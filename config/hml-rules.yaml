@@ -1,0 +1,318 @@
+version: v0.1
+status: approved-starter
+owner: Antaeus
+approved_by: Antaeus
+approved_at: 2026-06-16
+enforcement:
+  git: advisory
+  reasoning: mandatory
+  ci_blocking: false
+input_policy:
+  canonical_v1_source: app_database
+  non_canonical_v1_sources:
+    - ai_sentiment
+    - scraped_data
+    - external_enrichment
+    - email_metadata
+    - crm_sync
+    - slack_messages
+    - calendar_data
+classification_scale:
+  allowed_values:
+    - High
+    - Medium
+    - Low
+confidence_scale:
+  allowed_values:
+    - High
+    - Medium
+    - Low
+required_output_fields:
+  - category
+  - related_entity_type
+  - related_entity_id
+  - inputs
+  - rules_applied
+  - classification
+  - confidence
+  - explanation
+  - recommended_next_action
+  - source_record_ids
+  - rule_version
+global_caution_overlays:
+  permission_unclear:
+    condition: "permission_state in ['csm_context_needed', 'direct_contact_not_allowed', 'hold_sensitive', 'off_limits', 'ownership_unclear_requires_verification']"
+    effect: "raise caution; prevent recommendations that bypass relationship owner"
+  low_source_confidence:
+    condition: "source_confidence == 'Low'"
+    effect: "lower confidence; include source caveat in explanation"
+  sensitive_note:
+    condition: "note_sensitivity in ['private_csm_debrief', 'sensitive_boundary', 'legal_compliance_sensitive']"
+    effect: "require shareability check before external follow-up"
+  relationship_owner_bypass:
+    condition: "recommended_action_bypasses_owner == true"
+    effect: "approval_required_or_blocked"
+regional_overrides:
+  chicago_priority:
+    applies_to:
+      - territory_account_potential
+      - external_channel_quality
+    allowed_effect: "increase priority when fit signals are present"
+    prohibited_effect: "cannot override relationship permission, off-limits risk, direct-contact permission, CSM relationship heat, PEO protectiveness, or internal ambiguity risk"
+categories:
+  csm_relationship_heat:
+    structurally_required_v1: true
+    inputs:
+      - response_recency_days
+      - boundaries_clarity
+      - willing_to_prep
+      - daily_serve_reused
+      - daily_serve_forwarded
+      - approved_next_step
+      - protectiveness_level
+    rules:
+      high:
+        all:
+          - "response_recency_days <= 3"
+          - "boundaries_clarity == 'clear'"
+        any:
+          - "daily_serve_reused == true"
+          - "daily_serve_forwarded == true"
+          - "approved_next_step == true"
+      medium:
+        any:
+          - "response_recency_days <= 14"
+          - "willing_to_prep == true"
+          - "boundaries_clarity == 'partial'"
+      low:
+        any:
+          - "response_recency_days > 30"
+          - "boundaries_clarity == 'unclear'"
+          - "protectiveness_level == 'high' and approved_next_step != true"
+    recommended_actions:
+      High: "Propose a specific co-sell or prep move with the CSM."
+      Medium: "Send a useful daily serve and ask a low-friction context question."
+      Low: "Research more and ask for nothing bigger than context."
+  peo_readiness:
+    structurally_required_v1: true
+    inputs:
+      - public_global_fit_signal
+      - csm_sentiment
+      - use_case_strength
+      - urgency_level
+      - meeting_accepted
+      - permission_state
+    rules:
+      high:
+        all:
+          - "public_global_fit_signal == true"
+          - "use_case_strength in ['strong', 'specific']"
+        any:
+          - "meeting_accepted == true"
+          - "urgency_level == 'high'"
+      medium:
+        all:
+          - "public_global_fit_signal == true"
+        any:
+          - "use_case_strength == 'plausible'"
+          - "csm_sentiment == 'curious'"
+      low:
+        any:
+          - "public_global_fit_signal == false"
+          - "permission_state in ['research_only', 'csm_context_needed']"
+    recommended_actions:
+      High: "Prepare a specific use-case brief and confirm intro path."
+      Medium: "Gather CSM context and send a daily serve."
+      Low: "Monitor and continue research."
+  peo_protectiveness_caution:
+    structurally_required_v1: true
+    inputs:
+      - stay_in_thread_requested
+      - off_limits_flag
+      - access_request_deflected
+      - messaging_correction_count
+      - permission_state
+    rules:
+      high:
+        any:
+          - "stay_in_thread_requested == true"
+          - "off_limits_flag == true"
+          - "permission_state in ['hold_sensitive', 'off_limits', 'direct_contact_not_allowed']"
+      medium:
+        any:
+          - "access_request_deflected == true"
+          - "messaging_correction_count > 0"
+      low:
+        all:
+          - "off_limits_flag != true"
+          - "stay_in_thread_requested != true"
+          - "permission_state not in ['hold_sensitive', 'off_limits']"
+    recommended_actions:
+      High: "Switch from access-seeking to enablement and documentation."
+      Medium: "Confirm preferred motion before asking for access."
+      Low: "Proceed only through the recorded permission path."
+  opportunity_momentum:
+    structurally_required_v1: true
+    inputs:
+      - meeting_booked
+      - next_step_defined
+      - stakeholder_engagement_level
+      - follow_up_due_days
+      - problem_severity
+      - blocker_present
+    rules:
+      high:
+        all:
+          - "meeting_booked == true or next_step_defined == true"
+        any:
+          - "problem_severity == 'high'"
+          - "follow_up_due_days <= 1"
+      medium:
+        any:
+          - "stakeholder_engagement_level == 'some'"
+          - "next_step_defined == true"
+      low:
+        any:
+          - "next_step_defined != true"
+          - "follow_up_due_days > 30"
+          - "blocker_present == true"
+    recommended_actions:
+      High: "Complete the next action today."
+      Medium: "Clarify next step and owner."
+      Low: "Re-qualify or park with a review date."
+  follow_up_urgency:
+    structurally_required_v1: true
+    inputs:
+      - due_at
+      - overdue
+      - waiting_party
+      - meeting_recency_days
+      - unanswered_question_count
+    rules:
+      high:
+        any:
+          - "overdue == true"
+          - "waiting_party in ['csm', 'peo', 'peo_client']"
+      medium:
+        any:
+          - "due_in_days <= 7"
+          - "unanswered_question_count > 0"
+      low:
+        all:
+          - "overdue != true"
+          - "due_in_days > 7"
+    recommended_actions:
+      High: "Handle now or update the owner today."
+      Medium: "Schedule completion and confirm dependency."
+      Low: "Monitor."
+  boundary_off_limits_risk:
+    structurally_required_v1: true
+    inputs:
+      - off_limits_flag
+      - boundary_rule_severity
+      - direct_contact_permission
+      - approval_present
+      - note_sensitivity
+    rules:
+      high:
+        any:
+          - "off_limits_flag == true"
+          - "boundary_rule_severity == 'blocked'"
+          - "direct_contact_permission == false and approval_present != true"
+      medium:
+        any:
+          - "boundary_rule_severity == 'approval_required'"
+          - "note_sensitivity in ['sensitive_boundary', 'legal_compliance_sensitive']"
+      low:
+        all:
+          - "off_limits_flag != true"
+          - "boundary_rule_severity in ['none', 'warning']"
+    recommended_actions:
+      High: "Block or require explicit approval."
+      Medium: "Confirm owner consent and document next safest action."
+      Low: "Proceed through normal permission checks."
+  internal_ambiguity_risk:
+    structurally_required_v1: true
+    inputs:
+      - internal_unknown_count
+      - blocking_unknown_count
+      - low_confidence_claim_count
+      - affected_domain
+    rules:
+      high:
+        any:
+          - "blocking_unknown_count > 0"
+          - "affected_domain in ['permission', 'note_sensitivity', 'canon', 'schema', 'pricing', 'external_messaging'] and internal_unknown_count > 0"
+      medium:
+        any:
+          - "internal_unknown_count > 0"
+          - "low_confidence_claim_count > 0"
+      low:
+        all:
+          - "internal_unknown_count == 0"
+          - "low_confidence_claim_count == 0"
+    recommended_actions:
+      High: "Resolve before irreversible implementation or external action."
+      Medium: "Track with owner and due date."
+      Low: "No action."
+  external_channel_quality:
+    structurally_required_v1: false
+    inputs:
+      - audience_fit
+      - recurrence
+      - referral_specificity
+      - reciprocity
+      - qualified_conversation_count
+      - conflict_risk
+    rules:
+      high:
+        all:
+          - "audience_fit == 'strong'"
+        any:
+          - "qualified_conversation_count >= 2"
+          - "referral_specificity == 'specific_urgent_case'"
+      medium:
+        any:
+          - "audience_fit == 'plausible'"
+          - "recurrence == true"
+      low:
+        any:
+          - "audience_fit == 'weak'"
+          - "conflict_risk == 'high'"
+    recommended_actions:
+      High: "Invest and define next channel motion."
+      Medium: "Nurture and test one concrete use case."
+      Low: "Monitor or park."
+  territory_account_potential:
+    structurally_required_v1: true
+    inputs:
+      - visible_international_activity
+      - contractor_intensity
+      - hiring_velocity
+      - compliance_complexity
+      - channel_accessibility
+      - boundary_risk
+      - chicago_priority
+    rules:
+      high:
+        all:
+          - "chicago_priority == true"
+        any:
+          - "visible_international_activity == 'high'"
+          - "contractor_intensity == 'high'"
+          - "compliance_complexity == 'high'"
+        none:
+          - "boundary_risk == 'high'"
+      medium:
+        any:
+          - "visible_international_activity == 'medium'"
+          - "hiring_velocity == 'medium'"
+          - "channel_accessibility == 'medium'"
+      low:
+        any:
+          - "visible_international_activity == 'low'"
+          - "boundary_risk == 'high'"
+    recommended_actions:
+      High: "Identify safe channel path before outreach."
+      Medium: "Research and watch for triggers."
+      Low: "Park with review date."

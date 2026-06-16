@@ -4,7 +4,7 @@ Internal product planning and build repo for a ground-up partner-motion command 
 
 ## Purpose
 
-This app is intended to help manage a CSM-owned PEO channel motion for PrismHR Global.
+This app is intended to help manage a CSM-owned PEO channel motion for PrismHR Global and prospect the Chicagoland area for high-fit potential clients.
 
 It is designed around:
 
@@ -18,6 +18,7 @@ It is designed around:
 - HML signal intelligence
 - external channel development
 - Chicago territory prioritization
+- Chicagoland prospecting
 - internal ambiguity tracking
 
 ## Canonical Reading Order
@@ -49,9 +50,15 @@ Build scaffold that governs how Codex should move from planning to implementatio
 
 ## Current Status
 
-Planning / pre-build.
+Master MVP plan approved.
 
-No production code should be written until Codex produces and receives approval on:
+Active implementation contract:
+
+- docs/plans/master-mvp-plan.md
+
+Implementation may begin against the approved plan. New product, schema, permission, HML, or note-sensitivity decisions should continue to use the Decision Log process.
+
+The approved plan covers:
 
 - product definition
 - MVP scope

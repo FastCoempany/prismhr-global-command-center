@@ -1,6 +1,14 @@
 ﻿# Architecture
 
-This folder will hold architecture and implementation planning docs.
+This folder holds architecture and implementation planning docs.
+
+Current files:
+
+- brand-identity.md
+- design-brand-audit.md
+- design-system.md
+- field-glyphs.md
+- product-lexicon.md
 
 Likely future files:
 
