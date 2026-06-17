@@ -38,7 +38,7 @@ export default function Home() {
           <a aria-current="page" href="#today">
             Today
           </a>
-          <a href="#prospect-field">Prospect Field</a>
+          <a href="/prospect-field">Prospect Field</a>
           <a href="#partner-rooms">Partner Rooms</a>
           <a href="#signal-feed">Signal Feed</a>
           <a href="#boundaries">Boundaries</a>

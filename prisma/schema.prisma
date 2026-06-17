@@ -6,3 +6,260 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+enum UserRole {
+  OWNER
+  VIEWER
+}
+
+enum CanonStatus {
+  CANON
+  HYPOTHESIS
+  INFERENCE
+  UNKNOWN
+  UNVERIFIED
+}
+
+enum SourceConfidence {
+  CONFIRMED
+  STRONG
+  MEDIUM
+  LOW
+  UNVERIFIED
+  INFERRED
+  HYPOTHESIS
+}
+
+enum NoteSensitivity {
+  PUBLIC_RESEARCH
+  INTERNAL_ONLY
+  PRIVATE_CSM_DEBRIEF
+  SENSITIVE_BOUNDARY
+  LEGAL_COMPLIANCE_SENSITIVE
+  SHAREABLE_SUMMARY
+}
+
+enum PermissionStatus {
+  RESEARCH_ONLY
+  CSM_CONTEXT_NEEDED
+  CSM_APPROVED_FOR_DISCUSSION
+  CSM_APPROVED_FOR_INTRO
+  PEO_ENGAGED
+  PEO_CLIENT_ENGAGED
+  DIRECT_CONTACT_ALLOWED
+  DIRECT_CONTACT_NOT_ALLOWED
+  HOLD_SENSITIVE
+  OFF_LIMITS
+  OWNERSHIP_UNCLEAR_REQUIRES_VERIFICATION
+}
+
+enum HmlValue {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum TerritoryAccountStatus {
+  RESEARCH_ONLY
+  WATCH
+  PARKED
+  READY_FOR_REVIEW
+  CONVERTED_TO_OPPORTUNITY
+}
+
+enum ProductRelevance {
+  EOR
+  CONTRACTOR_MANAGEMENT
+  CONTRACTOR_MANAGEMENT_PLUS
+  GLOBAL_PAYROLL
+  CROSS_BORDER_RECRUITING
+}
+
+enum EvidenceType {
+  PUBLIC_WEB
+  COMPANY_SITE
+  JOB_POSTING
+  LINKEDIN
+  NEWS
+  MANUAL_RESEARCH
+  INTERNAL_NOTE
+  USER_ASSERTION
+}
+
+enum NoteType {
+  RESEARCH_NOTE
+  FIT_SIGNAL
+  BOUNDARY_NOTE
+  PRIVATE_DEBRIEF
+  SHAREABLE_SUMMARY
+}
+
+enum UnknownCategory {
+  SCHEMA
+  PERMISSION
+  HML
+  DATA_VISIBILITY
+  PRODUCT
+  PRICING_LEGAL
+  EXTERNAL_CHANNEL
+  TERRITORY
+  SOURCE_EVIDENCE
+}
+
+enum InternalUnknownStatus {
+  OPEN
+  DEFERRED
+  DECIDED
+  NO_LONGER_RELEVANT
+}
+
+enum HmlCategory {
+  TERRITORY_ACCOUNT_POTENTIAL
+  BOUNDARY_RISK
+  SOURCE_CONFIDENCE
+  INTERNAL_AMBIGUITY
+}
+
+model User {
+  id             String   @id @default(cuid())
+  name           String
+  email          String   @unique
+  role           UserRole @default(OWNER)
+  isProductOwner Boolean  @default(false)
+  isCanonOwner   Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  territoryAccounts TerritoryAccount[]
+}
+
+model TerritoryAccount {
+  id                  String                 @id @default(cuid())
+  companyName         String
+  website             String?
+  city                String                 @default("Chicago")
+  region              String                 @default("Chicagoland")
+  category            String?
+  status              TerritoryAccountStatus @default(RESEARCH_ONLY)
+  productRelevance    ProductRelevance[]
+  internationalSignal HmlValue               @default(LOW)
+  contractorSignal    HmlValue               @default(LOW)
+  hiringSignal        HmlValue               @default(LOW)
+  complexitySignal    HmlValue               @default(LOW)
+  channelSignal       HmlValue               @default(LOW)
+  boundaryRisk        HmlValue               @default(LOW)
+  priorityScore       Int?
+  fitSummary          String
+  nextSafestAction    String
+  permissionStatus    PermissionStatus       @default(RESEARCH_ONLY)
+  sourceConfidence    SourceConfidence       @default(UNVERIFIED)
+  canonStatus         CanonStatus            @default(UNVERIFIED)
+  ownerId             String?
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
+  lastReviewedAt      DateTime?
+
+  owner              User?               @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  evidence           SourceEvidence[]
+  notes              Note[]
+  permissionHistory  PermissionHistory[]
+  internalUnknowns   InternalUnknown[]
+  hmlClassifications HmlClassification[]
+
+  @@index([companyName])
+  @@index([status])
+  @@index([permissionStatus])
+  @@index([sourceConfidence])
+}
+
+model SourceEvidence {
+  id            String           @id @default(cuid())
+  accountId     String
+  type          EvidenceType     @default(PUBLIC_WEB)
+  title         String
+  url           String?
+  capturedClaim String
+  sourceDate    DateTime?
+  staleAfter    DateTime?
+  confidence    SourceConfidence @default(UNVERIFIED)
+  canonStatus   CanonStatus      @default(UNVERIFIED)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  account TerritoryAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+  @@index([confidence])
+}
+
+model Note {
+  id               String           @id @default(cuid())
+  accountId        String?
+  noteType         NoteType         @default(RESEARCH_NOTE)
+  body             String
+  sensitivity      NoteSensitivity  @default(INTERNAL_ONLY)
+  sourceConfidence SourceConfidence @default(UNVERIFIED)
+  shareability     String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  account TerritoryAccount? @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+  @@index([sensitivity])
+}
+
+model PermissionHistory {
+  id        String           @id @default(cuid())
+  accountId String
+  status    PermissionStatus
+  reason    String
+  setBy     String?
+  createdAt DateTime         @default(now())
+
+  account TerritoryAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+  @@index([status])
+}
+
+model InternalUnknown {
+  id                   String                @id @default(cuid())
+  question             String
+  category             UnknownCategory
+  currentBestAnswer    String?
+  sourceNeeded         String?
+  confidence           SourceConfidence      @default(UNVERIFIED)
+  riskLevel            HmlValue              @default(MEDIUM)
+  status               InternalUnknownStatus @default(OPEN)
+  blocksImplementation Boolean               @default(false)
+  relatedAccountId     String?
+  dueAt                DateTime?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+
+  relatedAccount TerritoryAccount? @relation(fields: [relatedAccountId], references: [id], onDelete: SetNull)
+
+  @@index([category])
+  @@index([status])
+  @@index([relatedAccountId])
+}
+
+model HmlClassification {
+  id                    String           @id @default(cuid())
+  category              HmlCategory
+  accountId             String?
+  classification        HmlValue
+  confidence            SourceConfidence
+  explanation           String
+  contributingSignals   String[]
+  recommendedNextAction String
+  ruleVersion           String           @default("v0.1")
+  createdAt             DateTime         @default(now())
+
+  account TerritoryAccount? @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([category])
+  @@index([accountId])
+  @@index([classification])
+}
