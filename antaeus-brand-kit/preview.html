@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Antaeus Visual Identity — Preview</title>
+<link rel="icon" href="brand/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/components.css">
+<style>
+  body { margin:0; background:var(--ds-field); color:var(--ds-ink); font-family:var(--ds-font-sans); }
+  .wrap { max-width:980px; margin:0 auto; padding:48px 32px 96px; }
+  h1 { font-family:var(--ds-font-serif); font-size:var(--ds-type-display); margin:0 0 8px; }
+  .kick { font-family:var(--ds-font-mono); text-transform:uppercase; letter-spacing:var(--ds-tracking-kicker); font-size:var(--ds-type-kicker); color:var(--ds-orange); font-weight:800; }
+  section { margin-top:48px; }
+  h2 { font-family:var(--ds-font-serif); font-size:24px; margin:0 0 16px; border-top:1px solid var(--ds-rule); padding-top:24px; }
+  .row { display:flex; flex-wrap:wrap; gap:12px; align-items:center; }
+  .swatches { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:12px; }
+  .sw { border:1px solid var(--ds-rule); border-radius:8px; overflow:hidden; font-size:12px; }
+  .sw .chip { height:64px; } .sw .lab { padding:8px 10px; } .sw .lab b{ display:block; } .sw .lab code{ font-family:var(--ds-font-mono); color:var(--ds-ink-soft); }
+  .card-demo { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:16px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="kick">Antaeus · Visual Identity</p>
+  <h1>The whole brand, one page.</h1>
+  <p style="max-width:60ch;color:var(--ds-ink-soft);line-height:1.6">Bright field, navy ink, one orange move. Everything below is rendered from <code>css/tokens.css</code> + <code>css/components.css</code> — no app code.</p>
+
+  <section>
+    <h2>Color roles</h2>
+    <div class="swatches">
+      <div class="sw"><div class="chip" style="background:var(--ds-ink)"></div><div class="lab"><b>Ink / navy</b><code>--ds-ink</code></div></div>
+      <div class="sw"><div class="chip" style="background:var(--ds-orange)"></div><div class="lab"><b>Orange — the move</b><code>--ds-orange</code></div></div>
+      <div class="sw"><div class="chip" style="background:var(--ds-blue)"></div><div class="lab"><b>Blue — system</b><code>--ds-blue</code></div></div>
+      <div class="sw"><div class="chip" style="background:var(--ds-green)"></div><div class="lab"><b>Green — ready</b><code>--ds-green</code></div></div>
+      <div class="sw"><div class="chip" style="background:var(--ds-amber)"></div><div class="lab"><b>Amber — caution</b><code>--ds-amber</code></div></div>
+      <div class="sw"><div class="chip" style="background:var(--ds-red)"></div><div class="lab"><b>Red — risk</b><code>--ds-red</code></div></div>
+      <div class="sw"><div class="chip" style="background:var(--ds-field);border-bottom:1px solid var(--ds-rule)"></div><div class="lab"><b>Field</b><code>--ds-field</code></div></div>
+      <div class="sw"><div class="chip" style="background:var(--ds-surface);border-bottom:1px solid var(--ds-rule)"></div><div class="lab"><b>Surface</b><code>--ds-surface</code></div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Buttons</h2>
+    <div class="row">
+      <button class="ds-btn ds-btn--accent">The dominant move</button>
+      <button class="ds-btn ds-btn--primary">Strong secondary</button>
+      <button class="ds-btn ds-btn--secondary">Quiet action</button>
+      <button class="ds-btn ds-btn--ghost">Tertiary</button>
+      <button class="ds-btn ds-btn--accent" disabled>Disabled</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>Status chips</h2>
+    <div class="row">
+      <span class="ds-chip ds-chip--green">Ready now</span>
+      <span class="ds-chip ds-chip--blue">Operating</span>
+      <span class="ds-chip ds-chip--amber">Needs sharpening</span>
+      <span class="ds-chip ds-chip--orange">At risk</span>
+      <span class="ds-chip ds-chip--red">Needs intervention</span>
+      <span class="ds-chip">Neutral</span>
+    </div>
+  </section>
+
+  <section>
+    <h2>Cards</h2>
+    <div class="card-demo">
+      <article class="ds-card ds-card--edge-orange"><div class="ds-card__head"><span class="ds-card__kicker-row"><span class="kick">Account</span></span></div><div class="ds-card__body"><h3 style="font-family:var(--ds-font-serif);margin:.2em 0">Northwind Freight</h3><p class="ds-card__copy">A card with the orange state edge — the gauge a card wears its condition on.</p></div></article>
+      <article class="ds-card ds-card--edge-green"><div class="ds-card__head"><span class="ds-card__kicker-row"><span class="kick">Proof</span></span></div><div class="ds-card__body"><h3 style="font-family:var(--ds-font-serif);margin:.2em 0">Pilot signed off</h3><p class="ds-card__copy">Green edge = real health, never a default positive.</p></div></article>
+    </div>
+  </section>
+
+  <section>
+    <h2>Type</h2>
+    <p class="kick">Mono kicker · letter-spaced</p>
+    <p style="font-family:var(--ds-font-serif);font-size:40px;margin:.1em 0">Serif headline carries the argument.</p>
+    <p style="font-size:15px;line-height:1.6;max-width:60ch">Public Sans carries the work — body copy, labels, controls. Mono recedes to kickers and codes only.</p>
+  </section>
+
+  <section>
+    <h2>The mark</h2>
+    <img src="brand/favicon.svg" width="48" height="48" alt="Antaeus mark">
+  </section>
+</div>
+</body>
+</html>

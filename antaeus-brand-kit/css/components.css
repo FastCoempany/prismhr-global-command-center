@@ -1,0 +1,912 @@
+/**
+ * Antaeus Design System — component styles (03 §4).
+ *
+ * Every value here is a token from src/styles/tokens.css; a literal
+ * color, size, or shadow in this file is drift. The mockup
+ * (deliverables/mockups/component-library-un-nav-full-2026-06-07.html)
+ * is the visual source of truth; this file is its translation.
+ *
+ * Interaction states (03 §4.8): every interactive renders six — rest,
+ * hover, focus (3px orange-soft ring via :focus-visible, always),
+ * active (1px depress), disabled (inert + carries why), selected
+ * (persistent orange on-state, distinct from hover).
+ */
+
+/* The motion layer (spec 08) — the cross-cutting named-motion
+   vocabulary. Imported here so every page that loads components.css
+   gets the grammar at one import point. */
+@import "./motion.css";
+
+/* ── Display ──────────────────────────────────────────────────── */
+
+.ds-kicker {
+  font: 600 var(--ds-type-kicker) / 1.2 var(--ds-font-mono);
+  letter-spacing: var(--ds-tracking-kicker);
+  text-transform: uppercase;
+  color: var(--ds-ink-faint);
+}
+
+.ds-heading--display {
+  font-family: var(--ds-font-serif);
+  font-size: var(--ds-type-display);
+  line-height: 1.08;
+  color: var(--ds-ink);
+  font-weight: 400;
+  margin: 0;
+}
+
+.ds-heading--title {
+  font-family: var(--ds-font-serif);
+  font-size: var(--ds-type-title);
+  line-height: 1.25;
+  color: var(--ds-ink);
+  font-weight: 400;
+  margin: 0;
+}
+
+.ds-heading--control {
+  font: 600 var(--ds-type-label) / 1.35 var(--ds-font-sans);
+  color: var(--ds-ink);
+  margin: 0;
+}
+
+.ds-stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-1);
+}
+.ds-stat__value {
+  font-family: var(--ds-font-serif);
+  font-size: 28px;
+  line-height: 1.1;
+  color: var(--ds-ink);
+}
+.ds-stat__label {
+  font: 600 var(--ds-type-kicker) / 1.2 var(--ds-font-mono);
+  letter-spacing: var(--ds-tracking-kicker);
+  text-transform: uppercase;
+  color: var(--ds-ink-faint);
+}
+
+.ds-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: 600 12px/1 var(--ds-font-sans);
+  padding: var(--ds-space-1) 10px;
+  border-radius: var(--ds-radius-pill);
+  border: 1px solid var(--ds-hair-strong);
+  color: var(--ds-ink-soft);
+  background: var(--ds-surface);
+}
+.ds-chip--green { color: var(--ds-green); border-color: var(--ds-green); background: var(--ds-green-soft); }
+.ds-chip--amber { color: var(--ds-amber); border-color: var(--ds-amber); background: var(--ds-amber-soft); }
+.ds-chip--red { color: var(--ds-red); border-color: var(--ds-red); background: var(--ds-red-soft); }
+.ds-chip--blue { color: var(--ds-blue); border-color: var(--ds-blue); background: var(--ds-blue-soft); }
+.ds-chip--orange { color: var(--ds-orange); border-color: var(--ds-orange); background: var(--ds-orange-soft); }
+
+/* The gauge — the card's left state-rule (03 §4.1 Display). */
+.ds-gauge {
+  width: 3px;
+  align-self: stretch;
+  border-radius: 2px;
+  background: var(--ds-ink-quiet);
+  flex: none;
+}
+.ds-gauge--orange { background: var(--ds-orange); }
+.ds-gauge--blue { background: var(--ds-blue); }
+.ds-gauge--green { background: var(--ds-green); }
+.ds-gauge--amber { background: var(--ds-amber); }
+.ds-gauge--red { background: var(--ds-red); }
+
+/* ── Card — Grounded (03 §2.3) ────────────────────────────────── */
+
+.ds-card {
+  display: flex;
+  gap: var(--ds-space-35);
+  background: var(--ds-surface);
+  border: 1px solid var(--ds-hair-strong);
+  /* The anchored edge (03 §2.3): the second weight device beside the
+     gauge — a 3px bottom rule, quiet neutral at rest, role color when
+     state is real (set by ds-card--edge-*). */
+  border-bottom: 3px solid var(--ds-ink-quiet);
+  border-radius: var(--ds-radius-card);
+  box-shadow: var(--ds-shadow-rest);
+  padding: var(--ds-space-4) var(--ds-space-45);
+  transition: box-shadow var(--ds-motion-base) var(--ds-ease-standard);
+}
+.ds-card--edge-orange { border-bottom-color: var(--ds-orange); }
+.ds-card--edge-blue { border-bottom-color: var(--ds-blue); }
+.ds-card--edge-green { border-bottom-color: var(--ds-green); }
+.ds-card--edge-amber { border-bottom-color: var(--ds-amber); }
+.ds-card--edge-red { border-bottom-color: var(--ds-red); }
+/* Offset (03 §2.4): one item breaks rank. The wrapper holds the tag
+   outside the card top-left; the card lifts with a heavier shadow + an
+   orange anchored edge; its action extends below the bottom border. */
+.ds-offset {
+  position: relative;
+  padding-top: var(--ds-space-4);
+  /* Reserve room for the action that protrudes below the card. */
+  padding-bottom: var(--ds-space-6);
+}
+.ds-offset__tag {
+  position: absolute;
+  top: -2px;
+  left: var(--ds-space-3);
+  font: 600 var(--ds-type-kicker) / 1 var(--ds-font-mono);
+  letter-spacing: var(--ds-tracking-kicker);
+  text-transform: uppercase;
+  color: var(--ds-orange);
+}
+.ds-card--offset {
+  box-shadow: var(--ds-shadow-offset);
+  border-color: var(--ds-rule);
+}
+.ds-card--offset { overflow: visible; }
+/* The action extends below the card's bottom border (03 §2.4) — the
+   foot translates down to straddle the anchored edge. */
+.ds-card--offset .ds-card__foot {
+  transform: translateY(calc(50% + var(--ds-space-3)));
+  margin-top: var(--ds-space-1);
+}
+.ds-card__body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--ds-space-2); }
+.ds-card__kicker-row { display: flex; align-items: center; gap: var(--ds-space-2); }
+.ds-card__icon { display: inline-flex; color: var(--ds-ink-soft); }
+.ds-card__head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--ds-space-3); }
+.ds-card__copy { font: var(--ds-type-body) / var(--ds-leading-body) var(--ds-font-sans); color: var(--ds-ink-soft); margin: 0; }
+.ds-card__foot { display: flex; align-items: center; gap: var(--ds-space-3); margin-top: var(--ds-space-1); }
+.ds-card__unsaved {
+  font: 600 11px/1 var(--ds-font-sans);
+  color: var(--ds-amber);
+}
+
+/* Data states (03 §4.4) — loading holds the silhouette. */
+.ds-card--loading .ds-card__body > * { visibility: hidden; }
+.ds-card--loading { position: relative; overflow: hidden; }
+.ds-card--loading::after {
+  content: "";
+  position: absolute;
+  inset: var(--ds-space-4);
+  border-radius: var(--ds-radius-control);
+  background: linear-gradient(90deg, var(--ds-surface-sunk), var(--ds-surface-sub), var(--ds-surface-sunk));
+  background-size: 200% 100%;
+  animation: ds-skeleton 1.2s var(--ds-ease-standard) infinite;
+}
+@keyframes ds-skeleton {
+  from { background-position: 0% 0; }
+  to { background-position: -200% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ds-card--loading::after { animation: none; }
+}
+
+.ds-empty {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-2);
+  padding: var(--ds-space-5) var(--ds-space-4);
+  border: 1px dashed var(--ds-hair-strong);
+  border-radius: var(--ds-radius-card);
+  background: var(--ds-surface-sub);
+}
+.ds-empty__why { font: var(--ds-type-body) / var(--ds-leading-body) var(--ds-font-sans); color: var(--ds-ink-soft); margin: 0; }
+.ds-empty > .ds-btn { align-self: flex-start; }
+
+.ds-error {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-2);
+  padding: var(--ds-space-35);
+  border-left: 3px solid var(--ds-red);
+  border-radius: var(--ds-radius-control);
+  background: var(--ds-red-soft);
+  font: var(--ds-type-body) / var(--ds-leading-body) var(--ds-font-sans);
+  color: var(--ds-ink);
+}
+
+/* ── Action (03 §4.1) ─────────────────────────────────────────── */
+
+.ds-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ds-space-2);
+  font: 600 var(--ds-type-label) / 1 var(--ds-font-sans);
+  padding: 10px var(--ds-space-4);
+  border-radius: var(--ds-radius-control);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition:
+    background var(--ds-motion-quick) var(--ds-ease-standard),
+    border-color var(--ds-motion-quick) var(--ds-ease-standard);
+}
+.ds-btn:active:not(:disabled) { transform: translateY(1px); }
+.ds-btn:focus-visible,
+.ds-input:focus-visible,
+.ds-toggle:focus-visible,
+.ds-seg__btn:focus-visible,
+.ds-link:focus-visible,
+.ds-iconbtn:focus-visible {
+  outline: 3px solid var(--ds-orange-soft);
+  outline-offset: 1px;
+}
+.ds-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.ds-btn--accent { background: var(--ds-orange); color: var(--ds-on-ink); }
+.ds-btn--accent:hover:not(:disabled) { background: var(--ds-orange-strong); }
+/* Primary = the strong secondary action (the dominant move is orange
+   --accent). Brightened from navy ink to the brand blue 2026-06-17
+   (founder: "always lean bright") — blue is the system/secondary-action
+   role (canon §3), so this reads bright without competing with orange. */
+.ds-btn--primary { background: var(--ds-blue); color: var(--ds-on-ink); }
+.ds-btn--primary:hover:not(:disabled) { background: var(--ds-blue-strong); }
+.ds-btn--secondary {
+  background: var(--ds-surface);
+  color: var(--ds-ink);
+  border-color: var(--ds-hair-strong);
+}
+.ds-btn--secondary:hover:not(:disabled) { border-color: var(--ds-rule); background: var(--ds-surface-sub); }
+.ds-btn--ghost { background: transparent; color: var(--ds-ink-soft); }
+.ds-btn--ghost:hover:not(:disabled) { background: var(--ds-surface-sunk); color: var(--ds-ink); }
+
+.ds-btn__why {
+  font: 12px/1.4 var(--ds-font-sans);
+  color: var(--ds-ink-faint);
+}
+
+.ds-iconbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--ds-radius-control);
+  border: 1px solid var(--ds-hair-strong);
+  background: var(--ds-surface);
+  color: var(--ds-ink-soft);
+  cursor: pointer;
+}
+.ds-iconbtn:hover:not(:disabled) { color: var(--ds-ink); border-color: var(--ds-rule); }
+.ds-iconbtn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.ds-link {
+  font: 600 var(--ds-type-label) / 1.4 var(--ds-font-sans);
+  color: var(--ds-blue);
+  text-decoration: none;
+  border-bottom: 1px dotted var(--ds-blue);
+}
+.ds-link:hover { border-bottom-style: solid; }
+
+.ds-toggle {
+  position: relative;
+  width: 38px;
+  height: 22px;
+  border-radius: var(--ds-radius-pill);
+  border: 1px solid var(--ds-hair-strong);
+  background: var(--ds-surface-sunk);
+  cursor: pointer;
+  transition: background var(--ds-motion-quick) var(--ds-ease-standard);
+}
+.ds-toggle::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--ds-surface);
+  box-shadow: var(--ds-shadow-rest);
+  transition: transform var(--ds-motion-quick) var(--ds-ease-standard);
+}
+.ds-toggle[aria-pressed="true"] { background: var(--ds-orange); border-color: var(--ds-orange); }
+.ds-toggle[aria-pressed="true"]::after { transform: translateX(16px); }
+.ds-toggle:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* ── Input (03 §4.1) ──────────────────────────────────────────── */
+
+.ds-field { display: flex; flex-direction: column; gap: 6px; }
+.ds-field__label { font: 600 var(--ds-type-label) / 1.35 var(--ds-font-sans); color: var(--ds-ink); }
+.ds-field__micro { font: 12px/1.45 var(--ds-font-sans); color: var(--ds-ink-faint); margin: 0; }
+.ds-field__error { font: 600 12px/1.45 var(--ds-font-sans); color: var(--ds-red); margin: 0; }
+.ds-field--error .ds-input { border-color: var(--ds-red); }
+
+.ds-input {
+  font: var(--ds-type-body) / 1.4 var(--ds-font-sans);
+  color: var(--ds-ink);
+  background: var(--ds-surface);
+  border: 1px solid var(--ds-hair-strong);
+  border-radius: var(--ds-radius-control);
+  padding: 9px var(--ds-space-3);
+  width: 100%;
+}
+.ds-input::placeholder { color: var(--ds-ink-quiet); }
+.ds-textarea { min-height: 64px; resize: vertical; line-height: var(--ds-leading-body); }
+.ds-input:hover:not(:disabled) { border-color: var(--ds-rule); }
+.ds-input:focus { outline: 3px solid var(--ds-orange-soft); outline-offset: 0; border-color: var(--ds-orange); }
+.ds-input:disabled { opacity: 0.55; background: var(--ds-surface-sunk); cursor: not-allowed; }
+
+/* ── Feedback & overlays (03 §4.1) ────────────────────────────── */
+
+.ds-toast {
+  position: fixed;
+  bottom: var(--ds-space-6);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: var(--ds-z-toast);
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-3);
+  background: var(--ds-ink);
+  color: var(--ds-on-ink);
+  font: var(--ds-type-label) / 1.4 var(--ds-font-sans);
+  padding: var(--ds-space-3) var(--ds-space-4);
+  border-radius: var(--ds-radius-card);
+  box-shadow: var(--ds-shadow-lift);
+}
+
+.ds-alert {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-2);
+  padding: var(--ds-space-35) var(--ds-space-4);
+  border-radius: var(--ds-radius-control);
+  border-left: 3px solid var(--ds-amber);
+  background: var(--ds-amber-soft);
+  font: var(--ds-type-body) / var(--ds-leading-body) var(--ds-font-sans);
+  color: var(--ds-ink);
+}
+.ds-alert--blue { border-left-color: var(--ds-blue); background: var(--ds-blue-soft); }
+.ds-alert--red { border-left-color: var(--ds-red); background: var(--ds-red-soft); }
+.ds-alert__move { align-self: flex-start; }
+
+.ds-scrim {
+  position: fixed;
+  inset: 0;
+  background: var(--ds-scrim);
+}
+.ds-drawer { z-index: var(--ds-z-drawer); position: fixed; inset: 0; }
+.ds-drawer__panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(520px, 92vw);
+  background: var(--ds-surface);
+  box-shadow: var(--ds-shadow-offset);
+  border-left: 1px solid var(--ds-hair-strong);
+  padding: var(--ds-space-6);
+  overflow-y: auto;
+  animation: ds-drawer-in var(--ds-motion-considered) var(--ds-ease-standard);
+}
+@keyframes ds-drawer-in {
+  from { transform: translateX(24px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ds-drawer__panel { animation: none; }
+}
+
+.ds-modal { z-index: var(--ds-z-modal); position: fixed; inset: 0; display: grid; place-items: center; }
+.ds-modal__panel {
+  width: min(440px, 92vw);
+  background: var(--ds-surface);
+  border-radius: var(--ds-radius-frame);
+  box-shadow: var(--ds-shadow-offset);
+  padding: var(--ds-space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-4);
+}
+.ds-modal__actions { display: flex; justify-content: flex-end; gap: var(--ds-space-3); }
+
+/* ── Navigation (03 Part III) ─────────────────────────────────── */
+
+.ds-wayfinder {
+  position: sticky;
+  top: 0;
+  z-index: var(--ds-z-wayfinder);
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-35);
+  padding: var(--ds-space-2) var(--ds-space-5);
+  background: var(--ds-surface);
+  border-bottom: 1px solid var(--ds-hair-strong);
+}
+.ds-wayfinder__mark { display: inline-flex; align-items: center; color: var(--ds-ink); text-decoration: none; }
+
+/* The L2 lockup (spec 10): mark + letterspaced caps for chrome. */
+.ds-lockup { display: inline-flex; align-items: center; gap: 10px; color: var(--ds-ink); }
+.ds-lockup__name {
+  font: 700 12px/1 var(--ds-font-sans);
+  letter-spacing: 0.22em;
+}
+@media (max-width: 720px) {
+  .ds-lockup__name { display: none; }
+}
+/* L1 — serif lockup (spec 10 §3): the mark beside "Antaeus" in the
+   headline voice, for the landing page + docs. */
+.ds-lockup__name-serif {
+  font: 400 28px/1 var(--ds-font-serif);
+  color: var(--ds-ink);
+}
+.ds-lockup--reversed { color: var(--ds-on-ink); }
+.ds-lockup--reversed .ds-lockup__name-serif { color: var(--ds-on-ink); }
+.ds-wayfinder__crumb {
+  font: 600 var(--ds-type-kicker) / 1 var(--ds-font-mono);
+  letter-spacing: var(--ds-tracking-kicker);
+  text-transform: uppercase;
+  color: var(--ds-ink-soft);
+}
+.ds-wayfinder__spacer { flex: 1; }
+.ds-wayfinder__k {
+  font: 600 11px/1 var(--ds-font-mono);
+  color: var(--ds-ink-faint);
+  border: 1px solid var(--ds-hair-strong);
+  border-radius: var(--ds-radius-control);
+  background: var(--ds-surface);
+  padding: 6px 10px;
+  cursor: pointer;
+}
+.ds-wayfinder__k:hover { color: var(--ds-ink); border-color: var(--ds-rule); }
+
+.ds-seg { display: inline-flex; gap: 2px; padding: 2px; border: 1px solid var(--ds-hair-strong); border-radius: var(--ds-radius-pill); background: var(--ds-surface-sub); }
+.ds-seg__btn {
+  font: 600 12px/1 var(--ds-font-sans);
+  color: var(--ds-ink-soft);
+  border: none;
+  background: transparent;
+  border-radius: var(--ds-radius-pill);
+  padding: 7px var(--ds-space-35);
+  cursor: pointer;
+}
+.ds-seg__btn:hover { color: var(--ds-ink); }
+/* Always lean bright (founder, 2026-06-16): no dark-navy pills. The
+   selected segment is a raised white pill with orange ink — unmistakable
+   against the soft track, with none of the dark-navy weight. */
+.ds-seg__btn[aria-pressed="true"] {
+  background: var(--ds-surface);
+  color: var(--ds-orange);
+  box-shadow: var(--ds-shadow-rest);
+}
+
+/* ── Data & structure (03 §4.1, §4.5) ─────────────────────────── */
+
+.ds-meter { display: flex; flex-direction: column; gap: var(--ds-space-2); }
+.ds-meter__track {
+  height: 6px;
+  border-radius: var(--ds-radius-pill);
+  background: var(--ds-surface-sunk);
+  overflow: hidden;
+}
+.ds-meter__fill {
+  height: 100%;
+  border-radius: var(--ds-radius-pill);
+  background: var(--ds-ink-soft);
+  transition: width var(--ds-motion-considered) var(--ds-ease-standard);
+}
+.ds-meter--green .ds-meter__fill { background: var(--ds-green); }
+.ds-meter--amber .ds-meter__fill { background: var(--ds-amber); }
+.ds-meter--red .ds-meter__fill { background: var(--ds-red); }
+.ds-meter--blue .ds-meter__fill { background: var(--ds-blue); }
+.ds-meter--orange .ds-meter__fill { background: var(--ds-orange); }
+.ds-meter__read { font: var(--ds-type-body) / var(--ds-leading-body) var(--ds-font-sans); color: var(--ds-ink-soft); margin: 0; }
+
+/* ── Catalog tail (03 §4.1) ───────────────────────────────────── */
+
+.ds-stamp {
+  display: inline-flex;
+  align-items: center;
+  font: 600 var(--ds-type-kicker) / 1 var(--ds-font-mono);
+  letter-spacing: var(--ds-tracking-kicker);
+  text-transform: uppercase;
+  color: var(--ds-ink-soft);
+  border-top: 1px solid var(--ds-hair-strong);
+  border-bottom: 1px solid var(--ds-hair-strong);
+  padding: var(--ds-space-1) var(--ds-space-2);
+}
+.ds-stamp--green { color: var(--ds-green); border-color: var(--ds-green); }
+.ds-stamp--red { color: var(--ds-red); border-color: var(--ds-red); }
+.ds-stamp--amber { color: var(--ds-amber); border-color: var(--ds-amber); }
+.ds-stamp--blue { color: var(--ds-blue); border-color: var(--ds-blue); }
+.ds-stamp--orange { color: var(--ds-orange); border-color: var(--ds-orange); }
+
+.ds-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--ds-radius-pill);
+  background: var(--ds-surface-sunk);
+  border: 1px solid var(--ds-hair-strong);
+  color: var(--ds-ink-soft);
+  font: 700 11px/1 var(--ds-font-sans);
+  letter-spacing: 0.04em;
+}
+.ds-avatar--orange { border-color: var(--ds-orange); color: var(--ds-orange); background: var(--ds-orange-tint); }
+.ds-avatar--blue { border-color: var(--ds-blue); color: var(--ds-blue); background: var(--ds-blue-soft); }
+
+.ds-tooltip { position: relative; display: inline-flex; }
+.ds-tooltip__bubble {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: var(--ds-z-toast);
+  background: var(--ds-ink);
+  color: var(--ds-on-ink);
+  font: 12px/1.45 var(--ds-font-sans);
+  padding: var(--ds-space-2) var(--ds-space-3);
+  border-radius: var(--ds-radius-control);
+  white-space: nowrap;
+  max-width: 320px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--ds-motion-quick) var(--ds-ease-standard);
+}
+.ds-tooltip:hover .ds-tooltip__bubble,
+.ds-tooltip:focus-visible .ds-tooltip__bubble {
+  opacity: 1;
+}
+
+.ds-table {
+  width: 100%;
+  border-collapse: collapse;
+  font: var(--ds-type-body) / 1.45 var(--ds-font-sans);
+  color: var(--ds-ink);
+}
+.ds-table th {
+  font: 600 var(--ds-type-kicker) / 1.2 var(--ds-font-mono);
+  letter-spacing: var(--ds-tracking-kicker);
+  text-transform: uppercase;
+  color: var(--ds-ink-faint);
+  text-align: left;
+  padding: var(--ds-space-2) var(--ds-space-3);
+  border-bottom: 1px solid var(--ds-hair-strong);
+}
+.ds-table td {
+  padding: var(--ds-space-3);
+  border-bottom: 1px solid var(--ds-hair);
+}
+.ds-table__num { text-align: right; font-variant-numeric: tabular-nums; }
+.ds-table tbody tr[tabindex]:hover { background: var(--ds-surface-sub); cursor: pointer; }
+.ds-table tbody tr:focus-visible { outline: 3px solid var(--ds-orange-soft); outline-offset: -3px; }
+.ds-table__row--selected { background: var(--ds-orange-tint); }
+.ds-table__row--offset {
+  background: var(--ds-surface);
+  box-shadow: var(--ds-shadow-lift);
+  position: relative;
+}
+.ds-table__row--offset td { border-bottom-color: var(--ds-rule); border-top: 1px solid var(--ds-rule); }
+.ds-table__row--offset td:first-child { border-left: 3px solid var(--ds-orange); }
+
+.ds-progress { display: flex; flex-direction: column; gap: var(--ds-space-3); }
+.ds-progress__count { font: 600 var(--ds-type-label) / 1.4 var(--ds-font-sans); color: var(--ds-ink); margin: 0; }
+.ds-progress__ladder { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--ds-space-2); }
+.ds-progress__step {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-3);
+  font: var(--ds-type-body) / 1.4 var(--ds-font-sans);
+  color: var(--ds-ink-faint);
+}
+.ds-progress__step.is-done { color: var(--ds-ink); }
+.ds-progress__mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: var(--ds-radius-pill);
+  border: 1px solid var(--ds-hair-strong);
+  font: 700 10px/1 var(--ds-font-sans);
+  color: var(--ds-green);
+  flex: none;
+}
+.ds-progress__step.is-done .ds-progress__mark { border-color: var(--ds-green); background: var(--ds-green-soft); }
+
+/* ── System cards (03 §4.1 System) ────────────────────────────── */
+
+.ds-pattern__claim { color: var(--ds-ink); }
+.ds-pattern__evidence {
+  margin: 0;
+  padding-left: var(--ds-space-4);
+  font: 13.5px/1.55 var(--ds-font-sans);
+  color: var(--ds-ink-soft);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-1);
+}
+.ds-pattern__sure {
+  font: 600 12px/1.4 var(--ds-font-sans);
+  color: var(--ds-blue);
+  margin: 0;
+}
+.ds-proposal__change { color: var(--ds-ink); }
+
+.ds-readiness { display: flex; flex-direction: column; gap: var(--ds-space-1); }
+.ds-readiness__state {
+  font-family: var(--ds-font-serif);
+  font-size: var(--ds-type-title);
+  color: var(--ds-ink);
+  margin: 0;
+}
+.ds-readiness__read {
+  font: var(--ds-type-body) / var(--ds-leading-body) var(--ds-font-sans);
+  color: var(--ds-ink-soft);
+  margin: 0;
+  max-width: 60ch;
+}
+
+/* ── Layout & grid (spec 05) ──────────────────────────────────── */
+
+/* The page frame: full-bleed bar above, centered capped column here. */
+.ds-frame { width: 100%; }
+.ds-frame__column {
+  max-width: var(--ds-page-max);
+  margin: 0 auto;
+  padding: 0 var(--ds-page-gutter);
+}
+/* Below 1024 the product is unsupported (05 §2.1): a calm notice, not
+   a half-reflowed room. Hidden above 1024; replaces the column below. */
+.ds-frame__unsupported {
+  display: none;
+  font: var(--ds-type-body) / var(--ds-leading-body) var(--ds-font-sans);
+  color: var(--ds-ink-soft);
+  max-width: var(--ds-measure);
+  margin: var(--ds-space-12) auto;
+  padding: 0 var(--ds-page-gutter);
+}
+@media (max-width: 1023px) {
+  .ds-frame__column { display: none; }
+  .ds-frame__unsupported { display: block; }
+}
+
+.ds-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: var(--ds-grid-gap);
+}
+@media (max-width: 1023px) {
+  .ds-grid { grid-template-columns: 1fr; }
+  .ds-grid__cell { grid-column: 1 / -1 !important; }
+}
+
+.ds-measure { max-width: var(--ds-measure); }
+
+.ds-bandstack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-8);
+}
+
+.ds-arch-single {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-6);
+}
+
+/* Focal + rail: the 8/4 split, collapsing to single column < 1024. */
+.ds-arch-focalrail {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--ds-grid-gap);
+  align-items: start;
+}
+.ds-arch-focalrail__rail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-3);
+}
+@media (max-width: 1023px) {
+  .ds-arch-focalrail { grid-template-columns: 1fr; }
+}
+
+/* Object + controls: the object dominant, the controls subordinate. */
+.ds-arch-objectcontrols {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--ds-grid-gap);
+  align-items: start;
+}
+.ds-arch-objectcontrols__controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-3);
+}
+@media (max-width: 1023px) {
+  .ds-arch-objectcontrols { grid-template-columns: 1fr; }
+}
+
+/* ── HandoffStrip — routing onward (spec 03 §3.4) ─────────────── */
+
+.ds-handoff {
+  border-top: 1px solid var(--ds-hair-strong);
+  padding-top: var(--ds-space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-3);
+}
+.ds-handoff__head { display: flex; flex-direction: column; gap: var(--ds-space-1); }
+.ds-handoff__sub { font: var(--ds-type-body) / var(--ds-leading-body) var(--ds-font-sans); color: var(--ds-ink-soft); margin: 0; max-width: var(--ds-measure); }
+.ds-handoff__routes { display: flex; gap: var(--ds-space-3); flex-wrap: wrap; }
+
+/* ── RiskCard — a Grounded card at recovery scale (spec 03 §4.1) ── */
+
+.ds-riskcard__score {
+  font-family: var(--ds-font-serif);
+  font-size: 22px;
+  line-height: 1;
+  color: var(--ds-red);
+}
+.ds-riskcard__cause {
+  font: var(--ds-type-body) / var(--ds-leading-body) var(--ds-font-sans);
+  color: var(--ds-ink-soft);
+  margin: 0;
+}
+/* The corrective route (Diagnosis Table — the move is obvious). */
+.ds-riskcard__move {
+  font: var(--ds-type-body) / var(--ds-leading-body) var(--ds-font-sans);
+  color: var(--ds-ink);
+  margin: 0;
+  padding-left: var(--ds-space-3);
+  border-left: 3px solid var(--ds-orange);
+}
+
+/* ── Wayfinder: the three cells + Pulling + Why (spec 03 §3.2) ──── */
+
+.ds-wayfinder-shell {
+  position: sticky;
+  top: 0;
+  z-index: var(--ds-z-wayfinder);
+  background: var(--ds-surface);
+  border-bottom: 1px solid var(--ds-hair-strong);
+}
+.ds-wayfinder-shell .ds-wayfinder {
+  position: static;
+  border-bottom: none;
+}
+
+.ds-wayfinder__trail { display: inline-flex; align-items: center; gap: var(--ds-space-2); }
+.ds-wayfinder__trail-crumb {
+  font: 600 var(--ds-type-kicker) / 1 var(--ds-font-mono);
+  letter-spacing: var(--ds-tracking-kicker);
+  text-transform: uppercase;
+  color: var(--ds-ink-quiet);
+  text-decoration: none;
+}
+.ds-wayfinder__trail-crumb::after { content: "›"; margin-left: var(--ds-space-2); color: var(--ds-ink-quiet); }
+.ds-wayfinder__trail-crumb:hover { color: var(--ds-ink-soft); }
+
+/* The Pulling cell — the only orange on the bar. */
+.ds-wayfinder__pulling {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ds-space-2);
+  padding: 6px var(--ds-space-3) 6px var(--ds-space-2);
+  border: 1px solid var(--ds-hair-strong);
+  border-radius: var(--ds-radius-control);
+  background: var(--ds-surface-sub);
+  text-decoration: none;
+  position: relative;
+  overflow: hidden;
+}
+.ds-wayfinder__pulling:hover { border-color: var(--ds-rule); }
+.ds-wayfinder__pulling-gauge {
+  width: 3px;
+  align-self: stretch;
+  margin: -6px var(--ds-space-1) -6px -2px;
+  background: var(--ds-orange);
+  border-radius: 2px;
+}
+.ds-wayfinder__pulling-verb {
+  font-family: var(--ds-font-serif);
+  font-size: 15px;
+  color: var(--ds-ink);
+}
+.ds-wayfinder__pulling-object {
+  font: var(--ds-type-label) / 1.3 var(--ds-font-sans);
+  color: var(--ds-ink-soft);
+  max-width: 30ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ds-wayfinder__why {
+  font: 600 12px/1 var(--ds-font-sans);
+  color: var(--ds-ink-soft);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 6px 8px;
+}
+.ds-wayfinder__why:hover { color: var(--ds-ink); }
+.ds-wayfinder__why:focus-visible { outline: 3px solid var(--ds-orange-soft); outline-offset: 1px; }
+
+.ds-wayfinder__why-panel {
+  max-width: var(--ds-page-max);
+  margin: 0 auto;
+  padding: var(--ds-space-4) var(--ds-page-gutter) var(--ds-space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-3);
+  font: var(--ds-type-body) / var(--ds-leading-body) var(--ds-font-sans);
+  color: var(--ds-ink-soft);
+  animation: ds-why-grow var(--ds-motion-base) var(--ds-ease-standard);
+  overflow: hidden;
+}
+@keyframes ds-why-grow {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ds-wayfinder__why-panel { animation: none; }
+}
+.ds-wayfinder__why-commit { display: flex; gap: var(--ds-space-3); align-items: center; }
+
+/* ── Pulse + Ribbon (spec 03 §2.1, §2.2) ──────────────────────── */
+
+.ds-ribbon {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-3);
+  margin-bottom: var(--ds-space-3);
+}
+.ds-ribbon__label {
+  font: 600 var(--ds-type-kicker) / 1 var(--ds-font-mono);
+  letter-spacing: var(--ds-tracking-kicker);
+  text-transform: uppercase;
+  color: var(--ds-ink-soft);
+  white-space: nowrap;
+}
+.ds-ribbon__rule {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, var(--ds-hair-strong), transparent);
+}
+.ds-ribbon__suffix {
+  font: 600 var(--ds-type-kicker) / 1 var(--ds-font-mono);
+  letter-spacing: var(--ds-tracking-kicker);
+  text-transform: uppercase;
+  color: var(--ds-ink-faint);
+  white-space: nowrap;
+}
+.ds-ribbon--orange .ds-ribbon__label { color: var(--ds-orange); }
+.ds-ribbon--red .ds-ribbon__label { color: var(--ds-red); }
+.ds-ribbon--amber .ds-ribbon__label { color: var(--ds-amber); }
+.ds-ribbon--blue .ds-ribbon__label { color: var(--ds-blue); }
+.ds-ribbon--green .ds-ribbon__label { color: var(--ds-green); }
+
+.ds-pulse { display: flex; flex-direction: column; gap: var(--ds-space-7); }
+
+.ds-pulse-zone__items { display: flex; flex-direction: column; gap: var(--ds-space-3); }
+/* Older zones recede progressively (03 §2.1): each depth step quiets
+   and tightens the zone further. */
+.ds-pulse-zone--depth-1 { opacity: 0.86; }
+.ds-pulse-zone--depth-1 .ds-pulse-zone__items { gap: var(--ds-space-2); }
+.ds-pulse-zone--depth-2 { opacity: 0.72; }
+.ds-pulse-zone--depth-2 .ds-pulse-zone__items { gap: var(--ds-space-2); }
+.ds-pulse-zone--depth-3 { opacity: 0.6; }
+.ds-pulse-zone--depth-3 .ds-pulse-zone__items { gap: var(--ds-space-1); }
+
+.ds-pulse-horizon {
+  display: flex;
+  gap: var(--ds-space-6);
+  flex-wrap: wrap;
+  margin-top: var(--ds-space-6);
+  padding-top: var(--ds-space-4);
+  border-top: 1px solid var(--ds-hair-strong);
+}
+.ds-pulse-horizon__cell { display: flex; flex-direction: column; gap: var(--ds-space-1); }
+.ds-pulse-horizon__value {
+  font-family: var(--ds-font-serif);
+  font-size: 22px;
+  line-height: 1;
+  color: var(--ds-ink);
+}
+.ds-pulse-horizon__label {
+  font: 600 var(--ds-type-kicker) / 1.2 var(--ds-font-mono);
+  letter-spacing: var(--ds-tracking-kicker);
+  text-transform: uppercase;
+  color: var(--ds-ink-faint);
+}

@@ -1,0 +1,116 @@
+/* The motion layer (spec 08 Part III) — the closed vocabulary of named
+   motions, each token-driven (Part II) and reduced-motion-safe (Part IV
+   §4.1). A build performs only these and invents neither a motion nor an
+   off-scale duration (the §4.2 contract). Component-local motions (the
+   Wayfinder grow, the drawer slide, the loading skeleton) live with their
+   components in components.css; this file owns the cross-cutting grammar.
+
+   Every duration is a --ds-motion-* token, and tokens.css already zeroes
+   those (and --ds-stagger) under prefers-reduced-motion, so every
+   duration-driven motion here collapses to instant automatically. The one
+   ambient loop (the pulse) carries its own period and is stopped
+   explicitly in the reduced-motion block at the foot of the file. */
+
+/* ── First-load staging (08 §3.1) ──────────────────────────────────
+   A region's children arrive in stack order on the 40ms stagger,
+   Standard easing, within the Considered duration — once, on first
+   compose. Capped at eight steps so a long region still finishes inside
+   the Considered budget regardless of item count. */
+.ds-stage > * {
+  animation: ds-stage-in var(--ds-motion-considered) var(--ds-ease-standard) both;
+}
+.ds-stage > *:nth-child(1) { animation-delay: calc(var(--ds-stagger) * 0); }
+.ds-stage > *:nth-child(2) { animation-delay: calc(var(--ds-stagger) * 1); }
+.ds-stage > *:nth-child(3) { animation-delay: calc(var(--ds-stagger) * 2); }
+.ds-stage > *:nth-child(4) { animation-delay: calc(var(--ds-stagger) * 3); }
+.ds-stage > *:nth-child(5) { animation-delay: calc(var(--ds-stagger) * 4); }
+.ds-stage > *:nth-child(6) { animation-delay: calc(var(--ds-stagger) * 5); }
+.ds-stage > *:nth-child(7) { animation-delay: calc(var(--ds-stagger) * 6); }
+.ds-stage > *:nth-child(n+8) { animation-delay: calc(var(--ds-stagger) * 7); }
+@keyframes ds-stage-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ── The read switch (08 §3.2) ─────────────────────────────────────
+   Switching Brief / Spotlight / Queue cross-fades the focal read on the
+   Base duration; the surrounding furniture does not move. A key change on
+   the read container re-mounts it, which triggers the fade. */
+.ds-read {
+  animation: ds-read-in var(--ds-motion-base) var(--ds-ease-standard) both;
+}
+@keyframes ds-read-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ── State-change confirmation (08 §3.4) ───────────────────────────
+   A gauge recolouring or a value settling crossfades on the Quick
+   duration rather than snapping, so the operator catches the move. Add
+   to an element whose color/background changes when an object's state
+   changes (every save must visibly matter — canon rule 5). */
+.ds-settle {
+  transition:
+    color var(--ds-motion-quick) var(--ds-ease-standard),
+    background-color var(--ds-motion-quick) var(--ds-ease-standard),
+    border-color var(--ds-motion-quick) var(--ds-ease-standard);
+}
+
+/* ── Region collapse (08 §3.5) ─────────────────────────────────────
+   A band leaving fades out on the Exit curve. BandStack drops absent
+   bands outright (the instant floor of this motion); this class is for
+   builds that keep the node through its exit. */
+.ds-collapse-exit {
+  animation: ds-collapse-out var(--ds-motion-base) var(--ds-ease-exit) forwards;
+}
+@keyframes ds-collapse-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* ── The pulse (08 §3.6) ───────────────────────────────────────────
+   The single ambient loop in the product: one shimmer on the most-
+   pressured object, exactly one dot per surface. The one motion that
+   does not show a transition — it is a standing emphasis — so it is the
+   most-watched candidate for overuse and is hard-gated below. */
+.ds-pulse-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ds-orange);
+  animation: ds-pulse 2s var(--ds-ease-standard) infinite;
+}
+@keyframes ds-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.72); }
+}
+.ds-offset__tag .ds-pulse-dot { margin-right: 6px; vertical-align: middle; }
+
+/* ── Escalation (08 §3.7) ──────────────────────────────────────────
+   Reserved for real, destructive risk only (canon rule 7) — a deal
+   about to close-lost, an edit about to be discarded. A brief, sharper
+   attention pull; never for ordinary ranking. An escalation that fires
+   on a non-destructive event is a bug. */
+.ds-escalate {
+  animation: ds-escalate-flash var(--ds-motion-base) var(--ds-ease-standard) 2;
+}
+@keyframes ds-escalate-flash {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+/* ── Reduced-motion floor (08 §4.1) ────────────────────────────────
+   Duration- and stagger-driven motions already collapse to instant via
+   the token zeroing in tokens.css; the looping pulse carries its own
+   period, so it is stopped explicitly here (a 0ms loop would still
+   cycle). Nothing is lost — motion is never load-bearing (Part I). */
+@media (prefers-reduced-motion: reduce) {
+  .ds-stage > *,
+  .ds-read,
+  .ds-collapse-exit,
+  .ds-escalate,
+  .ds-pulse-dot {
+    animation: none;
+  }
+}
