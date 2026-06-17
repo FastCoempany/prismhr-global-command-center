@@ -22,9 +22,13 @@ export default async function Home() {
   const leadAccount = dashboard.accounts[0];
   const hasAccounts = dashboard.totalAccounts > 0;
   const nextSafestAction =
-    leadSignal?.recommendedNextAction ??
-    leadAccount?.nextSafestAction ??
-    "Add a sourced Chicagoland prospect.";
+    dashboard.totalOverduePromises > 0
+      ? "Close, reset, or re-date overdue follow-up promises before new motion."
+      : dashboard.totalBlockedBoundaryRules > 0
+        ? "Resolve blocked boundary rules before advancing related motion."
+        : (leadSignal?.recommendedNextAction ??
+          leadAccount?.nextSafestAction ??
+          "Add a sourced Chicagoland prospect.");
   const permissionPosture = leadAccount
     ? humanizeEnum(leadAccount.permissionState)
     : "No active account";
@@ -34,6 +38,8 @@ export default async function Home() {
   const operatingItems = [
     `${dashboard.totalAccounts} sourced prospect${dashboard.totalAccounts === 1 ? "" : "s"}`,
     `${dashboard.hmlSummary.counts.HIGH} high priority item${dashboard.hmlSummary.counts.HIGH === 1 ? "" : "s"}`,
+    `${dashboard.totalOverduePromises} overdue promise${dashboard.totalOverduePromises === 1 ? "" : "s"}`,
+    `${dashboard.totalActiveBoundaryRules} active boundary rule${dashboard.totalActiveBoundaryRules === 1 ? "" : "s"}`,
     `${dashboard.totalOpenUnknowns} open unknown${dashboard.totalOpenUnknowns === 1 ? "" : "s"}`,
     dashboard.databaseReady
       ? "Permission stays visible before action"
@@ -54,6 +60,17 @@ export default async function Home() {
           : "HML will appear after sourced records have enough context.",
       href: leadSignal?.href ?? "/prospect-field",
       label: dashboard.hmlSummary.total > 0 ? "Review HML priority" : "Build HML context",
+    },
+    {
+      body:
+        dashboard.totalOverduePromises > 0
+          ? "Review overdue promises before adding new partner or prospect motion."
+          : "Keep off-limits, approval gates, and safer alternatives attached to the records they affect.",
+      href: dashboard.totalOverduePromises > 0 ? "/opportunities" : "/boundaries",
+      label:
+        dashboard.totalOverduePromises > 0
+          ? "Clear overdue promises"
+          : "Review boundary rules",
     },
     {
       body:

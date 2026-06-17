@@ -1,4 +1,5 @@
 import {
+  BoundaryRuleStatus,
   CsmPartnerStatus,
   HmlValue,
   PermissionState,
@@ -145,6 +146,15 @@ async function findSelectedPartner(
 ) {
   return prisma.cSMPartner.findUnique({
     include: {
+      boundaryRules: {
+        orderBy: {
+          updatedAt: "desc",
+        },
+        take: 8,
+        where: {
+          status: BoundaryRuleStatus.ACTIVE,
+        },
+      },
       followUpPromises: {
         orderBy: {
           dueAt: "asc",
@@ -167,6 +177,17 @@ async function findSelectedPartner(
         take: 5,
       },
       peos: {
+        include: {
+          boundaryRules: {
+            orderBy: {
+              updatedAt: "desc",
+            },
+            take: 3,
+            where: {
+              status: BoundaryRuleStatus.ACTIVE,
+            },
+          },
+        },
         orderBy: {
           updatedAt: "desc",
         },
@@ -207,8 +228,18 @@ export async function getPartnerRoomsData(filters: PartnerRoomsFilters) {
           include: {
             _count: {
               select: {
+                boundaryRules: true,
                 followUpPromises: true,
                 peos: true,
+              },
+            },
+            boundaryRules: {
+              orderBy: {
+                updatedAt: "desc",
+              },
+              take: 2,
+              where: {
+                status: BoundaryRuleStatus.ACTIVE,
               },
             },
             peos: {

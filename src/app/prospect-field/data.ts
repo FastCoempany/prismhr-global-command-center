@@ -1,4 +1,9 @@
-import { HmlValue, PermissionState, SourceConfidence } from "@/generated/prisma/client";
+import {
+  BoundaryRuleStatus,
+  HmlValue,
+  PermissionState,
+  SourceConfidence,
+} from "@/generated/prisma/client";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 
 const ACCOUNT_PAGE_SIZE = 25;
@@ -232,6 +237,15 @@ async function findSelectedAccount(
 ) {
   return prisma.territoryAccount.findFirst({
     include: {
+      boundaryRules: {
+        orderBy: {
+          updatedAt: "desc" as const,
+        },
+        take: 8,
+        where: {
+          status: BoundaryRuleStatus.ACTIVE,
+        },
+      },
       evidence: {
         orderBy: {
           updatedAt: "desc" as const,
@@ -297,6 +311,15 @@ export async function getProspectFieldData(filters: ProspectFieldFilters) {
     const [accountPage, totalAccounts, unknowns] = await Promise.all([
       prisma.territoryAccount.findMany({
         include: {
+          boundaryRules: {
+            orderBy: {
+              updatedAt: "desc",
+            },
+            take: 2,
+            where: {
+              status: BoundaryRuleStatus.ACTIVE,
+            },
+          },
           evidence: {
             orderBy: {
               updatedAt: "desc",

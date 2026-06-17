@@ -1,4 +1,9 @@
-import { HmlValue } from "@/generated/prisma/client";
+import {
+  BoundaryRuleStatus,
+  BoundarySeverity,
+  FollowUpPromiseStatus,
+  HmlValue,
+} from "@/generated/prisma/client";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import {
   emptyHmlCounts,
@@ -31,7 +36,10 @@ type DashboardData = {
   error: string | null;
   hmlSummary: HmlPrioritySummary;
   totalAccounts: number;
+  totalActiveBoundaryRules: number;
+  totalBlockedBoundaryRules: number;
   totalOpenUnknowns: number;
+  totalOverduePromises: number;
 };
 
 function emptyDashboardData(error: string | null): DashboardData {
@@ -45,7 +53,10 @@ function emptyDashboardData(error: string | null): DashboardData {
       total: 0,
     },
     totalAccounts: 0,
+    totalActiveBoundaryRules: 0,
+    totalBlockedBoundaryRules: 0,
     totalOpenUnknowns: 0,
+    totalOverduePromises: 0,
   };
 }
 
@@ -58,73 +69,101 @@ export async function getDashboardData(): Promise<DashboardData> {
 
   try {
     const prisma = getPrisma();
-    const [classifications, groupedCounts, accounts, totalAccounts, totalOpenUnknowns] =
-      await Promise.all([
-        prisma.hmlClassification.findMany({
-          include: {
-            account: {
-              select: {
-                companyName: true,
-                id: true,
-              },
-            },
-            csmPartner: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-            opportunity: {
-              select: {
-                csmPartnerId: true,
-                id: true,
-                name: true,
-              },
-            },
-            peo: {
-              select: {
-                csmPartnerId: true,
-                id: true,
-                name: true,
-              },
+    const now = new Date();
+    const [
+      classifications,
+      groupedCounts,
+      accounts,
+      totalAccounts,
+      totalOpenUnknowns,
+      totalOverduePromises,
+      totalActiveBoundaryRules,
+      totalBlockedBoundaryRules,
+    ] = await Promise.all([
+      prisma.hmlClassification.findMany({
+        include: {
+          account: {
+            select: {
+              companyName: true,
+              id: true,
             },
           },
-          orderBy: {
-            createdAt: "desc",
+          csmPartner: {
+            select: {
+              id: true,
+              name: true,
+            },
           },
-          take: DASHBOARD_SIGNAL_LIMIT,
-          where: visibleClassificationWhere,
-        }),
-        prisma.hmlClassification.groupBy({
-          by: ["classification"],
-          _count: {
-            classification: true,
+          opportunity: {
+            select: {
+              csmPartnerId: true,
+              id: true,
+              name: true,
+            },
           },
-          where: visibleClassificationWhere,
-        }),
-        prisma.territoryAccount.findMany({
-          orderBy: {
-            updatedAt: "desc",
+          peo: {
+            select: {
+              csmPartnerId: true,
+              id: true,
+              name: true,
+            },
           },
-          select: {
-            companyName: true,
-            id: true,
-            nextSafestAction: true,
-            permissionState: true,
-            sourceConfidence: true,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        take: DASHBOARD_SIGNAL_LIMIT,
+        where: visibleClassificationWhere,
+      }),
+      prisma.hmlClassification.groupBy({
+        by: ["classification"],
+        _count: {
+          classification: true,
+        },
+        where: visibleClassificationWhere,
+      }),
+      prisma.territoryAccount.findMany({
+        orderBy: {
+          updatedAt: "desc",
+        },
+        select: {
+          companyName: true,
+          id: true,
+          nextSafestAction: true,
+          permissionState: true,
+          sourceConfidence: true,
+        },
+        take: DASHBOARD_ACCOUNT_LIMIT,
+        where: visibleAccountWhere,
+      }),
+      prisma.territoryAccount.count({
+        where: visibleAccountWhere,
+      }),
+      prisma.internalUnknown.count({
+        where: {
+          status: "OPEN",
+        },
+      }),
+      prisma.followUpPromise.count({
+        where: {
+          dueAt: {
+            lt: now,
           },
-          take: DASHBOARD_ACCOUNT_LIMIT,
-          where: visibleAccountWhere,
-        }),
-        prisma.territoryAccount.count({
-          where: visibleAccountWhere,
-        }),
-        prisma.internalUnknown.count({
-          where: {
-            status: "OPEN",
-          },
-        }),
-      ]);
+          status: FollowUpPromiseStatus.OPEN,
+        },
+      }),
+      prisma.boundaryRule.count({
+        where: {
+          status: BoundaryRuleStatus.ACTIVE,
+        },
+      }),
+      prisma.boundaryRule.count({
+        where: {
+          severity: BoundarySeverity.BLOCKED,
+          status: BoundaryRuleStatus.ACTIVE,
+        },
+      }),
+    ]);
 
     const counts = emptyHmlCounts();
     groupedCounts.forEach((group) => {
@@ -172,7 +211,10 @@ export async function getDashboardData(): Promise<DashboardData> {
         total: counts[HmlValue.HIGH] + counts[HmlValue.MEDIUM] + counts[HmlValue.LOW],
       },
       totalAccounts,
+      totalActiveBoundaryRules,
+      totalBlockedBoundaryRules,
       totalOpenUnknowns,
+      totalOverduePromises,
     };
   } catch (error) {
     console.error("Dashboard load failed", error);

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import {
+  BoundarySeverity,
   EvidenceType,
   HmlValue,
   PermissionState,
@@ -78,6 +79,12 @@ function permissionTone(value: PermissionState) {
   ) {
     return "medium";
   }
+  return "unknown";
+}
+
+function boundarySeverityTone(value: BoundarySeverity) {
+  if (value === BoundarySeverity.BLOCKED) return "high";
+  if (value === BoundarySeverity.APPROVAL_REQUIRED) return "medium";
   return "unknown";
 }
 
@@ -495,6 +502,18 @@ export default async function ProspectFieldPage({
                             <Badge tone={permissionTone(account.permissionState)}>
                               {label(account.permissionState)}
                             </Badge>
+                            {account.boundaryRules.length > 0 ? (
+                              <div className="mt-2 flex max-w-56 flex-wrap gap-1.5">
+                                {account.boundaryRules.map((rule) => (
+                                  <Badge
+                                    key={rule.id}
+                                    tone={boundarySeverityTone(rule.severity)}
+                                  >
+                                    {label(rule.severity)}: {rule.title}
+                                  </Badge>
+                                ))}
+                              </div>
+                            ) : null}
                           </td>
                           <td className="px-4 py-3">
                             <div className="grid gap-2 justify-items-start">
@@ -595,6 +614,25 @@ export default async function ProspectFieldPage({
                     <div className="selected-account-note">
                       <span>Signal explanation</span>
                       <p>{selectedHml.explanation}</p>
+                    </div>
+                  ) : null}
+
+                  {selectedAccount.boundaryRules.length > 0 ? (
+                    <div className="selected-account-list">
+                      <h3>Active boundary rules</h3>
+                      {selectedAccount.boundaryRules.map((rule) => (
+                        <div key={rule.id}>
+                          <strong>{rule.title}</strong>
+                          <p>{rule.description}</p>
+                          <span>
+                            {label(rule.ruleType)} / {label(rule.severity)} / review{" "}
+                            {formatDate(rule.reviewAt)}
+                          </span>
+                          {rule.allowedAlternative ? (
+                            <p>{rule.allowedAlternative}</p>
+                          ) : null}
+                        </div>
+                      ))}
                     </div>
                   ) : null}
 

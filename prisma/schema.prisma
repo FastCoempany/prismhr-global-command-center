@@ -159,6 +159,38 @@ enum FollowUpPromiseStatus {
   CANCELLED
 }
 
+enum BoundaryScopeType {
+  CSM_PARTNER
+  PEO
+  PEO_CLIENT
+  OPPORTUNITY
+  TERRITORY_ACCOUNT
+  EXTERNAL_CHANNEL
+  GLOBAL
+}
+
+enum BoundaryRuleType {
+  OFF_LIMITS
+  APPROVAL_REQUIRED
+  HOLD_SENSITIVE
+  DIRECT_CONTACT_NOT_ALLOWED
+  RELATIONSHIP_OWNER_REQUIRED
+  ALLOWED_ALTERNATIVE
+}
+
+enum BoundarySeverity {
+  WARNING
+  APPROVAL_REQUIRED
+  BLOCKED
+}
+
+enum BoundaryRuleStatus {
+  ACTIVE
+  EXPIRED
+  SUPERSEDED
+  REVOKED
+}
+
 model User {
   id             String    @id @default(cuid())
   name           String
@@ -210,6 +242,7 @@ model TerritoryAccount {
   hmlClassifications HmlClassification[]
   opportunities      Opportunity[]
   followUpPromises   FollowUpPromise[]
+  boundaryRules      BoundaryRule[]
 
   @@index([companyName])
   @@index([status])
@@ -327,6 +360,7 @@ model CSMPartner {
   notes              Note[]
   followUpPromises   FollowUpPromise[]
   hmlClassifications HmlClassification[]
+  boundaryRules      BoundaryRule[]
 
   @@index([name])
   @@index([status])
@@ -361,6 +395,7 @@ model PEO {
   notes              Note[]
   followUpPromises   FollowUpPromise[]
   hmlClassifications HmlClassification[]
+  boundaryRules      BoundaryRule[]
 
   @@index([name])
   @@index([csmPartnerId])
@@ -385,8 +420,9 @@ model PEOClient {
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 
-  peo           PEO           @relation(fields: [peoId], references: [id], onDelete: Cascade)
+  peo           PEO            @relation(fields: [peoId], references: [id], onDelete: Cascade)
   opportunities Opportunity[]
+  boundaryRules BoundaryRule[]
 
   @@index([peoId])
   @@index([permissionState])
@@ -421,6 +457,7 @@ model Opportunity {
   notes              Note[]
   followUpPromises   FollowUpPromise[]
   hmlClassifications HmlClassification[]
+  boundaryRules      BoundaryRule[]
 
   @@index([stage])
   @@index([csmPartnerId])
@@ -462,6 +499,48 @@ model FollowUpPromise {
   @@index([territoryAccountId])
   @@index([status])
   @@index([dueAt])
+}
+
+model BoundaryRule {
+  id                 String             @id @default(cuid())
+  scopeType          BoundaryScopeType
+  csmPartnerId       String?
+  peoId              String?
+  peoClientId        String?
+  opportunityId      String?
+  territoryAccountId String?
+  ruleType           BoundaryRuleType
+  title              String
+  description        String
+  setBy              String?
+  reason             String
+  effectiveFrom      DateTime           @default(now())
+  expiresAt          DateTime?
+  reviewAt           DateTime?
+  severity           BoundarySeverity   @default(APPROVAL_REQUIRED)
+  allowedAlternative String?
+  status             BoundaryRuleStatus @default(ACTIVE)
+  sourceConfidence   SourceConfidence   @default(UNVERIFIED)
+  canonStatus        CanonStatus        @default(HYPOTHESIS)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  csmPartner       CSMPartner?       @relation(fields: [csmPartnerId], references: [id], onDelete: SetNull)
+  peo              PEO?              @relation(fields: [peoId], references: [id], onDelete: SetNull)
+  peoClient        PEOClient?        @relation(fields: [peoClientId], references: [id], onDelete: SetNull)
+  opportunity      Opportunity?      @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
+  territoryAccount TerritoryAccount? @relation(fields: [territoryAccountId], references: [id], onDelete: SetNull)
+
+  @@index([scopeType])
+  @@index([ruleType])
+  @@index([severity])
+  @@index([status])
+  @@index([reviewAt])
+  @@index([csmPartnerId])
+  @@index([peoId])
+  @@index([peoClientId])
+  @@index([opportunityId])
+  @@index([territoryAccountId])
 }
 
 model HmlClassification {

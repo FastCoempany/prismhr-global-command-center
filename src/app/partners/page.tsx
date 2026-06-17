@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
+  BoundarySeverity,
   CsmPartnerStatus,
   HmlValue,
   NoteSensitivity,
@@ -71,6 +72,12 @@ function permissionTone(value: PermissionState) {
 function statusTone(value: CsmPartnerStatus) {
   if (value === CsmPartnerStatus.ACTIVE) return "low";
   if (value === CsmPartnerStatus.WATCH) return "medium";
+  return "unknown";
+}
+
+function boundarySeverityTone(value: BoundarySeverity) {
+  if (value === BoundarySeverity.BLOCKED) return "high";
+  if (value === BoundarySeverity.APPROVAL_REQUIRED) return "medium";
   return "unknown";
 }
 
@@ -320,7 +327,20 @@ export default async function PartnersPage({ searchParams }: PartnersPageProps) 
                           {partner._count.followUpPromises} promise
                           {partner._count.followUpPromises === 1 ? "" : "s"}
                         </Badge>
+                        <Badge
+                          tone={partner.boundaryRules.length > 0 ? "medium" : "unknown"}
+                        >
+                          {partner.boundaryRules.length} active boundary
+                          {partner.boundaryRules.length === 1 ? "" : " rules"}
+                        </Badge>
                       </div>
+                      {partner.boundaryRules.length > 0 ? (
+                        <div className="partner-card__peos">
+                          {partner.boundaryRules.map((rule) => (
+                            <span key={rule.id}>{rule.title}</span>
+                          ))}
+                        </div>
+                      ) : null}
                       {partner.peos.length > 0 ? (
                         <div className="partner-card__peos">
                           {partner.peos.map((peo) => (
@@ -555,6 +575,22 @@ export default async function PartnersPage({ searchParams }: PartnersPageProps) 
                   </div>
                 ) : null}
 
+                {selectedPartner.boundaryRules.length > 0 ? (
+                  <section className="partner-subsection">
+                    <h3>Active boundary rules</h3>
+                    {selectedPartner.boundaryRules.map((rule) => (
+                      <div key={rule.id}>
+                        <strong>{rule.title}</strong>
+                        <p>{rule.description}</p>
+                        <span>
+                          {label(rule.ruleType)} / {label(rule.severity)} / review{" "}
+                          {formatDate(rule.reviewAt)}
+                        </span>
+                      </div>
+                    ))}
+                  </section>
+                ) : null}
+
                 <section className="partner-subsection">
                   <h3>Mapped PEOs</h3>
                   {selectedPartner.peos.length === 0 ? (
@@ -568,6 +604,18 @@ export default async function PartnersPage({ searchParams }: PartnersPageProps) 
                           {label(peo.readinessLevel)} readiness /{" "}
                           {label(peo.permissionState)}
                         </span>
+                        {peo.boundaryRules.length > 0 ? (
+                          <div className="partner-card__badges">
+                            {peo.boundaryRules.map((rule) => (
+                              <Badge
+                                key={rule.id}
+                                tone={boundarySeverityTone(rule.severity)}
+                              >
+                                {rule.title}
+                              </Badge>
+                            ))}
+                          </div>
+                        ) : null}
                       </div>
                     ))
                   )}

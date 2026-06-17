@@ -62,6 +62,13 @@ export function AppWayfinder({
             Opportunities
           </Link>
           <Link
+            aria-current={current === "Boundaries" ? "page" : undefined}
+            className="app-route-link"
+            href="/boundaries"
+          >
+            Boundaries
+          </Link>
+          <Link
             aria-current={current === "Unknowns" ? "page" : undefined}
             className="app-route-link"
             href="/unknowns"

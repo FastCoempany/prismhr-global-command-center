@@ -1,4 +1,5 @@
 import {
+  BoundaryRuleStatus,
   HmlValue,
   OpportunitySourceType,
   OpportunityStage,
@@ -159,6 +160,15 @@ async function findSelectedOpportunity(
 ) {
   return prisma.opportunity.findUnique({
     include: {
+      boundaryRules: {
+        orderBy: {
+          updatedAt: "desc",
+        },
+        take: 8,
+        where: {
+          status: BoundaryRuleStatus.ACTIVE,
+        },
+      },
       csmPartner: true,
       followUpPromises: {
         orderBy: {
@@ -223,6 +233,15 @@ export async function getOpportunityRoomsData(filters: OpportunityRoomsFilters) 
     ] = await Promise.all([
       prisma.opportunity.findMany({
         include: {
+          boundaryRules: {
+            orderBy: {
+              updatedAt: "desc",
+            },
+            take: 2,
+            where: {
+              status: BoundaryRuleStatus.ACTIVE,
+            },
+          },
           csmPartner: {
             select: {
               id: true,

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
+  BoundarySeverity,
   HmlValue,
   NoteSensitivity,
   NoteType,
@@ -100,6 +101,12 @@ function stageTone(value: OpportunityStage) {
     return "medium";
   }
   if (value === OpportunityStage.CLOSED_LOST) return "high";
+  return "unknown";
+}
+
+function boundarySeverityTone(value: BoundarySeverity) {
+  if (value === BoundarySeverity.BLOCKED) return "high";
+  if (value === BoundarySeverity.APPROVAL_REQUIRED) return "medium";
   return "unknown";
 }
 
@@ -394,6 +401,13 @@ export default async function OpportunitiesPage({
                           </Badge>
                         ) : null}
                       </div>
+                      {opportunity.boundaryRules.length > 0 ? (
+                        <div className="partner-card__peos">
+                          {opportunity.boundaryRules.map((rule) => (
+                            <span key={rule.id}>{rule.title}</span>
+                          ))}
+                        </div>
+                      ) : null}
                       {opportunity.followUpPromises.length > 0 ? (
                         <div className="partner-card__peos">
                           {opportunity.followUpPromises.map((promise) => (
@@ -471,6 +485,27 @@ export default async function OpportunitiesPage({
                       <p>{selectedOpportunity.riskFlags.join(", ")}</p>
                     </div>
                   </div>
+                ) : null}
+
+                {selectedOpportunity.boundaryRules.length > 0 ? (
+                  <section className="partner-subsection">
+                    <h3>Active boundary rules</h3>
+                    {selectedOpportunity.boundaryRules.map((rule) => (
+                      <div key={rule.id}>
+                        <strong>{rule.title}</strong>
+                        <p>{rule.description}</p>
+                        <div className="partner-card__badges">
+                          <Badge tone={boundarySeverityTone(rule.severity)}>
+                            {label(rule.severity)}
+                          </Badge>
+                          <Badge tone="unknown">{label(rule.ruleType)}</Badge>
+                        </div>
+                        {rule.allowedAlternative ? (
+                          <p>{rule.allowedAlternative}</p>
+                        ) : null}
+                      </div>
+                    ))}
+                  </section>
                 ) : null}
 
                 <form action={updateOpportunity} className="partner-form-block">
