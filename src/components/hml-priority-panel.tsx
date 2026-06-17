@@ -15,12 +15,13 @@ const hmlOrder = [HmlValue.HIGH, HmlValue.MEDIUM, HmlValue.LOW];
 
 export function HmlPriorityPanel({
   compact = false,
-  emptyText = "Signals appear after records have source, permission, and action context.",
+  emptyText = "No HML priorities yet. Add a sourced prospect to create the first priority read.",
   summary,
   title = "HML Priority",
 }: HmlPriorityPanelProps) {
   const total = Math.max(summary.total, 1);
   const visibleItems = compact ? summary.items.slice(0, 3) : summary.items.slice(0, 5);
+  const hasPriorityItems = summary.total > 0;
   const edgeTone = summary.counts.HIGH > 0 ? "red" : "blue";
 
   return (
@@ -35,42 +36,44 @@ export function HmlPriorityPanel({
       <div className="ds-card__body">
         <div className="ds-card__head">
           <div className="grid gap-1">
-            <p className="ds-kicker">Heat meter</p>
+            <p className="ds-kicker">Priority meter</p>
             <h2 className="ds-heading--title">{title}</h2>
           </div>
-          <Badge tone={summary.counts.HIGH > 0 ? "high" : "low"}>
-            {summary.counts.HIGH} High
+          <Badge tone={summary.counts.HIGH > 0 ? "high" : "unknown"}>
+            {hasPriorityItems ? `${summary.counts.HIGH} High` : "No priorities yet"}
           </Badge>
         </div>
 
-        <div className="grid gap-3">
-          {hmlOrder.map((value) => {
-            const count = summary.counts[value];
-            const tone =
-              value === HmlValue.HIGH
-                ? "red"
-                : value === HmlValue.MEDIUM
-                  ? "amber"
-                  : "green";
-            return (
-              <div className={`ds-meter ds-meter--${tone}`} key={value}>
-                <div className="flex items-center justify-between gap-3 text-xs font-bold leading-4">
-                  <span>{humanizeEnum(value)}</span>
-                  <span>{count}</span>
+        {hasPriorityItems ? (
+          <div className="grid gap-3">
+            {hmlOrder.map((value) => {
+              const count = summary.counts[value];
+              const tone =
+                value === HmlValue.HIGH
+                  ? "red"
+                  : value === HmlValue.MEDIUM
+                    ? "amber"
+                    : "green";
+              return (
+                <div className={`ds-meter ds-meter--${tone}`} key={value}>
+                  <div className="flex items-center justify-between gap-3 text-xs font-bold leading-4">
+                    <span>{humanizeEnum(value)}</span>
+                    <span>{count}</span>
+                  </div>
+                  <div className="ds-meter__track">
+                    <div
+                      aria-hidden="true"
+                      className="ds-meter__fill"
+                      style={{
+                        width: `${Math.max((count / total) * 100, count ? 12 : 0)}%`,
+                      }}
+                    />
+                  </div>
                 </div>
-                <div className="ds-meter__track">
-                  <div
-                    aria-hidden="true"
-                    className="ds-meter__fill"
-                    style={{
-                      width: `${Math.max((count / total) * 100, count ? 12 : 0)}%`,
-                    }}
-                  />
-                </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        ) : null}
 
         <div className="mt-2 grid gap-2">
           {visibleItems.length === 0 ? (

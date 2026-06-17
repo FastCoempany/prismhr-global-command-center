@@ -8,6 +8,16 @@ import {
 
 const DASHBOARD_SIGNAL_LIMIT = 8;
 const DASHBOARD_ACCOUNT_LIMIT = 5;
+const visibleAccountWhere = {
+  NOT: [{ companyName: "Placeholder Chicagoland Prospect" }, { category: "Placeholder" }],
+};
+const visibleClassificationWhere = {
+  NOT: {
+    contributingSignals: {
+      has: "placeholder_seed_record",
+    },
+  },
+};
 
 type DashboardData = {
   accounts: Array<{
@@ -63,12 +73,14 @@ export async function getDashboardData(): Promise<DashboardData> {
             createdAt: "desc",
           },
           take: DASHBOARD_SIGNAL_LIMIT,
+          where: visibleClassificationWhere,
         }),
         prisma.hmlClassification.groupBy({
           by: ["classification"],
           _count: {
             classification: true,
           },
+          where: visibleClassificationWhere,
         }),
         prisma.territoryAccount.findMany({
           orderBy: {
@@ -82,8 +94,11 @@ export async function getDashboardData(): Promise<DashboardData> {
             sourceConfidence: true,
           },
           take: DASHBOARD_ACCOUNT_LIMIT,
+          where: visibleAccountWhere,
         }),
-        prisma.territoryAccount.count(),
+        prisma.territoryAccount.count({
+          where: visibleAccountWhere,
+        }),
         prisma.internalUnknown.count({
           where: {
             status: "OPEN",

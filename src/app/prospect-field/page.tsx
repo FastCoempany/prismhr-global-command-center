@@ -115,7 +115,6 @@ export default async function ProspectFieldPage({
     <main className="app-shell">
       <AppWayfinder
         current="Prospect Field"
-        nextAction={nextSafestAction}
         onSignOut={
           <form action={signOut}>
             <Button size="compact" type="submit" variant="quiet">

@@ -1,6 +1,9 @@
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 
 const ACCOUNT_PAGE_SIZE = 25;
+const visibleAccountWhere = {
+  NOT: [{ companyName: "Placeholder Chicagoland Prospect" }, { category: "Placeholder" }],
+};
 
 export async function getProspectFieldData() {
   if (!hasDatabaseEnv()) {
@@ -41,8 +44,11 @@ export async function getProspectFieldData() {
           updatedAt: "desc",
         },
         take: ACCOUNT_PAGE_SIZE,
+        where: visibleAccountWhere,
       }),
-      prisma.territoryAccount.count(),
+      prisma.territoryAccount.count({
+        where: visibleAccountWhere,
+      }),
       prisma.internalUnknown.findMany({
         orderBy: {
           updatedAt: "desc",
