@@ -189,17 +189,17 @@ export default async function SignalFeedPage({ searchParams }: SignalFeedPagePro
                 ? `/prospect-field?${new URLSearchParams({
                     accountId: signal.account.id,
                   }).toString()}`
-                : signal.csmPartner
-                  ? `/partners?${new URLSearchParams({
-                      partnerId: signal.csmPartner.id,
+                : signal.opportunity
+                  ? `/opportunities?${new URLSearchParams({
+                      opportunityId: signal.opportunity.id,
                     }).toString()}`
-                  : signal.peo?.csmPartnerId
+                  : signal.csmPartner
                     ? `/partners?${new URLSearchParams({
-                        partnerId: signal.peo.csmPartnerId,
+                        partnerId: signal.csmPartner.id,
                       }).toString()}`
-                    : signal.opportunity?.csmPartnerId
+                    : signal.peo?.csmPartnerId
                       ? `/partners?${new URLSearchParams({
-                          partnerId: signal.opportunity.csmPartnerId,
+                          partnerId: signal.peo.csmPartnerId,
                         }).toString()}`
                       : null;
 

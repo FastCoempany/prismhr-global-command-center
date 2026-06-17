@@ -144,9 +144,13 @@ export async function getDashboardData(): Promise<DashboardData> {
         explanation: classification.explanation,
         href: classification.accountId
           ? `/prospect-field#account-${classification.accountId}`
-          : partnerId
-            ? `/partners?${new URLSearchParams({ partnerId }).toString()}`
-            : undefined,
+          : classification.opportunity?.id
+            ? `/opportunities?${new URLSearchParams({
+                opportunityId: classification.opportunity.id,
+              }).toString()}`
+            : partnerId
+              ? `/partners?${new URLSearchParams({ partnerId }).toString()}`
+              : undefined,
         id: classification.id,
         label:
           classification.account?.companyName ??
