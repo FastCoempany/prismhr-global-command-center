@@ -89,7 +89,7 @@ Indexed items:
 - [docs/architecture/product-lexicon.md](architecture/product-lexicon.md): governed UI vocabulary, navigation labels, CTAs, status labels, empty-state language, table naming, and forbidden CRM/outreach terms.
 - [docs/architecture/design-system.md](architecture/design-system.md): draft design system for the app shell, layout, visual language, semantic tokens, HML and permission treatments, Chicagoland prospecting UX, core components, page patterns, accessibility, and implementation mapping.
 - [config/design-tokens.css](../config/design-tokens.css): starter CSS custom properties for the light-only, non-earth-tone Field Signal palette, semantic colors, spacing, radius, typography, elevation, and motion.
-- Key implication: the UI should feel like a dense operator-grade command center, not a generic CRM, marketing site, decorative dashboard, or outreach tool.
+- Key implication: the UI should feel like a dense operator-grade command center, not a generic CRM, marketing site, or outreach tool. Visual decoration is allowed when it improves hierarchy, scanability, product identity, or operator focus.
 - Brand constraint: no navy, no dark UI, no dark mode, no dark gradients, no earth-tone palette, and no internal-company-system integration cues.
 
 ### PrismHR Global Video Notes

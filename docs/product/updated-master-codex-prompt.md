@@ -162,9 +162,9 @@ Do not build a generic CRM.
 
 Do not build an activity tracker pretending to be intelligence.
 
-Do not build a decorative dashboard.
-
 Build a **partner-motion command center** that helps me manage:
+
+The dashboard may be visually expressive or decorative when that treatment improves hierarchy, scanability, product identity, or operator focus. Decoration must not replace evidence, permission, boundary, HML priority, relationship motion, source confidence, unknowns, or next safest action.
 
 - borrowed trust
 - relationship permission
@@ -888,7 +888,7 @@ Tone:
 - Do not assume this is a CRM replacement.
 - Design this as a command center for a new partner/channel motion.
 - Keep the UI practical, fast, and executive-grade.
-- Favor structured operating clarity over decorative dashboards.
+- Favor structured operating clarity over decorative-only filler.
 - Separate confirmed requirements from assumptions.
 - Flag contradictions, unclear areas, and missing information.
 - Where notes are vague, propose a sensible default.

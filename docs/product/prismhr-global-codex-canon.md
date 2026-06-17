@@ -106,11 +106,11 @@ Revenue matters, but the app must also track the softer operating assets that or
 
 Do not build a generic CRM.
 
-Do not build a decorative dashboard.
-
 Do not build an activity tracker pretending to be intelligence.
 
 Build a **partner-motion command center** that makes invisible operating dynamics visible.
+
+The dashboard may be visually expressive or decorative when that treatment improves hierarchy, scanability, product identity, or operator focus. Decoration must not replace evidence, permission, boundary, HML priority, relationship motion, source confidence, unknowns, or next safest action.
 
 Do not expose scaffold, architecture, or implementation status as product UI.
 
@@ -572,7 +572,7 @@ Initial priority:
 9. Discovery frameworks
 10. Internal unknowns tracker
 
-Do not prioritize maps, AI summaries, forecasting, or decorative dashboards before these basics work.
+Do not prioritize maps, AI summaries, or forecasting before these basics work.
 
 ---
 

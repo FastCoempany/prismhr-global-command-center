@@ -18,9 +18,9 @@ related_docs:
 
 ## Design Intent
 
-The app should feel like an operator-grade command center: dense, calm, fast to scan, and built for repeated daily use.
+The app should feel like an operator-grade command center: dense, calm, fast to scan, visually distinctive, and built for repeated daily use.
 
-It is not a CRM, marketing site, or decorative dashboard. It should help the user decide:
+It is not a CRM or marketing site. Dashboard decoration is allowed when it improves hierarchy, scanability, product identity, or operator focus. It should help the user decide:
 
 - Which Chicagoland prospects are worth attention.
 - Which CSM or PEO relationship can move safely.
@@ -58,7 +58,7 @@ Use these priorities to break design ties:
 ### Should Not Feel
 
 - Generic SaaS CRM
-- Decorative dashboard
+- Decorative-only dashboard filler
 - Sales leaderboard
 - Consumer social app
 - Marketing landing page
@@ -1007,7 +1007,7 @@ Before a screen is considered ready:
 - Does sensitive note content have visible sensitivity state?
 - Does it avoid nesting cards inside cards?
 - Does the screen still work without external integrations?
-- Does it avoid decorative dashboard filler?
+- Does any decoration support operating clarity?
 - Does it use the Field Signal lexicon?
 - Do icons follow the Field Glyph style?
 - Do focus states, control borders, status dots, and icons meet non-text contrast?

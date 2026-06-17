@@ -71,7 +71,7 @@ Implementation phases (must not be skipped)
 
 Non-goals / enforcement
 -----------------------
-- Do not build decorative dashboards, vanity metrics, or features that display data without first building trust, permission, and signal systems.
+- Do not build visual-only dashboards, vanity metrics, or features that display data without first building trust, permission, and signal systems.
 - Do not skip phases or merge implementation work that bypasses approved planning documents.
 
 Approval and gating
