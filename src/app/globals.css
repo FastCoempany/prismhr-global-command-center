@@ -1,6 +1,22 @@
 @import "tailwindcss";
 @import "../../config/design-tokens.css";
 
+@theme inline {
+  --color-field-canvas: var(--color-canvas);
+  --color-field-surface: var(--color-surface);
+  --color-field-surface-mist: var(--color-surface-mist);
+  --color-field-line: var(--color-line);
+  --color-field-ink: var(--color-ink);
+  --color-field-ink-soft: var(--color-ink-soft);
+  --color-field-ink-support: var(--color-ink-support);
+  --color-field-action: var(--color-action-primary);
+  --color-field-action-border: var(--color-action-primary-border);
+  --color-field-focus: var(--color-focus-ring);
+  --radius-field-sm: var(--radius-sm);
+  --radius-field-md: var(--radius-md);
+  --radius-field-lg: var(--radius-lg);
+}
+
 * {
   box-sizing: border-box;
 }

@@ -9,8 +9,8 @@
     "start": "next start",
     "typecheck": "prisma generate && tsc --noEmit",
     "lint": "eslint .",
-    "format:check": "prettier --check \"*.{json,ts,mjs}\" \"src/**/*.{ts,tsx,css}\" \"config/**/*.css\"",
-    "format": "prettier --write \"*.{json,ts,mjs}\" \"src/**/*.{ts,tsx,css}\" \"config/**/*.css\"",
+    "format:check": "prettier --check \"*.{json,ts,mjs}\" \"src/**/*.{ts,tsx,css}\" \"prisma/**/*.ts\" \"config/**/*.{css,yaml,yml}\"",
+    "format": "prettier --write \"*.{json,ts,mjs}\" \"src/**/*.{ts,tsx,css}\" \"prisma/**/*.ts\" \"config/**/*.{css,yaml,yml}\"",
     "prisma:generate": "prisma generate",
     "prisma:format": "prisma format",
     "prisma:validate": "prisma validate",
@@ -29,7 +29,8 @@
     "react": "19.2.7",
     "react-dom": "19.2.7",
     "tailwind-merge": "3.6.0",
-    "tailwindcss": "4.3.1"
+    "tailwindcss": "4.3.1",
+    "yaml": "^2.8.3"
   },
   "overrides": {
     "@hono/node-server": "1.19.13",

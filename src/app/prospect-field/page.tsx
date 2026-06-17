@@ -2,7 +2,7 @@ import Link from "next/link";
 import {
   EvidenceType,
   HmlValue,
-  PermissionStatus,
+  PermissionState,
   ProductRelevance,
   SourceConfidence,
 } from "@/generated/prisma/client";
@@ -17,12 +17,12 @@ export const dynamic = "force-dynamic";
 const productOptions = Object.values(ProductRelevance);
 const confidenceOptions = Object.values(SourceConfidence);
 const permissionOptions = [
-  PermissionStatus.RESEARCH_ONLY,
-  PermissionStatus.CSM_CONTEXT_NEEDED,
-  PermissionStatus.OWNERSHIP_UNCLEAR_REQUIRES_VERIFICATION,
-  PermissionStatus.DIRECT_CONTACT_NOT_ALLOWED,
-  PermissionStatus.HOLD_SENSITIVE,
-  PermissionStatus.OFF_LIMITS,
+  PermissionState.RESEARCH_ONLY,
+  PermissionState.CSM_CONTEXT_NEEDED,
+  PermissionState.OWNERSHIP_UNCLEAR_REQUIRES_VERIFICATION,
+  PermissionState.DIRECT_CONTACT_NOT_ALLOWED,
+  PermissionState.HOLD_SENSITIVE,
+  PermissionState.OFF_LIMITS,
 ];
 const hmlOptions = Object.values(HmlValue);
 const evidenceOptions = Object.values(EvidenceType);
@@ -51,30 +51,40 @@ function confidenceTone(value: SourceConfidence) {
   return "unknown";
 }
 
-function permissionTone(value: PermissionStatus) {
+function permissionTone(value: PermissionState) {
   if (
-    value === PermissionStatus.OFF_LIMITS ||
-    value === PermissionStatus.HOLD_SENSITIVE ||
-    value === PermissionStatus.DIRECT_CONTACT_NOT_ALLOWED
+    value === PermissionState.OFF_LIMITS ||
+    value === PermissionState.HOLD_SENSITIVE ||
+    value === PermissionState.DIRECT_CONTACT_NOT_ALLOWED
   ) {
     return "high";
   }
   if (
-    value === PermissionStatus.CSM_CONTEXT_NEEDED ||
-    value === PermissionStatus.OWNERSHIP_UNCLEAR_REQUIRES_VERIFICATION
+    value === PermissionState.CSM_CONTEXT_NEEDED ||
+    value === PermissionState.OWNERSHIP_UNCLEAR_REQUIRES_VERIFICATION
   ) {
     return "medium";
   }
   return "unknown";
 }
 
-export default async function ProspectFieldPage() {
-  const { accounts, databaseReady, error, unknowns } = await getProspectFieldData();
+type ProspectFieldPageProps = {
+  searchParams?: Promise<{
+    created?: string;
+    formError?: string;
+  }>;
+};
+
+export default async function ProspectFieldPage({
+  searchParams,
+}: ProspectFieldPageProps) {
+  const params = searchParams ? await searchParams : {};
+  const { accountLimit, accounts, databaseReady, error, totalAccounts, unknowns } =
+    await getProspectFieldData();
   const topAccount = accounts[0];
   const nextSafestAction =
     topAccount?.nextSafestAction ?? "Add a sourced prospect before action.";
-  const permissionPosture =
-    topAccount?.permissionStatus ?? PermissionStatus.RESEARCH_ONLY;
+  const permissionPosture = topAccount?.permissionState ?? PermissionState.RESEARCH_ONLY;
   const sourceConfidence = topAccount?.sourceConfidence ?? SourceConfidence.UNVERIFIED;
 
   return (
@@ -156,6 +166,24 @@ export default async function ProspectFieldPage() {
             </section>
           ) : null}
 
+          {params.formError ? (
+            <section className="mb-5 rounded-lg border border-[color:var(--color-high-border)] bg-[color:var(--color-high-bg)] p-4">
+              <h2 className="text-base font-semibold leading-6">Prospect not saved</h2>
+              <p className="mt-1 text-sm font-semibold leading-5 text-[color:var(--color-ink-soft)]">
+                {params.formError}
+              </p>
+            </section>
+          ) : null}
+
+          {params.created ? (
+            <section className="mb-5 rounded-lg border border-[color:var(--color-low-border)] bg-[color:var(--color-low-bg)] p-4">
+              <h2 className="text-base font-semibold leading-6">Prospect saved</h2>
+              <p className="mt-1 text-sm font-semibold leading-5 text-[color:var(--color-ink-soft)]">
+                The record is now in the cloud database.
+              </p>
+            </section>
+          ) : null}
+
           <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_420px]">
             <section className="overflow-hidden rounded-lg border border-[color:var(--color-line)] bg-[color:var(--color-surface)]">
               <div className="border-b border-[color:var(--color-line)] p-4">
@@ -165,6 +193,10 @@ export default async function ProspectFieldPage() {
                 <h2 className="text-base font-semibold leading-6">
                   Accounts under research
                 </h2>
+                <p className="mt-1 text-xs font-semibold leading-4 text-[color:var(--color-ink-support)]">
+                  Showing {accounts.length} of {totalAccounts} account
+                  {totalAccounts === 1 ? "" : "s"}; newest first. Limit {accountLimit}.
+                </p>
               </div>
 
               {accounts.length === 0 ? (
@@ -214,8 +246,8 @@ export default async function ProspectFieldPage() {
                               </div>
                             </td>
                             <td className="px-4 py-3">
-                              <Badge tone={permissionTone(account.permissionStatus)}>
-                                {label(account.permissionStatus)}
+                              <Badge tone={permissionTone(account.permissionState)}>
+                                {label(account.permissionState)}
                               </Badge>
                             </td>
                             <td className="px-4 py-3">
@@ -300,8 +332,8 @@ export default async function ProspectFieldPage() {
                   </fieldset>
 
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <Field label="Permission" name="permissionStatus" required>
-                      <Select id="permissionStatus" name="permissionStatus">
+                    <Field label="Permission" name="permissionState" required>
+                      <Select id="permissionState" name="permissionState">
                         {permissionOptions.map((option) => (
                           <option key={option} value={option}>
                             {label(option)}

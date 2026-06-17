@@ -7,7 +7,7 @@ import {
   HmlValue,
   NoteSensitivity,
   NoteType,
-  PermissionStatus,
+  PermissionState,
   PrismaClient,
   ProductRelevance,
   SourceConfidence,
@@ -53,7 +53,19 @@ async function main() {
     },
   });
 
-  if (!existing) {
+  if (existing) {
+    await prisma.hmlClassification.updateMany({
+      data: {
+        ruleVersion: "v0.1-prospect-field",
+      },
+      where: {
+        accountId: existing.id,
+        contributingSignals: {
+          has: "placeholder_seed_record",
+        },
+      },
+    });
+  } else {
     await prisma.territoryAccount.create({
       data: {
         boundaryRisk: HmlValue.LOW,
@@ -68,22 +80,17 @@ async function main() {
           "Placeholder record for validating Prospect Field workflow shape. Replace with sourced public research before use.",
         hiringSignal: HmlValue.MEDIUM,
         internationalSignal: HmlValue.MEDIUM,
-        nextSafestAction:
-          "Record a real public source before making any recommendation.",
+        nextSafestAction: "Record a real public source before making any recommendation.",
         ownerId: antaeus.id,
-        permissionStatus: PermissionStatus.RESEARCH_ONLY,
+        permissionState: PermissionState.RESEARCH_ONLY,
         priorityScore: 50,
-        productRelevance: [
-          ProductRelevance.EOR,
-          ProductRelevance.CONTRACTOR_MANAGEMENT,
-        ],
+        productRelevance: [ProductRelevance.EOR, ProductRelevance.CONTRACTOR_MANAGEMENT],
         sourceConfidence: SourceConfidence.HYPOTHESIS,
         status: TerritoryAccountStatus.RESEARCH_ONLY,
         evidence: {
           create: {
             canonStatus: CanonStatus.HYPOTHESIS,
-            capturedClaim:
-              "Seed data only. This is not a real prospecting claim.",
+            capturedClaim: "Seed data only. This is not a real prospecting claim.",
             confidence: SourceConfidence.HYPOTHESIS,
             title: "Placeholder source evidence",
             type: EvidenceType.USER_ASSERTION,
@@ -99,6 +106,7 @@ async function main() {
               "Medium because this is a placeholder seed record for validating workflow structure only.",
             recommendedNextAction:
               "Replace placeholder with sourced public research before action.",
+            ruleVersion: "v0.1-prospect-field",
           },
         },
         notes: {
@@ -113,7 +121,7 @@ async function main() {
           create: {
             reason: "Seed records begin as research-only.",
             setBy: "seed",
-            status: PermissionStatus.RESEARCH_ONLY,
+            state: PermissionState.RESEARCH_ONLY,
           },
         },
       },

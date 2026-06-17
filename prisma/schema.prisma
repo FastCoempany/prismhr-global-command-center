@@ -39,7 +39,7 @@ enum NoteSensitivity {
   SHAREABLE_SUMMARY
 }
 
-enum PermissionStatus {
+enum PermissionState {
   RESEARCH_ONLY
   CSM_CONTEXT_NEEDED
   CSM_APPROVED_FOR_DISCUSSION
@@ -151,7 +151,7 @@ model TerritoryAccount {
   priorityScore       Int?
   fitSummary          String
   nextSafestAction    String
-  permissionStatus    PermissionStatus       @default(RESEARCH_ONLY)
+  permissionState     PermissionState        @default(RESEARCH_ONLY)
   sourceConfidence    SourceConfidence       @default(UNVERIFIED)
   canonStatus         CanonStatus            @default(UNVERIFIED)
   ownerId             String?
@@ -168,7 +168,7 @@ model TerritoryAccount {
 
   @@index([companyName])
   @@index([status])
-  @@index([permissionStatus])
+  @@index([permissionState])
   @@index([sourceConfidence])
 }
 
@@ -210,17 +210,17 @@ model Note {
 }
 
 model PermissionHistory {
-  id        String           @id @default(cuid())
+  id        String          @id @default(cuid())
   accountId String
-  status    PermissionStatus
+  state     PermissionState
   reason    String
   setBy     String?
-  createdAt DateTime         @default(now())
+  createdAt DateTime        @default(now())
 
   account TerritoryAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
   @@index([accountId])
-  @@index([status])
+  @@index([state])
 }
 
 model InternalUnknown {

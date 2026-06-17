@@ -39,6 +39,28 @@ required_output_fields:
   - recommended_next_action
   - source_record_ids
   - rule_version
+app_scoring:
+  prospect_field:
+    rule_version: v0.1-prospect-field
+    priority_signal_scores:
+      HIGH: 20
+      MEDIUM: 10
+      LOW: 3
+    weak_source_confidence:
+      - LOW
+      - UNVERIFIED
+      - HYPOTHESIS
+    classification:
+      high:
+        min_high_fit_signals: 2
+        requires_non_weak_source: true
+      low:
+        requires_all_fit_signals_low: true
+      fallback: MEDIUM
+    recommended_actions:
+      HIGH: "Identify safe channel path before outreach."
+      MEDIUM: "Research and watch for triggers."
+      LOW: "Park with review date."
 global_caution_overlays:
   permission_unclear:
     condition: "permission_state in ['csm_context_needed', 'direct_contact_not_allowed', 'hold_sensitive', 'off_limits', 'ownership_unclear_requires_verification']"

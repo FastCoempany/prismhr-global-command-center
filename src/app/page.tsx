@@ -1,8 +1,10 @@
+import Link from "next/link";
+
 const readinessItems = [
-  "Cloud-first app shell",
-  "Supabase env contract",
-  "Design tokens loaded",
-  "No local domain storage",
+  "Tailwind and shadcn/ui baseline mapped to Field Signal tokens",
+  "Supabase Postgres migration applied and verified",
+  "Prospect Field create/read workflow live",
+  "No browser local storage for domain records",
 ];
 
 const focusItems = [
@@ -38,7 +40,7 @@ export default function Home() {
           <a aria-current="page" href="#today">
             Today
           </a>
-          <a href="/prospect-field">Prospect Field</a>
+          <Link href="/prospect-field">Prospect Field</Link>
           <a href="#partner-rooms">Partner Rooms</a>
           <a href="#signal-feed">Signal Feed</a>
           <a href="#boundaries">Boundaries</a>
@@ -48,10 +50,10 @@ export default function Home() {
       <section className="work-surface" id="today">
         <header className="top-bar">
           <div>
-            <p className="eyebrow">Cloud build ready</p>
+            <p className="eyebrow">Phase 1A live</p>
             <h2>Find the right prospects. Protect the trust path.</h2>
           </div>
-          <div className="status-pill">Phase 0 scaffold</div>
+          <div className="status-pill">Cloud database verified</div>
         </header>
 
         <section className="safety-strip" aria-label="Current safety posture">
@@ -61,7 +63,7 @@ export default function Home() {
           </div>
           <div>
             <span>Next safest action</span>
-            <strong>Wire cloud database</strong>
+            <strong>Record sourced prospect evidence</strong>
           </div>
           <div>
             <span>Source confidence</span>
@@ -101,8 +103,9 @@ export default function Home() {
           <p className="eyebrow">Pitch rail</p>
           <h2>Prospecting and partner-motion command center.</h2>
           <p>
-            This scaffold is ready for Supabase-backed records, Prisma schema work, and
-            the first Prospect Field screen.
+            The first production-shaped Prospect Field workflow now writes to
+            Supabase-backed records with source confidence, permission state, and HML
+            output.
           </p>
         </section>
         <section>

@@ -9,23 +9,30 @@ import {
   HmlValue,
   NoteSensitivity,
   NoteType,
-  PermissionStatus,
+  PermissionState,
   ProductRelevance,
   SourceConfidence,
   TerritoryAccountStatus,
 } from "@/generated/prisma/client";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
+import { classifyProspectField } from "@/lib/hml";
 
 const hmlValues = new Set(Object.values(HmlValue));
 const sourceConfidenceValues = new Set(Object.values(SourceConfidence));
-const permissionValues = new Set(Object.values(PermissionStatus));
+const permissionValues = new Set(Object.values(PermissionState));
 const evidenceValues = new Set(Object.values(EvidenceType));
 const productValues = new Set(Object.values(ProductRelevance));
+
+class FormValidationError extends Error {}
+
+function formErrorRedirect(message: string): never {
+  redirect(`/prospect-field?formError=${encodeURIComponent(message)}`);
+}
 
 function requiredString(formData: FormData, key: string) {
   const value = formData.get(key);
   if (typeof value !== "string" || value.trim().length === 0) {
-    throw new Error(`${key} is required.`);
+    throw new FormValidationError(`${key} is required.`);
   }
   return value.trim();
 }
@@ -50,6 +57,21 @@ function optionalDate(formData: FormData, key: string) {
   return value ? new Date(`${value}T00:00:00.000Z`) : undefined;
 }
 
+function optionalHttpUrl(formData: FormData, key: string, label: string) {
+  const value = optionalString(formData, key);
+  if (!value) return undefined;
+
+  try {
+    const url = new URL(value);
+    if (url.protocol !== "https:" && url.protocol !== "http:") {
+      throw new Error("Unsupported protocol.");
+    }
+    return url.toString();
+  } catch {
+    throw new FormValidationError(`${label} must be a valid http or https URL.`);
+  }
+}
+
 function selectedProducts(formData: FormData) {
   const selected = formData
     .getAll("productRelevance")
@@ -58,149 +80,139 @@ function selectedProducts(formData: FormData) {
       productValues.has(value as ProductRelevance),
     );
 
-  return selected.length > 0 ? selected : [ProductRelevance.EOR];
-}
+  if (selected.length === 0) {
+    throw new FormValidationError("Select at least one product relevance.");
+  }
 
-function derivePriorityScore(signals: HmlValue[]) {
-  return signals.reduce((score, signal) => {
-    if (signal === HmlValue.HIGH) return score + 20;
-    if (signal === HmlValue.MEDIUM) return score + 10;
-    return score + 3;
-  }, 0);
-}
-
-function deriveClassification(signals: HmlValue[], confidence: SourceConfidence) {
-  const highCount = signals.filter((signal) => signal === HmlValue.HIGH).length;
-  const lowCount = signals.filter((signal) => signal === HmlValue.LOW).length;
-  const weakSource =
-    confidence === SourceConfidence.LOW ||
-    confidence === SourceConfidence.UNVERIFIED ||
-    confidence === SourceConfidence.HYPOTHESIS;
-
-  if (highCount >= 2 && !weakSource) return HmlValue.HIGH;
-  if (lowCount === signals.length) return HmlValue.LOW;
-  return HmlValue.MEDIUM;
+  return selected;
 }
 
 export async function createTerritoryAccount(formData: FormData) {
   if (!hasDatabaseEnv()) {
-    throw new Error("Database environment variables are required to save records.");
+    formErrorRedirect("Database environment variables are required to save records.");
   }
 
-  const sourceConfidence = enumValue(
-    formData,
-    "sourceConfidence",
-    sourceConfidenceValues,
-    SourceConfidence.UNVERIFIED,
-  );
-  const permissionStatus = enumValue(
-    formData,
-    "permissionStatus",
-    permissionValues,
-    PermissionStatus.RESEARCH_ONLY,
-  );
-  const internationalSignal = enumValue(
-    formData,
-    "internationalSignal",
-    hmlValues,
-    HmlValue.LOW,
-  );
-  const contractorSignal = enumValue(
-    formData,
-    "contractorSignal",
-    hmlValues,
-    HmlValue.LOW,
-  );
-  const hiringSignal = enumValue(formData, "hiringSignal", hmlValues, HmlValue.LOW);
-  const complexitySignal = enumValue(
-    formData,
-    "complexitySignal",
-    hmlValues,
-    HmlValue.LOW,
-  );
-  const channelSignal = enumValue(formData, "channelSignal", hmlValues, HmlValue.LOW);
-  const boundaryRisk = enumValue(formData, "boundaryRisk", hmlValues, HmlValue.LOW);
-  const evidenceType = enumValue(
-    formData,
-    "evidenceType",
-    evidenceValues,
-    EvidenceType.PUBLIC_WEB,
-  );
-  const signals = [
-    internationalSignal,
-    contractorSignal,
-    hiringSignal,
-    complexitySignal,
-    channelSignal,
-  ];
-  const classification = deriveClassification(signals, sourceConfidence);
-  const prisma = getPrisma();
-
-  await prisma.territoryAccount.create({
-    data: {
+  try {
+    const sourceConfidence = enumValue(
+      formData,
+      "sourceConfidence",
+      sourceConfidenceValues,
+      SourceConfidence.UNVERIFIED,
+    );
+    const permissionState = enumValue(
+      formData,
+      "permissionState",
+      permissionValues,
+      PermissionState.RESEARCH_ONLY,
+    );
+    const internationalSignal = enumValue(
+      formData,
+      "internationalSignal",
+      hmlValues,
+      HmlValue.LOW,
+    );
+    const contractorSignal = enumValue(
+      formData,
+      "contractorSignal",
+      hmlValues,
+      HmlValue.LOW,
+    );
+    const hiringSignal = enumValue(formData, "hiringSignal", hmlValues, HmlValue.LOW);
+    const complexitySignal = enumValue(
+      formData,
+      "complexitySignal",
+      hmlValues,
+      HmlValue.LOW,
+    );
+    const channelSignal = enumValue(formData, "channelSignal", hmlValues, HmlValue.LOW);
+    const boundaryRisk = enumValue(formData, "boundaryRisk", hmlValues, HmlValue.LOW);
+    const evidenceType = enumValue(
+      formData,
+      "evidenceType",
+      evidenceValues,
+      EvidenceType.PUBLIC_WEB,
+    );
+    const hml = classifyProspectField({
       boundaryRisk,
-      canonStatus: CanonStatus.HYPOTHESIS,
-      category: optionalString(formData, "category"),
       channelSignal,
-      city: optionalString(formData, "city") ?? "Chicago",
-      companyName: requiredString(formData, "companyName"),
       complexitySignal,
       contractorSignal,
-      fitSummary: requiredString(formData, "fitSummary"),
       hiringSignal,
       internationalSignal,
-      nextSafestAction: requiredString(formData, "nextSafestAction"),
-      permissionStatus,
-      priorityScore: derivePriorityScore([...signals, boundaryRisk]),
-      productRelevance: selectedProducts(formData),
       sourceConfidence,
-      status: TerritoryAccountStatus.RESEARCH_ONLY,
-      website: optionalString(formData, "website"),
-      evidence: {
-        create: {
-          capturedClaim: requiredString(formData, "capturedClaim"),
-          confidence: sourceConfidence,
-          sourceDate: optionalDate(formData, "sourceDate"),
-          staleAfter: optionalDate(formData, "staleAfter"),
-          title: requiredString(formData, "evidenceTitle"),
-          type: evidenceType,
-          url: optionalString(formData, "evidenceUrl"),
+    });
+    const nextSafestAction = requiredString(formData, "nextSafestAction");
+    const fitSummary = requiredString(formData, "fitSummary");
+    const prisma = getPrisma();
+
+    await prisma.territoryAccount.create({
+      data: {
+        boundaryRisk,
+        canonStatus: CanonStatus.HYPOTHESIS,
+        category: optionalString(formData, "category"),
+        channelSignal,
+        city: optionalString(formData, "city") ?? "Chicago",
+        companyName: requiredString(formData, "companyName"),
+        complexitySignal,
+        contractorSignal,
+        fitSummary,
+        hiringSignal,
+        internationalSignal,
+        nextSafestAction,
+        permissionState,
+        priorityScore: hml.priorityScore,
+        productRelevance: selectedProducts(formData),
+        sourceConfidence,
+        status: TerritoryAccountStatus.RESEARCH_ONLY,
+        website: optionalHttpUrl(formData, "website", "Website"),
+        evidence: {
+          create: {
+            capturedClaim: requiredString(formData, "capturedClaim"),
+            confidence: sourceConfidence,
+            sourceDate: optionalDate(formData, "sourceDate"),
+            staleAfter: optionalDate(formData, "staleAfter"),
+            title: requiredString(formData, "evidenceTitle"),
+            type: evidenceType,
+            url: optionalHttpUrl(formData, "evidenceUrl", "Evidence URL"),
+          },
+        },
+        hmlClassifications: {
+          create: {
+            category: HmlCategory.TERRITORY_ACCOUNT_POTENTIAL,
+            classification: hml.classification,
+            confidence: sourceConfidence,
+            contributingSignals: hml.contributingSignals,
+            explanation: hml.explanation,
+            recommendedNextAction: hml.recommendedNextAction,
+            ruleVersion: hml.ruleVersion,
+          },
+        },
+        notes: {
+          create: {
+            body: fitSummary,
+            noteType: NoteType.FIT_SIGNAL,
+            sensitivity: NoteSensitivity.INTERNAL_ONLY,
+            sourceConfidence,
+          },
+        },
+        permissionHistory: {
+          create: {
+            reason: `Initial prospect posture: ${permissionState.toLowerCase().replaceAll("_", " ")}.`,
+            setBy: "Field Signal",
+            state: permissionState,
+          },
         },
       },
-      hmlClassifications: {
-        create: {
-          category: HmlCategory.TERRITORY_ACCOUNT_POTENTIAL,
-          classification,
-          confidence: sourceConfidence,
-          contributingSignals: [
-            `international:${internationalSignal}`,
-            `contractor:${contractorSignal}`,
-            `hiring:${hiringSignal}`,
-            `complexity:${complexitySignal}`,
-            `channel:${channelSignal}`,
-          ],
-          explanation: `${classification} because the account has recorded fit signals with ${sourceConfidence.toLowerCase().replaceAll("_", " ")} source confidence.`,
-          recommendedNextAction: requiredString(formData, "nextSafestAction"),
-        },
-      },
-      notes: {
-        create: {
-          body: requiredString(formData, "fitSummary"),
-          noteType: NoteType.FIT_SIGNAL,
-          sensitivity: NoteSensitivity.INTERNAL_ONLY,
-          sourceConfidence,
-        },
-      },
-      permissionHistory: {
-        create: {
-          reason: `Initial prospect posture: ${permissionStatus.toLowerCase().replaceAll("_", " ")}.`,
-          setBy: "Field Signal",
-          status: permissionStatus,
-        },
-      },
-    },
-  });
+    });
+  } catch (error) {
+    if (error instanceof FormValidationError) {
+      formErrorRedirect(error.message);
+    }
+
+    console.error("Prospect Field save failed", error);
+    formErrorRedirect("Could not save prospect. Check the fields and try again.");
+  }
 
   revalidatePath("/prospect-field");
-  redirect("/prospect-field");
+  redirect("/prospect-field?created=1");
 }
