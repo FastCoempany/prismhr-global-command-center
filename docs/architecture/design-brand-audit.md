@@ -145,7 +145,7 @@ Problem:
 Resolution:
 
 - Added an evidence drawer/source ledger requirement for Prospect Field.
-- Required source type, source date, confidence, captured claim, and stale-after date for fit signals.
+- Required source type, source date, confidence, captured claim, and stale-after date for qualification signals.
 - Required evidence before public research claims influence HML, fit, or next safest action.
 
 Implementation risk:

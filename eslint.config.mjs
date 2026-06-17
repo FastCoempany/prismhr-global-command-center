@@ -6,6 +6,7 @@ const ignoredPaths = [
   "node_modules/**",
   "src/generated/**",
   "generated/**",
+  "antaeus-brand-kit/**",
   "coverage/**",
   "dist/**",
   "build/**",

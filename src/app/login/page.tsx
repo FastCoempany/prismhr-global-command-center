@@ -13,7 +13,7 @@ type LoginPageProps = {
 
 function safeNext(next: string | undefined) {
   if (!next || !next.startsWith("/") || next.startsWith("//")) {
-    return "/prospect-field";
+    return "/";
   }
   return next;
 }

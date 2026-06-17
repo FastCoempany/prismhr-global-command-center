@@ -548,7 +548,7 @@ The app should generate or track daily serves.
 Serve categories may include:
 
 - PEO talking point
-- client-fit signal
+- client-qualification signal
 - product explainer
 - use-case blurb
 - discovery question

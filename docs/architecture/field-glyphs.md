@@ -201,7 +201,7 @@ Avoid:
 
 Meaning:
 
-- Prospect or PEO client fit signal.
+- Prospect or PEO client qualification signal.
 
 Construction:
 

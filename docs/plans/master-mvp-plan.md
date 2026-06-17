@@ -744,7 +744,7 @@ Key components:
 1. Create PEO record.
 2. Link CSM owner or mark ownership unclear.
 3. Add public research and source confidence.
-4. Capture visible global-workforce fit signals.
+4. Capture visible global-workforce qualification signals.
 5. Set permission state.
 6. Add known off-limits or boundary rules.
 7. Generate PEO readiness and caution HML classifications.
@@ -1000,6 +1000,22 @@ Tasks:
 Acceptance:
 
 - User can create a CSM, link a PEO, add a Chicagoland prospect, add a note, create a follow-up promise, and see the relevant next action on the dashboard.
+
+### Phase 2A: Core Shell And HML Correction
+
+Tasks:
+
+- Make HML a persistent High / Medium / Low priority panel or meter in the app shell.
+- Make the dashboard cloud-backed and action-oriented instead of static scaffold content.
+- Separate prospect qualification signals from HML priority so HML is not treated as a fit classification.
+- Keep qualification signals, source confidence, permission posture, evidence, and next safest action visible on Prospect Field.
+
+Acceptance:
+
+- Dashboard and Prospect Field both show an HML priority meter.
+- Prospect Field has separate Qualification Signals and HML Priority surfaces.
+- HML explanations describe priority, not product fit.
+- No local storage is used for domain records.
 
 ### Phase 3: Permission, Off-Limits, And Follow-Up Safety
 

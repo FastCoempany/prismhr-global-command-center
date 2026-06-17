@@ -81,7 +81,7 @@ Use:
 
 - Prospect
 - Prospect Field
-- Fit Signal
+- Qualification Signal
 - Account Signal
 - Source Evidence
 - Source Confidence
@@ -190,7 +190,7 @@ Avoid:
 ### Primary CTAs
 
 - Add prospect
-- Add fit signal
+- Add qualification signal
 - Record source
 - Set permission posture
 - Add boundary rule
@@ -279,7 +279,7 @@ Empty states should invite the next useful action.
 
 Use:
 
-> Add a Chicagoland prospect and record the first fit signal.
+> Add a Chicagoland prospect and record the first qualification signal.
 
 Avoid:
 

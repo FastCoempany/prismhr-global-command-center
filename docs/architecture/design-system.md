@@ -696,7 +696,7 @@ The command palette should speed up operator work without implying automation.
 Allowed commands:
 
 - Add prospect.
-- Add fit signal.
+- Add qualification signal.
 - Add boundary rule.
 - Add private debrief.
 - Create promise.
@@ -768,7 +768,7 @@ Primary actions:
 
 Prospecting evidence rule:
 
-- Every fit signal needs source type, source date, confidence, captured claim, and stale-after date.
+- Every qualification signal needs source type, source date, confidence, captured claim, and stale-after date.
 - Public research claims should show evidence before they influence HML, fit, or next safest action.
 - Prospecting cannot depend on color-coded fit alone; it must show the reason and the safe channel path.
 
@@ -835,7 +835,7 @@ Use the Field Signal lexicon from [brand-identity.md](brand-identity.md).
 - Partner Room: CSM workspace.
 - Provider: PEO or payroll service bureau.
 - Account Signal: researched clue that a company may fit PrismHR Global.
-- Fit Signal: reason a prospect may need global payroll, EOR, contractor management, or recruiting.
+- Qualification Signal: reason a prospect may need global payroll, EOR, contractor management, or recruiting.
 - Permission Posture: current actionability state.
 - Boundary Rule: structured off-limits or caution rule.
 - Next Safest Action: recommended action that preserves trust.
@@ -850,7 +850,7 @@ Use the Field Signal lexicon from [brand-identity.md](brand-identity.md).
 ### Preferred UI Phrases
 
 - "Add prospect"
-- "Add fit signal"
+- "Add qualification signal"
 - "Record source"
 - "Set permission posture"
 - "Add boundary rule"

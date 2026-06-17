@@ -6,11 +6,14 @@ import {
   ProductRelevance,
   SourceConfidence,
 } from "@/generated/prisma/client";
+import { HmlPriorityPanel } from "@/components/hml-priority-panel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Select, Textarea } from "@/components/ui/field";
 import { signOut } from "@/app/auth/actions";
 import { getAppAccess } from "@/lib/auth";
+import { humanizeEnum as label } from "@/lib/format";
+import { buildHmlSummaryFromAccounts, hmlTone } from "@/lib/hml-priority";
 import { createTerritoryAccount } from "./actions";
 import { getProspectFieldData } from "./data";
 
@@ -26,22 +29,8 @@ const permissionOptions = [
   PermissionState.HOLD_SENSITIVE,
   PermissionState.OFF_LIMITS,
 ];
-const hmlOptions = Object.values(HmlValue);
+const signalIntensityOptions = Object.values(HmlValue);
 const evidenceOptions = Object.values(EvidenceType);
-
-function label(value: string) {
-  return value
-    .toLowerCase()
-    .split("_")
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
-}
-
-function hmlTone(value: HmlValue) {
-  if (value === HmlValue.HIGH) return "high";
-  if (value === HmlValue.MEDIUM) return "medium";
-  return "low";
-}
 
 function confidenceTone(value: SourceConfidence) {
   if (value === SourceConfidence.CONFIRMED || value === SourceConfidence.STRONG) {
@@ -115,6 +104,7 @@ export default async function ProspectFieldPage({
 
   const { accountLimit, accounts, databaseReady, error, totalAccounts, unknowns } =
     await getProspectFieldData();
+  const hmlSummary = buildHmlSummaryFromAccounts(accounts);
   const topAccount = accounts[0];
   const nextSafestAction =
     topAccount?.nextSafestAction ?? "Add a sourced prospect before action.";
@@ -146,6 +136,9 @@ export default async function ProspectFieldPage({
               Prospect Field
             </Link>
           </nav>
+          <div className="mt-5">
+            <HmlPriorityPanel compact summary={hmlSummary} />
+          </div>
         </aside>
 
         <section className="min-w-0 p-5">
@@ -243,15 +236,16 @@ export default async function ProspectFieldPage({
 
               {accounts.length === 0 ? (
                 <div className="p-4 text-sm font-semibold leading-5 text-[color:var(--color-ink-soft)]">
-                  Add a Chicagoland prospect and record the first fit signal.
+                  Add a Chicagoland prospect and record the first qualification signal.
                 </div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full min-w-[980px] border-collapse text-left text-sm">
+                  <table className="w-full min-w-[1120px] border-collapse text-left text-sm">
                     <thead className="bg-[color:var(--color-surface-mist)]">
                       <tr>
                         <th className="px-4 py-3 font-bold">Company</th>
-                        <th className="px-4 py-3 font-bold">Fit</th>
+                        <th className="px-4 py-3 font-bold">Qualification Signals</th>
+                        <th className="px-4 py-3 font-bold">HML Priority</th>
                         <th className="px-4 py-3 font-bold">Permission</th>
                         <th className="px-4 py-3 font-bold">Source</th>
                         <th className="px-4 py-3 font-bold">Next Safest Action</th>
@@ -262,15 +256,40 @@ export default async function ProspectFieldPage({
                       {accounts.map((account) => {
                         const latestHml = account.hmlClassifications[0];
                         const latestEvidence = account.evidence[0];
+                        const qualificationSignals = [
+                          ["International", account.internationalSignal],
+                          ["Contractor", account.contractorSignal],
+                          ["Hiring", account.hiringSignal],
+                          ["Complexity", account.complexitySignal],
+                          ["Channel", account.channelSignal],
+                          ["Boundary", account.boundaryRisk],
+                        ];
                         return (
                           <tr
                             className="border-t border-[color:var(--color-line)] align-top"
+                            id={`account-${account.id}`}
                             key={account.id}
                           >
                             <td className="px-4 py-3">
                               <div className="font-semibold">{account.companyName}</div>
                               <div className="text-xs font-semibold leading-4 text-[color:var(--color-ink-support)]">
                                 {account.city}, {account.region}
+                              </div>
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="max-w-64 text-xs font-semibold leading-4 text-[color:var(--color-ink-soft)]">
+                                {account.fitSummary}
+                              </div>
+                              <div className="mt-2 flex max-w-72 flex-wrap gap-1.5">
+                                {qualificationSignals.map(([name, value]) => (
+                                  <Badge
+                                    className="rounded-md"
+                                    key={name}
+                                    tone={hmlTone(value as HmlValue)}
+                                  >
+                                    {name}: {label(value)}
+                                  </Badge>
+                                ))}
                               </div>
                             </td>
                             <td className="px-4 py-3">
@@ -283,9 +302,11 @@ export default async function ProspectFieldPage({
                               >
                                 {latestHml ? label(latestHml.classification) : "Unscored"}
                               </Badge>
-                              <div className="mt-2 max-w-56 text-xs font-semibold leading-4 text-[color:var(--color-ink-soft)]">
-                                {account.fitSummary}
-                              </div>
+                              {latestHml ? (
+                                <div className="mt-2 max-w-64 text-xs font-semibold leading-4 text-[color:var(--color-ink-soft)]">
+                                  {latestHml.explanation}
+                                </div>
+                              ) : null}
                             </td>
                             <td className="px-4 py-3">
                               <Badge tone={permissionTone(account.permissionState)}>
@@ -329,7 +350,7 @@ export default async function ProspectFieldPage({
                   Add prospect
                 </p>
                 <h2 className="mb-4 text-base font-semibold leading-6">
-                  Record first fit signal
+                  Record qualification signals
                 </h2>
                 <form action={createTerritoryAccount} className="grid gap-4">
                   <Field label="Company" name="companyName" required>
@@ -395,32 +416,39 @@ export default async function ProspectFieldPage({
                   </div>
 
                   <div className="grid gap-3 sm:grid-cols-2">
-                    {[
-                      ["internationalSignal", "International"],
-                      ["contractorSignal", "Contractor"],
-                      ["hiringSignal", "Hiring"],
-                      ["complexitySignal", "Complexity"],
-                      ["channelSignal", "Channel"],
-                      ["boundaryRisk", "Boundary Risk"],
-                    ].map(([name, fieldLabel]) => (
-                      <Field key={name} label={fieldLabel} name={name} required>
-                        <Select id={name} name={name}>
-                          {hmlOptions.map((option) => (
-                            <option key={option} value={option}>
-                              {label(option)}
-                            </option>
-                          ))}
-                        </Select>
-                      </Field>
-                    ))}
+                    <fieldset className="grid gap-2 sm:col-span-2">
+                      <legend className="text-sm font-semibold leading-5">
+                        Qualification signals
+                      </legend>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        {[
+                          ["internationalSignal", "International activity"],
+                          ["contractorSignal", "Contractor intensity"],
+                          ["hiringSignal", "Hiring signal"],
+                          ["complexitySignal", "Complexity signal"],
+                          ["channelSignal", "Channel path"],
+                          ["boundaryRisk", "Boundary risk"],
+                        ].map(([name, fieldLabel]) => (
+                          <Field key={name} label={fieldLabel} name={name} required>
+                            <Select id={name} name={name}>
+                              {signalIntensityOptions.map((option) => (
+                                <option key={option} value={option}>
+                                  {label(option)}
+                                </option>
+                              ))}
+                            </Select>
+                          </Field>
+                        ))}
+                      </div>
+                    </fieldset>
                   </div>
 
-                  <Field label="Fit summary" name="fitSummary" required>
+                  <Field label="Qualification summary" name="fitSummary" required>
                     <Textarea
                       id="fitSummary"
                       name="fitSummary"
                       required
-                      placeholder="Why this account may fit PrismHR Global."
+                      placeholder="Why this account may be relevant to PrismHR Global."
                     />
                   </Field>
                   <Field label="Next safest action" name="nextSafestAction" required>

@@ -168,7 +168,7 @@ export function classifyProspectField(signals: ProspectFieldSignalSet) {
       `boundary_risk:${signals.boundaryRisk}`,
       `source_confidence:${signals.sourceConfidence}`,
     ],
-    explanation: `${classification} under ${rules.rule_version}: ${highFitSignalCount} high fit signal(s), ${label(signals.sourceConfidence)} source confidence, and ${label(signals.boundaryRisk)} boundary risk.`,
+    explanation: `${classification} priority under ${rules.rule_version}: ${highFitSignalCount} high qualification signal(s), ${label(signals.sourceConfidence)} source confidence, and ${label(signals.boundaryRisk)} boundary risk.`,
     priorityScore,
     recommendedNextAction: rules.recommended_actions[classification],
     ruleVersion: rules.rule_version,

@@ -1,11 +1,13 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { HmlPriorityPanel } from "@/components/hml-priority-panel";
+import { Button } from "@/components/ui/button";
+import { signOut } from "@/app/auth/actions";
+import { getAppAccess } from "@/lib/auth";
+import { humanizeEnum } from "@/lib/format";
+import { getDashboardData } from "./data";
 
-const readinessItems = [
-  "Review Chicagoland prospects with visible source confidence",
-  "Record fit evidence before creating a next action",
-  "Keep permission posture beside each account",
-  "Track unknowns before they become relationship risk",
-];
+export const dynamic = "force-dynamic";
 
 const focusItems = [
   {
@@ -25,7 +27,35 @@ const focusItems = [
   },
 ];
 
-export default function Home() {
+export default async function Home() {
+  const access = await getAppAccess();
+
+  if (access.status !== "active") {
+    redirect("/login?next=/");
+  }
+
+  const dashboard = await getDashboardData();
+  const leadSignal = dashboard.hmlSummary.items[0];
+  const leadAccount = dashboard.accounts[0];
+  const nextSafestAction =
+    leadSignal?.recommendedNextAction ??
+    leadAccount?.nextSafestAction ??
+    "Add a sourced prospect before action.";
+  const permissionPosture = leadAccount
+    ? humanizeEnum(leadAccount.permissionState)
+    : "Research Only";
+  const sourceConfidence = leadAccount
+    ? humanizeEnum(leadAccount.sourceConfidence)
+    : "Unverified";
+  const operatingItems = [
+    `${dashboard.totalAccounts} account${dashboard.totalAccounts === 1 ? "" : "s"} under research`,
+    `${dashboard.hmlSummary.counts.HIGH} high priority signal${dashboard.hmlSummary.counts.HIGH === 1 ? "" : "s"}`,
+    `${dashboard.totalOpenUnknowns} open unknown${dashboard.totalOpenUnknowns === 1 ? "" : "s"}`,
+    dashboard.databaseReady
+      ? "Permission posture stays beside each account"
+      : "Prospect records are unavailable right now",
+  ];
+
   return (
     <main className="app-shell">
       <aside className="nav-rail" aria-label="Primary">
@@ -41,11 +71,16 @@ export default function Home() {
             Today
           </a>
           <Link href="/prospect-field">Prospect Field</Link>
-          <Link href="/login">Sign in</Link>
           <a href="#partner-rooms">Partner Rooms</a>
           <a href="#signal-feed">Signal Feed</a>
           <a href="#boundaries">Boundaries</a>
         </nav>
+        <HmlPriorityPanel compact summary={dashboard.hmlSummary} />
+        <form action={signOut}>
+          <Button className="w-full" size="compact" type="submit" variant="quiet">
+            Sign out
+          </Button>
+        </form>
       </aside>
 
       <section className="work-surface" id="today">
@@ -54,21 +89,23 @@ export default function Home() {
             <p className="eyebrow">Today</p>
             <h2>Find the right prospects. Protect the trust path.</h2>
           </div>
-          <div className="status-pill">Research only</div>
+          <div className="status-pill">
+            {dashboard.databaseReady ? "Live signals" : "Records unavailable"}
+          </div>
         </header>
 
         <section className="safety-strip" aria-label="Current safety posture">
           <div>
             <span>Permission</span>
-            <strong>Research only</strong>
+            <strong>{permissionPosture}</strong>
           </div>
           <div>
             <span>Next safest action</span>
-            <strong>Record sourced prospect evidence</strong>
+            <strong>{nextSafestAction}</strong>
           </div>
           <div>
             <span>Source confidence</span>
-            <strong>Project supplied</strong>
+            <strong>{sourceConfidence}</strong>
           </div>
         </section>
 
@@ -89,7 +126,7 @@ export default function Home() {
             </div>
           </div>
           <div className="readiness-list">
-            {readinessItems.map((item) => (
+            {operatingItems.map((item) => (
               <div className="readiness-row" key={item}>
                 <span className="status-dot" aria-hidden="true" />
                 <span>{item}</span>
@@ -100,6 +137,7 @@ export default function Home() {
       </section>
 
       <aside className="right-rail" aria-label="Intelligence rail">
+        <HmlPriorityPanel summary={dashboard.hmlSummary} />
         <section id="boundaries">
           <p className="eyebrow">Pitch rail</p>
           <h2>Prospecting and partner-motion command center.</h2>

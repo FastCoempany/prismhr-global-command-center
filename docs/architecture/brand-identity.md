@@ -179,7 +179,7 @@ Prefer short direct statements:
 - "Permission needed before outreach."
 - "High fit, high caution."
 - "Source confidence is low."
-- "Add one fit signal before creating an opportunity."
+- "Add one qualification signal before creating an opportunity."
 
 Avoid broad marketing claims inside the app:
 
@@ -380,7 +380,7 @@ Detailed product vocabulary: [product-lexicon.md](product-lexicon.md)
 - Partner Room: CSM workspace.
 - Provider: PEO or payroll service bureau.
 - Account Signal: researched clue that a company may fit PrismHR Global.
-- Fit Signal: reason a prospect may need global payroll, EOR, contractor management, or recruiting.
+- Qualification Signal: reason a prospect may need global payroll, EOR, contractor management, or recruiting.
 - Permission Posture: current actionability state.
 - Boundary Rule: structured off-limits or caution rule.
 - Next Safest Action: recommended action that preserves trust.
@@ -420,7 +420,7 @@ Avoid:
 Preferred:
 
 - Add prospect
-- Add fit signal
+- Add qualification signal
 - Record source
 - Set permission posture
 - Add boundary rule
