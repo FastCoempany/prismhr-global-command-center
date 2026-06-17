@@ -47,6 +47,13 @@ export function AppWayfinder({
           >
             Signal Feed
           </Link>
+          <Link
+            aria-current={current === "Unknowns" ? "page" : undefined}
+            className="app-route-link"
+            href="/unknowns"
+          >
+            Unknowns
+          </Link>
         </nav>
         <Button size="compact" type="button" variant="quiet">
           Ctrl K

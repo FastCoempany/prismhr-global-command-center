@@ -60,7 +60,7 @@ export default async function Home() {
         dashboard.totalOpenUnknowns > 0
           ? "Resolve the unknowns that could affect permission, source quality, or schema."
           : "Keep unresolved facts explicit as they appear.",
-      href: "/prospect-field",
+      href: "/unknowns",
       label: dashboard.totalOpenUnknowns > 0 ? "Resolve open unknowns" : "Track unknowns",
     },
   ];
