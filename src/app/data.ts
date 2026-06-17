@@ -68,6 +68,26 @@ export async function getDashboardData(): Promise<DashboardData> {
                 id: true,
               },
             },
+            csmPartner: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+            opportunity: {
+              select: {
+                csmPartnerId: true,
+                id: true,
+                name: true,
+              },
+            },
+            peo: {
+              select: {
+                csmPartnerId: true,
+                id: true,
+                name: true,
+              },
+            },
           },
           orderBy: {
             createdAt: "desc",
@@ -111,18 +131,32 @@ export async function getDashboardData(): Promise<DashboardData> {
       counts[group.classification] = group._count.classification;
     });
 
-    const items: HmlPriorityItem[] = classifications.map((classification) => ({
-      category: classification.category,
-      classification: classification.classification,
-      confidence: classification.confidence,
-      explanation: classification.explanation,
-      href: classification.accountId
-        ? `/prospect-field#account-${classification.accountId}`
-        : undefined,
-      id: classification.id,
-      label: classification.account?.companyName ?? "Unlinked signal",
-      recommendedNextAction: classification.recommendedNextAction,
-    }));
+    const items: HmlPriorityItem[] = classifications.map((classification) => {
+      const partnerId =
+        classification.csmPartner?.id ??
+        classification.peo?.csmPartnerId ??
+        classification.opportunity?.csmPartnerId;
+
+      return {
+        category: classification.category,
+        classification: classification.classification,
+        confidence: classification.confidence,
+        explanation: classification.explanation,
+        href: classification.accountId
+          ? `/prospect-field#account-${classification.accountId}`
+          : partnerId
+            ? `/partners?${new URLSearchParams({ partnerId }).toString()}`
+            : undefined,
+        id: classification.id,
+        label:
+          classification.account?.companyName ??
+          classification.csmPartner?.name ??
+          classification.peo?.name ??
+          classification.opportunity?.name ??
+          "Unlinked signal",
+        recommendedNextAction: classification.recommendedNextAction,
+      };
+    });
 
     return {
       accounts,

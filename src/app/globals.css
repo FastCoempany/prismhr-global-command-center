@@ -684,6 +684,165 @@ textarea {
   width: 16px;
 }
 
+.partners-grid {
+  align-items: start;
+  display: grid;
+  gap: var(--ds-grid-gap);
+  grid-template-columns: minmax(0, 0.95fr) minmax(440px, 1.05fr);
+}
+
+.partners-column,
+.partner-list,
+.partner-detail-panel,
+.partner-subsection,
+.partner-form-block {
+  display: grid;
+  gap: var(--ds-space-4);
+  min-width: 0;
+}
+
+.partner-card,
+.partner-intake-panel,
+.partner-detail-panel {
+  background: var(--ds-surface);
+  border: 1px solid var(--ds-hair-strong);
+  border-bottom: 3px solid var(--ds-blue);
+  border-radius: var(--ds-radius-card);
+  box-shadow: var(--ds-shadow-rest);
+  color: var(--ds-ink);
+  padding: var(--ds-space-4) var(--ds-space-45);
+}
+
+.partner-card {
+  display: grid;
+  gap: var(--ds-space-3);
+  transition:
+    border-color var(--ds-motion-quick) var(--ds-ease-standard),
+    box-shadow var(--ds-motion-quick) var(--ds-ease-standard),
+    transform var(--ds-motion-quick) var(--ds-ease-standard);
+}
+
+.partner-card:hover,
+.partner-card--selected {
+  border-color: var(--ds-blue);
+  box-shadow: var(--ds-shadow-lift);
+  transform: translateY(-1px);
+}
+
+.partner-card--selected {
+  background: var(--ds-blue-soft);
+}
+
+.partner-card__head,
+.partner-detail-panel__head {
+  align-items: start;
+  display: grid;
+  gap: var(--ds-space-2);
+}
+
+.partner-card__head {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.partner-card__head h2,
+.partner-intake-panel h2,
+.partner-detail-panel__head h2 {
+  color: var(--ds-ink);
+  font-family: var(--ds-font-serif);
+  font-size: var(--ds-type-title);
+  font-weight: 400;
+  line-height: 1.18;
+}
+
+.partner-card p,
+.partner-detail-panel__head p,
+.partner-subsection p,
+.partner-note-stack p {
+  color: var(--ds-ink-700);
+  font: var(--ds-type-body) / var(--ds-leading-body) var(--ds-font-sans);
+}
+
+.partner-card__badges,
+.partner-card__peos {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ds-space-2);
+}
+
+.partner-card__head .partner-card__badges {
+  justify-content: flex-end;
+}
+
+.partner-card__peos span {
+  background: var(--ds-surface-sub);
+  border: 1px solid var(--ds-hair-strong);
+  border-radius: var(--ds-radius-pill);
+  color: var(--ds-ink);
+  font: 700 12px/1 var(--ds-font-sans);
+  padding: var(--ds-space-1) 10px;
+}
+
+.partner-intake-panel,
+.partner-detail-panel {
+  display: grid;
+  gap: var(--ds-space-4);
+}
+
+.partner-detail-panel {
+  border-bottom-color: var(--ds-orange);
+  position: sticky;
+  top: 82px;
+}
+
+.partner-metrics,
+.partner-note-stack {
+  display: grid;
+  gap: var(--ds-space-3);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.partner-note-stack {
+  grid-template-columns: 1fr;
+}
+
+.partner-metrics div,
+.partner-note-stack div,
+.partner-subsection > div {
+  background: var(--ds-surface-sub);
+  border: 1px solid var(--ds-hair-strong);
+  border-radius: var(--ds-radius-control);
+  display: grid;
+  gap: var(--ds-space-1);
+  padding: var(--ds-space-3);
+}
+
+.partner-metrics span,
+.partner-note-stack span,
+.partner-subsection span {
+  color: var(--ds-blue);
+  font: 700 var(--ds-type-kicker) / 1.2 var(--ds-font-mono);
+  letter-spacing: var(--ds-tracking-kicker);
+  text-transform: uppercase;
+}
+
+.partner-metrics strong,
+.partner-subsection strong {
+  color: var(--ds-ink);
+  font: 800 var(--ds-type-label) / 1.45 var(--ds-font-sans);
+}
+
+.partner-subsection h3,
+.partner-form-block h3 {
+  color: var(--ds-ink);
+  font: 800 var(--ds-type-label) / 1.4 var(--ds-font-sans);
+}
+
+.partner-form-block {
+  border-top: 1px solid var(--ds-hair-strong);
+  padding-top: var(--ds-space-4);
+}
+
 /* App-owned subset of the donor kit's component grammar. */
 .product-lockup {
   align-items: center;
@@ -1095,7 +1254,10 @@ textarea {
   .prospect-controls,
   .prospect-brief,
   .signal-summary,
-  .unknowns-grid {
+  .unknowns-grid,
+  .partners-grid,
+  .partner-card__head,
+  .partner-metrics {
     grid-template-columns: 1fr;
   }
 
@@ -1108,6 +1270,10 @@ textarea {
   }
 
   .unknown-create-panel {
+    position: static;
+  }
+
+  .partner-detail-panel {
     position: static;
   }
 
@@ -1144,6 +1310,10 @@ textarea {
   }
 
   .unknown-card__badges {
+    justify-content: flex-start;
+  }
+
+  .partner-card__head .partner-card__badges {
     justify-content: flex-start;
   }
 

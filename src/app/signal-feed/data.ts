@@ -72,8 +72,11 @@ function classificationWhere(filters: SignalFeedFilters) {
 function matchesSearch(
   signal: {
     account: { companyName: string } | null;
+    csmPartner: { name: string } | null;
     contributingSignals: string[];
     explanation: string;
+    opportunity: { name: string } | null;
+    peo: { name: string } | null;
     recommendedNextAction: string;
   },
   q: string | undefined,
@@ -82,6 +85,9 @@ function matchesSearch(
   const needle = q.toLowerCase();
   return [
     signal.account?.companyName,
+    signal.csmPartner?.name,
+    signal.peo?.name,
+    signal.opportunity?.name,
     signal.explanation,
     signal.recommendedNextAction,
     ...signal.contributingSignals,
@@ -112,6 +118,32 @@ export async function getSignalFeedData(filters: SignalFeedFilters) {
             city: true,
             companyName: true,
             id: true,
+            permissionState: true,
+            sourceConfidence: true,
+          },
+        },
+        csmPartner: {
+          select: {
+            id: true,
+            name: true,
+            permissionState: true,
+            sourceConfidence: true,
+          },
+        },
+        opportunity: {
+          select: {
+            csmPartnerId: true,
+            id: true,
+            name: true,
+            permissionState: true,
+            sourceConfidence: true,
+          },
+        },
+        peo: {
+          select: {
+            csmPartnerId: true,
+            id: true,
+            name: true,
             permissionState: true,
             sourceConfidence: true,
           },

@@ -179,20 +179,36 @@ export default async function SignalFeedPage({ searchParams }: SignalFeedPagePro
             </section>
           ) : (
             signals.map((signal) => {
-              const prospectPath = signal.account
+              const signalLabel =
+                signal.account?.companyName ??
+                signal.csmPartner?.name ??
+                signal.peo?.name ??
+                signal.opportunity?.name ??
+                "Unlinked signal";
+              const signalPath = signal.account
                 ? `/prospect-field?${new URLSearchParams({
                     accountId: signal.account.id,
                   }).toString()}`
-                : null;
+                : signal.csmPartner
+                  ? `/partners?${new URLSearchParams({
+                      partnerId: signal.csmPartner.id,
+                    }).toString()}`
+                  : signal.peo?.csmPartnerId
+                    ? `/partners?${new URLSearchParams({
+                        partnerId: signal.peo.csmPartnerId,
+                      }).toString()}`
+                    : signal.opportunity?.csmPartnerId
+                      ? `/partners?${new URLSearchParams({
+                          partnerId: signal.opportunity.csmPartnerId,
+                        }).toString()}`
+                      : null;
 
               return (
                 <article className="signal-card" key={signal.id}>
                   <div className="signal-card__head">
                     <div>
                       <p className="eyebrow">{label(signal.category)}</p>
-                      <h2>
-                        {signal.account ? signal.account.companyName : "Unlinked signal"}
-                      </h2>
+                      <h2>{signalLabel}</h2>
                     </div>
                     <div className="signal-card__badges">
                       <Badge tone={hmlTone(signal.classification)}>
@@ -214,7 +230,7 @@ export default async function SignalFeedPage({ searchParams }: SignalFeedPagePro
                   <div className="signal-card__meta">
                     <span>{formatDate(signal.createdAt)}</span>
                     <span>Rule {signal.ruleVersion}</span>
-                    {prospectPath ? <Link href={prospectPath}>Open prospect</Link> : null}
+                    {signalPath ? <Link href={signalPath}>Open record</Link> : null}
                   </div>
 
                   {signal.contributingSignals.length > 0 ? (

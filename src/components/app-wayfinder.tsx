@@ -48,6 +48,13 @@ export function AppWayfinder({
             Signal Feed
           </Link>
           <Link
+            aria-current={current === "Partners" ? "page" : undefined}
+            className="app-route-link"
+            href="/partners"
+          >
+            Partners
+          </Link>
+          <Link
             aria-current={current === "Unknowns" ? "page" : undefined}
             className="app-route-link"
             href="/unknowns"

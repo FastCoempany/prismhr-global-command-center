@@ -118,6 +118,45 @@ enum HmlCategory {
   BOUNDARY_RISK
   SOURCE_CONFIDENCE
   INTERNAL_AMBIGUITY
+  CSM_RELATIONSHIP_HEAT
+  PEO_READINESS
+  PEO_PROTECTIVENESS
+  OPPORTUNITY_MOMENTUM
+  FOLLOW_UP_URGENCY
+}
+
+enum CsmPartnerStatus {
+  ACTIVE
+  WATCH
+  PARKED
+}
+
+enum OpportunitySourceType {
+  CSM
+  PEO
+  PEO_CLIENT
+  TERRITORY_ACCOUNT
+  EXTERNAL_CHANNEL
+  MANUAL_RESEARCH
+}
+
+enum OpportunityStage {
+  RESEARCH
+  CSM_CONTEXT_NEEDED
+  QUALIFYING
+  INTRO_READY
+  MEETING_BOOKED
+  ACTIVE_DISCOVERY
+  PARKED
+  CLOSED_WON
+  CLOSED_LOST
+}
+
+enum FollowUpPromiseStatus {
+  OPEN
+  DEFERRED
+  COMPLETED
+  CANCELLED
 }
 
 model User {
@@ -133,6 +172,8 @@ model User {
   updatedAt      DateTime  @updatedAt
 
   territoryAccounts TerritoryAccount[]
+  csmPartners       CSMPartner[]
+  followUpPromises  FollowUpPromise[]
 }
 
 model TerritoryAccount {
@@ -167,6 +208,8 @@ model TerritoryAccount {
   permissionHistory  PermissionHistory[]
   internalUnknowns   InternalUnknown[]
   hmlClassifications HmlClassification[]
+  opportunities      Opportunity[]
+  followUpPromises   FollowUpPromise[]
 
   @@index([companyName])
   @@index([status])
@@ -197,6 +240,9 @@ model SourceEvidence {
 model Note {
   id               String           @id @default(cuid())
   accountId        String?
+  csmPartnerId     String?
+  peoId            String?
+  opportunityId    String?
   noteType         NoteType         @default(RESEARCH_NOTE)
   body             String
   sensitivity      NoteSensitivity  @default(INTERNAL_ONLY)
@@ -205,9 +251,15 @@ model Note {
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 
-  account TerritoryAccount? @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  account     TerritoryAccount? @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  csmPartner  CSMPartner?       @relation(fields: [csmPartnerId], references: [id], onDelete: SetNull)
+  peo         PEO?              @relation(fields: [peoId], references: [id], onDelete: SetNull)
+  opportunity Opportunity?      @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
 
   @@index([accountId])
+  @@index([csmPartnerId])
+  @@index([peoId])
+  @@index([opportunityId])
   @@index([sensitivity])
 }
 
@@ -247,10 +299,178 @@ model InternalUnknown {
   @@index([relatedAccountId])
 }
 
+model CSMPartner {
+  id                      String           @id @default(cuid())
+  name                    String
+  email                   String?          @unique
+  status                  CsmPartnerStatus @default(ACTIVE)
+  relationshipHeat        HmlValue         @default(MEDIUM)
+  protectivenessLevel     HmlValue         @default(MEDIUM)
+  communicationCadence    String?
+  preferredIntroMotion    String?
+  preferredFollowupMotion String?
+  privateDebriefRequired  Boolean          @default(true)
+  dosAndDonts             String?
+  trustSurfaceNotes       String?
+  permissionState         PermissionState  @default(CSM_CONTEXT_NEEDED)
+  sourceConfidence        SourceConfidence @default(UNVERIFIED)
+  canonStatus             CanonStatus      @default(HYPOTHESIS)
+  nextSafestAction        String
+  ownerId                 String?
+  createdAt               DateTime         @default(now())
+  updatedAt               DateTime         @updatedAt
+  lastReviewedAt          DateTime?
+
+  owner              User?               @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  peos               PEO[]
+  opportunities      Opportunity[]
+  notes              Note[]
+  followUpPromises   FollowUpPromise[]
+  hmlClassifications HmlClassification[]
+
+  @@index([name])
+  @@index([status])
+  @@index([permissionState])
+  @@index([relationshipHeat])
+}
+
+model PEO {
+  id                    String           @id @default(cuid())
+  name                  String
+  website               String?
+  csmPartnerId          String?
+  publicResearchSummary String?
+  industryFocus         String?
+  clientBaseNotes       String?
+  globalFitSignals      String?
+  readinessLevel        HmlValue         @default(MEDIUM)
+  protectivenessLevel   HmlValue         @default(MEDIUM)
+  boundaryRisk          HmlValue         @default(MEDIUM)
+  permissionState       PermissionState  @default(CSM_CONTEXT_NEEDED)
+  sourceConfidence      SourceConfidence @default(UNVERIFIED)
+  canonStatus           CanonStatus      @default(HYPOTHESIS)
+  offLimitsSummary      String?
+  nextSafestAction      String
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+  lastReviewedAt        DateTime?
+
+  csmPartner         CSMPartner?         @relation(fields: [csmPartnerId], references: [id], onDelete: SetNull)
+  peoClients         PEOClient[]
+  opportunities      Opportunity[]
+  notes              Note[]
+  followUpPromises   FollowUpPromise[]
+  hmlClassifications HmlClassification[]
+
+  @@index([name])
+  @@index([csmPartnerId])
+  @@index([permissionState])
+  @@index([readinessLevel])
+  @@index([protectivenessLevel])
+}
+
+model PEOClient {
+  id               String           @id @default(cuid())
+  displayName      String
+  peoId            String
+  industry         String?
+  countries        String[]         @default([])
+  workerTypes      String[]         @default([])
+  useCaseFit       String?
+  permissionState  PermissionState  @default(CSM_CONTEXT_NEEDED)
+  sourceConfidence SourceConfidence @default(UNVERIFIED)
+  boundaryRisk     HmlValue         @default(MEDIUM)
+  noteSensitivity  NoteSensitivity  @default(INTERNAL_ONLY)
+  isAnonymized     Boolean          @default(true)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  peo           PEO           @relation(fields: [peoId], references: [id], onDelete: Cascade)
+  opportunities Opportunity[]
+
+  @@index([peoId])
+  @@index([permissionState])
+  @@index([boundaryRisk])
+}
+
+model Opportunity {
+  id                 String                @id @default(cuid())
+  name               String
+  sourceType         OpportunitySourceType @default(MANUAL_RESEARCH)
+  csmPartnerId       String?
+  peoId              String?
+  peoClientId        String?
+  territoryAccountId String?
+  productInterest    ProductRelevance[]    @default([])
+  stage              OpportunityStage      @default(RESEARCH)
+  nextStep           String
+  nextStepOwner      String?
+  followUpDueAt      DateTime?
+  permissionState    PermissionState       @default(CSM_CONTEXT_NEEDED)
+  momentumLevel      HmlValue              @default(MEDIUM)
+  riskFlags          String[]              @default([])
+  sourceConfidence   SourceConfidence      @default(UNVERIFIED)
+  canonStatus        CanonStatus           @default(HYPOTHESIS)
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+
+  csmPartner         CSMPartner?         @relation(fields: [csmPartnerId], references: [id], onDelete: SetNull)
+  peo                PEO?                @relation(fields: [peoId], references: [id], onDelete: SetNull)
+  peoClient          PEOClient?          @relation(fields: [peoClientId], references: [id], onDelete: SetNull)
+  territoryAccount   TerritoryAccount?   @relation(fields: [territoryAccountId], references: [id], onDelete: SetNull)
+  notes              Note[]
+  followUpPromises   FollowUpPromise[]
+  hmlClassifications HmlClassification[]
+
+  @@index([stage])
+  @@index([csmPartnerId])
+  @@index([peoId])
+  @@index([peoClientId])
+  @@index([territoryAccountId])
+  @@index([permissionState])
+  @@index([momentumLevel])
+}
+
+model FollowUpPromise {
+  id                 String                @id @default(cuid())
+  promise            String
+  madeTo             String
+  ownerId            String?
+  csmPartnerId       String?
+  peoId              String?
+  opportunityId      String?
+  territoryAccountId String?
+  dueAt              DateTime
+  status             FollowUpPromiseStatus @default(OPEN)
+  sensitivity        NoteSensitivity       @default(INTERNAL_ONLY)
+  sourceConfidence   SourceConfidence      @default(UNVERIFIED)
+  overdueAt          DateTime?
+  completedAt        DateTime?
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+
+  owner            User?             @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  csmPartner       CSMPartner?       @relation(fields: [csmPartnerId], references: [id], onDelete: SetNull)
+  peo              PEO?              @relation(fields: [peoId], references: [id], onDelete: SetNull)
+  opportunity      Opportunity?      @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
+  territoryAccount TerritoryAccount? @relation(fields: [territoryAccountId], references: [id], onDelete: SetNull)
+
+  @@index([ownerId])
+  @@index([csmPartnerId])
+  @@index([peoId])
+  @@index([opportunityId])
+  @@index([territoryAccountId])
+  @@index([status])
+  @@index([dueAt])
+}
+
 model HmlClassification {
   id                    String           @id @default(cuid())
   category              HmlCategory
   accountId             String?
+  csmPartnerId          String?
+  peoId                 String?
+  opportunityId         String?
   classification        HmlValue
   confidence            SourceConfidence
   explanation           String
@@ -259,9 +479,15 @@ model HmlClassification {
   ruleVersion           String           @default("v0.1")
   createdAt             DateTime         @default(now())
 
-  account TerritoryAccount? @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  account     TerritoryAccount? @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  csmPartner  CSMPartner?       @relation(fields: [csmPartnerId], references: [id], onDelete: Cascade)
+  peo         PEO?              @relation(fields: [peoId], references: [id], onDelete: Cascade)
+  opportunity Opportunity?      @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
 
   @@index([category])
   @@index([accountId])
+  @@index([csmPartnerId])
+  @@index([peoId])
+  @@index([opportunityId])
   @@index([classification])
 }
