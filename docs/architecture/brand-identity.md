@@ -1,7 +1,7 @@
 ---
-title: PrismHR Global Command Center Brand Identity
+title: Field Signal Visual Identity
 status: Draft
-owner: Antaeus
+owner: Product Owner / Canon Owner
 related_plan: docs/plans/master-mvp-plan.md
 related_docs:
   - docs/architecture/design-system.md
@@ -11,473 +11,229 @@ related_docs:
   - docs/research/prismhr-global-video-notes.md
 ---
 
-# PrismHR Global Command Center Brand Identity
+# Field Signal Visual Identity
 
-## Brand Premise
+## Supersession
 
-The product is a light, tactical operating desk for finding high-fit Chicagoland prospects and moving through CSM-owned PEO relationships without damaging trust.
+This file supersedes the earlier custom Field Signal palette, old icon rules, and no-navy wording.
 
-The brand should feel like a clean field office for serious commercial judgment: precise, useful, composed, and alive with signal.
+The repo folder `antaeus-brand-kit/` is now the visual-system donor for this app. It provides breadth and depth for color roles, typography, spacing, motion, component grammar, icon construction, density, and governance.
 
-## Brand Promise
-
-Find the right prospects. Protect the trust path. Know the next safest move.
-
-## Positioning Line
-
-A prospecting and partner-motion command center for PrismHR Global.
-
-## Brand Architecture
-
-### Product
-
-- Product UI name: Field Signal
-- Full reference: Field Signal for PrismHR Global
-- Descriptor: prospecting and partner-motion command center
-
-### Primary Workspaces
-
-- Today: daily operating view
-- Prospect Field: Chicagoland prospecting
-- Partner Rooms: CSM relationship workspaces
-- Provider Network: PEO and payroll service bureau records
-- Signal Feed: HML signal layer
-- Pitch Rail: approved messaging and talk tracks
-- Boundaries: permission, off-limits, and safety rules
-- Unknowns: unresolved internal facts and operating ambiguity
-
-### Naming Relationship To PrismHR Global
-
-Field Signal is an internal operating product for PrismHR Global work. It should not pretend to be an official external PrismHR brand unless explicitly approved later.
-
-## Brand Principles
-
-1. Light by default
-   - No dark UI, no navy, no dark mode, no dramatic command-center black.
-
-2. Signal with restraint
-   - Color is used for meaning, not decoration.
-
-3. Prospecting is first-class
-   - Chicagoland account discovery is as central as CSM relationship management.
-
-4. Permission is visible
-   - The user should never wonder whether an action is safe.
-
-5. Source confidence travels with claims
-   - Research, inference, and canon are visually distinct.
-
-6. The system speaks like an operator
-   - Clear verbs, no hype, no CRM jargon.
-
-## Name System
-
-The repo can keep `PrismHR Global Command Center`, but the product UI should use a shorter internal product name.
-
-Recommended app name:
-
-**Field Signal**
-
-Why:
-
-- It covers prospecting, relationship movement, and HML signal.
-- It does not sound like a CRM.
-- It is serious without sounding bureaucratic.
-- It can scale beyond Chicagoland if the territory expands.
-
-Supporting names:
-
-- Full name: Field Signal for PrismHR Global
-- Short name: Field Signal
-- Internal descriptor: Prospecting and partner-motion command center
+It does not provide this app's name, product claim, wordmark, Grounded A mark, lockups, favicon, room model, or brand authorship.
 
 Do not use:
 
-- Pipeline
-- CRM
-- Sales hub
-- Lead machine
-- Growth cockpit
-- AI command center
-
-## Mark And Logo System
-
-### Core Mark Concept
-
-The Field Signal mark should combine three ideas:
-
-- a field line for prospecting territory;
-- a path node for relationship motion;
-- a small signal point for HML intelligence.
-
-Recommended mark:
-
-**Signal Plot**
-
-Construction:
-
-- A rounded square or soft rectangular frame.
-- Two thin field rows.
-- One path line crossing the rows.
-- One signal dot at the point where field and path meet.
-
-This creates a mark that can represent "finding signal in the field" without using a globe, funnel, target, or generic analytics icon.
-
-### Wordmark
+- Antaeus as a product name.
+- The Grounded A mark.
+- The Antaeus wordmark or lockups.
+- The donor kit favicon.
+- Donor product room names or claims when they do not belong to this app.
 
 Use:
 
-- `Field Signal`
+- `antaeus-brand-kit/css/tokens.css` as the color/type/spacing/motion baseline.
+- `antaeus-brand-kit/css/motion.css` as the motion grammar baseline.
+- `antaeus-brand-kit/spec/03-component-library-2026-06-07.md` for component depth.
+- `antaeus-brand-kit/spec/09-iconography-2026-06-07.md` for icon construction discipline.
+- `antaeus-brand-kit/spec/10-brand-identity-2026-06-12.md` only for the idea that identity geometry must be governed, not for the mark itself.
 
-Style:
+## Product Identity
 
-- Title case.
-- Medium weight.
-- No all-caps wordmark.
-- No negative letter spacing.
-- No condensed techno type.
+Working app name:
 
-### Lockups
-
-Allowed:
-
-- Mark + Field Signal
 - Field Signal
+
+Full reference:
+
 - Field Signal for PrismHR Global
 
-Not allowed:
+Descriptor:
 
-- Mark on dark background.
-- White/reversed logo lockup.
-- Gradient-filled mark.
-- Globe mark.
-- Sales funnel mark.
-- Rocket, target, or trophy symbol.
+- Prospecting and partner-motion command center for PrismHR Global.
 
-### Usage
+Brand promise:
 
-- Use the full mark in the app shell header or login/local landing screen.
-- Use the glyph-only mark in collapsed navigation.
-- Use text-only wordmark in dense product surfaces where space is limited.
-- Keep clear space equal to the mark's signal-dot diameter on all sides at minimum.
+- Find the right prospects. Protect the trust path. Know the next safest move.
 
-## Brand Voice
+The product remains a relationship-safe prospecting and partner-motion tool. The visual identity must reinforce evidence, permission, HML priority, and next safe action without becoming a CRM, outreach sequencer, or generic dashboard.
 
-### Voice Attributes
+## Visual Position
 
-- precise
-- calm
-- useful
-- field-aware
-- evidence-led
-- permission-conscious
+Field Signal should feel:
 
-### Sentence Shape
+- bright;
+- operator-grade;
+- evidence-led;
+- dense but readable;
+- grounded in commercial judgment;
+- distinctive enough not to look like a stock SaaS admin page.
 
-Prefer short direct statements:
+It should not feel:
 
-- "Permission needed before outreach."
-- "High fit, high caution."
-- "Source confidence is low."
-- "Add one qualification signal before creating an opportunity."
+- like the donor app;
+- like a dark command center;
+- like a sales leaderboard;
+- like a marketing landing page;
+- like an internal-company-system console;
+- like an outreach automation product.
 
-Avoid broad marketing claims inside the app:
+## Color Doctrine
 
-- "Unlock limitless growth."
-- "Transform your pipeline."
-- "Let AI find your next customer."
+Canonical runtime source:
 
-Avoid meta or scaffold claims inside the app:
+- [config/design-tokens.css](../../config/design-tokens.css)
 
-- "Code gate."
-- "Cloud database."
-- "Owner writes."
-- "MVP slice."
-- "Auth enabled."
-- "Prisma connected."
+Donor token source:
 
-The brand voice speaks from the operator's work, not from the implementation. Product UI should name the task, status, evidence, permission, risk, or next safe action. It should not narrate the build.
+- [antaeus-brand-kit/css/tokens.css](../../antaeus-brand-kit/css/tokens.css)
 
-### Explanation Pattern
+Core roles:
 
-Use:
+- Field: `--ds-field` / `#F5F7FB`
+- Surface: `--ds-surface` / `#FFFFFF`
+- Sub surface: `--ds-surface-sub` / `#FAFBFD`
+- Sunk surface: `--ds-surface-sunk` / `#EFF2F7`
+- Ink: `--ds-ink` / `#0A1C40`
+- Orange: `--ds-orange` / dominant move
+- Blue: `--ds-blue` / system intelligence and secondary action
+- Green: `--ds-green` / health, ready, low attention
+- Amber: `--ds-amber` / caution, medium attention
+- Red: `--ds-red` / real risk, high attention
 
-```text
-<Status> because <evidence>. Next safest action: <action>.
-```
+The old ban on "navy anywhere" is retired because the donor kit uses ink/navy as the readable text and icon stroke. The live constraint is sharper:
 
-Examples:
+- no dark surfaces;
+- no dark panels;
+- no dark decorative blocks;
+- no dark gradients;
+- no dark mode;
+- no black/chrome command-center shell;
+- no faded text as a substitute for hierarchy.
 
-- `High fit because the company is hiring in Canada and uses contractor-heavy roles. Next safest action: find a safe channel path.`
-- `Permission needed because the related provider has a CSM owner and no intro path is recorded. Next safest action: ask for context first.`
+Ink may be used for:
 
-## Light-Only Color Law
+- primary text;
+- headings;
+- icons;
+- table values;
+- borders when tokenized;
+- small product marks.
 
-This brand does not use dark color fields or dark surfaces. Dark text is allowed and expected.
+Ink may not be used for:
 
-Rules:
+- page backgrounds;
+- card backgrounds;
+- panels;
+- large brand fills;
+- decorative slabs.
 
-- No navy.
-- No dark blue.
-- No dark purple.
-- No black backgrounds.
-- No charcoal panels.
-- No dark gradients.
-- No dark-mode variant.
-- No dark decorative blocks.
-- No heavy shadows that make the UI feel dark.
-- No faded text.
+Orange is rationed. It marks the one dominant move, the active gauge, the selected or pending operational object, or a signal dot. It is not general decoration.
 
-Text rule:
+Blue is system intelligence: Wayfinder cues, search, source/evidence affordances, unknown/system states, and secondary actions.
 
-- Use strong ink for readable text and icons.
-- Do not use ink utilities as brand surfaces, backgrounds, large visual fields, or decorative fills.
-- Do not fade body text, labels, table values, helper text, or status copy.
-- Avoid opacity-based text. Disabled controls must remain legible and should explain why the action is unavailable when workflow impact is material.
-
-## Brand Palette
-
-### Base
-
-- `canvas`: `#F7FAFC`
-- `surface`: `#FFFFFF`
-- `surface-mist`: `#F2F7FA`
-- `surface-glass`: `#EEF6FA`
-- `line`: `#DCE7EE`
-- `line-strong`: `#C8D7E0`
-
-### Text Utilities
-
-- `ink`: `#1F2A30`
-- `ink-soft`: `#34434D`
-- `ink-support`: `#4F5B64`
-- `ink-disabled`: `#65727C`
-
-These are utility colors for legibility, not brand fields.
-
-### Brand Accents
-
-- `aqua`: `#6ECFE0`
-- `aqua-soft`: `#E5F8FB`
-- `mint`: `#7EDFC2`
-- `mint-soft`: `#E7FBF5`
-- `lilac`: `#C5B8FF`
-- `lilac-soft`: `#F1EEFF`
-- `coral`: `#FF9CA8`
-- `coral-soft`: `#FFF0F2`
-- `signal-yellow`: `#FFE082`
-- `signal-yellow-soft`: `#FFF7D6`
-
-Use accents as small signals, soft badge backgrounds, and selected states. Do not flood a page with one accent. Use the stronger semantic border/status-dot values for meaningful strokes.
-
-### Semantic Colors
-
-- High attention: accent `#FF8A96`, text `#1F2A30`, background `#FFF0F2`, border/status dot `#D43F51`
-- Medium attention: accent `#D8B84F`, text `#1F2A30`, background `#FFF7D6`, border/status dot `#34434D`
-- Low attention: accent `#67C9B0`, text `#1F2A30`, background `#E7FBF5`, border/status dot `#23836B`
-- Permission clear: accent `#67C9B0`, text `#1F2A30`, background `#E7FBF5`, border/status dot `#23836B`
-- Permission needed: accent `#D8B84F`, text `#1F2A30`, background `#FFF7D6`, border/status dot `#34434D`
-- Hold / sensitive: accent `#A6A8FF`, text `#1F2A30`, background `#F1EEFF`, border/status dot `#665DFF`
-- Off-limits: accent `#FF8A96`, text `#1F2A30`, background `#FFF0F2`, border/status dot `#D43F51`
-- Unknown / unverified: text `#1F2A30`, background `#F2F7FA`, border/status dot `#647887`
-- Prospect high fit: accent `#67C9B0`, text `#1F2A30`, background `#E7FBF5`, border/status dot `#23836B`
-- Prospect watch: accent `#D8B84F`, text `#1F2A30`, background `#FFF7D6`, border/status dot `#34434D`
-- Prospect parked: text `#1F2A30`, background `#F2F7FA`, border/status dot `#647887`
+Green, amber, and red are semantic only. Do not pick them for flavor.
 
 ## Typography
 
-Use a practical interface font with a clear editorial feel.
+Use the donor kit's three-font stack:
 
-Preferred:
+- DM Serif Display for authored headlines and product-level headings.
+- Public Sans for UI, tables, forms, buttons, and body copy.
+- JetBrains Mono for kickers, codes, tiny meters, timestamps, and compact operational labels.
 
-- Inter for product UI.
-- System fallback if Inter is not installed.
+Do not use negative letter spacing. Do not scale type with viewport width inside product surfaces. Dense panels should use smaller type, not hero-scale text.
 
-Tone:
+## Mark System
 
-- Compact.
-- Legible.
-- Never oversized inside operational surfaces.
-- No negative letter spacing.
+The app does not use the donor Grounded A.
 
-## Iconography: Field Glyphs
+Field Signal uses an app-specific signal/field mark:
 
-The app should use its own iconography system, called **Field Glyphs**.
+- field grid lines for prospecting territory;
+- a path line for relationship motion;
+- one orange signal dot for the active interpreted signal;
+- one blue direction angle for system intelligence.
 
-Field Glyphs are custom SVG icons built on a 24x24 grid.
+Construction must follow donor icon discipline:
 
-Detailed icon construction spec: [field-glyphs.md](field-glyphs.md)
+- flat terminals;
+- miter joins;
+- clear 24/48 grid;
+- 2px default stroke;
+- no filled icon containers;
+- color only when semantic.
+
+The mark is implemented in [src/components/brand.tsx](../../src/components/brand.tsx).
+
+## Iconography
+
+The old Field Glyph style is superseded by an app-owned icon set built from the donor iconography grammar.
+
+Current implementation:
+
+- [src/components/field-glyph.tsx](../../src/components/field-glyph.tsx)
+
+Design spec:
+
+- [docs/architecture/field-glyphs.md](field-glyphs.md)
 
 Rules:
 
-- Stroke-only icons.
-- 1.75px stroke.
-- Rounded caps and joins.
-- No filled blocks.
-- No dark icon containers.
-- Use `ink-soft` by default.
-- Use semantic accent strokes only when the icon itself carries status.
-- Each icon should include one small signal detail: a dot, tick, short ray, or path node.
-- Icons that carry meaning need at least 3:1 contrast against adjacent colors.
-- Icon-only controls must use a larger hit area than the visible glyph.
+- semantic icons only;
+- 24px viewBox;
+- 2px stroke;
+- flat caps;
+- miter joins;
+- no generic CRM metaphors;
+- no outreach automation metaphors unless a feature actually performs that action;
+- icon-only controls must have accessible names and at least a 32px hit area.
 
-Core visual motifs:
+## Navigation Identity
 
-- Path: relationship motion and channel path.
-- Pin: territory and prospecting.
-- Ring: permission and trust boundary.
-- Pulse: HML signal.
-- Field grid: Chicagoland fieldwork and account discovery.
-- Shield line: caution and off-limits.
-- Note fold: source evidence and confidence.
+The old left rail is not the visual default.
 
-### Required Field Glyphs
+Use a top Wayfinder:
 
-- `SignalHome`: dashboard / daily operating view.
-- `FieldMap`: Chicagoland prospecting.
-- `TrustPath`: CSM-owned relationship path.
-- `PartnerRoom`: CSM partner room.
-- `ProviderNode`: PEO record.
-- `ClientSignal`: PEO client or prospect signal.
-- `OpportunityPath`: opportunity movement.
-- `ServeNote`: daily serve.
-- `PromiseClock`: follow-up promise.
-- `PitchRail`: pitch library.
-- `PermissionRing`: permission state.
-- `BoundaryShield`: off-limits / boundary rule.
-- `HmlPulse`: HML signal feed.
-- `UnknownMark`: internal unknown.
-- `SourceFold`: source confidence.
-- `PrivateDebrief`: private CSM debrief.
-- `CanonStamp`: canon / approved decision.
+- product mark/name;
+- current trail;
+- Pulling cell for the active next safest action;
+- primary route links;
+- command affordance.
 
-### Icon Construction Notes
+Wayfinder is a visual pattern borrowed from the donor system. Labels, routes, and product language remain Field Signal-specific.
 
-- `FieldMap`: rounded map fold with one pin and one small signal dot.
-- `TrustPath`: two small nodes connected by a curved path, with a ring around the owner node.
-- `PermissionRing`: open ring for allowed, ring plus small bar for approval needed, closed ring for blocked.
-- `HmlPulse`: short baseline with three vertical pulses labeled visually by height, not by color alone.
-- `BoundaryShield`: shield outline with a horizontal hold line.
-- `ServeNote`: note page with a small outward arrow, but not a send-plane icon that implies automation.
+## Copy And Lexicon
 
-Implementation:
-
-- Create icons as local React SVG components under `src/components/icons/field-glyphs`.
-- Do not rely on lucide, stock, or ad hoc icons for primary navigation or product-specific status icons.
-- If Field Glyphs are not implemented yet, use text-only navigation until they are available.
-
-## Lexicon
-
-Use this vocabulary in navigation, headings, CTAs, and empty states.
-
-Detailed product vocabulary: [product-lexicon.md](product-lexicon.md)
-
-### Core Terms
-
-- Field Signal: the app.
-- Prospect Field: Chicagoland prospecting workspace.
-- Trust Path: relationship-owned channel path.
-- Partner Room: CSM workspace.
-- Provider: PEO or payroll service bureau.
-- Account Signal: researched clue that a company may fit PrismHR Global.
-- Qualification Signal: reason a prospect may need global payroll, EOR, contractor management, or recruiting.
-- Permission Posture: current actionability state.
-- Boundary Rule: structured off-limits or caution rule.
-- Next Safest Action: recommended action that preserves trust.
-- Daily Serve: useful CSM-facing asset or note.
-- Promise: follow-up commitment.
-- Private Debrief: internal CSM-facing recap.
-- Source Confidence: confidence in evidence.
-- Canon Status: whether a claim is canon, hypothesis, inference, unknown, or unverified.
-- Signal Feed: explainable HML event stream.
-- Watchlist: prospects or relationships worth monitoring.
-
-### HML Language
+The donor kit does not replace this app's domain language.
 
 Use:
 
-- High attention
-- Medium attention
-- Low attention
-- High fit
-- Medium fit
-- Low fit
-- High caution
-- Permission needed
-- Ownership unclear
+- [docs/architecture/product-lexicon.md](product-lexicon.md)
 
-Avoid:
+The interface should name the operator's work:
 
-- Hot lead
-- Warm lead
-- Cold lead
-- Score without explanation
-- AI says
-- Automated recommendation
+- Prospect Field;
+- Permission Posture;
+- Source Evidence;
+- Qualification Signals;
+- HML Priority;
+- Next Safest Action;
+- Boundary Rule;
+- Internal Unknown.
 
-### CTAs
-
-Preferred:
-
-- Add prospect
-- Add qualification signal
-- Record source
-- Set permission posture
-- Add boundary rule
-- Create next safest action
-- Log daily serve
-- Record outcome
-- Add private debrief
-- Resolve unknown
-- Promote to canon
-- Park for later
-
-Avoid:
-
-- Blast
-- Sequence
-- Auto-send
-- Push to CRM
-- Close deal
-- Launch campaign
-
-## Motion And Interaction
-
-Keep motion minimal and light.
-
-- 120-180ms for hover and selection.
-- No dramatic page transitions.
-- No dark overlays except a transparent modal scrim if required; prefer light scrims.
-- Use small pulse only for new HML events, and stop after one cycle.
-- Tables should not jump or resize during status changes.
-- Respect reduced-motion settings. Pulses, transitions, skeleton shimmer, and drawer animation must have reduced or static alternatives.
-- The main work surface must preserve permission posture and next safest action when the right rail collapses.
-
-## Data Visualization Style
-
-Use light visualizations:
-
-- Small bars.
-- Dot matrices.
-- Timeline rows.
-- Fit/risk quadrants with pale backgrounds.
-- No dark map tiles.
-- No dense heatmaps that look like cybersecurity dashboards.
-
-Chicagoland prospecting should be table-first for v1. A map may come later, but it must use a pale base map.
+It must never expose scaffold or implementation labels as product UI.
 
 ## Brand QA
 
-Before a screen is design-complete:
+A screen is visually aligned when:
 
-- No navy is present.
-- No dark surface is present.
-- No dark gradient is present.
-- The page still reads as light when filled with data.
-- The primary user can see prospect fit, permission posture, and next safest action without hunting.
-- Prospect fit claims show evidence, source confidence, and freshness.
-- Permission posture and next safest action are still visible when the right rail is hidden.
-- Icons feel like one family.
-- Copy uses the Field Signal lexicon.
-- HML and permission are labeled with text, not only color.
-- Prospecting and relationship safety both appear as first-class concerns.
+- it uses donor color roles through app tokens;
+- it does not use the donor name, mark, or wordmark;
+- it stays bright even when full of data;
+- ink is text/icon-only, not a surface;
+- orange appears as a real move or active signal, not decoration;
+- HML has a persistent panel and text explanation;
+- permission and next safest action remain visible near decisions;
+- source evidence and confidence travel with prospecting claims;
+- icons follow the donor construction grammar but remain app-owned;
+- the screen does not look like a generic CRM or outreach tool.

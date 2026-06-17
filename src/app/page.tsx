@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
+import { AppWayfinder } from "@/components/app-wayfinder";
 import { HmlPriorityPanel } from "@/components/hml-priority-panel";
 import { Button } from "@/components/ui/button";
 import { signOut } from "@/app/auth/actions";
@@ -58,36 +58,23 @@ export default async function Home() {
 
   return (
     <main className="app-shell">
-      <aside className="nav-rail" aria-label="Primary">
-        <div className="brand-mark" aria-hidden="true">
-          <span />
-        </div>
-        <div>
-          <p className="eyebrow">Field Signal</p>
-          <h1>PrismHR Global</h1>
-        </div>
-        <nav>
-          <a aria-current="page" href="#today">
-            Today
-          </a>
-          <Link href="/prospect-field">Prospect Field</Link>
-          <a href="#partner-rooms">Partner Rooms</a>
-          <a href="#signal-feed">Signal Feed</a>
-          <a href="#boundaries">Boundaries</a>
-        </nav>
-        <HmlPriorityPanel compact summary={dashboard.hmlSummary} />
-        <form action={signOut}>
-          <Button className="w-full" size="compact" type="submit" variant="quiet">
-            Sign out
-          </Button>
-        </form>
-      </aside>
+      <AppWayfinder
+        current="Today"
+        nextAction={nextSafestAction}
+        onSignOut={
+          <form action={signOut}>
+            <Button size="compact" type="submit" variant="quiet">
+              Sign out
+            </Button>
+          </form>
+        }
+      />
 
       <section className="work-surface" id="today">
         <header className="top-bar">
-          <div>
+          <div className="grid gap-2">
             <p className="eyebrow">Today</p>
-            <h2>Find the right prospects. Protect the trust path.</h2>
+            <h1>Find the right prospects. Protect the trust path.</h1>
           </div>
           <div className="status-pill">
             {dashboard.databaseReady ? "Live signals" : "Records unavailable"}
@@ -109,48 +96,53 @@ export default async function Home() {
           </div>
         </section>
 
-        <section className="panel-grid" aria-label="Workspace readiness">
-          {focusItems.map((item) => (
-            <article className="panel" id={item.id} key={item.label}>
-              <h3>{item.label}</h3>
-              <p>{item.body}</p>
-            </article>
-          ))}
-        </section>
+        <section className="dashboard-grid" aria-label="Today workspace">
+          <div className="dashboard-main">
+            <HmlPriorityPanel summary={dashboard.hmlSummary} />
 
-        <section className="table-panel" id="prospect-field">
-          <div className="section-heading">
-            <div>
-              <p className="eyebrow">Operating posture</p>
-              <h3>Prospecting guardrails</h3>
-            </div>
-          </div>
-          <div className="readiness-list">
-            {operatingItems.map((item) => (
-              <div className="readiness-row" key={item}>
-                <span className="status-dot" aria-hidden="true" />
-                <span>{item}</span>
+            <section className="panel-grid" aria-label="Workspace readiness">
+              {focusItems.map((item) => (
+                <article className="panel" id={item.id} key={item.label}>
+                  <h3>{item.label}</h3>
+                  <p>{item.body}</p>
+                </article>
+              ))}
+            </section>
+
+            <section className="table-panel" id="prospect-field">
+              <div className="section-heading">
+                <div>
+                  <p className="eyebrow">Operating posture</p>
+                  <h3>Prospecting guardrails</h3>
+                </div>
               </div>
-            ))}
+              <div className="readiness-list">
+                {operatingItems.map((item) => (
+                  <div className="readiness-row" key={item}>
+                    <span className="status-dot" aria-hidden="true" />
+                    <span>{item}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
           </div>
+
+          <aside className="right-rail" aria-label="Operating context">
+            <section id="boundaries">
+              <p className="eyebrow">Pitch rail</p>
+              <h2>Prospecting and partner-motion command center.</h2>
+              <p>
+                Prospect Field keeps account evidence, source confidence, permission
+                posture, and next safest action close together.
+              </p>
+            </section>
+            <section>
+              <p className="eyebrow">Boundary</p>
+              <p>Research can raise priority. It cannot override permission.</p>
+            </section>
+          </aside>
         </section>
       </section>
-
-      <aside className="right-rail" aria-label="Intelligence rail">
-        <HmlPriorityPanel summary={dashboard.hmlSummary} />
-        <section id="boundaries">
-          <p className="eyebrow">Pitch rail</p>
-          <h2>Prospecting and partner-motion command center.</h2>
-          <p>
-            Prospect Field keeps account evidence, source confidence, permission posture,
-            and next safest action close together.
-          </p>
-        </section>
-        <section>
-          <p className="eyebrow">Boundary</p>
-          <p>Research can raise priority. It cannot override permission.</p>
-        </section>
-      </aside>
     </main>
   );
 }

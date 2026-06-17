@@ -83,14 +83,14 @@ Tags: `relationship-motion`, `hml`, `decision-log`, `plan-before-code`
 
 Indexed items:
 
-- [docs/architecture/design-brand-audit.md](architecture/design-brand-audit.md): audit of missing brand/design depth and durable non-negotiables for implementation.
-- [docs/architecture/brand-identity.md](architecture/brand-identity.md): light-only brand identity for Field Signal, including brand promise, naming system, no-navy color law, custom Field Glyph iconography, lexicon, and brand QA.
-- [docs/architecture/field-glyphs.md](architecture/field-glyphs.md): custom iconography construction system for Field Glyphs, including required icons, anatomy, component API, and QA.
+- [docs/architecture/design-brand-audit.md](architecture/design-brand-audit.md): audit of the donor-kit adoption boundary, including the decision to use `antaeus-brand-kit/` for visual-system depth but not app name, mark, wordmark, favicon, or donor product identity.
+- [docs/architecture/brand-identity.md](architecture/brand-identity.md): Field Signal visual identity, including the donor-kit boundary, Signal Plot app mark, color-role doctrine, typography, iconography, lexicon, and brand QA.
+- [docs/architecture/field-glyphs.md](architecture/field-glyphs.md): app-owned iconography system using the donor kit's construction grammar: 24px grid, 2px stroke, flat terminals, miter joins, semantic accents, and no donor identity assets.
 - [docs/architecture/product-lexicon.md](architecture/product-lexicon.md): governed UI vocabulary, navigation labels, CTAs, status labels, empty-state language, table naming, and forbidden CRM/outreach terms.
 - [docs/architecture/design-system.md](architecture/design-system.md): draft design system for the app shell, layout, visual language, semantic tokens, HML and permission treatments, Chicagoland prospecting UX, core components, page patterns, accessibility, and implementation mapping.
-- [config/design-tokens.css](../config/design-tokens.css): starter CSS custom properties for the light-only, non-earth-tone Field Signal palette, semantic colors, spacing, radius, typography, elevation, and motion.
+- [config/design-tokens.css](../config/design-tokens.css): runtime visual tokens importing donor kit colors/motion and mapping app aliases to Field Signal roles.
 - Key implication: the UI should feel like a dense operator-grade command center, not a generic CRM, marketing site, or outreach tool. Visual decoration is allowed when it improves hierarchy, scanability, product identity, or operator focus.
-- Brand constraint: no navy, no dark UI, no dark mode, no dark gradients, no earth-tone palette, and no internal-company-system integration cues.
+- Brand constraint: no donor identity assets, no dark surfaces, no dark UI, no dark mode, no dark gradients, no earth-tone palette, no scaffold copy, and no internal-company-system integration cues. Ink/navy is allowed only for readable text and icon strokes.
 
 ### PrismHR Global Video Notes
 
@@ -113,10 +113,10 @@ Indexed items:
 | Clarifying Question Answers | [docs/skills/clarifying questions_skills/Answers to Clarifying Questions.md](skills/clarifying%20questions_skills/Answers%20to%20Clarifying%20Questions.md) | `skills`, `decision-log`, `hml`, `relationship-motion`, `plan-before-code`, `ci` | Resolved governance answers for all five skills, including owner model, advisory-vs-CI posture, canon promotion evidence, HML inputs, relationship overrides, private notes, and planning approval rules. |
 | Master MVP Plan | [docs/plans/master-mvp-plan.md](plans/master-mvp-plan.md) | `skills`, `decision-log`, `hml`, `relationship-motion`, `plan-before-code`, `ci` | Approved implementation contract covering product definition, MVP scope, data model, UX, workflows, HML engine, architecture, build phases, blockers, and risks. |
 | PrismHR Global Video Notes | [docs/research/prismhr-global-video-notes.md](research/prismhr-global-video-notes.md) | `hml`, `relationship-motion`, `decision-log` | Video/transcript source notes supporting the prospecting and PrismHR Global positioning layer. |
-| Brand Identity | [docs/architecture/brand-identity.md](architecture/brand-identity.md) | `relationship-motion`, `hml`, `decision-log`, `plan-before-code` | Light-only brand system for Field Signal, including color law, naming, custom iconography, lexicon, motion, and brand QA. |
-| Design System | [docs/architecture/design-system.md](architecture/design-system.md) | `relationship-motion`, `hml`, `decision-log`, `plan-before-code` | Draft UI system covering layout, tokens, components, page patterns, prospecting UX, permission gates, HML explanation, and implementation mapping. |
-| Design/Brand Audit | [docs/architecture/design-brand-audit.md](architecture/design-brand-audit.md) | `relationship-motion`, `hml`, `decision-log`, `plan-before-code` | Gap audit documenting what was missing and the non-negotiables for design-complete screens. |
-| Field Glyphs | [docs/architecture/field-glyphs.md](architecture/field-glyphs.md) | `relationship-motion`, `hml`, `decision-log`, `plan-before-code` | Dedicated custom SVG iconography system with construction rules and required glyph specifications. |
+| Brand Identity | [docs/architecture/brand-identity.md](architecture/brand-identity.md) | `relationship-motion`, `hml`, `decision-log`, `plan-before-code` | Field Signal visual identity with donor-kit visual doctrine, explicit exclusion of donor name/mark/wordmark, Signal Plot mark, role colors, typography, iconography, lexicon, and brand QA. |
+| Design System | [docs/architecture/design-system.md](architecture/design-system.md) | `relationship-motion`, `hml`, `decision-log`, `plan-before-code` | Runtime UI system covering donor-token mapping, Wayfinder shell, HML priority panel, Safety Strip, component rules, accessibility, and implementation mapping. |
+| Design/Brand Audit | [docs/architecture/design-brand-audit.md](architecture/design-brand-audit.md) | `relationship-motion`, `hml`, `decision-log`, `plan-before-code` | Gap audit documenting corrected donor-kit adoption boundaries and design-complete non-negotiables. |
+| Field Signal Iconography | [docs/architecture/field-glyphs.md](architecture/field-glyphs.md) | `relationship-motion`, `hml`, `decision-log`, `plan-before-code` | App-owned SVG iconography system borrowing donor construction grammar while excluding donor identity assets. |
 | Product Lexicon | [docs/architecture/product-lexicon.md](architecture/product-lexicon.md) | `relationship-motion`, `hml`, `decision-log`, `plan-before-code` | Governed product vocabulary to prevent generic CRM, outreach, and automation language. |
 
 ## Tag Index

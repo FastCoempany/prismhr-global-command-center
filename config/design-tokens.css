@@ -1,162 +1,145 @@
+@import "../antaeus-brand-kit/css/tokens.css";
+@import "../antaeus-brand-kit/css/motion.css";
+
 :root {
   color-scheme: light;
 
-  /* Base */
-  --color-canvas: #f7fafc;
-  --color-surface: #ffffff;
-  --color-surface-mist: #f2f7fa;
-  --color-surface-glass: #eef6fa;
-  --color-line: #dce7ee;
-  --color-line-strong: #c8d7e0;
-  --color-control-border: #7f93a1;
-  --color-control-border-strong: #647887;
+  /*
+   * Visual doctrine donor:
+   * Use antaeus-brand-kit for color, type, spacing, motion, density, and icon
+   * grammar. Do not use the Antaeus name, Grounded A mark, or wordmark.
+   */
 
-  /* Functional ink. Use only for readable text and icons, never surfaces. */
-  --color-ink: #1f2a30;
-  --color-ink-soft: #34434d;
-  --color-ink-support: #4f5b64;
-  --color-ink-disabled: #65727c;
+  /* Legacy aliases used by the current app while components migrate to --ds-*. */
+  --color-canvas: var(--ds-field);
+  --color-surface: var(--ds-surface);
+  --color-surface-mist: var(--ds-surface-sub);
+  --color-surface-glass: var(--ds-surface-sunk);
+  --color-line: var(--ds-hair-strong);
+  --color-line-strong: var(--ds-rule);
+  --color-control-border: var(--ds-rule);
+  --color-control-border-strong: var(--ds-ink-quiet);
 
-  /* Brand accents */
-  --color-aqua: #6ecfe0;
-  --color-aqua-soft: #e5f8fb;
-  --color-mint: #7edfc2;
-  --color-mint-soft: #e7fbf5;
-  --color-lilac: #c5b8ff;
-  --color-lilac-soft: #f1eeff;
-  --color-coral: #ff9ca8;
-  --color-coral-soft: #fff0f2;
-  --color-signal-yellow: #ffe082;
-  --color-signal-yellow-soft: #fff7d6;
+  /* Ink is allowed for readable text and icon strokes, never as a surface. */
+  --color-ink: var(--ds-ink);
+  --color-ink-soft: var(--ds-ink-700);
+  --color-ink-support: var(--ds-ink-700);
+  --color-ink-disabled: var(--ds-ink-soft);
 
-  /* Actions */
-  --color-action-primary: #e7fbf5;
-  --color-action-primary-hover: #d5f5ec;
-  --color-action-primary-border: #23836b;
-  --color-action-secondary: #e5f8fb;
-  --color-action-secondary-hover: #d6f2f6;
-  --color-action-secondary-border: #007a8a;
-  --color-focus-ring: #c9345c;
-  --color-selection: #e7fbf5;
+  /* Action roles from the donor kit. */
+  --color-action-primary: var(--ds-orange);
+  --color-action-primary-hover: var(--ds-orange-strong);
+  --color-action-primary-border: var(--ds-orange);
+  --color-action-secondary: var(--ds-blue-soft);
+  --color-action-secondary-hover: rgba(37, 99, 235, 0.14);
+  --color-action-secondary-border: var(--ds-blue);
+  --color-focus-ring: var(--ds-orange);
+  --color-selection: var(--ds-orange-tint);
 
-  /* HML and decision semantics */
-  --color-high: #ff8a96;
-  --color-high-fg: #1f2a30;
-  --color-high-bg: #fff0f2;
-  --color-high-border: #d43f51;
-  --color-medium: #d8b84f;
-  --color-medium-fg: #1f2a30;
-  --color-medium-bg: #fff7d6;
-  --color-medium-border: #34434d;
-  --color-low: #67c9b0;
-  --color-low-fg: #1f2a30;
-  --color-low-bg: #e7fbf5;
-  --color-low-border: #23836b;
+  /* HML and decision semantics. */
+  --color-high: var(--ds-red);
+  --color-high-fg: var(--ds-ink);
+  --color-high-bg: var(--ds-red-soft);
+  --color-high-border: var(--ds-red);
+  --color-medium: var(--ds-amber);
+  --color-medium-fg: var(--ds-ink);
+  --color-medium-bg: var(--ds-amber-soft);
+  --color-medium-border: var(--ds-amber);
+  --color-low: var(--ds-green);
+  --color-low-fg: var(--ds-ink);
+  --color-low-bg: var(--ds-green-soft);
+  --color-low-border: var(--ds-green);
 
-  /* Permission and source semantics */
-  --color-permission-clear: #67c9b0;
-  --color-permission-clear-fg: #1f2a30;
-  --color-permission-clear-bg: #e7fbf5;
-  --color-permission-clear-border: #23836b;
-  --color-permission-needed: #d8b84f;
-  --color-permission-needed-fg: #1f2a30;
-  --color-permission-needed-bg: #fff7d6;
-  --color-permission-needed-border: #34434d;
-  --color-hold-sensitive: #a6a8ff;
-  --color-hold-sensitive-fg: #1f2a30;
-  --color-hold-sensitive-border: #665dff;
-  --color-hold-sensitive-bg: #f1eeff;
-  --color-off-limits: #ff8a96;
-  --color-off-limits-fg: #1f2a30;
-  --color-off-limits-bg: #fff0f2;
-  --color-off-limits-border: #d43f51;
-  --color-unknown: #4f5b64;
-  --color-unknown-fg: #1f2a30;
-  --color-unknown-bg: #f2f7fa;
-  --color-unknown-border: #647887;
+  /* Permission and source semantics. */
+  --color-permission-clear: var(--ds-green);
+  --color-permission-clear-fg: var(--ds-ink);
+  --color-permission-clear-bg: var(--ds-green-soft);
+  --color-permission-clear-border: var(--ds-green);
+  --color-permission-needed: var(--ds-amber);
+  --color-permission-needed-fg: var(--ds-ink);
+  --color-permission-needed-bg: var(--ds-amber-soft);
+  --color-permission-needed-border: var(--ds-amber);
+  --color-hold-sensitive: var(--ds-amber);
+  --color-hold-sensitive-fg: var(--ds-ink);
+  --color-hold-sensitive-border: var(--ds-amber);
+  --color-hold-sensitive-bg: var(--ds-amber-soft);
+  --color-off-limits: var(--ds-red);
+  --color-off-limits-fg: var(--ds-ink);
+  --color-off-limits-bg: var(--ds-red-soft);
+  --color-off-limits-border: var(--ds-red);
+  --color-unknown: var(--ds-blue);
+  --color-unknown-fg: var(--ds-ink);
+  --color-unknown-bg: var(--ds-blue-soft);
+  --color-unknown-border: var(--ds-blue);
 
-  /* Prospecting fit */
-  --color-prospect-high-fit: #67c9b0;
-  --color-prospect-high-fit-fg: #1f2a30;
-  --color-prospect-high-fit-bg: #e7fbf5;
-  --color-prospect-high-fit-border: #23836b;
-  --color-prospect-watch: #d8b84f;
-  --color-prospect-watch-fg: #1f2a30;
-  --color-prospect-watch-bg: #fff7d6;
-  --color-prospect-watch-border: #34434d;
-  --color-prospect-parked: #4f5b64;
-  --color-prospect-parked-fg: #1f2a30;
-  --color-prospect-parked-bg: #f2f7fa;
-  --color-prospect-parked-border: #647887;
-  --color-boundary-risk: #ff8a96;
-  --color-boundary-risk-fg: #1f2a30;
-  --color-boundary-risk-bg: #fff0f2;
-  --color-boundary-risk-border: #d43f51;
+  /* Prospecting fit. */
+  --color-prospect-high-fit: var(--ds-green);
+  --color-prospect-high-fit-fg: var(--ds-ink);
+  --color-prospect-high-fit-bg: var(--ds-green-soft);
+  --color-prospect-high-fit-border: var(--ds-green);
+  --color-prospect-watch: var(--ds-amber);
+  --color-prospect-watch-fg: var(--ds-ink);
+  --color-prospect-watch-bg: var(--ds-amber-soft);
+  --color-prospect-watch-border: var(--ds-amber);
+  --color-prospect-parked: var(--ds-blue);
+  --color-prospect-parked-fg: var(--ds-ink);
+  --color-prospect-parked-bg: var(--ds-blue-soft);
+  --color-prospect-parked-border: var(--ds-blue);
+  --color-boundary-risk: var(--ds-red);
+  --color-boundary-risk-fg: var(--ds-ink);
+  --color-boundary-risk-bg: var(--ds-red-soft);
+  --color-boundary-risk-border: var(--ds-red);
 
-  /* Typography */
-  --font-sans:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    sans-serif;
-  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-  --text-page-title: 24px;
-  --text-section-title: 18px;
-  --text-panel-title: 15px;
-  --text-body: 14px;
-  --text-small: 12px;
-  --line-page-title: 32px;
-  --line-section-title: 26px;
-  --line-panel-title: 22px;
-  --line-body: 20px;
-  --line-small: 16px;
+  /* Typography. */
+  --ds-font-serif: var(--font-donor-serif), "DM Serif Display", serif;
+  --ds-font-sans:
+    var(--font-donor-sans), "Public Sans", -apple-system, system-ui, sans-serif;
+  --ds-font-mono: var(--font-donor-mono), "JetBrains Mono", monospace;
+  --font-serif: var(--ds-font-serif);
+  --font-sans: var(--ds-font-sans);
+  --font-mono: var(--ds-font-mono);
+  --text-page-title: 32px;
+  --text-section-title: 22px;
+  --text-panel-title: var(--ds-type-title);
+  --text-body: var(--ds-type-body);
+  --text-small: var(--ds-type-label);
+  --line-page-title: 38px;
+  --line-section-title: 28px;
+  --line-panel-title: 25px;
+  --line-body: 24px;
+  --line-small: 18px;
 
-  /* Spacing */
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 20px;
-  --space-6: 24px;
-  --space-8: 32px;
+  /* Spacing aliases. */
+  --space-1: var(--ds-space-1);
+  --space-2: var(--ds-space-2);
+  --space-3: var(--ds-space-3);
+  --space-4: var(--ds-space-4);
+  --space-5: var(--ds-space-5);
+  --space-6: var(--ds-space-6);
+  --space-8: var(--ds-space-8);
 
-  /* Shape */
-  --radius-xs: 3px;
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 8px;
-  --radius-pill: 999px;
+  /* Shape. */
+  --radius-xs: var(--ds-radius-control);
+  --radius-sm: var(--ds-radius-control);
+  --radius-md: var(--ds-radius-control);
+  --radius-lg: var(--ds-radius-card);
+  --radius-pill: var(--ds-radius-pill);
 
-  /* Elevation */
-  --shadow-hairline: 0 0 0 1px var(--color-line);
-  --shadow-raised: 0 8px 20px rgba(57, 67, 74, 0.08);
-  --shadow-overlay: 0 16px 36px rgba(57, 67, 74, 0.12);
+  /* Elevation. */
+  --shadow-hairline: 0 0 0 1px var(--ds-hair-strong);
+  --shadow-raised: var(--ds-shadow-rest);
+  --shadow-overlay: var(--ds-shadow-lift);
 
-  /* Motion */
-  --duration-fast: 120ms;
-  --duration-base: 180ms;
-  --duration-slow: 260ms;
-  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  /* Motion aliases. */
+  --duration-fast: var(--ds-motion-quick);
+  --duration-base: var(--ds-motion-base);
+  --duration-slow: var(--ds-motion-considered);
+  --ease-standard: var(--ds-ease-standard);
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-focus-ring);
+  outline: 3px solid var(--ds-orange-soft);
   outline-offset: 2px;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  :root {
-    --duration-fast: 0ms;
-    --duration-base: 0ms;
-    --duration-slow: 0ms;
-  }
-
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    scroll-behavior: auto !important;
-    transition-duration: 0.01ms !important;
-  }
 }
 
 @media (forced-colors: active) {

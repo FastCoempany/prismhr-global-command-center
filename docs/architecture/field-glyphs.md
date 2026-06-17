@@ -1,444 +1,178 @@
 ---
-title: Field Glyphs Iconography System
+title: Field Signal Iconography System
 status: Draft
-owner: Antaeus
+owner: Product Owner / Canon Owner
 related_docs:
   - docs/architecture/brand-identity.md
   - docs/architecture/design-system.md
 ---
 
-# Field Glyphs Iconography System
+# Field Signal Iconography System
+
+## Supersession
+
+This document replaces the earlier Field Glyph spec.
+
+The app's iconography now borrows the construction discipline from `antaeus-brand-kit/spec/09-iconography-2026-06-07.md`, but it does not borrow the donor app's mark, wordmark, name, favicon, or room icons verbatim.
 
 ## Purpose
 
-Field Glyphs are the custom icon system for Field Signal.
+Field Signal icons make the product feel owned without looking like a generic SaaS dashboard.
 
-They exist to prevent the app from looking like a generic SaaS dashboard and to make the product's core ideas visually ownable:
+They must support:
 
-- Chicagoland prospecting
-- trust paths
-- permission posture
-- HML signal
-- source confidence
-- boundary risk
-- daily serves
-- internal unknowns
+- Chicagoland prospecting;
+- qualification signals;
+- source evidence;
+- permission posture;
+- relationship trust paths;
+- HML Priority;
+- boundary risk;
+- internal unknowns;
+- next safest action.
 
-## Core Rules
+## Construction Rules
 
-- Canvas: 24x24.
-- Stroke: 1.75px.
-- Style: line icon, no filled blocks.
-- Caps: round.
-- Joins: round.
-- Corners: soft but not playful.
-- Default stroke: `ink-soft`.
-- Accent stroke: one brand accent only when status is meaningful.
-- No dark containers.
-- No filled circular icon backgrounds for primary navigation.
-- No generic stock-icon metaphors when a Field Signal metaphor exists.
-- No third-party icon set for primary navigation.
-- Meaningful glyph strokes must maintain at least 3:1 contrast against adjacent colors.
-- Interactive glyph controls need at least a 32px by 32px hit area, even when the visible glyph is 16px or 20px.
+Canvas:
 
-## Anatomy
+- 24px viewBox for normal icons.
+- 48px viewBox allowed for the product mark.
 
-Each Field Glyph should combine:
+Stroke:
 
-1. Base form
-   - The object or concept.
+- 2px default.
+- Flat terminals.
+- Miter joins.
+- No round-cap generic SaaS softness.
+- No hairline detail that disappears at 16px.
 
-2. Signal detail
-   - A small dot, pulse, tick, ray, path node, fold, or ring.
+Color:
 
-3. Motion cue
-   - A subtle line direction or path, only when it helps meaning.
+- Ink by default.
+- One accent only when the icon carries semantic state.
+- Orange for active signal or dominant move.
+- Blue for system intelligence, source, search, unknown, or route.
+- Green for ready/healthy.
+- Amber for caution.
+- Red for real risk.
 
-Do not add all three if the icon becomes busy. At small sizes, clarity wins.
+Shape:
 
-## Grid
+- geometric;
+- field/grid/path/ring/fold motifs;
+- no filled icon containers;
+- no dark icon tiles;
+- no heavy filled pictograms.
 
-- Outer safe area: 2px.
-- Main strokes should sit between x/y 3 and 21.
-- Small signal dots should be 2px to 2.5px.
-- Avoid hairline details below 1.5px spacing.
-- Keep icons legible at 16px.
+## Product Mark
 
-## Icon Families
+The app mark is Signal Plot:
 
-### Navigation Glyphs
+- horizontal field grid;
+- relationship path line;
+- orange signal dot;
+- blue direction angle.
 
-Used in the left navigation.
+Implementation:
 
-Must be recognizable at 20px.
+- [src/components/brand.tsx](../../src/components/brand.tsx)
+- [src/app/icon.svg](../../src/app/icon.svg)
 
-- `SignalHome`
-- `FieldMap`
-- `PartnerRoom`
-- `ProviderNode`
-- `OpportunityPath`
-- `ServeNote`
-- `PromiseClock`
-- `PitchRail`
-- `HmlPulse`
-- `BoundaryShield`
-- `UnknownMark`
+This mark is app-owned. It is not the donor Grounded A.
 
-### Status Glyphs
+## Current Glyph Set
 
-Used in badges, panels, and tables.
+Implementation:
 
-Must work at 14px to 16px.
+- [src/components/field-glyph.tsx](../../src/components/field-glyph.tsx)
 
-- `PermissionRing`
-- `SourceFold`
-- `CanonStamp`
-- `PrivateDebrief`
-- `FitSignal`
-- `CautionRay`
-- `BlockedHold`
-- `WatchDot`
+Current names:
 
-### Relationship Glyphs
+- `signal`: HML priority, signal feed, interpreted operating signal.
+- `gauge`: meter, priority distribution, pressure read.
+- `prospect`: Prospect Field and account research.
+- `trust`: relationship path and CSM-owned motion.
+- `permission`: permission posture and safe action check.
+- `evidence`: source evidence and captured claim.
+- `unknown`: internal unknown or unresolved operating fact.
+- `find`: search or research.
+- `add`: create/add action.
+- `ready`: saved, ready, or clear state.
+- `attention`: caution or active risk.
 
-Used in detail pages and diagrams.
+## Required Future Glyphs
 
-- `TrustPath`
-- `OwnerNode`
-- `IntroPath`
-- `DebriefLoop`
-- `ChannelBridge`
+Add only when a screen needs them:
 
-## Required Glyph Specifications
+- `boundary`: off-limits, hold, or sensitive rule.
+- `provider`: PEO or payroll service bureau.
+- `partnerRoom`: CSM workspace.
+- `promise`: follow-up commitment.
+- `pitch`: approved talk track or pitch rail.
+- `canon`: approved decision/canon state.
+- `privateNote`: private CSM debrief.
+- `opportunity`: permission-cleared opportunity path.
 
-### SignalHome
+Each addition must update this file, the React component, and any screenshots or QA notes that depend on it.
 
-Meaning:
+## Semantic Mapping
 
-- Daily operating view.
-
-Construction:
-
-- Rounded square outline suggesting a desk tile.
-- Three small horizontal rows.
-- One pulse dot in the upper right.
-
-Avoid:
-
-- House icon.
-- Dashboard speedometer.
-
-### FieldMap
-
-Meaning:
-
-- Chicagoland prospecting / Prospect Field.
-
-Construction:
-
-- Folded map outline with two soft vertical fold lines.
-- One pin built from a ring and point.
-- One small signal dot near the pin.
-
-Avoid:
-
-- Globe.
-- Dark map tile.
-- Generic location marker alone.
-
-### TrustPath
-
-Meaning:
-
-- Relationship-owned channel path.
-
-Construction:
-
-- Three nodes connected by a curved line.
-- First node has a soft owner ring.
-- Last node has a small open endpoint.
-
-Avoid:
-
-- Sales funnel.
-- Network clutter.
-
-### PartnerRoom
-
-Meaning:
-
-- CSM workspace.
-
-Construction:
-
-- Open doorway or room frame.
-- One owner node inside.
-- Small check or signal dot near the frame.
-
-Avoid:
-
-- Handshake as the primary metaphor.
-- People silhouettes.
-
-### ProviderNode
-
-Meaning:
-
-- PEO / payroll service bureau.
-
-Construction:
-
-- Rounded building outline or stacked service nodes.
-- One connected side node.
-- Light signal tick.
-
-Avoid:
-
-- Corporate skyscraper.
-- Bank icon.
-
-### ClientSignal
-
-Meaning:
-
-- Prospect or PEO client qualification signal.
-
-Construction:
-
-- Small document/card outline.
-- One signal dot.
-- One short diagonal ray.
-
-Avoid:
-
-- User avatar.
-- Lead/person icon.
-
-### OpportunityPath
-
-Meaning:
-
-- Opportunity movement with permission gates.
-
-Construction:
-
-- Curved path with two nodes.
-- Small gate/ring in the middle.
-- Endpoint tick.
-
-Avoid:
-
-- Rocket.
-- Trophy.
-- Dollar sign.
-
-### ServeNote
-
-Meaning:
-
-- Daily Serve.
-
-Construction:
-
-- Note page with folded corner.
-- Small outward arrow or usefulness spark.
-- No send-plane.
-
-Avoid:
-
-- Paper airplane, because the app does not automate outreach.
-
-### PromiseClock
-
-Meaning:
-
-- Follow-up promise.
-
-Construction:
-
-- Small clock ring.
-- Checkmark tail integrated into lower right.
-
-Avoid:
-
-- Alarm bell unless used for overdue status.
-
-### PitchRail
-
-Meaning:
-
-- Persistent pitch library / right rail.
-
-Construction:
-
-- Vertical panel outline.
-- Two short content lines.
-- One small approved dot.
-
-Avoid:
-
-- Megaphone as the primary symbol.
-
-### PermissionRing
-
-Meaning:
-
-- Permission posture.
-
-Construction variants:
-
-- Clear: open ring with small check.
-- Needed: ring with small gap and dot.
-- Blocked: closed ring with horizontal hold line.
-
-Avoid:
-
-- Lock-only metaphor. Permission is contextual, not just security.
-
-### BoundaryShield
-
-Meaning:
-
-- Off-limits or boundary rule.
-
-Construction:
-
-- Shield outline.
-- Horizontal hold line.
-- Optional small signal dot for active rule.
-
-Avoid:
-
-- Police/security aesthetic.
-
-### HmlPulse
-
-Meaning:
-
-- Explainable signal classification.
-
-Construction:
-
-- Baseline with three uneven pulses.
-- Small source dot at start.
-
-Avoid:
-
-- Heartbeat medical icon if it reads too clinical.
-- Lightning bolt.
-
-### UnknownMark
-
-Meaning:
-
-- Internal unknown / unresolved operating fact.
-
-Construction:
-
-- Small circle or open loop.
-- Question mark implied through dot and curve.
-- No full question mark if it looks cartoonish.
-
-Avoid:
-
-- Warning triangle unless the unknown is blocking.
-
-### SourceFold
-
-Meaning:
-
-- Source confidence / evidence.
-
-Construction:
-
-- Document fold.
-- Small anchor dot.
-- One short underline.
-
-Avoid:
-
-- Clipboard icon.
-
-### PrivateDebrief
-
-Meaning:
-
-- Private CSM debrief.
-
-Construction:
-
-- Note page.
-- Small side ring representing internal audience.
-- Soft diagonal privacy line.
-
-Avoid:
-
-- Lock-only icon.
-
-### CanonStamp
-
-Meaning:
-
-- Approved canon / owner decision.
-
-Construction:
-
-- Small stamp outline.
-- Check line.
-- Source dot.
-
-Avoid:
-
-- Legal gavel.
-
-## Component API Recommendation
-
-```tsx
-type FieldGlyphName =
-  | "SignalHome"
-  | "FieldMap"
-  | "TrustPath"
-  | "PartnerRoom"
-  | "ProviderNode"
-  | "ClientSignal"
-  | "OpportunityPath"
-  | "ServeNote"
-  | "PromiseClock"
-  | "PitchRail"
-  | "PermissionRing"
-  | "BoundaryShield"
-  | "HmlPulse"
-  | "UnknownMark"
-  | "SourceFold"
-  | "PrivateDebrief"
-  | "CanonStamp";
-
-type FieldGlyphProps = {
-  name: FieldGlyphName;
-  size?: 16 | 18 | 20 | 24;
-  tone?: "default" | "aqua" | "mint" | "lilac" | "coral" | "signal-yellow" | "attention-high" | "muted";
-  interactive?: boolean;
-  title?: string;
-  decorative?: boolean;
-};
-```
+Navigation:
+
+- Today: `signal` or app mark.
+- Prospect Field: `prospect`.
+- Trust Path / Partner Rooms: `trust`.
+- Boundaries: `permission` or future `boundary`.
+- Unknowns: `unknown`.
+
+Status:
+
+- HML High: label plus red badge, optional `attention`.
+- HML Medium: label plus amber badge.
+- HML Low: label plus green badge or `ready`.
+- Source evidence: `evidence` with blue.
+- Permission posture: `permission` with semantic accent.
+
+Actions:
+
+- Add prospect: `add`.
+- Research/find source: `find`.
+- Confirm/save: `ready`.
 
 ## Accessibility
 
-- Informational icons need accessible names.
-- Decorative icons must set `aria-hidden`.
-- Status icons must never be the only status indicator.
-- Icon-only buttons must have tooltip and accessible label.
-- `interactive` glyph wrappers must provide the accessible name, keyboard focus, and target size; the SVG itself should not own button behavior.
+Rules:
+
+- Decorative icons use `aria-hidden`.
+- Informational icons need accessible names or adjacent text.
+- Status icons are never the only status indicator.
+- Icon-only controls require an accessible label and tooltip.
+- Interactive wrappers should be at least 32px by 32px.
+- Dense table controls may visually show 16px icons, but the target cannot collapse to 16px.
+
+## Forbidden Iconography
+
+Do not use:
+
+- the donor Grounded A;
+- donor wordmark glyphs;
+- generic CRM funnels;
+- rockets;
+- trophies;
+- megaphones for outreach;
+- paper airplanes that imply sending;
+- dark icon tiles;
+- globe icons as the default prospecting metaphor;
+- lock-only metaphors for permission, because permission is contextual.
 
 ## QA Checklist
 
-- Does the icon read at 16px?
-- Does it avoid dark fills and dark containers?
-- Does it meet meaningful-icon contrast?
-- If interactive, is the hit area at least 32px by 32px?
-- Does it avoid generic CRM/sales metaphors?
-- Does it include only one signal detail?
-- Does it fit the Field Glyph family?
-- Does the icon imply automation? If yes, revise unless automation is actually part of the feature.
-- Is the icon paired with text where status matters?
+An icon is acceptable only if:
+
+- it reads at 16px;
+- it follows flat-terminal, miter-join construction;
+- it uses one semantic accent at most;
+- it avoids donor identity assets;
+- it avoids generic CRM/outreach metaphors;
+- it has a text label or accessible name when meaningful;
+- it does not imply the app touches internal company systems or automates outreach.
