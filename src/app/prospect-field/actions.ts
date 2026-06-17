@@ -26,8 +26,37 @@ const productValues = new Set(Object.values(ProductRelevance));
 
 class FormValidationError extends Error {}
 
-function formErrorRedirect(message: string): never {
-  redirect(`/prospect-field?formError=${encodeURIComponent(message)}`);
+function safeReturnTo(formData: FormData) {
+  const value = formData.get("returnTo");
+  if (typeof value !== "string" || value.startsWith("//")) {
+    return "/prospect-field";
+  }
+
+  try {
+    const url = new URL(value, "http://field-signal.local");
+    if (url.origin !== "http://field-signal.local") return "/prospect-field";
+    if (url.pathname !== "/prospect-field") return "/prospect-field";
+    return `${url.pathname}${url.search}`;
+  } catch {
+    return "/prospect-field";
+  }
+}
+
+function appendStatus(path: string, key: string, value: string) {
+  const url = new URL(path, "http://field-signal.local");
+  url.searchParams.delete("formError");
+  url.searchParams.set(key, value);
+  return `${url.pathname}?${url.searchParams.toString()}`;
+}
+
+function appendAccountId(path: string, accountId: string) {
+  const url = new URL(path, "http://field-signal.local");
+  url.searchParams.set("accountId", accountId);
+  return `${url.pathname}?${url.searchParams.toString()}`;
+}
+
+function formErrorRedirect(message: string, returnTo = "/prospect-field"): never {
+  redirect(appendStatus(returnTo, "formError", message));
 }
 
 function requiredString(formData: FormData, key: string) {
@@ -55,7 +84,14 @@ function enumValue<T extends string>(
 
 function optionalDate(formData: FormData, key: string) {
   const value = optionalString(formData, key);
-  return value ? new Date(`${value}T00:00:00.000Z`) : undefined;
+  if (!value) return undefined;
+  const parsed = new Date(`${value}T00:00:00.000Z`);
+
+  if (Number.isNaN(parsed.getTime())) {
+    throw new FormValidationError(`${key} must be a valid date.`);
+  }
+
+  return parsed;
 }
 
 function optionalHttpUrl(formData: FormData, key: string, label: string) {
@@ -88,20 +124,28 @@ function selectedProducts(formData: FormData) {
   return selected;
 }
 
-export async function createTerritoryAccount(formData: FormData) {
+async function requireWriteAccess(returnTo: string) {
   if (!hasDatabaseEnv()) {
-    formErrorRedirect("Prospect records are unavailable right now.");
+    formErrorRedirect("Prospect records are unavailable right now.", returnTo);
   }
 
   const access = await getAppAccess();
 
   if (access.status === "unauthenticated") {
-    formErrorRedirect("Sign in before creating records.");
+    formErrorRedirect("Sign in before changing records.", returnTo);
   }
 
   if (!access.canWrite) {
-    formErrorRedirect("Write access is required to create prospect records.");
+    formErrorRedirect("Write access is required to change prospect records.", returnTo);
   }
+
+  return access;
+}
+
+export async function createTerritoryAccount(formData: FormData) {
+  const returnTo = safeReturnTo(formData);
+  const access = await requireWriteAccess(returnTo);
+  let createdAccountId: string | undefined;
 
   try {
     const sourceConfidence = enumValue(
@@ -156,7 +200,7 @@ export async function createTerritoryAccount(formData: FormData) {
     const fitSummary = requiredString(formData, "fitSummary");
     const prisma = getPrisma();
 
-    await prisma.territoryAccount.create({
+    const createdAccount = await prisma.territoryAccount.create({
       data: {
         boundaryRisk,
         canonStatus: CanonStatus.HYPOTHESIS,
@@ -216,15 +260,180 @@ export async function createTerritoryAccount(formData: FormData) {
         },
       },
     });
+    createdAccountId = createdAccount.id;
   } catch (error) {
     if (error instanceof FormValidationError) {
-      formErrorRedirect(error.message);
+      formErrorRedirect(error.message, returnTo);
     }
 
     console.error("Prospect Field save failed", error);
-    formErrorRedirect("Could not save prospect. Check the fields and try again.");
+    formErrorRedirect(
+      "Could not save prospect. Check the fields and try again.",
+      returnTo,
+    );
   }
 
   revalidatePath("/prospect-field");
-  redirect("/prospect-field?created=1");
+  redirect(
+    appendStatus(
+      createdAccountId ? appendAccountId(returnTo, createdAccountId) : returnTo,
+      "created",
+      "1",
+    ),
+  );
+}
+
+export async function updateTerritoryAccountPosture(formData: FormData) {
+  const returnTo = safeReturnTo(formData);
+  const access = await requireWriteAccess(returnTo);
+
+  try {
+    const accountId = requiredString(formData, "accountId");
+    const sourceConfidence = enumValue(
+      formData,
+      "sourceConfidence",
+      sourceConfidenceValues,
+      SourceConfidence.UNVERIFIED,
+    );
+    const permissionState = enumValue(
+      formData,
+      "permissionState",
+      permissionValues,
+      PermissionState.RESEARCH_ONLY,
+    );
+    const fitSummary = requiredString(formData, "fitSummary");
+    const nextSafestAction = requiredString(formData, "nextSafestAction");
+    const prisma = getPrisma();
+
+    await prisma.$transaction(async (tx) => {
+      const current = await tx.territoryAccount.findUnique({
+        where: {
+          id: accountId,
+        },
+      });
+
+      if (!current) {
+        throw new FormValidationError("Selected prospect could not be found.");
+      }
+
+      const hml = classifyProspectField({
+        boundaryRisk: current.boundaryRisk,
+        channelSignal: current.channelSignal,
+        complexitySignal: current.complexitySignal,
+        contractorSignal: current.contractorSignal,
+        hiringSignal: current.hiringSignal,
+        internationalSignal: current.internationalSignal,
+        sourceConfidence,
+      });
+
+      await tx.territoryAccount.update({
+        data: {
+          fitSummary,
+          lastReviewedAt: new Date(),
+          nextSafestAction,
+          permissionState,
+          priorityScore: hml.priorityScore,
+          sourceConfidence,
+        },
+        where: {
+          id: accountId,
+        },
+      });
+
+      if (current.permissionState !== permissionState) {
+        await tx.permissionHistory.create({
+          data: {
+            accountId,
+            reason: `Updated prospect posture: ${permissionState.toLowerCase().replaceAll("_", " ")}.`,
+            setBy: access.appUser.email,
+            state: permissionState,
+          },
+        });
+      }
+
+      await tx.hmlClassification.create({
+        data: {
+          accountId,
+          category: HmlCategory.TERRITORY_ACCOUNT_POTENTIAL,
+          classification: hml.classification,
+          confidence: sourceConfidence,
+          contributingSignals: hml.contributingSignals,
+          explanation: hml.explanation,
+          recommendedNextAction: hml.recommendedNextAction,
+          ruleVersion: hml.ruleVersion,
+        },
+      });
+    });
+  } catch (error) {
+    if (error instanceof FormValidationError) {
+      formErrorRedirect(error.message, returnTo);
+    }
+
+    console.error("Prospect Field update failed", error);
+    formErrorRedirect(
+      "Could not update prospect. Check the fields and try again.",
+      returnTo,
+    );
+  }
+
+  revalidatePath("/prospect-field");
+  redirect(appendStatus(returnTo, "updated", "1"));
+}
+
+export async function createSourceEvidence(formData: FormData) {
+  const returnTo = safeReturnTo(formData);
+  await requireWriteAccess(returnTo);
+
+  try {
+    const accountId = requiredString(formData, "accountId");
+    const confidence = enumValue(
+      formData,
+      "evidenceConfidence",
+      sourceConfidenceValues,
+      SourceConfidence.UNVERIFIED,
+    );
+    const type = enumValue(
+      formData,
+      "evidenceType",
+      evidenceValues,
+      EvidenceType.PUBLIC_WEB,
+    );
+    const prisma = getPrisma();
+
+    await prisma.$transaction([
+      prisma.sourceEvidence.create({
+        data: {
+          accountId,
+          capturedClaim: requiredString(formData, "capturedClaim"),
+          confidence,
+          sourceDate: optionalDate(formData, "sourceDate"),
+          staleAfter: optionalDate(formData, "staleAfter"),
+          title: requiredString(formData, "evidenceTitle"),
+          type,
+          url: optionalHttpUrl(formData, "evidenceUrl", "Evidence URL"),
+        },
+      }),
+      prisma.territoryAccount.update({
+        data: {
+          lastReviewedAt: new Date(),
+        },
+        where: {
+          id: accountId,
+        },
+      }),
+    ]);
+  } catch (error) {
+    if (error instanceof FormValidationError) {
+      formErrorRedirect(error.message, returnTo);
+    }
+
+    console.error("Prospect Field evidence save failed", error);
+    formErrorRedirect(
+      "Could not add source evidence. Check the fields and try again.",
+      returnTo,
+    );
+  }
+
+  revalidatePath("/prospect-field");
+  redirect(appendStatus(returnTo, "evidenceAdded", "1"));
 }

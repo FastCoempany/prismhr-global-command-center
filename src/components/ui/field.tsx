@@ -6,12 +6,13 @@ type FieldProps = {
   name: string;
   children: React.ReactNode;
   hint?: string;
+  htmlFor?: string;
   required?: boolean;
 };
 
-export function Field({ label, name, children, hint, required }: FieldProps) {
+export function Field({ label, name, children, hint, htmlFor, required }: FieldProps) {
   return (
-    <label className="ds-field" htmlFor={name}>
+    <label className="ds-field" htmlFor={htmlFor ?? name}>
       <span className="ds-field__label">
         {label}
         {required ? <span aria-hidden="true"> *</span> : null}

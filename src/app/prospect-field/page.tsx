@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
   EvidenceType,
   HmlValue,
@@ -15,8 +16,16 @@ import { signOut } from "@/app/auth/actions";
 import { getAppAccess } from "@/lib/auth";
 import { humanizeEnum as label } from "@/lib/format";
 import { buildHmlSummaryFromAccounts, hmlTone } from "@/lib/hml-priority";
-import { createTerritoryAccount } from "./actions";
-import { getProspectFieldData } from "./data";
+import {
+  createSourceEvidence,
+  createTerritoryAccount,
+  updateTerritoryAccountPosture,
+} from "./actions";
+import {
+  buildProspectFieldPath,
+  getProspectFieldData,
+  parseProspectFieldFilters,
+} from "./data";
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +41,18 @@ const permissionOptions = [
 ];
 const signalIntensityOptions = Object.values(HmlValue);
 const evidenceOptions = Object.values(EvidenceType);
+const sortOptions = [
+  ["updated", "Recently updated"],
+  ["priority", "Priority score"],
+  ["freshness", "Source freshness"],
+  ["source", "Source confidence"],
+  ["company", "Company name"],
+];
+const freshnessOptions = [
+  ["fresh", "Fresh source"],
+  ["stale", "Stale source"],
+  ["missing", "Evidence missing"],
+];
 
 function confidenceTone(value: SourceConfidence) {
   if (value === SourceConfidence.CONFIRMED || value === SourceConfidence.STRONG) {
@@ -60,10 +81,52 @@ function permissionTone(value: PermissionState) {
   return "unknown";
 }
 
+function formatDate(value: Date | null | undefined) {
+  if (!value) return "Not recorded";
+  return new Intl.DateTimeFormat("en-US", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(value);
+}
+
+function sourceFreshness(evidence: { staleAfter: Date | null } | null | undefined): {
+  label: string;
+  tone: "high" | "low" | "medium" | "unknown";
+} {
+  if (!evidence) {
+    return {
+      label: "Evidence missing",
+      tone: "high",
+    };
+  }
+
+  if (evidence.staleAfter && evidence.staleAfter.getTime() <= Date.now()) {
+    return {
+      label: "Stale source",
+      tone: "medium",
+    };
+  }
+
+  return {
+    label: "Fresh source",
+    tone: "low",
+  };
+}
+
 type ProspectFieldPageProps = {
   searchParams?: Promise<{
+    accountId?: string;
+    confidence?: string;
     created?: string;
+    evidenceAdded?: string;
+    freshness?: string;
     formError?: string;
+    hml?: string;
+    permission?: string;
+    q?: string;
+    sort?: string;
+    updated?: string;
   }>;
 };
 
@@ -103,14 +166,32 @@ export default async function ProspectFieldPage({
     );
   }
 
-  const { accountLimit, accounts, databaseReady, error, totalAccounts, unknowns } =
-    await getProspectFieldData();
+  const filters = parseProspectFieldFilters(params);
+  const {
+    accountLimit,
+    accounts,
+    databaseReady,
+    error,
+    selectedAccount,
+    totalAccounts,
+    unknowns,
+  } = await getProspectFieldData(filters);
   const hmlSummary = buildHmlSummaryFromAccounts(accounts);
   const topAccount = accounts[0];
   const nextSafestAction =
     topAccount?.nextSafestAction ?? "Add a sourced prospect before action.";
   const permissionPosture = topAccount?.permissionState ?? PermissionState.RESEARCH_ONLY;
   const sourceConfidence = topAccount?.sourceConfidence ?? SourceConfidence.UNVERIFIED;
+  const selectedPath = buildProspectFieldPath(
+    filters,
+    selectedAccount
+      ? {
+          accountId: selectedAccount.id,
+        }
+      : {},
+  );
+  const selectedHml = selectedAccount?.hmlClassifications[0];
+  const selectedFreshness = sourceFreshness(selectedAccount?.evidence[0]);
 
   return (
     <main className="app-shell">
@@ -201,6 +282,85 @@ export default async function ProspectFieldPage({
 
         <HmlPriorityPanel compact summary={hmlSummary} />
 
+        <form action="/prospect-field" className="prospect-controls">
+          <Field label="Find account" name="q">
+            <Input
+              id="q"
+              name="q"
+              placeholder="Company, city, category"
+              type="search"
+              defaultValue={filters.q ?? ""}
+            />
+          </Field>
+          <Field label="HML priority" name="hml">
+            <Select id="hml" name="hml" defaultValue={filters.hml ?? ""}>
+              <option value="">All priorities</option>
+              {signalIntensityOptions.map((option) => (
+                <option key={option} value={option}>
+                  {label(option)}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <Field label="Permission" name="permission">
+            <Select
+              id="permission"
+              name="permission"
+              defaultValue={filters.permission ?? ""}
+            >
+              <option value="">All permissions</option>
+              {permissionOptions.map((option) => (
+                <option key={option} value={option}>
+                  {label(option)}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <Field label="Confidence" name="confidence">
+            <Select
+              id="confidence"
+              name="confidence"
+              defaultValue={filters.confidence ?? ""}
+            >
+              <option value="">All confidence</option>
+              {confidenceOptions.map((option) => (
+                <option key={option} value={option}>
+                  {label(option)}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <Field label="Source freshness" name="freshness">
+            <Select
+              id="freshness"
+              name="freshness"
+              defaultValue={filters.freshness ?? ""}
+            >
+              <option value="">All sources</option>
+              {freshnessOptions.map(([value, optionLabel]) => (
+                <option key={value} value={value}>
+                  {optionLabel}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <Field label="Sort" name="sort">
+            <Select id="sort" name="sort" defaultValue={filters.sort}>
+              {sortOptions.map(([value, optionLabel]) => (
+                <option key={value} value={value}>
+                  {optionLabel}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <div className="prospect-controls__actions">
+            <Button type="submit">Apply</Button>
+            <Link className="ds-btn ds-btn--secondary" href="/prospect-field">
+              Reset
+            </Link>
+          </div>
+        </form>
+
         {!databaseReady ? (
           <section className="mb-5 rounded-lg border border-[color:var(--color-medium-border)] bg-[color:var(--color-medium-bg)] p-4">
             <h2 className="text-base font-semibold leading-6">
@@ -226,6 +386,24 @@ export default async function ProspectFieldPage({
             <h2 className="text-base font-semibold leading-6">Prospect saved</h2>
             <p className="mt-1 text-sm font-semibold leading-5 text-[color:var(--color-ink-soft)]">
               The prospect record is saved.
+            </p>
+          </section>
+        ) : null}
+
+        {params.updated ? (
+          <section className="mb-5 rounded-lg border border-[color:var(--color-low-border)] bg-[color:var(--color-low-bg)] p-4">
+            <h2 className="text-base font-semibold leading-6">Prospect updated</h2>
+            <p className="mt-1 text-sm font-semibold leading-5 text-[color:var(--color-ink-soft)]">
+              Permission, confidence, next action, and HML priority were refreshed.
+            </p>
+          </section>
+        ) : null}
+
+        {params.evidenceAdded ? (
+          <section className="mb-5 rounded-lg border border-[color:var(--color-low-border)] bg-[color:var(--color-low-bg)] p-4">
+            <h2 className="text-base font-semibold leading-6">Evidence added</h2>
+            <p className="mt-1 text-sm font-semibold leading-5 text-[color:var(--color-ink-soft)]">
+              The selected prospect now has an additional source record.
             </p>
           </section>
         ) : null}
@@ -267,6 +445,10 @@ export default async function ProspectFieldPage({
                     {accounts.map((account) => {
                       const latestHml = account.hmlClassifications[0];
                       const latestEvidence = account.evidence[0];
+                      const freshness = sourceFreshness(latestEvidence);
+                      const accountPath = buildProspectFieldPath(filters, {
+                        accountId: account.id,
+                      });
                       const qualificationSignals = [
                         ["International", account.internationalSignal],
                         ["Contractor", account.contractorSignal],
@@ -277,12 +459,18 @@ export default async function ProspectFieldPage({
                       ];
                       return (
                         <tr
-                          className="border-t border-[color:var(--color-line)] align-top"
+                          className={`border-t border-[color:var(--color-line)] align-top ${
+                            selectedAccount?.id === account.id
+                              ? "account-row-selected"
+                              : ""
+                          }`}
                           id={`account-${account.id}`}
                           key={account.id}
                         >
                           <td className="px-4 py-3">
-                            <div className="font-semibold">{account.companyName}</div>
+                            <Link className="account-link" href={accountPath}>
+                              {account.companyName}
+                            </Link>
                             <div className="text-xs font-semibold leading-4 text-[color:var(--color-ink-support)]">
                               {account.city}, {account.region}
                             </div>
@@ -309,9 +497,12 @@ export default async function ProspectFieldPage({
                             </Badge>
                           </td>
                           <td className="px-4 py-3">
-                            <Badge tone={confidenceTone(account.sourceConfidence)}>
-                              {label(account.sourceConfidence)}
-                            </Badge>
+                            <div className="grid gap-2 justify-items-start">
+                              <Badge tone={confidenceTone(account.sourceConfidence)}>
+                                {label(account.sourceConfidence)}
+                              </Badge>
+                              <Badge tone={freshness.tone}>{freshness.label}</Badge>
+                            </div>
                           </td>
                           <td className="px-4 py-3">
                             <Badge
@@ -354,12 +545,287 @@ export default async function ProspectFieldPage({
           </section>
 
           <aside className="grid content-start gap-5">
+            <section className="selected-account-panel">
+              <p className="eyebrow">Selected prospect</p>
+              {selectedAccount ? (
+                <div className="grid gap-5">
+                  <div className="selected-account-summary">
+                    <div>
+                      <h2>{selectedAccount.companyName}</h2>
+                      <p>
+                        {selectedAccount.city}, {selectedAccount.region}
+                        {selectedAccount.category ? ` / ${selectedAccount.category}` : ""}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Badge tone={permissionTone(selectedAccount.permissionState)}>
+                        {label(selectedAccount.permissionState)}
+                      </Badge>
+                      <Badge tone={confidenceTone(selectedAccount.sourceConfidence)}>
+                        {label(selectedAccount.sourceConfidence)}
+                      </Badge>
+                      <Badge tone={selectedFreshness.tone}>
+                        {selectedFreshness.label}
+                      </Badge>
+                    </div>
+                  </div>
+
+                  <div className="selected-account-metrics">
+                    <div>
+                      <span>Product relevance</span>
+                      <strong>
+                        {selectedAccount.productRelevance.length > 0
+                          ? selectedAccount.productRelevance.map(label).join(", ")
+                          : "Not recorded"}
+                      </strong>
+                    </div>
+                    <div>
+                      <span>Last reviewed</span>
+                      <strong>{formatDate(selectedAccount.lastReviewedAt)}</strong>
+                    </div>
+                    <div>
+                      <span>HML priority</span>
+                      <strong>
+                        {selectedHml ? label(selectedHml.classification) : "Unscored"}
+                      </strong>
+                    </div>
+                  </div>
+
+                  {selectedHml ? (
+                    <div className="selected-account-note">
+                      <span>Signal explanation</span>
+                      <p>{selectedHml.explanation}</p>
+                    </div>
+                  ) : null}
+
+                  <form action={updateTerritoryAccountPosture} className="grid gap-4">
+                    <input name="accountId" type="hidden" value={selectedAccount.id} />
+                    <input name="returnTo" type="hidden" value={selectedPath} />
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <Field
+                        htmlFor="permissionStateSelected"
+                        label="Permission"
+                        name="permissionState"
+                        required
+                      >
+                        <Select
+                          id="permissionStateSelected"
+                          name="permissionState"
+                          defaultValue={selectedAccount.permissionState}
+                        >
+                          {permissionOptions.map((option) => (
+                            <option key={option} value={option}>
+                              {label(option)}
+                            </option>
+                          ))}
+                        </Select>
+                      </Field>
+                      <Field
+                        htmlFor="sourceConfidenceSelected"
+                        label="Source confidence"
+                        name="sourceConfidence"
+                        required
+                      >
+                        <Select
+                          id="sourceConfidenceSelected"
+                          name="sourceConfidence"
+                          defaultValue={selectedAccount.sourceConfidence}
+                        >
+                          {confidenceOptions.map((option) => (
+                            <option key={option} value={option}>
+                              {label(option)}
+                            </option>
+                          ))}
+                        </Select>
+                      </Field>
+                    </div>
+                    <Field
+                      htmlFor="fitSummarySelected"
+                      label="Qualification summary"
+                      name="fitSummary"
+                      required
+                    >
+                      <Textarea
+                        id="fitSummarySelected"
+                        name="fitSummary"
+                        required
+                        defaultValue={selectedAccount.fitSummary}
+                      />
+                    </Field>
+                    <Field
+                      htmlFor="nextSafestActionSelected"
+                      label="Next safest action"
+                      name="nextSafestAction"
+                      required
+                    >
+                      <Textarea
+                        id="nextSafestActionSelected"
+                        name="nextSafestAction"
+                        required
+                        defaultValue={selectedAccount.nextSafestAction}
+                      />
+                    </Field>
+                    <Button disabled={!databaseReady || !access.canWrite} type="submit">
+                      Update operating read
+                    </Button>
+                  </form>
+
+                  <form action={createSourceEvidence} className="grid gap-3">
+                    <input name="accountId" type="hidden" value={selectedAccount.id} />
+                    <input name="returnTo" type="hidden" value={selectedPath} />
+                    <h3 className="text-base font-semibold leading-6">
+                      Add source evidence
+                    </h3>
+                    <Field
+                      htmlFor="selectedEvidenceTitle"
+                      label="Evidence title"
+                      name="evidenceTitle"
+                      required
+                    >
+                      <Input id="selectedEvidenceTitle" name="evidenceTitle" required />
+                    </Field>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <Field
+                        htmlFor="selectedEvidenceType"
+                        label="Evidence type"
+                        name="evidenceType"
+                        required
+                      >
+                        <Select id="selectedEvidenceType" name="evidenceType">
+                          {evidenceOptions.map((option) => (
+                            <option key={option} value={option}>
+                              {label(option)}
+                            </option>
+                          ))}
+                        </Select>
+                      </Field>
+                      <Field
+                        htmlFor="selectedEvidenceConfidence"
+                        label="Evidence confidence"
+                        name="evidenceConfidence"
+                        required
+                      >
+                        <Select id="selectedEvidenceConfidence" name="evidenceConfidence">
+                          {confidenceOptions.map((option) => (
+                            <option key={option} value={option}>
+                              {label(option)}
+                            </option>
+                          ))}
+                        </Select>
+                      </Field>
+                    </div>
+                    <Field
+                      htmlFor="selectedEvidenceUrl"
+                      label="Evidence URL"
+                      name="evidenceUrl"
+                    >
+                      <Input id="selectedEvidenceUrl" name="evidenceUrl" type="url" />
+                    </Field>
+                    <Field
+                      htmlFor="selectedCapturedClaim"
+                      label="Captured claim"
+                      name="capturedClaim"
+                      required
+                    >
+                      <Textarea
+                        id="selectedCapturedClaim"
+                        name="capturedClaim"
+                        required
+                        placeholder="Specific claim this source supports."
+                      />
+                    </Field>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <Field
+                        htmlFor="selectedSourceDate"
+                        label="Source date"
+                        name="sourceDate"
+                      >
+                        <Input id="selectedSourceDate" name="sourceDate" type="date" />
+                      </Field>
+                      <Field
+                        htmlFor="selectedStaleAfter"
+                        label="Stale after"
+                        name="staleAfter"
+                      >
+                        <Input id="selectedStaleAfter" name="staleAfter" type="date" />
+                      </Field>
+                    </div>
+                    <Button disabled={!databaseReady || !access.canWrite} type="submit">
+                      Add evidence
+                    </Button>
+                  </form>
+
+                  <div className="selected-account-list">
+                    <h3>Recent evidence</h3>
+                    {selectedAccount.evidence.length === 0 ? (
+                      <p>No source evidence recorded.</p>
+                    ) : (
+                      selectedAccount.evidence.map((evidence) => (
+                        <div key={evidence.id}>
+                          <strong>
+                            {evidence.url ? (
+                              <a href={evidence.url} rel="noreferrer" target="_blank">
+                                {evidence.title}
+                              </a>
+                            ) : (
+                              evidence.title
+                            )}
+                          </strong>
+                          <p>{evidence.capturedClaim}</p>
+                          <span>
+                            {label(evidence.type)} / {label(evidence.confidence)} / stale
+                            after {formatDate(evidence.staleAfter)}
+                          </span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  <div className="selected-account-list">
+                    <h3>Permission history</h3>
+                    {selectedAccount.permissionHistory.length === 0 ? (
+                      <p>No permission history recorded.</p>
+                    ) : (
+                      selectedAccount.permissionHistory.map((event) => (
+                        <div key={event.id}>
+                          <strong>{label(event.state)}</strong>
+                          <p>{event.reason}</p>
+                          <span>
+                            {formatDate(event.createdAt)} / {event.setBy ?? "Unknown"}
+                          </span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  {selectedAccount.internalUnknowns.length > 0 ? (
+                    <div className="selected-account-list">
+                      <h3>Selected-account unknowns</h3>
+                      {selectedAccount.internalUnknowns.map((unknown) => (
+                        <div key={unknown.id}>
+                          <strong>{unknown.question}</strong>
+                          <p>
+                            {label(unknown.category)} / {label(unknown.confidence)}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+              ) : (
+                <p className="mt-3 text-sm font-semibold leading-5 text-[color:var(--ds-ink-700)]">
+                  Select an account from the desk or add the first sourced prospect.
+                </p>
+              )}
+            </section>
+
             <section className="rounded-lg border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-4">
               <p className="eyebrow">Desk intake</p>
               <h2 className="mb-4 text-base font-semibold leading-6">
                 Add sourced prospect
               </h2>
               <form action={createTerritoryAccount} className="grid gap-4">
+                <input name="returnTo" type="hidden" value={selectedPath} />
                 <Field label="Company" name="companyName" required>
                   <Input id="companyName" name="companyName" required />
                 </Field>
