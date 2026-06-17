@@ -8,13 +8,11 @@ import {
   BoundaryScopeType,
   BoundarySeverity,
   CanonStatus,
-  HmlCategory,
-  HmlValue,
   SourceConfidence,
 } from "@/generated/prisma/client";
 import { getAppAccess } from "@/lib/auth";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
-import { humanizeEnum as label } from "@/lib/format";
+import { classifyBoundaryRisk } from "@/lib/hml";
 
 const ruleTypeValues = new Set(Object.values(BoundaryRuleType));
 const scopeTypeValues = new Set(Object.values(BoundaryScopeType));
@@ -325,13 +323,6 @@ function boundaryFields(formData: FormData, fallbackSetBy: string) {
   };
 }
 
-function boundaryHmlValue(severity: BoundarySeverity, status: BoundaryRuleStatus) {
-  if (status !== BoundaryRuleStatus.ACTIVE) return HmlValue.LOW;
-  if (severity === BoundarySeverity.BLOCKED) return HmlValue.HIGH;
-  if (severity === BoundarySeverity.APPROVAL_REQUIRED) return HmlValue.MEDIUM;
-  return HmlValue.LOW;
-}
-
 function hmlTarget(links: {
   csmPartnerId: string | null;
   opportunityId: string | null;
@@ -380,7 +371,15 @@ export async function createBoundaryRule(formData: FormData) {
     const links = await boundaryLinks(formData, fields.scopeType);
     const prisma = getPrisma();
     const status = BoundaryRuleStatus.ACTIVE;
-    const classification = boundaryHmlValue(fields.severity, status);
+    const boundarySignal = classifyBoundaryRisk({
+      allowedAlternative: fields.allowedAlternative,
+      ruleType: fields.ruleType,
+      scopeType: fields.scopeType,
+      severity: fields.severity,
+      sourceConfidence: fields.sourceConfidence,
+      status,
+      title: fields.title,
+    });
 
     const rule = await prisma.$transaction(async (tx) => {
       const created = await tx.boundaryRule.create({
@@ -397,19 +396,7 @@ export async function createBoundaryRule(formData: FormData) {
         await tx.hmlClassification.create({
           data: {
             ...target,
-            category: HmlCategory.BOUNDARY_RISK,
-            classification,
-            confidence: fields.sourceConfidence,
-            contributingSignals: [
-              `rule:${fields.ruleType}`,
-              `scope:${fields.scopeType}`,
-              `severity:${fields.severity}`,
-              `status:${status}`,
-            ],
-            explanation: `${label(fields.ruleType)} boundary is ${label(fields.severity).toLowerCase()}: ${fields.title}.`,
-            recommendedNextAction:
-              fields.allowedAlternative ?? "Resolve the boundary before motion.",
-            ruleVersion: "boundary-rules-v0.1",
+            ...boundarySignal,
           },
         });
       }
@@ -451,7 +438,15 @@ export async function updateBoundaryRule(formData: FormData) {
     const status = requiredEnum(formData, "status", "Status", statusValues);
     const links = await boundaryLinks(formData, fields.scopeType);
     const prisma = getPrisma();
-    const classification = boundaryHmlValue(fields.severity, status);
+    const boundarySignal = classifyBoundaryRisk({
+      allowedAlternative: fields.allowedAlternative,
+      ruleType: fields.ruleType,
+      scopeType: fields.scopeType,
+      severity: fields.severity,
+      sourceConfidence: fields.sourceConfidence,
+      status,
+      title: fields.title,
+    });
 
     await prisma.$transaction(async (tx) => {
       const updated = await tx.boundaryRule.update({
@@ -470,19 +465,7 @@ export async function updateBoundaryRule(formData: FormData) {
         await tx.hmlClassification.create({
           data: {
             ...target,
-            category: HmlCategory.BOUNDARY_RISK,
-            classification,
-            confidence: fields.sourceConfidence,
-            contributingSignals: [
-              `rule:${fields.ruleType}`,
-              `scope:${fields.scopeType}`,
-              `severity:${fields.severity}`,
-              `status:${status}`,
-            ],
-            explanation: `${label(fields.ruleType)} boundary is ${label(status).toLowerCase()} at ${label(fields.severity).toLowerCase()} severity: ${fields.title}.`,
-            recommendedNextAction:
-              fields.allowedAlternative ?? "Resolve the boundary before motion.",
-            ruleVersion: "boundary-rules-v0.1",
+            ...boundarySignal,
           },
         });
       }

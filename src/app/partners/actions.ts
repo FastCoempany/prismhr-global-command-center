@@ -6,7 +6,6 @@ import {
   CanonStatus,
   CsmPartnerStatus,
   FollowUpPromiseStatus,
-  HmlCategory,
   HmlValue,
   NoteSensitivity,
   PermissionState,
@@ -14,6 +13,12 @@ import {
 } from "@/generated/prisma/client";
 import { getAppAccess } from "@/lib/auth";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
+import {
+  classifyCsmRelationship,
+  classifyFollowUpUrgency,
+  classifyPeoProtectiveness,
+  classifyPeoReadiness,
+} from "@/lib/hml";
 
 const csmStatusValues = new Set(Object.values(CsmPartnerStatus));
 const hmlValues = new Set(Object.values(HmlValue));
@@ -244,6 +249,18 @@ export async function createCsmPartner(formData: FormData) {
       "Source confidence",
       confidenceValues,
     );
+    const nextSafestAction = requiredString(
+      formData,
+      "nextSafestAction",
+      "Next safest action",
+    );
+    const relationshipSignal = classifyCsmRelationship({
+      nextSafestAction,
+      permissionState,
+      protectivenessLevel,
+      relationshipHeat,
+      sourceConfidence,
+    });
     const prisma = getPrisma();
     const partner = await prisma.cSMPartner.create({
       data: {
@@ -256,11 +273,7 @@ export async function createCsmPartner(formData: FormData) {
         dosAndDonts: optionalString(formData, "dosAndDonts", "Do and don't guidance"),
         email: optionalEmail(formData, "email", "Email"),
         name: requiredString(formData, "name", "Name"),
-        nextSafestAction: requiredString(
-          formData,
-          "nextSafestAction",
-          "Next safest action",
-        ),
+        nextSafestAction,
         ownerId: access.appUser.id,
         permissionState,
         preferredFollowupMotion: optionalString(
@@ -284,23 +297,7 @@ export async function createCsmPartner(formData: FormData) {
           "Trust surface notes",
         ),
         hmlClassifications: {
-          create: {
-            category: HmlCategory.CSM_RELATIONSHIP_HEAT,
-            classification: relationshipHeat,
-            confidence: sourceConfidence,
-            contributingSignals: [
-              `protectiveness:${protectivenessLevel}`,
-              `permission:${permissionState}`,
-            ],
-            explanation:
-              "Relationship heat is manually set until enough CSM motion is recorded.",
-            recommendedNextAction: requiredString(
-              formData,
-              "nextSafestAction",
-              "Next safest action",
-            ),
-            ruleVersion: "relationship-map-v0.1",
-          },
+          create: relationshipSignal,
         },
       },
     });
@@ -371,6 +368,20 @@ export async function createPeoRecord(formData: FormData) {
       "nextSafestAction",
       "Next safest action",
     );
+    const readinessSignal = classifyPeoReadiness({
+      boundaryRisk,
+      nextSafestAction,
+      permissionState,
+      readinessLevel,
+      sourceConfidence,
+    });
+    const protectivenessSignal = classifyPeoProtectiveness({
+      boundaryRisk,
+      nextSafestAction,
+      permissionState,
+      protectivenessLevel,
+      sourceConfidence,
+    });
     const prisma = getPrisma();
 
     await prisma.pEO.create({
@@ -403,35 +414,7 @@ export async function createPeoRecord(formData: FormData) {
         sourceConfidence,
         website: optionalHttpUrl(formData, "website", "Website"),
         hmlClassifications: {
-          create: [
-            {
-              category: HmlCategory.PEO_READINESS,
-              classification: readinessLevel,
-              confidence: sourceConfidence,
-              contributingSignals: [
-                `protectiveness:${protectivenessLevel}`,
-                `boundary:${boundaryRisk}`,
-                `permission:${permissionState}`,
-              ],
-              explanation:
-                "PEO readiness is manually set until enough relationship motion is recorded.",
-              recommendedNextAction: nextSafestAction,
-              ruleVersion: "relationship-map-v0.1",
-            },
-            {
-              category: HmlCategory.PEO_PROTECTIVENESS,
-              classification: protectivenessLevel,
-              confidence: sourceConfidence,
-              contributingSignals: [
-                `boundary:${boundaryRisk}`,
-                `permission:${permissionState}`,
-              ],
-              explanation:
-                "PEO protectiveness is manually set until off-limits and CSM context mature.",
-              recommendedNextAction: nextSafestAction,
-              ruleVersion: "relationship-map-v0.1",
-            },
-          ],
+          create: [readinessSignal, protectivenessSignal],
         },
       },
     });
@@ -477,20 +460,38 @@ export async function createFollowUpPromise(formData: FormData) {
       "Source confidence",
       confidenceValues,
     );
+    const madeTo = requiredString(formData, "madeTo", "Made to");
+    const promise = requiredString(formData, "promise", "Promise");
+    const urgencySignal = classifyFollowUpUrgency({
+      dueAt,
+      madeTo,
+      sourceConfidence,
+      status: FollowUpPromiseStatus.OPEN,
+    });
     const prisma = getPrisma();
 
-    await prisma.followUpPromise.create({
-      data: {
-        csmPartnerId: partnerId,
-        dueAt,
-        madeTo: requiredString(formData, "madeTo", "Made to"),
-        ownerId: access.appUser.id,
-        peoId,
-        promise: requiredString(formData, "promise", "Promise"),
-        sensitivity,
-        sourceConfidence,
-        status: FollowUpPromiseStatus.OPEN,
-      },
+    await prisma.$transaction(async (tx) => {
+      await tx.followUpPromise.create({
+        data: {
+          csmPartnerId: partnerId,
+          dueAt,
+          madeTo,
+          ownerId: access.appUser.id,
+          peoId,
+          promise,
+          sensitivity,
+          sourceConfidence,
+          status: FollowUpPromiseStatus.OPEN,
+        },
+      });
+
+      await tx.hmlClassification.create({
+        data: {
+          ...urgencySignal,
+          csmPartnerId: partnerId,
+          peoId,
+        },
+      });
     });
   } catch (error) {
     if (error instanceof FormValidationError) {

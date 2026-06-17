@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { HmlValue } from "@/generated/prisma/client";
 import { AppWayfinder } from "@/components/app-wayfinder";
 import { HmlPriorityPanel } from "@/components/hml-priority-panel";
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,29 @@ export default async function Home() {
   const sourceConfidence = leadAccount
     ? humanizeEnum(leadAccount.sourceConfidence)
     : "Source needed";
+  const digestColumns = [
+    {
+      description: "High priority signals that need the safest move now.",
+      items: dashboard.hmlSummary.items
+        .filter((item) => item.classification === HmlValue.HIGH)
+        .slice(0, 4),
+      label: "Do Now",
+    },
+    {
+      description: "Medium priority work that should be shaped or clarified today.",
+      items: dashboard.hmlSummary.items
+        .filter((item) => item.classification === HmlValue.MEDIUM)
+        .slice(0, 4),
+      label: "Do Today",
+    },
+    {
+      description: "Low priority signals to monitor without forcing motion.",
+      items: dashboard.hmlSummary.items
+        .filter((item) => item.classification === HmlValue.LOW)
+        .slice(0, 4),
+      label: "Watch",
+    },
+  ];
   const operatingItems = [
     `${dashboard.totalAccounts} sourced prospect${dashboard.totalAccounts === 1 ? "" : "s"}`,
     `${dashboard.hmlSummary.counts.HIGH} high priority item${dashboard.hmlSummary.counts.HIGH === 1 ? "" : "s"}`,
@@ -126,6 +150,44 @@ export default async function Home() {
 
         <section className="today-stack" aria-label="Today workspace">
           <HmlPriorityPanel summary={dashboard.hmlSummary} />
+
+          <section className="grid gap-4" aria-label="Daily HML digest">
+            <div className="section-heading">
+              <div>
+                <p className="eyebrow">Dashboard digest</p>
+                <h3>Do Now / Do Today / Watch</h3>
+              </div>
+            </div>
+            <div className="panel-grid">
+              {digestColumns.map((column) => (
+                <article className="panel" key={column.label}>
+                  <h3>{column.label}</h3>
+                  <p>{column.description}</p>
+                  <div className="readiness-list">
+                    {column.items.length === 0 ? (
+                      <div className="readiness-row">
+                        <span className="status-dot" aria-hidden="true" />
+                        <span>No current signals.</span>
+                      </div>
+                    ) : (
+                      column.items.map((item) => (
+                        <Link
+                          className="readiness-row"
+                          href={item.href ?? "/signal-feed"}
+                          key={item.id}
+                        >
+                          <span className="status-dot" aria-hidden="true" />
+                          <span>
+                            {item.label}: {item.recommendedNextAction}
+                          </span>
+                        </Link>
+                      ))
+                    )}
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
 
           <section className="panel-grid" aria-label="Next work">
             {nextWork.map((item) => (

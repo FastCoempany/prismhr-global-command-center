@@ -273,7 +273,9 @@ export async function createTerritoryAccount(formData: FormData) {
     );
   }
 
+  revalidatePath("/");
   revalidatePath("/prospect-field");
+  revalidatePath("/signal-feed");
   redirect(
     appendStatus(
       createdAccountId ? appendAccountId(returnTo, createdAccountId) : returnTo,
@@ -376,7 +378,9 @@ export async function updateTerritoryAccountPosture(formData: FormData) {
     );
   }
 
+  revalidatePath("/");
   revalidatePath("/prospect-field");
+  revalidatePath("/signal-feed");
   redirect(appendStatus(returnTo, "updated", "1"));
 }
 
@@ -434,6 +438,7 @@ export async function createSourceEvidence(formData: FormData) {
     );
   }
 
+  revalidatePath("/");
   revalidatePath("/prospect-field");
   redirect(appendStatus(returnTo, "evidenceAdded", "1"));
 }

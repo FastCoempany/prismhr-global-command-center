@@ -5,7 +5,6 @@ import { redirect } from "next/navigation";
 import {
   CanonStatus,
   FollowUpPromiseStatus,
-  HmlCategory,
   HmlValue,
   NoteSensitivity,
   NoteType,
@@ -17,6 +16,7 @@ import {
 } from "@/generated/prisma/client";
 import { getAppAccess } from "@/lib/auth";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
+import { classifyFollowUpUrgency, classifyOpportunityMomentum } from "@/lib/hml";
 
 const confidenceValues = new Set(Object.values(SourceConfidence));
 const hmlValues = new Set(Object.values(HmlValue));
@@ -307,6 +307,7 @@ export async function createOpportunity(formData: FormData) {
     const peoId = await optionalPeoId(formData, csmPartnerId);
     const territoryAccountId = await optionalTerritoryAccountId(formData);
     const fields = opportunityFields(formData);
+    const momentumSignal = classifyOpportunityMomentum(fields);
     const prisma = getPrisma();
     const opportunity = await prisma.opportunity.create({
       data: {
@@ -316,20 +317,7 @@ export async function createOpportunity(formData: FormData) {
         peoId,
         territoryAccountId,
         hmlClassifications: {
-          create: {
-            category: HmlCategory.OPPORTUNITY_MOMENTUM,
-            classification: fields.momentumLevel,
-            confidence: fields.sourceConfidence,
-            contributingSignals: [
-              `stage:${fields.stage}`,
-              `permission:${fields.permissionState}`,
-              `source:${fields.sourceType}`,
-            ],
-            explanation:
-              "Opportunity momentum is manually set until meeting, promise, and stakeholder signals mature.",
-            recommendedNextAction: fields.nextStep,
-            ruleVersion: "opportunity-room-v0.1",
-          },
+          create: momentumSignal,
         },
       },
     });
@@ -376,6 +364,7 @@ export async function updateOpportunity(formData: FormData) {
     const peoId = await optionalPeoId(formData, csmPartnerId);
     const territoryAccountId = await optionalTerritoryAccountId(formData);
     const fields = opportunityFields(formData);
+    const momentumSignal = classifyOpportunityMomentum(fields);
     const prisma = getPrisma();
 
     await prisma.$transaction([
@@ -392,19 +381,8 @@ export async function updateOpportunity(formData: FormData) {
       }),
       prisma.hmlClassification.create({
         data: {
-          category: HmlCategory.OPPORTUNITY_MOMENTUM,
-          classification: fields.momentumLevel,
-          confidence: fields.sourceConfidence,
-          contributingSignals: [
-            `stage:${fields.stage}`,
-            `permission:${fields.permissionState}`,
-            `source:${fields.sourceType}`,
-          ],
-          explanation:
-            "Opportunity momentum was refreshed from the current stage, permission, source, and next step.",
+          ...momentumSignal,
           opportunityId,
-          recommendedNextAction: fields.nextStep,
-          ruleVersion: "opportunity-room-v0.1",
         },
       }),
     ]);
@@ -484,32 +462,54 @@ export async function createOpportunityFollowUp(formData: FormData) {
       200,
     );
     const opportunity = await requiredOpportunity(opportunityId);
+    const dueAt = requiredDate(formData, "dueAt", "Due date");
+    const madeTo = requiredString(formData, "madeTo", "Made to");
+    const promise = requiredString(formData, "promise", "Promise");
+    const sourceConfidence = requiredEnum(
+      formData,
+      "sourceConfidence",
+      "Source confidence",
+      confidenceValues,
+    );
+    const urgencySignal = classifyFollowUpUrgency({
+      dueAt,
+      madeTo,
+      sourceConfidence,
+      status: FollowUpPromiseStatus.OPEN,
+    });
     const prisma = getPrisma();
 
-    await prisma.followUpPromise.create({
-      data: {
-        csmPartnerId: opportunity.csmPartnerId,
-        dueAt: requiredDate(formData, "dueAt", "Due date"),
-        madeTo: requiredString(formData, "madeTo", "Made to"),
-        opportunityId,
-        ownerId: access.appUser.id,
-        peoId: opportunity.peoId,
-        promise: requiredString(formData, "promise", "Promise"),
-        sensitivity: requiredEnum(
-          formData,
-          "sensitivity",
-          "Sensitivity",
-          noteSensitivityValues,
-        ),
-        sourceConfidence: requiredEnum(
-          formData,
-          "sourceConfidence",
-          "Source confidence",
-          confidenceValues,
-        ),
-        status: FollowUpPromiseStatus.OPEN,
-        territoryAccountId: opportunity.territoryAccountId,
-      },
+    await prisma.$transaction(async (tx) => {
+      await tx.followUpPromise.create({
+        data: {
+          csmPartnerId: opportunity.csmPartnerId,
+          dueAt,
+          madeTo,
+          opportunityId,
+          ownerId: access.appUser.id,
+          peoId: opportunity.peoId,
+          promise,
+          sensitivity: requiredEnum(
+            formData,
+            "sensitivity",
+            "Sensitivity",
+            noteSensitivityValues,
+          ),
+          sourceConfidence,
+          status: FollowUpPromiseStatus.OPEN,
+          territoryAccountId: opportunity.territoryAccountId,
+        },
+      });
+
+      await tx.hmlClassification.create({
+        data: {
+          ...urgencySignal,
+          accountId: opportunity.territoryAccountId,
+          csmPartnerId: opportunity.csmPartnerId,
+          opportunityId,
+          peoId: opportunity.peoId,
+        },
+      });
     });
   } catch (error) {
     if (error instanceof FormValidationError) {

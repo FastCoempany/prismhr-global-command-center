@@ -10,6 +10,7 @@ import {
 } from "@/generated/prisma/client";
 import { getAppAccess } from "@/lib/auth";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
+import { classifyInternalAmbiguity } from "@/lib/hml";
 
 const categoryValues = new Set(Object.values(UnknownCategory));
 const confidenceValues = new Set(Object.values(SourceConfidence));
@@ -181,13 +182,32 @@ export async function createInternalUnknown(formData: FormData) {
   try {
     const prisma = getPrisma();
     const relatedAccountId = await relatedAccountIdOrNull(formData);
+    const fields = unknownData(formData);
+    const status = InternalUnknownStatus.OPEN;
+    const ambiguitySignal = classifyInternalAmbiguity({
+      blocksImplementation: fields.blocksImplementation,
+      category: fields.category,
+      confidence: fields.confidence,
+      question: fields.question,
+      riskLevel: fields.riskLevel,
+      status,
+    });
 
-    await prisma.internalUnknown.create({
-      data: {
-        ...unknownData(formData),
-        relatedAccountId,
-        status: InternalUnknownStatus.OPEN,
-      },
+    await prisma.$transaction(async (tx) => {
+      await tx.internalUnknown.create({
+        data: {
+          ...fields,
+          relatedAccountId,
+          status,
+        },
+      });
+
+      await tx.hmlClassification.create({
+        data: {
+          ...ambiguitySignal,
+          accountId: relatedAccountId,
+        },
+      });
     });
   } catch (error) {
     if (error instanceof FormValidationError) {
@@ -203,6 +223,7 @@ export async function createInternalUnknown(formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/prospect-field");
+  revalidatePath("/signal-feed");
   revalidatePath("/unknowns");
   redirect(appendStatus(returnTo, "created", "1"));
 }
@@ -215,6 +236,8 @@ export async function updateInternalUnknown(formData: FormData) {
     const prisma = getPrisma();
     const id = requiredString(formData, "id", "Unknown id", 200);
     const relatedAccountId = await relatedAccountIdOrNull(formData);
+    const fields = unknownData(formData);
+    const status = requiredEnum(formData, "status", "Status", statusValues);
     const existing = await prisma.internalUnknown.findUnique({
       select: {
         id: true,
@@ -228,15 +251,33 @@ export async function updateInternalUnknown(formData: FormData) {
       throw new FormValidationError("Selected unknown could not be found.");
     }
 
-    await prisma.internalUnknown.update({
-      data: {
-        ...unknownData(formData),
-        relatedAccountId,
-        status: requiredEnum(formData, "status", "Status", statusValues),
-      },
-      where: {
-        id,
-      },
+    const ambiguitySignal = classifyInternalAmbiguity({
+      blocksImplementation: fields.blocksImplementation,
+      category: fields.category,
+      confidence: fields.confidence,
+      question: fields.question,
+      riskLevel: fields.riskLevel,
+      status,
+    });
+
+    await prisma.$transaction(async (tx) => {
+      await tx.internalUnknown.update({
+        data: {
+          ...fields,
+          relatedAccountId,
+          status,
+        },
+        where: {
+          id,
+        },
+      });
+
+      await tx.hmlClassification.create({
+        data: {
+          ...ambiguitySignal,
+          accountId: relatedAccountId,
+        },
+      });
     });
   } catch (error) {
     if (error instanceof FormValidationError) {
@@ -252,6 +293,7 @@ export async function updateInternalUnknown(formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/prospect-field");
+  revalidatePath("/signal-feed");
   revalidatePath("/unknowns");
   redirect(appendStatus(returnTo, "updated", "1"));
 }
