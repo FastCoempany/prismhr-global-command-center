@@ -439,13 +439,27 @@ export default async function ProspectFieldPage({
                 <table className="w-full min-w-[1120px] border-collapse text-left text-sm">
                   <thead className="bg-[color:var(--color-surface-mist)]">
                     <tr>
-                      <th className="px-4 py-3 font-bold">Company</th>
-                      <th className="px-4 py-3 font-bold">Qualification Signals</th>
-                      <th className="px-4 py-3 font-bold">Permission</th>
-                      <th className="px-4 py-3 font-bold">Source Confidence</th>
-                      <th className="px-4 py-3 font-bold">HML Priority</th>
-                      <th className="px-4 py-3 font-bold">Next Safest Action</th>
-                      <th className="px-4 py-3 font-bold">Evidence</th>
+                      <th className="px-4 py-3 font-bold" scope="col">
+                        Company
+                      </th>
+                      <th className="px-4 py-3 font-bold" scope="col">
+                        Qualification Signals
+                      </th>
+                      <th className="px-4 py-3 font-bold" scope="col">
+                        Permission
+                      </th>
+                      <th className="px-4 py-3 font-bold" scope="col">
+                        Source Confidence
+                      </th>
+                      <th className="px-4 py-3 font-bold" scope="col">
+                        HML Priority
+                      </th>
+                      <th className="px-4 py-3 font-bold" scope="col">
+                        Next Safest Action
+                      </th>
+                      <th className="px-4 py-3 font-bold" scope="col">
+                        Evidence
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
