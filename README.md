@@ -50,7 +50,7 @@ Build scaffold that governs how Codex should move from planning to implementatio
 
 ## Current Status
 
-Master MVP plan approved.
+Master MVP plan approved. Phase 1A and the first Phase 1B access-control pass are implemented.
 
 Active implementation contract:
 
@@ -66,6 +66,23 @@ The approved plan covers:
 - UX architecture
 - technical architecture
 - phased implementation plan
+
+## Access Control
+
+Prospect Field is protected by Supabase Auth and an internal `User` row.
+
+Required Vercel/Supabase env:
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `DATABASE_URL`
+- `DIRECT_URL`
+
+Optional bootstrap env:
+
+- `APP_BOOTSTRAP_OWNER_EMAILS`
+
+Set `APP_BOOTSTRAP_OWNER_EMAILS` to a comma-separated list of approved owner emails during initial setup. When one of those authenticated users signs in, the app activates the matching internal `User` row as `OWNER`. Without that env, newly authenticated users are created as inactive `VIEWER` records and must be activated in the database before they can read Prospect Field.
 
 ## Prime Directive
 

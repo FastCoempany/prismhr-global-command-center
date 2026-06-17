@@ -121,14 +121,17 @@ enum HmlCategory {
 }
 
 model User {
-  id             String   @id @default(cuid())
+  id             String    @id @default(cuid())
+  authUserId     String?   @unique
   name           String
-  email          String   @unique
-  role           UserRole @default(OWNER)
-  isProductOwner Boolean  @default(false)
-  isCanonOwner   Boolean  @default(false)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  email          String    @unique
+  role           UserRole  @default(VIEWER)
+  isActive       Boolean   @default(false)
+  isProductOwner Boolean   @default(false)
+  isCanonOwner   Boolean   @default(false)
+  lastSignedInAt DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   territoryAccounts TerritoryAccount[]
 }

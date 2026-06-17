@@ -16,6 +16,7 @@ import {
 } from "@/generated/prisma/client";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import { classifyProspectField } from "@/lib/hml";
+import { getAppAccess } from "@/lib/auth";
 
 const hmlValues = new Set(Object.values(HmlValue));
 const sourceConfidenceValues = new Set(Object.values(SourceConfidence));
@@ -92,6 +93,16 @@ export async function createTerritoryAccount(formData: FormData) {
     formErrorRedirect("Database environment variables are required to save records.");
   }
 
+  const access = await getAppAccess();
+
+  if (access.status === "unauthenticated") {
+    formErrorRedirect("Sign in before creating records.");
+  }
+
+  if (!access.canWrite) {
+    formErrorRedirect("Owner access is required to create prospect records.");
+  }
+
   try {
     const sourceConfidence = enumValue(
       formData,
@@ -159,6 +170,7 @@ export async function createTerritoryAccount(formData: FormData) {
         hiringSignal,
         internationalSignal,
         nextSafestAction,
+        ownerId: access.appUser.id,
         permissionState,
         priorityScore: hml.priorityScore,
         productRelevance: selectedProducts(formData),
@@ -198,7 +210,7 @@ export async function createTerritoryAccount(formData: FormData) {
         permissionHistory: {
           create: {
             reason: `Initial prospect posture: ${permissionState.toLowerCase().replaceAll("_", " ")}.`,
-            setBy: "Field Signal",
+            setBy: access.appUser.email,
             state: permissionState,
           },
         },

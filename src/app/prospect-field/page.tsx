@@ -9,6 +9,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Select, Textarea } from "@/components/ui/field";
+import { signOut } from "@/app/auth/actions";
+import { getAppAccess } from "@/lib/auth";
 import { createTerritoryAccount } from "./actions";
 import { getProspectFieldData } from "./data";
 
@@ -79,6 +81,38 @@ export default async function ProspectFieldPage({
   searchParams,
 }: ProspectFieldPageProps) {
   const params = searchParams ? await searchParams : {};
+  const access = await getAppAccess();
+
+  if (access.status !== "active") {
+    return (
+      <main className="min-h-screen bg-[color:var(--color-canvas)] p-5 text-[color:var(--color-ink)]">
+        <section className="mx-auto grid min-h-[calc(100vh-40px)] max-w-3xl content-center gap-5">
+          <div className="rounded-lg border border-[color:var(--color-medium-border)] bg-[color:var(--color-medium-bg)] p-5">
+            <p className="text-xs font-bold leading-4 text-[color:var(--color-ink-support)]">
+              Access pending
+            </p>
+            <h1 className="mt-1 text-2xl font-semibold leading-8">
+              Prospect Field is protected.
+            </h1>
+            <p className="mt-3 text-sm font-semibold leading-5 text-[color:var(--color-ink-soft)]">
+              {access.message}
+            </p>
+            {access.authEmail ? (
+              <p className="mt-2 text-sm font-semibold leading-5">
+                Signed in as {access.authEmail}
+              </p>
+            ) : null}
+            <form action={signOut} className="mt-4">
+              <Button type="submit" variant="quiet">
+                Sign out
+              </Button>
+            </form>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
   const { accountLimit, accounts, databaseReady, error, totalAccounts, unknowns } =
     await getProspectFieldData();
   const topAccount = accounts[0];
@@ -121,10 +155,20 @@ export default async function ProspectFieldPage({
                 Chicagoland prospecting
               </p>
               <h1 className="text-2xl font-semibold leading-8">Prospect Field</h1>
+              <p className="mt-1 text-xs font-semibold leading-4 text-[color:var(--color-ink-support)]">
+                Signed in as {access.appUser.email} / {label(access.appUser.role)}
+              </p>
             </div>
-            <Badge tone={databaseReady ? "low" : "medium"}>
-              {databaseReady ? "Cloud database connected" : "Database pending"}
-            </Badge>
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <Badge tone={databaseReady ? "low" : "medium"}>
+                {databaseReady ? "Cloud database connected" : "Database pending"}
+              </Badge>
+              <form action={signOut}>
+                <Button size="compact" type="submit" variant="quiet">
+                  Sign out
+                </Button>
+              </form>
+            </div>
           </header>
 
           <section
@@ -429,12 +473,17 @@ export default async function ProspectFieldPage({
                     </div>
                   </div>
 
-                  <Button disabled={!databaseReady} type="submit">
+                  <Button disabled={!databaseReady || !access.canWrite} type="submit">
                     Add sourced prospect
                   </Button>
                   {!databaseReady ? (
                     <p className="text-xs font-semibold leading-4 text-[color:var(--color-ink-support)]">
                       Apply the Prisma migration before creating records.
+                    </p>
+                  ) : null}
+                  {!access.canWrite ? (
+                    <p className="text-xs font-semibold leading-4 text-[color:var(--color-ink-support)]">
+                      Owner access is required to create prospect records.
                     </p>
                   ) : null}
                 </form>

@@ -28,18 +28,21 @@ const prisma = new PrismaClient({
 });
 
 async function main() {
+  const ownerEmail = process.env["APP_OWNER_EMAIL"] ?? "antaeus@example.local";
   const antaeus = await prisma.user.upsert({
     where: {
-      email: "antaeus@example.local",
+      email: ownerEmail,
     },
     update: {
+      isActive: true,
       isCanonOwner: true,
       isProductOwner: true,
       name: "Antaeus",
       role: UserRole.OWNER,
     },
     create: {
-      email: "antaeus@example.local",
+      email: ownerEmail,
+      isActive: true,
       isCanonOwner: true,
       isProductOwner: true,
       name: "Antaeus",
