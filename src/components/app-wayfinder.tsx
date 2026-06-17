@@ -62,6 +62,13 @@ export function AppWayfinder({
             Opportunities
           </Link>
           <Link
+            aria-current={current === "Pitch Rail" ? "page" : undefined}
+            className="app-route-link"
+            href="/pitch-rail"
+          >
+            Pitch Rail
+          </Link>
+          <Link
             aria-current={current === "Boundaries" ? "page" : undefined}
             className="app-route-link"
             href="/boundaries"

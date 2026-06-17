@@ -1,20 +1,30 @@
 import {
+  ApprovalStatus,
   BoundaryRuleStatus,
   HmlValue,
   OpportunitySourceType,
   OpportunityStage,
+  PitchAssetType,
+  PitchAudience,
   PermissionState,
+  ProductRelevance,
   SourceConfidence,
 } from "@/generated/prisma/client";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 
 const OPPORTUNITY_LIMIT = 40;
 const OPTION_LIMIT = 100;
+const PITCH_RAIL_LIMIT = 5;
 const hmlValues = new Set(Object.values(HmlValue));
 const permissionValues = new Set(Object.values(PermissionState));
 const sourceTypeValues = new Set(Object.values(OpportunitySourceType));
 const stageValues = new Set(Object.values(OpportunityStage));
 const confidenceValues = new Set(Object.values(SourceConfidence));
+
+const emptyPitchRail = {
+  assets: [],
+  frameworks: [],
+};
 
 export type OpportunityRoomsSearchParams = {
   confidence?: string;
@@ -170,6 +180,7 @@ async function findSelectedOpportunity(
         },
       },
       csmPartner: true,
+      discoveryFramework: true,
       followUpPromises: {
         orderBy: {
           dueAt: "asc",
@@ -197,6 +208,70 @@ async function findSelectedOpportunity(
   });
 }
 
+function approvalRank(value: ApprovalStatus) {
+  if (value === ApprovalStatus.OWNER_APPROVED) return 0;
+  if (value === ApprovalStatus.NEEDS_OWNER_REVIEW) return 1;
+  if (value === ApprovalStatus.DRAFT) return 2;
+  return 3;
+}
+
+async function getOpportunityPitchRail(
+  prisma: ReturnType<typeof getPrisma>,
+  productInterest: ProductRelevance[],
+) {
+  if (productInterest.length === 0) {
+    return emptyPitchRail;
+  }
+
+  const [frameworks, assets] = await Promise.all([
+    prisma.discoveryFramework.findMany({
+      orderBy: {
+        updatedAt: "desc",
+      },
+      take: PITCH_RAIL_LIMIT,
+      where: {
+        approvalStatus: {
+          not: ApprovalStatus.RETIRED,
+        },
+        audience: PitchAudience.CSM,
+        productRelevance: {
+          in: productInterest,
+        },
+      },
+    }),
+    prisma.pitchAsset.findMany({
+      orderBy: {
+        updatedAt: "desc",
+      },
+      take: PITCH_RAIL_LIMIT,
+      where: {
+        approvalStatus: ApprovalStatus.OWNER_APPROVED,
+        assetType: {
+          in: [
+            PitchAssetType.CSM_SAFE_BLURB,
+            PitchAssetType.DISCOVERY_CHEAT_SHEET,
+            PitchAssetType.MEETING_PREP_NOTE,
+            PitchAssetType.OBJECTION_RESPONSE,
+            PitchAssetType.USE_CASE_BRIEF,
+          ],
+        },
+        audience: PitchAudience.CSM,
+        productRelevance: {
+          in: productInterest,
+        },
+      },
+    }),
+  ]);
+
+  return {
+    assets,
+    frameworks: frameworks.sort(
+      (left, right) =>
+        approvalRank(left.approvalStatus) - approvalRank(right.approvalStatus),
+    ),
+  };
+}
+
 export async function getOpportunityRoomsData(filters: OpportunityRoomsFilters) {
   if (!hasDatabaseEnv()) {
     return {
@@ -213,6 +288,7 @@ export async function getOpportunityRoomsData(filters: OpportunityRoomsFilters) 
       limit: OPPORTUNITY_LIMIT,
       opportunities: [],
       peoOptions: [],
+      pitchRail: emptyPitchRail,
       selectedOpportunity: null,
       territoryOptions: [],
     };
@@ -350,6 +426,9 @@ export async function getOpportunityRoomsData(filters: OpportunityRoomsFilters) 
       (opportunities[0]
         ? await findSelectedOpportunity(prisma, opportunities[0].id)
         : null);
+    const pitchRail = selectedOpportunity
+      ? await getOpportunityPitchRail(prisma, selectedOpportunity.productInterest)
+      : emptyPitchRail;
 
     return {
       counts: {
@@ -365,6 +444,7 @@ export async function getOpportunityRoomsData(filters: OpportunityRoomsFilters) 
       limit: OPPORTUNITY_LIMIT,
       opportunities,
       peoOptions,
+      pitchRail,
       selectedOpportunity,
       territoryOptions,
     };
@@ -385,6 +465,7 @@ export async function getOpportunityRoomsData(filters: OpportunityRoomsFilters) 
       limit: OPPORTUNITY_LIMIT,
       opportunities: [],
       peoOptions: [],
+      pitchRail: emptyPitchRail,
       selectedOpportunity: null,
       territoryOptions: [],
     };

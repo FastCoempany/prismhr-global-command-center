@@ -101,7 +101,7 @@ export default function MockupsPage() {
         id="prospecting-desk"
         label="Variant 1"
         summary="Prospecting Desk"
-        why="Best when the app needs to make Chicagoland prospecting unmistakably central. The table is the product: every row carries fit, source, permission, priority, and the next safe move."
+        why="Best when the app needs to make Chicagoland prospecting unmistakably central. The table is the product: every row carries qualification signal, source, permission, priority, and the next safe move."
       >
         <article className={styles.prospectingDesk}>
           <header className={styles.variantTopbar}>
@@ -192,8 +192,8 @@ export default function MockupsPage() {
               <span>Next safest action</span>
               <strong>Ask CSM owner for channel context before outreach.</strong>
               <p>
-                The prospect has enough fit to research, but no approved intro path exists
-                yet.
+                The prospect has enough qualification signal to research, but no approved
+                intro path exists yet.
               </p>
             </div>
           </section>
@@ -265,7 +265,7 @@ export default function MockupsPage() {
               <span className={styles.columnTitle}>Do now</span>
               <div className={styles.workCard}>
                 <strong>Verify safe path for North River Components</strong>
-                <p>High fit, permission still research-only.</p>
+                <p>Strong qualification signal, permission still research-only.</p>
               </div>
               <div className={styles.workCard}>
                 <strong>Resolve ownership on Lakefront Robotics</strong>

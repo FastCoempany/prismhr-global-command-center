@@ -159,6 +159,30 @@ enum FollowUpPromiseStatus {
   CANCELLED
 }
 
+enum ApprovalStatus {
+  DRAFT
+  NEEDS_OWNER_REVIEW
+  OWNER_APPROVED
+  RETIRED
+}
+
+enum PitchAudience {
+  CSM
+  PEO
+  PEO_CLIENT
+  INTERNAL
+  EXTERNAL_CHANNEL
+}
+
+enum PitchAssetType {
+  CSM_SAFE_BLURB
+  DISCOVERY_CHEAT_SHEET
+  OBJECTION_RESPONSE
+  EMAIL_LANGUAGE
+  MEETING_PREP_NOTE
+  USE_CASE_BRIEF
+}
+
 enum BoundaryScopeType {
   CSM_PARTNER
   PEO
@@ -430,30 +454,32 @@ model PEOClient {
 }
 
 model Opportunity {
-  id                 String                @id @default(cuid())
-  name               String
-  sourceType         OpportunitySourceType @default(MANUAL_RESEARCH)
-  csmPartnerId       String?
-  peoId              String?
-  peoClientId        String?
-  territoryAccountId String?
-  productInterest    ProductRelevance[]    @default([])
-  stage              OpportunityStage      @default(RESEARCH)
-  nextStep           String
-  nextStepOwner      String?
-  followUpDueAt      DateTime?
-  permissionState    PermissionState       @default(CSM_CONTEXT_NEEDED)
-  momentumLevel      HmlValue              @default(MEDIUM)
-  riskFlags          String[]              @default([])
-  sourceConfidence   SourceConfidence      @default(UNVERIFIED)
-  canonStatus        CanonStatus           @default(HYPOTHESIS)
-  createdAt          DateTime              @default(now())
-  updatedAt          DateTime              @updatedAt
+  id                   String                @id @default(cuid())
+  name                 String
+  sourceType           OpportunitySourceType @default(MANUAL_RESEARCH)
+  csmPartnerId         String?
+  peoId                String?
+  peoClientId          String?
+  territoryAccountId   String?
+  productInterest      ProductRelevance[]    @default([])
+  stage                OpportunityStage      @default(RESEARCH)
+  nextStep             String
+  nextStepOwner        String?
+  followUpDueAt        DateTime?
+  permissionState      PermissionState       @default(CSM_CONTEXT_NEEDED)
+  momentumLevel        HmlValue              @default(MEDIUM)
+  riskFlags            String[]              @default([])
+  sourceConfidence     SourceConfidence      @default(UNVERIFIED)
+  canonStatus          CanonStatus           @default(HYPOTHESIS)
+  discoveryFrameworkId String?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
 
   csmPartner         CSMPartner?         @relation(fields: [csmPartnerId], references: [id], onDelete: SetNull)
   peo                PEO?                @relation(fields: [peoId], references: [id], onDelete: SetNull)
   peoClient          PEOClient?          @relation(fields: [peoClientId], references: [id], onDelete: SetNull)
   territoryAccount   TerritoryAccount?   @relation(fields: [territoryAccountId], references: [id], onDelete: SetNull)
+  discoveryFramework DiscoveryFramework? @relation(fields: [discoveryFrameworkId], references: [id], onDelete: SetNull)
   notes              Note[]
   followUpPromises   FollowUpPromise[]
   hmlClassifications HmlClassification[]
@@ -464,6 +490,7 @@ model Opportunity {
   @@index([peoId])
   @@index([peoClientId])
   @@index([territoryAccountId])
+  @@index([discoveryFrameworkId])
   @@index([permissionState])
   @@index([momentumLevel])
 }
@@ -541,6 +568,54 @@ model BoundaryRule {
   @@index([peoClientId])
   @@index([opportunityId])
   @@index([territoryAccountId])
+}
+
+model DiscoveryFramework {
+  id                      String           @id @default(cuid())
+  title                   String
+  productRelevance        ProductRelevance
+  audience                PitchAudience    @default(CSM)
+  useCase                 String
+  triggerSignals          String[]         @default([])
+  discoveryQuestions      String[]         @default([])
+  disqualificationSignals String[]         @default([])
+  demoFocus               String?
+  boundaryNotes           String?
+  sourceConfidence        SourceConfidence @default(UNVERIFIED)
+  canonStatus             CanonStatus      @default(HYPOTHESIS)
+  approvalStatus          ApprovalStatus   @default(DRAFT)
+  approvedBy              String?
+  createdAt               DateTime         @default(now())
+  updatedAt               DateTime         @updatedAt
+
+  opportunities Opportunity[]
+
+  @@index([productRelevance])
+  @@index([audience])
+  @@index([approvalStatus])
+  @@index([sourceConfidence])
+}
+
+model PitchAsset {
+  id               String           @id @default(cuid())
+  title            String
+  productRelevance ProductRelevance
+  assetType        PitchAssetType
+  audience         PitchAudience    @default(CSM)
+  content          String
+  usageNotes       String?
+  sourceConfidence SourceConfidence @default(UNVERIFIED)
+  canonStatus      CanonStatus      @default(HYPOTHESIS)
+  approvalStatus   ApprovalStatus   @default(DRAFT)
+  approvedBy       String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@index([productRelevance])
+  @@index([assetType])
+  @@index([audience])
+  @@index([approvalStatus])
+  @@index([sourceConfidence])
 }
 
 model HmlClassification {

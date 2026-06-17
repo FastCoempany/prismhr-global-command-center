@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
+  ApprovalStatus,
   BoundarySeverity,
   HmlValue,
   NoteSensitivity,
@@ -110,6 +111,17 @@ function boundarySeverityTone(value: BoundarySeverity) {
   return "unknown";
 }
 
+function approvalTone(value: ApprovalStatus) {
+  if (value === ApprovalStatus.OWNER_APPROVED) return "low";
+  if (value === ApprovalStatus.NEEDS_OWNER_REVIEW) return "medium";
+  if (value === ApprovalStatus.RETIRED) return "high";
+  return "unknown";
+}
+
+function formatLines(lines: string[]) {
+  return lines.length > 0 ? lines.join(" / ") : "Not recorded";
+}
+
 function formatDate(value: Date | null | undefined) {
   if (!value) return "Not set";
   return new Intl.DateTimeFormat("en-US", {
@@ -163,6 +175,7 @@ export default async function OpportunitiesPage({
     limit,
     opportunities,
     peoOptions,
+    pitchRail,
     selectedOpportunity,
     territoryOptions,
   } = await getOpportunityRoomsData(filters);
@@ -507,6 +520,57 @@ export default async function OpportunitiesPage({
                     ))}
                   </section>
                 ) : null}
+
+                <section className="partner-subsection">
+                  <h3>Pitch Rail</h3>
+                  <p>
+                    Only owner-approved CSM-facing assets appear here. Draft and
+                    review-needed material stays in Pitch Rail with its approval status.
+                  </p>
+                  {pitchRail.frameworks.length === 0 && pitchRail.assets.length === 0 ? (
+                    <div>
+                      <strong>No matching pitch material</strong>
+                      <p>
+                        Add product-specific frameworks or approved CSM-safe copy before
+                        relying on a packaged message.
+                      </p>
+                    </div>
+                  ) : null}
+                  {pitchRail.frameworks.map((framework) => (
+                    <div key={framework.id}>
+                      <strong>{framework.title}</strong>
+                      <p>{framework.useCase}</p>
+                      <div className="partner-card__badges">
+                        <Badge tone={approvalTone(framework.approvalStatus)}>
+                          {label(framework.approvalStatus)}
+                        </Badge>
+                        <Badge tone={confidenceTone(framework.sourceConfidence)}>
+                          {label(framework.sourceConfidence)}
+                        </Badge>
+                        <Badge tone="unknown">{label(framework.productRelevance)}</Badge>
+                      </div>
+                      <span>Discovery questions</span>
+                      <p>{formatLines(framework.discoveryQuestions)}</p>
+                    </div>
+                  ))}
+                  {pitchRail.assets.map((asset) => (
+                    <div key={asset.id}>
+                      <strong>{asset.title}</strong>
+                      <p>{asset.content}</p>
+                      <div className="partner-card__badges">
+                        <Badge tone="low">{label(asset.approvalStatus)}</Badge>
+                        <Badge tone={confidenceTone(asset.sourceConfidence)}>
+                          {label(asset.sourceConfidence)}
+                        </Badge>
+                        <Badge tone="unknown">{label(asset.assetType)}</Badge>
+                      </div>
+                      {asset.usageNotes ? <p>{asset.usageNotes}</p> : null}
+                    </div>
+                  ))}
+                  <Link className="ds-btn ds-btn--secondary" href="/pitch-rail">
+                    Open Pitch Rail
+                  </Link>
+                </section>
 
                 <form action={updateOpportunity} className="partner-form-block">
                   <input name="returnTo" type="hidden" value={currentPath} />

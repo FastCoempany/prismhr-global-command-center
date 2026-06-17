@@ -129,9 +129,9 @@ Use:
 - High attention
 - Medium attention
 - Low attention
-- High fit
-- Medium fit
-- Low fit
+- High priority
+- Medium priority
+- Low priority
 - High caution
 - Signal explanation
 - Contributing signals
@@ -251,11 +251,11 @@ Avoid:
 - Inferred
 - Hypothesis
 
-### Prospect Fit
+### Qualification Signals
 
-- High fit
-- Medium fit
-- Low fit
+- Strong qualification signal
+- Moderate qualification signal
+- Weak qualification signal
 - Watch
 - Parked
 - Needs research
@@ -352,7 +352,7 @@ Avoid columns:
 
 Examples:
 
-- Good: "High fit because the company is hiring in Canada and has contractor-heavy engineering roles."
+- Good: "Strong qualification signal because the company is hiring in Canada and has contractor-heavy engineering roles."
 - Good: "Permission needed because the related provider is owned by a CSM and no intro path is recorded."
 - Bad: "This account is hot."
 - Bad: "AI recommends immediate outreach."
