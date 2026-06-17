@@ -122,7 +122,6 @@ enum HmlCategory {
 
 model User {
   id             String    @id @default(cuid())
-  authUserId     String?   @unique
   name           String
   email          String    @unique
   role           UserRole  @default(VIEWER)

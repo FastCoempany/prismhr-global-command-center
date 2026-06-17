@@ -20,8 +20,6 @@
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "7.8.0",
-    "@supabase/ssr": "^0.12.0",
-    "@supabase/supabase-js": "2.108.2",
     "@tailwindcss/postcss": "4.3.1",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",

@@ -69,20 +69,20 @@ The approved plan covers:
 
 ## Access Control
 
-Prospect Field is protected by Supabase Auth and an internal `User` row.
+Prospect Field is protected by a server-validated access code and an HTTP-only session cookie. A valid code maps to the internal owner `User` row for now.
 
-Required Vercel/Supabase env:
+Required Vercel env:
 
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `DATABASE_URL`
 - `DIRECT_URL`
+- `APP_ACCESS_CODE`
 
-Optional bootstrap env:
+Recommended Vercel env:
 
-- `APP_BOOTSTRAP_OWNER_EMAILS`
+- `APP_AUTH_COOKIE_SECRET`
+- `APP_ACCESS_USER_EMAIL`
 
-Set `APP_BOOTSTRAP_OWNER_EMAILS` to a comma-separated list of approved owner emails during initial setup. When one of those authenticated users signs in, the app activates the matching internal `User` row as `OWNER`. Without that env, newly authenticated users are created as inactive `VIEWER` records and must be activated in the database before they can read Prospect Field.
+Set `APP_ACCESS_CODE` to the shared code. Set `APP_AUTH_COOKIE_SECRET` to a long random value so session cookies are signed independently from the code. Set `APP_ACCESS_USER_EMAIL` when the code session should map to a real owner email instead of the placeholder owner.
 
 ## Prime Directive
 

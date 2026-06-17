@@ -1,6 +1,13 @@
+import crypto from "node:crypto";
+import { cookies } from "next/headers";
 import { UserRole, type User } from "@/generated/prisma/client";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+
+export const ACCESS_COOKIE_NAME = "field_signal_access";
+
+const ACCESS_COOKIE_MAX_AGE = 60 * 60 * 12;
+const ACCESS_COOKIE_MAX_AGE_MS = ACCESS_COOKIE_MAX_AGE * 1000;
+const FALLBACK_OWNER_EMAIL = "antaeus@example.local";
 
 export type AppAccess =
   | {
@@ -20,14 +27,6 @@ export type AppAccess =
       message: string;
     }
   | {
-      status: "pending";
-      appUser: User;
-      authEmail: string;
-      canRead: false;
-      canWrite: false;
-      message: string;
-    }
-  | {
       status: "active";
       appUser: User;
       authEmail: string;
@@ -40,45 +39,102 @@ function normalizeEmail(email: string) {
   return email.trim().toLowerCase();
 }
 
-function displayName(email: string, metadata: Record<string, unknown> | undefined) {
-  const metadataName =
-    typeof metadata?.["full_name"] === "string"
-      ? metadata["full_name"]
-      : typeof metadata?.["name"] === "string"
-        ? metadata["name"]
-        : undefined;
-
-  return metadataName ?? email.split("@")[0] ?? email;
+function accessCode() {
+  return process.env["APP_ACCESS_CODE"]?.trim() || undefined;
 }
 
-function bootstrapOwnerEmails() {
-  return new Set(
-    (process.env["APP_BOOTSTRAP_OWNER_EMAILS"] ?? "")
-      .split(",")
-      .map((email) => normalizeEmail(email))
-      .filter(Boolean),
-  );
+function cookieSecret() {
+  return process.env["APP_AUTH_COOKIE_SECRET"]?.trim() || accessCode();
+}
+
+function ownerEmail() {
+  return normalizeEmail(process.env["APP_ACCESS_USER_EMAIL"] ?? FALLBACK_OWNER_EMAIL);
+}
+
+function safeEqual(a: string, b: string) {
+  const aHash = crypto.createHash("sha256").update(a).digest();
+  const bHash = crypto.createHash("sha256").update(b).digest();
+  return crypto.timingSafeEqual(aHash, bHash);
+}
+
+function signSessionPayload(payload: string) {
+  const secret = cookieSecret();
+
+  if (!secret) {
+    throw new Error("APP_ACCESS_CODE or APP_AUTH_COOKIE_SECRET is required.");
+  }
+
+  return crypto.createHmac("sha256", secret).update(payload).digest("hex");
+}
+
+function createAccessToken() {
+  const issuedAt = Date.now().toString();
+  const signature = signSessionPayload(issuedAt);
+  return `${issuedAt}.${signature}`;
+}
+
+function isValidAccessToken(token: string | undefined) {
+  if (!token) return false;
+
+  const [issuedAt, signature] = token.split(".");
+  if (!issuedAt || !signature) return false;
+
+  const issuedAtMs = Number(issuedAt);
+  if (!Number.isFinite(issuedAtMs)) return false;
+  if (Date.now() - issuedAtMs > ACCESS_COOKIE_MAX_AGE_MS) return false;
+
+  try {
+    return safeEqual(signature, signSessionPayload(issuedAt));
+  } catch {
+    return false;
+  }
+}
+
+export function hasAccessCookieValue(value: string | undefined) {
+  return isValidAccessToken(value);
+}
+
+export function isValidAccessCode(input: string) {
+  const expected = accessCode();
+  if (!expected) return false;
+  return safeEqual(input.trim(), expected);
+}
+
+export async function setAccessSession() {
+  const cookieStore = await cookies();
+
+  cookieStore.set(ACCESS_COOKIE_NAME, createAccessToken(), {
+    httpOnly: true,
+    maxAge: ACCESS_COOKIE_MAX_AGE,
+    sameSite: "lax",
+    secure: process.env["NODE_ENV"] === "production",
+    path: "/",
+  });
+}
+
+export async function clearAccessSession() {
+  const cookieStore = await cookies();
+  cookieStore.delete(ACCESS_COOKIE_NAME);
+}
+
+export async function hasAccessSession() {
+  const cookieStore = await cookies();
+  return isValidAccessToken(cookieStore.get(ACCESS_COOKIE_NAME)?.value);
 }
 
 export async function getAppAccess(): Promise<AppAccess> {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user: authUser },
-    error,
-  } = await supabase.auth.getUser();
-
-  if (error || !authUser?.email) {
+  if (!(await hasAccessSession())) {
     return {
       appUser: null,
       authEmail: null,
       canRead: false,
       canWrite: false,
-      message: "Sign in to continue.",
+      message: "Enter the access code to continue.",
       status: "unauthenticated",
     };
   }
 
-  const email = normalizeEmail(authUser.email);
+  const email = ownerEmail();
 
   if (!hasDatabaseEnv()) {
     return {
@@ -92,55 +148,25 @@ export async function getAppAccess(): Promise<AppAccess> {
   }
 
   const prisma = getPrisma();
-  const bootstrapOwner = bootstrapOwnerEmails().has(email);
-  const existing = await prisma.user.findFirst({
+  const appUser = await prisma.user.upsert({
+    create: {
+      email,
+      isActive: true,
+      isCanonOwner: true,
+      isProductOwner: true,
+      lastSignedInAt: new Date(),
+      name: "Antaeus",
+      role: UserRole.OWNER,
+    },
+    update: {
+      isActive: true,
+      lastSignedInAt: new Date(),
+      role: UserRole.OWNER,
+    },
     where: {
-      OR: [
-        {
-          authUserId: authUser.id,
-        },
-        {
-          email,
-        },
-      ],
+      email,
     },
   });
-  const appUser = existing
-    ? await prisma.user.update({
-        data: {
-          authUserId: existing.authUserId ?? authUser.id,
-          isActive: bootstrapOwner ? true : existing.isActive,
-          lastSignedInAt: new Date(),
-          name: existing.name || displayName(email, authUser.user_metadata),
-          role: bootstrapOwner ? UserRole.OWNER : existing.role,
-        },
-        where: {
-          id: existing.id,
-        },
-      })
-    : await prisma.user.create({
-        data: {
-          authUserId: authUser.id,
-          email,
-          isActive: bootstrapOwner,
-          isCanonOwner: bootstrapOwner,
-          isProductOwner: bootstrapOwner,
-          lastSignedInAt: new Date(),
-          name: displayName(email, authUser.user_metadata),
-          role: bootstrapOwner ? UserRole.OWNER : UserRole.VIEWER,
-        },
-      });
-
-  if (!appUser.isActive) {
-    return {
-      appUser,
-      authEmail: email,
-      canRead: false,
-      canWrite: false,
-      message: "Your account is signed in but not active for this workspace yet.",
-      status: "pending",
-    };
-  }
 
   return {
     appUser,
