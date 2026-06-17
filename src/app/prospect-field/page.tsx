@@ -6,6 +6,7 @@ import {
   SourceConfidence,
 } from "@/generated/prisma/client";
 import { AppWayfinder } from "@/components/app-wayfinder";
+import { FieldGlyph } from "@/components/field-glyph";
 import { HmlPriorityPanel } from "@/components/hml-priority-panel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -125,41 +126,77 @@ export default async function ProspectFieldPage({
       />
 
       <section className="work-surface">
-        <header className="top-bar">
-          <div className="grid gap-2">
-            <p className="eyebrow">Chicagoland prospecting</p>
-            <h1>Prospect Field</h1>
+        <section className="prospect-brief" aria-label="Prospecting desk posture">
+          <section className="prospect-brief__main">
+            <p className="eyebrow">Prospecting Desk</p>
+            <h1>Build the Chicagoland account list without breaking the trust path.</h1>
+            <p className="prospect-brief__lede">
+              Chicagoland prospecting is central. Every account needs evidence, source
+              confidence, permission posture, HML priority, and a safe next move before
+              action.
+            </p>
+            <div className="prospect-brief__action">
+              <span>Next safest action</span>
+              <strong>{nextSafestAction}</strong>
+              <p>
+                {topAccount
+                  ? `${topAccount.companyName} is the current working account.`
+                  : "Start by adding a sourced prospect with a clear qualification signal."}
+              </p>
+            </div>
             <p className="text-xs font-semibold leading-4 text-[color:var(--ds-ink-700)]">
               Signed in as {access.appUser.email} / {label(access.appUser.role)}
             </p>
-          </div>
-          {!databaseReady ? <Badge tone="medium">Records unavailable</Badge> : null}
-        </header>
+          </section>
 
-        <section
-          aria-label="Current safety posture"
-          className="safety-strip safety-strip--four"
-        >
-          <div className="grid gap-1">
-            <span>Permission</span>
-            <Badge tone={permissionTone(permissionPosture)}>
-              {label(permissionPosture)}
-            </Badge>
-          </div>
-          <div className="grid gap-1 md:col-span-2">
-            <span>Next safest action</span>
-            <strong>{nextSafestAction}</strong>
-          </div>
-          <div className="grid gap-1">
-            <span>Source confidence</span>
-            <Badge tone={confidenceTone(sourceConfidence)}>
-              {label(sourceConfidence)}
-            </Badge>
-          </div>
-          <div className="grid gap-1">
-            <span>Records</span>
-            <strong>{totalAccounts}</strong>
-          </div>
+          <aside className="prospect-brief__trust-stack">
+            <div className="prospect-brief__trust-card">
+              <span>Territory</span>
+              <strong>Chicagoland</strong>
+            </div>
+            <div className="prospect-brief__trust-card">
+              <span>Permission posture</span>
+              <Badge tone={permissionTone(permissionPosture)}>
+                {label(permissionPosture)}
+              </Badge>
+            </div>
+            <div className="prospect-brief__trust-card">
+              <span>Source confidence</span>
+              <Badge tone={confidenceTone(sourceConfidence)}>
+                {label(sourceConfidence)}
+              </Badge>
+            </div>
+            <div className="prospect-brief__trust-card">
+              <span>Records</span>
+              <strong>
+                {databaseReady
+                  ? `${totalAccounts} prospect${totalAccounts === 1 ? "" : "s"}`
+                  : "Records unavailable"}
+              </strong>
+            </div>
+          </aside>
+
+          <section className="prospect-brief__path-panel">
+            <div className="prospect-brief__path-node">
+              <FieldGlyph accent="blue" name="prospect" size={22} />
+              <span>Prospect</span>
+            </div>
+            <div className="prospect-brief__path-line" />
+            <div className="prospect-brief__path-node">
+              <FieldGlyph accent="orange" name="evidence" size={22} />
+              <span>Source evidence</span>
+            </div>
+            <div className="prospect-brief__path-line" />
+            <div className="prospect-brief__path-node">
+              <FieldGlyph accent="amber" name="permission" size={22} />
+              <span>Permission</span>
+            </div>
+            <div className="prospect-brief__path-line" />
+            <div className="prospect-brief__path-node">
+              <FieldGlyph accent="green" name="trust" size={22} />
+              <span>CSM-safe move</span>
+            </div>
+          </section>
         </section>
 
         <HmlPriorityPanel compact summary={hmlSummary} />
@@ -195,14 +232,14 @@ export default async function ProspectFieldPage({
 
         <div className="prospect-grid">
           <section className="overflow-hidden rounded-lg border border-[color:var(--color-line)] bg-[color:var(--color-surface)]">
-            <div className="border-b border-[color:var(--color-line)] p-4">
-              <p className="text-xs font-bold leading-4 text-[color:var(--color-ink-support)]">
-                Evidence-led territory list
+            <div className="section-heading">
+              <p className="eyebrow">Prospecting Desk</p>
+              <h2 className="ds-heading--title">Accounts under research</h2>
+              <p className="mt-2 text-sm font-semibold leading-5 text-[color:var(--ds-ink-700)]">
+                This is the primary work surface. The list exists to decide what is worth
+                researching, what is unsafe, and what needs a better source.
               </p>
-              <h2 className="text-base font-semibold leading-6">
-                Accounts under research
-              </h2>
-              <p className="mt-1 text-xs font-semibold leading-4 text-[color:var(--color-ink-support)]">
+              <p className="mt-2 text-xs font-semibold leading-4 text-[color:var(--color-ink-support)]">
                 Showing {accounts.length} of {totalAccounts} account
                 {totalAccounts === 1 ? "" : "s"}; newest first. Limit {accountLimit}.
               </p>
@@ -219,9 +256,9 @@ export default async function ProspectFieldPage({
                     <tr>
                       <th className="px-4 py-3 font-bold">Company</th>
                       <th className="px-4 py-3 font-bold">Qualification Signals</th>
-                      <th className="px-4 py-3 font-bold">HML Priority</th>
                       <th className="px-4 py-3 font-bold">Permission</th>
-                      <th className="px-4 py-3 font-bold">Source</th>
+                      <th className="px-4 py-3 font-bold">Source Confidence</th>
+                      <th className="px-4 py-3 font-bold">HML Priority</th>
                       <th className="px-4 py-3 font-bold">Next Safest Action</th>
                       <th className="px-4 py-3 font-bold">Evidence</th>
                     </tr>
@@ -267,6 +304,16 @@ export default async function ProspectFieldPage({
                             </div>
                           </td>
                           <td className="px-4 py-3">
+                            <Badge tone={permissionTone(account.permissionState)}>
+                              {label(account.permissionState)}
+                            </Badge>
+                          </td>
+                          <td className="px-4 py-3">
+                            <Badge tone={confidenceTone(account.sourceConfidence)}>
+                              {label(account.sourceConfidence)}
+                            </Badge>
+                          </td>
+                          <td className="px-4 py-3">
                             <Badge
                               tone={
                                 latestHml ? hmlTone(latestHml.classification) : "unknown"
@@ -279,16 +326,6 @@ export default async function ProspectFieldPage({
                                 {latestHml.explanation}
                               </div>
                             ) : null}
-                          </td>
-                          <td className="px-4 py-3">
-                            <Badge tone={permissionTone(account.permissionState)}>
-                              {label(account.permissionState)}
-                            </Badge>
-                          </td>
-                          <td className="px-4 py-3">
-                            <Badge tone={confidenceTone(account.sourceConfidence)}>
-                              {label(account.sourceConfidence)}
-                            </Badge>
                           </td>
                           <td className="max-w-72 px-4 py-3 font-semibold leading-5">
                             {account.nextSafestAction}
@@ -318,11 +355,9 @@ export default async function ProspectFieldPage({
 
           <aside className="grid content-start gap-5">
             <section className="rounded-lg border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-4">
-              <p className="text-xs font-bold leading-4 text-[color:var(--color-ink-support)]">
-                Add prospect
-              </p>
+              <p className="eyebrow">Desk intake</p>
               <h2 className="mb-4 text-base font-semibold leading-6">
-                Record qualification signals
+                Add sourced prospect
               </h2>
               <form action={createTerritoryAccount} className="grid gap-4">
                 <Field label="Company" name="companyName" required>

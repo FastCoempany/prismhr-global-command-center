@@ -134,6 +134,13 @@ The app should help answer:
 - Which external channel has actual timing, not just surface area?
 - What should the user do next?
 
+For the first real operating surface, treat this as canon:
+
+- The product/information architecture winner is **Prospecting Desk**.
+- The visual composition winner is **Relationship Brief**.
+- Chicagoland prospecting must be unmistakably central, but the screen should visually lead with borrowed trust, permission posture, source confidence, and next safest action before any action is taken.
+- Do not turn this into a generic CRM table. Do not turn it into a decorative trust dashboard that hides the account list.
+
 ---
 
 ## 5. Permission Is A First-Class Concept

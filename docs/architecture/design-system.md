@@ -26,6 +26,20 @@ The folder `antaeus-brand-kit/` is now the visual-system donor. This app borrows
 
 The app helps the owner prospect Chicagoland accounts while protecting CSM-owned relationship motion.
 
+## Selected Direction
+
+Antaeus selected a hybrid direction for the first real operating surface:
+
+- Product / information architecture: **Prospecting Desk**.
+- Visual composition: **Relationship Brief**.
+
+Meaning:
+
+- Chicagoland prospecting must be unmistakably central.
+- The account table is the primary work surface.
+- The page should visually open like a trust-path brief: large operating statement, next safest action, relationship/permission/source cards, and a clear safe-motion path.
+- Do not make the first screen feel like a generic table app, CRM list, or decorative dashboard.
+
 The UI must make these visible where decisions happen:
 
 - HML Priority;
@@ -176,8 +190,10 @@ Today:
 Prospect Field:
 
 - Wayfinder;
-- top title;
-- Safety Strip;
+- Relationship Brief-style operating panel;
+- top-level next safest action;
+- relationship/permission/source cards;
+- trust-path strip;
 - HML Priority panel;
 - cloud-backed table;
 - create prospect form;

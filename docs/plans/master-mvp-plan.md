@@ -635,6 +635,12 @@ Boundary logic surfaced:
 
 Purpose: prospect, research, and prioritize potential Chicagoland clients that may fit PrismHR Global's global payroll, EOR, contractor management, or cross-border recruiting value proposition.
 
+Selected first-surface direction:
+
+- Product / information architecture: Prospecting Desk.
+- Visual composition: Relationship Brief.
+- The account list remains the central work surface, but the page should open with a trust-path brief that foregrounds next safest action, permission posture, source confidence, and relationship-safe motion.
+
 Key components:
 
 - Target account list.
