@@ -378,15 +378,28 @@ model InternalUnknown {
   status               InternalUnknownStatus @default(OPEN)
   blocksImplementation Boolean               @default(false)
   relatedAccountId     String?
+  csmPartnerId         String?
+  peoId                String?
+  opportunityId        String?
+  dailyServeId         String?
   dueAt                DateTime?
   createdAt            DateTime              @default(now())
   updatedAt            DateTime              @updatedAt
 
-  relatedAccount TerritoryAccount? @relation(fields: [relatedAccountId], references: [id], onDelete: SetNull)
+  relatedAccount     TerritoryAccount?   @relation(fields: [relatedAccountId], references: [id], onDelete: SetNull)
+  csmPartner         CSMPartner?         @relation(fields: [csmPartnerId], references: [id], onDelete: SetNull)
+  peo                PEO?                @relation(fields: [peoId], references: [id], onDelete: SetNull)
+  opportunity        Opportunity?        @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
+  dailyServe         DailyServe?         @relation(fields: [dailyServeId], references: [id], onDelete: SetNull)
+  hmlClassifications HmlClassification[]
 
   @@index([category])
   @@index([status])
   @@index([relatedAccountId])
+  @@index([csmPartnerId])
+  @@index([peoId])
+  @@index([opportunityId])
+  @@index([dailyServeId])
 }
 
 model CSMPartner {
@@ -419,6 +432,7 @@ model CSMPartner {
   hmlClassifications HmlClassification[]
   boundaryRules      BoundaryRule[]
   dailyServes        DailyServe[]
+  internalUnknowns   InternalUnknown[]
 
   @@index([name])
   @@index([status])
@@ -455,6 +469,7 @@ model PEO {
   hmlClassifications HmlClassification[]
   boundaryRules      BoundaryRule[]
   dailyServes        DailyServe[]
+  internalUnknowns   InternalUnknown[]
 
   @@index([name])
   @@index([csmPartnerId])
@@ -520,6 +535,7 @@ model Opportunity {
   hmlClassifications HmlClassification[]
   boundaryRules      BoundaryRule[]
   dailyServes        DailyServe[]
+  internalUnknowns   InternalUnknown[]
 
   @@index([stage])
   @@index([csmPartnerId])
@@ -687,6 +703,7 @@ model DailyServe {
   territoryAccount   TerritoryAccount?   @relation(fields: [territoryAccountId], references: [id], onDelete: SetNull)
   pitchAsset         PitchAsset?         @relation(fields: [pitchAssetId], references: [id], onDelete: SetNull)
   hmlClassifications HmlClassification[]
+  internalUnknowns   InternalUnknown[]
 
   @@index([ownerId])
   @@index([csmPartnerId])
@@ -709,6 +726,7 @@ model HmlClassification {
   peoId                 String?
   opportunityId         String?
   dailyServeId          String?
+  internalUnknownId     String?
   classification        HmlValue
   confidence            SourceConfidence
   explanation           String
@@ -717,11 +735,12 @@ model HmlClassification {
   ruleVersion           String           @default("v0.1")
   createdAt             DateTime         @default(now())
 
-  account     TerritoryAccount? @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  csmPartner  CSMPartner?       @relation(fields: [csmPartnerId], references: [id], onDelete: Cascade)
-  peo         PEO?              @relation(fields: [peoId], references: [id], onDelete: Cascade)
-  opportunity Opportunity?      @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
-  dailyServe  DailyServe?       @relation(fields: [dailyServeId], references: [id], onDelete: SetNull)
+  account         TerritoryAccount? @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  csmPartner      CSMPartner?       @relation(fields: [csmPartnerId], references: [id], onDelete: Cascade)
+  peo             PEO?              @relation(fields: [peoId], references: [id], onDelete: Cascade)
+  opportunity     Opportunity?      @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  dailyServe      DailyServe?       @relation(fields: [dailyServeId], references: [id], onDelete: SetNull)
+  internalUnknown InternalUnknown?  @relation(fields: [internalUnknownId], references: [id], onDelete: SetNull)
 
   @@index([category])
   @@index([accountId])
@@ -729,5 +748,6 @@ model HmlClassification {
   @@index([peoId])
   @@index([opportunityId])
   @@index([dailyServeId])
+  @@index([internalUnknownId])
   @@index([classification])
 }

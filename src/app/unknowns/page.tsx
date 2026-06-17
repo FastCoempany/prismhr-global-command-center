@@ -82,8 +82,18 @@ export default async function UnknownsPage({ searchParams }: UnknownsPageProps) 
   }
 
   const filters = parseUnknownsFilters(params);
-  const { accountOptions, counts, databaseReady, error, limit, unknowns } =
-    await getUnknownsData(filters);
+  const {
+    accountOptions,
+    counts,
+    csmOptions,
+    dailyServeOptions,
+    databaseReady,
+    error,
+    limit,
+    opportunityOptions,
+    peoOptions,
+    unknowns,
+  } = await getUnknownsData(filters);
   const currentPath = buildUnknownsPath(filters);
 
   return (
@@ -264,6 +274,21 @@ export default async function UnknownsPage({ searchParams }: UnknownsPageProps) 
                       accountId: unknown.relatedAccount.id,
                     }).toString()}`
                   : null;
+                const relatedCsmPath = unknown.csmPartner
+                  ? `/partners?${new URLSearchParams({
+                      partnerId: unknown.csmPartner.id,
+                    }).toString()}`
+                  : null;
+                const relatedOpportunityPath = unknown.opportunity
+                  ? `/opportunities?${new URLSearchParams({
+                      opportunityId: unknown.opportunity.id,
+                    }).toString()}`
+                  : null;
+                const relatedDailyServePath = unknown.dailyServe
+                  ? `/daily-serves?${new URLSearchParams({
+                      dailyServeId: unknown.dailyServe.id,
+                    }).toString()}`
+                  : null;
 
                 return (
                   <article
@@ -310,6 +335,44 @@ export default async function UnknownsPage({ searchParams }: UnknownsPageProps) 
                           {relatedProspectPath && unknown.relatedAccount ? (
                             <Link href={relatedProspectPath}>
                               {unknown.relatedAccount.companyName}
+                            </Link>
+                          ) : (
+                            "Not linked"
+                          )}
+                        </p>
+                      </div>
+                      <div>
+                        <span>Related CSM</span>
+                        <p>
+                          {relatedCsmPath && unknown.csmPartner ? (
+                            <Link href={relatedCsmPath}>{unknown.csmPartner.name}</Link>
+                          ) : (
+                            "Not linked"
+                          )}
+                        </p>
+                      </div>
+                      <div>
+                        <span>Related PEO</span>
+                        <p>{unknown.peo?.name ?? "Not linked"}</p>
+                      </div>
+                      <div>
+                        <span>Related opportunity</span>
+                        <p>
+                          {relatedOpportunityPath && unknown.opportunity ? (
+                            <Link href={relatedOpportunityPath}>
+                              {unknown.opportunity.name}
+                            </Link>
+                          ) : (
+                            "Not linked"
+                          )}
+                        </p>
+                      </div>
+                      <div>
+                        <span>Related Daily Serve</span>
+                        <p>
+                          {relatedDailyServePath && unknown.dailyServe ? (
+                            <Link href={relatedDailyServePath}>
+                              {unknown.dailyServe.title}
                             </Link>
                           ) : (
                             "Not linked"
@@ -474,6 +537,14 @@ export default async function UnknownsPage({ searchParams }: UnknownsPageProps) 
                           />
                         </Field>
                       </div>
+                      <RelatedRecordFields
+                        csmOptions={csmOptions}
+                        dailyServeOptions={dailyServeOptions}
+                        defaults={unknown}
+                        idPrefix={`edit-${unknown.id}`}
+                        opportunityOptions={opportunityOptions}
+                        peoOptions={peoOptions}
+                      />
 
                       <label className="unknown-checkbox">
                         <input
@@ -568,6 +639,13 @@ export default async function UnknownsPage({ searchParams }: UnknownsPageProps) 
                   ))}
                 </Select>
               </Field>
+              <RelatedRecordFields
+                csmOptions={csmOptions}
+                dailyServeOptions={dailyServeOptions}
+                idPrefix="create"
+                opportunityOptions={opportunityOptions}
+                peoOptions={peoOptions}
+              />
               <Field
                 htmlFor="currentBestAnswerCreate"
                 label="Current best answer"
@@ -615,5 +693,101 @@ export default async function UnknownsPage({ searchParams }: UnknownsPageProps) 
         </div>
       </section>
     </main>
+  );
+}
+
+type RelatedRecordFieldsProps = {
+  csmOptions: Array<{ id: string; name: string }>;
+  dailyServeOptions: Array<{ id: string; title: string }>;
+  defaults?: {
+    csmPartnerId: string | null;
+    dailyServeId: string | null;
+    opportunityId: string | null;
+    peoId: string | null;
+  };
+  idPrefix: string;
+  opportunityOptions: Array<{ id: string; name: string }>;
+  peoOptions: Array<{ id: string; name: string }>;
+};
+
+function RelatedRecordFields({
+  csmOptions,
+  dailyServeOptions,
+  defaults,
+  idPrefix,
+  opportunityOptions,
+  peoOptions,
+}: RelatedRecordFieldsProps) {
+  return (
+    <>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field htmlFor={`${idPrefix}-csmPartner`} label="Related CSM" name="csmPartnerId">
+          <Select
+            id={`${idPrefix}-csmPartner`}
+            name="csmPartnerId"
+            defaultValue={defaults?.csmPartnerId ?? ""}
+          >
+            <option value="">Not linked</option>
+            {csmOptions.map((partner) => (
+              <option key={partner.id} value={partner.id}>
+                {partner.name}
+              </option>
+            ))}
+          </Select>
+        </Field>
+        <Field htmlFor={`${idPrefix}-peo`} label="Related PEO" name="peoId">
+          <Select
+            id={`${idPrefix}-peo`}
+            name="peoId"
+            defaultValue={defaults?.peoId ?? ""}
+          >
+            <option value="">Not linked</option>
+            {peoOptions.map((peo) => (
+              <option key={peo.id} value={peo.id}>
+                {peo.name}
+              </option>
+            ))}
+          </Select>
+        </Field>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field
+          htmlFor={`${idPrefix}-opportunity`}
+          label="Related opportunity"
+          name="opportunityId"
+        >
+          <Select
+            id={`${idPrefix}-opportunity`}
+            name="opportunityId"
+            defaultValue={defaults?.opportunityId ?? ""}
+          >
+            <option value="">Not linked</option>
+            {opportunityOptions.map((opportunity) => (
+              <option key={opportunity.id} value={opportunity.id}>
+                {opportunity.name}
+              </option>
+            ))}
+          </Select>
+        </Field>
+        <Field
+          htmlFor={`${idPrefix}-dailyServe`}
+          label="Related Daily Serve"
+          name="dailyServeId"
+        >
+          <Select
+            id={`${idPrefix}-dailyServe`}
+            name="dailyServeId"
+            defaultValue={defaults?.dailyServeId ?? ""}
+          >
+            <option value="">Not linked</option>
+            {dailyServeOptions.map((dailyServe) => (
+              <option key={dailyServe.id} value={dailyServe.id}>
+                {dailyServe.title}
+              </option>
+            ))}
+          </Select>
+        </Field>
+      </div>
+    </>
   );
 }

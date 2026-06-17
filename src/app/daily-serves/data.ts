@@ -3,6 +3,7 @@ import {
   DailyServeCategory,
   DailyServeOutcome,
   DailyServeStatus,
+  InternalUnknownStatus,
   PitchAudience,
   SourceConfidence,
 } from "@/generated/prisma/client";
@@ -152,6 +153,15 @@ async function findSelectedDailyServe(
           createdAt: "desc",
         },
         take: 5,
+      },
+      internalUnknowns: {
+        orderBy: {
+          updatedAt: "desc",
+        },
+        take: 5,
+        where: {
+          status: InternalUnknownStatus.OPEN,
+        },
       },
       opportunity: true,
       peo: true,

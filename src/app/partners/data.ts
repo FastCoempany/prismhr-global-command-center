@@ -2,6 +2,7 @@ import {
   BoundaryRuleStatus,
   CsmPartnerStatus,
   HmlValue,
+  InternalUnknownStatus,
   PermissionState,
   SourceConfidence,
 } from "@/generated/prisma/client";
@@ -175,6 +176,15 @@ async function findSelectedPartner(
           createdAt: "desc",
         },
         take: 5,
+      },
+      internalUnknowns: {
+        orderBy: {
+          updatedAt: "desc",
+        },
+        take: 5,
+        where: {
+          status: InternalUnknownStatus.OPEN,
+        },
       },
       notes: {
         orderBy: {

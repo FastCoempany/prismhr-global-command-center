@@ -431,6 +431,32 @@ export default async function DailyServesPage({ searchParams }: DailyServesPageP
                   </div>
                 </section>
 
+                <section className="partner-subsection">
+                  <h3>Related unknowns</h3>
+                  {selectedDailyServe.internalUnknowns.length === 0 ? (
+                    <p>No open unknowns linked to this Daily Serve.</p>
+                  ) : (
+                    selectedDailyServe.internalUnknowns.map((unknown) => (
+                      <div key={unknown.id}>
+                        <Link href={`/unknowns#unknown-${unknown.id}`}>
+                          <strong>{unknown.question}</strong>
+                        </Link>
+                        <p>{unknown.currentBestAnswer ?? "No answer recorded yet."}</p>
+                        <div className="partner-card__badges">
+                          <Badge tone={hmlTone(unknown.riskLevel)}>
+                            {label(unknown.riskLevel)} Risk
+                          </Badge>
+                          <Badge tone={unknown.blocksImplementation ? "high" : "unknown"}>
+                            {unknown.blocksImplementation
+                              ? "Blocks implementation"
+                              : "Tracked unknown"}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </section>
+
                 <form action={updateDailyServeOutcome} className="partner-form-block">
                   <input name="returnTo" type="hidden" value={currentPath} />
                   <input

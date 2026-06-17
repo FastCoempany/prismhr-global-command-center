@@ -118,6 +118,12 @@ export async function getDashboardData(): Promise<DashboardData> {
               title: true,
             },
           },
+          internalUnknown: {
+            select: {
+              id: true,
+              question: true,
+            },
+          },
           peo: {
             select: {
               csmPartnerId: true,
@@ -221,21 +227,24 @@ export async function getDashboardData(): Promise<DashboardData> {
         classification: classification.classification,
         confidence: classification.confidence,
         explanation: classification.explanation,
-        href: classification.accountId
-          ? `/prospect-field#account-${classification.accountId}`
-          : classification.dailyServe?.id
-            ? `/daily-serves?${new URLSearchParams({
-                dailyServeId: classification.dailyServe.id,
-              }).toString()}`
-            : classification.opportunity?.id
-              ? `/opportunities?${new URLSearchParams({
-                  opportunityId: classification.opportunity.id,
+        href: classification.internalUnknown?.id
+          ? `/unknowns#unknown-${classification.internalUnknown.id}`
+          : classification.accountId
+            ? `/prospect-field#account-${classification.accountId}`
+            : classification.dailyServe?.id
+              ? `/daily-serves?${new URLSearchParams({
+                  dailyServeId: classification.dailyServe.id,
                 }).toString()}`
-              : partnerId
-                ? `/partners?${new URLSearchParams({ partnerId }).toString()}`
-                : undefined,
+              : classification.opportunity?.id
+                ? `/opportunities?${new URLSearchParams({
+                    opportunityId: classification.opportunity.id,
+                  }).toString()}`
+                : partnerId
+                  ? `/partners?${new URLSearchParams({ partnerId }).toString()}`
+                  : undefined,
         id: classification.id,
         label:
+          classification.internalUnknown?.question ??
           classification.account?.companyName ??
           classification.csmPartner?.name ??
           classification.peo?.name ??

@@ -8,6 +8,7 @@ import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 
 const UNKNOWN_LIMIT = 60;
 const ACCOUNT_OPTION_LIMIT = 100;
+const RELATED_OPTION_LIMIT = 100;
 const visibleAccountWhere = {
   NOT: [{ companyName: "Placeholder Chicagoland Prospect" }, { category: "Placeholder" }],
 };
@@ -134,6 +135,34 @@ function unknownWhere(filters: UnknownsFilters) {
           },
         },
         {
+          csmPartner: {
+            name: {
+              contains: filters.q,
+            },
+          },
+        },
+        {
+          peo: {
+            name: {
+              contains: filters.q,
+            },
+          },
+        },
+        {
+          opportunity: {
+            name: {
+              contains: filters.q,
+            },
+          },
+        },
+        {
+          dailyServe: {
+            title: {
+              contains: filters.q,
+            },
+          },
+        },
+        {
           relatedAccount: {
             companyName: {
               contains: filters.q,
@@ -162,9 +191,13 @@ export async function getUnknownsData(filters: UnknownsFilters) {
         visible: 0,
       },
       databaseReady: false,
+      dailyServeOptions: [],
       error: "Unknown records cannot be loaded right now.",
       filters,
       limit: UNKNOWN_LIMIT,
+      csmOptions: [],
+      opportunityOptions: [],
+      peoOptions: [],
       unknowns: [],
     };
   }
@@ -172,64 +205,147 @@ export async function getUnknownsData(filters: UnknownsFilters) {
   try {
     const prisma = getPrisma();
     const where = unknownWhere(filters);
-    const [unknowns, visible, open, blockingOpen, highRiskOpen, accountOptions] =
-      await Promise.all([
-        prisma.internalUnknown.findMany({
-          include: {
-            relatedAccount: {
-              select: {
-                city: true,
-                companyName: true,
-                id: true,
-                permissionState: true,
-                sourceConfidence: true,
-              },
+    const [
+      unknowns,
+      visible,
+      open,
+      blockingOpen,
+      highRiskOpen,
+      accountOptions,
+      csmOptions,
+      peoOptions,
+      opportunityOptions,
+      dailyServeOptions,
+    ] = await Promise.all([
+      prisma.internalUnknown.findMany({
+        include: {
+          csmPartner: {
+            select: {
+              id: true,
+              name: true,
             },
           },
-          orderBy: [
-            {
-              blocksImplementation: "desc",
+          dailyServe: {
+            select: {
+              id: true,
+              title: true,
             },
-            {
-              updatedAt: "desc",
+          },
+          opportunity: {
+            select: {
+              id: true,
+              name: true,
             },
-          ],
-          take: UNKNOWN_LIMIT,
-          where,
-        }),
-        prisma.internalUnknown.count({
-          where,
-        }),
-        prisma.internalUnknown.count({
-          where: {
-            status: InternalUnknownStatus.OPEN,
           },
-        }),
-        prisma.internalUnknown.count({
-          where: {
-            blocksImplementation: true,
-            status: InternalUnknownStatus.OPEN,
+          peo: {
+            select: {
+              csmPartnerId: true,
+              id: true,
+              name: true,
+            },
           },
-        }),
-        prisma.internalUnknown.count({
-          where: {
-            riskLevel: HmlValue.HIGH,
-            status: InternalUnknownStatus.OPEN,
+          relatedAccount: {
+            select: {
+              city: true,
+              companyName: true,
+              id: true,
+              permissionState: true,
+              sourceConfidence: true,
+            },
           },
-        }),
-        prisma.territoryAccount.findMany({
-          orderBy: {
-            companyName: "asc",
+        },
+        orderBy: [
+          {
+            blocksImplementation: "desc",
           },
-          select: {
-            city: true,
-            companyName: true,
-            id: true,
+          {
+            updatedAt: "desc",
           },
-          take: ACCOUNT_OPTION_LIMIT,
-          where: visibleAccountWhere,
-        }),
-      ]);
+        ],
+        take: UNKNOWN_LIMIT,
+        where,
+      }),
+      prisma.internalUnknown.count({
+        where,
+      }),
+      prisma.internalUnknown.count({
+        where: {
+          status: InternalUnknownStatus.OPEN,
+        },
+      }),
+      prisma.internalUnknown.count({
+        where: {
+          blocksImplementation: true,
+          status: InternalUnknownStatus.OPEN,
+        },
+      }),
+      prisma.internalUnknown.count({
+        where: {
+          riskLevel: HmlValue.HIGH,
+          status: InternalUnknownStatus.OPEN,
+        },
+      }),
+      prisma.territoryAccount.findMany({
+        orderBy: {
+          companyName: "asc",
+        },
+        select: {
+          city: true,
+          companyName: true,
+          id: true,
+        },
+        take: ACCOUNT_OPTION_LIMIT,
+        where: visibleAccountWhere,
+      }),
+      prisma.cSMPartner.findMany({
+        orderBy: {
+          name: "asc",
+        },
+        select: {
+          id: true,
+          name: true,
+        },
+        take: RELATED_OPTION_LIMIT,
+      }),
+      prisma.pEO.findMany({
+        orderBy: {
+          name: "asc",
+        },
+        select: {
+          csmPartnerId: true,
+          id: true,
+          name: true,
+        },
+        take: RELATED_OPTION_LIMIT,
+      }),
+      prisma.opportunity.findMany({
+        orderBy: {
+          updatedAt: "desc",
+        },
+        select: {
+          csmPartnerId: true,
+          id: true,
+          name: true,
+          peoId: true,
+          territoryAccountId: true,
+        },
+        take: RELATED_OPTION_LIMIT,
+      }),
+      prisma.dailyServe.findMany({
+        orderBy: {
+          updatedAt: "desc",
+        },
+        select: {
+          csmPartnerId: true,
+          id: true,
+          opportunityId: true,
+          peoId: true,
+          territoryAccountId: true,
+          title: true,
+        },
+        take: RELATED_OPTION_LIMIT,
+      }),
+    ]);
 
     return {
       accountOptions,
@@ -239,10 +355,14 @@ export async function getUnknownsData(filters: UnknownsFilters) {
         open,
         visible,
       },
+      csmOptions,
       databaseReady: true,
+      dailyServeOptions,
       error: null,
       filters,
       limit: UNKNOWN_LIMIT,
+      opportunityOptions,
+      peoOptions,
       unknowns,
     };
   } catch (error) {
@@ -257,9 +377,13 @@ export async function getUnknownsData(filters: UnknownsFilters) {
         visible: 0,
       },
       databaseReady: false,
+      dailyServeOptions: [],
       error: "Unknown records cannot be loaded right now.",
       filters,
       limit: UNKNOWN_LIMIT,
+      csmOptions: [],
+      opportunityOptions: [],
+      peoOptions: [],
       unknowns: [],
     };
   }

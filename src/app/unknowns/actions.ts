@@ -132,7 +132,7 @@ async function requireWriteAccess(returnTo: string) {
   return access;
 }
 
-async function relatedAccountIdOrNull(formData: FormData) {
+async function relatedAccountOrNull(formData: FormData) {
   const accountId = optionalString(formData, "relatedAccountId", "Related prospect", 200);
   if (!accountId) return null;
 
@@ -155,7 +155,170 @@ async function relatedAccountIdOrNull(formData: FormData) {
     throw new FormValidationError("Related prospect could not be found.");
   }
 
-  return account.id;
+  return account;
+}
+
+async function relatedCsmPartnerOrNull(formData: FormData) {
+  const csmPartnerId = optionalString(formData, "csmPartnerId", "CSM partner", 200);
+  if (!csmPartnerId) return null;
+
+  const partner = await getPrisma().cSMPartner.findUnique({
+    select: {
+      id: true,
+    },
+    where: {
+      id: csmPartnerId,
+    },
+  });
+
+  if (!partner) {
+    throw new FormValidationError("Related CSM partner could not be found.");
+  }
+
+  return partner;
+}
+
+async function relatedPeoOrNull(formData: FormData) {
+  const peoId = optionalString(formData, "peoId", "PEO", 200);
+  if (!peoId) return null;
+
+  const peo = await getPrisma().pEO.findUnique({
+    select: {
+      csmPartnerId: true,
+      id: true,
+    },
+    where: {
+      id: peoId,
+    },
+  });
+
+  if (!peo) {
+    throw new FormValidationError("Related PEO could not be found.");
+  }
+
+  return peo;
+}
+
+async function relatedOpportunityOrNull(formData: FormData) {
+  const opportunityId = optionalString(formData, "opportunityId", "Opportunity", 200);
+  if (!opportunityId) return null;
+
+  const opportunity = await getPrisma().opportunity.findUnique({
+    select: {
+      csmPartnerId: true,
+      id: true,
+      peoId: true,
+      territoryAccountId: true,
+    },
+    where: {
+      id: opportunityId,
+    },
+  });
+
+  if (!opportunity) {
+    throw new FormValidationError("Related opportunity could not be found.");
+  }
+
+  return opportunity;
+}
+
+async function relatedDailyServeOrNull(formData: FormData) {
+  const dailyServeId = optionalString(formData, "dailyServeId", "Daily Serve", 200);
+  if (!dailyServeId) return null;
+
+  const dailyServe = await getPrisma().dailyServe.findUnique({
+    select: {
+      csmPartnerId: true,
+      id: true,
+      opportunityId: true,
+      peoId: true,
+      territoryAccountId: true,
+    },
+    where: {
+      id: dailyServeId,
+    },
+  });
+
+  if (!dailyServe) {
+    throw new FormValidationError("Related Daily Serve could not be found.");
+  }
+
+  return dailyServe;
+}
+
+async function unknownLinks(formData: FormData) {
+  const account = await relatedAccountOrNull(formData);
+  const csmPartner = await relatedCsmPartnerOrNull(formData);
+  const peo = await relatedPeoOrNull(formData);
+  const opportunity = await relatedOpportunityOrNull(formData);
+  const dailyServe = await relatedDailyServeOrNull(formData);
+  const accountId = account?.id ?? null;
+  const csmPartnerId = csmPartner?.id ?? null;
+  const peoId = peo?.id ?? null;
+  const opportunityId = opportunity?.id ?? null;
+  const dailyServeId = dailyServe?.id ?? null;
+
+  if (csmPartnerId && peo?.csmPartnerId && peo.csmPartnerId !== csmPartnerId) {
+    throw new FormValidationError("Related PEO belongs to a different CSM.");
+  }
+
+  if (
+    csmPartnerId &&
+    opportunity?.csmPartnerId &&
+    opportunity.csmPartnerId !== csmPartnerId
+  ) {
+    throw new FormValidationError("Related opportunity belongs to a different CSM.");
+  }
+
+  if (peoId && opportunity?.peoId && opportunity.peoId !== peoId) {
+    throw new FormValidationError("Related opportunity belongs to a different PEO.");
+  }
+
+  if (
+    accountId &&
+    opportunity?.territoryAccountId &&
+    opportunity.territoryAccountId !== accountId
+  ) {
+    throw new FormValidationError("Related opportunity belongs to a different prospect.");
+  }
+
+  if (
+    csmPartnerId &&
+    dailyServe?.csmPartnerId &&
+    dailyServe.csmPartnerId !== csmPartnerId
+  ) {
+    throw new FormValidationError("Related Daily Serve belongs to a different CSM.");
+  }
+
+  if (peoId && dailyServe?.peoId && dailyServe.peoId !== peoId) {
+    throw new FormValidationError("Related Daily Serve belongs to a different PEO.");
+  }
+
+  if (
+    opportunityId &&
+    dailyServe?.opportunityId &&
+    dailyServe.opportunityId !== opportunityId
+  ) {
+    throw new FormValidationError(
+      "Related Daily Serve belongs to a different opportunity.",
+    );
+  }
+
+  if (
+    accountId &&
+    dailyServe?.territoryAccountId &&
+    dailyServe.territoryAccountId !== accountId
+  ) {
+    throw new FormValidationError("Related Daily Serve belongs to a different prospect.");
+  }
+
+  return {
+    accountId,
+    csmPartnerId,
+    dailyServeId,
+    opportunityId,
+    peoId,
+  };
 }
 
 function unknownData(formData: FormData) {
@@ -181,7 +344,7 @@ export async function createInternalUnknown(formData: FormData) {
 
   try {
     const prisma = getPrisma();
-    const relatedAccountId = await relatedAccountIdOrNull(formData);
+    const links = await unknownLinks(formData);
     const fields = unknownData(formData);
     const status = InternalUnknownStatus.OPEN;
     const ambiguitySignal = classifyInternalAmbiguity({
@@ -194,10 +357,14 @@ export async function createInternalUnknown(formData: FormData) {
     });
 
     await prisma.$transaction(async (tx) => {
-      await tx.internalUnknown.create({
+      const unknown = await tx.internalUnknown.create({
         data: {
           ...fields,
-          relatedAccountId,
+          csmPartnerId: links.csmPartnerId,
+          dailyServeId: links.dailyServeId,
+          opportunityId: links.opportunityId,
+          peoId: links.peoId,
+          relatedAccountId: links.accountId,
           status,
         },
       });
@@ -205,7 +372,12 @@ export async function createInternalUnknown(formData: FormData) {
       await tx.hmlClassification.create({
         data: {
           ...ambiguitySignal,
-          accountId: relatedAccountId,
+          accountId: links.accountId,
+          csmPartnerId: links.csmPartnerId,
+          dailyServeId: links.dailyServeId,
+          internalUnknownId: unknown.id,
+          opportunityId: links.opportunityId,
+          peoId: links.peoId,
         },
       });
     });
@@ -222,6 +394,9 @@ export async function createInternalUnknown(formData: FormData) {
   }
 
   revalidatePath("/");
+  revalidatePath("/daily-serves");
+  revalidatePath("/opportunities");
+  revalidatePath("/partners");
   revalidatePath("/prospect-field");
   revalidatePath("/signal-feed");
   revalidatePath("/unknowns");
@@ -235,7 +410,7 @@ export async function updateInternalUnknown(formData: FormData) {
   try {
     const prisma = getPrisma();
     const id = requiredString(formData, "id", "Unknown id", 200);
-    const relatedAccountId = await relatedAccountIdOrNull(formData);
+    const links = await unknownLinks(formData);
     const fields = unknownData(formData);
     const status = requiredEnum(formData, "status", "Status", statusValues);
     const existing = await prisma.internalUnknown.findUnique({
@@ -264,7 +439,11 @@ export async function updateInternalUnknown(formData: FormData) {
       await tx.internalUnknown.update({
         data: {
           ...fields,
-          relatedAccountId,
+          csmPartnerId: links.csmPartnerId,
+          dailyServeId: links.dailyServeId,
+          opportunityId: links.opportunityId,
+          peoId: links.peoId,
+          relatedAccountId: links.accountId,
           status,
         },
         where: {
@@ -275,7 +454,12 @@ export async function updateInternalUnknown(formData: FormData) {
       await tx.hmlClassification.create({
         data: {
           ...ambiguitySignal,
-          accountId: relatedAccountId,
+          accountId: links.accountId,
+          csmPartnerId: links.csmPartnerId,
+          dailyServeId: links.dailyServeId,
+          internalUnknownId: id,
+          opportunityId: links.opportunityId,
+          peoId: links.peoId,
         },
       });
     });
@@ -292,6 +476,9 @@ export async function updateInternalUnknown(formData: FormData) {
   }
 
   revalidatePath("/");
+  revalidatePath("/daily-serves");
+  revalidatePath("/opportunities");
+  revalidatePath("/partners");
   revalidatePath("/prospect-field");
   revalidatePath("/signal-feed");
   revalidatePath("/unknowns");

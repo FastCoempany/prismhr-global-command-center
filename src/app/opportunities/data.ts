@@ -2,6 +2,7 @@ import {
   ApprovalStatus,
   BoundaryRuleStatus,
   HmlValue,
+  InternalUnknownStatus,
   OpportunitySourceType,
   OpportunityStage,
   PitchAssetType,
@@ -198,6 +199,15 @@ async function findSelectedOpportunity(
           createdAt: "desc",
         },
         take: 5,
+      },
+      internalUnknowns: {
+        orderBy: {
+          updatedAt: "desc",
+        },
+        take: 5,
+        where: {
+          status: InternalUnknownStatus.OPEN,
+        },
       },
       notes: {
         orderBy: {

@@ -282,7 +282,7 @@ export default function MockupsPage() {
             <div>
               <span className={styles.columnTitle}>Blocked</span>
               <div className={styles.workCard}>
-                <strong>No direct outreach without channel context</strong>
+                <strong>No motion without channel context</strong>
                 <p>Research can raise priority. It cannot override permission.</p>
               </div>
             </div>
