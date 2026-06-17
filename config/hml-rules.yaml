@@ -58,7 +58,7 @@ app_scoring:
         requires_all_fit_signals_low: true
       fallback: MEDIUM
     recommended_actions:
-      HIGH: "Identify safe channel path before outreach."
+      HIGH: "Identify safe channel path before motion."
       MEDIUM: "Research and watch for triggers."
       LOW: "Park with review date."
 global_caution_overlays:
@@ -335,6 +335,6 @@ categories:
           - "visible_international_activity == 'low'"
           - "boundary_risk == 'high'"
     recommended_actions:
-      High: "Identify safe channel path before outreach."
+      High: "Identify safe channel path before motion."
       Medium: "Research and watch for triggers."
       Low: "Park with review date."

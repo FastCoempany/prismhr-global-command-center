@@ -69,6 +69,13 @@ export function AppWayfinder({
             Pitch Rail
           </Link>
           <Link
+            aria-current={current === "Daily Serves" ? "page" : undefined}
+            className="app-route-link"
+            href="/daily-serves"
+          >
+            Daily Serves
+          </Link>
+          <Link
             aria-current={current === "Boundaries" ? "page" : undefined}
             className="app-route-link"
             href="/boundaries"

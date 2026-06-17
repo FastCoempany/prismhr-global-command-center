@@ -155,6 +155,12 @@ async function findSelectedPartner(
           status: BoundaryRuleStatus.ACTIVE,
         },
       },
+      dailyServes: {
+        orderBy: {
+          updatedAt: "desc",
+        },
+        take: 5,
+      },
       followUpPromises: {
         orderBy: {
           dueAt: "asc",
@@ -229,6 +235,7 @@ export async function getPartnerRoomsData(filters: PartnerRoomsFilters) {
             _count: {
               select: {
                 boundaryRules: true,
+                dailyServes: true,
                 followUpPromises: true,
                 peos: true,
               },

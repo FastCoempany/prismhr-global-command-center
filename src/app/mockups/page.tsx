@@ -190,7 +190,7 @@ export default function MockupsPage() {
             <h3>Protect the trust path before motion.</h3>
             <div className={styles.briefAction}>
               <span>Next safest action</span>
-              <strong>Ask CSM owner for channel context before outreach.</strong>
+              <strong>Ask CSM owner for channel context before motion.</strong>
               <p>
                 The prospect has enough qualification signal to research, but no approved
                 intro path exists yet.

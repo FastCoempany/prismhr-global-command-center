@@ -625,6 +625,23 @@ export default async function OpportunitiesPage({
                   )}
                 </section>
 
+                <section className="partner-subsection">
+                  <h3>Recent Daily Serves</h3>
+                  {selectedOpportunity.dailyServes.length === 0 ? (
+                    <p>No Daily Serves recorded for this opportunity.</p>
+                  ) : (
+                    selectedOpportunity.dailyServes.map((dailyServe) => (
+                      <div key={dailyServe.id}>
+                        <strong>{dailyServe.title}</strong>
+                        <p>{dailyServe.nextSafestAction}</p>
+                        <span>
+                          {label(dailyServe.status)} / {label(dailyServe.outcome)}
+                        </span>
+                      </div>
+                    ))
+                  )}
+                </section>
+
                 <form action={createOpportunityNote} className="partner-form-block">
                   <input name="returnTo" type="hidden" value={currentPath} />
                   <input

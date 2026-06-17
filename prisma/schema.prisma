@@ -183,6 +183,37 @@ enum PitchAssetType {
   USE_CASE_BRIEF
 }
 
+enum DailyServeCategory {
+  PEO_TALKING_POINT
+  CLIENT_FIT_SIGNAL
+  PRODUCT_EXPLAINER
+  USE_CASE_BLURB
+  DISCOVERY_QUESTION
+  COMPLIANCE_WATCHOUT
+  OBJECTION_RESPONSE
+  MEETING_PREP
+  FOLLOW_UP_LANGUAGE
+}
+
+enum DailyServeStatus {
+  DRAFT
+  READY
+  SENT
+  HELD
+  ARCHIVED
+}
+
+enum DailyServeOutcome {
+  PENDING
+  USED_BY_CSM
+  FORWARDED
+  REPLIED
+  CREATED_NEXT_STEP
+  CONVERTED_TO_OPPORTUNITY
+  NO_RESPONSE
+  NOT_USEFUL
+}
+
 enum BoundaryScopeType {
   CSM_PARTNER
   PEO
@@ -230,6 +261,7 @@ model User {
   territoryAccounts TerritoryAccount[]
   csmPartners       CSMPartner[]
   followUpPromises  FollowUpPromise[]
+  dailyServes       DailyServe[]
 }
 
 model TerritoryAccount {
@@ -267,6 +299,7 @@ model TerritoryAccount {
   opportunities      Opportunity[]
   followUpPromises   FollowUpPromise[]
   boundaryRules      BoundaryRule[]
+  dailyServes        DailyServe[]
 
   @@index([companyName])
   @@index([status])
@@ -385,6 +418,7 @@ model CSMPartner {
   followUpPromises   FollowUpPromise[]
   hmlClassifications HmlClassification[]
   boundaryRules      BoundaryRule[]
+  dailyServes        DailyServe[]
 
   @@index([name])
   @@index([status])
@@ -420,6 +454,7 @@ model PEO {
   followUpPromises   FollowUpPromise[]
   hmlClassifications HmlClassification[]
   boundaryRules      BoundaryRule[]
+  dailyServes        DailyServe[]
 
   @@index([name])
   @@index([csmPartnerId])
@@ -484,6 +519,7 @@ model Opportunity {
   followUpPromises   FollowUpPromise[]
   hmlClassifications HmlClassification[]
   boundaryRules      BoundaryRule[]
+  dailyServes        DailyServe[]
 
   @@index([stage])
   @@index([csmPartnerId])
@@ -611,11 +647,58 @@ model PitchAsset {
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 
+  dailyServes DailyServe[]
+
   @@index([productRelevance])
   @@index([assetType])
   @@index([audience])
   @@index([approvalStatus])
   @@index([sourceConfidence])
+}
+
+model DailyServe {
+  id                 String             @id @default(cuid())
+  title              String
+  category           DailyServeCategory
+  status             DailyServeStatus   @default(DRAFT)
+  outcome            DailyServeOutcome  @default(PENDING)
+  content            String
+  usefulnessReason   String
+  nextSafestAction   String
+  ownerId            String?
+  csmPartnerId       String?
+  peoId              String?
+  opportunityId      String?
+  territoryAccountId String?
+  pitchAssetId       String?
+  sourceConfidence   SourceConfidence   @default(UNVERIFIED)
+  canonStatus        CanonStatus        @default(HYPOTHESIS)
+  relationshipImpact HmlValue           @default(MEDIUM)
+  opportunityImpact  HmlValue           @default(MEDIUM)
+  sentAt             DateTime?
+  outcomeAt          DateTime?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  owner              User?               @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  csmPartner         CSMPartner?         @relation(fields: [csmPartnerId], references: [id], onDelete: SetNull)
+  peo                PEO?                @relation(fields: [peoId], references: [id], onDelete: SetNull)
+  opportunity        Opportunity?        @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
+  territoryAccount   TerritoryAccount?   @relation(fields: [territoryAccountId], references: [id], onDelete: SetNull)
+  pitchAsset         PitchAsset?         @relation(fields: [pitchAssetId], references: [id], onDelete: SetNull)
+  hmlClassifications HmlClassification[]
+
+  @@index([ownerId])
+  @@index([csmPartnerId])
+  @@index([peoId])
+  @@index([opportunityId])
+  @@index([territoryAccountId])
+  @@index([pitchAssetId])
+  @@index([category])
+  @@index([status])
+  @@index([outcome])
+  @@index([sentAt])
+  @@index([outcomeAt])
 }
 
 model HmlClassification {
@@ -625,6 +708,7 @@ model HmlClassification {
   csmPartnerId          String?
   peoId                 String?
   opportunityId         String?
+  dailyServeId          String?
   classification        HmlValue
   confidence            SourceConfidence
   explanation           String
@@ -637,11 +721,13 @@ model HmlClassification {
   csmPartner  CSMPartner?       @relation(fields: [csmPartnerId], references: [id], onDelete: Cascade)
   peo         PEO?              @relation(fields: [peoId], references: [id], onDelete: Cascade)
   opportunity Opportunity?      @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  dailyServe  DailyServe?       @relation(fields: [dailyServeId], references: [id], onDelete: SetNull)
 
   @@index([category])
   @@index([accountId])
   @@index([csmPartnerId])
   @@index([peoId])
   @@index([opportunityId])
+  @@index([dailyServeId])
   @@index([classification])
 }

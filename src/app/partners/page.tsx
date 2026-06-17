@@ -327,6 +327,10 @@ export default async function PartnersPage({ searchParams }: PartnersPageProps) 
                           {partner._count.followUpPromises} promise
                           {partner._count.followUpPromises === 1 ? "" : "s"}
                         </Badge>
+                        <Badge tone="unknown">
+                          {partner._count.dailyServes} serve
+                          {partner._count.dailyServes === 1 ? "" : "s"}
+                        </Badge>
                         <Badge
                           tone={partner.boundaryRules.length > 0 ? "medium" : "unknown"}
                         >
@@ -631,6 +635,23 @@ export default async function PartnersPage({ searchParams }: PartnersPageProps) 
                         <strong>{promise.promise}</strong>
                         <p>Made to {promise.madeTo}</p>
                         <span>Due {formatDate(promise.dueAt)}</span>
+                      </div>
+                    ))
+                  )}
+                </section>
+
+                <section className="partner-subsection">
+                  <h3>Recent Daily Serves</h3>
+                  {selectedPartner.dailyServes.length === 0 ? (
+                    <p>No Daily Serves recorded for this CSM.</p>
+                  ) : (
+                    selectedPartner.dailyServes.map((dailyServe) => (
+                      <div key={dailyServe.id}>
+                        <strong>{dailyServe.title}</strong>
+                        <p>{dailyServe.nextSafestAction}</p>
+                        <span>
+                          {label(dailyServe.status)} / {label(dailyServe.outcome)}
+                        </span>
                       </div>
                     ))
                   )}

@@ -180,6 +180,12 @@ async function findSelectedOpportunity(
         },
       },
       csmPartner: true,
+      dailyServes: {
+        orderBy: {
+          updatedAt: "desc",
+        },
+        take: 5,
+      },
       discoveryFramework: true,
       followUpPromises: {
         orderBy: {

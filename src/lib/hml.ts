@@ -5,6 +5,9 @@ import {
   BoundaryRuleStatus,
   BoundaryRuleType,
   BoundarySeverity,
+  DailyServeCategory,
+  DailyServeOutcome,
+  DailyServeStatus,
   FollowUpPromiseStatus,
   HmlCategory,
   HmlValue,
@@ -107,7 +110,7 @@ const fallbackRules: ResolvedProspectFieldRules = {
     fallback: HmlValue.MEDIUM,
   },
   recommended_actions: {
-    HIGH: "Identify safe channel path before outreach.",
+    HIGH: "Identify safe channel path before motion.",
     MEDIUM: "Research and watch for triggers.",
     LOW: "Park with review date.",
   },
@@ -482,6 +485,88 @@ export function classifyFollowUpUrgency(input: {
       "Handle or schedule the promise.",
     ),
     ruleVersion: ruleVersion("follow-up-urgency"),
+  };
+}
+
+function dailyServeImpact(status: DailyServeStatus, outcome: DailyServeOutcome) {
+  if (
+    outcome === DailyServeOutcome.USED_BY_CSM ||
+    outcome === DailyServeOutcome.FORWARDED ||
+    outcome === DailyServeOutcome.REPLIED ||
+    outcome === DailyServeOutcome.CREATED_NEXT_STEP ||
+    outcome === DailyServeOutcome.CONVERTED_TO_OPPORTUNITY
+  ) {
+    return HmlValue.HIGH;
+  }
+
+  if (outcome === DailyServeOutcome.NOT_USEFUL) {
+    return HmlValue.LOW;
+  }
+
+  if (status === DailyServeStatus.HELD || status === DailyServeStatus.ARCHIVED) {
+    return HmlValue.LOW;
+  }
+
+  return HmlValue.MEDIUM;
+}
+
+export function classifyDailyServeRelationshipImpact(input: {
+  category: DailyServeCategory;
+  nextSafestAction: string;
+  outcome: DailyServeOutcome;
+  sourceConfidence: SourceConfidence;
+  status: DailyServeStatus;
+  title: string;
+}): HmlClassificationDraft {
+  const classification = dailyServeImpact(input.status, input.outcome);
+
+  return {
+    category: HmlCategory.CSM_RELATIONSHIP_HEAT,
+    classification,
+    confidence: input.sourceConfidence,
+    contributingSignals: [
+      `daily_serve:${input.title}`,
+      `daily_serve_category:${input.category}`,
+      `daily_serve_status:${input.status}`,
+      `daily_serve_outcome:${input.outcome}`,
+    ],
+    explanation: `${classification} relationship heat under ${ruleVersion("daily-serve-relationship")}: daily serve ${input.title} is ${label(input.status)} with ${label(input.outcome)} outcome.`,
+    recommendedNextAction: recommendedAction(
+      HmlCategory.CSM_RELATIONSHIP_HEAT,
+      classification,
+      input.nextSafestAction,
+    ),
+    ruleVersion: ruleVersion("daily-serve-relationship"),
+  };
+}
+
+export function classifyDailyServeOpportunityImpact(input: {
+  category: DailyServeCategory;
+  nextSafestAction: string;
+  outcome: DailyServeOutcome;
+  sourceConfidence: SourceConfidence;
+  status: DailyServeStatus;
+  title: string;
+}): HmlClassificationDraft {
+  const classification = dailyServeImpact(input.status, input.outcome);
+
+  return {
+    category: HmlCategory.OPPORTUNITY_MOMENTUM,
+    classification,
+    confidence: input.sourceConfidence,
+    contributingSignals: [
+      `daily_serve:${input.title}`,
+      `daily_serve_category:${input.category}`,
+      `daily_serve_status:${input.status}`,
+      `daily_serve_outcome:${input.outcome}`,
+    ],
+    explanation: `${classification} opportunity momentum under ${ruleVersion("daily-serve-opportunity")}: daily serve ${input.title} is ${label(input.status)} with ${label(input.outcome)} outcome.`,
+    recommendedNextAction: recommendedAction(
+      HmlCategory.OPPORTUNITY_MOMENTUM,
+      classification,
+      input.nextSafestAction,
+    ),
+    ruleVersion: ruleVersion("daily-serve-opportunity"),
   };
 }
 

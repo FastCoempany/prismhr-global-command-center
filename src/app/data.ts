@@ -1,6 +1,8 @@
 import {
   BoundaryRuleStatus,
   BoundarySeverity,
+  DailyServeOutcome,
+  DailyServeStatus,
   FollowUpPromiseStatus,
   HmlValue,
 } from "@/generated/prisma/client";
@@ -38,6 +40,9 @@ type DashboardData = {
   totalAccounts: number;
   totalActiveBoundaryRules: number;
   totalBlockedBoundaryRules: number;
+  totalPendingDailyServeOutcomes: number;
+  totalPositiveDailyServeOutcomes: number;
+  totalSentDailyServes: number;
   totalOpenUnknowns: number;
   totalOverduePromises: number;
 };
@@ -55,6 +60,9 @@ function emptyDashboardData(error: string | null): DashboardData {
     totalAccounts: 0,
     totalActiveBoundaryRules: 0,
     totalBlockedBoundaryRules: 0,
+    totalPendingDailyServeOutcomes: 0,
+    totalPositiveDailyServeOutcomes: 0,
+    totalSentDailyServes: 0,
     totalOpenUnknowns: 0,
     totalOverduePromises: 0,
   };
@@ -79,6 +87,9 @@ export async function getDashboardData(): Promise<DashboardData> {
       totalOverduePromises,
       totalActiveBoundaryRules,
       totalBlockedBoundaryRules,
+      totalPendingDailyServeOutcomes,
+      totalPositiveDailyServeOutcomes,
+      totalSentDailyServes,
     ] = await Promise.all([
       prisma.hmlClassification.findMany({
         include: {
@@ -99,6 +110,12 @@ export async function getDashboardData(): Promise<DashboardData> {
               csmPartnerId: true,
               id: true,
               name: true,
+            },
+          },
+          dailyServe: {
+            select: {
+              id: true,
+              title: true,
             },
           },
           peo: {
@@ -163,6 +180,29 @@ export async function getDashboardData(): Promise<DashboardData> {
           status: BoundaryRuleStatus.ACTIVE,
         },
       }),
+      prisma.dailyServe.count({
+        where: {
+          outcome: DailyServeOutcome.PENDING,
+        },
+      }),
+      prisma.dailyServe.count({
+        where: {
+          outcome: {
+            in: [
+              DailyServeOutcome.USED_BY_CSM,
+              DailyServeOutcome.FORWARDED,
+              DailyServeOutcome.REPLIED,
+              DailyServeOutcome.CREATED_NEXT_STEP,
+              DailyServeOutcome.CONVERTED_TO_OPPORTUNITY,
+            ],
+          },
+        },
+      }),
+      prisma.dailyServe.count({
+        where: {
+          status: DailyServeStatus.SENT,
+        },
+      }),
     ]);
 
     const counts = emptyHmlCounts();
@@ -183,19 +223,24 @@ export async function getDashboardData(): Promise<DashboardData> {
         explanation: classification.explanation,
         href: classification.accountId
           ? `/prospect-field#account-${classification.accountId}`
-          : classification.opportunity?.id
-            ? `/opportunities?${new URLSearchParams({
-                opportunityId: classification.opportunity.id,
+          : classification.dailyServe?.id
+            ? `/daily-serves?${new URLSearchParams({
+                dailyServeId: classification.dailyServe.id,
               }).toString()}`
-            : partnerId
-              ? `/partners?${new URLSearchParams({ partnerId }).toString()}`
-              : undefined,
+            : classification.opportunity?.id
+              ? `/opportunities?${new URLSearchParams({
+                  opportunityId: classification.opportunity.id,
+                }).toString()}`
+              : partnerId
+                ? `/partners?${new URLSearchParams({ partnerId }).toString()}`
+                : undefined,
         id: classification.id,
         label:
           classification.account?.companyName ??
           classification.csmPartner?.name ??
           classification.peo?.name ??
           classification.opportunity?.name ??
+          classification.dailyServe?.title ??
           "Unlinked signal",
         recommendedNextAction: classification.recommendedNextAction,
       };
@@ -213,6 +258,9 @@ export async function getDashboardData(): Promise<DashboardData> {
       totalAccounts,
       totalActiveBoundaryRules,
       totalBlockedBoundaryRules,
+      totalPendingDailyServeOutcomes,
+      totalPositiveDailyServeOutcomes,
+      totalSentDailyServes,
       totalOpenUnknowns,
       totalOverduePromises,
     };

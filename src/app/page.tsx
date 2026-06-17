@@ -27,9 +27,11 @@ export default async function Home() {
       ? "Close, reset, or re-date overdue follow-up promises before new motion."
       : dashboard.totalBlockedBoundaryRules > 0
         ? "Resolve blocked boundary rules before advancing related motion."
-        : (leadSignal?.recommendedNextAction ??
-          leadAccount?.nextSafestAction ??
-          "Add a sourced Chicagoland prospect.");
+        : dashboard.totalPendingDailyServeOutcomes > 0
+          ? "Tag pending Daily Serve outcomes so relationship heat stays current."
+          : (leadSignal?.recommendedNextAction ??
+            leadAccount?.nextSafestAction ??
+            "Add a sourced Chicagoland prospect.");
   const permissionPosture = leadAccount
     ? humanizeEnum(leadAccount.permissionState)
     : "No active account";
@@ -63,6 +65,9 @@ export default async function Home() {
     `${dashboard.totalAccounts} sourced prospect${dashboard.totalAccounts === 1 ? "" : "s"}`,
     `${dashboard.hmlSummary.counts.HIGH} high priority item${dashboard.hmlSummary.counts.HIGH === 1 ? "" : "s"}`,
     `${dashboard.totalOverduePromises} overdue promise${dashboard.totalOverduePromises === 1 ? "" : "s"}`,
+    `${dashboard.totalSentDailyServes} sent Daily Serve${dashboard.totalSentDailyServes === 1 ? "" : "s"}`,
+    `${dashboard.totalPositiveDailyServeOutcomes} positive serve outcome${dashboard.totalPositiveDailyServeOutcomes === 1 ? "" : "s"}`,
+    `${dashboard.totalPendingDailyServeOutcomes} pending serve outcome${dashboard.totalPendingDailyServeOutcomes === 1 ? "" : "s"}`,
     `${dashboard.totalActiveBoundaryRules} active boundary rule${dashboard.totalActiveBoundaryRules === 1 ? "" : "s"}`,
     `${dashboard.totalOpenUnknowns} open unknown${dashboard.totalOpenUnknowns === 1 ? "" : "s"}`,
     dashboard.databaseReady
@@ -95,6 +100,17 @@ export default async function Home() {
         dashboard.totalOverduePromises > 0
           ? "Clear overdue promises"
           : "Review boundary rules",
+    },
+    {
+      body:
+        dashboard.totalPendingDailyServeOutcomes > 0
+          ? "Record whether the serve was used, forwarded, replied to, or turned into a next step."
+          : "Prepare a small useful asset for a CSM and track what it changes.",
+      href: "/daily-serves",
+      label:
+        dashboard.totalPendingDailyServeOutcomes > 0
+          ? "Tag Daily Serve outcome"
+          : "Create Daily Serve",
     },
     {
       body:

@@ -806,7 +806,7 @@ Key components:
 2. Score visible international activity, contractor intensity, hiring velocity, compliance complexity, channel accessibility, and boundary risk.
 3. Assign source confidence.
 4. Create next safest action.
-5. If CSM/PEO ownership is unclear, create internal unknown before outreach.
+5. If CSM/PEO ownership is unclear, create internal unknown before motion.
 
 ### Off-Limits Rule Capture Workflow
 
