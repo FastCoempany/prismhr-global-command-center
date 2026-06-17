@@ -142,7 +142,7 @@ export async function getAppAccess(): Promise<AppAccess> {
       authEmail: email,
       canRead: false,
       canWrite: false,
-      message: "Database environment variables are required for access checks.",
+      message: "Access checks are unavailable right now.",
       status: "database-unavailable",
     };
   }

@@ -1,10 +1,10 @@
 import Link from "next/link";
 
 const readinessItems = [
-  "Tailwind and shadcn/ui baseline mapped to Field Signal tokens",
-  "Supabase Postgres migration applied and verified",
-  "Prospect Field create/read workflow live",
-  "No browser local storage for domain records",
+  "Review Chicagoland prospects with visible source confidence",
+  "Record fit evidence before creating a next action",
+  "Keep permission posture beside each account",
+  "Track unknowns before they become relationship risk",
 ];
 
 const focusItems = [
@@ -21,7 +21,7 @@ const focusItems = [
   {
     id: "signal-feed",
     label: "Signal Feed",
-    body: "Explainable HML classifications grounded in app records, not black-box scoring.",
+    body: "High, Medium, and Low priorities grounded in source, permission, and relationship motion.",
   },
 ];
 
@@ -51,10 +51,10 @@ export default function Home() {
       <section className="work-surface" id="today">
         <header className="top-bar">
           <div>
-            <p className="eyebrow">Phase 1A live</p>
+            <p className="eyebrow">Today</p>
             <h2>Find the right prospects. Protect the trust path.</h2>
           </div>
-          <div className="status-pill">Cloud database verified</div>
+          <div className="status-pill">Research only</div>
         </header>
 
         <section className="safety-strip" aria-label="Current safety posture">
@@ -84,8 +84,8 @@ export default function Home() {
         <section className="table-panel" id="prospect-field">
           <div className="section-heading">
             <div>
-              <p className="eyebrow">Build contract</p>
-              <h3>Cloud-first readiness</h3>
+              <p className="eyebrow">Operating posture</p>
+              <h3>Prospecting guardrails</h3>
             </div>
           </div>
           <div className="readiness-list">
@@ -104,14 +104,13 @@ export default function Home() {
           <p className="eyebrow">Pitch rail</p>
           <h2>Prospecting and partner-motion command center.</h2>
           <p>
-            The first production-shaped Prospect Field workflow now writes to
-            Supabase-backed records with source confidence, permission state, and HML
-            output.
+            Prospect Field keeps account evidence, source confidence, permission posture,
+            and next safest action close together.
           </p>
         </section>
         <section>
           <p className="eyebrow">Boundary</p>
-          <p>No browser local storage for domain records.</p>
+          <p>Research can raise priority. It cannot override permission.</p>
         </section>
       </aside>
     </main>

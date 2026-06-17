@@ -517,6 +517,10 @@ Permission should be modeled as a controlled enum plus history:
 
 ## UX / App Structure
 
+Hard UX rule: no scaffold, meta, or implementation-status UI on product screens.
+
+The app can expose source, confidence, permission, risk, HML priority, relationship motion, unknowns, and sync health when those are operator-actionable. It must not expose developer concerns such as code gate, cloud database, owner writes, server actions, Prisma, local storage, build phase, or MVP slice as user-facing interface. Access screens should stay task-only: product identity, credential field, submit action, and actionable error text.
+
 ### Dashboard
 
 Purpose: daily operating cockpit.

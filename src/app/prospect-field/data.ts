@@ -8,8 +8,7 @@ export async function getProspectFieldData() {
       accountLimit: ACCOUNT_PAGE_SIZE,
       accounts: [],
       databaseReady: false,
-      error:
-        "Database environment variables are not available locally. Vercel can still build, but cloud data cannot be queried here.",
+      error: "Prospect records cannot be loaded from this environment.",
       totalAccounts: 0,
       unknowns: [],
     };
@@ -70,8 +69,7 @@ export async function getProspectFieldData() {
       accountLimit: ACCOUNT_PAGE_SIZE,
       accounts: [],
       databaseReady: false,
-      error:
-        "Prospect Field tables are not queryable yet. Apply the Prisma migration and verify Supabase env vars.",
+      error: "Prospect records cannot be loaded right now.",
       totalAccounts: 0,
       unknowns: [],
     };

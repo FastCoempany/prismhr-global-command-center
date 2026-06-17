@@ -187,6 +187,17 @@ Avoid broad marketing claims inside the app:
 - "Transform your pipeline."
 - "Let AI find your next customer."
 
+Avoid meta or scaffold claims inside the app:
+
+- "Code gate."
+- "Cloud database."
+- "Owner writes."
+- "MVP slice."
+- "Auth enabled."
+- "Prisma connected."
+
+The brand voice speaks from the operator's work, not from the implementation. Product UI should name the task, status, evidence, permission, risk, or next safe action. It should not narrate the build.
+
 ### Explanation Pattern
 
 Use:

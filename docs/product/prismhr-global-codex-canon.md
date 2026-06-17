@@ -112,6 +112,10 @@ Do not build an activity tracker pretending to be intelligence.
 
 Build a **partner-motion command center** that makes invisible operating dynamics visible.
 
+Do not expose scaffold, architecture, or implementation status as product UI.
+
+User-facing screens must not explain that the app has a code gate, database connection, owner-write model, server action, build phase, or other developer concern. Those facts belong in code, docs, deployment checks, or admin diagnostics only. The interface should show the operator's work: evidence, permission, boundary, HML priority, relationship motion, source confidence, unknowns, and next safest action.
+
 The app should help answer:
 
 - What matters now?

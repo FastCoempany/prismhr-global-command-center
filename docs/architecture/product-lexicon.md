@@ -345,6 +345,7 @@ Avoid columns:
 - Prefer "because" explanations.
 - Use human-scale next actions.
 - Do not describe features in empty prose.
+- Do not describe implementation details, architecture, build phase, storage mode, auth mode, or developer guardrails in product UI.
 - Do not imply certainty when source confidence is low.
 - Do not use "AI" as an authority.
 - Do not use "global" as vague flavor; attach it to a real signal.
@@ -355,6 +356,8 @@ Examples:
 - Good: "Permission needed because the related provider is owned by a CSM and no intro path is recorded."
 - Bad: "This account is hot."
 - Bad: "AI recommends immediate outreach."
+- Bad: "Cloud database connected."
+- Bad: "Owner writes enabled."
 
 ## Error And Warning Language
 

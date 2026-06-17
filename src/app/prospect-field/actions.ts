@@ -90,7 +90,7 @@ function selectedProducts(formData: FormData) {
 
 export async function createTerritoryAccount(formData: FormData) {
   if (!hasDatabaseEnv()) {
-    formErrorRedirect("Database environment variables are required to save records.");
+    formErrorRedirect("Prospect records are unavailable right now.");
   }
 
   const access = await getAppAccess();
@@ -100,7 +100,7 @@ export async function createTerritoryAccount(formData: FormData) {
   }
 
   if (!access.canWrite) {
-    formErrorRedirect("Owner access is required to create prospect records.");
+    formErrorRedirect("Write access is required to create prospect records.");
   }
 
   try {

@@ -67,6 +67,36 @@ Use these priorities to break design ties:
 - Dark command-center product
 - Navy enterprise product
 
+### Hard Product UI Rule: No Meta Or Scaffold UI
+
+Product screens must never expose implementation thinking as user-facing interface.
+
+Do not show cards, chips, labels, headings, or empty states whose purpose is to explain how the app was built, what infrastructure it uses, what phase it is in, or which internal guardrails the developer implemented.
+
+Forbidden user-facing examples:
+
+- "Code gate"
+- "Cloud database"
+- "Owner writes"
+- "Auth enabled"
+- "Scaffold complete"
+- "MVP slice"
+- "Local storage disabled"
+- "Server action"
+- "Prisma connected"
+
+Allowed only when it is operational data the user can act on:
+
+- Source confidence.
+- Permission posture.
+- Boundary rule.
+- Evidence type.
+- Next safest action.
+- Internal unknown.
+- Sync health for a user-connected external source.
+
+Access screens are especially strict. They may show only the product mark/name, the required credential field, the submit action, and actionable error text. They must not explain the access model, database model, ownership model, or build status.
+
 ## Layout System
 
 ### App Shell
@@ -783,6 +813,8 @@ Use progressive disclosure for advanced metadata, but do not hide permission or 
 ## Empty States
 
 Empty states should be operational prompts, not marketing copy.
+
+Empty states must also avoid scaffold/meta copy. They should not say what system capability exists, what technical layer is ready, or what build phase produced the screen. They should state the missing operator input or the next safe action.
 
 Examples:
 

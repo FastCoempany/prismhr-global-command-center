@@ -160,9 +160,7 @@ export default async function ProspectFieldPage({
               </p>
             </div>
             <div className="flex flex-wrap items-center justify-end gap-2">
-              <Badge tone={databaseReady ? "low" : "medium"}>
-                {databaseReady ? "Cloud database connected" : "Database pending"}
-              </Badge>
+              {!databaseReady ? <Badge tone="medium">Records unavailable</Badge> : null}
               <form action={signOut}>
                 <Button size="compact" type="submit" variant="quiet">
                   Sign out
@@ -202,7 +200,7 @@ export default async function ProspectFieldPage({
           {!databaseReady ? (
             <section className="mb-5 rounded-lg border border-[color:var(--color-medium-border)] bg-[color:var(--color-medium-bg)] p-4">
               <h2 className="text-base font-semibold leading-6">
-                Cloud database not queryable from this runtime yet
+                Prospect records are unavailable
               </h2>
               <p className="mt-1 text-sm font-semibold leading-5 text-[color:var(--color-ink-soft)]">
                 {error}
@@ -223,7 +221,7 @@ export default async function ProspectFieldPage({
             <section className="mb-5 rounded-lg border border-[color:var(--color-low-border)] bg-[color:var(--color-low-bg)] p-4">
               <h2 className="text-base font-semibold leading-6">Prospect saved</h2>
               <p className="mt-1 text-sm font-semibold leading-5 text-[color:var(--color-ink-soft)]">
-                The record is now in the cloud database.
+                The prospect record is saved.
               </p>
             </section>
           ) : null}
@@ -478,12 +476,12 @@ export default async function ProspectFieldPage({
                   </Button>
                   {!databaseReady ? (
                     <p className="text-xs font-semibold leading-4 text-[color:var(--color-ink-support)]">
-                      Apply the Prisma migration before creating records.
+                      Prospect records are unavailable right now.
                     </p>
                   ) : null}
                   {!access.canWrite ? (
                     <p className="text-xs font-semibold leading-4 text-[color:var(--color-ink-support)]">
-                      Owner access is required to create prospect records.
+                      Write access is required to create prospect records.
                     </p>
                   ) : null}
                 </form>
