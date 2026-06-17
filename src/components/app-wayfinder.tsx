@@ -40,6 +40,13 @@ export function AppWayfinder({
           >
             Prospect Field
           </Link>
+          <Link
+            aria-current={current === "Signal Feed" ? "page" : undefined}
+            className="app-route-link"
+            href="/signal-feed"
+          >
+            Signal Feed
+          </Link>
         </nav>
         <Button size="compact" type="button" variant="quiet">
           Ctrl K

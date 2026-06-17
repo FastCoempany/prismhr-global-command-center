@@ -474,6 +474,105 @@ textarea {
   font: 800 var(--ds-type-label) / 1.4 var(--ds-font-sans);
 }
 
+.signal-summary {
+  display: grid;
+  gap: var(--ds-space-4);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.signal-summary div {
+  background: var(--ds-surface);
+  border: 1px solid var(--ds-hair-strong);
+  border-bottom: 3px solid var(--ds-blue);
+  border-radius: var(--ds-radius-card);
+  box-shadow: var(--ds-shadow-rest);
+  display: grid;
+  gap: var(--ds-space-1);
+  padding: var(--ds-space-4) var(--ds-space-45);
+}
+
+.signal-summary span,
+.signal-card__next span,
+.signal-card__meta {
+  color: var(--ds-blue);
+  font: 700 var(--ds-type-kicker) / 1.2 var(--ds-font-mono);
+  letter-spacing: var(--ds-tracking-kicker);
+  text-transform: uppercase;
+}
+
+.signal-summary strong {
+  color: var(--ds-ink);
+  font-family: var(--ds-font-serif);
+  font-size: 34px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.signal-feed-list {
+  display: grid;
+  gap: var(--ds-space-4);
+}
+
+.signal-card {
+  background: var(--ds-surface);
+  border: 1px solid var(--ds-hair-strong);
+  border-bottom: 3px solid var(--ds-orange);
+  border-radius: var(--ds-radius-card);
+  box-shadow: var(--ds-shadow-rest);
+  display: grid;
+  gap: var(--ds-space-4);
+  padding: var(--ds-space-4) var(--ds-space-45);
+}
+
+.signal-card__head {
+  align-items: start;
+  display: flex;
+  gap: var(--ds-space-4);
+  justify-content: space-between;
+}
+
+.signal-card__head h2 {
+  color: var(--ds-ink);
+  font-family: var(--ds-font-serif);
+  font-size: var(--ds-type-title);
+  font-weight: 400;
+  line-height: 1.18;
+}
+
+.signal-card__badges,
+.signal-card__signals,
+.signal-card__meta {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ds-space-2);
+}
+
+.signal-card__explanation {
+  color: var(--ds-ink-700);
+  font: var(--ds-type-body) / var(--ds-leading-body) var(--ds-font-sans);
+  max-width: 880px;
+}
+
+.signal-card__next {
+  background: var(--ds-surface-sub);
+  border: 1px solid var(--ds-hair-strong);
+  border-radius: var(--ds-radius-control);
+  display: grid;
+  gap: var(--ds-space-1);
+  padding: var(--ds-space-3);
+}
+
+.signal-card__next strong {
+  color: var(--ds-ink);
+  font: 800 var(--ds-type-label) / 1.45 var(--ds-font-sans);
+}
+
+.signal-card__meta a {
+  border-bottom: 1px dotted var(--ds-blue);
+  color: var(--ds-blue);
+}
+
 /* App-owned subset of the donor kit's component grammar. */
 .product-lockup {
   align-items: center;
@@ -883,7 +982,8 @@ textarea {
   .dashboard-grid,
   .prospect-grid,
   .prospect-controls,
-  .prospect-brief {
+  .prospect-brief,
+  .signal-summary {
     grid-template-columns: 1fr;
   }
 
@@ -914,6 +1014,10 @@ textarea {
   }
 
   .top-bar {
+    display: grid;
+  }
+
+  .signal-card__head {
     display: grid;
   }
 
