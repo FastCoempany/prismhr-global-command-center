@@ -1163,7 +1163,7 @@ textarea {
 
 .ds-input:focus {
   border-color: var(--ds-orange);
-  outline: 3px solid var(--ds-orange-soft);
+  outline: 3px solid var(--ds-orange);
   outline-offset: 0;
 }
 
