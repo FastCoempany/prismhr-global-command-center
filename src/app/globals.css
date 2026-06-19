@@ -548,6 +548,24 @@ textarea {
   gap: var(--ds-space-2);
 }
 
+.signal-card__posture {
+  align-items: center;
+  background: var(--ds-surface-sub);
+  border: 1px solid var(--ds-hair-strong);
+  border-radius: var(--ds-radius-control);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ds-space-2);
+  padding: var(--ds-space-2) var(--ds-space-3);
+}
+
+.signal-card__posture > span {
+  color: var(--ds-blue);
+  font: 700 var(--ds-type-kicker) / 1.2 var(--ds-font-mono);
+  letter-spacing: var(--ds-tracking-kicker);
+  text-transform: uppercase;
+}
+
 .signal-card__explanation {
   color: var(--ds-ink-700);
   font: var(--ds-type-body) / var(--ds-leading-body) var(--ds-font-sans);

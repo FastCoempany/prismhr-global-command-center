@@ -1,6 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { HmlCategory, HmlValue, SourceConfidence } from "@/generated/prisma/client";
+import {
+  HmlCategory,
+  HmlValue,
+  PermissionState,
+  SourceConfidence,
+} from "@/generated/prisma/client";
 import { AppWayfinder } from "@/components/app-wayfinder";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,6 +30,24 @@ function confidenceTone(value: SourceConfidence) {
     return "medium";
   }
   return "unknown";
+}
+
+function permissionTone(value: PermissionState) {
+  if (
+    value === PermissionState.OFF_LIMITS ||
+    value === PermissionState.HOLD_SENSITIVE ||
+    value === PermissionState.DIRECT_CONTACT_NOT_ALLOWED
+  ) {
+    return "high";
+  }
+  if (
+    value === PermissionState.RESEARCH_ONLY ||
+    value === PermissionState.CSM_CONTEXT_NEEDED ||
+    value === PermissionState.OWNERSHIP_UNCLEAR_REQUIRES_VERIFICATION
+  ) {
+    return "medium";
+  }
+  return "low";
 }
 
 function formatDate(value: Date) {
@@ -202,6 +225,8 @@ export default async function SignalFeedPage({ searchParams }: SignalFeedPagePro
                           partnerId: signal.peo.csmPartnerId,
                         }).toString()}`
                       : null;
+              const linkedRecord =
+                signal.account ?? signal.csmPartner ?? signal.peo ?? signal.opportunity;
 
               return (
                 <article className="signal-card" key={signal.id}>
@@ -226,6 +251,21 @@ export default async function SignalFeedPage({ searchParams }: SignalFeedPagePro
                     <span>Next safest action</span>
                     <strong>{signal.recommendedNextAction}</strong>
                   </div>
+
+                  {linkedRecord ? (
+                    <div
+                      aria-label="Linked record posture"
+                      className="signal-card__posture"
+                    >
+                      <span>Linked record</span>
+                      <Badge tone={permissionTone(linkedRecord.permissionState)}>
+                        Permission: {label(linkedRecord.permissionState)}
+                      </Badge>
+                      <Badge tone={confidenceTone(linkedRecord.sourceConfidence)}>
+                        Source: {label(linkedRecord.sourceConfidence)}
+                      </Badge>
+                    </div>
+                  ) : null}
 
                   <div className="signal-card__meta">
                     <span>{formatDate(signal.createdAt)}</span>
