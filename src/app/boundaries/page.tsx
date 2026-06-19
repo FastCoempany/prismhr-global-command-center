@@ -39,6 +39,17 @@ const createScopeOptions = [
 
 type BoundaryRulesData = Awaited<ReturnType<typeof getBoundaryRulesData>>;
 type BoundaryRuleRecord = NonNullable<BoundaryRulesData["selectedRule"]>;
+type BoundaryRuleRelationLabel = {
+  csmPartner: { name: string } | null;
+  opportunity: { name: string } | null;
+  peo: { name: string } | null;
+  peoClient: {
+    displayName: string;
+    peo: { name: string } | null;
+  } | null;
+  scopeType: BoundaryScopeType;
+  territoryAccount: { companyName: string } | null;
+};
 
 function severityTone(value: BoundarySeverity) {
   if (value === BoundarySeverity.BLOCKED) return "high";
@@ -96,7 +107,7 @@ function todayInputValue() {
   return new Date().toISOString().slice(0, 10);
 }
 
-function relatedLabel(rule: BoundaryRuleRecord) {
+function relatedLabel(rule: BoundaryRuleRelationLabel) {
   if (rule.csmPartner) return rule.csmPartner.name;
   if (rule.peo) return rule.peo.name;
   if (rule.peoClient) {

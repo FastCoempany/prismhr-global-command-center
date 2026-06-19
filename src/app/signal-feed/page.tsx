@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Field, Input, Select } from "@/components/ui/field";
 import { signOut } from "@/app/auth/actions";
 import { getAppAccess } from "@/lib/auth";
-import { humanizeEnum as label } from "@/lib/format";
+import { formatContributingSignal, humanizeEnum as label } from "@/lib/format";
 import { hmlTone } from "@/lib/hml-priority";
 import { getSignalFeedData, parseSignalFeedFilters } from "./data";
 
@@ -237,7 +237,7 @@ export default async function SignalFeedPage({ searchParams }: SignalFeedPagePro
                     <div className="signal-card__signals">
                       {signal.contributingSignals.map((contributingSignal) => (
                         <Badge key={contributingSignal} tone="unknown">
-                          {contributingSignal}
+                          {formatContributingSignal(contributingSignal)}
                         </Badge>
                       ))}
                     </div>
