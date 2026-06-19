@@ -1,6 +1,3 @@
-import fs from "node:fs";
-import path from "node:path";
-import YAML from "yaml";
 import {
   BoundaryRuleStatus,
   BoundaryRuleType,
@@ -17,6 +14,8 @@ import {
   SourceConfidence,
   UnknownCategory,
 } from "@/generated/prisma/client";
+import { readHmlRulesConfig } from "@/lib/hml-rules-config";
+import { scoreProspectField } from "@/lib/prospect-scoring";
 
 type ProspectFieldRules = {
   rule_version?: string;
@@ -74,6 +73,7 @@ export type ProspectFieldSignalSet = {
   complexitySignal: HmlValue;
   channelSignal: HmlValue;
   boundaryRisk: HmlValue;
+  permissionState: PermissionState;
   sourceConfidence: SourceConfidence;
 };
 
@@ -117,20 +117,11 @@ const fallbackRules: ResolvedProspectFieldRules = {
 };
 
 let cachedRules: ResolvedProspectFieldRules | undefined;
-let cachedConfig: HmlRulesConfig | undefined;
-
-function readRulesConfig() {
-  if (cachedConfig) return cachedConfig;
-
-  const rulesPath = path.join(process.cwd(), "config", "hml-rules.yaml");
-  cachedConfig = YAML.parse(fs.readFileSync(rulesPath, "utf8")) as HmlRulesConfig;
-  return cachedConfig;
-}
 
 function readProspectFieldRules() {
   if (cachedRules) return cachedRules;
 
-  const parsed = readRulesConfig();
+  const parsed = readHmlRulesConfig<HmlRulesConfig>();
   const configured = parsed.app_scoring?.prospect_field ?? {};
 
   cachedRules = {
@@ -189,7 +180,7 @@ function categoryKey(category: HmlCategory) {
 }
 
 function ruleVersion(suffix: string) {
-  return `${readRulesConfig().version ?? "v0.1"}-${suffix}`;
+  return `${readHmlRulesConfig<HmlRulesConfig>().version ?? "v0.1"}-${suffix}`;
 }
 
 function recommendedAction(
@@ -198,9 +189,8 @@ function recommendedAction(
   fallback: string,
 ) {
   return (
-    readRulesConfig().categories?.[categoryKey(category)]?.recommended_actions?.[
-      titleValue(classification)
-    ] ?? fallback
+    readHmlRulesConfig<HmlRulesConfig>().categories?.[categoryKey(category)]
+      ?.recommended_actions?.[titleValue(classification)] ?? fallback
   );
 }
 
@@ -230,6 +220,7 @@ function approvedPermission(permissionState: PermissionState) {
 
 export function classifyProspectField(signals: ProspectFieldSignalSet) {
   const rules = readProspectFieldRules();
+  const score = scoreProspectField(signals);
   const fitSignals = [
     signals.internationalSignal,
     signals.contractorSignal,
@@ -237,10 +228,6 @@ export function classifyProspectField(signals: ProspectFieldSignalSet) {
     signals.complexitySignal,
     signals.channelSignal,
   ];
-  const priorityScore = [...fitSignals, signals.boundaryRisk].reduce(
-    (score, signal) => score + rules.priority_signal_scores[signal],
-    0,
-  );
   const highFitSignalCount = fitSignals.filter(
     (signal) => signal === HmlValue.HIGH,
   ).length;
@@ -270,10 +257,14 @@ export function classifyProspectField(signals: ProspectFieldSignalSet) {
       `complexity:${signals.complexitySignal}`,
       `channel:${signals.channelSignal}`,
       `boundary_risk:${signals.boundaryRisk}`,
+      `permission:${signals.permissionState}`,
       `source_confidence:${signals.sourceConfidence}`,
+      `research_score:${score.researchScore}`,
+      `qualification_score:${score.qualificationScore}`,
+      `motion_gate:${score.motionGate}`,
     ],
-    explanation: `${classification} priority under ${rules.rule_version}: ${highFitSignalCount} high qualification signal(s), ${label(signals.sourceConfidence)} source confidence, and ${label(signals.boundaryRisk)} boundary risk.`,
-    priorityScore,
+    explanation: `${classification} priority under ${rules.rule_version}: ${score.researchScore}/100 research score, ${highFitSignalCount} high qualification signal(s), ${label(signals.sourceConfidence)} source confidence, ${label(signals.permissionState)} permission, and ${label(signals.boundaryRisk)} boundary risk.`,
+    priorityScore: score.researchScore,
     recommendedNextAction: rules.recommended_actions[classification],
     ruleVersion: rules.rule_version,
   };

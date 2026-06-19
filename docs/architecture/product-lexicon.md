@@ -85,6 +85,8 @@ Use:
 - Account Signal
 - Source Evidence
 - Source Confidence
+- Research Score
+- Prospecting Scorecard
 - Watchlist
 - Parked
 - Channel Path
@@ -97,6 +99,7 @@ Avoid:
 - Hot lead
 - Cold lead
 - Lead score
+- HML fit score
 - Lead source machine
 - Scrape target
 
@@ -110,6 +113,7 @@ Use:
 - Intro Path
 - Private Debrief
 - Next Safest Action
+- Safe Motion
 - Owner Consent
 - CSM Context Needed
 - Ownership Unclear
@@ -121,6 +125,7 @@ Avoid:
 - Workaround
 - Push through
 - Contact anyway
+- Motion gate as a user-facing label
 
 ### HML Signal
 

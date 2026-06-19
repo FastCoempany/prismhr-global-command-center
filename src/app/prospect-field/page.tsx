@@ -17,6 +17,7 @@ import { signOut } from "@/app/auth/actions";
 import { getAppAccess } from "@/lib/auth";
 import { humanizeEnum as label } from "@/lib/format";
 import { buildHmlSummaryFromAccounts, hmlTone } from "@/lib/hml-priority";
+import { scoreProspectField, type ProspectScore } from "@/lib/prospect-scoring";
 import {
   createSourceEvidence,
   createTerritoryAccount,
@@ -44,7 +45,7 @@ const signalIntensityOptions = Object.values(HmlValue);
 const evidenceOptions = Object.values(EvidenceType);
 const sortOptions = [
   ["updated", "Recently updated"],
-  ["priority", "Priority score"],
+  ["priority", "Research score"],
   ["freshness", "Source freshness"],
   ["source", "Source confidence"],
   ["company", "Company name"],
@@ -86,6 +87,40 @@ function boundarySeverityTone(value: BoundarySeverity) {
   if (value === BoundarySeverity.BLOCKED) return "high";
   if (value === BoundarySeverity.APPROVAL_REQUIRED) return "medium";
   return "unknown";
+}
+
+function scoreTone(value: number) {
+  if (value >= 70) return "low";
+  if (value >= 45) return "medium";
+  return "high";
+}
+
+function motionGateTone(value: ProspectScore["motionGate"]) {
+  if (value === "open") return "low";
+  if (value === "channel_only") return "medium";
+  return "high";
+}
+
+function prospectScoreFor(account: {
+  boundaryRisk: HmlValue;
+  channelSignal: HmlValue;
+  complexitySignal: HmlValue;
+  contractorSignal: HmlValue;
+  hiringSignal: HmlValue;
+  internationalSignal: HmlValue;
+  permissionState: PermissionState;
+  sourceConfidence: SourceConfidence;
+}) {
+  return scoreProspectField({
+    boundaryRisk: account.boundaryRisk,
+    channelSignal: account.channelSignal,
+    complexitySignal: account.complexitySignal,
+    contractorSignal: account.contractorSignal,
+    hiringSignal: account.hiringSignal,
+    internationalSignal: account.internationalSignal,
+    permissionState: account.permissionState,
+    sourceConfidence: account.sourceConfidence,
+  });
 }
 
 function formatDate(value: Date | null | undefined) {
@@ -199,6 +234,7 @@ export default async function ProspectFieldPage({
   );
   const selectedHml = selectedAccount?.hmlClassifications[0];
   const selectedFreshness = sourceFreshness(selectedAccount?.evidence[0]);
+  const selectedScore = selectedAccount ? prospectScoreFor(selectedAccount) : null;
 
   return (
     <main className="app-shell">
@@ -436,11 +472,14 @@ export default async function ProspectFieldPage({
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[1120px] border-collapse text-left text-sm">
+                <table className="w-full min-w-[1240px] border-collapse text-left text-sm">
                   <thead className="bg-[color:var(--color-surface-mist)]">
                     <tr>
                       <th className="px-4 py-3 font-bold" scope="col">
                         Company
+                      </th>
+                      <th className="px-4 py-3 font-bold" scope="col">
+                        Research Score
                       </th>
                       <th className="px-4 py-3 font-bold" scope="col">
                         Qualification Signals
@@ -467,6 +506,7 @@ export default async function ProspectFieldPage({
                       const latestHml = account.hmlClassifications[0];
                       const latestEvidence = account.evidence[0];
                       const freshness = sourceFreshness(latestEvidence);
+                      const prospectScore = prospectScoreFor(account);
                       const accountPath = buildProspectFieldPath(filters, {
                         accountId: account.id,
                       });
@@ -494,6 +534,16 @@ export default async function ProspectFieldPage({
                             </Link>
                             <div className="text-xs font-semibold leading-4 text-[color:var(--color-ink-support)]">
                               {account.city}, {account.region}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="grid gap-2 justify-items-start">
+                              <Badge tone={scoreTone(prospectScore.researchScore)}>
+                                {prospectScore.researchScore}/100
+                              </Badge>
+                              <Badge tone={motionGateTone(prospectScore.motionGate)}>
+                                {prospectScore.motionGateLabel}
+                              </Badge>
                             </div>
                           </td>
                           <td className="px-4 py-3">
@@ -617,6 +667,20 @@ export default async function ProspectFieldPage({
                       <strong>{formatDate(selectedAccount.lastReviewedAt)}</strong>
                     </div>
                     <div>
+                      <span>Research score</span>
+                      <strong>
+                        {selectedScore
+                          ? `${selectedScore.researchScore}/100`
+                          : "Unscored"}
+                      </strong>
+                    </div>
+                    <div>
+                      <span>Safe motion</span>
+                      <strong>
+                        {selectedScore ? selectedScore.motionGateLabel : "Not recorded"}
+                      </strong>
+                    </div>
+                    <div>
                       <span>HML priority</span>
                       <strong>
                         {selectedHml ? label(selectedHml.classification) : "Unscored"}
@@ -628,6 +692,31 @@ export default async function ProspectFieldPage({
                     <div className="selected-account-note">
                       <span>Signal explanation</span>
                       <p>{selectedHml.explanation}</p>
+                    </div>
+                  ) : null}
+
+                  {selectedScore ? (
+                    <div className="selected-account-list">
+                      <h3>Prospecting scorecard</h3>
+                      <div>
+                        <strong>Qualification</strong>
+                        <p>
+                          {selectedScore.qualificationScore}/70 across international
+                          activity, contractor intensity, hiring velocity, compliance
+                          complexity, and channel accessibility.
+                        </p>
+                      </div>
+                      <div>
+                        <strong>Safety and source quality</strong>
+                        <p>
+                          Boundary safety {selectedScore.boundarySafetyScore}/8 and source
+                          quality {selectedScore.evidenceScore}/12.
+                        </p>
+                      </div>
+                      <div>
+                        <strong>Safe motion</strong>
+                        <p>{selectedScore.motionGateLabel}</p>
+                      </div>
                     </div>
                   ) : null}
 

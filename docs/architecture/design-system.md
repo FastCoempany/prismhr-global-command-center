@@ -261,6 +261,7 @@ Tables are first-class surfaces.
 Required for Prospect Field:
 
 - Company;
+- Research Score;
 - Qualification Signals;
 - HML Priority;
 - Permission;
@@ -275,6 +276,12 @@ Rows must preserve readable source and permission context. If horizontal scroll 
 HML is not prospect fit. HML is a persistent High/Medium/Low priority panel and heat meter.
 
 Qualification signals can feed HML, but they are not the same thing.
+
+Research Score is a prospecting-strength score. It may combine qualification signal
+strength, source quality, permission posture, and boundary safety, but it is not the
+HML label. When shown, pair it with the Prospecting Scorecard inputs and a Safe Motion
+label so the operator can see whether a high-scoring account still needs a safer
+channel path.
 
 Every HML output must show:
 

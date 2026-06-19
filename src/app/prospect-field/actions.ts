@@ -194,6 +194,7 @@ export async function createTerritoryAccount(formData: FormData) {
       contractorSignal,
       hiringSignal,
       internationalSignal,
+      permissionState,
       sourceConfidence,
     });
     const nextSafestAction = requiredString(formData, "nextSafestAction");
@@ -325,6 +326,7 @@ export async function updateTerritoryAccountPosture(formData: FormData) {
         contractorSignal: current.contractorSignal,
         hiringSignal: current.hiringSignal,
         internationalSignal: current.internationalSignal,
+        permissionState,
         sourceConfidence,
       });
 

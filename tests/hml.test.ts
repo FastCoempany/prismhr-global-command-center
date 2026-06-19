@@ -19,6 +19,7 @@ import {
   classifyPeoReadiness,
   classifyProspectField,
 } from "@/lib/hml";
+import { scoreProspectField } from "@/lib/prospect-scoring";
 
 describe("HML prospect field rules", () => {
   test("promotes sourced high qualification signals when boundary risk is not high", () => {
@@ -29,6 +30,7 @@ describe("HML prospect field rules", () => {
       contractorSignal: HmlValue.HIGH,
       hiringSignal: HmlValue.MEDIUM,
       internationalSignal: HmlValue.LOW,
+      permissionState: PermissionState.CSM_APPROVED_FOR_DISCUSSION,
       sourceConfidence: SourceConfidence.STRONG,
     });
 
@@ -45,6 +47,7 @@ describe("HML prospect field rules", () => {
       contractorSignal: HmlValue.HIGH,
       hiringSignal: HmlValue.MEDIUM,
       internationalSignal: HmlValue.MEDIUM,
+      permissionState: PermissionState.CSM_APPROVED_FOR_DISCUSSION,
       sourceConfidence: SourceConfidence.HYPOTHESIS,
     });
 
@@ -59,6 +62,7 @@ describe("HML prospect field rules", () => {
       contractorSignal: HmlValue.LOW,
       hiringSignal: HmlValue.LOW,
       internationalSignal: HmlValue.LOW,
+      permissionState: PermissionState.CSM_APPROVED_FOR_DISCUSSION,
       sourceConfidence: SourceConfidence.CONFIRMED,
     });
 
@@ -73,10 +77,57 @@ describe("HML prospect field rules", () => {
       contractorSignal: HmlValue.HIGH,
       hiringSignal: HmlValue.HIGH,
       internationalSignal: HmlValue.HIGH,
+      permissionState: PermissionState.CSM_APPROVED_FOR_DISCUSSION,
       sourceConfidence: SourceConfidence.CONFIRMED,
     });
 
     assert.equal(result.classification, HmlValue.MEDIUM);
+  });
+
+  test("scores research strength separately from HML priority", () => {
+    const score = scoreProspectField({
+      boundaryRisk: HmlValue.LOW,
+      channelSignal: HmlValue.MEDIUM,
+      complexitySignal: HmlValue.HIGH,
+      contractorSignal: HmlValue.HIGH,
+      hiringSignal: HmlValue.MEDIUM,
+      internationalSignal: HmlValue.LOW,
+      permissionState: PermissionState.CSM_APPROVED_FOR_DISCUSSION,
+      sourceConfidence: SourceConfidence.STRONG,
+    });
+
+    assert.equal(score.qualificationScore, 44);
+    assert.equal(score.boundarySafetyScore, 8);
+    assert.equal(score.evidenceScore, 11);
+    assert.equal(score.researchScore, 73);
+    assert.equal(score.motionGate, "open");
+  });
+
+  test("keeps unsafe motion visible even when qualification signals are strong", () => {
+    const result = classifyProspectField({
+      boundaryRisk: HmlValue.HIGH,
+      channelSignal: HmlValue.HIGH,
+      complexitySignal: HmlValue.HIGH,
+      contractorSignal: HmlValue.HIGH,
+      hiringSignal: HmlValue.HIGH,
+      internationalSignal: HmlValue.HIGH,
+      permissionState: PermissionState.RESEARCH_ONLY,
+      sourceConfidence: SourceConfidence.CONFIRMED,
+    });
+    const score = scoreProspectField({
+      boundaryRisk: HmlValue.HIGH,
+      channelSignal: HmlValue.HIGH,
+      complexitySignal: HmlValue.HIGH,
+      contractorSignal: HmlValue.HIGH,
+      hiringSignal: HmlValue.HIGH,
+      internationalSignal: HmlValue.HIGH,
+      permissionState: PermissionState.RESEARCH_ONLY,
+      sourceConfidence: SourceConfidence.CONFIRMED,
+    });
+
+    assert.equal(result.classification, HmlValue.MEDIUM);
+    assert.equal(score.qualificationScore, 70);
+    assert.equal(score.motionGate, "blocked");
   });
 });
 

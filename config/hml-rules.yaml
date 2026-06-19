@@ -46,6 +46,42 @@ app_scoring:
       HIGH: 20
       MEDIUM: 10
       LOW: 3
+    research_score:
+      score_version: v0.2-prospect-score
+      qualification_weights:
+        internationalSignal: 16
+        contractorSignal: 14
+        hiringSignal: 12
+        complexitySignal: 16
+        channelSignal: 12
+      signal_factors:
+        HIGH: 1
+        MEDIUM: 0.55
+        LOW: 0
+      boundary_safety_scores:
+        LOW: 8
+        MEDIUM: 4
+        HIGH: 0
+      source_confidence_scores:
+        CONFIRMED: 12
+        STRONG: 11
+        MEDIUM: 8
+        INFERRED: 7
+        LOW: 4
+        UNVERIFIED: 2
+        HYPOTHESIS: 0
+      permission_state_scores:
+        RESEARCH_ONLY: 5
+        CSM_CONTEXT_NEEDED: 5
+        CSM_APPROVED_FOR_DISCUSSION: 10
+        CSM_APPROVED_FOR_INTRO: 10
+        PEO_ENGAGED: 10
+        PEO_CLIENT_ENGAGED: 10
+        DIRECT_CONTACT_ALLOWED: 10
+        DIRECT_CONTACT_NOT_ALLOWED: 5
+        HOLD_SENSITIVE: 0
+        OFF_LIMITS: 0
+        OWNERSHIP_UNCLEAR_REQUIRES_VERIFICATION: 5
     weak_source_confidence:
       - LOW
       - UNVERIFIED
