@@ -74,7 +74,9 @@ function matchesSearch(
     account: { companyName: string } | null;
     csmPartner: { name: string } | null;
     contributingSignals: string[];
+    dailyServe: { title: string } | null;
     explanation: string;
+    internalUnknown: { question: string } | null;
     opportunity: { name: string } | null;
     peo: { name: string } | null;
     recommendedNextAction: string;
@@ -86,6 +88,8 @@ function matchesSearch(
   return [
     signal.account?.companyName,
     signal.csmPartner?.name,
+    signal.dailyServe?.title,
+    signal.internalUnknown?.question,
     signal.peo?.name,
     signal.opportunity?.name,
     signal.explanation,
@@ -128,6 +132,18 @@ export async function getSignalFeedData(filters: SignalFeedFilters) {
             name: true,
             permissionState: true,
             sourceConfidence: true,
+          },
+        },
+        dailyServe: {
+          select: {
+            id: true,
+            title: true,
+          },
+        },
+        internalUnknown: {
+          select: {
+            id: true,
+            question: true,
           },
         },
         opportunity: {

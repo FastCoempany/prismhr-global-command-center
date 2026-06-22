@@ -207,7 +207,9 @@ export default async function SignalFeedPage({ searchParams }: SignalFeedPagePro
                 signal.csmPartner?.name ??
                 signal.peo?.name ??
                 signal.opportunity?.name ??
-                "Unlinked signal";
+                signal.dailyServe?.title ??
+                signal.internalUnknown?.question ??
+                "Source signal";
               const signalPath = signal.account
                 ? `/prospect-field?${new URLSearchParams({
                     accountId: signal.account.id,
@@ -224,7 +226,13 @@ export default async function SignalFeedPage({ searchParams }: SignalFeedPagePro
                       ? `/partners?${new URLSearchParams({
                           partnerId: signal.peo.csmPartnerId,
                         }).toString()}`
-                      : null;
+                      : signal.dailyServe
+                        ? `/daily-serves?${new URLSearchParams({
+                            dailyServeId: signal.dailyServe.id,
+                          }).toString()}`
+                        : signal.internalUnknown
+                          ? `/unknowns#unknown-${signal.internalUnknown.id}`
+                          : null;
               const linkedRecord =
                 signal.account ?? signal.csmPartner ?? signal.peo ?? signal.opportunity;
 
