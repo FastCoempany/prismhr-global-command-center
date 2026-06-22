@@ -138,6 +138,14 @@ const unknownQuestions = [
   "What final wording should Contractor Management Plus use for PEO-led discovery?",
   "Should stale public evidence automatically lower source confidence?",
 ];
+const evidenceTitles = [
+  "Halsted hiring and contractor signals",
+  "Halsted deployment complexity",
+  "Lakeshore staffing demand",
+  "Aurora boundary review",
+  "Northbrook distributed hiring",
+  "Elgin seasonal hiring",
+];
 
 type Tx = Prisma.TransactionClient;
 type IdMap = Map<string, string>;
@@ -391,14 +399,50 @@ async function deleteDemoData(tx: Tx): Promise<DeleteStats> {
     where: {
       OR: [
         {
-          url: {
-            startsWith: researchRoot,
-          },
+          AND: [
+            {
+              title: {
+                in: evidenceTitles,
+              },
+            },
+            {
+              account: {
+                companyName: {
+                  in: accountNames,
+                },
+              },
+            },
+          ],
         },
         {
-          url: {
-            startsWith: legacyResearchRoot,
-          },
+          AND: [
+            {
+              account: {
+                companyName: {
+                  in: accountNames,
+                },
+              },
+            },
+            {
+              OR: [
+                {
+                  title: {
+                    startsWith: "Research fixture:",
+                  },
+                },
+                {
+                  url: {
+                    startsWith: researchRoot,
+                  },
+                },
+                {
+                  url: {
+                    startsWith: legacyResearchRoot,
+                  },
+                },
+              ],
+            },
+          ],
         },
       ],
     },
@@ -1085,6 +1129,19 @@ async function seedAccounts(tx: Tx, ownerId: string, stats: SeedStats) {
       stats,
     );
   }
+
+  const leadAccountId = accounts.get("Halsted Robotics Works");
+  if (!leadAccountId) {
+    throw new Error("Lead demo account was not seeded.");
+  }
+  await tx.territoryAccount.update({
+    data: {
+      lastReviewedAt: new Date(),
+    },
+    where: {
+      id: leadAccountId,
+    },
+  });
 
   return accounts;
 }
