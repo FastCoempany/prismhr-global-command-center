@@ -2,16 +2,9 @@ import { NextResponse, type NextRequest } from "next/server";
 
 const ACCESS_COOKIE_NAME = "field_signal_access";
 const protectedRoutes = ["/", "/prospect-field"];
-const authRoutes = ["/login"];
 
 function isProtectedRoute(pathname: string) {
   return protectedRoutes.some(
-    (route) => pathname === route || pathname.startsWith(`${route}/`),
-  );
-}
-
-function isAuthRoute(pathname: string) {
-  return authRoutes.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`),
   );
 }
@@ -28,13 +21,6 @@ export function updateSession(request: NextRequest) {
 
   if (isProtectedRoute(request.nextUrl.pathname) && !hasAccess) {
     return loginRedirect(request);
-  }
-
-  if (isAuthRoute(request.nextUrl.pathname) && hasAccess) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/";
-    url.search = "";
-    return NextResponse.redirect(url);
   }
 
   return NextResponse.next({
