@@ -1,0 +1,51 @@
+# Canonical controlled vocabulary for the demo catalog.
+# Every entry's classification fields MUST use values from here, so the catalog
+# stays consistent and phase-2 tooling can group/filter/branch reliably.
+# Add new values here (not ad hoc in entries) as the walk uncovers them.
+
+# Top-level product areas — seeded from the demo's left-nav.
+modules:
+  - key: dashboard        # landing / approvals overview
+  - key: new-hire
+  - key: onboarding
+  - key: team
+  - key: invoices
+  - key: time-off
+  - key: time-tracking
+  - key: reimbursements
+  - key: reports
+  - key: tools-resources
+  - key: settings
+  - key: support-cases
+
+# What kind of node an entry represents.
+types:
+  - page          # a full screen reachable from nav
+  - tab           # a tab within a page
+  - drilldown     # a detail view reached by clicking a row/item
+  - modal         # dialog overlay
+  - overlay       # dropdown / menu / hover card / tooltip
+  - table         # a data grid worth cataloging on its own
+  - field         # a notable input/control
+  - button        # a notable action
+
+# Demo importance — how much script weight a screen deserves.
+value_tier:
+  - high          # core value story; script in depth
+  - medium        # supporting; script briefly
+  - low           # exists for completeness; minimal/no script
+
+# Who we tailor the value narrative toward. Product-led for BOTH audiences:
+# we describe what the product DOES and why it matters — not discovery, not
+# what the customer might need.
+audiences:
+  - key: service_provider
+    label: Service providers (PEOs, ASOs, payroll providers) extending into global
+  - key: direct_employer
+    label: Companies hiring/paying across borders (Founders, CFOs, COOs, Heads of People)
+
+# Lifecycle of an entry.
+status:
+  - captured      # artifacts exist; not yet classified
+  - classified    # facts + taxonomy filled in (phase 1 done)
+  - scripted      # value narrative written (phase 2 done)

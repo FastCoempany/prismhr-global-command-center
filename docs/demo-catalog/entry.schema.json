@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://prismhr-global/demo-catalog/entry.schema.json",
+  "title": "Demo catalog entry frontmatter",
+  "description": "Validates the YAML frontmatter of each entries/*.md file. The Markdown body (value narrative) is authored freely in phase 2 and not validated here.",
+  "type": "object",
+  "required": ["id", "title", "status", "type", "module", "nav_path", "value_tier"],
+  "additionalProperties": false,
+  "properties": {
+    "id": { "type": "string", "pattern": "^[0-9]{3,}$", "description": "Zero-padded stable id; matches the entries/NNN-*.md filename." },
+    "title": { "type": "string", "minLength": 1 },
+    "status": { "enum": ["captured", "classified", "scripted"] },
+    "type": { "enum": ["page", "tab", "drilldown", "modal", "overlay", "table", "field", "button"] },
+    "module": {
+      "enum": ["dashboard", "new-hire", "onboarding", "team", "invoices", "time-off", "time-tracking", "reimbursements", "reports", "tools-resources", "settings", "support-cases"]
+    },
+    "nav_path": { "type": "array", "items": { "type": "string" }, "minItems": 1, "description": "Breadcrumb from login to this node." },
+    "parent": { "type": ["string", "null"], "description": "Parent entry id, or null for a top-level node." },
+    "children_frontier": { "type": "array", "items": { "type": "string" }, "description": "Clickables here that lead somewhere new. Drives completeness: every item must eventually become its own entry." },
+    "elements": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string" },
+          "kind": { "type": "string", "description": "Free text, e.g. nav | card | table | header | field | button." },
+          "actions": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "states": { "type": "array", "items": { "type": "string" }, "description": "e.g. populated, empty, error." },
+    "value_tier": { "enum": ["high", "medium", "low"] },
+    "audiences": { "type": "array", "items": { "enum": ["service_provider", "direct_employer"] } },
+    "capture": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Relative paths into the capture-output folder produced by tools/demo-capture.",
+      "properties": {
+        "text": { "type": "string" },
+        "dom": { "type": "string" },
+        "a11y": { "type": "string" },
+        "screenshot": { "type": "string" }
+      }
+    },
+    "tags": { "type": "array", "items": { "type": "string" } }
+  }
+}
