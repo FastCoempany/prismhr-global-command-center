@@ -109,12 +109,34 @@ await page.exposeFunction('__capSignal', async (reason) => {
   }
 });
 
-// --- in-page control panel + auto-capture-on-click ----------------------------
+// --- in-page control panel + capture triggers ---------------------------------
 // Re-injected on every document load. State persists in sessionStorage so a full
 // page reload doesn't silently turn capturing off.
+//
+// Transient states (dropdowns, hover cards, modals) are the hard case: reaching
+// for a button with the mouse dismisses a hover. So we catch them THREE ways:
+//   1. Auto: a MutationObserver fires whenever an overlay/modal/menu/tooltip is
+//      added to the page — most transient states capture themselves, hands-free.
+//   2. Hotkey Ctrl+Shift+S: fires instantly, mouse never moves, so a held hover
+//      stays on screen. This is the reliable manual trigger for hovers.
+//   3. Delay (Ctrl+Shift+D or "⏱ 3s"): counts down, giving you time to open and
+//      hold a state before it snapshots — for anything the first two miss.
 await context.addInitScript(() => {
   const KEY = '__capOn';
   const isOn = () => sessionStorage.getItem(KEY) === '1';
+  const signal = (r) => window.__capSignal && window.__capSignal(r);
+
+  function countdown(seconds, done) {
+    const tip = document.getElementById('__cap_tip');
+    let n = seconds;
+    const tick = () => {
+      if (tip) tip.textContent = n > 0 ? `capturing in ${n}…` : '';
+      if (n <= 0) return done();
+      n -= 1;
+      setTimeout(tick, 1000);
+    };
+    tick();
+  }
 
   function mount() {
     if (document.getElementById('__cap_panel')) return;
@@ -123,13 +145,21 @@ await context.addInitScript(() => {
     panel.style.cssText =
       'position:fixed;z-index:2147483647;bottom:16px;right:16px;background:#0f172a;color:#fff;' +
       'font:13px/1.4 system-ui,sans-serif;padding:10px 12px;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.3);' +
-      'display:flex;gap:10px;align-items:center;user-select:none';
+      'display:flex;gap:8px;align-items:center;user-select:none';
+    const bs = 'cursor:pointer;border:0;border-radius:6px;padding:6px 10px;color:#fff';
     const btn = document.createElement('button');
-    btn.style.cssText =
-      'cursor:pointer;border:0;border-radius:6px;padding:6px 10px;font-weight:600;color:#fff;background:#2563eb';
+    btn.style.cssText = bs + ';font-weight:600;background:#2563eb';
     const snap = document.createElement('button');
-    snap.textContent = '📸 Capture now';
-    snap.style.cssText = 'cursor:pointer;border:0;border-radius:6px;padding:6px 10px;background:#334155;color:#fff';
+    snap.textContent = '📸 Now';
+    snap.title = 'Capture now (Ctrl+Shift+S)';
+    snap.style.cssText = bs + ';background:#334155';
+    const delay = document.createElement('button');
+    delay.textContent = '⏱ 3s';
+    delay.title = 'Capture after 3s — for holding a hover/dropdown open (Ctrl+Shift+D)';
+    delay.style.cssText = bs + ';background:#334155';
+    const tip = document.createElement('span');
+    tip.id = '__cap_tip';
+    tip.style.cssText = 'color:#fbbf24;min-width:0';
     const count = document.createElement('span');
     count.innerHTML = 'saved <b id="__cap_count">0</b>';
 
@@ -142,11 +172,12 @@ await context.addInitScript(() => {
       const next = !isOn();
       sessionStorage.setItem(KEY, next ? '1' : '0');
       render();
-      window.__capSignal && window.__capSignal(next ? 'start' : 'stop');
+      signal(next ? 'start' : 'stop');
     };
-    snap.onclick = () => window.__capSignal && window.__capSignal('manual');
+    snap.onclick = () => signal('manual');
+    delay.onclick = () => countdown(3, () => signal('delayed'));
 
-    panel.append(btn, snap, count);
+    panel.append(btn, snap, delay, tip, count);
     document.body.appendChild(panel);
     render();
   }
@@ -154,23 +185,49 @@ await context.addInitScript(() => {
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount);
   else mount();
 
-  // Auto-capture: debounce after any click so SPA tab/drill-down changes land.
+  // (1) Auto-capture after any click so SPA tab/drill-down changes land.
   let t;
   document.addEventListener(
     'click',
     () => {
       if (!isOn()) return;
       clearTimeout(t);
-      t = setTimeout(() => window.__capSignal && window.__capSignal('auto'), 900);
+      t = setTimeout(() => signal('auto'), 900);
     },
     true,
   );
 
-  // Manual hotkey: Ctrl+Shift+S
+  // (1b) Auto-capture when an overlay appears: modal, menu, dropdown, tooltip.
+  // Covers most transient states with no action from you.
+  const OVERLAY =
+    '[role="dialog"],[aria-modal="true"],[role="menu"],[role="listbox"],[role="tooltip"],' +
+    '.modal,.dropdown-menu,[data-radix-popper-content-wrapper],[data-state="open"]';
+  let ot;
+  const obs = new MutationObserver((muts) => {
+    if (!isOn()) return;
+    for (const m of muts) {
+      for (const node of m.addedNodes) {
+        if (node.nodeType === 1 && (node.matches?.(OVERLAY) || node.querySelector?.(OVERLAY))) {
+          clearTimeout(ot);
+          ot = setTimeout(() => signal('overlay'), 600);
+          return;
+        }
+      }
+    }
+  });
+  const startObs = () => document.body && obs.observe(document.body, { childList: true, subtree: true });
+  if (document.body) startObs();
+  else document.addEventListener('DOMContentLoaded', startObs);
+
+  // (2)/(3) Hotkeys: instant capture (mouse stays put) and delayed capture.
   window.addEventListener('keydown', (e) => {
-    if (e.ctrlKey && e.shiftKey && (e.key === 'S' || e.key === 's')) {
+    if (!(e.ctrlKey && e.shiftKey)) return;
+    if (e.key === 'S' || e.key === 's') {
       e.preventDefault();
-      window.__capSignal && window.__capSignal('manual');
+      signal('manual');
+    } else if (e.key === 'D' || e.key === 'd') {
+      e.preventDefault();
+      countdown(3, () => signal('delayed'));
     }
   });
 });

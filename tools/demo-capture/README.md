@@ -42,9 +42,27 @@ Then, in the Chromium window that opens:
 3. **Walk the app** — every menu, tab, drill-down, row. Each new screen saves
    itself. Be exhaustive: open every nav item, every tab on every page, click
    into list rows, expand every section.
-4. For a transient state (an open dropdown, a hover card, a modal) that a click
-   alone won't hold, press **Ctrl+Shift+S** or **📸 Capture now** to force a snapshot.
-5. **Close the window** when done. Everything is already saved.
+4. **Close the window** when done. Everything is already saved.
+
+### Capturing transient states (dropdowns, hover cards, modals)
+
+These only exist while the mouse is on the trigger, so reaching for a button
+dismisses them. The tool handles them three ways:
+
+- **Automatic** — a watcher fires whenever a modal, menu, dropdown, or tooltip
+  appears, so most transient states capture themselves with no action from you.
+- **`Ctrl+Shift+S`** (instant) — fires without moving the mouse, so a **held
+  hover** stays on screen. This is the reliable manual trigger for hovers; the
+  **📸 Now** button works too, but only for states that *don't* close when you
+  move the mouse (e.g. modals).
+- **`Ctrl+Shift+D`** / **⏱ 3s** (delayed) — counts down so you can open and hold
+  a state before it snapshots. Use it for anything the first two miss.
+
+> **One genuine limit:** a browser's *native* `<select>` dropdown is drawn by
+> the OS, outside the page, so its open list can't be screenshotted or read from
+> the DOM. The options themselves are still captured (they're `<option>` tags in
+> the DOM), and any *custom/styled* dropdown is captured fully — only the native
+> open-list visual is out of reach.
 
 ### Tips for completeness
 
