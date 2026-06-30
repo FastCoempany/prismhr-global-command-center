@@ -1,0 +1,208 @@
+// PrismHR Global demo capture robot.
+//
+// Runs LOCALLY on your machine (the cloud build environment is blocked from
+// reaching the demo host). Opens a real Chromium window pointed at the demo,
+// you log in by hand, and then it silently saves a clean record of every
+// screen you visit as you click through. No manual screenshotting.
+//
+// For each captured screen it writes, into ./capture-output/:
+//   text/NNN.txt        visible page text (verbatim, includes below-the-fold)
+//   dom/NNN.html        full serialized DOM (every label, field, link target)
+//   a11y/NNN.json       accessibility tree (semantic roles + names)
+//   screenshots/NNN.png full-page screenshot (the look, for the visual guide)
+// plus manifest.jsonl   one line per capture (seq, url, title, trigger, time)
+//
+// Your credentials never leave your machine and are never written to disk:
+// you type them into the browser window yourself.
+//
+// Usage:
+//   npm install
+//   npx playwright install chromium
+//   node capture.mjs
+//
+// Then in the window: log in, click "Start capture" in the floating panel,
+// and walk the app. Re-visited screens are de-duplicated automatically.
+
+import { chromium } from 'playwright';
+import { mkdir, writeFile, appendFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import path from 'node:path';
+
+const START_URL = process.env.DEMO_URL || 'https://app1.demo.prismhr.com/';
+const OUT = path.resolve(process.env.OUT_DIR || 'capture-output');
+const SETTLE_MS = Number(process.env.SETTLE_MS || 900); // debounce after a click
+
+const dirs = ['text', 'dom', 'a11y', 'screenshots'];
+await mkdir(OUT, { recursive: true });
+await Promise.all(dirs.map((d) => mkdir(path.join(OUT, d), { recursive: true })));
+
+const sha1 = (s) => createHash('sha1').update(s).digest('hex');
+
+const seen = new Set(); // content hashes already captured -> skip re-visits
+let seq = 0;
+let started = false;
+let busy = false;
+
+const browser = await chromium.launch({ headless: false });
+const context = await browser.newContext({ viewport: null });
+const page = await context.newPage();
+
+// --- capture routine (runs in Node) ------------------------------------------
+async function capture(reason) {
+  if (!started || busy) return;
+  busy = true;
+  try {
+    try {
+      await page.waitForLoadState('networkidle', { timeout: 4000 });
+    } catch {
+      /* SPA may never go fully idle; proceed anyway */
+    }
+
+    const text = (await page.evaluate(() => document.body?.innerText || '').catch(() => '')).trim();
+    if (!text) return;
+
+    const hash = sha1(text);
+    if (seen.has(hash)) {
+      console.log('·  (already captured, skipped)');
+      return;
+    }
+    seen.add(hash);
+
+    seq += 1;
+    const id = String(seq).padStart(3, '0');
+    const url = page.url();
+    const title = await page.title().catch(() => '');
+
+    await writeFile(path.join(OUT, 'text', `${id}.txt`), `URL: ${url}\nTITLE: ${title}\n\n${text}`);
+    await writeFile(path.join(OUT, 'dom', `${id}.html`), await page.content());
+    const a11y = await page.accessibility.snapshot().catch(() => null);
+    await writeFile(path.join(OUT, 'a11y', `${id}.json`), JSON.stringify(a11y, null, 2));
+    await page.screenshot({ path: path.join(OUT, 'screenshots', `${id}.png`), fullPage: true }).catch(() => {});
+    await appendFile(
+      path.join(OUT, 'manifest.jsonl'),
+      JSON.stringify({ seq, id, url, title, reason, ts: new Date().toISOString() }) + '\n',
+    );
+
+    console.log(`✓  ${id}  ${title || url}`);
+    await page.evaluate((n) => {
+      const el = document.getElementById('__cap_count');
+      if (el) el.textContent = String(n);
+    }, seq).catch(() => {});
+  } catch (e) {
+    console.error('capture error:', e.message);
+  } finally {
+    busy = false;
+  }
+}
+
+// Bridge the page -> Node. Persists across navigations for this page.
+await page.exposeFunction('__capSignal', async (reason) => {
+  if (reason === 'start') {
+    started = true;
+    console.log('▶  capturing ON');
+    await capture('start');
+  } else if (reason === 'stop') {
+    started = false;
+    console.log('⏸  capturing OFF');
+  } else {
+    await capture(reason);
+  }
+});
+
+// --- in-page control panel + auto-capture-on-click ----------------------------
+// Re-injected on every document load. State persists in sessionStorage so a full
+// page reload doesn't silently turn capturing off.
+await context.addInitScript(() => {
+  const KEY = '__capOn';
+  const isOn = () => sessionStorage.getItem(KEY) === '1';
+
+  function mount() {
+    if (document.getElementById('__cap_panel')) return;
+    const panel = document.createElement('div');
+    panel.id = '__cap_panel';
+    panel.style.cssText =
+      'position:fixed;z-index:2147483647;bottom:16px;right:16px;background:#0f172a;color:#fff;' +
+      'font:13px/1.4 system-ui,sans-serif;padding:10px 12px;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.3);' +
+      'display:flex;gap:10px;align-items:center;user-select:none';
+    const btn = document.createElement('button');
+    btn.style.cssText =
+      'cursor:pointer;border:0;border-radius:6px;padding:6px 10px;font-weight:600;color:#fff;background:#2563eb';
+    const snap = document.createElement('button');
+    snap.textContent = '📸 Capture now';
+    snap.style.cssText = 'cursor:pointer;border:0;border-radius:6px;padding:6px 10px;background:#334155;color:#fff';
+    const count = document.createElement('span');
+    count.innerHTML = 'saved <b id="__cap_count">0</b>';
+
+    function render() {
+      const on = isOn();
+      btn.textContent = on ? '⏸ Stop capture' : '▶ Start capture';
+      btn.style.background = on ? '#dc2626' : '#2563eb';
+    }
+    btn.onclick = () => {
+      const next = !isOn();
+      sessionStorage.setItem(KEY, next ? '1' : '0');
+      render();
+      window.__capSignal && window.__capSignal(next ? 'start' : 'stop');
+    };
+    snap.onclick = () => window.__capSignal && window.__capSignal('manual');
+
+    panel.append(btn, snap, count);
+    document.body.appendChild(panel);
+    render();
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount);
+  else mount();
+
+  // Auto-capture: debounce after any click so SPA tab/drill-down changes land.
+  let t;
+  document.addEventListener(
+    'click',
+    () => {
+      if (!isOn()) return;
+      clearTimeout(t);
+      t = setTimeout(() => window.__capSignal && window.__capSignal('auto'), 900);
+    },
+    true,
+  );
+
+  // Manual hotkey: Ctrl+Shift+S
+  window.addEventListener('keydown', (e) => {
+    if (e.ctrlKey && e.shiftKey && (e.key === 'S' || e.key === 's')) {
+      e.preventDefault();
+      window.__capSignal && window.__capSignal('manual');
+    }
+  });
+});
+
+// Catch full navigations too (click debounce + dedup keep this from doubling).
+let navT;
+page.on('framenavigated', (frame) => {
+  if (frame !== page.mainFrame() || !started) return;
+  clearTimeout(navT);
+  navT = setTimeout(() => capture('nav'), SETTLE_MS);
+});
+
+await page.goto(START_URL, { waitUntil: 'domcontentloaded' }).catch((e) => {
+  console.error(`Could not open ${START_URL}: ${e.message}`);
+});
+
+console.log(`
+PrismHR Global demo capture
+---------------------------
+Output folder : ${OUT}
+1. Log in to the demo in the window that just opened.
+2. Click "▶ Start capture" in the panel (bottom-right).
+3. Walk every menu, tab, drill-down, and row. Each new screen saves itself.
+   - Re-visited screens are skipped automatically.
+   - Press Ctrl+Shift+S (or "📸 Capture now") to force a snapshot of a
+     transient state (open menu, hover card, modal).
+4. Close the browser window when done. Files are already on disk.
+`);
+
+// Keep the process alive until the user closes the browser.
+await new Promise((resolve) => {
+  browser.on('disconnected', resolve);
+});
+console.log(`\nDone. Captured ${seq} unique screens into ${OUT}`);
+process.exit(0);

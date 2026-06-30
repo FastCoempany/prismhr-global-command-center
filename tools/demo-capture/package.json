@@ -1,0 +1,13 @@
+{
+  "name": "demo-capture",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Local browser robot that records every screen of the PrismHR Global demo as you click through it.",
+  "scripts": {
+    "capture": "node capture.mjs"
+  },
+  "dependencies": {
+    "playwright": "^1.49.0"
+  }
+}
