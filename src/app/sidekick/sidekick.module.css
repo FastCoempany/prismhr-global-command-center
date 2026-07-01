@@ -448,3 +448,116 @@
   color: var(--muted);
   font-size: 12px;
 }
+
+/* Screenshot */
+.shot {
+  margin-bottom: 20px;
+}
+.shot img {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  display: block;
+}
+
+/* Edit form */
+.editForm label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--muted);
+  display: block;
+  margin: 10px 0 4px;
+}
+.editForm textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
+  font: inherit;
+  resize: vertical;
+}
+.editRow {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 12px;
+}
+.editedChip {
+  background: #fff4e6;
+  color: #b6531a;
+}
+
+/* Playbooks */
+.pbBar {
+  padding: 0 14px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.pbBar select {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  font-size: 13px;
+}
+.pbBar select option {
+  color: #0a1c40;
+}
+.pbItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-right: 6px;
+}
+.pbItem .item {
+  flex: 1;
+}
+.pbControls {
+  display: flex;
+  gap: 2px;
+}
+.pbControls button {
+  background: transparent;
+  border: 0;
+  color: #9db4dc;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px 4px;
+  line-height: 1;
+}
+.pbControls button:hover {
+  color: #fff;
+}
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.stepper button {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 7px;
+  padding: 5px 9px;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--navy);
+}
+.inlineForm {
+  display: flex;
+  gap: 6px;
+}
+.inlineForm input {
+  flex: 1;
+  padding: 7px 9px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  font-size: 13px;
+}

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { AppWayfinder } from "@/components/app-wayfinder";
-import { modules, screens } from "@/lib/catalog";
-import { loadSidekick } from "./data";
+import { modules, screens as baseScreens } from "@/lib/catalog";
+import { applyOverrides, loadSidekick } from "./data";
 import { SidekickClient } from "./sidekick-client";
 
 export const dynamic = "force-dynamic";
@@ -32,6 +32,8 @@ export default async function SidekickPage({
     );
   }
 
+  const { screens, editedIds } = applyOverrides(baseScreens, data.overrides);
+
   return (
     <>
       <AppWayfinder current="Demo Sidekick" />
@@ -42,9 +44,12 @@ export default async function SidekickPage({
         activeAccount={data.activeAccount}
         notes={data.notes}
         pinnedScreenIds={data.pinnedScreenIds}
+        playbooks={data.playbooks}
+        editedIds={editedIds}
         canWrite={data.canWrite}
         dbUnavailable={data.status === "database-unavailable"}
         initialScreenId={pick("screen")}
+        initialPlaybookId={pick("pb")}
         justSaved={pick("saved") === "1"}
       />
     </>

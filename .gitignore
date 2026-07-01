@@ -41,3 +41,6 @@ private/
 local/
 .vercel
 .env*.local
+
+# Sidekick screenshots (large; generated locally)
+public/demo-screens/*.png

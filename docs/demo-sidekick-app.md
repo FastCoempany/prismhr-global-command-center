@@ -63,7 +63,23 @@ npx prisma generate                        # or: npx prisma migrate deploy
 ```
 On a normal laptop / CI / Vercel, none of this is needed — `npm run build` just works.
 
-## Not yet wired (intentional next steps)
-- Playbooks UI (models exist) — ordered demo sequences per account.
-- In-app script editing (currently scripts come from the markdown catalog).
-- Screenshot-beside-script (PNGs live on the capture machine; add an image host/path).
+## Playbooks
+Ordered demo sequences per account. In the sidebar, pick/create a **Playbook**, then
+**＋ Add current screen** to append screens; reorder with ↑/↓ and remove with ✕. When a
+playbook is active, a **◀ n/total ▶ stepper** appears in the top bar so you can walk the
+planned sequence during a call. Stored in `DemoPlaybook` / `DemoPlaybookItem`.
+
+## In-app script editing
+Click **✎ Edit script** on any screen to edit the talk track, capabilities, per-audience
+value, branching, and "what this screen is" — saved to `DemoScreenOverride` and layered over
+the static catalog (`applyOverrides`). Edits are **global** (every account sees the improved
+script); an **edited** chip marks overridden screens and **↺ Reset to catalog** clears the
+override. The markdown catalog remains the source of truth for anything not overridden.
+
+## Screenshot beside the script
+Each screen shows `public/demo-screens/<screenId>.png` if present (graceful fallback if not).
+Populate it locally from your capture output:
+```bash
+node tools/collect-screenshots.mjs   # copies capture PNGs → public/demo-screens/<id>.png
+```
+The PNGs are git-ignored (large); regenerate per machine. Text/a11y stay the catalog source.

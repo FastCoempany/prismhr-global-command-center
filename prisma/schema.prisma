@@ -830,3 +830,18 @@ model DemoPlaybookItem {
 
   @@index([playbookId])
 }
+
+// Global, editable script overrides layered over the static catalog. A null
+// scalar or empty array means "fall back to the catalog value" for that field.
+model DemoScreenOverride {
+  id           String   @id @default(cuid())
+  screenId     String   @unique
+  say          String?
+  what         String?
+  capabilities String[]
+  sp           String[]
+  de           String[]
+  branching    String[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
