@@ -1,0 +1,75 @@
+URL: https://app1.demo.prismhr.com/time-off
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Antaeus Service Provider - Main Client
+Logout
+Time Off
+Pending Requests
+Time Off Calendar
+History
+All Workers
+Engagement
+Leave Type
+Search
+Search
+Export
+Pending Requests
+John Contractor
+Contractor
+Date
+Jul 7, 2026 - Jul 12, 2026
+|
+Vacation
+Pending Approval
+Decline
+Approve
+Yasmin Hunt
+Contractor+
+Date
+Jul 6, 2026 - Jul 12, 2026
+|
+Personal
+Pending Approval
+Decline
+Approve
+Rose Allen
+EOR
+Date
+Jul 6, 2026 - Jul 12, 2026
+|
+Annual Leave
+|
+Vacation
+Pending Approval
+Decline
+Approve
+Victor Reed
+Contractor+
+Date
+Jul 9, 2026 - Jul 15, 2026
+|
+Holidays
+Pending Approval
+Decline
+Approve
+Henry Bell
+Contractor
+Date
+Jul 8, 2026 - Jul 13, 2026
+|
+Holidays
+Pending Approval
+Decline
+Approve

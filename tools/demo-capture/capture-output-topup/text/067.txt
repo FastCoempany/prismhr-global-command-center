@@ -1,0 +1,55 @@
+URL: https://app1.demo.prismhr.com/wrkr/accept-payroll/63d43e0f-6561-44a1-a70d-4e2f86eacc99/national-id
+TITLE: PrismHR
+
+You need to set your Bank Account.Link Bank Account →
+
+Dashboard
+Payments
+Time Off
+Time Tracking
+Reimbursements
+Resources
+Worker Portal
+Logout
+
+Personal Information
+
+Address
+
+03
+
+Identification
+
+Identification
+
+We require some essential documents to comply with regulations and ensure a seamless hiring process. This might include identification documents, tax forms, or any other necessary legal paperwork.
+
+National ID Number
+Please upload a copy of the front of your ID
+We accept various forms of identification, including:
+Driver’s License
+Passport
+National ID Card
+
+Front image of ID card is required
+
+Baseball (2).jpg
+Remove
+|
+View
+Please upload a copy of the back of your ID
+
+Back image of ID card is required
+
+Upload a Back ID Upload
+
+PDF,PNG,JPG up to 10MB
+
+Back
+Submit
+
+Success
+
+ID Front uploaded successfully
+
+Close

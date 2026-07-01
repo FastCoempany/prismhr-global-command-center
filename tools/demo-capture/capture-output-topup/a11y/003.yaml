@@ -1,0 +1,135 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - link "Logout":
+    - /url: /login
+- main:
+  - heading "Team" [level=1]
+  - 'heading "TOTAL WORKERS: 20" [level=2]'
+  - text: Search Search
+  - textbox "Search":
+    - /placeholder: Search people
+  - button "All Workers"
+  - button "Countries"
+  - button "Type"
+  - button "Location"
+  - button "Status"
+  - button "Sort Newest"
+  - button "Export"
+  - table:
+    - rowgroup:
+      - row "NAME COUNTRY TYPE LOCATION MANAGER CONTRACTS STATUS ACTIONS":
+        - columnheader "NAME":
+          - paragraph: NAME
+        - columnheader "COUNTRY":
+          - paragraph: COUNTRY
+        - columnheader "TYPE":
+          - paragraph: TYPE
+        - columnheader "LOCATION":
+          - paragraph: LOCATION
+        - columnheader "MANAGER":
+          - paragraph: MANAGER
+        - columnheader "CONTRACTS":
+          - paragraph: CONTRACTS
+        - columnheader "STATUS":
+          - paragraph: STATUS
+        - columnheader "ACTIONS":
+          - paragraph: ACTIONS
+    - rowgroup:
+      - row "VR Victor Reed Corporate Intranet Orchestrator Corporate Intranet Orchestrator Contractor+ — Demo HR Manager 1 Active":
+        - cell "VR Victor Reed Corporate Intranet Orchestrator Corporate Intranet Orchestrator"
+        - cell:
+          - img
+        - cell "Contractor+"
+        - cell "—"
+        - cell "Demo HR Manager"
+        - cell "1"
+        - cell "Active"
+        - cell:
+          - button
+      - row "PC Pablo Contractorplus National Response Coordinator National Response Coordinator Contractor+ — Emma Onboard 1 Active":
+        - cell "PC Pablo Contractorplus National Response Coordinator National Response Coordinator"
+        - cell:
+          - img
+        - cell "Contractor+"
+        - cell "—"
+        - cell "Emma Onboard"
+        - cell "1"
+        - cell "Active"
+        - cell:
+          - button
+      - row "AD Alex Developer Chief Assurance Officer Contractor — Demo Admin 1 Active":
+        - cell "AD Alex Developer Chief Assurance Officer"
+        - cell:
+          - img
+        - cell "Contractor"
+        - cell "—"
+        - cell "Demo Admin"
+        - cell "1"
+        - cell "Active"
+        - cell:
+          - button
+      - row "GH Grace Hunt Direct Usability Manager EOR — Demo HR Manager 1 Active":
+        - cell "GH Grace Hunt Direct Usability Manager"
+        - cell:
+          - img
+        - cell "EOR"
+        - cell "—"
+        - cell "Demo HR Manager"
+        - cell "1"
+        - cell "Active"
+        - cell:
+          - button
+      - row "HB Henry Bell Future Creative Agent Contractor — John Manager 1 Active":
+        - cell "HB Henry Bell Future Creative Agent"
+        - cell:
+          - img
+        - cell "Contractor"
+        - cell "—"
+        - cell "John Manager"
+        - cell "1"
+        - cell "Active"
+        - cell:
+          - button
+      - row "IG Iris Green Forward Factors Orchestrator Forward Factors Orchestrator Contractor — Demo Finance Manager 1 Active":
+        - cell "IG Iris Green Forward Factors Orchestrator Forward Factors Orchestrator"
+        - cell:
+          - img
+        - cell "Contractor"
+        - cell "—"
+        - cell "Demo Finance Manager"
+        - cell "1"
+        - cell "Active"
+        - cell:
+          - button
+  - paragraph: Showing 15 to 20 of 20 results
+  - navigation "Pagination":
+    - button "Previous"
+    - button "1"
+    - button "2"
+    - button "3"
+    - button "Next" [disabled]
+- img

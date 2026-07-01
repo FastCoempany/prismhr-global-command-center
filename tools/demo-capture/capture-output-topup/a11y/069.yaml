@@ -1,0 +1,68 @@
+- paragraph:
+  - text: You need to set your Bank Account.
+  - link "Link Bank Account":
+    - /url: https://admin1.demo.prismhr.com
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /wrkr
+  - link "Payments":
+    - /url: /wrkr/payments
+  - link "Time Off":
+    - /url: /wrkr/request-time-off
+  - link "Time Tracking":
+    - /url: /wrkr/timecards
+  - link "Reimbursements":
+    - /url: /wrkr/request-reimbursement
+  - link "Resources":
+    - /url: /wrkr/documents
+  - button "Worker Portal"
+  - link "Logout":
+    - /url: /login
+- heading "Profile" [level=1]
+- img "antaeus coe avatar"
+- text: Change user photo Antaeus Coe Work Email
+- button "Copy email to clipboard"
+- link "antaeus.coe@prismhr.com":
+  - /url: mailto:antaeus.coe@prismhr.com
+- text: Joined Date Jul 1, 2026 Position
+- list:
+  - listitem: engineer
+- text: Worker ID 105260700001 Manager
+- list:
+  - listitem: Demo Admin
+- text: Location No location assigned
+- region:
+  - navigation:
+    - link "Personal":
+      - /url: /wrkr/profile/info
+    - link "Contracts":
+      - /url: /wrkr/profile/my-contracts
+    - link "Bank & Tax Info":
+      - /url: /wrkr/profile/bank-account
+    - link "Security":
+      - /url: /wrkr/profile/security
+    - link "Assignments":
+      - /url: /wrkr/profile/organization
+  - heading "Bank Accounts" [level=3]
+  - button "Add a Bank Account"
+  - paragraph: Please add your banking details from one or more bank account. Payments from PrismHR will be issued to the default bank of your choosing.
+  - separator
+  - heading "National ID" [level=3]
+  - button
+  - paragraph: Make sure your tax information is up to date. This is required for a work engagement. This can be your personal id number or the tax id of an entity.
+  - paragraph: National ID
+  - paragraph: "123456"
+  - separator
+  - heading "Identification" [level=3]
+  - heading "Front of ID" [level=4]
+  - paragraph: Baseball (2).jpg
+  - button
+  - button
+  - button
+  - heading "Back of ID" [level=4]
+  - paragraph: Baseball (2).jpg
+  - button
+  - button
+  - button
+- img

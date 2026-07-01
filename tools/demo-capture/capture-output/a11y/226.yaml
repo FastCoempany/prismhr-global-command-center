@@ -1,0 +1,215 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - link "Logout":
+    - /url: /login
+- main:
+  - heading "Worker Report" [level=1]
+  - navigation "Breadcrumb":
+    - list:
+      - listitem:
+        - link "Reports":
+          - /url: /reports
+      - listitem:
+        - link "Worker Report":
+          - /url: /reports/worker-detail
+  - button "Start Date Current Month"
+  - text: "-"
+  - button "End Date Current Month"
+  - button "Engagement"
+  - button "Status"
+  - button "Countries"
+  - button "Pay Frequency"
+  - button "Show Map"
+  - term:
+    - paragraph: Total Workers
+  - definition:
+    - paragraph: "42"
+  - term:
+    - paragraph: Pending Contracts
+  - definition:
+    - paragraph: "9"
+  - term:
+    - paragraph: Contractor
+  - definition:
+    - paragraph: "12"
+  - term:
+    - paragraph: Contractor+
+  - definition:
+    - paragraph: "5"
+  - term:
+    - paragraph: EOR
+  - definition:
+    - paragraph: "9"
+  - term:
+    - paragraph: Payroll
+  - definition:
+    - paragraph: "7"
+  - text: Search Search
+  - textbox "Search":
+    - /placeholder: Search name
+  - button "Download Report"
+  - table:
+    - rowgroup:
+      - row "Name Country Engagement Pay Frequency Base Pay Term Status":
+        - columnheader "Name":
+          - paragraph: Name
+        - columnheader "Country":
+          - paragraph: Country
+        - columnheader "Engagement":
+          - paragraph: Engagement
+        - columnheader "Pay Frequency":
+          - paragraph: Pay Frequency
+        - columnheader "Base Pay":
+          - paragraph: Base Pay
+        - columnheader "Term":
+          - paragraph: Term
+        - columnheader "Status":
+          - paragraph: Status
+        - columnheader
+    - rowgroup:
+      - row "Aaron Taylor United Kingdom Contractor Monthly $3,909.97 USD Fixed Active":
+        - cell "Aaron Taylor"
+        - cell "United Kingdom":
+          - img
+          - text: United Kingdom
+        - cell "Contractor"
+        - cell "Monthly"
+        - cell "$3,909.97 USD"
+        - cell "Fixed"
+        - cell "Active"
+        - cell
+      - row "Alex Demo Worker United Kingdom EOR Monthly £5,000.00 GBP Fixed Active":
+        - cell "Alex Demo Worker"
+        - cell "United Kingdom":
+          - img
+          - text: United Kingdom
+        - cell "EOR"
+        - cell "Monthly"
+        - cell "£5,000.00 GBP"
+        - cell "Fixed"
+        - cell "Active"
+        - cell
+      - row "Alex Developer United States Contractor Monthly $24.02 USD Hourly Active":
+        - cell "Alex Developer"
+        - cell "United States":
+          - img
+          - text: United States
+        - cell "Contractor"
+        - cell "Monthly"
+        - cell "$24.02 USD"
+        - cell "Hourly"
+        - cell "Active"
+        - cell
+      - row "Ben Bell Canada EOR Monthly $5,403.04 CAD Fixed Active":
+        - cell "Ben Bell"
+        - cell "Canada":
+          - img
+          - text: Canada
+        - cell "EOR"
+        - cell "Monthly"
+        - cell "$5,403.04 CAD"
+        - cell "Fixed"
+        - cell "Active"
+        - cell
+      - row "Beth Parker Canada EOR Monthly $4,384.64 CAD Fixed Active":
+        - cell "Beth Parker"
+        - cell "Canada":
+          - img
+          - text: Canada
+        - cell "EOR"
+        - cell "Monthly"
+        - cell "$4,384.64 CAD"
+        - cell "Fixed"
+        - cell "Active"
+        - cell
+      - row "Claire Allen Nicaragua EOR Monthly C$86,353.00 NIO Fixed Active":
+        - cell "Claire Allen"
+        - cell "Nicaragua":
+          - img
+          - text: Nicaragua
+        - cell "EOR"
+        - cell "Monthly"
+        - cell "C$86,353.00 NIO"
+        - cell "Fixed"
+        - cell "Active"
+        - cell
+      - row "Dan Adams United Kingdom EOR Monthly £2,379.05 GBP Fixed Active":
+        - cell "Dan Adams"
+        - cell "United Kingdom":
+          - img
+          - text: United Kingdom
+        - cell "EOR"
+        - cell "Monthly"
+        - cell "£2,379.05 GBP"
+        - cell "Fixed"
+        - cell "Active"
+        - cell
+      - row "Emma Nelson Taiwan Contractor Monthly $2,271.03 USD Fixed Active":
+        - cell "Emma Nelson"
+        - cell "Taiwan":
+          - img
+          - text: Taiwan
+        - cell "Contractor"
+        - cell "Monthly"
+        - cell "$2,271.03 USD"
+        - cell "Fixed"
+        - cell "Active"
+        - cell
+      - row "Felix Hunt Nicaragua Contractor Monthly $22.49 USD Hourly Active":
+        - cell "Felix Hunt"
+        - cell "Nicaragua":
+          - img
+          - text: Nicaragua
+        - cell "Contractor"
+        - cell "Monthly"
+        - cell "$22.49 USD"
+        - cell "Hourly"
+        - cell "Active"
+        - cell
+      - row "Frank Harris United Kingdom Payroll Monthly £1,823.04 GBP Fixed Active":
+        - cell "Frank Harris"
+        - cell "United Kingdom":
+          - img
+          - text: United Kingdom
+        - cell "Payroll"
+        - cell "Monthly"
+        - cell "£1,823.04 GBP"
+        - cell "Fixed"
+        - cell "Active"
+        - cell
+  - paragraph: Showing 1 to 10 of 42 results
+  - navigation "Pagination":
+    - button "Previous" [disabled]
+    - button "1"
+    - button "2"
+    - button "3"
+    - button "Next"
+- button "⏸ Stop capture"
+- button "📸 Now"
+- button "⏱ 3s"
+- text: saved 225
+- img

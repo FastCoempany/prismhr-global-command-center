@@ -1,0 +1,225 @@
+URL: https://app1.demo.prismhr.com/reports/payroll/gross-to-net
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+Employee Gross to Net Report
+Reports
+Payroll Report
+Employee Gross to Net Report
+Start Date
+June 2026
+-
+End Date
+June 2026
+Compensation
+Countries
+Pay Frequency
+All
+Monthly
+Search
+Search
+Export
+Egypt
+
+
+NAME
+
+	
+
+COMPENSATION
+
+	
+
+GROSS WAGES
+
+	
+
+BONUS PAYMENTS
+
+	
+
+RECURRING PAYMENTS
+
+	
+
+ONE-TIME PAYMENT
+
+	
+
+REIMBURSEMENTS
+
+	
+
+GROSS TOTAL
+
+	
+
+TAXES & CONTRIBUTIONS
+
+	
+
+NET
+
+
+
+Ximena Fisher
+	
+Salary
+	
+£145,043.27 EGP
+	
+£0.00 EGP
+	
+£2,549.86 EGP
+	
+£3,942.98 EGP
+	
+£0.00 EGP
+	
+£145,043.27 EGP
+	
+£13,053.95 EGP
+	
+£131,989.32 EGP
+
+Total		£145,043.27EGP	£0.00EGP	£2,549.86EGP	£3,942.98EGP	£0.00EGP	£145,043.27EGP	£13,053.95EGP	£131,989.32EGP
+United Kingdom
+
+
+NAME
+
+	
+
+COMPENSATION
+
+	
+
+GROSS WAGES
+
+	
+
+BONUS PAYMENTS
+
+	
+
+RECURRING PAYMENTS
+
+	
+
+ONE-TIME PAYMENT
+
+	
+
+REIMBURSEMENTS
+
+	
+
+GROSS TOTAL
+
+	
+
+TAXES & CONTRIBUTIONS
+
+	
+
+NET
+
+
+
+Tara Martin
+	
+Salary
+	
+£1,674.57 GBP
+	
+£0.00 GBP
+	
+£55.52 GBP
+	
+£75.01 GBP
+	
+£0.00 GBP
+	
+£1,674.57 GBP
+	
+£150.72 GBP
+	
+£1,523.85 GBP
+
+Total		£1,674.57GBP	£0.00GBP	£55.52GBP	£75.01GBP	£0.00GBP	£1,674.57GBP	£150.72GBP	£1,523.85GBP
+United States
+
+
+NAME
+
+	
+
+COMPENSATION
+
+	
+
+GROSS WAGES
+
+	
+
+BONUS PAYMENTS
+
+	
+
+RECURRING PAYMENTS
+
+	
+
+ONE-TIME PAYMENT
+
+	
+
+REIMBURSEMENTS
+
+	
+
+GROSS TOTAL
+
+	
+
+TAXES & CONTRIBUTIONS
+
+	
+
+NET
+
+
+
+Jane Employee
+	
+Salary
+	
+$3,139.59 USD
+	
+$0.00 USD
+	
+$68.26 USD
+	
+$33.42 USD
+	
+$0.00 USD
+	
+$3,139.59 USD
+	
+$282.57 USD
+	
+$2,857.02 USD
+
+Total		$3,139.59USD	$0.00USD	$68.26USD	$33.42USD	$0.00USD	$3,139.59USD	$282.57USD	$2,857.02USD

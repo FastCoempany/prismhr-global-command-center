@@ -1,0 +1,152 @@
+URL: https://app1.demo.prismhr.com/
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Antaeus Service Provider - Main Client
+Logout
+Hello, Antaeus Coe!
+Company
+Antaeus Service Provider - Main Client
+Support Cases
+DA
+Pay Periods
+Add One-Time Payment
+NEEDS APPROVAL (0)
+
+Payday
+
+Wed, Jul 8
+
+Pay period: Jun 1 - Jun 30
+
+EOR
+|
+MONTHLY
+Payment Due
+
+Payday
+
+Sat, Aug 8
+
+Pay period: Jul 1 - Jul 31
+
+CONTRACTOR
+|
+MONTHLY
+Payment Due
+
+Payday
+
+Fri, Jul 31
+
+Pay period: Jul 1 - Jul 31
+
+CONTRACTOR
+|
+MONTHLY
+
+Payday
+
+Fri, Jul 31
+
+Pay period: Jul 1 - Jul 31
+
+PAYROLL
+|
+MONTHLY
+
+Payday
+
+Fri, Jul 31
+
+Pay period: Jul 1 - Jul 31
+
+EOR
+|
+MONTHLY
+Time Off
+View Requests
+NEEDS APPROVAL (5)
+
+John Contractor
+
+Jul 7 - Jul 12
+
+Yasmin Hunt
+
+Jul 6 - Jul 12
+
+Rose Allen
+
+Jul 6 - Jul 12
+
+Victor Reed
+
+Jul 9 - Jul 15
+
+Henry Bell
+
+Jul 8 - Jul 13
+
+Who's Out
+TODAY (6)
+GH
+JE
+NC
+VR
+XF
+YH
+TOMORROW (4)
+GH
+NC
+VR
+XF
+Reimbursements
+View Requests
+NEEDS APPROVAL (5)
+$427.95
+USD
+
+John Contractor
+
+$669.52
+CAD
+
+Ximena Young
+
+$390.05
+CAD
+
+Rose Allen
+
+$636.47
+USD
+
+Alex Developer
+
+$1,188.93
+USD
+
+Iris Green
+
+Reminders
+Upcoming Holiday: Independence Day
+Jul 3
+Links
+Time Off
+View and approve your worker’s vacation, sick days, and other leave.
+Track Time
+View your worker’s hours and monitor time spent on tasks.
+Reimbursement
+View and approve expenses for reimbursement.

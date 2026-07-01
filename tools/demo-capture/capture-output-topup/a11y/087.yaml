@@ -1,0 +1,42 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - button "Antaeus Service Provider - Main Client"
+  - link "Logout":
+    - /url: /login
+- main:
+  - heading "Time Tracking" [level=1]
+  - button "Manage Labels"
+  - term: Total Hours
+  - definition: "0"
+  - text: Pay Periods
+  - combobox
+  - text: Labels...
+  - combobox
+  - button "Export" [disabled]
+  - heading "Please select a Pay Period." [level=3]
+  - list
+- img

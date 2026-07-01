@@ -1,0 +1,28 @@
+URL: https://app1.demo.prismhr.com/time-tracking
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+Time Tracking
+Manage Labels
+Total Hours
+-
+Pay Periods
+Labels...
+Export
+Please select a Pay Period.
+⏸ Stop capture
+📸 Now
+⏱ 3s
+saved 205

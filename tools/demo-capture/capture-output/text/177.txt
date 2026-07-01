@@ -1,0 +1,106 @@
+URL: https://app1.demo.prismhr.com/onboarding
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+Onboarding
+Onboarding
+Search
+Search
+Search
+Sort
+Filters
+AllContractorContractor+Employer of RecordPayroll
+
+Aurore Wuckert
+
+Switzerland
+Delete
+Continue
+
+In Draft
+
+Payroll
+
+Paul Davis
+
+Mexico
+View Worker
+
+Employee Info
+
+Employee Invited
+
+Payroll
+
+Ruby Carter
+
+Taiwan
+View Worker
+
+Employee Info
+
+Employee Invited
+
+Payroll
+
+Grace Johnson
+
+Philippines
+View Worker
+
+Employee Info
+
+Employee Invited
+
+Payroll
+
+Iris Davis
+
+Taiwan
+View Worker
+
+Employee Info
+
+Employee Invited
+
+Payroll
+
+Claire Walker
+
+Taiwan
+View Worker
+
+Employee Info
+
+Employee Invited
+
+Payroll
+
+Zach Cooper
+
+Mexico
+View Worker
+
+Employee Info
+
+Employee Invited
+
+Payroll
+Previous
+Next
+⏸ Stop capture
+📸 Now
+⏱ 3s
+saved 176

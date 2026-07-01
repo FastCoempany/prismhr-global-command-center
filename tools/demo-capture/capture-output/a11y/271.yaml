@@ -1,0 +1,57 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - link "Logout":
+    - /url: /login
+- main:
+  - heading "Compensation Calculator" [level=1]
+  - navigation "Breadcrumb":
+    - list:
+      - listitem:
+        - link "Tools & Resources":
+          - /url: /tools-and-resources
+      - listitem:
+        - link "Compensation Calculator":
+          - /url: /tools-and-resources/compensation-calculator
+  - application "Salary Calculator":
+    - text: I want to hire in
+    - combobox "I want to hire in": Canada
+    - button
+    - button "British Columbia"
+    - text: Gross salary
+    - button "CAD Canada"
+    - textbox "Gross salary":
+      - /placeholder: "0.00"
+      - text: "1"
+    - combobox "cdn-pay-period":
+      - option "Monthly" [selected]
+      - option "Annually"
+    - button "Calculate"
+- button "⏸ Stop capture"
+- button "📸 Now"
+- button "⏱ 3s"
+- text: saved 270
+- img

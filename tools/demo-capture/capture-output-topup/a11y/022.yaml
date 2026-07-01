@@ -1,0 +1,205 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - link "Logout":
+    - /url: /login
+- main:
+  - heading "General Ledger Report" [level=1]
+  - navigation "Breadcrumb":
+    - list:
+      - listitem:
+        - link "Reports":
+          - /url: /reports
+      - listitem:
+        - link "Payroll Report":
+          - /url: /reports/payroll
+      - listitem:
+        - link "General Ledger Report":
+          - /url: /reports/payroll/general-ledger
+  - button "Start Date June 2026"
+  - text: "-"
+  - button "End Date June 2026"
+  - button "Compensation"
+  - button "Countries"
+  - button "Pay Frequency"
+  - text: Search Search
+  - textbox "Search":
+    - /placeholder: Search by name
+  - button "Export"
+  - table:
+    - rowgroup:
+      - row "Egypt":
+        - columnheader "Egypt":
+          - img
+          - text: Egypt
+    - rowgroup:
+      - row "Name Compensation Gross Wages 1000 Bonus Payments Recurring Payments One-Time Payment 3000 Reimbursements 4000 Benefits 2000 Employer Taxes & Contributions 5000 Total":
+        - columnheader "Name":
+          - paragraph: Name
+        - columnheader "Compensation":
+          - paragraph: Compensation
+        - columnheader "Gross Wages 1000":
+          - paragraph: Gross Wages 1000
+        - columnheader "Bonus Payments":
+          - paragraph: Bonus Payments
+        - columnheader "Recurring Payments":
+          - paragraph: Recurring Payments
+        - columnheader "One-Time Payment 3000":
+          - paragraph: One-Time Payment 3000
+        - columnheader "Reimbursements 4000":
+          - paragraph: Reimbursements 4000
+        - columnheader "Benefits 2000":
+          - paragraph: Benefits 2000
+        - columnheader "Employer Taxes & Contributions 5000":
+          - paragraph: Employer Taxes & Contributions 5000
+        - columnheader "Total":
+          - paragraph: Total
+    - rowgroup:
+      - row "Ximena Fisher Salary £145,043.27 EGP £0.00 EGP £2,549.86 EGP £3,942.98 EGP £0.00 EGP £0.00 EGP £66,720.05 EGP £211,763.32 EGP":
+        - cell "Ximena Fisher"
+        - cell "Salary"
+        - cell "£145,043.27 EGP"
+        - cell "£0.00 EGP"
+        - cell "£2,549.86 EGP"
+        - cell "£3,942.98 EGP"
+        - cell "£0.00 EGP"
+        - cell "£0.00 EGP"
+        - cell "£66,720.05 EGP"
+        - cell "£211,763.32 EGP"
+      - row "Total £145,043.27EGP £0.00EGP £2,549.86EGP £3,942.98EGP £0.00EGP £0.00EGP £66,720.05EGP £211,763.32EGP":
+        - cell "Total"
+        - cell
+        - cell "£145,043.27EGP"
+        - cell "£0.00EGP"
+        - cell "£2,549.86EGP"
+        - cell "£3,942.98EGP"
+        - cell "£0.00EGP"
+        - cell "£0.00EGP"
+        - cell "£66,720.05EGP"
+        - cell "£211,763.32EGP"
+  - table:
+    - rowgroup:
+      - row "United Kingdom":
+        - columnheader "United Kingdom":
+          - img
+          - text: United Kingdom
+    - rowgroup:
+      - row "Name Compensation Gross Wages 1000 Bonus Payments Recurring Payments One-Time Payment 3000 Reimbursements 4000 Benefits 2000 Employer Taxes & Contributions 5000 Total":
+        - columnheader "Name":
+          - paragraph: Name
+        - columnheader "Compensation":
+          - paragraph: Compensation
+        - columnheader "Gross Wages 1000":
+          - paragraph: Gross Wages 1000
+        - columnheader "Bonus Payments":
+          - paragraph: Bonus Payments
+        - columnheader "Recurring Payments":
+          - paragraph: Recurring Payments
+        - columnheader "One-Time Payment 3000":
+          - paragraph: One-Time Payment 3000
+        - columnheader "Reimbursements 4000":
+          - paragraph: Reimbursements 4000
+        - columnheader "Benefits 2000":
+          - paragraph: Benefits 2000
+        - columnheader "Employer Taxes & Contributions 5000":
+          - paragraph: Employer Taxes & Contributions 5000
+        - columnheader "Total":
+          - paragraph: Total
+    - rowgroup:
+      - row "Tara Martin Salary £1,674.57 GBP £0.00 GBP £55.52 GBP £75.01 GBP £0.00 GBP £0.00 GBP £267.95 GBP £1,942.52 GBP":
+        - cell "Tara Martin"
+        - cell "Salary"
+        - cell "£1,674.57 GBP"
+        - cell "£0.00 GBP"
+        - cell "£55.52 GBP"
+        - cell "£75.01 GBP"
+        - cell "£0.00 GBP"
+        - cell "£0.00 GBP"
+        - cell "£267.95 GBP"
+        - cell "£1,942.52 GBP"
+      - row "Total £1,674.57GBP £0.00GBP £55.52GBP £75.01GBP £0.00GBP £0.00GBP £267.95GBP £1,942.52GBP":
+        - cell "Total"
+        - cell
+        - cell "£1,674.57GBP"
+        - cell "£0.00GBP"
+        - cell "£55.52GBP"
+        - cell "£75.01GBP"
+        - cell "£0.00GBP"
+        - cell "£0.00GBP"
+        - cell "£267.95GBP"
+        - cell "£1,942.52GBP"
+  - table:
+    - rowgroup:
+      - row "United States":
+        - columnheader "United States":
+          - img
+          - text: United States
+    - rowgroup:
+      - row "Name Compensation Gross Wages 1000 Bonus Payments Recurring Payments One-Time Payment 3000 Reimbursements 4000 Benefits 2000 Employer Taxes & Contributions 5000 Total":
+        - columnheader "Name":
+          - paragraph: Name
+        - columnheader "Compensation":
+          - paragraph: Compensation
+        - columnheader "Gross Wages 1000":
+          - paragraph: Gross Wages 1000
+        - columnheader "Bonus Payments":
+          - paragraph: Bonus Payments
+        - columnheader "Recurring Payments":
+          - paragraph: Recurring Payments
+        - columnheader "One-Time Payment 3000":
+          - paragraph: One-Time Payment 3000
+        - columnheader "Reimbursements 4000":
+          - paragraph: Reimbursements 4000
+        - columnheader "Benefits 2000":
+          - paragraph: Benefits 2000
+        - columnheader "Employer Taxes & Contributions 5000":
+          - paragraph: Employer Taxes & Contributions 5000
+        - columnheader "Total":
+          - paragraph: Total
+    - rowgroup:
+      - row "Jane Employee Salary $3,139.59 USD $0.00 USD $68.26 USD $33.42 USD $0.00 USD $0.00 USD $502.35 USD $3,641.94 USD":
+        - cell "Jane Employee"
+        - cell "Salary"
+        - cell "$3,139.59 USD"
+        - cell "$0.00 USD"
+        - cell "$68.26 USD"
+        - cell "$33.42 USD"
+        - cell "$0.00 USD"
+        - cell "$0.00 USD"
+        - cell "$502.35 USD"
+        - cell "$3,641.94 USD"
+      - row "Total $3,139.59USD $0.00USD $68.26USD $33.42USD $0.00USD $0.00USD $502.35USD $3,641.94USD":
+        - cell "Total"
+        - cell
+        - cell "$3,139.59USD"
+        - cell "$0.00USD"
+        - cell "$68.26USD"
+        - cell "$33.42USD"
+        - cell "$0.00USD"
+        - cell "$0.00USD"
+        - cell "$502.35USD"
+        - cell "$3,641.94USD"
+- img

@@ -1,0 +1,230 @@
+URL: https://app1.demo.prismhr.com/invoices
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+Invoices
+CREATED AT	INVOICE NUMBER	STATUS	PAYPERIOD	INVOICE TYPE	TOTAL AMOUNT
+
+Jun 30, 2026
+	
+	
+Invoiced
+	Jun 1, 2026-Jun 30, 2026	
+Monthly Contractors Fee
+	
+$1,575.00
+USD
+
+
+May 31, 2026
+	
+	
+Invoiced
+	May 1, 2026-May 31, 2026	
+EOR
+	
+$38,712.48
+USD
+
+
+Apr 30, 2026
+	
+	
+Invoiced
+	Apr 1, 2026-Apr 30, 2026	
+Payroll
+	
+$24,591.72
+USD
+
+
+Apr 30, 2026
+	
+	
+Invoiced
+	Apr 1, 2026-Apr 30, 2026	
+Contractor
+	
+$46,810.99
+USD
+
+
+Mar 31, 2026
+	
+	
+Invoiced
+	Mar 1, 2026-Mar 31, 2026	
+Payroll
+	
+$25,517.84
+USD
+
+
+Feb 28, 2026
+	
+	
+Invoiced
+	Feb 1, 2026-Feb 28, 2026	
+Contractor
+	
+$36,975.07
+USD
+
+
+Feb 28, 2026
+	
+	
+Invoiced
+	Feb 1, 2026-Feb 28, 2026	
+EOR
+	
+$34,016.68
+USD
+
+
+Jan 31, 2026
+	
+	
+Invoiced
+	Jan 1, 2026-Jan 31, 2026	
+EOR
+	
+$34,359.01
+USD
+
+
+Dec 31, 2025
+	
+	
+Invoiced
+	Dec 1, 2025-Dec 31, 2025	
+Contractor
+	
+$25,903.78
+USD
+
+
+Dec 31, 2025
+	
+	
+Invoiced
+	Dec 1, 2025-Dec 31, 2025	
+EOR
+	
+$27,837.52
+USD
+
+
+Nov 30, 2025
+	
+	
+Invoiced
+	Nov 1, 2025-Nov 30, 2025	
+Payroll
+	
+$19,650.19
+USD
+
+
+Oct 31, 2025
+	
+	
+Invoiced
+	Oct 1, 2025-Oct 31, 2025	
+Payroll
+	
+$14,332.02
+USD
+
+
+Oct 31, 2025
+	
+	
+Invoiced
+	Oct 1, 2025-Oct 31, 2025	
+Contractor
+	
+$17,854.55
+USD
+
+
+Sep 30, 2025
+	
+	
+Invoiced
+	Sep 1, 2025-Sep 30, 2025	
+Payroll
+	
+$10,308.75
+USD
+
+
+Aug 31, 2025
+	
+	
+Invoiced
+	Aug 1, 2025-Aug 31, 2025	
+EOR
+	
+$8,133.81
+USD
+
+
+Aug 31, 2025
+	
+	
+Invoiced
+	Aug 1, 2025-Aug 31, 2025	
+Contractor
+	
+$10,032.88
+USD
+
+
+Jul 31, 2025
+	
+	
+Invoiced
+	Jul 1, 2025-Jul 31, 2025	
+Payroll
+	
+$5,515.51
+USD
+
+
+Jun 30, 2025
+	
+	
+Invoiced
+	Jun 1, 2025-Jun 30, 2025	
+Payroll
+	
+$1,824.86
+USD
+
+
+May 31, 2025
+	
+	
+Invoiced
+	May 1, 2025-May 31, 2025	
+EOR
+	
+$10,082.47
+USD
+⏸ Stop capture
+📸 Now
+⏱ 3s
+saved 196

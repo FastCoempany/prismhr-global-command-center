@@ -1,0 +1,52 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - button "Antaeus Service Provider - Main Client"
+  - link "Logout":
+    - /url: /login
+- main:
+  - heading "Hello, Antaeus Coe!" [level=1]
+  - button "Refresh test client"
+  - button "Regenerate test client data (preserves users)"
+  - term: Company
+  - definition: Antaeus Service Provider - Main Client
+  - button
+  - button "Support Cases":
+    - text: Support Cases
+    - img
+  - button
+  - img
+  - img
+  - img
+  - img
+  - text: Reminders Links
+  - link "Time Off View and approve your worker’s vacation, sick days, and other leave.":
+    - /url: /time-off
+  - link "Track Time View your worker’s hours and monitor time spent on tasks.":
+    - /url: /time-tracking
+  - link "Reimbursement View and approve expenses for reimbursement.":
+    - /url: /reimbursements
+- img

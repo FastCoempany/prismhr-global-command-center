@@ -89,6 +89,13 @@ export function AppWayfinder({
           >
             Unknowns
           </Link>
+          <Link
+            aria-current={current === "Demo Sidekick" ? "page" : undefined}
+            className="app-route-link"
+            href="/sidekick"
+          >
+            Demo Sidekick
+          </Link>
         </nav>
         <Button size="compact" type="button" variant="quiet">
           Ctrl K

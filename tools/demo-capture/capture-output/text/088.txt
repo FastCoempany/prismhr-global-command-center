@@ -1,0 +1,87 @@
+URL: https://app1.demo.prismhr.com/create-contract/eor/job?contractIndex=1
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+New Hire | EOR
+
+Employee Info
+
+02
+
+Job Info
+
+03
+
+Compensation
+
+04
+
+Equipment
+
+05
+
+Benefits
+
+06
+
+Submit
+
+Job information
+Job title
+Seniority level
+Select the employee's seniority level
+Not Applicable
+Junior
+Mid
+Senior
+Lead
+Principal
+Director
+Department Head
+Vice President
+Senior Vice President
+Job description
+
+Write a few sentences explaining the role and responsibilities.
+
+Assignments (Optional)
+Division
+Select division
+Select division
+Engineering Division
+Product Division
+Location
+Select Location
+Unassigned
+San Francisco Office
+New York Office
+Reporting Manager
+
+Auto-assigned based on organizational assignment
+
+Assign Manager
+Start date
+
+The earliest possible start date for this contract may vary due to regulatory requirements. Please note that visa and/or work permit requirements may cause delays.
+
+Target start date
+Save & Exit
+Exit
+Back
+Next
+⏸ Stop capture
+📸 Now
+⏱ 3s
+saved 87

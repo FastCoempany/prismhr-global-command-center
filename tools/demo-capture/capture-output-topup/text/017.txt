@@ -1,0 +1,369 @@
+URL: https://app1.demo.prismhr.com/reports/eor/general-ledger
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+General Ledger Report
+Reports
+EOR Report
+General Ledger Report
+Start Date
+June 2026
+-
+End Date
+June 2026
+Compensation
+Countries
+Pay Frequency
+Search
+Search
+Export
+Canada
+
+
+NAME
+ 
+
+	
+
+COMPENSATION
+ 
+
+	
+
+GROSS WAGES
+1000
+
+	
+
+BONUS PAYMENTS
+ 
+
+	
+
+RECURRING PAYMENTS
+ 
+
+	
+
+ONE-TIME PAYMENT
+3000
+
+	
+
+REIMBURSEMENTS
+4000
+
+	
+
+BENEFITS
+2000
+
+	
+
+EMPLOYER TAXES & CONTRIBUTIONS
+5000
+
+	
+
+TOTAL
+ 
+
+
+
+Chris Reed
+	
+Salary
+	
+$4,141.86 USD
+	
+$0.00 USD
+	
+$0.00 USD
+	
+$0.00 USD
+	
+$0.00 USD
+	
+$0.00 USD
+	
+$662.72 USD
+	
+$4,804.58 USD
+
+
+Rose Allen
+	
+Salary
+	
+$4,102.16 USD
+	
+$0.00 USD
+	
+$0.00 USD
+	
+$0.00 USD
+	
+$0.00 USD
+	
+$0.00 USD
+	
+$2,320.68 USD
+	
+$6,422.84 USD
+
+
+Ximena Young
+	
+Salary
+	
+$1,354.78 USD
+	
+$0.00 USD
+	
+$0.00 USD
+	
+$0.00 USD
+	
+$0.00 USD
+	
+$0.00 USD
+	
+$2,146.02 USD
+	
+$3,500.80 USD
+
+Total		$9,598.80USD	$0.00USD	$0.00USD	$0.00USD	$0.00USD	$0.00USD	$5,129.42USD	$14,728.22USD
+Egypt
+
+
+NAME
+ 
+
+	
+
+COMPENSATION
+ 
+
+	
+
+GROSS WAGES
+1000
+
+	
+
+BONUS PAYMENTS
+ 
+
+	
+
+RECURRING PAYMENTS
+ 
+
+	
+
+ONE-TIME PAYMENT
+3000
+
+	
+
+REIMBURSEMENTS
+4000
+
+	
+
+BENEFITS
+2000
+
+	
+
+EMPLOYER TAXES & CONTRIBUTIONS
+5000
+
+	
+
+TOTAL
+ 
+
+
+
+Hugo Johnson
+	
+Salary
+	
+$4,212.80 USD
+	
+$0.00 USD
+	
+$0.00 USD
+	
+$0.00 USD
+	
+$0.00 USD
+	
+$0.00 USD
+	
+$1,095.32 USD
+	
+$5,308.12 USD
+
+Total		$4,212.80USD	$0.00USD	$0.00USD	$0.00USD	$0.00USD	$0.00USD	$1,095.32USD	$5,308.12USD
+Mexico
+
+
+NAME
+ 
+
+	
+
+COMPENSATION
+ 
+
+	
+
+GROSS WAGES
+1000
+
+	
+
+BONUS PAYMENTS
+ 
+
+	
+
+RECURRING PAYMENTS
+ 
+
+	
+
+ONE-TIME PAYMENT
+3000
+
+	
+
+REIMBURSEMENTS
+4000
+
+	
+
+BENEFITS
+2000
+
+	
+
+EMPLOYER TAXES & CONTRIBUTIONS
+5000
+
+	
+
+TOTAL
+ 
+
+
+
+Grace Hunt
+	
+Salary
+	
+$7,738.02 USD
+	
+$0.00 USD
+	
+$0.00 USD
+	
+$0.00 USD
+	
+$0.00 USD
+	
+$0.00 USD
+	
+$2,011.88 USD
+	
+$9,749.90 USD
+
+Total		$7,738.02USD	$0.00USD	$0.00USD	$0.00USD	$0.00USD	$0.00USD	$2,011.88USD	$9,749.90USD
+United States
+
+
+NAME
+ 
+
+	
+
+COMPENSATION
+ 
+
+	
+
+GROSS WAGES
+1000
+
+	
+
+BONUS PAYMENTS
+ 
+
+	
+
+RECURRING PAYMENTS
+ 
+
+	
+
+ONE-TIME PAYMENT
+3000
+
+	
+
+REIMBURSEMENTS
+4000
+
+	
+
+BENEFITS
+2000
+
+	
+
+EMPLOYER TAXES & CONTRIBUTIONS
+5000
+
+	
+
+TOTAL
+ 
+
+
+
+Alex Demo Worker
+	
+Salary
+	
+$10,000.00 USD
+	
+$0.00 USD
+	
+$0.00 USD
+	
+$0.00 USD
+	
+$0.00 USD
+	
+$0.00 USD
+	
+$2,600.00 USD
+	
+$12,600.00 USD
+
+Total		$10,000.00USD	$0.00USD	$0.00USD	$0.00USD	$0.00USD	$0.00USD	$2,600.00USD	$12,600.00USD

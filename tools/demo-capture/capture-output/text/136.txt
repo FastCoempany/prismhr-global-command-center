@@ -1,0 +1,51 @@
+URL: https://app1.demo.prismhr.com/create-contract/eor/equipments?contractIndex=1
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+New Hire | EOR
+
+Employee Info
+
+Job Info
+
+Compensation
+
+04
+
+Equipment
+
+05
+
+Benefits
+
+06
+
+Submit
+
+Set up equipment policy
+Select an equipments policy
+Select an equipments policy
+Antaeus Service Provider - Main Client wants to provide the equipment
+The new hire will use their personal equipment for work
+Antaeus Service Provider - Main Client will provide a reimbursement for equipment purchase
+We’ll be in touch about the equipment options in the Singapore.
+Save & Exit
+Exit
+Back
+Next
+⏸ Stop capture
+📸 Now
+⏱ 3s
+saved 135

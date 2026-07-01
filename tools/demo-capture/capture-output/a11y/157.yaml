@@ -1,0 +1,133 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - link "Logout":
+    - /url: /login
+- main:
+  - heading "Onboarding" [level=1]
+  - navigation "Breadcrumb":
+    - list:
+      - listitem:
+        - link "Onboarding":
+          - /url: /onboarding
+  - region "Search":
+    - heading "Search" [level=2]
+    - text: Search Search
+    - textbox "Search":
+      - /placeholder: Search Workers
+    - button "Sort"
+    - button "Filters"
+  - region:
+    - navigation "Tabs":
+      - button "All"
+      - button "Contractor"
+      - button "Contractor+"
+      - button "Employer of Record"
+      - button "Payroll"
+  - list:
+    - listitem:
+      - paragraph: Mozelle Jaskolski
+      - img
+      - text: United Kingdom
+      - button "Delete"
+      - button "Continue"
+      - paragraph: In Draft
+      - paragraph: Contract
+      - paragraph: Start Date
+      - text: Contractor
+    - listitem:
+      - paragraph: Aurore Wuckert
+      - img
+      - text: Switzerland
+      - button "Delete"
+      - button "Continue"
+      - paragraph: In Draft
+      - text: Payroll
+    - listitem:
+      - paragraph: Breanna Senger
+      - img
+      - text: Uganda
+      - button "Delete"
+      - button "Continue"
+      - paragraph: In Draft
+      - paragraph: Offer Letter
+      - paragraph: Agreement
+      - paragraph: Start Date
+      - text: EOR
+    - listitem:
+      - paragraph: Everardo Yundt
+      - img
+      - text: Uzbekistan
+      - button "Delete"
+      - button "Continue"
+      - paragraph: In Draft
+      - paragraph: Contract
+      - paragraph: Start Date
+      - text: Contractor+
+    - listitem:
+      - paragraph: Paul Davis
+      - img
+      - text: Mexico
+      - button "View Worker"
+      - paragraph: Employee Info
+      - paragraph: Employee Invited
+      - text: Payroll
+    - listitem:
+      - paragraph: Antaeus Coe
+      - img
+      - text: Singapore
+      - paragraph: Employee Info
+      - paragraph: Awaiting Offer Letter
+      - paragraph: Agreement
+      - paragraph: Start Date
+      - text: EOR
+    - listitem:
+      - paragraph: Ulrich Young
+      - img
+      - text: Canada - Nova Scotia
+      - button "Send Reminder"
+      - paragraph: Employee Info
+      - paragraph: Awaiting Worker Signature
+      - paragraph: Start Date
+      - text: Contractor
+    - listitem:
+      - paragraph: Ruby Carter
+      - img
+      - text: Taiwan
+      - button "View Worker"
+      - paragraph: Employee Info
+      - paragraph: Employee Invited
+      - text: Payroll
+  - navigation "Pagination":
+    - link "Previous":
+      - /url: "#"
+    - link "Next":
+      - /url: "#"
+- button "⏸ Stop capture"
+- button "📸 Now"
+- button "⏱ 3s"
+- text: saved 156
+- img

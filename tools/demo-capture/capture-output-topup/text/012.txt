@@ -1,0 +1,35 @@
+URL: https://app1.demo.prismhr.com/reports/eor
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+EOR Reports
+Reports
+EOR Reports
+
+Employer Gross Report
+
+See total payroll costs for your EOR-managed workers, including gross wages, taxes, and contributions.
+
+Employee Gross to Net Report
+
+Review gross pay, deductions, and net pay for workers employed through your EOR.
+
+General Ledger Report
+
+Download an accounting-ready report mapped to your general ledger for EOR-managed payroll.
+
+Variance Report
+
+Track payroll changes for EOR employees across periods to flag inconsistencies or trends.

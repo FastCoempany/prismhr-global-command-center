@@ -1,0 +1,247 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - link "Logout":
+    - /url: /login
+- main:
+  - heading "Settings" [level=1]
+  - navigation "Breadcrumb":
+    - list:
+      - listitem:
+        - link "Settings":
+          - /url: /settings/general
+      - listitem:
+        - link "General":
+          - /url: /settings/general
+  - navigation:
+    - link "General":
+      - /url: /settings/general
+    - link "Users":
+      - /url: /settings/users
+    - link "Roles and Permissions":
+      - /url: /settings/roles
+    - link "Approval Workflows":
+      - /url: /settings/approval-workflows
+    - link "Assignments":
+      - /url: /settings/assignments
+  - heading "Overview" [level=3]
+  - paragraph: General information about your account.
+  - term: "Account Owner's Name:"
+  - definition: Demo Admin
+  - term: "Email:"
+  - definition:
+    - text: antaeus.coe@vensure.com
+    - button "Copy email to clipboard"
+  - term: "Client ID:"
+  - definition: "10500045"
+  - heading "Entity Details" [level=4]
+  - text: Name
+  - textbox "Name": Antaeus Service Provider - Main Client
+  - text: Entity Type
+  - combobox:
+    - option "LLC"
+    - option "S-corp"
+    - option "C-corp"
+    - option "Sole Proprietorship"
+    - option "LTD"
+    - option "unknown"
+  - text: Tax ID Number
+  - textbox "Tax ID Number"
+  - text: Address 1
+  - textbox "Address 1"
+  - text: Address 2
+  - textbox "Address 2"
+  - text: City
+  - textbox "City"
+  - text: Postal Code
+  - textbox "Postal Code"
+  - text: State
+  - textbox "State"
+  - text: Country
+  - combobox:
+    - option "Albania"
+    - option "Algeria"
+    - option "Angola"
+    - option "Argentina"
+    - option "Armenia"
+    - option "Australia"
+    - option "Australia - New South Wales"
+    - option "Australia - Queensland"
+    - option "Australia - South Australia"
+    - option "Australia - Victoria"
+    - option "Australia - Western Australia"
+    - option "Austria"
+    - option "Azerbaijan"
+    - option "Bahamas"
+    - option "Bahrain"
+    - option "Bangladesh"
+    - option "Belarus"
+    - option "Belgium"
+    - option "Belize"
+    - option "Bolivia"
+    - option "Bosnia and Herzegovina"
+    - option "Brazil"
+    - option "British Virgin Island"
+    - option "Bulgaria"
+    - option "Burkina Faso"
+    - option "Burundi (Bujumbura)"
+    - option "Cambodia"
+    - option "Cameroon"
+    - option "Canada"
+    - option "Canada - Nova Scotia"
+    - option "Canada - Alberta"
+    - option "Canada - British Columbia"
+    - option "Canada - Ontario"
+    - option "Canada - Quebec"
+    - option "Canada - Newfoundland and Labrador"
+    - option "Canada - Prince Edward Island"
+    - option "Canada - New Brunswick"
+    - option "Canada - Manitoba"
+    - option "Chile"
+    - option "China"
+    - option "China - Shanghai"
+    - option "China - Guangzhou"
+    - option "Chad"
+    - option "Colombia"
+    - option "Costa Rica"
+    - option "Croatia"
+    - option "Cyprus"
+    - option "Czech Republic"
+    - option "Congo (Brazzaville)"
+    - option "Congo (Kinshasa)"
+    - option "Denmark"
+    - option "Dominican Republic"
+    - option "Ecuador"
+    - option "Egypt"
+    - option "El Salvador"
+    - option "Estonia"
+    - option "Ethiopia"
+    - option "Finland"
+    - option "France"
+    - option "Georgia"
+    - option "Germany"
+    - option "Ghana"
+    - option "Greece"
+    - option "Guatemala"
+    - option "Honduras"
+    - option "Hong Kong"
+    - option "Hungary"
+    - option "Iceland"
+    - option "India"
+    - option "Indonesia"
+    - option "Ireland"
+    - option "Israel"
+    - option "Italy"
+    - option "Ivory Coast"
+    - option "Jamaica"
+    - option "Japan"
+    - option "Jordan"
+    - option "Kazakhstan"
+    - option "Kenya"
+    - option "Kosovo"
+    - option "Kuwait"
+    - option "Latvia"
+    - option "Lebanon"
+    - option "Libya"
+    - option "Lithuania"
+    - option "Luxembourg"
+    - option "Macau"
+    - option "North Macedonia"
+    - option "Malawi"
+    - option "Malaysia"
+    - option "Malta"
+    - option "Mauritius"
+    - option "Mexico"
+    - option "Moldova"
+    - option "Mongolia"
+    - option "Montenegro"
+    - option "Morocco"
+    - option "Myanmar"
+    - option "Nepal"
+    - option "Netherlands"
+    - option "New Zealand"
+    - option "Nicaragua"
+    - option "Niger"
+    - option "Nigeria"
+    - option "Norway"
+    - option "Oman"
+    - option "Papua New Guinea"
+    - option "Pakistan"
+    - option "Palestine"
+    - option "Panama"
+    - option "Paraguay"
+    - option "Peru"
+    - option "Philippines"
+    - option "Poland"
+    - option "Portugal"
+    - option "Puerto Rico"
+    - option "Qatar"
+    - option "Romania"
+    - option "Russia"
+    - option "Rwanda"
+    - option "Senegal"
+    - option "Serbia"
+    - option "Singapore"
+    - option "Slovakia"
+    - option "Slovenia"
+    - option "South Africa"
+    - option "South Korea"
+    - option "Spain"
+    - option "Sri Lanka"
+    - option "Sweden"
+    - option "Switzerland"
+    - option "Switzerland - Geneva"
+    - option "Switzerland - Zurich"
+    - option "Taiwan"
+    - option "Tanzania"
+    - option "Thailand"
+    - option "Togo (Lomé)"
+    - option "Trinidad & Tobago"
+    - option "Tunisia"
+    - option "Turkey"
+    - option "Tonga"
+    - option "Ukraine"
+    - option "Uganda"
+    - option "United Arab Emirates"
+    - option "United Kingdom"
+    - option "United States"
+    - option "Uruguay"
+    - option "Uzbekistan"
+    - option "Venezuela"
+    - option "Vietnam"
+    - option "Zambia"
+    - option "Zimbabwe"
+  - heading "Billing Contact Info" [level=3]
+  - paragraph: Enter the email address(es) that invoices should be sent to
+  - text: Primary Email
+  - textbox "Primary Email"
+  - button "Add Another Email"
+  - button "Update"
+- button "⏸ Stop capture"
+- button "📸 Now"
+- button "⏱ 3s"
+- text: saved 304
+- img

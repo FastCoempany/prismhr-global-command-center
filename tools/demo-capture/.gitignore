@@ -1,0 +1,4 @@
+# Capture output is large and lives on your machine; don't commit raw artifacts.
+# Hand the text/, a11y/, and manifest.jsonl to the catalog step; keep PNGs local.
+capture-output/
+node_modules/

@@ -1,0 +1,89 @@
+URL: https://app1.demo.prismhr.com/settings/users/fe5c10b4-6979-4256-a55f-961961123d39
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+Settings
+Settings
+General
+Back to Users
+SA
+Sarah Admin
+INVITED
+antaeus.coe+admin@vensure.com
+Admin
+Set as Inactive
+Permissions
+Details: Has most permissions, but cannot view or edit company settings
+Super Admin
+Manager
+HR
+Admin
+Onboard Only
+Finance
+PEOPLE MANAGEMENT
+SELECT ALL
+Onboard new hires
+Approve/decline time-off requests
+View time off details
+View time-off report
+Make salary adjustments
+View time tracking details
+View payment summary report
+Manage labels
+Off-board current workers
+View expense reimbursements requests
+Edit charts of account
+View reimbursements report
+View reports
+View worker report
+View hour log report
+View events
+View worker documents
+Assign worker manager
+View worker contracts
+View worker personal profile details
+View worker payments
+Access all workers data
+View holiday calendar
+Approve/decline expense reimbursement requests
+View onboarding status
+FINANCE
+SELECT ALL
+Pay invoices
+View invoices
+PAYMENTS
+SELECT ALL
+View compensation calculator
+Approve pay period summaries
+View pay period summaries
+Add one time payment
+Initiate bulk upload
+ADMINISTRATION
+SELECT ALL
+Invite users
+Assign user roles
+Can delete account
+Edit managers
+Customize user permissions
+Override multi-level approvals
+View/edit company settings
+COMMUNICATION
+SELECT ALL
+Receive client payment notifications
+Receive contract signature notifications
+⏸ Stop capture
+📸 Now
+⏱ 3s
+saved 282

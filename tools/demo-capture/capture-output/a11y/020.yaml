@@ -1,0 +1,74 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - link "Logout":
+    - /url: /login
+- main:
+  - heading "Add One-Time Payment" [level=1]
+  - navigation "Breadcrumb":
+    - list:
+      - listitem:
+        - link "Dashboard":
+          - /url: /
+      - listitem:
+        - link "Add One-Time Payment":
+          - /url: /pay-periods/add-one-time-payment
+  - heading "Confirm One-Time Payment" [level=2]
+  - paragraph: Review the payment details before processing. This payment will be included in each worker's next paycheck.
+  - paragraph:
+    - strong: "Payment Timing:"
+    - text: This payment will be included in each worker's next paycheck
+  - heading "Payment Summary" [level=2]
+  - paragraph: Each worker will receive their payment converted to local currency
+  - table:
+    - rowgroup:
+      - row "Worker Type One-Time Payment Total Pay Next Pay Date":
+        - columnheader "Worker"
+        - columnheader "Type"
+        - columnheader "One-Time Payment"
+        - columnheader "Total Pay"
+        - columnheader "Next Pay Date"
+    - rowgroup:
+      - row "aaron taylor CONTRACTOR USD $200.00 USD $200.00 Jun 30, 2026 MONTHLY":
+        - cell "aaron taylor"
+        - cell "CONTRACTOR"
+        - cell "USD $200.00":
+          - img
+          - text: USD $200.00
+        - cell "USD $200.00":
+          - img
+          - text: USD $200.00
+        - cell "Jun 30, 2026 MONTHLY"
+  - text: "Total USD:"
+  - img
+  - text: USD $200.00
+  - button "Back"
+  - button "Confirm Payment"
+- button "⏸ Stop capture"
+- button "📸 Now"
+- button "⏱ 3s"
+- text: saved 19
+- img

@@ -1,0 +1,146 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - link "Logout":
+    - /url: /login
+- main:
+  - heading "Team" [level=1]
+  - 'heading "TOTAL WORKERS: 20" [level=2]'
+  - text: Search Search
+  - textbox "Search":
+    - /placeholder: Search people
+  - button "All Workers"
+  - button "Countries"
+  - button "Type"
+  - button "Location"
+  - button "Status"
+  - button "Sort Newest"
+  - button "Export"
+  - table:
+    - rowgroup:
+      - row "NAME COUNTRY TYPE LOCATION MANAGER CONTRACTS STATUS ACTIONS":
+        - columnheader "NAME":
+          - paragraph: NAME
+        - columnheader "COUNTRY":
+          - paragraph: COUNTRY
+        - columnheader "TYPE":
+          - paragraph: TYPE
+        - columnheader "LOCATION":
+          - paragraph: LOCATION
+        - columnheader "MANAGER":
+          - paragraph: MANAGER
+        - columnheader "CONTRACTS":
+          - paragraph: CONTRACTS
+        - columnheader "STATUS":
+          - paragraph: STATUS
+        - columnheader "ACTIONS":
+          - paragraph: ACTIONS
+    - rowgroup:
+      - row "CR Chris Reed Global Accountability Coordinator Global Accountability Coordinator EOR — Emma Onboard 1 Active":
+        - cell "CR Chris Reed Global Accountability Coordinator Global Accountability Coordinator"
+        - cell:
+          - img
+        - cell "EOR"
+        - cell "—"
+        - cell "Emma Onboard"
+        - cell "1"
+        - cell "Active"
+        - cell:
+          - button
+      - row "NC Nadia Contractorplus District Metrics Orchestrator Contractor+ — Emma Onboard 1 Active":
+        - cell "NC Nadia Contractorplus District Metrics Orchestrator"
+        - cell:
+          - img
+        - cell "Contractor+"
+        - cell "—"
+        - cell "Emma Onboard"
+        - cell "1"
+        - cell "Active"
+        - cell:
+          - button
+      - row "JE Jane Employee Legacy Brand Coordinator Payroll — Demo Finance Manager 1 Active":
+        - cell "JE Jane Employee Legacy Brand Coordinator"
+        - cell:
+          - img
+        - cell "Payroll"
+        - cell "—"
+        - cell "Demo Finance Manager"
+        - cell "1"
+        - cell "Active"
+        - cell:
+          - button
+      - row "JC John Contractor Forward Usability Developer Contractor — Emma Onboard 1 Active":
+        - cell "JC John Contractor Forward Usability Developer"
+        - cell:
+          - img
+        - cell "Contractor"
+        - cell "—"
+        - cell "Emma Onboard"
+        - cell "1"
+        - cell "Active"
+        - cell:
+          - button
+      - row "HJ Hugo Johnson Investor Identity Supervisor EOR — Sarah Admin 1 Active":
+        - cell "HJ Hugo Johnson Investor Identity Supervisor"
+        - cell:
+          - img
+        - cell "EOR"
+        - cell "—"
+        - cell "Sarah Admin"
+        - cell "1"
+        - cell "Active"
+        - cell:
+          - button
+      - row "XF Ximena Fisher Internal Configuration Facilitator Internal Configuration Facilitator Payroll — Demo HR Manager 1 Active":
+        - cell "XF Ximena Fisher Internal Configuration Facilitator Internal Configuration Facilitator"
+        - cell:
+          - img
+        - cell "Payroll"
+        - cell "—"
+        - cell "Demo HR Manager"
+        - cell "1"
+        - cell "Active"
+        - cell:
+          - button
+      - row "TM Tara Martin Human Division Associate Payroll — John Manager 1 Active":
+        - cell "TM Tara Martin Human Division Associate"
+        - cell:
+          - img
+        - cell "Payroll"
+        - cell "—"
+        - cell "John Manager"
+        - cell "1"
+        - cell "Active"
+        - cell:
+          - button
+  - paragraph: Showing 8 to 14 of 20 results
+  - navigation "Pagination":
+    - button "Previous"
+    - button "1"
+    - button "2"
+    - button "3"
+    - button "Next"
+- img

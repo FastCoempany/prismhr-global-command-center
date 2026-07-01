@@ -1,0 +1,118 @@
+URL: https://app1.demo.prismhr.com/tools-and-resources/compensation-calculator
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+Compensation Calculator
+Tools & Resources
+Compensation Calculator
+I want to hire in
+Select Country
+Albania
+Argentina
+Armenia
+Australia
+Bahrain
+Bangladesh
+Belgium
+Bolivia
+Botswana
+Brazil
+Cameroon
+Canada
+Chile
+Colombia
+Costa Rica
+Cote d'Ivoire
+Croatia
+Czechia
+Democratic Republic of the Congo
+Denmark
+Dominican Republic
+Egypt
+El Salvador
+Estonia
+Finland
+France
+Georgia
+Germany
+Ghana
+Greece
+Guatemala
+Honduras
+Hungary
+India
+Indonesia
+Ireland
+Italy
+Japan
+Jordan
+Kenya
+Kuwait
+Latvia
+Lithuania
+Malawi
+Malaysia
+Mexico
+Morocco
+Namibia
+Nepal
+Netherlands
+New Zealand
+Nigeria
+North Macedonia (Republic of North Macedonia)
+Norway
+Oman
+Pakistan
+Panama
+Paraguay
+Peru
+Philippines
+Poland
+Portugal
+Qatar
+Republic of Korea
+Romania
+Rwanda
+Saudi Arabia
+Serbia
+Singapore
+Slovenia
+South Africa
+Spain
+Sri Lanka
+Sweden
+Switzerland
+Taiwan (Province of China)
+Tanzania (United Republic of)
+Thailand
+Tunisia
+Turkey
+Uganda
+United Arab Emirates
+United Kingdom
+Uruguay
+Vietnam
+Zambia
+Zimbabwe
+Select State / Region (Optional)
+Gross salary
+Select Currency
+Monthly
+Annually
+Calculate
+⏸ Stop capture
+📸 Now
+⏱ 3s
+saved 267

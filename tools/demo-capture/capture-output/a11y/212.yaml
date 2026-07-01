@@ -1,0 +1,52 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - link "Logout":
+    - /url: /login
+- main:
+  - heading "Time Tracking" [level=1]
+  - button "Manage Labels"
+  - term: Total Hours
+  - definition: "138"
+  - text: Jun 1 - Jun 30, 2026 - Pending approval - Contractor
+  - combobox
+  - text: option Priority, selected. Select is focused ,type to refine list, press Down to open the menu, press left to focus selected values Priority
+  - button "Remove Priority"
+  - combobox
+  - button "Import"
+  - button "Export"
+  - list:
+    - listitem:
+      - button "View"
+      - text: FH
+      - paragraph: felix hunt
+      - paragraph: Jun 1, 2026 - Jun 30, 2026
+      - paragraph: 138 hours
+- button "⏸ Stop capture"
+- button "📸 Now"
+- button "⏱ 3s"
+- text: saved 211
+- img

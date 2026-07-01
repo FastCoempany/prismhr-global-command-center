@@ -1,0 +1,269 @@
+URL: https://app1.demo.prismhr.com/invoices
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Antaeus Service Provider - Main Client
+Logout
+Invoices
+CREATED AT	INVOICE NUMBER	STATUS	PAYPERIOD	INVOICE TYPE	TOTAL AMOUNT
+
+Jul 1, 2026
+	
+	
+Invoiced
+	Jul 1, 2026-Jul 31, 2026	
+Monthly Contractors Fee
+	
+$1,080.00
+USD
+
+
+Jun 30, 2026
+	
+	
+Invoiced
+	Jun 1, 2026-Jun 30, 2026	
+EOR
+	
+$24,787.12
+USD
+
+
+May 31, 2026
+	
+	
+Invoiced
+	May 1, 2026-May 31, 2026	
+Contractor
+	
+$24,694.56
+USD
+
+
+May 31, 2026
+	
+	
+Invoiced
+	May 1, 2026-May 31, 2026	
+Payroll
+	
+$12,061.67
+USD
+
+
+Apr 30, 2026
+	
+	
+Invoiced
+	Apr 1, 2026-Apr 30, 2026	
+EOR
+	
+$15,528.47
+USD
+
+
+Mar 31, 2026
+	
+	
+Invoiced
+	Mar 1, 2026-Mar 31, 2026	
+Contractor
+	
+$19,799.66
+USD
+
+
+Mar 31, 2026
+	
+	
+Invoiced
+	Mar 1, 2026-Mar 31, 2026	
+EOR
+	
+$16,012.91
+USD
+
+
+Feb 28, 2026
+	
+	
+Invoiced
+	Feb 1, 2026-Feb 28, 2026	
+Payroll
+	
+$7,686.26
+USD
+
+
+Jan 31, 2026
+	
+	
+Invoiced
+	Jan 1, 2026-Jan 31, 2026	
+Payroll
+	
+$7,616.66
+USD
+
+
+Jan 31, 2026
+	
+	
+Invoiced
+	Jan 1, 2026-Jan 31, 2026	
+Contractor
+	
+$17,179.87
+USD
+
+
+Dec 31, 2025
+	
+	
+Invoiced
+	Dec 1, 2025-Dec 31, 2025	
+EOR
+	
+$14,146.75
+USD
+
+
+Nov 30, 2025
+	
+	
+Invoiced
+	Nov 1, 2025-Nov 30, 2025	
+EOR
+	
+$13,759.85
+USD
+
+
+Oct 31, 2025
+	
+	
+Invoiced
+	Oct 1, 2025-Oct 31, 2025	
+EOR
+	
+$13,759.85
+USD
+
+
+Sep 30, 2025
+	
+	
+Invoiced
+	Sep 1, 2025-Sep 30, 2025	
+EOR
+	
+$13,646.75
+USD
+
+
+Aug 31, 2025
+	
+	
+Invoiced
+	Aug 1, 2025-Aug 31, 2025	
+EOR
+	
+$11,198.93
+USD
+
+
+Jul 31, 2025
+	
+	
+Invoiced
+	Jul 1, 2025-Jul 31, 2025	
+EOR
+	
+$7,899.00
+USD
+
+
+Jun 30, 2025
+	
+	
+Invoiced
+	Jun 1, 2025-Jun 30, 2025	
+EOR
+	
+$7,399.00
+USD
+INVOICE
+
+#
+
+057cd2de-59ed-44e6-bb3d-ff7c3a3893aa
+
+PRISMHR
+
+PrismHR
+
+35 Parkwood Drive, Suite 200
+Hopkinton, MA, 01748
+GlobalFinOps@prismhr.com
+www.prismhr.com
+BILL TO
+
+Antaeus Service Provider - Main Client
+
+
+
+
+INVOICE DATE
+
+Jul 1, 2026
+
+PAYMENT STATUS
+Unpaid
+DESCRIPTION	AMOUNT
+Monthly CONTRACTOR_PLUS Fee: Victor Reed	
+$225.00
+USD
+
+Monthly CONTRACTOR Fee: John Contractor	
+$45.00
+USD
+
+Monthly CONTRACTOR Fee: Iris Green	
+$45.00
+USD
+
+Monthly CONTRACTOR Fee: Alex Developer	
+$45.00
+USD
+
+Monthly CONTRACTOR_PLUS Fee: Pablo Contractorplus	
+$225.00
+USD
+
+Monthly CONTRACTOR_PLUS Fee: Yasmin Hunt	
+$225.00
+USD
+
+Monthly CONTRACTOR Fee: Henry Bell	
+$45.00
+USD
+
+Monthly CONTRACTOR_PLUS Fee: Nadia Contractorplus	
+$225.00
+USD
+TOTAL:
+$1,080.00
+USD
+Download
+Send Email

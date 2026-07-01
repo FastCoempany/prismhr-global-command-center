@@ -1,0 +1,132 @@
+URL: https://app1.demo.prismhr.com/pay-periods/add-one-time-payment
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Antaeus Service Provider - Main Client
+Logout
+Add One-Time Payment
+Dashboard
+Add One-Time Payment
+Enter Payment Details
+
+Select the payment type and amount for each worker below.
+
+Pay Period Type
+Last day of the month - EOR
+Last day of the month - CONTRACTOR
+Last day of the month - PAYROLL
+Pay Period
+[Current] Jul 1, 2026 - Jul 31, 2026 - [Ends on: Jul 10, 2026]
+[Next] Aug 1, 2026 - Aug 31, 2026
+Countries
+Sort
+Name
+NAME	PAY PERIOD TYPE	COUNTRY	PAYMENT TYPE	AMOUNT
+Alex Demo Worker	Last day of the month - EOR	
+United States
+	
+Select Payment Type
+Signing Bonus
+Commission
+Spiff
+Performance
+Holiday
+Equipment
+Other
+	
+$
+USD
+
+Chris Reed	Last day of the month - EOR	
+Canada - Ontario
+	
+Select Payment Type
+Signing Bonus
+Commission
+Spiff
+Performance
+Holiday
+Equipment
+Other
+	
+$
+CAD
+
+Grace Hunt	Last day of the month - EOR	
+Mexico
+	
+Select Payment Type
+Signing Bonus
+Commission
+Spiff
+Performance
+Holiday
+Equipment
+Other
+	
+$
+MXN
+
+Hugo Johnson	Last day of the month - EOR	
+Egypt
+	
+Select Payment Type
+Signing Bonus
+Commission
+Spiff
+Performance
+Holiday
+Equipment
+Other
+	
+E£
+EGP
+
+Rose Allen	Last day of the month - EOR	
+Canada
+	
+Select Payment Type
+Signing Bonus
+Commission
+Spiff
+Performance
+Holiday
+Equipment
+Other
+	
+$
+CAD
+
+Ximena Young	Last day of the month - EOR	
+Canada - Ontario
+	
+Select Payment Type
+Signing Bonus
+Commission
+Spiff
+Performance
+Holiday
+Equipment
+Other
+	
+$
+CAD
+Back
+Next
+
+No Bonus Amount Entered
+
+Please enter at least one bonus amount to continue.
+
+Close

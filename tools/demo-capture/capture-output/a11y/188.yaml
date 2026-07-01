@@ -1,0 +1,202 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - link "Logout":
+    - /url: /login
+- heading "Profile" [level=1]
+- navigation "Breadcrumb":
+  - list:
+    - listitem:
+      - link "Team":
+        - /url: /team
+    - listitem:
+      - link "Profile":
+        - /url: /team/6ab3e4b7-92ff-46e6-9ba3-24ddbb9f4ffb/1ec6133c-f849-4802-8e9c-fa924a356014
+    - listitem:
+      - link "Expense Reimbursements":
+        - /url: /team/6ab3e4b7-92ff-46e6-9ba3-24ddbb9f4ffb/1ec6133c-f849-4802-8e9c-fa924a356014/expense-reimbursements
+- text: Paul Davis Work Email paul.davis@prismhr.com Start Date Aug 26, 2026 Position National Security Coordinator Worker ID 105260601496 Manager
+- button "Mike Superadmin"
+- text: Location
+- button "Assign Location"
+- region:
+  - navigation:
+    - link "Details":
+      - /url: /team/6ab3e4b7-92ff-46e6-9ba3-24ddbb9f4ffb/1ec6133c-f849-4802-8e9c-fa924a356014/details
+    - link "Documents":
+      - /url: /team/6ab3e4b7-92ff-46e6-9ba3-24ddbb9f4ffb/1ec6133c-f849-4802-8e9c-fa924a356014/documents
+    - link "Payments":
+      - /url: /team/6ab3e4b7-92ff-46e6-9ba3-24ddbb9f4ffb/1ec6133c-f849-4802-8e9c-fa924a356014/payments
+    - link "Contracts":
+      - /url: /team/6ab3e4b7-92ff-46e6-9ba3-24ddbb9f4ffb/1ec6133c-f849-4802-8e9c-fa924a356014/contracts
+    - link "Time Off":
+      - /url: /team/6ab3e4b7-92ff-46e6-9ba3-24ddbb9f4ffb/1ec6133c-f849-4802-8e9c-fa924a356014/time-off
+    - link "Expense Reimbursements":
+      - /url: /team/6ab3e4b7-92ff-46e6-9ba3-24ddbb9f4ffb/1ec6133c-f849-4802-8e9c-fa924a356014/expense-reimbursements
+    - link "Assignments":
+      - /url: /team/6ab3e4b7-92ff-46e6-9ba3-24ddbb9f4ffb/1ec6133c-f849-4802-8e9c-fa924a356014/organization
+  - table:
+    - rowgroup:
+      - row "Expense Date Amount Description":
+        - columnheader "Expense Date"
+        - columnheader "Amount"
+        - columnheader "Description"
+        - columnheader
+    - rowgroup:
+      - row "Jun 12, 2026 $1,965.88 MXN Office supply purchase View":
+        - cell "Jun 12, 2026"
+        - cell "$1,965.88 MXN"
+        - cell "Office supply purchase"
+        - cell "View":
+          - button "View"
+      - row "Jun 20, 2026 $1,078.45 MXN Flight booking for workshop View":
+        - cell "Jun 20, 2026"
+        - cell "$1,078.45 MXN"
+        - cell "Flight booking for workshop"
+        - cell "View":
+          - button "View"
+      - row "Jun 8, 2026 $1,005.99 MXN Business development dinner View":
+        - cell "Jun 8, 2026"
+        - cell "$1,005.99 MXN"
+        - cell "Business development dinner"
+        - cell "View":
+          - button "View"
+      - row "Jun 8, 2026 $1,035.93 MXN Office supply purchase View":
+        - cell "Jun 8, 2026"
+        - cell "$1,035.93 MXN"
+        - cell "Office supply purchase"
+        - cell "View":
+          - button "View"
+      - row "Jun 7, 2026 $511.18 MXN Subscription renewal for software View":
+        - cell "Jun 7, 2026"
+        - cell "$511.18 MXN"
+        - cell "Subscription renewal for software"
+        - cell "View":
+          - button "View"
+      - row "Jun 25, 2026 $1,890.63 MXN Office supply purchase View":
+        - cell "Jun 25, 2026"
+        - cell "$1,890.63 MXN"
+        - cell "Office supply purchase"
+        - cell "View":
+          - button "View"
+      - row "Jun 11, 2026 $965.08 MXN Hotel stay for conference View":
+        - cell "Jun 11, 2026"
+        - cell "$965.08 MXN"
+        - cell "Hotel stay for conference"
+        - cell "View":
+          - button "View"
+      - row "Jun 2, 2026 $782.64 MXN Internet charges for remote work View":
+        - cell "Jun 2, 2026"
+        - cell "$782.64 MXN"
+        - cell "Internet charges for remote work"
+        - cell "View":
+          - button "View"
+      - row "Jun 29, 2026 $527.15 MXN Subscription renewal for software View":
+        - cell "Jun 29, 2026"
+        - cell "$527.15 MXN"
+        - cell "Subscription renewal for software"
+        - cell "View":
+          - button "View"
+      - row "Jun 4, 2026 $1,699.01 MXN Client entertainment expense View":
+        - cell "Jun 4, 2026"
+        - cell "$1,699.01 MXN"
+        - cell "Client entertainment expense"
+        - cell "View":
+          - button "View"
+      - row "Jun 16, 2026 $1,316.58 MXN Client entertainment expense View":
+        - cell "Jun 16, 2026"
+        - cell "$1,316.58 MXN"
+        - cell "Client entertainment expense"
+        - cell "View":
+          - button "View"
+      - row "Jun 7, 2026 $427.75 MXN Subscription renewal for software View":
+        - cell "Jun 7, 2026"
+        - cell "$427.75 MXN"
+        - cell "Subscription renewal for software"
+        - cell "View":
+          - button "View"
+      - row "Jun 15, 2026 $620.16 MXN Internet charges for remote work View":
+        - cell "Jun 15, 2026"
+        - cell "$620.16 MXN"
+        - cell "Internet charges for remote work"
+        - cell "View":
+          - button "View"
+      - row "Jun 17, 2026 $1,342.72 MXN Subscription renewal for software View":
+        - cell "Jun 17, 2026"
+        - cell "$1,342.72 MXN"
+        - cell "Subscription renewal for software"
+        - cell "View":
+          - button "View"
+      - row "Jun 9, 2026 $992.02 MXN Flight booking for workshop View":
+        - cell "Jun 9, 2026"
+        - cell "$992.02 MXN"
+        - cell "Flight booking for workshop"
+        - cell "View":
+          - button "View"
+      - row "Jun 14, 2026 $1,119.57 MXN Hotel stay for conference View":
+        - cell "Jun 14, 2026"
+        - cell "$1,119.57 MXN"
+        - cell "Hotel stay for conference"
+        - cell "View":
+          - button "View"
+      - row "Jun 11, 2026 $1,601.61 MXN Hotel stay for conference View":
+        - cell "Jun 11, 2026"
+        - cell "$1,601.61 MXN"
+        - cell "Hotel stay for conference"
+        - cell "View":
+          - button "View"
+      - row "Jun 25, 2026 $1,411.39 MXN Hotel stay for conference View":
+        - cell "Jun 25, 2026"
+        - cell "$1,411.39 MXN"
+        - cell "Hotel stay for conference"
+        - cell "View":
+          - button "View"
+      - row "Jun 26, 2026 $1,211.19 MXN Office supply purchase View":
+        - cell "Jun 26, 2026"
+        - cell "$1,211.19 MXN"
+        - cell "Office supply purchase"
+        - cell "View":
+          - button "View"
+      - row "Jun 17, 2026 $730.54 MXN Flight booking for workshop View":
+        - cell "Jun 17, 2026"
+        - cell "$730.54 MXN"
+        - cell "Flight booking for workshop"
+        - cell "View":
+          - button "View"
+      - row "Sep 12, 2026 $1,593.42 MXN Client entertainment expense View":
+        - cell "Sep 12, 2026"
+        - cell "$1,593.42 MXN"
+        - cell "Client entertainment expense"
+        - cell "View":
+          - button "View"
+  - navigation "Pagination":
+    - button "Previous"
+    - button "Next"
+- button "⏸ Stop capture"
+- button "📸 Now"
+- button "⏱ 3s"
+- text: saved 187
+- img

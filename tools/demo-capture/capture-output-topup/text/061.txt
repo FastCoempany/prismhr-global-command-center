@@ -1,0 +1,49 @@
+URL: https://app1.demo.prismhr.com/wrkr
+TITLE: PrismHR
+
+You need to set your Bank Account.Link Bank Account →
+
+Dashboard
+Payments
+Time Off
+Time Tracking
+Reimbursements
+Resources
+Worker Portal
+Logout
+Hello, Antaeus Coe!
+AC
+Tasks
+Antaeus Service Provider - Main Client
+Onboarding Steps
+Complete Profile Details
+Fill your personal information to complete this step.
+Not Started
+Add Bank Account Details
+Add your bank account to receive payments.
+Not Started
+Complete your onboarding
+0%
+COMPLETED
+Next up: Complete Profile Details
+Continue
+Reminders
+Don’t forget to track your time.
+Today
+Upcoming Payments
+
+Next payday
+
+Friday, Jul 31Antaeus Service Provider - Main Client
+
+Pay period: Jul 1 - Jul 31
+
+Links
+Time Off
+Request and manage your vacation, sick days, and other leave.
+Track Time
+Log your work hours and monitor time spent on tasks.
+Reimbursement
+Submit and track expenses for reimbursement.
+Contracts
+Navigate to your Contract details.

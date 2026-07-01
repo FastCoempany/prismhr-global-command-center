@@ -1,0 +1,62 @@
+URL: https://app1.demo.prismhr.com/create-contract/payroll/job?contractIndex=1
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+New Hire | Payroll
+
+Employee Info
+
+02
+
+Job Info
+
+03
+
+Compensation
+
+04
+
+Upload Agreement
+
+05
+
+Review
+
+Job information
+Job title
+Seniority level
+Select the employee's seniority level
+Not Applicable
+Junior
+Mid
+Senior
+Lead
+Principal
+Director
+Department Head
+Vice President
+Senior Vice President
+C-Level Executive
+Job description
+
+Write a few sentences explaining the role and responsibilities.
+
+Manager (Optional)
+Demo Admin
+Employment start date
+Save & Exit
+Exit
+Back
+Next

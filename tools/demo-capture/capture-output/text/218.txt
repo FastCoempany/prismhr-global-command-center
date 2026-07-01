@@ -1,0 +1,40 @@
+URL: https://app1.demo.prismhr.com/time-tracking/labels
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+Manage Labels
+Create New Label
+Save
+
+Business Domain
+
+Client Project
+
+Delivery Phase
+
+Priority
+
+Priority
+
+Sprint Objective
+
+Work Type
+
+Work Type
+
+⏸ Stop capture
+📸 Now
+⏱ 3s
+saved 217

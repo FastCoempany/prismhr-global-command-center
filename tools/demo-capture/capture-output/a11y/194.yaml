@@ -1,0 +1,248 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - link "Logout":
+    - /url: /login
+- main:
+  - heading "Invoices" [level=1]
+  - list:
+    - table:
+      - rowgroup:
+        - row "Created At Invoice Number Status PayPeriod Invoice Type Total Amount":
+          - columnheader "Created At"
+          - columnheader "Invoice Number"
+          - columnheader "Status"
+          - columnheader "PayPeriod"
+          - columnheader "Invoice Type"
+          - columnheader "Total Amount"
+      - rowgroup:
+        - row "Jun 30, 2026 Invoiced Jun 1, 2026-Jun 30, 2026 Monthly Contractors Fee $1,575.00 USD":
+          - cell "Jun 30, 2026"
+          - cell
+          - cell "Invoiced"
+          - cell "Jun 1, 2026-Jun 30, 2026"
+          - cell "Monthly Contractors Fee"
+          - cell "$1,575.00 USD"
+        - row "May 31, 2026 Invoiced May 1, 2026-May 31, 2026 EOR $38,712.48 USD":
+          - cell "May 31, 2026"
+          - cell
+          - cell "Invoiced"
+          - cell "May 1, 2026-May 31, 2026"
+          - cell "EOR"
+          - cell "$38,712.48 USD"
+        - row "Apr 30, 2026 Invoiced Apr 1, 2026-Apr 30, 2026 Payroll $24,591.72 USD":
+          - cell "Apr 30, 2026"
+          - cell
+          - cell "Invoiced"
+          - cell "Apr 1, 2026-Apr 30, 2026"
+          - cell "Payroll"
+          - cell "$24,591.72 USD"
+        - row "Apr 30, 2026 Invoiced Apr 1, 2026-Apr 30, 2026 Contractor $46,810.99 USD":
+          - cell "Apr 30, 2026"
+          - cell
+          - cell "Invoiced"
+          - cell "Apr 1, 2026-Apr 30, 2026"
+          - cell "Contractor"
+          - cell "$46,810.99 USD"
+        - row "Mar 31, 2026 Invoiced Mar 1, 2026-Mar 31, 2026 Payroll $25,517.84 USD":
+          - cell "Mar 31, 2026"
+          - cell
+          - cell "Invoiced"
+          - cell "Mar 1, 2026-Mar 31, 2026"
+          - cell "Payroll"
+          - cell "$25,517.84 USD"
+        - row "Feb 28, 2026 Invoiced Feb 1, 2026-Feb 28, 2026 Contractor $36,975.07 USD":
+          - cell "Feb 28, 2026"
+          - cell
+          - cell "Invoiced"
+          - cell "Feb 1, 2026-Feb 28, 2026"
+          - cell "Contractor"
+          - cell "$36,975.07 USD"
+        - row "Feb 28, 2026 Invoiced Feb 1, 2026-Feb 28, 2026 EOR $34,016.68 USD":
+          - cell "Feb 28, 2026"
+          - cell
+          - cell "Invoiced"
+          - cell "Feb 1, 2026-Feb 28, 2026"
+          - cell "EOR"
+          - cell "$34,016.68 USD"
+        - row "Jan 31, 2026 Invoiced Jan 1, 2026-Jan 31, 2026 EOR $34,359.01 USD":
+          - cell "Jan 31, 2026"
+          - cell
+          - cell "Invoiced"
+          - cell "Jan 1, 2026-Jan 31, 2026"
+          - cell "EOR"
+          - cell "$34,359.01 USD"
+        - row "Dec 31, 2025 Invoiced Dec 1, 2025-Dec 31, 2025 Contractor $25,903.78 USD":
+          - cell "Dec 31, 2025"
+          - cell
+          - cell "Invoiced"
+          - cell "Dec 1, 2025-Dec 31, 2025"
+          - cell "Contractor"
+          - cell "$25,903.78 USD"
+        - row "Dec 31, 2025 Invoiced Dec 1, 2025-Dec 31, 2025 EOR $27,837.52 USD":
+          - cell "Dec 31, 2025"
+          - cell
+          - cell "Invoiced"
+          - cell "Dec 1, 2025-Dec 31, 2025"
+          - cell "EOR"
+          - cell "$27,837.52 USD"
+        - row "Nov 30, 2025 Invoiced Nov 1, 2025-Nov 30, 2025 Payroll $19,650.19 USD":
+          - cell "Nov 30, 2025"
+          - cell
+          - cell "Invoiced"
+          - cell "Nov 1, 2025-Nov 30, 2025"
+          - cell "Payroll"
+          - cell "$19,650.19 USD"
+        - row "Oct 31, 2025 Invoiced Oct 1, 2025-Oct 31, 2025 Payroll $14,332.02 USD":
+          - cell "Oct 31, 2025"
+          - cell
+          - cell "Invoiced"
+          - cell "Oct 1, 2025-Oct 31, 2025"
+          - cell "Payroll"
+          - cell "$14,332.02 USD"
+        - row "Oct 31, 2025 Invoiced Oct 1, 2025-Oct 31, 2025 Contractor $17,854.55 USD":
+          - cell "Oct 31, 2025"
+          - cell
+          - cell "Invoiced"
+          - cell "Oct 1, 2025-Oct 31, 2025"
+          - cell "Contractor"
+          - cell "$17,854.55 USD"
+        - row "Sep 30, 2025 Invoiced Sep 1, 2025-Sep 30, 2025 Payroll $10,308.75 USD":
+          - cell "Sep 30, 2025"
+          - cell
+          - cell "Invoiced"
+          - cell "Sep 1, 2025-Sep 30, 2025"
+          - cell "Payroll"
+          - cell "$10,308.75 USD"
+        - row "Aug 31, 2025 Invoiced Aug 1, 2025-Aug 31, 2025 EOR $8,133.81 USD":
+          - cell "Aug 31, 2025"
+          - cell
+          - cell "Invoiced"
+          - cell "Aug 1, 2025-Aug 31, 2025"
+          - cell "EOR"
+          - cell "$8,133.81 USD"
+        - row "Aug 31, 2025 Invoiced Aug 1, 2025-Aug 31, 2025 Contractor $10,032.88 USD":
+          - cell "Aug 31, 2025"
+          - cell
+          - cell "Invoiced"
+          - cell "Aug 1, 2025-Aug 31, 2025"
+          - cell "Contractor"
+          - cell "$10,032.88 USD"
+        - row "Jul 31, 2025 Invoiced Jul 1, 2025-Jul 31, 2025 Payroll $5,515.51 USD":
+          - cell "Jul 31, 2025"
+          - cell
+          - cell "Invoiced"
+          - cell "Jul 1, 2025-Jul 31, 2025"
+          - cell "Payroll"
+          - cell "$5,515.51 USD"
+        - row "Jun 30, 2025 Invoiced Jun 1, 2025-Jun 30, 2025 Payroll $1,824.86 USD":
+          - cell "Jun 30, 2025"
+          - cell
+          - cell "Invoiced"
+          - cell "Jun 1, 2025-Jun 30, 2025"
+          - cell "Payroll"
+          - cell "$1,824.86 USD"
+        - row "May 31, 2025 Invoiced May 1, 2025-May 31, 2025 EOR $10,082.47 USD":
+          - cell "May 31, 2025"
+          - cell
+          - cell "Invoiced"
+          - cell "May 1, 2025-May 31, 2025"
+          - cell "EOR"
+          - cell "$10,082.47 USD"
+- button "⏸ Stop capture"
+- button "📸 Now"
+- button "⏱ 3s"
+- text: saved 193
+- img
+- dialog:
+  - button
+  - img "PrismHR logo"
+  - heading "INVOICE" [level=1]
+  - paragraph: "#"
+  - paragraph: 40fd607a-be80-4898-a0a1-e51c0400a51a
+  - heading "PRISMHR" [level=2]
+  - paragraph: PrismHR
+  - text: 35 Parkwood Drive, Suite 200 Hopkinton, MA, 01748 GlobalFinOps@prismhr.com www.prismhr.com
+  - heading "BILL TO" [level=2]
+  - paragraph: Antaeus Service Provider - Main Client
+  - heading "Invoice Date" [level=3]
+  - paragraph: Jun 30, 2026
+  - heading "Payment Status" [level=3]
+  - text: Unpaid
+  - table:
+    - rowgroup:
+      - row "Description Amount":
+        - columnheader "Description"
+        - columnheader "Amount"
+    - rowgroup:
+      - 'row "Monthly CONTRACTOR_PLUS Fee: Ximena Martin $225.00 USD"':
+        - 'cell "Monthly CONTRACTOR_PLUS Fee: Ximena Martin"'
+        - cell "$225.00 USD"
+      - 'row "Monthly CONTRACTOR_PLUS Fee: Nadia Contractorplus $225.00 USD"':
+        - 'cell "Monthly CONTRACTOR_PLUS Fee: Nadia Contractorplus"'
+        - cell "$225.00 USD"
+      - 'row "Monthly CONTRACTOR Fee: Alex Developer $45.00 USD"':
+        - 'cell "Monthly CONTRACTOR Fee: Alex Developer"'
+        - cell "$45.00 USD"
+      - 'row "Monthly CONTRACTOR Fee: Ulrich Young $45.00 USD"':
+        - 'cell "Monthly CONTRACTOR Fee: Ulrich Young"'
+        - cell "$45.00 USD"
+      - 'row "Monthly CONTRACTOR_PLUS Fee: Paul Miller $225.00 USD"':
+        - 'cell "Monthly CONTRACTOR_PLUS Fee: Paul Miller"'
+        - cell "$225.00 USD"
+      - 'row "Monthly CONTRACTOR Fee: Tara Kelly $45.00 USD"':
+        - 'cell "Monthly CONTRACTOR Fee: Tara Kelly"'
+        - cell "$45.00 USD"
+      - 'row "Monthly CONTRACTOR Fee: Aaron Taylor $45.00 USD"':
+        - 'cell "Monthly CONTRACTOR Fee: Aaron Taylor"'
+        - cell "$45.00 USD"
+      - 'row "Monthly CONTRACTOR_PLUS Fee: Kate Carter $225.00 USD"':
+        - 'cell "Monthly CONTRACTOR_PLUS Fee: Kate Carter"'
+        - cell "$225.00 USD"
+      - 'row "Monthly CONTRACTOR_PLUS Fee: Nina Smith $225.00 USD"':
+        - 'cell "Monthly CONTRACTOR_PLUS Fee: Nina Smith"'
+        - cell "$225.00 USD"
+      - 'row "Monthly CONTRACTOR Fee: Yuki Thompson $45.00 USD"':
+        - 'cell "Monthly CONTRACTOR Fee: Yuki Thompson"'
+        - cell "$45.00 USD"
+      - 'row "Monthly CONTRACTOR Fee: John Contractor $45.00 USD"':
+        - 'cell "Monthly CONTRACTOR Fee: John Contractor"'
+        - cell "$45.00 USD"
+      - 'row "Monthly CONTRACTOR Fee: Karen Moore $45.00 USD"':
+        - 'cell "Monthly CONTRACTOR Fee: Karen Moore"'
+        - cell "$45.00 USD"
+      - 'row "Monthly CONTRACTOR Fee: Felix Hunt $45.00 USD"':
+        - 'cell "Monthly CONTRACTOR Fee: Felix Hunt"'
+        - cell "$45.00 USD"
+      - 'row "Monthly CONTRACTOR Fee: Uma Johnson $45.00 USD"':
+        - 'cell "Monthly CONTRACTOR Fee: Uma Johnson"'
+        - cell "$45.00 USD"
+      - 'row "Monthly CONTRACTOR Fee: Ulrich Cooper $45.00 USD"':
+        - 'cell "Monthly CONTRACTOR Fee: Ulrich Cooper"'
+        - cell "$45.00 USD"
+  - text: "Total: $1,575.00 USD"
+  - button "Download"
+  - button "Send Email"

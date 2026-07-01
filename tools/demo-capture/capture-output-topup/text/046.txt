@@ -1,0 +1,29 @@
+URL: https://app1.demo.prismhr.com/
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Antaeus Service Provider - Main Client
+Logout
+Hello, Demo!
+Company
+Antaeus Service Provider - Main Client
+Support Cases
+Reminders
+Links
+Time Off
+View and approve your worker’s vacation, sick days, and other leave.
+Track Time
+View your worker’s hours and monitor time spent on tasks.
+Reimbursement
+View and approve expenses for reimbursement.

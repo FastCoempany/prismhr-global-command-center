@@ -1,0 +1,52 @@
+- paragraph:
+  - text: You need to set your Bank Account.
+  - link "Link Bank Account":
+    - /url: https://admin1.demo.prismhr.com
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /wrkr
+  - link "Payments":
+    - /url: /wrkr/payments
+  - link "Time Off":
+    - /url: /wrkr/request-time-off
+  - link "Time Tracking":
+    - /url: /wrkr/timecards
+  - link "Reimbursements":
+    - /url: /wrkr/request-reimbursement
+  - link "Resources":
+    - /url: /wrkr/documents
+  - button "Worker Portal"
+  - link "Logout":
+    - /url: /login
+- main:
+  - navigation "Progress":
+    - list:
+      - listitem:
+        - link "01":
+          - /url: /wrkr/accept-payroll/63d43e0f-6561-44a1-a70d-4e2f86eacc99/info
+        - paragraph: Personal Information
+      - listitem:
+        - text: "02"
+        - paragraph: Address
+      - listitem:
+        - text: "03"
+        - paragraph: Identification
+  - region: "Full Name: antaeus coe Email: antaeus.coe@prismhr.com Salary: BZ$3,500.00 BZD/month Start Date: Jul 9, 2026 Job Title: Engineer Payment Currency: BZD"
+  - heading "Personal Information" [level=3]
+  - paragraph: To get started, please take a moment to fill out your personal information. This essential step allows us to draft your contract, which you'll be able to review shortly. Your journey towards seamless and rewarding work opportunities begins here!
+  - text: Preferred Name
+  - textbox "Preferred Name": Antaeus Coe
+  - text: Phone Number
+  - combobox "Country selector"
+  - textbox: "+501"
+  - heading "Date Of Birth" [level=3]
+  - textbox
+  - heading "Gender" [level=3]
+  - combobox:
+    - option "Male"
+    - option "Female"
+    - option "Prefer not to say"
+  - button "Cancel"
+  - button "Next"
+- img

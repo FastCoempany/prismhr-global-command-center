@@ -1,0 +1,71 @@
+URL: https://app1.demo.prismhr.com/create-contract/payroll/compensation?contractIndex=1
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+New Hire | Payroll
+
+Employee Info
+
+Job Info
+
+03
+
+Compensation
+
+04
+
+Upload Agreement
+
+05
+
+Review
+
+Compensation
+Compensation type
+
+How much should the employee be paid? Select between hourly and salary compensation.
+
+workType
+Hourly
+Salary
+Compensation is paid in local currency as required by law. This amount does not include contributions and deductions.
+Currency
+BZD
+Belize
+Gross Monthly Salary
+Employment type
+
+Note that definitions for “full-time” and “part-time” hours may vary by country.
+
+employmentType
+Full-time
+Part-time
+Vacation and paid time-Off
+
+Employees in Belize are legally entitled to all local public holidays . If you would like to offer additional paid time off, indicate the number of days here.
+
+Additional Paid Time-off
+0 Days
+Edit
+Want to offer Unlimited PTO?
+Additional payment
+
+Add any other payments, bonuses, commissions or other benefits here
+
+Add Additional Payment
+Save & Exit
+Exit
+Back
+Next

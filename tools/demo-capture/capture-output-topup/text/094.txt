@@ -1,0 +1,81 @@
+URL: https://app1.demo.prismhr.com/reimbursements
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Antaeus Service Provider - Main Client
+Logout
+Reimbursements
+Pending Requests
+History
+All Workers
+Engagement
+Search
+Search
+Export
+Pending Requests
+Iris Green
+Contractor
+Amount:
+$1,188.93
+USD
+Jun 30, 2026
+|
+Flight booking for workshop
+Pending
+Decline
+Approve
+Alex Developer
+Contractor
+Amount:
+$636.47
+USD
+Jun 30, 2026
+|
+Business development dinner
+Pending
+Decline
+Approve
+Rose Allen
+EOR
+Amount:
+$390.05
+CAD
+Jun 30, 2026
+|
+Business development dinner
+Pending
+Decline
+Approve
+Ximena Young
+EOR
+Amount:
+$669.52
+CAD
+Jun 30, 2026
+|
+Internet charges for remote work
+Pending
+Decline
+Approve
+John Contractor
+Contractor
+Amount:
+$427.95
+USD
+Jun 29, 2026
+|
+Business development dinner
+Pending
+Decline
+Approve

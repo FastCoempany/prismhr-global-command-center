@@ -1,0 +1,73 @@
+URL: https://app1.demo.prismhr.com/create-contract/payroll/approval?contractIndex=1
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+New Hire | Payroll
+
+Employee Info
+
+Job Info
+
+Compensation
+
+Upload Agreement
+
+05
+
+Review
+
+Submit Offer Letter to Listo for Approval
+EMPLOYEE INFO
+Name:
+Antaeus Coe
+Email:
+antaeus.coe@prismhr.com
+Nationality:
+Canada - Nova Scotia
+Working country:
+Belize
+JOB INFO
+Job title:
+Engineer
+Seniority:
+Senior
+Description:
+do great work
+Sub-department:
+-
+Direct manager:
+Demo Admin
+Start date:
+Jul 9, 2026
+COMPENSATION
+Compensation type:
+Salary
+Contract amount:
+$3,500.00
+per month
+Employment type:
+Full-time
+Contract term:
+Indefinite
+Save & Exit
+Exit
+Back
+Onboard Employee
+
+Success
+
+Employment agreement uploaded successfully
+
+Close

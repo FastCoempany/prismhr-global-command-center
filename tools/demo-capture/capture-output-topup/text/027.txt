@@ -1,0 +1,24 @@
+URL: https://app1.demo.prismhr.com/create-contract/employee
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+New Hire
+What type of employee?
+Employer of Record (EOR)
+PrismHR hires the employee in-country as the employer of record on your behalf.
+Onboard Employer of Record
+Payroll
+Administer payroll, deliver benefits, and oversee contracts for your own entities.
+Onboard to Payroll

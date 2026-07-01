@@ -1,0 +1,81 @@
+URL: https://app1.demo.prismhr.com/create-contract/new/job?contractIndex=0
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+New Hire | Contractor
+
+Contractor Info
+
+02
+
+Job Info
+
+03
+
+Compensation
+
+04
+
+Review
+
+Job information
+
+Please provide information regarding the work the contractor will be performing.
+
+Job title
+Seniority
+Select seniority
+Not Applicable
+Junior
+Mid
+Senior
+Lead
+Principal
+Director
+Department Head
+Vice President
+Senior Vice President
+Job description
+
+This section will be included in the original agreement so please be descriptive and explain the role, expectations and responsibilities.
+
+Assignments (Optional)
+Division
+Select division
+Select division
+Engineering Division
+Product Division
+Location
+Select Location
+Unassigned
+San Francisco Office
+New York Office
+Reporting Manager
+
+Auto-assigned based on organizational assignment
+
+Assign Manager
+Start date
+
+The earliest possible start date for this contract may vary due to regulatory requirements. Please note that visa and/or work permit requirements may cause delays.
+
+Save & Exit
+Exit
+Back
+Next
+⏸ Stop capture
+📸 Now
+⏱ 3s
+saved 162

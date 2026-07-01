@@ -1,0 +1,436 @@
+URL: https://app1.demo.prismhr.com/time-tracking
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+Time Tracking
+Manage Labels
+Total Hours
+1079
+Jun 1 - Jun 30, 2026 - Pending approval - Contractor
+Labels...
+Import
+Export
+View
+KM
+
+Karen Moore
+
+Jun 1, 2026 - Jun 30, 2026
+
+137 Hours
+
+View
+YT
+
+Yuki Thompson
+
+Jun 1, 2026 - Jun 30, 2026
+
+137 Hours
+
+View
+PM
+
+Paul Miller
+
+Jun 1, 2026 - Jun 30, 2026
+
+128 Hours
+
+View
+FH
+
+Felix Hunt
+
+Jun 1, 2026 - Jun 30, 2026
+
+138 Hours
+
+View
+UC
+
+Ulrich Cooper
+
+Jun 1, 2026 - Jun 30, 2026
+
+142 Hours
+
+View
+UJ
+
+Uma Johnson
+
+Jun 1, 2026 - Jun 30, 2026
+
+125 Hours
+
+View
+AD
+
+Alex Developer
+
+Jun 1, 2026 - Jun 30, 2026
+
+133 Hours
+
+View
+UY
+
+Ulrich Young
+
+Jun 1, 2026 - Jun 30, 2026
+
+139 Hours
+
+⏸ Stop capture
+📸 Now
+⏱ 3s
+saved 212
+Worker's Name	Date
+Date
+	Hours
+Hours
+	Label
+Label
+
+
+KM
+
+Karen Moore
+
+	
+Jun 1, 2026
+
+Deployed Electronic Matrix
+
+	
+8 hours
+	
+Business Domain
+
+
+KM
+
+Karen Moore
+
+	
+Jun 2, 2026
+
+Debugged Recycled Port
+
+	
+6 hours
+	
+Business Domain
+
+
+KM
+
+Karen Moore
+
+	
+Jun 3, 2026
+
+Deployed Gorgeous Capacitor
+
+	
+6 hours
+	
+Business Domain
+
+
+KM
+
+Karen Moore
+
+	
+Jun 4, 2026
+
+Deployed Practical Driver
+
+	
+7 hours
+	
+Business Domain
+
+
+KM
+
+Karen Moore
+
+	
+Jun 5, 2026
+
+Debugged Incredible Card
+
+	
+5 hours
+	
+Business Domain
+
+
+KM
+
+Karen Moore
+
+	
+Jun 8, 2026
+
+Deployed Tasty Application
+
+	
+4 hours
+	
+Business Domain
+
+
+KM
+
+Karen Moore
+
+	
+Jun 9, 2026
+
+Implemented Licensed Protocol
+
+	
+7 hours
+	
+Business Domain
+
+
+KM
+
+Karen Moore
+
+	
+Jun 10, 2026
+
+Debugged Ergonomic Microchip
+
+	
+7 hours
+	
+Business Domain
+
+
+KM
+
+Karen Moore
+
+	
+Jun 11, 2026
+
+Debugged Tasty Firewall
+
+	
+8 hours
+	
+Business Domain
+
+
+KM
+
+Karen Moore
+
+	
+Jun 12, 2026
+
+Worked On Generic Port
+
+	
+4 hours
+	
+Business Domain
+
+
+KM
+
+Karen Moore
+
+	
+Jun 15, 2026
+
+Deployed Handcrafted Driver
+
+	
+7 hours
+	
+Business Domain
+
+
+KM
+
+Karen Moore
+
+	
+Jun 16, 2026
+
+Worked On Gorgeous Feed
+
+	
+8 hours
+	
+Business Domain
+
+
+KM
+
+Karen Moore
+
+	
+Jun 17, 2026
+
+Implemented Elegant Card
+
+	
+8 hours
+	
+Business Domain
+
+
+KM
+
+Karen Moore
+
+	
+Jun 18, 2026
+
+Deployed Bespoke Driver
+
+	
+6 hours
+	
+Business Domain
+
+
+KM
+
+Karen Moore
+
+	
+Jun 19, 2026
+
+Implemented Awesome Interface
+
+	
+4 hours
+	
+Business Domain
+
+
+KM
+
+Karen Moore
+
+	
+Jun 22, 2026
+
+Worked On Bespoke Driver
+
+	
+5 hours
+	
+Business Domain
+
+
+KM
+
+Karen Moore
+
+	
+Jun 23, 2026
+
+Worked On Oriental Program
+
+	
+4 hours
+	
+Business Domain
+
+
+KM
+
+Karen Moore
+
+	
+Jun 24, 2026
+
+Implemented Handcrafted Pixel
+
+	
+7 hours
+	
+Business Domain
+
+
+KM
+
+Karen Moore
+
+	
+Jun 25, 2026
+
+Debugged Unbranded Monitor
+
+	
+8 hours
+	
+Business Domain
+
+
+KM
+
+Karen Moore
+
+	
+Jun 26, 2026
+
+Deployed Sleek Panel
+
+	
+5 hours
+	
+Business Domain
+
+
+KM
+
+Karen Moore
+
+	
+Jun 29, 2026
+
+Worked On Oriental Alarm
+
+	
+5 hours
+	
+Business Domain
+
+
+KM
+
+Karen Moore
+
+	
+Jun 30, 2026
+
+Deployed Incredible Transmitter
+
+	
+8 hours
+	
+Business Domain

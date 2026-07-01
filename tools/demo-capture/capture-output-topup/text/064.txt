@@ -1,0 +1,188 @@
+URL: https://app1.demo.prismhr.com/wrkr/accept-payroll/63d43e0f-6561-44a1-a70d-4e2f86eacc99/address
+TITLE: PrismHR
+
+You need to set your Bank Account.Link Bank Account →
+
+Dashboard
+Payments
+Time Off
+Time Tracking
+Reimbursements
+Resources
+Worker Portal
+Logout
+
+Personal Information
+
+02
+
+Address
+
+03
+
+Identification
+
+Personal Address
+
+Use your legal residence address.
+
+Street Address 1
+Street Address 2
+City
+State / Province
+Zip / Postal Code
+Country
+Albania
+Algeria
+Angola
+Argentina
+Armenia
+Australia
+Australia - New South Wales
+Australia - Queensland
+Australia - South Australia
+Australia - Victoria
+Australia - Western Australia
+Austria
+Azerbaijan
+Bahamas
+Bahrain
+Bangladesh
+Belarus
+Belgium
+Belize
+Bolivia
+Bosnia and Herzegovina
+Brazil
+British Virgin Island
+Bulgaria
+Burkina Faso
+Burundi (Bujumbura)
+Cambodia
+Cameroon
+Canada
+Canada - Nova Scotia
+Canada - Alberta
+Canada - British Columbia
+Canada - Ontario
+Canada - Quebec
+Canada - Newfoundland and Labrador
+Canada - Prince Edward Island
+Canada - New Brunswick
+Canada - Manitoba
+Chile
+China
+China - Shanghai
+China - Guangzhou
+Chad
+Colombia
+Costa Rica
+Croatia
+Cyprus
+Czech Republic
+Congo (Brazzaville)
+Congo (Kinshasa)
+Denmark
+Dominican Republic
+Ecuador
+Egypt
+El Salvador
+Estonia
+Ethiopia
+Finland
+France
+Georgia
+Germany
+Ghana
+Greece
+Guatemala
+Honduras
+Hong Kong
+Hungary
+Iceland
+India
+Indonesia
+Ireland
+Israel
+Italy
+Ivory Coast
+Jamaica
+Japan
+Jordan
+Kazakhstan
+Kenya
+Kosovo
+Kuwait
+Latvia
+Lebanon
+Libya
+Lithuania
+Luxembourg
+Macau
+North Macedonia
+Malawi
+Malaysia
+Malta
+Mauritius
+Mexico
+Moldova
+Mongolia
+Montenegro
+Morocco
+Myanmar
+Nepal
+Netherlands
+New Zealand
+Nicaragua
+Niger
+Nigeria
+Norway
+Oman
+Papua New Guinea
+Pakistan
+Palestine
+Panama
+Paraguay
+Peru
+Philippines
+Poland
+Portugal
+Puerto Rico
+Qatar
+Romania
+Russia
+Rwanda
+Senegal
+Serbia
+Singapore
+Slovakia
+Slovenia
+South Africa
+South Korea
+Spain
+Sri Lanka
+Sweden
+Switzerland
+Switzerland - Geneva
+Switzerland - Zurich
+Taiwan
+Tanzania
+Thailand
+Togo (Lomé)
+Trinidad & Tobago
+Tunisia
+Turkey
+Tonga
+Ukraine
+Uganda
+United Arab Emirates
+United Kingdom
+United States
+Uruguay
+Uzbekistan
+Venezuela
+Vietnam
+Zambia
+Zimbabwe
+Back
+Next

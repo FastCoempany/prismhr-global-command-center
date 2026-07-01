@@ -1,0 +1,109 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - button "Antaeus Service Provider - Main Client"
+  - link "Logout":
+    - /url: /login
+- main:
+  - heading "Time Off" [level=1]
+  - tablist "Navigation tabs":
+    - tab "Pending Requests"
+    - tab "Time Off Calendar"
+    - tab "History" [selected]
+  - button "Start Date April 2026"
+  - text: "-"
+  - button "End Date Current Month"
+  - button "All Workers"
+  - button "Engagement"
+  - button "Leave Type"
+  - button "Status"
+  - text: Search Search
+  - textbox "Search requests by name or leave notes"
+  - button "Export"
+  - text: History
+  - table:
+    - rowgroup:
+      - row "name leave type requested on leave dates status":
+        - columnheader "name"
+        - columnheader "leave type"
+        - columnheader "requested on"
+        - columnheader "leave dates"
+        - columnheader "status"
+        - columnheader
+    - rowgroup:
+      - row "Owen Brown Contractor - Jul 11, 2026 Jul 23 - Aug 8, 2026 12.0 days approved by Demo Admin":
+        - cell "Owen Brown Contractor":
+          - text: Owen Brown
+          - paragraph: Contractor
+        - cell "-"
+        - cell "Jul 11, 2026"
+        - cell "Jul 23 - Aug 8, 2026 12.0 days"
+        - cell "approved by Demo Admin"
+        - cell
+      - row "Rose Allen EOR Annual leave Jul 10, 2026 Jul 25 - Aug 2, 2026 5.0 days approved by Demo Admin":
+        - cell "Rose Allen EOR":
+          - text: Rose Allen
+          - paragraph: EOR
+        - cell "Annual leave"
+        - cell "Jul 10, 2026"
+        - cell "Jul 25 - Aug 2, 2026 5.0 days"
+        - cell "approved by Demo Admin"
+        - cell
+      - row "Chris Reed EOR Sick leave Jul 3, 2026 Jul 18 - Jul 26, 2026 5.0 days approved by Demo Admin":
+        - cell "Chris Reed EOR":
+          - text: Chris Reed
+          - paragraph: EOR
+        - cell "Sick leave"
+        - cell "Jul 3, 2026"
+        - cell "Jul 18 - Jul 26, 2026 5.0 days"
+        - cell "approved by Demo Admin"
+        - cell
+      - row "Chris Reed EOR Annual leave Jun 30, 2026 Jul 3 - Jul 10, 2026 6.0 days approved by Demo Admin":
+        - cell "Chris Reed EOR":
+          - text: Chris Reed
+          - paragraph: EOR
+        - cell "Annual leave"
+        - cell "Jun 30, 2026"
+        - cell "Jul 3 - Jul 10, 2026 6.0 days"
+        - cell "approved by Demo Admin"
+        - cell
+      - row "Grace Hunt EOR Sick leave Jun 30, 2026 Jul 1 - Jul 6, 2026 4.0 days approved by Demo Admin":
+        - cell "Grace Hunt EOR":
+          - text: Grace Hunt
+          - paragraph: EOR
+        - cell "Sick leave"
+        - cell "Jun 30, 2026"
+        - cell "Jul 1 - Jul 6, 2026 4.0 days"
+        - cell "approved by Demo Admin"
+        - cell
+  - paragraph: Showing 1 to 5 of 19 results
+  - navigation "Pagination":
+    - button "Previous" [disabled]
+    - button "1"
+    - button "2"
+    - button "3"
+    - button "Next"
+- img

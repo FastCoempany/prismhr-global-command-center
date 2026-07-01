@@ -1,0 +1,160 @@
+URL: https://app1.demo.prismhr.com/team
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+Team
+TOTAL WORKERS: 20
+Search
+Search
+All Workers
+Countries
+Type
+Location
+Status
+Sort
+Newest
+Export
+
+NAME
+
+	
+
+COUNTRY
+
+	
+
+TYPE
+
+	
+
+LOCATION
+
+	
+
+MANAGER
+
+	
+
+CONTRACTS
+
+	
+
+STATUS
+
+	
+
+ACTIONS
+
+
+
+CR
+Chris Reed
+Global Accountability Coordinator
+Global Accountability Coordinator
+	
+	EOR	—	
+Emma Onboard
+	
+1
+	
+Active
+	
+
+
+NC
+Nadia Contractorplus
+District Metrics Orchestrator
+	
+	Contractor+	—	
+Emma Onboard
+	
+1
+	
+Active
+	
+
+
+JE
+Jane Employee
+Legacy Brand Coordinator
+	
+	Payroll	—	
+Demo Finance Manager
+	
+1
+	
+Active
+	
+
+
+JC
+John Contractor
+Forward Usability Developer
+	
+	Contractor	—	
+Emma Onboard
+	
+1
+	
+Active
+	
+
+
+HJ
+Hugo Johnson
+Investor Identity Supervisor
+	
+	EOR	—	
+Sarah Admin
+	
+1
+	
+Active
+	
+
+
+XF
+Ximena Fisher
+Internal Configuration Facilitator
+Internal Configuration Facilitator
+	
+	Payroll	—	
+Demo HR Manager
+	
+1
+	
+Active
+	
+
+
+TM
+Tara Martin
+Human Division Associate
+	
+	Payroll	—	
+John Manager
+	
+1
+	
+Active
+	
+
+Showing 8 to 14 of 20 results
+
+Previous
+1
+2
+3
+Next

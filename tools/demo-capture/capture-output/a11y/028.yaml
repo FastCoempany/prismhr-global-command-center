@@ -1,0 +1,309 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - link "Logout":
+    - /url: /login
+- main:
+  - heading "Pay Period Approval" [level=1]
+  - text: Monthly Pay Period Jun 1, 2026 - Jun 30, 2026
+  - button "Import Distribution data"
+  - button "Approve $58,579.23 USD"
+  - button "See detailed view"
+  - heading "Additional Payments" [level=3]
+  - list:
+    - listitem: Worker Description Amount
+    - listitem: Ulrich Cooper Internet Allowance $56.68 USD
+    - listitem: Emma Nelson Transportation Allowance $62.64 USD
+    - listitem: Nina Smith Transportation Allowance $34.42 USD
+    - listitem: Felix Hunt Transportation Allowance $31.11 USD
+    - listitem: Paul Miller Internet Allowance $61.63 USD
+    - listitem: Yuki Thompson Mobile Allowance $92.59 USD
+    - listitem: Kate Carter Internet Allowance $53.69 USD
+    - listitem: Uma Johnson Transportation Allowance $52.18 USD
+    - listitem: Frank Nelson Mobile Allowance $95.23 USD
+    - listitem: John Contractor Mobile Allowance $99.09 USD
+    - listitem: Nadia Contractorplus Mobile Allowance $61.41 USD
+    - listitem: Alex Developer Internet Allowance $54.62 USD
+    - listitem: Aaron Taylor Transportation Allowance $64.03 USD
+    - listitem: Tara Kelly Mobile Allowance $77.23 USD
+    - listitem: Karen Moore Mobile Allowance $62.88 USD
+    - listitem: Ulrich Young Mobile Allowance $86.02 USD
+    - listitem: Ximena Martin Internet Allowance $70.91 USD
+  - heading "One time Payments" [level=3]
+  - list:
+    - listitem: Worker Description Amount
+    - listitem: Tara Kelly Excellence in teamwork $86.45 USD
+    - listitem: Ulrich Young Quarterly performance bonus $65.36 USD
+    - listitem: Yuki Thompson Training completion bonus $43.89 USD
+    - listitem: Kate Carter Project completion bonus $76.55 USD
+    - listitem: Frank Nelson Special project contribution $47.49 USD
+    - listitem: Ulrich Young Sales target achievement $56.76 USD
+    - listitem: Aaron Taylor Overtime compensation $91.42 USD
+    - listitem: Karen Moore Client retention bonus $34.89 USD
+    - listitem: Nina Smith Innovation award $98.73 USD
+    - listitem: Ulrich Cooper Innovation award $55.76 USD
+    - listitem: Felix Hunt Innovation award $28.54 USD
+    - listitem: Paul Miller Innovation award $39.49 USD
+    - listitem: Ximena Martin Quarterly performance bonus $46.49 USD
+    - listitem: Emma Nelson Cost-saving initiative reward $84.12 USD
+    - listitem: Uma Johnson Milestone delivery bonus $79.11 USD
+    - listitem: Alex Developer Project completion bonus $58.99 USD
+    - listitem: John Contractor Milestone delivery bonus $30.53 USD
+    - listitem: Nadia Contractorplus Cost-saving initiative reward $28.27 USD
+    - listitem: Pablo Contractorplus Monthly performance bonus $93.35 USD
+    - listitem: Aaron Taylor One-Time Payment - Equipment $200.00 USD
+    - listitem:
+      - button "Add one-time distribution"
+  - heading "Hourly Workers" [level=3]
+  - list:
+    - listitem: Worker Billing Rate Hours Logged Approved Hours Amount
+    - listitem:
+      - text: Ulrich Cooper $36.61 USD/hr 142 hours
+      - textbox: "142"
+      - text: $5,198.62 USD
+    - listitem:
+      - text: Felix Hunt $22.49 USD/hr 138 hours
+      - textbox: "138"
+      - text: $3,103.62 USD
+    - listitem:
+      - text: Paul Miller $25.43 USD/hr 128 hours
+      - textbox: "128"
+      - text: $3,255.04 USD
+    - listitem:
+      - text: Yuki Thompson $21.53 USD/hr 137 hours
+      - textbox: "137"
+      - text: $2,949.61 USD
+    - listitem:
+      - text: Uma Johnson $27.20 USD/hr 125 hours
+      - textbox: "125"
+      - text: $3,400.00 USD
+    - listitem:
+      - text: Alex Developer $24.02 USD/hr 133 hours
+      - textbox: "133"
+      - text: $3,194.66 USD
+    - listitem:
+      - text: Karen Moore $25.08 USD/hr 137 hours
+      - textbox: "137"
+      - text: $3,435.96 USD
+    - listitem:
+      - text: Ulrich Young $29.01 USD/hr 139 hours
+      - textbox: "139"
+      - text: $4,032.39 USD
+  - heading "Fixed Rate Workers" [level=3]
+  - list:
+    - listitem: Worker Billing Rate Approved Amount Amount
+    - listitem:
+      - text: Emma Nelson $2,271.03 USD/month USD
+      - textbox:
+        - /placeholder: "0.00"
+        - text: "2271.03"
+      - text: $2,271.03 USD
+    - listitem:
+      - text: Nina Smith $3,971.93 USD/month USD
+      - textbox:
+        - /placeholder: "0.00"
+        - text: "3971.93"
+      - text: $3,971.93 USD
+    - listitem:
+      - text: Kate Carter $3,534.01 USD/month USD
+      - textbox:
+        - /placeholder: "0.00"
+        - text: "3534.01"
+      - text: $3,534.01 USD
+    - listitem:
+      - text: Frank Nelson $2,297.97 USD/month USD
+      - textbox:
+        - /placeholder: "0.00"
+        - text: "1253.44"
+      - text: $1,253.44 USD
+      - button
+    - listitem:
+      - text: John Contractor $3,514.82 USD/month USD
+      - textbox:
+        - /placeholder: "0.00"
+        - text: "3514.82"
+      - text: $3,514.82 USD
+    - listitem:
+      - text: Nadia Contractorplus $2,982.09 USD/month USD
+      - textbox:
+        - /placeholder: "0.00"
+        - text: "2982.09"
+      - text: $2,982.09 USD
+    - listitem:
+      - text: Aaron Taylor $3,909.97 USD/month USD
+      - textbox:
+        - /placeholder: "0.00"
+        - text: "3909.97"
+      - text: $3,909.97 USD
+    - listitem:
+      - text: Tara Kelly $2,161.23 USD/month USD
+      - textbox:
+        - /placeholder: "0.00"
+        - text: "2161.23"
+      - text: $2,161.23 USD
+    - listitem:
+      - text: Ximena Martin $2,849.31 USD/month USD
+      - textbox:
+        - /placeholder: "0.00"
+        - text: "2849.31"
+      - text: $2,849.31 USD
+  - heading "Reimbursements" [level=3]
+  - list:
+    - listitem: Worker Description Date Status Amount
+    - listitem:
+      - text: Pablo Contractorplus Flight booking for workshop Jun 8, 2026
+      - definition: Approved
+      - text: $64.28 USD
+      - button
+    - listitem:
+      - text: Nadia Contractorplus Client entertainment expense Jun 7, 2026
+      - definition: Approved
+      - text: $46.86 USD
+      - button
+    - listitem:
+      - text: John Contractor Hotel stay for conference Jun 25, 2026
+      - definition: Approved
+      - text: $79.31 USD
+      - button
+    - listitem:
+      - text: Alex Developer Flight booking for workshop Jun 25, 2026
+      - definition: Approved
+      - text: $79.93 USD
+      - button
+    - listitem:
+      - text: Uma Johnson Subscription renewal for software Jun 29, 2026
+      - definition: Approved
+      - text: $72.73 USD
+      - button
+    - listitem:
+      - text: Emma Nelson Taxi fare to airport Jun 17, 2026
+      - definition: Approved
+      - text: $21.32 USD
+      - button
+    - listitem:
+      - text: Ximena Martin Client entertainment expense Jun 4, 2026
+      - definition: Approved
+      - text: $32.26 USD
+      - button
+    - listitem:
+      - text: Paul Miller Internet charges for remote work Jun 8, 2026
+      - definition: Approved
+      - text: $81.11 USD
+      - button
+    - listitem:
+      - text: Felix Hunt Hotel stay for conference Jun 30, 2026
+      - definition: Approved
+      - text: $80.07 USD
+      - button
+    - listitem:
+      - text: Ulrich Cooper Client entertainment expense May 31, 2026
+      - definition: Approved
+      - text: $50.59 USD
+      - button
+    - listitem:
+      - text: Nina Smith Business development dinner Jun 13, 2026
+      - definition: Approved
+      - text: $32.82 USD
+      - button
+    - listitem:
+      - text: Karen Moore Subscription renewal for software Jun 3, 2026
+      - definition: Approved
+      - text: $34.30 USD
+      - button
+    - listitem:
+      - text: Aaron Taylor Internet charges for remote work Jun 10, 2026
+      - definition: Approved
+      - text: $75.30 USD
+      - button
+    - listitem:
+      - text: Ulrich Young Business development dinner Jun 5, 2026
+      - definition: Approved
+      - text: $41.91 USD
+      - button
+    - listitem:
+      - text: Frank Nelson Client entertainment expense Jun 30, 2026
+      - definition: Approved
+      - text: $59.73 USD
+      - button
+    - listitem:
+      - text: Kate Carter Client entertainment expense Jun 26, 2026
+      - definition: Approved
+      - text: $24.50 USD
+      - button
+    - listitem:
+      - text: Yuki Thompson Taxi fare to airport May 31, 2026
+      - definition: Approved
+      - text: $32.43 USD
+      - button
+    - listitem:
+      - text: Ulrich Young Internet charges for remote work Jun 16, 2026
+      - definition: Approved
+      - text: $90.30 USD
+      - button
+    - listitem:
+      - text: Tara Kelly Subscription renewal for software Jun 7, 2026
+      - definition: Approved
+      - text: $99.20 USD
+      - button
+    - listitem:
+      - text: Felix Hunt Internet charges for remote work Jun 13, 2026
+      - definition: Approved
+      - text: $47.82 USD
+      - button
+    - listitem:
+      - text: Beth Parker Flight booking for workshop Jun 4, 2026
+      - definition: Approved
+      - text: $97.26 CAD
+      - button
+    - listitem:
+      - text: Ruby Green Internet charges for remote work Jun 1, 2026
+      - definition: Approved
+      - text: £2,448.33 EGP
+      - button
+    - listitem:
+      - text: Emma Nelson Hotel stay for conference May 17, 2026
+      - definition: Approved
+      - text: $82.73 USD
+      - button
+    - listitem:
+      - text: Hugo Baker Flight booking for workshop May 17, 2026
+      - definition: Approved
+      - text: £31.88 GBP
+      - button
+    - listitem:
+      - text: Frank Harris Business development dinner May 16, 2026
+      - definition: Approved
+      - text: £57.43 GBP
+      - button
+- button "⏸ Stop capture"
+- button "📸 Now"
+- button "⏱ 3s"
+- text: saved 27
+- img
+- dialog:
+  - text: Detailed Currency View Global Currency Approx. (USD)
+  - img
+  - text: "$58,579.23 USD = $58,579.23 Total: $58,579.23 USD *Totals are an estimate based on current foreign exchange rates, which may fluctuate."

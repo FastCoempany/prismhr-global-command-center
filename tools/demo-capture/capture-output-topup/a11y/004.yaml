@@ -1,0 +1,190 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - link "Logout":
+    - /url: /login
+- main:
+  - heading "Team" [level=1]
+  - 'heading "TOTAL WORKERS: 20" [level=2]'
+  - text: Search Search
+  - textbox "Search":
+    - /placeholder: Search people
+  - button "All Workers" [expanded]
+  - textbox "Search"
+  - checkbox "All"
+  - text: All
+  - separator
+  - checkbox "Alex Demo Worker"
+  - text: Alex Demo Worker
+  - checkbox "Alex Developer"
+  - text: Alex Developer
+  - checkbox "Chris Reed"
+  - text: Chris Reed
+  - checkbox "Grace Hunt"
+  - text: Grace Hunt
+  - checkbox "Henry Bell"
+  - text: Henry Bell
+  - checkbox "Hugo Johnson"
+  - text: Hugo Johnson
+  - checkbox "Iris Green"
+  - text: Iris Green
+  - checkbox "Jane Employee"
+  - text: Jane Employee
+  - checkbox "John Contractor"
+  - text: John Contractor
+  - checkbox "Nadia Contractorplus"
+  - text: Nadia Contractorplus
+  - checkbox "Olivia Allen"
+  - text: Olivia Allen
+  - checkbox "Owen Brown"
+  - text: Owen Brown
+  - checkbox "Pablo Contractorplus"
+  - text: Pablo Contractorplus
+  - checkbox "Rose Allen"
+  - text: Rose Allen
+  - checkbox "Tara Martin"
+  - text: Tara Martin
+  - checkbox "Victor Reed"
+  - text: Victor Reed
+  - checkbox "Ximena Fisher"
+  - text: Ximena Fisher
+  - checkbox "Ximena Young"
+  - text: Ximena Young
+  - checkbox "Yasmin Hunt"
+  - text: Yasmin Hunt
+  - checkbox "Yasmin Moore"
+  - text: Yasmin Moore
+  - button "Countries"
+  - button "Type"
+  - button "Location"
+  - button "Status"
+  - button "Sort Newest"
+  - button "Export"
+  - table:
+    - rowgroup:
+      - row "NAME COUNTRY TYPE LOCATION MANAGER CONTRACTS STATUS ACTIONS":
+        - columnheader "NAME":
+          - paragraph: NAME
+        - columnheader "COUNTRY":
+          - paragraph: COUNTRY
+        - columnheader "TYPE":
+          - paragraph: TYPE
+        - columnheader "LOCATION":
+          - paragraph: LOCATION
+        - columnheader "MANAGER":
+          - paragraph: MANAGER
+        - columnheader "CONTRACTS":
+          - paragraph: CONTRACTS
+        - columnheader "STATUS":
+          - paragraph: STATUS
+        - columnheader "ACTIONS":
+          - paragraph: ACTIONS
+    - rowgroup:
+      - row "YM Yasmin Moore Senior Intranet Architect Contractor — Demo HR Manager 1 Awaiting Signatures":
+        - cell "YM Yasmin Moore Senior Intranet Architect"
+        - cell:
+          - img
+        - cell "Contractor"
+        - cell "—"
+        - cell "Demo HR Manager"
+        - cell "1"
+        - cell "Awaiting Signatures"
+        - cell:
+          - button
+      - row "AD Alex Demo Worker Demo Software Engineer EOR — Demo HR Manager 1 Active":
+        - cell "AD Alex Demo Worker Demo Software Engineer"
+        - cell:
+          - img
+        - cell "EOR"
+        - cell "—"
+        - cell "Demo HR Manager"
+        - cell "1"
+        - cell "Active"
+        - cell:
+          - button
+      - row "OA Olivia Allen Regional Research Executive Contractor — John Manager 1 Awaiting Signatures":
+        - cell "OA Olivia Allen Regional Research Executive"
+        - cell:
+          - img
+        - cell "Contractor"
+        - cell "—"
+        - cell "John Manager"
+        - cell "1"
+        - cell "Awaiting Signatures"
+        - cell:
+          - button
+      - row "OB Owen Brown Corporate Marketing Associate Corporate Marketing Associate Contractor — John Manager 1 Awaiting Signatures":
+        - cell "OB Owen Brown Corporate Marketing Associate Corporate Marketing Associate"
+        - cell:
+          - img
+        - cell "Contractor"
+        - cell "—"
+        - cell "John Manager"
+        - cell "1"
+        - cell "Awaiting Signatures"
+        - cell:
+          - button
+      - row "XY Ximena Young Future Research Analyst EOR — Mike SuperAdmin 1 Active":
+        - cell "XY Ximena Young Future Research Analyst"
+        - cell:
+          - img
+        - cell "EOR"
+        - cell "—"
+        - cell "Mike SuperAdmin"
+        - cell "1"
+        - cell "Active"
+        - cell:
+          - button
+      - row "RA Rose Allen Human Solutions Assistant EOR — Demo Finance Manager 1 Active":
+        - cell "RA Rose Allen Human Solutions Assistant"
+        - cell:
+          - img
+        - cell "EOR"
+        - cell "—"
+        - cell "Demo Finance Manager"
+        - cell "1"
+        - cell "Active"
+        - cell:
+          - button
+      - row "YH Yasmin Hunt Human Interactions Architect Human Interactions Architect Contractor+ — Alex Demo Worker 1 Active":
+        - cell "YH Yasmin Hunt Human Interactions Architect Human Interactions Architect"
+        - cell:
+          - img
+        - cell "Contractor+"
+        - cell "—"
+        - cell "Alex Demo Worker"
+        - cell "1"
+        - cell "Active"
+        - cell:
+          - button
+  - paragraph: Showing 1 to 7 of 20 results
+  - navigation "Pagination":
+    - button "Previous" [disabled]
+    - button "1"
+    - button "2"
+    - button "3"
+    - button "Next"
+- img

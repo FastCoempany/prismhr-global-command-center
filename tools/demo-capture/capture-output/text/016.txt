@@ -1,0 +1,294 @@
+URL: https://app1.demo.prismhr.com/pay-periods/add-one-time-payment
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+Add One-Time Payment
+Dashboard
+Add One-Time Payment
+Enter Payment Details
+
+Select the payment type and amount for each worker below.
+
+Pay Period Type
+Last day of the month - EOR
+Last day of the month - CONTRACTOR
+Last day of the month - PAYROLL
+Pay Period
+[Current] Jun 1, 2026 - Jun 30, 2026 - [Ends on: Jun 23, 2026]
+[Next] Jul 1, 2026 - Jul 31, 2026
+Countries
+Sort
+Name
+NAME	PAY PERIOD TYPE	COUNTRY	PAYMENT TYPE	AMOUNT
+Aaron Taylor	Last day of the month - CONTRACTOR	
+United Kingdom
+	
+Select Payment Type
+Signing Bonus
+Commission
+Spiff
+Performance
+Holiday
+Equipment
+Other
+	
+$
+USD
+
+Alex Developer	Last day of the month - CONTRACTOR	
+United States
+	
+Select Payment Type
+Signing Bonus
+Commission
+Spiff
+Performance
+Holiday
+Equipment
+Other
+	
+$
+USD
+
+Emma Nelson	Last day of the month - CONTRACTOR	
+Taiwan
+	
+Select Payment Type
+Signing Bonus
+Commission
+Spiff
+Performance
+Holiday
+Equipment
+Other
+	
+$
+USD
+
+Felix Hunt	Last day of the month - CONTRACTOR	
+Nicaragua
+	
+Select Payment Type
+Signing Bonus
+Commission
+Spiff
+Performance
+Holiday
+Equipment
+Other
+	
+$
+USD
+
+Frank Nelson	Last day of the month - CONTRACTOR	
+Egypt
+	
+Select Payment Type
+Signing Bonus
+Commission
+Spiff
+Performance
+Holiday
+Equipment
+Other
+	
+$
+USD
+
+John Contractor	Last day of the month - CONTRACTOR	
+United States
+	
+Select Payment Type
+Signing Bonus
+Commission
+Spiff
+Performance
+Holiday
+Equipment
+Other
+	
+$
+USD
+
+Karen Moore	Last day of the month - CONTRACTOR	
+United Kingdom
+	
+Select Payment Type
+Signing Bonus
+Commission
+Spiff
+Performance
+Holiday
+Equipment
+Other
+	
+$
+USD
+
+Kate Carter	Last day of the month - CONTRACTOR	
+Canada - Ontario
+	
+Select Payment Type
+Signing Bonus
+Commission
+Spiff
+Performance
+Holiday
+Equipment
+Other
+	
+$
+USD
+
+Nadia Contractorplus	Last day of the month - CONTRACTOR	
+United States
+	
+Select Payment Type
+Signing Bonus
+Commission
+Spiff
+Performance
+Holiday
+Equipment
+Other
+	
+$
+USD
+
+Nina Smith	Last day of the month - CONTRACTOR	
+United Kingdom
+	
+Select Payment Type
+Signing Bonus
+Commission
+Spiff
+Performance
+Holiday
+Equipment
+Other
+	
+$
+USD
+
+Paul Miller	Last day of the month - CONTRACTOR	
+Nicaragua
+	
+Select Payment Type
+Signing Bonus
+Commission
+Spiff
+Performance
+Holiday
+Equipment
+Other
+	
+$
+USD
+
+Tara Kelly	Last day of the month - CONTRACTOR	
+Canada - Nova Scotia
+	
+Select Payment Type
+Signing Bonus
+Commission
+Spiff
+Performance
+Holiday
+Equipment
+Other
+	
+$
+USD
+
+Ulrich Cooper	Last day of the month - CONTRACTOR	
+Mexico
+	
+Select Payment Type
+Signing Bonus
+Commission
+Spiff
+Performance
+Holiday
+Equipment
+Other
+	
+$
+USD
+
+Ulrich Young	Last day of the month - CONTRACTOR	
+Egypt
+	
+Select Payment Type
+Signing Bonus
+Commission
+Spiff
+Performance
+Holiday
+Equipment
+Other
+	
+$
+USD
+
+Uma Johnson	Last day of the month - CONTRACTOR	
+Taiwan
+	
+Select Payment Type
+Signing Bonus
+Commission
+Spiff
+Performance
+Holiday
+Equipment
+Other
+	
+$
+USD
+
+Ximena Martin	Last day of the month - CONTRACTOR	
+Nicaragua
+	
+Select Payment Type
+Signing Bonus
+Commission
+Spiff
+Performance
+Holiday
+Equipment
+Other
+	
+$
+USD
+
+Yuki Thompson	Last day of the month - CONTRACTOR	
+Canada - Nova Scotia
+	
+Select Payment Type
+Signing Bonus
+Commission
+Spiff
+Performance
+Holiday
+Equipment
+Other
+	
+$
+USD
+Back
+Next
+⏸ Stop capture
+📸 Now
+⏱ 3s
+saved 15

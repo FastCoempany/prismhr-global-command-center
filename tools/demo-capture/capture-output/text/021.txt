@@ -1,0 +1,26 @@
+URL: https://app1.demo.prismhr.com/pay-periods/add-one-time-payment
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+⏸ Stop capture
+📸 Now
+⏱ 3s
+saved 20
+Payment Confirmed
+
+Successfully created 1 one-time payment. The payment will be included in the next paycheck for the selected workers.
+
+Add Another Payment
+Close

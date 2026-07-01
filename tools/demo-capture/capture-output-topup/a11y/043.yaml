@@ -1,0 +1,64 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - link "Logout":
+    - /url: /login
+- main:
+  - heading "New Hire | Payroll" [level=1]
+  - navigation "Progress":
+    - list:
+      - listitem:
+        - link:
+          - /url: /create-contract/payroll/employee-info?contractIndex=1
+        - paragraph: Employee Info
+      - listitem:
+        - link:
+          - /url: /create-contract/payroll/job?contractIndex=1
+        - paragraph: Job Info
+      - listitem:
+        - link:
+          - /url: /create-contract/payroll/compensation?contractIndex=1
+        - paragraph: Compensation
+      - listitem:
+        - link:
+          - /url: /create-contract/payroll/agreement?contractIndex=1
+        - paragraph: Upload Agreement
+      - listitem:
+        - link "05":
+          - /url: /create-contract/payroll/approval?contractIndex=1
+        - paragraph: Review
+  - text: "Submit Offer Letter to Listo for Approval EMPLOYEE INFO Name: Antaeus Coe Email: antaeus.coe@prismhr.com Nationality:"
+  - img
+  - text: "Canada - Nova Scotia Working country:"
+  - img
+  - text: "Belize JOB INFO Job title: Engineer Seniority: Senior Description: do great work Sub-department: - Direct manager: Demo Admin Start date: Jul 9, 2026 COMPENSATION Compensation type: Salary Contract amount:"
+  - img
+  - text: "$3,500.00 per month Employment type: Full-time Contract term: Indefinite"
+  - button "Save & Exit"
+  - button "Exit"
+  - button "Back"
+  - button "Onboard Employee"
+- img

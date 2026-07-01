@@ -1,0 +1,95 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - link "Logout":
+    - /url: /login
+- main:
+  - heading "New Hire | Contractor" [level=1]
+  - navigation "Progress":
+    - list:
+      - listitem:
+        - link:
+          - /url: /create-contract/new/contractor?contractIndex=0
+        - paragraph: Contractor Info
+      - listitem:
+        - link "02":
+          - /url: /create-contract/new/job?contractIndex=0
+        - paragraph: Job Info
+      - listitem:
+        - text: "03"
+        - paragraph: Compensation
+      - listitem:
+        - text: "04"
+        - paragraph: Review
+  - heading "Job information" [level=3]
+  - paragraph: Please provide information regarding the work the contractor will be performing.
+  - text: Job title
+  - textbox "Job title":
+    - /placeholder: Enter job title
+    - text: Direct Applications Administrator
+  - text: Seniority
+  - combobox:
+    - option "Not Applicable"
+    - option "Junior"
+    - option "Mid"
+    - option "Senior"
+    - option "Lead"
+    - option "Principal"
+    - option "Director" [selected]
+    - option "Department Head"
+    - option "Vice President"
+    - option "Senior Vice President"
+  - text: Job description
+  - paragraph: This section will be included in the original agreement so please be descriptive and explain the role, expectations and responsibilities.
+  - textbox "Job description":
+    - /placeholder: Write a few sentences explaining the role and responsibilities.
+    - text: We are seeking a creative and detail-oriented Marketing Coordinator to support our growing marketing team. In this role, you will assist in the development, execution, and monitoring of marketing campaigns across digital and traditional channels. You’ll work closely with designers, content creators, and sales teams to ensure consistent messaging and branding.
+  - heading "Assignments (Optional)" [level=3]
+  - text: Division
+  - combobox:
+    - option "Select division"
+    - option "Engineering Division"
+    - option "Product Division"
+  - heading "Location" [level=3]
+  - combobox:
+    - option "Unassigned"
+    - option "San Francisco Office"
+    - option "New York Office"
+  - heading "Reporting Manager" [level=3]
+  - paragraph: Auto-assigned based on organizational assignment
+  - button "Assign Manager"
+  - heading "Start date" [level=3]
+  - paragraph: The earliest possible start date for this contract may vary due to regulatory requirements. Please note that visa and/or work permit requirements may cause delays.
+  - textbox
+  - button "Save & Exit"
+  - button "Exit"
+  - button "Back"
+  - button "Next"
+- button "⏸ Stop capture"
+- button "📸 Now"
+- button "⏱ 3s"
+- text: saved 162
+- img

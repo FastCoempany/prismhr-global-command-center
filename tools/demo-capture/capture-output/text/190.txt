@@ -1,0 +1,60 @@
+URL: https://app1.demo.prismhr.com/team/6ab3e4b7-92ff-46e6-9ba3-24ddbb9f4ffb/1ec6133c-f849-4802-8e9c-fa924a356014/organization
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+Profile
+Team
+Profile
+Organization
+Paul Davis
+Work Email
+paul.davis@prismhr.com
+Start Date
+Aug 26, 2026
+Position
+National Security Coordinator
+Worker ID
+105260601496
+Manager
+Mike Superadmin
+Location
+Assign Location
+Details
+Documents
+Payments
+Contracts
+Time Off
+Expense Reimbursements
+Assignments
+Organization Structure
+Assignments
+Reporting Line
+
+All the categories/sub-categories assigned to this worker are
+highlighted below
+
+Create assignment
+DIVISION
+Engineering Division
+Backend Development
+Product Division
+Product Design
+DEPARTMENT
+SUB_DEPARTMENT
+Drag to pan · Scroll to zoom
+⏸ Stop capture
+📸 Now
+⏱ 3s
+saved 189

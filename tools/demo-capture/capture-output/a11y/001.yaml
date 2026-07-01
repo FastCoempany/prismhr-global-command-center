@@ -1,0 +1,138 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - link "Logout":
+    - /url: /login
+- main:
+  - heading "Hello, Demo!" [level=1]
+  - button "Refresh test client"
+  - button "Regenerate test client data (preserves users)"
+  - term: Company
+  - definition: Antaeus Service Provider - Main Client
+  - button
+  - button "Support Cases":
+    - text: Support Cases
+    - img
+  - button "DA"
+  - text: Pay Periods
+  - button "Add One-Time Payment"
+  - text: Needs Approval (3)
+  - 'link "Payday Tue, Jun 30 Pay period: Jun 1 - Jun 30 CONTRACTOR | Monthly Ready To Approve"':
+    - /url: /pay-period/150d5502-0c72-405e-b01a-493feb532ce6/approve
+    - paragraph: Payday
+    - paragraph: Tue, Jun 30
+    - paragraph: "Pay period: Jun 1 - Jun 30"
+    - text: CONTRACTOR | Monthly Ready To Approve
+  - 'link "Payday Tue, Jun 30 Pay period: Jun 1 - Jun 30 EOR | Monthly Ready To Approve"':
+    - /url: /pay-period/8a91eff7-43c3-4a11-ba4e-1dabe92c6cfc/approve
+    - paragraph: Payday
+    - paragraph: Tue, Jun 30
+    - paragraph: "Pay period: Jun 1 - Jun 30"
+    - text: EOR | Monthly Ready To Approve
+  - 'link "Payday Tue, Jun 30 Pay period: Jun 1 - Jun 30 PAYROLL | Monthly Ready To Approve"':
+    - /url: /pay-period/b6b04134-78b4-469e-8ae9-94d1e91cb096/approve
+    - paragraph: Payday
+    - paragraph: Tue, Jun 30
+    - paragraph: "Pay period: Jun 1 - Jun 30"
+    - text: PAYROLL | Monthly Ready To Approve
+  - paragraph: Payday
+  - paragraph: Wed, Jul 8
+  - paragraph: "Pay period: Jun 1 - Jun 30"
+  - text: CONTRACTOR | Monthly Payment Due
+  - paragraph: Payday
+  - paragraph: Fri, Jul 31
+  - paragraph: "Pay period: Jul 1 - Jul 31"
+  - text: PAYROLL | Monthly
+  - paragraph: Payday
+  - paragraph: Fri, Jul 31
+  - paragraph: "Pay period: Jul 1 - Jul 31"
+  - text: EOR | Monthly
+  - paragraph: Payday
+  - paragraph: Fri, Jul 31
+  - paragraph: "Pay period: Jul 1 - Jul 31"
+  - text: CONTRACTOR | Monthly Time Off
+  - button "View Requests"
+  - text: Needs Approval (5)
+  - link "John Contractor Jul 9 - Jul 11":
+    - /url: /team/d6b4264a-000a-43ca-8fa0-d2b2ba6bbb55/b9f04842-df8e-40da-8f86-5f065fa7d082/time-off
+    - paragraph: John Contractor
+    - paragraph: Jul 9 - Jul 11
+  - link "Yuki Thompson Jul 7 - Jul 11":
+    - /url: /team/3e8882b3-3b24-4bd5-bf00-58c6f529971d/b516e096-6422-4532-a8e7-ede680bfb7c9/time-off
+    - paragraph: Yuki Thompson
+    - paragraph: Jul 7 - Jul 11
+  - link "Olivia Walker Jul 6 - Jul 11":
+    - /url: /team/28fd37c2-cfc7-4f0f-a58d-377a920668f7/23ea5eec-cb12-45dd-b54b-3ee7fccd773e/time-off
+    - paragraph: Olivia Walker
+    - paragraph: Jul 6 - Jul 11
+  - link "Vera Lopez Jul 9 - Jul 16":
+    - /url: /team/2303d49e-e350-4f17-a566-ca0de9e449aa/0caf7ca8-4c0f-460e-a22f-018430b53d5d/time-off
+    - paragraph: Vera Lopez
+    - paragraph: Jul 9 - Jul 16
+  - link "Claire Allen Jul 7 - Jul 12":
+    - /url: /team/53849879-0874-4aed-9c11-e9b613a26b2b/8593d091-2b81-4ff6-9540-3f8edc6e0236/time-off
+    - paragraph: Claire Allen
+    - paragraph: Jul 7 - Jul 12
+  - text: Who's Out
+  - button
+  - button
+  - text: Today (3) BP NS VL Tomorrow (8) BP DA EN NC NS PM TK VL Reimbursements
+  - button "View Requests"
+  - text: Needs Approval (5)
+  - link "£1,190.15 GBP Nina Thompson":
+    - /url: /reimbursements?reimbursementId=177d0fee-3a57-4a1c-8b23-fd60d7f6269f
+    - text: £1,190.15 GBP
+    - paragraph: Nina Thompson
+  - link "$636.70 USD Paul Miller":
+    - /url: /reimbursements?reimbursementId=d0299172-87cd-4d69-9549-5549a30552a4
+    - text: $636.70 USD
+    - paragraph: Paul Miller
+  - link "£380.53 GBP Hugo Baker":
+    - /url: /reimbursements?reimbursementId=9ce16838-c4ff-4e3a-8d61-ec8efcb30ca2
+    - text: £380.53 GBP
+    - paragraph: Hugo Baker
+  - link "$653.99 USD Frank Nelson":
+    - /url: /reimbursements?reimbursementId=923e721b-6876-4d77-b596-f4f445dac8c0
+    - text: $653.99 USD
+    - paragraph: Frank Nelson
+  - link "$632.69 USD Paul Miller":
+    - /url: /reimbursements?reimbursementId=cb3edf38-8581-4be2-bc09-ec3e7bbe46eb
+    - text: $632.69 USD
+    - paragraph: Paul Miller
+  - text: Reminders
+  - img
+  - text: "Upcoming Holiday: Independence Day Jul 3 Links"
+  - link "Time Off View and approve your worker’s vacation, sick days, and other leave.":
+    - /url: /time-off
+  - link "Track Time View your worker’s hours and monitor time spent on tasks.":
+    - /url: /time-tracking
+  - link "Reimbursement View and approve expenses for reimbursement.":
+    - /url: /reimbursements
+- button "⏸ Stop capture"
+- button "📸 Now"
+- button "⏱ 3s"
+- text: saved 0
+- img

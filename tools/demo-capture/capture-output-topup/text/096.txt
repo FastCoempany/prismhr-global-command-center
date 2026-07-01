@@ -1,0 +1,45 @@
+URL: https://app1.demo.prismhr.com/pay-periods/add-one-time-payment
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Antaeus Service Provider - Main Client
+Logout
+Add One-Time Payment
+Dashboard
+Add One-Time Payment
+Confirm One-Time Payment
+
+Review the payment details before processing. This payment will be included in each worker's next paycheck.
+
+Payment Timing: This payment will be included in each worker's next paycheck
+
+Payment Summary
+
+Each worker will receive their payment converted to local currency
+
+Worker	Type	One-Time Payment	Total Pay	Next Pay Date
+alex demo worker	EOR	
+USD
+$10,000.00
+	
+USD
+$10,000.00
+	
+Jul 31, 2026
+MONTHLY
+Total USD:
+USD
+$10,000.00
+Back
+Confirm Payment

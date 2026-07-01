@@ -1,0 +1,204 @@
+- paragraph:
+  - text: You need to set your Bank Account.
+  - link "Link Bank Account":
+    - /url: https://admin1.demo.prismhr.com
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /wrkr
+  - link "Payments":
+    - /url: /wrkr/payments
+  - link "Time Off":
+    - /url: /wrkr/request-time-off
+  - link "Time Tracking":
+    - /url: /wrkr/timecards
+  - link "Reimbursements":
+    - /url: /wrkr/request-reimbursement
+  - link "Resources":
+    - /url: /wrkr/documents
+  - button "Worker Portal"
+  - link "Logout":
+    - /url: /login
+- main:
+  - navigation "Progress":
+    - list:
+      - listitem:
+        - link:
+          - /url: /wrkr/accept-payroll/63d43e0f-6561-44a1-a70d-4e2f86eacc99/info
+        - paragraph: Personal Information
+      - listitem:
+        - link "02":
+          - /url: /wrkr/accept-payroll/63d43e0f-6561-44a1-a70d-4e2f86eacc99/address
+        - paragraph: Address
+      - listitem:
+        - text: "03"
+        - paragraph: Identification
+  - heading "Personal Address" [level=3]
+  - paragraph: Use your legal residence address.
+  - text: Street Address 1
+  - textbox "Street Address 1"
+  - text: Street Address 2
+  - textbox "Street Address 2"
+  - text: City
+  - textbox "City"
+  - text: State / Province
+  - textbox "State / Province"
+  - text: Zip / Postal Code
+  - textbox "Zip / Postal Code"
+  - text: Country
+  - combobox:
+    - option "Albania"
+    - option "Algeria"
+    - option "Angola"
+    - option "Argentina"
+    - option "Armenia"
+    - option "Australia"
+    - option "Australia - New South Wales"
+    - option "Australia - Queensland"
+    - option "Australia - South Australia"
+    - option "Australia - Victoria"
+    - option "Australia - Western Australia"
+    - option "Austria"
+    - option "Azerbaijan"
+    - option "Bahamas"
+    - option "Bahrain"
+    - option "Bangladesh"
+    - option "Belarus"
+    - option "Belgium"
+    - option "Belize"
+    - option "Bolivia"
+    - option "Bosnia and Herzegovina"
+    - option "Brazil"
+    - option "British Virgin Island"
+    - option "Bulgaria"
+    - option "Burkina Faso"
+    - option "Burundi (Bujumbura)"
+    - option "Cambodia"
+    - option "Cameroon"
+    - option "Canada"
+    - option "Canada - Nova Scotia"
+    - option "Canada - Alberta"
+    - option "Canada - British Columbia"
+    - option "Canada - Ontario"
+    - option "Canada - Quebec"
+    - option "Canada - Newfoundland and Labrador"
+    - option "Canada - Prince Edward Island"
+    - option "Canada - New Brunswick"
+    - option "Canada - Manitoba"
+    - option "Chile"
+    - option "China"
+    - option "China - Shanghai"
+    - option "China - Guangzhou"
+    - option "Chad"
+    - option "Colombia"
+    - option "Costa Rica"
+    - option "Croatia"
+    - option "Cyprus"
+    - option "Czech Republic"
+    - option "Congo (Brazzaville)"
+    - option "Congo (Kinshasa)"
+    - option "Denmark"
+    - option "Dominican Republic"
+    - option "Ecuador"
+    - option "Egypt"
+    - option "El Salvador"
+    - option "Estonia"
+    - option "Ethiopia"
+    - option "Finland"
+    - option "France"
+    - option "Georgia"
+    - option "Germany"
+    - option "Ghana"
+    - option "Greece"
+    - option "Guatemala"
+    - option "Honduras"
+    - option "Hong Kong"
+    - option "Hungary"
+    - option "Iceland"
+    - option "India"
+    - option "Indonesia"
+    - option "Ireland"
+    - option "Israel"
+    - option "Italy"
+    - option "Ivory Coast"
+    - option "Jamaica"
+    - option "Japan"
+    - option "Jordan"
+    - option "Kazakhstan"
+    - option "Kenya"
+    - option "Kosovo"
+    - option "Kuwait"
+    - option "Latvia"
+    - option "Lebanon"
+    - option "Libya"
+    - option "Lithuania"
+    - option "Luxembourg"
+    - option "Macau"
+    - option "North Macedonia"
+    - option "Malawi"
+    - option "Malaysia"
+    - option "Malta"
+    - option "Mauritius"
+    - option "Mexico"
+    - option "Moldova"
+    - option "Mongolia"
+    - option "Montenegro"
+    - option "Morocco"
+    - option "Myanmar"
+    - option "Nepal"
+    - option "Netherlands"
+    - option "New Zealand"
+    - option "Nicaragua"
+    - option "Niger"
+    - option "Nigeria"
+    - option "Norway"
+    - option "Oman"
+    - option "Papua New Guinea"
+    - option "Pakistan"
+    - option "Palestine"
+    - option "Panama"
+    - option "Paraguay"
+    - option "Peru"
+    - option "Philippines"
+    - option "Poland"
+    - option "Portugal"
+    - option "Puerto Rico"
+    - option "Qatar"
+    - option "Romania"
+    - option "Russia"
+    - option "Rwanda"
+    - option "Senegal"
+    - option "Serbia"
+    - option "Singapore" [selected]
+    - option "Slovakia"
+    - option "Slovenia"
+    - option "South Africa"
+    - option "South Korea"
+    - option "Spain"
+    - option "Sri Lanka"
+    - option "Sweden"
+    - option "Switzerland"
+    - option "Switzerland - Geneva"
+    - option "Switzerland - Zurich"
+    - option "Taiwan"
+    - option "Tanzania"
+    - option "Thailand"
+    - option "Togo (Lomé)"
+    - option "Trinidad & Tobago"
+    - option "Tunisia"
+    - option "Turkey"
+    - option "Tonga"
+    - option "Ukraine"
+    - option "Uganda"
+    - option "United Arab Emirates"
+    - option "United Kingdom"
+    - option "United States"
+    - option "Uruguay"
+    - option "Uzbekistan"
+    - option "Venezuela"
+    - option "Vietnam"
+    - option "Zambia"
+    - option "Zimbabwe"
+  - button "Back"
+  - button "Next"
+- img

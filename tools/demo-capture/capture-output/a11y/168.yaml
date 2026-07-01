@@ -1,0 +1,86 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - link "Logout":
+    - /url: /login
+- main:
+  - heading "New Hire | Contractor" [level=1]
+  - navigation "Progress":
+    - list:
+      - listitem:
+        - link:
+          - /url: /create-contract/new/contractor?contractIndex=0
+        - paragraph: Contractor Info
+      - listitem:
+        - link:
+          - /url: /create-contract/new/job?contractIndex=0
+        - paragraph: Job Info
+      - listitem:
+        - link "03":
+          - /url: /create-contract/new/compensation?contractIndex=0
+        - paragraph: Compensation
+      - listitem:
+        - text: "04"
+        - paragraph: Review
+  - heading "Compensation" [level=3]
+  - paragraph: Enter details regarding how the contractor should be paid. This will determine the totals generated for your monthly invoices.
+  - heading "Contract type" [level=3]
+  - paragraph: Pay contractors a fixed amount each month.
+  - group "billingFrequency": billingFrequency ✓ Fixed Hourly
+  - heading "Payment frequency" [level=3]
+  - paragraph: How often the contractor will be paid.
+  - group "distributionFrequency": distributionFrequency ✓ Monthly Semi-Monthly Bi-Weekly
+  - group "paymentOption":
+    - text: paymentOption
+    - paragraph: Choose a pay date
+    - radio "Last business day of the month Most of your contractors use this" [checked]
+    - text: Last business day of the month Most of your contractors use this
+    - radio "5th business day of the month"
+    - text: 5th business day of the month
+  - heading "Contract payment amount" [level=3]
+  - paragraph: The currency and amount you will pay per month. Contractors will be paid through the ListoPay digital wallet.
+  - button "USD United States":
+    - img
+    - text: USD United States
+  - textbox:
+    - /placeholder: "0.00"
+  - text: Per Month
+  - heading "Additional payment" [level=3]
+  - paragraph: Add any other payments, commissions or other benefits here
+  - button "Add Additional Payment"
+  - paragraph: Global payments made simple with ListoPay
+  - link "Learn More":
+    - /url: https://listopay.framer.website/
+  - img "logo"
+  - button "Save & Exit"
+  - button "Exit"
+  - button "Back"
+  - button "Next"
+- button "⏸ Stop capture"
+- button "📸 Now"
+- button "⏱ 3s"
+- text: saved 167
+- img

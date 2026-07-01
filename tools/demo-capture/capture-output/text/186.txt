@@ -1,0 +1,60 @@
+URL: https://app1.demo.prismhr.com/team/6ab3e4b7-92ff-46e6-9ba3-24ddbb9f4ffb/1ec6133c-f849-4802-8e9c-fa924a356014/time-off
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+Profile
+Team
+Profile
+Time Off
+Paul Davis
+Work Email
+paul.davis@prismhr.com
+Start Date
+Aug 26, 2026
+Position
+National Security Coordinator
+Worker ID
+105260601496
+Manager
+Mike Superadmin
+Location
+Assign Location
+Details
+Documents
+Payments
+Contracts
+Time Off
+Expense Reimbursements
+Assignments
+Public Holidays
+7 days
+View Details
+Sick Leave
+3.8 days
+Annual Leave
+2.5 days
+Pending Requests
+Create Request
+No Pending Time Off Requests
+History
+Filter
+3
+CATEGORY NAME	DATES REQUESTED	TIME REQUESTED	APPROVE/DECLINE DATE	STATUS
+Annual leave	Aug 27, 2026 - Sep 8, 2026	9.0 days	Jun 30, 2026	
+Approved
+⏸ Stop capture
+📸 Now
+⏱ 3s
+saved 185

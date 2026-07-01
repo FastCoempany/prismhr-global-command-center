@@ -1,0 +1,61 @@
+URL: https://app1.demo.prismhr.com/settings/assignments/categories
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+Settings
+Settings
+Assignments
+General
+Users
+Roles and Permissions
+Approval Workflows
+Assignments
+Categories
+Locations
+Category Assignments
+
+Create and manage your categories according to your organization's preference.
+
+Add New Category Type
+DIVISION
+|
+2 DIVISION
+|
+1 Worker
+Add DIVISION
+Engineering Division
+|
+1 Engineering Division
+|
+1 Worker
+Add Engineering Division
+Product Division
+|
+1 Product Division
+|
+0 Workers
+Add Product Division
+DEPARTMENT
+|
+0 Workers
+Add DEPARTMENT
+SUB_DEPARTMENT
+|
+0 Workers
+Add SUB_DEPARTMENT
+⏸ Stop capture
+📸 Now
+⏱ 3s
+saved 299

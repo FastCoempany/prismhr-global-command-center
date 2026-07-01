@@ -1,0 +1,30 @@
+URL: https://app1.demo.prismhr.com/time-tracking
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+Time Tracking
+Manage Labels
+Total Hours
+0
+Jun 1 - Jun 30, 2026 - Pending approval - Contractor
+option Work Type, selected. Select is focused ,type to refine list, press Down to open the menu, press left to focus selected values
+Work Type
+Import
+Export
+No Time Cards logged for this Pay Period.
+⏸ Stop capture
+📸 Now
+⏱ 3s
+saved 209

@@ -1,0 +1,448 @@
+URL: https://app1.demo.prismhr.com/pay-period/150d5502-0c72-405e-b01a-493feb532ce6/approve
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+Pay Period Approval
+Monthly Pay Period
+Jun 1, 2026 - Jun 30, 2026
+IMPORT DISTRIBUTION DATA
+Approve $58,579.23 USD
+SEE DETAILED VIEW
+Additional Payments
+WORKER
+DESCRIPTION
+AMOUNT
+Ulrich Cooper
+Internet Allowance
+$56.68
+USD
+Emma Nelson
+Transportation Allowance
+$62.64
+USD
+Nina Smith
+Transportation Allowance
+$34.42
+USD
+Felix Hunt
+Transportation Allowance
+$31.11
+USD
+Paul Miller
+Internet Allowance
+$61.63
+USD
+Yuki Thompson
+Mobile Allowance
+$92.59
+USD
+Kate Carter
+Internet Allowance
+$53.69
+USD
+Uma Johnson
+Transportation Allowance
+$52.18
+USD
+Frank Nelson
+Mobile Allowance
+$95.23
+USD
+John Contractor
+Mobile Allowance
+$99.09
+USD
+Nadia Contractorplus
+Mobile Allowance
+$61.41
+USD
+Alex Developer
+Internet Allowance
+$54.62
+USD
+Aaron Taylor
+Transportation Allowance
+$64.03
+USD
+Tara Kelly
+Mobile Allowance
+$77.23
+USD
+Karen Moore
+Mobile Allowance
+$62.88
+USD
+Ulrich Young
+Mobile Allowance
+$86.02
+USD
+Ximena Martin
+Internet Allowance
+$70.91
+USD
+One time Payments
+WORKER
+DESCRIPTION
+AMOUNT
+Tara Kelly
+Excellence in teamwork
+$86.45
+USD
+Ulrich Young
+Quarterly performance bonus
+$65.36
+USD
+Yuki Thompson
+Training completion bonus
+$43.89
+USD
+Kate Carter
+Project completion bonus
+$76.55
+USD
+Frank Nelson
+Special project contribution
+$47.49
+USD
+Ulrich Young
+Sales target achievement
+$56.76
+USD
+Aaron Taylor
+Overtime compensation
+$91.42
+USD
+Karen Moore
+Client retention bonus
+$34.89
+USD
+Nina Smith
+Innovation award
+$98.73
+USD
+Ulrich Cooper
+Innovation award
+$55.76
+USD
+Felix Hunt
+Innovation award
+$28.54
+USD
+Paul Miller
+Innovation award
+$39.49
+USD
+Ximena Martin
+Quarterly performance bonus
+$46.49
+USD
+Emma Nelson
+Cost-saving initiative reward
+$84.12
+USD
+Uma Johnson
+Milestone delivery bonus
+$79.11
+USD
+Alex Developer
+Project completion bonus
+$58.99
+USD
+John Contractor
+Milestone delivery bonus
+$30.53
+USD
+Nadia Contractorplus
+Cost-saving initiative reward
+$28.27
+USD
+Pablo Contractorplus
+Monthly performance bonus
+$93.35
+USD
+Aaron Taylor
+One-Time Payment - Equipment
+$200.00
+USD
+Add one-time distribution
+Hourly Workers
+WORKER
+BILLING RATE
+HOURS LOGGED
+APPROVED HOURS
+AMOUNT
+Ulrich Cooper
+$36.61 USD/hr
+142 hours
+$5,198.62
+USD
+Felix Hunt
+$22.49 USD/hr
+138 hours
+$3,103.62
+USD
+Paul Miller
+$25.43 USD/hr
+128 hours
+$3,255.04
+USD
+Yuki Thompson
+$21.53 USD/hr
+137 hours
+$2,949.61
+USD
+Uma Johnson
+$27.20 USD/hr
+125 hours
+$3,400.00
+USD
+Alex Developer
+$24.02 USD/hr
+133 hours
+$3,194.66
+USD
+Karen Moore
+$25.08 USD/hr
+137 hours
+$3,435.96
+USD
+Ulrich Young
+$29.01 USD/hr
+139 hours
+$4,032.39
+USD
+Fixed Rate Workers
+WORKER
+BILLING RATE
+APPROVED AMOUNT
+AMOUNT
+Emma Nelson
+$2,271.03 USD/month
+USD
+$2,271.03
+USD
+Nina Smith
+$3,971.93 USD/month
+USD
+$3,971.93
+USD
+Kate Carter
+$3,534.01 USD/month
+USD
+$3,534.01
+USD
+Frank Nelson
+$2,297.97 USD/month
+USD
+$1,253.44
+USD
+This payment is prorated from starting date Jun 15, 2026
+John Contractor
+$3,514.82 USD/month
+USD
+$3,514.82
+USD
+Nadia Contractorplus
+$2,982.09 USD/month
+USD
+$2,982.09
+USD
+Aaron Taylor
+$3,909.97 USD/month
+USD
+$3,909.97
+USD
+Tara Kelly
+$2,161.23 USD/month
+USD
+$2,161.23
+USD
+Ximena Martin
+$2,849.31 USD/month
+USD
+$2,849.31
+USD
+Reimbursements
+WORKER
+DESCRIPTION
+DATE
+STATUS
+AMOUNT
+Pablo Contractorplus
+Flight booking for workshop
+Jun 8, 2026
+Approved
+$64.28
+USD
+Nadia Contractorplus
+Client entertainment expense
+Jun 7, 2026
+Approved
+$46.86
+USD
+John Contractor
+Hotel stay for conference
+Jun 25, 2026
+Approved
+$79.31
+USD
+Alex Developer
+Flight booking for workshop
+Jun 25, 2026
+Approved
+$79.93
+USD
+Uma Johnson
+Subscription renewal for software
+Jun 29, 2026
+Approved
+$72.73
+USD
+Emma Nelson
+Taxi fare to airport
+Jun 17, 2026
+Approved
+$21.32
+USD
+Ximena Martin
+Client entertainment expense
+Jun 4, 2026
+Approved
+$32.26
+USD
+Paul Miller
+Internet charges for remote work
+Jun 8, 2026
+Approved
+$81.11
+USD
+Felix Hunt
+Hotel stay for conference
+Jun 30, 2026
+Approved
+$80.07
+USD
+Ulrich Cooper
+Client entertainment expense
+May 31, 2026
+Approved
+$50.59
+USD
+Nina Smith
+Business development dinner
+Jun 13, 2026
+Approved
+$32.82
+USD
+Karen Moore
+Subscription renewal for software
+Jun 3, 2026
+Approved
+$34.30
+USD
+Aaron Taylor
+Internet charges for remote work
+Jun 10, 2026
+Approved
+$75.30
+USD
+Ulrich Young
+Business development dinner
+Jun 5, 2026
+Approved
+$41.91
+USD
+Frank Nelson
+Client entertainment expense
+Jun 30, 2026
+Approved
+$59.73
+USD
+Kate Carter
+Client entertainment expense
+Jun 26, 2026
+Approved
+$24.50
+USD
+Yuki Thompson
+Taxi fare to airport
+May 31, 2026
+Approved
+$32.43
+USD
+Ulrich Young
+Internet charges for remote work
+Jun 16, 2026
+Approved
+$90.30
+USD
+Tara Kelly
+Subscription renewal for software
+Jun 7, 2026
+Approved
+$99.20
+USD
+Felix Hunt
+Internet charges for remote work
+Jun 13, 2026
+Approved
+$47.82
+USD
+Beth Parker
+Flight booking for workshop
+Jun 4, 2026
+Approved
+$97.26
+CAD
+Ruby Green
+Internet charges for remote work
+Jun 1, 2026
+Approved
+£2,448.33
+EGP
+Emma Nelson
+Hotel stay for conference
+May 17, 2026
+Approved
+$82.73
+USD
+Hugo Baker
+Flight booking for workshop
+May 17, 2026
+Approved
+£31.88
+GBP
+Frank Harris
+Business development dinner
+May 16, 2026
+Approved
+£57.43
+GBP
+⏸ Stop capture
+📸 Now
+⏱ 3s
+saved 36
+Reimbursement Details
+AMOUNT:
+$64.28
+USD
+Approved
+REQUESTED BY:
+Pablo Contractorplus
+EXPENSE DATE:
+Jun 8, 2026
+DESCRIPTION:
+Flight booking for workshop
+Close

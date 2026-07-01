@@ -1,0 +1,58 @@
+URL: https://app1.demo.prismhr.com/wrkr/profile/info
+TITLE: PrismHR
+
+You need to set your Bank Account.Link Bank Account →
+
+Dashboard
+Payments
+Time Off
+Time Tracking
+Reimbursements
+Resources
+Worker Portal
+Logout
+Profile
+Change
+user photo
+Antaeus Coe
+Work Email
+antaeus.coe@prismhr.com
+Joined Date
+Jul 1, 2026
+Position
+engineer
+Worker ID
+105260700001
+Manager
+Demo Admin
+Location
+No location assigned
+Personal
+Contracts
+Bank & Tax Info
+Security
+Assignments
+Personal Info
+Full Name
+Antaeus Coe
+Phone Number
++501
+Preferred Name
+Antaeus Coe
+Address
+4000 s nubie rd
+chicago, il, 60600
+Singapore
+Birthday
+Jul 1, 2008
+Gender
+Female
+Nationality
+-
+Emergency Contact Info
+Full Name
+-
+Email Address
+-
+Phone Number (optional)
+-

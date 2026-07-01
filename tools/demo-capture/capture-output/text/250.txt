@@ -1,0 +1,42 @@
+URL: https://app1.demo.prismhr.com/reports
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+Reports
+Report Settings
+
+Worker Report
+
+See information about your workers
+
+Contractor Report
+
+View and download a contractor report
+
+EOR Report
+
+View and download an employer of record report
+
+Payroll Report
+
+View and download a payroll report
+
+Hour Log Report
+
+Report about hours logged
+⏸ Stop capture
+📸 Now
+⏱ 3s
+saved 249

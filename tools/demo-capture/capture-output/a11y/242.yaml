@@ -1,0 +1,63 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - link "Logout":
+    - /url: /login
+- main:
+  - heading "EOR Reports" [level=1]
+  - navigation "Breadcrumb":
+    - list:
+      - listitem:
+        - link "Reports":
+          - /url: /reports
+      - listitem:
+        - link "EOR Reports":
+          - /url: /reports/eor
+  - link "Employer Gross Report See total payroll costs for your EOR-managed workers, including gross wages, taxes, and contributions.":
+    - /url: /reports/eor/employer-gross
+    - term:
+      - paragraph: Employer Gross Report
+    - definition: See total payroll costs for your EOR-managed workers, including gross wages, taxes, and contributions.
+  - link "Employee Gross to Net Report Review gross pay, deductions, and net pay for workers employed through your EOR.":
+    - /url: /reports/eor/gross-to-net
+    - term:
+      - paragraph: Employee Gross to Net Report
+    - definition: Review gross pay, deductions, and net pay for workers employed through your EOR.
+  - link "General Ledger Report Download an accounting-ready report mapped to your general ledger for EOR-managed payroll.":
+    - /url: /reports/eor/general-ledger
+    - term:
+      - paragraph: General Ledger Report
+    - definition: Download an accounting-ready report mapped to your general ledger for EOR-managed payroll.
+  - link "Variance Report Track payroll changes for EOR employees across periods to flag inconsistencies or trends.":
+    - /url: /reports/eor/variance
+    - term:
+      - paragraph: Variance Report
+    - definition: Track payroll changes for EOR employees across periods to flag inconsistencies or trends.
+- button "⏸ Stop capture"
+- button "📸 Now"
+- button "⏱ 3s"
+- text: saved 241
+- img

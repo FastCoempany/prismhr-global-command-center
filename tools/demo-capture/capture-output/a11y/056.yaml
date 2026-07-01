@@ -1,0 +1,17 @@
+- img
+- dialog:
+  - heading "Pending Request" [level=2]
+  - button
+  - text: Nina Thompson Payroll £1,190.15 GBP Antaeus Service Provider - Main Client
+  - time: Jun 28, 2026
+  - text: Business development dinner
+  - button "View Receipt Click to preview the uploaded image":
+    - paragraph: View Receipt
+    - paragraph: Click to preview the uploaded image
+  - button "Decline"
+  - button "Approve"
+- dialog "Approve":
+  - heading "Approve" [level=3]
+  - textbox "Enter your message (optional)"
+  - button "Cancel"
+  - button "Confirm"

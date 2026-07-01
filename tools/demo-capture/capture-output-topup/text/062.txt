@@ -1,0 +1,51 @@
+URL: https://app1.demo.prismhr.com/wrkr/accept-payroll/63d43e0f-6561-44a1-a70d-4e2f86eacc99/info
+TITLE: PrismHR
+
+You need to set your Bank Account.Link Bank Account →
+
+Dashboard
+Payments
+Time Off
+Time Tracking
+Reimbursements
+Resources
+Worker Portal
+Logout
+01
+
+Personal Information
+
+02
+
+Address
+
+03
+
+Identification
+
+Full Name:
+Antaeus Coe
+Email:
+antaeus.coe@prismhr.com
+Salary:
+BZ$3,500.00 BZD/month
+Start Date:
+Jul 9, 2026
+Job Title:
+Engineer
+Payment Currency:
+BZD
+Personal Information
+
+To get started, please take a moment to fill out your personal information. This essential step allows us to draft your contract, which you'll be able to review shortly. Your journey towards seamless and rewarding work opportunities begins here!
+
+Preferred Name
+Phone Number
+Date Of Birth
+Gender
+Prefer not to say
+Male
+Female
+Prefer not to say
+Cancel
+Next

@@ -1,0 +1,82 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - link "Logout":
+    - /url: /login
+- main:
+  - heading "New Hire | Payroll" [level=1]
+  - navigation "Progress":
+    - list:
+      - listitem:
+        - link:
+          - /url: /create-contract/payroll/employee-info?contractIndex=1
+        - paragraph: Employee Info
+      - listitem:
+        - link:
+          - /url: /create-contract/payroll/job?contractIndex=1
+        - paragraph: Job Info
+      - listitem:
+        - link "03":
+          - /url: /create-contract/payroll/compensation?contractIndex=1
+        - paragraph: Compensation
+      - listitem:
+        - text: "04"
+        - paragraph: Upload Agreement
+      - listitem:
+        - text: "05"
+        - paragraph: Review
+  - heading "Compensation" [level=3]
+  - heading "Compensation type" [level=3]
+  - paragraph: How much should the employee be paid? Select between hourly and salary compensation.
+  - group "workType": workType Hourly ✓ Salary
+  - text: Compensation is paid in local currency as required by law. This amount does not include contributions and deductions. Currency
+  - button "BZD Belize" [disabled]:
+    - img
+    - text: BZD Belize
+  - text: Gross Monthly Salary
+  - textbox "Gross Monthly Salary":
+    - /placeholder: "0.00"
+    - text: "3500.00"
+  - heading "Employment type" [level=3]
+  - paragraph: Note that definitions for “full-time” and “part-time” hours may vary by country.
+  - group "employmentType": employmentType ✓ Full-time Part-time
+  - heading "Vacation and paid time-Off" [level=3]
+  - paragraph: Employees in Belize are legally entitled to all local public holidays . If you would like to offer additional paid time off, indicate the number of days here.
+  - text: Additional Paid Time-off
+  - textbox:
+    - /placeholder: "0.00"
+    - text: "3"
+  - button "Save Changes"
+  - button "Want to offer Unlimited PTO?"
+  - text: If you want to offer unlimited vacation days, enter zero additional paid time-off days. This would be an informal arrangement between you and the worker and can only be utilized once the statutory vacation has been exhausted.
+  - heading "Additional payment" [level=3]
+  - paragraph: Add any other payments, bonuses, commissions or other benefits here
+  - button "Add Additional Payment"
+  - button "Save & Exit"
+  - button "Exit"
+  - button "Back"
+  - button "Next"
+- img

@@ -1,0 +1,34 @@
+URL: https://app1.demo.prismhr.com/support-tickets
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+Support Cases
+Search
+Search
+Status
+Type
+Create Case
+Case ID	Subject	Type	Status	Created
+
+
+No cases found
+
+Create your first support case to get started.
+
+Create Case
+⏸ Stop capture
+📸 Now
+⏱ 3s
+saved 306

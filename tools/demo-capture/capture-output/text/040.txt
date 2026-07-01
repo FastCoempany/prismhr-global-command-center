@@ -1,0 +1,41 @@
+URL: https://app1.demo.prismhr.com/pay-period/150d5502-0c72-405e-b01a-493feb532ce6
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+Pay Period
+Pay Period
+
+Details regarding important dates and status expectations.
+
+Pay Period Id
+150d5502
+Target Distribution Date
+Jun 30, 2026
+Required Approval Date
+Jun 23, 2026
+Anticipated Invoice Date
+Jun 23, 2026
+Approve
+Invoice
+Distribute
+Pending Approval
+
+Your pay period is pending approval. The pay period period must be approved on or before Jun 23, 2026 in order for Listo to collect and distribute payments on-time.
+
+Upload
+⏸ Stop capture
+📸 Now
+⏱ 3s
+saved 39

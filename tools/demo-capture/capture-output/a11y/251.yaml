@@ -1,0 +1,63 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - link "Logout":
+    - /url: /login
+- main:
+  - heading "Payroll Reports" [level=1]
+  - navigation "Breadcrumb":
+    - list:
+      - listitem:
+        - link "Reports":
+          - /url: /reports
+      - listitem:
+        - link "Payroll Reports":
+          - /url: /reports/payroll
+  - link "Employer Gross Report View total payroll costs for your organization, including gross wages, taxes, and contributions.":
+    - /url: /reports/payroll/employer-gross
+    - term:
+      - paragraph: Employer Gross Report
+    - definition: View total payroll costs for your organization, including gross wages, taxes, and contributions.
+  - link "Employee Gross to Net Report See individual employee earnings, deductions, and net pay across a selected period.":
+    - /url: /reports/payroll/gross-to-net
+    - term:
+      - paragraph: Employee Gross to Net Report
+    - definition: See individual employee earnings, deductions, and net pay across a selected period.
+  - link "General Ledger Report Download a ledger-friendly breakdown of payroll data, mapped to your chart of accounts.":
+    - /url: /reports/payroll/general-ledger
+    - term:
+      - paragraph: General Ledger Report
+    - definition: Download a ledger-friendly breakdown of payroll data, mapped to your chart of accounts.
+  - link "Variance Report Compare payroll changes across periods to spot anomalies, trends, or unexpected shifts.":
+    - /url: /reports/payroll/variance
+    - term:
+      - paragraph: Variance Report
+    - definition: Compare payroll changes across periods to spot anomalies, trends, or unexpected shifts.
+- button "⏸ Stop capture"
+- button "📸 Now"
+- button "⏱ 3s"
+- text: saved 250
+- img

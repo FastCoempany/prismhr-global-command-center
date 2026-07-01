@@ -1,0 +1,43 @@
+URL: https://app1.demo.prismhr.com/create-contract/payroll/agreement?contractIndex=1
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+New Hire | Payroll
+
+Employee Info
+
+Job Info
+
+Compensation
+
+04
+
+Upload Agreement
+
+05
+
+Review
+
+Upload Agreement (Optional)
+Attach a signed employment agreement
+Upload a Custom Contracts
+
+PDF,PNG,JPG up to 10MB
+
+Save & Exit
+Exit
+Back
+Skip
+Next

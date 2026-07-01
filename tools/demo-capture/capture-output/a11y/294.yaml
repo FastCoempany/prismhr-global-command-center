@@ -1,0 +1,115 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - link "Logout":
+    - /url: /login
+- main:
+  - heading "Settings" [level=1]
+  - navigation "Breadcrumb":
+    - list:
+      - listitem:
+        - link "Settings":
+          - /url: /settings/general
+      - listitem:
+        - link "Roles and Permissions":
+          - /url: /settings/roles
+  - navigation:
+    - link "General":
+      - /url: /settings/general
+    - link "Users":
+      - /url: /settings/users
+    - link "Roles and Permissions":
+      - /url: /settings/roles
+    - link "Approval Workflows":
+      - /url: /settings/approval-workflows
+    - link "Assignments":
+      - /url: /settings/assignments
+  - heading "Roles and Permissions" [level=1]
+  - paragraph: Roles and privleges allow you to control permission across your business. Create and manage roles and then assign them to your admins.
+  - table:
+    - rowgroup:
+      - row "Role Name Description View Permissions":
+        - columnheader "Role Name"
+        - columnheader "Description"
+        - columnheader "View Permissions"
+    - rowgroup:
+      - row "Owner Has all Administration, People Management, Payments, and Finance permissions, and can delete account":
+        - cell "Owner":
+          - button "Owner"
+        - cell "Has all Administration, People Management, Payments, and Finance permissions, and can delete account":
+          - button "Has all Administration, People Management, Payments, and Finance permissions, and can delete account"
+        - cell:
+          - button
+      - row "Super Admin Has all Administration, People Management, Payments, and Finance permissions":
+        - cell "Super Admin":
+          - button "Super Admin"
+        - cell "Has all Administration, People Management, Payments, and Finance permissions":
+          - button "Has all Administration, People Management, Payments, and Finance permissions"
+        - cell:
+          - button
+      - row "Admin Has most permissions, but cannot view or edit company settings":
+        - cell "Admin":
+          - button "Admin"
+        - cell "Has most permissions, but cannot view or edit company settings":
+          - button "Has most permissions, but cannot view or edit company settings"
+        - cell:
+          - button
+      - row "HR Has all People Management, Payments, and some Finance permissions":
+        - cell "HR":
+          - button "HR"
+        - cell "Has all People Management, Payments, and some Finance permissions":
+          - button "Has all People Management, Payments, and some Finance permissions"
+        - cell:
+          - button
+      - row "Manager Can onboard and view onboarding status of new hires":
+        - cell "Manager":
+          - button "Manager"
+        - cell "Can onboard and view onboarding status of new hires":
+          - button "Can onboard and view onboarding status of new hires"
+        - cell:
+          - button
+      - row "Finance Has all Finance and most Payments permissions":
+        - cell "Finance":
+          - button "Finance"
+        - cell "Has all Finance and most Payments permissions":
+          - button "Has all Finance and most Payments permissions"
+        - cell:
+          - button
+      - row "Onboard Only Has all People Management, Payments, and some Finance permissions (only for assigned team members)":
+        - cell "Onboard Only":
+          - button "Onboard Only"
+        - cell "Has all People Management, Payments, and some Finance permissions (only for assigned team members)":
+          - button "Has all People Management, Payments, and some Finance permissions (only for assigned team members)"
+        - cell:
+          - button
+  - navigation "Pagination":
+    - button "Previous" [disabled]
+    - button "Next" [disabled]
+- button "⏸ Stop capture"
+- button "📸 Now"
+- button "⏱ 3s"
+- text: saved 293
+- img

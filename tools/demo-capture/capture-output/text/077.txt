@@ -1,0 +1,354 @@
+URL: https://app1.demo.prismhr.com/create-contract/eor/employee-info
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+New Hire | EOR
+01
+
+Employee Info
+
+02
+
+Job Info
+
+03
+
+Compensation
+
+04
+
+Equipment
+
+05
+
+Benefits
+
+06
+
+Submit
+
+Employee information
+First name
+Last name
+Email address
+What is the employee nationality?
+Select a Country
+Albania
+Algeria
+Angola
+Argentina
+Armenia
+Australia
+Australia - New South Wales
+Australia - Queensland
+Australia - South Australia
+Australia - Victoria
+Australia - Western Australia
+Austria
+Azerbaijan
+Bahamas
+Bahrain
+Bangladesh
+Belarus
+Belgium
+Belize
+Bolivia
+Bosnia and Herzegovina
+Brazil
+British Virgin Island
+Bulgaria
+Burkina Faso
+Burundi (Bujumbura)
+Cambodia
+Cameroon
+Canada - Nova Scotia
+Canada - Alberta
+Canada - British Columbia
+Canada - Ontario
+Canada - Quebec
+Canada - Newfoundland and Labrador
+Canada - Prince Edward Island
+Canada - New Brunswick
+Canada - Manitoba
+Chile
+China
+China - Shanghai
+China - Guangzhou
+Chad
+Colombia
+Costa Rica
+Croatia
+Cyprus
+Czech Republic
+Congo (Brazzaville)
+Congo (Kinshasa)
+Denmark
+Dominican Republic
+Ecuador
+Egypt
+El Salvador
+Estonia
+Ethiopia
+Finland
+France
+Georgia
+Germany
+Ghana
+Greece
+Guatemala
+Honduras
+Hong Kong
+Hungary
+Iceland
+India
+Indonesia
+Ireland
+Israel
+Italy
+Ivory Coast
+Jamaica
+Japan
+Jordan
+Kazakhstan
+Kenya
+Kosovo
+Kuwait
+Latvia
+Libya
+Lithuania
+Luxembourg
+Macau
+North Macedonia
+Malawi
+Malaysia
+Malta
+Mauritius
+Mexico
+Moldova
+Mongolia
+Montenegro
+Morocco
+Myanmar
+Nepal
+Netherlands
+New Zealand
+Nicaragua
+Niger
+Nigeria
+Norway
+Oman
+Papua New Guinea
+Pakistan
+Palestine
+Panama
+Paraguay
+Peru
+Philippines
+Poland
+Portugal
+Puerto Rico
+Qatar
+Romania
+Russia
+Rwanda
+Senegal
+Serbia
+Singapore
+Slovakia
+Slovenia
+South Africa
+South Korea
+Spain
+Sri Lanka
+Sweden
+Switzerland
+Switzerland - Geneva
+Switzerland - Zurich
+Taiwan
+Tanzania
+Thailand
+Togo (Lomé)
+Trinidad & Tobago
+Tunisia
+Turkey
+Tonga
+Ukraine
+Uganda
+United Arab Emirates
+United Kingdom
+United States
+Uruguay
+Uzbekistan
+Venezuela
+Vietnam
+Zambia
+Zimbabwe
+What country is the employee working from?
+Select a Country
+Albania
+Algeria
+Angola
+Argentina
+Armenia
+Australia
+Australia - New South Wales
+Australia - Queensland
+Australia - South Australia
+Australia - Victoria
+Australia - Western Australia
+Austria
+Azerbaijan
+Bahamas
+Bahrain
+Bangladesh
+Belarus
+Belgium
+Belize
+Bolivia
+Bosnia and Herzegovina
+Brazil
+British Virgin Island
+Bulgaria
+Burkina Faso
+Burundi (Bujumbura)
+Cambodia
+Cameroon
+Canada - Nova Scotia
+Canada - Alberta
+Canada - British Columbia
+Canada - Ontario
+Canada - Quebec
+Canada - Newfoundland and Labrador
+Canada - Prince Edward Island
+Canada - New Brunswick
+Canada - Manitoba
+Chile
+China
+China - Shanghai
+China - Guangzhou
+Chad
+Colombia
+Costa Rica
+Croatia
+Cyprus
+Czech Republic
+Congo (Brazzaville)
+Congo (Kinshasa)
+Denmark
+Dominican Republic
+Ecuador
+Egypt
+El Salvador
+Estonia
+Ethiopia
+Finland
+France
+Georgia
+Germany
+Ghana
+Greece
+Guatemala
+Honduras
+Hong Kong
+Hungary
+Iceland
+India
+Indonesia
+Ireland
+Israel
+Italy
+Ivory Coast
+Jamaica
+Japan
+Jordan
+Kazakhstan
+Kenya
+Kosovo
+Kuwait
+Latvia
+Libya
+Lithuania
+Luxembourg
+Macau
+North Macedonia
+Malawi
+Malaysia
+Malta
+Mauritius
+Mexico
+Moldova
+Mongolia
+Montenegro
+Morocco
+Myanmar
+Nepal
+Netherlands
+New Zealand
+Nicaragua
+Niger
+Nigeria
+Norway
+Oman
+Papua New Guinea
+Pakistan
+Palestine
+Panama
+Paraguay
+Peru
+Philippines
+Poland
+Portugal
+Puerto Rico
+Qatar
+Romania
+Rwanda
+Senegal
+Serbia
+Singapore
+Slovakia
+Slovenia
+South Africa
+South Korea
+Spain
+Sri Lanka
+Sweden
+Switzerland
+Switzerland - Geneva
+Switzerland - Zurich
+Taiwan
+Tanzania
+Thailand
+Togo (Lomé)
+Trinidad & Tobago
+Tunisia
+Turkey
+Tonga
+Ukraine
+Uganda
+United Arab Emirates
+United Kingdom
+United States
+Uruguay
+Uzbekistan
+Vietnam
+Zambia
+Zimbabwe
+Save & Exit
+Exit
+Next
+⏸ Stop capture
+📸 Now
+⏱ 3s
+saved 76

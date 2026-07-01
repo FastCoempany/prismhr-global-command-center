@@ -1,0 +1,45 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - link "Logout":
+    - /url: /login
+- main:
+  - heading "Tools & Resources" [level=1]
+  - link "Compensation Calculator Quickly estimate employer costs and employee take-home pay based on country, amount, and pay frequency.":
+    - /url: /tools-and-resources/compensation-calculator
+    - term:
+      - paragraph: Compensation Calculator
+    - definition: Quickly estimate employer costs and employee take-home pay based on country, amount, and pay frequency.
+  - link "Holidays Calendar View public holidays across all countries where your team operates, helping you plan schedules with ease.":
+    - /url: /tools-and-resources/holiday-calendar
+    - term:
+      - paragraph: Holidays Calendar
+    - definition: View public holidays across all countries where your team operates, helping you plan schedules with ease.
+- button "⏸ Stop capture"
+- button "📸 Now"
+- button "⏱ 3s"
+- text: saved 258
+- img

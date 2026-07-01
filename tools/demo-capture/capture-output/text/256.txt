@@ -1,0 +1,95 @@
+URL: https://app1.demo.prismhr.com/reports/hour-log
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+Hour Log Report
+Pay Periods
+1
+2
+1
+1
+1
+1
+1
+Hour Logs
+Current View
+UC
+Ulrich Cooper
+Legacy Security Administrator
+
+Start Date: 2025-08-01
+
+$36.61/hr
+
+FH
+Felix Hunt
+Future Accountability Coordinator
+
+Start Date: 2025-11-09
+
+$22.49/hr
+
+PM
+Paul Miller
+Future Infrastructure Manager
+
+Start Date: 2026-04-14
+
+$25.43/hr
+
+YT
+Yuki Thompson
+Global Factors Executive
+
+Start Date: 2026-03-16
+
+$21.53/hr
+
+UJ
+Uma Johnson
+International Data Orchestrator
+
+Start Date: 2026-01-27
+
+$27.20/hr
+
+AD
+Alex Developer
+Global Metrics Technician
+
+Start Date: 2025-12-25
+
+$24.02/hr
+
+KM
+Karen Moore
+Product Web Executive
+
+Start Date: 2026-02-16
+
+$25.08/hr
+
+UY
+Ulrich Young
+Human Creative Agent
+
+Start Date: 2025-10-18
+
+$29.01/hr
+
+⏸ Stop capture
+📸 Now
+⏱ 3s
+saved 255

@@ -1,0 +1,30 @@
+URL: https://app1.demo.prismhr.com/reimbursements?reimbursementId=177d0fee-3a57-4a1c-8b23-fd60d7f6269f
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+Reimbursements
+Pending Requests
+History
+All Workers
+Engagement
+Search
+Search
+Export
+Pending Requests
+No Pending Expense Reimbursements Requests
+⏸ Stop capture
+📸 Now
+⏱ 3s
+saved 46

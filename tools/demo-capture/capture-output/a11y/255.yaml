@@ -1,0 +1,93 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - link "Logout":
+    - /url: /login
+- heading "Hour Log Report" [level=1]
+- text: option Jul 1 - Jul 31 focused, 1 of 64. 64 results available. Use Up and Down to choose options, press Enter to select the currently focused option, press Escape to exit the menu, press Tab to select the option and exit the menu. Pay Periods
+- combobox [expanded]: Jul 1 - Jul 31 Jul 1 - Jul 31 Jul 1 - Jul 31 Jun 1 - Jun 30 Jun 1 - Jun 30 Jun 1 - Jun 30 Jun 1 - Jun 30 May 1 - May 31 May 1 - May 31 May 1 - May 31 May 1 - May 31 Apr 1 - Apr 30 Apr 1 - Apr 30 Apr 1 - Apr 30 Apr 1 - Apr 30 Apr 1 - Apr 30 Mar 1 - Mar 31 Mar 1 - Mar 31 Mar 1 - Mar 31 Mar 1 - Mar 31 Feb 1 - Feb 28 Feb 1 - Feb 28 Feb 1 - Feb 28 Feb 1 - Feb 28 Feb 1 - Feb 28 Jan 1 - Jan 31 Jan 1 - Jan 31 Jan 1 - Jan 31 Jan 1 - Jan 31 Dec 1 - Dec 31 Dec 1 - Dec 31 Dec 1 - Dec 31 Dec 1 - Dec 31 Dec 1 - Dec 31 Nov 1 - Nov 30 Nov 1 - Nov 30 Nov 1 - Nov 30 Nov 1 - Nov 30 Oct 1 - Oct 31 Oct 1 - Oct 31 Oct 1 - Oct 31 Oct 1 - Oct 31 Oct 1 - Oct 31 Sep 1 - Sep 30 Sep 1 - Sep 30 Sep 1 - Sep 30 Sep 1 - Sep 30 Aug 1 - Aug 31 Aug 1 - Aug 31 Aug 1 - Aug 31 Aug 1 - Aug 31 Aug 1 - Aug 31 Jul 1 - Jul 31 Jul 1 - Jul 31 Jul 1 - Jul 31 Jul 1 - Jul 31 Jun 1 - Jun 30 Jun 1 - Jun 30 Jun 1 - Jun 30 Jun 1 - Jun 30 May 1 - May 31 May 1 - May 31 May 1 - May 31 May 1 - May 31
+- img
+- text: "1"
+- img
+- text: "2"
+- img
+- text: "1"
+- img
+- text: "1"
+- img
+- text: "1"
+- img
+- text: "1"
+- img
+- text: "1"
+- heading "Hour Logs" [level=1]
+- button "Current View"
+- list:
+  - listitem:
+    - text: UC ulrich cooper Legacy Security Administrator
+    - paragraph: "Start Date: 2025-08-01"
+    - paragraph: $36.61/hr
+    - button
+  - listitem:
+    - text: FH felix hunt Future Accountability Coordinator
+    - paragraph: "Start Date: 2025-11-09"
+    - paragraph: $22.49/hr
+    - button
+  - listitem:
+    - text: PM paul miller Future Infrastructure Manager
+    - paragraph: "Start Date: 2026-04-14"
+    - paragraph: $25.43/hr
+    - button
+  - listitem:
+    - text: YT yuki thompson Global Factors Executive
+    - paragraph: "Start Date: 2026-03-16"
+    - paragraph: $21.53/hr
+    - button
+  - listitem:
+    - text: UJ uma johnson International Data Orchestrator
+    - paragraph: "Start Date: 2026-01-27"
+    - paragraph: $27.20/hr
+    - button
+  - listitem:
+    - text: AD alex developer Global Metrics Technician
+    - paragraph: "Start Date: 2025-12-25"
+    - paragraph: $24.02/hr
+    - button
+  - listitem:
+    - text: KM karen moore Product Web Executive
+    - paragraph: "Start Date: 2026-02-16"
+    - paragraph: $25.08/hr
+    - button
+  - listitem:
+    - text: UY ulrich young Human Creative Agent
+    - paragraph: "Start Date: 2025-10-18"
+    - paragraph: $29.01/hr
+    - button
+- button "⏸ Stop capture"
+- button "📸 Now"
+- button "⏱ 3s"
+- text: saved 254
+- img

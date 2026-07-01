@@ -1,0 +1,256 @@
+URL: https://app1.demo.prismhr.com/reports/worker-detail
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+Worker Report
+Reports
+Worker Report
+Start Date
+Current Month
+-
+End Date
+Current Month
+Engagement
+Status
+Countries
+Pay Frequency
+Show Map
+
+Total Workers
+
+42
+
+Pending Contracts
+
+9
+
+Contractor
+
+12
+
+Contractor+
+
+5
+
+EOR
+
+9
+
+Payroll
+
+7
+
+Search
+Search
+Download Report
+
+NAME
+
+	
+
+COUNTRY
+
+	
+
+ENGAGEMENT
+
+	
+
+PAY FREQUENCY
+
+	
+
+BASE PAY
+
+	
+
+TERM
+
+	
+
+STATUS
+
+	
+
+Aaron Taylor
+	
+United Kingdom
+	
+Contractor
+	
+Monthly
+	
+$3,909.97 USD
+	
+Fixed
+	
+Active
+	
+
+
+Alex Demo Worker
+	
+United Kingdom
+	
+EOR
+	
+Monthly
+	
+£5,000.00 GBP
+	
+Fixed
+	
+Active
+	
+
+
+Alex Developer
+	
+United States
+	
+Contractor
+	
+Monthly
+	
+$24.02 USD
+	
+Hourly
+	
+Active
+	
+
+
+Ben Bell
+	
+Canada
+	
+EOR
+	
+Monthly
+	
+$5,403.04 CAD
+	
+Fixed
+	
+Active
+	
+
+
+Beth Parker
+	
+Canada
+	
+EOR
+	
+Monthly
+	
+$4,384.64 CAD
+	
+Fixed
+	
+Active
+	
+
+
+Claire Allen
+	
+Nicaragua
+	
+EOR
+	
+Monthly
+	
+C$86,353.00 NIO
+	
+Fixed
+	
+Active
+	
+
+
+Dan Adams
+	
+United Kingdom
+	
+EOR
+	
+Monthly
+	
+£2,379.05 GBP
+	
+Fixed
+	
+Active
+	
+
+
+Emma Nelson
+	
+Taiwan
+	
+Contractor
+	
+Monthly
+	
+$2,271.03 USD
+	
+Fixed
+	
+Active
+	
+
+
+Felix Hunt
+	
+Nicaragua
+	
+Contractor
+	
+Monthly
+	
+$22.49 USD
+	
+Hourly
+	
+Active
+	
+
+
+Frank Harris
+	
+United Kingdom
+	
+Payroll
+	
+Monthly
+	
+£1,823.04 GBP
+	
+Fixed
+	
+Active
+	
+
+Showing 1 to 10 of 42 results
+
+Previous
+1
+2
+3
+Next
+⏸ Stop capture
+📸 Now
+⏱ 3s
+saved 225

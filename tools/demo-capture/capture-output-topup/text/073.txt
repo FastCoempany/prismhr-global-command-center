@@ -1,0 +1,42 @@
+URL: https://app1.demo.prismhr.com/wrkr/profile/organization
+TITLE: PrismHR
+
+You need to set your Bank Account.Link Bank Account →
+
+Dashboard
+Payments
+Time Off
+Time Tracking
+Reimbursements
+Resources
+Worker Portal
+Logout
+Profile
+Change
+user photo
+Antaeus Coe
+Work Email
+antaeus.coe@prismhr.com
+Joined Date
+Jul 1, 2026
+Position
+engineer
+Worker ID
+105260700001
+Manager
+Demo Admin
+Location
+No location assigned
+Personal
+Contracts
+Bank & Tax Info
+Security
+Assignments
+Organization Structure
+Assignments
+Reporting Line
+
+All the categories you've been assigned to are
+highlighted below
+
+No assignment categories yet.
