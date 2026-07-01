@@ -8,69 +8,91 @@ nav_path: [Team]
 parent: null
 children_frontier:
   - "Worker row drilldown (e.g. Yasmin Moore) → Worker Profile — Details"
+  - "Row actions: View Profile"
+  - "Row actions: View Contract"
   - "Export"
-  - "New Hire"
-  - "Row actions menu (…)"
   - "Filter: Countries"
   - "Filter: Type"
   - "Filter: Location"
   - "Filter: Status"
+  - "All Workers selector"
   - "Sort"
+  - "Pagination: Page 2"
+  - "Pagination: Page 3"
 elements:
   - { name: "Search people", kind: field, actions: ["Search"] }
-  - { name: "Filter bar", kind: field, actions: ["All Workers", "Countries", "Type", "Location", "Status", "Sort"] }
+  - { name: "All Workers selector", kind: field, actions: ["All", "pick a named worker (20 listed)"] }
+  - { name: "Countries filter", kind: field, actions: ["All", "Canada", "Egypt", "Mexico", "Philippines", "United Kingdom", "United States"] }
+  - { name: "Type filter", kind: field, actions: ["All", "Contractor", "Contractor+", "EOR", "Payroll"] }
+  - { name: "Location filter", kind: field, actions: ["Location"] }
+  - { name: "Status filter", kind: field, actions: ["All", "On Hold", "Draft", "Offer Draft", "Offer Sent", "Offer Accepted", "Awaiting Signatures", "Agreement Draft", "Pending Release", "Active", "Offboarded", "Offboard In Progress"] }
+  - { name: "Sort", kind: field, actions: ["Newest", "Oldest", "A - Z", "Z - A"] }
   - { name: "Export", kind: button, actions: ["Export"] }
   - { name: "Worker table", kind: table, actions: ["Open worker profile", "Row actions (…)"] }
   - { name: "Columns", kind: table, actions: ["Name", "Country", "Type", "Location", "Manager", "Contracts", "Status", "Actions"] }
-  - { name: "Pagination", kind: nav, actions: ["Page 1", "Page 2", "Page 3"] }
+  - { name: "Row actions menu", kind: button, actions: ["View Profile", "View Contract"] }
+  - { name: "Pagination", kind: nav, actions: ["Previous", "1", "2", "3", "Next", "7 per page"] }
 states: [populated]
 value_tier: high
 audiences: [service_provider, direct_employer]
 capture:
-  text: text/team-roster.txt
-  dom: dom/team-roster.html
-  a11y: a11y/team-roster.yaml
-  screenshot: screenshots/team-roster.png
+  text: capture-output-topup/text/007.txt
+  a11y: capture-output-topup/a11y/007.yaml
 tags: [team, roster, directory, workforce, multi-country, eor, contractor, export, status]
 ---
 
-<!-- Cataloged from a screenshot to close the Team-roster gap; enrich when the
-     top-up walk captures the full artifacts (all 3 pages + filter options). -->
-
 ## What this screen is
 The Team roster — a searchable, filterable directory of the client's entire workforce
-(here 20 workers) spanning countries and engagement types, with per-worker status and a
-drilldown into each profile.
+(here **TOTAL WORKERS: 20**) spanning countries and engagement types, paginated 7 per page
+across 3 pages, with per-worker status and a drilldown into each profile.
 
 ## Capabilities shown
-- One roster across **all engagement types side by side** — EOR, Contractor, Contractor+
-- **Multi-country** at a glance (country flags: US, UK, Canada, Mexico…)
-- Columns: Name + role, Country, Type, Location, Manager, Contracts count, **Status**
-  (`Active`, `Awaiting Signatures`)
-- **Search**, filters (Countries, Type, Location, Status), **Sort** (e.g. Newest), and **Export**
-- Row **Actions (…)** and click-through to the full worker profile; paginated (20 results)
+- One roster across **four engagement types side by side** — the **Type** filter offers
+  `Contractor`, `Contractor+`, `EOR`, and `Payroll` (all present in the data: e.g. Yasmin
+  Moore is Contractor, Alex Demo Worker is EOR, Yasmin Hunt is Contractor+, Jane Employee is
+  Payroll)
+- **Multi-country** in one directory — the **Countries** filter lists `Canada`, `Egypt`,
+  `Mexico`, `Philippines`, `United Kingdom`, `United States`
+- Columns: **Name** + job title, **Country**, **Type**, **Location**, **Manager**,
+  **Contracts** count, **Status**, **Actions**
+- **Status** spans the full worker lifecycle — the filter exposes `On Hold`, `Draft`,
+  `Offer Draft`, `Offer Sent`, `Offer Accepted`, `Awaiting Signatures`, `Agreement Draft`,
+  `Pending Release`, `Active`, `Offboarded`, `Offboard In Progress` (roster here shows
+  mostly `Active` with several `Awaiting Signatures`)
+- **Search**, an **All Workers** picker (jump straight to a named worker), **Sort**
+  (`Newest`, `Oldest`, `A - Z`, `Z - A`), and one-click **Export**
+- Row **Actions (…)** menu → `View Profile` / `View Contract`, plus click-through to the
+  full worker profile
 
 ## Value narrative (product-led, not discovery)
 
 ### For service providers
-- A client's whole global workforce in one directory — EOR and contractors together — so
-  you manage the entire book from a single list instead of country-by-country tools.
-- Status column surfaces who's `Active` vs `Awaiting Signatures`, and Export turns the
-  roster into a client-ready report in one click.
+- A client's whole global workforce in one directory — Contractor, Contractor+, EOR, and
+  Payroll together — so you manage the entire book from a single list instead of stitching
+  country-by-country tools.
+- The Status filter tracks every worker from `Offer Sent` through `Awaiting Signatures` to
+  `Active` and on to `Offboarded`, so onboarding progress across the book is one filter away,
+  and Export turns the roster into a client-ready report in one click.
 
 ### For direct employers
-- Your entire distributed team on one screen: who they are, what country, which engagement,
-  who manages them, and whether they're fully onboarded — filterable and exportable.
-- No separate system per country — one roster, every worker, every border.
+- Your entire distributed team on one screen: who they are, what country, which engagement
+  type, who manages them, and exactly where they sit in the onboarding lifecycle — all
+  filterable and exportable.
+- No separate system per country — one roster spanning the US, UK, Canada, Mexico, Egypt,
+  and the Philippines, every worker, every border.
 
 ## Branching
-- **If** the prospect has a **mixed workforce** (employees + contractors) **then** point at
-  the Type column showing EOR, Contractor, and Contractor+ in one unified roster.
-- **If** cross-country **visibility** is the concern **then** use the Countries filter and the
-  flag column to show the global spread, then Export.
+- **If** the prospect has a **mixed workforce** **then** open the **Type** filter to show
+  Contractor, Contractor+, EOR, and Payroll coexisting in one unified roster.
+- **If** cross-country **visibility** is the concern **then** open the **Countries** filter
+  to show the six-country spread, then Export.
+- **If** **onboarding / lifecycle tracking** is the hot button **then** open the **Status**
+  filter and walk the full progression from `Offer Draft` to `Active` to `Offboarded`.
 
 ## Say-this (talk track)
-> "This is your entire global team in one list — every worker, every country, whether they're
-> EOR, a contractor, or contractor-plus, with their manager and status right there. Filter by
-> country or type, and export it in a single click. There's no separate system per country —
-> it's one roster for your whole global workforce."
+> "This is your entire global team in one list — twenty workers here across the US, UK,
+> Canada, Mexico, Egypt, and the Philippines, whether they're EOR, a contractor,
+> contractor-plus, or on payroll, with their manager and status right there. Filter by
+> country, type, or status — you can pull up everyone who's still awaiting signatures versus
+> everyone active — sort it, and export it in a single click. There's no separate system per
+> country; it's one roster for your whole global workforce."

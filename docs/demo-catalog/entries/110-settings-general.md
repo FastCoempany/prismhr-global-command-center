@@ -16,40 +16,58 @@ elements:
   - { name: "Account overview", kind: card, actions: ["Copy email to clipboard"] }
   - { name: "Entity Details form", kind: field, actions: ["Name", "Tax ID Number", "Address 1", "Address 2", "City", "Postal Code", "State"] }
   - { name: "Entity Type selector", kind: field, actions: ["LLC", "S-corp", "C-corp", "Sole Proprietorship", "LTD", "unknown"] }
-  - { name: "Country selector", kind: field, actions: ["150+ countries and regions"] }
+  - { name: "Country selector", kind: field, actions: ["130+ countries and sub-national regions"] }
   - { name: "Billing Contact Info", kind: field, actions: ["Primary Email", "Add Another Email"] }
   - { name: "Update", kind: button, actions: ["Update"] }
 states: [populated]
 value_tier: low
 audiences: [service_provider, direct_employer]
 capture:
-  text: text/305.txt
-  dom: dom/305.html
-  a11y: a11y/305.yaml
-  screenshot: screenshots/305.png
+  text: capture-output-topup/text/053.txt
+  a11y: capture-output-topup/a11y/053.yaml
 tags: [settings, account, entity, billing, admin]
 ---
 
 ## What this screen is
-The General settings tab showing account overview details plus editable entity and billing-contact information for the client.
+The General settings tab for the client (here "Antaeus Service Provider - Main Client"),
+showing a read-only account overview plus editable legal-entity and billing-contact forms.
 
 ## Capabilities shown
-- Read-only account **Overview**: Account Owner's Name, Email (with copy-to-clipboard), Client ID
-- **Entity Details** form: Name, Entity Type (LLC / S-corp / C-corp / Sole Proprietorship / LTD / unknown), Tax ID Number, full address, and a Country selector spanning 150+ countries and regions
-- **Billing Contact Info**: primary invoice email plus Add Another Email
-- Settings sub-navigation to Users, Roles and Permissions, Approval Workflows, Assignments
+- Read-only account **Overview** ("General information about your account"): Account Owner's
+  Name (`Demo Admin`), Email (`antaeus.coe@prismhr.com`, copy-to-clipboard), and Client ID
+  (`10500048`)
+- **Entity Details** form: Name, **Entity Type** (`Select` / `LLC` / `S-corp` / `C-corp` /
+  `Sole Proprietorship` / `LTD` / `unknown`), Tax ID Number, Address 1, Address 2, City,
+  Postal Code, State, and a **Country** selector
+- **Country** selector spans ~130 countries and sub-national regions — including
+  state/province granularity for Australia (New South Wales, Queensland, South Australia,
+  Victoria, Western Australia), Canada (Alberta, BC, Ontario, Quebec, Manitoba, Nova Scotia,
+  and more), China (Shanghai, Guangzhou), and Switzerland (Geneva, Zurich)
+- **Billing Contact Info**: "Enter the email address(es) that invoices should be sent to" —
+  a Primary Email plus **Add Another Email**
+- An **Update** button commits the entity/billing edits
+- Settings sub-navigation to **Users**, **Roles and Permissions**, **Approval Workflows**,
+  **Assignments**
 
 ## Value narrative (product-led, not discovery)
 
 ### For service providers
-- Client entity and billing configuration lives in the same platform as operations, so onboarding a new client's legal details is self-contained.
+- A new client's legal identity — entity type, tax ID, registered address, country — and its
+  invoice-routing emails live in the same platform as operations, so client onboarding is
+  self-contained rather than tracked off-system.
 
 ### For direct employers
-- One place to keep your legal entity and invoice-routing details current, with country coverage broad enough for wherever your entity sits.
+- One place to keep your legal entity and invoice recipients current, with a Country list
+  granular enough (down to state/province) to match wherever your entity is actually
+  registered.
 
 ## Branching
-- **If** the account setup / legal-entity story is relevant **then** show the breadth of the Entity Type and Country selectors.
+- **If** the account setup / legal-entity story is relevant **then** open the **Entity Type**
+  and **Country** selectors to show the breadth, including the sub-national regions.
 - **Else** treat this as a completeness screen and move on to Users or Roles.
 
 ## Say-this (talk track)
-> "This is your account's home base — who owns it, your client ID, your legal entity and where invoices go. It's the plumbing; the interesting control lives in the next tabs, Users and Roles."
+> "This is your account's home base — the owner, your Client ID, your legal entity, and where
+> invoices go. Entity type, tax ID, registered address right down to the state or province,
+> and as many billing emails as you need. It's the plumbing; the interesting control lives in
+> the next tabs, Users and Roles."
