@@ -751,3 +751,81 @@ model HmlClassification {
   @@index([internalUnknownId])
   @@index([classification])
 }
+
+// --- Demo Sidekick -----------------------------------------------------------
+// Account-based demo companion. Catalog screens live in the app bundle
+// (src/lib/catalog); only per-account mutable state is persisted here.
+
+enum DemoAudience {
+  BOTH
+  SERVICE_PROVIDER
+  DIRECT_EMPLOYER
+}
+
+model DemoAccount {
+  id              String       @id @default(cuid())
+  name            String
+  company         String?
+  personaLabel    String?
+  defaultAudience DemoAudience @default(BOTH)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  notes     DemoNote[]
+  pins      DemoPin[]
+  playbooks DemoPlaybook[]
+
+  @@index([name])
+}
+
+model DemoNote {
+  id        String   @id @default(cuid())
+  accountId String
+  screenId  String
+  body      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  account DemoAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@unique([accountId, screenId])
+  @@index([accountId])
+}
+
+model DemoPin {
+  id        String   @id @default(cuid())
+  accountId String
+  screenId  String
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  account DemoAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@unique([accountId, screenId])
+  @@index([accountId])
+}
+
+model DemoPlaybook {
+  id        String   @id @default(cuid())
+  accountId String
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  account DemoAccount        @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  items   DemoPlaybookItem[]
+
+  @@index([accountId])
+}
+
+model DemoPlaybookItem {
+  id         String   @id @default(cuid())
+  playbookId String
+  screenId   String
+  position   Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  playbook DemoPlaybook @relation(fields: [playbookId], references: [id], onDelete: Cascade)
+
+  @@index([playbookId])
+}
