@@ -12,7 +12,7 @@
     "status": { "enum": ["captured", "classified", "scripted"] },
     "type": { "enum": ["page", "tab", "drilldown", "modal", "overlay", "table", "field", "button"] },
     "module": {
-      "enum": ["dashboard", "new-hire", "onboarding", "team", "invoices", "time-off", "time-tracking", "reimbursements", "reports", "tools-resources", "settings", "support-cases"]
+      "enum": ["dashboard", "new-hire", "onboarding", "team", "invoices", "time-off", "time-tracking", "reimbursements", "reports", "tools-resources", "settings", "support-cases", "worker-portal"]
     },
     "nav_path": { "type": "array", "items": { "type": "string" }, "minItems": 1, "description": "Breadcrumb from login to this node." },
     "parent": { "type": ["string", "null"], "description": "Parent entry id, or null for a top-level node." },

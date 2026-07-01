@@ -17,6 +17,7 @@ modules:
   - key: tools-resources
   - key: settings
   - key: support-cases
+  - key: worker-portal   # employee-facing self-service ("Switch to Worker")
 
 # What kind of node an entry represents.
 types:
