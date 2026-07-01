@@ -41,22 +41,20 @@ for a selected period.
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
-- Organization-wide payroll drops straight into accounting: pre-coded to a chart of accounts,
-  per country, in local currency — the same GL format used across the EOR suite.
-- One consistent ledger export whether the worker is EOR or on the client's own payroll.
+### For the PEO partner (channel)
+- Organization-wide payroll drops straight into accounting: pre-coded to a chart of accounts — Gross Wages `1000`, One-Time Payment `3000`, Reimbursements `4000`, Employer Taxes & Contributions `5000` — per country, in local currency, the same GL format used across the EOR suite, with no build on your side.
+- One consistent ledger export whether the worker is EOR or on the client's own payroll, so the accounting story you resell holds across a client's whole book.
+- A ledger-ready file per client is the clean, defensible output that makes you the trusted extension of their finance operation.
 
-### For direct employers
-- Finance gets a ledger-ready breakdown mapped to your chart of accounts, employer taxes and
-  contributions included, for the whole organization — no rework to post it.
+### For the SMB client (via their PEO)
+- Finance gets a ledger-ready breakdown mapped to your chart of accounts, employer taxes and contributions included, for the whole organization — no rework to post it and **no finance ops for you to build**.
+- Per-worker rows roll into a per-country **Total** that includes employer taxes (e.g. Ximena Fisher `£145,043.27` wages → `£211,763.32` total with `£66,720.05` employer taxes), each in native currency — **EGP**, **GBP**, **USD**.
+- It's the same accounting hand-off your PEO gives you domestically, now covering every country and currency you employ in.
 
 ## Branching
-- **If** month-end close or accounting integration is the theme **then** anchor here and point
-  at the GL codes in the headers.
-- **If** the audience thinks org-wide rather than EOR-only **then** demo here; the format
-  matches `/reports/eor/general-ledger`.
+- **If** month-end close or accounting integration is the theme **then** anchor here and point at the GL codes (`1000`, `3000`, `4000`, `5000`) in the headers.
+- **If** the audience thinks org-wide rather than EOR-only **then** demo here; the format matches `/reports/eor/general-ledger`.
+- **If** multi-currency is the concern **then** show the per-country totals in **EGP / GBP / USD**.
 
 ## Say-this (talk track)
-> "This is the accounting view of your whole payroll — every line coded to a chart-of-accounts
-> number, employer taxes and contributions included, grouped by country and in local currency.
-> Export it and it posts."
+> "This is the accounting view of your whole payroll — every line coded to a chart-of-accounts number, employer taxes and contributions included, grouped by country and in local currency. Export it and it posts, with nothing for you to set up. It's the clean ledger hand-off your PEO gives you domestically, now global."

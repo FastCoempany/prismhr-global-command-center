@@ -39,23 +39,20 @@ country, for a selected period.
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
-- The same gross-to-net breakdown available for EOR is available org-wide — one consistent
-  report shape whether the worker is EOR or on the client's own payroll.
-- Multi-currency, multi-country pay reads in one report you can export per client.
+### For the PEO partner (channel)
+- The same gross-to-net breakdown available for EOR is available org-wide — one consistent report shape whether the worker is EOR or on the client's own payroll, and nothing for you to build.
+- Multi-currency, multi-country pay reads in one exportable report per client, so cross-border net pay is a clean number you can stand behind.
+- Consistent output across EOR and org-wide payroll makes the global offering an easy, trustworthy extension to resell inside the PrismHR ecosystem.
 
-### For direct employers
-- Every employee's full pay story — gross to net, in their own currency — for the whole
-  organization, in one exportable report.
-- No stitching together payroll runs from different countries to see net pay.
+### For the SMB client (via their PEO)
+- Every employee's full pay story — **Gross Wages → Bonus → Recurring → One-Time → Reimbursements → Gross Total → Taxes & Contributions → Net** — for the whole organization, in one exportable report, **without building finance ops**.
+- Native local currency per market — **EGP**, **GBP**, **USD** — shown side by side, with per-country **Total** rows, so no stitching payroll runs from different countries to see net pay.
+- It's the same trusted pay reporting your PEO gives you domestically, now spanning every country and currency you operate in.
 
 ## Branching
-- **If** the audience thinks org-wide rather than EOR-only **then** demo here; the report shape
-  is identical to `/reports/eor/gross-to-net`.
-- **If** multi-currency operations are the hot button **then** point at the EGP / GBP / USD
-  totals shown natively per country.
+- **If** the audience thinks org-wide rather than EOR-only **then** demo here; the report shape is identical to `/reports/eor/gross-to-net`.
+- **If** multi-currency operations are the hot button **then** point at the **EGP / GBP / USD** totals shown natively per country (Egypt, United Kingdom, United States).
+- **If** the client cares about a specific market **then** use the **Countries** filter before exporting.
 
 ## Say-this (talk track)
-> "At the organization level you get the same gross-to-net report — every employee walked from
-> gross wages to net, grouped by country and shown in local currency. Pick your period, filter,
-> and export."
+> "At the organization level you get the same gross-to-net report — every employee walked from gross wages to net, grouped by country and shown in local currency, EGP, GBP, USD, side by side. You didn't build any of it; it's the same pay reporting your PEO gives you domestically, now global. Pick your period, filter, and export."

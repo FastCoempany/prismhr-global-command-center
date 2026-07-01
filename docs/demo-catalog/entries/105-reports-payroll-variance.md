@@ -41,24 +41,20 @@ The capture compares **June 2026 to May 2026**.
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
-- Every pay period is automatically checked against the last — anomalies, spikes, and drops
-  surface across the whole multi-country book before they reach a client, per worker and per
-  country.
-- A built-in control you can run for every client, not a spreadsheet you rebuild each month.
+### For the PEO partner (channel)
+- Every pay period is automatically checked against the last — anomalies, spikes, and drops surface across a client's whole multi-country book, per worker and per country, before they reach the client, with no build on your side.
+- A built-in control you can run for every client each month, not a spreadsheet you rebuild — clean variance you can stand behind with clients.
+- Catching a shift and explaining it on the client's behalf is exactly the trusted, done-for-you value that keeps them in your ecosystem.
 
-### For direct employers
-- Month-over-month payroll change is visible per employee and per country in one report — a
-  fast way to catch mistakes or explain shifts before finance signs off.
-- Current vs previous totals sit side by side in local currency, no manual comparison.
+### For the SMB client (via their PEO)
+- Month-over-month payroll change is visible per employee and per country in one report — a fast way to catch a mistake or explain a shift before finance signs off, **without building any reconciliation of your own**.
+- Current **Total** and **Previous Month Total** sit side by side in native currency — **EGP**, **GBP**, **USD** — with no manual comparison (e.g. Jane Employee `$3,641.94` this month vs `$4,583.82` previous).
+- It's the same payroll safety net your PEO gives you domestically, now watching your global payroll across every country and currency.
 
 ## Branching
-- **If** finance/audit rigor or payroll controls are the theme **then** anchor here and point at
-  a worker whose Total differs from Previous Month Total.
-- **If** the audience runs many entities or currencies **then** show how variance rolls up per
-  country in native currency.
+- **If** finance/audit rigor or payroll controls are the theme **then** anchor here and point at a worker whose **Total** differs from **Previous Month Total**.
+- **If** the audience runs many entities or currencies **then** show how variance rolls up per country in native currency (**EGP / GBP / USD**).
+- **If** the client fears global will be hard to control **then** frame this as the automatic month-over-month check they get for free.
 
 ## Say-this (talk track)
-> "This compares this period to the last one automatically — here, June against May — for every
-> worker and every country. Current total next to previous total, in local currency, so a spike
-> or a drop jumps out before it becomes a problem."
+> "This compares this period to the last one automatically — here, June against May — for every worker and every country. Current total next to previous total, in local currency, so a spike or a drop jumps out before it becomes a problem. You didn't set any of it up; it's the same safety net your PEO gives you domestically, now on your global payroll."
