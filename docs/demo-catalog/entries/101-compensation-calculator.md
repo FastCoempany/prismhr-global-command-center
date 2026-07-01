@@ -38,18 +38,18 @@ A calculator that estimates the total employer cost and the employee's net take-
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
-- A concrete pre-sales asset: model the fully-loaded cost of a hire in any of 70+ countries in local currency, live, in the same platform you'd operate the hire from.
-- The split of employer contributions vs. employee deductions makes the true cost of global expansion tangible, which is exactly the number that moves a deal.
+### For the PEO partner (channel)
+- A client-facing pre-sales asset you can put in front of your SMB book: model the fully-loaded cost of a hire in any of 70+ countries, in local currency, live — an instant, credible answer that turns a "should we go global?" conversation into a lead.
+- The **Employer pays** vs. **Employee gets** split makes global expansion tangible with zero build on your side — PrismHR Global already owns the in-country rates, so you look like the hero who made the cost question easy.
 
-### For direct employers
-- Before you commit to a hire, you see the total employer cost and the candidate's net pay side by side, in the local currency, with in-country contributions and deductions already applied.
-- No guesswork on statutory on-costs — the calculator encodes the country-specific rates so budgeting a cross-border role is a two-minute exercise.
+### For the SMB client (via their PEO)
+- Before you commit to a hire, you get an instant "what will this hire actually cost" answer — **Total Employer Cost** (e.g. `129,670.2 CAD`) and the employee's **Net salary** (e.g. `86,138.88 CAD`) side by side, in local currency, with in-country contributions and deductions already applied.
+- No legal team, no entity, no statutory-oncost guesswork — the calculator encodes each country's rates, so budgeting your first international role (or your fiftieth) is a two-minute exercise on the platform you already trust.
 
 ## Branching
-- **If** the prospect is weighing which country to hire in **then** run the same salary through two countries (e.g. Canada vs. Argentina) to show the cost delta.
-- **If** the audience cares about candidate experience / offers **then** emphasize the "Employee gets" net-pay side.
-- **If** they operate multi-region within a country **then** show the state/region selector (e.g. Canada → British Columbia).
+- **If** the client is weighing which country to hire in **then** run the same gross salary through two countries (e.g. **Canada** vs. **Argentina**) to show the **Total Employer Cost** delta.
+- **If** the conversation is about the offer / candidate experience **then** emphasize the **Employee gets** net-pay side.
+- **If** they hire across regions within a country **then** show the optional **State / Region** selector (e.g. Canada → **British Columbia**).
 
 ## Say-this (talk track)
-> "Say you're thinking about a hire in Canada at 120,000 a year. One click and here's the whole picture — your total employer cost with contributions is about 129,670 CAD, and your employee takes home roughly 86,000 after deductions. Change the country and the math changes with it, in local currency. That's the real cost of going global, before you've signed a thing."
+> "Here's the tool your PEO can hand you before you commit to anything. Say you're thinking about a hire in Canada at 120,000 a year — one click on **Calculate** and here's the whole picture: your total employer cost with contributions is about `129,670 CAD`, and your employee takes home roughly `86,000` after deductions. Change the country and the math changes with it, in local currency. That's the real cost of going global, answered in two minutes, before you've signed a thing — no entity, no lawyers."

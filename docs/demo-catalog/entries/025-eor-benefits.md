@@ -43,25 +43,28 @@ three priced tiers.
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
-- Supplemental benefits are a packaged, priced add-on you can attach to any global hire in one
-  click — a resellable line item, not a plan you have to source or administer.
-- Transparent monthly pricing per tier lets you position benefits to clients on the spot.
+### For the PEO partner (channel)
+- Supplemental benefits are a packaged, priced add-on attached to any global hire in one click —
+  a value-add your clients get through you, not a plan you source or administer.
+- Transparent per-tier monthly pricing (`$130`, `$210`, `$260`) lets the global offering be
+  positioned to clients on the spot, reinforcing that you extend real benefits into global with
+  zero build.
 
-### For direct employers
-- Competitive private coverage (medical, dental, vision, maternity) is available as three clear
-  tiers with upfront pricing — you enrich a cross-border offer without a broker.
-- Choosing a tier is optional and reversible in-flow, so benefits are a decision you make at
-  offer time, not a separate procurement.
+### For the SMB client (via their PEO)
+- Competitive private coverage (medical, dental, vision, maternity) comes as three clear tiers —
+  `Standard`, `Premium`, `Premium + Maternity` — with upfront pricing, so you enrich a
+  cross-border offer without a broker.
+- Choosing a tier is optional (`Yes` / `No`) and reversible in-flow, so benefits are a decision
+  you make at offer time, not a separate procurement project.
 
 ## Branching
-- **If** the audience competes on benefits **then** walk the three tiers and land on Premium +
-  Maternity to show breadth (maternity and newborn cover).
-- **If** cost control is the theme **then** show the transparent per-tier monthly pricing and
-  the Optional Yes/No toggle.
+- **If** the client competes on benefits **then** walk the three tiers and land on `Premium +
+  Maternity` to show breadth (`Maternity and Newborn Cover`).
+- **If** cost control is the theme **then** show the transparent per-tier monthly pricing and the
+  optional `Yes` / `No` toggle.
 
 ## Say-this (talk track)
 > "Benefits are optional and packaged. Three tiers — Standard at a hundred thirty a month,
 > Premium at two-ten, Premium plus Maternity at two-sixty — each with clear coverage and pricing
-> right here. One click adds real private medical, dental, and vision to the offer. No broker,
-> no separate plan to stand up."
+> right here. One click adds real private medical, dental, and vision to your client's offer. No
+> broker, no separate plan to stand up — it's another thing they get through you, ready to go."

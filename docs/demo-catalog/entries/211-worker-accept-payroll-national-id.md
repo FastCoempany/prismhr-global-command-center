@@ -31,25 +31,26 @@ tags: [worker-portal, onboarding, accept-payroll, identification, compliance, ky
 Step 03 (Identification) of the new worker's onboarding-acceptance flow, where the hire supplies a national ID number and uploads front and back images of an accepted identity document to satisfy compliance.
 
 ## Capabilities shown
-- National ID number capture plus front/back document upload (PDF, PNG, JPG up to 10MB)
-- Multiple accepted ID types spelled out for the worker (Driver's License, Passport, National ID Card)
-- Required-field validation ("Front image of ID card is required") and per-file confirmation ("ID Front uploaded successfully")
-- Uploaded-file management (Remove | View) before submission
-- A final Submit that completes the acceptance flow
+- `National ID Number` capture plus front/back document upload (`PDF,PNG,JPG up to 10MB`)
+- Multiple accepted ID types spelled out for the worker (`Driver's License`, `Passport`, `National ID Card`)
+- Required-field validation (`Front image of ID card is required`) and per-file confirmation (`ID Front uploaded successfully`)
+- Uploaded-file management (`Remove | View`) before submission
+- Framed to the worker as regulatory compliance (`We require some essential documents to comply with regulations…`) with a final `Submit` completing the acceptance flow
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
-- The compliance step your clients' employees get is worker-driven document collection — the hire uploads their own ID against clear requirements, so you gather the identity paperwork every country demands without manual back-and-forth.
-- Framed as regulatory compliance and guided by accepted-document lists and validation, the step lands the same way for any client's workforce.
+### For the PEO partner (channel)
+- The compliance step your clients' overseas hires get is worker-driven document collection — the hire uploads their own ID against clear requirements — so clients gather the identity paperwork every country demands with zero manual back-and-forth and zero build on their side.
+- Guided by accepted-document lists and validation, the step lands the same way for any client's workforce, keeping the compliant experience consistent as you extend global to your book.
 
-### For direct employers
-- Your new hire submits their own identity documents against a clear checklist, with upload confirmation and validation, so you're not emailing to collect and chase ID files.
-- Front/back capture and file management put the compliance burden on a guided self-serve step rather than your HR team.
+### For the SMB client (via their PEO)
+- Your new overseas hire submits their own identity documents against a clear checklist, with upload confirmation and validation, so the SMB isn't emailing to collect and chase ID files.
+- Front/back capture and file management put the compliance burden on a guided self-serve step, the trusted, done-for-you safety net your PEO gives you domestically, now for a global hire.
 
 ## Branching
 - **If** the buyer operates in ID/KYC-heavy jurisdictions **then** emphasize worker-driven document collection with accepted-type guidance and validation.
-- **If** onboarding friction is the concern **then** point to the upload confirmation and remove/view controls that make the worker's step self-correcting.
+- **If** onboarding friction is the concern **then** point to the `ID Front uploaded successfully` confirmation and `Remove | View` controls that make the worker's step self-correcting.
+- **If** the SMB worries about compliance exposure **then** frame the guided regulatory step as the safety net handled for them.
 
 ## Say-this (talk track)
-> "The last step is compliance. The worker enters their ID number and uploads the front and back themselves — we tell them exactly what documents we accept, validate that both sides are there, and confirm each upload. So the identity paperwork every country requires gets collected by the worker, correctly, without your team chasing files."
+> "The last step is compliance. The worker enters their ID number and uploads the front and back themselves — we tell them exactly what documents we accept, validate that both sides are there, and confirm each upload. So the identity paperwork every country requires gets collected correctly, without the SMB chasing files. For you, that's a compliant, guided step baked into the offering you resell — a safety net your clients trust."

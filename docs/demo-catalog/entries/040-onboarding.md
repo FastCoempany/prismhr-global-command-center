@@ -52,18 +52,22 @@ country, engagement type, and current onboarding stage.
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
-- Every client's global hires — contractors, EOR employees, and local payroll —
-  move through one pipeline, so you run onboarding as a single motion regardless of
-  engagement model or country.
-- The tab filter lets you slice by worker type instantly, so you can operate a mixed
-  book (a Contractor+ in Mexico next to an EOR hire in Singapore) without leaving the view.
+### For the PEO partner (channel)
+- Every client's global hires — Contractor, Contractor+, EOR, and Payroll — move through
+  one pipeline across every country, so you can promote a single onboarding motion regardless
+  of engagement model, and PrismHR delivers the compliance behind each one.
+- The worker-type tabs let you or your client slice a mixed book instantly (a **Contractor+**
+  in Mexico next to an **Employer of Record** hire in Singapore), so extending clients into
+  global is a filter, not a new system to build or staff.
 
-### For direct employers
-- New hires in the UK, Mexico, Singapore, Uganda, and beyond sit in one list with a
-  clear stage on each — you always know exactly what's blocking a start date.
-- Actions are stage-aware: the system tells you whether to Continue a draft, invite,
-  or Send Reminder, so nothing stalls waiting on you to figure out the next step.
+### For the SMB client (via their PEO)
+- New hires in the UK, Mexico, Singapore, Uganda, Uzbekistan, and beyond sit in one list with a
+  clear stage on each — **In Draft**, **Employee Invited**, **Awaiting Offer Letter**,
+  **Awaiting Worker Signature** — so you always know what's blocking a start date without an
+  entity or a legal team in any of those countries.
+- Actions are stage-aware: the system tells you whether to **Continue** a draft, **View Worker**,
+  or **Send Reminder**, so the same trusted safety net your PEO gives you domestically keeps every
+  global hire moving with nothing stalled on you.
 
 ## Branching
 - **If** the audience is contractor-heavy **then** filter to the **Contractor** /

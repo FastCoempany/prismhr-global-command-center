@@ -29,24 +29,25 @@ tags: [worker-portal, onboarding, accept-payroll, address, global-coverage, empl
 Step 02 (Address) of the new worker's onboarding-acceptance flow, where the hire enters their legal residence address and selects their country from the platform's global list.
 
 ## Capabilities shown
-- Structured legal-residence capture (street 1/2, city, state/province, zip/postal, country)
-- A broad country selector spanning the platform's global coverage, including regional sub-entries (e.g. Australia, Canada, China, Switzerland states/provinces)
-- Worker-driven, guided address entry sandwiched between Personal Information and Identification
-- Back/Next navigation letting the worker move through the stepper at their own pace
+- Structured legal-residence capture (`Street Address 1/2`, `City`, `State / Province`, `Zip / Postal Code`, `Country`), prompted with `Use your legal residence address.`
+- A broad `Country` selector spanning the platform's global coverage (Albania through Zimbabwe), including regional sub-entries (e.g. `Australia - Victoria`, `Canada - Ontario`, `China - Shanghai`, `Switzerland - Zurich`)
+- Worker-driven, guided address entry sandwiched between `Personal Information` and `Identification`
+- `Back`/`Next` navigation letting the worker move through the stepper at their own pace
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
-- The address step your clients' employees get reflects the platform's global reach — the worker picks from a country list covering the markets you can sell into, including sub-regional payroll jurisdictions.
-- Structured address capture keeps the residence data consistent across every client's workforce.
+### For the PEO partner (channel)
+- The address step your clients' overseas hires get reflects the platform's global reach — the worker picks from a country list covering the markets you can extend clients into, including sub-regional payroll jurisdictions — proof the global offering you resell is genuinely worldwide with no build.
+- Structured address capture keeps residence data consistent across every client's workforce, so the same guided step works whoever the client is.
 
-### For direct employers
-- Your new hire enters their own legal address against a global list that already knows the regional distinctions (state, province) that drive local compliance.
-- The address the worker self-enters flows into their record, so cross-border hires are captured accurately without your team formatting foreign addresses.
+### For the SMB client (via their PEO)
+- Your new overseas hire enters their own legal address against a global list that already knows the regional distinctions (state, province) that drive local compliance, so the SMB isn't formatting foreign addresses.
+- The address the worker self-enters flows into their record, so cross-border hires are captured accurately as a done-for-you step rather than SMB effort.
 
 ## Branching
 - **If** the buyer hires into many countries **then** emphasize the breadth of the country list and its regional sub-entries as proof of global coverage.
-- **If** local compliance is the hot button **then** point to state/province granularity (Canada, Australia, Switzerland) that address entry captures up front.
+- **If** local compliance is the hot button **then** point to state/province granularity (`Canada`, `Australia`, `Switzerland`) captured up front.
+- **If** the SMB is small or first-hire **then** stress the worker self-enters accurately with no address handling required from the SMB.
 
 ## Say-this (talk track)
-> "Step two is the worker's legal address. They pick from a country list that spans everywhere the platform operates — right down to the provinces and states that change how payroll and compliance work locally. The worker captures their own address accurately, so a cross-border hire is recorded correctly from the start."
+> "Step two is the worker's legal address. They pick from a country list that spans everywhere the platform operates — right down to the provinces and states that change how payroll and compliance work locally. The worker captures their own address accurately, so your SMB client's cross-border hire is recorded correctly from the start without anyone formatting a foreign address. For you, that breadth is proof the global offering you're extending is truly worldwide."

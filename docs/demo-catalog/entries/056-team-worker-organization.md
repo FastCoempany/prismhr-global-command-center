@@ -26,39 +26,44 @@ tags: [team, worker-profile, organization, assignments, reporting-line, org-stru
 ---
 
 ## What this screen is
-The Assignments tab (Organization) of a worker's profile: a visual org structure showing
-the divisions, departments, and sub-departments assigned to the worker, with views for
-structure, assignments, and reporting line.
+The **Assignments** tab (Organization) of a worker's profile (here **Paul Davis**): a visual
+org structure showing the divisions, departments, and sub-departments assigned to the worker,
+with views for structure, assignments, and reporting line.
 
 ## Capabilities shown
 - Three views: **Organization Structure**, **Assignments**, and **Reporting Line**
-- Interactive **org graph** with categories highlighted for this worker
-  (Engineering Division / Backend Development, Product Division / Product Design)
-- Category tiers: **DIVISION, DEPARTMENT, SUB_DEPARTMENT**
+- Interactive **org graph** with the categories assigned to this worker highlighted
+  (`Engineering Division` / `Backend Development`, `Product Division` / `Product Design`)
+- Category tiers: `DIVISION`, `DEPARTMENT`, `SUB_DEPARTMENT`
 - **Create assignment** to attach the worker to org categories
-- Pan/zoom canvas ("Drag to pan · Scroll to zoom")
+- Pan/zoom canvas (`Drag to pan · Scroll to zoom`)
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
-- Each worker can be placed into a client's org structure — divisions, departments,
-  reporting lines — so you can model and report on a client's organization inside the
-  same platform that runs their pay.
-- The assignments and reporting-line views mean org context travels with the worker
-  record, not in a separate HRIS.
+### For the PEO partner (channel)
+- Each of your clients' workers can be placed into a real org structure — divisions,
+  departments, reporting lines — so you can offer full org modeling and reporting inside the
+  **same platform that runs their global pay**, with nothing to build.
+- Because assignments and reporting line live on the worker record, org context travels with
+  the person, so your clients aren't pushed into a separate HRIS to see how their team is structured.
 
-### For direct employers
-- You can see and set where a global team member sits in your organization and who they
-  report to, so structure isn't lost just because someone is employed across a border.
-- The visual graph makes the worker's place in the org immediately legible.
+### For the SMB client (via their PEO)
+- You can see and set where a global team member sits in your organization and who they report
+  to, so structure isn't lost just because someone is employed across a border.
+- The visual graph makes each person's place in the org immediately legible — the **same
+  clarity you'd expect domestically, extended to your international hires**.
 
 ## Branching
-- **If** the audience cares about org modeling / reporting **then** toggle
-  **Reporting Line** and **Assignments** to show structure travels with the worker.
-- **If** onboarding a new hire **then** show **Create assignment** to place them in the org.
+- **If** the audience cares about org modeling / reporting **then** toggle **Reporting Line**
+  and **Assignments** to show structure travels with the worker record.
+- **If** onboarding a new hire **then** show **Create assignment** to place them into the
+  `DIVISION` / `DEPARTMENT` / `SUB_DEPARTMENT` tiers.
+- **If** scale is the concern **then** pan and zoom the graph to show the same view holds
+  whether the client has a few workers or a large org.
 
 ## Say-this (talk track)
-> "This is where the worker sits in the organization — division, department,
-> sub-department, and their reporting line — as a visual you can pan and zoom. You assign
-> people into the structure right here, so org context lives on the same record that runs
-> their pay."
+> "This is where the worker sits in the organization — division, department, sub-department,
+> and their reporting line — as a visual you can pan and zoom. You assign people into the
+> structure right here, so org context lives on the same record that runs their pay. For your
+> PEO, that means your clients get real org modeling for their global team without adopting a
+> separate HRIS."

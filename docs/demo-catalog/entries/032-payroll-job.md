@@ -44,26 +44,29 @@ description, an optional **direct manager**, and the **employment start date**.
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
-- Manager assignment wires the new hire into the client's existing approval structure —
-  time-off and reimbursement requests route to the right person on day one, no manual
-  routing setup.
-- Seniority is a controlled ladder, so roles stay consistent across the many workers
-  and clients you run.
+### For the PEO partner (channel)
+- Manager assignment wires the new hire into the client's own approval structure — the
+  same manager-approves-requests model your clients already run domestically now extends
+  to their global hire, with no routing setup for you.
+- Seniority is a controlled ladder, so roles stay consistent across every client and
+  every hire you promote PrismHR Global into — low lift, trusted structure.
 
-### For direct employers
-- The direct manager you pick here becomes the approver for that employee's requests, so
-  the org and the workflow are set together in one step.
-- Role, seniority, and start date are captured up front and carry into the review and
-  the signed record.
+### For the SMB client (via their PEO)
+- The direct manager you pick here becomes the approver for that employee's time-off and
+  reimbursement requests, so your org and your workflow are set together in one step —
+  the same simple structure your PEO gives you at home, now for someone abroad.
+- Role, seniority, and start date are captured once and carry straight into review and
+  the signed record — no re-keying, no legal team.
 
 ## Branching
-- **If** approval hierarchy matters **then** open the Assign Manager modal and show the
-  note that the manager approves this employee's time-off and reimbursements.
-- **If** consistency across a large workforce is the point **then** show the fixed
-  seniority ladder.
+- **If** the client cares about approval hierarchy **then** open the **`Assign Manager`**
+  modal and show the note that the manager approves this employee's time-off and
+  reimbursements.
+- **If** consistency across a growing team is the point **then** show the fixed seniority
+  ladder (Junior through C-Level Executive).
 
 ## Say-this (talk track)
 > "Title, seniority off a standard ladder, a quick description, and who they report to.
-> Assigning a manager here isn't cosmetic — that person will approve this employee's
-> time off and reimbursements. Set the start date and we're ready for pay."
+> Assigning a manager here isn't cosmetic — that person will approve this employee's time
+> off and reimbursements, exactly the way your client already runs approvals at home. Set
+> the start date and we're ready for pay."

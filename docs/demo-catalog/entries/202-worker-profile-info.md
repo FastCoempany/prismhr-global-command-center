@@ -45,26 +45,17 @@ and emergency contact fields.
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
-- Workers maintain their own personal and emergency-contact details, so your team isn't
-  re-keying employee data your clients could keep current themselves.
-- One profile ties identity, contracts, banking, security, and org placement together
-  for every worker you administer.
+### For the PEO partner (channel)
+- A worker-owned profile — identity, **Personal Info**, **Emergency Contact Info**, all self-maintained — is a professional experience you can promote to clients, and it means the global offering runs itself rather than adding admin.
+- One profile ties identity, **Contracts**, **Bank & Tax Info**, **Security**, and **Assignments** together for every overseas worker, so the polished experience is consistent across all your PEO clients with zero build.
 
-### For direct employers
-- Employees own their record — address, phone, emergency contact — reducing stale data
-  and HR update tickets.
-- The profile header keeps the essentials (manager, worker ID, position, join date)
-  visible in one place for both the worker and anyone assisting them.
+### For the SMB client (via their PEO)
+- Your international hire keeps their own record current — address, phone, emergency contact — so stale data and update requests don't come back to your team.
+- The profile header keeps the essentials (**Manager**, **Worker ID**, **Position**, **Joined Date**) visible in one place, so the worker self-serves and your SMB never has to build HR operations abroad.
 
 ## Branching
-- **If** data accuracy / self-maintenance is the theme **then** emphasize worker-owned
-  Personal Info and Emergency Contact fields.
-- **If** the buyer wants the full profile story **then** use the tab row to preview
-  Contracts, Bank & Tax, Security, and Assignments.
+- **If** self-maintenance and data accuracy is the theme **then** emphasize worker-owned **Personal Info** and **Emergency Contact Info** the hire keeps current themselves.
+- **If** the client wants the full profile story **then** use the tab row to preview **Contracts**, **Bank & Tax Info**, **Security**, and **Assignments** — everything the worker self-serves in one place.
 
 ## Say-this (talk track)
-> "This is the worker's profile. Their key details — manager, worker ID, position — sit
-> right up top, and they maintain their own personal and emergency-contact information.
-> From these tabs they reach their contracts, banking and tax info, security settings,
-> and where they sit in the org — all in one place."
+> "This is your client's overseas hire's own profile. Their key details — manager, worker ID, position — sit right up top, and they maintain their own personal and emergency-contact information. From these tabs they reach their contracts, banking, security, and where they sit in the org — all self-service. So the SMB gives their international people a clean, done-for-them experience without ever standing up HR operations in another country."

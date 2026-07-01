@@ -32,24 +32,29 @@ worker's contract (shown here in an empty "No Documents Requested" state).
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
-- Compliance documents live on the worker's own record and are tied to that contract, so
-  you can see at a glance whether a given hire has outstanding paperwork.
-- The clear empty state means "nothing owed" reads instantly, keeping document chase-downs
-  targeted only at workers who actually have gaps.
+### For the PEO partner (channel)
+- The compliance paperwork that varies by country is handled inside PrismHR's platform and
+  tied to each contract, so your clients get in-country document requirements managed for
+  them — an offering you extend with zero build.
+- A clear "**No Documents Requested**" state means clients can see at a glance who has
+  outstanding paperwork, so your book stays audit-ready without you tracking it.
 
-### For direct employers
-- Each worker's required documents sit right on their profile alongside pay, contract, and
-  leave — no separate document system to reconcile against the employee.
-- When there's nothing outstanding, the tab says so plainly, so you're not left guessing.
+### For the SMB client (via their PEO)
+- Each worker's required documents sit right on their profile, next to pay, contract, and
+  leave — the same done-for-you compliance your PEO gives you domestically, now for a hire
+  abroad, with no separate document system to reconcile.
+- When there's nothing outstanding, the tab says so plainly ("**No Documents Requested**"),
+  so you're never guessing whether a compliance gap is hiding on a global hire.
 
 ## Branching
 - **If** the audience cares about compliance paperwork **then** open a worker who has
-  requested documents to contrast with this empty state.
-- **If** keeping the tour brief **then** note the tab exists per-worker and move on to
-  Payments or Contracts.
+  requested documents to contrast with this **No Documents Requested** empty state.
+- **If** keeping the tour brief **then** note the **Documents** tab exists per-worker,
+  tied to the contract, and move on to **Payments** or **Contracts**.
 
 ## Say-this (talk track)
 > "Every worker has a Documents tab tied to their contract. This one's clean — 'No
-> Documents Requested' — so you know there's nothing outstanding for this person. When a
-> contract does require paperwork, it surfaces right here on their record."
+> Documents Requested' — so there's nothing outstanding for this person. When a country's
+> rules require paperwork, it surfaces right here on the record. That's the in-country
+> compliance your PEO already handles domestically, now done for your clients abroad —
+> without them owning any of it."

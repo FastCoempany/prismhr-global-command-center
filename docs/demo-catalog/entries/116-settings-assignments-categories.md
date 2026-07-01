@@ -38,15 +38,15 @@ The Categories tab of Assignments, where the organization defines its structural
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
-- Model each client's org structure to their own preference, so reporting and worker grouping reflect how the business is actually organized.
+### For the PEO partner (channel)
+- Each client's org structure is modeled to their own preference, so reporting and worker grouping reflect how the business is actually organized — configurable out of the box, **zero build** to support.
 
-### For direct employers
-- Define your own divisions, departments, and sub-departments and see headcount per node, giving structure to workers for reporting and assignment.
+### For the SMB client (via their PEO)
+- Define your own **DIVISION**, **DEPARTMENT**, and **SUB_DEPARTMENT** and see headcount per node, giving structure to workers for reporting and assignment — simple, and it scales from your first global hire onward.
 
 ## Branching
-- **If** the audience has a complex org **then** show the nested Division → entries structure and Add New Category Type.
+- **If** the audience has a complex org **then** show the nested Division → entries structure (e.g. Engineering Division, Product Division) and **Add New Category Type**.
 - **Else** treat as a completeness screen.
 
 ## Say-this (talk track)
-> "This is where you shape the org to match your business — divisions, departments, sub-departments, however you're structured. Each shows its headcount, and you can add your own category types. It's the backbone for grouping and reporting on your workforce."
+> "This is where you shape the org to match your business — divisions, departments, sub-departments, however you're structured. Each shows its headcount, and you can add your own category types. It's the backbone for grouping and reporting on your workforce, whether that's one person abroad or many."

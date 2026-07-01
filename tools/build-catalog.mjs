@@ -90,8 +90,10 @@ function parse(raw) {
 
   const valueSec = sections['Value narrative (product-led, not discovery)'] || '';
   const subs = valueSec.split(/\n###\s+/);
-  const grab = (label) => {
-    const s = subs.find((x) => x.trim().toLowerCase().startsWith(label));
+  // Accept both the new audience headers and the legacy ones so entries populate
+  // regardless of whether they've been reframed yet.
+  const grab = (labels) => {
+    const s = subs.find((x) => labels.some((l) => x.trim().toLowerCase().startsWith(l)));
     return s ? listItems(s.slice(s.indexOf('\n') + 1)) : [];
   };
 
@@ -120,8 +122,8 @@ function parse(raw) {
     elements: elementsField(fm),
     what,
     capabilities: listItems(sections['Capabilities shown'] || ''),
-    sp: grab('for service providers'),
-    de: grab('for direct employers'),
+    sp: grab(['for the peo partner', 'for service providers']),
+    de: grab(['for the smb client', 'for direct employers']),
     branching: listItems(sections['Branching'] || ''),
     say,
   };

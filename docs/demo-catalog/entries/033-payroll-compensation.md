@@ -60,30 +60,33 @@ hourly, employment type, statutory + additional PTO, and additional payments —
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
+### For the PEO partner (channel)
 - Pay is built in the worker's local currency and confirmed against the payer's currency
-  in one modal — you quote a client's real cost without a spreadsheet or a separate FX
-  lookup.
-- Statutory public holidays for the working country pre-populate and allowances carry a
-  local-tax note, so your team isn't tracking each country's leave and tax treatment by
-  hand.
+  in one modal — your client sees real cost without a spreadsheet or a separate FX lookup,
+  and you never have to build local-currency payroll to offer it.
+- Statutory public holidays for the working country pre-populate and every allowance
+  carries a local-tax note, so the in-country compliance your clients trust you for at
+  home is owned by PrismHR abroad — no country-by-country leave or tax knowledge on your
+  side.
 
-### For direct employers
-- Enter pay the way the employee experiences it — their currency, their statutory
-  holidays — and see what it costs you in your own currency before you commit.
-- Bonuses and allowances each get their own frequency and a local-tax flag, so the full
-  cost of the hire is on the table before the next step.
+### For the SMB client (via their PEO)
+- Enter pay the way the employee actually experiences it — their currency, their
+  statutory holidays — and see what it costs you in your own currency before you commit,
+  so a first overseas hire has no hidden math.
+- Bonuses and allowances each get their own frequency and a local-tax flag, so the
+  fully-loaded cost is on the table up front and the compliance is done for you — no
+  legal team, no guesswork.
 
 ## Branching
 - **If** cross-border cost is the hot button **then** enter the local amount and open the
-  FX confirmation modal (BZD → USD) at today's rate.
+  FX confirmation modal (BZD → USD, ~USD $1,741.86/month) at today's rate.
 - **If** local compliance is the concern **then** highlight the auto-populated statutory
   holidays, the "paid in local currency as required by law" note, and the allowance
   local-tax disclaimer.
 
 ## Say-this (talk track)
 > "Pay is in their local currency — Belize dollars — because that's the law, and their
-> public holidays are already in. Add a bonus or allowance with its own frequency, and
-> note the local-tax flag. Before I lock it, we show what it costs in your currency:
-> about seventeen hundred US dollars a month, at today's rate. Loaded cost, no
-> spreadsheet."
+> public holidays are already in. Your client adds a bonus or allowance with its own
+> frequency, and note the local-tax flag PrismHR handles for them. Before we lock it, we
+> show what it costs in their own currency: about seventeen hundred US dollars a month, at
+> today's rate. Fully-loaded cost, no spreadsheet, no in-country expertise required."

@@ -31,14 +31,14 @@ The read-only detail view for a single role (e.g. Owner), listing every permissi
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
-- Concrete, auditable evidence of exactly what a role grants — the answer to "what can this person do?" without reverse-engineering it.
+### For the PEO partner (channel)
+- Concrete, auditable evidence of exactly what a role grants — the answer to "what can this person do?" without reverse-engineering it, so you can reassure any client with confidence.
 
-### For direct employers
-- Confirms, permission by permission, that a role matches the responsibility you intend to delegate.
+### For the SMB client (via their PEO)
+- Confirms, permission by permission, that a role matches the responsibility you intend to delegate — clear and done-for-you, the same trusted control you expect from your PEO.
 
 ## Branching
-- **If** the audience challenges what a role covers **then** open this view and read down the group that concerns them.
+- **If** the audience challenges what a role covers **then** open this **Has Access** view and read down the group that concerns them.
 - **Else** treat as supporting detail for the Roles screen.
 
 ## Say-this (talk track)

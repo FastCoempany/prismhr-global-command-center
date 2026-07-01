@@ -29,43 +29,31 @@ tags: [new-hire, contractor, compensation, listopay, multi-currency, invoicing, 
 ---
 
 ## What this screen is
-Step 03 of the Contractor wizard: set how the contractor is paid — contract type, frequency,
-pay date, amount and currency — which drives the monthly invoice totals.
+Step 03 of the Contractor wizard: set how the contractor is paid — **Contract type**, **Payment frequency**, pay date, amount, and currency — which "determine the totals generated for your monthly invoices."
 
 ## Capabilities shown
-- **Contract type**: Fixed (a fixed amount each month) or Hourly
-- **Payment frequency**: Monthly, Semi-Monthly, Bi-Weekly
-- **Pay date** option: Last business day of the month (default; "most of your contractors use
-  this") or 5th business day of the month
-- **Contract payment amount** with a currency/country selector (e.g. USD / United States, "Per
-  Month"); amount field validates numeric input
+- **Contract type**: **Fixed** ("Pay contractors a fixed amount each month") or **Hourly**
+- **Payment frequency**: **Monthly**, **Semi-Monthly**, **Bi-Weekly**
+- Pay date option: **Last business day of the month** ("Most of your contractors use this") or **5th business day of the month**
+- **Contract payment amount** with a currency/country selector (e.g. **USD** / **United States**, "Per Month")
 - **Add Additional Payment** for other payments, commissions, or benefits
-- Payment rails: contractors are paid through the **ListoPay** digital wallet ("Global payments
-  made simple with ListoPay"), with a Learn More link
-- Note that these details determine the totals generated for the monthly invoices
+- Global payout through the **ListoPay digital wallet** ("Global payments made simple with ListoPay") with a **Learn More** link
+- Explicit note that these inputs drive the monthly invoice totals
+- Wizard actions: **Save & Exit**, **Exit**, **Back**, **Next**
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
-- Contractor pay terms feed directly into monthly invoice totals, so what you configure here is
-  what your client is billed — one flow from setup to invoice.
-- Global payout runs on ListoPay's digital wallet, so paying a contractor anywhere is built in
-  rather than bolted on.
+### For the PEO partner (channel)
+- Contractor pay terms feed straight into monthly invoice totals, so your client gets one clean flow from setup to billing — new revenue from your book with none of the payment infrastructure to build, because PrismHR runs the rails.
+- Global payout is built in through **ListoPay**, so you can promise clients they can pay a contractor anywhere without you or they standing up international banking — a real "extend into global with zero build" story.
 
-### For direct employers
-- Fixed or hourly, on a chosen pay date, in the currency you pay — contractor comp is set once
-  and drives invoicing automatically.
-- Cross-border payout is handled through ListoPay, so you pay a contractor abroad without wiring
-  up your own international rails.
+### For the SMB client (via their PEO)
+- Fixed or hourly, on a chosen pay date, in the currency you pay — comp is set once and the monthly invoice generates itself, so paying someone abroad is as simple as paying someone at home.
+- Cross-border payout runs on **ListoPay**, so you pay a contractor in another country without wiring up your own international rails or FX — done-for-you, the same safety net your PEO already gives you.
 
 ## Branching
-- **If** the audience cares about payment logistics **then** highlight the ListoPay digital
-  wallet and the pay-date options.
-- **If** invoicing/billing is the theme **then** stress that these inputs generate the monthly
-  invoice totals directly.
+- **If** the client cares about payment logistics **then** highlight the **ListoPay** digital wallet and the two pay-date options.
+- **If** billing is the theme **then** stress that these inputs generate the monthly invoice totals directly, so setup and invoicing are one flow.
 
 ## Say-this (talk track)
-> "Set the contractor's pay — fixed or hourly, the frequency, the pay date, the amount and
-> currency. That directly builds your monthly invoice totals. And payout runs on ListoPay's
-> digital wallet, so you're paying contractors anywhere in the world without standing up your
-> own payment rails."
+> "Here you set the contractor's pay — fixed or hourly, the frequency, the pay date, the amount and the currency. Those choices directly build your monthly invoice totals, so setup and billing are the same flow. And payout runs on ListoPay's digital wallet, which means your client pays a contractor anywhere in the world without ever standing up their own international payment rails — that's all PrismHR."

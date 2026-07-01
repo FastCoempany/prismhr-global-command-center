@@ -48,13 +48,13 @@ The full approval view for a monthly pay period, itemizing every payment compone
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
-- The entire pay run — wages, bonuses, allowances, reimbursements, across currencies — resolves to one number and one approval, so you clear a client's period without reconciling separate systems.
-- The Detailed Currency View turns a mixed-currency run into an auditable global total, which is exactly the multi-country visibility you resell.
+### For the PEO partner (channel)
+- The entire pay run — wages, bonuses, allowances, reimbursements, across USD/CAD/GBP/EGP — resolves to **one number and one `Approve` action**, so the global payroll motion you extend to clients clears without reconciling separate systems and with zero build on your side.
+- The **Detailed Currency View** turns a mixed-currency run into an auditable global total with a USD roll-up — exactly the multi-country visibility that makes you look like the hero to clients, delivered inside the PrismHR ecosystem they already trust.
 
-### For direct employers
-- You approve a whole month of global pay in one click, while still being able to open any line item — an hourly worker's hours, a reimbursement's receipt detail — before you commit.
-- Native currencies plus an approximate USD roll-up mean you see both what each person is paid locally and what the run costs you overall.
+### For the SMB client (via their PEO)
+- You approve a whole month of **global pay in one click**, while still being able to open any line item — an hourly worker's hours, a reimbursement's receipt detail — before you commit; the same trusted control you get domestically, now across borders.
+- Native currencies plus an approximate USD roll-up mean you see both what each person is paid locally and what the run costs you overall — no FX math, no chasing, whether the team is one country or many.
 
 ## Branching
 - **If** cost control / FX exposure is the theme **then** open the Detailed Currency View and anchor on the global total with its FX-estimate disclaimer.

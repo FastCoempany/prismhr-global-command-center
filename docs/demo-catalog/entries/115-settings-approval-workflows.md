@@ -35,15 +35,15 @@ A configuration page defining the approval flow and notification recipients for 
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
-- Codify each client's approval chain once — who signs off on time off, pay runs, and reimbursements — so operations run consistently and notifications reach the right people.
+### For the PEO partner (channel)
+- Each client's approval chain is codified once — who signs off on time off, pay runs, and reimbursements — so operations run consistently and notifications reach the right people, all configurable with **zero build** on your side.
 
-### For direct employers
-- Approvals aren't ad hoc: you define the chain of approvers and the notification list per request type, so payroll, time off, and expenses all route the way your controls require.
+### For the SMB client (via their PEO)
+- Approvals aren't ad hoc: you define the chain of **Approvers** and the **Will Receive Notifications** list per request type, so payroll, time off, and expenses all route the way your controls require — the same trusted sign-off discipline your PEO gives you, now global.
 
 ## Branching
-- **If** financial controls / multi-level sign-off is the hot button **then** anchor on Pay Period Approvals and the Add Approver flow.
-- **If** the audience is people-ops led **then** lead with Time off Requests.
+- **If** financial controls / multi-level sign-off is the hot button **then** anchor on **Pay Period Approvals** and the **+ Add Approver** flow.
+- **If** the audience is people-ops led **then** lead with **Time off Requests**.
 
 ## Say-this (talk track)
-> "Approvals are configurable per request type. Time off, pay periods, and reimbursements each get their own approval chain and their own notification list — so the right people sign off, and the right people get told, every time."
+> "Approvals are configurable per request type. Time off, pay periods, and reimbursements each get their own approval chain and their own notification list — so the right people sign off, and the right people get told, every time. It's the same control you already trust, applied to your global operations."

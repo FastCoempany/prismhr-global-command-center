@@ -37,17 +37,21 @@ with its contract, pay period dates, distribution date, and gross payment amount
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
-- Every payment ever made to a worker is on their record, in their local currency, so
-  answering "what did we pay them and when" is instant across your whole client book.
-- Distributed vs. upcoming periods are visibly different, so you can see what has settled
-  and what's still scheduled without leaving the profile.
+### For the PEO partner (channel)
+- Cross-border payroll runs on PrismHR's in-country infrastructure and lands as a clean
+  per-period history in the worker's own currency (here **MXN**) — a global pay capability
+  your clients get with zero build on your side.
+- Because every payment is on the record, your clients can answer "what did we pay them and
+  when" themselves, so extending into global adds value to your book without adding support
+  load.
 
-### For direct employers
-- A complete, per-period pay history sits on each global team member's profile — in the
-  currency they're actually paid in — so cross-border pay is transparent and auditable.
-- Past and future pay periods appear together, giving a running picture of what's been
-  paid and what's coming.
+### For the SMB client (via their PEO)
+- A complete, per-period pay history sits on each global team member's profile — with
+  **Contract**, **Pay Period**, **Distributed At**, and **Gross Payment** — in the currency
+  they're actually paid in, so paying someone abroad is as transparent as paying at home.
+- **Distributed** periods (with a **Distributed At** date) and **upcoming** ones appear
+  together across 2025 into 2026, giving a running picture of what's settled and what's
+  scheduled — done for you, no international payroll expertise required.
 
 ## Branching
 - **If** multi-currency is the hot button **then** anchor on the native **MXN** amounts
@@ -57,5 +61,7 @@ with its contract, pay period dates, distribution date, and gross payment amount
 
 ## Say-this (talk track)
 > "This is the worker's full pay history — every period, the dates, when it was
-> distributed, and the gross amount, right in their local currency. You can see what's
-> already been paid and what's still scheduled, all on their profile."
+> distributed, and the gross amount, right in their local currency, MXN here. You can see
+> what's already been paid and what's still scheduled, all on their profile. Your clients
+> get compliant global payroll done for them — the same trusted pay experience you give
+> them domestically, now across borders, with nothing for them to stand up."

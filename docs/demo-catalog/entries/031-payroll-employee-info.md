@@ -49,29 +49,33 @@ country-specific compliance prompts.
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
-- The country picker and the country-specific note mean local rules surface inside the
-  onboarding flow — your team isn't the one memorizing Belize's severance and bonus
-  law.
+### For the PEO partner (channel)
+- The country picker and inline country note mean in-country rules surface inside the
+  flow — you extend your clients into 175+ countries without your team memorizing
+  Belize's severance and bonus law or building any global expertise in-house.
 - Sub-national regions (Canadian provinces, Australian states, Swiss cantons) are
-  first-class, so multi-jurisdiction clients are handled without workarounds.
+  first-class, so even a client's oddball multi-jurisdiction hire is handled inside the
+  same trusted PrismHR flow rather than pushed back to you.
 
-### For direct employers
-- Pick where the person actually works and the platform tells you what's different
-  about that country before you go further, including whether work authorization is a
-  question you have to answer.
-- Nationality and working country are separate fields, so a cross-border hire (Canadian
-  national working in Belize) is captured correctly from the start.
+### For the SMB client (via their PEO)
+- Pick where the person actually works and the platform tells you what's different about
+  that country — and whether work authorization is even a question — before you go
+  further, so a first international hire doesn't require your own legal team.
+- Nationality and working country are separate fields, so a genuine cross-border hire (a
+  Canadian national working in Belize) is captured correctly from the start, with the
+  compliance done for you.
 
 ## Branching
-- **If** compliance is the hot button **then** select a country with a note (Belize)
-  and show the inline Global Hiring Guide callout and the work-authorization gate.
-- **If** the audience is multi-region within one country **then** open the picker and
+- **If** compliance reassurance is the hot button **then** select a country with a note
+  (Belize) and show the inline **Global Hiring Guide** callout and the work-authorization
+  gate.
+- **If** the client hires across regions within one country **then** open the picker and
   scroll the Canadian provinces / Australian states to show sub-national coverage.
 
 ## Say-this (talk track)
-> "Name, email, and two country fields — where they're a national and where they
-> actually work. Watch what happens when I pick Belize: the platform tells me Belize has
-> its own rules on vacation, bonuses, and severance, links me to the hiring guide, and
-> asks whether they're authorized to work there. Compliance shows up before I've typed a
-> salary."
+> "Name, email, and two country fields — where they're a national and where they actually
+> work. Watch what happens when I pick Belize: the platform tells your client that Belize
+> has its own rules on vacation, bonuses, and severance, links them to the hiring guide,
+> and asks whether the person is authorized to work there. Your client sees compliance
+> handled before they've even typed a salary — no in-country expertise required, from you
+> or from them."

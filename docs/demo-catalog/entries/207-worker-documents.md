@@ -27,24 +27,25 @@ tags: [worker-portal, self-service, documents, employee-experience]
 The worker-facing document library inside the Worker Portal ("Switch to Worker"), where an employee retrieves their own contracts, payslips, and legal paperwork — shown empty here for a freshly onboarded worker.
 
 ## Capabilities shown
-- Self-service document access for the end worker, on their own login
-- A persistent bank-account prompt guiding the worker to complete their pay setup
-- Worker-scoped context tied to the client ("Antaeus Service Provider - Main Client")
-- Consistent worker nav (Dashboard, Payments, Time Off, Time Tracking, Reimbursements, Resources)
+- Self-service **My Documents** library for the end worker, on their own login (shown empty for a freshly onboarded worker)
+- A persistent `Link Bank Account →` prompt guiding the worker to complete their pay setup
+- Worker-scoped context tied to the client (`Antaeus Service Provider - Main Client`)
+- Consistent worker nav (`Dashboard`, `Payments`, `Time Off`, `Time Tracking`, `Reimbursements`, `Resources`)
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
-- The experience your clients' employees get is a branded, self-serve document vault — workers pull their own paperwork without opening a ticket to you or your client's HR team.
-- One portal covers documents across every client you run, so worker support scales without adding headcount.
+### For the PEO partner (channel)
+- The experience your clients' overseas workers get is a polished, self-serve document vault — workers pull their own paperwork without a ticket — a differentiator you can promote that makes clients stickier with zero build.
+- One portal covers documents across every client's workforce, so a happier worker experience scales as you extend global to your book without adding support headcount.
 
-### For direct employers
-- Your workers see one place for every document you issue them — contracts and payslips live where the worker already logs in.
-- The link-bank-account nudge keeps onboarding moving without HR chasing it manually.
+### For the SMB client (via their PEO)
+- Your overseas hire sees one place for every document you issue them — contracts, payslips, tax forms — so the SMB doesn't field "can I get a copy of my…" requests.
+- The `Link Bank Account →` nudge keeps onboarding moving on its own, the guided, done-for-you next step so the SMB isn't chasing pay setup.
 
 ## Branching
-- **If** the buyer worries about worker support load **then** emphasize that document self-service deflects the routine "can I get a copy of my…" requests.
-- **If** the worker is mid-onboarding (empty state) **then** point to the bank-account banner as the guided next step the portal drives on its own.
+- **If** the buyer worries about worker support load **then** emphasize that document self-service deflects routine copy requests off the SMB entirely.
+- **If** the worker is mid-onboarding (empty state) **then** point to the `Link Bank Account →` banner as the guided next step the portal drives itself.
+- **If** the PEO wants a differentiator **then** frame the branded self-serve vault as something they promote to clients.
 
 ## Say-this (talk track)
-> "This is what your workers see when they switch into their own portal. Every document you give them — contract, payslips, tax forms — lives right here, self-serve. Notice the portal is already nudging this new hire to link their bank account, so the pay setup finishes without anyone chasing them."
+> "This is what your client's overseas workers see when they switch into their own portal. Every document — contract, payslips, tax forms — lives right here, self-serve, so the SMB never has to hand copies out. Notice the portal is already nudging this new hire to link their bank account, so pay setup finishes without anyone chasing them. For you, that polished worker experience is exactly the kind of thing you can promote to clients."

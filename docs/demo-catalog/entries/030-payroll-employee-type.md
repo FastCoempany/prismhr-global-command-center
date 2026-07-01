@@ -26,39 +26,46 @@ tags: [new-hire, payroll, eor, worker-type, engagement-model]
 ## What this screen is
 The engagement-model fork in the New Hire flow: after choosing **Employee** (vs
 Contractor), the admin chooses whether PrismHR is the **Employer of Record (EOR)** or
-whether the employee is run on the customer's **own entity via Payroll**.
+whether the employee is run on the client's **own entity via Payroll**.
 
 ## Capabilities shown
-- Two-level worker classification: first **Employee vs Contractor**, then, for
-  employees, **EOR vs Payroll**
-- **EOR**: "PrismHR hires the employee in-country as the employer of record on your
-  behalf" — no local entity required
-- **Payroll**: "Administer payroll, deliver benefits, and oversee contracts for your
-  own entities" — the customer already has an in-country entity
-- Both paths advertised across **180+ countries**
+- Question framed plainly: **"What type of employee?"** with two cards
+- **Employer of Record (EOR)** — "PrismHR hires the employee in-country as the employer
+  of record on your behalf"; action **`Onboard Employer of Record`**. No local entity
+  required.
+- **Payroll** — "Administer payroll, deliver benefits, and oversee contracts for your
+  own entities"; action **`Onboard to Payroll`**. The client already has an in-country
+  entity.
+- Both branches live inside the same New Hire wizard — one flow, one platform, chosen
+  per hire
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
-- One product covers both models — resell EOR where the client has no entity and run
-  payroll on the client's own entities where they do, without switching platforms.
-- The fork makes the choice explicit and self-service, so onboarding a worker doesn't
-  require your team to route the deal to a specialist first.
+### For the PEO partner (channel)
+- One platform covers both models across your client book — clients with a local entity
+  run **Payroll**, clients without one use **EOR** — so you extend into global with zero
+  build and no in-house global specialists.
+- The fork is self-service and explicit, so a client's first international hire doesn't
+  need a country-by-country consult from you — the same trusted PrismHR ecosystem your
+  clients already know just widens to global.
 
-### For direct employers
-- Where you already have a local entity, keep it and run payroll, benefits, and
-  contracts through PrismHR; where you don't, hand the hire to EOR — same flow, same
-  screens.
-- The model decision is made once, up front, and drives the rest of the wizard.
+### For the SMB client (via their PEO)
+- If you have a local entity abroad, keep it and run **Payroll** through PrismHR; if you
+  don't, hand the hire to **EOR** — either way you're hiring compliantly without standing
+  up a legal team.
+- One decision, made once at the top of the flow, and PrismHR carries the rest — the
+  same done-for-you safety net your PEO gives you domestically, now for a hire overseas.
 
 ## Branching
-- **If** the customer has in-country entities **then** take the **Onboard to Payroll**
-  branch and follow the payroll wizard (Employee Info → Job → Compensation → Agreement
+- **If** the client already has an in-country entity **then** take **`Onboard to
+  Payroll`** and run the payroll wizard (Employee Info → Job → Compensation → Agreement
   → Review).
-- **If** they have no local entity **then** point at **Onboard Employer of Record** and
-  cross-reference the EOR wizard.
+- **If** the client has no local entity **then** take **`Onboard Employer of Record`**
+  and PrismHR employs the worker in-country on their behalf.
 
 ## Say-this (talk track)
-> "First we say this is an employee, not a contractor. Then one decision: do you have a
-> local entity or not? If you do, we run payroll on your entity. If you don't, we become
-> the employer of record for you. Same platform, you pick the model per hire."
+> "First we say this is an employee, not a contractor. Then one question: does your
+> client have a local entity in that country, or not? If they do, we run payroll on their
+> entity. If they don't, PrismHR becomes the employer of record for them — no entity, no
+> legal team required. Same platform your clients already trust, you just pick the model
+> per hire."

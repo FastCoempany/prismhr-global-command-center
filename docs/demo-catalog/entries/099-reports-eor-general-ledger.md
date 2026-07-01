@@ -40,23 +40,20 @@ country, for a selected period.
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
-- EOR payroll drops straight into a client's accounting: every component is pre-coded to a
-  chart-of-accounts number, per country, ready to export and post — no manual journal building.
-- One report format serves every client's GL, across the whole multi-country book.
+### For the PEO partner (channel)
+- EOR payroll drops straight into a client's accounting: every component is pre-coded to a chart-of-accounts number — Gross Wages `1000`, One-Time Payment `3000`, Reimbursements `4000`, Employer Taxes & Contributions `5000` — per country, ready to export and post, with no build on your side.
+- One GL format serves every client across their whole multi-country book, so the accounting story you resell is consistent and defensible.
+- Handing a client's finance team a ledger-ready file is exactly the clean, stand-behind-it output that makes you the hero inside the PrismHR relationship they trust.
 
-### For direct employers
-- Finance gets a ledger-ready breakdown mapped to your chart of accounts, including the
-  employer-side taxes and contributions, so cross-border payroll posts without rework.
-- The full employer cost (wages + employer taxes) rolls up per country in the Total column.
+### For the SMB client (via their PEO)
+- Finance gets a ledger-ready breakdown mapped to your chart of accounts, employer-side taxes and contributions included, so cross-border payroll posts **without rework and without you building finance ops**.
+- The full employer cost (wages + employer taxes) rolls up per country in the **Total** column — e.g. Chris Reed's `$4,141.86` wages + `$662.72` employer taxes = `$4,804.58`.
+- It's the done-for-you accounting hand-off your PEO gives you domestically, now covering every country you employ in.
 
 ## Branching
-- **If** accounting integration or month-end close is the theme **then** anchor here and point
-  at the GL codes in the headers.
-- **If** they want to prove employer cost **then** walk the Total column (gross + employer
-  taxes & contributions).
+- **If** accounting integration or month-end close is the theme **then** anchor here and point at the GL codes (`1000`, `3000`, `4000`, `5000`) in the headers.
+- **If** they want to prove employer cost **then** walk the **Total** column (gross + **Employer Taxes & Contributions**).
+- **If** the client fears global will complicate close **then** show the export and how it posts as-is.
 
 ## Say-this (talk track)
-> "This is the accounting view of your EOR payroll — every line already mapped to a
-> chart-of-accounts code, employer taxes and contributions included, grouped by country. Your
-> finance team exports it and posts it; there's no rebuilding journals by hand."
+> "This is the accounting view of your EOR payroll — every line already mapped to a chart-of-accounts code, employer taxes and contributions included, grouped by country. Your finance team exports it and posts it; there's no rebuilding journals by hand and nothing you had to set up. It's the clean hand-off your PEO gives you domestically, now global."

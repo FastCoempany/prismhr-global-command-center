@@ -27,37 +27,27 @@ tags: [new-hire, contractor, global-hiring, tax-residence, country-selection]
 ---
 
 ## What this screen is
-Step 01 of the four-step Contractor wizard: capture the contractor's name, email, and **tax
-residence**; this information is used to send the contract.
+Step 01 of the four-step Contractor wizard: capture the contractor's **First name**, **Last name**, **Email address**, and **Tax residence** — the details used to generate and send the contract.
 
 ## Capabilities shown
-- Four-step progress stepper (Contractor Info → Job Info → Compensation → Review)
-- **Tax residence** picker covering 175+ countries, including sub-national jurisdictions
-  (Canadian provinces, Australian states, China Shanghai/Guangzhou, Switzerland Geneva/Zurich)
-- Note that the entered details are used to send the contract
-- Save & Exit to resume the draft later
+- Four-step progress stepper: **Contractor Info** → **Job Info** → **Compensation** → **Review**
+- **Tax residence** picker covering **175+ countries**, including sub-national jurisdictions (Canadian provinces, Australian states, China Shanghai/Guangzhou, Switzerland Geneva/Zurich)
+- Just three fields plus tax residence; the entered details are used to send the contract
+- **Save & Exit** to park the draft and resume later, or **Next** to continue
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
-- The contractor motion opens with tax residence, so the engagement is anchored to the right
-  jurisdiction from field one — the basis for compliant classification you resell.
-- The same 175+ country reach as the employee path means one product covers a client's whole
-  contractor base, anywhere.
+### For the PEO partner (channel)
+- Your SMB client can engage a contractor in any of 175+ countries from the same platform you already deliver — no in-country entity, no legal team, and zero build on your side, since PrismHR owns the compliance behind that tax-residence list.
+- The contractor path opens exactly like the employee path (name, email, jurisdiction), so it's one simple story to promote across your book: refer, and PrismHR delivers global hiring.
 
-### For direct employers
-- Onboarding a contractor abroad starts with just name, email, and tax residence — the contract
-  is generated from there.
-- Global coverage down to sub-region level means engaging a contractor in another country is a
-  form, not a project.
+### For the SMB client (via their PEO)
+- Anchoring on **Tax residence** from field one means the engagement is classified against the right country automatically — done-for-you compliance instead of research you can't afford to get wrong.
+- Whether it's your first international contractor or your fiftieth, engaging one abroad is three fields and a country, not a legal project — the same trusted safety net your PEO gives you domestically, now global.
 
 ## Branching
-- **If** the audience engages contractors globally **then** open the tax-residence list to show
-  the 175+ country reach mirroring the employee path.
-- **If** speed is the theme **then** show how three fields are enough to start generating the
-  contract.
+- **If** the client's contractors span multiple countries **then** open the **Tax residence** list to show the 175+ country reach, sub-region level included, all covered by PrismHR's in-country entities.
+- **If** speed is the theme **then** show that name, email, and tax residence are enough to start generating the contract.
 
 ## Say-this (talk track)
-> "Contractors start the same way — name, email, and tax residence. That last one anchors the
-> whole engagement to the right country, and the list is the same 175-plus we saw for employees.
-> Three fields and we're ready to build the contract."
+> "Contractors start the same simple way — first name, last name, email, and tax residence. That last field anchors the whole engagement to the right country, and the list is 175-plus countries deep, right down to provinces and states. PrismHR already owns the entities and the compliance behind every one of them, so your client just tells us who and where, and we build the contract from there."

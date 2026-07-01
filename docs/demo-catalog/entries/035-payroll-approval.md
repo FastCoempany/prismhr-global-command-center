@@ -45,26 +45,29 @@ Offer Letter to {approver} for Approval" — before **Onboard Employee** commits
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
+### For the PEO partner (channel)
 - Everything the client's approver needs to sign off — identity, role, manager, pay,
-  currency, term — is on one screen, so approval is a single decision instead of a
-  document chase.
-- Submitting routes the offer for approval, keeping the client's sign-off in the loop
-  rather than bypassing it.
+  currency, term — is on one screen, so a client's first global hire is a single decision
+  instead of a document chase, keeping the motion low-lift for both of you.
+- Submitting routes the offer for approval rather than silently creating the hire, so the
+  client's own governance stays intact — the same trusted, in-control experience your
+  ecosystem provides domestically.
 
-### For direct employers
-- One final look at the whole hire — cross-border identity, role, and fully-loaded
-  monthly pay — before you commit; nothing is buried across steps.
-- Onboarding the employee moves straight into inviting them to the platform.
+### For the SMB client (via their PEO)
+- One final look at the whole hire — cross-border identity, role, and fully-loaded monthly
+  pay (e.g. $3,500.00/month, salaried, indefinite term) — before you commit; nothing is
+  buried across steps.
+- Approving the offer moves straight into inviting the employee to the platform, so you
+  go from decision to a live global hire without a legal team or a handoff.
 
 ## Branching
-- **If** approval governance is the hot button **then** anchor on the "Submit Offer
-  Letter for Approval" header and the single consolidated summary.
+- **If** approval governance is the hot button **then** anchor on the **"Submit Offer
+  Letter to {approver} for Approval"** header and the single consolidated summary.
 - **If** speed is the point **then** show how one screen captures the entire hire before
-  Onboard Employee.
+  **`Onboard Employee`**.
 
 ## Say-this (talk track)
 > "One screen, the whole hire — who they are, the role, their manager, and pay:
-> thirty-five hundred a month, salaried, indefinite term. This goes to your approver as
-> an offer letter, not straight into the system. Approve it and we onboard the employee
-> and invite them in."
+> thirty-five hundred a month, salaried, indefinite term. This goes to the client's
+> approver as an offer letter, not straight into the system, so they stay in control the
+> way they expect. Approve it and PrismHR onboards the employee and invites them in."

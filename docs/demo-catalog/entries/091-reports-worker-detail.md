@@ -44,26 +44,31 @@ every worker with summary tiles and a per-worker detail grid.
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
-- A single roster shows every worker across every client engagement type and country —
-  the composition of the global book is one export away.
-- Summary tiles quantify the mix (EOR vs. contractor vs. payroll) at a glance, so you
-  can speak to the breadth of what you're running.
+### For the PEO partner (channel)
+- One roster shows every worker your client engages across every country and engagement
+  type — Contractor, EOR, Payroll — so you can stand behind your client's global
+  headcount with clean visibility and zero build on your side.
+- The summary tiles quantify the mix (**EOR (9)**, **Contractor (12)**, **Payroll (7)**)
+  at a glance, giving you a credible, at-a-glance view of what your client's international
+  book actually looks like.
 
-### For direct employers
-- Your entire cross-border headcount sits in one grid — native currencies, home
-  countries, and engagement types — with no per-country spreadsheets.
-- Filters and download turn "how many workers, where, on what terms" into a
-  two-second answer.
+### For the SMB client (via their PEO)
+- Your entire cross-border headcount sits in one grid — native currencies (USD, GBP, CAD,
+  NIO), home countries (UK, US, Canada, Nicaragua, Taiwan), engagement types — with no
+  finance ops or per-country spreadsheets to build.
+- Filters and **Download Report** turn "how many people, where, on what terms" into a
+  two-second answer — the same simplicity your PEO gives you domestically, now global.
 
 ## Branching
-- **If** engagement mix is the story **then** anchor on the summary tiles and filter
-  by Engagement to show EOR and contractor populations separately.
-- **If** multi-currency operations matter **then** scroll the base-pay column to show
-  USD/GBP/CAD/NIO side by side.
+- **If** the workforce mix is the point **then** use the **Engagement** filter to split
+  the roster into EOR, Contractor, and Payroll populations.
+- **If** geographic spread matters **then** use **Show Map** and the **Countries** filter
+  to plot where workers sit.
+- **If** finance wants the raw records **then** use **Download Report** to hand off the
+  full multi-currency roster.
 
 ## Say-this (talk track)
-> "Here's every worker you have, anywhere in the world, in one report. Forty-two people
-> across the UK, US, Canada, Nicaragua, Taiwan — EOR, contractors, payroll — each paid
-> in their local currency. Filter it, map it, download it. That's your whole workforce
-> on one screen."
+> "Here's every worker in one report — forty-two people across the UK, US, Canada,
+> Nicaragua, and Taiwan, paid in their own currency, whether they're EOR, contractor, or
+> on payroll. The tiles up top break down the mix instantly. Filter it, map it, download
+> it — that's the whole workforce on one screen, without you building a thing."

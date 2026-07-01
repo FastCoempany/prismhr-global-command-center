@@ -37,18 +37,18 @@ entries are created and edited.
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
-- You define the time-tracking taxonomy once, so hours across clients can be categorized
-  and filtered consistently the way each engagement needs.
+### For the PEO partner (channel)
+- The time-tracking taxonomy is defined once, so hours across every client can be categorized
+  and filtered consistently the way each engagement needs — configurable, not custom-built.
 
-### For direct employers
-- You control how time is classified — by work type, project, phase, or priority — so
-  timesheets report in your own terms.
+### For the SMB client (via their PEO)
+- You control how time is classified — by **Work Type**, **Client Project**, **Delivery
+  Phase**, or **Priority** — so timesheets report in your own terms, simply.
 
 ## Branching
-- **If** the buyer asks how time is categorized **then** show this screen as the source of
+- **If** the client asks how time is categorized **then** show this screen as the source of
   the labels and filters seen on Time Tracking.
 
 ## Say-this (talk track)
 > "The labels you filter time cards by aren't fixed — you manage them here. Add a label,
-> save, and it's immediately available to tag and slice hours."
+> save, and it's immediately available to tag and slice hours your way."

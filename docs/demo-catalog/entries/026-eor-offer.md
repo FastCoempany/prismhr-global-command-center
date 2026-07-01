@@ -41,26 +41,28 @@ PrismHR for Approval** — before submission.
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
+### For the PEO partner (channel)
 - The entire cross-border offer — comp, benefits, equipment, start date — is verified on one
-  screen before it goes out, so what your client sees is exactly what was assembled.
-- Submit hands the compliant employment to PrismHR: you originate and review, the EOR carries
-  the legal-employer burden.
+  screen before it goes out, so what your client extends is exactly what was assembled.
+- `Submit Offer Letter to PrismHR for Approval` hands the compliant employment to PrismHR: the
+  client originates and reviews, PrismHR carries the legal-employer burden — the "zero build,
+  low lift" promise made concrete.
 
-### For direct employers
-- One glance confirms the whole global hire is right before it's submitted; no toggling between
-  steps to double-check comp against benefits.
-- Approval flows to PrismHR as the employer of record, so you extend the offer without standing
-  up a local entity.
+### For the SMB client (via their PEO)
+- One glance confirms the whole global hire is right before submission — nationality `Mexico`,
+  working country `Singapore`, `$2,000.00 per month`, `Premium` benefits, reimbursed equipment —
+  with no toggling between steps.
+- Approval flows to PrismHR as the employer of record, so you extend a compliant offer abroad in
+  days without standing up a local entity or legal team.
 
 ## Branching
-- **If** the audience worries about compliance liability **then** emphasize that Submit routes
-  to PrismHR for approval as the employer of record.
-- **If** speed-to-offer is the theme **then** show how the full package is reviewed and sent
-  from this one screen in seconds.
+- **If** the client worries about compliance liability **then** emphasize that `Submit` routes to
+  `PrismHR for Approval` as the employer of record carrying the legal burden.
+- **If** speed-to-offer is the theme **then** show how the full package is reviewed and sent from
+  this one screen in seconds.
 
 ## Say-this (talk track)
 > "Last step — everything we built is on one page. Nationality Mexico, working from Singapore,
-> two thousand a month, Premium benefits, reimbursed equipment. Looks right? Hit Submit and it
-> goes to PrismHR for approval as the employer of record. You made the offer; we carry the
-> compliance."
+> two thousand a month, Premium benefits, reimbursed equipment. Looks right? Your client hits
+> Submit and it goes to PrismHR for approval as the employer of record. They made the offer; we
+> carry the compliance and the legal-employer risk — that's the safety net they get through you."

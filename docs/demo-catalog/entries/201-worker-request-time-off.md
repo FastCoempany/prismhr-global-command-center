@@ -48,28 +48,17 @@ submitting new leave.
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
-- Your clients' employees request leave themselves against country-appropriate balances
-  (public holidays are broken out separately), so leave administration doesn't land on
-  your service desk.
-- The full request lifecycle — submit, pending, approved/declined history — lives in the
-  same platform that runs their payroll, keeping leave and pay in one system of record.
+### For the PEO partner (channel)
+- A polished, locally-aware leave experience — with **Public Holidays** broken out separately from **Additional Leave** — is exactly the kind of professional worker touch you can promote to your PEO clients as part of the global offering.
+- The whole leave lifecycle lives in the same platform that runs the worker's pay, so your clients extend into global time-off management with zero build and their overseas people just self-serve.
 
-### For direct employers
-- Workers see exactly how much leave they have and what a request would leave them with
-  before they submit — fewer over-requests and back-and-forth with managers.
-- Public-holiday entitlement is tracked separately from discretionary leave, so
-  cross-border teams get locally correct balances without manual bookkeeping.
+### For the SMB client (via their PEO)
+- Your international hire requests leave themselves against correct balances and sees exactly what they'd have left ("**Balance Remaining (if request is approved): 3.0 days**") before submitting — so your team isn't tracking foreign leave in a spreadsheet.
+- Public-holiday entitlement is handled separately from discretionary leave, so a hire in another country gets locally-correct balances without you having to know the local rules.
 
 ## Branching
-- **If** the buyer's teams span multiple countries **then** emphasize the separate
-  Public Holidays balance as evidence of locally-aware leave.
-- **If** approval workflow / manager burden is the concern **then** show the live
-  "Balance Remaining if approved" and the Pending/History lifecycle.
+- **If** the client's hires span multiple countries **then** emphasize the separate **Public Holidays** balance as evidence of locally-aware leave the worker sees automatically.
+- **If** manager or admin burden is the concern **then** show the live **Balance Remaining (if request is approved)** and the **Pending Requests** / **History** lifecycle that keeps leave off email.
 
 ## Say-this (talk track)
-> "Your worker just opens Time Off, sees their public-holiday and leave balances, and
-> submits a request. As they pick dates, the system tells them what they'll have left if
-> it's approved — and it's clear that only approved time counts against the balance.
-> Everything they've requested, pending or historical, is right here. No email, no
-> spreadsheet."
+> "Your client's overseas hire just opens **Time Off**, sees their public-holiday and additional-leave balances, and submits a request. As they pick dates, the portal tells them what they'll have left if it's approved — and it's clear only approved time counts against the balance. Everything they've requested, pending or historical, is right here — so the same self-service safety net their PEO gives them at home now covers their people abroad, with no spreadsheet on anyone's desk."

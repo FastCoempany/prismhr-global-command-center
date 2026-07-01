@@ -30,31 +30,35 @@ The entry point of the New Hire flow, asking whether to hire an **Employee** (EO
 
 ## Capabilities shown
 - Single starting point for two compliant global-hiring motions
-- **Employee** path: hire employees compliantly in over 180 countries
-- **Contractor** path: classify and hire contractors compliantly in over 180 countries
+- **Employee** path: `Hire employees compliantly in over 180 countries` via `Select Employee`
+- **Contractor** path: `Classify and hire contractors compliantly in over 180 countries` via
+  `Select Contractor`
 - Worker-type choice made up front, before any data entry
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
-- One flow lets you originate both EOR employment and contractor engagements for your
-  clients — the same product covers the full spectrum of global work arrangements you resell.
-- Compliant classification and hiring across 180+ countries is the headline before a
-  single field is filled in.
+### For the PEO partner (channel)
+- One screen shows your clients can hire abroad — as an employee or a contractor — through
+  the exact global capability you now promote, with zero build on your side.
+- Both compliant motions live in one product, so a lead you pass covers whatever work
+  arrangement the client needs; PrismHR delivers either path.
+- The `over 180 countries` promise is the headline before any data entry — an easy, credible
+  message to carry to your client book.
 
-### For direct employers
-- Whether the next hire is a full employee or a contractor, you start in the same place and
-  the product handles the compliance path for either.
-- The 180+ country reach is stated at the door, so global expansion is a choice on this
-  screen rather than a project.
+### For the SMB client (via their PEO)
+- Whether your next hire abroad is a full employee or a contractor, you start in the same
+  place and the platform handles the compliant path for either.
+- No entity, no local legal team — the choice on this screen is the entire decision, and the
+  180+ country reach means expansion is a click, not a project.
 
 ## Branching
-- **If** the audience hires primarily full-time staff abroad **then** take the **Employee**
-  (EOR) path and lead with the six-step compliant onboarding wizard.
-- **If** the audience relies on contractors **then** take the **Contractor** path and
-  emphasize compliant classification across 180+ countries.
+- **If** the client's need is ongoing headcount abroad **then** take `Select Employee` (EOR)
+  and lead with the compliant six-step onboarding wizard.
+- **If** the client engages independent workers **then** take `Select Contractor` and
+  emphasize compliant classification across `over 180 countries`.
 
 ## Say-this (talk track)
-> "Every global hire starts here with one decision — employee or contractor. Pick either and
-> we hire them compliantly in over 180 countries. That's the whole point: the hard part,
-> local compliance, is built into whichever path you choose."
+> "This is where every global hire your clients make begins — one decision, employee or
+> contractor. Pick either and we hire them compliantly in over 180 countries. That's the
+> whole story you get to tell your clients: they extend into global through you, and the hard
+> part — local compliance — is already built into whichever path they choose."

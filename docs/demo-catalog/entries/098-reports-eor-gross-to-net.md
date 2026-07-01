@@ -41,24 +41,20 @@ country, for a selected period (June 2026 in the capture).
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
-- Every EOR worker's full pay breakdown — gross to net — is reportable across the whole
-  multi-country book from one screen, grouped by country and exportable per client.
-- Filtering by country lets you hand each client the exact slice of their global workforce
-  they care about.
+### For the PEO partner (channel)
+- Every EOR worker's full pay breakdown — gross to net — is reportable across a client's whole multi-country book from one screen, grouped by country and exportable per client, with nothing for you to build.
+- Filtering by **Countries** lets you hand each client the exact slice of their global workforce they care about — clean, defensible numbers you can stand behind.
+- Walking a worker from **Gross Wages** through **Taxes & Contributions** to **Net** is a simple, trust-building demo you deliver inside the PrismHR relationship they already have.
 
-### For direct employers
-- See exactly what each employee earns and nets in each country, in local currency, for the
-  period — no rebuilding gross-to-net from raw payroll data.
-- Country grouping means a cross-border workforce reads cleanly in one report.
+### For the SMB client (via their PEO)
+- See exactly what each employee earns and nets in each country — Canada, Egypt, Mexico, United States in the capture — in local currency, for the period, **without rebuilding gross-to-net from raw payroll data**.
+- Country grouping with per-country **Total** rows means a cross-border workforce reads cleanly in one report, not a stack of country spreadsheets.
+- It's the done-for-you pay transparency your PEO gives you domestically, now covering every worker abroad — whether that's one hire or hundreds.
 
 ## Branching
-- **If** the room cares about employee-level pay transparency **then** anchor here and walk
-  a single worker's line from gross wages to net.
-- **If** they operate in specific markets **then** use the Countries filter to narrow to those
-  markets before exporting.
+- **If** the room cares about employee-level pay transparency **then** anchor here and walk a single worker's line from **Gross Wages** to **Net**.
+- **If** they operate in specific markets **then** use the **Countries** filter (All, Canada, Egypt, Mexico, United States) to narrow before exporting.
+- **If** the client is small today **then** show that even a single worker's full gross-to-net is here with no setup.
 
 ## Say-this (talk track)
-> "For your EOR population this walks every worker from gross wages all the way to net —
-> bonuses, recurring pay, reimbursements, taxes and contributions — grouped by country and
-> in local currency. Pick a period, filter the markets you care about, and export it."
+> "For your EOR population this walks every worker from gross wages all the way to net — bonuses, recurring pay, reimbursements, taxes and contributions — grouped by country and in local currency. You didn't build any of it; your PEO gives you this the same way they give you domestic pay reporting. Pick a period, filter the markets you care about, and export it."

@@ -48,24 +48,27 @@ per-worker drilldown into individual dated time entries.
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
-- Contractor and worker hours for every client roll up per pay period in one place, so you
-  administer timesheets across your book without a separate tool.
-- Labels plus import/export let you shape and move time data to fit each client's reporting.
+### For the PEO partner (channel)
+- Contractor and worker hours roll up per pay period in one place across the global book, so
+  timesheet administration is ready without a separate tool — **zero build**, low lift to
+  fold into what you already offer clients.
+- Labels plus **Import**/**Export** let time data be shaped and moved to fit each client's
+  reporting, so global timekeeping fits the trusted PrismHR workflow they know.
 
-### For direct employers
-- You see total hours for the period and can drill into any worker to verify exactly what
-  was logged, day by day, before it feeds pay.
-- Pay-period states (Scheduled / Pending approval / Complete) make it clear what still
-  needs attention.
+### For the SMB client (via their PEO)
+- You see **Total Hours** for the period and can drill into any worker to verify exactly what
+  was logged, day by day, before it feeds pay — done-for-you accuracy, no chasing timesheets.
+- Pay-period states (`Scheduled` / `Pending approval` / `Complete`) make it clear what still
+  needs attention, whether you have one contractor abroad or a full team.
 
 ## Branching
-- **If** the buyer bills clients by time **then** open a worker's time card and show the
-  dated, labeled entries that back the total.
-- **If** the buyer manages many workers **then** stay on the roll-up and show Total Hours
+- **If** the client bills by time **then** open a worker's time card and show the dated,
+  labeled entries that back the total.
+- **If** the client manages many workers **then** stay on the roll-up and show Total Hours
   plus the label filters recomputing the view.
 
 ## Say-this (talk track)
-> "Pick a pay period and you get total hours for the whole team, then hours per worker.
-> Click into anyone and you see every dated entry with its label and description. Filter
-> by work type, import or export — it's the full timesheet workflow in one screen."
+> "Pick a pay period and you get total hours for the whole team, then hours per worker. Click
+> into anyone and you see every dated entry with its label and description. Filter by work
+> type, import or export — it's the full timesheet workflow in one screen, the same trusted
+> way you already run things, now across your global workers."

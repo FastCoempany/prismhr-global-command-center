@@ -35,17 +35,20 @@ its pay rate, engagement/rate type, and current status.
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
-- Each worker's contract, its rate, and its signing status are one click from the
-  profile, so you can confirm terms and chase signatures without hunting in a separate
-  contract system.
-- The status chip (Awaiting Signatures) tells you immediately whether a contract is still
-  blocking, across any client.
+### For the PEO partner (channel)
+- The in-country employment contract is generated and managed on PrismHR's platform — rate,
+  engagement type, signing status — so your clients get compliant global agreements without
+  you owning entities, drafting contracts, or building anything.
+- The status chip (**Awaiting Signatures**) makes the state of any hire obvious at a glance,
+  so onboarding across your book stays trackable with no added lift for you.
 
-### For direct employers
-- The commercial terms for a global hire — rate, cadence, type — live on their profile in
-  their local currency, so what you're paying and on what basis is never ambiguous.
-- A visible status makes it obvious when a contract still needs signatures to be complete.
+### For the SMB client (via their PEO)
+- The commercial terms for a global hire — pay rate in local currency ($66,272.69
+  **MXN**/month), **Payroll - Fixed rate** — live right on the worker's profile, so what
+  you're paying and on what basis is never ambiguous.
+- A visible **Awaiting Signatures** status makes it obvious when a contract still needs
+  signing, so your first hire abroad moves forward with the same done-for-you clarity your
+  PEO gives you at home.
 
 ## Branching
 - **If** signature/approval flow is the point **then** open the card into the contract
@@ -53,6 +56,8 @@ its pay rate, engagement/rate type, and current status.
 - **If** keeping it high level **then** read the rate, type, and status off the card and move on.
 
 ## Say-this (talk track)
-> "Here's the worker's contract — the rate in their local currency, the fact it's a
-> fixed-rate payroll engagement, and the status. This one's Awaiting Signatures, so we
-> know it's not fully executed yet. Click in and you get the full contract."
+> "Here's the worker's contract — the rate in their local currency, MXN here, the fact
+> it's a fixed-rate payroll engagement, and the status. This one's Awaiting Signatures, so
+> it's not fully executed yet. Click in and you get the full contract. The point for your
+> clients: PrismHR generates and manages the in-country agreement, so they get a compliant
+> global contract without owning an entity or drafting a thing."

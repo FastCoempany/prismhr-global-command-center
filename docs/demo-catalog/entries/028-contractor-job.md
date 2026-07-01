@@ -31,40 +31,29 @@ tags: [new-hire, contractor, job, seniority, org-structure, start-date]
 ---
 
 ## What this screen is
-Step 02 of the Contractor wizard: describe the engagement — job title, seniority, job
-description, optional division/location, reporting manager, and start date.
+Step 02 of the Contractor wizard: describe the engagement — **Job title**, **Seniority**, **Job description**, optional **Division** and **Location**, **Reporting Manager**, and **Start date**.
 
 ## Capabilities shown
-- Same **seniority** ladder as the employee path: Not Applicable, Junior, Mid, Senior, Lead,
-  Principal, Director, Department Head, Vice President, Senior Vice President
-- Job description carried into the agreement ("included in the original agreement so please be
-  descriptive")
-- Optional org assignment: Division (Engineering / Product) and Location (Unassigned / San
-  Francisco / New York)
-- Reporting Manager auto-assigned by org structure, or set via **Assign Manager**
-- Start date with a note that visa and/or work-permit requirements may cause delays
+- **Seniority** ladder identical to the employee path: Not Applicable, Junior, Mid, Senior, Lead, Principal, Director, Department Head, Vice President, Senior Vice President
+- **Job description** carried into the agreement ("included in the original agreement so please be descriptive")
+- Optional org assignment: **Division** (Engineering / Product) and **Location** (Unassigned / San Francisco / New York)
+- **Reporting Manager** auto-assigned by org structure, or set via **Assign Manager**
+- **Start date** with a note that visa and/or work-permit requirements may cause delays
+- Wizard actions: **Save & Exit**, **Exit**, **Back**, **Next**
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
-- Contractors are described with the same structured role fields as employees, so a mixed
-  workforce lives in one consistent shape across your clients.
-- Org placement and reporting manager attach to the contractor too, keeping approvals and
-  structure uniform regardless of worker type.
+### For the PEO partner (channel)
+- Contractors are described with the same structured role fields as employees, so your client's mixed workforce — domestic and global, contractor and EOR — lives in one consistent shape you can support without a separate playbook.
+- The visa/work-permit note is a live example of the in-country expertise PrismHR bakes in, so you extend your clients into global engagements without owning any of that specialist knowledge yourself.
 
-### For direct employers
-- Defining a contractor engagement uses the same seniority and org tools as an employee hire —
-  no separate mental model for contractors.
-- The role description flows straight into the agreement, so scope is documented where the
-  contract is generated.
+### For the SMB client (via their PEO)
+- Defining a contractor uses the same seniority and org tools as any hire — no separate mental model, no learning curve, just the trusted flow your PEO already gives you, now reaching abroad.
+- The **Job description** flows straight into the original agreement, so scope is documented exactly where the contract is generated — done-for-you paperwork instead of drafting terms yourself.
 
 ## Branching
-- **If** the audience runs mixed employee/contractor teams **then** highlight that the job step
-  mirrors the EOR path for consistency.
-- **If** scope/agreement clarity matters **then** emphasize that the description is written into
-  the original agreement.
+- **If** the client runs mixed employee/contractor teams **then** highlight that the job step mirrors the employee path so onboarding feels identical regardless of worker type.
+- **If** scope or agreement clarity matters **then** emphasize that the **Job description** is written directly into the original agreement.
 
 ## Say-this (talk track)
-> "The contractor's role is captured just like an employee's — same seniority ladder, same org
-> placement, same manager assignment. What you write here as the description goes straight into
-> the agreement, so scope is on paper from the start."
+> "The contractor's role is captured just like an employee's — same seniority ladder, same division and location, same manager assignment. What you write in the description goes straight into the agreement, so scope is on paper from the start. And notice the start-date note about visas and work permits — that's the kind of in-country detail PrismHR handles so your client never has to."

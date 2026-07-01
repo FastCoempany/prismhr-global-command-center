@@ -66,33 +66,41 @@ across 3 pages, with per-worker status and a drilldown into each profile.
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
-- A client's whole global workforce in one directory — Contractor, Contractor+, EOR, and
-  Payroll together — so you manage the entire book from a single list instead of stitching
-  country-by-country tools.
-- The Status filter tracks every worker from `Offer Sent` through `Awaiting Signatures` to
-  `Active` and on to `Offboarded`, so onboarding progress across the book is one filter away,
-  and Export turns the roster into a client-ready report in one click.
+### For the PEO partner (channel)
+- A client's whole global workforce in one directory — `Contractor`, `Contractor+`, `EOR`, and
+  `Payroll` side by side across six countries — so you can promote and even run PrismHR Global
+  for your client base from a single list, **with zero build**; PrismHR owns the in-country
+  entities and experts behind every one of these workers.
+- The **Status** filter tracks each worker from `Offer Sent` through `Awaiting Signatures` to
+  `Active` and on to `Offboarded`, so you can see onboarding progress across a client's book in
+  one click and **Export** a client-ready roster — an easy hero moment inside the ecosystem
+  your clients already trust.
+- Scale-flexible by design: the same roster works whether a client has their first hire abroad
+  or hundreds across countries, so it fits every SMB in your book without a different tool per size.
 
-### For direct employers
-- Your entire distributed team on one screen: who they are, what country, which engagement
-  type, who manages them, and exactly where they sit in the onboarding lifecycle — all
-  filterable and exportable.
-- No separate system per country — one roster spanning the US, UK, Canada, Mexico, Egypt,
-  and the Philippines, every worker, every border.
+### For the SMB client (via their PEO)
+- Your entire distributed team on one screen: who they are, what country, which engagement type,
+  who manages them, how many contracts, and exactly where they sit in the onboarding lifecycle —
+  all filterable, sortable, and exportable, the **same trusted safety net your PEO gives you
+  domestically, now global**.
+- No entities and no legal team to stand up: one roster spans the US, UK, Canada, Mexico, Egypt,
+  and the Philippines, every worker, every border — done-for-you compliance behind each row.
 
 ## Branching
 - **If** the prospect has a **mixed workforce** **then** open the **Type** filter to show
-  Contractor, Contractor+, EOR, and Payroll coexisting in one unified roster.
-- **If** cross-country **visibility** is the concern **then** open the **Countries** filter
-  to show the six-country spread, then Export.
+  `Contractor`, `Contractor+`, `EOR`, and `Payroll` coexisting in one unified roster.
+- **If** cross-country **visibility** is the concern **then** open the **Countries** filter to
+  show the six-country spread (`Canada`, `Egypt`, `Mexico`, `Philippines`, `United Kingdom`,
+  `United States`), then **Export**.
 - **If** **onboarding / lifecycle tracking** is the hot button **then** open the **Status**
   filter and walk the full progression from `Offer Draft` to `Active` to `Offboarded`.
 
 ## Say-this (talk track)
-> "This is your entire global team in one list — twenty workers here across the US, UK,
-> Canada, Mexico, Egypt, and the Philippines, whether they're EOR, a contractor,
-> contractor-plus, or on payroll, with their manager and status right there. Filter by
-> country, type, or status — you can pull up everyone who's still awaiting signatures versus
-> everyone active — sort it, and export it in a single click. There's no separate system per
-> country; it's one roster for your whole global workforce."
+> "This is a client's entire global team in one list — twenty workers here across the US, UK,
+> Canada, Mexico, Egypt, and the Philippines, whether they're EOR, a contractor, contractor-plus,
+> or on payroll, with their manager and status right there. Filter by country, type, or status —
+> pull up everyone still awaiting signatures versus everyone active — sort it, and export it in a
+> single click. There's no separate system per country, and no entity for your PEO or your client
+> to stand up; PrismHR owns the in-country entities and experts behind every row. It's one roster
+> for a whole global workforce, and it works the same whether it's their first hire abroad or their
+> five hundredth."

@@ -208,9 +208,9 @@ export function SidekickClient(props: Props) {
   const audValue = (s: Screen) => {
     const out: { who: string; de?: boolean; items: string[] }[] = [];
     if (audience === "both" || audience === "sp")
-      out.push({ who: "For service providers (PEOs / ASOs / payroll)", items: s.sp });
+      out.push({ who: "For the PEO partner (channel)", items: s.sp });
     if (audience === "both" || audience === "de")
-      out.push({ who: "For direct employers (hiring across borders)", de: true, items: s.de });
+      out.push({ who: "For the SMB client (via their PEO)", de: true, items: s.de });
     return out.filter((b) => b.items.length);
   };
 
@@ -253,8 +253,8 @@ export function SidekickClient(props: Props) {
               <input name="personaLabel" placeholder="Persona (e.g. PEO Owner)" />
               <select name="defaultAudience" defaultValue="BOTH" aria-label="Default audience">
                 <option value="BOTH">Both audiences</option>
-                <option value="SERVICE_PROVIDER">Service Provider</option>
-                <option value="DIRECT_EMPLOYER">Direct Employer</option>
+                <option value="SERVICE_PROVIDER">PEO Partner</option>
+                <option value="DIRECT_EMPLOYER">SMB Client</option>
               </select>
               <button type="submit" className={styles.saveBtn}>
                 Create account
@@ -440,7 +440,7 @@ export function SidekickClient(props: Props) {
                 className={audience === a ? styles.toggleOn : ""}
                 onClick={() => setAudience(a)}
               >
-                {a === "both" ? "Both" : a === "sp" ? "Service Provider" : "Direct Employer"}
+                {a === "both" ? "Both" : a === "sp" ? "PEO Partner" : "SMB Client"}
               </button>
             ))}
           </div>
@@ -487,9 +487,9 @@ export function SidekickClient(props: Props) {
                 <textarea name="say" rows={3} defaultValue={selected.say} />
                 <label>Capabilities (one per line)</label>
                 <textarea name="capabilities" rows={5} defaultValue={selected.capabilities.join("\n")} />
-                <label>Value — service providers (one per line)</label>
+                <label>Value — PEO partner / channel (one per line)</label>
                 <textarea name="sp" rows={4} defaultValue={selected.sp.join("\n")} />
-                <label>Value — direct employers (one per line)</label>
+                <label>Value — SMB client via PEO (one per line)</label>
                 <textarea name="de" rows={4} defaultValue={selected.de.join("\n")} />
                 <label>Branching (one per line)</label>
                 <textarea name="branching" rows={4} defaultValue={selected.branching.join("\n")} />

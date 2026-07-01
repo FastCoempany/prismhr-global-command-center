@@ -51,26 +51,30 @@ optional org assignment (division/location), reporting manager, and target start
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
-- The role definition maps a global hire straight onto the client's existing org — divisions,
-  locations, and a reporting manager drawn from the client's own team.
-- The date picker flags visa/work-permit delays inline, so you set client expectations on
-  start date without leaving the flow.
+### For the PEO partner (channel)
+- A global hire maps straight onto the client's existing org — divisions, locations, and a
+  reporting manager drawn from the client's own team — so the international hire feels like
+  part of their business, delivered through you.
+- The `Target start date` picker flags visa/work-permit delays inline, so realistic timelines
+  are set inside the flow without you fielding the compliance question.
 
-### For direct employers
-- A full seniority ladder and org placement mean a cross-border hire slots into your structure
-  the same way a domestic one would.
-- Assigning a manager here wires up approvals from day one — that person owns the new hire's
-  time-off and reimbursement approvals automatically.
+### For the SMB client (via their PEO)
+- A full seniority ladder (`Junior` through `Senior Vice President`) and org placement mean a
+  cross-border hire slots into your structure exactly like a domestic one.
+- Assigning a manager here wires up approvals from day one — that person automatically owns the
+  new hire's time-off and reimbursement approvals, the same safety net you already have at home.
+- The start date warning about visa/permit timing sets honest expectations up front, so there
+  are no surprises after the offer.
 
 ## Branching
-- **If** org structure / reporting lines matter to the audience **then** open the Assign
-  Manager modal and show role-tagged members and downstream approval routing.
-- **If** timelines are the concern **then** open the date picker and surface the visa /
-  work-permit delay warning as proof of built-in compliance realism.
+- **If** org structure and reporting lines matter to the client **then** open `Assign Manager`
+  and show role-tagged members and downstream approval routing.
+- **If** timelines are the concern **then** open the `Target start date` picker and surface the
+  visa/work-permit delay warning as proof of built-in compliance realism.
 
 ## Say-this (talk track)
 > "Now the role. Pick a seniority from Junior all the way to SVP, drop them into a division and
-> office, and assign a manager — that manager will approve their time off and expenses from
-> here on. Notice the start date even warns you when visa or permit timing could push things
-> out. It's role-building and compliance in one step."
+> office, and assign a manager — that manager approves their time off and expenses from here on,
+> just like your client's domestic team. Notice the start date even warns when visa or permit
+> timing could push things out. It's role-building and compliance in one step, and it's all
+> yours to offer."

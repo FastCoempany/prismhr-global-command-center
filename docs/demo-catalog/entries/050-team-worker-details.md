@@ -48,17 +48,22 @@ contact details.
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
-- Every worker across every client and country resolves to one consistent profile, so
-  your team supports a UK contractor and a Mexican payroll employee from the same screen.
-- The tab strip is the whole worker lifecycle — documents, pay, contracts, leave,
-  expenses, org — in one place, so you answer any client question without switching tools.
+### For the PEO partner (channel)
+- Your clients get one consistent worker record for every international hire — a Mexican
+  payroll employee and a UK contractor look identical — so extending your domestic PEO
+  relationship into global feels seamless, with zero platform to build.
+- The tab strip is the entire worker lifecycle (**Details**, **Documents**, **Payments**,
+  **Contracts**, **Time Off**, **Expense Reimbursements**, **Assignments**), all on
+  PrismHR's in-country infrastructure, so your client book gets a global capability you
+  never had to stand up.
 
-### For direct employers
-- One profile holds everything about a global team member: who they are, where they
-  are, who they report to, and every downstream record via the tabs.
-- The layout is identical whether the person sits in Mexico or the UK, so managing an
-  international team feels like managing one team.
+### For the SMB client (via their PEO)
+- One profile holds everything about a global team member — **Position**, **Worker ID**,
+  **Manager**, **Location**, personal and **Emergency Contact Info** — the same
+  done-for-you record your PEO already gives you domestically, now across borders.
+- The layout is identical whether the person sits in Mexico or the UK, so your first
+  international hire feels no different from managing your team at home — no entity, no
+  legal team, no new system to learn.
 
 ## Branching
 - **If** the emphasis is breadth of the worker record **then** run the tab strip left to
@@ -70,5 +75,7 @@ contact details.
 > "This is a single worker's profile. Up top is the employment snapshot — position,
 > worker ID, manager, location — and below it their personal and emergency details.
 > Notice the tabs: documents, payments, contracts, time off, expenses, org structure.
-> Everything about this person, in one record, and it looks the same whether they're in
-> Mexico or the UK."
+> Everything about this person lives in one record, and it looks exactly the same whether
+> they're in Mexico or the UK. For your clients, that means their first hire abroad feels
+> just like managing their team at home — same safety net, now global, and nothing for
+> them to build."
