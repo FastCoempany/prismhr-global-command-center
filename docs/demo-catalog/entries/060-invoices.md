@@ -41,25 +41,30 @@ detail view that itemizes an invoice down to per-worker fees.
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
-- One ledger covers every billing motion you resell — EOR, payroll, and contractor fees
-  invoice through the same surface, so you bill a global book without separate systems.
-- The per-worker line items make each invoice self-explaining: you can hand a client an
-  invoice that spells out exactly who was charged and at which fee tier.
+### For the PEO partner (channel)
+- One ledger covers every global billing motion — **EOR, Payroll, Contractor, Monthly
+  Contractors Fee** — through the same surface, so you extend into global with **zero build**
+  and no separate billing system to stand up.
+- Per-worker line items make every invoice self-explaining, so you can hand a client an
+  invoice that spells out exactly who was charged and at which fee tier — a clean story that
+  makes you the hero and reinforces the trusted PrismHR ecosystem.
 
-### For direct employers
-- Every cross-border charge lands in one running history you can open, download, or email
-  without chasing finance for backup.
-- The itemized detail shows precisely what you are paying for each worker, so cost is
-  transparent down to the individual.
+### For the SMB client (via their PEO)
+- Every cross-border charge lands in one running history you can open, **Download**, or
+  **Send Email** — no chasing finance for backup, the same done-for-you simplicity your PEO
+  gives you domestically.
+- The itemized detail shows precisely what you are paying for each worker (e.g. `Monthly
+  CONTRACTOR_PLUS Fee: Ximena Martin — $225.00`), so cost is transparent down to the
+  individual whether you have one worker abroad or many.
 
 ## Branching
-- **If** the buyer is fee-sensitive **then** open an invoice and walk the per-worker
+- **If** the client is fee-sensitive **then** open an invoice and walk the per-worker
   `CONTRACTOR` vs `CONTRACTOR_PLUS` line items to show fee transparency.
-- **If** the buyer runs mixed EOR + contractor populations **then** stay on the list and
+- **If** the client runs mixed EOR + contractor populations **then** stay on the list and
   point at the `INVOICE TYPE` column carrying all motions in one place.
 
 ## Say-this (talk track)
-> "Here's every invoice we've cut for this client — EOR, payroll, contractors, all in one
-> ledger. Open any one and it itemizes down to the individual worker and their fee tier,
-> then you download it or email it. No separate billing tool, no reconciliation."
+> "Here's every invoice on this account — EOR, payroll, contractors, all in one ledger. Open
+> any one and it itemizes down to the individual worker and their fee tier, then you download
+> it or email it. No separate billing tool, no reconciliation — the same clarity your PEO
+> already gives you, now for your global spend."

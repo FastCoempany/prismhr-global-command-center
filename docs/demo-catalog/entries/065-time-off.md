@@ -51,26 +51,28 @@ Calendar with a "Who's Out" panel, and a filterable History of all leave records
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
-- One leave queue spans every client engagement type, so you administer time off for EOR,
-  payroll, and contractor workers from a single approval surface.
-- History plus filters and export gives you an auditable leave record per client without
-  building it yourself.
+### For the PEO partner (channel)
+- One leave queue spans every engagement type (EOR, payroll, contractor) across the global
+  book, so time-off administration comes ready-made — **zero build**, no separate leave tool
+  to extend into your offering.
+- **History** plus filters and **Export** give an auditable leave record per client out of
+  the box, so global time off feels like the same trusted PrismHR your clients already run.
 
-### For direct employers
-- Every leave request that needs a decision is in one list with the context to decide —
-  who, when, what type — and approve or decline in place.
-- The calendar and Who's Out view tell you at a glance who is unavailable today and
-  tomorrow across the whole workforce.
+### For the SMB client (via their PEO)
+- Every leave request that needs a decision is in one list with the context to decide — who,
+  when, what type — and you **Approve** or **Decline** in place, done-for-you and simple.
+- The **Calendar** and **Who's Out** panel tell you at a glance who is unavailable today and
+  tomorrow across the whole workforce, so coverage is handled without spreadsheets — the same
+  safety net your PEO gives you at home, now for your global people.
 
 ## Branching
-- **If** the buyer worries about coverage **then** open the Calendar and Who's Out panel
-  to show at-a-glance visibility of who's out.
-- **If** the buyer needs auditability **then** open History, apply the Status filter, and
-  show the exportable record with approver attribution.
+- **If** the client worries about coverage **then** open the Calendar and Who's Out panel to
+  show at-a-glance visibility of who's out.
+- **If** the client needs auditability **then** open History, apply the Status filter, and
+  show the exportable record with approver attribution (`Approved by Demo Hr Manager`).
 
 ## Say-this (talk track)
-> "Time off lives in one place. Everything awaiting a decision is here — across EOR,
-> payroll, and contractors — approve or decline in a click. Flip to the calendar to see
-> who's out today and tomorrow, and History gives you a filterable, exportable record of
-> every request with who approved it."
+> "Time off lives in one place. Everything awaiting a decision is here — across EOR, payroll,
+> and contractors — approve or decline in a click. Flip to the calendar to see who's out
+> today and tomorrow, and History gives you a filterable, exportable record of every request
+> with who approved it. It's the same simple safety net you already trust, now global."

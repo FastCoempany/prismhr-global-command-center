@@ -27,40 +27,48 @@ tags: [team, worker-profile, time-off, leave, public-holidays, balances]
 ---
 
 ## What this screen is
-The Time Off tab of a worker's profile, showing leave balances, pending requests, and a
-filterable history of past time-off requests with their outcomes.
+The **Time Off** tab of a worker's profile (here **Paul Davis**), showing leave balances,
+pending requests, and a filterable history of past time-off requests with their outcomes.
 
 ## Capabilities shown
-- **Leave balances** by category: Public Holidays (7 days), Sick Leave (3.8 days),
-  Annual Leave (2.5 days)
-- **View Details** on public holidays (country-specific holiday calendar)
+- **Leave balances** by category: `Public Holidays` (7 days), `Sick Leave` (3.8 days),
+  `Annual Leave` (2.5 days)
+- **View Details** on `Public Holidays` — the country-specific holiday calendar for this worker
 - **Pending Requests** area with a **Create Request** action and an empty state
-  ("No Pending Time Off Requests")
-- **History** table with category, dates requested, time requested, approve/decline
-  date, and status (e.g. Annual leave, 9.0 days, Approved), with a Filter control
+  (`No Pending Time Off Requests`)
+- **History** table — `CATEGORY NAME`, `DATES REQUESTED`, `TIME REQUESTED`,
+  `APPROVE/DECLINE DATE`, `STATUS` (e.g. `Annual leave`, Aug 27 – Sep 8 2026, `9.0 days`,
+  `Approved`), with a **Filter** control
+- Worker context header (work email, start date, position, worker ID, manager) alongside
+  the profile tab strip
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
-- Each worker's leave balances, holiday entitlement, and full request history are on
-  their profile, so you administer time off across many clients and countries from one place.
-- Public holidays are tracked per worker with their own calendar, so country-specific
-  entitlements are handled without you maintaining them by hand.
+### For the PEO partner (channel)
+- Every client's workers carry their own leave balances, local holiday entitlement, and full
+  request history right on the profile — so you can extend time-off administration across your
+  entire client base **with zero build**; PrismHR already tracks it per country.
+- Public holidays come with their own in-country calendar, so the compliance detail your
+  clients would otherwise have to research is handled inside the ecosystem they already trust.
 
-### For direct employers
-- You can see exactly where a global team member stands on holidays, sick, and annual
-  leave — plus every past request and its outcome — without a separate leave tool.
-- Requests can be created and tracked to Approved right on the profile, so leave for
-  international staff is managed the same way for everyone.
+### For the SMB client (via their PEO)
+- You can see exactly where a global team member stands on holidays, sick, and annual leave —
+  plus every past request and its outcome — without a separate leave tool or a legal team to
+  interpret local entitlements.
+- Local `Public Holidays` are pre-loaded per worker, so a hire abroad gets the **same
+  done-for-you safety net your PEO gives you at home**, now applied to another country.
 
 ## Branching
 - **If** country-specific compliance is the theme **then** open **View Details** on
-  Public Holidays to show the local holiday calendar.
-- **If** the audience runs approvals **then** walk the History row (requested → Approved
-  with dates) to show the audit trail.
+  `Public Holidays` to show the local holiday calendar carried per worker.
+- **If** the audience runs approvals **then** walk a **History** row (requested → `Approved`
+  with dates) to show the built-in audit trail.
+- **If** the audience wants day-to-day simplicity **then** show **Create Request** and the
+  live balance cards updating leave in one place.
 
 ## Say-this (talk track)
-> "Time off for this worker: their balances up top — public holidays, sick, annual —
-> then any pending requests, and a full history with what was requested and whether it
-> was approved. Public holidays even carry their own country calendar, so local
-> entitlements are handled for you."
+> "Time off for this worker sits right on their profile — balances up top for public holidays,
+> sick, and annual leave, then any pending requests, and a full history of what was requested
+> and whether it was approved. The public holidays even carry their own country calendar, so
+> local entitlements are handled for you. For your PEO, that means you can offer global leave
+> management to every client without building any of it — it's already here, per country."
