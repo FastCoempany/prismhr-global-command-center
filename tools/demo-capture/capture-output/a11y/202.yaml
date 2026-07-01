@@ -1,0 +1,198 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - link "Logout":
+    - /url: /login
+- main:
+  - heading "Time Off" [level=1]
+  - tablist "Navigation tabs":
+    - tab "Pending Requests"
+    - tab "Time Off Calendar"
+    - tab "History" [selected]
+  - button "Start Date April 2026"
+  - text: "-"
+  - button "End Date Current Month"
+  - button "All Workers" [expanded]
+  - textbox "Search"
+  - checkbox "All"
+  - text: All
+  - separator
+  - checkbox "Aaron Taylor"
+  - text: Aaron Taylor
+  - checkbox "Alex Demo Worker"
+  - text: Alex Demo Worker
+  - checkbox "Alex Developer"
+  - text: Alex Developer
+  - checkbox "Ben Bell"
+  - text: Ben Bell
+  - checkbox "Beth Parker"
+  - text: Beth Parker
+  - checkbox "Claire Allen"
+  - text: Claire Allen
+  - checkbox "Claire Walker"
+  - text: Claire Walker
+  - checkbox "Dan Adams"
+  - text: Dan Adams
+  - checkbox "Emma Nelson"
+  - text: Emma Nelson
+  - checkbox "Felix Hunt"
+  - text: Felix Hunt
+  - checkbox "Frank Harris"
+  - text: Frank Harris
+  - checkbox "Frank Nelson"
+  - text: Frank Nelson
+  - checkbox "Grace Johnson"
+  - text: Grace Johnson
+  - checkbox "Hugo Baker"
+  - text: Hugo Baker
+  - checkbox "Iris Davis"
+  - text: Iris Davis
+  - checkbox "James Dixon"
+  - text: James Dixon
+  - checkbox "Jane Employee"
+  - text: Jane Employee
+  - checkbox "John Contractor"
+  - text: John Contractor
+  - checkbox "Karen Moore"
+  - text: Karen Moore
+  - checkbox "Kate Carter"
+  - text: Kate Carter
+  - checkbox "Kate James"
+  - text: Kate James
+  - checkbox "Leo Hunt"
+  - text: Leo Hunt
+  - checkbox "Nadia Contractorplus"
+  - text: Nadia Contractorplus
+  - checkbox "Nina Smith"
+  - text: Nina Smith
+  - checkbox "Nina Thompson"
+  - text: Nina Thompson
+  - checkbox "Olivia Walker"
+  - text: Olivia Walker
+  - checkbox "Pablo Contractorplus"
+  - text: Pablo Contractorplus
+  - checkbox "Paul Davis"
+  - text: Paul Davis
+  - checkbox "Paul Miller"
+  - text: Paul Miller
+  - checkbox "Ruby Carter"
+  - text: Ruby Carter
+  - checkbox "Ruby Green"
+  - text: Ruby Green
+  - checkbox "Tara Kelly"
+  - text: Tara Kelly
+  - checkbox "Ulrich Cooper"
+  - text: Ulrich Cooper
+  - checkbox "Ulrich Young"
+  - text: Ulrich Young
+  - checkbox "Ulrich Young"
+  - text: Ulrich Young
+  - checkbox "Uma Johnson"
+  - text: Uma Johnson
+  - checkbox "Uma Walker"
+  - text: Uma Walker
+  - checkbox "Vera Lopez"
+  - text: Vera Lopez
+  - checkbox "Ximena Martin"
+  - text: Ximena Martin
+  - checkbox "Yuki Thompson"
+  - text: Yuki Thompson
+  - checkbox "Zach Cooper"
+  - text: Zach Cooper
+  - button "Engagement"
+  - button "Leave Type"
+  - button "Status"
+  - text: Search Search
+  - textbox "Search requests by name or leave notes"
+  - button "Export"
+  - text: History
+  - table:
+    - rowgroup:
+      - row "name leave type requested on leave dates status":
+        - columnheader "name"
+        - columnheader "leave type"
+        - columnheader "requested on"
+        - columnheader "leave dates"
+        - columnheader "status"
+        - columnheader
+    - rowgroup:
+      - row "Ruby Carter Payroll Annual leave Jul 20, 2026 Jul 30 - Aug 6, 2026 6.0 days approved by Demo Hr Manager":
+        - cell "Ruby Carter Payroll":
+          - text: Ruby Carter
+          - paragraph: Payroll
+        - cell "Annual leave"
+        - cell "Jul 20, 2026"
+        - cell "Jul 30 - Aug 6, 2026 6.0 days"
+        - cell "approved by Demo Hr Manager"
+        - cell
+      - row "Iris Davis Payroll Annual leave Jul 5, 2026 Jul 27 - Jul 31, 2026 5.0 days approved by Demo Hr Manager":
+        - cell "Iris Davis Payroll":
+          - text: Iris Davis
+          - paragraph: Payroll
+        - cell "Annual leave"
+        - cell "Jul 5, 2026"
+        - cell "Jul 27 - Jul 31, 2026 5.0 days"
+        - cell "approved by Demo Hr Manager"
+        - cell
+      - row "Zach Cooper Payroll Annual leave Jul 5, 2026 Jul 17 - Jul 22, 2026 4.0 days approved by Demo Hr Manager":
+        - cell "Zach Cooper Payroll":
+          - text: Zach Cooper
+          - paragraph: Payroll
+        - cell "Annual leave"
+        - cell "Jul 5, 2026"
+        - cell "Jul 17 - Jul 22, 2026 4.0 days"
+        - cell "approved by Demo Hr Manager"
+        - cell
+      - row "Kate James EOR Sick leave Jul 4, 2026 Jul 14 - Jul 18, 2026 4.0 days approved by Demo Hr Manager":
+        - cell "Kate James EOR":
+          - text: Kate James
+          - paragraph: EOR
+        - cell "Sick leave"
+        - cell "Jul 4, 2026"
+        - cell "Jul 14 - Jul 18, 2026 4.0 days"
+        - cell "approved by Demo Hr Manager"
+        - cell
+      - row "Pablo Contractorplus Contractor+ - Jul 3, 2026 Jul 18 - Aug 4, 2026 12.0 days approved by Demo Hr Manager":
+        - cell "Pablo Contractorplus Contractor+":
+          - text: Pablo Contractorplus
+          - paragraph: Contractor+
+        - cell "-"
+        - cell "Jul 3, 2026"
+        - cell "Jul 18 - Aug 4, 2026 12.0 days"
+        - cell "approved by Demo Hr Manager"
+        - cell
+  - paragraph: Showing 1 to 5 of 27 results
+  - navigation "Pagination":
+    - button "Previous" [disabled]
+    - button "1"
+    - button "2"
+    - button "3"
+    - button "Next"
+- button "⏸ Stop capture"
+- button "📸 Now"
+- button "⏱ 3s"
+- text: saved 201
+- img

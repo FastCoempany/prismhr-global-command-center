@@ -1,0 +1,124 @@
+URL: https://app1.demo.prismhr.com/reimbursements
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+Reimbursements
+Pending Requests
+History
+Start Date
+April 2026
+-
+End Date
+Current Month
+All Workers
+Status
+Sort
+Search
+Search
+Export
+History
+
+NAME
+
+	
+
+DATE REQUESTED
+
+	
+
+DATE DISTRIBUTED
+
+	
+
+EXPENSE DATE
+
+	
+
+NOTES
+
+	
+
+AMOUNT
+
+	
+
+STATUS
+
+	
+
+ACTION
+
+
+Uma Walker	Apr 15, 2026	May 29, 2026	Apr 15, 2026	
+Client entertainment expense
+	
+$1,740.93
+MXN
+	
+Approved
+by Demo Hr Manager
+	
+
+Olivia Walker	Apr 19, 2026	May 29, 2026	Apr 19, 2026	
+Internet charges for remote work
+	
+C$975.88
+NIO
+	
+Approved
+by Demo Hr Manager
+	
+
+Claire Allen	Apr 23, 2026	May 29, 2026	Apr 23, 2026	
+Client entertainment expense
+	
+C$1,102.00
+NIO
+	
+Approved
+by Demo Hr Manager
+	
+
+Vera Lopez	Apr 27, 2026	May 29, 2026	Apr 27, 2026	
+Flight booking for workshop
+	
+£38.13
+GBP
+	
+Approved
+by Demo Hr Manager
+	
+
+Frank Harris	May 16, 2026	Not Yet	May 16, 2026	
+Business development dinner
+	
+£57.43
+GBP
+	
+Approved
+by Demo Hr Manager
+	
+
+Showing 1 to 5 of 763 results
+
+Previous
+1
+2
+3
+Next
+⏸ Stop capture
+📸 Now
+⏱ 3s
+saved 66

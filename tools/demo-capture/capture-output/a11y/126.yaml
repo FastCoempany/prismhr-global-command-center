@@ -1,0 +1,99 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - link "Logout":
+    - /url: /login
+- main:
+  - heading "New Hire | EOR" [level=1]
+  - navigation "Progress":
+    - list:
+      - listitem:
+        - link:
+          - /url: /create-contract/eor/employee-info?contractIndex=1
+        - paragraph: Employee Info
+      - listitem:
+        - link:
+          - /url: /create-contract/eor/job?contractIndex=1
+        - paragraph: Job Info
+      - listitem:
+        - link "03":
+          - /url: /create-contract/eor/compensation?contractIndex=1
+        - paragraph: Compensation
+      - listitem:
+        - text: "04"
+        - paragraph: Equipment
+      - listitem:
+        - text: "05"
+        - paragraph: Benefits
+      - listitem:
+        - text: "06"
+        - paragraph: Submit
+  - heading "Compensation" [level=3]
+  - heading "Compensation type" [level=3]
+  - paragraph: How much should the employee be paid? Select between hourly and salary compensation.
+  - group "workType": workType Hourly ✓ Salary
+  - text: Compensation is paid in local currency as required by law. This amount does not include contributions and deductions. Currency
+  - button "SGD Singapore" [disabled]:
+    - img
+    - text: SGD Singapore
+  - text: Gross monthly salary
+  - textbox "Gross monthly salary":
+    - /placeholder: "0.00"
+    - text: "2000.00"
+  - text: Salary Breakdown
+  - button "Collapse"
+  - text: Amount you pay Gross Monthly salary S$2,000.00 SGD Total employer contribution
+  - button
+  - text: S$345.00 SGD Total Monthly Cost S$2,345.00 SGD Amount employee gets Gross Monthly salary S$2,000.00 SGD Total employee contribution
+  - button
+  - text: "S$400.00 SGD Total Monthly Cost S$1,600.00 SGD Disclaimer: All calculations are estimates and are not guaranteed."
+  - heading "Employment type" [level=3]
+  - paragraph: Note that definitions for “full-time” and “part-time” hours may vary by country.
+  - group "employmentType": employmentType ✓ Full-time Part-time
+  - heading "Contract term" [level=3]
+  - paragraph: An “indefinite” contract term means the contract remains in place until terminated. A “definite” contract term terminates on a pre-defined date.
+  - group "contractTerm": contractTerm ✓ Indefinite Fixed Term
+  - heading "Additional payment" [level=3]
+  - paragraph: Add any other payments, bonuses, commissions or other benefits here
+  - button "Add Additional Payment"
+  - heading "Vacation and paid time-off" [level=3]
+  - paragraph: Employees in Singapore are legally entitled to all local public holidays and 20 paid days off for their first year of employment. If you would like to offer additional paid time off, indicate the number of days here.
+  - text: Additional Paid Time-off
+  - textbox:
+    - /placeholder: "0.00"
+    - text: "0"
+  - button "Save Changes"
+  - button "Want to offer Unlimited PTO?"
+  - text: If you want to offer unlimited vacation days, enter zero additional paid time-off days. This would be an informal arrangement between you and the worker and can only be utilized once the statutory vacation has been exhausted.
+  - button "Save & Exit"
+  - button "Exit"
+  - button "Back"
+  - button "Next"
+- button "⏸ Stop capture"
+- button "📸 Now"
+- button "⏱ 3s"
+- text: saved 125
+- img

@@ -1,0 +1,87 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - link "Logout":
+    - /url: /login
+- heading "Profile" [level=1]
+- navigation "Breadcrumb":
+  - list:
+    - listitem:
+      - link "Team":
+        - /url: /team
+    - listitem:
+      - link "Profile":
+        - /url: /team/6ab3e4b7-92ff-46e6-9ba3-24ddbb9f4ffb/1ec6133c-f849-4802-8e9c-fa924a356014
+    - listitem:
+      - link "Time Off":
+        - /url: /team/6ab3e4b7-92ff-46e6-9ba3-24ddbb9f4ffb/1ec6133c-f849-4802-8e9c-fa924a356014/time-off
+- text: Paul Davis Work Email paul.davis@prismhr.com Start Date Aug 26, 2026 Position National Security Coordinator Worker ID 105260601496 Manager
+- button "Mike Superadmin"
+- text: Location
+- button "Assign Location"
+- region:
+  - navigation:
+    - link "Details":
+      - /url: /team/6ab3e4b7-92ff-46e6-9ba3-24ddbb9f4ffb/1ec6133c-f849-4802-8e9c-fa924a356014/details
+    - link "Documents":
+      - /url: /team/6ab3e4b7-92ff-46e6-9ba3-24ddbb9f4ffb/1ec6133c-f849-4802-8e9c-fa924a356014/documents
+    - link "Payments":
+      - /url: /team/6ab3e4b7-92ff-46e6-9ba3-24ddbb9f4ffb/1ec6133c-f849-4802-8e9c-fa924a356014/payments
+    - link "Contracts":
+      - /url: /team/6ab3e4b7-92ff-46e6-9ba3-24ddbb9f4ffb/1ec6133c-f849-4802-8e9c-fa924a356014/contracts
+    - link "Time Off":
+      - /url: /team/6ab3e4b7-92ff-46e6-9ba3-24ddbb9f4ffb/1ec6133c-f849-4802-8e9c-fa924a356014/time-off
+    - link "Expense Reimbursements":
+      - /url: /team/6ab3e4b7-92ff-46e6-9ba3-24ddbb9f4ffb/1ec6133c-f849-4802-8e9c-fa924a356014/expense-reimbursements
+    - link "Assignments":
+      - /url: /team/6ab3e4b7-92ff-46e6-9ba3-24ddbb9f4ffb/1ec6133c-f849-4802-8e9c-fa924a356014/organization
+  - text: Public Holidays 7 days
+  - button "View Details"
+  - text: Sick Leave 3.8 days Annual Leave 2.5 days Pending Requests
+  - button "Create Request"
+  - text: No Pending Time Off Requests History
+  - button "Filter 3"
+  - table:
+    - rowgroup:
+      - row "category name Dates Requested Time Requested Approve/Decline Date status":
+        - columnheader "category name"
+        - columnheader "Dates Requested"
+        - columnheader "Time Requested"
+        - columnheader "Approve/Decline Date"
+        - columnheader "status"
+    - rowgroup:
+      - row "Annual leave Aug 27, 2026 - Sep 8, 2026 9.0 days Jun 30, 2026 Approved":
+        - cell "Annual leave"
+        - cell "Aug 27, 2026 - Sep 8, 2026"
+        - cell "9.0 days"
+        - cell "Jun 30, 2026"
+        - cell "Approved":
+          - definition: Approved
+- button "⏸ Stop capture"
+- button "📸 Now"
+- button "⏱ 3s"
+- text: saved 186
+- img

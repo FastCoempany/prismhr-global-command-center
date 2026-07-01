@@ -1,0 +1,28 @@
+URL: https://app1.demo.prismhr.com/create-contract
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+New Hire
+What type of worker do you want to hire?
+Employee
+Hire employees compliantly in over 180 countries
+Select Employee
+Contractor
+Classify and hire contractors compliantly in over 180 countries
+Select Contractor
+⏸ Stop capture
+📸 Now
+⏱ 3s
+saved 67

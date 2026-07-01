@@ -1,0 +1,202 @@
+URL: https://app1.demo.prismhr.com/settings/users
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+Settings
+Settings
+Users
+General
+Users
+Roles and Permissions
+Approval Workflows
+Assignments
+Users
+
+Invite or manage your organization's users.
+
+Sort
+Filter
++ Invite User
+NAME
+	
+STATUS
+	
+ROLE
+	
+MANAGER
+	
+ACTION
+
+
+DA
+Demo Admin
+antaeus.coe@vensure.com
+	Active	
+Account Owner
+	
+	
+
+
+MS
+Mike Superadmin
+antaeus.coe+superadmin@vensure.com
+	Invited	
+Super Admin
+Manager
+HR
+Admin
+Onboard Only
+Finance
+	
+Demo Admin
+Sarah Admin
+Demo HR Manager
+John Manager
+Alex Demo Worker
+Demo Finance Manager
+Emma Onboard
+	
+
+
+SA
+Sarah Admin
+antaeus.coe+admin@vensure.com
+	Invited	
+Super Admin
+Manager
+HR
+Admin
+Onboard Only
+Finance
+	
+Demo Admin
+Mike SuperAdmin
+Demo HR Manager
+John Manager
+Alex Demo Worker
+Demo Finance Manager
+Emma Onboard
+	
+
+
+DH
+Demo Hr Manager
+antaeus.coe+hr@vensure.com
+	Invited	
+Super Admin
+Manager
+HR
+Admin
+Onboard Only
+Finance
+	
+Demo Admin
+Mike SuperAdmin
+Sarah Admin
+John Manager
+Alex Demo Worker
+Demo Finance Manager
+Emma Onboard
+	
+
+
+JM
+John Manager
+antaeus.coe+manager@vensure.com
+	Invited	
+Super Admin
+Manager
+HR
+Admin
+Onboard Only
+Finance
+	
+Demo Admin
+Mike SuperAdmin
+Sarah Admin
+Demo HR Manager
+Alex Demo Worker
+Demo Finance Manager
+Emma Onboard
+	
+
+
+AD
+Alex Demo Worker
+antaeus.coe+userworker@vensure.com
+	Active	
+Super Admin
+Manager
+HR
+Admin
+Onboard Only
+Finance
+	
+Demo Admin
+Mike SuperAdmin
+Sarah Admin
+Demo HR Manager
+John Manager
+Demo Finance Manager
+Emma Onboard
+	
+
+
+DF
+Demo Finance Manager
+antaeus.coe+finance@vensure.com
+	Invited	
+Super Admin
+Manager
+HR
+Admin
+Onboard Only
+Finance
+	
+Demo Admin
+Mike SuperAdmin
+Sarah Admin
+Demo HR Manager
+John Manager
+Alex Demo Worker
+Emma Onboard
+	
+
+
+EO
+Emma Onboard
+antaeus.coe+onboard@vensure.com
+	Invited	
+Super Admin
+Manager
+HR
+Admin
+Onboard Only
+Finance
+	
+Demo Admin
+Mike SuperAdmin
+Sarah Admin
+Demo HR Manager
+John Manager
+Alex Demo Worker
+Demo Finance Manager
+	
+Previous
+Next
+⏸ Stop capture
+📸 Now
+⏱ 3s
+saved 287

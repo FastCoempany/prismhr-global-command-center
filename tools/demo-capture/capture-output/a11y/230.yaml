@@ -1,0 +1,576 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - link "Logout":
+    - /url: /login
+- heading "Contract" [level=1]
+- navigation "Breadcrumb":
+  - list:
+    - listitem:
+      - link "Aaron Taylor":
+        - /url: /team/06bede5a-a495-4a03-adab-e85ecc26ccb9/878d3043-bf40-457a-a9c8-56a129e70172/details
+    - listitem:
+      - link "Contracts":
+        - /url: /team/06bede5a-a495-4a03-adab-e85ecc26ccb9/878d3043-bf40-457a-a9c8-56a129e70172/contracts
+- heading "Aaron Taylor" [level=2]
+- text: Contractor United Kingdom $3,909.97 USD/month Starting on Oct 11, 2025
+- term: Email
+- definition: aaron.taylor46203@prismhr.com
+- term: Worker Signature
+- definition: Aaron Taylor
+- term: Client Signature
+- definition: Admin User
+- term: Payment Frequency
+- definition: Fixed Rate Last Business Day Of The Month
+- term: Job Title
+- definition: Direct Identity Strategist
+- term: Seniority Level
+- definition: Supervisor
+- term: Scope of Work
+- definition: We need to copy the multi-byte TCP panel!
+- region "Signatures":
+  - heading "Signatures" [level=2]
+  - paragraph: Sign and send the contract
+  - paragraph: Issuer signature
+  - paragraph: Admin User
+  - paragraph: Contractor signature
+  - paragraph: Aaron Taylor
+  - button "View Contract"
+- heading "Change Job Title" [level=3]
+- button "View History"
+- button "Update"
+- heading "Change Pay Rate" [level=3]
+- button "View History"
+- button "Update"
+- paragraph: Request Off-board
+- button "Off-board"
+- heading "Distributions" [level=3]
+- list:
+  - listitem:
+    - paragraph:
+      - img
+      - text: One Time
+    - paragraph:
+      - text: "Status:"
+      - img
+      - text: "GENERATED Distribution Date: Dec 31, 2026"
+    - time
+    - paragraph: $85.81 USD
+  - listitem:
+    - paragraph:
+      - img
+      - text: Reimbursement
+    - paragraph:
+      - text: "Status:"
+      - img
+      - text: "GENERATED Distribution Date: Dec 31, 2026"
+    - time
+    - paragraph: $53.80 USD
+  - listitem:
+    - paragraph:
+      - img
+      - text: Reimbursement
+    - paragraph:
+      - text: "Status:"
+      - img
+      - text: "GENERATED Distribution Date: Nov 30, 2026"
+    - time
+    - paragraph: $77.29 USD
+  - listitem:
+    - paragraph:
+      - img
+      - text: One Time
+    - paragraph:
+      - text: "Status:"
+      - img
+      - text: "GENERATED Distribution Date: Nov 30, 2026"
+    - time
+    - paragraph: $50.09 USD
+  - listitem:
+    - paragraph:
+      - img
+      - text: Reimbursement
+    - paragraph:
+      - text: "Status:"
+      - img
+      - text: "GENERATED Distribution Date: Oct 30, 2026"
+    - time
+    - paragraph: $81.38 USD
+  - listitem:
+    - paragraph:
+      - img
+      - text: One Time
+    - paragraph:
+      - text: "Status:"
+      - img
+      - text: "GENERATED Distribution Date: Oct 30, 2026"
+    - time
+    - paragraph: $81.21 USD
+  - listitem:
+    - paragraph:
+      - img
+      - text: Reimbursement
+    - paragraph:
+      - text: "Status:"
+      - img
+      - text: "GENERATED Distribution Date: Sep 30, 2026"
+    - time
+    - paragraph: $73.11 USD
+  - listitem:
+    - paragraph:
+      - img
+      - text: One Time
+    - paragraph:
+      - text: "Status:"
+      - img
+      - text: "GENERATED Distribution Date: Sep 30, 2026"
+    - time
+    - paragraph: $43.11 USD
+  - listitem:
+    - paragraph:
+      - img
+      - text: Reimbursement
+    - paragraph:
+      - text: "Status:"
+      - img
+      - text: "GENERATED Distribution Date: Aug 31, 2026"
+    - time
+    - paragraph: $36.80 USD
+  - listitem:
+    - paragraph:
+      - img
+      - text: One Time
+    - paragraph:
+      - text: "Status:"
+      - img
+      - text: "GENERATED Distribution Date: Aug 31, 2026"
+    - time
+    - paragraph: $76.58 USD
+  - listitem:
+    - paragraph:
+      - img
+      - text: One Time
+    - paragraph:
+      - text: "Status:"
+      - img
+      - text: "GENERATED Distribution Date: Jul 31, 2026"
+    - time
+    - paragraph: $74.39 USD
+  - listitem:
+    - paragraph:
+      - img
+      - text: Reimbursement
+    - paragraph:
+      - text: "Status:"
+      - img
+      - text: "GENERATED Distribution Date: Jul 31, 2026"
+    - time
+    - paragraph: $76.74 USD
+  - listitem:
+    - paragraph:
+      - img
+      - text: One Time
+    - paragraph:
+      - text: "Status:"
+      - img
+      - text: "SENT Confirmation Number: ed4fe5cf-caae-48c9-bbc6-bbbbff63174f"
+    - time
+    - paragraph: $91.42 USD
+  - listitem:
+    - paragraph:
+      - img
+      - text: One Time
+    - paragraph:
+      - text: "Status:"
+      - img
+      - text: "GENERATED Distribution Date: Jun 30, 2026"
+    - time
+    - paragraph: $200.00 USD
+  - listitem:
+    - paragraph:
+      - img
+      - text: Reimbursement
+    - paragraph:
+      - text: "Status:"
+      - img
+      - text: "SENT Confirmation Number: a522886e-3dc7-48b0-bb63-c0f43ee70298"
+    - time
+    - paragraph: $75.30 USD
+  - listitem:
+    - paragraph:
+      - img
+      - text: Wages
+    - paragraph:
+      - text: "Status:"
+      - img
+      - text: "SENT Confirmation Number: null"
+    - time: May 29, 2026
+    - paragraph: $3,909.97 USD
+  - listitem:
+    - paragraph:
+      - img
+      - text: One Time
+    - paragraph:
+      - text: "Status:"
+      - img
+      - text: "SENT Confirmation Number: 892d23e5-27db-4a09-92d8-0d1c8a0a3565"
+    - time: May 29, 2026
+    - paragraph: $89.07 USD
+  - listitem:
+    - paragraph:
+      - img
+      - text: Reimbursement
+    - paragraph:
+      - text: "Status:"
+      - img
+      - text: "SENT Confirmation Number: 067f1e1b-b7f1-46e7-b862-82c91b2b3600"
+    - time: May 29, 2026
+    - paragraph: $62.67 USD
+  - listitem:
+    - paragraph:
+      - img
+      - text: Wages
+    - paragraph:
+      - text: "Status:"
+      - img
+      - text: "SENT Confirmation Number: null"
+    - time: Apr 30, 2026
+    - paragraph: $3,909.97 USD
+  - listitem:
+    - paragraph:
+      - img
+      - text: One Time
+    - paragraph:
+      - text: "Status:"
+      - img
+      - text: "SENT Confirmation Number: 410bc481-bc05-4e07-a120-51dc6558f47e"
+    - time: Apr 30, 2026
+    - paragraph: $62.83 USD
+  - listitem:
+    - paragraph:
+      - img
+      - text: Reimbursement
+    - paragraph:
+      - text: "Status:"
+      - img
+      - text: "SENT Confirmation Number: 2b1ae577-26aa-435b-90a9-ee9acfaf2629"
+    - time: Apr 30, 2026
+    - paragraph: $30.67 USD
+  - listitem:
+    - paragraph:
+      - img
+      - text: One Time
+    - paragraph:
+      - text: "Status:"
+      - img
+      - text: "SENT Confirmation Number: 48cad1a8-6655-4b68-8ff1-13211e49b99f"
+    - time: Mar 31, 2026
+    - paragraph: $33.73 USD
+  - listitem:
+    - paragraph:
+      - img
+      - text: Wages
+    - paragraph:
+      - text: "Status:"
+      - img
+      - text: "SENT Confirmation Number: null"
+    - time: Mar 31, 2026
+    - paragraph: $3,909.97 USD
+  - listitem:
+    - paragraph:
+      - img
+      - text: Reimbursement
+    - paragraph:
+      - text: "Status:"
+      - img
+      - text: "SENT Confirmation Number: fa2edbac-7cdd-4c7d-bc44-417430db95df"
+    - time: Mar 31, 2026
+    - paragraph: $40.36 USD
+  - listitem:
+    - paragraph:
+      - img
+      - text: Reimbursement
+    - paragraph:
+      - text: "Status:"
+      - img
+      - text: "SENT Confirmation Number: 2c2e662b-3690-46fa-b653-0c72420ddde9"
+    - time: Feb 27, 2026
+    - paragraph: $92.84 USD
+  - listitem:
+    - paragraph:
+      - img
+      - text: Wages
+    - paragraph:
+      - text: "Status:"
+      - img
+      - text: "SENT Confirmation Number: null"
+    - time: Feb 27, 2026
+    - paragraph: $3,909.97 USD
+  - listitem:
+    - paragraph:
+      - img
+      - text: One Time
+    - paragraph:
+      - text: "Status:"
+      - img
+      - text: "SENT Confirmation Number: 0157aa76-2606-4054-90e7-195e0d957535"
+    - time: Feb 27, 2026
+    - paragraph: $97.36 USD
+  - listitem:
+    - paragraph:
+      - img
+      - text: Reimbursement
+    - paragraph:
+      - text: "Status:"
+      - img
+      - text: "SENT Confirmation Number: 3c96fe6c-6f7a-4867-aac1-8b82853559d2"
+    - time: Jan 30, 2026
+    - paragraph: $24.87 USD
+  - listitem:
+    - paragraph:
+      - img
+      - text: One Time
+    - paragraph:
+      - text: "Status:"
+      - img
+      - text: "SENT Confirmation Number: 00322209-d1ec-43db-8f6c-25a6862f2477"
+    - time: Jan 30, 2026
+    - paragraph: $25.47 USD
+  - listitem:
+    - paragraph:
+      - img
+      - text: Wages
+    - paragraph:
+      - text: "Status:"
+      - img
+      - text: "SENT Confirmation Number: null"
+    - time: Jan 30, 2026
+    - paragraph: $3,909.97 USD
+  - listitem:
+    - paragraph:
+      - img
+      - text: One Time
+    - paragraph:
+      - text: "Status:"
+      - img
+      - text: "SENT Confirmation Number: cbc9fc0d-78cd-409e-9bc7-96dd631ef5b0"
+    - time: Dec 31, 2025
+    - paragraph: $92.87 USD
+  - listitem:
+    - paragraph:
+      - img
+      - text: Wages
+    - paragraph:
+      - text: "Status:"
+      - img
+      - text: "SENT Confirmation Number: null"
+    - time: Dec 31, 2025
+    - paragraph: $3,909.97 USD
+  - listitem:
+    - paragraph:
+      - img
+      - text: Reimbursement
+    - paragraph:
+      - text: "Status:"
+      - img
+      - text: "SENT Confirmation Number: 283b2715-9be7-4f65-9a11-964c9968cb40"
+    - time: Dec 31, 2025
+    - paragraph: $51.01 USD
+  - listitem:
+    - paragraph:
+      - img
+      - text: Reimbursement
+    - paragraph:
+      - text: "Status:"
+      - img
+      - text: "SENT Confirmation Number: bd8de23a-d2c3-4c46-94dc-a97d3901e3b0"
+    - time: Nov 28, 2025
+    - paragraph: $26.78 USD
+  - listitem:
+    - paragraph:
+      - img
+      - text: Wages
+    - paragraph:
+      - text: "Status:"
+      - img
+      - text: "SENT Confirmation Number: null"
+    - time: Nov 28, 2025
+    - paragraph: $3,909.97 USD
+  - listitem:
+    - paragraph:
+      - img
+      - text: One Time
+    - paragraph:
+      - text: "Status:"
+      - img
+      - text: "SENT Confirmation Number: af2528f4-c651-410c-8127-f73cb600f1e8"
+    - time: Nov 28, 2025
+    - paragraph: $32.65 USD
+  - listitem:
+    - paragraph:
+      - img
+      - text: One Time
+    - paragraph:
+      - text: "Status:"
+      - img
+      - text: "SENT Confirmation Number: 97d9db5b-ebcd-443a-a015-28a6e359e92c"
+    - time: Oct 31, 2025
+    - paragraph: $82.51 USD
+  - listitem:
+    - paragraph:
+      - img
+      - text: Reimbursement
+    - paragraph:
+      - text: "Status:"
+      - img
+      - text: "SENT Confirmation Number: 4e5f005c-1fde-48d4-9ead-a2c08cb07618"
+    - time: Oct 31, 2025
+    - paragraph: $38.45 USD
+  - listitem:
+    - paragraph:
+      - img
+      - text: Wages
+    - paragraph:
+      - text: "Status:"
+      - img
+      - text: "SENT Confirmation Number: null"
+    - time: Oct 31, 2025
+    - paragraph: $2,549.98 USD
+  - listitem:
+    - paragraph:
+      - img
+      - text: Reimbursement
+    - paragraph:
+      - text: "Status:"
+      - img
+      - text: "SENT Confirmation Number: 558edcd4-3f8b-4785-a084-4b86f0111525"
+    - time: Sep 30, 2025
+    - paragraph: $29.93 USD
+  - listitem:
+    - paragraph:
+      - img
+      - text: One Time
+    - paragraph:
+      - text: "Status:"
+      - img
+      - text: "SENT Confirmation Number: a7f6d6f5-9b99-4534-a600-a4fa8fd159ab"
+    - time: Sep 30, 2025
+    - paragraph: $71.54 USD
+  - listitem:
+    - paragraph:
+      - img
+      - text: Reimbursement
+    - paragraph:
+      - text: "Status:"
+      - img
+      - text: "SENT Confirmation Number: b1a5af20-53a4-4d52-97da-c8199b29dc36"
+    - time: Aug 29, 2025
+    - paragraph: $62.21 USD
+  - listitem:
+    - paragraph:
+      - img
+      - text: One Time
+    - paragraph:
+      - text: "Status:"
+      - img
+      - text: "SENT Confirmation Number: d47ee9f8-eeaa-43c2-843c-28dc68d9d30a"
+    - time: Aug 29, 2025
+    - paragraph: $41.16 USD
+  - listitem:
+    - paragraph:
+      - img
+      - text: Reimbursement
+    - paragraph:
+      - text: "Status:"
+      - img
+      - text: "SENT Confirmation Number: dae109db-5a03-4d70-bb66-031e2066dd3a"
+    - time: Jul 31, 2025
+    - paragraph: $88.15 USD
+  - listitem:
+    - paragraph:
+      - img
+      - text: One Time
+    - paragraph:
+      - text: "Status:"
+      - img
+      - text: "SENT Confirmation Number: 8e326033-c677-4c97-a5cd-7802f8ce7f8b"
+    - time: Jul 31, 2025
+    - paragraph: $81.90 USD
+  - listitem:
+    - paragraph:
+      - img
+      - text: One Time
+    - paragraph:
+      - text: "Status:"
+      - img
+      - text: "SENT Confirmation Number: 02a1857b-f8e5-456b-be29-c3b58445cdbf"
+    - time: Jun 30, 2025
+    - paragraph: $50.19 USD
+  - listitem:
+    - paragraph:
+      - img
+      - text: Reimbursement
+    - paragraph:
+      - text: "Status:"
+      - img
+      - text: "SENT Confirmation Number: 215eca0e-a001-452d-9622-67ba45d5b195"
+    - time: Jun 30, 2025
+    - paragraph: $29.23 USD
+  - listitem:
+    - paragraph:
+      - img
+      - text: One Time
+    - paragraph:
+      - text: "Status:"
+      - img
+      - text: "SENT Confirmation Number: 105007bd-2d54-4c42-978d-7add3d9a4036"
+    - time: May 30, 2025
+    - paragraph: $85.75 USD
+  - listitem:
+    - paragraph:
+      - img
+      - text: Reimbursement
+    - paragraph:
+      - text: "Status:"
+      - img
+      - text: "SENT Confirmation Number: c6f360f7-acae-4f0a-bdef-d33136284e4f"
+    - time: May 30, 2025
+    - paragraph: $68.04 USD
+- heading "Additional Payments" [level=3]
+- button "Additional Payment"
+- list:
+  - listitem:
+    - paragraph: Transportation Allowance
+    - paragraph: Monthly
+    - paragraph: Jan 1, 2024
+    - paragraph: $64.03 USD - Fixed Payment
+    - button "Delete"
+    - button "Edit"
+- button "⏸ Stop capture"
+- button "📸 Now"
+- button "⏱ 3s"
+- text: saved 229
+- img

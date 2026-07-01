@@ -1,0 +1,58 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - link "Logout":
+    - /url: /login
+- main:
+  - heading "Compensation Calculator" [level=1]
+  - navigation "Breadcrumb":
+    - list:
+      - listitem:
+        - link "Tools & Resources":
+          - /url: /tools-and-resources
+      - listitem:
+        - link "Compensation Calculator":
+          - /url: /tools-and-resources/compensation-calculator
+  - application "Salary Calculator":
+    - heading "Cost Breakdown" [level=3]
+    - button "Reset calculator"
+    - text: Calculation for Argentina
+    - tablist:
+      - tab "Monthly" [selected]
+      - tab "Annually"
+    - heading "Employer pays" [level=4]
+    - text: Gross salary 10,000 ARS
+    - group: Employer Contributions 16,151.31 ARS
+    - text: Total Employer Cost 26,151.31 ARS
+    - heading "Employee gets" [level=4]
+    - text: Gross salary 10,000 ARS
+    - group: Deductions 25,618.29 ARS
+    - text: Net salary -15,618.29 ARS
+- button "⏸ Stop capture"
+- button "📸 Now"
+- button "⏱ 3s"
+- text: saved 265
+- img

@@ -1,0 +1,293 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - link "Logout":
+    - /url: /login
+- main:
+  - heading "Add One-Time Payment" [level=1]
+  - navigation "Breadcrumb":
+    - list:
+      - listitem:
+        - link "Dashboard":
+          - /url: /
+      - listitem:
+        - link "Add One-Time Payment":
+          - /url: /pay-periods/add-one-time-payment
+  - heading "Enter Payment Details" [level=2]
+  - paragraph: Select the payment type and amount for each worker below.
+  - text: Pay Period Type
+  - combobox "Pay Period Type":
+    - option "Last day of the month - EOR" [selected]
+    - option "Last day of the month - CONTRACTOR"
+    - option "Last day of the month - PAYROLL"
+  - text: Pay Period
+  - combobox "Pay Period":
+    - 'option "[Current] Jul 1, 2026 - Jul 31, 2026 - [Ends on: Jul 10, 2026]" [selected]'
+    - option "[Next] Aug 1, 2026 - Aug 31, 2026"
+  - textbox "Search workers"
+  - button "Countries"
+  - button "Sort Name"
+  - table:
+    - rowgroup:
+      - row "NAME PAY PERIOD TYPE COUNTRY PAYMENT TYPE AMOUNT":
+        - columnheader "NAME"
+        - columnheader "PAY PERIOD TYPE"
+        - columnheader "COUNTRY"
+        - columnheader "PAYMENT TYPE"
+        - columnheader "AMOUNT"
+    - rowgroup:
+      - row "Alex Demo Worker Last day of the month - EOR United Kingdom Select Payment Type Price input with currency selector":
+        - cell "Alex Demo Worker"
+        - cell "Last day of the month - EOR"
+        - cell "United Kingdom":
+          - img
+          - text: United Kingdom
+        - cell "Select Payment Type":
+          - combobox:
+            - option "Select Payment Type" [selected]
+            - option "Signing Bonus"
+            - option "Commission"
+            - option "Spiff"
+            - option "Performance"
+            - option "Holiday"
+            - option "Equipment"
+            - option "Other"
+        - cell "Price input with currency selector":
+          - group "Price input with currency selector":
+            - text: £
+            - textbox "Price amount":
+              - /placeholder: "0.00"
+            - button "GBP":
+              - img
+              - text: GBP
+              - img
+      - row "Ben Bell Last day of the month - EOR Canada - Nova Scotia Select Payment Type Price input with currency selector":
+        - cell "Ben Bell"
+        - cell "Last day of the month - EOR"
+        - cell "Canada - Nova Scotia":
+          - img
+          - text: Canada - Nova Scotia
+        - cell "Select Payment Type":
+          - combobox:
+            - option "Select Payment Type" [selected]
+            - option "Signing Bonus"
+            - option "Commission"
+            - option "Spiff"
+            - option "Performance"
+            - option "Holiday"
+            - option "Equipment"
+            - option "Other"
+        - cell "Price input with currency selector":
+          - group "Price input with currency selector":
+            - text: $
+            - textbox "Price amount":
+              - /placeholder: "0.00"
+            - button "CAD":
+              - img
+              - text: CAD
+              - img
+      - row "Beth Parker Last day of the month - EOR Canada Select Payment Type Price input with currency selector":
+        - cell "Beth Parker"
+        - cell "Last day of the month - EOR"
+        - cell "Canada":
+          - img
+          - text: Canada
+        - cell "Select Payment Type":
+          - combobox:
+            - option "Select Payment Type" [selected]
+            - option "Signing Bonus"
+            - option "Commission"
+            - option "Spiff"
+            - option "Performance"
+            - option "Holiday"
+            - option "Equipment"
+            - option "Other"
+        - cell "Price input with currency selector":
+          - group "Price input with currency selector":
+            - text: $
+            - textbox "Price amount":
+              - /placeholder: "0.00"
+            - button "CAD":
+              - img
+              - text: CAD
+              - img
+      - row "Claire Allen Last day of the month - EOR Nicaragua Select Payment Type Price input with currency selector":
+        - cell "Claire Allen"
+        - cell "Last day of the month - EOR"
+        - cell "Nicaragua":
+          - img
+          - text: Nicaragua
+        - cell "Select Payment Type":
+          - combobox:
+            - option "Select Payment Type" [selected]
+            - option "Signing Bonus"
+            - option "Commission"
+            - option "Spiff"
+            - option "Performance"
+            - option "Holiday"
+            - option "Equipment"
+            - option "Other"
+        - cell "Price input with currency selector":
+          - group "Price input with currency selector":
+            - text: C$
+            - textbox "Price amount":
+              - /placeholder: "0.00"
+            - button "NIO":
+              - img
+              - text: NIO
+              - img
+      - row "Dan Adams Last day of the month - EOR United Kingdom Select Payment Type Price input with currency selector":
+        - cell "Dan Adams"
+        - cell "Last day of the month - EOR"
+        - cell "United Kingdom":
+          - img
+          - text: United Kingdom
+        - cell "Select Payment Type":
+          - combobox:
+            - option "Select Payment Type" [selected]
+            - option "Signing Bonus"
+            - option "Commission"
+            - option "Spiff"
+            - option "Performance"
+            - option "Holiday"
+            - option "Equipment"
+            - option "Other"
+        - cell "Price input with currency selector":
+          - group "Price input with currency selector":
+            - text: £
+            - textbox "Price amount":
+              - /placeholder: "0.00"
+            - button "GBP":
+              - img
+              - text: GBP
+              - img
+      - row "Hugo Baker Last day of the month - EOR United Kingdom Select Payment Type Price input with currency selector":
+        - cell "Hugo Baker"
+        - cell "Last day of the month - EOR"
+        - cell "United Kingdom":
+          - img
+          - text: United Kingdom
+        - cell "Select Payment Type":
+          - combobox:
+            - option "Select Payment Type" [selected]
+            - option "Signing Bonus"
+            - option "Commission"
+            - option "Spiff"
+            - option "Performance"
+            - option "Holiday"
+            - option "Equipment"
+            - option "Other"
+        - cell "Price input with currency selector":
+          - group "Price input with currency selector":
+            - text: £
+            - textbox "Price amount":
+              - /placeholder: "0.00"
+            - button "GBP":
+              - img
+              - text: GBP
+              - img
+      - row "Kate James Last day of the month - EOR Nicaragua Select Payment Type Price input with currency selector":
+        - cell "Kate James"
+        - cell "Last day of the month - EOR"
+        - cell "Nicaragua":
+          - img
+          - text: Nicaragua
+        - cell "Select Payment Type":
+          - combobox:
+            - option "Select Payment Type" [selected]
+            - option "Signing Bonus"
+            - option "Commission"
+            - option "Spiff"
+            - option "Performance"
+            - option "Holiday"
+            - option "Equipment"
+            - option "Other"
+        - cell "Price input with currency selector":
+          - group "Price input with currency selector":
+            - text: C$
+            - textbox "Price amount":
+              - /placeholder: "0.00"
+            - button "NIO":
+              - img
+              - text: NIO
+              - img
+      - row "Leo Hunt Last day of the month - EOR Taiwan Select Payment Type Price input with currency selector":
+        - cell "Leo Hunt"
+        - cell "Last day of the month - EOR"
+        - cell "Taiwan":
+          - img
+          - text: Taiwan
+        - cell "Select Payment Type":
+          - combobox:
+            - option "Select Payment Type" [selected]
+            - option "Signing Bonus"
+            - option "Commission"
+            - option "Spiff"
+            - option "Performance"
+            - option "Holiday"
+            - option "Equipment"
+            - option "Other"
+        - cell "Price input with currency selector":
+          - group "Price input with currency selector":
+            - text: $
+            - textbox "Price amount":
+              - /placeholder: "0.00"
+            - button "TWD":
+              - img
+              - text: TWD
+              - img
+      - row "Olivia Walker Last day of the month - EOR Nicaragua Select Payment Type Price input with currency selector":
+        - cell "Olivia Walker"
+        - cell "Last day of the month - EOR"
+        - cell "Nicaragua":
+          - img
+          - text: Nicaragua
+        - cell "Select Payment Type":
+          - combobox:
+            - option "Select Payment Type" [selected]
+            - option "Signing Bonus"
+            - option "Commission"
+            - option "Spiff"
+            - option "Performance"
+            - option "Holiday"
+            - option "Equipment"
+            - option "Other"
+        - cell "Price input with currency selector":
+          - group "Price input with currency selector":
+            - text: C$
+            - textbox "Price amount":
+              - /placeholder: "0.00"
+            - button "NIO":
+              - img
+              - text: NIO
+              - img
+  - button "Back"
+  - button "Next"
+- button "⏸ Stop capture"
+- button "📸 Now"
+- button "⏱ 3s"
+- text: saved 3
+- img

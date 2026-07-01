@@ -1,0 +1,126 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - link "Logout":
+    - /url: /login
+- main:
+  - heading "Settings" [level=1]
+  - navigation "Breadcrumb":
+    - list:
+      - listitem:
+        - link "Settings":
+          - /url: /settings/general
+      - listitem:
+        - link "General":
+          - /url: /settings/general
+  - button "Back to Users"
+  - text: "Roles: Owner Details: Has all Administration, People Management, Payments, and Finance permissions, and can delete account Administration Has Access Invite users"
+  - checkbox [checked] [disabled]
+  - text: Assign user roles
+  - checkbox [checked] [disabled]
+  - text: Can delete account
+  - checkbox [checked] [disabled]
+  - text: Edit managers
+  - checkbox [checked] [disabled]
+  - text: Customize user permissions
+  - checkbox [checked] [disabled]
+  - text: Override multi-level approvals
+  - checkbox [checked] [disabled]
+  - text: View/edit company settings
+  - checkbox [checked] [disabled]
+  - text: Communication Has Access Receive client payment notifications
+  - checkbox [checked] [disabled]
+  - text: Receive contract signature notifications
+  - checkbox [checked] [disabled]
+  - text: Finance Has Access Pay invoices
+  - checkbox [checked] [disabled]
+  - text: View invoices
+  - checkbox [checked] [disabled]
+  - text: Payments Has Access View compensation calculator
+  - checkbox [checked] [disabled]
+  - text: Approve pay period summaries
+  - checkbox [checked] [disabled]
+  - text: View pay period summaries
+  - checkbox [checked] [disabled]
+  - text: Add one time payment
+  - checkbox [checked] [disabled]
+  - text: Initiate bulk upload
+  - checkbox [checked] [disabled]
+  - text: People management Has Access Onboard new hires
+  - checkbox [checked] [disabled]
+  - text: Approve/decline time-off requests
+  - checkbox [checked] [disabled]
+  - text: View time off details
+  - checkbox [checked] [disabled]
+  - text: View time-off report
+  - checkbox [checked] [disabled]
+  - text: Make salary adjustments
+  - checkbox [checked] [disabled]
+  - text: View time tracking details
+  - checkbox [checked] [disabled]
+  - text: View payment summary report
+  - checkbox [checked] [disabled]
+  - text: Manage labels
+  - checkbox [checked] [disabled]
+  - text: Off-board current workers
+  - checkbox [checked] [disabled]
+  - text: View expense reimbursements requests
+  - checkbox [checked] [disabled]
+  - text: Edit charts of account
+  - checkbox [checked] [disabled]
+  - text: View reimbursements report
+  - checkbox [checked] [disabled]
+  - text: View reports
+  - checkbox [checked] [disabled]
+  - text: View worker report
+  - checkbox [checked] [disabled]
+  - text: View hour log report
+  - checkbox [checked] [disabled]
+  - text: View events
+  - checkbox [checked] [disabled]
+  - text: View worker documents
+  - checkbox [checked] [disabled]
+  - text: Assign worker manager
+  - checkbox [checked] [disabled]
+  - text: View worker contracts
+  - checkbox [checked] [disabled]
+  - text: View worker personal profile details
+  - checkbox [checked] [disabled]
+  - text: View worker payments
+  - checkbox [checked] [disabled]
+  - text: Access all workers data
+  - checkbox [checked] [disabled]
+  - text: View holiday calendar
+  - checkbox [checked] [disabled]
+  - text: Approve/decline expense reimbursement requests
+  - checkbox [checked] [disabled]
+  - text: View onboarding status
+  - checkbox [checked] [disabled]
+- button "⏸ Stop capture"
+- button "📸 Now"
+- button "⏱ 3s"
+- text: saved 292
+- img

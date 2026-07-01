@@ -1,0 +1,113 @@
+URL: https://app1.demo.prismhr.com/time-tracking
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+Time Tracking
+Manage Labels
+Total Hours
+1079
+option Jul 1 - Jul 31, 2026 - Scheduled - Contractor focused, 1 of 12. 12 results available. Use Up and Down to choose options, press Enter to select the currently focused option, press Escape to exit the menu, press Tab to select the option and exit the menu.
+Jun 1 - Jun 30, 2026 - Pending approval - Contractor
+Jul 1 - Jul 31, 2026 - Scheduled - Contractor
+Jun 1 - Jun 30, 2026 - Pending approval - Contractor
+May 1 - May 31, 2026 - Complete - Contractor
+Apr 1 - Apr 30, 2026 - Complete - Contractor
+Mar 1 - Mar 31, 2026 - Complete - Contractor
+Feb 1 - Feb 28, 2026 - Complete - Contractor
+Jan 1 - Jan 31, 2026 - Complete - Contractor
+Dec 1 - Dec 31, 2025 - Complete - Contractor
+Nov 1 - Nov 30, 2025 - Complete - Contractor
+Oct 1 - Oct 31, 2025 - Complete - Contractor
+Sep 1 - Sep 30, 2025 - Complete - Contractor
+Aug 1 - Aug 31, 2025 - Complete - Contractor
+Labels...
+Import
+Export
+View
+KM
+
+Karen Moore
+
+Jun 1, 2026 - Jun 30, 2026
+
+137 Hours
+
+View
+YT
+
+Yuki Thompson
+
+Jun 1, 2026 - Jun 30, 2026
+
+137 Hours
+
+View
+PM
+
+Paul Miller
+
+Jun 1, 2026 - Jun 30, 2026
+
+128 Hours
+
+View
+FH
+
+Felix Hunt
+
+Jun 1, 2026 - Jun 30, 2026
+
+138 Hours
+
+View
+UC
+
+Ulrich Cooper
+
+Jun 1, 2026 - Jun 30, 2026
+
+142 Hours
+
+View
+UJ
+
+Uma Johnson
+
+Jun 1, 2026 - Jun 30, 2026
+
+125 Hours
+
+View
+AD
+
+Alex Developer
+
+Jun 1, 2026 - Jun 30, 2026
+
+133 Hours
+
+View
+UY
+
+Ulrich Young
+
+Jun 1, 2026 - Jun 30, 2026
+
+139 Hours
+
+⏸ Stop capture
+📸 Now
+⏱ 3s
+saved 207

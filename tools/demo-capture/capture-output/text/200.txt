@@ -1,0 +1,83 @@
+URL: https://app1.demo.prismhr.com/time-off
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+Time Off
+Pending Requests
+Time Off Calendar
+History
+July 2026
+Previous month
+Next month
+Today
+S
+M
+T
+W
+T
+F
+S
+28
+29
+30
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+Who's Out
+TODAY (3)
+BP
+NS
+VL
+TOMORROW (8)
+BP
+DA
+EN
+NC
+NS
+PM
+TK
+VL
+⏸ Stop capture
+📸 Now
+⏱ 3s
+saved 199

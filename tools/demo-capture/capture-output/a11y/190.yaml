@@ -1,0 +1,95 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - link "Logout":
+    - /url: /login
+- heading "Profile" [level=1]
+- navigation "Breadcrumb":
+  - list:
+    - listitem:
+      - link "Team":
+        - /url: /team
+    - listitem:
+      - link "Profile":
+        - /url: /team/6ab3e4b7-92ff-46e6-9ba3-24ddbb9f4ffb/1ec6133c-f849-4802-8e9c-fa924a356014
+    - listitem:
+      - link "Organization":
+        - /url: /team/6ab3e4b7-92ff-46e6-9ba3-24ddbb9f4ffb/1ec6133c-f849-4802-8e9c-fa924a356014/organization
+- text: Paul Davis Work Email paul.davis@prismhr.com Start Date Aug 26, 2026 Position National Security Coordinator Worker ID 105260601496 Manager
+- button "Mike Superadmin"
+- text: Location
+- button "Assign Location"
+- region:
+  - navigation:
+    - link "Details":
+      - /url: /team/6ab3e4b7-92ff-46e6-9ba3-24ddbb9f4ffb/1ec6133c-f849-4802-8e9c-fa924a356014/details
+    - link "Documents":
+      - /url: /team/6ab3e4b7-92ff-46e6-9ba3-24ddbb9f4ffb/1ec6133c-f849-4802-8e9c-fa924a356014/documents
+    - link "Payments":
+      - /url: /team/6ab3e4b7-92ff-46e6-9ba3-24ddbb9f4ffb/1ec6133c-f849-4802-8e9c-fa924a356014/payments
+    - link "Contracts":
+      - /url: /team/6ab3e4b7-92ff-46e6-9ba3-24ddbb9f4ffb/1ec6133c-f849-4802-8e9c-fa924a356014/contracts
+    - link "Time Off":
+      - /url: /team/6ab3e4b7-92ff-46e6-9ba3-24ddbb9f4ffb/1ec6133c-f849-4802-8e9c-fa924a356014/time-off
+    - link "Expense Reimbursements":
+      - /url: /team/6ab3e4b7-92ff-46e6-9ba3-24ddbb9f4ffb/1ec6133c-f849-4802-8e9c-fa924a356014/expense-reimbursements
+    - link "Assignments":
+      - /url: /team/6ab3e4b7-92ff-46e6-9ba3-24ddbb9f4ffb/1ec6133c-f849-4802-8e9c-fa924a356014/organization
+  - heading "Organization Structure" [level=3]
+  - tablist "View filter options":
+    - button "Assignments"
+    - button "Reporting Line"
+  - paragraph: All the categories/sub-categories assigned to this worker are highlighted below
+  - button "Create assignment"
+  - application:
+    - img:
+      - group "Edge from 5dd09f58-f1a4-4433-9a92-1cdb6e4cc50e to d7cbacec-97c6-459e-9336-6a73038cbc61"
+    - img:
+      - group "Edge from 733192ba-a50c-4f3c-856f-10c7251af561 to 5dd09f58-f1a4-4433-9a92-1cdb6e4cc50e"
+    - img:
+      - group "Edge from a58e1bda-8236-4fbf-8f34-3def503f56cb to c466efd7-bdf7-4af3-a54d-fa0b334793ec"
+    - img:
+      - group "Edge from 733192ba-a50c-4f3c-856f-10c7251af561 to a58e1bda-8236-4fbf-8f34-3def503f56cb"
+    - group: DIVISION
+    - group: Engineering Division
+    - group: Backend Development
+    - group: Product Division
+    - group: Product Design
+    - group: DEPARTMENT
+    - group: SUB_DEPARTMENT
+    - img
+    - button "Zoom In":
+      - img
+    - button "Zoom Out":
+      - img
+    - button "Fit View":
+      - img
+    - text: Drag to pan · Scroll to zoom
+- button "⏸ Stop capture"
+- button "📸 Now"
+- button "⏱ 3s"
+- text: saved 189
+- img

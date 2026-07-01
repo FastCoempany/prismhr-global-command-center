@@ -1,0 +1,80 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - link "Logout":
+    - /url: /login
+- main:
+  - heading "Onboarding" [level=1]
+  - navigation "Breadcrumb":
+    - list:
+      - listitem:
+        - link "Onboarding":
+          - /url: /onboarding
+  - region "Search":
+    - heading "Search" [level=2]
+    - text: Search Search
+    - textbox "Search":
+      - /placeholder: Search Workers
+    - button "Sort"
+    - button "Filters"
+  - region:
+    - navigation "Tabs":
+      - button "All"
+      - button "Contractor"
+      - button "Contractor+"
+      - button "Employer of Record"
+      - button "Payroll"
+  - list:
+    - listitem:
+      - paragraph: Everardo Yundt
+      - img
+      - text: Uzbekistan
+      - button "Delete"
+      - button "Continue"
+      - paragraph: In Draft
+      - paragraph: Contract
+      - paragraph: Start Date
+      - text: Contractor+
+    - listitem:
+      - paragraph: Pablo Contractorplus
+      - img
+      - text: United States
+      - button "Delete"
+      - button "Continue"
+      - paragraph: In Draft
+      - paragraph: Contract
+      - paragraph: Start Date
+      - text: Contractor+
+  - navigation "Pagination":
+    - link "Previous":
+      - /url: "#"
+    - link "Next":
+      - /url: "#"
+- button "⏸ Stop capture"
+- button "📸 Now"
+- button "⏱ 3s"
+- text: saved 175
+- img

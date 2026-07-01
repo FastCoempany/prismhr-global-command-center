@@ -1,0 +1,35 @@
+URL: https://app1.demo.prismhr.com/reports/eor/employer-gross
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+EOR Employer Gross Report
+Reports
+EOR Report
+EOR Employer Gross Report
+Start Date
+June 2026
+-
+End Date
+June 2026
+Compensation
+Countries
+Pay Frequency
+Search
+Search
+Export
+⏸ Stop capture
+📸 Now
+⏱ 3s
+saved 245

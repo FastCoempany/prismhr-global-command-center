@@ -1,0 +1,545 @@
+URL: https://app1.demo.prismhr.com/contracts/878d3043-bf40-457a-a9c8-56a129e70172
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+Contract
+Aaron Taylor
+Contracts
+Aaron Taylor
+Contractor
+United Kingdom
+$3,909.97 USD/month
+Starting on Oct 11, 2025
+Email
+aaron.taylor46203@prismhr.com
+Worker Signature
+Aaron Taylor
+Client Signature
+Admin User
+Payment Frequency
+Fixed Rate
+Last Business Day Of The Month
+Job Title
+Direct Identity Strategist
+Seniority Level
+Supervisor
+Scope of Work
+We need to copy the multi-byte TCP panel!
+Signatures
+
+Sign and send the contract
+
+Issuer signature
+
+Admin User
+
+Contractor signature
+
+Aaron Taylor
+
+View Contract
+Change Job Title
+View History
+Update
+Change Pay Rate
+View History
+Update
+
+Request Off-board
+
+Off-board
+Distributions
+
+One Time
+
+Status:
+GENERATEDDistribution Date: Dec 31, 2026
+
+$85.81
+USD
+
+Reimbursement
+
+Status:
+GENERATEDDistribution Date: Dec 31, 2026
+
+$53.80
+USD
+
+Reimbursement
+
+Status:
+GENERATEDDistribution Date: Nov 30, 2026
+
+$77.29
+USD
+
+One Time
+
+Status:
+GENERATEDDistribution Date: Nov 30, 2026
+
+$50.09
+USD
+
+Reimbursement
+
+Status:
+GENERATEDDistribution Date: Oct 30, 2026
+
+$81.38
+USD
+
+One Time
+
+Status:
+GENERATEDDistribution Date: Oct 30, 2026
+
+$81.21
+USD
+
+Reimbursement
+
+Status:
+GENERATEDDistribution Date: Sep 30, 2026
+
+$73.11
+USD
+
+One Time
+
+Status:
+GENERATEDDistribution Date: Sep 30, 2026
+
+$43.11
+USD
+
+Reimbursement
+
+Status:
+GENERATEDDistribution Date: Aug 31, 2026
+
+$36.80
+USD
+
+One Time
+
+Status:
+GENERATEDDistribution Date: Aug 31, 2026
+
+$76.58
+USD
+
+One Time
+
+Status:
+GENERATEDDistribution Date: Jul 31, 2026
+
+$74.39
+USD
+
+Reimbursement
+
+Status:
+GENERATEDDistribution Date: Jul 31, 2026
+
+$76.74
+USD
+
+One Time
+
+Status:
+SENTConfirmation Number: ed4fe5cf-caae-48c9-bbc6-bbbbff63174f
+
+$91.42
+USD
+
+One Time
+
+Status:
+GENERATEDDistribution Date: Jun 30, 2026
+
+$200.00
+USD
+
+Reimbursement
+
+Status:
+SENTConfirmation Number: a522886e-3dc7-48b0-bb63-c0f43ee70298
+
+$75.30
+USD
+
+Wages
+
+Status:
+SENTConfirmation Number: null
+
+May 29, 2026
+
+$3,909.97
+USD
+
+One Time
+
+Status:
+SENTConfirmation Number: 892d23e5-27db-4a09-92d8-0d1c8a0a3565
+
+May 29, 2026
+
+$89.07
+USD
+
+Reimbursement
+
+Status:
+SENTConfirmation Number: 067f1e1b-b7f1-46e7-b862-82c91b2b3600
+
+May 29, 2026
+
+$62.67
+USD
+
+Wages
+
+Status:
+SENTConfirmation Number: null
+
+Apr 30, 2026
+
+$3,909.97
+USD
+
+One Time
+
+Status:
+SENTConfirmation Number: 410bc481-bc05-4e07-a120-51dc6558f47e
+
+Apr 30, 2026
+
+$62.83
+USD
+
+Reimbursement
+
+Status:
+SENTConfirmation Number: 2b1ae577-26aa-435b-90a9-ee9acfaf2629
+
+Apr 30, 2026
+
+$30.67
+USD
+
+One Time
+
+Status:
+SENTConfirmation Number: 48cad1a8-6655-4b68-8ff1-13211e49b99f
+
+Mar 31, 2026
+
+$33.73
+USD
+
+Wages
+
+Status:
+SENTConfirmation Number: null
+
+Mar 31, 2026
+
+$3,909.97
+USD
+
+Reimbursement
+
+Status:
+SENTConfirmation Number: fa2edbac-7cdd-4c7d-bc44-417430db95df
+
+Mar 31, 2026
+
+$40.36
+USD
+
+Reimbursement
+
+Status:
+SENTConfirmation Number: 2c2e662b-3690-46fa-b653-0c72420ddde9
+
+Feb 27, 2026
+
+$92.84
+USD
+
+Wages
+
+Status:
+SENTConfirmation Number: null
+
+Feb 27, 2026
+
+$3,909.97
+USD
+
+One Time
+
+Status:
+SENTConfirmation Number: 0157aa76-2606-4054-90e7-195e0d957535
+
+Feb 27, 2026
+
+$97.36
+USD
+
+Reimbursement
+
+Status:
+SENTConfirmation Number: 3c96fe6c-6f7a-4867-aac1-8b82853559d2
+
+Jan 30, 2026
+
+$24.87
+USD
+
+One Time
+
+Status:
+SENTConfirmation Number: 00322209-d1ec-43db-8f6c-25a6862f2477
+
+Jan 30, 2026
+
+$25.47
+USD
+
+Wages
+
+Status:
+SENTConfirmation Number: null
+
+Jan 30, 2026
+
+$3,909.97
+USD
+
+One Time
+
+Status:
+SENTConfirmation Number: cbc9fc0d-78cd-409e-9bc7-96dd631ef5b0
+
+Dec 31, 2025
+
+$92.87
+USD
+
+Wages
+
+Status:
+SENTConfirmation Number: null
+
+Dec 31, 2025
+
+$3,909.97
+USD
+
+Reimbursement
+
+Status:
+SENTConfirmation Number: 283b2715-9be7-4f65-9a11-964c9968cb40
+
+Dec 31, 2025
+
+$51.01
+USD
+
+Reimbursement
+
+Status:
+SENTConfirmation Number: bd8de23a-d2c3-4c46-94dc-a97d3901e3b0
+
+Nov 28, 2025
+
+$26.78
+USD
+
+Wages
+
+Status:
+SENTConfirmation Number: null
+
+Nov 28, 2025
+
+$3,909.97
+USD
+
+One Time
+
+Status:
+SENTConfirmation Number: af2528f4-c651-410c-8127-f73cb600f1e8
+
+Nov 28, 2025
+
+$32.65
+USD
+
+One Time
+
+Status:
+SENTConfirmation Number: 97d9db5b-ebcd-443a-a015-28a6e359e92c
+
+Oct 31, 2025
+
+$82.51
+USD
+
+Reimbursement
+
+Status:
+SENTConfirmation Number: 4e5f005c-1fde-48d4-9ead-a2c08cb07618
+
+Oct 31, 2025
+
+$38.45
+USD
+
+Wages
+
+Status:
+SENTConfirmation Number: null
+
+Oct 31, 2025
+
+$2,549.98
+USD
+
+Reimbursement
+
+Status:
+SENTConfirmation Number: 558edcd4-3f8b-4785-a084-4b86f0111525
+
+Sep 30, 2025
+
+$29.93
+USD
+
+One Time
+
+Status:
+SENTConfirmation Number: a7f6d6f5-9b99-4534-a600-a4fa8fd159ab
+
+Sep 30, 2025
+
+$71.54
+USD
+
+Reimbursement
+
+Status:
+SENTConfirmation Number: b1a5af20-53a4-4d52-97da-c8199b29dc36
+
+Aug 29, 2025
+
+$62.21
+USD
+
+One Time
+
+Status:
+SENTConfirmation Number: d47ee9f8-eeaa-43c2-843c-28dc68d9d30a
+
+Aug 29, 2025
+
+$41.16
+USD
+
+Reimbursement
+
+Status:
+SENTConfirmation Number: dae109db-5a03-4d70-bb66-031e2066dd3a
+
+Jul 31, 2025
+
+$88.15
+USD
+
+One Time
+
+Status:
+SENTConfirmation Number: 8e326033-c677-4c97-a5cd-7802f8ce7f8b
+
+Jul 31, 2025
+
+$81.90
+USD
+
+One Time
+
+Status:
+SENTConfirmation Number: 02a1857b-f8e5-456b-be29-c3b58445cdbf
+
+Jun 30, 2025
+
+$50.19
+USD
+
+Reimbursement
+
+Status:
+SENTConfirmation Number: 215eca0e-a001-452d-9622-67ba45d5b195
+
+Jun 30, 2025
+
+$29.23
+USD
+
+One Time
+
+Status:
+SENTConfirmation Number: 105007bd-2d54-4c42-978d-7add3d9a4036
+
+May 30, 2025
+
+$85.75
+USD
+
+Reimbursement
+
+Status:
+SENTConfirmation Number: c6f360f7-acae-4f0a-bdef-d33136284e4f
+
+May 30, 2025
+
+$68.04
+USD
+
+Additional Payments
+Additional Payment
+
+Transportation Allowance
+
+Monthly
+
+Jan 1, 2024
+
+$64.03
+USD
+-
+Fixed Payment
+
+Delete
+ 
+Edit
+⏸ Stop capture
+📸 Now
+⏱ 3s
+saved 229

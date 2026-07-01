@@ -1,0 +1,80 @@
+URL: https://app1.demo.prismhr.com/create-contract/new/compensation?contractIndex=0
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+New Hire | Contractor
+
+Contractor Info
+
+Job Info
+
+03
+
+Compensation
+
+04
+
+Review
+
+Compensation
+
+Enter details regarding how the contractor should be paid. This will determine the totals generated for your monthly invoices.
+
+Contract type
+
+Pay contractors a fixed amount each month.
+
+billingFrequency
+Fixed
+Hourly
+Payment frequency
+
+How often the contractor will be paid.
+
+distributionFrequency
+Monthly
+Semi-Monthly
+Bi-Weekly
+paymentOption
+
+Choose a pay date
+
+Last business day of the month
+Most of your contractors use this
+5th business day of the month
+Contract payment amount
+
+The currency and amount you will pay per month. Contractors will be paid through the ListoPay digital wallet.
+
+USD
+United States
+Per Month
+Additional payment
+
+Add any other payments, commissions or other benefits here
+
+Add Additional Payment
+
+Global payments made simple with ListoPay
+
+Learn More
+Save & Exit
+Exit
+Back
+Next
+⏸ Stop capture
+📸 Now
+⏱ 3s
+saved 168

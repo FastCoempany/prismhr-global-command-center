@@ -1,0 +1,38 @@
+URL: https://app1.demo.prismhr.com/time-tracking
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+Time Tracking
+Manage Labels
+Total Hours
+138
+Jun 1 - Jun 30, 2026 - Pending approval - Contractor
+option Priority, selected. Select is focused ,type to refine list, press Down to open the menu, press left to focus selected values
+Priority
+Import
+Export
+View
+FH
+
+Felix Hunt
+
+Jun 1, 2026 - Jun 30, 2026
+
+138 Hours
+
+⏸ Stop capture
+📸 Now
+⏱ 3s
+saved 211

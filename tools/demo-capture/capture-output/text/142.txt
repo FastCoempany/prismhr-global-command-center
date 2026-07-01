@@ -1,0 +1,87 @@
+URL: https://app1.demo.prismhr.com/create-contract/eor/benefits?contractIndex=1
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+New Hire | EOR
+
+Employee Info
+
+Job Info
+
+Compensation
+
+Equipment
+
+05
+
+Benefits
+
+06
+
+Submit
+
+Do you want to offer private supplemental benefits? (Optional)
+
+Benefits may include medical, dental, vision, and maternity.
+
+benefits
+Yes
+No
+Standard
+STARTING FROM
+$130
+/month
+View Standard Plan
+
+*Priced for ages 18-39
+
+Inpatient Treatments
+Outpatient Cover
+Dental & Vision Cover
+Select Standard
+MOST POPULAR
+Premium
+STARTING FROM
+$210
+/month
+View Premium Plan
+
+*Priced for ages 18-39
+
+Inpatient Treatments
+Outpatient Cover
+Dental & Vision Cover
+Select Premium
+Premium + Maternity
+STARTING FROM
+$260
+/month
+View Premium+ Plan
+
+*Priced for ages 18-39
+
+Inpatient Treatments
+Outpatient Cover
+Dental & Vision Cover
+Maternity and Newborn Cover
+Select Premium+
+Save & Exit
+Exit
+Back
+Next
+⏸ Stop capture
+📸 Now
+⏱ 3s
+saved 141

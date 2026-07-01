@@ -1,0 +1,58 @@
+URL: https://app1.demo.prismhr.com/onboarding
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+Onboarding
+Onboarding
+Search
+Search
+Search
+Sort
+Filters
+AllContractorContractor+Employer of RecordPayroll
+
+Everardo Yundt
+
+Uzbekistan
+Delete
+Continue
+
+In Draft
+
+Contract
+
+Start Date
+
+Contractor+
+
+Pablo Contractorplus
+
+United States
+Delete
+Continue
+
+In Draft
+
+Contract
+
+Start Date
+
+Contractor+
+Previous
+Next
+⏸ Stop capture
+📸 Now
+⏱ 3s
+saved 175

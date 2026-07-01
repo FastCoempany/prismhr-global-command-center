@@ -1,0 +1,72 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - link "Logout":
+    - /url: /login
+- main:
+  - heading "Settings" [level=1]
+  - navigation "Breadcrumb":
+    - list:
+      - listitem:
+        - link "Settings":
+          - /url: /settings/general
+      - listitem:
+        - link "Assignments":
+          - /url: /settings/assignments
+  - navigation:
+    - link "General":
+      - /url: /settings/general
+    - link "Users":
+      - /url: /settings/users
+    - link "Roles and Permissions":
+      - /url: /settings/roles
+    - link "Approval Workflows":
+      - /url: /settings/approval-workflows
+    - link "Assignments":
+      - /url: /settings/assignments
+  - navigation "Sidebar":
+    - button "Categories"
+    - button "Locations"
+  - heading "Category Assignments" [level=1]
+  - paragraph: Create and manage your categories according to your organization's preference.
+  - button "Add New Category Type"
+  - button "DIVISION | 2 DIVISION | 1 Worker Add DIVISION":
+    - button
+    - text: DIVISION | 2 DIVISION | 1 Worker
+    - button "Add DIVISION"
+  - button "DEPARTMENT | 0 Workers Add DEPARTMENT":
+    - button [disabled]
+    - text: DEPARTMENT | 0 Workers
+    - button "Add DEPARTMENT"
+  - button "SUB_DEPARTMENT | 0 Workers Add SUB_DEPARTMENT":
+    - button [disabled]
+    - text: SUB_DEPARTMENT | 0 Workers
+    - button "Add SUB_DEPARTMENT"
+- button "⏸ Stop capture"
+- button "📸 Now"
+- button "⏱ 3s"
+- text: saved 298
+- img

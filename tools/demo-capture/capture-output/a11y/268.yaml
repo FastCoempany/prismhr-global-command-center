@@ -1,0 +1,145 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - link "Logout":
+    - /url: /login
+- main:
+  - heading "Compensation Calculator" [level=1]
+  - navigation "Breadcrumb":
+    - list:
+      - listitem:
+        - link "Tools & Resources":
+          - /url: /tools-and-resources
+      - listitem:
+        - link "Compensation Calculator":
+          - /url: /tools-and-resources/compensation-calculator
+  - application "Salary Calculator":
+    - text: I want to hire in
+    - combobox "I want to hire in" [expanded]
+    - button [expanded]
+    - listbox:
+      - text: Select Country
+      - option "Albania"
+      - option "Argentina" [selected]
+      - option "Armenia"
+      - option "Australia"
+      - option "Bahrain"
+      - option "Bangladesh"
+      - option "Belgium"
+      - option "Bolivia"
+      - option "Botswana"
+      - option "Brazil"
+      - option "Cameroon"
+      - option "Canada"
+      - option "Chile"
+      - option "Colombia"
+      - option "Costa Rica"
+      - option "Cote d'Ivoire"
+      - option "Croatia"
+      - option "Czechia"
+      - option "Democratic Republic of the Congo"
+      - option "Denmark"
+      - option "Dominican Republic"
+      - option "Egypt"
+      - option "El Salvador"
+      - option "Estonia"
+      - option "Finland"
+      - option "France"
+      - option "Georgia"
+      - option "Germany"
+      - option "Ghana"
+      - option "Greece"
+      - option "Guatemala"
+      - option "Honduras"
+      - option "Hungary"
+      - option "India"
+      - option "Indonesia"
+      - option "Ireland"
+      - option "Italy"
+      - option "Japan"
+      - option "Jordan"
+      - option "Kenya"
+      - option "Kuwait"
+      - option "Latvia"
+      - option "Lithuania"
+      - option "Malawi"
+      - option "Malaysia"
+      - option "Mexico"
+      - option "Morocco"
+      - option "Namibia"
+      - option "Nepal"
+      - option "Netherlands"
+      - option "New Zealand"
+      - option "Nigeria"
+      - option "North Macedonia (Republic of North Macedonia)"
+      - option "Norway"
+      - option "Oman"
+      - option "Pakistan"
+      - option "Panama"
+      - option "Paraguay"
+      - option "Peru"
+      - option "Philippines"
+      - option "Poland"
+      - option "Portugal"
+      - option "Qatar"
+      - option "Republic of Korea"
+      - option "Romania"
+      - option "Rwanda"
+      - option "Saudi Arabia"
+      - option "Serbia"
+      - option "Singapore"
+      - option "Slovenia"
+      - option "South Africa"
+      - option "Spain"
+      - option "Sri Lanka"
+      - option "Sweden"
+      - option "Switzerland"
+      - option "Taiwan (Province of China)"
+      - option "Tanzania (United Republic of)"
+      - option "Thailand"
+      - option "Tunisia"
+      - option "Turkey"
+      - option "Uganda"
+      - option "United Arab Emirates"
+      - option "United Kingdom"
+      - option "Uruguay"
+      - option "Vietnam"
+      - option "Zambia"
+      - option "Zimbabwe"
+    - button "Select State / Region (Optional)"
+    - text: Gross salary
+    - button "Select Currency"
+    - textbox "Gross salary":
+      - /placeholder: "0.00"
+    - combobox "cdn-pay-period":
+      - option "Monthly" [selected]
+      - option "Annually"
+    - button "Calculate"
+- button "⏸ Stop capture"
+- button "📸 Now"
+- button "⏱ 3s"
+- text: saved 267
+- img

@@ -1,0 +1,322 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - link "Logout":
+    - /url: /login
+- main:
+  - heading "Time Tracking" [level=1]
+  - button "Manage Labels"
+  - term: Total Hours
+  - definition: "1079"
+  - text: Jun 1 - Jun 30, 2026 - Pending approval - Contractor
+  - combobox
+  - text: Labels...
+  - combobox
+  - button "Import"
+  - button "Export"
+  - list:
+    - listitem:
+      - button "View"
+      - text: KM
+      - paragraph: karen moore
+      - paragraph: Jun 1, 2026 - Jun 30, 2026
+      - paragraph: 137 hours
+    - listitem:
+      - button "View"
+      - text: YT
+      - paragraph: yuki thompson
+      - paragraph: Jun 1, 2026 - Jun 30, 2026
+      - paragraph: 137 hours
+    - listitem:
+      - button "View"
+      - text: PM
+      - paragraph: paul miller
+      - paragraph: Jun 1, 2026 - Jun 30, 2026
+      - paragraph: 128 hours
+    - listitem:
+      - button "View"
+      - text: FH
+      - paragraph: felix hunt
+      - paragraph: Jun 1, 2026 - Jun 30, 2026
+      - paragraph: 138 hours
+    - listitem:
+      - button "View"
+      - text: UC
+      - paragraph: ulrich cooper
+      - paragraph: Jun 1, 2026 - Jun 30, 2026
+      - paragraph: 142 hours
+    - listitem:
+      - button "View"
+      - text: UJ
+      - paragraph: uma johnson
+      - paragraph: Jun 1, 2026 - Jun 30, 2026
+      - paragraph: 125 hours
+    - listitem:
+      - button "View"
+      - text: AD
+      - paragraph: alex developer
+      - paragraph: Jun 1, 2026 - Jun 30, 2026
+      - paragraph: 133 hours
+    - listitem:
+      - button "View"
+      - text: UY
+      - paragraph: ulrich young
+      - paragraph: Jun 1, 2026 - Jun 30, 2026
+      - paragraph: 139 hours
+- button "⏸ Stop capture"
+- button "📸 Now"
+- button "⏱ 3s"
+- text: saved 213
+- img
+- dialog:
+  - table:
+    - rowgroup:
+      - row "Worker's Name Date Date Hours Hours Label Label":
+        - columnheader "Worker's Name"
+        - columnheader "Date Date"
+        - columnheader "Hours Hours"
+        - columnheader "Label Label"
+    - rowgroup:
+      - row "KM karen moore Jun 1, 2026 Deployed Electronic matrix 8 hours Business Domain":
+        - cell "KM karen moore":
+          - text: KM
+          - paragraph: karen moore
+        - cell "Jun 1, 2026 Deployed Electronic matrix":
+          - text: Jun 1, 2026
+          - button "Deployed Electronic matrix":
+            - paragraph: Deployed Electronic matrix
+        - cell "8 hours"
+        - cell "Business Domain"
+      - row "KM karen moore Jun 2, 2026 Debugged Recycled port 6 hours Business Domain":
+        - cell "KM karen moore":
+          - text: KM
+          - paragraph: karen moore
+        - cell "Jun 2, 2026 Debugged Recycled port":
+          - text: Jun 2, 2026
+          - button "Debugged Recycled port":
+            - paragraph: Debugged Recycled port
+        - cell "6 hours"
+        - cell "Business Domain"
+      - row "KM karen moore Jun 3, 2026 Deployed Gorgeous capacitor 6 hours Business Domain":
+        - cell "KM karen moore":
+          - text: KM
+          - paragraph: karen moore
+        - cell "Jun 3, 2026 Deployed Gorgeous capacitor":
+          - text: Jun 3, 2026
+          - button "Deployed Gorgeous capacitor":
+            - paragraph: Deployed Gorgeous capacitor
+        - cell "6 hours"
+        - cell "Business Domain"
+      - row "KM karen moore Jun 4, 2026 Deployed Practical driver 7 hours Business Domain":
+        - cell "KM karen moore":
+          - text: KM
+          - paragraph: karen moore
+        - cell "Jun 4, 2026 Deployed Practical driver":
+          - text: Jun 4, 2026
+          - button "Deployed Practical driver":
+            - paragraph: Deployed Practical driver
+        - cell "7 hours"
+        - cell "Business Domain"
+      - row "KM karen moore Jun 5, 2026 Debugged Incredible card 5 hours Business Domain":
+        - cell "KM karen moore":
+          - text: KM
+          - paragraph: karen moore
+        - cell "Jun 5, 2026 Debugged Incredible card":
+          - text: Jun 5, 2026
+          - button "Debugged Incredible card":
+            - paragraph: Debugged Incredible card
+        - cell "5 hours"
+        - cell "Business Domain"
+      - row "KM karen moore Jun 8, 2026 Deployed Tasty application 4 hours Business Domain":
+        - cell "KM karen moore":
+          - text: KM
+          - paragraph: karen moore
+        - cell "Jun 8, 2026 Deployed Tasty application":
+          - text: Jun 8, 2026
+          - button "Deployed Tasty application":
+            - paragraph: Deployed Tasty application
+        - cell "4 hours"
+        - cell "Business Domain"
+      - row "KM karen moore Jun 9, 2026 Implemented Licensed protocol 7 hours Business Domain":
+        - cell "KM karen moore":
+          - text: KM
+          - paragraph: karen moore
+        - cell "Jun 9, 2026 Implemented Licensed protocol":
+          - text: Jun 9, 2026
+          - button "Implemented Licensed protocol":
+            - paragraph: Implemented Licensed protocol
+        - cell "7 hours"
+        - cell "Business Domain"
+      - row "KM karen moore Jun 10, 2026 Debugged Ergonomic microchip 7 hours Business Domain":
+        - cell "KM karen moore":
+          - text: KM
+          - paragraph: karen moore
+        - cell "Jun 10, 2026 Debugged Ergonomic microchip":
+          - text: Jun 10, 2026
+          - button "Debugged Ergonomic microchip":
+            - paragraph: Debugged Ergonomic microchip
+        - cell "7 hours"
+        - cell "Business Domain"
+      - row "KM karen moore Jun 11, 2026 Debugged Tasty firewall 8 hours Business Domain":
+        - cell "KM karen moore":
+          - text: KM
+          - paragraph: karen moore
+        - cell "Jun 11, 2026 Debugged Tasty firewall":
+          - text: Jun 11, 2026
+          - button "Debugged Tasty firewall":
+            - paragraph: Debugged Tasty firewall
+        - cell "8 hours"
+        - cell "Business Domain"
+      - row "KM karen moore Jun 12, 2026 Worked on Generic port 4 hours Business Domain":
+        - cell "KM karen moore":
+          - text: KM
+          - paragraph: karen moore
+        - cell "Jun 12, 2026 Worked on Generic port":
+          - text: Jun 12, 2026
+          - button "Worked on Generic port":
+            - paragraph: Worked on Generic port
+        - cell "4 hours"
+        - cell "Business Domain"
+      - row "KM karen moore Jun 15, 2026 Deployed Handcrafted driver 7 hours Business Domain":
+        - cell "KM karen moore":
+          - text: KM
+          - paragraph: karen moore
+        - cell "Jun 15, 2026 Deployed Handcrafted driver":
+          - text: Jun 15, 2026
+          - button "Deployed Handcrafted driver":
+            - paragraph: Deployed Handcrafted driver
+        - cell "7 hours"
+        - cell "Business Domain"
+      - row "KM karen moore Jun 16, 2026 Worked on Gorgeous feed 8 hours Business Domain":
+        - cell "KM karen moore":
+          - text: KM
+          - paragraph: karen moore
+        - cell "Jun 16, 2026 Worked on Gorgeous feed":
+          - text: Jun 16, 2026
+          - button "Worked on Gorgeous feed":
+            - paragraph: Worked on Gorgeous feed
+        - cell "8 hours"
+        - cell "Business Domain"
+      - row "KM karen moore Jun 17, 2026 Implemented Elegant card 8 hours Business Domain":
+        - cell "KM karen moore":
+          - text: KM
+          - paragraph: karen moore
+        - cell "Jun 17, 2026 Implemented Elegant card":
+          - text: Jun 17, 2026
+          - button "Implemented Elegant card":
+            - paragraph: Implemented Elegant card
+        - cell "8 hours"
+        - cell "Business Domain"
+      - row "KM karen moore Jun 18, 2026 Deployed Bespoke driver 6 hours Business Domain":
+        - cell "KM karen moore":
+          - text: KM
+          - paragraph: karen moore
+        - cell "Jun 18, 2026 Deployed Bespoke driver":
+          - text: Jun 18, 2026
+          - button "Deployed Bespoke driver":
+            - paragraph: Deployed Bespoke driver
+        - cell "6 hours"
+        - cell "Business Domain"
+      - row "KM karen moore Jun 19, 2026 Implemented Awesome interface 4 hours Business Domain":
+        - cell "KM karen moore":
+          - text: KM
+          - paragraph: karen moore
+        - cell "Jun 19, 2026 Implemented Awesome interface":
+          - text: Jun 19, 2026
+          - button "Implemented Awesome interface":
+            - paragraph: Implemented Awesome interface
+        - cell "4 hours"
+        - cell "Business Domain"
+      - row "KM karen moore Jun 22, 2026 Worked on Bespoke driver 5 hours Business Domain":
+        - cell "KM karen moore":
+          - text: KM
+          - paragraph: karen moore
+        - cell "Jun 22, 2026 Worked on Bespoke driver":
+          - text: Jun 22, 2026
+          - button "Worked on Bespoke driver":
+            - paragraph: Worked on Bespoke driver
+        - cell "5 hours"
+        - cell "Business Domain"
+      - row "KM karen moore Jun 23, 2026 Worked on Oriental program 4 hours Business Domain":
+        - cell "KM karen moore":
+          - text: KM
+          - paragraph: karen moore
+        - cell "Jun 23, 2026 Worked on Oriental program":
+          - text: Jun 23, 2026
+          - button "Worked on Oriental program":
+            - paragraph: Worked on Oriental program
+        - cell "4 hours"
+        - cell "Business Domain"
+      - row "KM karen moore Jun 24, 2026 Implemented Handcrafted pixel 7 hours Business Domain":
+        - cell "KM karen moore":
+          - text: KM
+          - paragraph: karen moore
+        - cell "Jun 24, 2026 Implemented Handcrafted pixel":
+          - text: Jun 24, 2026
+          - button "Implemented Handcrafted pixel":
+            - paragraph: Implemented Handcrafted pixel
+        - cell "7 hours"
+        - cell "Business Domain"
+      - row "KM karen moore Jun 25, 2026 Debugged Unbranded monitor 8 hours Business Domain":
+        - cell "KM karen moore":
+          - text: KM
+          - paragraph: karen moore
+        - cell "Jun 25, 2026 Debugged Unbranded monitor":
+          - text: Jun 25, 2026
+          - button "Debugged Unbranded monitor":
+            - paragraph: Debugged Unbranded monitor
+        - cell "8 hours"
+        - cell "Business Domain"
+      - row "KM karen moore Jun 26, 2026 Deployed Sleek panel 5 hours Business Domain":
+        - cell "KM karen moore":
+          - text: KM
+          - paragraph: karen moore
+        - cell "Jun 26, 2026 Deployed Sleek panel":
+          - text: Jun 26, 2026
+          - button "Deployed Sleek panel":
+            - paragraph: Deployed Sleek panel
+        - cell "5 hours"
+        - cell "Business Domain"
+      - row "KM karen moore Jun 29, 2026 Worked on Oriental alarm 5 hours Business Domain":
+        - cell "KM karen moore":
+          - text: KM
+          - paragraph: karen moore
+        - cell "Jun 29, 2026 Worked on Oriental alarm":
+          - text: Jun 29, 2026
+          - button "Worked on Oriental alarm":
+            - paragraph: Worked on Oriental alarm
+        - cell "5 hours"
+        - cell "Business Domain"
+      - row "KM karen moore Jun 30, 2026 Deployed Incredible transmitter 8 hours Business Domain":
+        - cell "KM karen moore":
+          - text: KM
+          - paragraph: karen moore
+        - cell "Jun 30, 2026 Deployed Incredible transmitter":
+          - text: Jun 30, 2026
+          - button "Deployed Incredible transmitter":
+            - paragraph: Deployed Incredible transmitter
+        - cell "8 hours"
+        - cell "Business Domain"

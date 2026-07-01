@@ -1,0 +1,61 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - link "Logout":
+    - /url: /login
+- main:
+  - heading "Reports" [level=1]
+  - button "Report Settings"
+  - link "Worker Report See information about your workers":
+    - /url: /reports/worker-detail
+    - term:
+      - paragraph: Worker Report
+    - definition: See information about your workers
+  - link "Contractor Report View and download a contractor report":
+    - /url: /reports/contractor
+    - term:
+      - paragraph: Contractor Report
+    - definition: View and download a contractor report
+  - link "EOR Report View and download an employer of record report":
+    - /url: /reports/eor
+    - term:
+      - paragraph: EOR Report
+    - definition: View and download an employer of record report
+  - link "Payroll Report View and download a payroll report":
+    - /url: /reports/payroll
+    - term:
+      - paragraph: Payroll Report
+    - definition: View and download a payroll report
+  - link "Hour Log Report Report about hours logged":
+    - /url: /reports/hour-log
+    - term:
+      - paragraph: Hour Log Report
+    - definition: Report about hours logged
+- button "⏸ Stop capture"
+- button "📸 Now"
+- button "⏱ 3s"
+- text: saved 257
+- img

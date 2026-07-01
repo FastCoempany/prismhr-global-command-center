@@ -1,0 +1,81 @@
+URL: https://app1.demo.prismhr.com/settings/roles
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+Settings
+Settings
+Roles and Permissions
+General
+Users
+Roles and Permissions
+Approval Workflows
+Assignments
+Roles and Permissions
+
+Roles and privleges allow you to control permission across your business. Create and manage roles and then assign them to your admins.
+
+ROLE NAME
+	
+DESCRIPTION
+	
+VIEW PERMISSIONS
+
+
+Owner
+	
+Has all Administration, People Management, Payments, and Finance permissions, and can delete account
+	
+
+
+Super Admin
+	
+Has all Administration, People Management, Payments, and Finance permissions
+	
+
+
+Admin
+	
+Has most permissions, but cannot view or edit company settings
+	
+
+
+HR
+	
+Has all People Management, Payments, and some Finance permissions
+	
+
+
+Manager
+	
+Can onboard and view onboarding status of new hires
+	
+
+
+Finance
+	
+Has all Finance and most Payments permissions
+	
+
+
+Onboard Only
+	
+Has all People Management, Payments, and some Finance permissions (only for assigned team members)
+	
+Previous
+Next
+⏸ Stop capture
+📸 Now
+⏱ 3s
+saved 290

@@ -1,0 +1,130 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - link "Logout":
+    - /url: /login
+- main:
+  - heading "Reimbursements" [level=1]
+  - tablist "Navigation tabs":
+    - tab "Pending Requests"
+    - tab "History" [selected]
+  - button "Start Date April 2026"
+  - text: "-"
+  - button "End Date Current Month"
+  - button "All Workers"
+  - button "Status"
+  - button "Sort"
+  - text: Search Search
+  - textbox "Search reimbursement requests by name or notes"
+  - button "Export"
+  - text: History
+  - table:
+    - rowgroup:
+      - row "Name Date Requested Date Distributed Expense Date Notes Amount Status Action":
+        - columnheader "Name":
+          - paragraph: Name
+        - columnheader "Date Requested":
+          - paragraph: Date Requested
+        - columnheader "Date Distributed":
+          - paragraph: Date Distributed
+        - columnheader "Expense Date":
+          - paragraph: Expense Date
+        - columnheader "Notes":
+          - paragraph: Notes
+        - columnheader "Amount":
+          - paragraph: Amount
+        - columnheader "Status":
+          - paragraph: Status
+        - columnheader "Action":
+          - paragraph: Action
+    - rowgroup:
+      - row "Uma Walker Apr 15, 2026 May 29, 2026 Apr 15, 2026 Client entertainment expense $1,740.93 MXN approved by Demo Hr Manager":
+        - cell "Uma Walker"
+        - cell "Apr 15, 2026"
+        - cell "May 29, 2026"
+        - cell "Apr 15, 2026"
+        - cell "Client entertainment expense"
+        - cell "$1,740.93 MXN"
+        - cell "approved by Demo Hr Manager"
+        - cell:
+          - button
+          - button
+      - row "Olivia Walker Apr 19, 2026 May 29, 2026 Apr 19, 2026 Internet charges for remote work C$975.88 NIO approved by Demo Hr Manager":
+        - cell "Olivia Walker"
+        - cell "Apr 19, 2026"
+        - cell "May 29, 2026"
+        - cell "Apr 19, 2026"
+        - cell "Internet charges for remote work"
+        - cell "C$975.88 NIO"
+        - cell "approved by Demo Hr Manager"
+        - cell:
+          - button
+          - button
+      - row "Claire Allen Apr 23, 2026 May 29, 2026 Apr 23, 2026 Client entertainment expense C$1,102.00 NIO approved by Demo Hr Manager":
+        - cell "Claire Allen"
+        - cell "Apr 23, 2026"
+        - cell "May 29, 2026"
+        - cell "Apr 23, 2026"
+        - cell "Client entertainment expense"
+        - cell "C$1,102.00 NIO"
+        - cell "approved by Demo Hr Manager"
+        - cell:
+          - button
+          - button
+      - row "Vera Lopez Apr 27, 2026 May 29, 2026 Apr 27, 2026 Flight booking for workshop £38.13 GBP approved by Demo Hr Manager":
+        - cell "Vera Lopez"
+        - cell "Apr 27, 2026"
+        - cell "May 29, 2026"
+        - cell "Apr 27, 2026"
+        - cell "Flight booking for workshop"
+        - cell "£38.13 GBP"
+        - cell "approved by Demo Hr Manager"
+        - cell:
+          - button
+          - button
+      - row "Frank Harris May 16, 2026 Not Yet May 16, 2026 Business development dinner £57.43 GBP approved by Demo Hr Manager":
+        - cell "Frank Harris"
+        - cell "May 16, 2026"
+        - cell "Not Yet"
+        - cell "May 16, 2026"
+        - cell "Business development dinner"
+        - cell "£57.43 GBP"
+        - cell "approved by Demo Hr Manager"
+        - cell:
+          - button
+          - button
+  - paragraph: Showing 1 to 5 of 763 results
+  - navigation "Pagination":
+    - button "Previous" [disabled]
+    - button "1"
+    - button "2"
+    - button "3"
+    - button "Next"
+- button "⏸ Stop capture"
+- button "📸 Now"
+- button "⏱ 3s"
+- text: saved 66
+- img

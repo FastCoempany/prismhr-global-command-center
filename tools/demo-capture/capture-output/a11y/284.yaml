@@ -1,0 +1,146 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - link "Logout":
+    - /url: /login
+- main:
+  - heading "Settings" [level=1]
+  - navigation "Breadcrumb":
+    - list:
+      - listitem:
+        - link "Settings":
+          - /url: /settings/general
+      - listitem:
+        - link "General":
+          - /url: /settings/general
+  - button "Back to Users"
+  - text: SA Sarah Admin INVITED antaeus.coe+admin@vensure.com Admin
+  - button "Set as Inactive"
+  - text: "Permissions Details: Has most permissions, but cannot view or edit company settings"
+  - combobox:
+    - option "Super Admin"
+    - option "Manager"
+    - option "HR"
+    - option "Admin" [selected]
+    - option "Onboard Only"
+    - option "Finance"
+  - text: People management Select All
+  - checkbox [checked]
+  - text: Onboard new hires
+  - checkbox [checked]
+  - text: Approve/decline time-off requests
+  - checkbox [checked]
+  - text: View time off details
+  - checkbox [checked]
+  - text: View time-off report
+  - checkbox [checked]
+  - text: Make salary adjustments
+  - checkbox [checked]
+  - text: View time tracking details
+  - checkbox [checked]
+  - text: View payment summary report
+  - checkbox [checked]
+  - text: Manage labels
+  - checkbox [checked]
+  - text: Off-board current workers
+  - checkbox [checked]
+  - text: View expense reimbursements requests
+  - checkbox [checked]
+  - text: Edit charts of account
+  - checkbox [checked]
+  - text: View reimbursements report
+  - checkbox [checked]
+  - text: View reports
+  - checkbox [checked]
+  - text: View worker report
+  - checkbox [checked]
+  - text: View hour log report
+  - checkbox [checked]
+  - text: View events
+  - checkbox [checked]
+  - text: View worker documents
+  - checkbox [checked]
+  - text: Assign worker manager
+  - checkbox [checked]
+  - text: View worker contracts
+  - checkbox [checked]
+  - text: View worker personal profile details
+  - checkbox [checked]
+  - text: View worker payments
+  - checkbox [checked]
+  - text: Access all workers data
+  - checkbox [checked]
+  - text: View holiday calendar
+  - checkbox [checked]
+  - text: Approve/decline expense reimbursement requests
+  - checkbox [checked]
+  - text: View onboarding status
+  - checkbox [checked]
+  - text: Finance Select All
+  - checkbox [checked]
+  - text: Pay invoices
+  - checkbox [checked]
+  - text: View invoices
+  - checkbox [checked]
+  - text: Payments Select All
+  - checkbox [checked]
+  - text: View compensation calculator
+  - checkbox [checked]
+  - text: Approve pay period summaries
+  - checkbox [checked]
+  - text: View pay period summaries
+  - checkbox [checked]
+  - text: Add one time payment
+  - checkbox [checked]
+  - text: Initiate bulk upload
+  - checkbox [checked]
+  - text: Administration Select All
+  - checkbox
+  - text: Invite users
+  - checkbox
+  - text: Assign user roles
+  - checkbox
+  - text: Can delete account
+  - checkbox
+  - text: Edit managers
+  - checkbox
+  - text: Customize user permissions
+  - checkbox
+  - text: Override multi-level approvals
+  - checkbox [checked]
+  - text: View/edit company settings
+  - checkbox [checked]
+  - text: Communication Select All
+  - checkbox [checked]
+  - text: Receive client payment notifications
+  - checkbox [checked]
+  - text: Receive contract signature notifications
+  - checkbox [checked]
+- button "⏸ Stop capture"
+- button "📸 Now"
+- button "⏱ 3s"
+- text: saved 283
+- img

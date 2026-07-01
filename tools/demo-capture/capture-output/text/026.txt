@@ -1,0 +1,22 @@
+URL: https://app1.demo.prismhr.com/pay-period/150d5502-0c72-405e-b01a-493feb532ce6/approve
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+Pay Period Approval
+;
+⏸ Stop capture
+📸 Now
+⏱ 3s
+saved 25

@@ -1,0 +1,102 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - link "Logout":
+    - /url: /login
+- main:
+  - heading "Time Off" [level=1]
+  - tablist "Navigation tabs":
+    - tab "Pending Requests" [selected]
+    - tab "Time Off Calendar"
+    - tab "History"
+  - button "All Workers"
+  - button "Engagement"
+  - button "Leave Type"
+  - text: Search Search
+  - textbox "Search Search":
+    - /placeholder: Search pending requests by name or leave notes
+  - button "Export"
+  - text: Pending Requests
+  - listitem:
+    - heading "john contractor" [level=3]
+    - text: Contractor
+    - definition:
+      - text: Date
+      - time: Jul 9, 2026 - Jul 11, 2026
+      - text: "| Holidays"
+    - definition: Pending Approval
+    - button
+    - button "Decline"
+    - button "Approve"
+  - listitem:
+    - heading "yuki thompson" [level=3]
+    - text: Contractor
+    - definition:
+      - text: Date
+      - time: Jul 7, 2026 - Jul 11, 2026
+      - text: "| Vacation"
+    - definition: Pending Approval
+    - button
+    - button "Decline"
+    - button "Approve"
+  - listitem:
+    - heading "olivia walker" [level=3]
+    - text: EOR
+    - definition:
+      - text: Date
+      - time: Jul 6, 2026 - Jul 11, 2026
+      - text: "| Annual Leave | Personal"
+    - definition: Pending Approval
+    - button
+    - button "Decline"
+    - button "Approve"
+  - listitem:
+    - heading "vera lopez" [level=3]
+    - text: Payroll
+    - definition:
+      - text: Date
+      - time: Jul 9, 2026 - Jul 16, 2026
+      - text: "| Annual Leave | Family time"
+    - definition: Pending Approval
+    - button
+    - button "Decline"
+    - button "Approve"
+  - listitem:
+    - heading "claire allen" [level=3]
+    - text: EOR
+    - definition:
+      - text: Date
+      - time: Jul 7, 2026 - Jul 12, 2026
+      - text: "| Annual Leave | Family time"
+    - definition: Pending Approval
+    - button
+    - button "Decline"
+    - button "Approve"
+- button "⏸ Stop capture"
+- button "📸 Now"
+- button "⏱ 3s"
+- text: saved 197
+- img

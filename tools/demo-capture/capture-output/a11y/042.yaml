@@ -1,0 +1,51 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - link "Logout":
+    - /url: /login
+- main:
+  - heading "Pay Period" [level=1]
+  - region:
+    - heading "Pay Period" [level=2]
+    - paragraph: Details regarding important dates and status expectations.
+    - term: Pay Period Id
+    - definition: 150d5502
+    - term: Target Distribution Date
+    - definition: Jun 30, 2026
+    - term: Required Approval Date
+    - definition: Jun 23, 2026
+    - term: Anticipated Invoice Date
+    - definition: Jun 23, 2026
+    - text: Approve Invoice Distribute
+  - region "Pending Approval":
+    - heading "Pending Approval" [level=2]
+    - paragraph: Your pay period is pending approval. The pay period period must be approved on or before Jun 23, 2026 in order for Listo to collect and distribute payments on-time.
+    - button "Upload"
+- button "⏸ Stop capture"
+- button "📸 Now"
+- button "⏱ 3s"
+- text: saved 41
+- img

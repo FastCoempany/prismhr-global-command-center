@@ -1,0 +1,39 @@
+URL: https://app1.demo.prismhr.com/reports/payroll
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+Payroll Reports
+Reports
+Payroll Reports
+
+Employer Gross Report
+
+View total payroll costs for your organization, including gross wages, taxes, and contributions.
+
+Employee Gross to Net Report
+
+See individual employee earnings, deductions, and net pay across a selected period.
+
+General Ledger Report
+
+Download a ledger-friendly breakdown of payroll data, mapped to your chart of accounts.
+
+Variance Report
+
+Compare payroll changes across periods to spot anomalies, trends, or unexpected shifts.
+⏸ Stop capture
+📸 Now
+⏱ 3s
+saved 250

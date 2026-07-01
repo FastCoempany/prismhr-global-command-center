@@ -1,0 +1,60 @@
+URL: https://app1.demo.prismhr.com/onboarding
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+Onboarding
+Onboarding
+Search
+Search
+Search
+Sort
+Filters
+AllContractorContractor+Employer of RecordPayroll
+
+Breanna Senger
+
+Uganda
+Delete
+Continue
+
+In Draft
+
+Offer Letter
+
+Agreement
+
+Start Date
+
+EOR
+
+Antaeus Coe
+
+Singapore
+
+Employee Info
+
+Awaiting Offer Letter
+
+Agreement
+
+Start Date
+
+EOR
+Previous
+Next
+⏸ Stop capture
+📸 Now
+⏱ 3s
+saved 174

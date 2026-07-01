@@ -1,0 +1,152 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - link "Logout":
+    - /url: /login
+- main:
+  - heading "Holidays Calendar" [level=1]
+  - navigation "Breadcrumb":
+    - list:
+      - listitem:
+        - link "Tools & Resources":
+          - /url: /tools-and-resources
+      - listitem:
+        - link "Holidays Calendar":
+          - /url: /tools-and-resources/holiday-calendar
+  - text: Country Canada - Nova Scotia
+  - button "Remove Canada - Nova Scotia"
+  - text: Canada
+  - button "Remove Canada"
+  - text: United States
+  - button "Remove United States"
+  - text: Singapore
+  - button "Remove Singapore"
+  - text: United Kingdom
+  - button "Remove United Kingdom"
+  - text: Canada - Ontario
+  - button "Remove Canada - Ontario"
+  - text: Mexico
+  - button "Remove Mexico"
+  - text: Netherlands
+  - button "Remove Netherlands"
+  - text: Egypt
+  - button "Remove Egypt"
+  - text: Philippines
+  - button "Remove Philippines"
+  - text: Nicaragua
+  - button "Remove Nicaragua"
+  - text: Taiwan
+  - button "Remove Taiwan"
+  - combobox
+  - button "Previous month"
+  - text: 2026 July
+  - button "Next month"
+  - text: S M T W T F S
+  - button "28":
+    - time: "28"
+  - button "29":
+    - time: "29"
+  - button "30 Flag of EG Revolution Day":
+    - time: "30"
+    - img "Flag of EG"
+    - text: Revolution Day
+  - button "1 Flag of CA-NS Canada Day Flag of CA-ON Canada Day":
+    - time: "1"
+    - img "Flag of CA-NS"
+    - text: Canada Day
+    - img "Flag of CA-ON"
+    - text: Canada Day
+  - button "2":
+    - time: "2"
+  - button "3 Flag of US Independence Day":
+    - time: "3"
+    - img "Flag of US"
+    - text: Independence Day
+  - button "4":
+    - time: "4"
+  - button "5":
+    - time: "5"
+  - button "6":
+    - time: "6"
+  - button "7":
+    - time: "7"
+  - button "8":
+    - time: "8"
+  - button "9":
+    - time: "9"
+  - button "10":
+    - time: "10"
+  - button "11":
+    - time: "11"
+  - button "12":
+    - time: "12"
+  - button "13":
+    - time: "13"
+  - button "14":
+    - time: "14"
+  - button "15":
+    - time: "15"
+  - button "16":
+    - time: "16"
+  - button "17":
+    - time: "17"
+  - button "18":
+    - time: "18"
+  - button "19":
+    - time: "19"
+  - button "20 Flag of NI Revolution Day":
+    - time: "20"
+    - img "Flag of NI"
+    - text: Revolution Day
+  - button "21":
+    - time: "21"
+  - button "22":
+    - time: "22"
+  - button "23 Flag of EG Revolution Day":
+    - time: "23"
+    - img "Flag of EG"
+    - text: Revolution Day
+  - button "24":
+    - time: "24"
+  - button "25":
+    - time: "25"
+  - button "26":
+    - time: "26"
+  - button "27":
+    - time: "27"
+  - button "28":
+    - time: "28"
+  - button "29":
+    - time: "29"
+  - button "30":
+    - time: "30"
+  - button "31":
+    - time: "31"
+- button "⏸ Stop capture"
+- button "📸 Now"
+- button "⏱ 3s"
+- text: saved 273
+- img

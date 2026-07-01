@@ -1,0 +1,129 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - link "Logout":
+    - /url: /login
+- main:
+  - heading "New Hire | EOR" [level=1]
+  - navigation "Progress":
+    - list:
+      - listitem:
+        - link:
+          - /url: /create-contract/eor/employee-info?contractIndex=1
+        - paragraph: Employee Info
+      - listitem:
+        - link "02":
+          - /url: /create-contract/eor/job?contractIndex=1
+        - paragraph: Job Info
+      - listitem:
+        - text: "03"
+        - paragraph: Compensation
+      - listitem:
+        - text: "04"
+        - paragraph: Equipment
+      - listitem:
+        - text: "05"
+        - paragraph: Benefits
+      - listitem:
+        - text: "06"
+        - paragraph: Submit
+  - heading "Job information" [level=3]
+  - text: Job title
+  - textbox "Job title":
+    - /placeholder: Software Engineer
+    - text: Engineer
+  - text: Seniority level
+  - combobox:
+    - option "Not Applicable"
+    - option "Junior"
+    - option "Mid"
+    - option "Senior" [selected]
+    - option "Lead"
+    - option "Principal"
+    - option "Director"
+    - option "Department Head"
+    - option "Vice President"
+    - option "Senior Vice President"
+  - text: Job description
+  - paragraph: Write a few sentences explaining the role and responsibilities.
+  - textbox "Job description":
+    - /placeholder: Develop and maintain robust, scalable, and efficient software applications.
+    - text: do good work
+  - heading "Assignments (Optional)" [level=3]
+  - text: Division
+  - combobox:
+    - option "Select division"
+    - option "Engineering Division" [selected]
+    - option "Product Division"
+  - text: Engineering Division
+  - combobox:
+    - option "Select engineering division"
+    - option "Backend Development"
+  - heading "Location" [level=3]
+  - combobox:
+    - option "Unassigned" [selected]
+    - option "San Francisco Office"
+    - option "New York Office"
+  - heading "Reporting Manager" [level=3]
+  - paragraph: Auto-assigned based on organizational assignment
+  - button "Assign Manager"
+  - heading "Start date" [level=3]
+  - paragraph: The earliest possible start date for this contract may vary due to regulatory requirements. Please note that visa and/or work permit requirements may cause delays.
+  - text: Target start date
+  - textbox
+  - button "Save & Exit"
+  - button "Exit"
+  - button "Back"
+  - button "Next"
+- button "⏸ Stop capture"
+- button "📸 Now"
+- button "⏱ 3s"
+- text: saved 96
+- img
+- dialog:
+  - main:
+    - heading "Assign Manager" [level=1]
+    - paragraph: This will be the employee's direct report. Any requests such as time-off requests, reimbursements, etc will be approved by the manager.
+    - textbox "Search"
+    - heading "Select who the employee will directly report to" [level=2]
+    - text: DH Demo HR Manager HR
+    - button "Assign"
+    - text: DF Demo Finance Manager Finance
+    - button "Assign"
+    - text: SA Sarah Admin Admin
+    - button "Assign"
+    - text: MS Mike SuperAdmin Super Admin
+    - button "Assign"
+    - text: DA Demo Admin Owner
+    - button "Assign"
+    - text: JM John Manager Manager
+    - button "Assign"
+    - text: EO Emma Onboard Onboard Only
+    - button "Assign"
+    - text: AD Alex Demo Worker Manager
+    - button "Assign"
+    - button "Cancel"
+    - button "Confirm Selection"

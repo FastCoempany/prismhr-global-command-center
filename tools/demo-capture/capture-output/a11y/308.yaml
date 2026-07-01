@@ -1,0 +1,63 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - link "Logout":
+    - /url: /login
+- main:
+  - heading "Create Support Case" [level=1]
+  - navigation "Breadcrumb":
+    - list:
+      - listitem:
+        - link "Support Cases":
+          - /url: /support-tickets
+      - listitem:
+        - link "Create Case":
+          - /url: /support-tickets/create
+  - heading "New Support Case" [level=3]
+  - paragraph: Please provide details about your issue. Our team will review it and get back to you.
+  - text: Case Type
+  - combobox:
+    - option "Onboarding" [selected]
+    - option "Tax Forms"
+    - option "Schedule a Meeting"
+    - option "Product Feedback"
+    - option "Other"
+    - option "Letters"
+    - option "Change Request"
+    - option "Benefits"
+  - text: Subject
+  - textbox "Subject":
+    - /placeholder: Brief description of your issue
+  - text: Issue Description
+  - paragraph: Please describe your issue in detail. Include any relevant information that might help us resolve it faster.
+  - textbox "Issue Description"
+  - button "Cancel"
+  - button "Create Case"
+- button "⏸ Stop capture"
+- button "📸 Now"
+- button "⏱ 3s"
+- text: saved 307
+- img

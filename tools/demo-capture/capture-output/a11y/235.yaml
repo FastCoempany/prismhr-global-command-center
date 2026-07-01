@@ -1,0 +1,88 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - link "Logout":
+    - /url: /login
+- heading "Profile" [level=1]
+- navigation "Breadcrumb":
+  - list:
+    - listitem:
+      - link "Team":
+        - /url: /team
+    - listitem:
+      - link "Profile":
+        - /url: /team/06bede5a-a495-4a03-adab-e85ecc26ccb9/878d3043-bf40-457a-a9c8-56a129e70172
+    - listitem:
+      - link "Details":
+        - /url: /team/06bede5a-a495-4a03-adab-e85ecc26ccb9/878d3043-bf40-457a-a9c8-56a129e70172/details
+- text: Aaron Taylor Work Email aaron.taylor46203@prismhr.com Start Date Oct 11, 2025 Position Direct Identity Strategist Worker ID 105260601450 Manager
+- button "Demo Admin"
+- text: Location
+- button "Assign Location"
+- region:
+  - navigation:
+    - link "Details":
+      - /url: /team/06bede5a-a495-4a03-adab-e85ecc26ccb9/878d3043-bf40-457a-a9c8-56a129e70172/details
+    - link "Documents":
+      - /url: /team/06bede5a-a495-4a03-adab-e85ecc26ccb9/878d3043-bf40-457a-a9c8-56a129e70172/documents
+    - link "Payments":
+      - /url: /team/06bede5a-a495-4a03-adab-e85ecc26ccb9/878d3043-bf40-457a-a9c8-56a129e70172/payments
+    - link "Contracts":
+      - /url: /team/06bede5a-a495-4a03-adab-e85ecc26ccb9/878d3043-bf40-457a-a9c8-56a129e70172/contracts
+    - link "Time Off":
+      - /url: /team/06bede5a-a495-4a03-adab-e85ecc26ccb9/878d3043-bf40-457a-a9c8-56a129e70172/time-off
+    - link "Expense Reimbursements":
+      - /url: /team/06bede5a-a495-4a03-adab-e85ecc26ccb9/878d3043-bf40-457a-a9c8-56a129e70172/expense-reimbursements
+    - link "Assignments":
+      - /url: /team/06bede5a-a495-4a03-adab-e85ecc26ccb9/878d3043-bf40-457a-a9c8-56a129e70172/organization
+  - heading "Personal Info" [level=3]
+  - term: Full Name
+  - definition: Aaron Taylor
+  - term: Phone Number
+  - definition: 425.319.8366
+  - term: Preferred Name
+  - definition: "-"
+  - term: Address
+  - definition: 43634 Sylvan Drives
+  - definition: St. Cloud, Northern Ireland, 59212-4435
+  - definition: United Kingdom
+  - term: Birthday
+  - definition: Jun 28, 1970
+  - term: Gender
+  - definition: "-"
+  - separator
+  - heading "Emergency Contact Info" [level=3]
+  - term: Full Name
+  - definition: "-"
+  - term: Email Address
+  - definition: "-"
+  - term: Phone Number (optional)
+  - definition: "-"
+- button "⏸ Stop capture"
+- button "📸 Now"
+- button "⏱ 3s"
+- text: saved 234
+- img

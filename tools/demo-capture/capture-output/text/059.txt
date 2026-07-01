@@ -1,0 +1,84 @@
+URL: https://app1.demo.prismhr.com/reimbursements
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+Reimbursements
+Pending Requests
+History
+All Workers
+Engagement
+Search
+Search
+Export
+Pending Requests
+Paul Miller
+Contractor+
+Amount:
+$632.69
+USD
+Jun 30, 2026
+|
+Internet charges for remote work
+Pending
+Decline
+Approve
+Frank Nelson
+Contractor
+Amount:
+$653.99
+USD
+Jun 30, 2026
+|
+Business development dinner
+Pending
+Decline
+Approve
+Hugo Baker
+EOR
+Amount:
+£380.53
+GBP
+Jun 30, 2026
+|
+Internet charges for remote work
+Pending
+Decline
+Approve
+Paul Miller
+Contractor+
+Amount:
+$636.70
+USD
+Jun 29, 2026
+|
+Business development dinner
+Pending
+Decline
+Approve
+Nina Thompson
+Payroll
+Amount:
+£1,190.15
+GBP
+Jun 28, 2026
+|
+Business development dinner
+Pending
+Decline
+Approve
+⏸ Stop capture
+📸 Now
+⏱ 3s
+saved 58

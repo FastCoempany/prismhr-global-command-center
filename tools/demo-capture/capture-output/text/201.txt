@@ -1,0 +1,130 @@
+URL: https://app1.demo.prismhr.com/time-off
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+Time Off
+Pending Requests
+Time Off Calendar
+History
+Start Date
+April 2026
+-
+End Date
+Current Month
+All Workers
+Engagement
+Leave Type
+Status
+Search
+Search
+Export
+History
+NAME	LEAVE TYPE	REQUESTED ON	LEAVE DATES	STATUS	
+
+Ruby Carter
+
+Payroll
+
+	
+Annual leave
+	
+Jul 20, 2026
+	
+Jul 30 - Aug 6, 2026
+6.0 days
+	
+Approved
+by Demo Hr Manager
+	
+
+
+Iris Davis
+
+Payroll
+
+	
+Annual leave
+	
+Jul 5, 2026
+	
+Jul 27 - Jul 31, 2026
+5.0 days
+	
+Approved
+by Demo Hr Manager
+	
+
+
+Zach Cooper
+
+Payroll
+
+	
+Annual leave
+	
+Jul 5, 2026
+	
+Jul 17 - Jul 22, 2026
+4.0 days
+	
+Approved
+by Demo Hr Manager
+	
+
+
+Kate James
+
+EOR
+
+	
+Sick leave
+	
+Jul 4, 2026
+	
+Jul 14 - Jul 18, 2026
+4.0 days
+	
+Approved
+by Demo Hr Manager
+	
+
+
+Pablo Contractorplus
+
+Contractor+
+
+	
+-
+	
+Jul 3, 2026
+	
+Jul 18 - Aug 4, 2026
+12.0 days
+	
+Approved
+by Demo Hr Manager
+	
+
+Showing 1 to 5 of 27 results
+
+Previous
+1
+2
+3
+Next
+⏸ Stop capture
+📸 Now
+⏱ 3s
+saved 200

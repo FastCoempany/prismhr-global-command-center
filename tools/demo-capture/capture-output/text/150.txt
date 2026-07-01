@@ -1,0 +1,79 @@
+URL: https://app1.demo.prismhr.com/create-contract/eor/offer?contractIndex=1
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+New Hire | EOR
+
+Employee Info
+
+Job Info
+
+Compensation
+
+Equipment
+
+Benefits
+
+06
+
+Submit
+
+Submit Offer Letter to PrismHR for Approval
+EMPLOYEE INFO
+Name:
+Antaeus Coe
+Email:
+antaeus.coe@prismhr.com
+Nationality:
+Mexico
+Working country:
+Singapore
+JOB INFO
+Job title:
+Engineer
+Seniority:
+Senior
+Description:
+do good work
+Sub-department:
+-
+Direct manager:
+No manager was assigned
+Start date:
+Jul 16, 2026
+COMPENSATION
+Compensation type:
+Salary
+Contract amount:
+$2,000.00
+per month
+Employment type:
+Full-time
+Contract term:
+Indefinite
+EQUIPMENT
+Compensation type:
+Yes (Reimbursed)
+BENEFITS
+Benefit package:
+Premium
+Save & Exit
+Exit
+Back
+Submit
+⏸ Stop capture
+📸 Now
+⏱ 3s
+saved 149

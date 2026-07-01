@@ -1,0 +1,476 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - link "Logout":
+    - /url: /login
+- main:
+  - heading "Add One-Time Payment" [level=1]
+  - navigation "Breadcrumb":
+    - list:
+      - listitem:
+        - link "Dashboard":
+          - /url: /
+      - listitem:
+        - link "Add One-Time Payment":
+          - /url: /pay-periods/add-one-time-payment
+  - heading "Enter Payment Details" [level=2]
+  - paragraph: Select the payment type and amount for each worker below.
+  - text: Pay Period Type
+  - combobox "Pay Period Type":
+    - option "Last day of the month - EOR"
+    - option "Last day of the month - CONTRACTOR" [selected]
+    - option "Last day of the month - PAYROLL"
+  - text: Pay Period
+  - combobox "Pay Period":
+    - 'option "[Current] Jun 1, 2026 - Jun 30, 2026 - [Ends on: Jun 23, 2026]" [selected]'
+    - option "[Next] Jul 1, 2026 - Jul 31, 2026"
+  - textbox "Search workers"
+  - button "Countries"
+  - button "Sort Name"
+  - table:
+    - rowgroup:
+      - row "NAME PAY PERIOD TYPE COUNTRY PAYMENT TYPE AMOUNT":
+        - columnheader "NAME"
+        - columnheader "PAY PERIOD TYPE"
+        - columnheader "COUNTRY"
+        - columnheader "PAYMENT TYPE"
+        - columnheader "AMOUNT"
+    - rowgroup:
+      - row "Aaron Taylor Last day of the month - CONTRACTOR United Kingdom Select Payment Type Price input with currency selector":
+        - cell "Aaron Taylor"
+        - cell "Last day of the month - CONTRACTOR"
+        - cell "United Kingdom":
+          - img
+          - text: United Kingdom
+        - cell "Select Payment Type":
+          - combobox:
+            - option "Select Payment Type" [selected]
+            - option "Signing Bonus"
+            - option "Commission"
+            - option "Spiff"
+            - option "Performance"
+            - option "Holiday"
+            - option "Equipment"
+            - option "Other"
+        - cell "Price input with currency selector":
+          - group "Price input with currency selector":
+            - text: $
+            - textbox "Price amount":
+              - /placeholder: "0.00"
+            - button "USD" [disabled]:
+              - img
+              - text: USD
+      - row "Alex Developer Last day of the month - CONTRACTOR United States Select Payment Type Price input with currency selector":
+        - cell "Alex Developer"
+        - cell "Last day of the month - CONTRACTOR"
+        - cell "United States":
+          - img
+          - text: United States
+        - cell "Select Payment Type":
+          - combobox:
+            - option "Select Payment Type" [selected]
+            - option "Signing Bonus"
+            - option "Commission"
+            - option "Spiff"
+            - option "Performance"
+            - option "Holiday"
+            - option "Equipment"
+            - option "Other"
+        - cell "Price input with currency selector":
+          - group "Price input with currency selector":
+            - text: $
+            - textbox "Price amount":
+              - /placeholder: "0.00"
+            - button "USD" [disabled]:
+              - img
+              - text: USD
+      - row "Emma Nelson Last day of the month - CONTRACTOR Taiwan Select Payment Type Price input with currency selector":
+        - cell "Emma Nelson"
+        - cell "Last day of the month - CONTRACTOR"
+        - cell "Taiwan":
+          - img
+          - text: Taiwan
+        - cell "Select Payment Type":
+          - combobox:
+            - option "Select Payment Type" [selected]
+            - option "Signing Bonus"
+            - option "Commission"
+            - option "Spiff"
+            - option "Performance"
+            - option "Holiday"
+            - option "Equipment"
+            - option "Other"
+        - cell "Price input with currency selector":
+          - group "Price input with currency selector":
+            - text: $
+            - textbox "Price amount":
+              - /placeholder: "0.00"
+            - button "USD" [disabled]:
+              - img
+              - text: USD
+      - row "Felix Hunt Last day of the month - CONTRACTOR Nicaragua Select Payment Type Price input with currency selector":
+        - cell "Felix Hunt"
+        - cell "Last day of the month - CONTRACTOR"
+        - cell "Nicaragua":
+          - img
+          - text: Nicaragua
+        - cell "Select Payment Type":
+          - combobox:
+            - option "Select Payment Type" [selected]
+            - option "Signing Bonus"
+            - option "Commission"
+            - option "Spiff"
+            - option "Performance"
+            - option "Holiday"
+            - option "Equipment"
+            - option "Other"
+        - cell "Price input with currency selector":
+          - group "Price input with currency selector":
+            - text: $
+            - textbox "Price amount":
+              - /placeholder: "0.00"
+            - button "USD" [disabled]:
+              - img
+              - text: USD
+      - row "Frank Nelson Last day of the month - CONTRACTOR Egypt Select Payment Type Price input with currency selector":
+        - cell "Frank Nelson"
+        - cell "Last day of the month - CONTRACTOR"
+        - cell "Egypt":
+          - img
+          - text: Egypt
+        - cell "Select Payment Type":
+          - combobox:
+            - option "Select Payment Type" [selected]
+            - option "Signing Bonus"
+            - option "Commission"
+            - option "Spiff"
+            - option "Performance"
+            - option "Holiday"
+            - option "Equipment"
+            - option "Other"
+        - cell "Price input with currency selector":
+          - group "Price input with currency selector":
+            - text: $
+            - textbox "Price amount":
+              - /placeholder: "0.00"
+            - button "USD" [disabled]:
+              - img
+              - text: USD
+      - row "John Contractor Last day of the month - CONTRACTOR United States Select Payment Type Price input with currency selector":
+        - cell "John Contractor"
+        - cell "Last day of the month - CONTRACTOR"
+        - cell "United States":
+          - img
+          - text: United States
+        - cell "Select Payment Type":
+          - combobox:
+            - option "Select Payment Type" [selected]
+            - option "Signing Bonus"
+            - option "Commission"
+            - option "Spiff"
+            - option "Performance"
+            - option "Holiday"
+            - option "Equipment"
+            - option "Other"
+        - cell "Price input with currency selector":
+          - group "Price input with currency selector":
+            - text: $
+            - textbox "Price amount":
+              - /placeholder: "0.00"
+            - button "USD" [disabled]:
+              - img
+              - text: USD
+      - row "Karen Moore Last day of the month - CONTRACTOR United Kingdom Select Payment Type Price input with currency selector":
+        - cell "Karen Moore"
+        - cell "Last day of the month - CONTRACTOR"
+        - cell "United Kingdom":
+          - img
+          - text: United Kingdom
+        - cell "Select Payment Type":
+          - combobox:
+            - option "Select Payment Type" [selected]
+            - option "Signing Bonus"
+            - option "Commission"
+            - option "Spiff"
+            - option "Performance"
+            - option "Holiday"
+            - option "Equipment"
+            - option "Other"
+        - cell "Price input with currency selector":
+          - group "Price input with currency selector":
+            - text: $
+            - textbox "Price amount":
+              - /placeholder: "0.00"
+            - button "USD" [disabled]:
+              - img
+              - text: USD
+      - row "Kate Carter Last day of the month - CONTRACTOR Canada - Ontario Select Payment Type Price input with currency selector":
+        - cell "Kate Carter"
+        - cell "Last day of the month - CONTRACTOR"
+        - cell "Canada - Ontario":
+          - img
+          - text: Canada - Ontario
+        - cell "Select Payment Type":
+          - combobox:
+            - option "Select Payment Type" [selected]
+            - option "Signing Bonus"
+            - option "Commission"
+            - option "Spiff"
+            - option "Performance"
+            - option "Holiday"
+            - option "Equipment"
+            - option "Other"
+        - cell "Price input with currency selector":
+          - group "Price input with currency selector":
+            - text: $
+            - textbox "Price amount":
+              - /placeholder: "0.00"
+            - button "USD" [disabled]:
+              - img
+              - text: USD
+      - row "Nadia Contractorplus Last day of the month - CONTRACTOR United States Select Payment Type Price input with currency selector":
+        - cell "Nadia Contractorplus"
+        - cell "Last day of the month - CONTRACTOR"
+        - cell "United States":
+          - img
+          - text: United States
+        - cell "Select Payment Type":
+          - combobox:
+            - option "Select Payment Type" [selected]
+            - option "Signing Bonus"
+            - option "Commission"
+            - option "Spiff"
+            - option "Performance"
+            - option "Holiday"
+            - option "Equipment"
+            - option "Other"
+        - cell "Price input with currency selector":
+          - group "Price input with currency selector":
+            - text: $
+            - textbox "Price amount":
+              - /placeholder: "0.00"
+            - button "USD" [disabled]:
+              - img
+              - text: USD
+      - row "Nina Smith Last day of the month - CONTRACTOR United Kingdom Select Payment Type Price input with currency selector":
+        - cell "Nina Smith"
+        - cell "Last day of the month - CONTRACTOR"
+        - cell "United Kingdom":
+          - img
+          - text: United Kingdom
+        - cell "Select Payment Type":
+          - combobox:
+            - option "Select Payment Type" [selected]
+            - option "Signing Bonus"
+            - option "Commission"
+            - option "Spiff"
+            - option "Performance"
+            - option "Holiday"
+            - option "Equipment"
+            - option "Other"
+        - cell "Price input with currency selector":
+          - group "Price input with currency selector":
+            - text: $
+            - textbox "Price amount":
+              - /placeholder: "0.00"
+            - button "USD" [disabled]:
+              - img
+              - text: USD
+      - row "Paul Miller Last day of the month - CONTRACTOR Nicaragua Select Payment Type Price input with currency selector":
+        - cell "Paul Miller"
+        - cell "Last day of the month - CONTRACTOR"
+        - cell "Nicaragua":
+          - img
+          - text: Nicaragua
+        - cell "Select Payment Type":
+          - combobox:
+            - option "Select Payment Type" [selected]
+            - option "Signing Bonus"
+            - option "Commission"
+            - option "Spiff"
+            - option "Performance"
+            - option "Holiday"
+            - option "Equipment"
+            - option "Other"
+        - cell "Price input with currency selector":
+          - group "Price input with currency selector":
+            - text: $
+            - textbox "Price amount":
+              - /placeholder: "0.00"
+            - button "USD" [disabled]:
+              - img
+              - text: USD
+      - row "Tara Kelly Last day of the month - CONTRACTOR Canada - Nova Scotia Select Payment Type Price input with currency selector":
+        - cell "Tara Kelly"
+        - cell "Last day of the month - CONTRACTOR"
+        - cell "Canada - Nova Scotia":
+          - img
+          - text: Canada - Nova Scotia
+        - cell "Select Payment Type":
+          - combobox:
+            - option "Select Payment Type" [selected]
+            - option "Signing Bonus"
+            - option "Commission"
+            - option "Spiff"
+            - option "Performance"
+            - option "Holiday"
+            - option "Equipment"
+            - option "Other"
+        - cell "Price input with currency selector":
+          - group "Price input with currency selector":
+            - text: $
+            - textbox "Price amount":
+              - /placeholder: "0.00"
+            - button "USD" [disabled]:
+              - img
+              - text: USD
+      - row "Ulrich Cooper Last day of the month - CONTRACTOR Mexico Select Payment Type Price input with currency selector":
+        - cell "Ulrich Cooper"
+        - cell "Last day of the month - CONTRACTOR"
+        - cell "Mexico":
+          - img
+          - text: Mexico
+        - cell "Select Payment Type":
+          - combobox:
+            - option "Select Payment Type" [selected]
+            - option "Signing Bonus"
+            - option "Commission"
+            - option "Spiff"
+            - option "Performance"
+            - option "Holiday"
+            - option "Equipment"
+            - option "Other"
+        - cell "Price input with currency selector":
+          - group "Price input with currency selector":
+            - text: $
+            - textbox "Price amount":
+              - /placeholder: "0.00"
+            - button "USD" [disabled]:
+              - img
+              - text: USD
+      - row "Ulrich Young Last day of the month - CONTRACTOR Egypt Select Payment Type Price input with currency selector":
+        - cell "Ulrich Young"
+        - cell "Last day of the month - CONTRACTOR"
+        - cell "Egypt":
+          - img
+          - text: Egypt
+        - cell "Select Payment Type":
+          - combobox:
+            - option "Select Payment Type" [selected]
+            - option "Signing Bonus"
+            - option "Commission"
+            - option "Spiff"
+            - option "Performance"
+            - option "Holiday"
+            - option "Equipment"
+            - option "Other"
+        - cell "Price input with currency selector":
+          - group "Price input with currency selector":
+            - text: $
+            - textbox "Price amount":
+              - /placeholder: "0.00"
+            - button "USD" [disabled]:
+              - img
+              - text: USD
+      - row "Uma Johnson Last day of the month - CONTRACTOR Taiwan Select Payment Type Price input with currency selector":
+        - cell "Uma Johnson"
+        - cell "Last day of the month - CONTRACTOR"
+        - cell "Taiwan":
+          - img
+          - text: Taiwan
+        - cell "Select Payment Type":
+          - combobox:
+            - option "Select Payment Type" [selected]
+            - option "Signing Bonus"
+            - option "Commission"
+            - option "Spiff"
+            - option "Performance"
+            - option "Holiday"
+            - option "Equipment"
+            - option "Other"
+        - cell "Price input with currency selector":
+          - group "Price input with currency selector":
+            - text: $
+            - textbox "Price amount":
+              - /placeholder: "0.00"
+            - button "USD" [disabled]:
+              - img
+              - text: USD
+      - row "Ximena Martin Last day of the month - CONTRACTOR Nicaragua Select Payment Type Price input with currency selector":
+        - cell "Ximena Martin"
+        - cell "Last day of the month - CONTRACTOR"
+        - cell "Nicaragua":
+          - img
+          - text: Nicaragua
+        - cell "Select Payment Type":
+          - combobox:
+            - option "Select Payment Type" [selected]
+            - option "Signing Bonus"
+            - option "Commission"
+            - option "Spiff"
+            - option "Performance"
+            - option "Holiday"
+            - option "Equipment"
+            - option "Other"
+        - cell "Price input with currency selector":
+          - group "Price input with currency selector":
+            - text: $
+            - textbox "Price amount":
+              - /placeholder: "0.00"
+            - button "USD" [disabled]:
+              - img
+              - text: USD
+      - row "Yuki Thompson Last day of the month - CONTRACTOR Canada - Nova Scotia Select Payment Type Price input with currency selector":
+        - cell "Yuki Thompson"
+        - cell "Last day of the month - CONTRACTOR"
+        - cell "Canada - Nova Scotia":
+          - img
+          - text: Canada - Nova Scotia
+        - cell "Select Payment Type":
+          - combobox:
+            - option "Select Payment Type" [selected]
+            - option "Signing Bonus"
+            - option "Commission"
+            - option "Spiff"
+            - option "Performance"
+            - option "Holiday"
+            - option "Equipment"
+            - option "Other"
+        - cell "Price input with currency selector":
+          - group "Price input with currency selector":
+            - text: $
+            - textbox "Price amount":
+              - /placeholder: "0.00"
+            - button "USD" [disabled]:
+              - img
+              - text: USD
+  - button "Back"
+  - button "Next"
+- button "⏸ Stop capture"
+- button "📸 Now"
+- button "⏱ 3s"
+- text: saved 11
+- img

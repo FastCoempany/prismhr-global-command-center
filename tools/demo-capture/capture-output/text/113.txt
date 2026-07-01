@@ -1,0 +1,134 @@
+URL: https://app1.demo.prismhr.com/create-contract/eor/compensation?contractIndex=1
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+New Hire | EOR
+
+Employee Info
+
+Job Info
+
+03
+
+Compensation
+
+04
+
+Equipment
+
+05
+
+Benefits
+
+06
+
+Submit
+
+Compensation
+Compensation type
+
+How much should the employee be paid? Select between hourly and salary compensation.
+
+workType
+Hourly
+Salary
+Compensation is paid in local currency as required by law. This amount does not include contributions and deductions.
+Currency
+SGD
+Singapore
+Gross monthly salary
+Salary Breakdown
+Collapse
+Amount you pay
+Gross Monthly salary
+S$2,000.00
+SGD
+Total employer contribution
+S$345.00
+SGD
+Total Monthly Cost
+S$2,345.00
+SGD
+Amount employee gets
+Gross Monthly salary
+S$2,000.00
+SGD
+Total employee contribution
+S$400.00
+SGD
+Total Monthly Cost
+S$1,600.00
+SGD
+Disclaimer:
+All calculations are estimates and are not guaranteed.
+Employment type
+
+Note that definitions for “full-time” and “part-time” hours may vary by country.
+
+employmentType
+Full-time
+Part-time
+Contract term
+
+An “indefinite” contract term means the contract remains in place until terminated. A “definite” contract term terminates on a pre-defined date.
+
+contractTerm
+Indefinite
+Fixed Term
+Additional payment
+
+Add any other payments, bonuses, commissions or other benefits here
+
+Add Additional Payment
+Vacation and paid time-off
+
+Employees in Singapore are legally entitled to all local public holidays and 20 paid days off for their first year of employment. If you would like to offer additional paid time off, indicate the number of days here.
+
+Additional Paid Time-off
+0 Days
+Edit
+Want to offer Unlimited PTO?
+Save & Exit
+Exit
+Back
+Next
+⏸ Stop capture
+📸 Now
+⏱ 3s
+saved 112
+Add Additional Payment
+Pay type
+Variable Bonus
+Variable Bonus
+Mobile Allowance
+Internet Allowance
+Other Allowance
+Signing Bonus
+Frequency
+Select a Frequency
+One Time
+Monthly
+Bi Monthly
+Quarterly
+Semi Annually
+Annually
+Semi Monthly
+Bi Weekly
+Amount (SGD)
+
+Disclaimer: All allowances added here are subject to local tax and social security.
+
+Cancel
+Add Payment

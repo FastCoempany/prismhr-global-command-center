@@ -1,0 +1,43 @@
+URL: https://app1.demo.prismhr.com/tools-and-resources/compensation-calculator
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+Compensation Calculator
+Tools & Resources
+Compensation Calculator
+Cost Breakdown
+Reset calculator
+Calculation for
+Canada
+Monthly
+Annually
+Employer pays
+Gross salary
+10,000 CAD
+Employer Contributions
+805.85 CAD
+Total Employer Cost
+10,805.85 CAD
+Employee gets
+Gross salary
+10,000 CAD
+Deductions
+2,821.76 CAD
+Net salary
+7,178.24 CAD
+⏸ Stop capture
+📸 Now
+⏱ 3s
+saved 271

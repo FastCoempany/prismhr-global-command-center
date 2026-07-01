@@ -1,0 +1,174 @@
+URL: https://app1.demo.prismhr.com/pay-periods/add-one-time-payment
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+Add One-Time Payment
+Dashboard
+Add One-Time Payment
+Enter Payment Details
+
+Select the payment type and amount for each worker below.
+
+Pay Period Type
+Last day of the month - EOR
+Last day of the month - CONTRACTOR
+Last day of the month - PAYROLL
+Pay Period
+[Current] Jul 1, 2026 - Jul 31, 2026 - [Ends on: Jul 10, 2026]
+[Next] Aug 1, 2026 - Aug 31, 2026
+Countries
+Sort
+Name
+NAME	PAY PERIOD TYPE	COUNTRY	PAYMENT TYPE	AMOUNT
+Alex Demo Worker	Last day of the month - EOR	
+United Kingdom
+	
+Select Payment Type
+Signing Bonus
+Commission
+Spiff
+Performance
+Holiday
+Equipment
+Other
+	
+£
+GBP
+
+Ben Bell	Last day of the month - EOR	
+Canada - Nova Scotia
+	
+Select Payment Type
+Signing Bonus
+Commission
+Spiff
+Performance
+Holiday
+Equipment
+Other
+	
+$
+CAD
+
+Beth Parker	Last day of the month - EOR	
+Canada
+	
+Select Payment Type
+Signing Bonus
+Commission
+Spiff
+Performance
+Holiday
+Equipment
+Other
+	
+$
+CAD
+
+Claire Allen	Last day of the month - EOR	
+Nicaragua
+	
+Select Payment Type
+Signing Bonus
+Commission
+Spiff
+Performance
+Holiday
+Equipment
+Other
+	
+C$
+NIO
+
+Dan Adams	Last day of the month - EOR	
+United Kingdom
+	
+Select Payment Type
+Signing Bonus
+Commission
+Spiff
+Performance
+Holiday
+Equipment
+Other
+	
+£
+GBP
+
+Hugo Baker	Last day of the month - EOR	
+United Kingdom
+	
+Select Payment Type
+Signing Bonus
+Commission
+Spiff
+Performance
+Holiday
+Equipment
+Other
+	
+£
+GBP
+
+Kate James	Last day of the month - EOR	
+Nicaragua
+	
+Select Payment Type
+Signing Bonus
+Commission
+Spiff
+Performance
+Holiday
+Equipment
+Other
+	
+C$
+NIO
+
+Leo Hunt	Last day of the month - EOR	
+Taiwan
+	
+Select Payment Type
+Signing Bonus
+Commission
+Spiff
+Performance
+Holiday
+Equipment
+Other
+	
+$
+TWD
+
+Olivia Walker	Last day of the month - EOR	
+Nicaragua
+	
+Select Payment Type
+Signing Bonus
+Commission
+Spiff
+Performance
+Holiday
+Equipment
+Other
+	
+C$
+NIO
+Back
+Next
+⏸ Stop capture
+📸 Now
+⏱ 3s
+saved 5

@@ -1,0 +1,232 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - link "Logout":
+    - /url: /login
+- main:
+  - heading "Settings" [level=1]
+  - navigation "Breadcrumb":
+    - list:
+      - listitem:
+        - link "Settings":
+          - /url: /settings/general
+      - listitem:
+        - link "Users":
+          - /url: /settings/users
+  - navigation:
+    - link "General":
+      - /url: /settings/general
+    - link "Users":
+      - /url: /settings/users
+    - link "Roles and Permissions":
+      - /url: /settings/roles
+    - link "Approval Workflows":
+      - /url: /settings/approval-workflows
+    - link "Assignments":
+      - /url: /settings/assignments
+  - heading "Users" [level=1]
+  - paragraph: Invite or manage your organization's users.
+  - textbox "Search users"
+  - button "Sort"
+  - button "Filter"
+  - button "+ Invite User"
+  - table:
+    - rowgroup:
+      - row "Name status Role Manager Action":
+        - columnheader "Name"
+        - columnheader "status"
+        - columnheader "Role"
+        - columnheader "Manager"
+        - columnheader "Action"
+    - rowgroup:
+      - row "DA Demo Admin antaeus.coe@vensure.com Active Account Owner":
+        - cell "DA Demo Admin antaeus.coe@vensure.com"
+        - cell "Active"
+        - cell "Account Owner"
+        - cell
+        - cell
+      - row "MS Mike Superadmin antaeus.coe+superadmin@vensure.com Invited Super Admin Demo Admin":
+        - cell "MS Mike Superadmin antaeus.coe+superadmin@vensure.com"
+        - cell "Invited"
+        - cell "Super Admin":
+          - combobox:
+            - option "Super Admin" [selected]
+            - option "Manager"
+            - option "HR"
+            - option "Admin"
+            - option "Onboard Only"
+            - option "Finance"
+        - cell "Demo Admin":
+          - combobox:
+            - option "Demo Admin" [selected]
+            - option "Sarah Admin"
+            - option "Demo HR Manager"
+            - option "John Manager"
+            - option "Alex Demo Worker"
+            - option "Demo Finance Manager"
+            - option "Emma Onboard"
+        - cell:
+          - button
+      - row "SA Sarah Admin antaeus.coe+admin@vensure.com Invited Admin Demo Admin":
+        - cell "SA Sarah Admin antaeus.coe+admin@vensure.com"
+        - cell "Invited"
+        - cell "Admin":
+          - combobox:
+            - option "Super Admin"
+            - option "Manager"
+            - option "HR"
+            - option "Admin" [selected]
+            - option "Onboard Only"
+            - option "Finance"
+        - cell "Demo Admin":
+          - combobox:
+            - option "Demo Admin" [selected]
+            - option "Mike SuperAdmin"
+            - option "Demo HR Manager"
+            - option "John Manager"
+            - option "Alex Demo Worker"
+            - option "Demo Finance Manager"
+            - option "Emma Onboard"
+        - cell:
+          - button
+      - row "DH Demo Hr Manager antaeus.coe+hr@vensure.com Invited HR Demo Admin":
+        - cell "DH Demo Hr Manager antaeus.coe+hr@vensure.com"
+        - cell "Invited"
+        - cell "HR":
+          - combobox:
+            - option "Super Admin"
+            - option "Manager"
+            - option "HR" [selected]
+            - option "Admin"
+            - option "Onboard Only"
+            - option "Finance"
+        - cell "Demo Admin":
+          - combobox:
+            - option "Demo Admin" [selected]
+            - option "Mike SuperAdmin"
+            - option "Sarah Admin"
+            - option "John Manager"
+            - option "Alex Demo Worker"
+            - option "Demo Finance Manager"
+            - option "Emma Onboard"
+        - cell:
+          - button
+      - row "JM John Manager antaeus.coe+manager@vensure.com Invited Manager Demo Admin":
+        - cell "JM John Manager antaeus.coe+manager@vensure.com"
+        - cell "Invited"
+        - cell "Manager":
+          - combobox:
+            - option "Super Admin"
+            - option "Manager" [selected]
+            - option "HR"
+            - option "Admin"
+            - option "Onboard Only"
+            - option "Finance"
+        - cell "Demo Admin":
+          - combobox:
+            - option "Demo Admin" [selected]
+            - option "Mike SuperAdmin"
+            - option "Sarah Admin"
+            - option "Demo HR Manager"
+            - option "Alex Demo Worker"
+            - option "Demo Finance Manager"
+            - option "Emma Onboard"
+        - cell:
+          - button
+      - row "AD Alex Demo Worker antaeus.coe+userworker@vensure.com Active Manager Demo Admin":
+        - cell "AD Alex Demo Worker antaeus.coe+userworker@vensure.com"
+        - cell "Active"
+        - cell "Manager":
+          - combobox:
+            - option "Super Admin"
+            - option "Manager" [selected]
+            - option "HR"
+            - option "Admin"
+            - option "Onboard Only"
+            - option "Finance"
+        - cell "Demo Admin":
+          - combobox:
+            - option "Demo Admin" [selected]
+            - option "Mike SuperAdmin"
+            - option "Sarah Admin"
+            - option "Demo HR Manager"
+            - option "John Manager"
+            - option "Demo Finance Manager"
+            - option "Emma Onboard"
+        - cell:
+          - button
+      - row "DF Demo Finance Manager antaeus.coe+finance@vensure.com Invited Finance Demo Admin":
+        - cell "DF Demo Finance Manager antaeus.coe+finance@vensure.com"
+        - cell "Invited"
+        - cell "Finance":
+          - combobox:
+            - option "Super Admin"
+            - option "Manager"
+            - option "HR"
+            - option "Admin"
+            - option "Onboard Only"
+            - option "Finance" [selected]
+        - cell "Demo Admin":
+          - combobox:
+            - option "Demo Admin" [selected]
+            - option "Mike SuperAdmin"
+            - option "Sarah Admin"
+            - option "Demo HR Manager"
+            - option "John Manager"
+            - option "Alex Demo Worker"
+            - option "Emma Onboard"
+        - cell:
+          - button
+      - row "EO Emma Onboard antaeus.coe+onboard@vensure.com Invited Onboard Only Alex Demo Worker":
+        - cell "EO Emma Onboard antaeus.coe+onboard@vensure.com"
+        - cell "Invited"
+        - cell "Onboard Only":
+          - combobox:
+            - option "Super Admin"
+            - option "Manager"
+            - option "HR"
+            - option "Admin"
+            - option "Onboard Only" [selected]
+            - option "Finance"
+        - cell "Alex Demo Worker":
+          - combobox:
+            - option "Demo Admin"
+            - option "Mike SuperAdmin"
+            - option "Sarah Admin"
+            - option "Demo HR Manager"
+            - option "John Manager"
+            - option "Alex Demo Worker" [selected]
+            - option "Demo Finance Manager"
+        - cell:
+          - button
+  - navigation "Pagination":
+    - button "Previous" [disabled]
+    - button "Next" [disabled]
+- button "⏸ Stop capture"
+- button "📸 Now"
+- button "⏱ 3s"
+- text: saved 279
+- img

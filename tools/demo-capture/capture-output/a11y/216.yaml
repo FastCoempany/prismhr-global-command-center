@@ -1,0 +1,93 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - link "Logout":
+    - /url: /login
+- main:
+  - heading "Time Tracking" [level=1]
+  - button "Manage Labels"
+  - term: Total Hours
+  - definition: "1079"
+  - text: Jun 1 - Jun 30, 2026 - Pending approval - Contractor
+  - combobox
+  - text: Labels...
+  - combobox
+  - button "Import"
+  - button "Export"
+  - list:
+    - listitem:
+      - button "View"
+      - text: KM
+      - paragraph: karen moore
+      - paragraph: Jun 1, 2026 - Jun 30, 2026
+      - paragraph: 137 hours
+    - listitem:
+      - button "View"
+      - text: YT
+      - paragraph: yuki thompson
+      - paragraph: Jun 1, 2026 - Jun 30, 2026
+      - paragraph: 137 hours
+    - listitem:
+      - button "View"
+      - text: PM
+      - paragraph: paul miller
+      - paragraph: Jun 1, 2026 - Jun 30, 2026
+      - paragraph: 128 hours
+    - listitem:
+      - button "View"
+      - text: FH
+      - paragraph: felix hunt
+      - paragraph: Jun 1, 2026 - Jun 30, 2026
+      - paragraph: 138 hours
+    - listitem:
+      - button "View"
+      - text: UC
+      - paragraph: ulrich cooper
+      - paragraph: Jun 1, 2026 - Jun 30, 2026
+      - paragraph: 142 hours
+    - listitem:
+      - button "View"
+      - text: UJ
+      - paragraph: uma johnson
+      - paragraph: Jun 1, 2026 - Jun 30, 2026
+      - paragraph: 125 hours
+    - listitem:
+      - button "View"
+      - text: AD
+      - paragraph: alex developer
+      - paragraph: Jun 1, 2026 - Jun 30, 2026
+      - paragraph: 133 hours
+    - listitem:
+      - button "View"
+      - text: UY
+      - paragraph: ulrich young
+      - paragraph: Jun 1, 2026 - Jun 30, 2026
+      - paragraph: 139 hours
+- button "⏸ Stop capture"
+- button "📸 Now"
+- button "⏱ 3s"
+- text: saved 215
+- img

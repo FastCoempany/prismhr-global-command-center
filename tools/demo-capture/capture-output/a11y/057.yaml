@@ -1,0 +1,90 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - link "Logout":
+    - /url: /login
+- main:
+  - heading "Reimbursements" [level=1]
+  - tablist "Navigation tabs":
+    - tab "Pending Requests" [selected]
+    - tab "History"
+  - button "All Workers"
+  - button "Engagement"
+  - text: Search Search
+  - textbox "Search Search":
+    - /placeholder: Search reimbursement requests by name or notes
+  - button "Export"
+  - text: "Pending Requests Paul Miller Contractor+ Amount: $632.69 USD"
+  - time: Jun 30, 2026
+  - text: "| Internet charges for remote work Pending"
+  - button
+  - button
+  - button "Decline"
+  - button "Approve"
+  - text: "Frank Nelson Contractor Amount: $653.99 USD"
+  - time: Jun 30, 2026
+  - text: "| Business development dinner Pending"
+  - button
+  - button
+  - button "Decline"
+  - button "Approve"
+  - text: "Hugo Baker EOR Amount: £380.53 GBP"
+  - time: Jun 30, 2026
+  - text: "| Internet charges for remote work Pending"
+  - button
+  - button
+  - button "Decline"
+  - button "Approve"
+  - text: "Paul Miller Contractor+ Amount: $636.70 USD"
+  - time: Jun 29, 2026
+  - text: "| Business development dinner Pending"
+  - button
+  - button
+  - button "Decline"
+  - button "Approve"
+  - text: "Nina Thompson Payroll Amount: £1,190.15 GBP"
+  - time: Jun 28, 2026
+  - text: "| Business development dinner Pending"
+  - button
+  - button
+  - button "Decline"
+  - button "Approve"
+- button "⏸ Stop capture"
+- button "📸 Now"
+- button "⏱ 3s"
+- text: saved 56
+- img
+- dialog:
+  - heading "Pending Request" [level=2]
+  - button
+  - text: Nina Thompson Payroll £1,190.15 GBP Antaeus Service Provider - Main Client
+  - time: Jun 28, 2026
+  - text: Business development dinner
+  - button "View Receipt Click to preview the uploaded image":
+    - paragraph: View Receipt
+    - paragraph: Click to preview the uploaded image
+  - button "Decline"
+  - button "Approve"

@@ -1,0 +1,207 @@
+URL: https://app1.demo.prismhr.com/team/6ab3e4b7-92ff-46e6-9ba3-24ddbb9f4ffb/1ec6133c-f849-4802-8e9c-fa924a356014/payments
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+Profile
+Team
+Profile
+Payments
+Paul Davis
+Work Email
+paul.davis@prismhr.com
+Start Date
+Aug 26, 2026
+Position
+National Security Coordinator
+Worker ID
+105260601496
+Manager
+Mike Superadmin
+Location
+Assign Location
+Details
+Documents
+Payments
+Contracts
+Time Off
+Expense Reimbursements
+Assignments
+Contract	Pay Period	Distributed At	Gross Payment	
+
+
+National Security Coordinator-PAYROLL
+
+	Dec 1, 2026 - Dec 31, 2026		
+$3,380.46
+MXN
+	
+
+
+National Security Coordinator-PAYROLL
+
+	Nov 1, 2026 - Nov 30, 2026		
+$3,072.67
+MXN
+	
+
+
+National Security Coordinator-PAYROLL
+
+	Oct 1, 2026 - Oct 31, 2026		
+$1,982.44
+MXN
+	
+
+
+National Security Coordinator-PAYROLL
+
+	Sep 1, 2026 - Sep 30, 2026		
+$1,827.35
+MXN
+	
+
+
+National Security Coordinator-PAYROLL
+
+	Aug 1, 2026 - Aug 31, 2026		
+$1,830.15
+MXN
+	
+
+
+National Security Coordinator-PAYROLL
+
+	Jul 1, 2026 - Jul 31, 2026		
+$2,805.41
+MXN
+	
+
+
+National Security Coordinator-PAYROLL
+
+	Jun 1, 2026 - Jun 30, 2026		
+$1,911.99
+MXN
+	
+
+
+National Security Coordinator-PAYROLL
+
+	May 1, 2026 - May 31, 2026	May 29, 2026	
+$1,360.09
+MXN
+	
+
+
+National Security Coordinator-PAYROLL
+
+	Apr 1, 2026 - Apr 30, 2026	Apr 30, 2026	
+$1,656.30
+MXN
+	
+
+
+National Security Coordinator-PAYROLL
+
+	Mar 1, 2026 - Mar 31, 2026	Mar 31, 2026	
+$2,533.35
+MXN
+	
+
+
+National Security Coordinator-PAYROLL
+
+	Feb 1, 2026 - Feb 28, 2026	Feb 27, 2026	
+$2,428.36
+MXN
+	
+
+
+National Security Coordinator-PAYROLL
+
+	Jan 1, 2026 - Jan 31, 2026	Jan 30, 2026	
+$1,823.37
+MXN
+	
+
+
+National Security Coordinator-PAYROLL
+
+	Dec 1, 2025 - Dec 31, 2025	Dec 31, 2025	
+$2,018.97
+MXN
+	
+
+
+National Security Coordinator-PAYROLL
+
+	Nov 1, 2025 - Nov 30, 2025	Nov 28, 2025	
+$3,155.71
+MXN
+	
+
+
+National Security Coordinator-PAYROLL
+
+	Oct 1, 2025 - Oct 31, 2025	Oct 31, 2025	
+$2,615.78
+MXN
+	
+
+
+National Security Coordinator-PAYROLL
+
+	Sep 1, 2025 - Sep 30, 2025	Sep 30, 2025	
+$2,715.19
+MXN
+	
+
+
+National Security Coordinator-PAYROLL
+
+	Aug 1, 2025 - Aug 31, 2025	Aug 29, 2025	
+$2,589.64
+MXN
+	
+
+
+National Security Coordinator-PAYROLL
+
+	Jul 1, 2025 - Jul 31, 2025	Jul 31, 2025	
+$2,372.47
+MXN
+	
+
+
+National Security Coordinator-PAYROLL
+
+	Jun 1, 2025 - Jun 30, 2025	Jun 30, 2025	
+$2,822.38
+MXN
+	
+
+
+National Security Coordinator-PAYROLL
+
+	May 1, 2025 - May 31, 2025	May 30, 2025	
+$2,225.56
+MXN
+	
+Previous
+Next
+⏸ Stop capture
+📸 Now
+⏱ 3s
+saved 181

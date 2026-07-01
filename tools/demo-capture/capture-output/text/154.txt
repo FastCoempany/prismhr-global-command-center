@@ -1,0 +1,30 @@
+URL: https://app1.demo.prismhr.com/onboarding-success/eor
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+Success!
+Here’s what happens next:
+Offer Letter Generated: An Offer Letter, based on the information you have provided, will be sent to you for your review and approval.
+Invitation to Join PrismHR: After the letter is approved, the platform will send an invitation to the candidate to join the platform and review the offer. Once they accept the offer, the platform leads them into their onboarding by gathering their personal information.
+Onboarding: The CX team will reach out to the candidate to guide and support them throughout their onboarding process, and you will be kept in CC on all communications.
+Employment Agreement Signed: Once signed, the onboarding process is complete!
+
+We’ll keep you updated every step of the way. Need assistance? Contact us.
+
+Go to Onboarding
+⏸ Stop capture
+📸 Now
+⏱ 3s
+saved 153

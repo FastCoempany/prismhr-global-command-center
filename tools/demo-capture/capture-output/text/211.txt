@@ -1,0 +1,101 @@
+URL: https://app1.demo.prismhr.com/time-tracking
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+Time Tracking
+Manage Labels
+Total Hours
+1079
+Jun 1 - Jun 30, 2026 - Pending approval - Contractor
+option Work Type, deselected. Select is focused ,type to refine list, press Down to open the menu, press left to focus selected values
+Labels...
+Import
+Export
+View
+KM
+
+Karen Moore
+
+Jun 1, 2026 - Jun 30, 2026
+
+137 Hours
+
+View
+YT
+
+Yuki Thompson
+
+Jun 1, 2026 - Jun 30, 2026
+
+137 Hours
+
+View
+PM
+
+Paul Miller
+
+Jun 1, 2026 - Jun 30, 2026
+
+128 Hours
+
+View
+FH
+
+Felix Hunt
+
+Jun 1, 2026 - Jun 30, 2026
+
+138 Hours
+
+View
+UC
+
+Ulrich Cooper
+
+Jun 1, 2026 - Jun 30, 2026
+
+142 Hours
+
+View
+UJ
+
+Uma Johnson
+
+Jun 1, 2026 - Jun 30, 2026
+
+125 Hours
+
+View
+AD
+
+Alex Developer
+
+Jun 1, 2026 - Jun 30, 2026
+
+133 Hours
+
+View
+UY
+
+Ulrich Young
+
+Jun 1, 2026 - Jun 30, 2026
+
+139 Hours
+
+⏸ Stop capture
+📸 Now
+⏱ 3s
+saved 210

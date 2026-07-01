@@ -1,0 +1,214 @@
+URL: https://app1.demo.prismhr.com/settings/general
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+Settings
+Settings
+General
+General
+Users
+Roles and Permissions
+Approval Workflows
+Assignments
+Overview
+
+General information about your account.
+
+Account Owner's Name:
+Demo Admin
+Email:
+antaeus.coe@vensure.com
+Client ID:
+10500045
+Entity Details
+Name
+Entity Type
+Select
+LLC
+S-corp
+C-corp
+Sole Proprietorship
+LTD
+unknown
+Tax ID Number
+Address 1
+Address 2
+City
+Postal Code
+State
+Country
+Albania
+Algeria
+Angola
+Argentina
+Armenia
+Australia
+Australia - New South Wales
+Australia - Queensland
+Australia - South Australia
+Australia - Victoria
+Australia - Western Australia
+Austria
+Azerbaijan
+Bahamas
+Bahrain
+Bangladesh
+Belarus
+Belgium
+Belize
+Bolivia
+Bosnia and Herzegovina
+Brazil
+British Virgin Island
+Bulgaria
+Burkina Faso
+Burundi (Bujumbura)
+Cambodia
+Cameroon
+Canada
+Canada - Nova Scotia
+Canada - Alberta
+Canada - British Columbia
+Canada - Ontario
+Canada - Quebec
+Canada - Newfoundland and Labrador
+Canada - Prince Edward Island
+Canada - New Brunswick
+Canada - Manitoba
+Chile
+China
+China - Shanghai
+China - Guangzhou
+Chad
+Colombia
+Costa Rica
+Croatia
+Cyprus
+Czech Republic
+Congo (Brazzaville)
+Congo (Kinshasa)
+Denmark
+Dominican Republic
+Ecuador
+Egypt
+El Salvador
+Estonia
+Ethiopia
+Finland
+France
+Georgia
+Germany
+Ghana
+Greece
+Guatemala
+Honduras
+Hong Kong
+Hungary
+Iceland
+India
+Indonesia
+Ireland
+Israel
+Italy
+Ivory Coast
+Jamaica
+Japan
+Jordan
+Kazakhstan
+Kenya
+Kosovo
+Kuwait
+Latvia
+Lebanon
+Libya
+Lithuania
+Luxembourg
+Macau
+North Macedonia
+Malawi
+Malaysia
+Malta
+Mauritius
+Mexico
+Moldova
+Mongolia
+Montenegro
+Morocco
+Myanmar
+Nepal
+Netherlands
+New Zealand
+Nicaragua
+Niger
+Nigeria
+Norway
+Oman
+Papua New Guinea
+Pakistan
+Palestine
+Panama
+Paraguay
+Peru
+Philippines
+Poland
+Portugal
+Puerto Rico
+Qatar
+Romania
+Russia
+Rwanda
+Senegal
+Serbia
+Singapore
+Slovakia
+Slovenia
+South Africa
+South Korea
+Spain
+Sri Lanka
+Sweden
+Switzerland
+Switzerland - Geneva
+Switzerland - Zurich
+Taiwan
+Tanzania
+Thailand
+Togo (Lomé)
+Trinidad & Tobago
+Tunisia
+Turkey
+Tonga
+Ukraine
+Uganda
+United Arab Emirates
+United Kingdom
+United States
+Uruguay
+Uzbekistan
+Venezuela
+Vietnam
+Zambia
+Zimbabwe
+Billing Contact Info
+
+Enter the email address(es) that invoices should be sent to
+
+Primary Email
+Add Another Email
+Update
+⏸ Stop capture
+📸 Now
+⏱ 3s
+saved 303
