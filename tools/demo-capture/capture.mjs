@@ -67,6 +67,18 @@ async function capture(reason, clicked = null) {
       /* SPA may never go fully idle; proceed anyway */
     }
 
+    // Hide our own control panel so it doesn't pollute the text, DOM, a11y, or
+    // screenshot. Restored in `finally`.
+    await page
+      .evaluate(() => {
+        const p = document.getElementById('__cap_panel');
+        if (p) {
+          p.dataset.prevDisplay = p.style.display;
+          p.style.display = 'none';
+        }
+      })
+      .catch(() => {});
+
     const text = (await page.evaluate(() => document.body?.innerText || '').catch(() => '')).trim();
     if (!text) return;
 
@@ -151,6 +163,16 @@ async function capture(reason, clicked = null) {
   } catch (e) {
     console.error('capture error:', e.message);
   } finally {
+    // Restore the control panel we hid for the snapshot.
+    await page
+      .evaluate(() => {
+        const p = document.getElementById('__cap_panel');
+        if (p && p.style.display === 'none') {
+          p.style.display = p.dataset.prevDisplay || 'flex';
+          delete p.dataset.prevDisplay;
+        }
+      })
+      .catch(() => {});
     busy = false;
     if (pending) {
       const p = pending;
@@ -194,14 +216,27 @@ await context.addInitScript(() => {
   const signal = (r, clicked) => window.__capSignal && window.__capSignal(r, clicked === undefined ? lastClick : clicked);
 
   // Compact description of the element the user clicked, resolved up to the
-  // nearest meaningful clickable ancestor (so an icon inside a button reports
-  // the button). Recorded as the "arrived by clicking" breadcrumb.
+  // nearest meaningful clickable ancestor. Produces a concise `label` even for
+  // icon-only buttons, inputs, and div-based rows. The "arrived by clicking"
+  // breadcrumb.
   function describe(el) {
     if (!el || !el.closest) return null;
     const CLICKABLE =
-      'a,button,[role="button"],[role="menuitem"],[role="menuitemradio"],[role="tab"],[role="link"],[role="option"],[onclick],[tabindex]';
+      'a,button,[role="button"],[role="menuitem"],[role="menuitemradio"],[role="tab"],[role="link"],[role="option"],input,select,textarea,[tabindex]';
     const t = el.closest(CLICKABLE) || el;
-    const clean = (s) => (s || '').replace(/\s+/g, ' ').trim().slice(0, 120);
+    const clean = (s) => (s || '').replace(/\s+/g, ' ').trim();
+    const attr = (name) => (t.getAttribute ? clean(t.getAttribute(name)) : '');
+    const full = clean(t.innerText || t.textContent);
+
+    // Prefer a concise, human-meaningful label; fall back progressively so that
+    // icon-only buttons, inputs, and div-based rows still get identified.
+    let label = attr('aria-label') || attr('title') || attr('alt') || attr('placeholder') || attr('name');
+    if (!label) {
+      const h = t.querySelector && t.querySelector('h1,h2,h3,h4,h5,h6');
+      if (h) label = clean(h.innerText || h.textContent).slice(0, 80);
+    }
+    if (!label) label = full.slice(0, 80);
+
     let cssPath = '';
     try {
       const parts = [];
@@ -226,13 +261,15 @@ await context.addInitScript(() => {
     } catch {
       /* best-effort */
     }
-    const attr = (name) => (t.getAttribute ? clean(t.getAttribute(name)) : '');
+
     return {
-      text: clean(t.innerText || t.textContent),
-      label: attr('aria-label'),
-      title: attr('title'),
+      label, // concise best-guess identifier
+      text: full.slice(0, 120), // short visible text
       role: (t.getAttribute && t.getAttribute('role')) || '',
       tag: t.tagName ? t.tagName.toLowerCase() : '',
+      type: attr('type'),
+      name: attr('name'),
+      id: t.id || '',
       href: (t.getAttribute && t.getAttribute('href')) || '',
       path: cssPath,
     };
