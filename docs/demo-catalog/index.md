@@ -53,6 +53,7 @@ PrismHR Global demo (312 captures → 49 distinct screens across all 12 modules)
 | 055 | Worker Profile — Expense Reimbursements | team | tab | medium | classified |
 | 056 | Worker Profile — Organization (Assignments) | team | tab | medium | classified |
 | 057 | Contract Detail | team | drilldown | medium | classified |
+| 058 | Team (Roster) | team | page | high | classified |
 | 060 | Invoices | invoices | page | medium | classified |
 | 065 | Time Off | time-off | page | medium | classified |
 | 070 | Time Tracking | time-tracking | page | medium | classified |
@@ -84,7 +85,7 @@ Surfaced from the captures (links/options seen but the screen/state wasn't walke
 Grouped by priority.
 
 ### A. Uncaptured screens reachable from what we have
-- [ ] **Team roster/list** — we captured worker *profiles* but not the `/team` list landing.
+- [x] **Team roster/list** — cataloged as `058` (from screenshot; enrich on top-up walk).
 - [ ] **Reports — EOR Gross-to-Net** and **EOR General Ledger** (seen as cards on 093, not opened).
 - [ ] **Reports — Payroll Gross-to-Net / General Ledger / Variance** (096 mirrors the EOR suite; only the hub was captured).
 - [ ] **New Hire — Payroll worker-type path** (only EOR + Contractor were walked; onboarding shows a Payroll type too).
