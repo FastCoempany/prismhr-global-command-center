@@ -25,6 +25,7 @@ const MODULES = [
   ['tools-resources', 'Tools & Resources'],
   ['settings', 'Settings'],
   ['support-cases', 'Support Cases'],
+  ['worker-portal', 'Worker Portal'],
 ];
 
 const scalar = (fm, k) => {
