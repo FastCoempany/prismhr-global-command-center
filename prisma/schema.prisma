@@ -845,3 +845,46 @@ model DemoScreenOverride {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
+
+// --- Command Center (rebuilt) ------------------------------------------------
+// The PEO "book" itself is static (src/lib/book). Only the mutable per-PEO
+// working state lives here, keyed by the Salesforce account id.
+
+enum PeoStage {
+  NOT_TOUCHED
+  CSM_BRIEFED
+  PEO_ENGAGED
+  CLIENT_CAMPAIGN
+  LEAD
+  DEMO
+  OPPORTUNITY
+  WON
+  PASSED
+}
+
+model PeoState {
+  id             String    @id @default(cuid())
+  peoId          String    @unique // Salesforce 18-digit id from the book
+  stage          PeoStage  @default(NOT_TOUCHED)
+  nextAction     String?
+  nextActionDate DateTime?
+  notes          String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  activities PeoActivity[]
+
+  @@index([stage])
+  @@index([nextActionDate])
+}
+
+model PeoActivity {
+  id        String   @id @default(cuid())
+  peoId     String
+  body      String
+  createdAt DateTime @default(now())
+
+  state PeoState @relation(fields: [peoId], references: [peoId], onDelete: Cascade)
+
+  @@index([peoId])
+}

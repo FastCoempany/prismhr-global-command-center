@@ -13,7 +13,7 @@ function required(formData: FormData, key: string) {
 
 function safeNext(value: FormDataEntryValue | null) {
   if (typeof value !== "string" || !value.startsWith("/") || value.startsWith("//")) {
-    return "/prospect-field";
+    return "/";
   }
   return value;
 }
