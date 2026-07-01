@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import { PeoApproach, PeoIntent, PeoStage } from "@/generated/prisma/client";
 import { getAppAccess } from "@/lib/auth";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
+import { getPeo } from "@/lib/book";
+import { getKit, mergeText } from "@/lib/campaigns";
 
 const stageValues = new Set<string>(Object.values(PeoStage));
 const approachValues = new Set<string>(Object.values(PeoApproach));
@@ -66,6 +68,34 @@ export async function savePeo(formData: FormData) {
   if (activity) {
     await prisma.peoActivity.create({ data: { peoId, body: activity } });
   }
+
+  revalidatePath("/");
+  revalidatePath("/book");
+  revalidatePath("/pipeline");
+  redirect(backTo(formData, peoId, { saved: "1" }));
+}
+
+// Apply a campaign play: set its ask as the next action, due in the kit's window,
+// and log the play to the PEO's activity trail. Leaves stage/approach/intent as-is.
+export async function applyPlay(formData: FormData) {
+  const peoId = str(formData, "peoId", 40);
+  const kitId = str(formData, "kitId", 60);
+  const kit = getKit(kitId);
+  const peo = getPeo(peoId);
+  if (!(await requireWrite()) || !peo || !kit) {
+    redirect(backTo(formData, peoId, { error: "1" }));
+  }
+
+  const nextAction = mergeText(kit.ask, peo).slice(0, 400);
+  const nextActionDate = new Date(Date.now() + kit.dueInDays * 86_400_000);
+
+  const prisma = getPrisma();
+  await prisma.peoState.upsert({
+    where: { peoId },
+    create: { peoId, nextAction, nextActionDate },
+    update: { nextAction, nextActionDate },
+  });
+  await prisma.peoActivity.create({ data: { peoId, body: `Queued play: ${kit.name}` } });
 
   revalidatePath("/");
   revalidatePath("/book");

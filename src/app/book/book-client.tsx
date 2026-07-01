@@ -15,7 +15,8 @@ import {
   type PeoRow,
   type Stage,
 } from "@/lib/command-center/types";
-import { savePeo } from "./actions";
+import { kitsFor, mergeText, type CampaignKit } from "@/lib/campaigns";
+import { applyPlay, savePeo } from "./actions";
 import styles from "../command-center.module.css";
 
 const fitClass: Record<string, string> = {
@@ -60,6 +61,7 @@ export function BookClient({ rows, canWrite, dbUnavailable, initialPeoId, justSa
   const [approach, setApproach] = useState("");
   const [industry, setIndustry] = useState("");
   const [selectedId, setSelectedId] = useState(initialPeoId ?? "");
+  const [copiedId, setCopiedId] = useState("");
 
   const csmOptions = useMemo(() => [...new Set(rows.map((r) => r.csm))].sort(), [rows]);
   const industryOptions = useMemo(
@@ -97,6 +99,18 @@ export function BookClient({ rows, canWrite, dbUnavailable, initialPeoId, justSa
   const select = (id: string) => {
     setSelectedId(id);
     window.history.replaceState(null, "", `/book?peo=${id}`);
+  };
+
+  const copyKit = async (kit: CampaignKit) => {
+    if (!selected) return;
+    const text = `Subject: ${mergeText(kit.subject, selected)}\n\n${mergeText(kit.body, selected)}`;
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedId(kit.id);
+      setTimeout(() => setCopiedId(""), 2000);
+    } catch {
+      setCopiedId("");
+    }
   };
 
   return (
@@ -330,6 +344,57 @@ export function BookClient({ rows, canWrite, dbUnavailable, initialPeoId, justSa
                     : "Read-only access."}
                 </p>
               )}
+
+              {(() => {
+                const plays = kitsFor(selected.stage, selected.approach);
+                return (
+                  <div className={styles.plays}>
+                    <h3 className={styles.playsHead}>Plays for this stage</h3>
+                    {plays.length === 0 ? (
+                      <p className={styles.muted}>
+                        No play for this stage and approach — advance the stage or clear the
+                        approach gate to unlock the next move.
+                      </p>
+                    ) : (
+                      plays.map((k) => (
+                        <div key={k.id} className={styles.play}>
+                          <div className={styles.playTop}>
+                            <strong>{k.name}</strong>
+                            <span className={styles.chip}>{k.channel}</span>
+                          </div>
+                          <p className={styles.playAsk}>{mergeText(k.ask, selected)}</p>
+                          <details className={styles.playDetails}>
+                            <summary>Preview message</summary>
+                            <div className={styles.playSubject}>
+                              Subject: {mergeText(k.subject, selected)}
+                            </div>
+                            <pre className={styles.playPre}>{mergeText(k.body, selected)}</pre>
+                          </details>
+                          <div className={styles.playActions}>
+                            <button
+                              type="button"
+                              className={styles.playCopy}
+                              onClick={() => copyKit(k)}
+                            >
+                              {copiedId === k.id ? "Copied ✓" : "Copy message"}
+                            </button>
+                            {canWrite && (
+                              <form action={applyPlay}>
+                                <input type="hidden" name="peoId" value={selected.id} />
+                                <input type="hidden" name="kitId" value={k.id} />
+                                <input type="hidden" name="returnTo" value="/book" />
+                                <button type="submit" className={styles.playApply}>
+                                  Set as next action
+                                </button>
+                              </form>
+                            )}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                );
+              })()}
             </div>
           )}
         </div>
