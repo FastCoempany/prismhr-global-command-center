@@ -45,11 +45,23 @@ Standard for this app (e.g. Vercel): set `DATABASE_URL`/`DIRECT_URL`, run
 `prisma migrate deploy` on release, `npm run build`. The `/sidekick` page is
 `force-dynamic` and guards on `hasDatabaseEnv()`, so builds don't need a live DB.
 
-## Note on this environment
-`prisma generate` and `next build` could not be run in the cloud session that authored
-this because the egress policy blocks Prisma's engine-binary CDN. Type-checking showed no
-genuine errors in the sidekick code — only the expected "generated client not present"
-cascade, which resolves the moment `prisma generate` runs locally.
+## Build verification
+Verified end-to-end: `tsc --noEmit` passes with **0 errors** and `next build` compiles
+successfully with `/sidekick` in the route table.
+
+### Prisma engine / restricted networks
+Runtime uses the **WASM query engine** (`engineType = "client"` + `@prisma/adapter-pg`),
+so **no native query-engine binary ships to production** — smaller, faster serverless cold
+starts. The only native binary is the CLI's schema-engine, used by `generate`/`migrate`.
+
+In a network-restricted sandbox, Prisma's Node downloader ignores `HTTPS_PROXY` and its
+direct fetch of `binaries.prisma.sh` is reset by the egress firewall (while `curl`, which
+honors the proxy, succeeds). Workaround for such environments:
+```bash
+source tools/prisma-engine-bootstrap.sh   # curl-fetches schema-engine, sets env
+npx prisma generate                        # or: npx prisma migrate deploy
+```
+On a normal laptop / CI / Vercel, none of this is needed — `npm run build` just works.
 
 ## Not yet wired (intentional next steps)
 - Playbooks UI (models exist) — ordered demo sequences per account.
