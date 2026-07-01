@@ -183,6 +183,36 @@
   padding: 1px 7px;
 }
 
+/* Approach (channel permission gate) */
+.stackTop {
+  margin-top: 4px;
+}
+.approach {
+  display: inline-block;
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 1px 7px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+.approachHold {
+  background: #fdeaea;
+  color: #b42318;
+}
+.approachOk {
+  background: #fef3e2;
+  color: #b6531a;
+}
+.approachGo {
+  background: #e4f7ea;
+  color: var(--green);
+}
+.hint {
+  color: var(--muted);
+  font-size: 11.5px;
+  margin: 4px 0 0;
+}
+
 /* Detail panel */
 .panel {
   background: var(--card);
@@ -304,6 +334,32 @@
 .overdue {
   color: #dc2626;
   font-weight: 600;
+}
+.itemStack {
+  padding: 7px 0;
+  border-top: 1px solid var(--line);
+}
+.itemStack:first-of-type {
+  border-top: 0;
+}
+.itemTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+}
+.itemTop a {
+  color: var(--navy);
+  font-weight: 600;
+  text-decoration: none;
+}
+.itemTop a:hover {
+  color: var(--blue-d);
+}
+.suggest {
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 2px;
 }
 
 /* Pipeline */

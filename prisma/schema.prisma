@@ -862,19 +862,40 @@ enum PeoStage {
   PASSED
 }
 
+// Channel permission gate — what you're allowed to do with this PEO right now.
+// Enforces the go-to-market motion: reach the SMB *through* its PEO, and only
+// after the CSM has cleared the path.
+enum PeoApproach {
+  NEEDS_CSM // prep only — don't approach the PEO until the CSM clears it
+  CHANNEL_OK // CSM has cleared it — work the PEO directly
+  DIRECT_OK // PEO engaged — cleared to approach their SMB clients
+}
+
+// Intent signal: how much international-hiring demand sits in the PEO's book.
+// Layered on top of the structural fit score to re-rank toward real demand.
+enum PeoIntent {
+  UNKNOWN
+  LOW
+  MEDIUM
+  HIGH
+}
+
 model PeoState {
-  id             String    @id @default(cuid())
-  peoId          String    @unique // Salesforce 18-digit id from the book
-  stage          PeoStage  @default(NOT_TOUCHED)
+  id             String      @id @default(cuid())
+  peoId          String      @unique // Salesforce 18-digit id from the book
+  stage          PeoStage    @default(NOT_TOUCHED)
+  approach       PeoApproach @default(NEEDS_CSM)
+  intent         PeoIntent   @default(UNKNOWN)
   nextAction     String?
   nextActionDate DateTime?
   notes          String?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
 
   activities PeoActivity[]
 
   @@index([stage])
+  @@index([approach])
   @@index([nextActionDate])
 }
 

@@ -1,7 +1,7 @@
 import { getAppAccess } from "@/lib/auth";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import { peos, type Peo } from "@/lib/book";
-import type { PeoRow, Stage } from "./types";
+import { priorityScore, type Approach, type Intent, type PeoRow, type Stage } from "./types";
 
 export type { PeoRow, Stage } from "./types";
 export { STAGES, stageLabel } from "./types";
@@ -13,7 +13,16 @@ export type CommandData = {
 };
 
 function baseRow(p: Peo): PeoRow {
-  return { ...p, stage: "NOT_TOUCHED", nextAction: null, nextActionDate: null, notes: null };
+  return {
+    ...p,
+    stage: "NOT_TOUCHED",
+    approach: "NEEDS_CSM",
+    intent: "UNKNOWN",
+    priority: p.fit,
+    nextAction: null,
+    nextActionDate: null,
+    notes: null,
+  };
 }
 
 export async function loadCommand(): Promise<CommandData> {
@@ -33,6 +42,8 @@ export async function loadCommand(): Promise<CommandData> {
       select: {
         peoId: true,
         stage: true,
+        approach: true,
+        intent: true,
         nextAction: true,
         nextActionDate: true,
         notes: true,
@@ -42,9 +53,13 @@ export async function loadCommand(): Promise<CommandData> {
     const rows = base.map((r) => {
       const s = byId.get(r.id);
       if (!s) return r;
+      const intent = s.intent as Intent;
       return {
         ...r,
         stage: s.stage as Stage,
+        approach: s.approach as Approach,
+        intent,
+        priority: priorityScore(r.fit, intent),
         nextAction: s.nextAction,
         nextActionDate: s.nextActionDate ? s.nextActionDate.toISOString().slice(0, 10) : null,
         notes: s.notes,

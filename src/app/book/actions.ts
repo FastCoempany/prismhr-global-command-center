@@ -2,11 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { PeoStage } from "@/generated/prisma/client";
+import { PeoApproach, PeoIntent, PeoStage } from "@/generated/prisma/client";
 import { getAppAccess } from "@/lib/auth";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 
 const stageValues = new Set<string>(Object.values(PeoStage));
+const approachValues = new Set<string>(Object.values(PeoApproach));
+const intentValues = new Set<string>(Object.values(PeoIntent));
 
 function str(fd: FormData, key: string, max = 4000) {
   const v = fd.get(key);
@@ -43,13 +45,19 @@ export async function savePeo(formData: FormData) {
 
   const stageRaw = str(formData, "stage", 40);
   const stage = stageValues.has(stageRaw) ? (stageRaw as PeoStage) : PeoStage.NOT_TOUCHED;
+  const approachRaw = str(formData, "approach", 40);
+  const approach = approachValues.has(approachRaw)
+    ? (approachRaw as PeoApproach)
+    : PeoApproach.NEEDS_CSM;
+  const intentRaw = str(formData, "intent", 40);
+  const intent = intentValues.has(intentRaw) ? (intentRaw as PeoIntent) : PeoIntent.UNKNOWN;
   const nextAction = str(formData, "nextAction", 400) || null;
   const nextActionDate = parseDate(str(formData, "nextActionDate", 10));
   const notes = str(formData, "notes", 8000) || null;
   const activity = str(formData, "activity", 1000);
 
   const prisma = getPrisma();
-  const data = { stage, nextAction, nextActionDate, notes };
+  const data = { stage, approach, intent, nextAction, nextActionDate, notes };
   await prisma.peoState.upsert({
     where: { peoId },
     create: { peoId, ...data },
