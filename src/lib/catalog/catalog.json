@@ -155,27 +155,31 @@
           ]
         }
       ],
-      "what": "The post-login landing screen for an admin, scoped to a service provider's client (\"Antaeus Service Provider – Main Client\"). It surfaces everything awaiting action — pay periods, reimbursements, time-off requests — plus country-aware holiday reminders and quick links.",
+      "what": "The post-login landing screen for an admin, scoped to a client (\"Antaeus Service Provider – Main Client\"), surfacing everything awaiting action — pay periods, reimbursements, time-off requests — plus country-aware holiday reminders and quick links.",
       "capabilities": [
-        "One approval queue spanning **EOR and contractor** pay runs in a single view",
-        "**Multi-currency** amounts (GBP, USD) shown natively, side by side",
-        "Country-aware **holiday reminders** (Canada Day, US Independence Day)",
-        "Client-scoped context (\"Service Provider – Main Client\")",
-        "Action-first home: pending counts and \"Ready to Approve\" states up front"
+        "One approval home spanning **EOR and contractor** pay runs in a single view",
+        "**Multi-currency** amounts (GBP, USD) shown natively, side by side, with no manual conversion",
+        "The **Pay Periods** card with `Add One-Time Payment`, plus **Reimbursements** and **Time Off** cards that jump straight into their queues",
+        "Country-aware **holiday reminders** (Canada Day, US Independence Day) surfaced automatically per the workforce's countries",
+        "Client-scoped context banner and a `Links` quick-access card",
+        "Header with notifications, in-product support, and account menu"
       ],
       "sp": [
-        "One login shows the whole book of client activity that needs action — you operate",
-        "EOR and contractor pay runs share one queue: the breadth of the global motion you"
+        "One login shows the entire global book of client activity that needs action, so you can promote and even run PrismHR Global for your client base **without building a payroll platform** — the queue is already here.",
+        "EOR and contractor pay runs share one home screen, so the full breadth of the global offering you can extend to clients is visible in the first five seconds — an easy story to demo and resell.",
+        "The client-scoped landing sits inside the trusted PrismHR ecosystem your clients already use, so global becomes a natural extension of what you deliver, not a new vendor."
       ],
       "de": [
-        "The moment you log in, every cross-border obligation that needs a decision is in",
-        "Local compliance surfaces as reminders (in-country holidays) instead of something"
+        "The moment you log in, every cross-border obligation that needs a decision is in front of you — multi-currency, multi-country, no hunting — the **same trusted safety net your PEO gives you domestically, now global**.",
+        "In-country **holiday reminders** appear automatically, so local compliance is handled for you instead of something you have to research per country.",
+        "Whether you have one worker abroad or many across countries, the same simple home surfaces exactly what needs you."
       ],
       "branching": [
-        "**If** the workforce is contractor-heavy **then** open the `CONTRACTOR | MONTHLY`",
-        "**If** multi-entity / multi-currency operations are the hot button **then** anchor"
+        "**If** the workforce is contractor-heavy **then** open the `CONTRACTOR | MONTHLY` pay run from the Pay Periods card to show the unified queue rather than leading with EOR.",
+        "**If** multi-currency operations are the theme **then** anchor on the side-by-side GBP/USD amounts and the single approval surface.",
+        "**If** in-country compliance is the point **then** point at the auto-generated holiday reminders as a live example of done-for-you local awareness."
       ],
-      "say": "\"This is the first thing you see when you log in. Notice we're not on a menu hunt — every pay run, reimbursement, and time-off request that needs you is right here, across EOR and contractors, in whatever currency it was incurred. One screen, your entire global book, ready to action.\""
+      "say": "\"This is the first thing you see when you log in. Notice we're not on a menu hunt — every pay run, reimbursement, and time-off request that needs you is right here, across EOR and contractors, in whatever currency it was incurred. It's even flagging local holidays in the countries you employ people. One screen, your entire global book, ready to action — inside the same PrismHR you already trust.\""
     },
     {
       "id": "002",
@@ -286,18 +290,19 @@
         "Success state confirming the payment will land in each worker's next paycheck, with \"Add Another Payment\" or \"Close\""
       ],
       "sp": [
-        "One flow issues off-cycle pay across EOR, contractor, and payroll worker types and across countries, so you administer bonuses for a whole book without a separate tool per country.",
-        "Each amount is entered and confirmed in the worker's own currency, and the product handles the conversion into the next paycheck — the operational complexity of paying globally is absorbed."
+        "One flow issues off-cycle pay across **EOR, CONTRACTOR, and PAYROLL** worker types and across countries, so the global bonus/commission motion you extend to clients runs on **PrismHR's in-country entities and experts** — zero build on your side.",
+        "Each amount is entered and confirmed in the worker's own currency and the product handles the conversion, so you can enable clients to reward talent worldwide and look like the hero, with PrismHR absorbing the operational complexity."
       ],
       "de": [
-        "Rewarding a team member in another country is a few clicks on the same screen you already run payroll from — no wire, no local intermediary.",
-        "The confirm step shows exactly what each worker receives in local currency and when, so an ad-hoc bonus carries no surprise about timing or FX."
+        "Rewarding a team member in another country is a few clicks on the **same screen you already run payroll from** — no wire, no local intermediary, no new tool to learn.",
+        "The confirm step shows exactly what each worker receives in local currency (GBP, USD, CAD, NIO, TWD) and in which paycheck, so an ad-hoc bonus carries no surprise about timing or FX — done-for-you, whether it's one person or many."
       ],
       "branching": [
-        "**If** the audience runs a contractor-heavy workforce **then** set Pay Period Type to `CONTRACTOR` and issue a bonus across several countries in one pass.",
-        "**If** multi-currency is the hot button **then** dwell on the per-row currency lock (GBP/USD/CAD/NIO/TWD) and the local-currency conversion called out on the confirm step."
+        "**If** the workforce is contractor-heavy **then** set Pay Period Type to `CONTRACTOR` and issue a bonus across several countries in one pass.",
+        "**If** multi-currency is the theme **then** dwell on the per-row currency lock (GBP/USD/CAD/NIO/TWD) and the local-currency conversion called out on the confirm step.",
+        "**If** payment variety matters **then** open the payment-type dropdown to show `Signing Bonus`, `Commission`, `Spiff`, `Performance`, `Holiday`, `Equipment`, and `Other` all handled in one flow."
       ],
-      "say": "\"Say you want to hand out a spot bonus. Pick the pay period, find the worker, choose the payment type, type the amount — in their currency, not yours. We show you exactly what they'll receive and in which paycheck, you confirm, and it's done. Same screen whether they're an employee in the UK or a contractor in Taiwan.\""
+      "say": "\"Say you want to hand out a spot bonus. Pick the pay period, find the worker, choose the payment type, type the amount — in their currency, not yours. We show you exactly what they'll receive and in which paycheck, you confirm, and it's done. Same screen whether they're an employee in the UK or a contractor in Taiwan — no entities to set up, no FX to work out yourself.\""
     },
     {
       "id": "003",
@@ -424,12 +429,12 @@
         "\"Import Distribution data\" and \"Add one-time distribution\" to adjust the run before approving"
       ],
       "sp": [
-        "The entire pay run — wages, bonuses, allowances, reimbursements, across currencies — resolves to one number and one approval, so you clear a client's period without reconciling separate systems.",
-        "The Detailed Currency View turns a mixed-currency run into an auditable global total, which is exactly the multi-country visibility you resell."
+        "The entire pay run — wages, bonuses, allowances, reimbursements, across USD/CAD/GBP/EGP — resolves to **one number and one `Approve` action**, so the global payroll motion you extend to clients clears without reconciling separate systems and with zero build on your side.",
+        "The **Detailed Currency View** turns a mixed-currency run into an auditable global total with a USD roll-up — exactly the multi-country visibility that makes you look like the hero to clients, delivered inside the PrismHR ecosystem they already trust."
       ],
       "de": [
-        "You approve a whole month of global pay in one click, while still being able to open any line item — an hourly worker's hours, a reimbursement's receipt detail — before you commit.",
-        "Native currencies plus an approximate USD roll-up mean you see both what each person is paid locally and what the run costs you overall."
+        "You approve a whole month of **global pay in one click**, while still being able to open any line item — an hourly worker's hours, a reimbursement's receipt detail — before you commit; the same trusted control you get domestically, now across borders.",
+        "Native currencies plus an approximate USD roll-up mean you see both what each person is paid locally and what the run costs you overall — no FX math, no chasing, whether the team is one country or many."
       ],
       "branching": [
         "**If** cost control / FX exposure is the theme **then** open the Detailed Currency View and anchor on the global total with its FX-estimate disclaimer.",
@@ -500,16 +505,17 @@
         "An Upload action for supporting distribution data"
       ],
       "sp": [
-        "Every period carries its own dated status card, so across a book of clients you can see at a glance which runs are still pending and when each must be approved to distribute on time.",
-        "The Approve/Invoice/Distribute sequence makes the operational chain explicit, so the workflow you operate on clients' behalf is legible rather than opaque."
+        "Every period carries its own dated status card, so across a client base you can see which runs are still pending and when each must be approved to distribute on time — the delivery machinery is **PrismHR's, with zero build on your side**.",
+        "The `Approve → Invoice → Distribute` sequence makes the operational chain explicit, so the global workflow you extend to clients is legible and easy to demo, all inside the trusted PrismHR ecosystem."
       ],
       "de": [
-        "One glance tells you where the period stands and the exact date you must act by to keep pay on schedule.",
-        "The deadline is framed around the outcome — on-time collection and distribution — so the consequence of the approval date is spelled out, not left to you to infer."
+        "One glance tells you where the period stands and the **exact date you must act by** to keep pay on schedule — the same clear, done-for-you cadence your PEO gives you domestically, now global.",
+        "The deadline is framed around the outcome — on-time collection and distribution by the payment partner (Listo) — so the consequence of the approval date is spelled out for you, whether it's one worker or many."
       ],
       "branching": [
-        "**If** the conversation is about missed-deadline risk **then** anchor on the Required Approval Date and the Pending Approval notice.",
-        "**If** the audience wants to see the end-to-end run **then** use Approve here as the jump into the full Pay Period Approval view (003)."
+        "**If** timing/lifecycle is the point **then** anchor on the `Required Approval Date` and the Pending Approval notice tying it to on-time distribution.",
+        "**If** the audience wants the end-to-end run **then** use `Approve` here as the jump into the full Pay Period Approval view (003).",
+        "**If** supporting data must be added **then** show the `Upload` action for supplemental distribution data before the period advances."
       ],
       "say": "\"Each pay period has a status page like this. It tells you the dates that matter — when it has to be approved, when it invoices, when it distributes — and where it is right now. This one's pending approval, and it's clear you need to approve by the 23rd to keep pay on time. From here you move it down the line: approve, invoice, distribute.\""
     },
@@ -557,23 +563,24 @@
       "what": "The entry point of the New Hire flow, asking whether to hire an **Employee** (EOR) or a **Contractor** before branching into the matching wizard.",
       "capabilities": [
         "Single starting point for two compliant global-hiring motions",
-        "**Employee** path: hire employees compliantly in over 180 countries",
-        "**Contractor** path: classify and hire contractors compliantly in over 180 countries",
+        "**Employee** path: `Hire employees compliantly in over 180 countries` via `Select Employee`",
+        "**Contractor** path: `Classify and hire contractors compliantly in over 180 countries` via",
         "Worker-type choice made up front, before any data entry"
       ],
       "sp": [
-        "One flow lets you originate both EOR employment and contractor engagements for your",
-        "Compliant classification and hiring across 180+ countries is the headline before a"
+        "One screen shows your clients can hire abroad — as an employee or a contractor — through",
+        "Both compliant motions live in one product, so a lead you pass covers whatever work",
+        "The `over 180 countries` promise is the headline before any data entry — an easy, credible"
       ],
       "de": [
-        "Whether the next hire is a full employee or a contractor, you start in the same place and",
-        "The 180+ country reach is stated at the door, so global expansion is a choice on this"
+        "Whether your next hire abroad is a full employee or a contractor, you start in the same",
+        "No entity, no local legal team — the choice on this screen is the entire decision, and the"
       ],
       "branching": [
-        "**If** the audience hires primarily full-time staff abroad **then** take the **Employee**",
-        "**If** the audience relies on contractors **then** take the **Contractor** path and"
+        "**If** the client's need is ongoing headcount abroad **then** take `Select Employee` (EOR)",
+        "**If** the client engages independent workers **then** take `Select Contractor` and"
       ],
-      "say": "\"Every global hire starts here with one decision — employee or contractor. Pick either and we hire them compliantly in over 180 countries. That's the whole point: the hard part, local compliance, is built into whichever path you choose.\""
+      "say": "\"This is where every global hire your clients make begins — one decision, employee or contractor. Pick either and we hire them compliantly in over 180 countries. That's the whole story you get to tell your clients: they extend into global through you, and the hard part — local compliance — is already built into whichever path they choose.\""
     },
     {
       "id": "021",
@@ -660,18 +667,19 @@
         "Save & Exit to resume the draft later"
       ],
       "sp": [
-        "The same intake form services any of 175+ countries, down to the sub-region level — you",
-        "Local nuance is delivered inline (the Singapore rules note) so your team doesn't need to be"
+        "Your client onboards a hire anywhere — Quebec, New South Wales, `Singapore` — on one intake",
+        "In-country expertise is baked in: the inline `Note about Singapore` and `Global Hiring",
+        "The same 175+ country reach across every client makes this a global capability you promote"
       ],
       "de": [
-        "Nationality and work location are separated, so cross-border situations (a Mexican national",
-        "The moment you pick a country, the product tells you what's different about it — compliance"
+        "`Employee nationality` and `Working country` are separate fields, so a cross-border case (a",
+        "The moment you pick a country the platform tells you what's different — local rules on"
       ],
       "branching": [
-        "**If** hiring into a jurisdiction with distinctive rules (e.g. Singapore) **then** show the",
-        "**If** the audience operates sub-nationally (Canada, Australia, China) **then** open the"
+        "**If** the client is hiring into a jurisdiction with distinctive rules (e.g. `Singapore`)",
+        "**If** the client operates sub-nationally (Canada, Australia, China) **then** open the"
       ],
-      "say": "\"First step, who are they and where do they work. That country list is 175-plus deep — right down to Canadian provinces and Australian states. And watch: pick Singapore and the product immediately flags the local rules on bonuses, severance, and benefits. You don't have to know every country's law — the platform does.\""
+      "say": "\"First step — who are they and where do they work. That country list is 175-plus deep, right down to Canadian provinces and Australian states. And watch: pick Singapore and the platform immediately flags the local rules on bonuses, severance, and benefits. Your client doesn't have to know every country's law, and neither do you — that's what they're getting through you.\""
     },
     {
       "id": "022",
@@ -794,18 +802,19 @@
         "**Target start date** picker that disables unavailable dates and warns that regulatory,"
       ],
       "sp": [
-        "The role definition maps a global hire straight onto the client's existing org — divisions,",
-        "The date picker flags visa/work-permit delays inline, so you set client expectations on"
+        "A global hire maps straight onto the client's existing org — divisions, locations, and a",
+        "The `Target start date` picker flags visa/work-permit delays inline, so realistic timelines"
       ],
       "de": [
-        "A full seniority ladder and org placement mean a cross-border hire slots into your structure",
-        "Assigning a manager here wires up approvals from day one — that person owns the new hire's"
+        "A full seniority ladder (`Junior` through `Senior Vice President`) and org placement mean a",
+        "Assigning a manager here wires up approvals from day one — that person automatically owns the",
+        "The start date warning about visa/permit timing sets honest expectations up front, so there"
       ],
       "branching": [
-        "**If** org structure / reporting lines matter to the audience **then** open the Assign",
-        "**If** timelines are the concern **then** open the date picker and surface the visa /"
+        "**If** org structure and reporting lines matter to the client **then** open `Assign Manager`",
+        "**If** timelines are the concern **then** open the `Target start date` picker and surface the"
       ],
-      "say": "\"Now the role. Pick a seniority from Junior all the way to SVP, drop them into a division and office, and assign a manager — that manager will approve their time off and expenses from here on. Notice the start date even warns you when visa or permit timing could push things out. It's role-building and compliance in one step.\""
+      "say": "\"Now the role. Pick a seniority from Junior all the way to SVP, drop them into a division and office, and assign a manager — that manager approves their time off and expenses from here on, just like your client's domestic team. Notice the start date even warns when visa or permit timing could push things out. It's role-building and compliance in one step, and it's all yours to offer.\""
     },
     {
       "id": "023",
@@ -944,18 +953,19 @@
         "**FX confirmation modal**: converts the local-currency pay to the payer's currency (e.g."
       ],
       "sp": [
-        "Comp is built and validated in the worker's local currency, with employer-vs-employee cost",
-        "Statutory holidays and minimum PTO for the working country pre-populate, so your team isn't"
+        "Comp is built and validated in the worker's local currency, with `Total employer",
+        "Statutory holidays and minimum PTO for the working country pre-populate (e.g. Singapore's",
+        "This is the \"done-for-you compliance\" proof point that makes the global offering safe for you"
       ],
       "de": [
-        "Enter pay the way the employee experiences it (their currency, their statutory leave) and see",
-        "Bonuses and allowances carry their own frequency and tax treatment, so total cost of the hire"
+        "Enter pay the way the employee experiences it — their currency (`SGD`), their statutory leave",
+        "Bonuses and allowances (`Variable Bonus`, `Signing Bonus`, mobile/internet allowances) carry"
       ],
       "branching": [
-        "**If** total cost of a global hire is the hot button **then** anchor on the salary breakdown",
+        "**If** total cost of a global hire is the hot button **then** anchor on the `Salary Breakdown`",
         "**If** local compliance is the concern **then** highlight the auto-populated statutory PTO and"
       ],
-      "say": "\"Pay is in their local currency — Singapore dollars here — because that's the law. Type the salary and the breakdown shows you the real cost: two thousand gross, employer contributions on top, total monthly cost. Their statutory holidays and twenty days of leave are already in. And before we continue, we show you what that costs in your currency — about fifteen hundred US dollars — at today's FX. Full loaded cost, no spreadsheet.\""
+      "say": "\"Pay is in their local currency — Singapore dollars here — because that's the law. Type the salary and the breakdown shows the real cost: two thousand gross, employer contributions on top, total monthly cost. Their statutory holidays and twenty days of leave are already in. And before we continue, we show your client what that costs in their currency — about fifteen hundred US dollars — at today's FX. Fully loaded, fully compliant, no spreadsheet, and none of it lands on you to figure out.\""
     },
     {
       "id": "024",
@@ -1016,18 +1026,18 @@
         "Option labels are scoped to the client name (e.g. \"Antaeus Service Provider - Main Client\")"
       ],
       "sp": [
-        "Equipment handling is a per-hire policy captured in one field, and the options are labeled",
-        "Reimbursement-for-equipment is a built-in choice, so device provisioning ties back into the"
+        "Equipment handling is a single per-hire policy field, and the options are labeled with the",
+        "`will provide a reimbursement for equipment purchase` ties device provisioning back into the"
       ],
       "de": [
-        "Deciding who supplies the laptop is a single dropdown, not a side conversation — the answer",
-        "BYO-device and reimbursement models are first-class options, so remote and in-office setups"
+        "Deciding who supplies the laptop is one dropdown, not a side conversation — the answer travels",
+        "BYO-device (`use their personal equipment for work`) and reimbursement models are first-class"
       ],
       "branching": [
-        "**If** the audience runs a BYO-device or reimbursement model **then** show that option and",
+        "**If** the client runs a BYO-device or reimbursement model **then** show that option and",
         "**If** equipment isn't a talking point **then** treat this as a quick single-select step and"
       ],
-      "say": "\"Equipment is one dropdown. You provide it, they use their own, or you reimburse them — pick one and it's baked into the offer. No separate procurement thread.\""
+      "say": "\"Equipment is one dropdown. Your client provides it, the hire uses their own, or your client reimburses them — pick one and it's baked into the offer. No separate procurement thread, no extra system for you to run.\""
     },
     {
       "id": "025",
@@ -1113,18 +1123,18 @@
         "Per-tier select actions (Select Standard / Premium / Premium+); selecting a tier marks it chosen"
       ],
       "sp": [
-        "Supplemental benefits are a packaged, priced add-on you can attach to any global hire in one",
-        "Transparent monthly pricing per tier lets you position benefits to clients on the spot."
+        "Supplemental benefits are a packaged, priced add-on attached to any global hire in one click —",
+        "Transparent per-tier monthly pricing (`$130`, `$210`, `$260`) lets the global offering be"
       ],
       "de": [
-        "Competitive private coverage (medical, dental, vision, maternity) is available as three clear",
-        "Choosing a tier is optional and reversible in-flow, so benefits are a decision you make at"
+        "Competitive private coverage (medical, dental, vision, maternity) comes as three clear tiers —",
+        "Choosing a tier is optional (`Yes` / `No`) and reversible in-flow, so benefits are a decision"
       ],
       "branching": [
-        "**If** the audience competes on benefits **then** walk the three tiers and land on Premium +",
-        "**If** cost control is the theme **then** show the transparent per-tier monthly pricing and"
+        "**If** the client competes on benefits **then** walk the three tiers and land on `Premium +",
+        "**If** cost control is the theme **then** show the transparent per-tier monthly pricing and the"
       ],
-      "say": "\"Benefits are optional and packaged. Three tiers — Standard at a hundred thirty a month, Premium at two-ten, Premium plus Maternity at two-sixty — each with clear coverage and pricing right here. One click adds real private medical, dental, and vision to the offer. No broker, no separate plan to stand up.\""
+      "say": "\"Benefits are optional and packaged. Three tiers — Standard at a hundred thirty a month, Premium at two-ten, Premium plus Maternity at two-sixty — each with clear coverage and pricing right here. One click adds real private medical, dental, and vision to your client's offer. No broker, no separate plan to stand up — it's another thing they get through you, ready to go.\""
     },
     {
       "id": "026",
@@ -1192,17 +1202,17 @@
       ],
       "sp": [
         "The entire cross-border offer — comp, benefits, equipment, start date — is verified on one",
-        "Submit hands the compliant employment to PrismHR: you originate and review, the EOR carries"
+        "`Submit Offer Letter to PrismHR for Approval` hands the compliant employment to PrismHR: the"
       ],
       "de": [
-        "One glance confirms the whole global hire is right before it's submitted; no toggling between",
-        "Approval flows to PrismHR as the employer of record, so you extend the offer without standing"
+        "One glance confirms the whole global hire is right before submission — nationality `Mexico`,",
+        "Approval flows to PrismHR as the employer of record, so you extend a compliant offer abroad in"
       ],
       "branching": [
-        "**If** the audience worries about compliance liability **then** emphasize that Submit routes",
-        "**If** speed-to-offer is the theme **then** show how the full package is reviewed and sent"
+        "**If** the client worries about compliance liability **then** emphasize that `Submit` routes to",
+        "**If** speed-to-offer is the theme **then** show how the full package is reviewed and sent from"
       ],
-      "say": "\"Last step — everything we built is on one page. Nationality Mexico, working from Singapore, two thousand a month, Premium benefits, reimbursed equipment. Looks right? Hit Submit and it goes to PrismHR for approval as the employer of record. You made the offer; we carry the compliance.\""
+      "say": "\"Last step — everything we built is on one page. Nationality Mexico, working from Singapore, two thousand a month, Premium benefits, reimbursed equipment. Looks right? Your client hits Submit and it goes to PrismHR for approval as the employer of record. They made the offer; we carry the compliance and the legal-employer risk — that's the safety net they get through you.\""
     },
     {
       "id": "027",
@@ -1541,26 +1551,26 @@
           ]
         }
       ],
-      "what": "The engagement-model fork in the New Hire flow: after choosing **Employee** (vs Contractor), the admin chooses whether PrismHR is the **Employer of Record (EOR)** or whether the employee is run on the customer's **own entity via Payroll**.",
+      "what": "The engagement-model fork in the New Hire flow: after choosing **Employee** (vs Contractor), the admin chooses whether PrismHR is the **Employer of Record (EOR)** or whether the employee is run on the client's **own entity via Payroll**.",
       "capabilities": [
-        "Two-level worker classification: first **Employee vs Contractor**, then, for",
-        "**EOR**: \"PrismHR hires the employee in-country as the employer of record on your",
-        "**Payroll**: \"Administer payroll, deliver benefits, and oversee contracts for your",
-        "Both paths advertised across **180+ countries**"
+        "Question framed plainly: **\"What type of employee?\"** with two cards",
+        "**Employer of Record (EOR)** — \"PrismHR hires the employee in-country as the employer",
+        "**Payroll** — \"Administer payroll, deliver benefits, and oversee contracts for your",
+        "Both branches live inside the same New Hire wizard — one flow, one platform, chosen"
       ],
       "sp": [
-        "One product covers both models — resell EOR where the client has no entity and run",
-        "The fork makes the choice explicit and self-service, so onboarding a worker doesn't"
+        "One platform covers both models across your client book — clients with a local entity",
+        "The fork is self-service and explicit, so a client's first international hire doesn't"
       ],
       "de": [
-        "Where you already have a local entity, keep it and run payroll, benefits, and",
-        "The model decision is made once, up front, and drives the rest of the wizard."
+        "If you have a local entity abroad, keep it and run **Payroll** through PrismHR; if you",
+        "One decision, made once at the top of the flow, and PrismHR carries the rest — the"
       ],
       "branching": [
-        "**If** the customer has in-country entities **then** take the **Onboard to Payroll**",
-        "**If** they have no local entity **then** point at **Onboard Employer of Record** and"
+        "**If** the client already has an in-country entity **then** take **`Onboard to",
+        "**If** the client has no local entity **then** take **`Onboard Employer of Record`**"
       ],
-      "say": "\"First we say this is an employee, not a contractor. Then one decision: do you have a local entity or not? If you do, we run payroll on your entity. If you don't, we become the employer of record for you. Same platform, you pick the model per hire.\""
+      "say": "\"First we say this is an employee, not a contractor. Then one question: does your client have a local entity in that country, or not? If they do, we run payroll on their entity. If they don't, PrismHR becomes the employer of record for them — no entity, no legal team required. Same platform your clients already trust, you just pick the model per hire.\""
     },
     {
       "id": "031",
@@ -1648,18 +1658,18 @@
         "Five-step progress stepper: Employee Info → Job Info → Compensation → Upload"
       ],
       "sp": [
-        "The country picker and the country-specific note mean local rules surface inside the",
+        "The country picker and inline country note mean in-country rules surface inside the",
         "Sub-national regions (Canadian provinces, Australian states, Swiss cantons) are"
       ],
       "de": [
-        "Pick where the person actually works and the platform tells you what's different",
-        "Nationality and working country are separate fields, so a cross-border hire (Canadian"
+        "Pick where the person actually works and the platform tells you what's different about",
+        "Nationality and working country are separate fields, so a genuine cross-border hire (a"
       ],
       "branching": [
-        "**If** compliance is the hot button **then** select a country with a note (Belize)",
-        "**If** the audience is multi-region within one country **then** open the picker and"
+        "**If** compliance reassurance is the hot button **then** select a country with a note",
+        "**If** the client hires across regions within one country **then** open the picker and"
       ],
-      "say": "\"Name, email, and two country fields — where they're a national and where they actually work. Watch what happens when I pick Belize: the platform tells me Belize has its own rules on vacation, bonuses, and severance, links me to the hiring guide, and asks whether they're authorized to work there. Compliance shows up before I've typed a salary.\""
+      "say": "\"Name, email, and two country fields — where they're a national and where they actually work. Watch what happens when I pick Belize: the platform tells your client that Belize has its own rules on vacation, bonuses, and severance, links them to the hiring guide, and asks whether the person is authorized to work there. Your client sees compliance handled before they've even typed a salary — no in-country expertise required, from you or from them.\""
     },
     {
       "id": "032",
@@ -1766,18 +1776,18 @@
         "**Employment start date** via a month calendar picker"
       ],
       "sp": [
-        "Manager assignment wires the new hire into the client's existing approval structure —",
-        "Seniority is a controlled ladder, so roles stay consistent across the many workers"
+        "Manager assignment wires the new hire into the client's own approval structure — the",
+        "Seniority is a controlled ladder, so roles stay consistent across every client and"
       ],
       "de": [
-        "The direct manager you pick here becomes the approver for that employee's requests, so",
-        "Role, seniority, and start date are captured up front and carry into the review and"
+        "The direct manager you pick here becomes the approver for that employee's time-off and",
+        "Role, seniority, and start date are captured once and carry straight into review and"
       ],
       "branching": [
-        "**If** approval hierarchy matters **then** open the Assign Manager modal and show the",
-        "**If** consistency across a large workforce is the point **then** show the fixed"
+        "**If** the client cares about approval hierarchy **then** open the **`Assign Manager`**",
+        "**If** consistency across a growing team is the point **then** show the fixed seniority"
       ],
-      "say": "\"Title, seniority off a standard ladder, a quick description, and who they report to. Assigning a manager here isn't cosmetic — that person will approve this employee's time off and reimbursements. Set the start date and we're ready for pay.\""
+      "say": "\"Title, seniority off a standard ladder, a quick description, and who they report to. Assigning a manager here isn't cosmetic — that person will approve this employee's time off and reimbursements, exactly the way your client already runs approvals at home. Set the start date and we're ready for pay.\""
     },
     {
       "id": "033",
@@ -1908,17 +1918,17 @@
       ],
       "sp": [
         "Pay is built in the worker's local currency and confirmed against the payer's currency",
-        "Statutory public holidays for the working country pre-populate and allowances carry a"
+        "Statutory public holidays for the working country pre-populate and every allowance"
       ],
       "de": [
-        "Enter pay the way the employee experiences it — their currency, their statutory",
-        "Bonuses and allowances each get their own frequency and a local-tax flag, so the full"
+        "Enter pay the way the employee actually experiences it — their currency, their",
+        "Bonuses and allowances each get their own frequency and a local-tax flag, so the"
       ],
       "branching": [
         "**If** cross-border cost is the hot button **then** enter the local amount and open the",
         "**If** local compliance is the concern **then** highlight the auto-populated statutory"
       ],
-      "say": "\"Pay is in their local currency — Belize dollars — because that's the law, and their public holidays are already in. Add a bonus or allowance with its own frequency, and note the local-tax flag. Before I lock it, we show what it costs in your currency: about seventeen hundred US dollars a month, at today's rate. Loaded cost, no spreadsheet.\""
+      "say": "\"Pay is in their local currency — Belize dollars — because that's the law, and their public holidays are already in. Your client adds a bonus or allowance with its own frequency, and note the local-tax flag PrismHR handles for them. Before we lock it, we show what it costs in their own currency: about seventeen hundred US dollars a month, at today's rate. Fully-loaded cost, no spreadsheet, no in-country expertise required.\""
     },
     {
       "id": "034",
@@ -1979,16 +1989,18 @@
         "Uploaded document is attached to the employee record (a later \"Employment agreement"
       ],
       "sp": [
-        "Clients who bring their own paper can attach it here; those who don't just skip — the"
+        "Clients who bring their own paper attach it here; those who don't just **`Skip`** — the",
+        "No forced template or format means you can promote PrismHR Global across a varied client"
       ],
       "de": [
-        "Your existing signed agreement rides along with the hire and lands on the employee"
+        "Your existing signed agreement rides along with the hire and lands on the employee",
+        "If you don't have paperwork ready, skip it entirely — the step is optional and nothing"
       ],
       "branching": [
-        "**If** the customer uses their own contracts **then** upload here and reference the",
-        "**If** they don't **then** hit Skip and move straight to Review — the step is"
+        "**If** the client uses their own contracts **then** upload here (PDF/PNG/JPG up to 10MB)",
+        "**If** they don't **then** hit **`Skip`** and move straight to Review — the step is"
       ],
-      "say": "\"If you already have a signed agreement, drop it here and it attaches to the record. If not, skip it — this step is optional. Either way we go to review.\""
+      "say": "\"If your client already has a signed agreement, they drop it here and it attaches to the record. If not, skip it — this step is optional. Either way we go to review.\""
     },
     {
       "id": "035",
@@ -2082,17 +2094,17 @@
       ],
       "sp": [
         "Everything the client's approver needs to sign off — identity, role, manager, pay,",
-        "Submitting routes the offer for approval, keeping the client's sign-off in the loop"
+        "Submitting routes the offer for approval rather than silently creating the hire, so the"
       ],
       "de": [
-        "One final look at the whole hire — cross-border identity, role, and fully-loaded",
-        "Onboarding the employee moves straight into inviting them to the platform."
+        "One final look at the whole hire — cross-border identity, role, and fully-loaded monthly",
+        "Approving the offer moves straight into inviting the employee to the platform, so you"
       ],
       "branching": [
-        "**If** approval governance is the hot button **then** anchor on the \"Submit Offer",
+        "**If** approval governance is the hot button **then** anchor on the **\"Submit Offer",
         "**If** speed is the point **then** show how one screen captures the entire hire before"
       ],
-      "say": "\"One screen, the whole hire — who they are, the role, their manager, and pay: thirty-five hundred a month, salaried, indefinite term. This goes to your approver as an offer letter, not straight into the system. Approve it and we onboard the employee and invite them in.\""
+      "say": "\"One screen, the whole hire — who they are, the role, their manager, and pay: thirty-five hundred a month, salaried, indefinite term. This goes to the client's approver as an offer letter, not straight into the system, so they stay in control the way they expect. Approve it and PrismHR onboards the employee and invites them in.\""
     },
     {
       "id": "036",
@@ -2137,15 +2149,17 @@
         "Scoped to the client context (\"Antaeus Service Provider - Main Client\")"
       ],
       "sp": [
-        "The moment the hire is approved, the worker gets pulled into self-service onboarding —"
+        "The moment the hire is approved, the worker is pulled into self-service onboarding —",
+        "The whole hand-off is one button in the same trusted platform, so your client looks like"
       ],
       "de": [
-        "One click hands the rest of onboarding to the employee: they complete their own"
+        "One click — **`Send Invite Now`** — hands the rest of onboarding to the employee: they",
+        "The invite goes to the email already captured in the wizard (e.g. antaeus.coe@prismhr.com),"
       ],
       "branching": [
         "**If** self-service onboarding is the point **then** send the invite live and show the"
       ],
-      "say": "\"The hire's done, so here's what's next — we invite the employee to join. One click, the invite goes to the email we already captured, and they finish their own profile.\""
+      "say": "\"The hire's approved, so here's what's next — your client invites the employee to join. One click, the invite goes to the email we already captured, and the new hire finishes their own profile. No portal setup, no chasing — the client just made a global hire and looks like a hero doing it.\""
     },
     {
       "id": "037",
@@ -2448,18 +2462,18 @@
         "**Personal Info** (full name, phone, address, birthday, nationality) and"
       ],
       "sp": [
-        "Every worker across every client and country resolves to one consistent profile, so",
-        "The tab strip is the whole worker lifecycle — documents, pay, contracts, leave,"
+        "Your clients get one consistent worker record for every international hire — a Mexican",
+        "The tab strip is the entire worker lifecycle (**Details**, **Documents**, **Payments**,"
       ],
       "de": [
-        "One profile holds everything about a global team member: who they are, where they",
-        "The layout is identical whether the person sits in Mexico or the UK, so managing an"
+        "One profile holds everything about a global team member — **Position**, **Worker ID**,",
+        "The layout is identical whether the person sits in Mexico or the UK, so your first"
       ],
       "branching": [
         "**If** the emphasis is breadth of the worker record **then** run the tab strip left to",
         "**If** comparing engagement models **then** open the same Details tab on a payroll"
       ],
-      "say": "\"This is a single worker's profile. Up top is the employment snapshot — position, worker ID, manager, location — and below it their personal and emergency details. Notice the tabs: documents, payments, contracts, time off, expenses, org structure. Everything about this person, in one record, and it looks the same whether they're in Mexico or the UK.\""
+      "say": "\"This is a single worker's profile. Up top is the employment snapshot — position, worker ID, manager, location — and below it their personal and emergency details. Notice the tabs: documents, payments, contracts, time off, expenses, org structure. Everything about this person lives in one record, and it looks exactly the same whether they're in Mexico or the UK. For your clients, that means their first hire abroad feels just like managing their team at home — same safety net, now global, and nothing for them to build.\""
     },
     {
       "id": "051",
@@ -2504,18 +2518,18 @@
         "Document requirements are scoped to the **individual contract**, not a global folder"
       ],
       "sp": [
-        "Compliance documents live on the worker's own record and are tied to that contract, so",
-        "The clear empty state means \"nothing owed\" reads instantly, keeping document chase-downs"
+        "The compliance paperwork that varies by country is handled inside PrismHR's platform and",
+        "A clear \"**No Documents Requested**\" state means clients can see at a glance who has"
       ],
       "de": [
-        "Each worker's required documents sit right on their profile alongside pay, contract, and",
-        "When there's nothing outstanding, the tab says so plainly, so you're not left guessing."
+        "Each worker's required documents sit right on their profile, next to pay, contract, and",
+        "When there's nothing outstanding, the tab says so plainly (\"**No Documents Requested**\"),"
       ],
       "branching": [
         "**If** the audience cares about compliance paperwork **then** open a worker who has",
-        "**If** keeping the tour brief **then** note the tab exists per-worker and move on to"
+        "**If** keeping the tour brief **then** note the **Documents** tab exists per-worker,"
       ],
-      "say": "\"Every worker has a Documents tab tied to their contract. This one's clean — 'No Documents Requested' — so you know there's nothing outstanding for this person. When a contract does require paperwork, it surfaces right here on their record.\""
+      "say": "\"Every worker has a Documents tab tied to their contract. This one's clean — 'No Documents Requested' — so there's nothing outstanding for this person. When a country's rules require paperwork, it surfaces right here on the record. That's the in-country compliance your PEO already handles domestically, now done for your clients abroad — without them owning any of it.\""
     },
     {
       "id": "052",
@@ -2574,18 +2588,18 @@
         "Paginated across a long history (2025 through 2026 visible)"
       ],
       "sp": [
-        "Every payment ever made to a worker is on their record, in their local currency, so",
-        "Distributed vs. upcoming periods are visibly different, so you can see what has settled"
+        "Cross-border payroll runs on PrismHR's in-country infrastructure and lands as a clean",
+        "Because every payment is on the record, your clients can answer \"what did we pay them and"
       ],
       "de": [
-        "A complete, per-period pay history sits on each global team member's profile — in the",
-        "Past and future pay periods appear together, giving a running picture of what's been"
+        "A complete, per-period pay history sits on each global team member's profile — with",
+        "**Distributed** periods (with a **Distributed At** date) and **upcoming** ones appear"
       ],
       "branching": [
         "**If** multi-currency is the hot button **then** anchor on the native **MXN** amounts",
         "**If** the audience is operational **then** point at the **Distributed At** column to"
       ],
-      "say": "\"This is the worker's full pay history — every period, the dates, when it was distributed, and the gross amount, right in their local currency. You can see what's already been paid and what's still scheduled, all on their profile.\""
+      "say": "\"This is the worker's full pay history — every period, the dates, when it was distributed, and the gross amount, right in their local currency, MXN here. You can see what's already been paid and what's still scheduled, all on their profile. Your clients get compliant global payroll done for them — the same trusted pay experience you give them domestically, now across borders, with nothing for them to stand up.\""
     },
     {
       "id": "053",
@@ -2638,18 +2652,18 @@
         "Card is the entry point into the full contract detail"
       ],
       "sp": [
-        "Each worker's contract, its rate, and its signing status are one click from the",
-        "The status chip (Awaiting Signatures) tells you immediately whether a contract is still"
+        "The in-country employment contract is generated and managed on PrismHR's platform — rate,",
+        "The status chip (**Awaiting Signatures**) makes the state of any hire obvious at a glance,"
       ],
       "de": [
-        "The commercial terms for a global hire — rate, cadence, type — live on their profile in",
-        "A visible status makes it obvious when a contract still needs signatures to be complete."
+        "The commercial terms for a global hire — pay rate in local currency ($66,272.69",
+        "A visible **Awaiting Signatures** status makes it obvious when a contract still needs"
       ],
       "branching": [
         "**If** signature/approval flow is the point **then** open the card into the contract",
         "**If** keeping it high level **then** read the rate, type, and status off the card and move on."
       ],
-      "say": "\"Here's the worker's contract — the rate in their local currency, the fact it's a fixed-rate payroll engagement, and the status. This one's Awaiting Signatures, so we know it's not fully executed yet. Click in and you get the full contract.\""
+      "say": "\"Here's the worker's contract — the rate in their local currency, MXN here, the fact it's a fixed-rate payroll engagement, and the status. This one's Awaiting Signatures, so it's not fully executed yet. Click in and you get the full contract. The point for your clients: PrismHR generates and manages the in-country agreement, so they get a compliant global contract without owning an entity or drafting a thing.\""
     },
     {
       "id": "054",
@@ -3566,12 +3580,12 @@
         "Empty state (\"No Pending Expense Reimbursements Requests\")"
       ],
       "sp": [
-        "One reimbursement queue spans every client engagement and currency, so you approve",
-        "Receipt preview plus an exportable 700+ row history gives each client an auditable"
+        "One reimbursement queue spans every engagement type (Contractor, Contractor+, EOR, Payroll) and currency, so the global expense motion you extend to clients runs on **PrismHR with zero build** — no separate system, no manual FX.",
+        "Receipt preview plus an exportable 700+ row history gives each client an auditable expense trail with approver attribution, so you deliver enterprise-grade controls and look like the hero inside the PrismHR ecosystem they already use."
       ],
       "de": [
-        "Every expense awaiting a decision is in one queue, in the currency it was incurred, with",
-        "History with filters, sort, and export means every cross-border expense is traceable"
+        "Every expense awaiting a decision is in one queue, in the currency it was incurred (USD, GBP, MXN, NIO), with the **receipt one click away** — approve or decline with full context, the same trusted safety net your PEO gives you domestically, now global.",
+        "History with filters, sort, and export means every cross-border expense is traceable from request to distribution without chasing paperwork — simple whether you reimburse one worker or hundreds."
       ],
       "branching": [
         "**If** multi-currency operations are the hot button **then** stay on Pending Requests and",
@@ -3745,18 +3759,19 @@
         "Show Map, Search, Download Report, and paginated results"
       ],
       "sp": [
-        "A single roster shows every worker across every client engagement type and country —",
-        "Summary tiles quantify the mix (EOR vs. contractor vs. payroll) at a glance, so you"
+        "One roster shows every worker your client engages across every country and engagement",
+        "The summary tiles quantify the mix (**EOR (9)**, **Contractor (12)**, **Payroll (7)**)"
       ],
       "de": [
-        "Your entire cross-border headcount sits in one grid — native currencies, home",
-        "Filters and download turn \"how many workers, where, on what terms\" into a"
+        "Your entire cross-border headcount sits in one grid — native currencies (USD, GBP, CAD,",
+        "Filters and **Download Report** turn \"how many people, where, on what terms\" into a"
       ],
       "branching": [
-        "**If** engagement mix is the story **then** anchor on the summary tiles and filter",
-        "**If** multi-currency operations matter **then** scroll the base-pay column to show"
+        "**If** the workforce mix is the point **then** use the **Engagement** filter to split",
+        "**If** geographic spread matters **then** use **Show Map** and the **Countries** filter",
+        "**If** finance wants the raw records **then** use **Download Report** to hand off the"
       ],
-      "say": "\"Here's every worker you have, anywhere in the world, in one report. Forty-two people across the UK, US, Canada, Nicaragua, Taiwan — EOR, contractors, payroll — each paid in their local currency. Filter it, map it, download it. That's your whole workforce on one screen.\""
+      "say": "\"Here's every worker in one report — forty-two people across the UK, US, Canada, Nicaragua, and Taiwan, paid in their own currency, whether they're EOR, contractor, or on payroll. The tiles up top break down the mix instantly. Filter it, map it, download it — that's the whole workforce on one screen, without you building a thing.\""
     },
     {
       "id": "092",
@@ -3815,18 +3830,19 @@
         "Export the report"
       ],
       "sp": [
-        "A dedicated contractor view lets you report on the contractor slice of a client's",
-        "Period-scoped export means clients get clean contractor records for any month."
+        "A dedicated contractor view isolates the contractor slice of your client's global book",
+        "Period-scoped **Export** means your client walks away with tidy contractor records for"
       ],
       "de": [
-        "Your contractor spend and roster is reportable and exportable on its own — filtered",
-        "One consistent report regardless of where contractors sit."
+        "Your contractor roster and spend is reportable and exportable on its own — filtered by",
+        "One consistent report no matter where a contractor sits, so your first international"
       ],
       "branching": [
-        "**If** the workforce is contractor-heavy **then** lead here and filter by Countries",
-        "**If** finance needs records **then** demonstrate the Export for the selected period."
+        "**If** the workforce leans contractor **then** use the **Countries** filter to show the",
+        "**If** finance needs clean records **then** set **Start Date / End Date** to the period",
+        "**If** they pay on mixed schedules **then** use the **Pay Frequency** filter to isolate"
       ],
-      "say": "\"When you just need the contractor picture — who they are, where they are, what they're paid — this report isolates it, filters by country and pay frequency, and exports in one click.\""
+      "say": "\"When you just need the contractor picture — who they are, where they are, what they're paid — this report isolates it. Pick the month with the date range, filter by country or pay frequency, and export in one click. It's the clean cross-border record your PEO can hand you without either of you building a reporting stack.\""
     },
     {
       "id": "093",
@@ -3886,18 +3902,19 @@
         "**Variance Report** — payroll changes across periods to flag inconsistencies or trends"
       ],
       "sp": [
-        "The full EOR reporting suite — employer cost, net pay, GL mapping, variance — is",
-        "GL-ready and variance reports mean you support the client's accounting and controls,"
+        "The full EOR reporting suite — **Employer Gross**, **Employee Gross to Net**,",
+        "GL-ready and variance reports let you back your client's accounting and controls, not"
       ],
       "de": [
         "Everything finance asks about EOR employment — true employer cost, what employees net,",
-        "No exporting raw data and rebuilding it: the reports are shaped for accounting use."
+        "No exporting raw data and rebuilding it: each report is shaped for an accounting job,"
       ],
       "branching": [
         "**If** the conversation is about total cost of employment **then** open **Employer",
-        "**If** the conversation is about finance/audit rigor **then** show **General Ledger**"
+        "**If** the conversation is about finance/audit rigor **then** show **General Ledger",
+        "**If** they care about employee-level pay transparency **then** open **Employee Gross"
       ],
-      "say": "\"For your EOR population, this is the finance suite: employer gross cost, gross-to-net per employee, a general-ledger-ready export, and a variance report that flags what changed period to period. Everything your accounting team needs, built in.\""
+      "say": "\"For your EOR population this is the whole finance suite in one place: employer gross cost, gross-to-net per employee, a general-ledger-ready export, and a variance report that flags what changed period to period. It's already built and run in-country, so everything your accounting team needs is here without you standing up a thing.\""
     },
     {
       "id": "094",
@@ -4375,17 +4392,18 @@
         "Each tool is described in-line so users know what it does before opening it"
       ],
       "sp": [
-        "A ready-made set of client-facing tools you can put in front of prospects and existing clients without building anything yourself.",
-        "Estimation and holiday-planning utilities live inside the same platform as payroll and onboarding, so the value story is one login, not a toolkit of disconnected calculators."
+        "Two ready-made, client-facing tools you can put in front of your SMB clients today — no build, no engineering, just PrismHR Global's platform doing the work under your brand of trust.",
+        "The **Compensation Calculator** and **Holidays Calendar** live in the same login as payroll and onboarding, so the global story you pass to clients is one platform, not a scattered toolkit — reinforcing that going global with you is low-lift."
       ],
       "de": [
-        "Practical, always-available utilities for planning global hires and schedules sit right next to the operational screens you use every day."
+        "The same trusted operational hub your PEO gives you domestically now includes self-serve tools for planning a global hire — model a hire's real cost and see who's off where, without a legal team or a spreadsheet.",
+        "Both tools sit right next to the screens you use every day, so planning your first (or hundredth) international hire never means leaving the platform you already trust."
       ],
       "branching": [
-        "**If** the conversation is pre-sales / cost-modeling **then** open the Compensation Calculator first.",
-        "**If** the audience runs distributed teams across time zones **then** lead with the Holidays Calendar."
+        "**If** the conversation is pre-sales / cost-modeling **then** open the **Compensation Calculator** first — it's the fastest way to make global cost tangible.",
+        "**If** the client already has people across time zones **then** lead with the **Holidays Calendar**."
       ],
-      "say": "\"Beyond the day-to-day workflows, we give you a couple of tools right in the platform — a compensation calculator to model the true cost of a hire in any country, and a holiday calendar so you always know who's off where. No spreadsheets, no separate logins.\""
+      "say": "\"Right inside the same platform your PEO already trusts, you get two tools you'd otherwise pay a consultant for — a compensation calculator that tells you the true, fully-loaded cost of a hire in any country, and a holiday calendar so you always know who's off where. No spreadsheets, no separate logins, no build on anyone's part. That's the whole idea: global made simple, on a platform you already know.\""
     },
     {
       "id": "101",
@@ -4479,19 +4497,19 @@
         "Country-specific math — Argentina, Canada, and others each apply their own contribution and deduction rates"
       ],
       "sp": [
-        "A concrete pre-sales asset: model the fully-loaded cost of a hire in any of 70+ countries in local currency, live, in the same platform you'd operate the hire from.",
-        "The split of employer contributions vs. employee deductions makes the true cost of global expansion tangible, which is exactly the number that moves a deal."
+        "A client-facing pre-sales asset you can put in front of your SMB book: model the fully-loaded cost of a hire in any of 70+ countries, in local currency, live — an instant, credible answer that turns a \"should we go global?\" conversation into a lead.",
+        "The **Employer pays** vs. **Employee gets** split makes global expansion tangible with zero build on your side — PrismHR Global already owns the in-country rates, so you look like the hero who made the cost question easy."
       ],
       "de": [
-        "Before you commit to a hire, you see the total employer cost and the candidate's net pay side by side, in the local currency, with in-country contributions and deductions already applied.",
-        "No guesswork on statutory on-costs — the calculator encodes the country-specific rates so budgeting a cross-border role is a two-minute exercise."
+        "Before you commit to a hire, you get an instant \"what will this hire actually cost\" answer — **Total Employer Cost** (e.g. `129,670.2 CAD`) and the employee's **Net salary** (e.g. `86,138.88 CAD`) side by side, in local currency, with in-country contributions and deductions already applied.",
+        "No legal team, no entity, no statutory-oncost guesswork — the calculator encodes each country's rates, so budgeting your first international role (or your fiftieth) is a two-minute exercise on the platform you already trust."
       ],
       "branching": [
-        "**If** the prospect is weighing which country to hire in **then** run the same salary through two countries (e.g. Canada vs. Argentina) to show the cost delta.",
-        "**If** the audience cares about candidate experience / offers **then** emphasize the \"Employee gets\" net-pay side.",
-        "**If** they operate multi-region within a country **then** show the state/region selector (e.g. Canada → British Columbia)."
+        "**If** the client is weighing which country to hire in **then** run the same gross salary through two countries (e.g. **Canada** vs. **Argentina**) to show the **Total Employer Cost** delta.",
+        "**If** the conversation is about the offer / candidate experience **then** emphasize the **Employee gets** net-pay side.",
+        "**If** they hire across regions within a country **then** show the optional **State / Region** selector (e.g. Canada → **British Columbia**)."
       ],
-      "say": "\"Say you're thinking about a hire in Canada at 120,000 a year. One click and here's the whole picture — your total employer cost with contributions is about 129,670 CAD, and your employee takes home roughly 86,000 after deductions. Change the country and the math changes with it, in local currency. That's the real cost of going global, before you've signed a thing.\""
+      "say": "\"Here's the tool your PEO can hand you before you commit to anything. Say you're thinking about a hire in Canada at 120,000 a year — one click on **Calculate** and here's the whole picture: your total employer cost with contributions is about `129,670 CAD`, and your employee takes home roughly `86,000` after deductions. Change the country and the math changes with it, in local currency. That's the real cost of going global, answered in two minutes, before you've signed a thing — no entity, no lawyers.\""
     },
     {
       "id": "102",
@@ -4559,17 +4577,18 @@
         "Region-level granularity within a country (Nova Scotia vs. Ontario shown separately)"
       ],
       "sp": [
-        "One calendar shows the holiday picture across an entire multi-country book, so you can advise clients on coverage and pay-run timing without chasing local calendars."
+        "One calendar shows the public-holiday picture across any set of countries your SMB clients hire into, so the global-coverage advice you'd normally have to source from experts is built into the platform you already promote.",
+        "It's another client-facing tool that comes free with the offering — no build, no local calendars to maintain — reinforcing that extending your clients into global is genuinely low-lift."
       ],
       "de": [
-        "You see, in one grid, which of your teams are off and when — including region-specific holidays — so scheduling and deadlines account for local time off automatically.",
-        "Country flags on each holiday make it obvious at a glance where a gap falls, rather than tracking a dozen national calendars yourself."
+        "You see, in one grid, which of your global teammates are off and when — including region-specific holidays (e.g. **Canada - Nova Scotia** vs. **Canada - Ontario**) — so scheduling and deadlines account for local time off without you tracking a dozen national calendars.",
+        "Each holiday renders **on its date with a country flag**, so a gap is obvious at a glance — the same done-for-you safety net your PEO gives you domestically, now covering wherever you hire."
       ],
       "branching": [
-        "**If** the team spans several countries **then** stack multiple country chips and point out overlapping/staggered holidays in the same month.",
-        "**If** the audience operates within one country across regions **then** show the region-level chips (e.g. Nova Scotia vs. Ontario)."
+        "**If** the client hires across several countries **then** stack multiple country chips and point out overlapping/staggered holidays in the same month (e.g. Canada Day and US Independence Day).",
+        "**If** they operate within one country across regions **then** show the region-level chips (e.g. **Nova Scotia** vs. **Ontario**)."
       ],
-      "say": "\"If your team is spread across countries, this is where you see everyone's public holidays on one calendar. Add the countries you care about — you can even go region by region — and every holiday shows up on its date with the flag, so you always know who's off before you plan a pay run or a deadline.\""
+      "say": "\"As you add people around the world, this is where you see everyone's public holidays on one calendar. Add the countries and regions you care about — right down to Nova Scotia versus Ontario — and every holiday shows up on its date with the flag, so you always know who's off before you plan a pay run or a deadline. It's the kind of local knowledge you'd normally chase down yourself, already built in.\""
     },
     {
       "id": "103",
@@ -4894,16 +4913,16 @@
         "Settings sub-navigation to **Users**, **Roles and Permissions**, **Approval Workflows**,"
       ],
       "sp": [
-        "A new client's legal identity — entity type, tax ID, registered address, country — and its"
+        "Each SMB client's legal identity — **Entity Type**, **Tax ID Number**, registered address,"
       ],
       "de": [
-        "One place to keep your legal entity and invoice recipients current, with a Country list"
+        "One place to keep your legal entity and invoice recipients current, with a **Country** list"
       ],
       "branching": [
-        "**If** the account setup / legal-entity story is relevant **then** open the **Entity Type**",
-        "**Else** treat this as a completeness screen and move on to Users or Roles."
+        "**If** the legal-entity / account-setup story is relevant **then** open the **Entity Type**",
+        "**Else** treat this as a completeness screen and move on to **Users** or **Roles and Permissions**."
       ],
-      "say": "\"This is your account's home base — the owner, your Client ID, your legal entity, and where invoices go. Entity type, tax ID, registered address right down to the state or province, and as many billing emails as you need. It's the plumbing; the interesting control lives in the next tabs, Users and Roles.\""
+      "say": "\"This is your account's home base — the owner, your Client ID, your legal entity, and where invoices go. Entity type, tax ID, registered address right down to the state or province, and as many billing emails as you need. It's the plumbing that keeps things clean; the interesting control lives in the next tabs, **Users** and **Roles**.\""
     },
     {
       "id": "111",
@@ -4992,18 +5011,18 @@
         "**Invite User**, plus Search, Sort, and Filter over the list"
       ],
       "sp": [
-        "Delegated administration at a glance: you can staff each client's account with the right mix of roles and reporting lines, and grant scoped access (e.g. Onboard Only) rather than all-or-nothing logins.",
-        "Inviting and role-assigning users inline means standing up a new client team is fast and auditable."
+        "Delegated administration at a glance: each SMB client can staff its own account with the right mix of roles and reporting lines, and grant scoped access (e.g. **Onboard Only**) rather than all-or-nothing logins — so global access control is self-serve and safe with no lift from you.",
+        "Inviting and role-assigning users inline means a client team stands up in minutes, on the platform you already promote."
       ],
       "de": [
-        "You control exactly who touches payroll, onboarding, and finance, and who they report to, from one table — role and manager are both editable inline.",
-        "Statuses make it obvious who has accepted their invite versus who is still pending."
+        "You control exactly who touches payroll, onboarding, and finance — and who they report to — from one table, with **Role** and **Manager** both editable inline (**Super Admin**, **Manager**, **HR**, **Admin**, **Onboard Only**, **Finance**).",
+        "**Status** (Active / Invited) makes it obvious who has accepted their invite versus who is still pending — the same simple, safe control you're used to, now over your global team."
       ],
       "branching": [
-        "**If** the audience cares about least-privilege access **then** open a role selector and walk the six roles, then jump to a user detail to show the permission matrix.",
-        "**If** approval routing matters **then** highlight the Manager column as the backbone of the approval workflows."
+        "**If** least-privilege access matters **then** open a **Role** selector, walk the six roles, then jump to a user detail to show the permission matrix.",
+        "**If** approval routing matters **then** highlight the **Manager** column as the backbone of the approval workflows."
       ],
-      "say": "\"Here's everyone with access to the account. Each person has a role — Super Admin, HR, Finance, Manager, Onboard Only — and a manager, and you can change both right here in the row. Invite someone in seconds and give them exactly the access they need, nothing more.\""
+      "say": "\"Here's everyone with access to the account. Each person has a role — **Super Admin**, **HR**, **Finance**, **Manager**, **Onboard Only** — and a manager, and you can change both right here in the row. Invite someone in seconds and give them exactly the access they need, nothing more. Same peace of mind your PEO gives you at home, now for your global operation.\""
     },
     {
       "id": "112",
@@ -5571,28 +5590,28 @@
           ]
         }
       ],
-      "what": "The post-login home for an end worker (Antaeus Coe), scoped to their employer of record (\"Antaeus Service Provider – Main Client\"), surfacing onboarding progress, reminders, next payday, and quick links to self-service actions.",
+      "what": "The post-login home an SMB's international hire lands on (\"Hello, Antaeus Coe!\"), scoped to their client (\"Antaeus Service Provider - Main Client\"), surfacing onboarding progress, reminders, next payday, and quick links to self-service actions.",
       "capabilities": [
-        "**Guided onboarding** with a percent-complete tracker and a \"Next up\" step (Complete",
-        "Persistent **Link Bank Account** banner until payment setup is done",
-        "**Upcoming Payments** card showing next payday and pay period, employer-labeled",
-        "**Reminders** (e.g. track your time) surfaced on the home screen",
-        "**Links** launchpad to Time Off, Track Time, Reimbursement, and Contracts",
-        "Account menu to **Switch to Client** view, open Profile, and sign out"
+        "**Guided onboarding** with a `0% COMPLETED` tracker and a `Next up: Complete Profile Details` step (Complete Profile Details → Add Bank Account Details), driven from a **Continue** button",
+        "Persistent **Link Bank Account** banner (\"You need to set your Bank Account\") until payment setup is done",
+        "**Upcoming Payments** card showing next payday (`Friday, Jul 31`) and pay period (`Jul 1 - Jul 31`), client-labeled",
+        "**Reminders** card (\"Don't forget to track your time.\")",
+        "**Links** launchpad — **Time Off**, **Track Time**, **Reimbursement**, **Contracts** — each with a plain-language description",
+        "Worker-scoped primary nav: **Dashboard**, **Payments**, **Time Off**, **Time Tracking**, **Reimbursements**, **Resources**"
       ],
       "sp": [
-        "The self-service worker experience your clients' employees get is built in — one",
-        "The single sign-on flips between Client and Worker views, so the same platform serves"
+        "This polished, self-service worker home is a differentiator you can promote to your PEO clients — the same trusted, guided experience they already get domestically, now for their overseas people, with zero build on your side.",
+        "Workers who onboard and self-serve themselves mean less admin and happier clients — a stickier, more retained book that you extended into global without owning entities or experts."
       ],
       "de": [
-        "New hires land on a guided onboarding flow that walks them to a completed profile and",
-        "Employees answer their own \"when do I get paid, how do I request time off, where's my"
+        "Your international hire lands on a branded home that walks them through onboarding and tells them exactly when they're paid, so your team isn't the help desk for people in another country.",
+        "Every common question — \"when do I get paid, how do I request time off, where's my contract\" — is answered from one screen the worker owns, done-for-you."
       ],
       "branching": [
-        "**If** onboarding/time-to-productivity is the hot button **then** anchor on the",
-        "**If** the buyer worries about worker support burden **then** lead with the Links"
+        "**If** the client worries about supporting overseas hires **then** anchor on the Links launchpad and Upcoming Payments as pure self-service the worker drives alone.",
+        "**If** onboarding a first international employee is the concern **then** lead with the `0% COMPLETED` tracker and the `Next up` Continue flow that guides the worker step by step."
       ],
-      "say": "\"This is what your workers see when they log in. They're guided through onboarding step by step, they can see exactly when their next payday is, and every common request — time off, timesheets, reimbursements, contracts — is one click away. It's a self-service experience your people get out of the box, so your team isn't fielding the same questions over and over.\""
+      "say": "\"This is what your client's overseas hire sees the moment they log in — a clean, branded home that guides them through onboarding, shows them their next payday, and puts time off, timesheets, reimbursements, and their contract one click away. Your PEO client gets to give their international people the same polished safety net they already give domestically, and neither you nor they had to build a thing to do it.\""
     },
     {
       "id": "201",
@@ -5678,18 +5697,18 @@
         "**Pending Requests** and **History** lists with a filter (All, Approved, Declined,"
       ],
       "sp": [
-        "Your clients' employees request leave themselves against country-appropriate balances",
-        "The full request lifecycle — submit, pending, approved/declined history — lives in the"
+        "A polished, locally-aware leave experience — with **Public Holidays** broken out separately from **Additional Leave** — is exactly the kind of professional worker touch you can promote to your PEO clients as part of the global offering.",
+        "The whole leave lifecycle lives in the same platform that runs the worker's pay, so your clients extend into global time-off management with zero build and their overseas people just self-serve."
       ],
       "de": [
-        "Workers see exactly how much leave they have and what a request would leave them with",
-        "Public-holiday entitlement is tracked separately from discretionary leave, so"
+        "Your international hire requests leave themselves against correct balances and sees exactly what they'd have left (\"**Balance Remaining (if request is approved): 3.0 days**\") before submitting — so your team isn't tracking foreign leave in a spreadsheet.",
+        "Public-holiday entitlement is handled separately from discretionary leave, so a hire in another country gets locally-correct balances without you having to know the local rules."
       ],
       "branching": [
-        "**If** the buyer's teams span multiple countries **then** emphasize the separate",
-        "**If** approval workflow / manager burden is the concern **then** show the live"
+        "**If** the client's hires span multiple countries **then** emphasize the separate **Public Holidays** balance as evidence of locally-aware leave the worker sees automatically.",
+        "**If** manager or admin burden is the concern **then** show the live **Balance Remaining (if request is approved)** and the **Pending Requests** / **History** lifecycle that keeps leave off email."
       ],
-      "say": "\"Your worker just opens Time Off, sees their public-holiday and leave balances, and submits a request. As they pick dates, the system tells them what they'll have left if it's approved — and it's clear that only approved time counts against the balance. Everything they've requested, pending or historical, is right here. No email, no spreadsheet.\""
+      "say": "\"Your client's overseas hire just opens **Time Off**, sees their public-holiday and additional-leave balances, and submits a request. As they pick dates, the portal tells them what they'll have left if it's approved — and it's clear only approved time counts against the balance. Everything they've requested, pending or historical, is right here — so the same self-service safety net their PEO gives them at home now covers their people abroad, with no spreadsheet on anyone's desk.\""
     },
     {
       "id": "202",
@@ -5751,18 +5770,18 @@
         "Tabbed profile: Personal, Contracts, Bank & Tax Info, Security, Assignments"
       ],
       "sp": [
-        "Workers maintain their own personal and emergency-contact details, so your team isn't",
-        "One profile ties identity, contracts, banking, security, and org placement together"
+        "A worker-owned profile — identity, **Personal Info**, **Emergency Contact Info**, all self-maintained — is a professional experience you can promote to clients, and it means the global offering runs itself rather than adding admin.",
+        "One profile ties identity, **Contracts**, **Bank & Tax Info**, **Security**, and **Assignments** together for every overseas worker, so the polished experience is consistent across all your PEO clients with zero build."
       ],
       "de": [
-        "Employees own their record — address, phone, emergency contact — reducing stale data",
-        "The profile header keeps the essentials (manager, worker ID, position, join date)"
+        "Your international hire keeps their own record current — address, phone, emergency contact — so stale data and update requests don't come back to your team.",
+        "The profile header keeps the essentials (**Manager**, **Worker ID**, **Position**, **Joined Date**) visible in one place, so the worker self-serves and your SMB never has to build HR operations abroad."
       ],
       "branching": [
-        "**If** data accuracy / self-maintenance is the theme **then** emphasize worker-owned",
-        "**If** the buyer wants the full profile story **then** use the tab row to preview"
+        "**If** self-maintenance and data accuracy is the theme **then** emphasize worker-owned **Personal Info** and **Emergency Contact Info** the hire keeps current themselves.",
+        "**If** the client wants the full profile story **then** use the tab row to preview **Contracts**, **Bank & Tax Info**, **Security**, and **Assignments** — everything the worker self-serves in one place."
       ],
-      "say": "\"This is the worker's profile. Their key details — manager, worker ID, position — sit right up top, and they maintain their own personal and emergency-contact information. From these tabs they reach their contracts, banking and tax info, security settings, and where they sit in the org — all in one place.\""
+      "say": "\"This is your client's overseas hire's own profile. Their key details — manager, worker ID, position — sit right up top, and they maintain their own personal and emergency-contact information. From these tabs they reach their contracts, banking, security, and where they sit in the org — all self-service. So the SMB gives their international people a clean, done-for-them experience without ever standing up HR operations in another country.\""
     },
     {
       "id": "203",

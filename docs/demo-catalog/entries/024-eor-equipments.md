@@ -36,24 +36,26 @@ dropdown.
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
-- Equipment handling is a per-hire policy captured in one field, and the options are labeled
-  with the specific client — the flow stays scoped to whose hire this is.
-- Reimbursement-for-equipment is a built-in choice, so device provisioning ties back into the
-  same pay/reimbursement machinery you already run.
+### For the PEO partner (channel)
+- Equipment handling is a single per-hire policy field, and the options are labeled with the
+  specific client (e.g. `Antaeus Service Provider - Main Client`) — the flow stays scoped to
+  whose hire it is across your whole book.
+- `will provide a reimbursement for equipment purchase` ties device provisioning back into the
+  same pay/reimbursement machinery, so global hires need no separate tooling from you.
 
-### For direct employers
-- Deciding who supplies the laptop is a single dropdown, not a side conversation — the answer
-  travels with the offer.
-- BYO-device and reimbursement models are first-class options, so remote and in-office setups
-  are both covered without leaving the wizard.
+### For the SMB client (via their PEO)
+- Deciding who supplies the laptop is one dropdown, not a side conversation — the answer travels
+  with the offer.
+- BYO-device (`use their personal equipment for work`) and reimbursement models are first-class
+  options, so remote and in-office setups abroad are both covered without leaving the wizard.
 
 ## Branching
-- **If** the audience runs a BYO-device or reimbursement model **then** show that option and
-  connect it to the reimbursements flow shown on the dashboard.
+- **If** the client runs a BYO-device or reimbursement model **then** show that option and
+  connect `provide a reimbursement for equipment purchase` to the dashboard reimbursements flow.
 - **If** equipment isn't a talking point **then** treat this as a quick single-select step and
-  move to Benefits.
+  move to `Benefits`.
 
 ## Say-this (talk track)
-> "Equipment is one dropdown. You provide it, they use their own, or you reimburse them — pick
-> one and it's baked into the offer. No separate procurement thread."
+> "Equipment is one dropdown. Your client provides it, the hire uses their own, or your client
+> reimburses them — pick one and it's baked into the offer. No separate procurement thread, no
+> extra system for you to run."

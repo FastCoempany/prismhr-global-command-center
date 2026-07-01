@@ -54,17 +54,13 @@ a filterable History of all reimbursements, both spanning engagement types and c
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
-- One reimbursement queue spans every client engagement and currency, so you approve
-  expenses for a global book without switching systems or converting by hand.
-- Receipt preview plus an exportable 700+ row history gives each client an auditable
-  expense trail with approver attribution.
+### For the PEO partner (channel)
+- One reimbursement queue spans every engagement type (Contractor, Contractor+, EOR, Payroll) and currency, so the global expense motion you extend to clients runs on **PrismHR with zero build** — no separate system, no manual FX.
+- Receipt preview plus an exportable 700+ row history gives each client an auditable expense trail with approver attribution, so you deliver enterprise-grade controls and look like the hero inside the PrismHR ecosystem they already use.
 
-### For direct employers
-- Every expense awaiting a decision is in one queue, in the currency it was incurred, with
-  the receipt one click away — approve or decline with full context.
-- History with filters, sort, and export means every cross-border expense is traceable
-  from request to distribution without chasing paperwork.
+### For the SMB client (via their PEO)
+- Every expense awaiting a decision is in one queue, in the currency it was incurred (USD, GBP, MXN, NIO), with the **receipt one click away** — approve or decline with full context, the same trusted safety net your PEO gives you domestically, now global.
+- History with filters, sort, and export means every cross-border expense is traceable from request to distribution without chasing paperwork — simple whether you reimburse one worker or hundreds.
 
 ## Branching
 - **If** multi-currency operations are the hot button **then** stay on Pending Requests and

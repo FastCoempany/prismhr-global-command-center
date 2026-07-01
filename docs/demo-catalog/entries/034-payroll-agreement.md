@@ -35,20 +35,25 @@ before review.
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
-- Clients who bring their own paper can attach it here; those who don't just skip — the
-  wizard doesn't force a document format on either.
+### For the PEO partner (channel)
+- Clients who bring their own paper attach it here; those who don't just **`Skip`** — the
+  flow flexes to whatever the client already has, so onboarding stays low-lift no matter
+  how prepared each of your clients is.
+- No forced template or format means you can promote PrismHR Global across a varied client
+  book without pre-work on contracts.
 
-### For direct employers
+### For the SMB client (via their PEO)
 - Your existing signed agreement rides along with the hire and lands on the employee
-  record, without leaving the flow.
+  record without leaving the flow — a PDF, PNG, or JPG up to 10MB.
+- If you don't have paperwork ready, skip it entirely — the step is optional and nothing
+  stalls, keeping the first international hire simple.
 
 ## Branching
-- **If** the customer uses their own contracts **then** upload here and reference the
-  success confirmation at Review.
-- **If** they don't **then** hit Skip and move straight to Review — the step is
+- **If** the client uses their own contracts **then** upload here (PDF/PNG/JPG up to 10MB)
+  and reference the success confirmation at Review.
+- **If** they don't **then** hit **`Skip`** and move straight to Review — the step is
   optional.
 
 ## Say-this (talk track)
-> "If you already have a signed agreement, drop it here and it attaches to the record. If
-> not, skip it — this step is optional. Either way we go to review."
+> "If your client already has a signed agreement, they drop it here and it attaches to the
+> record. If not, skip it — this step is optional. Either way we go to review."

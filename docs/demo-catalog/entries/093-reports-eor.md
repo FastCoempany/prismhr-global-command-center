@@ -41,25 +41,30 @@ and Variance.
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
-- The full EOR reporting suite — employer cost, net pay, GL mapping, variance — is
-  packaged behind one card, so you can deliver finance-grade output for every EOR
-  client from a single place.
-- GL-ready and variance reports mean you support the client's accounting and controls,
-  not just payroll execution.
+### For the PEO partner (channel)
+- The full EOR reporting suite — **Employer Gross**, **Employee Gross to Net**,
+  **General Ledger**, **Variance** — is packaged behind one card, so the finance-grade
+  cross-border output your client needs is already built, in-country, by PrismHR.
+- GL-ready and variance reports let you back your client's accounting and controls, not
+  just payroll execution — clean numbers you can stand behind with the client book you
+  introduced.
 
-### For direct employers
+### For the SMB client (via their PEO)
 - Everything finance asks about EOR employment — true employer cost, what employees net,
-  what hits the ledger, and what changed period over period — is one screen.
-- No exporting raw data and rebuilding it: the reports are shaped for accounting use.
+  what hits the ledger, what changed period over period — is one screen, done for you.
+- No exporting raw data and rebuilding it: each report is shaped for an accounting job,
+  the same done-for-you safety net your PEO gives you at home, now global.
 
 ## Branching
 - **If** the conversation is about total cost of employment **then** open **Employer
-  Gross**.
-- **If** the conversation is about finance/audit rigor **then** show **General Ledger**
-  and **Variance** as the accounting-ready pair.
+  Gross Report**.
+- **If** the conversation is about finance/audit rigor **then** show **General Ledger
+  Report** and **Variance Report** as the accounting-ready pair.
+- **If** they care about employee-level pay transparency **then** open **Employee Gross
+  to Net Report**.
 
 ## Say-this (talk track)
-> "For your EOR population, this is the finance suite: employer gross cost, gross-to-net
-> per employee, a general-ledger-ready export, and a variance report that flags what
-> changed period to period. Everything your accounting team needs, built in."
+> "For your EOR population this is the whole finance suite in one place: employer gross
+> cost, gross-to-net per employee, a general-ledger-ready export, and a variance report
+> that flags what changed period to period. It's already built and run in-country, so
+> everything your accounting team needs is here without you standing up a thing."

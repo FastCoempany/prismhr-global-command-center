@@ -39,17 +39,17 @@ A table of the organization's admin users showing name, status, assigned role, a
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
-- Delegated administration at a glance: you can staff each client's account with the right mix of roles and reporting lines, and grant scoped access (e.g. Onboard Only) rather than all-or-nothing logins.
-- Inviting and role-assigning users inline means standing up a new client team is fast and auditable.
+### For the PEO partner (channel)
+- Delegated administration at a glance: each SMB client can staff its own account with the right mix of roles and reporting lines, and grant scoped access (e.g. **Onboard Only**) rather than all-or-nothing logins — so global access control is self-serve and safe with no lift from you.
+- Inviting and role-assigning users inline means a client team stands up in minutes, on the platform you already promote.
 
-### For direct employers
-- You control exactly who touches payroll, onboarding, and finance, and who they report to, from one table — role and manager are both editable inline.
-- Statuses make it obvious who has accepted their invite versus who is still pending.
+### For the SMB client (via their PEO)
+- You control exactly who touches payroll, onboarding, and finance — and who they report to — from one table, with **Role** and **Manager** both editable inline (**Super Admin**, **Manager**, **HR**, **Admin**, **Onboard Only**, **Finance**).
+- **Status** (Active / Invited) makes it obvious who has accepted their invite versus who is still pending — the same simple, safe control you're used to, now over your global team.
 
 ## Branching
-- **If** the audience cares about least-privilege access **then** open a role selector and walk the six roles, then jump to a user detail to show the permission matrix.
-- **If** approval routing matters **then** highlight the Manager column as the backbone of the approval workflows.
+- **If** least-privilege access matters **then** open a **Role** selector, walk the six roles, then jump to a user detail to show the permission matrix.
+- **If** approval routing matters **then** highlight the **Manager** column as the backbone of the approval workflows.
 
 ## Say-this (talk track)
-> "Here's everyone with access to the account. Each person has a role — Super Admin, HR, Finance, Manager, Onboard Only — and a manager, and you can change both right here in the row. Invite someone in seconds and give them exactly the access they need, nothing more."
+> "Here's everyone with access to the account. Each person has a role — **Super Admin**, **HR**, **Finance**, **Manager**, **Onboard Only** — and a manager, and you can change both right here in the row. Invite someone in seconds and give them exactly the access they need, nothing more. Same peace of mind your PEO gives you at home, now for your global operation."

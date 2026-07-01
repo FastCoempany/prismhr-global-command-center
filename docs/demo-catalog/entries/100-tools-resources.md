@@ -33,16 +33,17 @@ The Tools & Resources landing page, a hub with two self-serve utilities: a Compe
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
-- A ready-made set of client-facing tools you can put in front of prospects and existing clients without building anything yourself.
-- Estimation and holiday-planning utilities live inside the same platform as payroll and onboarding, so the value story is one login, not a toolkit of disconnected calculators.
+### For the PEO partner (channel)
+- Two ready-made, client-facing tools you can put in front of your SMB clients today — no build, no engineering, just PrismHR Global's platform doing the work under your brand of trust.
+- The **Compensation Calculator** and **Holidays Calendar** live in the same login as payroll and onboarding, so the global story you pass to clients is one platform, not a scattered toolkit — reinforcing that going global with you is low-lift.
 
-### For direct employers
-- Practical, always-available utilities for planning global hires and schedules sit right next to the operational screens you use every day.
+### For the SMB client (via their PEO)
+- The same trusted operational hub your PEO gives you domestically now includes self-serve tools for planning a global hire — model a hire's real cost and see who's off where, without a legal team or a spreadsheet.
+- Both tools sit right next to the screens you use every day, so planning your first (or hundredth) international hire never means leaving the platform you already trust.
 
 ## Branching
-- **If** the conversation is pre-sales / cost-modeling **then** open the Compensation Calculator first.
-- **If** the audience runs distributed teams across time zones **then** lead with the Holidays Calendar.
+- **If** the conversation is pre-sales / cost-modeling **then** open the **Compensation Calculator** first — it's the fastest way to make global cost tangible.
+- **If** the client already has people across time zones **then** lead with the **Holidays Calendar**.
 
 ## Say-this (talk track)
-> "Beyond the day-to-day workflows, we give you a couple of tools right in the platform — a compensation calculator to model the true cost of a hire in any country, and a holiday calendar so you always know who's off where. No spreadsheets, no separate logins."
+> "Right inside the same platform your PEO already trusts, you get two tools you'd otherwise pay a consultant for — a compensation calculator that tells you the true, fully-loaded cost of a hire in any country, and a holiday calendar so you always know who's off where. No spreadsheets, no separate logins, no build on anyone's part. That's the whole idea: global made simple, on a platform you already know."

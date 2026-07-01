@@ -38,17 +38,18 @@ The status detail for a single pay period, showing its key dates and lifecycle s
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
-- Every period carries its own dated status card, so across a book of clients you can see at a glance which runs are still pending and when each must be approved to distribute on time.
-- The Approve/Invoice/Distribute sequence makes the operational chain explicit, so the workflow you operate on clients' behalf is legible rather than opaque.
+### For the PEO partner (channel)
+- Every period carries its own dated status card, so across a client base you can see which runs are still pending and when each must be approved to distribute on time — the delivery machinery is **PrismHR's, with zero build on your side**.
+- The `Approve → Invoice → Distribute` sequence makes the operational chain explicit, so the global workflow you extend to clients is legible and easy to demo, all inside the trusted PrismHR ecosystem.
 
-### For direct employers
-- One glance tells you where the period stands and the exact date you must act by to keep pay on schedule.
-- The deadline is framed around the outcome — on-time collection and distribution — so the consequence of the approval date is spelled out, not left to you to infer.
+### For the SMB client (via their PEO)
+- One glance tells you where the period stands and the **exact date you must act by** to keep pay on schedule — the same clear, done-for-you cadence your PEO gives you domestically, now global.
+- The deadline is framed around the outcome — on-time collection and distribution by the payment partner (Listo) — so the consequence of the approval date is spelled out for you, whether it's one worker or many.
 
 ## Branching
-- **If** the conversation is about missed-deadline risk **then** anchor on the Required Approval Date and the Pending Approval notice.
-- **If** the audience wants to see the end-to-end run **then** use Approve here as the jump into the full Pay Period Approval view (003).
+- **If** timing/lifecycle is the point **then** anchor on the `Required Approval Date` and the Pending Approval notice tying it to on-time distribution.
+- **If** the audience wants the end-to-end run **then** use `Approve` here as the jump into the full Pay Period Approval view (003).
+- **If** supporting data must be added **then** show the `Upload` action for supplemental distribution data before the period advances.
 
 ## Say-this (talk track)
 > "Each pay period has a status page like this. It tells you the dates that matter — when it has to be approved, when it invoices, when it distributes — and where it is right now. This one's pending approval, and it's clear you need to approve by the 23rd to keep pay on time. From here you move it down the line: approve, invoice, distribute."

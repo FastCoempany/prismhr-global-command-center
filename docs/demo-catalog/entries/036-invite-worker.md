@@ -34,18 +34,26 @@ worker to join PrismHR at their captured email.
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
-- The moment the hire is approved, the worker gets pulled into self-service onboarding —
-  your team doesn't chase email addresses or set up portal access by hand.
+### For the PEO partner (channel)
+- The moment the hire is approved, the worker is pulled into self-service onboarding —
+  neither you nor your client chases email addresses or sets up portal access by hand, so
+  extending into global stays genuinely low-lift.
+- The whole hand-off is one button in the same trusted platform, so your client looks like
+  the hero to their new international employee with zero effort from your team.
 
-### For direct employers
-- One click hands the rest of onboarding to the employee: they complete their own
-  profile so they can start getting paid.
+### For the SMB client (via their PEO)
+- One click — **`Send Invite Now`** — hands the rest of onboarding to the employee: they
+  complete their own profile so they can start getting paid, no legal team or manual setup
+  on your side.
+- The invite goes to the email already captured in the wizard (e.g. antaeus.coe@prismhr.com),
+  so nothing is re-keyed and the new hire's first experience is smooth.
 
 ## Branching
 - **If** self-service onboarding is the point **then** send the invite live and show the
   Success screen's "what happens next" for the employee.
 
 ## Say-this (talk track)
-> "The hire's done, so here's what's next — we invite the employee to join. One click,
-> the invite goes to the email we already captured, and they finish their own profile."
+> "The hire's approved, so here's what's next — your client invites the employee to join.
+> One click, the invite goes to the email we already captured, and the new hire finishes
+> their own profile. No portal setup, no chasing — the client just made a global hire and
+> looks like a hero doing it."

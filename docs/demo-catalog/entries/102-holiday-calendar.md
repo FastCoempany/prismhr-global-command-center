@@ -34,16 +34,17 @@ A month-view calendar that overlays public holidays for a selected set of countr
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
-- One calendar shows the holiday picture across an entire multi-country book, so you can advise clients on coverage and pay-run timing without chasing local calendars.
+### For the PEO partner (channel)
+- One calendar shows the public-holiday picture across any set of countries your SMB clients hire into, so the global-coverage advice you'd normally have to source from experts is built into the platform you already promote.
+- It's another client-facing tool that comes free with the offering — no build, no local calendars to maintain — reinforcing that extending your clients into global is genuinely low-lift.
 
-### For direct employers
-- You see, in one grid, which of your teams are off and when — including region-specific holidays — so scheduling and deadlines account for local time off automatically.
-- Country flags on each holiday make it obvious at a glance where a gap falls, rather than tracking a dozen national calendars yourself.
+### For the SMB client (via their PEO)
+- You see, in one grid, which of your global teammates are off and when — including region-specific holidays (e.g. **Canada - Nova Scotia** vs. **Canada - Ontario**) — so scheduling and deadlines account for local time off without you tracking a dozen national calendars.
+- Each holiday renders **on its date with a country flag**, so a gap is obvious at a glance — the same done-for-you safety net your PEO gives you domestically, now covering wherever you hire.
 
 ## Branching
-- **If** the team spans several countries **then** stack multiple country chips and point out overlapping/staggered holidays in the same month.
-- **If** the audience operates within one country across regions **then** show the region-level chips (e.g. Nova Scotia vs. Ontario).
+- **If** the client hires across several countries **then** stack multiple country chips and point out overlapping/staggered holidays in the same month (e.g. Canada Day and US Independence Day).
+- **If** they operate within one country across regions **then** show the region-level chips (e.g. **Nova Scotia** vs. **Ontario**).
 
 ## Say-this (talk track)
-> "If your team is spread across countries, this is where you see everyone's public holidays on one calendar. Add the countries you care about — you can even go region by region — and every holiday shows up on its date with the flag, so you always know who's off before you plan a pay run or a deadline."
+> "As you add people around the world, this is where you see everyone's public holidays on one calendar. Add the countries and regions you care about — right down to Nova Scotia versus Ontario — and every holiday shows up on its date with the flag, so you always know who's off before you plan a pay run or a deadline. It's the kind of local knowledge you'd normally chase down yourself, already built in."

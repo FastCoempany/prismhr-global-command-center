@@ -61,28 +61,34 @@ breakdown and an FX confirmation.
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
-- Comp is built and validated in the worker's local currency, with employer-vs-employee cost
-  and the payer's-currency equivalent shown side by side — you quote a fully-loaded global cost
-  to your client without a spreadsheet.
-- Statutory holidays and minimum PTO for the working country pre-populate, so your team isn't
-  the one tracking each country's leave law.
+### For the PEO partner (channel)
+- Comp is built and validated in the worker's local currency, with `Total employer
+  contribution`, `Total Monthly Cost`, and the payer's-currency equivalent shown side by side —
+  your client gets a fully-loaded global cost without a spreadsheet, and without you sourcing it.
+- Statutory holidays and minimum PTO for the working country pre-populate (e.g. Singapore's
+  public holidays plus `20 paid days off` in year one), so no one on your side tracks each
+  country's leave law.
+- This is the "done-for-you compliance" proof point that makes the global offering safe for you
+  to put in front of your client book.
 
-### For direct employers
-- Enter pay the way the employee experiences it (their currency, their statutory leave) and see
-  instantly what it costs you in your own currency including contributions.
-- Bonuses and allowances carry their own frequency and tax treatment, so total cost of the hire
-  is complete before you move on.
+### For the SMB client (via their PEO)
+- Enter pay the way the employee experiences it — their currency (`SGD`), their statutory leave
+  — and instantly see what it costs you in your own currency including contributions via the
+  FX confirmation.
+- Bonuses and allowances (`Variable Bonus`, `Signing Bonus`, mobile/internet allowances) carry
+  their own frequency and local tax treatment, so the total cost of the hire is complete and
+  compliant before you move on.
 
 ## Branching
-- **If** total cost of a global hire is the hot button **then** anchor on the salary breakdown
-  (employer contribution + total monthly cost) and the FX confirmation modal.
+- **If** total cost of a global hire is the hot button **then** anchor on the `Salary Breakdown`
+  (`Total employer contribution` + `Total Monthly Cost`) and the FX confirmation modal.
 - **If** local compliance is the concern **then** highlight the auto-populated statutory PTO and
   the "paid in local currency as required by law" and allowance-tax notes.
 
 ## Say-this (talk track)
 > "Pay is in their local currency — Singapore dollars here — because that's the law. Type the
-> salary and the breakdown shows you the real cost: two thousand gross, employer contributions
-> on top, total monthly cost. Their statutory holidays and twenty days of leave are already in.
-> And before we continue, we show you what that costs in your currency — about fifteen hundred
-> US dollars — at today's FX. Full loaded cost, no spreadsheet."
+> salary and the breakdown shows the real cost: two thousand gross, employer contributions on
+> top, total monthly cost. Their statutory holidays and twenty days of leave are already in.
+> And before we continue, we show your client what that costs in their currency — about fifteen
+> hundred US dollars — at today's FX. Fully loaded, fully compliant, no spreadsheet, and none of
+> it lands on you to figure out."

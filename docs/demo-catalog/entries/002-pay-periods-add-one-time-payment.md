@@ -46,17 +46,18 @@ A three-step flow for adding an ad-hoc payment (bonus, commission, equipment, et
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
-- One flow issues off-cycle pay across EOR, contractor, and payroll worker types and across countries, so you administer bonuses for a whole book without a separate tool per country.
-- Each amount is entered and confirmed in the worker's own currency, and the product handles the conversion into the next paycheck — the operational complexity of paying globally is absorbed.
+### For the PEO partner (channel)
+- One flow issues off-cycle pay across **EOR, CONTRACTOR, and PAYROLL** worker types and across countries, so the global bonus/commission motion you extend to clients runs on **PrismHR's in-country entities and experts** — zero build on your side.
+- Each amount is entered and confirmed in the worker's own currency and the product handles the conversion, so you can enable clients to reward talent worldwide and look like the hero, with PrismHR absorbing the operational complexity.
 
-### For direct employers
-- Rewarding a team member in another country is a few clicks on the same screen you already run payroll from — no wire, no local intermediary.
-- The confirm step shows exactly what each worker receives in local currency and when, so an ad-hoc bonus carries no surprise about timing or FX.
+### For the SMB client (via their PEO)
+- Rewarding a team member in another country is a few clicks on the **same screen you already run payroll from** — no wire, no local intermediary, no new tool to learn.
+- The confirm step shows exactly what each worker receives in local currency (GBP, USD, CAD, NIO, TWD) and in which paycheck, so an ad-hoc bonus carries no surprise about timing or FX — done-for-you, whether it's one person or many.
 
 ## Branching
-- **If** the audience runs a contractor-heavy workforce **then** set Pay Period Type to `CONTRACTOR` and issue a bonus across several countries in one pass.
-- **If** multi-currency is the hot button **then** dwell on the per-row currency lock (GBP/USD/CAD/NIO/TWD) and the local-currency conversion called out on the confirm step.
+- **If** the workforce is contractor-heavy **then** set Pay Period Type to `CONTRACTOR` and issue a bonus across several countries in one pass.
+- **If** multi-currency is the theme **then** dwell on the per-row currency lock (GBP/USD/CAD/NIO/TWD) and the local-currency conversion called out on the confirm step.
+- **If** payment variety matters **then** open the payment-type dropdown to show `Signing Bonus`, `Commission`, `Spiff`, `Performance`, `Holiday`, `Equipment`, and `Other` all handled in one flow.
 
 ## Say-this (talk track)
-> "Say you want to hand out a spot bonus. Pick the pay period, find the worker, choose the payment type, type the amount — in their currency, not yours. We show you exactly what they'll receive and in which paycheck, you confirm, and it's done. Same screen whether they're an employee in the UK or a contractor in Taiwan."
+> "Say you want to hand out a spot bonus. Pick the pay period, find the worker, choose the payment type, type the amount — in their currency, not yours. We show you exactly what they'll receive and in which paycheck, you confirm, and it's done. Same screen whether they're an employee in the UK or a contractor in Taiwan — no entities to set up, no FX to work out yourself."

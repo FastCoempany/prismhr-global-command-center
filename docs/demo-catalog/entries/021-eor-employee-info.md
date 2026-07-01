@@ -44,26 +44,31 @@ Step 01 of the six-step EOR wizard: capture the employee's name, email, **nation
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
-- The same intake form services any of 175+ countries, down to the sub-region level — you
-  onboard a client's hire in Quebec or New South Wales without a country-specific process.
-- Local nuance is delivered inline (the Singapore rules note) so your team doesn't need to be
-  the in-country expert to run the hire.
+### For the PEO partner (channel)
+- Your client onboards a hire anywhere — Quebec, New South Wales, `Singapore` — on one intake
+  form, with no country-specific process for you to build or staff.
+- In-country expertise is baked in: the inline `Note about Singapore` and `Global Hiring
+  Guide` link mean neither you nor your client has to be the local law expert.
+- The same 175+ country reach across every client makes this a global capability you promote
+  once and PrismHR delivers everywhere.
 
-### For direct employers
-- Nationality and work location are separated, so cross-border situations (a Mexican national
-  working from Singapore) are handled as a first-class case, not an exception.
-- The moment you pick a country, the product tells you what's different about it — compliance
-  guidance shows up where you're working, not in a separate manual.
+### For the SMB client (via their PEO)
+- `Employee nationality` and `Working country` are separate fields, so a cross-border case (a
+  Mexican national working from Singapore) is handled as normal, not an exception.
+- The moment you pick a country the platform tells you what's different — local rules on
+  vacation, bonuses, severance, and benefits surface right where you're hiring, no manual to
+  hunt through.
 
 ## Branching
-- **If** hiring into a jurisdiction with distinctive rules (e.g. Singapore) **then** show the
-  inline country note and Global Hiring Guide link as proof the compliance is built in.
-- **If** the audience operates sub-nationally (Canada, Australia, China) **then** open the
-  country list and show province/state-level entries.
+- **If** the client is hiring into a jurisdiction with distinctive rules (e.g. `Singapore`)
+  **then** show the inline country note and `Global Hiring Guide` link as proof compliance is
+  built in.
+- **If** the client operates sub-nationally (Canada, Australia, China) **then** open the
+  `Select a Country` list and show province/state-level entries.
 
 ## Say-this (talk track)
-> "First step, who are they and where do they work. That country list is 175-plus deep — right
-> down to Canadian provinces and Australian states. And watch: pick Singapore and the product
-> immediately flags the local rules on bonuses, severance, and benefits. You don't have to know
-> every country's law — the platform does."
+> "First step — who are they and where do they work. That country list is 175-plus deep, right
+> down to Canadian provinces and Australian states. And watch: pick Singapore and the platform
+> immediately flags the local rules on bonuses, severance, and benefits. Your client doesn't
+> have to know every country's law, and neither do you — that's what they're getting through
+> you."

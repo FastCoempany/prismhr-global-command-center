@@ -36,43 +36,29 @@ tags: [worker-portal, self-service, onboarding, employee-experience, eor]
 ---
 
 ## What this screen is
-The post-login home for an end worker (Antaeus Coe), scoped to their employer of
-record ("Antaeus Service Provider – Main Client"), surfacing onboarding progress,
-reminders, next payday, and quick links to self-service actions.
+The post-login home an SMB's international hire lands on ("Hello, Antaeus Coe!"), scoped to their client ("Antaeus Service Provider - Main Client"), surfacing onboarding progress, reminders, next payday, and quick links to self-service actions.
 
 ## Capabilities shown
-- **Guided onboarding** with a percent-complete tracker and a "Next up" step (Complete
-  Profile Details → Add Bank Account Details), driven from a Continue button
-- Persistent **Link Bank Account** banner until payment setup is done
-- **Upcoming Payments** card showing next payday and pay period, employer-labeled
-- **Reminders** (e.g. track your time) surfaced on the home screen
-- **Links** launchpad to Time Off, Track Time, Reimbursement, and Contracts
-- Account menu to **Switch to Client** view, open Profile, and sign out
+- **Guided onboarding** with a `0% COMPLETED` tracker and a `Next up: Complete Profile Details` step (Complete Profile Details → Add Bank Account Details), driven from a **Continue** button
+- Persistent **Link Bank Account** banner ("You need to set your Bank Account") until payment setup is done
+- **Upcoming Payments** card showing next payday (`Friday, Jul 31`) and pay period (`Jul 1 - Jul 31`), client-labeled
+- **Reminders** card ("Don't forget to track your time.")
+- **Links** launchpad — **Time Off**, **Track Time**, **Reimbursement**, **Contracts** — each with a plain-language description
+- Worker-scoped primary nav: **Dashboard**, **Payments**, **Time Off**, **Time Tracking**, **Reimbursements**, **Resources**
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
-- The self-service worker experience your clients' employees get is built in — one
-  branded home that onboards them, tells them when they're paid, and routes every
-  common action, with no extra portal for you to build or support.
-- The single sign-on flips between Client and Worker views, so the same platform serves
-  both your admin operators and the workers they pay.
+### For the PEO partner (channel)
+- This polished, self-service worker home is a differentiator you can promote to your PEO clients — the same trusted, guided experience they already get domestically, now for their overseas people, with zero build on your side.
+- Workers who onboard and self-serve themselves mean less admin and happier clients — a stickier, more retained book that you extended into global without owning entities or experts.
 
-### For direct employers
-- New hires land on a guided onboarding flow that walks them to a completed profile and
-  linked bank account without HR chasing them.
-- Employees answer their own "when do I get paid, how do I request time off, where's my
-  contract" questions from one screen, cutting inbound HR load.
+### For the SMB client (via their PEO)
+- Your international hire lands on a branded home that walks them through onboarding and tells them exactly when they're paid, so your team isn't the help desk for people in another country.
+- Every common question — "when do I get paid, how do I request time off, where's my contract" — is answered from one screen the worker owns, done-for-you.
 
 ## Branching
-- **If** onboarding/time-to-productivity is the hot button **then** anchor on the
-  percent-complete tracker and the "Next up" Continue flow.
-- **If** the buyer worries about worker support burden **then** lead with the Links
-  launchpad and Upcoming Payments as pure self-service deflection.
+- **If** the client worries about supporting overseas hires **then** anchor on the Links launchpad and Upcoming Payments as pure self-service the worker drives alone.
+- **If** onboarding a first international employee is the concern **then** lead with the `0% COMPLETED` tracker and the `Next up` Continue flow that guides the worker step by step.
 
 ## Say-this (talk track)
-> "This is what your workers see when they log in. They're guided through onboarding
-> step by step, they can see exactly when their next payday is, and every common
-> request — time off, timesheets, reimbursements, contracts — is one click away. It's a
-> self-service experience your people get out of the box, so your team isn't fielding
-> the same questions over and over."
+> "This is what your client's overseas hire sees the moment they log in — a clean, branded home that guides them through onboarding, shows them their next payday, and puts time off, timesheets, reimbursements, and their contract one click away. Your PEO client gets to give their international people the same polished safety net they already give domestically, and neither you nor they had to build a thing to do it."
