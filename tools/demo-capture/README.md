@@ -22,7 +22,13 @@ For every unique screen you visit, into `capture-output/`:
 | `dom/NNN.html` | Full serialized DOM | Every label, field, and link target; nothing hidden escapes |
 | `a11y/NNN.yaml` | Accessibility (aria) snapshot | Semantic map of buttons, tabs, inputs |
 | `screenshots/NNN.png` | Full-page screenshot | The look, for the eventual visual guide |
-| `manifest.jsonl` | One line per capture | seq, url, title, what triggered it, timestamp |
+| `manifest.jsonl` | One line per capture | seq, url, title, trigger, **`clicked`** (the element you clicked to get here), timestamp |
+
+Every manifest line records `clicked` — the visible text, aria-label, role, tag,
+href, and a short path of the element you clicked to arrive at that screen ("arrived
+by clicking here"). Clicks that land on an already-captured screen are still logged
+(with `duplicate: true`, no new files) so the full click-path graph is preserved. The
+terminal echoes `← clicked: "..."` live as you walk, so you can see it working.
 
 Re-visited screens are de-duplicated automatically (by page-text hash).
 

@@ -10,7 +10,7 @@
 //   dom/NNN.html        full serialized DOM (every label, field, link target)
 //   a11y/NNN.yaml       accessibility (aria) snapshot — semantic roles + names
 //   screenshots/NNN.png full-page screenshot (the look, for the visual guide)
-// plus manifest.jsonl   one line per capture (seq, url, title, trigger, time)
+// plus manifest.jsonl   one line per capture (seq, url, title, trigger, clicked, time)
 //
 // Your credentials never leave your machine and are never written to disk:
 // you type them into the browser window yourself.
@@ -42,14 +42,23 @@ const seen = new Set(); // content hashes already captured -> skip re-visits
 let seq = 0;
 let started = false;
 let busy = false;
+let pending = null; // latest signal deferred while a capture is in flight (so provenance isn't dropped)
 
 const browser = await chromium.launch({ headless: false });
 const context = await browser.newContext({ viewport: null });
 const page = await context.newPage();
 
 // --- capture routine (runs in Node) ------------------------------------------
-async function capture(reason) {
-  if (!started || busy) return;
+// `clicked` describes the element the user clicked to arrive here (or the most
+// recent click, for overlay/manual triggers). It is recorded on every manifest
+// line so the click-path can be reconstructed exactly — including edges to
+// screens already captured (logged with duplicate:true, no new files written).
+async function capture(reason, clicked = null) {
+  if (!started) return;
+  if (busy) {
+    pending = { reason, clicked }; // don't drop it — run after the current capture finishes
+    return;
+  }
   busy = true;
   try {
     try {
@@ -61,17 +70,31 @@ async function capture(reason) {
     const text = (await page.evaluate(() => document.body?.innerText || '').catch(() => '')).trim();
     if (!text) return;
 
+    const url = page.url();
+    const title = await page.title().catch(() => '');
+    const ts = new Date().toISOString();
+    const label = clicked && (clicked.label || clicked.text);
+    const via = label ? ` ← clicked: "${label.slice(0, 60)}"` : '';
+
     const hash = sha1(text);
     if (seen.has(hash)) {
-      console.log('·  (already captured, skipped)');
+      // Same screen as before: don't re-save files, but DO log the edge so we
+      // still know this click also leads here.
+      try {
+        await appendFile(
+          path.join(OUT, 'manifest.jsonl'),
+          JSON.stringify({ seq: null, id: null, url, title, reason, clicked, duplicate: true, ts }) + '\n',
+        );
+      } catch {
+        /* non-fatal */
+      }
+      console.log(`·  (already captured)${via}`);
       return;
     }
     seen.add(hash);
 
     seq += 1;
     const id = String(seq).padStart(3, '0');
-    const url = page.url();
-    const title = await page.title().catch(() => '');
 
     // Each artifact is written independently so one failure never loses the rest.
     try {
@@ -112,35 +135,42 @@ async function capture(reason) {
     try {
       await appendFile(
         path.join(OUT, 'manifest.jsonl'),
-        JSON.stringify({ seq, id, url, title, reason, ts: new Date().toISOString() }) + '\n',
+        JSON.stringify({ seq, id, url, title, reason, clicked, duplicate: false, ts }) + '\n',
       );
     } catch (e) {
       console.error('  manifest:', e.message);
     }
 
-    console.log(`✓  ${id}  ${title || url}`);
-    await page.evaluate((n) => {
-      const el = document.getElementById('__cap_count');
-      if (el) el.textContent = String(n);
-    }, seq).catch(() => {});
+    console.log(`✓  ${id}  ${title || url}${via}`);
+    await page
+      .evaluate((n) => {
+        const el = document.getElementById('__cap_count');
+        if (el) el.textContent = String(n);
+      }, seq)
+      .catch(() => {});
   } catch (e) {
     console.error('capture error:', e.message);
   } finally {
     busy = false;
+    if (pending) {
+      const p = pending;
+      pending = null;
+      capture(p.reason, p.clicked); // drain the deferred signal
+    }
   }
 }
 
 // Bridge the page -> Node. Persists across navigations for this page.
-await page.exposeFunction('__capSignal', async (reason) => {
+await page.exposeFunction('__capSignal', async (reason, clicked) => {
   if (reason === 'start') {
     started = true;
     console.log('▶  capturing ON');
-    await capture('start');
+    await capture('start', clicked);
   } else if (reason === 'stop') {
     started = false;
     console.log('⏸  capturing OFF');
   } else {
-    await capture(reason);
+    await capture(reason, clicked);
   }
 });
 
@@ -159,7 +189,54 @@ await page.exposeFunction('__capSignal', async (reason) => {
 await context.addInitScript(() => {
   const KEY = '__capOn';
   const isOn = () => sessionStorage.getItem(KEY) === '1';
-  const signal = (r) => window.__capSignal && window.__capSignal(r);
+  let lastClick = null;
+  // When clicked is omitted, fall back to the most recent real click.
+  const signal = (r, clicked) => window.__capSignal && window.__capSignal(r, clicked === undefined ? lastClick : clicked);
+
+  // Compact description of the element the user clicked, resolved up to the
+  // nearest meaningful clickable ancestor (so an icon inside a button reports
+  // the button). Recorded as the "arrived by clicking" breadcrumb.
+  function describe(el) {
+    if (!el || !el.closest) return null;
+    const CLICKABLE =
+      'a,button,[role="button"],[role="menuitem"],[role="menuitemradio"],[role="tab"],[role="link"],[role="option"],[onclick],[tabindex]';
+    const t = el.closest(CLICKABLE) || el;
+    const clean = (s) => (s || '').replace(/\s+/g, ' ').trim().slice(0, 120);
+    let cssPath = '';
+    try {
+      const parts = [];
+      let n = t;
+      let hops = 0;
+      while (n && n.nodeType === 1 && hops < 4) {
+        let seg = n.tagName.toLowerCase();
+        if (n.id) {
+          parts.unshift(seg + '#' + n.id);
+          break;
+        }
+        const p = n.parentElement;
+        if (p) {
+          const sibs = Array.from(p.children).filter((c) => c.tagName === n.tagName);
+          if (sibs.length > 1) seg += ':nth-of-type(' + (sibs.indexOf(n) + 1) + ')';
+        }
+        parts.unshift(seg);
+        n = n.parentElement;
+        hops += 1;
+      }
+      cssPath = parts.join(' > ');
+    } catch {
+      /* best-effort */
+    }
+    const attr = (name) => (t.getAttribute ? clean(t.getAttribute(name)) : '');
+    return {
+      text: clean(t.innerText || t.textContent),
+      label: attr('aria-label'),
+      title: attr('title'),
+      role: (t.getAttribute && t.getAttribute('role')) || '',
+      tag: t.tagName ? t.tagName.toLowerCase() : '',
+      href: (t.getAttribute && t.getAttribute('href')) || '',
+      path: cssPath,
+    };
+  }
 
   function countdown(seconds, done) {
     const tip = document.getElementById('__cap_tip');
@@ -221,13 +298,18 @@ await context.addInitScript(() => {
   else mount();
 
   // (1) Auto-capture after any click so SPA tab/drill-down changes land.
+  // Record WHAT was clicked at click time (the page may navigate before the
+  // debounced capture fires). Ignore clicks on our own control panel.
   let t;
   document.addEventListener(
     'click',
-    () => {
+    (e) => {
+      if (e.target && e.target.closest && e.target.closest('#__cap_panel')) return;
+      lastClick = describe(e.target);
       if (!isOn()) return;
       clearTimeout(t);
-      t = setTimeout(() => signal('auto'), 900);
+      const clicked = lastClick;
+      t = setTimeout(() => signal('auto', clicked), 900);
     },
     true,
   );
