@@ -1,7 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { ProductLockup } from "@/components/brand";
-import { Button } from "@/components/ui/button";
 
 type AppWayfinderProps = {
   current: string;
@@ -34,60 +33,18 @@ export function AppWayfinder({
             Today
           </Link>
           <Link
-            aria-current={current === "Prospect Field" ? "page" : undefined}
+            aria-current={current === "Book" ? "page" : undefined}
             className="app-route-link"
-            href="/prospect-field"
+            href="/book"
           >
-            Prospect Field
+            Book
           </Link>
           <Link
-            aria-current={current === "Signal Feed" ? "page" : undefined}
+            aria-current={current === "Pipeline" ? "page" : undefined}
             className="app-route-link"
-            href="/signal-feed"
+            href="/pipeline"
           >
-            Signal Feed
-          </Link>
-          <Link
-            aria-current={current === "Partners" ? "page" : undefined}
-            className="app-route-link"
-            href="/partners"
-          >
-            Partners
-          </Link>
-          <Link
-            aria-current={current === "Opportunities" ? "page" : undefined}
-            className="app-route-link"
-            href="/opportunities"
-          >
-            Opportunities
-          </Link>
-          <Link
-            aria-current={current === "Pitch Rail" ? "page" : undefined}
-            className="app-route-link"
-            href="/pitch-rail"
-          >
-            Pitch Rail
-          </Link>
-          <Link
-            aria-current={current === "Daily Serves" ? "page" : undefined}
-            className="app-route-link"
-            href="/daily-serves"
-          >
-            Daily Serves
-          </Link>
-          <Link
-            aria-current={current === "Boundaries" ? "page" : undefined}
-            className="app-route-link"
-            href="/boundaries"
-          >
-            Boundaries
-          </Link>
-          <Link
-            aria-current={current === "Unknowns" ? "page" : undefined}
-            className="app-route-link"
-            href="/unknowns"
-          >
-            Unknowns
+            Pipeline
           </Link>
           <Link
             aria-current={current === "Demo Sidekick" ? "page" : undefined}
@@ -97,9 +54,6 @@ export function AppWayfinder({
             Demo Sidekick
           </Link>
         </nav>
-        <Button size="compact" type="button" variant="quiet">
-          Ctrl K
-        </Button>
         {onSignOut}
       </div>
     </header>

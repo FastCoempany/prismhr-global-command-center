@@ -21,8 +21,8 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Field Signal | PrismHR Global",
-  description: "Prospecting and partner-motion command center for PrismHR Global.",
+  title: "Command Center | PrismHR Global",
+  description: "PEO channel command center for PrismHR Global.",
 };
 
 export default function RootLayout({
