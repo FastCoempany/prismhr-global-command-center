@@ -1,0 +1,167 @@
+URL: https://app1.demo.prismhr.com/team
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+Team
+TOTAL WORKERS: 20
+Search
+Search
+All Workers
+Countries
+All
+Canada
+Egypt
+Mexico
+Philippines
+United Kingdom
+United States
+Type
+Location
+Status
+Sort
+Newest
+Export
+
+NAME
+
+	
+
+COUNTRY
+
+	
+
+TYPE
+
+	
+
+LOCATION
+
+	
+
+MANAGER
+
+	
+
+CONTRACTS
+
+	
+
+STATUS
+
+	
+
+ACTIONS
+
+
+
+YM
+Yasmin Moore
+Senior Intranet Architect
+	
+	Contractor	—	
+Demo HR Manager
+	
+1
+	
+Awaiting Signatures
+	
+
+
+AD
+Alex Demo Worker
+Demo Software Engineer
+	
+	EOR	—	
+Demo HR Manager
+	
+1
+	
+Active
+	
+
+
+OA
+Olivia Allen
+Regional Research Executive
+	
+	Contractor	—	
+John Manager
+	
+1
+	
+Awaiting Signatures
+	
+
+
+OB
+Owen Brown
+Corporate Marketing Associate
+Corporate Marketing Associate
+	
+	Contractor	—	
+John Manager
+	
+1
+	
+Awaiting Signatures
+	
+
+
+XY
+Ximena Young
+Future Research Analyst
+	
+	EOR	—	
+Mike SuperAdmin
+	
+1
+	
+Active
+	
+
+
+RA
+Rose Allen
+Human Solutions Assistant
+	
+	EOR	—	
+Demo Finance Manager
+	
+1
+	
+Active
+	
+
+
+YH
+Yasmin Hunt
+Human Interactions Architect
+Human Interactions Architect
+	
+	Contractor+	—	
+Alex Demo Worker
+	
+1
+	
+Active
+	
+
+Showing 1 to 7 of 20 results
+
+Previous
+1
+2
+3
+Next

@@ -1,0 +1,46 @@
+- paragraph:
+  - text: You need to set your Bank Account.
+  - link "Link Bank Account":
+    - /url: https://admin1.demo.prismhr.com
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /wrkr
+  - link "Payments":
+    - /url: /wrkr/payments
+  - link "Time Off":
+    - /url: /wrkr/request-time-off
+  - link "Time Tracking":
+    - /url: /wrkr/timecards
+  - link "Reimbursements":
+    - /url: /wrkr/request-reimbursement
+  - link "Resources":
+    - /url: /wrkr/documents
+  - button "Worker Portal"
+  - link "Logout":
+    - /url: /login
+- heading "Hello, Antaeus Coe!" [level=1]
+- button
+- button "AC"
+- text: Tasks
+- heading "Antaeus Service Provider - Main Client" [level=2]
+- button
+- text: "Complete your onboarding 50% COMPLETED Next up: Add Bank Account Details"
+- button "Continue"
+- text: Reminders Don’t forget to track your time. Today Upcoming Payments
+- paragraph: Next payday
+- paragraph: Friday, Jul 31Antaeus Service Provider - Main Client
+- paragraph: "Pay period: Jul 1 - Jul 31"
+- text: Links
+- link "Time Off Request and manage your vacation, sick days, and other leave.":
+  - /url: /wrkr/request-time-off
+- link "Track Time Log your work hours and monitor time spent on tasks.":
+  - /url: /wrkr/timecards
+- link "Reimbursement Submit and track expenses for reimbursement.":
+  - /url: /wrkr/request-reimbursement
+- link "Contracts Navigate to your Contract details.":
+  - /url: /wrkr/my-contracts
+- paragraph: Success
+- paragraph: ID Back uploaded successfully
+- button "Close"
+- img

@@ -1,0 +1,31 @@
+URL: https://app1.demo.prismhr.com/wrkr/request-time-off
+TITLE: PrismHR
+
+You need to set your Bank Account.Link Bank Account →
+
+Dashboard
+Payments
+Time Off
+Time Tracking
+Reimbursements
+Resources
+Worker Portal
+Logout
+Time Off
+Create Request
+Public Holidays
+13 days
+View Details
+Additional Leave
+3.0 days
+Request Time
+Pending Requests
+There are no pending requests.
+History
+Filter
+3
+All
+Approved
+Declined
+Cancelled
+There are no approved or declined requests.

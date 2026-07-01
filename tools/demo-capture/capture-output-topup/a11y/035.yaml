@@ -1,0 +1,122 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - link "Logout":
+    - /url: /login
+- main:
+  - heading "New Hire | Payroll" [level=1]
+  - navigation "Progress":
+    - list:
+      - listitem:
+        - link:
+          - /url: /create-contract/payroll/employee-info?contractIndex=1
+        - paragraph: Employee Info
+      - listitem:
+        - link "02":
+          - /url: /create-contract/payroll/job?contractIndex=1
+        - paragraph: Job Info
+      - listitem:
+        - text: "03"
+        - paragraph: Compensation
+      - listitem:
+        - text: "04"
+        - paragraph: Upload Agreement
+      - listitem:
+        - text: "05"
+        - paragraph: Review
+  - heading "Job information" [level=3]
+  - text: Job title
+  - textbox "Job title":
+    - /placeholder: Software Engineer
+    - text: engineer
+  - text: Seniority level
+  - combobox:
+    - option "Not Applicable"
+    - option "Junior"
+    - option "Mid"
+    - option "Senior" [selected]
+    - option "Lead"
+    - option "Principal"
+    - option "Director"
+    - option "Department Head"
+    - option "Vice President"
+    - option "Senior Vice President"
+    - option "C-Level Executive"
+  - text: Job description
+  - paragraph: Write a few sentences explaining the role and responsibilities.
+  - textbox "Job description":
+    - /placeholder: Develop and maintain robust, scalable, and efficient software applications.
+    - text: do great work
+  - heading "Manager (Optional)" [level=3]
+  - button "Demo Admin"
+  - text: Employment start date
+  - textbox
+  - dialog "Choose Date":
+    - alert
+    - button "Previous Month"
+    - button "Next Month"
+    - text: July 2026 Su Mo Tu We Th Fr Sa
+    - listbox "Month July, 2026":
+      - option "Not available Sunday, June 28th, 2026" [disabled]: "28"
+      - option "Choose Monday, June 29th, 2026": "29"
+      - option "Choose Tuesday, June 30th, 2026": "30"
+      - option "Choose Wednesday, July 1st, 2026": "1"
+      - option "Choose Thursday, July 2nd, 2026": "2"
+      - option "Choose Friday, July 3rd, 2026": "3"
+      - option "Not available Saturday, July 4th, 2026" [disabled]: "4"
+      - option "Not available Sunday, July 5th, 2026" [disabled]: "5"
+      - option "Choose Monday, July 6th, 2026": "6"
+      - option "Choose Tuesday, July 7th, 2026": "7"
+      - option "Choose Wednesday, July 8th, 2026": "8"
+      - option "Choose Thursday, July 9th, 2026": "9"
+      - option "Choose Friday, July 10th, 2026": "10"
+      - option "Not available Saturday, July 11th, 2026" [disabled]: "11"
+      - option "Not available Sunday, July 12th, 2026" [disabled]: "12"
+      - option "Choose Monday, July 13th, 2026": "13"
+      - option "Choose Tuesday, July 14th, 2026": "14"
+      - option "Choose Wednesday, July 15th, 2026": "15"
+      - option "Choose Thursday, July 16th, 2026": "16"
+      - option "Choose Friday, July 17th, 2026": "17"
+      - option "Not available Saturday, July 18th, 2026" [disabled]: "18"
+      - option "Not available Sunday, July 19th, 2026" [disabled]: "19"
+      - option "Choose Monday, July 20th, 2026": "20"
+      - option "Choose Tuesday, July 21st, 2026": "21"
+      - option "Choose Wednesday, July 22nd, 2026": "22"
+      - option "Choose Thursday, July 23rd, 2026": "23"
+      - option "Choose Friday, July 24th, 2026": "24"
+      - option "Not available Saturday, July 25th, 2026" [disabled]: "25"
+      - option "Not available Sunday, July 26th, 2026" [disabled]: "26"
+      - option "Choose Monday, July 27th, 2026": "27"
+      - option "Choose Tuesday, July 28th, 2026": "28"
+      - option "Choose Wednesday, July 29th, 2026": "29"
+      - option "Choose Thursday, July 30th, 2026": "30"
+      - option "Not available Friday, July 31st, 2026" [disabled]: "31"
+      - option "Not available Saturday, August 1st, 2026" [disabled]: "1"
+  - button "Save & Exit"
+  - button "Exit"
+  - button "Back"
+  - button "Next"
+- img

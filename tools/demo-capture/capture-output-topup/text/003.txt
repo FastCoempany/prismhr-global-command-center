@@ -1,0 +1,148 @@
+URL: https://app1.demo.prismhr.com/team
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+Team
+TOTAL WORKERS: 20
+Search
+Search
+All Workers
+Countries
+Type
+Location
+Status
+Sort
+Newest
+Export
+
+NAME
+
+	
+
+COUNTRY
+
+	
+
+TYPE
+
+	
+
+LOCATION
+
+	
+
+MANAGER
+
+	
+
+CONTRACTS
+
+	
+
+STATUS
+
+	
+
+ACTIONS
+
+
+
+VR
+Victor Reed
+Corporate Intranet Orchestrator
+Corporate Intranet Orchestrator
+	
+	Contractor+	—	
+Demo HR Manager
+	
+1
+	
+Active
+	
+
+
+PC
+Pablo Contractorplus
+National Response Coordinator
+National Response Coordinator
+	
+	Contractor+	—	
+Emma Onboard
+	
+1
+	
+Active
+	
+
+
+AD
+Alex Developer
+Chief Assurance Officer
+	
+	Contractor	—	
+Demo Admin
+	
+1
+	
+Active
+	
+
+
+GH
+Grace Hunt
+Direct Usability Manager
+	
+	EOR	—	
+Demo HR Manager
+	
+1
+	
+Active
+	
+
+
+HB
+Henry Bell
+Future Creative Agent
+	
+	Contractor	—	
+John Manager
+	
+1
+	
+Active
+	
+
+
+IG
+Iris Green
+Forward Factors Orchestrator
+Forward Factors Orchestrator
+	
+	Contractor	—	
+Demo Finance Manager
+	
+1
+	
+Active
+	
+
+Showing 15 to 20 of 20 results
+
+Previous
+1
+2
+3
+Next

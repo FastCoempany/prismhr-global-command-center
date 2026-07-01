@@ -1,0 +1,21 @@
+URL: https://app1.demo.prismhr.com/invite-worker/63d43e0f-6561-44a1-a70d-4e2f86eacc99
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Antaeus Service Provider - Main Client
+Logout
+What's next?
+Invite Antaeus to join PrismHR.
+antaeus.coe@prismhr.com
+Send Invite Now

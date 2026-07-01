@@ -1,0 +1,74 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - button "Antaeus Service Provider - Main Client"
+  - link "Logout":
+    - /url: /login
+- main:
+  - heading "Settings" [level=1]
+  - navigation "Breadcrumb":
+    - list:
+      - listitem:
+        - link "Settings":
+          - /url: /settings/general
+      - listitem:
+        - link "Approval Workflows":
+          - /url: /settings/approval-workflows
+  - navigation:
+    - link "General":
+      - /url: /settings/general
+    - link "Users":
+      - /url: /settings/users
+    - link "Roles and Permissions":
+      - /url: /settings/roles
+    - link "Approval Workflows":
+      - /url: /settings/approval-workflows
+    - link "Assignments":
+      - /url: /settings/assignments
+  - heading "Approval Workflows" [level=1]
+  - paragraph: Invite or manage your organization’s users.
+  - heading "Time off Requests" [level=2]
+  - paragraph: Vacation, sick leave, and personal time requests
+  - button "Edit Workflow"
+  - text: Approval flow
+  - button "+ Add Approver"
+  - text: Will receive notifications
+  - button "Add notification recipient": +
+  - heading "Pay Period Approvals" [level=2]
+  - paragraph: Pay Period Approvals
+  - button "Edit Workflow"
+  - text: Approval flow
+  - button "+ Add Approver"
+  - text: Will receive notifications
+  - button "Add notification recipient": +
+  - heading "Reimbursements" [level=2]
+  - paragraph: Additional expenses and one-time payments
+  - button "Edit Workflow"
+  - text: Approval flow
+  - button "+ Add Approver"
+  - text: Will receive notifications
+  - button "Add notification recipient": +
+- img

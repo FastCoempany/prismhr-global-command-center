@@ -1,0 +1,42 @@
+- paragraph:
+  - text: You need to set your Bank Account.
+  - link "Link Bank Account":
+    - /url: https://admin1.demo.prismhr.com
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /wrkr
+  - link "Payments":
+    - /url: /wrkr/payments
+  - link "Time Off":
+    - /url: /wrkr/request-time-off
+  - link "Time Tracking":
+    - /url: /wrkr/timecards
+  - link "Reimbursements":
+    - /url: /wrkr/request-reimbursement
+  - link "Resources":
+    - /url: /wrkr/documents
+  - button "Worker Portal"
+  - link "Logout":
+    - /url: /login
+- heading "Time Off" [level=1]
+- button "Create Request"
+- text: Public Holidays 13 days
+- button "View Details"
+- text: Additional Leave 3.0 days
+- button "Request Time"
+- text: Pending Requests
+- heading "There are no pending requests." [level=3]
+- text: History
+- button "Filter 3" [expanded]
+- checkbox "All" [checked]
+- text: All
+- separator
+- checkbox "Approved" [checked]
+- text: Approved
+- checkbox "Declined" [checked]
+- text: Declined
+- checkbox "Cancelled" [checked]
+- text: Cancelled
+- heading "There are no approved or declined requests." [level=3]
+- img

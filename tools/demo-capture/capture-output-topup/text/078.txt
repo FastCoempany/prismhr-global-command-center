@@ -1,0 +1,16 @@
+URL: https://app1.demo.prismhr.com/wrkr/documents
+TITLE: PrismHR
+
+You need to set your Bank Account.Link Bank Account →
+
+Dashboard
+Payments
+Time Off
+Time Tracking
+Reimbursements
+Resources
+Worker Portal
+Antaeus Service Provider - Main Client
+Logout
+My Documents
+- Empty -

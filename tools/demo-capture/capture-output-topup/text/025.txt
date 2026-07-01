@@ -1,0 +1,239 @@
+URL: https://app1.demo.prismhr.com/reports/payroll/variance
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+Variance Report
+Reports
+Payroll Report
+Variance Report
+Comparing June 2026 to May2026
+Compensation
+Countries
+Pay Frequency
+All
+Monthly
+Search
+Search
+Export
+Egypt
+
+
+NAME
+
+	
+
+COMPENSATION
+
+	
+
+WAGES
+
+	
+
+BONUS PAYMENTS
+
+	
+
+RECURRING PAYMENTS
+
+	
+
+ONE-TIME PAYMENT
+
+	
+
+REIMBURSEMENTS
+
+	
+
+BENEFITS
+
+	
+
+EMPLOYER TAXES & CONTRIBUTIONS
+
+	
+
+TOTAL
+
+	
+
+PREVIOUS MONTH TOTAL
+
+
+
+Ximena Fisher
+	
+Salary
+	
+£145,043.27 EGP
+	
+£0.00 EGP
+	
+£2,549.86 EGP
+	
+£3,942.98 EGP
+	
+£0.00 EGP
+	
+£0.00 EGP
+	
+£66,720.05 EGP
+	
+£211,763.32 EGP
+	
+£168,250.09 EGP
+
+Total		£145,043.27EGP	£0.00EGP	£2,549.86EGP	£3,942.98EGP	£0.00EGP	£0.00EGP	£66,720.05EGP	£211,763.32EGP	£168,250.09EGP
+United Kingdom
+
+
+NAME
+
+	
+
+COMPENSATION
+
+	
+
+WAGES
+
+	
+
+BONUS PAYMENTS
+
+	
+
+RECURRING PAYMENTS
+
+	
+
+ONE-TIME PAYMENT
+
+	
+
+REIMBURSEMENTS
+
+	
+
+BENEFITS
+
+	
+
+EMPLOYER TAXES & CONTRIBUTIONS
+
+	
+
+TOTAL
+
+	
+
+PREVIOUS MONTH TOTAL
+
+
+
+Tara Martin
+	
+Salary
+	
+£1,674.57 GBP
+	
+£0.00 GBP
+	
+£55.52 GBP
+	
+£75.01 GBP
+	
+£0.00 GBP
+	
+£0.00 GBP
+	
+£267.95 GBP
+	
+£1,942.52 GBP
+	
+£1,991.35 GBP
+
+Total		£1,674.57GBP	£0.00GBP	£55.52GBP	£75.01GBP	£0.00GBP	£0.00GBP	£267.95GBP	£1,942.52GBP	£1,991.35GBP
+United States
+
+
+NAME
+
+	
+
+COMPENSATION
+
+	
+
+WAGES
+
+	
+
+BONUS PAYMENTS
+
+	
+
+RECURRING PAYMENTS
+
+	
+
+ONE-TIME PAYMENT
+
+	
+
+REIMBURSEMENTS
+
+	
+
+BENEFITS
+
+	
+
+EMPLOYER TAXES & CONTRIBUTIONS
+
+	
+
+TOTAL
+
+	
+
+PREVIOUS MONTH TOTAL
+
+
+
+Jane Employee
+	
+Salary
+	
+$3,139.59 USD
+	
+$0.00 USD
+	
+$68.26 USD
+	
+$33.42 USD
+	
+$0.00 USD
+	
+$0.00 USD
+	
+$502.35 USD
+	
+$3,641.94 USD
+	
+$4,583.82 USD
+
+Total		$3,139.59USD	$0.00USD	$68.26USD	$33.42USD	$0.00USD	$0.00USD	$502.35USD	$3,641.94USD	$4,583.82USD

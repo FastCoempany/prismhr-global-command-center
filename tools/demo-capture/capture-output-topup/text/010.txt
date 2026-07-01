@@ -1,0 +1,46 @@
+URL: https://app1.demo.prismhr.com/team/2f03ac3b-0cff-4607-aae1-5a10cf3a80d8/315c6b7a-e350-4aa9-86fa-06c7219688ec/contracts
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+Profile
+Team
+Profile
+Contracts
+Yasmin Moore
+Work Email
+yasmin.moore@prismhr.com
+Start Date
+Aug 9, 2026
+Position
+Senior Intranet Architect
+Worker ID
+105260700042
+Manager
+Demo Hr Manager
+Location
+Assign Location
+Details
+Documents
+Payments
+Contracts
+Time Off
+Expense Reimbursements
+Assignments
+YM
+$30.31 USD/hr
+
+Contractor - Variable rate
+
+Awaiting Signatures

@@ -1,0 +1,101 @@
+URL: https://app1.demo.prismhr.com/create-contract/payroll/job?contractIndex=1
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+New Hire | Payroll
+
+Employee Info
+
+02
+
+Job Info
+
+03
+
+Compensation
+
+04
+
+Upload Agreement
+
+05
+
+Review
+
+Job information
+Job title
+Seniority level
+Select the employee's seniority level
+Not Applicable
+Junior
+Mid
+Senior
+Lead
+Principal
+Director
+Department Head
+Vice President
+Senior Vice President
+C-Level Executive
+Job description
+
+Write a few sentences explaining the role and responsibilities.
+
+Manager (Optional)
+Assign Manager
+Employment start date
+Save & Exit
+Exit
+Back
+Next
+Assign Manager
+
+This will be the employee's direct report. Any requests such as time-off requests, reimbursements, etc will be approved by the manager.
+
+SELECT WHO THE EMPLOYEE WILL DIRECTLY REPORT TO
+DA
+Demo Admin
+Owner
+Assign
+DH
+Demo HR Manager
+HR
+Assign
+DF
+Demo Finance Manager
+Finance
+Assign
+AD
+Alex Demo Worker
+Manager
+Assign
+SA
+Sarah Admin
+Admin
+Assign
+MS
+Mike SuperAdmin
+Super Admin
+Assign
+JM
+John Manager
+Manager
+Assign
+EO
+Emma Onboard
+Onboard Only
+Assign
+Cancel
+Confirm Selection

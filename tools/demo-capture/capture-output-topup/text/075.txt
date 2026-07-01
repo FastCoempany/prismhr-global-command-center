@@ -1,0 +1,27 @@
+URL: https://app1.demo.prismhr.com/wrkr/payments
+TITLE: PrismHR
+
+You need to set your Bank Account.Link Bank Account →
+
+Dashboard
+Payments
+Time Off
+Time Tracking
+Reimbursements
+Resources
+Worker Portal
+Logout
+Payments
+Start Date
+April 2026
+–
+End Date
+Current Month
+Company
+Status
+Search
+Search
+
+TOTAL PAYMENTS: 0
+
+No payments have been issued yet.

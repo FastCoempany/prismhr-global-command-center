@@ -1,0 +1,54 @@
+- paragraph:
+  - text: You need to set your Bank Account.
+  - link "Link Bank Account":
+    - /url: https://admin1.demo.prismhr.com
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /wrkr
+  - link "Payments":
+    - /url: /wrkr/payments
+  - link "Time Off":
+    - /url: /wrkr/request-time-off
+  - link "Time Tracking":
+    - /url: /wrkr/timecards
+  - link "Reimbursements":
+    - /url: /wrkr/request-reimbursement
+  - link "Resources":
+    - /url: /wrkr/documents
+  - button "Worker Portal"
+  - link "Logout":
+    - /url: /login
+- main:
+  - navigation "Progress":
+    - list:
+      - listitem:
+        - link:
+          - /url: /wrkr/accept-payroll/63d43e0f-6561-44a1-a70d-4e2f86eacc99/info
+        - paragraph: Personal Information
+      - listitem:
+        - link:
+          - /url: /wrkr/accept-payroll/63d43e0f-6561-44a1-a70d-4e2f86eacc99/address
+        - paragraph: Address
+      - listitem:
+        - link "03":
+          - /url: /wrkr/accept-payroll/63d43e0f-6561-44a1-a70d-4e2f86eacc99/national-id
+        - paragraph: Identification
+  - heading "Identification" [level=3]
+  - paragraph: We require some essential documents to comply with regulations and ensure a seamless hiring process. This might include identification documents, tax forms, or any other necessary legal paperwork.
+  - text: National ID Number
+  - textbox "National ID Number":
+    - /placeholder: Enter your National ID number
+  - text: "Please upload a copy of the front of your ID We accept various forms of identification, including:"
+  - list:
+    - listitem: Driver’s License
+    - listitem: Passport
+    - listitem: National ID Card
+  - button "Upload a Front ID Upload"
+  - paragraph: PDF,PNG,JPG up to 10MB
+  - text: Please upload a copy of the back of your ID
+  - button "Upload a Back ID Upload"
+  - paragraph: PDF,PNG,JPG up to 10MB
+  - button "Back"
+  - button "Submit"
+- img

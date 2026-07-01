@@ -1,0 +1,331 @@
+URL: https://app1.demo.prismhr.com/reports/eor/gross-to-net
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Logout
+Employee Gross to Net Report
+Reports
+EOR Report
+Employee Gross to Net Report
+Start Date
+June 2026
+-
+End Date
+June 2026
+Compensation
+Countries
+Pay Frequency
+All
+Monthly
+Search
+Search
+Export
+Canada
+
+
+NAME
+
+	
+
+COMPENSATION
+
+	
+
+GROSS WAGES
+
+	
+
+BONUS PAYMENTS
+
+	
+
+RECURRING PAYMENTS
+
+	
+
+ONE-TIME PAYMENT
+
+	
+
+REIMBURSEMENTS
+
+	
+
+GROSS TOTAL
+
+	
+
+TAXES & CONTRIBUTIONS
+
+	
+
+NET
+
+
+
+Chris Reed
+	
+Salary
+	
+$4,141.86 USD
+	
+$0.00 USD
+	
+$0.00 USD
+	
+$0.00 USD
+	
+$0.00 USD
+	
+$4,141.86 USD
+	
+$0.00 USD
+	
+$4,141.86 USD
+
+
+Rose Allen
+	
+Salary
+	
+$4,102.16 USD
+	
+$0.00 USD
+	
+$0.00 USD
+	
+$0.00 USD
+	
+$0.00 USD
+	
+$4,102.16 USD
+	
+$0.00 USD
+	
+$4,102.16 USD
+
+
+Ximena Young
+	
+Salary
+	
+$1,354.78 USD
+	
+$0.00 USD
+	
+$0.00 USD
+	
+$0.00 USD
+	
+$0.00 USD
+	
+$1,354.78 USD
+	
+$0.00 USD
+	
+$1,354.78 USD
+
+Total		$9,598.80USD	$0.00USD	$0.00USD	$0.00USD	$0.00USD	$9,598.80USD	$0.00USD	$9,598.80USD
+Egypt
+
+
+NAME
+
+	
+
+COMPENSATION
+
+	
+
+GROSS WAGES
+
+	
+
+BONUS PAYMENTS
+
+	
+
+RECURRING PAYMENTS
+
+	
+
+ONE-TIME PAYMENT
+
+	
+
+REIMBURSEMENTS
+
+	
+
+GROSS TOTAL
+
+	
+
+TAXES & CONTRIBUTIONS
+
+	
+
+NET
+
+
+
+Hugo Johnson
+	
+Salary
+	
+$4,212.80 USD
+	
+$0.00 USD
+	
+$0.00 USD
+	
+$0.00 USD
+	
+$0.00 USD
+	
+$4,212.80 USD
+	
+$0.00 USD
+	
+$4,212.80 USD
+
+Total		$4,212.80USD	$0.00USD	$0.00USD	$0.00USD	$0.00USD	$4,212.80USD	$0.00USD	$4,212.80USD
+Mexico
+
+
+NAME
+
+	
+
+COMPENSATION
+
+	
+
+GROSS WAGES
+
+	
+
+BONUS PAYMENTS
+
+	
+
+RECURRING PAYMENTS
+
+	
+
+ONE-TIME PAYMENT
+
+	
+
+REIMBURSEMENTS
+
+	
+
+GROSS TOTAL
+
+	
+
+TAXES & CONTRIBUTIONS
+
+	
+
+NET
+
+
+
+Grace Hunt
+	
+Salary
+	
+$7,738.02 USD
+	
+$0.00 USD
+	
+$0.00 USD
+	
+$0.00 USD
+	
+$0.00 USD
+	
+$7,738.02 USD
+	
+$0.00 USD
+	
+$7,738.02 USD
+
+Total		$7,738.02USD	$0.00USD	$0.00USD	$0.00USD	$0.00USD	$7,738.02USD	$0.00USD	$7,738.02USD
+United States
+
+
+NAME
+
+	
+
+COMPENSATION
+
+	
+
+GROSS WAGES
+
+	
+
+BONUS PAYMENTS
+
+	
+
+RECURRING PAYMENTS
+
+	
+
+ONE-TIME PAYMENT
+
+	
+
+REIMBURSEMENTS
+
+	
+
+GROSS TOTAL
+
+	
+
+TAXES & CONTRIBUTIONS
+
+	
+
+NET
+
+
+
+Alex Demo Worker
+	
+Salary
+	
+$10,000.00 USD
+	
+$0.00 USD
+	
+$0.00 USD
+	
+$0.00 USD
+	
+$0.00 USD
+	
+$10,000.00 USD
+	
+$0.00 USD
+	
+$10,000.00 USD
+
+Total		$10,000.00USD	$0.00USD	$0.00USD	$0.00USD	$0.00USD	$10,000.00USD	$0.00USD	$10,000.00USD

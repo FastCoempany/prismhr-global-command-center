@@ -1,0 +1,213 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - button "Antaeus Service Provider - Main Client"
+  - link "Logout":
+    - /url: /login
+- main:
+  - heading "Invoices" [level=1]
+  - list:
+    - table:
+      - rowgroup:
+        - row "Created At Invoice Number Status PayPeriod Invoice Type Total Amount":
+          - columnheader "Created At"
+          - columnheader "Invoice Number"
+          - columnheader "Status"
+          - columnheader "PayPeriod"
+          - columnheader "Invoice Type"
+          - columnheader "Total Amount"
+      - rowgroup:
+        - row "Jul 1, 2026 Invoiced Jul 1, 2026-Jul 31, 2026 Monthly Contractors Fee $1,080.00 USD":
+          - cell "Jul 1, 2026"
+          - cell
+          - cell "Invoiced"
+          - cell "Jul 1, 2026-Jul 31, 2026"
+          - cell "Monthly Contractors Fee"
+          - cell "$1,080.00 USD"
+        - row "Jun 30, 2026 Invoiced Jun 1, 2026-Jun 30, 2026 EOR $24,787.12 USD":
+          - cell "Jun 30, 2026"
+          - cell
+          - cell "Invoiced"
+          - cell "Jun 1, 2026-Jun 30, 2026"
+          - cell "EOR"
+          - cell "$24,787.12 USD"
+        - row "May 31, 2026 Invoiced May 1, 2026-May 31, 2026 Contractor $24,694.56 USD":
+          - cell "May 31, 2026"
+          - cell
+          - cell "Invoiced"
+          - cell "May 1, 2026-May 31, 2026"
+          - cell "Contractor"
+          - cell "$24,694.56 USD"
+        - row "May 31, 2026 Invoiced May 1, 2026-May 31, 2026 Payroll $12,061.67 USD":
+          - cell "May 31, 2026"
+          - cell
+          - cell "Invoiced"
+          - cell "May 1, 2026-May 31, 2026"
+          - cell "Payroll"
+          - cell "$12,061.67 USD"
+        - row "Apr 30, 2026 Invoiced Apr 1, 2026-Apr 30, 2026 EOR $15,528.47 USD":
+          - cell "Apr 30, 2026"
+          - cell
+          - cell "Invoiced"
+          - cell "Apr 1, 2026-Apr 30, 2026"
+          - cell "EOR"
+          - cell "$15,528.47 USD"
+        - row "Mar 31, 2026 Invoiced Mar 1, 2026-Mar 31, 2026 Contractor $19,799.66 USD":
+          - cell "Mar 31, 2026"
+          - cell
+          - cell "Invoiced"
+          - cell "Mar 1, 2026-Mar 31, 2026"
+          - cell "Contractor"
+          - cell "$19,799.66 USD"
+        - row "Mar 31, 2026 Invoiced Mar 1, 2026-Mar 31, 2026 EOR $16,012.91 USD":
+          - cell "Mar 31, 2026"
+          - cell
+          - cell "Invoiced"
+          - cell "Mar 1, 2026-Mar 31, 2026"
+          - cell "EOR"
+          - cell "$16,012.91 USD"
+        - row "Feb 28, 2026 Invoiced Feb 1, 2026-Feb 28, 2026 Payroll $7,686.26 USD":
+          - cell "Feb 28, 2026"
+          - cell
+          - cell "Invoiced"
+          - cell "Feb 1, 2026-Feb 28, 2026"
+          - cell "Payroll"
+          - cell "$7,686.26 USD"
+        - row "Jan 31, 2026 Invoiced Jan 1, 2026-Jan 31, 2026 Payroll $7,616.66 USD":
+          - cell "Jan 31, 2026"
+          - cell
+          - cell "Invoiced"
+          - cell "Jan 1, 2026-Jan 31, 2026"
+          - cell "Payroll"
+          - cell "$7,616.66 USD"
+        - row "Jan 31, 2026 Invoiced Jan 1, 2026-Jan 31, 2026 Contractor $17,179.87 USD":
+          - cell "Jan 31, 2026"
+          - cell
+          - cell "Invoiced"
+          - cell "Jan 1, 2026-Jan 31, 2026"
+          - cell "Contractor"
+          - cell "$17,179.87 USD"
+        - row "Dec 31, 2025 Invoiced Dec 1, 2025-Dec 31, 2025 EOR $14,146.75 USD":
+          - cell "Dec 31, 2025"
+          - cell
+          - cell "Invoiced"
+          - cell "Dec 1, 2025-Dec 31, 2025"
+          - cell "EOR"
+          - cell "$14,146.75 USD"
+        - row "Nov 30, 2025 Invoiced Nov 1, 2025-Nov 30, 2025 EOR $13,759.85 USD":
+          - cell "Nov 30, 2025"
+          - cell
+          - cell "Invoiced"
+          - cell "Nov 1, 2025-Nov 30, 2025"
+          - cell "EOR"
+          - cell "$13,759.85 USD"
+        - row "Oct 31, 2025 Invoiced Oct 1, 2025-Oct 31, 2025 EOR $13,759.85 USD":
+          - cell "Oct 31, 2025"
+          - cell
+          - cell "Invoiced"
+          - cell "Oct 1, 2025-Oct 31, 2025"
+          - cell "EOR"
+          - cell "$13,759.85 USD"
+        - row "Sep 30, 2025 Invoiced Sep 1, 2025-Sep 30, 2025 EOR $13,646.75 USD":
+          - cell "Sep 30, 2025"
+          - cell
+          - cell "Invoiced"
+          - cell "Sep 1, 2025-Sep 30, 2025"
+          - cell "EOR"
+          - cell "$13,646.75 USD"
+        - row "Aug 31, 2025 Invoiced Aug 1, 2025-Aug 31, 2025 EOR $11,198.93 USD":
+          - cell "Aug 31, 2025"
+          - cell
+          - cell "Invoiced"
+          - cell "Aug 1, 2025-Aug 31, 2025"
+          - cell "EOR"
+          - cell "$11,198.93 USD"
+        - row "Jul 31, 2025 Invoiced Jul 1, 2025-Jul 31, 2025 EOR $7,899.00 USD":
+          - cell "Jul 31, 2025"
+          - cell
+          - cell "Invoiced"
+          - cell "Jul 1, 2025-Jul 31, 2025"
+          - cell "EOR"
+          - cell "$7,899.00 USD"
+        - row "Jun 30, 2025 Invoiced Jun 1, 2025-Jun 30, 2025 EOR $7,399.00 USD":
+          - cell "Jun 30, 2025"
+          - cell
+          - cell "Invoiced"
+          - cell "Jun 1, 2025-Jun 30, 2025"
+          - cell "EOR"
+          - cell "$7,399.00 USD"
+- paragraph: Success
+- paragraph: Email Sent
+- button "Close"
+- img
+- dialog:
+  - button
+  - img "PrismHR logo"
+  - heading "INVOICE" [level=1]
+  - paragraph: "#"
+  - paragraph: 057cd2de-59ed-44e6-bb3d-ff7c3a3893aa
+  - heading "PRISMHR" [level=2]
+  - paragraph: PrismHR
+  - text: 35 Parkwood Drive, Suite 200 Hopkinton, MA, 01748 GlobalFinOps@prismhr.com www.prismhr.com
+  - heading "BILL TO" [level=2]
+  - paragraph: Antaeus Service Provider - Main Client
+  - heading "Invoice Date" [level=3]
+  - paragraph: Jul 1, 2026
+  - heading "Payment Status" [level=3]
+  - text: Unpaid
+  - table:
+    - rowgroup:
+      - row "Description Amount":
+        - columnheader "Description"
+        - columnheader "Amount"
+    - rowgroup:
+      - 'row "Monthly CONTRACTOR_PLUS Fee: Victor Reed $225.00 USD"':
+        - 'cell "Monthly CONTRACTOR_PLUS Fee: Victor Reed"'
+        - cell "$225.00 USD"
+      - 'row "Monthly CONTRACTOR Fee: John Contractor $45.00 USD"':
+        - 'cell "Monthly CONTRACTOR Fee: John Contractor"'
+        - cell "$45.00 USD"
+      - 'row "Monthly CONTRACTOR Fee: Iris Green $45.00 USD"':
+        - 'cell "Monthly CONTRACTOR Fee: Iris Green"'
+        - cell "$45.00 USD"
+      - 'row "Monthly CONTRACTOR Fee: Alex Developer $45.00 USD"':
+        - 'cell "Monthly CONTRACTOR Fee: Alex Developer"'
+        - cell "$45.00 USD"
+      - 'row "Monthly CONTRACTOR_PLUS Fee: Pablo Contractorplus $225.00 USD"':
+        - 'cell "Monthly CONTRACTOR_PLUS Fee: Pablo Contractorplus"'
+        - cell "$225.00 USD"
+      - 'row "Monthly CONTRACTOR_PLUS Fee: Yasmin Hunt $225.00 USD"':
+        - 'cell "Monthly CONTRACTOR_PLUS Fee: Yasmin Hunt"'
+        - cell "$225.00 USD"
+      - 'row "Monthly CONTRACTOR Fee: Henry Bell $45.00 USD"':
+        - 'cell "Monthly CONTRACTOR Fee: Henry Bell"'
+        - cell "$45.00 USD"
+      - 'row "Monthly CONTRACTOR_PLUS Fee: Nadia Contractorplus $225.00 USD"':
+        - 'cell "Monthly CONTRACTOR_PLUS Fee: Nadia Contractorplus"'
+        - cell "$225.00 USD"
+  - text: "Total: $1,080.00 USD"
+  - button "Download"
+  - button "Send Email"

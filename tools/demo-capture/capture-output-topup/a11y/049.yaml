@@ -1,0 +1,17 @@
+- main:
+  - img "logo"
+  - heading "Sign in to your account" [level=2]
+  - paragraph:
+    - text: Or
+    - link "create an account":
+      - /url: /sign-up
+  - text: Email address
+  - textbox "Email address"
+  - text: Password
+  - textbox "Password"
+  - checkbox "Remember me" [checked]
+  - text: Remember me
+  - link "Forgot your password?":
+    - /url: /forgot-password
+  - button "Sign in"
+- img

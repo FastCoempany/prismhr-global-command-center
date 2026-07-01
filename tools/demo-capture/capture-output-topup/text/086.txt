@@ -1,0 +1,127 @@
+URL: https://app1.demo.prismhr.com/time-off
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Antaeus Service Provider - Main Client
+Logout
+Time Off
+Pending Requests
+Time Off Calendar
+History
+Start Date
+April 2026
+-
+End Date
+Current Month
+All Workers
+Engagement
+Leave Type
+Status
+Search
+Search
+Export
+History
+NAME	LEAVE TYPE	REQUESTED ON	LEAVE DATES	STATUS	
+
+Owen Brown
+
+Contractor
+
+	
+-
+	
+Jul 11, 2026
+	
+Jul 23 - Aug 8, 2026
+12.0 days
+	
+Approved
+by Demo Admin
+	
+
+
+Rose Allen
+
+EOR
+
+	
+Annual leave
+	
+Jul 10, 2026
+	
+Jul 25 - Aug 2, 2026
+5.0 days
+	
+Approved
+by Demo Admin
+	
+
+
+Chris Reed
+
+EOR
+
+	
+Sick leave
+	
+Jul 3, 2026
+	
+Jul 18 - Jul 26, 2026
+5.0 days
+	
+Approved
+by Demo Admin
+	
+
+
+Chris Reed
+
+EOR
+
+	
+Annual leave
+	
+Jun 30, 2026
+	
+Jul 3 - Jul 10, 2026
+6.0 days
+	
+Approved
+by Demo Admin
+	
+
+
+Grace Hunt
+
+EOR
+
+	
+Sick leave
+	
+Jun 30, 2026
+	
+Jul 1 - Jul 6, 2026
+4.0 days
+	
+Approved
+by Demo Admin
+	
+
+Showing 1 to 5 of 19 results
+
+Previous
+1
+2
+3
+Next

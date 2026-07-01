@@ -1,0 +1,61 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - link "Logout":
+    - /url: /login
+- main:
+  - heading "New Hire | Payroll" [level=1]
+  - navigation "Progress":
+    - list:
+      - listitem:
+        - link:
+          - /url: /create-contract/payroll/employee-info?contractIndex=1
+        - paragraph: Employee Info
+      - listitem:
+        - link:
+          - /url: /create-contract/payroll/job?contractIndex=1
+        - paragraph: Job Info
+      - listitem:
+        - link:
+          - /url: /create-contract/payroll/compensation?contractIndex=1
+        - paragraph: Compensation
+      - listitem:
+        - link "04":
+          - /url: /create-contract/payroll/agreement?contractIndex=1
+        - paragraph: Upload Agreement
+      - listitem:
+        - text: "05"
+        - paragraph: Review
+  - heading "Upload Agreement (Optional)" [level=3]
+  - text: Attach a signed employment agreement
+  - button "Upload a Custom Contracts"
+  - paragraph: PDF,PNG,JPG up to 10MB
+  - button "Save & Exit"
+  - button "Exit"
+  - button "Back"
+  - button "Skip"
+  - button "Next" [disabled]
+- img

@@ -1,0 +1,56 @@
+URL: https://app1.demo.prismhr.com/settings/approval-workflows
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Antaeus Service Provider - Main Client
+Logout
+Settings
+Settings
+Approval Workflows
+General
+Users
+Roles and Permissions
+Approval Workflows
+Assignments
+Approval Workflows
+
+Invite or manage your organization’s users.
+
+Time off Requests
+
+Vacation, sick leave, and personal time requests
+
+Edit Workflow
+APPROVAL FLOW
++ Add Approver
+WILL RECEIVE NOTIFICATIONS
++
+Pay Period Approvals
+
+Pay Period Approvals
+
+Edit Workflow
+APPROVAL FLOW
++ Add Approver
+WILL RECEIVE NOTIFICATIONS
++
+Reimbursements
+
+Additional expenses and one-time payments
+
+Edit Workflow
+APPROVAL FLOW
++ Add Approver
+WILL RECEIVE NOTIFICATIONS
++

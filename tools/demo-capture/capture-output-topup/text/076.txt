@@ -1,0 +1,23 @@
+URL: https://app1.demo.prismhr.com/wrkr/timecards
+TITLE: PrismHR
+
+You need to set your Bank Account.Link Bank Account →
+
+Dashboard
+Payments
+Time Off
+Time Tracking
+Reimbursements
+Resources
+Worker Portal
+Logout
+Time Tracking
+Start Date
+April 2026
+-
+End Date
+Current Month
+Company
+Label
+Track Time
+No time has been logged yet.

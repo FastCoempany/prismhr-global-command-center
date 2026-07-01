@@ -1,0 +1,54 @@
+- paragraph:
+  - text: You need to set your Bank Account.
+  - link "Link Bank Account":
+    - /url: https://admin1.demo.prismhr.com
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /wrkr
+  - link "Payments":
+    - /url: /wrkr/payments
+  - link "Time Off":
+    - /url: /wrkr/request-time-off
+  - link "Time Tracking":
+    - /url: /wrkr/timecards
+  - link "Reimbursements":
+    - /url: /wrkr/request-reimbursement
+  - link "Resources":
+    - /url: /wrkr/documents
+  - button "Worker Portal"
+  - link "Logout":
+    - /url: /login
+- heading "Profile" [level=1]
+- img "antaeus coe avatar"
+- text: Change user photo Antaeus Coe Work Email
+- button "Copy email to clipboard"
+- link "antaeus.coe@prismhr.com":
+  - /url: mailto:antaeus.coe@prismhr.com
+- text: Joined Date Jul 1, 2026 Position
+- list:
+  - listitem: engineer
+- text: Worker ID 105260700001 Manager
+- list:
+  - listitem: Demo Admin
+- text: Location No location assigned
+- region:
+  - navigation:
+    - link "Personal":
+      - /url: /wrkr/profile/info
+    - link "Contracts":
+      - /url: /wrkr/profile/my-contracts
+    - link "Bank & Tax Info":
+      - /url: /wrkr/profile/bank-account
+    - link "Security":
+      - /url: /wrkr/profile/security
+    - link "Assignments":
+      - /url: /wrkr/profile/organization
+  - main:
+    - text: "Active Contracts: 1"
+    - button "Filter"
+    - link "engineer Antaeus Service Provider - Main Client Payroll BZ$3,500.00 BZD/month Belize Offer Accepted":
+      - /url: /wrkr/my-contracts/63d43e0f-6561-44a1-a70d-4e2f86eacc99
+      - paragraph: engineer
+      - text: Antaeus Service Provider - Main Client Payroll BZ$3,500.00 BZD/month Belize Offer Accepted
+- img

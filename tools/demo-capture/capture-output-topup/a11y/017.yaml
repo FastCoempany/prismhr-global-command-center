@@ -1,0 +1,278 @@
+- img "PrismHR logo"
+- navigation "Sidebar":
+  - link "Dashboard":
+    - /url: /
+  - link "New Hire":
+    - /url: /create-contract
+  - link "Onboarding":
+    - /url: /onboarding
+  - link "Team":
+    - /url: /team
+  - link "Invoices":
+    - /url: /invoices
+  - link "Time Off":
+    - /url: /time-off
+  - link "Time Tracking":
+    - /url: /time-tracking
+  - link "Reimbursements":
+    - /url: /reimbursements
+  - link "Reports":
+    - /url: /reports
+  - link "Tools & Resources":
+    - /url: /tools-and-resources
+  - link "Settings":
+    - /url: /settings/general
+  - link "Support Cases":
+    - /url: /support-tickets
+  - link "Logout":
+    - /url: /login
+- main:
+  - heading "General Ledger Report" [level=1]
+  - navigation "Breadcrumb":
+    - list:
+      - listitem:
+        - link "Reports":
+          - /url: /reports
+      - listitem:
+        - link "EOR Report":
+          - /url: /reports/eor
+      - listitem:
+        - link "General Ledger Report":
+          - /url: /reports/eor/general-ledger
+  - button "Start Date June 2026"
+  - text: "-"
+  - button "End Date June 2026"
+  - button "Compensation"
+  - button "Countries"
+  - button "Pay Frequency"
+  - text: Search Search
+  - textbox "Search":
+    - /placeholder: Search by name
+  - button "Export"
+  - table:
+    - rowgroup:
+      - row "Canada":
+        - columnheader "Canada":
+          - img
+          - text: Canada
+    - rowgroup:
+      - row "Name Compensation Gross Wages 1000 Bonus Payments Recurring Payments One-Time Payment 3000 Reimbursements 4000 Benefits 2000 Employer Taxes & Contributions 5000 Total":
+        - columnheader "Name":
+          - paragraph: Name
+        - columnheader "Compensation":
+          - paragraph: Compensation
+        - columnheader "Gross Wages 1000":
+          - paragraph: Gross Wages 1000
+        - columnheader "Bonus Payments":
+          - paragraph: Bonus Payments
+        - columnheader "Recurring Payments":
+          - paragraph: Recurring Payments
+        - columnheader "One-Time Payment 3000":
+          - paragraph: One-Time Payment 3000
+        - columnheader "Reimbursements 4000":
+          - paragraph: Reimbursements 4000
+        - columnheader "Benefits 2000":
+          - paragraph: Benefits 2000
+        - columnheader "Employer Taxes & Contributions 5000":
+          - paragraph: Employer Taxes & Contributions 5000
+        - columnheader "Total":
+          - paragraph: Total
+    - rowgroup:
+      - row "Chris Reed Salary $4,141.86 USD $0.00 USD $0.00 USD $0.00 USD $0.00 USD $0.00 USD $662.72 USD $4,804.58 USD":
+        - cell "Chris Reed"
+        - cell "Salary"
+        - cell "$4,141.86 USD"
+        - cell "$0.00 USD"
+        - cell "$0.00 USD"
+        - cell "$0.00 USD"
+        - cell "$0.00 USD"
+        - cell "$0.00 USD"
+        - cell "$662.72 USD"
+        - cell "$4,804.58 USD"
+      - row "Rose Allen Salary $4,102.16 USD $0.00 USD $0.00 USD $0.00 USD $0.00 USD $0.00 USD $2,320.68 USD $6,422.84 USD":
+        - cell "Rose Allen"
+        - cell "Salary"
+        - cell "$4,102.16 USD"
+        - cell "$0.00 USD"
+        - cell "$0.00 USD"
+        - cell "$0.00 USD"
+        - cell "$0.00 USD"
+        - cell "$0.00 USD"
+        - cell "$2,320.68 USD"
+        - cell "$6,422.84 USD"
+      - row "Ximena Young Salary $1,354.78 USD $0.00 USD $0.00 USD $0.00 USD $0.00 USD $0.00 USD $2,146.02 USD $3,500.80 USD":
+        - cell "Ximena Young"
+        - cell "Salary"
+        - cell "$1,354.78 USD"
+        - cell "$0.00 USD"
+        - cell "$0.00 USD"
+        - cell "$0.00 USD"
+        - cell "$0.00 USD"
+        - cell "$0.00 USD"
+        - cell "$2,146.02 USD"
+        - cell "$3,500.80 USD"
+      - row "Total $9,598.80USD $0.00USD $0.00USD $0.00USD $0.00USD $0.00USD $5,129.42USD $14,728.22USD":
+        - cell "Total"
+        - cell
+        - cell "$9,598.80USD"
+        - cell "$0.00USD"
+        - cell "$0.00USD"
+        - cell "$0.00USD"
+        - cell "$0.00USD"
+        - cell "$0.00USD"
+        - cell "$5,129.42USD"
+        - cell "$14,728.22USD"
+  - table:
+    - rowgroup:
+      - row "Egypt":
+        - columnheader "Egypt":
+          - img
+          - text: Egypt
+    - rowgroup:
+      - row "Name Compensation Gross Wages 1000 Bonus Payments Recurring Payments One-Time Payment 3000 Reimbursements 4000 Benefits 2000 Employer Taxes & Contributions 5000 Total":
+        - columnheader "Name":
+          - paragraph: Name
+        - columnheader "Compensation":
+          - paragraph: Compensation
+        - columnheader "Gross Wages 1000":
+          - paragraph: Gross Wages 1000
+        - columnheader "Bonus Payments":
+          - paragraph: Bonus Payments
+        - columnheader "Recurring Payments":
+          - paragraph: Recurring Payments
+        - columnheader "One-Time Payment 3000":
+          - paragraph: One-Time Payment 3000
+        - columnheader "Reimbursements 4000":
+          - paragraph: Reimbursements 4000
+        - columnheader "Benefits 2000":
+          - paragraph: Benefits 2000
+        - columnheader "Employer Taxes & Contributions 5000":
+          - paragraph: Employer Taxes & Contributions 5000
+        - columnheader "Total":
+          - paragraph: Total
+    - rowgroup:
+      - row "Hugo Johnson Salary $4,212.80 USD $0.00 USD $0.00 USD $0.00 USD $0.00 USD $0.00 USD $1,095.32 USD $5,308.12 USD":
+        - cell "Hugo Johnson"
+        - cell "Salary"
+        - cell "$4,212.80 USD"
+        - cell "$0.00 USD"
+        - cell "$0.00 USD"
+        - cell "$0.00 USD"
+        - cell "$0.00 USD"
+        - cell "$0.00 USD"
+        - cell "$1,095.32 USD"
+        - cell "$5,308.12 USD"
+      - row "Total $4,212.80USD $0.00USD $0.00USD $0.00USD $0.00USD $0.00USD $1,095.32USD $5,308.12USD":
+        - cell "Total"
+        - cell
+        - cell "$4,212.80USD"
+        - cell "$0.00USD"
+        - cell "$0.00USD"
+        - cell "$0.00USD"
+        - cell "$0.00USD"
+        - cell "$0.00USD"
+        - cell "$1,095.32USD"
+        - cell "$5,308.12USD"
+  - table:
+    - rowgroup:
+      - row "Mexico":
+        - columnheader "Mexico":
+          - img
+          - text: Mexico
+    - rowgroup:
+      - row "Name Compensation Gross Wages 1000 Bonus Payments Recurring Payments One-Time Payment 3000 Reimbursements 4000 Benefits 2000 Employer Taxes & Contributions 5000 Total":
+        - columnheader "Name":
+          - paragraph: Name
+        - columnheader "Compensation":
+          - paragraph: Compensation
+        - columnheader "Gross Wages 1000":
+          - paragraph: Gross Wages 1000
+        - columnheader "Bonus Payments":
+          - paragraph: Bonus Payments
+        - columnheader "Recurring Payments":
+          - paragraph: Recurring Payments
+        - columnheader "One-Time Payment 3000":
+          - paragraph: One-Time Payment 3000
+        - columnheader "Reimbursements 4000":
+          - paragraph: Reimbursements 4000
+        - columnheader "Benefits 2000":
+          - paragraph: Benefits 2000
+        - columnheader "Employer Taxes & Contributions 5000":
+          - paragraph: Employer Taxes & Contributions 5000
+        - columnheader "Total":
+          - paragraph: Total
+    - rowgroup:
+      - row "Grace Hunt Salary $7,738.02 USD $0.00 USD $0.00 USD $0.00 USD $0.00 USD $0.00 USD $2,011.88 USD $9,749.90 USD":
+        - cell "Grace Hunt"
+        - cell "Salary"
+        - cell "$7,738.02 USD"
+        - cell "$0.00 USD"
+        - cell "$0.00 USD"
+        - cell "$0.00 USD"
+        - cell "$0.00 USD"
+        - cell "$0.00 USD"
+        - cell "$2,011.88 USD"
+        - cell "$9,749.90 USD"
+      - row "Total $7,738.02USD $0.00USD $0.00USD $0.00USD $0.00USD $0.00USD $2,011.88USD $9,749.90USD":
+        - cell "Total"
+        - cell
+        - cell "$7,738.02USD"
+        - cell "$0.00USD"
+        - cell "$0.00USD"
+        - cell "$0.00USD"
+        - cell "$0.00USD"
+        - cell "$0.00USD"
+        - cell "$2,011.88USD"
+        - cell "$9,749.90USD"
+  - table:
+    - rowgroup:
+      - row "United States":
+        - columnheader "United States":
+          - img
+          - text: United States
+    - rowgroup:
+      - row "Name Compensation Gross Wages 1000 Bonus Payments Recurring Payments One-Time Payment 3000 Reimbursements 4000 Benefits 2000 Employer Taxes & Contributions 5000 Total":
+        - columnheader "Name":
+          - paragraph: Name
+        - columnheader "Compensation":
+          - paragraph: Compensation
+        - columnheader "Gross Wages 1000":
+          - paragraph: Gross Wages 1000
+        - columnheader "Bonus Payments":
+          - paragraph: Bonus Payments
+        - columnheader "Recurring Payments":
+          - paragraph: Recurring Payments
+        - columnheader "One-Time Payment 3000":
+          - paragraph: One-Time Payment 3000
+        - columnheader "Reimbursements 4000":
+          - paragraph: Reimbursements 4000
+        - columnheader "Benefits 2000":
+          - paragraph: Benefits 2000
+        - columnheader "Employer Taxes & Contributions 5000":
+          - paragraph: Employer Taxes & Contributions 5000
+        - columnheader "Total":
+          - paragraph: Total
+    - rowgroup:
+      - row "Alex Demo Worker Salary $10,000.00 USD $0.00 USD $0.00 USD $0.00 USD $0.00 USD $0.00 USD $2,600.00 USD $12,600.00 USD":
+        - cell "Alex Demo Worker"
+        - cell "Salary"
+        - cell "$10,000.00 USD"
+        - cell "$0.00 USD"
+        - cell "$0.00 USD"
+        - cell "$0.00 USD"
+        - cell "$0.00 USD"
+        - cell "$0.00 USD"
+        - cell "$2,600.00 USD"
+        - cell "$12,600.00 USD"
+      - row "Total $10,000.00USD $0.00USD $0.00USD $0.00USD $0.00USD $0.00USD $2,600.00USD $12,600.00USD":
+        - cell "Total"
+        - cell
+        - cell "$10,000.00USD"
+        - cell "$0.00USD"
+        - cell "$0.00USD"
+        - cell "$0.00USD"
+        - cell "$0.00USD"
+        - cell "$0.00USD"
+        - cell "$2,600.00USD"
+        - cell "$12,600.00USD"
+- img

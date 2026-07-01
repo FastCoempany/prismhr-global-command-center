@@ -1,0 +1,25 @@
+URL: https://app1.demo.prismhr.com/onboarding-success/payroll
+TITLE: PrismHR
+
+Dashboard
+New Hire
+Onboarding
+Team
+Invoices
+Time Off
+Time Tracking
+Reimbursements
+Reports
+Tools & Resources
+Settings
+Support Cases
+Antaeus Service Provider - Main Client
+Logout
+Success!
+Here’s what happens next:
+Invitation to Join PrismHR: The employee will receive an invitation to join the PrismHR platform.
+Employee Information: Once the employee completes their profile, they can start receiving payments.
+
+We’ll keep you updated every step of the way. Need assistance? Contact us.
+
+Go to Dashboard
