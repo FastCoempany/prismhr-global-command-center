@@ -34,15 +34,15 @@ The detail view for a single user (e.g. Sarah Admin, Invited, Admin), showing th
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
-- You can prove exactly what a given user can and can't do, permission by permission — useful when a client asks who can approve payments or edit company settings.
+### For the PEO partner (channel)
+- You can prove exactly what a given user can and can't do, permission by permission — useful when a client asks who can approve payments or edit company settings, and reassuring because access control comes built in with **zero build**.
 
-### For direct employers
-- Fine-grained control: start from a role, then confirm or tune the exact capabilities, so access maps precisely to responsibility.
+### For the SMB client (via their PEO)
+- Fine-grained control done simply: start from a role, then confirm or tune the exact capabilities, so access maps precisely to responsibility — the same trusted governance your PEO gives you, now on your global team.
 
 ## Branching
-- **If** governance / SoD (separation of duties) is the concern **then** contrast a role that has Pay invoices with one that only has View invoices.
+- **If** governance / SoD (separation of duties) is the concern **then** contrast a role that has **Pay invoices** with one that only has **View invoices**.
 - **Else** keep this brief — it's the evidence behind the Users and Roles screens.
 
 ## Say-this (talk track)
-> "Drill into any user and you see exactly what their role grants — every permission, grouped by area. Sarah's an Admin: she can run people and payments, but she can't touch company settings or delete the account. It's role-based, and it's transparent."
+> "Drill into any user and you see exactly what their role grants — every permission, grouped by area. Sarah's an Admin: she can run people and payments, but she can't touch company settings or delete the account. It's role-based, transparent, and built in — nothing for you or your PEO to configure from scratch."

@@ -33,51 +33,55 @@ tags: [team, contracts, contractor, signatures, pay-rate, off-board, distributio
 ---
 
 ## What this screen is
-The full contract detail for a single worker's engagement, showing contract terms,
-signature status, in-contract change actions (job title, pay rate, off-board), and a
-complete distributions ledger.
+The full contract detail for a single worker's engagement (here **Aaron Taylor**, a UK
+contractor), showing contract terms, signature status, in-contract change actions (job title,
+pay rate, off-board), and a complete distributions ledger.
 
 ## Capabilities shown
-- Contract **summary**: worker type (Contractor), country (United Kingdom), rate
-  ($3,909.97 USD/month), start date, payment frequency (Fixed Rate, last business day
-  of month), job title, seniority, and scope of work
-- **Signatures** section — Issuer and Contractor signatures with "Sign and send the
-  contract"
-- In-contract changes: **Change Job Title** and **Change Pay Rate**, each with
-  **Update** and **View History**
-- **Request Off-board / Off-board** to end the engagement
-- **Distributions** ledger of every payout — Wages, One Time, Reimbursement — each with
-  status (**GENERATED** / **SENT**), distribution date or confirmation number, and amount
-  in local currency (USD)
-- **Additional Payments** (recurring items like a monthly Transportation Allowance) with
-  Edit / Delete
+- Contract **summary**: worker type (`Contractor`), country (`United Kingdom`), rate
+  (`$3,909.97 USD/month`), start date (`Oct 11, 2025`), payment frequency (`Fixed Rate`,
+  `Last Business Day Of The Month`), job title (`Direct Identity Strategist`), seniority
+  (`Supervisor`), and scope of work
+- **Signatures** section — `Issuer signature` and `Contractor signature` with
+  **Sign and send the contract** and **View Contract**
+- In-contract changes: **Change Job Title** and **Change Pay Rate**, each with **Update** and
+  **View History**
+- **Request Off-board** / **Off-board** to end the engagement
+- **Distributions** ledger of every payout — `Wages`, `One Time`, `Reimbursement` — each with
+  status (`GENERATED` / `SENT`), a distribution date or confirmation number, and amount in
+  local currency (`USD`); recurring monthly wages of `$3,909.97 USD` are visible line by line
+- **Additional Payments** — a recurring `Transportation Allowance` (`Monthly`, `$64.03 USD`,
+  Fixed Payment) with **Edit** / **Delete**
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
-- One screen holds the whole contract lifecycle — terms, signatures, mid-contract changes,
-  additional payments, off-boarding, and the full distribution ledger — so you administer
-  a client's engagement end to end without leaving it.
-- **Change Pay Rate** and **Change Job Title** carry **View History**, giving an auditable
-  trail of amendments you can defend to any client or authority.
+### For the PEO partner (channel)
+- One screen holds a client's entire contract lifecycle — terms, signatures, mid-contract
+  changes, additional payments, off-boarding, and the full distribution ledger — so you can
+  offer clients end-to-end management of a global engagement **without owning the entity or the
+  paperwork**; PrismHR does.
+- **Change Pay Rate** and **Change Job Title** each carry **View History**, giving an auditable
+  amendment trail your clients can rely on — a trusted, defensible record inside your ecosystem.
 
-### For direct employers
-- Everything about a global engagement lives here: what you agreed, who has signed, every
-  payment made (in the worker's currency), and how to change terms or off-board — all in
-  one view.
-- The distributions ledger shows exactly what was paid and when (GENERATED vs. SENT), so
-  cross-border pay is fully transparent and traceable.
+### For the SMB client (via their PEO)
+- Everything about a global engagement lives here: what you agreed, who has signed, every payment
+  made in the worker's currency, and how to change terms or off-board — all in one view, **no
+  legal team required**.
+- The distributions ledger shows exactly what was paid and when (`GENERATED` vs. `SENT`), so
+  cross-border pay is fully transparent and traceable — the same accountability your PEO gives
+  you at home.
 
 ## Branching
 - **If** the story is managing change over time **then** show **Change Pay Rate** with
-  **View History** and the **Additional Payments** (Transportation Allowance).
-- **If** the story is transparency / audit **then** scroll the **Distributions** ledger to
-  show every Wages / One Time / Reimbursement line with status and amount.
+  **View History** and the recurring **Additional Payments** (`Transportation Allowance`).
+- **If** the story is transparency / audit **then** scroll the **Distributions** ledger to show
+  every `Wages` / `One Time` / `Reimbursement` line with status and amount.
 - **If** the story is ending an engagement cleanly **then** point to **Request Off-board**.
 
 ## Say-this (talk track)
-> "This is the whole contract in one place — the terms, the signatures, and every change
-> you can make: adjust the job title or pay rate, each with a full history, add recurring
-> payments, or off-board the worker. Below it is the complete distribution ledger — every
-> wage, one-time payment, and reimbursement, with status and amount, right in their
-> currency."
+> "This is the whole contract in one place — the terms, the signatures, and every change you can
+> make: adjust the job title or pay rate, each with a full history, add a recurring payment like
+> this transportation allowance, or off-board the worker. Below it is the complete distribution
+> ledger — every wage, one-time payment, and reimbursement, with status and amount, right in the
+> worker's currency. Your PEO can hand clients this level of control over a global engagement
+> without ever owning the in-country entity — PrismHR does that part."
