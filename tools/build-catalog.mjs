@@ -120,8 +120,8 @@ function parse(raw) {
     elements: elementsField(fm),
     what,
     capabilities: listItems(sections['Capabilities shown'] || ''),
-    sp: grab('for service providers'),
-    de: grab('for direct employers'),
+    sp: grab('for the peo partner'),
+    de: grab('for the smb client'),
     branching: listItems(sections['Branching'] || ''),
     say,
   };

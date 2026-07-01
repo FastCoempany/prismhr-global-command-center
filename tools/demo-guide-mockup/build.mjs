@@ -107,8 +107,8 @@ function parse(raw) {
     tags: arrayField(fm, 'tags'),
     what,
     capabilities: listItems(sections['Capabilities shown'] || ''),
-    sp: grab('for service providers'),
-    de: grab('for direct employers'),
+    sp: grab('for the peo partner'),
+    de: grab('for the smb client'),
     branching: listItems(sections['Branching'] || ''),
     say,
   };
@@ -208,8 +208,8 @@ const html = `<!doctype html>
       <div class="crumb" id="crumb"></div>
       <div class="toggle" id="aud">
         <button data-a="both" class="on">Both</button>
-        <button data-a="sp">Service Provider</button>
-        <button data-a="de">Direct Employer</button>
+        <button data-a="sp">PEO Partner</button>
+        <button data-a="de">SMB Client</button>
       </div>
     </div>
     <div class="wrap" id="wrap"></div>
@@ -260,8 +260,8 @@ function audBlock(d){
     var lis=items.map(function(i){ return '<li>'+md(i)+'</li>'; }).join('');
     return '<div class="aud-block '+cls+'"><div class="who">'+who+'</div><ul class="clean">'+lis+'</ul></div>';
   }
-  if(aud==='both'||aud==='sp') out+=block('sp','For service providers (PEOs / ASOs / payroll)',d.sp);
-  if(aud==='both'||aud==='de') out+=block('de','For direct employers (hiring across borders)',d.de);
+  if(aud==='both'||aud==='sp') out+=block('sp','For the PEO partner (channel)',d.sp);
+  if(aud==='both'||aud==='de') out+=block('de','For the SMB client (via their PEO)',d.de);
   return out || '<div class="what">No value narrative yet.</div>';
 }
 

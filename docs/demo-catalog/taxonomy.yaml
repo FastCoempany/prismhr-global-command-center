@@ -36,14 +36,18 @@ value_tier:
   - medium        # supporting; script briefly
   - low           # exists for completeness; minimal/no script
 
-# Who we tailor the value narrative toward. Product-led for BOTH audiences:
-# we describe what the product DOES and why it matters — not discovery, not
-# what the customer might need.
+# Who we tailor the value narrative toward, mapped to the actual PEO-channel motion.
+# Product-led for BOTH: we describe what the product DOES and why it matters —
+# not discovery, not what the customer might need. (Internal `sp`/`de` keys retained.)
 audiences:
   - key: service_provider
-    label: Service providers (PEOs, ASOs, payroll providers) extending into global
+    label: PEO Partner (channel) — a PrismHR-HCM PEO that promotes PrismHR Global to its
+      client base and passes leads; value = new revenue, client retention, extend the
+      offering into global with zero build.
   - key: direct_employer
-    label: Companies hiring/paying across borders (Founders, CFOs, COOs, Heads of People)
+    label: SMB Client (via their PEO) — a small/mid business introduced by its PEO that
+      needs to hire/pay abroad; value = borrowed trust from the PEO, done-for-you
+      compliance, simple to hire one person or scale to hundreds across borders.
 
 # Lifecycle of an entry.
 status:

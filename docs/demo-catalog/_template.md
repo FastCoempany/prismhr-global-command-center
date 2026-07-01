@@ -27,9 +27,9 @@ tags: []
 
 ## Value narrative (product-led, not discovery)
 
-### For service providers
+### For the PEO partner (channel)
 
-### For direct employers
+### For the SMB client (via their PEO)
 
 ## Branching
 <!-- **If** <product-capability condition> **then** emphasize <point> -->
