@@ -52,7 +52,7 @@ export default async function PipelinePage() {
             {boardStages.map((s) => {
               const rows = inPipeline
                 .filter((r) => r.stage === s.key)
-                .sort((a, b) => b.fit - a.fit);
+                .sort((a, b) => b.priority - a.priority);
               return (
                 <div key={s.key} className={styles.col}>
                   <div className={styles.colHead}>
@@ -63,7 +63,8 @@ export default async function PipelinePage() {
                     <Link key={r.id} href={`/book?peo=${r.id}`} className={styles.pcard}>
                       <div className={styles.nm}>{r.name}</div>
                       <div className={styles.rowSub}>
-                        {r.csm} · fit {r.fit}
+                        {r.csm} · priority {r.priority}
+                        {r.approach === "NEEDS_CSM" ? " · needs CSM" : ""}
                         {r.nextAction ? ` · ${r.nextAction}` : ""}
                       </div>
                     </Link>

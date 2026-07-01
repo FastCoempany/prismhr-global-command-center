@@ -1,7 +1,20 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { STAGES, stageLabel, type PeoRow, type Stage } from "@/lib/command-center/types";
+import {
+  APPROACHES,
+  INTENTS,
+  STAGES,
+  approachBlurb,
+  approachLabel,
+  intentLabel,
+  priorityTier,
+  stageLabel,
+  suggestedAction,
+  type Approach,
+  type PeoRow,
+  type Stage,
+} from "@/lib/command-center/types";
 import { savePeo } from "./actions";
 import styles from "../command-center.module.css";
 
@@ -21,6 +34,16 @@ function StageBadge({ stage }: { stage: Stage }) {
   return <span className={cls}>{stageLabel(stage)}</span>;
 }
 
+function ApproachChip({ approach }: { approach: Approach }) {
+  const cls =
+    approach === "DIRECT_OK"
+      ? `${styles.approach} ${styles.approachGo}`
+      : approach === "CHANNEL_OK"
+        ? `${styles.approach} ${styles.approachOk}`
+        : `${styles.approach} ${styles.approachHold}`;
+  return <span className={cls}>{approachLabel(approach)}</span>;
+}
+
 type Props = {
   rows: PeoRow[];
   canWrite: boolean;
@@ -34,6 +57,7 @@ export function BookClient({ rows, canWrite, dbUnavailable, initialPeoId, justSa
   const [csm, setCsm] = useState("");
   const [tier, setTier] = useState("");
   const [stage, setStage] = useState("");
+  const [approach, setApproach] = useState("");
   const [industry, setIndustry] = useState("");
   const [selectedId, setSelectedId] = useState(initialPeoId ?? "");
 
@@ -47,22 +71,24 @@ export function BookClient({ rows, canWrite, dbUnavailable, initialPeoId, justSa
     const q = query.toLowerCase();
     return rows.filter((r) => {
       if (csm && r.csm !== csm) return false;
-      if (tier && r.fitTier !== tier) return false;
+      if (tier && priorityTier(r.priority) !== tier) return false;
       if (stage && r.stage !== stage) return false;
+      if (approach && r.approach !== approach) return false;
       if (industry && r.industry !== industry) return false;
       if (q && !`${r.name} ${r.contactName} ${r.city} ${r.state}`.toLowerCase().includes(q))
         return false;
       return true;
     });
-  }, [rows, query, csm, tier, stage, industry]);
+  }, [rows, query, csm, tier, stage, approach, industry]);
 
-  // group by CSM
+  // group by CSM, each group ranked by blended priority
   const groups = useMemo(() => {
     const m = new Map<string, PeoRow[]>();
     for (const r of filtered) {
       if (!m.has(r.csm)) m.set(r.csm, []);
       m.get(r.csm)!.push(r);
     }
+    for (const list of m.values()) list.sort((a, b) => b.priority - a.priority);
     return [...m.entries()].sort((a, b) => b[1].length - a[1].length);
   }, [filtered]);
 
@@ -89,9 +115,9 @@ export function BookClient({ rows, canWrite, dbUnavailable, initialPeoId, justSa
             </option>
           ))}
         </select>
-        <select value={tier} onChange={(e) => setTier(e.target.value)} aria-label="Fit">
-          <option value="">All fit</option>
-          <option value="high">High fit</option>
+        <select value={tier} onChange={(e) => setTier(e.target.value)} aria-label="Priority">
+          <option value="">All priority</option>
+          <option value="high">High priority</option>
           <option value="medium">Medium</option>
           <option value="low">Low</option>
         </select>
@@ -100,6 +126,18 @@ export function BookClient({ rows, canWrite, dbUnavailable, initialPeoId, justSa
           {STAGES.map((s) => (
             <option key={s.key} value={s.key}>
               {s.label}
+            </option>
+          ))}
+        </select>
+        <select
+          value={approach}
+          onChange={(e) => setApproach(e.target.value)}
+          aria-label="Approach"
+        >
+          <option value="">Any approach</option>
+          {APPROACHES.map((a) => (
+            <option key={a.key} value={a.key}>
+              {a.label}
             </option>
           ))}
         </select>
@@ -130,8 +168,8 @@ export function BookClient({ rows, canWrite, dbUnavailable, initialPeoId, justSa
                 <thead>
                   <tr>
                     <th>Account</th>
-                    <th>Fit</th>
-                    <th>Stage</th>
+                    <th>Priority</th>
+                    <th>Stage / approach</th>
                     <th>Next action</th>
                   </tr>
                 </thead>
@@ -146,13 +184,24 @@ export function BookClient({ rows, canWrite, dbUnavailable, initialPeoId, justSa
                           {r.industry}
                           {r.size ? ` · ${r.size.toLocaleString()} WSE` : ""}
                           {r.state ? ` · ${r.city}, ${r.state}` : ""}
+                          {r.intent !== "UNKNOWN" ? ` · intl hiring: ${intentLabel(r.intent)}` : ""}
                         </div>
                       </td>
                       <td>
-                        <span className={`${styles.fit} ${fitClass[r.fitTier]}`}>{r.fit}</span>
+                        <span
+                          className={`${styles.fit} ${fitClass[priorityTier(r.priority)]}`}
+                          title={
+                            r.priority !== r.fit ? `structural fit ${r.fit} + intent` : undefined
+                          }
+                        >
+                          {r.priority}
+                        </span>
                       </td>
                       <td>
                         <StageBadge stage={r.stage} />
+                        <div className={styles.stackTop}>
+                          <ApproachChip approach={r.approach} />
+                        </div>
                       </td>
                       <td>
                         {r.nextAction ? (
@@ -184,7 +233,8 @@ export function BookClient({ rows, canWrite, dbUnavailable, initialPeoId, justSa
             <div className={styles.panel}>
               <h2>{selected.name}</h2>
               <div className={styles.meta}>
-                {selected.csm} · {selected.industry} · fit {selected.fit}
+                {selected.csm} · {selected.industry} · priority {selected.priority}
+                {selected.priority !== selected.fit ? ` (fit ${selected.fit})` : ""}
                 <br />
                 {selected.contactName && (
                   <>
@@ -220,12 +270,37 @@ export function BookClient({ rows, canWrite, dbUnavailable, initialPeoId, justSa
                     </select>
                   </div>
                   <div className={styles.field}>
+                    <label>Approach — what you&apos;re cleared to do</label>
+                    <select name="approach" defaultValue={selected.approach}>
+                      {APPROACHES.map((a) => (
+                        <option key={a.key} value={a.key}>
+                          {a.label}
+                        </option>
+                      ))}
+                    </select>
+                    <p className={styles.hint}>{approachBlurb(selected.approach)}</p>
+                  </div>
+                  <div className={styles.field}>
+                    <label>International hiring in their book</label>
+                    <select name="intent" defaultValue={selected.intent}>
+                      {INTENTS.map((i) => (
+                        <option key={i.key} value={i.key}>
+                          {i.label}
+                        </option>
+                      ))}
+                    </select>
+                    <p className={styles.hint}>Lifts or lowers priority to match real demand.</p>
+                  </div>
+                  <div className={styles.field}>
                     <label>Next action</label>
                     <input
                       name="nextAction"
                       defaultValue={selected.nextAction ?? ""}
-                      placeholder="e.g. Brief Anika on Engage's global appetite"
+                      placeholder={suggestedAction(selected) ?? "e.g. Brief the CSM"}
                     />
+                    {!selected.nextAction && suggestedAction(selected) && (
+                      <p className={styles.hint}>Suggested: {suggestedAction(selected)}</p>
+                    )}
                   </div>
                   <div className={styles.field}>
                     <label>Next action date</label>

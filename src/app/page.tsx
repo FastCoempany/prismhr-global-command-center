@@ -1,12 +1,18 @@
 import Link from "next/link";
 import { AppWayfinder } from "@/components/app-wayfinder";
 import { loadCommand, todayIso, type PeoRow } from "@/lib/command-center/data";
-import { STAGES, stageLabel } from "@/lib/command-center/types";
+import { STAGES, isGated, stageLabel, suggestedAction } from "@/lib/command-center/types";
 import styles from "./command-center.module.css";
 
 export const dynamic = "force-dynamic";
 
 const activeSet = new Set(STAGES.filter((s) => s.pipeline).map((s) => s.key));
+
+// Gate-aware: never suggest a channel-jumping move for a PEO the CSM hasn't cleared.
+function nextStepFor(r: PeoRow): string | null {
+  if (isGated(r.approach)) return `Clear ${r.name} with ${r.csm} first`;
+  return suggestedAction(r);
+}
 
 function Row({ r, note }: { r: PeoRow; note?: React.ReactNode }) {
   return (
@@ -42,7 +48,10 @@ export default async function TodayPage() {
     .sort((a, b) => (a.nextActionDate ?? "").localeCompare(b.nextActionDate ?? ""))
     .slice(0, 8);
   const inflight = data.rows.filter((r) => activeSet.has(r.stage) && !r.nextActionDate);
-  const starts = data.rows.filter((r) => r.stage === "NOT_TOUCHED").slice(0, 8);
+  const starts = data.rows
+    .filter((r) => r.stage === "NOT_TOUCHED")
+    .sort((a, b) => b.priority - a.priority)
+    .slice(0, 8);
 
   return (
     <>
@@ -83,11 +92,13 @@ export default async function TodayPage() {
               <p className={styles.muted}>All active PEOs have a next step.</p>
             )}
             {inflight.map((r) => (
-              <Row
-                key={r.id}
-                r={r}
-                note={<span className={styles.chip}>{stageLabel(r.stage)}</span>}
-              />
+              <div key={r.id} className={styles.itemStack}>
+                <div className={styles.itemTop}>
+                  <Link href={`/book?peo=${r.id}`}>{r.name}</Link>
+                  <span className={styles.chip}>{stageLabel(r.stage)}</span>
+                </div>
+                {nextStepFor(r) && <div className={styles.suggest}>{nextStepFor(r)}</div>}
+              </div>
             ))}
           </div>
 
@@ -100,17 +111,17 @@ export default async function TodayPage() {
           </div>
 
           <div className={styles.card}>
-            <h3>Suggested starts — highest fit, untouched</h3>
+            <h3>Suggested starts — highest priority, untouched</h3>
             {starts.map((r) => (
-              <Row
-                key={r.id}
-                r={r}
-                note={
+              <div key={r.id} className={styles.itemStack}>
+                <div className={styles.itemTop}>
+                  <Link href={`/book?peo=${r.id}`}>{r.name}</Link>
                   <span className={styles.chip}>
-                    fit {r.fit} · {r.csm}
+                    {r.priority} · {r.csm}
                   </span>
-                }
-              />
+                </div>
+                <div className={styles.suggest}>Brief {r.csm} on {r.name}</div>
+              </div>
             ))}
           </div>
         </div>
