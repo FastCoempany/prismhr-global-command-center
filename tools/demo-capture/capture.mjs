@@ -8,7 +8,7 @@
 // For each captured screen it writes, into ./capture-output/:
 //   text/NNN.txt        visible page text (verbatim, includes below-the-fold)
 //   dom/NNN.html        full serialized DOM (every label, field, link target)
-//   a11y/NNN.json       accessibility tree (semantic roles + names)
+//   a11y/NNN.yaml       accessibility (aria) snapshot — semantic roles + names
 //   screenshots/NNN.png full-page screenshot (the look, for the visual guide)
 // plus manifest.jsonl   one line per capture (seq, url, title, trigger, time)
 //
@@ -73,15 +73,50 @@ async function capture(reason) {
     const url = page.url();
     const title = await page.title().catch(() => '');
 
-    await writeFile(path.join(OUT, 'text', `${id}.txt`), `URL: ${url}\nTITLE: ${title}\n\n${text}`);
-    await writeFile(path.join(OUT, 'dom', `${id}.html`), await page.content());
-    const a11y = await page.accessibility.snapshot().catch(() => null);
-    await writeFile(path.join(OUT, 'a11y', `${id}.json`), JSON.stringify(a11y, null, 2));
-    await page.screenshot({ path: path.join(OUT, 'screenshots', `${id}.png`), fullPage: true }).catch(() => {});
-    await appendFile(
-      path.join(OUT, 'manifest.jsonl'),
-      JSON.stringify({ seq, id, url, title, reason, ts: new Date().toISOString() }) + '\n',
-    );
+    // Each artifact is written independently so one failure never loses the rest.
+    try {
+      await writeFile(path.join(OUT, 'text', `${id}.txt`), `URL: ${url}\nTITLE: ${title}\n\n${text}`);
+    } catch (e) {
+      console.error('  text:', e.message);
+    }
+
+    try {
+      await writeFile(path.join(OUT, 'dom', `${id}.html`), await page.content());
+    } catch (e) {
+      console.error('  dom:', e.message);
+    }
+
+    // Accessibility snapshot. page.accessibility was removed in recent Playwright,
+    // so prefer the modern locator.ariaSnapshot() and fall back for older builds.
+    try {
+      let aria = null;
+      try {
+        aria = await page.locator('body').ariaSnapshot();
+      } catch {
+        /* older/newer API mismatch — try the legacy path below */
+      }
+      if (aria == null && page.accessibility?.snapshot) {
+        aria = JSON.stringify(await page.accessibility.snapshot(), null, 2);
+      }
+      if (aria != null) await writeFile(path.join(OUT, 'a11y', `${id}.yaml`), aria);
+    } catch (e) {
+      console.error('  a11y:', e.message);
+    }
+
+    try {
+      await page.screenshot({ path: path.join(OUT, 'screenshots', `${id}.png`), fullPage: true });
+    } catch (e) {
+      console.error('  screenshot:', e.message);
+    }
+
+    try {
+      await appendFile(
+        path.join(OUT, 'manifest.jsonl'),
+        JSON.stringify({ seq, id, url, title, reason, ts: new Date().toISOString() }) + '\n',
+      );
+    } catch (e) {
+      console.error('  manifest:', e.message);
+    }
 
     console.log(`✓  ${id}  ${title || url}`);
     await page.evaluate((n) => {

@@ -14,7 +14,7 @@ audiences: []               # service_provider | direct_employer
 capture:
   text: ""                  # text/NNN.txt
   dom: ""                   # dom/NNN.html
-  a11y: ""                  # a11y/NNN.json
+  a11y: ""                  # a11y/NNN.yaml
   screenshot: ""            # screenshots/NNN.png
 tags: []
 ---

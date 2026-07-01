@@ -43,7 +43,7 @@ audiences: [service_provider, direct_employer]
 capture:
   text: text/001.txt
   dom: dom/001.html
-  a11y: a11y/001.json
+  a11y: a11y/001.yaml
   screenshot: screenshots/001.png
 tags: [landing, approvals, multi-currency, eor, contractor]
 ---

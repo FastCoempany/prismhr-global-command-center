@@ -20,7 +20,7 @@ For every unique screen you visit, into `capture-output/`:
 | --- | --- | --- |
 | `text/NNN.txt` | Visible page text, verbatim | Clean, low-noise source for scripts — includes below-the-fold |
 | `dom/NNN.html` | Full serialized DOM | Every label, field, and link target; nothing hidden escapes |
-| `a11y/NNN.json` | Accessibility tree | Semantic map of buttons, tabs, inputs |
+| `a11y/NNN.yaml` | Accessibility (aria) snapshot | Semantic map of buttons, tabs, inputs |
 | `screenshots/NNN.png` | Full-page screenshot | The look, for the eventual visual guide |
 | `manifest.jsonl` | One line per capture | seq, url, title, what triggered it, timestamp |
 
