@@ -1,0 +1,1056 @@
+{
+"generatedAt": "2026-07-02",
+"currency": "USD",
+"offboardingFee": 750,
+"offboardingNote": "A $750 offboarding fee applies each time an employee is offboarded.",
+"billingNote": "PEPM = per employee, per month. Prices are PrismHR Global list pricing in USD.",
+"addOns": [
+{
+"label": "Agent of Record (AOR)",
+"price": 135,
+"billing": "PEPM"
+},
+{
+"label": "Contractor",
+"price": 27,
+"billing": "PEPM"
+},
+{
+"label": "Background check (per employee)",
+"price": 200,
+"billing": "one-time"
+},
+{
+"label": "Monthly Visa Maintenance",
+"price": 210,
+"billing": "PEPM"
+},
+{
+"label": "Setup Fee Per Employee",
+"price": 500,
+"billing": "one-time"
+},
+{
+"label": "Visa Sponsorship",
+"price": 100,
+"billing": "PEPM"
+},
+{
+"label": "Visa Sponsorship Application",
+"price": "Per Request",
+"billing": "one-time"
+},
+{
+"label": "Global HR Essential Advisory - Additional Hours",
+"price": "Per Request",
+"billing": "one-time charge"
+},
+{
+"label": "Global HR Essential Advisory - Hourly Consulting",
+"price": "Per Request",
+"billing": "one-time charge"
+},
+{
+"label": "Global HR Essential Advisory - Monthly Advisory",
+"price": "Per Request",
+"billing": "PEPM"
+},
+{
+"label": "Global Payroll Monthly Fee Per Country",
+"price": "Per Request",
+"billing": "PEPM"
+},
+{
+"label": "Global Payroll Setup Fee Per Country",
+"price": "Per Request",
+"billing": "one-time"
+}
+],
+"countries": [
+{
+"country": "Albania",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Algeria",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Andorra",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Angola",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Antigua",
+"price": 455,
+"tier": "Tier 3"
+},
+{
+"country": "Argentina",
+"price": 350,
+"tier": "Tier 1"
+},
+{
+"country": "Armenia",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Aruba",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Australia",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Austria",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Azerbaijan",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Bahamas",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Bahrain",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Bangladesh",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Barbados",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Belarus",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Belgium",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Belize",
+"price": 350,
+"tier": "Tier 1"
+},
+{
+"country": "Benin",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Bermuda",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Bhutan",
+"price": 455,
+"tier": "Tier 3"
+},
+{
+"country": "Bolivia",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Bosnia",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Botswana",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Brazil",
+"price": 420,
+"tier": "Tier 3"
+},
+{
+"country": "Brunei",
+"price": 455,
+"tier": "Tier 3"
+},
+{
+"country": "Bulgaria",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Burkina Faso",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Burundi",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Cabo Verde",
+"price": 455,
+"tier": "Tier 3"
+},
+{
+"country": "Cambodia",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Cameroon",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Canada",
+"price": 350,
+"tier": "Tier 1"
+},
+{
+"country": "Cayman Islands",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Central Africa Republic",
+"price": 455,
+"tier": "Tier 3"
+},
+{
+"country": "Chad",
+"price": 455,
+"tier": "Tier 3"
+},
+{
+"country": "Chile",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "China",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Colombia",
+"price": 350,
+"tier": "Tier 1"
+},
+{
+"country": "Comoros",
+"price": 455,
+"tier": "Tier 3"
+},
+{
+"country": "Costa Rica",
+"price": 350,
+"tier": "Tier 1"
+},
+{
+"country": "Cote d'Ivoire",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Croatia",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Cyprus",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Czech Republic/Czechia",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Democratic Republic of Congo",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Denmark",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Djibouti",
+"price": 455,
+"tier": "Tier 3"
+},
+{
+"country": "Dominica",
+"price": 455,
+"tier": "Tier 3"
+},
+{
+"country": "Dominican Republic",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Ecuador",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Egypt",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "El Salvador",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Equatorial Guinea",
+"price": 455,
+"tier": "Tier 3"
+},
+{
+"country": "Eritrea",
+"price": 455,
+"tier": "Tier 3"
+},
+{
+"country": "Estonia",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Eswatini",
+"price": 455,
+"tier": "Tier 3"
+},
+{
+"country": "Ethiopia",
+"price": 455,
+"tier": "Tier 3"
+},
+{
+"country": "Faroe Islands",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Fiji",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Finland",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "France",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Gabon",
+"price": 455,
+"tier": "Tier 3"
+},
+{
+"country": "Gambia",
+"price": 455,
+"tier": "Tier 3"
+},
+{
+"country": "Georgia",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Germany",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Ghana",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Gibraltar",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Global",
+"price": 419.3,
+"tier": "Tier 3"
+},
+{
+"country": "Greece",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Grenada",
+"price": 455,
+"tier": "Tier 3"
+},
+{
+"country": "Guam",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Guatemala",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Guinea",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Guinea-Bissau",
+"price": 455,
+"tier": "Tier 3"
+},
+{
+"country": "Guyana",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Haiti",
+"price": 455,
+"tier": "Tier 3"
+},
+{
+"country": "Honduras",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Hong Kong",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Hungary",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Iceland",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "India",
+"price": 315,
+"tier": "Tier 1"
+},
+{
+"country": "Indonesia",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Iraq",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Ireland",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Isle of Man",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Israel",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Italy",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Ivory Coast",
+"price": 455,
+"tier": "Tier 3"
+},
+{
+"country": "Jamaica",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Japan",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Jordan",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Kazakstan",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Kenya",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Kiribati",
+"price": 455,
+"tier": "Tier 3"
+},
+{
+"country": "Kuwait",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Kyrgyzstan",
+"price": 455,
+"tier": "Tier 3"
+},
+{
+"country": "Laos",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Latvia",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Lebanon",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Lesotho",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Liberia",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Libya",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Liechtenstein",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Lithuania",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Luxembourg",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Macao",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Madagascar",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Malawi",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Malaysia",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Maldives",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Mali",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Malta",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Marshall Islands",
+"price": 455,
+"tier": "Tier 3"
+},
+{
+"country": "Mauritania",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Mauritius",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Mexico",
+"price": 350,
+"tier": "Tier 1"
+},
+{
+"country": "Micronesia",
+"price": 455,
+"tier": "Tier 3"
+},
+{
+"country": "Moldova",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Monaco",
+"price": 455,
+"tier": "Tier 3"
+},
+{
+"country": "Mongolia",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Montenegro",
+"price": 455,
+"tier": "Tier 3"
+},
+{
+"country": "Morocco",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Mozambique",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Myanmar",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Namibia",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Nauru",
+"price": 455,
+"tier": "Tier 3"
+},
+{
+"country": "Nepal",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Netherland Antilles",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Netherlands",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "New Zealand",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Nicaragua",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Niger",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Nigeria",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "North Macedonia",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Norway",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Oman",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Pakistan",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Palau",
+"price": 455,
+"tier": "Tier 3"
+},
+{
+"country": "Palestine",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Panama",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Papua New Guinea",
+"price": 455,
+"tier": "Tier 3"
+},
+{
+"country": "Paraguay",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Peru",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Philippines",
+"price": 350,
+"tier": "Tier 1"
+},
+{
+"country": "Poland",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Portugal",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Puerto Rico",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Qatar",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Romania",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Rwanda",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Saint Lucia",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Saint Vincent and The Grenadines",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Samoa",
+"price": 455,
+"tier": "Tier 3"
+},
+{
+"country": "San Marino",
+"price": 455,
+"tier": "Tier 3"
+},
+{
+"country": "Saudi Arabia",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Senegal",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Serbia",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Seychelles",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Sierra Leone",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Singapore",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Slovakia",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Slovenia",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Solomon Islands",
+"price": 455,
+"tier": "Tier 3"
+},
+{
+"country": "Somalia",
+"price": 455,
+"tier": "Tier 3"
+},
+{
+"country": "South Africa",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "South Korea",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Spain",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Sri Lanka",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Suriname",
+"price": 455,
+"tier": "Tier 3"
+},
+{
+"country": "Sweden",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Switzerland",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Taiwan",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Tajikistan",
+"price": 455,
+"tier": "Tier 3"
+},
+{
+"country": "Tanzania",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Thailand",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Timor-Leste",
+"price": 455,
+"tier": "Tier 3"
+},
+{
+"country": "Togo",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Tonga",
+"price": 455,
+"tier": "Tier 3"
+},
+{
+"country": "Trinidad and Tobago",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Tunisia",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Turkey",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Turkmenistan",
+"price": 455,
+"tier": "Tier 3"
+},
+{
+"country": "Tuvalu",
+"price": 455,
+"tier": "Tier 3"
+},
+{
+"country": "UAE",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "US Virgin Islands",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Uganda",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Ukraine",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "United Kingdom",
+"price": 350,
+"tier": "Tier 1"
+},
+{
+"country": "United States",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Uruguay",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Uzbekistan",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Vanuatu",
+"price": 455,
+"tier": "Tier 3"
+},
+{
+"country": "Vietnam",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Yemen",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Zambia",
+"price": 385,
+"tier": "Tier 2"
+},
+{
+"country": "Zimbabwe",
+"price": 385,
+"tier": "Tier 2"
+}
+]
+}

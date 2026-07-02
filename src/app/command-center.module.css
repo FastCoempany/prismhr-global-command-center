@@ -24,6 +24,21 @@
   font-size: 13px;
   margin: 0 0 20px;
 }
+.h2 {
+  font-size: 15px;
+  color: var(--navy);
+  margin: 22px 0 10px;
+}
+.priceCountry {
+  font-weight: 600;
+  color: var(--navy);
+}
+.priceCell {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  white-space: nowrap;
+}
 .banner {
   background: #fff7ed;
   border: 1px solid #fed7aa;

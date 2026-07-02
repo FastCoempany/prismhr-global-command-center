@@ -40,6 +40,13 @@ export function AppWayfinder({
             Accounts
           </Link>
           <Link
+            aria-current={current === "Pricing" ? "page" : undefined}
+            className="app-route-link"
+            href="/pricing"
+          >
+            Pricing
+          </Link>
+          <Link
             aria-current={current === "Today" ? "page" : undefined}
             className="app-route-link"
             href="/today"
