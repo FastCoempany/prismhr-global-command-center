@@ -105,6 +105,28 @@ export function extractCountries(d: DemandRecord | undefined): string[] {
   return [...new Set(norm)].slice(0, 6);
 }
 
+// Homepages for the competitor EORs we detect — so their names can be linked.
+const COMPETITOR_URLS: Record<string, string> = {
+  "Globalization Partners": "https://www.g-p.com",
+  Deel: "https://www.deel.com",
+  "Velocity Global": "https://velocityglobal.com",
+  Papaya: "https://www.papayaglobal.com",
+  "Remote.com": "https://remote.com",
+  Oyster: "https://www.oysterhr.com",
+  Multiplier: "https://www.usemultiplier.com",
+  "Safeguard Global": "https://www.safeguardglobal.com",
+  Omnipresent: "https://www.omnipresent.com",
+  Rippling: "https://www.rippling.com",
+  Skuad: "https://www.skuad.io",
+  Playroll: "https://www.playroll.com",
+  "Atlas HXM": "https://www.atlashxm.com",
+  TriNet: "https://www.trinet.com",
+};
+
+export function competitorUrl(name: string): string | undefined {
+  return COMPETITOR_URLS[name];
+}
+
 export type PlayType = "displacement" | "greenfield" | null;
 
 export function analyzePlay(d: DemandRecord | undefined): {
