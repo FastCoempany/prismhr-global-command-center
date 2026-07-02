@@ -915,15 +915,17 @@ model PeoActivity {
 // from PeoState / the book / anything else. Every card and node state is set by
 // hand. `states` / `notes` are JSON maps keyed by dashboard node key.
 model DashCard {
-  id        String   @id @default(cuid())
-  name      String
-  subtitle  String?
-  position  Int      @default(0)
-  archived  Boolean  @default(false)
-  states    Json?
-  notes     Json?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String   @id @default(cuid())
+  name       String
+  subtitle   String?
+  position   Int      @default(0)
+  archived   Boolean  @default(false)
+  states     Json? // { nodeKey: "todo"|"active"|"done" }
+  notes      Json? // { nodeKey: string }  (general per-node note, e.g. research seed)
+  checks     Json? // { nodeKey: boolean[] }  (mandatory checkbox state)
+  checkNotes Json? // { nodeKey: { itemIndex: string } }  (per-checkbox note)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   @@index([position])
   @@index([archived])

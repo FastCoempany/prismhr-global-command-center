@@ -4,7 +4,22 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getAppAccess } from "@/lib/auth";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
-import { DASH_NODE_KEYS, isNodeState, type DashNodeKey, type NodeState } from "@/lib/dashboard/stages";
+import {
+  DASH_NODE_KEYS,
+  isNodeState,
+  nodeChecklist,
+  stateFromChecks,
+  type DashNodeKey,
+  type NodeState,
+} from "@/lib/dashboard/stages";
+
+function lightNext(states: Record<string, string>, node: DashNodeKey) {
+  const i = DASH_NODE_KEYS.indexOf(node);
+  const nextKey = DASH_NODE_KEYS[i + 1];
+  if (nextKey && (!isNodeState(states[nextKey]) || states[nextKey] === "todo")) {
+    states[nextKey] = "active";
+  }
+}
 
 function str(fd: FormData, key: string, max = 4000) {
   const v = fd.get(key);
@@ -63,36 +78,91 @@ export async function renameCard(formData: FormData) {
   done();
 }
 
-// Quick-paint: set one node's state, preserving notes.
-export async function paintNode(formData: FormData) {
+// Node-click override (the "for fun" poke): advance todo → active → done → todo,
+// and light the next node when this one reaches done.
+export async function advanceNode(formData: FormData) {
   const cardId = str(formData, "cardId", 40);
   const node = str(formData, "node", 40) as DashNodeKey;
-  const stateRaw = str(formData, "state", 20);
-  const state: NodeState = isNodeState(stateRaw) ? stateRaw : "todo";
   if (!(await requireWrite()) || !cardId || !DASH_NODE_KEYS.includes(node)) done();
 
   const prisma = getPrisma();
   const card = await prisma.dashCard.findUnique({ where: { id: cardId } });
   if (!card) done();
-  const states: Record<string, string> = {
-    ...((card!.states as Record<string, string> | null) ?? {}),
-    [node]: state,
-  };
+  const states: Record<string, string> = { ...((card!.states as Record<string, string> | null) ?? {}) };
+  const cur: NodeState = isNodeState(states[node]) ? (states[node] as NodeState) : "todo";
+  states[node] = cur === "todo" ? "active" : cur === "active" ? "done" : "todo";
+  if (states[node] === "done") lightNext(states, node);
   await prisma.dashCard.update({ where: { id: cardId }, data: { states } });
   done();
 }
 
-// Save all of a card's per-node notes at once, preserving states.
-export async function saveNotes(formData: FormData) {
+// The real mechanism: toggle one mandatory checkbox, recompute the node's lit
+// state from its checks, and light the next node once all are checked.
+export async function toggleCheck(formData: FormData) {
   const cardId = str(formData, "cardId", 40);
-  if (!(await requireWrite()) || !cardId) done();
-
-  const notes: Record<string, string> = {};
-  for (const key of DASH_NODE_KEYS) {
-    const v = str(formData, `note_${key}`, 4000);
-    if (v) notes[key] = v;
+  const node = str(formData, "node", 40) as DashNodeKey;
+  const index = parseInt(str(formData, "index", 4), 10);
+  if (!(await requireWrite()) || !cardId || !DASH_NODE_KEYS.includes(node) || Number.isNaN(index)) {
+    done();
   }
-  await getPrisma().dashCard.update({ where: { id: cardId }, data: { notes } });
+
+  const count = nodeChecklist(node).length;
+  const prisma = getPrisma();
+  const card = await prisma.dashCard.findUnique({ where: { id: cardId } });
+  if (!card) done();
+
+  const allChecks: Record<string, boolean[]> = {
+    ...((card!.checks as Record<string, boolean[]> | null) ?? {}),
+  };
+  const arr = Array.isArray(allChecks[node]) ? [...allChecks[node]] : [];
+  while (arr.length < count) arr.push(false);
+  if (index >= 0 && index < count) arr[index] = !arr[index];
+  allChecks[node] = arr;
+
+  const states: Record<string, string> = { ...((card!.states as Record<string, string> | null) ?? {}) };
+  states[node] = stateFromChecks(arr, count);
+  if (states[node] === "done") lightNext(states, node);
+
+  await prisma.dashCard.update({ where: { id: cardId }, data: { checks: allChecks, states } });
+  done();
+}
+
+// Per-checkbox note.
+export async function saveCheckNote(formData: FormData) {
+  const cardId = str(formData, "cardId", 40);
+  const node = str(formData, "node", 40) as DashNodeKey;
+  const index = str(formData, "index", 4);
+  const note = str(formData, "note", 2000);
+  if (!(await requireWrite()) || !cardId || !DASH_NODE_KEYS.includes(node)) done();
+
+  const prisma = getPrisma();
+  const card = await prisma.dashCard.findUnique({ where: { id: cardId } });
+  if (!card) done();
+  const all: Record<string, Record<string, string>> = {
+    ...((card!.checkNotes as Record<string, Record<string, string>> | null) ?? {}),
+  };
+  const per = { ...(all[node] ?? {}) };
+  if (note) per[index] = note;
+  else delete per[index];
+  all[node] = per;
+  await prisma.dashCard.update({ where: { id: cardId }, data: { checkNotes: all } });
+  done();
+}
+
+// General per-node note (e.g. the research seed dropped on Discovery at add-time).
+export async function saveNote(formData: FormData) {
+  const cardId = str(formData, "cardId", 40);
+  const node = str(formData, "node", 40) as DashNodeKey;
+  const note = str(formData, "note", 4000);
+  if (!(await requireWrite()) || !cardId || !DASH_NODE_KEYS.includes(node)) done();
+
+  const prisma = getPrisma();
+  const card = await prisma.dashCard.findUnique({ where: { id: cardId } });
+  if (!card) done();
+  const notes: Record<string, string> = { ...((card!.notes as Record<string, string> | null) ?? {}) };
+  if (note) notes[node] = note;
+  else delete notes[node];
+  await prisma.dashCard.update({ where: { id: cardId }, data: { notes } });
   done();
 }
 

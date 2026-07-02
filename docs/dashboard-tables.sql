@@ -11,13 +11,17 @@ CREATE TABLE IF NOT EXISTS "DashCard" (
   "archived" BOOLEAN NOT NULL DEFAULT false,
   "states" JSONB,
   "notes" JSONB,
+  "checks" JSONB,
+  "checkNotes" JSONB,
   "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
   "updatedAt" TIMESTAMP(3) NOT NULL,
   CONSTRAINT "DashCard_pkey" PRIMARY KEY ("id")
 );
 
--- If DashCard already existed from an earlier run, add the archived column.
+-- If DashCard already existed from an earlier run, add the newer columns.
 ALTER TABLE "DashCard" ADD COLUMN IF NOT EXISTS "archived" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "DashCard" ADD COLUMN IF NOT EXISTS "checks" JSONB;
+ALTER TABLE "DashCard" ADD COLUMN IF NOT EXISTS "checkNotes" JSONB;
 
 CREATE INDEX IF NOT EXISTS "DashCard_position_idx" ON "DashCard"("position");
 CREATE INDEX IF NOT EXISTS "DashCard_archived_idx" ON "DashCard"("archived");

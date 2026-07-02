@@ -10,13 +10,15 @@ import {
   type NodeState,
 } from "@/lib/dashboard/stages";
 import {
+  advanceNode,
   deleteCard,
   moveCard,
-  paintNode,
   renameCard,
+  saveCheckNote,
   saveLabels,
-  saveNotes,
+  saveNote,
   toggleArchive,
+  toggleCheck,
 } from "./dashboard/actions";
 import styles from "./dashboard.module.css";
 
@@ -27,34 +29,20 @@ type Props = {
   labels: Record<string, string>;
 };
 
-const NEXT: Record<NodeState, NodeState> = {
-  todo: "active",
-  active: "done",
-  done: "action",
-  action: "todo",
-};
-
-const stateTextClass: Record<NodeState, string> = {
-  done: styles.doneText,
-  active: styles.activeText,
-  action: styles.actionText,
-  todo: styles.todoText,
-};
-
-function glyph(state: NodeState): string {
-  if (state === "done") return "✓";
-  if (state === "action") return "!";
-  return "";
-}
+const glyph = (state: NodeState) => (state === "done" ? "✓" : "");
 
 function Track({
   card,
   canWrite,
   label,
+  openKey,
+  onToggle,
 }: {
   card: DashCardRow;
   canWrite: boolean;
   label: (key: DashNodeKey) => string;
+  openKey: DashNodeKey | null;
+  onToggle: (key: DashNodeKey) => void;
 }) {
   return (
     <div className={styles.track}>
@@ -66,41 +54,54 @@ function Track({
           state === "done" || state === "active"
             ? ({ "--heat": n.heat } as React.CSSProperties)
             : undefined;
-        const glyphEl = <span className={styles.glyph}>{glyph(state)}</span>;
+        const done = card.checks[n.key].filter(Boolean).length;
+        const total = n.checklist.length;
         return (
           <div key={n.key} className={styles.cell}>
-            {i > 0 && (
-              <span className={`${styles.line} ${styles.lineLeft} ${prevDone ? styles.lineOn : ""}`} />
-            )}
-            {i < LAST_NODE && (
-              <span className={`${styles.line} ${styles.lineRight} ${selfDone ? styles.lineOn : ""}`} />
-            )}
-            {canWrite ? (
-              <form action={paintNode} className={styles.nodeForm}>
-                <input type="hidden" name="cardId" value={card.id} />
-                <input type="hidden" name="node" value={n.key} />
-                <input type="hidden" name="state" value={NEXT[state]} />
-                <button
-                  type="submit"
+            <div className={styles.nodeRow}>
+              {i > 0 && (
+                <span className={`${styles.line} ${styles.lineLeft} ${prevDone ? styles.lineOn : ""}`} />
+              )}
+              {i < LAST_NODE && (
+                <span className={`${styles.line} ${styles.lineRight} ${selfDone ? styles.lineOn : ""}`} />
+              )}
+              {canWrite ? (
+                <form action={advanceNode} className={styles.nodeForm}>
+                  <input type="hidden" name="cardId" value={card.id} />
+                  <input type="hidden" name="node" value={n.key} />
+                  <button
+                    type="submit"
+                    className={`${styles.node} ${styles[state]}`}
+                    style={heat}
+                    title={`${label(n.key)} — ${stateWord(state)} (override: click to advance)`}
+                    aria-label={`${label(n.key)}: ${stateWord(state)}. Override — click to advance.`}
+                  >
+                    <span className={styles.glyph}>{glyph(state)}</span>
+                  </button>
+                </form>
+              ) : (
+                <span
                   className={`${styles.node} ${styles[state]}`}
                   style={heat}
-                  title={`${label(n.key)} — ${stateWord(state)} (click to advance)`}
-                  aria-label={`${label(n.key)}: ${stateWord(state)}. Click to advance.`}
+                  role="img"
+                  aria-label={`${label(n.key)}: ${stateWord(state)}`}
                 >
-                  {glyphEl}
-                </button>
-              </form>
-            ) : (
-              <span
-                className={`${styles.node} ${styles[state]}`}
-                style={heat}
-                role="img"
-                aria-label={`${label(n.key)}: ${stateWord(state)}`}
-                title={`${label(n.key)} — ${stateWord(state)}`}
-              >
-                {glyphEl}
-              </span>
-            )}
+                  <span className={styles.glyph}>{glyph(state)}</span>
+                </span>
+              )}
+            </div>
+            <button
+              type="button"
+              className={`${styles.burger} ${openKey === n.key ? styles.burgerOn : ""}`}
+              onClick={() => onToggle(n.key)}
+              aria-expanded={openKey === n.key}
+              aria-label={`${label(n.key)} checklist (${done}/${total})`}
+              title={`${done}/${total} done`}
+            >
+              <span />
+              <span />
+              <span />
+            </button>
           </div>
         );
       })}
@@ -109,15 +110,21 @@ function Track({
 }
 
 export function DashboardClient({ cards, canWrite, dbUnavailable, labels }: Props) {
-  const [openCard, setOpenCard] = useState<string | null>(null);
   const [renaming, setRenaming] = useState<string | null>(null);
   const [showRename, setShowRename] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
+  const [openNode, setOpenNode] = useState<{ card: string; node: DashNodeKey } | null>(null);
+  const [openNote, setOpenNote] = useState<{ card: string; node: DashNodeKey; index: number } | null>(
+    null,
+  );
 
   const label = (key: DashNodeKey) => labels[key] || DASH_NODES.find((n) => n.key === key)!.label;
 
   const active = cards.filter((c) => !c.archived);
   const archived = cards.filter((c) => c.archived);
+
+  const toggleNode = (card: string, node: DashNodeKey) =>
+    setOpenNode((o) => (o && o.card === card && o.node === node ? null : { card, node }));
 
   return (
     <div className={styles.board}>
@@ -129,12 +136,7 @@ export function DashboardClient({ cards, canWrite, dbUnavailable, labels }: Prop
           {showRename && (
             <form action={saveLabels} className={styles.renameStages}>
               {DASH_NODES.map((n) => (
-                <input
-                  key={n.key}
-                  name={`label_${n.key}`}
-                  defaultValue={label(n.key)}
-                  aria-label={`${n.label} label`}
-                />
+                <input key={n.key} name={`label_${n.key}`} defaultValue={label(n.key)} aria-label={`${n.label} label`} />
               ))}
               <button type="submit" className={styles.miniSave}>
                 Save labels
@@ -144,7 +146,6 @@ export function DashboardClient({ cards, canWrite, dbUnavailable, labels }: Prop
         </div>
       )}
 
-      {/* Column headers */}
       <div className={styles.headRow}>
         <div className={styles.nameCol} />
         <div className={styles.track}>
@@ -165,7 +166,8 @@ export function DashboardClient({ cards, canWrite, dbUnavailable, labels }: Prop
       )}
 
       {active.map((card) => {
-        const isOpen = openCard === card.id;
+        const open = openNode?.card === card.id ? openNode.node : null;
+        const openN = open ? DASH_NODES.find((n) => n.key === open)! : null;
         return (
           <div key={card.id} className={styles.block}>
             <div className={styles.row}>
@@ -176,24 +178,13 @@ export function DashboardClient({ cards, canWrite, dbUnavailable, labels }: Prop
                     <input name="name" defaultValue={card.name} required aria-label="Account name" />
                     <input name="subtitle" defaultValue={card.subtitle ?? ""} placeholder="Note / CSM" aria-label="Subtitle" />
                     <div className={styles.renameRow}>
-                      <button type="submit" className={styles.miniSave}>
-                        Save
-                      </button>
-                      <button type="button" className={styles.miniBtn} onClick={() => setRenaming(null)}>
-                        Cancel
-                      </button>
+                      <button type="submit" className={styles.miniSave}>Save</button>
+                      <button type="button" className={styles.miniBtn} onClick={() => setRenaming(null)}>Cancel</button>
                     </div>
                   </form>
                 ) : (
                   <>
-                    <button
-                      type="button"
-                      className={styles.nameBtn}
-                      onClick={() => setOpenCard(isOpen ? null : card.id)}
-                      aria-expanded={isOpen}
-                    >
-                      {card.name}
-                    </button>
+                    <div className={styles.name}>{card.name}</div>
                     {card.subtitle && <div className={styles.meta}>{card.subtitle}</div>}
                     {canWrite && (
                       <div className={styles.manage}>
@@ -202,9 +193,7 @@ export function DashboardClient({ cards, canWrite, dbUnavailable, labels }: Prop
                           <button name="dir" value="up" className={styles.miniBtn} aria-label="Move up">↑</button>
                           <button name="dir" value="down" className={styles.miniBtn} aria-label="Move down">↓</button>
                         </form>
-                        <button type="button" className={styles.miniBtn} onClick={() => setRenaming(card.id)}>
-                          Rename
-                        </button>
+                        <button type="button" className={styles.miniBtn} onClick={() => setRenaming(card.id)}>Rename</button>
                         <form action={toggleArchive} className={styles.inlineForm}>
                           <input type="hidden" name="id" value={card.id} />
                           <button className={styles.miniBtn} aria-label="Archive">Archive</button>
@@ -218,53 +207,123 @@ export function DashboardClient({ cards, canWrite, dbUnavailable, labels }: Prop
                   </>
                 )}
               </div>
-              <Track card={card} canWrite={canWrite} label={label} />
+              <Track
+                card={card}
+                canWrite={canWrite}
+                label={label}
+                openKey={open}
+                onToggle={(k) => toggleNode(card.id, k)}
+              />
             </div>
 
-            {isOpen && (
-              <form action={saveNotes} className={styles.cardPanel}>
-                <input type="hidden" name="cardId" value={card.id} />
-                <div className={styles.panelHint}>
-                  Click a node above to advance its state. Notes below are what has to happen at each
-                  stage.
+            {openN && (
+              <div className={styles.checklistPanel}>
+                <div className={styles.panelHead}>
+                  <strong>{label(openN.key)}</strong>
+                  <span className={styles.progress}>
+                    {card.checks[openN.key].filter(Boolean).length}/{openN.checklist.length} done —
+                    all checked lights the stage
+                  </span>
+                  <button
+                    type="button"
+                    className={styles.drillClose}
+                    onClick={() => setOpenNode(null)}
+                    aria-label="Close"
+                  >
+                    ✕
+                  </button>
                 </div>
-                {DASH_NODES.map((n) => (
-                  <div key={n.key} className={styles.nodeNote}>
-                    <div className={styles.nodeNoteHead}>
-                      <span>{label(n.key)}</span>
-                      <span className={`${styles.drillState} ${stateTextClass[card.states[n.key]]}`}>
-                        {stateWord(card.states[n.key])}
-                      </span>
-                    </div>
-                    <ul className={styles.checklist}>
-                      {n.checklist.map((item, idx) => (
-                        <li key={idx}>
-                          <span className={styles.bullet} />
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
+
+                {(canWrite || card.notes[openN.key]) && (
+                  <form action={saveNote} className={styles.generalNote}>
+                    <input type="hidden" name="cardId" value={card.id} />
+                    <input type="hidden" name="node" value={openN.key} />
                     {canWrite ? (
                       <textarea
-                        name={`note_${n.key}`}
-                        defaultValue={card.notes[n.key]}
-                        placeholder="What has to happen here…"
-                        aria-label={`${label(n.key)} notes`}
+                        name="note"
+                        defaultValue={card.notes[openN.key]}
+                        placeholder="Context for this stage (research, partner notes)…"
+                        aria-label={`${label(openN.key)} context note`}
                         className={styles.noteArea}
                       />
                     ) : (
-                      card.notes[n.key] && <p className={styles.noteRead}>{card.notes[n.key]}</p>
+                      <p className={styles.noteRead}>{card.notes[openN.key]}</p>
                     )}
-                  </div>
-                ))}
-                {canWrite && (
-                  <div className={styles.saveRow}>
-                    <button type="submit" className={styles.saveBtn}>
-                      Save notes
-                    </button>
-                  </div>
+                    {canWrite && (
+                      <button type="submit" className={styles.miniSave}>Save context</button>
+                    )}
+                  </form>
                 )}
-              </form>
+
+                <ul className={styles.checkList}>
+                  {openN.checklist.map((item, i) => {
+                    const checked = card.checks[openN.key][i];
+                    const noteOpen =
+                      openNote?.card === card.id && openNote.node === openN.key && openNote.index === i;
+                    const existing = card.checkNotes[openN.key][i] ?? "";
+                    return (
+                      <li key={i} className={styles.checkItem}>
+                        <div className={styles.checkRow}>
+                          {canWrite ? (
+                            <form action={toggleCheck} className={styles.inlineForm}>
+                              <input type="hidden" name="cardId" value={card.id} />
+                              <input type="hidden" name="node" value={openN.key} />
+                              <input type="hidden" name="index" value={i} />
+                              <button
+                                type="submit"
+                                className={`${styles.checkbox} ${checked ? styles.checkOn : ""}`}
+                                aria-pressed={checked}
+                                aria-label={checked ? "Uncheck" : "Check"}
+                              >
+                                {checked ? "✓" : ""}
+                              </button>
+                            </form>
+                          ) : (
+                            <span className={`${styles.checkbox} ${checked ? styles.checkOn : ""}`}>
+                              {checked ? "✓" : ""}
+                            </span>
+                          )}
+                          <span className={`${styles.checkLabel} ${checked ? styles.checkLabelDone : ""}`}>
+                            {item}
+                          </span>
+                          <button
+                            type="button"
+                            className={`${styles.noteToggle} ${existing ? styles.noteToggleFull : ""}`}
+                            onClick={() =>
+                              setOpenNote((o) =>
+                                o && o.card === card.id && o.node === openN.key && o.index === i
+                                  ? null
+                                  : { card: card.id, node: openN.key, index: i },
+                              )
+                            }
+                            aria-label="Note"
+                            title={existing ? "Edit note" : "Add note"}
+                          >
+                            ✎
+                          </button>
+                        </div>
+                        {noteOpen && canWrite ? (
+                          <form action={saveCheckNote} className={styles.checkNoteForm}>
+                            <input type="hidden" name="cardId" value={card.id} />
+                            <input type="hidden" name="node" value={openN.key} />
+                            <input type="hidden" name="index" value={i} />
+                            <textarea
+                              name="note"
+                              defaultValue={existing}
+                              placeholder="Note for this item…"
+                              aria-label="Item note"
+                              className={styles.noteArea}
+                            />
+                            <button type="submit" className={styles.miniSave}>Save</button>
+                          </form>
+                        ) : (
+                          existing && <div className={styles.checkNoteRead}>{existing}</div>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
             )}
           </div>
         );
