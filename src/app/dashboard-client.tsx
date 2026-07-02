@@ -10,7 +10,6 @@ import {
   type NodeState,
 } from "@/lib/dashboard/stages";
 import {
-  addCard,
   deleteCard,
   moveCard,
   paintNode,
@@ -160,8 +159,8 @@ export function DashboardClient({ cards, canWrite, dbUnavailable, labels }: Prop
       {active.length === 0 && (
         <div className={styles.empty}>
           {dbUnavailable
-            ? "Run docs/dashboard-tables.sql in Supabase, then add your first account."
-            : "No accounts yet — add one below, or send one over from the Account Room."}
+            ? "Run docs/dashboard-tables.sql in Supabase, then add accounts from the Account Room."
+            : "No accounts yet — open the Account Room and use “+ Dashboard” to add them here."}
         </div>
       )}
 
@@ -270,16 +269,6 @@ export function DashboardClient({ cards, canWrite, dbUnavailable, labels }: Prop
           </div>
         );
       })}
-
-      {canWrite && (
-        <form action={addCard} className={styles.addForm}>
-          <input name="name" placeholder="Account name" required aria-label="New account name" />
-          <input name="subtitle" placeholder="Note / CSM (optional)" aria-label="New account note" />
-          <button type="submit" className={styles.addBtn}>
-            + Add account
-          </button>
-        </form>
-      )}
 
       {archived.length > 0 && (
         <div className={styles.archivedWrap}>

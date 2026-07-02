@@ -99,9 +99,23 @@
   cursor: pointer;
   white-space: nowrap;
 }
-.addMini:hover {
+.addMini:hover:not(:disabled) {
   border-color: var(--blue);
   background: #eef3fb;
+}
+.addMini:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.onDash {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--green);
+  background: #e4f7ea;
+  border-radius: 7px;
+  padding: 4px 10px;
+  white-space: nowrap;
 }
 .acctDetail {
   background: #fbfcfe;

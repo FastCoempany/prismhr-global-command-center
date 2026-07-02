@@ -410,35 +410,10 @@
 .saveBtn:hover {
   background: var(--blue-d);
 }
-.addForm {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  align-items: center;
-  margin-top: 18px;
-  padding-top: 16px;
-  border-top: 1px solid var(--line);
-}
-.addForm input {
-  padding: 8px 11px;
-  border-radius: 8px;
-  border: 1px solid var(--line);
-  font: inherit;
-  font-size: 13px;
-}
-.addForm input:first-of-type {
-  min-width: 220px;
-}
-.addBtn {
-  background: var(--navy);
-  color: #fff;
-  border: 0;
-  border-radius: 8px;
-  padding: 9px 16px;
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
-}
-.addBtn:hover {
-  background: #14264d;
+/* Clean, on-brand focus for the board's inputs — no stray default ring */
+.board input:focus,
+.board textarea:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 }
