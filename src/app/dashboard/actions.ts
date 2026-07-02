@@ -6,7 +6,7 @@ import { getAppAccess } from "@/lib/auth";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import { DASH_NODE_KEYS, isNodeState, type DashNodeKey, type NodeState } from "@/lib/dashboard/stages";
 
-function str(fd: FormData, key: string, max = 2000) {
+function str(fd: FormData, key: string, max = 4000) {
   const v = fd.get(key);
   return typeof v === "string" ? v.trim().slice(0, max) : "";
 }
@@ -33,6 +33,10 @@ export async function addCard(formData: FormData) {
   const back = safeReturn(formData);
   if (!(await requireWrite()) || !name) done(back);
 
+  // Optional one-time seed from the Account Room research (Discovery note).
+  const seed = str(formData, "seedDiscovery", 4000);
+  const notes: Record<string, string> = seed ? { discovery: seed } : {};
+
   const prisma = getPrisma();
   const top = await prisma.dashCard.findFirst({ orderBy: { position: "desc" }, select: { position: true } });
   await prisma.dashCard.create({
@@ -41,7 +45,7 @@ export async function addCard(formData: FormData) {
       subtitle: str(formData, "subtitle", 160) || null,
       position: (top?.position ?? -1) + 1,
       states: {},
-      notes: {},
+      notes,
     },
   });
   done(back);
@@ -59,27 +63,46 @@ export async function renameCard(formData: FormData) {
   done();
 }
 
-export async function setNode(formData: FormData) {
+// Quick-paint: set one node's state, preserving notes.
+export async function paintNode(formData: FormData) {
   const cardId = str(formData, "cardId", 40);
   const node = str(formData, "node", 40) as DashNodeKey;
   const stateRaw = str(formData, "state", 20);
   const state: NodeState = isNodeState(stateRaw) ? stateRaw : "todo";
-  const note = str(formData, "note", 2000);
   if (!(await requireWrite()) || !cardId || !DASH_NODE_KEYS.includes(node)) done();
 
   const prisma = getPrisma();
   const card = await prisma.dashCard.findUnique({ where: { id: cardId } });
   if (!card) done();
-
   const states: Record<string, string> = {
     ...((card!.states as Record<string, string> | null) ?? {}),
     [node]: state,
   };
-  const notes: Record<string, string> = { ...((card!.notes as Record<string, string> | null) ?? {}) };
-  if (note) notes[node] = note;
-  else delete notes[node];
+  await prisma.dashCard.update({ where: { id: cardId }, data: { states } });
+  done();
+}
 
-  await prisma.dashCard.update({ where: { id: cardId }, data: { states, notes } });
+// Save all of a card's per-node notes at once, preserving states.
+export async function saveNotes(formData: FormData) {
+  const cardId = str(formData, "cardId", 40);
+  if (!(await requireWrite()) || !cardId) done();
+
+  const notes: Record<string, string> = {};
+  for (const key of DASH_NODE_KEYS) {
+    const v = str(formData, `note_${key}`, 2000);
+    if (v) notes[key] = v;
+  }
+  await getPrisma().dashCard.update({ where: { id: cardId }, data: { notes } });
+  done();
+}
+
+export async function toggleArchive(formData: FormData) {
+  const id = str(formData, "id", 40);
+  if (!(await requireWrite()) || !id) done();
+  const prisma = getPrisma();
+  const card = await prisma.dashCard.findUnique({ where: { id }, select: { archived: true } });
+  if (!card) done();
+  await prisma.dashCard.update({ where: { id }, data: { archived: !card!.archived } });
   done();
 }
 
@@ -90,6 +113,7 @@ export async function moveCard(formData: FormData) {
 
   const prisma = getPrisma();
   const all = await prisma.dashCard.findMany({
+    where: { archived: false },
     orderBy: [{ position: "asc" }, { createdAt: "asc" }],
     select: { id: true, position: true },
   });
@@ -107,7 +131,22 @@ export async function moveCard(formData: FormData) {
 export async function deleteCard(formData: FormData) {
   const id = str(formData, "id", 40);
   if (!(await requireWrite()) || !id) done();
-
   await getPrisma().dashCard.delete({ where: { id } });
+  done();
+}
+
+// Rename the six stage-column labels (global; stored in the DashConfig singleton).
+export async function saveLabels(formData: FormData) {
+  if (!(await requireWrite())) done();
+  const labels: Record<string, string> = {};
+  for (const key of DASH_NODE_KEYS) {
+    const v = str(formData, `label_${key}`, 60);
+    if (v) labels[key] = v;
+  }
+  await getPrisma().dashConfig.upsert({
+    where: { id: "default" },
+    create: { id: "default", labels },
+    update: { labels },
+  });
   done();
 }

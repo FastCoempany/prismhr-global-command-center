@@ -80,13 +80,18 @@ export type DeskScore = {
 // condition — ease-of-landing (desk) only matters if there's something to sell —
 // so demand leads the blend (60/40). Accounts we couldn't research fall back to
 // the desk score alone.
+const CONF_FACTOR: Record<string, number> = { high: 1, medium: 0.85, low: 0.7 };
+
 export function compositeScore(
   desk: number,
   demand: number | null,
-): { score: number; tier: "high" | "medium" | "low" } {
-  const score = demand == null ? desk : Math.round(0.4 * desk + 0.6 * demand);
+  confidence: "high" | "medium" | "low" = "low",
+): { score: number; tier: "high" | "medium" | "low"; demandAdj: number | null; confFactor: number } {
+  const confFactor = CONF_FACTOR[confidence] ?? 0.7;
+  const demandAdj = demand == null ? null : Math.round(demand * confFactor);
+  const score = demandAdj == null ? desk : Math.round(0.4 * desk + 0.6 * demandAdj);
   const tier = score >= 70 ? "high" : score >= 45 ? "medium" : "low";
-  return { score, tier };
+  return { score, tier, demandAdj, confFactor };
 }
 
 export function deskScore(p: Peo): DeskScore {

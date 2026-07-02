@@ -4,7 +4,7 @@ import { getAppAccess } from "@/lib/auth";
 import { hasDatabaseEnv } from "@/lib/db";
 import { peos } from "@/lib/book";
 import { compositeScore, deskScore } from "@/lib/book/scoring";
-import { analyzePlay, getDemand } from "@/lib/book/research";
+import { analyzePlay, extractCountries, getDemand, researchGeneratedAt } from "@/lib/book/research";
 import { AccountsClient, type AccountRow } from "../accounts-client";
 import styles from "../command-center.module.css";
 
@@ -32,7 +32,7 @@ export default async function AccountsPage() {
       const d = deskScore(p);
       const dem = getDemand(p.id);
       const demand = dem?.researched ? dem.demandScore : null;
-      const c = compositeScore(d.score, demand);
+      const c = compositeScore(d.score, demand, dem?.confidence ?? "low");
       const pl = analyzePlay(dem);
       return {
         id: p.id,
@@ -57,6 +57,9 @@ export default async function AccountsPage() {
         researched: dem?.researched ?? false,
         play: pl.play,
         competitors: pl.competitors,
+        countries: extractCountries(dem),
+        demandAdj: c.demandAdj,
+        confFactor: c.confFactor,
         score: c.score,
         tier: c.tier,
         breakdown: d.breakdown,
@@ -70,9 +73,9 @@ export default async function AccountsPage() {
       <main className={styles.wrap}>
         <h1 className={styles.h1}>Account Room</h1>
         <p className={styles.sub}>
-          All {rows.length} channel accounts, heat-scored for PrismHR Global fit. Search, then add
-          any to your dashboard. Desk score now — the demand signal folds in after the 131-account
-          research pass.
+          All {rows.length} channel accounts, heat-scored for PrismHR Global fit. Global fit = 40%
+          desk + 60% demand (confidence-weighted). Play flags whether they&apos;re already on a
+          competitor EOR. Demand research last run {researchGeneratedAt}.
         </p>
         <AccountsClient rows={rows} canAdd={canAdd} />
       </main>

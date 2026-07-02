@@ -27,6 +27,9 @@ export type AccountRow = {
   researched: boolean;
   play: "displacement" | "greenfield" | null;
   competitors: string[];
+  countries: string[];
+  demandAdj: number | null;
+  confFactor: number;
   score: number; // composite
   tier: "high" | "medium" | "low";
   breakdown: { scale: number; incumbency: number; model: number; recency: number };
@@ -56,14 +59,32 @@ export function AccountsClient({ rows, canAdd }: { rows: AccountRow[]; canAdd: b
   const [tier, setTier] = useState("");
   const [play, setPlay] = useState("");
   const [incOnly, setIncOnly] = useState(false);
+  const [hotOnly, setHotOnly] = useState(false);
   const [sort, setSort] = useState("score");
   const [openId, setOpenId] = useState("");
+  const [copied, setCopied] = useState(false);
+
+  const isHot = (r: AccountRow) => r.play != null && (r.demand ?? 0) >= 60;
 
   const csms = useMemo(() => [...new Set(rows.map((r) => r.csm).filter(Boolean))].sort(), [rows]);
   const inds = useMemo(
     () => [...new Set(rows.map((r) => r.industry).filter(Boolean))].sort(),
     [rows],
   );
+
+  // Per-CSM rollup of real targets (books worth briefing on).
+  const rollup = useMemo(() => {
+    const m = new Map<string, { high: number; targets: number; hot: number }>();
+    for (const r of rows) {
+      if (!r.csm) continue;
+      if (!m.has(r.csm)) m.set(r.csm, { high: 0, targets: 0, hot: 0 });
+      const e = m.get(r.csm)!;
+      if (r.tier === "high") e.high++;
+      if (r.play != null) e.targets++;
+      if (isHot(r)) e.hot++;
+    }
+    return [...m.entries()].sort((a, b) => b[1].hot - a[1].hot);
+  }, [rows]);
 
   const filtered = useMemo(() => {
     const s = q.toLowerCase();
@@ -73,6 +94,7 @@ export function AccountsClient({ rows, canAdd }: { rows: AccountRow[]; canAdd: b
       if (tier && r.tier !== tier) return false;
       if (play && r.play !== play) return false;
       if (incOnly && !r.incumbent) return false;
+      if (hotOnly && !isHot(r)) return false;
       if (s && !`${r.name} ${r.city} ${r.state} ${r.contactName} ${r.industry}`.toLowerCase().includes(s))
         return false;
       return true;
@@ -82,10 +104,44 @@ export function AccountsClient({ rows, canAdd }: { rows: AccountRow[]; canAdd: b
       if (sort === "demand") return (b.demand ?? -1) - (a.demand ?? -1);
       return b.score - a.score;
     });
-  }, [rows, q, csm, industry, tier, play, incOnly, sort]);
+  }, [rows, q, csm, industry, tier, play, incOnly, hotOnly, sort]);
+
+  const copyList = async () => {
+    const text = filtered
+      .map(
+        (r) =>
+          `${r.name} — fit ${r.score}${r.demand != null ? `, demand ${r.demand}` : ""}${
+            r.play ? `, ${r.play}${r.competitors.length ? ` (${r.competitors.join("/")})` : ""}` : ""
+          } · ${r.csm}`,
+      )
+      .join("\n");
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setCopied(false);
+    }
+  };
 
   return (
     <>
+      <div className={styles.rollup}>
+        {rollup.map(([name, e]) => (
+          <button
+            key={name}
+            type="button"
+            className={`${styles.rollupCard} ${csm === name ? styles.rollupActive : ""}`}
+            onClick={() => setCsm(csm === name ? "" : name)}
+          >
+            <span className={styles.rollupName}>{name}</span>
+            <span className={styles.rollupNums}>
+              <b>{e.hot}</b> hot · {e.targets} targets · {e.high} high-fit
+            </span>
+          </button>
+        ))}
+      </div>
+
       <div className={styles.filters}>
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search account, city, contact…" />
         <select value={csm} onChange={(e) => setCsm(e.target.value)} aria-label="CSM">
@@ -124,6 +180,13 @@ export function AccountsClient({ rows, canAdd }: { rows: AccountRow[]; canAdd: b
           <input type="checkbox" checked={incOnly} onChange={(e) => setIncOnly(e.target.checked)} />
           On PrismHR only
         </label>
+        <label className={styles.toggle}>
+          <input type="checkbox" checked={hotOnly} onChange={(e) => setHotOnly(e.target.checked)} />
+          Hot targets
+        </label>
+        <button type="button" className={styles.addMini} onClick={copyList}>
+          {copied ? "Copied ✓" : "Copy list"}
+        </button>
         <span className={styles.count}>
           {filtered.length} of {rows.length}
         </span>
@@ -173,12 +236,12 @@ export function AccountsClient({ rows, canAdd }: { rows: AccountRow[]; canAdd: b
                 </td>
                 <td>
                   {a.play === "displacement" ? (
-                    <span
-                      className={`${styles.tag} ${styles.tagDisplace}`}
-                      title={`Currently served by ${a.competitors.join(", ")}`}
-                    >
-                      Displace
-                    </span>
+                    <>
+                      <span className={`${styles.tag} ${styles.tagDisplace}`}>Displace</span>
+                      {a.competitors.length > 0 && (
+                        <div className={styles.rowSub}>{a.competitors.join(", ")}</div>
+                      )}
+                    </>
                   ) : a.play === "greenfield" ? (
                     <span className={`${styles.tag} ${styles.tagGreen}`}>Greenfield</span>
                   ) : (
@@ -202,6 +265,7 @@ export function AccountsClient({ rows, canAdd }: { rows: AccountRow[]; canAdd: b
                         name="subtitle"
                         value={`${a.csm}${a.industry ? ` · ${a.industry}` : ""}`}
                       />
+                      <input type="hidden" name="seedDiscovery" value={seedFor(a)} />
                       <input type="hidden" name="returnTo" value="/accounts" />
                       <button className={styles.addMini}>+ Dashboard</button>
                     </form>
@@ -242,6 +306,15 @@ export function AccountsClient({ rows, canAdd }: { rows: AccountRow[]; canAdd: b
                                 ))}
                               </ul>
                             )}
+                            {a.countries.length > 0 && (
+                              <div className={styles.countries}>
+                                {a.countries.map((c) => (
+                                  <span key={c} className={styles.countryChip}>
+                                    {c}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
                             {a.evidence.length > 0 && (
                               <div className={styles.evidence}>
                                 {a.evidence.map((e, i) => (
@@ -251,6 +324,10 @@ export function AccountsClient({ rows, canAdd }: { rows: AccountRow[]; canAdd: b
                                 ))}
                               </div>
                             )}
+                            <div className={styles.formula}>
+                              Global fit {a.score} = 40% desk ({a.deskScore}) + 60% demand ({a.demand}
+                              {a.confFactor < 1 ? ` × ${a.confFactor} conf = ${a.demandAdj}` : ""})
+                            </div>
                           </>
                         ) : (
                           <div className={styles.demandPending}>
@@ -323,4 +400,17 @@ function hostOf(url: string) {
   } catch {
     return url;
   }
+}
+
+// One-time seed dropped into a new dashboard card's Discovery note on "+ Dashboard".
+function seedFor(a: AccountRow): string {
+  if (!a.researched || a.demand == null) return "";
+  const play =
+    a.play === "displacement"
+      ? `Displacement — currently on ${a.competitors.join(", ") || "a competitor EOR"}.`
+      : a.play === "greenfield"
+        ? "Greenfield — no incumbent EOR named."
+        : "";
+  const countries = a.countries.length ? ` Countries seen: ${a.countries.join(", ")}.` : "";
+  return `Demand ${a.demand}/100 (${a.confidence} confidence). ${play}${countries} ${a.summary}`.trim();
 }

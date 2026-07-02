@@ -44,6 +44,65 @@ const COMPETITORS: { name: string; re: RegExp }[] = [
 // found none".
 const NEG = /\b(no|not|n.t|without|zero|none|nor|lacks?|absence|unlike|neither|minimal)\b/i;
 
+// Light country extraction from the research text — surfaces "where" without a
+// new research pass. Curated to common cross-border hiring destinations.
+const COUNTRIES = [
+  "Canada",
+  "Mexico",
+  "Brazil",
+  "Argentina",
+  "Colombia",
+  "Chile",
+  "Costa Rica",
+  "United Kingdom",
+  "UK",
+  "Ireland",
+  "Germany",
+  "France",
+  "Spain",
+  "Portugal",
+  "Netherlands",
+  "Belgium",
+  "Poland",
+  "Ukraine",
+  "Romania",
+  "Bulgaria",
+  "Italy",
+  "Sweden",
+  "India",
+  "Philippines",
+  "Vietnam",
+  "China",
+  "Japan",
+  "Singapore",
+  "Indonesia",
+  "Malaysia",
+  "Australia",
+  "New Zealand",
+  "Turkey",
+  "Israel",
+  "United Arab Emirates",
+  "UAE",
+  "Saudi Arabia",
+  "South Africa",
+  "Nigeria",
+  "Kenya",
+  "Egypt",
+];
+
+export function extractCountries(d: DemandRecord | undefined): string[] {
+  if (!d) return [];
+  const text = [d.summary, ...(d.signals ?? []), ...(d.evidence ?? []).map((e) => e.claim)].join(" ");
+  const found: string[] = [];
+  for (const c of COUNTRIES) {
+    const re = new RegExp(`\\b${c.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`);
+    if (re.test(text) && !found.includes(c)) found.push(c);
+  }
+  // Normalize UK/UAE duplicates
+  const norm = found.map((c) => (c === "UK" ? "United Kingdom" : c === "UAE" ? "United Arab Emirates" : c));
+  return [...new Set(norm)].slice(0, 6);
+}
+
 export type PlayType = "displacement" | "greenfield" | null;
 
 export function analyzePlay(d: DemandRecord | undefined): {

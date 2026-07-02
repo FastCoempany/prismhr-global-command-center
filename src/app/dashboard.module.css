@@ -301,6 +301,107 @@
   text-decoration: underline;
 }
 
+/* Toolbar + stage rename */
+.toolbar {
+  margin-bottom: 10px;
+}
+.renameStages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+  align-items: center;
+}
+.renameStages input {
+  width: 150px;
+  padding: 5px 8px;
+  border-radius: 7px;
+  border: 1px solid var(--line);
+  font: inherit;
+  font-size: 12.5px;
+}
+
+/* Name as a toggle button */
+.nameBtn {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-weight: 700;
+  color: var(--navy);
+  font-size: 14px;
+  line-height: 1.25;
+  cursor: pointer;
+  text-align: left;
+}
+.nameBtn:hover {
+  color: var(--blue);
+}
+
+/* Node paint form wrapper — let the button be the flex item */
+.nodeForm {
+  display: contents;
+}
+
+/* Per-card notes panel */
+.cardPanel {
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--blue);
+  border-radius: 12px;
+  margin: 2px 0 10px;
+  padding: 12px 15px;
+  min-width: 820px;
+  display: grid;
+  gap: 12px;
+}
+.panelHint {
+  font-size: 12px;
+  color: var(--muted);
+}
+.nodeNote {
+  display: grid;
+  gap: 6px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+}
+.nodeNote:last-of-type {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+.nodeNoteHead {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-weight: 700;
+  color: var(--navy);
+  font-size: 13px;
+}
+
+/* Archived */
+.archivedWrap {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.archivedRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 0;
+  font-size: 13px;
+}
+.archivedName {
+  font-weight: 600;
+  color: var(--muted);
+  text-decoration: line-through;
+}
+.archivedActions {
+  display: inline-flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
 /* Manual board: empty state, card management, editing */
 .empty {
   color: var(--muted);

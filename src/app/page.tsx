@@ -41,6 +41,7 @@ export default async function DashboardPage() {
           cards={data.cards}
           canWrite={data.canWrite}
           dbUnavailable={data.status === "database-unavailable"}
+          labels={data.labels}
         />
       </main>
     </>
