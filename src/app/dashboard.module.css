@@ -57,11 +57,52 @@
 }
 .cell {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+/* The node + its connector lines live in a fixed-height row so the lines stay
+   centered on the node even though the burger sits below. */
+.nodeRow {
   position: relative;
+  width: 100%;
+  height: 34px;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 48px;
+}
+
+/* Hamburger under each node — opens that stage's checklist */
+.burger {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2.5px;
+  width: 22px;
+  height: 16px;
+  padding: 3px 4px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: #fff;
+  cursor: pointer;
+}
+.burger span {
+  display: block;
+  height: 1.5px;
+  border-radius: 2px;
+  background: var(--muted);
+}
+.burger:hover {
+  border-color: var(--blue);
+}
+.burgerOn {
+  border-color: var(--blue);
+  background: #eef3fb;
+}
+.burgerOn span {
+  background: var(--blue-d);
 }
 
 /* Connector lines behind the nodes */
@@ -243,39 +284,113 @@
   display: contents;
 }
 
-/* Per-card notes panel */
-.cardPanel {
+/* Per-node checklist panel (opened by the hamburger) */
+.checklistPanel {
   background: #f8fafc;
   border: 1px solid var(--line);
   border-left: 3px solid var(--blue);
   border-radius: 12px;
-  margin: 2px 0 10px;
+  margin: 4px 0 10px;
   padding: 12px 15px;
   min-width: 820px;
   display: grid;
-  gap: 12px;
+  gap: 10px;
 }
-.panelHint {
-  font-size: 12px;
-  color: var(--muted);
-}
-.nodeNote {
-  display: grid;
-  gap: 6px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--line);
-}
-.nodeNote:last-of-type {
-  border-bottom: 0;
-  padding-bottom: 0;
-}
-.nodeNoteHead {
+.panelHead {
   display: flex;
   align-items: baseline;
   gap: 10px;
-  font-weight: 700;
+}
+.panelHead strong {
+  font-size: 13.5px;
   color: var(--navy);
+}
+.progress {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.generalNote {
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+}
+.checkList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.checkItem {
+  display: grid;
+  gap: 6px;
+}
+.checkRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+}
+.checkbox {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  border: 1.5px solid #c2cede;
+  background: #fff;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+  display: inline-grid;
+  place-items: center;
+  cursor: pointer;
+  margin-top: 1px;
+}
+.checkOn {
+  background: var(--green);
+  border-color: var(--green);
+}
+.checkLabel {
+  flex: 1;
   font-size: 13px;
+  color: var(--ink);
+  line-height: 1.45;
+}
+.checkLabelDone {
+  color: var(--muted);
+}
+.noteToggle {
+  flex-shrink: 0;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--muted);
+  border-radius: 6px;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+}
+.noteToggle:hover {
+  border-color: var(--blue);
+  color: var(--blue-d);
+}
+.noteToggleFull {
+  border-color: var(--blue);
+  color: var(--blue-d);
+  background: #eef3fb;
+}
+.checkNoteForm {
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+  margin-left: 29px;
+}
+.checkNoteRead {
+  margin-left: 29px;
+  font-size: 12.5px;
+  color: var(--muted);
+  white-space: pre-wrap;
 }
 
 /* Archived */
