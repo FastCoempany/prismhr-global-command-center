@@ -909,3 +909,20 @@ model PeoActivity {
 
   @@index([peoId])
 }
+
+// --- Dashboard (moonshot) ----------------------------------------------------
+// A hand-sewn, fully manual board. Deliberately isolated: it derives nothing
+// from PeoState / the book / anything else. Every card and node state is set by
+// hand. `states` / `notes` are JSON maps keyed by dashboard node key.
+model DashCard {
+  id        String   @id @default(cuid())
+  name      String
+  subtitle  String?
+  position  Int      @default(0)
+  states    Json?
+  notes     Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([position])
+}
