@@ -86,8 +86,9 @@ export default async function AccountsPage() {
         <h1 className={styles.h1}>Account Room</h1>
         <p className={styles.sub}>
           All {rows.length} channel accounts, heat-scored for PrismHR Global fit. Global fit = 40%
-          desk + 60% demand (confidence-weighted). Play flags whether they&apos;re already on a
-          competitor EOR. Demand research last run {researchGeneratedAt}.
+          account profile (size · on-PrismHR · model · recency) + 60% researched demand
+          (confidence-weighted). Play flags whether they&apos;re already on a competitor EOR. Demand
+          research last run {researchGeneratedAt}.
         </p>
         <AccountsClient rows={rows} canAdd={canAdd} onDashboard={onDashboard} />
       </main>

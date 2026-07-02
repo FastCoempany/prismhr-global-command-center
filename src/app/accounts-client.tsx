@@ -2,8 +2,32 @@
 
 import { Fragment, useMemo, useState } from "react";
 import { useFormStatus } from "react-dom";
+import { EXTRA_PARTNERS, partnerRole } from "@/lib/book/partners";
+import { competitorUrl } from "@/lib/book/research";
 import { addCard } from "./dashboard/actions";
 import styles from "./command-center.module.css";
+
+function CompetitorLinks({ names }: { names: string[] }) {
+  return (
+    <>
+      {names.map((c, i) => {
+        const url = competitorUrl(c);
+        return (
+          <Fragment key={c}>
+            {i > 0 && ", "}
+            {url ? (
+              <a href={url} target="_blank" rel="noreferrer">
+                {c}
+              </a>
+            ) : (
+              c
+            )}
+          </Fragment>
+        );
+      })}
+    </>
+  );
+}
 
 function AddButton() {
   const { pending } = useFormStatus();
@@ -85,25 +109,30 @@ export function AccountsClient({
 
   const isHot = (r: AccountRow) => r.play != null && (r.demand ?? 0) >= 60;
 
-  const csms = useMemo(() => [...new Set(rows.map((r) => r.csm).filter(Boolean))].sort(), [rows]);
+  // Partners (internal PrismHR people): the CSMs from the book + others like
+  // Eric who may bring net-new accounts before owning any here.
+  const partners = useMemo(
+    () => [...new Set([...rows.map((r) => r.csm).filter(Boolean), ...EXTRA_PARTNERS])].sort(),
+    [rows],
+  );
   const inds = useMemo(
     () => [...new Set(rows.map((r) => r.industry).filter(Boolean))].sort(),
     [rows],
   );
 
-  // Per-CSM rollup of real targets (books worth briefing on).
+  // Per-partner rollup of real targets (books worth briefing on).
   const rollup = useMemo(() => {
     const m = new Map<string, { high: number; targets: number; hot: number }>();
+    for (const name of partners) m.set(name, { high: 0, targets: 0, hot: 0 });
     for (const r of rows) {
-      if (!r.csm) continue;
-      if (!m.has(r.csm)) m.set(r.csm, { high: 0, targets: 0, hot: 0 });
-      const e = m.get(r.csm)!;
+      const e = m.get(r.csm);
+      if (!e) continue;
       if (r.tier === "high") e.high++;
       if (r.play != null) e.targets++;
       if (isHot(r)) e.hot++;
     }
-    return [...m.entries()].sort((a, b) => b[1].hot - a[1].hot);
-  }, [rows]);
+    return [...m.entries()].sort((a, b) => b[1].hot - a[1].hot || b[1].targets - a[1].targets);
+  }, [rows, partners]);
 
   const filtered = useMemo(() => {
     const s = q.toLowerCase();
@@ -154,7 +183,9 @@ export function AccountsClient({
             className={`${styles.rollupCard} ${csm === name ? styles.rollupActive : ""}`}
             onClick={() => setCsm(csm === name ? "" : name)}
           >
-            <span className={styles.rollupName}>{name}</span>
+            <span className={styles.rollupName}>
+              {name} <span className={styles.rollupRole}>· {partnerRole(name)}</span>
+            </span>
             <span className={styles.rollupNums}>
               <b>{e.hot}</b> hot · {e.targets} targets · {e.high} high-fit
             </span>
@@ -169,11 +200,11 @@ export function AccountsClient({
           placeholder="Search account, city, contact…"
           aria-label="Search accounts"
         />
-        <select value={csm} onChange={(e) => setCsm(e.target.value)} aria-label="CSM">
-          <option value="">All CSMs</option>
-          {csms.map((c) => (
+        <select value={csm} onChange={(e) => setCsm(e.target.value)} aria-label="Partner">
+          <option value="">All partners</option>
+          {partners.map((c) => (
             <option key={c} value={c}>
-              {c}
+              {c} — {partnerRole(c)}
             </option>
           ))}
         </select>
@@ -264,7 +295,9 @@ export function AccountsClient({
                     <>
                       <span className={`${styles.tag} ${styles.tagDisplace}`}>Displace</span>
                       {a.competitors.length > 0 && (
-                        <div className={styles.rowSub}>{a.competitors.join(", ")}</div>
+                        <div className={styles.rowSub}>
+                          <CompetitorLinks names={a.competitors} />
+                        </div>
                       )}
                     </>
                   ) : a.play === "greenfield" ? (
@@ -276,9 +309,16 @@ export function AccountsClient({
                 <td className={styles.rowSub}>{a.industry}</td>
                 <td>
                   {a.incumbent ? (
-                    <span className={styles.chip}>{a.cloud}</span>
+                    <span
+                      className={styles.chip}
+                      title={`PrismHR cloud tenant “${a.cloud}” — existing platform customer`}
+                    >
+                      {a.cloud}
+                    </span>
                   ) : (
-                    <span className={styles.muted}>—</span>
+                    <span className={styles.muted} title="Not a PrismHR platform customer">
+                      —
+                    </span>
                   )}
                 </td>
                 <td>
@@ -317,8 +357,10 @@ export function AccountsClient({
                             {a.play === "displacement" && a.competitors.length > 0 && (
                               <p className={styles.servedBy}>
                                 Displacement play — currently served by{" "}
-                                <strong>{a.competitors.join(", ")}</strong>. Pitch: bring it in-house
-                                on the platform they already run.
+                                <strong>
+                                  <CompetitorLinks names={a.competitors} />
+                                </strong>
+                                . Pitch: bring it in-house on the platform they already run.
                               </p>
                             )}
                             {a.play === "greenfield" && (
@@ -353,21 +395,24 @@ export function AccountsClient({
                               </div>
                             )}
                             <div className={styles.formula}>
-                              Global fit {a.score} = 40% desk ({a.deskScore}) + 60% demand ({a.demand}
-                              {a.confFactor < 1 ? ` × ${a.confFactor} conf = ${a.demandAdj}` : ""})
+                              How this {a.score} is built: account profile {a.deskScore} (40% of the
+                              score) + global demand {a.demandAdj ?? a.demand} (60%).
+                              {a.confFactor < 1
+                                ? ` Raw demand ${a.demand} trimmed to ${a.demandAdj} because confidence is ${a.confidence}.`
+                                : ""}
                             </div>
                           </>
                         ) : (
                           <div className={styles.demandPending}>
                             Not researched (no findable web presence, or missed on the run). Score is
-                            desk-only.
+                            the account profile only — no demand signal yet.
                           </div>
                         )}
                       </div>
 
                       <div className={styles.bars}>
                         <div className={styles.barsHead}>
-                          Desk signals · {a.deskScore}/100
+                          Account profile · {a.deskScore}/100 (firmographics, no research)
                         </div>
                         {(["scale", "incumbency", "model", "recency"] as const).map((k) => (
                           <div key={k} className={styles.barRow}>
@@ -387,23 +432,27 @@ export function AccountsClient({
 
                       <div className={styles.acctMeta}>
                         {a.sizeBucket || (a.size ? `${a.size.toLocaleString()} WSE` : "size n/a")}
-                        {" · "}
+                        {" · Partner: "}
+                        {a.csm} ({partnerRole(a.csm)})
                         {a.contactName && (
                           <>
-                            {a.contactName}
+                            {" · "}
+                            {a.contactName} (Primary contact)
                             {a.contactEmail && (
                               <>
-                                {" · "}
+                                {" — "}
                                 <a href={`mailto:${a.contactEmail}`}>{a.contactEmail}</a>
                               </>
                             )}
-                            {" · "}
                           </>
                         )}
                         {a.website && (
-                          <a href={ensureHttp(a.website)} target="_blank" rel="noreferrer">
-                            {a.website}
-                          </a>
+                          <>
+                            {" · "}
+                            <a href={ensureHttp(a.website)} target="_blank" rel="noreferrer">
+                              {a.website}
+                            </a>
+                          </>
                         )}
                       </div>
                     </div>
