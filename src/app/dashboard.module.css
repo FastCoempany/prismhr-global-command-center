@@ -1,0 +1,444 @@
+.board {
+  --navy: #0a1c40;
+  --blue: #2563eb;
+  --blue-d: #1d4ed8;
+  --line: #e6ebf3;
+  --ink: #16233d;
+  --muted: #5b6b86;
+  --green: #1a7f3c;
+  --track: #dbe2ec;
+  --track-on: #33456b;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+/* Header + rows share the same flex skeleton so nodes align under labels */
+.headRow,
+.row {
+  display: flex;
+  align-items: center;
+  min-width: 820px;
+}
+.headRow {
+  padding-bottom: 6px;
+}
+.row {
+  padding: 16px 0;
+  border-top: 1px solid var(--line);
+}
+
+.nameCol {
+  width: 170px;
+  flex-shrink: 0;
+  padding-right: 14px;
+}
+.meta {
+  font-size: 11.5px;
+  color: var(--muted);
+  margin-top: 1px;
+}
+
+/* Track of nodes */
+.track {
+  flex: 1;
+  display: flex;
+  min-width: 0;
+}
+.headCell {
+  flex: 1;
+  text-align: center;
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 0 6px;
+  align-self: flex-end;
+  line-height: 1.25;
+}
+.cell {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+}
+
+/* Connector lines behind the nodes */
+.line {
+  position: absolute;
+  top: 50%;
+  height: 2px;
+  background: var(--track);
+  z-index: 0;
+}
+.lineLeft {
+  left: 0;
+  width: 50%;
+}
+.lineRight {
+  left: 50%;
+  right: 0;
+}
+.lineOn {
+  background: var(--track-on);
+}
+
+/* Node */
+.node {
+  position: relative;
+  z-index: 1;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  padding: 0;
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.2s ease;
+}
+.node:hover {
+  transform: scale(1.08);
+}
+.node::before {
+  content: "";
+  position: absolute;
+  inset: -7px;
+  border-radius: 50%;
+  border: 1.5px dotted #cfd8e6;
+  pointer-events: none;
+}
+.glyph {
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.todo {
+  background: #eef1f6;
+  border-color: #c2cede;
+  color: transparent;
+}
+.done {
+  background: var(--heat);
+  border-color: var(--heat);
+  color: #fff;
+}
+.done::before {
+  border-color: #cbd5e4;
+}
+.active {
+  background: var(--heat);
+  border-color: var(--heat);
+  color: #fff;
+  box-shadow: 0 0 13px -2px var(--heat);
+}
+.active::before {
+  border-style: solid;
+  border-color: var(--heat);
+  animation: pulse 1.9s ease-out infinite;
+}
+.action {
+  background: #dc2626;
+  border-color: #dc2626;
+  color: #fff;
+  box-shadow: 0 0 13px -1px rgba(220, 38, 38, 0.75);
+}
+.action::before {
+  border-style: solid;
+  border-color: #dc2626;
+  animation: pulse 1.5s ease-out infinite;
+}
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  70%,
+  100% {
+    transform: scale(1.45);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .active::before,
+  .action::before {
+    animation: none;
+  }
+}
+
+/* Notes-panel state word + checklist */
+.drillState {
+  font-size: 11px;
+  font-weight: 700;
+}
+.doneText {
+  color: var(--green);
+}
+.activeText {
+  color: var(--blue);
+}
+.actionText {
+  color: #c02626;
+}
+.todoText {
+  color: var(--muted);
+}
+.checklist {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 7px;
+}
+.checklist li {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  font-size: 13px;
+  color: var(--ink);
+}
+/* Toolbar + stage rename */
+.toolbar {
+  margin-bottom: 10px;
+}
+.renameStages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+  align-items: center;
+}
+.renameStages input {
+  width: 150px;
+  padding: 5px 8px;
+  border-radius: 7px;
+  border: 1px solid var(--line);
+  font: inherit;
+  font-size: 12.5px;
+}
+
+/* Name as a toggle button */
+.nameBtn {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-weight: 700;
+  color: var(--navy);
+  font-size: 14px;
+  line-height: 1.25;
+  cursor: pointer;
+  text-align: left;
+}
+.nameBtn:hover {
+  color: var(--blue);
+}
+
+/* Node paint form wrapper — let the button be the flex item */
+.nodeForm {
+  display: contents;
+}
+
+/* Per-card notes panel */
+.cardPanel {
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--blue);
+  border-radius: 12px;
+  margin: 2px 0 10px;
+  padding: 12px 15px;
+  min-width: 820px;
+  display: grid;
+  gap: 12px;
+}
+.panelHint {
+  font-size: 12px;
+  color: var(--muted);
+}
+.nodeNote {
+  display: grid;
+  gap: 6px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+}
+.nodeNote:last-of-type {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+.nodeNoteHead {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-weight: 700;
+  color: var(--navy);
+  font-size: 13px;
+}
+
+/* Archived */
+.archivedWrap {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.archivedRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 0;
+  font-size: 13px;
+}
+.archivedName {
+  font-weight: 600;
+  color: var(--muted);
+  text-decoration: line-through;
+}
+.archivedActions {
+  display: inline-flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+/* Manual board: empty state, card management, editing */
+.empty {
+  color: var(--muted);
+  padding: 26px;
+  text-align: center;
+  border: 1px dashed #d7dfea;
+  border-radius: 12px;
+  margin: 12px 0;
+}
+.manage {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+.inlineForm {
+  display: inline-flex;
+  gap: 4px;
+}
+.miniBtn,
+.miniDel,
+.miniSave {
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--muted);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 7px;
+  cursor: pointer;
+  line-height: 1.4;
+}
+.miniBtn:hover {
+  border-color: var(--blue);
+  color: var(--navy);
+}
+.miniDel {
+  color: #b42318;
+}
+.miniDel:hover {
+  border-color: #dc2626;
+  background: #fdecec;
+}
+.miniSave {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: #fff;
+}
+.renameForm {
+  display: grid;
+  gap: 6px;
+}
+.renameForm input {
+  padding: 5px 8px;
+  border-radius: 7px;
+  border: 1px solid var(--line);
+  font: inherit;
+  font-size: 12.5px;
+}
+.renameRow {
+  display: flex;
+  gap: 6px;
+}
+
+.bullet {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #c2cede;
+  flex-shrink: 0;
+  margin-top: 7px;
+}
+.noteArea {
+  width: 100%;
+  margin-top: 10px;
+  padding: 9px 11px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  font: inherit;
+  font-size: 13px;
+  min-height: 60px;
+  resize: vertical;
+  background: #fff;
+}
+.noteRead {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: var(--ink);
+  white-space: pre-wrap;
+}
+.saveRow {
+  margin-top: 10px;
+}
+.saveBtn {
+  background: var(--blue);
+  color: #fff;
+  border: 0;
+  border-radius: 8px;
+  padding: 8px 18px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.saveBtn:hover {
+  background: var(--blue-d);
+}
+.addForm {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+.addForm input {
+  padding: 8px 11px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  font: inherit;
+  font-size: 13px;
+}
+.addForm input:first-of-type {
+  min-width: 220px;
+}
+.addBtn {
+  background: var(--navy);
+  color: #fff;
+  border: 0;
+  border-radius: 8px;
+  padding: 9px 16px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.addBtn:hover {
+  background: #14264d;
+}

@@ -77,6 +77,233 @@
   align-self: center;
   margin-left: auto;
 }
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--muted);
+  align-self: center;
+}
+
+/* Account Room */
+.addMini {
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--blue-d);
+  border-radius: 7px;
+  padding: 4px 10px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.addMini:hover {
+  border-color: var(--blue);
+  background: #eef3fb;
+}
+.acctDetail {
+  background: #fbfcfe;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin: 4px 0 8px;
+  display: grid;
+  gap: 14px;
+}
+.demandBlock {
+  display: grid;
+  gap: 8px;
+}
+.demandHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.demandHead strong {
+  color: var(--navy);
+  font-size: 13.5px;
+}
+.confChip {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: capitalize;
+  color: var(--muted);
+  background: #f1f4f9;
+  border-radius: 20px;
+  padding: 1px 8px;
+}
+.demandSummary {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink);
+  line-height: 1.55;
+}
+.signalList {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 3px;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.evidence {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  font-size: 12px;
+}
+.evidence a {
+  color: var(--blue-d);
+  text-decoration: none;
+}
+.evidence a:hover {
+  text-decoration: underline;
+}
+.barsHead {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--muted);
+  margin-bottom: 2px;
+}
+.tag {
+  display: inline-block;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+.tagDisplace {
+  background: #fdeae0;
+  color: #b6531a;
+}
+.tagGreen {
+  background: #e4f7ea;
+  color: var(--green);
+}
+.servedBy {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--ink);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 7px 10px;
+}
+.servedBy strong {
+  color: #b6531a;
+}
+.countries {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.countryChip {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--navy);
+  background: #eef3fb;
+  border-radius: 20px;
+  padding: 1px 9px;
+}
+.formula {
+  font-size: 11.5px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+}
+
+/* CSM rollup band */
+.rollup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.rollupCard {
+  display: grid;
+  gap: 1px;
+  text-align: left;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font: inherit;
+}
+.rollupCard:hover {
+  border-color: var(--blue);
+}
+.rollupActive {
+  border-color: var(--blue);
+  background: #eef3fb;
+}
+.rollupName {
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--navy);
+}
+.rollupNums {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.rollupNums b {
+  color: var(--orange);
+}
+.bars {
+  display: grid;
+  gap: 6px;
+}
+.barRow {
+  display: grid;
+  grid-template-columns: 84px 1fr 42px;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+.barLabel {
+  color: var(--muted);
+}
+.barTrack {
+  height: 8px;
+  background: #eef1f6;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.barFill {
+  display: block;
+  height: 100%;
+  background: var(--blue);
+  border-radius: 6px;
+}
+.barVal {
+  color: var(--muted);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.demandPending {
+  align-self: start;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  color: #9a3412;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 12px;
+}
+.acctMeta {
+  grid-column: 1 / -1;
+  font-size: 12.5px;
+  color: var(--muted);
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+}
+.acctMeta a {
+  color: var(--blue-d);
+}
 
 /* Table */
 .table {
