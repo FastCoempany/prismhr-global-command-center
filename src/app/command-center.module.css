@@ -77,6 +77,92 @@
   align-self: center;
   margin-left: auto;
 }
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--muted);
+  align-self: center;
+}
+
+/* Account Room */
+.addMini {
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--blue-d);
+  border-radius: 7px;
+  padding: 4px 10px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.addMini:hover {
+  border-color: var(--blue);
+  background: #eef3fb;
+}
+.acctDetail {
+  background: #fbfcfe;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin: 4px 0 8px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1fr 1fr;
+}
+.bars {
+  display: grid;
+  gap: 6px;
+}
+.barRow {
+  display: grid;
+  grid-template-columns: 84px 1fr 42px;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+.barLabel {
+  color: var(--muted);
+}
+.barTrack {
+  height: 8px;
+  background: #eef1f6;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.barFill {
+  display: block;
+  height: 100%;
+  background: var(--blue);
+  border-radius: 6px;
+}
+.barVal {
+  color: var(--muted);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.demandPending {
+  align-self: start;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  color: #9a3412;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 12px;
+}
+.acctMeta {
+  grid-column: 1 / -1;
+  font-size: 12.5px;
+  color: var(--muted);
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+}
+.acctMeta a {
+  color: var(--blue-d);
+}
 
 /* Table */
 .table {
