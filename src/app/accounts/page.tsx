@@ -4,7 +4,7 @@ import { getAppAccess } from "@/lib/auth";
 import { hasDatabaseEnv } from "@/lib/db";
 import { peos } from "@/lib/book";
 import { compositeScore, deskScore } from "@/lib/book/scoring";
-import { getDemand } from "@/lib/book/research";
+import { analyzePlay, getDemand } from "@/lib/book/research";
 import { AccountsClient, type AccountRow } from "../accounts-client";
 import styles from "../command-center.module.css";
 
@@ -33,6 +33,7 @@ export default async function AccountsPage() {
       const dem = getDemand(p.id);
       const demand = dem?.researched ? dem.demandScore : null;
       const c = compositeScore(d.score, demand);
+      const pl = analyzePlay(dem);
       return {
         id: p.id,
         name: p.name,
@@ -54,6 +55,8 @@ export default async function AccountsPage() {
         evidence: dem?.evidence ?? [],
         summary: dem?.summary ?? "",
         researched: dem?.researched ?? false,
+        play: pl.play,
+        competitors: pl.competitors,
         score: c.score,
         tier: c.tier,
         breakdown: d.breakdown,

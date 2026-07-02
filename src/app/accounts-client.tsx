@@ -25,6 +25,8 @@ export type AccountRow = {
   evidence: { claim: string; url: string }[];
   summary: string;
   researched: boolean;
+  play: "displacement" | "greenfield" | null;
+  competitors: string[];
   score: number; // composite
   tier: "high" | "medium" | "low";
   breakdown: { scale: number; incumbency: number; model: number; recency: number };
@@ -52,6 +54,7 @@ export function AccountsClient({ rows, canAdd }: { rows: AccountRow[]; canAdd: b
   const [csm, setCsm] = useState("");
   const [industry, setIndustry] = useState("");
   const [tier, setTier] = useState("");
+  const [play, setPlay] = useState("");
   const [incOnly, setIncOnly] = useState(false);
   const [sort, setSort] = useState("score");
   const [openId, setOpenId] = useState("");
@@ -68,6 +71,7 @@ export function AccountsClient({ rows, canAdd }: { rows: AccountRow[]; canAdd: b
       if (csm && r.csm !== csm) return false;
       if (industry && r.industry !== industry) return false;
       if (tier && r.tier !== tier) return false;
+      if (play && r.play !== play) return false;
       if (incOnly && !r.incumbent) return false;
       if (s && !`${r.name} ${r.city} ${r.state} ${r.contactName} ${r.industry}`.toLowerCase().includes(s))
         return false;
@@ -78,7 +82,7 @@ export function AccountsClient({ rows, canAdd }: { rows: AccountRow[]; canAdd: b
       if (sort === "demand") return (b.demand ?? -1) - (a.demand ?? -1);
       return b.score - a.score;
     });
-  }, [rows, q, csm, industry, tier, incOnly, sort]);
+  }, [rows, q, csm, industry, tier, play, incOnly, sort]);
 
   return (
     <>
@@ -106,6 +110,11 @@ export function AccountsClient({ rows, canAdd }: { rows: AccountRow[]; canAdd: b
           <option value="medium">Medium</option>
           <option value="low">Low</option>
         </select>
+        <select value={play} onChange={(e) => setPlay(e.target.value)} aria-label="Play type">
+          <option value="">All plays</option>
+          <option value="displacement">Displacement</option>
+          <option value="greenfield">Greenfield</option>
+        </select>
         <select value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort">
           <option value="score">Sort: Global fit</option>
           <option value="demand">Sort: demand</option>
@@ -126,6 +135,7 @@ export function AccountsClient({ rows, canAdd }: { rows: AccountRow[]; canAdd: b
             <th>Account</th>
             <th>Global fit</th>
             <th>Demand</th>
+            <th>Play</th>
             <th>Model</th>
             <th>PrismHR</th>
             <th />
@@ -161,6 +171,20 @@ export function AccountsClient({ rows, canAdd }: { rows: AccountRow[]; canAdd: b
                     </span>
                   )}
                 </td>
+                <td>
+                  {a.play === "displacement" ? (
+                    <span
+                      className={`${styles.tag} ${styles.tagDisplace}`}
+                      title={`Currently served by ${a.competitors.join(", ")}`}
+                    >
+                      Displace
+                    </span>
+                  ) : a.play === "greenfield" ? (
+                    <span className={`${styles.tag} ${styles.tagGreen}`}>Greenfield</span>
+                  ) : (
+                    <span className={styles.muted}>—</span>
+                  )}
+                </td>
                 <td className={styles.rowSub}>{a.industry}</td>
                 <td>
                   {a.incumbent ? (
@@ -186,7 +210,7 @@ export function AccountsClient({ rows, canAdd }: { rows: AccountRow[]; canAdd: b
               </tr>
               {openId === a.id && (
                 <tr>
-                  <td colSpan={6}>
+                  <td colSpan={7}>
                     <div className={styles.acctDetail}>
                       <div className={styles.demandBlock}>
                         {a.researched && a.demand != null ? (
@@ -198,6 +222,18 @@ export function AccountsClient({ rows, canAdd }: { rows: AccountRow[]; canAdd: b
                               <strong>Global-hiring demand</strong>
                               <span className={styles.confChip}>{a.confidence} confidence</span>
                             </div>
+                            {a.play === "displacement" && a.competitors.length > 0 && (
+                              <p className={styles.servedBy}>
+                                Displacement play — currently served by{" "}
+                                <strong>{a.competitors.join(", ")}</strong>. Pitch: bring it in-house
+                                on the platform they already run.
+                              </p>
+                            )}
+                            {a.play === "greenfield" && (
+                              <p className={styles.servedBy}>
+                                Greenfield — real demand, no incumbent EOR named in the research.
+                              </p>
+                            )}
                             {a.summary && <p className={styles.demandSummary}>{a.summary}</p>}
                             {a.signals.length > 0 && (
                               <ul className={styles.signalList}>
