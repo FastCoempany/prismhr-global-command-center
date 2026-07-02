@@ -33,6 +33,13 @@ export function AppWayfinder({
             Dashboard
           </Link>
           <Link
+            aria-current={current === "Accounts" ? "page" : undefined}
+            className="app-route-link"
+            href="/accounts"
+          >
+            Accounts
+          </Link>
+          <Link
             aria-current={current === "Today" ? "page" : undefined}
             className="app-route-link"
             href="/today"

@@ -17,14 +17,21 @@ async function requireWrite() {
   return access.status === "active" && access.canWrite;
 }
 
-function done() {
+function safeReturn(fd: FormData): string {
+  const raw = str(fd, "returnTo", 80);
+  return raw === "/accounts" ? "/accounts" : "/";
+}
+
+function done(to = "/") {
   revalidatePath("/");
-  redirect("/");
+  revalidatePath("/accounts");
+  redirect(to);
 }
 
 export async function addCard(formData: FormData) {
   const name = str(formData, "name", 120);
-  if (!(await requireWrite()) || !name) done();
+  const back = safeReturn(formData);
+  if (!(await requireWrite()) || !name) done(back);
 
   const prisma = getPrisma();
   const top = await prisma.dashCard.findFirst({ orderBy: { position: "desc" }, select: { position: true } });
@@ -37,7 +44,7 @@ export async function addCard(formData: FormData) {
       notes: {},
     },
   });
-  done();
+  done(back);
 }
 
 export async function renameCard(formData: FormData) {

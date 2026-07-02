@@ -29,7 +29,7 @@ export default async function DashboardPage() {
         <h1 className={styles.h1}>Dashboard</h1>
         <p className={styles.sub}>
           Your hand-sewn board — manual, wired to nothing. Click any node to set its state and note
-          what has to happen for it to go green.
+          what has to happen for it to go green. <Link href="/accounts">Open the Account Room →</Link>
         </p>
         {data.status === "database-unavailable" && (
           <div className={styles.banner}>
