@@ -1,8 +1,18 @@
 "use client";
 
 import { Fragment, useMemo, useState } from "react";
+import { useFormStatus } from "react-dom";
 import { addCard } from "./dashboard/actions";
 import styles from "./command-center.module.css";
+
+function AddButton() {
+  const { pending } = useFormStatus();
+  return (
+    <button className={styles.addMini} disabled={pending}>
+      {pending ? "Adding…" : "+ Dashboard"}
+    </button>
+  );
+}
 
 export type AccountRow = {
   id: string;
@@ -52,7 +62,16 @@ const BAR_LABEL = {
   recency: "Recency",
 } as const;
 
-export function AccountsClient({ rows, canAdd }: { rows: AccountRow[]; canAdd: boolean }) {
+export function AccountsClient({
+  rows,
+  canAdd,
+  onDashboard,
+}: {
+  rows: AccountRow[];
+  canAdd: boolean;
+  onDashboard: string[];
+}) {
+  const onDash = useMemo(() => new Set(onDashboard), [onDashboard]);
   const [q, setQ] = useState("");
   const [csm, setCsm] = useState("");
   const [industry, setIndustry] = useState("");
@@ -263,19 +282,22 @@ export function AccountsClient({ rows, canAdd }: { rows: AccountRow[]; canAdd: b
                   )}
                 </td>
                 <td>
-                  {canAdd && (
-                    <form action={addCard}>
-                      <input type="hidden" name="name" value={a.name} />
-                      <input
-                        type="hidden"
-                        name="subtitle"
-                        value={`${a.csm}${a.industry ? ` · ${a.industry}` : ""}`}
-                      />
-                      <input type="hidden" name="seedDiscovery" value={seedFor(a)} />
-                      <input type="hidden" name="returnTo" value="/accounts" />
-                      <button className={styles.addMini}>+ Dashboard</button>
-                    </form>
-                  )}
+                  {canAdd &&
+                    (onDash.has(a.name) ? (
+                      <span className={styles.onDash}>On dashboard ✓</span>
+                    ) : (
+                      <form action={addCard}>
+                        <input type="hidden" name="name" value={a.name} />
+                        <input
+                          type="hidden"
+                          name="subtitle"
+                          value={`${a.csm}${a.industry ? ` · ${a.industry}` : ""}`}
+                        />
+                        <input type="hidden" name="seedDiscovery" value={seedFor(a)} />
+                        <input type="hidden" name="returnTo" value="/accounts" />
+                        <AddButton />
+                      </form>
+                    ))}
                 </td>
               </tr>
               {openId === a.id && (

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { AppWayfinder } from "@/components/app-wayfinder";
 import { getAppAccess } from "@/lib/auth";
-import { hasDatabaseEnv } from "@/lib/db";
+import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import { peos } from "@/lib/book";
 import { compositeScore, deskScore } from "@/lib/book/scoring";
 import { analyzePlay, extractCountries, getDemand, researchGeneratedAt } from "@/lib/book/research";
@@ -27,6 +27,18 @@ export default async function AccountsPage() {
   }
 
   const canAdd = access.canWrite && hasDatabaseEnv();
+
+  // Which accounts are already on the dashboard (matched by name) — so the
+  // "+ Dashboard" button can show an added state instead of doing nothing visible.
+  let onDashboard: string[] = [];
+  if (canAdd) {
+    try {
+      const cards = await getPrisma().dashCard.findMany({ select: { name: true } });
+      onDashboard = cards.map((c) => c.name);
+    } catch {
+      onDashboard = [];
+    }
+  }
   const rows: AccountRow[] = peos
     .map((p) => {
       const d = deskScore(p);
@@ -77,7 +89,7 @@ export default async function AccountsPage() {
           desk + 60% demand (confidence-weighted). Play flags whether they&apos;re already on a
           competitor EOR. Demand research last run {researchGeneratedAt}.
         </p>
-        <AccountsClient rows={rows} canAdd={canAdd} />
+        <AccountsClient rows={rows} canAdd={canAdd} onDashboard={onDashboard} />
       </main>
     </>
   );
