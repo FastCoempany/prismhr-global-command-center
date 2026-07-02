@@ -1,8 +1,9 @@
 {
-  "count": 131,
+  "count": 132,
   "csms": [
     "Anika Steenstra",
     "Cody Jensen",
+    "Eric Ronci",
     "John Hebert",
     "Lesha Cyphers",
     "Unassigned"
@@ -1434,6 +1435,23 @@
       "website": "www.pespayrollservices.com",
       "lastActivity": "7/1/2026",
       "fit": 37,
+      "fitTier": "low"
+    },
+    {
+      "id": "PUZZLEHR000000001",
+      "name": "PuzzleHR",
+      "cloud": "",
+      "csm": "Eric Ronci",
+      "contactName": "Lonny Ostrander",
+      "contactEmail": "",
+      "size": 317,
+      "sizeBucket": "Start Up (0 - 500)",
+      "industry": "HRaaS",
+      "city": "Tampa",
+      "state": "FL",
+      "website": "puzzlehr.com",
+      "lastActivity": "7/2/2026",
+      "fit": 35,
       "fitTier": "low"
     },
     {

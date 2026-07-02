@@ -71,6 +71,7 @@ const industryWeight = (ind) => {
   const i = (ind || '').toLowerCase();
   if (i.includes('peo')) return 1.0;
   if (i === 'aso') return 0.9;
+  if (i.includes('hraas') || i.includes('hro')) return 0.85;
   if (i.includes('payroll')) return 0.7;
   if (i.includes('accounting')) return 0.6;
   if (i.includes('staffing')) return 0.55;

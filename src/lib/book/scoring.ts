@@ -18,6 +18,7 @@ const SIZE_PTS: Record<string, number> = {
 const MODEL_PTS: Record<string, number> = {
   "PEO/ASO": 25,
   ASO: 18,
+  HRaaS: 20,
   "Payroll Service Bureau": 14,
   Staffing: 12,
   "Accounting Services": 10,
