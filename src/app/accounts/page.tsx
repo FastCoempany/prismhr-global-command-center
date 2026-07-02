@@ -3,7 +3,8 @@ import { AppWayfinder } from "@/components/app-wayfinder";
 import { getAppAccess } from "@/lib/auth";
 import { hasDatabaseEnv } from "@/lib/db";
 import { peos } from "@/lib/book";
-import { deskScore } from "@/lib/book/scoring";
+import { compositeScore, deskScore } from "@/lib/book/scoring";
+import { getDemand } from "@/lib/book/research";
 import { AccountsClient, type AccountRow } from "../accounts-client";
 import styles from "../command-center.module.css";
 
@@ -29,6 +30,9 @@ export default async function AccountsPage() {
   const rows: AccountRow[] = peos
     .map((p) => {
       const d = deskScore(p);
+      const dem = getDemand(p.id);
+      const demand = dem?.researched ? dem.demandScore : null;
+      const c = compositeScore(d.score, demand);
       return {
         id: p.id,
         name: p.name,
@@ -43,8 +47,15 @@ export default async function AccountsPage() {
         contactName: p.contactName,
         contactEmail: p.contactEmail,
         incumbent: d.incumbent,
-        score: d.score,
-        tier: d.tier,
+        deskScore: d.score,
+        demand,
+        confidence: dem?.confidence ?? "low",
+        signals: dem?.signals ?? [],
+        evidence: dem?.evidence ?? [],
+        summary: dem?.summary ?? "",
+        researched: dem?.researched ?? false,
+        score: c.score,
+        tier: c.tier,
         breakdown: d.breakdown,
       };
     })

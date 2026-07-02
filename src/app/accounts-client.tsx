@@ -18,7 +18,14 @@ export type AccountRow = {
   contactName: string;
   contactEmail: string;
   incumbent: boolean;
-  score: number;
+  deskScore: number;
+  demand: number | null;
+  confidence: "high" | "medium" | "low";
+  signals: string[];
+  evidence: { claim: string; url: string }[];
+  summary: string;
+  researched: boolean;
+  score: number; // composite
   tier: "high" | "medium" | "low";
   breakdown: { scale: number; incumbency: number; model: number; recency: number };
 };
@@ -28,6 +35,9 @@ const fitClass: Record<string, string> = {
   medium: styles.fitMedium,
   low: styles.fitLow,
 };
+
+const demandClass = (d: number | null) =>
+  d == null ? styles.fitLow : d >= 60 ? styles.fitHigh : d >= 35 ? styles.fitMedium : styles.fitLow;
 
 const BAR_MAX = { scale: 35, incumbency: 25, model: 25, recency: 15 } as const;
 const BAR_LABEL = {
@@ -63,9 +73,11 @@ export function AccountsClient({ rows, canAdd }: { rows: AccountRow[]; canAdd: b
         return false;
       return true;
     });
-    return [...list].sort((a, b) =>
-      sort === "name" ? a.name.localeCompare(b.name) : b.score - a.score,
-    );
+    return [...list].sort((a, b) => {
+      if (sort === "name") return a.name.localeCompare(b.name);
+      if (sort === "demand") return (b.demand ?? -1) - (a.demand ?? -1);
+      return b.score - a.score;
+    });
   }, [rows, q, csm, industry, tier, incOnly, sort]);
 
   return (
@@ -95,7 +107,8 @@ export function AccountsClient({ rows, canAdd }: { rows: AccountRow[]; canAdd: b
           <option value="low">Low</option>
         </select>
         <select value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort">
-          <option value="score">Sort: fit</option>
+          <option value="score">Sort: Global fit</option>
+          <option value="demand">Sort: demand</option>
           <option value="name">Sort: name</option>
         </select>
         <label className={styles.toggle}>
@@ -111,9 +124,9 @@ export function AccountsClient({ rows, canAdd }: { rows: AccountRow[]; canAdd: b
         <thead>
           <tr>
             <th>Account</th>
-            <th>Fit (desk)</th>
+            <th>Global fit</th>
+            <th>Demand</th>
             <th>Model</th>
-            <th>Size</th>
             <th>PrismHR</th>
             <th />
           </tr>
@@ -139,10 +152,16 @@ export function AccountsClient({ rows, canAdd }: { rows: AccountRow[]; canAdd: b
                 <td>
                   <span className={`${styles.fit} ${fitClass[a.tier]}`}>{a.score}</span>
                 </td>
-                <td className={styles.rowSub}>{a.industry}</td>
-                <td className={styles.rowSub}>
-                  {a.sizeBucket || (a.size ? a.size.toLocaleString() : "—")}
+                <td>
+                  {a.researched && a.demand != null ? (
+                    <span className={`${styles.fit} ${demandClass(a.demand)}`}>{a.demand}</span>
+                  ) : (
+                    <span className={styles.muted} title="Not researched">
+                      —
+                    </span>
+                  )}
                 </td>
+                <td className={styles.rowSub}>{a.industry}</td>
                 <td>
                   {a.incumbent ? (
                     <span className={styles.chip}>{a.cloud}</span>
@@ -169,7 +188,46 @@ export function AccountsClient({ rows, canAdd }: { rows: AccountRow[]; canAdd: b
                 <tr>
                   <td colSpan={6}>
                     <div className={styles.acctDetail}>
+                      <div className={styles.demandBlock}>
+                        {a.researched && a.demand != null ? (
+                          <>
+                            <div className={styles.demandHead}>
+                              <span className={`${styles.fit} ${demandClass(a.demand)}`}>
+                                {a.demand}
+                              </span>
+                              <strong>Global-hiring demand</strong>
+                              <span className={styles.confChip}>{a.confidence} confidence</span>
+                            </div>
+                            {a.summary && <p className={styles.demandSummary}>{a.summary}</p>}
+                            {a.signals.length > 0 && (
+                              <ul className={styles.signalList}>
+                                {a.signals.slice(0, 4).map((s, i) => (
+                                  <li key={i}>{s}</li>
+                                ))}
+                              </ul>
+                            )}
+                            {a.evidence.length > 0 && (
+                              <div className={styles.evidence}>
+                                {a.evidence.map((e, i) => (
+                                  <a key={i} href={e.url} target="_blank" rel="noreferrer">
+                                    ↗ {hostOf(e.url)}
+                                  </a>
+                                ))}
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <div className={styles.demandPending}>
+                            Not researched (no findable web presence, or missed on the run). Score is
+                            desk-only.
+                          </div>
+                        )}
+                      </div>
+
                       <div className={styles.bars}>
+                        <div className={styles.barsHead}>
+                          Desk signals · {a.deskScore}/100
+                        </div>
                         {(["scale", "incumbency", "model", "recency"] as const).map((k) => (
                           <div key={k} className={styles.barRow}>
                             <span className={styles.barLabel}>{BAR_LABEL[k]}</span>
@@ -185,11 +243,10 @@ export function AccountsClient({ rows, canAdd }: { rows: AccountRow[]; canAdd: b
                           </div>
                         ))}
                       </div>
-                      <div className={styles.demandPending}>
-                        Demand signal — not yet researched. Fills in on the 131-account research pass
-                        (weight ~30 of the final score).
-                      </div>
+
                       <div className={styles.acctMeta}>
+                        {a.sizeBucket || (a.size ? `${a.size.toLocaleString()} WSE` : "size n/a")}
+                        {" · "}
                         {a.contactName && (
                           <>
                             {a.contactName}
@@ -199,7 +256,7 @@ export function AccountsClient({ rows, canAdd }: { rows: AccountRow[]; canAdd: b
                                 <a href={`mailto:${a.contactEmail}`}>{a.contactEmail}</a>
                               </>
                             )}
-                            <br />
+                            {" · "}
                           </>
                         )}
                         {a.website && (
@@ -222,4 +279,12 @@ export function AccountsClient({ rows, canAdd }: { rows: AccountRow[]; canAdd: b
 
 function ensureHttp(url: string) {
   return /^https?:\/\//.test(url) ? url : `https://${url}`;
+}
+
+function hostOf(url: string) {
+  try {
+    return new URL(ensureHttp(url)).hostname.replace(/^www\./, "");
+  } catch {
+    return url;
+  }
 }

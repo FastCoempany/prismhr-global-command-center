@@ -110,8 +110,63 @@
   padding: 12px 14px;
   margin: 4px 0 8px;
   display: grid;
-  gap: 12px;
-  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.demandBlock {
+  display: grid;
+  gap: 8px;
+}
+.demandHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.demandHead strong {
+  color: var(--navy);
+  font-size: 13.5px;
+}
+.confChip {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: capitalize;
+  color: var(--muted);
+  background: #f1f4f9;
+  border-radius: 20px;
+  padding: 1px 8px;
+}
+.demandSummary {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink);
+  line-height: 1.55;
+}
+.signalList {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 3px;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.evidence {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  font-size: 12px;
+}
+.evidence a {
+  color: var(--blue-d);
+  text-decoration: none;
+}
+.evidence a:hover {
+  text-decoration: underline;
+}
+.barsHead {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--muted);
+  margin-bottom: 2px;
 }
 .bars {
   display: grid;

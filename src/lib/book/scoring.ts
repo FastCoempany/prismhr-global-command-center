@@ -76,6 +76,19 @@ export type DeskScore = {
   breakdown: DeskBreakdown;
 };
 
+// Composite Global-fit. For this product the demand signal is the necessary
+// condition — ease-of-landing (desk) only matters if there's something to sell —
+// so demand leads the blend (60/40). Accounts we couldn't research fall back to
+// the desk score alone.
+export function compositeScore(
+  desk: number,
+  demand: number | null,
+): { score: number; tier: "high" | "medium" | "low" } {
+  const score = demand == null ? desk : Math.round(0.4 * desk + 0.6 * demand);
+  const tier = score >= 70 ? "high" : score >= 45 ? "medium" : "low";
+  return { score, tier };
+}
+
 export function deskScore(p: Peo): DeskScore {
   const breakdown: DeskBreakdown = {
     scale: scalePts(p),
