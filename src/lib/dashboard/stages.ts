@@ -85,7 +85,7 @@ export const LAST_NODE = DASH_NODES.length - 1;
 // Manual states you paint onto each node.
 export type NodeState = "todo" | "active" | "done" | "action";
 
-export const NODE_STATES: { key: NodeState; label: string }[] = [
+const NODE_STATES: { key: NodeState; label: string }[] = [
   { key: "todo", label: "Not started" },
   { key: "active", label: "In progress" },
   { key: "done", label: "Done" },

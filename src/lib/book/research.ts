@@ -42,7 +42,9 @@ const COMPETITORS: { name: string; re: RegExp }[] = [
 
 // Negation / uncertainty cues that flip "named a competitor" into "checked and
 // found none".
-const NEG = /\b(no|not|n.t|without|zero|none|nor|lacks?|absence|unlike|neither|minimal)\b/i;
+// Negation / uncertainty cues. Word-negations OR any "…n't" contraction — the
+// contraction arm requires an apostrophe so it can't false-match "net"/"nut".
+const NEG = /\b(no|not|without|zero|none|nor|lacks?|absence|unlike|neither|minimal|cannot)\b|[a-z]+n['’]t/i;
 
 // Light country extraction from the research text — surfaces "where" without a
 // new research pass. Curated to common cross-border hiring destinations.
@@ -95,7 +97,7 @@ export function extractCountries(d: DemandRecord | undefined): string[] {
   const text = [d.summary, ...(d.signals ?? []), ...(d.evidence ?? []).map((e) => e.claim)].join(" ");
   const found: string[] = [];
   for (const c of COUNTRIES) {
-    const re = new RegExp(`\\b${c.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`);
+    const re = new RegExp(`\\b${c.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i");
     if (re.test(text) && !found.includes(c)) found.push(c);
   }
   // Normalize UK/UAE duplicates

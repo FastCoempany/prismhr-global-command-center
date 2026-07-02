@@ -89,7 +89,7 @@ export async function saveNotes(formData: FormData) {
 
   const notes: Record<string, string> = {};
   for (const key of DASH_NODE_KEYS) {
-    const v = str(formData, `note_${key}`, 2000);
+    const v = str(formData, `note_${key}`, 4000);
     if (v) notes[key] = v;
   }
   await getPrisma().dashCard.update({ where: { id: cardId }, data: { notes } });
@@ -120,10 +120,13 @@ export async function moveCard(formData: FormData) {
   const idx = all.findIndex((c) => c.id === id);
   const swapWith = dir === "up" ? idx - 1 : idx + 1;
   if (idx >= 0 && swapWith >= 0 && swapWith < all.length) {
-    const a = all[idx];
-    const b = all[swapWith];
-    await prisma.dashCard.update({ where: { id: a.id }, data: { position: b.position } });
-    await prisma.dashCard.update({ where: { id: b.id }, data: { position: a.position } });
+    // Reindex to sequential positions with the swap applied — robust even when
+    // legacy rows share a position.
+    const order = all.map((c) => c.id);
+    [order[idx], order[swapWith]] = [order[swapWith], order[idx]];
+    await Promise.all(
+      order.map((cid, i) => prisma.dashCard.update({ where: { id: cid }, data: { position: i } })),
+    );
   }
   done();
 }

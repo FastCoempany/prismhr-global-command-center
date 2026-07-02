@@ -1,6 +1,7 @@
 .board {
   --navy: #0a1c40;
   --blue: #2563eb;
+  --blue-d: #1d4ed8;
   --line: #e6ebf3;
   --ink: #16233d;
   --muted: #5b6b86;
@@ -31,41 +32,10 @@
   flex-shrink: 0;
   padding-right: 14px;
 }
-.name {
-  font-weight: 700;
-  color: var(--navy);
-  font-size: 14px;
-  line-height: 1.25;
-}
 .meta {
   font-size: 11.5px;
   color: var(--muted);
   margin-top: 1px;
-}
-.status {
-  display: inline-block;
-  margin-top: 6px;
-  font-size: 10.5px;
-  font-weight: 700;
-  padding: 1px 8px;
-  border-radius: 20px;
-  white-space: nowrap;
-}
-.stOk {
-  background: #eef3fb;
-  color: #2b5bb5;
-}
-.stAction {
-  background: #fdecec;
-  color: #c02626;
-}
-.stWon {
-  background: #e4f7ea;
-  color: var(--green);
-}
-.stPassed {
-  background: #eef1f6;
-  color: #64748b;
 }
 
 /* Track of nodes */
@@ -182,11 +152,6 @@
   border-color: #dc2626;
   animation: pulse 1.5s ease-out infinite;
 }
-.selected {
-  outline: 2px solid var(--blue);
-  outline-offset: 3px;
-}
-
 @keyframes pulse {
   0% {
     transform: scale(1);
@@ -205,26 +170,7 @@
   }
 }
 
-/* Inline drilldown */
-.drill {
-  background: #f8fafc;
-  border: 1px solid var(--line);
-  border-left: 3px solid var(--blue);
-  border-radius: 12px;
-  margin: 2px 0 10px;
-  padding: 12px 15px;
-  min-width: 820px;
-}
-.drillHead {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.drillTitle {
-  font-weight: 700;
-  color: var(--navy);
-  font-size: 13.5px;
-}
+/* Notes-panel state word + checklist */
 .drillState {
   font-size: 11px;
   font-weight: 700;
@@ -241,24 +187,6 @@
 .todoText {
   color: var(--muted);
 }
-.drillClose {
-  margin-left: auto;
-  background: none;
-  border: 0;
-  color: var(--muted);
-  cursor: pointer;
-  font-size: 13px;
-  line-height: 1;
-}
-.actionBanner {
-  background: #fdecec;
-  border: 1px solid #f6caca;
-  color: #a01f1f;
-  border-radius: 8px;
-  padding: 7px 10px;
-  font-size: 12.5px;
-  margin: 9px 0 2px;
-}
 .checklist {
   list-style: none;
   margin: 10px 0 0;
@@ -273,34 +201,6 @@
   font-size: 13px;
   color: var(--ink);
 }
-.checkBox {
-  width: 16px;
-  height: 16px;
-  border-radius: 4px;
-  border: 1.5px solid #c2cede;
-  display: inline-grid;
-  place-items: center;
-  font-size: 11px;
-  color: #fff;
-  flex-shrink: 0;
-  margin-top: 1px;
-}
-.checkDone .checkBox {
-  background: var(--green);
-  border-color: var(--green);
-}
-.deepDive {
-  display: inline-block;
-  margin-top: 11px;
-  font-size: 12.5px;
-  font-weight: 600;
-  color: #1d4ed8;
-  text-decoration: none;
-}
-.deepDive:hover {
-  text-decoration: underline;
-}
-
 /* Toolbar + stage rename */
 .toolbar {
   margin-bottom: 10px;
@@ -468,33 +368,6 @@
   gap: 6px;
 }
 
-.statePick {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin: 10px 0 4px;
-}
-.stateOpt {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  border: 1px solid var(--line);
-  border-radius: 20px;
-  padding: 3px 10px;
-  font-size: 12px;
-  color: var(--ink);
-  cursor: pointer;
-  background: #fff;
-}
-.stateOpt:has(input:checked) {
-  border-color: var(--blue);
-  background: #eef3fb;
-  color: var(--navy);
-  font-weight: 600;
-}
-.stateOpt input {
-  accent-color: var(--blue);
-}
 .bullet {
   width: 6px;
   height: 6px;
@@ -535,7 +408,7 @@
   cursor: pointer;
 }
 .saveBtn:hover {
-  background: #1d4ed8;
+  background: var(--blue-d);
 }
 .addForm {
   display: flex;

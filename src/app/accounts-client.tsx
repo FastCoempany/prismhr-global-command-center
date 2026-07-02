@@ -131,6 +131,7 @@ export function AccountsClient({ rows, canAdd }: { rows: AccountRow[]; canAdd: b
           <button
             key={name}
             type="button"
+            aria-pressed={csm === name}
             className={`${styles.rollupCard} ${csm === name ? styles.rollupActive : ""}`}
             onClick={() => setCsm(csm === name ? "" : name)}
           >
@@ -143,7 +144,12 @@ export function AccountsClient({ rows, canAdd }: { rows: AccountRow[]; canAdd: b
       </div>
 
       <div className={styles.filters}>
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search account, city, contact…" />
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Search account, city, contact…"
+          aria-label="Search accounts"
+        />
         <select value={csm} onChange={(e) => setCsm(e.target.value)} aria-label="CSM">
           <option value="">All CSMs</option>
           {csms.map((c) => (

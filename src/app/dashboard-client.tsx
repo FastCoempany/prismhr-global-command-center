@@ -48,6 +48,67 @@ function glyph(state: NodeState): string {
   return "";
 }
 
+function Track({
+  card,
+  canWrite,
+  label,
+}: {
+  card: DashCardRow;
+  canWrite: boolean;
+  label: (key: DashNodeKey) => string;
+}) {
+  return (
+    <div className={styles.track}>
+      {DASH_NODES.map((n, i) => {
+        const state = card.states[n.key];
+        const prevDone = i > 0 && card.states[DASH_NODES[i - 1].key] === "done";
+        const selfDone = state === "done";
+        const heat =
+          state === "done" || state === "active"
+            ? ({ "--heat": n.heat } as React.CSSProperties)
+            : undefined;
+        const glyphEl = <span className={styles.glyph}>{glyph(state)}</span>;
+        return (
+          <div key={n.key} className={styles.cell}>
+            {i > 0 && (
+              <span className={`${styles.line} ${styles.lineLeft} ${prevDone ? styles.lineOn : ""}`} />
+            )}
+            {i < LAST_NODE && (
+              <span className={`${styles.line} ${styles.lineRight} ${selfDone ? styles.lineOn : ""}`} />
+            )}
+            {canWrite ? (
+              <form action={paintNode} className={styles.nodeForm}>
+                <input type="hidden" name="cardId" value={card.id} />
+                <input type="hidden" name="node" value={n.key} />
+                <input type="hidden" name="state" value={NEXT[state]} />
+                <button
+                  type="submit"
+                  className={`${styles.node} ${styles[state]}`}
+                  style={heat}
+                  title={`${label(n.key)} — ${stateWord(state)} (click to advance)`}
+                  aria-label={`${label(n.key)}: ${stateWord(state)}. Click to advance.`}
+                >
+                  {glyphEl}
+                </button>
+              </form>
+            ) : (
+              <span
+                className={`${styles.node} ${styles[state]}`}
+                style={heat}
+                role="img"
+                aria-label={`${label(n.key)}: ${stateWord(state)}`}
+                title={`${label(n.key)} — ${stateWord(state)}`}
+              >
+                {glyphEl}
+              </span>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export function DashboardClient({ cards, canWrite, dbUnavailable, labels }: Props) {
   const [openCard, setOpenCard] = useState<string | null>(null);
   const [renaming, setRenaming] = useState<string | null>(null);
@@ -58,53 +119,6 @@ export function DashboardClient({ cards, canWrite, dbUnavailable, labels }: Prop
 
   const active = cards.filter((c) => !c.archived);
   const archived = cards.filter((c) => c.archived);
-
-  function Track({ card }: { card: DashCardRow }) {
-    return (
-      <div className={styles.track}>
-        {DASH_NODES.map((n, i) => {
-          const state = card.states[n.key];
-          const prevDone = i > 0 && card.states[DASH_NODES[i - 1].key] === "done";
-          const selfDone = state === "done";
-          const heat =
-            state === "done" || state === "active"
-              ? ({ "--heat": n.heat } as React.CSSProperties)
-              : undefined;
-          const glyphEl = <span className={styles.glyph}>{glyph(state)}</span>;
-          return (
-            <div key={n.key} className={styles.cell}>
-              {i > 0 && (
-                <span className={`${styles.line} ${styles.lineLeft} ${prevDone ? styles.lineOn : ""}`} />
-              )}
-              {i < LAST_NODE && (
-                <span className={`${styles.line} ${styles.lineRight} ${selfDone ? styles.lineOn : ""}`} />
-              )}
-              {canWrite ? (
-                <form action={paintNode} className={styles.nodeForm}>
-                  <input type="hidden" name="cardId" value={card.id} />
-                  <input type="hidden" name="node" value={n.key} />
-                  <input type="hidden" name="state" value={NEXT[state]} />
-                  <button
-                    type="submit"
-                    className={`${styles.node} ${styles[state]}`}
-                    style={heat}
-                    title={`${label(n.key)} — ${stateWord(state)} (click to advance)`}
-                    aria-label={`${label(n.key)}: ${stateWord(state)}. Click to advance.`}
-                  >
-                    {glyphEl}
-                  </button>
-                </form>
-              ) : (
-                <span className={`${styles.node} ${styles[state]}`} style={heat} title={`${label(n.key)} — ${stateWord(state)}`}>
-                  {glyphEl}
-                </span>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    );
-  }
 
   return (
     <div className={styles.board}>
@@ -205,7 +219,7 @@ export function DashboardClient({ cards, canWrite, dbUnavailable, labels }: Prop
                   </>
                 )}
               </div>
-              <Track card={card} />
+              <Track card={card} canWrite={canWrite} label={label} />
             </div>
 
             {isOpen && (
@@ -236,6 +250,7 @@ export function DashboardClient({ cards, canWrite, dbUnavailable, labels }: Prop
                         name={`note_${n.key}`}
                         defaultValue={card.notes[n.key]}
                         placeholder="What has to happen here…"
+                        aria-label={`${label(n.key)} notes`}
                         className={styles.noteArea}
                       />
                     ) : (
