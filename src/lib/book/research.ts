@@ -129,6 +129,13 @@ export function competitorUrl(name: string): string | undefined {
 
 export type PlayType = "displacement" | "greenfield" | null;
 
+// The demand floor at which a researched account carries an actionable play (and
+// counts as a real "signal in" on Today). Lowered from 40 → 30 to surface the
+// borderline base — demand is thin, so a handful of mid-signal accounts are worth
+// a partner conversation even if they're not slam-dunks. One source of truth for
+// scoring, signals, and narrative math.
+export const DEMAND_GATE = 30;
+
 export function analyzePlay(d: DemandRecord | undefined): {
   play: PlayType;
   competitors: string[];
@@ -145,7 +152,7 @@ export function analyzePlay(d: DemandRecord | undefined): {
     for (const c of COMPETITORS) if (c.re.test(s)) found.add(c.name);
   }
   const competitors = [...found];
-  if (d.demandScore >= 40) {
+  if (d.demandScore >= DEMAND_GATE) {
     return { play: competitors.length ? "displacement" : "greenfield", competitors };
   }
   return { play: null, competitors };

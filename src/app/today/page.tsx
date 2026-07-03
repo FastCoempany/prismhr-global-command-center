@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { AppWayfinder } from "@/components/app-wayfinder";
 import { loadDashboard } from "@/lib/dashboard/data";
+import { loadFieldNotes, FIELD_NOTE_KINDS } from "@/lib/field-notes/data";
+import { researchGeneratedAt } from "@/lib/book/research";
 import {
   accountIntel,
   debtsFromCards,
@@ -9,6 +11,8 @@ import {
   signals,
   type AccountIntel,
 } from "@/lib/today/build";
+import { CopyLine, NoteSubmit } from "../today-client";
+import { addFieldNote, resolveFieldNote } from "./actions";
 import styles from "../command-center.module.css";
 
 export const dynamic = "force-dynamic";
@@ -19,8 +23,23 @@ function PlayTag({ play }: { play: AccountIntel["play"] }) {
   return <span className={`${styles.tag} ${cls}`}>{play}</span>;
 }
 
+function FunnelChip({ funnel }: { funnel: AccountIntel["funnel"] }) {
+  return (
+    <span className={`${styles.funnelChip} ${funnel === "hcm" ? styles.funnelHcm : ""}`}>
+      {funnel === "hcm" ? "HCM funnel" : "PEO channel"}
+    </span>
+  );
+}
+
 function fitClass(tier: "high" | "medium" | "low") {
   return tier === "high" ? styles.fitHigh : tier === "medium" ? styles.fitMedium : styles.fitLow;
+}
+
+function ageBadge(ageDays: number | null) {
+  if (ageDays == null) return null;
+  const label = ageDays === 0 ? "today" : `${ageDays}d owed`;
+  const hot = ageDays >= 5; // the availability gate is 5 business days — past that it's aging
+  return <span className={`${styles.ageBadge} ${hot ? styles.ageHot : ""}`}>{label}</span>;
 }
 
 export default async function TodayPage() {
@@ -41,8 +60,10 @@ export default async function TodayPage() {
 
   const intel = accountIntel();
   const sig = signals(intel);
+  const hcm = intel.filter((a) => a.funnel === "hcm").slice(0, 6);
   const debts = debtsFromCards(dash.cards, dash.labels);
   const nar = narrative(intel);
+  const notes = await loadFieldNotes();
 
   // The single highest-leverage move: top composite-fit account that has a real
   // play (displacement or greenfield) and isn't already on the Dashboard.
@@ -58,9 +79,9 @@ export default async function TodayPage() {
         <h1 className={styles.h1}>Today</h1>
         <p className={styles.sub}>
           The daily command surface. Cold calling isn&apos;t the motion — this is a channel sell
-          through partners (CSMs and HCM enterprise sales) into the base you already serve. As the
-          Global consultant for the HCM side, the clients of our PEOs — and the PEOs themselves —
-          running on PrismHR HCM funnel here too. Read → route → record.
+          through partners into the base you already serve. Two lead streams route here: the{" "}
+          <b>PEO channel</b> (CSM-owned) and the <b>HCM funnel</b> — net-new HCM logos Eric brings
+          on, plus HRaaS platforms and the clients riding our PrismHR HCM. Read → route → record.
         </p>
 
         {/* ── Band 1 · Signal in ─────────────────────────────────────────── */}
@@ -71,7 +92,8 @@ export default async function TodayPage() {
               <h2 className={styles.bandTitle}>Signal in</h2>
               <p className={styles.bandSub}>
                 What the base is telling you — accounts where research surfaced real global-hiring
-                demand. Start the day here.
+                demand. Snapshot as of {researchGeneratedAt}; re-run research from the Account Room to
+                refresh.
               </p>
             </div>
           </div>
@@ -85,9 +107,10 @@ export default async function TodayPage() {
             {sig.map((a) => (
               <div key={a.id} className={styles.signalRow}>
                 <div className={styles.signalTop}>
-                  <Link href="/accounts">{a.name}</Link>
+                  <Link href={`/accounts?focus=${a.id}`}>{a.name}</Link>
                   <span className={`${styles.fit} ${fitClass(a.tier)}`}>{a.demand}</span>
                   <PlayTag play={a.play} />
+                  <FunnelChip funnel={a.funnel} />
                   <span className={styles.signalCsm}>{a.csm}</span>
                 </div>
                 {a.summary && <p className={styles.signalSummary}>{a.summary}</p>}
@@ -102,6 +125,17 @@ export default async function TodayPage() {
                 )}
               </div>
             ))}
+
+            {hcm.length > 0 && (
+              <div className={styles.hcmStrip}>
+                <span className={styles.hcmLabel}>HCM funnel — routes to you directly:</span>
+                {hcm.map((a) => (
+                  <Link key={a.id} href={`/accounts?focus=${a.id}`} className={styles.hcmChip}>
+                    {a.name} <b>{a.score}</b> · {a.csm}
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
         </section>
 
@@ -114,7 +148,7 @@ export default async function TodayPage() {
               <p className={styles.bandSub}>
                 What you owe before an account can move — the recap, the availability request, the
                 partner brief. Pulled live from the mandatory checkboxes on in-flight Dashboard
-                nodes.
+                nodes, oldest first.
               </p>
             </div>
           </div>
@@ -137,6 +171,7 @@ export default async function TodayPage() {
                 <div className={styles.debtTop}>
                   <span className={styles.debtName}>{d.cardName}</span>
                   <span className={styles.debtNode}>{d.nodeLabel}</span>
+                  {ageBadge(d.ageDays)}
                 </div>
                 <div className={styles.debtItem}>{d.item}</div>
                 {d.note && <div className={styles.debtNote}>“{d.note}”</div>}
@@ -172,11 +207,12 @@ export default async function TodayPage() {
             {move && (
               <div className={styles.moveHero}>
                 <div className={styles.moveTop}>
-                  <Link href="/accounts" className={styles.moveName}>
+                  <Link href={`/accounts?focus=${move.id}`} className={styles.moveName}>
                     {move.name}
                   </Link>
                   <span className={`${styles.fit} ${fitClass(move.tier)}`}>{move.score}</span>
                   <PlayTag play={move.play} />
+                  <FunnelChip funnel={move.funnel} />
                   {move.competitors.length > 0 && (
                     <span className={styles.signalCsm}>vs {move.competitors.join(", ")}</span>
                   )}
@@ -185,15 +221,16 @@ export default async function TodayPage() {
                 <div className={styles.moveAsk}>
                   <strong>The line for {move.csm}:</strong> {partnerAngle(move)}
                 </div>
+                <CopyLine text={partnerAngle(move)} />
               </div>
             )}
             {onDeck.length > 0 && (
               <div className={styles.onDeck}>
                 <span className={styles.onDeckLabel}>On deck:</span>
                 {onDeck.map((a) => (
-                  <span key={a.id} className={styles.onDeckChip}>
+                  <Link key={a.id} href={`/accounts?focus=${a.id}`} className={styles.onDeckChip}>
                     {a.name} <b>{a.score}</b>
-                  </span>
+                  </Link>
                 ))}
               </div>
             )}
@@ -218,7 +255,7 @@ export default async function TodayPage() {
               <Stat n={nar.realDemand} label="showing real demand" />
               <Stat n={nar.displacement} label="displacement plays" />
               <Stat n={nar.greenfield} label="greenfield plays" />
-              <Stat n={nar.highFit + nar.mediumFit} label="high/medium fit" />
+              <Stat n={nar.hcmFunnel} label="HCM-funnel accounts" />
             </div>
 
             {nar.topCountries.length > 0 && (
@@ -252,17 +289,76 @@ export default async function TodayPage() {
                 <h4>Arm the partners</h4>
                 <p>
                   At startup stage, the job is to make Eric and the CSMs dangerous on Global. Be
-                  loud to Aleks and marketing on what we have, what we don&apos;t, and what we need:
-                  a one-pager per play, a country-price cheat sheet, and a standing{" "}
-                  <b>lunch-and-learn / SME webinar</b> so partners can gauge intent without me in
-                  every room.
+                  loud to Aleks and marketing on what we have, what we don&apos;t, and what we need —
+                  capture it below so it&apos;s ready for the 1:1, not remembered on the spot.
                 </p>
               </div>
             </div>
           </div>
         </section>
 
-        {/* ── Operating cadence ──────────────────────────────────────────── */}
+        {/* ── Voice of the base & enablement gaps (capture) ──────────────── */}
+        <h2 className={styles.h2}>Voice of the base &amp; enablement gaps</h2>
+        <p className={styles.sub}>
+          The running list you carry into the Aleks 1:1 and to marketing — what the base keeps
+          asking for, what&apos;s missing to arm partners, and what you need from the org. Resolve an
+          item once you&apos;ve raised it.
+        </p>
+        <div className={styles.notesWrap}>
+          {!notes.available && (
+            <p className={styles.muted}>
+              Capture isn&apos;t connected yet — run <code>docs/dashboard-tables.sql</code> in
+              Supabase (it now creates the FieldNote table) to start logging.
+            </p>
+          )}
+          {notes.available && (
+            <>
+              <form action={addFieldNote} className={styles.noteForm}>
+                <select name="kind" aria-label="Note kind" defaultValue="gap">
+                  {FIELD_NOTE_KINDS.map((k) => (
+                    <option key={k.key} value={k.key}>
+                      {k.label}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  name="body"
+                  required
+                  maxLength={2000}
+                  placeholder="e.g. 3rd account this month asking about contractor conversion — need a one-pager"
+                  aria-label="Note body"
+                />
+                <NoteSubmit />
+              </form>
+
+              {notes.notes.length === 0 ? (
+                <p className={styles.muted}>Nothing logged yet.</p>
+              ) : (
+                <div className={styles.noteList}>
+                  {notes.notes.map((n) => {
+                    const meta = FIELD_NOTE_KINDS.find((k) => k.key === n.kind);
+                    return (
+                      <div key={n.id} className={styles.noteItem}>
+                        <span className={`${styles.noteKind} ${styles[`kind_${n.kind}`] ?? ""}`}>
+                          {meta?.label ?? n.kind}
+                        </span>
+                        <span className={styles.noteBody}>{n.body}</span>
+                        <form action={resolveFieldNote} className={styles.noteResolve}>
+                          <input type="hidden" name="id" value={n.id} />
+                          <button className={styles.noteResolveBtn} aria-label="Resolve note">
+                            Resolve
+                          </button>
+                        </form>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* ── The daily loop ─────────────────────────────────────────────── */}
         <h2 className={styles.h2}>The three questions I run every day</h2>
         <div className={styles.cards}>
           <div className={styles.card}>
@@ -282,8 +378,8 @@ export default async function TodayPage() {
           <div className={styles.card}>
             <h3>3 · What language drums up the intent?</h3>
             <p className={styles.muted}>
-              The partner question: what do I say to <b>gauge, drum up, or campaign</b> a client&apos;s
-              interest in Global? <b>Record</b> the answer on the Dashboard node.
+              The partner question: what do I say to <b>gauge, drum up, or campaign</b> a
+              client&apos;s interest in Global? <b>Record</b> the answer on the Dashboard node.
             </p>
           </div>
         </div>
@@ -336,7 +432,7 @@ export default async function TodayPage() {
               need her air cover.
             </li>
             <li>
-              <b>Market signal</b> — the one thing the base is telling us (voice of the base).
+              <b>Market signal</b> — the one thing the base is telling us (voice of the base, above).
             </li>
             <li>
               <b>Asks / air cover</b> — what I need from her or marketing to arm partners.

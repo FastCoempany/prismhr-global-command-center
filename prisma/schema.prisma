@@ -924,6 +924,7 @@ model DashCard {
   notes      Json? // { nodeKey: string }  (general per-node note, e.g. research seed)
   checks     Json? // { nodeKey: boolean[] }  (mandatory checkbox state)
   checkNotes Json? // { nodeKey: { itemIndex: string } }  (per-checkbox note)
+  activated  Json? // { nodeKey: isoString }  (when a node first went active — ages debts)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
@@ -937,4 +938,25 @@ model DashConfig {
   id        String   @id
   labels    Json?
   updatedAt DateTime @updatedAt
+}
+
+// --- Field notes -------------------------------------------------------------
+// The owner's running "voice of the base" + enablement-gap capture. Standalone
+// (not tied to any account): what we have, what we don't, what we need to arm
+// partners like Eric — the raw material carried into the Aleks 1:1 and to
+// marketing. Deliberately simple: a kind, a body, a resolved flag.
+//   kind: "gap"   — an enablement gap ("we have no country one-pager for Brazil")
+//         "voice" — a voice-of-the-base observation ("3rd account this month
+//                   asking about contractor conversion")
+//         "ask"   — something needed from Aleks / marketing / product
+model FieldNote {
+  id        String   @id @default(cuid())
+  kind      String   @default("gap")
+  body      String
+  resolved  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([kind])
+  @@index([resolved])
 }

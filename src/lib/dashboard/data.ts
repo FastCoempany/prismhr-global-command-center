@@ -12,6 +12,7 @@ export type DashCardRow = {
   notes: Record<DashNodeKey, string>;
   checks: Record<DashNodeKey, boolean[]>;
   checkNotes: Record<DashNodeKey, Record<number, string>>;
+  activated: Record<DashNodeKey, string>; // ISO string when a node first went active ("" = none)
 };
 
 export type DashData = {
@@ -35,6 +36,13 @@ function normChecks(raw: unknown): Record<DashNodeKey, boolean[]> {
     const arr = Array.isArray(src[n.key]) ? (src[n.key] as unknown[]) : [];
     out[n.key] = n.checklist.map((_, i) => arr[i] === true);
   }
+  return out;
+}
+
+function normActivated(raw: unknown): Record<DashNodeKey, string> {
+  const src = (raw ?? {}) as Record<string, unknown>;
+  const out = {} as Record<DashNodeKey, string>;
+  for (const n of DASH_NODES) out[n.key] = typeof src[n.key] === "string" ? (src[n.key] as string) : "";
   return out;
 }
 
@@ -76,6 +84,38 @@ function normLabels(raw: unknown): Record<string, string> {
   return out;
 }
 
+// Column-safe fetch: the `activated` column is newer than the table, so if the
+// SQL delta hasn't been run yet we fall back to selecting the stable columns and
+// treat aging as absent — the board stays fully usable instead of going
+// read-only (the failure mode when a whole default select hits a missing column).
+const STABLE_SELECT = {
+  id: true,
+  name: true,
+  subtitle: true,
+  position: true,
+  archived: true,
+  states: true,
+  notes: true,
+  checks: true,
+  checkNotes: true,
+} as const;
+const CARD_ORDER = [{ position: "asc" }, { createdAt: "asc" }] as const;
+
+async function fetchCards(prisma: ReturnType<typeof getPrisma>) {
+  try {
+    return await prisma.dashCard.findMany({
+      orderBy: [...CARD_ORDER],
+      select: { ...STABLE_SELECT, activated: true },
+    });
+  } catch {
+    const rows = await prisma.dashCard.findMany({
+      orderBy: [...CARD_ORDER],
+      select: STABLE_SELECT,
+    });
+    return rows.map((r) => ({ ...r, activated: null as unknown }));
+  }
+}
+
 export async function loadDashboard(): Promise<DashData> {
   const access = await getAppAccess();
   if (access.status !== "active" || !hasDatabaseEnv()) {
@@ -90,7 +130,7 @@ export async function loadDashboard(): Promise<DashData> {
   try {
     const prisma = getPrisma();
     const [rows, config] = await Promise.all([
-      prisma.dashCard.findMany({ orderBy: [{ position: "asc" }, { createdAt: "asc" }] }),
+      fetchCards(prisma),
       prisma.dashConfig.findUnique({ where: { id: "default" } }).catch(() => null),
     ]);
     const cards: DashCardRow[] = rows.map((r) => {
@@ -110,6 +150,7 @@ export async function loadDashboard(): Promise<DashData> {
         notes: normNotes(r.notes),
         checks,
         checkNotes: normCheckNotes(r.checkNotes),
+        activated: normActivated(r.activated),
       };
     });
     return {
