@@ -1,0 +1,40 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { getAppAccess } from "@/lib/auth";
+import { getPrisma, hasDatabaseEnv } from "@/lib/db";
+import { asFieldNoteKind } from "@/lib/field-notes/data";
+
+function str(fd: FormData, key: string, max = 4000) {
+  const v = fd.get(key);
+  return typeof v === "string" ? v.trim().slice(0, max) : "";
+}
+
+async function requireWrite() {
+  if (!hasDatabaseEnv()) return false;
+  const access = await getAppAccess();
+  return access.status === "active" && access.canWrite;
+}
+
+function done() {
+  revalidatePath("/today");
+  redirect("/today");
+}
+
+export async function addFieldNote(formData: FormData) {
+  const body = str(formData, "body", 2000);
+  if (!(await requireWrite()) || !body) done();
+  await getPrisma().fieldNote.create({
+    data: { kind: asFieldNoteKind(str(formData, "kind", 12)), body },
+  });
+  done();
+}
+
+// Resolve = clear it off the running list (it's been carried to Aleks / closed).
+export async function resolveFieldNote(formData: FormData) {
+  const id = str(formData, "id", 40);
+  if (!(await requireWrite()) || !id) done();
+  await getPrisma().fieldNote.update({ where: { id }, data: { resolved: true } });
+  done();
+}

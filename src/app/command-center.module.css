@@ -915,6 +915,10 @@
   background: #eef3fb;
   border-radius: 20px;
   padding: 2px 10px;
+  text-decoration: none;
+}
+.onDeckChip:hover {
+  background: #e1e9f7;
 }
 
 /* Band 4 — narrative */
@@ -1046,4 +1050,161 @@
 }
 .agenda b {
   color: var(--navy);
+}
+
+/* Funnel chip (PEO channel vs HCM funnel) */
+.funnelChip {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: #eef3fb;
+  color: var(--navy);
+  white-space: nowrap;
+}
+.funnelHcm {
+  background: #efe7fb;
+  color: #5b3aa8;
+}
+
+/* Debt aging badge */
+.ageBadge {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 20px;
+  background: #eef3fb;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.ageHot {
+  background: #fde7e7;
+  color: #b42323;
+}
+
+/* HCM funnel strip inside Band 1 */
+.hcmStrip {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  border-top: 1px dashed var(--line);
+  padding-top: 10px;
+  margin-top: 2px;
+}
+.hcmLabel {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #5b3aa8;
+}
+.hcmChip {
+  font-size: 11.5px;
+  color: var(--navy);
+  background: #efe7fb;
+  border-radius: 20px;
+  padding: 2px 10px;
+  text-decoration: none;
+}
+.hcmChip:hover {
+  background: #e4d8f7;
+}
+
+/* Copy-the-line button on the move */
+.copyLine {
+  margin-top: 8px;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--blue-d);
+  border-radius: 7px;
+  padding: 4px 12px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.copyLine:hover {
+  border-color: var(--blue);
+  background: #eef3fb;
+}
+
+/* Voice-of-the-base capture */
+.notesWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.noteForm {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.noteForm select,
+.noteForm input {
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: #fff;
+  font: inherit;
+}
+.noteForm input {
+  flex: 1;
+  min-width: 220px;
+}
+.noteList {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.noteItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 8px 11px;
+}
+.noteKind {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  white-space: nowrap;
+  background: #eef3fb;
+  color: var(--navy);
+}
+.kind_gap {
+  background: #fff1e6;
+  color: #b6531a;
+}
+.kind_voice {
+  background: #e4f7ea;
+  color: var(--green);
+}
+.kind_ask {
+  background: #efe7fb;
+  color: #5b3aa8;
+}
+.noteBody {
+  flex: 1;
+  font-size: 12.5px;
+  color: var(--ink);
+}
+.noteResolve {
+  margin: 0;
+}
+.noteResolveBtn {
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--muted);
+  border-radius: 7px;
+  padding: 3px 10px;
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.noteResolveBtn:hover {
+  border-color: var(--green);
+  color: var(--green);
 }

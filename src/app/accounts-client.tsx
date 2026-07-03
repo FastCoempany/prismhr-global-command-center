@@ -1,6 +1,7 @@
 "use client";
 
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useFormStatus } from "react-dom";
 import { EXTRA_PARTNERS, partnerRole } from "@/lib/book/partners";
 import { competitorUrl } from "@/lib/book/research";
@@ -104,8 +105,19 @@ export function AccountsClient({
   const [incOnly, setIncOnly] = useState(false);
   const [hotOnly, setHotOnly] = useState(false);
   const [sort, setSort] = useState("score");
-  const [openId, setOpenId] = useState("");
+  // Deep-link from Today (and elsewhere): /accounts?focus=<id> opens that
+  // account's detail (initial openId, below) and scrolls it into view, so a link
+  // lands on the row, not the top of a 130-row table.
+  const params = useSearchParams();
+  const focusId = params.get("focus") ?? "";
+  const [openId, setOpenId] = useState(focusId);
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (!focusId) return;
+    const el = document.getElementById(`acct-${focusId}`);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [focusId]);
 
   const isHot = (r: AccountRow) => r.play != null && (r.demand ?? 0) >= 60;
 
@@ -170,6 +182,65 @@ export function AccountsClient({
     } catch {
       setCopied(false);
     }
+  };
+
+  // Export the current (filtered) view as CSV — a portable PEO list to hand a
+  // partner, or the canonical account roster until an internal source is wired.
+  const exportCsv = () => {
+    const cols = [
+      "Account",
+      "City",
+      "State",
+      "Partner",
+      "Role",
+      "Model",
+      "Size",
+      "On PrismHR",
+      "Global fit",
+      "Demand",
+      "Confidence",
+      "Play",
+      "Competitors",
+      "Countries",
+      "Website",
+      "Contact",
+      "Email",
+    ];
+    const esc = (v: string | number) => {
+      const s = String(v ?? "");
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const lines = filtered.map((r) =>
+      [
+        r.name,
+        r.city,
+        r.state,
+        r.csm,
+        partnerRole(r.csm),
+        r.industry,
+        r.size || "",
+        r.incumbent ? r.cloud : "",
+        r.score,
+        r.demand ?? "",
+        r.researched ? r.confidence : "",
+        r.play ?? "",
+        r.competitors.join(" / "),
+        r.countries.join(" / "),
+        r.website,
+        r.contactName,
+        r.contactEmail,
+      ]
+        .map(esc)
+        .join(","),
+    );
+    const csv = [cols.join(","), ...lines].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `prismhr-accounts-${filtered.length}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -243,6 +314,9 @@ export function AccountsClient({
         <button type="button" className={styles.addMini} onClick={copyList}>
           {copied ? "Copied ✓" : "Copy list"}
         </button>
+        <button type="button" className={styles.addMini} onClick={exportCsv}>
+          Export CSV
+        </button>
         <span className={styles.count}>
           {filtered.length} of {rows.length}
         </span>
@@ -263,7 +337,7 @@ export function AccountsClient({
         <tbody>
           {filtered.map((a) => (
             <Fragment key={a.id}>
-              <tr className={a.id === openId ? styles.rowActive : ""}>
+              <tr id={`acct-${a.id}`} className={a.id === openId ? styles.rowActive : ""}>
                 <td>
                   <button
                     className={styles.rowBtn}

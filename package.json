@@ -7,7 +7,7 @@
     "dev": "next dev",
     "build": "prisma generate && next build",
     "start": "next start",
-    "test": "tsx --test tests/hml.test.ts tests/format.test.ts",
+    "test": "tsx --test tests/hml.test.ts tests/format.test.ts tests/today.test.ts",
     "typecheck": "prisma generate && tsc --noEmit",
     "lint": "eslint .",
     "format:check": "prettier --check \"*.{json,ts,mjs}\" \"src/**/*.{ts,tsx,css}\" \"prisma/**/*.ts\" \"config/**/*.{css,yaml,yml}\"",

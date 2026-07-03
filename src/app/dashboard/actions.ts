@@ -21,6 +21,17 @@ function lightNext(states: Record<string, string>, node: DashNodeKey) {
   }
 }
 
+// Keep the per-node activation stamps in sync with the final node states: stamp
+// the moment a node first goes active (so Today can age the debt), clear it when
+// a node falls back to todo, and leave done nodes' stamps untouched.
+function syncActivation(activated: Record<string, string>, states: Record<string, string>) {
+  const now = new Date().toISOString();
+  for (const key of DASH_NODE_KEYS) {
+    if (states[key] === "active" && !activated[key]) activated[key] = now;
+    else if (states[key] === "todo") delete activated[key];
+  }
+}
+
 function str(fd: FormData, key: string, max = 4000) {
   const v = fd.get(key);
   return typeof v === "string" ? v.trim().slice(0, max) : "";
@@ -92,7 +103,9 @@ export async function advanceNode(formData: FormData) {
   const cur: NodeState = isNodeState(states[node]) ? (states[node] as NodeState) : "todo";
   states[node] = cur === "todo" ? "active" : cur === "active" ? "done" : "todo";
   if (states[node] === "done") lightNext(states, node);
-  await prisma.dashCard.update({ where: { id: cardId }, data: { states } });
+  const activated: Record<string, string> = { ...((card!.activated as Record<string, string> | null) ?? {}) };
+  syncActivation(activated, states);
+  await prisma.dashCard.update({ where: { id: cardId }, data: { states, activated } });
   done();
 }
 
@@ -122,8 +135,10 @@ export async function toggleCheck(formData: FormData) {
   const states: Record<string, string> = { ...((card!.states as Record<string, string> | null) ?? {}) };
   states[node] = stateFromChecks(arr, count);
   if (states[node] === "done") lightNext(states, node);
+  const activated: Record<string, string> = { ...((card!.activated as Record<string, string> | null) ?? {}) };
+  syncActivation(activated, states);
 
-  await prisma.dashCard.update({ where: { id: cardId }, data: { checks: allChecks, states } });
+  await prisma.dashCard.update({ where: { id: cardId }, data: { checks: allChecks, states, activated } });
   done();
 }
 

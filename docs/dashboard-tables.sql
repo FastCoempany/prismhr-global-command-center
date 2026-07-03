@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS "DashCard" (
   "notes" JSONB,
   "checks" JSONB,
   "checkNotes" JSONB,
+  "activated" JSONB,
   "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
   "updatedAt" TIMESTAMP(3) NOT NULL,
   CONSTRAINT "DashCard_pkey" PRIMARY KEY ("id")
@@ -22,6 +23,8 @@ CREATE TABLE IF NOT EXISTS "DashCard" (
 ALTER TABLE "DashCard" ADD COLUMN IF NOT EXISTS "archived" BOOLEAN NOT NULL DEFAULT false;
 ALTER TABLE "DashCard" ADD COLUMN IF NOT EXISTS "checks" JSONB;
 ALTER TABLE "DashCard" ADD COLUMN IF NOT EXISTS "checkNotes" JSONB;
+-- "activated" records when each node first went active, so Today can age debts.
+ALTER TABLE "DashCard" ADD COLUMN IF NOT EXISTS "activated" JSONB;
 
 CREATE INDEX IF NOT EXISTS "DashCard_position_idx" ON "DashCard"("position");
 CREATE INDEX IF NOT EXISTS "DashCard_archived_idx" ON "DashCard"("archived");
@@ -32,3 +35,18 @@ CREATE TABLE IF NOT EXISTS "DashConfig" (
   "updatedAt" TIMESTAMP(3) NOT NULL,
   CONSTRAINT "DashConfig_pkey" PRIMARY KEY ("id")
 );
+
+-- Field notes — the owner's running "voice of the base" + enablement-gap
+-- capture (what we have / don't / need to arm partners). Standalone; feeds the
+-- Today surface and the Aleks 1:1. Safe to re-run.
+CREATE TABLE IF NOT EXISTS "FieldNote" (
+  "id" TEXT NOT NULL,
+  "kind" TEXT NOT NULL DEFAULT 'gap',
+  "body" TEXT NOT NULL,
+  "resolved" BOOLEAN NOT NULL DEFAULT false,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL,
+  CONSTRAINT "FieldNote_pkey" PRIMARY KEY ("id")
+);
+CREATE INDEX IF NOT EXISTS "FieldNote_kind_idx" ON "FieldNote"("kind");
+CREATE INDEX IF NOT EXISTS "FieldNote_resolved_idx" ON "FieldNote"("resolved");
