@@ -6,6 +6,7 @@ import { researchGeneratedAt } from "@/lib/book/research";
 import {
   accountIntel,
   debtsFromCards,
+  isStrongSignal,
   narrative,
   partnerAngle,
   signals,
@@ -109,9 +110,12 @@ export default async function TodayPage() {
                 <div className={styles.signalTop}>
                   <Link href={`/accounts?focus=${a.id}`}>{a.name}</Link>
                   <span className={`${styles.fit} ${fitClass(a.tier)}`}>{a.demand}</span>
+                  {!isStrongSignal(a) && <span className={styles.emergingTag}>emerging</span>}
                   <PlayTag play={a.play} />
                   <FunnelChip funnel={a.funnel} />
-                  <span className={styles.signalCsm}>{a.csm}</span>
+                  <span className={styles.signalCsm}>
+                    {a.confidence} conf · {a.csm}
+                  </span>
                 </div>
                 {a.summary && <p className={styles.signalSummary}>{a.summary}</p>}
                 {a.countries.length > 0 && (
@@ -252,9 +256,9 @@ export default async function TodayPage() {
           <div className={styles.bandBody}>
             <div className={styles.statRow}>
               <Stat n={`${nar.researched}/${nar.total}`} label="accounts researched" />
-              <Stat n={nar.realDemand} label="showing real demand" />
-              <Stat n={nar.displacement} label="displacement plays" />
-              <Stat n={nar.greenfield} label="greenfield plays" />
+              <Stat n={nar.strongDemand} label="strong demand" />
+              <Stat n={nar.emerging} label="emerging / hedged" />
+              <Stat n={`${nar.displacement}/${nar.greenfield}`} label="displace / greenfield" />
               <Stat n={nar.hcmFunnel} label="HCM-funnel accounts" />
             </div>
 
@@ -275,14 +279,17 @@ export default async function TodayPage() {
               <div className={styles.narCard}>
                 <h4>The line up to Aleks</h4>
                 <p>
-                  “Demand across the base is real but concentrated —{" "}
-                  <b>{nar.realDemand}</b> of {nar.total} accounts carry an actionable global-hiring
-                  signal, split{" "}
-                  <b>
-                    {nar.displacement} displacement / {nar.greenfield} greenfield
-                  </b>
-                  . The motion isn&apos;t volume, it&apos;s precision through partners. Here&apos;s
-                  the one I&apos;m converting this week.”
+                  “Demand across the base is thin but real — <b>{nar.strongDemand}</b> accounts carry
+                  a solid global-hiring signal
+                  {nar.emerging > 0 ? (
+                    <>
+                      , plus <b>{nar.emerging}</b> emerging (lower demand or confidence — worth a
+                      partner conversation, not a forecast)
+                    </>
+                  ) : null}
+                  . Split <b>{nar.displacement} displacement / {nar.greenfield} greenfield</b>. The
+                  motion isn&apos;t volume, it&apos;s precision through partners — here&apos;s the one
+                  I&apos;m converting this week.”
                 </p>
               </div>
               <div className={styles.narCard}>
