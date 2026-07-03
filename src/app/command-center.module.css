@@ -1123,6 +1123,68 @@
   background: #e4d8f7;
 }
 
+/* Loud "go look into this" callout (incomplete data source) */
+.hcmWarn {
+  display: block;
+  margin-top: 4px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  color: #9a3412;
+  border-radius: 9px;
+  padding: 8px 11px;
+  font-size: 12.5px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.hcmWarn:hover {
+  border-color: #fb923c;
+  background: #ffedd5;
+}
+
+/* Look-into page items */
+.lookItem {
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--orange);
+  border-radius: 10px;
+  padding: 11px 13px;
+  background: #fffaf5;
+}
+.lookTop {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-bottom: 5px;
+}
+.lookTitle {
+  font-weight: 700;
+  font-size: 13.5px;
+  color: var(--navy);
+}
+.lookWhere {
+  font-size: 11px;
+  color: var(--muted);
+  background: #eef3fb;
+  border-radius: 20px;
+  padding: 1px 9px;
+  margin-left: auto;
+}
+.lookWhy {
+  margin: 0 0 6px;
+  font-size: 12.5px;
+  color: var(--ink);
+  line-height: 1.55;
+}
+.lookAsk {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--ink);
+  line-height: 1.55;
+}
+.lookAsk strong {
+  color: var(--orange);
+}
+
 /* Copy-the-line button on the move */
 .copyLine {
   margin-top: 8px;
