@@ -2,18 +2,27 @@ import Link from "next/link";
 import { AppWayfinder } from "@/components/app-wayfinder";
 import { loadDashboard } from "@/lib/dashboard/data";
 import { loadFieldNotes, FIELD_NOTE_KINDS } from "@/lib/field-notes/data";
+import { loadSnoozes, loadValidations } from "@/lib/today/overlay";
 import { researchGeneratedAt } from "@/lib/book/research";
 import {
   accountIntel,
+  applyValidations,
   debtsFromCards,
+  DEBT_WINDOW_DAYS,
   isStrongSignal,
+  isTrusted,
+  movedThisWeek,
   narrative,
+  partitionSignals,
   partnerAngle,
   signals,
+  stateOfPlay,
   type AccountIntel,
+  type Validation,
 } from "@/lib/today/build";
 import { CopyLine, NoteSubmit } from "../today-client";
-import { addFieldNote, resolveFieldNote } from "./actions";
+import { addCard, toggleCheck } from "../dashboard/actions";
+import { addFieldNote, resolveFieldNote, snoozeSignal, unsnoozeSignal } from "./actions";
 import styles from "../command-center.module.css";
 
 export const dynamic = "force-dynamic";
@@ -32,6 +41,13 @@ function FunnelChip({ funnel }: { funnel: AccountIntel["funnel"] }) {
   );
 }
 
+function ValidationBadge({ v }: { v?: Validation }) {
+  if (!v) return null;
+  if (v.status === "confirmed") return <span className={styles.valConfirmed}>✓ confirmed</span>;
+  if (v.status === "flagged") return <span className={styles.valFlagged}>⚠ flagged</span>;
+  return <span className={styles.valAdjusted}>adjusted → {v.adjustedDemand}</span>;
+}
+
 function fitClass(tier: "high" | "medium" | "low") {
   return tier === "high" ? styles.fitHigh : tier === "medium" ? styles.fitMedium : styles.fitLow;
 }
@@ -39,8 +55,55 @@ function fitClass(tier: "high" | "medium" | "low") {
 function ageBadge(ageDays: number | null) {
   if (ageDays == null) return null;
   const label = ageDays === 0 ? "today" : `${ageDays}d owed`;
-  const hot = ageDays >= 5; // the availability gate is 5 business days — past that it's aging
+  const hot = ageDays >= DEBT_WINDOW_DAYS;
   return <span className={`${styles.ageBadge} ${hot ? styles.ageHot : ""}`}>{label}</span>;
+}
+
+// One-time seed dropped into a new card's Discovery note on "Seed to board".
+function seedFor(a: AccountIntel): string {
+  if (!a.researched || a.demand == null) return "";
+  const play =
+    a.play === "displacement"
+      ? `Displacement — currently on ${a.competitors.join(", ") || "a competitor EOR"}.`
+      : a.play === "greenfield"
+        ? "Greenfield — no incumbent EOR named."
+        : "";
+  const countries = a.countries.length ? ` Countries: ${a.countries.join(", ")}.` : "";
+  return `Demand ${a.demand}/100 (${a.confidence} confidence). ${play}${countries} ${a.summary}`.trim();
+}
+
+// "Seed to board" / "Act" — reuses the Dashboard addCard action, returning here.
+function SeedForm({ a, onBoard, label }: { a: AccountIntel; onBoard: boolean; label: string }) {
+  if (onBoard) return <span className={styles.onDash}>On board ✓</span>;
+  return (
+    <form action={addCard}>
+      <input type="hidden" name="name" value={a.name} />
+      <input type="hidden" name="subtitle" value={`${a.csm}${a.industry ? ` · ${a.industry}` : ""}`} />
+      <input type="hidden" name="seedDiscovery" value={seedFor(a)} />
+      <input type="hidden" name="returnTo" value="/today" />
+      <button className={styles.actBtn}>{label}</button>
+    </form>
+  );
+}
+
+// "Park ▾" — a disclosure with the snooze form (reason + optional resurface).
+function ParkControl({ id }: { id: string }) {
+  return (
+    <details className={styles.park}>
+      <summary className={styles.parkSummary}>Park ▾</summary>
+      <form action={snoozeSignal} className={styles.parkForm}>
+        <input type="hidden" name="accountId" value={id} />
+        <input name="reason" required maxLength={300} placeholder="Why park it?" aria-label="Reason" />
+        <select name="days" defaultValue="0" aria-label="Resurface">
+          <option value="0">until I un-park</option>
+          <option value="3">in 3 days</option>
+          <option value="7">in 7 days</option>
+          <option value="14">in 14 days</option>
+        </select>
+        <button className={styles.parkBtn}>Park</button>
+      </form>
+    </details>
+  );
 }
 
 export default async function TodayPage() {
@@ -59,19 +122,51 @@ export default async function TodayPage() {
     );
   }
 
-  const intel = accountIntel();
-  const sig = signals(intel);
-  const hcm = intel.filter((a) => a.funnel === "hcm").slice(0, 6);
-  const debts = debtsFromCards(dash.cards, dash.labels);
-  const nar = narrative(intel);
-  const notes = await loadFieldNotes();
+  const [snoozes, validations, notes] = await Promise.all([
+    loadSnoozes(),
+    loadValidations(),
+    loadFieldNotes(),
+  ]);
 
-  // The single highest-leverage move: top composite-fit account that has a real
-  // play (displacement or greenfield) and isn't already on the Dashboard.
-  const onDash = new Set(dash.cards.map((c) => c.name));
-  const withPlay = intel.filter((a) => a.play);
-  const move = withPlay.find((a) => !onDash.has(a.name)) ?? withPlay[0] ?? null;
-  const onDeck = withPlay.filter((a) => a !== move && !onDash.has(a.name)).slice(0, 4);
+  const intel = applyValidations(accountIntel(), validations);
+  const nar = narrative(intel);
+  const debts = debtsFromCards(dash.cards, dash.labels);
+  const onBoard = new Set(dash.cards.map((c) => c.name));
+
+  // Signals, split into active vs parked ("Not now"). Request-time "now" is
+  // resolved inside the pure helpers so the component stays free of impure calls.
+  const { active: activeSignals, parked } = partitionSignals(signals(intel), snoozes);
+  const hcm = intel.filter((a) => a.funnel === "hcm").slice(0, 6);
+
+  // The move: top trusted, non-parked play not yet on the board. Parked ids come
+  // straight from the partition (every play candidate clears the demand gate, so
+  // it's also a signal).
+  const parkedIds = new Set(parked.map((p) => p.intel.id));
+  const candidates = intel.filter(
+    (a) => a.play && isTrusted(a) && !parkedIds.has(a.id) && !onBoard.has(a.name),
+  );
+  const move = candidates[0] ?? null;
+  const onDeck = candidates.slice(1, 5);
+
+  const sop = stateOfPlay({ cards: dash.cards, debts, activeSignals, onBoard });
+
+  // "Start here" — the single most time-sensitive thing, with its reason.
+  let start: { text: string; why: string } | null = null;
+  const hotDebt = debts.find((d) => d.ageDays != null && d.ageDays >= DEBT_WINDOW_DAYS);
+  const firstUntriaged = activeSignals.find((a) => !onBoard.has(a.name));
+  if (hotDebt) {
+    start = {
+      text: `Close the aging debt on ${hotDebt.cardName} — ${hotDebt.item}`,
+      why: `it's ${hotDebt.ageDays}d past its 5-day window`,
+    };
+  } else if (firstUntriaged) {
+    start = {
+      text: `Triage ${firstUntriaged.name}`,
+      why: `a ${firstUntriaged.demand}-demand signal not yet on the board`,
+    };
+  } else if (move) {
+    start = { text: `Make the move on ${move.name}`, why: `top Global-fit with a real play` };
+  }
 
   return (
     <>
@@ -81,9 +176,38 @@ export default async function TodayPage() {
         <p className={styles.sub}>
           The daily command surface. Cold calling isn&apos;t the motion — this is a channel sell
           through partners into the base you already serve. Two lead streams route here: the{" "}
-          <b>PEO channel</b> (CSM-owned) and the <b>HCM funnel</b> — net-new HCM logos Eric brings
-          on, plus HRaaS platforms and the clients riding our PrismHR HCM. Read → route → record.
+          <b>PEO channel</b> (CSM-owned) and the <b>HCM funnel</b> (Eric&apos;s HCM logos + HRaaS +
+          clients on our PrismHR HCM). Read → route → record.
         </p>
+
+        {/* ── State of play ──────────────────────────────────────────────── */}
+        <div className={styles.sop}>
+          <div className={styles.sopStats}>
+            <span>
+              <b>{sop.openLoops}</b> loops open
+            </span>
+            <span className={sop.debtsPastWindow > 0 ? styles.sopHot : ""}>
+              <b>{sop.debtsPastWindow}</b> past window
+            </span>
+            <span>
+              <b>{sop.untriaged}</b> to triage
+            </span>
+            <span>
+              <b>{sop.moved}</b> moved this week
+            </span>
+          </div>
+          {start ? (
+            <p className={styles.sopStart}>
+              <span className={styles.sopStartLabel}>Start here:</span> {start.text}{" "}
+              <span className={styles.sopWhy}>— {start.why}</span>
+            </p>
+          ) : (
+            <p className={styles.sopStart}>
+              <span className={styles.sopStartLabel}>Clear.</span> Nothing pressing — seed a new
+              signal or advance a loop.
+            </p>
+          )}
+        </div>
 
         {/* ── Band 1 · Signal in ─────────────────────────────────────────── */}
         <section className={styles.band}>
@@ -92,27 +216,30 @@ export default async function TodayPage() {
             <div>
               <h2 className={styles.bandTitle}>Signal in</h2>
               <p className={styles.bandSub}>
-                What the base is telling you — accounts where research surfaced real global-hiring
-                demand. Snapshot as of {researchGeneratedAt}; re-run research from the Account Room to
-                refresh.
+                What the base is telling you — real global-hiring demand. Seed one to the board, copy
+                the partner line, or park it with a reason. Snapshot as of {researchGeneratedAt}.
               </p>
             </div>
           </div>
           <div className={styles.bandBody}>
-            {sig.length === 0 && (
+            {activeSignals.length === 0 && (
               <p className={styles.muted}>
-                No account is showing actionable demand yet. Demand is thin across the base — which
-                is itself the signal. Run deeper research from the Account Room.
+                No active signal. {parked.length > 0 ? "Some are parked below. " : ""}Demand is thin
+                across the base — run deeper research from the Account Room.
               </p>
             )}
-            {sig.map((a) => (
-              <div key={a.id} className={styles.signalRow}>
+            {activeSignals.map((a) => (
+              <div
+                key={a.id}
+                className={`${styles.signalRow} ${a.validation?.status === "flagged" ? styles.signalFlagged : ""}`}
+              >
                 <div className={styles.signalTop}>
                   <Link href={`/accounts?focus=${a.id}`}>{a.name}</Link>
                   <span className={`${styles.fit} ${fitClass(a.tier)}`}>{a.demand}</span>
                   {!isStrongSignal(a) && <span className={styles.emergingTag}>emerging</span>}
                   <PlayTag play={a.play} />
                   <FunnelChip funnel={a.funnel} />
+                  <ValidationBadge v={a.validation} />
                   <span className={styles.signalCsm}>
                     {a.confidence} conf · {a.csm}
                   </span>
@@ -127,6 +254,11 @@ export default async function TodayPage() {
                     ))}
                   </div>
                 )}
+                <div className={styles.actRow}>
+                  <SeedForm a={a} onBoard={onBoard.has(a.name)} label="Seed to board" />
+                  <CopyLine text={partnerAngle(a)} label="Copy the line" />
+                  <ParkControl id={a.id} />
+                </div>
               </div>
             ))}
 
@@ -144,6 +276,27 @@ export default async function TodayPage() {
               ⚠ This HCM funnel is incomplete — the roster of PEO clients running on PrismHR HCM
               isn&apos;t loaded yet, so it looks smaller than it is. Look into →
             </Link>
+
+            {parked.length > 0 && (
+              <details className={styles.parkedList}>
+                <summary>Parked ({parked.length})</summary>
+                {parked.map(({ intel: a, snooze }) => (
+                  <div key={a.id} className={styles.parkedRow}>
+                    <Link href={`/accounts?focus=${a.id}`}>{a.name}</Link>
+                    <span className={styles.parkedReason}>
+                      “{snooze.reason}”
+                      {snooze.snoozedUntil
+                        ? ` · back ${snooze.snoozedUntil.slice(0, 10)}`
+                        : " · until un-parked"}
+                    </span>
+                    <form action={unsnoozeSignal} className={styles.noteResolve}>
+                      <input type="hidden" name="accountId" value={a.id} />
+                      <button className={styles.noteResolveBtn}>Un-park</button>
+                    </form>
+                  </div>
+                ))}
+              </details>
+            )}
           </div>
         </section>
 
@@ -155,8 +308,7 @@ export default async function TodayPage() {
               <h2 className={styles.bandTitle}>Debts out ({debts.length})</h2>
               <p className={styles.bandSub}>
                 What you owe before an account can move — the recap, the availability request, the
-                partner brief. Pulled live from the mandatory checkboxes on in-flight Dashboard
-                nodes, oldest first.
+                partner brief. Check one off here and it closes on the Dashboard node. Oldest first.
               </p>
             </div>
           </div>
@@ -164,8 +316,7 @@ export default async function TodayPage() {
             {dash.status === "database-unavailable" && (
               <p className={styles.muted}>
                 The execution ledger isn&apos;t connected — run <code>docs/dashboard-tables.sql</code>{" "}
-                in Supabase and start moving nodes on the <Link href="/">Dashboard</Link> to see what
-                you owe.
+                in Supabase and start moving nodes on the <Link href="/">Dashboard</Link>.
               </p>
             )}
             {dash.status === "active" && debts.length === 0 && (
@@ -175,11 +326,18 @@ export default async function TodayPage() {
               </p>
             )}
             {debts.slice(0, 12).map((d) => (
-              <div key={`${d.cardId}-${d.nodeKey}-${d.item}`} className={styles.debt}>
+              <div key={`${d.cardId}-${d.nodeKey}-${d.index}`} className={styles.debt}>
                 <div className={styles.debtTop}>
                   <span className={styles.debtName}>{d.cardName}</span>
                   <span className={styles.debtNode}>{d.nodeLabel}</span>
                   {ageBadge(d.ageDays)}
+                  <form action={toggleCheck} className={styles.debtClose}>
+                    <input type="hidden" name="cardId" value={d.cardId} />
+                    <input type="hidden" name="node" value={d.nodeKey} />
+                    <input type="hidden" name="index" value={d.index} />
+                    <input type="hidden" name="returnTo" value="/today" />
+                    <button className={styles.closeBtn}>Close ✓</button>
+                  </form>
                 </div>
                 <div className={styles.debtItem}>{d.item}</div>
                 {d.note && <div className={styles.debtNote}>“{d.note}”</div>}
@@ -200,16 +358,17 @@ export default async function TodayPage() {
             <div>
               <h2 className={styles.bandTitle}>Highest-leverage move</h2>
               <p className={styles.bandSub}>
-                The one account to touch now — top Global-fit with a real play, not yet on the board.
-                Lead with the partner, not the client.
+                The one account to touch now — top Global-fit with a real play, not on the board, not
+                parked, not flagged. Lead with the partner. Not this one? Act on an on-deck
+                alternative or park it.
               </p>
             </div>
           </div>
           <div className={styles.bandBody}>
             {!move && (
               <p className={styles.muted}>
-                No account carries a qualified play yet. Deepen research or seed a partner from the{" "}
-                <Link href="/accounts">Account Room</Link>.
+                No account carries a qualified play right now. Deepen research or seed a partner from
+                the <Link href="/accounts">Account Room</Link>.
               </p>
             )}
             {move && (
@@ -221,6 +380,7 @@ export default async function TodayPage() {
                   <span className={`${styles.fit} ${fitClass(move.tier)}`}>{move.score}</span>
                   <PlayTag play={move.play} />
                   <FunnelChip funnel={move.funnel} />
+                  <ValidationBadge v={move.validation} />
                   {move.competitors.length > 0 && (
                     <span className={styles.signalCsm}>vs {move.competitors.join(", ")}</span>
                   )}
@@ -229,7 +389,11 @@ export default async function TodayPage() {
                 <div className={styles.moveAsk}>
                   <strong>The line for {move.csm}:</strong> {partnerAngle(move)}
                 </div>
-                <CopyLine text={partnerAngle(move)} />
+                <div className={styles.actRow}>
+                  <SeedForm a={move} onBoard={onBoard.has(move.name)} label="Act — seed & open" />
+                  <CopyLine text={partnerAngle(move)} label="Copy the line" />
+                  <ParkControl id={move.id} />
+                </div>
               </div>
             )}
             {onDeck.length > 0 && (
@@ -263,7 +427,7 @@ export default async function TodayPage() {
               <Stat n={nar.strongDemand} label="strong demand" />
               <Stat n={nar.emerging} label="emerging / hedged" />
               <Stat n={`${nar.displacement}/${nar.greenfield}`} label="displace / greenfield" />
-              <Stat n={nar.hcmFunnel} label="HCM-funnel accounts" />
+              <Stat n={movedThisWeek(dash.cards)} label="moved this week" />
             </div>
 
             {nar.topCountries.length > 0 && (
@@ -319,7 +483,7 @@ export default async function TodayPage() {
           {!notes.available && (
             <p className={styles.muted}>
               Capture isn&apos;t connected yet — run <code>docs/dashboard-tables.sql</code> in
-              Supabase (it now creates the FieldNote table) to start logging.
+              Supabase to start logging.
             </p>
           )}
           {notes.available && (

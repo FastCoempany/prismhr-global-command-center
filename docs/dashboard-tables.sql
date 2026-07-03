@@ -50,3 +50,39 @@ CREATE TABLE IF NOT EXISTS "FieldNote" (
 );
 CREATE INDEX IF NOT EXISTS "FieldNote_kind_idx" ON "FieldNote"("kind");
 CREATE INDEX IF NOT EXISTS "FieldNote_resolved_idx" ON "FieldNote"("resolved");
+
+-- Today interaction overlays — let Today act in place (park a signal, validate a
+-- score, resolve a Look-into item) without duplicating the Dashboard. Safe to re-run.
+CREATE TABLE IF NOT EXISTS "SignalSnooze" (
+  "id" TEXT NOT NULL,
+  "accountId" TEXT NOT NULL,
+  "reason" TEXT NOT NULL,
+  "snoozedUntil" TIMESTAMP(3),
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL,
+  CONSTRAINT "SignalSnooze_pkey" PRIMARY KEY ("id")
+);
+CREATE UNIQUE INDEX IF NOT EXISTS "SignalSnooze_accountId_key" ON "SignalSnooze"("accountId");
+
+CREATE TABLE IF NOT EXISTS "ScoreValidation" (
+  "id" TEXT NOT NULL,
+  "accountId" TEXT NOT NULL,
+  "status" TEXT NOT NULL DEFAULT 'confirmed',
+  "adjustedDemand" INTEGER,
+  "note" TEXT,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL,
+  CONSTRAINT "ScoreValidation_pkey" PRIMARY KEY ("id")
+);
+CREATE UNIQUE INDEX IF NOT EXISTS "ScoreValidation_accountId_key" ON "ScoreValidation"("accountId");
+
+CREATE TABLE IF NOT EXISTS "LookIntoStatus" (
+  "id" TEXT NOT NULL,
+  "itemId" TEXT NOT NULL,
+  "resolved" BOOLEAN NOT NULL DEFAULT false,
+  "note" TEXT,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL,
+  CONSTRAINT "LookIntoStatus_pkey" PRIMARY KEY ("id")
+);
+CREATE UNIQUE INDEX IF NOT EXISTS "LookIntoStatus_itemId_key" ON "LookIntoStatus"("itemId");

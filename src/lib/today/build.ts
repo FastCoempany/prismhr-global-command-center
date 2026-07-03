@@ -30,12 +30,16 @@ export function funnelOf(csm: string, industry: string): Funnel {
   return "peo";
 }
 
+export type ValidationStatus = "confirmed" | "flagged" | "adjusted";
+export type Validation = { status: ValidationStatus; note?: string; adjustedDemand?: number };
+
 export type AccountIntel = {
   id: string;
   name: string;
   csm: string;
   industry: string;
   funnel: Funnel;
+  desk: number; // firmographic account-profile score (for recompute on adjust)
   score: number; // composite Global-fit
   tier: "high" | "medium" | "low";
   demand: number | null;
@@ -45,6 +49,7 @@ export type AccountIntel = {
   competitors: string[];
   countries: string[];
   summary: string;
+  validation?: Validation; // owner/CSM trust layer, applied after the fact
 };
 
 // Slim intel for every channel account, highest composite fit first. Mirrors the
@@ -63,6 +68,7 @@ export function accountIntel(): AccountIntel[] {
         csm: p.csm,
         industry: p.industry,
         funnel: funnelOf(p.csm, p.industry),
+        desk: d.score,
         score: c.score,
         tier: c.tier,
         demand,
@@ -75,6 +81,37 @@ export function accountIntel(): AccountIntel[] {
       };
     })
     .sort((a, b) => b.score - a.score);
+}
+
+// A flagged score is no longer trusted — it's excluded from "strong" signals and
+// from the highest-leverage move, so a score the owner marked wrong never bosses
+// the day around. Confirmed/adjusted stay trusted.
+export function isTrusted(a: AccountIntel): boolean {
+  return a.validation?.status !== "flagged";
+}
+
+// Apply the owner/CSM validation layer on top of the researched intel. "adjusted"
+// overrides demand and reflows the composite (using the untouched desk score);
+// "flagged"/"confirmed" annotate without changing the numbers. Re-sorts by the
+// (possibly changed) score. Pure: the validation map is loaded from the DB and
+// passed in.
+export function applyValidations(
+  intel: AccountIntel[],
+  vmap: Map<string, Validation>,
+): AccountIntel[] {
+  const out = intel.map((a) => {
+    const v = vmap.get(a.id);
+    if (!v) return a;
+    if (v.status === "adjusted" && v.adjustedDemand != null) {
+      const demand = Math.max(0, Math.min(100, Math.round(v.adjustedDemand)));
+      const c = compositeScore(a.desk, demand, a.confidence);
+      const play: AccountIntel["play"] =
+        demand >= DEMAND_GATE ? (a.competitors.length ? "displacement" : "greenfield") : null;
+      return { ...a, demand, score: c.score, tier: c.tier, play, validation: v };
+    }
+    return { ...a, validation: v };
+  });
+  return out.sort((x, y) => y.score - x.score);
 }
 
 // A signal is "strong" only when demand clears a higher bar AND the research
@@ -97,12 +134,17 @@ export function signals(intel: AccountIntel[], limit = 6): AccountIntel[] {
   return [...pool].sort((a, b) => (b.demand ?? 0) - (a.demand ?? 0)).slice(0, limit);
 }
 
+// A debt aged past this many days has blown its window (the demo-availability
+// gate is 5 business days) — used for the "hot" badge and state-of-play.
+export const DEBT_WINDOW_DAYS = 5;
+
 export type Debt = {
   cardId: string;
   cardName: string;
   nodeKey: DashNodeKey;
   nodeLabel: string;
   item: string;
+  index: number; // the checklist index — lets Today close it in place
   note?: string;
   ageDays: number | null; // days the node has been in flight ("owed"), null if unstamped
 };
@@ -141,6 +183,7 @@ export function debtsFromCards(
           nodeKey: node.key,
           nodeLabel: labels[node.key] ?? node.label,
           item,
+          index: i,
           note: card.checkNotes[node.key]?.[i],
           ageDays,
         });
@@ -186,7 +229,7 @@ export type Narrative = {
 export function narrative(intel: AccountIntel[]): Narrative {
   const researched = intel.filter((a) => a.researched).length;
   const realDemand = intel.filter((a) => a.demand != null && a.demand >= DEMAND_GATE).length;
-  const strongDemand = intel.filter((a) => isStrongSignal(a)).length;
+  const strongDemand = intel.filter((a) => isStrongSignal(a) && isTrusted(a)).length;
   const emerging = realDemand - strongDemand;
   const displacement = intel.filter((a) => a.play === "displacement").length;
   const greenfield = intel.filter((a) => a.play === "greenfield").length;
@@ -214,4 +257,74 @@ export function narrative(intel: AccountIntel[]): Narrative {
     hcmFunnel,
     topCountries,
   };
+}
+
+// --- Snooze ("Not now") ------------------------------------------------------
+export type Snooze = { reason: string; snoozedUntil: string | null };
+
+// A snooze is live (signal stays parked) until its snoozedUntil passes; a null
+// snoozedUntil parks it until manually un-parked.
+export function isParked(s: Snooze | undefined, now: number): boolean {
+  if (!s) return false;
+  if (s.snoozedUntil == null) return true;
+  const t = Date.parse(s.snoozedUntil);
+  return Number.isNaN(t) ? true : t > now;
+}
+
+export function partitionSignals(
+  list: AccountIntel[],
+  snoozeMap: Map<string, Snooze>,
+  now: number = Date.now(),
+): { active: AccountIntel[]; parked: { intel: AccountIntel; snooze: Snooze }[] } {
+  const active: AccountIntel[] = [];
+  const parked: { intel: AccountIntel; snooze: Snooze }[] = [];
+  for (const a of list) {
+    const s = snoozeMap.get(a.id);
+    if (s && isParked(s, now)) parked.push({ intel: a, snooze: s });
+    else active.push(a);
+  }
+  return { active, parked };
+}
+
+// --- Momentum & state of play ------------------------------------------------
+// Nodes that first went active in the last 7 days — the honest, non-gamified
+// "what moved this week" (counts progress, not clicks).
+export function movedThisWeek(cards: DashCardRow[], now: number = Date.now()): number {
+  const weekAgo = now - 7 * 86_400_000;
+  let n = 0;
+  for (const c of cards) {
+    if (c.archived) continue;
+    for (const key of Object.keys(c.activated) as DashNodeKey[]) {
+      const iso = c.activated[key];
+      if (!iso) continue;
+      const t = Date.parse(iso);
+      if (!Number.isNaN(t) && t >= weekAgo) n++;
+    }
+  }
+  return n;
+}
+
+export type StateOfPlay = {
+  openLoops: number; // non-archived cards with a node in flight
+  debtsPastWindow: number; // debts aged past the window
+  untriaged: number; // active signals not yet on the board
+  moved: number; // nodes advanced this week
+};
+
+export function stateOfPlay(args: {
+  cards: DashCardRow[];
+  debts: Debt[];
+  activeSignals: AccountIntel[];
+  onBoard: Set<string>;
+  now?: number;
+}): StateOfPlay {
+  const now = args.now ?? Date.now();
+  const openLoops = args.cards.filter(
+    (c) => !c.archived && DASH_NODES.some((n) => c.states[n.key] === "active"),
+  ).length;
+  const debtsPastWindow = args.debts.filter(
+    (d) => d.ageDays != null && d.ageDays >= DEBT_WINDOW_DAYS,
+  ).length;
+  const untriaged = args.activeSignals.filter((a) => !args.onBoard.has(a.name)).length;
+  return { openLoops, debtsPastWindow, untriaged, moved: movedThisWeek(args.cards, now) };
 }

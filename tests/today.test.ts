@@ -4,13 +4,21 @@ import { DASH_NODES, type DashNodeKey, type NodeState } from "@/lib/dashboard/st
 import type { DashCardRow } from "@/lib/dashboard/data";
 import {
   accountIntel,
+  applyValidations,
   debtsFromCards,
   funnelOf,
+  isParked,
   isStrongSignal,
+  isTrusted,
+  movedThisWeek,
   narrative,
+  partitionSignals,
   partnerAngle,
   signals,
+  stateOfPlay,
   type AccountIntel,
+  type Snooze,
+  type Validation,
 } from "@/lib/today/build";
 import { DEMAND_GATE } from "@/lib/book/research";
 
@@ -23,6 +31,7 @@ function intel(partial: Partial<AccountIntel>): AccountIntel {
     csm: partial.csm ?? "Jamie Doe",
     industry: partial.industry ?? "PEO/ASO",
     funnel: partial.funnel ?? "peo",
+    desk: partial.desk ?? 50,
     score: partial.score ?? 50,
     tier: partial.tier ?? "medium",
     demand: partial.demand ?? null,
@@ -255,6 +264,108 @@ describe("narrative", () => {
     const n = narrative(rows);
     assert.equal(n.topCountries[0].name, "Canada");
     assert.equal(n.topCountries[0].count, 2);
+  });
+});
+
+// --- validation overlay ------------------------------------------------------
+
+describe("applyValidations", () => {
+  test("confirmed/flagged annotate without changing the score", () => {
+    const rows = [intel({ id: "a", demand: 55, score: 60 })];
+    const v = new Map<string, Validation>([["a", { status: "flagged", note: "wrong" }]]);
+    const out = applyValidations(rows, v);
+    assert.equal(out[0].score, 60);
+    assert.equal(out[0].validation?.status, "flagged");
+    assert.equal(isTrusted(out[0]), false);
+  });
+
+  test("adjusted overrides demand and reflows composite + play, then re-sorts", () => {
+    const rows = [
+      intel({ id: "a", desk: 50, demand: 20, score: 32, play: null, competitors: [], confidence: "high" }),
+      intel({ id: "b", desk: 50, demand: 50, score: 50 }),
+    ];
+    const v = new Map<string, Validation>([["a", { status: "adjusted", adjustedDemand: 90 }]]);
+    const out = applyValidations(rows, v);
+    // a: high-conf, so demandAdj = 90; composite = round(0.4*50 + 0.6*90) = 74 → now first
+    assert.equal(out[0].id, "a");
+    assert.equal(out[0].demand, 90);
+    assert.equal(out[0].score, 74);
+    assert.equal(out[0].play, "greenfield"); // re-gated above 30, no competitor
+  });
+
+  test("adjusting below the gate drops the play", () => {
+    const rows = [intel({ id: "a", desk: 40, demand: 60, play: "greenfield" })];
+    const v = new Map<string, Validation>([["a", { status: "adjusted", adjustedDemand: 10 }]]);
+    const out = applyValidations(rows, v);
+    assert.equal(out[0].play, null);
+  });
+
+  test("isTrusted excludes flagged from strong-demand narrative", () => {
+    const rows = applyValidations(
+      [
+        intel({ researched: true, demand: 58, confidence: "high" }),
+        intel({ id: "f", researched: true, demand: 58, confidence: "high" }),
+      ],
+      new Map([["f", { status: "flagged" }]]),
+    );
+    assert.equal(narrative(rows).strongDemand, 1);
+  });
+});
+
+// --- snooze / parking --------------------------------------------------------
+
+describe("partitionSignals & isParked", () => {
+  const now = 100 * 86_400_000;
+  test("indefinite park (null until) stays parked", () => {
+    assert.equal(isParked({ reason: "x", snoozedUntil: null }, now), true);
+  });
+  test("future until parks; past until resurfaces", () => {
+    assert.equal(isParked({ reason: "x", snoozedUntil: new Date(now + 86_400_000).toISOString() }, now), true);
+    assert.equal(isParked({ reason: "x", snoozedUntil: new Date(now - 86_400_000).toISOString() }, now), false);
+  });
+  test("splits active from parked signals", () => {
+    const rows = [intel({ id: "a" }), intel({ id: "b" }), intel({ id: "c" })];
+    const snoozes = new Map<string, Snooze>([
+      ["b", { reason: "later", snoozedUntil: null }],
+      ["c", { reason: "expired", snoozedUntil: new Date(now - 86_400_000).toISOString() }], // resurfaced
+    ]);
+    const { active, parked } = partitionSignals(rows, snoozes, now);
+    assert.deepEqual(active.map((a) => a.id).sort(), ["a", "c"]);
+    assert.equal(parked.length, 1);
+    assert.equal(parked[0].intel.id, "b");
+  });
+});
+
+// --- momentum & state of play ------------------------------------------------
+
+describe("movedThisWeek & stateOfPlay", () => {
+  const now = 100 * 86_400_000;
+  const DAY = 86_400_000;
+  function card(id: string, opts: { active?: DashNodeKey[]; activated?: Partial<Record<DashNodeKey, string>>; archived?: boolean }): DashCardRow {
+    const states = {} as Record<DashNodeKey, NodeState>;
+    for (const n of DASH_NODES) states[n.key] = (opts.active ?? []).includes(n.key) ? "active" : "todo";
+    const activated = {} as Record<DashNodeKey, string>;
+    for (const n of DASH_NODES) activated[n.key] = opts.activated?.[n.key] ?? "";
+    return {
+      id, name: id, subtitle: null, position: 0, archived: opts.archived ?? false, states,
+      notes: {} as Record<DashNodeKey, string>, checks: {} as Record<DashNodeKey, boolean[]>,
+      checkNotes: {} as Record<DashNodeKey, Record<number, string>>, activated,
+    };
+  }
+  test("counts nodes activated within the last 7 days, skipping archived", () => {
+    const c1 = card("c1", { activated: { discovery: new Date(now - 2 * DAY).toISOString(), demo: new Date(now - 20 * DAY).toISOString() } });
+    const c2 = card("c2", { archived: true, activated: { demo: new Date(now - 1 * DAY).toISOString() } });
+    assert.equal(movedThisWeek([c1, c2], now), 1);
+  });
+  test("state of play: open loops, past-window debts, untriaged, moved", () => {
+    const c = card("Acme", { active: ["demo"], activated: { demo: new Date(now - 6 * DAY).toISOString() } });
+    const debts = debtsFromCards([c], {}, now); // demo active 6d → all past window
+    const activeSignals = [intel({ name: "New Co" }), intel({ name: "Acme" })];
+    const sop = stateOfPlay({ cards: [c], debts, activeSignals, onBoard: new Set(["Acme"]), now });
+    assert.equal(sop.openLoops, 1);
+    assert.ok(sop.debtsPastWindow > 0);
+    assert.equal(sop.untriaged, 1); // "New Co" not on board; "Acme" is
+    assert.equal(sop.moved, 1);
   });
 });
 

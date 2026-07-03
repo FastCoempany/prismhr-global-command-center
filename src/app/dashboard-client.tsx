@@ -31,6 +31,17 @@ type Props = {
 
 const glyph = (state: NodeState) => (state === "done" ? "✓" : "");
 
+// The single next mandatory item to act on: the first unchecked item on the
+// first in-flight (active) node. Null when nothing's in flight.
+function nextStep(card: DashCardRow): { node: DashNodeKey; item: string } | null {
+  for (const n of DASH_NODES) {
+    if (card.states[n.key] !== "active") continue;
+    const i = n.checklist.findIndex((_, idx) => !card.checks[n.key][idx]);
+    if (i >= 0) return { node: n.key, item: n.checklist[i] };
+  }
+  return null;
+}
+
 function Track({
   card,
   canWrite,
@@ -186,6 +197,19 @@ export function DashboardClient({ cards, canWrite, dbUnavailable, labels }: Prop
                   <>
                     <div className={styles.name}>{card.name}</div>
                     {card.subtitle && <div className={styles.meta}>{card.subtitle}</div>}
+                    {(() => {
+                      const next = nextStep(card);
+                      return next ? (
+                        <button
+                          type="button"
+                          className={styles.nextStep}
+                          onClick={() => toggleNode(card.id, next.node)}
+                          title="Open this node's checklist"
+                        >
+                          <span className={styles.nextStepLabel}>Next:</span> {next.item}
+                        </button>
+                      ) : null;
+                    })()}
                     {canWrite && (
                       <div className={styles.manage}>
                         <form action={moveCard} className={styles.inlineForm}>

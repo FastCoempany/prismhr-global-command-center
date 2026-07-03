@@ -5,6 +5,7 @@ import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import { peos } from "@/lib/book";
 import { compositeScore, deskScore } from "@/lib/book/scoring";
 import { analyzePlay, extractCountries, getDemand, researchGeneratedAt } from "@/lib/book/research";
+import { loadValidations } from "@/lib/today/overlay";
 import { AccountsClient, type AccountRow } from "../accounts-client";
 import styles from "../command-center.module.css";
 
@@ -39,13 +40,33 @@ export default async function AccountsPage() {
       onDashboard = [];
     }
   }
+
+  // Owner/CSM validation overlay — confirmed/flagged annotate; adjusted overrides
+  // demand and reflows the composite.
+  const validations = await loadValidations();
+
   const rows: AccountRow[] = peos
     .map((p) => {
       const d = deskScore(p);
       const dem = getDemand(p.id);
-      const demand = dem?.researched ? dem.demandScore : null;
+      const researchedDemand = dem?.researched ? dem.demandScore : null;
+      const v = validations.get(p.id);
+      const demand =
+        v?.status === "adjusted" && v.adjustedDemand != null
+          ? Math.max(0, Math.min(100, Math.round(v.adjustedDemand)))
+          : researchedDemand;
       const c = compositeScore(d.score, demand, dem?.confidence ?? "low");
-      const pl = analyzePlay(dem);
+      // Play re-gates on the (possibly adjusted) demand; competitor detection is
+      // text-based and unchanged.
+      const basePl = analyzePlay(dem);
+      const play =
+        demand != null && demand >= 30
+          ? basePl.competitors.length
+            ? "displacement"
+            : "greenfield"
+          : demand == null
+            ? basePl.play
+            : null;
       return {
         id: p.id,
         name: p.name,
@@ -67,14 +88,15 @@ export default async function AccountsPage() {
         evidence: dem?.evidence ?? [],
         summary: dem?.summary ?? "",
         researched: dem?.researched ?? false,
-        play: pl.play,
-        competitors: pl.competitors,
+        play: play as AccountRow["play"],
+        competitors: basePl.competitors,
         countries: extractCountries(dem),
         demandAdj: c.demandAdj,
         confFactor: c.confFactor,
         score: c.score,
         tier: c.tier,
         breakdown: d.breakdown,
+        validation: v ? { status: v.status, note: v.note, adjustedDemand: v.adjustedDemand } : null,
       };
     })
     .sort((a, b) => b.score - a.score);

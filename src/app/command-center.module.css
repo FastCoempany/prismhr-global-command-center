@@ -1067,6 +1067,270 @@
   color: #5b3aa8;
 }
 
+/* State of play (interactive Today header) */
+.sop {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+  padding: 11px 15px;
+  margin-bottom: 16px;
+}
+.sopStats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.sopStats b {
+  color: var(--navy);
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+.sopHot b {
+  color: #b42323;
+}
+.sopStart {
+  margin: 8px 0 0;
+  font-size: 13.5px;
+  color: var(--ink);
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+}
+.sopStartLabel {
+  font-weight: 800;
+  color: var(--orange);
+}
+.sopWhy {
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+/* Inline action rows on signals / the move */
+.actRow {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+.actBtn {
+  border: 1px solid var(--blue);
+  background: var(--blue);
+  color: #fff;
+  border-radius: 7px;
+  padding: 5px 12px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.actBtn:hover {
+  background: var(--blue-d);
+}
+
+/* Park ("Not now") disclosure */
+.park {
+  display: inline-block;
+}
+.parkSummary {
+  list-style: none;
+  cursor: pointer;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  background: #fff;
+  white-space: nowrap;
+}
+.parkSummary::-webkit-details-marker {
+  display: none;
+}
+.parkSummary:hover {
+  border-color: var(--muted);
+}
+.parkForm {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+  align-items: center;
+}
+.parkForm input,
+.parkForm select {
+  padding: 5px 9px;
+  border-radius: 7px;
+  border: 1px solid var(--line);
+  background: #fff;
+  font: inherit;
+  font-size: 12px;
+}
+.parkForm input {
+  min-width: 200px;
+}
+.parkBtn {
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--navy);
+  border-radius: 7px;
+  padding: 5px 12px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.parkBtn:hover {
+  border-color: var(--blue);
+}
+
+/* Parked list */
+.parkedList {
+  margin-top: 4px;
+  font-size: 12.5px;
+}
+.parkedList summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-weight: 600;
+}
+.parkedRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line);
+}
+.parkedRow a {
+  font-weight: 600;
+  color: var(--navy);
+  text-decoration: none;
+}
+.parkedReason {
+  flex: 1;
+  color: var(--muted);
+  font-style: italic;
+}
+
+/* Flagged signal (distrusted) */
+.signalFlagged {
+  opacity: 0.72;
+  border-left-color: #b42323;
+}
+
+/* Validation badges */
+.valConfirmed,
+.valFlagged,
+.valAdjusted {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 1px 8px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+.valConfirmed {
+  background: #e4f7ea;
+  color: var(--green);
+}
+.valFlagged {
+  background: #fde7e7;
+  color: #b42323;
+}
+.valAdjusted {
+  background: #eef3fb;
+  color: var(--blue-d);
+}
+
+/* Account Room — triage nudge + validation controls */
+.triage {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  color: #9a3412;
+  border-radius: 10px;
+  padding: 9px 14px;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+.triage b {
+  color: #7c2d12;
+}
+.validate {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+.validateLabel {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.valInline {
+  margin: 0;
+  display: inline;
+}
+.valDetails {
+  display: inline-block;
+}
+.valDetails summary {
+  list-style: none;
+}
+.valDetails summary::-webkit-details-marker {
+  display: none;
+}
+.valBtn {
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--navy);
+  border-radius: 7px;
+  padding: 4px 11px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.valBtn:hover {
+  border-color: var(--blue);
+}
+.valClear {
+  border: none;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 12px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Close-debt button */
+.debtClose {
+  margin: 0 0 0 auto;
+}
+.closeBtn {
+  border: 1px solid var(--green);
+  background: #fff;
+  color: var(--green);
+  border-radius: 7px;
+  padding: 3px 12px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.closeBtn:hover {
+  background: #e4f7ea;
+}
+
 /* Emerging (sub-strong) signal marker */
 .emergingTag {
   font-size: 10px;
@@ -1183,6 +1447,9 @@
 }
 .lookAsk strong {
   color: var(--orange);
+}
+.lookResolve {
+  margin: 8px 0 0;
 }
 
 /* Copy-the-line button on the move */

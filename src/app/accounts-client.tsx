@@ -6,6 +6,7 @@ import { useFormStatus } from "react-dom";
 import { EXTRA_PARTNERS, partnerRole } from "@/lib/book/partners";
 import { competitorUrl } from "@/lib/book/research";
 import { addCard } from "./dashboard/actions";
+import { clearValidation, validateScore } from "./accounts/actions";
 import styles from "./command-center.module.css";
 
 function CompetitorLinks({ names }: { names: string[] }) {
@@ -39,6 +40,61 @@ function AddButton() {
   );
 }
 
+function ValBadge({ v }: { v: AccountRow["validation"] }) {
+  if (!v) return null;
+  if (v.status === "confirmed") return <span className={styles.valConfirmed}>✓ confirmed</span>;
+  if (v.status === "flagged") return <span className={styles.valFlagged}>⚠ flagged</span>;
+  return <span className={styles.valAdjusted}>adj → {v.adjustedDemand}</span>;
+}
+
+// The trust layer: Confirm the AI score, Flag it as wrong (visibly distrusted
+// downstream), or Adjust the demand (flows into the composite everywhere).
+function ValidateControls({ id, current }: { id: string; current: AccountRow["validation"] }) {
+  return (
+    <div className={styles.validate}>
+      <span className={styles.validateLabel}>Validate score:</span>
+      <form action={validateScore} className={styles.valInline}>
+        <input type="hidden" name="accountId" value={id} />
+        <input type="hidden" name="status" value="confirmed" />
+        <button className={styles.valBtn}>Confirm ✓</button>
+      </form>
+      <details className={styles.valDetails}>
+        <summary className={styles.valBtn}>Flag ▾</summary>
+        <form action={validateScore} className={styles.parkForm}>
+          <input type="hidden" name="accountId" value={id} />
+          <input type="hidden" name="status" value="flagged" />
+          <input name="note" maxLength={500} placeholder="What's wrong?" aria-label="Flag reason" />
+          <button className={styles.parkBtn}>Flag</button>
+        </form>
+      </details>
+      <details className={styles.valDetails}>
+        <summary className={styles.valBtn}>Adjust ▾</summary>
+        <form action={validateScore} className={styles.parkForm}>
+          <input type="hidden" name="accountId" value={id} />
+          <input type="hidden" name="status" value="adjusted" />
+          <input
+            name="adjustedDemand"
+            type="number"
+            min="0"
+            max="100"
+            required
+            placeholder="Demand 0–100"
+            aria-label="Adjusted demand"
+          />
+          <input name="note" maxLength={500} placeholder="Why? (optional)" aria-label="Adjust note" />
+          <button className={styles.parkBtn}>Set</button>
+        </form>
+      </details>
+      {current && (
+        <form action={clearValidation} className={styles.valInline}>
+          <input type="hidden" name="accountId" value={id} />
+          <button className={styles.valClear}>Clear</button>
+        </form>
+      )}
+    </div>
+  );
+}
+
 export type AccountRow = {
   id: string;
   name: string;
@@ -68,6 +124,11 @@ export type AccountRow = {
   score: number; // composite
   tier: "high" | "medium" | "low";
   breakdown: { scale: number; incumbency: number; model: number; recency: number };
+  validation: {
+    status: "confirmed" | "flagged" | "adjusted";
+    note?: string;
+    adjustedDemand?: number;
+  } | null;
 };
 
 const fitClass: Record<string, string> = {
@@ -322,6 +383,31 @@ export function AccountsClient({
         </span>
       </div>
 
+      {(() => {
+        const hotOffBoard = rows.filter((r) => isHot(r) && !onDash.has(r.name));
+        if (hotOffBoard.length === 0 || !canAdd) return null;
+        return (
+          <div className={styles.triage}>
+            <span>
+              <b>{hotOffBoard.length}</b> hot {hotOffBoard.length === 1 ? "signal" : "signals"} not on
+              the board yet.
+            </span>
+            <button
+              type="button"
+              className={styles.addMini}
+              onClick={() => {
+                setHotOnly(true);
+                setCsm("");
+                setTier("");
+                setPlay("");
+              }}
+            >
+              Show them
+            </button>
+          </div>
+        );
+      })()}
+
       <table className={styles.table}>
         <thead>
           <tr>
@@ -345,7 +431,8 @@ export function AccountsClient({
                     aria-expanded={openId === a.id}
                   >
                     {a.name}
-                  </button>
+                  </button>{" "}
+                  <ValBadge v={a.validation} />
                   <div className={styles.rowSub}>
                     {a.city}
                     {a.state ? `, ${a.state}` : ""}
@@ -529,6 +616,8 @@ export function AccountsClient({
                           </>
                         )}
                       </div>
+
+                      {canAdd && <ValidateControls id={a.id} current={a.validation} />}
                     </div>
                   </td>
                 </tr>
