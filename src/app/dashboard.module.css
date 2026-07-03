@@ -532,3 +532,30 @@
   border-color: var(--blue);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 }
+
+/* "Next mandatory item" prompt on a card (opens that node's checklist) */
+.nextStep {
+  display: inline-block;
+  margin-top: 5px;
+  max-width: 100%;
+  text-align: left;
+  border: 1px solid #fed7aa;
+  background: #fff7ed;
+  color: #9a3412;
+  border-radius: 8px;
+  padding: 4px 9px;
+  font: inherit;
+  font-size: 11.5px;
+  line-height: 1.35;
+  cursor: pointer;
+}
+.nextStep:hover {
+  border-color: #fb923c;
+  background: #ffedd5;
+}
+.nextStepLabel {
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  font-size: 10px;
+}

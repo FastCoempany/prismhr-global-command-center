@@ -960,3 +960,49 @@ model FieldNote {
   @@index([kind])
   @@index([resolved])
 }
+
+// --- Today interaction overlays ---------------------------------------------
+// Small, isolated stores that let Today become act-in-place without duplicating
+// the Dashboard ledger. Keyed by the Salesforce account id from the book.
+
+// A deliberately parked signal — "not now, here's why". Resurfaces when
+// snoozedUntil passes (null = parked until manually un-parked).
+model SignalSnooze {
+  id           String    @id @default(cuid())
+  accountId    String    @unique
+  reason       String
+  snoozedUntil DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([accountId])
+}
+
+// Owner/CSM validation of an AI-researched score — the trust layer that keeps
+// the app from bossing you around on unverified data. status:
+//   "confirmed" — sanity-checked, the score stands
+//   "flagged"   — looks wrong (note says why); score is visibly distrusted
+//   "adjusted"  — demand overridden to adjustedDemand; flows into the composite
+model ScoreValidation {
+  id             String   @id @default(cuid())
+  accountId      String   @unique
+  status         String   @default("confirmed")
+  adjustedDemand Int?
+  note           String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([accountId])
+}
+
+// Resolution state for a curated Look-into item (keyed by its static id).
+model LookIntoStatus {
+  id        String   @id @default(cuid())
+  itemId    String   @unique
+  resolved  Boolean  @default(false)
+  note      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([itemId])
+}

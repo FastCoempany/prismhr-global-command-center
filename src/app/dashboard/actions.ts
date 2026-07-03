@@ -45,12 +45,13 @@ async function requireWrite() {
 
 function safeReturn(fd: FormData): string {
   const raw = str(fd, "returnTo", 80);
-  return raw === "/accounts" ? "/accounts" : "/";
+  return raw === "/accounts" ? "/accounts" : raw === "/today" ? "/today" : "/";
 }
 
 function done(to = "/") {
   revalidatePath("/");
   revalidatePath("/accounts");
+  revalidatePath("/today");
   redirect(to);
 }
 
@@ -115,14 +116,15 @@ export async function toggleCheck(formData: FormData) {
   const cardId = str(formData, "cardId", 40);
   const node = str(formData, "node", 40) as DashNodeKey;
   const index = parseInt(str(formData, "index", 4), 10);
+  const back = safeReturn(formData);
   if (!(await requireWrite()) || !cardId || !DASH_NODE_KEYS.includes(node) || Number.isNaN(index)) {
-    done();
+    done(back);
   }
 
   const count = nodeChecklist(node).length;
   const prisma = getPrisma();
   const card = await prisma.dashCard.findUnique({ where: { id: cardId } });
-  if (!card) done();
+  if (!card) done(back);
 
   const allChecks: Record<string, boolean[]> = {
     ...((card!.checks as Record<string, boolean[]> | null) ?? {}),
@@ -139,7 +141,7 @@ export async function toggleCheck(formData: FormData) {
   syncActivation(activated, states);
 
   await prisma.dashCard.update({ where: { id: cardId }, data: { checks: allChecks, states, activated } });
-  done();
+  done(back);
 }
 
 // Per-checkbox note.
