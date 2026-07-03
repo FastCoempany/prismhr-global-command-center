@@ -1067,6 +1067,20 @@
   color: #5b3aa8;
 }
 
+/* Emerging (sub-strong) signal marker */
+.emergingTag {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  padding: 1px 7px;
+  border-radius: 20px;
+  background: #f3f4f7;
+  color: #6b7280;
+  border: 1px dashed #cfd6e2;
+  white-space: nowrap;
+}
+
 /* Debt aging badge */
 .ageBadge {
   font-size: 10.5px;

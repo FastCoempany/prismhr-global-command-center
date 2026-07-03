@@ -19,10 +19,14 @@ import type { DashCardRow } from "@/lib/dashboard/data";
 // platforms — these route to Global directly through the HCM side, not a CSM.
 export type Funnel = "peo" | "hcm";
 
+// Word-boundary match, not a bare substring: "hro" as a naked includes() would
+// mis-tag any future industry string that merely contains those letters. \b
+// keeps it to the actual HRaaS / HRO tokens.
+const HCM_MODEL = /\bhraas\b|\bhro\b/i;
+
 export function funnelOf(csm: string, industry: string): Funnel {
   if (partnerRole(csm) === "Enterprise Sales, HCM") return "hcm";
-  const i = industry.toLowerCase();
-  if (i.includes("hraas") || i.includes("hro")) return "hcm";
+  if (HCM_MODEL.test(industry)) return "hcm";
   return "peo";
 }
 
@@ -71,6 +75,16 @@ export function accountIntel(): AccountIntel[] {
       };
     })
     .sort((a, b) => b.score - a.score);
+}
+
+// A signal is "strong" only when demand clears a higher bar AND the research
+// wasn't low-confidence. Below that it's "emerging" — still worth surfacing (the
+// gate is 30), but it must never read as equal to a confirmed, high-demand
+// account. This is what keeps the count honest when we brief Aleks.
+export const STRONG_DEMAND = 40;
+
+export function isStrongSignal(a: Pick<AccountIntel, "demand" | "confidence">): boolean {
+  return a.demand != null && a.demand >= STRONG_DEMAND && a.confidence !== "low";
 }
 
 // Band 1 — Signal in. Accounts where research surfaced real, actionable
@@ -154,7 +168,9 @@ export function partnerAngle(a: AccountIntel): string {
 export type Narrative = {
   researched: number;
   total: number;
-  realDemand: number;
+  realDemand: number; // demand >= gate (30) — everything surfaced
+  strongDemand: number; // demand >= 40 AND not low-confidence — what we lead with
+  emerging: number; // realDemand that isn't strong — surfaced but hedged
   displacement: number;
   greenfield: number;
   highFit: number;
@@ -170,6 +186,8 @@ export type Narrative = {
 export function narrative(intel: AccountIntel[]): Narrative {
   const researched = intel.filter((a) => a.researched).length;
   const realDemand = intel.filter((a) => a.demand != null && a.demand >= DEMAND_GATE).length;
+  const strongDemand = intel.filter((a) => isStrongSignal(a)).length;
+  const emerging = realDemand - strongDemand;
   const displacement = intel.filter((a) => a.play === "displacement").length;
   const greenfield = intel.filter((a) => a.play === "greenfield").length;
   const highFit = intel.filter((a) => a.tier === "high").length;
@@ -187,6 +205,8 @@ export function narrative(intel: AccountIntel[]): Narrative {
     researched,
     total: intel.length,
     realDemand,
+    strongDemand,
+    emerging,
     displacement,
     greenfield,
     highFit,

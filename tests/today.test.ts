@@ -6,6 +6,7 @@ import {
   accountIntel,
   debtsFromCards,
   funnelOf,
+  isStrongSignal,
   narrative,
   partnerAngle,
   signals,
@@ -82,6 +83,24 @@ describe("funnelOf", () => {
   });
   test("routes ordinary CSM-owned PEOs through the PEO channel", () => {
     assert.equal(funnelOf("Jamie Doe", "PEO/ASO"), "peo");
+  });
+  test("does not mis-tag industries that merely contain the letters h-r-o", () => {
+    // Word-boundary guard: none of these should read as HCM.
+    for (const ind of ["Petrochemical", "Hydro Services", "Throughput Corp", "Chrome Retail"]) {
+      assert.equal(funnelOf("Jamie Doe", ind), "peo", `${ind} should be PEO`);
+    }
+  });
+});
+
+// --- strong vs emerging signals ---------------------------------------------
+
+describe("isStrongSignal", () => {
+  test("requires both high-enough demand and non-low confidence", () => {
+    assert.equal(isStrongSignal({ demand: 58, confidence: "high" }), true);
+    assert.equal(isStrongSignal({ demand: 45, confidence: "medium" }), true);
+    assert.equal(isStrongSignal({ demand: 39, confidence: "high" }), false); // demand too low
+    assert.equal(isStrongSignal({ demand: 55, confidence: "low" }), false); // confidence too low
+    assert.equal(isStrongSignal({ demand: null, confidence: "high" }), false);
   });
 });
 
@@ -211,6 +230,21 @@ describe("narrative", () => {
     assert.equal(n.greenfield, 1);
     assert.equal(n.highFit, 1);
     assert.equal(n.hcmFunnel, 1);
+  });
+
+  test("splits real demand into strong vs emerging without double-counting", () => {
+    const rows = [
+      intel({ researched: true, demand: 58, confidence: "high" }), // strong
+      intel({ researched: true, demand: 45, confidence: "medium" }), // strong
+      intel({ researched: true, demand: 33, confidence: "low" }), // emerging (low conf)
+      intel({ researched: true, demand: 35, confidence: "medium" }), // emerging (< 40)
+      intel({ researched: true, demand: 20, confidence: "high" }), // below gate — not counted
+    ];
+    const n = narrative(rows);
+    assert.equal(n.realDemand, 4);
+    assert.equal(n.strongDemand, 2);
+    assert.equal(n.emerging, 2);
+    assert.equal(n.strongDemand + n.emerging, n.realDemand);
   });
 
   test("aggregates and ranks countries across the base", () => {
