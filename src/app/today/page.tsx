@@ -1,32 +1,32 @@
 import Link from "next/link";
 import { AppWayfinder } from "@/components/app-wayfinder";
-import { loadCommand, todayIso, type PeoRow } from "@/lib/command-center/data";
-import { STAGES, isGated, stageLabel, suggestedAction } from "@/lib/command-center/types";
+import { loadDashboard } from "@/lib/dashboard/data";
+import {
+  accountIntel,
+  debtsFromCards,
+  narrative,
+  partnerAngle,
+  signals,
+  type AccountIntel,
+} from "@/lib/today/build";
 import styles from "../command-center.module.css";
 
 export const dynamic = "force-dynamic";
 
-const activeSet = new Set(STAGES.filter((s) => s.pipeline).map((s) => s.key));
-
-// Gate-aware: never suggest a channel-jumping move for a PEO the CSM hasn't cleared.
-function nextStepFor(r: PeoRow): string | null {
-  if (isGated(r.approach)) return `Clear ${r.name} with ${r.csm} first`;
-  return suggestedAction(r);
+function PlayTag({ play }: { play: AccountIntel["play"] }) {
+  if (!play) return null;
+  const cls = play === "displacement" ? styles.tagDisplace : styles.tagGreen;
+  return <span className={`${styles.tag} ${cls}`}>{play}</span>;
 }
 
-function Row({ r, note }: { r: PeoRow; note?: React.ReactNode }) {
-  return (
-    <div className={styles.item}>
-      <Link href={`/book?peo=${r.id}`}>{r.name}</Link>
-      {note}
-    </div>
-  );
+function fitClass(tier: "high" | "medium" | "low") {
+  return tier === "high" ? styles.fitHigh : tier === "medium" ? styles.fitMedium : styles.fitLow;
 }
 
 export default async function TodayPage() {
-  const data = await loadCommand();
+  const dash = await loadDashboard();
 
-  if (data.status === "unauthenticated") {
+  if (dash.status === "unauthenticated") {
     return (
       <>
         <AppWayfinder current="Today" />
@@ -39,93 +39,330 @@ export default async function TodayPage() {
     );
   }
 
-  const today = todayIso();
-  const due = data.rows
-    .filter((r) => r.nextActionDate && r.nextActionDate <= today)
-    .sort((a, b) => (a.nextActionDate ?? "").localeCompare(b.nextActionDate ?? ""));
-  const upcoming = data.rows
-    .filter((r) => r.nextActionDate && r.nextActionDate > today)
-    .sort((a, b) => (a.nextActionDate ?? "").localeCompare(b.nextActionDate ?? ""))
-    .slice(0, 8);
-  const inflight = data.rows.filter((r) => activeSet.has(r.stage) && !r.nextActionDate);
-  const starts = data.rows
-    .filter((r) => r.stage === "NOT_TOUCHED")
-    .sort((a, b) => b.priority - a.priority)
-    .slice(0, 8);
+  const intel = accountIntel();
+  const sig = signals(intel);
+  const debts = debtsFromCards(dash.cards, dash.labels);
+  const nar = narrative(intel);
+
+  // The single highest-leverage move: top composite-fit account that has a real
+  // play (displacement or greenfield) and isn't already on the Dashboard.
+  const onDash = new Set(dash.cards.map((c) => c.name));
+  const withPlay = intel.filter((a) => a.play);
+  const move = withPlay.find((a) => !onDash.has(a.name)) ?? withPlay[0] ?? null;
+  const onDeck = withPlay.filter((a) => a !== move && !onDash.has(a.name)).slice(0, 4);
 
   return (
     <>
       <AppWayfinder current="Today" />
       <main className={styles.wrap}>
         <h1 className={styles.h1}>Today</h1>
-        <p className={styles.sub}>Your next moves across the PEO channel, prioritized.</p>
-        {data.status === "database-unavailable" && (
-          <div className={styles.banner}>
-            Working state is read-only — run <code>docs/command-center-tables.sql</code> in
-            Supabase to start tracking stage and next actions.
-          </div>
-        )}
+        <p className={styles.sub}>
+          The daily command surface. Cold calling isn&apos;t the motion — this is a channel sell
+          through partners (CSMs and HCM enterprise sales) into the base you already serve. As the
+          Global consultant for the HCM side, the clients of our PEOs — and the PEOs themselves —
+          running on PrismHR HCM funnel here too. Read → route → record.
+        </p>
 
+        {/* ── Band 1 · Signal in ─────────────────────────────────────────── */}
+        <section className={styles.band}>
+          <div className={styles.bandHead}>
+            <span className={styles.bandNum}>1</span>
+            <div>
+              <h2 className={styles.bandTitle}>Signal in</h2>
+              <p className={styles.bandSub}>
+                What the base is telling you — accounts where research surfaced real global-hiring
+                demand. Start the day here.
+              </p>
+            </div>
+          </div>
+          <div className={styles.bandBody}>
+            {sig.length === 0 && (
+              <p className={styles.muted}>
+                No account is showing actionable demand yet. Demand is thin across the base — which
+                is itself the signal. Run deeper research from the Account Room.
+              </p>
+            )}
+            {sig.map((a) => (
+              <div key={a.id} className={styles.signalRow}>
+                <div className={styles.signalTop}>
+                  <Link href="/accounts">{a.name}</Link>
+                  <span className={`${styles.fit} ${fitClass(a.tier)}`}>{a.demand}</span>
+                  <PlayTag play={a.play} />
+                  <span className={styles.signalCsm}>{a.csm}</span>
+                </div>
+                {a.summary && <p className={styles.signalSummary}>{a.summary}</p>}
+                {a.countries.length > 0 && (
+                  <div className={styles.countries}>
+                    {a.countries.map((c) => (
+                      <span key={c} className={styles.countryChip}>
+                        {c}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ── Band 2 · Debts out ─────────────────────────────────────────── */}
+        <section className={styles.band}>
+          <div className={styles.bandHead}>
+            <span className={styles.bandNum}>2</span>
+            <div>
+              <h2 className={styles.bandTitle}>Debts out ({debts.length})</h2>
+              <p className={styles.bandSub}>
+                What you owe before an account can move — the recap, the availability request, the
+                partner brief. Pulled live from the mandatory checkboxes on in-flight Dashboard
+                nodes.
+              </p>
+            </div>
+          </div>
+          <div className={styles.bandBody}>
+            {dash.status === "database-unavailable" && (
+              <p className={styles.muted}>
+                The execution ledger isn&apos;t connected — run <code>docs/dashboard-tables.sql</code>{" "}
+                in Supabase and start moving nodes on the <Link href="/">Dashboard</Link> to see what
+                you owe.
+              </p>
+            )}
+            {dash.status === "active" && debts.length === 0 && (
+              <p className={styles.muted}>
+                Nothing owed on any in-flight node. Either you&apos;re clean, or nothing has been
+                started — advance a node on the <Link href="/">Dashboard</Link>.
+              </p>
+            )}
+            {debts.slice(0, 12).map((d) => (
+              <div key={`${d.cardId}-${d.nodeKey}-${d.item}`} className={styles.debt}>
+                <div className={styles.debtTop}>
+                  <span className={styles.debtName}>{d.cardName}</span>
+                  <span className={styles.debtNode}>{d.nodeLabel}</span>
+                </div>
+                <div className={styles.debtItem}>{d.item}</div>
+                {d.note && <div className={styles.debtNote}>“{d.note}”</div>}
+              </div>
+            ))}
+            {debts.length > 12 && (
+              <p className={styles.muted}>
+                + {debts.length - 12} more on the <Link href="/">Dashboard</Link>.
+              </p>
+            )}
+          </div>
+        </section>
+
+        {/* ── Band 3 · Highest-leverage move ─────────────────────────────── */}
+        <section className={styles.band}>
+          <div className={styles.bandHead}>
+            <span className={styles.bandNum}>3</span>
+            <div>
+              <h2 className={styles.bandTitle}>Highest-leverage move</h2>
+              <p className={styles.bandSub}>
+                The one account to touch now — top Global-fit with a real play, not yet on the board.
+                Lead with the partner, not the client.
+              </p>
+            </div>
+          </div>
+          <div className={styles.bandBody}>
+            {!move && (
+              <p className={styles.muted}>
+                No account carries a qualified play yet. Deepen research or seed a partner from the{" "}
+                <Link href="/accounts">Account Room</Link>.
+              </p>
+            )}
+            {move && (
+              <div className={styles.moveHero}>
+                <div className={styles.moveTop}>
+                  <Link href="/accounts" className={styles.moveName}>
+                    {move.name}
+                  </Link>
+                  <span className={`${styles.fit} ${fitClass(move.tier)}`}>{move.score}</span>
+                  <PlayTag play={move.play} />
+                  {move.competitors.length > 0 && (
+                    <span className={styles.signalCsm}>vs {move.competitors.join(", ")}</span>
+                  )}
+                </div>
+                {move.summary && <p className={styles.signalSummary}>{move.summary}</p>}
+                <div className={styles.moveAsk}>
+                  <strong>The line for {move.csm}:</strong> {partnerAngle(move)}
+                </div>
+              </div>
+            )}
+            {onDeck.length > 0 && (
+              <div className={styles.onDeck}>
+                <span className={styles.onDeckLabel}>On deck:</span>
+                {onDeck.map((a) => (
+                  <span key={a.id} className={styles.onDeckChip}>
+                    {a.name} <b>{a.score}</b>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* ── Band 4 · Narrative forming ─────────────────────────────────── */}
+        <section className={styles.band}>
+          <div className={styles.bandHead}>
+            <span className={styles.bandNum}>4</span>
+            <div>
+              <h2 className={styles.bandTitle}>Narrative forming</h2>
+              <p className={styles.bandSub}>
+                Voice of the base — the honest pattern in the data, and the line it&apos;s accruing
+                toward your 1:1 with Aleks.
+              </p>
+            </div>
+          </div>
+          <div className={styles.bandBody}>
+            <div className={styles.statRow}>
+              <Stat n={`${nar.researched}/${nar.total}`} label="accounts researched" />
+              <Stat n={nar.realDemand} label="showing real demand" />
+              <Stat n={nar.displacement} label="displacement plays" />
+              <Stat n={nar.greenfield} label="greenfield plays" />
+              <Stat n={nar.highFit + nar.mediumFit} label="high/medium fit" />
+            </div>
+
+            {nar.topCountries.length > 0 && (
+              <div className={styles.narLine}>
+                <span className={styles.narLabel}>Where the base points:</span>
+                <div className={styles.countries}>
+                  {nar.topCountries.map((c) => (
+                    <span key={c.name} className={styles.countryChip}>
+                      {c.name} <b>{c.count}</b>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className={styles.narGrid}>
+              <div className={styles.narCard}>
+                <h4>The line up to Aleks</h4>
+                <p>
+                  “Demand across the base is real but concentrated —{" "}
+                  <b>{nar.realDemand}</b> of {nar.total} accounts carry an actionable global-hiring
+                  signal, split{" "}
+                  <b>
+                    {nar.displacement} displacement / {nar.greenfield} greenfield
+                  </b>
+                  . The motion isn&apos;t volume, it&apos;s precision through partners. Here&apos;s
+                  the one I&apos;m converting this week.”
+                </p>
+              </div>
+              <div className={styles.narCard}>
+                <h4>Arm the partners</h4>
+                <p>
+                  At startup stage, the job is to make Eric and the CSMs dangerous on Global. Be
+                  loud to Aleks and marketing on what we have, what we don&apos;t, and what we need:
+                  a one-pager per play, a country-price cheat sheet, and a standing{" "}
+                  <b>lunch-and-learn / SME webinar</b> so partners can gauge intent without me in
+                  every room.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ── Operating cadence ──────────────────────────────────────────── */}
+        <h2 className={styles.h2}>The three questions I run every day</h2>
         <div className={styles.cards}>
           <div className={styles.card}>
-            <h3>Due / overdue ({due.length})</h3>
-            {due.length === 0 && <p className={styles.muted}>Nothing due. Nice.</p>}
-            {due.map((r) => (
-              <Row
-                key={r.id}
-                r={r}
-                note={
-                  <span
-                    className={`${styles.due} ${(r.nextActionDate ?? "") < today ? styles.overdue : ""}`}
-                  >
-                    {r.nextAction ? `${r.nextAction} · ` : ""}
-                    {r.nextActionDate}
-                  </span>
-                }
-              />
-            ))}
+            <h3>1 · What changed in the base?</h3>
+            <p className={styles.muted}>
+              New global-hiring evidence, a partner flag, an inbound. <b>Read</b> the signal before
+              anything else — Band 1 is the answer.
+            </p>
           </div>
-
           <div className={styles.card}>
-            <h3>In flight, no next step ({inflight.length})</h3>
-            {inflight.length === 0 && (
-              <p className={styles.muted}>All active PEOs have a next step.</p>
-            )}
-            {inflight.map((r) => (
-              <div key={r.id} className={styles.itemStack}>
-                <div className={styles.itemTop}>
-                  <Link href={`/book?peo=${r.id}`}>{r.name}</Link>
-                  <span className={styles.chip}>{stageLabel(r.stage)}</span>
-                </div>
-                {nextStepFor(r) && <div className={styles.suggest}>{nextStepFor(r)}</div>}
-              </div>
-            ))}
+            <h3>2 · What do I owe, and who do I clear?</h3>
+            <p className={styles.muted}>
+              <b>Route</b> through the partner. Pay the debts in Band 2, and never jump a client
+              before the CSM has cleared them.
+            </p>
           </div>
-
           <div className={styles.card}>
-            <h3>Upcoming ({upcoming.length})</h3>
-            {upcoming.length === 0 && <p className={styles.muted}>Nothing scheduled ahead.</p>}
-            {upcoming.map((r) => (
-              <Row key={r.id} r={r} note={<span className={styles.due}>{r.nextActionDate}</span>} />
-            ))}
+            <h3>3 · What language drums up the intent?</h3>
+            <p className={styles.muted}>
+              The partner question: what do I say to <b>gauge, drum up, or campaign</b> a client&apos;s
+              interest in Global? <b>Record</b> the answer on the Dashboard node.
+            </p>
           </div>
+        </div>
 
-          <div className={styles.card}>
-            <h3>Suggested starts — highest priority, untouched</h3>
-            {starts.map((r) => (
-              <div key={r.id} className={styles.itemStack}>
-                <div className={styles.itemTop}>
-                  <Link href={`/book?peo=${r.id}`}>{r.name}</Link>
-                  <span className={styles.chip}>
-                    {r.priority} · {r.csm}
-                  </span>
-                </div>
-                <div className={styles.suggest}>Brief {r.csm} on {r.name}</div>
-              </div>
-            ))}
+        {/* ── 30 / 60 / 90 ───────────────────────────────────────────────── */}
+        <h2 className={styles.h2}>30 / 60 / 90 — first-ever 1:1 with Aleks is Monday</h2>
+        <div className={styles.plan}>
+          <div className={styles.planCol}>
+            <div className={styles.planNum}>First 30</div>
+            <div className={styles.planTheme}>Learn the base · arm the partners</div>
+            <ul>
+              <li>Ship the Account Room as shared targeting intel partners can see.</li>
+              <li>Sit with each partner — start with Eric — and map their books to Global fit.</li>
+              <li>Publish the first enablement-gap list to Aleks + marketing.</li>
+              <li>Land the first 2–3 partner-cleared discovery calls.</li>
+            </ul>
           </div>
+          <div className={styles.planCol}>
+            <div className={styles.planNum}>By 60</div>
+            <div className={styles.planTheme}>Convert signal to pipeline</div>
+            <ul>
+              <li>A handful of qualified Global opportunities in flight on the Dashboard.</li>
+              <li>First tailored demos delivered — countries and worker types matched.</li>
+              <li>A repeatable partner-brief motion (the same three questions every time).</li>
+              <li>First “voice of the base” note to marketing.</li>
+            </ul>
+          </div>
+          <div className={styles.planCol}>
+            <div className={styles.planNum}>By 90</div>
+            <div className={styles.planTheme}>Prove the motion</div>
+            <ul>
+              <li>First Global close or a deal in late-stage decision.</li>
+              <li>A documented displacement + greenfield play partners can self-serve.</li>
+              <li>A standing lunch-and-learn / SME webinar cadence.</li>
+              <li>A weekly base-signal digest that Aleks can carry upward.</li>
+            </ul>
+          </div>
+        </div>
+
+        {/* ── Weekly 1:1 agenda ──────────────────────────────────────────── */}
+        <h2 className={styles.h2}>Weekly 1:1 with Aleks — standing agenda</h2>
+        <div className={styles.agenda}>
+          <ol>
+            <li>
+              <b>Base-expansion pipeline</b> — what moved this week, what&apos;s next, where it&apos;s
+              stuck.
+            </li>
+            <li>
+              <b>Partner health</b> — who&apos;s engaged (Eric, the CSMs), who&apos;s cold, where I
+              need her air cover.
+            </li>
+            <li>
+              <b>Market signal</b> — the one thing the base is telling us (voice of the base).
+            </li>
+            <li>
+              <b>Asks / air cover</b> — what I need from her or marketing to arm partners.
+            </li>
+            <li>
+              <b>Enablement gaps</b> — what we have, what we don&apos;t, what we need to sell Global.
+            </li>
+            <li>
+              <b>The narrative up</b> — the one line she carries to her leadership.
+            </li>
+          </ol>
+          <p className={styles.muted}>
+            PEPM = per employee, per month — the unit EOR and global payroll price on. Keep the deal
+            math in those terms when you brief her.
+          </p>
         </div>
       </main>
     </>
+  );
+}
+
+function Stat({ n, label }: { n: number | string; label: string }) {
+  return (
+    <div className={styles.stat}>
+      <span className={styles.statNum}>{n}</span>
+      <span className={styles.statLabel}>{label}</span>
+    </div>
   );
 }

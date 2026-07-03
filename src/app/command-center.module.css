@@ -754,3 +754,296 @@
   font-weight: 600;
   font-size: 13px;
 }
+
+/* ── Today · daily command surface ───────────────────────────────────── */
+.band {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 16px 18px;
+  margin-bottom: 16px;
+}
+.bandHead {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.bandNum {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 15px;
+  color: #fff;
+  background: linear-gradient(135deg, var(--navy), var(--blue));
+}
+.bandTitle {
+  font-size: 16px;
+  margin: 2px 0 2px;
+  color: var(--navy);
+}
+.bandSub {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--muted);
+  max-width: 70ch;
+}
+.bandBody {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Band 1 — signals */
+.signalRow {
+  border-left: 3px solid var(--blue);
+  padding: 2px 0 2px 12px;
+}
+.signalTop {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.signalTop a {
+  font-weight: 700;
+  color: var(--navy);
+  text-decoration: none;
+}
+.signalTop a:hover {
+  color: var(--blue);
+}
+.signalCsm {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.signalSummary {
+  margin: 4px 0 6px;
+  font-size: 12.5px;
+  color: var(--ink);
+  max-width: 90ch;
+}
+
+/* Band 2 — debts */
+.debt {
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 8px 11px;
+  background: #fffdf8;
+}
+.debtTop {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 3px;
+}
+.debtName {
+  font-weight: 700;
+  font-size: 12.5px;
+  color: var(--navy);
+}
+.debtNode {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #9a3412;
+  background: #ffedd5;
+  border-radius: 20px;
+  padding: 1px 8px;
+}
+.debtItem {
+  font-size: 12.5px;
+  color: var(--ink);
+}
+.debtNote {
+  margin-top: 3px;
+  font-size: 11.5px;
+  color: var(--muted);
+  font-style: italic;
+}
+
+/* Band 3 — the move */
+.moveHero {
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--orange);
+  border-radius: 10px;
+  padding: 12px 14px;
+  background: #fffaf5;
+}
+.moveTop {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+.moveName {
+  font-weight: 800;
+  font-size: 15px;
+  color: var(--navy);
+  text-decoration: none;
+}
+.moveName:hover {
+  color: var(--blue);
+}
+.moveAsk {
+  margin-top: 8px;
+  font-size: 12.5px;
+  color: var(--ink);
+  line-height: 1.55;
+}
+.moveAsk strong {
+  color: var(--orange);
+}
+.onDeck {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.onDeckLabel {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.onDeckChip {
+  font-size: 11.5px;
+  color: var(--navy);
+  background: #eef3fb;
+  border-radius: 20px;
+  padding: 2px 10px;
+}
+
+/* Band 4 — narrative */
+.statRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.stat {
+  flex: 1;
+  min-width: 120px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.statNum {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--navy);
+  font-variant-numeric: tabular-nums;
+}
+.statLabel {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.narLine {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.narLabel {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.narGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 720px) {
+  .narGrid {
+    grid-template-columns: 1fr;
+  }
+}
+.narCard {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 11px 13px;
+  background: var(--bg);
+}
+.narCard h4 {
+  margin: 0 0 5px;
+  font-size: 12.5px;
+  color: var(--navy);
+}
+.narCard p {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--ink);
+  line-height: 1.55;
+}
+
+/* 30/60/90 */
+.plan {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+@media (max-width: 820px) {
+  .plan {
+    grid-template-columns: 1fr;
+  }
+}
+.planCol {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 13px 15px;
+  background: var(--card);
+}
+.planNum {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--blue);
+}
+.planTheme {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--navy);
+  margin: 2px 0 8px;
+}
+.planCol ul {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.planCol li {
+  font-size: 12.5px;
+  color: var(--ink);
+  line-height: 1.45;
+}
+
+/* Weekly 1:1 agenda */
+.agenda {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 18px;
+  background: var(--card);
+}
+.agenda ol {
+  margin: 0 0 10px;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.agenda li {
+  font-size: 13px;
+  color: var(--ink);
+  line-height: 1.5;
+}
+.agenda b {
+  color: var(--navy);
+}
