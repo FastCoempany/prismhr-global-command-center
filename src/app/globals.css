@@ -946,6 +946,20 @@ textarea {
   border-bottom-color: var(--ds-blue);
 }
 
+.app-route-badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 16px;
+  height: 16px;
+  margin-left: 5px;
+  padding: 0 4px;
+  border-radius: 20px;
+  background: var(--ds-orange);
+  color: #fff;
+  font: 700 11px / 1 var(--ds-font-sans);
+  vertical-align: middle;
+}
+
 .ds-card {
   background: var(--ds-surface);
   border: 1px solid var(--ds-hair-strong);

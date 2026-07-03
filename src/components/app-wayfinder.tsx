@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { ProductLockup } from "@/components/brand";
+import { lookIntoHighCount } from "@/lib/look-into";
 
 type AppWayfinderProps = {
   current: string;
@@ -73,6 +74,18 @@ export function AppWayfinder({
             href="/sidekick"
           >
             Demo Sidekick
+          </Link>
+          <Link
+            aria-current={current === "Look into" ? "page" : undefined}
+            className="app-route-link"
+            href="/look-into"
+          >
+            Look into
+            {lookIntoHighCount > 0 && (
+              <span className="app-route-badge" aria-label={`${lookIntoHighCount} high priority`}>
+                {lookIntoHighCount}
+              </span>
+            )}
           </Link>
         </nav>
         {onSignOut}

@@ -140,6 +140,10 @@ export default async function TodayPage() {
                 ))}
               </div>
             )}
+            <Link href="/look-into" className={styles.hcmWarn}>
+              ⚠ This HCM funnel is incomplete — the roster of PEO clients running on PrismHR HCM
+              isn&apos;t loaded yet, so it looks smaller than it is. Look into →
+            </Link>
           </div>
         </section>
 
