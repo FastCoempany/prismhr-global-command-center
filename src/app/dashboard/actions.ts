@@ -22,7 +22,7 @@ function lightNext(states: Record<string, string>, node: DashNodeKey) {
 }
 
 // Keep the per-node activation stamps in sync with the final node states: stamp
-// the moment a node first goes active (so Today can age the debt), clear it when
+// the moment a node first goes active (so Today can age the commitment), clear it when
 // a node falls back to todo, and leave done nodes' stamps untouched.
 function syncActivation(activated: Record<string, string>, states: Record<string, string>) {
   const now = new Date().toISOString();

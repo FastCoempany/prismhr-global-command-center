@@ -29,7 +29,7 @@ message to an internal partner (Eric, a CSM) or to Aleks/marketing.
 |---|---|---|---|---|---|---|---|
 | 1 | Draft the partner-engagement line for the day's top account (displacement/greenfield ask) | Daily | Low | **High** — already templated in `partnerAngle()` | **1-click edit → send** | Yes — CSM / Eric | Today · Band 3 ("Copy the line") |
 | 2 | Compile the "Signal in" digest (accounts with new/real demand) | Daily | Low | **High** | **1-click approve** | Optional — Aleks weekly | Today · Band 1 |
-| 3 | Surface aging debts (recap owed, availability request) + draft the nudge | Daily | Low–Med | **High** to detect, **Med** to word | **1-click edit → send** | Yes — CSM | Today · Band 2 (detect); copy = next |
+| 3 | Surface aging commitments (recap owed, availability request) + draft the nudge | Daily | Low–Med | **High** to detect, **Med** to word | **1-click edit → send** | Yes — CSM | Today · Band 2 (detect); copy = next |
 | 4 | Partner brief when seeding a new account ("here's the Global angle for X") | Per new account | Medium | **Medium** — structure auto, framing human | **1-click edit → send** | Yes — CSM / Eric | Dashboard seed note → manual today |
 | 5 | Post-demo recap to the partner | Per demo | Medium | **Medium** | **1-click edit → send** | Yes | Manual |
 | 6 | Weekly base-signal roll-up for the Aleks 1:1 | Weekly | Low–Med | **High** | **1-click approve** | Yes — Aleks | Today · Band 4 + agenda (assembles it) |

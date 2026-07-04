@@ -828,26 +828,26 @@
   max-width: 90ch;
 }
 
-/* Band 2 — debts */
-.debt {
+/* Band 2 — commitments */
+.commitment {
   border: 1px solid var(--line);
   border-radius: 9px;
   padding: 8px 11px;
   background: #fffdf8;
 }
-.debtTop {
+.commitmentTop {
   display: flex;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
   margin-bottom: 3px;
 }
-.debtName {
+.commitmentName {
   font-weight: 700;
   font-size: 12.5px;
   color: var(--navy);
 }
-.debtNode {
+.commitmentNode {
   font-size: 10.5px;
   font-weight: 700;
   color: #9a3412;
@@ -855,11 +855,11 @@
   border-radius: 20px;
   padding: 1px 8px;
 }
-.debtItem {
+.commitmentItem {
   font-size: 12.5px;
   color: var(--ink);
 }
-.debtNote {
+.commitmentNote {
   margin-top: 3px;
   font-size: 11.5px;
   color: var(--muted);
@@ -1311,8 +1311,8 @@
   cursor: pointer;
 }
 
-/* Close-debt button */
-.debtClose {
+/* Close-commitment button */
+.commitmentClose {
   margin: 0 0 0 auto;
 }
 .closeBtn {
@@ -1345,7 +1345,7 @@
   white-space: nowrap;
 }
 
-/* Debt aging badge */
+/* Commitment aging badge */
 .ageBadge {
   font-size: 10.5px;
   font-weight: 700;

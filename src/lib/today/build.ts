@@ -2,7 +2,7 @@
 // the Account Room (targeting intelligence — firmographics + researched global
 // demand) and the Dashboard (the hand-sewn execution ledger). Nothing here
 // writes. It turns those two into four bands: what the base is telling you
-// (Signal in), what you owe a partner before an account can move (Debts out),
+// (Signal in), what you've committed to before an account can move (Commitments),
 // the single highest-leverage account to touch now (Move), and the pattern
 // worth carrying up (Narrative). All derivation is pure so it stays honest.
 
@@ -134,11 +134,11 @@ export function signals(intel: AccountIntel[], limit = 6): AccountIntel[] {
   return [...pool].sort((a, b) => (b.demand ?? 0) - (a.demand ?? 0)).slice(0, limit);
 }
 
-// A debt aged past this many days has blown its window (the demo-availability
+// A commitment aged past this many days has blown its window (the demo-availability
 // gate is 5 business days) — used for the "hot" badge and state-of-play.
-export const DEBT_WINDOW_DAYS = 5;
+export const COMMITMENT_WINDOW_DAYS = 5;
 
-export type Debt = {
+export type Commitment = {
   cardId: string;
   cardName: string;
   nodeKey: DashNodeKey;
@@ -158,17 +158,17 @@ function daysSince(iso: string, now: number): number | null {
   return Math.max(0, Math.floor((now - t) / 86_400_000));
 }
 
-// Band 2 — Debts out. A debt is a mandatory item still unchecked on a node
+// Band 2 — Commitments. A commitment is a mandatory item still unchecked on a node
 // that's already in motion ("active"). Nodes at "todo" haven't started (nothing
-// owed yet) and "done" nodes are settled — so only active nodes generate debts:
+// owed yet) and "done" nodes are settled — so only active nodes generate commitments:
 // the recap you owe, the availability you asked a partner to confirm, the brief
 // you promised. Aged by how long the node has been active, oldest first.
-export function debtsFromCards(
+export function commitmentsFromCards(
   cards: DashCardRow[],
   labels: Record<string, string>,
   now: number = Date.now(),
-): Debt[] {
-  const out: Debt[] = [];
+): Commitment[] {
+  const out: Commitment[] = [];
   for (const card of cards) {
     if (card.archived) continue;
     for (const node of DASH_NODES) {
@@ -190,7 +190,7 @@ export function debtsFromCards(
       });
     }
   }
-  // Oldest debts first (nulls — unstamped, e.g. pre-migration — sort last).
+  // Oldest commitments first (nulls — unstamped, e.g. pre-migration — sort last).
   return out.sort((a, b) => (b.ageDays ?? -1) - (a.ageDays ?? -1));
 }
 
@@ -306,14 +306,14 @@ export function movedThisWeek(cards: DashCardRow[], now: number = Date.now()): n
 
 export type StateOfPlay = {
   openLoops: number; // non-archived cards with a node in flight
-  debtsPastWindow: number; // debts aged past the window
+  commitmentsPastWindow: number; // commitments aged past the window
   untriaged: number; // active signals not yet on the board
   moved: number; // nodes advanced this week
 };
 
 export function stateOfPlay(args: {
   cards: DashCardRow[];
-  debts: Debt[];
+  commitments: Commitment[];
   activeSignals: AccountIntel[];
   onBoard: Set<string>;
   now?: number;
@@ -322,9 +322,9 @@ export function stateOfPlay(args: {
   const openLoops = args.cards.filter(
     (c) => !c.archived && DASH_NODES.some((n) => c.states[n.key] === "active"),
   ).length;
-  const debtsPastWindow = args.debts.filter(
-    (d) => d.ageDays != null && d.ageDays >= DEBT_WINDOW_DAYS,
+  const commitmentsPastWindow = args.commitments.filter(
+    (d) => d.ageDays != null && d.ageDays >= COMMITMENT_WINDOW_DAYS,
   ).length;
   const untriaged = args.activeSignals.filter((a) => !args.onBoard.has(a.name)).length;
-  return { openLoops, debtsPastWindow, untriaged, moved: movedThisWeek(args.cards, now) };
+  return { openLoops, commitmentsPastWindow, untriaged, moved: movedThisWeek(args.cards, now) };
 }

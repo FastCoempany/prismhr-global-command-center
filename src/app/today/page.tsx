@@ -7,8 +7,8 @@ import { researchGeneratedAt } from "@/lib/book/research";
 import {
   accountIntel,
   applyValidations,
-  debtsFromCards,
-  DEBT_WINDOW_DAYS,
+  commitmentsFromCards,
+  COMMITMENT_WINDOW_DAYS,
   isStrongSignal,
   isTrusted,
   movedThisWeek,
@@ -54,8 +54,8 @@ function fitClass(tier: "high" | "medium" | "low") {
 
 function ageBadge(ageDays: number | null) {
   if (ageDays == null) return null;
-  const label = ageDays === 0 ? "today" : `${ageDays}d owed`;
-  const hot = ageDays >= DEBT_WINDOW_DAYS;
+  const label = ageDays === 0 ? "today" : `${ageDays}d open`;
+  const hot = ageDays >= COMMITMENT_WINDOW_DAYS;
   return <span className={`${styles.ageBadge} ${hot ? styles.ageHot : ""}`}>{label}</span>;
 }
 
@@ -130,7 +130,7 @@ export default async function TodayPage() {
 
   const intel = applyValidations(accountIntel(), validations);
   const nar = narrative(intel);
-  const debts = debtsFromCards(dash.cards, dash.labels);
+  const commitments = commitmentsFromCards(dash.cards, dash.labels);
   const onBoard = new Set(dash.cards.map((c) => c.name));
 
   // Signals, split into active vs parked ("Not now"). Request-time "now" is
@@ -148,16 +148,16 @@ export default async function TodayPage() {
   const move = candidates[0] ?? null;
   const onDeck = candidates.slice(1, 5);
 
-  const sop = stateOfPlay({ cards: dash.cards, debts, activeSignals, onBoard });
+  const sop = stateOfPlay({ cards: dash.cards, commitments, activeSignals, onBoard });
 
   // "Start here" — the single most time-sensitive thing, with its reason.
   let start: { text: string; why: string } | null = null;
-  const hotDebt = debts.find((d) => d.ageDays != null && d.ageDays >= DEBT_WINDOW_DAYS);
+  const hotCommitment = commitments.find((d) => d.ageDays != null && d.ageDays >= COMMITMENT_WINDOW_DAYS);
   const firstUntriaged = activeSignals.find((a) => !onBoard.has(a.name));
-  if (hotDebt) {
+  if (hotCommitment) {
     start = {
-      text: `Close the aging debt on ${hotDebt.cardName} — ${hotDebt.item}`,
-      why: `it's ${hotDebt.ageDays}d past its 5-day window`,
+      text: `Close the aging commitment on ${hotCommitment.cardName} — ${hotCommitment.item}`,
+      why: `it's ${hotCommitment.ageDays}d past its 5-day window`,
     };
   } else if (firstUntriaged) {
     start = {
@@ -186,8 +186,8 @@ export default async function TodayPage() {
             <span>
               <b>{sop.openLoops}</b> loops open
             </span>
-            <span className={sop.debtsPastWindow > 0 ? styles.sopHot : ""}>
-              <b>{sop.debtsPastWindow}</b> past window
+            <span className={sop.commitmentsPastWindow > 0 ? styles.sopHot : ""}>
+              <b>{sop.commitmentsPastWindow}</b> past window
             </span>
             <span>
               <b>{sop.untriaged}</b> to triage
@@ -300,15 +300,16 @@ export default async function TodayPage() {
           </div>
         </section>
 
-        {/* ── Band 2 · Debts out ─────────────────────────────────────────── */}
+        {/* ── Band 2 · Commitments ───────────────────────────────────────── */}
         <section className={styles.band}>
           <div className={styles.bandHead}>
             <span className={styles.bandNum}>2</span>
             <div>
-              <h2 className={styles.bandTitle}>Debts out ({debts.length})</h2>
+              <h2 className={styles.bandTitle}>Commitments ({commitments.length})</h2>
               <p className={styles.bandSub}>
-                What you owe before an account can move — the recap, the availability request, the
-                partner brief. Check one off here and it closes on the Dashboard node. Oldest first.
+                What you&apos;ve committed to before an account can move — the recap, the availability
+                request, the partner brief. Check one off here and it closes on the Dashboard node.
+                Oldest first.
               </p>
             </div>
           </div>
@@ -319,19 +320,19 @@ export default async function TodayPage() {
                 in Supabase and start moving nodes on the <Link href="/">Dashboard</Link>.
               </p>
             )}
-            {dash.status === "active" && debts.length === 0 && (
+            {dash.status === "active" && commitments.length === 0 && (
               <p className={styles.muted}>
-                Nothing owed on any in-flight node. Either you&apos;re clean, or nothing has been
+                Nothing open on any in-flight node. Either you&apos;re clean, or nothing has been
                 started — advance a node on the <Link href="/">Dashboard</Link>.
               </p>
             )}
-            {debts.slice(0, 12).map((d) => (
-              <div key={`${d.cardId}-${d.nodeKey}-${d.index}`} className={styles.debt}>
-                <div className={styles.debtTop}>
-                  <span className={styles.debtName}>{d.cardName}</span>
-                  <span className={styles.debtNode}>{d.nodeLabel}</span>
+            {commitments.slice(0, 12).map((d) => (
+              <div key={`${d.cardId}-${d.nodeKey}-${d.index}`} className={styles.commitment}>
+                <div className={styles.commitmentTop}>
+                  <span className={styles.commitmentName}>{d.cardName}</span>
+                  <span className={styles.commitmentNode}>{d.nodeLabel}</span>
                   {ageBadge(d.ageDays)}
-                  <form action={toggleCheck} className={styles.debtClose}>
+                  <form action={toggleCheck} className={styles.commitmentClose}>
                     <input type="hidden" name="cardId" value={d.cardId} />
                     <input type="hidden" name="node" value={d.nodeKey} />
                     <input type="hidden" name="index" value={d.index} />
@@ -339,13 +340,13 @@ export default async function TodayPage() {
                     <button className={styles.closeBtn}>Close ✓</button>
                   </form>
                 </div>
-                <div className={styles.debtItem}>{d.item}</div>
-                {d.note && <div className={styles.debtNote}>“{d.note}”</div>}
+                <div className={styles.commitmentItem}>{d.item}</div>
+                {d.note && <div className={styles.commitmentNote}>“{d.note}”</div>}
               </div>
             ))}
-            {debts.length > 12 && (
+            {commitments.length > 12 && (
               <p className={styles.muted}>
-                + {debts.length - 12} more on the <Link href="/">Dashboard</Link>.
+                + {commitments.length - 12} more on the <Link href="/">Dashboard</Link>.
               </p>
             )}
           </div>
@@ -546,8 +547,8 @@ export default async function TodayPage() {
           <div className={styles.card}>
             <h3>2 · What do I owe, and who do I clear?</h3>
             <p className={styles.muted}>
-              <b>Route</b> through the partner. Pay the debts in Band 2, and never jump a client
-              before the CSM has cleared them.
+              <b>Route</b> through the partner. Clear the commitments in Band 2, and never jump a
+              client before the CSM has cleared them.
             </p>
           </div>
           <div className={styles.card}>
