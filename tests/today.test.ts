@@ -5,7 +5,7 @@ import type { DashCardRow } from "@/lib/dashboard/data";
 import {
   accountIntel,
   applyValidations,
-  debtsFromCards,
+  commitmentsFromCards,
   funnelOf,
   isParked,
   isStrongSignal,
@@ -142,9 +142,9 @@ describe("signals", () => {
   });
 });
 
-// --- debts -------------------------------------------------------------------
+// --- commitments -------------------------------------------------------------------
 
-describe("debtsFromCards", () => {
+describe("commitmentsFromCards", () => {
   const now = 100 * DAY;
 
   test("emits unchecked items only for in-flight (active) nodes", () => {
@@ -155,11 +155,11 @@ describe("debtsFromCards", () => {
       checks: { demo: [true, ...Array(demoLen - 1).fill(false)] },
       activated: { demo: new Date(now - 3 * DAY).toISOString() },
     });
-    const debts = debtsFromCards([c], {}, now);
-    // demo has demoLen items, one checked → demoLen-1 debts; done/todo nodes emit none.
-    assert.equal(debts.length, demoLen - 1);
-    assert.ok(debts.every((d) => d.nodeKey === "demo"));
-    assert.equal(debts[0].ageDays, 3);
+    const commitments = commitmentsFromCards([c], {}, now);
+    // demo has demoLen items, one checked → demoLen-1 commitments; done/todo nodes emit none.
+    assert.equal(commitments.length, demoLen - 1);
+    assert.ok(commitments.every((d) => d.nodeKey === "demo"));
+    assert.equal(commitments[0].ageDays, 3);
   });
 
   test("skips archived cards", () => {
@@ -169,10 +169,10 @@ describe("debtsFromCards", () => {
       states: { demo: "active" },
       activated: { demo: new Date(now - 3 * DAY).toISOString() },
     });
-    assert.equal(debtsFromCards([c], {}, now).length, 0);
+    assert.equal(commitmentsFromCards([c], {}, now).length, 0);
   });
 
-  test("sorts oldest debts first; unstamped sort last", () => {
+  test("sorts oldest commitments first; unstamped sort last", () => {
     const young = card({
       id: "young",
       states: { demo: "active" },
@@ -184,9 +184,9 @@ describe("debtsFromCards", () => {
       activated: { demo: new Date(now - 9 * DAY).toISOString() },
     });
     const unstamped = card({ id: "unstamped", states: { demo: "active" } });
-    const debts = debtsFromCards([young, old, unstamped], {}, now);
-    assert.equal(debts[0].cardId, "old");
-    assert.equal(debts[debts.length - 1].ageDays, null);
+    const commitments = commitmentsFromCards([young, old, unstamped], {}, now);
+    assert.equal(commitments[0].cardId, "old");
+    assert.equal(commitments[commitments.length - 1].ageDays, null);
   });
 
   test("uses custom node labels when provided", () => {
@@ -195,8 +195,8 @@ describe("debtsFromCards", () => {
       states: { demo: "active" },
       activated: { demo: new Date(now).toISOString() },
     });
-    const debts = debtsFromCards([c], { demo: "Show & tell" }, now);
-    assert.ok(debts.every((d) => d.nodeLabel === "Show & tell"));
+    const commitments = commitmentsFromCards([c], { demo: "Show & tell" }, now);
+    assert.ok(commitments.every((d) => d.nodeLabel === "Show & tell"));
   });
 });
 
@@ -357,13 +357,13 @@ describe("movedThisWeek & stateOfPlay", () => {
     const c2 = card("c2", { archived: true, activated: { demo: new Date(now - 1 * DAY).toISOString() } });
     assert.equal(movedThisWeek([c1, c2], now), 1);
   });
-  test("state of play: open loops, past-window debts, untriaged, moved", () => {
+  test("state of play: open loops, past-window commitments, untriaged, moved", () => {
     const c = card("Acme", { active: ["demo"], activated: { demo: new Date(now - 6 * DAY).toISOString() } });
-    const debts = debtsFromCards([c], {}, now); // demo active 6d → all past window
+    const commitments = commitmentsFromCards([c], {}, now); // demo active 6d → all past window
     const activeSignals = [intel({ name: "New Co" }), intel({ name: "Acme" })];
-    const sop = stateOfPlay({ cards: [c], debts, activeSignals, onBoard: new Set(["Acme"]), now });
+    const sop = stateOfPlay({ cards: [c], commitments, activeSignals, onBoard: new Set(["Acme"]), now });
     assert.equal(sop.openLoops, 1);
-    assert.ok(sop.debtsPastWindow > 0);
+    assert.ok(sop.commitmentsPastWindow > 0);
     assert.equal(sop.untriaged, 1); // "New Co" not on board; "Acme" is
     assert.equal(sop.moved, 1);
   });

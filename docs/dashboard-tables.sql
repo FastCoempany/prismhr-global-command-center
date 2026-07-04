@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS "DashCard" (
 ALTER TABLE "DashCard" ADD COLUMN IF NOT EXISTS "archived" BOOLEAN NOT NULL DEFAULT false;
 ALTER TABLE "DashCard" ADD COLUMN IF NOT EXISTS "checks" JSONB;
 ALTER TABLE "DashCard" ADD COLUMN IF NOT EXISTS "checkNotes" JSONB;
--- "activated" records when each node first went active, so Today can age debts.
+-- "activated" records when each node first went active, so Today can age commitments.
 ALTER TABLE "DashCard" ADD COLUMN IF NOT EXISTS "activated" JSONB;
 
 CREATE INDEX IF NOT EXISTS "DashCard_position_idx" ON "DashCard"("position");
