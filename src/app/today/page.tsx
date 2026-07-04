@@ -391,7 +391,7 @@ export default async function TodayPage() {
                   <strong>The line for {move.csm}:</strong> {partnerAngle(move)}
                 </div>
                 <div className={styles.actRow}>
-                  <SeedForm a={move} onBoard={onBoard.has(move.name)} label="Act — seed & open" />
+                  <SeedForm a={move} onBoard={onBoard.has(move.name)} label="Seed to board" />
                   <CopyLine text={partnerAngle(move)} label="Copy the line" />
                   <ParkControl id={move.id} />
                 </div>
