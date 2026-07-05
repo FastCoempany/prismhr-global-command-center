@@ -375,8 +375,9 @@ export default async function TodayPage() {
                     </li>
                   ))}
                   <li>
-                    Jot a <Link href="#capture">voice-of-the-base note</Link> if you&apos;re noticing
-                    a pattern across the base — raw material for the Aleks 1:1.
+                    Jot a <Link href="#capture">voice-of-the-base note</Link>{" "}
+                    if you&apos;re noticing a pattern across the base — raw material for the Aleks
+                    1:1.
                   </li>
                 </ul>
               ) : (
