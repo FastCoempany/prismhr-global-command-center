@@ -1,23 +1,29 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { AppWayfinder } from "@/components/app-wayfinder";
 import { loadDashboard } from "@/lib/dashboard/data";
 import { loadFieldNotes, FIELD_NOTE_KINDS } from "@/lib/field-notes/data";
 import { loadSnoozes, loadValidations } from "@/lib/today/overlay";
-import { researchGeneratedAt } from "@/lib/book/research";
 import {
   accountIntel,
   applyValidations,
+  cardNextStep,
+  commitmentBrief,
   commitmentsFromCards,
   COMMITMENT_WINDOW_DAYS,
+  firstNameOf,
   isStrongSignal,
   isTrusted,
   movedThisWeek,
   narrative,
+  outreachBrief,
   partitionSignals,
-  partnerAngle,
+  partnerMessage,
   signals,
   stateOfPlay,
+  triageBrief,
   type AccountIntel,
+  type CardStep,
   type Validation,
 } from "@/lib/today/build";
 import { CopyLine, NoteSubmit } from "../today-client";
@@ -106,6 +112,140 @@ function ParkControl({ id }: { id: string }) {
   );
 }
 
+// A move on the morning list: a commitment to close, an outreach to send, or a
+// signal to triage.
+type Mv =
+  | { kind: "commitment"; step: CardStep }
+  | { kind: "outreach"; a: AccountIntel }
+  | { kind: "triage"; a: AccountIntel };
+
+// Bold directive with the account/card name emphasized.
+function Emph({ text, term }: { text: string; term: string }) {
+  const i = term ? text.indexOf(term) : -1;
+  if (i < 0) return <>{text}</>;
+  return (
+    <>
+      {text.slice(0, i)}
+      <span className={styles.mvWho}>{term}</span>
+      {text.slice(i + term.length)}
+    </>
+  );
+}
+
+// One move, rendered A2-style: the brief on the left, the exact thing to do
+// (message / decision / step) on the right.
+function MorningMove({ mv, n }: { mv: Mv; n: number }) {
+  let term = "";
+  let brief = { directive: "", narrative: "" };
+  let chips: ReactNode = null;
+  let aside: ReactNode = null;
+
+  if (mv.kind === "outreach") {
+    const a = mv.a;
+    term = a.name;
+    brief = outreachBrief(a);
+    const message = partnerMessage(a);
+    chips = (
+      <>
+        <span className={`${styles.fit} ${fitClass(a.tier)}`}>demand {a.demand}</span>
+        <PlayTag play={a.play} />
+        {a.competitors.length > 0 && (
+          <span className={styles.mvOwner}>incumbent: {a.competitors.join(", ")}</span>
+        )}
+        <FunnelChip funnel={a.funnel} />
+        <span className={styles.mvOwner}>owner: {a.csm}</span>
+        <ValidationBadge v={a.validation} />
+      </>
+    );
+    aside = (
+      <>
+        <div className={styles.mvAsideLab}>The message to {firstNameOf(a.csm)}, ready to send</div>
+        <div className={styles.mvAsideText}>{message}</div>
+        <div className={styles.actRow}>
+          <CopyLine text={message} label="Copy the message" />
+        </div>
+      </>
+    );
+  } else if (mv.kind === "triage") {
+    const a = mv.a;
+    term = a.name;
+    brief = triageBrief(a);
+    chips = (
+      <>
+        <span className={`${styles.fit} ${fitClass(a.tier)}`}>demand {a.demand}</span>
+        {!isStrongSignal(a) && <span className={styles.emergingTag}>emerging</span>}
+        <PlayTag play={a.play} />
+        <FunnelChip funnel={a.funnel} />
+        <span className={styles.mvOwner}>owner: {a.csm}</span>
+        <ValidationBadge v={a.validation} />
+      </>
+    );
+    aside = (
+      <>
+        <div className={styles.mvAsideLab}>Your decision</div>
+        <div className={styles.mvOpt}>
+          <b>Seed</b>
+          <span>— put it on the board with the research attached and start working it.</span>
+        </div>
+        <div className={styles.mvOpt}>
+          <b>Park</b>
+          <span>— set it aside with a written reason; it resurfaces later, not lost.</span>
+        </div>
+        <div className={styles.actRow}>
+          <SeedForm a={a} onBoard={false} label="Seed to board" />
+          <ParkControl id={a.id} />
+        </div>
+      </>
+    );
+  } else {
+    const s = mv.step;
+    term = s.cardName;
+    brief = commitmentBrief(s);
+    chips = (
+      <>
+        <span className={styles.mvOwner}>on the board · {s.nodeLabel}</span>
+        {ageBadge(s.ageDays)}
+      </>
+    );
+    aside = (
+      <>
+        <div className={styles.mvAsideLab}>The step to close</div>
+        <div className={styles.mvAsideText}>
+          “{s.item}” — closing it moves {s.cardName} toward its next stage.
+        </div>
+        <div className={styles.actRow}>
+          <Link href="/" className={styles.mvOpen}>
+            Open on the board
+          </Link>
+          <form action={toggleCheck} className={styles.commitmentClose}>
+            <input type="hidden" name="cardId" value={s.cardId} />
+            <input type="hidden" name="node" value={s.nodeKey} />
+            <input type="hidden" name="index" value={s.index} />
+            <input type="hidden" name="returnTo" value="/today" />
+            <button className={styles.closeBtn}>Mark done ✓</button>
+          </form>
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <div className={`${styles.mvMove} ${n === 1 ? styles.mvFirst : ""}`}>
+      <div className={styles.mvNum}>{n}</div>
+      <div className={styles.mvSplit}>
+        <div>
+          <div className={styles.mvDirective}>
+            <Emph text={brief.directive} term={term} />
+          </div>
+          <p className={styles.mvNarr}>{brief.narrative}</p>
+          <div className={styles.mvMeta}>{chips}</div>
+        </div>
+        <aside className={styles.mvAside}>{aside}</aside>
+      </div>
+    </div>
+  );
+}
+
 export default async function TodayPage() {
   const dash = await loadDashboard();
 
@@ -146,27 +286,31 @@ export default async function TodayPage() {
     (a) => a.play && isTrusted(a) && !parkedIds.has(a.id) && !onBoard.has(a.name),
   );
   const move = candidates[0] ?? null;
-  const onDeck = candidates.slice(1, 5);
 
   const sop = stateOfPlay({ cards: dash.cards, commitments, activeSignals, onBoard });
 
-  // "Start here" — the single most time-sensitive thing, with its reason.
-  let start: { text: string; why: string } | null = null;
-  const hotCommitment = commitments.find((d) => d.ageDays != null && d.ageDays >= COMMITMENT_WINDOW_DAYS);
-  const firstUntriaged = activeSignals.find((a) => !onBoard.has(a.name));
-  if (hotCommitment) {
-    start = {
-      text: `Close the aging commitment on ${hotCommitment.cardName} — ${hotCommitment.item}`,
-      why: `it's ${hotCommitment.ageDays}d past its 5-day window`,
-    };
-  } else if (firstUntriaged) {
-    start = {
-      text: `Triage ${firstUntriaged.name}`,
-      why: `a ${firstUntriaged.demand}-demand signal not yet on the board`,
-    };
-  } else if (move) {
-    start = { text: `Make the move on ${move.name}`, why: `top Global-fit with a real play` };
-  }
+  // ── Compose "This morning": an ordered list of thoroughly-written moves. ──
+  // Order: aging commitments (urgent) → the outreach move → the top triage
+  // decision → other in-flight steps. Cap the primary list; the rest go to
+  // "then, if there's time".
+  const cardSteps = dash.cards
+    .filter((c) => !c.archived)
+    .map((c) => cardNextStep(c, dash.labels))
+    .filter((s): s is CardStep => s != null)
+    .sort((x, y) => (y.ageDays ?? -1) - (x.ageDays ?? -1));
+  const overdue = (s: CardStep) => s.ageDays != null && s.ageDays >= COMMITMENT_WINDOW_DAYS;
+  const pastWindow = cardSteps.filter(overdue);
+  const otherSteps = cardSteps.filter((s) => !overdue(s));
+  const triageList = activeSignals.filter((a) => !onBoard.has(a.name) && a.id !== move?.id);
+
+  const allMoves: Mv[] = [
+    ...pastWindow.map((step): Mv => ({ kind: "commitment", step })),
+    ...(move ? [{ kind: "outreach", a: move } as Mv] : []),
+    ...(triageList[0] ? [{ kind: "triage", a: triageList[0] } as Mv] : []),
+    ...otherSteps.map((step): Mv => ({ kind: "commitment", step })),
+  ];
+  const morning = allMoves.slice(0, 4);
+  const laterTriage = triageList.slice(triageList[0] ? 1 : 0);
 
   return (
     <>
@@ -180,11 +324,11 @@ export default async function TodayPage() {
           clients on our PrismHR HCM). Read → route → record.
         </p>
 
-        {/* ── State of play ──────────────────────────────────────────────── */}
+        {/* ── Right now (quiet status) ───────────────────────────────────── */}
         <div className={styles.sop}>
           <div className={styles.sopStats}>
             <span>
-              <b>{sop.openLoops}</b> loops open
+              <b>{sop.openLoops}</b> in flight
             </span>
             <span className={sop.commitmentsPastWindow > 0 ? styles.sopHot : ""}>
               <b>{sop.commitmentsPastWindow}</b> past window
@@ -196,219 +340,91 @@ export default async function TodayPage() {
               <b>{sop.moved}</b> moved this week
             </span>
           </div>
-          {start ? (
-            <p className={styles.sopStart}>
-              <span className={styles.sopStartLabel}>Start here:</span> {start.text}{" "}
-              <span className={styles.sopWhy}>— {start.why}</span>
+        </div>
+
+        {/* ── This morning — your first moves, in order ──────────────────── */}
+        <div className={styles.mvPanel}>
+          <div className={styles.mvCap}>This morning · {morning.length ? `${morning.length} moves, in order` : "nothing pressing"}</div>
+
+          {morning.length === 0 && (
+            <p className={styles.muted}>
+              Nothing needs you right now — no aging commitments, no untriaged signals, no play
+              waiting. Seed a signal from the <Link href="/accounts">Account Room</Link> or advance a
+              loop on the <Link href="/">Dashboard</Link>.
             </p>
-          ) : (
-            <p className={styles.sopStart}>
-              <span className={styles.sopStartLabel}>Clear.</span> Nothing pressing — seed a new
-              signal or advance a loop.
-            </p>
+          )}
+
+          {morning.map((mv, i) => (
+            <MorningMove
+              key={mv.kind === "commitment" ? `${mv.step.cardId}-${mv.step.nodeKey}` : mv.a.id}
+              mv={mv}
+              n={i + 1}
+            />
+          ))}
+
+          {(laterTriage.length > 0 || dash.status === "active") && (
+            <div className={styles.mvThen}>
+              <div className={styles.mvThenLab}>Then, if there&apos;s time</div>
+              {laterTriage.length > 0 ? (
+                <ul className={styles.mvThenList}>
+                  {laterTriage.map((a) => (
+                    <li key={a.id}>
+                      Decide on{" "}
+                      <Link href={`/accounts?focus=${a.id}`}>{a.name}</Link> — {a.demand}-demand{" "}
+                      {a.play ?? "signal"}, {a.confidence} confidence.
+                    </li>
+                  ))}
+                  <li>
+                    Jot a <Link href="#capture">voice-of-the-base note</Link> if you&apos;re noticing
+                    a pattern across the base — raw material for the Aleks 1:1.
+                  </li>
+                </ul>
+              ) : (
+                <p className={styles.muted}>
+                  Nothing else waiting. If you&apos;re noticing a pattern across the base, log a{" "}
+                  <Link href="#capture">voice-of-the-base note</Link> for the Aleks 1:1.
+                </p>
+              )}
+            </div>
           )}
         </div>
 
-        {/* ── Band 1 · Signal in ─────────────────────────────────────────── */}
-        <section className={styles.band}>
-          <div className={styles.bandHead}>
-            <span className={styles.bandNum}>1</span>
-            <div>
-              <h2 className={styles.bandTitle}>Signal in</h2>
-              <p className={styles.bandSub}>
-                What the base is telling you — real global-hiring demand. Seed one to the board, copy
-                the partner line, or park it with a reason. Snapshot as of {researchGeneratedAt}.
-              </p>
-            </div>
+        {/* ── HCM funnel + look-into flag (context, below the moves) ──────── */}
+        {hcm.length > 0 && (
+          <div className={styles.hcmStrip}>
+            <span className={styles.hcmLabel}>HCM funnel — routes to you directly:</span>
+            {hcm.map((a) => (
+              <Link key={a.id} href={`/accounts?focus=${a.id}`} className={styles.hcmChip}>
+                {a.name} <b>{a.score}</b> · {a.csm}
+              </Link>
+            ))}
           </div>
-          <div className={styles.bandBody}>
-            {activeSignals.length === 0 && (
-              <p className={styles.muted}>
-                No active signal. {parked.length > 0 ? "Some are parked below. " : ""}Demand is thin
-                across the base — run deeper research from the Account Room.
-              </p>
-            )}
-            {activeSignals.map((a) => (
-              <div
-                key={a.id}
-                className={`${styles.signalRow} ${a.validation?.status === "flagged" ? styles.signalFlagged : ""}`}
-              >
-                <div className={styles.signalTop}>
-                  <Link href={`/accounts?focus=${a.id}`}>{a.name}</Link>
-                  <span className={`${styles.fit} ${fitClass(a.tier)}`}>{a.demand}</span>
-                  {!isStrongSignal(a) && <span className={styles.emergingTag}>emerging</span>}
-                  <PlayTag play={a.play} />
-                  <FunnelChip funnel={a.funnel} />
-                  <ValidationBadge v={a.validation} />
-                  <span className={styles.signalCsm}>
-                    {a.confidence} conf · {a.csm}
-                  </span>
-                </div>
-                {a.summary && <p className={styles.signalSummary}>{a.summary}</p>}
-                {a.countries.length > 0 && (
-                  <div className={styles.countries}>
-                    {a.countries.map((c) => (
-                      <span key={c} className={styles.countryChip}>
-                        {c}
-                      </span>
-                    ))}
-                  </div>
-                )}
-                <div className={styles.actRow}>
-                  <SeedForm a={a} onBoard={onBoard.has(a.name)} label="Seed to board" />
-                  <CopyLine text={partnerAngle(a)} label="Copy the line" />
-                  <ParkControl id={a.id} />
-                </div>
+        )}
+        <Link href="/look-into" className={styles.hcmWarn}>
+          ⚠ This HCM funnel is incomplete — the roster of PEO clients running on PrismHR HCM
+          isn&apos;t loaded yet, so it looks smaller than it is. Look into →
+        </Link>
+
+        {parked.length > 0 && (
+          <details className={styles.parkedList}>
+            <summary>Parked signals ({parked.length})</summary>
+            {parked.map(({ intel: a, snooze }) => (
+              <div key={a.id} className={styles.parkedRow}>
+                <Link href={`/accounts?focus=${a.id}`}>{a.name}</Link>
+                <span className={styles.parkedReason}>
+                  “{snooze.reason}”
+                  {snooze.snoozedUntil
+                    ? ` · back ${snooze.snoozedUntil.slice(0, 10)}`
+                    : " · until un-parked"}
+                </span>
+                <form action={unsnoozeSignal} className={styles.noteResolve}>
+                  <input type="hidden" name="accountId" value={a.id} />
+                  <button className={styles.noteResolveBtn}>Un-park</button>
+                </form>
               </div>
             ))}
-
-            {hcm.length > 0 && (
-              <div className={styles.hcmStrip}>
-                <span className={styles.hcmLabel}>HCM funnel — routes to you directly:</span>
-                {hcm.map((a) => (
-                  <Link key={a.id} href={`/accounts?focus=${a.id}`} className={styles.hcmChip}>
-                    {a.name} <b>{a.score}</b> · {a.csm}
-                  </Link>
-                ))}
-              </div>
-            )}
-            <Link href="/look-into" className={styles.hcmWarn}>
-              ⚠ This HCM funnel is incomplete — the roster of PEO clients running on PrismHR HCM
-              isn&apos;t loaded yet, so it looks smaller than it is. Look into →
-            </Link>
-
-            {parked.length > 0 && (
-              <details className={styles.parkedList}>
-                <summary>Parked ({parked.length})</summary>
-                {parked.map(({ intel: a, snooze }) => (
-                  <div key={a.id} className={styles.parkedRow}>
-                    <Link href={`/accounts?focus=${a.id}`}>{a.name}</Link>
-                    <span className={styles.parkedReason}>
-                      “{snooze.reason}”
-                      {snooze.snoozedUntil
-                        ? ` · back ${snooze.snoozedUntil.slice(0, 10)}`
-                        : " · until un-parked"}
-                    </span>
-                    <form action={unsnoozeSignal} className={styles.noteResolve}>
-                      <input type="hidden" name="accountId" value={a.id} />
-                      <button className={styles.noteResolveBtn}>Un-park</button>
-                    </form>
-                  </div>
-                ))}
-              </details>
-            )}
-          </div>
-        </section>
-
-        {/* ── Band 2 · Commitments ───────────────────────────────────────── */}
-        <section className={styles.band}>
-          <div className={styles.bandHead}>
-            <span className={styles.bandNum}>2</span>
-            <div>
-              <h2 className={styles.bandTitle}>Commitments ({commitments.length})</h2>
-              <p className={styles.bandSub}>
-                What you&apos;ve committed to before an account can move — the recap, the availability
-                request, the partner brief. Check one off here and it closes on the Dashboard node.
-                Oldest first.
-              </p>
-            </div>
-          </div>
-          <div className={styles.bandBody}>
-            {dash.status === "database-unavailable" && (
-              <p className={styles.muted}>
-                The execution ledger isn&apos;t connected — run <code>docs/dashboard-tables.sql</code>{" "}
-                in Supabase and start moving nodes on the <Link href="/">Dashboard</Link>.
-              </p>
-            )}
-            {dash.status === "active" && commitments.length === 0 && (
-              <p className={styles.muted}>
-                Nothing open on any in-flight node. Either you&apos;re clean, or nothing has been
-                started — advance a node on the <Link href="/">Dashboard</Link>.
-              </p>
-            )}
-            {commitments.slice(0, 12).map((d) => (
-              <div key={`${d.cardId}-${d.nodeKey}-${d.index}`} className={styles.commitment}>
-                <div className={styles.commitmentTop}>
-                  <span className={styles.commitmentName}>{d.cardName}</span>
-                  <span className={styles.commitmentNode}>{d.nodeLabel}</span>
-                  {ageBadge(d.ageDays)}
-                  <form action={toggleCheck} className={styles.commitmentClose}>
-                    <input type="hidden" name="cardId" value={d.cardId} />
-                    <input type="hidden" name="node" value={d.nodeKey} />
-                    <input type="hidden" name="index" value={d.index} />
-                    <input type="hidden" name="returnTo" value="/today" />
-                    <button className={styles.closeBtn}>Close ✓</button>
-                  </form>
-                </div>
-                <div className={styles.commitmentItem}>{d.item}</div>
-                {d.note && <div className={styles.commitmentNote}>“{d.note}”</div>}
-              </div>
-            ))}
-            {commitments.length > 12 && (
-              <p className={styles.muted}>
-                + {commitments.length - 12} more on the <Link href="/">Dashboard</Link>.
-              </p>
-            )}
-          </div>
-        </section>
-
-        {/* ── Band 3 · Highest-leverage move ─────────────────────────────── */}
-        <section className={styles.band}>
-          <div className={styles.bandHead}>
-            <span className={styles.bandNum}>3</span>
-            <div>
-              <h2 className={styles.bandTitle}>Highest-leverage move</h2>
-              <p className={styles.bandSub}>
-                The one account to touch now — top Global-fit with a real play, not on the board, not
-                parked, not flagged. Lead with the partner. Not this one? Act on an on-deck
-                alternative or park it.
-              </p>
-            </div>
-          </div>
-          <div className={styles.bandBody}>
-            {!move && (
-              <p className={styles.muted}>
-                No account carries a qualified play right now. Deepen research or seed a partner from
-                the <Link href="/accounts">Account Room</Link>.
-              </p>
-            )}
-            {move && (
-              <div className={styles.moveHero}>
-                <div className={styles.moveTop}>
-                  <Link href={`/accounts?focus=${move.id}`} className={styles.moveName}>
-                    {move.name}
-                  </Link>
-                  <span className={`${styles.fit} ${fitClass(move.tier)}`}>{move.score}</span>
-                  <PlayTag play={move.play} />
-                  <FunnelChip funnel={move.funnel} />
-                  <ValidationBadge v={move.validation} />
-                  {move.competitors.length > 0 && (
-                    <span className={styles.signalCsm}>vs {move.competitors.join(", ")}</span>
-                  )}
-                </div>
-                {move.summary && <p className={styles.signalSummary}>{move.summary}</p>}
-                <div className={styles.moveAsk}>
-                  <strong>The line for {move.csm}:</strong> {partnerAngle(move)}
-                </div>
-                <div className={styles.actRow}>
-                  <SeedForm a={move} onBoard={onBoard.has(move.name)} label="Seed to board" />
-                  <CopyLine text={partnerAngle(move)} label="Copy the line" />
-                  <ParkControl id={move.id} />
-                </div>
-              </div>
-            )}
-            {onDeck.length > 0 && (
-              <div className={styles.onDeck}>
-                <span className={styles.onDeckLabel}>On deck:</span>
-                {onDeck.map((a) => (
-                  <Link key={a.id} href={`/accounts?focus=${a.id}`} className={styles.onDeckChip}>
-                    {a.name} <b>{a.score}</b>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-        </section>
+          </details>
+        )}
 
         {/* ── Band 4 · Narrative forming ─────────────────────────────────── */}
         <section className={styles.band}>
@@ -474,7 +490,7 @@ export default async function TodayPage() {
         </section>
 
         {/* ── Voice of the base & enablement gaps (capture) ──────────────── */}
-        <h2 className={styles.h2}>Voice of the base &amp; enablement gaps</h2>
+        <h2 id="capture" className={styles.h2}>Voice of the base &amp; enablement gaps</h2>
         <p className={styles.sub}>
           The running list you carry into the Aleks 1:1 and to marketing — what the base keeps
           asking for, what&apos;s missing to arm partners, and what you need from the org. Resolve an

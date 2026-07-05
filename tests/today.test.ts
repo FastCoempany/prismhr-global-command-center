@@ -5,7 +5,9 @@ import type { DashCardRow } from "@/lib/dashboard/data";
 import {
   accountIntel,
   applyValidations,
+  cardNextStep,
   commitmentsFromCards,
+  firstNameOf,
   funnelOf,
   isParked,
   isStrongSignal,
@@ -14,6 +16,7 @@ import {
   narrative,
   partitionSignals,
   partnerAngle,
+  partnerMessage,
   signals,
   stateOfPlay,
   type AccountIntel,
@@ -366,6 +369,50 @@ describe("movedThisWeek & stateOfPlay", () => {
     assert.ok(sop.commitmentsPastWindow > 0);
     assert.equal(sop.untriaged, 1); // "New Co" not on board; "Acme" is
     assert.equal(sop.moved, 1);
+  });
+});
+
+// --- morning composition -----------------------------------------------------
+
+describe("firstNameOf & partnerMessage", () => {
+  test("first name is the leading token; empty falls back", () => {
+    assert.equal(firstNameOf("Anika Steenstra"), "Anika");
+    assert.equal(firstNameOf(""), "there");
+  });
+  test("displacement message names the incumbent and asks about renewal", () => {
+    const m = partnerMessage(
+      intel({ name: "Infiniti HR", csm: "Anika Steenstra", play: "displacement", competitors: ["Globalization Partners"] }),
+    );
+    assert.match(m, /Anika/);
+    assert.match(m, /Globalization Partners/);
+    assert.match(m, /renewal/i);
+  });
+  test("greenfield message asks about entities/contractors, no incumbent", () => {
+    const m = partnerMessage(intel({ name: "MAU", csm: "Lesha Cyphers", play: "greenfield" }));
+    assert.match(m, /entity|contractor/i);
+    assert.doesNotMatch(m, /renewal/i);
+  });
+});
+
+describe("cardNextStep", () => {
+  const now = 100 * DAY;
+  test("returns the first unchecked item on the first active node, with age", () => {
+    const demoLen = DASH_NODES.find((n) => n.key === "demo")!.checklist.length;
+    const c = card({
+      id: "c1",
+      name: "Nextep",
+      states: { demo: "active" },
+      checks: { demo: [true, ...Array(demoLen - 1).fill(false)] },
+      activated: { demo: new Date(now - 4 * DAY).toISOString() },
+    });
+    const step = cardNextStep(c, {}, now);
+    assert.ok(step);
+    assert.equal(step!.cardName, "Nextep");
+    assert.equal(step!.index, 1);
+    assert.equal(step!.ageDays, 4);
+  });
+  test("returns null when nothing is active", () => {
+    assert.equal(cardNextStep(card({ id: "c1" }), {}, now), null);
   });
 });
 

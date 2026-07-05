@@ -94,21 +94,28 @@ export default async function LookIntoPage() {
         )}
 
         {resolved.length > 0 && (
-          <details className={styles.parkedList}>
-            <summary>Resolved ({resolved.length})</summary>
-            {resolved.map((item) => (
-              <div key={item.id} className={styles.parkedRow}>
-                <span className={styles.lookTitle}>{item.title}</span>
-                <span className={styles.parkedReason}>{item.surfacedIn}</span>
-                {canWrite && (
-                  <form action={toggleLookInto} className={styles.noteResolve}>
-                    <input type="hidden" name="itemId" value={item.id} />
-                    <input type="hidden" name="resolved" value="false" />
-                    <button className={styles.noteResolveBtn}>Reopen</button>
-                  </form>
-                )}
-              </div>
-            ))}
+          <details className={styles.archive}>
+            <summary className={styles.archiveSummary}>
+              <span className={styles.archiveTitle}>Resolved archive</span>
+              <span className={styles.archiveCount}>{resolved.length} closed</span>
+              <span className={styles.archiveHint}>— click to open</span>
+            </summary>
+            <div className={styles.archiveBody}>
+              {resolved.map((item) => (
+                <div key={item.id} className={styles.archiveRow}>
+                  <span className={styles.archiveCheck}>✓</span>
+                  <span className={styles.archiveName}>{item.title}</span>
+                  <span className={styles.archiveWhere}>{item.surfacedIn}</span>
+                  {canWrite && (
+                    <form action={toggleLookInto} className={styles.noteResolve}>
+                      <input type="hidden" name="itemId" value={item.id} />
+                      <input type="hidden" name="resolved" value="false" />
+                      <button className={styles.noteResolveBtn}>Reopen</button>
+                    </form>
+                  )}
+                </div>
+              ))}
+            </div>
           </details>
         )}
 
