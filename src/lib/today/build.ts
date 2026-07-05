@@ -208,6 +208,115 @@ export function partnerAngle(a: AccountIntel): string {
   return `Ask ${a.csm} what ${a.name}'s cross-border footprint looks like — entities, how they pay, employees vs contractors. Gauge before you campaign.`;
 }
 
+// --- "This morning" composition ---------------------------------------------
+// Turns the day's inputs into thoroughly-written moves, each with the exact
+// thing to do beside the reasoning. Verbose by design — anything that becomes an
+// outbound message is spelled out in full.
+
+export function firstNameOf(name: string): string {
+  return (name || "").trim().split(/\s+/)[0] || "there";
+}
+
+// A complete, ready-to-send message to the partner (not a one-liner) — what the
+// owner copies into Slack / Teams / email. Shaped by the play.
+export function partnerMessage(a: AccountIntel): string {
+  const who = firstNameOf(a.csm);
+  const comp = a.competitors[0];
+  if (a.play === "displacement" && comp) {
+    return `Hi ${who} — quick one on ${a.name}. I've been looking at them for PrismHR Global, and from the research it looks like they currently run their international hiring through ${comp}. Before I take any step, I'd really value your read on the relationship: how happy do you think ${a.name} is with ${comp} right now, and do you have any sense of when that contract comes up for renewal? Renewal timing basically tells me whether it's worth opening a Global conversation soon or holding off. I completely want to move at your pace and not get out ahead of the relationship — just trying to figure out if there's an opening and, if so, roughly when. Thanks so much.`;
+  }
+  if (a.play === "greenfield") {
+    return `Hi ${who} — quick one on ${a.name}. I've been looking at them for PrismHR Global and there's a real signal they're hiring across borders, with no Employer-of-Record provider in place yet — so this could be a clean introduction rather than a switch. Before I take any step, could you help me understand the account a bit: are they hiring in countries where they don't have a legal entity, or converting contractors to employees anywhere? That's usually where the Global fit is clearest. I want to move at your pace and not get ahead of the relationship — just gauging whether there's an opening worth exploring. Thanks so much.`;
+  }
+  return `Hi ${who} — quick one on ${a.name}. I've been looking at them for PrismHR Global and wanted your read before I do anything. Could you help me understand their cross-border footprint — where they're hiring, how they pay international workers today, and whether they lean on employees or contractors? That'll tell me whether there's a real Global opening. I want to move at your pace and not get ahead of the relationship. Thanks so much.`;
+}
+
+export type Brief = { directive: string; narrative: string };
+
+export function outreachBrief(a: AccountIntel): Brief {
+  const who = firstNameOf(a.csm);
+  const comp = a.competitors[0];
+  if (a.play === "displacement" && comp) {
+    return {
+      directive: `Open the ${a.name} conversation through ${who} — go through the partner, not the client.`,
+      narrative: `${a.name} is your strongest play right now: a global-hiring demand score of ${a.demand} out of 100 at ${a.confidence} confidence. The complication is that ${a.name} already runs its international hiring through ${comp}, a direct PrismHR Global competitor — which makes this a displacement play. You're trying to win business away from an incumbent, not fill an obvious gap, and that changes how you open. Don't contact ${a.name} directly. Go to ${a.csm}, the CSM who owns the relationship, and ask two things: how satisfied ${a.name} seems with ${comp} today, and — the part that matters most — when their current contract comes up for renewal. That renewal date is the whole game: a client almost never switches providers mid-contract, so the months heading into their renewal are the only realistic window to move. The message on the right is written to gauge exactly that, without getting ahead of ${who}'s relationship.`,
+    };
+  }
+  if (a.play === "greenfield") {
+    return {
+      directive: `Open the ${a.name} conversation through ${who} — go through the partner, not the client.`,
+      narrative: `${a.name} scored ${a.demand} out of 100 for global-hiring demand at ${a.confidence} confidence, and it reads as greenfield — no competing Employer-of-Record provider showed up in their footprint. You'd be introducing the capability rather than displacing anyone, which is usually a cleaner conversation. You still don't approach the client cold; you go through ${a.csm}, the CSM who owns the relationship. The opening you're probing for is a compliance one: are they hiring in countries where they don't have a legal entity, or converting contractors to employees? That exposure is where Global fits. The message on the right asks ${who} exactly that, at the partner's pace.`,
+    };
+  }
+  return {
+    directive: `Open the ${a.name} conversation through ${who} — start with the partner.`,
+    narrative: `${a.name} carries a global-hiring signal (demand ${a.demand} out of 100, ${a.confidence} confidence), but the shape of the opportunity isn't fully clear yet. Before anything reaches the client, go through ${a.csm} to understand their cross-border footprint — where they hire, how they pay international workers, and whether they use employees or contractors. The message on the right opens that up without getting ahead of the relationship.`,
+  };
+}
+
+export function triageBrief(a: AccountIntel): Brief {
+  const strength = isStrongSignal(a) ? "a solid signal" : "a real but moderate signal";
+  const lowConf = a.confidence === "low" ? ", though at low confidence" : "";
+  const playText =
+    a.play === "displacement"
+      ? `it reads as a displacement play — they appear to already use ${a.competitors[0] ?? "a competitor EOR"}, so you'd be winning business away from an incumbent`
+      : a.play === "greenfield"
+        ? "it reads as greenfield — no competing Employer-of-Record provider showed up, so you'd be introducing the capability rather than displacing anyone"
+        : "the play isn't classified yet";
+  return {
+    directive: `Make a call on ${a.name} — seed it to the board or park it.`,
+    narrative: `Research scored ${a.name} at ${a.demand} out of 100 for global-hiring demand (${strength}${lowConf}), and ${playText}. It sits in ${a.csm}'s book and isn't on your board yet. This is a decision, not a task: seed it onto the board — which creates a card pre-loaded with the research so you can start working it — or park it with a written reason if the timing or fit isn't right. It stays a loose end until you decide.`,
+  };
+}
+
+export type CardStep = {
+  cardId: string;
+  cardName: string;
+  nodeKey: DashNodeKey;
+  nodeLabel: string;
+  item: string;
+  index: number;
+  ageDays: number | null;
+};
+
+// The single next step to close on a card: the first unchecked item on its first
+// in-flight node. Null when nothing's active.
+export function cardNextStep(
+  card: DashCardRow,
+  labels: Record<string, string>,
+  now: number = Date.now(),
+): CardStep | null {
+  for (const node of DASH_NODES) {
+    if (card.states[node.key] !== "active") continue;
+    const i = node.checklist.findIndex((_, idx) => !card.checks[node.key]?.[idx]);
+    if (i < 0) continue;
+    return {
+      cardId: card.id,
+      cardName: card.name,
+      nodeKey: node.key,
+      nodeLabel: labels[node.key] ?? node.label,
+      item: node.checklist[i],
+      index: i,
+      ageDays: daysSince(card.activated?.[node.key] ?? "", now),
+    };
+  }
+  return null;
+}
+
+export function commitmentBrief(step: CardStep): Brief {
+  const overdue = step.ageDays != null && step.ageDays >= COMMITMENT_WINDOW_DAYS;
+  const age =
+    step.ageDays == null
+      ? ""
+      : overdue
+        ? ` It's been open ${step.ageDays} days — past its window, so it's the first thing to clear.`
+        : ` It's been open ${step.ageDays} day${step.ageDays === 1 ? "" : "s"}.`;
+  return {
+    directive: `Advance ${step.cardName} — close the step you owe in ${step.nodeLabel}.`,
+    narrative: `${step.cardName} is on your board in the ${step.nodeLabel} stage, and it's held up by one step you owe: “${step.item}”.${age} Until it's checked, the opportunity can't move to the next stage and the momentum quietly stalls. Open it and either do the step and check it off, or record exactly what you're waiting on so it's tracked, not silently slipping.`,
+  };
+}
+
 export type Narrative = {
   researched: number;
   total: number;
