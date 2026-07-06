@@ -1,5 +1,5 @@
 {
-  "count": 132,
+  "count": 133,
   "csms": [
     "Anika Steenstra",
     "Whitney Dideon",
@@ -2251,6 +2251,23 @@
       "website": "",
       "lastActivity": "1/8/2025",
       "fit": 10,
+      "fitTier": "low"
+    },
+    {
+      "id": "ADVOCATEPAY000001",
+      "name": "Advocate Pay",
+      "cloud": "",
+      "csm": "Eric Ronci",
+      "contactName": "Bryce Rowley",
+      "contactEmail": "",
+      "size": 40,
+      "sizeBucket": "Start Up (0 - 500)",
+      "industry": "PEO/ASO",
+      "city": "Sarasota",
+      "state": "FL",
+      "website": "advocatepay.com",
+      "lastActivity": "",
+      "fit": 37,
       "fitTier": "low"
     }
   ]
