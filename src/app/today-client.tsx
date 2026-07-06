@@ -113,6 +113,7 @@ export function ContactControl({
   detail = "",
   defaultMessage,
   sentLabel = "Mark contacted ✓",
+  editLabel = "Edit & copy the message",
   contacted,
   followUpLabel,
 }: {
@@ -122,6 +123,7 @@ export function ContactControl({
   detail?: string;
   defaultMessage: string;
   sentLabel?: string;
+  editLabel?: string;
   contacted: boolean;
   followUpLabel?: string;
 }) {
@@ -129,12 +131,16 @@ export function ContactControl({
   const [copied, setCopied] = useState(false);
   const ref = useRef<HTMLTextAreaElement>(null);
 
-  useEffect(() => {
+  // Auto-grow to fit. Also re-run when the disclosure opens: a textarea inside a
+  // collapsed <details> measures scrollHeight as 0, so it must be re-fit on
+  // expand or it renders squashed.
+  const fit = () => {
     const el = ref.current;
     if (!el) return;
     el.style.height = "auto";
     el.style.height = `${el.scrollHeight}px`;
-  }, [val]);
+  };
+  useEffect(fit, [val]);
 
   if (contacted) {
     return (
@@ -156,43 +162,53 @@ export function ContactControl({
       <input type="hidden" name="kind" value={kind} />
       <input type="hidden" name="label" value={label} />
       <input type="hidden" name="detail" value={detail} />
-      <div className={styles.editMsg}>
-        <textarea
-          ref={ref}
-          name="message"
-          className={styles.editMsgArea}
-          value={val}
-          onChange={(e) => setVal(e.target.value)}
-          aria-label="Message to send"
-          spellCheck
-        />
-        <div className={styles.editMsgRow}>
-          <button
-            type="button"
-            className={styles.copyLine}
-            onClick={async () => {
-              try {
-                await navigator.clipboard.writeText(val);
-                setCopied(true);
-                setTimeout(() => setCopied(false), 2000);
-              } catch {
-                setCopied(false);
-              }
-            }}
-          >
-            {copied ? "Copied ✓ — paste into Slack, Teams, or email" : "Copy message"}
-          </button>
-          {val !== defaultMessage && (
+      {/* The textarea stays inside the form even while collapsed, so its edited
+          value is still submitted. */}
+      <details
+        className={styles.contactDetails}
+        onToggle={(e) => {
+          if ((e.currentTarget as HTMLDetailsElement).open) fit();
+        }}
+      >
+        <summary className={styles.contactSummary}>✎ {editLabel}</summary>
+        <div className={styles.editMsg}>
+          <textarea
+            ref={ref}
+            name="message"
+            className={styles.editMsgArea}
+            value={val}
+            onChange={(e) => setVal(e.target.value)}
+            aria-label="Message to send"
+            spellCheck
+          />
+          <div className={styles.editMsgRow}>
             <button
               type="button"
-              className={styles.editMsgReset}
-              onClick={() => setVal(defaultMessage)}
+              className={styles.copyLine}
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(val);
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 2000);
+                } catch {
+                  setCopied(false);
+                }
+              }}
             >
-              Reset
+              {copied ? "Copied ✓ — paste into Slack, Teams, or email" : "Copy message"}
             </button>
-          )}
+            {val !== defaultMessage && (
+              <button
+                type="button"
+                className={styles.editMsgReset}
+                onClick={() => setVal(defaultMessage)}
+              >
+                Reset
+              </button>
+            )}
+          </div>
         </div>
-      </div>
+      </details>
       <ContactSubmit label={sentLabel} />
     </form>
   );
