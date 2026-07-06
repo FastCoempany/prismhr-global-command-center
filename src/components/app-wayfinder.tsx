@@ -27,6 +27,13 @@ export function AppWayfinder({
         <span className="ds-wayfinder__spacer" />
         <nav className="app-wayfinder-routes" aria-label="Primary routes">
           <Link
+            aria-current={current === "Today" ? "page" : undefined}
+            className="app-route-link"
+            href="/today"
+          >
+            Today
+          </Link>
+          <Link
             aria-current={current === "Dashboard" ? "page" : undefined}
             className="app-route-link"
             href="/"
@@ -46,13 +53,6 @@ export function AppWayfinder({
             href="/pricing"
           >
             Pricing
-          </Link>
-          <Link
-            aria-current={current === "Today" ? "page" : undefined}
-            className="app-route-link"
-            href="/today"
-          >
-            Today
           </Link>
           <Link
             aria-current={current === "Book" ? "page" : undefined}

@@ -231,41 +231,76 @@ export function partnerMessage(a: AccountIntel): string {
   return `Hi ${who} — quick one on ${a.name}. I've been looking at them for PrismHR Global and wanted your read before I do anything. Could you help me understand their cross-border footprint — where they're hiring, how they pay international workers today, and whether they lean on employees or contractors? That'll tell me whether there's a real Global opening. I want to move at your pace and not get ahead of the relationship. Thanks so much.`;
 }
 
-export type Brief = { directive: string; narrative: string };
+// Granular, spoon-fed guidance for a task. do = the one standout action; how =
+// precise steps; say = the exact message to send (editable); consider = the
+// caveat / relationship note. Rendered as loud, labeled, color-coded sections.
+export type Guidance = {
+  do: string;
+  how: string[];
+  say?: string;
+  consider?: string;
+};
 
-export function outreachBrief(a: AccountIntel): Brief {
+export function outreachGuidance(a: AccountIntel): Guidance {
   const who = firstNameOf(a.csm);
   const comp = a.competitors[0];
   if (a.play === "displacement" && comp) {
     return {
-      directive: `Open the ${a.name} conversation through ${who} — go through the partner, not the client.`,
-      narrative: `${a.name} is your strongest play right now: a global-hiring demand score of ${a.demand} out of 100 at ${a.confidence} confidence. The complication is that ${a.name} already runs its international hiring through ${comp}, a direct PrismHR Global competitor — which makes this a displacement play. You're trying to win business away from an incumbent, not fill an obvious gap, and that changes how you open. Don't contact ${a.name} directly. Go to ${a.csm}, the CSM who owns the relationship, and ask two things: how satisfied ${a.name} seems with ${comp} today, and — the part that matters most — when their current contract comes up for renewal. That renewal date is the whole game: a client almost never switches providers mid-contract, so the months heading into their renewal are the only realistic window to move. The message on the right is written to gauge exactly that, without getting ahead of ${who}'s relationship.`,
+      do: `Message ${a.csm} about ${a.name} — and do NOT contact ${a.name} directly. This is a partner-first, win-back conversation.`,
+      how: [
+        `Open Slack, Teams, or email to ${a.csm} — the CSM who owns the ${a.name} relationship.`,
+        `Paste the message below (edit anything that doesn't sound like you), then send it.`,
+        `The one thing you must find out: when ${a.name}'s ${comp} contract renews. That date is the only realistic window to win them.`,
+        `Do not reach out to anyone at ${a.name} until ${who} clears the path.`,
+        `When you've sent it, hit "Mark sent ✓" below so it drops off your list.`,
+      ],
+      say: partnerMessage(a),
+      consider: `${a.name} already uses ${comp}, so this is a win-back, not a fresh sale (demand ${a.demand}/100, ${a.confidence} confidence). ${who} may be protective of that relationship — move at ${who}'s pace and never get ahead of the partner.`,
     };
   }
   if (a.play === "greenfield") {
     return {
-      directive: `Open the ${a.name} conversation through ${who} — go through the partner, not the client.`,
-      narrative: `${a.name} scored ${a.demand} out of 100 for global-hiring demand at ${a.confidence} confidence, and it reads as greenfield — no competing Employer-of-Record provider showed up in their footprint. You'd be introducing the capability rather than displacing anyone, which is usually a cleaner conversation. You still don't approach the client cold; you go through ${a.csm}, the CSM who owns the relationship. The opening you're probing for is a compliance one: are they hiring in countries where they don't have a legal entity, or converting contractors to employees? That exposure is where Global fits. The message on the right asks ${who} exactly that, at the partner's pace.`,
+      do: `Message ${a.csm} about ${a.name} to open a Global conversation — go through the partner, not the client.`,
+      how: [
+        `Open Slack, Teams, or email to ${a.csm} — the CSM who owns ${a.name}.`,
+        `Paste the message below (edit to taste), then send it.`,
+        `You're probing one thing: are they hiring where they have no legal entity, or converting contractors? That's the Global opening.`,
+        `Let ${who} judge whether ${a.name} is ready before anything reaches the client.`,
+        `When it's sent, hit "Mark sent ✓" below.`,
+      ],
+      say: partnerMessage(a),
+      consider: `No incumbent EOR was found (demand ${a.demand}/100, ${a.confidence} confidence), so this is a clean introduction — usually an easier conversation than a win-back. Still, let ${who} set the pace.`,
     };
   }
   return {
-    directive: `Open the ${a.name} conversation through ${who} — start with the partner.`,
-    narrative: `${a.name} carries a global-hiring signal (demand ${a.demand} out of 100, ${a.confidence} confidence), but the shape of the opportunity isn't fully clear yet. Before anything reaches the client, go through ${a.csm} to understand their cross-border footprint — where they hire, how they pay international workers, and whether they use employees or contractors. The message on the right opens that up without getting ahead of the relationship.`,
+    do: `Message ${a.csm} about ${a.name} to gauge whether there's a Global opening — start with the partner.`,
+    how: [
+      `Open Slack, Teams, or email to ${a.csm}.`,
+      `Paste the message below (edit to taste), then send it.`,
+      `Ask about their cross-border footprint — where they hire, how they pay international workers, employees vs contractors.`,
+      `When it's sent, hit "Mark sent ✓" below.`,
+    ],
+    say: partnerMessage(a),
+    consider: `The shape of this one isn't fully clear yet (demand ${a.demand}/100, ${a.confidence} confidence). You're gauging, not pitching — let ${who}'s read guide the next step.`,
   };
 }
 
-export function triageBrief(a: AccountIntel): Brief {
-  const strength = isStrongSignal(a) ? "a solid signal" : "a real but moderate signal";
-  const lowConf = a.confidence === "low" ? ", though at low confidence" : "";
-  const playText =
+export function triageGuidance(a: AccountIntel): Guidance {
+  const playLine =
     a.play === "displacement"
-      ? `it reads as a displacement play — they appear to already use ${a.competitors[0] ?? "a competitor EOR"}, so you'd be winning business away from an incumbent`
+      ? `They appear to already use ${a.competitors[0] ?? "a competitor EOR"}, so if you work it, it's a win-back.`
       : a.play === "greenfield"
-        ? "it reads as greenfield — no competing Employer-of-Record provider showed up, so you'd be introducing the capability rather than displacing anyone"
-        : "the play isn't classified yet";
+        ? "No incumbent EOR was found, so it'd be a clean introduction."
+        : "No play is flagged yet — this is a gauge-and-see.";
   return {
-    directive: `Make a call on ${a.name} — seed it to the board or park it.`,
-    narrative: `Research scored ${a.name} at ${a.demand} out of 100 for global-hiring demand (${strength}${lowConf}), and ${playText}. It sits in ${a.csm}'s book and isn't on your board yet. This is a decision, not a task: seed it onto the board — which creates a card pre-loaded with the research so you can start working it — or park it with a written reason if the timing or fit isn't right. It stays a loose end until you decide.`,
+    do: `Decide right now what happens to ${a.name}: seed it to your board, or park it. Don't leave it undecided.`,
+    how: [
+      `Read the fit: demand ${a.demand}/100, ${a.confidence} confidence, ${a.play ?? "no play flagged yet"}. ${playLine}`,
+      `If it's worth working now → hit "Seed to board". It creates a card with all the research attached so you can start.`,
+      `If not now → hit "Park", type one line on why, and it resurfaces later (it's never lost).`,
+      `Either choice clears it from this list. That's the whole task.`,
+    ],
+    consider: `${a.name} sits in ${a.csm}'s book. Seeding it just means you'll work it; parking is a perfectly good call if the timing or fit isn't right yet.`,
   };
 }
 
@@ -303,18 +338,56 @@ export function cardNextStep(
   return null;
 }
 
-export function commitmentBrief(step: CardStep): Brief {
+export function commitmentGuidance(step: CardStep): Guidance {
   const overdue = step.ageDays != null && step.ageDays >= COMMITMENT_WINDOW_DAYS;
-  const age =
-    step.ageDays == null
-      ? ""
-      : overdue
-        ? ` It's been open ${step.ageDays} days — past its window, so it's the first thing to clear.`
-        : ` It's been open ${step.ageDays} day${step.ageDays === 1 ? "" : "s"}.`;
   return {
-    directive: `Advance ${step.cardName} — close the step you owe in ${step.nodeLabel}.`,
-    narrative: `${step.cardName} is on your board in the ${step.nodeLabel} stage, and it's held up by one step you owe: “${step.item}”.${age} Until it's checked, the opportunity can't move to the next stage and the momentum quietly stalls. Open it and either do the step and check it off, or record exactly what you're waiting on so it's tracked, not silently slipping.`,
+    do: `Close the step you owe on ${step.cardName}: “${step.item}”.${overdue ? " It's past its window — do this first." : ""}`,
+    how: [
+      `Open ${step.cardName} on the board — it's in the ${step.nodeLabel} stage.`,
+      `Do the step: ${step.item}.`,
+      `If you're waiting on someone, note exactly what you're waiting for so it's tracked, not silently slipping.`,
+      `When it's done, hit "Mark done ✓" — the board advances to the next step.`,
+    ],
+    consider:
+      step.ageDays == null
+        ? "This just started."
+        : overdue
+          ? `This has been open ${step.ageDays} days — past its ${COMMITMENT_WINDOW_DAYS}-day window. Clearing it is the difference between a deal that's moving and one that only looks like it is.`
+          : `Open ${step.ageDays} day${step.ageDays === 1 ? "" : "s"} so far — plenty of runway, but don't let it drift.`,
   };
+}
+
+// --- Completion keys (per-day / per-week) -----------------------------------
+// A done-mark's key encodes the task AND its period, so it resets on a new
+// day/week. Default-param now keeps the clock read out of the React render path.
+function pad2(n: number): string {
+  return n < 10 ? `0${n}` : `${n}`;
+}
+
+export function dayStamp(now: number = Date.now()): string {
+  const d = new Date(now);
+  return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())}`;
+}
+
+// ISO-8601 year + week (e.g. "2026-W28").
+export function weekStamp(now: number = Date.now()): string {
+  const d = new Date(now);
+  const target = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+  const dayNr = (target.getUTCDay() + 6) % 7; // Mon=0..Sun=6
+  target.setUTCDate(target.getUTCDate() - dayNr + 3); // Thursday of this week
+  const thursday = target.getTime();
+  const year = new Date(thursday).getUTCFullYear();
+  const yearStart = new Date(Date.UTC(year, 0, 1)).getTime();
+  const week = 1 + Math.round((thursday - yearStart) / 604_800_000);
+  return `${year}-W${pad2(week)}`;
+}
+
+export function morningDoneKey(moveKey: string, now: number = Date.now()): string {
+  return `morning:${dayStamp(now)}:${moveKey}`;
+}
+
+export function kickoffDoneKey(partner: string, now: number = Date.now()): string {
+  return `kickoff:${weekStamp(now)}:${partner}`;
 }
 
 // --- Weekly partner kickoff (Monday ritual) ---------------------------------

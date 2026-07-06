@@ -86,3 +86,13 @@ CREATE TABLE IF NOT EXISTS "LookIntoStatus" (
   CONSTRAINT "LookIntoStatus_pkey" PRIMARY KEY ("id")
 );
 CREATE UNIQUE INDEX IF NOT EXISTS "LookIntoStatus_itemId_key" ON "LookIntoStatus"("itemId");
+
+-- Task completion marks (per day / per week). The key encodes the task + its
+-- period, so marks reset automatically. Presence = done.
+CREATE TABLE IF NOT EXISTS "TaskDone" (
+  "id" TEXT NOT NULL,
+  "key" TEXT NOT NULL,
+  "doneAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "TaskDone_pkey" PRIMARY KEY ("id")
+);
+CREATE UNIQUE INDEX IF NOT EXISTS "TaskDone_key_key" ON "TaskDone"("key");

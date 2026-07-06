@@ -25,6 +25,17 @@ export async function loadSnoozes(): Promise<Map<string, Snooze>> {
   }
 }
 
+// Every completion mark (per-day / per-week task keys). Presence = done.
+export async function loadDoneKeys(): Promise<Set<string>> {
+  if (!hasDatabaseEnv()) return new Set();
+  try {
+    const rows = await getPrisma().taskDone.findMany({ select: { key: true } });
+    return new Set(rows.map((r) => r.key));
+  } catch {
+    return new Set();
+  }
+}
+
 export async function loadValidations(): Promise<Map<string, Validation>> {
   if (!hasDatabaseEnv()) return new Map();
   try {

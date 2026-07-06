@@ -3,35 +3,37 @@ import Link from "next/link";
 import { AppWayfinder } from "@/components/app-wayfinder";
 import { loadDashboard } from "@/lib/dashboard/data";
 import { loadFieldNotes, FIELD_NOTE_KINDS } from "@/lib/field-notes/data";
-import { loadSnoozes, loadValidations } from "@/lib/today/overlay";
+import { loadDoneKeys, loadSnoozes, loadValidations } from "@/lib/today/overlay";
 import {
   accountIntel,
   applyValidations,
   cardNextStep,
-  commitmentBrief,
+  commitmentGuidance,
   commitmentsFromCards,
   COMMITMENT_WINDOW_DAYS,
   firstNameOf,
   isStrongSignal,
   isTrusted,
   isWeekKickoff,
+  kickoffDoneKey,
+  morningDoneKey,
   movedThisWeek,
   narrative,
-  outreachBrief,
+  outreachGuidance,
   partitionSignals,
   partnerKickoff,
-  partnerMessage,
   partnerWeekMessage,
   signals,
   stateOfPlay,
-  triageBrief,
+  triageGuidance,
   type AccountIntel,
   type CardStep,
+  type Guidance,
   type Validation,
 } from "@/lib/today/build";
-import { CopyLine, NoteSubmit } from "../today-client";
+import { EditableMessage, NoteSubmit } from "../today-client";
 import { addCard, toggleCheck } from "../dashboard/actions";
-import { addFieldNote, resolveFieldNote, snoozeSignal, unsnoozeSignal } from "./actions";
+import { addFieldNote, resolveFieldNote, snoozeSignal, toggleTaskDone, unsnoozeSignal } from "./actions";
 import styles from "../command-center.module.css";
 
 export const dynamic = "force-dynamic";
@@ -122,32 +124,87 @@ type Mv =
   | { kind: "outreach"; a: AccountIntel }
   | { kind: "triage"; a: AccountIntel };
 
-// Bold directive with the account/card name emphasized.
-function Emph({ text, term }: { text: string; term: string }) {
+// The account/card name emphasized — and clickable when a href is given.
+function Emph({ text, term, href }: { text: string; term: string; href?: string }) {
   const i = term ? text.indexOf(term) : -1;
   if (i < 0) return <>{text}</>;
+  const mark = href ? (
+    <Link href={href} className={styles.mvWhoLink}>
+      {term}
+    </Link>
+  ) : (
+    <span className={styles.mvWho}>{term}</span>
+  );
   return (
     <>
       {text.slice(0, i)}
-      <span className={styles.mvWho}>{term}</span>
+      {mark}
       {text.slice(i + term.length)}
     </>
   );
 }
 
-// One move, rendered A2-style: the brief on the left, the exact thing to do
-// (message / decision / step) on the right.
-function MorningMove({ mv, n }: { mv: Mv; n: number }) {
-  let term = "";
-  let brief = { directive: "", narrative: "" };
+// The labeled, color-coded guidance body: DO THIS · HOW · SAY THIS · CONSIDER.
+function GuidanceBody({
+  g,
+  term,
+  href,
+  children,
+}: {
+  g: Guidance;
+  term: string;
+  href: string;
+  children?: ReactNode;
+}) {
+  return (
+    <div className={styles.gWrap}>
+      <div className={styles.gDo}>
+        <span className={styles.gDoLabel}>Do this</span>
+        <span className={styles.gDoText}>
+          <Emph text={g.do} term={term} href={href} />
+        </span>
+      </div>
+      <div className={styles.gHow}>
+        <span className={styles.gLabel}>How — step by step</span>
+        <ol className={styles.gHowList}>
+          {g.how.map((h, i) => (
+            <li key={i}>{h}</li>
+          ))}
+        </ol>
+      </div>
+      {g.say && (
+        <div className={styles.gSay}>
+          <span className={styles.gLabel}>Say this — edit anything, then copy</span>
+          <EditableMessage text={g.say} />
+        </div>
+      )}
+      {children}
+      {g.consider && (
+        <div className={styles.gConsider}>
+          <span className={styles.gConsiderLabel}>Also consider</span>
+          <span className={styles.gConsiderText}>{g.consider}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function moveTerm(mv: Mv): { term: string; href: string } {
+  if (mv.kind === "commitment") return { term: mv.step.cardName, href: "/" };
+  return { term: mv.a.name, href: `/accounts?focus=${mv.a.id}` };
+}
+
+// One fully-guided move: DO/HOW/SAY/CONSIDER + the real action panel + a
+// uniform "Mark done ✓" you can always see the state of.
+function MorningMove({ mv, n, doneKey, done }: { mv: Mv; n: number; doneKey: string; done: boolean }) {
+  const { term, href } = moveTerm(mv);
+  let g: Guidance;
   let chips: ReactNode = null;
-  let aside: ReactNode = null;
+  let actions: ReactNode = null;
 
   if (mv.kind === "outreach") {
     const a = mv.a;
-    term = a.name;
-    brief = outreachBrief(a);
-    const message = partnerMessage(a);
+    g = outreachGuidance(a);
     chips = (
       <>
         <span className={`${styles.fit} ${fitClass(a.tier)}`}>demand {a.demand}</span>
@@ -156,94 +213,87 @@ function MorningMove({ mv, n }: { mv: Mv; n: number }) {
           <span className={styles.mvOwner}>incumbent: {a.competitors.join(", ")}</span>
         )}
         <FunnelChip funnel={a.funnel} />
-        <span className={styles.mvOwner}>owner: {a.csm}</span>
         <ValidationBadge v={a.validation} />
-      </>
-    );
-    aside = (
-      <>
-        <div className={styles.mvAsideLab}>The message to {firstNameOf(a.csm)}, ready to send</div>
-        <div className={styles.mvAsideText}>{message}</div>
-        <div className={styles.actRow}>
-          <CopyLine text={message} label="Copy the message" />
-        </div>
       </>
     );
   } else if (mv.kind === "triage") {
     const a = mv.a;
-    term = a.name;
-    brief = triageBrief(a);
+    g = triageGuidance(a);
     chips = (
       <>
         <span className={`${styles.fit} ${fitClass(a.tier)}`}>demand {a.demand}</span>
         {!isStrongSignal(a) && <span className={styles.emergingTag}>emerging</span>}
         <PlayTag play={a.play} />
         <FunnelChip funnel={a.funnel} />
-        <span className={styles.mvOwner}>owner: {a.csm}</span>
         <ValidationBadge v={a.validation} />
       </>
     );
-    aside = (
-      <>
-        <div className={styles.mvAsideLab}>Your decision</div>
-        <div className={styles.mvOpt}>
-          <b>Seed</b>
-          <span>— put it on the board with the research attached and start working it.</span>
-        </div>
-        <div className={styles.mvOpt}>
-          <b>Park</b>
-          <span>— set it aside with a written reason; it resurfaces later, not lost.</span>
-        </div>
-        <div className={styles.actRow}>
-          <SeedForm a={a} onBoard={false} label="Seed to board" />
-          <ParkControl id={a.id} />
-        </div>
-      </>
+    actions = (
+      <div className={styles.gActions}>
+        <SeedForm a={a} onBoard={false} label="Seed to board" />
+        <ParkControl id={a.id} />
+      </div>
     );
   } else {
     const s = mv.step;
-    term = s.cardName;
-    brief = commitmentBrief(s);
+    g = commitmentGuidance(s);
     chips = (
       <>
         <span className={styles.mvOwner}>on the board · {s.nodeLabel}</span>
         {ageBadge(s.ageDays)}
       </>
     );
-    aside = (
-      <>
-        <div className={styles.mvAsideLab}>The step to close</div>
-        <div className={styles.mvAsideText}>
-          “{s.item}” — closing it moves {s.cardName} toward its next stage.
+    actions = (
+      <div className={styles.gActions}>
+        <Link href="/" className={styles.mvOpen}>
+          Open on the board
+        </Link>
+        <form action={toggleCheck} className={styles.commitmentClose}>
+          <input type="hidden" name="cardId" value={s.cardId} />
+          <input type="hidden" name="node" value={s.nodeKey} />
+          <input type="hidden" name="index" value={s.index} />
+          <input type="hidden" name="returnTo" value="/today" />
+          <button className={styles.closeBtn}>Check the step off on the board</button>
+        </form>
+      </div>
+    );
+  }
+
+  const doneBtn = (
+    <form action={toggleTaskDone} className={styles.mvDoneForm}>
+      <input type="hidden" name="key" value={doneKey} />
+      <button className={done ? styles.mvUndoBtn : styles.mvDoneBtn}>
+        {done ? "Undo" : "Mark done ✓"}
+      </button>
+    </form>
+  );
+
+  // Done → a compact struck line with Undo.
+  if (done) {
+    return (
+      <div className={`${styles.mvMove} ${styles.mvDoneRow}`}>
+        <div className={`${styles.mvNum} ${styles.mvNumDone}`}>✓</div>
+        <div className={styles.mvDoneBody}>
+          <span className={styles.mvDoneText}>
+            <Emph text={g.do} term={term} href={href} />
+          </span>
+          {doneBtn}
         </div>
-        <div className={styles.actRow}>
-          <Link href="/" className={styles.mvOpen}>
-            Open on the board
-          </Link>
-          <form action={toggleCheck} className={styles.commitmentClose}>
-            <input type="hidden" name="cardId" value={s.cardId} />
-            <input type="hidden" name="node" value={s.nodeKey} />
-            <input type="hidden" name="index" value={s.index} />
-            <input type="hidden" name="returnTo" value="/today" />
-            <button className={styles.closeBtn}>Mark done ✓</button>
-          </form>
-        </div>
-      </>
+      </div>
     );
   }
 
   return (
     <div className={`${styles.mvMove} ${n === 1 ? styles.mvFirst : ""}`}>
       <div className={styles.mvNum}>{n}</div>
-      <div className={styles.mvSplit}>
-        <div>
-          <div className={styles.mvDirective}>
-            <Emph text={brief.directive} term={term} />
-          </div>
-          <p className={styles.mvNarr}>{brief.narrative}</p>
+      <div className={styles.mvBody}>
+        <div className={styles.mvTopRow}>
           <div className={styles.mvMeta}>{chips}</div>
+          {doneBtn}
         </div>
-        <aside className={styles.mvAside}>{aside}</aside>
+        <GuidanceBody g={g} term={term} href={href}>
+          {actions}
+        </GuidanceBody>
       </div>
     </div>
   );
@@ -271,10 +321,11 @@ export default async function TodayPage({
     );
   }
 
-  const [snoozes, validations, notes] = await Promise.all([
+  const [snoozes, validations, notes, doneKeys] = await Promise.all([
     loadSnoozes(),
     loadValidations(),
     loadFieldNotes(),
+    loadDoneKeys(),
   ]);
 
   const intel = applyValidations(accountIntel(), validations);
@@ -301,6 +352,11 @@ export default async function TodayPage({
   const showKickoff = forceWeek || isWeekKickoff();
   const kickoff = showKickoff ? partnerKickoff(intel, parkedIds) : [];
   const kickoffTotal = kickoff.reduce((n, k) => n + k.accounts.length, 0);
+  const kickoffItems = kickoff.map((k) => {
+    const key = kickoffDoneKey(k.partner);
+    return { k, key, done: doneKeys.has(key) };
+  });
+  const kickoffDoneCount = kickoffItems.filter((i) => i.done).length;
 
   const sop = stateOfPlay({ cards: dash.cards, commitments, activeSignals, onBoard });
 
@@ -324,7 +380,17 @@ export default async function TodayPage({
     ...(triageList[0] ? [{ kind: "triage", a: triageList[0] } as Mv] : []),
     ...otherSteps.map((step): Mv => ({ kind: "commitment", step })),
   ];
-  const morning = allMoves.slice(0, 4);
+  const mvId = (mv: Mv) =>
+    mv.kind === "commitment"
+      ? `card:${mv.step.cardId}:${mv.step.nodeKey}:${mv.step.index}`
+      : `acct:${mv.a.id}`;
+  const items = allMoves.map((mv) => {
+    const key = morningDoneKey(mvId(mv));
+    return { mv, key, done: doneKeys.has(key) };
+  });
+  const pendingMoves = items.filter((i) => !i.done);
+  const doneMoves = items.filter((i) => i.done);
+  const shownMoves = pendingMoves.slice(0, 4);
   const laterTriage = triageList.slice(triageList[0] ? 1 : 0);
 
   return (
@@ -349,20 +415,45 @@ export default async function TodayPage({
               </h2>
               <p className={styles.kickoffSub}>
                 It&apos;s the start of the week. Arm every partner — {kickoff.length}{" "}
-                {kickoff.length === 1 ? "partner" : "partners"}, {kickoffTotal} accounts teed up
-                (each partner&apos;s top Global-fit from their book). Send each partner their opener,
-                then work the replies through the week.
+                {kickoff.length === 1 ? "partner" : "partners"}, {kickoffTotal}{" "}
+                accounts teed up (each partner&apos;s top Global-fit from their book). Open each
+                partner&apos;s message below, edit it, copy it, send it — then mark them done.
               </p>
+              <div className={styles.mvProgress}>
+                <span className={styles.mvProgressBar}>
+                  <span
+                    className={styles.mvProgressFill}
+                    style={{
+                      width: `${Math.round((kickoffDoneCount / Math.max(1, kickoffItems.length)) * 100)}%`,
+                    }}
+                  />
+                </span>
+                <span className={styles.mvProgressText}>
+                  {kickoffDoneCount} of {kickoffItems.length} partners contacted this week
+                </span>
+              </div>
             </div>
-            {kickoff.map((k) => (
-              <div key={k.partner} className={styles.kickoffPartner}>
+            {kickoffItems.map(({ k, key, done }) => (
+              <div
+                key={k.partner}
+                className={`${styles.kickoffPartner} ${done ? styles.kickoffDone : ""}`}
+              >
                 <div className={styles.kickoffPartnerHead}>
-                  <span className={styles.kickoffPartnerName}>{k.partner}</span>
+                  <span className={styles.kickoffPartnerName}>
+                    {done && <span className={styles.kickoffCheck}>✓ </span>}
+                    {k.partner}
+                  </span>
                   <span className={styles.kickoffPartnerRole}>{k.role}</span>
                   <span className={styles.kickoffCount}>
                     {k.accounts.length} teed up
                     {k.accounts.length < 5 ? " · fewer than 5 in this book" : ""}
                   </span>
+                  <form action={toggleTaskDone} className={styles.kickoffDoneForm}>
+                    <input type="hidden" name="key" value={key} />
+                    <button className={done ? styles.mvUndoBtn : styles.mvDoneBtn}>
+                      {done ? "Undo" : "Mark contacted ✓"}
+                    </button>
+                  </form>
                 </div>
                 <div className={styles.kickoffAccts}>
                   {k.accounts.map((a) => (
@@ -376,10 +467,17 @@ export default async function TodayPage({
                     </Link>
                   ))}
                 </div>
-                <CopyLine
-                  text={partnerWeekMessage(k.partner, k.accounts)}
-                  label={`Copy the week-opener to ${firstNameOf(k.partner)}`}
-                />
+                {!done && (
+                  <details className={styles.kickoffMsg}>
+                    <summary className={styles.kickoffMsgSummary}>
+                      ✎ Open, edit &amp; copy the week-opener to {firstNameOf(k.partner)}
+                    </summary>
+                    <EditableMessage
+                      text={partnerWeekMessage(k.partner, k.accounts)}
+                      copyLabel={`Copy the opener to ${firstNameOf(k.partner)}`}
+                    />
+                  </details>
+                )}
               </div>
             ))}
           </section>
@@ -405,23 +503,48 @@ export default async function TodayPage({
 
         {/* ── This morning — your first moves, in order ──────────────────── */}
         <div className={styles.mvPanel}>
-          <div className={styles.mvCap}>This morning · {morning.length ? `${morning.length} moves, in order` : "nothing pressing"}</div>
+          <div className={styles.mvCap}>
+            This morning
+            {items.length
+              ? ` · ${pendingMoves.length} to do${doneMoves.length ? `, ${doneMoves.length} done` : ""}`
+              : " · nothing pressing"}
+          </div>
 
-          {morning.length === 0 && (
+          {items.length > 0 && (
+            <div className={styles.mvProgress}>
+              <span className={styles.mvProgressBar}>
+                <span
+                  className={styles.mvProgressFill}
+                  style={{ width: `${Math.round((doneMoves.length / items.length) * 100)}%` }}
+                />
+              </span>
+              <span className={styles.mvProgressText}>
+                {doneMoves.length} of {items.length} done
+              </span>
+            </div>
+          )}
+
+          {items.length === 0 && (
             <p className={styles.muted}>
               Nothing needs you right now — no aging commitments, no untriaged signals, no play
               waiting. Seed a signal from the <Link href="/accounts">Account Room</Link> or advance a
               loop on the <Link href="/">Dashboard</Link>.
             </p>
           )}
+          {items.length > 0 && pendingMoves.length === 0 && (
+            <p className={styles.mvAllDone}>✓ Everything for this morning is done. Nice work.</p>
+          )}
 
-          {morning.map((mv, i) => (
-            <MorningMove
-              key={mv.kind === "commitment" ? `${mv.step.cardId}-${mv.step.nodeKey}` : mv.a.id}
-              mv={mv}
-              n={i + 1}
-            />
+          {shownMoves.map((it, i) => (
+            <MorningMove key={it.key} mv={it.mv} n={i + 1} doneKey={it.key} done={false} />
           ))}
+
+          {pendingMoves.length > shownMoves.length && (
+            <p className={styles.muted}>
+              + {pendingMoves.length - shownMoves.length} more to do — mark these done to reveal
+              them.
+            </p>
+          )}
 
           {(laterTriage.length > 0 || dash.status === "active") && (
             <div className={styles.mvThen}>
@@ -448,6 +571,15 @@ export default async function TodayPage({
                 </p>
               )}
             </div>
+          )}
+
+          {doneMoves.length > 0 && (
+            <details className={styles.mvDoneSection}>
+              <summary>Done this morning ({doneMoves.length})</summary>
+              {doneMoves.map((it) => (
+                <MorningMove key={it.key} mv={it.mv} n={0} doneKey={it.key} done />
+              ))}
+            </details>
           )}
         </div>
 
