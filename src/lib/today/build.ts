@@ -433,20 +433,26 @@ export function partnerKickoff(
 // that opens several conversations. Thorough and relationship-safe by design.
 export function partnerWeekMessage(partner: string, accounts: AccountIntel[]): string {
   const who = firstNameOf(partner);
-  const named = accounts.map((a) => {
-    const why =
-      a.play === "displacement"
-        ? `already on ${a.competitors[0] ?? "a competitor"}, possible win-back`
-        : a.play === "greenfield"
-          ? "early greenfield signal"
-          : "worth a quick look";
-    return `${a.name} (${why})`;
-  });
-  const list =
-    named.length <= 1
-      ? named[0] ?? ""
-      : `${named.slice(0, -1).join(", ")}, and ${named[named.length - 1]}`;
-  return `Hi ${who} — kicking off the week. As I work the PrismHR Global side, I've been going through your book and pulled a few accounts I'd love your read on for global-hiring potential: ${list}. None of these are urgent, and I don't want to get ahead of any of your relationships — I'm really just trying to find where there might be a global opening worth a conversation. Could we grab 15 minutes this week to run through them? Even a quick “yes / no / not yet” on each would help me prioritize. Thanks so much!`;
+  const bullets = accounts
+    .map((a) => {
+      const why =
+        a.play === "displacement"
+          ? `From my research they currently run their international hiring through ${a.competitors[0] ?? "a competitor Employer-of-Record provider"}, so this would be a win-back rather than a fresh sale. I'd really value your read on how that relationship is going, and if you happen to know roughly when their contract comes up for renewal, that timing tells us whether it's worth opening a conversation soon or holding off.`
+          : a.play === "greenfield"
+            ? `There's an early signal they're hiring across borders with no Employer-of-Record provider in place yet, which would make this a clean introduction rather than a switch. The clearest fit usually shows up where they're hiring in countries they don't have a legal entity, or converting contractors to employees — worth confirming whether either is happening here.`
+            : `No specific global-hiring signal has surfaced yet, but the account profile fits the kind of company that runs into cross-border needs. Worth a quick gauge of where they hire and how they pay international workers before we decide whether to work it or set it aside.`;
+      return `• ${a.name} — ${why}`;
+    })
+    .join("\n");
+  return (
+    `Hi ${who} — kicking off the week. As I work the PrismHR Global side, I went through your ` +
+    `book and pulled a few accounts I'd love your read on for global-hiring potential:\n\n` +
+    `${bullets}\n\n` +
+    `None of these are urgent, and I don't want to get ahead of any of your relationships — I'm ` +
+    `really just trying to find where there might be a global opening worth a conversation. Could ` +
+    `we grab 15 minutes this week to run through them? Even a quick “yes / no / not yet” on each ` +
+    `would help me prioritize. Thanks so much!`
+  );
 }
 
 export type Narrative = {
@@ -514,16 +520,16 @@ export function aleksLineGuidance(nar: Narrative, convert: AccountIntel | null):
     ? `${convert.name}${convert.play ? ` (the ${convert.play})` : ""}`
     : "the one account I'm working hardest right now";
   const say =
-    `Here's where the base actually is on Global. I've researched ${nar.researched} of ${nar.total} ` +
-    `accounts. ${nar.strongDemand} carry a solid global-hiring signal` +
+    `Here's where the base actually is on Global:\n\n` +
+    `• Researched: ${nar.researched} of ${nar.total} accounts\n` +
+    `• Strong global-hiring signal: ${nar.strongDemand}\n` +
     (nar.emerging > 0
-      ? `, and ${nar.emerging} more are emerging — lower demand or confidence, worth a partner ` +
-        `conversation but not a forecast yet`
+      ? `• Emerging (lower demand or confidence — worth a partner conversation, not a forecast): ${nar.emerging}\n`
       : "") +
-    `. The split is ${nar.displacement} displacement / ${nar.greenfield} greenfield. I'm not ` +
-    `chasing volume — the motion is precision through the CSMs and Eric. The one I'm converting ` +
-    `this week is ${one}. What I need from you: [air cover / an intro / a specific marketing asset] ` +
-    `— I'll be precise on that in the meeting.`;
+    `• Split: ${nar.displacement} displacement / ${nar.greenfield} greenfield\n` +
+    `• Converting this week: ${one}\n\n` +
+    `I'm not chasing volume — the motion is precision through the CSMs and Eric. What I need from ` +
+    `you: [air cover / an intro / a specific marketing asset] — I'll be precise on that in the meeting.`;
   return {
     do:
       `Lock the one line you carry into your 1:1 with Aleks` +
@@ -554,11 +560,17 @@ export function armPartnersGuidance(nar: Narrative): Guidance {
       `Turn every gap into a specific, named ask for Aleks or marketing — "I need X to arm Y for account Z" — so it's actionable, not a complaint.`,
     ],
     say:
-      `Quick enablement read for the Global push. To make Eric and the CSMs effective I already have ` +
-      `[the Account Room, the displacement/greenfield plays, per-account openers], but I'm missing ` +
-      `[contractor-conversion one-pager / country-coverage sheet / packaged pricing]. Close those and ` +
-      `roughly ${conversations} accounts across the base become real partner conversations instead of me ` +
-      `improvising. Can we prioritize [the single biggest gap] this week?`,
+      `Quick enablement read for the Global push.\n\n` +
+      `What I already have to make Eric and the CSMs effective:\n` +
+      `• The Account Room — shared targeting intelligence across the base\n` +
+      `• The displacement and greenfield plays for each researched account\n` +
+      `• Ready-to-send, per-account partner openers\n\n` +
+      `What I'm still missing and need help sourcing:\n` +
+      `• A contractor-conversion one-pager (the misclassification-risk story)\n` +
+      `• Country-coverage sheets so partners can answer "can you hire in X?"\n` +
+      `• Packaged pricing partners can quote without coming back to me\n\n` +
+      `If we close those gaps, roughly ${conversations} accounts across the base become real partner ` +
+      `conversations instead of me improvising. Can we prioritize the single biggest gap this week?`,
     consider: `At startup stage the constraint isn't leads, it's enablement. Every gap you name and get filled multiplies across every partner and every account — higher leverage than working any one deal yourself.`,
   };
 }
