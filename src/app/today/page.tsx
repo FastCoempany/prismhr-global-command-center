@@ -6,7 +6,9 @@ import { loadFieldNotes, FIELD_NOTE_KINDS } from "@/lib/field-notes/data";
 import { loadDoneKeys, loadSnoozes, loadValidations } from "@/lib/today/overlay";
 import {
   accountIntel,
+  aleksLineGuidance,
   applyValidations,
+  armPartnersGuidance,
   cardNextStep,
   commitmentGuidance,
   commitmentsFromCards,
@@ -26,6 +28,7 @@ import {
   signals,
   stateOfPlay,
   triageGuidance,
+  voiceOfBaseGuidance,
   type AccountIntel,
   type CardStep,
   type Guidance,
@@ -299,6 +302,37 @@ function MorningMove({ mv, n, doneKey, done }: { mv: Mv; n: number; doneKey: str
   );
 }
 
+// A fully-guided block outside the numbered morning list: a header + optional
+// chips, then the same DO/HOW/SAY/CONSIDER body. Used for "Then, if there's
+// time" and the narrative-forming moves so those carry the same granularity.
+function GuidedBlock({
+  title,
+  chips,
+  g,
+  term,
+  href,
+  children,
+}: {
+  title: string;
+  chips?: ReactNode;
+  g: Guidance;
+  term: string;
+  href: string;
+  children?: ReactNode;
+}) {
+  return (
+    <div className={styles.thenItem}>
+      <div className={styles.thenHead}>
+        <span className={styles.thenWhat}>{title}</span>
+        {chips}
+      </div>
+      <GuidanceBody g={g} term={term} href={href}>
+        {children}
+      </GuidanceBody>
+    </div>
+  );
+}
+
 export default async function TodayPage({
   searchParams,
 }: {
@@ -549,27 +583,41 @@ export default async function TodayPage({
           {(laterTriage.length > 0 || dash.status === "active") && (
             <div className={styles.mvThen}>
               <div className={styles.mvThenLab}>Then, if there&apos;s time</div>
-              {laterTriage.length > 0 ? (
-                <ul className={styles.mvThenList}>
-                  {laterTriage.map((a) => (
-                    <li key={a.id}>
-                      Decide on{" "}
-                      <Link href={`/accounts?focus=${a.id}`}>{a.name}</Link> — {a.demand}-demand{" "}
-                      {a.play ?? "signal"}, {a.confidence} confidence.
-                    </li>
-                  ))}
-                  <li>
-                    Jot a <Link href="#capture">voice-of-the-base note</Link>{" "}
-                    if you&apos;re noticing a pattern across the base — raw material for the Aleks
-                    1:1.
-                  </li>
-                </ul>
-              ) : (
-                <p className={styles.muted}>
-                  Nothing else waiting. If you&apos;re noticing a pattern across the base, log a{" "}
-                  <Link href="#capture">voice-of-the-base note</Link> for the Aleks 1:1.
-                </p>
-              )}
+              {laterTriage.map((a) => (
+                <GuidedBlock
+                  key={a.id}
+                  title={`Decide on ${a.name}`}
+                  chips={
+                    <>
+                      <span className={`${styles.fit} ${fitClass(a.tier)}`}>demand {a.demand}</span>
+                      {!isStrongSignal(a) && <span className={styles.emergingTag}>emerging</span>}
+                      <PlayTag play={a.play} />
+                      <FunnelChip funnel={a.funnel} />
+                      <ValidationBadge v={a.validation} />
+                    </>
+                  }
+                  g={triageGuidance(a)}
+                  term={a.name}
+                  href={`/accounts?focus=${a.id}`}
+                >
+                  <div className={styles.gActions}>
+                    <SeedForm a={a} onBoard={false} label="Seed to board" />
+                    <ParkControl id={a.id} />
+                  </div>
+                </GuidedBlock>
+              ))}
+              <GuidedBlock
+                title="Log a voice-of-the-base note"
+                g={voiceOfBaseGuidance()}
+                term=""
+                href="#capture"
+              >
+                <div className={styles.gActions}>
+                  <Link href="#capture" className={styles.mvOpen}>
+                    Go to the capture box ↓
+                  </Link>
+                </div>
+              </GuidedBlock>
             </div>
           )}
 
@@ -654,31 +702,25 @@ export default async function TodayPage({
               </div>
             )}
 
-            <div className={styles.narGrid}>
-              <div className={styles.narCard}>
-                <h4>The line up to Aleks</h4>
-                <p>
-                  “Demand across the base is thin but real — <b>{nar.strongDemand}</b> accounts carry
-                  a solid global-hiring signal
-                  {nar.emerging > 0 ? (
-                    <>
-                      , plus <b>{nar.emerging}</b> emerging (lower demand or confidence — worth a
-                      partner conversation, not a forecast)
-                    </>
-                  ) : null}
-                  . Split <b>{nar.displacement} displacement / {nar.greenfield} greenfield</b>. The
-                  motion isn&apos;t volume, it&apos;s precision through partners — here&apos;s the one
-                  I&apos;m converting this week.”
-                </p>
-              </div>
-              <div className={styles.narCard}>
-                <h4>Arm the partners</h4>
-                <p>
-                  At startup stage, the job is to make Eric and the CSMs dangerous on Global. Be
-                  loud to Aleks and marketing on what we have, what we don&apos;t, and what we need —
-                  capture it below so it&apos;s ready for the 1:1, not remembered on the spot.
-                </p>
-              </div>
+            <div className={styles.narGuides}>
+              <GuidedBlock
+                title="Carry this into the Aleks 1:1"
+                g={aleksLineGuidance(nar, move)}
+                term={move?.name ?? ""}
+                href={move ? `/accounts?focus=${move.id}` : "#"}
+              />
+              <GuidedBlock
+                title="Arm the partners"
+                g={armPartnersGuidance(nar)}
+                term=""
+                href="#capture"
+              >
+                <div className={styles.gActions}>
+                  <Link href="#capture" className={styles.mvOpen}>
+                    Log a gap in the capture box ↓
+                  </Link>
+                </div>
+              </GuidedBlock>
             </div>
           </div>
         </section>

@@ -500,6 +500,85 @@ export function narrative(intel: AccountIntel[]): Narrative {
   };
 }
 
+// --- Narrative → action ------------------------------------------------------
+// Band 4 isn't a readout you admire — it's raw material for two moves: the line
+// you carry into the Aleks 1:1, and arming the partners. Each is spelled out to
+// the same granularity as the morning moves: what to do, step by step, and the
+// exact words to say (editable before you use them).
+
+// The line up to Aleks. `convert` is the single account you're actively working
+// (the highest-leverage move) — naming a specific deal in motion is what makes
+// the story land. Null when nothing's teed up yet.
+export function aleksLineGuidance(nar: Narrative, convert: AccountIntel | null): Guidance {
+  const one = convert
+    ? `${convert.name}${convert.play ? ` (the ${convert.play})` : ""}`
+    : "the one account I'm working hardest right now";
+  const say =
+    `Here's where the base actually is on Global. I've researched ${nar.researched} of ${nar.total} ` +
+    `accounts. ${nar.strongDemand} carry a solid global-hiring signal` +
+    (nar.emerging > 0
+      ? `, and ${nar.emerging} more are emerging — lower demand or confidence, worth a partner ` +
+        `conversation but not a forecast yet`
+      : "") +
+    `. The split is ${nar.displacement} displacement / ${nar.greenfield} greenfield. I'm not ` +
+    `chasing volume — the motion is precision through the CSMs and Eric. The one I'm converting ` +
+    `this week is ${one}. What I need from you: [air cover / an intro / a specific marketing asset] ` +
+    `— I'll be precise on that in the meeting.`;
+  return {
+    do:
+      `Lock the one line you carry into your 1:1 with Aleks` +
+      (convert ? ` — built around ${convert.name}, the account you're converting this week` : "") +
+      `. Honest headline, one real deal, one concrete ask.`,
+    how: [
+      `Read the five numbers above — every one is derived from your own account research, not a guess. That's your evidence, and it's what lets you be honest without sounding thin.`,
+      `Lead with the honest headline: ${nar.strongDemand} strong${nar.emerging > 0 ? `, ${nar.emerging} emerging` : ""}. Do not round up — a hedged number you can defend beats a big one you can't, especially in a first-ever 1:1.`,
+      `Name the one account you're converting this week${convert ? ` — right now that's ${convert.name}` : ""}. A specific deal in motion turns "there's potential" into "this is happening."`,
+      `End with a single concrete ask — air cover, an intro, or a marketing asset. Never walk into the 1:1 without one; that's how you convert a status update into support.`,
+      `Paste the script below into your 1:1 notes and edit it into your own voice before Monday.`,
+    ],
+    say,
+    consider: `Aleks carries this line upward to her leadership, so it has to survive scrutiny. Every figure here traces back to research you can point to — keep it exactly that honest and it holds under any question.`,
+  };
+}
+
+// Arm the partners — the enablement move. At startup stage the constraint isn't
+// leads, it's whether Eric and the CSMs are equipped to talk Global at all.
+export function armPartnersGuidance(nar: Narrative): Guidance {
+  const conversations = nar.strongDemand + nar.emerging;
+  return {
+    do: `Arm Eric and the CSMs to be dangerous on Global — be loud, to Aleks and marketing, about what you have, what you're missing, and what you need. Nothing sells through a partner you haven't equipped.`,
+    how: [
+      `Write down what you can already hand a partner today: the Account Room targeting, the displacement/greenfield plays, and the per-account openers Today generates.`,
+      `Name the gaps out loud — the contractor-conversion one-pager, country-coverage sheets, packaged pricing, whatever's missing. Log each one as a voice-of-the-base note below so it reaches marketing, not just your memory.`,
+      `Decide who you arm first: Eric on the HCM enterprise side, then the CSMs whose books carry the strongest signals. Sequence by where the demand already is.`,
+      `Turn every gap into a specific, named ask for Aleks or marketing — "I need X to arm Y for account Z" — so it's actionable, not a complaint.`,
+    ],
+    say:
+      `Quick enablement read for the Global push. To make Eric and the CSMs effective I already have ` +
+      `[the Account Room, the displacement/greenfield plays, per-account openers], but I'm missing ` +
+      `[contractor-conversion one-pager / country-coverage sheet / packaged pricing]. Close those and ` +
+      `roughly ${conversations} accounts across the base become real partner conversations instead of me ` +
+      `improvising. Can we prioritize [the single biggest gap] this week?`,
+    consider: `At startup stage the constraint isn't leads, it's enablement. Every gap you name and get filled multiplies across every partner and every account — higher leverage than working any one deal yourself.`,
+  };
+}
+
+// The "if there's time" habit: capture a pattern before it evaporates. No account
+// — it points at the capture box below and the Aleks 1:1 it feeds.
+export function voiceOfBaseGuidance(): Guidance {
+  return {
+    do: `Log one voice-of-the-base note if a pattern showed up across the base today. It's the raw material for your Aleks 1:1 — and it's gone by tomorrow if you don't write it down now.`,
+    how: [
+      `Think back over today's touches: did the same ask, objection, or missing-tool come up on more than one account?`,
+      `Scroll to "Voice of the base & enablement gaps" below.`,
+      `Pick the kind (gap / signal / ask), write one plain sentence, and log it.`,
+      `That's the whole task — it accrues into the narrative above on its own.`,
+    ],
+    say: `Pattern I'm seeing: [e.g. 3rd account this month asking about contractor conversion] — we need [a one-pager / a country sheet / a pricing answer] to arm partners on it.`,
+    consider: `You will not remember this on the spot in the 1:1. Two lines now beats a great memory later — this is exactly the stuff that goes missing under pressure.`,
+  };
+}
+
 // --- Snooze ("Not now") ------------------------------------------------------
 export type Snooze = { reason: string; snoozedUntil: string | null };
 

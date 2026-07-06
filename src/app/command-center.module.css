@@ -1579,6 +1579,36 @@
   text-decoration: underline;
 }
 
+/* A guided block outside the numbered list (Then-if-there's-time + narrative). */
+.thenItem {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 15px;
+  background: var(--bg);
+  margin-top: 12px;
+}
+.thenItem:first-of-type {
+  margin-top: 8px;
+}
+.thenHead {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.thenWhat {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: var(--navy);
+  letter-spacing: -0.01em;
+}
+.narGuides {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 /* ── Granular guidance (DO / HOW / SAY / CONSIDER) ───────────────────── */
 .mvBody {
   min-width: 0;
