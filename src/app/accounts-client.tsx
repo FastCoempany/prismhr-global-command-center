@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useFormStatus } from "react-dom";
 import { EXTRA_PARTNERS, partnerRole } from "@/lib/book/partners";
 import { competitorUrl } from "@/lib/book/research";
+import { SfCheckpoint } from "@/components/sf";
 import { addCard } from "./dashboard/actions";
 import { clearValidation, validateScore } from "./accounts/actions";
 import styles from "./command-center.module.css";
@@ -505,6 +506,7 @@ export function AccountsClient({
                 <tr>
                   <td colSpan={7}>
                     <div className={styles.acctDetail}>
+                      <SfCheckpoint when="account" id={a.id} name={a.name} />
                       <div className={styles.demandBlock}>
                         {a.researched && a.demand != null ? (
                           <>

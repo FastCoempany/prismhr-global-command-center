@@ -248,11 +248,12 @@ export function outreachGuidance(a: AccountIntel): Guidance {
     return {
       do: `Message ${a.csm} about ${a.name} — and do NOT contact ${a.name} directly. This is a partner-first consolidation play: they already run PrismHR domestically, and the aim is to bring their global layer onto the same platform.`,
       how: [
+        `Check Salesforce on ${a.name} FIRST — recent activity, open cases, notes, and any contract/renewal dates. Never message ${who} without the current picture in front of you.`,
         `Open Slack, Teams, or email to ${a.csm} — the CSM who owns the ${a.name} relationship.`,
         `Paste the message below (edit anything that doesn't sound like you), then send it.`,
         `The one thing you must find out: when ${a.name}'s ${comp} contract renews. That date is the realistic window to move their global/EOR layer onto PrismHR.`,
         `Do not reach out to anyone at ${a.name} until ${who} clears the path.`,
-        `When you've sent it, hit "Mark sent ✓" below so it drops off your list.`,
+        `When you've sent it, log the outreach in Salesforce (activity + note) so the record stays current, then hit "Mark sent ✓" below.`,
       ],
       say: partnerMessage(a),
       consider: `${a.name} already runs their domestic PEO on PrismHR but uses ${comp} for global — so this is consolidation onto the platform they already have, not a fresh sale and not a win-back (we haven't lost them; we just don't hold their global layer yet) (demand ${a.demand}/100, ${a.confidence} confidence). ${who} may be protective of the ${comp} relationship — move at ${who}'s pace and never get ahead of the partner.`,
@@ -262,11 +263,12 @@ export function outreachGuidance(a: AccountIntel): Guidance {
     return {
       do: `Message ${a.csm} about ${a.name} to open a Global conversation — go through the partner, not the client.`,
       how: [
+        `Check Salesforce on ${a.name} FIRST — recent activity, notes, open cases. Don't message ${who} without knowing the account's current state.`,
         `Open Slack, Teams, or email to ${a.csm} — the CSM who owns ${a.name}.`,
         `Paste the message below (edit to taste), then send it.`,
         `You're probing one thing: are they hiring where they have no legal entity, or converting contractors? That's the Global opening.`,
         `Let ${who} judge whether ${a.name} is ready before anything reaches the client.`,
-        `When it's sent, hit "Mark sent ✓" below.`,
+        `When it's sent, log it in Salesforce (activity + note), then hit "Mark sent ✓" below.`,
       ],
       say: partnerMessage(a),
       consider: `No incumbent EOR was found (demand ${a.demand}/100, ${a.confidence} confidence), so this is a clean introduction — usually an easier conversation than displacing an incumbent. Still, let ${who} set the pace.`,
@@ -275,10 +277,11 @@ export function outreachGuidance(a: AccountIntel): Guidance {
   return {
     do: `Message ${a.csm} about ${a.name} to gauge whether there's a Global opening — start with the partner.`,
     how: [
+      `Check Salesforce on ${a.name} FIRST — recent activity, notes, open cases — so you're not gauging from stale data.`,
       `Open Slack, Teams, or email to ${a.csm}.`,
       `Paste the message below (edit to taste), then send it.`,
       `Ask about their cross-border footprint — where they hire, how they pay international workers, employees vs contractors.`,
-      `When it's sent, hit "Mark sent ✓" below.`,
+      `When it's sent, log it in Salesforce (activity + note), then hit "Mark sent ✓" below.`,
     ],
     say: partnerMessage(a),
     consider: `The shape of this one isn't fully clear yet (demand ${a.demand}/100, ${a.confidence} confidence). You're gauging, not pitching — let ${who}'s read guide the next step.`,
@@ -295,6 +298,7 @@ export function triageGuidance(a: AccountIntel): Guidance {
   return {
     do: `Decide right now what happens to ${a.name}: seed it to your board, or park it. Don't leave it undecided.`,
     how: [
+      `Check Salesforce on ${a.name} first — current status, notes, open activity — so you decide on the live picture, not just the research.`,
       `Read the fit: demand ${a.demand}/100, ${a.confidence} confidence, ${a.play ?? "no play flagged yet"}. ${playLine}`,
       `If it's worth working now → hit "Seed to board". It creates a card with all the research attached so you can start.`,
       `If not now → hit "Park", type one line on why, and it resurfaces later (it's never lost).`,
@@ -346,6 +350,7 @@ export function commitmentGuidance(step: CardStep): Guidance {
       `Open ${step.cardName} on the board — it's in the ${step.nodeLabel} stage.`,
       `Do the step: ${step.item}.`,
       `If you're waiting on someone, note exactly what you're waiting for so it's tracked, not silently slipping.`,
+      `Reflect it in Salesforce — a note plus any field/stage update — so the record matches the board.`,
       `When it's done, hit "Mark done ✓" — the board advances to the next step.`,
     ],
     consider:
