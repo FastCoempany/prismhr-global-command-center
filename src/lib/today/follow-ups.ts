@@ -11,9 +11,10 @@ export const FOLLOWUP_DAYS = 2;
 export type TouchLogEntry = { at: string; body: string };
 
 // A logged contact as Today consumes it (ISO strings, not Date objects).
+// kind "custom" = a follow-up you wrote yourself (not tied to a logged contact).
 export type Touch = {
   subjectKey: string;
-  kind: "partner" | "account";
+  kind: "partner" | "account" | "custom";
   label: string;
   detail: string;
   message: string;
@@ -22,6 +23,13 @@ export type Touch = {
   intervalDays: number;
   status: "awaiting" | "replied";
   log: TouchLogEntry[];
+};
+
+// A plain personal to-do (right-hand column beside Follow-ups).
+export type Todo = {
+  id: string;
+  body: string;
+  done: boolean;
 };
 
 // Stable, deterministic subject keys. The kickoff key carries the ISO week so the
@@ -83,6 +91,7 @@ export function partitionFollowUps(touches: Touch[], now: number = Date.now()): 
 // the touch was a partner week-opener or a single-account outreach. Editable
 // before you send it.
 export function followUpMessage(t: Touch, now: number = Date.now()): string {
+  if (t.kind === "custom") return t.message || t.label; // your own words, not a partner nudge
   const who = firstNameOf(t.label);
   const days = daysSinceIso(t.contactedAt, now);
   const when = days <= 0 ? "the other day" : days === 1 ? "yesterday" : `${days} days ago`;

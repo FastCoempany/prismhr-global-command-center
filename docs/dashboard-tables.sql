@@ -124,3 +124,17 @@ CREATE TABLE IF NOT EXISTS "Touch" (
 CREATE UNIQUE INDEX IF NOT EXISTS "Touch_subjectKey_key" ON "Touch"("subjectKey");
 CREATE INDEX IF NOT EXISTS "Touch_status_idx" ON "Touch"("status");
 CREATE INDEX IF NOT EXISTS "Touch_followUpAt_idx" ON "Touch"("followUpAt");
+
+-- Plain personal to-dos — the right-hand column beside Follow-ups on Today.
+-- Safe to re-run.
+CREATE TABLE IF NOT EXISTS "Todo" (
+  "id" TEXT NOT NULL,
+  "body" TEXT NOT NULL,
+  "done" BOOLEAN NOT NULL DEFAULT false,
+  "position" INTEGER NOT NULL DEFAULT 0,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL,
+  CONSTRAINT "Todo_pkey" PRIMARY KEY ("id")
+);
+CREATE INDEX IF NOT EXISTS "Todo_done_idx" ON "Todo"("done");
+CREATE INDEX IF NOT EXISTS "Todo_position_idx" ON "Todo"("position");

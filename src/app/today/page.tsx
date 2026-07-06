@@ -3,7 +3,13 @@ import Link from "next/link";
 import { AppWayfinder } from "@/components/app-wayfinder";
 import { loadDashboard } from "@/lib/dashboard/data";
 import { loadFieldNotes, FIELD_NOTE_KINDS } from "@/lib/field-notes/data";
-import { loadDoneKeys, loadSnoozes, loadTouches, loadValidations } from "@/lib/today/overlay";
+import {
+  loadDoneKeys,
+  loadSnoozes,
+  loadTodos,
+  loadTouches,
+  loadValidations,
+} from "@/lib/today/overlay";
 import {
   daysUntilIso,
   FOLLOWUP_DAYS,
@@ -47,12 +53,16 @@ import { ContactControl, EditableMessage, NoteSubmit } from "../today-client";
 import { addCard, toggleCheck } from "../dashboard/actions";
 import {
   addFieldNote,
+  addFollowUp,
+  addTodo,
   addTouchNote,
+  deleteTodo,
   markReplied,
   resolveFieldNote,
   snoozeFollowUp,
   snoozeSignal,
   toggleTaskDone,
+  toggleTodo,
   unsnoozeSignal,
 } from "./actions";
 import styles from "../command-center.module.css";
@@ -373,17 +383,19 @@ function shortDate(iso: string): string {
 // A due follow-up: what you sent, any notes so far, a ready nudge to send, and
 // the three ways to move it — replied (done), snooze, or log what happened.
 function FollowUpDue({ t }: { t: Touch }) {
+  const custom = t.kind === "custom";
   return (
     <div className={styles.fuCard}>
       <div className={styles.fuHead}>
         <span className={styles.fuWho}>
-          Follow up with {t.label}
-          {t.detail ? <span className={styles.fuDetail}> · {t.detail}</span> : null}
+          {custom ? t.label : `Follow up with ${t.label}`}
+          {!custom && t.detail ? <span className={styles.fuDetail}> · {t.detail}</span> : null}
         </span>
         <span className={styles.fuAge}>{followUpStatusLine(t)}</span>
       </div>
-      <SfCheckpoint when="followup" />
-      {t.message && (
+      {custom && t.detail ? <p className={styles.fuNote}>{t.detail}</p> : null}
+      {!custom && <SfCheckpoint when="followup" />}
+      {!custom && t.message && (
         <details className={styles.fuSent}>
           <summary>What you sent</summary>
           <p className={styles.fuSentBody}>{t.message}</p>
@@ -398,15 +410,19 @@ function FollowUpDue({ t }: { t: Touch }) {
           ))}
         </ul>
       )}
-      <div className={styles.fuSayLab}>Send a nudge — edit anything, then copy</div>
-      <EditableMessage
-        text={followUpMessage(t)}
-        copyLabel={`Copy the nudge to ${firstNameOf(t.label)}`}
-      />
+      {!custom && (
+        <>
+          <div className={styles.fuSayLab}>Send a nudge — edit anything, then copy</div>
+          <EditableMessage
+            text={followUpMessage(t)}
+            copyLabel={`Copy the nudge to ${firstNameOf(t.label)}`}
+          />
+        </>
+      )}
       <div className={styles.fuActions}>
         <form action={markReplied}>
           <input type="hidden" name="subjectKey" value={t.subjectKey} />
-          <button className={styles.fuReplied}>They replied ✓</button>
+          <button className={styles.fuReplied}>{custom ? "Done ✓" : "They replied ✓"}</button>
         </form>
         <form action={snoozeFollowUp}>
           <input type="hidden" name="subjectKey" value={t.subjectKey} />
@@ -418,10 +434,10 @@ function FollowUpDue({ t }: { t: Touch }) {
             name="body"
             required
             maxLength={500}
-            placeholder="Log what happened (e.g. left a voicemail, no reply)…"
-            aria-label="Log what happened"
+            placeholder={custom ? "Add a note…" : "Log what happened (e.g. left a voicemail)…"}
+            aria-label="Add a note"
           />
-          <button className={styles.fuNoteBtn}>Log &amp; re-arm</button>
+          <button className={styles.fuNoteBtn}>{custom ? "Note" : "Log & re-arm"}</button>
         </form>
       </div>
     </div>
@@ -450,15 +466,18 @@ export default async function TodayPage({
     );
   }
 
-  const [snoozes, validations, notes, doneKeys, touches] = await Promise.all([
+  const [snoozes, validations, notes, doneKeys, touches, todos] = await Promise.all([
     loadSnoozes(),
     loadValidations(),
     loadFieldNotes(),
     loadDoneKeys(),
     loadTouches(),
+    loadTodos(),
   ]);
   const touchMap = new Map(touches.map((t) => [t.subjectKey, t]));
   const followUps = partitionFollowUps(touches);
+  const openTodos = todos.filter((t) => !t.done);
+  const doneTodos = todos.filter((t) => t.done);
 
   const intel = applyValidations(accountIntel(), validations);
   const nar = narrative(intel);
@@ -618,47 +637,138 @@ export default async function TodayPage({
           </section>
         )}
 
-        {/* ── Follow-ups (contacted → auto check-in every 2 days) ────────── */}
-        {(followUps.due.length > 0 || followUps.upcoming.length > 0) && (
-          <section className={styles.fuBand}>
-            <div className={styles.fuBandHead}>
-              <span className={styles.fuTag}>Follow-ups</span>
-              <h2 className={styles.fuTitle}>
-                {followUps.due.length > 0
-                  ? `${followUps.due.length} follow-up${followUps.due.length === 1 ? "" : "s"} due`
-                  : "Nothing due yet — upcoming check-ins below"}
-              </h2>
-              <p className={styles.fuSub}>
-                Every contact you log sets an automatic check-in {FOLLOWUP_DAYS} days out. These are
-                the ones it&apos;s time to nudge — they keep surfacing until you mark a reply.
-              </p>
+        {/* ── Follow-ups + To-do's (2 columns) ───────────────────────────── */}
+        <section className={styles.fuBand}>
+          <div className={styles.fuGrid}>
+            {/* Left — Follow-ups (auto from contacts + your own) */}
+            <div className={styles.fuCol}>
+              <div className={styles.fuBandHead}>
+                <span className={styles.fuTag}>Follow-ups</span>
+                <h2 className={styles.fuTitle}>
+                  {followUps.due.length > 0
+                    ? `${followUps.due.length} due`
+                    : "Nothing due right now"}
+                </h2>
+                <p className={styles.fuSub}>
+                  Every contact you log sets a check-in {FOLLOWUP_DAYS} days out — or write your own
+                  below. They keep surfacing until you close them.
+                </p>
+              </div>
+              {followUps.due.map((t) => (
+                <FollowUpDue key={t.subjectKey} t={t} />
+              ))}
+              {followUps.upcoming.length > 0 && (
+                <details className={styles.fuUpcoming}>
+                  <summary>Upcoming check-ins ({followUps.upcoming.length})</summary>
+                  <ul className={styles.fuUpcomingList}>
+                    {followUps.upcoming.map((t) => {
+                      const d = daysUntilIso(t.followUpAt);
+                      return (
+                        <li key={t.subjectKey}>
+                          <span className={styles.fuUpWho}>{t.label}</span>
+                          {t.detail ? (
+                            <span className={styles.fuUpDetail}> · {t.detail}</span>
+                          ) : null}
+                          <span className={styles.fuUpWhen}>
+                            {" "}
+                            — {d === 0 ? "due today" : `in ${d} day${d === 1 ? "" : "s"}`} (
+                            {shortDate(t.followUpAt)})
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </details>
+              )}
+              <form action={addFollowUp} className={styles.fuAdd}>
+                <input
+                  name="label"
+                  required
+                  maxLength={200}
+                  placeholder="Add your own follow-up (who / what)…"
+                  aria-label="Add a follow-up"
+                />
+                <select name="days" defaultValue={String(FOLLOWUP_DAYS)} aria-label="When">
+                  <option value="0">today</option>
+                  <option value="1">in 1 day</option>
+                  <option value="2">in 2 days</option>
+                  <option value="3">in 3 days</option>
+                  <option value="7">in 7 days</option>
+                </select>
+                <button className={styles.fuAddBtn}>Add</button>
+              </form>
             </div>
-            {followUps.due.map((t) => (
-              <FollowUpDue key={t.subjectKey} t={t} />
-            ))}
-            {followUps.upcoming.length > 0 && (
-              <details className={styles.fuUpcoming}>
-                <summary>Upcoming check-ins ({followUps.upcoming.length})</summary>
-                <ul className={styles.fuUpcomingList}>
-                  {followUps.upcoming.map((t) => {
-                    const d = daysUntilIso(t.followUpAt);
-                    return (
-                      <li key={t.subjectKey}>
-                        <span className={styles.fuUpWho}>{t.label}</span>
-                        {t.detail ? <span className={styles.fuUpDetail}> · {t.detail}</span> : null}
-                        <span className={styles.fuUpWhen}>
-                          {" "}
-                          — {d === 0 ? "due today" : `in ${d} day${d === 1 ? "" : "s"}`} (
-                          {shortDate(t.followUpAt)})
-                        </span>
+
+            {/* Right — plain to-do's */}
+            <div className={styles.fuCol}>
+              <div className={styles.fuBandHead}>
+                <span className={styles.todoTag}>To-do&apos;s</span>
+                <h2 className={styles.fuTitle}>
+                  {openTodos.length > 0 ? `${openTodos.length} open` : "All clear"}
+                </h2>
+                <p className={styles.fuSub}>
+                  Your running list — anything that isn&apos;t a partner follow-up.
+                </p>
+              </div>
+              <form action={addTodo} className={styles.fuAdd}>
+                <input
+                  name="body"
+                  required
+                  maxLength={500}
+                  placeholder="Add a to-do…"
+                  aria-label="Add a to-do"
+                />
+                <button className={styles.fuAddBtn}>Add</button>
+              </form>
+              <ul className={styles.todoList}>
+                {openTodos.map((td) => (
+                  <li key={td.id} className={styles.todoItem}>
+                    <form action={toggleTodo} className={styles.todoCheckForm}>
+                      <input type="hidden" name="id" value={td.id} />
+                      <button className={styles.todoCheck} aria-label="Mark done">
+                        ☐
+                      </button>
+                    </form>
+                    <span className={styles.todoBody}>{td.body}</span>
+                    <form action={deleteTodo} className={styles.todoDelForm}>
+                      <input type="hidden" name="id" value={td.id} />
+                      <button className={styles.todoDel} aria-label="Delete">
+                        ✕
+                      </button>
+                    </form>
+                  </li>
+                ))}
+                {openTodos.length === 0 && (
+                  <li className={styles.todoEmpty}>Nothing on the list.</li>
+                )}
+              </ul>
+              {doneTodos.length > 0 && (
+                <details className={styles.todoDoneWrap}>
+                  <summary>Done ({doneTodos.length})</summary>
+                  <ul className={styles.todoList}>
+                    {doneTodos.map((td) => (
+                      <li key={td.id} className={`${styles.todoItem} ${styles.todoItemDone}`}>
+                        <form action={toggleTodo} className={styles.todoCheckForm}>
+                          <input type="hidden" name="id" value={td.id} />
+                          <button className={styles.todoCheck} aria-label="Mark not done">
+                            ☑
+                          </button>
+                        </form>
+                        <span className={styles.todoBody}>{td.body}</span>
+                        <form action={deleteTodo} className={styles.todoDelForm}>
+                          <input type="hidden" name="id" value={td.id} />
+                          <button className={styles.todoDel} aria-label="Delete">
+                            ✕
+                          </button>
+                        </form>
                       </li>
-                    );
-                  })}
-                </ul>
-              </details>
-            )}
-          </section>
-        )}
+                    ))}
+                  </ul>
+                </details>
+              )}
+            </div>
+          </div>
+        </section>
 
         {/* ── Right now (quiet status) ───────────────────────────────────── */}
         <div className={styles.sop}>

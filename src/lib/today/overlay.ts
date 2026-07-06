@@ -5,7 +5,7 @@
 
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import type { Snooze, Validation, ValidationStatus } from "./build";
-import type { Touch, TouchLogEntry } from "./follow-ups";
+import type { Todo, Touch, TouchLogEntry } from "./follow-ups";
 
 function asStatus(s: string): ValidationStatus {
   return s === "flagged" || s === "adjusted" ? s : "confirmed";
@@ -59,7 +59,7 @@ export async function loadTouches(): Promise<Touch[]> {
     const rows = await getPrisma().touch.findMany();
     return rows.map((r) => ({
       subjectKey: r.subjectKey,
-      kind: r.kind === "account" ? "account" : "partner",
+      kind: r.kind === "account" ? "account" : r.kind === "custom" ? "custom" : "partner",
       label: r.label,
       detail: r.detail ?? "",
       message: r.message ?? "",
@@ -69,6 +69,20 @@ export async function loadTouches(): Promise<Touch[]> {
       status: r.status === "replied" ? "replied" : "awaiting",
       log: normTouchLog(r.log),
     }));
+  } catch {
+    return [];
+  }
+}
+
+// Personal to-dos (right column beside Follow-ups). Defensive → [] if unmigrated.
+// Open items first (by position, then newest), done items after.
+export async function loadTodos(): Promise<Todo[]> {
+  if (!hasDatabaseEnv()) return [];
+  try {
+    const rows = await getPrisma().todo.findMany({
+      orderBy: [{ done: "asc" }, { position: "asc" }, { createdAt: "desc" }],
+    });
+    return rows.map((r) => ({ id: r.id, body: r.body, done: r.done }));
   } catch {
     return [];
   }

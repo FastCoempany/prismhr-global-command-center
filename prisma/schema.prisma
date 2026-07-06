@@ -1046,3 +1046,17 @@ model Touch {
   @@index([status])
   @@index([followUpAt])
 }
+
+// A plain personal to-do — the right-hand column beside Follow-ups on Today.
+// No cadence, no partner; just a running checklist you write and check off.
+model Todo {
+  id        String   @id @default(cuid())
+  body      String
+  done      Boolean  @default(false)
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([done])
+  @@index([position])
+}

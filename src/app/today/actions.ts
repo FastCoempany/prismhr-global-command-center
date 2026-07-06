@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getAppAccess } from "@/lib/auth";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
+import { randomUUID } from "node:crypto";
 import { asFieldNoteKind } from "@/lib/field-notes/data";
 import { FOLLOWUP_DAYS } from "@/lib/today/follow-ups";
 
@@ -179,6 +180,67 @@ export async function snoozeFollowUp(formData: FormData) {
       where: { subjectKey },
       data: { followUpAt: followUpDate(Date.now(), t.intervalDays), status: "awaiting" },
     });
+  });
+  done();
+}
+
+// Write in your own follow-up (not tied to a logged contact). Surfaces in the
+// same due/upcoming buckets; kind "custom" so the card shows your words instead
+// of a partner nudge.
+export async function addFollowUp(formData: FormData) {
+  const label = str(formData, "label", 200);
+  const days = parseInt(str(formData, "days", 4), 10);
+  if (!(await requireWrite()) || !label) done();
+  const interval = Number.isFinite(days) && days >= 0 ? days : FOLLOWUP_DAYS;
+  await safeWrite(async () => {
+    const now = Date.now();
+    await getPrisma().touch.create({
+      data: {
+        subjectKey: `manual:${randomUUID()}`,
+        kind: "custom",
+        label,
+        detail: str(formData, "detail", 400) || null,
+        message: null,
+        contactedAt: new Date(now),
+        followUpAt: followUpDate(now, interval),
+        intervalDays: interval || FOLLOWUP_DAYS,
+        status: "awaiting",
+        log: [],
+      },
+    });
+  });
+  done();
+}
+
+// --- To-dos (the right column) ----------------------------------------------
+export async function addTodo(formData: FormData) {
+  const body = str(formData, "body", 500);
+  if (!(await requireWrite()) || !body) done();
+  await safeWrite(async () => {
+    const prisma = getPrisma();
+    const top = await prisma.todo.findFirst({ orderBy: { position: "desc" }, select: { position: true } });
+    await prisma.todo.create({ data: { body, position: (top?.position ?? -1) + 1 } });
+  });
+  done();
+}
+
+export async function toggleTodo(formData: FormData) {
+  const id = str(formData, "id", 40);
+  if (!(await requireWrite()) || !id) done();
+  await safeWrite(async () => {
+    const prisma = getPrisma();
+    const t = await prisma.todo.findUnique({ where: { id } });
+    if (!t) return;
+    await prisma.todo.update({ where: { id }, data: { done: !t.done } });
+  });
+  done();
+}
+
+export async function deleteTodo(formData: FormData) {
+  const id = str(formData, "id", 40);
+  if (!(await requireWrite()) || !id) done();
+  await safeWrite(async () => {
+    await getPrisma().todo.deleteMany({ where: { id } });
   });
   done();
 }
