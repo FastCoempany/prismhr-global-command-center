@@ -554,7 +554,7 @@ export function armPartnersGuidance(nar: Narrative): Guidance {
   return {
     do: `Arm Eric and the CSMs to be dangerous on Global — be loud, to Aleks and marketing, about what you have, what you're missing, and what you need. Nothing sells through a partner you haven't equipped.`,
     how: [
-      `Write down what you can already hand a partner today: the Account Room targeting, the displacement/greenfield plays, and the per-account openers Today generates.`,
+      `Write down what you can already brief a partner with today: your Account Room research on their accounts, the displacement/greenfield plays, and the per-account openers Today generates for you.`,
       `Name the gaps out loud — the contractor-conversion one-pager, country-coverage sheets, packaged pricing, whatever's missing. Log each one as a voice-of-the-base note below so it reaches marketing, not just your memory.`,
       `Decide who you arm first: Eric on the HCM enterprise side, then the CSMs whose books carry the strongest signals. Sequence by where the demand already is.`,
       `Turn every gap into a specific, named ask for Aleks or marketing — "I need X to arm Y for account Z" — so it's actionable, not a complaint.`,
@@ -562,7 +562,7 @@ export function armPartnersGuidance(nar: Narrative): Guidance {
     say:
       `Quick enablement read for the Global push.\n\n` +
       `What I already have to make Eric and the CSMs effective:\n` +
-      `• The Account Room — shared targeting intelligence across the base\n` +
+      `• The Account Room — my researched targeting on every account in the base\n` +
       `• The displacement and greenfield plays for each researched account\n` +
       `• Ready-to-send, per-account partner openers\n\n` +
       `What I'm still missing and need help sourcing:\n` +

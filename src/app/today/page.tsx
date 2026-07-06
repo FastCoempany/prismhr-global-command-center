@@ -948,9 +948,9 @@ export default async function TodayPage({
             <div className={styles.planNum}>First 30</div>
             <div className={styles.planTheme}>Learn the base · arm the partners</div>
             <ul>
-              <li>Ship the Account Room as shared targeting intel partners can see.</li>
+              <li>Build out the Account Room — my private targeting intel on the whole base.</li>
               <li>Sit with each partner — start with Eric — and map their books to Global fit.</li>
-              <li>Publish the first enablement-gap list to Aleks + marketing.</li>
+              <li>Take the first enablement-gap list to Aleks + marketing.</li>
               <li>Land the first 2–3 partner-cleared discovery calls.</li>
             </ul>
           </div>
@@ -969,7 +969,7 @@ export default async function TodayPage({
             <div className={styles.planTheme}>Prove the motion</div>
             <ul>
               <li>First Global close or a deal in late-stage decision.</li>
-              <li>A documented displacement + greenfield play partners can self-serve.</li>
+              <li>A documented displacement + greenfield play I can hand any partner.</li>
               <li>A standing lunch-and-learn / SME webinar cadence.</li>
               <li>A weekly base-signal digest that Aleks can carry upward.</li>
             </ul>
