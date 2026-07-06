@@ -241,14 +241,28 @@ export async function saveLabels(formData: FormData) {
   done();
 }
 
+// Run a DB write, but never let a missing/newer column (dealSize, stakeholders —
+// added by docs/dashboard-tables.sql) 500 the page. Degrades to a no-op if the
+// migration hasn't run. `done()` redirects (throws NEXT_REDIRECT) so it stays
+// OUTSIDE the try/catch.
+async function safeWrite(work: () => Promise<void>) {
+  try {
+    await work();
+  } catch {
+    // Column not migrated yet — swallow so the board reloads cleanly.
+  }
+}
+
 // Deal size — free text ("$120k ARR", "300 EEs / 4 countries").
 export async function saveDealSize(formData: FormData) {
   const cardId = str(formData, "id", 40);
   const dealSize = str(formData, "dealSize", 160);
   if (!(await requireWrite()) || !cardId) done();
-  await getPrisma().dashCard.update({
-    where: { id: cardId },
-    data: { dealSize: dealSize || null },
+  await safeWrite(async () => {
+    await getPrisma().dashCard.update({
+      where: { id: cardId },
+      data: { dealSize: dealSize || null },
+    });
   });
   done();
 }
@@ -259,14 +273,16 @@ export async function addStakeholder(formData: FormData) {
   const role = str(formData, "role", 120);
   const note = str(formData, "note", 500);
   if (!(await requireWrite()) || !cardId || !name) done();
-  const prisma = getPrisma();
-  const card = await prisma.dashCard.findUnique({ where: { id: cardId } });
-  if (!card) done();
-  const list: Record<string, string>[] = Array.isArray(card!.stakeholders)
-    ? (card!.stakeholders as Record<string, string>[])
-    : [];
-  list.push({ name, role, note });
-  await prisma.dashCard.update({ where: { id: cardId }, data: { stakeholders: list } });
+  await safeWrite(async () => {
+    const prisma = getPrisma();
+    const card = await prisma.dashCard.findUnique({ where: { id: cardId } });
+    if (!card) return;
+    const list: Record<string, string>[] = Array.isArray(card.stakeholders)
+      ? (card.stakeholders as Record<string, string>[])
+      : [];
+    list.push({ name, role, note });
+    await prisma.dashCard.update({ where: { id: cardId }, data: { stakeholders: list } });
+  });
   done();
 }
 
@@ -274,13 +290,15 @@ export async function removeStakeholder(formData: FormData) {
   const cardId = str(formData, "id", 40);
   const index = parseInt(str(formData, "index", 4), 10);
   if (!(await requireWrite()) || !cardId || Number.isNaN(index)) done();
-  const prisma = getPrisma();
-  const card = await prisma.dashCard.findUnique({ where: { id: cardId } });
-  if (!card) done();
-  const list: Record<string, string>[] = Array.isArray(card!.stakeholders)
-    ? (card!.stakeholders as Record<string, string>[])
-    : [];
-  if (index >= 0 && index < list.length) list.splice(index, 1);
-  await prisma.dashCard.update({ where: { id: cardId }, data: { stakeholders: list } });
+  await safeWrite(async () => {
+    const prisma = getPrisma();
+    const card = await prisma.dashCard.findUnique({ where: { id: cardId } });
+    if (!card) return;
+    const list: Record<string, string>[] = Array.isArray(card.stakeholders)
+      ? (card.stakeholders as Record<string, string>[])
+      : [];
+    if (index >= 0 && index < list.length) list.splice(index, 1);
+    await prisma.dashCard.update({ where: { id: cardId }, data: { stakeholders: list } });
+  });
   done();
 }

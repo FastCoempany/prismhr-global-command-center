@@ -22,11 +22,26 @@ function done() {
   redirect("/today");
 }
 
+// Run a DB write, but never let a missing/newer table 500 the page. If the
+// relevant table from docs/dashboard-tables.sql hasn't been created yet, the
+// action degrades to a no-op (the change just doesn't persist) instead of
+// crashing the Server Component render. `redirect()` throws a NEXT_REDIRECT
+// control-flow signal, so `done()` stays OUTSIDE the try/catch.
+async function safeWrite(work: () => Promise<void>) {
+  try {
+    await work();
+  } catch {
+    // Table not migrated yet — swallow so the page reloads cleanly.
+  }
+}
+
 export async function addFieldNote(formData: FormData) {
   const body = str(formData, "body", 2000);
   if (!(await requireWrite()) || !body) done();
-  await getPrisma().fieldNote.create({
-    data: { kind: asFieldNoteKind(str(formData, "kind", 12)), body },
+  await safeWrite(async () => {
+    await getPrisma().fieldNote.create({
+      data: { kind: asFieldNoteKind(str(formData, "kind", 12)), body },
+    });
   });
   done();
 }
@@ -35,7 +50,9 @@ export async function addFieldNote(formData: FormData) {
 export async function resolveFieldNote(formData: FormData) {
   const id = str(formData, "id", 40);
   if (!(await requireWrite()) || !id) done();
-  await getPrisma().fieldNote.update({ where: { id }, data: { resolved: true } });
+  await safeWrite(async () => {
+    await getPrisma().fieldNote.update({ where: { id }, data: { resolved: true } });
+  });
   done();
 }
 
@@ -49,10 +66,12 @@ export async function snoozeSignal(formData: FormData) {
   if (!(await requireWrite()) || !accountId) done();
   const snoozedUntil =
     Number.isFinite(days) && days > 0 ? new Date(Date.now() + days * 86_400_000) : null;
-  await getPrisma().signalSnooze.upsert({
-    where: { accountId },
-    create: { accountId, reason, snoozedUntil },
-    update: { reason, snoozedUntil },
+  await safeWrite(async () => {
+    await getPrisma().signalSnooze.upsert({
+      where: { accountId },
+      create: { accountId, reason, snoozedUntil },
+      update: { reason, snoozedUntil },
+    });
   });
   done();
 }
@@ -60,7 +79,9 @@ export async function snoozeSignal(formData: FormData) {
 export async function unsnoozeSignal(formData: FormData) {
   const accountId = str(formData, "accountId", 40);
   if (!(await requireWrite()) || !accountId) done();
-  await getPrisma().signalSnooze.deleteMany({ where: { accountId } });
+  await safeWrite(async () => {
+    await getPrisma().signalSnooze.deleteMany({ where: { accountId } });
+  });
   done();
 }
 
@@ -69,9 +90,11 @@ export async function unsnoozeSignal(formData: FormData) {
 export async function toggleTaskDone(formData: FormData) {
   const key = str(formData, "key", 160);
   if (!(await requireWrite()) || !key) done();
-  const prisma = getPrisma();
-  const existing = await prisma.taskDone.findUnique({ where: { key } });
-  if (existing) await prisma.taskDone.delete({ where: { key } });
-  else await prisma.taskDone.create({ data: { key } });
+  await safeWrite(async () => {
+    const prisma = getPrisma();
+    const existing = await prisma.taskDone.findUnique({ where: { key } });
+    if (existing) await prisma.taskDone.delete({ where: { key } });
+    else await prisma.taskDone.create({ data: { key } });
+  });
   done();
 }
