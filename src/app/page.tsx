@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AppWayfinder } from "@/components/app-wayfinder";
+import { SfCheckpoint } from "@/components/sf";
 import { loadDashboard } from "@/lib/dashboard/data";
 import { DashboardClient } from "./dashboard-client";
 import styles from "./command-center.module.css";
@@ -31,6 +32,8 @@ export default async function DashboardPage() {
           Your hand-sewn board — manual, wired to nothing. Click any node to set its state and note
           what has to happen for it to go green. <Link href="/accounts">Open the Account Room →</Link>
         </p>
+        <SfCheckpoint when="dashboard" />
+
         {data.status === "database-unavailable" && (
           <div className={styles.banner}>
             Read-only — run <code>docs/dashboard-tables.sql</code> in Supabase to start saving cards

@@ -1,0 +1,75 @@
+/* Salesforce checkpoint — a recognizable "check + update SF" notation used
+   everywhere you act on an account. Deliberately distinct (SF blue) so it reads
+   as one consistent cue across Today, Accounts, and the Dashboard. */
+.chk {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  border: 1px solid #b6e3f7;
+  background: #f0f9ff;
+  border-left: 3px solid #00a1e0;
+  border-radius: 8px;
+  padding: 8px 11px;
+  margin: 8px 0;
+}
+.chkStrong {
+  border-color: #00a1e0;
+  background: #e4f4fc;
+}
+.icon {
+  flex: none;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.lead {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #0369a1;
+}
+.text {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #075985;
+}
+.link {
+  align-self: flex-start;
+  font-size: 12px;
+  font-weight: 700;
+  color: #0369a1;
+  text-decoration: none;
+  border-bottom: 1.5px solid #7dd3fc;
+}
+.link:hover {
+  border-bottom-color: #0369a1;
+}
+.copy {
+  align-self: flex-start;
+  border: 1px solid #b6e3f7;
+  background: #fff;
+  color: #0369a1;
+  border-radius: 6px;
+  padding: 3px 9px;
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.copy:hover {
+  border-color: #00a1e0;
+}
+.inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #0369a1;
+}

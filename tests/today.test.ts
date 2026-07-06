@@ -21,6 +21,7 @@ import {
   isWeekKickoff,
   movedThisWeek,
   narrative,
+  outreachGuidance,
   partitionSignals,
   partnerAngle,
   partnerKickoff,
@@ -28,6 +29,7 @@ import {
   partnerWeekMessage,
   signals,
   stateOfPlay,
+  triageGuidance,
   voiceOfBaseGuidance,
   type AccountIntel,
   type Snooze,
@@ -43,6 +45,7 @@ import {
   partitionFollowUps,
   type Touch,
 } from "@/lib/today/follow-ups";
+import { isRealSfId, sfAccountUrl } from "@/lib/salesforce";
 import { DEMAND_GATE } from "@/lib/book/research";
 
 // --- factories ---------------------------------------------------------------
@@ -644,6 +647,36 @@ describe("follow-ups", () => {
 
   test("outreachSubjectKey is stable per account", () => {
     assert.equal(outreachSubjectKey("001X"), "outreach:001X");
+  });
+});
+
+// --- Salesforce checkpoint ---------------------------------------------------
+
+describe("salesforce helpers", () => {
+  test("isRealSfId accepts 15/18-char 001 account ids, rejects synthetic ones", () => {
+    assert.equal(isRealSfId("001F000000w38OIIAY"), true); // 18-char
+    assert.equal(isRealSfId("001F000000w38OI"), true); // 15-char
+    assert.equal(isRealSfId("ADVOCATEPAY000001"), false); // synthetic
+    assert.equal(isRealSfId("PUZZLEHR000000001"), false);
+    assert.equal(isRealSfId("003F000000w38OIIAY"), false); // not an Account prefix
+  });
+
+  test("sfAccountUrl deep-links only when the instance base URL is set + id is real", () => {
+    delete process.env.NEXT_PUBLIC_SF_BASE_URL;
+    assert.equal(sfAccountUrl("001F000000w38OIIAY"), null);
+    process.env.NEXT_PUBLIC_SF_BASE_URL = "https://prismhr.lightning.force.com/";
+    assert.equal(
+      sfAccountUrl("001F000000w38OIIAY"),
+      "https://prismhr.lightning.force.com/lightning/r/Account/001F000000w38OIIAY/view",
+    );
+    assert.equal(sfAccountUrl("ADVOCATEPAY000001"), null); // synthetic → no link
+    delete process.env.NEXT_PUBLIC_SF_BASE_URL;
+  });
+
+  test("outreach + triage guidance require a Salesforce check step", () => {
+    const a = intel({ name: "Acme", csm: "Anika", demand: 55, play: "greenfield" });
+    assert.match(outreachGuidance(a).how.join(" "), /Salesforce/);
+    assert.match(triageGuidance(a).how.join(" "), /Salesforce/);
   });
 });
 

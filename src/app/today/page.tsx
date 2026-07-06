@@ -42,6 +42,7 @@ import {
   type Guidance,
   type Validation,
 } from "@/lib/today/build";
+import { SfCheckpoint } from "@/components/sf";
 import { ContactControl, EditableMessage, NoteSubmit } from "../today-client";
 import { addCard, toggleCheck } from "../dashboard/actions";
 import {
@@ -303,6 +304,13 @@ function MorningMove({ mv, n, doneKey, done }: { mv: Mv; n: number; doneKey: str
     );
   }
 
+  const sfCheck =
+    mv.kind === "outreach" ? (
+      <SfCheckpoint when="before-outreach" id={mv.a.id} name={mv.a.name} strong />
+    ) : mv.kind === "triage" ? (
+      <SfCheckpoint when="triage" id={mv.a.id} name={mv.a.name} />
+    ) : null;
+
   return (
     <div className={`${styles.mvMove} ${n === 1 ? styles.mvFirst : ""}`}>
       <div className={styles.mvNum}>{n}</div>
@@ -311,6 +319,7 @@ function MorningMove({ mv, n, doneKey, done }: { mv: Mv; n: number; doneKey: str
           <div className={styles.mvMeta}>{chips}</div>
           {doneBtn}
         </div>
+        {sfCheck}
         <GuidanceBody g={g} term={term} href={href}>
           {actions}
         </GuidanceBody>
@@ -373,6 +382,7 @@ function FollowUpDue({ t }: { t: Touch }) {
         </span>
         <span className={styles.fuAge}>{followUpStatusLine(t)}</span>
       </div>
+      <SfCheckpoint when="followup" />
       {t.message && (
         <details className={styles.fuSent}>
           <summary>What you sent</summary>
@@ -530,6 +540,9 @@ export default async function TodayPage({
           clients on our PrismHR HCM). Read → route → record.
         </p>
 
+        <SfCheckpoint when="standing" strong />
+
+
         {/* ── Week kickoff (Sun/Mon) ─────────────────────────────────────── */}
         {kickoff.length > 0 && (
           <section className={styles.kickoff}>
@@ -557,6 +570,7 @@ export default async function TodayPage({
                   {kickoffDoneCount} of {kickoffItems.length} partners contacted this week
                 </span>
               </div>
+              <SfCheckpoint when="kickoff" strong />
             </div>
             {kickoffItems.map(({ k, key, touch, done }) => (
               <div
