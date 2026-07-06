@@ -680,15 +680,18 @@ describe("salesforce helpers", () => {
     assert.equal(isRealSfId("003F000000w38OIIAY"), false); // not an Account prefix
   });
 
-  test("sfAccountUrl deep-links only when the instance base URL is set + id is real", () => {
+  test("sfAccountUrl deep-links real ids via the default instance, honors env override, skips synthetic", () => {
     delete process.env.NEXT_PUBLIC_SF_BASE_URL;
-    assert.equal(sfAccountUrl("001F000000w38OIIAY"), null);
-    process.env.NEXT_PUBLIC_SF_BASE_URL = "https://prismhr.lightning.force.com/";
     assert.equal(
       sfAccountUrl("001F000000w38OIIAY"),
       "https://prismhr.lightning.force.com/lightning/r/Account/001F000000w38OIIAY/view",
     );
     assert.equal(sfAccountUrl("ADVOCATEPAY000001"), null); // synthetic → no link
+    process.env.NEXT_PUBLIC_SF_BASE_URL = "https://other.my.salesforce.com/";
+    assert.equal(
+      sfAccountUrl("001F000000w38OIIAY"),
+      "https://other.my.salesforce.com/lightning/r/Account/001F000000w38OIIAY/view",
+    );
     delete process.env.NEXT_PUBLIC_SF_BASE_URL;
   });
 
