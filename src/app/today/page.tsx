@@ -3,7 +3,15 @@ import Link from "next/link";
 import { AppWayfinder } from "@/components/app-wayfinder";
 import { loadDashboard } from "@/lib/dashboard/data";
 import { loadFieldNotes, FIELD_NOTE_KINDS } from "@/lib/field-notes/data";
-import { loadDoneKeys, loadSnoozes, loadValidations } from "@/lib/today/overlay";
+import { loadDoneKeys, loadSnoozes, loadTouches, loadValidations } from "@/lib/today/overlay";
+import {
+  daysUntilIso,
+  FOLLOWUP_DAYS,
+  followUpMessage,
+  followUpStatusLine,
+  partitionFollowUps,
+  type Touch,
+} from "@/lib/today/follow-ups";
 import {
   accountIntel,
   aleksLineGuidance,
@@ -34,9 +42,18 @@ import {
   type Guidance,
   type Validation,
 } from "@/lib/today/build";
-import { EditableMessage, NoteSubmit } from "../today-client";
+import { ContactControl, EditableMessage, NoteSubmit } from "../today-client";
 import { addCard, toggleCheck } from "../dashboard/actions";
-import { addFieldNote, resolveFieldNote, snoozeSignal, toggleTaskDone, unsnoozeSignal } from "./actions";
+import {
+  addFieldNote,
+  addTouchNote,
+  markReplied,
+  resolveFieldNote,
+  snoozeFollowUp,
+  snoozeSignal,
+  toggleTaskDone,
+  unsnoozeSignal,
+} from "./actions";
 import styles from "../command-center.module.css";
 
 export const dynamic = "force-dynamic";
@@ -333,6 +350,74 @@ function GuidedBlock({
   );
 }
 
+// Short, human date from an ISO string (pure — deterministic given the string).
+function shortDate(iso: string): string {
+  const t = Date.parse(iso);
+  if (Number.isNaN(t)) return "";
+  return new Date(t).toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+// A due follow-up: what you sent, any notes so far, a ready nudge to send, and
+// the three ways to move it — replied (done), snooze, or log what happened.
+function FollowUpDue({ t }: { t: Touch }) {
+  return (
+    <div className={styles.fuCard}>
+      <div className={styles.fuHead}>
+        <span className={styles.fuWho}>
+          Follow up with {t.label}
+          {t.detail ? <span className={styles.fuDetail}> · {t.detail}</span> : null}
+        </span>
+        <span className={styles.fuAge}>{followUpStatusLine(t)}</span>
+      </div>
+      {t.message && (
+        <details className={styles.fuSent}>
+          <summary>What you sent</summary>
+          <p className={styles.fuSentBody}>{t.message}</p>
+        </details>
+      )}
+      {t.log.length > 0 && (
+        <ul className={styles.fuLog}>
+          {t.log.map((e, i) => (
+            <li key={i}>
+              <b>{shortDate(e.at)}</b> — {e.body}
+            </li>
+          ))}
+        </ul>
+      )}
+      <div className={styles.fuSayLab}>Send a nudge — edit anything, then copy</div>
+      <EditableMessage
+        text={followUpMessage(t)}
+        copyLabel={`Copy the nudge to ${firstNameOf(t.label)}`}
+      />
+      <div className={styles.fuActions}>
+        <form action={markReplied}>
+          <input type="hidden" name="subjectKey" value={t.subjectKey} />
+          <button className={styles.fuReplied}>They replied ✓</button>
+        </form>
+        <form action={snoozeFollowUp}>
+          <input type="hidden" name="subjectKey" value={t.subjectKey} />
+          <button className={styles.fuSnooze}>Snooze +{FOLLOWUP_DAYS} days</button>
+        </form>
+        <form action={addTouchNote} className={styles.fuNoteForm}>
+          <input type="hidden" name="subjectKey" value={t.subjectKey} />
+          <input
+            name="body"
+            required
+            maxLength={500}
+            placeholder="Log what happened (e.g. left a voicemail, no reply)…"
+            aria-label="Log what happened"
+          />
+          <button className={styles.fuNoteBtn}>Log &amp; re-arm</button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 export default async function TodayPage({
   searchParams,
 }: {
@@ -355,12 +440,15 @@ export default async function TodayPage({
     );
   }
 
-  const [snoozes, validations, notes, doneKeys] = await Promise.all([
+  const [snoozes, validations, notes, doneKeys, touches] = await Promise.all([
     loadSnoozes(),
     loadValidations(),
     loadFieldNotes(),
     loadDoneKeys(),
+    loadTouches(),
   ]);
+  const touchMap = new Map(touches.map((t) => [t.subjectKey, t]));
+  const followUps = partitionFollowUps(touches);
 
   const intel = applyValidations(accountIntel(), validations);
   const nar = narrative(intel);
@@ -386,9 +474,12 @@ export default async function TodayPage({
   const showKickoff = forceWeek || isWeekKickoff();
   const kickoff = showKickoff ? partnerKickoff(intel, parkedIds) : [];
   const kickoffTotal = kickoff.reduce((n, k) => n + k.accounts.length, 0);
+  // The kickoff "contacted" mark is now a logged Touch (so it carries the date,
+  // the message, and an auto follow-up) — keyed by the same per-week string.
   const kickoffItems = kickoff.map((k) => {
     const key = kickoffDoneKey(k.partner);
-    return { k, key, done: doneKeys.has(key) };
+    const touch = touchMap.get(key);
+    return { k, key, touch, done: !!touch };
   });
   const kickoffDoneCount = kickoffItems.filter((i) => i.done).length;
 
@@ -467,7 +558,7 @@ export default async function TodayPage({
                 </span>
               </div>
             </div>
-            {kickoffItems.map(({ k, key, done }) => (
+            {kickoffItems.map(({ k, key, touch, done }) => (
               <div
                 key={k.partner}
                 className={`${styles.kickoffPartner} ${done ? styles.kickoffDone : ""}`}
@@ -482,12 +573,6 @@ export default async function TodayPage({
                     {k.accounts.length} teed up
                     {k.accounts.length < 5 ? " · fewer than 5 in this book" : ""}
                   </span>
-                  <form action={toggleTaskDone} className={styles.kickoffDoneForm}>
-                    <input type="hidden" name="key" value={key} />
-                    <button className={done ? styles.mvUndoBtn : styles.mvDoneBtn}>
-                      {done ? "Undo" : "Mark contacted ✓"}
-                    </button>
-                  </form>
                 </div>
                 <div className={styles.kickoffAccts}>
                   {k.accounts.map((a) => (
@@ -501,19 +586,68 @@ export default async function TodayPage({
                     </Link>
                   ))}
                 </div>
-                {!done && (
-                  <details className={styles.kickoffMsg}>
-                    <summary className={styles.kickoffMsgSummary}>
-                      ✎ Open, edit &amp; copy the week-opener to {firstNameOf(k.partner)}
-                    </summary>
-                    <EditableMessage
-                      text={partnerWeekMessage(k.partner, k.accounts)}
-                      copyLabel={`Copy the opener to ${firstNameOf(k.partner)}`}
-                    />
-                  </details>
-                )}
+                <div className={styles.kickoffContact}>
+                  {!done && (
+                    <span className={styles.kickoffContactLab}>
+                      ✎ Edit the week-opener to {firstNameOf(k.partner)}, copy it, send it — then
+                      mark contacted to set a 2-day follow-up.
+                    </span>
+                  )}
+                  <ContactControl
+                    subjectKey={key}
+                    kind="partner"
+                    label={k.partner}
+                    detail={`${k.accounts.length} account${k.accounts.length === 1 ? "" : "s"} teed up`}
+                    defaultMessage={partnerWeekMessage(k.partner, k.accounts)}
+                    sentLabel="Mark contacted ✓"
+                    contacted={done}
+                    followUpLabel={touch ? shortDate(touch.followUpAt) : undefined}
+                  />
+                </div>
               </div>
             ))}
+          </section>
+        )}
+
+        {/* ── Follow-ups (contacted → auto check-in every 2 days) ────────── */}
+        {(followUps.due.length > 0 || followUps.upcoming.length > 0) && (
+          <section className={styles.fuBand}>
+            <div className={styles.fuBandHead}>
+              <span className={styles.fuTag}>Follow-ups</span>
+              <h2 className={styles.fuTitle}>
+                {followUps.due.length > 0
+                  ? `${followUps.due.length} follow-up${followUps.due.length === 1 ? "" : "s"} due`
+                  : "Nothing due yet — upcoming check-ins below"}
+              </h2>
+              <p className={styles.fuSub}>
+                Every contact you log sets an automatic check-in {FOLLOWUP_DAYS} days out. These are
+                the ones it&apos;s time to nudge — they keep surfacing until you mark a reply.
+              </p>
+            </div>
+            {followUps.due.map((t) => (
+              <FollowUpDue key={t.subjectKey} t={t} />
+            ))}
+            {followUps.upcoming.length > 0 && (
+              <details className={styles.fuUpcoming}>
+                <summary>Upcoming check-ins ({followUps.upcoming.length})</summary>
+                <ul className={styles.fuUpcomingList}>
+                  {followUps.upcoming.map((t) => {
+                    const d = daysUntilIso(t.followUpAt);
+                    return (
+                      <li key={t.subjectKey}>
+                        <span className={styles.fuUpWho}>{t.label}</span>
+                        {t.detail ? <span className={styles.fuUpDetail}> · {t.detail}</span> : null}
+                        <span className={styles.fuUpWhen}>
+                          {" "}
+                          — {d === 0 ? "due today" : `in ${d} day${d === 1 ? "" : "s"}`} (
+                          {shortDate(t.followUpAt)})
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </details>
+            )}
           </section>
         )}
 

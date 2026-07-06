@@ -2195,3 +2195,258 @@
   border-color: var(--green);
   color: var(--green);
 }
+
+/* ── Contact control (edit opener + mark contacted, in one) ──────────── */
+.kickoffContact {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.kickoffContactLab {
+  font-size: 12.5px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.contactForm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
+}
+.contactSendBtn {
+  border: none;
+  background: var(--orange);
+  color: #fff;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.contactSendBtn:hover {
+  background: #cf610f;
+}
+.contactSendBtn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.contactDone {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.contactDoneText {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--green);
+}
+
+/* ── Follow-ups band ─────────────────────────────────────────────────── */
+.fuBand {
+  border: 1px solid #fed7aa;
+  background: linear-gradient(180deg, #fff7ed, var(--card, #fff) 60%);
+  border-radius: 14px;
+  padding: 16px 18px;
+  margin: 18px 0;
+}
+.fuBandHead {
+  margin-bottom: 12px;
+}
+.fuTag {
+  display: inline-block;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: #fff;
+  background: var(--orange);
+  border-radius: 5px;
+  padding: 2px 8px;
+  margin-bottom: 8px;
+}
+.fuTitle {
+  margin: 0 0 4px;
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--navy);
+  letter-spacing: -0.01em;
+}
+.fuSub {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--muted);
+  line-height: 1.55;
+}
+.fuCard {
+  border: 1px solid var(--line);
+  background: var(--bg);
+  border-radius: 12px;
+  padding: 13px 15px;
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.fuHead {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.fuWho {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--navy);
+}
+.fuDetail {
+  font-weight: 600;
+  color: var(--muted);
+}
+.fuAge {
+  font-size: 12px;
+  font-weight: 700;
+  color: #9a3412;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 6px;
+  padding: 2px 8px;
+}
+.fuSent {
+  font-size: 12.5px;
+}
+.fuSent > summary {
+  cursor: pointer;
+  color: var(--blue-d);
+  font-weight: 600;
+  list-style: none;
+}
+.fuSent > summary::-webkit-details-marker {
+  display: none;
+}
+.fuSentBody {
+  margin: 6px 0 0;
+  padding: 8px 10px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+.fuLog {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.fuLog li {
+  font-size: 12.5px;
+  color: var(--ink);
+  line-height: 1.5;
+}
+.fuSayLab {
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--green);
+}
+.fuActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.fuReplied {
+  border: none;
+  background: var(--green);
+  color: #fff;
+  border-radius: 8px;
+  padding: 7px 14px;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.fuReplied:hover {
+  background: #156c32;
+}
+.fuSnooze {
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--ink);
+  border-radius: 8px;
+  padding: 7px 12px;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.fuSnooze:hover {
+  border-color: var(--orange);
+  color: var(--orange);
+}
+.fuNoteForm {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1 1 240px;
+}
+.fuNoteForm input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 7px 10px;
+  font: inherit;
+  font-size: 12.5px;
+}
+.fuNoteBtn {
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--blue-d);
+  border-radius: 8px;
+  padding: 7px 12px;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.fuNoteBtn:hover {
+  border-color: var(--blue);
+}
+.fuUpcoming {
+  margin-top: 12px;
+  font-size: 13px;
+}
+.fuUpcoming > summary {
+  cursor: pointer;
+  color: var(--blue-d);
+  font-weight: 700;
+}
+.fuUpcomingList {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.fuUpcomingList li {
+  font-size: 12.5px;
+  color: var(--ink);
+}
+.fuUpWho {
+  font-weight: 700;
+  color: var(--navy);
+}
+.fuUpDetail {
+  color: var(--muted);
+}
+.fuUpWhen {
+  color: var(--muted);
+}

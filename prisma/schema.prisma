@@ -1020,3 +1020,29 @@ model LookIntoStatus {
 
   @@index([itemId])
 }
+
+// A logged contact ("touch") with an automatic follow-up cadence. Marking a
+// partner contacted (or an outreach sent) creates one; Today then surfaces it
+// when the follow-up comes due and keeps nudging every `intervalDays` until you
+// mark a reply. `subjectKey` is stable and deterministic (e.g.
+// "kickoff:2026-W28:Anika Steenstra" or "outreach:<accountId>") so re-contacting
+// the same subject advances the same thread instead of duplicating it. label /
+// detail snapshot the display text so the follow-up list is self-contained.
+model Touch {
+  id           String   @id @default(cuid())
+  subjectKey   String   @unique
+  kind         String   @default("partner") // "partner" | "account"
+  label        String
+  detail       String?
+  message      String? // what was said — the opener you actually sent
+  contactedAt  DateTime @default(now())
+  followUpAt   DateTime // when the next check-in is due
+  intervalDays Int      @default(2)
+  status       String   @default("awaiting") // "awaiting" | "replied"
+  log          Json? // [{ at: isoString, body: string }] — follow-up notes
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([status])
+  @@index([followUpAt])
+}
