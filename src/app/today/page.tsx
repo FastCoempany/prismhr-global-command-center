@@ -587,12 +587,6 @@ export default async function TodayPage({
                   ))}
                 </div>
                 <div className={styles.kickoffContact}>
-                  {!done && (
-                    <span className={styles.kickoffContactLab}>
-                      ✎ Edit the week-opener to {firstNameOf(k.partner)}, copy it, send it — then
-                      mark contacted to set a 2-day follow-up.
-                    </span>
-                  )}
                   <ContactControl
                     subjectKey={key}
                     kind="partner"
@@ -600,6 +594,7 @@ export default async function TodayPage({
                     detail={`${k.accounts.length} account${k.accounts.length === 1 ? "" : "s"} teed up`}
                     defaultMessage={partnerWeekMessage(k.partner, k.accounts)}
                     sentLabel="Mark contacted ✓"
+                    editLabel={`Edit & copy the week-opener to ${firstNameOf(k.partner)}`}
                     contacted={done}
                     followUpLabel={touch ? shortDate(touch.followUpAt) : undefined}
                   />
