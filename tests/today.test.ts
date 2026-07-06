@@ -7,8 +7,12 @@ import {
   applyValidations,
   cardNextStep,
   commitmentsFromCards,
+  dayStamp,
   firstNameOf,
   funnelOf,
+  kickoffDoneKey,
+  morningDoneKey,
+  weekStamp,
   isParked,
   isStrongSignal,
   isTrusted,
@@ -416,6 +420,28 @@ describe("cardNextStep", () => {
   });
   test("returns null when nothing is active", () => {
     assert.equal(cardNextStep(card({ id: "c1" }), {}, now), null);
+  });
+});
+
+// --- completion keys ---------------------------------------------------------
+
+describe("dayStamp / weekStamp / done keys", () => {
+  test("dayStamp is UTC yyyy-mm-dd", () => {
+    assert.equal(dayStamp(Date.parse("2026-07-06T09:30:00Z")), "2026-07-06");
+  });
+  test("weekStamp is ISO year-week", () => {
+    assert.equal(weekStamp(Date.parse("2026-07-06T12:00:00Z")), "2026-W28"); // Mon of ISO week 28
+    assert.equal(weekStamp(Date.parse("2024-01-01T12:00:00Z")), "2024-W01");
+  });
+  test("morning key resets by day, kickoff key by week", () => {
+    assert.equal(
+      morningDoneKey("acct:X", Date.parse("2026-07-06T00:00:00Z")),
+      "morning:2026-07-06:acct:X",
+    );
+    assert.equal(
+      kickoffDoneKey("Anika", Date.parse("2026-07-06T00:00:00Z")),
+      "kickoff:2026-W28:Anika",
+    );
   });
 });
 

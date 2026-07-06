@@ -1579,6 +1579,302 @@
   text-decoration: underline;
 }
 
+/* ── Granular guidance (DO / HOW / SAY / CONSIDER) ───────────────────── */
+.mvBody {
+  min-width: 0;
+}
+.mvTopRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.mvTopRow .mvMeta {
+  margin: 0;
+}
+.mvWhoLink {
+  color: var(--orange);
+  font-weight: 800;
+  text-decoration: none;
+  border-bottom: 1.5px solid color-mix(in srgb, var(--orange) 45%, transparent);
+}
+.mvWhoLink:hover {
+  border-bottom-color: var(--orange);
+}
+.gWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* DO THIS — the standout instruction */
+.gDo {
+  border-left: 4px solid var(--orange);
+  background: linear-gradient(90deg, #fff5ec, transparent 90%);
+  border-radius: 0 10px 10px 0;
+  padding: 11px 14px;
+}
+.gDoLabel {
+  display: inline-block;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: #fff;
+  background: var(--orange);
+  border-radius: 5px;
+  padding: 2px 8px;
+  margin-bottom: 6px;
+}
+.gDoText {
+  display: block;
+  font-size: 16.5px;
+  font-weight: 800;
+  line-height: 1.35;
+  color: var(--navy);
+  letter-spacing: -0.01em;
+}
+
+/* HOW — the steps */
+.gLabel {
+  display: block;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--blue-d);
+  margin-bottom: 6px;
+}
+.gHowList {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.gHowList li {
+  font-size: 14px;
+  color: var(--ink);
+  line-height: 1.5;
+  padding-left: 3px;
+}
+.gHowList li::marker {
+  color: var(--blue);
+  font-weight: 800;
+}
+
+/* SAY THIS — editable message */
+.gSay .gLabel {
+  color: var(--green);
+}
+.gActions {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ALSO CONSIDER — caveat callout */
+.gConsider {
+  background: var(--amber-bg, #fff7ed);
+  border: 1px solid #fed7aa;
+  border-radius: 10px;
+  padding: 10px 13px;
+}
+.gConsiderLabel {
+  display: block;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #9a3412;
+  margin-bottom: 4px;
+}
+.gConsiderText {
+  font-size: 13.5px;
+  color: #7c2d12;
+  line-height: 1.55;
+}
+
+/* Editable message box */
+.editMsg {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.editMsgArea {
+  width: 100%;
+  min-height: 90px;
+  resize: vertical;
+  border: 1px solid var(--hair-strong, #d4dbe8);
+  border-radius: 10px;
+  padding: 11px 13px;
+  font: inherit;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--ink);
+  background: #fbfdff;
+}
+.editMsgArea:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+.editMsgRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.editMsgReset {
+  border: none;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 12px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Mark done / undo */
+.mvDoneForm,
+.kickoffDoneForm {
+  margin: 0 0 0 auto;
+}
+.mvDoneBtn {
+  border: 1px solid var(--green);
+  background: var(--green);
+  color: #fff;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.mvDoneBtn:hover {
+  filter: brightness(1.06);
+}
+.mvUndoBtn {
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--muted);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.mvUndoBtn:hover {
+  border-color: var(--muted);
+}
+
+/* Progress */
+.mvProgress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0 6px;
+}
+.mvProgressBar {
+  flex: 1;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--line);
+  overflow: hidden;
+  max-width: 340px;
+}
+.mvProgressFill {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--green), #46c47a);
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+.mvProgressText {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.mvAllDone {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--green);
+  padding: 8px 0;
+}
+
+/* Done row (struck) + done section */
+.mvDoneSection {
+  margin-top: 8px;
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+}
+.mvDoneSection summary {
+  cursor: pointer;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--green);
+}
+.mvDoneRow {
+  padding: 10px 0;
+}
+.mvNumDone {
+  background: var(--green) !important;
+}
+.mvDoneBody {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.mvDoneText {
+  flex: 1;
+  font-size: 14px;
+  color: var(--muted);
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in srgb, var(--muted) 55%, transparent);
+}
+.mvDoneText .mvWhoLink {
+  color: var(--muted);
+  border-bottom: none;
+}
+
+/* Kickoff: done + editable message */
+.kickoffDone {
+  opacity: 0.72;
+}
+.kickoffCheck {
+  color: var(--green);
+}
+.kickoffMsg {
+  margin-top: 4px;
+}
+.kickoffMsgSummary {
+  cursor: pointer;
+  list-style: none;
+  display: inline-block;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--blue-d);
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 8px;
+  padding: 6px 12px;
+}
+.kickoffMsgSummary::-webkit-details-marker {
+  display: none;
+}
+.kickoffMsgSummary:hover {
+  border-color: var(--blue);
+  background: #eef3fb;
+}
+.kickoffMsg[open] .kickoffMsgSummary {
+  margin-bottom: 10px;
+}
+
 /* Emerging (sub-strong) signal marker */
 .emergingTag {
   font-size: 10px;

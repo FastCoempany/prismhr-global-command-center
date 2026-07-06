@@ -63,3 +63,15 @@ export async function unsnoozeSignal(formData: FormData) {
   await getPrisma().signalSnooze.deleteMany({ where: { accountId } });
   done();
 }
+
+// Toggle a task's done-mark. The key already encodes the period (day/week), so
+// presence = done for that period; toggling flips it.
+export async function toggleTaskDone(formData: FormData) {
+  const key = str(formData, "key", 160);
+  if (!(await requireWrite()) || !key) done();
+  const prisma = getPrisma();
+  const existing = await prisma.taskDone.findUnique({ where: { key } });
+  if (existing) await prisma.taskDone.delete({ where: { key } });
+  else await prisma.taskDone.create({ data: { key } });
+  done();
+}

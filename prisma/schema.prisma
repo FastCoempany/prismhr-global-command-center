@@ -961,6 +961,18 @@ model FieldNote {
   @@index([resolved])
 }
 
+// Completion marks for the day/week — so the owner can see when every little
+// task is done. The key encodes the task AND its period (e.g.
+// "morning:2026-07-06:acct:<id>" or "kickoff:2026-W28:Anika Steenstra"), so it
+// resets automatically on a new day/week. Presence = done.
+model TaskDone {
+  id     String   @id @default(cuid())
+  key    String   @unique
+  doneAt DateTime @default(now())
+
+  @@index([key])
+}
+
 // --- Today interaction overlays ---------------------------------------------
 // Small, isolated stores that let Today become act-in-place without duplicating
 // the Dashboard ledger. Keyed by the Salesforce account id from the book.
