@@ -2279,10 +2279,6 @@
 
 /* ── Follow-ups band ─────────────────────────────────────────────────── */
 .fuBand {
-  border: 1px solid #fed7aa;
-  background: linear-gradient(180deg, #fff7ed, var(--card, #fff) 60%);
-  border-radius: 14px;
-  padding: 16px 18px;
   margin: 18px 0;
 }
 .fuBandHead {
@@ -2488,15 +2484,29 @@
 .fuGrid {
   display: grid;
   grid-template-columns: 1.35fr 1fr;
-  gap: 20px;
+  gap: 18px;
 }
 @media (max-width: 820px) {
   .fuGrid {
     grid-template-columns: 1fr;
   }
 }
+/* Each column is its own colored panel — the gap + distinct tint + accent bar
+   delineate Follow-ups (orange) from To-do's (navy). */
 .fuCol {
   min-width: 0;
+  border-radius: 14px;
+  padding: 15px 17px;
+}
+.fuColFollow {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-top: 3px solid var(--orange);
+}
+.fuColTodo {
+  background: #eef4ff;
+  border: 1px solid #cdddf5;
+  border-top: 3px solid var(--navy);
 }
 .fuNote {
   margin: 0;

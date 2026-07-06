@@ -641,7 +641,7 @@ export default async function TodayPage({
         <section className={styles.fuBand}>
           <div className={styles.fuGrid}>
             {/* Left — Follow-ups (auto from contacts + your own) */}
-            <div className={styles.fuCol}>
+            <div className={`${styles.fuCol} ${styles.fuColFollow}`}>
               <div className={styles.fuBandHead}>
                 <span className={styles.fuTag}>Follow-ups</span>
                 <h2 className={styles.fuTitle}>
@@ -700,7 +700,7 @@ export default async function TodayPage({
             </div>
 
             {/* Right — plain to-do's */}
-            <div className={styles.fuCol}>
+            <div className={`${styles.fuCol} ${styles.fuColTodo}`}>
               <div className={styles.fuBandHead}>
                 <span className={styles.todoTag}>To-do&apos;s</span>
                 <h2 className={styles.fuTitle}>
