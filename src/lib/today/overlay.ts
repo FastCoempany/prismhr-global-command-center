@@ -5,6 +5,7 @@
 
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import type { Snooze, Validation, ValidationStatus } from "./build";
+import type { Touch, TouchLogEntry } from "./follow-ups";
 
 function asStatus(s: string): ValidationStatus {
   return s === "flagged" || s === "adjusted" ? s : "confirmed";
@@ -33,6 +34,43 @@ export async function loadDoneKeys(): Promise<Set<string>> {
     return new Set(rows.map((r) => r.key));
   } catch {
     return new Set();
+  }
+}
+
+// Normalize a JSON log column into typed entries, dropping anything malformed.
+function normTouchLog(raw: unknown): TouchLogEntry[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((e) => {
+      const o = (e ?? {}) as Record<string, unknown>;
+      return {
+        at: typeof o.at === "string" ? o.at : "",
+        body: typeof o.body === "string" ? o.body : "",
+      };
+    })
+    .filter((e) => e.body.trim());
+}
+
+// Logged contacts + their follow-up cadence. Defensive: degrades to [] if the
+// Touch table hasn't been migrated yet.
+export async function loadTouches(): Promise<Touch[]> {
+  if (!hasDatabaseEnv()) return [];
+  try {
+    const rows = await getPrisma().touch.findMany();
+    return rows.map((r) => ({
+      subjectKey: r.subjectKey,
+      kind: r.kind === "account" ? "account" : "partner",
+      label: r.label,
+      detail: r.detail ?? "",
+      message: r.message ?? "",
+      contactedAt: r.contactedAt.toISOString(),
+      followUpAt: r.followUpAt.toISOString(),
+      intervalDays: r.intervalDays,
+      status: r.status === "replied" ? "replied" : "awaiting",
+      log: normTouchLog(r.log),
+    }));
+  } catch {
+    return [];
   }
 }
 

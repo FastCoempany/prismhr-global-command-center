@@ -33,6 +33,16 @@ import {
   type Snooze,
   type Validation,
 } from "@/lib/today/build";
+import {
+  daysUntilIso,
+  FOLLOWUP_DAYS,
+  followUpFrom,
+  followUpMessage,
+  isDue,
+  outreachSubjectKey,
+  partitionFollowUps,
+  type Touch,
+} from "@/lib/today/follow-ups";
 import { DEMAND_GATE } from "@/lib/book/research";
 
 // --- factories ---------------------------------------------------------------
@@ -556,6 +566,84 @@ describe("partnerKickoff & partnerWeekMessage", () => {
     // not a "win-back" (they've never left — we just don't hold their global layer).
     assert.match(msg, /consolidate/);
     assert.match(msg, /already run their domestic PEO on PrismHR/);
+  });
+});
+
+// --- follow-up cadence -------------------------------------------------------
+
+function touch(p: Partial<Touch>): Touch {
+  return {
+    subjectKey: p.subjectKey ?? "k",
+    kind: p.kind ?? "partner",
+    label: p.label ?? "Anika Steenstra",
+    detail: p.detail ?? "5 accounts teed up",
+    message: p.message ?? "",
+    contactedAt: p.contactedAt ?? new Date(0).toISOString(),
+    followUpAt: p.followUpAt ?? new Date(0).toISOString(),
+    intervalDays: p.intervalDays ?? 2,
+    status: p.status ?? "awaiting",
+    log: p.log ?? [],
+  };
+}
+
+describe("follow-ups", () => {
+  const now = 100 * DAY;
+
+  test("isDue: awaiting + past follow-up is due; future isn't; replied never is", () => {
+    assert.equal(isDue(touch({ followUpAt: new Date(now - DAY).toISOString() }), now), true);
+    assert.equal(isDue(touch({ followUpAt: new Date(now + DAY).toISOString() }), now), false);
+    assert.equal(
+      isDue(touch({ status: "replied", followUpAt: new Date(now - DAY).toISOString() }), now),
+      false,
+    );
+  });
+
+  test("partition splits due / upcoming / replied; due is most-overdue first", () => {
+    const a = touch({ subjectKey: "a", followUpAt: new Date(now - 3 * DAY).toISOString() });
+    const b = touch({ subjectKey: "b", followUpAt: new Date(now - DAY).toISOString() });
+    const c = touch({ subjectKey: "c", followUpAt: new Date(now + 2 * DAY).toISOString() });
+    const d = touch({ subjectKey: "d", status: "replied" });
+    const r = partitionFollowUps([b, a, c, d], now);
+    assert.deepEqual(
+      r.due.map((t) => t.subjectKey),
+      ["a", "b"],
+    );
+    assert.deepEqual(
+      r.upcoming.map((t) => t.subjectKey),
+      ["c"],
+    );
+    assert.deepEqual(
+      r.replied.map((t) => t.subjectKey),
+      ["d"],
+    );
+  });
+
+  test("followUpFrom respects the interval and defaults to FOLLOWUP_DAYS", () => {
+    assert.equal(followUpFrom(now, 2), new Date(now + 2 * DAY).toISOString());
+    assert.equal(followUpFrom(now), new Date(now + FOLLOWUP_DAYS * DAY).toISOString());
+  });
+
+  test("daysUntilIso ceils, and past instants floor at zero (due, not negative)", () => {
+    assert.equal(daysUntilIso(new Date(now + 2 * DAY).toISOString(), now), 2);
+    assert.equal(daysUntilIso(new Date(now - DAY).toISOString(), now), 0);
+  });
+
+  test("partner nudge names the partner, the teed-up accounts, and how long it's been", () => {
+    const m = followUpMessage(
+      touch({
+        label: "Anika Steenstra",
+        detail: "5 accounts teed up",
+        contactedAt: new Date(now - 2 * DAY).toISOString(),
+      }),
+      now,
+    );
+    assert.match(m, /Anika/);
+    assert.match(m, /5 accounts teed up/);
+    assert.match(m, /2 days ago/);
+  });
+
+  test("outreachSubjectKey is stable per account", () => {
+    assert.equal(outreachSubjectKey("001X"), "outreach:001X");
   });
 });
 

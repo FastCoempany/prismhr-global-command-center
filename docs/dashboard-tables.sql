@@ -99,3 +99,28 @@ CREATE TABLE IF NOT EXISTS "TaskDone" (
   CONSTRAINT "TaskDone_pkey" PRIMARY KEY ("id")
 );
 CREATE UNIQUE INDEX IF NOT EXISTS "TaskDone_key_key" ON "TaskDone"("key");
+
+-- Logged contacts ("touches") with an automatic follow-up cadence. Marking a
+-- partner contacted / an outreach sent creates one; Today surfaces it when the
+-- follow-up comes due and keeps nudging every intervalDays until a reply is
+-- marked. subjectKey is stable/deterministic so re-contacting advances the same
+-- thread. Safe to re-run.
+CREATE TABLE IF NOT EXISTS "Touch" (
+  "id" TEXT NOT NULL,
+  "subjectKey" TEXT NOT NULL,
+  "kind" TEXT NOT NULL DEFAULT 'partner',
+  "label" TEXT NOT NULL,
+  "detail" TEXT,
+  "message" TEXT,
+  "contactedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "followUpAt" TIMESTAMP(3) NOT NULL,
+  "intervalDays" INTEGER NOT NULL DEFAULT 2,
+  "status" TEXT NOT NULL DEFAULT 'awaiting',
+  "log" JSONB,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL,
+  CONSTRAINT "Touch_pkey" PRIMARY KEY ("id")
+);
+CREATE UNIQUE INDEX IF NOT EXISTS "Touch_subjectKey_key" ON "Touch"("subjectKey");
+CREATE INDEX IF NOT EXISTS "Touch_status_idx" ON "Touch"("status");
+CREATE INDEX IF NOT EXISTS "Touch_followUpAt_idx" ON "Touch"("followUpAt");
