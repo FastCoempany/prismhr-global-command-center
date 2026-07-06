@@ -138,3 +138,21 @@ CREATE TABLE IF NOT EXISTS "Todo" (
 );
 CREATE INDEX IF NOT EXISTS "Todo_done_idx" ON "Todo"("done");
 CREATE INDEX IF NOT EXISTS "Todo_position_idx" ON "Todo"("position");
+
+-- Per-account engagement — CSM meeting cadence, CSM notes, client health, and
+-- whether Salesforce research has been pulled. Keyed by the SF account id.
+-- Safe to re-run.
+CREATE TABLE IF NOT EXISTS "AccountEngagement" (
+  "id" TEXT NOT NULL,
+  "accountId" TEXT NOT NULL,
+  "cadence" TEXT,
+  "meetingDay" TEXT,
+  "nextMeetingAt" TIMESTAMP(3),
+  "clientHealth" TEXT,
+  "csmNotes" TEXT,
+  "sfCheckedAt" TIMESTAMP(3),
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL,
+  CONSTRAINT "AccountEngagement_pkey" PRIMARY KEY ("id")
+);
+CREATE UNIQUE INDEX IF NOT EXISTS "AccountEngagement_accountId_key" ON "AccountEngagement"("accountId");

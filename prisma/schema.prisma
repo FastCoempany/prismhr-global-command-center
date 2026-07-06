@@ -1060,3 +1060,21 @@ model Todo {
   @@index([done])
   @@index([position])
 }
+
+// Per-account engagement — the CSM's meeting cadence with the client, a running
+// CSM-notes/health read, and whether Salesforce research has been pulled. Keyed
+// by the Salesforce account id from the book (like SignalSnooze / ScoreValidation).
+model AccountEngagement {
+  id            String    @id @default(cuid())
+  accountId     String    @unique
+  cadence       String?
+  meetingDay    String?
+  nextMeetingAt DateTime?
+  clientHealth  String? // "green" | "yellow" | "red"
+  csmNotes      String?
+  sfCheckedAt   DateTime? // when Salesforce research was last pulled
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([accountId])
+}
