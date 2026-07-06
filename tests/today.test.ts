@@ -46,6 +46,7 @@ import {
   type Touch,
 } from "@/lib/today/follow-ups";
 import { isRealSfId, sfAccountUrl } from "@/lib/salesforce";
+import { askToJoinMessage, EMPTY_ENGAGEMENT, engagementGates } from "@/lib/engagement";
 import { DEMAND_GATE } from "@/lib/book/research";
 
 // --- factories ---------------------------------------------------------------
@@ -695,6 +696,43 @@ describe("salesforce helpers", () => {
     const a = intel({ name: "Acme", csm: "Anika", demand: 55, play: "greenfield" });
     assert.match(outreachGuidance(a).how.join(" "), /Salesforce/);
     assert.match(triageGuidance(a).how.join(" "), /Salesforce/);
+  });
+});
+
+// --- CSM engagement ----------------------------------------------------------
+
+describe("engagement", () => {
+  test("gates count SF / notes / health independently; done only at 3/3", () => {
+    assert.deepEqual({ ...engagementGates(EMPTY_ENGAGEMENT) }, {
+      sf: false,
+      notes: false,
+      health: false,
+      count: 0,
+      done: false,
+    });
+    const g = engagementGates({
+      ...EMPTY_ENGAGEMENT,
+      sfChecked: true,
+      csmNotes: "spoke Tuesday",
+      clientHealth: "green",
+    });
+    assert.equal(g.count, 3);
+    assert.equal(g.done, true);
+    // whitespace-only notes don't count
+    assert.equal(engagementGates({ ...EMPTY_ENGAGEMENT, csmNotes: "   " }).notes, false);
+  });
+
+  test("ask-to-join names the CSM + account and reflects the cadence when set", () => {
+    const withCadence = askToJoinMessage("Anika Steenstra", "XcelHR", {
+      ...EMPTY_ENGAGEMENT,
+      cadence: "Biweekly",
+      meetingDay: "Thursday",
+    });
+    assert.match(withCadence, /Anika/);
+    assert.match(withCadence, /XcelHR/);
+    assert.match(withCadence, /Biweekly \(Thursday\)/);
+    // falls back gracefully with no cadence
+    assert.match(askToJoinMessage("Lesha Cyphers", "MAU", EMPTY_ENGAGEMENT), /next check-in with MAU/);
   });
 });
 

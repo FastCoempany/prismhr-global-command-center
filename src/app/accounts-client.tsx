@@ -6,8 +6,15 @@ import { useFormStatus } from "react-dom";
 import { EXTRA_PARTNERS, partnerRole } from "@/lib/book/partners";
 import { competitorUrl } from "@/lib/book/research";
 import { SfCheckpoint } from "@/components/sf";
+import {
+  askToJoinMessage,
+  CADENCE_OPTIONS,
+  engagementGates,
+  type Engagement,
+} from "@/lib/engagement";
 import { addCard } from "./dashboard/actions";
-import { clearValidation, validateScore } from "./accounts/actions";
+import { clearValidation, saveEngagement, toggleSfChecked, validateScore } from "./accounts/actions";
+import { EditableMessage } from "./today-client";
 import styles from "./command-center.module.css";
 
 function CompetitorLinks({ names }: { names: string[] }) {
@@ -130,6 +137,7 @@ export type AccountRow = {
     note?: string;
     adjustedDemand?: number;
   } | null;
+  engagement: Engagement;
 };
 
 const fitClass: Record<string, string> = {
@@ -148,6 +156,105 @@ const BAR_LABEL = {
   model: "Model fit",
   recency: "Recency",
 } as const;
+
+const HEALTHS = ["green", "yellow", "red"] as const;
+
+// The CSM-engagement panel: meeting cadence, notes, client health, the three prep
+// gates (SF pulled · notes · health), and a ready "can I join?" message. This is
+// the partner-first motion made concrete — ride the CSM's existing meetings.
+function EngagementPanel({ a }: { a: AccountRow }) {
+  const e = a.engagement;
+  const gates = engagementGates(e);
+  const who = a.csm.trim().split(/\s+/)[0] || a.csm;
+  return (
+    <div className={styles.engage}>
+      <div className={styles.engageHead}>
+        <span className={styles.engageTitle}>CSM engagement — {a.csm}</span>
+        <span className={styles.engageGates}>
+          Prep {gates.count}/3
+          <span className={gates.sf ? styles.gateOn : styles.gateOff}>SF</span>
+          <span className={gates.notes ? styles.gateOn : styles.gateOff}>Notes</span>
+          <span className={gates.health ? styles.gateOn : styles.gateOff}>Health</span>
+        </span>
+      </div>
+
+      <form action={toggleSfChecked} className={styles.engageSfForm}>
+        <input type="hidden" name="accountId" value={a.id} />
+        <button className={e.sfChecked ? styles.gateBtnOn : styles.gateBtnOff}>
+          {e.sfChecked ? "✓ Salesforce research pulled" : "☐ Mark Salesforce research pulled"}
+        </button>
+      </form>
+
+      <form action={saveEngagement} className={styles.engageForm}>
+        <input type="hidden" name="accountId" value={a.id} />
+        <div className={styles.engageGrid}>
+          <label className={styles.engageField}>
+            <span>Cadence</span>
+            <input
+              name="cadence"
+              defaultValue={e.cadence}
+              list="cadenceOpts"
+              placeholder="Weekly / Monthly…"
+              maxLength={40}
+            />
+          </label>
+          <label className={styles.engageField}>
+            <span>Meeting day</span>
+            <input name="meetingDay" defaultValue={e.meetingDay} placeholder="Thursday" maxLength={20} />
+          </label>
+          <label className={styles.engageField}>
+            <span>Next meeting</span>
+            <input type="date" name="nextMeeting" defaultValue={e.nextMeeting} />
+          </label>
+        </div>
+        <datalist id="cadenceOpts">
+          {CADENCE_OPTIONS.map((c) => (
+            <option key={c} value={c} />
+          ))}
+        </datalist>
+        <div className={styles.engageHealth}>
+          <span className={styles.engageHealthLab}>Client health</span>
+          {HEALTHS.map((h) => (
+            <label key={h} className={styles.healthOpt}>
+              <input
+                type="radio"
+                name="clientHealth"
+                value={h}
+                defaultChecked={e.clientHealth === h}
+              />
+              <span className={`${styles.healthDot} ${styles[`health_${h}`]}`}>{h}</span>
+            </label>
+          ))}
+          <label className={styles.healthOpt}>
+            <input type="radio" name="clientHealth" value="" defaultChecked={e.clientHealth === ""} />
+            <span className={styles.healthNone}>—</span>
+          </label>
+        </div>
+        <label className={styles.engageField}>
+          <span>CSM notes</span>
+          <textarea
+            name="csmNotes"
+            defaultValue={e.csmNotes}
+            rows={3}
+            maxLength={4000}
+            placeholder="What the CSM said — the client's world, health, timing, any cross-border hints…"
+          />
+        </label>
+        <button className={styles.engageSave}>Save engagement</button>
+      </form>
+
+      <details className={styles.engageAsk}>
+        <summary className={styles.engageAskSummary}>
+          ✎ &ldquo;Can I join?&rdquo; — message to {who}
+        </summary>
+        <EditableMessage
+          text={askToJoinMessage(a.csm, a.name, e)}
+          copyLabel={`Copy the ask-to-join to ${who}`}
+        />
+      </details>
+    </div>
+  );
+}
 
 export function AccountsClient({
   rows,
@@ -507,6 +614,7 @@ export function AccountsClient({
                   <td colSpan={7}>
                     <div className={styles.acctDetail}>
                       <SfCheckpoint when="account" id={a.id} name={a.name} />
+                      <EngagementPanel a={a} />
                       <div className={styles.demandBlock}>
                         {a.researched && a.demand != null ? (
                           <>

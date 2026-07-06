@@ -4,6 +4,7 @@
 // the page's loadDashboard() call before these run.
 
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
+import type { ClientHealth, Engagement } from "@/lib/engagement";
 import type { Snooze, Validation, ValidationStatus } from "./build";
 import type { Todo, Touch, TouchLogEntry } from "./follow-ups";
 
@@ -71,6 +72,33 @@ export async function loadTouches(): Promise<Touch[]> {
     }));
   } catch {
     return [];
+  }
+}
+
+// Per-account engagement (CSM cadence / notes / health / SF-checked). Keyed by
+// account id. Defensive → empty map if unmigrated.
+export async function loadEngagements(): Promise<Map<string, Engagement>> {
+  if (!hasDatabaseEnv()) return new Map();
+  try {
+    const rows = await getPrisma().accountEngagement.findMany();
+    return new Map(
+      rows.map((r) => [
+        r.accountId,
+        {
+          cadence: r.cadence ?? "",
+          meetingDay: r.meetingDay ?? "",
+          nextMeeting: r.nextMeetingAt ? r.nextMeetingAt.toISOString().slice(0, 10) : "",
+          clientHealth: (["green", "yellow", "red"].includes(r.clientHealth ?? "")
+            ? r.clientHealth
+            : "") as ClientHealth,
+          csmNotes: r.csmNotes ?? "",
+          sfChecked: r.sfCheckedAt != null,
+          sfCheckedAt: r.sfCheckedAt ? r.sfCheckedAt.toISOString() : "",
+        },
+      ]),
+    );
+  } catch {
+    return new Map();
   }
 }
 
