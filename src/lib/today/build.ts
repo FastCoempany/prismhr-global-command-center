@@ -317,6 +317,65 @@ export function commitmentBrief(step: CardStep): Brief {
   };
 }
 
+// --- Weekly partner kickoff (Monday ritual) ---------------------------------
+// At the start of the week, tee up at least N interactions per partner: their
+// top Global targets, plus a ready-to-send opener that names them. Only partners
+// who actually have a real target (a play) show up — no point teeing up a book
+// with nothing global in it.
+
+// True on Sunday/Monday (UTC) — the window to plan the week. A default-param now
+// keeps the impure clock read out of the React render path.
+export function isWeekKickoff(now: number = Date.now()): boolean {
+  const day = new Date(now).getUTCDay();
+  return day === 0 || day === 1; // Sun or Mon
+}
+
+export type PartnerKickoff = { partner: string; role: string; accounts: AccountIntel[] };
+
+export function partnerKickoff(
+  intel: AccountIntel[],
+  parkedIds: Set<string>,
+  perPartner = 5,
+): PartnerKickoff[] {
+  const byPartner = new Map<string, AccountIntel[]>();
+  for (const a of intel) {
+    if (parkedIds.has(a.id)) continue;
+    const p = a.csm?.trim();
+    if (!p || p === "Unassigned") continue;
+    const list = byPartner.get(p);
+    if (list) list.push(a);
+    else byPartner.set(p, [a]);
+  }
+  const out: PartnerKickoff[] = [];
+  for (const [partner, accts] of byPartner) {
+    if (!accts.some((a) => a.play)) continue; // only partners with a real target
+    const top = [...accts].sort((x, y) => y.score - x.score).slice(0, perPartner);
+    out.push({ partner, role: partnerRole(partner), accounts: top });
+  }
+  // Partners with the strongest lead account first.
+  return out.sort((a, b) => (b.accounts[0]?.score ?? 0) - (a.accounts[0]?.score ?? 0));
+}
+
+// A ready-to-send opener that names the partner's teed-up accounts — one message
+// that opens several conversations. Thorough and relationship-safe by design.
+export function partnerWeekMessage(partner: string, accounts: AccountIntel[]): string {
+  const who = firstNameOf(partner);
+  const named = accounts.map((a) => {
+    const why =
+      a.play === "displacement"
+        ? `already on ${a.competitors[0] ?? "a competitor"}, possible win-back`
+        : a.play === "greenfield"
+          ? "early greenfield signal"
+          : "worth a quick look";
+    return `${a.name} (${why})`;
+  });
+  const list =
+    named.length <= 1
+      ? named[0] ?? ""
+      : `${named.slice(0, -1).join(", ")}, and ${named[named.length - 1]}`;
+  return `Hi ${who} — kicking off the week. As I work the PrismHR Global side, I've been going through your book and pulled a few accounts I'd love your read on for global-hiring potential: ${list}. None of these are urgent, and I don't want to get ahead of any of your relationships — I'm really just trying to find where there might be a global opening worth a conversation. Could we grab 15 minutes this week to run through them? Even a quick “yes / no / not yet” on each would help me prioritize. Thanks so much!`;
+}
+
 export type Narrative = {
   researched: number;
   total: number;

@@ -14,11 +14,14 @@ import {
   firstNameOf,
   isStrongSignal,
   isTrusted,
+  isWeekKickoff,
   movedThisWeek,
   narrative,
   outreachBrief,
   partitionSignals,
+  partnerKickoff,
   partnerMessage,
+  partnerWeekMessage,
   signals,
   stateOfPlay,
   triageBrief,
@@ -246,7 +249,13 @@ function MorningMove({ mv, n }: { mv: Mv; n: number }) {
   );
 }
 
-export default async function TodayPage() {
+export default async function TodayPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [k: string]: string | string[] | undefined }>;
+}) {
+  const sp = await searchParams;
+  const forceWeek = sp.week === "1";
   const dash = await loadDashboard();
 
   if (dash.status === "unauthenticated") {
@@ -287,6 +296,12 @@ export default async function TodayPage() {
   );
   const move = candidates[0] ?? null;
 
+  // Week kickoff (Sun/Mon, or forced via ?week=1): tee up ≥5 interactions per
+  // partner with a real target.
+  const showKickoff = forceWeek || isWeekKickoff();
+  const kickoff = showKickoff ? partnerKickoff(intel, parkedIds) : [];
+  const kickoffTotal = kickoff.reduce((n, k) => n + k.accounts.length, 0);
+
   const sop = stateOfPlay({ cards: dash.cards, commitments, activeSignals, onBoard });
 
   // ── Compose "This morning": an ordered list of thoroughly-written moves. ──
@@ -323,6 +338,52 @@ export default async function TodayPage() {
           <b>PEO channel</b> (CSM-owned) and the <b>HCM funnel</b> (Eric&apos;s HCM logos + HRaaS +
           clients on our PrismHR HCM). Read → route → record.
         </p>
+
+        {/* ── Week kickoff (Sun/Mon) ─────────────────────────────────────── */}
+        {kickoff.length > 0 && (
+          <section className={styles.kickoff}>
+            <div className={styles.kickoffHead}>
+              <span className={styles.kickoffTag}>Week kickoff</span>
+              <h2 className={styles.kickoffTitle}>
+                Line up at least 5 interactions per partner
+              </h2>
+              <p className={styles.kickoffSub}>
+                It&apos;s the start of the week. {kickoff.length}{" "}
+                {kickoff.length === 1 ? "partner has" : "partners have"} real Global targets —{" "}
+                {kickoffTotal} accounts teed up. Send each partner their opener, then work the
+                replies through the week.
+              </p>
+            </div>
+            {kickoff.map((k) => (
+              <div key={k.partner} className={styles.kickoffPartner}>
+                <div className={styles.kickoffPartnerHead}>
+                  <span className={styles.kickoffPartnerName}>{k.partner}</span>
+                  <span className={styles.kickoffPartnerRole}>{k.role}</span>
+                  <span className={styles.kickoffCount}>
+                    {k.accounts.length} teed up
+                    {k.accounts.length < 5 ? " · fewer than 5 in this book" : ""}
+                  </span>
+                </div>
+                <div className={styles.kickoffAccts}>
+                  {k.accounts.map((a) => (
+                    <Link
+                      key={a.id}
+                      href={`/accounts?focus=${a.id}`}
+                      className={styles.kickoffAcct}
+                    >
+                      {a.name} <b>{a.score}</b>
+                      {a.play ? ` · ${a.play}` : ""}
+                    </Link>
+                  ))}
+                </div>
+                <CopyLine
+                  text={partnerWeekMessage(k.partner, k.accounts)}
+                  label={`Copy the week-opener to ${firstNameOf(k.partner)}`}
+                />
+              </div>
+            ))}
+          </section>
+        )}
 
         {/* ── Right now (quiet status) ───────────────────────────────────── */}
         <div className={styles.sop}>
