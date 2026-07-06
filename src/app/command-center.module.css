@@ -2212,9 +2212,13 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  align-items: flex-start;
+  align-items: stretch;
+}
+.contactForm .editMsg {
+  width: 100%;
 }
 .contactSendBtn {
+  align-self: flex-start;
   border: none;
   background: var(--orange);
   color: #fff;
