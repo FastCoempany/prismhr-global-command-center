@@ -348,10 +348,10 @@ export default async function TodayPage({
                 Line up at least 5 interactions per partner
               </h2>
               <p className={styles.kickoffSub}>
-                It&apos;s the start of the week. {kickoff.length}{" "}
-                {kickoff.length === 1 ? "partner has" : "partners have"} real Global targets —{" "}
-                {kickoffTotal} accounts teed up. Send each partner their opener, then work the
-                replies through the week.
+                It&apos;s the start of the week. Arm every partner — {kickoff.length}{" "}
+                {kickoff.length === 1 ? "partner" : "partners"}, {kickoffTotal} accounts teed up
+                (each partner&apos;s top Global-fit from their book). Send each partner their opener,
+                then work the replies through the week.
               </p>
             </div>
             {kickoff.map((k) => (

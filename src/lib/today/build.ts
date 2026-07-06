@@ -319,9 +319,10 @@ export function commitmentBrief(step: CardStep): Brief {
 
 // --- Weekly partner kickoff (Monday ritual) ---------------------------------
 // At the start of the week, tee up at least N interactions per partner: their
-// top Global targets, plus a ready-to-send opener that names them. Only partners
-// who actually have a real target (a play) show up — no point teeing up a book
-// with nothing global in it.
+// top Global-fit accounts, plus a ready-to-send opener that names them. Every
+// partner is included — the point is to arm the whole roster, not just the two
+// who already have hot signals; a book with no researched play still gets its
+// best-fit accounts as conversation starters (that's the drum-up motion).
 
 // True on Sunday/Monday (UTC) — the window to plan the week. A default-param now
 // keeps the impure clock read out of the React render path.
@@ -348,7 +349,6 @@ export function partnerKickoff(
   }
   const out: PartnerKickoff[] = [];
   for (const [partner, accts] of byPartner) {
-    if (!accts.some((a) => a.play)) continue; // only partners with a real target
     const top = [...accts].sort((x, y) => y.score - x.score).slice(0, perPartner);
     out.push({ partner, role: partnerRole(partner), accounts: top });
   }

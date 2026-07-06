@@ -430,19 +430,22 @@ describe("isWeekKickoff", () => {
 });
 
 describe("partnerKickoff & partnerWeekMessage", () => {
-  test("only partners with a real target; top-N by score, parked excluded", () => {
+  test("includes every partner (except Unassigned); top-N by score, parked excluded", () => {
     const rows = [
       intel({ id: "a1", name: "Acme", csm: "Anika", play: "displacement", competitors: ["Deel"], score: 70 }),
       intel({ id: "a2", name: "Beta", csm: "Anika", play: null, score: 60 }),
       intel({ id: "a3", name: "Gamma", csm: "Anika", play: null, score: 40 }),
-      intel({ id: "b1", name: "Delta", csm: "Cody", play: null, score: 55 }), // no play → skip Cody
+      intel({ id: "b1", name: "Delta", csm: "Cody", play: null, score: 55 }), // no play — Cody still included
+      intel({ id: "u1", name: "Nobody", csm: "Unassigned", play: "greenfield", score: 99 }), // excluded
       intel({ id: "p1", name: "Parked", csm: "Anika", play: "greenfield", score: 90 }),
     ];
     const out = partnerKickoff(rows, new Set(["p1"]), 5);
-    assert.equal(out.length, 1); // only Anika (has a play)
-    assert.equal(out[0].partner, "Anika");
-    // parked p1 excluded even though it has a play + top score
+    assert.equal(out.length, 2); // Anika and Cody; Unassigned dropped
+    assert.equal(out[0].partner, "Anika"); // strongest lead account first
+    // parked p1 excluded even though it has the top score
     assert.deepEqual(out[0].accounts.map((a) => a.id), ["a1", "a2", "a3"]);
+    assert.equal(out[1].partner, "Cody");
+    assert.deepEqual(out[1].accounts.map((a) => a.id), ["b1"]);
   });
 
   test("caps at N per partner", () => {
