@@ -9,11 +9,15 @@ export function isRealSfId(id: string): boolean {
   return /^001[a-zA-Z0-9]{12}([a-zA-Z0-9]{3})?$/.test(id.trim());
 }
 
-// A Lightning deep-link to the Account record, when the SF instance base URL is
-// configured (NEXT_PUBLIC_SF_BASE_URL, e.g. "https://prismhr.lightning.force.com")
-// and the id is a real SF id. Null otherwise — the UI falls back to a copyable id.
+// The PrismHR Salesforce org's Lightning domain (public My Domain, not a secret).
+// Overridable via NEXT_PUBLIC_SF_BASE_URL if the instance ever changes.
+const DEFAULT_SF_BASE = "https://prismhr.lightning.force.com";
+
+// A Lightning deep-link to the Account record for a real SF id. Null for
+// synthetic ids (manually-added accounts) — the UI falls back to a "no record
+// yet" note.
 export function sfAccountUrl(id: string): string | null {
-  const base = process.env.NEXT_PUBLIC_SF_BASE_URL?.trim().replace(/\/+$/, "");
+  const base = (process.env.NEXT_PUBLIC_SF_BASE_URL?.trim() || DEFAULT_SF_BASE).replace(/\/+$/, "");
   if (!base || !isRealSfId(id)) return null;
   return `${base}/lightning/r/Account/${id.trim()}/view`;
 }
