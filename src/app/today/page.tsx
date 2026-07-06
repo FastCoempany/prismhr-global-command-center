@@ -15,6 +15,7 @@ import {
   FOLLOWUP_DAYS,
   followUpMessage,
   followUpStatusLine,
+  outreachSubjectKey,
   partitionFollowUps,
   type Touch,
 } from "@/lib/today/follow-ups";
@@ -57,6 +58,7 @@ import {
   addTodo,
   addTouchNote,
   deleteTodo,
+  deleteTouch,
   markReplied,
   resolveFieldNote,
   snoozeFollowUp,
@@ -181,11 +183,13 @@ function GuidanceBody({
   term,
   href,
   children,
+  sayNode,
 }: {
   g: Guidance;
   term: string;
   href: string;
   children?: ReactNode;
+  sayNode?: ReactNode; // overrides the default "Say this" block (e.g. a ContactControl)
 }) {
   return (
     <div className={styles.gWrap}>
@@ -203,12 +207,14 @@ function GuidanceBody({
           ))}
         </ol>
       </div>
-      {g.say && (
-        <div className={styles.gSay}>
-          <span className={styles.gLabel}>Say this — edit anything, then copy</span>
-          <EditableMessage text={g.say} />
-        </div>
-      )}
+      {sayNode
+        ? sayNode
+        : g.say && (
+            <div className={styles.gSay}>
+              <span className={styles.gLabel}>Say this — edit anything, then copy</span>
+              <EditableMessage text={g.say} />
+            </div>
+          )}
       {children}
       {g.consider && (
         <div className={styles.gConsider}>
@@ -227,7 +233,19 @@ function moveTerm(mv: Mv): { term: string; href: string } {
 
 // One fully-guided move: DO/HOW/SAY/CONSIDER + the real action panel + a
 // uniform "Mark done ✓" you can always see the state of.
-function MorningMove({ mv, n, doneKey, done }: { mv: Mv; n: number; doneKey: string; done: boolean }) {
+function MorningMove({
+  mv,
+  n,
+  doneKey,
+  done,
+  touch,
+}: {
+  mv: Mv;
+  n: number;
+  doneKey: string;
+  done: boolean;
+  touch?: Touch;
+}) {
   const { term, href } = moveTerm(mv);
   let g: Guidance;
   let chips: ReactNode = null;
@@ -290,12 +308,20 @@ function MorningMove({ mv, n, doneKey, done }: { mv: Mv; n: number; doneKey: str
     );
   }
 
-  const doneBtn = (
+  const isOutreach = mv.kind === "outreach";
+
+  // Outreach completes by logging a contact (a Touch) — which also arms the
+  // 2-day follow-up and captures the message — so its "Say this" slot is the
+  // send control, and Undo removes the touch. Everything else uses a TaskDone key.
+  const undoBtn = isOutreach ? (
+    <form action={deleteTouch} className={styles.mvDoneForm}>
+      <input type="hidden" name="subjectKey" value={outreachSubjectKey(mv.a.id)} />
+      <button className={styles.mvUndoBtn}>Undo</button>
+    </form>
+  ) : (
     <form action={toggleTaskDone} className={styles.mvDoneForm}>
       <input type="hidden" name="key" value={doneKey} />
-      <button className={done ? styles.mvUndoBtn : styles.mvDoneBtn}>
-        {done ? "Undo" : "Mark done ✓"}
-      </button>
+      <button className={styles.mvUndoBtn}>Undo</button>
     </form>
   );
 
@@ -308,11 +334,29 @@ function MorningMove({ mv, n, doneKey, done }: { mv: Mv; n: number; doneKey: str
           <span className={styles.mvDoneText}>
             <Emph text={g.do} term={term} href={href} />
           </span>
-          {doneBtn}
+          {undoBtn}
         </div>
       </div>
     );
   }
+
+  const sayNode = isOutreach ? (
+    <div className={styles.gSay}>
+      <span className={styles.gLabel}>Send this — edit, copy, send, then mark it sent</span>
+      <ContactControl
+        subjectKey={outreachSubjectKey(mv.a.id)}
+        kind="account"
+        label={mv.a.name}
+        detail={`${mv.a.csm}${mv.a.play ? ` · ${mv.a.play}` : ""}`}
+        defaultMessage={g.say ?? ""}
+        sentLabel="Mark sent ✓ (sets a 2-day follow-up)"
+        doneText="Sent ✓"
+        editLabel={`Edit & copy the message to ${firstNameOf(mv.a.csm)}`}
+        contacted={done}
+        followUpLabel={touch ? shortDate(touch.followUpAt) : undefined}
+      />
+    </div>
+  ) : undefined;
 
   const sfCheck =
     mv.kind === "outreach" ? (
@@ -327,10 +371,15 @@ function MorningMove({ mv, n, doneKey, done }: { mv: Mv; n: number; doneKey: str
       <div className={styles.mvBody}>
         <div className={styles.mvTopRow}>
           <div className={styles.mvMeta}>{chips}</div>
-          {doneBtn}
+          {!isOutreach && (
+            <form action={toggleTaskDone} className={styles.mvDoneForm}>
+              <input type="hidden" name="key" value={doneKey} />
+              <button className={styles.mvDoneBtn}>Mark done ✓</button>
+            </form>
+          )}
         </div>
         {sfCheck}
-        <GuidanceBody g={g} term={term} href={href}>
+        <GuidanceBody g={g} term={term} href={href} sayNode={sayNode}>
           {actions}
         </GuidanceBody>
       </div>
@@ -538,9 +587,16 @@ export default async function TodayPage({
     mv.kind === "commitment"
       ? `card:${mv.step.cardId}:${mv.step.nodeKey}:${mv.step.index}`
       : `acct:${mv.a.id}`;
+  // Outreach completes as a logged contact (Touch) so it feeds the follow-up
+  // loop; everything else completes via a per-day TaskDone key.
   const items = allMoves.map((mv) => {
+    if (mv.kind === "outreach") {
+      const key = outreachSubjectKey(mv.a.id);
+      const t = touchMap.get(key);
+      return { mv, key, done: !!t, touch: t };
+    }
     const key = morningDoneKey(mvId(mv));
-    return { mv, key, done: doneKeys.has(key) };
+    return { mv, key, done: doneKeys.has(key), touch: undefined as Touch | undefined };
   });
   const pendingMoves = items.filter((i) => !i.done);
   const doneMoves = items.filter((i) => i.done);
@@ -823,7 +879,14 @@ export default async function TodayPage({
           )}
 
           {shownMoves.map((it, i) => (
-            <MorningMove key={it.key} mv={it.mv} n={i + 1} doneKey={it.key} done={false} />
+            <MorningMove
+              key={it.key}
+              mv={it.mv}
+              n={i + 1}
+              doneKey={it.key}
+              done={false}
+              touch={it.touch}
+            />
           ))}
 
           {pendingMoves.length > shownMoves.length && (
@@ -878,7 +941,7 @@ export default async function TodayPage({
             <details className={styles.mvDoneSection}>
               <summary>Done this morning ({doneMoves.length})</summary>
               {doneMoves.map((it) => (
-                <MorningMove key={it.key} mv={it.mv} n={0} doneKey={it.key} done />
+                <MorningMove key={it.key} mv={it.mv} n={0} doneKey={it.key} done touch={it.touch} />
               ))}
             </details>
           )}

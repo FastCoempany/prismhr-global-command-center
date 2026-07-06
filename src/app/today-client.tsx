@@ -114,6 +114,7 @@ export function ContactControl({
   defaultMessage,
   sentLabel = "Mark contacted ✓",
   editLabel = "Edit & copy the message",
+  doneText = "Contacted ✓",
   contacted,
   followUpLabel,
 }: {
@@ -124,6 +125,7 @@ export function ContactControl({
   defaultMessage: string;
   sentLabel?: string;
   editLabel?: string;
+  doneText?: string;
   contacted: boolean;
   followUpLabel?: string;
 }) {
@@ -146,7 +148,8 @@ export function ContactControl({
     return (
       <div className={styles.contactDone}>
         <span className={styles.contactDoneText}>
-          Contacted ✓{followUpLabel ? ` · follow-up ${followUpLabel}` : ""}
+          {doneText}
+          {followUpLabel ? ` · follow-up ${followUpLabel}` : ""}
         </span>
         <form action={deleteTouch}>
           <input type="hidden" name="subjectKey" value={subjectKey} />
