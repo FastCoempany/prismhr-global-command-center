@@ -559,3 +559,146 @@
   text-transform: uppercase;
   font-size: 10px;
 }
+
+/* Deal details — deal size + stakeholders (collapsible) */
+.dealDetails {
+  border-top: 1px solid var(--line);
+  margin-top: 4px;
+}
+.dealSummary {
+  cursor: pointer;
+  list-style: none;
+  padding: 10px 2px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.dealSummary::-webkit-details-marker {
+  display: none;
+}
+.dealSummary::before {
+  content: "▸ ";
+  color: var(--muted);
+}
+.dealDetails[open] .dealSummary::before {
+  content: "▾ ";
+}
+.dealSummary:hover {
+  color: var(--navy);
+}
+.dealBody {
+  padding: 4px 2px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.dealLabel {
+  display: block;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.dealValue {
+  font-size: 13.5px;
+  color: var(--ink);
+}
+.dealSizeForm {
+  display: flex;
+  gap: 8px;
+}
+.dealSizeForm input {
+  flex: 1;
+  min-width: 0;
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 13px;
+  background: #fff;
+}
+.dealSizeForm input:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+.stakeGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 9px;
+  margin-bottom: 10px;
+}
+.stakeBox {
+  position: relative;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--blue);
+  border-radius: 9px;
+  padding: 9px 11px;
+  background: #fbfdff;
+}
+.stakeRemove {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  margin: 0;
+}
+.stakeRemove button {
+  border: none;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+  padding: 2px 4px;
+}
+.stakeRemove button:hover {
+  color: #b42323;
+}
+.stakeName {
+  font-weight: 700;
+  font-size: 13.5px;
+  color: var(--navy);
+  padding-right: 16px;
+}
+.stakeRole {
+  font-size: 12px;
+  color: var(--blue-d);
+  margin-top: 1px;
+}
+.stakeNote {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 4px;
+  line-height: 1.45;
+}
+.stakeAdd {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.stakeAdd input {
+  padding: 6px 9px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  font: inherit;
+  font-size: 12.5px;
+  background: #fff;
+}
+.stakeAdd input[name="name"] {
+  flex: 1;
+  min-width: 120px;
+}
+.stakeAdd input[name="role"] {
+  flex: 1;
+  min-width: 120px;
+}
+.stakeAdd input[name="note"] {
+  flex: 2;
+  min-width: 140px;
+}
+.stakeAdd input:focus {
+  outline: none;
+  border-color: var(--blue);
+}

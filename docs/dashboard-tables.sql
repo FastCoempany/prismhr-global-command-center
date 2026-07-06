@@ -25,6 +25,9 @@ ALTER TABLE "DashCard" ADD COLUMN IF NOT EXISTS "checks" JSONB;
 ALTER TABLE "DashCard" ADD COLUMN IF NOT EXISTS "checkNotes" JSONB;
 -- "activated" records when each node first went active, so Today can age commitments.
 ALTER TABLE "DashCard" ADD COLUMN IF NOT EXISTS "activated" JSONB;
+-- Deal size (free text) + stakeholders (each their own box).
+ALTER TABLE "DashCard" ADD COLUMN IF NOT EXISTS "dealSize" TEXT;
+ALTER TABLE "DashCard" ADD COLUMN IF NOT EXISTS "stakeholders" JSONB;
 
 CREATE INDEX IF NOT EXISTS "DashCard_position_idx" ON "DashCard"("position");
 CREATE INDEX IF NOT EXISTS "DashCard_archived_idx" ON "DashCard"("archived");

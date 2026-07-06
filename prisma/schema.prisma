@@ -924,9 +924,11 @@ model DashCard {
   notes      Json? // { nodeKey: string }  (general per-node note, e.g. research seed)
   checks     Json? // { nodeKey: boolean[] }  (mandatory checkbox state)
   checkNotes Json? // { nodeKey: { itemIndex: string } }  (per-checkbox note)
-  activated  Json? // { nodeKey: isoString }  (when a node first went active — ages commitments)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  activated    Json? // { nodeKey: isoString }  (when a node first went active — ages commitments)
+  dealSize     String? // free-text estimated size ("$120k ARR", "300 EEs / 4 countries")
+  stakeholders Json? // [{ name, role, note }]  (people on the deal, each its own box)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   @@index([position])
   @@index([archived])

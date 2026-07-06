@@ -85,6 +85,8 @@ function card(partial: {
     checks,
     checkNotes: emptyByNode<Record<number, string>>(() => ({})),
     activated,
+    dealSize: "",
+    stakeholders: [],
   };
 }
 
@@ -360,6 +362,7 @@ describe("movedThisWeek & stateOfPlay", () => {
       id, name: id, subtitle: null, position: 0, archived: opts.archived ?? false, states,
       notes: {} as Record<DashNodeKey, string>, checks: {} as Record<DashNodeKey, boolean[]>,
       checkNotes: {} as Record<DashNodeKey, Record<number, string>>, activated,
+      dealSize: "", stakeholders: [],
     };
   }
   test("counts nodes activated within the last 7 days, skipping archived", () => {

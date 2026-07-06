@@ -2,6 +2,8 @@ import { getAppAccess } from "@/lib/auth";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import { DASH_NODES, isNodeState, stateFromChecks, type DashNodeKey, type NodeState } from "./stages";
 
+export type Stakeholder = { name: string; role: string; note: string };
+
 export type DashCardRow = {
   id: string;
   name: string;
@@ -13,6 +15,8 @@ export type DashCardRow = {
   checks: Record<DashNodeKey, boolean[]>;
   checkNotes: Record<DashNodeKey, Record<number, string>>;
   activated: Record<DashNodeKey, string>; // ISO string when a node first went active ("" = none)
+  dealSize: string;
+  stakeholders: Stakeholder[];
 };
 
 export type DashData = {
@@ -44,6 +48,20 @@ function normActivated(raw: unknown): Record<DashNodeKey, string> {
   const out = {} as Record<DashNodeKey, string>;
   for (const n of DASH_NODES) out[n.key] = typeof src[n.key] === "string" ? (src[n.key] as string) : "";
   return out;
+}
+
+function normStakeholders(raw: unknown): Stakeholder[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((s) => {
+      const o = (s ?? {}) as Record<string, unknown>;
+      return {
+        name: typeof o.name === "string" ? o.name : "",
+        role: typeof o.role === "string" ? o.role : "",
+        note: typeof o.note === "string" ? o.note : "",
+      };
+    })
+    .filter((s) => s.name.trim());
 }
 
 function normCheckNotes(raw: unknown): Record<DashNodeKey, Record<number, string>> {
@@ -105,14 +123,19 @@ async function fetchCards(prisma: ReturnType<typeof getPrisma>) {
   try {
     return await prisma.dashCard.findMany({
       orderBy: [...CARD_ORDER],
-      select: { ...STABLE_SELECT, activated: true },
+      select: { ...STABLE_SELECT, activated: true, dealSize: true, stakeholders: true },
     });
   } catch {
     const rows = await prisma.dashCard.findMany({
       orderBy: [...CARD_ORDER],
       select: STABLE_SELECT,
     });
-    return rows.map((r) => ({ ...r, activated: null as unknown }));
+    return rows.map((r) => ({
+      ...r,
+      activated: null as unknown,
+      dealSize: null as unknown,
+      stakeholders: null as unknown,
+    }));
   }
 }
 
@@ -151,6 +174,8 @@ export async function loadDashboard(): Promise<DashData> {
         checks,
         checkNotes: normCheckNotes(r.checkNotes),
         activated: normActivated(r.activated),
+        dealSize: typeof r.dealSize === "string" ? r.dealSize : "",
+        stakeholders: normStakeholders(r.stakeholders),
       };
     });
     return {
