@@ -4,7 +4,9 @@ import { DASH_NODES, type DashNodeKey, type NodeState } from "@/lib/dashboard/st
 import type { DashCardRow } from "@/lib/dashboard/data";
 import {
   accountIntel,
+  aleksLineGuidance,
   applyValidations,
+  armPartnersGuidance,
   cardNextStep,
   commitmentsFromCards,
   dayStamp,
@@ -26,6 +28,7 @@ import {
   partnerWeekMessage,
   signals,
   stateOfPlay,
+  voiceOfBaseGuidance,
   type AccountIntel,
   type Snooze,
   type Validation,
@@ -321,6 +324,52 @@ describe("applyValidations", () => {
       new Map([["f", { status: "flagged" }]]),
     );
     assert.equal(narrative(rows).strongDemand, 1);
+  });
+});
+
+// --- narrative → action guidance ---------------------------------------------
+
+describe("aleksLineGuidance / armPartnersGuidance / voiceOfBaseGuidance", () => {
+  const nar = narrative([
+    intel({ researched: true, demand: 58, confidence: "high", play: "displacement" }),
+    intel({ researched: true, demand: 45, confidence: "medium", play: "greenfield" }),
+    intel({ researched: true, demand: 35, confidence: "medium" }), // emerging
+    intel({ researched: false }),
+  ]);
+
+  test("every guidance has do + steps + editable say + caveat", () => {
+    const gs = [
+      aleksLineGuidance(nar, intel({ name: "Acme", play: "displacement" })),
+      armPartnersGuidance(nar),
+      voiceOfBaseGuidance(),
+    ];
+    for (const g of gs) {
+      assert.ok(g.do.length > 0);
+      assert.ok(g.how.length >= 3);
+      assert.ok(g.say && g.say.length > 0);
+      assert.ok(g.consider && g.consider.length > 0);
+    }
+  });
+
+  test("aleks line names the account being converted and cites the honest numbers", () => {
+    const g = aleksLineGuidance(nar, intel({ id: "z", name: "Zephyr Co", play: "greenfield" }));
+    assert.match(g.do, /Zephyr Co/);
+    assert.match(g.say!, /Zephyr Co/);
+    // strong (2) and emerging (1) both surfaced, not rounded away
+    assert.match(g.say!, /2 carry a solid global-hiring signal/);
+    assert.match(g.say!, /1 more are emerging/);
+    assert.match(g.say!, /1 displacement \/ 1 greenfield/);
+  });
+
+  test("aleks line degrades gracefully when nothing is teed up", () => {
+    const g = aleksLineGuidance(nar, null);
+    assert.doesNotMatch(g.do, /built around/);
+    assert.match(g.say!, /working hardest/);
+  });
+
+  test("arm-partners reflects the count of live partner conversations (strong + emerging)", () => {
+    const g = armPartnersGuidance(nar);
+    assert.match(g.say!, /3 accounts across the base become real partner conversations/);
   });
 });
 
