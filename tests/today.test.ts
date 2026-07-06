@@ -355,9 +355,9 @@ describe("aleksLineGuidance / armPartnersGuidance / voiceOfBaseGuidance", () => 
     const g = aleksLineGuidance(nar, intel({ id: "z", name: "Zephyr Co", play: "greenfield" }));
     assert.match(g.do, /Zephyr Co/);
     assert.match(g.say!, /Zephyr Co/);
-    // strong (2) and emerging (1) both surfaced, not rounded away
-    assert.match(g.say!, /2 carry a solid global-hiring signal/);
-    assert.match(g.say!, /1 more are emerging/);
+    // strong (2) and emerging (1) both surfaced as bullets, not rounded away
+    assert.match(g.say!, /Strong global-hiring signal: 2/);
+    assert.match(g.say!, /Emerging[^\n]*: 1/);
     assert.match(g.say!, /1 displacement \/ 1 greenfield/);
   });
 
@@ -534,15 +534,20 @@ describe("partnerKickoff & partnerWeekMessage", () => {
     assert.equal(out[0].accounts.length, 5);
   });
 
-  test("week message names accounts and asks for time", () => {
+  test("week message lists accounts as descriptive bullets and asks for time", () => {
     const msg = partnerWeekMessage("Anika Steenstra", [
       intel({ name: "Infiniti HR", play: "displacement", competitors: ["Globalization Partners"] }),
       intel({ name: "MAU", play: "greenfield" }),
     ]);
     assert.match(msg, /Anika/);
-    assert.match(msg, /Infiniti HR/);
-    assert.match(msg, /MAU/);
     assert.match(msg, /15 minutes/);
+    // Each account is its own bullet line...
+    assert.match(msg, /• Infiniti HR — /);
+    assert.match(msg, /• MAU — /);
+    // ...and the reason is thorough, not shorthand.
+    assert.match(msg, /Globalization Partners/);
+    assert.match(msg, /renewal/);
+    assert.match(msg, /Employer-of-Record/);
   });
 });
 
