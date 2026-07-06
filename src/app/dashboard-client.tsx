@@ -10,11 +10,14 @@ import {
   type NodeState,
 } from "@/lib/dashboard/stages";
 import {
+  addStakeholder,
   advanceNode,
   deleteCard,
   moveCard,
+  removeStakeholder,
   renameCard,
   saveCheckNote,
+  saveDealSize,
   saveLabels,
   saveNote,
   toggleArchive,
@@ -349,6 +352,75 @@ export function DashboardClient({ cards, canWrite, dbUnavailable, labels }: Prop
                 </ul>
               </div>
             )}
+
+            <details className={styles.dealDetails}>
+              <summary className={styles.dealSummary}>
+                Deal details
+                {card.dealSize ? ` · ${card.dealSize}` : ""}
+                {card.stakeholders.length
+                  ? ` · ${card.stakeholders.length} stakeholder${card.stakeholders.length === 1 ? "" : "s"}`
+                  : ""}
+              </summary>
+              <div className={styles.dealBody}>
+                <div className={styles.dealField}>
+                  <span className={styles.dealLabel}>Deal size</span>
+                  {canWrite ? (
+                    <form action={saveDealSize} className={styles.dealSizeForm}>
+                      <input type="hidden" name="id" value={card.id} />
+                      <input
+                        name="dealSize"
+                        defaultValue={card.dealSize}
+                        placeholder={`e.g. "$120k ARR" or "300 EEs / 4 countries"`}
+                        aria-label="Deal size"
+                      />
+                      <button type="submit" className={styles.miniSave}>
+                        Save
+                      </button>
+                    </form>
+                  ) : (
+                    <span className={styles.dealValue}>{card.dealSize || "—"}</span>
+                  )}
+                </div>
+
+                <div className={styles.stakeSection}>
+                  <span className={styles.dealLabel}>Stakeholders</span>
+                  {card.stakeholders.length > 0 && (
+                    <div className={styles.stakeGrid}>
+                      {card.stakeholders.map((s, i) => (
+                        <div key={i} className={styles.stakeBox}>
+                          {canWrite && (
+                            <form action={removeStakeholder} className={styles.stakeRemove}>
+                              <input type="hidden" name="id" value={card.id} />
+                              <input type="hidden" name="index" value={i} />
+                              <button type="submit" aria-label={`Remove ${s.name}`}>
+                                ✕
+                              </button>
+                            </form>
+                          )}
+                          <div className={styles.stakeName}>{s.name}</div>
+                          {s.role && <div className={styles.stakeRole}>{s.role}</div>}
+                          {s.note && <div className={styles.stakeNote}>{s.note}</div>}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {canWrite && (
+                    <form action={addStakeholder} className={styles.stakeAdd}>
+                      <input type="hidden" name="id" value={card.id} />
+                      <input name="name" placeholder="Name" required aria-label="Stakeholder name" />
+                      <input name="role" placeholder="Role / title" aria-label="Stakeholder role" />
+                      <input name="note" placeholder="Note (optional)" aria-label="Stakeholder note" />
+                      <button type="submit" className={styles.miniSave}>
+                        Add
+                      </button>
+                    </form>
+                  )}
+                  {card.stakeholders.length === 0 && !canWrite && (
+                    <span className={styles.dealValue}>—</span>
+                  )}
+                </div>
+              </div>
+            </details>
           </div>
         );
       })}
