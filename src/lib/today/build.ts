@@ -223,7 +223,7 @@ export function partnerMessage(a: AccountIntel): string {
   const who = firstNameOf(a.csm);
   const comp = a.competitors[0];
   if (a.play === "displacement" && comp) {
-    return `Hi ${who} — quick one on ${a.name}. I've been looking at them for PrismHR Global, and from the research it looks like they currently run their international hiring through ${comp}. Before I take any step, I'd really value your read on the relationship: how happy do you think ${a.name} is with ${comp} right now, and do you have any sense of when that contract comes up for renewal? Renewal timing basically tells me whether it's worth opening a Global conversation soon or holding off. I completely want to move at your pace and not get out ahead of the relationship — just trying to figure out if there's an opening and, if so, roughly when. Thanks so much.`;
+    return `Hi ${who} — quick one on ${a.name}. I've been looking at them for PrismHR Global. From the research, they already run their domestic PEO on PrismHR but handle their international hiring through ${comp} — so the opening here isn't a fresh sale or a win-back, it's consolidation: bringing that global/EOR layer onto the platform they already use, instead of running it separately through ${comp}. Before I take any step, I'd really value your read on the ${comp} relationship: how happy do you think ${a.name} is with it right now, and do you have any sense of when that contract comes up for renewal? Renewal timing basically tells me whether it's worth opening a Global conversation soon or holding off. I completely want to move at your pace and not get out ahead of the relationship — just trying to figure out if there's an opening and, if so, roughly when. Thanks so much.`;
   }
   if (a.play === "greenfield") {
     return `Hi ${who} — quick one on ${a.name}. I've been looking at them for PrismHR Global and there's a real signal they're hiring across borders, with no Employer-of-Record provider in place yet — so this could be a clean introduction rather than a switch. Before I take any step, could you help me understand the account a bit: are they hiring in countries where they don't have a legal entity, or converting contractors to employees anywhere? That's usually where the Global fit is clearest. I want to move at your pace and not get ahead of the relationship — just gauging whether there's an opening worth exploring. Thanks so much.`;
@@ -246,16 +246,16 @@ export function outreachGuidance(a: AccountIntel): Guidance {
   const comp = a.competitors[0];
   if (a.play === "displacement" && comp) {
     return {
-      do: `Message ${a.csm} about ${a.name} — and do NOT contact ${a.name} directly. This is a partner-first, win-back conversation.`,
+      do: `Message ${a.csm} about ${a.name} — and do NOT contact ${a.name} directly. This is a partner-first consolidation play: they already run PrismHR domestically, and the aim is to bring their global layer onto the same platform.`,
       how: [
         `Open Slack, Teams, or email to ${a.csm} — the CSM who owns the ${a.name} relationship.`,
         `Paste the message below (edit anything that doesn't sound like you), then send it.`,
-        `The one thing you must find out: when ${a.name}'s ${comp} contract renews. That date is the only realistic window to win them.`,
+        `The one thing you must find out: when ${a.name}'s ${comp} contract renews. That date is the realistic window to move their global/EOR layer onto PrismHR.`,
         `Do not reach out to anyone at ${a.name} until ${who} clears the path.`,
         `When you've sent it, hit "Mark sent ✓" below so it drops off your list.`,
       ],
       say: partnerMessage(a),
-      consider: `${a.name} already uses ${comp}, so this is a win-back, not a fresh sale (demand ${a.demand}/100, ${a.confidence} confidence). ${who} may be protective of that relationship — move at ${who}'s pace and never get ahead of the partner.`,
+      consider: `${a.name} already runs their domestic PEO on PrismHR but uses ${comp} for global — so this is consolidation onto the platform they already have, not a fresh sale and not a win-back (we haven't lost them; we just don't hold their global layer yet) (demand ${a.demand}/100, ${a.confidence} confidence). ${who} may be protective of the ${comp} relationship — move at ${who}'s pace and never get ahead of the partner.`,
     };
   }
   if (a.play === "greenfield") {
@@ -269,7 +269,7 @@ export function outreachGuidance(a: AccountIntel): Guidance {
         `When it's sent, hit "Mark sent ✓" below.`,
       ],
       say: partnerMessage(a),
-      consider: `No incumbent EOR was found (demand ${a.demand}/100, ${a.confidence} confidence), so this is a clean introduction — usually an easier conversation than a win-back. Still, let ${who} set the pace.`,
+      consider: `No incumbent EOR was found (demand ${a.demand}/100, ${a.confidence} confidence), so this is a clean introduction — usually an easier conversation than displacing an incumbent. Still, let ${who} set the pace.`,
     };
   }
   return {
@@ -288,7 +288,7 @@ export function outreachGuidance(a: AccountIntel): Guidance {
 export function triageGuidance(a: AccountIntel): Guidance {
   const playLine =
     a.play === "displacement"
-      ? `They appear to already use ${a.competitors[0] ?? "a competitor EOR"}, so if you work it, it's a win-back.`
+      ? `They already run PrismHR domestically but use ${a.competitors[0] ?? "a competitor EOR"} for global, so working it is a consolidation play — bring their global layer onto the platform they already have.`
       : a.play === "greenfield"
         ? "No incumbent EOR was found, so it'd be a clean introduction."
         : "No play is flagged yet — this is a gauge-and-see.";
@@ -437,7 +437,7 @@ export function partnerWeekMessage(partner: string, accounts: AccountIntel[]): s
     .map((a) => {
       const why =
         a.play === "displacement"
-          ? `From my research they currently run their international hiring through ${a.competitors[0] ?? "a competitor Employer-of-Record provider"}, so this would be a win-back rather than a fresh sale. I'd really value your read on how that relationship is going, and if you happen to know roughly when their contract comes up for renewal, that timing tells us whether it's worth opening a conversation soon or holding off.`
+          ? `They already run their domestic PEO on PrismHR but handle global hiring through ${a.competitors[0] ?? "a competitor Employer-of-Record provider"}, so the opening is to consolidate that global/EOR layer onto the PrismHR platform they already trust, rather than run it separately. I'd really value your read on how that relationship is going, and if you happen to know roughly when their contract comes up for renewal, that timing tells us whether it's worth opening a conversation soon or holding off.`
           : a.play === "greenfield"
             ? `There's an early signal they're hiring across borders with no Employer-of-Record provider in place yet, which would make this a clean introduction rather than a switch. The clearest fit usually shows up where they're hiring in countries they don't have a legal entity, or converting contractors to employees — worth confirming whether either is happening here.`
             : `No specific global-hiring signal has surfaced yet, but the account profile fits the kind of company that runs into cross-border needs. Worth a quick gauge of where they hire and how they pay international workers before we decide whether to work it or set it aside.`;

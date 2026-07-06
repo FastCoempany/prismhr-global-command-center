@@ -438,13 +438,17 @@ describe("firstNameOf & partnerMessage", () => {
     assert.equal(firstNameOf("Anika Steenstra"), "Anika");
     assert.equal(firstNameOf(""), "there");
   });
-  test("displacement message names the incumbent and asks about renewal", () => {
+  test("displacement message frames consolidation, names the incumbent, asks about renewal", () => {
     const m = partnerMessage(
       intel({ name: "Infiniti HR", csm: "Anika Steenstra", play: "displacement", competitors: ["Globalization Partners"] }),
     );
     assert.match(m, /Anika/);
     assert.match(m, /Globalization Partners/);
     assert.match(m, /renewal/i);
+    // Consolidation onto the existing PrismHR platform — explicitly not a win-back.
+    assert.match(m, /consolidation/i);
+    assert.match(m, /already run their domestic PEO on PrismHR/);
+    assert.match(m, /isn't a fresh sale or a win-back/);
   });
   test("greenfield message asks about entities/contractors, no incumbent", () => {
     const m = partnerMessage(intel({ name: "MAU", csm: "Lesha Cyphers", play: "greenfield" }));
@@ -548,6 +552,10 @@ describe("partnerKickoff & partnerWeekMessage", () => {
     assert.match(msg, /Globalization Partners/);
     assert.match(msg, /renewal/);
     assert.match(msg, /Employer-of-Record/);
+    // Displacement is framed as consolidation onto the existing PrismHR platform,
+    // not a "win-back" (they've never left — we just don't hold their global layer).
+    assert.match(msg, /consolidate/);
+    assert.match(msg, /already run their domestic PEO on PrismHR/);
   });
 });
 
