@@ -12,11 +12,14 @@ import {
   isParked,
   isStrongSignal,
   isTrusted,
+  isWeekKickoff,
   movedThisWeek,
   narrative,
   partitionSignals,
   partnerAngle,
+  partnerKickoff,
   partnerMessage,
+  partnerWeekMessage,
   signals,
   stateOfPlay,
   type AccountIntel,
@@ -413,6 +416,52 @@ describe("cardNextStep", () => {
   });
   test("returns null when nothing is active", () => {
     assert.equal(cardNextStep(card({ id: "c1" }), {}, now), null);
+  });
+});
+
+// --- week kickoff ------------------------------------------------------------
+
+describe("isWeekKickoff", () => {
+  test("true on Sunday and Monday (UTC), false midweek", () => {
+    assert.equal(isWeekKickoff(Date.parse("2024-01-01T12:00:00Z")), true); // Monday
+    assert.equal(isWeekKickoff(Date.parse("2023-12-31T12:00:00Z")), true); // Sunday
+    assert.equal(isWeekKickoff(Date.parse("2024-01-03T12:00:00Z")), false); // Wednesday
+  });
+});
+
+describe("partnerKickoff & partnerWeekMessage", () => {
+  test("only partners with a real target; top-N by score, parked excluded", () => {
+    const rows = [
+      intel({ id: "a1", name: "Acme", csm: "Anika", play: "displacement", competitors: ["Deel"], score: 70 }),
+      intel({ id: "a2", name: "Beta", csm: "Anika", play: null, score: 60 }),
+      intel({ id: "a3", name: "Gamma", csm: "Anika", play: null, score: 40 }),
+      intel({ id: "b1", name: "Delta", csm: "Cody", play: null, score: 55 }), // no play → skip Cody
+      intel({ id: "p1", name: "Parked", csm: "Anika", play: "greenfield", score: 90 }),
+    ];
+    const out = partnerKickoff(rows, new Set(["p1"]), 5);
+    assert.equal(out.length, 1); // only Anika (has a play)
+    assert.equal(out[0].partner, "Anika");
+    // parked p1 excluded even though it has a play + top score
+    assert.deepEqual(out[0].accounts.map((a) => a.id), ["a1", "a2", "a3"]);
+  });
+
+  test("caps at N per partner", () => {
+    const rows = Array.from({ length: 8 }, (_, i) =>
+      intel({ id: `x${i}`, csm: "Anika", play: i === 0 ? "greenfield" : null, score: 100 - i }),
+    );
+    const out = partnerKickoff(rows, new Set(), 5);
+    assert.equal(out[0].accounts.length, 5);
+  });
+
+  test("week message names accounts and asks for time", () => {
+    const msg = partnerWeekMessage("Anika Steenstra", [
+      intel({ name: "Infiniti HR", play: "displacement", competitors: ["Globalization Partners"] }),
+      intel({ name: "MAU", play: "greenfield" }),
+    ]);
+    assert.match(msg, /Anika/);
+    assert.match(msg, /Infiniti HR/);
+    assert.match(msg, /MAU/);
+    assert.match(msg, /15 minutes/);
   });
 });
 

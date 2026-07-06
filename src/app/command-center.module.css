@@ -1331,6 +1331,96 @@
   background: #e4f7ea;
 }
 
+/* ── Week kickoff (Monday ritual) ────────────────────────────────────── */
+.kickoff {
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--orange);
+  border-radius: 14px;
+  background: linear-gradient(180deg, #fffaf5, var(--card) 120px);
+  box-shadow: 0 1px 2px rgba(10, 28, 64, 0.05), 0 10px 30px rgba(10, 28, 64, 0.05);
+  padding: 16px 22px 20px;
+  margin-bottom: 16px;
+}
+.kickoffHead {
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 12px;
+  margin-bottom: 6px;
+}
+.kickoffTag {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--orange);
+}
+.kickoffTitle {
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--navy);
+  margin: 4px 0 4px;
+}
+.kickoffSub {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 0;
+  max-width: 80ch;
+}
+.kickoffPartner {
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+}
+.kickoffPartner:first-of-type {
+  border-top: none;
+}
+.kickoffPartnerHead {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-bottom: 9px;
+}
+.kickoffPartnerName {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--navy);
+}
+.kickoffPartnerRole {
+  font-size: 12px;
+  color: var(--muted);
+}
+.kickoffCount {
+  margin-left: auto;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--accent-ink, #b6531a);
+  background: color-mix(in srgb, var(--orange) 14%, transparent);
+  border-radius: 999px;
+  padding: 2px 10px;
+}
+.kickoffAccts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-bottom: 11px;
+}
+.kickoffAcct {
+  font-size: 12.5px;
+  color: var(--navy);
+  background: #eef3fb;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 4px 11px;
+  text-decoration: none;
+}
+.kickoffAcct b {
+  font-variant-numeric: tabular-nums;
+}
+.kickoffAcct:hover {
+  border-color: var(--blue);
+  background: #e4ecfb;
+}
+
 /* ── This morning (A2 — brief + the thing you send) ──────────────────── */
 .mvPanel {
   background: var(--card);
