@@ -648,6 +648,24 @@ describe("follow-ups", () => {
   test("outreachSubjectKey is stable per account", () => {
     assert.equal(outreachSubjectKey("001X"), "outreach:001X");
   });
+
+  test("custom follow-ups return your own words (not a partner nudge) and still bucket", () => {
+    const c = touch({
+      subjectKey: "manual:x",
+      kind: "custom",
+      label: "Prep pricing deck for Aleks",
+      message: "",
+      followUpAt: new Date(now - DAY).toISOString(),
+    });
+    // no partner-nudge phrasing — falls back to the label
+    assert.equal(followUpMessage(c, now), "Prep pricing deck for Aleks");
+    assert.doesNotMatch(followUpMessage(c, now), /circling back|following up on/);
+    // still flows through the due/upcoming machinery
+    assert.deepEqual(
+      partitionFollowUps([c], now).due.map((t) => t.subjectKey),
+      ["manual:x"],
+    );
+  });
 });
 
 // --- Salesforce checkpoint ---------------------------------------------------
