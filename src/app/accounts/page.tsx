@@ -5,8 +5,9 @@ import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import { peos } from "@/lib/book";
 import { compositeScore, deskScore } from "@/lib/book/scoring";
 import { analyzePlay, extractCountries, getDemand, researchGeneratedAt } from "@/lib/book/research";
-import { loadEngagements, loadValidations } from "@/lib/today/overlay";
+import { loadEngagements, loadTodos, loadValidations } from "@/lib/today/overlay";
 import { EMPTY_ENGAGEMENT } from "@/lib/engagement";
+import type { LinkedNote } from "@/components/account-notes";
 import { AccountsClient, type AccountRow } from "../accounts-client";
 import styles from "../command-center.module.css";
 
@@ -46,6 +47,15 @@ export default async function AccountsPage() {
   // demand and reflows the composite.
   const validations = await loadValidations();
   const engagements = await loadEngagements();
+
+  // Notetaker notes linked to accounts (surfaced read-only here).
+  const notesByAccount = new Map<string, LinkedNote[]>();
+  for (const t of await loadTodos()) {
+    if (!t.accountId) continue;
+    const list = notesByAccount.get(t.accountId) ?? [];
+    list.push({ id: t.id, body: t.body, done: t.done, remindAt: t.remindAt });
+    notesByAccount.set(t.accountId, list);
+  }
 
   const rows: AccountRow[] = peos
     .map((p) => {
@@ -100,6 +110,7 @@ export default async function AccountsPage() {
         breakdown: d.breakdown,
         validation: v ? { status: v.status, note: v.note, adjustedDemand: v.adjustedDemand } : null,
         engagement: engagements.get(p.id) ?? EMPTY_ENGAGEMENT,
+        notes: notesByAccount.get(p.id) ?? [],
       };
     })
     .sort((a, b) => b.score - a.score);
