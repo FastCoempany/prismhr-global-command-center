@@ -2701,9 +2701,18 @@
   align-items: center;
   gap: 8px;
 }
-.noteSelWrap,
-.noteDoneWrap {
+.noteChk {
   display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  cursor: pointer;
+  user-select: none;
+}
+.noteChk input {
+  cursor: pointer;
 }
 .noteStatus {
   font-size: 10.5px;

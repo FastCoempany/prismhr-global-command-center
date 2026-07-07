@@ -215,21 +215,21 @@ export function NotesPanel({ initialNotes, accounts }: { initialNotes: Todo[]; a
       {notes.map((n) => (
         <div key={n.id} className={`${styles.noteCard} ${n.done ? styles.noteCardDone : ""}`}>
           <div className={styles.noteTop}>
-            <label className={styles.noteSelWrap} title="Select for Copy selected">
+            <label className={styles.noteChk} title="Select this note for “Copy selected”">
               <input
                 type="checkbox"
                 checked={selected.has(n.id)}
                 onChange={() => toggleSelect(n.id)}
-                aria-label="Select note"
               />
+              <span>Select</span>
             </label>
-            <label className={styles.noteDoneWrap} title="Mark done">
+            <label className={styles.noteChk} title="Mark this note done">
               <input
                 type="checkbox"
                 checked={n.done}
                 onChange={(e) => toggleDone(n.id, e.target.checked)}
-                aria-label="Mark done"
               />
+              <span>Done</span>
             </label>
             <StatusChip s={n.status} />
             <button className={styles.noteDel} onClick={() => del(n.id)} aria-label="Delete note">
