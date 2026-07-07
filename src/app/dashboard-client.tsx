@@ -23,6 +23,7 @@ import {
   toggleArchive,
   toggleCheck,
 } from "./dashboard/actions";
+import { AccountNotes, type LinkedNote } from "@/components/account-notes";
 import styles from "./dashboard.module.css";
 
 type Props = {
@@ -30,6 +31,7 @@ type Props = {
   canWrite: boolean;
   dbUnavailable: boolean;
   labels: Record<string, string>;
+  notesByName?: Record<string, LinkedNote[]>;
 };
 
 const glyph = (state: NodeState) => (state === "done" ? "✓" : "");
@@ -123,7 +125,13 @@ function Track({
   );
 }
 
-export function DashboardClient({ cards, canWrite, dbUnavailable, labels }: Props) {
+export function DashboardClient({
+  cards,
+  canWrite,
+  dbUnavailable,
+  labels,
+  notesByName = {},
+}: Props) {
   const [renaming, setRenaming] = useState<string | null>(null);
   const [showRename, setShowRename] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
@@ -234,6 +242,7 @@ export function DashboardClient({ cards, canWrite, dbUnavailable, labels }: Prop
                   </>
                 )}
               </div>
+              <AccountNotes notes={notesByName[card.name] ?? []} />
               <Track
                 card={card}
                 canWrite={canWrite}

@@ -6,6 +6,7 @@ import { useFormStatus } from "react-dom";
 import { EXTRA_PARTNERS, partnerRole } from "@/lib/book/partners";
 import { competitorUrl } from "@/lib/book/research";
 import { SfCheckpoint } from "@/components/sf";
+import { AccountNotes, type LinkedNote } from "@/components/account-notes";
 import {
   askToJoinMessage,
   CADENCE_OPTIONS,
@@ -138,6 +139,7 @@ export type AccountRow = {
     adjustedDemand?: number;
   } | null;
   engagement: Engagement;
+  notes: LinkedNote[];
 };
 
 const fitClass: Record<string, string> = {
@@ -614,6 +616,7 @@ export function AccountsClient({
                   <td colSpan={7}>
                     <div className={styles.acctDetail}>
                       <SfCheckpoint when="account" id={a.id} name={a.name} />
+                      <AccountNotes notes={a.notes} />
                       <EngagementPanel a={a} />
                       <div className={styles.demandBlock}>
                         {a.researched && a.demand != null ? (

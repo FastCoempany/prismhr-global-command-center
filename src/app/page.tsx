@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { AppWayfinder } from "@/components/app-wayfinder";
 import { SfCheckpoint } from "@/components/sf";
+import type { LinkedNote } from "@/components/account-notes";
+import { peos } from "@/lib/book";
 import { loadDashboard } from "@/lib/dashboard/data";
+import { loadTodos } from "@/lib/today/overlay";
 import { DashboardClient } from "./dashboard-client";
 import styles from "./command-center.module.css";
 
@@ -9,6 +12,21 @@ export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   const data = await loadDashboard();
+
+  // Surface notetaker notes on their card, matched by account name (cards are
+  // keyed by name; notes carry the account id → resolve via the book).
+  const nameById = new Map(peos.map((p) => [p.id, p.name]));
+  const notesByName: Record<string, LinkedNote[]> = {};
+  for (const t of await loadTodos()) {
+    const name = t.accountId ? nameById.get(t.accountId) : undefined;
+    if (!name) continue;
+    (notesByName[name] ??= []).push({
+      id: t.id,
+      body: t.body,
+      done: t.done,
+      remindAt: t.remindAt,
+    });
+  }
 
   if (data.status === "unauthenticated") {
     return (
@@ -45,6 +63,7 @@ export default async function DashboardPage() {
           canWrite={data.canWrite}
           dbUnavailable={data.status === "database-unavailable"}
           labels={data.labels}
+          notesByName={notesByName}
         />
       </main>
     </>
