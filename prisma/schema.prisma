@@ -1047,18 +1047,22 @@ model Touch {
   @@index([followUpAt])
 }
 
-// A plain personal to-do — the right-hand column beside Follow-ups on Today.
-// No cadence, no partner; just a running checklist you write and check off.
+// A note / to-do — the right-hand column beside Follow-ups on Today, upgraded
+// into a live notetaker (autosaved as you type). Optionally tied to an account
+// and given a date/time. No cadence — just your running notes.
 model Todo {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   body      String
-  done      Boolean  @default(false)
-  position  Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  done      Boolean   @default(false)
+  accountId String? // optional link to a book account (Salesforce id)
+  remindAt  DateTime? // optional date/time set via the calendar picker
+  position  Int       @default(0)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
   @@index([done])
   @@index([position])
+  @@index([accountId])
 }
 
 // Per-account engagement — the CSM's meeting cadence with the client, a running

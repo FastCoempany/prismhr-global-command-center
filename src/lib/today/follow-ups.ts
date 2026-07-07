@@ -25,11 +25,14 @@ export type Touch = {
   log: TouchLogEntry[];
 };
 
-// A plain personal to-do (right-hand column beside Follow-ups).
+// A note / to-do (right-hand column beside Follow-ups). Optionally tied to an
+// account and given a date/time.
 export type Todo = {
   id: string;
   body: string;
   done: boolean;
+  accountId: string; // "" = unlinked
+  remindAt: string; // ISO ("" = none)
 };
 
 // Stable, deterministic subject keys. The kickoff key carries the ISO week so the
