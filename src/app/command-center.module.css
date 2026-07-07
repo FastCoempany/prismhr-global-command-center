@@ -2638,6 +2638,156 @@
   font-weight: 700;
 }
 
+/* Notetaker (right column) */
+.notes {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+}
+.notesBar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.noteAddBtn {
+  border: none;
+  background: var(--navy);
+  color: #fff;
+  border-radius: 8px;
+  padding: 7px 14px;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.noteAddBtn:hover {
+  background: #0c2350;
+}
+.notesMeta {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.noteCopyBtn {
+  margin-left: auto;
+  border: 1px solid var(--navy);
+  background: #fff;
+  color: var(--navy);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.noteCopyBtn:hover {
+  background: #eef2fb;
+}
+.noteCard {
+  background: #fff;
+  border: 1px solid #cdddf5;
+  border-radius: 10px;
+  padding: 9px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.noteCardDone {
+  opacity: 0.62;
+}
+.noteTop {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.noteSelWrap,
+.noteDoneWrap {
+  display: inline-flex;
+}
+.noteStatus {
+  font-size: 10.5px;
+  font-weight: 700;
+  border-radius: 5px;
+  padding: 1px 7px;
+}
+.noteStatusSaving {
+  background: #fef3c7;
+  color: #92400e;
+}
+.noteStatusSaved {
+  background: #dcfce7;
+  color: #166534;
+}
+.noteStatusLocal {
+  background: #fee2e2;
+  color: #991b1b;
+}
+.noteDel {
+  margin-left: auto;
+  border: none;
+  background: none;
+  color: var(--muted);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 0 3px;
+}
+.noteDel:hover {
+  color: #b91c1c;
+}
+.noteArea {
+  width: 100%;
+  min-height: 62px;
+  resize: vertical;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--ink);
+  background: #fbfdff;
+}
+.noteArea:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+.noteMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.noteAcct {
+  flex: 1;
+  min-width: 120px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 5px 7px;
+  font: inherit;
+  font-size: 12px;
+  background: #fff;
+  color: var(--ink);
+}
+.noteDate {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.noteDate input {
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 5px 7px;
+  font: inherit;
+  font-size: 12px;
+  background: #fff;
+  color: var(--ink);
+}
+.noteCal {
+  font-size: 13px;
+}
+
 /* CSM engagement panel (Account Room detail) */
 .engage {
   border: 1px solid #cdddf5;

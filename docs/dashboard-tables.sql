@@ -138,6 +138,11 @@ CREATE TABLE IF NOT EXISTS "Todo" (
 );
 CREATE INDEX IF NOT EXISTS "Todo_done_idx" ON "Todo"("done");
 CREATE INDEX IF NOT EXISTS "Todo_position_idx" ON "Todo"("position");
+-- Notetaker upgrade: optional account link + date/time. Additive; existing notes
+-- keep their body/done untouched.
+ALTER TABLE "Todo" ADD COLUMN IF NOT EXISTS "accountId" TEXT;
+ALTER TABLE "Todo" ADD COLUMN IF NOT EXISTS "remindAt" TIMESTAMP(3);
+CREATE INDEX IF NOT EXISTS "Todo_accountId_idx" ON "Todo"("accountId");
 
 -- Per-account engagement — CSM meeting cadence, CSM notes, client health, and
 -- whether Salesforce research has been pulled. Keyed by the SF account id.

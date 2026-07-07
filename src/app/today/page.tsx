@@ -51,20 +51,18 @@ import {
 } from "@/lib/today/build";
 import { SfCheckpoint } from "@/components/sf";
 import { ContactControl, EditableMessage, NoteSubmit } from "../today-client";
+import { NotesPanel } from "../notes-client";
 import { addCard, toggleCheck } from "../dashboard/actions";
 import {
   addFieldNote,
   addFollowUp,
-  addTodo,
   addTouchNote,
-  deleteTodo,
   deleteTouch,
   markReplied,
   resolveFieldNote,
   snoozeFollowUp,
   snoozeSignal,
   toggleTaskDone,
-  toggleTodo,
   unsnoozeSignal,
 } from "./actions";
 import styles from "../command-center.module.css";
@@ -525,10 +523,12 @@ export default async function TodayPage({
   ]);
   const touchMap = new Map(touches.map((t) => [t.subjectKey, t]));
   const followUps = partitionFollowUps(touches);
-  const openTodos = todos.filter((t) => !t.done);
-  const doneTodos = todos.filter((t) => t.done);
 
   const intel = applyValidations(accountIntel(), validations);
+  // Accounts for the notetaker's per-note dropdown (alphabetical).
+  const noteAccounts = [...intel]
+    .map((a) => ({ id: a.id, name: a.name }))
+    .sort((a, b) => a.name.localeCompare(b.name));
   const nar = narrative(intel);
   const commitments = commitmentsFromCards(dash.cards, dash.labels);
   const onBoard = new Set(dash.cards.map((c) => c.name));
@@ -755,73 +755,17 @@ export default async function TodayPage({
               </form>
             </div>
 
-            {/* Right — plain to-do's */}
+            {/* Right — notes / to-dos (live notetaker, autosaved) */}
             <div className={`${styles.fuCol} ${styles.fuColTodo}`}>
               <div className={styles.fuBandHead}>
-                <span className={styles.todoTag}>To-do&apos;s</span>
-                <h2 className={styles.fuTitle}>
-                  {openTodos.length > 0 ? `${openTodos.length} open` : "All clear"}
-                </h2>
+                <span className={styles.todoTag}>Notes &amp; to-dos</span>
+                <h2 className={styles.fuTitle}>Notetaker</h2>
                 <p className={styles.fuSub}>
-                  Your running list — anything that isn&apos;t a partner follow-up.
+                  Live notes — autosaved as you type (browser + database). Link an account, set a
+                  date, select any notes and copy them out.
                 </p>
               </div>
-              <form action={addTodo} className={styles.fuAdd}>
-                <input
-                  name="body"
-                  required
-                  maxLength={500}
-                  placeholder="Add a to-do…"
-                  aria-label="Add a to-do"
-                />
-                <button className={styles.fuAddBtn}>Add</button>
-              </form>
-              <ul className={styles.todoList}>
-                {openTodos.map((td) => (
-                  <li key={td.id} className={styles.todoItem}>
-                    <form action={toggleTodo} className={styles.todoCheckForm}>
-                      <input type="hidden" name="id" value={td.id} />
-                      <button className={styles.todoCheck} aria-label="Mark done">
-                        ☐
-                      </button>
-                    </form>
-                    <span className={styles.todoBody}>{td.body}</span>
-                    <form action={deleteTodo} className={styles.todoDelForm}>
-                      <input type="hidden" name="id" value={td.id} />
-                      <button className={styles.todoDel} aria-label="Delete">
-                        ✕
-                      </button>
-                    </form>
-                  </li>
-                ))}
-                {openTodos.length === 0 && (
-                  <li className={styles.todoEmpty}>Nothing on the list.</li>
-                )}
-              </ul>
-              {doneTodos.length > 0 && (
-                <details className={styles.todoDoneWrap}>
-                  <summary>Done ({doneTodos.length})</summary>
-                  <ul className={styles.todoList}>
-                    {doneTodos.map((td) => (
-                      <li key={td.id} className={`${styles.todoItem} ${styles.todoItemDone}`}>
-                        <form action={toggleTodo} className={styles.todoCheckForm}>
-                          <input type="hidden" name="id" value={td.id} />
-                          <button className={styles.todoCheck} aria-label="Mark not done">
-                            ☑
-                          </button>
-                        </form>
-                        <span className={styles.todoBody}>{td.body}</span>
-                        <form action={deleteTodo} className={styles.todoDelForm}>
-                          <input type="hidden" name="id" value={td.id} />
-                          <button className={styles.todoDel} aria-label="Delete">
-                            ✕
-                          </button>
-                        </form>
-                      </li>
-                    ))}
-                  </ul>
-                </details>
-              )}
+              <NotesPanel initialNotes={todos} accounts={noteAccounts} />
             </div>
           </div>
         </section>

@@ -102,17 +102,34 @@ export async function loadEngagements(): Promise<Map<string, Engagement>> {
   }
 }
 
-// Personal to-dos (right column beside Follow-ups). Defensive → [] if unmigrated.
-// Open items first (by position, then newest), done items after.
+// Notes / to-dos (right column beside Follow-ups). Newest first. Column-safe: if
+// the notetaker columns (accountId, remindAt) aren't migrated yet, fall back to
+// the stable columns so EXISTING NOTES STILL LOAD (never silently vanish).
+const TODO_STABLE = { id: true, body: true, done: true, position: true, createdAt: true } as const;
+const TODO_ORDER = [{ done: "asc" }, { createdAt: "desc" }] as const;
+
 export async function loadTodos(): Promise<Todo[]> {
   if (!hasDatabaseEnv()) return [];
+  const prisma = getPrisma();
   try {
-    const rows = await getPrisma().todo.findMany({
-      orderBy: [{ done: "asc" }, { position: "asc" }, { createdAt: "desc" }],
+    const rows = await prisma.todo.findMany({
+      orderBy: [...TODO_ORDER],
+      select: { ...TODO_STABLE, accountId: true, remindAt: true },
     });
-    return rows.map((r) => ({ id: r.id, body: r.body, done: r.done }));
+    return rows.map((r) => ({
+      id: r.id,
+      body: r.body,
+      done: r.done,
+      accountId: r.accountId ?? "",
+      remindAt: r.remindAt ? r.remindAt.toISOString() : "",
+    }));
   } catch {
-    return [];
+    try {
+      const rows = await prisma.todo.findMany({ orderBy: [...TODO_ORDER], select: TODO_STABLE });
+      return rows.map((r) => ({ id: r.id, body: r.body, done: r.done, accountId: "", remindAt: "" }));
+    } catch {
+      return [];
+    }
   }
 }
 

@@ -212,37 +212,71 @@ export async function addFollowUp(formData: FormData) {
   done();
 }
 
-// --- To-dos (the right column) ----------------------------------------------
-export async function addTodo(formData: FormData) {
-  const body = str(formData, "body", 500);
-  if (!(await requireWrite()) || !body) done();
-  await safeWrite(async () => {
+// --- Notes / to-dos (the notetaker, right column) ---------------------------
+// Called programmatically from the client (autosave), so they RETURN a value
+// instead of redirecting — live typing never triggers a page reload. Each write
+// is column-safe so a note's body always persists even before the notetaker
+// columns are migrated.
+
+export async function createTodoNote(): Promise<{ id: string } | null> {
+  if (!(await requireWrite())) return null;
+  try {
     const prisma = getPrisma();
-    const top = await prisma.todo.findFirst({ orderBy: { position: "desc" }, select: { position: true } });
-    await prisma.todo.create({ data: { body, position: (top?.position ?? -1) + 1 } });
-  });
-  done();
+    const top = await prisma.todo.findFirst({
+      orderBy: { position: "desc" },
+      select: { position: true },
+    });
+    const t = await prisma.todo.create({ data: { body: "", position: (top?.position ?? -1) + 1 } });
+    return { id: t.id };
+  } catch {
+    return null;
+  }
 }
 
-export async function toggleTodo(formData: FormData) {
-  const id = str(formData, "id", 40);
-  if (!(await requireWrite()) || !id) done();
-  await safeWrite(async () => {
-    const prisma = getPrisma();
-    const t = await prisma.todo.findUnique({ where: { id } });
-    if (!t) return;
-    await prisma.todo.update({ where: { id }, data: { done: !t.done } });
-  });
-  done();
+export async function saveTodoNote(
+  id: string,
+  body: string,
+  accountId: string,
+  remindAt: string,
+): Promise<{ ok: boolean }> {
+  if (!(await requireWrite()) || !id) return { ok: false };
+  const b = typeof body === "string" ? body.slice(0, 20000) : "";
+  const acct = accountId ? accountId.slice(0, 40) : null;
+  const when = remindAt && !Number.isNaN(Date.parse(remindAt)) ? new Date(remindAt) : null;
+  const prisma = getPrisma();
+  try {
+    await prisma.todo.update({ where: { id }, data: { body: b, accountId: acct, remindAt: when } });
+    return { ok: true };
+  } catch {
+    // Notetaker columns not migrated yet — still persist the body so the note is
+    // never lost; the account link + date save once the ALTER runs.
+    try {
+      await prisma.todo.update({ where: { id }, data: { body: b } });
+      return { ok: true };
+    } catch {
+      return { ok: false };
+    }
+  }
 }
 
-export async function deleteTodo(formData: FormData) {
-  const id = str(formData, "id", 40);
-  if (!(await requireWrite()) || !id) done();
-  await safeWrite(async () => {
+export async function setTodoDone(id: string, done: boolean): Promise<{ ok: boolean }> {
+  if (!(await requireWrite()) || !id) return { ok: false };
+  try {
+    await getPrisma().todo.update({ where: { id }, data: { done: !!done } });
+    return { ok: true };
+  } catch {
+    return { ok: false };
+  }
+}
+
+export async function deleteTodoNote(id: string): Promise<{ ok: boolean }> {
+  if (!(await requireWrite()) || !id) return { ok: false };
+  try {
     await getPrisma().todo.deleteMany({ where: { id } });
-  });
-  done();
+    return { ok: true };
+  } catch {
+    return { ok: false };
+  }
 }
 
 // Log what happened on a touch (append to its timeline) and re-arm the next
