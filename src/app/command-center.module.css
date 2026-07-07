@@ -2788,6 +2788,20 @@
   font-size: 13px;
 }
 
+/* Contract-pricing table */
+.tableScroll {
+  overflow-x: auto;
+}
+.priceLine {
+  font-size: 12.5px;
+  line-height: 1.55;
+  white-space: nowrap;
+  color: var(--ink);
+}
+.feeCell {
+  background: #fffbeb;
+}
+
 /* CSM engagement panel (Account Room detail) */
 .engage {
   border: 1px solid #cdddf5;
