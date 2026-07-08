@@ -533,7 +533,14 @@ export function AccountsClient({
         <tbody>
           {filtered.map((a) => (
             <Fragment key={a.id}>
-              <tr id={`acct-${a.id}`} className={a.id === openId ? styles.rowActive : ""}>
+              <tr
+                id={`acct-${a.id}`}
+                className={a.id === openId ? styles.rowActive : ""}
+                data-stash="1"
+                data-stash-account={a.id}
+                data-stash-source={`Accounts › ${a.name}`}
+                data-stash-label={`${a.name}${a.demand != null ? ` — demand ${a.demand}` : ""}${a.play ? `, ${a.play}` : ""}`}
+              >
                 <td>
                   <button
                     className={styles.rowBtn}
