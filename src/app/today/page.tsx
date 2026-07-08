@@ -804,7 +804,7 @@ export default async function TodayPage({
               >
                 <div className={styles.gActions}>
                   <Link href="#capture" className={styles.mvOpen}>
-                    Go to the capture box ↓
+                    Log it in Narrative ↓
                   </Link>
                 </div>
               </GuidedBlock>
