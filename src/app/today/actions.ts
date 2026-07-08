@@ -168,6 +168,20 @@ export async function markReplied(formData: FormData) {
   done();
 }
 
+// Bring a not-yet-due check-in forward to now, so it surfaces in the due list
+// today (the inverse of snooze).
+export async function bringFollowUpDue(formData: FormData) {
+  const subjectKey = str(formData, "subjectKey", 200);
+  if (!(await requireWrite()) || !subjectKey) done();
+  await safeWrite(async () => {
+    await getPrisma().touch.updateMany({
+      where: { subjectKey },
+      data: { followUpAt: new Date(), status: "awaiting" },
+    });
+  });
+  done();
+}
+
 // Push the next check-in out one more interval (still no reply).
 export async function snoozeFollowUp(formData: FormData) {
   const subjectKey = str(formData, "subjectKey", 200);

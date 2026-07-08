@@ -58,6 +58,7 @@ import {
   addFieldNote,
   addFollowUp,
   addTouchNote,
+  bringFollowUpDue,
   deleteTouch,
   markReplied,
   resolveFieldNote,
@@ -1108,6 +1109,26 @@ export default async function TodayPage({
                             {" "}
                             — {d === 0 ? "due today" : `in ${d} day${d === 1 ? "" : "s"}`} (
                             {shortDate(t.followUpAt)})
+                          </span>
+                          <span className={styles.fuUpActions}>
+                            <form action={markReplied} className={styles.valInline}>
+                              <input type="hidden" name="subjectKey" value={t.subjectKey} />
+                              <button className={styles.fuUpDone} title="Close it — already done">
+                                Done ✓
+                              </button>
+                            </form>
+                            <form action={bringFollowUpDue} className={styles.valInline}>
+                              <input type="hidden" name="subjectKey" value={t.subjectKey} />
+                              <button className={styles.fuUpBtn} title="Bring the check-in to today">
+                                Do now
+                              </button>
+                            </form>
+                            <form action={deleteTouch} className={styles.valInline}>
+                              <input type="hidden" name="subjectKey" value={t.subjectKey} />
+                              <button className={styles.fuUpDel} title="Remove this follow-up">
+                                Delete
+                              </button>
+                            </form>
                           </span>
                         </li>
                       );

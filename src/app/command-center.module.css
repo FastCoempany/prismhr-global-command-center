@@ -2479,6 +2479,47 @@
 .fuUpWhen {
   color: var(--muted);
 }
+.fuUpActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 8px;
+  vertical-align: baseline;
+}
+.fuUpDone,
+.fuUpBtn,
+.fuUpDel {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 6px;
+  padding: 2px 8px;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.fuUpDone {
+  border-color: #a7e0bd;
+  color: var(--green);
+}
+.fuUpDone:hover {
+  background: #e4f7ea;
+}
+.fuUpBtn {
+  color: var(--blue-d);
+}
+.fuUpBtn:hover {
+  border-color: var(--blue);
+  background: #eef3fb;
+}
+.fuUpDel {
+  color: var(--muted);
+}
+.fuUpDel:hover {
+  border-color: #f0a3a3;
+  color: #b91c1c;
+}
 
 /* Today section tabs — keep any one view short instead of one long scroll. */
 .tabsWrap {
