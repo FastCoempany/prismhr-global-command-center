@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { DM_Serif_Display, JetBrains_Mono, Public_Sans } from "next/font/google";
+import { StashDock } from "@/components/stash/stash-dock";
 import "./globals.css";
 
 const dmSerif = DM_Serif_Display({
@@ -35,7 +36,10 @@ export default function RootLayout({
       className={`${dmSerif.variable} ${publicSans.variable} ${jetbrainsMono.variable}`}
       lang="en"
     >
-      <body>{children}</body>
+      <body>
+        {children}
+        <StashDock />
+      </body>
     </html>
   );
 }

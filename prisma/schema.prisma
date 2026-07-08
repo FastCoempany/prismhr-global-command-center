@@ -1065,6 +1065,25 @@ model Todo {
   @@index([accountId])
 }
 
+// Stash — the app-wide capture inbox. Any text you highlight, right-click, or
+// drag from any tab lands here as a captured item with an auto micro-note. From
+// the tray you route it to a lane: "todo" → Todo (Notetaker), "follow" → Touch
+// (Follow-ups), "gap" → FieldNote (Voice of the base). Right-click routing goes
+// straight to the lane and never creates a StashItem; only un-routed grabs
+// (highlight / drag) persist here until sorted. Isolated + additive: routing
+// writes to the existing stores, so nothing here couples to them at read time.
+model StashItem {
+  id        String   @id @default(cuid())
+  body      String // the raw captured text
+  micro     String   @default("") // deterministic one-line summary (Sharpen can rewrite it)
+  source    String   @default("") // where it came from, e.g. "selection" or "Accounts › Meridian HR"
+  accountId String? // optional book account (Salesforce id) when captured from one
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([createdAt])
+}
+
 // Per-account engagement — the CSM's meeting cadence with the client, a running
 // CSM-notes/health read, and whether Salesforce research has been pulled. Keyed
 // by the Salesforce account id from the book (like SignalSnooze / ScoreValidation).

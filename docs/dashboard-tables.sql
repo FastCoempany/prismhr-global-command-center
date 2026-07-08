@@ -144,6 +144,22 @@ ALTER TABLE "Todo" ADD COLUMN IF NOT EXISTS "accountId" TEXT;
 ALTER TABLE "Todo" ADD COLUMN IF NOT EXISTS "remindAt" TIMESTAMP(3);
 CREATE INDEX IF NOT EXISTS "Todo_accountId_idx" ON "Todo"("accountId");
 
+-- Stash — the app-wide capture inbox. Highlight / right-click / drag anything on
+-- any tab and it lands here with an auto micro-note, until you route it to a lane
+-- (todo → Todo, follow → Touch, gap → FieldNote). Only un-routed grabs persist
+-- here; right-click routing writes straight to the target store. Safe to re-run.
+CREATE TABLE IF NOT EXISTS "StashItem" (
+  "id" TEXT NOT NULL,
+  "body" TEXT NOT NULL,
+  "micro" TEXT NOT NULL DEFAULT '',
+  "source" TEXT NOT NULL DEFAULT '',
+  "accountId" TEXT,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL,
+  CONSTRAINT "StashItem_pkey" PRIMARY KEY ("id")
+);
+CREATE INDEX IF NOT EXISTS "StashItem_createdAt_idx" ON "StashItem"("createdAt");
+
 -- Per-account engagement — CSM meeting cadence, CSM notes, client health, and
 -- whether Salesforce research has been pulled. Keyed by the SF account id.
 -- Safe to re-run.
