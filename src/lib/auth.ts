@@ -5,6 +5,11 @@ import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 
 export const ACCESS_COOKIE_NAME = "field_signal_access";
 
+// ⚠ TEMPORARY: site is PUBLIC. Anyone with the URL gets full owner access
+// (view + edit) with no access-code screen. To restore the private gate, set
+// this back to false (or delete this constant and its use in getAppAccess).
+const PUBLIC_ACCESS = true;
+
 const ACCESS_COOKIE_MAX_AGE = 60 * 60 * 12;
 const ACCESS_COOKIE_MAX_AGE_MS = ACCESS_COOKIE_MAX_AGE * 1000;
 const FALLBACK_OWNER_EMAIL = "antaeus@example.local";
@@ -123,7 +128,9 @@ export async function hasAccessSession() {
 }
 
 export async function getAppAccess(): Promise<AppAccess> {
-  if (!(await hasAccessSession())) {
+  // When public, skip the cookie gate entirely — everyone is treated as the
+  // signed-in owner (full read + write) and no login screen is shown.
+  if (!PUBLIC_ACCESS && !(await hasAccessSession())) {
     return {
       appUser: null,
       authEmail: null,
