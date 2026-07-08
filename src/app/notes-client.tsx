@@ -192,7 +192,9 @@ export function NotesPanel({ initialNotes, accounts }: { initialNotes: Todo[]; a
     }
   }
 
-  const openCount = notes.filter((n) => !n.done).length;
+  const openNotes = notes.filter((n) => !n.done);
+  const doneNotes = notes.filter((n) => n.done);
+  const openCount = openNotes.length;
 
   return (
     <div className={styles.notes}>
@@ -211,8 +213,11 @@ export function NotesPanel({ initialNotes, accounts }: { initialNotes: Todo[]; a
       {notes.length === 0 && (
         <p className={styles.todoEmpty}>No notes yet — hit “＋ New note” and start typing.</p>
       )}
+      {notes.length > 0 && openNotes.length === 0 && (
+        <p className={styles.todoEmpty}>All caught up — done notes are in the archive below.</p>
+      )}
 
-      {notes.map((n) => (
+      {openNotes.map((n) => (
         <div key={n.id} className={`${styles.noteCard} ${n.done ? styles.noteCardDone : ""}`}>
           <div className={styles.noteTop}>
             <label className={styles.noteChk} title="Select this note for “Copy selected”">
@@ -275,6 +280,35 @@ export function NotesPanel({ initialNotes, accounts }: { initialNotes: Todo[]; a
           </div>
         </div>
       ))}
+
+      {doneNotes.length > 0 && (
+        <details className={styles.noteArchive}>
+          <summary>
+            Done
+            <span className={styles.noteArchiveCount}>{doneNotes.length}</span>
+            <span className={styles.noteArchiveHint}>checked-off notes · restore or delete</span>
+          </summary>
+          {doneNotes.map((n) => (
+            <div key={n.id} className={styles.noteArchiveRow}>
+              <span className={styles.noteArchiveBody}>{n.body.trim() || "(empty note)"}</span>
+              <button
+                className={styles.noteRestore}
+                onClick={() => toggleDone(n.id, false)}
+                title="Move back to the open list"
+              >
+                Restore
+              </button>
+              <button
+                className={styles.noteDel}
+                onClick={() => del(n.id)}
+                aria-label="Delete note"
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+        </details>
+      )}
     </div>
   );
 }
