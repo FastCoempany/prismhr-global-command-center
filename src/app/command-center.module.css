@@ -2485,6 +2485,10 @@
   display: grid;
   grid-template-columns: 1.35fr 1fr;
   gap: 18px;
+  /* Each column sizes to its own content. Without this the shorter column
+     (usually Follow-ups) stretches to match a very tall Notetaker, leaving a
+     big empty tinted expanse down the page. */
+  align-items: start;
 }
 @media (max-width: 820px) {
   .fuGrid {
