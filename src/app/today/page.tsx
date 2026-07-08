@@ -52,6 +52,7 @@ import {
 import { SfCheckpoint } from "@/components/sf";
 import { ContactControl, EditableMessage, NoteSubmit } from "../today-client";
 import { NotesPanel } from "../notes-client";
+import { TodayTabs } from "../today-tabs";
 import { addCard, toggleCheck } from "../dashboard/actions";
 import {
   addFieldNote,
@@ -618,6 +619,12 @@ export default async function TodayPage({
         <SfCheckpoint when="standing" strong />
 
 
+        {/* ── Sections, tabbed to keep any one view short ────────────────── */}
+        <TodayTabs
+          followUpsDue={followUps.due.length}
+          notesCount={todos.length}
+          morning={
+            <>
         {/* ── Week kickoff (Sun/Mon) ─────────────────────────────────────── */}
         {kickoff.length > 0 && (
           <section className={styles.kickoff}>
@@ -692,83 +699,6 @@ export default async function TodayPage({
             ))}
           </section>
         )}
-
-        {/* ── Follow-ups + To-do's (2 columns) ───────────────────────────── */}
-        <section className={styles.fuBand}>
-          <div className={styles.fuGrid}>
-            {/* Left — Follow-ups (auto from contacts + your own) */}
-            <div className={`${styles.fuCol} ${styles.fuColFollow}`}>
-              <div className={styles.fuBandHead}>
-                <span className={styles.fuTag}>Follow-ups</span>
-                <h2 className={styles.fuTitle}>
-                  {followUps.due.length > 0
-                    ? `${followUps.due.length} due`
-                    : "Nothing due right now"}
-                </h2>
-                <p className={styles.fuSub}>
-                  Every contact you log sets a check-in {FOLLOWUP_DAYS} days out — or write your own
-                  below. They keep surfacing until you close them.
-                </p>
-              </div>
-              {followUps.due.map((t) => (
-                <FollowUpDue key={t.subjectKey} t={t} />
-              ))}
-              {followUps.upcoming.length > 0 && (
-                <details className={styles.fuUpcoming}>
-                  <summary>Upcoming check-ins ({followUps.upcoming.length})</summary>
-                  <ul className={styles.fuUpcomingList}>
-                    {followUps.upcoming.map((t) => {
-                      const d = daysUntilIso(t.followUpAt);
-                      return (
-                        <li key={t.subjectKey}>
-                          <span className={styles.fuUpWho}>{t.label}</span>
-                          {t.detail ? (
-                            <span className={styles.fuUpDetail}> · {t.detail}</span>
-                          ) : null}
-                          <span className={styles.fuUpWhen}>
-                            {" "}
-                            — {d === 0 ? "due today" : `in ${d} day${d === 1 ? "" : "s"}`} (
-                            {shortDate(t.followUpAt)})
-                          </span>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </details>
-              )}
-              <form action={addFollowUp} className={styles.fuAdd}>
-                <input
-                  name="label"
-                  required
-                  maxLength={200}
-                  placeholder="Add your own follow-up (who / what)…"
-                  aria-label="Add a follow-up"
-                />
-                <select name="days" defaultValue={String(FOLLOWUP_DAYS)} aria-label="When">
-                  <option value="0">today</option>
-                  <option value="1">in 1 day</option>
-                  <option value="2">in 2 days</option>
-                  <option value="3">in 3 days</option>
-                  <option value="7">in 7 days</option>
-                </select>
-                <button className={styles.fuAddBtn}>Add</button>
-              </form>
-            </div>
-
-            {/* Right — notes / to-dos (live notetaker, autosaved) */}
-            <div className={`${styles.fuCol} ${styles.fuColTodo}`}>
-              <div className={styles.fuBandHead}>
-                <span className={styles.todoTag}>Notes &amp; to-dos</span>
-                <h2 className={styles.fuTitle}>Notetaker</h2>
-                <p className={styles.fuSub}>
-                  Live notes — autosaved as you type (browser + database). Link an account, set a
-                  date, select any notes and copy them out.
-                </p>
-              </div>
-              <NotesPanel initialNotes={todos} accounts={noteAccounts} />
-            </div>
-          </div>
-        </section>
 
         {/* ── Right now (quiet status) ───────────────────────────────────── */}
         <div className={styles.sop}>
@@ -927,7 +857,10 @@ export default async function TodayPage({
             ))}
           </details>
         )}
-
+            </>
+          }
+          narrative={
+            <>
         {/* ── Band 4 · Narrative forming ─────────────────────────────────── */}
         <section className={styles.band}>
           <div className={styles.bandHead}>
@@ -1045,7 +978,10 @@ export default async function TodayPage({
             </>
           )}
         </div>
-
+            </>
+          }
+          plan={
+            <>
         {/* ── The daily loop ─────────────────────────────────────────────── */}
         <h2 className={styles.h2}>The three questions I run every day</h2>
         <div className={styles.cards}>
@@ -1137,6 +1073,81 @@ export default async function TodayPage({
             math in those terms when you brief her.
           </p>
         </div>
+            </>
+          }
+          followups={
+            <div className={`${styles.fuCol} ${styles.fuColFollow}`}>
+              <div className={styles.fuBandHead}>
+                <span className={styles.fuTag}>Follow-ups</span>
+                <h2 className={styles.fuTitle}>
+                  {followUps.due.length > 0
+                    ? `${followUps.due.length} due`
+                    : "Nothing due right now"}
+                </h2>
+                <p className={styles.fuSub}>
+                  Every contact you log sets a check-in {FOLLOWUP_DAYS} days out — or write your own
+                  below. They keep surfacing until you close them.
+                </p>
+              </div>
+              {followUps.due.map((t) => (
+                <FollowUpDue key={t.subjectKey} t={t} />
+              ))}
+              {followUps.upcoming.length > 0 && (
+                <details className={styles.fuUpcoming}>
+                  <summary>Upcoming check-ins ({followUps.upcoming.length})</summary>
+                  <ul className={styles.fuUpcomingList}>
+                    {followUps.upcoming.map((t) => {
+                      const d = daysUntilIso(t.followUpAt);
+                      return (
+                        <li key={t.subjectKey}>
+                          <span className={styles.fuUpWho}>{t.label}</span>
+                          {t.detail ? (
+                            <span className={styles.fuUpDetail}> · {t.detail}</span>
+                          ) : null}
+                          <span className={styles.fuUpWhen}>
+                            {" "}
+                            — {d === 0 ? "due today" : `in ${d} day${d === 1 ? "" : "s"}`} (
+                            {shortDate(t.followUpAt)})
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </details>
+              )}
+              <form action={addFollowUp} className={styles.fuAdd}>
+                <input
+                  name="label"
+                  required
+                  maxLength={200}
+                  placeholder="Add your own follow-up (who / what)…"
+                  aria-label="Add a follow-up"
+                />
+                <select name="days" defaultValue={String(FOLLOWUP_DAYS)} aria-label="When">
+                  <option value="0">today</option>
+                  <option value="1">in 1 day</option>
+                  <option value="2">in 2 days</option>
+                  <option value="3">in 3 days</option>
+                  <option value="7">in 7 days</option>
+                </select>
+                <button className={styles.fuAddBtn}>Add</button>
+              </form>
+            </div>
+          }
+          notes={
+            <div className={`${styles.fuCol} ${styles.fuColTodo}`}>
+              <div className={styles.fuBandHead}>
+                <span className={styles.todoTag}>Notes &amp; to-dos</span>
+                <h2 className={styles.fuTitle}>Notetaker</h2>
+                <p className={styles.fuSub}>
+                  Live notes — autosaved as you type (browser + database). Link an account, set a
+                  date, select any notes and copy them out.
+                </p>
+              </div>
+              <NotesPanel initialNotes={todos} accounts={noteAccounts} />
+            </div>
+          }
+        />
       </main>
     </>
   );

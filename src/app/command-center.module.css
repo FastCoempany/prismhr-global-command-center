@@ -2480,6 +2480,75 @@
   color: var(--muted);
 }
 
+/* Today section tabs — keep any one view short instead of one long scroll. */
+.tabsWrap {
+  margin: 16px 0;
+}
+.tabBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 16px;
+  position: sticky;
+  top: 58px;
+  background: var(--bg);
+  z-index: 4;
+  padding: 6px 0 0;
+}
+.tabBtn {
+  border: 1px solid var(--line);
+  border-bottom: none;
+  background: #fff;
+  color: var(--muted);
+  border-radius: 9px 9px 0 0;
+  padding: 8px 14px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: -1px;
+}
+.tabBtn:hover {
+  color: var(--navy);
+  border-color: var(--muted);
+}
+.tabBtnOn {
+  color: var(--navy);
+  border-color: var(--line);
+  border-top: 3px solid var(--blue);
+  background: var(--card);
+}
+.tab_followups.tabBtnOn {
+  border-top-color: var(--orange);
+}
+.tab_notes.tabBtnOn {
+  border-top-color: var(--navy);
+}
+.tabCount {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--sunk, #eef1f6);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+.tabBtnOn .tabCount {
+  background: color-mix(in srgb, var(--blue) 14%, transparent);
+  color: var(--blue-d);
+}
+.tab_followups.tabBtnOn .tabCount {
+  background: color-mix(in srgb, var(--orange) 16%, transparent);
+  color: #b6531a;
+}
+
 /* Follow-ups + To-do's, two columns */
 .fuGrid {
   display: grid;
