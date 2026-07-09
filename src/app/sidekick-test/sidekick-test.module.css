@@ -196,3 +196,6 @@
   opacity: 0.35;
   cursor: default;
 }
+.sayPara {
+  margin-top: 0.7em !important;
+}

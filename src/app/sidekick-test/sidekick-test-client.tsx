@@ -8,7 +8,12 @@ import {
   type DemoModuleEntry,
   type DemoScreen,
 } from "@/lib/catalog-demo";
-import { createDemoAccount, resetScreenScript, saveNote, saveScreenScript } from "./actions";
+import {
+  createDemoAccount,
+  resetScreenScript,
+  saveNote,
+  saveScreenScript,
+} from "./actions";
 import type { DemoAccountSummary } from "./data";
 import s from "../sidekick/sidekick.module.css";
 import x from "./sidekick-test.module.css";
@@ -72,7 +77,9 @@ export function SidekickTestClient(props: Props) {
     if (!query) return screens;
     const q = query.toLowerCase();
     return screens.filter((sc) =>
-      `${sc.title} ${demoModuleLabel(sc.module)} ${sc.tags.join(" ")}`.toLowerCase().includes(q),
+      `${sc.title} ${demoModuleLabel(sc.module)} ${sc.tags.join(" ")}`
+        .toLowerCase()
+        .includes(q),
     );
   }, [screens, query]);
 
@@ -103,7 +110,8 @@ export function SidekickTestClient(props: Props) {
     const onKey = (e: KeyboardEvent) => {
       const el = e.target as HTMLElement | null;
       const typing =
-        el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.tagName === "SELECT");
+        el &&
+        (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.tagName === "SELECT");
       if (e.key === "Escape") {
         setPresenter(false);
         setShowBrief(false);
@@ -183,7 +191,11 @@ export function SidekickTestClient(props: Props) {
               <input name="name" placeholder="Account / prospect name" required />
               <input name="company" placeholder="Company (optional)" />
               <input name="personaLabel" placeholder="Persona (e.g. PEO Owner)" />
-              <select name="defaultAudience" defaultValue="BOTH" aria-label="Default audience">
+              <select
+                name="defaultAudience"
+                defaultValue="BOTH"
+                aria-label="Default audience"
+              >
                 <option value="BOTH">Both audiences</option>
                 <option value="SERVICE_PROVIDER">PEO Partner</option>
                 <option value="DIRECT_EMPLOYER">SMB Client</option>
@@ -222,7 +234,9 @@ export function SidekickTestClient(props: Props) {
               <span className={x.flowClock}>{sc.videoClock}</span>
             </button>
           ))}
-          {filtered.length === 0 && <div className={x.flowEmpty}>No steps match “{query}”.</div>}
+          {filtered.length === 0 && (
+            <div className={x.flowEmpty}>No steps match “{query}”.</div>
+          )}
         </div>
       </aside>
 
@@ -232,7 +246,11 @@ export function SidekickTestClient(props: Props) {
           <span className={s.crumb}>{selected?.navPath.join("  ›  ")}</span>
           <span className={s.spacer} />
           <div className={s.stepper}>
-            <button onClick={() => stepTo(-1)} disabled={stepIndex <= 0} title="Previous step (←)">
+            <button
+              onClick={() => stepTo(-1)}
+              disabled={stepIndex <= 0}
+              title="Previous step (←)"
+            >
               ◀
             </button>
             <span>
@@ -270,11 +288,18 @@ export function SidekickTestClient(props: Props) {
             </h1>
             <div className={s.chips}>
               <span className={s.chip}>{demoModuleLabel(selected.module)}</span>
-              <span className={`${s.chip} ${tierChip(selected.tier)}`}>{selected.tier} value</span>
-              <span className={`${s.chip} ${x.clockChip}`} title="Where this happens in the recording">
+              <span className={`${s.chip} ${tierChip(selected.tier)}`}>
+                {selected.tier} value
+              </span>
+              <span
+                className={`${s.chip} ${x.clockChip}`}
+                title="Where this happens in the recording"
+              >
                 ⏱ {selected.videoClock}–{selected.videoEndClock}
               </span>
-              {editedSet.has(selected.id) && <span className={`${s.chip} ${s.editedChip}`}>edited</span>}
+              {editedSet.has(selected.id) && (
+                <span className={`${s.chip} ${s.editedChip}`}>edited</span>
+              )}
               {selected.needsFrameCheck && (
                 <span
                   className={`${s.chip} ${x.unverifiedChip}`}
@@ -301,24 +326,40 @@ export function SidekickTestClient(props: Props) {
                 <label>Say this (talk track)</label>
                 <textarea name="say" rows={4} defaultValue={selected.say} />
                 <label>Capabilities (one per line)</label>
-                <textarea name="capabilities" rows={5} defaultValue={selected.capabilities.join("\n")} />
+                <textarea
+                  name="capabilities"
+                  rows={5}
+                  defaultValue={selected.capabilities.join("\n")}
+                />
                 <label>Value — PEO partner / channel (one per line)</label>
                 <textarea name="sp" rows={4} defaultValue={selected.sp.join("\n")} />
                 <label>Value — SMB client via PEO (one per line)</label>
                 <textarea name="de" rows={4} defaultValue={selected.de.join("\n")} />
                 <label>Branching (one per line)</label>
-                <textarea name="branching" rows={4} defaultValue={selected.branching.join("\n")} />
+                <textarea
+                  name="branching"
+                  rows={4}
+                  defaultValue={selected.branching.join("\n")}
+                />
                 <label>What this screen is</label>
                 <textarea name="what" rows={3} defaultValue={selected.what} />
                 <div className={s.editRow}>
                   <button type="submit" className={s.saveBtn}>
                     Save script
                   </button>
-                  <button type="button" className={s.ghostBtn} onClick={() => setEditing(false)}>
+                  <button
+                    type="button"
+                    className={s.ghostBtn}
+                    onClick={() => setEditing(false)}
+                  >
                     Cancel
                   </button>
                   {editedSet.has(selected.id) && (
-                    <button type="submit" className={s.ghostBtn} formAction={resetScreenScript}>
+                    <button
+                      type="submit"
+                      className={s.ghostBtn}
+                      formAction={resetScreenScript}
+                    >
                       ↺ Reset to demo
                     </button>
                   )}
@@ -331,7 +372,13 @@ export function SidekickTestClient(props: Props) {
                   <div className={s.say}>
                     <span className={s.accent} />
                     <div className={s.lab ?? ""}>▶ Say this</div>
-                    <p dangerouslySetInnerHTML={{ __html: md(selected.say) }} />
+                    {selected.say.split(/\n{2,}/).map((para, i) => (
+                      <p
+                        key={i}
+                        className={i > 0 ? x.sayPara : undefined}
+                        dangerouslySetInnerHTML={{ __html: md(para) }}
+                      />
+                    ))}
                   </div>
                 )}
 
@@ -353,7 +400,9 @@ export function SidekickTestClient(props: Props) {
                         <button type="submit" className={s.saveBtn}>
                           Save note
                         </button>
-                        <span className={s.muted}>Persists per account across devices.</span>
+                        <span className={s.muted}>
+                          Persists per account across devices.
+                        </span>
                       </div>
                     </form>
                   ) : (
@@ -415,7 +464,10 @@ export function SidekickTestClient(props: Props) {
                 {selected.what && (
                   <div className={s.sec}>
                     <h3>What this screen is</h3>
-                    <div className={s.what} dangerouslySetInnerHTML={{ __html: md(selected.what) }} />
+                    <div
+                      className={s.what}
+                      dangerouslySetInnerHTML={{ __html: md(selected.what) }}
+                    />
                   </div>
                 )}
 
@@ -423,7 +475,10 @@ export function SidekickTestClient(props: Props) {
                   <button onClick={() => stepTo(-1)} disabled={stepIndex <= 0}>
                     ◀ Previous
                   </button>
-                  <button onClick={() => stepTo(1)} disabled={stepIndex >= screens.length - 1}>
+                  <button
+                    onClick={() => stepTo(1)}
+                    disabled={stepIndex >= screens.length - 1}
+                  >
                     Next step ▶
                   </button>
                 </div>
@@ -472,7 +527,11 @@ export function SidekickTestClient(props: Props) {
             Step {selected.flowOrder} / {screens.length} · {selected.videoClock}
           </div>
           <div className={s.pTitle ?? x.presTitle}>{selected.title}</div>
-          <div className={s.pSay ?? x.presSay}>{selected.say || selected.what}</div>
+          <div className={s.pSay ?? x.presSay}>
+            {(selected.say || selected.what).split(/\n{2,}/).map((para, i) => (
+              <p key={i}>{para}</p>
+            ))}
+          </div>
           <ul>
             {(audience === "de" ? selected.de : selected.sp).slice(0, 3).map((it, i) => (
               <li key={i} dangerouslySetInnerHTML={{ __html: md(it) }} />
