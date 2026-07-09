@@ -1,0 +1,5135 @@
+{
+  "momentCount": 55,
+  "entries": [
+    {
+      "id": "moment-001-brycerowley-hey-shane",
+      "order": 1,
+      "moduleGuess": "unknown",
+      "confidence": "none",
+      "matchedKeywords": [],
+      "titleGuess": "Brycerowley: Hey, Shane",
+      "tsRange": {
+        "startSec": 68.21,
+        "endSec": 129.99,
+        "startClock": "00:01:08.21",
+        "endClock": "00:02:09.99"
+      },
+      "durationSec": 61.78,
+      "cueCount": 20,
+      "speakers": [
+        "Shane Jacobs"
+      ],
+      "transcriptExcerpt": "brycerowley: Hey, Shane. Hello. For ya. brycerowley: Yeah, I don't brycerowley: You, just to… I'm sure you did, just to confirm. I sent over those… the email addresses. brycerowley: For a bunch of the folks. You just sent those out, right? C. I did, yes, yep. brycerowley: But. brycerowley: Wait, wait, wait. brycerowley: Historically, these guys have been 2-3 minutes late getting on calls, so… Okay. brycerowley: Don't…",
+      "frameRefs": [
+        {
+          "file": "frame_000274.jpg",
+          "tSec": 68.25,
+          "clock": "00:01:08.25"
+        },
+        {
+          "file": "frame_000296.jpg",
+          "tSec": 73.75,
+          "clock": "00:01:13.75"
+        },
+        {
+          "file": "frame_000319.jpg",
+          "tSec": 79.5,
+          "clock": "00:01:19.50"
+        },
+        {
+          "file": "frame_000341.jpg",
+          "tSec": 85,
+          "clock": "00:01:25.00"
+        },
+        {
+          "file": "frame_000364.jpg",
+          "tSec": 90.75,
+          "clock": "00:01:30.75"
+        },
+        {
+          "file": "frame_000386.jpg",
+          "tSec": 96.25,
+          "clock": "00:01:36.25"
+        },
+        {
+          "file": "frame_000409.jpg",
+          "tSec": 102,
+          "clock": "00:01:42.00"
+        },
+        {
+          "file": "frame_000431.jpg",
+          "tSec": 107.5,
+          "clock": "00:01:47.50"
+        },
+        {
+          "file": "frame_000454.jpg",
+          "tSec": 113.25,
+          "clock": "00:01:53.25"
+        },
+        {
+          "file": "frame_000476.jpg",
+          "tSec": 118.75,
+          "clock": "00:01:58.75"
+        },
+        {
+          "file": "frame_000499.jpg",
+          "tSec": 124.5,
+          "clock": "00:02:04.50"
+        },
+        {
+          "file": "frame_000521.jpg",
+          "tSec": 130,
+          "clock": "00:02:10.00"
+        }
+      ],
+      "visibleScreenNotes": "",
+      "draft": {
+        "say": "TODO — talk track for “Brycerowley: Hey, Shane” (source: transcript 00:01:08.21–00:02:09.99)",
+        "what": "TODO — one-paragraph description of what this screen/moment shows",
+        "capabilities": [],
+        "sp": [],
+        "de": [],
+        "branching": []
+      }
+    },
+    {
+      "id": "moment-002-we-re-all-joining-here",
+      "order": 2,
+      "moduleGuess": "unknown",
+      "confidence": "none",
+      "matchedKeywords": [],
+      "titleGuess": "We're all joining here",
+      "tsRange": {
+        "startSec": 160.65,
+        "endSec": 162.78,
+        "startClock": "00:02:40.65",
+        "endClock": "00:02:42.78"
+      },
+      "durationSec": 2.13,
+      "cueCount": 2,
+      "speakers": [
+        "Shane Jacobs"
+      ],
+      "transcriptExcerpt": "We're all joining here. brycerowley: Great.",
+      "frameRefs": [
+        {
+          "file": "frame_000644.jpg",
+          "tSec": 160.75,
+          "clock": "00:02:40.75"
+        },
+        {
+          "file": "frame_000645.jpg",
+          "tSec": 161,
+          "clock": "00:02:41.00"
+        },
+        {
+          "file": "frame_000646.jpg",
+          "tSec": 161.25,
+          "clock": "00:02:41.25"
+        },
+        {
+          "file": "frame_000647.jpg",
+          "tSec": 161.5,
+          "clock": "00:02:41.50"
+        },
+        {
+          "file": "frame_000648.jpg",
+          "tSec": 161.75,
+          "clock": "00:02:41.75"
+        },
+        {
+          "file": "frame_000649.jpg",
+          "tSec": 162,
+          "clock": "00:02:42.00"
+        },
+        {
+          "file": "frame_000650.jpg",
+          "tSec": 162.25,
+          "clock": "00:02:42.25"
+        },
+        {
+          "file": "frame_000651.jpg",
+          "tSec": 162.5,
+          "clock": "00:02:42.50"
+        },
+        {
+          "file": "frame_000652.jpg",
+          "tSec": 162.75,
+          "clock": "00:02:42.75"
+        }
+      ],
+      "visibleScreenNotes": "",
+      "draft": {
+        "say": "TODO — talk track for “We're all joining here” (source: transcript 00:02:40.65–00:02:42.78)",
+        "what": "TODO — one-paragraph description of what this screen/moment shows",
+        "capabilities": [],
+        "sp": [],
+        "de": [],
+        "branching": []
+      }
+    },
+    {
+      "id": "moment-003-moment-00-02-55-25",
+      "order": 3,
+      "moduleGuess": "unknown",
+      "confidence": "none",
+      "matchedKeywords": [],
+      "titleGuess": "moment @ 00:02:55.25",
+      "tsRange": {
+        "startSec": 175.25,
+        "endSec": 249.92,
+        "startClock": "00:02:55.25",
+        "endClock": "00:04:09.92"
+      },
+      "durationSec": 74.67,
+      "cueCount": 32,
+      "speakers": [
+        "Shane Jacobs",
+        "Elissa",
+        "Antaeus.Coe",
+        "Nate Price",
+        "Jessica Brach",
+        "Andy A"
+      ],
+      "transcriptExcerpt": "See ya. Hello. Hello. Carlos? Doing. Good, hi, my name's Alisa, I'm with, HR over at Subcontractor. Fantastic. Good to meet you. You too. Yep. Hey Nate. Hey, what's up guys? Hey man, how are you. Doing alright. brycerowley: Hey, Alyssa. And there's so many different note takers in this world now. Sub. Hub note taker. That's. That's a… that's an internal… No kidding. that I don't even know how it showed up and I don't…",
+      "frameRefs": [
+        {
+          "file": "frame_000702.jpg",
+          "tSec": 175.25,
+          "clock": "00:02:55.25"
+        },
+        {
+          "file": "frame_000729.jpg",
+          "tSec": 182,
+          "clock": "00:03:02.00"
+        },
+        {
+          "file": "frame_000756.jpg",
+          "tSec": 188.75,
+          "clock": "00:03:08.75"
+        },
+        {
+          "file": "frame_000784.jpg",
+          "tSec": 195.75,
+          "clock": "00:03:15.75"
+        },
+        {
+          "file": "frame_000811.jpg",
+          "tSec": 202.5,
+          "clock": "00:03:22.50"
+        },
+        {
+          "file": "frame_000838.jpg",
+          "tSec": 209.25,
+          "clock": "00:03:29.25"
+        },
+        {
+          "file": "frame_000865.jpg",
+          "tSec": 216,
+          "clock": "00:03:36.00"
+        },
+        {
+          "file": "frame_000892.jpg",
+          "tSec": 222.75,
+          "clock": "00:03:42.75"
+        },
+        {
+          "file": "frame_000919.jpg",
+          "tSec": 229.5,
+          "clock": "00:03:49.50"
+        },
+        {
+          "file": "frame_000947.jpg",
+          "tSec": 236.5,
+          "clock": "00:03:56.50"
+        },
+        {
+          "file": "frame_000974.jpg",
+          "tSec": 243.25,
+          "clock": "00:04:03.25"
+        },
+        {
+          "file": "frame_001001.jpg",
+          "tSec": 250,
+          "clock": "00:04:10.00"
+        }
+      ],
+      "visibleScreenNotes": "",
+      "draft": {
+        "say": "TODO — talk track for “moment @ 00:02:55.25” (source: transcript 00:02:55.25–00:04:09.92)",
+        "what": "TODO — one-paragraph description of what this screen/moment shows",
+        "capabilities": [],
+        "sp": [],
+        "de": [],
+        "branching": []
+      }
+    },
+    {
+      "id": "moment-004-moment-00-04-09-92",
+      "order": 4,
+      "moduleGuess": "unknown",
+      "confidence": "none",
+      "matchedKeywords": [],
+      "titleGuess": "moment @ 00:04:09.92",
+      "tsRange": {
+        "startSec": 249.92,
+        "endSec": 266.45,
+        "startClock": "00:04:09.92",
+        "endClock": "00:04:26.45"
+      },
+      "durationSec": 16.53,
+      "cueCount": 8,
+      "speakers": [
+        "Eric Ronci",
+        "Andy A",
+        "Jessica Brach"
+      ],
+      "transcriptExcerpt": "Nice. brycerowley: Oh. Andy. Good morning, how are you? You're right. brycerowley: Do we want to hold off for Renee or for Justin, or do we want to get started? Up to you guys. Let me just ping your name real fast. brycerowley: Yep.",
+      "frameRefs": [
+        {
+          "file": "frame_001001.jpg",
+          "tSec": 250,
+          "clock": "00:04:10.00"
+        },
+        {
+          "file": "frame_001007.jpg",
+          "tSec": 251.5,
+          "clock": "00:04:11.50"
+        },
+        {
+          "file": "frame_001013.jpg",
+          "tSec": 253,
+          "clock": "00:04:13.00"
+        },
+        {
+          "file": "frame_001019.jpg",
+          "tSec": 254.5,
+          "clock": "00:04:14.50"
+        },
+        {
+          "file": "frame_001025.jpg",
+          "tSec": 256,
+          "clock": "00:04:16.00"
+        },
+        {
+          "file": "frame_001031.jpg",
+          "tSec": 257.5,
+          "clock": "00:04:17.50"
+        },
+        {
+          "file": "frame_001037.jpg",
+          "tSec": 259,
+          "clock": "00:04:19.00"
+        },
+        {
+          "file": "frame_001043.jpg",
+          "tSec": 260.5,
+          "clock": "00:04:20.50"
+        },
+        {
+          "file": "frame_001049.jpg",
+          "tSec": 262,
+          "clock": "00:04:22.00"
+        },
+        {
+          "file": "frame_001055.jpg",
+          "tSec": 263.5,
+          "clock": "00:04:23.50"
+        },
+        {
+          "file": "frame_001061.jpg",
+          "tSec": 265,
+          "clock": "00:04:25.00"
+        },
+        {
+          "file": "frame_001067.jpg",
+          "tSec": 266.5,
+          "clock": "00:04:26.50"
+        }
+      ],
+      "visibleScreenNotes": "",
+      "draft": {
+        "say": "TODO — talk track for “moment @ 00:04:09.92” (source: transcript 00:04:09.92–00:04:26.45)",
+        "what": "TODO — one-paragraph description of what this screen/moment shows",
+        "capabilities": [],
+        "sp": [],
+        "de": [],
+        "branching": []
+      }
+    },
+    {
+      "id": "moment-005-hello-andy-good-to-see-you-again",
+      "order": 5,
+      "moduleGuess": "team",
+      "confidence": "low",
+      "matchedKeywords": [
+        "team"
+      ],
+      "titleGuess": "Hello, Andy, good to see you again",
+      "tsRange": {
+        "startSec": 288.59,
+        "endSec": 336.45,
+        "startClock": "00:04:48.59",
+        "endClock": "00:05:36.45"
+      },
+      "durationSec": 47.86,
+      "cueCount": 15,
+      "speakers": [
+        "Shane Jacobs",
+        "Andy A",
+        "Antaeus.Coe",
+        "Jessica Brach"
+      ],
+      "transcriptExcerpt": "Hello, Andy, good to see you again. Good to see you again, Shane. How are you? Good, good. Excellent. Hi, Andy. You've probably seen me on the emails, but I'm a member of the team you probably haven't met yet. On the prism side. Pleasure to meet you. Pleasure is mine. Okay, Renee, so just give her a minute. brycerowley: No worries. And where is Subcontractor Hub located? Where are you guys at? We're in Utah, we're ki…",
+      "frameRefs": [
+        {
+          "file": "frame_001155.jpg",
+          "tSec": 288.5,
+          "clock": "00:04:48.50"
+        },
+        {
+          "file": "frame_001172.jpg",
+          "tSec": 292.75,
+          "clock": "00:04:52.75"
+        },
+        {
+          "file": "frame_001190.jpg",
+          "tSec": 297.25,
+          "clock": "00:04:57.25"
+        },
+        {
+          "file": "frame_001207.jpg",
+          "tSec": 301.5,
+          "clock": "00:05:01.50"
+        },
+        {
+          "file": "frame_001225.jpg",
+          "tSec": 306,
+          "clock": "00:05:06.00"
+        },
+        {
+          "file": "frame_001242.jpg",
+          "tSec": 310.25,
+          "clock": "00:05:10.25"
+        },
+        {
+          "file": "frame_001260.jpg",
+          "tSec": 314.75,
+          "clock": "00:05:14.75"
+        },
+        {
+          "file": "frame_001277.jpg",
+          "tSec": 319,
+          "clock": "00:05:19.00"
+        },
+        {
+          "file": "frame_001295.jpg",
+          "tSec": 323.5,
+          "clock": "00:05:23.50"
+        },
+        {
+          "file": "frame_001312.jpg",
+          "tSec": 327.75,
+          "clock": "00:05:27.75"
+        },
+        {
+          "file": "frame_001330.jpg",
+          "tSec": 332.25,
+          "clock": "00:05:32.25"
+        },
+        {
+          "file": "frame_001347.jpg",
+          "tSec": 336.5,
+          "clock": "00:05:36.50"
+        }
+      ],
+      "visibleScreenNotes": "",
+      "draft": {
+        "say": "TODO — talk track for “Hello, Andy, good to see you again” (source: transcript 00:04:48.59–00:05:36.45)",
+        "what": "TODO — one-paragraph description of what this screen/moment shows",
+        "capabilities": [],
+        "sp": [],
+        "de": [],
+        "branching": []
+      }
+    },
+    {
+      "id": "moment-006-is-the-whole-state-burned-down-yet-from-all",
+      "order": 6,
+      "moduleGuess": "unknown",
+      "confidence": "none",
+      "matchedKeywords": [],
+      "titleGuess": "Is the whole state burned down yet from all…",
+      "tsRange": {
+        "startSec": 345.66,
+        "endSec": 413.24,
+        "startClock": "00:05:45.66",
+        "endClock": "00:06:53.24"
+      },
+      "durationSec": 67.58,
+      "cueCount": 16,
+      "speakers": [
+        "Shane Jacobs",
+        "Jessica Brach",
+        "Andy A"
+      ],
+      "transcriptExcerpt": "Is the whole state burned down yet from all the fireworks? Ahh. I'll stop. I feel like it's nonstop. One goes out and another one starts. we drove up. the week before the fourth, and we drove through Beaver. I live in, I live in Phoenix, Arizona, and the fire was so intense. Oh, w. right there in Beaver, and then coming up, and it seemed like from Beaver all the way up through Salt Lake, it was just haze and smoke an…",
+      "frameRefs": [
+        {
+          "file": "frame_001384.jpg",
+          "tSec": 345.75,
+          "clock": "00:05:45.75"
+        },
+        {
+          "file": "frame_001409.jpg",
+          "tSec": 352,
+          "clock": "00:05:52.00"
+        },
+        {
+          "file": "frame_001433.jpg",
+          "tSec": 358,
+          "clock": "00:05:58.00"
+        },
+        {
+          "file": "frame_001458.jpg",
+          "tSec": 364.25,
+          "clock": "00:06:04.25"
+        },
+        {
+          "file": "frame_001482.jpg",
+          "tSec": 370.25,
+          "clock": "00:06:10.25"
+        },
+        {
+          "file": "frame_001507.jpg",
+          "tSec": 376.5,
+          "clock": "00:06:16.50"
+        },
+        {
+          "file": "frame_001531.jpg",
+          "tSec": 382.5,
+          "clock": "00:06:22.50"
+        },
+        {
+          "file": "frame_001556.jpg",
+          "tSec": 388.75,
+          "clock": "00:06:28.75"
+        },
+        {
+          "file": "frame_001580.jpg",
+          "tSec": 394.75,
+          "clock": "00:06:34.75"
+        },
+        {
+          "file": "frame_001605.jpg",
+          "tSec": 401,
+          "clock": "00:06:41.00"
+        },
+        {
+          "file": "frame_001629.jpg",
+          "tSec": 407,
+          "clock": "00:06:47.00"
+        },
+        {
+          "file": "frame_001654.jpg",
+          "tSec": 413.25,
+          "clock": "00:06:53.25"
+        }
+      ],
+      "visibleScreenNotes": "",
+      "draft": {
+        "say": "TODO — talk track for “Is the whole state burned down yet from all…” (source: transcript 00:05:45.66–00:06:53.24)",
+        "what": "TODO — one-paragraph description of what this screen/moment shows",
+        "capabilities": [],
+        "sp": [],
+        "de": [],
+        "branching": []
+      }
+    },
+    {
+      "id": "moment-007-who-d-you-who-d-you-say-we-were-waiting-on",
+      "order": 7,
+      "moduleGuess": "unknown",
+      "confidence": "none",
+      "matchedKeywords": [],
+      "titleGuess": "Who'd you? Who'd you say we were waiting on",
+      "tsRange": {
+        "startSec": 418.69,
+        "endSec": 429.73,
+        "startClock": "00:06:58.69",
+        "endClock": "00:07:09.73"
+      },
+      "durationSec": 11.04,
+      "cueCount": 5,
+      "speakers": [
+        "Antaeus.Coe"
+      ],
+      "transcriptExcerpt": "Who'd you? Who'd you say we were waiting on. brycerowley: We're waiting on one more individual on the subcontractor hub side. Cool. brycerowley: Give her just another minute here, if that works for you guys. word, right?",
+      "frameRefs": [
+        {
+          "file": "frame_001676.jpg",
+          "tSec": 418.75,
+          "clock": "00:06:58.75"
+        },
+        {
+          "file": "frame_001680.jpg",
+          "tSec": 419.75,
+          "clock": "00:06:59.75"
+        },
+        {
+          "file": "frame_001684.jpg",
+          "tSec": 420.75,
+          "clock": "00:07:00.75"
+        },
+        {
+          "file": "frame_001688.jpg",
+          "tSec": 421.75,
+          "clock": "00:07:01.75"
+        },
+        {
+          "file": "frame_001692.jpg",
+          "tSec": 422.75,
+          "clock": "00:07:02.75"
+        },
+        {
+          "file": "frame_001696.jpg",
+          "tSec": 423.75,
+          "clock": "00:07:03.75"
+        },
+        {
+          "file": "frame_001700.jpg",
+          "tSec": 424.75,
+          "clock": "00:07:04.75"
+        },
+        {
+          "file": "frame_001704.jpg",
+          "tSec": 425.75,
+          "clock": "00:07:05.75"
+        },
+        {
+          "file": "frame_001708.jpg",
+          "tSec": 426.75,
+          "clock": "00:07:06.75"
+        },
+        {
+          "file": "frame_001712.jpg",
+          "tSec": 427.75,
+          "clock": "00:07:07.75"
+        },
+        {
+          "file": "frame_001716.jpg",
+          "tSec": 428.75,
+          "clock": "00:07:08.75"
+        },
+        {
+          "file": "frame_001720.jpg",
+          "tSec": 429.75,
+          "clock": "00:07:09.75"
+        }
+      ],
+      "visibleScreenNotes": "",
+      "draft": {
+        "say": "TODO — talk track for “Who'd you? Who'd you say we were waiting on” (source: transcript 00:06:58.69–00:07:09.73)",
+        "what": "TODO — one-paragraph description of what this screen/moment shows",
+        "capabilities": [],
+        "sp": [],
+        "de": [],
+        "branching": []
+      }
+    },
+    {
+      "id": "moment-008-brycerowley-jessica-would-it-be-helpful-to-do-some",
+      "order": 8,
+      "moduleGuess": "team",
+      "confidence": "low",
+      "matchedKeywords": [
+        "team"
+      ],
+      "titleGuess": "Brycerowley: Jessica, would it be helpful to do some…",
+      "tsRange": {
+        "startSec": 438.56,
+        "endSec": 507.03,
+        "startClock": "00:07:18.56",
+        "endClock": "00:08:27.03"
+      },
+      "durationSec": 68.47,
+      "cueCount": 10,
+      "speakers": [
+        "Jessica Brach",
+        "Andy A",
+        "Nate Price",
+        "Renee"
+      ],
+      "transcriptExcerpt": "brycerowley: Jessica, would it be helpful to do some quick introductions and give the team here a brief overview of kind of the international distribution of employees and things like that, what you're doing today while we're waiting on her? Yeah, N. Correct. brycerowley: Oh, there's your mic. Yes. Oh, sorry. Oh. brycerowley: All right. Hey, Rene. Awesome. All right, well, I think we have quorum now. So everyone, tha…",
+      "frameRefs": [
+        {
+          "file": "frame_001755.jpg",
+          "tSec": 438.5,
+          "clock": "00:07:18.50"
+        },
+        {
+          "file": "frame_001780.jpg",
+          "tSec": 444.75,
+          "clock": "00:07:24.75"
+        },
+        {
+          "file": "frame_001805.jpg",
+          "tSec": 451,
+          "clock": "00:07:31.00"
+        },
+        {
+          "file": "frame_001830.jpg",
+          "tSec": 457.25,
+          "clock": "00:07:37.25"
+        },
+        {
+          "file": "frame_001855.jpg",
+          "tSec": 463.5,
+          "clock": "00:07:43.50"
+        },
+        {
+          "file": "frame_001880.jpg",
+          "tSec": 469.75,
+          "clock": "00:07:49.75"
+        },
+        {
+          "file": "frame_001904.jpg",
+          "tSec": 475.75,
+          "clock": "00:07:55.75"
+        },
+        {
+          "file": "frame_001929.jpg",
+          "tSec": 482,
+          "clock": "00:08:02.00"
+        },
+        {
+          "file": "frame_001954.jpg",
+          "tSec": 488.25,
+          "clock": "00:08:08.25"
+        },
+        {
+          "file": "frame_001979.jpg",
+          "tSec": 494.5,
+          "clock": "00:08:14.50"
+        },
+        {
+          "file": "frame_002004.jpg",
+          "tSec": 500.75,
+          "clock": "00:08:20.75"
+        },
+        {
+          "file": "frame_002029.jpg",
+          "tSec": 507,
+          "clock": "00:08:27.00"
+        }
+      ],
+      "visibleScreenNotes": "",
+      "draft": {
+        "say": "TODO — talk track for “Brycerowley: Jessica, would it be helpful to do some…” (source: transcript 00:07:18.56–00:08:27.03)",
+        "what": "TODO — one-paragraph description of what this screen/moment shows",
+        "capabilities": [],
+        "sp": [],
+        "de": [],
+        "branching": []
+      }
+    },
+    {
+      "id": "moment-009-brycerowley-what-s-the-value-to-having-those-employees-that",
+      "order": 9,
+      "moduleGuess": "team",
+      "confidence": "low",
+      "matchedKeywords": [
+        "team"
+      ],
+      "titleGuess": "Brycerowley: what's the value to having those employees that…",
+      "tsRange": {
+        "startSec": 507.29,
+        "endSec": 566.88,
+        "startClock": "00:08:27.29",
+        "endClock": "00:09:26.88"
+      },
+      "durationSec": 59.59,
+      "cueCount": 6,
+      "speakers": [
+        "Nate Price"
+      ],
+      "transcriptExcerpt": "brycerowley: what's the value to having those employees that are international, that are touching sensitive files and whatnot, actually be, handled and treated more as traditional employees, rather than hiring and, using them as contractors. So, those are… that's kind of the root… brycerowley: of our side as we've thought about the problem and where we're at. Nate, feel free to fill me in, Jessica. Likewise, the team…",
+      "frameRefs": [
+        {
+          "file": "frame_002030.jpg",
+          "tSec": 507.25,
+          "clock": "00:08:27.25"
+        },
+        {
+          "file": "frame_002052.jpg",
+          "tSec": 512.75,
+          "clock": "00:08:32.75"
+        },
+        {
+          "file": "frame_002073.jpg",
+          "tSec": 518,
+          "clock": "00:08:38.00"
+        },
+        {
+          "file": "frame_002095.jpg",
+          "tSec": 523.5,
+          "clock": "00:08:43.50"
+        },
+        {
+          "file": "frame_002117.jpg",
+          "tSec": 529,
+          "clock": "00:08:49.00"
+        },
+        {
+          "file": "frame_002139.jpg",
+          "tSec": 534.5,
+          "clock": "00:08:54.50"
+        },
+        {
+          "file": "frame_002160.jpg",
+          "tSec": 539.75,
+          "clock": "00:08:59.75"
+        },
+        {
+          "file": "frame_002182.jpg",
+          "tSec": 545.25,
+          "clock": "00:09:05.25"
+        },
+        {
+          "file": "frame_002204.jpg",
+          "tSec": 550.75,
+          "clock": "00:09:10.75"
+        },
+        {
+          "file": "frame_002226.jpg",
+          "tSec": 556.25,
+          "clock": "00:09:16.25"
+        },
+        {
+          "file": "frame_002247.jpg",
+          "tSec": 561.5,
+          "clock": "00:09:21.50"
+        },
+        {
+          "file": "frame_002269.jpg",
+          "tSec": 567,
+          "clock": "00:09:27.00"
+        }
+      ],
+      "visibleScreenNotes": "",
+      "draft": {
+        "say": "TODO — talk track for “Brycerowley: what's the value to having those employees that…” (source: transcript 00:08:27.29–00:09:26.88)",
+        "what": "TODO — one-paragraph description of what this screen/moment shows",
+        "capabilities": [],
+        "sp": [],
+        "de": [],
+        "branching": []
+      }
+    },
+    {
+      "id": "moment-010-we-ve-got-you-know-we-ve-got-i-don-t-know",
+      "order": 10,
+      "moduleGuess": "onboarding",
+      "confidence": "low",
+      "matchedKeywords": [
+        "onboard"
+      ],
+      "titleGuess": "We've got… you know, we've got… I don't know…",
+      "tsRange": {
+        "startSec": 566.88,
+        "endSec": 632.35,
+        "startClock": "00:09:26.88",
+        "endClock": "00:10:32.35"
+      },
+      "durationSec": 65.47,
+      "cueCount": 7,
+      "speakers": [
+        "Nate Price"
+      ],
+      "transcriptExcerpt": "We've got… you know, we've got… I don't know the exact number, but it's 25 or so international employees that I pay directly right now, currently. I get their banking information, and we do an international banking wire. And so we're paying international bank wire fees for each one of those. Wires that we do. And so the… you know, we did… I can't remember the name of the company. I did onboard onto… because TriNet sa…",
+      "frameRefs": [
+        {
+          "file": "frame_002269.jpg",
+          "tSec": 567,
+          "clock": "00:09:27.00"
+        },
+        {
+          "file": "frame_002293.jpg",
+          "tSec": 573,
+          "clock": "00:09:33.00"
+        },
+        {
+          "file": "frame_002316.jpg",
+          "tSec": 578.75,
+          "clock": "00:09:38.75"
+        },
+        {
+          "file": "frame_002340.jpg",
+          "tSec": 584.75,
+          "clock": "00:09:44.75"
+        },
+        {
+          "file": "frame_002364.jpg",
+          "tSec": 590.75,
+          "clock": "00:09:50.75"
+        },
+        {
+          "file": "frame_002388.jpg",
+          "tSec": 596.75,
+          "clock": "00:09:56.75"
+        },
+        {
+          "file": "frame_002411.jpg",
+          "tSec": 602.5,
+          "clock": "00:10:02.50"
+        },
+        {
+          "file": "frame_002435.jpg",
+          "tSec": 608.5,
+          "clock": "00:10:08.50"
+        },
+        {
+          "file": "frame_002459.jpg",
+          "tSec": 614.5,
+          "clock": "00:10:14.50"
+        },
+        {
+          "file": "frame_002483.jpg",
+          "tSec": 620.5,
+          "clock": "00:10:20.50"
+        },
+        {
+          "file": "frame_002506.jpg",
+          "tSec": 626.25,
+          "clock": "00:10:26.25"
+        },
+        {
+          "file": "frame_002530.jpg",
+          "tSec": 632.25,
+          "clock": "00:10:32.25"
+        }
+      ],
+      "visibleScreenNotes": "",
+      "draft": {
+        "say": "TODO — talk track for “We've got… you know, we've got… I don't know…” (source: transcript 00:09:26.88–00:10:32.35)",
+        "what": "TODO — one-paragraph description of what this screen/moment shows",
+        "capabilities": [],
+        "sp": [],
+        "de": [],
+        "branching": []
+      }
+    },
+    {
+      "id": "moment-011-because-that-could-that-could-vary-from-country-to",
+      "order": 11,
+      "moduleGuess": "unknown",
+      "confidence": "none",
+      "matchedKeywords": [],
+      "titleGuess": "Because that could, that could vary from country to…",
+      "tsRange": {
+        "startSec": 632.35,
+        "endSec": 701.38,
+        "startClock": "00:10:32.35",
+        "endClock": "00:11:41.38"
+      },
+      "durationSec": 69.03,
+      "cueCount": 10,
+      "speakers": [
+        "Nate Price",
+        "Renee",
+        "Shane Jacobs"
+      ],
+      "transcriptExcerpt": "Because that could, that could vary from country to country. We're in India, I think, well, no, we're in Philippines, Mexico, South Africa. Sorry to interrupt. Can someone let Justin in, please? Oh, yes. Thank you. Yeah, so we're in… We're in various different countries, which all have specific payroll laws surrounding that. Like I said, Mexico, South Africa, Philippines, I think those are the three that we have curr…",
+      "frameRefs": [
+        {
+          "file": "frame_002530.jpg",
+          "tSec": 632.25,
+          "clock": "00:10:32.25"
+        },
+        {
+          "file": "frame_002555.jpg",
+          "tSec": 638.5,
+          "clock": "00:10:38.50"
+        },
+        {
+          "file": "frame_002580.jpg",
+          "tSec": 644.75,
+          "clock": "00:10:44.75"
+        },
+        {
+          "file": "frame_002606.jpg",
+          "tSec": 651.25,
+          "clock": "00:10:51.25"
+        },
+        {
+          "file": "frame_002631.jpg",
+          "tSec": 657.5,
+          "clock": "00:10:57.50"
+        },
+        {
+          "file": "frame_002656.jpg",
+          "tSec": 663.75,
+          "clock": "00:11:03.75"
+        },
+        {
+          "file": "frame_002681.jpg",
+          "tSec": 670,
+          "clock": "00:11:10.00"
+        },
+        {
+          "file": "frame_002706.jpg",
+          "tSec": 676.25,
+          "clock": "00:11:16.25"
+        },
+        {
+          "file": "frame_002731.jpg",
+          "tSec": 682.5,
+          "clock": "00:11:22.50"
+        },
+        {
+          "file": "frame_002757.jpg",
+          "tSec": 689,
+          "clock": "00:11:29.00"
+        },
+        {
+          "file": "frame_002782.jpg",
+          "tSec": 695.25,
+          "clock": "00:11:35.25"
+        },
+        {
+          "file": "frame_002807.jpg",
+          "tSec": 701.5,
+          "clock": "00:11:41.50"
+        }
+      ],
+      "visibleScreenNotes": "",
+      "draft": {
+        "say": "TODO — talk track for “Because that could, that could vary from country to…” (source: transcript 00:10:32.35–00:11:41.38)",
+        "what": "TODO — one-paragraph description of what this screen/moment shows",
+        "capabilities": [],
+        "sp": [],
+        "de": [],
+        "branching": []
+      }
+    },
+    {
+      "id": "moment-012-i-know-i-ve-been-through-it-and-there-s-a",
+      "order": 12,
+      "moduleGuess": "onboarding",
+      "confidence": "low",
+      "matchedKeywords": [
+        "onboard"
+      ],
+      "titleGuess": "I know I've been through it, and there's a…",
+      "tsRange": {
+        "startSec": 701.38,
+        "endSec": 773.99,
+        "startClock": "00:11:41.38",
+        "endClock": "00:12:53.99"
+      },
+      "durationSec": 72.61,
+      "cueCount": 6,
+      "speakers": [
+        "Nate Price"
+      ],
+      "transcriptExcerpt": "I know I've been through it, and there's a few different caveats that we can consider these contractors, or we need to hire them as full-time employees to make sure we're in compliance. So those kinds of considerations that we had worked with this third-party company to onboard, they didn't actually integrate with TriNet, so we kind of just paused. I think we saw some value in that… I can't remember the name of the c…",
+      "frameRefs": [
+        {
+          "file": "frame_002807.jpg",
+          "tSec": 701.5,
+          "clock": "00:11:41.50"
+        },
+        {
+          "file": "frame_002833.jpg",
+          "tSec": 708,
+          "clock": "00:11:48.00"
+        },
+        {
+          "file": "frame_002860.jpg",
+          "tSec": 714.75,
+          "clock": "00:11:54.75"
+        },
+        {
+          "file": "frame_002886.jpg",
+          "tSec": 721.25,
+          "clock": "00:12:01.25"
+        },
+        {
+          "file": "frame_002912.jpg",
+          "tSec": 727.75,
+          "clock": "00:12:07.75"
+        },
+        {
+          "file": "frame_002939.jpg",
+          "tSec": 734.5,
+          "clock": "00:12:14.50"
+        },
+        {
+          "file": "frame_002965.jpg",
+          "tSec": 741,
+          "clock": "00:12:21.00"
+        },
+        {
+          "file": "frame_002992.jpg",
+          "tSec": 747.75,
+          "clock": "00:12:27.75"
+        },
+        {
+          "file": "frame_003018.jpg",
+          "tSec": 754.25,
+          "clock": "00:12:34.25"
+        },
+        {
+          "file": "frame_003044.jpg",
+          "tSec": 760.75,
+          "clock": "00:12:40.75"
+        },
+        {
+          "file": "frame_003071.jpg",
+          "tSec": 767.5,
+          "clock": "00:12:47.50"
+        },
+        {
+          "file": "frame_003097.jpg",
+          "tSec": 774,
+          "clock": "00:12:54.00"
+        }
+      ],
+      "visibleScreenNotes": "",
+      "draft": {
+        "say": "TODO — talk track for “I know I've been through it, and there's a…” (source: transcript 00:11:41.38–00:12:53.99)",
+        "what": "TODO — one-paragraph description of what this screen/moment shows",
+        "capabilities": [],
+        "sp": [],
+        "de": [],
+        "branching": []
+      }
+    },
+    {
+      "id": "moment-013-so-i-can-t-remember-the-exact-cost-but-i",
+      "order": 13,
+      "moduleGuess": "unknown",
+      "confidence": "none",
+      "matchedKeywords": [],
+      "titleGuess": "So I can't remember the exact cost, but I…",
+      "tsRange": {
+        "startSec": 774.08,
+        "endSec": 843.35,
+        "startClock": "00:12:54.08",
+        "endClock": "00:14:03.35"
+      },
+      "durationSec": 69.27,
+      "cueCount": 8,
+      "speakers": [
+        "Nate Price",
+        "Justin Brach"
+      ],
+      "transcriptExcerpt": "So I can't remember the exact cost, but I believe they were charging between 20, $25 per person. Now that was. Considering they were still contractors, there's a different cost if we were to hire these people on as full-time employees. Can I, I've been on just for a little bit. I kind of want to triangulate because I want to not get too far down the rabbit hole here. Does everybody know the objective of what I'm tryi…",
+      "frameRefs": [
+        {
+          "file": "frame_003097.jpg",
+          "tSec": 774,
+          "clock": "00:12:54.00"
+        },
+        {
+          "file": "frame_003122.jpg",
+          "tSec": 780.25,
+          "clock": "00:13:00.25"
+        },
+        {
+          "file": "frame_003147.jpg",
+          "tSec": 786.5,
+          "clock": "00:13:06.50"
+        },
+        {
+          "file": "frame_003173.jpg",
+          "tSec": 793,
+          "clock": "00:13:13.00"
+        },
+        {
+          "file": "frame_003198.jpg",
+          "tSec": 799.25,
+          "clock": "00:13:19.25"
+        },
+        {
+          "file": "frame_003223.jpg",
+          "tSec": 805.5,
+          "clock": "00:13:25.50"
+        },
+        {
+          "file": "frame_003248.jpg",
+          "tSec": 811.75,
+          "clock": "00:13:31.75"
+        },
+        {
+          "file": "frame_003273.jpg",
+          "tSec": 818,
+          "clock": "00:13:38.00"
+        },
+        {
+          "file": "frame_003298.jpg",
+          "tSec": 824.25,
+          "clock": "00:13:44.25"
+        },
+        {
+          "file": "frame_003324.jpg",
+          "tSec": 830.75,
+          "clock": "00:13:50.75"
+        },
+        {
+          "file": "frame_003349.jpg",
+          "tSec": 837,
+          "clock": "00:13:57.00"
+        },
+        {
+          "file": "frame_003374.jpg",
+          "tSec": 843.25,
+          "clock": "00:14:03.25"
+        }
+      ],
+      "visibleScreenNotes": "",
+      "draft": {
+        "say": "TODO — talk track for “So I can't remember the exact cost, but I…” (source: transcript 00:12:54.08–00:14:03.35)",
+        "what": "TODO — one-paragraph description of what this screen/moment shows",
+        "capabilities": [],
+        "sp": [],
+        "de": [],
+        "branching": []
+      }
+    },
+    {
+      "id": "moment-014-cool-so-yeah-from-bulgaria-s-standpoint-right-now-we",
+      "order": 14,
+      "moduleGuess": "team",
+      "confidence": "low",
+      "matchedKeywords": [
+        "team"
+      ],
+      "titleGuess": "Cool, so yeah, from Bulgaria's standpoint, right now, we…",
+      "tsRange": {
+        "startSec": 845.4,
+        "endSec": 913.36,
+        "startClock": "00:14:05.40",
+        "endClock": "00:15:13.36"
+      },
+      "durationSec": 67.96,
+      "cueCount": 8,
+      "speakers": [
+        "Nate Price",
+        "Shane Jacobs",
+        "Justin Brach"
+      ],
+      "transcriptExcerpt": "Cool, so yeah, from Bulgaria's standpoint, right now, we pay them, they invoice us, we don't pay individual employees, they are, like, a vendor to us, and what Justin's saying is we'd like to… Go down the path of hiring these people and protecting ourselves from an intellectual property standpoint. Okay. brycerowley: And Justin, do you have any IP concerns with any of the folks, Philippines, Mexico? I saw you had two…",
+      "frameRefs": [
+        {
+          "file": "frame_003383.jpg",
+          "tSec": 845.5,
+          "clock": "00:14:05.50"
+        },
+        {
+          "file": "frame_003408.jpg",
+          "tSec": 851.75,
+          "clock": "00:14:11.75"
+        },
+        {
+          "file": "frame_003432.jpg",
+          "tSec": 857.75,
+          "clock": "00:14:17.75"
+        },
+        {
+          "file": "frame_003457.jpg",
+          "tSec": 864,
+          "clock": "00:14:24.00"
+        },
+        {
+          "file": "frame_003482.jpg",
+          "tSec": 870.25,
+          "clock": "00:14:30.25"
+        },
+        {
+          "file": "frame_003506.jpg",
+          "tSec": 876.25,
+          "clock": "00:14:36.25"
+        },
+        {
+          "file": "frame_003531.jpg",
+          "tSec": 882.5,
+          "clock": "00:14:42.50"
+        },
+        {
+          "file": "frame_003555.jpg",
+          "tSec": 888.5,
+          "clock": "00:14:48.50"
+        },
+        {
+          "file": "frame_003580.jpg",
+          "tSec": 894.75,
+          "clock": "00:14:54.75"
+        },
+        {
+          "file": "frame_003605.jpg",
+          "tSec": 901,
+          "clock": "00:15:01.00"
+        },
+        {
+          "file": "frame_003629.jpg",
+          "tSec": 907,
+          "clock": "00:15:07.00"
+        },
+        {
+          "file": "frame_003654.jpg",
+          "tSec": 913.25,
+          "clock": "00:15:13.25"
+        }
+      ],
+      "visibleScreenNotes": "",
+      "draft": {
+        "say": "TODO — talk track for “Cool, so yeah, from Bulgaria's standpoint, right now, we…” (source: transcript 00:14:05.40–00:15:13.36)",
+        "what": "TODO — one-paragraph description of what this screen/moment shows",
+        "capabilities": [],
+        "sp": [],
+        "de": [],
+        "branching": []
+      }
+    },
+    {
+      "id": "moment-015-scraping-on-payroll-happening-where-the-leadership-is-saying",
+      "order": 15,
+      "moduleGuess": "unknown",
+      "confidence": "none",
+      "matchedKeywords": [],
+      "titleGuess": "Scraping on payroll happening, where the leadership is saying…",
+      "tsRange": {
+        "startSec": 913.39,
+        "endSec": 983.11,
+        "startClock": "00:15:13.39",
+        "endClock": "00:16:23.11"
+      },
+      "durationSec": 69.72,
+      "cueCount": 10,
+      "speakers": [
+        "Justin Brach",
+        "Renee",
+        "Nate Price"
+      ],
+      "transcriptExcerpt": "scraping on payroll happening, where the leadership is saying X people are getting paid X, and they're actually getting paid Y, and they're scraping off the top. Like, there's… there's just a multitude of things that I'm trying to… make sure aren't happening, and then, you know, the intellectual property side of things, if they're W2 employees, it protects our intellectual property as well. brycerowley: And so the tw…",
+      "frameRefs": [
+        {
+          "file": "frame_003655.jpg",
+          "tSec": 913.5,
+          "clock": "00:15:13.50"
+        },
+        {
+          "file": "frame_003680.jpg",
+          "tSec": 919.75,
+          "clock": "00:15:19.75"
+        },
+        {
+          "file": "frame_003706.jpg",
+          "tSec": 926.25,
+          "clock": "00:15:26.25"
+        },
+        {
+          "file": "frame_003731.jpg",
+          "tSec": 932.5,
+          "clock": "00:15:32.50"
+        },
+        {
+          "file": "frame_003756.jpg",
+          "tSec": 938.75,
+          "clock": "00:15:38.75"
+        },
+        {
+          "file": "frame_003781.jpg",
+          "tSec": 945,
+          "clock": "00:15:45.00"
+        },
+        {
+          "file": "frame_003807.jpg",
+          "tSec": 951.5,
+          "clock": "00:15:51.50"
+        },
+        {
+          "file": "frame_003832.jpg",
+          "tSec": 957.75,
+          "clock": "00:15:57.75"
+        },
+        {
+          "file": "frame_003857.jpg",
+          "tSec": 964,
+          "clock": "00:16:04.00"
+        },
+        {
+          "file": "frame_003882.jpg",
+          "tSec": 970.25,
+          "clock": "00:16:10.25"
+        },
+        {
+          "file": "frame_003908.jpg",
+          "tSec": 976.75,
+          "clock": "00:16:16.75"
+        },
+        {
+          "file": "frame_003933.jpg",
+          "tSec": 983,
+          "clock": "00:16:23.00"
+        }
+      ],
+      "visibleScreenNotes": "",
+      "draft": {
+        "say": "TODO — talk track for “Scraping on payroll happening, where the leadership is saying…” (source: transcript 00:15:13.39–00:16:23.11)",
+        "what": "TODO — one-paragraph description of what this screen/moment shows",
+        "capabilities": [],
+        "sp": [],
+        "de": [],
+        "branching": []
+      }
+    },
+    {
+      "id": "moment-016-yeah-we-technically-pay-his-us-bank-account-but",
+      "order": 16,
+      "moduleGuess": "team",
+      "confidence": "low",
+      "matchedKeywords": [
+        "team"
+      ],
+      "titleGuess": "Yeah, we technically pay his US bank account, but…",
+      "tsRange": {
+        "startSec": 983.11,
+        "endSec": 1045.76,
+        "startClock": "00:16:23.11",
+        "endClock": "00:17:25.76"
+      },
+      "durationSec": 62.65,
+      "cueCount": 7,
+      "speakers": [
+        "Nate Price",
+        "Justin Brach"
+      ],
+      "transcriptExcerpt": "Yeah, we technically pay his US bank account, but he is in the UK, yeah. Yeah, I'd like to… if at all possible, yeah, I'd like to bring him in as W2 as well. That would be… that would be… yeah, that's another one that… I think we want to be protected as well. brycerowley: So priority number one is international, becoming that employer of record, W2 style of employment with the Bulgaria team and one or two others in o…",
+      "frameRefs": [
+        {
+          "file": "frame_003933.jpg",
+          "tSec": 983,
+          "clock": "00:16:23.00"
+        },
+        {
+          "file": "frame_003956.jpg",
+          "tSec": 988.75,
+          "clock": "00:16:28.75"
+        },
+        {
+          "file": "frame_003979.jpg",
+          "tSec": 994.5,
+          "clock": "00:16:34.50"
+        },
+        {
+          "file": "frame_004001.jpg",
+          "tSec": 1000,
+          "clock": "00:16:40.00"
+        },
+        {
+          "file": "frame_004024.jpg",
+          "tSec": 1005.75,
+          "clock": "00:16:45.75"
+        },
+        {
+          "file": "frame_004047.jpg",
+          "tSec": 1011.5,
+          "clock": "00:16:51.50"
+        },
+        {
+          "file": "frame_004070.jpg",
+          "tSec": 1017.25,
+          "clock": "00:16:57.25"
+        },
+        {
+          "file": "frame_004093.jpg",
+          "tSec": 1023,
+          "clock": "00:17:03.00"
+        },
+        {
+          "file": "frame_004116.jpg",
+          "tSec": 1028.75,
+          "clock": "00:17:08.75"
+        },
+        {
+          "file": "frame_004138.jpg",
+          "tSec": 1034.25,
+          "clock": "00:17:14.25"
+        },
+        {
+          "file": "frame_004161.jpg",
+          "tSec": 1040,
+          "clock": "00:17:20.00"
+        },
+        {
+          "file": "frame_004184.jpg",
+          "tSec": 1045.75,
+          "clock": "00:17:25.75"
+        }
+      ],
+      "visibleScreenNotes": "",
+      "draft": {
+        "say": "TODO — talk track for “Yeah, we technically pay his US bank account, but…” (source: transcript 00:16:23.11–00:17:25.76)",
+        "what": "TODO — one-paragraph description of what this screen/moment shows",
+        "capabilities": [],
+        "sp": [],
+        "de": [],
+        "branching": []
+      }
+    },
+    {
+      "id": "moment-017-my-apologies-to-you-guys-i-m-i-m-hyper-focused-on",
+      "order": 17,
+      "moduleGuess": "onboarding",
+      "confidence": "low",
+      "matchedKeywords": [
+        "onboard"
+      ],
+      "titleGuess": "My apologies to you guys, I'm… I'm hyper-focused on…",
+      "tsRange": {
+        "startSec": 1045.76,
+        "endSec": 1111.95,
+        "startClock": "00:17:25.76",
+        "endClock": "00:18:31.95"
+      },
+      "durationSec": 66.19,
+      "cueCount": 5,
+      "speakers": [
+        "Justin Brach",
+        "Shane Jacobs"
+      ],
+      "transcriptExcerpt": "my apologies to you guys, I'm… I'm hyper-focused on one thing, and I'd like to, you know, make sure that it's not… if… if it all works out, the, you know, combined, fine, but I'm… I've been very excited for this call, because I'm hyper-focused on, you know, making sure that the Bulgaria team is doing things the right way. brycerowley: Yep. Shane, before we kick off and go into the deep demo, what's your thought? Can…",
+      "frameRefs": [
+        {
+          "file": "frame_004184.jpg",
+          "tSec": 1045.75,
+          "clock": "00:17:25.75"
+        },
+        {
+          "file": "frame_004208.jpg",
+          "tSec": 1051.75,
+          "clock": "00:17:31.75"
+        },
+        {
+          "file": "frame_004232.jpg",
+          "tSec": 1057.75,
+          "clock": "00:17:37.75"
+        },
+        {
+          "file": "frame_004256.jpg",
+          "tSec": 1063.75,
+          "clock": "00:17:43.75"
+        },
+        {
+          "file": "frame_004280.jpg",
+          "tSec": 1069.75,
+          "clock": "00:17:49.75"
+        },
+        {
+          "file": "frame_004304.jpg",
+          "tSec": 1075.75,
+          "clock": "00:17:55.75"
+        },
+        {
+          "file": "frame_004329.jpg",
+          "tSec": 1082,
+          "clock": "00:18:02.00"
+        },
+        {
+          "file": "frame_004353.jpg",
+          "tSec": 1088,
+          "clock": "00:18:08.00"
+        },
+        {
+          "file": "frame_004377.jpg",
+          "tSec": 1094,
+          "clock": "00:18:14.00"
+        },
+        {
+          "file": "frame_004401.jpg",
+          "tSec": 1100,
+          "clock": "00:18:20.00"
+        },
+        {
+          "file": "frame_004425.jpg",
+          "tSec": 1106,
+          "clock": "00:18:26.00"
+        },
+        {
+          "file": "frame_004449.jpg",
+          "tSec": 1112,
+          "clock": "00:18:32.00"
+        }
+      ],
+      "visibleScreenNotes": "",
+      "draft": {
+        "say": "TODO — talk track for “My apologies to you guys, I'm… I'm hyper-focused on…” (source: transcript 00:17:25.76–00:18:31.95)",
+        "what": "TODO — one-paragraph description of what this screen/moment shows",
+        "capabilities": [],
+        "sp": [],
+        "de": [],
+        "branching": []
+      }
+    },
+    {
+      "id": "moment-018-part-of-the-contractual-arrangement-also-is-the-ip",
+      "order": 18,
+      "moduleGuess": "onboarding",
+      "confidence": "medium",
+      "matchedKeywords": [
+        "onboarding",
+        "onboard"
+      ],
+      "titleGuess": "Part of the contractual arrangement also is the IP…",
+      "tsRange": {
+        "startSec": 1112.05,
+        "endSec": 1178.41,
+        "startClock": "00:18:32.05",
+        "endClock": "00:19:38.41"
+      },
+      "durationSec": 66.36,
+      "cueCount": 6,
+      "speakers": [
+        "Shane Jacobs",
+        "Renee",
+        "Justin Brach"
+      ],
+      "transcriptExcerpt": "Part of the contractual arrangement also is the IP, so there is specific language in there that protects your IP, so as they're working for you, the IP remains with you. So those two things are accomplished through an employer of record, which we provide. Could we, on top of that, we have a separate, like, IP agreement that we've ran through our lawyers, can we have them send that as well? Yeah, I can, we can take th…",
+      "frameRefs": [
+        {
+          "file": "frame_004449.jpg",
+          "tSec": 1112,
+          "clock": "00:18:32.00"
+        },
+        {
+          "file": "frame_004473.jpg",
+          "tSec": 1118,
+          "clock": "00:18:38.00"
+        },
+        {
+          "file": "frame_004497.jpg",
+          "tSec": 1124,
+          "clock": "00:18:44.00"
+        },
+        {
+          "file": "frame_004522.jpg",
+          "tSec": 1130.25,
+          "clock": "00:18:50.25"
+        },
+        {
+          "file": "frame_004546.jpg",
+          "tSec": 1136.25,
+          "clock": "00:18:56.25"
+        },
+        {
+          "file": "frame_004570.jpg",
+          "tSec": 1142.25,
+          "clock": "00:19:02.25"
+        },
+        {
+          "file": "frame_004594.jpg",
+          "tSec": 1148.25,
+          "clock": "00:19:08.25"
+        },
+        {
+          "file": "frame_004618.jpg",
+          "tSec": 1154.25,
+          "clock": "00:19:14.25"
+        },
+        {
+          "file": "frame_004642.jpg",
+          "tSec": 1160.25,
+          "clock": "00:19:20.25"
+        },
+        {
+          "file": "frame_004667.jpg",
+          "tSec": 1166.5,
+          "clock": "00:19:26.50"
+        },
+        {
+          "file": "frame_004691.jpg",
+          "tSec": 1172.5,
+          "clock": "00:19:32.50"
+        },
+        {
+          "file": "frame_004715.jpg",
+          "tSec": 1178.5,
+          "clock": "00:19:38.50"
+        }
+      ],
+      "visibleScreenNotes": "",
+      "draft": {
+        "say": "TODO — talk track for “Part of the contractual arrangement also is the IP…” (source: transcript 00:18:32.05–00:19:38.41)",
+        "what": "TODO — one-paragraph description of what this screen/moment shows",
+        "capabilities": [],
+        "sp": [],
+        "de": [],
+        "branching": []
+      }
+    },
+    {
+      "id": "moment-019-so-we-get-all-our-contracts-in-place-notify",
+      "order": 19,
+      "moduleGuess": "onboarding",
+      "confidence": "medium",
+      "matchedKeywords": [
+        "onboarding",
+        "onboard"
+      ],
+      "titleGuess": "So we get all our contracts in place, notify…",
+      "tsRange": {
+        "startSec": 1178.56,
+        "endSec": 1236.74,
+        "startClock": "00:19:38.56",
+        "endClock": "00:20:36.74"
+      },
+      "durationSec": 58.18,
+      "cueCount": 10,
+      "speakers": [
+        "Shane Jacobs",
+        "Justin Brach"
+      ],
+      "transcriptExcerpt": "So we get all our contracts in place, notify the employees that this is happening, and then I'll guide you through the demo on there's a lot of automation in our software that allows you to set the things up. They get emails. They then input their personal information. But that onboarding timeline from an employee standpoint is about a two-week process. Okay, awesome. brycerowley: I think, Justin, realistically for u…",
+      "frameRefs": [
+        {
+          "file": "frame_004715.jpg",
+          "tSec": 1178.5,
+          "clock": "00:19:38.50"
+        },
+        {
+          "file": "frame_004736.jpg",
+          "tSec": 1183.75,
+          "clock": "00:19:43.75"
+        },
+        {
+          "file": "frame_004757.jpg",
+          "tSec": 1189,
+          "clock": "00:19:49.00"
+        },
+        {
+          "file": "frame_004779.jpg",
+          "tSec": 1194.5,
+          "clock": "00:19:54.50"
+        },
+        {
+          "file": "frame_004800.jpg",
+          "tSec": 1199.75,
+          "clock": "00:19:59.75"
+        },
+        {
+          "file": "frame_004821.jpg",
+          "tSec": 1205,
+          "clock": "00:20:05.00"
+        },
+        {
+          "file": "frame_004842.jpg",
+          "tSec": 1210.25,
+          "clock": "00:20:10.25"
+        },
+        {
+          "file": "frame_004863.jpg",
+          "tSec": 1215.5,
+          "clock": "00:20:15.50"
+        },
+        {
+          "file": "frame_004884.jpg",
+          "tSec": 1220.75,
+          "clock": "00:20:20.75"
+        },
+        {
+          "file": "frame_004906.jpg",
+          "tSec": 1226.25,
+          "clock": "00:20:26.25"
+        },
+        {
+          "file": "frame_004927.jpg",
+          "tSec": 1231.5,
+          "clock": "00:20:31.50"
+        },
+        {
+          "file": "frame_004948.jpg",
+          "tSec": 1236.75,
+          "clock": "00:20:36.75"
+        }
+      ],
+      "visibleScreenNotes": "",
+      "draft": {
+        "say": "TODO — talk track for “So we get all our contracts in place, notify…” (source: transcript 00:19:38.56–00:20:36.74)",
+        "what": "TODO — one-paragraph description of what this screen/moment shows",
+        "capabilities": [],
+        "sp": [],
+        "de": [],
+        "branching": []
+      }
+    },
+    {
+      "id": "moment-020-brycerowley-no-i-get-it-so-jessica-and-i",
+      "order": 20,
+      "moduleGuess": "onboarding",
+      "confidence": "low",
+      "matchedKeywords": [
+        "onboard"
+      ],
+      "titleGuess": "Brycerowley: No, I get it. So Jessica and I…",
+      "tsRange": {
+        "startSec": 1236.74,
+        "endSec": 1309.14,
+        "startClock": "00:20:36.74",
+        "endClock": "00:21:49.14"
+      },
+      "durationSec": 72.4,
+      "cueCount": 12,
+      "speakers": [
+        "Shane Jacobs",
+        "Renee",
+        "Justin Brach"
+      ],
+      "transcriptExcerpt": "brycerowley: No, I get it. So Jessica and I were talking about could we do some kind of staggered rollout where we roll out just the Bulgaria team or just the international piece, try to get that out a couple weeks earlier. The answer is it's a potential that we can do that. The caveat there is that we just want to go into that knowing that the way that you'll access that system, right, it'll have a direct login. It…",
+      "frameRefs": [
+        {
+          "file": "frame_004948.jpg",
+          "tSec": 1236.75,
+          "clock": "00:20:36.75"
+        },
+        {
+          "file": "frame_004974.jpg",
+          "tSec": 1243.25,
+          "clock": "00:20:43.25"
+        },
+        {
+          "file": "frame_005001.jpg",
+          "tSec": 1250,
+          "clock": "00:20:50.00"
+        },
+        {
+          "file": "frame_005027.jpg",
+          "tSec": 1256.5,
+          "clock": "00:20:56.50"
+        },
+        {
+          "file": "frame_005053.jpg",
+          "tSec": 1263,
+          "clock": "00:21:03.00"
+        },
+        {
+          "file": "frame_005080.jpg",
+          "tSec": 1269.75,
+          "clock": "00:21:09.75"
+        },
+        {
+          "file": "frame_005106.jpg",
+          "tSec": 1276.25,
+          "clock": "00:21:16.25"
+        },
+        {
+          "file": "frame_005133.jpg",
+          "tSec": 1283,
+          "clock": "00:21:23.00"
+        },
+        {
+          "file": "frame_005159.jpg",
+          "tSec": 1289.5,
+          "clock": "00:21:29.50"
+        },
+        {
+          "file": "frame_005185.jpg",
+          "tSec": 1296,
+          "clock": "00:21:36.00"
+        },
+        {
+          "file": "frame_005212.jpg",
+          "tSec": 1302.75,
+          "clock": "00:21:42.75"
+        },
+        {
+          "file": "frame_005238.jpg",
+          "tSec": 1309.25,
+          "clock": "00:21:49.25"
+        }
+      ],
+      "visibleScreenNotes": "",
+      "draft": {
+        "say": "TODO — talk track for “Brycerowley: No, I get it. So Jessica and I…” (source: transcript 00:20:36.74–00:21:49.14)",
+        "what": "TODO — one-paragraph description of what this screen/moment shows",
+        "capabilities": [],
+        "sp": [],
+        "de": [],
+        "branching": []
+      }
+    },
+    {
+      "id": "moment-021-okay-on-the-client-side-yes-they-don-t-have",
+      "order": 21,
+      "moduleGuess": "team",
+      "confidence": "low",
+      "matchedKeywords": [
+        "team"
+      ],
+      "titleGuess": "Okay, on the client side, yes, they don't have…",
+      "tsRange": {
+        "startSec": 1309.14,
+        "endSec": 1379.59,
+        "startClock": "00:21:49.14",
+        "endClock": "00:22:59.59"
+      },
+      "durationSec": 70.45,
+      "cueCount": 12,
+      "speakers": [
+        "Renee",
+        "Shane Jacobs"
+      ],
+      "transcriptExcerpt": "Okay, on the client side, yes, they don't have it, that's what we've been told. And then Peter and Alec, who are the leaders on that side, do own that company. As far as we know. So they shouldn't have to give a notice. Okay. But yes, Justin's correct on that, please. That's what we've been told. Got it. Okay. Yeah, and assuming that goes forward, yeah, that whole process, again, sometimes takes… it takes longer in o…",
+      "frameRefs": [
+        {
+          "file": "frame_005238.jpg",
+          "tSec": 1309.25,
+          "clock": "00:21:49.25"
+        },
+        {
+          "file": "frame_005264.jpg",
+          "tSec": 1315.75,
+          "clock": "00:21:55.75"
+        },
+        {
+          "file": "frame_005289.jpg",
+          "tSec": 1322,
+          "clock": "00:22:02.00"
+        },
+        {
+          "file": "frame_005315.jpg",
+          "tSec": 1328.5,
+          "clock": "00:22:08.50"
+        },
+        {
+          "file": "frame_005340.jpg",
+          "tSec": 1334.75,
+          "clock": "00:22:14.75"
+        },
+        {
+          "file": "frame_005366.jpg",
+          "tSec": 1341.25,
+          "clock": "00:22:21.25"
+        },
+        {
+          "file": "frame_005391.jpg",
+          "tSec": 1347.5,
+          "clock": "00:22:27.50"
+        },
+        {
+          "file": "frame_005417.jpg",
+          "tSec": 1354,
+          "clock": "00:22:34.00"
+        },
+        {
+          "file": "frame_005442.jpg",
+          "tSec": 1360.25,
+          "clock": "00:22:40.25"
+        },
+        {
+          "file": "frame_005468.jpg",
+          "tSec": 1366.75,
+          "clock": "00:22:46.75"
+        },
+        {
+          "file": "frame_005493.jpg",
+          "tSec": 1373,
+          "clock": "00:22:53.00"
+        },
+        {
+          "file": "frame_005519.jpg",
+          "tSec": 1379.5,
+          "clock": "00:22:59.50"
+        }
+      ],
+      "visibleScreenNotes": "",
+      "draft": {
+        "say": "TODO — talk track for “Okay, on the client side, yes, they don't have…” (source: transcript 00:21:49.14–00:22:59.59)",
+        "what": "TODO — one-paragraph description of what this screen/moment shows",
+        "capabilities": [],
+        "sp": [],
+        "de": [],
+        "branching": []
+      }
+    },
+    {
+      "id": "moment-022-brycerowley-jane-should-we-jump-in-and-show-them",
+      "order": 22,
+      "moduleGuess": "dashboard",
+      "confidence": "low",
+      "matchedKeywords": [
+        "dashboard"
+      ],
+      "titleGuess": "Brycerowley: Jane, should we jump in and show them…",
+      "tsRange": {
+        "startSec": 1381.99,
+        "endSec": 1452.67,
+        "startClock": "00:23:01.99",
+        "endClock": "00:24:12.67"
+      },
+      "durationSec": 70.68,
+      "cueCount": 9,
+      "speakers": [
+        "Shane Jacobs",
+        "Renee"
+      ],
+      "transcriptExcerpt": "brycerowley: Jane, should we jump in and show them the platform, and what it looks like, and some mechanics. And I'll talk through some of — there's a platform piece, but there's a whole support piece along with that that I'll talk through at the same time. Let's see, here we go. Okay, and you're seeing my screen okay now? It says, hello, demo? Yes. Okay, great. So this is the Prism Global Platform. This is what all…",
+      "frameRefs": [
+        {
+          "file": "frame_005529.jpg",
+          "tSec": 1382,
+          "clock": "00:23:02.00"
+        },
+        {
+          "file": "frame_005555.jpg",
+          "tSec": 1388.5,
+          "clock": "00:23:08.50"
+        },
+        {
+          "file": "frame_005580.jpg",
+          "tSec": 1394.75,
+          "clock": "00:23:14.75"
+        },
+        {
+          "file": "frame_005606.jpg",
+          "tSec": 1401.25,
+          "clock": "00:23:21.25"
+        },
+        {
+          "file": "frame_005632.jpg",
+          "tSec": 1407.75,
+          "clock": "00:23:27.75"
+        },
+        {
+          "file": "frame_005658.jpg",
+          "tSec": 1414.25,
+          "clock": "00:23:34.25"
+        },
+        {
+          "file": "frame_005683.jpg",
+          "tSec": 1420.5,
+          "clock": "00:23:40.50"
+        },
+        {
+          "file": "frame_005709.jpg",
+          "tSec": 1427,
+          "clock": "00:23:47.00"
+        },
+        {
+          "file": "frame_005735.jpg",
+          "tSec": 1433.5,
+          "clock": "00:23:53.50"
+        },
+        {
+          "file": "frame_005761.jpg",
+          "tSec": 1440,
+          "clock": "00:24:00.00"
+        },
+        {
+          "file": "frame_005786.jpg",
+          "tSec": 1446.25,
+          "clock": "00:24:06.25"
+        },
+        {
+          "file": "frame_005812.jpg",
+          "tSec": 1452.75,
+          "clock": "00:24:12.75"
+        }
+      ],
+      "visibleScreenNotes": "",
+      "draft": {
+        "say": "TODO — talk track for “Brycerowley: Jane, should we jump in and show them…” (source: transcript 00:23:01.99–00:24:12.67)",
+        "what": "TODO — one-paragraph description of what this screen/moment shows",
+        "capabilities": [],
+        "sp": [],
+        "de": [],
+        "branching": []
+      }
+    },
+    {
+      "id": "moment-023-period-for-this-next-month-would-show-all-the",
+      "order": 23,
+      "moduleGuess": "reimbursements",
+      "confidence": "medium",
+      "matchedKeywords": [
+        "reimbursement",
+        "reimburse"
+      ],
+      "titleGuess": "Period for this next month would show all the…",
+      "tsRange": {
+        "startSec": 1452.67,
+        "endSec": 1527.57,
+        "startClock": "00:24:12.67",
+        "endClock": "00:25:27.57"
+      },
+      "durationSec": 74.9,
+      "cueCount": 8,
+      "speakers": [
+        "Shane Jacobs"
+      ],
+      "transcriptExcerpt": "period for this next month would show all the different payments that you pay all your contractors. And so, as you scroll down, you can see there's additional payments, one-time payments, going further down, hourly workers, fixed rate workers, reimbursements, etc. So, depending on how you have the contract, whether it's a fixed rate per month. Per project, or if you're doing it on an hourly basis, that'll all be refl…",
+      "frameRefs": [
+        {
+          "file": "frame_005812.jpg",
+          "tSec": 1452.75,
+          "clock": "00:24:12.75"
+        },
+        {
+          "file": "frame_005839.jpg",
+          "tSec": 1459.5,
+          "clock": "00:24:19.50"
+        },
+        {
+          "file": "frame_005866.jpg",
+          "tSec": 1466.25,
+          "clock": "00:24:26.25"
+        },
+        {
+          "file": "frame_005894.jpg",
+          "tSec": 1473.25,
+          "clock": "00:24:33.25"
+        },
+        {
+          "file": "frame_005921.jpg",
+          "tSec": 1480,
+          "clock": "00:24:40.00"
+        },
+        {
+          "file": "frame_005948.jpg",
+          "tSec": 1486.75,
+          "clock": "00:24:46.75"
+        },
+        {
+          "file": "frame_005975.jpg",
+          "tSec": 1493.5,
+          "clock": "00:24:53.50"
+        },
+        {
+          "file": "frame_006002.jpg",
+          "tSec": 1500.25,
+          "clock": "00:25:00.25"
+        },
+        {
+          "file": "frame_006029.jpg",
+          "tSec": 1507,
+          "clock": "00:25:07.00"
+        },
+        {
+          "file": "frame_006057.jpg",
+          "tSec": 1514,
+          "clock": "00:25:14.00"
+        },
+        {
+          "file": "frame_006084.jpg",
+          "tSec": 1520.75,
+          "clock": "00:25:20.75"
+        },
+        {
+          "file": "frame_006111.jpg",
+          "tSec": 1527.5,
+          "clock": "00:25:27.50"
+        }
+      ],
+      "visibleScreenNotes": "",
+      "draft": {
+        "say": "TODO — talk track for “Period for this next month would show all the…” (source: transcript 00:24:12.67–00:25:27.57)",
+        "what": "TODO — one-paragraph description of what this screen/moment shows",
+        "capabilities": [],
+        "sp": [],
+        "de": [],
+        "branching": []
+      }
+    },
+    {
+      "id": "moment-024-what-are-the-additional-taxes-that-are-being-paid",
+      "order": 24,
+      "moduleGuess": "invoices",
+      "confidence": "low",
+      "matchedKeywords": [
+        "invoice"
+      ],
+      "titleGuess": "What are the additional taxes that are being paid…",
+      "tsRange": {
+        "startSec": 1527.57,
+        "endSec": 1591.22,
+        "startClock": "00:25:27.57",
+        "endClock": "00:26:31.22"
+      },
+      "durationSec": 63.65,
+      "cueCount": 6,
+      "speakers": [
+        "Shane Jacobs"
+      ],
+      "transcriptExcerpt": "what are the additional taxes that are being paid to that local government, right? And this is all broken out here for you, and we break that up by country. So you'll see the different employees in each country, and you can quickly scroll… click into that and see exactly what those wages are going to be, what the gross net is, etc. And this is just where you get to review that, make sure there aren't any issues. When…",
+      "frameRefs": [
+        {
+          "file": "frame_006111.jpg",
+          "tSec": 1527.5,
+          "clock": "00:25:27.50"
+        },
+        {
+          "file": "frame_006134.jpg",
+          "tSec": 1533.25,
+          "clock": "00:25:33.25"
+        },
+        {
+          "file": "frame_006157.jpg",
+          "tSec": 1539,
+          "clock": "00:25:39.00"
+        },
+        {
+          "file": "frame_006181.jpg",
+          "tSec": 1545,
+          "clock": "00:25:45.00"
+        },
+        {
+          "file": "frame_006204.jpg",
+          "tSec": 1550.75,
+          "clock": "00:25:50.75"
+        },
+        {
+          "file": "frame_006227.jpg",
+          "tSec": 1556.5,
+          "clock": "00:25:56.50"
+        },
+        {
+          "file": "frame_006250.jpg",
+          "tSec": 1562.25,
+          "clock": "00:26:02.25"
+        },
+        {
+          "file": "frame_006273.jpg",
+          "tSec": 1568,
+          "clock": "00:26:08.00"
+        },
+        {
+          "file": "frame_006296.jpg",
+          "tSec": 1573.75,
+          "clock": "00:26:13.75"
+        },
+        {
+          "file": "frame_006320.jpg",
+          "tSec": 1579.75,
+          "clock": "00:26:19.75"
+        },
+        {
+          "file": "frame_006343.jpg",
+          "tSec": 1585.5,
+          "clock": "00:26:25.50"
+        },
+        {
+          "file": "frame_006366.jpg",
+          "tSec": 1591.25,
+          "clock": "00:26:31.25"
+        }
+      ],
+      "visibleScreenNotes": "",
+      "draft": {
+        "say": "TODO — talk track for “What are the additional taxes that are being paid…” (source: transcript 00:25:27.57–00:26:31.22)",
+        "what": "TODO — one-paragraph description of what this screen/moment shows",
+        "capabilities": [],
+        "sp": [],
+        "de": [],
+        "branching": []
+      }
+    },
+    {
+      "id": "moment-025-what-no-there-s-no-international-wire-fees-right-you",
+      "order": 25,
+      "moduleGuess": "reimbursements",
+      "confidence": "high",
+      "matchedKeywords": [
+        "reimbursement",
+        "reimburse",
+        "expense"
+      ],
+      "titleGuess": "What? No, there's no international wire fees, right? You…",
+      "tsRange": {
+        "startSec": 1591.31,
+        "endSec": 1658.26,
+        "startClock": "00:26:31.31",
+        "endClock": "00:27:38.26"
+      },
+      "durationSec": 66.95,
+      "cueCount": 6,
+      "speakers": [
+        "Shane Jacobs"
+      ],
+      "transcriptExcerpt": "What? No, there's no international wire fees, right? You pay us, we convert that into… I'm not sure what Bulgaria uses. Did they use a euro or a local currency? I forget. But then we convert it, and we send those directly to their bank accounts, and then paying the taxes to the Bulgarian authorities. So there aren't any… wires going back and forth from you. You originate in the United States, and you pay our invoice…",
+      "frameRefs": [
+        {
+          "file": "frame_006366.jpg",
+          "tSec": 1591.25,
+          "clock": "00:26:31.25"
+        },
+        {
+          "file": "frame_006390.jpg",
+          "tSec": 1597.25,
+          "clock": "00:26:37.25"
+        },
+        {
+          "file": "frame_006415.jpg",
+          "tSec": 1603.5,
+          "clock": "00:26:43.50"
+        },
+        {
+          "file": "frame_006439.jpg",
+          "tSec": 1609.5,
+          "clock": "00:26:49.50"
+        },
+        {
+          "file": "frame_006463.jpg",
+          "tSec": 1615.5,
+          "clock": "00:26:55.50"
+        },
+        {
+          "file": "frame_006488.jpg",
+          "tSec": 1621.75,
+          "clock": "00:27:01.75"
+        },
+        {
+          "file": "frame_006512.jpg",
+          "tSec": 1627.75,
+          "clock": "00:27:07.75"
+        },
+        {
+          "file": "frame_006537.jpg",
+          "tSec": 1634,
+          "clock": "00:27:14.00"
+        },
+        {
+          "file": "frame_006561.jpg",
+          "tSec": 1640,
+          "clock": "00:27:20.00"
+        },
+        {
+          "file": "frame_006585.jpg",
+          "tSec": 1646,
+          "clock": "00:27:26.00"
+        },
+        {
+          "file": "frame_006610.jpg",
+          "tSec": 1652.25,
+          "clock": "00:27:32.25"
+        },
+        {
+          "file": "frame_006634.jpg",
+          "tSec": 1658.25,
+          "clock": "00:27:38.25"
+        }
+      ],
+      "visibleScreenNotes": "",
+      "draft": {
+        "say": "TODO — talk track for “What? No, there's no international wire fees, right? You…” (source: transcript 00:26:31.31–00:27:38.26)",
+        "what": "TODO — one-paragraph description of what this screen/moment shows",
+        "capabilities": [],
+        "sp": [],
+        "de": [],
+        "branching": []
+      }
+    },
+    {
+      "id": "moment-026-we-also-have-time-off-requests-so-if-i",
+      "order": 26,
+      "moduleGuess": "time-off",
+      "confidence": "high",
+      "matchedKeywords": [
+        "time off",
+        "vacation",
+        "holiday"
+      ],
+      "titleGuess": "We also have time off requests, so if I…",
+      "tsRange": {
+        "startSec": 1658.69,
+        "endSec": 1733.51,
+        "startClock": "00:27:38.69",
+        "endClock": "00:28:53.51"
+      },
+      "durationSec": 74.82,
+      "cueCount": 6,
+      "speakers": [
+        "Shane Jacobs"
+      ],
+      "transcriptExcerpt": "We also have time off requests, so if I look at my time off requests in Bulgaria, they have a statutory amount of paid vacation, holidays, leaves, other things that are required that an employer must provide. We also must provide that. We always have to honor the country-specific. paid time off, vacation, maternity, all those types of things. You can always offer more, but we cannot offer less than what's standard in…",
+      "frameRefs": [
+        {
+          "file": "frame_006636.jpg",
+          "tSec": 1658.75,
+          "clock": "00:27:38.75"
+        },
+        {
+          "file": "frame_006663.jpg",
+          "tSec": 1665.5,
+          "clock": "00:27:45.50"
+        },
+        {
+          "file": "frame_006690.jpg",
+          "tSec": 1672.25,
+          "clock": "00:27:52.25"
+        },
+        {
+          "file": "frame_006718.jpg",
+          "tSec": 1679.25,
+          "clock": "00:27:59.25"
+        },
+        {
+          "file": "frame_006745.jpg",
+          "tSec": 1686,
+          "clock": "00:28:06.00"
+        },
+        {
+          "file": "frame_006772.jpg",
+          "tSec": 1692.75,
+          "clock": "00:28:12.75"
+        },
+        {
+          "file": "frame_006799.jpg",
+          "tSec": 1699.5,
+          "clock": "00:28:19.50"
+        },
+        {
+          "file": "frame_006826.jpg",
+          "tSec": 1706.25,
+          "clock": "00:28:26.25"
+        },
+        {
+          "file": "frame_006853.jpg",
+          "tSec": 1713,
+          "clock": "00:28:33.00"
+        },
+        {
+          "file": "frame_006881.jpg",
+          "tSec": 1720,
+          "clock": "00:28:40.00"
+        },
+        {
+          "file": "frame_006908.jpg",
+          "tSec": 1726.75,
+          "clock": "00:28:46.75"
+        },
+        {
+          "file": "frame_006935.jpg",
+          "tSec": 1733.5,
+          "clock": "00:28:53.50"
+        }
+      ],
+      "visibleScreenNotes": "",
+      "draft": {
+        "say": "TODO — talk track for “We also have time off requests, so if I…” (source: transcript 00:27:38.69–00:28:53.51)",
+        "what": "TODO — one-paragraph description of what this screen/moment shows",
+        "capabilities": [],
+        "sp": [],
+        "de": [],
+        "branching": []
+      }
+    },
+    {
+      "id": "moment-027-it-would-have-her-signed-contract-that-contract-is",
+      "order": 27,
+      "moduleGuess": "unknown",
+      "confidence": "none",
+      "matchedKeywords": [],
+      "titleGuess": "It would have her signed contract. That contract is…",
+      "tsRange": {
+        "startSec": 1733.51,
+        "endSec": 1797.17,
+        "startClock": "00:28:53.51",
+        "endClock": "00:29:57.17"
+      },
+      "durationSec": 63.66,
+      "cueCount": 6,
+      "speakers": [
+        "Shane Jacobs"
+      ],
+      "transcriptExcerpt": "It would have her signed contract. That contract is her employment contract. That employment contract is between the employee and PRISM HR. Because we're the local employer of record. The contract that we have with you then assigns her to work for you on your behalf, et cetera. But then employment contracts where the IP protection, some of those things would lie with the employee directly. And then conversely. our ag…",
+      "frameRefs": [
+        {
+          "file": "frame_006935.jpg",
+          "tSec": 1733.5,
+          "clock": "00:28:53.50"
+        },
+        {
+          "file": "frame_006958.jpg",
+          "tSec": 1739.25,
+          "clock": "00:28:59.25"
+        },
+        {
+          "file": "frame_006981.jpg",
+          "tSec": 1745,
+          "clock": "00:29:05.00"
+        },
+        {
+          "file": "frame_007005.jpg",
+          "tSec": 1751,
+          "clock": "00:29:11.00"
+        },
+        {
+          "file": "frame_007028.jpg",
+          "tSec": 1756.75,
+          "clock": "00:29:16.75"
+        },
+        {
+          "file": "frame_007051.jpg",
+          "tSec": 1762.5,
+          "clock": "00:29:22.50"
+        },
+        {
+          "file": "frame_007074.jpg",
+          "tSec": 1768.25,
+          "clock": "00:29:28.25"
+        },
+        {
+          "file": "frame_007097.jpg",
+          "tSec": 1774,
+          "clock": "00:29:34.00"
+        },
+        {
+          "file": "frame_007120.jpg",
+          "tSec": 1779.75,
+          "clock": "00:29:39.75"
+        },
+        {
+          "file": "frame_007144.jpg",
+          "tSec": 1785.75,
+          "clock": "00:29:45.75"
+        },
+        {
+          "file": "frame_007167.jpg",
+          "tSec": 1791.5,
+          "clock": "00:29:51.50"
+        },
+        {
+          "file": "frame_007190.jpg",
+          "tSec": 1797.25,
+          "clock": "00:29:57.25"
+        }
+      ],
+      "visibleScreenNotes": "",
+      "draft": {
+        "say": "TODO — talk track for “It would have her signed contract. That contract is…” (source: transcript 00:28:53.51–00:29:57.17)",
+        "what": "TODO — one-paragraph description of what this screen/moment shows",
+        "capabilities": [],
+        "sp": [],
+        "de": [],
+        "branching": []
+      }
+    },
+    {
+      "id": "moment-028-based-on-that-contracted-amount-and-i-ll-go-into",
+      "order": 28,
+      "moduleGuess": "onboarding",
+      "confidence": "medium",
+      "matchedKeywords": [
+        "onboarding",
+        "onboard"
+      ],
+      "titleGuess": "Based on that contracted amount, and I'll go into…",
+      "tsRange": {
+        "startSec": 1797.17,
+        "endSec": 1870.91,
+        "startClock": "00:29:57.17",
+        "endClock": "00:31:10.91"
+      },
+      "durationSec": 73.74,
+      "cueCount": 6,
+      "speakers": [
+        "Shane Jacobs",
+        "Renee"
+      ],
+      "transcriptExcerpt": "based on that contracted amount, and I'll go into that a little bit later, but they don't have any statutory leaves or benefits or anything like that involved. They're just a contractor, but we manage the payment here. Maybe I'll add that those payments aren't… direct wires into each of their bank accounts, you're paying actually into a wallet, and then that wallet goes from there. And I'll explain that a little bit…",
+      "frameRefs": [
+        {
+          "file": "frame_007190.jpg",
+          "tSec": 1797.25,
+          "clock": "00:29:57.25"
+        },
+        {
+          "file": "frame_007217.jpg",
+          "tSec": 1804,
+          "clock": "00:30:04.00"
+        },
+        {
+          "file": "frame_007244.jpg",
+          "tSec": 1810.75,
+          "clock": "00:30:10.75"
+        },
+        {
+          "file": "frame_007270.jpg",
+          "tSec": 1817.25,
+          "clock": "00:30:17.25"
+        },
+        {
+          "file": "frame_007297.jpg",
+          "tSec": 1824,
+          "clock": "00:30:24.00"
+        },
+        {
+          "file": "frame_007324.jpg",
+          "tSec": 1830.75,
+          "clock": "00:30:30.75"
+        },
+        {
+          "file": "frame_007351.jpg",
+          "tSec": 1837.5,
+          "clock": "00:30:37.50"
+        },
+        {
+          "file": "frame_007378.jpg",
+          "tSec": 1844.25,
+          "clock": "00:30:44.25"
+        },
+        {
+          "file": "frame_007405.jpg",
+          "tSec": 1851,
+          "clock": "00:30:51.00"
+        },
+        {
+          "file": "frame_007431.jpg",
+          "tSec": 1857.5,
+          "clock": "00:30:57.50"
+        },
+        {
+          "file": "frame_007458.jpg",
+          "tSec": 1864.25,
+          "clock": "00:31:04.25"
+        },
+        {
+          "file": "frame_007485.jpg",
+          "tSec": 1871,
+          "clock": "00:31:11.00"
+        }
+      ],
+      "visibleScreenNotes": "",
+      "draft": {
+        "say": "TODO — talk track for “Based on that contracted amount, and I'll go into…” (source: transcript 00:29:57.17–00:31:10.91)",
+        "what": "TODO — one-paragraph description of what this screen/moment shows",
+        "capabilities": [],
+        "sp": [],
+        "de": [],
+        "branching": []
+      }
+    },
+    {
+      "id": "moment-029-requirements-that-you-have-to-pay-employees-on-like",
+      "order": 29,
+      "moduleGuess": "invoices",
+      "confidence": "low",
+      "matchedKeywords": [
+        "charge"
+      ],
+      "titleGuess": "Requirements that you have to pay employees on? Like…",
+      "tsRange": {
+        "startSec": 1871.34,
+        "endSec": 1945.86,
+        "startClock": "00:31:11.34",
+        "endClock": "00:32:25.86"
+      },
+      "durationSec": 74.52,
+      "cueCount": 6,
+      "speakers": [
+        "Renee",
+        "Shane Jacobs"
+      ],
+      "transcriptExcerpt": "requirements that you have to pay employees on? Like, for instance, Mexico has, like, specific stipends for, like, housing and food and stuff like that. Is there anything that we need to be aware of with the UK or Bulgaria that will be added on to payroll as moving them to a… or, like, a full-time employee? Bulgaria, off the top of my head, I don't know, but we can find out exactly what those payments are. Of course,…",
+      "frameRefs": [
+        {
+          "file": "frame_007486.jpg",
+          "tSec": 1871.25,
+          "clock": "00:31:11.25"
+        },
+        {
+          "file": "frame_007513.jpg",
+          "tSec": 1878,
+          "clock": "00:31:18.00"
+        },
+        {
+          "file": "frame_007540.jpg",
+          "tSec": 1884.75,
+          "clock": "00:31:24.75"
+        },
+        {
+          "file": "frame_007567.jpg",
+          "tSec": 1891.5,
+          "clock": "00:31:31.50"
+        },
+        {
+          "file": "frame_007594.jpg",
+          "tSec": 1898.25,
+          "clock": "00:31:38.25"
+        },
+        {
+          "file": "frame_007621.jpg",
+          "tSec": 1905,
+          "clock": "00:31:45.00"
+        },
+        {
+          "file": "frame_007649.jpg",
+          "tSec": 1912,
+          "clock": "00:31:52.00"
+        },
+        {
+          "file": "frame_007676.jpg",
+          "tSec": 1918.75,
+          "clock": "00:31:58.75"
+        },
+        {
+          "file": "frame_007703.jpg",
+          "tSec": 1925.5,
+          "clock": "00:32:05.50"
+        },
+        {
+          "file": "frame_007730.jpg",
+          "tSec": 1932.25,
+          "clock": "00:32:12.25"
+        },
+        {
+          "file": "frame_007757.jpg",
+          "tSec": 1939,
+          "clock": "00:32:19.00"
+        },
+        {
+          "file": "frame_007784.jpg",
+          "tSec": 1945.75,
+          "clock": "00:32:25.75"
+        }
+      ],
+      "visibleScreenNotes": "",
+      "draft": {
+        "say": "TODO — talk track for “Requirements that you have to pay employees on? Like…” (source: transcript 00:31:11.34–00:32:25.86)",
+        "what": "TODO — one-paragraph description of what this screen/moment shows",
+        "capabilities": [],
+        "sp": [],
+        "de": [],
+        "branching": []
+      }
+    },
+    {
+      "id": "moment-030-every-employee-is-entitled-to-that-you-re-paying-it",
+      "order": 30,
+      "moduleGuess": "invoices",
+      "confidence": "low",
+      "matchedKeywords": [
+        "charge"
+      ],
+      "titleGuess": "Every employee is entitled to that. You're paying it…",
+      "tsRange": {
+        "startSec": 1946.06,
+        "endSec": 2017.64,
+        "startClock": "00:32:26.06",
+        "endClock": "00:33:37.64"
+      },
+      "durationSec": 71.58,
+      "cueCount": 10,
+      "speakers": [
+        "Shane Jacobs",
+        "Renee"
+      ],
+      "transcriptExcerpt": "Every employee is entitled to that. You're paying it through those social charges. None of this is free. People talk about all this free health care around the world. Believe me, it's not. You're paying. Rec. You're being worried so much, Ray. Yeah. Yeah, so I… when I hear that, my ears bleed. I'm like, it's not free, people. They're paying a lot of taxes. Any So there's that component there, which you as a company c…",
+      "frameRefs": [
+        {
+          "file": "frame_007785.jpg",
+          "tSec": 1946,
+          "clock": "00:32:26.00"
+        },
+        {
+          "file": "frame_007811.jpg",
+          "tSec": 1952.5,
+          "clock": "00:32:32.50"
+        },
+        {
+          "file": "frame_007837.jpg",
+          "tSec": 1959,
+          "clock": "00:32:39.00"
+        },
+        {
+          "file": "frame_007863.jpg",
+          "tSec": 1965.5,
+          "clock": "00:32:45.50"
+        },
+        {
+          "file": "frame_007889.jpg",
+          "tSec": 1972,
+          "clock": "00:32:52.00"
+        },
+        {
+          "file": "frame_007915.jpg",
+          "tSec": 1978.5,
+          "clock": "00:32:58.50"
+        },
+        {
+          "file": "frame_007942.jpg",
+          "tSec": 1985.25,
+          "clock": "00:33:05.25"
+        },
+        {
+          "file": "frame_007968.jpg",
+          "tSec": 1991.75,
+          "clock": "00:33:11.75"
+        },
+        {
+          "file": "frame_007994.jpg",
+          "tSec": 1998.25,
+          "clock": "00:33:18.25"
+        },
+        {
+          "file": "frame_008020.jpg",
+          "tSec": 2004.75,
+          "clock": "00:33:24.75"
+        },
+        {
+          "file": "frame_008046.jpg",
+          "tSec": 2011.25,
+          "clock": "00:33:31.25"
+        },
+        {
+          "file": "frame_008072.jpg",
+          "tSec": 2017.75,
+          "clock": "00:33:37.75"
+        }
+      ],
+      "visibleScreenNotes": "",
+      "draft": {
+        "say": "TODO — talk track for “Every employee is entitled to that. You're paying it…” (source: transcript 00:32:26.06–00:33:37.64)",
+        "what": "TODO — one-paragraph description of what this screen/moment shows",
+        "capabilities": [],
+        "sp": [],
+        "de": [],
+        "branching": []
+      }
+    },
+    {
+      "id": "moment-031-so-yeah-that-s-how-the-benefits-work-in-each",
+      "order": 31,
+      "moduleGuess": "onboarding",
+      "confidence": "medium",
+      "matchedKeywords": [
+        "onboarding",
+        "onboard"
+      ],
+      "titleGuess": "So yeah, that's how the benefits work in each…",
+      "tsRange": {
+        "startSec": 2019.5,
+        "endSec": 2081.23,
+        "startClock": "00:33:39.50",
+        "endClock": "00:34:41.23"
+      },
+      "durationSec": 61.73,
+      "cueCount": 5,
+      "speakers": [
+        "Shane Jacobs"
+      ],
+      "transcriptExcerpt": "So yeah, that's how the benefits work in each of these countries. But very good questions. Let me go through that higher… that new onboarding real quick, just to show you what that would look like. Again, we have two different… Roads that you could go down, an employee or a contractor. I'll quickly say on the contractor, we have two components to that. Contractor is just simply contractor payments. You are the contra…",
+      "frameRefs": [
+        {
+          "file": "frame_008079.jpg",
+          "tSec": 2019.5,
+          "clock": "00:33:39.50"
+        },
+        {
+          "file": "frame_008101.jpg",
+          "tSec": 2025,
+          "clock": "00:33:45.00"
+        },
+        {
+          "file": "frame_008124.jpg",
+          "tSec": 2030.75,
+          "clock": "00:33:50.75"
+        },
+        {
+          "file": "frame_008146.jpg",
+          "tSec": 2036.25,
+          "clock": "00:33:56.25"
+        },
+        {
+          "file": "frame_008169.jpg",
+          "tSec": 2042,
+          "clock": "00:34:02.00"
+        },
+        {
+          "file": "frame_008191.jpg",
+          "tSec": 2047.5,
+          "clock": "00:34:07.50"
+        },
+        {
+          "file": "frame_008214.jpg",
+          "tSec": 2053.25,
+          "clock": "00:34:13.25"
+        },
+        {
+          "file": "frame_008236.jpg",
+          "tSec": 2058.75,
+          "clock": "00:34:18.75"
+        },
+        {
+          "file": "frame_008259.jpg",
+          "tSec": 2064.5,
+          "clock": "00:34:24.50"
+        },
+        {
+          "file": "frame_008281.jpg",
+          "tSec": 2070,
+          "clock": "00:34:30.00"
+        },
+        {
+          "file": "frame_008304.jpg",
+          "tSec": 2075.75,
+          "clock": "00:34:35.75"
+        },
+        {
+          "file": "frame_008326.jpg",
+          "tSec": 2081.25,
+          "clock": "00:34:41.25"
+        }
+      ],
+      "visibleScreenNotes": "",
+      "draft": {
+        "say": "TODO — talk track for “So yeah, that's how the benefits work in each…” (source: transcript 00:33:39.50–00:34:41.23)",
+        "what": "TODO — one-paragraph description of what this screen/moment shows",
+        "capabilities": [],
+        "sp": [],
+        "de": [],
+        "branching": []
+      }
+    },
+    {
+      "id": "moment-032-contract-if-they-are-not-and-we-don-t-feel",
+      "order": 32,
+      "moduleGuess": "unknown",
+      "confidence": "none",
+      "matchedKeywords": [],
+      "titleGuess": "Contract. If they are not and we don't feel…",
+      "tsRange": {
+        "startSec": 2081.23,
+        "endSec": 2142.84,
+        "startClock": "00:34:41.23",
+        "endClock": "00:35:42.84"
+      },
+      "durationSec": 61.61,
+      "cueCount": 7,
+      "speakers": [
+        "Shane Jacobs",
+        "Renee"
+      ],
+      "transcriptExcerpt": "contract. If they are not and we don't feel like they are meeting the requirements of a contractor, then we would then urge and say, well, we can't be party to that. We would need to put them as an employer of record. So those are the different levels. If you're comfortable with the relationship you have as a contractor and just need that payment, then you'd use the contractor method there. But we'll choose employee…",
+      "frameRefs": [
+        {
+          "file": "frame_008326.jpg",
+          "tSec": 2081.25,
+          "clock": "00:34:41.25"
+        },
+        {
+          "file": "frame_008348.jpg",
+          "tSec": 2086.75,
+          "clock": "00:34:46.75"
+        },
+        {
+          "file": "frame_008371.jpg",
+          "tSec": 2092.5,
+          "clock": "00:34:52.50"
+        },
+        {
+          "file": "frame_008393.jpg",
+          "tSec": 2098,
+          "clock": "00:34:58.00"
+        },
+        {
+          "file": "frame_008415.jpg",
+          "tSec": 2103.5,
+          "clock": "00:35:03.50"
+        },
+        {
+          "file": "frame_008438.jpg",
+          "tSec": 2109.25,
+          "clock": "00:35:09.25"
+        },
+        {
+          "file": "frame_008460.jpg",
+          "tSec": 2114.75,
+          "clock": "00:35:14.75"
+        },
+        {
+          "file": "frame_008483.jpg",
+          "tSec": 2120.5,
+          "clock": "00:35:20.50"
+        },
+        {
+          "file": "frame_008505.jpg",
+          "tSec": 2126,
+          "clock": "00:35:26.00"
+        },
+        {
+          "file": "frame_008527.jpg",
+          "tSec": 2131.5,
+          "clock": "00:35:31.50"
+        },
+        {
+          "file": "frame_008550.jpg",
+          "tSec": 2137.25,
+          "clock": "00:35:37.25"
+        },
+        {
+          "file": "frame_008572.jpg",
+          "tSec": 2142.75,
+          "clock": "00:35:42.75"
+        }
+      ],
+      "visibleScreenNotes": "",
+      "draft": {
+        "say": "TODO — talk track for “Contract. If they are not and we don't feel…” (source: transcript 00:34:41.23–00:35:42.84)",
+        "what": "TODO — one-paragraph description of what this screen/moment shows",
+        "capabilities": [],
+        "sp": [],
+        "de": [],
+        "branching": []
+      }
+    },
+    {
+      "id": "moment-033-you-know-analysis-of-here-s-the-potential-risks-that",
+      "order": 33,
+      "moduleGuess": "onboarding",
+      "confidence": "medium",
+      "matchedKeywords": [
+        "onboarding",
+        "onboard"
+      ],
+      "titleGuess": "You know, analysis of here's the potential risks that…",
+      "tsRange": {
+        "startSec": 2142.9,
+        "endSec": 2217.42,
+        "startClock": "00:35:42.90",
+        "endClock": "00:36:57.42"
+      },
+      "durationSec": 74.52,
+      "cueCount": 8,
+      "speakers": [
+        "Shane Jacobs",
+        "Renee"
+      ],
+      "transcriptExcerpt": "you know, analysis of here's the potential risks that you face in that country by continuing to pay that contractor as is, when in all essence, they're acting exactly like an employee. There are real consequences, fines, penalties, there are real consequences if the government finds out, And there's all sorts of ways that that can happen, but we would advise accordingly. But then, ultimately, it's the client's decisi…",
+      "frameRefs": [
+        {
+          "file": "frame_008573.jpg",
+          "tSec": 2143,
+          "clock": "00:35:43.00"
+        },
+        {
+          "file": "frame_008600.jpg",
+          "tSec": 2149.75,
+          "clock": "00:35:49.75"
+        },
+        {
+          "file": "frame_008627.jpg",
+          "tSec": 2156.5,
+          "clock": "00:35:56.50"
+        },
+        {
+          "file": "frame_008654.jpg",
+          "tSec": 2163.25,
+          "clock": "00:36:03.25"
+        },
+        {
+          "file": "frame_008681.jpg",
+          "tSec": 2170,
+          "clock": "00:36:10.00"
+        },
+        {
+          "file": "frame_008708.jpg",
+          "tSec": 2176.75,
+          "clock": "00:36:16.75"
+        },
+        {
+          "file": "frame_008736.jpg",
+          "tSec": 2183.75,
+          "clock": "00:36:23.75"
+        },
+        {
+          "file": "frame_008763.jpg",
+          "tSec": 2190.5,
+          "clock": "00:36:30.50"
+        },
+        {
+          "file": "frame_008790.jpg",
+          "tSec": 2197.25,
+          "clock": "00:36:37.25"
+        },
+        {
+          "file": "frame_008817.jpg",
+          "tSec": 2204,
+          "clock": "00:36:44.00"
+        },
+        {
+          "file": "frame_008844.jpg",
+          "tSec": 2210.75,
+          "clock": "00:36:50.75"
+        },
+        {
+          "file": "frame_008871.jpg",
+          "tSec": 2217.5,
+          "clock": "00:36:57.50"
+        }
+      ],
+      "visibleScreenNotes": "",
+      "draft": {
+        "say": "TODO — talk track for “You know, analysis of here's the potential risks that…” (source: transcript 00:35:42.90–00:36:57.42)",
+        "what": "TODO — one-paragraph description of what this screen/moment shows",
+        "capabilities": [],
+        "sp": [],
+        "de": [],
+        "branching": []
+      }
+    },
+    {
+      "id": "moment-034-all-of-them-bulgarian-nationals",
+      "order": 34,
+      "moduleGuess": "onboarding",
+      "confidence": "medium",
+      "matchedKeywords": [
+        "onboarding",
+        "onboard"
+      ],
+      "titleGuess": "All of them Bulgarian nationals",
+      "tsRange": {
+        "startSec": 2217.42,
+        "endSec": 2290.87,
+        "startClock": "00:36:57.42",
+        "endClock": "00:38:10.87"
+      },
+      "durationSec": 73.45,
+      "cueCount": 18,
+      "speakers": [
+        "Shane Jacobs",
+        "Renee"
+      ],
+      "transcriptExcerpt": "All of them Bulgarian nationals. I think one lives in Spain. Okay, so where they live is where they would need to be employed. Yep. I'm pretty sure one of them lives in Spain and comes from that area, yeah. And are they Bulgarian living in Spain? It's a great question. I don't know that answer. I can find out. Yeah, so before we… and that's where this question comes into play. So the nationality is Bulgaria, but I ch…",
+      "frameRefs": [
+        {
+          "file": "frame_008871.jpg",
+          "tSec": 2217.5,
+          "clock": "00:36:57.50"
+        },
+        {
+          "file": "frame_008898.jpg",
+          "tSec": 2224.25,
+          "clock": "00:37:04.25"
+        },
+        {
+          "file": "frame_008924.jpg",
+          "tSec": 2230.75,
+          "clock": "00:37:10.75"
+        },
+        {
+          "file": "frame_008951.jpg",
+          "tSec": 2237.5,
+          "clock": "00:37:17.50"
+        },
+        {
+          "file": "frame_008978.jpg",
+          "tSec": 2244.25,
+          "clock": "00:37:24.25"
+        },
+        {
+          "file": "frame_009004.jpg",
+          "tSec": 2250.75,
+          "clock": "00:37:30.75"
+        },
+        {
+          "file": "frame_009031.jpg",
+          "tSec": 2257.5,
+          "clock": "00:37:37.50"
+        },
+        {
+          "file": "frame_009057.jpg",
+          "tSec": 2264,
+          "clock": "00:37:44.00"
+        },
+        {
+          "file": "frame_009084.jpg",
+          "tSec": 2270.75,
+          "clock": "00:37:50.75"
+        },
+        {
+          "file": "frame_009111.jpg",
+          "tSec": 2277.5,
+          "clock": "00:37:57.50"
+        },
+        {
+          "file": "frame_009137.jpg",
+          "tSec": 2284,
+          "clock": "00:38:04.00"
+        },
+        {
+          "file": "frame_009164.jpg",
+          "tSec": 2290.75,
+          "clock": "00:38:10.75"
+        }
+      ],
+      "visibleScreenNotes": "",
+      "draft": {
+        "say": "TODO — talk track for “All of them Bulgarian nationals” (source: transcript 00:36:57.42–00:38:10.87)",
+        "what": "TODO — one-paragraph description of what this screen/moment shows",
+        "capabilities": [],
+        "sp": [],
+        "de": [],
+        "branching": []
+      }
+    },
+    {
+      "id": "moment-035-so-let-me-just-go-back-here-so-it",
+      "order": 35,
+      "moduleGuess": "team",
+      "confidence": "low",
+      "matchedKeywords": [
+        "team"
+      ],
+      "titleGuess": "So let me just go back here, so it…",
+      "tsRange": {
+        "startSec": 2292.51,
+        "endSec": 2357.54,
+        "startClock": "00:38:12.51",
+        "endClock": "00:39:17.54"
+      },
+      "durationSec": 65.03,
+      "cueCount": 6,
+      "speakers": [
+        "Shane Jacobs"
+      ],
+      "transcriptExcerpt": "So let me just go back here, so it… Does it correctly? So the rest of these people are Bulgarian nationals. They live in Bulgaria, so they have work authorization. And then here, you're just going to go through the simple process. This would be what you would be doing in terms of setting them up. These are project managers. Maybe they're mid-level. I just put in a quick project management. You put in a description of…",
+      "frameRefs": [
+        {
+          "file": "frame_009171.jpg",
+          "tSec": 2292.5,
+          "clock": "00:38:12.50"
+        },
+        {
+          "file": "frame_009195.jpg",
+          "tSec": 2298.5,
+          "clock": "00:38:18.50"
+        },
+        {
+          "file": "frame_009218.jpg",
+          "tSec": 2304.25,
+          "clock": "00:38:24.25"
+        },
+        {
+          "file": "frame_009242.jpg",
+          "tSec": 2310.25,
+          "clock": "00:38:30.25"
+        },
+        {
+          "file": "frame_009266.jpg",
+          "tSec": 2316.25,
+          "clock": "00:38:36.25"
+        },
+        {
+          "file": "frame_009289.jpg",
+          "tSec": 2322,
+          "clock": "00:38:42.00"
+        },
+        {
+          "file": "frame_009313.jpg",
+          "tSec": 2328,
+          "clock": "00:38:48.00"
+        },
+        {
+          "file": "frame_009336.jpg",
+          "tSec": 2333.75,
+          "clock": "00:38:53.75"
+        },
+        {
+          "file": "frame_009360.jpg",
+          "tSec": 2339.75,
+          "clock": "00:38:59.75"
+        },
+        {
+          "file": "frame_009384.jpg",
+          "tSec": 2345.75,
+          "clock": "00:39:05.75"
+        },
+        {
+          "file": "frame_009407.jpg",
+          "tSec": 2351.5,
+          "clock": "00:39:11.50"
+        },
+        {
+          "file": "frame_009431.jpg",
+          "tSec": 2357.5,
+          "clock": "00:39:17.50"
+        }
+      ],
+      "visibleScreenNotes": "",
+      "draft": {
+        "say": "TODO — talk track for “So let me just go back here, so it…” (source: transcript 00:38:12.51–00:39:17.54)",
+        "what": "TODO — one-paragraph description of what this screen/moment shows",
+        "capabilities": [],
+        "sp": [],
+        "de": [],
+        "branching": []
+      }
+    },
+    {
+      "id": "moment-036-the-employment-contract-worked-on-i-don-t-know-about",
+      "order": 36,
+      "moduleGuess": "unknown",
+      "confidence": "none",
+      "matchedKeywords": [],
+      "titleGuess": "The employment contract worked on. I don't know about…",
+      "tsRange": {
+        "startSec": 2357.54,
+        "endSec": 2431.68,
+        "startClock": "00:39:17.54",
+        "endClock": "00:40:31.68"
+      },
+      "durationSec": 74.14,
+      "cueCount": 6,
+      "speakers": [
+        "Shane Jacobs",
+        "Renee"
+      ],
+      "transcriptExcerpt": "the employment contract worked on. I don't know about Bulgaria. Some countries have mandatory registrations or a little bit of waiting periods. In France, you have to go to the doctor. In the Philippines, you have to go to the doctor first. So there's different things that have to happen so that two-week window allows for all those requirements to take place before they can actually start. Got it. And from here, we g…",
+      "frameRefs": [
+        {
+          "file": "frame_009431.jpg",
+          "tSec": 2357.5,
+          "clock": "00:39:17.50"
+        },
+        {
+          "file": "frame_009458.jpg",
+          "tSec": 2364.25,
+          "clock": "00:39:24.25"
+        },
+        {
+          "file": "frame_009485.jpg",
+          "tSec": 2371,
+          "clock": "00:39:31.00"
+        },
+        {
+          "file": "frame_009512.jpg",
+          "tSec": 2377.75,
+          "clock": "00:39:37.75"
+        },
+        {
+          "file": "frame_009539.jpg",
+          "tSec": 2384.5,
+          "clock": "00:39:44.50"
+        },
+        {
+          "file": "frame_009566.jpg",
+          "tSec": 2391.25,
+          "clock": "00:39:51.25"
+        },
+        {
+          "file": "frame_009593.jpg",
+          "tSec": 2398,
+          "clock": "00:39:58.00"
+        },
+        {
+          "file": "frame_009620.jpg",
+          "tSec": 2404.75,
+          "clock": "00:40:04.75"
+        },
+        {
+          "file": "frame_009647.jpg",
+          "tSec": 2411.5,
+          "clock": "00:40:11.50"
+        },
+        {
+          "file": "frame_009674.jpg",
+          "tSec": 2418.25,
+          "clock": "00:40:18.25"
+        },
+        {
+          "file": "frame_009701.jpg",
+          "tSec": 2425,
+          "clock": "00:40:25.00"
+        },
+        {
+          "file": "frame_009728.jpg",
+          "tSec": 2431.75,
+          "clock": "00:40:31.75"
+        }
+      ],
+      "visibleScreenNotes": "",
+      "draft": {
+        "say": "TODO — talk track for “The employment contract worked on. I don't know about…” (source: transcript 00:39:17.54–00:40:31.68)",
+        "what": "TODO — one-paragraph description of what this screen/moment shows",
+        "capabilities": [],
+        "sp": [],
+        "de": [],
+        "branching": []
+      }
+    },
+    {
+      "id": "moment-037-i-can-set-up-even-additional-payments-if-i",
+      "order": 37,
+      "moduleGuess": "time-off",
+      "confidence": "high",
+      "matchedKeywords": [
+        "time off",
+        "vacation",
+        "holiday"
+      ],
+      "titleGuess": "I can set up even additional payments. If I…",
+      "tsRange": {
+        "startSec": 2432.87,
+        "endSec": 2506.34,
+        "startClock": "00:40:32.87",
+        "endClock": "00:41:46.34"
+      },
+      "durationSec": 73.47,
+      "cueCount": 5,
+      "speakers": [
+        "Shane Jacobs"
+      ],
+      "transcriptExcerpt": "I can set up even additional payments. If I want to give them each a mobile allowance every month, I can set that up. You know, give them an extra $100 for a mobile allowance, whatever you'd like. You can set that up here, and that will happen in each paycheck moving forward. Vacation and paid time off, again, you'll know exactly there's, we'll give you that information on how many vacation days that are allowed in B…",
+      "frameRefs": [
+        {
+          "file": "frame_009732.jpg",
+          "tSec": 2432.75,
+          "clock": "00:40:32.75"
+        },
+        {
+          "file": "frame_009759.jpg",
+          "tSec": 2439.5,
+          "clock": "00:40:39.50"
+        },
+        {
+          "file": "frame_009785.jpg",
+          "tSec": 2446,
+          "clock": "00:40:46.00"
+        },
+        {
+          "file": "frame_009812.jpg",
+          "tSec": 2452.75,
+          "clock": "00:40:52.75"
+        },
+        {
+          "file": "frame_009839.jpg",
+          "tSec": 2459.5,
+          "clock": "00:40:59.50"
+        },
+        {
+          "file": "frame_009866.jpg",
+          "tSec": 2466.25,
+          "clock": "00:41:06.25"
+        },
+        {
+          "file": "frame_009892.jpg",
+          "tSec": 2472.75,
+          "clock": "00:41:12.75"
+        },
+        {
+          "file": "frame_009919.jpg",
+          "tSec": 2479.5,
+          "clock": "00:41:19.50"
+        },
+        {
+          "file": "frame_009946.jpg",
+          "tSec": 2486.25,
+          "clock": "00:41:26.25"
+        },
+        {
+          "file": "frame_009973.jpg",
+          "tSec": 2493,
+          "clock": "00:41:33.00"
+        },
+        {
+          "file": "frame_009999.jpg",
+          "tSec": 2499.5,
+          "clock": "00:41:39.50"
+        },
+        {
+          "file": "frame_010026.jpg",
+          "tSec": 2506.25,
+          "clock": "00:41:46.25"
+        }
+      ],
+      "visibleScreenNotes": "",
+      "draft": {
+        "say": "TODO — talk track for “I can set up even additional payments. If I…” (source: transcript 00:40:32.87–00:41:46.34)",
+        "what": "TODO — one-paragraph description of what this screen/moment shows",
+        "capabilities": [],
+        "sp": [],
+        "de": [],
+        "branching": []
+      }
+    },
+    {
+      "id": "moment-038-equipment-policy-if-you-want-to-set-up-them",
+      "order": 38,
+      "moduleGuess": "new-hire",
+      "confidence": "low",
+      "matchedKeywords": [
+        "new hire"
+      ],
+      "titleGuess": "Equipment policy, if you want to set up them…",
+      "tsRange": {
+        "startSec": 2507.36,
+        "endSec": 2565.63,
+        "startClock": "00:41:47.36",
+        "endClock": "00:42:45.63"
+      },
+      "durationSec": 58.27,
+      "cueCount": 4,
+      "speakers": [
+        "Shane Jacobs"
+      ],
+      "transcriptExcerpt": "Equipment policy, if you want to set up them with computers, laptops, monitors, all that type of stuff, The least effective way is for you to ship them from the US. They'll probably get caught in customs, and that can be pretty expensive. Or we do have a third party that you would just work with directly. They have a menu that you can click on all the different IT equipment and get that sent to their home or their of…",
+      "frameRefs": [
+        {
+          "file": "frame_010030.jpg",
+          "tSec": 2507.25,
+          "clock": "00:41:47.25"
+        },
+        {
+          "file": "frame_010051.jpg",
+          "tSec": 2512.5,
+          "clock": "00:41:52.50"
+        },
+        {
+          "file": "frame_010073.jpg",
+          "tSec": 2518,
+          "clock": "00:41:58.00"
+        },
+        {
+          "file": "frame_010094.jpg",
+          "tSec": 2523.25,
+          "clock": "00:42:03.25"
+        },
+        {
+          "file": "frame_010115.jpg",
+          "tSec": 2528.5,
+          "clock": "00:42:08.50"
+        },
+        {
+          "file": "frame_010136.jpg",
+          "tSec": 2533.75,
+          "clock": "00:42:13.75"
+        },
+        {
+          "file": "frame_010158.jpg",
+          "tSec": 2539.25,
+          "clock": "00:42:19.25"
+        },
+        {
+          "file": "frame_010179.jpg",
+          "tSec": 2544.5,
+          "clock": "00:42:24.50"
+        },
+        {
+          "file": "frame_010200.jpg",
+          "tSec": 2549.75,
+          "clock": "00:42:29.75"
+        },
+        {
+          "file": "frame_010221.jpg",
+          "tSec": 2555,
+          "clock": "00:42:35.00"
+        },
+        {
+          "file": "frame_010243.jpg",
+          "tSec": 2560.5,
+          "clock": "00:42:40.50"
+        },
+        {
+          "file": "frame_010264.jpg",
+          "tSec": 2565.75,
+          "clock": "00:42:45.75"
+        }
+      ],
+      "visibleScreenNotes": "",
+      "draft": {
+        "say": "TODO — talk track for “Equipment policy, if you want to set up them…” (source: transcript 00:41:47.36–00:42:45.63)",
+        "what": "TODO — one-paragraph description of what this screen/moment shows",
+        "capabilities": [],
+        "sp": [],
+        "de": [],
+        "branching": []
+      }
+    },
+    {
+      "id": "moment-039-per-employee-per-month-would-be-an-extra-210",
+      "order": 39,
+      "moduleGuess": "onboarding",
+      "confidence": "low",
+      "matchedKeywords": [
+        "onboard"
+      ],
+      "titleGuess": "Per employee per month would be an extra $210…",
+      "tsRange": {
+        "startSec": 2565.75,
+        "endSec": 2638.75,
+        "startClock": "00:42:45.75",
+        "endClock": "00:43:58.75"
+      },
+      "durationSec": 73,
+      "cueCount": 8,
+      "speakers": [
+        "Shane Jacobs"
+      ],
+      "transcriptExcerpt": "Per employee per month would be an extra $210 per month if you chose that. And you could say, hey, as a company, we're just going to absorb that. Or you could say, hey, we'll cover half. You cover half. If the employee wants to cover their dependents, it's just an extra $210 a month. So it's a per employee per month rate. And to know what those information are, I click on here. And it brings up all the… the benefits.…",
+      "frameRefs": [
+        {
+          "file": "frame_010264.jpg",
+          "tSec": 2565.75,
+          "clock": "00:42:45.75"
+        },
+        {
+          "file": "frame_010291.jpg",
+          "tSec": 2572.5,
+          "clock": "00:42:52.50"
+        },
+        {
+          "file": "frame_010317.jpg",
+          "tSec": 2579,
+          "clock": "00:42:59.00"
+        },
+        {
+          "file": "frame_010344.jpg",
+          "tSec": 2585.75,
+          "clock": "00:43:05.75"
+        },
+        {
+          "file": "frame_010370.jpg",
+          "tSec": 2592.25,
+          "clock": "00:43:12.25"
+        },
+        {
+          "file": "frame_010397.jpg",
+          "tSec": 2599,
+          "clock": "00:43:19.00"
+        },
+        {
+          "file": "frame_010423.jpg",
+          "tSec": 2605.5,
+          "clock": "00:43:25.50"
+        },
+        {
+          "file": "frame_010450.jpg",
+          "tSec": 2612.25,
+          "clock": "00:43:32.25"
+        },
+        {
+          "file": "frame_010476.jpg",
+          "tSec": 2618.75,
+          "clock": "00:43:38.75"
+        },
+        {
+          "file": "frame_010503.jpg",
+          "tSec": 2625.5,
+          "clock": "00:43:45.50"
+        },
+        {
+          "file": "frame_010529.jpg",
+          "tSec": 2632,
+          "clock": "00:43:52.00"
+        },
+        {
+          "file": "frame_010556.jpg",
+          "tSec": 2638.75,
+          "clock": "00:43:58.75"
+        }
+      ],
+      "visibleScreenNotes": "",
+      "draft": {
+        "say": "TODO — talk track for “Per employee per month would be an extra $210…” (source: transcript 00:42:45.75–00:43:58.75)",
+        "what": "TODO — one-paragraph description of what this screen/moment shows",
+        "capabilities": [],
+        "sp": [],
+        "de": [],
+        "branching": []
+      }
+    },
+    {
+      "id": "moment-040-they-will-ensure-that-all-the-information-is-correct",
+      "order": 40,
+      "moduleGuess": "new-hire",
+      "confidence": "low",
+      "matchedKeywords": [
+        "offer letter"
+      ],
+      "titleGuess": "They will ensure that all the information is correct…",
+      "tsRange": {
+        "startSec": 2639.3,
+        "endSec": 2707.17,
+        "startClock": "00:43:59.30",
+        "endClock": "00:45:07.17"
+      },
+      "durationSec": 67.87,
+      "cueCount": 6,
+      "speakers": [
+        "Shane Jacobs"
+      ],
+      "transcriptExcerpt": "They will ensure that all the information is correct, and they will generate an offer letter. That offer letter will then be reviewed by you before we send it to the employee. And that offer letter contains their salary, any additional benefits, all those types of things you've talked about with them. And make sure everything looks correct. So if there's any back and forth, any questions, we can do that in the offer…",
+      "frameRefs": [
+        {
+          "file": "frame_010558.jpg",
+          "tSec": 2639.25,
+          "clock": "00:43:59.25"
+        },
+        {
+          "file": "frame_010583.jpg",
+          "tSec": 2645.5,
+          "clock": "00:44:05.50"
+        },
+        {
+          "file": "frame_010607.jpg",
+          "tSec": 2651.5,
+          "clock": "00:44:11.50"
+        },
+        {
+          "file": "frame_010632.jpg",
+          "tSec": 2657.75,
+          "clock": "00:44:17.75"
+        },
+        {
+          "file": "frame_010657.jpg",
+          "tSec": 2664,
+          "clock": "00:44:24.00"
+        },
+        {
+          "file": "frame_010682.jpg",
+          "tSec": 2670.25,
+          "clock": "00:44:30.25"
+        },
+        {
+          "file": "frame_010706.jpg",
+          "tSec": 2676.25,
+          "clock": "00:44:36.25"
+        },
+        {
+          "file": "frame_010731.jpg",
+          "tSec": 2682.5,
+          "clock": "00:44:42.50"
+        },
+        {
+          "file": "frame_010756.jpg",
+          "tSec": 2688.75,
+          "clock": "00:44:48.75"
+        },
+        {
+          "file": "frame_010781.jpg",
+          "tSec": 2695,
+          "clock": "00:44:55.00"
+        },
+        {
+          "file": "frame_010805.jpg",
+          "tSec": 2701,
+          "clock": "00:45:01.00"
+        },
+        {
+          "file": "frame_010830.jpg",
+          "tSec": 2707.25,
+          "clock": "00:45:07.25"
+        }
+      ],
+      "visibleScreenNotes": "",
+      "draft": {
+        "say": "TODO — talk track for “They will ensure that all the information is correct…” (source: transcript 00:43:59.30–00:45:07.17)",
+        "what": "TODO — one-paragraph description of what this screen/moment shows",
+        "capabilities": [],
+        "sp": [],
+        "de": [],
+        "branching": []
+      }
+    },
+    {
+      "id": "moment-041-this-is-where-they-re-going-to-see-all-their",
+      "order": 41,
+      "moduleGuess": "onboarding",
+      "confidence": "medium",
+      "matchedKeywords": [
+        "onboarding",
+        "onboard"
+      ],
+      "titleGuess": "This is where they're going to see all their…",
+      "tsRange": {
+        "startSec": 2707.48,
+        "endSec": 2780.56,
+        "startClock": "00:45:07.48",
+        "endClock": "00:46:20.56"
+      },
+      "durationSec": 73.08,
+      "cueCount": 7,
+      "speakers": [
+        "Shane Jacobs"
+      ],
+      "transcriptExcerpt": "This is where they're going to see all their different payments, how much they've been paid, where their payslips are located. If they need to ask for time off, they just go right into here. They know what their holidays are, how much leave they have available, and then they can request time off. You can set up those approvals, so if they're frontline managers, the first approval, HR, second approval, however you'd l…",
+      "frameRefs": [
+        {
+          "file": "frame_010831.jpg",
+          "tSec": 2707.5,
+          "clock": "00:45:07.50"
+        },
+        {
+          "file": "frame_010858.jpg",
+          "tSec": 2714.25,
+          "clock": "00:45:14.25"
+        },
+        {
+          "file": "frame_010884.jpg",
+          "tSec": 2720.75,
+          "clock": "00:45:20.75"
+        },
+        {
+          "file": "frame_010911.jpg",
+          "tSec": 2727.5,
+          "clock": "00:45:27.50"
+        },
+        {
+          "file": "frame_010937.jpg",
+          "tSec": 2734,
+          "clock": "00:45:34.00"
+        },
+        {
+          "file": "frame_010964.jpg",
+          "tSec": 2740.75,
+          "clock": "00:45:40.75"
+        },
+        {
+          "file": "frame_010990.jpg",
+          "tSec": 2747.25,
+          "clock": "00:45:47.25"
+        },
+        {
+          "file": "frame_011017.jpg",
+          "tSec": 2754,
+          "clock": "00:45:54.00"
+        },
+        {
+          "file": "frame_011043.jpg",
+          "tSec": 2760.5,
+          "clock": "00:46:00.50"
+        },
+        {
+          "file": "frame_011070.jpg",
+          "tSec": 2767.25,
+          "clock": "00:46:07.25"
+        },
+        {
+          "file": "frame_011096.jpg",
+          "tSec": 2773.75,
+          "clock": "00:46:13.75"
+        },
+        {
+          "file": "frame_011123.jpg",
+          "tSec": 2780.5,
+          "clock": "00:46:20.50"
+        }
+      ],
+      "visibleScreenNotes": "",
+      "draft": {
+        "say": "TODO — talk track for “This is where they're going to see all their…” (source: transcript 00:45:07.48–00:46:20.56)",
+        "what": "TODO — one-paragraph description of what this screen/moment shows",
+        "capabilities": [],
+        "sp": [],
+        "de": [],
+        "branching": []
+      }
+    },
+    {
+      "id": "moment-042-you-can-see-down-here-oh-here-s-laurent-in",
+      "order": 42,
+      "moduleGuess": "new-hire",
+      "confidence": "low",
+      "matchedKeywords": [
+        "offer letter"
+      ],
+      "titleGuess": "You can see down here, oh, here's Laurent in…",
+      "tsRange": {
+        "startSec": 2789.87,
+        "endSec": 2852.37,
+        "startClock": "00:46:29.87",
+        "endClock": "00:47:32.37"
+      },
+      "durationSec": 62.5,
+      "cueCount": 6,
+      "speakers": [
+        "Shane Jacobs"
+      ],
+      "transcriptExcerpt": "You can see down here, oh, here's Laurent in Bulgaria, he's awaiting the offer letter, right? That's going to our implementation manager, they'll get the offer letter ready, send that out, and once that's sent out. then it'll click over here that the agreement's been signed. So that's… that's how you manage this. Once you do this once, it's pretty easy to go through, but then the employee, they upload all their infor…",
+      "frameRefs": [
+        {
+          "file": "frame_011160.jpg",
+          "tSec": 2789.75,
+          "clock": "00:46:29.75"
+        },
+        {
+          "file": "frame_011183.jpg",
+          "tSec": 2795.5,
+          "clock": "00:46:35.50"
+        },
+        {
+          "file": "frame_011205.jpg",
+          "tSec": 2801,
+          "clock": "00:46:41.00"
+        },
+        {
+          "file": "frame_011228.jpg",
+          "tSec": 2806.75,
+          "clock": "00:46:46.75"
+        },
+        {
+          "file": "frame_011251.jpg",
+          "tSec": 2812.5,
+          "clock": "00:46:52.50"
+        },
+        {
+          "file": "frame_011274.jpg",
+          "tSec": 2818.25,
+          "clock": "00:46:58.25"
+        },
+        {
+          "file": "frame_011296.jpg",
+          "tSec": 2823.75,
+          "clock": "00:47:03.75"
+        },
+        {
+          "file": "frame_011319.jpg",
+          "tSec": 2829.5,
+          "clock": "00:47:09.50"
+        },
+        {
+          "file": "frame_011342.jpg",
+          "tSec": 2835.25,
+          "clock": "00:47:15.25"
+        },
+        {
+          "file": "frame_011365.jpg",
+          "tSec": 2841,
+          "clock": "00:47:21.00"
+        },
+        {
+          "file": "frame_011387.jpg",
+          "tSec": 2846.5,
+          "clock": "00:47:26.50"
+        },
+        {
+          "file": "frame_011410.jpg",
+          "tSec": 2852.25,
+          "clock": "00:47:32.25"
+        }
+      ],
+      "visibleScreenNotes": "",
+      "draft": {
+        "say": "TODO — talk track for “You can see down here, oh, here's Laurent in…” (source: transcript 00:46:29.87–00:47:32.37)",
+        "what": "TODO — one-paragraph description of what this screen/moment shows",
+        "capabilities": [],
+        "sp": [],
+        "de": [],
+        "branching": []
+      }
+    },
+    {
+      "id": "moment-043-let-me-just-show-you-a-couple-reports-and",
+      "order": 43,
+      "moduleGuess": "reports",
+      "confidence": "high",
+      "matchedKeywords": [
+        "report",
+        "reporting",
+        "export",
+        "csv"
+      ],
+      "titleGuess": "Let me just show you a couple reports, and…",
+      "tsRange": {
+        "startSec": 2852.82,
+        "endSec": 2918.2,
+        "startClock": "00:47:32.82",
+        "endClock": "00:48:38.20"
+      },
+      "durationSec": 65.38,
+      "cueCount": 6,
+      "speakers": [
+        "Shane Jacobs"
+      ],
+      "transcriptExcerpt": "Let me just show you a couple reports, and then I did want to show you the wallet really quick. These are just for reporting that you can get out of the system. The worker report, again, showing you each month how many workers, you have contractors, EOR, etc. If I'm looking at my EOR report, I can see the gross report, which is gross to net type of reports. Let me get back here. So, showing you per country what we're…",
+      "frameRefs": [
+        {
+          "file": "frame_011412.jpg",
+          "tSec": 2852.75,
+          "clock": "00:47:32.75"
+        },
+        {
+          "file": "frame_011436.jpg",
+          "tSec": 2858.75,
+          "clock": "00:47:38.75"
+        },
+        {
+          "file": "frame_011460.jpg",
+          "tSec": 2864.75,
+          "clock": "00:47:44.75"
+        },
+        {
+          "file": "frame_011483.jpg",
+          "tSec": 2870.5,
+          "clock": "00:47:50.50"
+        },
+        {
+          "file": "frame_011507.jpg",
+          "tSec": 2876.5,
+          "clock": "00:47:56.50"
+        },
+        {
+          "file": "frame_011531.jpg",
+          "tSec": 2882.5,
+          "clock": "00:48:02.50"
+        },
+        {
+          "file": "frame_011555.jpg",
+          "tSec": 2888.5,
+          "clock": "00:48:08.50"
+        },
+        {
+          "file": "frame_011579.jpg",
+          "tSec": 2894.5,
+          "clock": "00:48:14.50"
+        },
+        {
+          "file": "frame_011603.jpg",
+          "tSec": 2900.5,
+          "clock": "00:48:20.50"
+        },
+        {
+          "file": "frame_011626.jpg",
+          "tSec": 2906.25,
+          "clock": "00:48:26.25"
+        },
+        {
+          "file": "frame_011650.jpg",
+          "tSec": 2912.25,
+          "clock": "00:48:32.25"
+        },
+        {
+          "file": "frame_011674.jpg",
+          "tSec": 2918.25,
+          "clock": "00:48:38.25"
+        }
+      ],
+      "visibleScreenNotes": "",
+      "draft": {
+        "say": "TODO — talk track for “Let me just show you a couple reports, and…” (source: transcript 00:47:32.82–00:48:38.20)",
+        "what": "TODO — one-paragraph description of what this screen/moment shows",
+        "capabilities": [],
+        "sp": [],
+        "de": [],
+        "branching": []
+      }
+    },
+    {
+      "id": "moment-044-different-tools-and-resources-compensation-calendar-is-reall",
+      "order": 44,
+      "moduleGuess": "tools-resources",
+      "confidence": "medium",
+      "matchedKeywords": [
+        "tools",
+        "resources"
+      ],
+      "titleGuess": "Different tools and resources. Compensation calendar is really nice…",
+      "tsRange": {
+        "startSec": 2919.28,
+        "endSec": 2993.42,
+        "startClock": "00:48:39.28",
+        "endClock": "00:49:53.42"
+      },
+      "durationSec": 74.14,
+      "cueCount": 10,
+      "speakers": [
+        "Shane Jacobs"
+      ],
+      "transcriptExcerpt": "Different tools and resources. Compensation calendar is really nice. If I want to know exactly how much it's going to be costing to hire someone in Bulgaria. Let's see. They're on there? Oh, it's not in there. I'll get that taken care of. In Australia, 10,000… per month, I can calculate that, and that will show me exactly what the employer's gonna pay, what the employee gets. In fact, maybe let's go back to the UK, a…",
+      "frameRefs": [
+        {
+          "file": "frame_011678.jpg",
+          "tSec": 2919.25,
+          "clock": "00:48:39.25"
+        },
+        {
+          "file": "frame_011705.jpg",
+          "tSec": 2926,
+          "clock": "00:48:46.00"
+        },
+        {
+          "file": "frame_011732.jpg",
+          "tSec": 2932.75,
+          "clock": "00:48:52.75"
+        },
+        {
+          "file": "frame_011759.jpg",
+          "tSec": 2939.5,
+          "clock": "00:48:59.50"
+        },
+        {
+          "file": "frame_011786.jpg",
+          "tSec": 2946.25,
+          "clock": "00:49:06.25"
+        },
+        {
+          "file": "frame_011813.jpg",
+          "tSec": 2953,
+          "clock": "00:49:13.00"
+        },
+        {
+          "file": "frame_011840.jpg",
+          "tSec": 2959.75,
+          "clock": "00:49:19.75"
+        },
+        {
+          "file": "frame_011867.jpg",
+          "tSec": 2966.5,
+          "clock": "00:49:26.50"
+        },
+        {
+          "file": "frame_011894.jpg",
+          "tSec": 2973.25,
+          "clock": "00:49:33.25"
+        },
+        {
+          "file": "frame_011921.jpg",
+          "tSec": 2980,
+          "clock": "00:49:40.00"
+        },
+        {
+          "file": "frame_011948.jpg",
+          "tSec": 2986.75,
+          "clock": "00:49:46.75"
+        },
+        {
+          "file": "frame_011975.jpg",
+          "tSec": 2993.5,
+          "clock": "00:49:53.50"
+        }
+      ],
+      "visibleScreenNotes": "",
+      "draft": {
+        "say": "TODO — talk track for “Different tools and resources. Compensation calendar is really nice…” (source: transcript 00:48:39.28–00:49:53.42)",
+        "what": "TODO — one-paragraph description of what this screen/moment shows",
+        "capabilities": [],
+        "sp": [],
+        "de": [],
+        "branching": []
+      }
+    },
+    {
+      "id": "moment-045-and-then-what-s-the-cost-to-us-on-this",
+      "order": 45,
+      "moduleGuess": "unknown",
+      "confidence": "none",
+      "matchedKeywords": [],
+      "titleGuess": "And then what's the cost to us on this…",
+      "tsRange": {
+        "startSec": 2996.21,
+        "endSec": 3058.58,
+        "startClock": "00:49:56.21",
+        "endClock": "00:50:58.58"
+      },
+      "durationSec": 62.37,
+      "cueCount": 8,
+      "speakers": [
+        "Justin Brach",
+        "Shane Jacobs"
+      ],
+      "transcriptExcerpt": "And then what's the cost to us on this platform? Yeah, and we're finalizing those rates. What we needed to get, and we just barely got it, was the countries. It varies by country, but we can get that to you momentarily. Some countries are more complicated, but we're talking not thousands, but for an employer of record, it's in the usually hundreds. You know, I want to say… There's a range between $550 and $700-ish pe…",
+      "frameRefs": [
+        {
+          "file": "frame_011986.jpg",
+          "tSec": 2996.25,
+          "clock": "00:49:56.25"
+        },
+        {
+          "file": "frame_012009.jpg",
+          "tSec": 3002,
+          "clock": "00:50:02.00"
+        },
+        {
+          "file": "frame_012031.jpg",
+          "tSec": 3007.5,
+          "clock": "00:50:07.50"
+        },
+        {
+          "file": "frame_012054.jpg",
+          "tSec": 3013.25,
+          "clock": "00:50:13.25"
+        },
+        {
+          "file": "frame_012077.jpg",
+          "tSec": 3019,
+          "clock": "00:50:19.00"
+        },
+        {
+          "file": "frame_012099.jpg",
+          "tSec": 3024.5,
+          "clock": "00:50:24.50"
+        },
+        {
+          "file": "frame_012122.jpg",
+          "tSec": 3030.25,
+          "clock": "00:50:30.25"
+        },
+        {
+          "file": "frame_012144.jpg",
+          "tSec": 3035.75,
+          "clock": "00:50:35.75"
+        },
+        {
+          "file": "frame_012167.jpg",
+          "tSec": 3041.5,
+          "clock": "00:50:41.50"
+        },
+        {
+          "file": "frame_012190.jpg",
+          "tSec": 3047.25,
+          "clock": "00:50:47.25"
+        },
+        {
+          "file": "frame_012212.jpg",
+          "tSec": 3052.75,
+          "clock": "00:50:52.75"
+        },
+        {
+          "file": "frame_012235.jpg",
+          "tSec": 3058.5,
+          "clock": "00:50:58.50"
+        }
+      ],
+      "visibleScreenNotes": "",
+      "draft": {
+        "say": "TODO — talk track for “And then what's the cost to us on this…” (source: transcript 00:49:56.21–00:50:58.58)",
+        "what": "TODO — one-paragraph description of what this screen/moment shows",
+        "capabilities": [],
+        "sp": [],
+        "de": [],
+        "branching": []
+      }
+    },
+    {
+      "id": "moment-046-let-me-in-the-time-we-have-remaining-let",
+      "order": 46,
+      "moduleGuess": "unknown",
+      "confidence": "none",
+      "matchedKeywords": [],
+      "titleGuess": "Let me, in the time we have remaining, let…",
+      "tsRange": {
+        "startSec": 3059.44,
+        "endSec": 3123.46,
+        "startClock": "00:50:59.44",
+        "endClock": "00:52:03.46"
+      },
+      "durationSec": 64.02,
+      "cueCount": 5,
+      "speakers": [
+        "Shane Jacobs"
+      ],
+      "transcriptExcerpt": "Let me, in the time we have remaining, let me show you the wallet really quickly, because that's going to impact the contractors, and I'm hoping that you are going to like this a lot. So, right now, you're paying wires, and you're paying wire fees, and you're wiring money across the globe, which is not only expensive, but you're… signaling to these countries, I'm paying people. That's not good, right? Because then th…",
+      "frameRefs": [
+        {
+          "file": "frame_012239.jpg",
+          "tSec": 3059.5,
+          "clock": "00:50:59.50"
+        },
+        {
+          "file": "frame_012262.jpg",
+          "tSec": 3065.25,
+          "clock": "00:51:05.25"
+        },
+        {
+          "file": "frame_012286.jpg",
+          "tSec": 3071.25,
+          "clock": "00:51:11.25"
+        },
+        {
+          "file": "frame_012309.jpg",
+          "tSec": 3077,
+          "clock": "00:51:17.00"
+        },
+        {
+          "file": "frame_012332.jpg",
+          "tSec": 3082.75,
+          "clock": "00:51:22.75"
+        },
+        {
+          "file": "frame_012355.jpg",
+          "tSec": 3088.5,
+          "clock": "00:51:28.50"
+        },
+        {
+          "file": "frame_012379.jpg",
+          "tSec": 3094.5,
+          "clock": "00:51:34.50"
+        },
+        {
+          "file": "frame_012402.jpg",
+          "tSec": 3100.25,
+          "clock": "00:51:40.25"
+        },
+        {
+          "file": "frame_012425.jpg",
+          "tSec": 3106,
+          "clock": "00:51:46.00"
+        },
+        {
+          "file": "frame_012448.jpg",
+          "tSec": 3111.75,
+          "clock": "00:51:51.75"
+        },
+        {
+          "file": "frame_012472.jpg",
+          "tSec": 3117.75,
+          "clock": "00:51:57.75"
+        },
+        {
+          "file": "frame_012495.jpg",
+          "tSec": 3123.5,
+          "clock": "00:52:03.50"
+        }
+      ],
+      "visibleScreenNotes": "",
+      "draft": {
+        "say": "TODO — talk track for “Let me, in the time we have remaining, let…” (source: transcript 00:50:59.44–00:52:03.46)",
+        "what": "TODO — one-paragraph description of what this screen/moment shows",
+        "capabilities": [],
+        "sp": [],
+        "de": [],
+        "branching": []
+      }
+    },
+    {
+      "id": "moment-047-is-that-i-can-withdraw-that-in-a-number",
+      "order": 47,
+      "moduleGuess": "invoices",
+      "confidence": "low",
+      "matchedKeywords": [
+        "bill"
+      ],
+      "titleGuess": "Is that I can withdraw that in a number…",
+      "tsRange": {
+        "startSec": 3124.1,
+        "endSec": 3186,
+        "startClock": "00:52:04.10",
+        "endClock": "00:53:06.00"
+      },
+      "durationSec": 61.9,
+      "cueCount": 5,
+      "speakers": [
+        "Shane Jacobs"
+      ],
+      "transcriptExcerpt": "is that I can withdraw that in a number of ways. I can actually, transfer that into my own bank account. And at that point is when the conversion will happen. But the fee is very minimal for the employee. We're talking $1, $2, $3 per deposit into their bank account. And you, from a client's perspective, aren't paying any of those fees. You're just paying us. We then put it into the wallet. The mobile wallet is very,…",
+      "frameRefs": [
+        {
+          "file": "frame_012497.jpg",
+          "tSec": 3124,
+          "clock": "00:52:04.00"
+        },
+        {
+          "file": "frame_012520.jpg",
+          "tSec": 3129.75,
+          "clock": "00:52:09.75"
+        },
+        {
+          "file": "frame_012542.jpg",
+          "tSec": 3135.25,
+          "clock": "00:52:15.25"
+        },
+        {
+          "file": "frame_012565.jpg",
+          "tSec": 3141,
+          "clock": "00:52:21.00"
+        },
+        {
+          "file": "frame_012587.jpg",
+          "tSec": 3146.5,
+          "clock": "00:52:26.50"
+        },
+        {
+          "file": "frame_012610.jpg",
+          "tSec": 3152.25,
+          "clock": "00:52:32.25"
+        },
+        {
+          "file": "frame_012632.jpg",
+          "tSec": 3157.75,
+          "clock": "00:52:37.75"
+        },
+        {
+          "file": "frame_012655.jpg",
+          "tSec": 3163.5,
+          "clock": "00:52:43.50"
+        },
+        {
+          "file": "frame_012677.jpg",
+          "tSec": 3169,
+          "clock": "00:52:49.00"
+        },
+        {
+          "file": "frame_012700.jpg",
+          "tSec": 3174.75,
+          "clock": "00:52:54.75"
+        },
+        {
+          "file": "frame_012722.jpg",
+          "tSec": 3180.25,
+          "clock": "00:53:00.25"
+        },
+        {
+          "file": "frame_012745.jpg",
+          "tSec": 3186,
+          "clock": "00:53:06.00"
+        }
+      ],
+      "visibleScreenNotes": "",
+      "draft": {
+        "say": "TODO — talk track for “Is that I can withdraw that in a number…” (source: transcript 00:52:04.10–00:53:06.00)",
+        "what": "TODO — one-paragraph description of what this screen/moment shows",
+        "capabilities": [],
+        "sp": [],
+        "de": [],
+        "branching": []
+      }
+    },
+    {
+      "id": "moment-048-other-areas-in-which-they-can-use-that-again",
+      "order": 48,
+      "moduleGuess": "team",
+      "confidence": "low",
+      "matchedKeywords": [
+        "team"
+      ],
+      "titleGuess": "Other areas in which they can use that, again…",
+      "tsRange": {
+        "startSec": 3189.67,
+        "endSec": 3254.27,
+        "startClock": "00:53:09.67",
+        "endClock": "00:54:14.27"
+      },
+      "durationSec": 64.6,
+      "cueCount": 6,
+      "speakers": [
+        "Shane Jacobs"
+      ],
+      "transcriptExcerpt": "Other areas in which they can use that, again, there's a crypto wallet, if they want to buy crypto, they can transfer that, or they can use a digital credit card. So now, through this wallet, they can actually create a digital credit card, buy things online. whatever they need to, using an actual credit card number tied to their wallet. So they don't have to actually go through a bank to do that, they can do that thr…",
+      "frameRefs": [
+        {
+          "file": "frame_012760.jpg",
+          "tSec": 3189.75,
+          "clock": "00:53:09.75"
+        },
+        {
+          "file": "frame_012783.jpg",
+          "tSec": 3195.5,
+          "clock": "00:53:15.50"
+        },
+        {
+          "file": "frame_012807.jpg",
+          "tSec": 3201.5,
+          "clock": "00:53:21.50"
+        },
+        {
+          "file": "frame_012830.jpg",
+          "tSec": 3207.25,
+          "clock": "00:53:27.25"
+        },
+        {
+          "file": "frame_012854.jpg",
+          "tSec": 3213.25,
+          "clock": "00:53:33.25"
+        },
+        {
+          "file": "frame_012877.jpg",
+          "tSec": 3219,
+          "clock": "00:53:39.00"
+        },
+        {
+          "file": "frame_012901.jpg",
+          "tSec": 3225,
+          "clock": "00:53:45.00"
+        },
+        {
+          "file": "frame_012924.jpg",
+          "tSec": 3230.75,
+          "clock": "00:53:50.75"
+        },
+        {
+          "file": "frame_012948.jpg",
+          "tSec": 3236.75,
+          "clock": "00:53:56.75"
+        },
+        {
+          "file": "frame_012971.jpg",
+          "tSec": 3242.5,
+          "clock": "00:54:02.50"
+        },
+        {
+          "file": "frame_012995.jpg",
+          "tSec": 3248.5,
+          "clock": "00:54:08.50"
+        },
+        {
+          "file": "frame_013018.jpg",
+          "tSec": 3254.25,
+          "clock": "00:54:14.25"
+        }
+      ],
+      "visibleScreenNotes": "",
+      "draft": {
+        "say": "TODO — talk track for “Other areas in which they can use that, again…” (source: transcript 00:53:09.67–00:54:14.27)",
+        "what": "TODO — one-paragraph description of what this screen/moment shows",
+        "capabilities": [],
+        "sp": [],
+        "de": [],
+        "branching": []
+      }
+    },
+    {
+      "id": "moment-049-brycerowley-however-in-some-countries-where-their-local-curr",
+      "order": 49,
+      "moduleGuess": "unknown",
+      "confidence": "none",
+      "matchedKeywords": [],
+      "titleGuess": "Brycerowley: However, in some countries where their local currency…",
+      "tsRange": {
+        "startSec": 3254.27,
+        "endSec": 3328.04,
+        "startClock": "00:54:14.27",
+        "endClock": "00:55:28.04"
+      },
+      "durationSec": 73.77,
+      "cueCount": 6,
+      "speakers": [
+        "Shane Jacobs"
+      ],
+      "transcriptExcerpt": "brycerowley: However, in some countries where their local currency might not be as desirable or stable as a US dollar, they have the ability to effectively invest in the US dollar by allowing those funds to sit in a US stablecoin while their own local currency does whatever craziness that it does and pull out whatever amount that they need over time. So I'll pause there. Yeah, no, those are some of the talking points…",
+      "frameRefs": [
+        {
+          "file": "frame_013018.jpg",
+          "tSec": 3254.25,
+          "clock": "00:54:14.25"
+        },
+        {
+          "file": "frame_013045.jpg",
+          "tSec": 3261,
+          "clock": "00:54:21.00"
+        },
+        {
+          "file": "frame_013072.jpg",
+          "tSec": 3267.75,
+          "clock": "00:54:27.75"
+        },
+        {
+          "file": "frame_013098.jpg",
+          "tSec": 3274.25,
+          "clock": "00:54:34.25"
+        },
+        {
+          "file": "frame_013125.jpg",
+          "tSec": 3281,
+          "clock": "00:54:41.00"
+        },
+        {
+          "file": "frame_013152.jpg",
+          "tSec": 3287.75,
+          "clock": "00:54:47.75"
+        },
+        {
+          "file": "frame_013179.jpg",
+          "tSec": 3294.5,
+          "clock": "00:54:54.50"
+        },
+        {
+          "file": "frame_013206.jpg",
+          "tSec": 3301.25,
+          "clock": "00:55:01.25"
+        },
+        {
+          "file": "frame_013233.jpg",
+          "tSec": 3308,
+          "clock": "00:55:08.00"
+        },
+        {
+          "file": "frame_013259.jpg",
+          "tSec": 3314.5,
+          "clock": "00:55:14.50"
+        },
+        {
+          "file": "frame_013286.jpg",
+          "tSec": 3321.25,
+          "clock": "00:55:21.25"
+        },
+        {
+          "file": "frame_013313.jpg",
+          "tSec": 3328,
+          "clock": "00:55:28.00"
+        }
+      ],
+      "visibleScreenNotes": "",
+      "draft": {
+        "say": "TODO — talk track for “Brycerowley: However, in some countries where their local currency…” (source: transcript 00:54:14.27–00:55:28.04)",
+        "what": "TODO — one-paragraph description of what this screen/moment shows",
+        "capabilities": [],
+        "sp": [],
+        "de": [],
+        "branching": []
+      }
+    },
+    {
+      "id": "moment-050-which-other-contractors-we-ve-seen-they-re-getting-hit-with",
+      "order": 50,
+      "moduleGuess": "team",
+      "confidence": "low",
+      "matchedKeywords": [
+        "team"
+      ],
+      "titleGuess": "Which other contractors we've seen, they're getting hit with…",
+      "tsRange": {
+        "startSec": 3328.14,
+        "endSec": 3402.84,
+        "startClock": "00:55:28.14",
+        "endClock": "00:56:42.84"
+      },
+      "durationSec": 74.7,
+      "cueCount": 7,
+      "speakers": [
+        "Shane Jacobs"
+      ],
+      "transcriptExcerpt": "Which other contractors we've seen, they're getting hit with their own international or conversion fees. They're getting paid, they're paying 40, 50 bucks just to get their own money out. So it's a much easier solution in that respect. And from your perspective, like Bryce talked about, it's a monthly fee. So it's a per employee per month fee. No matter how many times you're paying the contractor, okay? And you're pa…",
+      "frameRefs": [
+        {
+          "file": "frame_013314.jpg",
+          "tSec": 3328.25,
+          "clock": "00:55:28.25"
+        },
+        {
+          "file": "frame_013341.jpg",
+          "tSec": 3335,
+          "clock": "00:55:35.00"
+        },
+        {
+          "file": "frame_013368.jpg",
+          "tSec": 3341.75,
+          "clock": "00:55:41.75"
+        },
+        {
+          "file": "frame_013395.jpg",
+          "tSec": 3348.5,
+          "clock": "00:55:48.50"
+        },
+        {
+          "file": "frame_013422.jpg",
+          "tSec": 3355.25,
+          "clock": "00:55:55.25"
+        },
+        {
+          "file": "frame_013449.jpg",
+          "tSec": 3362,
+          "clock": "00:56:02.00"
+        },
+        {
+          "file": "frame_013477.jpg",
+          "tSec": 3369,
+          "clock": "00:56:09.00"
+        },
+        {
+          "file": "frame_013504.jpg",
+          "tSec": 3375.75,
+          "clock": "00:56:15.75"
+        },
+        {
+          "file": "frame_013531.jpg",
+          "tSec": 3382.5,
+          "clock": "00:56:22.50"
+        },
+        {
+          "file": "frame_013558.jpg",
+          "tSec": 3389.25,
+          "clock": "00:56:29.25"
+        },
+        {
+          "file": "frame_013585.jpg",
+          "tSec": 3396,
+          "clock": "00:56:36.00"
+        },
+        {
+          "file": "frame_013612.jpg",
+          "tSec": 3402.75,
+          "clock": "00:56:42.75"
+        }
+      ],
+      "visibleScreenNotes": "",
+      "draft": {
+        "say": "TODO — talk track for “Which other contractors we've seen, they're getting hit with…” (source: transcript 00:55:28.14–00:56:42.84)",
+        "what": "TODO — one-paragraph description of what this screen/moment shows",
+        "capabilities": [],
+        "sp": [],
+        "de": [],
+        "branching": []
+      }
+    },
+    {
+      "id": "moment-051-any-other-questions-on-the-leased-opay-that-s-just",
+      "order": 51,
+      "moduleGuess": "onboarding",
+      "confidence": "medium",
+      "matchedKeywords": [
+        "onboarding",
+        "onboard"
+      ],
+      "titleGuess": "Any other questions on the leased opay? That's just…",
+      "tsRange": {
+        "startSec": 3403.3,
+        "endSec": 3478.24,
+        "startClock": "00:56:43.30",
+        "endClock": "00:57:58.24"
+      },
+      "durationSec": 74.94,
+      "cueCount": 10,
+      "speakers": [
+        "Shane Jacobs",
+        "Renee",
+        "Nate Price"
+      ],
+      "transcriptExcerpt": "Any other questions on the leased opay? That's just the platform that we use that manages all this. I said… Nothing over here. Okay. So that's it from a, technology standpoint. In the time I have left, I want to talk about more of the support. Although the technology is great, and this is really easy to use, you actually have humans that are managing this employment. From an implementation manager that's based in the…",
+      "frameRefs": [
+        {
+          "file": "frame_013614.jpg",
+          "tSec": 3403.25,
+          "clock": "00:56:43.25"
+        },
+        {
+          "file": "frame_013641.jpg",
+          "tSec": 3410,
+          "clock": "00:56:50.00"
+        },
+        {
+          "file": "frame_013669.jpg",
+          "tSec": 3417,
+          "clock": "00:56:57.00"
+        },
+        {
+          "file": "frame_013696.jpg",
+          "tSec": 3423.75,
+          "clock": "00:57:03.75"
+        },
+        {
+          "file": "frame_013723.jpg",
+          "tSec": 3430.5,
+          "clock": "00:57:10.50"
+        },
+        {
+          "file": "frame_013750.jpg",
+          "tSec": 3437.25,
+          "clock": "00:57:17.25"
+        },
+        {
+          "file": "frame_013778.jpg",
+          "tSec": 3444.25,
+          "clock": "00:57:24.25"
+        },
+        {
+          "file": "frame_013805.jpg",
+          "tSec": 3451,
+          "clock": "00:57:31.00"
+        },
+        {
+          "file": "frame_013832.jpg",
+          "tSec": 3457.75,
+          "clock": "00:57:37.75"
+        },
+        {
+          "file": "frame_013859.jpg",
+          "tSec": 3464.5,
+          "clock": "00:57:44.50"
+        },
+        {
+          "file": "frame_013887.jpg",
+          "tSec": 3471.5,
+          "clock": "00:57:51.50"
+        },
+        {
+          "file": "frame_013914.jpg",
+          "tSec": 3478.25,
+          "clock": "00:57:58.25"
+        }
+      ],
+      "visibleScreenNotes": "",
+      "draft": {
+        "say": "TODO — talk track for “Any other questions on the leased opay? That's just…” (source: transcript 00:56:43.30–00:57:58.24)",
+        "what": "TODO — one-paragraph description of what this screen/moment shows",
+        "capabilities": [],
+        "sp": [],
+        "de": [],
+        "branching": []
+      }
+    },
+    {
+      "id": "moment-052-it-s-more-than-just-payment-it-s-the-support-of",
+      "order": 52,
+      "moduleGuess": "unknown",
+      "confidence": "none",
+      "matchedKeywords": [],
+      "titleGuess": "It's more than just payment. It's the support of…",
+      "tsRange": {
+        "startSec": 3478.34,
+        "endSec": 3533.41,
+        "startClock": "00:57:58.34",
+        "endClock": "00:58:53.41"
+      },
+      "durationSec": 55.07,
+      "cueCount": 5,
+      "speakers": [
+        "Shane Jacobs"
+      ],
+      "transcriptExcerpt": "It's more than just payment. It's the support of real people that are managing this for you. And you don't have to worry about knowing all these rules. That's what we get to do, right? You're going to learn them as you go just because you have these Bulgarian employees. But we are going to be managing that. But you can always reach out for questions, concerns when it's time to separate an employee. Doing that is diff…",
+      "frameRefs": [
+        {
+          "file": "frame_013914.jpg",
+          "tSec": 3478.25,
+          "clock": "00:57:58.25"
+        },
+        {
+          "file": "frame_013934.jpg",
+          "tSec": 3483.25,
+          "clock": "00:58:03.25"
+        },
+        {
+          "file": "frame_013954.jpg",
+          "tSec": 3488.25,
+          "clock": "00:58:08.25"
+        },
+        {
+          "file": "frame_013974.jpg",
+          "tSec": 3493.25,
+          "clock": "00:58:13.25"
+        },
+        {
+          "file": "frame_013994.jpg",
+          "tSec": 3498.25,
+          "clock": "00:58:18.25"
+        },
+        {
+          "file": "frame_014014.jpg",
+          "tSec": 3503.25,
+          "clock": "00:58:23.25"
+        },
+        {
+          "file": "frame_014035.jpg",
+          "tSec": 3508.5,
+          "clock": "00:58:28.50"
+        },
+        {
+          "file": "frame_014055.jpg",
+          "tSec": 3513.5,
+          "clock": "00:58:33.50"
+        },
+        {
+          "file": "frame_014075.jpg",
+          "tSec": 3518.5,
+          "clock": "00:58:38.50"
+        },
+        {
+          "file": "frame_014095.jpg",
+          "tSec": 3523.5,
+          "clock": "00:58:43.50"
+        },
+        {
+          "file": "frame_014115.jpg",
+          "tSec": 3528.5,
+          "clock": "00:58:48.50"
+        },
+        {
+          "file": "frame_014135.jpg",
+          "tSec": 3533.5,
+          "clock": "00:58:53.50"
+        }
+      ],
+      "visibleScreenNotes": "",
+      "draft": {
+        "say": "TODO — talk track for “It's more than just payment. It's the support of…” (source: transcript 00:57:58.34–00:58:53.41)",
+        "what": "TODO — one-paragraph description of what this screen/moment shows",
+        "capabilities": [],
+        "sp": [],
+        "de": [],
+        "branching": []
+      }
+    },
+    {
+      "id": "moment-053-i-know-i-ve-got-something-in-three-minutes-one",
+      "order": 53,
+      "moduleGuess": "unknown",
+      "confidence": "none",
+      "matchedKeywords": [],
+      "titleGuess": "I know I've got something in three minutes, one…",
+      "tsRange": {
+        "startSec": 3533.41,
+        "endSec": 3587.59,
+        "startClock": "00:58:53.41",
+        "endClock": "00:59:47.59"
+      },
+      "durationSec": 54.18,
+      "cueCount": 6,
+      "speakers": [
+        "Shane Jacobs",
+        "Nate Price",
+        "Renee"
+      ],
+      "transcriptExcerpt": "I know I've got something in three minutes, one of these days where I've got back-to-back-to-back, but happy to field any questions. Antaeus as well, who's been on the phone, we're happy to answer any questions that come from you or from Bryce to make sure that you feel comfortable in, okay, how does this program really work, what do the financials look like, the contractual arrangement, etc. But we'd be happy to hel…",
+      "frameRefs": [
+        {
+          "file": "frame_014135.jpg",
+          "tSec": 3533.5,
+          "clock": "00:58:53.50"
+        },
+        {
+          "file": "frame_014155.jpg",
+          "tSec": 3538.5,
+          "clock": "00:58:58.50"
+        },
+        {
+          "file": "frame_014174.jpg",
+          "tSec": 3543.25,
+          "clock": "00:59:03.25"
+        },
+        {
+          "file": "frame_014194.jpg",
+          "tSec": 3548.25,
+          "clock": "00:59:08.25"
+        },
+        {
+          "file": "frame_014214.jpg",
+          "tSec": 3553.25,
+          "clock": "00:59:13.25"
+        },
+        {
+          "file": "frame_014233.jpg",
+          "tSec": 3558,
+          "clock": "00:59:18.00"
+        },
+        {
+          "file": "frame_014253.jpg",
+          "tSec": 3563,
+          "clock": "00:59:23.00"
+        },
+        {
+          "file": "frame_014272.jpg",
+          "tSec": 3567.75,
+          "clock": "00:59:27.75"
+        },
+        {
+          "file": "frame_014292.jpg",
+          "tSec": 3572.75,
+          "clock": "00:59:32.75"
+        },
+        {
+          "file": "frame_014312.jpg",
+          "tSec": 3577.75,
+          "clock": "00:59:37.75"
+        },
+        {
+          "file": "frame_014331.jpg",
+          "tSec": 3582.5,
+          "clock": "00:59:42.50"
+        },
+        {
+          "file": "frame_014351.jpg",
+          "tSec": 3587.5,
+          "clock": "00:59:47.50"
+        }
+      ],
+      "visibleScreenNotes": "",
+      "draft": {
+        "say": "TODO — talk track for “I know I've got something in three minutes, one…” (source: transcript 00:58:53.41–00:59:47.59)",
+        "what": "TODO — one-paragraph description of what this screen/moment shows",
+        "capabilities": [],
+        "sp": [],
+        "de": [],
+        "branching": []
+      }
+    },
+    {
+      "id": "moment-054-brycerowley-so-let-me-circle-back-with-the-team",
+      "order": 54,
+      "moduleGuess": "team",
+      "confidence": "low",
+      "matchedKeywords": [
+        "team"
+      ],
+      "titleGuess": "Brycerowley: So let me circle back with the team…",
+      "tsRange": {
+        "startSec": 3588.23,
+        "endSec": 3662.56,
+        "startClock": "00:59:48.23",
+        "endClock": "01:01:02.56"
+      },
+      "durationSec": 74.33,
+      "cueCount": 10,
+      "speakers": [
+        "Renee",
+        "Justin Brach"
+      ],
+      "transcriptExcerpt": "brycerowley: So let me circle back with the team on our side as to two key things. One is direct pricing. What are the economics and what would this look like for you guys? Like I said, I've got it here put together, but it's just a simple spreadsheet. So let me put something together that looks presentable. And then secondly, we'll come back to you with a timeline on exactly what it would look like from a deployment…",
+      "frameRefs": [
+        {
+          "file": "frame_014354.jpg",
+          "tSec": 3588.25,
+          "clock": "00:59:48.25"
+        },
+        {
+          "file": "frame_014381.jpg",
+          "tSec": 3595,
+          "clock": "00:59:55.00"
+        },
+        {
+          "file": "frame_014408.jpg",
+          "tSec": 3601.75,
+          "clock": "01:00:01.75"
+        },
+        {
+          "file": "frame_014435.jpg",
+          "tSec": 3608.5,
+          "clock": "01:00:08.50"
+        },
+        {
+          "file": "frame_014462.jpg",
+          "tSec": 3615.25,
+          "clock": "01:00:15.25"
+        },
+        {
+          "file": "frame_014489.jpg",
+          "tSec": 3622,
+          "clock": "01:00:22.00"
+        },
+        {
+          "file": "frame_014516.jpg",
+          "tSec": 3628.75,
+          "clock": "01:00:28.75"
+        },
+        {
+          "file": "frame_014543.jpg",
+          "tSec": 3635.5,
+          "clock": "01:00:35.50"
+        },
+        {
+          "file": "frame_014570.jpg",
+          "tSec": 3642.25,
+          "clock": "01:00:42.25"
+        },
+        {
+          "file": "frame_014597.jpg",
+          "tSec": 3649,
+          "clock": "01:00:49.00"
+        },
+        {
+          "file": "frame_014624.jpg",
+          "tSec": 3655.75,
+          "clock": "01:00:55.75"
+        },
+        {
+          "file": "frame_014651.jpg",
+          "tSec": 3662.5,
+          "clock": "01:01:02.50"
+        }
+      ],
+      "visibleScreenNotes": "",
+      "draft": {
+        "say": "TODO — talk track for “Brycerowley: So let me circle back with the team…” (source: transcript 00:59:48.23–01:01:02.56)",
+        "what": "TODO — one-paragraph description of what this screen/moment shows",
+        "capabilities": [],
+        "sp": [],
+        "de": [],
+        "branching": []
+      }
+    },
+    {
+      "id": "moment-055-moment-01-01-02-85",
+      "order": 55,
+      "moduleGuess": "unknown",
+      "confidence": "none",
+      "matchedKeywords": [],
+      "titleGuess": "moment @ 01:01:02.85",
+      "tsRange": {
+        "startSec": 3662.85,
+        "endSec": 3666.51,
+        "startClock": "01:01:02.85",
+        "endClock": "01:01:06.51"
+      },
+      "durationSec": 3.66,
+      "cueCount": 5,
+      "speakers": [
+        "Renee",
+        "Shane Jacobs",
+        "Nate Price",
+        "Elissa"
+      ],
+      "transcriptExcerpt": "Thanks. Everybody. Thank you. Thanks everyone. Thank you.",
+      "frameRefs": [
+        {
+          "file": "frame_014652.jpg",
+          "tSec": 3662.75,
+          "clock": "01:01:02.75"
+        },
+        {
+          "file": "frame_014653.jpg",
+          "tSec": 3663,
+          "clock": "01:01:03.00"
+        },
+        {
+          "file": "frame_014655.jpg",
+          "tSec": 3663.5,
+          "clock": "01:01:03.50"
+        },
+        {
+          "file": "frame_014656.jpg",
+          "tSec": 3663.75,
+          "clock": "01:01:03.75"
+        },
+        {
+          "file": "frame_014657.jpg",
+          "tSec": 3664,
+          "clock": "01:01:04.00"
+        },
+        {
+          "file": "frame_014659.jpg",
+          "tSec": 3664.5,
+          "clock": "01:01:04.50"
+        },
+        {
+          "file": "frame_014660.jpg",
+          "tSec": 3664.75,
+          "clock": "01:01:04.75"
+        },
+        {
+          "file": "frame_014662.jpg",
+          "tSec": 3665.25,
+          "clock": "01:01:05.25"
+        },
+        {
+          "file": "frame_014663.jpg",
+          "tSec": 3665.5,
+          "clock": "01:01:05.50"
+        },
+        {
+          "file": "frame_014664.jpg",
+          "tSec": 3665.75,
+          "clock": "01:01:05.75"
+        },
+        {
+          "file": "frame_014666.jpg",
+          "tSec": 3666.25,
+          "clock": "01:01:06.25"
+        },
+        {
+          "file": "frame_014667.jpg",
+          "tSec": 3666.5,
+          "clock": "01:01:06.50"
+        }
+      ],
+      "visibleScreenNotes": "",
+      "draft": {
+        "say": "TODO — talk track for “moment @ 01:01:02.85” (source: transcript 01:01:02.85–01:01:06.51)",
+        "what": "TODO — one-paragraph description of what this screen/moment shows",
+        "capabilities": [],
+        "sp": [],
+        "de": [],
+        "branching": []
+      }
+    }
+  ]
+}
