@@ -3007,6 +3007,13 @@
 .tableScroll {
   overflow-x: auto;
 }
+/* Inside an overflow container, sticky sticks to the CONTAINER, not the
+   viewport — a th with top: 74px gets permanently displaced 74px down over the
+   first data row (empty band left at its natural slot). Kill stickiness here;
+   the container never scrolls vertically, so nothing is lost. */
+.tableScroll .table th {
+  position: static;
+}
 .priceLine {
   font-size: 12.5px;
   line-height: 1.55;
