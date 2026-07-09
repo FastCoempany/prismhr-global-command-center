@@ -47,7 +47,7 @@ export type AccountNote = {
   id: string;
   accountId: string;
   partner: string;
-  kind: "mine" | "partner";
+  kind: "mine" | "partner" | "account";
   body: string;
   createdAt: string; // ISO
 };
@@ -66,7 +66,8 @@ export async function loadAccountNotes(): Promise<Map<string, AccountNote[]>> {
         id: r.id,
         accountId: r.accountId,
         partner: r.partner,
-        kind: r.kind === "partner" ? "partner" : "mine",
+        kind:
+          r.kind === "partner" ? "partner" : r.kind === "account" ? "account" : "mine",
         body: r.body,
         createdAt: r.createdAt.toISOString(),
       };

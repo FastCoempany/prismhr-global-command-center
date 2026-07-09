@@ -676,7 +676,7 @@ describe("partnerKickoff & partnerWeekMessage", () => {
     assert.equal(chipTone(hoursAgo(48.1), now), "cold");
   });
 
-  test("a roundup pin is guaranteed onto its partner's card, bumping the lowest auto-pick", () => {
+  test("a roundup pin extends its partner's card past the top-N (never displaces)", () => {
     const PIN = "001F000000w389qIAA"; // My HR Pros (fka Southern Personnel) — Lesha's pin
     const rows = [
       ...Array.from({ length: 5 }, (_, i) =>
@@ -686,12 +686,29 @@ describe("partnerKickoff & partnerWeekMessage", () => {
     ];
     const out = partnerKickoff(rows, new Set(), 5);
     const ids = out[0].accounts.map((a) => a.id);
-    assert.equal(ids.length, 5);
+    // Top-5 on merit ALL stay; the pin rides along as a 6th slot.
+    assert.equal(ids.length, 6);
     assert.ok(ids.includes(PIN), "pinned account is present");
-    assert.ok(!ids.includes("L4"), "the lowest-ranked auto-pick (45) is bumped");
-    // Presented by score: the pin (46) sits just above the retained 46-ranked
-    // picks' floor and below the higher auto-picks.
+    assert.ok(ids.includes("L4"), "no auto-pick is displaced by a pin");
+    // Presented by score: L0 first, the 46-scoring pin near the bottom.
     assert.equal(ids[0], "L0");
+  });
+
+  test("a custom roundup bullet replaces the play template for a live thread", () => {
+    const msg = partnerWeekMessage("Lesha Cyphers", [
+      intel({
+        id: "001F000000w38BOIAY",
+        name: "Simploy",
+        csm: "Lesha Cyphers",
+        play: "greenfield",
+        score: 77,
+      }),
+    ]);
+    assert.match(msg, /• Simploy — Already in motion/);
+    assert.match(msg, /8\/6/);
+    assert.match(msg, /Chassie/);
+    // The generic greenfield template must NOT appear for an overridden account.
+    assert.ok(!msg.includes("clean introduction rather than a switch"));
   });
 
   test("roundup message lists accounts as descriptive bullets and asks for a read", () => {

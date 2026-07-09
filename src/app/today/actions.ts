@@ -267,7 +267,10 @@ export async function addAccountNote(formData: FormData) {
   const accountId = str(formData, "accountId", 40);
   const body = str(formData, "body", 2000);
   if (!(await requireWrite()) || !accountId || !body) done();
-  const kind = str(formData, "kind", 12) === "partner" ? "partner" : "mine";
+  const raw = str(formData, "kind", 12);
+  // "mine" = your words, "partner" = what the partner said, "account" = a plain
+  // unattributed note on the account itself. All three refresh the chip clock.
+  const kind = raw === "partner" ? "partner" : raw === "account" ? "account" : "mine";
   await safeWrite(async () => {
     await getPrisma().accountNote.create({
       data: { accountId, partner: str(formData, "partner", 120), kind, body },
