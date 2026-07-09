@@ -660,6 +660,24 @@ describe("partnerKickoff & partnerWeekMessage", () => {
     assert.equal(out[0].accounts.length, 5);
   });
 
+  test("a roundup pin is guaranteed onto its partner's card, bumping the lowest auto-pick", () => {
+    const PIN = "001F000000w389qIAA"; // Southern Personnel Management — Lesha's pin
+    const rows = [
+      ...Array.from({ length: 5 }, (_, i) =>
+        intel({ id: `L${i}`, csm: "Lesha Cyphers", score: 49 - i }),
+      ), // L0..L4 score 49..45
+      intel({ id: PIN, csm: "Lesha Cyphers", score: 46 }),
+    ];
+    const out = partnerKickoff(rows, new Set(), 5);
+    const ids = out[0].accounts.map((a) => a.id);
+    assert.equal(ids.length, 5);
+    assert.ok(ids.includes(PIN), "pinned account is present");
+    assert.ok(!ids.includes("L4"), "the lowest-ranked auto-pick (45) is bumped");
+    // Presented by score: the pin (46) sits just above the retained 46-ranked
+    // picks' floor and below the higher auto-picks.
+    assert.equal(ids[0], "L0");
+  });
+
   test("roundup message lists accounts as descriptive bullets and asks for a read", () => {
     const msg = partnerWeekMessage("Anika Steenstra", [
       intel({
