@@ -4,6 +4,10 @@ GitHub Release:
 
 https://github.com/FastCoempany/prismhr-global-command-center/releases/tag/sidekick-assets-dense-20260708-213650
 
+## Status
+
+Fixed after initial extraction failure. This version has a valid dense frame set.
+
 ## Local source folder
 
 C:\Users\tanya\prismhr-global-command-center\PrismHR Global Demo
@@ -22,7 +26,7 @@ C:\Users\tanya\prismhr-global-command-center\PrismHR Global Demo\sidekick-assets
 
 ## Archive parts
 
-- sidekick-assets-dense-20260708-213650.zip.001 — 2.8 MB
+- sidekick-assets-dense-20260708-213650.zip.001 — 916.6 MB
 
 ## Dense frame extraction
 
@@ -30,7 +34,7 @@ C:\Users\tanya\prismhr-global-command-center\PrismHR Global Demo\sidekick-assets
 - FPS: 4
 - Width: 1600 px
 - JPEG quality: 4
-- Frame count: 0
+- Frame count: 14674
 
 ## What is in the release
 
