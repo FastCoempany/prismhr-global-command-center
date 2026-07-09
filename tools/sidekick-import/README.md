@@ -63,10 +63,11 @@ npm run sidekick:import:draft -- --pack tools/sidekick-import/fixture
 5. Guess a module per moment by keyword hits against the real catalog module
    list (`src/lib/catalog/catalog.json`); confidence = none/low/medium/high by
    distinct hits.
-6. Emit draft entries: module guess, title guess, timestamp range, transcript
-   excerpt, ≤12 evenly-sampled frame refs, a `visibleScreenNotes` placeholder,
-   and `say` / `what` / `capabilities` / `sp` / `de` / `branching` placeholders
-   matching the Sidekick screen shape — plus the confidence field.
+6. Emit draft entries. Each entry carries, top-level: `id`, `timestampStart`,
+   `timestampEnd` (plus `…Sec` numeric twins), `titleGuess`, `moduleGuess`,
+   `transcriptExcerpt`, `frameRefs` (≤12 evenly sampled), a `visibleScreenNotes`
+   placeholder, `say` / `what` / `capabilities` / `sp` / `de` / `branching`
+   placeholders matching the Sidekick screen shape, and `confidence`.
 
 ## Review loop
 
