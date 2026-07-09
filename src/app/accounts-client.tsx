@@ -6,7 +6,12 @@ import { useFormStatus } from "react-dom";
 import { EXTRA_PARTNERS, partnerRole } from "@/lib/book/partners";
 import { competitorUrl } from "@/lib/book/research";
 import { SfCheckpoint } from "@/components/sf";
-import { AccountNotes, type LinkedNote } from "@/components/account-notes";
+import {
+  AccountChipNotes,
+  AccountNotes,
+  type ChipNote,
+  type LinkedNote,
+} from "@/components/account-notes";
 import {
   askToJoinMessage,
   CADENCE_OPTIONS,
@@ -14,7 +19,12 @@ import {
   type Engagement,
 } from "@/lib/engagement";
 import { addCard } from "./dashboard/actions";
-import { clearValidation, saveEngagement, toggleSfChecked, validateScore } from "./accounts/actions";
+import {
+  clearValidation,
+  saveEngagement,
+  toggleSfChecked,
+  validateScore,
+} from "./accounts/actions";
 import { EditableMessage } from "./today-client";
 import styles from "./command-center.module.css";
 
@@ -51,14 +61,21 @@ function AddButton() {
 
 function ValBadge({ v }: { v: AccountRow["validation"] }) {
   if (!v) return null;
-  if (v.status === "confirmed") return <span className={styles.valConfirmed}>✓ confirmed</span>;
+  if (v.status === "confirmed")
+    return <span className={styles.valConfirmed}>✓ confirmed</span>;
   if (v.status === "flagged") return <span className={styles.valFlagged}>⚠ flagged</span>;
   return <span className={styles.valAdjusted}>adj → {v.adjustedDemand}</span>;
 }
 
 // The trust layer: Confirm the AI score, Flag it as wrong (visibly distrusted
 // downstream), or Adjust the demand (flows into the composite everywhere).
-function ValidateControls({ id, current }: { id: string; current: AccountRow["validation"] }) {
+function ValidateControls({
+  id,
+  current,
+}: {
+  id: string;
+  current: AccountRow["validation"];
+}) {
   return (
     <div className={styles.validate}>
       <span className={styles.validateLabel}>Validate score:</span>
@@ -72,7 +89,12 @@ function ValidateControls({ id, current }: { id: string; current: AccountRow["va
         <form action={validateScore} className={styles.parkForm}>
           <input type="hidden" name="accountId" value={id} />
           <input type="hidden" name="status" value="flagged" />
-          <input name="note" maxLength={500} placeholder="What's wrong?" aria-label="Flag reason" />
+          <input
+            name="note"
+            maxLength={500}
+            placeholder="What's wrong?"
+            aria-label="Flag reason"
+          />
           <button className={styles.parkBtn}>Flag</button>
         </form>
       </details>
@@ -90,7 +112,12 @@ function ValidateControls({ id, current }: { id: string; current: AccountRow["va
             placeholder="Demand 0–100"
             aria-label="Adjusted demand"
           />
-          <input name="note" maxLength={500} placeholder="Why? (optional)" aria-label="Adjust note" />
+          <input
+            name="note"
+            maxLength={500}
+            placeholder="Why? (optional)"
+            aria-label="Adjust note"
+          />
           <button className={styles.parkBtn}>Set</button>
         </form>
       </details>
@@ -140,6 +167,7 @@ export type AccountRow = {
   } | null;
   engagement: Engagement;
   notes: LinkedNote[];
+  chipNotes: ChipNote[];
 };
 
 const fitClass: Record<string, string> = {
@@ -149,7 +177,13 @@ const fitClass: Record<string, string> = {
 };
 
 const demandClass = (d: number | null) =>
-  d == null ? styles.fitLow : d >= 60 ? styles.fitHigh : d >= 35 ? styles.fitMedium : styles.fitLow;
+  d == null
+    ? styles.fitLow
+    : d >= 60
+      ? styles.fitHigh
+      : d >= 35
+        ? styles.fitMedium
+        : styles.fitLow;
 
 const BAR_MAX = { scale: 35, incumbency: 25, model: 25, recency: 15 } as const;
 const BAR_LABEL = {
@@ -183,7 +217,9 @@ function EngagementPanel({ a }: { a: AccountRow }) {
       <form action={toggleSfChecked} className={styles.engageSfForm}>
         <input type="hidden" name="accountId" value={a.id} />
         <button className={e.sfChecked ? styles.gateBtnOn : styles.gateBtnOff}>
-          {e.sfChecked ? "✓ Salesforce research pulled" : "☐ Mark Salesforce research pulled"}
+          {e.sfChecked
+            ? "✓ Salesforce research pulled"
+            : "☐ Mark Salesforce research pulled"}
         </button>
       </form>
 
@@ -202,7 +238,12 @@ function EngagementPanel({ a }: { a: AccountRow }) {
           </label>
           <label className={styles.engageField}>
             <span>Meeting day</span>
-            <input name="meetingDay" defaultValue={e.meetingDay} placeholder="Thursday" maxLength={20} />
+            <input
+              name="meetingDay"
+              defaultValue={e.meetingDay}
+              placeholder="Thursday"
+              maxLength={20}
+            />
           </label>
           <label className={styles.engageField}>
             <span>Next meeting</span>
@@ -228,7 +269,12 @@ function EngagementPanel({ a }: { a: AccountRow }) {
             </label>
           ))}
           <label className={styles.healthOpt}>
-            <input type="radio" name="clientHealth" value="" defaultChecked={e.clientHealth === ""} />
+            <input
+              type="radio"
+              name="clientHealth"
+              value=""
+              defaultChecked={e.clientHealth === ""}
+            />
             <span className={styles.healthNone}>—</span>
           </label>
         </div>
@@ -295,7 +341,8 @@ export function AccountsClient({
   // Partners (internal PrismHR people): the CSMs from the book + others like
   // Eric who may bring net-new accounts before owning any here.
   const partners = useMemo(
-    () => [...new Set([...rows.map((r) => r.csm).filter(Boolean), ...EXTRA_PARTNERS])].sort(),
+    () =>
+      [...new Set([...rows.map((r) => r.csm).filter(Boolean), ...EXTRA_PARTNERS])].sort(),
     [rows],
   );
   const inds = useMemo(
@@ -314,7 +361,9 @@ export function AccountsClient({
       if (r.play != null) e.targets++;
       if (isHot(r)) e.hot++;
     }
-    return [...m.entries()].sort((a, b) => b[1].hot - a[1].hot || b[1].targets - a[1].targets);
+    return [...m.entries()].sort(
+      (a, b) => b[1].hot - a[1].hot || b[1].targets - a[1].targets,
+    );
   }, [rows, partners]);
 
   const filtered = useMemo(() => {
@@ -326,7 +375,12 @@ export function AccountsClient({
       if (play && r.play !== play) return false;
       if (incOnly && !r.incumbent) return false;
       if (hotOnly && !isHot(r)) return false;
-      if (s && !`${r.name} ${r.city} ${r.state} ${r.contactName} ${r.industry}`.toLowerCase().includes(s))
+      if (
+        s &&
+        !`${r.name} ${r.city} ${r.state} ${r.contactName} ${r.industry}`
+          .toLowerCase()
+          .includes(s)
+      )
         return false;
       return true;
     });
@@ -342,7 +396,9 @@ export function AccountsClient({
       .map(
         (r) =>
           `${r.name} — fit ${r.score}${r.demand != null ? `, demand ${r.demand}` : ""}${
-            r.play ? `, ${r.play}${r.competitors.length ? ` (${r.competitors.join("/")})` : ""}` : ""
+            r.play
+              ? `, ${r.play}${r.competitors.length ? ` (${r.competitors.join("/")})` : ""}`
+              : ""
           } · ${r.csm}`,
       )
       .join("\n");
@@ -450,7 +506,11 @@ export function AccountsClient({
             </option>
           ))}
         </select>
-        <select value={industry} onChange={(e) => setIndustry(e.target.value)} aria-label="Industry">
+        <select
+          value={industry}
+          onChange={(e) => setIndustry(e.target.value)}
+          aria-label="Industry"
+        >
           <option value="">All models</option>
           {inds.map((i) => (
             <option key={i} value={i}>
@@ -458,13 +518,21 @@ export function AccountsClient({
             </option>
           ))}
         </select>
-        <select value={tier} onChange={(e) => setTier(e.target.value)} aria-label="Fit tier">
+        <select
+          value={tier}
+          onChange={(e) => setTier(e.target.value)}
+          aria-label="Fit tier"
+        >
           <option value="">All fit</option>
           <option value="high">High fit</option>
           <option value="medium">Medium</option>
           <option value="low">Low</option>
         </select>
-        <select value={play} onChange={(e) => setPlay(e.target.value)} aria-label="Play type">
+        <select
+          value={play}
+          onChange={(e) => setPlay(e.target.value)}
+          aria-label="Play type"
+        >
           <option value="">All plays</option>
           <option value="displacement">Displacement</option>
           <option value="greenfield">Greenfield</option>
@@ -475,11 +543,19 @@ export function AccountsClient({
           <option value="name">Sort: name</option>
         </select>
         <label className={styles.toggle}>
-          <input type="checkbox" checked={incOnly} onChange={(e) => setIncOnly(e.target.checked)} />
+          <input
+            type="checkbox"
+            checked={incOnly}
+            onChange={(e) => setIncOnly(e.target.checked)}
+          />
           On PrismHR only
         </label>
         <label className={styles.toggle}>
-          <input type="checkbox" checked={hotOnly} onChange={(e) => setHotOnly(e.target.checked)} />
+          <input
+            type="checkbox"
+            checked={hotOnly}
+            onChange={(e) => setHotOnly(e.target.checked)}
+          />
           Hot targets
         </label>
         <button type="button" className={styles.addMini} onClick={copyList}>
@@ -499,8 +575,8 @@ export function AccountsClient({
         return (
           <div className={styles.triage}>
             <span>
-              <b>{hotOffBoard.length}</b> hot {hotOffBoard.length === 1 ? "signal" : "signals"} not on
-              the board yet.
+              <b>{hotOffBoard.length}</b> hot{" "}
+              {hotOffBoard.length === 1 ? "signal" : "signals"} not on the board yet.
             </span>
             <button
               type="button"
@@ -561,7 +637,9 @@ export function AccountsClient({
                 </td>
                 <td>
                   {a.researched && a.demand != null ? (
-                    <span className={`${styles.fit} ${demandClass(a.demand)}`}>{a.demand}</span>
+                    <span className={`${styles.fit} ${demandClass(a.demand)}`}>
+                      {a.demand}
+                    </span>
                   ) : (
                     <span className={styles.muted} title="Not researched">
                       —
@@ -571,7 +649,9 @@ export function AccountsClient({
                 <td>
                   {a.play === "displacement" ? (
                     <>
-                      <span className={`${styles.tag} ${styles.tagDisplace}`}>Displace</span>
+                      <span className={`${styles.tag} ${styles.tagDisplace}`}>
+                        Displace
+                      </span>
                       {a.competitors.length > 0 && (
                         <div className={styles.rowSub}>
                           <CompetitorLinks names={a.competitors} />
@@ -594,7 +674,10 @@ export function AccountsClient({
                       {a.cloud}
                     </span>
                   ) : (
-                    <span className={styles.muted} title="Not a PrismHR platform customer">
+                    <span
+                      className={styles.muted}
+                      title="Not a PrismHR platform customer"
+                    >
                       —
                     </span>
                   )}
@@ -623,6 +706,7 @@ export function AccountsClient({
                   <td colSpan={7}>
                     <div className={styles.acctDetail}>
                       <SfCheckpoint when="account" id={a.id} name={a.name} />
+                      <AccountChipNotes notes={a.chipNotes} />
                       <AccountNotes notes={a.notes} />
                       <EngagementPanel a={a} />
                       <div className={styles.demandBlock}>
@@ -633,7 +717,9 @@ export function AccountsClient({
                                 {a.demand}
                               </span>
                               <strong>Global-hiring demand</strong>
-                              <span className={styles.confChip}>{a.confidence} confidence</span>
+                              <span className={styles.confChip}>
+                                {a.confidence} confidence
+                              </span>
                             </div>
                             {a.play === "displacement" && a.competitors.length > 0 && (
                               <p className={styles.servedBy}>
@@ -641,15 +727,19 @@ export function AccountsClient({
                                 <strong>
                                   <CompetitorLinks names={a.competitors} />
                                 </strong>
-                                . Pitch: bring it in-house on the platform they already run.
+                                . Pitch: bring it in-house on the platform they already
+                                run.
                               </p>
                             )}
                             {a.play === "greenfield" && (
                               <p className={styles.servedBy}>
-                                Greenfield — real demand, no incumbent EOR named in the research.
+                                Greenfield — real demand, no incumbent EOR named in the
+                                research.
                               </p>
                             )}
-                            {a.summary && <p className={styles.demandSummary}>{a.summary}</p>}
+                            {a.summary && (
+                              <p className={styles.demandSummary}>{a.summary}</p>
+                            )}
                             {a.signals.length > 0 && (
                               <ul className={styles.signalList}>
                                 {a.signals.slice(0, 4).map((s, i) => (
@@ -669,15 +759,21 @@ export function AccountsClient({
                             {a.evidence.length > 0 && (
                               <div className={styles.evidence}>
                                 {a.evidence.map((e, i) => (
-                                  <a key={i} href={e.url} target="_blank" rel="noreferrer">
+                                  <a
+                                    key={i}
+                                    href={e.url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                  >
                                     ↗ {hostOf(e.url)}
                                   </a>
                                 ))}
                               </div>
                             )}
                             <div className={styles.formula}>
-                              How this {a.score} is built: account profile {a.deskScore} (40% of the
-                              score) + global demand {a.demandAdj ?? a.demand} (60%).
+                              How this {a.score} is built: account profile {a.deskScore}{" "}
+                              (40% of the score) + global demand {a.demandAdj ?? a.demand}{" "}
+                              (60%).
                               {a.confFactor < 1
                                 ? ` Raw demand ${a.demand} trimmed to ${a.demandAdj} because confidence is ${a.confidence}.`
                                 : ""}
@@ -685,8 +781,9 @@ export function AccountsClient({
                           </>
                         ) : (
                           <div className={styles.demandPending}>
-                            Not researched (no findable web presence, or missed on the run). Score is
-                            the account profile only — no demand signal yet.
+                            Not researched (no findable web presence, or missed on the
+                            run). Score is the account profile only — no demand signal
+                            yet.
                           </div>
                         )}
                       </div>
@@ -695,24 +792,29 @@ export function AccountsClient({
                         <div className={styles.barsHead}>
                           Account profile · {a.deskScore}/100 (firmographics, no research)
                         </div>
-                        {(["scale", "incumbency", "model", "recency"] as const).map((k) => (
-                          <div key={k} className={styles.barRow}>
-                            <span className={styles.barLabel}>{BAR_LABEL[k]}</span>
-                            <span className={styles.barTrack}>
-                              <span
-                                className={styles.barFill}
-                                style={{ width: `${(a.breakdown[k] / BAR_MAX[k]) * 100}%` }}
-                              />
-                            </span>
-                            <span className={styles.barVal}>
-                              {a.breakdown[k]}/{BAR_MAX[k]}
-                            </span>
-                          </div>
-                        ))}
+                        {(["scale", "incumbency", "model", "recency"] as const).map(
+                          (k) => (
+                            <div key={k} className={styles.barRow}>
+                              <span className={styles.barLabel}>{BAR_LABEL[k]}</span>
+                              <span className={styles.barTrack}>
+                                <span
+                                  className={styles.barFill}
+                                  style={{
+                                    width: `${(a.breakdown[k] / BAR_MAX[k]) * 100}%`,
+                                  }}
+                                />
+                              </span>
+                              <span className={styles.barVal}>
+                                {a.breakdown[k]}/{BAR_MAX[k]}
+                              </span>
+                            </div>
+                          ),
+                        )}
                       </div>
 
                       <div className={styles.acctMeta}>
-                        {a.sizeBucket || (a.size ? `${a.size.toLocaleString()} WSE` : "size n/a")}
+                        {a.sizeBucket ||
+                          (a.size ? `${a.size.toLocaleString()} WSE` : "size n/a")}
                         {" · Partner: "}
                         {a.csm} ({partnerRole(a.csm)})
                         {a.contactName && (
@@ -730,7 +832,11 @@ export function AccountsClient({
                         {a.website && (
                           <>
                             {" · "}
-                            <a href={ensureHttp(a.website)} target="_blank" rel="noreferrer">
+                            <a
+                              href={ensureHttp(a.website)}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
                               {a.website}
                             </a>
                           </>
@@ -771,6 +877,8 @@ function seedFor(a: AccountRow): string {
       : a.play === "greenfield"
         ? "Greenfield — no incumbent EOR named."
         : "";
-  const countries = a.countries.length ? ` Countries seen: ${a.countries.join(", ")}.` : "";
+  const countries = a.countries.length
+    ? ` Countries seen: ${a.countries.join(", ")}.`
+    : "";
   return `Demand ${a.demand}/100 (${a.confidence} confidence). ${play}${countries} ${a.summary}`.trim();
 }

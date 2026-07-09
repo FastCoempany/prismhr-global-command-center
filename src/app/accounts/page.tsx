@@ -4,8 +4,18 @@ import { getAppAccess } from "@/lib/auth";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import { peos } from "@/lib/book";
 import { compositeScore, deskScore } from "@/lib/book/scoring";
-import { analyzePlay, extractCountries, getDemand, researchGeneratedAt } from "@/lib/book/research";
-import { loadEngagements, loadTodos, loadValidations } from "@/lib/today/overlay";
+import {
+  analyzePlay,
+  extractCountries,
+  getDemand,
+  researchGeneratedAt,
+} from "@/lib/book/research";
+import {
+  loadAccountNotes,
+  loadEngagements,
+  loadTodos,
+  loadValidations,
+} from "@/lib/today/overlay";
 import { EMPTY_ENGAGEMENT } from "@/lib/engagement";
 import type { LinkedNote } from "@/components/account-notes";
 import { AccountsClient, type AccountRow } from "../accounts-client";
@@ -47,6 +57,7 @@ export default async function AccountsPage() {
   // demand and reflows the composite.
   const validations = await loadValidations();
   const engagements = await loadEngagements();
+  const chipNotes = await loadAccountNotes();
 
   // Notetaker notes linked to accounts (surfaced read-only here).
   const notesByAccount = new Map<string, LinkedNote[]>();
@@ -108,9 +119,18 @@ export default async function AccountsPage() {
         score: c.score,
         tier: c.tier,
         breakdown: d.breakdown,
-        validation: v ? { status: v.status, note: v.note, adjustedDemand: v.adjustedDemand } : null,
+        validation: v
+          ? { status: v.status, note: v.note, adjustedDemand: v.adjustedDemand }
+          : null,
         engagement: engagements.get(p.id) ?? EMPTY_ENGAGEMENT,
         notes: notesByAccount.get(p.id) ?? [],
+        chipNotes: (chipNotes.get(p.id) ?? []).map((n) => ({
+          id: n.id,
+          partner: n.partner,
+          kind: n.kind,
+          body: n.body,
+          createdAt: n.createdAt,
+        })),
       };
     })
     .sort((a, b) => b.score - a.score);
@@ -121,10 +141,10 @@ export default async function AccountsPage() {
       <main className={styles.wrap}>
         <h1 className={styles.h1}>Account Room</h1>
         <p className={styles.sub}>
-          All {rows.length} channel accounts, heat-scored for PrismHR Global fit. Global fit = 40%
-          account profile (size · on-PrismHR · model · recency) + 60% researched demand
-          (confidence-weighted). Play flags whether they&apos;re already on a competitor EOR. Demand
-          research last run {researchGeneratedAt}.
+          All {rows.length} channel accounts, heat-scored for PrismHR Global fit. Global
+          fit = 40% account profile (size · on-PrismHR · model · recency) + 60% researched
+          demand (confidence-weighted). Play flags whether they&apos;re already on a
+          competitor EOR. Demand research last run {researchGeneratedAt}.
         </p>
         <AccountsClient rows={rows} canAdd={canAdd} onDashboard={onDashboard} />
       </main>

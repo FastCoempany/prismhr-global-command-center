@@ -191,3 +191,17 @@ CREATE TABLE IF NOT EXISTS "PartnerNote" (
   CONSTRAINT "PartnerNote_pkey" PRIMARY KEY ("id")
 );
 CREATE INDEX IF NOT EXISTS "PartnerNote_partner_createdAt_idx" ON "PartnerNote"("partner", "createdAt");
+
+-- A dated, time-stamped note pinned to a book account from the partner-outreach
+-- chips on Today — your own note or what the partner said. Surfaces on the
+-- Account Room detail panel and drives chip freshness colors. Safe to re-run.
+CREATE TABLE IF NOT EXISTS "AccountNote" (
+  "id" TEXT NOT NULL,
+  "accountId" TEXT NOT NULL,
+  "partner" TEXT NOT NULL DEFAULT '',
+  "kind" TEXT NOT NULL DEFAULT 'mine',
+  "body" TEXT NOT NULL,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "AccountNote_pkey" PRIMARY KEY ("id")
+);
+CREATE INDEX IF NOT EXISTS "AccountNote_accountId_createdAt_idx" ON "AccountNote"("accountId", "createdAt");

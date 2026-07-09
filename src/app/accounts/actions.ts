@@ -32,7 +32,9 @@ export async function validateScore(formData: FormData) {
   const note = str(formData, "note", 500) || null;
   const adj = parseInt(str(formData, "adjustedDemand", 4), 10);
   const adjustedDemand =
-    status === "adjusted" && Number.isFinite(adj) ? Math.max(0, Math.min(100, adj)) : null;
+    status === "adjusted" && Number.isFinite(adj)
+      ? Math.max(0, Math.min(100, adj))
+      : null;
   if (!(await requireWrite()) || !accountId) done();
   await getPrisma().scoreValidation.upsert({
     where: { accountId },

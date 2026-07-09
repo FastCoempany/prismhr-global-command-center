@@ -1084,6 +1084,22 @@ model StashItem {
   @@index([createdAt])
 }
 
+// A dated, time-stamped note pinned to a book ACCOUNT from the partner-outreach
+// chips on Today: either your own note ("mine") or what the partner told you
+// about it ("partner"). Surfaces on the Account Room's detail panel — NOT in the
+// Notes/Follow-ups tabs. Also drives the chip freshness color (green/yellow/red
+// by time since the account was last touched).
+model AccountNote {
+  id        String   @id @default(cuid())
+  accountId String // book account (Salesforce id)
+  partner   String   @default("") // whose outreach card it was written from
+  kind      String   @default("mine") // "mine" | "partner"
+  body      String
+  createdAt DateTime @default(now())
+
+  @@index([accountId, createdAt])
+}
+
 // A dated, time-stamped note pinned to a partner (CSM) — the by-partner
 // repository behind the Partner Room and the notes strip on each partner's
 // outreach card. Written from Stash routing, the Partner Room's note box, or
