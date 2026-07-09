@@ -1084,6 +1084,21 @@ model StashItem {
   @@index([createdAt])
 }
 
+// A dated, time-stamped note pinned to a partner (CSM) — the by-partner
+// repository behind the Partner Room and the notes strip on each partner's
+// outreach card. Written from Stash routing, the Partner Room's note box, or
+// anywhere else that talks about a partner. Keyed by the partner's name (the
+// same string the book's `csm` field uses).
+model PartnerNote {
+  id        String   @id @default(cuid())
+  partner   String
+  body      String
+  source    String   @default("") // e.g. "stash", "partner-room", "today"
+  createdAt DateTime @default(now())
+
+  @@index([partner, createdAt])
+}
+
 // Per-account engagement — the CSM's meeting cadence with the client, a running
 // CSM-notes/health read, and whether Salesforce research has been pulled. Keyed
 // by the Salesforce account id from the book (like SignalSnooze / ScoreValidation).

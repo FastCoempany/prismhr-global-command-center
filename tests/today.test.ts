@@ -36,11 +36,13 @@ import {
   type Validation,
 } from "@/lib/today/build";
 import {
+  asFollowUpWhen,
+  dayGroupLabel,
   daysUntilIso,
-  FOLLOWUP_DAYS,
-  followUpFrom,
   followUpMessage,
+  groupUpcomingByDay,
   isDue,
+  nextCheckIn,
   outreachSubjectKey,
   partitionFollowUps,
   type Touch,
@@ -767,9 +769,54 @@ describe("follow-ups", () => {
     );
   });
 
-  test("followUpFrom respects the interval and defaults to FOLLOWUP_DAYS", () => {
-    assert.equal(followUpFrom(now, 2), new Date(now + 2 * DAY).toISOString());
-    assert.equal(followUpFrom(now), new Date(now + FOLLOWUP_DAYS * DAY).toISOString());
+  test("nextCheckIn: later today = +4h, tomorrow = +24h, weekends never included", () => {
+    const wed = Date.parse("2026-07-08T15:00:00Z"); // Wednesday
+    assert.equal(nextCheckIn(wed, "today").toISOString(), "2026-07-08T19:00:00.000Z");
+    assert.equal(nextCheckIn(wed, "tomorrow").toISOString(), "2026-07-09T15:00:00.000Z");
+    // Friday + tomorrow would be Saturday → rolls to Monday, same time.
+    const fri = Date.parse("2026-07-10T15:00:00Z"); // Friday
+    assert.equal(nextCheckIn(fri, "tomorrow").toISOString(), "2026-07-13T15:00:00.000Z");
+    // Friday evening + "later today" would cross into Saturday → Monday.
+    const friNight = Date.parse("2026-07-10T22:00:00Z");
+    assert.equal(
+      nextCheckIn(friNight, "today").toISOString(),
+      "2026-07-13T02:00:00.000Z",
+    );
+    // Saturday itself always lands on Monday.
+    const sat = Date.parse("2026-07-11T10:00:00Z");
+    assert.equal(nextCheckIn(sat, "today").getUTCDay(), 1);
+    assert.equal(nextCheckIn(sat, "tomorrow").getUTCDay(), 1);
+  });
+
+  test("asFollowUpWhen only admits the two options, defaulting to tomorrow", () => {
+    assert.equal(asFollowUpWhen("today"), "today");
+    assert.equal(asFollowUpWhen("tomorrow"), "tomorrow");
+    assert.equal(asFollowUpWhen("2"), "tomorrow");
+    assert.equal(asFollowUpWhen(""), "tomorrow");
+  });
+
+  test("groupUpcomingByDay groups by due day with Today/Tomorrow labels, day order kept", () => {
+    const mk = (key: string, at: string) => touch({ subjectKey: key, followUpAt: at });
+    const base = Date.parse("2026-07-08T09:00:00Z"); // Wednesday
+    const { upcoming } = partitionFollowUps(
+      [
+        mk("a", "2026-07-08T18:00:00Z"), // later today
+        mk("b", "2026-07-09T10:00:00Z"), // tomorrow
+        mk("c", "2026-07-09T15:00:00Z"), // tomorrow
+        mk("d", "2026-07-13T09:00:00Z"), // Monday
+      ],
+      base,
+    );
+    const groups = groupUpcomingByDay(upcoming, base);
+    assert.deepEqual(
+      groups.map((g) => g.label),
+      ["Today", "Tomorrow", "Monday · Jul 13"],
+    );
+    assert.deepEqual(
+      groups[1].items.map((t) => t.subjectKey),
+      ["b", "c"],
+    );
+    assert.equal(dayGroupLabel("2026-07-09T15:00:00Z", base), "Tomorrow");
   });
 
   test("daysUntilIso ceils, and past instants floor at zero (due, not negative)", () => {

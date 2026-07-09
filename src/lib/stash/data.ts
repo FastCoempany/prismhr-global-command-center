@@ -1,5 +1,7 @@
 import { getAppAccess } from "@/lib/auth";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
+import { csms } from "@/lib/book";
+import { EXTRA_PARTNERS } from "@/lib/book/partners";
 
 // A single un-routed capture as the Stash tray consumes it (ISO strings).
 export type StashTrayItem = {
@@ -17,9 +19,18 @@ export type StashTray = {
   available: boolean;
   canWrite: boolean;
   items: StashTrayItem[];
+  partners: string[]; // the partner roster, so captures can route to a name
 };
 
-const EMPTY: StashTray = { available: false, canWrite: false, items: [] };
+const EMPTY: StashTray = { available: false, canWrite: false, items: [], partners: [] };
+
+// The partner roster the dock routes to — the book's CSMs (minus Unassigned)
+// plus standing extras. Static, so it costs nothing to include in every tray.
+export function stashPartners(): string[] {
+  return [
+    ...new Set([...csms.filter((c) => c && c !== "Unassigned"), ...EXTRA_PARTNERS]),
+  ];
+}
 
 // The un-routed captures waiting to be sorted, newest first. Defensive: any
 // failure (unmigrated table, no DB) degrades to an unavailable, empty tray so the
@@ -35,6 +46,7 @@ export async function loadStashTray(): Promise<StashTray> {
     return {
       available: true,
       canWrite: access.canWrite,
+      partners: stashPartners(),
       items: rows.map((r) => ({
         id: r.id,
         body: r.body,
