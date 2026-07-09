@@ -47,7 +47,11 @@ export function AccountChip({
           ? styles.chipCold
           : "";
 
-  const noteForm = (kind: "mine" | "partner", label: string, placeholder: string) => (
+  const noteForm = (
+    kind: "mine" | "partner" | "account",
+    label: string,
+    placeholder: string,
+  ) => (
     <details className={styles.chipItem}>
       <summary>{label}</summary>
       <form action={addAccountNote} className={styles.chipNoteForm}>
@@ -104,6 +108,11 @@ export function AccountChip({
               "partner",
               `💬 ${partnerFirst} said`,
               `What ${partnerFirst} told you about ${account.name}…`,
+            )}
+            {noteForm(
+              "account",
+              "🗒 Add account note",
+              `A plain note on ${account.name} — lands on its account page…`,
             )}
 
             {card ? (

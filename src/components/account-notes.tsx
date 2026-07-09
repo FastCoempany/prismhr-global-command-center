@@ -20,7 +20,7 @@ function fmtWhen(iso: string): string {
 export type ChipNote = {
   id: string;
   partner: string;
-  kind: "mine" | "partner";
+  kind: "mine" | "partner" | "account";
   body: string;
   createdAt: string; // ISO
 };
@@ -40,11 +40,15 @@ export function AccountChipNotes({ notes }: { notes: ChipNote[] }) {
       {notes.map((n) => (
         <div key={n.id} className={styles.note}>
           <span className={styles.body}>
-            <b>
-              {n.kind === "partner"
-                ? `${n.partner.split(" ")[0] || "Partner"} said:`
-                : "You:"}
-            </b>{" "}
+            {n.kind !== "account" && (
+              <>
+                <b>
+                  {n.kind === "partner"
+                    ? `${n.partner.split(" ")[0] || "Partner"} said:`
+                    : "You:"}
+                </b>{" "}
+              </>
+            )}
             {n.body.trim()}
           </span>
           <span className={styles.when}>🕐 {fmtWhen(n.createdAt)}</span>

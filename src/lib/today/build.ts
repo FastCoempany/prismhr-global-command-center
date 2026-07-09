@@ -448,13 +448,30 @@ export type PartnerKickoff = { partner: string; role: string; accounts: AccountI
 
 // Editorial pins: accounts a partner should always have teed up on their
 // roundup regardless of auto-rank — an owner override for a relationship reason
-// the Global-fit score can't see. Keyed by CSM name → account ids. Pinned
-// accounts take a slot first; the rest of the top-N fills in by score, so a pin
-// bumps the lowest-ranked auto-pick rather than growing the list past N.
+// the Global-fit score can't see. Keyed by CSM name → account ids. Pins EXTEND
+// the card past the top-N (a 6th slot) rather than displacing an auto-pick, so
+// pinning never hides an account that earned its place on merit.
 export const ROUNDUP_PINS: Record<string, string[]> = {
   // My HR Pros (formerly Southern Personnel Management) — an existing on-PrismHR
   // Lesha account that scores just below her top-5 cutoff; pinned by owner request.
   "Lesha Cyphers": ["001F000000w389qIAA"],
+};
+
+// Hand-written roundup bullets for accounts where the generic play framing would
+// be wrong — e.g. a thread that's already live. Keyed by account id; used by
+// partnerWeekMessage in place of the displacement/greenfield/gauge template.
+export const ROUNDUP_BULLETS: Record<string, string> = {
+  // Simploy — Chassie's inbound after PrismHR LIVE; the conversation is already
+  // in motion, so the bullet reads as shared status, not a request for a read.
+  "001F000000w38BOIAY":
+    "Already in motion (thanks for the intro!): Chassie reached out after PrismHR LIVE — " +
+    "about two months into selecting a global-workforce partner (EOR, contractor management, " +
+    "global payroll), with the partner and approach to be finalized by 8/6. I replied 7/9 with " +
+    "the functionality/coverage and implementation docs, confirmed Global is built into their " +
+    "existing PrismHR setup (a new tab — no integration work), and asked for countries, EOR " +
+    "conversion headcount, and contractor counts to shape pricing. Demo goes on the calendar as " +
+    "soon as she responds. Nothing needed from you right now — keeping it on our shared radar " +
+    "(and she's still waiting to hear about shipping for the glasses she won at the conference).",
 };
 
 export function partnerKickoff(
@@ -481,12 +498,11 @@ export function partnerKickoff(
     const ranked = [...accts]
       .filter((a) => !pinnedSet.has(a.id))
       .sort((x, y) => y.score - x.score);
-    // Guarantee the pins, fill the rest by score, then present the card by score
-    // so a low-scoring pin sits where its number says (honestly at the bottom).
-    const top = [
-      ...pinned,
-      ...ranked.slice(0, Math.max(0, perPartner - pinned.length)),
-    ].sort((x, y) => y.score - x.score);
+    // The top-N earn their slots on merit; pins EXTEND the card beyond N (never
+    // displace). Present by score so a low-scoring pin honestly sits last.
+    const top = [...pinned, ...ranked.slice(0, perPartner)].sort(
+      (x, y) => y.score - x.score,
+    );
     out.push({ partner, role: partnerRole(partner), accounts: top });
   }
   // Partners with the strongest lead account first.
@@ -499,6 +515,8 @@ export function partnerWeekMessage(partner: string, accounts: AccountIntel[]): s
   const who = firstNameOf(partner);
   const bullets = accounts
     .map((a) => {
+      const custom = ROUNDUP_BULLETS[a.id];
+      if (custom) return `• ${a.name} — ${custom}`;
       const why =
         a.play === "displacement"
           ? `They already run their domestic PEO on PrismHR but handle global hiring through ${a.competitors[0] ?? "a competitor Employer-of-Record provider"}, so the opening is to consolidate that global/EOR layer onto the PrismHR platform they already trust, rather than run it separately. I'd really value your read on how that relationship is going, and if you happen to know roughly when their contract comes up for renewal, that timing tells us whether it's worth opening a conversation soon or holding off.`

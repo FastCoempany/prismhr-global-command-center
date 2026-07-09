@@ -1724,31 +1724,29 @@
       "researched": true
     },
     "001F000000w38BOIAY": {
-      "demandScore": 10,
-      "confidence": "medium",
+      "demandScore": 75,
+      "confidence": "high",
       "signals": [
-        "Positions itself strictly as a St. Louis / US PEO: HR, payroll, benefits, and workers' comp — no international, global, EOR, or cross-border language anywhere on site or in third-party profiles",
-        "Geographic footprint described repeatedly as domestic only: clients and co-employees in 'a few dozen states' / 'almost every state' — no mention of any foreign country",
-        "Service list is entirely US-domestic: Basic HR Support, Staffing & Recruiting, Payroll, Time & Attendance, OSHA, Workers' Comp, Unemployment Claims, US Employee Benefits, I-9/garnishment compliance",
-        "SMB client base (5 to several hundred employees) originating in local construction/design staffing — segments with low propensity to hire abroad",
-        "Zero results returned when searching Simploy against 'international employees', 'global payroll', 'employer of record', 'overseas', or competitor EOR names (Deel/Velocity Global/Papaya Global)"
+        "FIRST-PARTY INBOUND (7/8, via CSM Lesha Cyphers): Chassie at Simploy is ~2 months into an active project to select a partner for international/global workforce expansion — EOR, contractor management, and global payroll — and asked for PrismHR Global pricing, functionality + country coverage, implementation timeline, integration details, and a demo ASAP.",
+        "HARD DEADLINE: the partner and approach must be finalized by 8/6 (not live by then — chosen by then). This is an active, dated procurement, not latent interest.",
+        "PRISM-NATIVE PREFERENCE: she said an integrated option through PrismHR 'would be ideal,' provided it's competitive on price and functionality — Simploy already runs on PrismHR (cloud tenant SIM), so Global is a config-on attach, exactly the consolidation story.",
+        "COMPETITIVE SELECTION, NO INCUMBENT: two months in, evaluating options; no provider is named as installed, so this is a clean introduction that must win on price + functionality, on a clock.",
+        "Status (7/9): replied with functionality/coverage + implementation docs, confirmed integration is built-in (a new tab, no integration work), and asked for countries, EOR conversion headcount, and contractor counts to shape pricing; demo to be scheduled on her response.",
+        "Public footprint still reads US-domestic only (re-checked 7/9: St. Louis full-service PEO, 'a few dozen states', no global language on site) — the demand is real but first-party; web research alone would miss it."
       ],
       "evidence": [
         {
-          "claim": "Simploy is a St. Louis full-service PEO handling HR, payroll, benefits, and workers' comp for local/US businesses, with clients and co-employees in 'a few dozen states' — a purely domestic footprint with no international offering mentioned.",
+          "claim": "Simploy is a St. Louis full-service PEO (HR, payroll, benefits, workers' comp) serving SMBs across a few dozen US states — the public site carries no global/EOR language, so the global project is known only from the first-party inbound.",
           "url": "https://simploy.com/"
         },
         {
-          "claim": "Company profile confirms domestic scope and SMB focus: serves small businesses from five to several hundred employees across US states, originating in construction/design staffing; no global or EOR services listed.",
+          "claim": "Simploy, Inc. (founded 1990) is the only locally owned PEO in the St. Louis region; 2026 Best of HR Services winner with 4.8/5 across 130 client ratings — an established, healthy book.",
           "url": "https://www.clearlyrated.com/hr-services/mo-usa/saint-louis-mo/simploy-saint-louis-mo"
-        },
-        {
-          "claim": "Simploy's own services page enumerates US-domestic offerings (Payroll, Time & Attendance, garnishment/I-9 compliance) with no reference to international payroll, cross-border hiring, or contractor management overseas.",
-          "url": "https://simploy.com/payroll/"
         }
       ],
-      "summary": "Simploy is a ~25-year-old St. Louis-based domestic PEO/ASO serving SMB clients (5 to several hundred employees) across US states with standard HR, payroll, benefits, and workers' comp — with roots in local construction/design staffing. No web signal of international hiring, global payroll, EOR, or overseas contractor needs was found in the company's site or any third-party source, so cross-border demand in its book of business appears minimal.",
-      "researched": true
+      "summary": "Live, first-party demand: Chassie at Simploy reached out after PrismHR LIVE (7/8) — two months into selecting a global-workforce partner (EOR, contractor management, global payroll) with the decision due 8/6, and a stated preference for an integrated PrismHR option if it's competitive. Simploy already runs its PEO on PrismHR, so this is a clean greenfield introduction on our own platform, in an active competitive selection with a clock. Replied 7/9 with docs and pricing-shaping questions (countries, EOR headcount, contractor counts); demo next.",
+      "researched": true,
+      "verified": true
     },
     "0012A00002M27HJQAZ": {
       "demandScore": 10,
