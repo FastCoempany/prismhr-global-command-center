@@ -425,19 +425,19 @@ export function isWeekKickoff(now: number = Date.now()): boolean {
   return day === 0 || day === 1; // Sun or Mon
 }
 
-// Freshness of an account chip on a partner's outreach card, from the moment it
-// was last worked (a note saved via the chip). Green under 24h, yellow 24–48h,
-// red past 48h. Never-touched chips read as yellow — "hasn't been interacted
-// with in 24 hours" is true of them by definition, and the pressure is the point.
-export type ChipTone = "fresh" | "stale" | "cold";
+// Freshness of an account chip on a partner's outreach card. The clock only
+// starts once an official interaction happens (a note saved via the chip):
+// green under 24h, yellow 24–48h, red past 48h. A chip that was never worked
+// stays neutral — no color at all until an interaction triggers the timer.
+export type ChipTone = "none" | "fresh" | "stale" | "cold";
 
 export function chipTone(
   lastTouchedAt: string | null,
   now: number = Date.now(),
 ): ChipTone {
-  if (!lastTouchedAt) return "stale";
+  if (!lastTouchedAt) return "none";
   const t = Date.parse(lastTouchedAt);
-  if (Number.isNaN(t)) return "stale";
+  if (Number.isNaN(t)) return "none";
   const hours = (now - t) / 3_600_000;
   if (hours < 24) return "fresh";
   if (hours < 48) return "stale";

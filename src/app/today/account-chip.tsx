@@ -37,12 +37,15 @@ export function AccountChip({
   const [open, setOpen] = useState(false);
   const partnerFirst = partner.split(" ")[0] || "Partner";
 
+  // Neutral until an interaction starts the clock — "none" adds no color class.
   const toneClass =
     tone === "fresh"
       ? styles.chipFresh
-      : tone === "cold"
-        ? styles.chipCold
-        : styles.chipStale;
+      : tone === "stale"
+        ? styles.chipStale
+        : tone === "cold"
+          ? styles.chipCold
+          : "";
 
   const noteForm = (kind: "mine" | "partner", label: string, placeholder: string) => (
     <details className={styles.chipItem}>
