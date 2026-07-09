@@ -23,7 +23,7 @@ import {
   toggleArchive,
   toggleCheck,
 } from "./dashboard/actions";
-import { AccountNotes, type LinkedNote } from "@/components/account-notes";
+import { AccountChipNotes, type ChipNote } from "@/components/account-notes";
 import styles from "./dashboard.module.css";
 
 type Props = {
@@ -31,7 +31,7 @@ type Props = {
   canWrite: boolean;
   dbUnavailable: boolean;
   labels: Record<string, string>;
-  notesByName?: Record<string, LinkedNote[]>;
+  notesByName?: Record<string, ChipNote[]>; // chip-written worked notes, by card name
 };
 
 const glyph = (state: NodeState) => (state === "done" ? "✓" : "");
@@ -76,10 +76,14 @@ function Track({
           <div key={n.key} className={styles.cell}>
             <div className={styles.nodeRow}>
               {i > 0 && (
-                <span className={`${styles.line} ${styles.lineLeft} ${prevDone ? styles.lineOn : ""}`} />
+                <span
+                  className={`${styles.line} ${styles.lineLeft} ${prevDone ? styles.lineOn : ""}`}
+                />
               )}
               {i < LAST_NODE && (
-                <span className={`${styles.line} ${styles.lineRight} ${selfDone ? styles.lineOn : ""}`} />
+                <span
+                  className={`${styles.line} ${styles.lineRight} ${selfDone ? styles.lineOn : ""}`}
+                />
               )}
               {canWrite ? (
                 <form action={advanceNode} className={styles.nodeForm}>
@@ -135,12 +139,17 @@ export function DashboardClient({
   const [renaming, setRenaming] = useState<string | null>(null);
   const [showRename, setShowRename] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
-  const [openNode, setOpenNode] = useState<{ card: string; node: DashNodeKey } | null>(null);
-  const [openNote, setOpenNote] = useState<{ card: string; node: DashNodeKey; index: number } | null>(
+  const [openNode, setOpenNode] = useState<{ card: string; node: DashNodeKey } | null>(
     null,
   );
+  const [openNote, setOpenNote] = useState<{
+    card: string;
+    node: DashNodeKey;
+    index: number;
+  } | null>(null);
 
-  const label = (key: DashNodeKey) => labels[key] || DASH_NODES.find((n) => n.key === key)!.label;
+  const label = (key: DashNodeKey) =>
+    labels[key] || DASH_NODES.find((n) => n.key === key)!.label;
 
   const active = cards.filter((c) => !c.archived);
   const archived = cards.filter((c) => c.archived);
@@ -152,13 +161,22 @@ export function DashboardClient({
     <div className={styles.board}>
       {canWrite && (
         <div className={styles.toolbar}>
-          <button type="button" className={styles.miniBtn} onClick={() => setShowRename((v) => !v)}>
+          <button
+            type="button"
+            className={styles.miniBtn}
+            onClick={() => setShowRename((v) => !v)}
+          >
             {showRename ? "Close" : "Rename stages"}
           </button>
           {showRename && (
             <form action={saveLabels} className={styles.renameStages}>
               {DASH_NODES.map((n) => (
-                <input key={n.key} name={`label_${n.key}`} defaultValue={label(n.key)} aria-label={`${n.label} label`} />
+                <input
+                  key={n.key}
+                  name={`label_${n.key}`}
+                  defaultValue={label(n.key)}
+                  aria-label={`${n.label} label`}
+                />
               ))}
               <button type="submit" className={styles.miniSave}>
                 Save labels
@@ -197,11 +215,29 @@ export function DashboardClient({
                 {renaming === card.id ? (
                   <form action={renameCard} className={styles.renameForm}>
                     <input type="hidden" name="id" value={card.id} />
-                    <input name="name" defaultValue={card.name} required aria-label="Account name" />
-                    <input name="subtitle" defaultValue={card.subtitle ?? ""} placeholder="Note / CSM" aria-label="Subtitle" />
+                    <input
+                      name="name"
+                      defaultValue={card.name}
+                      required
+                      aria-label="Account name"
+                    />
+                    <input
+                      name="subtitle"
+                      defaultValue={card.subtitle ?? ""}
+                      placeholder="Note / CSM"
+                      aria-label="Subtitle"
+                    />
                     <div className={styles.renameRow}>
-                      <button type="submit" className={styles.miniSave}>Save</button>
-                      <button type="button" className={styles.miniBtn} onClick={() => setRenaming(null)}>Cancel</button>
+                      <button type="submit" className={styles.miniSave}>
+                        Save
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.miniBtn}
+                        onClick={() => setRenaming(null)}
+                      >
+                        Cancel
+                      </button>
                     </div>
                   </form>
                 ) : (
@@ -225,24 +261,47 @@ export function DashboardClient({
                       <div className={styles.manage}>
                         <form action={moveCard} className={styles.inlineForm}>
                           <input type="hidden" name="id" value={card.id} />
-                          <button name="dir" value="up" className={styles.miniBtn} aria-label="Move up">↑</button>
-                          <button name="dir" value="down" className={styles.miniBtn} aria-label="Move down">↓</button>
+                          <button
+                            name="dir"
+                            value="up"
+                            className={styles.miniBtn}
+                            aria-label="Move up"
+                          >
+                            ↑
+                          </button>
+                          <button
+                            name="dir"
+                            value="down"
+                            className={styles.miniBtn}
+                            aria-label="Move down"
+                          >
+                            ↓
+                          </button>
                         </form>
-                        <button type="button" className={styles.miniBtn} onClick={() => setRenaming(card.id)}>Rename</button>
+                        <button
+                          type="button"
+                          className={styles.miniBtn}
+                          onClick={() => setRenaming(card.id)}
+                        >
+                          Rename
+                        </button>
                         <form action={toggleArchive} className={styles.inlineForm}>
                           <input type="hidden" name="id" value={card.id} />
-                          <button className={styles.miniBtn} aria-label="Archive">Archive</button>
+                          <button className={styles.miniBtn} aria-label="Archive">
+                            Archive
+                          </button>
                         </form>
                         <form action={deleteCard} className={styles.inlineForm}>
                           <input type="hidden" name="id" value={card.id} />
-                          <button className={styles.miniDel} aria-label="Delete account">Delete</button>
+                          <button className={styles.miniDel} aria-label="Delete account">
+                            Delete
+                          </button>
                         </form>
                       </div>
                     )}
                   </>
                 )}
               </div>
-              <AccountNotes notes={notesByName[card.name] ?? []} />
               <Track
                 card={card}
                 canWrite={canWrite}
@@ -257,8 +316,8 @@ export function DashboardClient({
                 <div className={styles.panelHead}>
                   <strong>{label(openN.key)}</strong>
                   <span className={styles.progress}>
-                    {card.checks[openN.key].filter(Boolean).length}/{openN.checklist.length} done —
-                    all checked lights the stage
+                    {card.checks[openN.key].filter(Boolean).length}/
+                    {openN.checklist.length} done — all checked lights the stage
                   </span>
                   <button
                     type="button"
@@ -286,7 +345,9 @@ export function DashboardClient({
                       <p className={styles.noteRead}>{card.notes[openN.key]}</p>
                     )}
                     {canWrite && (
-                      <button type="submit" className={styles.miniSave}>Save context</button>
+                      <button type="submit" className={styles.miniSave}>
+                        Save context
+                      </button>
                     )}
                   </form>
                 )}
@@ -295,7 +356,9 @@ export function DashboardClient({
                   {openN.checklist.map((item, i) => {
                     const checked = card.checks[openN.key][i];
                     const noteOpen =
-                      openNote?.card === card.id && openNote.node === openN.key && openNote.index === i;
+                      openNote?.card === card.id &&
+                      openNote.node === openN.key &&
+                      openNote.index === i;
                     const existing = card.checkNotes[openN.key][i] ?? "";
                     return (
                       <li key={i} className={styles.checkItem}>
@@ -315,11 +378,15 @@ export function DashboardClient({
                               </button>
                             </form>
                           ) : (
-                            <span className={`${styles.checkbox} ${checked ? styles.checkOn : ""}`}>
+                            <span
+                              className={`${styles.checkbox} ${checked ? styles.checkOn : ""}`}
+                            >
                               {checked ? "✓" : ""}
                             </span>
                           )}
-                          <span className={`${styles.checkLabel} ${checked ? styles.checkLabelDone : ""}`}>
+                          <span
+                            className={`${styles.checkLabel} ${checked ? styles.checkLabelDone : ""}`}
+                          >
                             {item}
                           </span>
                           <button
@@ -327,7 +394,10 @@ export function DashboardClient({
                             className={`${styles.noteToggle} ${existing ? styles.noteToggleFull : ""}`}
                             onClick={() =>
                               setOpenNote((o) =>
-                                o && o.card === card.id && o.node === openN.key && o.index === i
+                                o &&
+                                o.card === card.id &&
+                                o.node === openN.key &&
+                                o.index === i
                                   ? null
                                   : { card: card.id, node: openN.key, index: i },
                               )
@@ -350,10 +420,14 @@ export function DashboardClient({
                               aria-label="Item note"
                               className={styles.noteArea}
                             />
-                            <button type="submit" className={styles.miniSave}>Save</button>
+                            <button type="submit" className={styles.miniSave}>
+                              Save
+                            </button>
                           </form>
                         ) : (
-                          existing && <div className={styles.checkNoteRead}>{existing}</div>
+                          existing && (
+                            <div className={styles.checkNoteRead}>{existing}</div>
+                          )
                         )}
                       </li>
                     );
@@ -369,8 +443,12 @@ export function DashboardClient({
                 {card.stakeholders.length
                   ? ` · ${card.stakeholders.length} stakeholder${card.stakeholders.length === 1 ? "" : "s"}`
                   : ""}
+                {(notesByName[card.name] ?? []).length
+                  ? ` · ${(notesByName[card.name] ?? []).length} note${(notesByName[card.name] ?? []).length === 1 ? "" : "s"}`
+                  : ""}
               </summary>
               <div className={styles.dealBody}>
+                <AccountChipNotes notes={notesByName[card.name] ?? []} />
                 <div className={styles.dealField}>
                   <span className={styles.dealLabel}>Deal size</span>
                   {canWrite ? (
@@ -398,7 +476,10 @@ export function DashboardClient({
                       {card.stakeholders.map((s, i) => (
                         <div key={i} className={styles.stakeBox}>
                           {canWrite && (
-                            <form action={removeStakeholder} className={styles.stakeRemove}>
+                            <form
+                              action={removeStakeholder}
+                              className={styles.stakeRemove}
+                            >
                               <input type="hidden" name="id" value={card.id} />
                               <input type="hidden" name="index" value={i} />
                               <button type="submit" aria-label={`Remove ${s.name}`}>
@@ -416,9 +497,22 @@ export function DashboardClient({
                   {canWrite && (
                     <form action={addStakeholder} className={styles.stakeAdd}>
                       <input type="hidden" name="id" value={card.id} />
-                      <input name="name" placeholder="Name" required aria-label="Stakeholder name" />
-                      <input name="role" placeholder="Role / title" aria-label="Stakeholder role" />
-                      <input name="note" placeholder="Note (optional)" aria-label="Stakeholder note" />
+                      <input
+                        name="name"
+                        placeholder="Name"
+                        required
+                        aria-label="Stakeholder name"
+                      />
+                      <input
+                        name="role"
+                        placeholder="Role / title"
+                        aria-label="Stakeholder role"
+                      />
+                      <input
+                        name="note"
+                        placeholder="Note (optional)"
+                        aria-label="Stakeholder note"
+                      />
                       <button type="submit" className={styles.miniSave}>
                         Add
                       </button>
@@ -436,7 +530,11 @@ export function DashboardClient({
 
       {archived.length > 0 && (
         <div className={styles.archivedWrap}>
-          <button type="button" className={styles.miniBtn} onClick={() => setShowArchived((v) => !v)}>
+          <button
+            type="button"
+            className={styles.miniBtn}
+            onClick={() => setShowArchived((v) => !v)}
+          >
             {showArchived ? "Hide" : "Show"} archived ({archived.length})
           </button>
           {showArchived &&

@@ -663,17 +663,17 @@ describe("partnerKickoff & partnerWeekMessage", () => {
     assert.equal(out[0].accounts.length, 5);
   });
 
-  test("chipTone: green under 24h, yellow 24-48h or never touched, red past 48h", () => {
+  test("chipTone: neutral until first interaction; then green <24h, yellow 24-48h, red 48h+", () => {
     const now = Date.parse("2026-07-09T12:00:00Z");
     const hoursAgo = (h: number) => new Date(now - h * 3_600_000).toISOString();
+    // The clock only starts once something official happens — no color before.
+    assert.equal(chipTone(null, now), "none");
+    assert.equal(chipTone("not-a-date", now), "none");
     assert.equal(chipTone(hoursAgo(1), now), "fresh");
     assert.equal(chipTone(hoursAgo(23.9), now), "fresh");
     assert.equal(chipTone(hoursAgo(24.1), now), "stale");
     assert.equal(chipTone(hoursAgo(47.9), now), "stale");
     assert.equal(chipTone(hoursAgo(48.1), now), "cold");
-    // Never interacted → yellow: "hasn't been touched in 24h" is true of it.
-    assert.equal(chipTone(null, now), "stale");
-    assert.equal(chipTone("not-a-date", now), "stale");
   });
 
   test("a roundup pin is guaranteed onto its partner's card, bumping the lowest auto-pick", () => {
