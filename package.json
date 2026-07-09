@@ -16,7 +16,8 @@
     "prisma:format": "prisma format",
     "prisma:validate": "prisma validate",
     "db:migrate:deploy": "prisma migrate deploy",
-    "db:seed": "tsx prisma/seed.ts"
+    "db:seed": "tsx prisma/seed.ts",
+    "sidekick:import:draft": "node tools/sidekick-import/build-draft.mjs"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",
