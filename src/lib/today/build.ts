@@ -427,6 +427,17 @@ export function isWeekKickoff(now: number = Date.now()): boolean {
 
 export type PartnerKickoff = { partner: string; role: string; accounts: AccountIntel[] };
 
+// Editorial pins: accounts a partner should always have teed up on their
+// roundup regardless of auto-rank — an owner override for a relationship reason
+// the Global-fit score can't see. Keyed by CSM name → account ids. Pinned
+// accounts take a slot first; the rest of the top-N fills in by score, so a pin
+// bumps the lowest-ranked auto-pick rather than growing the list past N.
+export const ROUNDUP_PINS: Record<string, string[]> = {
+  // Southern Personnel Management, Inc. (My HR Pros) — an existing on-PrismHR
+  // Lesha account that scores just below her top-5 cutoff; pinned by owner request.
+  "Lesha Cyphers": ["001F000000w389qIAA"],
+};
+
 export function partnerKickoff(
   intel: AccountIntel[],
   parkedIds: Set<string>,
@@ -443,7 +454,20 @@ export function partnerKickoff(
   }
   const out: PartnerKickoff[] = [];
   for (const [partner, accts] of byPartner) {
-    const top = [...accts].sort((x, y) => y.score - x.score).slice(0, perPartner);
+    const pinnedIds = ROUNDUP_PINS[partner] ?? [];
+    const pinned = pinnedIds
+      .map((id) => accts.find((a) => a.id === id))
+      .filter((a): a is AccountIntel => Boolean(a));
+    const pinnedSet = new Set(pinned.map((a) => a.id));
+    const ranked = [...accts]
+      .filter((a) => !pinnedSet.has(a.id))
+      .sort((x, y) => y.score - x.score);
+    // Guarantee the pins, fill the rest by score, then present the card by score
+    // so a low-scoring pin sits where its number says (honestly at the bottom).
+    const top = [
+      ...pinned,
+      ...ranked.slice(0, Math.max(0, perPartner - pinned.length)),
+    ].sort((x, y) => y.score - x.score);
     out.push({ partner, role: partnerRole(partner), accounts: top });
   }
   // Partners with the strongest lead account first.
