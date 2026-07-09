@@ -2,13 +2,12 @@ import crypto from "node:crypto";
 import { cookies } from "next/headers";
 import { UserRole, type User } from "@/generated/prisma/client";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
+// ⚠ TEMPORARY: site is PUBLIC while this flag is true — anyone with the URL
+// gets full owner access (view + edit), and the edge proxy skips its cookie
+// gate too. One flip in src/lib/public-access.ts restores the private gate.
+import { PUBLIC_ACCESS } from "@/lib/public-access";
 
 export const ACCESS_COOKIE_NAME = "field_signal_access";
-
-// ⚠ TEMPORARY: site is PUBLIC. Anyone with the URL gets full owner access
-// (view + edit) with no access-code screen. To restore the private gate, set
-// this back to false (or delete this constant and its use in getAppAccess).
-const PUBLIC_ACCESS = true;
 
 const ACCESS_COOKIE_MAX_AGE = 60 * 60 * 12;
 const ACCESS_COOKIE_MAX_AGE_MS = ACCESS_COOKIE_MAX_AGE * 1000;
