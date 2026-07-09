@@ -3548,13 +3548,15 @@
 .chipShade {
   position: fixed;
   inset: 0;
-  z-index: 40;
+  z-index: 999;
 }
 .chipPop {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
-  z-index: 41;
+  /* Fixed at the viewport level (top/left set inline from the chip's measured
+     rect) — absolute-in-row got painted over by later cards' stacking contexts. */
+  position: fixed;
+  z-index: 1000;
+  max-height: 70vh;
+  overflow-y: auto;
   width: 320px;
   display: flex;
   flex-direction: column;
@@ -3697,4 +3699,120 @@
 }
 .chipGoLink:hover {
   text-decoration: underline;
+}
+
+/* ── Drafting desk (Partner Room) + draft link ───────────────────────── */
+.contactDraftLink {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #5b3aa8;
+  text-decoration: none;
+}
+.contactDraftLink:hover {
+  text-decoration: underline;
+}
+.desk {
+  margin-bottom: 12px;
+  border: 1px dashed #d7c8f2;
+  background: #faf8fe;
+  border-radius: 10px;
+  padding: 8px 12px;
+}
+.deskSummary {
+  cursor: pointer;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #5b3aa8;
+  list-style: none;
+}
+.deskSummary::-webkit-details-marker {
+  display: none;
+}
+.deskBody {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 10px;
+}
+.deskField {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.deskField select,
+.deskField input,
+.deskField textarea {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 7px 10px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--ink);
+  background: #fff;
+}
+.deskField textarea {
+  resize: vertical;
+}
+.deskActions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.deskDraftBtn {
+  border: none;
+  background: #5b3aa8;
+  color: #fff;
+  border-radius: 8px;
+  padding: 7px 14px;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.deskDraftBtn:hover {
+  background: #4a2f8a;
+}
+.deskDraftBtn:disabled,
+.deskCopyBtn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.deskCopyBtn {
+  border: 1px solid #d7c8f2;
+  background: #fff;
+  color: #5b3aa8;
+  border-radius: 8px;
+  padding: 7px 14px;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.deskCopyBtn:hover {
+  background: #f3eefc;
+}
+.deskNotice {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.deskOut {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.deskOut textarea {
+  border: 1px solid #d7c8f2;
+  border-radius: 8px;
+  padding: 9px 11px;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.55;
+  resize: vertical;
+  background: #fff;
 }
