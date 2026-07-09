@@ -3548,13 +3548,15 @@
 .chipShade {
   position: fixed;
   inset: 0;
-  z-index: 999;
+  z-index: 9998;
+  /* Visible dim: makes the open box unmistakable and the layering obvious. */
+  background: rgba(10, 28, 64, 0.28);
 }
 .chipPop {
   /* Fixed at the viewport level (top/left set inline from the chip's measured
      rect) — absolute-in-row got painted over by later cards' stacking contexts. */
   position: fixed;
-  z-index: 1000;
+  z-index: 9999;
   max-height: 70vh;
   overflow-y: auto;
   width: 320px;
