@@ -41,6 +41,45 @@ export async function loadDoneKeys(): Promise<Set<string>> {
   }
 }
 
+// A dated, time-stamped account note written from a partner-outreach chip —
+// either yours ("mine") or what the partner said ("partner").
+export type AccountNote = {
+  id: string;
+  accountId: string;
+  partner: string;
+  kind: "mine" | "partner";
+  body: string;
+  createdAt: string; // ISO
+};
+
+// All account notes, newest first, grouped by account id. Defensive: degrades to
+// an empty map until the AccountNote table is migrated.
+export async function loadAccountNotes(): Promise<Map<string, AccountNote[]>> {
+  if (!hasDatabaseEnv()) return new Map();
+  try {
+    const rows = await getPrisma().accountNote.findMany({
+      orderBy: { createdAt: "desc" },
+    });
+    const out = new Map<string, AccountNote[]>();
+    for (const r of rows) {
+      const note: AccountNote = {
+        id: r.id,
+        accountId: r.accountId,
+        partner: r.partner,
+        kind: r.kind === "partner" ? "partner" : "mine",
+        body: r.body,
+        createdAt: r.createdAt.toISOString(),
+      };
+      const list = out.get(r.accountId);
+      if (list) list.push(note);
+      else out.set(r.accountId, [note]);
+    }
+    return out;
+  } catch {
+    return new Map();
+  }
+}
+
 // A dated, time-stamped partner note (from Stash routing or the Partner Room).
 export type PartnerNote = {
   id: string;

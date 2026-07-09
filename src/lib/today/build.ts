@@ -425,6 +425,25 @@ export function isWeekKickoff(now: number = Date.now()): boolean {
   return day === 0 || day === 1; // Sun or Mon
 }
 
+// Freshness of an account chip on a partner's outreach card, from the moment it
+// was last worked (a note saved via the chip). Green under 24h, yellow 24–48h,
+// red past 48h. Never-touched chips read as yellow — "hasn't been interacted
+// with in 24 hours" is true of them by definition, and the pressure is the point.
+export type ChipTone = "fresh" | "stale" | "cold";
+
+export function chipTone(
+  lastTouchedAt: string | null,
+  now: number = Date.now(),
+): ChipTone {
+  if (!lastTouchedAt) return "stale";
+  const t = Date.parse(lastTouchedAt);
+  if (Number.isNaN(t)) return "stale";
+  const hours = (now - t) / 3_600_000;
+  if (hours < 24) return "fresh";
+  if (hours < 48) return "stale";
+  return "cold";
+}
+
 export type PartnerKickoff = { partner: string; role: string; accounts: AccountIntel[] };
 
 // Editorial pins: accounts a partner should always have teed up on their
@@ -433,7 +452,7 @@ export type PartnerKickoff = { partner: string; role: string; accounts: AccountI
 // accounts take a slot first; the rest of the top-N fills in by score, so a pin
 // bumps the lowest-ranked auto-pick rather than growing the list past N.
 export const ROUNDUP_PINS: Record<string, string[]> = {
-  // Southern Personnel Management, Inc. (My HR Pros) — an existing on-PrismHR
+  // My HR Pros (formerly Southern Personnel Management) — an existing on-PrismHR
   // Lesha account that scores just below her top-5 cutoff; pinned by owner request.
   "Lesha Cyphers": ["001F000000w389qIAA"],
 };

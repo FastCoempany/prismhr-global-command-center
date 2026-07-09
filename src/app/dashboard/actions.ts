@@ -24,7 +24,10 @@ function lightNext(states: Record<string, string>, node: DashNodeKey) {
 // Keep the per-node activation stamps in sync with the final node states: stamp
 // the moment a node first goes active (so Today can age the commitment), clear it when
 // a node falls back to todo, and leave done nodes' stamps untouched.
-function syncActivation(activated: Record<string, string>, states: Record<string, string>) {
+function syncActivation(
+  activated: Record<string, string>,
+  states: Record<string, string>,
+) {
   const now = new Date().toISOString();
   for (const key of DASH_NODE_KEYS) {
     if (states[key] === "active" && !activated[key]) activated[key] = now;
@@ -65,7 +68,10 @@ export async function addCard(formData: FormData) {
   const notes: Record<string, string> = seed ? { discovery: seed } : {};
 
   const prisma = getPrisma();
-  const top = await prisma.dashCard.findFirst({ orderBy: { position: "desc" }, select: { position: true } });
+  const top = await prisma.dashCard.findFirst({
+    orderBy: { position: "desc" },
+    select: { position: true },
+  });
   await prisma.dashCard.create({
     data: {
       name,
@@ -100,14 +106,46 @@ export async function advanceNode(formData: FormData) {
   const prisma = getPrisma();
   const card = await prisma.dashCard.findUnique({ where: { id: cardId } });
   if (!card) done();
-  const states: Record<string, string> = { ...((card!.states as Record<string, string> | null) ?? {}) };
+  const states: Record<string, string> = {
+    ...((card!.states as Record<string, string> | null) ?? {}),
+  };
   const cur: NodeState = isNodeState(states[node]) ? (states[node] as NodeState) : "todo";
   states[node] = cur === "todo" ? "active" : cur === "active" ? "done" : "todo";
   if (states[node] === "done") lightNext(states, node);
-  const activated: Record<string, string> = { ...((card!.activated as Record<string, string> | null) ?? {}) };
+  const activated: Record<string, string> = {
+    ...((card!.activated as Record<string, string> | null) ?? {}),
+  };
   syncActivation(activated, states);
   await prisma.dashCard.update({ where: { id: cardId }, data: { states, activated } });
   done();
+}
+
+// Remote-control a card's stage from anywhere (e.g. the account chips on
+// Today's partner outreach): everything before the chosen node reads done, the
+// chosen node goes active, everything after resets to todo. Same state machine
+// the board itself uses — the dashboard picks it up with no changes of its own.
+export async function setCardStage(formData: FormData) {
+  const cardId = str(formData, "cardId", 40);
+  const node = str(formData, "node", 40) as DashNodeKey;
+  const to = safeReturn(formData);
+  if (!(await requireWrite()) || !cardId || !DASH_NODE_KEYS.includes(node)) done(to);
+
+  const prisma = getPrisma();
+  const card = await prisma.dashCard.findUnique({ where: { id: cardId } });
+  if (!card) done(to);
+  const states: Record<string, string> = {
+    ...((card!.states as Record<string, string> | null) ?? {}),
+  };
+  const target = DASH_NODE_KEYS.indexOf(node);
+  DASH_NODE_KEYS.forEach((key, i) => {
+    states[key] = i < target ? "done" : i === target ? "active" : "todo";
+  });
+  const activated: Record<string, string> = {
+    ...((card!.activated as Record<string, string> | null) ?? {}),
+  };
+  syncActivation(activated, states);
+  await prisma.dashCard.update({ where: { id: cardId }, data: { states, activated } });
+  done(to);
 }
 
 // The real mechanism: toggle one mandatory checkbox, recompute the node's lit
@@ -117,7 +155,12 @@ export async function toggleCheck(formData: FormData) {
   const node = str(formData, "node", 40) as DashNodeKey;
   const index = parseInt(str(formData, "index", 4), 10);
   const back = safeReturn(formData);
-  if (!(await requireWrite()) || !cardId || !DASH_NODE_KEYS.includes(node) || Number.isNaN(index)) {
+  if (
+    !(await requireWrite()) ||
+    !cardId ||
+    !DASH_NODE_KEYS.includes(node) ||
+    Number.isNaN(index)
+  ) {
     done(back);
   }
 
@@ -134,13 +177,20 @@ export async function toggleCheck(formData: FormData) {
   if (index >= 0 && index < count) arr[index] = !arr[index];
   allChecks[node] = arr;
 
-  const states: Record<string, string> = { ...((card!.states as Record<string, string> | null) ?? {}) };
+  const states: Record<string, string> = {
+    ...((card!.states as Record<string, string> | null) ?? {}),
+  };
   states[node] = stateFromChecks(arr, count);
   if (states[node] === "done") lightNext(states, node);
-  const activated: Record<string, string> = { ...((card!.activated as Record<string, string> | null) ?? {}) };
+  const activated: Record<string, string> = {
+    ...((card!.activated as Record<string, string> | null) ?? {}),
+  };
   syncActivation(activated, states);
 
-  await prisma.dashCard.update({ where: { id: cardId }, data: { checks: allChecks, states, activated } });
+  await prisma.dashCard.update({
+    where: { id: cardId },
+    data: { checks: allChecks, states, activated },
+  });
   done(back);
 }
 
@@ -176,7 +226,9 @@ export async function saveNote(formData: FormData) {
   const prisma = getPrisma();
   const card = await prisma.dashCard.findUnique({ where: { id: cardId } });
   if (!card) done();
-  const notes: Record<string, string> = { ...((card!.notes as Record<string, string> | null) ?? {}) };
+  const notes: Record<string, string> = {
+    ...((card!.notes as Record<string, string> | null) ?? {}),
+  };
   if (note) notes[node] = note;
   else delete notes[node];
   await prisma.dashCard.update({ where: { id: cardId }, data: { notes } });
@@ -187,7 +239,10 @@ export async function toggleArchive(formData: FormData) {
   const id = str(formData, "id", 40);
   if (!(await requireWrite()) || !id) done();
   const prisma = getPrisma();
-  const card = await prisma.dashCard.findUnique({ where: { id }, select: { archived: true } });
+  const card = await prisma.dashCard.findUnique({
+    where: { id },
+    select: { archived: true },
+  });
   if (!card) done();
   await prisma.dashCard.update({ where: { id }, data: { archived: !card!.archived } });
   done();
@@ -212,7 +267,9 @@ export async function moveCard(formData: FormData) {
     const order = all.map((c) => c.id);
     [order[idx], order[swapWith]] = [order[swapWith], order[idx]];
     await Promise.all(
-      order.map((cid, i) => prisma.dashCard.update({ where: { id: cid }, data: { position: i } })),
+      order.map((cid, i) =>
+        prisma.dashCard.update({ where: { id: cid }, data: { position: i } }),
+      ),
     );
   }
   done();

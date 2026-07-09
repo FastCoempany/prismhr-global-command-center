@@ -258,6 +258,25 @@ export async function addFollowUp(formData: FormData) {
   done();
 }
 
+// --- Account notes (from the partner-outreach chips) -------------------------
+// A dated, time-stamped note pinned to a book account: your own words ("mine")
+// or what the partner told you ("partner"). Lands on the Account Room's detail
+// panel — deliberately NOT the Notes/Follow-ups tabs — and refreshes the chip's
+// green/yellow/red freshness clock.
+export async function addAccountNote(formData: FormData) {
+  const accountId = str(formData, "accountId", 40);
+  const body = str(formData, "body", 2000);
+  if (!(await requireWrite()) || !accountId || !body) done();
+  const kind = str(formData, "kind", 12) === "partner" ? "partner" : "mine";
+  await safeWrite(async () => {
+    await getPrisma().accountNote.create({
+      data: { accountId, partner: str(formData, "partner", 120), kind, body },
+    });
+  });
+  revalidatePath("/accounts");
+  done();
+}
+
 // --- Notes / to-dos (the notetaker, right column) ---------------------------
 // Called programmatically from the client (autosave), so they RETURN a value
 // instead of redirecting — live typing never triggers a page reload. Each write

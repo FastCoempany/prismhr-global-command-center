@@ -3520,3 +3520,181 @@
 .prDel:hover {
   color: #b3261e;
 }
+
+/* ── Account chips: freshness tones + the work box ───────────────────── */
+.chipWrap {
+  position: relative;
+  display: inline-block;
+}
+.chipBtn {
+  font: inherit;
+  cursor: pointer;
+}
+.chipFresh {
+  background: #e4f7ea;
+  border-color: #a7e0bd;
+  color: #14632e;
+}
+.chipStale {
+  background: #fdf3d7;
+  border-color: #ecd490;
+  color: #8a6410;
+}
+.chipCold {
+  background: #fde4e1;
+  border-color: #f3b6ae;
+  color: #a02c20;
+}
+.chipShade {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+}
+.chipPop {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 41;
+  width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(10, 28, 64, 0.18);
+  padding: 12px 14px;
+  text-align: left;
+}
+.chipPopHead {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.chipPopHead b {
+  font-size: 13.5px;
+  color: var(--navy);
+}
+.chipPopStamp {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.chipItem {
+  font-size: 13px;
+}
+.chipItem > summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--blue-d);
+  list-style: none;
+}
+.chipItem > summary::-webkit-details-marker {
+  display: none;
+}
+.chipItem > summary:hover {
+  color: var(--orange);
+}
+.chipNoteForm {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+}
+.chipNoteForm textarea {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 7px 10px;
+  font: inherit;
+  font-size: 12.5px;
+  resize: vertical;
+}
+.chipSaveBtn {
+  align-self: flex-start;
+  border: none;
+  background: var(--navy);
+  color: #fff;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.chipSaveBtn:hover {
+  background: #0d2a5c;
+}
+.chipStageBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-top: 1px solid var(--bg);
+  padding-top: 8px;
+}
+.chipStageHead {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.chipStageList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.chipStageBtn {
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 3px 10px;
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.chipStageBtn:hover {
+  border-color: var(--orange);
+  color: var(--orange);
+}
+.chipStageOn {
+  background: var(--orange);
+  border-color: var(--orange);
+  color: #fff;
+  font-weight: 800;
+}
+.chipStageDone {
+  background: #e4f7ea;
+  border-color: #a7e0bd;
+  color: var(--green);
+}
+.chipItemForm {
+  border-top: 1px solid var(--bg);
+  padding-top: 8px;
+}
+.chipDashBtn {
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--blue-d);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.chipDashBtn:hover {
+  border-color: var(--blue);
+  background: #eef3fb;
+}
+.chipGoLink {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--blue-d);
+  text-decoration: none;
+  border-top: 1px solid var(--bg);
+  padding-top: 8px;
+}
+.chipGoLink:hover {
+  text-decoration: underline;
+}

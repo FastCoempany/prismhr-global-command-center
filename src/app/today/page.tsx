@@ -4,6 +4,7 @@ import { AppWayfinder } from "@/components/app-wayfinder";
 import { loadDashboard } from "@/lib/dashboard/data";
 import { loadFieldNotes, FIELD_NOTE_KINDS } from "@/lib/field-notes/data";
 import {
+  loadAccountNotes,
   loadDoneKeys,
   loadPartnerNotes,
   loadSnoozes,
@@ -11,6 +12,8 @@ import {
   loadTouches,
   loadValidations,
 } from "@/lib/today/overlay";
+import { DASH_NODES } from "@/lib/dashboard/stages";
+import { AccountChip } from "./account-chip";
 import {
   followUpMessage,
   groupUpcomingByDay,
@@ -30,6 +33,7 @@ import {
   firstNameOf,
   isStrongSignal,
   isTrusted,
+  chipTone,
   partnerOutreachKey,
   morningDoneKey,
   movedThisWeek,
@@ -558,7 +562,7 @@ export default async function TodayPage({
     );
   }
 
-  const [snoozes, validations, notes, doneKeys, touches, todos, partnerNotes] =
+  const [snoozes, validations, notes, doneKeys, touches, todos, partnerNotes, acctNotes] =
     await Promise.all([
       loadSnoozes(),
       loadValidations(),
@@ -567,6 +571,7 @@ export default async function TodayPage({
       loadTouches(),
       loadTodos(),
       loadPartnerNotes(),
+      loadAccountNotes(),
     ]);
   const touchMap = new Map(touches.map((t) => [t.subjectKey, t]));
   const followUps = partitionFollowUps(touches);
@@ -728,16 +733,40 @@ export default async function TodayPage({
                         </span>
                       </div>
                       <div className={styles.kickoffAccts}>
-                        {k.accounts.map((a) => (
-                          <Link
-                            key={a.id}
-                            href={`/accounts?focus=${a.id}`}
-                            className={styles.kickoffAcct}
-                          >
-                            {a.name} <b>{a.score}</b>
-                            {a.play ? ` · ${a.play}` : ""}
-                          </Link>
-                        ))}
+                        {k.accounts.map((a) => {
+                          const dashCard = dash.cards.find(
+                            (c) => !c.archived && c.name === a.name,
+                          );
+                          const lastNoteAt = acctNotes.get(a.id)?.[0]?.createdAt ?? null;
+                          return (
+                            <AccountChip
+                              key={a.id}
+                              account={{
+                                id: a.id,
+                                name: a.name,
+                                score: a.score,
+                                play: a.play,
+                              }}
+                              partner={k.partner}
+                              tone={chipTone(lastNoteAt)}
+                              lastNoteAt={lastNoteAt}
+                              card={
+                                dashCard
+                                  ? {
+                                      id: dashCard.id,
+                                      stages: DASH_NODES.map((n) => ({
+                                        key: n.key,
+                                        label: n.label,
+                                        state: dashCard.states[n.key] ?? "todo",
+                                      })),
+                                    }
+                                  : null
+                              }
+                              seedSubtitle={`${a.csm}${a.industry ? ` · ${a.industry}` : ""}`}
+                              seedDiscovery={seedFor(a)}
+                            />
+                          );
+                        })}
                       </div>
                       {(partnerNotes.get(k.partner) ?? []).length > 0 && (
                         <ul className={styles.kickoffNotes}>
