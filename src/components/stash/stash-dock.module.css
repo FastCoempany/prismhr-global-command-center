@@ -15,7 +15,9 @@
   border-radius: var(--ds-radius-pill);
   background: var(--ds-surface);
   color: var(--ds-ink);
-  box-shadow: 0 2px 4px rgba(10, 28, 64, 0.06), 0 14px 30px rgba(10, 28, 64, 0.14);
+  box-shadow:
+    0 2px 4px rgba(10, 28, 64, 0.06),
+    0 14px 30px rgba(10, 28, 64, 0.14);
   cursor: pointer;
   font: 700 13px var(--ds-font-sans);
   transition:
@@ -23,12 +25,16 @@
     transform var(--ds-motion-quick) var(--ds-ease-standard);
 }
 .dock:hover {
-  box-shadow: 0 2px 4px rgba(10, 28, 64, 0.08), 0 16px 36px rgba(10, 28, 64, 0.18);
+  box-shadow:
+    0 2px 4px rgba(10, 28, 64, 0.08),
+    0 16px 36px rgba(10, 28, 64, 0.18);
   transform: translateY(-1px);
 }
 .dockDrag {
   border-color: var(--ds-orange);
-  box-shadow: 0 0 0 3px rgba(230, 112, 30, 0.28), 0 16px 36px rgba(10, 28, 64, 0.18);
+  box-shadow:
+    0 0 0 3px rgba(230, 112, 30, 0.28),
+    0 16px 36px rgba(10, 28, 64, 0.18);
 }
 .dockIcon {
   display: grid;
@@ -167,7 +173,9 @@
   border: 1px solid var(--ds-hair-strong);
   border-top: 3px solid #0a1c40;
   border-radius: var(--ds-radius-frame);
-  box-shadow: 0 2px 4px rgba(10, 28, 64, 0.06), 0 20px 48px rgba(10, 28, 64, 0.18);
+  box-shadow:
+    0 2px 4px rgba(10, 28, 64, 0.06),
+    0 20px 48px rgba(10, 28, 64, 0.18);
   overflow: hidden;
 }
 .panelHead {
@@ -321,4 +329,56 @@
   font: 500 11px/1.5 var(--ds-font-sans);
   color: var(--ds-ink-soft);
   background: var(--ds-surface-sub);
+}
+
+/* Partner routing — blue to match the channel color language. */
+.dot_partner {
+  background: #2563eb;
+}
+.segPartner {
+  border: 1px solid #dbe3f0;
+  background: #fff;
+  border-radius: 7px;
+  padding: 4px 6px;
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #2559b8;
+  max-width: 130px;
+}
+.segPartner:disabled {
+  opacity: 0.55;
+}
+.partnerZone {
+  border-top: 1px solid #e7ecf5;
+  padding: 10px 14px 4px;
+}
+.partnerZoneHead {
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #64748b;
+  margin-bottom: 7px;
+}
+.partnerChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-bottom: 8px;
+}
+.partnerChip {
+  border: 1px dashed #b9c8e4;
+  background: #f5f8fd;
+  color: #2559b8;
+  border-radius: 999px;
+  padding: 4px 11px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: default;
+}
+.partnerChipDrag {
+  border-style: solid;
+  border-color: #2563eb;
+  background: #e3edfd;
 }

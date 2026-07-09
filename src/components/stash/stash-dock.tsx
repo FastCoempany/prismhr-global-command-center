@@ -6,7 +6,9 @@ import {
   deleteTrayItem,
   getTray,
   routeStash,
+  routeStashToPartner,
   routeTrayItem,
+  routeTrayItemToPartner,
   sharpenTrayItem,
 } from "@/app/stash/actions";
 import { STASH_LANES, type StashLane } from "@/lib/stash/summarize";
@@ -26,7 +28,11 @@ function selectionInEditable(sel: Selection | null): boolean {
   let node: Node | null = sel.anchorNode;
   while (node) {
     if (node instanceof HTMLElement) {
-      if (node.tagName === "INPUT" || node.tagName === "TEXTAREA" || node.isContentEditable) {
+      if (
+        node.tagName === "INPUT" ||
+        node.tagName === "TEXTAREA" ||
+        node.isContentEditable
+      ) {
         return true;
       }
     }
@@ -44,12 +50,14 @@ export function StashDock() {
   const [ready, setReady] = useState(false);
   const [enabled, setEnabled] = useState(false);
   const [items, setItems] = useState<StashTrayItem[]>([]);
+  const [partners, setPartners] = useState<string[]>([]);
   const [open, setOpen] = useState(false);
   const [chip, setChip] = useState<Chip | null>(null);
   const [menu, setMenu] = useState<Menu | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [dragPartner, setDragPartner] = useState<string | null>(null);
 
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -62,6 +70,7 @@ export function StashDock() {
   const refetch = useCallback(async () => {
     const t = await getTray();
     setItems(t.items);
+    setPartners(t.partners);
     if (!t.available || !t.canWrite) setEnabled(false);
   }, []);
 
@@ -73,6 +82,7 @@ export function StashDock() {
       setReady(true);
       setEnabled(t.available && t.canWrite);
       setItems(t.items);
+      setPartners(t.partners);
     });
     return () => {
       alive = false;
@@ -171,6 +181,18 @@ export function StashDock() {
     const meta = STASH_LANES.find((l) => l.key === lane);
     flash(res.ok ? `Sent to ${meta?.label} → ${meta?.lands}` : "Couldn't route");
   };
+  // Right-click menu → route straight to a partner (lands as a dated note on
+  // their outreach card + the Partner Room).
+  const onMenuRoutePartner = async (partner: string) => {
+    if (!menu) return;
+    const m = menu;
+    setMenu(null);
+    clearSelection();
+    const res = await routeStashToPartner(m.body, m.source, partner);
+    flash(
+      res.ok ? `Noted for ${partner.split(" ")[0]} → Partner outreach` : "Couldn't route",
+    );
+  };
   // Right-click menu → hold in the tray instead of routing now.
   const onMenuStash = async () => {
     if (!menu) return;
@@ -196,7 +218,10 @@ export function StashDock() {
   const onSharpen = async (id: string) => {
     setBusy(id);
     const res = await sharpenTrayItem(id);
-    if (res) setItems((prev) => prev.map((it) => (it.id === id ? { ...it, micro: res.micro } : it)));
+    if (res)
+      setItems((prev) =>
+        prev.map((it) => (it.id === id ? { ...it, micro: res.micro } : it)),
+      );
     setBusy(null);
   };
   const onDelete = async (id: string) => {
@@ -204,6 +229,25 @@ export function StashDock() {
     await deleteTrayItem(id);
     await refetch();
     setBusy(null);
+  };
+  const onRoutePartner = async (id: string, partner: string) => {
+    if (!partner) return;
+    setBusy(id);
+    const res = await routeTrayItemToPartner(id, partner);
+    await refetch();
+    setBusy(null);
+    flash(res.ok ? `Noted for ${partner.split(" ")[0]}` : "Couldn't route");
+  };
+  // Drop dragged text straight onto a partner name in the panel.
+  const onPartnerDrop = async (partner: string, e: React.DragEvent) => {
+    e.preventDefault();
+    setDragPartner(null);
+    const text = (e.dataTransfer.getData("text/plain") || "").trim();
+    if (text.length < MIN_SEL) return;
+    const res = await routeStashToPartner(text.slice(0, MAX_SEL), "drag", partner);
+    flash(
+      res.ok ? `Noted for ${partner.split(" ")[0]} → Partner outreach` : "Couldn't route",
+    );
   };
 
   // Drag selected text (or a [data-stash] drag) onto the dock → capture.
@@ -255,6 +299,24 @@ export function StashDock() {
               <span className={styles.menuLands}>→ {l.lands}</span>
             </button>
           ))}
+          {partners.length > 0 && (
+            <>
+              <div className={styles.menuSep} />
+              <div className={styles.menuHead}>To a partner</div>
+              {partners.map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  className={styles.menuItem}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => onMenuRoutePartner(p)}
+                >
+                  <span className={`${styles.dot} ${styles.dot_partner}`} />
+                  {p}
+                </button>
+              ))}
+            </>
+          )}
           <div className={styles.menuSep} />
           <button
             type="button"
@@ -277,14 +339,18 @@ export function StashDock() {
             <span className={styles.panelTitle}>
               Stash tray {count > 0 && <span className={styles.panelCount}>{count}</span>}
             </span>
-            <button type="button" className={styles.panelClose} onClick={() => setOpen(false)}>
+            <button
+              type="button"
+              className={styles.panelClose}
+              onClick={() => setOpen(false)}
+            >
               ✕
             </button>
           </div>
           {count === 0 ? (
             <div className={styles.empty}>
-              Nothing waiting. Highlight text, right-click, or drag anything here — it lands with a
-              micro-note to sort into To-do, Follow-up, or Gap.
+              Nothing waiting. Highlight text, right-click, or drag anything here — it
+              lands with a micro-note to sort into To-do, Follow-up, or Gap.
             </div>
           ) : (
             <div className={styles.rows}>
@@ -324,13 +390,54 @@ export function StashDock() {
                         {l.label}
                       </button>
                     ))}
+                    {partners.length > 0 && (
+                      <select
+                        className={styles.segPartner}
+                        disabled={busy === it.id}
+                        value=""
+                        onChange={(e) => onRoutePartner(it.id, e.target.value)}
+                        aria-label="Route to a partner"
+                      >
+                        <option value="" disabled>
+                          → Partner…
+                        </option>
+                        {partners.map((p) => (
+                          <option key={p} value={p}>
+                            {p}
+                          </option>
+                        ))}
+                      </select>
+                    )}
                   </div>
                 </div>
               ))}
             </div>
           )}
+          {partners.length > 0 && (
+            <div className={styles.partnerZone}>
+              <div className={styles.partnerZoneHead}>Partners — drop text on a name</div>
+              <div className={styles.partnerChips}>
+                {partners.map((p) => (
+                  <span
+                    key={p}
+                    className={`${styles.partnerChip} ${dragPartner === p ? styles.partnerChipDrag : ""}`}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setDragPartner(p);
+                    }}
+                    onDragLeave={() => setDragPartner(null)}
+                    onDrop={(e) => onPartnerDrop(p, e)}
+                  >
+                    {p}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
           <div className={styles.panelFoot}>
-            Right-click routes on the spot. Highlight &amp; drag land here — saved until you sort them.
+            Right-click routes on the spot. Highlight &amp; drag land here — saved until
+            you sort them. Anything routed to a partner shows on their outreach card on
+            Today.
           </div>
         </div>
       )}

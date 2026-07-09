@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import styles from "./command-center.module.css";
-import { deleteTouch, logTouch } from "./today/actions";
+import { deleteTouch, logTouch, markReplied } from "./today/actions";
 
 // A visible, editable message box: see exactly what you're sending, tweak it,
 // then copy the edited text. Auto-grows to fit. Used for partner messages and
@@ -53,7 +53,11 @@ export function EditableMessage({
           {copied ? "Copied ✓ — paste into Slack, Teams, or email" : copyLabel}
         </button>
         {val !== text && (
-          <button type="button" className={styles.editMsgReset} onClick={() => setVal(text)}>
+          <button
+            type="button"
+            className={styles.editMsgReset}
+            onClick={() => setVal(text)}
+          >
             Reset
           </button>
         )}
@@ -62,9 +66,51 @@ export function EditableMessage({
   );
 }
 
+// A date + time stamp rendered in the viewer's own timezone. The server renders
+// UTC, then the client corrects after mount — suppressHydrationWarning covers
+// the expected mismatch.
+export function LocalTime({ iso }: { iso: string }) {
+  const [text, setText] = useState(() => fmtStamp(iso, "UTC"));
+  useEffect(() => {
+    // Deferred so the local-tz correction paints after hydration settles
+    // (react-hooks/set-state-in-effect).
+    const id = setTimeout(() => setText(fmtStamp(iso)), 0);
+    return () => clearTimeout(id);
+  }, [iso]);
+  return (
+    <time dateTime={iso} suppressHydrationWarning>
+      {text}
+    </time>
+  );
+}
+
+function fmtStamp(iso: string, timeZone?: string): string {
+  const t = Date.parse(iso);
+  if (Number.isNaN(t)) return "";
+  const d = new Date(t);
+  const day = d.toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    ...(timeZone ? { timeZone } : {}),
+  });
+  const time = d.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    ...(timeZone ? { timeZone } : {}),
+  });
+  return `${day} · ${time}`;
+}
+
 // Copy a partner-engagement line to the clipboard — the first, smallest step
 // toward "automate copy to partners": today it's one click to paste into Slack.
-export function CopyLine({ text, label = "Copy the line" }: { text: string; label?: string }) {
+export function CopyLine({
+  text,
+  label = "Copy the line",
+}: {
+  text: string;
+  label?: string;
+}) {
   const [done, setDone] = useState(false);
   return (
     <button
@@ -104,8 +150,10 @@ function ContactSubmit({ label }: { label: string }) {
 }
 
 // One control that does both jobs: shows the exact opener (editable + copyable),
-// and logs the contact — capturing what you actually sent and arming an
-// automatic follow-up. Once contacted it collapses to a confirmation + Undo.
+// and logs the contact — capturing what you actually sent and arming the next
+// check-in (later today or tomorrow, never a weekend). Once contacted it shows
+// when it was sent, when the check-in lands, a "They replied" close, an Undo,
+// and "+ New outreach" to start the next thread (history is kept server-side).
 export function ContactControl({
   subjectKey,
   kind,
@@ -114,9 +162,11 @@ export function ContactControl({
   defaultMessage,
   sentLabel = "Mark contacted ✓",
   editLabel = "Edit & copy the message",
-  doneText = "Contacted ✓",
+  doneText = "Contacted",
   contacted,
+  contactedLabel,
   followUpLabel,
+  replied = false,
 }: {
   subjectKey: string;
   kind: "partner" | "account";
@@ -127,7 +177,9 @@ export function ContactControl({
   editLabel?: string;
   doneText?: string;
   contacted: boolean;
-  followUpLabel?: string;
+  contactedLabel?: string; // short date the contact was logged
+  followUpLabel?: string; // short date of the next check-in
+  replied?: boolean;
 }) {
   const [val, setVal] = useState(defaultMessage);
   const [copied, setCopied] = useState(false);
@@ -144,22 +196,9 @@ export function ContactControl({
   };
   useEffect(fit, [val]);
 
-  if (contacted) {
-    return (
-      <div className={styles.contactDone}>
-        <span className={styles.contactDoneText}>
-          {doneText}
-          {followUpLabel ? ` · follow-up ${followUpLabel}` : ""}
-        </span>
-        <form action={deleteTouch}>
-          <input type="hidden" name="subjectKey" value={subjectKey} />
-          <button className={styles.mvUndoBtn}>Undo</button>
-        </form>
-      </div>
-    );
-  }
-
-  return (
+  // The outreach form (editor + when + send). Rendered directly before first
+  // contact, and inside a "+ New outreach" disclosure after.
+  const outreachForm = (submitLabel: string) => (
     <form action={logTouch} className={styles.contactForm}>
       <input type="hidden" name="subjectKey" value={subjectKey} />
       <input type="hidden" name="kind" value={kind} />
@@ -212,7 +251,46 @@ export function ContactControl({
           </div>
         </div>
       </details>
-      <ContactSubmit label={sentLabel} />
+      <div className={styles.contactSendRow}>
+        <label className={styles.contactWhen}>
+          Check in
+          <select name="when" defaultValue="tomorrow" aria-label="When to check in">
+            <option value="today">later today</option>
+            <option value="tomorrow">tomorrow</option>
+          </select>
+        </label>
+        <ContactSubmit label={submitLabel} />
+      </div>
     </form>
   );
+
+  if (contacted) {
+    return (
+      <div className={styles.contactDone}>
+        <div className={styles.contactDoneRow}>
+          <span className={styles.contactDoneText}>
+            {replied ? "Replied ✓" : `${doneText} ✓`}
+            {contactedLabel ? ` · sent ${contactedLabel}` : ""}
+            {!replied && followUpLabel ? ` · check-in ${followUpLabel}` : ""}
+          </span>
+          {!replied && (
+            <form action={markReplied}>
+              <input type="hidden" name="subjectKey" value={subjectKey} />
+              <button className={styles.contactRepliedBtn}>They replied ✓</button>
+            </form>
+          )}
+          <form action={deleteTouch}>
+            <input type="hidden" name="subjectKey" value={subjectKey} />
+            <button className={styles.mvUndoBtn}>Undo</button>
+          </form>
+        </div>
+        <details className={styles.contactAgain}>
+          <summary className={styles.contactSummary}>＋ New outreach</summary>
+          {outreachForm("Log new outreach ✓")}
+        </details>
+      </div>
+    );
+  }
+
+  return outreachForm(sentLabel);
 }

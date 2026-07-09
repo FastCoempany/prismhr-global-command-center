@@ -13,7 +13,12 @@
   margin: 0 auto;
   padding: 22px 28px 90px;
   color: var(--ink);
-  font: 14.5px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font:
+    14.5px/1.5 system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
 }
 .h1 {
   font-size: 24px;
@@ -601,7 +606,12 @@
 }
 .playPre {
   white-space: pre-wrap;
-  font: 12.5px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font:
+    12.5px/1.5 system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
   background: #fff;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -1337,7 +1347,9 @@
   border-top: 3px solid var(--orange);
   border-radius: 14px;
   background: linear-gradient(180deg, #fffaf5, var(--card) 120px);
-  box-shadow: 0 1px 2px rgba(10, 28, 64, 0.05), 0 10px 30px rgba(10, 28, 64, 0.05);
+  box-shadow:
+    0 1px 2px rgba(10, 28, 64, 0.05),
+    0 10px 30px rgba(10, 28, 64, 0.05);
   padding: 16px 22px 20px;
   margin-bottom: 16px;
 }
@@ -1426,7 +1438,9 @@
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: 14px;
-  box-shadow: 0 1px 2px rgba(10, 28, 64, 0.05), 0 10px 30px rgba(10, 28, 64, 0.05);
+  box-shadow:
+    0 1px 2px rgba(10, 28, 64, 0.05),
+    0 10px 30px rgba(10, 28, 64, 0.05);
   padding: 4px 24px;
   margin-bottom: 16px;
 }
@@ -3180,4 +3194,329 @@
 }
 .engageAskSummary::-webkit-details-marker {
   display: none;
+}
+
+/* ── Contact control: when-picker, replied, new outreach ─────────────── */
+.contactSendRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.contactWhen {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.contactWhen select {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 6px 8px;
+  font: inherit;
+  font-size: 12.5px;
+  background: #fff;
+  color: var(--ink);
+}
+.contactDone {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+.contactDoneRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.contactRepliedBtn {
+  border: 1px solid #a7e0bd;
+  background: #fff;
+  color: var(--green);
+  border-radius: 8px;
+  padding: 5px 12px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.contactRepliedBtn:hover {
+  background: #e4f7ea;
+}
+.contactAgain {
+  font-size: 13px;
+}
+
+/* ── Follow-ups: delay menu, day groups, done list ───────────────────── */
+.fuDelay {
+  position: relative;
+}
+.fuDelay > summary {
+  list-style: none;
+  display: inline-block;
+}
+.fuDelay > summary::-webkit-details-marker {
+  display: none;
+}
+.fuDelayMenu {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+.fuDelayOpt {
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--ink);
+  border-radius: 8px;
+  padding: 5px 12px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.fuDelayOpt:hover {
+  border-color: var(--orange);
+  color: var(--orange);
+}
+.fuDayGroup {
+  margin-top: 14px;
+}
+.fuDayHead {
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--navy);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 5px;
+  list-style: none;
+}
+.fuDayHead::-webkit-details-marker {
+  display: none;
+}
+.fuDayHead::after {
+  content: "▾";
+  font-size: 10px;
+  color: var(--muted);
+}
+.fuDayGroup:not([open]) .fuDayHead::after {
+  content: "▸";
+}
+.fuDayCount {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0 8px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.fuDone {
+  margin-top: 18px;
+  border-top: 2px solid var(--line);
+  padding-top: 10px;
+}
+.fuDoneHead {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--green);
+  margin-bottom: 6px;
+}
+.fuDoneList {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.fuDoneList li {
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+/* ── Partner outreach card extras ────────────────────────────────────── */
+.kickoffRoomLink {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--blue-d);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.kickoffRoomLink:hover {
+  text-decoration: underline;
+}
+.kickoffNotes {
+  margin: 8px 0 0;
+  padding: 8px 12px;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: var(--bg);
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+}
+.kickoffNotes li {
+  font-size: 12.5px;
+  color: var(--ink);
+}
+.kickoffNotes li b {
+  color: var(--navy);
+}
+.kickoffNotesMore a {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--blue-d);
+}
+
+/* ── Partner Room ────────────────────────────────────────────────────── */
+.prCard {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 14px;
+  padding: 16px 18px;
+  margin-top: 16px;
+  scroll-margin-top: 80px;
+}
+.prHead {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.prName {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--navy);
+  letter-spacing: -0.01em;
+}
+.prRole {
+  font-size: 12px;
+  color: var(--muted);
+}
+.prNext {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--blue-d);
+}
+.prTodayLink {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--blue-d);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.prTodayLink:hover {
+  text-decoration: underline;
+}
+.prNoteForm {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.prNoteForm input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 11px;
+  font: inherit;
+  font-size: 13px;
+}
+.prNoteBtn {
+  border: none;
+  background: var(--navy);
+  color: #fff;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.prNoteBtn:hover {
+  background: #0d2a5c;
+}
+.prEmpty {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.prTimeline {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+}
+.prEntry {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 7px 0;
+  border-top: 1px solid var(--bg);
+  font-size: 13px;
+}
+.prWhen {
+  flex: none;
+  width: 150px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--navy);
+  font-variant-numeric: tabular-nums;
+}
+.prTag {
+  flex: none;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-radius: 5px;
+  padding: 1px 7px;
+  background: var(--bg);
+  color: var(--muted);
+  border: 1px solid var(--line);
+}
+.prTag_outreach {
+  background: #fdeadd;
+  color: #b45309;
+  border-color: #f5cfae;
+}
+.prTag_reply {
+  background: #e4f7ea;
+  color: var(--green);
+  border-color: #a7e0bd;
+}
+.prTag_stash {
+  background: #efe9fa;
+  color: #5b3aa8;
+  border-color: #d7c8f2;
+}
+.prBody {
+  flex: 1;
+  min-width: 0;
+  color: var(--ink);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.prDel {
+  border: none;
+  background: none;
+  color: var(--muted);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 0 4px;
+}
+.prDel:hover {
+  color: #b3261e;
 }

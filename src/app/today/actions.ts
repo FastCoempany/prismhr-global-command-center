@@ -6,7 +6,7 @@ import { getAppAccess } from "@/lib/auth";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import { randomUUID } from "node:crypto";
 import { asFieldNoteKind } from "@/lib/field-notes/data";
-import { FOLLOWUP_DAYS } from "@/lib/today/follow-ups";
+import { asFollowUpWhen, nextCheckIn, type TouchLogEntry } from "@/lib/today/follow-ups";
 
 function str(fd: FormData, key: string, max = 4000) {
   const v = fd.get(key);
@@ -102,11 +102,18 @@ export async function toggleTaskDone(formData: FormData) {
 }
 
 // --- Contacts + follow-up cadence -------------------------------------------
-// Log a contact ("touch") and arm an automatic follow-up `intervalDays` out.
-// Re-logging the same subjectKey resets the thread (fresh contact, fresh
-// follow-up). The message is what was actually sent (captured from the box).
-function followUpDate(now: number, days: number) {
-  return new Date(now + days * 86_400_000);
+// Log a contact ("touch") and arm the next check-in — later today or tomorrow,
+// never on a weekend. Re-logging the same subjectKey starts a fresh outreach but
+// keeps the thread's history: the previous contact is archived into the touch's
+// log, so the by-partner timeline (Partner Room) never loses an outreach.
+
+function clipForLog(s: string, max = 240): string {
+  const t = s.replace(/\s+/g, " ").trim();
+  return t.length <= max ? t : `${t.slice(0, max)}…`;
+}
+
+function touchLog(v: unknown): TouchLogEntry[] {
+  return Array.isArray(v) ? (v as TouchLogEntry[]) : [];
 }
 
 export async function logTouch(formData: FormData) {
@@ -116,10 +123,25 @@ export async function logTouch(formData: FormData) {
   const kind = str(formData, "kind", 12) === "account" ? "account" : "partner";
   const detail = str(formData, "detail", 200);
   const message = str(formData, "message", 4000);
+  const when = asFollowUpWhen(str(formData, "when", 12));
   await safeWrite(async () => {
+    const prisma = getPrisma();
     const now = Date.now();
-    const followUpAt = followUpDate(now, FOLLOWUP_DAYS);
-    await getPrisma().touch.upsert({
+    const followUpAt = nextCheckIn(now, when);
+    const prev = await prisma.touch.findUnique({ where: { subjectKey } });
+    // Archive the outgoing contact into the thread history before overwriting.
+    const log = prev
+      ? [
+          ...touchLog(prev.log),
+          {
+            at: prev.contactedAt.toISOString(),
+            body: `Outreach sent${prev.message ? ` — “${clipForLog(prev.message)}”` : ""}${
+              prev.status === "replied" ? " · replied" : ""
+            }`,
+          },
+        ]
+      : [];
+    await prisma.touch.upsert({
       where: { subjectKey },
       create: {
         subjectKey,
@@ -129,7 +151,7 @@ export async function logTouch(formData: FormData) {
         message: message || null,
         contactedAt: new Date(now),
         followUpAt,
-        intervalDays: FOLLOWUP_DAYS,
+        intervalDays: when === "today" ? 0 : 1,
         status: "awaiting",
         log: [],
       },
@@ -140,8 +162,9 @@ export async function logTouch(formData: FormData) {
         message: message || null,
         contactedAt: new Date(now),
         followUpAt,
+        intervalDays: when === "today" ? 0 : 1,
         status: "awaiting",
-        log: [],
+        log,
       },
     });
   });
@@ -158,12 +181,23 @@ export async function deleteTouch(formData: FormData) {
   done();
 }
 
-// Close the loop — they replied; stop the cadence.
+// Close the loop — they replied; stop the cadence. The reply is stamped into the
+// thread history so the Partner Room timeline shows when the loop closed.
 export async function markReplied(formData: FormData) {
   const subjectKey = str(formData, "subjectKey", 200);
   if (!(await requireWrite()) || !subjectKey) done();
   await safeWrite(async () => {
-    await getPrisma().touch.updateMany({ where: { subjectKey }, data: { status: "replied" } });
+    const prisma = getPrisma();
+    const t = await prisma.touch.findUnique({ where: { subjectKey } });
+    if (!t) return;
+    const log = [
+      ...touchLog(t.log),
+      { at: new Date().toISOString(), body: "Reply received ✓" },
+    ];
+    await prisma.touch.update({
+      where: { subjectKey },
+      data: { status: "replied", log },
+    });
   });
   done();
 }
@@ -182,17 +216,16 @@ export async function bringFollowUpDue(formData: FormData) {
   done();
 }
 
-// Push the next check-in out one more interval (still no reply).
-export async function snoozeFollowUp(formData: FormData) {
+// Delay the check-in — later today or tomorrow (never a weekend). That's the
+// whole menu; there is no multi-day snooze.
+export async function delayFollowUp(formData: FormData) {
   const subjectKey = str(formData, "subjectKey", 200);
   if (!(await requireWrite()) || !subjectKey) done();
+  const when = asFollowUpWhen(str(formData, "when", 12));
   await safeWrite(async () => {
-    const prisma = getPrisma();
-    const t = await prisma.touch.findUnique({ where: { subjectKey } });
-    if (!t) return;
-    await prisma.touch.update({
+    await getPrisma().touch.updateMany({
       where: { subjectKey },
-      data: { followUpAt: followUpDate(Date.now(), t.intervalDays), status: "awaiting" },
+      data: { followUpAt: nextCheckIn(Date.now(), when), status: "awaiting" },
     });
   });
   done();
@@ -203,9 +236,8 @@ export async function snoozeFollowUp(formData: FormData) {
 // of a partner nudge.
 export async function addFollowUp(formData: FormData) {
   const label = str(formData, "label", 200);
-  const days = parseInt(str(formData, "days", 4), 10);
   if (!(await requireWrite()) || !label) done();
-  const interval = Number.isFinite(days) && days >= 0 ? days : FOLLOWUP_DAYS;
+  const when = asFollowUpWhen(str(formData, "when", 12));
   await safeWrite(async () => {
     const now = Date.now();
     await getPrisma().touch.create({
@@ -216,8 +248,8 @@ export async function addFollowUp(formData: FormData) {
         detail: str(formData, "detail", 400) || null,
         message: null,
         contactedAt: new Date(now),
-        followUpAt: followUpDate(now, interval),
-        intervalDays: interval || FOLLOWUP_DAYS,
+        followUpAt: nextCheckIn(now, when),
+        intervalDays: when === "today" ? 0 : 1,
         status: "awaiting",
         log: [],
       },
@@ -240,7 +272,9 @@ export async function createTodoNote(): Promise<{ id: string } | null> {
       orderBy: { position: "desc" },
       select: { position: true },
     });
-    const t = await prisma.todo.create({ data: { body: "", position: (top?.position ?? -1) + 1 } });
+    const t = await prisma.todo.create({
+      data: { body: "", position: (top?.position ?? -1) + 1 },
+    });
     return { id: t.id };
   } catch {
     return null;
@@ -256,10 +290,14 @@ export async function saveTodoNote(
   if (!(await requireWrite()) || !id) return { ok: false };
   const b = typeof body === "string" ? body.slice(0, 20000) : "";
   const acct = accountId ? accountId.slice(0, 40) : null;
-  const when = remindAt && !Number.isNaN(Date.parse(remindAt)) ? new Date(remindAt) : null;
+  const when =
+    remindAt && !Number.isNaN(Date.parse(remindAt)) ? new Date(remindAt) : null;
   const prisma = getPrisma();
   try {
-    await prisma.todo.update({ where: { id }, data: { body: b, accountId: acct, remindAt: when } });
+    await prisma.todo.update({
+      where: { id },
+      data: { body: b, accountId: acct, remindAt: when },
+    });
     return { ok: true };
   } catch {
     // Notetaker columns not migrated yet — still persist the body so the note is
@@ -303,13 +341,10 @@ export async function addTouchNote(formData: FormData) {
     const prisma = getPrisma();
     const t = await prisma.touch.findUnique({ where: { subjectKey } });
     if (!t) return;
-    const log: Record<string, string>[] = Array.isArray(t.log)
-      ? (t.log as Record<string, string>[])
-      : [];
-    log.push({ at: new Date().toISOString(), body });
+    const log = [...touchLog(t.log), { at: new Date().toISOString(), body }];
     await prisma.touch.update({
       where: { subjectKey },
-      data: { log, followUpAt: followUpDate(Date.now(), t.intervalDays), status: "awaiting" },
+      data: { log, followUpAt: nextCheckIn(Date.now(), "tomorrow"), status: "awaiting" },
     });
   });
   done();

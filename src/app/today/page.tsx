@@ -5,16 +5,15 @@ import { loadDashboard } from "@/lib/dashboard/data";
 import { loadFieldNotes, FIELD_NOTE_KINDS } from "@/lib/field-notes/data";
 import {
   loadDoneKeys,
+  loadPartnerNotes,
   loadSnoozes,
   loadTodos,
   loadTouches,
   loadValidations,
 } from "@/lib/today/overlay";
 import {
-  daysUntilIso,
-  FOLLOWUP_DAYS,
   followUpMessage,
-  followUpStatusLine,
+  groupUpcomingByDay,
   outreachSubjectKey,
   partitionFollowUps,
   type Touch,
@@ -58,10 +57,10 @@ import {
   addFollowUp,
   addTouchNote,
   bringFollowUpDue,
+  delayFollowUp,
   deleteTouch,
   markReplied,
   resolveFieldNote,
-  snoozeFollowUp,
   snoozeSignal,
   toggleTaskDone,
   unsnoozeSignal,
@@ -468,7 +467,9 @@ function FollowUpDue({ t }: { t: Touch }) {
             <span className={styles.fuDetail}> · {t.detail}</span>
           ) : null}
         </span>
-        <span className={styles.fuAge}>{followUpStatusLine(t)}</span>
+        {!custom && (
+          <span className={styles.fuAge}>Contacted {shortDate(t.contactedAt)}</span>
+        )}
       </div>
       {custom && t.detail ? <p className={styles.fuNote}>{t.detail}</p> : null}
       {!custom && <SfCheckpoint when="followup" />}
@@ -503,10 +504,21 @@ function FollowUpDue({ t }: { t: Touch }) {
             {custom ? "Done ✓" : "They replied ✓"}
           </button>
         </form>
-        <form action={snoozeFollowUp}>
-          <input type="hidden" name="subjectKey" value={t.subjectKey} />
-          <button className={styles.fuSnooze}>Snooze +{FOLLOWUP_DAYS} days</button>
-        </form>
+        <details className={styles.fuDelay}>
+          <summary className={styles.fuSnooze}>Delay ▾</summary>
+          <div className={styles.fuDelayMenu}>
+            <form action={delayFollowUp}>
+              <input type="hidden" name="subjectKey" value={t.subjectKey} />
+              <input type="hidden" name="when" value="today" />
+              <button className={styles.fuDelayOpt}>Later today</button>
+            </form>
+            <form action={delayFollowUp}>
+              <input type="hidden" name="subjectKey" value={t.subjectKey} />
+              <input type="hidden" name="when" value="tomorrow" />
+              <button className={styles.fuDelayOpt}>Tomorrow</button>
+            </form>
+          </div>
+        </details>
         <form action={addTouchNote} className={styles.fuNoteForm}>
           <input type="hidden" name="subjectKey" value={t.subjectKey} />
           <input
@@ -546,14 +558,16 @@ export default async function TodayPage({
     );
   }
 
-  const [snoozes, validations, notes, doneKeys, touches, todos] = await Promise.all([
-    loadSnoozes(),
-    loadValidations(),
-    loadFieldNotes(),
-    loadDoneKeys(),
-    loadTouches(),
-    loadTodos(),
-  ]);
+  const [snoozes, validations, notes, doneKeys, touches, todos, partnerNotes] =
+    await Promise.all([
+      loadSnoozes(),
+      loadValidations(),
+      loadFieldNotes(),
+      loadDoneKeys(),
+      loadTouches(),
+      loadTodos(),
+      loadPartnerNotes(),
+    ]);
   const touchMap = new Map(touches.map((t) => [t.subjectKey, t]));
   const followUps = partitionFollowUps(touches);
 
@@ -701,6 +715,13 @@ export default async function TodayPage({
                           {k.partner}
                         </span>
                         <span className={styles.kickoffPartnerRole}>{k.role}</span>
+                        <Link
+                          href={`/partners#${encodeURIComponent(k.partner)}`}
+                          className={styles.kickoffRoomLink}
+                          title="Every outreach and note for this partner, timestamped"
+                        >
+                          Partner room →
+                        </Link>
                         <span className={styles.kickoffCount}>
                           {k.accounts.length} teed up
                           {k.accounts.length < 5 ? " · fewer than 5 in this book" : ""}
@@ -718,6 +739,23 @@ export default async function TodayPage({
                           </Link>
                         ))}
                       </div>
+                      {(partnerNotes.get(k.partner) ?? []).length > 0 && (
+                        <ul className={styles.kickoffNotes}>
+                          {(partnerNotes.get(k.partner) ?? []).slice(0, 3).map((n) => (
+                            <li key={n.id}>
+                              <b>{shortDate(n.createdAt)}</b> — {n.body}
+                            </li>
+                          ))}
+                          {(partnerNotes.get(k.partner) ?? []).length > 3 && (
+                            <li className={styles.kickoffNotesMore}>
+                              <Link href={`/partners#${encodeURIComponent(k.partner)}`}>
+                                +{(partnerNotes.get(k.partner) ?? []).length - 3} more in
+                                the partner room
+                              </Link>
+                            </li>
+                          )}
+                        </ul>
+                      )}
                       <div className={styles.kickoffContact}>
                         <ContactControl
                           subjectKey={key}
@@ -728,7 +766,11 @@ export default async function TodayPage({
                           sentLabel="Mark contacted ✓"
                           editLabel={`Edit & copy the roundup to ${firstNameOf(k.partner)}`}
                           contacted={done}
+                          contactedLabel={
+                            touch ? shortDate(touch.contactedAt) : undefined
+                          }
                           followUpLabel={touch ? shortDate(touch.followUpAt) : undefined}
+                          replied={touch?.status === "replied"}
                         />
                       </div>
                     </div>
@@ -1184,79 +1226,65 @@ export default async function TodayPage({
                     : "Nothing due right now"}
                 </h2>
                 <p className={styles.fuSub}>
-                  Every contact you log sets a check-in {FOLLOWUP_DAYS} days out — or
-                  write your own below. They keep surfacing until you close them.
+                  Every contact you log sets a check-in — later today or tomorrow, never
+                  on a weekend — or write your own below. They keep surfacing until you
+                  close them.
                 </p>
               </div>
               {followUps.due.map((t) => (
                 <FollowUpDue key={t.subjectKey} t={t} />
               ))}
-              {followUps.upcoming.length > 0 && (
-                <details className={styles.fuUpcoming}>
-                  <summary>Upcoming check-ins ({followUps.upcoming.length})</summary>
+              {groupUpcomingByDay(followUps.upcoming).map((g) => (
+                <details key={g.key} className={styles.fuDayGroup} open>
+                  <summary className={styles.fuDayHead}>
+                    {g.label}
+                    <span className={styles.fuDayCount}>{g.items.length}</span>
+                  </summary>
                   <ul className={styles.fuUpcomingList}>
-                    {followUps.upcoming.map((t) => {
-                      const d = daysUntilIso(t.followUpAt);
-                      return (
-                        <li key={t.subjectKey}>
-                          <span className={styles.fuUpWho}>{t.label}</span>
-                          {t.detail ? (
-                            <span className={styles.fuUpDetail}> · {t.detail}</span>
-                          ) : null}
-                          <span className={styles.fuUpWhen}>
-                            {" "}
-                            — {d === 0
-                              ? "due today"
-                              : `in ${d} day${d === 1 ? "" : "s"}`}{" "}
-                            ({shortDate(t.followUpAt)})
-                          </span>
-                          <span className={styles.fuUpActions}>
-                            <form action={markReplied} className={styles.valInline}>
-                              <input
-                                type="hidden"
-                                name="subjectKey"
-                                value={t.subjectKey}
-                              />
-                              <button
-                                className={styles.fuUpDone}
-                                title="Close it — already done"
-                              >
-                                Done ✓
-                              </button>
-                            </form>
-                            <form action={bringFollowUpDue} className={styles.valInline}>
-                              <input
-                                type="hidden"
-                                name="subjectKey"
-                                value={t.subjectKey}
-                              />
-                              <button
-                                className={styles.fuUpBtn}
-                                title="Bring the check-in to today"
-                              >
-                                Do now
-                              </button>
-                            </form>
-                            <form action={deleteTouch} className={styles.valInline}>
-                              <input
-                                type="hidden"
-                                name="subjectKey"
-                                value={t.subjectKey}
-                              />
-                              <button
-                                className={styles.fuUpDel}
-                                title="Remove this follow-up"
-                              >
-                                Delete
-                              </button>
-                            </form>
-                          </span>
-                        </li>
-                      );
-                    })}
+                    {g.items.map((t) => (
+                      <li key={t.subjectKey}>
+                        <span className={styles.fuUpWho}>{t.label}</span>
+                        {t.detail ? (
+                          <span className={styles.fuUpDetail}> · {t.detail}</span>
+                        ) : null}
+                        <span className={styles.fuUpWhen}>
+                          {" "}
+                          — {shortDate(t.followUpAt)}
+                        </span>
+                        <span className={styles.fuUpActions}>
+                          <form action={markReplied} className={styles.valInline}>
+                            <input type="hidden" name="subjectKey" value={t.subjectKey} />
+                            <button
+                              className={styles.fuUpDone}
+                              title="Close it — already done"
+                            >
+                              Done ✓
+                            </button>
+                          </form>
+                          <form action={bringFollowUpDue} className={styles.valInline}>
+                            <input type="hidden" name="subjectKey" value={t.subjectKey} />
+                            <button
+                              className={styles.fuUpBtn}
+                              title="Bring the check-in to today"
+                            >
+                              Do now
+                            </button>
+                          </form>
+                          <form action={deleteTouch} className={styles.valInline}>
+                            <input type="hidden" name="subjectKey" value={t.subjectKey} />
+                            <button
+                              className={styles.fuUpDel}
+                              title="Remove this follow-up"
+                            >
+                              Delete
+                            </button>
+                          </form>
+                        </span>
+                      </li>
+                    ))}
                   </ul>
                 </details>
-              )}
+              ))}
               <form action={addFollowUp} className={styles.fuAdd}>
                 <input
                   name="label"
@@ -1265,19 +1293,48 @@ export default async function TodayPage({
                   placeholder="Add your own follow-up (who / what)…"
                   aria-label="Add a follow-up"
                 />
-                <select
-                  name="days"
-                  defaultValue={String(FOLLOWUP_DAYS)}
-                  aria-label="When"
-                >
-                  <option value="0">today</option>
-                  <option value="1">in 1 day</option>
-                  <option value="2">in 2 days</option>
-                  <option value="3">in 3 days</option>
-                  <option value="7">in 7 days</option>
+                <select name="when" defaultValue="tomorrow" aria-label="When">
+                  <option value="today">later today</option>
+                  <option value="tomorrow">tomorrow</option>
                 </select>
                 <button className={styles.fuAddBtn}>Add</button>
               </form>
+              {followUps.replied.length > 0 && (
+                <div className={styles.fuDone}>
+                  <div className={styles.fuDoneHead}>Done</div>
+                  <ul className={styles.fuDoneList}>
+                    {followUps.replied.map((t) => (
+                      <li key={t.subjectKey}>
+                        <span className={styles.fuUpWho}>{t.label}</span>
+                        {t.detail ? (
+                          <span className={styles.fuUpDetail}> · {t.detail}</span>
+                        ) : null}
+                        <span className={styles.fuUpWhen}>
+                          {" "}
+                          — contacted {shortDate(t.contactedAt)}
+                        </span>
+                        <span className={styles.fuUpActions}>
+                          <form action={bringFollowUpDue} className={styles.valInline}>
+                            <input type="hidden" name="subjectKey" value={t.subjectKey} />
+                            <button
+                              className={styles.fuUpBtn}
+                              title="Reopen — bring it back due"
+                            >
+                              Reopen
+                            </button>
+                          </form>
+                          <form action={deleteTouch} className={styles.valInline}>
+                            <input type="hidden" name="subjectKey" value={t.subjectKey} />
+                            <button className={styles.fuUpDel} title="Remove entirely">
+                              Delete
+                            </button>
+                          </form>
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           }
           notes={

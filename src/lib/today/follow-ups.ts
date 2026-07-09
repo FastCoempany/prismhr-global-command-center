@@ -5,8 +5,13 @@
 
 import { firstNameOf } from "./build";
 
-// Default check-in gap: "every other day."
-export const FOLLOWUP_DAYS = 2;
+// When the next check-in can land: later today, or tomorrow. That's the whole
+// menu — no multi-day windows.
+export type FollowUpWhen = "today" | "tomorrow";
+
+export function asFollowUpWhen(v: string): FollowUpWhen {
+  return v === "today" ? "today" : "tomorrow";
+}
 
 export type TouchLogEntry = { at: string; body: string };
 
@@ -42,10 +47,16 @@ export function outreachSubjectKey(accountId: string): string {
   return `outreach:${accountId}`;
 }
 
-// ISO of `now` + `days`, at day granularity is unnecessary — keep the time so the
-// gap is a true N×24h. Pure given `now`.
-export function followUpFrom(now: number, days: number = FOLLOWUP_DAYS): string {
-  return new Date(now + days * 86_400_000).toISOString();
+// The next check-in instant. "today" = a few hours from now; "tomorrow" = this
+// time tomorrow. Either way the window never includes a weekend — anything that
+// would land on Sat/Sun rolls forward to Monday (same time of day). Days are
+// UTC, consistent with dayStamp/weekStamp everywhere else. Pure given `now`.
+export function nextCheckIn(now: number, when: FollowUpWhen): Date {
+  const base = when === "today" ? now + 4 * 3_600_000 : now + 86_400_000;
+  let d = new Date(base);
+  while (d.getUTCDay() === 6 || d.getUTCDay() === 0)
+    d = new Date(d.getTime() + 86_400_000);
+  return d;
 }
 
 // Whole days between an ISO instant and `now` (floored, never negative).
@@ -75,7 +86,10 @@ export type FollowUpBuckets = {
   replied: Touch[]; // closed the loop (most recent first)
 };
 
-export function partitionFollowUps(touches: Touch[], now: number = Date.now()): FollowUpBuckets {
+export function partitionFollowUps(
+  touches: Touch[],
+  now: number = Date.now(),
+): FollowUpBuckets {
   const due: Touch[] = [];
   const upcoming: Touch[] = [];
   const replied: Touch[] = [];
@@ -90,6 +104,48 @@ export function partitionFollowUps(touches: Touch[], now: number = Date.now()): 
   return { due, upcoming, replied };
 }
 
+// Upcoming check-ins, grouped by the calendar day they're due (UTC), soonest day
+// first. Labels read for scanning: "Today", "Tomorrow", else "Wednesday · Jul 15".
+export type DayGroup = { key: string; label: string; items: Touch[] };
+
+function utcDayKey(ms: number): string {
+  return new Date(ms).toISOString().slice(0, 10);
+}
+
+export function dayGroupLabel(iso: string, now: number = Date.now()): string {
+  const t = Date.parse(iso);
+  if (Number.isNaN(t)) return "";
+  const key = utcDayKey(t);
+  if (key === utcDayKey(now)) return "Today";
+  if (key === utcDayKey(now + 86_400_000)) return "Tomorrow";
+  const d = new Date(t);
+  const weekday = d.toLocaleDateString("en-US", { weekday: "long", timeZone: "UTC" });
+  const monthDay = d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  });
+  return `${weekday} · ${monthDay}`;
+}
+
+export function groupUpcomingByDay(
+  upcoming: Touch[],
+  now: number = Date.now(),
+): DayGroup[] {
+  const groups = new Map<string, DayGroup>();
+  for (const t of upcoming) {
+    const ms = Date.parse(t.followUpAt);
+    if (Number.isNaN(ms)) continue;
+    const key = utcDayKey(ms);
+    const g = groups.get(key);
+    if (g) g.items.push(t);
+    else groups.set(key, { key, label: dayGroupLabel(t.followUpAt, now), items: [t] });
+  }
+  // partitionFollowUps already sorted `upcoming` soonest-first, so insertion
+  // order is day order and items within a day stay soonest-first.
+  return [...groups.values()];
+}
+
 // The ready-to-send follow-up nudge — a gentle "circling back," shaped by whether
 // the touch was a partner week-opener or a single-account outreach. Editable
 // before you send it.
@@ -97,7 +153,8 @@ export function followUpMessage(t: Touch, now: number = Date.now()): string {
   if (t.kind === "custom") return t.message || t.label; // your own words, not a partner nudge
   const who = firstNameOf(t.label);
   const days = daysSinceIso(t.contactedAt, now);
-  const when = days <= 0 ? "the other day" : days === 1 ? "yesterday" : `${days} days ago`;
+  const when =
+    days <= 0 ? "the other day" : days === 1 ? "yesterday" : `${days} days ago`;
   if (t.kind === "partner") {
     return (
       `Hi ${who} — circling back on the accounts I flagged ${when} (${t.detail}). No pressure at ` +
@@ -111,11 +168,4 @@ export function followUpMessage(t: Touch, now: number = Date.now()): string {
     `moment; I just didn't want it to slip. Whenever you have a second, even a quick read on ` +
     `whether there's anything worth exploring would be a big help. Thanks!`
   );
-}
-
-// How a due row should read: "contacted 3 days ago, no reply yet."
-export function followUpStatusLine(t: Touch, now: number = Date.now()): string {
-  const days = daysSinceIso(t.contactedAt, now);
-  const ago = days <= 0 ? "earlier today" : days === 1 ? "yesterday" : `${days} days ago`;
-  return `Contacted ${ago} · no reply logged yet`;
 }

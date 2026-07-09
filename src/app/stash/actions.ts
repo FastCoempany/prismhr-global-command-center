@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { randomUUID } from "node:crypto";
 import { getAppAccess } from "@/lib/auth";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
-import { FOLLOWUP_DAYS } from "@/lib/today/follow-ups";
+import { nextCheckIn } from "@/lib/today/follow-ups";
 import { isStashLane, microNote, sharpen, type StashLane } from "@/lib/stash/summarize";
 import { loadStashTray, type StashTray } from "@/lib/stash/data";
 
@@ -57,8 +57,8 @@ async function createInLane(
           detail: "from Stash",
           message: null,
           contactedAt: new Date(now),
-          followUpAt: new Date(now + FOLLOWUP_DAYS * 86_400_000),
-          intervalDays: FOLLOWUP_DAYS,
+          followUpAt: nextCheckIn(now, "tomorrow"),
+          intervalDays: 1,
           status: "awaiting",
           log: [],
         },
@@ -110,7 +110,12 @@ export async function routeStash(
   const b = (body ?? "").trim().slice(0, 8000);
   if (!b || !isStashLane(lane)) return { ok: false };
   try {
-    const ok = await createInLane(getPrisma(), lane, microNote(b), accountId ? accountId.slice(0, 40) : null);
+    const ok = await createInLane(
+      getPrisma(),
+      lane,
+      microNote(b),
+      accountId ? accountId.slice(0, 40) : null,
+    );
     if (ok) revalidatePath("/today");
     return { ok };
   } catch {
@@ -131,6 +136,72 @@ export async function routeTrayItem(id: string, lane: string): Promise<{ ok: boo
     if (ok) {
       await prisma.stashItem.delete({ where: { id } });
       revalidatePath("/today");
+    }
+    return { ok };
+  } catch {
+    return { ok: false };
+  }
+}
+
+// Route a capture to a partner: it becomes a dated PartnerNote, which shows on
+// that partner's outreach card on Today and in the Partner Room. Both surfaces
+// read the same row, so they can never disagree.
+async function createPartnerNote(
+  prisma: Db,
+  partner: string,
+  micro: string,
+): Promise<boolean> {
+  const p = partner.trim().slice(0, 120);
+  const body = micro.trim().slice(0, 2000) || "(note)";
+  if (!p) return false;
+  try {
+    await prisma.partnerNote.create({ data: { partner: p, body, source: "stash" } });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// Right-click / drop routing straight to a partner (no tray stop).
+export async function routeStashToPartner(
+  body: string,
+  source: string,
+  partner: string,
+): Promise<{ ok: boolean }> {
+  if (!(await canWrite())) return { ok: false };
+  const b = (body ?? "").trim().slice(0, 8000);
+  if (!b || !partner) return { ok: false };
+  try {
+    const ok = await createPartnerNote(getPrisma(), partner, microNote(b));
+    if (ok) {
+      revalidatePath("/today");
+      revalidatePath("/partners");
+    }
+    return { ok };
+  } catch {
+    return { ok: false };
+  }
+}
+
+// Sort a tray item to a partner, then remove it from the tray.
+export async function routeTrayItemToPartner(
+  id: string,
+  partner: string,
+): Promise<{ ok: boolean }> {
+  if (!(await canWrite()) || !id || !partner) return { ok: false };
+  try {
+    const prisma = getPrisma();
+    const item = await prisma.stashItem.findUnique({ where: { id } });
+    if (!item) return { ok: false };
+    const ok = await createPartnerNote(
+      prisma,
+      partner,
+      item.micro?.trim() || microNote(item.body),
+    );
+    if (ok) {
+      await prisma.stashItem.delete({ where: { id } });
+      revalidatePath("/today");
+      revalidatePath("/partners");
     }
     return { ok };
   } catch {

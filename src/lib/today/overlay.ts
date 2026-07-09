@@ -19,7 +19,10 @@ export async function loadSnoozes(): Promise<Map<string, Snooze>> {
     return new Map(
       rows.map((r) => [
         r.accountId,
-        { reason: r.reason, snoozedUntil: r.snoozedUntil ? r.snoozedUntil.toISOString() : null },
+        {
+          reason: r.reason,
+          snoozedUntil: r.snoozedUntil ? r.snoozedUntil.toISOString() : null,
+        },
       ]),
     );
   } catch {
@@ -35,6 +38,42 @@ export async function loadDoneKeys(): Promise<Set<string>> {
     return new Set(rows.map((r) => r.key));
   } catch {
     return new Set();
+  }
+}
+
+// A dated, time-stamped partner note (from Stash routing or the Partner Room).
+export type PartnerNote = {
+  id: string;
+  partner: string;
+  body: string;
+  source: string;
+  createdAt: string; // ISO
+};
+
+// All partner notes, newest first, grouped by partner. Defensive: degrades to an
+// empty map if the PartnerNote table hasn't been migrated yet.
+export async function loadPartnerNotes(): Promise<Map<string, PartnerNote[]>> {
+  if (!hasDatabaseEnv()) return new Map();
+  try {
+    const rows = await getPrisma().partnerNote.findMany({
+      orderBy: { createdAt: "desc" },
+    });
+    const out = new Map<string, PartnerNote[]>();
+    for (const r of rows) {
+      const note: PartnerNote = {
+        id: r.id,
+        partner: r.partner,
+        body: r.body,
+        source: r.source,
+        createdAt: r.createdAt.toISOString(),
+      };
+      const list = out.get(r.partner);
+      if (list) list.push(note);
+      else out.set(r.partner, [note]);
+    }
+    return out;
+  } catch {
+    return new Map();
   }
 }
 
@@ -105,7 +144,13 @@ export async function loadEngagements(): Promise<Map<string, Engagement>> {
 // Notes / to-dos (right column beside Follow-ups). Newest first. Column-safe: if
 // the notetaker columns (accountId, remindAt) aren't migrated yet, fall back to
 // the stable columns so EXISTING NOTES STILL LOAD (never silently vanish).
-const TODO_STABLE = { id: true, body: true, done: true, position: true, createdAt: true } as const;
+const TODO_STABLE = {
+  id: true,
+  body: true,
+  done: true,
+  position: true,
+  createdAt: true,
+} as const;
 const TODO_ORDER = [{ done: "asc" }, { createdAt: "desc" }] as const;
 
 export async function loadTodos(): Promise<Todo[]> {
@@ -125,8 +170,17 @@ export async function loadTodos(): Promise<Todo[]> {
     }));
   } catch {
     try {
-      const rows = await prisma.todo.findMany({ orderBy: [...TODO_ORDER], select: TODO_STABLE });
-      return rows.map((r) => ({ id: r.id, body: r.body, done: r.done, accountId: "", remindAt: "" }));
+      const rows = await prisma.todo.findMany({
+        orderBy: [...TODO_ORDER],
+        select: TODO_STABLE,
+      });
+      return rows.map((r) => ({
+        id: r.id,
+        body: r.body,
+        done: r.done,
+        accountId: "",
+        remindAt: "",
+      }));
     } catch {
       return [];
     }

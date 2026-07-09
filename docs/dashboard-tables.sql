@@ -177,3 +177,17 @@ CREATE TABLE IF NOT EXISTS "AccountEngagement" (
   CONSTRAINT "AccountEngagement_pkey" PRIMARY KEY ("id")
 );
 CREATE UNIQUE INDEX IF NOT EXISTS "AccountEngagement_accountId_key" ON "AccountEngagement"("accountId");
+
+-- A dated, time-stamped note pinned to a partner (CSM) — the by-partner
+-- repository behind the Partner Room and the notes strip on each partner's
+-- outreach card on Today. Written from Stash routing and the Partner Room's
+-- note box. Safe to re-run.
+CREATE TABLE IF NOT EXISTS "PartnerNote" (
+  "id" TEXT NOT NULL,
+  "partner" TEXT NOT NULL,
+  "body" TEXT NOT NULL,
+  "source" TEXT NOT NULL DEFAULT '',
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "PartnerNote_pkey" PRIMARY KEY ("id")
+);
+CREATE INDEX IF NOT EXISTS "PartnerNote_partner_createdAt_idx" ON "PartnerNote"("partner", "createdAt");

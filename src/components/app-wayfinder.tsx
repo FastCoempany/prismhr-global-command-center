@@ -48,6 +48,13 @@ export function AppWayfinder({
             Accounts
           </Link>
           <Link
+            aria-current={current === "Partners" ? "page" : undefined}
+            className="app-route-link"
+            href="/partners"
+          >
+            Partners
+          </Link>
+          <Link
             aria-current={current === "Pricing" ? "page" : undefined}
             className="app-route-link"
             href="/pricing"
@@ -89,7 +96,10 @@ export function AppWayfinder({
           >
             Look into
             {lookIntoHighCount > 0 && (
-              <span className="app-route-badge" aria-label={`${lookIntoHighCount} high priority`}>
+              <span
+                className="app-route-badge"
+                aria-label={`${lookIntoHighCount} high priority`}
+              >
                 {lookIntoHighCount}
               </span>
             )}
