@@ -17,6 +17,12 @@ export type TouchLogEntry = { at: string; body: string };
 
 // A logged contact as Today consumes it (ISO strings, not Date objects).
 // kind "custom" = a follow-up you wrote yourself (not tied to a logged contact).
+// The status walks the roundup lifecycle: awaiting (sent, waiting on them) →
+// replied (they answered) → responded (you answered back — ball in their court
+// again) → archived (thread closed; the card resets to a fresh roundup built
+// from current research, with the whole exchange kept in the log history).
+export type TouchStatus = "awaiting" | "replied" | "responded" | "archived";
+
 export type Touch = {
   subjectKey: string;
   kind: "partner" | "account" | "custom";
@@ -26,7 +32,7 @@ export type Touch = {
   contactedAt: string;
   followUpAt: string;
   intervalDays: number;
-  status: "awaiting" | "replied";
+  status: TouchStatus;
   log: TouchLogEntry[];
 };
 
@@ -77,7 +83,10 @@ export function daysUntilIso(iso: string, now: number = Date.now()): number {
 // A follow-up is "due" when it's still awaiting a reply and its follow-up instant
 // has arrived.
 export function isDue(t: Touch, now: number): boolean {
-  return t.status === "awaiting" && Date.parse(t.followUpAt) <= now;
+  return (
+    (t.status === "awaiting" || t.status === "responded") &&
+    Date.parse(t.followUpAt) <= now
+  );
 }
 
 export type FollowUpBuckets = {
@@ -94,7 +103,10 @@ export function partitionFollowUps(
   const upcoming: Touch[] = [];
   const replied: Touch[] = [];
   for (const t of touches) {
+    if (t.status === "archived") continue; // closed threads live only in history
     if (t.status === "replied") replied.push(t);
+    // awaiting AND responded both mean the ball is in their court — the
+    // check-in cadence keeps running until the thread is archived.
     else if (isDue(t, now)) due.push(t);
     else upcoming.push(t);
   }

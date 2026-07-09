@@ -202,6 +202,51 @@ export async function markReplied(formData: FormData) {
   done();
 }
 
+// You answered their reply — ball back in their court; the check-in cadence
+// re-arms for the next business day and the exchange is stamped into history.
+export async function markResponded(formData: FormData) {
+  const subjectKey = str(formData, "subjectKey", 200);
+  if (!(await requireWrite()) || !subjectKey) done();
+  await safeWrite(async () => {
+    const prisma = getPrisma();
+    const t = await prisma.touch.findUnique({ where: { subjectKey } });
+    if (!t) return;
+    const log = [
+      ...touchLog(t.log),
+      { at: new Date().toISOString(), body: "You replied ✓" },
+    ];
+    await prisma.touch.update({
+      where: { subjectKey },
+      data: { status: "responded", followUpAt: nextCheckIn(Date.now(), "tomorrow"), log },
+    });
+  });
+  done();
+}
+
+// Close the thread. History stays on the row (Partner Room timeline); the
+// partner card resets to a fresh roundup generated from current research.
+export async function archiveThread(formData: FormData) {
+  const subjectKey = str(formData, "subjectKey", 200);
+  if (!(await requireWrite()) || !subjectKey) done();
+  await safeWrite(async () => {
+    const prisma = getPrisma();
+    const t = await prisma.touch.findUnique({ where: { subjectKey } });
+    if (!t) return;
+    const log = [
+      ...touchLog(t.log),
+      {
+        at: new Date().toISOString(),
+        body: `Thread archived ✓${t.message ? ` — closed: “${clipForLog(t.message, 160)}”` : ""}`,
+      },
+    ];
+    await prisma.touch.update({
+      where: { subjectKey },
+      data: { status: "archived", log },
+    });
+  });
+  done();
+}
+
 // Bring a not-yet-due check-in forward to now, so it surfaces in the due list
 // today (the inverse of snooze).
 export async function bringFollowUpDue(formData: FormData) {

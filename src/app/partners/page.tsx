@@ -2,13 +2,15 @@ import Link from "next/link";
 import { AppWayfinder } from "@/components/app-wayfinder";
 import { getAppAccess } from "@/lib/auth";
 import { hasDatabaseEnv } from "@/lib/db";
-import { csms } from "@/lib/book";
+import { csms, getPeo } from "@/lib/book";
 import { EXTRA_PARTNERS, partnerRole } from "@/lib/book/partners";
 import { loadPartnerNotes, loadTouches } from "@/lib/today/overlay";
-import { partnerOutreachKey } from "@/lib/today/build";
+import { accountIntel, partnerKickoff, partnerOutreachKey } from "@/lib/today/build";
 import type { Touch } from "@/lib/today/follow-ups";
+import type { DraftRecipient } from "@/lib/claude/prompt";
 import { LocalTime } from "../today-client";
 import { addPartnerNote, deletePartnerNote } from "./actions";
+import { DraftDesk } from "./draft-desk";
 import styles from "../command-center.module.css";
 
 export const dynamic = "force-dynamic";
@@ -96,6 +98,20 @@ export default async function PartnersPage() {
   const canWrite = access.canWrite && hasDatabaseEnv();
 
   const [touches, partnerNotes] = await Promise.all([loadTouches(), loadPartnerNotes()]);
+  const kickoff = partnerKickoff(accountIntel(), new Set());
+
+  // Recipient intelligence for the drafting desk: the partner themselves, then
+  // the named contact at each of their teed-up accounts (from the book).
+  const recipientsFor = (partner: string): DraftRecipient[] => {
+    const out: DraftRecipient[] = [
+      { name: partner, role: `${partnerRole(partner)} partner at PrismHR` },
+    ];
+    for (const a of kickoff.find((k) => k.partner === partner)?.accounts ?? []) {
+      const contact = getPeo(a.id)?.contactName?.trim();
+      if (contact) out.push({ name: contact, role: `contact at ${a.name}` });
+    }
+    return out;
+  };
 
   // Roster: the book's CSMs (minus Unassigned) + standing extras + anyone who
   // already has partner history — so a name never disappears from the room.
@@ -138,8 +154,12 @@ export default async function PartnersPage() {
                 <span className={styles.prNext}>
                   {t
                     ? t.status === "replied"
-                      ? `Replied ✓ · last outreach ${shortDate(t.contactedAt)}`
-                      : `Awaiting reply · check-in ${shortDate(t.followUpAt)}`
+                      ? `Replied ✓ · sent ${shortDate(t.contactedAt)} — your move`
+                      : t.status === "responded"
+                        ? `You replied ✓ · check-in ${shortDate(t.followUpAt)} — their move`
+                        : t.status === "archived"
+                          ? "Thread archived · fresh roundup ready on Today"
+                          : `Awaiting reply · check-in ${shortDate(t.followUpAt)}`
                     : "No outreach logged yet"}
                 </span>
                 <Link href="/today" className={styles.prTodayLink}>
@@ -160,6 +180,8 @@ export default async function PartnersPage() {
                   <button className={styles.prNoteBtn}>Add note</button>
                 </form>
               )}
+
+              <DraftDesk partner={partner} recipients={recipientsFor(partner)} />
 
               {entries.length === 0 ? (
                 <p className={styles.prEmpty}>

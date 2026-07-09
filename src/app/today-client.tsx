@@ -3,7 +3,13 @@
 import { useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import styles from "./command-center.module.css";
-import { deleteTouch, logTouch, markReplied } from "./today/actions";
+import {
+  archiveThread,
+  deleteTouch,
+  logTouch,
+  markReplied,
+  markResponded,
+} from "./today/actions";
 
 // A visible, editable message box: see exactly what you're sending, tweak it,
 // then copy the edited text. Auto-grows to fit. Used for partner messages and
@@ -163,10 +169,10 @@ export function ContactControl({
   sentLabel = "Mark contacted ✓",
   editLabel = "Edit & copy the message",
   doneText = "Contacted",
-  contacted,
+  status = "none",
   contactedLabel,
   followUpLabel,
-  replied = false,
+  draftHref,
 }: {
   subjectKey: string;
   kind: "partner" | "account";
@@ -176,10 +182,13 @@ export function ContactControl({
   sentLabel?: string;
   editLabel?: string;
   doneText?: string;
-  contacted: boolean;
+  // The roundup lifecycle: none (fresh — current-research roundup ready) →
+  // awaiting (sent) → replied (they answered) → responded (you answered back)
+  // → archive resets to none with history kept.
+  status?: "none" | "awaiting" | "replied" | "responded";
   contactedLabel?: string; // short date the contact was logged
   followUpLabel?: string; // short date of the next check-in
-  replied?: boolean;
+  draftHref?: string; // link to the Claude drafting desk for this thread
 }) {
   const [val, setVal] = useState(defaultMessage);
   const [copied, setCopied] = useState(false);
@@ -264,25 +273,53 @@ export function ContactControl({
     </form>
   );
 
-  if (contacted) {
+  if (status !== "none") {
+    const statusLine =
+      status === "replied"
+        ? `Replied ✓${contactedLabel ? ` · sent ${contactedLabel}` : ""} — your move`
+        : status === "responded"
+          ? `You replied ✓${followUpLabel ? ` · check-in ${followUpLabel}` : ""} — their move`
+          : `${doneText} ✓${contactedLabel ? ` · sent ${contactedLabel}` : ""}${
+              followUpLabel ? ` · check-in ${followUpLabel}` : ""
+            }`;
     return (
       <div className={styles.contactDone}>
         <div className={styles.contactDoneRow}>
-          <span className={styles.contactDoneText}>
-            {replied ? "Replied ✓" : `${doneText} ✓`}
-            {contactedLabel ? ` · sent ${contactedLabel}` : ""}
-            {!replied && followUpLabel ? ` · check-in ${followUpLabel}` : ""}
-          </span>
-          {!replied && (
+          <span className={styles.contactDoneText}>{statusLine}</span>
+          {(status === "awaiting" || status === "responded") && (
             <form action={markReplied}>
               <input type="hidden" name="subjectKey" value={subjectKey} />
               <button className={styles.contactRepliedBtn}>They replied ✓</button>
             </form>
           )}
-          <form action={deleteTouch}>
-            <input type="hidden" name="subjectKey" value={subjectKey} />
-            <button className={styles.mvUndoBtn}>Undo</button>
-          </form>
+          {status === "replied" && (
+            <form action={markResponded}>
+              <input type="hidden" name="subjectKey" value={subjectKey} />
+              <button className={styles.contactRepliedBtn}>I replied ✓</button>
+            </form>
+          )}
+          {(status === "replied" || status === "responded") && (
+            <form action={archiveThread}>
+              <input type="hidden" name="subjectKey" value={subjectKey} />
+              <button
+                className={styles.mvUndoBtn}
+                title="Close the thread — history stays in the Partner Room; the card resets to a fresh roundup from current research"
+              >
+                Archive thread ✓
+              </button>
+            </form>
+          )}
+          {status === "awaiting" && (
+            <form action={deleteTouch}>
+              <input type="hidden" name="subjectKey" value={subjectKey} />
+              <button className={styles.mvUndoBtn}>Undo</button>
+            </form>
+          )}
+          {draftHref && status === "replied" && (
+            <a href={draftHref} className={styles.contactDraftLink}>
+              ✍ Draft the reply →
+            </a>
+          )}
         </div>
         <details className={styles.contactAgain}>
           <summary className={styles.contactSummary}>＋ New outreach</summary>

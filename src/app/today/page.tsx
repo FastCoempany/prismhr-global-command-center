@@ -378,10 +378,11 @@ function MorningMove({
         label={mv.a.name}
         detail={`${mv.a.csm}${mv.a.play ? ` · ${mv.a.play}` : ""}`}
         defaultMessage={g.say ?? ""}
-        sentLabel="Mark sent ✓ (sets a 2-day follow-up)"
-        doneText="Sent ✓"
+        sentLabel="Mark sent ✓ (arms the next check-in)"
+        doneText="Sent"
         editLabel={`Edit & copy the message to ${firstNameOf(mv.a.csm)}`}
-        contacted={done}
+        status={done && touch && touch.status !== "archived" ? touch.status : "none"}
+        contactedLabel={touch ? shortDate(touch.contactedAt) : undefined}
         followUpLabel={touch ? shortDate(touch.followUpAt) : undefined}
       />
     </div>
@@ -609,7 +610,9 @@ export default async function TodayPage({
   const kickoffItems = kickoff.map((k) => {
     const key = partnerOutreachKey(k.partner);
     const touch = touchMap.get(key);
-    return { k, key, touch, done: !!touch };
+    // An archived thread resets the card — a fresh roundup (from current
+    // research) is ready to send, so the partner reads as not-yet-contacted.
+    return { k, key, touch, done: !!touch && touch.status !== "archived" };
   });
   const kickoffDoneCount = kickoffItems.filter((i) => i.done).length;
 
@@ -794,12 +797,16 @@ export default async function TodayPage({
                           defaultMessage={partnerWeekMessage(k.partner, k.accounts)}
                           sentLabel="Mark contacted ✓"
                           editLabel={`Edit & copy the roundup to ${firstNameOf(k.partner)}`}
-                          contacted={done}
+                          status={
+                            done && touch && touch.status !== "archived"
+                              ? touch.status
+                              : "none"
+                          }
                           contactedLabel={
                             touch ? shortDate(touch.contactedAt) : undefined
                           }
                           followUpLabel={touch ? shortDate(touch.followUpAt) : undefined}
-                          replied={touch?.status === "replied"}
+                          draftHref={`/partners#${encodeURIComponent(k.partner)}`}
                         />
                       </div>
                     </div>

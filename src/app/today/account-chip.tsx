@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import type { ChipTone } from "@/lib/today/build";
 import { addAccountNote } from "./actions";
@@ -35,7 +35,36 @@ export function AccountChip({
   seedDiscovery: string;
 }) {
   const [open, setOpen] = useState(false);
+  // The box renders position:fixed from the chip's measured rect — absolute
+  // positioning inside the chip row got painted over by later cards (ancestor
+  // stacking contexts trap z-index); fixed at the viewport level is immune.
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
   const partnerFirst = partner.split(" ")[0] || "Partner";
+
+  const openBox = () => {
+    const r = btnRef.current?.getBoundingClientRect();
+    if (r) {
+      setPos({
+        top: r.bottom + 6,
+        left: Math.max(8, Math.min(r.left, window.innerWidth - 336)),
+      });
+    }
+    setOpen((v) => !v);
+  };
+
+  // The box is anchored to a viewport position; if the page scrolls or resizes
+  // underneath it, close rather than drift.
+  useEffect(() => {
+    if (!open) return;
+    const close = () => setOpen(false);
+    window.addEventListener("scroll", close, true);
+    window.addEventListener("resize", close);
+    return () => {
+      window.removeEventListener("scroll", close, true);
+      window.removeEventListener("resize", close);
+    };
+  }, [open]);
 
   // Neutral until an interaction starts the clock — "none" adds no color class.
   const toneClass =
@@ -73,9 +102,10 @@ export function AccountChip({
   return (
     <span className={styles.chipWrap}>
       <button
+        ref={btnRef}
         type="button"
         className={`${styles.kickoffAcct} ${styles.chipBtn} ${toneClass}`}
-        onClick={() => setOpen((v) => !v)}
+        onClick={openBox}
         title={
           lastNoteAt
             ? "Last worked — see the box for options"
@@ -89,7 +119,7 @@ export function AccountChip({
       {open && (
         <>
           <span className={styles.chipShade} onClick={() => setOpen(false)} />
-          <span className={styles.chipPop}>
+          <span className={styles.chipPop} style={pos ?? undefined}>
             <span className={styles.chipPopHead}>
               <b>{account.name}</b>
               <span className={styles.chipPopStamp}>
