@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import type { ChipTone } from "@/lib/today/build";
 import { addAccountNote } from "./actions";
@@ -116,81 +117,93 @@ export function AccountChip({
         {account.play ? ` · ${account.play}` : ""}
       </button>
 
-      {open && (
-        <>
-          <span className={styles.chipShade} onClick={() => setOpen(false)} />
-          <span className={styles.chipPop} style={pos ?? undefined}>
-            <span className={styles.chipPopHead}>
-              <b>{account.name}</b>
-              <span className={styles.chipPopStamp}>
-                {lastNoteAt ? (
-                  <>
-                    last note <LocalTime iso={lastNoteAt} />
-                  </>
-                ) : (
-                  "no notes yet"
-                )}
-              </span>
-            </span>
-
-            {noteForm("mine", "✎ My note", `What you know / did on ${account.name}…`)}
-            {noteForm(
-              "partner",
-              `💬 ${partnerFirst} said`,
-              `What ${partnerFirst} told you about ${account.name}…`,
-            )}
-            {noteForm(
-              "account",
-              "🗒 Add account note",
-              `A plain note on ${account.name} — lands on its account page…`,
-            )}
-
-            {card ? (
-              <span className={styles.chipStageBlock}>
-                <span className={styles.chipStageHead}>On dashboard — set the stage</span>
-                <span className={styles.chipStageList}>
-                  {card.stages.map((s) => (
-                    <form action={setCardStage} key={s.key} className={styles.valInline}>
-                      <input type="hidden" name="cardId" value={card.id} />
-                      <input type="hidden" name="node" value={s.key} />
-                      <input type="hidden" name="returnTo" value="/today" />
-                      <button
-                        className={`${styles.chipStageBtn} ${
-                          s.state === "active"
-                            ? styles.chipStageOn
-                            : s.state === "done"
-                              ? styles.chipStageDone
-                              : ""
-                        }`}
-                        title={
-                          s.state === "active" ? "Current stage" : `Move to ${s.label}`
-                        }
-                      >
-                        {s.state === "done" ? "✓ " : ""}
-                        {s.label}
-                      </button>
-                    </form>
-                  ))}
+      {/* The work box renders in a PORTAL on document.body — a contacted card's
+          opacity (kickoffDone: 0.72) creates a stacking context that both traps
+          any z-index inside it and renders descendants translucent. Escaping the
+          subtree entirely is the only robust fix. */}
+      {open &&
+        createPortal(
+          <>
+            <span className={styles.chipShade} onClick={() => setOpen(false)} />
+            <span className={styles.chipPop} style={pos ?? undefined}>
+              <span className={styles.chipPopHead}>
+                <b>{account.name}</b>
+                <span className={styles.chipPopStamp}>
+                  {lastNoteAt ? (
+                    <>
+                      last note <LocalTime iso={lastNoteAt} />
+                    </>
+                  ) : (
+                    "no notes yet"
+                  )}
                 </span>
               </span>
-            ) : (
-              <form action={addCard} className={styles.chipItemForm}>
-                <input type="hidden" name="name" value={account.name} />
-                <input type="hidden" name="subtitle" value={seedSubtitle} />
-                <input type="hidden" name="seedDiscovery" value={seedDiscovery} />
-                <input type="hidden" name="returnTo" value="/today" />
-                <button className={styles.chipDashBtn}>
-                  ＋ Add account to dashboard
-                </button>
-              </form>
-            )}
 
-            <Link href={`/accounts?focus=${account.id}`} className={styles.chipGoLink}>
-              Go to account →
-            </Link>
-          </span>
-        </>
-      )}
+              {noteForm("mine", "✎ My note", `What you know / did on ${account.name}…`)}
+              {noteForm(
+                "partner",
+                `💬 ${partnerFirst} said`,
+                `What ${partnerFirst} told you about ${account.name}…`,
+              )}
+              {noteForm(
+                "account",
+                "🗒 Add account note",
+                `A plain note on ${account.name} — lands on its account page…`,
+              )}
+
+              {card ? (
+                <span className={styles.chipStageBlock}>
+                  <span className={styles.chipStageHead}>
+                    On dashboard — set the stage
+                  </span>
+                  <span className={styles.chipStageList}>
+                    {card.stages.map((s) => (
+                      <form
+                        action={setCardStage}
+                        key={s.key}
+                        className={styles.valInline}
+                      >
+                        <input type="hidden" name="cardId" value={card.id} />
+                        <input type="hidden" name="node" value={s.key} />
+                        <input type="hidden" name="returnTo" value="/today" />
+                        <button
+                          className={`${styles.chipStageBtn} ${
+                            s.state === "active"
+                              ? styles.chipStageOn
+                              : s.state === "done"
+                                ? styles.chipStageDone
+                                : ""
+                          }`}
+                          title={
+                            s.state === "active" ? "Current stage" : `Move to ${s.label}`
+                          }
+                        >
+                          {s.state === "done" ? "✓ " : ""}
+                          {s.label}
+                        </button>
+                      </form>
+                    ))}
+                  </span>
+                </span>
+              ) : (
+                <form action={addCard} className={styles.chipItemForm}>
+                  <input type="hidden" name="name" value={account.name} />
+                  <input type="hidden" name="subtitle" value={seedSubtitle} />
+                  <input type="hidden" name="seedDiscovery" value={seedDiscovery} />
+                  <input type="hidden" name="returnTo" value="/today" />
+                  <button className={styles.chipDashBtn}>
+                    ＋ Add account to dashboard
+                  </button>
+                </form>
+              )}
+
+              <Link href={`/accounts?focus=${account.id}`} className={styles.chipGoLink}>
+                Go to account →
+              </Link>
+            </span>
+          </>,
+          document.body,
+        )}
     </span>
   );
 }
