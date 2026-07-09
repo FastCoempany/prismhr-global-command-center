@@ -9,7 +9,12 @@
 import { peos } from "@/lib/book";
 import { partnerRole } from "@/lib/book/partners";
 import { compositeScore, deskScore } from "@/lib/book/scoring";
-import { analyzePlay, DEMAND_GATE, extractCountries, getDemand } from "@/lib/book/research";
+import {
+  analyzePlay,
+  DEMAND_GATE,
+  extractCountries,
+  getDemand,
+} from "@/lib/book/research";
 import { DASH_NODES, type DashNodeKey } from "@/lib/dashboard/stages";
 import type { DashCardRow } from "@/lib/dashboard/data";
 
@@ -31,7 +36,11 @@ export function funnelOf(csm: string, industry: string): Funnel {
 }
 
 export type ValidationStatus = "confirmed" | "flagged" | "adjusted";
-export type Validation = { status: ValidationStatus; note?: string; adjustedDemand?: number };
+export type Validation = {
+  status: ValidationStatus;
+  note?: string;
+  adjustedDemand?: number;
+};
 
 export type AccountIntel = {
   id: string;
@@ -106,7 +115,11 @@ export function applyValidations(
       const demand = Math.max(0, Math.min(100, Math.round(v.adjustedDemand)));
       const c = compositeScore(a.desk, demand, a.confidence);
       const play: AccountIntel["play"] =
-        demand >= DEMAND_GATE ? (a.competitors.length ? "displacement" : "greenfield") : null;
+        demand >= DEMAND_GATE
+          ? a.competitors.length
+            ? "displacement"
+            : "greenfield"
+          : null;
       return { ...a, demand, score: c.score, tier: c.tier, play, validation: v };
     }
     return { ...a, validation: v };
@@ -391,8 +404,11 @@ export function morningDoneKey(moveKey: string, now: number = Date.now()): strin
   return `morning:${dayStamp(now)}:${moveKey}`;
 }
 
-export function kickoffDoneKey(partner: string, now: number = Date.now()): string {
-  return `kickoff:${weekStamp(now)}:${partner}`;
+// The "sent" mark for a partner's outreach roundup. A stable per-partner key so
+// the contacted state persists (this is a standing tracker you work through
+// once, not a weekly ritual that resets every Monday).
+export function partnerOutreachKey(partner: string): string {
+  return `partner-outreach:${partner}`;
 }
 
 // --- Weekly partner kickoff (Monday ritual) ---------------------------------
@@ -450,13 +466,13 @@ export function partnerWeekMessage(partner: string, accounts: AccountIntel[]): s
     })
     .join("\n");
   return (
-    `Hi ${who} — kicking off the week. As I work the PrismHR Global side, I went through your ` +
-    `book and pulled a few accounts I'd love your read on for global-hiring potential:\n\n` +
+    `Hi ${who} — as I work through my set of the PrismHR Global leads assigned to me, I pulled a ` +
+    `few of your accounts I'd love your read on for global-hiring potential:\n\n` +
     `${bullets}\n\n` +
     `None of these are urgent, and I don't want to get ahead of any of your relationships — I'm ` +
-    `really just trying to find where there might be a global opening worth a conversation. Could ` +
-    `we grab 15 minutes this week to run through them? Even a quick “yes / no / not yet” on each ` +
-    `would help me prioritize. Thanks so much!`
+    `really just trying to find where there might be a global opening worth a conversation.\n\n` +
+    `A quick “yes / no / not yet” on each would help me prioritize. Thanks so much!\n\n` +
+    `Looking forward to winning some business together!`
   );
 }
 
@@ -480,7 +496,9 @@ export type Narrative = {
 // carried up to Aleks — no spin, just what the data says.
 export function narrative(intel: AccountIntel[]): Narrative {
   const researched = intel.filter((a) => a.researched).length;
-  const realDemand = intel.filter((a) => a.demand != null && a.demand >= DEMAND_GATE).length;
+  const realDemand = intel.filter(
+    (a) => a.demand != null && a.demand >= DEMAND_GATE,
+  ).length;
   const strongDemand = intel.filter((a) => isStrongSignal(a) && isTrusted(a)).length;
   const emerging = realDemand - strongDemand;
   const displacement = intel.filter((a) => a.play === "displacement").length;
@@ -520,7 +538,10 @@ export function narrative(intel: AccountIntel[]): Narrative {
 // The line up to Aleks. `convert` is the single account you're actively working
 // (the highest-leverage move) — naming a specific deal in motion is what makes
 // the story land. Null when nothing's teed up yet.
-export function aleksLineGuidance(nar: Narrative, convert: AccountIntel | null): Guidance {
+export function aleksLineGuidance(
+  nar: Narrative,
+  convert: AccountIntel | null,
+): Guidance {
   const one = convert
     ? `${convert.name}${convert.play ? ` (the ${convert.play})` : ""}`
     : "the one account I'm working hardest right now";
@@ -538,7 +559,9 @@ export function aleksLineGuidance(nar: Narrative, convert: AccountIntel | null):
   return {
     do:
       `Lock the one line you carry into your 1:1 with Aleks` +
-      (convert ? ` — built around ${convert.name}, the account you're converting this week` : "") +
+      (convert
+        ? ` — built around ${convert.name}, the account you're converting this week`
+        : "") +
       `. Honest headline, one real deal, one concrete ask.`,
     how: [
       `Read the five numbers above — every one is derived from your own account research, not a guess. That's your evidence, and it's what lets you be honest without sounding thin.`,
@@ -663,5 +686,10 @@ export function stateOfPlay(args: {
     (d) => d.ageDays != null && d.ageDays >= COMMITMENT_WINDOW_DAYS,
   ).length;
   const untriaged = args.activeSignals.filter((a) => !args.onBoard.has(a.name)).length;
-  return { openLoops, commitmentsPastWindow, untriaged, moved: movedThisWeek(args.cards, now) };
+  return {
+    openLoops,
+    commitmentsPastWindow,
+    untriaged,
+    moved: movedThisWeek(args.cards, now),
+  };
 }

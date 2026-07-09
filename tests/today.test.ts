@@ -12,7 +12,7 @@ import {
   dayStamp,
   firstNameOf,
   funnelOf,
-  kickoffDoneKey,
+  partnerOutreachKey,
   morningDoneKey,
   weekStamp,
   isParked,
@@ -124,7 +124,12 @@ describe("funnelOf", () => {
   });
   test("does not mis-tag industries that merely contain the letters h-r-o", () => {
     // Word-boundary guard: none of these should read as HCM.
-    for (const ind of ["Petrochemical", "Hydro Services", "Throughput Corp", "Chrome Retail"]) {
+    for (const ind of [
+      "Petrochemical",
+      "Hydro Services",
+      "Throughput Corp",
+      "Chrome Retail",
+    ]) {
       assert.equal(funnelOf("Jamie Doe", ind), "peo", `${ind} should be PEO`);
     }
   });
@@ -255,8 +260,19 @@ describe("partnerAngle", () => {
 describe("narrative", () => {
   test("counts research coverage, demand, plays, and funnel honestly", () => {
     const rows = [
-      intel({ researched: true, demand: DEMAND_GATE + 5, play: "displacement", tier: "high", funnel: "hcm" }),
-      intel({ researched: true, demand: DEMAND_GATE, play: "greenfield", tier: "medium" }),
+      intel({
+        researched: true,
+        demand: DEMAND_GATE + 5,
+        play: "displacement",
+        tier: "high",
+        funnel: "hcm",
+      }),
+      intel({
+        researched: true,
+        demand: DEMAND_GATE,
+        play: "greenfield",
+        tier: "medium",
+      }),
       intel({ researched: true, demand: DEMAND_GATE - 5, tier: "low" }),
       intel({ researched: false }),
     ];
@@ -310,10 +326,20 @@ describe("applyValidations", () => {
 
   test("adjusted overrides demand and reflows composite + play, then re-sorts", () => {
     const rows = [
-      intel({ id: "a", desk: 50, demand: 20, score: 32, play: null, competitors: [], confidence: "high" }),
+      intel({
+        id: "a",
+        desk: 50,
+        demand: 20,
+        score: 32,
+        play: null,
+        competitors: [],
+        confidence: "high",
+      }),
       intel({ id: "b", desk: 50, demand: 50, score: 50 }),
     ];
-    const v = new Map<string, Validation>([["a", { status: "adjusted", adjustedDemand: 90 }]]);
+    const v = new Map<string, Validation>([
+      ["a", { status: "adjusted", adjustedDemand: 90 }],
+    ]);
     const out = applyValidations(rows, v);
     // a: high-conf, so demandAdj = 90; composite = round(0.4*50 + 0.6*90) = 74 → now first
     assert.equal(out[0].id, "a");
@@ -324,7 +350,9 @@ describe("applyValidations", () => {
 
   test("adjusting below the gate drops the play", () => {
     const rows = [intel({ id: "a", desk: 40, demand: 60, play: "greenfield" })];
-    const v = new Map<string, Validation>([["a", { status: "adjusted", adjustedDemand: 10 }]]);
+    const v = new Map<string, Validation>([
+      ["a", { status: "adjusted", adjustedDemand: 10 }],
+    ]);
     const out = applyValidations(rows, v);
     assert.equal(out[0].play, null);
   });
@@ -366,7 +394,10 @@ describe("aleksLineGuidance / armPartnersGuidance / voiceOfBaseGuidance", () => 
   });
 
   test("aleks line names the account being converted and cites the honest numbers", () => {
-    const g = aleksLineGuidance(nar, intel({ id: "z", name: "Zephyr Co", play: "greenfield" }));
+    const g = aleksLineGuidance(
+      nar,
+      intel({ id: "z", name: "Zephyr Co", play: "greenfield" }),
+    );
     assert.match(g.do, /Zephyr Co/);
     assert.match(g.say!, /Zephyr Co/);
     // strong (2) and emerging (1) both surfaced as bullets, not rounded away
@@ -395,14 +426,29 @@ describe("partitionSignals & isParked", () => {
     assert.equal(isParked({ reason: "x", snoozedUntil: null }, now), true);
   });
   test("future until parks; past until resurfaces", () => {
-    assert.equal(isParked({ reason: "x", snoozedUntil: new Date(now + 86_400_000).toISOString() }, now), true);
-    assert.equal(isParked({ reason: "x", snoozedUntil: new Date(now - 86_400_000).toISOString() }, now), false);
+    assert.equal(
+      isParked(
+        { reason: "x", snoozedUntil: new Date(now + 86_400_000).toISOString() },
+        now,
+      ),
+      true,
+    );
+    assert.equal(
+      isParked(
+        { reason: "x", snoozedUntil: new Date(now - 86_400_000).toISOString() },
+        now,
+      ),
+      false,
+    );
   });
   test("splits active from parked signals", () => {
     const rows = [intel({ id: "a" }), intel({ id: "b" }), intel({ id: "c" })];
     const snoozes = new Map<string, Snooze>([
       ["b", { reason: "later", snoozedUntil: null }],
-      ["c", { reason: "expired", snoozedUntil: new Date(now - 86_400_000).toISOString() }], // resurfaced
+      [
+        "c",
+        { reason: "expired", snoozedUntil: new Date(now - 86_400_000).toISOString() },
+      ], // resurfaced
     ]);
     const { active, parked } = partitionSignals(rows, snoozes, now);
     assert.deepEqual(active.map((a) => a.id).sort(), ["a", "c"]);
@@ -416,28 +462,61 @@ describe("partitionSignals & isParked", () => {
 describe("movedThisWeek & stateOfPlay", () => {
   const now = 100 * 86_400_000;
   const DAY = 86_400_000;
-  function card(id: string, opts: { active?: DashNodeKey[]; activated?: Partial<Record<DashNodeKey, string>>; archived?: boolean }): DashCardRow {
+  function card(
+    id: string,
+    opts: {
+      active?: DashNodeKey[];
+      activated?: Partial<Record<DashNodeKey, string>>;
+      archived?: boolean;
+    },
+  ): DashCardRow {
     const states = {} as Record<DashNodeKey, NodeState>;
-    for (const n of DASH_NODES) states[n.key] = (opts.active ?? []).includes(n.key) ? "active" : "todo";
+    for (const n of DASH_NODES)
+      states[n.key] = (opts.active ?? []).includes(n.key) ? "active" : "todo";
     const activated = {} as Record<DashNodeKey, string>;
     for (const n of DASH_NODES) activated[n.key] = opts.activated?.[n.key] ?? "";
     return {
-      id, name: id, subtitle: null, position: 0, archived: opts.archived ?? false, states,
-      notes: {} as Record<DashNodeKey, string>, checks: {} as Record<DashNodeKey, boolean[]>,
-      checkNotes: {} as Record<DashNodeKey, Record<number, string>>, activated,
-      dealSize: "", stakeholders: [],
+      id,
+      name: id,
+      subtitle: null,
+      position: 0,
+      archived: opts.archived ?? false,
+      states,
+      notes: {} as Record<DashNodeKey, string>,
+      checks: {} as Record<DashNodeKey, boolean[]>,
+      checkNotes: {} as Record<DashNodeKey, Record<number, string>>,
+      activated,
+      dealSize: "",
+      stakeholders: [],
     };
   }
   test("counts nodes activated within the last 7 days, skipping archived", () => {
-    const c1 = card("c1", { activated: { discovery: new Date(now - 2 * DAY).toISOString(), demo: new Date(now - 20 * DAY).toISOString() } });
-    const c2 = card("c2", { archived: true, activated: { demo: new Date(now - 1 * DAY).toISOString() } });
+    const c1 = card("c1", {
+      activated: {
+        discovery: new Date(now - 2 * DAY).toISOString(),
+        demo: new Date(now - 20 * DAY).toISOString(),
+      },
+    });
+    const c2 = card("c2", {
+      archived: true,
+      activated: { demo: new Date(now - 1 * DAY).toISOString() },
+    });
     assert.equal(movedThisWeek([c1, c2], now), 1);
   });
   test("state of play: open loops, past-window commitments, untriaged, moved", () => {
-    const c = card("Acme", { active: ["demo"], activated: { demo: new Date(now - 6 * DAY).toISOString() } });
+    const c = card("Acme", {
+      active: ["demo"],
+      activated: { demo: new Date(now - 6 * DAY).toISOString() },
+    });
     const commitments = commitmentsFromCards([c], {}, now); // demo active 6d → all past window
     const activeSignals = [intel({ name: "New Co" }), intel({ name: "Acme" })];
-    const sop = stateOfPlay({ cards: [c], commitments, activeSignals, onBoard: new Set(["Acme"]), now });
+    const sop = stateOfPlay({
+      cards: [c],
+      commitments,
+      activeSignals,
+      onBoard: new Set(["Acme"]),
+      now,
+    });
     assert.equal(sop.openLoops, 1);
     assert.ok(sop.commitmentsPastWindow > 0);
     assert.equal(sop.untriaged, 1); // "New Co" not on board; "Acme" is
@@ -454,7 +533,12 @@ describe("firstNameOf & partnerMessage", () => {
   });
   test("displacement message frames consolidation, names the incumbent, asks about renewal", () => {
     const m = partnerMessage(
-      intel({ name: "Infiniti HR", csm: "Anika Steenstra", play: "displacement", competitors: ["Globalization Partners"] }),
+      intel({
+        name: "Infiniti HR",
+        csm: "Anika Steenstra",
+        play: "displacement",
+        competitors: ["Globalization Partners"],
+      }),
     );
     assert.match(m, /Anika/);
     assert.match(m, /Globalization Partners/);
@@ -465,7 +549,9 @@ describe("firstNameOf & partnerMessage", () => {
     assert.match(m, /isn't a fresh sale or a win-back/);
   });
   test("greenfield message asks about entities/contractors, no incumbent", () => {
-    const m = partnerMessage(intel({ name: "MAU", csm: "Lesha Cyphers", play: "greenfield" }));
+    const m = partnerMessage(
+      intel({ name: "MAU", csm: "Lesha Cyphers", play: "greenfield" }),
+    );
     assert.match(m, /entity|contractor/i);
     assert.doesNotMatch(m, /renewal/i);
   });
@@ -503,15 +589,13 @@ describe("dayStamp / weekStamp / done keys", () => {
     assert.equal(weekStamp(Date.parse("2026-07-06T12:00:00Z")), "2026-W28"); // Mon of ISO week 28
     assert.equal(weekStamp(Date.parse("2024-01-01T12:00:00Z")), "2024-W01");
   });
-  test("morning key resets by day, kickoff key by week", () => {
+  test("morning key resets by day; partner-outreach key is stable per partner", () => {
     assert.equal(
       morningDoneKey("acct:X", Date.parse("2026-07-06T00:00:00Z")),
       "morning:2026-07-06:acct:X",
     );
-    assert.equal(
-      kickoffDoneKey("Anika", Date.parse("2026-07-06T00:00:00Z")),
-      "kickoff:2026-W28:Anika",
-    );
+    // No date component — the sent mark persists (standing tracker, not weekly).
+    assert.equal(partnerOutreachKey("Anika"), "partner-outreach:Anika");
   });
 });
 
@@ -528,37 +612,65 @@ describe("isWeekKickoff", () => {
 describe("partnerKickoff & partnerWeekMessage", () => {
   test("includes every partner (except Unassigned); top-N by score, parked excluded", () => {
     const rows = [
-      intel({ id: "a1", name: "Acme", csm: "Anika", play: "displacement", competitors: ["Deel"], score: 70 }),
+      intel({
+        id: "a1",
+        name: "Acme",
+        csm: "Anika",
+        play: "displacement",
+        competitors: ["Deel"],
+        score: 70,
+      }),
       intel({ id: "a2", name: "Beta", csm: "Anika", play: null, score: 60 }),
       intel({ id: "a3", name: "Gamma", csm: "Anika", play: null, score: 40 }),
       intel({ id: "b1", name: "Delta", csm: "Whitney", play: null, score: 55 }), // no play — Whitney still included
-      intel({ id: "u1", name: "Nobody", csm: "Unassigned", play: "greenfield", score: 99 }), // excluded
+      intel({
+        id: "u1",
+        name: "Nobody",
+        csm: "Unassigned",
+        play: "greenfield",
+        score: 99,
+      }), // excluded
       intel({ id: "p1", name: "Parked", csm: "Anika", play: "greenfield", score: 90 }),
     ];
     const out = partnerKickoff(rows, new Set(["p1"]), 5);
     assert.equal(out.length, 2); // Anika and Whitney; Unassigned dropped
     assert.equal(out[0].partner, "Anika"); // strongest lead account first
     // parked p1 excluded even though it has the top score
-    assert.deepEqual(out[0].accounts.map((a) => a.id), ["a1", "a2", "a3"]);
+    assert.deepEqual(
+      out[0].accounts.map((a) => a.id),
+      ["a1", "a2", "a3"],
+    );
     assert.equal(out[1].partner, "Whitney");
-    assert.deepEqual(out[1].accounts.map((a) => a.id), ["b1"]);
+    assert.deepEqual(
+      out[1].accounts.map((a) => a.id),
+      ["b1"],
+    );
   });
 
   test("caps at N per partner", () => {
     const rows = Array.from({ length: 8 }, (_, i) =>
-      intel({ id: `x${i}`, csm: "Anika", play: i === 0 ? "greenfield" : null, score: 100 - i }),
+      intel({
+        id: `x${i}`,
+        csm: "Anika",
+        play: i === 0 ? "greenfield" : null,
+        score: 100 - i,
+      }),
     );
     const out = partnerKickoff(rows, new Set(), 5);
     assert.equal(out[0].accounts.length, 5);
   });
 
-  test("week message lists accounts as descriptive bullets and asks for time", () => {
+  test("roundup message lists accounts as descriptive bullets and asks for a read", () => {
     const msg = partnerWeekMessage("Anika Steenstra", [
-      intel({ name: "Infiniti HR", play: "displacement", competitors: ["Globalization Partners"] }),
+      intel({
+        name: "Infiniti HR",
+        play: "displacement",
+        competitors: ["Globalization Partners"],
+      }),
       intel({ name: "MAU", play: "greenfield" }),
     ]);
     assert.match(msg, /Anika/);
-    assert.match(msg, /15 minutes/);
+    assert.match(msg, /yes \/ no \/ not yet/);
     // Each account is its own bullet line...
     assert.match(msg, /• Infiniti HR — /);
     assert.match(msg, /• MAU — /);
@@ -594,18 +706,33 @@ describe("follow-ups", () => {
   const now = 100 * DAY;
 
   test("isDue: awaiting + past follow-up is due; future isn't; replied never is", () => {
-    assert.equal(isDue(touch({ followUpAt: new Date(now - DAY).toISOString() }), now), true);
-    assert.equal(isDue(touch({ followUpAt: new Date(now + DAY).toISOString() }), now), false);
     assert.equal(
-      isDue(touch({ status: "replied", followUpAt: new Date(now - DAY).toISOString() }), now),
+      isDue(touch({ followUpAt: new Date(now - DAY).toISOString() }), now),
+      true,
+    );
+    assert.equal(
+      isDue(touch({ followUpAt: new Date(now + DAY).toISOString() }), now),
+      false,
+    );
+    assert.equal(
+      isDue(
+        touch({ status: "replied", followUpAt: new Date(now - DAY).toISOString() }),
+        now,
+      ),
       false,
     );
   });
 
   test("partition splits due / upcoming / replied; due is most-overdue first", () => {
-    const a = touch({ subjectKey: "a", followUpAt: new Date(now - 3 * DAY).toISOString() });
+    const a = touch({
+      subjectKey: "a",
+      followUpAt: new Date(now - 3 * DAY).toISOString(),
+    });
     const b = touch({ subjectKey: "b", followUpAt: new Date(now - DAY).toISOString() });
-    const c = touch({ subjectKey: "c", followUpAt: new Date(now + 2 * DAY).toISOString() });
+    const c = touch({
+      subjectKey: "c",
+      followUpAt: new Date(now + 2 * DAY).toISOString(),
+    });
     const d = touch({ subjectKey: "d", status: "replied" });
     const r = partitionFollowUps([b, a, c, d], now);
     assert.deepEqual(
@@ -706,13 +833,16 @@ describe("salesforce helpers", () => {
 
 describe("engagement", () => {
   test("gates count SF / notes / health independently; done only at 3/3", () => {
-    assert.deepEqual({ ...engagementGates(EMPTY_ENGAGEMENT) }, {
-      sf: false,
-      notes: false,
-      health: false,
-      count: 0,
-      done: false,
-    });
+    assert.deepEqual(
+      { ...engagementGates(EMPTY_ENGAGEMENT) },
+      {
+        sf: false,
+        notes: false,
+        health: false,
+        count: 0,
+        done: false,
+      },
+    );
     const g = engagementGates({
       ...EMPTY_ENGAGEMENT,
       sfChecked: true,
@@ -735,7 +865,10 @@ describe("engagement", () => {
     assert.match(withCadence, /XcelHR/);
     assert.match(withCadence, /Biweekly \(Thursday\)/);
     // falls back gracefully with no cadence
-    assert.match(askToJoinMessage("Lesha Cyphers", "MAU", EMPTY_ENGAGEMENT), /next check-in with MAU/);
+    assert.match(
+      askToJoinMessage("Lesha Cyphers", "MAU", EMPTY_ENGAGEMENT),
+      /next check-in with MAU/,
+    );
   });
 });
 
