@@ -205,3 +205,18 @@ CREATE TABLE IF NOT EXISTS "AccountNote" (
   CONSTRAINT "AccountNote_pkey" PRIMARY KEY ("id")
 );
 CREATE INDEX IF NOT EXISTS "AccountNote_accountId_createdAt_idx" ON "AccountNote"("accountId", "createdAt");
+
+-- Off-structure account dispositions — "motion" (conversation already live,
+-- skip the roundup), "not-mine" (another rep's account; excluded + ledgered),
+-- "parked" (shelved for now). One row per account. Safe to re-run.
+CREATE TABLE IF NOT EXISTS "AccountDisposition" (
+  "id" TEXT NOT NULL,
+  "accountId" TEXT NOT NULL,
+  "status" TEXT NOT NULL,
+  "reason" TEXT NOT NULL DEFAULT '',
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "AccountDisposition_pkey" PRIMARY KEY ("id")
+);
+CREATE UNIQUE INDEX IF NOT EXISTS "AccountDisposition_accountId_key" ON "AccountDisposition"("accountId");
+CREATE INDEX IF NOT EXISTS "AccountDisposition_status_idx" ON "AccountDisposition"("status");

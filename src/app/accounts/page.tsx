@@ -12,10 +12,13 @@ import {
 } from "@/lib/book/research";
 import {
   loadAccountNotes,
+  loadDispositions,
   loadEngagements,
   loadTodos,
   loadValidations,
 } from "@/lib/today/overlay";
+import { clearDisposition } from "../today/actions";
+import { LocalTime } from "../today-client";
 import { EMPTY_ENGAGEMENT } from "@/lib/engagement";
 import type { LinkedNote } from "@/components/account-notes";
 import { AccountsClient, type AccountRow } from "../accounts-client";
@@ -58,6 +61,7 @@ export default async function AccountsPage() {
   const validations = await loadValidations();
   const engagements = await loadEngagements();
   const chipNotes = await loadAccountNotes();
+  const dispositions = await loadDispositions();
 
   // Notetaker notes linked to accounts (surfaced read-only here).
   const notesByAccount = new Map<string, LinkedNote[]>();
@@ -68,7 +72,16 @@ export default async function AccountsPage() {
     notesByAccount.set(t.accountId, list);
   }
 
+  // Not-mine accounts drop out of the room and into the exclusions ledger below
+  // — kept with the reason and date so the book count reconciles and you
+  // remember why (and can undo).
+  const excluded = peos
+    .map((p) => ({ p, d: dispositions.get(p.id) }))
+    .filter((x) => x.d?.status === "not-mine");
+  const excludedIds = new Set(excluded.map((x) => x.p.id));
+
   const rows: AccountRow[] = peos
+    .filter((p) => !excludedIds.has(p.id))
     .map((p) => {
       const d = deskScore(p);
       const dem = getDemand(p.id);
@@ -123,6 +136,12 @@ export default async function AccountsPage() {
           ? { status: v.status, note: v.note, adjustedDemand: v.adjustedDemand }
           : null,
         engagement: engagements.get(p.id) ?? EMPTY_ENGAGEMENT,
+        disposition: (() => {
+          const d = dispositions.get(p.id);
+          return d && (d.status === "motion" || d.status === "parked")
+            ? { status: d.status, reason: d.reason }
+            : null;
+        })(),
         notes: notesByAccount.get(p.id) ?? [],
         chipNotes: (chipNotes.get(p.id) ?? []).map((n) => ({
           id: n.id,
@@ -151,6 +170,32 @@ export default async function AccountsPage() {
           </p>
         </div>
         <AccountsClient rows={rows} canAdd={canAdd} onDashboard={onDashboard} />
+
+        {/* The exclusions ledger — accounts marked "not mine" leave the room
+            but never vanish silently: name, reason, when, and an undo. */}
+        {excluded.length > 0 && (
+          <details className={styles.ledger}>
+            <summary className={styles.ledgerSummary}>
+              Excluded — not mine ({excluded.length})
+            </summary>
+            <ul className={styles.ledgerList}>
+              {excluded.map(({ p, d }) => (
+                <li key={p.id} className={styles.ledgerRow}>
+                  <b>{p.name}</b>
+                  <span className={styles.ledgerWhy}>
+                    {d?.reason || "no reason logged"} ·{" "}
+                    {d ? <LocalTime iso={d.updatedAt} /> : null}
+                  </span>
+                  <form action={clearDisposition} className={styles.valInline}>
+                    <input type="hidden" name="accountId" value={p.id} />
+                    <input type="hidden" name="returnTo" value="/accounts" />
+                    <button className={styles.ledgerUndo}>↩ Restore</button>
+                  </form>
+                </li>
+              ))}
+            </ul>
+          </details>
+        )}
       </main>
     </>
   );

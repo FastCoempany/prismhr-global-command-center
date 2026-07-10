@@ -3590,6 +3590,19 @@
   background: rgba(10, 28, 64, 0.28);
 }
 .chipPop {
+  /* The box is PORTALED to document.body, outside .wrap — so the theme
+     variables must be re-declared here or every var() inside silently falls
+     back (transparent buttons, invisible borders). */
+  --navy: #0a1c40;
+  --blue: #2563eb;
+  --blue-d: #1d4ed8;
+  --orange: #e6701e;
+  --bg: #f5f7fb;
+  --card: #ffffff;
+  --line: #e6ebf3;
+  --ink: #0a1c40;
+  --muted: #5b6b86;
+  --green: #1a7f3c;
   /* Fixed at the viewport level (top/left set inline from the chip's measured
      rect) — absolute-in-row got painted over by later cards' stacking contexts. */
   position: fixed;
@@ -3648,6 +3661,17 @@
   font: inherit;
   font-size: 12.5px;
   resize: vertical;
+}
+.chipNoteForm select,
+.chipNoteForm input[type="text"],
+.chipNoteForm input:not([type]) {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 5px 8px;
+  font: inherit;
+  font-size: 12px;
+  background: #fff;
+  color: var(--ink);
 }
 .chipSaveBtn {
   align-self: flex-start;
@@ -4019,6 +4043,207 @@
   flex: 1 1 100%;
   flex-direction: column;
   gap: 8px;
+}
+
+/* Curveball logger + log-activity + state override + roundup composer —
+   the off-structure controls that live on/under the rail. */
+.atcHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.atcCurveBtn {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--orange);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 1px 9px;
+  cursor: pointer;
+}
+.atcCurveBtn:hover {
+  border-color: var(--orange);
+}
+.atcCurve {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 7px 12px;
+  background: #fff7f0;
+  border-bottom: 1px solid var(--line);
+}
+.atcCurve select,
+.atcCurve input {
+  font-size: 11.5px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 3px 7px;
+  background: #fff;
+  color: var(--ink);
+}
+.atcCurve input {
+  flex: 1 1 220px;
+  min-width: 160px;
+}
+.atcLogForm {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1 1 100%;
+}
+.atcLogForm input {
+  flex: 1;
+  font-size: 11.5px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 4px 8px;
+  background: #fff;
+  color: var(--ink);
+}
+.atcStateForm {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.atcStateForm select {
+  font-size: 10.5px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 2px 5px;
+  background: #fff;
+  color: var(--muted);
+}
+.composerRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 6px 0 2px;
+}
+.composerHint {
+  flex: 1 1 100%;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.composerChk {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--navy);
+  background: #eef3fb;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 1px 8px;
+  cursor: pointer;
+}
+.composerChk input {
+  accent-color: var(--blue-d);
+  margin: 0;
+}
+.composerMotion {
+  background: #fff2e6;
+  border-color: #f3c9a3;
+}
+.composerParked {
+  background: var(--bg);
+  color: var(--muted);
+}
+
+/* Chip work box — off-structure block */
+.chipDispo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 11px;
+  color: var(--ink);
+  background: #fff7f0;
+  border: 1px dashed #f3c9a3;
+  border-radius: 8px;
+  padding: 5px 8px;
+}
+.chipDispoLine {
+  flex: 1;
+  font-weight: 600;
+}
+.chipDispoBtn {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--blue-d);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 1px 8px;
+  cursor: pointer;
+}
+
+/* Account Room — disposition badge + exclusions ledger */
+.dispoBadge {
+  font-size: 10px;
+  font-weight: 700;
+  color: #8a5a10;
+  background: #fff2e6;
+  border: 1px solid #f3c9a3;
+  border-radius: 999px;
+  padding: 0 7px;
+  white-space: nowrap;
+}
+.ledger {
+  margin-top: 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg);
+  padding: 8px 12px;
+}
+.ledgerSummary {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  cursor: pointer;
+}
+.ledgerList {
+  list-style: none;
+  margin: 8px 0 2px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ledgerRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12.5px;
+  color: var(--ink);
+}
+.ledgerRow b {
+  color: var(--navy);
+}
+.ledgerWhy {
+  flex: 1;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.ledgerUndo {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--blue-d);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 1px 8px;
+  cursor: pointer;
 }
 
 /* The reference group below the rail — same boxed shell + micro-header as the

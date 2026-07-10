@@ -1132,3 +1132,20 @@ model AccountEngagement {
 
   @@index([accountId])
 }
+
+// Off-structure account dispositions — how real life overrides the structured
+// research → roundup → reply path. Keyed by the book account id.
+//   "motion"   — the conversation is already live (skip the roundup, keep visible)
+//   "not-mine" — belongs to another rep; excluded everywhere, kept in the
+//                Account Room's exclusions ledger with the reason
+//   "parked"   — deliberately shelved for now (dimmed, out of the roundup)
+model AccountDisposition {
+  id        String   @id @default(cuid())
+  accountId String   @unique
+  status    String // "motion" | "not-mine" | "parked"
+  reason    String   @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+}

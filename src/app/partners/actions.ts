@@ -65,7 +65,12 @@ export async function deletePartnerNote(formData: FormData) {
 
 import { accountIntel, partnerKickoff, partnerOutreachKey } from "@/lib/today/build";
 import { partnerRole } from "@/lib/book/partners";
-import { loadAccountNotes, loadPartnerNotes, loadTouches } from "@/lib/today/overlay";
+import {
+  loadAccountNotes,
+  loadDispositions,
+  loadPartnerNotes,
+  loadTouches,
+} from "@/lib/today/overlay";
 import { buildFollowUpPrompt, type DraftRecipient } from "@/lib/claude/prompt";
 
 export async function getFollowUpPrompt(
@@ -74,12 +79,16 @@ export async function getFollowUpPrompt(
   pastedContext: string,
 ): Promise<string> {
   const p = (partner ?? "").slice(0, 120);
-  const [touches, accountNotes, partnerNotes] = await Promise.all([
+  const [touches, accountNotes, partnerNotes, dispositions] = await Promise.all([
     loadTouches(),
     loadAccountNotes(),
     loadPartnerNotes(),
+    loadDispositions(),
   ]);
-  const kickoff = partnerKickoff(accountIntel(), new Set());
+  const kickoff = partnerKickoff(
+    accountIntel().filter((a) => dispositions.get(a.id)?.status !== "not-mine"),
+    new Set(),
+  );
   const accounts = kickoff.find((k) => k.partner === p)?.accounts ?? [];
   const thread = touches.find((t) => t.subjectKey === partnerOutreachKey(p)) ?? null;
   return buildFollowUpPrompt({

@@ -117,6 +117,37 @@ export async function loadPartnerNotes(): Promise<Map<string, PartnerNote[]>> {
   }
 }
 
+// An off-structure disposition on a book account — how real life overrides the
+// structured path. "motion" = conversation already live (skip the roundup);
+// "not-mine" = another rep's account (excluded everywhere, ledgered with the
+// reason); "parked" = deliberately shelved.
+export type DispositionStatus = "motion" | "not-mine" | "parked";
+export type Disposition = {
+  status: DispositionStatus;
+  reason: string;
+  updatedAt: string; // ISO
+};
+
+export async function loadDispositions(): Promise<Map<string, Disposition>> {
+  if (!hasDatabaseEnv()) return new Map();
+  try {
+    const rows = await getPrisma().accountDisposition.findMany();
+    const out = new Map<string, Disposition>();
+    for (const r of rows) {
+      if (r.status !== "motion" && r.status !== "not-mine" && r.status !== "parked")
+        continue;
+      out.set(r.accountId, {
+        status: r.status,
+        reason: r.reason,
+        updatedAt: r.updatedAt.toISOString(),
+      });
+    }
+    return out;
+  } catch {
+    return new Map();
+  }
+}
+
 // Normalize a JSON log column into typed entries, dropping anything malformed.
 function normTouchLog(raw: unknown): TouchLogEntry[] {
   if (!Array.isArray(raw)) return [];
