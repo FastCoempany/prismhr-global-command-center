@@ -1,6 +1,6 @@
 {
   "version": "v1",
-  "name": "subcontractor-hub-demo-map",
+  "name": "prismhr-global-master-demo-flow",
   "status": "curated-review-map — NOT imported; no DB writes; no Sidekick UI changes",
   "sources": {
     "draftEntries": "tools/sidekick-import/output/draft_catalog_entries.md (full dense-pack run, 55 moments)",
@@ -17,7 +17,7 @@
   },
   "screens": [
     {
-      "id": "shd-01-dashboard-demo-home",
+      "id": "pgd-01-dashboard-demo-home",
       "title": "Dashboard / demo home",
       "sourceMoments": [22],
       "timestampStart": "00:23:27",
@@ -40,14 +40,14 @@
         "No re-platforming as the engagement model changes — contractor today, EOR tomorrow, subsidiary later, same login"
       ],
       "de": [
-        "Bryce framed the jump-in (“should we show them the platform and some mechanics”); Shane confirmed screen share off the “Hello, Demo” greeting"
+        "The partner rep framed the jump-in (“should we show them the platform and some mechanics”); the presenter confirmed screen share off the “Hello, Demo” greeting"
       ],
       "branching": [
         "If the room asks “is this the system we would actually use?” — yes, this exact environment, demo data aside"
       ]
     },
     {
-      "id": "shd-02-pay-period-approval-entry",
+      "id": "pgd-02-pay-period-approval-entry",
       "title": "Pay Period Approval entry",
       "sourceMoments": [22, 23],
       "timestampStart": "00:24:12",
@@ -75,7 +75,7 @@
       ]
     },
     {
-      "id": "shd-03-monthly-pay-period-detail",
+      "id": "pgd-03-monthly-pay-period-detail",
       "title": "Monthly Pay Period detail",
       "sourceMoments": [23, 24],
       "timestampStart": "00:25:00",
@@ -99,14 +99,14 @@
         "The employer-burden line answers the real budgeting question — what a $10k salary actually costs in-country"
       ],
       "de": [
-        "Bulgaria wasn't loaded in the demo set — Shane used Ava in Canada as the stand-in; flag if a prospect asks to see their own country"
+        "Bulgaria wasn't loaded in the demo set — the presenter used Ava in Canada as the stand-in; flag if a prospect asks to see their own country"
       ],
       "branching": [
-        "If asked to see Bulgaria specifically: acknowledge the demo set gap and pivot to the compensation calculator promise (screen 18 has the same gap — same fix)"
+        "If asked to see the prospect's own country: acknowledge the demo set gap and pivot to the compensation calculator promise (screen 18 has the same gap — same fix)"
       ]
     },
     {
-      "id": "shd-04-confirm-payroll-approval",
+      "id": "pgd-04-confirm-payroll-approval",
       "title": "Confirm payroll approval",
       "sourceMoments": [24],
       "timestampStart": "00:26:02",
@@ -133,7 +133,7 @@
       ]
     },
     {
-      "id": "shd-05-wire-fee-value-point",
+      "id": "pgd-05-wire-fee-value-point",
       "title": "Wire-fee / dashboard value point",
       "sourceMoments": [25],
       "timestampStart": "00:26:31",
@@ -157,14 +157,14 @@
         "Kills the wire-fee line item AND the cross-border payment scrutiny in one move — the headline cost/compliance win of the payroll section"
       ],
       "de": [
-        "Bryce interjected “stop us as we go if you have questions” — a good structural spot to invite the room in"
+        "The partner rep interjected “stop us as we go if you have questions” — a good structural spot to invite the room in"
       ],
       "branching": [
         "If the room does the math on current wire fees, let them — this point lands hardest self-computed"
       ]
     },
     {
-      "id": "shd-06-time-off-requests",
+      "id": "pgd-06-time-off-requests",
       "title": "Time off requests",
       "sourceMoments": [26],
       "timestampStart": "00:27:38",
@@ -192,7 +192,7 @@
       ]
     },
     {
-      "id": "shd-07-worker-contractor-list",
+      "id": "pgd-07-worker-contractor-list",
       "title": "Worker / contractor list",
       "sourceMoments": [26, 27, 28],
       "timestampStart": "00:28:18",
@@ -216,14 +216,14 @@
         "One roster for a mixed global workforce — the 'single pane of glass' moment of the demo"
       ],
       "de": [
-        "Renee asked whether countries add mandatory pay items (citing Mexico housing/food stipends) for UK/Bulgaria → social charges always; UK has a required pension; Bulgaria specifics to be confirmed (open action)"
+        "A prospect stakeholder asked whether countries add mandatory pay items (citing Mexico housing/food stipends) → social charges always; UK has a required pension; country specifics get confirmed per engagement"
       ],
       "branching": [
         "If the roster question turns into a cost question, jump ahead to statutory costs (screen 9) or the compensation calculator (screen 18)"
       ]
     },
     {
-      "id": "shd-08-worker-profile-signed-contract",
+      "id": "pgd-08-worker-profile-signed-contract",
       "title": "Worker profile / signed contract",
       "sourceMoments": [27],
       "timestampStart": "00:28:53",
@@ -246,14 +246,14 @@
         "The two-contract chain is the legal spine of EOR — showing the actual signed document makes it concrete instead of abstract"
       ],
       "de": [
-        "Justin's core concern is IP/W2 — this screen is where you plant the answer; Shane took an action item to let them add their own IP agreement"
+        "The prospect's core concern in the source call was IP/W2 — this screen is where you plant the answer; the presenter took an action item to let clients add their own IP agreement"
       ],
       "branching": [
         "If counsel wants specifics, offer both agreements for attorney review rather than paraphrasing clauses live"
       ]
     },
     {
-      "id": "shd-09-country-pay-requirements",
+      "id": "pgd-09-country-pay-requirements",
       "title": "Country pay requirements / statutory costs",
       "sourceMoments": [28, 29, 30],
       "timestampStart": "00:30:00",
@@ -277,17 +277,17 @@
         "Transparent per-country employer costs turn 'what will this really cost us?' from a fear into a lookup"
       ],
       "de": [
-        "Renee asked: does the country add mandatory pay items? → social charges always; Bulgaria specifics to be confirmed",
-        "Renee asked: are benefit providers already set up? → yes; national systems via social charges, optional supplemental on top (India weak, Australia public system good)",
-        "Objection-defuser Shane used: “none of this is free — they're paying a lot of taxes” when someone raises 'free healthcare'"
+        "Prospect question: does the country add mandatory pay items? → social charges always; Bulgaria specifics to be confirmed",
+        "Prospect question: are benefit providers already set up? → yes; national systems via social charges, optional supplemental on top (India weak, Australia public system good)",
+        "Objection-defuser used in the source call: “none of this is free — they're paying a lot of taxes” when someone raises 'free healthcare'"
       ],
       "branching": [
-        "Bulgaria allowances/stipends are an open confirm-item — don't guess specifics live",
+        "Country allowances/stipends can be open confirm-items — don't guess specifics live",
         "If 'free healthcare' comes up, use the taxes-fund-it framing before pitching supplemental tiers"
       ]
     },
     {
-      "id": "shd-10-employment-type-decision",
+      "id": "pgd-10-employment-type-decision",
       "title": "Employment type decision",
       "sourceMoments": [31, 32, 33],
       "timestampStart": "00:33:39",
@@ -311,15 +311,15 @@
         "Classification risk is surfaced BEFORE the relationship is created — the compliance moat versus pay-anyone tools"
       ],
       "de": [
-        "Bryce/Shane clarified for the room: once PrismHR flags someone as likely an employee under Contractor Plus, you can't knowingly keep paying them as a contractor through us — but the model choice stays the employer's",
-        "Shane's line: “it's not an exact checklist — three or four questions and it's leaning one way; we just make sure you have full information”"
+        "Clarified for the room: once PrismHR flags someone as likely an employee under Contractor Plus, you can't knowingly keep paying them as a contractor through us — but the model choice stays the employer's",
+        "The presenter's line: “it's not an exact checklist — three or four questions and it's leaning one way; we just make sure you have full information”"
       ],
       "branching": [
         "If they're comfortable with their existing contractor relationships, plain contractor (payment-only) is the low-friction start; Contractor Plus is the step-up when they want the liability shield"
       ]
     },
     {
-      "id": "shd-11-new-hire-setup-form",
+      "id": "pgd-11-new-hire-setup-form",
       "title": "New hire / employment setup form",
       "sourceMoments": [33, 34, 35, 36],
       "timestampStart": "00:36:57",
@@ -344,7 +344,7 @@
         "Residence — not nationality or payroll convenience — drives the employment country; that single rule is most of cross-border compliance"
       ],
       "de": [
-        "Live on the call: Renee said one of the ~12 likely lives in Spain; nationality vs residence unknown — Renee took the action to confirm. This is the open item on the deal: residency drives the seat's country and cost"
+        "Live in the source call: one of the workers likely lived in Spain; nationality vs residence was unknown, and the prospect took an action item to confirm. Residency drives the seat's country and cost — a common early open item to surface"
       ],
       "branching": [
         "If they push for a faster start, anchor on the 2-week window = contract + country requirements, not platform lag",
@@ -352,7 +352,7 @@
       ]
     },
     {
-      "id": "shd-12-additional-payments",
+      "id": "pgd-12-additional-payments",
       "title": "Additional payments",
       "sourceMoments": [37],
       "timestampStart": "00:40:32",
@@ -380,7 +380,7 @@
       ]
     },
     {
-      "id": "shd-13-equipment-policy",
+      "id": "pgd-13-equipment-policy",
       "title": "Equipment policy",
       "sourceMoments": [38],
       "timestampStart": "00:41:47",
@@ -408,7 +408,7 @@
       ]
     },
     {
-      "id": "shd-14-benefits-global-health",
+      "id": "pgd-14-benefits-global-health",
       "title": "Benefits / global health insurance",
       "sourceMoments": [39],
       "timestampStart": "00:42:45",
@@ -432,14 +432,14 @@
         "“AI-driven, but a human is involved” — the submit-to-a-person beat differentiates from fully-automated competitors"
       ],
       "de": [
-        "This answers Renee's earlier benefits-provider question from the roster section — providers are already set up"
+        "This answers the earlier benefits-provider question from the roster section — providers are already set up"
       ],
       "branching": [
         "Country quality varies: India's public option is weak, Australia's is good — supplemental matters more in some countries than others"
       ]
     },
     {
-      "id": "shd-15-contract-onboarding-handoff",
+      "id": "pgd-15-contract-onboarding-handoff",
       "title": "Contract / onboarding handoff",
       "sourceMoments": [40, 41],
       "timestampStart": "00:43:59",
@@ -468,7 +468,7 @@
       ]
     },
     {
-      "id": "shd-16-worker-portal-employee-view",
+      "id": "pgd-16-worker-portal-employee-view",
       "title": "Worker portal / employee view",
       "sourceMoments": [41, 42],
       "timestampStart": "00:45:07",
@@ -501,7 +501,7 @@
       ]
     },
     {
-      "id": "shd-17-reports",
+      "id": "pgd-17-reports",
       "title": "Reports",
       "sourceMoments": [43],
       "timestampStart": "00:47:32",
@@ -531,7 +531,7 @@
       ]
     },
     {
-      "id": "shd-18-tools-resources-comp-calculator",
+      "id": "pgd-18-tools-resources-comp-calculator",
       "title": "Tools & resources / compensation calendar",
       "sourceMoments": [44],
       "timestampStart": "00:48:39",
@@ -554,14 +554,14 @@
         "Turns the scariest unknown — true per-country cost — into a 10-second lookup the prospect can run themselves"
       ],
       "de": [
-        "⚠ Bulgaria was not loaded in the calculator during the demo — Shane flagged he'd fix it and demoed the UK instead. Verify Bulgaria is loaded before the next run"
+        "⚠ Bulgaria was not loaded in the calculator during the demo — the presenter flagged he'd fix it and demoed the UK instead. Verify the prospect's countries are loaded before any run"
       ],
       "branching": [
         "If the prospect's country is missing from the calculator, name it as a data-load gap and commit to the fix — don't improvise numbers"
       ]
     },
     {
-      "id": "shd-19-wallet-contractor-payment",
+      "id": "pgd-19-wallet-contractor-payment",
       "title": "Wallet / contractor payment method",
       "sourceMoments": [46, 47],
       "timestampStart": "00:50:59",
@@ -584,14 +584,14 @@
         "No wires also means no wire signals — the permanent-establishment risk angle turns a cost saving into a compliance story"
       ],
       "de": [
-        "Bryce co-sold advantage #1 live: one flat fee per month with unlimited transfers — pay weekly or monthly, employer's choice. A natural partner tag-team moment"
+        "The partner rep co-sold advantage #1 live: one flat fee per month with unlimited transfers — pay weekly or monthly, employer's choice. A natural partner tag-team moment"
       ],
       "branching": [
         "Philippines contractors: lead with GCash — it's the payout method they already live in"
       ]
     },
     {
-      "id": "shd-20-local-currency-payment-setup",
+      "id": "pgd-20-local-currency-payment-setup",
       "title": "Local currency / payment method setup",
       "sourceMoments": [48, 49, 50],
       "timestampStart": "00:53:09",
@@ -616,14 +616,14 @@
         "The wallet is a retention pitch to the contractors themselves — their money arrives faster, cheaper, and in the currency they trust"
       ],
       "de": [
-        "Bryce co-sold advantage #2: day-one instant withdrawal, or park in USD while the local currency 'does whatever craziness it does'"
+        "The partner rep co-sold advantage #2: day-one instant withdrawal, or park in USD while the local currency 'does whatever craziness it does'"
       ],
       "branching": [
-        "⚠ The wallet is contractors-only today — EOR employees must be paid in local currency to local banks. The team is exploring EOR support, but do NOT promise it for the Bulgaria EOR seats"
+        "⚠ The wallet is contractors-only today — EOR employees must be paid in local currency to local banks. The team is exploring EOR support, but do NOT promise it for EOR seats"
       ]
     },
     {
-      "id": "shd-21-wallet-wrap-pay-overview",
+      "id": "pgd-21-wallet-wrap-pay-overview",
       "title": "Wallet wrap / return to pay overview",
       "sourceMoments": [51],
       "timestampStart": "00:56:43",
@@ -656,7 +656,7 @@
       "range": "≈00:00:00–00:23:27",
       "disposition": "account-context-only",
       "keepOrCut": "cut",
-      "reason": "Pre-demo discovery, intros, and context-setting. Valuable as account/deal context (attendees, current pain, Bulgaria/UK/contractor situation) but not product screens — do not make them Sidekick screens."
+      "reason": "Pre-demo discovery, intros, and context-setting. Valuable as call context (attendees, current pain, and the countries and engagement models discussed) but not product screens — do not make them Sidekick screens."
     },
     {
       "moments": "45",
@@ -670,7 +670,7 @@
       "range": "≈00:57:58–end",
       "disposition": "follow-up-notes",
       "keepOrCut": "cut",
-      "reason": "Close and follow-up: action items (Bulgaria allowances to confirm, Spain residency to confirm, calculator data load, IP-agreement question), next steps, and goodbyes. Keep as follow-up notes, not core flow."
+      "reason": "Close and follow-up: action items from the source call (country allowances to confirm, residency to confirm, calculator data load, IP-agreement question), next steps, and goodbyes. Keep as follow-up notes, not core flow."
     }
   ]
 }

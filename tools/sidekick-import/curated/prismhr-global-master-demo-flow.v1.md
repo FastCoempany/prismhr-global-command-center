@@ -1,8 +1,8 @@
-# Subcontractor Hub demo map — curated flow v1
+# PrismHR Global Master Demo Flow — curated flow v1
 
 **Status: curated review map only.** Nothing here is imported anywhere — no DB writes, no
 Sidekick UI changes. This is the human-reviewed cut of the Zoom demo, ready for a later,
-explicit import step. Machine-readable twin: `subcontractor-hub-demo-map.v1.json`.
+explicit import step. Machine-readable twin: `prismhr-global-master-demo-flow.v1.json`.
 
 ## Provenance
 
@@ -26,33 +26,33 @@ explicit import step. Machine-readable twin: `subcontractor-hub-demo-map.v1.json
 
 | # | id | Title | Moments | Range | Module |
 |---|----|-------|---------|-------|--------|
-| 1 | `shd-01-dashboard-demo-home` | Dashboard / demo home | 22 | 00:23:27–00:24:06 | dashboard |
-| 2 | `shd-02-pay-period-approval-entry` | Pay Period Approval entry | 22–23 | 00:24:12–00:25:00 | invoices |
-| 3 | `shd-03-monthly-pay-period-detail` | Monthly Pay Period detail | 23–24 | 00:25:00–00:26:31 | invoices |
-| 4 | `shd-04-confirm-payroll-approval` | Confirm payroll approval | 24 | 00:26:02–00:26:13 | invoices |
-| 5 | `shd-05-wire-fee-value-point` | Wire-fee / dashboard value point | 25 | 00:26:31–00:27:38 | invoices |
-| 6 | `shd-06-time-off-requests` | Time off requests | 26 | 00:27:38–00:28:18 | time-off |
-| 7 | `shd-07-worker-contractor-list` | Worker / contractor list | 26–28 | 00:28:18–00:31:10 | team |
-| 8 | `shd-08-worker-profile-signed-contract` | Worker profile / signed contract | 27 | 00:28:53–00:29:57 | team |
-| 9 | `shd-09-country-pay-requirements` | Country pay requirements / statutory costs | 28–30 | 00:30:00–00:33:37 | team |
-| 10 | `shd-10-employment-type-decision` | Employment type decision | 31–33 | 00:33:39–00:36:57 | new-hire |
-| 11 | `shd-11-new-hire-setup-form` | New hire / employment setup form | 33–36 | 00:36:57–00:40:31 | new-hire |
-| 12 | `shd-12-additional-payments` | Additional payments | 37 | 00:40:32–00:41:46 | new-hire |
-| 13 | `shd-13-equipment-policy` | Equipment policy | 38 | 00:41:47–00:42:45 | onboarding |
-| 14 | `shd-14-benefits-global-health` | Benefits / global health insurance | 39 | 00:42:45–00:43:58 | onboarding |
-| 15 | `shd-15-contract-onboarding-handoff` | Contract / onboarding handoff | 40–41 | 00:43:59–00:46:20 | onboarding |
-| 16 | `shd-16-worker-portal-employee-view` | Worker portal / employee view | 41–42 | 00:45:07–00:47:32 | worker-portal |
-| 17 | `shd-17-reports` | Reports | 43 | 00:47:32–00:48:38 | reports |
-| 18 | `shd-18-tools-resources-comp-calculator` | Tools & resources / compensation calendar | 44 | 00:48:39–00:49:53 | tools-resources |
-| 19 | `shd-19-wallet-contractor-payment` | Wallet / contractor payment method | 46–47 | 00:50:59–00:53:06 | worker-portal |
-| 20 | `shd-20-local-currency-payment-setup` | Local currency / payment method setup | 48–50 | 00:53:09–00:56:42 | worker-portal |
-| 21 | `shd-21-wallet-wrap-pay-overview` | Wallet wrap / return to pay overview | 51 | 00:56:43–00:57:58 | invoices |
+| 1 | `pgd-01-dashboard-demo-home` | Dashboard / demo home | 22 | 00:23:27–00:24:06 | dashboard |
+| 2 | `pgd-02-pay-period-approval-entry` | Pay Period Approval entry | 22–23 | 00:24:12–00:25:00 | invoices |
+| 3 | `pgd-03-monthly-pay-period-detail` | Monthly Pay Period detail | 23–24 | 00:25:00–00:26:31 | invoices |
+| 4 | `pgd-04-confirm-payroll-approval` | Confirm payroll approval | 24 | 00:26:02–00:26:13 | invoices |
+| 5 | `pgd-05-wire-fee-value-point` | Wire-fee / dashboard value point | 25 | 00:26:31–00:27:38 | invoices |
+| 6 | `pgd-06-time-off-requests` | Time off requests | 26 | 00:27:38–00:28:18 | time-off |
+| 7 | `pgd-07-worker-contractor-list` | Worker / contractor list | 26–28 | 00:28:18–00:31:10 | team |
+| 8 | `pgd-08-worker-profile-signed-contract` | Worker profile / signed contract | 27 | 00:28:53–00:29:57 | team |
+| 9 | `pgd-09-country-pay-requirements` | Country pay requirements / statutory costs | 28–30 | 00:30:00–00:33:37 | team |
+| 10 | `pgd-10-employment-type-decision` | Employment type decision | 31–33 | 00:33:39–00:36:57 | new-hire |
+| 11 | `pgd-11-new-hire-setup-form` | New hire / employment setup form | 33–36 | 00:36:57–00:40:31 | new-hire |
+| 12 | `pgd-12-additional-payments` | Additional payments | 37 | 00:40:32–00:41:46 | new-hire |
+| 13 | `pgd-13-equipment-policy` | Equipment policy | 38 | 00:41:47–00:42:45 | onboarding |
+| 14 | `pgd-14-benefits-global-health` | Benefits / global health insurance | 39 | 00:42:45–00:43:58 | onboarding |
+| 15 | `pgd-15-contract-onboarding-handoff` | Contract / onboarding handoff | 40–41 | 00:43:59–00:46:20 | onboarding |
+| 16 | `pgd-16-worker-portal-employee-view` | Worker portal / employee view | 41–42 | 00:45:07–00:47:32 | worker-portal |
+| 17 | `pgd-17-reports` | Reports | 43 | 00:47:32–00:48:38 | reports |
+| 18 | `pgd-18-tools-resources-comp-calculator` | Tools & resources / compensation calendar | 44 | 00:48:39–00:49:53 | tools-resources |
+| 19 | `pgd-19-wallet-contractor-payment` | Wallet / contractor payment method | 46–47 | 00:50:59–00:53:06 | worker-portal |
+| 20 | `pgd-20-local-currency-payment-setup` | Local currency / payment method setup | 48–50 | 00:53:09–00:56:42 | worker-portal |
+| 21 | `pgd-21-wallet-wrap-pay-overview` | Wallet wrap / return to pay overview | 51 | 00:56:43–00:57:58 | invoices |
 
 ---
 
 ## 1. Dashboard / demo home
 
-- **id:** `shd-01-dashboard-demo-home` · **keep**
+- **id:** `pgd-01-dashboard-demo-home` · **keep**
 - **source moments:** 22 · **range:** 00:23:27–00:24:06 · **module:** `dashboard`
 - **screen type:** home dashboard
 - **visual:** Home dashboard with the “Hello, Demo” greeting, task/widget cards, and pay-period tiles broken out by worker segment.
@@ -68,7 +68,7 @@ explicit import step. Machine-readable twin: `subcontractor-hub-demo-map.v1.json
 
 **Strategic point:** No re-platforming as the engagement model changes — contractor today, EOR tomorrow, subsidiary later, same login.
 
-**Discovery/executive note:** Bryce framed the jump-in; Shane confirmed screen share off the “Hello, Demo” greeting.
+**Discovery/executive note:** The partner rep framed the jump-in; the presenter confirmed screen share off the “Hello, Demo” greeting.
 
 **Branching:** If the room asks “is this the system we would actually use?” — yes, this exact environment, demo data aside.
 
@@ -76,7 +76,7 @@ explicit import step. Machine-readable twin: `subcontractor-hub-demo-map.v1.json
 
 ## 2. Pay Period Approval entry
 
-- **id:** `shd-02-pay-period-approval-entry` · **keep**
+- **id:** `pgd-02-pay-period-approval-entry` · **keep**
 - **source moments:** 22–23 · **range:** 00:24:12–00:25:00 · **module:** `invoices`
 - **screen type:** pay period approval list
 - **visual:** Pay Period Approval / Monthly Pay Period entry view listing the upcoming contractor pay period and its payment types.
@@ -98,7 +98,7 @@ explicit import step. Machine-readable twin: `subcontractor-hub-demo-map.v1.json
 
 ## 3. Monthly Pay Period detail
 
-- **id:** `shd-03-monthly-pay-period-detail` · **keep**
+- **id:** `pgd-03-monthly-pay-period-detail` · **keep**
 - **source moments:** 23–24 · **range:** 00:25:00–00:26:31 · **module:** `invoices`
 - **screen type:** pay period country detail
 - **visual:** Country cards with employee/payment tables, reimbursements and additional payments; per-employee wage, gross-to-net and employer-burden breakdown.
@@ -114,15 +114,15 @@ explicit import step. Machine-readable twin: `subcontractor-hub-demo-map.v1.json
 
 **Strategic point:** The employer-burden line answers the real budgeting question — what a $10k salary actually costs in-country.
 
-**Discovery/executive note:** Bulgaria wasn't loaded in the demo set — Shane used Ava in Canada as the stand-in; flag if a prospect asks to see their own country.
+**Discovery/executive note:** Bulgaria wasn't loaded in the demo set — the presenter used Ava in Canada as the stand-in; flag if a prospect asks to see their own country.
 
-**Branching:** If asked to see Bulgaria specifically: acknowledge the demo-set gap and pivot to the compensation-calculator promise (screen 18 has the same gap — same fix).
+**Branching:** If asked to see the prospect's own country: acknowledge the demo-set gap and pivot to the compensation-calculator promise (screen 18 has the same gap — same fix).
 
 ---
 
 ## 4. Confirm payroll approval
 
-- **id:** `shd-04-confirm-payroll-approval` · **keep**
+- **id:** `pgd-04-confirm-payroll-approval` · **keep**
 - **source moments:** 24 · **range:** 00:26:02–00:26:13 · **module:** `invoices`
 - **screen type:** confirmation modal
 - **visual:** Confirm Payroll Approval modal over the pay-period detail, summarizing what will be paid in local currency.
@@ -144,7 +144,7 @@ explicit import step. Machine-readable twin: `subcontractor-hub-demo-map.v1.json
 
 ## 5. Wire-fee / dashboard value point
 
-- **id:** `shd-05-wire-fee-value-point` · **keep**
+- **id:** `pgd-05-wire-fee-value-point` · **keep**
 - **source moments:** 25 · **range:** 00:26:31–00:27:38 · **module:** `invoices`
 - **screen type:** pay period → dashboard transition
 - **visual:** Pay-period page returning toward the dashboard/home while the invoicing model is narrated.
@@ -160,7 +160,7 @@ explicit import step. Machine-readable twin: `subcontractor-hub-demo-map.v1.json
 
 **Strategic point:** Kills the wire-fee line item AND the cross-border payment scrutiny in one move — the headline cost/compliance win of the payroll section.
 
-**Discovery/executive note:** Bryce interjected “stop us as we go if you have questions” — a good structural spot to invite the room in.
+**Discovery/executive note:** The partner rep interjected “stop us as we go if you have questions” — a good structural spot to invite the room in.
 
 **Branching:** If the room does the math on current wire fees, let them — this point lands hardest self-computed.
 
@@ -168,7 +168,7 @@ explicit import step. Machine-readable twin: `subcontractor-hub-demo-map.v1.json
 
 ## 6. Time off requests
 
-- **id:** `shd-06-time-off-requests` · **keep**
+- **id:** `pgd-06-time-off-requests` · **keep**
 - **source moments:** 26 · **range:** 00:27:38–00:28:18 · **module:** `time-off`
 - **screen type:** time off request list
 - **visual:** Time Off page with the request list and country statutory leave context; dashboard “who's out today/tomorrow” beat.
@@ -190,7 +190,7 @@ explicit import step. Machine-readable twin: `subcontractor-hub-demo-map.v1.json
 
 ## 7. Worker / contractor list
 
-- **id:** `shd-07-worker-contractor-list` · **keep**
+- **id:** `pgd-07-worker-contractor-list` · **keep**
 - **source moments:** 26–28 · **range:** 00:28:18–00:31:10 · **module:** `team`
 - **screen type:** worker roster table
 - **visual:** My Team worker table / people list across both populations, with countries, statuses, and searchable employee data.
@@ -206,7 +206,7 @@ explicit import step. Machine-readable twin: `subcontractor-hub-demo-map.v1.json
 
 **Strategic point:** One roster for a mixed global workforce — the “single pane of glass” moment of the demo.
 
-**Discovery/executive note:** Renee asked whether countries add mandatory pay items (citing Mexico housing/food stipends) for UK/Bulgaria → social charges always; UK has a required pension; Bulgaria specifics to be confirmed (open action).
+**Discovery/executive note:** A prospect stakeholder asked whether countries add mandatory pay items (citing Mexico housing/food stipends) → social charges always; UK has a required pension; country specifics get confirmed per engagement.
 
 **Branching:** If the roster question turns into a cost question, jump ahead to statutory costs (screen 9) or the compensation calculator (screen 18).
 
@@ -214,7 +214,7 @@ explicit import step. Machine-readable twin: `subcontractor-hub-demo-map.v1.json
 
 ## 8. Worker profile / signed contract
 
-- **id:** `shd-08-worker-profile-signed-contract` · **keep**
+- **id:** `pgd-08-worker-profile-signed-contract` · **keep**
 - **source moments:** 27 · **range:** 00:28:53–00:29:57 · **module:** `team`
 - **screen type:** employee profile / documents
 - **visual:** Employee HR profile with the contract/document area open — the signed employment contract on the worker record.
@@ -230,7 +230,7 @@ explicit import step. Machine-readable twin: `subcontractor-hub-demo-map.v1.json
 
 **Strategic point:** The two-contract chain is the legal spine of EOR — showing the actual signed document makes it concrete instead of abstract.
 
-**Discovery/executive note:** Justin's core concern is IP/W2 — this screen is where you plant the answer; Shane took an action item to let them add their own IP agreement.
+**Discovery/executive note:** The prospect's core concern in the source call was IP/W2 — this screen is where you plant the answer; the presenter took an action item to let clients add their own IP agreement.
 
 **Branching:** If counsel wants specifics, offer both agreements for attorney review rather than paraphrasing clauses live.
 
@@ -238,7 +238,7 @@ explicit import step. Machine-readable twin: `subcontractor-hub-demo-map.v1.json
 
 ## 9. Country pay requirements / statutory costs
 
-- **id:** `shd-09-country-pay-requirements` · **keep**
+- **id:** `pgd-09-country-pay-requirements` · **keep**
 - **source moments:** 28–30 · **range:** 00:30:00–00:33:37 · **module:** `team`
 - **screen type:** country requirements / recurring costs
 - **visual:** Employee/country requirement details and recurring cost rows: social charges, required pension, healthcare, supplemental benefit options.
@@ -254,15 +254,15 @@ explicit import step. Machine-readable twin: `subcontractor-hub-demo-map.v1.json
 
 **Strategic point:** Transparent per-country employer costs turn “what will this really cost us?” from a fear into a lookup.
 
-**Discovery/executive note:** Renee's two questions live here — mandatory pay items (social charges always; Bulgaria TBC) and whether benefit providers are pre-set (yes; India weak, Australia good). Objection-defuser Shane used: “none of this is free — they're paying a lot of taxes.”
+**Discovery/executive note:** Two common prospect questions live here — mandatory pay items (social charges always; country specifics per engagement) and whether benefit providers are pre-set (yes; India weak, Australia good). Objection-defuser used in the source call: “none of this is free — they're paying a lot of taxes.”
 
-**Branching:** Bulgaria allowances/stipends are an open confirm-item — don't guess specifics live. If “free healthcare” comes up, use the taxes-fund-it framing before pitching supplemental tiers.
+**Branching:** Country allowances/stipends can be open confirm-items — don't guess specifics live. If “free healthcare” comes up, use the taxes-fund-it framing before pitching supplemental tiers.
 
 ---
 
 ## 10. Employment type decision
 
-- **id:** `shd-10-employment-type-decision` · **keep**
+- **id:** `pgd-10-employment-type-decision` · **keep**
 - **source moments:** 31–33 · **range:** 00:33:39–00:36:57 · **module:** `new-hire`
 - **screen type:** employment type chooser
 - **visual:** “What type of employment?” flow with employee (EOR) and contractor options — the fork where the platform routes the setup.
@@ -278,7 +278,7 @@ explicit import step. Machine-readable twin: `subcontractor-hub-demo-map.v1.json
 
 **Strategic point:** Classification risk is surfaced BEFORE the relationship is created — the compliance moat versus pay-anyone tools.
 
-**Discovery/executive note:** Bryce/Shane clarified: once PrismHR flags someone as likely an employee under Contractor Plus, you can't knowingly keep paying them as a contractor through us — but the model choice stays the employer's. Shane: “it's not an exact checklist — three or four questions and it's leaning one way.”
+**Discovery/executive note:** Clarified for the room in the source call: once PrismHR flags someone as likely an employee under Contractor Plus, you can't knowingly keep paying them as a contractor through us — but the model choice stays the employer's. The presenter's line: “it's not an exact checklist — three or four questions and it's leaning one way.”
 
 **Branching:** If they're comfortable with existing contractor relationships, plain contractor (payment-only) is the low-friction start; Contractor Plus is the step-up when they want the liability shield.
 
@@ -286,7 +286,7 @@ explicit import step. Machine-readable twin: `subcontractor-hub-demo-map.v1.json
 
 ## 11. New hire / employment setup form
 
-- **id:** `shd-11-new-hire-setup-form` · **keep**
+- **id:** `pgd-11-new-hire-setup-form` · **keep**
 - **source moments:** 33–36 · **range:** 00:36:57–00:40:31 · **module:** `new-hire`
 - **screen type:** new hire form
 - **visual:** Employment setup form: nationality and country-of-employment dropdowns, work-authorization prompt, role/division/team/location fields, start date, gross salary, contract type.
@@ -302,7 +302,7 @@ explicit import step. Machine-readable twin: `subcontractor-hub-demo-map.v1.json
 
 **Strategic point:** Residence — not nationality or payroll convenience — drives the employment country; that single rule is most of cross-border compliance.
 
-**Discovery/executive note:** Live on the call: Renee said one of the ~12 likely lives in Spain; nationality vs residence unknown — Renee took the action to confirm. This is the open item on the deal: residency drives the seat's country and cost.
+**Discovery/executive note:** Live in the source call: one of the workers likely lived in Spain; nationality vs residence was unknown, and the prospect took an action item to confirm. Residency drives the seat's country and cost — a common early open item to surface.
 
 **Branching:** If they push for a faster start, anchor on the 2-week window = contract + country requirements, not platform lag. The Spain worker's setup can't be finalized until residency/authorization is confirmed.
 
@@ -310,7 +310,7 @@ explicit import step. Machine-readable twin: `subcontractor-hub-demo-map.v1.json
 
 ## 12. Additional payments
 
-- **id:** `shd-12-additional-payments` · **keep**
+- **id:** `pgd-12-additional-payments` · **keep**
 - **source moments:** 37 · **range:** 00:40:32–00:41:46 · **module:** `new-hire`
 - **screen type:** additional payment form + confirmation
 - **visual:** Additional/recurring payment form (e.g. monthly allowance) with its confirmation modal; PTO days and the currency sanity-check beat.
@@ -332,7 +332,7 @@ explicit import step. Machine-readable twin: `subcontractor-hub-demo-map.v1.json
 
 ## 13. Equipment policy
 
-- **id:** `shd-13-equipment-policy` · **keep**
+- **id:** `pgd-13-equipment-policy` · **keep**
 - **source moments:** 38 · **range:** 00:41:47–00:42:45 · **module:** `onboarding`
 - **screen type:** onboarding stepper / equipment policy
 - **visual:** Onboarding stepper on the equipment policy screen: third-party IT catalog option vs personal-device reimbursement.
@@ -354,7 +354,7 @@ explicit import step. Machine-readable twin: `subcontractor-hub-demo-map.v1.json
 
 ## 14. Benefits / global health insurance
 
-- **id:** `shd-14-benefits-global-health` · **keep**
+- **id:** `pgd-14-benefits-global-health` · **keep**
 - **source moments:** 39 · **range:** 00:42:45–00:43:58 · **module:** `onboarding`
 - **screen type:** benefits selection cards
 - **visual:** Benefits/pricing cards (standard / premium / premium + maternity) and the global health insurance detail — SafetyWing coverage breakdown.
@@ -370,7 +370,7 @@ explicit import step. Machine-readable twin: `subcontractor-hub-demo-map.v1.json
 
 **Strategic point:** “AI-driven, but a human is involved” — the submit-to-a-person beat differentiates from fully-automated competitors.
 
-**Discovery/executive note:** This answers Renee's earlier benefits-provider question from the roster section — providers are already set up.
+**Discovery/executive note:** This answers the earlier benefits-provider question from the roster section — providers are already set up.
 
 **Branching:** Country quality varies: India's public option is weak, Australia's is good — supplemental matters more in some countries than others.
 
@@ -378,7 +378,7 @@ explicit import step. Machine-readable twin: `subcontractor-hub-demo-map.v1.json
 
 ## 15. Contract / onboarding handoff
 
-- **id:** `shd-15-contract-onboarding-handoff` · **keep**
+- **id:** `pgd-15-contract-onboarding-handoff` · **keep**
 - **source moments:** 40–41 · **range:** 00:43:59–00:46:20 · **module:** `onboarding`
 - **screen type:** submission success / tasks panel
 - **visual:** Success/confirmation state, My Tasks, and the onboarding panel — the handoff from client setup to offer letter and employee signing.
@@ -400,7 +400,7 @@ explicit import step. Machine-readable twin: `subcontractor-hub-demo-map.v1.json
 
 ## 16. Worker portal / employee view
 
-- **id:** `shd-16-worker-portal-employee-view` · **keep**
+- **id:** `pgd-16-worker-portal-employee-view` · **keep**
 - **source moments:** 41–42 · **range:** 00:45:07–00:47:32 · **module:** `worker-portal`
 - **screen type:** worker portal
 - **visual:** The worker's own portal: personal info, payslips and payment history, time-off, onboarding items (Laurent awaiting offer letter), document self-upload.
@@ -424,7 +424,7 @@ explicit import step. Machine-readable twin: `subcontractor-hub-demo-map.v1.json
 
 ## 17. Reports
 
-- **id:** `shd-17-reports` · **keep**
+- **id:** `pgd-17-reports` · **keep**
 - **source moments:** 43 · **range:** 00:47:32–00:48:38 · **module:** `reports`
 - **screen type:** reports list + tables
 - **visual:** Reports list with filters and report tables: worker report, EOR gross-to-net, general ledger, variance.
@@ -446,7 +446,7 @@ explicit import step. Machine-readable twin: `subcontractor-hub-demo-map.v1.json
 
 ## 18. Tools & resources / compensation calendar
 
-- **id:** `shd-18-tools-resources-comp-calculator` · **keep**
+- **id:** `pgd-18-tools-resources-comp-calculator` · **keep**
 - **source moments:** 44 · **range:** 00:48:39–00:49:53 · **module:** `tools-resources`
 - **screen type:** tools & resources / calculator
 - **visual:** Tools & resources page with the compensation calculator: country selector, salary input, employer-cost and net-take-home table.
@@ -462,7 +462,7 @@ explicit import step. Machine-readable twin: `subcontractor-hub-demo-map.v1.json
 
 **Strategic point:** Turns the scariest unknown — true per-country cost — into a 10-second lookup the prospect can run themselves.
 
-**Discovery/executive note:** ⚠ Bulgaria was not loaded in the calculator during the demo — Shane flagged he'd fix it and demoed the UK instead. Verify Bulgaria is loaded before the next run.
+**Discovery/executive note:** ⚠ Bulgaria was not loaded in the calculator during the demo — the presenter flagged he'd fix it and demoed the UK instead. Verify the prospect's countries are loaded before any run.
 
 **Branching:** If the prospect's country is missing from the calculator, name it as a data-load gap and commit to the fix — don't improvise numbers.
 
@@ -470,7 +470,7 @@ explicit import step. Machine-readable twin: `subcontractor-hub-demo-map.v1.json
 
 ## 19. Wallet / contractor payment method
 
-- **id:** `shd-19-wallet-contractor-payment` · **keep**
+- **id:** `pgd-19-wallet-contractor-payment` · **keep**
 - **source moments:** 46–47 · **range:** 00:50:59–00:53:06 · **module:** `worker-portal`
 - **screen type:** wallet profile + withdrawal modal
 - **visual:** Contractor wallet profile with the withdrawal modal and payment-method selection: bank transfer, mobile wallet, crypto, virtual card.
@@ -486,7 +486,7 @@ explicit import step. Machine-readable twin: `subcontractor-hub-demo-map.v1.json
 
 **Strategic point:** No wires also means no wire signals — the permanent-establishment risk angle turns a cost saving into a compliance story.
 
-**Discovery/executive note:** Bryce co-sold advantage #1 live: one flat fee per month with unlimited transfers — pay weekly or monthly, employer's choice. A natural partner tag-team moment.
+**Discovery/executive note:** The partner rep co-sold advantage #1 live: one flat fee per month with unlimited transfers — pay weekly or monthly, employer's choice. A natural partner tag-team moment.
 
 **Branching:** Philippines contractors: lead with GCash — it's the payout method they already live in.
 
@@ -494,7 +494,7 @@ explicit import step. Machine-readable twin: `subcontractor-hub-demo-map.v1.json
 
 ## 20. Local currency / payment method setup
 
-- **id:** `shd-20-local-currency-payment-setup` · **keep**
+- **id:** `pgd-20-local-currency-payment-setup` · **keep**
 - **source moments:** 48–50 · **range:** 00:53:09–00:56:42 · **module:** `worker-portal`
 - **screen type:** currency / payment method forms
 - **visual:** Currency and payment-method dropdowns with bank/payment forms — configuring how a contractor actually receives funds.
@@ -510,15 +510,15 @@ explicit import step. Machine-readable twin: `subcontractor-hub-demo-map.v1.json
 
 **Strategic point:** The wallet is a retention pitch to the contractors themselves — their money arrives faster, cheaper, and in the currency they trust.
 
-**Discovery/executive note:** Bryce co-sold advantage #2: day-one instant withdrawal, or park in USD while the local currency “does whatever craziness it does.”
+**Discovery/executive note:** The partner rep co-sold advantage #2: day-one instant withdrawal, or park in USD while the local currency “does whatever craziness it does.”
 
-**Branching:** ⚠ The wallet is contractors-only today — EOR employees must be paid in local currency to local banks. The team is exploring EOR support, but do NOT promise it for the Bulgaria EOR seats.
+**Branching:** ⚠ The wallet is contractors-only today — EOR employees must be paid in local currency to local banks. The team is exploring EOR support, but do NOT promise it for EOR seats.
 
 ---
 
 ## 21. Wallet wrap / return to pay overview
 
-- **id:** `shd-21-wallet-wrap-pay-overview` · **keep**
+- **id:** `pgd-21-wallet-wrap-pay-overview` · **keep**
 - **source moments:** 51 · **range:** 00:56:43–00:57:58 · **module:** `invoices`
 - **screen type:** pay overview / workers table
 - **visual:** Back on the pay overview / workers table — the reset frame that closes the wallet section before Q&A.
@@ -542,6 +542,6 @@ explicit import step. Machine-readable twin: `subcontractor-hub-demo-map.v1.json
 
 | Moments | Range | Disposition | Why |
 |---------|-------|-------------|-----|
-| 1–21 | ≈00:00:00–00:23:27 | **account context only** | Pre-demo discovery, intros, and context-setting. Valuable as account/deal context (attendees, current pain, Bulgaria/UK/contractor situation) but not product screens. |
+| 1–21 | ≈00:00:00–00:23:27 | **account context only** | Pre-demo discovery, intros, and context-setting. Valuable as call context (attendees, current pain, and the countries and engagement models discussed) but not product screens. |
 | 45 | ≈00:49:53–00:50:59 | **objection note** | Pricing/cost Q&A between the compensation calculator and the wallet section. Keep attached to the pricing conversation as objection-handling material, not a core-flow screen. |
-| 52–55 | ≈00:57:58–end | **follow-up notes** | Close and follow-up: action items (Bulgaria allowances to confirm, Spain residency to confirm, calculator data load, IP-agreement question), next steps, goodbyes. Keep as follow-up notes. |
+| 52–55 | ≈00:57:58–end | **follow-up notes** | Close and follow-up: action items from the source call (country allowances to confirm, residency to confirm, calculator data load, IP-agreement question), next steps, goodbyes. Keep as follow-up notes. |

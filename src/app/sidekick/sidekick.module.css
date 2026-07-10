@@ -69,6 +69,21 @@
   color: #fff;
   font-size: 14px;
 }
+.flowLink {
+  display: block;
+  margin: 8px 14px 2px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: #dfe6f2;
+  font-size: 13px;
+  text-decoration: none;
+}
+.flowLink:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
 .search input::placeholder {
   color: #8ea3c7;
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { moduleLabel, resolveChild, type ModuleEntry, type Screen } from "@/lib/catalog";
 import {
@@ -322,6 +323,10 @@ export function SidekickClient(props: Props) {
             placeholder="Search screens…  ( / )"
           />
         </div>
+
+        <Link href="/sidekick/flows/prismhr-global" className={styles.flowLink}>
+          Curated Flow: PrismHR Global
+        </Link>
 
         <div className={styles.nav}>
           {activePlaybook && pbScreens.length > 0 && (
