@@ -1,0 +1,676 @@
+{
+  "version": "v1",
+  "name": "subcontractor-hub-demo-map",
+  "status": "curated-review-map — NOT imported; no DB writes; no Sidekick UI changes",
+  "sources": {
+    "draftEntries": "tools/sidekick-import/output/draft_catalog_entries.md (full dense-pack run, 55 moments)",
+    "screenStates": "tools/sidekick-import/output/screen_state_candidates.json (full dense-pack run)",
+    "visualCuration": "uploaded frame review packet (dense pack 20260708-213650)",
+    "talkTrackGrounding": "tools/sidekick-import/curated/enrichment-audit.md (verbatim transcript windows)",
+    "assetPointer": "docs/sidekick-imports/sidekick-assets-dense-20260708-213650.md"
+  },
+  "notes": {
+    "demoStart": "Main demo starts at Moment 22 (~00:23:27), not Moment 1. Moments 1–21 are pre-demo discovery/intros/context — account context only, never Sidekick screens.",
+    "momentNumbering": "sourceMoments reference the full dense-pack importer run (55 moments). The output/ folder in a fresh checkout may hold fixture data — regenerate against the real pack to cross-check.",
+    "suggestedScreenshotFrame": "approxFile computed from the 4 fps dense cadence (frame N ≈ round(seconds × 4) + 1, matching frame_000005.jpg @ 1.00s). Verify against frame_manifest.csv before use — treat as a pointer, not ground truth.",
+    "moduleKeys": "recommendedSidekickModule values are valid keys from src/lib/catalog/catalog.json."
+  },
+  "screens": [
+    {
+      "id": "shd-01-dashboard-demo-home",
+      "title": "Dashboard / demo home",
+      "sourceMoments": [22],
+      "timestampStart": "00:23:27",
+      "timestampEnd": "00:24:06",
+      "screenType": "home dashboard",
+      "visualSummary": "Home dashboard with the “Hello, Demo” greeting, task/widget cards, and pay-period tiles broken out by worker segment.",
+      "demoPurpose": "Orient the user to the PrismHR Global environment before any workflow starts.",
+      "recommendedSidekickModule": "dashboard",
+      "keepOrCut": "keep",
+      "suggestedScreenshotFrame": { "clock": "00:23:45", "approxFile": "frame_005701.jpg" },
+      "transcriptAnchor": "So this is the Prism Global Platform. This is what all the international employees we're talking about would be onboarded to, and how you would interface with them.",
+      "say": "This is the Prism Global platform — what every international worker we're talking about gets onboarded to, and how you interface with them. Contractor, employer-of-record, or down the road people you pay directly through your own subsidiary — one platform manages all of it. There's the technology you're looking at plus a human support layer running alongside it. The dashboard is where most people live: pay periods broken out by segment — contractor payments, one-time payments, hourly, fixed-rate, reimbursements.",
+      "what": "The logged-in home screen of PrismHR Global: greeting, reminders, and pay-period cards segmented by worker classification. It is the anchor the demo returns to between workflows.",
+      "capabilities": [
+        "One platform for contractors, EOR, and future direct/subsidiary payroll",
+        "Pay periods segmented by worker type (contractor · one-time · hourly · fixed-rate · reimbursements)",
+        "Technology platform plus a human support layer"
+      ],
+      "sp": [
+        "No re-platforming as the engagement model changes — contractor today, EOR tomorrow, subsidiary later, same login"
+      ],
+      "de": [
+        "Bryce framed the jump-in (“should we show them the platform and some mechanics”); Shane confirmed screen share off the “Hello, Demo” greeting"
+      ],
+      "branching": [
+        "If the room asks “is this the system we would actually use?” — yes, this exact environment, demo data aside"
+      ]
+    },
+    {
+      "id": "shd-02-pay-period-approval-entry",
+      "title": "Pay Period Approval entry",
+      "sourceMoments": [22, 23],
+      "timestampStart": "00:24:12",
+      "timestampEnd": "00:25:00",
+      "screenType": "pay period approval list",
+      "visualSummary": "Pay Period Approval / Monthly Pay Period entry view listing the upcoming contractor pay period and its payment types.",
+      "demoPurpose": "Show where payroll approval starts.",
+      "recommendedSidekickModule": "invoices",
+      "keepOrCut": "keep",
+      "suggestedScreenshotFrame": { "clock": "00:24:30", "approxFile": "frame_005881.jpg" },
+      "transcriptAnchor": "As you scroll down, you can see there's additional payments, one-time payments, going further down, hourly workers, fixed rate workers, reimbursements, etc.",
+      "say": "This contractor pay period shows every payment you make — one-time, hourly, fixed-rate, reimbursements — however each contract is set up. I open a detailed view, it totals it, and I approve it right here. That's the whole contractor payment motion.",
+      "what": "The entry point into a monthly pay period: a list of every payment type due in the run, with a detailed view that totals and takes the approval.",
+      "capabilities": [
+        "Every payment type in one pay-period view, reflecting how each contract is set up",
+        "Detailed view with running total",
+        "Approve the run in place"
+      ],
+      "sp": [
+        "All payment types converge on a single approval flow — no side spreadsheets to reconcile a run"
+      ],
+      "de": [],
+      "branching": [
+        "If asked about cadence: pay weekly or monthly — the flat per-employee fee doesn't change (fully covered at screen 19–20)"
+      ]
+    },
+    {
+      "id": "shd-03-monthly-pay-period-detail",
+      "title": "Monthly Pay Period detail",
+      "sourceMoments": [23, 24],
+      "timestampStart": "00:25:00",
+      "timestampEnd": "00:26:31",
+      "screenType": "pay period country detail",
+      "visualSummary": "Country cards with employee/payment tables, reimbursements and additional payments; per-employee wage, gross-to-net and employer-burden breakdown.",
+      "demoPurpose": "Show country-level payroll breakdown and approval detail.",
+      "recommendedSidekickModule": "invoices",
+      "keepOrCut": "keep",
+      "suggestedScreenshotFrame": { "clock": "00:25:45", "approxFile": "frame_006181.jpg" },
+      "transcriptAnchor": "It's gonna show you the employee net… gross to net… and the employer burden.",
+      "say": "The employer-of-record view looks a little different: these are full-time regular employees, so it brings up taxes, withholdings, and benefits. Here's Ava in Canada — wages, benefits, taxes — and it shows the employee net, gross to net, and the employer burden. Those two are the ones that matter: on $10,000 a month, what are the additional taxes going to that local government. It's all broken out by country, and this is where you review — I can spot variances (“that makes sense, we gave bonuses this month”) and make corrections here before anything hits payroll.",
+      "what": "The country-level drill-down of an EOR pay period: per-country cards, per-employee rows with gross-to-net and employer burden side by side, plus reimbursements and additional payments — the variance-review stop before approval.",
+      "capabilities": [
+        "EOR view surfaces taxes, withholdings, benefits",
+        "Gross-to-net for the employee AND the employer burden side by side",
+        "Broken out by country",
+        "Variance review and corrections before anything goes to payroll"
+      ],
+      "sp": [
+        "The employer-burden line answers the real budgeting question — what a $10k salary actually costs in-country"
+      ],
+      "de": [
+        "Bulgaria wasn't loaded in the demo set — Shane used Ava in Canada as the stand-in; flag if a prospect asks to see their own country"
+      ],
+      "branching": [
+        "If asked to see Bulgaria specifically: acknowledge the demo set gap and pivot to the compensation calculator promise (screen 18 has the same gap — same fix)"
+      ]
+    },
+    {
+      "id": "shd-04-confirm-payroll-approval",
+      "title": "Confirm payroll approval",
+      "sourceMoments": [24],
+      "timestampStart": "00:26:02",
+      "timestampEnd": "00:26:13",
+      "screenType": "confirmation modal",
+      "visualSummary": "Confirm Payroll Approval modal over the pay-period detail, summarizing what will be paid in local currency.",
+      "demoPurpose": "Show the final approval action and accountability.",
+      "recommendedSidekickModule": "invoices",
+      "keepOrCut": "keep",
+      "suggestedScreenshotFrame": { "clock": "00:26:08", "approxFile": "frame_006273.jpg" },
+      "transcriptAnchor": "As I approve that, it'll just give you a quick analysis of what we're paying the employees in that currency.",
+      "say": "When I approve, it gives a quick analysis of what we're paying the employees in local currency — in an employer-of-record model we're required to pay employees in local currency into their own bank account. One click, one accountable action, and the run is committed.",
+      "what": "The terminal confirmation step of the payroll flow: a modal that restates the local-currency totals and records the approval.",
+      "capabilities": [
+        "Single accountable approval action with a local-currency summary",
+        "EOR compliance baked in: employees paid in local currency to their own bank"
+      ],
+      "sp": [
+        "Approval is explicit and auditable — one person, one click, one record"
+      ],
+      "de": [],
+      "branching": [
+        "If asked who can approve: approval chains are configurable (same pattern as time-off approvals, screen 16)"
+      ]
+    },
+    {
+      "id": "shd-05-wire-fee-value-point",
+      "title": "Wire-fee / dashboard value point",
+      "sourceMoments": [25],
+      "timestampStart": "00:26:31",
+      "timestampEnd": "00:27:38",
+      "screenType": "pay period → dashboard transition",
+      "visualSummary": "Pay-period page returning toward the dashboard/home while the invoicing model is narrated.",
+      "demoPurpose": "Connect the platform workflow to the no-international-wire-fee value point.",
+      "recommendedSidekickModule": "invoices",
+      "keepOrCut": "keep",
+      "suggestedScreenshotFrame": { "clock": "00:27:00", "approxFile": "frame_006481.jpg" },
+      "transcriptAnchor": "There's no international wire fees, right? You pay us, we convert that… and we send those directly to their bank accounts, and then paying the taxes to the Bulgarian authorities.",
+      "say": "Here's what changes from what you do now: you pay us in USD. We send one invoice with your Bulgarian employees' salaries in USD, you pay it into our US bank — no international wire fees. We convert, pay their bank accounts directly, and remit the taxes to the Bulgarian authorities. No wires going back and forth from you — you originate and pay in the United States. Same in any country: CAD, GBP, whatever the local currency is. Reimbursable expenses go through the system with approvers you choose, and Bulgaria runs a monthly cycle, paid at the end of the month.",
+      "what": "A value-point beat rather than a new screen: the walk back from the pay period toward home, carrying the one-US-invoice / no-wire-fees story.",
+      "capabilities": [
+        "One US invoice, paid in USD to a US bank — no international wire fees",
+        "PrismHR converts to local currency, pays employees' banks, remits local taxes",
+        "Same flow in any country (CAD, GBP, …)",
+        "Reimbursements submitted and approved in-system; Bulgaria = monthly cycle, end of month"
+      ],
+      "sp": [
+        "Kills the wire-fee line item AND the cross-border payment scrutiny in one move — the headline cost/compliance win of the payroll section"
+      ],
+      "de": [
+        "Bryce interjected “stop us as we go if you have questions” — a good structural spot to invite the room in"
+      ],
+      "branching": [
+        "If the room does the math on current wire fees, let them — this point lands hardest self-computed"
+      ]
+    },
+    {
+      "id": "shd-06-time-off-requests",
+      "title": "Time off requests",
+      "sourceMoments": [26],
+      "timestampStart": "00:27:38",
+      "timestampEnd": "00:28:18",
+      "screenType": "time off request list",
+      "visualSummary": "Time Off page with the request list and country statutory leave context; dashboard 'who's out today/tomorrow' beat.",
+      "demoPurpose": "Show employee time-off visibility and approval handling.",
+      "recommendedSidekickModule": "time-off",
+      "keepOrCut": "keep",
+      "suggestedScreenshotFrame": { "clock": "00:27:55", "approxFile": "frame_006701.jpg" },
+      "transcriptAnchor": "They have a statutory amount of paid vacation, holidays, leaves, other things that are required that an employer must provide.",
+      "say": "Time-off requests live here. Bulgaria has a statutory amount of paid vacation, holidays, leaves, maternity — things an employer must provide, and we always honor the country-specific minimum. You can offer more; we can never offer less than the Bulgarian standard, even if that's a lot more than we're used to in the US. Back on the dashboard you can see who's out today and tomorrow.",
+      "what": "The time-off request list for the EOR population, framed by the statutory-minimum rule and the dashboard's who's-out widget.",
+      "capabilities": [
+        "Country statutory leave enforced (vacation, holidays, maternity) — offer more, never less",
+        "Dashboard 'who's out today / tomorrow' plus reminders",
+        "Request list with approval handling"
+      ],
+      "sp": [
+        "Statutory compliance is a floor the platform enforces for you — not a rule you have to remember per country"
+      ],
+      "de": [],
+      "branching": [
+        "US-centric pushback on generous leave: acknowledge, anchor on 'we can't go below the local standard' as a compliance feature, not a policy choice"
+      ]
+    },
+    {
+      "id": "shd-07-worker-contractor-list",
+      "title": "Worker / contractor list",
+      "sourceMoments": [26, 27, 28],
+      "timestampStart": "00:28:18",
+      "timestampEnd": "00:31:10",
+      "screenType": "worker roster table",
+      "visualSummary": "My Team worker table / people list across both populations, with countries, statuses, and searchable employee data.",
+      "demoPurpose": "Show the global worker roster: countries, statuses, and searchable employee data.",
+      "recommendedSidekickModule": "team",
+      "keepOrCut": "keep",
+      "suggestedScreenshotFrame": { "clock": "00:28:35", "approxFile": "frame_006861.jpg" },
+      "transcriptAnchor": "If I go to my team, this is going to show my team across those populations, contractors and employer of record.",
+      "say": "My Team shows everyone across both populations — contractors and employer-of-record — in one roster. Filter to just the Bulgarian EOR employees, or list by type to see contractor profiles. Drill into anyone's personal information — this is the HR system. Contractors aren't regular full-time employees — no statutory leaves or benefits, you're paying a contracted amount — but the payment is still managed here, wallet-funded, on one flat per-employee-per-month fee. The onboarding tab shows where each person is: have they signed, are they waiting on us.",
+      "what": "The unified roster: every worker regardless of engagement model, with country, status, and type filters, doubling as the entry point into individual HR records and onboarding status.",
+      "capabilities": [
+        "Team view across contractors and EOR in one place",
+        "Filter/search by country, type, status",
+        "Full HR profile per worker behind every row",
+        "Onboarding status per worker (signed / waiting on us)"
+      ],
+      "sp": [
+        "One roster for a mixed global workforce — the 'single pane of glass' moment of the demo"
+      ],
+      "de": [
+        "Renee asked whether countries add mandatory pay items (citing Mexico housing/food stipends) for UK/Bulgaria → social charges always; UK has a required pension; Bulgaria specifics to be confirmed (open action)"
+      ],
+      "branching": [
+        "If the roster question turns into a cost question, jump ahead to statutory costs (screen 9) or the compensation calculator (screen 18)"
+      ]
+    },
+    {
+      "id": "shd-08-worker-profile-signed-contract",
+      "title": "Worker profile / signed contract",
+      "sourceMoments": [27],
+      "timestampStart": "00:28:53",
+      "timestampEnd": "00:29:57",
+      "screenType": "employee profile / documents",
+      "visualSummary": "Employee HR profile with the contract/document area open — the signed employment contract on the worker record.",
+      "demoPurpose": "Show the signed contract and the worker record.",
+      "recommendedSidekickModule": "team",
+      "keepOrCut": "keep",
+      "suggestedScreenshotFrame": { "clock": "00:29:25", "approxFile": "frame_007061.jpg" },
+      "transcriptAnchor": "That contract is her employment contract. That employment contract is between the employee and PRISM HR.",
+      "say": "Her signed contract is her employment contract, and it's between the employee and PrismHR — because we're the local employer of record. The contract we have with you then assigns her to work on your behalf. IP protection sits in the employment contract with the employee directly, and our company-to-company agreement carries IP protection as well — you can review both with your attorneys. I can pull her contract up right here on the record.",
+      "what": "An individual worker's HR profile with the document area open: the signed employment contract, and the contract-chain explanation (employee ↔ PrismHR, PrismHR ↔ client) that carries the IP-protection story.",
+      "capabilities": [
+        "Signed employment contract on the worker record (employee ↔ PrismHR as EOR)",
+        "Company-to-company assignment agreement to your business",
+        "IP protection on both layers — reviewable by your counsel"
+      ],
+      "sp": [
+        "The two-contract chain is the legal spine of EOR — showing the actual signed document makes it concrete instead of abstract"
+      ],
+      "de": [
+        "Justin's core concern is IP/W2 — this screen is where you plant the answer; Shane took an action item to let them add their own IP agreement"
+      ],
+      "branching": [
+        "If counsel wants specifics, offer both agreements for attorney review rather than paraphrasing clauses live"
+      ]
+    },
+    {
+      "id": "shd-09-country-pay-requirements",
+      "title": "Country pay requirements / statutory costs",
+      "sourceMoments": [28, 29, 30],
+      "timestampStart": "00:30:00",
+      "timestampEnd": "00:33:37",
+      "screenType": "country requirements / recurring costs",
+      "visualSummary": "Employee/country requirement details and recurring cost rows: social charges, required pension, healthcare, supplemental benefit options.",
+      "demoPurpose": "Show statutory requirements and the country-specific employer cost structure.",
+      "recommendedSidekickModule": "team",
+      "keepOrCut": "keep",
+      "suggestedScreenshotFrame": { "clock": "00:31:30", "approxFile": "frame_007561.jpg" },
+      "transcriptAnchor": "Of course, there's the social charges that all companies must pay per employee… I know for sure there's a required pension in the UK.",
+      "say": "Every company pays the social charges per employee — that's constant. On top of that each country defines its own required items: in the UK there's a required pension — a national pension program instead of a 401k — plus national healthcare paid through taxes. Healthcare abroad isn't free; it's paid through those social charges. Most companies then add optional supplemental benefits so people can use private hospitals — you can absorb the cost or share it. It all gets defined per country, so you know exactly what you're paying. For Bulgaria-specific allowances, we'll confirm the exact list.",
+      "what": "The statutory-cost layer of a worker/country record: recurring employer cost rows (social charges, pension, healthcare) plus where optional supplemental benefits attach.",
+      "capabilities": [
+        "Country statutory costs defined per country — always visible, never surprise line items",
+        "UK: required national pension + national healthcare via taxes",
+        "Optional supplemental benefits (private-hospital access), employer-absorbed or cost-shared",
+        "Contractor payments carry none of the statutory load — contracted amount only"
+      ],
+      "sp": [
+        "Transparent per-country employer costs turn 'what will this really cost us?' from a fear into a lookup"
+      ],
+      "de": [
+        "Renee asked: does the country add mandatory pay items? → social charges always; Bulgaria specifics to be confirmed",
+        "Renee asked: are benefit providers already set up? → yes; national systems via social charges, optional supplemental on top (India weak, Australia public system good)",
+        "Objection-defuser Shane used: “none of this is free — they're paying a lot of taxes” when someone raises 'free healthcare'"
+      ],
+      "branching": [
+        "Bulgaria allowances/stipends are an open confirm-item — don't guess specifics live",
+        "If 'free healthcare' comes up, use the taxes-fund-it framing before pitching supplemental tiers"
+      ]
+    },
+    {
+      "id": "shd-10-employment-type-decision",
+      "title": "Employment type decision",
+      "sourceMoments": [31, 32, 33],
+      "timestampStart": "00:33:39",
+      "timestampEnd": "00:36:57",
+      "screenType": "employment type chooser",
+      "visualSummary": "“What type of employment?” flow with employee (EOR) and contractor options — the fork where the platform routes the setup.",
+      "demoPurpose": "Show how the platform routes EOR vs contractor setup.",
+      "recommendedSidekickModule": "new-hire",
+      "keepOrCut": "keep",
+      "suggestedScreenshotFrame": { "clock": "00:34:30", "approxFile": "frame_008281.jpg" },
+      "transcriptAnchor": "Contractor plus is where we become the agent of record… we would go through a classification process to ensure that the workers are truly classified appropriately.",
+      "say": "Two roads when you add someone: employee or contractor. Contractor has two flavors. Plain contractor is just payments — the contract is between you and the contractor (we have samples, or use your own); we're only the method of payment. Contractor Plus is where we become the agent of record — the contract is between the contractor and PrismHR — and there we run a classification process, because now our name and liability are on it. If they don't meet contractor requirements, we'll say we can't be party to it and they'd need employer-of-record. If someone's acting exactly like an employee, we show you the real risks — fines, penalties, real consequences if the government finds out — but ultimately it's your decision how much risk to take. For Bulgaria, we choose employee.",
+      "what": "The routing fork of the new-hire flow: employee (EOR) vs contractor vs Contractor Plus, including where the misclassification analysis lives.",
+      "capabilities": [
+        "Employee (EOR) and contractor paths from one entry point",
+        "Contractor = payment only (your contract or a sample); Contractor Plus = PrismHR as agent of record with a classification process",
+        "Misclassification risk analysis — fines/penalties advice per country",
+        "Client decides the risk; the platform advises with full information"
+      ],
+      "sp": [
+        "Classification risk is surfaced BEFORE the relationship is created — the compliance moat versus pay-anyone tools"
+      ],
+      "de": [
+        "Bryce/Shane clarified for the room: once PrismHR flags someone as likely an employee under Contractor Plus, you can't knowingly keep paying them as a contractor through us — but the model choice stays the employer's",
+        "Shane's line: “it's not an exact checklist — three or four questions and it's leaning one way; we just make sure you have full information”"
+      ],
+      "branching": [
+        "If they're comfortable with their existing contractor relationships, plain contractor (payment-only) is the low-friction start; Contractor Plus is the step-up when they want the liability shield"
+      ]
+    },
+    {
+      "id": "shd-11-new-hire-setup-form",
+      "title": "New hire / employment setup form",
+      "sourceMoments": [33, 34, 35, 36],
+      "timestampStart": "00:36:57",
+      "timestampEnd": "00:40:31",
+      "screenType": "new hire form",
+      "visualSummary": "Employment setup form: nationality and country-of-employment dropdowns, work-authorization prompt, role/division/team/location fields, start date, gross salary, contract type.",
+      "demoPurpose": "Show the data capture required to create an employment relationship.",
+      "recommendedSidekickModule": "new-hire",
+      "keepOrCut": "keep",
+      "suggestedScreenshotFrame": { "clock": "00:38:30", "approxFile": "frame_009241.jpg" },
+      "transcriptAnchor": "So where they live is where they would need to be employed.",
+      "say": "Where they live is where they're employed. Nationality can say Bulgaria, but if someone lives in Spain, I choose Spain — and it asks whether they're authorized to work there. Our team verifies the documentation; we don't just take their word. Then the simple part: role title and description, divisions and teams, location, and the start date — two weeks out, because that window covers the employment contract and any country requirements (some countries need registrations; in France and the Philippines they see a doctor first). Gross salary — we'll use $10,000 — and contract type: indefinite versus fixed-term. Most companies use indefinite, and after one or two fixed-term renewals local rules usually make it indefinite anyway.",
+      "what": "The core data-capture form of the EOR hire: residence-driven country of employment with a work-authorization gate, role and org fields, start-date window, salary, and contract type.",
+      "capabilities": [
+        "Country of employment = country of residence (nationality handled separately)",
+        "Work-authorization prompt with team-verified documentation (EU/Schengen handling)",
+        "Role title, description, divisions, teams, location (office/remote)",
+        "Start date with a ~2-week window covering contract prep + country registrations",
+        "Indefinite vs fixed-term contracts, with local renewal-to-indefinite rules noted"
+      ],
+      "sp": [
+        "Residence — not nationality or payroll convenience — drives the employment country; that single rule is most of cross-border compliance"
+      ],
+      "de": [
+        "Live on the call: Renee said one of the ~12 likely lives in Spain; nationality vs residence unknown — Renee took the action to confirm. This is the open item on the deal: residency drives the seat's country and cost"
+      ],
+      "branching": [
+        "If they push for a faster start, anchor on the 2-week window = contract + country requirements, not platform lag",
+        "The Spain worker's setup can't be finalized until residency/authorization is confirmed"
+      ]
+    },
+    {
+      "id": "shd-12-additional-payments",
+      "title": "Additional payments",
+      "sourceMoments": [37],
+      "timestampStart": "00:40:32",
+      "timestampEnd": "00:41:46",
+      "screenType": "additional payment form + confirmation",
+      "visualSummary": "Additional/recurring payment form (e.g. monthly allowance) with its confirmation modal; PTO days and the currency sanity-check beat.",
+      "demoPurpose": "Show one-off payments and allowances.",
+      "recommendedSidekickModule": "new-hire",
+      "keepOrCut": "keep",
+      "suggestedScreenshotFrame": { "clock": "00:41:00", "approxFile": "frame_009841.jpg" },
+      "transcriptAnchor": "Give them an extra $100 for a mobile allowance, whatever you'd like… that will happen in each paycheck moving forward.",
+      "say": "I can set up additional recurring payments — say a $100 monthly mobile allowance — and it hits every paycheck going forward. On PTO, we show exactly how many days Bulgaria allows; we can't go below it, but you can add more — birthday off for everyone? Add a day. And there's a nice currency check: it flags that 10,000 Bulgarian lev is about 5,500 USD a month, so I can confirm the amount I typed is actually the amount I meant.",
+      "what": "The compensation-extras step of the hire flow: recurring allowances with confirmation, PTO days above the statutory floor, and the local-currency conversion check.",
+      "capabilities": [
+        "Recurring allowances (e.g. $100 mobile) applied to every paycheck",
+        "Country PTO floor shown; add extra days on top",
+        "Currency sanity check (e.g. 10,000 BGN ≈ 5,500 USD) before confirming"
+      ],
+      "sp": [
+        "The currency check quietly prevents the most expensive class of setup mistake — paying in the wrong denomination"
+      ],
+      "de": [],
+      "branching": [
+        "Holiday-vs-required-work nuance: if a Bulgarian holiday lands on a US workday and you require work, that opens holiday-pay/jurisdiction questions — the platform's job is keeping you compliant with Bulgarian law"
+      ]
+    },
+    {
+      "id": "shd-13-equipment-policy",
+      "title": "Equipment policy",
+      "sourceMoments": [38],
+      "timestampStart": "00:41:47",
+      "timestampEnd": "00:42:45",
+      "screenType": "onboarding stepper / equipment policy",
+      "visualSummary": "Onboarding stepper on the equipment policy screen: third-party IT catalog option vs personal-device reimbursement.",
+      "demoPurpose": "Show configurable policy/workflow options.",
+      "recommendedSidekickModule": "onboarding",
+      "keepOrCut": "keep",
+      "suggestedScreenshotFrame": { "clock": "00:42:10", "approxFile": "frame_010121.jpg" },
+      "transcriptAnchor": "The least effective way is for you to ship them from the US. They'll probably get caught in customs, and that can be pretty expensive.",
+      "say": "Equipment policy: the least effective way is shipping laptops and monitors from the US — they'll probably get caught in customs and it gets expensive. Instead, we have a third party you work with directly — a menu of IT equipment delivered to their home or office in-country. Or the new hire uses their personal computer and gets reimbursed. Your policy, your choice, configured right in the flow.",
+      "what": "A policy-selection step inside onboarding: how the new worker gets equipped, with the in-country catalog and reimbursement options replacing US shipping.",
+      "capabilities": [
+        "Third-party IT catalog delivered in-country (avoids customs)",
+        "Personal device + reimbursement alternative",
+        "Policy options configured inside the onboarding flow"
+      ],
+      "sp": [
+        "Practical operational details (laptops through customs) are already solved — signals the vendor has done this many times"
+      ],
+      "de": [],
+      "branching": [
+        "If IT/security asks about device management, note this covers procurement — MDM/security tooling remains the client's stack"
+      ]
+    },
+    {
+      "id": "shd-14-benefits-global-health",
+      "title": "Benefits / global health insurance",
+      "sourceMoments": [39],
+      "timestampStart": "00:42:45",
+      "timestampEnd": "00:43:58",
+      "screenType": "benefits selection cards",
+      "visualSummary": "Benefits/pricing cards (standard / premium / premium + maternity) and the global health insurance detail — SafetyWing coverage breakdown.",
+      "demoPurpose": "Show the benefits add-on discussion.",
+      "recommendedSidekickModule": "onboarding",
+      "keepOrCut": "keep",
+      "suggestedScreenshotFrame": { "clock": "00:43:20", "approxFile": "frame_010401.jpg" },
+      "transcriptAnchor": "We use… it's called SafetyWing, the global healthcare network that we use so that we can manage… those supplemental benefits across the globe.",
+      "say": "Supplemental health comes in tiers — standard, premium, premium plus maternity — and they're global plans at reasonable rates: about an extra $210 per employee per month if you choose it. Absorb it as the company, split it, and dependents are the same $210. Clicking in shows the coverages — we use SafetyWing, a global healthcare network, so supplemental benefits work the same across the globe. I select it, and we're done — and when I hit Submit, all of it goes to an actual human: one of our implementation managers covering Europe. A lot of what we do is AI-driven, but we keep a human in the loop.",
+      "what": "The benefits step of onboarding: supplemental tier cards with per-employee pricing, the SafetyWing coverage detail, and the submit handoff to a human implementation manager.",
+      "capabilities": [
+        "Supplemental tiers: standard / premium / premium + maternity (global plans)",
+        "~$210 per-employee-per-month; employer-absorbed, cost-split, or dependents at the same rate",
+        "SafetyWing global healthcare network behind the coverage",
+        "Submit routes to a human implementation manager (Europe)"
+      ],
+      "sp": [
+        "“AI-driven, but a human is involved” — the submit-to-a-person beat differentiates from fully-automated competitors"
+      ],
+      "de": [
+        "This answers Renee's earlier benefits-provider question from the roster section — providers are already set up"
+      ],
+      "branching": [
+        "Country quality varies: India's public option is weak, Australia's is good — supplemental matters more in some countries than others"
+      ]
+    },
+    {
+      "id": "shd-15-contract-onboarding-handoff",
+      "title": "Contract / onboarding handoff",
+      "sourceMoments": [40, 41],
+      "timestampStart": "00:43:59",
+      "timestampEnd": "00:46:20",
+      "screenType": "submission success / tasks panel",
+      "visualSummary": "Success/confirmation state, My Tasks, and the onboarding panel — the handoff from client setup to offer letter and employee signing.",
+      "demoPurpose": "Show how the worker experiences onboarding after setup.",
+      "recommendedSidekickModule": "onboarding",
+      "keepOrCut": "keep",
+      "suggestedScreenshotFrame": { "clock": "00:44:30", "approxFile": "frame_010681.jpg" },
+      "transcriptAnchor": "That offer letter will then be reviewed by you before we send it to the employee.",
+      "say": "After submit, the implementation manager verifies everything and generates the offer letter — and you review it before we send it to the employee. It contains their salary, benefits, everything you discussed; any back-and-forth happens at the offer-letter stage. Once it's signed, the employee gets an email into their own instance of Prism Global, signs, and we finalize the employment contract — that's what dictates their employment and start date. That's also where the employee enters their bank details and private information themselves.",
+      "what": "The post-submit handoff: confirmation state and task panel showing the offer-letter → employee-signature → contract-finalization chain, with the client review gate in the middle.",
+      "capabilities": [
+        "Offer letter generated by the implementation manager, client-reviewed before sending",
+        "Back-and-forth resolved at the offer stage, before contracts",
+        "Employee e-signs in their own Prism Global instance → employment contract finalized with start date",
+        "Employee enters bank and private info during their own step"
+      ],
+      "sp": [
+        "You never collect passports or bank details — the worker enters their own data into their own login, which is both cleaner and safer"
+      ],
+      "de": [],
+      "branching": [
+        "If asked what happens when the offer needs changes: iterate at the offer-letter stage; contracts only finalize after signature"
+      ]
+    },
+    {
+      "id": "shd-16-worker-portal-employee-view",
+      "title": "Worker portal / employee view",
+      "sourceMoments": [41, 42],
+      "timestampStart": "00:45:07",
+      "timestampEnd": "00:47:32",
+      "screenType": "worker portal",
+      "visualSummary": "The worker's own portal: personal info, payslips and payment history, time-off, onboarding items (Laurent awaiting offer letter), document self-upload.",
+      "demoPurpose": "Show employee-side self-service.",
+      "recommendedSidekickModule": "worker-portal",
+      "keepOrCut": "keep",
+      "suggestedScreenshotFrame": { "clock": "00:46:45", "approxFile": "frame_011221.jpg" },
+      "transcriptAnchor": "This is where they're going to see all their different payments, how much they've been paid, where their payslips are located.",
+      "say": "This is the employee's own view: every payment, how much they've been paid, where their payslips live. Time off is right here — they see their holidays and available leave and request it, with the approval chain you configure (frontline manager first, HR second, however you like). Time tracking is optional — hours per day or per project — turn it on or skip it. Reimbursements go through the system so taxes are handled correctly. And on the onboarding tracker: here's Laurent in Bulgaria, awaiting his offer letter — once the agreement's signed it flips here. Workers upload their own passports and government documents straight into the system for our HR managers to verify; you never collect them.",
+      "what": "The employee-side portal and the onboarding tracker together: payslips, time-off, optional time tracking, reimbursements, and self-service document upload with HR verification.",
+      "capabilities": [
+        "Payslips and full payment history",
+        "Time-off requests with configurable approval chain (manager → HR)",
+        "Optional time tracking (per day / per project)",
+        "Reimbursements in-system for correct tax accounting",
+        "Per-hire onboarding status (awaiting offer letter → agreement signed)",
+        "Workers self-upload passports/government docs; HR verifies before the contract issues"
+      ],
+      "sp": [
+        "Self-service on the worker side means the client's HR team isn't the middleman for payslips, leave, or documents"
+      ],
+      "de": [
+        "Ties back to the Spain worker: their work authorization gets verified here before any contract issues"
+      ],
+      "branching": [
+        "If the client doesn't care about hour tracking, skip the time-tracking beat entirely — it's optional by design"
+      ]
+    },
+    {
+      "id": "shd-17-reports",
+      "title": "Reports",
+      "sourceMoments": [43],
+      "timestampStart": "00:47:32",
+      "timestampEnd": "00:48:38",
+      "screenType": "reports list + tables",
+      "visualSummary": "Reports list with filters and report tables: worker report, EOR gross-to-net, general ledger, variance.",
+      "demoPurpose": "Show reporting and export capability.",
+      "recommendedSidekickModule": "reports",
+      "keepOrCut": "keep",
+      "suggestedScreenshotFrame": { "clock": "00:48:00", "approxFile": "frame_011521.jpg" },
+      "transcriptAnchor": "The worker report, again, showing you each month how many workers, you have contractors, EOR, etc.",
+      "say": "A few reports worth knowing. The worker report shows month by month how many workers you have — contractors, EOR. The EOR report gives gross-to-net and, per country, what you're spending on total compensation, taxes, bonuses. Everything exports to CSV or Excel. There's a general-ledger report you can generate and import into whatever GL you use — set up the GL codes right here — and the variance report we glanced at earlier. All of it splits contractor versus employer-of-record.",
+      "what": "The reporting surface: prebuilt worker, gross-to-net, GL, and variance reports with filters, all exportable and all split by engagement model.",
+      "capabilities": [
+        "Worker report (contractor vs EOR counts, monthly)",
+        "EOR gross-to-net plus per-country total comp / taxes / bonuses",
+        "CSV / Excel export",
+        "General-ledger report + GL codes for import into your accounting",
+        "Variance report; everything split contractor vs EOR"
+      ],
+      "sp": [
+        "The GL report closes the loop with finance — global payroll lands in their existing accounting without manual re-keying"
+      ],
+      "de": [],
+      "branching": [
+        "If finance is on the call, the GL-code setup is the beat to slow down on"
+      ]
+    },
+    {
+      "id": "shd-18-tools-resources-comp-calculator",
+      "title": "Tools & resources / compensation calendar",
+      "sourceMoments": [44],
+      "timestampStart": "00:48:39",
+      "timestampEnd": "00:49:53",
+      "screenType": "tools & resources / calculator",
+      "visualSummary": "Tools & resources page with the compensation calculator: country selector, salary input, employer-cost and net-take-home table.",
+      "demoPurpose": "Show country resources and the compensation calculator.",
+      "recommendedSidekickModule": "tools-resources",
+      "keepOrCut": "keep",
+      "suggestedScreenshotFrame": { "clock": "00:49:10", "approxFile": "frame_011801.jpg" },
+      "transcriptAnchor": "The total employer cost, so the salary is 11.5 British pounds… really that 11.5 is going to be 13.2.",
+      "say": "Under tools and resources, the compensation calculator is really nice. Enter a salary for a country and it shows what the employer pays all-in and what the employee takes home. In the UK: an £11,500 salary comes to about £13,200 total employer cost once National Insurance and the pension are in — and the employee's take-home is about £6,800 after taxes, pension, and insurance. So before you commit to anything, you get the real cost and the real take-home.",
+      "what": "The pre-hire budgeting tool: pick a country, enter a salary, and see the employer's all-in cost next to the employee's net — the numbers version of the statutory-costs story.",
+      "capabilities": [
+        "Employer all-in cost per country (UK: £11.5k salary → ~£13.2k with NI + pension)",
+        "Employee net take-home (UK example: ~£6.8k)",
+        "Pre-hire budgeting before any commitment"
+      ],
+      "sp": [
+        "Turns the scariest unknown — true per-country cost — into a 10-second lookup the prospect can run themselves"
+      ],
+      "de": [
+        "⚠ Bulgaria was not loaded in the calculator during the demo — Shane flagged he'd fix it and demoed the UK instead. Verify Bulgaria is loaded before the next run"
+      ],
+      "branching": [
+        "If the prospect's country is missing from the calculator, name it as a data-load gap and commit to the fix — don't improvise numbers"
+      ]
+    },
+    {
+      "id": "shd-19-wallet-contractor-payment",
+      "title": "Wallet / contractor payment method",
+      "sourceMoments": [46, 47],
+      "timestampStart": "00:50:59",
+      "timestampEnd": "00:53:06",
+      "screenType": "wallet profile + withdrawal modal",
+      "visualSummary": "Contractor wallet profile with the withdrawal modal and payment-method selection: bank transfer, mobile wallet, crypto, virtual card.",
+      "demoPurpose": "Show the contractor wallet and withdrawal options.",
+      "recommendedSidekickModule": "worker-portal",
+      "keepOrCut": "keep",
+      "suggestedScreenshotFrame": { "clock": "00:52:00", "approxFile": "frame_012481.jpg" },
+      "transcriptAnchor": "Think of it like a Venmo wallet… This wallet is tied to a US stablecoin. So it's all digital currency.",
+      "say": "Right now you're paying wires and wire fees across the globe — expensive, and it signals to those countries that you're paying people there, which can start permanent-establishment questions. Instead, with our contractor model you pay us in US dollars and contractors are paid into a wallet — think a Venmo-style wallet tied to a US stablecoin, all digital. They hold their money there until they want it, then withdraw how they like: transfer to their own bank (conversion happens then, $1–3 fee, and you as the client pay none of it), deposit to a mobile wallet like GCash in the Philippines, buy crypto, spin up a virtual credit card tied to the wallet, or move money to Wise.",
+      "what": "The contractor-side wallet: balance, withdrawal modal, and the menu of payout methods that replaces per-payment international wires.",
+      "capabilities": [
+        "US-stablecoin wallet funded by your USD payment to PrismHR",
+        "Withdraw to own bank ($1–3 fee, client pays none), GCash/mobile wallets, crypto, virtual credit card, Wise",
+        "Contractor holds funds until they choose to move them"
+      ],
+      "sp": [
+        "No wires also means no wire signals — the permanent-establishment risk angle turns a cost saving into a compliance story"
+      ],
+      "de": [
+        "Bryce co-sold advantage #1 live: one flat fee per month with unlimited transfers — pay weekly or monthly, employer's choice. A natural partner tag-team moment"
+      ],
+      "branching": [
+        "Philippines contractors: lead with GCash — it's the payout method they already live in"
+      ]
+    },
+    {
+      "id": "shd-20-local-currency-payment-setup",
+      "title": "Local currency / payment method setup",
+      "sourceMoments": [48, 49, 50],
+      "timestampStart": "00:53:09",
+      "timestampEnd": "00:56:42",
+      "screenType": "currency / payment method forms",
+      "visualSummary": "Currency and payment-method dropdowns with bank/payment forms — configuring how a contractor actually receives funds.",
+      "demoPurpose": "Show how contractors avoid friction and receive funds in their preferred ways.",
+      "recommendedSidekickModule": "worker-portal",
+      "keepOrCut": "keep",
+      "suggestedScreenshotFrame": { "clock": "00:54:30", "approxFile": "frame_013081.jpg" },
+      "transcriptAnchor": "They have the ability to effectively invest in the US dollar by allowing those funds to sit in a US stablecoin while their own local currency does whatever craziness that it does.",
+      "say": "On the contractor's side: instant (or near-instant) withdrawal to their standard bank account — or, where the local currency is unstable, they can leave funds sitting in US-dollar stablecoin and pull out what they need over time. They can even earn 3.29% in a US savings account, or invest. Contractors elsewhere get hit with $40–50 just to get their own money out; here it's a couple of dollars at most. And from your side it's one per-employee-per-month fee no matter how often you pay — US account to US account, so no international-transfer scrutiny.",
+      "what": "The payout-preference setup: currency and method selection per contractor, including the hold-in-USD option, savings/invest features, and the flat-fee employer economics.",
+      "capabilities": [
+        "Hold funds in USD stablecoin when the local currency is unstable",
+        "3.29% US savings option + investing from the wallet",
+        "Flat per-employee-per-month fee, unlimited transfers (weekly or monthly pay runs)",
+        "US-account to US-account — no international-transfer scrutiny",
+        "Replaces the $40–50 per-withdrawal fees contractors pay elsewhere"
+      ],
+      "sp": [
+        "The wallet is a retention pitch to the contractors themselves — their money arrives faster, cheaper, and in the currency they trust"
+      ],
+      "de": [
+        "Bryce co-sold advantage #2: day-one instant withdrawal, or park in USD while the local currency 'does whatever craziness it does'"
+      ],
+      "branching": [
+        "⚠ The wallet is contractors-only today — EOR employees must be paid in local currency to local banks. The team is exploring EOR support, but do NOT promise it for the Bulgaria EOR seats"
+      ]
+    },
+    {
+      "id": "shd-21-wallet-wrap-pay-overview",
+      "title": "Wallet wrap / return to pay overview",
+      "sourceMoments": [51],
+      "timestampStart": "00:56:43",
+      "timestampEnd": "00:57:58",
+      "screenType": "pay overview / workers table",
+      "visualSummary": "Back on the pay overview / workers table — the reset frame that closes the wallet section before Q&A.",
+      "demoPurpose": "Close the wallet/payment value section.",
+      "recommendedSidekickModule": "invoices",
+      "keepOrCut": "keep",
+      "suggestedScreenshotFrame": { "clock": "00:57:20", "approxFile": "frame_013761.jpg" },
+      "transcriptAnchor": "Saves them a lot of time and money, and it lets them do what they want with their money.",
+      "say": "So that's the wallet: contractors love it, it saves them time and money, there are no wire or transfer fees, and they do what they want with their money. Back on the pay overview you can see it all in one place — that's the platform that manages all of this. Any other questions on the platform side?",
+      "what": "The closing beat of the payments arc: landing back on the pay overview / workers table to consolidate the wallet story and open the floor.",
+      "capabilities": [
+        "Single pay overview consolidating contractor and EOR runs",
+        "Natural reset point between the demo and Q&A"
+      ],
+      "sp": [
+        "Ending the arc back where payment work actually happens reinforces that everything shown is one continuous system, not a feature tour"
+      ],
+      "de": [],
+      "branching": [
+        "This is the deliberate pause-for-questions beat — hold the silence and let the room fill it"
+      ]
+    }
+  ],
+  "cuts": [
+    {
+      "moments": "1–21",
+      "range": "≈00:00:00–00:23:27",
+      "disposition": "account-context-only",
+      "keepOrCut": "cut",
+      "reason": "Pre-demo discovery, intros, and context-setting. Valuable as account/deal context (attendees, current pain, Bulgaria/UK/contractor situation) but not product screens — do not make them Sidekick screens."
+    },
+    {
+      "moments": "45",
+      "range": "≈00:49:53–00:50:59",
+      "disposition": "objection-note",
+      "keepOrCut": "cut",
+      "reason": "Pricing/cost Q&A between the compensation calculator and the wallet section. Keep as an objection-handling note attached to the pricing conversation, not a core-flow screen."
+    },
+    {
+      "moments": "52–55",
+      "range": "≈00:57:58–end",
+      "disposition": "follow-up-notes",
+      "keepOrCut": "cut",
+      "reason": "Close and follow-up: action items (Bulgaria allowances to confirm, Spain residency to confirm, calculator data load, IP-agreement question), next steps, and goodbyes. Keep as follow-up notes, not core flow."
+    }
+  ]
+}

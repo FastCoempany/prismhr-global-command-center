@@ -366,26 +366,27 @@ function main() {
     const excerpt = text.length > EXCERPT_MAX ? `${text.slice(0, EXCERPT_MAX).trimEnd()}…` : text;
     return {
       id: `moment-${String(i + 1).padStart(3, "0")}-${slugify(title) || "untitled"}`,
-      order: i + 1,
-      moduleGuess: module,
-      confidence,
-      matchedKeywords,
+      timestampStart: secToClock(g.startSec),
+      timestampEnd: secToClock(g.endSec),
+      timestampStartSec: +g.startSec.toFixed(2),
+      timestampEndSec: +g.endSec.toFixed(2),
       titleGuess: title,
-      tsRange: { startSec: +g.startSec.toFixed(2), endSec: +g.endSec.toFixed(2), startClock: secToClock(g.startSec), endClock: secToClock(g.endSec) },
-      durationSec: +(g.endSec - g.startSec).toFixed(2),
-      cueCount: g.cues.length,
-      speakers,
+      moduleGuess: module,
       transcriptExcerpt: excerpt,
       frameRefs,
       visibleScreenNotes: "", // reviewer: what is actually on screen in these frames?
-      draft: {
-        say: `TODO — talk track for “${title}” (source: transcript ${secToClock(g.startSec)}–${secToClock(g.endSec)})`,
-        what: "TODO — one-paragraph description of what this screen/moment shows",
-        capabilities: [],
-        sp: [],
-        de: [],
-        branching: [],
-      },
+      say: `TODO — talk track for “${title}” (source: transcript ${secToClock(g.startSec)}–${secToClock(g.endSec)})`,
+      what: "TODO — one-paragraph description of what this screen/moment shows",
+      capabilities: [],
+      sp: [],
+      de: [],
+      branching: [],
+      confidence,
+      order: i + 1,
+      matchedKeywords,
+      durationSec: +(g.endSec - g.startSec).toFixed(2),
+      cueCount: g.cues.length,
+      speakers,
     };
   });
 
@@ -410,7 +411,7 @@ function main() {
     // screen here?" review queue, not the entry draft.
     moments: candidates.map((c) => {
       const rest = { ...c };
-      delete rest.draft;
+      for (const k of ["say", "what", "capabilities", "sp", "de", "branching"]) delete rest[k];
       return rest;
     }),
   });
@@ -426,7 +427,7 @@ function main() {
     `| # | Module guess | Confidence | Range | Title guess |`,
     `|---|---|---|---|---|`,
     ...candidates.map(
-      (c) => `| ${c.order} | ${c.moduleGuess} | ${c.confidence} | ${c.tsRange.startClock}–${c.tsRange.endClock} | ${c.titleGuess.replace(/\|/g, "\\|")} |`,
+      (c) => `| ${c.order} | ${c.moduleGuess} | ${c.confidence} | ${c.timestampStart}–${c.timestampEnd} | ${c.titleGuess.replace(/\|/g, "\\|")} |`,
     ),
     ``,
     ...candidates.flatMap((c) => [
@@ -436,16 +437,16 @@ function main() {
       ``,
       `- **id:** \`${c.id}\``,
       `- **module guess:** \`${c.moduleGuess}\` (confidence: ${c.confidence}${c.matchedKeywords.length ? `; matched: ${c.matchedKeywords.join(", ")}` : ""})`,
-      `- **timestamp:** ${c.tsRange.startClock} → ${c.tsRange.endClock} (${c.durationSec}s, ${c.cueCount} cues${c.speakers.length ? `; ${c.speakers.join(", ")}` : ""})`,
+      `- **timestamp:** ${c.timestampStart} → ${c.timestampEnd} (${c.durationSec}s, ${c.cueCount} cues${c.speakers.length ? `; ${c.speakers.join(", ")}` : ""})`,
       `- **frames:** ${c.frameRefs.map((f) => `\`${f.file}\``).join(" · ")}`,
       ``,
       `> ${c.transcriptExcerpt}`,
       ``,
       `**Visible screen notes:** _(fill in after eyeballing the frames)_`,
       ``,
-      `**say:** ${c.draft.say}`,
+      `**say:** ${c.say}`,
       ``,
-      `**what:** ${c.draft.what}`,
+      `**what:** ${c.what}`,
       ``,
       `**capabilities / sp / de / branching:** _(fill in)_`,
       ``,
