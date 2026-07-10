@@ -1,0 +1,63 @@
+{
+  "meta": {
+    "note": "Companion material folded out of the curated flow's cuts section. Account-neutral: the discovery brief is a template to fill per account, objections and follow-ups are patterns observed in the source call.",
+    "provenance": "tools/sidekick-import/curated/prismhr-global-master-demo-flow.v1.json (cuts)"
+  },
+  "discoveryBrief": {
+    "title": "Discovery brief — fill in before the demo",
+    "sourceNote": "In the source recording, the first ~23 minutes (moments 1–21) were discovery, intros, and context — deliberately kept out of the screen flow. Capture the same ground per account here.",
+    "prompts": [
+      "Who is in the room, and who owns the decision?",
+      "How are international workers paid today (wires? per-payment fees? which banks)?",
+      "Which countries are in play, and which engagement model per country (contractor / EOR / future subsidiary)?",
+      "Roughly how many workers per country, and are any converting from contractor to employee?",
+      "Does anyone live in a different country than their nationality suggests? (Residency drives the seat's country and cost.)",
+      "What are the current pain points: fees, compliance worry, IP protection, onboarding speed?",
+      "Any known statutory concerns in their countries (mandatory allowances, pensions, healthcare)?",
+      "What would make this a win for the person running the evaluation?"
+    ]
+  },
+  "objections": {
+    "title": "Objection notes",
+    "sourceNote": "Moment 45 in the source recording (~00:49:53–00:50:59) was a pricing/cost Q&A held out of the core flow. These are the recurring objections and the framings that worked.",
+    "items": [
+      {
+        "objection": "What does this really cost per country?",
+        "response": "Don't improvise numbers. Use the compensation calculator (flow step 18) live: salary in, employer all-in cost and employee net out. If the prospect's country isn't loaded, name it as a data-load gap and commit to the fix.",
+        "relatedScreenId": "pgd-18-tools-resources-comp-calculator"
+      },
+      {
+        "objection": "Isn't healthcare free in these countries?",
+        "response": "Defuser from the source call: “none of this is free — they're paying a lot of taxes.” Statutory healthcare is funded through social charges; supplemental tiers exist on top and can be absorbed or cost-shared.",
+        "relatedScreenId": "pgd-09-country-pay-requirements"
+      },
+      {
+        "objection": "We already pay people by wire — why change?",
+        "response": "Let them do the math on their own wire fees, then add the compliance angle: cross-border wires also signal to those countries that you're paying people there, which can start permanent-establishment questions. One US invoice ends both.",
+        "relatedScreenId": "pgd-05-wire-fee-value-point"
+      },
+      {
+        "objection": "What about our IP if you employ them?",
+        "response": "Two-contract chain: IP protection sits in the employment contract (worker ↔ platform as EOR) and in the company-to-company assignment agreement. Offer both documents for attorney review rather than paraphrasing clauses live.",
+        "relatedScreenId": "pgd-08-worker-profile-signed-contract"
+      },
+      {
+        "objection": "Can't we just keep everyone as contractors?",
+        "response": "Surface the classification analysis (flow step 10): the platform shows real risks — fines, penalties — when someone is acting like an employee. The client decides the risk; the platform advises with full information.",
+        "relatedScreenId": "pgd-10-employment-type-decision"
+      }
+    ]
+  },
+  "followUps": {
+    "title": "Follow-up checklist",
+    "sourceNote": "Moments 52–55 in the source recording (~00:57:58–end) were close and follow-up. These are the action-item patterns to confirm after any run of this demo.",
+    "items": [
+      "Confirm country-specific mandatory allowances/stipends for every country in play.",
+      "Confirm residency vs nationality for any worker who may live outside their home country — residency drives the seat's country and cost.",
+      "Verify the prospect's countries are loaded in the compensation calculator before the next touchpoint.",
+      "Resolve any IP-agreement request (client adding their own IP terms) with the implementation team.",
+      "Send pricing recap tied to the engagement models discussed (contractor / Contractor Plus / EOR).",
+      "Schedule the follow-up with the decision-maker in the room, not just the evaluator."
+    ]
+  }
+}

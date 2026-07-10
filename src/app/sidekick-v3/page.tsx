@@ -1,12 +1,16 @@
 import Link from "next/link";
 import { AppWayfinder } from "@/components/app-wayfinder";
-import { demoContext, demoMeta, demoModules, demoScreens } from "@/lib/catalog-demo";
-import { applyDemoOverrides, loadSidekickTest } from "./data";
-import { SidekickTestClient } from "./sidekick-test-client";
+import { flowScreens, v3Companion, v3MasterFlow } from "@/lib/sidekick-v3";
+import { applyV3Overrides, loadSidekickV3 } from "./data";
+import { SidekickV3Client } from "./sidekick-v3-client";
 
 export const dynamic = "force-dynamic";
 
-export default async function SidekickTestPage({
+export const metadata = {
+  title: "v3 Sidekick",
+};
+
+export default async function SidekickV3Page({
   searchParams,
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -17,12 +21,12 @@ export default async function SidekickTestPage({
     return typeof v === "string" ? v : undefined;
   };
 
-  const data = await loadSidekickTest(pick("account"));
+  const data = await loadSidekickV3(pick("account"));
 
   if (data.status === "unauthenticated") {
     return (
       <>
-        <AppWayfinder current="New Sidekick Test" />
+        <AppWayfinder current="v3 Sidekick" />
         <main className="app-main">
           <p>
             {data.message} <Link href="/login">Sign in</Link>.
@@ -32,23 +36,27 @@ export default async function SidekickTestPage({
     );
   }
 
-  const { screens, editedIds } = applyDemoOverrides(demoScreens, data.overrides);
+  const { screens, editedIds } = applyV3Overrides(
+    flowScreens(v3MasterFlow),
+    data.overrides,
+  );
 
   return (
     <>
-      <AppWayfinder current="New Sidekick Test" />
-      <SidekickTestClient
-        meta={demoMeta}
-        modules={demoModules}
+      <AppWayfinder current="v3 Sidekick" />
+      <SidekickV3Client
+        flow={v3MasterFlow}
         screens={screens}
-        context={demoContext}
+        companion={v3Companion}
         accounts={data.accounts}
         activeAccount={data.activeAccount}
         notes={data.notes}
+        playbooks={data.playbooks}
         editedIds={editedIds}
         canWrite={data.canWrite}
         dbUnavailable={data.status === "database-unavailable"}
         initialScreenId={pick("screen")}
+        initialPlaybookId={pick("pb")}
         justSaved={pick("saved") === "1"}
       />
     </>

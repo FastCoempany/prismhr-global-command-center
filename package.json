@@ -17,7 +17,8 @@
     "prisma:validate": "prisma validate",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
-    "sidekick:import:draft": "node tools/sidekick-import/build-draft.mjs"
+    "sidekick:import:draft": "node tools/sidekick-import/build-draft.mjs",
+    "sidekick:frames:v3": "node tools/sidekick-import/extract-flow-frames.mjs"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",
