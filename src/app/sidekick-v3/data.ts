@@ -1,6 +1,6 @@
 import { getAppAccess } from "@/lib/auth";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
-import { v3ScreenIds, type V3Screen } from "@/lib/sidekick-v3";
+import { V3_PLAYBOOK_PREFIX, v3ScreenIds, type V3Screen } from "@/lib/sidekick-v3";
 
 // v3 reuses the existing Demo* tables. Every row it writes is keyed by a v3
 // screen id ("pgd-…"), which never collides with the original catalog's
@@ -142,10 +142,15 @@ export async function loadSidekickV3(
       notes = Object.fromEntries(
         noteRows.filter((n) => v3ScreenIds.has(n.screenId)).map((n) => [n.screenId, n.body]),
       );
-      playbooks = playbookRows.map((p) => ({
-        ...p,
-        items: p.items.filter((it) => v3ScreenIds.has(it.screenId)),
-      }));
+      // Only v3-namespaced playbooks — legacy /sidekick playbooks never show
+      // here (and v3 actions refuse to mutate them). Prefix stripped for display.
+      playbooks = playbookRows
+        .filter((p) => p.name.startsWith(V3_PLAYBOOK_PREFIX))
+        .map((p) => ({
+          ...p,
+          name: p.name.slice(V3_PLAYBOOK_PREFIX.length),
+          items: p.items.filter((it) => v3ScreenIds.has(it.screenId)),
+        }));
     }
 
     return {

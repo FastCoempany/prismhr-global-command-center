@@ -141,7 +141,9 @@ export async function loadSidekick(requestedAccountId?: string): Promise<Sidekic
     ]);
     notes = Object.fromEntries(noteRows.map((n) => [n.screenId, n.body]));
     pinnedScreenIds = pinRows.map((p) => p.screenId);
-    playbooks = playbookRows;
+    // v3 Sidekick namespaces its playbooks with a "v3:" name prefix — keep
+    // them out of this app's dropdown (and it keeps ours out of its own).
+    playbooks = playbookRows.filter((p) => !p.name.startsWith("v3:"));
   }
 
   return {

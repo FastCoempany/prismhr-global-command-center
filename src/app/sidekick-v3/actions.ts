@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { DemoAudience } from "@/generated/prisma/client";
 import { getAppAccess } from "@/lib/auth";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
-import { v3MasterFlow, v3ScreenIds } from "@/lib/sidekick-v3";
+import { V3_PLAYBOOK_PREFIX, v3MasterFlow, v3ScreenIds } from "@/lib/sidekick-v3";
 
 const audienceValues = new Set<string>(Object.values(DemoAudience));
 
@@ -37,6 +37,17 @@ async function requireWrite(): Promise<boolean> {
   if (!hasDatabaseEnv()) return false;
   const access = await getAppAccess();
   return access.status === "active" && access.canWrite;
+}
+
+// v3 mutations only ever touch v3-namespaced playbooks — a legacy /sidekick
+// playbook id passed here is a no-op.
+async function isV3Playbook(playbookId: string): Promise<boolean> {
+  if (!playbookId) return false;
+  const pb = await getPrisma().demoPlaybook.findUnique({
+    where: { id: playbookId },
+    select: { name: true },
+  });
+  return Boolean(pb?.name.startsWith(V3_PLAYBOOK_PREFIX));
 }
 
 export async function createDemoAccount(formData: FormData) {
@@ -102,7 +113,7 @@ export async function forkMasterFlow(formData: FormData) {
   }
   const prisma = getPrisma();
   const pb = await prisma.demoPlaybook.create({
-    data: { accountId, name: `${v3MasterFlow.title} (fork)` },
+    data: { accountId, name: `${V3_PLAYBOOK_PREFIX}${v3MasterFlow.title} (fork)` },
     select: { id: true },
   });
   await prisma.demoPlaybookItem.createMany({
@@ -124,7 +135,7 @@ export async function createPlaybook(formData: FormData) {
     redirect(target(accountId, screenId, { error: "playbook" }));
   }
   const pb = await getPrisma().demoPlaybook.create({
-    data: { accountId, name },
+    data: { accountId, name: `${V3_PLAYBOOK_PREFIX}${name}` },
     select: { id: true },
   });
   revalidatePath("/sidekick-v3");
@@ -135,7 +146,7 @@ export async function deletePlaybook(formData: FormData) {
   const playbookId = str(formData, "playbookId", 200);
   const accountId = str(formData, "accountId", 200);
   const screenId = str(formData, "screenId", 80);
-  if (await requireWrite()) {
+  if ((await requireWrite()) && (await isV3Playbook(playbookId))) {
     await getPrisma()
       .demoPlaybook.delete({ where: { id: playbookId } })
       .catch(() => undefined);
@@ -148,7 +159,11 @@ export async function addToPlaybook(formData: FormData) {
   const playbookId = str(formData, "playbookId", 200);
   const screenId = str(formData, "screenId", 80);
   const accountId = str(formData, "accountId", 200);
-  if ((await requireWrite()) && playbookId && v3ScreenIds.has(screenId)) {
+  if (
+    (await requireWrite()) &&
+    v3ScreenIds.has(screenId) &&
+    (await isV3Playbook(playbookId))
+  ) {
     const prisma = getPrisma();
     const exists = await prisma.demoPlaybookItem.findFirst({
       where: { playbookId, screenId },
@@ -170,9 +185,9 @@ export async function removePlaybookItem(formData: FormData) {
   const playbookId = str(formData, "playbookId", 200);
   const accountId = str(formData, "accountId", 200);
   const screenId = str(formData, "screenId", 80);
-  if (await requireWrite()) {
+  if ((await requireWrite()) && (await isV3Playbook(playbookId))) {
     await getPrisma()
-      .demoPlaybookItem.delete({ where: { id: itemId } })
+      .demoPlaybookItem.deleteMany({ where: { id: itemId, playbookId } })
       .catch(() => undefined);
   }
   revalidatePath("/sidekick-v3");
@@ -185,7 +200,7 @@ export async function movePlaybookItem(formData: FormData) {
   const playbookId = str(formData, "playbookId", 200);
   const accountId = str(formData, "accountId", 200);
   const screenId = str(formData, "screenId", 80);
-  if ((await requireWrite()) && itemId && playbookId) {
+  if ((await requireWrite()) && itemId && (await isV3Playbook(playbookId))) {
     const prisma = getPrisma();
     const items = await prisma.demoPlaybookItem.findMany({
       where: { playbookId },

@@ -47,6 +47,11 @@ export type V3Companion = {
   followUps: { title: string; sourceNote: string; items: string[] };
 };
 
+// Durable namespace for v3-owned DemoPlaybook rows (the table has no app
+// column). Stored in the name, stripped for display; mutations refuse rows
+// without it, so the two Sidekicks can't touch each other's playbooks.
+export const V3_PLAYBOOK_PREFIX = "v3:";
+
 export const v3Screens = screensJson.screens as V3Screen[];
 export const v3Flows = flowsJson.flows as V3Flow[];
 export const v3Companion = companionJson as unknown as V3Companion;
