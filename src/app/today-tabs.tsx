@@ -80,7 +80,13 @@ export function TodayTabs({
     };
   }, []);
 
-  const panels: Record<TabKey, ReactNode> = { morning, followups, notes, narrative, plan };
+  const panels: Record<TabKey, ReactNode> = {
+    morning,
+    followups,
+    notes,
+    narrative,
+    plan,
+  };
   const badgeFor = (k: TabKey): number | null =>
     k === "followups" ? followUpsDue || null : k === "notes" ? notesCount || null : null;
 
@@ -106,7 +112,12 @@ export function TodayTabs({
         })}
       </div>
       {TABS.map((t) => (
-        <div key={t.key} role="tabpanel" hidden={tab !== t.key} className={styles.tabPanel}>
+        <div
+          key={t.key}
+          role="tabpanel"
+          hidden={tab !== t.key}
+          className={styles.tabPanel}
+        >
           {panels[t.key]}
         </div>
       ))}

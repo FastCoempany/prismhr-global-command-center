@@ -58,12 +58,17 @@ export function applyDemoOverrides(
       branching: o.branching.length ? o.branching : s.branching,
     };
   });
-  return { screens, editedIds: overrides.filter((o) => map.has(o.screenId)).map((o) => o.screenId) };
+  return {
+    screens,
+    editedIds: overrides.filter((o) => map.has(o.screenId)).map((o) => o.screenId),
+  };
 }
 
 const DEMO_IDS = new Set(demoScreens.map((s) => s.id));
 
-export async function loadSidekickTest(requestedAccountId?: string): Promise<SidekickTestData> {
+export async function loadSidekickTest(
+  requestedAccountId?: string,
+): Promise<SidekickTestData> {
   const access = await getAppAccess();
 
   if (access.status !== "active" || !hasDatabaseEnv()) {
@@ -80,10 +85,24 @@ export async function loadSidekickTest(requestedAccountId?: string): Promise<Sid
     const [accounts, overrideRows] = await Promise.all([
       prisma.demoAccount.findMany({
         orderBy: { name: "asc" },
-        select: { id: true, name: true, company: true, personaLabel: true, defaultAudience: true },
+        select: {
+          id: true,
+          name: true,
+          company: true,
+          personaLabel: true,
+          defaultAudience: true,
+        },
       }),
       prisma.demoScreenOverride.findMany({
-        select: { screenId: true, say: true, what: true, capabilities: true, sp: true, de: true, branching: true },
+        select: {
+          screenId: true,
+          say: true,
+          what: true,
+          capabilities: true,
+          sp: true,
+          de: true,
+          branching: true,
+        },
       }),
     ]);
 
@@ -113,6 +132,11 @@ export async function loadSidekickTest(requestedAccountId?: string): Promise<Sid
       overrides: overrideRows.filter((o) => DEMO_IDS.has(o.screenId)),
     };
   } catch {
-    return { ...EMPTY, status: "database-unavailable", canWrite: false, message: access.message };
+    return {
+      ...EMPTY,
+      status: "database-unavailable",
+      canWrite: false,
+      message: access.message,
+    };
   }
 }

@@ -15,7 +15,12 @@
   min-height: 0;
   color: var(--ink);
   background: var(--bg);
-  font: 15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font:
+    15px/1.55 system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
 }
 
 /* Sidebar */

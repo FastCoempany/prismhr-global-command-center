@@ -29,7 +29,9 @@ export function PricingClient({
       return true;
     });
     return [...list].sort((a, b) =>
-      sort === "price" ? a.price - b.price || a.country.localeCompare(b.country) : a.country.localeCompare(b.country),
+      sort === "price"
+        ? a.price - b.price || a.country.localeCompare(b.country)
+        : a.country.localeCompare(b.country),
     );
   }, [countries, q, tier, sort]);
 
@@ -75,7 +77,9 @@ export function PricingClient({
               </td>
               <td className={styles.priceCell}>{fmtPrice(c.price)}</td>
               <td>
-                <span className={`${styles.fit} ${tierClass[c.tier] ?? styles.fitMedium}`}>
+                <span
+                  className={`${styles.fit} ${tierClass[c.tier] ?? styles.fitMedium}`}
+                >
                   {c.tier}
                 </span>
               </td>

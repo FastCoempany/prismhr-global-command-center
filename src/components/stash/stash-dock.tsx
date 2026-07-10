@@ -58,6 +58,7 @@ export function StashDock() {
   const [busy, setBusy] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [dragPartner, setDragPartner] = useState<string | null>(null);
+  const [compose, setCompose] = useState("");
 
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -263,6 +264,34 @@ export function StashDock() {
     }
   };
 
+  // Quick note — type from anywhere, route straight to a lane / partner, or
+  // hold it in the tray. The birdseye capture for thoughts, not just selections.
+  const onComposeRoute = async (lane: StashLane) => {
+    const text = compose.trim();
+    if (!text) return;
+    const res = await routeStash(text, "quick note", "", lane);
+    if (res.ok) setCompose("");
+    const meta = STASH_LANES.find((l) => l.key === lane);
+    flash(res.ok ? `Sent to ${meta?.label} → ${meta?.lands}` : "Couldn't route");
+  };
+  const onComposePartner = async (partner: string) => {
+    const text = compose.trim();
+    if (!text || !partner) return;
+    const res = await routeStashToPartner(text, "quick note", partner);
+    if (res.ok) setCompose("");
+    flash(res.ok ? `Noted for ${partner.split(" ")[0]}` : "Couldn't route");
+  };
+  const onComposeStash = async () => {
+    const text = compose.trim();
+    if (!text) return;
+    const res = await captureToStash(text, "quick note", "");
+    if (res) {
+      setCompose("");
+      await refetch();
+      flash("Stashed ✓");
+    }
+  };
+
   if (!ready || !enabled) return null;
 
   const count = items.length;
@@ -346,6 +375,53 @@ export function StashDock() {
             >
               ✕
             </button>
+          </div>
+          <div className={styles.compose}>
+            <textarea
+              value={compose}
+              onChange={(e) => setCompose(e.target.value)}
+              rows={2}
+              placeholder="Quick note from anywhere — type, then route it…"
+              aria-label="Quick note"
+            />
+            {compose.trim() && (
+              <div className={styles.composeRow}>
+                {STASH_LANES.map((l) => (
+                  <button
+                    key={l.key}
+                    type="button"
+                    className={`${styles.segBtn} ${styles[`seg_${l.key}`]}`}
+                    onClick={() => onComposeRoute(l.key)}
+                  >
+                    {l.label}
+                  </button>
+                ))}
+                {partners.length > 0 && (
+                  <select
+                    className={styles.segPartner}
+                    value=""
+                    onChange={(e) => onComposePartner(e.target.value)}
+                    aria-label="Route note to a partner"
+                  >
+                    <option value="" disabled>
+                      → Partner…
+                    </option>
+                    {partners.map((p) => (
+                      <option key={p} value={p}>
+                        {p}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                <button
+                  type="button"
+                  className={`${styles.segBtn} ${styles.segHold}`}
+                  onClick={onComposeStash}
+                >
+                  Hold in tray
+                </button>
+              </div>
+            )}
           </div>
           {count === 0 ? (
             <div className={styles.empty}>

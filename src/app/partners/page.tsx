@@ -130,13 +130,14 @@ export default async function PartnersPage() {
     <>
       <AppWayfinder current="Partners" />
       <main className={styles.wrap}>
-        <h1 className={styles.h1}>Partner Room</h1>
-        <p className={styles.sub}>
-          The by-partner repository — every outreach you&apos;ve sent, every reply, and
-          every note, dated and time-stamped. Notes land here from the box below or by
-          routing a Stash capture to a partner; outreach history syncs from the partner
-          cards on <Link href="/today">Today</Link>.
-        </p>
+        <div className={styles.pageHead}>
+          <h1 className={styles.h1}>Partner Room</h1>
+
+          <p className={styles.sub}>
+            Every outreach, reply, and note — dated, time-stamped, synced with{" "}
+            <Link href="/today">Today</Link>.
+          </p>
+        </div>
 
         {roster.map((partner) => {
           const key = partnerOutreachKey(partner);

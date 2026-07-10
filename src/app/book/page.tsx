@@ -35,14 +35,17 @@ export default async function BookPage({
     <>
       <AppWayfinder current="Book" />
       <main className={styles.wrap}>
-        <h1 className={styles.h1}>Book</h1>
-        <p className={styles.sub}>
-          {data.rows.length} PEO partner accounts, grouped by CSM, ranked by fit.
-        </p>
+        <div className={styles.pageHead}>
+          <h1 className={styles.h1}>Book</h1>
+
+          <p className={styles.sub}>
+            PEO partner accounts, grouped by CSM, ranked by fit.
+          </p>
+        </div>
         {data.status === "database-unavailable" && (
           <div className={styles.banner}>
-            Working state is read-only — run <code>docs/command-center-tables.sql</code> in
-            Supabase to enable saving stage / next actions.
+            Working state is read-only — run <code>docs/command-center-tables.sql</code>{" "}
+            in Supabase to enable saving stage / next actions.
           </div>
         )}
         <BookClient

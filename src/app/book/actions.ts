@@ -52,7 +52,9 @@ export async function savePeo(formData: FormData) {
     ? (approachRaw as PeoApproach)
     : PeoApproach.NEEDS_CSM;
   const intentRaw = str(formData, "intent", 40);
-  const intent = intentValues.has(intentRaw) ? (intentRaw as PeoIntent) : PeoIntent.UNKNOWN;
+  const intent = intentValues.has(intentRaw)
+    ? (intentRaw as PeoIntent)
+    : PeoIntent.UNKNOWN;
   const nextAction = str(formData, "nextAction", 400) || null;
   const nextActionDate = parseDate(str(formData, "nextActionDate", 10));
   const notes = str(formData, "notes", 8000) || null;

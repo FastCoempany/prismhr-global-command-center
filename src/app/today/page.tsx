@@ -665,16 +665,16 @@ export default async function TodayPage({
     <>
       <AppWayfinder current="Today" />
       <main className={styles.wrap}>
-        <h1 className={styles.h1}>Today</h1>
-        <p className={styles.sub}>
-          The daily command surface. Cold calling isn&apos;t the motion — this is a
-          channel sell through partners into the base you already serve. Two lead streams
-          route here: the <b>PEO channel</b> (CSM-owned) and the <b>HCM funnel</b>{" "}
-          (Eric&apos;s HCM logos + HRaaS + clients on our PrismHR HCM). Read → route →
-          record.
-        </p>
-
-        <SfCheckpoint when="standing" strong />
+        <div className={styles.pageHead}>
+          <h1 className={styles.h1}>Today</h1>
+          <p
+            className={styles.sub}
+            title="Cold calling isn't the motion — this is a channel sell through partners into the base you already serve: the PEO channel (CSM-owned) and the HCM funnel (Eric's HCM logos + HRaaS)."
+          >
+            Channel sell through partners — read → route → record.
+          </p>
+          <SfCheckpoint when="standing" strong />
+        </div>
 
         {/* ── Sections, tabbed to keep any one view short ────────────────── */}
         <TodayTabs
@@ -685,18 +685,14 @@ export default async function TodayPage({
               {/* ── Partner outreach (standing roundup) ────────────────────────── */}
               {kickoff.length > 0 && (
                 <section className={styles.kickoff}>
-                  <div className={styles.kickoffHead}>
+                  <div
+                    className={styles.kickoffHead}
+                    title={`One roundup per partner — ${kickoffTotal} accounts teed up (each partner's top Global-fit). Edit, copy, send, mark contacted.`}
+                  >
                     <span className={styles.kickoffTag}>Partner outreach</span>
                     <h2 className={styles.kickoffTitle}>
-                      Send each partner their account roundup
+                      One roundup per partner — edit, copy, send, mark contacted
                     </h2>
-                    <p className={styles.kickoffSub}>
-                      One roundup per partner — {kickoff.length}{" "}
-                      {kickoff.length === 1 ? "partner" : "partners"}, {kickoffTotal}{" "}
-                      accounts teed up (each partner&apos;s top Global-fit from their
-                      book). Open a partner&apos;s message, edit it, copy it, send it —
-                      then mark them contacted.
-                    </p>
                     <div className={styles.mvProgress}>
                       <span className={styles.mvProgressBar}>
                         <span
@@ -707,7 +703,7 @@ export default async function TodayPage({
                         />
                       </span>
                       <span className={styles.mvProgressText}>
-                        {kickoffDoneCount} of {kickoffItems.length} partners contacted
+                        {kickoffDoneCount}/{kickoffItems.length} contacted
                       </span>
                     </div>
                     <SfCheckpoint when="kickoff" strong />
@@ -730,46 +726,45 @@ export default async function TodayPage({
                         >
                           Partner room →
                         </Link>
-                        <span className={styles.kickoffCount}>
-                          {k.accounts.length} teed up
-                          {k.accounts.length < 5 ? " · fewer than 5 in this book" : ""}
-                        </span>
-                      </div>
-                      <div className={styles.kickoffAccts}>
-                        {k.accounts.map((a) => {
-                          const dashCard = dash.cards.find(
-                            (c) => !c.archived && c.name === a.name,
-                          );
-                          const lastNoteAt = acctNotes.get(a.id)?.[0]?.createdAt ?? null;
-                          return (
-                            <AccountChip
-                              key={a.id}
-                              account={{
-                                id: a.id,
-                                name: a.name,
-                                score: a.score,
-                                play: a.play,
-                              }}
-                              partner={k.partner}
-                              tone={chipTone(lastNoteAt)}
-                              lastNoteAt={lastNoteAt}
-                              card={
-                                dashCard
-                                  ? {
-                                      id: dashCard.id,
-                                      stages: DASH_NODES.map((n) => ({
-                                        key: n.key,
-                                        label: n.label,
-                                        state: dashCard.states[n.key] ?? "todo",
-                                      })),
-                                    }
-                                  : null
-                              }
-                              seedSubtitle={`${a.csm}${a.industry ? ` · ${a.industry}` : ""}`}
-                              seedDiscovery={seedFor(a)}
-                            />
-                          );
-                        })}
+                        {/* Chips flow inline on the name row (kickoffAccts is
+                            display:contents) — the row wraps as needed. */}
+                        <div className={styles.kickoffAccts}>
+                          {k.accounts.map((a) => {
+                            const dashCard = dash.cards.find(
+                              (c) => !c.archived && c.name === a.name,
+                            );
+                            const lastNoteAt =
+                              acctNotes.get(a.id)?.[0]?.createdAt ?? null;
+                            return (
+                              <AccountChip
+                                key={a.id}
+                                account={{
+                                  id: a.id,
+                                  name: a.name,
+                                  score: a.score,
+                                  play: a.play,
+                                }}
+                                partner={k.partner}
+                                tone={chipTone(lastNoteAt)}
+                                lastNoteAt={lastNoteAt}
+                                card={
+                                  dashCard
+                                    ? {
+                                        id: dashCard.id,
+                                        stages: DASH_NODES.map((n) => ({
+                                          key: n.key,
+                                          label: n.label,
+                                          state: dashCard.states[n.key] ?? "todo",
+                                        })),
+                                      }
+                                    : null
+                                }
+                                seedSubtitle={`${a.csm}${a.industry ? ` · ${a.industry}` : ""}`}
+                                seedDiscovery={seedFor(a)}
+                              />
+                            );
+                          })}
+                        </div>
                       </div>
                       {(partnerNotes.get(k.partner) ?? []).length > 0 && (
                         <ul className={styles.kickoffNotes}>
@@ -1262,9 +1257,8 @@ export default async function TodayPage({
                     : "Nothing due right now"}
                 </h2>
                 <p className={styles.fuSub}>
-                  Every contact you log sets a check-in — later today or tomorrow, never
-                  on a weekend — or write your own below. They keep surfacing until you
-                  close them.
+                  Check-ins land later today or tomorrow — never weekends — and surface
+                  until closed.
                 </p>
               </div>
               {followUps.due.map((t) => (

@@ -48,12 +48,14 @@ export default async function DashboardPage() {
     <>
       <AppWayfinder current="Dashboard" />
       <main className={styles.wrap}>
-        <h1 className={styles.h1}>Dashboard</h1>
-        <p className={styles.sub}>
-          Your hand-sewn board — manual, wired to nothing. Click any node to set its state
-          and note what has to happen for it to go green.{" "}
-          <Link href="/accounts">Open the Account Room →</Link>
-        </p>
+        <div className={styles.pageHead}>
+          <h1 className={styles.h1}>Dashboard</h1>
+
+          <p className={styles.sub}>
+            Hand-sewn board — click a node to set its state.{" "}
+            <Link href="/accounts">Account Room →</Link>
+          </p>
+        </div>
         <SfCheckpoint when="dashboard" />
 
         {data.status === "database-unavailable" && (

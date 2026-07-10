@@ -38,7 +38,9 @@ export default async function LookIntoPage() {
     .map((g) => ({ ...g, items: g.items.filter((i) => !isResolved(i.id)) }))
     .filter((g) => g.items.length > 0);
   const resolved = LOOK_INTO.filter((i) => isResolved(i.id));
-  const openHigh = LOOK_INTO.filter((i) => i.priority === "high" && !isResolved(i.id)).length;
+  const openHigh = LOOK_INTO.filter(
+    (i) => i.priority === "high" && !isResolved(i.id),
+  ).length;
 
   return (
     <>
@@ -46,10 +48,11 @@ export default async function LookIntoPage() {
       <main className={styles.wrap}>
         <h1 className={styles.h1}>Look into</h1>
         <p className={styles.sub}>
-          Open loops to resolve <b>internally</b> — where the command center runs on an assumption
-          instead of a real source, system, or capability. {LOOK_INTO.length - resolved.length} open,{" "}
-          {openHigh} high priority. Day-to-day asks live in the{" "}
-          <Link href="/today">Today capture</Link>; these are the “go find out” items.
+          Open loops to resolve <b>internally</b> — where the command center runs on an
+          assumption instead of a real source, system, or capability.{" "}
+          {LOOK_INTO.length - resolved.length} open, {openHigh} high priority. Day-to-day
+          asks live in the <Link href="/today">Today capture</Link>; these are the “go
+          find out” items.
         </p>
 
         {groups.map((g) => (
@@ -123,7 +126,8 @@ export default async function LookIntoPage() {
           {available
             ? "Mark items resolved as you close them out. "
             : "Run docs/dashboard-tables.sql to enable marking items resolved. "}
-          This list is curated as the app grows — tell me when you spot another seam to add.
+          This list is curated as the app grows — tell me when you spot another seam to
+          add.
         </p>
       </main>
     </>

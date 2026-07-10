@@ -30,22 +30,22 @@ export default async function PipelinePage() {
     <>
       <AppWayfinder current="Pipeline" />
       <main className={styles.wrap}>
-        <h1 className={styles.h1}>Pipeline</h1>
-        <p className={styles.sub}>
-          {inPipeline.length} PEO{inPipeline.length === 1 ? "" : "s"} in motion across the
-          channel.
-        </p>
+        <div className={styles.pageHead}>
+          <h1 className={styles.h1}>Pipeline</h1>
+
+          <p className={styles.sub}>PEOs in motion across the channel.</p>
+        </div>
         {data.status === "database-unavailable" && (
           <div className={styles.banner}>
-            Working state is read-only — run <code>docs/command-center-tables.sql</code> in
-            Supabase, then move PEOs through stages from the Book.
+            Working state is read-only — run <code>docs/command-center-tables.sql</code>{" "}
+            in Supabase, then move PEOs through stages from the Book.
           </div>
         )}
 
         {inPipeline.length === 0 ? (
           <div className={styles.empty}>
-            Nothing in motion yet. Head to <Link href="/book">Book</Link> and move a high-fit PEO
-            to a stage.
+            Nothing in motion yet. Head to <Link href="/book">Book</Link> and move a
+            high-fit PEO to a stage.
           </div>
         ) : (
           <div className={styles.cols}>
