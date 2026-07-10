@@ -1,0 +1,33 @@
+{
+  "flows": [
+    {
+      "id": "prismhr-global-master",
+      "title": "PrismHR Global Master Demo Flow",
+      "version": "v1",
+      "description": "The account-neutral master walkthrough of the PrismHR Global platform, in the order the recorded demo actually ran. Fork it into an account playbook to tailor per prospect.",
+      "screenIds": [
+        "pgd-01-dashboard-demo-home",
+        "pgd-02-pay-period-approval-entry",
+        "pgd-03-monthly-pay-period-detail",
+        "pgd-04-confirm-payroll-approval",
+        "pgd-05-wire-fee-value-point",
+        "pgd-06-time-off-requests",
+        "pgd-07-worker-contractor-list",
+        "pgd-08-worker-profile-signed-contract",
+        "pgd-09-country-pay-requirements",
+        "pgd-10-employment-type-decision",
+        "pgd-11-new-hire-setup-form",
+        "pgd-12-additional-payments",
+        "pgd-13-equipment-policy",
+        "pgd-14-benefits-global-health",
+        "pgd-15-contract-onboarding-handoff",
+        "pgd-16-worker-portal-employee-view",
+        "pgd-17-reports",
+        "pgd-18-tools-resources-comp-calculator",
+        "pgd-19-wallet-contractor-payment",
+        "pgd-20-local-currency-payment-setup",
+        "pgd-21-wallet-wrap-pay-overview"
+      ]
+    }
+  ]
+}

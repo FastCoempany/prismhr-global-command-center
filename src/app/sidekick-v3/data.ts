@@ -1,11 +1,10 @@
 import { getAppAccess } from "@/lib/auth";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
-import { demoScreens, type DemoScreen } from "@/lib/catalog-demo";
+import { V3_PLAYBOOK_PREFIX, v3ScreenIds, type V3Screen } from "@/lib/sidekick-v3";
 
-// The new (test) Sidekick reuses the existing Demo* tables for editing, but
-// every row it writes is keyed by a demo screen id (e.g. "screen-07-…"), which
-// never collides with the original catalog's numeric ids ("001"…). So editing
-// here can't touch the existing Sidekick, and no new tables are needed.
+// v3 reuses the existing Demo* tables. Every row it writes is keyed by a v3
+// screen id ("pgd-…"), which never collides with the original catalog's
+// numeric ids ("001"…), so the two Sidekicks can't touch each other's data.
 
 export type DemoAudience = "BOTH" | "SERVICE_PROVIDER" | "DIRECT_EMPLOYER";
 
@@ -15,6 +14,12 @@ export type DemoAccountSummary = {
   company: string | null;
   personaLabel: string | null;
   defaultAudience: DemoAudience;
+};
+
+export type PlaybookData = {
+  id: string;
+  name: string;
+  items: { id: string; screenId: string }[];
 };
 
 export type ScreenOverride = {
@@ -27,23 +32,30 @@ export type ScreenOverride = {
   branching: string[];
 };
 
-export type SidekickTestData = {
+export type SidekickV3Data = {
   status: "active" | "unauthenticated" | "database-unavailable";
   canWrite: boolean;
   message: string;
   accounts: DemoAccountSummary[];
   activeAccount: DemoAccountSummary | null;
   notes: Record<string, string>;
+  playbooks: PlaybookData[];
   overrides: ScreenOverride[];
 };
 
-const EMPTY = { accounts: [], activeAccount: null, notes: {}, overrides: [] };
+const EMPTY = {
+  accounts: [],
+  activeAccount: null,
+  notes: {},
+  playbooks: [],
+  overrides: [],
+} satisfies Omit<SidekickV3Data, "status" | "canWrite" | "message">;
 
-// Layer editable overrides over the generated demo catalog.
-export function applyDemoOverrides(
-  base: DemoScreen[],
+/** Layer editable overrides over the static screen store. */
+export function applyV3Overrides(
+  base: V3Screen[],
   overrides: ScreenOverride[],
-): { screens: DemoScreen[]; editedIds: string[] } {
+): { screens: V3Screen[]; editedIds: string[] } {
   const map = new Map(overrides.map((o) => [o.screenId, o]));
   const screens = base.map((s) => {
     const o = map.get(s.id);
@@ -58,17 +70,12 @@ export function applyDemoOverrides(
       branching: o.branching.length ? o.branching : s.branching,
     };
   });
-  return {
-    screens,
-    editedIds: overrides.filter((o) => map.has(o.screenId)).map((o) => o.screenId),
-  };
+  return { screens, editedIds: overrides.map((o) => o.screenId) };
 }
 
-const DEMO_IDS = new Set(demoScreens.map((s) => s.id));
-
-export async function loadSidekickTest(
+export async function loadSidekickV3(
   requestedAccountId?: string,
-): Promise<SidekickTestData> {
+): Promise<SidekickV3Data> {
   const access = await getAppAccess();
 
   if (access.status !== "active" || !hasDatabaseEnv()) {
@@ -110,15 +117,40 @@ export async function loadSidekickTest(
       accounts.find((a) => a.id === requestedAccountId) ?? accounts[0] ?? null;
 
     let notes: Record<string, string> = {};
+    let playbooks: PlaybookData[] = [];
+
     if (activeAccount) {
-      const noteRows = await prisma.demoNote.findMany({
-        where: { accountId: activeAccount.id },
-        select: { screenId: true, body: true },
-      });
-      // Only this catalog's notes (id-namespaced) — never the other Sidekick's.
+      const [noteRows, playbookRows] = await Promise.all([
+        prisma.demoNote.findMany({
+          where: { accountId: activeAccount.id },
+          select: { screenId: true, body: true },
+        }),
+        prisma.demoPlaybook.findMany({
+          where: { accountId: activeAccount.id },
+          orderBy: { createdAt: "asc" },
+          select: {
+            id: true,
+            name: true,
+            items: {
+              orderBy: { position: "asc" },
+              select: { id: true, screenId: true },
+            },
+          },
+        }),
+      ]);
+      // Only v3-namespaced rows reach this client — never the other Sidekick's.
       notes = Object.fromEntries(
-        noteRows.filter((n) => DEMO_IDS.has(n.screenId)).map((n) => [n.screenId, n.body]),
+        noteRows.filter((n) => v3ScreenIds.has(n.screenId)).map((n) => [n.screenId, n.body]),
       );
+      // Only v3-namespaced playbooks — legacy /sidekick playbooks never show
+      // here (and v3 actions refuse to mutate them). Prefix stripped for display.
+      playbooks = playbookRows
+        .filter((p) => p.name.startsWith(V3_PLAYBOOK_PREFIX))
+        .map((p) => ({
+          ...p,
+          name: p.name.slice(V3_PLAYBOOK_PREFIX.length),
+          items: p.items.filter((it) => v3ScreenIds.has(it.screenId)),
+        }));
     }
 
     return {
@@ -128,8 +160,8 @@ export async function loadSidekickTest(
       accounts,
       activeAccount,
       notes,
-      // Only overrides for this catalog's ids reach the client.
-      overrides: overrideRows.filter((o) => DEMO_IDS.has(o.screenId)),
+      playbooks,
+      overrides: overrideRows.filter((o) => v3ScreenIds.has(o.screenId)),
     };
   } catch {
     return {

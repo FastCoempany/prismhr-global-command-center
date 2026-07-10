@@ -83,11 +83,11 @@ export function AppWayfinder({
             Demo Sidekick
           </Link>
           <Link
-            aria-current={current === "New Sidekick Test" ? "page" : undefined}
+            aria-current={current === "v3 Sidekick" ? "page" : undefined}
             className="app-route-link"
-            href="/sidekick-test"
+            href="/sidekick-v3"
           >
-            New Sidekick Test
+            v3 Sidekick
           </Link>
           <Link
             aria-current={current === "Look into" ? "page" : undefined}
