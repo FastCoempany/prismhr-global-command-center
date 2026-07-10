@@ -2,15 +2,17 @@
    everywhere you act on an account. Deliberately distinct (SF blue) so it reads
    as one consistent cue across Today, Accounts, and the Dashboard. */
 .chk {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-wrap: wrap;
   border: 1px solid #b6e3f7;
   background: #f0f9ff;
   border-left: 3px solid #00a1e0;
-  border-radius: 8px;
-  padding: 8px 11px;
-  margin: 8px 0;
+  border-radius: 6px;
+  padding: 2px 9px;
+  margin: 4px 0;
+  cursor: help;
 }
 .chkStrong {
   border-color: #00a1e0;
@@ -18,25 +20,17 @@
 }
 .icon {
   flex: none;
-  font-size: 13px;
-  line-height: 1.5;
-}
-.body {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
+  font-size: 11px;
 }
 .lead {
-  font-size: 10px;
+  font-size: 9.5px;
   font-weight: 800;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
   color: #0369a1;
 }
 .text {
-  font-size: 12.5px;
-  line-height: 1.5;
+  font-size: 11px;
   color: #075985;
 }
 .link {

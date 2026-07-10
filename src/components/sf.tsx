@@ -71,10 +71,15 @@ export function SfLink({ id, name }: { id: string; name?: string }) {
     );
   }
   if (isRealSfId(id)) return <SfId id={id} />;
-  return <span className={styles.inline}>No Salesforce record on file yet — create/link one</span>;
+  return (
+    <span className={styles.inline}>
+      No Salesforce record on file yet — create/link one
+    </span>
+  );
 }
 
-// The checkpoint notation. `id`/`name` optional — when present, shows the SF link.
+// The checkpoint notation — one compact line; the full wording lives in the
+// tooltip. The cue stays recognizable (SF blue) without eating real estate.
 export function SfCheckpoint({
   when,
   id,
@@ -88,13 +93,11 @@ export function SfCheckpoint({
 }) {
   const c = COPY[when];
   return (
-    <div className={`${styles.chk} ${strong ? styles.chkStrong : ""}`}>
+    <div className={`${styles.chk} ${strong ? styles.chkStrong : ""}`} title={c.text}>
       <span className={styles.icon}>⟳</span>
-      <div className={styles.body}>
-        <span className={styles.lead}>{c.lead}</span>
-        <span className={styles.text}>{c.text}</span>
-        {id ? <SfLink id={id} name={name} /> : null}
-      </div>
+      <span className={styles.lead}>{c.lead}</span>
+      <span className={styles.text}>— check before, log after</span>
+      {id ? <SfLink id={id} name={name} /> : null}
     </div>
   );
 }

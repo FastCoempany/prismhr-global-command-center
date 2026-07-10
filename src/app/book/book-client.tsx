@@ -53,7 +53,13 @@ type Props = {
   justSaved: boolean;
 };
 
-export function BookClient({ rows, canWrite, dbUnavailable, initialPeoId, justSaved }: Props) {
+export function BookClient({
+  rows,
+  canWrite,
+  dbUnavailable,
+  initialPeoId,
+  justSaved,
+}: Props) {
   const [query, setQuery] = useState("");
   const [csm, setCsm] = useState("");
   const [tier, setTier] = useState("");
@@ -77,7 +83,10 @@ export function BookClient({ rows, canWrite, dbUnavailable, initialPeoId, justSa
       if (stage && r.stage !== stage) return false;
       if (approach && r.approach !== approach) return false;
       if (industry && r.industry !== industry) return false;
-      if (q && !`${r.name} ${r.contactName} ${r.city} ${r.state}`.toLowerCase().includes(q))
+      if (
+        q &&
+        !`${r.name} ${r.contactName} ${r.city} ${r.state}`.toLowerCase().includes(q)
+      )
         return false;
       return true;
     });
@@ -129,13 +138,21 @@ export function BookClient({ rows, canWrite, dbUnavailable, initialPeoId, justSa
             </option>
           ))}
         </select>
-        <select value={tier} onChange={(e) => setTier(e.target.value)} aria-label="Priority">
+        <select
+          value={tier}
+          onChange={(e) => setTier(e.target.value)}
+          aria-label="Priority"
+        >
           <option value="">All priority</option>
           <option value="high">High priority</option>
           <option value="medium">Medium</option>
           <option value="low">Low</option>
         </select>
-        <select value={stage} onChange={(e) => setStage(e.target.value)} aria-label="Stage">
+        <select
+          value={stage}
+          onChange={(e) => setStage(e.target.value)}
+          aria-label="Stage"
+        >
           <option value="">All stages</option>
           {STAGES.map((s) => (
             <option key={s.key} value={s.key}>
@@ -167,7 +184,9 @@ export function BookClient({ rows, canWrite, dbUnavailable, initialPeoId, justSa
             </option>
           ))}
         </select>
-        <span className={styles.count}>{filtered.length} of {rows.length}</span>
+        <span className={styles.count}>
+          {filtered.length} of {rows.length}
+        </span>
       </div>
 
       <div className={styles.split}>
@@ -189,7 +208,10 @@ export function BookClient({ rows, canWrite, dbUnavailable, initialPeoId, justSa
                 </thead>
                 <tbody>
                   {list.map((r) => (
-                    <tr key={r.id} className={r.id === selectedId ? styles.rowActive : ""}>
+                    <tr
+                      key={r.id}
+                      className={r.id === selectedId ? styles.rowActive : ""}
+                    >
                       <td>
                         <button className={styles.rowBtn} onClick={() => select(r.id)}>
                           {r.name}
@@ -198,14 +220,18 @@ export function BookClient({ rows, canWrite, dbUnavailable, initialPeoId, justSa
                           {r.industry}
                           {r.size ? ` · ${r.size.toLocaleString()} WSE` : ""}
                           {r.state ? ` · ${r.city}, ${r.state}` : ""}
-                          {r.intent !== "UNKNOWN" ? ` · intl hiring: ${intentLabel(r.intent)}` : ""}
+                          {r.intent !== "UNKNOWN"
+                            ? ` · intl hiring: ${intentLabel(r.intent)}`
+                            : ""}
                         </div>
                       </td>
                       <td>
                         <span
                           className={`${styles.fit} ${fitClass[priorityTier(r.priority)]}`}
                           title={
-                            r.priority !== r.fit ? `structural fit ${r.fit} + intent` : undefined
+                            r.priority !== r.fit
+                              ? `structural fit ${r.fit} + intent`
+                              : undefined
                           }
                         >
                           {r.priority}
@@ -241,7 +267,9 @@ export function BookClient({ rows, canWrite, dbUnavailable, initialPeoId, justSa
         <div>
           {!selected ? (
             <div className={styles.panel}>
-              <p className={styles.muted}>Select a PEO to view and update its working state.</p>
+              <p className={styles.muted}>
+                Select a PEO to view and update its working state.
+              </p>
             </div>
           ) : (
             <div className={styles.panel}>
@@ -256,7 +284,9 @@ export function BookClient({ rows, canWrite, dbUnavailable, initialPeoId, justSa
                     {selected.contactEmail && (
                       <>
                         {" — "}
-                        <a href={`mailto:${selected.contactEmail}`}>{selected.contactEmail}</a>
+                        <a href={`mailto:${selected.contactEmail}`}>
+                          {selected.contactEmail}
+                        </a>
                       </>
                     )}
                     <br />
@@ -303,7 +333,9 @@ export function BookClient({ rows, canWrite, dbUnavailable, initialPeoId, justSa
                         </option>
                       ))}
                     </select>
-                    <p className={styles.hint}>Lifts or lowers priority to match real demand.</p>
+                    <p className={styles.hint}>
+                      Lifts or lowers priority to match real demand.
+                    </p>
                   </div>
                   <div className={styles.field}>
                     <label>Next action</label>
@@ -313,12 +345,18 @@ export function BookClient({ rows, canWrite, dbUnavailable, initialPeoId, justSa
                       placeholder={suggestedAction(selected) ?? "e.g. Brief the CSM"}
                     />
                     {!selected.nextAction && suggestedAction(selected) && (
-                      <p className={styles.hint}>Suggested: {suggestedAction(selected)}</p>
+                      <p className={styles.hint}>
+                        Suggested: {suggestedAction(selected)}
+                      </p>
                     )}
                   </div>
                   <div className={styles.field}>
                     <label>Next action date</label>
-                    <input type="date" name="nextActionDate" defaultValue={selected.nextActionDate ?? ""} />
+                    <input
+                      type="date"
+                      name="nextActionDate"
+                      defaultValue={selected.nextActionDate ?? ""}
+                    />
                   </div>
                   <div className={styles.field}>
                     <label>Notes</label>
@@ -326,7 +364,10 @@ export function BookClient({ rows, canWrite, dbUnavailable, initialPeoId, justSa
                   </div>
                   <div className={styles.field}>
                     <label>Log activity (optional)</label>
-                    <input name="activity" placeholder="e.g. Called Anika — she'll intro to 2 clients" />
+                    <input
+                      name="activity"
+                      placeholder="e.g. Called Anika — she'll intro to 2 clients"
+                    />
                   </div>
                   <div className={styles.saveRow}>
                     <button type="submit" className={styles.saveBtn}>
@@ -352,8 +393,8 @@ export function BookClient({ rows, canWrite, dbUnavailable, initialPeoId, justSa
                     <h3 className={styles.playsHead}>Plays for this stage</h3>
                     {plays.length === 0 ? (
                       <p className={styles.muted}>
-                        No play for this stage and approach — advance the stage or clear the
-                        approach gate to unlock the next move.
+                        No play for this stage and approach — advance the stage or clear
+                        the approach gate to unlock the next move.
                       </p>
                     ) : (
                       plays.map((k) => (
@@ -368,7 +409,9 @@ export function BookClient({ rows, canWrite, dbUnavailable, initialPeoId, justSa
                             <div className={styles.playSubject}>
                               Subject: {mergeText(k.subject, selected)}
                             </div>
-                            <pre className={styles.playPre}>{mergeText(k.body, selected)}</pre>
+                            <pre className={styles.playPre}>
+                              {mergeText(k.body, selected)}
+                            </pre>
                           </details>
                           <div className={styles.playActions}>
                             <button

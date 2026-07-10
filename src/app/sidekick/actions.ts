@@ -197,8 +197,14 @@ export async function movePlaybookItem(formData: FormData) {
       const a = items[idx];
       const b = items[swapIdx];
       await prisma.$transaction([
-        prisma.demoPlaybookItem.update({ where: { id: a.id }, data: { position: b.position } }),
-        prisma.demoPlaybookItem.update({ where: { id: b.id }, data: { position: a.position } }),
+        prisma.demoPlaybookItem.update({
+          where: { id: a.id },
+          data: { position: b.position },
+        }),
+        prisma.demoPlaybookItem.update({
+          where: { id: b.id },
+          data: { position: a.position },
+        }),
       ]);
     }
   }

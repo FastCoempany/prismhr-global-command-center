@@ -2,7 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { Todo } from "@/lib/today/follow-ups";
-import { createTodoNote, deleteTodoNote, saveTodoNote, setTodoDone } from "./today/actions";
+import {
+  createTodoNote,
+  deleteTodoNote,
+  saveTodoNote,
+  setTodoDone,
+} from "./today/actions";
 import styles from "./command-center.module.css";
 
 type Acct = { id: string; name: string };
@@ -57,19 +62,35 @@ function fmtWhen(iso: string): string {
 }
 
 function StatusChip({ s }: { s?: Status }) {
-  if (s === "saving") return <span className={`${styles.noteStatus} ${styles.noteStatusSaving}`}>Saving…</span>;
+  if (s === "saving")
+    return (
+      <span className={`${styles.noteStatus} ${styles.noteStatusSaving}`}>Saving…</span>
+    );
   if (s === "local")
     return (
-      <span className={`${styles.noteStatus} ${styles.noteStatusLocal}`}>Saved locally · retrying</span>
+      <span className={`${styles.noteStatus} ${styles.noteStatusLocal}`}>
+        Saved locally · retrying
+      </span>
     );
-  return <span className={`${styles.noteStatus} ${styles.noteStatusSaved}`}>Saved ✓</span>;
+  return (
+    <span className={`${styles.noteStatus} ${styles.noteStatusSaved}`}>Saved ✓</span>
+  );
 }
 
-export function NotesPanel({ initialNotes, accounts }: { initialNotes: Todo[]; accounts: Acct[] }) {
+export function NotesPanel({
+  initialNotes,
+  accounts,
+}: {
+  initialNotes: Todo[];
+  accounts: Acct[];
+}) {
   const [notes, setNotes] = useState<Note[]>(initialNotes);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [copied, setCopied] = useState(0);
   const [focusId, setFocusId] = useState("");
+  // Only one note is open for editing at a time; the rest sit as a compact,
+  // clickable list. Saving (or adding a new note) controls which one is open.
+  const [openId, setOpenId] = useState<string | null>(null);
   const notesRef = useRef<Note[]>(initialNotes);
   const timers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
@@ -79,7 +100,13 @@ export function NotesPanel({ initialNotes, accounts }: { initialNotes: Todo[]; a
 
   // Backup #2 — durable DB write, debounced. On failure the localStorage draft
   // stays, so nothing is ever lost; on success we clear it.
-  function scheduleSave(id: string, body: string, accountId: string, remindAt: string, delay = 600) {
+  function scheduleSave(
+    id: string,
+    body: string,
+    accountId: string,
+    remindAt: string,
+    delay = 600,
+  ) {
     writeDraft(id, { body, accountId, remindAt });
     setNotes((prev) => prev.map((n) => (n.id === id ? { ...n, status: "saving" } : n)));
     clearTimeout(timers.current[id]);
@@ -87,7 +114,9 @@ export function NotesPanel({ initialNotes, accounts }: { initialNotes: Todo[]; a
       const res = await saveTodoNote(id, body, accountId, remindAt);
       const ok = !!res?.ok;
       if (ok) clearDraft(id);
-      setNotes((prev) => prev.map((n) => (n.id === id ? { ...n, status: ok ? "saved" : "local" } : n)));
+      setNotes((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, status: ok ? "saved" : "local" } : n)),
+      );
     }, delay);
   }
 
@@ -99,7 +128,10 @@ export function NotesPanel({ initialNotes, accounts }: { initialNotes: Todo[]; a
     const recover: { id: string; d: Draft }[] = [];
     for (const n of notesRef.current) {
       const d = readDraft(n.id);
-      if (d && (d.body !== n.body || d.accountId !== n.accountId || d.remindAt !== n.remindAt)) {
+      if (
+        d &&
+        (d.body !== n.body || d.accountId !== n.accountId || d.remindAt !== n.remindAt)
+      ) {
         recover.push({ id: n.id, d });
       }
     }
@@ -113,7 +145,9 @@ export function NotesPanel({ initialNotes, accounts }: { initialNotes: Todo[]; a
           return d ? { ...n, ...d, status: "saving" } : n;
         }),
       );
-      recover.forEach(({ id, d }) => scheduleSave(id, d.body, d.accountId, d.remindAt, 0));
+      recover.forEach(({ id, d }) =>
+        scheduleSave(id, d.body, d.accountId, d.remindAt, 0),
+      );
     });
     return () => {
       cancelled = true;
@@ -137,6 +171,13 @@ export function NotesPanel({ initialNotes, accounts }: { initialNotes: Todo[]; a
     scheduleSave(id, merged.body, merged.accountId, merged.remindAt, immediate ? 0 : 600);
   }
 
+  // "Save" = flush the current state to the DB now and depress the note into
+  // the list. (Autosave already ran while typing — this is the explicit close.)
+  function saveAndCollapse(id: string) {
+    update(id, {}, true);
+    setOpenId(null);
+  }
+
   async function addNote() {
     const res = await createTodoNote();
     if (!res) return;
@@ -145,6 +186,7 @@ export function NotesPanel({ initialNotes, accounts }: { initialNotes: Todo[]; a
       ...prev,
     ]);
     setFocusId(res.id);
+    setOpenId(res.id);
   }
 
   async function toggleDone(id: string, done: boolean) {
@@ -211,86 +253,134 @@ export function NotesPanel({ initialNotes, accounts }: { initialNotes: Todo[]; a
       </div>
 
       {notes.length === 0 && (
-        <p className={styles.todoEmpty}>No notes yet — hit “＋ New note” and start typing.</p>
+        <p className={styles.todoEmpty}>
+          No notes yet — hit “＋ New note” and start typing.
+        </p>
       )}
       {notes.length > 0 && openNotes.length === 0 && (
-        <p className={styles.todoEmpty}>All caught up — done notes are in the archive below.</p>
+        <p className={styles.todoEmpty}>
+          All caught up — done notes are in the archive below.
+        </p>
       )}
 
-      {openNotes.map((n) => (
-        <div key={n.id} className={`${styles.noteCard} ${n.done ? styles.noteCardDone : ""}`}>
-          <div className={styles.noteTop}>
-            <label className={styles.noteChk} title="Select this note for “Copy selected”">
-              <input
-                type="checkbox"
-                checked={selected.has(n.id)}
-                onChange={() => toggleSelect(n.id)}
-              />
-              <span>Select</span>
-            </label>
-            <label className={styles.noteChk} title="Mark this note done">
-              <input
-                type="checkbox"
-                checked={n.done}
-                onChange={(e) => toggleDone(n.id, e.target.checked)}
-              />
-              <span>Done</span>
-            </label>
-            <StatusChip s={n.status} />
-            <button className={styles.noteDel} onClick={() => del(n.id)} aria-label="Delete note">
-              ✕
-            </button>
+      {openNotes.map((n) =>
+        n.id !== openId ? (
+          <div
+            key={n.id}
+            className={styles.noteRow}
+            onClick={() => setOpenId(n.id)}
+            title="Click to edit"
+          >
+            <input
+              type="checkbox"
+              checked={n.done}
+              onClick={(e) => e.stopPropagation()}
+              onChange={(e) => toggleDone(n.id, e.target.checked)}
+              aria-label="Mark done"
+            />
+            <span className={styles.noteRowBody}>{n.body.trim() || "(empty note)"}</span>
+            <span className={styles.noteRowMeta}>
+              {[accounts.find((a) => a.id === n.accountId)?.name, fmtWhen(n.remindAt)]
+                .filter(Boolean)
+                .join(" · ")}
+            </span>
           </div>
+        ) : (
+          <div
+            key={n.id}
+            className={`${styles.noteCard} ${n.done ? styles.noteCardDone : ""}`}
+          >
+            <div className={styles.noteTop}>
+              <label
+                className={styles.noteChk}
+                title="Select this note for “Copy selected”"
+              >
+                <input
+                  type="checkbox"
+                  checked={selected.has(n.id)}
+                  onChange={() => toggleSelect(n.id)}
+                />
+                <span>Select</span>
+              </label>
+              <label className={styles.noteChk} title="Mark this note done">
+                <input
+                  type="checkbox"
+                  checked={n.done}
+                  onChange={(e) => toggleDone(n.id, e.target.checked)}
+                />
+                <span>Done</span>
+              </label>
+              <StatusChip s={n.status} />
+              <button
+                className={styles.noteDel}
+                onClick={() => del(n.id)}
+                aria-label="Delete note"
+              >
+                ✕
+              </button>
+            </div>
 
-          <textarea
-            className={styles.noteArea}
-            value={n.body}
-            maxLength={20000}
-            autoFocus={n.id === focusId}
-            spellCheck
-            placeholder="Type a note… (Shift+Enter or Enter for a new line — it autosaves)"
-            onChange={(e) => update(n.id, { body: e.target.value })}
-          />
+            <textarea
+              className={styles.noteArea}
+              value={n.body}
+              maxLength={20000}
+              autoFocus={n.id === focusId}
+              spellCheck
+              placeholder="Type a note… (Shift+Enter or Enter for a new line — it autosaves)"
+              onChange={(e) => update(n.id, { body: e.target.value })}
+            />
 
-          <div className={styles.noteMeta}>
-            <select
-              className={styles.noteAcct}
-              value={n.accountId}
-              onChange={(e) => update(n.id, { accountId: e.target.value }, true)}
-              aria-label="Link to account"
-            >
-              <option value="">— no account —</option>
-              {accounts.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.name}
-                </option>
-              ))}
-            </select>
-            <label className={styles.noteDate}>
-              <span className={styles.noteCal} aria-hidden>
-                📅
-              </span>
-              <input
-                type="datetime-local"
-                value={toLocalInput(n.remindAt)}
-                onChange={(e) => update(n.id, { remindAt: e.target.value }, true)}
-                aria-label="Date and time"
-              />
-            </label>
+            <div className={styles.noteMeta}>
+              <select
+                className={styles.noteAcct}
+                value={n.accountId}
+                onChange={(e) => update(n.id, { accountId: e.target.value }, true)}
+                aria-label="Link to account"
+              >
+                <option value="">— no account —</option>
+                {accounts.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.name}
+                  </option>
+                ))}
+              </select>
+              <label className={styles.noteDate}>
+                <span className={styles.noteCal} aria-hidden>
+                  📅
+                </span>
+                <input
+                  type="datetime-local"
+                  value={toLocalInput(n.remindAt)}
+                  onChange={(e) => update(n.id, { remindAt: e.target.value }, true)}
+                  aria-label="Date and time"
+                />
+              </label>
+              <button
+                className={styles.noteSaveBtn}
+                onClick={() => saveAndCollapse(n.id)}
+                title="Save and tuck this note into the list"
+              >
+                Save ✓
+              </button>
+            </div>
           </div>
-        </div>
-      ))}
+        ),
+      )}
 
       {doneNotes.length > 0 && (
         <details className={styles.noteArchive}>
           <summary>
             Done
             <span className={styles.noteArchiveCount}>{doneNotes.length}</span>
-            <span className={styles.noteArchiveHint}>checked-off notes · restore or delete</span>
+            <span className={styles.noteArchiveHint}>
+              checked-off notes · restore or delete
+            </span>
           </summary>
           {doneNotes.map((n) => (
             <div key={n.id} className={styles.noteArchiveRow}>
-              <span className={styles.noteArchiveBody}>{n.body.trim() || "(empty note)"}</span>
+              <span className={styles.noteArchiveBody}>
+                {n.body.trim() || "(empty note)"}
+              </span>
               <button
                 className={styles.noteRestore}
                 onClick={() => toggleDone(n.id, false)}

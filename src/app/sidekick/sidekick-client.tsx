@@ -2,12 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  moduleLabel,
-  resolveChild,
-  type ModuleEntry,
-  type Screen,
-} from "@/lib/catalog";
+import { moduleLabel, resolveChild, type ModuleEntry, type Screen } from "@/lib/catalog";
 import {
   addToPlaybook,
   createDemoAccount,
@@ -130,7 +125,8 @@ export function SidekickClient(props: Props) {
   }, [modules, screens, matches]);
 
   const pinnedScreens = useMemo(
-    () => pinnedScreenIds.map((id) => byId.get(id)).filter((s): s is Screen => Boolean(s)),
+    () =>
+      pinnedScreenIds.map((id) => byId.get(id)).filter((s): s is Screen => Boolean(s)),
     [pinnedScreenIds, byId],
   );
 
@@ -158,7 +154,8 @@ export function SidekickClient(props: Props) {
     const onKey = (e: KeyboardEvent) => {
       const el = e.target as HTMLElement | null;
       const typing =
-        el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.tagName === "SELECT");
+        el &&
+        (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.tagName === "SELECT");
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         setPaletteOpen((v) => !v);
@@ -251,7 +248,11 @@ export function SidekickClient(props: Props) {
               <input name="name" placeholder="Account / prospect name" required />
               <input name="company" placeholder="Company (optional)" />
               <input name="personaLabel" placeholder="Persona (e.g. PEO Owner)" />
-              <select name="defaultAudience" defaultValue="BOTH" aria-label="Default audience">
+              <select
+                name="defaultAudience"
+                defaultValue="BOTH"
+                aria-label="Default audience"
+              >
                 <option value="BOTH">Both audiences</option>
                 <option value="SERVICE_PROVIDER">PEO Partner</option>
                 <option value="DIRECT_EMPLOYER">SMB Client</option>
@@ -300,7 +301,11 @@ export function SidekickClient(props: Props) {
                 <form action={deletePlaybook}>
                   {hidden(selectedId)}
                   <input type="hidden" name="playbookId" value={activePlaybook.id} />
-                  <button type="submit" className={styles.pbControls} title="Delete playbook">
+                  <button
+                    type="submit"
+                    className={styles.pbControls}
+                    title="Delete playbook"
+                  >
                     🗑
                   </button>
                 </form>
@@ -338,7 +343,11 @@ export function SidekickClient(props: Props) {
                       <div className={styles.pbControls}>
                         <form action={movePlaybookItem}>
                           {hidden(selectedId)}
-                          <input type="hidden" name="playbookId" value={activePlaybook.id} />
+                          <input
+                            type="hidden"
+                            name="playbookId"
+                            value={activePlaybook.id}
+                          />
                           <input type="hidden" name="itemId" value={it.id} />
                           <input type="hidden" name="direction" value="up" />
                           <button type="submit" title="Move up">
@@ -347,7 +356,11 @@ export function SidekickClient(props: Props) {
                         </form>
                         <form action={movePlaybookItem}>
                           {hidden(selectedId)}
-                          <input type="hidden" name="playbookId" value={activePlaybook.id} />
+                          <input
+                            type="hidden"
+                            name="playbookId"
+                            value={activePlaybook.id}
+                          />
                           <input type="hidden" name="itemId" value={it.id} />
                           <input type="hidden" name="direction" value="down" />
                           <button type="submit" title="Move down">
@@ -356,7 +369,11 @@ export function SidekickClient(props: Props) {
                         </form>
                         <form action={removePlaybookItem}>
                           {hidden(selectedId)}
-                          <input type="hidden" name="playbookId" value={activePlaybook.id} />
+                          <input
+                            type="hidden"
+                            name="playbookId"
+                            value={activePlaybook.id}
+                          />
                           <input type="hidden" name="itemId" value={it.id} />
                           <button type="submit" title="Remove">
                             ✕
@@ -425,7 +442,8 @@ export function SidekickClient(props: Props) {
               </span>
               <button
                 onClick={() =>
-                  pbStepIndex < pbScreens.length - 1 && select(pbScreens[pbStepIndex + 1].id)
+                  pbStepIndex < pbScreens.length - 1 &&
+                  select(pbScreens[pbStepIndex + 1].id)
                 }
                 disabled={pbStepIndex >= pbScreens.length - 1}
               >
@@ -486,13 +504,21 @@ export function SidekickClient(props: Props) {
                 <label>Say this (talk track)</label>
                 <textarea name="say" rows={3} defaultValue={selected.say} />
                 <label>Capabilities (one per line)</label>
-                <textarea name="capabilities" rows={5} defaultValue={selected.capabilities.join("\n")} />
+                <textarea
+                  name="capabilities"
+                  rows={5}
+                  defaultValue={selected.capabilities.join("\n")}
+                />
                 <label>Value — PEO partner / channel (one per line)</label>
                 <textarea name="sp" rows={4} defaultValue={selected.sp.join("\n")} />
                 <label>Value — SMB client via PEO (one per line)</label>
                 <textarea name="de" rows={4} defaultValue={selected.de.join("\n")} />
                 <label>Branching (one per line)</label>
-                <textarea name="branching" rows={4} defaultValue={selected.branching.join("\n")} />
+                <textarea
+                  name="branching"
+                  rows={4}
+                  defaultValue={selected.branching.join("\n")}
+                />
                 <label>What this screen is</label>
                 <textarea name="what" rows={2} defaultValue={selected.what} />
                 <div className={styles.editRow}>
@@ -531,7 +557,9 @@ export function SidekickClient(props: Props) {
                 <div className={styles.sec}>
                   <h3>
                     Your notes{activeAccount ? ` · ${activeAccount.name}` : ""}
-                    {props.justSaved && <span className={styles.savedFlag}> · saved ✓</span>}
+                    {props.justSaved && (
+                      <span className={styles.savedFlag}> · saved ✓</span>
+                    )}
                   </h3>
                   {canEdit ? (
                     <form action={saveNote} className={styles.noteBox}>
@@ -546,7 +574,9 @@ export function SidekickClient(props: Props) {
                         <button type="submit" className={styles.saveBtn}>
                           Save note
                         </button>
-                        <span className={styles.muted}>Persists per account across devices.</span>
+                        <span className={styles.muted}>
+                          Persists per account across devices.
+                        </span>
                       </div>
                     </form>
                   ) : (
@@ -581,7 +611,9 @@ export function SidekickClient(props: Props) {
                     )}
                     {audValue(selected).map((b, i) => (
                       <div key={i} style={{ marginBottom: 12 }}>
-                        <div className={`${styles.who} ${b.de ? styles.whoDe : ""}`}>{b.who}</div>
+                        <div className={`${styles.who} ${b.de ? styles.whoDe : ""}`}>
+                          {b.who}
+                        </div>
                         <ul className={styles.clean}>
                           {b.items.map((it, j) => (
                             <li key={j} dangerouslySetInnerHTML={{ __html: md(it) }} />
@@ -629,7 +661,10 @@ export function SidekickClient(props: Props) {
                             <span>
                               <strong>{el.name}</strong>
                               {el.actions.length > 0 && (
-                                <span className={styles.checkActions}> — {el.actions.join(", ")}</span>
+                                <span className={styles.checkActions}>
+                                  {" "}
+                                  — {el.actions.join(", ")}
+                                </span>
                               )}
                             </span>
                           </label>
@@ -656,7 +691,11 @@ export function SidekickClient(props: Props) {
                       {selected.children.map((c, i) => {
                         const dest = resolveChild(c);
                         return (
-                          <button key={i} disabled={!dest} onClick={() => dest && select(dest.id)}>
+                          <button
+                            key={i}
+                            disabled={!dest}
+                            onClick={() => dest && select(dest.id)}
+                          >
                             {c}
                           </button>
                         );
@@ -720,7 +759,9 @@ function CommandPalette({
     const ql = q.toLowerCase();
     return screens
       .filter((s) =>
-        !ql ? true : `${s.title} ${s.module} ${s.tags.join(" ")}`.toLowerCase().includes(ql),
+        !ql
+          ? true
+          : `${s.title} ${s.module} ${s.tags.join(" ")}`.toLowerCase().includes(ql),
       )
       .slice(0, 40);
   }, [q, screens]);

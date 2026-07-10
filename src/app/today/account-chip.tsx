@@ -107,14 +107,11 @@ export function AccountChip({
         type="button"
         className={`${styles.kickoffAcct} ${styles.chipBtn} ${toneClass}`}
         onClick={openBox}
-        title={
-          lastNoteAt
-            ? "Last worked — see the box for options"
-            : "Not worked yet — click to add a note"
-        }
+        title={`${account.name}${account.play ? ` · ${account.play}` : ""} — ${
+          lastNoteAt ? "worked; click for the box" : "not worked yet; click to add a note"
+        }`}
       >
         {account.name} <b>{account.score}</b>
-        {account.play ? ` · ${account.play}` : ""}
       </button>
 
       {/* The work box renders in a PORTAL on document.body — a contacted card's
