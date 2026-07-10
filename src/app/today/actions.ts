@@ -325,6 +325,122 @@ export async function addAccountNote(formData: FormData) {
   done();
 }
 
+// --- Off-structure dispositions ----------------------------------------------
+// Real life moves accounts off the structured path: a thread is already live
+// before the roundup went out ("motion"), an account turns out to belong to
+// another rep ("not-mine"), or you shelve one on purpose ("parked"). Each change
+// also drops a dated account note so the account's own history says what
+// happened and why — the disposition is state, the note is the record.
+
+function asDisposition(v: string): "motion" | "not-mine" | "parked" | null {
+  return v === "motion" || v === "not-mine" || v === "parked" ? v : null;
+}
+
+const DISPOSITION_LABEL = {
+  motion: "⚡ Marked in motion",
+  "not-mine": "🚫 Marked not mine — excluded from my book",
+  parked: "⏸ Parked",
+} as const;
+
+function doneTo(fd: FormData) {
+  const target = str(fd, "returnTo", 200) || "/today";
+  revalidatePath("/today");
+  revalidatePath("/accounts");
+  redirect(target);
+}
+
+export async function setDisposition(formData: FormData) {
+  const accountId = str(formData, "accountId", 40);
+  const status = asDisposition(str(formData, "status", 12));
+  if (!(await requireWrite()) || !accountId || !status) doneTo(formData);
+  const reason = str(formData, "reason", 400);
+  await safeWrite(async () => {
+    const prisma = getPrisma();
+    await prisma.accountDisposition.upsert({
+      where: { accountId },
+      create: { accountId, status: status!, reason },
+      update: { status: status!, reason },
+    });
+    await prisma.accountNote.create({
+      data: {
+        accountId,
+        partner: str(formData, "partner", 120),
+        kind: "account",
+        body: `${DISPOSITION_LABEL[status!]}${reason ? ` — ${reason}` : ""}`,
+      },
+    });
+  });
+  doneTo(formData);
+}
+
+export async function clearDisposition(formData: FormData) {
+  const accountId = str(formData, "accountId", 40);
+  if (!(await requireWrite()) || !accountId) doneTo(formData);
+  await safeWrite(async () => {
+    const prisma = getPrisma();
+    await prisma.accountDisposition.deleteMany({ where: { accountId } });
+    await prisma.accountNote.create({
+      data: { accountId, partner: "", kind: "account", body: "↩ Returned to active" },
+    });
+  });
+  doneTo(formData);
+}
+
+// The curveball logger — "something happened" in one capture: what happened is
+// stamped as a dated account note, and the optional consequence flips the
+// disposition in the same write, so every surface reconciles from one entry.
+export async function logHappening(formData: FormData) {
+  const accountId = str(formData, "accountId", 40);
+  const body = str(formData, "body", 2000);
+  if (!(await requireWrite()) || !accountId || !body) done();
+  const consequence = asDisposition(str(formData, "consequence", 12));
+  await safeWrite(async () => {
+    const prisma = getPrisma();
+    await prisma.accountNote.create({
+      data: { accountId, partner: "", kind: "account", body: `⚡ ${body}` },
+    });
+    if (consequence) {
+      await prisma.accountDisposition.upsert({
+        where: { accountId },
+        create: { accountId, status: consequence, reason: body.slice(0, 400) },
+        update: { status: consequence, reason: body.slice(0, 400) },
+      });
+    }
+  });
+  revalidatePath("/accounts");
+  done();
+}
+
+// Manual thread-state override — for when reality skipped steps. Sets the
+// lifecycle state directly and stamps the override into the thread history;
+// awaiting/responded re-arm the next business-day check-in.
+export async function setThreadStatus(formData: FormData) {
+  const subjectKey = str(formData, "subjectKey", 200);
+  const status = str(formData, "status", 12);
+  const ok = ["awaiting", "replied", "responded", "archived"].includes(status);
+  if (!(await requireWrite()) || !subjectKey || !ok) done();
+  await safeWrite(async () => {
+    const prisma = getPrisma();
+    const t = await prisma.touch.findUnique({ where: { subjectKey } });
+    if (!t || t.status === status) return;
+    const log = [
+      ...touchLog(t.log),
+      { at: new Date().toISOString(), body: `State set manually → ${status}` },
+    ];
+    await prisma.touch.update({
+      where: { subjectKey },
+      data: {
+        status,
+        log,
+        ...(status === "awaiting" || status === "responded"
+          ? { followUpAt: nextCheckIn(Date.now(), "tomorrow") }
+          : {}),
+      },
+    });
+  });
+  done();
+}
+
 // --- Notes / to-dos (the notetaker, right column) ---------------------------
 // Called programmatically from the client (autosave), so they RETURN a value
 // instead of redirecting — live typing never triggers a page reload. Each write

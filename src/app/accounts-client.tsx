@@ -166,6 +166,9 @@ export type AccountRow = {
     adjustedDemand?: number;
   } | null;
   engagement: Engagement;
+  // Off-structure state: ⚡ in motion (live conversation) or ⏸ parked. Not-mine
+  // accounts never reach the room — they live in the exclusions ledger.
+  disposition: { status: "motion" | "parked"; reason: string } | null;
   notes: LinkedNote[];
   chipNotes: ChipNote[];
 };
@@ -625,6 +628,14 @@ export function AccountsClient({
                   >
                     {a.name}
                   </button>{" "}
+                  {a.disposition && (
+                    <span
+                      className={styles.dispoBadge}
+                      title={a.disposition.reason || undefined}
+                    >
+                      {a.disposition.status === "motion" ? "⚡ in motion" : "⏸ parked"}
+                    </span>
+                  )}{" "}
                   <ValBadge v={a.validation} />
                   <div className={styles.rowSub}>
                     {a.city}

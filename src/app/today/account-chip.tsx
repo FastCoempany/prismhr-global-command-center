@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import type { ChipTone } from "@/lib/today/build";
-import { addAccountNote } from "./actions";
+import type { Disposition } from "@/lib/today/overlay";
+import { addAccountNote, clearDisposition, setDisposition } from "./actions";
 import { addCard, setCardStage } from "../dashboard/actions";
 import { LocalTime } from "../today-client";
 import styles from "../command-center.module.css";
@@ -26,6 +27,7 @@ export function AccountChip({
   card,
   seedSubtitle,
   seedDiscovery,
+  disposition = null,
 }: {
   account: { id: string; name: string; score: number; play: string | null };
   partner: string;
@@ -34,6 +36,10 @@ export function AccountChip({
   card: { id: string; stages: Stage[] } | null;
   seedSubtitle: string;
   seedDiscovery: string;
+  // Off-structure state: "motion" (⚡ live conversation, out of the roundup) or
+  // "parked" (⏸ shelved). "not-mine" never reaches a chip — those accounts are
+  // filtered out server-side.
+  disposition?: Disposition | null;
 }) {
   const [open, setOpen] = useState(false);
   // The box renders position:fixed from the chip's measured rect — absolute
@@ -107,10 +113,19 @@ export function AccountChip({
         type="button"
         className={`${styles.kickoffAcct} ${styles.chipBtn} ${toneClass}`}
         onClick={openBox}
-        title={`${account.name}${account.play ? ` · ${account.play}` : ""} — ${
+        title={`${account.name}${account.play ? ` · ${account.play}` : ""}${
+          disposition
+            ? ` · ${disposition.status === "motion" ? "in motion" : "parked"}${disposition.reason ? ` — ${disposition.reason}` : ""}`
+            : ""
+        } — ${
           lastNoteAt ? "worked; click for the box" : "not worked yet; click to add a note"
         }`}
       >
+        {disposition?.status === "motion"
+          ? "⚡ "
+          : disposition?.status === "parked"
+            ? "⏸ "
+            : ""}
         {account.name} <b>{account.score}</b>
       </button>
 
@@ -192,6 +207,43 @@ export function AccountChip({
                     ＋ Add account to dashboard
                   </button>
                 </form>
+              )}
+
+              {/* Off-structure exits — real life moved this account off the
+                  scripted path. Each change also drops a dated account note. */}
+              {disposition ? (
+                <span className={styles.chipDispo}>
+                  <span className={styles.chipDispoLine}>
+                    {disposition.status === "motion" ? "⚡ In motion" : "⏸ Parked"}
+                    {disposition.reason ? ` — ${disposition.reason}` : ""}
+                  </span>
+                  <form action={clearDisposition} className={styles.valInline}>
+                    <input type="hidden" name="accountId" value={account.id} />
+                    <input type="hidden" name="returnTo" value="/today" />
+                    <button className={styles.chipDispoBtn}>↩ Return to active</button>
+                  </form>
+                </span>
+              ) : (
+                <details className={styles.chipItem}>
+                  <summary>⚡ Off-structure…</summary>
+                  <form action={setDisposition} className={styles.chipNoteForm}>
+                    <input type="hidden" name="accountId" value={account.id} />
+                    <input type="hidden" name="partner" value={partner} />
+                    <input type="hidden" name="returnTo" value="/today" />
+                    <select name="status" defaultValue="motion" aria-label="What shifted">
+                      <option value="motion">already in motion — skip the roundup</option>
+                      <option value="parked">park it for now</option>
+                      <option value="not-mine">not mine — remove from my book</option>
+                    </select>
+                    <input
+                      name="reason"
+                      maxLength={400}
+                      placeholder="Why? (optional — lands as a dated note)"
+                      aria-label="Reason"
+                    />
+                    <button className={styles.chipSaveBtn}>Apply</button>
+                  </form>
+                </details>
               )}
 
               <Link href={`/accounts?focus=${account.id}`} className={styles.chipGoLink}>

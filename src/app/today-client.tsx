@@ -155,6 +155,17 @@ function ContactSubmit({ label }: { label: string }) {
   );
 }
 
+// One account row in the roundup composer: toggling it in or out rebuilds the
+// message. "mark" flags why a row defaults to unchecked (already in motion, or
+// parked) so the checkbox row explains itself.
+export type RoundupSection = {
+  id: string;
+  name: string;
+  bullet: string;
+  on: boolean;
+  mark: "" | "motion" | "parked";
+};
+
 // One control that does both jobs: shows the exact opener (editable + copyable),
 // and logs the contact — capturing what you actually sent and arming the next
 // check-in (later today or tomorrow, never a weekend). Once contacted it shows
@@ -173,6 +184,8 @@ export function ContactControl({
   contactedLabel,
   followUpLabel,
   draftHref,
+  sections,
+  frame,
 }: {
   subjectKey: string;
   kind: "partner" | "account";
@@ -189,10 +202,32 @@ export function ContactControl({
   contactedLabel?: string; // short date the contact was logged
   followUpLabel?: string; // short date of the next check-in
   draftHref?: string; // link to the Claude drafting desk for this thread
+  // The roundup composer: per-account toggles that rebuild the message from
+  // opener + checked bullets + closer. In-motion/parked rows default off.
+  sections?: RoundupSection[];
+  frame?: { opener: string; closer: string };
 }) {
   const [val, setVal] = useState(defaultMessage);
   const [copied, setCopied] = useState(false);
+  const [checked, setChecked] = useState<Set<string>>(
+    () => new Set((sections ?? []).filter((s) => s.on).map((s) => s.id)),
+  );
   const ref = useRef<HTMLTextAreaElement>(null);
+
+  const composeFrom = (ids: Set<string>) => {
+    if (!sections || !frame) return defaultMessage;
+    const bullets = sections.filter((s) => ids.has(s.id)).map((s) => s.bullet);
+    return bullets.length
+      ? `${frame.opener}\n\n${bullets.join("\n")}\n\n${frame.closer}`
+      : `${frame.opener}\n\n${frame.closer}`;
+  };
+  const toggleSection = (id: string) => {
+    const next = new Set(checked);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setChecked(next);
+    setVal(composeFrom(next));
+  };
 
   // Auto-grow to fit. Also re-run when the disclosure opens: a textarea inside a
   // collapsed <details> measures scrollHeight as 0, so it must be re-fit on
@@ -222,6 +257,40 @@ export function ContactControl({
         }}
       >
         <summary className={styles.contactSummary}>✎ {editLabel}</summary>
+        {sections && sections.length > 0 && (
+          <div className={styles.composerRow}>
+            <span className={styles.composerHint}>
+              In this roundup (toggling rebuilds the message):
+            </span>
+            {sections.map((s) => (
+              <label
+                key={s.id}
+                className={`${styles.composerChk} ${
+                  s.mark === "motion"
+                    ? styles.composerMotion
+                    : s.mark === "parked"
+                      ? styles.composerParked
+                      : ""
+                }`}
+                title={
+                  s.mark === "motion"
+                    ? `${s.name} is already in motion — left out by default`
+                    : s.mark === "parked"
+                      ? `${s.name} is parked — left out by default`
+                      : s.name
+                }
+              >
+                <input
+                  type="checkbox"
+                  checked={checked.has(s.id)}
+                  onChange={() => toggleSection(s.id)}
+                />
+                {s.mark === "motion" ? "⚡ " : s.mark === "parked" ? "⏸ " : ""}
+                {s.name}
+              </label>
+            ))}
+          </div>
+        )}
         <div className={styles.editMsg}>
           <textarea
             ref={ref}

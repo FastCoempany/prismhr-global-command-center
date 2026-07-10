@@ -5,6 +5,7 @@ import { loadDashboard } from "@/lib/dashboard/data";
 import { loadFieldNotes, FIELD_NOTE_KINDS } from "@/lib/field-notes/data";
 import {
   loadAccountNotes,
+  loadDispositions,
   loadDoneKeys,
   loadPartnerNotes,
   loadSnoozes,
@@ -44,6 +45,8 @@ import {
   partitionSignals,
   partnerKickoff,
   partnerWeekMessage,
+  roundupBullet,
+  roundupFrame,
   signals,
   stateOfPlay,
   triageGuidance,
@@ -565,21 +568,36 @@ export default async function TodayPage({
     );
   }
 
-  const [snoozes, validations, notes, doneKeys, touches, todos, partnerNotes, acctNotes] =
-    await Promise.all([
-      loadSnoozes(),
-      loadValidations(),
-      loadFieldNotes(),
-      loadDoneKeys(),
-      loadTouches(),
-      loadTodos(),
-      loadPartnerNotes(),
-      loadAccountNotes(),
-    ]);
+  const [
+    snoozes,
+    validations,
+    notes,
+    doneKeys,
+    touches,
+    todos,
+    partnerNotes,
+    acctNotes,
+    dispositions,
+  ] = await Promise.all([
+    loadSnoozes(),
+    loadValidations(),
+    loadFieldNotes(),
+    loadDoneKeys(),
+    loadTouches(),
+    loadTodos(),
+    loadPartnerNotes(),
+    loadAccountNotes(),
+    loadDispositions(),
+  ]);
   const touchMap = new Map(touches.map((t) => [t.subjectKey, t]));
   const followUps = partitionFollowUps(touches);
 
-  const intel = applyValidations(accountIntel(), validations);
+  // Not-mine accounts vanish from every Today surface — they live only in the
+  // Account Room's exclusions ledger. Motion/parked stay visible (marked) but
+  // drop out of the default roundup.
+  const intel = applyValidations(accountIntel(), validations).filter(
+    (a) => dispositions.get(a.id)?.status !== "not-mine",
+  );
   // Accounts for the notetaker's per-note dropdown (alphabetical).
   const noteAccounts = [...intel]
     .map((a) => ({ id: a.id, name: a.name }))
@@ -628,6 +646,29 @@ export default async function TodayPage({
           ? "archived"
           : touch.status;
       const due = !!touch && isDue(touch);
+      // Composer rows: in-motion/parked accounts stay listed but default out of
+      // the message; the default roundup is built from what's still checked.
+      const sections = k.accounts.map((a) => {
+        const d = dispositions.get(a.id);
+        const mark =
+          d?.status === "motion"
+            ? ("motion" as const)
+            : d?.status === "parked"
+              ? ("parked" as const)
+              : ("" as const);
+        return { id: a.id, name: a.name, bullet: roundupBullet(a), on: !mark, mark };
+      });
+      const sendAccts = k.accounts.filter((a) => sections.find((s) => s.id === a.id)?.on);
+      const motionCount = sections.filter((s) => s.mark === "motion").length;
+      const parkedCount = sections.filter((s) => s.mark === "parked").length;
+      const nothingToSend =
+        sendAccts.length === 0 && (status === "none" || status === "archived");
+      const offPhrase = [
+        motionCount ? `${motionCount} in motion` : "",
+        parkedCount ? `${parkedCount} parked` : "",
+      ]
+        .filter(Boolean)
+        .join(", ");
       const phrase =
         status === "replied"
           ? `Replied ${touch ? shortDate(touch.contactedAt) : ""} — your move`
@@ -639,27 +680,33 @@ export default async function TodayPage({
               ? due
                 ? `Sent ${touch ? shortDate(touch.contactedAt) : ""} — check-in due now`
                 : `Sent ${touch ? shortDate(touch.contactedAt) : ""} · check-in ${touch ? shortDate(touch.followUpAt) : ""}`
-              : status === "archived"
-                ? "Archived — fresh roundup available"
-                : `Not contacted — roundup ready (${k.accounts.length} accounts)`;
+              : nothingToSend
+                ? `${offPhrase || "No accounts"} — nothing to send`
+                : status === "archived"
+                  ? "Archived — fresh roundup available"
+                  : `Not contacted — roundup ready (${sendAccts.length}${offPhrase ? ` · ${offPhrase}` : ""})`;
       const dot: RailItem["dot"] =
         status === "replied"
           ? "green"
-          : due || status === "none"
-            ? "orange"
-            : status === "archived"
-              ? "grey"
-              : "yellow";
+          : nothingToSend
+            ? "grey"
+            : due || status === "none"
+              ? "orange"
+              : status === "archived"
+                ? "grey"
+                : "yellow";
       const rank =
         status === "replied"
           ? 0
           : due
             ? 1
-            : status === "none"
-              ? 3
-              : status === "archived"
-                ? 4
-                : 2;
+            : nothingToSend
+              ? 5
+              : status === "none"
+                ? 3
+                : status === "archived"
+                  ? 4
+                  : 2;
       return {
         rank,
         item: {
@@ -670,9 +717,12 @@ export default async function TodayPage({
           due,
           phrase,
           dot,
-          detail: `${k.accounts.length} account${k.accounts.length === 1 ? "" : "s"} teed up`,
-          defaultMessage: partnerWeekMessage(k.partner, k.accounts),
+          detail: `${sendAccts.length} of ${k.accounts.length} teed up`,
+          defaultMessage: partnerWeekMessage(k.partner, sendAccts),
           draftHref: `/partners#${encodeURIComponent(k.partner)}`,
+          sendable: sendAccts.length,
+          sections,
+          frame: roundupFrame(k.partner),
         } satisfies RailItem,
       };
     })
@@ -775,7 +825,7 @@ export default async function TodayPage({
 
                   {/* The tower: work the rail top-to-bottom. Cards below are
                       reference only (dot + name + chips + latest notes). */}
-                  <AtcRail items={railItems} />
+                  <AtcRail items={railItems} accounts={noteAccounts} />
 
                   <div className={styles.atcRefGroup}>
                     <div className={styles.atcHead}>
@@ -842,6 +892,7 @@ export default async function TodayPage({
                                     }
                                     seedSubtitle={`${a.csm}${a.industry ? ` · ${a.industry}` : ""}`}
                                     seedDiscovery={seedFor(a)}
+                                    disposition={dispositions.get(a.id) ?? null}
                                   />
                                 );
                               })}

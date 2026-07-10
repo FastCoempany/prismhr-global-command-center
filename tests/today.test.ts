@@ -28,6 +28,8 @@ import {
   partnerKickoff,
   partnerMessage,
   partnerWeekMessage,
+  roundupBullet,
+  roundupFrame,
   signals,
   stateOfPlay,
   triageGuidance,
@@ -733,6 +735,20 @@ describe("partnerKickoff & partnerWeekMessage", () => {
     // not a "win-back" (they've never left — we just don't hold their global layer).
     assert.match(msg, /consolidate/);
     assert.match(msg, /already run their domestic PEO on PrismHR/);
+  });
+
+  test("the message is exactly frame + bullets, so the client composer can rebuild it", () => {
+    const accounts = [
+      intel({ id: "a1", name: "Infiniti HR", play: "displacement" }),
+      intel({ id: "a2", name: "MAU", play: "greenfield" }),
+    ];
+    const { opener, closer } = roundupFrame("Anika Steenstra");
+    const stitched = `${opener}\n\n${accounts.map(roundupBullet).join("\n")}\n\n${closer}`;
+    assert.equal(partnerWeekMessage("Anika Steenstra", accounts), stitched);
+    // Dropping an account (the composer's uncheck) removes exactly its bullet.
+    const without = partnerWeekMessage("Anika Steenstra", [accounts[0]]);
+    assert.ok(!without.includes("• MAU"));
+    assert.match(without, /• Infiniti HR — /);
   });
 });
 

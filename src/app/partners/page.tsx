@@ -4,7 +4,7 @@ import { getAppAccess } from "@/lib/auth";
 import { hasDatabaseEnv } from "@/lib/db";
 import { csms, getPeo } from "@/lib/book";
 import { EXTRA_PARTNERS, partnerRole } from "@/lib/book/partners";
-import { loadPartnerNotes, loadTouches } from "@/lib/today/overlay";
+import { loadDispositions, loadPartnerNotes, loadTouches } from "@/lib/today/overlay";
 import { accountIntel, partnerKickoff, partnerOutreachKey } from "@/lib/today/build";
 import type { Touch } from "@/lib/today/follow-ups";
 import type { DraftRecipient } from "@/lib/claude/prompt";
@@ -97,8 +97,16 @@ export default async function PartnersPage() {
   }
   const canWrite = access.canWrite && hasDatabaseEnv();
 
-  const [touches, partnerNotes] = await Promise.all([loadTouches(), loadPartnerNotes()]);
-  const kickoff = partnerKickoff(accountIntel(), new Set());
+  const [touches, partnerNotes, dispositions] = await Promise.all([
+    loadTouches(),
+    loadPartnerNotes(),
+    loadDispositions(),
+  ]);
+  // Not-mine accounts are excluded here too — same rule as Today/Accounts.
+  const kickoff = partnerKickoff(
+    accountIntel().filter((a) => dispositions.get(a.id)?.status !== "not-mine"),
+    new Set(),
+  );
 
   // Recipient intelligence for the drafting desk: the partner themselves, then
   // the named contact at each of their teed-up accounts (from the book).

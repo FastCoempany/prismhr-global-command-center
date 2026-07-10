@@ -509,32 +509,42 @@ export function partnerKickoff(
   return out.sort((a, b) => (b.accounts[0]?.score ?? 0) - (a.accounts[0]?.score ?? 0));
 }
 
+// One roundup bullet for an account — the hand-written override when the thread
+// is already live, otherwise the play-shaped template. Exported so the client
+// composer can rebuild the message from a checked subset of accounts.
+export function roundupBullet(a: AccountIntel): string {
+  const custom = ROUNDUP_BULLETS[a.id];
+  if (custom) return `• ${a.name} — ${custom}`;
+  const why =
+    a.play === "displacement"
+      ? `They already run their domestic PEO on PrismHR but handle global hiring through ${a.competitors[0] ?? "a competitor Employer-of-Record provider"}, so the opening is to consolidate that global/EOR layer onto the PrismHR platform they already trust, rather than run it separately. I'd really value your read on how that relationship is going, and if you happen to know roughly when their contract comes up for renewal, that timing tells us whether it's worth opening a conversation soon or holding off.`
+      : a.play === "greenfield"
+        ? `There's an early signal they're hiring across borders with no Employer-of-Record provider in place yet, which would make this a clean introduction rather than a switch. The clearest fit usually shows up where they're hiring in countries they don't have a legal entity, or converting contractors to employees — worth confirming whether either is happening here.`
+        : `No specific global-hiring signal has surfaced yet, but the account profile fits the kind of company that runs into cross-border needs. Worth a quick gauge of where they hire and how they pay international workers before we decide whether to work it or set it aside.`;
+  return `• ${a.name} — ${why}`;
+}
+
+// The evergreen opener/closer that frame the bullets. Same export rationale as
+// roundupBullet — the composer stitches opener + checked bullets + closer.
+export function roundupFrame(partner: string): { opener: string; closer: string } {
+  const who = firstNameOf(partner);
+  return {
+    opener:
+      `Hi ${who} — as I work through my set of the PrismHR Global leads assigned to me, I pulled a ` +
+      `few of your accounts I'd love your read on for global-hiring potential:`,
+    closer:
+      `None of these are urgent, and I don't want to get ahead of any of your relationships — I'm ` +
+      `really just trying to find where there might be a global opening worth a conversation.\n\n` +
+      `A quick “yes / no / not yet” on each would help me prioritize. Thanks so much!\n\n` +
+      `Looking forward to winning some business together!`,
+  };
+}
+
 // A ready-to-send opener that names the partner's teed-up accounts — one message
 // that opens several conversations. Thorough and relationship-safe by design.
 export function partnerWeekMessage(partner: string, accounts: AccountIntel[]): string {
-  const who = firstNameOf(partner);
-  const bullets = accounts
-    .map((a) => {
-      const custom = ROUNDUP_BULLETS[a.id];
-      if (custom) return `• ${a.name} — ${custom}`;
-      const why =
-        a.play === "displacement"
-          ? `They already run their domestic PEO on PrismHR but handle global hiring through ${a.competitors[0] ?? "a competitor Employer-of-Record provider"}, so the opening is to consolidate that global/EOR layer onto the PrismHR platform they already trust, rather than run it separately. I'd really value your read on how that relationship is going, and if you happen to know roughly when their contract comes up for renewal, that timing tells us whether it's worth opening a conversation soon or holding off.`
-          : a.play === "greenfield"
-            ? `There's an early signal they're hiring across borders with no Employer-of-Record provider in place yet, which would make this a clean introduction rather than a switch. The clearest fit usually shows up where they're hiring in countries they don't have a legal entity, or converting contractors to employees — worth confirming whether either is happening here.`
-            : `No specific global-hiring signal has surfaced yet, but the account profile fits the kind of company that runs into cross-border needs. Worth a quick gauge of where they hire and how they pay international workers before we decide whether to work it or set it aside.`;
-      return `• ${a.name} — ${why}`;
-    })
-    .join("\n");
-  return (
-    `Hi ${who} — as I work through my set of the PrismHR Global leads assigned to me, I pulled a ` +
-    `few of your accounts I'd love your read on for global-hiring potential:\n\n` +
-    `${bullets}\n\n` +
-    `None of these are urgent, and I don't want to get ahead of any of your relationships — I'm ` +
-    `really just trying to find where there might be a global opening worth a conversation.\n\n` +
-    `A quick “yes / no / not yet” on each would help me prioritize. Thanks so much!\n\n` +
-    `Looking forward to winning some business together!`
-  );
+  const { opener, closer } = roundupFrame(partner);
+  return `${opener}\n\n${accounts.map(roundupBullet).join("\n")}\n\n${closer}`;
 }
 
 export type Narrative = {
