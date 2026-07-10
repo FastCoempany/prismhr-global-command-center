@@ -82,7 +82,7 @@ export function daysUntilIso(iso: string, now: number = Date.now()): number {
 
 // A follow-up is "due" when it's still awaiting a reply and its follow-up instant
 // has arrived.
-export function isDue(t: Touch, now: number): boolean {
+export function isDue(t: Touch, now: number = Date.now()): boolean {
   return (
     (t.status === "awaiting" || t.status === "responded") &&
     Date.parse(t.followUpAt) <= now

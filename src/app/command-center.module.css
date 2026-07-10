@@ -3901,3 +3901,122 @@
 .noteSaveBtn:hover {
   background: #156c32;
 }
+
+/* ── ATC rail — the control tower on Partner outreach ─────────────────── */
+.atcRail {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg);
+  margin: 10px 0 4px;
+  overflow: hidden;
+}
+.atcHead {
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 5px 12px;
+  border-bottom: 1px solid var(--line);
+  background: #fff;
+}
+.atcRowWrap {
+  border-top: 1px solid var(--line);
+  background: #fff;
+}
+.atcRowWrap:first-of-type {
+  border-top: none;
+}
+.atcRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 12px;
+  font-size: 12px;
+}
+.atcDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+}
+.atcName {
+  font-weight: 800;
+  color: var(--navy);
+  width: 150px;
+  flex: none;
+}
+.atcPhrase {
+  color: var(--muted);
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.atcBtn {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 999px;
+  padding: 1px 11px;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--blue-d);
+  cursor: pointer;
+  white-space: nowrap;
+  text-decoration: none;
+}
+.atcBtn:hover {
+  border-color: var(--blue);
+  background: #eef3fb;
+}
+.atcHot {
+  background: var(--orange);
+  border-color: var(--orange);
+  color: #fff;
+}
+.atcHot:hover {
+  background: #cf610f;
+  border-color: #cf610f;
+  color: #fff;
+}
+.atcGo {
+  color: #14632e;
+  border-color: #a7e0bd;
+}
+.atcGo:hover {
+  background: #e4f7ea;
+  border-color: #a7e0bd;
+}
+.atcMore {
+  border: none;
+  background: none;
+  color: var(--muted);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0 4px;
+}
+.atcMore:hover {
+  color: var(--orange);
+}
+.atcPanel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 6px 12px 9px 30px;
+  background: var(--bg);
+  border-top: 1px dashed var(--line);
+}
+.atcPanel > div,
+.atcPanel form {
+  display: contents;
+}
+.atcPanel .contactForm,
+.atcPanel .contactDone {
+  display: flex;
+  flex: 1 1 100%;
+  flex-direction: column;
+  gap: 8px;
+}
