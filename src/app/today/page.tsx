@@ -14,9 +14,11 @@ import {
 } from "@/lib/today/overlay";
 import { DASH_NODES } from "@/lib/dashboard/stages";
 import { AccountChip } from "./account-chip";
+import { AtcRail, type RailItem } from "./atc-rail";
 import {
   followUpMessage,
   groupUpcomingByDay,
+  isDue,
   outreachSubjectKey,
   partitionFollowUps,
   type Touch,
@@ -616,6 +618,68 @@ export default async function TodayPage({
   });
   const kickoffDoneCount = kickoffItems.filter((i) => i.done).length;
 
+  // The ATC rail: one urgency-ranked control line per partner. Phrase + dot are
+  // composed here (server-side) so the rail component stays a dumb renderer.
+  const railItems = kickoffItems
+    .map(({ k, key, touch }) => {
+      const status: RailItem["status"] = !touch
+        ? "none"
+        : touch.status === "archived"
+          ? "archived"
+          : touch.status;
+      const due = !!touch && isDue(touch);
+      const phrase =
+        status === "replied"
+          ? `Replied ${touch ? shortDate(touch.contactedAt) : ""} — your move`
+          : status === "responded"
+            ? due
+              ? "You replied — check-in due now"
+              : `You replied · check-in ${touch ? shortDate(touch.followUpAt) : ""} — their move`
+            : status === "awaiting"
+              ? due
+                ? `Sent ${touch ? shortDate(touch.contactedAt) : ""} — check-in due now`
+                : `Sent ${touch ? shortDate(touch.contactedAt) : ""} · check-in ${touch ? shortDate(touch.followUpAt) : ""}`
+              : status === "archived"
+                ? "Archived — fresh roundup available"
+                : `Not contacted — roundup ready (${k.accounts.length} accounts)`;
+      const dot: RailItem["dot"] =
+        status === "replied"
+          ? "green"
+          : due || status === "none"
+            ? "orange"
+            : status === "archived"
+              ? "grey"
+              : "yellow";
+      const rank =
+        status === "replied"
+          ? 0
+          : due
+            ? 1
+            : status === "none"
+              ? 3
+              : status === "archived"
+                ? 4
+                : 2;
+      return {
+        rank,
+        item: {
+          partner: k.partner,
+          role: k.role,
+          subjectKey: key,
+          status,
+          due,
+          phrase,
+          dot,
+          detail: `${k.accounts.length} account${k.accounts.length === 1 ? "" : "s"} teed up`,
+          defaultMessage: partnerWeekMessage(k.partner, k.accounts),
+          draftHref: `/partners#${encodeURIComponent(k.partner)}`,
+        } satisfies RailItem,
+      };
+    })
+    .sort((a, b) => a.rank - b.rank)
+    .map((r) => r.item);
+  const railDot = new Map(railItems.map((r) => [r.partner, r.dot]));
+
   const sop = stateOfPlay({ cards: dash.cards, commitments, activeSignals, onBoard });
 
   // ── Compose "This morning": an ordered list of thoroughly-written moves. ──
@@ -708,16 +772,28 @@ export default async function TodayPage({
                     </div>
                     <SfCheckpoint when="kickoff" strong />
                   </div>
-                  {kickoffItems.map(({ k, key, touch, done }) => (
-                    <div
-                      key={k.partner}
-                      className={`${styles.kickoffPartner} ${done ? styles.kickoffDone : ""}`}
-                    >
+
+                  {/* The tower: work the rail top-to-bottom. Cards below are
+                      reference only (dot + name + chips + latest notes). */}
+                  <AtcRail items={railItems} />
+
+                  {kickoffItems.map(({ k }) => (
+                    <div key={k.partner} className={styles.kickoffPartner}>
                       <div className={styles.kickoffPartnerHead}>
-                        <span className={styles.kickoffPartnerName}>
-                          {done && <span className={styles.kickoffCheck}>✓ </span>}
-                          {k.partner}
-                        </span>
+                        <span
+                          className={styles.atcDot}
+                          style={{
+                            background:
+                              railDot.get(k.partner) === "green"
+                                ? "#22c55e"
+                                : railDot.get(k.partner) === "orange"
+                                  ? "#e6701e"
+                                  : railDot.get(k.partner) === "grey"
+                                    ? "#cbd5e1"
+                                    : "#eab308",
+                          }}
+                        />
+                        <span className={styles.kickoffPartnerName}>{k.partner}</span>
                         <span className={styles.kickoffPartnerRole}>{k.role}</span>
                         <Link
                           href={`/partners#${encodeURIComponent(k.partner)}`}
@@ -783,27 +859,6 @@ export default async function TodayPage({
                           )}
                         </ul>
                       )}
-                      <div className={styles.kickoffContact}>
-                        <ContactControl
-                          subjectKey={key}
-                          kind="partner"
-                          label={k.partner}
-                          detail={`${k.accounts.length} account${k.accounts.length === 1 ? "" : "s"} teed up`}
-                          defaultMessage={partnerWeekMessage(k.partner, k.accounts)}
-                          sentLabel="Mark contacted ✓"
-                          editLabel={`Edit & copy the roundup to ${firstNameOf(k.partner)}`}
-                          status={
-                            done && touch && touch.status !== "archived"
-                              ? touch.status
-                              : "none"
-                          }
-                          contactedLabel={
-                            touch ? shortDate(touch.contactedAt) : undefined
-                          }
-                          followUpLabel={touch ? shortDate(touch.followUpAt) : undefined}
-                          draftHref={`/partners#${encodeURIComponent(k.partner)}`}
-                        />
-                      </div>
                     </div>
                   ))}
                 </section>
