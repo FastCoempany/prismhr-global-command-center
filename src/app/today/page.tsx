@@ -777,90 +777,101 @@ export default async function TodayPage({
                       reference only (dot + name + chips + latest notes). */}
                   <AtcRail items={railItems} />
 
-                  {kickoffItems.map(({ k }) => (
-                    <div key={k.partner} className={styles.kickoffPartner}>
-                      <div className={styles.kickoffPartnerHead}>
-                        <span
-                          className={styles.atcDot}
-                          style={{
-                            background:
-                              railDot.get(k.partner) === "green"
-                                ? "#22c55e"
-                                : railDot.get(k.partner) === "orange"
-                                  ? "#e6701e"
-                                  : railDot.get(k.partner) === "grey"
-                                    ? "#cbd5e1"
-                                    : "#eab308",
-                          }}
-                        />
-                        <span className={styles.kickoffPartnerName}>{k.partner}</span>
-                        <span className={styles.kickoffPartnerRole}>{k.role}</span>
-                        <Link
-                          href={`/partners#${encodeURIComponent(k.partner)}`}
-                          className={styles.kickoffRoomLink}
-                          title="Every outreach and note for this partner, timestamped"
-                        >
-                          Partner room →
-                        </Link>
-                        {/* Chips flow inline on the name row (kickoffAccts is
-                            display:contents) — the row wraps as needed. */}
-                        <div className={styles.kickoffAccts}>
-                          {k.accounts.map((a) => {
-                            const dashCard = dash.cards.find(
-                              (c) => !c.archived && c.name === a.name,
-                            );
-                            const lastNoteAt =
-                              acctNotes.get(a.id)?.[0]?.createdAt ?? null;
-                            return (
-                              <AccountChip
-                                key={a.id}
-                                account={{
-                                  id: a.id,
-                                  name: a.name,
-                                  score: a.score,
-                                  play: a.play,
-                                }}
-                                partner={k.partner}
-                                tone={chipTone(lastNoteAt)}
-                                lastNoteAt={lastNoteAt}
-                                card={
-                                  dashCard
-                                    ? {
-                                        id: dashCard.id,
-                                        stages: DASH_NODES.map((n) => ({
-                                          key: n.key,
-                                          label: n.label,
-                                          state: dashCard.states[n.key] ?? "todo",
-                                        })),
-                                      }
-                                    : null
-                                }
-                                seedSubtitle={`${a.csm}${a.industry ? ` · ${a.industry}` : ""}`}
-                                seedDiscovery={seedFor(a)}
-                              />
-                            );
-                          })}
-                        </div>
-                      </div>
-                      {(partnerNotes.get(k.partner) ?? []).length > 0 && (
-                        <ul className={styles.kickoffNotes}>
-                          {(partnerNotes.get(k.partner) ?? []).slice(0, 3).map((n) => (
-                            <li key={n.id}>
-                              <b>{shortDate(n.createdAt)}</b> — {n.body}
-                            </li>
-                          ))}
-                          {(partnerNotes.get(k.partner) ?? []).length > 3 && (
-                            <li className={styles.kickoffNotesMore}>
-                              <Link href={`/partners#${encodeURIComponent(k.partner)}`}>
-                                +{(partnerNotes.get(k.partner) ?? []).length - 3} more in
-                                the partner room
-                              </Link>
-                            </li>
-                          )}
-                        </ul>
-                      )}
+                  <div className={styles.atcRefGroup}>
+                    <div className={styles.atcHead}>
+                      Focus accounts — reference per partner
                     </div>
-                  ))}
+                    <div className={styles.atcRefBody}>
+                      {kickoffItems.map(({ k }) => (
+                        <div key={k.partner} className={styles.kickoffPartner}>
+                          <div className={styles.kickoffPartnerHead}>
+                            <span
+                              className={styles.atcDot}
+                              style={{
+                                background:
+                                  railDot.get(k.partner) === "green"
+                                    ? "#22c55e"
+                                    : railDot.get(k.partner) === "orange"
+                                      ? "#e6701e"
+                                      : railDot.get(k.partner) === "grey"
+                                        ? "#cbd5e1"
+                                        : "#eab308",
+                              }}
+                            />
+                            <span className={styles.kickoffPartnerName}>{k.partner}</span>
+                            <span className={styles.kickoffPartnerRole}>{k.role}</span>
+                            <Link
+                              href={`/partners#${encodeURIComponent(k.partner)}`}
+                              className={styles.kickoffRoomLink}
+                              title="Every outreach and note for this partner, timestamped"
+                            >
+                              Partner room →
+                            </Link>
+                            {/* Chips flow inline on the name row (kickoffAccts is
+                            display:contents) — the row wraps as needed. */}
+                            <div className={styles.kickoffAccts}>
+                              {k.accounts.map((a) => {
+                                const dashCard = dash.cards.find(
+                                  (c) => !c.archived && c.name === a.name,
+                                );
+                                const lastNoteAt =
+                                  acctNotes.get(a.id)?.[0]?.createdAt ?? null;
+                                return (
+                                  <AccountChip
+                                    key={a.id}
+                                    account={{
+                                      id: a.id,
+                                      name: a.name,
+                                      score: a.score,
+                                      play: a.play,
+                                    }}
+                                    partner={k.partner}
+                                    tone={chipTone(lastNoteAt)}
+                                    lastNoteAt={lastNoteAt}
+                                    card={
+                                      dashCard
+                                        ? {
+                                            id: dashCard.id,
+                                            stages: DASH_NODES.map((n) => ({
+                                              key: n.key,
+                                              label: n.label,
+                                              state: dashCard.states[n.key] ?? "todo",
+                                            })),
+                                          }
+                                        : null
+                                    }
+                                    seedSubtitle={`${a.csm}${a.industry ? ` · ${a.industry}` : ""}`}
+                                    seedDiscovery={seedFor(a)}
+                                  />
+                                );
+                              })}
+                            </div>
+                          </div>
+                          {(partnerNotes.get(k.partner) ?? []).length > 0 && (
+                            <ul className={styles.kickoffNotes}>
+                              {(partnerNotes.get(k.partner) ?? [])
+                                .slice(0, 3)
+                                .map((n) => (
+                                  <li key={n.id}>
+                                    <b>{shortDate(n.createdAt)}</b> — {n.body}
+                                  </li>
+                                ))}
+                              {(partnerNotes.get(k.partner) ?? []).length > 3 && (
+                                <li className={styles.kickoffNotesMore}>
+                                  <Link
+                                    href={`/partners#${encodeURIComponent(k.partner)}`}
+                                  >
+                                    +{(partnerNotes.get(k.partner) ?? []).length - 3} more
+                                    in the partner room
+                                  </Link>
+                                </li>
+                              )}
+                            </ul>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </section>
               )}
 
