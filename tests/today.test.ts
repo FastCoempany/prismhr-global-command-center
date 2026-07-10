@@ -899,7 +899,6 @@ describe("salesforce helpers", () => {
     assert.equal(isRealSfId("001F000000w38OIIAY"), true); // 18-char
     assert.equal(isRealSfId("001F000000w38OI"), true); // 15-char
     assert.equal(isRealSfId("ADVOCATEPAY000001"), false); // synthetic
-    assert.equal(isRealSfId("PUZZLEHR000000001"), false);
     assert.equal(isRealSfId("003F000000w38OIIAY"), false); // not an Account prefix
   });
 

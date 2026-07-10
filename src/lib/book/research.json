@@ -3633,35 +3633,6 @@
       "researched": true,
       "verified": true
     },
-    "PUZZLEHR000000001": {
-      "demandScore": 25,
-      "confidence": "medium",
-      "signals": [
-        "Fractional HR-as-a-Service firm (no co-employment, no platform lock-in) serving US SMB clients across many verticals — manufacturing, professional services, software & services, nonprofits, municipalities, cannabis, colleges/universities, pro sports teams",
-        "Leadership came from Paychex PEO (CEO Lonny Ostrander led the National Business Solutions PEO integration) — deep US HR-outsourcing DNA, not global employment",
-        "Internal global footprint only: ~278 employees across 4 continents (North America, South America, Asia) as of May 2025 — cross-border familiarity, but this is PuzzleHR's own staff, not a client-facing global-hiring offering",
-        "Latent demand via verticals: software/services and professional-services clients can carry international-hiring needs, but no product or client cases surfaced",
-        "No named competitor EOR/global-payroll provider (Deel, Velocity Global, Papaya, G-P, etc.) associated with PuzzleHR in any source",
-        "Their own site (puzzlehr.com) blocked automated fetch (HTTP 403); assessment rests on third-party profiles + search snippets, capping confidence at medium"
-      ],
-      "evidence": [
-        {
-          "claim": "PuzzleHR is a fractional HR-as-a-Service department serving US SMBs without co-employment or platform lock-in; services are US-domestic HR (payroll, compliance, benefits, talent, L&D, risk).",
-          "url": "https://puzzlehr.com/about-us/"
-        },
-        {
-          "claim": "Leadership came from Paychex's PEO business (CEO Lonny Ostrander led the National Business Solutions PEO integration), underscoring a US HR-outsourcing pedigree.",
-          "url": "https://www.crunchbase.com/organization/puzzlehr"
-        },
-        {
-          "claim": "PuzzleHR reports ~278 employees across 4 continents (North America, South America, Asia) as of May 2025 — internal global staffing, not a client global-payroll/EOR offering.",
-          "url": "https://www.cbinsights.com/company/puzzlehr"
-        }
-      ],
-      "summary": "PuzzleHR is a Tampa-based HR-as-a-Service firm (founded 2019, ~317 employees, ~$35M revenue) delivering fractional, US-domestic HR to SMB clients across many verticals, with no co-employment and no client-facing global-payroll/EOR product found. Demand is low and latent: some client verticals (software, professional services) could hire internationally, and PuzzleHR itself runs staff across 4 continents, but there is no evidence of an existing international offering or a competitor EOR in place — an early, education-first conversation rather than a hot target. Confidence is medium because their own site blocked direct fetch.",
-      "researched": true,
-      "verified": true
-    },
     "ADVOCATEPAY000001": {
       "demandScore": 14,
       "confidence": "medium",

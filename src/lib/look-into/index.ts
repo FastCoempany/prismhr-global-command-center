@@ -35,7 +35,7 @@ export const LOOK_INTO: LookIntoItem[] = [
   {
     id: "hcm-funnel-roster",
     title: "The HCM funnel roster isn't loaded",
-    why: "Today's “HCM funnel” only shows PuzzleHR. The real population — the clients of our PEOs who run on PrismHR HCM, plus Eric's net-new HCM logos — isn't in the book at all, so the funnel looks tiny when it may be the biggest lead stream you own.",
+    why: "Today's “HCM funnel” shows only a sliver of the real population — the clients of our PEOs who run on PrismHR HCM, plus Eric's net-new HCM logos, aren't in the book at all, so the funnel looks tiny when it may be the biggest lead stream you own.",
     ask: "Find where that roster lives (a PrismHR HCM tenant export? a report someone runs?) and whether we can pull it in the way the PEO book was loaded. Start with Eric and whoever owns HCM client data.",
     category: "Data sources",
     priority: "high",
