@@ -1410,11 +1410,14 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 7px;
-  margin-bottom: 6px;
+  gap: 5px;
+  margin-bottom: 5px;
+}
+.kickoffPartnerHead .kickoffRoomLink {
+  margin-right: 4px;
 }
 .kickoffPartnerName {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 800;
   color: var(--navy);
 }
@@ -1435,14 +1438,15 @@
   display: contents; /* chips flow inline on the partner-name row */
 }
 .kickoffAcct {
-  font-size: 11px;
+  font-size: 10px;
+  line-height: 1.6;
   color: var(--navy);
   background: #eef3fb;
   border: 1px solid var(--line);
   border-radius: 999px;
-  padding: 1px 9px;
+  padding: 0 7px;
   text-decoration: none;
-  max-width: 200px;
+  max-width: 118px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
