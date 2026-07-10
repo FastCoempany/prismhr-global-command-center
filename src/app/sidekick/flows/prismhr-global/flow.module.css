@@ -1,0 +1,132 @@
+.page {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 24px 20px 64px;
+  color: var(--color-ink);
+}
+
+.head h1 {
+  margin: 0 0 8px;
+  font-size: 1.5rem;
+}
+
+.lede {
+  margin: 0 0 8px;
+  color: var(--color-ink-soft);
+  line-height: 1.5;
+}
+
+.backLink {
+  margin: 0 0 8px;
+  font-size: 0.9rem;
+}
+
+.screens {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 16px;
+}
+
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md, 10px);
+  padding: 16px 18px;
+}
+
+.cardHead {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.cardIndex {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--color-ink-support);
+}
+
+.cardTitle {
+  margin: 0;
+  font-size: 1.1rem;
+  flex: 1;
+}
+
+.cardRange {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.85rem;
+  color: var(--color-ink-support);
+  white-space: nowrap;
+}
+
+.metaRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 10px 0 4px;
+}
+
+.metaChip {
+  font-size: 0.78rem;
+  color: var(--color-ink-soft);
+  background: var(--color-surface-mist);
+  border: 1px solid var(--color-line);
+  border-radius: 999px;
+  padding: 2px 10px;
+  white-space: nowrap;
+}
+
+.block {
+  margin-top: 10px;
+}
+
+.blockLabel {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-ink-support);
+  margin-bottom: 2px;
+}
+
+.blockText {
+  margin: 0;
+  line-height: 1.55;
+}
+
+.blockList {
+  margin: 0;
+  padding-left: 20px;
+  line-height: 1.55;
+}
+
+.anchor {
+  margin: 0;
+  padding: 6px 12px;
+  border-left: 3px solid var(--color-line-strong, var(--color-line));
+  color: var(--color-ink-soft);
+  font-style: italic;
+  line-height: 1.5;
+}
+
+.cuts {
+  margin-top: 32px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-line);
+}
+
+.cuts h2 {
+  font-size: 1.05rem;
+  margin: 0 0 8px;
+}
+
+.cuts ul {
+  margin: 0;
+  padding-left: 20px;
+  line-height: 1.6;
+  display: grid;
+  gap: 8px;
+}
