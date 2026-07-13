@@ -40,25 +40,105 @@ function clearDraft(id: string) {
   }
 }
 
-// ISO instant → the value a <input type="datetime-local"> expects (local time).
-function toLocalInput(iso: string): string {
+// Every note has a date: remindAt when set (new notes are auto-dated at
+// creation), else the day it was created.
+function dateOf(n: { remindAt: string; createdAt: string }): string {
+  return n.remindAt || n.createdAt;
+}
+// ISO instant → the value a <input type="date"> expects (local day).
+function toDateInput(iso: string): string {
   if (!iso) return "";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
   const p = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 }
-function fmtWhen(iso: string): string {
+// "YYYY-MM-DD" from the picker → ISO at local noon, so the chosen day never
+// shifts across timezones when it round-trips through UTC.
+function dayToIso(day: string): string {
+  const [y, m, d] = day.split("-").map(Number);
+  if (!y || !m || !d) return "";
+  return new Date(y, m - 1, d, 12, 0, 0).toISOString();
+}
+function fmtDay(iso: string): string {
   if (!iso) return "";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
-  return d.toLocaleString("en-US", {
+  return d.toLocaleDateString("en-US", {
     weekday: "short",
     month: "short",
     day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
   });
+}
+
+// The date control: the day as text plus a small branded calendar button that
+// opens the picker — dates are edited, not entered (notes default to today).
+function NoteDate({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (iso: string) => void;
+}) {
+  const ref = useRef<HTMLInputElement>(null);
+  const open = () => {
+    const el = ref.current;
+    if (!el) return;
+    if (typeof el.showPicker === "function") {
+      try {
+        el.showPicker();
+        return;
+      } catch {
+        /* fall through to focus */
+      }
+    }
+    el.focus();
+    el.click();
+  };
+  return (
+    <span className={styles.noteDateWrap}>
+      <span className={styles.noteDateText}>{fmtDay(value)}</span>
+      <button
+        type="button"
+        className={styles.noteCalBtn}
+        onClick={open}
+        title="Change the date"
+        aria-label="Change the date"
+      >
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden>
+          <rect
+            x="1.75"
+            y="3"
+            width="12.5"
+            height="11"
+            rx="2"
+            stroke="currentColor"
+            strokeWidth="1.5"
+          />
+          <path d="M2.5 6.6h11" stroke="#e6701e" strokeWidth="1.6" />
+          <path
+            d="M5 1.5v2.6M11 1.5v2.6"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+          />
+          <circle cx="5.4" cy="9.6" r="1" fill="#e6701e" />
+          <circle cx="8" cy="9.6" r="1" fill="currentColor" />
+          <circle cx="10.6" cy="9.6" r="1" fill="currentColor" />
+          <circle cx="5.4" cy="12" r="1" fill="currentColor" />
+        </svg>
+      </button>
+      <input
+        ref={ref}
+        type="date"
+        className={styles.noteDateHidden}
+        value={toDateInput(value)}
+        onChange={(e) => onChange(dayToIso(e.target.value))}
+        tabIndex={-1}
+        aria-hidden
+      />
+    </span>
+  );
 }
 
 function StatusChip({ s }: { s?: Status }) {
@@ -181,8 +261,18 @@ export function NotesPanel({
   async function addNote() {
     const res = await createTodoNote();
     if (!res) return;
+    // New notes are auto-dated to today (the server sets remindAt too).
+    const nowIso = new Date().toISOString();
     setNotes((prev) => [
-      { id: res.id, body: "", done: false, accountId: "", remindAt: "", status: "saved" },
+      {
+        id: res.id,
+        body: "",
+        done: false,
+        accountId: "",
+        remindAt: nowIso,
+        createdAt: nowIso,
+        status: "saved",
+      },
       ...prev,
     ]);
     setFocusId(res.id);
@@ -221,7 +311,7 @@ export function NotesPanel({
     const text = chosen
       .map((n, i) => {
         const acct = accounts.find((a) => a.id === n.accountId)?.name;
-        const meta = [acct, fmtWhen(n.remindAt)].filter(Boolean).join(" · ");
+        const meta = [acct, fmtDay(dateOf(n))].filter(Boolean).join(" · ");
         return `${i + 1}. ${n.body.trim()}${meta ? `\n   [${meta}]` : ""}`;
       })
       .join("\n\n");
@@ -280,7 +370,7 @@ export function NotesPanel({
             />
             <span className={styles.noteRowBody}>{n.body.trim() || "(empty note)"}</span>
             <span className={styles.noteRowMeta}>
-              {[accounts.find((a) => a.id === n.accountId)?.name, fmtWhen(n.remindAt)]
+              {[accounts.find((a) => a.id === n.accountId)?.name, fmtDay(dateOf(n))]
                 .filter(Boolean)
                 .join(" · ")}
             </span>
@@ -344,17 +434,10 @@ export function NotesPanel({
                   </option>
                 ))}
               </select>
-              <label className={styles.noteDate}>
-                <span className={styles.noteCal} aria-hidden>
-                  📅
-                </span>
-                <input
-                  type="datetime-local"
-                  value={toLocalInput(n.remindAt)}
-                  onChange={(e) => update(n.id, { remindAt: e.target.value }, true)}
-                  aria-label="Date and time"
-                />
-              </label>
+              <NoteDate
+                value={dateOf(n)}
+                onChange={(iso) => update(n.id, { remindAt: iso }, true)}
+              />
               <button
                 className={styles.noteSaveBtn}
                 onClick={() => saveAndCollapse(n.id)}

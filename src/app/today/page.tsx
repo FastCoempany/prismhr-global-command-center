@@ -578,7 +578,8 @@ export default async function TodayPage({
   // Signals, split into active vs parked ("Not now"). Request-time "now" is
   // resolved inside the pure helpers so the component stays free of impure calls.
   const { active: activeSignals, parked } = partitionSignals(signals(intel), snoozes);
-  const hcm = intel.filter((a) => a.funnel === "hcm").slice(0, 6);
+  const hcmAll = intel.filter((a) => a.funnel === "hcm");
+  const hcm = hcmAll.slice(0, 6);
 
   // The move: top trusted, non-parked play not yet on the board. Parked ids come
   // straight from the partition (every play candidate clears the demand gate, so
@@ -810,6 +811,9 @@ export default async function TodayPage({
                   <div className={styles.atcRefGroup}>
                     <div className={styles.atcHead}>
                       Focus accounts — reference per partner
+                      <span className={styles.deckProg}>
+                        {kickoffTotal} accounts · {kickoffItems.length} partners
+                      </span>
                     </div>
                     <div className={styles.atcRefBody}>
                       {kickoffItems.map(({ k }) => (
@@ -972,7 +976,8 @@ export default async function TodayPage({
                   {(laterTriage.length > 0 || dash.status === "active") && (
                     <>
                       <div className={styles.deckGroupLab}>
-                        Then, if there&apos;s time
+                        Then, if there&apos;s time (
+                        {laterTriage.length + (dash.status === "active" ? 1 : 0)})
                       </div>
                       {laterTriage.map((a) => (
                         <DeckRow
@@ -1020,7 +1025,7 @@ export default async function TodayPage({
 
                   {doneMoves.length > 0 && (
                     <>
-                      <div className={styles.deckGroupLab}>Done</div>
+                      <div className={styles.deckGroupLab}>Done ({doneMoves.length})</div>
                       {doneMoves.map((it) => (
                         <MorningMove
                           key={it.key}
@@ -1040,7 +1045,8 @@ export default async function TodayPage({
               {hcm.length > 0 && (
                 <div className={styles.hcmStrip}>
                   <span className={styles.hcmLabel}>
-                    HCM funnel — routes to you directly:
+                    HCM funnel ({hcmAll.length}) — top {hcm.length}, routes to you
+                    directly:
                   </span>
                   {hcm.map((a) => (
                     <Link
@@ -1457,7 +1463,9 @@ export default async function TodayPage({
               </form>
               {followUps.replied.length > 0 && (
                 <div className={styles.fuDone}>
-                  <div className={styles.fuDoneHead}>Done</div>
+                  <div className={styles.fuDoneHead}>
+                    Done ({followUps.replied.length})
+                  </div>
                   <ul className={styles.fuDoneList}>
                     {followUps.replied.map((t) => (
                       <li key={t.subjectKey}>

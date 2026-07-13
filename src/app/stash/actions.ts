@@ -40,7 +40,12 @@ async function createInLane(
       const position = (top?.position ?? -1) + 1;
       try {
         await prisma.todo.create({
-          data: { body: label, position, accountId: accountId ?? undefined },
+          data: {
+            body: label,
+            position,
+            accountId: accountId ?? undefined,
+            remindAt: new Date(), // notes are auto-dated to the day they're written
+          },
         });
       } catch {
         await prisma.todo.create({ data: { body: label, position } });

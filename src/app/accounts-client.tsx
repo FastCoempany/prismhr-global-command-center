@@ -355,11 +355,15 @@ export function AccountsClient({
 
   // Per-partner rollup of real targets (books worth briefing on).
   const rollup = useMemo(() => {
-    const m = new Map<string, { high: number; targets: number; hot: number }>();
-    for (const name of partners) m.set(name, { high: 0, targets: 0, hot: 0 });
+    const m = new Map<
+      string,
+      { total: number; high: number; targets: number; hot: number }
+    >();
+    for (const name of partners) m.set(name, { total: 0, high: 0, targets: 0, hot: 0 });
     for (const r of rows) {
       const e = m.get(r.csm);
       if (!e) continue;
+      e.total++;
       if (r.tier === "high") e.high++;
       if (r.play != null) e.targets++;
       if (isHot(r)) e.hot++;
@@ -368,6 +372,22 @@ export function AccountsClient({
       (a, b) => b[1].hot - a[1].hot || b[1].targets - a[1].targets,
     );
   }, [rows, partners]);
+
+  // Counts for every filter option, so each choice says how many it selects.
+  const countBy = (pick: (r: AccountRow) => string) => {
+    const m = new Map<string, number>();
+    for (const r of rows) {
+      const k = pick(r);
+      if (k) m.set(k, (m.get(k) ?? 0) + 1);
+    }
+    return m;
+  };
+  const csmCounts = useMemo(() => countBy((r) => r.csm), [rows]); // eslint-disable-line react-hooks/exhaustive-deps
+  const indCounts = useMemo(() => countBy((r) => r.industry), [rows]); // eslint-disable-line react-hooks/exhaustive-deps
+  const tierCounts = useMemo(() => countBy((r) => r.tier), [rows]); // eslint-disable-line react-hooks/exhaustive-deps
+  const playCounts = useMemo(() => countBy((r) => r.play ?? ""), [rows]); // eslint-disable-line react-hooks/exhaustive-deps
+  const incCount = useMemo(() => rows.filter((r) => r.incumbent).length, [rows]);
+  const hotCount = useMemo(() => rows.filter((r) => isHot(r)).length, [rows]);
 
   const filtered = useMemo(() => {
     const s = q.toLowerCase();
@@ -488,7 +508,8 @@ export function AccountsClient({
               {name} <span className={styles.rollupRole}>· {partnerRole(name)}</span>
             </span>
             <span className={styles.rollupNums}>
-              <b>{e.hot}</b> hot · {e.targets} targets · {e.high} high-fit
+              {e.total} account{e.total === 1 ? "" : "s"} · <b>{e.hot}</b> hot ·{" "}
+              {e.targets} targets · {e.high} high-fit
             </span>
           </button>
         ))}
@@ -502,10 +523,10 @@ export function AccountsClient({
           aria-label="Search accounts"
         />
         <select value={csm} onChange={(e) => setCsm(e.target.value)} aria-label="Partner">
-          <option value="">All partners</option>
+          <option value="">All partners ({rows.length})</option>
           {partners.map((c) => (
             <option key={c} value={c}>
-              {c} — {partnerRole(c)}
+              {c} — {partnerRole(c)} ({csmCounts.get(c) ?? 0})
             </option>
           ))}
         </select>
@@ -514,10 +535,10 @@ export function AccountsClient({
           onChange={(e) => setIndustry(e.target.value)}
           aria-label="Industry"
         >
-          <option value="">All models</option>
+          <option value="">All models ({rows.length})</option>
           {inds.map((i) => (
             <option key={i} value={i}>
-              {i}
+              {i} ({indCounts.get(i) ?? 0})
             </option>
           ))}
         </select>
@@ -526,19 +547,23 @@ export function AccountsClient({
           onChange={(e) => setTier(e.target.value)}
           aria-label="Fit tier"
         >
-          <option value="">All fit</option>
-          <option value="high">High fit</option>
-          <option value="medium">Medium</option>
-          <option value="low">Low</option>
+          <option value="">All fit ({rows.length})</option>
+          <option value="high">High fit ({tierCounts.get("high") ?? 0})</option>
+          <option value="medium">Medium ({tierCounts.get("medium") ?? 0})</option>
+          <option value="low">Low ({tierCounts.get("low") ?? 0})</option>
         </select>
         <select
           value={play}
           onChange={(e) => setPlay(e.target.value)}
           aria-label="Play type"
         >
-          <option value="">All plays</option>
-          <option value="displacement">Displacement</option>
-          <option value="greenfield">Greenfield</option>
+          <option value="">All plays ({rows.length})</option>
+          <option value="displacement">
+            Displacement ({playCounts.get("displacement") ?? 0})
+          </option>
+          <option value="greenfield">
+            Greenfield ({playCounts.get("greenfield") ?? 0})
+          </option>
         </select>
         <select value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort">
           <option value="score">Sort: Global fit</option>
@@ -551,7 +576,7 @@ export function AccountsClient({
             checked={incOnly}
             onChange={(e) => setIncOnly(e.target.checked)}
           />
-          On PrismHR only
+          On PrismHR only ({incCount})
         </label>
         <label className={styles.toggle}>
           <input
@@ -559,7 +584,7 @@ export function AccountsClient({
             checked={hotOnly}
             onChange={(e) => setHotOnly(e.target.checked)}
           />
-          Hot targets
+          Hot targets ({hotCount})
         </label>
         <button type="button" className={styles.addMini} onClick={copyList}>
           {copied ? "Copied ✓" : "Copy list"}
@@ -568,7 +593,8 @@ export function AccountsClient({
           Export CSV
         </button>
         <span className={styles.count}>
-          {filtered.length} of {rows.length}
+          <b>{filtered.length}</b> of {rows.length}
+          {csm ? ` — ${csm.split(" ")[0]}'s` : ""}
         </span>
       </div>
 
