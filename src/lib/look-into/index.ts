@@ -34,12 +34,12 @@ export const CATEGORY_ORDER: LookIntoCategory[] = [
 export const LOOK_INTO: LookIntoItem[] = [
   {
     id: "hcm-funnel-roster",
-    title: "The HCM funnel roster isn't loaded",
-    why: "Today's “HCM funnel” shows only a sliver of the real population — the clients of our PEOs who run on PrismHR HCM, plus Eric's net-new HCM logos, aren't in the book at all, so the funnel looks tiny when it may be the biggest lead stream you own.",
-    ask: "Find where that roster lives (a PrismHR HCM tenant export? a report someone runs?) and whether we can pull it in the way the PEO book was loaded. Start with Eric and whoever owns HCM client data.",
+    title: "Keep the HCM roster fresh (loaded 7/13)",
+    why: "The HCM customer roster is now loaded from the 7/13 Salesforce export (19 active HCM clients + 3 former). Like the PEO book, it's a point-in-time snapshot — owners, stages, and risk levels will drift as SF changes, and several accounts are missing size/contact/cloud details the export didn't carry.",
+    ask: "Get a refresh cadence for the SF HCM report (or a fuller export with size, contacts, and cloud names), and confirm who owns HCM client data now that Cody Jensen is inactive.",
     category: "Data sources",
-    priority: "high",
-    surfacedIn: "Today · Signal in (HCM funnel strip)",
+    priority: "medium",
+    surfacedIn: "Today · HCM funnel strip",
   },
   {
     id: "book-source-of-truth",
@@ -124,7 +124,10 @@ export const LOOK_INTO: LookIntoItem[] = [
   },
 ];
 
-export function lookIntoByCategory(): { category: LookIntoCategory; items: LookIntoItem[] }[] {
+export function lookIntoByCategory(): {
+  category: LookIntoCategory;
+  items: LookIntoItem[];
+}[] {
   const rank: Record<LookIntoPriority, number> = { high: 0, medium: 1, low: 2 };
   return CATEGORY_ORDER.map((category) => ({
     category,

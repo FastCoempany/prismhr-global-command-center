@@ -5,6 +5,10 @@
 
 const PARTNER_ROLES: Record<string, string> = {
   "Eric Ronci": "Enterprise Sales, HCM",
+  // HCM-side account owners from the 7/13 Salesforce HCM-customer export.
+  // (Cody Jensen is inactive in SF — his HCM book is carried by Whitney.)
+  "Kathryn Maddox": "CSM, HCM",
+  "Kellie Washington": "CSM, HCM",
 };
 
 // Partners with no accounts yet but who should still appear in the directory.

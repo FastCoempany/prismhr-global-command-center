@@ -35,6 +35,33 @@ export function funnelOf(csm: string, industry: string): Funnel {
   return "peo";
 }
 
+// Confirmed PrismHR HCM customers — the roster from the 7/13 Salesforce export
+// ("PrismHR HCM = Yes"). Explicit ids beat inference: several are owned by
+// PEO-side CSMs (Whitney carries the inactive Cody Jensen's HCM book), so
+// csm/industry alone can't route them. Former customers (360 Business
+// Solutions, Payroll Medics, Talonique) are deliberately absent.
+export const HCM_CLIENT_IDS = new Set<string>([
+  "0013k00003Ev0KDAAZ", // Accent Employer Solutions
+  "0013k00003Ev0KSAAZ", // Administrative Benefits
+  "0013k00003Ev0MZAAZ", // Denali HR Solutions
+  "0013k00003Ev0NbAAJ", // DMC Outsourcing
+  "001Do00000NEnWMIA1", // Easeworks
+  "001F000000w38JSIAY", // EmployShare
+  "001Pb00001EUHfbIAH", // Hiring Quick
+  "0013k00003Ev0OtAAJ", // HR Pulse / Bay Staffing
+  "INNOVATIVEPAY0001", // Innovative Payroll Processing
+  "001Pb00001tSd9VIAS", // July Business Services
+  "001Pb00001As43aIAB", // Leem Pro
+  "MERIDIANPAY000001", // Meridian Payroll Group
+  "PAYROLLSOL0000001", // Payroll Solutions, Inc.
+  "001Pb00002ezRkoIAE", // PayrollOne
+  "0013k00002roPPFAA2", // Puntual Payroll
+  "0013k00003Ev0PDAAZ", // Simplified Employer Solutions
+  "001Pb00002Cbu08IAB", // TruePath HCM
+  "001Pb00001SFhBBIA1", // VeroHCM
+  "WALCORPAYMASTER01", // WALCOR / Paymaster Pro (HCM stage: cancelled)
+]);
+
 export type ValidationStatus = "confirmed" | "flagged" | "adjusted";
 export type Validation = {
   status: ValidationStatus;
@@ -76,7 +103,7 @@ export function accountIntel(): AccountIntel[] {
         name: p.name,
         csm: p.csm,
         industry: p.industry,
-        funnel: funnelOf(p.csm, p.industry),
+        funnel: HCM_CLIENT_IDS.has(p.id) ? "hcm" : funnelOf(p.csm, p.industry),
         desk: d.score,
         score: c.score,
         tier: c.tier,
@@ -469,8 +496,11 @@ export const ROUNDUP_BULLETS: Record<string, string> = {
   // in motion, so the bullet reads as shared status, not a request for a read.
   "001F000000w38BOIAY":
     "Already in motion (thanks for the intro!): Chassie reached out after PrismHR LIVE — " +
-    "about two months into selecting a global-workforce partner (EOR, contractor management, " +
-    "global payroll), with the partner and approach to be finalized by 8/6. Her discovery " +
+    "about two months into evaluating potential partners for global workforce expansion (EOR, " +
+    "contractor management, global payroll), with the partner and approach to be finalized by " +
+    "8/6. Best part: she told us an integrated option through PrismHR “would be ideal,” " +
+    "assuming it's competitive on price and functionality — we're the preferred path if we're " +
+    "competitive. Her discovery " +
     "answers (7/9): two internal contractors in India today, plus at least one client group " +
     "with an India contractor on another provider — small counts, but the strategic play is " +
     "dual: internal international expansion AND offering global workforce solutions to their " +
