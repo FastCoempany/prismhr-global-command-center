@@ -508,6 +508,15 @@ export const ROUNDUP_BULLETS: Record<string, string> = {
     "materials on 7/13 and proposed a call for Mon or Tue next week, 1–3p. Nothing needed from " +
     "you right now — keeping it on our shared radar (and she's still waiting to hear about " +
     "shipping for the glasses she won at the conference).",
+  // Advocate Pay — the SubcontractorHub EOR deal is live (pricing + contracts
+  // out); the bullet reads as shared status to Eric, not a request for a read.
+  ADVOCATEPAY000001:
+    "Already in motion: the SubcontractorHub EOR deal through Advocate Pay is in pricing + " +
+    "contracts stage. Their international roster is in hand (the Bulgaria “Frontier” group is " +
+    "the primary W-2/EOR conversion; the rest stay 1099), the proposal is EOR CORE with the " +
+    "deposit waived, pricing went to Bryce 7/8, and the final client-shareable contracts went " +
+    "out 7/10 with the IP-protection walkthrough Renee asked for. Shane's out until 7/20 so " +
+    "I'm running point. Nothing needed from you — will flag if it stalls.",
   // XCEL HR — Anika's 7/13 read opened a live door; the bullet reads as taking
   // her up on the offer, not asking for a cold read.
   "001F000000w38GlIAI":
