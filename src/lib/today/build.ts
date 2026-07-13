@@ -563,19 +563,66 @@ export function partnerKickoff(
   return out.sort((a, b) => (b.accounts[0]?.score ?? 0) - (a.accounts[0]?.score ?? 0));
 }
 
+// Play-shaped bullet templates, several distinct phrasings per play — because a
+// roundup that repeats the same paragraph four times reads like a mail merge.
+// Variant 0 is the canonical wording; the rest say the same thing differently,
+// and the rotation below guarantees no two bullets in one message ever match.
+const DISPLACEMENT_VARIANTS: ((competitor: string) => string)[] = [
+  (c) =>
+    `They already run their domestic PEO on PrismHR but handle global hiring through ${c}, so the opening is to consolidate that global/EOR layer onto the PrismHR platform they already trust, rather than run it separately. I'd really value your read on how that relationship is going, and if you happen to know roughly when their contract comes up for renewal, that timing tells us whether it's worth opening a conversation soon or holding off.`,
+  (c) =>
+    `Their global layer currently runs through ${c} while everything domestic already sits on PrismHR — a split worth questioning. Any sense of how happy they are with that provider, or when the contract renews? On a switch, timing is most of the battle.`,
+  (c) =>
+    `${c} holds their global/EOR business today even though we're already their domestic platform. If you've heard any grumbling — service, price, integration pain — that's our opening; if they're happy, we wait for the renewal window. Either read helps me plan.`,
+  (c) =>
+    `Here the question isn't whether they hire globally — they do, through ${c} — it's whether they'd rather run it where the rest of their operation already lives. If you know who owns that vendor relationship on their side, that's the person I'd love to understand better.`,
+];
+
+const GREENFIELD_VARIANTS: string[] = [
+  `There's an early signal they're hiring across borders with no Employer-of-Record provider in place yet, which would make this a clean introduction rather than a switch. The clearest fit usually shows up where they're hiring in countries they don't have a legal entity, or converting contractors to employees — worth confirming whether either is happening here.`,
+  `Early signs of cross-border hiring with no EOR named anywhere I can find — meaning nobody to displace, just a first conversation to have. If you can confirm where they're hiring abroad (or whether contractors are involved), we'll know how real this is.`,
+  `The research shows international activity but no global-payroll provider attached to it — the best kind of opening: educate first, nothing to unseat. Your read on who's driving their international hiring would help me aim the conversation.`,
+  `They appear to be going international without a named global-employment partner yet. That window doesn't stay open long — once someone signs a Deel or a G-P, we're displacing instead of introducing. Even a rough "who should I talk to" from you moves this one.`,
+];
+
+const GAUGE_VARIANTS: string[] = [
+  `No specific global-hiring signal has surfaced yet, but the account profile fits the kind of company that runs into cross-border needs. Worth a quick gauge of where they hire and how they pay international workers before we decide whether to work it or set it aside.`,
+  `Nothing in the research points at international hiring today — this one is purely a knowledge check. If you know whether anyone in their client base pays people outside the US (or has asked about it), that alone tells us whether to keep it on the radar.`,
+  `Quiet on the global front from everything I can see, so I'd rather borrow your context than guess: any chatter about overseas contractors, remote hires abroad, or clients expanding internationally? If not, I'll happily set it aside.`,
+  `I don't have a cross-border signal here yet — but profile-wise they're the type where one client with two contractors abroad turns into a real conversation. A one-word read from you (worth it / skip it) is plenty.`,
+  `This one's on the list for shape, not signal: companies like them tend to bump into international questions eventually. If you've never heard a whisper of it, that's a useful answer too — I'll park it and spend the time elsewhere.`,
+  `No research hit on global activity, so consider this a standing question rather than a pitch: next time you're with them, "do any of your clients have people overseas?" is the one thing I'd love to know.`,
+];
+
 // One roundup bullet for an account — the hand-written override when the thread
-// is already live, otherwise the play-shaped template. Exported so the client
-// composer can rebuild the message from a checked subset of accounts.
-export function roundupBullet(a: AccountIntel): string {
+// is already live, otherwise the play-shaped template. `variant` rotates the
+// phrasing so a message with several same-play accounts never repeats itself.
+// Exported so the client composer can rebuild from a checked subset.
+export function roundupBullet(a: AccountIntel, variant = 0): string {
   const custom = ROUNDUP_BULLETS[a.id];
   if (custom) return `• ${a.name} — ${custom}`;
   const why =
     a.play === "displacement"
-      ? `They already run their domestic PEO on PrismHR but handle global hiring through ${a.competitors[0] ?? "a competitor Employer-of-Record provider"}, so the opening is to consolidate that global/EOR layer onto the PrismHR platform they already trust, rather than run it separately. I'd really value your read on how that relationship is going, and if you happen to know roughly when their contract comes up for renewal, that timing tells us whether it's worth opening a conversation soon or holding off.`
+      ? DISPLACEMENT_VARIANTS[variant % DISPLACEMENT_VARIANTS.length](
+          a.competitors[0] ?? "a competitor Employer-of-Record provider",
+        )
       : a.play === "greenfield"
-        ? `There's an early signal they're hiring across borders with no Employer-of-Record provider in place yet, which would make this a clean introduction rather than a switch. The clearest fit usually shows up where they're hiring in countries they don't have a legal entity, or converting contractors to employees — worth confirming whether either is happening here.`
-        : `No specific global-hiring signal has surfaced yet, but the account profile fits the kind of company that runs into cross-border needs. Worth a quick gauge of where they hire and how they pay international workers before we decide whether to work it or set it aside.`;
+        ? GREENFIELD_VARIANTS[variant % GREENFIELD_VARIANTS.length]
+        : GAUGE_VARIANTS[variant % GAUGE_VARIANTS.length];
   return `• ${a.name} — ${why}`;
+}
+
+// Bullets for a whole roundup, rotating the phrasing per play so no two lines
+// in one message repeat — custom (hand-written) bullets don't consume a turn.
+export function roundupBullets(accounts: AccountIntel[]): string[] {
+  const seen = new Map<string, number>();
+  return accounts.map((a) => {
+    if (ROUNDUP_BULLETS[a.id]) return roundupBullet(a);
+    const key = a.play ?? "gauge";
+    const v = seen.get(key) ?? 0;
+    seen.set(key, v + 1);
+    return roundupBullet(a, v);
+  });
 }
 
 // The evergreen opener/closer that frame the bullets. Same export rationale as
@@ -598,7 +645,10 @@ export function roundupFrame(partner: string): { opener: string; closer: string 
 // that opens several conversations. Thorough and relationship-safe by design.
 export function partnerWeekMessage(partner: string, accounts: AccountIntel[]): string {
   const { opener, closer } = roundupFrame(partner);
-  return `${opener}\n\n${accounts.map(roundupBullet).join("\n")}\n\n${closer}`;
+  const bullets = roundupBullets(accounts);
+  return bullets.length
+    ? `${opener}\n\n${bullets.join("\n")}\n\n${closer}`
+    : `${opener}\n\n${closer}`;
 }
 
 export type Narrative = {
