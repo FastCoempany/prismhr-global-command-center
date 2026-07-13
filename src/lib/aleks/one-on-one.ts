@@ -69,7 +69,7 @@ export const ALEKS_SESSIONS: AleksSession[] = [
       {
         title: "Partner engagement — the roundup program",
         bullets: [
-          "Standing roundup motion across seven partners (Lesha, Anika, Whitney, John, Eric, + new HCM-side partners Kathryn Maddox and Kellie Washington); every thread on reply/follow-up tracking. Three partners have replied with real intel.",
+          "Standing roundup motion across six partners (Lesha, Anika, Whitney, John, Eric, + new HCM-side partner Kathryn Maddox); every thread on reply/follow-up tracking. Three partners have replied with real intel.",
           "Whitney Dideon — met 7/13 (10a); she's the incoming Regional VP of HCM, ~3 weeks in seat. 4-account roundup delivered; she'll gauge as she connects with her clients (no formal meetings yet). She carries the HCM book (Cody Jensen's old accounts) — key long-game partner.",
           "John Hebert — replied 7/10: Premier Payroll acquired by Vensure 9/2025 → scrubbed to the exclusions ledger. His warning: “Vensure is like a vacuum sucking up other customers regularly” — flagged as standing book hygiene. His live angle: Meridian + Payroll Solutions, both in active HCM implementation.",
           "Anika — two replies: account-by-account read (Infiniti HR — monthly calls, SBR early fall, renewed 8/1; Nextep — bi-weekly calls, ~40k WSE growth goal, renews 9/1/2028; Genesis HR — child of Engage PEO; eEmployers — gauge next call; OnePoint — cold, include her) plus the XcelHR call invite. Consolidated reply is next.",
