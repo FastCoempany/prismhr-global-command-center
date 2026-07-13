@@ -5,8 +5,10 @@
 
 const PARTNER_ROLES: Record<string, string> = {
   "Eric Ronci": "Enterprise Sales, HCM",
+  // Incoming Regional VP of HCM — ~3 weeks in seat as of 7/13 (met at the
+  // meet-and-greet). Carries the inactive Cody Jensen's HCM book.
+  "Whitney Dideon": "Regional VP, HCM",
   // HCM-side account owners from the 7/13 Salesforce HCM-customer export.
-  // (Cody Jensen is inactive in SF — his HCM book is carried by Whitney.)
   "Kathryn Maddox": "CSM, HCM",
   "Kellie Washington": "CSM, HCM",
 };

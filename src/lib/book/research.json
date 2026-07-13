@@ -1862,9 +1862,10 @@
       "researched": true
     },
     "001Pb00000MLcjtIAD": {
-      "demandScore": 10,
-      "confidence": "medium",
+      "demandScore": 0,
+      "confidence": "high",
       "signals": [
+        "DISQUALIFIED (7/10, first-party from John Hebert): Premier Payroll was ACQUIRED BY VENSURE in September 2025. Vensure-acquired PEOs are typically fully absorbed within ~2 months, after which Vensure has full authority over any actions — John doesn't engage these entities (they work with Vensure Success, Support, and Services). Premier is also an ExecuPay customer, which Vensure manages under an entirely different model. Anything they do goes through Vensure — out of our channel motion.",
         "Small local payroll service bureau in Fort Wayne, IN, in business ~37 years (est. 1988), owner/director Jamie Miller",
         "Very small operation: ~1-16 employees across data sources, roughly $1M revenue - a micro service bureau, not a scaled PEO",
         "Services described everywhere as purely domestic: payroll processing, US federal/state tax filings and remittance, direct deposit, benefits administration",
@@ -1886,8 +1887,9 @@
           "url": "https://rocketreach.co/premier-payroll-hr-solutions-profile_b4404741fdc6002e"
         }
       ],
-      "summary": "Premier Payroll & HR Solutions is a small (~$1M revenue), 37-year-old local payroll service bureau in Fort Wayne, IN serving domestic small businesses with US payroll processing, tax filing/remittance, direct deposit, and benefits administration. No evidence of any international, global-payroll, EOR, or overseas-contractor activity exists across their site or third-party profiles, so cross-border hiring demand in their book of business appears minimal.",
-      "researched": true
+      "summary": "DISQUALIFIED: acquired by Vensure in September 2025 (per John Hebert, 7/10). Vensure absorbs acquired PEOs within ~2 months and takes full authority; John doesn't have conversations with these entities, and Premier is additionally an ExecuPay customer managed under a different Vensure model. Removed from the working book — anything global for their base would route through Vensure, not our partner channel. (John's broader warning: Vensure regularly acquires customers like this — expect repeats.)",
+      "researched": true,
+      "verified": true
     },
     "0013k00003Ev0KSAAZ": {
       "demandScore": 12,
