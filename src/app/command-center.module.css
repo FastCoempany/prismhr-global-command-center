@@ -1734,7 +1734,12 @@
   font-weight: 800;
 }
 
-/* SAY THIS — editable message */
+/* SAY THIS — editable message. The dashed top rule delineates the Steps block
+   from the Say block so the two read as separate lanes. */
+.gSay {
+  border-top: 1px dashed var(--line);
+  padding-top: 10px;
+}
 .gSay .gLabel {
   color: var(--green);
 }
@@ -4244,6 +4249,99 @@
   border-radius: 999px;
   padding: 1px 8px;
   cursor: pointer;
+}
+
+/* On deck — the This-morning rail. Same row idiom as the control rail: number,
+   kind tag, phrase, one fact, ONE button; the full coaching expands beneath. */
+.deckNum {
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: var(--navy);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+.deckNumDone {
+  background: #e4f7ea;
+  color: #14632e;
+}
+.deckKind {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-radius: 4px;
+  padding: 1px 6px;
+  flex: none;
+  border: 1px solid var(--line);
+}
+.deckSend {
+  color: #8a4a10;
+  background: #fff2e6;
+  border-color: #f3c9a3;
+}
+.deckDecide {
+  color: var(--blue-d);
+  background: #e8effc;
+  border-color: #c6d6f7;
+}
+.deckClose {
+  color: #14632e;
+  background: #e4f7ea;
+  border-color: #a7e0bd;
+}
+.deckNote {
+  color: var(--muted);
+  background: var(--bg);
+}
+.deckMeta {
+  font-size: 10px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.deckProg {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--muted);
+  letter-spacing: 0;
+  text-transform: none;
+}
+.deckExpand {
+  padding: 10px 14px 12px 37px;
+  background: var(--bg);
+  border-top: 1px dashed var(--line);
+}
+.deckGroupLab {
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 7px 12px 3px;
+  background: #fff;
+  border-top: 1px solid var(--line);
+}
+.deckEmpty {
+  margin: 0;
+  padding: 9px 12px;
+  background: #fff;
+}
+.deckMoreNote {
+  font-size: 11px;
+  color: var(--muted);
+  padding: 5px 12px 7px;
+  background: #fff;
+}
+.deckDoneRow {
+  opacity: 0.66;
+}
+.deckDoneText {
+  text-decoration: line-through;
 }
 
 /* The reference group below the rail — same boxed shell + micro-header as the
