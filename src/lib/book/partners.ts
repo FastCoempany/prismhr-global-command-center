@@ -12,6 +12,10 @@ const PARTNER_ROLES: Record<string, string> = {
   // (Kellie Washington was briefly listed from that export — mistaken ID; she
   // owns no accounts and was removed 7/13.)
   "Kathryn Maddox": "CSM, HCM",
+  // NOT a partner: Sara Fitzgerald appears as the SF owner on four accounts
+  // (Back Office Risk, Superior Staffing/Hawai'i, Surety HR, Upright Holdings)
+  // but she's in a different role — Lesha Cyphers is the CSM partner for all
+  // four (owner decision, 7/13). Don't re-add her from a future export sweep.
 };
 
 // Partners with no accounts yet but who should still appear in the directory.
