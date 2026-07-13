@@ -45,8 +45,7 @@ import {
   outreachGuidance,
   partitionSignals,
   partnerKickoff,
-  partnerWeekMessage,
-  roundupBullet,
+  roundupBullets,
   roundupFrame,
   signals,
   stateOfPlay,
@@ -618,7 +617,10 @@ export default async function TodayPage({
       const due = !!touch && isDue(touch);
       // Composer rows: in-motion/parked accounts stay listed but default out of
       // the message; the default roundup is built from what's still checked.
-      const sections = k.accounts.map((a) => {
+      // Bullets come from the rotating builder so a message with several
+      // same-play accounts never repeats a line.
+      const bullets = roundupBullets(k.accounts);
+      const sections = k.accounts.map((a, i) => {
         const d = dispositions.get(a.id);
         const mark =
           d?.status === "motion"
@@ -626,7 +628,7 @@ export default async function TodayPage({
             : d?.status === "parked"
               ? ("parked" as const)
               : ("" as const);
-        return { id: a.id, name: a.name, bullet: roundupBullet(a), on: !mark, mark };
+        return { id: a.id, name: a.name, bullet: bullets[i], on: !mark, mark };
       });
       const sendAccts = k.accounts.filter((a) => sections.find((s) => s.id === a.id)?.on);
       const motionCount = sections.filter((s) => s.mark === "motion").length;
@@ -677,6 +679,14 @@ export default async function TodayPage({
                 : status === "archived"
                   ? 4
                   : 2;
+      // The default message is stitched from the checked sections' bullets —
+      // byte-identical with what the client composer rebuilds, so toggling an
+      // account back on never shifts the other bullets' phrasing.
+      const frame = roundupFrame(k.partner);
+      const onBullets = sections.filter((s) => s.on).map((s) => s.bullet);
+      const defaultMessage = onBullets.length
+        ? `${frame.opener}\n\n${onBullets.join("\n")}\n\n${frame.closer}`
+        : `${frame.opener}\n\n${frame.closer}`;
       return {
         rank,
         item: {
@@ -688,11 +698,11 @@ export default async function TodayPage({
           phrase,
           dot,
           detail: `${sendAccts.length} of ${k.accounts.length} teed up`,
-          defaultMessage: partnerWeekMessage(k.partner, sendAccts),
+          defaultMessage,
           draftHref: `/partners#${encodeURIComponent(k.partner)}`,
           sendable: sendAccts.length,
           sections,
-          frame: roundupFrame(k.partner),
+          frame,
         } satisfies RailItem,
       };
     })

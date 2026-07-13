@@ -29,6 +29,7 @@ import {
   partnerMessage,
   partnerWeekMessage,
   roundupBullet,
+  roundupBullets,
   roundupFrame,
   signals,
   stateOfPlay,
@@ -743,12 +744,44 @@ describe("partnerKickoff & partnerWeekMessage", () => {
       intel({ id: "a2", name: "MAU", play: "greenfield" }),
     ];
     const { opener, closer } = roundupFrame("Anika Steenstra");
-    const stitched = `${opener}\n\n${accounts.map(roundupBullet).join("\n")}\n\n${closer}`;
+    const stitched = `${opener}\n\n${accounts.map((a) => roundupBullet(a)).join("\n")}\n\n${closer}`;
     assert.equal(partnerWeekMessage("Anika Steenstra", accounts), stitched);
     // Dropping an account (the composer's uncheck) removes exactly its bullet.
     const without = partnerWeekMessage("Anika Steenstra", [accounts[0]]);
     assert.ok(!without.includes("• MAU"));
     assert.match(without, /• Infiniti HR — /);
+  });
+
+  test("same-play accounts never repeat a line within one roundup", () => {
+    // Four no-signal accounts (the Kathryn/Whitney case) — every bullet body
+    // must be unique, not the gauge template four times.
+    const accounts = ["Alpha Co", "Beta Co", "Gamma Co", "Delta Co"].map((name, i) =>
+      intel({ id: `g${i}`, name, play: null }),
+    );
+    const bullets = roundupBullets(accounts);
+    const bodies = bullets.map((b) => b.split(" — ").slice(1).join(" — "));
+    assert.equal(new Set(bodies).size, accounts.length);
+    // Same for repeated displacement accounts (competitor interpolation aside).
+    const disp = ["D1", "D2", "D3"].map((name, i) =>
+      intel({ id: `d${i}`, name, play: "displacement", competitors: ["Deel"] }),
+    );
+    const dispBodies = roundupBullets(disp).map((b) =>
+      b.split(" — ").slice(1).join(" — "),
+    );
+    assert.equal(new Set(dispBodies).size, disp.length);
+    // Custom (hand-written) bullets don't consume a rotation slot: the two
+    // template accounts around one still get variants 0 and 1.
+    const withCustom = [
+      intel({ id: "g10", name: "Plain One", play: null }),
+      intel({ id: "001F000000w38BOIAY", name: "Simploy", play: "greenfield" }),
+      intel({ id: "g11", name: "Plain Two", play: null }),
+    ];
+    const mixed = roundupBullets(withCustom);
+    assert.match(mixed[1], /Already in motion/);
+    assert.notEqual(
+      mixed[0].split(" — ").slice(1).join(" — "),
+      mixed[2].split(" — ").slice(1).join(" — "),
+    );
   });
 });
 
