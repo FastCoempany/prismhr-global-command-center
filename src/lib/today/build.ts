@@ -54,7 +54,6 @@ export const HCM_CLIENT_IDS = new Set<string>([
   "001Pb00001As43aIAB", // Leem Pro
   "MERIDIANPAY000001", // Meridian Payroll Group
   "PAYROLLSOL0000001", // Payroll Solutions, Inc.
-  "001Pb00002ezRkoIAE", // PayrollOne
   "0013k00002roPPFAA2", // Puntual Payroll
   "0013k00003Ev0PDAAZ", // Simplified Employer Solutions
   "001Pb00002Cbu08IAB", // TruePath HCM
