@@ -1,5 +1,5 @@
 {
-  "count": 136,
+  "count": 135,
   "csms": [
     "Anika Steenstra",
     "Whitney Dideon",
@@ -1640,23 +1640,6 @@
       "website": "",
       "lastActivity": "7/13/2026",
       "fit": 33,
-      "fitTier": "low"
-    },
-    {
-      "id": "001Pb00002ezRkoIAE",
-      "name": "PayrollOne LLC",
-      "cloud": "PYO",
-      "csm": "Whitney Dideon",
-      "contactName": "",
-      "contactEmail": "",
-      "size": 0,
-      "sizeBucket": "",
-      "industry": "Accounting Services",
-      "city": "Kaysville",
-      "state": "UT",
-      "website": "",
-      "lastActivity": "",
-      "fit": 15,
       "fitTier": "low"
     },
     {

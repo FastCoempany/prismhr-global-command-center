@@ -2921,6 +2921,7 @@
       "demandScore": 12,
       "confidence": "medium",
       "signals": [
+        "STRUCTURE (7/13, owner intel): PayrollOne LLC is a child entity of Denali HR Solutions — PayrollOne is not separately contracted with Prism; the contract sits with Denali. PayrollOne was removed from the book accordingly, and anything PayrollOne-related routes through Denali.",
         "Positioned as a small, regional PEO/ASO serving Salt Lake City / Sandy, Utah area SMBs (locally focused, not multinational)",
         "Service list is entirely domestic-HR: payroll administration, employee benefits/health insurance, risk management/workers' comp, HR consulting, onboarding, compliance",
         "Very small operation (ZoomInfo lists ~2 employees, single continent/North America), typical of a local domestic book of business",
@@ -3551,35 +3552,6 @@
       ],
       "summary": "OPES Companies is a Kansas City-area PEO that markets itself almost entirely on local Missouri/Kansas expertise and domestic multi-state compliance for local SMBs (construction, healthcare, retail, restaurants, professional services). There is no findable signal of any international-hiring footprint or global/EOR offering, so cross-border payroll demand in its book of business is very low - though as a PEO it is at least the right channel type.",
       "researched": true
-    },
-    "001Pb00002ezRkoIAE": {
-      "demandScore": 6,
-      "confidence": "medium",
-      "signals": [
-        "EXPLICITLY US-ONLY: Website markets 'fully managed, flat-rate payroll for U.S. businesses' — domestic payroll, taxes, filings, and compliance for a single US SMB audience. No cross-border language anywhere.",
-        "No international-hiring demand in the book: services are payroll processing, federal/state/local tax filings, employee setup, and worker classification — all US-jurisdiction domestic work. No EOR, no global payroll, no foreign contractor management.",
-        "No named competitor EOR/global-payroll provider found (no Deel, Velocity Global, Papaya, G-P, Remote, Oyster, Multiplier). Not a partner or a customer of any global provider.",
-        "No countries or regions outside the US appear. Entirely Utah/US-focused.",
-        "Micro-scale local operation: PayrollOne is a brand affiliated with FJ & Associates, PLLC, a small Kaysville, UT CPA firm (founded 2012, partners Scott Farnes / Gayland Jones), sharing the same address (612 N Kays Dr Suite 120, Kaysville, UT 84037) and a local phone. This is an SMB accounting/payroll bureau, not a PEO with a multinational client base.",
-        "Not a PEO and not a channel fit: PrismHR Global sells through PEOs serving SMBs abroad; PayrollOne is a domestic bookkeeping/payroll provider with no PEO model or global-hiring pipeline."
-      ],
-      "evidence": [
-        {
-          "claim": "PayrollOne describes itself as 'fully managed, flat-rate payroll for U.S. businesses' handling payroll, taxes, filings, and compliance — a purely domestic scope with no international/EOR component.",
-          "url": "https://payrollone.net/"
-        },
-        {
-          "claim": "PayrollOne operates from 612 N Kays Dr Suite 120, Kaysville, UT and is tied to FJ & Associates, PLLC, a small local Utah CPA firm (tax prep, QuickBooks, payroll, CFO services) — no global-hiring or EOR offering.",
-          "url": "https://cpaone.net/payroll-service/"
-        },
-        {
-          "claim": "FJ & Associates, a Utah-licensed CPA firm founded in 2012, lists tax preparation, business tax planning, QuickBooks, payroll, and contract CFO/controller services — with no international, EOR, or overseas-contractor services indicated.",
-          "url": "https://www.uacpa.org/find-a-cpa/06947:fj-associates-pllc"
-        }
-      ],
-      "summary": "PayrollOne LLC is a micro-scale, US-domestic-only payroll bureau in Kaysville, UT (affiliated with local CPA firm FJ & Associates), explicitly marketing 'flat-rate payroll for U.S. businesses' with zero evidence of cross-border hiring, EOR, global payroll, foreign countries, or any named global-provider relationship. It is a poor fit as a PrismHR Global channel, warranting a very low demand score; confidence is medium because the public web presence is clear and consistent but the main site returned 403 to full-page fetches, so the read rests on search snippets and the affiliated CPA firm's profile.",
-      "researched": true,
-      "verified": true
     },
     "0013k00003Ev0PDAAZ": {
       "demandScore": 8,
