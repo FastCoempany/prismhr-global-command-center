@@ -56,6 +56,7 @@ import {
   type CardStep,
   type Guidance,
 } from "@/lib/today/build";
+import { ALEKS_SESSIONS } from "@/lib/aleks/one-on-one";
 import { SfCheckpoint } from "@/components/sf";
 import { ContactControl, EditableMessage, NoteSubmit } from "../today-client";
 import { NotesPanel } from "../notes-client";
@@ -1063,6 +1064,47 @@ export default async function TodayPage({
                   ))}
                 </details>
               )}
+            </>
+          }
+          aleks={
+            <>
+              {/* ── The Aleks 1:1 room — session records: call notes + the brief
+                     that was carried in. Newest session first. ─────────────── */}
+              {ALEKS_SESSIONS.map((s) => (
+                <section key={s.date} className={styles.prCard}>
+                  <div className={styles.pageHead}>
+                    <h2 className={styles.h2}>1:1 with Aleks — {s.label}</h2>
+                    <p className={styles.sub}>
+                      Call notes with what each changes, then the brief as carried in.
+                    </p>
+                  </div>
+
+                  <div className={styles.aleksNotes}>
+                    {s.callNotes.map((n, i) => (
+                      <div key={i} className={styles.aleksNote}>
+                        <div className={styles.aleksNoteBody}>{n.note}</div>
+                        {n.action && (
+                          <div className={styles.aleksNoteAction}>→ {n.action}</div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  <details className={styles.aleksBrief}>
+                    <summary>The brief I brought in</summary>
+                    {s.brief.map((sec) => (
+                      <div key={sec.title} className={styles.aleksBriefSec}>
+                        <div className={styles.aleksBriefTitle}>{sec.title}</div>
+                        <ul>
+                          {sec.bullets.map((b, i) => (
+                            <li key={i}>{b}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
+                  </details>
+                </section>
+              ))}
             </>
           }
           narrative={

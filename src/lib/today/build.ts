@@ -521,10 +521,11 @@ export const ROUNDUP_BULLETS: Record<string, string> = {
   // her up on the offer, not asking for a cold read.
   "001F000000w38GlIAI":
     "Taking you up on your offer here! You mentioned Xcel HR has been discussing a few new " +
-    "products since LIVE and that you could include me on the next call — I'd love that. No " +
-    "pressure on their Global aptitude going in; a quick education-first segment on what Global " +
-    "adds (and a read from Bill) is all I'm after. Send me the invite whenever the next one " +
-    "lands and I'll shape my part around whatever else is on the agenda.",
+    "products since LIVE and that you could include me on the next call — I'd love that. And " +
+    "you're closest to it: with everything they're implementing with Prism right now, you lead " +
+    "on the timing — whenever a call makes sense on your read, I'll fit in. No pressure on " +
+    "their Global aptitude going in; a quick education-first segment on what Global adds (and " +
+    "a read from Bill) is all I'm after.",
 };
 
 export function partnerKickoff(

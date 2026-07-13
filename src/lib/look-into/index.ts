@@ -36,7 +36,7 @@ export const LOOK_INTO: LookIntoItem[] = [
     id: "hcm-funnel-roster",
     title: "Keep the HCM roster fresh (loaded 7/13)",
     why: "The HCM customer roster is now loaded from the 7/13 Salesforce export (19 active HCM clients + 3 former). Like the PEO book, it's a point-in-time snapshot — owners, stages, and risk levels will drift as SF changes, and several accounts are missing size/contact/cloud details the export didn't carry.",
-    ask: "Get a refresh cadence for the SF HCM report (or a fuller export with size, contacts, and cloud names), and confirm who owns HCM client data now that Cody Jensen is inactive.",
+    ask: "Get a refresh cadence for the SF HCM report (or a fuller export with size, contacts, and cloud names), and confirm who owns HCM client data now that Cody Jensen is inactive. Named lead (per Aleks, 7/13): Eduardo at SOLVO runs the business-intelligence reports with deep account detail and growth specs — get plugged into those.",
     category: "Data sources",
     priority: "medium",
     surfacedIn: "Today · HCM funnel strip",

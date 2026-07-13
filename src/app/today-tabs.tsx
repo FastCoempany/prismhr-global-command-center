@@ -3,12 +3,13 @@
 import { useEffect, useState, type ReactNode } from "react";
 import styles from "./command-center.module.css";
 
-type TabKey = "morning" | "followups" | "notes" | "narrative" | "plan";
+type TabKey = "morning" | "followups" | "notes" | "aleks" | "narrative" | "plan";
 
 const TABS: { key: TabKey; label: string }[] = [
   { key: "morning", label: "This morning" },
   { key: "followups", label: "Follow-ups" },
   { key: "notes", label: "Notes" },
+  { key: "aleks", label: "Aleks 1:1" },
   { key: "narrative", label: "Narrative" },
   { key: "plan", label: "Plan" },
 ];
@@ -36,6 +37,7 @@ export function TodayTabs({
   morning,
   followups,
   notes,
+  aleks,
   narrative,
   plan,
   followUpsDue = 0,
@@ -44,6 +46,7 @@ export function TodayTabs({
   morning: ReactNode;
   followups: ReactNode;
   notes: ReactNode;
+  aleks: ReactNode;
   narrative: ReactNode;
   plan: ReactNode;
   followUpsDue?: number;
@@ -84,6 +87,7 @@ export function TodayTabs({
     morning,
     followups,
     notes,
+    aleks,
     narrative,
     plan,
   };
