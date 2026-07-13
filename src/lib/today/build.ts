@@ -455,6 +455,10 @@ export const ROUNDUP_PINS: Record<string, string[]> = {
   // My HR Pros (formerly Southern Personnel Management) — an existing on-PrismHR
   // Lesha account that scores just below her top-5 cutoff; pinned by owner request.
   "Lesha Cyphers": ["001F000000w389qIAA"],
+  // XCEL HR — low web-signal score, but Anika opened a live door (7/13): they're
+  // in new-product discussions post-LIVE and she can bring us onto the next call
+  // with Bill. Relationship-led motion, so it stays on her card.
+  "Anika Steenstra": ["001F000000w38GlIAI"],
 };
 
 // Hand-written roundup bullets for accounts where the generic play framing would
@@ -466,12 +470,22 @@ export const ROUNDUP_BULLETS: Record<string, string> = {
   "001F000000w38BOIAY":
     "Already in motion (thanks for the intro!): Chassie reached out after PrismHR LIVE — " +
     "about two months into selecting a global-workforce partner (EOR, contractor management, " +
-    "global payroll), with the partner and approach to be finalized by 8/6. I replied 7/9 with " +
-    "the functionality/coverage and implementation docs, confirmed Global is built into their " +
-    "existing PrismHR setup (a new tab — no integration work), and asked for countries, EOR " +
-    "conversion headcount, and contractor counts to shape pricing. Demo goes on the calendar as " +
-    "soon as she responds. Nothing needed from you right now — keeping it on our shared radar " +
-    "(and she's still waiting to hear about shipping for the glasses she won at the conference).",
+    "global payroll), with the partner and approach to be finalized by 8/6. Her discovery " +
+    "answers (7/9): two internal contractors in India today, plus at least one client group " +
+    "with an India contractor on another provider — small counts, but the strategic play is " +
+    "dual: internal international expansion AND offering global workforce solutions to their " +
+    "clients as an expanded service. I sent the pricing overview and the newly released Global " +
+    "materials on 7/13 and proposed a call for Mon or Tue next week, 1–3p. Nothing needed from " +
+    "you right now — keeping it on our shared radar (and she's still waiting to hear about " +
+    "shipping for the glasses she won at the conference).",
+  // XCEL HR — Anika's 7/13 read opened a live door; the bullet reads as taking
+  // her up on the offer, not asking for a cold read.
+  "001F000000w38GlIAI":
+    "Taking you up on your offer here! You mentioned Xcel HR has been discussing a few new " +
+    "products since LIVE and that you could include me on the next call — I'd love that. No " +
+    "pressure on their Global aptitude going in; a quick education-first segment on what Global " +
+    "adds (and a read from Bill) is all I'm after. Send me the invite whenever the next one " +
+    "lands and I'll shape my part around whatever else is on the agenda.",
 };
 
 export function partnerKickoff(
