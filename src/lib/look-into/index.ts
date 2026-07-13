@@ -42,6 +42,15 @@ export const LOOK_INTO: LookIntoItem[] = [
     surfacedIn: "Today · HCM funnel strip",
   },
   {
+    id: "vensure-acquisitions",
+    title: "Vensure acquisitions quietly invalidate book accounts",
+    why: "Premier Payroll turned out to have been acquired by Vensure in Sept 2025 — fully absorbed, managed by Vensure Success/Support/Services, out of our channel motion. Per John Hebert this is a pattern (“Vensure is like a vacuum sucking up other customers regularly”), so more book accounts may already be dead leads without anything in our data saying so.",
+    ask: "Find who tracks Vensure's customer acquisitions internally (or get the list), sweep the book against it, and add the check to whatever refresh cadence the book gets.",
+    category: "Data sources",
+    priority: "high",
+    surfacedIn: "Today · partner outreach (John Hebert thread)",
+  },
+  {
     id: "book-source-of-truth",
     title: "The PEO book is a one-time CSV, not a live source",
     why: "The 131 accounts came from a single CSV upload. As CSMs update owners, activity, and status in the real system, this book drifts out of date and nobody's notified.",
