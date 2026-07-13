@@ -10,6 +10,14 @@
 
 INSERT INTO "AccountNote" ("id", "accountId", "partner", "kind", "body", "createdAt") VALUES
 (
+  'simploy-thread-1b-platform-preference',
+  '001F000000w38BOIAY',
+  'Chassie (Simploy)',
+  'partner',
+  'Key buying signal from her original inbound (7/8): she is actively evaluating potential partners for global workforce expansion, and told us directly that "having an integrated option through PrismHR would be ideal for us, assuming it''s competitive on both price and functionality." Translation: we are the preferred path — already on our platform, integration is zero-lift — and the decision comes down to price + functionality vs. the other providers she''s comparing.',
+  '2026-07-08 15:05:00'
+),
+(
   'simploy-thread-4-chassie-discovery',
   '001F000000w38BOIAY',
   'Chassie (Simploy)',
