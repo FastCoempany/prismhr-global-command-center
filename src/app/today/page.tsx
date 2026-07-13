@@ -16,6 +16,7 @@ import {
 import { DASH_NODES } from "@/lib/dashboard/stages";
 import { AccountChip } from "./account-chip";
 import { AtcRail, type RailItem } from "./atc-rail";
+import { DeckRow, type DeckKind } from "./deck-row";
 import {
   followUpMessage,
   groupUpcomingByDay,
@@ -54,7 +55,6 @@ import {
   type AccountIntel,
   type CardStep,
   type Guidance,
-  type Validation,
 } from "@/lib/today/build";
 import { SfCheckpoint } from "@/components/sf";
 import { ContactControl, EditableMessage, NoteSubmit } from "../today-client";
@@ -77,45 +77,6 @@ import {
 import styles from "../command-center.module.css";
 
 export const dynamic = "force-dynamic";
-
-function PlayTag({ play }: { play: AccountIntel["play"] }) {
-  if (!play) return null;
-  const cls = play === "displacement" ? styles.tagDisplace : styles.tagGreen;
-  return <span className={`${styles.tag} ${cls}`}>{play}</span>;
-}
-
-function FunnelChip({ funnel }: { funnel: AccountIntel["funnel"] }) {
-  return (
-    <span className={`${styles.funnelChip} ${funnel === "hcm" ? styles.funnelHcm : ""}`}>
-      {funnel === "hcm" ? "HCM funnel" : "PEO channel"}
-    </span>
-  );
-}
-
-function ValidationBadge({ v }: { v?: Validation }) {
-  if (!v) return null;
-  if (v.status === "confirmed")
-    return <span className={styles.valConfirmed}>✓ confirmed</span>;
-  if (v.status === "flagged") return <span className={styles.valFlagged}>⚠ flagged</span>;
-  return <span className={styles.valAdjusted}>adjusted → {v.adjustedDemand}</span>;
-}
-
-function fitClass(tier: "high" | "medium" | "low") {
-  return tier === "high"
-    ? styles.fitHigh
-    : tier === "medium"
-      ? styles.fitMedium
-      : styles.fitLow;
-}
-
-function ageBadge(ageDays: number | null) {
-  if (ageDays == null) return null;
-  const label = ageDays === 0 ? "today" : `${ageDays}d open`;
-  const hot = ageDays >= COMMITMENT_WINDOW_DAYS;
-  return (
-    <span className={`${styles.ageBadge} ${hot ? styles.ageHot : ""}`}>{label}</span>
-  );
-}
 
 // One-time seed dropped into a new card's Discovery note on "Seed to board".
 function seedFor(a: AccountIntel): string {
@@ -182,6 +143,14 @@ function ParkControl({ id }: { id: string }) {
   );
 }
 
+// Kind-tag classes for On-deck rows (shared by DeckRow and the done rows here).
+const DECK_KIND_CLS: Record<DeckKind, string> = {
+  send: "deckSend",
+  decide: "deckDecide",
+  close: "deckClose",
+  note: "deckNote",
+};
+
 // A move on the morning list: a commitment to close, an outreach to send, or a
 // signal to triage.
 type Mv =
@@ -232,7 +201,7 @@ function GuidanceBody({
         </span>
       </div>
       <div className={styles.gHow}>
-        <span className={styles.gLabel}>How — step by step</span>
+        <span className={styles.gLabel}>Steps — in order</span>
         <ol className={styles.gHowList}>
           {g.how.map((h, i) => (
             <li key={i}>{h}</li>
@@ -280,49 +249,50 @@ function MorningMove({
 }) {
   const { term, href } = moveTerm(mv);
   let g: Guidance;
-  let chips: ReactNode = null;
+  let meta: string;
+  let kind: DeckKind;
   let actions: ReactNode = null;
+  let primary: ReactNode = null;
+  let primaryLabel: string | undefined;
 
   if (mv.kind === "outreach") {
     const a = mv.a;
     g = outreachGuidance(a);
-    chips = (
-      <>
-        <span className={`${styles.fit} ${fitClass(a.tier)}`}>demand {a.demand}</span>
-        <PlayTag play={a.play} />
-        {a.competitors.length > 0 && (
-          <span className={styles.mvOwner}>incumbent: {a.competitors.join(", ")}</span>
-        )}
-        <FunnelChip funnel={a.funnel} />
-        <ValidationBadge v={a.validation} />
-      </>
-    );
+    kind = "send";
+    meta = `demand ${a.demand ?? "—"}${a.play ? ` · ${a.play}` : ""} · ⟳ SF first`;
+    primaryLabel = "Send ▸";
   } else if (mv.kind === "triage") {
     const a = mv.a;
     g = triageGuidance(a);
-    chips = (
-      <>
-        <span className={`${styles.fit} ${fitClass(a.tier)}`}>demand {a.demand}</span>
-        {!isStrongSignal(a) && <span className={styles.emergingTag}>emerging</span>}
-        <PlayTag play={a.play} />
-        <FunnelChip funnel={a.funnel} />
-        <ValidationBadge v={a.validation} />
-      </>
-    );
+    kind = "decide";
+    meta = `demand ${a.demand ?? "—"}${!isStrongSignal(a) ? " · emerging" : ""}${
+      a.play ? ` · ${a.play}` : ""
+    }`;
+    primaryLabel = "Decide ▸";
     actions = (
       <div className={styles.gActions}>
         <SeedForm a={a} onBoard={false} label="Seed to board" />
         <ParkControl id={a.id} />
+        <form action={toggleTaskDone} className={styles.mvDoneForm}>
+          <input type="hidden" name="key" value={doneKey} />
+          <button className={styles.mvDoneBtn}>Mark done ✓</button>
+        </form>
       </div>
     );
   } else {
     const s = mv.step;
     g = commitmentGuidance(s);
-    chips = (
-      <>
-        <span className={styles.mvOwner}>on the board · {s.nodeLabel}</span>
-        {ageBadge(s.ageDays)}
-      </>
+    kind = "close";
+    meta = `board · ${s.nodeLabel}${
+      s.ageDays != null ? ` · ${s.ageDays === 0 ? "today" : `${s.ageDays}d open`}` : ""
+    }`;
+    // The one button: mark the morning move done. Checking the step off on the
+    // board itself stays in the expansion.
+    primary = (
+      <form action={toggleTaskDone} className={styles.valInline}>
+        <input type="hidden" name="key" value={doneKey} />
+        <button className={`${styles.atcBtn} ${styles.atcGo}`}>Mark done ✓</button>
+      </form>
     );
     actions = (
       <div className={styles.gActions}>
@@ -343,27 +313,30 @@ function MorningMove({
   const isOutreach = mv.kind === "outreach";
 
   // Outreach completes by logging a contact (a Touch) — which also arms the
-  // 2-day follow-up and captures the message — so its "Say this" slot is the
+  // next check-in and captures the message — so its "Say this" slot is the
   // send control, and Undo removes the touch. Everything else uses a TaskDone key.
   const undoBtn = isOutreach ? (
-    <form action={deleteTouch} className={styles.mvDoneForm}>
+    <form action={deleteTouch} className={styles.valInline}>
       <input type="hidden" name="subjectKey" value={outreachSubjectKey(mv.a.id)} />
-      <button className={styles.mvUndoBtn}>Undo</button>
+      <button className={styles.atcBtn}>Undo</button>
     </form>
   ) : (
-    <form action={toggleTaskDone} className={styles.mvDoneForm}>
+    <form action={toggleTaskDone} className={styles.valInline}>
       <input type="hidden" name="key" value={doneKey} />
-      <button className={styles.mvUndoBtn}>Undo</button>
+      <button className={styles.atcBtn}>Undo</button>
     </form>
   );
 
-  // Done → a compact struck line with Undo.
+  // Done → a struck one-liner that stays in the rail, with Undo.
   if (done) {
     return (
-      <div className={`${styles.mvMove} ${styles.mvDoneRow}`}>
-        <div className={`${styles.mvNum} ${styles.mvNumDone}`}>✓</div>
-        <div className={styles.mvDoneBody}>
-          <span className={styles.mvDoneText}>
+      <div className={styles.atcRowWrap}>
+        <div className={`${styles.atcRow} ${styles.deckDoneRow}`}>
+          <span className={`${styles.deckNum} ${styles.deckNumDone}`}>✓</span>
+          <span className={`${styles.deckKind} ${styles[DECK_KIND_CLS[kind]]}`}>
+            {kind}
+          </span>
+          <span className={`${styles.atcPhrase} ${styles.deckDoneText}`}>
             <Emph text={g.do} term={term} href={href} />
           </span>
           {undoBtn}
@@ -401,24 +374,20 @@ function MorningMove({
     ) : null;
 
   return (
-    <div className={`${styles.mvMove} ${n === 1 ? styles.mvFirst : ""}`}>
-      <div className={styles.mvNum}>{n}</div>
-      <div className={styles.mvBody}>
-        <div className={styles.mvTopRow}>
-          <div className={styles.mvMeta}>{chips}</div>
-          {!isOutreach && (
-            <form action={toggleTaskDone} className={styles.mvDoneForm}>
-              <input type="hidden" name="key" value={doneKey} />
-              <button className={styles.mvDoneBtn}>Mark done ✓</button>
-            </form>
-          )}
-        </div>
-        {sfCheck}
-        <GuidanceBody g={g} term={term} href={href} sayNode={sayNode}>
-          {actions}
-        </GuidanceBody>
-      </div>
-    </div>
+    <DeckRow
+      num={n}
+      kind={kind}
+      phrase={<Emph text={g.do} term={term} href={href} />}
+      meta={meta}
+      primaryLabel={primaryLabel}
+      primaryHot={isOutreach}
+      primary={primary}
+    >
+      {sfCheck}
+      <GuidanceBody g={g} term={term} href={href} sayNode={sayNode}>
+        {actions}
+      </GuidanceBody>
+    </DeckRow>
   );
 }
 
@@ -944,123 +913,116 @@ export default async function TodayPage({
                 </div>
               </div>
 
-              {/* ── This morning — your first moves, in order ──────────────────── */}
+              {/* ── On deck — your first moves, in order (rail rows; full
+                     coaching expands under each row) ──────────────────────── */}
               <div className={styles.mvPanel}>
-                <div className={styles.mvCap}>
-                  This morning
-                  {items.length
-                    ? ` · ${pendingMoves.length} to do${doneMoves.length ? `, ${doneMoves.length} done` : ""}`
-                    : " · nothing pressing"}
-                </div>
-
-                {items.length > 0 && (
-                  <div className={styles.mvProgress}>
-                    <span className={styles.mvProgressBar}>
-                      <span
-                        className={styles.mvProgressFill}
-                        style={{
-                          width: `${Math.round((doneMoves.length / items.length) * 100)}%`,
-                        }}
-                      />
-                    </span>
-                    <span className={styles.mvProgressText}>
-                      {doneMoves.length} of {items.length} done
+                <div className={styles.atcRail}>
+                  <div className={styles.atcHead}>
+                    On deck — in order
+                    <span className={styles.deckProg}>
+                      {items.length
+                        ? `${doneMoves.length} of ${items.length} done`
+                        : "nothing pressing"}
                     </span>
                   </div>
-                )}
 
-                {items.length === 0 && (
-                  <p className={styles.muted}>
-                    Nothing needs you right now — no aging commitments, no untriaged
-                    signals, no play waiting. Seed a signal from the{" "}
-                    <Link href="/accounts">Account Room</Link> or advance a loop on the{" "}
-                    <Link href="/">Dashboard</Link>.
-                  </p>
-                )}
-                {items.length > 0 && pendingMoves.length === 0 && (
-                  <p className={styles.mvAllDone}>
-                    ✓ Everything for this morning is done. Nice work.
-                  </p>
-                )}
+                  {items.length === 0 && (
+                    <p className={`${styles.muted} ${styles.deckEmpty}`}>
+                      Nothing needs you right now — no aging commitments, no untriaged
+                      signals, no play waiting. Seed a signal from the{" "}
+                      <Link href="/accounts">Account Room</Link> or advance a loop on the{" "}
+                      <Link href="/">Dashboard</Link>.
+                    </p>
+                  )}
+                  {items.length > 0 && pendingMoves.length === 0 && (
+                    <p className={`${styles.mvAllDone} ${styles.deckEmpty}`}>
+                      ✓ Everything on deck is done. Nice work.
+                    </p>
+                  )}
 
-                {shownMoves.map((it, i) => (
-                  <MorningMove
-                    key={it.key}
-                    mv={it.mv}
-                    n={i + 1}
-                    doneKey={it.key}
-                    done={false}
-                    touch={it.touch}
-                  />
-                ))}
+                  {shownMoves.map((it, i) => (
+                    <MorningMove
+                      key={it.key}
+                      mv={it.mv}
+                      n={i + 1}
+                      doneKey={it.key}
+                      done={false}
+                      touch={it.touch}
+                    />
+                  ))}
 
-                {pendingMoves.length > shownMoves.length && (
-                  <p className={styles.muted}>
-                    + {pendingMoves.length - shownMoves.length} more to do — mark these
-                    done to reveal them.
-                  </p>
-                )}
+                  {pendingMoves.length > shownMoves.length && (
+                    <div className={styles.deckMoreNote}>
+                      + {pendingMoves.length - shownMoves.length} more queued — mark these
+                      done to reveal them.
+                    </div>
+                  )}
 
-                {(laterTriage.length > 0 || dash.status === "active") && (
-                  <div className={styles.mvThen}>
-                    <div className={styles.mvThenLab}>Then, if there&apos;s time</div>
-                    {laterTriage.map((a) => (
-                      <GuidedBlock
-                        key={a.id}
-                        title={`Decide on ${a.name}`}
-                        chips={
-                          <>
-                            <span className={`${styles.fit} ${fitClass(a.tier)}`}>
-                              demand {a.demand}
-                            </span>
-                            {!isStrongSignal(a) && (
-                              <span className={styles.emergingTag}>emerging</span>
-                            )}
-                            <PlayTag play={a.play} />
-                            <FunnelChip funnel={a.funnel} />
-                            <ValidationBadge v={a.validation} />
-                          </>
-                        }
-                        g={triageGuidance(a)}
-                        term={a.name}
-                        href={`/accounts?focus=${a.id}`}
-                      >
-                        <div className={styles.gActions}>
-                          <SeedForm a={a} onBoard={false} label="Seed to board" />
-                          <ParkControl id={a.id} />
-                        </div>
-                      </GuidedBlock>
-                    ))}
-                    <GuidedBlock
-                      title="Log a voice-of-the-base note"
-                      g={voiceOfBaseGuidance()}
-                      term=""
-                      href="#capture"
-                    >
-                      <div className={styles.gActions}>
-                        <Link href="#capture" className={styles.mvOpen}>
-                          Log it in Narrative ↓
-                        </Link>
+                  {(laterTriage.length > 0 || dash.status === "active") && (
+                    <>
+                      <div className={styles.deckGroupLab}>
+                        Then, if there&apos;s time
                       </div>
-                    </GuidedBlock>
-                  </div>
-                )}
+                      {laterTriage.map((a) => (
+                        <DeckRow
+                          key={a.id}
+                          num="·"
+                          kind="decide"
+                          phrase={
+                            <Emph
+                              text={`Decide on ${a.name} — seed it or park it`}
+                              term={a.name}
+                              href={`/accounts?focus=${a.id}`}
+                            />
+                          }
+                          meta={`demand ${a.demand ?? "—"}${!isStrongSignal(a) ? " · emerging" : ""}`}
+                          primaryLabel="Decide ▸"
+                        >
+                          <GuidanceBody
+                            g={triageGuidance(a)}
+                            term={a.name}
+                            href={`/accounts?focus=${a.id}`}
+                          >
+                            <div className={styles.gActions}>
+                              <SeedForm a={a} onBoard={false} label="Seed to board" />
+                              <ParkControl id={a.id} />
+                            </div>
+                          </GuidanceBody>
+                        </DeckRow>
+                      ))}
+                      <DeckRow
+                        num="·"
+                        kind="note"
+                        phrase="Log a voice-of-the-base note"
+                        primaryLabel="Open ▸"
+                      >
+                        <GuidanceBody g={voiceOfBaseGuidance()} term="" href="#capture">
+                          <div className={styles.gActions}>
+                            <Link href="#capture" className={styles.mvOpen}>
+                              Log it in Narrative ↓
+                            </Link>
+                          </div>
+                        </GuidanceBody>
+                      </DeckRow>
+                    </>
+                  )}
 
-                {doneMoves.length > 0 && (
-                  <details className={styles.mvDoneSection}>
-                    <summary>Done this morning ({doneMoves.length})</summary>
-                    {doneMoves.map((it) => (
-                      <MorningMove
-                        key={it.key}
-                        mv={it.mv}
-                        n={0}
-                        doneKey={it.key}
-                        done
-                        touch={it.touch}
-                      />
-                    ))}
-                  </details>
-                )}
+                  {doneMoves.length > 0 && (
+                    <>
+                      <div className={styles.deckGroupLab}>Done</div>
+                      {doneMoves.map((it) => (
+                        <MorningMove
+                          key={it.key}
+                          mv={it.mv}
+                          n={0}
+                          doneKey={it.key}
+                          done
+                          touch={it.touch}
+                        />
+                      ))}
+                    </>
+                  )}
+                </div>
               </div>
 
               {/* ── HCM funnel + look-into flag (context, below the moves) ──────── */}
