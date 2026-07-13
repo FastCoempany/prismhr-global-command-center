@@ -455,9 +455,12 @@ export async function createTodoNote(): Promise<{ id: string } | null> {
       orderBy: { position: "desc" },
       select: { position: true },
     });
-    const t = await prisma.todo.create({
-      data: { body: "", position: (top?.position ?? -1) + 1 },
-    });
+    const position = (top?.position ?? -1) + 1;
+    // Notes are auto-dated to today — 99% are about the day they're written.
+    // Column-safe: if remindAt isn't migrated yet, fall back to a bare create.
+    const t = await prisma.todo
+      .create({ data: { body: "", position, remindAt: new Date() } })
+      .catch(() => prisma.todo.create({ data: { body: "", position } }));
     return { id: t.id };
   } catch {
     return null;

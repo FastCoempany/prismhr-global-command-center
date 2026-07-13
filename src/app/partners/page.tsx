@@ -151,6 +151,8 @@ export default async function PartnersPage() {
           const key = partnerOutreachKey(partner);
           const t = touches.find((x) => x.subjectKey === key);
           const entries = timelineFor(partner, touches, partnerNotes.get(partner) ?? []);
+          const acctCount =
+            kickoff.find((k) => k.partner === partner)?.accounts.length ?? 0;
           return (
             <section
               key={partner}
@@ -159,7 +161,11 @@ export default async function PartnersPage() {
             >
               <div className={styles.prHead}>
                 <span className={styles.prName}>{partner}</span>
-                <span className={styles.prRole}>{partnerRole(partner)}</span>
+                <span className={styles.prRole}>
+                  {partnerRole(partner)} · {acctCount} account
+                  {acctCount === 1 ? "" : "s"} · {entries.length}{" "}
+                  {entries.length === 1 ? "entry" : "entries"}
+                </span>
                 <span className={styles.prNext}>
                   {t
                     ? t.status === "replied"

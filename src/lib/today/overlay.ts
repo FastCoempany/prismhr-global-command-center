@@ -242,6 +242,7 @@ export async function loadTodos(): Promise<Todo[]> {
       done: r.done,
       accountId: r.accountId ?? "",
       remindAt: r.remindAt ? r.remindAt.toISOString() : "",
+      createdAt: r.createdAt.toISOString(),
     }));
   } catch {
     try {
@@ -255,6 +256,7 @@ export async function loadTodos(): Promise<Todo[]> {
         done: r.done,
         accountId: "",
         remindAt: "",
+        createdAt: r.createdAt.toISOString(),
       }));
     } catch {
       return [];

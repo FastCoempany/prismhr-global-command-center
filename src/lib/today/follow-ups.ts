@@ -37,13 +37,16 @@ export type Touch = {
 };
 
 // A note / to-do (right-hand column beside Follow-ups). Optionally tied to an
-// account and given a date/time.
+// account. Every note carries a date: remindAt when set (new notes are
+// auto-dated at creation), with createdAt as the display fallback for older
+// notes that were never dated.
 export type Todo = {
   id: string;
   body: string;
   done: boolean;
   accountId: string; // "" = unlinked
-  remindAt: string; // ISO ("" = none)
+  remindAt: string; // ISO ("" = none — display falls back to createdAt)
+  createdAt: string; // ISO
 };
 
 // Stable, deterministic subject keys. The kickoff key carries the ISO week so the
