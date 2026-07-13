@@ -728,14 +728,33 @@ describe("partnerKickoff & partnerWeekMessage", () => {
     // Each account is its own bullet line...
     assert.match(msg, /• Infiniti HR — /);
     assert.match(msg, /• MAU — /);
-    // ...and the reason is thorough, not shorthand.
+    // ...and the reason names the incumbent and hunts the renewal window.
     assert.match(msg, /Globalization Partners/);
     assert.match(msg, /renewal/);
-    assert.match(msg, /Employer-of-Record/);
-    // Displacement is framed as consolidation onto the existing PrismHR platform,
-    // not a "win-back" (they've never left — we just don't hold their global layer).
-    assert.match(msg, /consolidate/);
+    // Displacement is framed as bringing the global layer home to the platform
+    // they already run, not a "win-back" (they've never left).
     assert.match(msg, /already run their domestic PEO on PrismHR/);
+  });
+
+  test("every template bullet is conversational and ends on a question", () => {
+    // Enough same-play accounts to exercise every variant of each template.
+    const gauges = Array.from({ length: 6 }, (_, i) =>
+      intel({ id: `q-g${i}`, name: `G${i}`, play: null }),
+    );
+    const greens = Array.from({ length: 4 }, (_, i) =>
+      intel({ id: `q-n${i}`, name: `N${i}`, play: "greenfield" }),
+    );
+    const disps = Array.from({ length: 4 }, (_, i) =>
+      intel({
+        id: `q-d${i}`,
+        name: `D${i}`,
+        play: "displacement",
+        competitors: ["Deel"],
+      }),
+    );
+    for (const b of roundupBullets([...gauges, ...greens, ...disps])) {
+      assert.ok(b.trim().endsWith("?"), `bullet should end with a question: ${b}`);
+    }
   });
 
   test("the message is exactly frame + bullets, so the client composer can rebuild it", () => {

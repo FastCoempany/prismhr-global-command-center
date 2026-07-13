@@ -567,31 +567,33 @@ export function partnerKickoff(
 // roundup that repeats the same paragraph four times reads like a mail merge.
 // Variant 0 is the canonical wording; the rest say the same thing differently,
 // and the rotation below guarantees no two bullets in one message ever match.
+// Every variant is conversational and ENDS ON A QUESTION — the bullet's job is
+// to make replying easy, not to lecture.
 const DISPLACEMENT_VARIANTS: ((competitor: string) => string)[] = [
   (c) =>
-    `They already run their domestic PEO on PrismHR but handle global hiring through ${c}, so the opening is to consolidate that global/EOR layer onto the PrismHR platform they already trust, rather than run it separately. I'd really value your read on how that relationship is going, and if you happen to know roughly when their contract comes up for renewal, that timing tells us whether it's worth opening a conversation soon or holding off.`,
+    `here's one that nags at me: they already run their domestic PEO on PrismHR, but their global hiring goes through ${c} — a layer that feels like it wants to come home. How's their relationship with ${c} these days, and do you happen to know when that contract comes up for renewal?`,
   (c) =>
-    `Their global layer currently runs through ${c} while everything domestic already sits on PrismHR — a split worth questioning. Any sense of how happy they are with that provider, or when the contract renews? On a switch, timing is most of the battle.`,
+    `their global work sits with ${c} while everything domestic already lives on PrismHR. If there's any friction over there — service, price, integration headaches — that's our opening. Heard anything lately?`,
   (c) =>
-    `${c} holds their global/EOR business today even though we're already their domestic platform. If you've heard any grumbling — service, price, integration pain — that's our opening; if they're happy, we wait for the renewal window. Either read helps me plan.`,
+    `${c} holds their global/EOR business even though we're already their platform for everything else. No urgency, but — who owns that vendor relationship on their side, and would they take a call?`,
   (c) =>
-    `Here the question isn't whether they hire globally — they do, through ${c} — it's whether they'd rather run it where the rest of their operation already lives. If you know who owns that vendor relationship on their side, that's the person I'd love to understand better.`,
+    `they're already hiring globally (through ${c}), so it's not an "if" question — it's whether they'd rather run it where the rest of their operation lives. Worth me poking at this, or is that relationship rock solid?`,
 ];
 
 const GREENFIELD_VARIANTS: string[] = [
-  `There's an early signal they're hiring across borders with no Employer-of-Record provider in place yet, which would make this a clean introduction rather than a switch. The clearest fit usually shows up where they're hiring in countries they don't have a legal entity, or converting contractors to employees — worth confirming whether either is happening here.`,
-  `Early signs of cross-border hiring with no EOR named anywhere I can find — meaning nobody to displace, just a first conversation to have. If you can confirm where they're hiring abroad (or whether contractors are involved), we'll know how real this is.`,
-  `The research shows international activity but no global-payroll provider attached to it — the best kind of opening: educate first, nothing to unseat. Your read on who's driving their international hiring would help me aim the conversation.`,
-  `They appear to be going international without a named global-employment partner yet. That window doesn't stay open long — once someone signs a Deel or a G-P, we're displacing instead of introducing. Even a rough "who should I talk to" from you moves this one.`,
+  `there's an early signal they're hiring across borders with no Employer-of-Record provider in place yet — which makes this a clean introduction, not a switch. Do you know where they're hiring abroad, or whether contractors are part of the picture?`,
+  `it looks like cross-border hiring is starting there and nobody's holding the global-payroll seat yet. Those windows close fast once someone signs a Deel or a G-P — who should I be talking to before that happens?`,
+  `the research shows international activity with no provider attached to it — my favorite kind of opening: educate first, nothing to unseat. Any idea who's driving their international hiring?`,
+  `they seem to be going international without a named global-employment partner. Even a rough read from you helps here — is this real enough that I should dig in?`,
 ];
 
 const GAUGE_VARIANTS: string[] = [
-  `No specific global-hiring signal has surfaced yet, but the account profile fits the kind of company that runs into cross-border needs. Worth a quick gauge of where they hire and how they pay international workers before we decide whether to work it or set it aside.`,
-  `Nothing in the research points at international hiring today — this one is purely a knowledge check. If you know whether anyone in their client base pays people outside the US (or has asked about it), that alone tells us whether to keep it on the radar.`,
-  `Quiet on the global front from everything I can see, so I'd rather borrow your context than guess: any chatter about overseas contractors, remote hires abroad, or clients expanding internationally? If not, I'll happily set it aside.`,
-  `I don't have a cross-border signal here yet — but profile-wise they're the type where one client with two contractors abroad turns into a real conversation. A one-word read from you (worth it / skip it) is plenty.`,
-  `This one's on the list for shape, not signal: companies like them tend to bump into international questions eventually. If you've never heard a whisper of it, that's a useful answer too — I'll park it and spend the time elsewhere.`,
-  `No research hit on global activity, so consider this a standing question rather than a pitch: next time you're with them, "do any of your clients have people overseas?" is the one thing I'd love to know.`,
+  `no specific global-hiring signal has surfaced yet, but the profile fits the kind of company that runs into cross-border needs. Quick gut check: do they hire or pay anyone outside the US?`,
+  `nothing in the research points international on this one — it's purely a knowledge check. Has anyone in their client base ever asked about paying people overseas?`,
+  `quiet on the global front from everything I can see, so I'd rather borrow your context than guess. Any chatter about overseas contractors or clients expanding abroad?`,
+  `no cross-border signal yet, but they're the type where one client with two contractors abroad turns into a real conversation. Your call — worth it, or skip it?`,
+  `this one made the list on shape, not signal — companies like them tend to bump into international questions sooner or later. Have you ever heard even a whisper of it from them?`,
+  `no research hit on global activity, so treat this as a standing question rather than a pitch. Next time you're with them, could you ask whether any of their clients have people overseas?`,
 ];
 
 // One roundup bullet for an account — the hand-written override when the thread
