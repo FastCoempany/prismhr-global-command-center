@@ -3636,14 +3636,16 @@
       "verified": true
     },
     "ADVOCATEPAY000001": {
-      "demandScore": 14,
-      "confidence": "medium",
+      "demandScore": 85,
+      "confidence": "high",
       "signals": [
-        "Advocate Pay is a Sarasota, FL provider offering a single integrated platform of payroll, HR, insurance & benefits, time tracking, and compliance for US SMBs — a domestic HCM/payroll positioning, with no international or cross-border service surfaced.",
-        "Across four independent web searches, no evidence of an Employer-of-Record (EOR), global-payroll, or international-hiring offering, and no association with any competitor EOR (Deel, Velocity Global, Papaya, Globalization Partners, etc.).",
-        "Small single-location provider (corporate office at 677 N. Washington Blvd Ste 10, Sarasota, FL); headcount and worksite-employee counts are not publicly disclosed, implying a modest book.",
-        "As with other domestic SMB payroll/HR firms in the base, latent international-contractor demand may sit in the client book, but there is no expressed demand or existing global capability on record.",
-        "New assignment routed via Eric Ronci (HCM enterprise sales); CEO contact is Bryce Rowley. No global-hiring signal yet — a gauge-and-see, not an active play."
+        "LIVE DEAL (first-party, in contracts + pricing stage): SubcontractorHub — Advocate Pay's client — is converting international workers via PrismHR Global EOR. Their roster is in hand (7/1, Jessica Brach, EVP Treasury): the Frontier group in Bulgaria is the primary W-2/EOR focus; the remaining international workers stay 1099 contractors.",
+        "PROPOSAL: EOR CORE tier (no recruiting/SOLVO components). Deposit on the EOR employees is WAIVED (Shane Jacobs, 7/7).",
+        "PRICING: sent to Bryce Rowley (Advocate Pay) 7/8 after the 7/6 forward of SubcontractorHub's roster. Awaiting client reaction.",
+        "CONTRACTS: sent 7/10 (Service-Provider-to-SMB template + PrismHR Global Terms) with the IP-protection walkthrough Renee Surratt asked for — Section 3(a)(v): all work product by assigned employees vests in the client, with an irrevocable-assignment backstop where local law doesn't auto-vest; Section 5: confidentiality survives 3 years (trade secrets as long as they qualify); Section 9: platform license doesn't touch ownership of anything the team creates.",
+        "7/13: confirmed to Bryce + Andy Aziz that the contracts are FINAL and client-shareable — SubcontractorHub can review them directly.",
+        "OWNERSHIP: Shane Jacobs is OOO 7/10–7/20 — I run point on the deal until he returns.",
+        "CONTACTS: Advocate Pay — Bryce Rowley (bryce@advocatepay.com), Andy Aziz. SubcontractorHub — Jessica Brach (EVP Treasury, 530.306.9778), Renee Surratt, Justin Brach, Nate Price."
       ],
       "evidence": [
         {
@@ -3655,8 +3657,9 @@
           "url": "https://www.zoominfo.com/pic/advocate-pay/1340851353"
         }
       ],
-      "summary": "Advocate Pay is a small Sarasota, FL payroll/HR/benefits provider on a single HCM platform, positioned for US-domestic SMBs. Across multiple searches there is no evidence of any international, global-payroll, or Employer-of-Record offering, and no incumbent competitor EOR — so researched global-hiring demand reads low and unproven (14/100, medium confidence). It's a new assignment routed through Eric Ronci with CEO Bryce Rowley as the contact; treat it as a gauge-and-see — confirm any cross-border footprint through the partner before working it.",
-      "researched": true
+      "summary": "Live, first-party EOR deal running through Advocate Pay for their client SubcontractorHub: the international roster is in hand (Bulgaria 'Frontier' group is the primary W-2/EOR conversion; the rest stay 1099), the proposal is EOR CORE with the deposit waived, pricing went to Bryce 7/8, and the contracts (final, client-shareable as of 7/13) went out 7/10 with the IP-protection walkthrough Renee requested. Shane Jacobs is OOO until 7/20, so I run point. Next: SubcontractorHub's reaction to pricing + contracts, then signature and Bulgaria onboarding.",
+      "researched": true,
+      "verified": true
     }
   }
 }
