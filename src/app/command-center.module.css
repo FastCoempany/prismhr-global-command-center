@@ -4251,6 +4251,65 @@
   cursor: pointer;
 }
 
+/* ── Aleks 1:1 room ─────────────────────────────────────────────────── */
+.aleksNotes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 10px 0 12px;
+}
+.aleksNote {
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--orange);
+  border-radius: 8px;
+  background: #fff;
+  padding: 8px 12px;
+}
+.aleksNoteBody {
+  font-size: 13px;
+  color: var(--navy);
+  font-weight: 600;
+}
+.aleksNoteAction {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 3px;
+}
+.aleksBrief {
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  background: var(--bg);
+  padding: 8px 12px;
+}
+.aleksBrief > summary {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  cursor: pointer;
+}
+.aleksBriefSec {
+  margin-top: 10px;
+}
+.aleksBriefTitle {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--navy);
+  margin-bottom: 3px;
+}
+.aleksBriefSec ul {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.aleksBriefSec li {
+  font-size: 12.5px;
+  color: var(--ink);
+}
+
 /* On deck — the This-morning rail. Same row idiom as the control rail: number,
    kind tag, phrase, one fact, ONE button; the full coaching expands beneath. */
 .deckNum {
