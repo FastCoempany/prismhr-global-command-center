@@ -8,13 +8,15 @@ import styles from "../command-center.module.css";
 // fact that matters, and ONE button. The full coaching (steps, the editable
 // message, park/seed) expands beneath on demand, so nothing stands tall.
 
-export type DeckKind = "send" | "decide" | "close" | "note";
+export type DeckKind = "send" | "decide" | "close" | "note" | "chase" | "reply";
 
 const KIND_CLS: Record<DeckKind, string> = {
   send: "deckSend",
   decide: "deckDecide",
   close: "deckClose",
   note: "deckNote",
+  chase: "deckChase",
+  reply: "deckReply",
 };
 
 export function DeckRow({
