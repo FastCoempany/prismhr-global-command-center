@@ -40,6 +40,34 @@ INSERT INTO "AccountNote" ("id", "accountId", "partner", "kind", "body", "create
 )
 ON CONFLICT ("id") DO NOTHING;
 
+-- Hatton's discovery answers (added 7/14 pm — safe to re-run the whole file).
+INSERT INTO "AccountNote" ("id", "accountId", "partner", "kind", "body", "createdAt") VALUES
+(
+  'esc-5-hatton-answers',
+  'MYESC000000000001',
+  'C. Hatton Humphrey (ESC)',
+  'partner',
+  'Discovery answers, same day: (1) yes — two independent client companies, both established to do business in Canada; (2) employees, with interest in understanding contractor capabilities; (3) Canada, specifically Ontario initially; (4) companies are active businesses in Canada — "We are not interested in EOR"; (5) ~300 headcount to start. Also specifically asked: additional platform, or functionality built into the current Prism platform?',
+  '2026-07-14 20:30:00'
+),
+(
+  'esc-6-pricing-gate',
+  'MYESC000000000001',
+  'C. Hatton Humphrey (ESC)',
+  'mine',
+  'Confirmed pure Global Payroll deal (own Canadian entities, no EOR). Holding my reply until Aleks confirms our Canada per-employee payroll pricing and that it''s Listo product pricing — Teams note sent 7/14. Her platform question (built-in vs separate) is the easy part of the reply.',
+  '2026-07-14 20:45:00'
+)
+ON CONFLICT ("id") DO NOTHING;
+
+-- Refresh the seeded ESC card with the confirmed scope (only touches the
+-- seeded card id, so a hand-made card is never overwritten).
+UPDATE "DashCard" SET
+  "notes" = '{"discovery":"CONFIRMED pure Global Payroll (7/14 answers): two ESC client companies, both active businesses in Canada with their own entities; ~300 employees in Ontario to start; employees (contractor curiosity secondary); explicitly not EOR. Hatton''s open question: built into Prism or separate platform (answer: built in). Reply gated on Canada payroll pricing — with Aleks."}'::jsonb,
+  "dealSize" = '2 ESC clients · Canada (Ontario) · ~300 EEs · pure Global Payroll',
+  "updatedAt" = NOW()
+WHERE "id" = 'seed-card-esc';
+
 -- ESC is in motion — the rail reads it as a live conversation, not a pending
 -- roundup. No-op if a disposition is already set.
 INSERT INTO "AccountDisposition" ("id", "accountId", "status", "reason", "createdAt", "updatedAt") VALUES
