@@ -3639,14 +3639,16 @@
       "verified": true
     },
     "MYESC000000000001": {
-      "demandScore": 70,
+      "demandScore": 85,
       "confidence": "high",
       "signals": [
         "FIRST-PARTY INBOUND (7/13, via CSM Lesha Cyphers): C. Hatton Humphrey (Director of Technology Solutions, Employer Services Corporation — ESC, myesc.com, Western NY) asked for a demo and conversation about the 'Global Payroll Platform PrismHR is rolling out.' Kim Bartolotti cc'd.",
         "CLIENT-DRIVEN: a couple of ESC's clients are interested, and Hatton needs to understand what's available. This is channel demand: ESC reselling/servicing Global for their client base, not (only) ESC's own workforce.",
-        "PRODUCT-CLARITY FLAG: 'Global Payroll Platform' is one of four products. Global Payroll = paying employees on the client's OWN foreign entities; if the clients' workers are abroad without entities, the real fit is EOR (or Contractor Solutions if 1099). Pre-call discovery (sent 7/14) asks exactly this before the demo.",
+        "PRODUCT CONFIRMED (7/14, same-day answers): true Global Payroll fit. Two independent ESC client companies, both active businesses in Canada with their own entities; workers paid as employees (secondary interest in understanding contractor capabilities); Ontario initially; ~300 employees to start. Hatton explicitly ruled out EOR.",
         "PROCESS PREFERENCE (Hatton, 7/14): she wants a phone call first for a general understanding, then a system demo for a larger ESC team. Her availability this week: Wed 8:30–10a / 11a–2p / 3–4p, Thu 11:30a–2p, Fri 8:30a–12p (EDT).",
-        "Lesha intro'd me as the Global SME 7/14 — thread is live and mine to run."
+        "Lesha intro'd me as the Global SME 7/14 — thread is live and mine to run.",
+        "OPEN FROM HATTON: is Global an additional platform or functionality built into the current Prism platform? (Answer: built in — a new tab, no integration work.)",
+        "INTERNAL BLOCKER (7/14): Global Payroll per-employee pricing for Canada unconfirmed — asked Aleks to confirm rates and that what we'd quote is Listo product pricing. Holding the reply to Hatton until pricing is in hand."
       ],
       "evidence": [
         {
@@ -3654,7 +3656,7 @@
           "url": "https://www.myesc.com/"
         }
       ],
-      "summary": "Live, first-party channel demand: ESC (Western NY PEO, Lesha's book) came inbound 7/13 asking for a demo of the Global Payroll Platform on behalf of a couple of interested clients of theirs. Hatton Humphrey (Dir. of Technology Solutions) wants a phone call first, then a team demo — she's offered windows Wed/Thu/Fri. Key open question shapes everything: whether the clients' international workers sit on their own foreign entities (true Global Payroll fit) or have no entities (EOR fit) or are contractors (Contractor Solutions) — the 7/14 pre-call discovery note asks exactly that so the first call and demo land on the right product.",
+      "summary": "Live, first-party channel demand — now a confirmed pure Global Payroll deal: ESC (Western NY PEO, Lesha's book) came inbound 7/13 for a demo on behalf of two client companies. Hatton's same-day discovery answers (7/14): both companies are active businesses in Canada with their own entities, ~300 employees in Ontario to start, paid as employees (contractor curiosity secondary), explicitly NOT interested in EOR. Her one platform question — additional platform or built into Prism — is our easiest answer (built in). Next step gated on internal pricing: Canada per-employee Global Payroll rates with Aleks before the reply, call, and team demo.",
       "researched": true,
       "verified": true
     }
