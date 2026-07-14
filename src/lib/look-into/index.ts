@@ -99,7 +99,7 @@ export const LOOK_INTO: LookIntoItem[] = [
     id: "partner-collateral",
     title: "Per-play collateral exists (loaded 7/14) — country price sheet still missing",
     why: "Marketing collateral landed 7/14 (release `prismmktgcollateral`): EOR, Contractor Solutions, and Talent flyers plus the “Expand Without Borders” deck — now the app's product canon (src/lib/collateral/canon.ts). The Global Payroll flyer dropped later the same day and is ingested into the canon (PHRFLY-GLOBALPYRLL — partner-shareable, service-provider framing, no pricing). What a partner still can't do without you in the room is quote: there's no shareable per-country price cheat sheet, and internal Global Payroll pricing itself is unconfirmed (asked Aleks 7/14, live blocker on the ESC deal).",
-    ask: "Get Global Payroll pricing confirmed with Aleks (Canada first — ESC needs it), then ask marketing for a partner-shareable per-country pricing one-pager, and confirm the flyers are approved for partners to forward to their clients.",
+    ask: "Global Payroll pricing model is confirmed (Aleks, 7/14): individually priced per country — quotes via Anthony Falzone (Head of Global Ops), copy Aleks; Canada quote for ESC requested 7/14. Remaining: a partner-shareable pricing explainer (even 'individually quoted per country' as a one-liner), and confirm the flyers are approved for partners to forward to their clients.",
     category: "Enablement",
     priority: "medium",
     surfacedIn: "Today · Arm the partners",

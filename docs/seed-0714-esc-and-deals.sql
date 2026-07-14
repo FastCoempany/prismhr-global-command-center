@@ -60,10 +60,31 @@ INSERT INTO "AccountNote" ("id", "accountId", "partner", "kind", "body", "create
 )
 ON CONFLICT ("id") DO NOTHING;
 
+-- Aleks' pricing answer + the Anthony outreach (added 7/14 eve — file stays
+-- safe to re-run).
+INSERT INTO "AccountNote" ("id", "accountId", "partner", "kind", "body", "createdAt") VALUES
+(
+  'esc-7-pricing-path',
+  'MYESC000000000001',
+  'Aleks',
+  'partner',
+  'Aleks on the pricing question: "please reach out to Anthony and copy me. These are going to be individually priced based on country was our agreement." So: no list rates — Global Payroll is individually priced per country, quotes via Anthony Falzone (Head of Global Ops).',
+  '2026-07-14 21:15:00'
+),
+(
+  'esc-8-anthony-ask',
+  'MYESC000000000001',
+  'C. Hatton Humphrey (ESC)',
+  'mine',
+  'Reached out to Anthony Falzone (copy Aleks) for the Canada quote: two ESC client companies, own entities, ~300 employees in Ontario to start, paid as employees. Reply to Hatton holds until the quote lands.',
+  '2026-07-14 21:30:00'
+)
+ON CONFLICT ("id") DO NOTHING;
+
 -- Refresh the seeded ESC card with the confirmed scope (only touches the
 -- seeded card id, so a hand-made card is never overwritten).
 UPDATE "DashCard" SET
-  "notes" = '{"discovery":"CONFIRMED pure Global Payroll (7/14 answers): two ESC client companies, both active businesses in Canada with their own entities; ~300 employees in Ontario to start; employees (contractor curiosity secondary); explicitly not EOR. Hatton''s open question: built into Prism or separate platform (answer: built in). Reply gated on Canada payroll pricing — with Aleks."}'::jsonb,
+  "notes" = '{"discovery":"CONFIRMED pure Global Payroll (7/14 answers): two ESC client companies, both active businesses in Canada with their own entities; ~300 employees in Ontario to start; employees (contractor curiosity secondary); explicitly not EOR. Hatton''s open question: built into Prism or separate platform (answer: built in). Pricing path per Aleks: individually priced per country, no list rates — Canada quote requested 7/14 from Anthony Falzone (Head of Global Ops, cc Aleks). Reply to Hatton holds until it lands."}'::jsonb,
   "dealSize" = '2 ESC clients · Canada (Ontario) · ~300 EEs · pure Global Payroll',
   "updatedAt" = NOW()
 WHERE "id" = 'seed-card-esc';
