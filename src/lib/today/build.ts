@@ -524,8 +524,8 @@ export const ROUNDUP_BULLETS: Record<string, string> = {
     "the Global Payroll Platform for a couple of interested client prospects, and you handed " +
     "him to me 7/14. I've sent a short pre-call discovery note (are the prospects' workers on " +
     "their own foreign entities, employees vs contractors, which countries) so his intro call " +
-    "and the ESC team demo land on the right product the first time. Nothing needed from you — " +
-    "will keep you looped as it firms up.",
+    "and the ESC team demo land on the right product the first time — holding the calendar " +
+    "until his answers come back. Nothing needed from you — will keep you looped as it firms up.",
   // XCEL HR — Anika's 7/13 read opened a live door; the bullet reads as taking
   // her up on the offer, not asking for a cold read.
   "001F000000w38GlIAI":
