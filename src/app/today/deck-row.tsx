@@ -44,7 +44,11 @@ export function DeckRow({
   return (
     <div className={styles.atcRowWrap}>
       <div className={styles.atcRow}>
-        <span className={styles.deckNum}>{num}</span>
+        <span
+          className={`${styles.deckNum} ${kind === "chase" ? styles.deckNumChase : ""}`}
+        >
+          {num}
+        </span>
         <span className={`${styles.deckKind} ${styles[KIND_CLS[kind]]}`}>{kind}</span>
         <span className={styles.atcPhrase}>{phrase}</span>
         {meta ? <span className={styles.deckMeta}>{meta}</span> : null}
