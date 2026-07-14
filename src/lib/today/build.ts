@@ -478,9 +478,10 @@ export type PartnerKickoff = { partner: string; role: string; accounts: AccountI
 // the card past the top-N (a 6th slot) rather than displacing an auto-pick, so
 // pinning never hides an account that earned its place on merit.
 export const ROUNDUP_PINS: Record<string, string[]> = {
-  // My HR Pros (formerly Southern Personnel Management) — an existing on-PrismHR
-  // Lesha account that scores just below her top-5 cutoff; pinned by owner request.
-  "Lesha Cyphers": ["001F000000w389qIAA"],
+  // My HR Pros (fka Southern Personnel Management) — pinned by owner request —
+  // and ESC, whose 7/13 inbound (Global Payroll demo for client prospects) is a
+  // live thread on Lesha's card.
+  "Lesha Cyphers": ["001F000000w389qIAA", "MYESC000000000001"],
   // XCEL HR — low web-signal score, but Anika opened a live door (7/13): they're
   // in new-product discussions post-LIVE and she can bring us onto the next call
   // with Bill. Relationship-led motion, so it stays on her card.
@@ -516,6 +517,15 @@ export const ROUNDUP_BULLETS: Record<string, string> = {
     "deposit waived, pricing went to Bryce 7/8, and the final client-shareable contracts went " +
     "out 7/10 with the IP-protection walkthrough Renee asked for. Shane's out until 7/20 so " +
     "I'm running point. Nothing needed from you — will flag if it stalls.",
+  // ESC — Hatton's inbound via Lesha; already in motion, so the bullet reads
+  // as shared status with a thank-you, not a request for a read.
+  MYESC000000000001:
+    "Already in motion (thanks for the intro!): Hatton at ESC came to you 7/13 asking about " +
+    "the Global Payroll Platform for a couple of interested client prospects, and you handed " +
+    "him to me 7/14. I've sent a short pre-call discovery note (are the prospects' workers on " +
+    "their own foreign entities, employees vs contractors, which countries) so his intro call " +
+    "and the ESC team demo land on the right product the first time. Nothing needed from you — " +
+    "will keep you looped as it firms up.",
   // XCEL HR — Anika's 7/13 read opened a live door; the bullet reads as taking
   // her up on the offer, not asking for a cold read.
   "001F000000w38GlIAI":

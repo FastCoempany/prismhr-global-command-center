@@ -3637,6 +3637,26 @@
       "summary": "Live, first-party EOR deal running through Advocate Pay for their client SubcontractorHub: the international roster is in hand (Bulgaria 'Frontier' group is the primary W-2/EOR conversion; the rest stay 1099), the proposal is EOR CORE with the deposit waived, pricing went to Bryce 7/8, and the contracts (final, client-shareable as of 7/13) went out 7/10 with the IP-protection walkthrough Renee requested. Shane Jacobs is OOO until 7/20, so I run point. Next: SubcontractorHub's reaction to pricing + contracts, then signature and Bulgaria onboarding — paced per Aleks (7/13): give it time while contracts are solidified on our side.",
       "researched": true,
       "verified": true
+    },
+    "MYESC000000000001": {
+      "demandScore": 70,
+      "confidence": "high",
+      "signals": [
+        "FIRST-PARTY INBOUND (7/13, via CSM Lesha Cyphers): C. Hatton Humphrey (Director of Technology Solutions, Employer Services Corporation — ESC, myesc.com, Western NY) asked for a demo and conversation about the 'Global Payroll Platform PrismHR is rolling out.' Kim Bartolotti cc'd.",
+        "CLIENT-DRIVEN: ESC has 'a couple of interested prospects' — client companies of theirs — and needs to understand what's available. This is channel demand: ESC reselling/servicing Global for their client base, not (only) ESC's own workforce.",
+        "PRODUCT-CLARITY FLAG: 'Global Payroll Platform' is one of four products. Global Payroll = paying employees on the client's OWN foreign entities; if the prospects' workers are abroad without entities, the real fit is EOR (or Contractor Solutions if 1099). Pre-call discovery (sent 7/14) asks exactly this before the demo.",
+        "PROCESS PREFERENCE (Hatton, 7/14): phone call first for a general understanding, then a system demo for a larger ESC team. Availability offered this week: Wed 8:30–10a / 11a–2p / 3–4p, Thu 11:30a–2p, Fri 8:30a–12p (EDT).",
+        "Lesha intro'd me as the Global SME 7/14 — thread is live and mine to run."
+      ],
+      "evidence": [
+        {
+          "claim": "Employer Services Corporation (ESC) is a Western New York PEO/HR-outsourcing provider (myesc.com); inbound thread originated from their Director of Technology Solutions.",
+          "url": "https://www.myesc.com/"
+        }
+      ],
+      "summary": "Live, first-party channel demand: ESC (Western NY PEO, Lesha's book) came inbound 7/13 asking for a demo of the Global Payroll Platform on behalf of 'a couple of interested prospects' in their client base. Hatton Humphrey (Dir. of Technology Solutions) wants a phone call first, then a team demo. Key open question shapes everything: whether the prospects' international workers sit on their own foreign entities (true Global Payroll fit) or have no entities (EOR fit) or are contractors (Contractor Solutions) — the 7/14 pre-call discovery note asks exactly that so the first call and demo land on the right product.",
+      "researched": true,
+      "verified": true
     }
   }
 }

@@ -6,6 +6,7 @@
 // clipboard and pasted into claude.ai (no API needed — your subscription does
 // the writing).
 
+import { canonForPrompt } from "@/lib/collateral/canon";
 import type { AccountIntel } from "@/lib/today/build";
 import type { Touch } from "@/lib/today/follow-ups";
 import type { AccountNote, PartnerNote } from "@/lib/today/overlay";
@@ -70,6 +71,11 @@ export function buildFollowUpPrompt(opts: {
   lines.push("");
   lines.push(`## Who I am / voice`);
   lines.push(VOICE);
+  lines.push("");
+  lines.push(
+    `## Product canon (from the released collateral — the only product claims allowed)`,
+  );
+  lines.push(canonForPrompt());
   lines.push("");
   lines.push(`## Recipient`);
   lines.push(`${recipient.name} — ${recipient.role}.`);
