@@ -161,6 +161,14 @@ export function groupUpcomingByDay(
   return [...groups.values()];
 }
 
+// Open notes carrying a future date — they join the cockpit's Scheduled list so
+// the calendar view is complete (check-ins + dated notes in one place).
+export function futureDatedTodos(todos: Todo[], now: number = Date.now()): Todo[] {
+  return todos
+    .filter((t) => !t.done && t.remindAt && Date.parse(t.remindAt) > now)
+    .sort((a, b) => Date.parse(a.remindAt) - Date.parse(b.remindAt));
+}
+
 // The ready-to-send follow-up nudge — a gentle "circling back," shaped by whether
 // the touch was a partner week-opener or a single-account outreach. Editable
 // before you send it.

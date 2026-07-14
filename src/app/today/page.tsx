@@ -15,10 +15,12 @@ import {
 } from "@/lib/today/overlay";
 import { DASH_NODES } from "@/lib/dashboard/stages";
 import { AccountChip } from "./account-chip";
-import { AtcRail, type RailItem } from "./atc-rail";
+import { AtcRow, CurveballButton, type RailItem } from "./atc-rail";
+import { CockpitDrawers } from "./cockpit-drawers";
 import { DeckRow, type DeckKind } from "./deck-row";
 import {
   followUpMessage,
+  futureDatedTodos,
   groupUpcomingByDay,
   isDue,
   outreachSubjectKey,
@@ -59,7 +61,6 @@ import { ALEKS_SESSIONS } from "@/lib/aleks/one-on-one";
 import { SfCheckpoint } from "@/components/sf";
 import { ContactControl, EditableMessage, NoteSubmit } from "../today-client";
 import { NotesPanel } from "../notes-client";
-import { TodayTabs } from "../today-tabs";
 import { addCard, toggleCheck } from "../dashboard/actions";
 import {
   addFieldNote,
@@ -143,12 +144,14 @@ function ParkControl({ id }: { id: string }) {
   );
 }
 
-// Kind-tag classes for On-deck rows (shared by DeckRow and the done rows here).
+// Kind-tag classes for Work-rail rows (shared by DeckRow and the done rows here).
 const DECK_KIND_CLS: Record<DeckKind, string> = {
   send: "deckSend",
   decide: "deckDecide",
   close: "deckClose",
   note: "deckNote",
+  chase: "deckChase",
+  reply: "deckReply",
 };
 
 // A move on the morning list: a commitment to close, an outreach to send, or a
@@ -711,6 +714,21 @@ export default async function TodayPage({
     .map((r) => r.item);
   const railDot = new Map(railItems.map((r) => [r.partner, r.dot]));
 
+  // Cockpit partitions of the thread rows. Threads that are DUE render as
+  // chase cards (from followUps.due, which also carries custom follow-ups),
+  // so the rail skips them here to keep exactly one home per object.
+  const dueKeys = new Set(followUps.due.map((t) => t.subjectKey));
+  const replyRows = railItems.filter((r) => r.status === "replied");
+  const freshRows = railItems.filter(
+    (r) => r.status === "none" || r.status === "archived",
+  );
+  const waitingRows = railItems.filter(
+    (r) =>
+      (r.status === "awaiting" || r.status === "responded") && !dueKeys.has(r.subjectKey),
+  );
+  // Open notes with a future date join the Scheduled list on the right.
+  const futureNotes = futureDatedTodos(todos);
+
   const sop = stateOfPlay({ cards: dash.cards, commitments, activeSignals, onBoard });
 
   // ── Compose "This morning": an ordered list of thoroughly-written moves. ──
@@ -771,688 +789,274 @@ export default async function TodayPage({
           <SfCheckpoint when="standing" strong />
         </div>
 
-        {/* ── Sections, tabbed to keep any one view short ────────────────── */}
-        <TodayTabs
-          followUpsDue={followUps.due.length}
-          notesCount={todos.length}
-          morning={
-            <>
-              {/* ── Partner outreach (standing roundup) ────────────────────────── */}
-              {kickoff.length > 0 && (
-                <section className={styles.kickoff}>
-                  <div
-                    className={styles.kickoffHead}
-                    title={`One roundup per partner — ${kickoffTotal} accounts teed up (each partner's top Global-fit). Edit, copy, send, mark contacted.`}
-                  >
-                    <span className={styles.kickoffTag}>Partner outreach</span>
-                    <h2 className={styles.kickoffTitle}>
-                      One roundup per partner — edit, copy, send, mark contacted
-                    </h2>
-                    <div className={styles.mvProgress}>
-                      <span className={styles.mvProgressBar}>
-                        <span
-                          className={styles.mvProgressFill}
-                          style={{
-                            width: `${Math.round((kickoffDoneCount / Math.max(1, kickoffItems.length)) * 100)}%`,
-                          }}
-                        />
-                      </span>
-                      <span className={styles.mvProgressText}>
-                        {kickoffDoneCount}/{kickoffItems.length} contacted
-                      </span>
-                    </div>
-                    <SfCheckpoint when="kickoff" strong />
-                  </div>
+        {/* ── The cockpit: no tabs. DO on the left, TRACK on the right, BRIEF
+               as a bar + drawers below. Every element of the old six tabs has
+               a home here — nothing was dropped. ─────────────────────────── */}
+        <div className={styles.cockpit}>
+          {/* ══ LEFT — DO: everything that needs you, in one rail ══ */}
+          <div className={styles.cockCol}>
+            <div className={styles.cockCap}>
+              <span>Do — everything that needs you</span>
+              <span className={styles.cockCapR}>
+                {doneMoves.length} of {items.length} moves done
+              </span>
+              <CurveballButton accounts={noteAccounts} />
+            </div>
+            <div className={styles.cockSub}>
+              Partner roundups: {kickoffDoneCount}/{kickoffItems.length} contacted — edit,
+              copy, send, mark contacted. <SfCheckpoint when="kickoff" strong />
+            </div>
 
-                  {/* The tower: work the rail top-to-bottom. Cards below are
-                      reference only (dot + name + chips + latest notes). */}
-                  <AtcRail items={railItems} accounts={noteAccounts} />
+            <div className={styles.atcRail}>
+              {/* Replies waiting on you — your move. */}
+              {replyRows.map((r) => (
+                <AtcRow key={r.subjectKey} it={r} />
+              ))}
 
-                  <div className={styles.atcRefGroup}>
-                    <div className={styles.atcHead}>
-                      Focus accounts — reference per partner
-                      <span className={styles.deckProg}>
-                        {kickoffTotal} accounts · {kickoffItems.length} partners
-                      </span>
-                    </div>
-                    <div className={styles.atcRefBody}>
-                      {kickoffItems.map(({ k }) => (
-                        <div key={k.partner} className={styles.kickoffPartner}>
-                          <div className={styles.kickoffPartnerHead}>
-                            <span
-                              className={styles.atcDot}
-                              style={{
-                                background:
-                                  railDot.get(k.partner) === "green"
-                                    ? "#22c55e"
-                                    : railDot.get(k.partner) === "orange"
-                                      ? "#e6701e"
-                                      : railDot.get(k.partner) === "grey"
-                                        ? "#cbd5e1"
-                                        : "#eab308",
-                              }}
-                            />
-                            <span className={styles.kickoffPartnerName}>{k.partner}</span>
-                            <span className={styles.kickoffPartnerRole}>{k.role}</span>
-                            <Link
-                              href={`/partners#${encodeURIComponent(k.partner)}`}
-                              className={styles.kickoffRoomLink}
-                              title="Every outreach and note for this partner, timestamped"
-                            >
-                              Partner room →
-                            </Link>
-                            {/* Chips flow inline on the name row (kickoffAccts is
-                            display:contents) — the row wraps as needed. */}
-                            <div className={styles.kickoffAccts}>
-                              {k.accounts.map((a) => {
-                                const dashCard = dash.cards.find(
-                                  (c) => !c.archived && c.name === a.name,
-                                );
-                                const lastNoteAt =
-                                  acctNotes.get(a.id)?.[0]?.createdAt ?? null;
-                                return (
-                                  <AccountChip
-                                    key={a.id}
-                                    account={{
-                                      id: a.id,
-                                      name: a.name,
-                                      score: a.score,
-                                      play: a.play,
-                                    }}
-                                    partner={k.partner}
-                                    tone={chipTone(lastNoteAt)}
-                                    lastNoteAt={lastNoteAt}
-                                    card={
-                                      dashCard
-                                        ? {
-                                            id: dashCard.id,
-                                            stages: DASH_NODES.map((n) => ({
-                                              key: n.key,
-                                              label: n.label,
-                                              state: dashCard.states[n.key] ?? "todo",
-                                            })),
-                                          }
-                                        : null
-                                    }
-                                    seedSubtitle={`${a.csm}${a.industry ? ` · ${a.industry}` : ""}`}
-                                    seedDiscovery={seedFor(a)}
-                                    disposition={dispositions.get(a.id) ?? null}
-                                  />
-                                );
-                              })}
-                            </div>
-                          </div>
-                          {(partnerNotes.get(k.partner) ?? []).length > 0 && (
-                            <ul className={styles.kickoffNotes}>
-                              {(partnerNotes.get(k.partner) ?? [])
-                                .slice(0, 3)
-                                .map((n) => (
-                                  <li key={n.id}>
-                                    <b>{shortDate(n.createdAt)}</b> — {n.body}
-                                  </li>
-                                ))}
-                              {(partnerNotes.get(k.partner) ?? []).length > 3 && (
-                                <li className={styles.kickoffNotesMore}>
-                                  <Link
-                                    href={`/partners#${encodeURIComponent(k.partner)}`}
-                                  >
-                                    +{(partnerNotes.get(k.partner) ?? []).length - 3} more
-                                    in the partner room
-                                  </Link>
-                                </li>
-                              )}
-                            </ul>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </section>
+              {/* Chases — check-ins that are DUE. The expansion is the full
+                  follow-up card: what you sent, the log, the ready nudge,
+                  delay, and log-what-happened. */}
+              {followUps.due.map((t) => (
+                <DeckRow
+                  key={t.subjectKey}
+                  num="!"
+                  kind="chase"
+                  phrase={t.kind === "custom" ? t.label : `Check-in due: ${t.label}`}
+                  meta={
+                    t.kind === "custom"
+                      ? `due ${shortDate(t.followUpAt)}`
+                      : `sent ${shortDate(t.contactedAt)} · due now`
+                  }
+                  primary={
+                    <form action={markReplied} className={styles.valInline}>
+                      <input type="hidden" name="subjectKey" value={t.subjectKey} />
+                      <button className={`${styles.atcBtn} ${styles.atcGo}`}>
+                        {t.kind === "custom" ? "Done ✓" : "They replied ✓"}
+                      </button>
+                    </form>
+                  }
+                  primaryLabel="Nudge ▸"
+                  primaryHot
+                >
+                  <FollowUpDue t={t} />
+                </DeckRow>
+              ))}
+
+              {/* Moves — send / decide / close, in order. */}
+              {shownMoves.map((it, i) => (
+                <MorningMove
+                  key={it.key}
+                  mv={it.mv}
+                  n={i + 1}
+                  doneKey={it.key}
+                  done={false}
+                  touch={it.touch}
+                />
+              ))}
+              {pendingMoves.length > shownMoves.length && (
+                <div className={styles.deckMoreNote}>
+                  + {pendingMoves.length - shownMoves.length} more queued — mark these
+                  done to reveal them.
+                </div>
               )}
 
-              {/* ── Right now (quiet status) ───────────────────────────────────── */}
-              <div className={styles.sop}>
-                <div className={styles.sopStats}>
-                  <span>
-                    <b>{sop.openLoops}</b> in flight
-                  </span>
-                  <span className={sop.commitmentsPastWindow > 0 ? styles.sopHot : ""}>
-                    <b>{sop.commitmentsPastWindow}</b> past window
-                  </span>
-                  <span>
-                    <b>{sop.untriaged}</b> to triage
-                  </span>
-                  <span>
-                    <b>{sop.moved}</b> moved this week
-                  </span>
-                </div>
-              </div>
+              {/* Fresh roundups — ready to send (or log activity if nothing
+                  is sendable). */}
+              {freshRows.map((r) => (
+                <AtcRow key={r.subjectKey} it={r} />
+              ))}
 
-              {/* ── On deck — your first moves, in order (rail rows; full
-                     coaching expands under each row) ──────────────────────── */}
-              <div className={styles.mvPanel}>
-                <div className={styles.atcRail}>
-                  <div className={styles.atcHead}>
-                    On deck — in order
-                    <span className={styles.deckProg}>
-                      {items.length
-                        ? `${doneMoves.length} of ${items.length} done`
-                        : "nothing pressing"}
-                    </span>
+              {items.length === 0 &&
+                followUps.due.length === 0 &&
+                replyRows.length === 0 &&
+                freshRows.length === 0 && (
+                  <p className={`${styles.muted} ${styles.deckEmpty}`}>
+                    Nothing needs you right now — no aging commitments, no untriaged
+                    signals, no play waiting. Seed a signal from the{" "}
+                    <Link href="/accounts">Account Room</Link> or advance a loop on the{" "}
+                    <Link href="/">Dashboard</Link>.
+                  </p>
+                )}
+              {items.length > 0 && pendingMoves.length === 0 && (
+                <p className={`${styles.mvAllDone} ${styles.deckEmpty}`}>
+                  ✓ Every move is done. Nice work.
+                </p>
+              )}
+
+              {/* Waiting on them — cadence armed, nothing to do. */}
+              {waitingRows.length > 0 && (
+                <>
+                  <div className={styles.deckGroupLab}>
+                    Waiting on them ({waitingRows.length})
                   </div>
+                  {waitingRows.map((r) => (
+                    <div className={styles.waitDim} key={r.subjectKey}>
+                      <AtcRow it={r} />
+                    </div>
+                  ))}
+                </>
+              )}
 
-                  {items.length === 0 && (
-                    <p className={`${styles.muted} ${styles.deckEmpty}`}>
-                      Nothing needs you right now — no aging commitments, no untriaged
-                      signals, no play waiting. Seed a signal from the{" "}
-                      <Link href="/accounts">Account Room</Link> or advance a loop on the{" "}
-                      <Link href="/">Dashboard</Link>.
-                    </p>
-                  )}
-                  {items.length > 0 && pendingMoves.length === 0 && (
-                    <p className={`${styles.mvAllDone} ${styles.deckEmpty}`}>
-                      ✓ Everything on deck is done. Nice work.
-                    </p>
-                  )}
+              {/* Then, if there's time. */}
+              {(laterTriage.length > 0 || dash.status === "active") && (
+                <>
+                  <div className={styles.deckGroupLab}>
+                    Then, if there&apos;s time (
+                    {laterTriage.length + (dash.status === "active" ? 1 : 0)})
+                  </div>
+                  {laterTriage.map((a) => (
+                    <DeckRow
+                      key={a.id}
+                      num="·"
+                      kind="decide"
+                      phrase={
+                        <Emph
+                          text={`Decide on ${a.name} — seed it or park it`}
+                          term={a.name}
+                          href={`/accounts?focus=${a.id}`}
+                        />
+                      }
+                      meta={`demand ${a.demand ?? "—"}${!isStrongSignal(a) ? " · emerging" : ""}`}
+                      primaryLabel="Decide ▸"
+                    >
+                      <GuidanceBody
+                        g={triageGuidance(a)}
+                        term={a.name}
+                        href={`/accounts?focus=${a.id}`}
+                      >
+                        <div className={styles.gActions}>
+                          <SeedForm a={a} onBoard={false} label="Seed to board" />
+                          <ParkControl id={a.id} />
+                        </div>
+                      </GuidanceBody>
+                    </DeckRow>
+                  ))}
+                  <DeckRow
+                    num="·"
+                    kind="note"
+                    phrase="Log a voice-of-the-base note"
+                    primaryLabel="Open ▸"
+                  >
+                    <GuidanceBody g={voiceOfBaseGuidance()} term="" href="#capture">
+                      <div className={styles.gActions}>
+                        <Link href="#capture" className={styles.mvOpen}>
+                          Log it in the capture box ↓
+                        </Link>
+                      </div>
+                    </GuidanceBody>
+                  </DeckRow>
+                </>
+              )}
 
-                  {shownMoves.map((it, i) => (
+              {/* Done today. */}
+              {doneMoves.length > 0 && (
+                <>
+                  <div className={styles.deckGroupLab}>Done ({doneMoves.length})</div>
+                  {doneMoves.map((it) => (
                     <MorningMove
                       key={it.key}
                       mv={it.mv}
-                      n={i + 1}
+                      n={0}
                       doneKey={it.key}
-                      done={false}
+                      done
                       touch={it.touch}
                     />
                   ))}
+                </>
+              )}
+            </div>
+          </div>
 
-                  {pendingMoves.length > shownMoves.length && (
-                    <div className={styles.deckMoreNote}>
-                      + {pendingMoves.length - shownMoves.length} more queued — mark these
-                      done to reveal them.
-                    </div>
-                  )}
-
-                  {(laterTriage.length > 0 || dash.status === "active") && (
-                    <>
-                      <div className={styles.deckGroupLab}>
-                        Then, if there&apos;s time (
-                        {laterTriage.length + (dash.status === "active" ? 1 : 0)})
-                      </div>
-                      {laterTriage.map((a) => (
-                        <DeckRow
-                          key={a.id}
-                          num="·"
-                          kind="decide"
-                          phrase={
-                            <Emph
-                              text={`Decide on ${a.name} — seed it or park it`}
-                              term={a.name}
-                              href={`/accounts?focus=${a.id}`}
-                            />
-                          }
-                          meta={`demand ${a.demand ?? "—"}${!isStrongSignal(a) ? " · emerging" : ""}`}
-                          primaryLabel="Decide ▸"
-                        >
-                          <GuidanceBody
-                            g={triageGuidance(a)}
-                            term={a.name}
-                            href={`/accounts?focus=${a.id}`}
-                          >
-                            <div className={styles.gActions}>
-                              <SeedForm a={a} onBoard={false} label="Seed to board" />
-                              <ParkControl id={a.id} />
-                            </div>
-                          </GuidanceBody>
-                        </DeckRow>
-                      ))}
-                      <DeckRow
-                        num="·"
-                        kind="note"
-                        phrase="Log a voice-of-the-base note"
-                        primaryLabel="Open ▸"
-                      >
-                        <GuidanceBody g={voiceOfBaseGuidance()} term="" href="#capture">
-                          <div className={styles.gActions}>
-                            <Link href="#capture" className={styles.mvOpen}>
-                              Log it in Narrative ↓
-                            </Link>
-                          </div>
-                        </GuidanceBody>
-                      </DeckRow>
-                    </>
-                  )}
-
-                  {doneMoves.length > 0 && (
-                    <>
-                      <div className={styles.deckGroupLab}>Done ({doneMoves.length})</div>
-                      {doneMoves.map((it) => (
-                        <MorningMove
-                          key={it.key}
-                          mv={it.mv}
-                          n={0}
-                          doneKey={it.key}
-                          done
-                          touch={it.touch}
-                        />
-                      ))}
-                    </>
-                  )}
-                </div>
+          {/* ══ RIGHT — TRACK: the future, the notes, the reference ══ */}
+          <div className={styles.cockColR}>
+            {/* Scheduled — upcoming check-ins + future-dated notes. Nothing
+                here is ever due: due things are chases on the left. */}
+            <div className={styles.cockSect}>
+              <div className={styles.cockCap}>
+                Scheduled
+                <span className={styles.cockCapR}>
+                  {followUps.upcoming.length} check-in
+                  {followUps.upcoming.length === 1 ? "" : "s"}
+                  {futureNotes.length > 0 ? ` · ${futureNotes.length} dated notes` : ""}
+                </span>
               </div>
-
-              {/* ── HCM funnel + look-into flag (context, below the moves) ──────── */}
-              {hcm.length > 0 && (
-                <div className={styles.hcmStrip}>
-                  <span className={styles.hcmLabel}>
-                    HCM funnel ({hcmAll.length}) — top {hcm.length}, routes to you
-                    directly:
-                  </span>
-                  {hcm.map((a) => (
-                    <Link
-                      key={a.id}
-                      href={`/accounts?focus=${a.id}`}
-                      className={styles.hcmChip}
-                    >
-                      {a.name} <b>{a.score}</b> · {a.csm}
-                    </Link>
-                  ))}
-                </div>
-              )}
-
-              {parked.length > 0 && (
-                <details className={styles.parkedList}>
-                  <summary>Parked signals ({parked.length})</summary>
-                  {parked.map(({ intel: a, snooze }) => (
-                    <div key={a.id} className={styles.parkedRow}>
-                      <Link href={`/accounts?focus=${a.id}`}>{a.name}</Link>
-                      <span className={styles.parkedReason}>
-                        “{snooze.reason}”
-                        {snooze.snoozedUntil
-                          ? ` · back ${snooze.snoozedUntil.slice(0, 10)}`
-                          : " · until un-parked"}
-                      </span>
-                      <form action={unsnoozeSignal} className={styles.noteResolve}>
-                        <input type="hidden" name="accountId" value={a.id} />
-                        <button className={styles.noteResolveBtn}>Un-park</button>
-                      </form>
-                    </div>
-                  ))}
-                </details>
-              )}
-            </>
-          }
-          aleks={
-            <>
-              {/* ── The Aleks 1:1 room — session records: call notes + the brief
-                     that was carried in. Newest session first. ─────────────── */}
-              {ALEKS_SESSIONS.map((s) => (
-                <section key={s.date} className={styles.prCard}>
-                  <div className={styles.pageHead}>
-                    <h2 className={styles.h2}>1:1 with Aleks — {s.label}</h2>
-                    <p className={styles.sub}>
-                      Call notes with what each changes, then the brief as carried in.
-                    </p>
-                  </div>
-
-                  <div className={styles.aleksNotes}>
-                    {s.callNotes.map((n, i) => (
-                      <div key={i} className={styles.aleksNote}>
-                        <div className={styles.aleksNoteBody}>{n.note}</div>
-                        {n.action && (
-                          <div className={styles.aleksNoteAction}>→ {n.action}</div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-
-                  <details className={styles.aleksBrief}>
-                    <summary>The brief I brought in</summary>
-                    {s.brief.map((sec) => (
-                      <div key={sec.title} className={styles.aleksBriefSec}>
-                        <div className={styles.aleksBriefTitle}>{sec.title}</div>
-                        <ul>
-                          {sec.bullets.map((b, i) => (
-                            <li key={i}>{b}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    ))}
-                  </details>
-                </section>
-              ))}
-            </>
-          }
-          narrative={
-            <>
-              {/* ── Band 4 · Narrative forming ─────────────────────────────────── */}
-              <section className={styles.band}>
-                <div className={styles.bandHead}>
-                  <span className={styles.bandNum}>4</span>
-                  <div>
-                    <h2 className={styles.bandTitle}>Narrative forming</h2>
-                    <p className={styles.bandSub}>
-                      Voice of the base — the honest pattern in the data, and the line
-                      it&apos;s accruing toward your 1:1 with Aleks.
-                    </p>
-                  </div>
-                </div>
-                <div className={styles.bandBody}>
-                  <div className={styles.statRow}>
-                    <Stat
-                      n={`${nar.researched}/${nar.total}`}
-                      label="accounts researched"
-                    />
-                    <Stat n={nar.strongDemand} label="strong demand" />
-                    <Stat n={nar.emerging} label="emerging / hedged" />
-                    <Stat
-                      n={`${nar.displacement}/${nar.greenfield}`}
-                      label="displace / greenfield"
-                    />
-                    <Stat n={movedThisWeek(dash.cards)} label="moved this week" />
-                  </div>
-
-                  {nar.topCountries.length > 0 && (
-                    <div className={styles.narLine}>
-                      <span className={styles.narLabel}>Where the base points:</span>
-                      <div className={styles.countries}>
-                        {nar.topCountries.map((c) => (
-                          <span key={c.name} className={styles.countryChip}>
-                            {c.name} <b>{c.count}</b>
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className={styles.narGuides}>
-                    <GuidedBlock
-                      title="Carry this into the Aleks 1:1"
-                      g={aleksLineGuidance(nar, move)}
-                      term={move?.name ?? ""}
-                      href={move ? `/accounts?focus=${move.id}` : "#"}
-                    />
-                    <GuidedBlock
-                      title="Arm the partners"
-                      g={armPartnersGuidance(nar)}
-                      term=""
-                      href="#capture"
-                    >
-                      <div className={styles.gActions}>
-                        <Link href="#capture" className={styles.mvOpen}>
-                          Log a gap in the capture box ↓
-                        </Link>
-                      </div>
-                    </GuidedBlock>
-                  </div>
-                </div>
-              </section>
-
-              {/* ── Voice of the base & enablement gaps (capture) ──────────────── */}
-              <h2 id="capture" className={styles.h2}>
-                Voice of the base &amp; enablement gaps
-              </h2>
-              <p className={styles.sub}>
-                The running list you carry into the Aleks 1:1 and to marketing — what the
-                base keeps asking for, what&apos;s missing to arm partners, and what you
-                need from the org. Resolve an item once you&apos;ve raised it.
-              </p>
-              <div className={styles.notesWrap}>
-                {!notes.available && (
-                  <p className={styles.muted}>
-                    Capture isn&apos;t connected yet — run{" "}
-                    <code>docs/dashboard-tables.sql</code> in Supabase to start logging.
+              <div className={styles.atcRail}>
+                {followUps.upcoming.length === 0 && futureNotes.length === 0 && (
+                  <p className={`${styles.muted} ${styles.deckEmpty}`}>
+                    Nothing scheduled — log an outreach or add a check-in below.
                   </p>
                 )}
-                {notes.available && (
-                  <>
-                    <form action={addFieldNote} className={styles.noteForm}>
-                      <select name="kind" aria-label="Note kind" defaultValue="gap">
-                        {FIELD_NOTE_KINDS.map((k) => (
-                          <option key={k.key} value={k.key}>
-                            {k.label}
-                          </option>
-                        ))}
-                      </select>
-                      <input
-                        name="body"
-                        required
-                        maxLength={2000}
-                        placeholder="e.g. 3rd account this month asking about contractor conversion — need a one-pager"
-                        aria-label="Note body"
-                      />
-                      <NoteSubmit />
-                    </form>
-
-                    {notes.notes.length === 0 ? (
-                      <p className={styles.muted}>Nothing logged yet.</p>
-                    ) : (
-                      <div className={styles.noteList}>
-                        {notes.notes.map((n) => {
-                          const meta = FIELD_NOTE_KINDS.find((k) => k.key === n.kind);
-                          return (
-                            <div key={n.id} className={styles.noteItem}>
-                              <span
-                                className={`${styles.noteKind} ${styles[`kind_${n.kind}`] ?? ""}`}
-                              >
-                                {meta?.label ?? n.kind}
-                              </span>
-                              <span className={styles.noteBody}>{n.body}</span>
-                              <form
-                                action={resolveFieldNote}
-                                className={styles.noteResolve}
-                              >
-                                <input type="hidden" name="id" value={n.id} />
-                                <button
-                                  className={styles.noteResolveBtn}
-                                  aria-label="Resolve note"
-                                >
-                                  Resolve
-                                </button>
-                              </form>
-                            </div>
-                          );
-                        })}
+                {groupUpcomingByDay(followUps.upcoming).map((g) => (
+                  <div key={g.key}>
+                    <div className={styles.deckGroupLab}>
+                      {g.label} ({g.items.length})
+                    </div>
+                    {g.items.map((t) => (
+                      <div className={styles.next48row} key={t.subjectKey}>
+                        <span className={styles.next48body}>
+                          <b>{t.label}</b>
+                          {t.detail ? ` · ${t.detail}` : ""}
+                          <span className={styles.next48when}>
+                            {" "}
+                            — {shortDate(t.followUpAt)}
+                          </span>
+                        </span>
+                        <form action={markReplied} className={styles.valInline}>
+                          <input type="hidden" name="subjectKey" value={t.subjectKey} />
+                          <button
+                            className={styles.fuUpDone}
+                            title="Close it — already done"
+                          >
+                            Done ✓
+                          </button>
+                        </form>
+                        <form action={bringFollowUpDue} className={styles.valInline}>
+                          <input type="hidden" name="subjectKey" value={t.subjectKey} />
+                          <button
+                            className={styles.fuUpBtn}
+                            title="Bring the check-in to today"
+                          >
+                            ↑ Now
+                          </button>
+                        </form>
+                        <form action={deleteTouch} className={styles.valInline}>
+                          <input type="hidden" name="subjectKey" value={t.subjectKey} />
+                          <button
+                            className={styles.fuUpDel}
+                            title="Remove this follow-up"
+                          >
+                            ✕
+                          </button>
+                        </form>
                       </div>
-                    )}
+                    ))}
+                  </div>
+                ))}
+                {futureNotes.length > 0 && (
+                  <>
+                    <div className={styles.deckGroupLab}>
+                      Dated notes ({futureNotes.length})
+                    </div>
+                    {futureNotes.map((n) => (
+                      <div className={styles.next48row} key={n.id}>
+                        <span className={styles.next48body}>
+                          📝 {n.body.trim().slice(0, 90) || "(empty note)"}
+                          <span className={styles.next48when}>
+                            {" "}
+                            — {shortDate(n.remindAt)}
+                          </span>
+                        </span>
+                      </div>
+                    ))}
                   </>
                 )}
               </div>
-            </>
-          }
-          plan={
-            <>
-              {/* ── The daily loop ─────────────────────────────────────────────── */}
-              <h2 className={styles.h2}>The three questions I run every day</h2>
-              <div className={styles.cards}>
-                <div className={styles.card}>
-                  <h3>1 · What changed in the base?</h3>
-                  <p className={styles.muted}>
-                    New global-hiring evidence, a partner flag, an inbound. <b>Read</b>{" "}
-                    the signal before anything else — Band 1 is the answer.
-                  </p>
-                </div>
-                <div className={styles.card}>
-                  <h3>2 · What do I owe, and who do I clear?</h3>
-                  <p className={styles.muted}>
-                    <b>Route</b> through the partner. Clear the commitments in Band 2, and
-                    never jump a client before the CSM has cleared them.
-                  </p>
-                </div>
-                <div className={styles.card}>
-                  <h3>3 · What language drums up the intent?</h3>
-                  <p className={styles.muted}>
-                    The partner question: what do I say to{" "}
-                    <b>gauge, drum up, or campaign</b> a client&apos;s interest in Global?{" "}
-                    <b>Record</b> the answer on the Dashboard node.
-                  </p>
-                </div>
-              </div>
-
-              {/* ── 30 / 60 / 90 ───────────────────────────────────────────────── */}
-              <h2 className={styles.h2}>
-                30 / 60 / 90 — first-ever 1:1 with Aleks is Monday
-              </h2>
-              <div className={styles.plan}>
-                <div className={styles.planCol}>
-                  <div className={styles.planNum}>First 30</div>
-                  <div className={styles.planTheme}>
-                    Learn the base · arm the partners
-                  </div>
-                  <ul>
-                    <li>
-                      Build out the Account Room — my private targeting intel on the whole
-                      base.
-                    </li>
-                    <li>
-                      Sit with each partner — start with Eric — and map their books to
-                      Global fit.
-                    </li>
-                    <li>Take the first enablement-gap list to Aleks + marketing.</li>
-                    <li>Land the first 2–3 partner-cleared discovery calls.</li>
-                  </ul>
-                </div>
-                <div className={styles.planCol}>
-                  <div className={styles.planNum}>By 60</div>
-                  <div className={styles.planTheme}>Convert signal to pipeline</div>
-                  <ul>
-                    <li>
-                      A handful of qualified Global opportunities in flight on the
-                      Dashboard.
-                    </li>
-                    <li>
-                      First tailored demos delivered — countries and worker types matched.
-                    </li>
-                    <li>
-                      A repeatable partner-brief motion (the same three questions every
-                      time).
-                    </li>
-                    <li>First “voice of the base” note to marketing.</li>
-                  </ul>
-                </div>
-                <div className={styles.planCol}>
-                  <div className={styles.planNum}>By 90</div>
-                  <div className={styles.planTheme}>Prove the motion</div>
-                  <ul>
-                    <li>First Global close or a deal in late-stage decision.</li>
-                    <li>
-                      A documented displacement + greenfield play I can hand any partner.
-                    </li>
-                    <li>A standing lunch-and-learn / SME webinar cadence.</li>
-                    <li>A weekly base-signal digest that Aleks can carry upward.</li>
-                  </ul>
-                </div>
-              </div>
-
-              {/* ── Weekly 1:1 agenda ──────────────────────────────────────────── */}
-              <h2 className={styles.h2}>Weekly 1:1 with Aleks — standing agenda</h2>
-              <div className={styles.agenda}>
-                <ol>
-                  <li>
-                    <b>Base-expansion pipeline</b> — what moved this week, what&apos;s
-                    next, where it&apos;s stuck.
-                  </li>
-                  <li>
-                    <b>Partner health</b> — who&apos;s engaged (Eric, the CSMs),
-                    who&apos;s cold, where I need her air cover.
-                  </li>
-                  <li>
-                    <b>Market signal</b> — the one thing the base is telling us (voice of
-                    the base, above).
-                  </li>
-                  <li>
-                    <b>Asks / air cover</b> — what I need from her or marketing to arm
-                    partners.
-                  </li>
-                  <li>
-                    <b>Enablement gaps</b> — what we have, what we don&apos;t, what we
-                    need to sell Global.
-                  </li>
-                  <li>
-                    <b>The narrative up</b> — the one line she carries to her leadership.
-                  </li>
-                </ol>
-                <p className={styles.muted}>
-                  PEPM = per employee, per month — the unit EOR and global payroll price
-                  on. Keep the deal math in those terms when you brief her.
-                </p>
-              </div>
-            </>
-          }
-          followups={
-            <div className={`${styles.fuCol} ${styles.fuColFollow}`}>
-              <div className={styles.fuBandHead}>
-                <span className={styles.fuTag}>Follow-ups</span>
-                <h2 className={styles.fuTitle}>
-                  {followUps.due.length > 0
-                    ? `${followUps.due.length} due`
-                    : "Nothing due right now"}
-                </h2>
-                <p className={styles.fuSub}>
-                  Check-ins land later today or tomorrow — never weekends — and surface
-                  until closed.
-                </p>
-              </div>
-              {followUps.due.map((t) => (
-                <FollowUpDue key={t.subjectKey} t={t} />
-              ))}
-              {groupUpcomingByDay(followUps.upcoming).map((g) => (
-                <details key={g.key} className={styles.fuDayGroup} open>
-                  <summary className={styles.fuDayHead}>
-                    {g.label}
-                    <span className={styles.fuDayCount}>{g.items.length}</span>
-                  </summary>
-                  <ul className={styles.fuUpcomingList}>
-                    {g.items.map((t) => (
-                      <li key={t.subjectKey}>
-                        <span className={styles.fuUpWho}>{t.label}</span>
-                        {t.detail ? (
-                          <span className={styles.fuUpDetail}> · {t.detail}</span>
-                        ) : null}
-                        <span className={styles.fuUpWhen}>
-                          {" "}
-                          — {shortDate(t.followUpAt)}
-                        </span>
-                        <span className={styles.fuUpActions}>
-                          <form action={markReplied} className={styles.valInline}>
-                            <input type="hidden" name="subjectKey" value={t.subjectKey} />
-                            <button
-                              className={styles.fuUpDone}
-                              title="Close it — already done"
-                            >
-                              Done ✓
-                            </button>
-                          </form>
-                          <form action={bringFollowUpDue} className={styles.valInline}>
-                            <input type="hidden" name="subjectKey" value={t.subjectKey} />
-                            <button
-                              className={styles.fuUpBtn}
-                              title="Bring the check-in to today"
-                            >
-                              Do now
-                            </button>
-                          </form>
-                          <form action={deleteTouch} className={styles.valInline}>
-                            <input type="hidden" name="subjectKey" value={t.subjectKey} />
-                            <button
-                              className={styles.fuUpDel}
-                              title="Remove this follow-up"
-                            >
-                              Delete
-                            </button>
-                          </form>
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </details>
-              ))}
               <form action={addFollowUp} className={styles.fuAdd}>
                 <input
                   name="label"
                   required
                   maxLength={200}
-                  placeholder="Add your own follow-up (who / what)…"
+                  placeholder="Add your own check-in (who / what)…"
                   aria-label="Add a follow-up"
                 />
                 <select name="when" defaultValue="tomorrow" aria-label="When">
@@ -1462,10 +1066,10 @@ export default async function TodayPage({
                 <button className={styles.fuAddBtn}>Add</button>
               </form>
               {followUps.replied.length > 0 && (
-                <div className={styles.fuDone}>
-                  <div className={styles.fuDoneHead}>
-                    Done ({followUps.replied.length})
-                  </div>
+                <details className={styles.fuDone}>
+                  <summary className={styles.fuDoneHead}>
+                    Done ({followUps.replied.length}) — reopen or clear
+                  </summary>
                   <ul className={styles.fuDoneList}>
                     {followUps.replied.map((t) => (
                       <li key={t.subjectKey}>
@@ -1497,24 +1101,509 @@ export default async function TodayPage({
                       </li>
                     ))}
                   </ul>
-                </div>
+                </details>
               )}
             </div>
-          }
-          notes={
-            <div className={`${styles.fuCol} ${styles.fuColTodo}`}>
-              <div className={styles.fuBandHead}>
-                <span className={styles.todoTag}>Notes &amp; to-dos</span>
-                <h2 className={styles.fuTitle}>Notetaker</h2>
-                <p className={styles.fuSub}>
-                  Live notes — autosaved as you type (browser + database). Link an
-                  account, set a date, select any notes and copy them out.
-                </p>
+
+            {/* Notetaker — live notes, autosaved (browser + database). Link an
+                account, set a date, select any notes and copy them out. */}
+            <div className={styles.cockSect}>
+              <div className={styles.cockCap}>
+                Notetaker
+                <span className={styles.cockCapR}>autosaved as you type</span>
               </div>
               <NotesPanel initialNotes={todos} accounts={noteAccounts} />
             </div>
-          }
-        />
+
+            {/* Focus accounts — reference per partner (chips + notes strips). */}
+            {kickoff.length > 0 && (
+              <div className={styles.cockSect}>
+                <div className={styles.cockCap}>
+                  Focus accounts
+                  <span className={styles.cockCapR}>
+                    {kickoffTotal} accounts · {kickoffItems.length} partners
+                  </span>
+                </div>
+                <div className={styles.atcRefGroup}>
+                  <div className={styles.atcRefBody}>
+                    {kickoffItems.map(({ k }) => (
+                      <div key={k.partner} className={styles.kickoffPartner}>
+                        <div className={styles.kickoffPartnerHead}>
+                          <span
+                            className={styles.atcDot}
+                            style={{
+                              background:
+                                railDot.get(k.partner) === "green"
+                                  ? "#22c55e"
+                                  : railDot.get(k.partner) === "orange"
+                                    ? "#e6701e"
+                                    : railDot.get(k.partner) === "grey"
+                                      ? "#cbd5e1"
+                                      : "#eab308",
+                            }}
+                          />
+                          <span className={styles.kickoffPartnerName}>{k.partner}</span>
+                          <span className={styles.kickoffPartnerRole}>{k.role}</span>
+                          <Link
+                            href={`/partners#${encodeURIComponent(k.partner)}`}
+                            className={styles.kickoffRoomLink}
+                            title="Every outreach and note for this partner, timestamped"
+                          >
+                            Partner room →
+                          </Link>
+                          <div className={styles.kickoffAccts}>
+                            {k.accounts.map((a) => {
+                              const dashCard = dash.cards.find(
+                                (c) => !c.archived && c.name === a.name,
+                              );
+                              const lastNoteAt =
+                                acctNotes.get(a.id)?.[0]?.createdAt ?? null;
+                              return (
+                                <AccountChip
+                                  key={a.id}
+                                  account={{
+                                    id: a.id,
+                                    name: a.name,
+                                    score: a.score,
+                                    play: a.play,
+                                  }}
+                                  partner={k.partner}
+                                  tone={chipTone(lastNoteAt)}
+                                  lastNoteAt={lastNoteAt}
+                                  card={
+                                    dashCard
+                                      ? {
+                                          id: dashCard.id,
+                                          stages: DASH_NODES.map((n) => ({
+                                            key: n.key,
+                                            label: n.label,
+                                            state: dashCard.states[n.key] ?? "todo",
+                                          })),
+                                        }
+                                      : null
+                                  }
+                                  seedSubtitle={`${a.csm}${a.industry ? ` · ${a.industry}` : ""}`}
+                                  seedDiscovery={seedFor(a)}
+                                  disposition={dispositions.get(a.id) ?? null}
+                                />
+                              );
+                            })}
+                          </div>
+                        </div>
+                        {(partnerNotes.get(k.partner) ?? []).length > 0 && (
+                          <ul className={styles.kickoffNotes}>
+                            {(partnerNotes.get(k.partner) ?? []).slice(0, 3).map((n) => (
+                              <li key={n.id}>
+                                <b>{shortDate(n.createdAt)}</b> — {n.body}
+                              </li>
+                            ))}
+                            {(partnerNotes.get(k.partner) ?? []).length > 3 && (
+                              <li className={styles.kickoffNotesMore}>
+                                <Link href={`/partners#${encodeURIComponent(k.partner)}`}>
+                                  +{(partnerNotes.get(k.partner) ?? []).length - 3} more
+                                  in the partner room
+                                </Link>
+                              </li>
+                            )}
+                          </ul>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* ══ BRIEF — the bar + drawers (full width) ══ */}
+          <div className={styles.cockWide}>
+            <CockpitDrawers
+              stats={
+                <>
+                  <span className={styles.bnum}>
+                    <b>{sop.openLoops}</b>in flight
+                  </span>
+                  <span
+                    className={
+                      sop.commitmentsPastWindow > 0 ? styles.bnumHot : styles.bnum
+                    }
+                  >
+                    <b>{sop.commitmentsPastWindow}</b>past window
+                  </span>
+                  <span className={styles.bnum}>
+                    <b>{sop.untriaged}</b>to triage
+                  </span>
+                  <span className={styles.bnum}>
+                    <b>{sop.moved}</b>moved this wk
+                  </span>
+                  <span className={styles.briefSep} />
+                  <span className={styles.bnum}>
+                    <b>
+                      {nar.researched}/{nar.total}
+                    </b>
+                    researched
+                  </span>
+                  <span className={styles.bnum}>
+                    <b>{nar.strongDemand}</b>strong
+                  </span>
+                  <span className={styles.bnum}>
+                    <b>{nar.emerging}</b>emerging
+                  </span>
+                  <span className={styles.bnum}>
+                    <b>
+                      {nar.displacement}/{nar.greenfield}
+                    </b>
+                    displ/green
+                  </span>
+                  <span className={styles.bnum}>
+                    <b>{hcmAll.length}</b>HCM
+                  </span>
+                  {nar.topCountries.length > 0 && (
+                    <span className={styles.briefCountries}>
+                      {nar.topCountries.map((c) => `${c.name} ${c.count}`).join(" · ")}
+                    </span>
+                  )}
+                </>
+              }
+              aleks={
+                <>
+                  {/* One home for everything Aleks: the prep line (from
+                      Narrative), the standing agenda (from Plan), and the
+                      session records. */}
+                  <div className={styles.narGuides}>
+                    <GuidedBlock
+                      title="Carry this into the Aleks 1:1"
+                      g={aleksLineGuidance(nar, move)}
+                      term={move?.name ?? ""}
+                      href={move ? `/accounts?focus=${move.id}` : "#"}
+                    />
+                  </div>
+                  <h2 className={styles.h2}>Weekly 1:1 with Aleks — standing agenda</h2>
+                  <div className={styles.agenda}>
+                    <ol>
+                      <li>
+                        <b>Base-expansion pipeline</b> — what moved this week, what&apos;s
+                        next, where it&apos;s stuck.
+                      </li>
+                      <li>
+                        <b>Partner health</b> — who&apos;s engaged (Eric, the CSMs),
+                        who&apos;s cold, where I need her air cover.
+                      </li>
+                      <li>
+                        <b>Market signal</b> — the one thing the base is telling us (voice
+                        of the base).
+                      </li>
+                      <li>
+                        <b>Asks / air cover</b> — what I need from her or marketing to arm
+                        partners.
+                      </li>
+                      <li>
+                        <b>Enablement gaps</b> — what we have, what we don&apos;t, what we
+                        need to sell Global.
+                      </li>
+                      <li>
+                        <b>The narrative up</b> — the one line she carries to her
+                        leadership.
+                      </li>
+                    </ol>
+                    <p className={styles.muted}>
+                      PEPM = per employee, per month — the unit EOR and global payroll
+                      price on. Keep the deal math in those terms when you brief her.
+                    </p>
+                  </div>
+                  {ALEKS_SESSIONS.map((s) => (
+                    <section key={s.date} className={styles.prCard}>
+                      <div className={styles.pageHead}>
+                        <h2 className={styles.h2}>1:1 with Aleks — {s.label}</h2>
+                        <p className={styles.sub}>
+                          Call notes with what each changes, then the brief as carried in.
+                        </p>
+                      </div>
+                      <div className={styles.aleksNotes}>
+                        {s.callNotes.map((n, i) => (
+                          <div key={i} className={styles.aleksNote}>
+                            <div className={styles.aleksNoteBody}>{n.note}</div>
+                            {n.action && (
+                              <div className={styles.aleksNoteAction}>→ {n.action}</div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                      <details className={styles.aleksBrief}>
+                        <summary>The brief I brought in</summary>
+                        {s.brief.map((sec) => (
+                          <div key={sec.title} className={styles.aleksBriefSec}>
+                            <div className={styles.aleksBriefTitle}>{sec.title}</div>
+                            <ul>
+                              {sec.bullets.map((b, i) => (
+                                <li key={i}>{b}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        ))}
+                      </details>
+                    </section>
+                  ))}
+                </>
+              }
+              narrative={
+                <>
+                  {/* ── Band 4 · Narrative forming ─────────────────────────── */}
+                  <section className={styles.band}>
+                    <div className={styles.bandHead}>
+                      <span className={styles.bandNum}>4</span>
+                      <div>
+                        <h2 className={styles.bandTitle}>Narrative forming</h2>
+                        <p className={styles.bandSub}>
+                          Voice of the base — the honest pattern in the data, and the line
+                          it&apos;s accruing toward your 1:1 with Aleks.
+                        </p>
+                      </div>
+                    </div>
+                    <div className={styles.bandBody}>
+                      <div className={styles.statRow}>
+                        <Stat
+                          n={`${nar.researched}/${nar.total}`}
+                          label="accounts researched"
+                        />
+                        <Stat n={nar.strongDemand} label="strong demand" />
+                        <Stat n={nar.emerging} label="emerging / hedged" />
+                        <Stat
+                          n={`${nar.displacement}/${nar.greenfield}`}
+                          label="displace / greenfield"
+                        />
+                        <Stat n={movedThisWeek(dash.cards)} label="moved this week" />
+                      </div>
+                      {nar.topCountries.length > 0 && (
+                        <div className={styles.narLine}>
+                          <span className={styles.narLabel}>Where the base points:</span>
+                          <div className={styles.countries}>
+                            {nar.topCountries.map((c) => (
+                              <span key={c.name} className={styles.countryChip}>
+                                {c.name} <b>{c.count}</b>
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      <div className={styles.narGuides}>
+                        <GuidedBlock
+                          title="Arm the partners"
+                          g={armPartnersGuidance(nar)}
+                          term=""
+                          href="#capture"
+                        >
+                          <div className={styles.gActions}>
+                            <Link href="#capture" className={styles.mvOpen}>
+                              Log a gap in the capture box ↓
+                            </Link>
+                          </div>
+                        </GuidedBlock>
+                      </div>
+                    </div>
+                  </section>
+
+                  {/* ── Voice of the base & enablement gaps (capture) ──────── */}
+                  <h2 id="capture" className={styles.h2}>
+                    Voice of the base &amp; enablement gaps
+                  </h2>
+                  <p className={styles.sub}>
+                    The running list you carry into the Aleks 1:1 and to marketing — what
+                    the base keeps asking for, what&apos;s missing to arm partners, and
+                    what you need from the org. Resolve an item once you&apos;ve raised
+                    it.
+                  </p>
+                  <div className={styles.notesWrap}>
+                    {!notes.available && (
+                      <p className={styles.muted}>
+                        Capture isn&apos;t connected yet — run{" "}
+                        <code>docs/dashboard-tables.sql</code> in Supabase to start
+                        logging.
+                      </p>
+                    )}
+                    {notes.available && (
+                      <>
+                        <form action={addFieldNote} className={styles.noteForm}>
+                          <select name="kind" aria-label="Note kind" defaultValue="gap">
+                            {FIELD_NOTE_KINDS.map((k) => (
+                              <option key={k.key} value={k.key}>
+                                {k.label}
+                              </option>
+                            ))}
+                          </select>
+                          <input
+                            name="body"
+                            required
+                            maxLength={2000}
+                            placeholder="e.g. 3rd account this month asking about contractor conversion — need a one-pager"
+                            aria-label="Note body"
+                          />
+                          <NoteSubmit />
+                        </form>
+                        {notes.notes.length === 0 ? (
+                          <p className={styles.muted}>Nothing logged yet.</p>
+                        ) : (
+                          <div className={styles.noteList}>
+                            {notes.notes.map((n) => {
+                              const meta = FIELD_NOTE_KINDS.find((k) => k.key === n.kind);
+                              return (
+                                <div key={n.id} className={styles.noteItem}>
+                                  <span
+                                    className={`${styles.noteKind} ${styles[`kind_${n.kind}`] ?? ""}`}
+                                  >
+                                    {meta?.label ?? n.kind}
+                                  </span>
+                                  <span className={styles.noteBody}>{n.body}</span>
+                                  <form
+                                    action={resolveFieldNote}
+                                    className={styles.noteResolve}
+                                  >
+                                    <input type="hidden" name="id" value={n.id} />
+                                    <button
+                                      className={styles.noteResolveBtn}
+                                      aria-label="Resolve note"
+                                    >
+                                      Resolve
+                                    </button>
+                                  </form>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+
+                  {/* ── HCM funnel + parked signals (reference) ────────────── */}
+                  {hcm.length > 0 && (
+                    <div className={styles.hcmStrip}>
+                      <span className={styles.hcmLabel}>
+                        HCM funnel ({hcmAll.length}) — top {hcm.length}, routes to you
+                        directly:
+                      </span>
+                      {hcm.map((a) => (
+                        <Link
+                          key={a.id}
+                          href={`/accounts?focus=${a.id}`}
+                          className={styles.hcmChip}
+                        >
+                          {a.name} <b>{a.score}</b> · {a.csm}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                  {parked.length > 0 && (
+                    <details className={styles.parkedList}>
+                      <summary>Parked signals ({parked.length})</summary>
+                      {parked.map(({ intel: a, snooze }) => (
+                        <div key={a.id} className={styles.parkedRow}>
+                          <Link href={`/accounts?focus=${a.id}`}>{a.name}</Link>
+                          <span className={styles.parkedReason}>
+                            “{snooze.reason}”
+                            {snooze.snoozedUntil
+                              ? ` · back ${snooze.snoozedUntil.slice(0, 10)}`
+                              : " · until un-parked"}
+                          </span>
+                          <form action={unsnoozeSignal} className={styles.noteResolve}>
+                            <input type="hidden" name="accountId" value={a.id} />
+                            <button className={styles.noteResolveBtn}>Un-park</button>
+                          </form>
+                        </div>
+                      ))}
+                    </details>
+                  )}
+                </>
+              }
+              doctrine={
+                <>
+                  {/* ── The daily loop ─────────────────────────────────────── */}
+                  <h2 className={styles.h2}>The three questions I run every day</h2>
+                  <div className={styles.cards}>
+                    <div className={styles.card}>
+                      <h3>1 · What changed in the base?</h3>
+                      <p className={styles.muted}>
+                        New global-hiring evidence, a partner flag, an inbound.{" "}
+                        <b>Read</b> the signal before anything else — the Do rail is the
+                        answer.
+                      </p>
+                    </div>
+                    <div className={styles.card}>
+                      <h3>2 · What do I owe, and who do I clear?</h3>
+                      <p className={styles.muted}>
+                        <b>Route</b> through the partner. Clear the commitments and
+                        chases, and never jump a client before the CSM has cleared them.
+                      </p>
+                    </div>
+                    <div className={styles.card}>
+                      <h3>3 · What language drums up the intent?</h3>
+                      <p className={styles.muted}>
+                        The partner question: what do I say to{" "}
+                        <b>gauge, drum up, or campaign</b> a client&apos;s interest in
+                        Global? <b>Record</b> the answer on the Dashboard node.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* ── 30 / 60 / 90 ───────────────────────────────────────── */}
+                  <h2 className={styles.h2}>30 / 60 / 90</h2>
+                  <div className={styles.plan}>
+                    <div className={styles.planCol}>
+                      <div className={styles.planNum}>First 30</div>
+                      <div className={styles.planTheme}>
+                        Learn the base · arm the partners
+                      </div>
+                      <ul>
+                        <li>
+                          Build out the Account Room — my private targeting intel on the
+                          whole base.
+                        </li>
+                        <li>
+                          Sit with each partner — start with Eric — and map their books to
+                          Global fit.
+                        </li>
+                        <li>Take the first enablement-gap list to Aleks + marketing.</li>
+                        <li>Land the first 2–3 partner-cleared discovery calls.</li>
+                      </ul>
+                    </div>
+                    <div className={styles.planCol}>
+                      <div className={styles.planNum}>By 60</div>
+                      <div className={styles.planTheme}>Convert signal to pipeline</div>
+                      <ul>
+                        <li>
+                          A handful of qualified Global opportunities in flight on the
+                          Dashboard.
+                        </li>
+                        <li>
+                          First tailored demos delivered — countries and worker types
+                          matched.
+                        </li>
+                        <li>
+                          A repeatable partner-brief motion (the same three questions
+                          every time).
+                        </li>
+                        <li>First “voice of the base” note to marketing.</li>
+                      </ul>
+                    </div>
+                    <div className={styles.planCol}>
+                      <div className={styles.planNum}>By 90</div>
+                      <div className={styles.planTheme}>Prove the motion</div>
+                      <ul>
+                        <li>First Global close or a deal in late-stage decision.</li>
+                        <li>
+                          A documented displacement + greenfield play I can hand any
+                          partner.
+                        </li>
+                        <li>A standing lunch-and-learn / SME webinar cadence.</li>
+                        <li>A weekly base-signal digest that Aleks can carry upward.</li>
+                      </ul>
+                    </div>
+                  </div>
+                </>
+              }
+            />
+          </div>
+        </div>
       </main>
     </>
   );
