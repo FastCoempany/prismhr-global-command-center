@@ -138,6 +138,12 @@ export const PRODUCT_CANON: Product[] = [
   },
 ];
 
+// How Global Payroll gets priced — internal process knowledge (from Aleks,
+// 7/14), NOT a collateral claim. Kept separate from the canon so product
+// claims stay strictly sourced to released materials.
+export const PAYROLL_PRICING_PROCESS =
+  "Global Payroll pricing: there are NO standard list rates — each engagement is individually priced per country (per the internal agreement). Process: reach out to Anthony Falzone (Head of Global Ops at PrismHR) for the country quote and copy Aleks. Never state or estimate Global Payroll rates in a draft; say a country-specific quote is being prepared.";
+
 // Platform-level facts that apply across the family.
 export const CANON_FACTS: string[] = [
   "One platform for EOR, AOR/contractors and global payroll — a single vendor instead of stitched point solutions",
@@ -161,5 +167,5 @@ export function canonForPrompt(): string {
       : "";
     return `- ${p.name}: ${p.positioning}${tiers}`;
   }).join("\n");
-  return `${products}\nPlatform facts: ${CANON_FACTS.join(" · ")}`;
+  return `${products}\nPlatform facts: ${CANON_FACTS.join(" · ")}\n${PAYROLL_PRICING_PROCESS}`;
 }

@@ -527,8 +527,9 @@ export const ROUNDUP_BULLETS: Record<string, string> = {
     "Global Payroll Platform for a couple of her interested clients, and her discovery answers " +
     "came back the same day I asked — two client companies, both active businesses in Canada " +
     "with their own entities, ~300 employees in Ontario to start, explicitly not EOR. That's a " +
-    "true Global Payroll deal. I'm confirming our Canada payroll pricing internally before I " +
-    "reply and lock her call + team demo. Nothing needed from you — will keep you looped.",
+    "true Global Payroll deal. Pricing is individually quoted per country, so I've requested " +
+    "the Canada quote internally and I'll reply + lock her call and team demo when it lands. " +
+    "Nothing needed from you — will keep you looped.",
   // Infiniti HR — Jennifer Hardesty's 7/14 ask on Anika's LMS thread; already
   // in motion, so the bullet reads as shared status with a thank-you.
   "001F000000w38OIIAY":
