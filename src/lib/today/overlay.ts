@@ -177,10 +177,10 @@ export async function loadTouches(): Promise<Touch[]> {
       contactedAt: r.contactedAt.toISOString(),
       followUpAt: r.followUpAt.toISOString(),
       intervalDays: r.intervalDays,
-      status: (["replied", "responded", "archived"] as const).includes(
-        r.status as "replied" | "responded" | "archived",
+      status: (["replied", "responded", "archived", "open"] as const).includes(
+        r.status as "replied" | "responded" | "archived" | "open",
       )
-        ? (r.status as "replied" | "responded" | "archived")
+        ? (r.status as "replied" | "responded" | "archived" | "open")
         : "awaiting",
       log: normTouchLog(r.log),
     }));

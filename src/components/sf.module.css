@@ -18,6 +18,28 @@
   border-color: #00a1e0;
   background: #e4f4fc;
 }
+/* The retired-banner replacement: a micro-badge. Out of the way, still SF-blue,
+   full wording in the tooltip. */
+.mini {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: help;
+}
+.miniBadge {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #b6e3f7;
+  background: #f0f9ff;
+  color: #0369a1;
+  border-radius: 4px;
+  padding: 0 5px;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  line-height: 16px;
+  white-space: nowrap;
+}
 .icon {
   flex: none;
   font-size: 11px;
