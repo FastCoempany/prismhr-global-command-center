@@ -479,8 +479,8 @@ export type PartnerKickoff = { partner: string; role: string; accounts: AccountI
 // pinning never hides an account that earned its place on merit.
 export const ROUNDUP_PINS: Record<string, string[]> = {
   // My HR Pros (fka Southern Personnel Management) — pinned by owner request —
-  // and ESC, whose 7/13 inbound (Global Payroll demo for client prospects) is a
-  // live thread on Lesha's card.
+  // and ESC, whose 7/13 inbound (Global Payroll demo for interested ESC
+  // clients) is a live thread on Lesha's card.
   "Lesha Cyphers": ["001F000000w389qIAA", "MYESC000000000001"],
   // XCEL HR — low web-signal score, but Anika opened a live door (7/13): they're
   // in new-product discussions post-LIVE and she can bring us onto the next call
@@ -521,11 +521,11 @@ export const ROUNDUP_BULLETS: Record<string, string> = {
   // as shared status with a thank-you, not a request for a read.
   MYESC000000000001:
     "Already in motion (thanks for the intro!): Hatton at ESC came to you 7/13 asking about " +
-    "the Global Payroll Platform for a couple of interested client prospects, and you handed " +
-    "him to me 7/14. I've sent a short pre-call discovery note (are the prospects' workers on " +
-    "their own foreign entities, employees vs contractors, which countries) so his intro call " +
+    "the Global Payroll Platform for a couple of her interested clients, and you handed " +
+    "her to me 7/14. I've sent a short pre-call discovery note (are the clients' workers on " +
+    "their own foreign entities, employees vs contractors, which countries) so her intro call " +
     "and the ESC team demo land on the right product the first time — holding the calendar " +
-    "until his answers come back. Nothing needed from you — will keep you looped as it firms up.",
+    "until her answers come back. Nothing needed from you — will keep you looped as it firms up.",
   // XCEL HR — Anika's 7/13 read opened a live door; the bullet reads as taking
   // her up on the offer, not asking for a cold read.
   "001F000000w38GlIAI":
