@@ -25,6 +25,7 @@ import {
   isDue,
   outreachSubjectKey,
   partitionFollowUps,
+  roundupDue,
   type Touch,
 } from "@/lib/today/follow-ups";
 import {
@@ -51,6 +52,8 @@ import {
   roundupFrame,
   signals,
   stateOfPlay,
+  STEP_HOLDS,
+  holdGuidance,
   triageGuidance,
   voiceOfBaseGuidance,
   type AccountIntel,
@@ -60,7 +63,6 @@ import {
 import { ALEKS_SESSIONS } from "@/lib/aleks/one-on-one";
 import { SfCheckpoint } from "@/components/sf";
 import { ContactControl, EditableMessage, NoteSubmit } from "../today-client";
-import { NotesPanel } from "../notes-client";
 import { addCard, toggleCheck } from "../dashboard/actions";
 import {
   addFieldNote,
@@ -71,15 +73,17 @@ import {
   deleteTouch,
   markReplied,
   resolveFieldNote,
+  setThreadStatus,
   snoozeSignal,
   toggleTaskDone,
   unsnoozeSignal,
 } from "./actions";
+import { DaySheet } from "./day-sheet";
 import styles from "../command-center.module.css";
 
 export const dynamic = "force-dynamic";
 
-// One-time seed dropped into a new card's Discovery note on "Seed to board".
+// One-time seed dropped into a new card's Discovery note on "Seed to dashboard".
 function seedFor(a: AccountIntel): string {
   if (!a.researched || a.demand == null) return "";
   const play =
@@ -92,7 +96,7 @@ function seedFor(a: AccountIntel): string {
   return `Demand ${a.demand}/100 (${a.confidence} confidence). ${play}${countries} ${a.summary}`.trim();
 }
 
-// "Seed to board" / "Act" — reuses the Dashboard addCard action, returning here.
+// "Seed to dashboard" / "Act" — reuses the Dashboard addCard action, returning here.
 function SeedForm({
   a,
   onBoard,
@@ -102,7 +106,7 @@ function SeedForm({
   onBoard: boolean;
   label: string;
 }) {
-  if (onBoard) return <span className={styles.onDash}>On board ✓</span>;
+  if (onBoard) return <span className={styles.onDash}>On dashboard ✓</span>;
   return (
     <form action={addCard}>
       <input type="hidden" name="name" value={a.name} />
@@ -203,14 +207,6 @@ function GuidanceBody({
           <Emph text={g.do} term={term} href={href} />
         </span>
       </div>
-      <div className={styles.gHow}>
-        <span className={styles.gLabel}>Steps — in order</span>
-        <ol className={styles.gHowList}>
-          {g.how.map((h, i) => (
-            <li key={i}>{h}</li>
-          ))}
-        </ol>
-      </div>
       {sayNode
         ? sayNode
         : g.say && (
@@ -274,7 +270,7 @@ function MorningMove({
     primaryLabel = "Decide ▸";
     actions = (
       <div className={styles.gActions}>
-        <SeedForm a={a} onBoard={false} label="Seed to board" />
+        <SeedForm a={a} onBoard={false} label="Seed to dashboard" />
         <ParkControl id={a.id} />
         <form action={toggleTaskDone} className={styles.mvDoneForm}>
           <input type="hidden" name="key" value={doneKey} />
@@ -286,7 +282,7 @@ function MorningMove({
     const s = mv.step;
     g = commitmentGuidance(s);
     kind = "close";
-    meta = `board · ${s.nodeLabel}${
+    meta = `dashboard · ${s.nodeLabel}${
       s.ageDays != null ? ` · ${s.ageDays === 0 ? "today" : `${s.ageDays}d open`}` : ""
     }`;
     // The one button: mark the morning move done. Checking the step off on the
@@ -300,14 +296,14 @@ function MorningMove({
     actions = (
       <div className={styles.gActions}>
         <Link href="/" className={styles.mvOpen}>
-          Open on the board
+          Open on the dashboard
         </Link>
         <form action={toggleCheck} className={styles.commitmentClose}>
           <input type="hidden" name="cardId" value={s.cardId} />
           <input type="hidden" name="node" value={s.nodeKey} />
           <input type="hidden" name="index" value={s.index} />
           <input type="hidden" name="returnTo" value="/today" />
-          <button className={styles.closeBtn}>Check the step off on the board</button>
+          <button className={styles.closeBtn}>Check the step off on the dashboard</button>
         </form>
       </div>
     );
@@ -362,7 +358,11 @@ function MorningMove({
         sentLabel="Mark sent ✓ (arms the next check-in)"
         doneText="Sent"
         editLabel={`Edit & copy the message to ${firstNameOf(mv.a.csm)}`}
-        status={done && touch && touch.status !== "archived" ? touch.status : "none"}
+        status={
+          done && touch && touch.status !== "archived" && touch.status !== "open"
+            ? touch.status
+            : "none"
+        }
         contactedLabel={touch ? shortDate(touch.contactedAt) : undefined}
         followUpLabel={touch ? shortDate(touch.followUpAt) : undefined}
       />
@@ -425,6 +425,15 @@ function GuidedBlock({
   );
 }
 
+// The Day Sheet's date line, e.g. "Tue, Jul 14" (default-param clock read).
+function todayLabel(now: Date = new Date()): string {
+  return now.toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+}
+
 // Short, human date from an ISO string (pure — deterministic given the string).
 function shortDate(iso: string): string {
   const t = Date.parse(iso);
@@ -450,7 +459,7 @@ function FollowUpDue({ t }: { t: Touch }) {
           ) : null}
         </span>
         {!custom && (
-          <span className={styles.fuAge}>Contacted {shortDate(t.contactedAt)}</span>
+          <span className={styles.fuAge}>Last contacted {shortDate(t.contactedAt)}</span>
         )}
       </div>
       {custom && t.detail ? <p className={styles.fuNote}>{t.detail}</p> : null}
@@ -607,7 +616,6 @@ export default async function TodayPage({
     // research) is ready to send, so the partner reads as not-yet-contacted.
     return { k, key, touch, done: !!touch && touch.status !== "archived" };
   });
-  const kickoffDoneCount = kickoffItems.filter((i) => i.done).length;
 
   // The ATC rail: one urgency-ranked control line per partner. Phrase + dot are
   // composed here (server-side) so the rail component stays a dumb renderer.
@@ -645,28 +653,38 @@ export default async function TodayPage({
       ]
         .filter(Boolean)
         .join(", ");
+      // Every-2-days roundup cadence: a fresh card (never sent, or archived and
+      // past the cadence) reads as DUE, not as passive availability.
+      const cadenceDue =
+        (status === "none" || status === "archived") &&
+        !nothingToSend &&
+        roundupDue(touch);
       const phrase =
         status === "replied"
           ? `Replied ${touch ? shortDate(touch.contactedAt) : ""} — your move`
-          : status === "responded"
-            ? due
-              ? "You replied — check-in due now"
-              : `You replied · check-in ${touch ? shortDate(touch.followUpAt) : ""} — their move`
-            : status === "awaiting"
+          : status === "open"
+            ? `Open-ended — not waiting on a reply${touch?.contactedAt ? ` · last exchange ${shortDate(touch.contactedAt)}` : ""}`
+            : status === "responded"
               ? due
-                ? `Sent ${touch ? shortDate(touch.contactedAt) : ""} — check-in due now`
-                : `Sent ${touch ? shortDate(touch.contactedAt) : ""} · check-in ${touch ? shortDate(touch.followUpAt) : ""}`
-              : nothingToSend
-                ? `${offPhrase || "No accounts"} — nothing to send`
-                : status === "archived"
-                  ? "Archived — fresh roundup available"
-                  : `Not contacted — roundup ready (${sendAccts.length}${offPhrase ? ` · ${offPhrase}` : ""})`;
+                ? "You replied — check-in due now"
+                : `You replied · check-in ${touch ? shortDate(touch.followUpAt) : ""} — their move`
+              : status === "awaiting"
+                ? due
+                  ? `Sent ${touch ? shortDate(touch.contactedAt) : ""} — check-in due now`
+                  : `Sent ${touch ? shortDate(touch.contactedAt) : ""} · check-in ${touch ? shortDate(touch.followUpAt) : ""}`
+                : nothingToSend
+                  ? `${offPhrase || "No accounts"} — nothing to send`
+                  : status === "archived"
+                    ? cadenceDue
+                      ? `New roundup due — last sent ${touch ? shortDate(touch.contactedAt) : ""}`
+                      : `Fresh roundup ready — last sent ${touch ? shortDate(touch.contactedAt) : ""}`
+                    : `New roundup due — never sent (${sendAccts.length}${offPhrase ? ` · ${offPhrase}` : ""})`;
       const dot: RailItem["dot"] =
         status === "replied"
           ? "green"
-          : nothingToSend
+          : nothingToSend || status === "open"
             ? "grey"
-            : due || status === "none"
+            : due || status === "none" || cadenceDue
               ? "orange"
               : status === "archived"
                 ? "grey"
@@ -676,7 +694,7 @@ export default async function TodayPage({
           ? 0
           : due
             ? 1
-            : nothingToSend
+            : nothingToSend || status === "open"
               ? 5
               : status === "none"
                 ? 3
@@ -707,6 +725,7 @@ export default async function TodayPage({
           sendable: sendAccts.length,
           sections,
           frame,
+          cadenceDue,
         } satisfies RailItem,
       };
     })
@@ -769,25 +788,54 @@ export default async function TodayPage({
     const key = morningDoneKey(mvId(mv));
     return { mv, key, done: doneKeys.has(key), touch: undefined as Touch | undefined };
   });
-  const pendingMoves = items.filter((i) => !i.done);
-  const doneMoves = items.filter((i) => i.done);
-  const shownMoves = pendingMoves.slice(0, 4);
+  // Deliberate holds leave the numbered list entirely — they render as dim ⏸
+  // rows with their own guidance, and never count against "moves done".
+  const isHeld = (i: (typeof items)[number]) =>
+    i.mv.kind === "commitment" && !!STEP_HOLDS[i.mv.step.cardName];
+  const heldItems = items.filter(isHeld);
+  const activeItems = items.filter((i) => !isHeld(i));
+  const pendingMoves = activeItems.filter((i) => !i.done);
+  const doneMoves = activeItems.filter((i) => i.done);
   const laterTriage = triageList.slice(triageList[0] ? 1 : 0);
+
+  // Open-ended threads (nobody owes a reply): partner threads render as rail
+  // rows; account/custom threads get their own light rows with "+ new exchange".
+  const openRailRows = railItems.filter((r) => r.status === "open");
+  const openOther = followUps.open.filter((t) => t.kind !== "partner");
+
+  // Roundup cadence — every 2 days per partner. Due partners surface hot in the
+  // rail's Roundups family AND in the right-column cadence panel.
+  const cadence = kickoffItems.map(({ k, touch }) => ({
+    partner: k.partner,
+    accounts: k.accounts.length,
+    lastSent: touch ? touch.contactedAt : "",
+    due: roundupDue(touch),
+    inThread: !!touch && touch.status !== "archived",
+  }));
+  const cadenceDueCount = cadence.filter((c) => c.due).length;
+  const sortedFresh = [...freshRows].sort(
+    (a, b) => Number(b.cadenceDue ?? false) - Number(a.cadenceDue ?? false),
+  );
 
   return (
     <>
       <AppWayfinder current="Today" />
       <main className={styles.wrap}>
-        <div className={styles.pageHead}>
+        <div className={`${styles.pageHead} ${styles.deskHead}`}>
           <h1 className={styles.h1}>Today</h1>
-          <p
-            className={styles.sub}
-            title="Cold calling isn't the motion — this is a channel sell through partners into the base you already serve: the PEO channel (CSM-owned) and the HCM funnel (Eric's HCM logos + HRaaS)."
-          >
-            Channel sell through partners — read → route → record.
-          </p>
-          <SfCheckpoint when="standing" strong />
+          <CurveballButton accounts={noteAccounts} />
+          <span className={styles.deskHeadSf}>
+            <SfCheckpoint when="standing" />
+          </span>
         </div>
+
+        {/* ── The Day Sheet: everything you type lands here and stays here. ── */}
+        <DaySheet
+          initialNotes={todos}
+          accounts={noteAccounts}
+          partners={kickoff.map((k) => k.partner)}
+          dateLabel={todayLabel()}
+        />
 
         {/* ── The cockpit: no tabs. DO on the left, TRACK on the right, BRIEF
                as a bar + drawers below. Every element of the old six tabs has
@@ -798,75 +846,157 @@ export default async function TodayPage({
             <div className={styles.cockCap}>
               <span>Do — everything that needs you</span>
               <span className={styles.cockCapR}>
-                {doneMoves.length} of {items.length} moves done
+                {doneMoves.length} of {activeItems.length} moves done · all on screen
               </span>
-              <CurveballButton accounts={noteAccounts} />
-            </div>
-            <div className={styles.cockSub}>
-              Partner roundups: {kickoffDoneCount}/{kickoffItems.length} contacted — edit,
-              copy, send, mark contacted. <SfCheckpoint when="kickoff" strong />
             </div>
 
             <div className={styles.atcRail}>
               {/* Replies waiting on you — your move. */}
+              {replyRows.length > 0 && (
+                <div className={`${styles.famStrip} ${styles.famReply}`}>
+                  Your move — they&apos;re waiting on you
+                  <span className={styles.famN}>({replyRows.length})</span>
+                </div>
+              )}
               {replyRows.map((r) => (
-                <AtcRow key={r.subjectKey} it={r} />
+                <div className={styles.spineReply} key={r.subjectKey}>
+                  <AtcRow it={r} />
+                </div>
               ))}
 
               {/* Chases — check-ins that are DUE. The expansion is the full
                   follow-up card: what you sent, the log, the ready nudge,
                   delay, and log-what-happened. */}
-              {followUps.due.map((t) => (
-                <DeckRow
-                  key={t.subjectKey}
-                  num="!"
-                  kind="chase"
-                  phrase={t.kind === "custom" ? t.label : `Check-in due: ${t.label}`}
-                  meta={
-                    t.kind === "custom"
-                      ? `due ${shortDate(t.followUpAt)}`
-                      : `sent ${shortDate(t.contactedAt)} · due now`
-                  }
-                  primary={
-                    <form action={markReplied} className={styles.valInline}>
-                      <input type="hidden" name="subjectKey" value={t.subjectKey} />
-                      <button className={`${styles.atcBtn} ${styles.atcGo}`}>
-                        {t.kind === "custom" ? "Done ✓" : "They replied ✓"}
-                      </button>
-                    </form>
-                  }
-                  primaryLabel="Nudge ▸"
-                  primaryHot
-                >
-                  <FollowUpDue t={t} />
-                </DeckRow>
-              ))}
-
-              {/* Moves — send / decide / close, in order. */}
-              {shownMoves.map((it, i) => (
-                <MorningMove
-                  key={it.key}
-                  mv={it.mv}
-                  n={i + 1}
-                  doneKey={it.key}
-                  done={false}
-                  touch={it.touch}
-                />
-              ))}
-              {pendingMoves.length > shownMoves.length && (
-                <div className={styles.deckMoreNote}>
-                  + {pendingMoves.length - shownMoves.length} more queued — mark these
-                  done to reveal them.
+              {followUps.due.length > 0 && (
+                <div className={`${styles.famStrip} ${styles.famChase}`}>
+                  Chase — check-ins due
+                  <span className={styles.famN}>({followUps.due.length})</span>
                 </div>
               )}
-
-              {/* Fresh roundups — ready to send (or log activity if nothing
-                  is sendable). */}
-              {freshRows.map((r) => (
-                <AtcRow key={r.subjectKey} it={r} />
+              {followUps.due.map((t) => (
+                <div className={styles.spineChase} key={t.subjectKey}>
+                  <DeckRow
+                    num="!"
+                    kind="chase"
+                    phrase={t.kind === "custom" ? t.label : `Check-in due: ${t.label}`}
+                    meta={
+                      t.kind === "custom"
+                        ? `due ${shortDate(t.followUpAt)}`
+                        : `last contacted ${shortDate(t.contactedAt)} · due now`
+                    }
+                    primary={
+                      <>
+                        <form action={markReplied} className={styles.valInline}>
+                          <input type="hidden" name="subjectKey" value={t.subjectKey} />
+                          <button className={`${styles.atcBtn} ${styles.atcGo}`}>
+                            {t.kind === "custom" ? "Done ✓" : "They replied ✓"}
+                          </button>
+                        </form>
+                        {t.kind !== "custom" && (
+                          <form action={setThreadStatus} className={styles.valInline}>
+                            <input type="hidden" name="subjectKey" value={t.subjectKey} />
+                            <input type="hidden" name="status" value="open" />
+                            <button
+                              className={styles.notWaitingBtn}
+                              title="Not waiting on a reply — stop chasing; log the next exchange when it lands"
+                            >
+                              ↔ not waiting
+                            </button>
+                          </form>
+                        )}
+                      </>
+                    }
+                    primaryLabel="Nudge ▸"
+                    primaryHot
+                  >
+                    <FollowUpDue t={t} />
+                  </DeckRow>
+                </div>
               ))}
 
-              {items.length === 0 &&
+              {/* Moves — send / decide / close, in order. All on screen. */}
+              {(pendingMoves.length > 0 || heldItems.length > 0) && (
+                <div className={`${styles.famStrip} ${styles.famMove}`}>
+                  Moves — send · decide · close
+                  <span className={styles.famN}>
+                    ({pendingMoves.length}
+                    {heldItems.length ? ` + ${heldItems.length} held` : ""} — all shown)
+                  </span>
+                </div>
+              )}
+              {pendingMoves.map((it, i) => (
+                <div className={styles.spineMove} key={it.key}>
+                  <MorningMove
+                    mv={it.mv}
+                    n={i + 1}
+                    doneKey={it.key}
+                    done={false}
+                    touch={it.touch}
+                  />
+                </div>
+              ))}
+              {/* Deliberate holds — leadership said don't press. Dim ⏸ rows,
+                  out of the numbering; the guidance owns the re-check date. */}
+              {heldItems.map(({ mv, key }) => {
+                if (mv.kind !== "commitment") return null;
+                const hold = STEP_HOLDS[mv.step.cardName];
+                return (
+                  <div className={`${styles.spineMove} ${styles.waitDim}`} key={key}>
+                    <DeckRow
+                      num="⏸"
+                      kind="close"
+                      phrase={
+                        <Emph
+                          text={`${mv.step.cardName} — “${mv.step.item}” on hold`}
+                          term={mv.step.cardName}
+                          href="/"
+                        />
+                      }
+                      meta={`dashboard · ${mv.step.nodeLabel} · ${hold.recheck}`}
+                      primaryLabel="Open ▾"
+                    >
+                      <GuidanceBody
+                        g={holdGuidance(mv.step, hold)}
+                        term={mv.step.cardName}
+                        href="/"
+                      >
+                        <div className={styles.gActions}>
+                          <Link href="/" className={styles.mvOpen}>
+                            Open on the dashboard
+                          </Link>
+                          <form action={toggleCheck} className={styles.commitmentClose}>
+                            <input type="hidden" name="cardId" value={mv.step.cardId} />
+                            <input type="hidden" name="node" value={mv.step.nodeKey} />
+                            <input type="hidden" name="index" value={mv.step.index} />
+                            <input type="hidden" name="returnTo" value="/today" />
+                            <button className={styles.closeBtn}>
+                              Hold cleared — check the step off
+                            </button>
+                          </form>
+                        </div>
+                      </GuidanceBody>
+                    </DeckRow>
+                  </div>
+                );
+              })}
+
+              {/* Roundups — the standing 2-day partner cadence. Fresh cards
+                  surface here; past-cadence ones read as DUE, not optional. */}
+              {sortedFresh.length > 0 && (
+                <div className={`${styles.famStrip} ${styles.famRound}`}>
+                  Roundups — 2-day partner cadence
+                  <span className={styles.famN}>
+                    ({cadenceDueCount} due · {sortedFresh.length} ready)
+                  </span>
+                </div>
+              )}
+              {sortedFresh.map((r) => (
+                <div className={styles.spineRound} key={r.subjectKey}>
+                  <AtcRow it={r} />
+                </div>
+              ))}
+
+              {activeItems.length === 0 &&
                 followUps.due.length === 0 &&
                 replyRows.length === 0 &&
                 freshRows.length === 0 && (
@@ -877,21 +1007,52 @@ export default async function TodayPage({
                     <Link href="/">Dashboard</Link>.
                   </p>
                 )}
-              {items.length > 0 && pendingMoves.length === 0 && (
+              {activeItems.length > 0 && pendingMoves.length === 0 && (
                 <p className={`${styles.mvAllDone} ${styles.deckEmpty}`}>
                   ✓ Every move is done. Nice work.
                 </p>
               )}
 
-              {/* Waiting on them — cadence armed, nothing to do. */}
-              {waitingRows.length > 0 && (
+              {/* Waiting on them + open-ended — cadence armed or deliberately off. */}
+              {waitingRows.length + openRailRows.length + openOther.length > 0 && (
                 <>
-                  <div className={styles.deckGroupLab}>
-                    Waiting on them ({waitingRows.length})
+                  <div className={`${styles.famStrip} ${styles.famWait}`}>
+                    Waiting on them · open-ended
+                    <span className={styles.famN}>
+                      ({waitingRows.length + openRailRows.length + openOther.length})
+                    </span>
                   </div>
                   {waitingRows.map((r) => (
                     <div className={styles.waitDim} key={r.subjectKey}>
                       <AtcRow it={r} />
+                    </div>
+                  ))}
+                  {openRailRows.map((r) => (
+                    <div className={styles.waitDim} key={r.subjectKey}>
+                      <AtcRow it={r} />
+                    </div>
+                  ))}
+                  {openOther.map((t) => (
+                    <div
+                      className={`${styles.waitDim} ${styles.openRow}`}
+                      key={t.subjectKey}
+                    >
+                      <span className={styles.atcDot} style={{ background: "#cbd5e1" }} />
+                      <span className={styles.atcName}>{t.label}</span>
+                      <span className={styles.atcPhrase}>
+                        open-ended — not waiting on a reply
+                      </span>
+                      <form action={addTouchNote} className={styles.openExchange}>
+                        <input type="hidden" name="subjectKey" value={t.subjectKey} />
+                        <input
+                          name="body"
+                          required
+                          maxLength={500}
+                          placeholder="+ new exchange — what happened?"
+                          aria-label="Log a new exchange"
+                        />
+                        <button className={styles.atcBtn}>Log ✓</button>
+                      </form>
                     </div>
                   ))}
                 </>
@@ -925,7 +1086,7 @@ export default async function TodayPage({
                         href={`/accounts?focus=${a.id}`}
                       >
                         <div className={styles.gActions}>
-                          <SeedForm a={a} onBoard={false} label="Seed to board" />
+                          <SeedForm a={a} onBoard={false} label="Seed to dashboard" />
                           <ParkControl id={a.id} />
                         </div>
                       </GuidanceBody>
@@ -967,8 +1128,38 @@ export default async function TodayPage({
             </div>
           </div>
 
-          {/* ══ RIGHT — TRACK: the future, the notes, the reference ══ */}
+          {/* ══ RIGHT — TRACK: the future, the cadence, the reference ══ */}
           <div className={styles.cockColR}>
+            {/* Roundup cadence — every partner, every 2 days. Due partners are
+                also hot rows in the rail; this is the at-a-glance meter. */}
+            <div className={styles.cockSect}>
+              <div className={styles.cockCap}>
+                Roundups
+                <span className={styles.cockCapR}>
+                  every 2 days · {cadenceDueCount} due
+                </span>
+              </div>
+              <div className={styles.cadPanel}>
+                {cadence.map((c) => (
+                  <div key={c.partner} className={styles.cadRow}>
+                    {c.due ? (
+                      <span className={styles.cadDue}>DUE</span>
+                    ) : c.inThread ? (
+                      <span className={styles.cadThread}>IN THREAD</span>
+                    ) : (
+                      <span className={styles.cadOk}>OK</span>
+                    )}
+                    <b>{c.partner}</b>
+                    <span className={styles.cadMeta}>
+                      {c.lastSent ? `last sent ${shortDate(c.lastSent)}` : "never sent"}
+                      {" · "}
+                      {c.accounts} account{c.accounts === 1 ? "" : "s"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             {/* Scheduled — upcoming check-ins + future-dated notes. Nothing
                 here is ever due: due things are chases on the left. */}
             <div className={styles.cockSect}>
@@ -1105,16 +1296,6 @@ export default async function TodayPage({
               )}
             </div>
 
-            {/* Notetaker — live notes, autosaved (browser + database). Link an
-                account, set a date, select any notes and copy them out. */}
-            <div className={styles.cockSect}>
-              <div className={styles.cockCap}>
-                Notetaker
-                <span className={styles.cockCapR}>autosaved as you type</span>
-              </div>
-              <NotesPanel initialNotes={todos} accounts={noteAccounts} />
-            </div>
-
             {/* Focus accounts — reference per partner (chips + notes strips). */}
             {kickoff.length > 0 && (
               <div className={styles.cockSect}>
@@ -1124,7 +1305,7 @@ export default async function TodayPage({
                     {kickoffTotal} accounts · {kickoffItems.length} partners
                   </span>
                 </div>
-                <div className={styles.atcRefGroup}>
+                <div className={`${styles.atcRefGroup} ${styles.focusMini}`}>
                   <div className={styles.atcRefBody}>
                     {kickoffItems.map(({ k }) => (
                       <div key={k.partner} className={styles.kickoffPartner}>

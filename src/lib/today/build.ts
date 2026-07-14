@@ -295,7 +295,7 @@ export function outreachGuidance(a: AccountIntel): Guidance {
         `When you've sent it, log the outreach in Salesforce (activity + note) so the record stays current, then hit "Mark sent ✓" below.`,
       ],
       say: partnerMessage(a),
-      consider: `${a.name} already runs their domestic PEO on PrismHR but uses ${comp} for global — so this is consolidation onto the platform they already have, not a fresh sale and not a win-back (we haven't lost them; we just don't hold their global layer yet) (demand ${a.demand}/100, ${a.confidence} confidence). ${who} may be protective of the ${comp} relationship — move at ${who}'s pace and never get ahead of the partner.`,
+      consider: `${a.name} already runs their domestic PEO on PrismHR but uses ${comp} for global — consolidation onto the platform they already have (demand ${a.demand}/100, ${a.confidence} confidence). Pace with ${who}, never ahead of the partner — but don't confuse patience with silence: every quiet week is renewal runway ${comp} keeps for free, and displacement windows close exactly once.`,
     };
   }
   if (a.play === "greenfield") {
@@ -310,7 +310,7 @@ export function outreachGuidance(a: AccountIntel): Guidance {
         `When it's sent, log it in Salesforce (activity + note), then hit "Mark sent ✓" below.`,
       ],
       say: partnerMessage(a),
-      consider: `No incumbent EOR was found (demand ${a.demand}/100, ${a.confidence} confidence), so this is a clean introduction — usually an easier conversation than displacing an incumbent. Still, let ${who} set the pace.`,
+      consider: `No incumbent EOR was found (demand ${a.demand}/100, ${a.confidence} confidence) — a clean introduction, which means speed is the entire advantage. Greenfields don't stay green: the first vendor to frame the problem usually writes the contract. Let ${who} set the pace, but be the reason a pace exists.`,
     };
   }
   return {
@@ -323,7 +323,7 @@ export function outreachGuidance(a: AccountIntel): Guidance {
       `When it's sent, log it in Salesforce (activity + note), then hit "Mark sent ✓" below.`,
     ],
     say: partnerMessage(a),
-    consider: `The shape of this one isn't fully clear yet (demand ${a.demand}/100, ${a.confidence} confidence). You're gauging, not pitching — let ${who}'s read guide the next step.`,
+    consider: `The shape isn't fully clear yet (demand ${a.demand}/100, ${a.confidence} confidence) — you're gauging, not pitching. But gauge with a date on it: a probe with no follow-up is a no you never got to hear, and it costs you the account without ever telling you.`,
   };
 }
 
@@ -335,15 +335,15 @@ export function triageGuidance(a: AccountIntel): Guidance {
         ? "No incumbent EOR was found, so it'd be a clean introduction."
         : "No play is flagged yet — this is a gauge-and-see.";
   return {
-    do: `Decide right now what happens to ${a.name}: seed it to your board, or park it. Don't leave it undecided.`,
+    do: `Decide right now what happens to ${a.name}: seed it to your dashboard, or park it. Don't leave it undecided.`,
     how: [
       `Check Salesforce on ${a.name} first — current status, notes, open activity — so you decide on the live picture, not just the research.`,
       `Read the fit: demand ${a.demand}/100, ${a.confidence} confidence, ${a.play ?? "no play flagged yet"}. ${playLine}`,
-      `If it's worth working now → hit "Seed to board". It creates a card with all the research attached so you can start.`,
+      `If it's worth working now → hit "Seed to dashboard". It creates a card with all the research attached so you can start.`,
       `If not now → hit "Park", type one line on why, and it resurfaces later (it's never lost).`,
       `Either choice clears it from this list. That's the whole task.`,
     ],
-    consider: `${a.name} sits in ${a.csm}'s book. Seeding it just means you'll work it; parking is a perfectly good call if the timing or fit isn't right yet.`,
+    consider: `${a.name} sits in ${a.csm}'s book. Seeded means worked; parked means an honest no-for-now. Undecided is the only answer that costs you: a signal left floating decays to zero while you look at it, and you paid full price to surface it.`,
   };
 }
 
@@ -383,21 +383,54 @@ export function cardNextStep(
 
 export function commitmentGuidance(step: CardStep): Guidance {
   const overdue = step.ageDays != null && step.ageDays >= COMMITMENT_WINDOW_DAYS;
+  const age =
+    step.ageDays == null
+      ? ""
+      : ` It's been open ${step.ageDays} day${step.ageDays === 1 ? "" : "s"} in ${step.nodeLabel}.`;
   return {
-    do: `Close the step you owe on ${step.cardName}: “${step.item}”.${overdue ? " It's past its window — do this first." : ""}`,
+    do: `Close the step you owe on ${step.cardName}: “${step.item}”.${age} Do the step; if you're waiting on someone, write down exactly what (and who) you're waiting for so it's tracked rather than silently slipping; reflect it in Salesforce with a note and any field or stage update; then check it off on the dashboard so the deal advances.`,
     how: [
-      `Open ${step.cardName} on the board — it's in the ${step.nodeLabel} stage.`,
+      `Open ${step.cardName} on the dashboard — it's in the ${step.nodeLabel} stage.`,
       `Do the step: ${step.item}.`,
       `If you're waiting on someone, note exactly what you're waiting for so it's tracked, not silently slipping.`,
-      `Reflect it in Salesforce — a note plus any field/stage update — so the record matches the board.`,
-      `When it's done, hit "Mark done ✓" — the board advances to the next step.`,
+      `Reflect it in Salesforce — a note plus any field/stage update — so the record matches the dashboard.`,
+      `When it's done, hit "Mark done ✓" — the dashboard advances to the next step.`,
     ],
     consider:
       step.ageDays == null
-        ? "This just started."
+        ? "This just started — close it before it needs managing."
         : overdue
-          ? `This has been open ${step.ageDays} days — past its ${COMMITMENT_WINDOW_DAYS}-day window. Clearing it is the difference between a deal that's moving and one that only looks like it is.`
-          : `Open ${step.ageDays} day${step.ageDays === 1 ? "" : "s"} so far — plenty of runway, but don't let it drift.`,
+          ? `${step.ageDays} days open; the ${COMMITMENT_WINDOW_DAYS}-day window is blown. Steps don't age into done — they age into dead. Either this closes today, or you name the blocker out loud and chase THAT. Anything else is watching a live deal rot on your own dashboard.`
+          : `Open ${step.ageDays} day${step.ageDays === 1 ? "" : "s"} — inside the window, but runway burns silently. Put a finish date on it now, while it's still cheap; the version of you at day ${COMMITMENT_WINDOW_DAYS} will not thank the one reading this.`,
+  };
+}
+
+// --- Step holds ---------------------------------------------------------------
+// Deliberate pauses on dashboard steps — leadership said "don't press." Keyed by
+// card name (curated in code, like ROUNDUP_BULLETS). A held card's step leaves
+// the numbered moves, renders as a dim ⏸ row, and carries its own guidance: the
+// move that's still yours is owning the re-check date, not pushing the client.
+export type StepHold = { reason: string; recheck: string; consider: string };
+
+export const STEP_HOLDS: Record<string, StepHold> = {
+  "Advocate Pay — SubcontractorHub": {
+    reason:
+      "Held per Aleks (7/13): our contracts are being finalized on our side — don't press Bryce on timeline.",
+    recheck: "date the internal contract re-check (Thu)",
+    consider:
+      "A hold without a date is how deals die quietly. Every day this sits, the Bulgaria conversions drift toward the next payroll quarter and someone else gets a quiet look at a roster you already priced. Own the clock: contract re-check on your calendar, or accept that you're choosing to let a signed-adjacent deal age out.",
+  },
+};
+
+export function holdGuidance(step: CardStep, hold: StepHold): Guidance {
+  return {
+    do: `${step.cardName} — “${step.item}” is on hold. ${hold.reason} The move that's still yours: ${hold.recheck}, and the day the hold clears, close the step, log the exchange in Salesforce, and check it off on the dashboard.`,
+    how: [
+      `Confirm the hold still stands (it was set deliberately — check before pressing).`,
+      `Put the re-check on your calendar so the hold has an owner and a date.`,
+      `The day it clears: do the step, log it in Salesforce, check it off on the dashboard.`,
+    ],
+    consider: hold.consider,
   };
 }
 
@@ -799,7 +832,7 @@ export function armPartnersGuidance(nar: Narrative): Guidance {
       `• Packaged pricing partners can quote without coming back to me\n\n` +
       `If we close those gaps, roughly ${conversations} accounts across the base become real partner ` +
       `conversations instead of me improvising. Can we prioritize the single biggest gap this week?`,
-    consider: `At startup stage the constraint isn't leads, it's enablement. Every gap you name and get filled multiplies across every partner and every account — higher leverage than working any one deal yourself.`,
+    consider: `At startup stage the constraint isn't leads, it's enablement — and every week a gap goes unnamed, your partners sell around Global instead of selling it. A named gap with a date gets fixed; an ambient complaint gets sympathy. One of those multiplies across every partner and every account you'll ever touch.`,
   };
 }
 
@@ -815,7 +848,7 @@ export function voiceOfBaseGuidance(): Guidance {
       `That's the whole task — it accrues into the narrative above on its own.`,
     ],
     say: `Pattern I'm seeing: [e.g. 3rd account this month asking about contractor conversion] — we need [a one-pager / a country sheet / a pricing answer] to arm partners on it.`,
-    consider: `You will not remember this on the spot in the 1:1. Two lines now beats a great memory later — this is exactly the stuff that goes missing under pressure.`,
+    consider: `You will not remember this in the 1:1 — nobody does. An unlogged signal is field intel you paid for and then chose to forget; it's also exactly the ammunition Aleks needs to fight for resources upstairs. Two lines now, or it never happened.`,
   };
 }
 

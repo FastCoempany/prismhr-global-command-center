@@ -78,13 +78,15 @@ export function SfLink({ id, name }: { id: string; name?: string }) {
   );
 }
 
-// The checkpoint notation — one compact line; the full wording lives in the
-// tooltip. The cue stays recognizable (SF blue) without eating real estate.
+// The checkpoint notation — a tiny ⟳SF micro-badge. Inconspicuous but always
+// there; the full "check before, log after" wording lives in the tooltip, and
+// a deep link rides along when an account id is in hand. (`strong` is accepted
+// for call-site compatibility but no longer changes the size — the long banner
+// treatment is retired.)
 export function SfCheckpoint({
   when,
   id,
   name,
-  strong,
 }: {
   when: keyof typeof COPY;
   id?: string;
@@ -93,11 +95,9 @@ export function SfCheckpoint({
 }) {
   const c = COPY[when];
   return (
-    <div className={`${styles.chk} ${strong ? styles.chkStrong : ""}`} title={c.text}>
-      <span className={styles.icon}>⟳</span>
-      <span className={styles.lead}>{c.lead}</span>
-      <span className={styles.text}>— check before, log after</span>
+    <span className={styles.mini} title={`${c.lead} — ${c.text}`}>
+      <span className={styles.miniBadge}>⟳ SF</span>
       {id ? <SfLink id={id} name={name} /> : null}
-    </div>
+    </span>
   );
 }

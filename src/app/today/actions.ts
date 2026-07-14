@@ -417,7 +417,7 @@ export async function logHappening(formData: FormData) {
 export async function setThreadStatus(formData: FormData) {
   const subjectKey = str(formData, "subjectKey", 200);
   const status = str(formData, "status", 12);
-  const ok = ["awaiting", "replied", "responded", "archived"].includes(status);
+  const ok = ["awaiting", "replied", "responded", "archived", "open"].includes(status);
   if (!(await requireWrite()) || !subjectKey || !ok) done();
   await safeWrite(async () => {
     const prisma = getPrisma();
@@ -425,7 +425,13 @@ export async function setThreadStatus(formData: FormData) {
     if (!t || t.status === status) return;
     const log = [
       ...touchLog(t.log),
-      { at: new Date().toISOString(), body: `State set manually → ${status}` },
+      {
+        at: new Date().toISOString(),
+        body:
+          status === "open"
+            ? "Marked open-ended — not waiting on a reply; cadence off"
+            : `State set manually → ${status}`,
+      },
     ];
     await prisma.touch.update({
       where: { subjectKey },

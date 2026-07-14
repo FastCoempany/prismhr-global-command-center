@@ -24,9 +24,10 @@ export type RailItem = {
   partner: string;
   role: string;
   subjectKey: string;
-  // Thread state, with "none" = fresh (roundup ready) and "archived" kept
-  // distinct so the phrase can say a fresh roundup is available.
-  status: "none" | "awaiting" | "replied" | "responded" | "archived";
+  // Thread state, with "none" = fresh (roundup ready), "archived" kept
+  // distinct so the phrase can say a fresh roundup is available, and "open" =
+  // open-ended (not waiting on a reply — cadence off until a new exchange).
+  status: "none" | "awaiting" | "replied" | "responded" | "archived" | "open";
   due: boolean; // check-in instant has arrived (awaiting/responded)
   phrase: string; // the one-line status, composed server-side
   dot: "green" | "yellow" | "orange" | "grey";
@@ -36,6 +37,7 @@ export type RailItem = {
   sendable: number; // accounts still on the structured path (in the roundup)
   sections: RoundupSection[]; // composer rows — in-motion/parked default off
   frame: { opener: string; closer: string };
+  cadenceDue?: boolean; // fresh row past the 2-day roundup cadence — surface hot
 };
 
 const DOT: Record<RailItem["dot"], string> = {
@@ -95,6 +97,17 @@ export function AtcRow({ it }: { it: RailItem }) {
             "They replied ✓",
             `${styles.atcBtn} ${styles.atcGo}`,
           )}
+        {/* Open-ended — nobody owes a reply; log the next exchange when it lands. */}
+        {it.status === "open" && (
+          <button
+            type="button"
+            className={styles.atcBtn}
+            onClick={() => toggle("log")}
+            aria-expanded={logOpen}
+          >
+            ＋ New exchange
+          </button>
+        )}
         {nothingToSend && (
           <button
             type="button"
@@ -161,6 +174,7 @@ export function AtcRow({ it }: { it: RailItem }) {
                   <option value="awaiting">awaiting reply</option>
                   <option value="replied">they replied</option>
                   <option value="responded">I replied</option>
+                  <option value="open">↔ open-ended — not waiting</option>
                   <option value="archived">archived</option>
                 </select>
                 <button className={styles.atcBtn}>Set state</button>

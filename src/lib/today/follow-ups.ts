@@ -21,7 +21,10 @@ export type TouchLogEntry = { at: string; body: string };
 // replied (they answered) → responded (you answered back — ball in their court
 // again) → archived (thread closed; the card resets to a fresh roundup built
 // from current research, with the whole exchange kept in the log history).
-export type TouchStatus = "awaiting" | "replied" | "responded" | "archived";
+// "open" is the off-ramp for threads where nobody owes anybody a reply: the
+// cadence stops chasing entirely, the thread stays visible as open-ended, and
+// logging a new exchange re-arms it.
+export type TouchStatus = "awaiting" | "replied" | "responded" | "archived" | "open";
 
 export type Touch = {
   subjectKey: string;
@@ -96,6 +99,7 @@ export type FollowUpBuckets = {
   due: Touch[]; // awaiting + past the follow-up instant — needs you now (most overdue first)
   upcoming: Touch[]; // awaiting + follow-up still in the future (soonest first)
   replied: Touch[]; // closed the loop (most recent first)
+  open: Touch[]; // open-ended — not waiting on a reply, no cadence (newest first)
 };
 
 export function partitionFollowUps(
@@ -105,9 +109,11 @@ export function partitionFollowUps(
   const due: Touch[] = [];
   const upcoming: Touch[] = [];
   const replied: Touch[] = [];
+  const open: Touch[] = [];
   for (const t of touches) {
     if (t.status === "archived") continue; // closed threads live only in history
-    if (t.status === "replied") replied.push(t);
+    if (t.status === "open") open.push(t);
+    else if (t.status === "replied") replied.push(t);
     // awaiting AND responded both mean the ball is in their court — the
     // check-in cadence keeps running until the thread is archived.
     else if (isDue(t, now)) due.push(t);
@@ -116,7 +122,21 @@ export function partitionFollowUps(
   due.sort((a, b) => Date.parse(a.followUpAt) - Date.parse(b.followUpAt)); // most overdue first
   upcoming.sort((a, b) => Date.parse(a.followUpAt) - Date.parse(b.followUpAt)); // soonest first
   replied.sort((a, b) => Date.parse(b.contactedAt) - Date.parse(a.contactedAt));
-  return { due, upcoming, replied };
+  open.sort((a, b) => Date.parse(b.contactedAt) - Date.parse(a.contactedAt));
+  return { due, upcoming, replied, open };
+}
+
+// --- Roundup cadence -----------------------------------------------------------
+// Partner roundups run on a standing every-2-days rhythm: once a thread has
+// closed (or was never opened), a fresh roundup is DUE two days after the last
+// send. Live threads (awaiting/replied/responded/open) are excluded — you don't
+// stack a new roundup on an active conversation.
+export const ROUNDUP_CADENCE_DAYS = 2;
+
+export function roundupDue(touch: Touch | undefined, now: number = Date.now()): boolean {
+  if (!touch) return true; // never contacted — due immediately
+  if (touch.status !== "archived") return false; // thread still live
+  return daysSinceIso(touch.contactedAt, now) >= ROUNDUP_CADENCE_DAYS;
 }
 
 // Upcoming check-ins, grouped by the calendar day they're due (UTC), soonest day
