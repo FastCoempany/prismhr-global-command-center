@@ -35,7 +35,7 @@ INSERT INTO "AccountNote" ("id", "accountId", "partner", "kind", "body", "create
   'MYESC000000000001',
   'C. Hatton Humphrey (ESC)',
   'mine',
-  'Sent the pre-call discovery note: framed the four-product family (Global Payroll = client''s own entities; EOR = no entity; Contractor Solutions = 1099; Talent = recruiting), and asked the four scoping questions (independent client companies? employees vs contractors? which countries? own entities or not?) so the intro call and team demo land on the right product. Proposed locking one of his offered windows.',
+  'Sent the pre-call discovery note: framed the four-product family (Global Payroll = client''s own entities; EOR = no entity; Contractor Solutions = 1099; Talent = recruiting), and asked the four scoping questions (independent client companies? employees vs contractors? which countries? own entities or not?) so the intro call and team demo land on the right product. Holding the calendar until his answers come back — nothing scheduled yet.',
   '2026-07-14 18:00:00'
 )
 ON CONFLICT ("id") DO NOTHING;
@@ -47,7 +47,7 @@ INSERT INTO "AccountDisposition" ("id", "accountId", "status", "reason", "create
   'seed-dispo-esc',
   'MYESC000000000001',
   'motion',
-  'Inbound 7/13 — Global demo request for ESC client prospects; pre-call discovery out, call window pending',
+  'Inbound 7/13 — Global demo request for ESC client prospects; pre-call discovery out, calendar holds until answers return',
   '2026-07-14 18:00:00',
   '2026-07-14 18:00:00'
 )
@@ -82,7 +82,7 @@ INSERT INTO "DashCard" ("id", "name", "subtitle", "position", "archived", "state
 SELECT 'seed-card-esc', 'Employer Services Corporation (ESC)', 'Lesha Cyphers · PEO · Western NY',
   103, false,
   '{"interested":"done","csm_seeded":"done","discovery":"active"}'::jsonb,
-  '{"discovery":"Inbound 7/13: demo request for the Global Payroll Platform on behalf of a couple of interested client prospects. Pre-call discovery note sent 7/14 (entities vs EOR, employees vs contractors, countries). Hatton wants a phone call first, then a system demo for a larger ESC team — windows offered Wed/Thu/Fri."}'::jsonb,
+  '{"discovery":"Inbound 7/13: demo request for the Global Payroll Platform on behalf of a couple of interested client prospects. Pre-call discovery note sent 7/14 (entities vs EOR, employees vs contractors, countries) — calendar held until his answers land. Hatton wants a phone call first, then a system demo for a larger ESC team (had offered Wed/Thu/Fri windows)."}'::jsonb,
   '{"discovery":"2026-07-14T18:00:00Z"}'::jsonb,
   '2 client prospects · product TBD (Global Payroll vs EOR vs Contractor)',
   '[{"name":"C. Hatton Humphrey","role":"Director of Technology Solutions, ESC","note":"chumphrey@myesc.com · (716) 932-6886"},{"name":"Kim Bartolotti","role":"ESC","note":"cc on the thread"},{"name":"Lesha Cyphers","role":"CSM (intro)","note":"handed off 7/14"}]'::jsonb,
