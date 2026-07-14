@@ -57,15 +57,15 @@
       "researched": true
     },
     "001F000000w38OIIAY": {
-      "demandScore": 58,
+      "demandScore": 78,
       "confidence": "high",
       "signals": [
-        "CONFIRMED real cross-border demand: Infiniti HR publicly documents its first client to launch abroad — a global hospitality operator (~5,000 hotels) opening a hub in Turkey and needing help navigating local employment law.",
-        "ALREADY USES A NAMED COMPETITOR: Infiniti HR has a formal strategic alliance with Globalization Partners (G-P) for its EOR/global-payroll offering, announced Aug 31, 2023. This is a direct PrismHR Global competitor and the international channel is effectively occupied.",
-        "Markets EOR capability actively: ranked #6 on TechRadar's Best EOR 2024 list; Forbes Advisor 4.0-star EOR rating; advertises 'hire in 150+ countries in 48 hours' — the global capability is a productized part of their pitch, not just generic HR marketing.",
-        "Existing PrismHR relationship: Infiniti HR runs its domestic PEO on PrismHR (employee portal at infhsg-ep.prismhr.com), so the platform relationship exists — but they still chose G-P for the global/EOR layer rather than a PrismHR global product.",
-        "Geographic footprint: company reports employees across 4 continents (North America, Asia, Europe); concrete named country is Turkey, plus generic '150+ countries' claim.",
-        "Scale context: ~32,000 worksite employees, Inc. 5000 for ~10 years, franchise/hotel industry focus — an SMB-heavy book with genuine but not massive international volume so far (only one publicly cited launch-abroad client)."
+        "FIRST-PARTY INBOUND (7/14, via CSM Anika Steenstra): Jennifer Hardesty (Director of Implementation & Technology) asked on a live thread for info on 'the global payroll solution that Prism integrates with now' — she saw it at the conference. Anika looped me in, attached the Global one-pager, and offered to add me to their monthly call (or sooner). Stephanie Fitzwater cc'd.",
+        "MISPERCEPTION = THE WEDGE: Jennifer thinks Global is a third-party integration. It's PrismHR Global, built into the PrismHR environment they already run (INF.HSG). That correction is the displacement pitch in one line — they allied with G-P in Aug 2023 precisely because PrismHR had no global product then; now it's native to their platform.",
+        "ALREADY USES A NAMED COMPETITOR: formal strategic alliance with Globalization Partners (G-P) for EOR/global payroll (announced Aug 31, 2023). The international channel is occupied — but the incumbent lives outside their platform.",
+        "CONFIRMED real cross-border demand: first client abroad publicly documented — a global hospitality operator (~5,000 hotels) opening a hub in Turkey; markets 'hire in 150+ countries in 48 hours'; TechRadar #6 Best EOR 2024; employees across 4 continents.",
+        "RELATIONSHIP CAUTION: Jennifer sat on the TZP Group thread (Mar–Apr 2026) where an Infiniti client cancelled PrismHR Performance Management over 360-review gaps — the product fell short of what was pitched. Be precise about what each Global product does and doesn't do; no overclaiming.",
+        "Scale context: ~32,800 worksite employees, Inc. 5000 for ~10 years, franchise/hotel-heavy book — SMB-dense with genuine international volume in the client base."
       ],
       "evidence": [
         {
@@ -81,7 +81,7 @@
           "url": "https://remotepeople.com/providers/infiniti-hr-review/"
         }
       ],
-      "summary": "Infiniti HR has genuine, documented international-hiring demand (a franchise/hospitality client opening a hub in Turkey, an actively marketed EOR offering, and a '150+ countries' pitch), so demand is real — not just marketing. However, that demand is already served by a named PrismHR Global competitor, Globalization Partners (G-P), under a formal alliance since 2023, which makes this a consolidation play rather than a greenfield one: Infiniti HR is already an existing PrismHR domestic-payroll customer, so the opening is to displace G-P and bring the global/EOR layer onto the platform they already run — not a fresh sale and not a win-back (we haven't lost them).",
+      "summary": "Live, first-party displacement opening: Infiniti HR (Anika's book, ~32.8k WSEs, runs domestic PEO on PrismHR) allied with G-P for its global/EOR layer in 2023 — but on 7/14 Jennifer Hardesty (Dir. of Implementation & Technology) asked for info on 'the global payroll solution Prism integrates with,' having seen it at the conference. She doesn't yet know it's ours and built in — that correction is the whole pitch. Follow-up sent 7/14: clarified PrismHR Global is native to their environment and asked the scoping questions (own team vs. their clients, employees vs contractors, countries, entities) with Anika's monthly call — or sooner — as the venue. Caution: Jennifer lived the TZP Performance Management cancellation (April 2026), so precision over promises.",
       "researched": true,
       "verified": true
     },

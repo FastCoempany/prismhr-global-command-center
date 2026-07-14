@@ -484,8 +484,11 @@ export const ROUNDUP_PINS: Record<string, string[]> = {
   "Lesha Cyphers": ["001F000000w389qIAA", "MYESC000000000001"],
   // XCEL HR — low web-signal score, but Anika opened a live door (7/13): they're
   // in new-product discussions post-LIVE and she can bring us onto the next call
-  // with Bill. Relationship-led motion, so it stays on her card.
-  "Anika Steenstra": ["001F000000w38GlIAI"],
+  // with Bill. Relationship-led motion, so it stays on her card. Infiniti HR —
+  // Jennifer Hardesty's 7/14 inbound (via Anika's LMS thread) asking about "the
+  // global payroll solution Prism integrates with" — a live G-P displacement
+  // opening, so it stays teed up regardless of rank.
+  "Anika Steenstra": ["001F000000w38GlIAI", "001F000000w38OIIAY"],
 };
 
 // Hand-written roundup bullets for accounts where the generic play framing would
@@ -526,6 +529,16 @@ export const ROUNDUP_BULLETS: Record<string, string> = {
     "their own foreign entities, employees vs contractors, which countries) so her intro call " +
     "and the ESC team demo land on the right product the first time — holding the calendar " +
     "until her answers come back. Nothing needed from you — will keep you looped as it firms up.",
+  // Infiniti HR — Jennifer Hardesty's 7/14 ask on Anika's LMS thread; already
+  // in motion, so the bullet reads as shared status with a thank-you.
+  "001F000000w38OIIAY":
+    "Already on it (thanks for the loop-in!): Jennifer asked about “the global payroll " +
+    "solution Prism integrates with” — I've followed up to clarify it's not an integration, " +
+    "it's our own PrismHR Global family built right into their environment (that's our whole " +
+    "opening: they went to G-P back when we didn't have a global product), and asked the " +
+    "scoping questions — their own team vs. their clients, employees vs contractors, which " +
+    "countries, and whether entities exist. Happy to join your monthly call with them, or " +
+    "sooner if Jennifer wants — nothing needed from you beyond the intro you already made.",
   // XCEL HR — Anika's 7/13 read opened a live door; the bullet reads as taking
   // her up on the offer, not asking for a cold read.
   "001F000000w38GlIAI":
