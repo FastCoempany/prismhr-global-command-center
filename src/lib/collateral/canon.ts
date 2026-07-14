@@ -101,6 +101,9 @@ export const PRODUCT_CANON: Product[] = [
       "Consolidated reporting across all regions (general ledger, gross-to-net, variance)",
       "Integrates with existing HCM or finance systems",
       "Global Dashboard: review, approve and pay by pay period, country and employee",
+      "Supports employees AND contractors in multi-currency payroll runs (per the flyer)",
+      "Channel framing (flyer): built for service providers to extend their own global payroll services to clients across 175+ countries",
+      "Partner-shareable one-page flyer exists (PHRFLY-GLOBALPYRLL, added 7/14 pm) — carries no pricing",
     ],
   },
   {
@@ -148,7 +151,7 @@ export const CANON_FACTS: string[] = [
 ];
 
 export const CANON_SOURCE =
-  "Release `prismmktgcollateral` (7/14/2026): PrismHR Global EOR flyer, Contractor Solutions flyer, Talent flyer, and the “Expand Without Borders” deck (54 slides).";
+  "Release `prismmktgcollateral` (7/14/2026): PrismHR Global EOR flyer, Contractor Solutions flyer, Talent flyer, and the “Expand Without Borders” deck (54 slides) — plus the Global Payroll flyer (PHRFLY-GLOBALPYRLL), which dropped later on 7/14 and was ingested directly.";
 
 // A compact text block for grounding Claude prompts in the released canon.
 export function canonForPrompt(): string {
