@@ -97,11 +97,11 @@ export const LOOK_INTO: LookIntoItem[] = [
   },
   {
     id: "partner-collateral",
-    title: "Does per-play / per-country partner collateral exist?",
-    why: "The whole “arm the partners” motion assumes there are one-pagers per play and a country price cheat sheet a partner can use without you in the room. If those don't exist, that's the enablement gap to raise.",
-    ask: "Ask marketing what Global partner collateral exists today; whatever's missing becomes a concrete ask for Aleks + marketing.",
+    title: "Per-play collateral exists (loaded 7/14) — country price sheet still missing",
+    why: "Marketing collateral landed 7/14 (release `prismmktgcollateral`): EOR, Contractor Solutions, and Talent flyers plus the “Expand Without Borders” deck — now the app's product canon (src/lib/collateral/canon.ts). What a partner still can't do without you in the room is quote: there's no shareable per-country price cheat sheet.",
+    ask: "Ask marketing for a partner-shareable per-country pricing one-pager (or approval to build one from the internal price list), and confirm the flyers are approved for partners to forward to their clients.",
     category: "Enablement",
-    priority: "high",
+    priority: "medium",
     surfacedIn: "Today · Arm the partners",
   },
   {

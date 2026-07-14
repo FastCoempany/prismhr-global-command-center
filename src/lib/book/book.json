@@ -1,5 +1,5 @@
 {
-  "count": 135,
+  "count": 136,
   "csms": [
     "Anika Steenstra",
     "Whitney Dideon",
@@ -791,6 +791,23 @@
       "lastActivity": "7/1/2026",
       "fit": 95,
       "fitTier": "high"
+    },
+    {
+      "id": "MYESC000000000001",
+      "name": "Employer Services Corporation (ESC)",
+      "cloud": "",
+      "csm": "Lesha Cyphers",
+      "contactName": "C. Hatton Humphrey",
+      "contactEmail": "chumphrey@myesc.com",
+      "size": 0,
+      "sizeBucket": "",
+      "industry": "PEO/ASO",
+      "city": "Amherst",
+      "state": "NY",
+      "website": "myesc.com",
+      "lastActivity": "7/14/2026",
+      "fit": 44,
+      "fitTier": "medium"
     },
     {
       "id": "001F000000w38NnIAI",
