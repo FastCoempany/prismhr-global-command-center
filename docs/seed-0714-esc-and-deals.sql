@@ -228,3 +228,22 @@ INSERT INTO "AccountNote" ("id", "accountId", "partner", "kind", "body", "create
   '2026-07-15 18:30:00'
 )
 ON CONFLICT ("id") DO NOTHING;
+
+-- Bryce call, 7/15 (video transcribed) — urgency, contracts, pricing pressure.
+INSERT INTO "AccountNote" ("id", "accountId", "partner", "kind", "body", "createdAt") VALUES
+(
+  'advpay-bryce-call-715',
+  'ADVOCATEPAY000001',
+  'Bryce Rowley (Advocate Pay)',
+  'partner',
+  'Call with Bryce 7/15 (video on file): SubcontractorHub''s principal is excited and wants to move — but is asking hard timing/implementation questions and needs a clear game plan. He told Bryce he will "solve this or find another way" (Remote-class alternatives on his radar) — the problem is a big monthly financial hit ("hole in the ship"). CONTRACTS: Bryce reviewed ours — nothing alarming; needs a couple hours + his attorney (1–2 days max); realistic signature Fri 7/17–Mon 7/21. Renee''s IP concern already addressed in the language. PRICING PRESSURE: Advocate Pay presented at $495/EE/mo (≈$71K/yr for the 12) with a Sept 1 go-live; client calls it "crazy expensive" vs Remote.com-class pricing; Bryce''s rule-of-40 point — three stacked margins ≈120% markup on core cost — and says Advocate Pay isn''t making much on it either. SAME-DAY COMMITMENTS: roadmap (bullets + timing per bullet, Bulgaria only) to Bryce before his 5p ET in-person client meeting; reconvene call 1:45 CT / 2:45 ET. Bryce asked for the shortest reasonable Bulgaria timeline assuming "Monday morning, let''s start." Note: Bryce hasn''t told the client we''re freshly rolling out — treat maturity questions carefully.',
+  '2026-07-15 19:00:00'
+)
+ON CONFLICT ("id") DO NOTHING;
+
+-- Deal card: decision-stage picture per the 7/15 call.
+UPDATE "DashCard" SET
+  "notes" = '{"decision":"CLIENT URGENCY (7/15 call w/ Bryce, video on file): SubcontractorHub''s principal will solve it or go elsewhere (Remote-class alternatives); big monthly financial hit. Contracts: Bryce + attorney pass 1–2 days → target signature Fri 7/17–Mon 7/21. PRICING PRESSURE: $495/EE/mo presented (≈$71K/yr for 12), Sept 1 go-live in the proposal — client calls it expensive; the schedule is the retention play: signed Mon → first payroll on the August cycle, AHEAD of the quoted go-live. Roadmap delivered to Bryce 7/15 for his 5p client meeting.","use_case":"Bulgaria-first: 12 workers convert to W-2/EOR CORE via our Bulgarian entity; remaining international roster stays 1099, phased after Bulgaria proves the motion."}'::jsonb,
+  "dealSize" = '12 Bulgaria EEs · ~$495/EE/mo (≈$71K/yr) · sign target 7/21 · Aug payroll',
+  "updatedAt" = NOW()
+WHERE "id" = 'seed-card-advocatepay';
