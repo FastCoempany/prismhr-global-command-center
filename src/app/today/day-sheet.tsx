@@ -8,12 +8,13 @@
 
 import { useRef, useState, useSyncExternalStore } from "react";
 import type { Todo } from "@/lib/today/follow-ups";
-import { splitMarker } from "@/lib/today/route-notes";
+import { splitMarker, splitTags, type NoteTags } from "@/lib/today/route-notes";
 import {
   captureSheetNote,
   promoteSheetTodo,
   routeSheetNote,
   saveSheetNote,
+  tagSheetNote,
   undoSheetRoute,
   type SheetNote,
 } from "./sheet-actions";
@@ -68,6 +69,31 @@ function sameLocalDay(iso: string, now: Date): boolean {
   );
 }
 
+function tagsOf(n: N): NoteTags {
+  return splitTags(splitMarker(n.body).text).tags;
+}
+
+// Urgency-first ordering inside a group; ties keep their existing order.
+const URG_RANK: Record<NoteTags["urgency"], number> = {
+  high: 0,
+  med: 1,
+  low: 2,
+  "": 3,
+};
+function byUrgency(a: N, b: N): number {
+  return URG_RANK[tagsOf(a).urgency] - URG_RANK[tagsOf(b).urgency];
+}
+
+// "2026-07-18" → "Jul 18" (parsed as local, not UTC).
+function chipDate(d: string): string {
+  const [y, m, day] = d.split("-").map(Number);
+  if (!y || !m || !day) return d;
+  return new Date(y, m - 1, day).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+}
+
 // A future remindAt = it's on the Scheduled list ("→ todo").
 function todoDay(remindAt: string): string {
   const t = Date.parse(remindAt);
@@ -99,12 +125,21 @@ function NoteRow({
   onChange: (next: N) => void;
   onRemove: (id: string) => void;
 }) {
-  const { text, refs, label } = splitMarker(n.body);
+  const { text: taggedText, refs, label } = splitMarker(n.body);
+  const { text, tags } = splitTags(taggedText);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(text);
   const [picking, setPicking] = useState(false);
+  const [tagging, setTagging] = useState(false);
+  const [tagDraft, setTagDraft] = useState<NoteTags>(tags);
   const [busy, setBusy] = useState(false);
   const day = todoDay(n.remindAt);
+  const hasTags = !!(tags.date || tags.urgency || tags.when);
+
+  const openTagger = () => {
+    setTagDraft(tags);
+    setTagging((v) => !v);
+  };
 
   const run = async (fn: () => Promise<SheetNote | null>) => {
     if (busy) return;
@@ -130,11 +165,8 @@ function NoteRow({
           onBlur={async () => {
             setEditing(false);
             if (draft.trim() && draft !== text) {
-              await saveSheetNote(n.id, draft);
-              onChange({
-                ...n,
-                body: refs ? n.body.replace(text, draft.trim()) : draft.trim(),
-              });
+              const s = await saveSheetNote(n.id, draft);
+              if (s) onChange(apply(n, s));
             }
           }}
         />
@@ -148,6 +180,46 @@ function NoteRow({
           title="Click to edit"
         >
           {text || "(empty note)"}
+        </span>
+      )}
+      {hasTags && !editing && (
+        <span className={styles.sheetTags}>
+          {tags.urgency && (
+            <button
+              type="button"
+              className={`${styles.sheetTagChip} ${
+                tags.urgency === "high"
+                  ? styles.sheetUrgHigh
+                  : tags.urgency === "med"
+                    ? styles.sheetUrgMed
+                    : styles.sheetUrgLow
+              }`}
+              onClick={openTagger}
+              title="Urgency — click to change"
+            >
+              {tags.urgency}
+            </button>
+          )}
+          {tags.when && (
+            <button
+              type="button"
+              className={`${styles.sheetTagChip} ${styles.sheetWhenChip}`}
+              onClick={openTagger}
+              title="Today / later — click to change"
+            >
+              {tags.when}
+            </button>
+          )}
+          {tags.date && (
+            <button
+              type="button"
+              className={styles.sheetTagChip}
+              onClick={openTagger}
+              title="Date — click to change"
+            >
+              {chipDate(tags.date)}
+            </button>
+          )}
         </span>
       )}
       <span className={styles.sheetRoute}>
@@ -195,6 +267,17 @@ function NoteRow({
             )}
           </>
         )}
+        {!n.done && (
+          <button
+            type="button"
+            className={styles.sheetGhost}
+            disabled={busy}
+            title="Tag: urgency · today/later · date"
+            onClick={openTagger}
+          >
+            ⚑
+          </button>
+        )}
         <button
           type="button"
           className={styles.sheetGhost}
@@ -220,6 +303,63 @@ function NoteRow({
           ×
         </button>
       </span>
+      {tagging && (
+        <span className={styles.sheetTagEd}>
+          <select
+            value={tagDraft.urgency}
+            aria-label="Urgency"
+            onChange={(e) =>
+              setTagDraft((t) => ({
+                ...t,
+                urgency: e.target.value as NoteTags["urgency"],
+              }))
+            }
+          >
+            <option value="">urgency —</option>
+            <option value="low">low</option>
+            <option value="med">med</option>
+            <option value="high">high</option>
+          </select>
+          <select
+            value={tagDraft.when}
+            aria-label="Today or later"
+            onChange={(e) =>
+              setTagDraft((t) => ({
+                ...t,
+                when: e.target.value as NoteTags["when"],
+              }))
+            }
+          >
+            <option value="">today/later —</option>
+            <option value="today">today</option>
+            <option value="later">later</option>
+          </select>
+          <input
+            type="date"
+            value={tagDraft.date}
+            aria-label="Date"
+            onChange={(e) => setTagDraft((t) => ({ ...t, date: e.target.value }))}
+          />
+          <button
+            type="button"
+            className={styles.sheetBtn}
+            disabled={busy}
+            onClick={async () => {
+              await run(() => tagSheetNote(n.id, tagDraft));
+              setTagging(false);
+            }}
+          >
+            Set
+          </button>
+          <button
+            type="button"
+            className={styles.sheetGhost}
+            onClick={() => setTagging(false)}
+          >
+            ×
+          </button>
+        </span>
+      )}
       {picking && (
         <span className={styles.sheetPick}>
           no match found — file to:
@@ -357,8 +497,21 @@ export function DaySheet({
   const now = new Date();
   const open = notes.filter((n) => !n.done);
   const doneNotes = notes.filter((n) => n.done);
-  const today = open.filter((n) => sameLocalDay(n.createdAt, now));
-  const earlier = open.filter((n) => !sameLocalDay(n.createdAt, now));
+  // The "today"/"later" tag overrides where a note lives: later-tagged notes
+  // get their own section regardless of age; today-tagged notes surface on
+  // today's sheet even if captured days ago. Untagged notes group by capture
+  // day, as before. Urgency sorts high → med → low → untagged within a group.
+  const later = open.filter((n) => tagsOf(n).when === "later").sort(byUrgency);
+  const today = open
+    .filter(
+      (n) =>
+        tagsOf(n).when !== "later" &&
+        (sameLocalDay(n.createdAt, now) || tagsOf(n).when === "today"),
+    )
+    .sort(byUrgency);
+  const earlier = open
+    .filter((n) => !today.includes(n) && !later.includes(n))
+    .sort(byUrgency);
   const unrouted = today.filter((n) => !splitMarker(n.body).refs && !todoDay(n.remindAt));
 
   if (collapsed) {
@@ -371,6 +524,7 @@ export function DaySheet({
         <span className={styles.sheetCapR}>
           {today.length} note{today.length === 1 ? "" : "s"} today
           {unrouted.length ? ` · ${unrouted.length} scratch` : ""}
+          {later.length ? ` · ${later.length} later` : ""}
           {earlier.length ? ` · ${earlier.length} earlier` : ""} — click ▸ to open
         </span>
       </div>
@@ -425,6 +579,23 @@ export function DaySheet({
           />
         ))}
       </div>
+      {later.length > 0 && (
+        <div className={styles.sheetLater}>
+          <div className={styles.sheetLaterHead}>later ({later.length})</div>
+          {later.map((n) => (
+            <NoteRow
+              key={n.id}
+              n={n}
+              accounts={accounts}
+              partners={partners}
+              onChange={(next) =>
+                setNotes((p) => p.map((x) => (x.id === next.id ? next : x)))
+              }
+              onRemove={(id) => setNotes((p) => p.filter((x) => x.id !== id))}
+            />
+          ))}
+        </div>
+      )}
       {earlier.length > 0 && (
         <details className={styles.sheetEarlier}>
           <summary>earlier open notes ({earlier.length}) ▸</summary>

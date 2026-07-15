@@ -81,6 +81,7 @@ import {
   unsnoozeSignal,
 } from "./actions";
 import { DaySheet } from "./day-sheet";
+import { visibleText } from "@/lib/today/route-notes";
 import styles from "../command-center.module.css";
 
 export const dynamic = "force-dynamic";
@@ -1288,7 +1289,7 @@ export default async function TodayPage({
                     {futureNotes.map((n) => (
                       <div className={styles.next48row} key={n.id}>
                         <span className={styles.next48body}>
-                          📝 {n.body.trim().slice(0, 90) || "(empty note)"}
+                          📝 {visibleText(n.body).slice(0, 90) || "(empty note)"}
                           <span className={styles.next48when}>
                             {" "}
                             — {shortDate(n.remindAt)}

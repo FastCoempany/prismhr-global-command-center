@@ -11,7 +11,10 @@ import {
   detectTargets,
   routeLabel,
   splitMarker,
+  splitTags,
   withMarker,
+  withTags,
+  type NoteTags,
   type RouteRefs,
 } from "@/lib/today/route-notes";
 
@@ -126,6 +129,8 @@ export async function routeSheetNote(
     const { text, refs: existing } = splitMarker(t.body);
     if (existing) return asSheetNote(t.id, t.body, t.done, t.remindAt, t.createdAt);
 
+    // Tags are ours, not the note's content — detect and file without them.
+    const { text: visible } = splitTags(text);
     const { accounts, partners } = bookForDetection();
     let targets;
     if (explicit && (explicit.accountId || explicit.partner)) {
@@ -141,7 +146,7 @@ export async function routeSheetNote(
         ],
       };
     } else {
-      targets = detectTargets(text, accounts, partners);
+      targets = detectTargets(visible, accounts, partners);
     }
     if (!targets.accounts.length && !targets.partners.length)
       return {
@@ -149,7 +154,7 @@ export async function routeSheetNote(
         unmatched: true,
       };
 
-    const written = await writeRoutes(text, targets);
+    const written = await writeRoutes(visible, targets);
     const body =
       written.accountNoteIds.length || written.partnerNoteIds.length
         ? withMarker(text, written, routeLabel(targets))
@@ -209,20 +214,51 @@ export async function promoteSheetTodo(
   }
 }
 
-// Inline body edit from the sheet — preserves any routing marker.
-export async function saveSheetNote(id: string, text: string): Promise<boolean> {
-  if (!(await canWrite()) || !id) return false;
+// Inline body edit from the sheet — preserves any routing marker AND tags.
+export async function saveSheetNote(id: string, text: string): Promise<SheetNote | null> {
+  if (!(await canWrite()) || !id) return null;
   try {
     const prisma = getPrisma();
     const t = await prisma.todo.findUnique({ where: { id } });
-    if (!t) return false;
-    const { refs, label } = splitMarker(t.body);
-    const clean = text.trim().slice(0, 20000);
+    if (!t) return null;
+    const { text: old, refs, label } = splitMarker(t.body);
+    const { tags } = splitTags(old);
+    const clean = withTags(text.trim().slice(0, 20000), tags);
     const body = refs ? withMarker(clean, refs, label) : clean;
     await prisma.todo.update({ where: { id }, data: { body } });
-    return true;
+    return asSheetNote(id, body, t.done, t.remindAt, t.createdAt);
   } catch {
-    return false;
+    return null;
+  }
+}
+
+// Set (or clear) a note's tags — date, urgency, today/later. The tags ride in
+// the body's tag-marker line, so this works on routed and plain notes alike.
+export async function tagSheetNote(
+  id: string,
+  tags: NoteTags,
+): Promise<SheetNote | null> {
+  if (!(await canWrite()) || !id) return null;
+  try {
+    const prisma = getPrisma();
+    const t = await prisma.todo.findUnique({ where: { id } });
+    if (!t) return null;
+    const { text, refs, label } = splitMarker(t.body);
+    const { text: plain } = splitTags(text);
+    const safe: NoteTags = {
+      date: /^\d{4}-\d{2}-\d{2}$/.test(tags.date) ? tags.date : "",
+      urgency:
+        tags.urgency === "low" || tags.urgency === "med" || tags.urgency === "high"
+          ? tags.urgency
+          : "",
+      when: tags.when === "today" || tags.when === "later" ? tags.when : "",
+    };
+    const tagged = withTags(plain, safe);
+    const body = refs ? withMarker(tagged, refs, label) : tagged;
+    await prisma.todo.update({ where: { id }, data: { body } });
+    return asSheetNote(id, body, t.done, t.remindAt, t.createdAt);
+  } catch {
+    return null;
   }
 }
 

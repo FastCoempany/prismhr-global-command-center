@@ -47,6 +47,56 @@ export function withMarker(text: string, refs: RouteRefs, label: string): string
   return `${text.trimEnd()}\n${MARK}[${ids}] ${label}`;
 }
 
+// ---------------------------------------------------------------------------
+// Note tags — date, urgency, today/later. Same no-schema trick as routing:
+// the tags live INSIDE the body as their own marker line, kept at the end of
+// the text portion (i.e. BEFORE any routing marker, which stays the last line).
+//   ⚑[d:2026-07-18,u:high,w:later]
+
+export type NoteTags = {
+  date: string; // yyyy-mm-dd, or ""
+  urgency: "" | "low" | "med" | "high";
+  when: "" | "today" | "later";
+};
+
+const TAG = "⚑";
+export const NO_TAGS: NoteTags = { date: "", urgency: "", when: "" };
+
+// Split a text (already stripped of any routing marker) into the visible note
+// and its tags. Unknown or malformed values are ignored, the line still strips.
+export function splitTags(text: string): { text: string; tags: NoteTags } {
+  const i = text.lastIndexOf(`\n${TAG}[`);
+  const startsWith = text.startsWith(`${TAG}[`);
+  if (i < 0 && !startsWith) return { text, tags: { ...NO_TAGS } };
+  const at = startsWith && i < 0 ? 0 : i + 1;
+  const m = /^⚑\[([^\]]*)\]$/.exec(text.slice(at).trim());
+  if (!m) return { text, tags: { ...NO_TAGS } };
+  const tags: NoteTags = { ...NO_TAGS };
+  for (const part of m[1].split(",")) {
+    const [k, v = ""] = part.split(":");
+    if (k === "d" && /^\d{4}-\d{2}-\d{2}$/.test(v)) tags.date = v;
+    if (k === "u" && (v === "low" || v === "med" || v === "high")) tags.urgency = v;
+    if (k === "w" && (v === "today" || v === "later")) tags.when = v;
+  }
+  return { text: text.slice(0, at === 0 ? 0 : i).trimEnd(), tags };
+}
+
+export function withTags(text: string, tags: NoteTags): string {
+  const parts = [
+    tags.date ? `d:${tags.date}` : "",
+    tags.urgency ? `u:${tags.urgency}` : "",
+    tags.when ? `w:${tags.when}` : "",
+  ].filter(Boolean);
+  const clean = text.trimEnd();
+  return parts.length ? `${clean}\n${TAG}[${parts.join(",")}]` : clean;
+}
+
+// The note as the eye should see it — both markers stripped. For compact
+// displays outside the sheet (e.g. the Scheduled panel).
+export function visibleText(body: string): string {
+  return splitTags(splitMarker(body).text).text.trim();
+}
+
 // Words too generic to identify an account on their own. Anything that shows
 // up across the PEO/HCM industry (or ordinary business writing) can never be a
 // routing key by itself — "employee", "professionals", "leasing" and friends
