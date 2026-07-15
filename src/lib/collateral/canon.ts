@@ -102,6 +102,7 @@ export const PRODUCT_CANON: Product[] = [
       "Integrates with existing HCM or finance systems",
       "Global Dashboard: review, approve and pay by pay period, country and employee",
       "Supports employees AND contractors in multi-currency payroll runs (per the flyer)",
+      "NOT the same thing as the PrismHR core 'International Employee' record flag (June 2026 release notes, WSP-3980/3982/4043, service-provider-only INTLEMPLOYEE feature code): that flag only waives the US resident address on the employee record and such employees CANNOT be processed in a payroll batch — Global Payroll is the product that actually runs multi-country payroll",
       "Channel framing (flyer): built for service providers to extend their own global payroll services to clients across 175+ countries",
       "Partner-shareable one-page flyer exists (PHRFLY-GLOBALPYRLL, added 7/14 pm) — carries no pricing",
     ],
