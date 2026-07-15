@@ -205,14 +205,26 @@ INSERT INTO "AccountNote" ("id", "accountId", "partner", "kind", "body", "create
   'ADVOCATEPAY000001',
   'Advocate Pay / SubcontractorHub',
   'partner',
-  'Urgency confirmed (7/15): the unsolved Bulgaria problem is costing Advocate Pay dearly EVERY MONTH — they want the contract done NOW. Scope narrows to phase 1: the 12 workers in Bulgaria only, working back through the rest of the roster after. Sent the implementation timeline (keyed off signature date) with the Bulgaria intake list: signed agreements, roster (names/emails/roles/start dates), gross comp per person, terms (hours/remote/notice/benefits), clean 1099 end-dates for conversion, one comms point of contact.',
+  'Urgency confirmed (7/15, via Bryce): the unsolved Bulgaria problem is costing SUBCONTRACTORHUB (Advocate Pay''s prospect; Advocate Pay is our ASO partner on Prism) dearly EVERY MONTH — Prism and Advocate Pay need the contract done NOW. Scope narrows to phase 1: the 12 workers in Bulgaria only, working back through the rest of the roster after. Sent the implementation timeline (keyed off signature date) with the Bulgaria intake list: signed agreements, roster (names/emails/roles/start dates), gross comp per person, terms (hours/remote/notice/benefits), clean 1099 end-dates for conversion, one comms point of contact.',
   '2026-07-15 17:30:00'
 )
 ON CONFLICT ("id") DO NOTHING;
 
 -- Bulgaria-first scope + urgency onto the seeded card (guarded to the seed id).
 UPDATE "DashCard" SET
-  "notes" = '{"decision":"CLIENT URGENCY (7/15): the unsolved problem costs Advocate Pay dearly monthly — contract needs to close NOW. Phase 1 = the 12 Bulgaria workers only; rest of roster phases in behind. Implementation timeline + intake list sent 7/15. Contracts (final, client-shareable) in their hands since 7/10; deposit waived. Signature is the only gate.","use_case":"Bulgaria-first: 12 workers convert to W-2/EOR CORE via our Bulgarian entity; remaining international roster stays 1099, phased after Bulgaria proves the motion."}'::jsonb,
+  "notes" = '{"decision":"CLIENT URGENCY (7/15, via Bryce): the unsolved problem costs SubcontractorHub (Advocate Pay''s prospect) dearly monthly — contract needs to close NOW. Phase 1 = the 12 Bulgaria workers only; rest of roster phases in behind. Implementation timeline + intake list sent 7/15. Contracts (final, client-shareable) in their hands since 7/10; deposit waived. Signature is the only gate.","use_case":"Bulgaria-first: 12 workers convert to W-2/EOR CORE via our Bulgarian entity; remaining international roster stays 1099, phased after Bulgaria proves the motion."}'::jsonb,
   "dealSize" = '12 Bulgaria EEs now (EOR CORE) · roster phases behind · deposit waived',
   "updatedAt" = NOW()
 WHERE "id" = 'seed-card-advocatepay';
+
+-- Internal tension on record (added 7/15 pm): client urgency vs. our readiness.
+INSERT INTO "AccountNote" ("id", "accountId", "partner", "kind", "body", "createdAt") VALUES
+(
+  'advpay-aleks-readiness',
+  'ADVOCATEPAY000001',
+  'Aleks',
+  'note',
+  'Context for the 7/15 ask to Aleks: she recently signaled we want them to WAIT — parts of our contracting apparatus were still in limbo (the founding VP of Sales for Global left before launch, and this motion landed in her lap). That posture now collides with client urgency (SubcontractorHub bleeding monthly, Bryce pressing to close). Sent Aleks the question + a theoretical implementation sample (Bulgaria, 12 EEs) so the answer starts from a straw man, not a blank page. The decision needed from her: are we ready to countersign and implement now — and if not, what can I promise Bryce today?',
+  '2026-07-15 18:30:00'
+)
+ON CONFLICT ("id") DO NOTHING;
