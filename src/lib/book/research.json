@@ -3639,16 +3639,18 @@
       "verified": true
     },
     "MYESC000000000001": {
-      "demandScore": 85,
+      "demandScore": 90,
       "confidence": "high",
       "signals": [
         "FIRST-PARTY INBOUND (7/13, via CSM Lesha Cyphers): C. Hatton Humphrey (Director of Technology Solutions, Employer Services Corporation — ESC, myesc.com, Western NY) asked for a demo and conversation about the 'Global Payroll Platform PrismHR is rolling out.' Kim Bartolotti cc'd.",
+        "INTRO CALL (7/15): the deal is structural. ESC (Buffalo, on the Canadian border) treats every worksite employee as US-based, runs no Canadian payroll, has NO tech for international payroll or taxes — and TURNS DOWN 4–5 Canadian-adjacent companies a year (US companies with Canadian workers, or true Canadian companies). Global Payroll converts standing turn-downs into channel revenue. Named: D'Youville College (bi-national university — Dir of Ops wants to pay at their Canadian location; today's workaround lists the college as the Canadian residents' address, requires a US bank account, and treats them like green-card holders). Also a long-time trucking client with a Canadian side ESC can't touch. The ~300-EE scope is among 3 true bi-national Canadian prospects.",
         "CLIENT-DRIVEN: a couple of ESC's clients are interested, and Hatton needs to understand what's available. This is channel demand: ESC reselling/servicing Global for their client base, not (only) ESC's own workforce.",
         "PRODUCT CONFIRMED (7/14, same-day answers): true Global Payroll fit. Two independent ESC client companies, both active businesses in Canada with their own entities; workers paid as employees (secondary interest in understanding contractor capabilities); Ontario initially; ~300 employees to start. Hatton explicitly ruled out EOR.",
         "PROCESS PREFERENCE (Hatton, 7/14): she wants a phone call first for a general understanding, then a system demo for a larger ESC team. Her availability this week: Wed 8:30–10a / 11a–2p / 3–4p, Thu 11:30a–2p, Fri 8:30a–12p (EDT).",
         "Lesha intro'd me as the Global SME 7/14 — thread is live and mine to run.",
         "OPEN FROM HATTON: is Global an additional platform or functionality built into the current Prism platform? (Answer: built in — a new tab, no integration work.)",
-        "PRICING PATH CONFIRMED (Aleks, 7/14): Global Payroll has no standard list rates — individually priced per country, per the internal agreement. Process: request the country quote from Anthony Falzone (Head of Global Ops), copy Aleks. Canada quote for ~300 EEs requested 7/14; reply to Hatton holds until it lands. (The Global Payroll flyer, PHRFLY-GLOBALPYRLL, carries no pricing.)"
+        "PRICING PATH CONFIRMED (Aleks, 7/14): Global Payroll has no standard list rates — individually priced per country, per the internal agreement. Process: request the country quote from Anthony Falzone (Head of Global Ops), copy Aleks. Canada quote for ~300 EEs requested 7/14; reply to Hatton holds until it lands. (The Global Payroll flyer, PHRFLY-GLOBALPYRLL, carries no pricing.)",
+        "PLATFORM-CLARITY FLAG (from Hatton, 7/15): he connected the June 2026 release notes (WSP-3980/3982/4043 — 'International Employee' field, service-provider-only INTLEMPLOYEE feature code) to Global. That flag only waives the US resident address on the employee record; flagged employees cannot be processed in a payroll batch. The demo must explicitly separate it from Global Payroll, which does the actual multi-country processing."
       ],
       "evidence": [
         {
@@ -3656,7 +3658,7 @@
           "url": "https://www.myesc.com/"
         }
       ],
-      "summary": "Live, first-party channel demand — now a confirmed pure Global Payroll deal: ESC (Western NY PEO, Lesha's book) came inbound 7/13 for a demo on behalf of two client companies. Hatton's same-day discovery answers (7/14): both companies are active businesses in Canada with their own entities, ~300 employees in Ontario to start, paid as employees (contractor curiosity secondary), explicitly NOT interested in EOR. Her one platform question — additional platform or built into Prism — is our easiest answer (built in). Next step gated on the Canada quote: Global Payroll is individually priced per country (no list rates) — quote requested 7/14 from Anthony Falzone (Head of Global Ops, copy Aleks) before the reply, call, and team demo.",
+      "summary": "Live, confirmed Global Payroll deal with structural channel upside: ESC (Buffalo border PEO, Lesha's book) came inbound 7/13 for two client companies — active businesses in Canada with their own entities, ~300 employees in Ontario, explicitly not EOR. The 7/15 intro call reframed it: ESC turns down 4–5 Canadian-adjacent companies every year (no Canadian payroll, no international tax capability — current workaround treats Canadian residents like green-card holders with US bank accounts), so Global Payroll makes ESC able to say yes as a standing motion, not a one-off. Named next prospect: D'Youville College, bi-national. Demo must separate the INTLEMPLOYEE record flag (no payroll processing) from Global Payroll. Pricing gated on the Canada quote from Anthony Falzone (per-country, no list rates).",
       "researched": true,
       "verified": true
     }

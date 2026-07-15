@@ -89,6 +89,35 @@ UPDATE "DashCard" SET
   "updatedAt" = NOW()
 WHERE "id" = 'seed-card-esc';
 
+-- The 7/15 intro call with Hatton (added 7/15 — file stays safe to re-run).
+INSERT INTO "AccountNote" ("id", "accountId", "partner", "kind", "body", "createdAt") VALUES
+(
+  'esc-9-intro-call',
+  'MYESC000000000001',
+  'C. Hatton Humphrey (ESC)',
+  'partner',
+  'Intro call 7/15 — the deal is structural, not one-off. ESC sits in Buffalo on the Canadian border. As a Prism PEO/ASO provider all their clients are US-based and every employee is treated as US-based; they run NO Canadian payroll and have no tech for international payroll or taxes. They TURN DOWN 4–5 companies a year — US companies with Canadian workers, or true Canadian companies. Named example: D''Youville College (bi-national university; Dir of Ops asked to pay at their Canadian location — taxes, banking). Current workaround for Canadian residents: list the college as the residence in Prism, require a US bank account, treat them like green-card holders. Another example: a long-time trucking client with a US office paying US drivers, plus a Canadian side ESC can''t touch. The two client companies (~300 EEs) are among 3 prospects that are true bi-national Canadian companies.',
+  '2026-07-15 15:30:00'
+),
+(
+  'esc-10-intlemployee-fyi',
+  'MYESC000000000001',
+  'C. Hatton Humphrey (ESC)',
+  'partner',
+  'Post-call FYI from Hatton: June 2026 PrismHR release notes (WSP-3980/3982/4043) add an "International Employee" field on Employee Details (service-provider-only INTLEMPLOYEE feature code) that waives the US resident address. IMPORTANT CLARITY FOR THE DEMO: that flag is an HR-record accommodation only — flagged employees CANNOT be processed in a payroll batch (finalization errors by design). It is not Global Payroll; actual multi-country processing is the PrismHR Global Payroll product. Hatton saw this and connected it to Global — the demo should draw the line explicitly.',
+  '2026-07-15 16:00:00'
+)
+ON CONFLICT ("id") DO NOTHING;
+
+-- Intro call done → discovery closes, use-case shaping is live.
+UPDATE "DashCard" SET
+  "states" = '{"interested":"done","csm_seeded":"done","discovery":"done","use_case":"active"}'::jsonb,
+  "notes" = '{"discovery":"CONFIRMED pure Global Payroll (7/14 answers + 7/15 intro call): two ESC client companies, active businesses in Canada with their own entities, ~300 employees in Ontario to start, explicitly not EOR. Structural upside: ESC (Buffalo, border PEO) turns down 4–5 Canadian-adjacent companies a year — Global Payroll turns those from turn-downs into revenue.","use_case":"Bi-national Canada payroll for ESC''s client base. Named: D''Youville College (pay at their Canadian location — taxes, banking). Current workaround (college listed as residence, US bank account, green-card-holder treatment) is the urgency lever. Demo must separate the INTLEMPLOYEE record flag (no payroll processing) from Global Payroll (the actual product). Canada quote from Anthony Falzone gates pricing talk."}'::jsonb,
+  "activated" = '{"discovery":"2026-07-14T18:00:00Z","use_case":"2026-07-15T15:30:00Z"}'::jsonb,
+  "dealSize" = '2 clients · ~300 EEs Ontario now · +4–5 turn-downs/yr channel upside',
+  "updatedAt" = NOW()
+WHERE "id" = 'seed-card-esc';
+
 -- ESC is in motion — the rail reads it as a live conversation, not a pending
 -- roundup. No-op if a disposition is already set.
 INSERT INTO "AccountDisposition" ("id", "accountId", "status", "reason", "createdAt", "updatedAt") VALUES

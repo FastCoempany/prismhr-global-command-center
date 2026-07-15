@@ -556,13 +556,13 @@ export const ROUNDUP_BULLETS: Record<string, string> = {
   // ESC — Hatton's inbound via Lesha; already in motion, so the bullet reads
   // as shared status with a thank-you, not a request for a read.
   MYESC000000000001:
-    "Moving fast (thanks for the intro!): Hatton at ESC came to you 7/13 asking about the " +
-    "Global Payroll Platform for a couple of her interested clients, and her discovery answers " +
-    "came back the same day I asked — two client companies, both active businesses in Canada " +
-    "with their own entities, ~300 employees in Ontario to start, explicitly not EOR. That's a " +
-    "true Global Payroll deal. Pricing is individually quoted per country, so I've requested " +
-    "the Canada quote internally and I'll reply + lock her call and team demo when it lands. " +
-    "Nothing needed from you — will keep you looped.",
+    "Great momentum here (thanks again for the intro!): had the intro call with Hatton 7/15, " +
+    "and this is bigger than the two client companies (~300 employees in Ontario, own Canadian " +
+    "entities, pure Global Payroll). ESC sits on the border and turns down 4–5 " +
+    "Canadian-adjacent companies a year because they can't run Canadian payroll — Global " +
+    "Payroll makes those a yes, so this is a standing channel motion, not a one-off. Next: " +
+    "Canada pricing is being quoted internally, then the ESC team demo. Nothing needed from " +
+    "you — will keep you looped.",
   // Infiniti HR — Jennifer Hardesty's 7/14 ask on Anika's LMS thread; already
   // in motion, so the bullet reads as shared status with a thank-you.
   "001F000000w38OIIAY":
