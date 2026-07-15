@@ -3,6 +3,7 @@ import Link from "next/link";
 import { AppWayfinder } from "@/components/app-wayfinder";
 import { loadDashboard } from "@/lib/dashboard/data";
 import { loadFieldNotes, FIELD_NOTE_KINDS } from "@/lib/field-notes/data";
+import type { AccountNote as AcctNote } from "@/lib/today/overlay";
 import {
   loadAccountNotes,
   loadDispositions,
@@ -19,6 +20,7 @@ import { AtcRow, CurveballButton, type RailItem } from "./atc-rail";
 import { CockpitDrawers } from "./cockpit-drawers";
 import { DeckRow, type DeckKind } from "./deck-row";
 import {
+  daysSinceIso,
   followUpMessage,
   futureDatedTodos,
   groupUpcomingByDay,
@@ -239,12 +241,14 @@ function MorningMove({
   doneKey,
   done,
   touch,
+  notes = [],
 }: {
   mv: Mv;
   n: number;
   doneKey: string;
   done: boolean;
   touch?: Touch;
+  notes?: AcctNote[];
 }) {
   const { term, href } = moveTerm(mv);
   let g: Guidance;
@@ -388,9 +392,29 @@ function MorningMove({
     >
       {sfCheck}
       <GuidanceBody g={g} term={term} href={href} sayNode={sayNode}>
+        {notes.length > 0 && <NotesOnFile notes={notes} />}
         {actions}
       </GuidanceBody>
     </DeckRow>
+  );
+}
+
+// The dated notes already on file for an account — expandable wherever the
+// account is being worked, so the history is one click away, never a page away.
+function NotesOnFile({ notes }: { notes: AcctNote[] }) {
+  return (
+    <details className={styles.fuSent}>
+      <summary>Notes on file ({notes.length})</summary>
+      <ul className={styles.fuLog}>
+        {notes.slice(0, 6).map((n) => (
+          <li key={n.id}>
+            <b>{shortDate(n.createdAt)}</b>
+            {n.kind === "partner" ? " — partner said: " : " — "}
+            {n.body}
+          </li>
+        ))}
+      </ul>
+    </details>
   );
 }
 
@@ -803,15 +827,28 @@ export default async function TodayPage({
   const openRailRows = railItems.filter((r) => r.status === "open");
   const openOther = followUps.open.filter((t) => t.kind !== "partner");
 
-  // Roundup cadence — every 2 days per partner. Due partners surface hot in the
-  // rail's Roundups family AND in the right-column cadence panel.
-  const cadence = kickoffItems.map(({ k, touch }) => ({
-    partner: k.partner,
-    accounts: k.accounts.length,
-    lastSent: touch ? touch.contactedAt : "",
-    due: roundupDue(touch),
-    inThread: !!touch && touch.status !== "archived",
-  }));
+  // Roundup cadence — every 2 days per partner. The panel is a status readout:
+  // when the last roundup went out, how long ago, how many accounts it carried
+  // vs. the partner's total. Partners with nothing left to round up (all
+  // accounts in motion/parked) drop off the list entirely.
+  const sendableByPartner = new Map(railItems.map((r) => [r.partner, r.sendable]));
+  const cadence = kickoffItems
+    .map(({ k, touch }) => {
+      // "N of M teed up" was stamped on the touch at send time — the honest
+      // "how many went out" count; current sendable is the fallback.
+      const sentMatch = touch?.detail ? /^(\d+) of \d+/.exec(touch.detail) : null;
+      return {
+        partner: k.partner,
+        total: k.accounts.length,
+        sendable: sendableByPartner.get(k.partner) ?? 0,
+        sentCount: sentMatch ? Number(sentMatch[1]) : null,
+        lastSent: touch ? touch.contactedAt : "",
+        daysAgo: touch ? daysSinceIso(touch.contactedAt) : null,
+        due: roundupDue(touch),
+        live: !!touch && touch.status !== "archived",
+      };
+    })
+    .filter((c) => c.sendable > 0 || c.live);
   const cadenceDueCount = cadence.filter((c) => c.due).length;
   const sortedFresh = [...freshRows].sort(
     (a, b) => Number(b.cadenceDue ?? false) - Number(a.cadenceDue ?? false),
@@ -932,6 +969,9 @@ export default async function TodayPage({
                     doneKey={it.key}
                     done={false}
                     touch={it.touch}
+                    notes={
+                      it.mv.kind === "commitment" ? [] : (acctNotes.get(it.mv.a.id) ?? [])
+                    }
                   />
                 </div>
               ))}
@@ -1085,6 +1125,9 @@ export default async function TodayPage({
                         term={a.name}
                         href={`/accounts?focus=${a.id}`}
                       >
+                        {(acctNotes.get(a.id) ?? []).length > 0 && (
+                          <NotesOnFile notes={acctNotes.get(a.id) ?? []} />
+                        )}
                         <div className={styles.gActions}>
                           <SeedForm a={a} onBoard={false} label="Seed to dashboard" />
                           <ParkControl id={a.id} />
@@ -1142,21 +1185,35 @@ export default async function TodayPage({
               <div className={styles.cadPanel}>
                 {cadence.map((c) => (
                   <div key={c.partner} className={styles.cadRow}>
-                    {c.due ? (
-                      <span className={styles.cadDue}>DUE</span>
-                    ) : c.inThread ? (
-                      <span className={styles.cadThread}>IN THREAD</span>
-                    ) : (
-                      <span className={styles.cadOk}>OK</span>
-                    )}
+                    <span
+                      className={styles.cadDot}
+                      style={{
+                        background: c.due ? "#dc2626" : c.live ? "#eab308" : "#1a7f3c",
+                      }}
+                      title={
+                        c.due
+                          ? "New roundup due"
+                          : c.live
+                            ? "Conversation open — no new roundup stacks on a live thread"
+                            : "Fresh — inside the 2-day cadence"
+                      }
+                    />
                     <b>{c.partner}</b>
+                    {c.due && <span className={styles.cadDue}>DUE</span>}
                     <span className={styles.cadMeta}>
-                      {c.lastSent ? `last sent ${shortDate(c.lastSent)}` : "never sent"}
-                      {" · "}
-                      {c.accounts} account{c.accounts === 1 ? "" : "s"}
+                      {c.lastSent
+                        ? `sent ${shortDate(c.lastSent)} · ${c.daysAgo}d ago · ${
+                            c.sentCount != null ? c.sentCount : c.sendable
+                          }/${c.total} accts`
+                        : `never sent · ${c.sendable}/${c.total} accts ready`}
                     </span>
                   </div>
                 ))}
+                {cadence.length === 0 && (
+                  <p className={styles.muted}>
+                    Nothing to round up — every account is in motion or parked.
+                  </p>
+                )}
               </div>
             </div>
 
@@ -1247,7 +1304,7 @@ export default async function TodayPage({
                   name="label"
                   required
                   maxLength={200}
-                  placeholder="Add your own check-in (who / what)…"
+                  placeholder="Add a check-in…"
                   aria-label="Add a follow-up"
                 />
                 <select name="when" defaultValue="tomorrow" aria-label="When">
@@ -1259,7 +1316,7 @@ export default async function TodayPage({
               {followUps.replied.length > 0 && (
                 <details className={styles.fuDone}>
                   <summary className={styles.fuDoneHead}>
-                    Done ({followUps.replied.length}) — reopen or clear
+                    done ({followUps.replied.length}) ▸
                   </summary>
                   <ul className={styles.fuDoneList}>
                     {followUps.replied.map((t) => (
