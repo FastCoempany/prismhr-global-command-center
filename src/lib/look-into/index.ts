@@ -53,7 +53,7 @@ export const LOOK_INTO: LookIntoItem[] = [
   {
     id: "book-source-of-truth",
     title: "The PEO book is a one-time CSV, not a live source",
-    why: "The 131 accounts came from a single CSV upload. As CSMs update owners, activity, and status in the real system, this book drifts out of date and nobody's notified.",
+    why: "The book started as a single CSV upload and has since been reconciled by hand (HCM roster 7/13, ESC + Infiniti updates 7/14 — 136 accounts today). As CSMs update owners, activity, and status in the real system, this book drifts and nobody's notified.",
     ask: "Confirm the canonical internal source (a Salesforce report? a PrismHR export?) and whether we can refresh from it on a cadence instead of re-uploading by hand.",
     category: "Data sources",
     priority: "high",
