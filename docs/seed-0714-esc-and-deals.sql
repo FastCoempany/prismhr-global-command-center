@@ -118,6 +118,26 @@ UPDATE "DashCard" SET
   "updatedAt" = NOW()
 WHERE "id" = 'seed-card-esc';
 
+-- Anthony's pricing-thread reply (added 7/15 — file stays safe to re-run).
+INSERT INTO "AccountNote" ("id", "accountId", "partner", "kind", "body", "createdAt") VALUES
+(
+  'esc-12-pricing-thread',
+  'MYESC000000000001',
+  'Anthony Falzone',
+  'partner',
+  'Pricing thread (Teams, 7/14 pm — Anthony + Aleks): Anthony asked retail or wholesale pricing → I asked for BOTH, for future reference, Canada first. Aleks asked what tech ESC uses today and whether this is a contract with ESC (ESC bills their client) or direct with the end client → confirmed: CONTRACT WITH ESC (channel/wholesale motion). Relayed ESC''s tech concern: additional platform vs built into current Prism — "they want to use our tech." (At that point: email exchange only, no call yet.)',
+  '2026-07-14 21:22:00'
+),
+(
+  'esc-11-anthony-mpex',
+  'MYESC000000000001',
+  'Anthony Falzone',
+  'partner',
+  'Anthony (Teams, 7/15 am) on the Canada quote: "CAN is a bit nuanced because Vensure/Prism own local tech in CAN (MPEX). It is good from a cost standpoint because there are no 3rd parties, but we need to understand what they want from a technology standpoint." Owned Canadian payroll tech = cost-favorable, and his open question maps exactly to Hatton''s platform concern. Acknowledged 9:21 ("understood"); the tech-standpoint answer is in hand from the 7/15 discovery call (native-in-Prism; separate platform is the objection) — fold it into the next pricing-thread message. Freddie Ashby added to the thread with full history.',
+  '2026-07-15 13:07:00'
+)
+ON CONFLICT ("id") DO NOTHING;
+
 -- ESC is in motion — the rail reads it as a live conversation, not a pending
 -- roundup. No-op if a disposition is already set.
 INSERT INTO "AccountDisposition" ("id", "accountId", "status", "reason", "createdAt", "updatedAt") VALUES

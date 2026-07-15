@@ -142,6 +142,14 @@ export const PRODUCT_CANON: Product[] = [
 // How Global Payroll gets priced — internal process knowledge (from Aleks,
 // 7/14), NOT a collateral claim. Kept separate from the canon so product
 // claims stay strictly sourced to released materials.
+// Canada delivery (internal, from Anthony Falzone — Head of Global Ops, 7/15):
+// Vensure/PrismHR own local payroll technology in Canada (MPEX). No third
+// parties in the Canadian chain — cost-favorable — and the open design question
+// on any Canada deal is what the client wants from a technology standpoint
+// (native-in-Prism experience vs. separate system).
+export const CANADA_DELIVERY_NOTE =
+  "Canada: Vensure/PrismHR own local payroll tech in Canada (MPEX) — no 3rd parties in the chain, cost-favorable. Scope Canada deals around what the client wants from a technology standpoint.";
+
 export const PAYROLL_PRICING_PROCESS =
   "Global Payroll pricing: there are NO standard list rates — each engagement is individually priced per country (per the internal agreement). Process: reach out to Anthony Falzone (Head of Global Ops at PrismHR) for the country quote and copy Aleks. Never state or estimate Global Payroll rates in a draft; say a country-specific quote is being prepared.";
 
@@ -168,5 +176,5 @@ export function canonForPrompt(): string {
       : "";
     return `- ${p.name}: ${p.positioning}${tiers}`;
   }).join("\n");
-  return `${products}\nPlatform facts: ${CANON_FACTS.join(" · ")}\n${PAYROLL_PRICING_PROCESS}`;
+  return `${products}\nPlatform facts: ${CANON_FACTS.join(" · ")}\n${PAYROLL_PRICING_PROCESS}\n${CANADA_DELIVERY_NOTE}`;
 }
