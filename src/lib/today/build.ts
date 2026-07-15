@@ -557,8 +557,8 @@ export const ROUNDUP_BULLETS: Record<string, string> = {
   // as shared status with a thank-you, not a request for a read.
   MYESC000000000001:
     "Great momentum here (thanks again for the intro!): had the intro call with Hatton 7/15, " +
-    "and this is bigger than the two client companies (~300 employees in Ontario, own Canadian " +
-    "entities, pure Global Payroll). ESC sits on the border and turns down 4–5 " +
+    "and this is bigger than the first prospect (a standalone ~300-employee company operating " +
+    "in Canada that wants ESC running its Canadian payroll — pure Global Payroll). ESC sits on the border and turns down 4–5 " +
     "Canadian-adjacent companies a year because they can't run Canadian payroll — Global " +
     "Payroll makes those a yes, so this is a standing channel motion, not a one-off. Next: " +
     "Canada pricing is being quoted internally, then the ESC team demo. Nothing needed from " +
