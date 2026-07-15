@@ -47,33 +47,85 @@ export function withMarker(text: string, refs: RouteRefs, label: string): string
   return `${text.trimEnd()}\n${MARK}[${ids}] ${label}`;
 }
 
-// Words too generic to identify an account on their own.
+// Words too generic to identify an account on their own. Anything that shows
+// up across the PEO/HCM industry (or ordinary business writing) can never be a
+// routing key by itself — "employee", "professionals", "leasing" and friends
+// were spraying one note across half the book.
 const STOP = new Set([
   "the",
   "and",
+  "for",
   "inc",
   "llc",
+  "llp",
+  "dba",
+  "fka",
   "group",
   "corp",
   "corporation",
   "company",
+  "companies",
   "co",
   "hr",
   "payroll",
   "services",
+  "service",
   "solutions",
+  "solution",
   "staffing",
   "management",
+  "managed",
   "employer",
+  "employers",
+  "employee",
+  "employees",
+  "employment",
+  "professional",
+  "professionals",
+  "leasing",
+  "outsourcing",
+  "outsource",
+  "resources",
+  "resource",
+  "consulting",
+  "consultants",
+  "partners",
+  "partner",
+  "workforce",
+  "benefits",
+  "benefit",
+  "admin",
+  "administrative",
+  "business",
+  "national",
+  "american",
+  "america",
+  "first",
   "global",
+  "international",
+  "processing",
+  "pros",
+  "peo",
+  "hcm",
   "one",
   "pay",
+  "paymaster",
+  "pro",
+  "team",
+  "works",
+  "work",
 ]);
 
-// Detect which accounts / partners a note is about. Case-insensitive, whole-word
-// matching against (1) full account names, (2) distinctive single tokens of the
-// name (≥4 chars, not a stop word), and (3) partner first names. A matched
-// account pulls its CSM partner in too — the note lands on both surfaces.
+// Detect which accounts / partners a note is about — deliberately conservative:
+// a wrong route costs trust, a missed route costs one click ("route ▸").
+// An account matches on (1) its full name, or (2) a single DISTINCTIVE token —
+// ≥5 chars, not an industry stop-word, and unique to that one account across
+// the whole book (a token shared by several account names can never route).
+// Partner first names match as whole words; a matched account pulls its CSM in.
+// If more than MAX_ACCOUNT_ROUTES accounts match, the note is ambiguous and
+// nothing routes — it stays plain for manual routing.
+export const MAX_ACCOUNT_ROUTES = 2;
+
 export function detectTargets(
   text: string,
   accounts: { id: string; name: string; csm: string }[],
@@ -83,16 +135,30 @@ export function detectTargets(
   const has = (phrase: string) =>
     phrase.length >= 3 && hay.includes(` ${phrase.toLowerCase()} `);
 
-  const accHits: { id: string; name: string; csm: string }[] = [];
-  for (const a of accounts) {
-    const full = a.name
+  const norm = (name: string) =>
+    name
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, " ")
       .trim();
+
+  // How many account names each candidate token appears in — a token that
+  // occurs in 2+ names is ambiguous by construction and never routes.
+  const tokenOwners = new Map<string, number>();
+  for (const a of accounts) {
+    for (const tok of new Set(norm(a.name).split(" "))) {
+      tokenOwners.set(tok, (tokenOwners.get(tok) ?? 0) + 1);
+    }
+  }
+  const distinctive = (tok: string) =>
+    tok.length >= 5 && !STOP.has(tok) && tokenOwners.get(tok) === 1;
+
+  const accHits: { id: string; name: string; csm: string }[] = [];
+  for (const a of accounts) {
+    const full = norm(a.name);
     let hit = has(full);
     if (!hit) {
       for (const tok of full.split(" ")) {
-        if (tok.length >= 4 && !STOP.has(tok) && has(tok)) {
+        if (distinctive(tok) && has(tok)) {
           hit = true;
           break;
         }
@@ -101,15 +167,19 @@ export function detectTargets(
     if (hit) accHits.push(a);
   }
 
+  // Too many matches = the note isn't about specific accounts; don't spray.
+  const routedAccounts = accHits.length > MAX_ACCOUNT_ROUTES ? [] : accHits;
+
   const partnerHits = new Set<string>();
   for (const p of partners) {
     const first = p.split(" ")[0]?.toLowerCase() ?? "";
     if (first.length >= 3 && has(first)) partnerHits.add(p);
   }
-  for (const a of accHits) if (a.csm && a.csm !== "Unassigned") partnerHits.add(a.csm);
+  for (const a of routedAccounts)
+    if (a.csm && a.csm !== "Unassigned") partnerHits.add(a.csm);
 
   return {
-    accounts: accHits.map((a) => ({ id: a.id, name: a.name })),
+    accounts: routedAccounts.map((a) => ({ id: a.id, name: a.name })),
     partners: [...partnerHits],
   };
 }
