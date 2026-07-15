@@ -133,6 +133,11 @@ function NoteRow({
   const [tagging, setTagging] = useState(false);
   const [tagDraft, setTagDraft] = useState<NoteTags>(tags);
   const [busy, setBusy] = useState(false);
+  // Long notes sit clamped to a single row; the chevron (or a click on the
+  // text) opens the full note. Short notes skip the ceremony entirely.
+  const [expandedRow, setExpandedRow] = useState(false);
+  const isLong = text.includes("\n") || text.length > 90;
+  const clamped = isLong && !expandedRow;
   const day = todoDay(n.remindAt);
   const hasTags = !!(tags.date || tags.urgency || tags.when);
 
@@ -171,16 +176,32 @@ function NoteRow({
           }}
         />
       ) : (
-        <span
-          className={styles.sheetText}
-          onClick={() => {
-            setDraft(text);
-            setEditing(true);
-          }}
-          title="Click to edit"
-        >
-          {text || "(empty note)"}
-        </span>
+        <>
+          {isLong && (
+            <button
+              type="button"
+              className={styles.sheetChevron}
+              title={expandedRow ? "Collapse to one row" : "Expand the full note"}
+              onClick={() => setExpandedRow((v) => !v)}
+            >
+              {expandedRow ? "▾" : "▸"}
+            </button>
+          )}
+          <span
+            className={`${styles.sheetText} ${clamped ? styles.sheetTextClamp : ""}`}
+            onClick={() => {
+              if (clamped) {
+                setExpandedRow(true);
+                return;
+              }
+              setDraft(text);
+              setEditing(true);
+            }}
+            title={clamped ? "Click to expand" : "Click to edit"}
+          >
+            {text || "(empty note)"}
+          </span>
+        </>
       )}
       {hasTags && !editing && (
         <span className={styles.sheetTags}>

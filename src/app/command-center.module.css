@@ -4748,6 +4748,23 @@
   cursor: text;
   white-space: pre-wrap;
 }
+/* Long notes rest as a single ellipsized row until expanded. */
+.sheetTextClamp {
+  flex: 1 1 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sheetChevron {
+  flex: none;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font-size: 11px;
+  color: #b3a677;
+  padding: 0 2px;
+  line-height: inherit;
+}
 .sheetEdit {
   flex: 1;
   min-width: 200px;
