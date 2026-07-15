@@ -143,12 +143,11 @@ export function AtcRow({ it }: { it: RailItem }) {
       {/* ⌄ — the rest of the moves, one compact line */}
       {moreOpen && (
         <div className={styles.atcPanel}>
+          {/* Only actions NOT already on the row live here — the row's primary
+              buttons never repeat in the panel; manual overrides go through
+              the Set state control. */}
           {!fresh && (
             <>
-              {it.status !== "replied" &&
-                keyForm(it.subjectKey, markReplied, "They replied ✓", styles.atcBtn)}
-              {it.status === "replied" &&
-                keyForm(it.subjectKey, markResponded, "I replied ✓", styles.atcBtn)}
               {keyForm(it.subjectKey, archiveThread, "Archive thread", styles.atcBtn)}
               <form action={delayFollowUp} className={styles.valInline}>
                 <input type="hidden" name="subjectKey" value={it.subjectKey} />
@@ -164,7 +163,11 @@ export function AtcRow({ it }: { it: RailItem }) {
                 keyForm(it.subjectKey, deleteTouch, "Undo send", styles.atcBtn)}
               {/* Reality skipped steps — set the state directly. The override
                   is stamped into the thread history. */}
-              <form action={setThreadStatus} className={styles.atcStateForm}>
+              <form
+                action={setThreadStatus}
+                className={styles.atcStateForm}
+                title="Manual override for when reality skipped steps — sets the thread's lifecycle state directly and stamps the override into the history"
+              >
                 <input type="hidden" name="subjectKey" value={it.subjectKey} />
                 <select
                   name="status"

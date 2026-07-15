@@ -5000,3 +5000,94 @@
   transform-origin: left center;
   margin: -2px 0;
 }
+
+/* ── Desk refinement pass (feedback round 2) ─────────────────────────────── */
+/* Family strips get their own tint washes — the sections separate by color
+   field and breathing room, not by outlines. */
+.famStrip {
+  padding: 6px 12px;
+}
+.famReply {
+  background: #f7f3ff;
+}
+.famChase {
+  background: #fdf2f2;
+}
+.famMove {
+  background: #eff5ff;
+}
+.famRound {
+  background: #fff6ec;
+}
+.famWait {
+  background: #f6f8fb;
+}
+
+/* Soft elevation instead of harder borders; more air between sections. */
+.atcRail,
+.cadPanel,
+.atcRefGroup {
+  box-shadow: 0 1px 4px rgba(10, 28, 64, 0.06);
+}
+.cockColR {
+  gap: 22px;
+}
+.cockSect + .cockSect {
+  margin-top: 4px;
+}
+
+/* Roundup cadence rows: dot + name + readout, no repeated word labels. */
+.cadDot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex: none;
+  align-self: center;
+}
+.cadDue {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #dc2626;
+  flex: none;
+  min-width: 0;
+}
+
+/* Scheduled: the add-a-check-in row and the done line stay small and quiet. */
+.fuAdd {
+  gap: 5px;
+}
+.fuAdd input,
+.fuAdd select {
+  font-size: 12px;
+  padding: 3px 8px;
+}
+.fuAdd button {
+  font-size: 12px;
+  padding: 3px 12px;
+}
+.fuDoneHead {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: lowercase;
+  color: var(--muted);
+}
+
+/* Expandables read as expandable: What you sent / Notes on file. */
+.fuSent > summary {
+  cursor: pointer;
+  color: var(--blue);
+  font-weight: 600;
+  list-style: none;
+}
+.fuSent > summary::-webkit-details-marker {
+  display: none;
+}
+.fuSent > summary::before {
+  content: "▸ ";
+  font-size: 10px;
+}
+.fuSent[open] > summary::before {
+  content: "▾ ";
+}
