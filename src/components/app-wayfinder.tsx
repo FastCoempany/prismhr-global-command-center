@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { ProductLockup } from "@/components/brand";
-import { lookIntoHighCount } from "@/lib/look-into";
+import { openLookIntoHighCount } from "@/lib/look-into/status";
 
 type AppWayfinderProps = {
   current: string;
@@ -9,11 +9,14 @@ type AppWayfinderProps = {
   trail?: string;
 };
 
-export function AppWayfinder({
+export async function AppWayfinder({
   current,
   onSignOut,
   trail = "PrismHR Global",
 }: AppWayfinderProps) {
+  // Live count: high-priority Look-into items still open (resolved ones don't
+  // badge the tab — the static count ignored resolution state).
+  const lookIntoHighCount = await openLookIntoHighCount();
   return (
     <header className="ds-wayfinder-shell">
       <div className="ds-wayfinder">
