@@ -197,3 +197,22 @@ SELECT 'seed-card-xcelhr', 'XCEL HR', 'Anika Steenstra · PEO/ASO · Fort Wayne'
   '[{"name":"Bill","role":"XcelHR (Anika''s main contact)","note":"book lists Ted Bross — confirm"},{"name":"Anika Steenstra","role":"CSM","note":"owns the timing"}]'::jsonb,
   NOW()
 WHERE NOT EXISTS (SELECT 1 FROM "DashCard" WHERE "name" = 'XCEL HR' AND NOT "archived");
+
+-- ── Advocate Pay / SubcontractorHub: Bulgaria-first urgency (added 7/15) ────
+INSERT INTO "AccountNote" ("id", "accountId", "partner", "kind", "body", "createdAt") VALUES
+(
+  'advpay-bulgaria-12',
+  'ADVOCATEPAY000001',
+  'Advocate Pay / SubcontractorHub',
+  'partner',
+  'Urgency confirmed (7/15): the unsolved Bulgaria problem is costing Advocate Pay dearly EVERY MONTH — they want the contract done NOW. Scope narrows to phase 1: the 12 workers in Bulgaria only, working back through the rest of the roster after. Sent the implementation timeline (keyed off signature date) with the Bulgaria intake list: signed agreements, roster (names/emails/roles/start dates), gross comp per person, terms (hours/remote/notice/benefits), clean 1099 end-dates for conversion, one comms point of contact.',
+  '2026-07-15 17:30:00'
+)
+ON CONFLICT ("id") DO NOTHING;
+
+-- Bulgaria-first scope + urgency onto the seeded card (guarded to the seed id).
+UPDATE "DashCard" SET
+  "notes" = '{"decision":"CLIENT URGENCY (7/15): the unsolved problem costs Advocate Pay dearly monthly — contract needs to close NOW. Phase 1 = the 12 Bulgaria workers only; rest of roster phases in behind. Implementation timeline + intake list sent 7/15. Contracts (final, client-shareable) in their hands since 7/10; deposit waived. Signature is the only gate.","use_case":"Bulgaria-first: 12 workers convert to W-2/EOR CORE via our Bulgarian entity; remaining international roster stays 1099, phased after Bulgaria proves the motion."}'::jsonb,
+  "dealSize" = '12 Bulgaria EEs now (EOR CORE) · roster phases behind · deposit waived',
+  "updatedAt" = NOW()
+WHERE "id" = 'seed-card-advocatepay';

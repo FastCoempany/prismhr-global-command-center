@@ -413,13 +413,10 @@ export function commitmentGuidance(step: CardStep): Guidance {
 export type StepHold = { reason: string; recheck: string; consider: string };
 
 export const STEP_HOLDS: Record<string, StepHold> = {
-  "Advocate Pay — SubcontractorHub": {
-    reason:
-      "Held per Aleks (7/13): our contracts are being finalized on our side — don't press Bryce on timeline.",
-    recheck: "date the internal contract re-check (Thu)",
-    consider:
-      "A hold without a date is how deals die quietly. Every day this sits, the Bulgaria conversions drift toward the next payroll quarter and someone else gets a quiet look at a roster you already priced. Own the clock: contract re-check on your calendar, or accept that you're choosing to let a signed-adjacent deal age out.",
-  },
+  // Advocate Pay's hold (per Aleks 7/13, while our contracts solidified) was
+  // LIFTED 7/15: the client came back pressing — the unsolved Bulgaria problem
+  // costs them dearly monthly and they want the contract done now. Client
+  // urgency supersedes a protective hold; the step runs hot again.
 };
 
 export function holdGuidance(step: CardStep, hold: StepHold): Guidance {
