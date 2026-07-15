@@ -4,7 +4,10 @@ import {
   detectTargets,
   routeLabel,
   splitMarker,
+  splitTags,
+  visibleText,
   withMarker,
+  withTags,
 } from "@/lib/today/route-notes";
 
 // A slice of the real book shape — several accounts sharing generic industry
@@ -117,5 +120,63 @@ test("route-notes marker round-trip", async (t) => {
       }),
       "Simploy · Lesha",
     );
+  });
+});
+
+test("note tags marker", async (t) => {
+  await t.test("withTags → splitTags round-trips all three fields", () => {
+    const body = withTags("call aleks re: bulgaria", {
+      date: "2026-07-18",
+      urgency: "high",
+      when: "later",
+    });
+    const { text, tags } = splitTags(body);
+    assert.equal(text, "call aleks re: bulgaria");
+    assert.deepEqual(tags, { date: "2026-07-18", urgency: "high", when: "later" });
+  });
+
+  await t.test("empty tags add no marker line", () => {
+    assert.equal(
+      withTags("plain note", { date: "", urgency: "", when: "" }),
+      "plain note",
+    );
+  });
+
+  await t.test("text without a tag line parses as untagged", () => {
+    const { text, tags } = splitTags("no tags here");
+    assert.equal(text, "no tags here");
+    assert.deepEqual(tags, { date: "", urgency: "", when: "" });
+  });
+
+  await t.test("malformed values strip with the line but are ignored", () => {
+    const { text, tags } = splitTags("note\n⚑[d:notadate,u:mega,w:never]");
+    assert.equal(text, "note");
+    assert.deepEqual(tags, { date: "", urgency: "", when: "" });
+  });
+
+  await t.test("tags coexist with a routing marker; visibleText strips both", () => {
+    const tagged = withTags("simploy note", { date: "", urgency: "med", when: "today" });
+    const body = withMarker(
+      tagged,
+      { accountNoteIds: ["an1"], partnerNoteIds: [] },
+      "Simploy · Lesha",
+    );
+    const { text: afterRoute, refs } = splitMarker(body);
+    assert.ok(refs);
+    const { text, tags } = splitTags(afterRoute);
+    assert.equal(text, "simploy note");
+    assert.equal(tags.urgency, "med");
+    assert.equal(tags.when, "today");
+    assert.equal(visibleText(body), "simploy note");
+  });
+
+  await t.test("re-tagging replaces the old tag line instead of stacking", () => {
+    const once = withTags("note", { date: "", urgency: "low", when: "" });
+    const { text: stripped } = splitTags(once);
+    const twice = withTags(stripped, { date: "", urgency: "high", when: "today" });
+    const { text, tags } = splitTags(twice);
+    assert.equal(text, "note");
+    assert.deepEqual(tags, { date: "", urgency: "high", when: "today" });
+    assert.equal(twice.split("⚑").length, 2);
   });
 });

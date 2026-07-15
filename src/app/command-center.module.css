@@ -4717,16 +4717,11 @@
   font-weight: 600;
   margin-top: 4px;
 }
+/* One note per row, full width — a long note only grows its own row. (The
+   old two-column grid let one tall note stretch every cell in its row.) */
 .sheetNotes {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0 22px;
+  display: block;
   margin-top: 8px;
-}
-@media (max-width: 900px) {
-  .sheetNotes {
-    grid-template-columns: 1fr;
-  }
 }
 .sheetNote {
   display: flex;
@@ -4829,6 +4824,73 @@
   background: #fff;
   color: var(--ink);
   max-width: 180px;
+}
+.sheetTags {
+  display: inline-flex;
+  gap: 4px;
+  align-items: baseline;
+  flex: none;
+}
+.sheetTagChip {
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 1px 7px;
+  border: 1px solid #e3d8b4;
+  cursor: pointer;
+  background: #f4eed7;
+  color: #7a6f4d;
+  line-height: 1.5;
+}
+.sheetUrgHigh {
+  background: #fdecea;
+  color: #b3261e;
+  border-color: #f5c6c1;
+}
+.sheetUrgMed {
+  background: #fdf3e0;
+  color: #9a6b00;
+  border-color: #f0dcae;
+}
+.sheetUrgLow {
+  background: #eef3ec;
+  color: #4f7355;
+  border-color: #d7e4d8;
+}
+.sheetWhenChip {
+  background: #eef2fa;
+  color: #33507a;
+  border-color: #d4def0;
+}
+.sheetTagEd {
+  flex-basis: 100%;
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  flex-wrap: wrap;
+  font-size: 11px;
+  color: #7a6f4d;
+  padding: 2px 0 1px 50px;
+}
+.sheetTagEd select,
+.sheetTagEd input {
+  font: 11px/1.4 inherit;
+  border: 1px solid #d8c98f;
+  border-radius: 5px;
+  background: #fff;
+  color: var(--ink);
+  padding: 1px 4px;
+}
+.sheetLater {
+  margin-top: 8px;
+  border-top: 1px dashed #e0d5b0;
+  padding-top: 4px;
+}
+.sheetLaterHead {
+  font-size: 11px;
+  color: #b3a677;
+  font-weight: 700;
+  letter-spacing: 0.04em;
 }
 .sheetEarlier {
   margin-top: 8px;
