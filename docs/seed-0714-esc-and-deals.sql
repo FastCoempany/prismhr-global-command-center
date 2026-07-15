@@ -118,6 +118,18 @@ UPDATE "DashCard" SET
   "updatedAt" = NOW()
 WHERE "id" = 'seed-card-esc';
 
+-- Anthony's pricing-thread reply (added 7/15 — file stays safe to re-run).
+INSERT INTO "AccountNote" ("id", "accountId", "partner", "kind", "body", "createdAt") VALUES
+(
+  'esc-11-anthony-mpex',
+  'MYESC000000000001',
+  'Anthony Falzone',
+  'partner',
+  'Anthony (Teams, 7/15 am) on the Canada quote: "CAN is a bit nuanced because Vensure/Prism own local tech in CAN (MPEX). It is good from a cost standpoint because there are no 3rd parties, but we need to understand what they want from a technology standpoint." Owned Canadian payroll tech = cost-favorable, and his open question maps exactly to Hatton''s platform concern (built into Prism vs additional platform — "they want to use our tech"). Answer sent from the intro-call discovery.',
+  '2026-07-15 13:07:00'
+)
+ON CONFLICT ("id") DO NOTHING;
+
 -- ESC is in motion — the rail reads it as a live conversation, not a pending
 -- roundup. No-op if a disposition is already set.
 INSERT INTO "AccountDisposition" ("id", "accountId", "status", "reason", "createdAt", "updatedAt") VALUES
