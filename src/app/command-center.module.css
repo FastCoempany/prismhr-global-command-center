@@ -4072,6 +4072,7 @@
   width: 150px;
   flex: none;
 }
+/* Rows stay one line; hovering the ellipsized phrase shows the full text. */
 .atcPhrase {
   color: var(--muted);
   flex: 1;
@@ -5107,6 +5108,72 @@
   border: 1px solid var(--line);
   border-radius: 12px;
   padding: 8px 12px;
+}
+/* The Roundups section keeps a wider wash gutter on the right — that grey
+   strip is where the per-partner light switches live, outside the panel. */
+.cadSect {
+  padding-right: 46px;
+}
+.cadRow {
+  position: relative;
+}
+.lightForm {
+  position: absolute;
+  right: -44px;
+  top: 50%;
+  transform: translateY(-50%);
+  line-height: 0;
+}
+/* A literal light switch: a small plate whose knob sits up (on) or down
+   (off). Flipping it is a real toggle — the row glows while it's on. */
+.lightSwitch {
+  width: 16px;
+  height: 26px;
+  border-radius: 5px;
+  border: 1px solid #d9dfeb;
+  background: #fff;
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.08);
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+.lightKnob {
+  width: 100%;
+  height: 10px;
+  border-radius: 3px;
+  background: #cbd5e1;
+  box-shadow: 0 1px 1px rgba(15, 23, 42, 0.25);
+  transition:
+    background 0.15s,
+    box-shadow 0.15s;
+}
+.lightOn {
+  justify-content: flex-start;
+  background: #fffbeb;
+  border-color: #f2d98c;
+}
+.lightOn .lightKnob {
+  background: #f59e0b;
+  box-shadow: 0 0 8px 2px rgba(245, 158, 11, 0.55);
+}
+.cadRowLit {
+  background: #fffbea;
+  border-radius: 8px;
+  box-shadow: 0 0 0 3px #fffbea;
+}
+.cadBulb {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #f59e0b;
+  box-shadow: 0 0 7px 2px rgba(245, 158, 11, 0.6);
+  display: inline-block;
+  flex: none;
 }
 .cadHide {
   flex: none;

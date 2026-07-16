@@ -79,7 +79,12 @@ export function AtcRow({ it }: { it: RailItem }) {
       <div className={styles.atcRow}>
         <span className={styles.atcDot} style={{ background: DOT[it.dot] }} />
         <span className={styles.atcName}>{it.partner}</span>
-        <span className={styles.atcPhrase}>{it.phrase}</span>
+        <span
+          className={styles.atcPhrase}
+          title={typeof it.phrase === "string" ? it.phrase : undefined}
+        >
+          {it.phrase}
+        </span>
 
         {/* THE next action, by state */}
         {it.status === "replied" && (

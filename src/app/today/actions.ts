@@ -69,6 +69,32 @@ export async function unmuteRoundupPartner(formData: FormData) {
   done();
 }
 
+// --- Partner attention lights ----------------------------------------------
+// The literal light switches in the Roundups gutter: flip one up and that
+// partner's row glows until you flip it back — a manual "tend to something
+// here" flag, orthogonal to the cadence dots. Same namespaced-disposition
+// storage as the mute list (accountId "partner-light:<partner>").
+const PARTNER_LIGHT_PREFIX = "partner-light:";
+
+export async function setPartnerLight(formData: FormData) {
+  const partner = str(formData, "partner", 120);
+  const on = str(formData, "on", 4) === "1";
+  if (!(await requireWrite()) || !partner) done();
+  await safeWrite(async () => {
+    const accountId = `${PARTNER_LIGHT_PREFIX}${partner}`;
+    if (on) {
+      await getPrisma().accountDisposition.upsert({
+        where: { accountId },
+        create: { accountId, status: "motion", reason: "attention light on" },
+        update: { status: "motion", reason: "attention light on" },
+      });
+    } else {
+      await getPrisma().accountDisposition.deleteMany({ where: { accountId } });
+    }
+  });
+  done();
+}
+
 export async function addFieldNote(formData: FormData) {
   const body = str(formData, "body", 2000);
   if (!(await requireWrite()) || !body) done();
