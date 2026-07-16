@@ -5670,3 +5670,82 @@
   line-height: 0;
   flex: none;
 }
+
+/* ═══ Ledger v2 — the uniform row grammar from the approved full-page mock ═══ */
+.lgKind {
+  font-weight: 800;
+  color: var(--navy);
+  letter-spacing: 0.02em;
+}
+.lgMeta {
+  color: #9aa7bd;
+  font-size: 11px;
+}
+.owe {
+  color: var(--red);
+  font-weight: 600;
+}
+.lgQuiet .lgTx {
+  color: var(--muted);
+}
+.lgDotOpen::after {
+  background: #fff !important;
+  border: 3px solid var(--blue) !important;
+  width: 9px !important;
+  height: 9px !important;
+}
+.lgDotOwed::after {
+  background: #fff !important;
+  border: 3px solid var(--red) !important;
+  width: 9px !important;
+  height: 9px !important;
+}
+.lgDotCheck::after {
+  background: #fff !important;
+  border: 3px solid #b6c2d4 !important;
+  width: 9px !important;
+  height: 9px !important;
+}
+.lgChev {
+  border: 0;
+  background: none;
+  color: #b6c2d4;
+  font-size: 11px;
+  cursor: pointer;
+  padding: 0 2px;
+}
+.lgExp {
+  background: #f8fafd;
+  border-top: 1px dashed var(--line);
+  border-bottom: 1px dashed var(--line);
+  margin: 2px 0 4px;
+  padding: 9px 16px 10px 96px;
+  font-size: 13px;
+}
+.lgRow .atcBtn {
+  font-size: 11px;
+  padding: 1px 9px;
+}
+/* Focus chips: clean white — the freshness tint wall is gone. */
+.chipMoreWrap {
+  display: inline;
+}
+.chipMoreWrap summary {
+  display: inline-flex;
+  align-items: center;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 11.5px;
+  padding: 2px 10px;
+  font-weight: 700;
+  color: var(--navy);
+  cursor: pointer;
+  list-style: none;
+}
+.chipMoreWrap[open] summary {
+  color: var(--muted);
+}
+.chipMoreWrap > div {
+  margin-top: 6px;
+}
