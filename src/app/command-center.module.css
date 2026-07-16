@@ -3418,6 +3418,79 @@
 .kickoffRoomLink:hover {
   text-decoration: underline;
 }
+/* Partner notes under a Focus card — collapsed behind "show notes". */
+.pnWrap {
+  margin-top: 6px;
+}
+.pnToggle {
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  padding: 2px 0;
+}
+.pnToggle:hover {
+  color: var(--navy);
+}
+.pnList {
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+}
+.pnRow {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 3px 2px;
+  border-bottom: 1px dotted var(--line);
+  font-size: 12.5px;
+  min-width: 0;
+}
+.pnRow:last-of-type {
+  border-bottom: 0;
+}
+.pnDate {
+  flex: none;
+  font-weight: 700;
+  color: var(--navy);
+  font-size: 11px;
+  white-space: nowrap;
+}
+.pnBody {
+  flex: 1 1 0;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+.pnBodyFull {
+  white-space: pre-wrap;
+  overflow: visible;
+  text-overflow: clip;
+}
+.pnDel {
+  flex: none;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1;
+  padding: 0 3px;
+}
+.pnDel:hover {
+  color: #b3261e;
+}
+.pnMore {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--blue-d);
+  padding: 3px 2px 0;
+}
+
 .kickoffNotes {
   margin: 8px 0 0;
   padding: 8px 12px;
@@ -4354,6 +4427,20 @@
 .cockSect {
   margin-bottom: 14px;
 }
+/* Section delineation — each right-column section sits on its own soft wash
+   with the cap underlined, so blocks read as distinct territory without
+   outline boxes. */
+.cockColR .cockSect {
+  background: #f6f8fc;
+  border-radius: 14px;
+  padding: 10px 12px;
+  box-shadow: 0 1px 3px rgba(10, 28, 64, 0.05);
+}
+.cockCap {
+  border-bottom: 2px solid #e6ebf4;
+  padding-bottom: 5px;
+  margin-bottom: 9px;
+}
 .cockCap {
   display: flex;
   align-items: center;
@@ -5020,6 +5107,45 @@
   border: 1px solid var(--line);
   border-radius: 12px;
   padding: 8px 12px;
+}
+.cadHide {
+  flex: none;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  color: #c3ccda;
+  font-size: 11px;
+  line-height: 1;
+  padding: 0 2px;
+}
+.cadHide:hover {
+  color: #b3261e;
+}
+.cadHiddenWrap {
+  margin-top: 6px;
+  border-top: 1px dashed var(--line);
+  padding-top: 4px;
+}
+.cadHiddenWrap summary {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--muted);
+  cursor: pointer;
+  list-style: none;
+}
+.cadHiddenWrap .cadRow b {
+  color: var(--muted);
+}
+.cadRestore {
+  flex: none;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: #fff;
+  cursor: pointer;
+  color: var(--navy);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 7px;
 }
 .cadRow {
   display: flex;

@@ -74,13 +74,16 @@ import {
   delayFollowUp,
   deleteTouch,
   markReplied,
+  muteRoundupPartner,
   resolveFieldNote,
   setThreadStatus,
   snoozeSignal,
   toggleTaskDone,
+  unmuteRoundupPartner,
   unsnoozeSignal,
 } from "./actions";
 import { DaySheet } from "./day-sheet";
+import { PartnerNotes } from "./partner-notes";
 import { visibleText } from "@/lib/today/route-notes";
 import styles from "../command-center.module.css";
 
@@ -832,6 +835,15 @@ export default async function TodayPage({
   // when the last roundup went out, how long ago, how many accounts it carried
   // vs. the partner's total. Partners with nothing left to round up (all
   // accounts in motion/parked) drop off the list entirely.
+  // Muted partners come off the roundup list (panel + rail rows) until
+  // restored from the panel's "hidden" reveal. Stored as namespaced
+  // AccountDisposition rows, so the set falls out of the same load.
+  const ROUNDUP_MUTE = "roundup-mute:";
+  const mutedRoundups = new Set(
+    [...dispositions.keys()]
+      .filter((k) => k.startsWith(ROUNDUP_MUTE))
+      .map((k) => k.slice(ROUNDUP_MUTE.length)),
+  );
   const sendableByPartner = new Map(railItems.map((r) => [r.partner, r.sendable]));
   const cadence = kickoffItems
     .map(({ k, touch }) => {
@@ -850,10 +862,12 @@ export default async function TodayPage({
       };
     })
     .filter((c) => c.sendable > 0 || c.live);
-  const cadenceDueCount = cadence.filter((c) => c.due).length;
-  const sortedFresh = [...freshRows].sort(
-    (a, b) => Number(b.cadenceDue ?? false) - Number(a.cadenceDue ?? false),
-  );
+  const cadenceVisible = cadence.filter((c) => !mutedRoundups.has(c.partner));
+  const cadenceHidden = cadence.filter((c) => mutedRoundups.has(c.partner));
+  const cadenceDueCount = cadenceVisible.filter((c) => c.due).length;
+  const sortedFresh = [...freshRows]
+    .filter((r) => !mutedRoundups.has(r.partner))
+    .sort((a, b) => Number(b.cadenceDue ?? false) - Number(a.cadenceDue ?? false));
 
   return (
     <>
@@ -1184,7 +1198,7 @@ export default async function TodayPage({
                 </span>
               </div>
               <div className={styles.cadPanel}>
-                {cadence.map((c) => (
+                {cadenceVisible.map((c) => (
                   <div key={c.partner} className={styles.cadRow}>
                     <span
                       className={styles.cadDot}
@@ -1208,12 +1222,48 @@ export default async function TodayPage({
                           }/${c.total} accts`
                         : `never sent · ${c.sendable}/${c.total} accts ready`}
                     </span>
+                    <form action={muteRoundupPartner} className={styles.valInline}>
+                      <input type="hidden" name="partner" value={c.partner} />
+                      <button
+                        className={styles.cadHide}
+                        title="Remove from the roundup list — restore anytime under hidden"
+                      >
+                        ✕
+                      </button>
+                    </form>
                   </div>
                 ))}
-                {cadence.length === 0 && (
+                {cadenceVisible.length === 0 && (
                   <p className={styles.muted}>
                     Nothing to round up — every account is in motion or parked.
                   </p>
+                )}
+                {cadenceHidden.length > 0 && (
+                  <details className={styles.cadHiddenWrap}>
+                    <summary>hidden ({cadenceHidden.length}) ▸</summary>
+                    {cadenceHidden.map((c) => (
+                      <div key={c.partner} className={styles.cadRow}>
+                        <span
+                          className={styles.cadDot}
+                          style={{ background: "#cbd5e1" }}
+                          title="Off the roundup list"
+                        />
+                        <b>{c.partner}</b>
+                        <span className={styles.cadMeta}>
+                          off the list · {c.sendable}/{c.total} accts
+                        </span>
+                        <form action={unmuteRoundupPartner} className={styles.valInline}>
+                          <input type="hidden" name="partner" value={c.partner} />
+                          <button
+                            className={styles.cadRestore}
+                            title="Put this partner back on the roundup list"
+                          >
+                            ↩ restore
+                          </button>
+                        </form>
+                      </div>
+                    ))}
+                  </details>
                 )}
               </div>
             </div>
@@ -1429,23 +1479,14 @@ export default async function TodayPage({
                             })}
                           </div>
                         </div>
-                        {(partnerNotes.get(k.partner) ?? []).length > 0 && (
-                          <ul className={styles.kickoffNotes}>
-                            {(partnerNotes.get(k.partner) ?? []).slice(0, 3).map((n) => (
-                              <li key={n.id}>
-                                <b>{shortDate(n.createdAt)}</b> — {n.body}
-                              </li>
-                            ))}
-                            {(partnerNotes.get(k.partner) ?? []).length > 3 && (
-                              <li className={styles.kickoffNotesMore}>
-                                <Link href={`/partners#${encodeURIComponent(k.partner)}`}>
-                                  +{(partnerNotes.get(k.partner) ?? []).length - 3} more
-                                  in the partner room
-                                </Link>
-                              </li>
-                            )}
-                          </ul>
-                        )}
+                        <PartnerNotes
+                          partner={k.partner}
+                          notes={(partnerNotes.get(k.partner) ?? []).map((n) => ({
+                            id: n.id,
+                            body: n.body,
+                            createdAt: n.createdAt,
+                          }))}
+                        />
                       </div>
                     ))}
                   </div>

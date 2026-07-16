@@ -37,6 +37,38 @@ async function safeWrite(work: () => Promise<void>) {
   }
 }
 
+// --- Roundup list membership ---------------------------------------------
+// Some partners don't need the standing roundup cadence. Muting removes the
+// partner from the Roundups panel and the rail's roundup rows until restored
+// from the panel's "hidden" reveal. Stored as a namespaced AccountDisposition
+// row (accountId "roundup-mute:<partner>") — no new table, degrades the same.
+const ROUNDUP_MUTE_PREFIX = "roundup-mute:";
+
+export async function muteRoundupPartner(formData: FormData) {
+  const partner = str(formData, "partner", 120);
+  if (!(await requireWrite()) || !partner) done();
+  await safeWrite(async () => {
+    const accountId = `${ROUNDUP_MUTE_PREFIX}${partner}`;
+    await getPrisma().accountDisposition.upsert({
+      where: { accountId },
+      create: { accountId, status: "parked", reason: "roundup muted" },
+      update: { status: "parked", reason: "roundup muted" },
+    });
+  });
+  done();
+}
+
+export async function unmuteRoundupPartner(formData: FormData) {
+  const partner = str(formData, "partner", 120);
+  if (!(await requireWrite()) || !partner) done();
+  await safeWrite(async () => {
+    await getPrisma().accountDisposition.deleteMany({
+      where: { accountId: `${ROUNDUP_MUTE_PREFIX}${partner}` },
+    });
+  });
+  done();
+}
+
 export async function addFieldNote(formData: FormData) {
   const body = str(formData, "body", 2000);
   if (!(await requireWrite()) || !body) done();
