@@ -1476,7 +1476,7 @@ export default async function TodayPage({
                     account-level
                   </span>
                 </div>
-                <div className={styles.kickoffAccts}>
+                <div className={styles.focusRow}>
                   {focusAccounts.slice(0, 8).map(({ a, partner }) => {
                     const dashCard = dash.cards.find(
                       (c) => !c.archived && c.name === a.name,
@@ -1521,7 +1521,7 @@ export default async function TodayPage({
                   {focusAccounts.length > 8 && (
                     <details className={styles.chipMoreWrap}>
                       <summary>+{focusAccounts.length - 8} more ▸</summary>
-                      <div className={styles.kickoffAccts}>
+                      <div className={styles.focusRow}>
                         {focusAccounts.slice(8).map(({ a, partner }) => {
                           const dashCard = dash.cards.find(
                             (c) => !c.archived && c.name === a.name,
