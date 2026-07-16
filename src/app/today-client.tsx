@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import styles from "./command-center.module.css";
+import { USER_TZ } from "@/lib/tz";
 import {
   archiveThread,
   deleteTouch,
@@ -76,7 +77,7 @@ export function EditableMessage({
 // UTC, then the client corrects after mount — suppressHydrationWarning covers
 // the expected mismatch.
 export function LocalTime({ iso }: { iso: string }) {
-  const [text, setText] = useState(() => fmtStamp(iso, "UTC"));
+  const [text, setText] = useState(() => fmtStamp(iso));
   useEffect(() => {
     // Deferred so the local-tz correction paints after hydration settles
     // (react-hooks/set-state-in-effect).
@@ -92,7 +93,7 @@ export function LocalTime({ iso }: { iso: string }) {
 
 // Time-only variant for the ledger's time column — "9:43a", never a date.
 export function LocalClock({ iso }: { iso: string }) {
-  const [text, setText] = useState(() => fmtClock(iso, "UTC"));
+  const [text, setText] = useState(() => fmtClock(iso));
   useEffect(() => {
     const id = setTimeout(() => setText(fmtClock(iso)), 0);
     return () => clearTimeout(id);
@@ -104,7 +105,7 @@ export function LocalClock({ iso }: { iso: string }) {
   );
 }
 
-function fmtClock(iso: string, timeZone?: string): string {
+function fmtClock(iso: string, timeZone: string = USER_TZ): string {
   const t = Date.parse(iso);
   if (Number.isNaN(t)) return "";
   return new Date(t)
@@ -114,7 +115,7 @@ function fmtClock(iso: string, timeZone?: string): string {
     .replace(" pm", "p");
 }
 
-function fmtStamp(iso: string, timeZone?: string): string {
+function fmtStamp(iso: string, timeZone: string = USER_TZ): string {
   const t = Date.parse(iso);
   if (Number.isNaN(t)) return "";
   const d = new Date(t);

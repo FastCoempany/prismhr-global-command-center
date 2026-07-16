@@ -4,6 +4,7 @@
 // injected (default-param) so the clock read stays out of the React render path.
 
 import { firstNameOf } from "./build";
+import { userDayKey, USER_TZ } from "@/lib/tz";
 
 // When the next check-in can land: later today, or tomorrow. That's the whole
 // menu — no multi-day windows.
@@ -144,7 +145,7 @@ export function roundupDue(touch: Touch | undefined, now: number = Date.now()): 
 export type DayGroup = { key: string; label: string; items: Touch[] };
 
 function utcDayKey(ms: number): string {
-  return new Date(ms).toISOString().slice(0, 10);
+  return userDayKey(new Date(ms));
 }
 
 export function dayGroupLabel(iso: string, now: number = Date.now()): string {
@@ -154,11 +155,14 @@ export function dayGroupLabel(iso: string, now: number = Date.now()): string {
   if (key === utcDayKey(now)) return "Today";
   if (key === utcDayKey(now + 86_400_000)) return "Tomorrow";
   const d = new Date(t);
-  const weekday = d.toLocaleDateString("en-US", { weekday: "long", timeZone: "UTC" });
+  const weekday = d.toLocaleDateString("en-US", {
+    weekday: "long",
+    timeZone: USER_TZ,
+  });
   const monthDay = d.toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
-    timeZone: "UTC",
+    timeZone: USER_TZ,
   });
   return `${weekday} · ${monthDay}`;
 }
