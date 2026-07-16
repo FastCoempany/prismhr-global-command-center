@@ -90,6 +90,30 @@ export function LocalTime({ iso }: { iso: string }) {
   );
 }
 
+// Time-only variant for the ledger's time column — "9:43a", never a date.
+export function LocalClock({ iso }: { iso: string }) {
+  const [text, setText] = useState(() => fmtClock(iso, "UTC"));
+  useEffect(() => {
+    const id = setTimeout(() => setText(fmtClock(iso)), 0);
+    return () => clearTimeout(id);
+  }, [iso]);
+  return (
+    <time dateTime={iso} suppressHydrationWarning>
+      {text}
+    </time>
+  );
+}
+
+function fmtClock(iso: string, timeZone?: string): string {
+  const t = Date.parse(iso);
+  if (Number.isNaN(t)) return "";
+  return new Date(t)
+    .toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone })
+    .toLowerCase()
+    .replace(" am", "a")
+    .replace(" pm", "p");
+}
+
 function fmtStamp(iso: string, timeZone?: string): string {
   const t = Date.parse(iso);
   if (Number.isNaN(t)) return "";

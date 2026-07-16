@@ -154,7 +154,7 @@ export function AccountChip({
       <button
         ref={btnRef}
         type="button"
-        className={`${styles.kickoffAcct} ${styles.chipBtn}`}
+        className={styles.focusChip}
         data-tone={tone}
         onClick={openBox}
         title={`${account.name}${account.play ? ` · ${account.play}` : ""}${
@@ -165,12 +165,15 @@ export function AccountChip({
           lastNoteAt ? "worked; click for the box" : "not worked yet; click to add a note"
         }`}
       >
-        {disposition?.status === "motion"
-          ? "⚡ "
-          : disposition?.status === "parked"
-            ? "⏸ "
-            : ""}
-        {account.name} <b>{account.score}</b>
+        <span className={styles.focusChipName}>
+          {disposition?.status === "motion"
+            ? "⚡ "
+            : disposition?.status === "parked"
+              ? "⏸ "
+              : ""}
+          {account.name}
+        </span>{" "}
+        <b>{account.score}</b>
         {notes.length > 0 && (
           <span className={styles.chipNoteCt}> · 🗒{notes.length}</span>
         )}

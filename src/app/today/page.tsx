@@ -74,7 +74,7 @@ import {
 } from "@/lib/today/build";
 import { ALEKS_SESSIONS } from "@/lib/aleks/one-on-one";
 import { SfCheckpoint } from "@/components/sf";
-import { ContactControl, EditableMessage, LocalTime, NoteSubmit } from "../today-client";
+import { ContactControl, EditableMessage, LocalClock, NoteSubmit } from "../today-client";
 import { addCard, toggleCheck } from "../dashboard/actions";
 import {
   addFieldNote,
@@ -1060,7 +1060,7 @@ export default async function TodayPage({
                   {pastEarlier.map((e, i) => (
                     <div className={`${styles.lgRow} ${styles.lgPast}`} key={`pe-${i}`}>
                       <span className={styles.lgTm}>
-                        <LocalTime iso={e.at} />
+                        <LocalClock iso={e.at} />
                       </span>
                       <span
                         className={`${styles.lgDot} ${
@@ -1077,7 +1077,7 @@ export default async function TodayPage({
               {pastRecent.map((e, i) => (
                 <div className={`${styles.lgRow} ${styles.lgPast}`} key={`pr-${i}`}>
                   <span className={styles.lgTm}>
-                    <LocalTime iso={e.at} />
+                    <LocalClock iso={e.at} />
                   </span>
                   <span
                     className={`${styles.lgDot} ${
@@ -1573,20 +1573,18 @@ export default async function TodayPage({
 
           {/* ══ RIGHT — the Day Sheet owns the second column ══ */}
           <div className={styles.cockColR}>
-            <div className={styles.cockSect}>
-              <div className={styles.cockCap}>
-                <span>Day sheet</span>
-                <span className={styles.cockCapR}>
-                  everything lands here · route from here
-                </span>
-              </div>
-              <DaySheet
-                initialNotes={todos}
-                accounts={noteAccounts}
-                partners={kickoff.map((k) => k.partner)}
-                dateLabel={todayLabel()}
-              />
+            <div className={styles.cockCap}>
+              <span>Day sheet</span>
+              <span className={styles.cockCapR}>
+                everything lands here · route from here
+              </span>
             </div>
+            <DaySheet
+              initialNotes={todos}
+              accounts={noteAccounts}
+              partners={kickoff.map((k) => k.partner)}
+              dateLabel={todayLabel()}
+            />
           </div>
 
           {/* ══ EDGE TRAYS — roundups & scheduled live off-page, flying out
