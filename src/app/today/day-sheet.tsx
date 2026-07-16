@@ -9,6 +9,7 @@
 import { useRef, useState, useSyncExternalStore } from "react";
 import type { Todo } from "@/lib/today/follow-ups";
 import { splitMarker, splitTags, type NoteTags } from "@/lib/today/route-notes";
+import { sameUserDay, USER_TZ } from "@/lib/tz";
 import {
   captureSheetNote,
   promoteSheetTodo,
@@ -55,18 +56,17 @@ function timeOf(iso: string): string {
   const t = Date.parse(iso);
   if (Number.isNaN(t)) return "";
   return new Date(t)
-    .toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
+    .toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      timeZone: USER_TZ,
+    })
     .toLowerCase()
     .replace(" ", "");
 }
 
 function sameLocalDay(iso: string, now: Date): boolean {
-  const d = new Date(Date.parse(iso));
-  return (
-    d.getFullYear() === now.getFullYear() &&
-    d.getMonth() === now.getMonth() &&
-    d.getDate() === now.getDate()
-  );
+  return sameUserDay(iso, now);
 }
 
 function tagsOf(n: N): NoteTags {

@@ -6,6 +6,7 @@
 //   detail: "7 of 7 teed up ⊙owes: yes/no on the 5 flagged accounts"
 
 import { ROUNDUP_CADENCE_DAYS, type Touch } from "./follow-ups";
+import { sameUserDay } from "@/lib/tz";
 
 const ASK = "⊙owes:";
 
@@ -36,16 +37,10 @@ export function nextRoundupDueIso(touch: Touch | undefined): string {
   return new Date(t + ROUNDUP_CADENCE_DAYS * 86_400_000).toISOString();
 }
 
-// True when two ISO instants fall on the same local calendar day.
+// True when two instants fall on the same calendar day AT THE USER'S DESK —
+// the server runs UTC, so bare Date fields would flip days at 7pm Chicago.
 export function sameLocalDayIso(iso: string, now: Date): boolean {
-  const t = Date.parse(iso);
-  if (Number.isNaN(t)) return false;
-  const d = new Date(t);
-  return (
-    d.getFullYear() === now.getFullYear() &&
-    d.getMonth() === now.getMonth() &&
-    d.getDate() === now.getDate()
-  );
+  return sameUserDay(iso, now);
 }
 
 // A past-tense ledger entry — something that happened today, above the

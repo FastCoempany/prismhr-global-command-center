@@ -74,7 +74,8 @@ import {
 } from "@/lib/today/build";
 import { ALEKS_SESSIONS } from "@/lib/aleks/one-on-one";
 import { SfCheckpoint } from "@/components/sf";
-import { ContactControl, EditableMessage, LocalClock, NoteSubmit } from "../today-client";
+import { ContactControl, EditableMessage, NoteSubmit } from "../today-client";
+import { clockShort, USER_TZ } from "@/lib/tz";
 import { addCard, toggleCheck } from "../dashboard/actions";
 import {
   addFieldNote,
@@ -472,6 +473,7 @@ function GuidedBlock({
 // The Day Sheet's date line, e.g. "Tue, Jul 14" (default-param clock read).
 function todayLabel(now: Date = new Date()): string {
   return now.toLocaleDateString("en-US", {
+    timeZone: USER_TZ,
     weekday: "short",
     month: "short",
     day: "numeric",
@@ -480,9 +482,11 @@ function todayLabel(now: Date = new Date()): string {
 
 // Short, human date from an ISO string (pure — deterministic given the string).
 function shortDate(iso: string): string {
+  // (rendered in the user's timezone — see USER_TZ)
   const t = Date.parse(iso);
   if (Number.isNaN(t)) return "";
   return new Date(t).toLocaleDateString("en-US", {
+    timeZone: USER_TZ,
     weekday: "short",
     month: "short",
     day: "numeric",
@@ -1059,9 +1063,7 @@ export default async function TodayPage({
                   <summary>earlier today ({pastEarlier.length}) ▸</summary>
                   {pastEarlier.map((e, i) => (
                     <div className={`${styles.lgRow} ${styles.lgPast}`} key={`pe-${i}`}>
-                      <span className={styles.lgTm}>
-                        <LocalClock iso={e.at} />
-                      </span>
+                      <span className={styles.lgTm}>{clockShort(e.at)}</span>
                       <span
                         className={`${styles.lgDot} ${
                           e.kind === "send" ? styles.lgDotSend : styles.lgDotDone
@@ -1076,9 +1078,7 @@ export default async function TodayPage({
               )}
               {pastRecent.map((e, i) => (
                 <div className={`${styles.lgRow} ${styles.lgPast}`} key={`pr-${i}`}>
-                  <span className={styles.lgTm}>
-                    <LocalClock iso={e.at} />
-                  </span>
+                  <span className={styles.lgTm}>{clockShort(e.at)}</span>
                   <span
                     className={`${styles.lgDot} ${
                       e.kind === "send" ? styles.lgDotSend : styles.lgDotDone
