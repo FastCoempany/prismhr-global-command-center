@@ -76,6 +76,7 @@ import {
   markReplied,
   muteRoundupPartner,
   resolveFieldNote,
+  setPartnerLight,
   setThreadStatus,
   snoozeSignal,
   toggleTaskDone,
@@ -389,6 +390,7 @@ function MorningMove({
       num={n}
       kind={kind}
       phrase={<Emph text={g.do} term={term} href={href} />}
+      phraseTitle={g.do}
       meta={meta}
       primaryLabel={primaryLabel}
       primaryHot={isOutreach}
@@ -844,6 +846,13 @@ export default async function TodayPage({
       .filter((k) => k.startsWith(ROUNDUP_MUTE))
       .map((k) => k.slice(ROUNDUP_MUTE.length)),
   );
+  // Attention lights — flipped on from the switches in the Roundups gutter.
+  const PARTNER_LIGHT = "partner-light:";
+  const litPartners = new Set(
+    [...dispositions.keys()]
+      .filter((k) => k.startsWith(PARTNER_LIGHT))
+      .map((k) => k.slice(PARTNER_LIGHT.length)),
+  );
   const sendableByPartner = new Map(railItems.map((r) => [r.partner, r.sendable]));
   const cadence = kickoffItems
     .map(({ k, touch }) => {
@@ -1007,6 +1016,7 @@ export default async function TodayPage({
                           href="/"
                         />
                       }
+                      phraseTitle={`${mv.step.cardName} — “${mv.step.item}” on hold`}
                       meta={`dashboard · ${mv.step.nodeLabel} · ${hold.recheck}`}
                       primaryLabel="Open ▾"
                     >
@@ -1132,6 +1142,7 @@ export default async function TodayPage({
                           href={`/accounts?focus=${a.id}`}
                         />
                       }
+                      phraseTitle={`Decide on ${a.name} — seed it or park it`}
                       meta={`demand ${a.demand ?? "—"}${!isStrongSignal(a) ? " · emerging" : ""}`}
                       primaryLabel="Decide ▸"
                     >
@@ -1190,16 +1201,22 @@ export default async function TodayPage({
           <div className={styles.cockColR}>
             {/* Roundup cadence — every partner, every 2 days. Due partners are
                 also hot rows in the rail; this is the at-a-glance meter. */}
-            <div className={styles.cockSect}>
+            <div className={`${styles.cockSect} ${styles.cadSect}`}>
               <div className={styles.cockCap}>
                 Roundups
                 <span className={styles.cockCapR}>
                   every 2 days · {cadenceDueCount} due
+                  {litPartners.size > 0 ? ` · ${litPartners.size} lit` : ""}
                 </span>
               </div>
               <div className={styles.cadPanel}>
                 {cadenceVisible.map((c) => (
-                  <div key={c.partner} className={styles.cadRow}>
+                  <div
+                    key={c.partner}
+                    className={`${styles.cadRow} ${
+                      litPartners.has(c.partner) ? styles.cadRowLit : ""
+                    }`}
+                  >
                     <span
                       className={styles.cadDot}
                       style={{
@@ -1214,6 +1231,12 @@ export default async function TodayPage({
                       }
                     />
                     <b>{c.partner}</b>
+                    {litPartners.has(c.partner) && (
+                      <span
+                        className={styles.cadBulb}
+                        title="Your light is on — something to tend to here"
+                      />
+                    )}
                     {c.due && <span className={styles.cadDue}>DUE</span>}
                     <span className={styles.cadMeta}>
                       {c.lastSent
@@ -1229,6 +1252,26 @@ export default async function TodayPage({
                         title="Remove from the roundup list — restore anytime under hidden"
                       >
                         ✕
+                      </button>
+                    </form>
+                    <form action={setPartnerLight} className={styles.lightForm}>
+                      <input type="hidden" name="partner" value={c.partner} />
+                      <input
+                        type="hidden"
+                        name="on"
+                        value={litPartners.has(c.partner) ? "0" : "1"}
+                      />
+                      <button
+                        className={`${styles.lightSwitch} ${
+                          litPartners.has(c.partner) ? styles.lightOn : ""
+                        }`}
+                        title={
+                          litPartners.has(c.partner)
+                            ? `Flip the light off — done tending to ${c.partner}`
+                            : `Flip the light on — something to tend to for ${c.partner}`
+                        }
+                      >
+                        <span className={styles.lightKnob} />
                       </button>
                     </form>
                   </div>

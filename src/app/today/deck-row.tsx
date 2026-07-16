@@ -23,6 +23,7 @@ export function DeckRow({
   num,
   kind,
   phrase,
+  phraseTitle,
   meta,
   primaryLabel,
   primaryHot = false,
@@ -32,6 +33,7 @@ export function DeckRow({
   num: string | number;
   kind: DeckKind;
   phrase: ReactNode;
+  phraseTitle?: string; // hover text when the phrase is JSX (links inside)
   meta?: string;
   // A button that opens the coaching panel (Send ▸ / Decide ▸)…
   primaryLabel?: string;
@@ -50,7 +52,12 @@ export function DeckRow({
           {num}
         </span>
         <span className={`${styles.deckKind} ${styles[KIND_CLS[kind]]}`}>{kind}</span>
-        <span className={styles.atcPhrase}>{phrase}</span>
+        <span
+          className={styles.atcPhrase}
+          title={phraseTitle ?? (typeof phrase === "string" ? phrase : undefined)}
+        >
+          {phrase}
+        </span>
         {meta ? <span className={styles.deckMeta}>{meta}</span> : null}
         {primary}
         {primaryLabel && (
