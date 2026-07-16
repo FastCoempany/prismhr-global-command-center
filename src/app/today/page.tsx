@@ -26,7 +26,8 @@ import { DASH_NODES } from "@/lib/dashboard/stages";
 import { AccountChip } from "./account-chip";
 import { AtcRow, CurveballButton, type RailItem } from "./atc-rail";
 import { CockpitDrawers } from "./cockpit-drawers";
-import { DeckRow, type DeckKind } from "./deck-row";
+import { type DeckKind } from "./deck-row";
+import { LedgerRow } from "./led-row";
 import {
   daysSinceIso,
   followUpMessage,
@@ -83,6 +84,7 @@ import {
   delayFollowUp,
   deleteTouch,
   markReplied,
+  markResponded,
   muteRoundupPartner,
   resolveFieldNote,
   setPartnerLight,
@@ -251,14 +253,12 @@ function moveTerm(mv: Mv): { term: string; href: string } {
 // uniform "Mark done ✓" you can always see the state of.
 function MorningMove({
   mv,
-  n,
   doneKey,
   done,
   touch,
   notes = [],
 }: {
   mv: Mv;
-  n: number;
   doneKey: string;
   done: boolean;
   touch?: Touch;
@@ -300,15 +300,13 @@ function MorningMove({
     const s = mv.step;
     g = commitmentGuidance(s);
     kind = "close";
-    meta = `dashboard · ${s.nodeLabel}${
-      s.ageDays != null ? ` · ${s.ageDays === 0 ? "today" : `${s.ageDays}d open`}` : ""
-    }`;
+    meta = `dashboard · ${s.nodeLabel}`;
     // The one button: mark the morning move done. Checking the step off on the
     // board itself stays in the expansion.
     primary = (
       <form action={toggleTaskDone} className={styles.valInline}>
         <input type="hidden" name="key" value={doneKey} />
-        <button className={`${styles.atcBtn} ${styles.atcGo}`}>Mark done ✓</button>
+        <button className={`${styles.atcBtn} ${styles.atcGo}`}>Done ✓</button>
       </form>
     );
     actions = (
@@ -394,14 +392,21 @@ function MorningMove({
       <SfCheckpoint when="triage" id={mv.a.id} name={mv.a.name} />
     ) : null;
 
+  const kindWord =
+    mv.kind === "outreach" ? "SEND" : mv.kind === "triage" ? "DECIDE" : "CLOSE";
+  const tm =
+    mv.kind === "commitment" && mv.step.ageDays != null && mv.step.ageDays > 0
+      ? `${mv.step.ageDays}d`
+      : "";
   return (
-    <DeckRow
-      num={n}
-      kind={kind}
-      phrase={<Emph text={g.do} term={term} href={href} />}
-      phraseTitle={g.do}
+    <LedgerRow
+      tm={tm}
+      tone="open"
+      kind={kindWord}
+      text={<Emph text={g.do} term={term} href={href} />}
+      textTitle={g.do}
       meta={meta}
-      primaryLabel={primaryLabel}
+      primaryLabel={primaryLabel ?? "Open ▸"}
       primaryHot={isOutreach}
       primary={primary}
     >
@@ -410,7 +415,7 @@ function MorningMove({
         {notes.length > 0 && <NotesOnFile notes={notes} />}
         {actions}
       </GuidanceBody>
-    </DeckRow>
+    </LedgerRow>
   );
 }
 
@@ -886,6 +891,19 @@ export default async function TodayPage({
     .map((c) => `${firstNameOf(c.partner)} (${c.sendable} ready)`)
     .join(" · ");
 
+  // Ledger ordering: SEND → DECIDE → CLOSE; due threads split into real
+  // chases (custom to-dos + named asks) vs quiet check-ins (nothing owed).
+  const MV_RANK = { outreach: 0, triage: 1, commitment: 2 } as const;
+  const pendingLedger = [...pendingMoves].sort(
+    (x, y) => MV_RANK[x.mv.kind] - MV_RANK[y.mv.kind],
+  );
+  const dueAsks = followUps.due.filter(
+    (t) => t.kind === "custom" || splitAsk(t.detail).ask,
+  );
+  const dueChecks = followUps.due.filter(
+    (t) => t.kind !== "custom" && !splitAsk(t.detail).ask,
+  );
+
   // ── The ledger's past events — everything that happened today, assembled
   // from every timestamped store. Routed/mirrored sheet notes report through
   // their note rows, so plain captures are the only todo-sourced events.
@@ -1085,168 +1103,231 @@ export default async function TodayPage({
                 <span className={styles.lgNowLn} />
               </div>
               <div className={styles.lgSub}>Open — needs you</div>
-              {/* Replies waiting on you — your move. */}
+              {/* Replies waiting on you — your move first. */}
               {replyRows.map((r) => (
-                <div className={styles.spineReply} key={r.subjectKey}>
+                <LedgerRow
+                  key={r.subjectKey}
+                  tone="open"
+                  kind="REPLY"
+                  text={
+                    <>
+                      <b>{r.partner}</b> replied — draft the response
+                    </>
+                  }
+                  textTitle={`${r.partner} replied — draft the response`}
+                  primary={
+                    <>
+                      <a
+                        href={r.draftHref}
+                        className={`${styles.atcBtn} ${styles.atcHot}`}
+                      >
+                        ✍ Draft the reply
+                      </a>
+                      <form action={markResponded} className={styles.valInline}>
+                        <input type="hidden" name="subjectKey" value={r.subjectKey} />
+                        <button className={styles.atcBtn}>I replied ✓</button>
+                      </form>
+                    </>
+                  }
+                >
                   <AtcRow it={r} />
-                </div>
+                </LedgerRow>
               ))}
 
-              {/* Due threads. A CHASE exists only when something NAMED is
-                  owed (the ask rides in the touch detail); a due check-in
-                  with no ask is a quiet check row. All actions live in ▸ —
-                  no standing "They replied / Nudge" chips. */}
-              {followUps.due.map((t) => {
-                const ask = splitAsk(t.detail).ask;
-                const isCustom = t.kind === "custom";
-                const phrase = isCustom
-                  ? t.label
-                  : ask
-                    ? `${t.label} owes: ${ask}`
-                    : `Check in with ${t.label} — cadence, nothing owed`;
-                return (
-                  <div
-                    className={ask || isCustom ? styles.spineChase : styles.waitDim}
-                    key={t.subjectKey}
-                  >
-                    <DeckRow
-                      num={ask ? "!" : "·"}
-                      kind={ask || isCustom ? "chase" : "note"}
-                      phrase={phrase}
-                      phraseTitle={phrase}
-                      meta={
-                        isCustom
-                          ? `due ${shortDate(t.followUpAt)}`
-                          : `asked ${shortDate(t.contactedAt)} · ${daysSinceIso(
-                              t.contactedAt,
-                            )}d`
-                      }
-                      primary={
-                        isCustom ? (
-                          <form action={markReplied} className={styles.valInline}>
-                            <input type="hidden" name="subjectKey" value={t.subjectKey} />
-                            <button className={`${styles.atcBtn} ${styles.atcGo}`}>
-                              Done ✓
-                            </button>
-                          </form>
-                        ) : undefined
-                      }
-                      primaryLabel="▸"
-                      primaryHot={!!ask}
-                    >
-                      {!isCustom && (
-                        <form action={updateTouchAsk} className={styles.askForm}>
-                          <input type="hidden" name="subjectKey" value={t.subjectKey} />
-                          <input
-                            name="ask"
-                            defaultValue={ask}
-                            maxLength={300}
-                            placeholder="What exactly do they owe you? Naming it makes this a chase — clear it to stand down."
-                            aria-label="What they owe"
-                          />
-                          <button className={styles.atcBtn}>Set the ask ✓</button>
-                        </form>
-                      )}
-                      {!isCustom && (
-                        <div className={styles.gActions}>
-                          <form action={setThreadStatus} className={styles.valInline}>
-                            <input type="hidden" name="subjectKey" value={t.subjectKey} />
-                            <input type="hidden" name="status" value="open" />
-                            <button
-                              className={styles.notWaitingBtn}
-                              title="Not waiting on a reply — stop chasing; log the next exchange when it lands"
-                            >
-                              ↔ not waiting
-                            </button>
-                          </form>
-                        </div>
-                      )}
-                      <FollowUpDue t={t} />
-                    </DeckRow>
-                  </div>
-                );
-              })}
-
-              {/* Moves — send / decide / close, in order. All on screen. */}
-              {pendingMoves.map((it, i) => (
-                <div className={styles.spineMove} key={it.key}>
-                  <MorningMove
-                    mv={it.mv}
-                    n={i + 1}
-                    doneKey={it.key}
-                    done={false}
-                    touch={it.touch}
-                    notes={
-                      it.mv.kind === "commitment" ? [] : (acctNotes.get(it.mv.a.id) ?? [])
-                    }
-                  />
-                </div>
+              {/* Moves — SEND, then DECIDE, then CLOSE. Uniform ledger rows. */}
+              {pendingLedger.map((it) => (
+                <MorningMove
+                  key={it.key}
+                  mv={it.mv}
+                  doneKey={it.key}
+                  done={false}
+                  touch={it.touch}
+                  notes={
+                    it.mv.kind === "commitment" ? [] : (acctNotes.get(it.mv.a.id) ?? [])
+                  }
+                />
               ))}
-              {/* Deliberate holds — leadership said don't press. Dim ⏸ rows,
-                  out of the numbering; the guidance owns the re-check date. */}
+
+              {/* Deliberate holds — leadership said don't press. Quiet rows. */}
               {heldItems.map(({ mv, key }) => {
                 if (mv.kind !== "commitment") return null;
                 const hold = STEP_HOLDS[mv.step.cardName];
                 return (
-                  <div className={`${styles.spineMove} ${styles.waitDim}`} key={key}>
-                    <DeckRow
-                      num="⏸"
-                      kind="close"
-                      phrase={
-                        <Emph
-                          text={`${mv.step.cardName} — “${mv.step.item}” on hold`}
-                          term={mv.step.cardName}
-                          href="/"
-                        />
-                      }
-                      phraseTitle={`${mv.step.cardName} — “${mv.step.item}” on hold`}
-                      meta={`dashboard · ${mv.step.nodeLabel} · ${hold.recheck}`}
-                      primaryLabel="Open ▾"
+                  <LedgerRow
+                    key={key}
+                    tone="check"
+                    kind="⏸ HOLD"
+                    text={`${mv.step.cardName} — “${mv.step.item}” on hold`}
+                    textTitle={`${mv.step.cardName} — “${mv.step.item}” on hold`}
+                    meta={`dashboard · ${mv.step.nodeLabel} · ${hold.recheck}`}
+                    primaryLabel="Open ▸"
+                  >
+                    <GuidanceBody
+                      g={holdGuidance(mv.step, hold)}
+                      term={mv.step.cardName}
+                      href="/"
                     >
-                      <GuidanceBody
-                        g={holdGuidance(mv.step, hold)}
-                        term={mv.step.cardName}
-                        href="/"
-                      >
-                        <div className={styles.gActions}>
-                          <Link href="/" className={styles.mvOpen}>
-                            Open on the dashboard
-                          </Link>
-                          <form action={toggleCheck} className={styles.commitmentClose}>
-                            <input type="hidden" name="cardId" value={mv.step.cardId} />
-                            <input type="hidden" name="node" value={mv.step.nodeKey} />
-                            <input type="hidden" name="index" value={mv.step.index} />
-                            <input type="hidden" name="returnTo" value="/today" />
-                            <button className={styles.closeBtn}>
-                              Hold cleared — check the step off
-                            </button>
-                          </form>
-                        </div>
-                      </GuidanceBody>
-                    </DeckRow>
-                  </div>
+                      <div className={styles.gActions}>
+                        <Link href="/" className={styles.mvOpen}>
+                          Open on the dashboard
+                        </Link>
+                        <form action={toggleCheck} className={styles.commitmentClose}>
+                          <input type="hidden" name="cardId" value={mv.step.cardId} />
+                          <input type="hidden" name="node" value={mv.step.nodeKey} />
+                          <input type="hidden" name="index" value={mv.step.index} />
+                          <input type="hidden" name="returnTo" value="/today" />
+                          <button className={styles.closeBtn}>
+                            Hold cleared — check the step off
+                          </button>
+                        </form>
+                      </div>
+                    </GuidanceBody>
+                  </LedgerRow>
                 );
               })}
 
-              {/* Roundups join the tab ONLY when due — one aggregated row;
-                  the full cadence picture lives in the edge tray. */}
-              {dueRoundupRows.length > 0 && (
-                <div className={styles.spineRound}>
-                  <DeckRow
-                    num="○"
-                    kind="send"
-                    phrase={`Roundup due — ${dueRoundupLabel}`}
-                    phraseTitle={`Roundup due — ${dueRoundupLabel}`}
-                    meta="joins the tab only when due"
-                    primaryLabel="Open ▸"
-                    primaryHot
+              {/* Chases — something NAMED is owed (custom to-dos + asks). */}
+              {dueAsks.map((t) => {
+                const ask = splitAsk(t.detail).ask;
+                const isCustom = t.kind === "custom";
+                const late = daysSinceIso(t.followUpAt);
+                const text = isCustom ? (
+                  <>
+                    <b>You</b> owe: <span className={styles.owe}>{t.label}</span>
+                  </>
+                ) : (
+                  <>
+                    <b>{firstNameOf(t.label)}</b> owes:{" "}
+                    <span className={styles.owe}>{ask}</span>
+                  </>
+                );
+                return (
+                  <LedgerRow
+                    key={t.subjectKey}
+                    tm={
+                      isCustom
+                        ? late > 0
+                          ? `${late}d late`
+                          : "today"
+                        : `${daysSinceIso(t.contactedAt)}d`
+                    }
+                    tone="owed"
+                    text={text}
+                    textTitle={isCustom ? t.label : `${t.label} owes: ${ask}`}
+                    meta={
+                      isCustom
+                        ? `due ${shortDate(t.followUpAt)}`
+                        : `asked ${shortDate(t.contactedAt)}`
+                    }
+                    primary={
+                      <form action={markReplied} className={styles.valInline}>
+                        <input type="hidden" name="subjectKey" value={t.subjectKey} />
+                        <button className={`${styles.atcBtn} ${styles.atcGo}`}>
+                          Done ✓
+                        </button>
+                      </form>
+                    }
                   >
-                    {dueRoundupRows.map((r) => (
-                      <AtcRow it={r} key={r.subjectKey} />
-                    ))}
-                  </DeckRow>
-                </div>
+                    {!isCustom && (
+                      <form action={updateTouchAsk} className={styles.askForm}>
+                        <input type="hidden" name="subjectKey" value={t.subjectKey} />
+                        <input
+                          name="ask"
+                          defaultValue={ask}
+                          maxLength={300}
+                          placeholder="What exactly do they owe you? Clear it to stand down."
+                          aria-label="What they owe"
+                        />
+                        <button className={styles.atcBtn}>Set the ask ✓</button>
+                      </form>
+                    )}
+                    {!isCustom && (
+                      <div className={styles.gActions}>
+                        <form action={setThreadStatus} className={styles.valInline}>
+                          <input type="hidden" name="subjectKey" value={t.subjectKey} />
+                          <input type="hidden" name="status" value="open" />
+                          <button
+                            className={styles.notWaitingBtn}
+                            title="Not waiting on a reply — stop chasing"
+                          >
+                            ↔ not waiting
+                          </button>
+                        </form>
+                      </div>
+                    )}
+                    <FollowUpDue t={t} />
+                  </LedgerRow>
+                );
+              })}
+
+              {/* Roundups join the tab as ONE row, only when due. */}
+              {dueRoundupRows.length > 0 && (
+                <LedgerRow
+                  tone="open"
+                  kind="ROUNDUP"
+                  text={`due: ${dueRoundupLabel}`}
+                  textTitle={`Roundup due — ${dueRoundupLabel}`}
+                  primaryLabel="Open ▸"
+                  primaryHot
+                >
+                  {dueRoundupRows.map((r) => (
+                    <AtcRow it={r} key={r.subjectKey} />
+                  ))}
+                </LedgerRow>
               )}
+
+              {/* Check-ins due — cadence, nothing owed. Quiet until an ask
+                  is named; ✓ closes the loop. */}
+              {dueChecks.length > 0 && (
+                <div className={styles.lgSub}>Check-ins due — cadence, nothing owed</div>
+              )}
+              {dueChecks.map((t) => (
+                <LedgerRow
+                  key={t.subjectKey}
+                  tm={`${daysSinceIso(t.contactedAt)}d`}
+                  tone="check"
+                  text={
+                    <>
+                      Check in with <b>{t.label}</b>
+                    </>
+                  }
+                  textTitle={`Check in with ${t.label}`}
+                  meta={`asked ${shortDate(t.contactedAt)}`}
+                  primary={
+                    <form action={markReplied} className={styles.valInline}>
+                      <input type="hidden" name="subjectKey" value={t.subjectKey} />
+                      <button className={styles.atcBtn} title="Loop closed">
+                        ✓
+                      </button>
+                    </form>
+                  }
+                  primaryLabel="name the ask ▸"
+                >
+                  <form action={updateTouchAsk} className={styles.askForm}>
+                    <input type="hidden" name="subjectKey" value={t.subjectKey} />
+                    <input
+                      name="ask"
+                      maxLength={300}
+                      placeholder="What exactly do they owe you? Naming it makes this a chase."
+                      aria-label="What they owe"
+                    />
+                    <button className={styles.atcBtn}>Set the ask ✓</button>
+                  </form>
+                  <div className={styles.gActions}>
+                    <form action={setThreadStatus} className={styles.valInline}>
+                      <input type="hidden" name="subjectKey" value={t.subjectKey} />
+                      <input type="hidden" name="status" value="open" />
+                      <button
+                        className={styles.notWaitingBtn}
+                        title="Not waiting on a reply — stop chasing"
+                      >
+                        ↔ not waiting
+                      </button>
+                    </form>
+                  </div>
+                  <FollowUpDue t={t} />
+                </LedgerRow>
+              ))}
 
               {activeItems.length === 0 &&
                 followUps.due.length === 0 &&
@@ -1268,23 +1349,22 @@ export default async function TodayPage({
               {/* Then, if there's time. */}
               {(laterTriage.length > 0 || dash.status === "active") && (
                 <>
-                  <div className={styles.deckGroupLab}>
+                  <div className={styles.lgSub}>
                     Then, if there&apos;s time (
                     {laterTriage.length + (dash.status === "active" ? 1 : 0)})
                   </div>
                   {laterTriage.map((a) => (
-                    <DeckRow
+                    <LedgerRow
                       key={a.id}
-                      num="·"
-                      kind="decide"
-                      phrase={
+                      tone="check"
+                      text={
                         <Emph
                           text={`Decide on ${a.name} — seed it or park it`}
                           term={a.name}
                           href={`/accounts?focus=${a.id}`}
                         />
                       }
-                      phraseTitle={`Decide on ${a.name} — seed it or park it`}
+                      textTitle={`Decide on ${a.name} — seed it or park it`}
                       meta={`demand ${a.demand ?? "—"}${!isStrongSignal(a) ? " · emerging" : ""}`}
                       primaryLabel="Decide ▸"
                     >
@@ -1301,12 +1381,11 @@ export default async function TodayPage({
                           <ParkControl id={a.id} />
                         </div>
                       </GuidanceBody>
-                    </DeckRow>
+                    </LedgerRow>
                   ))}
-                  <DeckRow
-                    num="·"
-                    kind="note"
-                    phrase="Log a voice-of-the-base note"
+                  <LedgerRow
+                    tone="check"
+                    text="Log a voice-of-the-base note"
                     primaryLabel="Open ▸"
                   >
                     <GuidanceBody g={voiceOfBaseGuidance()} term="" href="#capture">
@@ -1316,7 +1395,7 @@ export default async function TodayPage({
                         </Link>
                       </div>
                     </GuidanceBody>
-                  </DeckRow>
+                  </LedgerRow>
                 </>
               )}
 
@@ -1398,7 +1477,7 @@ export default async function TodayPage({
                   </span>
                 </div>
                 <div className={styles.kickoffAccts}>
-                  {focusAccounts.map(({ a, partner }) => {
+                  {focusAccounts.slice(0, 8).map(({ a, partner }) => {
                     const dashCard = dash.cards.find(
                       (c) => !c.archived && c.name === a.name,
                     );
@@ -1439,6 +1518,54 @@ export default async function TodayPage({
                       />
                     );
                   })}
+                  {focusAccounts.length > 8 && (
+                    <details className={styles.chipMoreWrap}>
+                      <summary>+{focusAccounts.length - 8} more ▸</summary>
+                      <div className={styles.kickoffAccts}>
+                        {focusAccounts.slice(8).map(({ a, partner }) => {
+                          const dashCard = dash.cards.find(
+                            (c) => !c.archived && c.name === a.name,
+                          );
+                          const lastNoteAt = acctNotes.get(a.id)?.[0]?.createdAt ?? null;
+                          return (
+                            <AccountChip
+                              key={a.id}
+                              account={{
+                                id: a.id,
+                                name: a.name,
+                                score: a.score,
+                                play: a.play,
+                              }}
+                              partner={partner}
+                              tone={chipTone(lastNoteAt)}
+                              lastNoteAt={lastNoteAt}
+                              card={
+                                dashCard
+                                  ? {
+                                      id: dashCard.id,
+                                      stages: DASH_NODES.map((n) => ({
+                                        key: n.key,
+                                        label: n.label,
+                                        state: dashCard.states[n.key] ?? "todo",
+                                      })),
+                                    }
+                                  : null
+                              }
+                              seedSubtitle={`${a.csm}${a.industry ? ` · ${a.industry}` : ""}`}
+                              seedDiscovery={seedFor(a)}
+                              disposition={dispositions.get(a.id) ?? null}
+                              notes={(acctNotes.get(a.id) ?? []).map((n) => ({
+                                id: n.id,
+                                kind: n.kind,
+                                body: n.body,
+                                createdAt: n.createdAt,
+                              }))}
+                            />
+                          );
+                        })}
+                      </div>
+                    </details>
+                  )}
                 </div>
               </div>
             )}

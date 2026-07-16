@@ -126,16 +126,6 @@ export function AccountChip({
     };
   }, [open]);
 
-  // Neutral until an interaction starts the clock — "none" adds no color class.
-  const toneClass =
-    tone === "fresh"
-      ? styles.chipFresh
-      : tone === "stale"
-        ? styles.chipStale
-        : tone === "cold"
-          ? styles.chipCold
-          : "";
-
   const noteForm = (
     kind: "mine" | "partner" | "account",
     label: string,
@@ -164,7 +154,8 @@ export function AccountChip({
       <button
         ref={btnRef}
         type="button"
-        className={`${styles.kickoffAcct} ${styles.chipBtn} ${toneClass}`}
+        className={`${styles.kickoffAcct} ${styles.chipBtn}`}
+        data-tone={tone}
         onClick={openBox}
         title={`${account.name}${account.play ? ` · ${account.play}` : ""}${
           disposition
