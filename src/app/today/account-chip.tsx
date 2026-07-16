@@ -15,12 +15,13 @@ import { addCard, setCardStage } from "../dashboard/actions";
 import { LocalTime } from "../today-client";
 import styles from "../command-center.module.css";
 
-// An account chip on a partner's outreach card. Clicking it opens a work box
-// instead of jumping straight to the Accounts page: jot your own note, log what
-// the partner said, hop to the account, or put the account on the dashboard and
-// remote-control its stage from right here. The chip's color is its freshness
-// clock — green under 24h since the last note, yellow 24–48h (or never touched),
-// red past 48h.
+// An account chip on the Focus strip. Clicking it opens the work box built to
+// the approved mock: a header line (account · partner), ONE horizontal row of
+// pill buttons (My note / Partner said / Notes (N) / Go to account /
+// Dashboard), and whichever panel the active pill owns rendered inline
+// beneath — notes as one-line expandable rows. The box caps to the viewport
+// and scrolls internally; near the bottom of the screen it flips above the
+// chip instead of running under the taskbar.
 
 type Stage = { key: string; label: string; state: "todo" | "active" | "done" };
 
@@ -31,14 +32,17 @@ type ChipNote = {
   createdAt: string;
 };
 
-// One account note in the popover — a single ellipsized row; ▸ expands the
-// full note, × deletes exactly this note.
+// One account note — a single ellipsized row; ▸ expands, × deletes.
 function ChipNoteRow({ n }: { n: ChipNote }) {
   const [expanded, setExpanded] = useState(false);
   const d = new Date(Date.parse(n.createdAt));
   const stamp = Number.isNaN(d.getTime())
     ? ""
-    : d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    : d.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        timeZone: "America/Chicago",
+      });
   return (
     <span className={styles.chipNoteRow}>
       <button
@@ -70,6 +74,8 @@ function ChipNoteRow({ n }: { n: ChipNote }) {
   );
 }
 
+type Panel = "notes" | "mine" | "partner" | "dash" | null;
+
 export function AccountChip({
   account,
   partner,
@@ -95,29 +101,49 @@ export function AccountChip({
   disposition?: Disposition | null;
 }) {
   const [open, setOpen] = useState(false);
-  // The box renders position:fixed from the chip's measured rect — absolute
-  // positioning inside the chip row got painted over by later cards (ancestor
-  // stacking contexts trap z-index); fixed at the viewport level is immune.
-  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+  // Notes are the default panel when they exist — the box opens showing them.
+  const [panel, setPanel] = useState<Panel>(notes.length > 0 ? "notes" : null);
+  // Fixed-position box measured off the chip; flips above when the chip sits
+  // low on screen, and caps its height so the content scrolls INSIDE the box.
+  const [pos, setPos] = useState<{
+    top?: number;
+    bottom?: number;
+    left: number;
+    maxHeight: number;
+  } | null>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
+  const popRef = useRef<HTMLSpanElement>(null);
   const partnerFirst = partner.split(" ")[0] || "Partner";
 
   const openBox = () => {
     const r = btnRef.current?.getBoundingClientRect();
     if (r) {
-      setPos({
-        top: r.bottom + 6,
-        left: Math.max(8, Math.min(r.left, window.innerWidth - 336)),
-      });
+      const left = Math.max(8, Math.min(r.left, window.innerWidth - 470));
+      const below = window.innerHeight - r.bottom - 18;
+      const above = r.top - 18;
+      if (below < 320 && above > below) {
+        // Not enough room under the chip — open upward instead.
+        setPos({
+          bottom: window.innerHeight - r.top + 6,
+          left,
+          maxHeight: Math.min(480, above),
+        });
+      } else {
+        setPos({ top: r.bottom + 6, left, maxHeight: Math.min(480, below) });
+      }
     }
+    setPanel(notes.length > 0 ? "notes" : null);
     setOpen((v) => !v);
   };
 
-  // The box is anchored to a viewport position; if the page scrolls or resizes
-  // underneath it, close rather than drift.
+  // Page scroll/resize under a fixed box → close rather than drift. Scrolling
+  // INSIDE the box is fine — those events are ignored.
   useEffect(() => {
     if (!open) return;
-    const close = () => setOpen(false);
+    const close = (e: Event) => {
+      if (e.target instanceof Node && popRef.current?.contains(e.target)) return;
+      setOpen(false);
+    };
     window.addEventListener("scroll", close, true);
     window.addEventListener("resize", close);
     return () => {
@@ -126,27 +152,31 @@ export function AccountChip({
     };
   }, [open]);
 
-  const noteForm = (
-    kind: "mine" | "partner" | "account",
-    label: string,
-    placeholder: string,
-  ) => (
-    <details className={styles.chipItem}>
-      <summary>{label}</summary>
-      <form action={addAccountNote} className={styles.chipNoteForm}>
-        <input type="hidden" name="accountId" value={account.id} />
-        <input type="hidden" name="partner" value={partner} />
-        <input type="hidden" name="kind" value={kind} />
-        <textarea
-          name="body"
-          required
-          maxLength={2000}
-          rows={3}
-          placeholder={placeholder}
-        />
-        <button className={styles.chipSaveBtn}>Save note</button>
-      </form>
-    </details>
+  const pill = (key: Exclude<Panel, null>, label: string) => (
+    <button
+      type="button"
+      className={`${styles.chipPill} ${panel === key ? styles.chipPillOn : ""}`}
+      onClick={() => setPanel((p) => (p === key ? null : key))}
+      aria-expanded={panel === key}
+    >
+      {label}
+    </button>
+  );
+
+  const noteForm = (kind: "mine" | "partner", placeholder: string) => (
+    <form action={addAccountNote} className={styles.chipNoteForm}>
+      <input type="hidden" name="accountId" value={account.id} />
+      <input type="hidden" name="partner" value={partner} />
+      <input type="hidden" name="kind" value={kind} />
+      <textarea
+        name="body"
+        required
+        maxLength={2000}
+        rows={3}
+        placeholder={placeholder}
+      />
+      <button className={styles.chipSaveBtn}>Save note</button>
+    </form>
   );
 
   return (
@@ -179,17 +209,29 @@ export function AccountChip({
         )}
       </button>
 
-      {/* The work box renders in a PORTAL on document.body — a contacted card's
-          opacity (kickoffDone: 0.72) creates a stacking context that both traps
-          any z-index inside it and renders descendants translucent. Escaping the
-          subtree entirely is the only robust fix. */}
+      {/* The work box renders in a PORTAL on document.body — ancestor stacking
+          contexts would otherwise trap it. */}
       {open &&
         createPortal(
           <>
             <span className={styles.chipShade} onClick={() => setOpen(false)} />
-            <span className={styles.chipPop} style={pos ?? undefined}>
-              <span className={styles.chipPopHead}>
+            <span
+              ref={popRef}
+              className={styles.chipPop2}
+              style={
+                pos
+                  ? {
+                      top: pos.top,
+                      bottom: pos.bottom,
+                      left: pos.left,
+                      maxHeight: pos.maxHeight,
+                    }
+                  : undefined
+              }
+            >
+              <span className={styles.chipPop2Head}>
                 <b>{account.name}</b>
+                <span className={styles.chipPop2Partner}> · {partner}</span>
                 <span className={styles.chipPopStamp}>
                   {lastNoteAt ? (
                     <>
@@ -201,22 +243,30 @@ export function AccountChip({
                 </span>
               </span>
 
-              {noteForm("mine", "✎ My note", `What you know / did on ${account.name}…`)}
-              {noteForm(
-                "partner",
-                `💬 ${partnerFirst} said`,
-                `What ${partnerFirst} told you about ${account.name}…`,
-              )}
-              {noteForm(
-                "account",
-                "🗒 Add account note",
-                `A plain note on ${account.name} — lands on its account page…`,
-              )}
+              <span className={styles.chipPills}>
+                {pill("mine", "My note")}
+                {pill("partner", `${partnerFirst} said`)}
+                {notes.length > 0 &&
+                  pill(
+                    "notes",
+                    `Notes (${notes.length}) ${panel === "notes" ? "▾" : "▸"}`,
+                  )}
+                <Link href={`/accounts?focus=${account.id}`} className={styles.chipPill}>
+                  Go to account →
+                </Link>
+                {pill("dash", "Dashboard ▸")}
+              </span>
 
-              {/* This account's notes — one-line rows, expand, delete. */}
-              {notes.length > 0 && (
-                <details className={styles.chipItem}>
-                  <summary>🗒 Notes ({notes.length})</summary>
+              {panel === "mine" &&
+                noteForm("mine", `What you know / did on ${account.name}…`)}
+              {panel === "partner" &&
+                noteForm(
+                  "partner",
+                  `What ${partnerFirst} told you about ${account.name}…`,
+                )}
+
+              {panel === "notes" && (
+                <>
                   <span className={styles.chipNotesList}>
                     {notes.slice(0, 8).map((n) => (
                       <ChipNoteRow key={n.id} n={n} />
@@ -230,95 +280,124 @@ export function AccountChip({
                       </Link>
                     )}
                   </span>
-                </details>
+                  <span className={styles.chipPop2Foot}>
+                    one-line rows · ▸ expands · × deletes · this account&apos;s notes only
+                  </span>
+                </>
               )}
 
-              {card ? (
-                <span className={styles.chipStageBlock}>
-                  <span className={styles.chipStageHead}>
-                    On dashboard — set the stage
-                  </span>
-                  <span className={styles.chipStageList}>
-                    {card.stages.map((s) => (
-                      <form
-                        action={setCardStage}
-                        key={s.key}
-                        className={styles.valInline}
-                      >
-                        <input type="hidden" name="cardId" value={card.id} />
-                        <input type="hidden" name="node" value={s.key} />
+              {panel === "dash" && (
+                <span className={styles.chipDashPanel}>
+                  {card ? (
+                    <span className={styles.chipStageBlock}>
+                      <span className={styles.chipStageHead}>
+                        On dashboard — set the stage
+                      </span>
+                      <span className={styles.chipStageList}>
+                        {card.stages.map((s) => (
+                          <form
+                            action={setCardStage}
+                            key={s.key}
+                            className={styles.valInline}
+                          >
+                            <input type="hidden" name="cardId" value={card.id} />
+                            <input type="hidden" name="node" value={s.key} />
+                            <input type="hidden" name="returnTo" value="/today" />
+                            <button
+                              className={`${styles.chipStageBtn} ${
+                                s.state === "active"
+                                  ? styles.chipStageOn
+                                  : s.state === "done"
+                                    ? styles.chipStageDone
+                                    : ""
+                              }`}
+                              title={
+                                s.state === "active"
+                                  ? "Current stage"
+                                  : `Move to ${s.label}`
+                              }
+                            >
+                              {s.state === "done" ? "✓ " : ""}
+                              {s.label}
+                            </button>
+                          </form>
+                        ))}
+                      </span>
+                    </span>
+                  ) : (
+                    <form action={addCard} className={styles.chipItemForm}>
+                      <input type="hidden" name="name" value={account.name} />
+                      <input type="hidden" name="subtitle" value={seedSubtitle} />
+                      <input type="hidden" name="seedDiscovery" value={seedDiscovery} />
+                      <input type="hidden" name="returnTo" value="/today" />
+                      <button className={styles.chipDashBtn}>
+                        ＋ Add account to dashboard
+                      </button>
+                    </form>
+                  )}
+
+                  {/* Off-structure exits + the plain unattributed note live
+                      behind Dashboard ▸ — out of the everyday path. */}
+                  {disposition ? (
+                    <span className={styles.chipDispo}>
+                      <span className={styles.chipDispoLine}>
+                        {disposition.status === "motion" ? "⚡ In motion" : "⏸ Parked"}
+                        {disposition.reason ? ` — ${disposition.reason}` : ""}
+                      </span>
+                      <form action={clearDisposition} className={styles.valInline}>
+                        <input type="hidden" name="accountId" value={account.id} />
                         <input type="hidden" name="returnTo" value="/today" />
-                        <button
-                          className={`${styles.chipStageBtn} ${
-                            s.state === "active"
-                              ? styles.chipStageOn
-                              : s.state === "done"
-                                ? styles.chipStageDone
-                                : ""
-                          }`}
-                          title={
-                            s.state === "active" ? "Current stage" : `Move to ${s.label}`
-                          }
-                        >
-                          {s.state === "done" ? "✓ " : ""}
-                          {s.label}
+                        <button className={styles.chipDispoBtn}>
+                          ↩ Return to active
                         </button>
                       </form>
-                    ))}
-                  </span>
+                    </span>
+                  ) : (
+                    <details className={styles.chipItem}>
+                      <summary>⚡ Off-structure…</summary>
+                      <form action={setDisposition} className={styles.chipNoteForm}>
+                        <input type="hidden" name="accountId" value={account.id} />
+                        <input type="hidden" name="partner" value={partner} />
+                        <input type="hidden" name="returnTo" value="/today" />
+                        <select
+                          name="status"
+                          defaultValue="motion"
+                          aria-label="What shifted"
+                        >
+                          <option value="motion">
+                            already in motion — skip the roundup
+                          </option>
+                          <option value="parked">park it for now</option>
+                          <option value="not-mine">not mine — remove from my book</option>
+                        </select>
+                        <input
+                          name="reason"
+                          maxLength={400}
+                          placeholder="Why? (optional — lands as a dated note)"
+                          aria-label="Reason"
+                        />
+                        <button className={styles.chipSaveBtn}>Apply</button>
+                      </form>
+                    </details>
+                  )}
+                  <details className={styles.chipItem}>
+                    <summary>🗒 Plain account note…</summary>
+                    <form action={addAccountNote} className={styles.chipNoteForm}>
+                      <input type="hidden" name="accountId" value={account.id} />
+                      <input type="hidden" name="partner" value={partner} />
+                      <input type="hidden" name="kind" value="account" />
+                      <textarea
+                        name="body"
+                        required
+                        maxLength={2000}
+                        rows={3}
+                        placeholder={`A plain note on ${account.name} — lands on its account page…`}
+                      />
+                      <button className={styles.chipSaveBtn}>Save note</button>
+                    </form>
+                  </details>
                 </span>
-              ) : (
-                <form action={addCard} className={styles.chipItemForm}>
-                  <input type="hidden" name="name" value={account.name} />
-                  <input type="hidden" name="subtitle" value={seedSubtitle} />
-                  <input type="hidden" name="seedDiscovery" value={seedDiscovery} />
-                  <input type="hidden" name="returnTo" value="/today" />
-                  <button className={styles.chipDashBtn}>
-                    ＋ Add account to dashboard
-                  </button>
-                </form>
               )}
-
-              {/* Off-structure exits — real life moved this account off the
-                  scripted path. Each change also drops a dated account note. */}
-              {disposition ? (
-                <span className={styles.chipDispo}>
-                  <span className={styles.chipDispoLine}>
-                    {disposition.status === "motion" ? "⚡ In motion" : "⏸ Parked"}
-                    {disposition.reason ? ` — ${disposition.reason}` : ""}
-                  </span>
-                  <form action={clearDisposition} className={styles.valInline}>
-                    <input type="hidden" name="accountId" value={account.id} />
-                    <input type="hidden" name="returnTo" value="/today" />
-                    <button className={styles.chipDispoBtn}>↩ Return to active</button>
-                  </form>
-                </span>
-              ) : (
-                <details className={styles.chipItem}>
-                  <summary>⚡ Off-structure…</summary>
-                  <form action={setDisposition} className={styles.chipNoteForm}>
-                    <input type="hidden" name="accountId" value={account.id} />
-                    <input type="hidden" name="partner" value={partner} />
-                    <input type="hidden" name="returnTo" value="/today" />
-                    <select name="status" defaultValue="motion" aria-label="What shifted">
-                      <option value="motion">already in motion — skip the roundup</option>
-                      <option value="parked">park it for now</option>
-                      <option value="not-mine">not mine — remove from my book</option>
-                    </select>
-                    <input
-                      name="reason"
-                      maxLength={400}
-                      placeholder="Why? (optional — lands as a dated note)"
-                      aria-label="Reason"
-                    />
-                    <button className={styles.chipSaveBtn}>Apply</button>
-                  </form>
-                </details>
-              )}
-
-              <Link href={`/accounts?focus=${account.id}`} className={styles.chipGoLink}>
-                Go to account →
-              </Link>
             </span>
           </>,
           document.body,
