@@ -5796,12 +5796,10 @@
   z-index: 9999;
   width: 460px;
   max-width: calc(100vw - 20px);
-  overflow-y: auto;
   background: #fff;
   border: 1px solid var(--line);
   border-radius: 12px;
   box-shadow: 0 10px 28px rgba(10, 28, 64, 0.16);
-  padding: 10px 12px;
   font-size: 12.5px;
   display: block;
 }
@@ -5866,4 +5864,55 @@
   flex-wrap: wrap;
   gap: 6px;
   align-items: center;
+}
+
+/* Today runs wide — the sheet stretches toward the right edge of the screen
+   (the base .wrap caps at 1200px), with clearance for the edge tabs. */
+.wrapWide {
+  max-width: 1760px;
+  padding-right: 64px;
+}
+.wrapWide .cockpit {
+  padding-right: 0;
+}
+
+/* ═══ The thought bubble: the open chip GLOWS, and the box grows a caret
+   tail pointing back at it. No modal dim — it pops from the chip. ═══ */
+.focusChipOn {
+  border-color: var(--blue);
+  box-shadow:
+    0 0 0 2px #dbe7ff,
+    0 0 10px 2px rgba(37, 99, 235, 0.35);
+}
+.chipShade {
+  background: transparent;
+}
+.chipPop2 {
+  overflow: visible; /* the tail must poke outside the box */
+}
+.chipPop2Inner {
+  display: block;
+  overflow-y: auto;
+  padding: 10px 12px;
+  border-radius: 12px;
+}
+.chipPop2::before {
+  content: "";
+  position: absolute;
+  top: -7px;
+  left: 38px;
+  width: 12px;
+  height: 12px;
+  background: #fff;
+  border-left: 1px solid var(--line);
+  border-top: 1px solid var(--line);
+  transform: rotate(45deg);
+}
+.chipPop2Flip::before {
+  top: auto;
+  bottom: -7px;
+  border-left: 0;
+  border-top: 0;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
 }
