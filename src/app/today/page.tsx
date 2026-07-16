@@ -8,12 +8,20 @@ import {
   loadAccountNotes,
   loadDispositions,
   loadDoneKeys,
+  loadDoneTimes,
   loadPartnerNotes,
   loadSnoozes,
   loadTodos,
   loadTouches,
   loadValidations,
 } from "@/lib/today/overlay";
+import {
+  sameLocalDayIso,
+  sortEvents,
+  splitAsk,
+  type LedgerEvent,
+} from "@/lib/today/ledger";
+import { EdgeTray } from "./edge-tray";
 import { DASH_NODES } from "@/lib/dashboard/stages";
 import { AccountChip } from "./account-chip";
 import { AtcRow, CurveballButton, type RailItem } from "./atc-rail";
@@ -28,6 +36,7 @@ import {
   outreachSubjectKey,
   partitionFollowUps,
   roundupDue,
+  ROUNDUP_CADENCE_DAYS,
   type Touch,
 } from "@/lib/today/follow-ups";
 import {
@@ -64,7 +73,7 @@ import {
 } from "@/lib/today/build";
 import { ALEKS_SESSIONS } from "@/lib/aleks/one-on-one";
 import { SfCheckpoint } from "@/components/sf";
-import { ContactControl, EditableMessage, NoteSubmit } from "../today-client";
+import { ContactControl, EditableMessage, LocalTime, NoteSubmit } from "../today-client";
 import { addCard, toggleCheck } from "../dashboard/actions";
 import {
   addFieldNote,
@@ -77,6 +86,7 @@ import {
   muteRoundupPartner,
   resolveFieldNote,
   setPartnerLight,
+  updateTouchAsk,
   setThreadStatus,
   snoozeSignal,
   toggleTaskDone,
@@ -84,8 +94,7 @@ import {
   unsnoozeSignal,
 } from "./actions";
 import { DaySheet } from "./day-sheet";
-import { PartnerNotes } from "./partner-notes";
-import { visibleText } from "@/lib/today/route-notes";
+import { splitMarker, visibleText } from "@/lib/today/route-notes";
 import styles from "../command-center.module.css";
 
 export const dynamic = "force-dynamic";
@@ -589,6 +598,7 @@ export default async function TodayPage({
     partnerNotes,
     acctNotes,
     dispositions,
+    doneTimes,
   ] = await Promise.all([
     loadSnoozes(),
     loadValidations(),
@@ -599,6 +609,7 @@ export default async function TodayPage({
     loadPartnerNotes(),
     loadAccountNotes(),
     loadDispositions(),
+    loadDoneTimes(),
   ]);
   const touchMap = new Map(touches.map((t) => [t.subjectKey, t]));
   const followUps = partitionFollowUps(touches);
@@ -636,7 +647,6 @@ export default async function TodayPage({
   // accounts plus a ready-to-send opener that names them. Always on Today so the
   // whole roster is teed up to work through, one message at a time.
   const kickoff = partnerKickoff(intel, parkedIds);
-  const kickoffTotal = kickoff.reduce((n, k) => n + k.accounts.length, 0);
   // The "sent" mark is a logged Touch (so it carries the date, the message, and
   // an auto follow-up) — keyed by a stable per-partner string that persists.
   const kickoffItems = kickoff.map((k) => {
@@ -761,19 +771,12 @@ export default async function TodayPage({
     })
     .sort((a, b) => a.rank - b.rank)
     .map((r) => r.item);
-  const railDot = new Map(railItems.map((r) => [r.partner, r.dot]));
 
-  // Cockpit partitions of the thread rows. Threads that are DUE render as
-  // chase cards (from followUps.due, which also carries custom follow-ups),
-  // so the rail skips them here to keep exactly one home per object.
-  const dueKeys = new Set(followUps.due.map((t) => t.subjectKey));
+  // Tab partitions of the thread rows — due threads render from
+  // followUps.due; awaiting-but-not-due ones live in Upcoming/the trays.
   const replyRows = railItems.filter((r) => r.status === "replied");
   const freshRows = railItems.filter(
     (r) => r.status === "none" || r.status === "archived",
-  );
-  const waitingRows = railItems.filter(
-    (r) =>
-      (r.status === "awaiting" || r.status === "responded") && !dueKeys.has(r.subjectKey),
   );
   // Open notes with a future date join the Scheduled list on the right.
   const futureNotes = futureDatedTodos(todos);
@@ -877,6 +880,133 @@ export default async function TodayPage({
   const sortedFresh = [...freshRows]
     .filter((r) => !mutedRoundups.has(r.partner))
     .sort((a, b) => Number(b.cadenceDue ?? false) - Number(a.cadenceDue ?? false));
+  const dueRoundupRows = sortedFresh.filter((r) => r.cadenceDue);
+  const dueRoundupLabel = cadenceVisible
+    .filter((c) => c.due)
+    .map((c) => `${firstNameOf(c.partner)} (${c.sendable} ready)`)
+    .join(" · ");
+
+  // ── The ledger's past events — everything that happened today, assembled
+  // from every timestamped store. Routed/mirrored sheet notes report through
+  // their note rows, so plain captures are the only todo-sourced events.
+  const nowD = new Date();
+  const nameOf = new Map(intel.map((a) => [a.id, a.name]));
+  const events: LedgerEvent[] = [];
+  const seenBodies = new Set<string>();
+  for (const [accId, list] of acctNotes) {
+    for (const n of list) {
+      if (!sameLocalDayIso(n.createdAt, nowD)) continue;
+      const acct = nameOf.get(accId) ?? "account";
+      events.push({
+        at: n.createdAt,
+        kind: "note",
+        text: `${n.kind === "partner" ? "Partner said" : "Note"} → ${acct}: ${n.body.slice(0, 70)}`,
+      });
+      seenBodies.add(n.body);
+    }
+  }
+  for (const [partner, list] of partnerNotes) {
+    for (const n of list) {
+      if (!sameLocalDayIso(n.createdAt, nowD) || seenBodies.has(n.body)) continue;
+      events.push({
+        at: n.createdAt,
+        kind: "note",
+        text: `Partner note → ${partner}: ${n.body.slice(0, 70)}`,
+      });
+    }
+  }
+  for (const t of todos) {
+    if (!sameLocalDayIso(t.createdAt, nowD)) continue;
+    if (splitMarker(t.body).refs) continue; // routed/mirrored — reported above
+    events.push({
+      at: t.createdAt,
+      kind: "note",
+      text: `Captured on the sheet: ${visibleText(t.body).slice(0, 70)}`,
+    });
+  }
+  for (const t of touches) {
+    if (sameLocalDayIso(t.contactedAt, nowD))
+      events.push({
+        at: t.contactedAt,
+        kind: "send",
+        text: `${
+          t.kind === "partner"
+            ? "Roundup"
+            : t.kind === "account"
+              ? "Outreach"
+              : "Follow-up"
+        } sent → ${t.label}`,
+      });
+    for (const e of t.log) {
+      if (sameLocalDayIso(e.at, nowD))
+        events.push({
+          at: e.at,
+          kind: "done",
+          text: `Logged — ${t.label}: ${e.body.slice(0, 60)}`,
+        });
+    }
+  }
+  for (const it of doneMoves) {
+    if (it.mv.kind === "outreach") continue; // its touch event covers it
+    const at = doneTimes.get(it.key) ?? "";
+    if (!at || !sameLocalDayIso(at, nowD)) continue;
+    events.push({
+      at,
+      kind: "done",
+      text:
+        it.mv.kind === "triage"
+          ? `Decided ${it.mv.a.name}`
+          : `Move done — ${it.mv.step.cardName}: ${it.mv.step.item}`,
+    });
+  }
+  const pastEvents = sortEvents(events);
+  const pastRecent = pastEvents.slice(-9);
+  const pastEarlier = pastEvents.slice(0, -9);
+
+  // ── Upcoming — dimmed future ledger rows: check-ins, roundup windows,
+  // dated notes. This IS scheduled; rows join the open list on their day.
+  type UpRow = {
+    at: string;
+    text: string;
+    kind: "check" | "window" | "note";
+    subjectKey?: string;
+    partner?: string;
+  };
+  const upRows: UpRow[] = [
+    ...followUps.upcoming.map((t) => {
+      const ask = splitAsk(t.detail).ask;
+      return {
+        at: t.followUpAt,
+        text:
+          t.kind === "custom"
+            ? t.label
+            : `Check in with ${t.label} — cadence${ask ? ` · owes: ${ask}` : ""}`,
+        kind: "check" as const,
+        subjectKey: t.subjectKey,
+      };
+    }),
+    ...futureNotes.map((n) => ({
+      at: n.remindAt,
+      text: visibleText(n.body).slice(0, 80),
+      kind: "note" as const,
+    })),
+    ...cadenceVisible
+      .filter((c) => !c.due && !c.live && c.lastSent)
+      .map((c) => ({
+        at: new Date(
+          Date.parse(c.lastSent) + ROUNDUP_CADENCE_DAYS * 86_400_000,
+        ).toISOString(),
+        text: `Roundup window opens — ${c.partner} (${c.sendable} ready)`,
+        kind: "window" as const,
+        partner: c.partner,
+      })),
+  ].sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
+  const upShown = upRows.slice(0, 6);
+
+  // ── Focus accounts, flat — every kickoff account in one strip, score-sorted.
+  const focusAccounts = kickoff
+    .flatMap((k) => k.accounts.map((a) => ({ a, partner: k.partner })))
+    .sort((x, y) => y.a.score - x.a.score);
 
   return (
     <>
@@ -890,70 +1020,135 @@ export default async function TodayPage({
           </span>
         </div>
 
-        {/* ── The Day Sheet: everything you type lands here and stays here. ── */}
-        <DaySheet
-          initialNotes={todos}
-          accounts={noteAccounts}
-          partners={kickoff.map((k) => k.partner)}
-          dateLabel={todayLabel()}
-        />
-
-        {/* ── The cockpit: no tabs. DO on the left, TRACK on the right, BRIEF
-               as a bar + drawers below. Every element of the old six tabs has
-               a home here — nothing was dropped. ─────────────────────────── */}
+        {/* ── The tab left (the day as a ledger), the Day Sheet right,
+               roundups & scheduled off-page in the edge trays. ── */}
         <div className={styles.cockpit}>
-          {/* ══ LEFT — DO: everything that needs you, in one rail ══ */}
+          {/* ══ LEFT — Today's tab: everything that happened above the
+                 now-line, everything open below it ══ */}
           <div className={styles.cockCol}>
             <div className={styles.cockCap}>
-              <span>Do — everything that needs you</span>
+              <span>Today&apos;s tab — the day as a ledger</span>
               <span className={styles.cockCapR}>
-                {doneMoves.length} of {activeItems.length} moves done · all on screen
+                happened above the line · open below it · {doneMoves.length} of{" "}
+                {activeItems.length} moves done
               </span>
             </div>
 
             <div className={styles.atcRail}>
-              {/* Replies waiting on you — your move. */}
-              {replyRows.length > 0 && (
-                <div className={`${styles.famStrip} ${styles.famReply}`}>
-                  Your move — they&apos;re waiting on you
-                  <span className={styles.famN}>({replyRows.length})</span>
+              {/* Past — what already happened today, oldest first. */}
+              {pastEarlier.length > 0 && (
+                <details className={styles.lgEarlier}>
+                  <summary>earlier today ({pastEarlier.length}) ▸</summary>
+                  {pastEarlier.map((e, i) => (
+                    <div className={`${styles.lgRow} ${styles.lgPast}`} key={`pe-${i}`}>
+                      <span className={styles.lgTm}>
+                        <LocalTime iso={e.at} />
+                      </span>
+                      <span
+                        className={`${styles.lgDot} ${
+                          e.kind === "send" ? styles.lgDotSend : styles.lgDotDone
+                        }`}
+                      />
+                      <span className={styles.lgTx} title={e.text}>
+                        {e.text}
+                      </span>
+                    </div>
+                  ))}
+                </details>
+              )}
+              {pastRecent.map((e, i) => (
+                <div className={`${styles.lgRow} ${styles.lgPast}`} key={`pr-${i}`}>
+                  <span className={styles.lgTm}>
+                    <LocalTime iso={e.at} />
+                  </span>
+                  <span
+                    className={`${styles.lgDot} ${
+                      e.kind === "send" ? styles.lgDotSend : styles.lgDotDone
+                    }`}
+                  />
+                  <span className={styles.lgTx} title={e.text}>
+                    {e.text}
+                  </span>
+                </div>
+              ))}
+              {pastEvents.length === 0 && (
+                <div className={`${styles.lgRow} ${styles.lgPast}`}>
+                  <span className={styles.lgTm}></span>
+                  <span className={`${styles.lgDot} ${styles.lgDotDone}`} />
+                  <span className={styles.lgTx}>
+                    Nothing on the tab yet — it fills as the day happens.
+                  </span>
                 </div>
               )}
+              <div className={styles.lgNow}>
+                <span className={styles.lgNowLab}>now</span>
+                <span className={styles.lgNowLn} />
+              </div>
+              <div className={styles.lgSub}>Open — needs you</div>
+              {/* Replies waiting on you — your move. */}
               {replyRows.map((r) => (
                 <div className={styles.spineReply} key={r.subjectKey}>
                   <AtcRow it={r} />
                 </div>
               ))}
 
-              {/* Chases — check-ins that are DUE. The expansion is the full
-                  follow-up card: what you sent, the log, the ready nudge,
-                  delay, and log-what-happened. */}
-              {followUps.due.length > 0 && (
-                <div className={`${styles.famStrip} ${styles.famChase}`}>
-                  Chase — check-ins due
-                  <span className={styles.famN}>({followUps.due.length})</span>
-                </div>
-              )}
-              {followUps.due.map((t) => (
-                <div className={styles.spineChase} key={t.subjectKey}>
-                  <DeckRow
-                    num="!"
-                    kind="chase"
-                    phrase={t.kind === "custom" ? t.label : `Check-in due: ${t.label}`}
-                    meta={
-                      t.kind === "custom"
-                        ? `due ${shortDate(t.followUpAt)}`
-                        : `last contacted ${shortDate(t.contactedAt)} · due now`
-                    }
-                    primary={
-                      <>
-                        <form action={markReplied} className={styles.valInline}>
+              {/* Due threads. A CHASE exists only when something NAMED is
+                  owed (the ask rides in the touch detail); a due check-in
+                  with no ask is a quiet check row. All actions live in ▸ —
+                  no standing "They replied / Nudge" chips. */}
+              {followUps.due.map((t) => {
+                const ask = splitAsk(t.detail).ask;
+                const isCustom = t.kind === "custom";
+                const phrase = isCustom
+                  ? t.label
+                  : ask
+                    ? `${t.label} owes: ${ask}`
+                    : `Check in with ${t.label} — cadence, nothing owed`;
+                return (
+                  <div
+                    className={ask || isCustom ? styles.spineChase : styles.waitDim}
+                    key={t.subjectKey}
+                  >
+                    <DeckRow
+                      num={ask ? "!" : "·"}
+                      kind={ask || isCustom ? "chase" : "note"}
+                      phrase={phrase}
+                      phraseTitle={phrase}
+                      meta={
+                        isCustom
+                          ? `due ${shortDate(t.followUpAt)}`
+                          : `asked ${shortDate(t.contactedAt)} · ${daysSinceIso(
+                              t.contactedAt,
+                            )}d`
+                      }
+                      primary={
+                        isCustom ? (
+                          <form action={markReplied} className={styles.valInline}>
+                            <input type="hidden" name="subjectKey" value={t.subjectKey} />
+                            <button className={`${styles.atcBtn} ${styles.atcGo}`}>
+                              Done ✓
+                            </button>
+                          </form>
+                        ) : undefined
+                      }
+                      primaryLabel="▸"
+                      primaryHot={!!ask}
+                    >
+                      {!isCustom && (
+                        <form action={updateTouchAsk} className={styles.askForm}>
                           <input type="hidden" name="subjectKey" value={t.subjectKey} />
-                          <button className={`${styles.atcBtn} ${styles.atcGo}`}>
-                            {t.kind === "custom" ? "Done ✓" : "They replied ✓"}
-                          </button>
+                          <input
+                            name="ask"
+                            defaultValue={ask}
+                            maxLength={300}
+                            placeholder="What exactly do they owe you? Naming it makes this a chase — clear it to stand down."
+                            aria-label="What they owe"
+                          />
+                          <button className={styles.atcBtn}>Set the ask ✓</button>
                         </form>
-                        {t.kind !== "custom" && (
+                      )}
+                      {!isCustom && (
+                        <div className={styles.gActions}>
                           <form action={setThreadStatus} className={styles.valInline}>
                             <input type="hidden" name="subjectKey" value={t.subjectKey} />
                             <input type="hidden" name="status" value="open" />
@@ -964,27 +1159,15 @@ export default async function TodayPage({
                               ↔ not waiting
                             </button>
                           </form>
-                        )}
-                      </>
-                    }
-                    primaryLabel="Nudge ▸"
-                    primaryHot
-                  >
-                    <FollowUpDue t={t} />
-                  </DeckRow>
-                </div>
-              ))}
+                        </div>
+                      )}
+                      <FollowUpDue t={t} />
+                    </DeckRow>
+                  </div>
+                );
+              })}
 
               {/* Moves — send / decide / close, in order. All on screen. */}
-              {(pendingMoves.length > 0 || heldItems.length > 0) && (
-                <div className={`${styles.famStrip} ${styles.famMove}`}>
-                  Moves — send · decide · close
-                  <span className={styles.famN}>
-                    ({pendingMoves.length}
-                    {heldItems.length ? ` + ${heldItems.length} held` : ""} — all shown)
-                  </span>
-                </div>
-              )}
               {pendingMoves.map((it, i) => (
                 <div className={styles.spineMove} key={it.key}>
                   <MorningMove
@@ -1045,21 +1228,25 @@ export default async function TodayPage({
                 );
               })}
 
-              {/* Roundups — the standing 2-day partner cadence. Fresh cards
-                  surface here; past-cadence ones read as DUE, not optional. */}
-              {sortedFresh.length > 0 && (
-                <div className={`${styles.famStrip} ${styles.famRound}`}>
-                  Roundups — 2-day partner cadence
-                  <span className={styles.famN}>
-                    ({cadenceDueCount} due · {sortedFresh.length} ready)
-                  </span>
+              {/* Roundups join the tab ONLY when due — one aggregated row;
+                  the full cadence picture lives in the edge tray. */}
+              {dueRoundupRows.length > 0 && (
+                <div className={styles.spineRound}>
+                  <DeckRow
+                    num="○"
+                    kind="send"
+                    phrase={`Roundup due — ${dueRoundupLabel}`}
+                    phraseTitle={`Roundup due — ${dueRoundupLabel}`}
+                    meta="joins the tab only when due"
+                    primaryLabel="Open ▸"
+                    primaryHot
+                  >
+                    {dueRoundupRows.map((r) => (
+                      <AtcRow it={r} key={r.subjectKey} />
+                    ))}
+                  </DeckRow>
                 </div>
               )}
-              {sortedFresh.map((r) => (
-                <div className={styles.spineRound} key={r.subjectKey}>
-                  <AtcRow it={r} />
-                </div>
-              ))}
 
               {activeItems.length === 0 &&
                 followUps.due.length === 0 &&
@@ -1076,51 +1263,6 @@ export default async function TodayPage({
                 <p className={`${styles.mvAllDone} ${styles.deckEmpty}`}>
                   ✓ Every move is done. Nice work.
                 </p>
-              )}
-
-              {/* Waiting on them + open-ended — cadence armed or deliberately off. */}
-              {waitingRows.length + openRailRows.length + openOther.length > 0 && (
-                <>
-                  <div className={`${styles.famStrip} ${styles.famWait}`}>
-                    Waiting on them · open-ended
-                    <span className={styles.famN}>
-                      ({waitingRows.length + openRailRows.length + openOther.length})
-                    </span>
-                  </div>
-                  {waitingRows.map((r) => (
-                    <div className={styles.waitDim} key={r.subjectKey}>
-                      <AtcRow it={r} />
-                    </div>
-                  ))}
-                  {openRailRows.map((r) => (
-                    <div className={styles.waitDim} key={r.subjectKey}>
-                      <AtcRow it={r} />
-                    </div>
-                  ))}
-                  {openOther.map((t) => (
-                    <div
-                      className={`${styles.waitDim} ${styles.openRow}`}
-                      key={t.subjectKey}
-                    >
-                      <span className={styles.atcDot} style={{ background: "#cbd5e1" }} />
-                      <span className={styles.atcName}>{t.label}</span>
-                      <span className={styles.atcPhrase}>
-                        open-ended — not waiting on a reply
-                      </span>
-                      <form action={addTouchNote} className={styles.openExchange}>
-                        <input type="hidden" name="subjectKey" value={t.subjectKey} />
-                        <input
-                          name="body"
-                          required
-                          maxLength={500}
-                          placeholder="+ new exchange — what happened?"
-                          aria-label="Log a new exchange"
-                        />
-                        <button className={styles.atcBtn}>Log ✓</button>
-                      </form>
-                    </div>
-                  ))}
-                </>
               )}
 
               {/* Then, if there's time. */}
@@ -1178,365 +1320,453 @@ export default async function TodayPage({
                 </>
               )}
 
-              {/* Done today. */}
-              {doneMoves.length > 0 && (
+              {/* Upcoming — dimmed future ledger rows. This IS scheduled:
+                  rows join the open list on their day. */}
+              {upShown.length > 0 && (
                 <>
-                  <div className={styles.deckGroupLab}>Done ({doneMoves.length})</div>
-                  {doneMoves.map((it) => (
-                    <MorningMove
-                      key={it.key}
-                      mv={it.mv}
-                      n={0}
-                      doneKey={it.key}
-                      done
-                      touch={it.touch}
-                    />
+                  <div className={styles.lgSub}>Upcoming — joins the tab when due</div>
+                  {upShown.map((u, i) => (
+                    <div
+                      className={`${styles.lgRow} ${styles.lgUp}`}
+                      key={`up-${u.at}-${i}`}
+                    >
+                      <span className={styles.lgTm}>{shortDate(u.at)}</span>
+                      <span className={`${styles.lgDot} ${styles.lgDotUp}`} />
+                      <span className={styles.lgTx} title={u.text}>
+                        {u.text}
+                      </span>
+                      <span className={styles.lgAct}>
+                        {u.kind === "check" && u.subjectKey && (
+                          <>
+                            <form action={bringFollowUpDue} className={styles.valInline}>
+                              <input
+                                type="hidden"
+                                name="subjectKey"
+                                value={u.subjectKey}
+                              />
+                              <button className={styles.fuUpBtn} title="Pull it to today">
+                                ↑ now
+                              </button>
+                            </form>
+                            <form action={deleteTouch} className={styles.valInline}>
+                              <input
+                                type="hidden"
+                                name="subjectKey"
+                                value={u.subjectKey}
+                              />
+                              <button
+                                className={styles.fuUpDel}
+                                title="Remove this check-in"
+                              >
+                                ✕
+                              </button>
+                            </form>
+                          </>
+                        )}
+                        {u.kind === "window" && u.partner && (
+                          <form action={muteRoundupPartner} className={styles.valInline}>
+                            <input type="hidden" name="partner" value={u.partner} />
+                            <button
+                              className={styles.fuUpDel}
+                              title="Take this partner off the roundup list"
+                            >
+                              ✕
+                            </button>
+                          </form>
+                        )}
+                      </span>
+                    </div>
                   ))}
+                  {upRows.length > upShown.length && (
+                    <div className={styles.lgMore}>
+                      +{upRows.length - upShown.length} more in the Scheduled tray →
+                    </div>
+                  )}
                 </>
               )}
             </div>
-          </div>
 
-          {/* ══ RIGHT — TRACK: the future, the cadence, the reference ══ */}
-          <div className={styles.cockColR}>
-            {/* Roundup cadence — every partner, every 2 days. Due partners are
-                also hot rows in the rail; this is the at-a-glance meter. */}
-            <div className={`${styles.cockSect} ${styles.cadSect}`}>
-              <div className={styles.cockCap}>
-                Roundups
-                <span className={styles.cockCapR}>
-                  every 2 days · {cadenceDueCount} due
-                  {litPartners.size > 0 ? ` · ${litPartners.size} lit` : ""}
-                </span>
-              </div>
-              <div className={styles.cadPanel}>
-                {cadenceVisible.map((c) => (
-                  <div
-                    key={c.partner}
-                    className={`${styles.cadRow} ${
-                      litPartners.has(c.partner) ? styles.cadRowLit : ""
-                    }`}
-                  >
-                    <span
-                      className={styles.cadDot}
-                      style={{
-                        background: c.due ? "#dc2626" : c.live ? "#eab308" : "#1a7f3c",
-                      }}
-                      title={
-                        c.due
-                          ? "New roundup due"
-                          : c.live
-                            ? "Conversation open — no new roundup stacks on a live thread"
-                            : "Fresh — inside the 2-day cadence"
-                      }
-                    />
-                    <b>{c.partner}</b>
-                    {litPartners.has(c.partner) && (
-                      <span
-                        className={styles.cadBulb}
-                        title="Your light is on — something to tend to here"
-                      />
-                    )}
-                    {c.due && <span className={styles.cadDue}>DUE</span>}
-                    <span className={styles.cadMeta}>
-                      {c.lastSent
-                        ? `sent ${shortDate(c.lastSent)} · ${c.daysAgo}d ago · ${
-                            c.sentCount != null ? c.sentCount : c.sendable
-                          }/${c.total} accts`
-                        : `never sent · ${c.sendable}/${c.total} accts ready`}
-                    </span>
-                    <form action={muteRoundupPartner} className={styles.valInline}>
-                      <input type="hidden" name="partner" value={c.partner} />
-                      <button
-                        className={styles.cadHide}
-                        title="Remove from the roundup list — restore anytime under hidden"
-                      >
-                        ✕
-                      </button>
-                    </form>
-                    <form action={setPartnerLight} className={styles.lightForm}>
-                      <input type="hidden" name="partner" value={c.partner} />
-                      <input
-                        type="hidden"
-                        name="on"
-                        value={litPartners.has(c.partner) ? "0" : "1"}
-                      />
-                      <button
-                        className={`${styles.lightSwitch} ${
-                          litPartners.has(c.partner) ? styles.lightOn : ""
-                        }`}
-                        title={
-                          litPartners.has(c.partner)
-                            ? `Flip the light off — done tending to ${c.partner}`
-                            : `Flip the light on — something to tend to for ${c.partner}`
-                        }
-                      >
-                        <span className={styles.lightKnob} />
-                      </button>
-                    </form>
-                  </div>
-                ))}
-                {cadenceVisible.length === 0 && (
-                  <p className={styles.muted}>
-                    Nothing to round up — every account is in motion or parked.
-                  </p>
-                )}
-                {cadenceHidden.length > 0 && (
-                  <details className={styles.cadHiddenWrap}>
-                    <summary>hidden ({cadenceHidden.length}) ▸</summary>
-                    {cadenceHidden.map((c) => (
-                      <div key={c.partner} className={styles.cadRow}>
-                        <span
-                          className={styles.cadDot}
-                          style={{ background: "#cbd5e1" }}
-                          title="Off the roundup list"
-                        />
-                        <b>{c.partner}</b>
-                        <span className={styles.cadMeta}>
-                          off the list · {c.sendable}/{c.total} accts
-                        </span>
-                        <form action={unmuteRoundupPartner} className={styles.valInline}>
-                          <input type="hidden" name="partner" value={c.partner} />
-                          <button
-                            className={styles.cadRestore}
-                            title="Put this partner back on the roundup list"
-                          >
-                            ↩ restore
-                          </button>
-                        </form>
-                      </div>
-                    ))}
-                  </details>
-                )}
-              </div>
-            </div>
-
-            {/* Scheduled — upcoming check-ins + future-dated notes. Nothing
-                here is ever due: due things are chases on the left. */}
-            <div className={styles.cockSect}>
-              <div className={styles.cockCap}>
-                Scheduled
-                <span className={styles.cockCapR}>
-                  {followUps.upcoming.length} check-in
-                  {followUps.upcoming.length === 1 ? "" : "s"}
-                  {futureNotes.length > 0 ? ` · ${futureNotes.length} dated notes` : ""}
-                </span>
-              </div>
-              <div className={styles.atcRail}>
-                {followUps.upcoming.length === 0 && futureNotes.length === 0 && (
-                  <p className={`${styles.muted} ${styles.deckEmpty}`}>
-                    Nothing scheduled — log an outreach or add a check-in below.
-                  </p>
-                )}
-                {groupUpcomingByDay(followUps.upcoming).map((g) => (
-                  <div key={g.key}>
-                    <div className={styles.deckGroupLab}>
-                      {g.label} ({g.items.length})
-                    </div>
-                    {g.items.map((t) => (
-                      <div className={styles.next48row} key={t.subjectKey}>
-                        <span className={styles.next48body}>
-                          <b>{t.label}</b>
-                          {t.detail ? ` · ${t.detail}` : ""}
-                          <span className={styles.next48when}>
-                            {" "}
-                            — {shortDate(t.followUpAt)}
-                          </span>
-                        </span>
-                        <form action={markReplied} className={styles.valInline}>
-                          <input type="hidden" name="subjectKey" value={t.subjectKey} />
-                          <button
-                            className={styles.fuUpDone}
-                            title="Close it — already done"
-                          >
-                            Done ✓
-                          </button>
-                        </form>
-                        <form action={bringFollowUpDue} className={styles.valInline}>
-                          <input type="hidden" name="subjectKey" value={t.subjectKey} />
-                          <button
-                            className={styles.fuUpBtn}
-                            title="Bring the check-in to today"
-                          >
-                            ↑ Now
-                          </button>
-                        </form>
-                        <form action={deleteTouch} className={styles.valInline}>
-                          <input type="hidden" name="subjectKey" value={t.subjectKey} />
-                          <button
-                            className={styles.fuUpDel}
-                            title="Remove this follow-up"
-                          >
-                            ✕
-                          </button>
-                        </form>
-                      </div>
-                    ))}
-                  </div>
-                ))}
-                {futureNotes.length > 0 && (
-                  <>
-                    <div className={styles.deckGroupLab}>
-                      Dated notes ({futureNotes.length})
-                    </div>
-                    {futureNotes.map((n) => (
-                      <div className={styles.next48row} key={n.id}>
-                        <span className={styles.next48body}>
-                          📝 {visibleText(n.body).slice(0, 90) || "(empty note)"}
-                          <span className={styles.next48when}>
-                            {" "}
-                            — {shortDate(n.remindAt)}
-                          </span>
-                        </span>
-                      </div>
-                    ))}
-                  </>
-                )}
-              </div>
-              <form action={addFollowUp} className={styles.fuAdd}>
-                <input
-                  name="label"
-                  required
-                  maxLength={200}
-                  placeholder="Add a check-in…"
-                  aria-label="Add a follow-up"
-                />
-                <select name="when" defaultValue="tomorrow" aria-label="When">
-                  <option value="today">later today</option>
-                  <option value="tomorrow">tomorrow</option>
-                </select>
-                <button className={styles.fuAddBtn}>Add</button>
-              </form>
-              {followUps.replied.length > 0 && (
-                <details className={styles.fuDone}>
-                  <summary className={styles.fuDoneHead}>
-                    done ({followUps.replied.length}) ▸
-                  </summary>
-                  <ul className={styles.fuDoneList}>
-                    {followUps.replied.map((t) => (
-                      <li key={t.subjectKey}>
-                        <span className={styles.fuUpWho}>{t.label}</span>
-                        {t.detail ? (
-                          <span className={styles.fuUpDetail}> · {t.detail}</span>
-                        ) : null}
-                        <span className={styles.fuUpWhen}>
-                          {" "}
-                          — contacted {shortDate(t.contactedAt)}
-                        </span>
-                        <span className={styles.fuUpActions}>
-                          <form action={bringFollowUpDue} className={styles.valInline}>
-                            <input type="hidden" name="subjectKey" value={t.subjectKey} />
-                            <button
-                              className={styles.fuUpBtn}
-                              title="Reopen — bring it back due"
-                            >
-                              Reopen
-                            </button>
-                          </form>
-                          <form action={deleteTouch} className={styles.valInline}>
-                            <input type="hidden" name="subjectKey" value={t.subjectKey} />
-                            <button className={styles.fuUpDel} title="Remove entirely">
-                              Delete
-                            </button>
-                          </form>
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </details>
-              )}
-            </div>
-
-            {/* Focus accounts — reference per partner (chips + notes strips). */}
-            {kickoff.length > 0 && (
-              <div className={styles.cockSect}>
+            {/* Focus accounts — flat, score-sorted; notes are ACCOUNT-level,
+                inside each chip's popover. */}
+            {focusAccounts.length > 0 && (
+              <div className={styles.focusStrip}>
                 <div className={styles.cockCap}>
-                  Focus accounts
+                  <span>Focus accounts</span>
                   <span className={styles.cockCapR}>
-                    {kickoffTotal} accounts · {kickoffItems.length} partners
+                    {focusAccounts.length} accounts · click a chip — notes are
+                    account-level
                   </span>
                 </div>
-                <div className={`${styles.atcRefGroup} ${styles.focusMini}`}>
-                  <div className={styles.atcRefBody}>
-                    {kickoffItems.map(({ k }) => (
-                      <div key={k.partner} className={styles.kickoffPartner}>
-                        <div className={styles.kickoffPartnerHead}>
-                          <span
-                            className={styles.atcDot}
-                            style={{
-                              background:
-                                railDot.get(k.partner) === "green"
-                                  ? "#22c55e"
-                                  : railDot.get(k.partner) === "orange"
-                                    ? "#e6701e"
-                                    : railDot.get(k.partner) === "grey"
-                                      ? "#cbd5e1"
-                                      : "#eab308",
-                            }}
-                          />
-                          <span className={styles.kickoffPartnerName}>{k.partner}</span>
-                          <span className={styles.kickoffPartnerRole}>{k.role}</span>
-                          <Link
-                            href={`/partners#${encodeURIComponent(k.partner)}`}
-                            className={styles.kickoffRoomLink}
-                            title="Every outreach and note for this partner, timestamped"
-                          >
-                            Partner room →
-                          </Link>
-                          <div className={styles.kickoffAccts}>
-                            {k.accounts.map((a) => {
-                              const dashCard = dash.cards.find(
-                                (c) => !c.archived && c.name === a.name,
-                              );
-                              const lastNoteAt =
-                                acctNotes.get(a.id)?.[0]?.createdAt ?? null;
-                              return (
-                                <AccountChip
-                                  key={a.id}
-                                  account={{
-                                    id: a.id,
-                                    name: a.name,
-                                    score: a.score,
-                                    play: a.play,
-                                  }}
-                                  partner={k.partner}
-                                  tone={chipTone(lastNoteAt)}
-                                  lastNoteAt={lastNoteAt}
-                                  card={
-                                    dashCard
-                                      ? {
-                                          id: dashCard.id,
-                                          stages: DASH_NODES.map((n) => ({
-                                            key: n.key,
-                                            label: n.label,
-                                            state: dashCard.states[n.key] ?? "todo",
-                                          })),
-                                        }
-                                      : null
-                                  }
-                                  seedSubtitle={`${a.csm}${a.industry ? ` · ${a.industry}` : ""}`}
-                                  seedDiscovery={seedFor(a)}
-                                  disposition={dispositions.get(a.id) ?? null}
-                                />
-                              );
-                            })}
-                          </div>
-                        </div>
-                        <PartnerNotes
-                          partner={k.partner}
-                          notes={(partnerNotes.get(k.partner) ?? []).map((n) => ({
-                            id: n.id,
-                            body: n.body,
-                            createdAt: n.createdAt,
-                          }))}
-                        />
-                      </div>
-                    ))}
-                  </div>
+                <div className={styles.kickoffAccts}>
+                  {focusAccounts.map(({ a, partner }) => {
+                    const dashCard = dash.cards.find(
+                      (c) => !c.archived && c.name === a.name,
+                    );
+                    const lastNoteAt = acctNotes.get(a.id)?.[0]?.createdAt ?? null;
+                    return (
+                      <AccountChip
+                        key={a.id}
+                        account={{
+                          id: a.id,
+                          name: a.name,
+                          score: a.score,
+                          play: a.play,
+                        }}
+                        partner={partner}
+                        tone={chipTone(lastNoteAt)}
+                        lastNoteAt={lastNoteAt}
+                        card={
+                          dashCard
+                            ? {
+                                id: dashCard.id,
+                                stages: DASH_NODES.map((n) => ({
+                                  key: n.key,
+                                  label: n.label,
+                                  state: dashCard.states[n.key] ?? "todo",
+                                })),
+                              }
+                            : null
+                        }
+                        seedSubtitle={`${a.csm}${a.industry ? ` · ${a.industry}` : ""}`}
+                        seedDiscovery={seedFor(a)}
+                        disposition={dispositions.get(a.id) ?? null}
+                        notes={(acctNotes.get(a.id) ?? []).map((n) => ({
+                          id: n.id,
+                          kind: n.kind,
+                          body: n.body,
+                          createdAt: n.createdAt,
+                        }))}
+                      />
+                    );
+                  })}
                 </div>
               </div>
             )}
           </div>
+
+          {/* ══ RIGHT — the Day Sheet owns the second column ══ */}
+          <div className={styles.cockColR}>
+            <div className={styles.cockSect}>
+              <div className={styles.cockCap}>
+                <span>Day sheet</span>
+                <span className={styles.cockCapR}>
+                  everything lands here · route from here
+                </span>
+              </div>
+              <DaySheet
+                initialNotes={todos}
+                accounts={noteAccounts}
+                partners={kickoff.map((k) => k.partner)}
+                dateLabel={todayLabel()}
+              />
+            </div>
+          </div>
+
+          {/* ══ EDGE TRAYS — roundups & scheduled live off-page, flying out
+                 over it. Due items ALSO sit on the tab; the trays are the
+                 full pictures. ══ */}
+          <EdgeTray
+            tabs={[
+              {
+                key: "roundups",
+                label: "Roundups",
+                count: cadenceVisible.length,
+                hot: cadenceDueCount > 0,
+                body: (
+                  <div className={styles.trayBody}>
+                    <p className={styles.trayHint}>
+                      every 2 days per partner · due roundups also sit on the tab · flip a
+                      light to mark &quot;tend to something here&quot;
+                    </p>
+                    {cadenceVisible.map((c) => (
+                      <div
+                        key={c.partner}
+                        className={`${styles.cadRow} ${
+                          litPartners.has(c.partner) ? styles.cadRowLit : ""
+                        }`}
+                      >
+                        <span
+                          className={styles.cadDot}
+                          style={{
+                            background: c.due
+                              ? "#dc2626"
+                              : c.live
+                                ? "#eab308"
+                                : "#1a7f3c",
+                          }}
+                        />
+                        <b>{c.partner}</b>
+                        {litPartners.has(c.partner) && (
+                          <span
+                            className={styles.cadBulb}
+                            title="Your light is on — something to tend to here"
+                          />
+                        )}
+                        {c.due && <span className={styles.cadDue}>DUE</span>}
+                        <span className={styles.cadMeta}>
+                          {c.lastSent
+                            ? `sent ${shortDate(c.lastSent)} · ${c.daysAgo}d ago · ${
+                                c.sentCount != null ? c.sentCount : c.sendable
+                              }/${c.total} accts`
+                            : `never sent · ${c.sendable}/${c.total} accts ready`}
+                        </span>
+                        <form action={muteRoundupPartner} className={styles.valInline}>
+                          <input type="hidden" name="partner" value={c.partner} />
+                          <button
+                            className={styles.cadHide}
+                            title="Remove from the roundup list — restore anytime under hidden"
+                          >
+                            ✕
+                          </button>
+                        </form>
+                        <form action={setPartnerLight} className={styles.lightFormIn}>
+                          <input type="hidden" name="partner" value={c.partner} />
+                          <input
+                            type="hidden"
+                            name="on"
+                            value={litPartners.has(c.partner) ? "0" : "1"}
+                          />
+                          <button
+                            className={`${styles.lightSwitch} ${
+                              litPartners.has(c.partner) ? styles.lightOn : ""
+                            }`}
+                            title={
+                              litPartners.has(c.partner)
+                                ? `Flip the light off — done tending to ${c.partner}`
+                                : `Flip the light on — something to tend to for ${c.partner}`
+                            }
+                          >
+                            <span className={styles.lightKnob} />
+                          </button>
+                        </form>
+                      </div>
+                    ))}
+                    {cadenceHidden.length > 0 && (
+                      <details className={styles.cadHiddenWrap}>
+                        <summary>hidden ({cadenceHidden.length}) ▸</summary>
+                        {cadenceHidden.map((c) => (
+                          <div key={c.partner} className={styles.cadRow}>
+                            <span
+                              className={styles.cadDot}
+                              style={{ background: "#cbd5e1" }}
+                            />
+                            <b>{c.partner}</b>
+                            <span className={styles.cadMeta}>
+                              off the list · {c.sendable}/{c.total} accts
+                            </span>
+                            <form
+                              action={unmuteRoundupPartner}
+                              className={styles.valInline}
+                            >
+                              <input type="hidden" name="partner" value={c.partner} />
+                              <button
+                                className={styles.cadRestore}
+                                title="Put this partner back on the roundup list"
+                              >
+                                ↩ restore
+                              </button>
+                            </form>
+                          </div>
+                        ))}
+                      </details>
+                    )}
+                    {(openRailRows.length > 0 || openOther.length > 0) && (
+                      <>
+                        <div className={styles.deckGroupLab}>
+                          open-ended threads ({openRailRows.length + openOther.length})
+                        </div>
+                        {openRailRows.map((r) => (
+                          <AtcRow it={r} key={r.subjectKey} />
+                        ))}
+                        {openOther.map((t) => (
+                          <div className={styles.openRow} key={t.subjectKey}>
+                            <span
+                              className={styles.atcDot}
+                              style={{ background: "#cbd5e1" }}
+                            />
+                            <span className={styles.atcName}>{t.label}</span>
+                            <form action={addTouchNote} className={styles.openExchange}>
+                              <input
+                                type="hidden"
+                                name="subjectKey"
+                                value={t.subjectKey}
+                              />
+                              <input
+                                name="body"
+                                required
+                                maxLength={500}
+                                placeholder="+ new exchange — what happened?"
+                                aria-label="Log a new exchange"
+                              />
+                              <button className={styles.atcBtn}>Log ✓</button>
+                            </form>
+                          </div>
+                        ))}
+                      </>
+                    )}
+                  </div>
+                ),
+              },
+              {
+                key: "scheduled",
+                label: "Scheduled",
+                count: followUps.upcoming.length + futureNotes.length,
+                body: (
+                  <div className={styles.trayBody}>
+                    <p className={styles.trayHint}>
+                      never due — due things join the tab on their day
+                    </p>
+                    {followUps.upcoming.length === 0 && futureNotes.length === 0 && (
+                      <p className={`${styles.muted} ${styles.deckEmpty}`}>
+                        Nothing scheduled — log an outreach or add a check-in below.
+                      </p>
+                    )}
+                    {groupUpcomingByDay(followUps.upcoming).map((g) => (
+                      <div key={g.key}>
+                        <div className={styles.deckGroupLab}>
+                          {g.label} ({g.items.length})
+                        </div>
+                        {g.items.map((t) => (
+                          <div className={styles.next48row} key={t.subjectKey}>
+                            <span className={styles.next48body}>
+                              <b>{t.label}</b>
+                              {splitAsk(t.detail).ask
+                                ? ` · owes: ${splitAsk(t.detail).ask}`
+                                : ""}
+                              <span className={styles.next48when}>
+                                {" "}
+                                — {shortDate(t.followUpAt)}
+                              </span>
+                            </span>
+                            <form action={markReplied} className={styles.valInline}>
+                              <input
+                                type="hidden"
+                                name="subjectKey"
+                                value={t.subjectKey}
+                              />
+                              <button
+                                className={styles.fuUpDone}
+                                title="Close it — already done"
+                              >
+                                Done ✓
+                              </button>
+                            </form>
+                            <form action={bringFollowUpDue} className={styles.valInline}>
+                              <input
+                                type="hidden"
+                                name="subjectKey"
+                                value={t.subjectKey}
+                              />
+                              <button
+                                className={styles.fuUpBtn}
+                                title="Bring the check-in to today"
+                              >
+                                ↑ Now
+                              </button>
+                            </form>
+                            <form action={deleteTouch} className={styles.valInline}>
+                              <input
+                                type="hidden"
+                                name="subjectKey"
+                                value={t.subjectKey}
+                              />
+                              <button
+                                className={styles.fuUpDel}
+                                title="Remove this follow-up"
+                              >
+                                ✕
+                              </button>
+                            </form>
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+                    {futureNotes.length > 0 && (
+                      <>
+                        <div className={styles.deckGroupLab}>
+                          Dated notes ({futureNotes.length})
+                        </div>
+                        {futureNotes.map((n) => (
+                          <div className={styles.next48row} key={n.id}>
+                            <span className={styles.next48body}>
+                              📝 {visibleText(n.body).slice(0, 90) || "(empty note)"}
+                              <span className={styles.next48when}>
+                                {" "}
+                                — {shortDate(n.remindAt)}
+                              </span>
+                            </span>
+                          </div>
+                        ))}
+                      </>
+                    )}
+                    <form action={addFollowUp} className={styles.fuAdd}>
+                      <input
+                        name="label"
+                        required
+                        maxLength={200}
+                        placeholder="Add a check-in…"
+                        aria-label="Add a follow-up"
+                      />
+                      <select name="when" defaultValue="tomorrow" aria-label="When">
+                        <option value="today">later today</option>
+                        <option value="tomorrow">tomorrow</option>
+                      </select>
+                      <button className={styles.fuAddBtn}>Add</button>
+                    </form>
+                    {followUps.replied.length > 0 && (
+                      <details className={styles.fuDone}>
+                        <summary className={styles.fuDoneHead}>
+                          done ({followUps.replied.length}) ▸
+                        </summary>
+                        <ul className={styles.fuDoneList}>
+                          {followUps.replied.map((t) => (
+                            <li key={t.subjectKey}>
+                              <span className={styles.fuUpWho}>{t.label}</span>
+                              <span className={styles.fuUpWhen}>
+                                {" "}
+                                — contacted {shortDate(t.contactedAt)}
+                              </span>
+                              <span className={styles.fuUpActions}>
+                                <form
+                                  action={bringFollowUpDue}
+                                  className={styles.valInline}
+                                >
+                                  <input
+                                    type="hidden"
+                                    name="subjectKey"
+                                    value={t.subjectKey}
+                                  />
+                                  <button
+                                    className={styles.fuUpBtn}
+                                    title="Reopen — bring it back due"
+                                  >
+                                    Reopen
+                                  </button>
+                                </form>
+                                <form action={deleteTouch} className={styles.valInline}>
+                                  <input
+                                    type="hidden"
+                                    name="subjectKey"
+                                    value={t.subjectKey}
+                                  />
+                                  <button
+                                    className={styles.fuUpDel}
+                                    title="Remove entirely"
+                                  >
+                                    Delete
+                                  </button>
+                                </form>
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </details>
+                    )}
+                  </div>
+                ),
+              },
+            ]}
+          />
 
           {/* ══ BRIEF — the bar + drawers (full width) ══ */}
           <div className={styles.cockWide}>

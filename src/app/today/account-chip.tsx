@@ -5,7 +5,12 @@ import { createPortal } from "react-dom";
 import Link from "next/link";
 import type { ChipTone } from "@/lib/today/build";
 import type { Disposition } from "@/lib/today/overlay";
-import { addAccountNote, clearDisposition, setDisposition } from "./actions";
+import {
+  addAccountNote,
+  clearDisposition,
+  deleteAccountNote,
+  setDisposition,
+} from "./actions";
 import { addCard, setCardStage } from "../dashboard/actions";
 import { LocalTime } from "../today-client";
 import styles from "../command-center.module.css";
@@ -19,6 +24,52 @@ import styles from "../command-center.module.css";
 
 type Stage = { key: string; label: string; state: "todo" | "active" | "done" };
 
+type ChipNote = {
+  id: string;
+  kind: string;
+  body: string;
+  createdAt: string;
+};
+
+// One account note in the popover — a single ellipsized row; ▸ expands the
+// full note, × deletes exactly this note.
+function ChipNoteRow({ n }: { n: ChipNote }) {
+  const [expanded, setExpanded] = useState(false);
+  const d = new Date(Date.parse(n.createdAt));
+  const stamp = Number.isNaN(d.getTime())
+    ? ""
+    : d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  return (
+    <span className={styles.chipNoteRow}>
+      <button
+        type="button"
+        className={styles.sheetChevron}
+        title={expanded ? "Collapse" : "Expand the full note"}
+        onClick={() => setExpanded((v) => !v)}
+      >
+        {expanded ? "▾" : "▸"}
+      </button>
+      <b suppressHydrationWarning>{stamp}</b>
+      <i className={n.kind === "partner" ? styles.chipNoteKindP : styles.chipNoteKind}>
+        {n.kind === "partner" ? "partner" : "mine"}
+      </i>
+      <span
+        className={`${styles.chipNoteBody} ${expanded ? styles.chipNoteBodyFull : ""}`}
+        onClick={() => setExpanded((v) => !v)}
+      >
+        {n.body}
+      </span>
+      <form action={deleteAccountNote} className={styles.valInline}>
+        <input type="hidden" name="id" value={n.id} />
+        <input type="hidden" name="returnTo" value="/today" />
+        <button className={styles.chipNoteDel} title="Delete this note">
+          ×
+        </button>
+      </form>
+    </span>
+  );
+}
+
 export function AccountChip({
   account,
   partner,
@@ -28,6 +79,7 @@ export function AccountChip({
   seedSubtitle,
   seedDiscovery,
   disposition = null,
+  notes = [],
 }: {
   account: { id: string; name: string; score: number; play: string | null };
   partner: string;
@@ -36,6 +88,7 @@ export function AccountChip({
   card: { id: string; stages: Stage[] } | null;
   seedSubtitle: string;
   seedDiscovery: string;
+  notes?: ChipNote[];
   // Off-structure state: "motion" (⚡ live conversation, out of the roundup) or
   // "parked" (⏸ shelved). "not-mine" never reaches a chip — those accounts are
   // filtered out server-side.
@@ -127,6 +180,9 @@ export function AccountChip({
             ? "⏸ "
             : ""}
         {account.name} <b>{account.score}</b>
+        {notes.length > 0 && (
+          <span className={styles.chipNoteCt}> · 🗒{notes.length}</span>
+        )}
       </button>
 
       {/* The work box renders in a PORTAL on document.body — a contacted card's
@@ -161,6 +217,26 @@ export function AccountChip({
                 "account",
                 "🗒 Add account note",
                 `A plain note on ${account.name} — lands on its account page…`,
+              )}
+
+              {/* This account's notes — one-line rows, expand, delete. */}
+              {notes.length > 0 && (
+                <details className={styles.chipItem}>
+                  <summary>🗒 Notes ({notes.length})</summary>
+                  <span className={styles.chipNotesList}>
+                    {notes.slice(0, 8).map((n) => (
+                      <ChipNoteRow key={n.id} n={n} />
+                    ))}
+                    {notes.length > 8 && (
+                      <Link
+                        href={`/accounts?focus=${account.id}`}
+                        className={styles.chipGoLink}
+                      >
+                        +{notes.length - 8} more on the account →
+                      </Link>
+                    )}
+                  </span>
+                </details>
               )}
 
               {card ? (

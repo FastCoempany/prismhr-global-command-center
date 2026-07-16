@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getAppAccess } from "@/lib/auth";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
+import { mirrorNoteToSheet } from "@/lib/today/mirror";
 
 function str(fd: FormData, key: string, max = 4000) {
   const v = fd.get(key);
@@ -40,9 +41,15 @@ export async function addPartnerNote(formData: FormData) {
   const target = str(formData, "returnTo", 200) || "/partners";
   if (!(await requireWrite()) || !partner || !body) done(target);
   await safeWrite(async () => {
-    await getPrisma().partnerNote.create({
+    const n = await getPrisma().partnerNote.create({
       data: { partner, body, source: str(formData, "source", 40) || "partner-room" },
     });
+    // Every note lands on the Day Sheet too — pre-routed, undo-able.
+    await mirrorNoteToSheet(
+      body,
+      { accountNoteIds: [], partnerNoteIds: [n.id] },
+      partner.split(" ")[0] || partner,
+    );
   });
   done(target);
 }

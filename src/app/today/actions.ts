@@ -7,6 +7,9 @@ import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import { randomUUID } from "node:crypto";
 import { asFieldNoteKind } from "@/lib/field-notes/data";
 import { asFollowUpWhen, nextCheckIn, type TouchLogEntry } from "@/lib/today/follow-ups";
+import { accountIntel } from "@/lib/today/build";
+import { withAsk } from "@/lib/today/ledger";
+import { mirrorNoteToSheet } from "@/lib/today/mirror";
 
 function str(fd: FormData, key: string, max = 4000) {
   const v = fd.get(key);
@@ -375,11 +378,43 @@ export async function addAccountNote(formData: FormData) {
   // unattributed note on the account itself. All three refresh the chip clock.
   const kind = raw === "partner" ? "partner" : raw === "account" ? "account" : "mine";
   await safeWrite(async () => {
-    await getPrisma().accountNote.create({
+    const n = await getPrisma().accountNote.create({
       data: { accountId, partner: str(formData, "partner", 120), kind, body },
     });
+    // Every note lands on the Day Sheet too — pre-routed, undo-able.
+    const name = accountIntel().find((a) => a.id === accountId)?.name ?? "account";
+    await mirrorNoteToSheet(body, { accountNoteIds: [n.id], partnerNoteIds: [] }, name);
   });
   revalidatePath("/accounts");
+  done();
+}
+
+// Delete one account note (from the chip popover's Notes list).
+export async function deleteAccountNote(formData: FormData) {
+  const id = str(formData, "id", 40);
+  if (!(await requireWrite()) || !id) doneTo(formData);
+  await safeWrite(async () => {
+    await getPrisma().accountNote.deleteMany({ where: { id } });
+  });
+  revalidatePath("/accounts");
+  doneTo(formData);
+}
+
+// Set (or clear) what a thread is actually waiting on — the named ask that
+// makes a due check-in a CHASE. Rides inside Touch.detail as a marker.
+export async function updateTouchAsk(formData: FormData) {
+  const subjectKey = str(formData, "subjectKey", 200);
+  const ask = str(formData, "ask", 300);
+  if (!(await requireWrite()) || !subjectKey) done();
+  await safeWrite(async () => {
+    const prisma = getPrisma();
+    const t = await prisma.touch.findUnique({ where: { subjectKey } });
+    if (!t) return;
+    await prisma.touch.update({
+      where: { subjectKey },
+      data: { detail: withAsk(t.detail ?? "", ask) },
+    });
+  });
   done();
 }
 
@@ -454,9 +489,15 @@ export async function logHappening(formData: FormData) {
   const consequence = asDisposition(str(formData, "consequence", 12));
   await safeWrite(async () => {
     const prisma = getPrisma();
-    await prisma.accountNote.create({
+    const n = await prisma.accountNote.create({
       data: { accountId, partner: "", kind: "account", body: `⚡ ${body}` },
     });
+    const name = accountIntel().find((a) => a.id === accountId)?.name ?? "account";
+    await mirrorNoteToSheet(
+      `⚡ ${body}`,
+      { accountNoteIds: [n.id], partnerNoteIds: [] },
+      name,
+    );
     if (consequence) {
       await prisma.accountDisposition.upsert({
         where: { accountId },
