@@ -186,9 +186,7 @@ export function AccountChip({
       <button
         ref={btnRef}
         type="button"
-        className={`${styles.focusChip} ${
-          disposition?.status === "motion" ? styles.focusTileHot : ""
-        } ${open ? styles.focusChipOn : ""}`}
+        className={`${styles.focusChip} ${open ? styles.focusChipOn : ""}`}
         data-tone={tone}
         onClick={openBox}
         title={`${account.name}${account.play ? ` · ${account.play}` : ""}${
@@ -206,8 +204,8 @@ export function AccountChip({
               ? "⏸"
               : "\u00a0"}
         </span>
-        <span className={styles.focusChipName}>{account.name}</span>
         <b>{account.score}</b>
+        <span className={styles.focusChipName}>{account.name}</span>
         {notes.length > 0 && <span className={styles.chipNoteCt}>🗒{notes.length}</span>}
       </button>
 

@@ -5919,41 +5919,66 @@
 
 /* ═══ Uniform tiles — every Focus account the same size; a 2-line tile is
    impossible: the name ellipsizes, the numbers are pinned. ═══ */
-.focusGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(215px, 1fr));
-  gap: 7px;
+/* The roster: newspaper columns of ranked rows — [⚡][score][name][🗒N].
+   Hover tints the row and underlines the name; the open row glows while
+   the account box is up. */
+.focusCols {
+  column-count: 3;
+  column-gap: 26px;
 }
-.focusGrid .chipWrap {
-  display: contents; /* the tile itself is the grid item */
+.focusCols .chipWrap {
+  display: block;
+  break-inside: avoid;
 }
-.focusGrid .focusChip {
+.focusCols .focusChip {
+  display: flex;
   width: 100%;
   max-width: none;
-  height: 30px;
-  border-radius: 9px;
-  padding: 0 10px;
-  font-size: 12px;
-  gap: 6px;
-  align-items: center;
+  align-items: baseline;
+  gap: 7px;
+  padding: 3.5px 4px;
+  background: none;
+  border: 0;
+  border-bottom: 1px dotted var(--line);
+  border-radius: 6px;
+  font-size: 12.5px;
+  text-align: left;
+}
+.focusCols .focusChip b {
+  min-width: 24px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.focusCols .focusChipName {
+  flex: 1;
 }
 .tileZ {
   flex: none;
   font-size: 11px;
   width: 13px;
 }
-.focusTileHot {
-  border-color: #f4c9a4;
-  background: #fffaf5;
-}
 .focusChip:hover {
-  border-color: #b9cdf5;
+  background: #f2f6ff;
 }
 .focusChip:hover .focusChipName {
   color: var(--blue);
   text-decoration: underline;
   text-decoration-color: #9cc0ff;
   text-underline-offset: 2px;
+}
+.focusChipOn,
+.focusCols .focusChipOn {
+  background: #eff5ff;
+}
+@media (max-width: 1200px) {
+  .focusCols {
+    column-count: 2;
+  }
+}
+@media (max-width: 700px) {
+  .focusCols {
+    column-count: 1;
+  }
 }
 
 /* ═══ The spine (quiet rod) + curtain ═══ */

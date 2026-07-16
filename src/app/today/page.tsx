@@ -1534,11 +1534,11 @@ export default async function TodayPage({
                 <div className={styles.cockCap}>
                   <span>Focus accounts</span>
                   <span className={styles.cockCapR}>
-                    {focusAccounts.length} accounts · click a chip — notes are
-                    account-level
+                    {focusAccounts.length} accounts · ranked roster · click a row — notes
+                    are account-level
                   </span>
                 </div>
-                <div className={styles.focusGrid}>
+                <div className={styles.focusCols}>
                   {focusAccounts.map(({ a, partner }) => {
                     const dashCard = dash.cards.find(
                       (c) => !c.archived && c.name === a.name,
