@@ -22,6 +22,7 @@ import {
   type LedgerEvent,
 } from "@/lib/today/ledger";
 import { EdgeTray } from "./edge-tray";
+import { SpineRail } from "./spine-rail";
 import { DASH_NODES } from "@/lib/dashboard/stages";
 import { AccountChip } from "./account-chip";
 import { AtcRow, CurveballButton, type RailItem } from "./atc-rail";
@@ -1044,6 +1045,77 @@ export default async function TodayPage({
 
         {/* ── The tab left (the day as a ledger), the Day Sheet right,
                roundups & scheduled off-page in the edge trays. ── */}
+        {/* ── The spine ticker: state-of-play on the left margin; click
+               pulls the curtain. ── */}
+        <SpineRail
+          ticker={
+            <>
+              <b>{sop.openLoops}</b> IN FLIGHT ·{" "}
+              <b className={sop.commitmentsPastWindow > 0 ? styles.spineHot : ""}>
+                {sop.commitmentsPastWindow} PAST WINDOW
+              </b>{" "}
+              · <b>{sop.untriaged}</b> TRIAGE · <b>{sop.moved}</b> MOVED ▸
+            </>
+          }
+        >
+          <div className={styles.curtainBig}>
+            {[
+              [String(sop.openLoops), "in flight", "live dashboard loops", ""],
+              [
+                String(sop.commitmentsPastWindow),
+                "past window",
+                `commitments open ${COMMITMENT_WINDOW_DAYS}d+`,
+                sop.commitmentsPastWindow > 0 ? "hot" : "",
+              ],
+              [String(sop.untriaged), "to triage", "signals undecided", ""],
+              [String(sop.moved), "moved this wk", "stages advanced", ""],
+              [`${nar.researched}/${nar.total}`, "researched", "book coverage", ""],
+              [String(nar.strongDemand), "strong", "trusted strong demand", ""],
+              [String(nar.emerging), "emerging", "clearing the gate", ""],
+              [`${nar.displacement}/${nar.greenfield}`, "displ/green", "play split", ""],
+              [String(nar.hcmFunnel), "HCM", "HCM-funnel accounts", ""],
+            ].map(([v, l, why, hot]) => (
+              <span className={styles.curtainStat} key={l}>
+                <b className={hot ? styles.spineHot : ""}>{v}</b>
+                <span>{l}</span>
+                <i>{why}</i>
+              </span>
+            ))}
+          </div>
+          {nar.topCountries.length > 0 && (
+            <>
+              <div className={styles.curtainH}>Where demand points</div>
+              <div className={styles.ctyBar}>
+                {nar.topCountries.map((c, i) => (
+                  <span
+                    key={c.name}
+                    style={{
+                      flex: c.count,
+                      background: [
+                        "#2563eb",
+                        "#1a7f3c",
+                        "#e6701e",
+                        "#7c3aed",
+                        "#dc2626",
+                        "#0ea5e9",
+                      ][i % 6],
+                    }}
+                  />
+                ))}
+              </div>
+              <div className={styles.ctyLeg}>
+                {nar.topCountries.map((c) => `${c.name} ${c.count}`).join(" · ")}
+              </div>
+            </>
+          )}
+          <div className={styles.curtainH}>Rooms</div>
+          <div className={styles.ctyLeg}>
+            <a href="#rooms">Aleks room ▸</a> &nbsp;{" "}
+            <a href="#rooms">Narrative &amp; capture ▸</a> &nbsp;{" "}
+            <a href="#rooms">How I work ▸</a>
+          </div>
+        </SpineRail>
+
         <div className={styles.cockpit}>
           {/* ══ LEFT — Today's tab: everything that happened above the
                  now-line, everything open below it ══ */}
@@ -1476,8 +1548,8 @@ export default async function TodayPage({
                     account-level
                   </span>
                 </div>
-                <div className={styles.focusRow}>
-                  {focusAccounts.slice(0, 8).map(({ a, partner }) => {
+                <div className={styles.focusGrid}>
+                  {focusAccounts.map(({ a, partner }) => {
                     const dashCard = dash.cards.find(
                       (c) => !c.archived && c.name === a.name,
                     );
@@ -1518,54 +1590,6 @@ export default async function TodayPage({
                       />
                     );
                   })}
-                  {focusAccounts.length > 8 && (
-                    <details className={styles.chipMoreWrap}>
-                      <summary>+{focusAccounts.length - 8} more ▸</summary>
-                      <div className={styles.focusRow}>
-                        {focusAccounts.slice(8).map(({ a, partner }) => {
-                          const dashCard = dash.cards.find(
-                            (c) => !c.archived && c.name === a.name,
-                          );
-                          const lastNoteAt = acctNotes.get(a.id)?.[0]?.createdAt ?? null;
-                          return (
-                            <AccountChip
-                              key={a.id}
-                              account={{
-                                id: a.id,
-                                name: a.name,
-                                score: a.score,
-                                play: a.play,
-                              }}
-                              partner={partner}
-                              tone={chipTone(lastNoteAt)}
-                              lastNoteAt={lastNoteAt}
-                              card={
-                                dashCard
-                                  ? {
-                                      id: dashCard.id,
-                                      stages: DASH_NODES.map((n) => ({
-                                        key: n.key,
-                                        label: n.label,
-                                        state: dashCard.states[n.key] ?? "todo",
-                                      })),
-                                    }
-                                  : null
-                              }
-                              seedSubtitle={`${a.csm}${a.industry ? ` · ${a.industry}` : ""}`}
-                              seedDiscovery={seedFor(a)}
-                              disposition={dispositions.get(a.id) ?? null}
-                              notes={(acctNotes.get(a.id) ?? []).map((n) => ({
-                                id: n.id,
-                                kind: n.kind,
-                                body: n.body,
-                                createdAt: n.createdAt,
-                              }))}
-                            />
-                          );
-                        })}
-                      </div>
-                    </details>
-                  )}
                 </div>
               </div>
             )}
@@ -1894,55 +1918,9 @@ export default async function TodayPage({
           />
 
           {/* ══ BRIEF — the bar + drawers (full width) ══ */}
-          <div className={styles.cockWide}>
+          <div className={styles.cockWide} id="rooms">
             <CockpitDrawers
-              stats={
-                <>
-                  <span className={styles.bnum}>
-                    <b>{sop.openLoops}</b>in flight
-                  </span>
-                  <span
-                    className={
-                      sop.commitmentsPastWindow > 0 ? styles.bnumHot : styles.bnum
-                    }
-                  >
-                    <b>{sop.commitmentsPastWindow}</b>past window
-                  </span>
-                  <span className={styles.bnum}>
-                    <b>{sop.untriaged}</b>to triage
-                  </span>
-                  <span className={styles.bnum}>
-                    <b>{sop.moved}</b>moved this wk
-                  </span>
-                  <span className={styles.briefSep} />
-                  <span className={styles.bnum}>
-                    <b>
-                      {nar.researched}/{nar.total}
-                    </b>
-                    researched
-                  </span>
-                  <span className={styles.bnum}>
-                    <b>{nar.strongDemand}</b>strong
-                  </span>
-                  <span className={styles.bnum}>
-                    <b>{nar.emerging}</b>emerging
-                  </span>
-                  <span className={styles.bnum}>
-                    <b>
-                      {nar.displacement}/{nar.greenfield}
-                    </b>
-                    displ/green
-                  </span>
-                  <span className={styles.bnum}>
-                    <b>{hcmAll.length}</b>HCM
-                  </span>
-                  {nar.topCountries.length > 0 && (
-                    <span className={styles.briefCountries}>
-                      {nar.topCountries.map((c) => `${c.name} ${c.count}`).join(" · ")}
-                    </span>
-                  )}
-                </>
-              }
+              stats={null}
               aleks={
                 <>
                   {/* One home for everything Aleks: the prep line (from

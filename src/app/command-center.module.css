@@ -5916,3 +5916,161 @@
   border-right: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
 }
+
+/* ═══ Uniform tiles — every Focus account the same size; a 2-line tile is
+   impossible: the name ellipsizes, the numbers are pinned. ═══ */
+.focusGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(215px, 1fr));
+  gap: 7px;
+}
+.focusGrid .chipWrap {
+  display: contents; /* the tile itself is the grid item */
+}
+.focusGrid .focusChip {
+  width: 100%;
+  max-width: none;
+  height: 30px;
+  border-radius: 9px;
+  padding: 0 10px;
+  font-size: 12px;
+  gap: 6px;
+  align-items: center;
+}
+.tileZ {
+  flex: none;
+  font-size: 11px;
+  width: 13px;
+}
+.focusTileHot {
+  border-color: #f4c9a4;
+  background: #fffaf5;
+}
+.focusChip:hover {
+  border-color: #b9cdf5;
+}
+.focusChip:hover .focusChipName {
+  color: var(--blue);
+  text-decoration: underline;
+  text-decoration-color: #9cc0ff;
+  text-underline-offset: 2px;
+}
+
+/* ═══ The spine ticker + curtain ═══ */
+.spineRod {
+  position: fixed;
+  left: 0;
+  top: 96px;
+  bottom: 26px;
+  width: 30px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-left: 0;
+  border-radius: 0 10px 10px 0;
+  box-shadow: 2px 0 8px rgba(10, 28, 64, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 60;
+  padding: 0;
+}
+.spineRodOn {
+  background: var(--navy);
+  border-color: var(--navy);
+}
+.spineRodOn .spineTick,
+.spineRodOn .spineTick b {
+  color: #dbe7ff;
+}
+.spineTick {
+  writing-mode: vertical-rl;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.spineTick b {
+  color: var(--navy);
+}
+.spineHot {
+  color: var(--red) !important;
+}
+.spineCurtain {
+  position: fixed;
+  left: 30px;
+  top: 96px;
+  bottom: 26px;
+  width: min(580px, calc(100vw - 60px));
+  background: linear-gradient(180deg, #fff, #fbfcff);
+  border: 1px solid var(--line);
+  border-left: 0;
+  border-radius: 0 16px 16px 0;
+  box-shadow: 16px 0 36px rgba(10, 28, 64, 0.2);
+  padding: 16px 20px;
+  overflow-y: auto;
+  z-index: 62;
+}
+.curtainBig {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  padding: 6px 0 10px;
+  border-bottom: 1px dashed var(--line);
+}
+.curtainStat b {
+  font-size: 22px;
+  display: block;
+  line-height: 1.1;
+  color: var(--navy);
+}
+.curtainStat span {
+  font-size: 10px;
+  color: var(--muted);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  display: block;
+}
+.curtainStat i {
+  display: block;
+  font-style: normal;
+  font-size: 10px;
+  color: #9aa7bd;
+}
+.curtainH {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--orange);
+  margin: 12px 0 4px;
+}
+.ctyBar {
+  display: flex;
+  height: 10px;
+  border-radius: 5px;
+  overflow: hidden;
+  margin: 6px 0 4px;
+  max-width: 360px;
+}
+.ctyLeg {
+  font-size: 12px;
+  color: var(--muted);
+}
+.ctyLeg a {
+  color: var(--blue-d);
+  font-weight: 700;
+  text-decoration: none;
+}
+/* Today clears the rod on the left. */
+.wrapWide {
+  padding-left: 52px;
+}
+@media (max-width: 980px) {
+  .spineRod,
+  .spineCurtain {
+    display: none;
+  }
+}

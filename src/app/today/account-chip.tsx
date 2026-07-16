@@ -186,7 +186,9 @@ export function AccountChip({
       <button
         ref={btnRef}
         type="button"
-        className={`${styles.focusChip} ${open ? styles.focusChipOn : ""}`}
+        className={`${styles.focusChip} ${
+          disposition?.status === "motion" ? styles.focusTileHot : ""
+        } ${open ? styles.focusChipOn : ""}`}
         data-tone={tone}
         onClick={openBox}
         title={`${account.name}${account.play ? ` · ${account.play}` : ""}${
@@ -197,18 +199,16 @@ export function AccountChip({
           lastNoteAt ? "worked; click for the box" : "not worked yet; click to add a note"
         }`}
       >
-        <span className={styles.focusChipName}>
+        <span className={styles.tileZ}>
           {disposition?.status === "motion"
-            ? "⚡ "
+            ? "⚡"
             : disposition?.status === "parked"
-              ? "⏸ "
-              : ""}
-          {account.name}
-        </span>{" "}
+              ? "⏸"
+              : "\u00a0"}
+        </span>
+        <span className={styles.focusChipName}>{account.name}</span>
         <b>{account.score}</b>
-        {notes.length > 0 && (
-          <span className={styles.chipNoteCt}> · 🗒{notes.length}</span>
-        )}
+        {notes.length > 0 && <span className={styles.chipNoteCt}>🗒{notes.length}</span>}
       </button>
 
       {/* The work box renders in a PORTAL on document.body — ancestor stacking
