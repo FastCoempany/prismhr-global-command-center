@@ -588,7 +588,7 @@ export default async function TodayPage({
     return (
       <>
         <AppWayfinder current="Today" />
-        <main className={styles.wrap}>
+        <main className={`${styles.wrap} ${styles.wrapWide}`}>
           <p>
             Sign in to continue. <Link href="/login">Sign in</Link>.
           </p>
@@ -1033,7 +1033,7 @@ export default async function TodayPage({
   return (
     <>
       <AppWayfinder current="Today" />
-      <main className={styles.wrap}>
+      <main className={`${styles.wrap} ${styles.wrapWide}`}>
         <div className={`${styles.pageHead} ${styles.deskHead}`}>
           <h1 className={styles.h1}>Today</h1>
           <CurveballButton accounts={noteAccounts} />
