@@ -5363,3 +5363,310 @@
 .fuSent[open] > summary::before {
   content: "▾ ";
 }
+
+/* ═══ The ledger — Today's tab ═══ */
+/* Past + upcoming rows share the timeline grid: time cell, rail dot, text. */
+.lgRow {
+  display: grid;
+  grid-template-columns: 64px 20px 1fr auto;
+  align-items: baseline;
+  gap: 0 8px;
+  padding: 4px 14px 4px 10px;
+  font-size: 13px;
+  position: relative;
+}
+.lgTm {
+  font-size: 10.5px;
+  color: #9aa7bd;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.lgDot {
+  position: relative;
+  align-self: stretch;
+}
+.lgDot::before {
+  content: "";
+  position: absolute;
+  left: 8px;
+  top: -7px;
+  bottom: -7px;
+  width: 2px;
+  background: #e6ebf3;
+}
+.lgDot::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 3px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #cbd5e1;
+  border: 2px solid #fff;
+}
+.lgDotSend::after {
+  background: var(--blue);
+}
+.lgDotDone::after {
+  background: var(--green);
+}
+.lgDotUp::after {
+  background: #fff;
+  border: 3px solid #cbd5e1;
+  width: 9px;
+  height: 9px;
+}
+.lgTx {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.lgPast .lgTx {
+  color: var(--muted);
+}
+.lgUp .lgTx {
+  color: var(--muted);
+}
+.lgAct {
+  display: inline-flex;
+  gap: 5px;
+  align-items: baseline;
+}
+.lgNow {
+  display: grid;
+  grid-template-columns: 64px 20px 1fr;
+  align-items: center;
+  gap: 0 8px;
+  padding: 1px 14px 1px 10px;
+}
+.lgNowLab {
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--orange);
+  text-align: right;
+  text-transform: uppercase;
+}
+.lgNow::before {
+  content: "";
+  grid-column: 2;
+  grid-row: 1;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--orange);
+  box-shadow: 0 0 6px 1px rgba(230, 112, 30, 0.5);
+  margin-left: 3px;
+}
+.lgNowLn {
+  border-top: 1.5px dashed var(--orange);
+  opacity: 0.55;
+}
+.lgSub {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 8px 14px 3px 10px;
+}
+.lgEarlier {
+  padding: 2px 14px 0 10px;
+}
+.lgEarlier summary {
+  font-size: 10.5px;
+  color: #9aa7bd;
+  cursor: pointer;
+  list-style: none;
+  padding-left: 64px;
+}
+.lgMore {
+  font-size: 11px;
+  color: var(--muted);
+  padding: 3px 14px 6px 100px;
+}
+
+/* Set-the-ask editor inside a due row's expansion. */
+.askForm {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin: 2px 0 8px;
+}
+.askForm input {
+  flex: 1;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 4px 9px;
+  font: 12.5px/1.4 inherit;
+  color: var(--ink);
+}
+
+/* Focus strip under the ledger. */
+.focusStrip {
+  margin-top: 16px;
+}
+.chipNoteCt {
+  font-size: 10px;
+  color: var(--muted);
+  font-weight: 600;
+}
+.chipNotesList {
+  display: flex;
+  flex-direction: column;
+  margin-top: 4px;
+}
+.chipNoteRow {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  padding: 3px 0;
+  border-bottom: 1px dotted var(--line);
+  font-size: 12px;
+  min-width: 0;
+}
+.chipNoteRow b {
+  font-size: 10.5px;
+  color: var(--navy);
+  white-space: nowrap;
+  flex: none;
+}
+.chipNoteKind,
+.chipNoteKindP {
+  font-style: normal;
+  font-size: 9px;
+  font-weight: 800;
+  border-radius: 4px;
+  padding: 0 5px;
+  flex: none;
+  background: #eaf6ee;
+  color: var(--green);
+}
+.chipNoteKindP {
+  background: #eef2fa;
+  color: #33507a;
+}
+.chipNoteBody {
+  flex: 1 1 0;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+.chipNoteBodyFull {
+  white-space: pre-wrap;
+  overflow: visible;
+  text-overflow: clip;
+}
+.chipNoteDel {
+  flex: none;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1;
+  padding: 0 2px;
+}
+.chipNoteDel:hover {
+  color: #b3261e;
+}
+
+/* ═══ Edge trays — vertical tabs pinned to the right edge ═══ */
+.edgeRail {
+  position: fixed;
+  right: 0;
+  top: 120px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-end;
+  z-index: 60;
+}
+.edgeTab {
+  writing-mode: vertical-rl;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-right: 0;
+  border-radius: 10px 0 0 10px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: var(--navy);
+  padding: 12px 6px;
+  cursor: pointer;
+  box-shadow: -2px 2px 8px rgba(10, 28, 64, 0.08);
+}
+.edgeTabOn {
+  background: var(--navy);
+  color: #fff;
+  border-color: var(--navy);
+}
+.edgeDot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  margin-bottom: 6px;
+}
+.edgeDotHot {
+  background: var(--red);
+  box-shadow: 0 0 6px 1px rgba(220, 38, 38, 0.5);
+}
+.edgeShade {
+  position: fixed;
+  inset: 0;
+  z-index: 61;
+  background: rgba(10, 28, 64, 0.08);
+}
+.edgeFly {
+  position: fixed;
+  right: 44px;
+  top: 130px;
+  width: min(480px, calc(100vw - 70px));
+  max-height: calc(100vh - 170px);
+  overflow: auto;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 14px 0 14px 14px;
+  box-shadow: -14px 10px 40px rgba(10, 28, 64, 0.25);
+  padding: 12px 14px;
+  z-index: 62;
+}
+.edgeFlyHead {
+  display: flex;
+  align-items: baseline;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--orange);
+  margin-bottom: 6px;
+}
+.edgeClose {
+  margin-left: auto;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font-size: 16px;
+  color: var(--muted);
+  line-height: 1;
+}
+.trayBody {
+  font-size: 12.5px;
+}
+.trayHint {
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+/* Light switches sit inline at the end of tray rows (no gutter here). */
+.lightFormIn {
+  line-height: 0;
+  flex: none;
+}

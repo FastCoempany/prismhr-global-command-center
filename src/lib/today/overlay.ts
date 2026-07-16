@@ -41,6 +41,20 @@ export async function loadDoneKeys(): Promise<Set<string>> {
   }
 }
 
+// Completion timestamps (key → ISO doneAt) — the ledger's past events need to
+// say WHEN a move was done, not just that it was.
+export async function loadDoneTimes(): Promise<Map<string, string>> {
+  if (!hasDatabaseEnv()) return new Map();
+  try {
+    const rows = await getPrisma().taskDone.findMany({
+      select: { key: true, doneAt: true },
+    });
+    return new Map(rows.map((r) => [r.key, r.doneAt.toISOString()]));
+  } catch {
+    return new Map();
+  }
+}
+
 // A dated, time-stamped account note written from a partner-outreach chip —
 // either yours ("mine") or what the partner said ("partner").
 export type AccountNote = {
