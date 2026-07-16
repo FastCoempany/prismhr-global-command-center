@@ -5956,50 +5956,64 @@
   text-underline-offset: 2px;
 }
 
-/* ═══ The spine ticker + curtain ═══ */
+/* ═══ The spine (quiet rod) + curtain ═══ */
 .spineRod {
   position: fixed;
   left: 0;
   top: 96px;
   bottom: 26px;
-  width: 30px;
-  background: #fff;
+  width: 14px;
+  background: #f3f5fa;
   border: 1px solid var(--line);
   border-left: 0;
-  border-radius: 0 10px 10px 0;
-  box-shadow: 2px 0 8px rgba(10, 28, 64, 0.08);
+  border-radius: 0 7px 7px 0;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 8px;
   cursor: pointer;
   z-index: 60;
   padding: 0;
+  transition:
+    width 0.12s ease,
+    background 0.12s ease,
+    box-shadow 0.12s ease;
+}
+.spineRod:hover {
+  width: 20px;
+  background: #e8eefc;
+  box-shadow: 2px 0 8px rgba(10, 28, 64, 0.1);
 }
 .spineRodOn {
   background: var(--navy);
   border-color: var(--navy);
 }
-.spineRodOn .spineTick,
-.spineRodOn .spineTick b {
+.spineGrip {
+  color: #b8c2d6;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+}
+.spineRod:hover .spineGrip {
+  color: var(--blue-d);
+}
+.spineRodOn .spineGrip {
   color: #dbe7ff;
 }
-.spineTick {
-  writing-mode: vertical-rl;
-  font-size: 10.5px;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  color: var(--muted);
-  white-space: nowrap;
-}
-.spineTick b {
-  color: var(--navy);
+.spineDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--red);
+  box-shadow: 0 0 6px 1px rgba(220, 38, 38, 0.5);
 }
 .spineHot {
   color: var(--red) !important;
 }
 .spineCurtain {
   position: fixed;
-  left: 30px;
+  left: 14px;
   top: 96px;
   bottom: 26px;
   width: min(580px, calc(100vw - 60px));
@@ -6066,7 +6080,7 @@
 }
 /* Today clears the rod on the left. */
 .wrapWide {
-  padding-left: 52px;
+  padding-left: 36px;
 }
 @media (max-width: 980px) {
   .spineRod,

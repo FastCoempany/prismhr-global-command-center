@@ -1045,19 +1045,9 @@ export default async function TodayPage({
 
         {/* ── The tab left (the day as a ledger), the Day Sheet right,
                roundups & scheduled off-page in the edge trays. ── */}
-        {/* ── The spine ticker: state-of-play on the left margin; click
-               pulls the curtain. ── */}
-        <SpineRail
-          ticker={
-            <>
-              <b>{sop.openLoops}</b> IN FLIGHT ·{" "}
-              <b className={sop.commitmentsPastWindow > 0 ? styles.spineHot : ""}>
-                {sop.commitmentsPastWindow} PAST WINDOW
-              </b>{" "}
-              · <b>{sop.untriaged}</b> TRIAGE · <b>{sop.moved}</b> MOVED ▸
-            </>
-          }
-        >
+        {/* ── The spine: a quiet strip on the left margin (red dot when
+               something is past window); click pulls the curtain. ── */}
+        <SpineRail hot={sop.commitmentsPastWindow > 0}>
           <div className={styles.curtainBig}>
             {[
               [String(sop.openLoops), "in flight", "live dashboard loops", ""],
