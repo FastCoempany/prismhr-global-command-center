@@ -1,18 +1,18 @@
 "use client";
 
-// The spine ticker — the state-of-play numbers live as a vertical headline on
-// the LEFT margin (red where it hurts), readable without opening anything.
-// Clicking the rod pulls the curtain: a wide panel with every stat big, the
-// country demand bar, and shortcuts to the rooms.
+// The spine — a quiet, slim strip on the LEFT margin. No text on the rod;
+// just a grip and a red dot when something is past its window. Clicking it
+// pulls the curtain: a wide panel with every stat big, the country demand
+// bar, and shortcuts to the rooms.
 
 import { useState, type ReactNode } from "react";
 import styles from "../command-center.module.css";
 
 export function SpineRail({
-  ticker,
+  hot,
   children,
 }: {
-  ticker: ReactNode; // the vertical headline on the rod
+  hot?: boolean; // red dot on the rod (something past window)
   children: ReactNode; // the curtain's contents
 }) {
   const [open, setOpen] = useState(false);
@@ -23,9 +23,13 @@ export function SpineRail({
         className={`${styles.spineRod} ${open ? styles.spineRodOn : ""}`}
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
+        aria-label="State of play"
         title="State of play — click to pull the curtain"
       >
-        <span className={styles.spineTick}>{ticker}</span>
+        {hot && <span className={styles.spineDot} />}
+        <span className={styles.spineGrip} aria-hidden>
+          ⋮
+        </span>
       </button>
       {open && (
         <>
