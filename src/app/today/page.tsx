@@ -935,7 +935,7 @@ export default async function TodayPage({
       events.push({
         at: n.createdAt,
         kind: "note",
-        text: `${n.kind === "partner" ? "Partner said" : "Note"} → ${acct}: ${n.body.slice(0, 70)}`,
+        text: `${n.kind === "partner" ? "Partner said → " : "→ "}${acct}: ${n.body.slice(0, 70)}`,
         src: { store: "acct", id: n.id, body: n.body },
       });
       seenBodies.add(n.body);
@@ -947,7 +947,7 @@ export default async function TodayPage({
       events.push({
         at: n.createdAt,
         kind: "note",
-        text: `Partner note → ${partner}: ${n.body.slice(0, 70)}`,
+        text: `→ ${partner}: ${n.body.slice(0, 70)}`,
         src: { store: "partner", id: n.id, body: n.body },
       });
     }
@@ -962,7 +962,7 @@ export default async function TodayPage({
     events.push({
       at: t.updatedAt,
       kind: "done",
-      text: `Done — ${visibleText(t.body).slice(0, 70)}`,
+      text: visibleText(t.body).slice(0, 70),
       src: { store: "todo", id: t.id, body: visibleText(t.body) },
     });
   }
@@ -984,7 +984,7 @@ export default async function TodayPage({
         events.push({
           at: e.at,
           kind: "done",
-          text: `Logged — ${t.label}: ${e.body.slice(0, 60)}`,
+          text: `${t.label}: ${e.body.slice(0, 60)}`,
           src: { store: "touchLog", id: t.subjectKey, at: e.at, body: e.body },
         });
     }
@@ -999,7 +999,7 @@ export default async function TodayPage({
       text:
         it.mv.kind === "triage"
           ? `Decided ${it.mv.a.name}`
-          : `Move done — ${it.mv.step.cardName}: ${it.mv.step.item}`,
+          : `${it.mv.step.cardName}: ${it.mv.step.item}`,
     });
   }
   const pastEvents = sortEvents(events);
@@ -1221,7 +1221,6 @@ export default async function TodayPage({
             </div>
 
             <div className={styles.atcRail}>
-              <LedgerLegend />
               {/* Past — what already happened today, oldest first. */}
               {pastEarlier.length > 0 && (
                 <details className={styles.lgEarlier}>
@@ -1748,6 +1747,8 @@ export default async function TodayPage({
                   )}
                 </>
               )}
+              {/* The glyph key — a quiet footer, not a header. */}
+              <LedgerLegend />
             </div>
 
             {/* Focus accounts — flat, score-sorted; notes are ACCOUNT-level,

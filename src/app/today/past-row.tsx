@@ -8,6 +8,7 @@
 import { useState } from "react";
 import type { LedgerEvent } from "@/lib/today/ledger";
 import { deleteLedgerNote, saveLedgerNote } from "./actions";
+import { Glyph } from "./ledger-icons";
 import styles from "../command-center.module.css";
 
 export function PastRow({ e, timeLabel }: { e: LedgerEvent; timeLabel: string }) {
@@ -48,11 +49,7 @@ export function PastRow({ e, timeLabel }: { e: LedgerEvent; timeLabel: string })
   return (
     <div className={`${styles.lgRow} ${styles.lgPast}`}>
       <span className={styles.lgTm}>{timeLabel}</span>
-      <span
-        className={`${styles.lgDot} ${
-          e.kind === "send" ? styles.lgDotSend : styles.lgDotDone
-        }`}
-      />
+      <Glyph kind={e.kind === "send" ? "sent" : e.kind === "note" ? "note" : "done"} />
       {editing && src ? (
         <span className={styles.lgEditWrap}>
           <textarea
