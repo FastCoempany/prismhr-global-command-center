@@ -8,7 +8,7 @@
 INSERT INTO "AccountNote" ("id", "accountId", "partner", "kind", "body", "createdAt") VALUES
 (
   'esc-1-inbound',
-  'MYESC000000000001',
+  '001F000000w38ItIAI',
   'C. Hatton Humphrey (ESC)',
   'partner',
   'Inbound to Lesha: Hatton Humphrey (Director of Technology Solutions) asked for the best route to set up a demo and conversation about the Global Payroll Platform — a couple of ESC''s clients are interested and she needs to understand what''s available. Kim Bartolotti cc''d.',
@@ -16,7 +16,7 @@ INSERT INTO "AccountNote" ("id", "accountId", "partner", "kind", "body", "create
 ),
 (
   'esc-2-lesha-intro',
-  'MYESC000000000001',
+  '001F000000w38ItIAI',
   'Lesha Cyphers',
   'partner',
   'Lesha introduced me to Hatton as the Global SME for questions and the demo.',
@@ -24,7 +24,7 @@ INSERT INTO "AccountNote" ("id", "accountId", "partner", "kind", "body", "create
 ),
 (
   'esc-3-hatton-availability',
-  'MYESC000000000001',
+  '001F000000w38ItIAI',
   'C. Hatton Humphrey (ESC)',
   'partner',
   'Hatton''s reply: she wants a phone call first to discuss the platform and get a general understanding, then a system demo for a larger ESC team. Her availability this week (EDT): Wed 8:30–10a / 11a–2p / 3–4p, Thu 11:30a–2p, Fri 8:30a–12p.',
@@ -32,7 +32,7 @@ INSERT INTO "AccountNote" ("id", "accountId", "partner", "kind", "body", "create
 ),
 (
   'esc-4-precall-discovery',
-  'MYESC000000000001',
+  '001F000000w38ItIAI',
   'C. Hatton Humphrey (ESC)',
   'mine',
   'Sent the pre-call discovery note: framed the four-product family (Global Payroll = client''s own entities; EOR = no entity; Contractor Solutions = 1099; Talent = recruiting), and asked the four scoping questions (independent client companies? employees vs contractors? which countries? own entities or not?) so the intro call and team demo land on the right product. Holding the calendar until her answers come back — nothing scheduled yet.',
@@ -44,7 +44,7 @@ ON CONFLICT ("id") DO NOTHING;
 INSERT INTO "AccountNote" ("id", "accountId", "partner", "kind", "body", "createdAt") VALUES
 (
   'esc-5-hatton-answers',
-  'MYESC000000000001',
+  '001F000000w38ItIAI',
   'C. Hatton Humphrey (ESC)',
   'partner',
   'Discovery answers, same day: (1) yes — two independent client companies, both established to do business in Canada; (2) employees, with interest in understanding contractor capabilities; (3) Canada, specifically Ontario initially; (4) companies are active businesses in Canada — "We are not interested in EOR"; (5) ~300 headcount to start. Also specifically asked: additional platform, or functionality built into the current Prism platform?',
@@ -52,7 +52,7 @@ INSERT INTO "AccountNote" ("id", "accountId", "partner", "kind", "body", "create
 ),
 (
   'esc-6-pricing-gate',
-  'MYESC000000000001',
+  '001F000000w38ItIAI',
   'C. Hatton Humphrey (ESC)',
   'mine',
   'Confirmed pure Global Payroll deal (own Canadian entities, no EOR). Holding my reply until Aleks confirms our Canada per-employee payroll pricing and that it''s Listo product pricing — Teams note sent 7/14. Her platform question (built-in vs separate) is the easy part of the reply.',
@@ -65,7 +65,7 @@ ON CONFLICT ("id") DO NOTHING;
 INSERT INTO "AccountNote" ("id", "accountId", "partner", "kind", "body", "createdAt") VALUES
 (
   'esc-7-pricing-path',
-  'MYESC000000000001',
+  '001F000000w38ItIAI',
   'Aleks',
   'partner',
   'Aleks on the pricing question: "please reach out to Anthony and copy me. These are going to be individually priced based on country was our agreement." So: no list rates — Global Payroll is individually priced per country, quotes via Anthony Falzone (Head of Global Ops).',
@@ -73,7 +73,7 @@ INSERT INTO "AccountNote" ("id", "accountId", "partner", "kind", "body", "create
 ),
 (
   'esc-8-anthony-ask',
-  'MYESC000000000001',
+  '001F000000w38ItIAI',
   'C. Hatton Humphrey (ESC)',
   'mine',
   'Reached out to Anthony Falzone (copy Aleks) for the Canada quote: two ESC client companies, own entities, ~300 employees in Ontario to start, paid as employees. Reply to Hatton holds until the quote lands.',
@@ -93,7 +93,7 @@ WHERE "id" = 'seed-card-esc';
 INSERT INTO "AccountNote" ("id", "accountId", "partner", "kind", "body", "createdAt") VALUES
 (
   'esc-9-intro-call',
-  'MYESC000000000001',
+  '001F000000w38ItIAI',
   'C. Hatton Humphrey (ESC)',
   'partner',
   'Intro call 7/15 — the deal is structural, not one-off. ESC sits in Buffalo on the Canadian border. As a Prism PEO/ASO provider all their clients are US-based and every employee is treated as US-based; they run NO Canadian payroll and have no tech for international payroll or taxes. They TURN DOWN 4–5 companies a year — US companies with Canadian workers, or true Canadian companies. Named example: D''Youville College (bi-national university; Dir of Ops asked to pay at their Canadian location — taxes, banking). Current workaround for Canadian residents: list the college as the residence in Prism, require a US bank account, treat them like green-card holders. Another example: a long-time trucking client with a US office paying US drivers, plus a Canadian side ESC can''t touch. CORRECTION (7/15 pm): the ~300 employees are ONE STANDALONE ESC PROSPECT operating in Canada that wants ESC to run Canadian payroll for them — among the 3 true bi-national Canadian prospects ESC is holding.',
@@ -101,7 +101,7 @@ INSERT INTO "AccountNote" ("id", "accountId", "partner", "kind", "body", "create
 ),
 (
   'esc-10-intlemployee-fyi',
-  'MYESC000000000001',
+  '001F000000w38ItIAI',
   'C. Hatton Humphrey (ESC)',
   'partner',
   'Post-call FYI from Hatton: June 2026 PrismHR release notes (WSP-3980/3982/4043) add an "International Employee" field on Employee Details (service-provider-only INTLEMPLOYEE feature code) that waives the US resident address. IMPORTANT CLARITY FOR THE DEMO: that flag is an HR-record accommodation only — flagged employees CANNOT be processed in a payroll batch (finalization errors by design). It is not Global Payroll; actual multi-country processing is the PrismHR Global Payroll product. Hatton saw this and connected it to Global — the demo should draw the line explicitly.',
@@ -122,7 +122,7 @@ WHERE "id" = 'seed-card-esc';
 INSERT INTO "AccountNote" ("id", "accountId", "partner", "kind", "body", "createdAt") VALUES
 (
   'esc-12-pricing-thread',
-  'MYESC000000000001',
+  '001F000000w38ItIAI',
   'Anthony Falzone',
   'partner',
   'Pricing thread (Teams, 7/14 pm — Anthony + Aleks): Anthony asked retail or wholesale pricing → I asked for BOTH, for future reference, Canada first. Aleks asked what tech ESC uses today and whether this is a contract with ESC (ESC bills their client) or direct with the end client → confirmed: CONTRACT WITH ESC (channel/wholesale motion). Relayed ESC''s tech concern: additional platform vs built into current Prism — "they want to use our tech." (At that point: email exchange only, no call yet.)',
@@ -130,7 +130,7 @@ INSERT INTO "AccountNote" ("id", "accountId", "partner", "kind", "body", "create
 ),
 (
   'esc-11-anthony-mpex',
-  'MYESC000000000001',
+  '001F000000w38ItIAI',
   'Anthony Falzone',
   'partner',
   'Anthony (Teams, 7/15 am) on the Canada quote: "CAN is a bit nuanced because Vensure/Prism own local tech in CAN (MPEX). It is good from a cost standpoint because there are no 3rd parties, but we need to understand what they want from a technology standpoint." Owned Canadian payroll tech = cost-favorable, and his open question maps exactly to Hatton''s platform concern. Acknowledged 9:21 ("understood"); the tech-standpoint answer is in hand from the 7/15 discovery call (native-in-Prism; separate platform is the objection) — fold it into the next pricing-thread message. Freddie Ashby added to the thread with full history.',
@@ -143,7 +143,7 @@ ON CONFLICT ("id") DO NOTHING;
 INSERT INTO "AccountDisposition" ("id", "accountId", "status", "reason", "createdAt", "updatedAt") VALUES
 (
   'seed-dispo-esc',
-  'MYESC000000000001',
+  '001F000000w38ItIAI',
   'motion',
   'Inbound 7/13 — Global demo request for interested ESC clients; pre-call discovery out, calendar holds until answers return',
   '2026-07-14 18:00:00',

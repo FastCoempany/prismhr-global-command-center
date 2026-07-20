@@ -511,7 +511,7 @@ export const ROUNDUP_PINS: Record<string, string[]> = {
   // My HR Pros (fka Southern Personnel Management) — pinned by owner request —
   // and ESC, whose 7/13 inbound (Global Payroll demo for interested ESC
   // clients) is a live thread on Lesha's card.
-  "Lesha Cyphers": ["001F000000w389qIAA", "MYESC000000000001"],
+  "Lesha Cyphers": ["001F000000w389qIAA", "001F000000w38ItIAI"],
   // XCEL HR — low web-signal score, but Anika opened a live door (7/13): they're
   // in new-product discussions post-LIVE and she can bring us onto the next call
   // with Bill. Relationship-led motion, so it stays on her card. Infiniti HR —
@@ -552,7 +552,7 @@ export const ROUNDUP_BULLETS: Record<string, string> = {
     "I'm running point. Nothing needed from you — will flag if it stalls.",
   // ESC — Hatton's inbound via Lesha; already in motion, so the bullet reads
   // as shared status with a thank-you, not a request for a read.
-  MYESC000000000001:
+  "001F000000w38ItIAI":
     "Great momentum here (thanks again for the intro!): had the intro call with Hatton 7/15, " +
     "and this is bigger than the first prospect (a standalone ~300-employee company operating " +
     "in Canada that wants ESC running its Canadian payroll — pure Global Payroll). ESC sits on the border and turns down 4–5 " +
