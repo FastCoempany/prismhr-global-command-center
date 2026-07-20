@@ -4,6 +4,7 @@
 // sheet never reloads the page), so they RETURN values instead of redirecting.
 // Every write degrades gracefully when tables aren't migrated.
 
+import { revalidatePath } from "next/cache";
 import { getAppAccess } from "@/lib/auth";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import { accountIntel } from "@/lib/today/build";
@@ -31,6 +32,17 @@ async function canWrite() {
   if (!hasDatabaseEnv()) return false;
   const access = await getAppAccess();
   return access.status === "active" && access.canWrite;
+}
+
+// The ledger (and everything else server-rendered on Today) re-renders in the
+// same response, so a capture shows up above the now-line AS IT HAPPENS — the
+// sheet's client state carries its own list and is unaffected.
+function refreshToday() {
+  try {
+    revalidatePath("/today");
+  } catch {
+    // outside a request scope (tests) — nothing to refresh
+  }
 }
 
 function bookForDetection() {
@@ -103,6 +115,7 @@ export async function captureSheetNote(
     const t = await prisma.todo
       .create({ data: { body, position, remindAt: new Date() } })
       .catch(() => prisma.todo.create({ data: { body, position } }));
+    refreshToday();
     return {
       id: t.id,
       body,
@@ -160,6 +173,7 @@ export async function routeSheetNote(
         ? withMarker(text, written, routeLabel(targets))
         : t.body;
     await prisma.todo.update({ where: { id }, data: { body } });
+    refreshToday();
     return asSheetNote(id, body, t.done, t.remindAt, t.createdAt);
   } catch {
     return null;
@@ -186,6 +200,7 @@ export async function undoSheetRoute(id: string): Promise<SheetNote | null> {
           .catch(() => null);
     }
     await prisma.todo.update({ where: { id }, data: { body: text } });
+    refreshToday();
     return asSheetNote(id, text, t.done, t.remindAt, t.createdAt);
   } catch {
     return null;
@@ -208,6 +223,7 @@ export async function promoteSheetTodo(
       d.setHours(12, 0, 0, 0);
     }
     const t = await prisma.todo.update({ where: { id }, data: { remindAt: d } });
+    refreshToday();
     return asSheetNote(id, t.body, t.done, d, t.createdAt);
   } catch {
     return null;
@@ -226,6 +242,7 @@ export async function saveSheetNote(id: string, text: string): Promise<SheetNote
     const clean = withTags(text.trim().slice(0, 20000), tags);
     const body = refs ? withMarker(clean, refs, label) : clean;
     await prisma.todo.update({ where: { id }, data: { body } });
+    refreshToday();
     return asSheetNote(id, body, t.done, t.remindAt, t.createdAt);
   } catch {
     return null;
@@ -256,6 +273,7 @@ export async function tagSheetNote(
     const tagged = withTags(plain, safe);
     const body = refs ? withMarker(tagged, refs, label) : tagged;
     await prisma.todo.update({ where: { id }, data: { body } });
+    refreshToday();
     return asSheetNote(id, body, t.done, t.remindAt, t.createdAt);
   } catch {
     return null;
