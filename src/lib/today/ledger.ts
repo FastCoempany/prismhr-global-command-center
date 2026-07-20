@@ -43,12 +43,23 @@ export function sameLocalDayIso(iso: string, now: Date): boolean {
   return sameUserDay(iso, now);
 }
 
+// Where a past ledger row's words actually live, so the row can be edited or
+// deleted in place. "acct"/"partner" = a note row's id; "todo" = a sheet note;
+// "touchLog" = one entry (keyed by its timestamp) inside Touch.log.
+export type LedgerSrc = {
+  store: "acct" | "partner" | "todo" | "touchLog";
+  id: string; // note/todo id, or the touch's subjectKey for touchLog
+  at?: string; // touchLog only: the entry's ISO timestamp within the log
+  body: string; // the full editable body behind the row's truncated text
+};
+
 // A past-tense ledger entry — something that happened today, above the
 // now-line. Assembled server-side from every store that timestamps activity.
 export type LedgerEvent = {
   at: string; // ISO
   text: string;
   kind: "note" | "send" | "done";
+  src?: LedgerSrc; // present = the row is editable/deletable in place
 };
 
 export function sortEvents(events: LedgerEvent[]): LedgerEvent[] {
