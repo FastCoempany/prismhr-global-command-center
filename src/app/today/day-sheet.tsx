@@ -383,7 +383,7 @@ function NoteRow({
       )}
       {picking && (
         <span className={styles.sheetPick}>
-          no match found — file to:
+          <span className={styles.sheetPickLab}>no match found — file to:</span>
           <select id={`pa-${n.id}`} defaultValue="" aria-label="Account">
             <option value="">(no account)</option>
             {accounts.map((a) => (

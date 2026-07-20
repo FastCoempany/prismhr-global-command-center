@@ -606,6 +606,7 @@ export async function setTodoDone(id: string, done: boolean): Promise<{ ok: bool
   if (!(await requireWrite()) || !id) return { ok: false };
   try {
     await getPrisma().todo.update({ where: { id }, data: { done: !!done } });
+    revalidatePath("/today");
     return { ok: true };
   } catch {
     return { ok: false };
@@ -616,6 +617,7 @@ export async function deleteTodoNote(id: string): Promise<{ ok: boolean }> {
   if (!(await requireWrite()) || !id) return { ok: false };
   try {
     await getPrisma().todo.deleteMany({ where: { id } });
+    revalidatePath("/today");
     return { ok: true };
   } catch {
     return { ok: false };
