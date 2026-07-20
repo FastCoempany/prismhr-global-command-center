@@ -6140,3 +6140,440 @@
     display: none;
   }
 }
+
+/* ═══ The ledger's icon language — every verb is a colored glyph ═══ */
+.glyph {
+  flex: 0 0 20px;
+  width: 20px;
+  text-align: center;
+  font-size: 13.5px;
+  line-height: 1.3;
+  user-select: none;
+  cursor: default;
+}
+.gSend {
+  color: #2563eb;
+}
+.gDecide {
+  color: #7c3aed;
+}
+.gClose {
+  color: #0d9488;
+}
+.gOwed {
+  color: var(--red);
+}
+.gRound {
+  color: #0ea5e9;
+}
+.gSent {
+  color: #1d4ed8;
+}
+.gDone {
+  color: #1a7f3c;
+}
+.gDelay {
+  color: #b45309;
+}
+.gNote {
+  color: #3d4c6b;
+}
+.gCheck {
+  color: #9aa7bd;
+}
+.gHot {
+  text-shadow: 0 0 6px rgba(220, 38, 38, 0.35);
+}
+.pow {
+  width: 15px;
+  height: 15px;
+  vertical-align: -2.5px;
+  filter: drop-shadow(0 0 3px rgba(230, 112, 30, 0.45));
+}
+.glyph .pow {
+  width: 16px;
+  height: 16px;
+}
+.lgLegend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  align-items: center;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--line);
+  font-size: 10.5px;
+  color: var(--muted);
+}
+.lgLegendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+}
+.lgLegendItem .glyph {
+  flex: none;
+  width: auto;
+}
+
+/* ═══ Row controls: delay-with-why, flag pick, back/remove ═══ */
+.ctlBtn {
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: var(--muted);
+  border: 1px solid transparent;
+  background: none;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+.ctlBtn:hover {
+  border-color: var(--line);
+  background: #fff;
+  color: var(--navy);
+}
+.ctlBtnOn {
+  border-color: #ecd9b8;
+  background: #fff7e6;
+  color: #b45309;
+}
+.dlyWrap {
+  position: relative;
+  display: inline-flex;
+}
+.delayBox {
+  position: absolute;
+  right: 0;
+  top: 28px;
+  z-index: 80;
+  background: #fff;
+  border: 1px solid #ecd9b8;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(10, 28, 64, 0.16);
+  padding: 8px 10px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  width: 340px;
+}
+.dlyLab {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #b45309;
+  text-transform: uppercase;
+}
+.dqp {
+  font-size: 11px;
+  font-weight: 600;
+  color: #b45309;
+  border: 1px solid #ecd9b8;
+  border-radius: 999px;
+  padding: 2px 9px;
+  background: #fff7e6;
+  cursor: pointer;
+}
+.dqp:hover {
+  background: #fbe6bd;
+}
+.dfree {
+  flex: 1 1 120px;
+  min-width: 100px;
+  font: inherit;
+  font-size: 12px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 3px 8px;
+}
+.dfree:focus {
+  outline: none;
+  border-color: #b45309;
+  box-shadow: 0 0 0 3px rgba(180, 83, 9, 0.1);
+}
+.dset {
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  background: #b45309;
+  border-radius: 7px;
+  padding: 4px 10px;
+  border: 0;
+  cursor: pointer;
+}
+.dset:hover {
+  filter: brightness(1.08);
+}
+.dcancel {
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  color: var(--muted);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.dcancel:hover {
+  background: #eef2f8;
+}
+.flagPickBtn {
+  font-size: 12px;
+  color: #b6c1d6;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  padding: 0 5px;
+  border-radius: 6px;
+  opacity: 0;
+  transition:
+    opacity 0.18s ease,
+    color 0.15s ease,
+    background 0.15s ease;
+}
+.lgRow:hover .flagPickBtn {
+  opacity: 1;
+}
+.flagPickBtn:hover {
+  color: #1d4ed8;
+  background: #f3f7ff;
+}
+.flagMenu {
+  width: auto;
+  padding: 6px 8px;
+}
+.flagMenu button {
+  background: none;
+  border: 0;
+  padding: 2px;
+  border-radius: 5px;
+  cursor: pointer;
+  line-height: 0;
+}
+.flagMenu button:hover {
+  background: #eef2f8;
+}
+
+/* Country flags — inline SVG (no emoji; Windows can't draw those) */
+.flag {
+  display: inline-flex;
+  margin-left: 4px;
+  vertical-align: -1px;
+}
+.flag svg {
+  width: 15px;
+  height: 10px;
+  border-radius: 2px;
+  box-shadow: 0 0 0 0.5px rgba(10, 28, 64, 0.25);
+}
+
+/* File → pickers on a done action (the routing tech, post-✓) */
+.fileLine {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.fileLine select {
+  font: inherit;
+  font-size: 11px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 2px 6px;
+  background: #fff;
+  color: var(--navy);
+  max-width: 170px;
+}
+.fileLab {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #1d4ed8;
+  text-transform: uppercase;
+}
+
+/* ═══ The Chicago clock — a precise instrument capsule ═══ */
+.chiClock {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 6px 14px 6px 12px;
+  box-shadow: 0 1px 4px rgba(10, 28, 64, 0.05);
+}
+.chiClockDigits {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--navy);
+  letter-spacing: 0.03em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  min-width: 118px;
+  text-align: right;
+}
+.chiClockSide {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  border-left: 1px solid var(--line);
+  padding-left: 10px;
+}
+.chiClockZone {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: var(--orange);
+}
+.chiClockDate {
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ═══ Sheet composer — Note / POW-Action segments + lit urgency chips ═══ */
+.sheetSeg {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px 0;
+}
+.sheetSegBtn {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  padding: 5px 12px;
+  border-radius: 8px;
+  background: #eef2f8;
+  border: 1px solid transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.15s ease;
+}
+.sheetSegOn {
+  background: #fff;
+  color: var(--navy);
+  border-color: var(--line);
+  box-shadow: 0 1px 3px rgba(10, 28, 64, 0.12);
+}
+.sheetSegAct.sheetSegOn {
+  color: #b3400d;
+  border-color: #f4c9a4;
+}
+.sheetUrgRow {
+  display: inline-flex;
+  gap: 5px;
+  margin-left: 6px;
+}
+.uchip {
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  padding: 2px 9px;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.uchip_high:hover {
+  border-color: #f2c6c6;
+  color: var(--red);
+  box-shadow: 0 0 8px rgba(220, 38, 38, 0.3);
+}
+.uchip_med:hover {
+  border-color: #ecd9b8;
+  color: #b45309;
+  box-shadow: 0 0 8px rgba(180, 83, 9, 0.3);
+}
+.uchip_low:hover {
+  border-color: #bfe3cc;
+  color: #1a7f3c;
+  box-shadow: 0 0 8px rgba(26, 127, 60, 0.3);
+}
+.uchip_high.uchipOn {
+  color: #fff;
+  background: var(--red);
+  border-color: var(--red);
+  box-shadow:
+    0 0 10px 2px rgba(220, 38, 38, 0.5),
+    inset 0 0 6px rgba(255, 255, 255, 0.25);
+  animation: uGlowHigh 1.4s ease infinite;
+}
+.uchip_med.uchipOn {
+  color: #fff;
+  background: #b45309;
+  border-color: #b45309;
+  box-shadow:
+    0 0 10px 2px rgba(180, 83, 9, 0.45),
+    inset 0 0 6px rgba(255, 255, 255, 0.22);
+  animation: uGlowMed 2s ease infinite;
+}
+.uchip_low.uchipOn {
+  color: #fff;
+  background: #1a7f3c;
+  border-color: #1a7f3c;
+  box-shadow:
+    0 0 8px 1px rgba(26, 127, 60, 0.4),
+    inset 0 0 6px rgba(255, 255, 255, 0.2);
+}
+@keyframes uGlowHigh {
+  50% {
+    box-shadow:
+      0 0 18px 5px rgba(220, 38, 38, 0.7),
+      inset 0 0 8px rgba(255, 255, 255, 0.35);
+  }
+}
+@keyframes uGlowMed {
+  50% {
+    box-shadow:
+      0 0 15px 4px rgba(180, 83, 9, 0.6),
+      inset 0 0 7px rgba(255, 255, 255, 0.3);
+  }
+}
+.sheetSegHint {
+  margin-left: auto;
+  font-size: 10.5px;
+  color: #9aa7bd;
+  font-style: italic;
+}
+.sheetCaptureAct {
+  border-color: #e6701e !important;
+  box-shadow: 0 0 0 3px rgba(230, 112, 30, 0.08);
+}
+.sheetMka {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #b3400d;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  padding: 1px 6px;
+  border-radius: 7px;
+  white-space: nowrap;
+}
+.sheetMka:hover {
+  background: #fff3e8;
+}
+.sheetMka .pow {
+  width: 13px;
+  height: 13px;
+}

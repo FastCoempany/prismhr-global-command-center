@@ -5,6 +5,8 @@ import type { ChipNote } from "@/components/account-notes";
 import { peos } from "@/lib/book";
 import { loadDashboard } from "@/lib/dashboard/data";
 import { loadAccountNotes } from "@/lib/today/overlay";
+import { accountIntel } from "@/lib/today/build";
+import { countryCode } from "@/lib/flags";
 import { DashboardClient } from "./dashboard-client";
 import styles from "./command-center.module.css";
 
@@ -18,6 +20,12 @@ export default async function DashboardPage() {
   // name; notes carry the account id → resolve via the book). Notetaker notes
   // deliberately do NOT land here — they live on Today and the Account Room.
   const nameById = new Map(peos.map((p) => [p.id, p.name]));
+  // Country flags on cards — auto from the research's country extraction.
+  const countryByName: Record<string, string> = {};
+  for (const a of accountIntel()) {
+    const code = countryCode(a.countries[0] ?? "");
+    if (code) countryByName[a.name] = code;
+  }
   const notesByName: Record<string, ChipNote[]> = {};
   for (const [accountId, list] of await loadAccountNotes()) {
     const name = nameById.get(accountId);
@@ -71,6 +79,7 @@ export default async function DashboardPage() {
           dbUnavailable={data.status === "database-unavailable"}
           labels={data.labels}
           notesByName={notesByName}
+          countryByName={countryByName}
         />
       </main>
     </>

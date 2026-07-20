@@ -10,6 +10,7 @@ import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import { accountIntel } from "@/lib/today/build";
 import {
   detectTargets,
+  NO_TAGS,
   routeLabel,
   splitMarker,
   splitTags,
@@ -92,19 +93,31 @@ async function writeRoutes(
 export async function captureSheetNote(
   rawBody: string,
   plain: boolean,
+  opts?: { kind?: "" | "action"; urgency?: NoteTags["urgency"] },
 ): Promise<SheetNote | null> {
   const text = (rawBody ?? "").trim().slice(0, 20000);
   if (!(await canWrite()) || !text) return null;
   try {
     const prisma = getPrisma();
-    let body = text;
-    if (!plain) {
+    const isAction = opts?.kind === "action";
+    const urgency =
+      opts?.urgency === "low" || opts?.urgency === "med" || opts?.urgency === "high"
+        ? opts.urgency
+        : "";
+    // An ACTION goes straight to the ledger's open register — tagged, never
+    // auto-routed (filing happens on the ledger, after it's done).
+    const tagged =
+      isAction || urgency
+        ? withTags(text, { ...NO_TAGS, kind: isAction ? "action" : "", urgency })
+        : text;
+    let body = tagged;
+    if (!plain && !isAction) {
       const { accounts, partners } = bookForDetection();
       const targets = detectTargets(text, accounts, partners);
       if (targets.accounts.length || targets.partners.length) {
         const refs = await writeRoutes(text, targets);
         if (refs.accountNoteIds.length || refs.partnerNoteIds.length)
-          body = withMarker(text, refs, routeLabel(targets));
+          body = withMarker(tagged, refs, routeLabel(targets));
       }
     }
     const top = await prisma.todo.findFirst({
@@ -249,6 +262,26 @@ export async function saveSheetNote(id: string, text: string): Promise<SheetNote
   }
 }
 
+// "Make it an action →" — the note leaves the sheet and joins the ledger's
+// open register. Text, routing marker and urgency all ride along.
+export async function makeSheetAction(id: string): Promise<SheetNote | null> {
+  if (!(await canWrite()) || !id) return null;
+  try {
+    const prisma = getPrisma();
+    const t = await prisma.todo.findUnique({ where: { id } });
+    if (!t) return null;
+    const { text, refs, label } = splitMarker(t.body);
+    const { text: plain, tags } = splitTags(text);
+    const tagged = withTags(plain, { ...tags, kind: "action" });
+    const body = refs ? withMarker(tagged, refs, label) : tagged;
+    await prisma.todo.update({ where: { id }, data: { body, done: false } });
+    refreshToday();
+    return asSheetNote(id, body, false, t.remindAt, t.createdAt);
+  } catch {
+    return null;
+  }
+}
+
 // Set (or clear) a note's tags — date, urgency, today/later. The tags ride in
 // the body's tag-marker line, so this works on routed and plain notes alike.
 export async function tagSheetNote(
@@ -261,8 +294,11 @@ export async function tagSheetNote(
     const t = await prisma.todo.findUnique({ where: { id } });
     if (!t) return null;
     const { text, refs, label } = splitMarker(t.body);
-    const { text: plain } = splitTags(text);
+    const { text: plain, tags: existing } = splitTags(text);
+    // Only the sheet-facing tags are caller-settable; the ledger lifecycle tags
+    // (kind/delay/doneAt/country) ride through untouched.
     const safe: NoteTags = {
+      ...existing,
       date: /^\d{4}-\d{2}-\d{2}$/.test(tags.date) ? tags.date : "",
       urgency:
         tags.urgency === "low" || tags.urgency === "med" || tags.urgency === "high"

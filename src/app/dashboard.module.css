@@ -702,3 +702,16 @@
   outline: none;
   border-color: var(--blue);
 }
+
+/* Deal-country flag beside the card name (inline SVG — no emoji). */
+.cardFlag {
+  display: inline-flex;
+  margin-left: 6px;
+  vertical-align: -1px;
+}
+.cardFlag svg {
+  width: 15px;
+  height: 10px;
+  border-radius: 2px;
+  box-shadow: 0 0 0 0.5px rgba(10, 28, 64, 0.25);
+}

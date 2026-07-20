@@ -10,7 +10,14 @@ import { asFollowUpWhen, nextCheckIn, type TouchLogEntry } from "@/lib/today/fol
 import { accountIntel } from "@/lib/today/build";
 import { withAsk, type LedgerSrc } from "@/lib/today/ledger";
 import { mirrorNoteToSheet } from "@/lib/today/mirror";
-import { splitMarker, splitTags, withMarker, withTags } from "@/lib/today/route-notes";
+import {
+  splitMarker,
+  splitTags,
+  withMarker,
+  withTags,
+  type NoteTags,
+} from "@/lib/today/route-notes";
+import { routeSheetNote } from "./sheet-actions";
 
 function str(fd: FormData, key: string, max = 4000) {
   const v = fd.get(key);
@@ -95,6 +102,113 @@ export async function setPartnerLight(formData: FormData) {
     } else {
       await getPrisma().accountDisposition.deleteMany({ where: { accountId } });
     }
+  });
+  done();
+}
+
+// --- Ledger row lifecycle ---------------------------------------------------
+// Delay-with-a-reason works on ANY open ledger row via a namespaced
+// disposition (accountId "row-delay:<rowKey>"). A delay only counts for the
+// day it was set (updatedAt) — tomorrow the row is simply open again.
+const ROW_DELAY_PREFIX = "row-delay:";
+
+export async function delayLedgerRow(formData: FormData) {
+  const key = str(formData, "key", 180);
+  const reason = str(formData, "reason", 300) || str(formData, "quick", 300);
+  if (!(await requireWrite()) || !key || !reason) done();
+  await safeWrite(async () => {
+    const accountId = `${ROW_DELAY_PREFIX}${key}`;
+    await getPrisma().accountDisposition.upsert({
+      where: { accountId },
+      create: { accountId, status: "parked", reason },
+      update: { status: "parked", reason },
+    });
+  });
+  done();
+}
+
+export async function resumeLedgerRow(formData: FormData) {
+  const key = str(formData, "key", 180);
+  if (!(await requireWrite()) || !key) done();
+  await safeWrite(async () => {
+    await getPrisma().accountDisposition.deleteMany({
+      where: { accountId: `${ROW_DELAY_PREFIX}${key}` },
+    });
+  });
+  done();
+}
+
+// Rewrite a sheet-action todo's lifecycle tags in place, preserving the text,
+// any routing marker, and every tag not being changed.
+async function patchTodoTags(id: string, patch: Partial<NoteTags>) {
+  const prisma = getPrisma();
+  const t = await prisma.todo.findUnique({ where: { id } });
+  if (!t) return null;
+  const { text, refs, label } = splitMarker(t.body);
+  const { text: plain, tags } = splitTags(text);
+  const tagged = withTags(plain, { ...tags, ...patch });
+  const body = refs ? withMarker(tagged, refs, label) : tagged;
+  await prisma.todo.update({ where: { id }, data: { body } });
+  return t;
+}
+
+// ✓ on a ledger action — done, stamped with the moment, stays above the line.
+export async function doneSheetAction(formData: FormData) {
+  const id = str(formData, "id", 40);
+  if (!(await requireWrite()) || !id) done();
+  await safeWrite(async () => {
+    await patchTodoTags(id, { doneAt: String(Date.now()), delay: "" });
+    await getPrisma().todo.update({ where: { id }, data: { done: true } });
+    await getPrisma()
+      .accountDisposition.deleteMany({
+        where: { accountId: `${ROW_DELAY_PREFIX}todo:${id}` },
+      })
+      .catch(() => null);
+  });
+  done();
+}
+
+// ⇠ back to sheet — the action becomes a plain note again (undone, untagged).
+export async function sheetActionBack(formData: FormData) {
+  const id = str(formData, "id", 40);
+  if (!(await requireWrite()) || !id) done();
+  await safeWrite(async () => {
+    await patchTodoTags(id, { kind: "", delay: "", doneAt: "" });
+    await getPrisma().todo.update({ where: { id }, data: { done: false } });
+  });
+  done();
+}
+
+// Set (or clear) the country a ledger action / note is tied to.
+export async function setRowCountry(formData: FormData) {
+  const id = str(formData, "id", 40);
+  const code = str(formData, "code", 2).toLowerCase();
+  if (!(await requireWrite()) || !id) done();
+  await safeWrite(async () => {
+    await patchTodoTags(id, { country: /^[a-z]{2}$/.test(code) ? code : "" });
+  });
+  done();
+}
+
+// ✕ on a ledger action — gone for good (form flavor of deleteTodoNote).
+export async function removeSheetAction(formData: FormData) {
+  const id = str(formData, "id", 40);
+  if (!(await requireWrite()) || !id) done();
+  await safeWrite(async () => {
+    await getPrisma().todo.deleteMany({ where: { id } });
+  });
+  done();
+}
+
+// File a DONE ledger action to an account and/or partner — the routing tech,
+// now living on the ledger and offered after the ✓.
+export async function fileDoneAction(formData: FormData) {
+  const id = str(formData, "id", 40);
+  const accountId = str(formData, "accountId", 60);
+  const partner = str(formData, "partner", 120);
+  if (!(await requireWrite()) || !id || (!accountId && !partner)) done();
+  await safeWrite(async () => {
+    await routeSheetNote(id, { accountId, partner });
   });
   done();
 }

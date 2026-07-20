@@ -1,10 +1,11 @@
 "use client";
 
-// The Day Sheet — the cream pad across the top of Today. Everything you type
-// lands here instantly and STAYS here (routing adds a receipt, it never takes
-// the note away). Enter files it smart (auto-routes to partner room + account
-// page); Enter-Enter files it plain; Shift+Enter is a newline. Collapsible so
-// the work rail can come up the page — the state sticks per browser.
+// The Day Sheet — NOTES ONLY. Anything that reads as something to DO is an
+// ACTION and belongs on the Today ledger: the composer's POW chip sends it
+// straight there, and every note row carries "make it an action →" to
+// transfer it later. Enter files a note smart (auto-routes to partner room +
+// account page); Enter-Enter keeps it plain; Shift+Enter is a newline.
+// Urgency (high/med/low) is the only tag — no dates, no today/later.
 
 import { useRef, useState, useSyncExternalStore } from "react";
 import type { Todo } from "@/lib/today/follow-ups";
@@ -12,14 +13,14 @@ import { splitMarker, splitTags, type NoteTags } from "@/lib/today/route-notes";
 import { sameUserDay, USER_TZ } from "@/lib/tz";
 import {
   captureSheetNote,
-  promoteSheetTodo,
-  routeSheetNote,
+  makeSheetAction,
   saveSheetNote,
   tagSheetNote,
   undoSheetRoute,
   type SheetNote,
 } from "./sheet-actions";
 import { deleteTodoNote, setTodoDone } from "./actions";
+import { PowIcon } from "./ledger-icons";
 import styles from "../command-center.module.css";
 
 const COLLAPSE_KEY = "daySheetCollapsed";
@@ -84,44 +85,12 @@ function byUrgency(a: N, b: N): number {
   return URG_RANK[tagsOf(a).urgency] - URG_RANK[tagsOf(b).urgency];
 }
 
-// "2026-07-18" → "Jul 18" (parsed as local, not UTC).
-function chipDate(d: string): string {
-  const [y, m, day] = d.split("-").map(Number);
-  if (!y || !m || !day) return d;
-  return new Date(y, m - 1, day).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  });
-}
-
-// A future remindAt = it's on the Scheduled list ("→ todo").
-function todoDay(remindAt: string): string {
-  const t = Date.parse(remindAt);
-  if (Number.isNaN(t) || t <= Date.now()) return "";
-  const d = new Date(t);
-  const now = new Date();
-  if (sameLocalDay(remindAt, now)) return "today";
-  const tom = new Date(now);
-  tom.setDate(tom.getDate() + 1);
-  if (
-    d.getFullYear() === tom.getFullYear() &&
-    d.getMonth() === tom.getMonth() &&
-    d.getDate() === tom.getDate()
-  )
-    return "tomorrow";
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-}
-
 function NoteRow({
   n,
-  accounts,
-  partners,
   onChange,
   onRemove,
 }: {
   n: N;
-  accounts: { id: string; name: string }[];
-  partners: string[];
   onChange: (next: N) => void;
   onRemove: (id: string) => void;
 }) {
@@ -129,7 +98,6 @@ function NoteRow({
   const { text, tags } = splitTags(taggedText);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(text);
-  const [picking, setPicking] = useState(false);
   const [tagging, setTagging] = useState(false);
   const [busy, setBusy] = useState(false);
   // Long notes sit clamped to a single row; the chevron (or a click on the
@@ -137,8 +105,7 @@ function NoteRow({
   const [expandedRow, setExpandedRow] = useState(false);
   const isLong = text.includes("\n") || text.length > 90;
   const clamped = isLong && !expandedRow;
-  const day = todoDay(n.remindAt);
-  const hasTags = !!(tags.date || tags.urgency || tags.when);
+  const hasTags = !!tags.urgency;
 
   const openTagger = () => setTagging((v) => !v);
 
@@ -224,30 +191,10 @@ function NoteRow({
               {tags.urgency}
             </button>
           )}
-          {tags.when && (
-            <button
-              type="button"
-              className={`${styles.sheetTagChip} ${styles.sheetWhenChip}`}
-              onClick={openTagger}
-              title="Today / later — click to change"
-            >
-              {tags.when}
-            </button>
-          )}
-          {tags.date && (
-            <button
-              type="button"
-              className={styles.sheetTagChip}
-              onClick={openTagger}
-              title="Date — click to change"
-            >
-              {chipDate(tags.date)}
-            </button>
-          )}
         </span>
       )}
       <span className={styles.sheetRoute}>
-        {refs ? (
+        {refs && (
           <>
             <span className={styles.sheetRcpt}>routed → {label}</span>
             <button
@@ -259,44 +206,24 @@ function NoteRow({
               ↩ undo
             </button>
           </>
-        ) : (
-          <>
-            {day ? (
-              <span className={styles.sheetRcpt}>→ todo · {day} ✓</span>
-            ) : (
-              <span className={styles.sheetScratch}>scratch</span>
-            )}
-            {!n.done && !day && (
-              <button
-                type="button"
-                className={styles.sheetBtnTodo}
-                disabled={busy}
-                onClick={() => run(() => promoteSheetTodo(n.id, "today"))}
-              >
-                → todo
-              </button>
-            )}
-            {!n.done && !picking && (
-              <button
-                type="button"
-                className={styles.sheetBtn}
-                disabled={busy}
-                onClick={async () => {
-                  const s = await run(() => routeSheetNote(n.id));
-                  if (s?.unmatched) setPicking(true);
-                }}
-              >
-                route ▸
-              </button>
-            )}
-          </>
+        )}
+        {!n.done && (
+          <button
+            type="button"
+            className={styles.sheetMka}
+            disabled={busy}
+            title="Transfer this to the Today ledger as an action"
+            onClick={() => run(() => makeSheetAction(n.id))}
+          >
+            <PowIcon /> action →
+          </button>
         )}
         {!n.done && (
           <button
             type="button"
             className={styles.sheetGhost}
             disabled={busy}
-            title="Tag: urgency · today/later · date"
+            title="Urgency"
             onClick={openTagger}
           >
             ⚑
@@ -329,20 +256,6 @@ function NoteRow({
       </span>
       {tagging && (
         <span className={styles.sheetTagEd}>
-          {(["today", "later"] as const).map((w) => (
-            <button
-              key={w}
-              type="button"
-              disabled={busy}
-              className={`${styles.sheetTagChip} ${styles.sheetWhenChip} ${
-                tags.when === w ? styles.sheetTagOn : ""
-              }`}
-              onClick={() => pick({ ...tags, when: tags.when === w ? "" : w })}
-            >
-              {w}
-            </button>
-          ))}
-          <span className={styles.sheetTagSep}>·</span>
           {(["high", "med", "low"] as const).map((u) => (
             <button
               key={u}
@@ -360,62 +273,10 @@ function NoteRow({
               {u}
             </button>
           ))}
-          <span className={styles.sheetTagSep}>·</span>
-          <input
-            type="date"
-            value={tags.date}
-            aria-label="Date"
-            disabled={busy}
-            onChange={(e) => pick({ ...tags, date: e.target.value })}
-          />
           <button
             type="button"
             className={styles.sheetGhost}
             onClick={() => setTagging(false)}
-          >
-            ×
-          </button>
-        </span>
-      )}
-      {picking && (
-        <span className={styles.sheetPick}>
-          <span className={styles.sheetPickLab}>no match found — file to:</span>
-          <select id={`pa-${n.id}`} defaultValue="" aria-label="Account">
-            <option value="">(no account)</option>
-            {accounts.map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.name}
-              </option>
-            ))}
-          </select>
-          <select id={`pp-${n.id}`} defaultValue="" aria-label="Partner">
-            <option value="">(no partner)</option>
-            {partners.map((p) => (
-              <option key={p} value={p}>
-                {p}
-              </option>
-            ))}
-          </select>
-          <button
-            type="button"
-            className={styles.sheetBtn}
-            onClick={async () => {
-              const accountId =
-                (document.getElementById(`pa-${n.id}`) as HTMLSelectElement)?.value ?? "";
-              const partner =
-                (document.getElementById(`pp-${n.id}`) as HTMLSelectElement)?.value ?? "";
-              if (accountId || partner) {
-                await run(() => routeSheetNote(n.id, { accountId, partner }));
-              }
-              setPicking(false);
-            }}
-          >
-            Send
-          </button>
-          <button
-            type="button"
-            className={styles.sheetGhost}
-            onClick={() => setPicking(false)}
           >
             ×
           </button>
@@ -427,13 +288,9 @@ function NoteRow({
 
 export function DaySheet({
   initialNotes,
-  accounts,
-  partners,
   dateLabel,
 }: {
   initialNotes: Todo[];
-  accounts: { id: string; name: string }[];
-  partners: string[];
   dateLabel: string;
 }) {
   const [notes, setNotes] = useState<N[]>(() => initialNotes.map(fromTodo));
@@ -455,6 +312,10 @@ export function DaySheet({
   const collapsed = hydrated && collapsedPref;
   const [text, setText] = useState("");
   const [pendingPlain, setPendingPlain] = useState(false);
+  // Composer mode: a NOTE stays on the sheet; an ACTION (the POW chip) goes
+  // straight to the Today ledger's open register. Urgency rides along.
+  const [mode, setMode] = useState<"note" | "action">("note");
+  const [urg, setUrg] = useState<NoteTags["urgency"]>("");
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const boxRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -471,20 +332,29 @@ export function DaySheet({
   const file = async (plain: boolean) => {
     const body = text.trim();
     if (!body) return;
+    const isAction = mode === "action";
     setText("");
     setPendingPlain(false);
-    const s = await captureSheetNote(body, plain);
+    const s = await captureSheetNote(body, isAction ? true : plain, {
+      kind: isAction ? "action" : "",
+      urgency: urg,
+    });
     if (s) {
-      setNotes((prev) => [
-        {
-          id: s.id,
-          body: s.body,
-          done: false,
-          remindAt: s.remindAt,
-          createdAt: s.createdAt,
-        },
-        ...prev,
-      ]);
+      // Actions never join the sheet list — they live on the ledger, which
+      // the server refresh brings in on its own.
+      if (!isAction) {
+        setNotes((prev) => [
+          {
+            id: s.id,
+            body: s.body,
+            done: false,
+            remindAt: s.remindAt,
+            createdAt: s.createdAt,
+          },
+          ...prev,
+        ]);
+      }
+      setUrg("");
     } else {
       // Write failed (no DB / signed-out) — put the text back so nothing is lost.
       setText(body);
@@ -512,8 +382,10 @@ export function DaySheet({
   };
 
   const now = new Date();
-  const open = notes.filter((n) => !n.done);
-  const doneNotes = notes.filter((n) => n.done);
+  // Actions belong to the ledger — the sheet never shows them.
+  const sheetNotes = notes.filter((n) => tagsOf(n).kind !== "action");
+  const open = sheetNotes.filter((n) => !n.done);
+  const doneNotes = sheetNotes.filter((n) => n.done);
   // The "today"/"later" tag overrides where a note lives: later-tagged notes
   // get their own section regardless of age; today-tagged notes surface on
   // today's sheet even if captured days ago. Untagged notes group by capture
@@ -529,7 +401,6 @@ export function DaySheet({
   const earlier = open
     .filter((n) => !today.includes(n) && !later.includes(n))
     .sort(byUrgency);
-  const unrouted = today.filter((n) => !splitMarker(n.body).refs && !todoDay(n.remindAt));
 
   if (collapsed) {
     return (
@@ -540,7 +411,6 @@ export function DaySheet({
         <span className={styles.sheetCapT}>Day sheet — {dateLabel}</span>
         <span className={styles.sheetCapR}>
           {today.length} note{today.length === 1 ? "" : "s"} today
-          {unrouted.length ? ` · ${unrouted.length} scratch` : ""}
           {later.length ? ` · ${later.length} later` : ""}
           {earlier.length ? ` · ${earlier.length} earlier` : ""} — click ▸ to open
         </span>
@@ -560,14 +430,51 @@ export function DaySheet({
           ▾
         </button>
         <span className={styles.sheetCapT}>Day sheet — {dateLabel}</span>
-        <span className={styles.sheetCapR}>
-          Enter files it (auto-routes) · Enter-Enter keeps it plain · Shift+Enter = new
-          line
+        <span className={styles.sheetCapR}>notes only — actions go to the ledger</span>
+      </div>
+      <div className={styles.sheetSeg}>
+        <button
+          type="button"
+          className={`${styles.sheetSegBtn} ${mode === "note" ? styles.sheetSegOn : ""}`}
+          onClick={() => setMode("note")}
+          aria-pressed={mode === "note"}
+        >
+          🗒 Note
+        </button>
+        <button
+          type="button"
+          className={`${styles.sheetSegBtn} ${styles.sheetSegAct} ${
+            mode === "action" ? styles.sheetSegOn : ""
+          }`}
+          onClick={() => setMode("action")}
+          aria-pressed={mode === "action"}
+        >
+          <PowIcon /> Action
+        </button>
+        <span className={styles.sheetUrgRow}>
+          {(["high", "med", "low"] as const).map((u) => (
+            <button
+              key={u}
+              type="button"
+              className={`${styles.uchip} ${styles[`uchip_${u}`]} ${
+                urg === u ? styles.uchipOn : ""
+              }`}
+              onClick={() => setUrg((v) => (v === u ? "" : u))}
+              aria-pressed={urg === u}
+            >
+              {u}
+            </button>
+          ))}
+        </span>
+        <span className={styles.sheetSegHint} suppressHydrationWarning>
+          {mode === "note"
+            ? "Enter auto-routes · Enter-Enter plain · Shift+Enter newline"
+            : "Enter sends it to the ledger as an action"}
         </span>
       </div>
       <textarea
         ref={boxRef}
-        className={styles.sheetCapture}
+        className={`${styles.sheetCapture} ${mode === "action" ? styles.sheetCaptureAct : ""}`}
         value={text}
         onChange={(e) => setText(e.target.value)}
         onKeyDown={onKeyDown}
@@ -587,8 +494,6 @@ export function DaySheet({
           <NoteRow
             key={n.id}
             n={n}
-            accounts={accounts}
-            partners={partners}
             onChange={(next) =>
               setNotes((p) => p.map((x) => (x.id === next.id ? next : x)))
             }
@@ -603,8 +508,6 @@ export function DaySheet({
             <NoteRow
               key={n.id}
               n={n}
-              accounts={accounts}
-              partners={partners}
               onChange={(next) =>
                 setNotes((p) => p.map((x) => (x.id === next.id ? next : x)))
               }
@@ -620,8 +523,6 @@ export function DaySheet({
             <NoteRow
               key={n.id}
               n={n}
-              accounts={accounts}
-              partners={partners}
               onChange={(next) =>
                 setNotes((p) => p.map((x) => (x.id === next.id ? next : x)))
               }
@@ -637,8 +538,6 @@ export function DaySheet({
             <NoteRow
               key={n.id}
               n={n}
-              accounts={accounts}
-              partners={partners}
               onChange={(next) =>
                 setNotes((p) => p.map((x) => (x.id === next.id ? next : x)))
               }

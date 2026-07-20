@@ -57,10 +57,28 @@ export type NoteTags = {
   date: string; // yyyy-mm-dd, or ""
   urgency: "" | "low" | "med" | "high";
   when: "" | "today" | "later";
+  // A note that IS an action — it lives on the Today ledger, not the sheet.
+  kind: "" | "action";
+  // Why the action is delayed — free text, URI-encoded in the marker so commas
+  // and brackets can't break the format. "" = not delayed.
+  delay: string;
+  // When the action was marked done — epoch millis as a string ("" = not done
+  // via the ledger; the boolean done column still governs visibility).
+  doneAt: string;
+  // ISO-3166 alpha-2 country code the note/action is tied to ("" = none).
+  country: string;
 };
 
 const TAG = "⚑";
-export const NO_TAGS: NoteTags = { date: "", urgency: "", when: "" };
+export const NO_TAGS: NoteTags = {
+  date: "",
+  urgency: "",
+  when: "",
+  kind: "",
+  delay: "",
+  doneAt: "",
+  country: "",
+};
 
 // Split a text (already stripped of any routing marker) into the visible note
 // and its tags. Unknown or malformed values are ignored, the line still strips.
@@ -77,6 +95,16 @@ export function splitTags(text: string): { text: string; tags: NoteTags } {
     if (k === "d" && /^\d{4}-\d{2}-\d{2}$/.test(v)) tags.date = v;
     if (k === "u" && (v === "low" || v === "med" || v === "high")) tags.urgency = v;
     if (k === "w" && (v === "today" || v === "later")) tags.when = v;
+    if (k === "k" && v === "a") tags.kind = "action";
+    if (k === "dl" && v) {
+      try {
+        tags.delay = decodeURIComponent(v);
+      } catch {
+        // malformed encoding — drop rather than crash
+      }
+    }
+    if (k === "dn" && /^\d{10,16}$/.test(v)) tags.doneAt = v;
+    if (k === "c" && /^[a-z]{2}$/i.test(v)) tags.country = v.toLowerCase();
   }
   return { text: text.slice(0, at === 0 ? 0 : i).trimEnd(), tags };
 }
@@ -86,6 +114,10 @@ export function withTags(text: string, tags: NoteTags): string {
     tags.date ? `d:${tags.date}` : "",
     tags.urgency ? `u:${tags.urgency}` : "",
     tags.when ? `w:${tags.when}` : "",
+    tags.kind === "action" ? "k:a" : "",
+    tags.delay ? `dl:${encodeURIComponent(tags.delay)}` : "",
+    tags.doneAt ? `dn:${tags.doneAt}` : "",
+    tags.country ? `c:${tags.country.toLowerCase()}` : "",
   ].filter(Boolean);
   const clean = text.trimEnd();
   return parts.length ? `${clean}\n${TAG}[${parts.join(",")}]` : clean;

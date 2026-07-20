@@ -86,11 +86,16 @@ import {
   bringFollowUpDue,
   delayFollowUp,
   deleteTouch,
+  doneSheetAction,
+  fileDoneAction,
   markReplied,
   markResponded,
   muteRoundupPartner,
+  removeSheetAction,
   resolveFieldNote,
+  resumeLedgerRow,
   setPartnerLight,
+  sheetActionBack,
   updateTouchAsk,
   setThreadStatus,
   snoozeSignal,
@@ -99,7 +104,11 @@ import {
   unsnoozeSignal,
 } from "./actions";
 import { DaySheet } from "./day-sheet";
-import { visibleText } from "@/lib/today/route-notes";
+import { splitMarker, splitTags, visibleText } from "@/lib/today/route-notes";
+import { CountryFlag, countryCode } from "@/lib/flags";
+import { LedgerLegend, type GlyphKind } from "./ledger-icons";
+import { DelayControl, FlagPickControl } from "./row-controls";
+import { ChiClock } from "../today-client";
 import styles from "../command-center.module.css";
 
 export const dynamic = "force-dynamic";
@@ -259,12 +268,14 @@ function MorningMove({
   doneKey,
   done,
   touch,
+  flag,
   notes = [],
 }: {
   mv: Mv;
   doneKey: string;
   done: boolean;
   touch?: Touch;
+  flag?: ReactNode;
   notes?: AcctNote[];
 }) {
   const { term, href } = moveTerm(mv);
@@ -395,8 +406,6 @@ function MorningMove({
       <SfCheckpoint when="triage" id={mv.a.id} name={mv.a.name} />
     ) : null;
 
-  const kindWord =
-    mv.kind === "outreach" ? "SEND" : mv.kind === "triage" ? "DECIDE" : "CLOSE";
   const tm =
     mv.kind === "commitment" && mv.step.ageDays != null && mv.step.ageDays > 0
       ? `${mv.step.ageDays}d`
@@ -405,7 +414,9 @@ function MorningMove({
     <LedgerRow
       tm={tm}
       tone="open"
-      kind={kindWord}
+      icon={kind}
+      flag={flag}
+      controls={<DelayControl rowKey={`mv:${doneKey}`} />}
       text={<Emph text={g.do} term={term} href={href} />}
       textTitle={g.do}
       meta={meta}
@@ -945,6 +956,9 @@ export default async function TodayPage({
   // ledger moment. (Plain captures stay on the sheet; capturing isn't an event.)
   for (const t of todos) {
     if (!t.done || !sameLocalDayIso(t.updatedAt, nowD)) continue;
+    // Done ACTIONS render as their own rows above the line (with the File →
+    // pickers) — this loop reports plain sheet notes checked ✓.
+    if (splitTags(splitMarker(t.body).text).tags.kind === "action") continue;
     events.push({
       at: t.updatedAt,
       kind: "done",
@@ -1037,6 +1051,86 @@ export default async function TodayPage({
     .flatMap((k) => k.accounts.map((a) => ({ a, partner: k.partner })))
     .sort((x, y) => y.a.score - x.a.score);
 
+  // ── The action system: today's delays, sheet-actions, country flags ──
+  // A delay is a namespaced disposition set TODAY; yesterday's delays expire
+  // by simply not counting. Delayed rows leave the open register and reappear
+  // in "Delayed — and why" wearing their reason.
+  const ROW_DELAY = "row-delay:";
+  const delayedReasons = new Map<string, string>();
+  for (const [k, d] of dispositions) {
+    if (k.startsWith(ROW_DELAY) && sameLocalDayIso(d.updatedAt, nowD))
+      delayedReasons.set(k.slice(ROW_DELAY.length), d.reason);
+  }
+  type DelayedEntry = { key: string; icon: GlyphKind; text: string; reason: string };
+  const delayedLedger: DelayedEntry[] = [];
+  const isDelayed = (key: string, icon: GlyphKind, text: string): boolean => {
+    const reason = delayedReasons.get(key);
+    if (reason == null) return false;
+    delayedLedger.push({ key, icon, text, reason });
+    return true;
+  };
+  const mvLabel = (mv: Mv): string =>
+    mv.kind === "commitment"
+      ? `${mv.step.cardName}: “${mv.step.item}”`
+      : mv.kind === "outreach"
+        ? `Message ${firstNameOf(mv.a.csm)} about ${mv.a.name}`
+        : `Decide on ${mv.a.name}`;
+  const replyLive = replyRows.filter(
+    (r) => !isDelayed(`reply:${r.subjectKey}`, "send", `${r.partner} replied — respond`),
+  );
+  const pendingLive = pendingLedger.filter(
+    (it) =>
+      !isDelayed(
+        `mv:${it.key}`,
+        it.mv.kind === "outreach" ? "send" : it.mv.kind === "triage" ? "decide" : "close",
+        mvLabel(it.mv),
+      ),
+  );
+  const dueAsksLive = dueAsks.filter((t) => {
+    const ask = splitAsk(t.detail).ask;
+    return !isDelayed(
+      `ask:${t.subjectKey}`,
+      "owed",
+      t.kind === "custom"
+        ? `You owe: ${t.label}`
+        : `${firstNameOf(t.label)} owes: ${ask}`,
+    );
+  });
+  const dueChecksLive = dueChecks.filter(
+    (t) => !isDelayed(`chk:${t.subjectKey}`, "check", `Check in with ${t.label}`),
+  );
+  const roundupDelayed =
+    dueRoundupRows.length > 0 &&
+    isDelayed("roundup", "roundup", `Roundup due — ${dueRoundupLabel}`);
+
+  // Sheet actions — todos tagged k:a. Open ones sit on the ledger's open
+  // register; done-today ones sit above the NOW line offering the File →
+  // pickers (the routing tech, post-✓).
+  const todoTagsOf = (t: (typeof todos)[number]) =>
+    splitTags(splitMarker(t.body).text).tags;
+  const actionTodos = todos.filter((t) => todoTagsOf(t).kind === "action");
+  const openActions = actionTodos.filter(
+    (t) => !t.done && !isDelayed(`todo:${t.id}`, "action", visibleText(t.body)),
+  );
+  const doneActions = actionTodos
+    .filter((t) => {
+      const dn = todoTagsOf(t).doneAt;
+      return t.done && dn && sameLocalDayIso(new Date(Number(dn)).toISOString(), nowD);
+    })
+    .sort((a, b) => Number(todoTagsOf(a).doneAt) - Number(todoTagsOf(b).doneAt));
+
+  // Country flags — auto from the research's country extraction, keyed by
+  // account name so any row that names an account can wear its flag.
+  const flagCodeByName = new Map(
+    intel
+      .map((a) => [a.name, countryCode(a.countries[0] ?? "")] as const)
+      .filter(([, c]) => c),
+  );
+  const flagFor = (name: string) => {
+    const code = flagCodeByName.get(name);
+    return code ? <CountryFlag code={code} className={styles.flag} /> : undefined;
+  };
+
   return (
     <>
       <AppWayfinder current="Today" />
@@ -1047,6 +1141,8 @@ export default async function TodayPage({
           <span className={styles.deskHeadSf}>
             <SfCheckpoint when="standing" />
           </span>
+          {/* The digital clock — Chicago, ticking, above the Day Sheet column. */}
+          <ChiClock />
         </div>
 
         {/* ── The tab left (the day as a ledger), the Day Sheet right,
@@ -1125,6 +1221,7 @@ export default async function TodayPage({
             </div>
 
             <div className={styles.atcRail}>
+              <LedgerLegend />
               {/* Past — what already happened today, oldest first. */}
               {pastEarlier.length > 0 && (
                 <details className={styles.lgEarlier}>
@@ -1137,7 +1234,7 @@ export default async function TodayPage({
               {pastRecent.map((e, i) => (
                 <PastRow key={`pr-${i}`} e={e} timeLabel={clockShort(e.at)} />
               ))}
-              {pastEvents.length === 0 && (
+              {pastEvents.length === 0 && doneActions.length === 0 && (
                 <div className={`${styles.lgRow} ${styles.lgPast}`}>
                   <span className={styles.lgTm}></span>
                   <span className={`${styles.lgDot} ${styles.lgDotDone}`} />
@@ -1146,17 +1243,66 @@ export default async function TodayPage({
                   </span>
                 </div>
               )}
+              {/* Actions finished today — ✓ above the line, then FILE it:
+                  the routing tech lives here now, offered after done. */}
+              {doneActions.map((t) => {
+                const { refs, label } = splitMarker(t.body);
+                const tg = todoTagsOf(t);
+                const txt = visibleText(t.body);
+                return (
+                  <LedgerRow
+                    key={t.id}
+                    tm={clockShort(new Date(Number(tg.doneAt)).toISOString())}
+                    tone="check"
+                    icon="done"
+                    text={txt}
+                    textTitle={txt}
+                    flag={
+                      tg.country ? (
+                        <CountryFlag code={tg.country} className={styles.flag} />
+                      ) : undefined
+                    }
+                    meta={refs ? `filed → ${label}` : undefined}
+                    primary={
+                      !refs ? (
+                        <form action={fileDoneAction} className={styles.fileLine}>
+                          <input type="hidden" name="id" value={t.id} />
+                          <span className={styles.fileLab}>File →</span>
+                          <select name="accountId" defaultValue="" aria-label="Account">
+                            <option value="">Account ▾</option>
+                            {noteAccounts.map((a) => (
+                              <option key={a.id} value={a.id}>
+                                {a.name}
+                              </option>
+                            ))}
+                          </select>
+                          <select name="partner" defaultValue="" aria-label="Partner">
+                            <option value="">Partner ▾</option>
+                            {kickoff.map((k) => (
+                              <option key={k.partner} value={k.partner}>
+                                {k.partner}
+                              </option>
+                            ))}
+                          </select>
+                          <button className={styles.atcBtn}>file ✓</button>
+                        </form>
+                      ) : undefined
+                    }
+                  />
+                );
+              })}
               <div className={styles.lgNow}>
                 <span className={styles.lgNowLab}>now</span>
                 <span className={styles.lgNowLn} />
               </div>
               <div className={styles.lgSub}>Open — needs you</div>
               {/* Replies waiting on you — your move first. */}
-              {replyRows.map((r) => (
+              {replyLive.map((r) => (
                 <LedgerRow
                   key={r.subjectKey}
                   tone="open"
-                  kind="REPLY"
+                  icon="send"
+                  controls={<DelayControl rowKey={`reply:${r.subjectKey}`} />}
                   text={
                     <>
                       <b>{r.partner}</b> replied — draft the response
@@ -1183,13 +1329,16 @@ export default async function TodayPage({
               ))}
 
               {/* Moves — SEND, then DECIDE, then CLOSE. Uniform ledger rows. */}
-              {pendingLedger.map((it) => (
+              {pendingLive.map((it) => (
                 <MorningMove
                   key={it.key}
                   mv={it.mv}
                   doneKey={it.key}
                   done={false}
                   touch={it.touch}
+                  flag={flagFor(
+                    it.mv.kind === "commitment" ? it.mv.step.cardName : it.mv.a.name,
+                  )}
                   notes={
                     it.mv.kind === "commitment" ? [] : (acctNotes.get(it.mv.a.id) ?? [])
                   }
@@ -1235,7 +1384,7 @@ export default async function TodayPage({
               })}
 
               {/* Chases — something NAMED is owed (custom to-dos + asks). */}
-              {dueAsks.map((t) => {
+              {dueAsksLive.map((t) => {
                 const ask = splitAsk(t.detail).ask;
                 const isCustom = t.kind === "custom";
                 const late = daysSinceIso(t.followUpAt);
@@ -1260,6 +1409,11 @@ export default async function TodayPage({
                         : `${daysSinceIso(t.contactedAt)}d`
                     }
                     tone="owed"
+                    icon="owed"
+                    flag={
+                      !isCustom && t.kind === "account" ? flagFor(t.label) : undefined
+                    }
+                    controls={<DelayControl rowKey={`ask:${t.subjectKey}`} />}
                     text={text}
                     textTitle={isCustom ? t.label : `${t.label} owes: ${ask}`}
                     meta={
@@ -1308,12 +1462,69 @@ export default async function TodayPage({
                 );
               })}
 
+              {/* Actions — sent over from the Day Sheet (or born as actions).
+                  ✓ done · ⏲ delay-with-why · ⇠ back to the sheet · ✕ remove. */}
+              {openActions.map((t) => {
+                const tg = todoTagsOf(t);
+                const txt = visibleText(t.body);
+                return (
+                  <LedgerRow
+                    key={t.id}
+                    tm={
+                      sameLocalDayIso(t.createdAt, nowD)
+                        ? clockShort(t.createdAt)
+                        : `${daysSinceIso(t.createdAt)}d`
+                    }
+                    tone="open"
+                    icon="action"
+                    text={txt}
+                    textTitle={txt}
+                    flag={
+                      tg.country ? (
+                        <CountryFlag code={tg.country} className={styles.flag} />
+                      ) : undefined
+                    }
+                    meta={`from the sheet${tg.urgency ? ` · ${tg.urgency}` : ""}`}
+                    primary={
+                      <form action={doneSheetAction} className={styles.valInline}>
+                        <input type="hidden" name="id" value={t.id} />
+                        <button className={`${styles.atcBtn} ${styles.atcGo}`}>
+                          Done ✓
+                        </button>
+                      </form>
+                    }
+                    controls={
+                      <>
+                        <DelayControl rowKey={`todo:${t.id}`} />
+                        {!tg.country && <FlagPickControl id={t.id} />}
+                        <form action={sheetActionBack} className={styles.valInline}>
+                          <input type="hidden" name="id" value={t.id} />
+                          <button
+                            className={styles.ctlBtn}
+                            title="Back to the sheet as a note"
+                          >
+                            ⇠
+                          </button>
+                        </form>
+                        <form action={removeSheetAction} className={styles.valInline}>
+                          <input type="hidden" name="id" value={t.id} />
+                          <button className={styles.ctlBtn} title="Remove for good">
+                            ✕
+                          </button>
+                        </form>
+                      </>
+                    }
+                  />
+                );
+              })}
+
               {/* Roundups join the tab as ONE row, only when due. */}
-              {dueRoundupRows.length > 0 && (
+              {dueRoundupRows.length > 0 && !roundupDelayed && (
                 <LedgerRow
                   tone="open"
-                  kind="ROUNDUP"
-                  text={`due: ${dueRoundupLabel}`}
+                  icon="roundup"
+                  controls={<DelayControl rowKey="roundup" />}
+                  text={`Roundup due — ${dueRoundupLabel}`}
                   textTitle={`Roundup due — ${dueRoundupLabel}`}
                   primaryLabel="Open ▸"
                   primaryHot
@@ -1324,16 +1535,42 @@ export default async function TodayPage({
                 </LedgerRow>
               )}
 
+              {/* Delayed — and why. Rows sink here for the day, wearing their
+                  reason; ↩ resume puts them straight back in the open list. */}
+              {delayedLedger.length > 0 && (
+                <>
+                  <div className={styles.lgSub}>Delayed — and why</div>
+                  {delayedLedger.map((d) => (
+                    <LedgerRow
+                      key={d.key}
+                      tone="check"
+                      icon="delayed"
+                      text={d.text}
+                      textTitle={d.text}
+                      meta={`⏲ ${d.reason}`}
+                      primary={
+                        <form action={resumeLedgerRow} className={styles.valInline}>
+                          <input type="hidden" name="key" value={d.key} />
+                          <button className={styles.atcBtn}>↩ resume</button>
+                        </form>
+                      }
+                    />
+                  ))}
+                </>
+              )}
+
               {/* Check-ins due — cadence, nothing owed. Quiet until an ask
                   is named; ✓ closes the loop. */}
-              {dueChecks.length > 0 && (
+              {dueChecksLive.length > 0 && (
                 <div className={styles.lgSub}>Check-ins due — cadence, nothing owed</div>
               )}
-              {dueChecks.map((t) => (
+              {dueChecksLive.map((t) => (
                 <LedgerRow
                   key={t.subjectKey}
                   tm={`${daysSinceIso(t.contactedAt)}d`}
                   tone="check"
+                  icon="check"
+                  controls={<DelayControl rowKey={`chk:${t.subjectKey}`} />}
                   text={
                     <>
                       Check in with <b>{t.label}</b>
@@ -1542,6 +1779,7 @@ export default async function TodayPage({
                         partner={partner}
                         tone={chipTone(lastNoteAt)}
                         lastNoteAt={lastNoteAt}
+                        country={flagCodeByName.get(a.name) ?? ""}
                         card={
                           dashCard
                             ? {
@@ -1579,12 +1817,7 @@ export default async function TodayPage({
                 everything lands here · route from here
               </span>
             </div>
-            <DaySheet
-              initialNotes={todos}
-              accounts={noteAccounts}
-              partners={kickoff.map((k) => k.partner)}
-              dateLabel={todayLabel()}
-            />
+            <DaySheet initialNotes={todos} dateLabel={todayLabel()} />
           </div>
 
           {/* ══ EDGE TRAYS — roundups & scheduled live off-page, flying out

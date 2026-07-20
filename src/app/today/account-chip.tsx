@@ -13,6 +13,7 @@ import {
 } from "./actions";
 import { addCard, setCardStage } from "../dashboard/actions";
 import { LocalTime } from "../today-client";
+import { CountryFlag } from "@/lib/flags";
 import styles from "../command-center.module.css";
 
 // An account chip on the Focus strip. Clicking it opens the work box built to
@@ -86,9 +87,13 @@ export function AccountChip({
   seedDiscovery,
   disposition = null,
   notes = [],
+  country = "",
 }: {
   account: { id: string; name: string; score: number; play: string | null };
   partner: string;
+  // ISO alpha-2 code when the account's deal is tied to a country — renders a
+  // small flag on the roster row and in the popover header.
+  country?: string;
   tone: ChipTone;
   lastNoteAt: string | null;
   card: { id: string; stages: Stage[] } | null;
@@ -206,6 +211,7 @@ export function AccountChip({
         </span>
         <b>{account.score}</b>
         <span className={styles.focusChipName}>{account.name}</span>
+        {country && <CountryFlag code={country} className={styles.flag} />}
         {notes.length > 0 && <span className={styles.chipNoteCt}>🗒{notes.length}</span>}
       </button>
 
@@ -228,6 +234,7 @@ export function AccountChip({
               >
                 <span className={styles.chipPop2Head}>
                   <b>{account.name}</b>
+                  {country && <CountryFlag code={country} className={styles.flag} />}
                   <span className={styles.chipPop2Partner}> · {partner}</span>
                   <span className={styles.chipPopStamp}>
                     {lastNoteAt ? (

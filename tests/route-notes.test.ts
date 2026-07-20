@@ -8,6 +8,7 @@ import {
   visibleText,
   withMarker,
   withTags,
+  NO_TAGS,
 } from "@/lib/today/route-notes";
 
 // A slice of the real book shape — several accounts sharing generic industry
@@ -126,18 +127,19 @@ test("route-notes marker round-trip", async (t) => {
 test("note tags marker", async (t) => {
   await t.test("withTags → splitTags round-trips all three fields", () => {
     const body = withTags("call aleks re: bulgaria", {
+      ...NO_TAGS,
       date: "2026-07-18",
       urgency: "high",
       when: "later",
     });
     const { text, tags } = splitTags(body);
     assert.equal(text, "call aleks re: bulgaria");
-    assert.deepEqual(tags, { date: "2026-07-18", urgency: "high", when: "later" });
+    assert.deepEqual(tags, { ...NO_TAGS, date: "2026-07-18", urgency: "high", when: "later" });
   });
 
   await t.test("empty tags add no marker line", () => {
     assert.equal(
-      withTags("plain note", { date: "", urgency: "", when: "" }),
+      withTags("plain note", { ...NO_TAGS, date: "", urgency: "", when: "" }),
       "plain note",
     );
   });
@@ -145,17 +147,17 @@ test("note tags marker", async (t) => {
   await t.test("text without a tag line parses as untagged", () => {
     const { text, tags } = splitTags("no tags here");
     assert.equal(text, "no tags here");
-    assert.deepEqual(tags, { date: "", urgency: "", when: "" });
+    assert.deepEqual(tags, { ...NO_TAGS });
   });
 
   await t.test("malformed values strip with the line but are ignored", () => {
     const { text, tags } = splitTags("note\n⚑[d:notadate,u:mega,w:never]");
     assert.equal(text, "note");
-    assert.deepEqual(tags, { date: "", urgency: "", when: "" });
+    assert.deepEqual(tags, { ...NO_TAGS });
   });
 
   await t.test("tags coexist with a routing marker; visibleText strips both", () => {
-    const tagged = withTags("simploy note", { date: "", urgency: "med", when: "today" });
+    const tagged = withTags("simploy note", { ...NO_TAGS, date: "", urgency: "med", when: "today" });
     const body = withMarker(
       tagged,
       { accountNoteIds: ["an1"], partnerNoteIds: [] },
@@ -171,12 +173,67 @@ test("note tags marker", async (t) => {
   });
 
   await t.test("re-tagging replaces the old tag line instead of stacking", () => {
-    const once = withTags("note", { date: "", urgency: "low", when: "" });
+    const once = withTags("note", { ...NO_TAGS, date: "", urgency: "low", when: "" });
     const { text: stripped } = splitTags(once);
-    const twice = withTags(stripped, { date: "", urgency: "high", when: "today" });
+    const twice = withTags(stripped, { ...NO_TAGS, date: "", urgency: "high", when: "today" });
     const { text, tags } = splitTags(twice);
     assert.equal(text, "note");
-    assert.deepEqual(tags, { date: "", urgency: "high", when: "today" });
+    assert.deepEqual(tags, { ...NO_TAGS, urgency: "high", when: "today" });
     assert.equal(twice.split("⚑").length, 2);
+  });
+});
+
+test("ledger lifecycle tags — kind / delay / doneAt / country", async (t) => {
+  await t.test("k:a round-trips as an action", () => {
+    const body = withTags("build the workbook", { ...NO_TAGS, kind: "action" });
+    const { text, tags } = splitTags(body);
+    assert.equal(text, "build the workbook");
+    assert.equal(tags.kind, "action");
+  });
+
+  await t.test("delay reason survives commas, brackets and unicode", () => {
+    const reason = "waiting on Bryce, per [legal] — étape 2";
+    const body = withTags("chase the contract", { ...NO_TAGS, delay: reason });
+    const { tags } = splitTags(body);
+    assert.equal(tags.delay, reason);
+  });
+
+  await t.test("doneAt keeps epoch millis; junk is ignored", () => {
+    const body = withTags("done thing", { ...NO_TAGS, doneAt: "1753029600000" });
+    assert.equal(splitTags(body).tags.doneAt, "1753029600000");
+    const junk = splitTags("x\n⚑[dn:12:34]").tags;
+    assert.equal(junk.doneAt, "");
+  });
+
+  await t.test("country normalizes to lowercase alpha-2; junk ignored", () => {
+    const body = withTags("esc canada note", { ...NO_TAGS, country: "CA" });
+    assert.equal(splitTags(body).tags.country, "ca");
+    assert.equal(splitTags("x\n⚑[c:CAN]").tags.country, "");
+  });
+
+  await t.test("all lifecycle tags coexist with sheet tags and a routing marker", () => {
+    const tagged = withTags("full house", {
+      date: "2026-07-21",
+      urgency: "high",
+      when: "",
+      kind: "action",
+      delay: "blocked",
+      doneAt: "1753029600000",
+      country: "bg",
+    });
+    const body = withMarker(tagged, { accountNoteIds: ["a1"], partnerNoteIds: [] }, "AP");
+    const { text: afterRoute } = splitMarker(body);
+    const { text, tags } = splitTags(afterRoute);
+    assert.equal(text, "full house");
+    assert.deepEqual(tags, {
+      date: "2026-07-21",
+      urgency: "high",
+      when: "",
+      kind: "action",
+      delay: "blocked",
+      doneAt: "1753029600000",
+      country: "bg",
+    });
+    assert.equal(visibleText(body), "full house");
   });
 });
