@@ -239,6 +239,7 @@ const TODO_STABLE = {
   done: true,
   position: true,
   createdAt: true,
+  updatedAt: true,
 } as const;
 const TODO_ORDER = [{ done: "asc" }, { createdAt: "desc" }] as const;
 
@@ -257,6 +258,7 @@ export async function loadTodos(): Promise<Todo[]> {
       accountId: r.accountId ?? "",
       remindAt: r.remindAt ? r.remindAt.toISOString() : "",
       createdAt: r.createdAt.toISOString(),
+      updatedAt: r.updatedAt.toISOString(),
     }));
   } catch {
     try {
@@ -271,6 +273,7 @@ export async function loadTodos(): Promise<Todo[]> {
         accountId: "",
         remindAt: "",
         createdAt: r.createdAt.toISOString(),
+        updatedAt: r.updatedAt.toISOString(),
       }));
     } catch {
       return [];

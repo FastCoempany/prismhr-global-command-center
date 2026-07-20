@@ -4986,6 +4986,28 @@
   color: var(--ink);
   padding: 1px 4px;
 }
+/* The flag menu's currently-set value — click again to clear. */
+.sheetTagOn {
+  outline: 2px solid #b09a4f;
+  outline-offset: 1px;
+}
+.sheetTagSep {
+  color: #c9bc8d;
+  user-select: none;
+}
+/* Editable past ledger rows — the text is the edit affordance. */
+.lgTxEdit {
+  cursor: pointer;
+}
+.lgTxEdit:hover {
+  text-decoration: underline dotted;
+  text-underline-offset: 2px;
+}
+.lgEditWrap {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+}
 .sheetLater {
   margin-top: 8px;
   border-top: 1px dashed #e0d5b0;

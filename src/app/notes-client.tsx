@@ -271,6 +271,7 @@ export function NotesPanel({
         accountId: "",
         remindAt: nowIso,
         createdAt: nowIso,
+        updatedAt: nowIso,
         status: "saved",
       },
       ...prev,

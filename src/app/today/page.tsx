@@ -29,6 +29,7 @@ import { AtcRow, CurveballButton, type RailItem } from "./atc-rail";
 import { CockpitDrawers } from "./cockpit-drawers";
 import { type DeckKind } from "./deck-row";
 import { LedgerRow } from "./led-row";
+import { PastRow } from "./past-row";
 import {
   daysSinceIso,
   followUpMessage,
@@ -98,7 +99,7 @@ import {
   unsnoozeSignal,
 } from "./actions";
 import { DaySheet } from "./day-sheet";
-import { splitMarker, visibleText } from "@/lib/today/route-notes";
+import { visibleText } from "@/lib/today/route-notes";
 import styles from "../command-center.module.css";
 
 export const dynamic = "force-dynamic";
@@ -924,6 +925,7 @@ export default async function TodayPage({
         at: n.createdAt,
         kind: "note",
         text: `${n.kind === "partner" ? "Partner said" : "Note"} → ${acct}: ${n.body.slice(0, 70)}`,
+        src: { store: "acct", id: n.id, body: n.body },
       });
       seenBodies.add(n.body);
     }
@@ -935,16 +937,19 @@ export default async function TodayPage({
         at: n.createdAt,
         kind: "note",
         text: `Partner note → ${partner}: ${n.body.slice(0, 70)}`,
+        src: { store: "partner", id: n.id, body: n.body },
       });
     }
   }
+  // Sheet notes checked off today bop up here as done events — the ✓ is the
+  // ledger moment. (Plain captures stay on the sheet; capturing isn't an event.)
   for (const t of todos) {
-    if (!sameLocalDayIso(t.createdAt, nowD)) continue;
-    if (splitMarker(t.body).refs) continue; // routed/mirrored — reported above
+    if (!t.done || !sameLocalDayIso(t.updatedAt, nowD)) continue;
     events.push({
-      at: t.createdAt,
-      kind: "note",
-      text: `Captured on the sheet: ${visibleText(t.body).slice(0, 70)}`,
+      at: t.updatedAt,
+      kind: "done",
+      text: `Done — ${visibleText(t.body).slice(0, 70)}`,
+      src: { store: "todo", id: t.id, body: visibleText(t.body) },
     });
   }
   for (const t of touches) {
@@ -966,6 +971,7 @@ export default async function TodayPage({
           at: e.at,
           kind: "done",
           text: `Logged — ${t.label}: ${e.body.slice(0, 60)}`,
+          src: { store: "touchLog", id: t.subjectKey, at: e.at, body: e.body },
         });
     }
   }
@@ -1124,32 +1130,12 @@ export default async function TodayPage({
                 <details className={styles.lgEarlier}>
                   <summary>earlier today ({pastEarlier.length}) ▸</summary>
                   {pastEarlier.map((e, i) => (
-                    <div className={`${styles.lgRow} ${styles.lgPast}`} key={`pe-${i}`}>
-                      <span className={styles.lgTm}>{clockShort(e.at)}</span>
-                      <span
-                        className={`${styles.lgDot} ${
-                          e.kind === "send" ? styles.lgDotSend : styles.lgDotDone
-                        }`}
-                      />
-                      <span className={styles.lgTx} title={e.text}>
-                        {e.text}
-                      </span>
-                    </div>
+                    <PastRow key={`pe-${i}`} e={e} timeLabel={clockShort(e.at)} />
                   ))}
                 </details>
               )}
               {pastRecent.map((e, i) => (
-                <div className={`${styles.lgRow} ${styles.lgPast}`} key={`pr-${i}`}>
-                  <span className={styles.lgTm}>{clockShort(e.at)}</span>
-                  <span
-                    className={`${styles.lgDot} ${
-                      e.kind === "send" ? styles.lgDotSend : styles.lgDotDone
-                    }`}
-                  />
-                  <span className={styles.lgTx} title={e.text}>
-                    {e.text}
-                  </span>
-                </div>
+                <PastRow key={`pr-${i}`} e={e} timeLabel={clockShort(e.at)} />
               ))}
               {pastEvents.length === 0 && (
                 <div className={`${styles.lgRow} ${styles.lgPast}`}>

@@ -4,6 +4,7 @@
 // sheet never reloads the page), so they RETURN values instead of redirecting.
 // Every write degrades gracefully when tables aren't migrated.
 
+import { revalidatePath } from "next/cache";
 import { getAppAccess } from "@/lib/auth";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import { accountIntel } from "@/lib/today/build";
@@ -103,6 +104,7 @@ export async function captureSheetNote(
     const t = await prisma.todo
       .create({ data: { body, position, remindAt: new Date() } })
       .catch(() => prisma.todo.create({ data: { body, position } }));
+    if (body !== text) revalidatePath("/today"); // routed → ledger note rows changed
     return {
       id: t.id,
       body,
@@ -160,6 +162,7 @@ export async function routeSheetNote(
         ? withMarker(text, written, routeLabel(targets))
         : t.body;
     await prisma.todo.update({ where: { id }, data: { body } });
+    revalidatePath("/today");
     return asSheetNote(id, body, t.done, t.remindAt, t.createdAt);
   } catch {
     return null;
@@ -186,6 +189,7 @@ export async function undoSheetRoute(id: string): Promise<SheetNote | null> {
           .catch(() => null);
     }
     await prisma.todo.update({ where: { id }, data: { body: text } });
+    revalidatePath("/today");
     return asSheetNote(id, text, t.done, t.remindAt, t.createdAt);
   } catch {
     return null;
@@ -226,6 +230,7 @@ export async function saveSheetNote(id: string, text: string): Promise<SheetNote
     const clean = withTags(text.trim().slice(0, 20000), tags);
     const body = refs ? withMarker(clean, refs, label) : clean;
     await prisma.todo.update({ where: { id }, data: { body } });
+    revalidatePath("/today");
     return asSheetNote(id, body, t.done, t.remindAt, t.createdAt);
   } catch {
     return null;
@@ -256,6 +261,7 @@ export async function tagSheetNote(
     const tagged = withTags(plain, safe);
     const body = refs ? withMarker(tagged, refs, label) : tagged;
     await prisma.todo.update({ where: { id }, data: { body } });
+    revalidatePath("/today");
     return asSheetNote(id, body, t.done, t.remindAt, t.createdAt);
   } catch {
     return null;

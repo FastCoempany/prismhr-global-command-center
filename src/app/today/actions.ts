@@ -8,8 +8,9 @@ import { randomUUID } from "node:crypto";
 import { asFieldNoteKind } from "@/lib/field-notes/data";
 import { asFollowUpWhen, nextCheckIn, type TouchLogEntry } from "@/lib/today/follow-ups";
 import { accountIntel } from "@/lib/today/build";
-import { withAsk } from "@/lib/today/ledger";
+import { withAsk, type LedgerSrc } from "@/lib/today/ledger";
 import { mirrorNoteToSheet } from "@/lib/today/mirror";
+import { splitMarker, splitTags, withMarker, withTags } from "@/lib/today/route-notes";
 
 function str(fd: FormData, key: string, max = 4000) {
   const v = fd.get(key);
@@ -606,6 +607,9 @@ export async function setTodoDone(id: string, done: boolean): Promise<{ ok: bool
   if (!(await requireWrite()) || !id) return { ok: false };
   try {
     await getPrisma().todo.update({ where: { id }, data: { done: !!done } });
+    // The ✓ lands the note on Today's ledger (its "done" event) — refresh the
+    // server-rendered tab so it bops up without a manual reload.
+    revalidatePath("/today");
     return { ok: true };
   } catch {
     return { ok: false };
@@ -616,6 +620,74 @@ export async function deleteTodoNote(id: string): Promise<{ ok: boolean }> {
   if (!(await requireWrite()) || !id) return { ok: false };
   try {
     await getPrisma().todo.deleteMany({ where: { id } });
+    revalidatePath("/today");
+    return { ok: true };
+  } catch {
+    return { ok: false };
+  }
+}
+
+// --- Ledger row edit/delete ---------------------------------------------
+// Past ledger rows are assembled from four stores; each editable row carries a
+// LedgerSrc pointing at where its words live. These two actions are called
+// programmatically from the row (no reload), so they return values.
+
+export async function saveLedgerNote(
+  src: LedgerSrc,
+  body: string,
+): Promise<{ ok: boolean }> {
+  const text = (body ?? "").trim().slice(0, 20000);
+  if (!(await requireWrite()) || !src?.id || !text) return { ok: false };
+  const prisma = getPrisma();
+  try {
+    if (src.store === "acct") {
+      await prisma.accountNote.update({ where: { id: src.id }, data: { body: text } });
+    } else if (src.store === "partner") {
+      await prisma.partnerNote.update({ where: { id: src.id }, data: { body: text } });
+    } else if (src.store === "todo") {
+      // Sheet notes carry routing markers + tags in the body — preserve both.
+      const t = await prisma.todo.findUnique({ where: { id: src.id } });
+      if (!t) return { ok: false };
+      const { text: old, refs, label } = splitMarker(t.body);
+      const { tags } = splitTags(old);
+      const clean = withTags(text, tags);
+      await prisma.todo.update({
+        where: { id: src.id },
+        data: { body: refs ? withMarker(clean, refs, label) : clean },
+      });
+    } else {
+      // touchLog: replace one entry's body inside the touch's timeline.
+      const t = await prisma.touch.findUnique({ where: { subjectKey: src.id } });
+      if (!t) return { ok: false };
+      const log = touchLog(t.log).map((e) =>
+        e.at === src.at ? { ...e, body: text } : e,
+      );
+      await prisma.touch.update({ where: { subjectKey: src.id }, data: { log } });
+    }
+    revalidatePath("/today");
+    return { ok: true };
+  } catch {
+    return { ok: false };
+  }
+}
+
+export async function deleteLedgerNote(src: LedgerSrc): Promise<{ ok: boolean }> {
+  if (!(await requireWrite()) || !src?.id) return { ok: false };
+  const prisma = getPrisma();
+  try {
+    if (src.store === "acct") {
+      await prisma.accountNote.deleteMany({ where: { id: src.id } });
+    } else if (src.store === "partner") {
+      await prisma.partnerNote.deleteMany({ where: { id: src.id } });
+    } else if (src.store === "todo") {
+      await prisma.todo.deleteMany({ where: { id: src.id } });
+    } else {
+      const t = await prisma.touch.findUnique({ where: { subjectKey: src.id } });
+      if (!t) return { ok: false };
+      const log = touchLog(t.log).filter((e) => e.at !== src.at);
+      await prisma.touch.update({ where: { subjectKey: src.id }, data: { log } });
+    }
+    revalidatePath("/today");
     return { ok: true };
   } catch {
     return { ok: false };

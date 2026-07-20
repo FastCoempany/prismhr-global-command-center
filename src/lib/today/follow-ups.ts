@@ -51,6 +51,7 @@ export type Todo = {
   accountId: string; // "" = unlinked
   remindAt: string; // ISO ("" = none — display falls back to createdAt)
   createdAt: string; // ISO
+  updatedAt: string; // ISO — for done notes this is when the ✓ landed
 };
 
 // Stable, deterministic subject keys. The kickoff key carries the ISO week so the

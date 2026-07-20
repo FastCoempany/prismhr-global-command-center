@@ -131,7 +131,6 @@ function NoteRow({
   const [draft, setDraft] = useState(text);
   const [picking, setPicking] = useState(false);
   const [tagging, setTagging] = useState(false);
-  const [tagDraft, setTagDraft] = useState<NoteTags>(tags);
   const [busy, setBusy] = useState(false);
   // Long notes sit clamped to a single row; the chevron (or a click on the
   // text) opens the full note. Short notes skip the ceremony entirely.
@@ -141,10 +140,7 @@ function NoteRow({
   const day = todoDay(n.remindAt);
   const hasTags = !!(tags.date || tags.urgency || tags.when);
 
-  const openTagger = () => {
-    setTagDraft(tags);
-    setTagging((v) => !v);
-  };
+  const openTagger = () => setTagging((v) => !v);
 
   const run = async (fn: () => Promise<SheetNote | null>) => {
     if (busy) return;
@@ -153,6 +149,13 @@ function NoteRow({
     if (s) onChange(apply(n, s));
     setBusy(false);
     return s;
+  };
+
+  // One click sets the tag and closes the menu; clicking the active value
+  // clears it. The date input applies the moment a date is picked.
+  const pick = async (next: NoteTags) => {
+    await run(() => tagSheetNote(n.id, next));
+    setTagging(false);
   };
 
   return (
@@ -326,52 +329,45 @@ function NoteRow({
       </span>
       {tagging && (
         <span className={styles.sheetTagEd}>
-          <select
-            value={tagDraft.urgency}
-            aria-label="Urgency"
-            onChange={(e) =>
-              setTagDraft((t) => ({
-                ...t,
-                urgency: e.target.value as NoteTags["urgency"],
-              }))
-            }
-          >
-            <option value="">urgency —</option>
-            <option value="low">low</option>
-            <option value="med">med</option>
-            <option value="high">high</option>
-          </select>
-          <select
-            value={tagDraft.when}
-            aria-label="Today or later"
-            onChange={(e) =>
-              setTagDraft((t) => ({
-                ...t,
-                when: e.target.value as NoteTags["when"],
-              }))
-            }
-          >
-            <option value="">today/later —</option>
-            <option value="today">today</option>
-            <option value="later">later</option>
-          </select>
+          {(["today", "later"] as const).map((w) => (
+            <button
+              key={w}
+              type="button"
+              disabled={busy}
+              className={`${styles.sheetTagChip} ${styles.sheetWhenChip} ${
+                tags.when === w ? styles.sheetTagOn : ""
+              }`}
+              onClick={() => pick({ ...tags, when: tags.when === w ? "" : w })}
+            >
+              {w}
+            </button>
+          ))}
+          <span className={styles.sheetTagSep}>·</span>
+          {(["high", "med", "low"] as const).map((u) => (
+            <button
+              key={u}
+              type="button"
+              disabled={busy}
+              className={`${styles.sheetTagChip} ${
+                u === "high"
+                  ? styles.sheetUrgHigh
+                  : u === "med"
+                    ? styles.sheetUrgMed
+                    : styles.sheetUrgLow
+              } ${tags.urgency === u ? styles.sheetTagOn : ""}`}
+              onClick={() => pick({ ...tags, urgency: tags.urgency === u ? "" : u })}
+            >
+              {u}
+            </button>
+          ))}
+          <span className={styles.sheetTagSep}>·</span>
           <input
             type="date"
-            value={tagDraft.date}
+            value={tags.date}
             aria-label="Date"
-            onChange={(e) => setTagDraft((t) => ({ ...t, date: e.target.value }))}
-          />
-          <button
-            type="button"
-            className={styles.sheetBtn}
             disabled={busy}
-            onClick={async () => {
-              await run(() => tagSheetNote(n.id, tagDraft));
-              setTagging(false);
-            }}
-          >
-            Set
-          </button>
+            onChange={(e) => pick({ ...tags, date: e.target.value })}
+          />
           <button
             type="button"
             className={styles.sheetGhost}
