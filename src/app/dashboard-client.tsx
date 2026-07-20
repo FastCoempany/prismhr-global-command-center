@@ -24,6 +24,7 @@ import {
   toggleCheck,
 } from "./dashboard/actions";
 import { AccountChipNotes, type ChipNote } from "@/components/account-notes";
+import { CountryFlag } from "@/lib/flags";
 import styles from "./dashboard.module.css";
 
 type Props = {
@@ -32,6 +33,7 @@ type Props = {
   dbUnavailable: boolean;
   labels: Record<string, string>;
   notesByName?: Record<string, ChipNote[]>; // chip-written worked notes, by card name
+  countryByName?: Record<string, string>; // deal-country flag per card name (iso2)
 };
 
 const glyph = (state: NodeState) => (state === "done" ? "✓" : "");
@@ -135,6 +137,7 @@ export function DashboardClient({
   dbUnavailable,
   labels,
   notesByName = {},
+  countryByName = {},
 }: Props) {
   const [renaming, setRenaming] = useState<string | null>(null);
   const [showRename, setShowRename] = useState(false);
@@ -242,7 +245,15 @@ export function DashboardClient({
                   </form>
                 ) : (
                   <>
-                    <div className={styles.name}>{card.name}</div>
+                    <div className={styles.name}>
+                      {card.name}
+                      {countryByName[card.name] && (
+                        <CountryFlag
+                          code={countryByName[card.name]}
+                          className={styles.cardFlag}
+                        />
+                      )}
+                    </div>
                     {card.subtitle && <div className={styles.meta}>{card.subtitle}</div>}
                     {(() => {
                       const next = nextStep(card);

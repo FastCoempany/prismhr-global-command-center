@@ -12,6 +12,54 @@ import {
   markResponded,
 } from "./today/actions";
 
+// The digital clock — Chicago time with ticking seconds, in a precise
+// instrument capsule at the top of Today. Hydration-safe: renders em-dashes on
+// the server, real time after mount.
+export function ChiClock() {
+  const [now, setNow] = useState<Date | null>(null);
+  useEffect(() => {
+    const update = () => setNow(new Date());
+    const first = setTimeout(update, 0);
+    const id = setInterval(update, 1000);
+    return () => {
+      clearTimeout(first);
+      clearInterval(id);
+    };
+  }, []);
+  const time = now
+    ? now.toLocaleTimeString("en-US", {
+        timeZone: USER_TZ,
+        hour: "numeric",
+        minute: "2-digit",
+        second: "2-digit",
+      })
+    : "—:——:——";
+  const date = now
+    ? now
+        .toLocaleDateString("en-US", {
+          timeZone: USER_TZ,
+          weekday: "short",
+          month: "short",
+          day: "numeric",
+        })
+        .toUpperCase()
+        .replace(/,/g, " ·")
+    : "";
+  return (
+    <span className={styles.chiClock} aria-label="Current time in Chicago">
+      <span className={styles.chiClockDigits} suppressHydrationWarning>
+        {time}
+      </span>
+      <span className={styles.chiClockSide}>
+        <span className={styles.chiClockZone}>AMERICA/CHICAGO</span>
+        <span className={styles.chiClockDate} suppressHydrationWarning>
+          {date}
+        </span>
+      </span>
+    </span>
+  );
+}
+
 // A visible, editable message box: see exactly what you're sending, tweak it,
 // then copy the edited text. Auto-grows to fit. Used for partner messages and
 // week-openers so nothing is copied blind.
