@@ -6579,3 +6579,27 @@
   width: 13px;
   height: 13px;
 }
+
+/* Past-row rescue: 🞿 make-this-an-action — quiet until the row is hovered. */
+.pastToAction {
+  background: none;
+  border: 0;
+  cursor: pointer;
+  padding: 1px 5px;
+  border-radius: 6px;
+  line-height: 0;
+  opacity: 0;
+  transition:
+    opacity 0.18s ease,
+    background 0.15s ease;
+}
+.pastToAction .pow {
+  width: 13px;
+  height: 13px;
+}
+.lgRow:hover .pastToAction {
+  opacity: 1;
+}
+.pastToAction:hover {
+  background: #fff3e8;
+}
