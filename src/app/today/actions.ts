@@ -11,6 +11,7 @@ import { accountIntel } from "@/lib/today/build";
 import { withAsk, type LedgerSrc } from "@/lib/today/ledger";
 import { mirrorNoteToSheet } from "@/lib/today/mirror";
 import {
+  NO_TAGS,
   splitMarker,
   splitTags,
   withMarker,
@@ -800,6 +801,55 @@ export async function deleteLedgerNote(src: LedgerSrc): Promise<{ ok: boolean }>
       if (!t) return { ok: false };
       const log = touchLog(t.log).filter((e) => e.at !== src.at);
       await prisma.touch.update({ where: { subjectKey: src.id }, data: { log } });
+    }
+    revalidatePath("/today");
+    return { ok: true };
+  } catch {
+    return { ok: false };
+  }
+}
+
+// Miscapture escape hatch — turn any ledger NOTE into an open ACTION. A
+// todo-sourced row simply retags in place (keeps its identity and undoes an
+// accidental ✓); notes living in other stores become a fresh action todo and
+// the original entry is removed, so nothing double-reports.
+export async function makeLedgerAction(src: LedgerSrc): Promise<{ ok: boolean }> {
+  if (!(await requireWrite()) || !src?.id) return { ok: false };
+  const prisma = getPrisma();
+  try {
+    if (src.store === "todo") {
+      const t = await prisma.todo.findUnique({ where: { id: src.id } });
+      if (!t) return { ok: false };
+      const { text, refs, label } = splitMarker(t.body);
+      const { text: plain, tags } = splitTags(text);
+      const tagged = withTags(plain, { ...tags, kind: "action", doneAt: "", delay: "" });
+      await prisma.todo.update({
+        where: { id: src.id },
+        data: { body: refs ? withMarker(tagged, refs, label) : tagged, done: false },
+      });
+    } else {
+      const body = (src.body ?? "").trim().slice(0, 20000);
+      if (!body) return { ok: false };
+      const top = await prisma.todo.findFirst({
+        orderBy: { position: "desc" },
+        select: { position: true },
+      });
+      await prisma.todo.create({
+        data: {
+          body: withTags(body, { ...NO_TAGS, kind: "action" }),
+          position: (top?.position ?? -1) + 1,
+        },
+      });
+      if (src.store === "acct") {
+        await prisma.accountNote.deleteMany({ where: { id: src.id } });
+      } else if (src.store === "partner") {
+        await prisma.partnerNote.deleteMany({ where: { id: src.id } });
+      } else {
+        const t = await prisma.touch.findUnique({ where: { subjectKey: src.id } });
+        if (!t) return { ok: false };
+        const log = touchLog(t.log).filter((e) => e.at !== src.at);
+        await prisma.touch.update({ where: { subjectKey: src.id }, data: { log } });
+      }
     }
     revalidatePath("/today");
     return { ok: true };

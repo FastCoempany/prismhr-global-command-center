@@ -7,8 +7,8 @@
 
 import { useState } from "react";
 import type { LedgerEvent } from "@/lib/today/ledger";
-import { deleteLedgerNote, saveLedgerNote } from "./actions";
-import { Glyph } from "./ledger-icons";
+import { deleteLedgerNote, makeLedgerAction, saveLedgerNote } from "./actions";
+import { Glyph, PowIcon } from "./ledger-icons";
 import styles from "../command-center.module.css";
 
 export function PastRow({ e, timeLabel }: { e: LedgerEvent; timeLabel: string }) {
@@ -22,7 +22,8 @@ export function PastRow({ e, timeLabel }: { e: LedgerEvent; timeLabel: string })
 
   if (gone) return null;
   const src = e.src;
-  const shown = savedBody === null ? e.text : `${textPrefix(e.text)}${savedBody.slice(0, 70)}`;
+  const shown =
+    savedBody === null ? e.text : `${textPrefix(e.text)}${savedBody.slice(0, 70)}`;
 
   const save = async () => {
     if (!src || busy) return;
@@ -42,6 +43,15 @@ export function PastRow({ e, timeLabel }: { e: LedgerEvent; timeLabel: string })
     if (!src || busy) return;
     setBusy(true);
     const r = await deleteLedgerNote(src);
+    setBusy(false);
+    if (r.ok) setGone(true);
+  };
+
+  // Miscapture rescue — this note becomes an open ACTION below the now-line.
+  const toAction = async () => {
+    if (!src || busy) return;
+    setBusy(true);
+    const r = await makeLedgerAction({ ...src, body: savedBody ?? src.body });
     setBusy(false);
     if (r.ok) setGone(true);
   };
@@ -81,6 +91,17 @@ export function PastRow({ e, timeLabel }: { e: LedgerEvent; timeLabel: string })
           >
             {shown}
           </span>
+          {src && (
+            <button
+              type="button"
+              className={styles.pastToAction}
+              title="Make this an action — it moves below the now-line, open"
+              disabled={busy}
+              onClick={toAction}
+            >
+              <PowIcon />
+            </button>
+          )}
           {src && (
             <button
               type="button"
