@@ -70,7 +70,7 @@ export const ALEKS_SESSIONS: AleksSession[] = [
         title: "Partner engagement — the roundup program",
         bullets: [
           "Standing roundup motion across six partners (Lesha, Anika, Whitney, John, Eric, + new HCM-side partner Kathryn Maddox); every thread on reply/follow-up tracking. Three partners have replied with real intel.",
-          "Whitney Dideon — met 7/13 (10a); she's the incoming Regional VP of HCM, ~3 weeks in seat. 4-account roundup delivered; she'll gauge as she connects with her clients (no formal meetings yet). She carries the HCM book (Cody Jensen's old accounts) — key long-game partner.",
+          "Whitney Dideon — met 7/13 (10a); she's the incoming Regional VP of HCM, ~3 weeks in seat. 4-account roundup delivered; she'll gauge as she connects with her clients (no formal meetings yet). She carries the HCM book (the legacy HCM accounts) — key long-game partner.",
           "John Hebert — replied 7/10: Premier Payroll acquired by Vensure 9/2025 → scrubbed to the exclusions ledger. His warning: “Vensure is like a vacuum sucking up other customers regularly” — flagged as standing book hygiene. His live angle: Meridian + Payroll Solutions, both in active HCM implementation.",
           "Anika — two replies: account-by-account read (Infiniti HR — monthly calls, SBR early fall, renewed 8/1; Nextep — bi-weekly calls, ~40k WSE growth goal, renews 9/1/2028; Genesis HR — child of Engage PEO; eEmployers — gauge next call; OnePoint — cold, include her) plus the XcelHR call invite. Consolidated reply is next.",
           "Lesha's roundup leads with the live Simploy thread; Eric's carries SubcontractorHub as shared status.",
@@ -79,10 +79,10 @@ export const ALEKS_SESSIONS: AleksSession[] = [
       {
         title: "Book coverage & what's next",
         bullets: [
-          "HCM roster loaded from the 7/13 SF export: 19 active HCM clients mapped, 4 net-new accounts, 3 former customers excluded, ownership matched to SF; Cody Jensen's nine accounts carried under Whitney.",
+          "HCM roster loaded from the 7/13 SF export: 19 active HCM clients mapped, 4 net-new accounts, 3 former customers excluded, ownership matched to SF; nine legacy HCM accounts carried under Whitney.",
           "Full book heat-scored; no-drop cadence on every thread (sent → reply logged → my response → archived; business-day check-ins).",
           "Next 48 hours: chase SubcontractorHub's reaction (closest to signature); lock the Simploy call; reply to Anika (XcelHR invite + Infiniti/Genesis angles); send remaining roundups.",
-          "Asks: who tracks Vensure's customer acquisitions (sweep the book before more dead leads surface); refresh cadence for the SF HCM report + fuller export; confirm HCM data ownership with Cody inactive; conference-glasses shipping status for Chassie.",
+          "Asks: who tracks Vensure's customer acquisitions (sweep the book before more dead leads surface); refresh cadence for the SF HCM report + fuller export; confirm HCM data ownership under Whitney; conference-glasses shipping status for Chassie.",
         ],
       },
     ],

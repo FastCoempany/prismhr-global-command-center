@@ -98,7 +98,6 @@ import {
   sheetActionBack,
   updateTouchAsk,
   setThreadStatus,
-  snoozeSignal,
   toggleTaskDone,
   unmuteRoundupPartner,
   unsnoozeSignal,
@@ -152,31 +151,7 @@ function SeedForm({
   );
 }
 
-// "Park ▾" — a disclosure with the snooze form (reason + optional resurface).
-function ParkControl({ id }: { id: string }) {
-  return (
-    <details className={styles.park}>
-      <summary className={styles.parkSummary}>Park ▾</summary>
-      <form action={snoozeSignal} className={styles.parkForm}>
-        <input type="hidden" name="accountId" value={id} />
-        <input
-          name="reason"
-          required
-          maxLength={300}
-          placeholder="Why park it?"
-          aria-label="Reason"
-        />
-        <select name="days" defaultValue="0" aria-label="Resurface">
-          <option value="0">until I un-park</option>
-          <option value="3">in 3 days</option>
-          <option value="7">in 7 days</option>
-          <option value="14">in 14 days</option>
-        </select>
-        <button className={styles.parkBtn}>Park</button>
-      </form>
-    </details>
-  );
-}
+// ("Park ▾" is retired — deciding means seeding it or marking it done.)
 
 // Kind-tag classes for Work-rail rows (shared by DeckRow and the done rows here).
 const DECK_KIND_CLS: Record<DeckKind, string> = {
@@ -215,7 +190,9 @@ function Emph({ text, term, href }: { text: string; term: string; href?: string 
   );
 }
 
-// The labeled, color-coded guidance body: DO THIS · HOW · SAY THIS · CONSIDER.
+// The expansion body — the say-this block and the action panel. The "Do this"
+// restatement and "Also consider" advice are retired: the row itself already
+// says what needs looking into.
 function GuidanceBody({
   g,
   term,
@@ -230,13 +207,7 @@ function GuidanceBody({
   sayNode?: ReactNode; // overrides the default "Say this" block (e.g. a ContactControl)
 }) {
   return (
-    <div className={styles.gWrap}>
-      <div className={styles.gDo}>
-        <span className={styles.gDoLabel}>Do this</span>
-        <span className={styles.gDoText}>
-          <Emph text={g.do} term={term} href={href} />
-        </span>
-      </div>
+    <div className={styles.gWrap} data-term={term || undefined} data-href={href}>
       {sayNode
         ? sayNode
         : g.say && (
@@ -246,12 +217,6 @@ function GuidanceBody({
             </div>
           )}
       {children}
-      {g.consider && (
-        <div className={styles.gConsider}>
-          <span className={styles.gConsiderLabel}>Also consider</span>
-          <span className={styles.gConsiderText}>{g.consider}</span>
-        </div>
-      )}
     </div>
   );
 }
@@ -303,7 +268,6 @@ function MorningMove({
     actions = (
       <div className={styles.gActions}>
         <SeedForm a={a} onBoard={false} label="Seed to dashboard" />
-        <ParkControl id={a.id} />
         <form action={toggleTaskDone} className={styles.mvDoneForm}>
           <input type="hidden" name="key" value={doneKey} />
           <button className={styles.mvDoneBtn}>Mark done ✓</button>
@@ -636,6 +600,13 @@ export default async function TodayPage({
   const touchMap = new Map(touches.map((t) => [t.subjectKey, t]));
   const followUps = partitionFollowUps(touches);
 
+  // ✕ HIDES, never deletes — hidden items leave every Today surface and wait
+  // in the Archive's hidden bin, restorable.
+  const hiddenKeys = new Set(
+    [...dispositions.keys()].filter((k) => k.startsWith("hide:")),
+  );
+  const visibleTodos = todos.filter((t) => !hiddenKeys.has(`hide:todo:${t.id}`));
+
   // Not-mine accounts vanish from every Today surface — they live only in the
   // Account Room's exclusions ledger. Motion/parked stay visible (marked) but
   // drop out of the default roundup.
@@ -801,7 +772,7 @@ export default async function TodayPage({
     (r) => r.status === "none" || r.status === "archived",
   );
   // Open notes with a future date join the Scheduled list on the right.
-  const futureNotes = futureDatedTodos(todos);
+  const futureNotes = futureDatedTodos(visibleTodos);
 
   const sop = stateOfPlay({ cards: dash.cards, commitments, activeSignals, onBoard });
 
@@ -931,6 +902,7 @@ export default async function TodayPage({
   for (const [accId, list] of acctNotes) {
     for (const n of list) {
       if (!sameLocalDayIso(n.createdAt, nowD)) continue;
+      if (hiddenKeys.has(`hide:acct:${n.id}`)) continue;
       const acct = nameOf.get(accId) ?? "account";
       events.push({
         at: n.createdAt,
@@ -944,6 +916,7 @@ export default async function TodayPage({
   for (const [partner, list] of partnerNotes) {
     for (const n of list) {
       if (!sameLocalDayIso(n.createdAt, nowD) || seenBodies.has(n.body)) continue;
+      if (hiddenKeys.has(`hide:partner:${n.id}`)) continue;
       events.push({
         at: n.createdAt,
         kind: "note",
@@ -954,7 +927,7 @@ export default async function TodayPage({
   }
   // Sheet notes checked off today bop up here as done events — the ✓ is the
   // ledger moment. (Plain captures stay on the sheet; capturing isn't an event.)
-  for (const t of todos) {
+  for (const t of visibleTodos) {
     if (!t.done || !sameLocalDayIso(t.updatedAt, nowD)) continue;
     // Done ACTIONS render as their own rows above the line (with the File →
     // pickers) — this loop reports plain sheet notes checked ✓.
@@ -980,6 +953,7 @@ export default async function TodayPage({
         } sent → ${t.label}`,
       });
     for (const e of t.log) {
+      if (hiddenKeys.has(`hide:touchLog:${t.subjectKey}|${e.at}`)) continue;
       if (sameLocalDayIso(e.at, nowD))
         events.push({
           at: e.at,
@@ -1102,13 +1076,19 @@ export default async function TodayPage({
   const roundupDelayed =
     dueRoundupRows.length > 0 &&
     isDelayed("roundup", "roundup", `Roundup due — ${dueRoundupLabel}`);
+  // Then-if-time rows: Done ✓ retires them (task-done key), ⏲ delays them.
+  const laterLive = laterTriage.filter(
+    (a) =>
+      !doneKeys.has(`later:${a.id}`) &&
+      !isDelayed(`later:${a.id}`, "decide", `Look into ${a.name}`),
+  );
 
   // Sheet actions — todos tagged k:a. Open ones sit on the ledger's open
   // register; done-today ones sit above the NOW line offering the File →
   // pickers (the routing tech, post-✓).
   const todoTagsOf = (t: (typeof todos)[number]) =>
     splitTags(splitMarker(t.body).text).tags;
-  const actionTodos = todos.filter((t) => todoTagsOf(t).kind === "action");
+  const actionTodos = visibleTodos.filter((t) => todoTagsOf(t).kind === "action");
   const openActions = actionTodos.filter(
     (t) => !t.done && !isDelayed(`todo:${t.id}`, "action", visibleText(t.body)),
   );
@@ -1631,26 +1611,36 @@ export default async function TodayPage({
               )}
 
               {/* Then, if there's time. */}
-              {(laterTriage.length > 0 || dash.status === "active") && (
+              {(laterLive.length > 0 || dash.status === "active") && (
                 <>
                   <div className={styles.lgSub}>
                     Then, if there&apos;s time (
-                    {laterTriage.length + (dash.status === "active" ? 1 : 0)})
+                    {laterLive.length + (dash.status === "active" ? 1 : 0)})
                   </div>
-                  {laterTriage.map((a) => (
+                  {laterLive.map((a) => (
                     <LedgerRow
                       key={a.id}
                       tone="check"
+                      icon="decide"
                       text={
                         <Emph
-                          text={`Decide on ${a.name} — seed it or park it`}
+                          text={`Look into ${a.name}`}
                           term={a.name}
                           href={`/accounts?focus=${a.id}`}
                         />
                       }
-                      textTitle={`Decide on ${a.name} — seed it or park it`}
+                      textTitle={`Look into ${a.name}`}
+                      flag={flagFor(a.name)}
                       meta={`demand ${a.demand ?? "—"}${!isStrongSignal(a) ? " · emerging" : ""}`}
-                      primaryLabel="Decide ▸"
+                      primary={
+                        <form action={toggleTaskDone} className={styles.valInline}>
+                          <input type="hidden" name="key" value={`later:${a.id}`} />
+                          <button className={`${styles.atcBtn} ${styles.atcGo}`}>
+                            Done ✓
+                          </button>
+                        </form>
+                      }
+                      controls={<DelayControl rowKey={`later:${a.id}`} />}
                     >
                       <GuidanceBody
                         g={triageGuidance(a)}
@@ -1662,7 +1652,6 @@ export default async function TodayPage({
                         )}
                         <div className={styles.gActions}>
                           <SeedForm a={a} onBoard={false} label="Seed to dashboard" />
-                          <ParkControl id={a.id} />
                         </div>
                       </GuidanceBody>
                     </LedgerRow>
@@ -1818,7 +1807,7 @@ export default async function TodayPage({
                 everything lands here · route from here
               </span>
             </div>
-            <DaySheet initialNotes={todos} dateLabel={todayLabel()} />
+            <DaySheet initialNotes={visibleTodos} dateLabel={todayLabel()} />
           </div>
 
           {/* ══ EDGE TRAYS — roundups & scheduled live off-page, flying out

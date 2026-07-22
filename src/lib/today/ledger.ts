@@ -65,3 +65,10 @@ export type LedgerEvent = {
 export function sortEvents(events: LedgerEvent[]): LedgerEvent[] {
   return [...events].sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
 }
+
+// The hidden bin's disposition key for a ledger source — ✕ hides (parks the
+// item in the Archive), it never deletes.
+export function hideKeyFor(src: Pick<LedgerSrc, "store" | "id" | "at">): string {
+  const at = src.store === "touchLog" && src.at ? `|${src.at}` : "";
+  return `hide:${src.store}:${src.id}${at}`;
+}
