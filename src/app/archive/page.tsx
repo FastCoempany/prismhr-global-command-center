@@ -47,6 +47,8 @@ const STORE_LABEL: Record<string, string> = {
   acct: "account note",
   partner: "partner note",
   touchLog: "thread log",
+  move: "checked move",
+  send: "sent stamp",
 };
 
 export default async function ArchivePage({

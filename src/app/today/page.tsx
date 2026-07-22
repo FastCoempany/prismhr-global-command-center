@@ -940,7 +940,10 @@ export default async function TodayPage({
     });
   }
   for (const t of touches) {
-    if (sameLocalDayIso(t.contactedAt, nowD))
+    if (
+      sameLocalDayIso(t.contactedAt, nowD) &&
+      !hiddenKeys.has(`hide:send:${t.subjectKey}|${t.contactedAt}`)
+    )
       events.push({
         at: t.contactedAt,
         kind: "send",
@@ -951,6 +954,7 @@ export default async function TodayPage({
               ? "Outreach"
               : "Follow-up"
         } sent → ${t.label}`,
+        hideKey: `hide:send:${t.subjectKey}|${t.contactedAt}`,
       });
     for (const e of t.log) {
       if (hiddenKeys.has(`hide:touchLog:${t.subjectKey}|${e.at}`)) continue;
@@ -967,6 +971,7 @@ export default async function TodayPage({
     if (it.mv.kind === "outreach") continue; // its touch event covers it
     const at = doneTimes.get(it.key) ?? "";
     if (!at || !sameLocalDayIso(at, nowD)) continue;
+    if (hiddenKeys.has(`hide:move:${it.key}`)) continue;
     events.push({
       at,
       kind: "done",
@@ -974,6 +979,8 @@ export default async function TodayPage({
         it.mv.kind === "triage"
           ? `Decided ${it.mv.a.name}`
           : `${it.mv.step.cardName}: ${it.mv.step.item}`,
+      undoKey: it.key,
+      hideKey: `hide:move:${it.key}`,
     });
   }
   const pastEvents = sortEvents(events);

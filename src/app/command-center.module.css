@@ -6715,3 +6715,21 @@
 .arcDelete:hover {
   background: #fdf3f3;
 }
+
+/* Past-row controls live in ONE grid cell — three loose buttons used to
+   overflow the 4-column row grid and wrap onto phantom lines. Quietly visible
+   at rest (not hover-only — nobody discovers invisible buttons), full on hover. */
+.lgCtl {
+  display: inline-flex;
+  gap: 3px;
+  align-items: baseline;
+  white-space: nowrap;
+  opacity: 0.5;
+  transition: opacity 0.15s ease;
+}
+.lgRow:hover .lgCtl {
+  opacity: 1;
+}
+.lgCtl .pastToAction {
+  opacity: 1; /* the wrapper handles rest-state quieting now */
+}
