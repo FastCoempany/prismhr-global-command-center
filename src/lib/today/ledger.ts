@@ -60,6 +60,9 @@ export type LedgerEvent = {
   text: string;
   kind: "note" | "send" | "done";
   src?: LedgerSrc; // present = the row is editable/deletable in place
+  // Src-less rows (checked moves, sent stamps) stay malleable through these:
+  undoKey?: string; // TaskDone key — ↩ un-checks the move (drops back open)
+  hideKey?: string; // raw hide: disposition key — ✕ parks it in the Archive
 };
 
 export function sortEvents(events: LedgerEvent[]): LedgerEvent[] {

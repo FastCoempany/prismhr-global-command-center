@@ -1,17 +1,21 @@
 "use client";
 
-// One past row on Today's tab. Rows that carry a LedgerSrc (notes, checked-off
-// sheet notes, touch-log entries) edit in place: click the text to open the
-// full underlying body, save writes through to wherever the words live, × is
-// delete. Rows with no src (sends, move stamps) render read-only as before.
+// One past row on Today's tab — EVERYTHING above the now-line is malleable.
+// Rows that carry a LedgerSrc (notes, checked-off sheet notes, touch-log
+// entries) edit in place: click the text to open the full underlying body.
+// Src-less rows (checked moves, sent stamps) carry undo/hide keys instead:
+// ↩ un-checks the move, ✕ hides any row into the Archive's bin. Nothing on
+// this rail is ever read-only or permanently deleted.
 
 import { useState } from "react";
 import type { LedgerEvent } from "@/lib/today/ledger";
 import {
+  hideLedgerKey,
   hideLedgerNote,
   makeLedgerAction,
   reopenLedgerNote,
   saveLedgerNote,
+  undoTaskDone,
 } from "./actions";
 import { Glyph, PowIcon } from "./ledger-icons";
 import styles from "../command-center.module.css";
@@ -46,18 +50,28 @@ export function PastRow({ e, timeLabel }: { e: LedgerEvent; timeLabel: string })
 
   // ✕ hides — the entry moves to the Archive's hidden bin, restorable.
   const hide = async () => {
-    if (!src || busy) return;
+    if (busy) return;
     setBusy(true);
-    const r = await hideLedgerNote({ ...src, body: savedBody ?? src.body });
+    const r = src
+      ? await hideLedgerNote({ ...src, body: savedBody ?? src.body })
+      : e.hideKey
+        ? await hideLedgerKey(e.hideKey, e.text)
+        : { ok: false };
     setBusy(false);
     if (r.ok) setGone(true);
   };
 
-  // ↩ on a ✓-checked sheet note — undo the done; it reopens on the Day Sheet.
+  // ↩ — undo the ✓. A sheet note reopens on the Day Sheet; a checked move
+  // drops back below the now-line as open work.
   const reopen = async () => {
-    if (!src || busy) return;
+    if (busy) return;
     setBusy(true);
-    const r = await reopenLedgerNote(src);
+    const r =
+      src && src.store === "todo"
+        ? await reopenLedgerNote(src)
+        : e.undoKey
+          ? await undoTaskDone(e.undoKey)
+          : { ok: false };
     setBusy(false);
     if (r.ok) setGone(true);
   };
@@ -70,6 +84,9 @@ export function PastRow({ e, timeLabel }: { e: LedgerEvent; timeLabel: string })
     setBusy(false);
     if (r.ok) setGone(true);
   };
+
+  const canReopen = (src?.store === "todo" && e.kind === "done") || !!e.undoKey;
+  const canHide = !!src || !!e.hideKey;
 
   return (
     <div className={`${styles.lgRow} ${styles.lgPast}`}>
@@ -106,39 +123,45 @@ export function PastRow({ e, timeLabel }: { e: LedgerEvent; timeLabel: string })
           >
             {shown}
           </span>
-          {src && (
-            <button
-              type="button"
-              className={styles.pastToAction}
-              title="Make this an action — it moves below the now-line, open"
-              disabled={busy}
-              onClick={toAction}
-            >
-              <PowIcon />
-            </button>
-          )}
-          {src?.store === "todo" && e.kind === "done" && (
-            <button
-              type="button"
-              className={styles.sheetGhost}
-              title="Undo the ✓ — reopen on the Day Sheet"
-              disabled={busy}
-              onClick={reopen}
-            >
-              ↩
-            </button>
-          )}
-          {src && (
-            <button
-              type="button"
-              className={styles.sheetGhost}
-              title="Hide — moves to the Archive (restorable)"
-              disabled={busy}
-              onClick={hide}
-            >
-              ×
-            </button>
-          )}
+          <span className={styles.lgCtl}>
+            {src && (
+              <button
+                type="button"
+                className={styles.pastToAction}
+                title="Make this an action — it moves below the now-line, open"
+                disabled={busy}
+                onClick={toAction}
+              >
+                <PowIcon />
+              </button>
+            )}
+            {canReopen && (
+              <button
+                type="button"
+                className={styles.sheetGhost}
+                title={
+                  src
+                    ? "Undo the ✓ — reopen on the Day Sheet"
+                    : "Undo the ✓ — the move reopens below the now-line"
+                }
+                disabled={busy}
+                onClick={reopen}
+              >
+                ↩
+              </button>
+            )}
+            {canHide && (
+              <button
+                type="button"
+                className={styles.sheetGhost}
+                title="Hide — moves to the Archive (restorable)"
+                disabled={busy}
+                onClick={hide}
+              >
+                ×
+              </button>
+            )}
+          </span>
         </>
       )}
     </div>

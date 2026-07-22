@@ -887,6 +887,43 @@ export async function reopenLedgerNote(src: LedgerSrc): Promise<{ ok: boolean }>
   }
 }
 
+// ✕ on a src-less ledger row (checked moves, sent stamps) — hide by raw key
+// into the Archive's bin, restorable like everything else.
+export async function hideLedgerKey(
+  key: string,
+  snippet: string,
+): Promise<{ ok: boolean }> {
+  const k = (key ?? "").slice(0, 191);
+  if (!(await requireWrite()) || !k.startsWith(HIDE_PREFIX)) return { ok: false };
+  try {
+    const reason = (snippet ?? "").slice(0, 300);
+    await getPrisma().accountDisposition.upsert({
+      where: { accountId: k },
+      create: { accountId: k, status: "parked", reason },
+      update: { status: "parked", reason },
+    });
+    revalidatePath("/today");
+    revalidatePath("/archive");
+    return { ok: true };
+  } catch {
+    return { ok: false };
+  }
+}
+
+// ↩ on a checked-move ledger row — un-check it; the move drops back below the
+// now-line as open work. (Presence of the TaskDone key = done, so delete it.)
+export async function undoTaskDone(key: string): Promise<{ ok: boolean }> {
+  const k = (key ?? "").slice(0, 160);
+  if (!(await requireWrite()) || !k) return { ok: false };
+  try {
+    await getPrisma().taskDone.deleteMany({ where: { key: k } });
+    revalidatePath("/today");
+    return { ok: true };
+  } catch {
+    return { ok: false };
+  }
+}
+
 // Miscapture escape hatch — turn any ledger NOTE into an open ACTION. A
 // todo-sourced row simply retags in place (keeps its identity and undoes an
 // accidental ✓); notes living in other stores become a fresh action todo and
