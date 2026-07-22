@@ -8,6 +8,7 @@ import {
   saveTodoNote,
   setTodoDone,
 } from "./today/actions";
+import { smartPaste } from "@/lib/paste";
 import styles from "./command-center.module.css";
 
 type Acct = { id: string; name: string };
@@ -419,6 +420,9 @@ export function NotesPanel({
               spellCheck
               placeholder="Type a note… (Shift+Enter or Enter for a new line — it autosaves)"
               onChange={(e) => update(n.id, { body: e.target.value })}
+              onPaste={(e) =>
+                smartPaste(e, n.body, (next) => update(n.id, { body: next }))
+              }
             />
 
             <div className={styles.noteMeta}>

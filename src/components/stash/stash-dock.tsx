@@ -13,6 +13,7 @@ import {
 } from "@/app/stash/actions";
 import { STASH_LANES, type StashLane } from "@/lib/stash/summarize";
 import type { StashTrayItem } from "@/lib/stash/data";
+import { smartPaste } from "@/lib/paste";
 import styles from "./stash-dock.module.css";
 
 type Chip = { x: number; y: number; text: string };
@@ -380,6 +381,7 @@ export function StashDock() {
             <textarea
               value={compose}
               onChange={(e) => setCompose(e.target.value)}
+              onPaste={(e) => smartPaste(e, compose, setCompose)}
               rows={2}
               placeholder="Quick note from anywhere — type, then route it…"
               aria-label="Quick note"
