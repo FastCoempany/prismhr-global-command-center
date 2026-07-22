@@ -8,7 +8,7 @@ import { randomUUID } from "node:crypto";
 import { asFieldNoteKind } from "@/lib/field-notes/data";
 import { asFollowUpWhen, nextCheckIn, type TouchLogEntry } from "@/lib/today/follow-ups";
 import { accountIntel } from "@/lib/today/build";
-import { withAsk, type LedgerSrc } from "@/lib/today/ledger";
+import { hideKeyFor, withAsk, type LedgerSrc } from "@/lib/today/ledger";
 import { mirrorNoteToSheet } from "@/lib/today/mirror";
 import {
   NO_TAGS,
@@ -191,13 +191,24 @@ export async function setRowCountry(formData: FormData) {
   done();
 }
 
-// ✕ on a ledger action — gone for good (form flavor of deleteTodoNote).
+// ✕ on a ledger action — HIDES it (form flavor of hideTodoNote): the action
+// parks in the Archive's hidden bin, restorable if the click was an accident.
 export async function removeSheetAction(formData: FormData) {
   const id = str(formData, "id", 40);
   if (!(await requireWrite()) || !id) done();
   await safeWrite(async () => {
-    await getPrisma().todo.deleteMany({ where: { id } });
+    const prisma = getPrisma();
+    const t = await prisma.todo.findUnique({ where: { id } });
+    if (!t) return;
+    const key = `hide:todo:${id}`.slice(0, 191);
+    const snippet = splitTags(splitMarker(t.body).text).text.slice(0, 300);
+    await prisma.accountDisposition.upsert({
+      where: { accountId: key },
+      create: { accountId: key, status: "parked", reason: snippet },
+      update: { status: "parked", reason: snippet },
+    });
   });
+  revalidatePath("/archive");
   done();
 }
 
@@ -803,6 +814,73 @@ export async function deleteLedgerNote(src: LedgerSrc): Promise<{ ok: boolean }>
       await prisma.touch.update({ where: { subjectKey: src.id }, data: { log } });
     }
     revalidatePath("/today");
+    return { ok: true };
+  } catch {
+    return { ok: false };
+  }
+}
+
+// --- The hidden bin ---------------------------------------------------------
+// ✕ anywhere is HIDE, not delete — a namespaced disposition parks the item in
+// the Archive's hidden bin, restorable any time. The reason field carries a
+// text snippet so the archive can show what's in the bin without joins.
+const HIDE_PREFIX = "hide:";
+
+// ("use server" files may only export async functions — the key builder lives
+// in @/lib/today/ledger as hideKeyFor.)
+
+export async function hideLedgerNote(src: LedgerSrc): Promise<{ ok: boolean }> {
+  if (!(await requireWrite()) || !src?.id) return { ok: false };
+  try {
+    const key = hideKeyFor(src).slice(0, 191);
+    await getPrisma().accountDisposition.upsert({
+      where: { accountId: key },
+      create: {
+        accountId: key,
+        status: "parked",
+        reason: (src.body ?? "").slice(0, 300),
+      },
+      update: { status: "parked", reason: (src.body ?? "").slice(0, 300) },
+    });
+    revalidatePath("/today");
+    revalidatePath("/archive");
+    return { ok: true };
+  } catch {
+    return { ok: false };
+  }
+}
+
+// Sheet flavor — hides a todo note by id (fetches its text for the snippet).
+export async function hideTodoNote(id: string): Promise<{ ok: boolean }> {
+  if (!(await requireWrite()) || !id) return { ok: false };
+  try {
+    const prisma = getPrisma();
+    const t = await prisma.todo.findUnique({ where: { id } });
+    if (!t) return { ok: false };
+    const key = `${HIDE_PREFIX}todo:${id}`.slice(0, 191);
+    const snippet = splitTags(splitMarker(t.body).text).text.slice(0, 300);
+    await prisma.accountDisposition.upsert({
+      where: { accountId: key },
+      create: { accountId: key, status: "parked", reason: snippet },
+      update: { status: "parked", reason: snippet },
+    });
+    revalidatePath("/today");
+    revalidatePath("/archive");
+    return { ok: true };
+  } catch {
+    return { ok: false };
+  }
+}
+
+// ↩ on a done ledger row (todo-sourced) — undo the ✓; the note reopens on the
+// Day Sheet exactly as it was.
+export async function reopenLedgerNote(src: LedgerSrc): Promise<{ ok: boolean }> {
+  if (!(await requireWrite()) || !src?.id || src.store !== "todo") return { ok: false };
+  try {
+    await patchTodoTags(src.id, { doneAt: "" });
+    await getPrisma().todo.update({ where: { id: src.id }, data: { done: false } });
+    revalidatePath("/today");
+    revalidatePath("/archive");
     return { ok: true };
   } catch {
     return { ok: false };

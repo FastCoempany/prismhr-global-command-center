@@ -7,7 +7,12 @@
 
 import { useState } from "react";
 import type { LedgerEvent } from "@/lib/today/ledger";
-import { deleteLedgerNote, makeLedgerAction, saveLedgerNote } from "./actions";
+import {
+  hideLedgerNote,
+  makeLedgerAction,
+  reopenLedgerNote,
+  saveLedgerNote,
+} from "./actions";
 import { Glyph, PowIcon } from "./ledger-icons";
 import styles from "../command-center.module.css";
 
@@ -39,10 +44,20 @@ export function PastRow({ e, timeLabel }: { e: LedgerEvent; timeLabel: string })
     setEditing(false);
   };
 
-  const remove = async () => {
+  // ✕ hides — the entry moves to the Archive's hidden bin, restorable.
+  const hide = async () => {
     if (!src || busy) return;
     setBusy(true);
-    const r = await deleteLedgerNote(src);
+    const r = await hideLedgerNote({ ...src, body: savedBody ?? src.body });
+    setBusy(false);
+    if (r.ok) setGone(true);
+  };
+
+  // ↩ on a ✓-checked sheet note — undo the done; it reopens on the Day Sheet.
+  const reopen = async () => {
+    if (!src || busy) return;
+    setBusy(true);
+    const r = await reopenLedgerNote(src);
     setBusy(false);
     if (r.ok) setGone(true);
   };
@@ -102,13 +117,24 @@ export function PastRow({ e, timeLabel }: { e: LedgerEvent; timeLabel: string })
               <PowIcon />
             </button>
           )}
+          {src?.store === "todo" && e.kind === "done" && (
+            <button
+              type="button"
+              className={styles.sheetGhost}
+              title="Undo the ✓ — reopen on the Day Sheet"
+              disabled={busy}
+              onClick={reopen}
+            >
+              ↩
+            </button>
+          )}
           {src && (
             <button
               type="button"
               className={styles.sheetGhost}
-              title="Delete this entry"
+              title="Hide — moves to the Archive (restorable)"
               disabled={busy}
-              onClick={remove}
+              onClick={hide}
             >
               ×
             </button>

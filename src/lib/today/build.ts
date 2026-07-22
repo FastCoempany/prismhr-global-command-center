@@ -37,7 +37,7 @@ export function funnelOf(csm: string, industry: string): Funnel {
 
 // Confirmed PrismHR HCM customers — the roster from the 7/13 Salesforce export
 // ("PrismHR HCM = Yes"). Explicit ids beat inference: several are owned by
-// PEO-side CSMs (Whitney carries the inactive Cody Jensen's HCM book), so
+// PEO-side CSMs (Whitney Dideon carries the HCM book), so
 // csm/industry alone can't route them. Former customers (360 Business
 // Solutions, Payroll Medics, Talonique) are deliberately absent.
 export const HCM_CLIENT_IDS = new Set<string>([

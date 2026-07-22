@@ -19,7 +19,8 @@ import {
   undoSheetRoute,
   type SheetNote,
 } from "./sheet-actions";
-import { deleteTodoNote, setTodoDone } from "./actions";
+import { hideTodoNote, setTodoDone } from "./actions";
+import Link from "next/link";
 import { PowIcon } from "./ledger-icons";
 import { smartPaste } from "@/lib/paste";
 import styles from "../command-center.module.css";
@@ -65,6 +66,19 @@ function timeOf(iso: string): string {
     })
     .toLowerCase()
     .replace(" ", "");
+}
+
+// Older notes carry their DATE, not just a floating time.
+function stampOf(iso: string): string {
+  const t = Date.parse(iso);
+  if (Number.isNaN(t)) return "";
+  if (sameUserDay(iso, new Date())) return timeOf(iso);
+  const day = new Date(t).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    timeZone: USER_TZ,
+  });
+  return `${day} · ${timeOf(iso)}`;
 }
 
 function sameLocalDay(iso: string, now: Date): boolean {
@@ -129,7 +143,7 @@ function NoteRow({
   return (
     <div className={`${styles.sheetNote} ${n.done ? styles.sheetNoteDone : ""}`}>
       <span className={styles.sheetTime} suppressHydrationWarning>
-        {timeOf(n.createdAt)}
+        {stampOf(n.createdAt)}
       </span>
       {editing ? (
         <textarea
@@ -198,7 +212,9 @@ function NoteRow({
       <span className={styles.sheetRoute}>
         {refs && (
           <>
-            <span className={styles.sheetRcpt}>routed → {label}</span>
+            <span className={styles.sheetRcpt} title={`routed → ${label}`}>
+              routed → {label}
+            </span>
             <button
               type="button"
               className={styles.sheetGhost}
@@ -247,10 +263,10 @@ function NoteRow({
           type="button"
           className={styles.sheetGhost}
           disabled={busy}
-          title="Delete"
+          title="Hide — moves to the Archive (restorable)"
           onClick={async () => {
-            await deleteTodoNote(n.id);
-            onRemove(n.id);
+            const r = await hideTodoNote(n.id);
+            if (r.ok) onRemove(n.id);
           }}
         >
           ×
@@ -402,7 +418,7 @@ export function DaySheet({
     .sort(byUrgency);
   const earlier = open
     .filter((n) => !today.includes(n) && !later.includes(n))
-    .sort(byUrgency);
+    .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
 
   if (collapsed) {
     return (
@@ -534,21 +550,12 @@ export function DaySheet({
           ))}
         </details>
       )}
-      {doneNotes.length > 0 && (
-        <details className={styles.sheetEarlier}>
-          <summary>done ({doneNotes.length}) ▸</summary>
-          {doneNotes.map((n) => (
-            <NoteRow
-              key={n.id}
-              n={n}
-              onChange={(next) =>
-                setNotes((p) => p.map((x) => (x.id === next.id ? next : x)))
-              }
-              onRemove={(id) => setNotes((p) => p.filter((x) => x.id !== id))}
-            />
-          ))}
-        </details>
-      )}
+      {/* Done and hidden notes live in the Archive — off the sheet, findable. */}
+      <div className={styles.sheetArchiveLink}>
+        <Link href="/archive">
+          Archive{doneNotes.length ? ` (${doneNotes.length} done)` : ""} →
+        </Link>
+      </div>
     </div>
   );
 }
