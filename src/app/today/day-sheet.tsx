@@ -21,6 +21,7 @@ import {
 } from "./sheet-actions";
 import { deleteTodoNote, setTodoDone } from "./actions";
 import { PowIcon } from "./ledger-icons";
+import { smartPaste } from "@/lib/paste";
 import styles from "../command-center.module.css";
 
 const COLLAPSE_KEY = "daySheetCollapsed";
@@ -137,6 +138,7 @@ function NoteRow({
           autoFocus
           rows={Math.max(1, draft.split("\n").length)}
           onChange={(e) => setDraft(e.target.value)}
+          onPaste={(e) => smartPaste(e, draft, setDraft)}
           onBlur={async () => {
             setEditing(false);
             if (draft.trim() && draft !== text) {
@@ -477,6 +479,7 @@ export function DaySheet({
         className={`${styles.sheetCapture} ${mode === "action" ? styles.sheetCaptureAct : ""}`}
         value={text}
         onChange={(e) => setText(e.target.value)}
+        onPaste={(e) => smartPaste(e, text, setText)}
         onKeyDown={onKeyDown}
         placeholder="Type the second it happens — call notes, Teams pastes, stray thoughts…"
         rows={2}
