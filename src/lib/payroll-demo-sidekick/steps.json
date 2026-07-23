@@ -1,0 +1,1200 @@
+{
+  "meta": {
+    "note": "Payroll Demo Sidekick store — standalone, independent of the other Sidekick tabs. Steps follow the recorded screen order of a live payroll demo; every question asked on the call is mapped to the step where it was asked, with the answer that was given.",
+    "source": {
+      "releaseTag": "globalpayrolldemoCN",
+      "recording": "Meeting recording (mp4, 1920x1080, 51:47)",
+      "recordingSha256": "c09f26c658fb389cf7688ee568c73aad75a1e2156e03646cb5fa1c1f854161a6",
+      "transcript": "Recording transcript (vtt, 1,021 cues)",
+      "transcriptSha256": "55ba870229d70bb04ebc790c001eaf7733c5179d69ed7f6c093762cfb789a0a4",
+      "durationTimestamp": "51:47"
+    },
+    "speakers": "Roles, not names: Presenter (PrismHR Global), Host (PrismHR), and the prospect's team — Prospect (payroll ops), Prospect (sales), Prospect (service ops).",
+    "neutralization": "The recorded demo used one example country throughout. All curated text reads country/[any country] instead, and country-specific currency, tax and statutory names are written generically. Screenshots come straight from the recording — read any country name, flag or currency code on screen as [any country] / local currency.",
+    "screenshotDir": "public/demo-screens/payroll-demo/"
+  },
+  "steps": [
+    {
+      "id": "pds-01-kickoff-framing",
+      "title": "Kickoff — what this platform is (and isn't)",
+      "timestampStart": "00:00:00",
+      "timestampEnd": "00:01:37",
+      "navContext": "No screen share — call gallery",
+      "visualSummary": "No screen share yet: the five-person call gallery — the Presenter, the Host, and the prospect's three-person team on camera.",
+      "onScreen": ["Video tiles for all five participants", "No app or slides shared"],
+      "say": "The process is all the rules you've got to know — but when a consolidated payroll comes around for global payroll, which is what we do, our technology manages that all for you, and you can offer that solution to your clients. This is a managed-payroll portal that consolidates data from compliant in-country payroll engines; it is not itself a calculation engine you key payroll into.",
+      "demoPurpose": "Set expectations up front: managed payroll (we run it, you review it), not self-service payroll processing."
+    },
+    {
+      "id": "pds-02-us-platform-dashboard",
+      "title": "US platform dashboard — where the demo starts",
+      "timestampStart": "00:01:37",
+      "timestampEnd": "00:04:23",
+      "navContext": "US PrismHR platform (demo brand) — Client · Enhanced Dashboard",
+      "visualSummary": "The shared browser shows the US PrismHR Enhanced Dashboard for a demo client: a Favorites link list on the left and an 'At a Glance' employee panel. The screen sits here while the group talks through the prospect's expansion use cases.",
+      "onScreen": [
+        "Top nav: Work Centers, Client, HR, Payroll, Reports, Back Office, Marketplace",
+        "Favorites list including Process Payroll and Global Payroll links",
+        "'At a Glance' employee panel with status filters"
+      ],
+      "say": "Before jumping in, get the use cases on the table. Two expansion models come up: a US company sets up a new entity in [any country] — their own direct employees needing payroll — or cross-border companies with entities on both sides of the border where only the US side is served today. Employer-of-record is the third lane, available in the same platform if it ever comes up.",
+      "demoPurpose": "Anchor the demo in the prospect's actual expansion scenarios before showing any screens."
+    },
+    {
+      "id": "pds-03-sso-into-global",
+      "title": "SSO — Payroll menu into the global platform",
+      "timestampStart": "00:04:23",
+      "timestampEnd": "00:04:31",
+      "navContext": "US platform Payroll menu → Global Payroll → SSO redirect",
+      "visualSummary": "The Payroll mega-menu is open with a 'Global Payroll' link under Payroll | Action; clicking it chains through single-sign-on redirects in a new tab while the global platform loads.",
+      "onScreen": [
+        "Payroll | Change, Payroll | View, Payroll | Action, Payroll | Dashboard menu sections",
+        "'Global Payroll' link under Payroll | Action",
+        "New tab cycling through SSO token redirect URLs"
+      ],
+      "say": "I go into my Payroll tab and click Global Payroll — an easy single sign-on takes you straight from the US platform into the global platform. One login, two systems.",
+      "demoPurpose": "Show the connective tissue: global payroll is one click from the platform the audience already lives in."
+    },
+    {
+      "id": "pds-04-sp-dashboard",
+      "title": "Service-provider dashboard — all clients, all workers",
+      "timestampStart": "00:04:31",
+      "timestampEnd": "00:05:41",
+      "navContext": "Global admin · Dashboard",
+      "visualSummary": "The service-provider dashboard: stat tiles for Total Active Workers (136) and Total Active Clients (4), a Head Count Trends chart split by EOR / Payroll / Contractor workers, a Top Clients by Worker Count table, and a worker-distribution donut with a world map.",
+      "onScreen": [
+        "Total Active Workers 136 · Total Active Clients 4",
+        "Head Count Trends line chart (EOR Workers, Payroll Workers, Contractors)",
+        "Top Clients by Worker Count table",
+        "Worker Distribution by Type & Country with geographic map"
+      ],
+      "say": "This is the service-provider view — every client with foreign employees in one place. A 'worker' can be a direct payroll employee, an employer-of-record worker, or an independent contractor, all in one platform. If an EOR or contractor opportunity shows up later, there's no separate system to buy.",
+      "demoPurpose": "Establish the service-provider vantage point: one pane of glass over every client's global workforce."
+    },
+    {
+      "id": "pds-05-clients-list",
+      "title": "Clients list",
+      "timestampStart": "00:05:41",
+      "timestampEnd": "00:05:53",
+      "navContext": "Global admin · Clients",
+      "visualSummary": "The Clients page lists five client companies with country flags, Active status, created dates, and View / Impersonate links per row.",
+      "onScreen": [
+        "Client rows with country flags and Active status",
+        "View and Impersonate links per client",
+        "Create button and client search"
+      ],
+      "say": "This simply lists all my different clients. As I sign a new client they get onboarded here, which gives me the opportunity to see and help them with their international workers.",
+      "demoPurpose": "Show where new clients land and where the impersonation entry point lives."
+    },
+    {
+      "id": "pds-06-workers-list",
+      "title": "Workers list — filter by engagement",
+      "timestampStart": "00:05:53",
+      "timestampEnd": "00:06:17",
+      "navContext": "Global admin · Workers",
+      "visualSummary": "The Workers page shows every worker across clients with country flags and engagement types; the Engagement filter (Contractor, Contractor+, EOR, Payroll) is opened and set to Payroll, narrowing the list to direct-payroll hires across many countries.",
+      "onScreen": [
+        "Columns: Worker's Name, Country, Client, Engagement, Readable ID, Status",
+        "Engagement filter: Contractor, Contractor+, EOR, Payroll",
+        "Statuses: Offer Accepted, Awaiting Signatures, Pending Release, Active"
+      ],
+      "say": "Here's every worker engaged across all your clients — viewable by country and engagement type. Filter to Payroll and you're looking at the direct hires in [any country] running through payroll.",
+      "demoPurpose": "Demonstrate cross-client worker visibility and the payroll/EOR/contractor engagement lens."
+    },
+    {
+      "id": "pds-07-sp-invoices-partnership-models",
+      "title": "Service-provider invoices — and the partnership models",
+      "timestampStart": "00:06:17",
+      "timestampEnd": "00:08:48",
+      "navContext": "Global admin · Invoices (Service Provider tab)",
+      "visualSummary": "The Invoices page under the Service Provider tab: a table of client invoices (Monthly Contractors Fee, Payroll, EOR, Contractor types) with green 'invoiced' status pills, 116 results paginated. The screen holds here while the partnership-model discussion happens.",
+      "onScreen": [
+        "Service Provider / Clients toggle",
+        "Columns: Client Name, Invoice Number, Created At, Invoice Type, Total Amount, Status",
+        "Invoice types: Monthly Contractors Fee, Payroll, EOR, Contractor",
+        "All rows status 'invoiced'; 116 results"
+      ],
+      "say": "These are the invoices the platform sends to you as the service provider. There are two commercial routes — resell at a wholesale price you mark up, or refer directly for a referral bonus. Expect pushback here: prospects want one integrated experience across the US and [any country], not something that feels like a second product; the ask will be to keep the whole soup-to-nuts flow inside your environment.",
+      "demoPurpose": "Introduce the commercial model early and surface the 'one integrated experience' objection before the deep dive."
+    },
+    {
+      "id": "pds-08-impersonate-client",
+      "title": "Impersonate a client",
+      "timestampStart": "00:08:48",
+      "timestampEnd": "00:08:56",
+      "navContext": "Global admin · Clients → Impersonate",
+      "visualSummary": "Back on the Clients list, the cursor moves to a client row's Impersonate link to enter that client's environment.",
+      "onScreen": [
+        "Clients table with View / Impersonate links",
+        "Impersonate clicked on a demo client"
+      ],
+      "say": "From the service-provider standpoint I can dive into any of my clients. Let's impersonate this one — now I'll see exactly what they see.",
+      "demoPurpose": "Show the support superpower: the service provider can walk in the client's shoes at any time."
+    },
+    {
+      "id": "pds-09-client-dashboard",
+      "title": "Client dashboard — payroll at a glance",
+      "timestampStart": "00:08:56",
+      "timestampEnd": "00:09:14",
+      "navContext": "Client app · Dashboard (impersonation banner active)",
+      "visualSummary": "The client's 'Hello!' dashboard under a teal impersonation banner: Pay Periods needing approval (3) with Ready To Approve badges, Reimbursements needing approval (5) in mixed currencies, Time Off, holiday Reminders, and Who's Out widgets.",
+      "onScreen": [
+        "'You are currently impersonating' banner",
+        "Pay Periods: NEEDS APPROVAL (3), 'Ready To Approve' badges, + Add One-Time Payment",
+        "Reimbursements: NEEDS APPROVAL (5) in multiple currencies",
+        "Reminders with upcoming in-country holidays"
+      ],
+      "say": "This is the client's environment as they see it when they log in — a payroll-only client just sees payroll. At a glance: the pay period coming up for approval, pending reimbursements, time off, and in-country holidays.",
+      "demoPurpose": "Orient the audience in the client experience before opening the approval flow."
+    },
+    {
+      "id": "pds-10-pay-period-approval",
+      "title": "Pay period approval — grouped by country",
+      "timestampStart": "00:09:14",
+      "timestampEnd": "00:09:22",
+      "navContext": "Client app · Pay Period Approval",
+      "visualSummary": "The Pay Period Approval page for the monthly pay period: an Approve button, variance filter chips, and employee tables grouped by country — [any country] in local currency alongside Mexico (MXN) and a United States section.",
+      "onScreen": [
+        "Monthly pay period header with blue Approve button",
+        "Variance filters: All / Significant (>20%) / Moderate (10–20%) / Minimal (<10%) / Commented",
+        "[any country] section: four employees with previous vs current month and variance %",
+        "By Employee / By Metric toggle · Payroll Register download"
+      ],
+      "say": "Here's the upcoming monthly pay period. Every employee in [any country] is listed with previous month, current month, and the variance between them — this is the review stop before anything is approved.",
+      "demoPurpose": "Show the country-grouped review surface that anchors the whole managed-payroll loop."
+    },
+    {
+      "id": "pds-11-employee-pay-detail",
+      "title": "Employee pay detail — gross-to-net and employer cost",
+      "timestampStart": "00:09:22",
+      "timestampEnd": "00:11:25",
+      "navContext": "Client app · Pay Period Approval (employee row expanded)",
+      "visualSummary": "One employee's row is expanded into pay categories — wages, one-time payments, recurring payments, reimbursements, benefits, and an Employer Taxes & Contributions breakdown — with side-by-side Employee Net Pay and Employer Total Cost panels in local currency and USD.",
+      "onScreen": [
+        "Category rows: WAGES, ONE TIME PAYMENTS, RECURRING PAYMENTS, REIMBURSEMENTS, BENEFITS",
+        "EMPLOYER TAXES & CONTRIBUTIONS expanded into statutory line items",
+        "Employee Net Pay panel: net in local currency and USD",
+        "Employer Total Cost panel: total in local currency and USD"
+      ],
+      "say": "Drill into any employee: exactly what their wages, reimbursements, and employer contributions are, employee net pay, and the employer's total cost — local currency and USD side by side. The data isn't keyed in here: our teams run the payroll in [any country] on a compliant local payroll system and present the results in this platform. It's managed payroll — you're not doing the calculations on the back end.",
+      "demoPurpose": "Answer 'where do these numbers come from' with the managed-payroll model, on the screen that proves it."
+    },
+    {
+      "id": "pds-12-payroll-register-approve",
+      "title": "Payroll register download and approval",
+      "timestampStart": "00:11:25",
+      "timestampEnd": "00:11:50",
+      "navContext": "Client app · Pay Period Approval (register download)",
+      "visualSummary": "Back at the pay period header, the Payroll Register button is clicked and the browser shows a downloaded .xlsx register file; the expanded employee breakdown remains below the Approve button.",
+      "onScreen": [
+        "Payroll Register button with .xlsx download toast",
+        "Approve button on the monthly pay period",
+        "Variance filter chips still visible"
+      ],
+      "say": "I can download the payroll register to Excel if I need it. This is where the client looks for variances that month, reviews everything, and — once it all looks good — approves the payroll right here.",
+      "demoPurpose": "Close the review loop: register in hand, variances checked, one Approve button."
+    },
+    {
+      "id": "pds-13-variance-escalation-gams",
+      "title": "When a variance looks wrong — the escalation path",
+      "timestampStart": "00:11:50",
+      "timestampEnd": "00:12:58",
+      "navContext": "Client app · Pay Period Approval (variance view, Q&A)",
+      "visualSummary": "The approval page stays on the expanded variance view — an employee's one-time payments, recurring payments and reimbursements flagged at 100% variance — while the escalation-path questions are asked and answered.",
+      "onScreen": [
+        "Employee variance rows with percentage flags",
+        "Comments column on each employee row",
+        "Employer taxes & contributions line items in local currency"
+      ],
+      "say": "If a variance doesn't make sense, you're not filing a ticket into the void: every client is assigned a global account manager — a GAM, based in the US — as the first point of contact. The GAM chases the payroll team for answers and can connect you directly, and there's also a dedicated customer-service email with someone assigned to your account.",
+      "demoPurpose": "Name the human escalation path before anyone asks 'who do I call when this looks wrong?'"
+    },
+    {
+      "id": "pds-14-new-hire-choosers",
+      "title": "New hire — choose worker and employee type",
+      "timestampStart": "00:12:58",
+      "timestampEnd": "00:13:07",
+      "navContext": "Client app · New Hire",
+      "visualSummary": "The New Hire flow opens with two chooser pages: Employee vs Contractor cards ('hire compliantly in over 180 countries'), then Employer of Record (EOR) vs Payroll cards for the employee type.",
+      "onScreen": [
+        "Employee / Contractor cards with Select buttons",
+        "'Compliantly in over 180 countries' claims",
+        "Employer of Record (EOR) vs Payroll choice"
+      ],
+      "say": "The client has a new hire. They simply choose Employee, then Payroll — since this is a direct payroll hire into their own entity. The EOR lane sits right next to it in the same flow if they ever need it.",
+      "demoPurpose": "Show how simply the hire starts, and that payroll and EOR live in one flow."
+    },
+    {
+      "id": "pds-15-new-hire-employee-info",
+      "title": "New hire step 1 — employee info, country and work authorization",
+      "timestampStart": "00:13:07",
+      "timestampEnd": "00:13:41",
+      "navContext": "Client app · New Hire | Payroll · 01 Employee Info",
+      "visualSummary": "The Employee Info form: name, email, nationality and 'what country is the employee working from' dropdowns — the country list is province/region-specific for [any country] — plus a conditional 'is the employee authorized to work in…' toggle and a country note with a Global Hiring Guide link.",
+      "onScreen": [
+        "Stepper: 01 Employee Info → 02 Job Info → 03 Compensation → 04 Upload Agreement → 05 Review",
+        "Nationality and working-country dropdowns with [province/region]-specific entries",
+        "Conditional work-authorization Yes/No toggle",
+        "Country note box with Global Hiring Guide link"
+      ],
+      "say": "Employee info is quick — and notice it's [province/region]-specific for [any country]. It does ask: they're nationals of [any country], but do they also have authorization to work there? If someone's nationality is one country but they're authorized to work in another, the system takes that into consideration.",
+      "demoPurpose": "Show compliance built into the first screen: regional specificity and work-authorization capture."
+    },
+    {
+      "id": "pds-16-new-hire-job-info",
+      "title": "New hire step 2 — job info (and bulk import)",
+      "timestampStart": "00:13:41",
+      "timestampEnd": "00:15:12",
+      "navContext": "Client app · New Hire | Payroll · 02 Job Info",
+      "visualSummary": "The Job Info form filled in: job title with autocomplete, seniority level, description, optional division/department assignments, work group, location, an auto-assigned reporting manager, and the employment start date.",
+      "onScreen": [
+        "Job title autocomplete and Seniority dropdown",
+        "Division / department assignments and Work Group",
+        "Location options including offices and Unassigned",
+        "Reporting Manager auto-assigned by organizational assignment; start date"
+      ],
+      "say": "Job title, seniority, customizable divisions and departments, work groups, locations — office, region, or remote — reporting manager, start date. For initial employee loads there's a bulk-upload component coordinated with your GAM and the operations teams; this wizard is for the one-off new hire after that.",
+      "demoPurpose": "Cover the org-structure fields and pre-empt the 'do we really key these one at a time?' concern."
+    },
+    {
+      "id": "pds-17-compensation-calculator",
+      "title": "New hire step 3 — compensation and the gross-to-net calculator",
+      "timestampStart": "00:15:12",
+      "timestampEnd": "00:16:03",
+      "navContext": "Client app · New Hire | Payroll · 03 Compensation",
+      "visualSummary": "The Compensation step: Salary selected, currency locked to the local currency of [any country], gross monthly salary of 10,000 entered — and a live Salary Breakdown renders 'Amount you pay' (employer statutory contributions and total monthly cost) beside 'Amount employee gets' (employee contributions, income taxes, and net).",
+      "onScreen": [
+        "Compensation type Hourly / Salary; 'compensation is paid in local currency as required by law'",
+        "Gross Monthly Salary 10,000 (local currency)",
+        "Amount you pay: employer statutory contributions itemized, total monthly employer cost",
+        "Amount employee gets: employee contributions and income taxes itemized down to net",
+        "Disclaimer: all calculations are estimates"
+      ],
+      "say": "This is a really cool tool that isn't ordinary in the global landscape: on 10,000 a month in [any country], it instantly shows the employer's true cost — the statutory contributions on top of gross — and the employee's gross-to-net. Employer cost is what catches US companies off guard, and you can hand the employee their expected net immediately.",
+      "demoPurpose": "Deliver the wow moment: instant employer-burden and net-pay answers at the point of hire."
+    },
+    {
+      "id": "pds-18-employment-type-pto",
+      "title": "Compensation — employment type and statutory time off",
+      "timestampStart": "00:16:03",
+      "timestampEnd": "00:16:37",
+      "navContext": "Client app · New Hire | Payroll · 03 Compensation (scrolled)",
+      "visualSummary": "Further down the Compensation step: Full-time/Part-time selection, a 'Vacation and paid time-off' panel stating employees in [any country] - [province/region] are legally entitled to all local public holidays and 20 paid days off in year one, Additional Paid Time-off with Edit, and an Unlimited PTO link.",
+      "onScreen": [
+        "Employment type Full-time / Part-time ('definitions may vary by country')",
+        "Statutory vacation: local public holidays + 20 paid days in the first year",
+        "Additional Paid Time-off: 0 Days / Edit · 'Want to offer Unlimited PTO?'"
+      ],
+      "say": "Full-time it is — and the statutory vacation for [any country] loads automatically: all local public holidays plus the legally required paid days in year one. You can add more days on top; one client even created a separate bucket of US holidays for their foreign employees.",
+      "demoPurpose": "Show statutory PTO arriving pre-loaded — compliance as a default, generosity as an option."
+    },
+    {
+      "id": "pds-19-additional-payments",
+      "title": "Additional payments — allowances and bonuses",
+      "timestampStart": "00:16:37",
+      "timestampEnd": "00:17:04",
+      "navContext": "Client app · New Hire | Payroll · 03 Compensation (Add Additional Payment)",
+      "visualSummary": "The 'Add Additional Payment' dialog: pay types (Variable Bonus, Mobile Allowance, Internet Allowance, Other Allowance, Signing Bonus), a frequency dropdown, and an amount field — an Internet Allowance at 100/month in local currency is added and appears as a row on the Compensation page.",
+      "onScreen": [
+        "Pay types: Variable Bonus, Mobile / Internet / Other Allowance, Signing Bonus",
+        "Frequency: One Time or Monthly; amount in local currency",
+        "'Allowances are subject to local tax and social security' disclaimer",
+        "Added row: Internet Allowance — Monthly, fixed payment"
+      ],
+      "say": "Mobile allowance, internet allowance, signing bonus — add them here at hire, monthly or one-time, and they're taxed correctly as local law requires. They can also be added or edited later. And yes — this whole flow is what the employer does to enter a new hire; that's the model.",
+      "demoPurpose": "Show recurring allowances handled compliantly, and confirm who drives the hire entry."
+    },
+    {
+      "id": "pds-20-currency-double-check",
+      "title": "Double-check the amount — currency sanity check",
+      "timestampStart": "00:17:04",
+      "timestampEnd": "00:17:36",
+      "navContext": "Client app · New Hire | Payroll · 'Double check the amount' dialog",
+      "visualSummary": "A modal compares approximately what the employer will pay in USD against what the employee receives in local currency, with Go Back and Confirm Amount buttons and an FX-fluctuation note.",
+      "onScreen": [
+        "'Double check the amount' modal",
+        "Approximately what you will pay (USD) vs what the employee receives (local currency)",
+        "Estimate subject to foreign-exchange fluctuation note",
+        "Go Back / Confirm Amount"
+      ],
+      "say": "Is this really what you want to pay them — in US dollars? [any country] may not be wildly different, but when it's a salary quoted in a currency where a million units is normal, what is that in dollars? This gives you the back-of-the-napkin conversion instantly: confirm the amount knowing exactly where you landed.",
+      "demoPurpose": "Kill the classic FX mistake at the moment it would happen."
+    },
+    {
+      "id": "pds-21-upload-agreement",
+      "title": "New hire step 4 — upload the signed agreement",
+      "timestampStart": "00:17:36",
+      "timestampEnd": "00:17:50",
+      "navContext": "Client app · New Hire | Payroll · 04 Upload Agreement",
+      "visualSummary": "The optional Upload Agreement step: an 'Attach a signed employment agreement' dropzone (PDF/PNG/JPG up to 10MB); a file is attached and a success toast confirms the upload.",
+      "onScreen": [
+        "Upload Agreement (Optional) dropzone",
+        "PDF, PNG, JPG up to 10MB",
+        "'Employment agreement uploaded successfully' toast"
+      ],
+      "say": "Any signed documents — the employment contract executed in [any country] — get attached right here, so the paper trail lives with the worker record.",
+      "demoPurpose": "Show the contract artifact attaching to the hire, not living in someone's inbox."
+    },
+    {
+      "id": "pds-22-review-onboard",
+      "title": "New hire step 5 — review and onboard",
+      "timestampStart": "00:17:50",
+      "timestampEnd": "00:17:58",
+      "navContext": "Client app · New Hire | Payroll · 05 Review",
+      "visualSummary": "The Review page summarizes the whole hire — employee info, nationality and working country with flags, job details, salary with additional payments — above an Onboard Employee button.",
+      "onScreen": [
+        "Employee, job and compensation summary in one card",
+        "Contract amount per month in local currency; Full-time; Indefinite",
+        "Additional payments listed; Onboard Employee button"
+      ],
+      "say": "One review card: who they are, what they'll do, what they'll make, what extras they get. Click Onboard Employee and the hire is in motion.",
+      "demoPurpose": "Land the hire flow: five steps, one button."
+    },
+    {
+      "id": "pds-23-invite-employee-portal",
+      "title": "Invite the employee — self-service and tax forms",
+      "timestampStart": "00:17:58",
+      "timestampEnd": "00:18:46",
+      "navContext": "Client app · Invite worker → Success",
+      "visualSummary": "A 'What's next? Invite the employee to join' page with the employee's email and a Send Invite Now button, followed by a Success page listing what happens next (invitation, employee completes their profile, payments can start).",
+      "onScreen": [
+        "'What's next?' invite page with Send Invite Now",
+        "Success page: Invitation to Join → Employee Information → ready for payments",
+        "'We'll keep you updated every step of the way'"
+      ],
+      "say": "Send the invite and the employee fills in their own side — address, phone, banking, required documents like a passport or employment verification. All their tax forms are housed and completed through that portal too, exactly the pattern you know from your US platform's employee self-service.",
+      "demoPurpose": "Show the employee doing their own data entry — including the taxing determinations — through the portal."
+    },
+    {
+      "id": "pds-24-onboarding-tracker",
+      "title": "Onboarding tracker — where every worker stands",
+      "timestampStart": "00:18:46",
+      "timestampEnd": "00:19:24",
+      "navContext": "Client app · Onboarding",
+      "visualSummary": "The Onboarding page lists in-progress workers with country flags, worker-type tags, and status pills — the just-hired employee shows 'Employee Invited' while others sit In Draft, Awaiting Agreement, or Awaiting Worker Signature with Send Reminder buttons.",
+      "onScreen": [
+        "Tabs: All, Contractor, Contractor+, Employer of Record, Payroll",
+        "Statuses: In Draft, Employee Invited, Awaiting Agreement, Awaiting Worker Signature",
+        "Send Reminder / Continue / View Worker actions"
+      ],
+      "say": "The onboarding section shows where each worker is in the process — our new hire has been invited and the ball's in their court, others are still in draft or waiting on signatures. Nobody falls through the cracks between offer and first payroll.",
+      "demoPurpose": "Prove the funnel is visible: every in-flight hire and exactly what it's waiting on."
+    },
+    {
+      "id": "pds-25-team-active-worker-contract",
+      "title": "Team — into an active worker's contract",
+      "timestampStart": "00:19:24",
+      "timestampEnd": "00:19:54",
+      "navContext": "Client app · Team → worker panel → Contract",
+      "visualSummary": "The Team page (44 workers with flags, types, managers, contract counts, statuses) pages to the Active workers; a worker's slide-over shows his active payroll contract, and his contract record opens — including a signed offer-letter PDF that opens for review in a new tab.",
+      "onScreen": [
+        "Team table: name, country, type, location, manager, contracts, status",
+        "Worker panel: active contracts with pay rate and View",
+        "Contract record with SignedContract.pdf — Download / review"
+      ],
+      "say": "Completed hires land in Team. Jump into any active worker and you're one click from their executed contract — and the actual signed document is right there to open and review, not filed somewhere else.",
+      "demoPurpose": "Connect the roster to the underlying contract paper in two clicks."
+    },
+    {
+      "id": "pds-26-payments-history-entitlements",
+      "title": "Contract record — payment history and leave entitlements",
+      "timestampStart": "00:19:54",
+      "timestampEnd": "00:24:20",
+      "navContext": "Client app · Contract detail (Distributions, Additional Payments, Leave Entitlements)",
+      "visualSummary": "The contract page scrolled through its lower sections: a Distributions history of reimbursements and one-time payments (newer ones GENERATED, older ones SENT with confirmation numbers) in local currency, an Additional Payments section with a monthly Mobile Allowance, and a Leave Entitlements list (Annual 20, Maternity 365, Paternity 14, Sick 30) with balances.",
+      "onScreen": [
+        "Distributions: Reimbursement / One Time rows, GENERATED vs SENT with confirmation numbers",
+        "Additional Payments: Mobile Allowance — monthly fixed payment",
+        "Leave Entitlements: Annual, Maternity, Paternity, Sick with balances",
+        "All amounts in local currency"
+      ],
+      "say": "Every distribution that ever happened for this worker is here, with confirmation numbers once sent. Below it, allowances and the leave entitlements. The entitlements aren't typed in by anyone — the platform loads them from what employment law in [any country] dictates, kept accurate year over year, because as an EOR provider we're on the hook for exactly these statutory rules. The client then layers anything company-specific — extra days, birthday off — on top of that statutory baseline.",
+      "demoPurpose": "Show statutory entitlements as system-of-record data, with the client's extras cleanly on top."
+    },
+    {
+      "id": "pds-27-contract-actions-overview",
+      "title": "Contract actions — job, pay, and off-boarding",
+      "timestampStart": "00:24:20",
+      "timestampEnd": "00:24:49",
+      "navContext": "Client app · Contract detail (top)",
+      "visualSummary": "The top of the contract record: payroll type, [any country] - [province/region], monthly pay in local currency, start date, job title and seniority, the signed-contract attachment, EXECUTED status, and action panels for Change Job Title, Change Pay Rate, and Request Off-board.",
+      "onScreen": [
+        "Contract header: Payroll · [any country] - [province/region] · monthly rate · start date",
+        "Status: EXECUTED; SignedContract.pdf attachment",
+        "Change Job Title / Change Pay Rate with View History",
+        "Request Off-board (red button)"
+      ],
+      "say": "The lifecycle actions live on the record: change the job title, change the pay rate — with history — and request off-boarding when the day comes. As the service provider you can do all of this on the client's behalf while impersonating, or the client runs it independently; however you split it is up to you.",
+      "demoPurpose": "Show the worker lifecycle managed from one record, by whichever party owns the task."
+    },
+    {
+      "id": "pds-28-team-service-model",
+      "title": "The service model — strict payroll, remittances, and requirements",
+      "timestampStart": "00:24:49",
+      "timestampEnd": "00:29:38",
+      "navContext": "Client app · Team (screen holds during Q&A)",
+      "visualSummary": "The Team roster stays on screen (44 workers, flags, statuses) through the longest Q&A stretch of the call — service model, benefits scope, remittances, and the payroll-cycle walkthrough setup.",
+      "onScreen": [
+        "Team roster with country flags and status pills",
+        "Filters: All Workers, Countries, Type, Location, Status",
+        "Export button"
+      ],
+      "say": "Nail the model here. This is strict payroll processing for the client's entity in [any country] — no co-employment; [any country] doesn't support the PEO model. Benefits administration is out of scope, but everything legally mandated — statutory social security and required pensions — gets paid, because it must be. Remittances: we create a bank file, the client uploads it to their own in-country bank, and it pays employees and authorities directly — funds never flow through us. Requirements to onboard: an entity in [any country], proper payroll registration, and an in-country bank account. Employees get a portal with pay slips and year-end tax documents. Then the cycle: everyone's onboarded once; each month has cutoff dates for changes; after cutoff we run the payroll and put it in the dashboard for review.",
+      "demoPurpose": "Answer the model questions decisively: what you are, what you're not, and how money actually moves."
+    },
+    {
+      "id": "pds-29-payroll-cycle-review",
+      "title": "The cycle lands back at review — and the hours question",
+      "timestampStart": "00:29:38",
+      "timestampEnd": "00:30:37",
+      "navContext": "Client app · Dashboard → Pay Period Approval",
+      "visualSummary": "The walkthrough hops through the client dashboard back to the Pay Period Approval screen — the same country-grouped monthly review — where the 'how do hours get in' exchange plays out.",
+      "onScreen": [
+        "Pay Periods card → Pay Period Approval",
+        "[any country] employee table with variances in local currency",
+        "Approve button and variance filters"
+      ],
+      "say": "After cutoff, the run appears here for review — this is the loop the client lives in monthly. For hourly employees, be direct about today's state: hours come from the built-in time tracking, and how a third-party punch-clock system's data would flow in is a follow-up to bring back concretely.",
+      "demoPurpose": "Close the payroll-cycle story on the review screen and set up the time-tracking reality check."
+    },
+    {
+      "id": "pds-30-time-tracking",
+      "title": "Time tracking — declared hours, not punch clocks",
+      "timestampStart": "00:30:37",
+      "timestampEnd": "00:31:51",
+      "navContext": "Client app · Time Tracking",
+      "visualSummary": "The Time Tracking page: 548 total hours for the month's pay period with a per-worker list of date ranges and hours logged, each with a View button, plus Import/Export and Manage Labels controls.",
+      "onScreen": [
+        "Total Hours 548 · pay period selector",
+        "Per-worker rows with hours logged and View",
+        "Import / Export · Manage Labels"
+      ],
+      "say": "What exists today is a time-tracking component — a worker saying 'I worked 8 hours this day' — not clock-in/clock-out. If the prospect runs punch clocks or a third-party time-and-attendance system, the integration options (in-system tracking, an approved local system, or file import) are the committed follow-up; don't oversell this screen.",
+      "demoPurpose": "Show current time capture honestly and log the integration question as a real follow-up."
+    },
+    {
+      "id": "pds-31-reimbursements",
+      "title": "Reimbursements — submit, approve, decline",
+      "timestampStart": "00:31:51",
+      "timestampEnd": "00:32:05",
+      "navContext": "Client app · Reimbursements",
+      "visualSummary": "The Reimbursements page: Pending Requests in multiple currencies with descriptions ('Internet charges for remote work', 'Client entertainment expense'), receipts, and Approve/Decline buttons per request.",
+      "onScreen": [
+        "Pending Requests / History tabs",
+        "Requests in multiple currencies with descriptions and receipts",
+        "Approve and Decline buttons per row"
+      ],
+      "say": "Workers submit reimbursements straight into the system with receipts; the client approves or declines here, and approved amounts flow into the pay cycle. Third-party expense-system data is the same story as time tracking — a follow-up to confirm.",
+      "demoPurpose": "Show expense capture living inside the payroll loop."
+    },
+    {
+      "id": "pds-32-reports-menu",
+      "title": "Reports — what exists and what's coming",
+      "timestampStart": "00:32:05",
+      "timestampEnd": "00:32:15",
+      "navContext": "Client app · Reports",
+      "visualSummary": "The Reports landing page with five tiles — Worker Report, Contractor Report, EOR Report, Payroll Report, Hour Log Report — and a Report Settings button.",
+      "onScreen": [
+        "Worker / Contractor / EOR / Payroll / Hour Log report tiles",
+        "Report Settings button"
+      ],
+      "say": "These reports live inside the global platform. They don't yet talk to the US platform's Report Center — consolidated reporting is top of the roadmap, and that ask was heard loud and clear — but no timeline: the first time you give one, it's wrong.",
+      "demoPurpose": "Frame reporting expectations honestly: strong in-platform, consolidation on the roadmap."
+    },
+    {
+      "id": "pds-33-worker-report",
+      "title": "Worker report — the workforce in one table",
+      "timestampStart": "00:32:15",
+      "timestampEnd": "00:33:09",
+      "navContext": "Client app · Reports · Worker Report",
+      "visualSummary": "The Worker Report: summary tiles (47 workers split by engagement), date-range and country/engagement filters, a Show Map toggle, and a table of workers with flags, engagement, pay frequency, and base pay in each local currency.",
+      "onScreen": [
+        "Summary tiles: Total Workers, Pending Contracts, by engagement",
+        "Filters: Engagement, Status, Countries, Pay Frequency · Show Map",
+        "Base pay per worker in local currencies · Download Report"
+      ],
+      "say": "The whole workforce in one report — filterable by country and engagement, exportable. Until Report Center consolidation ships, cross-platform reporting means running a report on each side and merging; note the counterpoint too — for financials, many clients will want the [any country] side segmented from the US side anyway, since each pays out of nation-specific banking and the books differ.",
+      "demoPurpose": "Show workforce reporting today and handle the two-reports objection with the segmentation angle."
+    },
+    {
+      "id": "pds-34-payroll-reports-menu",
+      "title": "Payroll reports — the canned set",
+      "timestampStart": "00:33:09",
+      "timestampEnd": "00:33:55",
+      "navContext": "Client app · Reports · Payroll Reports",
+      "visualSummary": "The Payroll Reports sub-menu with four tiles: Employer Gross Report, Employee Gross to Net Report, General Ledger Report, and Variance Report, each with a one-line description.",
+      "onScreen": [
+        "Employer Gross Report — total payroll costs incl. taxes and contributions",
+        "Employee Gross to Net Report — earnings, deductions, net pay",
+        "General Ledger Report — ledger-friendly, mapped to chart of accounts",
+        "Variance Report — compare periods to spot anomalies"
+      ],
+      "say": "Can reports be customized in-system? Not yet — these are the canned primary payroll reports generated from the local payroll system in [any country]. Every one exports, and customization happens from the export until Report Center-level customization arrives.",
+      "demoPurpose": "Set the canned-vs-custom reporting expectation on the exact menu in question."
+    },
+    {
+      "id": "pds-35-employer-gross-report",
+      "title": "Employer gross report",
+      "timestampStart": "00:33:56",
+      "timestampEnd": "00:34:25",
+      "navContext": "Client app · Reports · Payroll · Employer Gross",
+      "visualSummary": "The Employer Gross Report over a five-month range: country-grouped tables — [any country] in local currency beside Mexico in MXN — with columns from wages through bonus, recurring and one-time payments, reimbursements, benefits, and employer taxes & contributions to a total.",
+      "onScreen": [
+        "Date range picker (month to month)",
+        "Columns: wages, bonus, recurring, one-time, reimbursements, benefits, employer taxes & contributions, total",
+        "Country sections with per-country totals in local currency",
+        "Export button"
+      ],
+      "say": "The employer-side story: everything you paid, all-in, by employee and by country — wages through employer contributions. Pick the range, export it, and slice it from there.",
+      "demoPurpose": "Show the employer-burden report that answers 'what did this workforce actually cost.'"
+    },
+    {
+      "id": "pds-36-gross-to-net-report",
+      "title": "Employee gross-to-net report",
+      "timestampStart": "00:34:26",
+      "timestampEnd": "00:34:33",
+      "navContext": "Client app · Reports · Payroll · Gross to Net",
+      "visualSummary": "The Employee Gross to Net Report: country-grouped tables with gross wages, additional payments, reimbursements, gross total, taxes & contributions, and net per employee, with country totals.",
+      "onScreen": [
+        "Columns: gross wages → gross total → taxes & contributions → net",
+        "Country sections with totals in local currency",
+        "Same filters and Export as the gross report"
+      ],
+      "say": "And the employee-side mirror: gross salaries, the deductions and taxes, down to net — per employee, per country, per period.",
+      "demoPurpose": "Complete the pair: employer cost and employee net from the same data."
+    },
+    {
+      "id": "pds-37-general-ledger-report",
+      "title": "General ledger report — GL codes built in",
+      "timestampStart": "00:34:34",
+      "timestampEnd": "00:34:48",
+      "navContext": "Client app · Reports · Payroll · General Ledger",
+      "visualSummary": "The General Ledger Report: the same country-grouped payroll tables with small general-ledger code numbers under each column header.",
+      "onScreen": [
+        "GL codes under column headers (1000, 2000, 3000…)",
+        "Country-grouped rows and totals in local currency",
+        "Export for import into the client's accounting system"
+      ],
+      "say": "Same numbers, ledger-shaped: the GL codes above each column are customizable on the back end, so the export drops straight into the client's own accounting system.",
+      "demoPurpose": "Show payroll landing in the books without re-keying."
+    },
+    {
+      "id": "pds-38-variance-report",
+      "title": "Variance report",
+      "timestampStart": "00:34:49",
+      "timestampEnd": "00:34:57",
+      "navContext": "Client app · Reports · Payroll · Variance",
+      "visualSummary": "The Variance Report page comparing one month to the previous — header chip and filters visible, though the demo data renders an empty table here.",
+      "onScreen": [
+        "'Comparing [month] to [previous month]' chip",
+        "Compensation / Countries / Pay Frequency filters",
+        "Empty content area in the demo data set"
+      ],
+      "say": "Period-over-period comparison to spot anomalies and trends before they become questions — the same variance thinking from the approval screen, as a report. (In the demo set this renders empty; acknowledge and move on rather than dwelling.)",
+      "demoPurpose": "Name the report and keep momentum past a thin demo-data moment."
+    },
+    {
+      "id": "pds-39-platform-origin-qa",
+      "title": "Platform origin — homegrown, proven, newly launched",
+      "timestampStart": "00:34:58",
+      "timestampEnd": "00:37:37",
+      "navContext": "Client app · Payroll Reports menu (screen holds during Q&A)",
+      "visualSummary": "The Payroll Reports card list sits unchanged for the platform-origin Q&A — white-label or homegrown, how long it's existed, and how many customers run on it.",
+      "onScreen": [
+        "Four payroll report tiles, static",
+        "Impersonation banner still visible"
+      ],
+      "say": "It's homegrown, not white-labeled: the back end came in through an acquisition a couple of years ago and runs all the international services — the sister global business and this platform are the same technology. The company-branded side just launched at the annual conference, so first clients are onboarding now; on the sister side, hundreds of clients already run on this same technology. GDPR keeps the data planes separated, but single sign-on and consolidated reporting are the integration path.",
+      "demoPurpose": "Answer the trust questions: whose code, how battle-tested, how new is new."
+    },
+    {
+      "id": "pds-40-sp-admin-view",
+      "title": "Stop impersonating — what's actually new here",
+      "timestampStart": "00:37:38",
+      "timestampEnd": "00:39:01",
+      "navContext": "Global admin · Dashboard (impersonation stopped)",
+      "visualSummary": "Impersonation ends and the service-provider dashboard returns: Total Active Workers 137, Total Active Clients 4, the Head Count Trends chart and Top Clients table — the view the sister businesses never had.",
+      "onScreen": [
+        "Service-provider dashboard, no impersonation banner",
+        "Head Count Trends with EOR / Payroll / Contractor series",
+        "Top Clients by Worker Count"
+      ],
+      "say": "This service-provider layer is the new part: the sister businesses sell direct to clients, so they never needed a view of every client's global workers in one spot. That's what's unique in the marketplace here — the service provider sits above all of it and helps clients directly. And the money question that follows: the invoice to the client and the funds flow — shown next on a real invoice.",
+      "demoPurpose": "Position the service-provider layer as the differentiator, and tee up the funds-flow answer."
+    },
+    {
+      "id": "pds-41-client-invoice-detail",
+      "title": "The invoice — what the platform bills the service provider",
+      "timestampStart": "00:39:01",
+      "timestampEnd": "00:41:37",
+      "navContext": "Global admin · Invoices → invoice detail modal",
+      "visualSummary": "An invoice modal over the invoices list: billed to a demo client, Unpaid status, line items of per-worker monthly fees ($20 each) plus per-[province/region] payroll base fees ($500 each) in USD — service fees only, no wages or taxes.",
+      "onScreen": [
+        "Invoice header with billing address and Payment Status: Unpaid",
+        "Per-worker Monthly Fee line items ($20.00 USD)",
+        "Payroll Base Fee per [province/region] ($500.00 USD)",
+        "No wage or tax amounts anywhere on the invoice"
+      ],
+      "say": "This is the platform's invoice to you as the service provider — service fees only, sold wholesale for you to mark up and re-invoice. Wages and taxes never appear here because they never flow through anyone but the client's own bank. The client's paper trail is the gross-to-net reports plus the bank file; the only true invoice they receive is yours for service fees. Two open items taken as follow-ups: folding the marked-up fee into the regular US-platform invoice as a line item, and automating that data flow — because nobody wants two invoices per pay period, and clients should never see the wholesale price.",
+      "demoPurpose": "Make the money model concrete on a real invoice, and log the invoice-integration follow-ups."
+    },
+    {
+      "id": "pds-42-funding-model",
+      "title": "Funding model — why funds stay in the client's bank",
+      "timestampStart": "00:41:37",
+      "timestampEnd": "00:44:45",
+      "navContext": "Global admin · Invoices list (screen holds during discussion)",
+      "visualSummary": "The invoice modal closes back to the static invoices list while the funding-model contrast is talked through on camera.",
+      "onScreen": [
+        "Service Provider invoices table, 116 results",
+        "Invoice types: Monthly Contractors Fee, Payroll, EOR, Contractor"
+      ],
+      "say": "Contrast this with a PEO: there, you're the employer of record remitting wages, taxes and benefits from your own account. In true global payroll the client's own in-country bank pays employees and authorities — and some countries legally require certain payments, like pensions, to come from the client's direct bank rather than any third party. That's why remitting on the client's behalf isn't possible in this model; it's closer to a staffing-style relationship than co-employment.",
+      "demoPurpose": "Explain the regulatory why behind the funds flow so the model reads as designed, not limited."
+    },
+    {
+      "id": "pds-43-wrapup-pricing-timeline",
+      "title": "Wrap-up — pricing ask and the real timeline",
+      "timestampStart": "00:44:45",
+      "timestampEnd": "00:49:03",
+      "navContext": "No screen share — call gallery",
+      "visualSummary": "Screen share ends; the five-person gallery carries the wrap-up — pricing, the prospect's client timeline, and the evaluation posture.",
+      "onScreen": ["Five participant tiles, no shared content"],
+      "say": "The close surfaces the commercial truth: pricing hasn't been sent and is the immediate follow-up. The live opportunity needs a proposal by September for a January start — and that prospect insists US and [any country] payroll come out of one system, which is exactly why they've stayed with their current provider. The evaluation team is weighing capabilities, Report Center integration, cost, and what entering the [any country] market means for them — and they'll sell what's actually here, not roadmap.",
+      "demoPurpose": "Capture the deal reality — pricing, deadline, and the one-system requirement — as spoken."
+    },
+    {
+      "id": "pds-44-close-hr-support",
+      "title": "Close — the HR-support wildcard and goodbyes",
+      "timestampStart": "00:49:03",
+      "timestampEnd": "00:51:47",
+      "navContext": "No screen share — call gallery",
+      "visualSummary": "Still on camera: the roadmap-vs-reality exchange, the HR consulting reveal, scope-and-pricing asks, and goodbyes as tiles drop off the call.",
+      "onScreen": [
+        "Five participant tiles through goodbyes",
+        "Tiles disappearing as participants leave"
+      ],
+      "say": "Two closing notes. First, the pushback to respect: 'the term vaporware exists for a reason' — improvements like Report Center integration are being built on service-provider feedback, but sell what ships. Second, the wildcard: beyond payroll there's a separate HR consulting service — real people providing behind-the-scenes HR support for [any country], billed hourly or monthly — and the prospect wants its scope and pricing to decide between payroll-only and a fuller HR offering. Get both documents out fast.",
+      "demoPurpose": "End with the two follow-ups that keep the deal moving: honest roadmap talk and the HR-support offer."
+    }
+  ],
+  "questions": [
+    {
+      "id": "q-01",
+      "stepId": "pds-02-us-platform-dashboard",
+      "atTimestamp": "00:02:08",
+      "asker": "Presenter",
+      "question": "Those clients expanding into [any country] — I see two expansion models; tell me if these are what you're working with. A US company sets up a new entity in [any country] with their own direct employees needing payroll and benefits — but is it mostly that?",
+      "askedWhileShowing": "The US platform's Enhanced Dashboard for a demo client, idle while the group talks.",
+      "answer": "The prospect confirms the new-entity model is one case, and says employer-of-record isn't something they're actively entertaining. Their two real needs: existing local customers opening a site in [any country], and companies based in [any country] wanting an HR outsourcing offering. The sales lead adds that the majority of immediate cases are cross-border companies — clients headquartered in [any country] with US entities that are currently served only on the US side.",
+      "answerQuote": "Yeah, that is one of them.",
+      "status": "answered"
+    },
+    {
+      "id": "q-02",
+      "stepId": "pds-11-employee-pay-detail",
+      "atTimestamp": "00:09:36",
+      "asker": "Prospect — payroll ops",
+      "question": "Where is this information coming from? Is it a similar process to entering payroll in the US PEO platform? Is it an import from a payroll system? How did we get to this point?",
+      "askedWhileShowing": "The pay period approval page with an employee's row expanded — wages, payments, reimbursements, benefits and employer taxes & contributions in local currency, with net pay and employer cost panels.",
+      "answer": "It is not the US-platform process. The presenter's teams run the payroll in [any country] on a compliant local payroll system, and the results are provided to the client in this platform. Once an employee is onboarded with salary, deductions and reimbursements, the calculations and processing happen on that engine and are presented here — a managed payroll, not a process-it-yourself environment.",
+      "answerQuote": "It is being taken from our teams running the payroll in [any country] from a compliant local payroll system, and then providing it to you here in this platform.",
+      "status": "answered"
+    },
+    {
+      "id": "q-03",
+      "stepId": "pds-11-employee-pay-detail",
+      "atTimestamp": "00:10:25",
+      "asker": "Prospect — service ops",
+      "question": "Is there an experience or a method today where we as the service provider can collect time from our clients, calculate, get approval, and process the payroll ourselves?",
+      "askedWhileShowing": "The same expanded employee pay detail with employer taxes & contributions and the net-pay / employer-cost panels.",
+      "answer": "Not in the way the US payroll software works — this is more managed, and the service provider is not doing the calculations on the back end. The presenter offers to show where everything else happens in the flow, acknowledging up front it may not be the exact model they're looking for.",
+      "answerQuote": "It's not going to be the same type of process you're used to with the payroll software, because it is more managed. You're not doing the calculations on the back end.",
+      "status": "answered"
+    },
+    {
+      "id": "q-04",
+      "stepId": "pds-11-employee-pay-detail",
+      "atTimestamp": "00:11:02",
+      "asker": "Presenter",
+      "question": "I understand this might not be the exact model you're looking for — so I just want to at least demonstrate what it is, right?",
+      "askedWhileShowing": "Still on the expanded employee pay detail during the model discussion.",
+      "answer": "The prospects agree to proceed on that basis. The payroll ops lead restates her understanding — an interface presenting post-processed information, with the processing done by the presenter's payroll operation — and the presenter confirms it.",
+      "answerQuote": "Yeah, no, that's great. And I think we're just trying to understand what the differences are.",
+      "status": "answered"
+    },
+    {
+      "id": "q-05",
+      "stepId": "pds-12-payroll-register-approve",
+      "atTimestamp": "00:11:26",
+      "asker": "Presenter",
+      "question": "I can download the payroll register into Excel if I need to — and then this is where I would look and see all that, right?",
+      "askedWhileShowing": "The pay period header with the Approve button, right after the payroll-register .xlsx download.",
+      "answer": "Self-answered as narration: this is where any variances for the month show up, where the client reviews everything, and — once it looks good — where the payroll is approved.",
+      "answerQuote": "I can see any variances that may be happening that month. So this is where the client is going to look and review everything… and then I can approve my payroll here.",
+      "status": "answered"
+    },
+    {
+      "id": "q-06",
+      "stepId": "pds-13-variance-escalation-gams",
+      "atTimestamp": "00:11:51",
+      "asker": "Prospect — payroll ops",
+      "question": "And so who's the contact? If I see a variance that doesn't make sense — say 250% on an employee — who am I contacting to say we need to dig into this, I think there's an error?",
+      "askedWhileShowing": "The pay period approval page on the expanded variance view, with 100% variance flags on an employee's payment rows.",
+      "answer": "Every client is assigned a global account manager (GAM), based in the United States, as the first point of contact. The GAM handles platform questions and issues like this, gets answers back from the payroll team, and sets up direct contact with payroll when needed. There's also a direct customer-service support email with someone assigned to the account.",
+      "answerQuote": "You would be assigned a global — we call them global account managers, a GAM for short.",
+      "status": "answered"
+    },
+    {
+      "id": "q-07",
+      "stepId": "pds-13-variance-escalation-gams",
+      "atTimestamp": "00:12:39",
+      "asker": "Prospect — payroll ops",
+      "question": "And these GAMs — are they platform employees, or a separate entity partnership?",
+      "askedWhileShowing": "The same pay-period variance view with the employer taxes & contributions breakdown.",
+      "answer": "They are the platform company's own employees — asked because of the company's marketplace-partner pattern elsewhere, and confirmed directly: all in-house, not a partner arrangement.",
+      "answerQuote": "They're our employees, yeah — all in-house.",
+      "status": "answered"
+    },
+    {
+      "id": "q-08",
+      "stepId": "pds-15-new-hire-employee-info",
+      "atTimestamp": "00:13:25",
+      "asker": "Presenter",
+      "question": "It does ask — they are nationals of [any country], but do they also have authorization to work in [any country]?",
+      "askedWhileShowing": "The new-hire Employee Info step with the country dropdown open and the conditional work-authorization Yes/No toggle visible.",
+      "answer": "Self-answered: the form captures work authorization, so a person whose nationality is one country but who is authorized to work in the hiring country is taken into consideration by the system.",
+      "answerQuote": "This person's nationality is another country, but they have authorization — it takes that into consideration.",
+      "status": "answered"
+    },
+    {
+      "id": "q-09",
+      "stepId": "pds-16-new-hire-job-info",
+      "atTimestamp": "00:14:32",
+      "asker": "Prospect — service ops",
+      "question": "As we're talking about loading data into this — importing is one of our time savers. Would we have the ability to import things in bulk? Is that something we'd coordinate with the platform's resources?",
+      "askedWhileShowing": "The completed Job Info step — title, seniority, division assignments, work group, auto-assigned manager and start date.",
+      "answer": "Yes — there is absolutely a bulk-upload component, coordinated with the client's GAM and the operations teams. Once a client's employees are loaded that way, the wizard being demoed is what handles an individual new hire afterwards.",
+      "answerQuote": "Yeah, there is a bulk upload component to this, absolutely. That's where you would work with your GAM and the operations teams to do that.",
+      "status": "answered"
+    },
+    {
+      "id": "q-10",
+      "stepId": "pds-16-new-hire-job-info",
+      "atTimestamp": "00:15:08",
+      "asker": "Presenter",
+      "question": "So next would be more of the financial information of the employee — their salary, what the monthly salary is, are they full-time?",
+      "askedWhileShowing": "The completed Job Info page, just before clicking Next into Compensation.",
+      "answer": "Self-answered by the demo: the Compensation step takes a 10,000/month gross salary in local currency and instantly shows the employer's cost and the employee's gross-to-net, followed by full-time selection, statutory vacation, and additional allowances.",
+      "answerQuote": "It quickly gives you, based on 10,000 a month, what the employer costs and what the employee's gross to net is going to be.",
+      "status": "answered"
+    },
+    {
+      "id": "q-11",
+      "stepId": "pds-19-additional-payments",
+      "atTimestamp": "00:16:56",
+      "asker": "Prospect — sales",
+      "question": "So this is something the employer does to just enter a new hire — is that what you're saying?",
+      "askedWhileShowing": "The Compensation step with the newly added monthly Internet Allowance row beneath the salary breakdown.",
+      "answer": "Confirmed — the whole five-step flow is what the client (employer) uses to enter a new hire, matching the earlier framing that 'our client has a new hire' and enters them here; the service provider can also drive it on the client's behalf via impersonation.",
+      "answerQuote": "That's, yeah, okay. Got it.",
+      "status": "answered"
+    },
+    {
+      "id": "q-12",
+      "stepId": "pds-20-currency-double-check",
+      "atTimestamp": "00:17:11",
+      "asker": "Presenter",
+      "question": "Is this really what you want to pay them, in US dollars? [any country] is not too wildly different, but in countries where a salary is a million units of local currency — what is that in US dollars?",
+      "askedWhileShowing": "The 'Double check the amount' dialog comparing the USD employer cost against the local-currency salary.",
+      "answer": "Self-answered by the tool: it gives a quick back-of-the-napkin conversion — the 10,000 local-currency salary shows as roughly 7,000 USD — so the employer can confirm 'that's exactly where I want to be' before locking the amount.",
+      "answerQuote": "This gives you a quick calculation… That's exactly where I want to be.",
+      "status": "answered"
+    },
+    {
+      "id": "q-13",
+      "stepId": "pds-23-invite-employee-portal",
+      "atTimestamp": "00:18:32",
+      "asker": "Prospect — payroll ops",
+      "question": "Is that where they also make taxing determinant selections?",
+      "askedWhileShowing": "The 'What's next? Invite the employee' page with the Send Invite Now button.",
+      "answer": "Yes — all the employee's tax forms are housed and filled out through the employee portal. The prospect analogizes it to the US platform's employee self-service: the portal is where the employee completes remaining employment documentation to be payroll-ready and address taxing and compliance — confirmed exactly.",
+      "answerQuote": "Yep — where all their tax forms are at and filled out; all that's done through the portal.",
+      "status": "answered"
+    },
+    {
+      "id": "q-14",
+      "stepId": "pds-26-payments-history-entitlements",
+      "atTimestamp": "00:20:21",
+      "asker": "Prospect — payroll ops",
+      "question": "So where do those leave entitlements come from? Who's providing those, and how are they getting into the system?",
+      "askedWhileShowing": "The contract record scrolled to Additional Payments and the Leave Entitlements list (Annual 20, Maternity 365, Paternity 14, Sick 30).",
+      "answer": "The platform provides them, loaded from what employment law in [any country] dictates — required annual leave and entitlements per the country's rules. Because the company also provides employer-of-record services, it is itself the employer in those cases and must adhere to statutory days off, holidays and sick days — so the entitlements are built in and kept accurate to the country's law each year.",
+      "answerQuote": "That's something that we're providing through the system based on what the employment laws of [any country] dictate in terms of the required annual leaves, entitlements, et cetera.",
+      "status": "answered"
+    },
+    {
+      "id": "q-15",
+      "stepId": "pds-26-payments-history-entitlements",
+      "atTimestamp": "00:21:19",
+      "asker": "Prospect — payroll ops",
+      "question": "How does any company-specific information get entered? If there are different entitlements based on company or position, how is that captured in the system, and who's providing that input?",
+      "askedWhileShowing": "The same contract view — Additional Payments and Leave Entitlements.",
+      "answer": "The client themselves provides that input — either when setting up the employee or on the back end (for example, giving all employees their birthday off or other extra benefits), loaded per their own company rules. The system starts at the statutory baseline required for [any country]; anything on top is the client's to add and customize.",
+      "answerQuote": "That would be the client themselves, when they set up that employee or on the back end.",
+      "status": "answered"
+    },
+    {
+      "id": "q-16",
+      "stepId": "pds-26-payments-history-entitlements",
+      "atTimestamp": "00:22:08",
+      "asker": "Prospect — payroll ops",
+      "question": "In our current service model, customers look to us per their handbook and policies to script the PTO calculations and confirm the amounts are correct and compliant. Where does that responsibility lie in this model?",
+      "askedWhileShowing": "Still the contract record's Additional Payments and Leave Entitlements sections.",
+      "answer": "The model is payroll processing only — the platform side is not providing HR support or scripting policy calculations, though an HR-support layer for service providers is being explored. Statutory entitlements are system-provided and law-accurate; company-specific policy remains with the client and their advisors. On the open detail of whether year-one leave accrues versus being granted day one in [any country], the presenter committed to find out and come back.",
+      "answerQuote": "We're only processing the payroll… I'll find that out — I don't know the specific rule.",
+      "status": "follow-up"
+    },
+    {
+      "id": "q-17",
+      "stepId": "pds-27-contract-actions-overview",
+      "atTimestamp": "00:24:46",
+      "asker": "Prospect — sales",
+      "question": "Do we have a hard stop at 1:30?",
+      "askedWhileShowing": "The top of the contract record (EXECUTED status, monthly rate in local currency), cursor moving toward the Team nav item.",
+      "answer": "The presenter has no hard stop but wants to be mindful of the prospect's time; the sales lead proceeds with her questions, offering to follow up separately if needed.",
+      "answerQuote": "Oh — I don't, but if you do, I want to be mindful of that.",
+      "status": "answered"
+    },
+    {
+      "id": "q-18",
+      "stepId": "pds-28-team-service-model",
+      "atTimestamp": "00:24:51",
+      "asker": "Prospect — sales",
+      "question": "When clients come on and do this, are we processing them as a PEO where we have co-employment, or is this strict payroll only — how are your clients doing it?",
+      "askedWhileShowing": "The Team roster page (44 workers with flags and status pills), which stays up through the service-model Q&A.",
+      "answer": "Strict payroll. The payroll ops lead notes the PEO model isn't even possible in [any country]; the presenter confirms they process payroll for the client's entity and employees in [any country] with no co-employment — strictly a payroll processor.",
+      "answerQuote": "We're processing payroll for your clients' entities and employees in [any country]. There's no co-employment there. We're just a payroll processor.",
+      "status": "answered"
+    },
+    {
+      "id": "q-19",
+      "stepId": "pds-28-team-service-model",
+      "atTimestamp": "00:25:31",
+      "asker": "Prospect — sales",
+      "question": "Does that mean any kind of benefits — understanding benefits are wildly different in [any country] and much is state-sponsored — is all of that out of scope for this system, or how are things like that tracked?",
+      "askedWhileShowing": "The Team roster, unchanged.",
+      "answer": "Benefits support and administration are out of scope — but as the payroll processor, everything legally mandated gets paid: the proper social security and the required pensions in [any country], because those are statutory. Guidance and administration of benefits themselves stay outside the system.",
+      "answerQuote": "As a payroll processor, we're going to be paying the proper social security. There are required pensions in [any country] — we're going to be paying those.",
+      "status": "answered"
+    },
+    {
+      "id": "q-20",
+      "stepId": "pds-28-team-service-model",
+      "atTimestamp": "00:26:17",
+      "asker": "Prospect — payroll ops",
+      "question": "If you're withholding the mandated provincial and local taxes and whatnot, how are those getting back to the proper authorities?",
+      "askedWhileShowing": "The Team roster, unchanged.",
+      "answer": "Via a bank file: the client must have a bank account in [any country], and the generated file is uploaded to the client's own bank, which processes payments to employees and authorities alike. Funds are never paid through the platform — everything is directed straight from the client's in-country bank, with the structure set up at payroll implementation so remittances go out timely with each payroll.",
+      "answerQuote": "We create a bank file that they upload to their bank to process those payments — either the employees or the authorities.",
+      "status": "answered"
+    },
+    {
+      "id": "q-21",
+      "stepId": "pds-28-team-service-model",
+      "atTimestamp": "00:27:17",
+      "asker": "Presenter",
+      "question": "Does the company have an entity in [any country]? Are they properly registered for payroll? Do they have a bank account in [any country]?",
+      "askedWhileShowing": "The Team roster, unchanged.",
+      "answer": "Self-answered checklist: these are the onboarding requirements. Once they're met, the client can be onboarded, the payroll set up, and all funds directed appropriately from there.",
+      "answerQuote": "And then we can onboard and set up the payroll system — we're going to direct all those funds appropriately from there.",
+      "status": "answered"
+    },
+    {
+      "id": "q-22",
+      "stepId": "pds-28-team-service-model",
+      "atTimestamp": "00:28:20",
+      "asker": "Prospect — service ops",
+      "question": "How does a client submit a payroll? Week one, pay period one, the client's ready to run payroll — what's the process of getting information in for your team to calculate, process, get approval, post, and generate the bank files back to the client? Can you walk us through that process?",
+      "askedWhileShowing": "The Team roster page, still on screen as the walkthrough is requested.",
+      "answer": "First, all employees are onboarded into the system once. Then each monthly (or semi-monthly) cycle has cutoff dates by which changes, additions and subtractions must be in. After cutoff, the presenter's team runs the payroll and posts it to the client dashboard for review — demonstrated by walking to the dashboard and opening the Pay Period Approval screen where it appears.",
+      "answerQuote": "Once that cutoff date hits, we run the payroll and provide it here in the dashboard for that client to review.",
+      "status": "answered"
+    },
+    {
+      "id": "q-23",
+      "stepId": "pds-29-payroll-cycle-review",
+      "atTimestamp": "00:29:43",
+      "asker": "Prospect — service ops",
+      "question": "How does the system get the hours to pay the employees?",
+      "askedWhileShowing": "The Pay Period Approval screen — the country-grouped monthly review in local currency.",
+      "answer": "After clarifying it's about hourly employees and hearing how the prospect captures hours today, the presenter shows the built-in time tracking: workers declare hours worked per day rather than punching in and out. How a third-party clock-in/clock-out system's data would flow to the payroll teams is a committed follow-up — including whether the options are in-system tracking, integrating an approved local time-and-attendance system, or a file import.",
+      "answerQuote": "The only component it has built currently is a time-tracking component where it's not clocking in and out — it's me saying I worked 8 hours this day.",
+      "status": "answered"
+    },
+    {
+      "id": "q-24",
+      "stepId": "pds-29-payroll-cycle-review",
+      "atTimestamp": "00:29:48",
+      "asker": "Presenter",
+      "question": "Are you talking about hourly employees or salaried employees?",
+      "askedWhileShowing": "The same Pay Period Approval screen.",
+      "answer": "The prospect's service ops lead answers immediately: their hourly employees — which sets up the follow-up about how those hours are captured today.",
+      "answerQuote": "Yes, our hourly employees.",
+      "status": "answered"
+    },
+    {
+      "id": "q-25",
+      "stepId": "pds-29-payroll-cycle-review",
+      "atTimestamp": "00:29:51",
+      "asker": "Presenter",
+      "question": "So how are they capturing those hours today?",
+      "askedWhileShowing": "The same Pay Period Approval screen.",
+      "answer": "Today the prospect collects payroll information on a timesheet in their US platform, and also offers a time-and-labor system where employees punch in and out on an app or portal widget; that data synchronizes into a timesheet that is finalized before payroll begins.",
+      "answerQuote": "We collect payroll information through a timesheet. We do offer a time and labor system where employees punch in and out.",
+      "status": "answered"
+    },
+    {
+      "id": "q-26",
+      "stepId": "pds-32-reports-menu",
+      "atTimestamp": "00:32:08",
+      "asker": "Presenter",
+      "question": "It's coming, and I don't have a timeline — because the first time I say a timeline, it will be wrong, right?",
+      "askedWhileShowing": "The Reports menu (Worker, Contractor, EOR, Payroll, Hour Log tiles).",
+      "answer": "The prospect agrees good-naturedly ('Yes, always'). The presenter reinforces that consolidated reporting through the US platform's Report Center is very top of the roadmap — heard loud and clear at the annual conference — and in the meantime cross-platform reporting means running a report on each side and merging.",
+      "answerQuote": "Yes, always.",
+      "status": "answered"
+    },
+    {
+      "id": "q-27",
+      "stepId": "pds-34-payroll-reports-menu",
+      "atTimestamp": "00:33:32",
+      "asker": "Prospect — payroll ops",
+      "question": "Until Report Center is available there are established canned reports — is there any ability to customize reports within this system, if a customer in [any country] needs something slightly different than what's on the menu?",
+      "askedWhileShowing": "The Payroll Reports card list in the client view.",
+      "answer": "Not yet — clients get the canned primary payroll reports generated from the local payroll system in [any country]. Every report exports, and customization happens from the export; General Ledger codes specifically can be edited on the back end so the export maps to the client's chart of accounts.",
+      "answerQuote": "Not yet. These are the primary payroll reports being generated from the payroll system in [any country].",
+      "status": "answered"
+    },
+    {
+      "id": "q-28",
+      "stepId": "pds-36-gross-to-net-report",
+      "atTimestamp": "00:34:25",
+      "asker": "Presenter",
+      "question": "We have the employee gross-to-net report, right?",
+      "askedWhileShowing": "The Payroll Reports list, cursor over the Employee Gross to Net Report row.",
+      "answer": "Self-answered by opening it: employees' gross salaries, then deductions and taxes, down to net — shown per employee with country totals before moving to the General Ledger Report.",
+      "answerQuote": "Similarly, to show employees' gross salaries after the deductions, the taxes — their net.",
+      "status": "answered"
+    },
+    {
+      "id": "q-29",
+      "stepId": "pds-39-platform-origin-qa",
+      "atTimestamp": "00:34:58",
+      "asker": "Prospect — payroll ops",
+      "question": "Is this a homegrown application, this functionality, or is this a white-labeled product?",
+      "askedWhileShowing": "The Payroll Reports card list, just after the empty Variance Report.",
+      "answer": "Homegrown: the back end came from a division partner acquired a couple of years ago and runs all the company's international services — the sister global business and this platform are the same technology, internal to the company. Asked whether it existed before the acquisition (like other acquired products), the presenter confirms it did.",
+      "answerQuote": "It is homegrown. The back end is one of our division partners that was acquired a couple of years ago… it's all the same platform, but it is internal, absolutely.",
+      "status": "answered"
+    },
+    {
+      "id": "q-30",
+      "stepId": "pds-39-platform-origin-qa",
+      "atTimestamp": "00:35:44",
+      "asker": "Presenter",
+      "question": "People I've worked with for years — we'd always been in this global space and would go, why don't we do it this way?",
+      "askedWhileShowing": "The static Payroll Reports list during the origin story.",
+      "answer": "Self-answered origin story: those colleagues created the acquired company, and the presenter later joined to define the international EOR, contractor and payroll approach — aiming for the best of everything they'd seen at other global payroll providers.",
+      "answerQuote": "We should. So they created this company.",
+      "status": "answered"
+    },
+    {
+      "id": "q-31",
+      "stepId": "pds-39-platform-origin-qa",
+      "atTimestamp": "00:36:52",
+      "asker": "Prospect — payroll ops",
+      "question": "How long has this been around? Did you just launch the global product at the conference?",
+      "askedWhileShowing": "The static Payroll Reports list.",
+      "answer": "The company-branded side, yes — just launched at the annual conference. But the underlying platform has been around for years on the sister global business's side, and was only recently brought to market under the company's brand.",
+      "answerQuote": "The branded side of it, yes. But this has been around for years on the sister global side.",
+      "status": "answered"
+    },
+    {
+      "id": "q-32",
+      "stepId": "pds-39-platform-origin-qa",
+      "atTimestamp": "00:37:10",
+      "asker": "Prospect — payroll ops",
+      "question": "And how many customers are currently on this platform — customers of the US platform?",
+      "askedWhileShowing": "The static Payroll Reports list.",
+      "answer": "On the newly launched branded side they're just starting — close to their first clients, having just launched at the conference. On the sister side, hundreds of clients already run on this same technology (labeled differently), though without the service-provider administrator view about to be shown.",
+      "answerQuote": "We're just starting… on the sister side, hundreds of clients are already using this same technology.",
+      "status": "answered"
+    },
+    {
+      "id": "q-33",
+      "stepId": "pds-40-sp-admin-view",
+      "atTimestamp": "00:37:38",
+      "asker": "Presenter",
+      "question": "If I stop impersonating — this is what's new here, because the other businesses are selling direct to clients, right?",
+      "askedWhileShowing": "The service-provider dashboard loading right after Stop Impersonating.",
+      "answer": "Self-answered: the sister businesses sell direct and don't serve service providers, so this admin layer — a service-provider view over every client's global employees in one spot — is what's new, built for the launch, and unique in the marketplace.",
+      "answerQuote": "This side is what's new… this is what's very unique in terms of the marketplace.",
+      "status": "answered"
+    },
+    {
+      "id": "q-34",
+      "stepId": "pds-40-sp-admin-view",
+      "atTimestamp": "00:38:15",
+      "asker": "Prospect — service ops",
+      "question": "Since your team's collecting the pay information, paying the employees, running that — where does the invoice to the client come from, and where do the funds go?",
+      "askedWhileShowing": "The service-provider dashboard with the head-count trends chart and top-clients table.",
+      "answer": "Answered on the invoice screens that follow: the platform invoices the service provider for service fees only (wholesale, to be marked up and re-invoiced to the client); wages and taxes never flow through the platform or the service provider — the client's own in-country bank pays employees and authorities from the generated bank file. The client's 'invoice' is effectively the gross-to-net reports plus the bank file; the only true invoice they receive is the service provider's fee invoice.",
+      "answerQuote": "They're going to see the gross-to-net reports generated from the payroll… separately, they receive the bank file with the amounts to be distributed to the employees and the tax authorities.",
+      "status": "answered"
+    },
+    {
+      "id": "q-35",
+      "stepId": "pds-40-sp-admin-view",
+      "atTimestamp": "00:38:57",
+      "asker": "Prospect — sales",
+      "question": "We want clients to feel like, if they're coming to us, it's within our environment — is that what you're trying to say?",
+      "askedWhileShowing": "The service-provider dashboard during the invoice/funds discussion.",
+      "answer": "The service ops lead confirms that's exactly the point, and the presenter picks up the thread — the service-provider view holds the invoices, and he pulls one up to show the fee-only wholesale model that keeps the client relationship in the service provider's hands.",
+      "answerQuote": "Yes, yes — yeah.",
+      "status": "answered"
+    },
+    {
+      "id": "q-36",
+      "stepId": "pds-41-client-invoice-detail",
+      "atTimestamp": "00:39:37",
+      "asker": "Prospect — payroll ops",
+      "question": "So they'd get their individual payroll invoice for purposes of debiting their bank account for wages and taxes, and then we would invoice them separately for their service fee — is that what you're saying?",
+      "askedWhileShowing": "The invoice modal — per-worker monthly fees and per-[province/region] payroll base fees, Unpaid status.",
+      "answer": "Confirmed: two pieces — the payroll/bank-debit side for wages and taxes out of the client's own bank, and the service provider's separate invoice for service fees after marking up the wholesale platform fees.",
+      "answerQuote": "Correct, correct.",
+      "status": "answered"
+    },
+    {
+      "id": "q-37",
+      "stepId": "pds-41-client-invoice-detail",
+      "atTimestamp": "00:39:51",
+      "asker": "Prospect — sales",
+      "question": "Can we integrate this and put it on a regular US-platform invoice, or does it have to be two separate invoices? Because this is the invoice to us, right — so can we take this and apply our markup?",
+      "askedWhileShowing": "The same invoice modal over the invoices list.",
+      "answer": "The wholesale-and-markup part is confirmed outright — it's sold at a wholesale price for the service provider to mark up. Whether the marked-up fee can ride as a line item on the regular US-platform invoice instead of two separate invoices is not definitively answered: the presenter is chasing that same answer and takes it back as a follow-up.",
+      "answerQuote": "We sell it at a wholesale price to you, right? And then you mark it up — absolutely.",
+      "status": "answered"
+    },
+    {
+      "id": "q-38",
+      "stepId": "pds-41-client-invoice-detail",
+      "atTimestamp": "00:40:13",
+      "asker": "Presenter",
+      "question": "We sell it at a wholesale price to you, right? And then you mark it up.",
+      "askedWhileShowing": "The invoice modal.",
+      "answer": "Self-answered confirmation of the commercial model; the sales lead agrees and extends it — they'd want the information truncated with their fee as a line item on the main invoice.",
+      "answerQuote": "And then you mark it up — absolutely, yeah.",
+      "status": "answered"
+    },
+    {
+      "id": "q-39",
+      "stepId": "pds-41-client-invoice-detail",
+      "atTimestamp": "00:40:25",
+      "asker": "Prospect — sales",
+      "question": "We'd want to truncate this information with our fee on it as a line item on the main invoice — would that be a manual process, or is there something we can set up so that data flows right to the invoice?",
+      "askedWhileShowing": "The invoice modal's fee line items.",
+      "answer": "No definitive answer on the call: the presenter doesn't want to add manual work turning the platform's invoice into a client invoice, is trying to get that exact question answered himself, and commits to come back on it.",
+      "answerQuote": "I'm trying to get that answered as well. That's a good point, and I'll come back.",
+      "status": "follow-up"
+    },
+    {
+      "id": "q-40",
+      "stepId": "pds-41-client-invoice-detail",
+      "atTimestamp": "00:40:54",
+      "asker": "Prospect — sales",
+      "question": "And then we don't want our clients seeing what you bill us, right?",
+      "askedWhileShowing": "The invoice modal still open over the invoices list.",
+      "answer": "Emphatically agreed. Clients should only see the end view, and for ease of use there shouldn't be two invoices each pay period — both points affirmed as making total sense.",
+      "answerQuote": "Exactly.",
+      "status": "answered"
+    },
+    {
+      "id": "q-41",
+      "stepId": "pds-41-client-invoice-detail",
+      "atTimestamp": "00:41:21",
+      "asker": "Prospect — service ops",
+      "question": "Is there an actual invoice generated for the client to pay you, or is it a summary of gross wages, employee taxes, employer taxes and benefit contributions that nets to zero because it's reflected in the bank files the client sends to their bank?",
+      "askedWhileShowing": "The invoice modal, moments before it closes back to the invoices list.",
+      "answer": "The latter, effectively: clients see the gross-to-net reports generated from payroll in the platform and separately receive the bank file with the amounts to be distributed to employees and tax authorities — 'you can call them invoices,' but those are reports. Since the client isn't paying the platform or the service provider for wages and taxes, the only true invoice the client receives is the service provider's fee invoice; taxes and salaries flow directly from the client's in-country bank.",
+      "answerQuote": "They're going to see those gross-to-net reports… separately, they're going to receive the bank file with the amounts to be distributed to the employees and the tax authorities.",
+      "status": "answered"
+    },
+    {
+      "id": "q-42",
+      "stepId": "pds-42-funding-model",
+      "atTimestamp": "00:44:06",
+      "asker": "Presenter",
+      "question": "Some countries require that payments come from an in-country bank, right? Like pensions that must come from the client's direct bank — it can't come from a third-party bank because they're paying a pension, right?",
+      "askedWhileShowing": "The static service-provider invoices list during the funding-model discussion.",
+      "answer": "Self-answered rhetorical tags inside the explanation of why funds must flow from the client's own in-country bank in some jurisdictions — which is exactly why remitting on the client's behalf isn't possible in this model. The prospect affirms along the way and agrees the model is closer to staffing than co-employment.",
+      "answerQuote": "Right, right.",
+      "status": "answered"
+    },
+    {
+      "id": "q-43",
+      "stepId": "pds-42-funding-model",
+      "atTimestamp": "00:44:41",
+      "asker": "Prospect — payroll ops",
+      "question": "Were there any other questions you had? I know we've run a bit long — I'm sure we'll have follow-ups we'll hit you with. I think I'm good; what about you guys?",
+      "askedWhileShowing": "The service-provider invoices list, just before screen share ends.",
+      "answer": "The sales lead takes the opening and raises pricing — they definitely need to understand what would be charged in this model — which launches the closing exchange on pricing, the live prospect's timeline, and evaluation next steps.",
+      "answerQuote": "Do we have pricing information?",
+      "status": "answered"
+    },
+    {
+      "id": "q-44",
+      "stepId": "pds-43-wrapup-pricing-timeline",
+      "atTimestamp": "00:45:00",
+      "asker": "Prospect — sales",
+      "question": "Do we have pricing information?",
+      "askedWhileShowing": "The call gallery — screen share has just ended.",
+      "answer": "Not yet: the host confirms no pricing has been sent over, and the payroll ops lead confirms 'not yet.' The prospect responds that they definitely need it — understanding the charges for this model is essential to proceed. Sending pricing is the standing follow-up out of the call.",
+      "answerQuote": "No, we haven't sent any pricing over yet.",
+      "status": "follow-up"
+    },
+    {
+      "id": "q-45",
+      "stepId": "pds-43-wrapup-pricing-timeline",
+      "atTimestamp": "00:45:15",
+      "asker": "Host",
+      "question": "What's the conversation like right now with your client in terms of how soon they need a solution for this?",
+      "askedWhileShowing": "The call gallery, host speaking.",
+      "answer": "The live opportunity is in the proposal process now: the sales lead is buying time with a standalone HR-support offering; if the client signs they'd start in January, and a proposal is needed by September at the latest. Critically, that client insists US and [any country] payroll come out of one system — the only reason they stay with their current provider — so payroll can't be discussed until processing in [any country] is real. The evaluation side adds there's no committed timeline: they're weighing capabilities, Report Center integration, cost, and what entering the market in [any country] implies.",
+      "answerQuote": "If this client chooses to move forward with us, they would do it in January… at least by September we would need to be putting a proposal in front of them.",
+      "status": "answered"
+    },
+    {
+      "id": "q-46",
+      "stepId": "pds-43-wrapup-pricing-timeline",
+      "atTimestamp": "00:45:47",
+      "asker": "Prospect — sales",
+      "question": "So I am exploring what's available, right?",
+      "askedWhileShowing": "The call gallery, sales lead mid-explanation of her prospect's timeline.",
+      "answer": "A rhetorical aside inside her own timeline explanation — why she's involved this early, when normally her colleagues would run this stage. No answer was expected; she continues her own thought.",
+      "answerQuote": "—",
+      "status": "answered"
+    },
+    {
+      "id": "q-47",
+      "stepId": "pds-44-close-hr-support",
+      "atTimestamp": "00:51:29",
+      "asker": "Host",
+      "question": "Anything else quick before we all jump?",
+      "askedWhileShowing": "The call gallery — five tiles, host speaking with hands clasped.",
+      "answer": "Nothing further — the prospect thanks the team for the extra time, the host closes with it being nice to meet everyone virtually and a promise to be in touch, and the call ends in goodbyes.",
+      "answerQuote": "No — we appreciate the extra time that you gave us.",
+      "status": "answered"
+    }
+  ]
+}
