@@ -7,6 +7,11 @@ import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import {
   DASH_NODE_KEYS,
   isNodeState,
+  migrateActivated,
+  migrateCheckNotes,
+  migrateChecks,
+  migrateNotes,
+  migrateStates,
   nodeChecklist,
   stateFromChecks,
   type DashNodeKey,
@@ -106,15 +111,11 @@ export async function advanceNode(formData: FormData) {
   const prisma = getPrisma();
   const card = await prisma.dashCard.findUnique({ where: { id: cardId } });
   if (!card) done();
-  const states: Record<string, string> = {
-    ...((card!.states as Record<string, string> | null) ?? {}),
-  };
+  const states: Record<string, string> = migrateStates(card!.states);
   const cur: NodeState = isNodeState(states[node]) ? (states[node] as NodeState) : "todo";
   states[node] = cur === "todo" ? "active" : cur === "active" ? "done" : "todo";
   if (states[node] === "done") lightNext(states, node);
-  const activated: Record<string, string> = {
-    ...((card!.activated as Record<string, string> | null) ?? {}),
-  };
+  const activated: Record<string, string> = migrateActivated(card!.activated);
   syncActivation(activated, states);
   await prisma.dashCard.update({ where: { id: cardId }, data: { states, activated } });
   done();
@@ -133,16 +134,12 @@ export async function setCardStage(formData: FormData) {
   const prisma = getPrisma();
   const card = await prisma.dashCard.findUnique({ where: { id: cardId } });
   if (!card) done(to);
-  const states: Record<string, string> = {
-    ...((card!.states as Record<string, string> | null) ?? {}),
-  };
+  const states: Record<string, string> = migrateStates(card!.states);
   const target = DASH_NODE_KEYS.indexOf(node);
   DASH_NODE_KEYS.forEach((key, i) => {
     states[key] = i < target ? "done" : i === target ? "active" : "todo";
   });
-  const activated: Record<string, string> = {
-    ...((card!.activated as Record<string, string> | null) ?? {}),
-  };
+  const activated: Record<string, string> = migrateActivated(card!.activated);
   syncActivation(activated, states);
   await prisma.dashCard.update({ where: { id: cardId }, data: { states, activated } });
   done(to);
@@ -169,22 +166,16 @@ export async function toggleCheck(formData: FormData) {
   const card = await prisma.dashCard.findUnique({ where: { id: cardId } });
   if (!card) done(back);
 
-  const allChecks: Record<string, boolean[]> = {
-    ...((card!.checks as Record<string, boolean[]> | null) ?? {}),
-  };
+  const allChecks: Record<string, boolean[]> = migrateChecks(card!.checks);
   const arr = Array.isArray(allChecks[node]) ? [...allChecks[node]] : [];
   while (arr.length < count) arr.push(false);
   if (index >= 0 && index < count) arr[index] = !arr[index];
   allChecks[node] = arr;
 
-  const states: Record<string, string> = {
-    ...((card!.states as Record<string, string> | null) ?? {}),
-  };
+  const states: Record<string, string> = migrateStates(card!.states);
   states[node] = stateFromChecks(arr, count);
   if (states[node] === "done") lightNext(states, node);
-  const activated: Record<string, string> = {
-    ...((card!.activated as Record<string, string> | null) ?? {}),
-  };
+  const activated: Record<string, string> = migrateActivated(card!.activated);
   syncActivation(activated, states);
 
   await prisma.dashCard.update({
@@ -205,9 +196,7 @@ export async function saveCheckNote(formData: FormData) {
   const prisma = getPrisma();
   const card = await prisma.dashCard.findUnique({ where: { id: cardId } });
   if (!card) done();
-  const all: Record<string, Record<string, string>> = {
-    ...((card!.checkNotes as Record<string, Record<string, string>> | null) ?? {}),
-  };
+  const all: Record<string, Record<string, string>> = migrateCheckNotes(card!.checkNotes);
   const per = { ...(all[node] ?? {}) };
   if (note) per[index] = note;
   else delete per[index];
@@ -226,9 +215,7 @@ export async function saveNote(formData: FormData) {
   const prisma = getPrisma();
   const card = await prisma.dashCard.findUnique({ where: { id: cardId } });
   if (!card) done();
-  const notes: Record<string, string> = {
-    ...((card!.notes as Record<string, string> | null) ?? {}),
-  };
+  const notes: Record<string, string> = migrateNotes(card!.notes);
   if (note) notes[node] = note;
   else delete notes[node];
   await prisma.dashCard.update({ where: { id: cardId }, data: { notes } });
