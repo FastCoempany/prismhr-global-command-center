@@ -34,7 +34,7 @@
       "visualSummary": "The shared browser shows the US PrismHR Enhanced Dashboard for a demo client: a Favorites link list on the left and an 'At a Glance' employee panel. The screen sits here while the group talks through the prospect's expansion use cases.",
       "onScreen": [
         "Top nav: Work Centers, Client, HR, Payroll, Reports, Back Office, Marketplace",
-        "Favorites list including Process Payroll and Global Payroll links",
+        "Favorites list including Process Payroll and other payroll shortcuts",
         "'At a Glance' employee panel with status filters"
       ],
       "say": "Before jumping in, get the use cases on the table. Two expansion models come up: a US company sets up a new entity in [any country] — their own direct employees needing payroll — or cross-border companies with entities on both sides of the border where only the US side is served today. Employer-of-record is the third lane, available in the same platform if it ever comes up.",
