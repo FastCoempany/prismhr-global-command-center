@@ -93,6 +93,13 @@ export async function AppWayfinder({
             v3 Sidekick
           </Link>
           <Link
+            aria-current={current === "Intake" ? "page" : undefined}
+            className="app-route-link"
+            href="/intake"
+          >
+            Intake
+          </Link>
+          <Link
             aria-current={current === "Look into" ? "page" : undefined}
             className="app-route-link"
             href="/look-into"
