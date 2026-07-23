@@ -44,7 +44,7 @@ function chip(id: string, name: string, score: number) {
       card={{
         id: "c1",
         stages: [
-          { key: "interested", label: "Interested", state: "done" },
+          { key: "investigate", label: "Investigate", state: "done" },
           { key: "engaged", label: "Partner engaged & seeded", state: "active" },
           { key: "usecase", label: "Use case & options", state: "todo" },
         ],

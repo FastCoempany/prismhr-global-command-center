@@ -14,7 +14,13 @@ import {
 import { addCard, setCardStage } from "../dashboard/actions";
 import { LocalTime } from "../today-client";
 import { CountryFlag } from "@/lib/flags";
-import { sfAccountUrl, sfLogCallUrl, sfNewOppUrl } from "@/lib/salesforce";
+import {
+  sfAccountUrl,
+  sfLogCallUrl,
+  sfNewContactUrl,
+  sfNewOppUrl,
+} from "@/lib/salesforce";
+import { SF_STAGE, type DashNodeKey } from "@/lib/dashboard/stages";
 import styles from "../command-center.module.css";
 
 // An account chip on the Focus strip. Clicking it opens the work box built to
@@ -26,6 +32,16 @@ import styles from "../command-center.module.css";
 // chip instead of running under the taskbar.
 
 type Stage = { key: string; label: string; state: "todo" | "active" | "done" };
+
+// The SF stage this deal's board position implies — furthest touched column;
+// no board card yet ⇒ the pipeline's first stage.
+function sfStageFromCard(card: { stages: Stage[] } | null): string {
+  let stage = SF_STAGE.investigate;
+  for (const s of card?.stages ?? []) {
+    if (s.state !== "todo") stage = SF_STAGE[s.key as DashNodeKey] ?? stage;
+  }
+  return stage;
+}
 
 type ChipNote = {
   id: string;
@@ -89,9 +105,13 @@ export function AccountChip({
   disposition = null,
   notes = [],
   country = "",
+  contact = null,
 }: {
   account: { id: string; name: string; score: number; play: string | null };
   partner: string;
+  // The account's known client contact (from the book) — pre-fills the New
+  // Contact link for the create-the-contact-first flow.
+  contact?: { name: string; email: string } | null;
   // ISO alpha-2 code when the account's deal is tied to a country — renders a
   // small flag on the roster row and in the popover header.
   country?: string;
@@ -266,8 +286,10 @@ export function AccountChip({
                 </span>
 
                 {/* Live Salesforce row — view the record, or open SF's own New
-                    Opportunity / New Task form PRE-FILLED (you review + Save
-                    inside Salesforce; the app never writes on its own). */}
+                    Opportunity / Task / Contact form PRE-FILLED (you review +
+                    Save inside Salesforce; the app never writes on its own).
+                    The Opp arrives with Type, the board-derived Stage, and a
+                    close date 60 days out already chosen. */}
                 {sfAccountUrl(account.id) && (
                   <span className={styles.chipSfRow}>
                     <a
@@ -284,11 +306,13 @@ export function AccountChip({
                       href={
                         sfNewOppUrl(account.id, {
                           name: `${account.name} — Global Payroll`,
+                          type: "Existing Client Add-On",
+                          stage: sfStageFromCard(card),
                         })!
                       }
                       target="_blank"
                       rel="noreferrer"
-                      title="Opens Salesforce's New Opportunity form pre-filled — review and Save there"
+                      title={`Opens Salesforce's New Opportunity form pre-filled — Type "Existing Client Add-On", Stage "${sfStageFromCard(card)}" (from this deal's board position), close date 60 days out. Review and Save there.`}
                     >
                       + Opp (pre-filled) ↗
                     </a>
@@ -305,6 +329,25 @@ export function AccountChip({
                     >
                       Log call (pre-filled) ↗
                     </a>
+                    {contact?.name && (
+                      <a
+                        className={styles.chipPill}
+                        href={
+                          sfNewContactUrl(account.id, {
+                            firstName: contact.name.split(/\s+/)[0] ?? "",
+                            lastName:
+                              contact.name.split(/\s+/).slice(1).join(" ") ||
+                              contact.name,
+                            email: contact.email,
+                          })!
+                        }
+                        target="_blank"
+                        rel="noreferrer"
+                        title={`Opens Salesforce's New Contact form pre-filled with ${contact.name} on this account — for when the right contact doesn't exist in SF yet. Save it, then pick it on the opp.`}
+                      >
+                        + Contact: {contact.name.split(/\s+/)[0]} ↗
+                      </a>
+                    )}
                   </span>
                 )}
 

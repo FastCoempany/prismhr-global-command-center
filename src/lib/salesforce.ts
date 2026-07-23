@@ -53,20 +53,52 @@ function dfv(fields: Record<string, string>): string {
     .join(",");
 }
 
-// Opens SF's New Opportunity form PRE-FILLED (account already linked, name
-// typed in). You review and press Save in Salesforce — the app never writes.
+// Close dates default to 60 days out (Antaeus's standing rule), computed at
+// click-time in Chicago terms.
+export function defaultCloseDate(now: Date = new Date()): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Chicago",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date(now.getTime() + 60 * 86_400_000));
+}
+
+// Opens SF's New Opportunity form PRE-FILLED — account linked, name typed,
+// Type + Stage chosen (exact picklist values from the org), close date 60 days
+// out. You review and press Save in Salesforce — the app never writes.
 export function sfNewOppUrl(
   id: string,
-  opts: { name?: string; closeDate?: string } = {},
+  opts: { name?: string; type?: string; stage?: string; closeDate?: string } = {},
 ): string | null {
   const real = resolveSfId(id);
   if (!real) return null;
   const fields = dfv({
     AccountId: real,
     Name: opts.name ?? "",
-    CloseDate: opts.closeDate ?? "", // YYYY-MM-DD
+    Type: opts.type ?? "",
+    StageName: opts.stage ?? "",
+    CloseDate: opts.closeDate ?? defaultCloseDate(), // YYYY-MM-DD
   });
   return `${sfBase()}/lightning/o/Opportunity/new?defaultFieldValues=${fields}`;
+}
+
+// Opens SF's New Contact form PRE-FILLED and linked to the account — for the
+// "the right contact doesn't exist yet" case: create it with one Save, then
+// pick it on the opportunity.
+export function sfNewContactUrl(
+  id: string,
+  opts: { firstName?: string; lastName?: string; email?: string } = {},
+): string | null {
+  const real = resolveSfId(id);
+  if (!real) return null;
+  const fields = dfv({
+    AccountId: real,
+    FirstName: opts.firstName ?? "",
+    LastName: opts.lastName ?? "",
+    Email: opts.email ?? "",
+  });
+  return `${sfBase()}/lightning/o/Contact/new?defaultFieldValues=${fields}`;
 }
 
 // Opens SF's New Task form PRE-FILLED and related to the account — the

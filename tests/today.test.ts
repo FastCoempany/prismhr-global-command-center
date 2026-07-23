@@ -51,7 +51,15 @@ import {
   partitionFollowUps,
   type Touch,
 } from "@/lib/today/follow-ups";
-import { isRealSfId, sfAccountUrl, sfLogCallUrl, sfNewOppUrl } from "@/lib/salesforce";
+import {
+  defaultCloseDate,
+  isRealSfId,
+  sfAccountUrl,
+  sfLogCallUrl,
+  sfNewContactUrl,
+  sfNewOppUrl,
+} from "@/lib/salesforce";
+import { migrateChecks, migrateStates, sfStageForStates } from "@/lib/dashboard/stages";
 import { askToJoinMessage, EMPTY_ENGAGEMENT, engagementGates } from "@/lib/engagement";
 import { DEMAND_GATE } from "@/lib/book/research";
 
@@ -182,6 +190,62 @@ describe("signals", () => {
   });
 });
 
+// --- stage-key migration (6-node board → SF-stage board) ---------------------
+
+describe("dash stage migration", () => {
+  test("legacy states remap; folded needs_analysis is done only when both halves were", () => {
+    const m = migrateStates({
+      interested: "done",
+      csm_seeded: "done",
+      discovery: "done",
+      use_case: "active",
+      demo: "active",
+    });
+    assert.equal(m.investigate, "done");
+    assert.equal(m.first_meeting, "done");
+    assert.equal(m.needs_analysis, "active"); // half-finished fold ≠ done
+    assert.equal(m.demo, "active");
+    const closed = migrateStates({ decision: "done" });
+    assert.equal(closed.exec_summary, "done");
+    assert.equal(closed.proposal, "done");
+    assert.equal(closed.contract, "done");
+  });
+
+  test("new keys always win over legacy leftovers", () => {
+    const m = migrateStates({ interested: "done", investigate: "active" });
+    assert.equal(m.investigate, "active");
+  });
+
+  test("legacy checks fold: discovery+use_case concat; decision splits 0-1/2-3", () => {
+    const m = migrateChecks({
+      discovery: [true, true, false, false],
+      use_case: [true, false, false, false],
+      decision: [true, true, false, false],
+    });
+    assert.deepEqual(m.needs_analysis, [
+      true,
+      true,
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+    ]);
+    assert.deepEqual(m.proposal, [true, true]);
+    assert.deepEqual(m.contract, [false, false]);
+  });
+
+  test("sfStageForStates picks the furthest touched column", () => {
+    assert.equal(sfStageForStates(null), "Investigate");
+    assert.equal(
+      sfStageForStates({ investigate: "done", first_meeting: "done", demo: "active" }),
+      "Demo",
+    );
+    assert.equal(sfStageForStates({ contract: "active" }), "Contract");
+  });
+});
+
 // --- commitments -------------------------------------------------------------------
 
 describe("commitmentsFromCards", () => {
@@ -191,7 +255,7 @@ describe("commitmentsFromCards", () => {
     const demoLen = DASH_NODES.find((n) => n.key === "demo")!.checklist.length;
     const c = card({
       id: "c1",
-      states: { demo: "active", interested: "done", discovery: "todo" },
+      states: { demo: "active", investigate: "done", needs_analysis: "todo" },
       checks: { demo: [true, ...Array(demoLen - 1).fill(false)] },
       activated: { demo: new Date(now - 3 * DAY).toISOString() },
     });
@@ -499,7 +563,7 @@ describe("movedThisWeek & stateOfPlay", () => {
   test("counts nodes activated within the last 7 days, skipping archived", () => {
     const c1 = card("c1", {
       activated: {
-        discovery: new Date(now - 2 * DAY).toISOString(),
+        needs_analysis: new Date(now - 2 * DAY).toISOString(),
         demo: new Date(now - 20 * DAY).toISOString(),
       },
     });
@@ -994,14 +1058,33 @@ describe("salesforce helpers", () => {
   test("pre-filled write links: New Opportunity + log-a-call encode fields, skip synthetic", () => {
     delete process.env.NEXT_PUBLIC_SF_BASE_URL;
     assert.equal(
-      sfNewOppUrl("001F000000w38OIIAY", { name: "Acme — Global Payroll" }),
+      sfNewOppUrl("001F000000w38OIIAY", {
+        name: "Acme — Global Payroll",
+        type: "Existing Client Add-On",
+        stage: "Needs Analysis",
+        closeDate: "2026-09-21",
+      }),
       "https://prismhr.lightning.force.com/lightning/o/Opportunity/new?defaultFieldValues=" +
-        "AccountId=001F000000w38OIIAY,Name=Acme%20%E2%80%94%20Global%20Payroll",
+        "AccountId=001F000000w38OIIAY,Name=Acme%20%E2%80%94%20Global%20Payroll," +
+        "Type=Existing%20Client%20Add-On,StageName=Needs%20Analysis,CloseDate=2026-09-21",
     );
+    // Close date defaults to 60 days out when not given.
+    const dflt = sfNewOppUrl("001F000000w38OIIAY", { name: "x" })!;
+    assert.match(dflt, /CloseDate=\d{4}-\d{2}-\d{2}$/);
+    assert.equal(defaultCloseDate(new Date("2026-07-23T17:00:00Z")), "2026-09-21");
     assert.equal(
       sfLogCallUrl("001F000000w38OIIAY", { subject: "Call — Acme, intro" }),
       "https://prismhr.lightning.force.com/lightning/o/Task/new?defaultFieldValues=" +
         "WhatId=001F000000w38OIIAY,Subject=Call%20%E2%80%94%20Acme%2C%20intro",
+    );
+    assert.equal(
+      sfNewContactUrl("001F000000w38OIIAY", {
+        firstName: "Hatton",
+        lastName: "Dawes",
+        email: "h@esc.com",
+      }),
+      "https://prismhr.lightning.force.com/lightning/o/Contact/new?defaultFieldValues=" +
+        "AccountId=001F000000w38OIIAY,FirstName=Hatton,LastName=Dawes,Email=h%40esc.com",
     );
     assert.equal(sfNewOppUrl("MERIDIANPAY000001", { name: "x" }), null);
     assert.equal(sfLogCallUrl("MERIDIANPAY000001", { subject: "x" }), null);
