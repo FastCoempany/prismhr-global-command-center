@@ -6733,3 +6733,16 @@
 .lgCtl .pastToAction {
   opacity: 1; /* the wrapper handles rest-state quieting now */
 }
+
+/* Salesforce row in the account popover — view + pre-filled write links. */
+.chipSfRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  align-items: center;
+  padding: 2px 0 0;
+}
+.chipSfRow .chipPill {
+  color: #1d4ed8;
+  border-color: #c7d7f5;
+}

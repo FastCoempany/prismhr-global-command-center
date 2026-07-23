@@ -51,7 +51,7 @@ import {
   partitionFollowUps,
   type Touch,
 } from "@/lib/today/follow-ups";
-import { isRealSfId, sfAccountUrl } from "@/lib/salesforce";
+import { isRealSfId, sfAccountUrl, sfLogCallUrl, sfNewOppUrl } from "@/lib/salesforce";
 import { askToJoinMessage, EMPTY_ENGAGEMENT, engagementGates } from "@/lib/engagement";
 import { DEMAND_GATE } from "@/lib/book/research";
 
@@ -976,13 +976,35 @@ describe("salesforce helpers", () => {
       sfAccountUrl("001F000000w38OIIAY"),
       "https://prismhr.lightning.force.com/lightning/r/Account/001F000000w38OIIAY/view",
     );
-    assert.equal(sfAccountUrl("ADVOCATEPAY000001"), null); // synthetic → no link
+    // Advocate Pay was added manually but has a real SF record — the override
+    // map resolves its synthetic id to the live 18-digit id.
+    assert.equal(
+      sfAccountUrl("ADVOCATEPAY000001"),
+      "https://prismhr.lightning.force.com/lightning/r/Account/001Pb00003esmqHIAQ/view",
+    );
+    assert.equal(sfAccountUrl("MERIDIANPAY000001"), null); // synthetic, no record → no link
     process.env.NEXT_PUBLIC_SF_BASE_URL = "https://other.my.salesforce.com/";
     assert.equal(
       sfAccountUrl("001F000000w38OIIAY"),
       "https://other.my.salesforce.com/lightning/r/Account/001F000000w38OIIAY/view",
     );
     delete process.env.NEXT_PUBLIC_SF_BASE_URL;
+  });
+
+  test("pre-filled write links: New Opportunity + log-a-call encode fields, skip synthetic", () => {
+    delete process.env.NEXT_PUBLIC_SF_BASE_URL;
+    assert.equal(
+      sfNewOppUrl("001F000000w38OIIAY", { name: "Acme — Global Payroll" }),
+      "https://prismhr.lightning.force.com/lightning/o/Opportunity/new?defaultFieldValues=" +
+        "AccountId=001F000000w38OIIAY,Name=Acme%20%E2%80%94%20Global%20Payroll",
+    );
+    assert.equal(
+      sfLogCallUrl("001F000000w38OIIAY", { subject: "Call — Acme, intro" }),
+      "https://prismhr.lightning.force.com/lightning/o/Task/new?defaultFieldValues=" +
+        "WhatId=001F000000w38OIIAY,Subject=Call%20%E2%80%94%20Acme%2C%20intro",
+    );
+    assert.equal(sfNewOppUrl("MERIDIANPAY000001", { name: "x" }), null);
+    assert.equal(sfLogCallUrl("MERIDIANPAY000001", { subject: "x" }), null);
   });
 
   test("outreach + triage guidance require a Salesforce check step", () => {
