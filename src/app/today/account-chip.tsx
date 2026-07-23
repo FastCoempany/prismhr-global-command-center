@@ -14,6 +14,7 @@ import {
 import { addCard, setCardStage } from "../dashboard/actions";
 import { LocalTime } from "../today-client";
 import { CountryFlag } from "@/lib/flags";
+import { sfAccountUrl, sfLogCallUrl, sfNewOppUrl } from "@/lib/salesforce";
 import styles from "../command-center.module.css";
 
 // An account chip on the Focus strip. Clicking it opens the work box built to
@@ -263,6 +264,49 @@ export function AccountChip({
                   </Link>
                   {pill("dash", "Dashboard ▸")}
                 </span>
+
+                {/* Live Salesforce row — view the record, or open SF's own New
+                    Opportunity / New Task form PRE-FILLED (you review + Save
+                    inside Salesforce; the app never writes on its own). */}
+                {sfAccountUrl(account.id) && (
+                  <span className={styles.chipSfRow}>
+                    <a
+                      className={styles.chipPill}
+                      href={sfAccountUrl(account.id)!}
+                      target="_blank"
+                      rel="noreferrer"
+                      title="Open this account's record in Salesforce"
+                    >
+                      SF record ↗
+                    </a>
+                    <a
+                      className={styles.chipPill}
+                      href={
+                        sfNewOppUrl(account.id, {
+                          name: `${account.name} — Global Payroll`,
+                        })!
+                      }
+                      target="_blank"
+                      rel="noreferrer"
+                      title="Opens Salesforce's New Opportunity form pre-filled — review and Save there"
+                    >
+                      + Opp (pre-filled) ↗
+                    </a>
+                    <a
+                      className={styles.chipPill}
+                      href={
+                        sfLogCallUrl(account.id, {
+                          subject: `Call — ${account.name}`,
+                        })!
+                      }
+                      target="_blank"
+                      rel="noreferrer"
+                      title="Opens Salesforce's New Task form pre-filled and related to this account — review and Save there"
+                    >
+                      Log call (pre-filled) ↗
+                    </a>
+                  </span>
+                )}
 
                 {panel === "mine" &&
                   noteForm("mine", `What you know / did on ${account.name}…`)}
