@@ -7,6 +7,7 @@
 import contacts from "./contacts.json";
 
 export type BookContact = {
+  id: string; // SF Contact record id (15-char from the report; "" if absent)
   first: string;
   last: string;
   title: string;

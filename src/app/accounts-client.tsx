@@ -28,6 +28,7 @@ import {
 import { EditableMessage } from "./today-client";
 import { getContacts } from "./accounts/actions";
 import type { BookContact } from "@/lib/book/contacts";
+import { sfContactUrl } from "@/lib/salesforce";
 import styles from "./command-center.module.css";
 
 function CompetitorLinks({ names }: { names: string[] }) {
@@ -946,9 +947,21 @@ function ContactsPanel({ accountId, count }: { accountId: string; count: number 
             {shown.map((c, i) => (
               <div className={styles.ctcRow} key={`${c.email}-${i}`}>
                 <div className={styles.ctcHead}>
-                  <b>
-                    {c.first} {c.last}
-                  </b>
+                  {sfContactUrl(c.id) ? (
+                    <a
+                      href={sfContactUrl(c.id)!}
+                      target="_blank"
+                      rel="noreferrer"
+                      className={styles.ctcName}
+                      title="Open this contact's record in Salesforce"
+                    >
+                      {c.first} {c.last} ↗
+                    </a>
+                  ) : (
+                    <b>
+                      {c.first} {c.last}
+                    </b>
+                  )}
                   {c.title && <span className={styles.ctcTitle}> — {c.title}</span>}
                 </div>
                 <div className={styles.ctcLine}>

@@ -16,6 +16,22 @@ export function isRealSfId(id: string): boolean {
 // which key every stored note and disposition, never have to change.
 const SF_ID_OVERRIDES: Record<string, string> = {
   ADVOCATEPAY000001: "001Pb00003esmqHIAQ", // Advocate Pay LLC
+  // From the 7/24 contact reports (15-char ids — valid in Lightning URLs):
+  ADVANCEDBUIL00001: "001Pb00003PwUqf", // Advanced Builds
+  ASPENHRLLC0000001: "0012A00002AekQQ", // AspenHR LLC
+  BESTPEO0000000001: "001F000000w38J5", // BestPEO
+  INNOVATIONSH00001: "0013k00003X76c9", // InnovationsHR
+  INTEGRITYTRA00001: "0013k00002gipez", // Integrity Trade Services LLC
+  IPOPAYROLLSE00001: "001F000001jPiF2", // IPO Payroll Services
+  LIBERTYASSOC00001: "0013k00002o4NzI", // Liberty Associates Group LLC
+  LSISTAFFING000001: "0012A00002YrvwC", // LSI Staffing
+  ONTRACKSTAFF00001: "0012A00002Yrvxc", // OnTrack Staffing
+  PENMACSTAFFI00001: "001F000000w38AA", // Penmac Staffing Services, Inc.
+  R1RCMINC000000001: "0012A00002VHwpt", // R1 RCM, Inc.
+  REALTIMEPEO000001: "001F000000w38Gn", // RealTime PEO
+  STRATEGICEMP00001: "001F000000w38NX", // Strategic Employer Services
+  THERESOURCE000001: "0012A00002Yrw8T", // The Resource
+  TLCCOMPANIES00001: "001F000000w38Om", // TLC Companies
 };
 
 // The real SF record id behind an app account id — through the override map
@@ -44,6 +60,17 @@ export function sfAccountUrl(id: string): string | null {
   return real ? `${sfBase()}/lightning/r/Account/${real}/view` : null;
 }
 
+// A contact record id (003 prefix, 15 or 18 chars).
+export function isRealSfContactId(id: string): boolean {
+  return /^003[a-zA-Z0-9]{12}([a-zA-Z0-9]{3})?$/.test(id.trim());
+}
+
+// Deep-link to a Contact record.
+export function sfContactUrl(contactId: string): string | null {
+  const id = (contactId ?? "").trim();
+  return isRealSfContactId(id) ? `${sfBase()}/lightning/r/Contact/${id}/view` : null;
+}
+
 // Lightning's defaultFieldValues param: Field=Value pairs, comma-joined, each
 // value URI-encoded so commas/spaces inside values survive.
 function dfv(fields: Record<string, string>): string {
@@ -69,16 +96,29 @@ export function defaultCloseDate(now: Date = new Date()): string {
 // out. You review and press Save in Salesforce — the app never writes.
 export function sfNewOppUrl(
   id: string,
-  opts: { name?: string; type?: string; stage?: string; closeDate?: string } = {},
+  opts: {
+    name?: string;
+    type?: string;
+    stage?: string;
+    closeDate?: string;
+    contactId?: string;
+  } = {},
 ): string | null {
   const real = resolveSfId(id);
   if (!real) return null;
+  const contact = isRealSfContactId(opts.contactId ?? "") ? opts.contactId! : "";
   const fields = dfv({
     AccountId: real,
     Name: opts.name ?? "",
     Type: opts.type ?? "",
     StageName: opts.stage ?? "",
     CloseDate: opts.closeDate ?? defaultCloseDate(), // YYYY-MM-DD
+    // The form's "Account Contact" is a custom lookup whose API name we can't
+    // read without Setup access — pass the id under the two likeliest names;
+    // Lightning silently ignores fields the form doesn't have, so a miss just
+    // leaves the lookup empty (pick by hand, as before).
+    ContactId: contact,
+    Account_Contact__c: contact,
   });
   return `${sfBase()}/lightning/o/Opportunity/new?defaultFieldValues=${fields}`;
 }

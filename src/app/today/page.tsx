@@ -1115,22 +1115,33 @@ export default async function TodayPage({
       .map((a) => [a.name, countryCode(a.countries[0] ?? "")] as const)
       .filter(([, c]) => c),
   );
-  // Known client contact per account — the book's primary, else the first
-  // contact from the 7/24 SF contact reports. Feeds the chip's pre-filled
-  // New Contact link.
-  const contactById = new Map(
-    peos
-      .filter((p) => p.contactName)
-      .map((p) => [p.id, { name: p.contactName, email: p.contactEmail }] as const),
-  );
+  // Known client contact per account — the book's primary (enriched with its
+  // SF contact id from the roster when we can match it), else the roster's
+  // first contact. Feeds the chip's pre-filled New Contact link AND the opp
+  // form's contact lookup.
+  const contactById = new Map<string, { name: string; email: string; sfId: string }>();
   for (const p of peos) {
-    if (contactById.has(p.id)) continue;
-    const c = contactsFor(p.id)[0];
-    if (c?.first || c?.last)
+    const roster = contactsFor(p.id);
+    if (p.contactName) {
+      const hit = roster.find(
+        (c) =>
+          (p.contactEmail && c.email.toLowerCase() === p.contactEmail.toLowerCase()) ||
+          `${c.first} ${c.last}`.trim().toLowerCase() ===
+            p.contactName.trim().toLowerCase(),
+      );
+      contactById.set(p.id, {
+        name: p.contactName,
+        email: p.contactEmail,
+        sfId: hit?.id ?? "",
+      });
+    } else if (roster[0]?.first || roster[0]?.last) {
+      const c = roster[0];
       contactById.set(p.id, {
         name: `${c.first} ${c.last}`.trim(),
         email: c.email,
+        sfId: c.id,
       });
+    }
   }
   const flagFor = (name: string) => {
     const code = flagCodeByName.get(name);

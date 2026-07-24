@@ -109,9 +109,9 @@ export function AccountChip({
 }: {
   account: { id: string; name: string; score: number; play: string | null };
   partner: string;
-  // The account's known client contact (from the book) — pre-fills the New
-  // Contact link for the create-the-contact-first flow.
-  contact?: { name: string; email: string } | null;
+  // The account's known client contact (from the book/roster) — pre-fills the
+  // New Contact link, and its sfId pre-selects the opp form's contact lookup.
+  contact?: { name: string; email: string; sfId?: string } | null;
   // ISO alpha-2 code when the account's deal is tied to a country — renders a
   // small flag on the roster row and in the popover header.
   country?: string;
@@ -308,6 +308,7 @@ export function AccountChip({
                           name: `${account.name} — Global Payroll`,
                           type: "Existing Client Add-On",
                           stage: sfStageFromCard(card),
+                          contactId: contact?.sfId,
                         })!
                       }
                       target="_blank"
