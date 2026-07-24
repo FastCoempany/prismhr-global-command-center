@@ -6857,3 +6857,76 @@
   font-size: 11.5px;
   line-height: 1.5;
 }
+
+/* ═══ Account Room contacts panel — the full SF contact roster ═══ */
+.ctcWrap {
+  margin-top: 10px;
+  border-top: 1px dashed #e0d5b0;
+  padding-top: 6px;
+}
+.ctcToggle {
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #1d4ed8;
+  cursor: pointer;
+  padding: 2px 0;
+}
+.ctcSearch {
+  display: block;
+  width: min(360px, 100%);
+  font: inherit;
+  font-size: 12px;
+  border: 1px solid #cdd6e4;
+  border-radius: 8px;
+  padding: 4px 9px;
+  margin: 6px 0;
+  background: #fff;
+}
+.ctcList {
+  max-height: 340px;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 6px 14px;
+  padding-right: 4px;
+}
+.ctcRow {
+  border: 1px solid #eceff5;
+  border-radius: 9px;
+  padding: 6px 9px;
+  font-size: 12px;
+  background: #fcfdff;
+  min-width: 0;
+}
+.ctcHead {
+  font-size: 12.5px;
+}
+.ctcTitle {
+  color: var(--muted);
+  font-weight: 400;
+}
+.ctcLine {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px 12px;
+  margin-top: 2px;
+}
+.ctcLink {
+  color: #2563eb;
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.ctcLink:hover {
+  text-decoration: underline;
+}
+.ctcAddr {
+  color: var(--muted);
+  margin-top: 2px;
+  font-size: 11px;
+}

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getAppAccess } from "@/lib/auth";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
+import { contactsFor, type BookContact } from "@/lib/book/contacts";
 
 function str(fd: FormData, key: string, max = 4000) {
   const v = fd.get(key);
@@ -97,4 +98,13 @@ export async function toggleSfChecked(formData: FormData) {
     });
   });
   done();
+}
+
+// The account's full contact roster (from the 7/24 SF contact reports) —
+// fetched on demand when a Contacts panel opens, so the 1.5MB roster never
+// rides in the page payload.
+export async function getContacts(accountId: string): Promise<BookContact[]> {
+  const access = await getAppAccess();
+  if (access.status !== "active") return [];
+  return contactsFor((accountId ?? "").slice(0, 40));
 }
