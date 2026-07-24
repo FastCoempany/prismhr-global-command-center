@@ -3,6 +3,7 @@ import { AppWayfinder } from "@/components/app-wayfinder";
 import { getAppAccess } from "@/lib/auth";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import { peos } from "@/lib/book";
+import { contactCount } from "@/lib/book/contacts";
 import { compositeScore, deskScore } from "@/lib/book/scoring";
 import {
   analyzePlay,
@@ -143,6 +144,7 @@ export default async function AccountsPage() {
             : null;
         })(),
         notes: notesByAccount.get(p.id) ?? [],
+        contactCount: contactCount(p.id),
         chipNotes: (chipNotes.get(p.id) ?? []).map((n) => ({
           id: n.id,
           partner: n.partner,

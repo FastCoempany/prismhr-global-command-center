@@ -25,6 +25,7 @@ import { EdgeTray } from "./edge-tray";
 import { SpineRail } from "./spine-rail";
 import { DASH_NODES } from "@/lib/dashboard/stages";
 import { peos } from "@/lib/book";
+import { contactsFor } from "@/lib/book/contacts";
 import { AccountChip } from "./account-chip";
 import { AtcRow, CurveballButton, type RailItem } from "./atc-rail";
 import { CockpitDrawers } from "./cockpit-drawers";
@@ -1114,13 +1115,23 @@ export default async function TodayPage({
       .map((a) => [a.name, countryCode(a.countries[0] ?? "")] as const)
       .filter(([, c]) => c),
   );
-  // Known client contact per account (from the book) — feeds the chip's
-  // pre-filled New Contact link.
+  // Known client contact per account — the book's primary, else the first
+  // contact from the 7/24 SF contact reports. Feeds the chip's pre-filled
+  // New Contact link.
   const contactById = new Map(
     peos
       .filter((p) => p.contactName)
       .map((p) => [p.id, { name: p.contactName, email: p.contactEmail }] as const),
   );
+  for (const p of peos) {
+    if (contactById.has(p.id)) continue;
+    const c = contactsFor(p.id)[0];
+    if (c?.first || c?.last)
+      contactById.set(p.id, {
+        name: `${c.first} ${c.last}`.trim(),
+        email: c.email,
+      });
+  }
   const flagFor = (name: string) => {
     const code = flagCodeByName.get(name);
     return code ? <CountryFlag code={code} className={styles.flag} /> : undefined;

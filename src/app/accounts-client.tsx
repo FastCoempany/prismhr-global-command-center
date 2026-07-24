@@ -26,6 +26,8 @@ import {
   validateScore,
 } from "./accounts/actions";
 import { EditableMessage } from "./today-client";
+import { getContacts } from "./accounts/actions";
+import type { BookContact } from "@/lib/book/contacts";
 import styles from "./command-center.module.css";
 
 function CompetitorLinks({ names }: { names: string[] }) {
@@ -171,6 +173,7 @@ export type AccountRow = {
   disposition: { status: "motion" | "parked"; reason: string } | null;
   notes: LinkedNote[];
   chipNotes: ChipNote[];
+  contactCount: number;
 };
 
 const fitClass: Record<string, string> = {
@@ -880,6 +883,8 @@ export function AccountsClient({
                         )}
                       </div>
 
+                      <ContactsPanel accountId={a.id} count={a.contactCount} />
+
                       {canAdd && <ValidateControls id={a.id} current={a.validation} />}
                     </div>
                   </td>
@@ -890,6 +895,92 @@ export function AccountsClient({
         </tbody>
       </table>
     </>
+  );
+}
+
+// The account's full contact roster — every column of the SF contact reports.
+// Collapsed by default; the list loads through a server action on first open
+// (5k contacts app-wide would otherwise ride in every page load).
+function ContactsPanel({ accountId, count }: { accountId: string; count: number }) {
+  const [open, setOpen] = useState(false);
+  const [list, setList] = useState<BookContact[] | null>(null);
+  const [q, setQ] = useState("");
+  if (count === 0) return null;
+
+  const openUp = async () => {
+    const next = !open;
+    setOpen(next);
+    if (next && list === null) setList(await getContacts(accountId));
+  };
+
+  const needle = q.trim().toLowerCase();
+  const shown = (list ?? []).filter(
+    (c) =>
+      !needle ||
+      `${c.first} ${c.last} ${c.title} ${c.email} ${c.city} ${c.state} ${c.phone} ${c.mobile}`
+        .toLowerCase()
+        .includes(needle),
+  );
+
+  return (
+    <div className={styles.ctcWrap}>
+      <button type="button" className={styles.ctcToggle} onClick={openUp}>
+        {open ? "▾" : "▸"} Contacts ({count})
+      </button>
+      {open && (
+        <>
+          {count > 8 && (
+            <input
+              type="search"
+              className={styles.ctcSearch}
+              placeholder="Filter by name, title, email, city…"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+            />
+          )}
+          {list === null && <p className={styles.muted}>Loading…</p>}
+          {list !== null && shown.length === 0 && (
+            <p className={styles.muted}>No contact matches “{q}”.</p>
+          )}
+          <div className={styles.ctcList}>
+            {shown.map((c, i) => (
+              <div className={styles.ctcRow} key={`${c.email}-${i}`}>
+                <div className={styles.ctcHead}>
+                  <b>
+                    {c.first} {c.last}
+                  </b>
+                  {c.title && <span className={styles.ctcTitle}> — {c.title}</span>}
+                </div>
+                <div className={styles.ctcLine}>
+                  {c.email && (
+                    <a href={`mailto:${c.email}`} className={styles.ctcLink}>
+                      ✉ {c.email}
+                    </a>
+                  )}
+                  {c.phone && (
+                    <a href={`tel:${c.phone}`} className={styles.ctcLink}>
+                      ☎ {c.phone}
+                    </a>
+                  )}
+                  {c.mobile && (
+                    <a href={`tel:${c.mobile}`} className={styles.ctcLink}>
+                      📱 {c.mobile}
+                    </a>
+                  )}
+                </div>
+                {(c.street || c.city || c.state || c.zip || c.country) && (
+                  <div className={styles.ctcAddr}>
+                    {[c.street, c.city, c.state, c.zip, c.country]
+                      .filter(Boolean)
+                      .join(", ")}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
   );
 }
 
