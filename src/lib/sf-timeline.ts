@@ -138,7 +138,10 @@ function parseAnchor(line: string): Anchor | null {
   const others = /\+\s*(\d+)\s+others?\s*$/.exec(line);
   const base = others ? line.slice(0, others.index).trim() : line.trim();
   const n = others ? Number(others[1]) : 0;
-  let m = /^(.+?)\s+to\s+(.+)$/.exec(base);
+  let m = /^(.+?)\s+sent an email to\s+(.+)$/.exec(base);
+  if (m && looksLikeName(m[1]) && looksLikeName(m[2]))
+    return { kind: "email", from: m[1], to: m[2], others: n };
+  m = /^(.+?)\s+to\s+(.+)$/.exec(base);
   if (m && looksLikeName(m[1]) && looksLikeName(m[2]))
     return { kind: "email", from: m[1], to: m[2], others: n };
   m = /^(.+?)\s+had a task with\s+(.+)$/.exec(base);
@@ -148,6 +151,26 @@ function parseAnchor(line: string): Anchor | null {
   if (m && looksLikeName(m[1]) && looksLikeName(m[2]))
     return { kind: "call", from: m[1], to: m[2], others: n };
   return null;
+}
+
+// Lightning junk that rides along in timeline innerText — thread markers,
+// bare record ids, and a11y skip links. Stripped before a paste files as a
+// transcript so the note reads like the conversation, not the DOM.
+const JUNK_LINE =
+  /^(?:thread::\S+|(?=[0-9A-Za-z]*\d)[0-9A-Za-z]{15}(?:[0-9A-Za-z]{3})?|Skip to the (?:top|bottom) of the activity timeline|Expand All|Collapse All|Refresh)$/;
+
+export function cleanSfPaste(text: string): string {
+  return (text ?? "")
+    .split(/\r?\n/)
+    .filter((l) => {
+      const t = l.trim();
+      if (!t) return true; // keep blank lines — paragraph structure
+      if (JUNK_LINE.test(t)) return false;
+      return true;
+    })
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 }
 
 export function parseSfTimeline(text: string, now: Date = new Date()): TimelineEntry[] {

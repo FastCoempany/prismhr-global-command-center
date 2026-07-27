@@ -165,9 +165,19 @@ export function IntakeClient({ accounts }: { accounts: Acct[] }) {
           <div className={styles.inkBar}>
             <b>
               {entries.length === 0
-                ? "Nothing recognized yet — paste the timeline portion of the page."
+                ? "Nothing recognized — this page's timeline text is shaped differently."
                 : `${entries.length} entr${entries.length === 1 ? "y" : "ies"} found · ${chosen.length} selected`}
             </b>
+            {entries.length === 0 && raw.trim().length > 120 && (
+              <button
+                type="button"
+                className={styles.atcBtn}
+                onClick={() => setKind("transcript")}
+                title="Nothing is lost — file the whole paste as one ☰ note on the account instead"
+              >
+                File it whole as ☰ transcript instead →
+              </button>
+            )}
           </div>
         )}
 

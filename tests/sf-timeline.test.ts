@@ -1,6 +1,6 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
-import { parseSfTimeline, resolveDay } from "@/lib/sf-timeline";
+import { cleanSfPaste, parseSfTimeline, resolveDay } from "@/lib/sf-timeline";
 
 // Reference "now": Thu Jul 23 2026, mid-day Chicago (17:00 UTC).
 const NOW = new Date("2026-07-23T17:00:00Z");
@@ -90,5 +90,41 @@ We plan to move the demo to Wednesday and to invite the broader team.
     assert.equal(resolveDay("Jan 5, 2024", NOW), "2024-01-05");
     assert.equal(resolveDay("6/29/2026", NOW), "2026-06-29");
     assert.equal(resolveDay("nonsense", NOW), "");
+  });
+});
+
+describe("Lightning variants + paste cleaning", () => {
+  test("'sent an email to' anchors parse as email entries", () => {
+    const text = `Re: Wednesday call
+Bill Laffey sent an email to Antaeus Coe
+9:14 AM | Jul 27
+Wed or Fri works on my end — send an invite.
+`;
+    const es = parseSfTimeline(text, NOW);
+    assert.equal(es.length, 1);
+    assert.equal(es[0].kind, "email");
+    assert.equal(es[0].from, "Bill Laffey");
+    assert.equal(es[0].to, "Antaeus Coe");
+    assert.match(es[0].body, /send an invite/);
+  });
+
+  test("cleanSfPaste strips thread tokens, bare SF ids, skip links", () => {
+    const dirty = [
+      "To update or check the status of Case #00685327:",
+      "thread::p4gG42cbcVy2-FRBDOEIHgE::",
+      "00X2A000002B6c2UAC",
+      "Skip to the top of the activity timeline",
+      "Expand All",
+      "Real sentence that stays.",
+      "Congratulations", // 15 letters, no digit — must survive
+    ].join("\n");
+    const clean = cleanSfPaste(dirty);
+    assert.ok(clean.includes("Case #00685327"));
+    assert.ok(clean.includes("Real sentence that stays."));
+    assert.ok(clean.includes("Congratulations"));
+    assert.ok(!clean.includes("thread::"));
+    assert.ok(!clean.includes("00X2A000002B6c2UAC"));
+    assert.ok(!clean.includes("Skip to the top"));
+    assert.ok(!clean.includes("Expand All"));
   });
 });
