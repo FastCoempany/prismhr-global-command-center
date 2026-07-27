@@ -3,21 +3,19 @@
 import { useEffect, useState, type ReactNode } from "react";
 import styles from "../command-center.module.css";
 
-type DrawerKey = "aleks" | "narrative" | "doctrine";
+type DrawerKey = "narrative" | "doctrine";
 
 // The cockpit's brief bar + drawers. The bar carries the read-only numbers
-// (rendered server-side and passed in as `stats`); the three toggles open
+// (rendered server-side and passed in as `stats`); the toggles open
 // full-content drawers over the page, so knowing never costs a navigation.
 // A click on any in-page "#capture" link (or a /today#capture deep link)
 // opens the Narrative drawer and scrolls to the capture box.
 export function CockpitDrawers({
   stats,
-  aleks,
   narrative,
   doctrine,
 }: {
   stats: ReactNode;
-  aleks: ReactNode;
   narrative: ReactNode;
   doctrine: ReactNode;
 }) {
@@ -70,25 +68,17 @@ export function CockpitDrawers({
       <div className={styles.briefBar}>
         {stats}
         <span className={styles.briefSep} />
-        {btn("aleks", "Aleks room")}
         {btn("narrative", "Narrative & capture")}
         {btn("doctrine", "How I work")}
       </div>
       {open && (
         <div className={styles.cockDrawer}>
           <div className={styles.cockDrawerHead}>
-            <b>
-              {open === "aleks"
-                ? "Aleks room"
-                : open === "narrative"
-                  ? "Narrative & capture"
-                  : "How I work"}
-            </b>
+            <b>{open === "narrative" ? "Narrative & capture" : "How I work"}</b>
             <button type="button" className={styles.atcBtn} onClick={() => setOpen(null)}>
               Close ✕
             </button>
           </div>
-          <div hidden={open !== "aleks"}>{aleks}</div>
           <div hidden={open !== "narrative"}>{narrative}</div>
           <div hidden={open !== "doctrine"}>{doctrine}</div>
         </div>

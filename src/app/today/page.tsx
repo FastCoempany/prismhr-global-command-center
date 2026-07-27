@@ -46,7 +46,6 @@ import {
 } from "@/lib/today/follow-ups";
 import {
   accountIntel,
-  aleksLineGuidance,
   applyValidations,
   armPartnersGuidance,
   cardNextStep,
@@ -76,7 +75,6 @@ import {
   type CardStep,
   type Guidance,
 } from "@/lib/today/build";
-import { ALEKS_SESSIONS } from "@/lib/aleks/one-on-one";
 import { SfCheckpoint } from "@/components/sf";
 import { ContactControl, EditableMessage, NoteSubmit } from "../today-client";
 import { clockShort, USER_TZ } from "@/lib/tz";
@@ -1155,9 +1153,6 @@ export default async function TodayPage({
         <div className={`${styles.pageHead} ${styles.deskHead}`}>
           <h1 className={styles.h1}>Today</h1>
           <CurveballButton accounts={noteAccounts} />
-          <span className={styles.deskHeadSf}>
-            <SfCheckpoint when="standing" />
-          </span>
           {/* The digital clock — Chicago, ticking, above the Day Sheet column. */}
           <ChiClock />
         </div>
@@ -1219,99 +1214,20 @@ export default async function TodayPage({
           )}
           <div className={styles.curtainH}>Rooms</div>
           <div className={styles.ctyLeg}>
-            <a href="#rooms">Aleks room ▸</a> &nbsp;{" "}
             <a href="#rooms">Narrative &amp; capture ▸</a> &nbsp;{" "}
             <a href="#rooms">How I work ▸</a>
           </div>
         </SpineRail>
 
         <div className={styles.cockpit}>
-          {/* ══ LEFT — Today's tab: everything that happened above the
-                 now-line, everything open below it ══ */}
+          {/* ══ LEFT — open notes/actions first, focus + check-ins, then
+                 the day's completed history at the bottom ══ */}
           <div className={styles.cockCol}>
             <div className={styles.cockCap}>
-              <span>Today&apos;s tab — the day as a ledger</span>
-              <span className={styles.cockCapR}>
-                happened above the line · open below it · {doneMoves.length} of{" "}
-                {activeItems.length} moves done
-              </span>
+              <span>Today&apos;s notes and actions</span>
             </div>
 
             <div className={styles.atcRail}>
-              {/* Past — what already happened today, oldest first. */}
-              {pastEarlier.length > 0 && (
-                <details className={styles.lgEarlier}>
-                  <summary>earlier today ({pastEarlier.length}) ▸</summary>
-                  {pastEarlier.map((e, i) => (
-                    <PastRow key={`pe-${i}`} e={e} timeLabel={clockShort(e.at)} />
-                  ))}
-                </details>
-              )}
-              {pastRecent.map((e, i) => (
-                <PastRow key={`pr-${i}`} e={e} timeLabel={clockShort(e.at)} />
-              ))}
-              {pastEvents.length === 0 && doneActions.length === 0 && (
-                <div className={`${styles.lgRow} ${styles.lgPast}`}>
-                  <span className={styles.lgTm}></span>
-                  <span className={`${styles.lgDot} ${styles.lgDotDone}`} />
-                  <span className={styles.lgTx}>
-                    Nothing on the tab yet — it fills as the day happens.
-                  </span>
-                </div>
-              )}
-              {/* Actions finished today — ✓ above the line, then FILE it:
-                  the routing tech lives here now, offered after done. */}
-              {doneActions.map((t) => {
-                const { refs, label } = splitMarker(t.body);
-                const tg = todoTagsOf(t);
-                const txt = visibleText(t.body);
-                return (
-                  <LedgerRow
-                    key={t.id}
-                    tm={clockShort(new Date(Number(tg.doneAt)).toISOString())}
-                    tone="check"
-                    icon="done"
-                    text={txt}
-                    textTitle={txt}
-                    flag={
-                      tg.country ? (
-                        <CountryFlag code={tg.country} className={styles.flag} />
-                      ) : undefined
-                    }
-                    meta={refs ? `filed → ${label}` : undefined}
-                    primary={
-                      !refs ? (
-                        <form action={fileDoneAction} className={styles.fileLine}>
-                          <input type="hidden" name="id" value={t.id} />
-                          <span className={styles.fileLab}>File →</span>
-                          <select name="accountId" defaultValue="" aria-label="Account">
-                            <option value="">Account ▾</option>
-                            {noteAccounts.map((a) => (
-                              <option key={a.id} value={a.id}>
-                                {a.name}
-                              </option>
-                            ))}
-                          </select>
-                          <select name="partner" defaultValue="" aria-label="Partner">
-                            <option value="">Partner ▾</option>
-                            {kickoff.map((k) => (
-                              <option key={k.partner} value={k.partner}>
-                                {k.partner}
-                              </option>
-                            ))}
-                          </select>
-                          <button className={styles.atcBtn}>file ✓</button>
-                        </form>
-                      ) : undefined
-                    }
-                  />
-                );
-              })}
-              <div className={styles.lgNow}>
-                <span className={styles.lgNowLab}>now</span>
-                <span className={styles.lgNowLn} />
-              </div>
-              <div className={styles.lgSub}>Open — needs you</div>
               {/* Replies waiting on you — your move first. */}
               {replyLive.map((r) => (
                 <LedgerRow
@@ -1575,61 +1491,6 @@ export default async function TodayPage({
                 </>
               )}
 
-              {/* Check-ins due — cadence, nothing owed. Quiet until an ask
-                  is named; ✓ closes the loop. */}
-              {dueChecksLive.length > 0 && (
-                <div className={styles.lgSub}>Check-ins due — cadence, nothing owed</div>
-              )}
-              {dueChecksLive.map((t) => (
-                <LedgerRow
-                  key={t.subjectKey}
-                  tm={`${daysSinceIso(t.contactedAt)}d`}
-                  tone="check"
-                  icon="check"
-                  controls={<DelayControl rowKey={`chk:${t.subjectKey}`} />}
-                  text={
-                    <>
-                      Check in with <b>{t.label}</b>
-                    </>
-                  }
-                  textTitle={`Check in with ${t.label}`}
-                  meta={`asked ${shortDate(t.contactedAt)}`}
-                  primary={
-                    <form action={markReplied} className={styles.valInline}>
-                      <input type="hidden" name="subjectKey" value={t.subjectKey} />
-                      <button className={styles.atcBtn} title="Loop closed">
-                        ✓
-                      </button>
-                    </form>
-                  }
-                  primaryLabel="name the ask ▸"
-                >
-                  <form action={updateTouchAsk} className={styles.askForm}>
-                    <input type="hidden" name="subjectKey" value={t.subjectKey} />
-                    <input
-                      name="ask"
-                      maxLength={300}
-                      placeholder="What exactly do they owe you? Naming it makes this a chase."
-                      aria-label="What they owe"
-                    />
-                    <button className={styles.atcBtn}>Set the ask ✓</button>
-                  </form>
-                  <div className={styles.gActions}>
-                    <form action={setThreadStatus} className={styles.valInline}>
-                      <input type="hidden" name="subjectKey" value={t.subjectKey} />
-                      <input type="hidden" name="status" value="open" />
-                      <button
-                        className={styles.notWaitingBtn}
-                        title="Not waiting on a reply — stop chasing"
-                      >
-                        ↔ not waiting
-                      </button>
-                    </form>
-                  </div>
-                  <FollowUpDue t={t} />
-                </LedgerRow>
-              ))}
-
               {activeItems.length === 0 &&
                 followUps.due.length === 0 &&
                 replyRows.length === 0 &&
@@ -1773,78 +1634,209 @@ export default async function TodayPage({
                   )}
                 </>
               )}
+            </div>
+
+            {/* Focus accounts + Check-ins due, side by side with a divider. */}
+            <div className={styles.focusRow}>
+              {focusAccounts.length > 0 && (
+                <div className={styles.focusStrip}>
+                  <div className={styles.cockCap}>
+                    <span>Focus accounts</span>
+                  </div>
+                  <div className={styles.focusCols}>
+                    {focusAccounts.map(({ a, partner }) => {
+                      const dashCard = dash.cards.find(
+                        (c) => !c.archived && c.name === a.name,
+                      );
+                      const lastNoteAt = acctNotes.get(a.id)?.[0]?.createdAt ?? null;
+                      return (
+                        <AccountChip
+                          key={a.id}
+                          account={{
+                            id: a.id,
+                            name: a.name,
+                            score: a.score,
+                            play: a.play,
+                          }}
+                          partner={partner}
+                          tone={chipTone(lastNoteAt)}
+                          lastNoteAt={lastNoteAt}
+                          country={flagCodeByName.get(a.name) ?? ""}
+                          card={
+                            dashCard
+                              ? {
+                                  id: dashCard.id,
+                                  stages: DASH_NODES.map((n) => ({
+                                    key: n.key,
+                                    label: n.label,
+                                    state: dashCard.states[n.key] ?? "todo",
+                                  })),
+                                }
+                              : null
+                          }
+                          seedSubtitle={`${a.csm}${a.industry ? ` · ${a.industry}` : ""}`}
+                          seedDiscovery={seedFor(a)}
+                          contact={contactById.get(a.id) ?? null}
+                          disposition={dispositions.get(a.id) ?? null}
+                          notes={(acctNotes.get(a.id) ?? []).map((n) => ({
+                            id: n.id,
+                            kind: n.kind,
+                            body: n.body,
+                            createdAt: n.createdAt,
+                          }))}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              <div className={styles.chkPanel}>
+                <div className={styles.cockCap}>
+                  <span>Check-ins due</span>
+                </div>
+                {/* Check-ins due — cadence, nothing owed. Quiet until an ask
+                  is named; ✓ closes the loop. */}
+                {dueChecksLive.map((t) => (
+                  <LedgerRow
+                    key={t.subjectKey}
+                    tm={`${daysSinceIso(t.contactedAt)}d`}
+                    tone="check"
+                    icon="check"
+                    controls={<DelayControl rowKey={`chk:${t.subjectKey}`} />}
+                    text={
+                      <>
+                        Check in with <b>{t.label}</b>
+                      </>
+                    }
+                    textTitle={`Check in with ${t.label}`}
+                    meta={`asked ${shortDate(t.contactedAt)}`}
+                    primary={
+                      <form action={markReplied} className={styles.valInline}>
+                        <input type="hidden" name="subjectKey" value={t.subjectKey} />
+                        <button className={styles.atcBtn} title="Loop closed">
+                          ✓
+                        </button>
+                      </form>
+                    }
+                    primaryLabel="name the ask ▸"
+                  >
+                    <form action={updateTouchAsk} className={styles.askForm}>
+                      <input type="hidden" name="subjectKey" value={t.subjectKey} />
+                      <input
+                        name="ask"
+                        maxLength={300}
+                        placeholder="What exactly do they owe you? Naming it makes this a chase."
+                        aria-label="What they owe"
+                      />
+                      <button className={styles.atcBtn}>Set the ask ✓</button>
+                    </form>
+                    <div className={styles.gActions}>
+                      <form action={setThreadStatus} className={styles.valInline}>
+                        <input type="hidden" name="subjectKey" value={t.subjectKey} />
+                        <input type="hidden" name="status" value="open" />
+                        <button
+                          className={styles.notWaitingBtn}
+                          title="Not waiting on a reply — stop chasing"
+                        >
+                          ↔ not waiting
+                        </button>
+                      </form>
+                    </div>
+                    <FollowUpDue t={t} />
+                  </LedgerRow>
+                ))}
+                {dueChecksLive.length === 0 && (
+                  <p className={styles.muted}>No check-ins due.</p>
+                )}
+              </div>
+            </div>
+
+            {/* ══ Completed today — the day's history, now-line at its foot ══ */}
+            <div className={styles.cockCap}>
+              <span>Completed today</span>
+            </div>
+            <div className={styles.atcRail}>
+              {/* Past — what already happened today, oldest first. */}
+              {pastEarlier.length > 0 && (
+                <details className={styles.lgEarlier}>
+                  <summary>earlier today ({pastEarlier.length}) ▸</summary>
+                  {pastEarlier.map((e, i) => (
+                    <PastRow key={`pe-${i}`} e={e} timeLabel={clockShort(e.at)} />
+                  ))}
+                </details>
+              )}
+              {pastRecent.map((e, i) => (
+                <PastRow key={`pr-${i}`} e={e} timeLabel={clockShort(e.at)} />
+              ))}
+              {pastEvents.length === 0 && doneActions.length === 0 && (
+                <div className={`${styles.lgRow} ${styles.lgPast}`}>
+                  <span className={styles.lgTm}></span>
+                  <span className={`${styles.lgDot} ${styles.lgDotDone}`} />
+                  <span className={styles.lgTx}>
+                    Nothing on the tab yet — it fills as the day happens.
+                  </span>
+                </div>
+              )}
+              {/* Actions finished today — ✓ above the line, then FILE it:
+                  the routing tech lives here now, offered after done. */}
+              {doneActions.map((t) => {
+                const { refs, label } = splitMarker(t.body);
+                const tg = todoTagsOf(t);
+                const txt = visibleText(t.body);
+                return (
+                  <LedgerRow
+                    key={t.id}
+                    tm={clockShort(new Date(Number(tg.doneAt)).toISOString())}
+                    tone="check"
+                    icon="done"
+                    text={txt}
+                    textTitle={txt}
+                    flag={
+                      tg.country ? (
+                        <CountryFlag code={tg.country} className={styles.flag} />
+                      ) : undefined
+                    }
+                    meta={refs ? `filed → ${label}` : undefined}
+                    primary={
+                      !refs ? (
+                        <form action={fileDoneAction} className={styles.fileLine}>
+                          <input type="hidden" name="id" value={t.id} />
+                          <span className={styles.fileLab}>File →</span>
+                          <select name="accountId" defaultValue="" aria-label="Account">
+                            <option value="">Account ▾</option>
+                            {noteAccounts.map((a) => (
+                              <option key={a.id} value={a.id}>
+                                {a.name}
+                              </option>
+                            ))}
+                          </select>
+                          <select name="partner" defaultValue="" aria-label="Partner">
+                            <option value="">Partner ▾</option>
+                            {kickoff.map((k) => (
+                              <option key={k.partner} value={k.partner}>
+                                {k.partner}
+                              </option>
+                            ))}
+                          </select>
+                          <button className={styles.atcBtn}>file ✓</button>
+                        </form>
+                      ) : undefined
+                    }
+                  />
+                );
+              })}
+              <div className={styles.lgNow}>
+                <span className={styles.lgNowLab}>now</span>
+                <span className={styles.lgNowLn} />
+              </div>
               {/* The glyph key — a quiet footer, not a header. */}
               <LedgerLegend />
             </div>
-
-            {/* Focus accounts — flat, score-sorted; notes are ACCOUNT-level,
-                inside each chip's popover. */}
-            {focusAccounts.length > 0 && (
-              <div className={styles.focusStrip}>
-                <div className={styles.cockCap}>
-                  <span>Focus accounts</span>
-                  <span className={styles.cockCapR}>
-                    {focusAccounts.length} accounts · ranked roster · click a row — notes
-                    are account-level
-                  </span>
-                </div>
-                <div className={styles.focusCols}>
-                  {focusAccounts.map(({ a, partner }) => {
-                    const dashCard = dash.cards.find(
-                      (c) => !c.archived && c.name === a.name,
-                    );
-                    const lastNoteAt = acctNotes.get(a.id)?.[0]?.createdAt ?? null;
-                    return (
-                      <AccountChip
-                        key={a.id}
-                        account={{
-                          id: a.id,
-                          name: a.name,
-                          score: a.score,
-                          play: a.play,
-                        }}
-                        partner={partner}
-                        tone={chipTone(lastNoteAt)}
-                        lastNoteAt={lastNoteAt}
-                        country={flagCodeByName.get(a.name) ?? ""}
-                        card={
-                          dashCard
-                            ? {
-                                id: dashCard.id,
-                                stages: DASH_NODES.map((n) => ({
-                                  key: n.key,
-                                  label: n.label,
-                                  state: dashCard.states[n.key] ?? "todo",
-                                })),
-                              }
-                            : null
-                        }
-                        seedSubtitle={`${a.csm}${a.industry ? ` · ${a.industry}` : ""}`}
-                        seedDiscovery={seedFor(a)}
-                        contact={contactById.get(a.id) ?? null}
-                        disposition={dispositions.get(a.id) ?? null}
-                        notes={(acctNotes.get(a.id) ?? []).map((n) => ({
-                          id: n.id,
-                          kind: n.kind,
-                          body: n.body,
-                          createdAt: n.createdAt,
-                        }))}
-                      />
-                    );
-                  })}
-                </div>
-              </div>
-            )}
           </div>
 
           {/* ══ RIGHT — the Day Sheet owns the second column ══ */}
           <div className={styles.cockColR}>
-            <div className={styles.cockCap}>
-              <span>Day sheet</span>
-              <span className={styles.cockCapR}>
-                everything lands here · route from here
-              </span>
-            </div>
             <DaySheet initialNotes={visibleTodos} dateLabel={todayLabel()} />
           </div>
 
@@ -2158,87 +2150,6 @@ export default async function TodayPage({
           <div className={styles.cockWide} id="rooms">
             <CockpitDrawers
               stats={null}
-              aleks={
-                <>
-                  {/* One home for everything Aleks: the prep line (from
-                      Narrative), the standing agenda (from Plan), and the
-                      session records. */}
-                  <div className={styles.narGuides}>
-                    <GuidedBlock
-                      title="Carry this into the Aleks 1:1"
-                      g={aleksLineGuidance(nar, move)}
-                      term={move?.name ?? ""}
-                      href={move ? `/accounts?focus=${move.id}` : "#"}
-                    />
-                  </div>
-                  <h2 className={styles.h2}>Weekly 1:1 with Aleks — standing agenda</h2>
-                  <div className={styles.agenda}>
-                    <ol>
-                      <li>
-                        <b>Base-expansion pipeline</b> — what moved this week, what&apos;s
-                        next, where it&apos;s stuck.
-                      </li>
-                      <li>
-                        <b>Partner health</b> — who&apos;s engaged (Eric, the CSMs),
-                        who&apos;s cold, where I need her air cover.
-                      </li>
-                      <li>
-                        <b>Market signal</b> — the one thing the base is telling us (voice
-                        of the base).
-                      </li>
-                      <li>
-                        <b>Asks / air cover</b> — what I need from her or marketing to arm
-                        partners.
-                      </li>
-                      <li>
-                        <b>Enablement gaps</b> — what we have, what we don&apos;t, what we
-                        need to sell Global.
-                      </li>
-                      <li>
-                        <b>The narrative up</b> — the one line she carries to her
-                        leadership.
-                      </li>
-                    </ol>
-                    <p className={styles.muted}>
-                      PEPM = per employee, per month — the unit EOR and global payroll
-                      price on. Keep the deal math in those terms when you brief her.
-                    </p>
-                  </div>
-                  {ALEKS_SESSIONS.map((s) => (
-                    <section key={s.date} className={styles.prCard}>
-                      <div className={styles.pageHead}>
-                        <h2 className={styles.h2}>1:1 with Aleks — {s.label}</h2>
-                        <p className={styles.sub}>
-                          Call notes with what each changes, then the brief as carried in.
-                        </p>
-                      </div>
-                      <div className={styles.aleksNotes}>
-                        {s.callNotes.map((n, i) => (
-                          <div key={i} className={styles.aleksNote}>
-                            <div className={styles.aleksNoteBody}>{n.note}</div>
-                            {n.action && (
-                              <div className={styles.aleksNoteAction}>→ {n.action}</div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                      <details className={styles.aleksBrief}>
-                        <summary>The brief I brought in</summary>
-                        {s.brief.map((sec) => (
-                          <div key={sec.title} className={styles.aleksBriefSec}>
-                            <div className={styles.aleksBriefTitle}>{sec.title}</div>
-                            <ul>
-                              {sec.bullets.map((b, i) => (
-                                <li key={i}>{b}</li>
-                              ))}
-                            </ul>
-                          </div>
-                        ))}
-                      </details>
-                    </section>
-                  ))}
-                </>
-              }
               narrative={
                 <>
                   {/* ── Band 4 · Narrative forming ─────────────────────────── */}
