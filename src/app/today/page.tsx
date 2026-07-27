@@ -86,7 +86,12 @@ import { askNextFor } from "@/lib/intel/ask-next";
 import { researchPrompt } from "@/lib/intel/research";
 import { COUNTRY_NAME } from "@/lib/intel/lexicon";
 import type { DealIntel } from "@/lib/intel/types";
+import { briefText, weeklyBrief } from "@/lib/intel/narrative";
+import { liveLookInto } from "@/lib/look-into/live";
+import { loadLookIntoStatus } from "@/lib/look-into/status";
 import { MorningBrief } from "./morning-brief";
+import { LookIntoBand } from "./look-into-band";
+import { WeeklyBriefBlock } from "./weekly-brief";
 import { addCard, toggleCheck } from "../dashboard/actions";
 import {
   addFieldNote,
@@ -660,6 +665,51 @@ export default async function TodayPage({
     dispositionKeys: dispositionKeySet,
     now: briefNow,
   });
+
+  // --- Weekly brief (Narrative drawer) -------------------------------------
+  const weekly = weeklyBrief({
+    now: briefNow,
+    cards: dash.cards
+      .filter((c) => !c.archived)
+      .map((c) => ({ name: c.name, states: c.states, activated: c.activated })),
+    labels: dash.labels,
+    partnerNotes: [...partnerNotes.values()]
+      .flat()
+      .map((n) => ({ partner: n.partner, body: n.body, createdAt: n.createdAt })),
+    filed: briefCards.flatMap((c) =>
+      (docsByCard[c.id] ?? [])
+        .filter((d) => d.src.startsWith("sf-activity") || d.src.startsWith("touch"))
+        .map((d) => ({ account: c.name, at: d.at })),
+    ),
+    openAsks: notes.notes
+      .filter((n) => n.kind === "ask" || n.kind === "gap")
+      .map((n) => ({ text: n.body, sinceIso: n.createdAt })),
+    staleBriefRows: briefRows
+      .filter((r) => r.ruleId === "owed-item" || r.ruleId === "contract-chase")
+      .map((r) => r.text),
+    deadlines: briefCards.flatMap((c) => {
+      const t = intelByCard[c.id]?.timing;
+      return t?.value.dateIso
+        ? [{ account: c.name, phrase: t.value.phrase, dateIso: t.value.dateIso }]
+        : [];
+    }),
+    upcoming: touches
+      .filter(
+        (t) => t.status !== "archived" && Date.parse(t.followUpAt) > briefNow.getTime(),
+      )
+      .map((t) => ({ label: `follow up — ${t.label}`, at: t.followUpAt })),
+  });
+  const weeklyTxt = briefText(weekly.sections);
+
+  // --- Live look-into ------------------------------------------------------
+  const lookIntoStatus = await loadLookIntoStatus();
+  const lookIntoItems = liveLookInto({
+    now: briefNow,
+    cards: briefCards.map((c) => ({ id: c.id, name: c.name, states: c.states })),
+    intelByCard,
+    suggByCard,
+    captureNotes: notes.notes,
+  }).filter((it) => lookIntoStatus.map.get(it.id)?.resolved !== true);
 
   // "Ask next" for a focus account: reuse the card's derived intel when it's
   // on the board, otherwise derive from notes + digest alone.
@@ -1843,6 +1893,9 @@ export default async function TodayPage({
               <LedgerLegend />
             </div>
 
+            {/* ══ Look into — live open loops, derived from today's corpus ══ */}
+            <LookIntoBand items={lookIntoItems} canWrite={dash.canWrite} />
+
             {/* Focus accounts + Check-ins due, side by side with a divider. */}
             <div className={styles.focusRow}>
               {focusAccounts.length > 0 && (
@@ -2278,6 +2331,9 @@ export default async function TodayPage({
               stats={null}
               narrative={
                 <>
+                  {/* ── The weekly brief — the update writes itself ────────── */}
+                  <WeeklyBriefBlock sections={weekly.sections} text={weeklyTxt} />
+
                   {/* ── Band 4 · Narrative forming ─────────────────────────── */}
                   <section className={styles.band}>
                     <div className={styles.bandHead}>
