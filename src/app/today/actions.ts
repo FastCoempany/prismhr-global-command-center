@@ -1008,3 +1008,44 @@ export async function addTouchNote(formData: FormData) {
   });
   done();
 }
+
+// --- Morning brief row lifecycle -------------------------------------------
+// ✓ on a brief row parks it for TODAY only (day-scoped key: tomorrow the rule
+// re-evaluates fresh); mute kills the rule+subject permanently. Zero-schema —
+// namespaced AccountDisposition rows, same store as everything else.
+const BRIEF_DONE_PREFIX = "brief-done:";
+const BRIEF_MUTE_PREFIX = "brief-mute:";
+
+export async function briefRowDone(formData: FormData) {
+  const ruleId = str(formData, "ruleId", 40);
+  const subjectId = str(formData, "subjectId", 80);
+  const dayKey = str(formData, "dayKey", 12);
+  if (!(await requireWrite()) || !ruleId || !subjectId || !dayKey) done();
+  await safeWrite(async () => {
+    const accountId = `${BRIEF_DONE_PREFIX}${ruleId}:${subjectId}:${dayKey}`.slice(
+      0,
+      191,
+    );
+    await getPrisma().accountDisposition.upsert({
+      where: { accountId },
+      create: { accountId, status: "parked", reason: "brief row done" },
+      update: { status: "parked" },
+    });
+  });
+  done();
+}
+
+export async function briefRowMute(formData: FormData) {
+  const ruleId = str(formData, "ruleId", 40);
+  const subjectId = str(formData, "subjectId", 80);
+  if (!(await requireWrite()) || !ruleId || !subjectId) done();
+  await safeWrite(async () => {
+    const accountId = `${BRIEF_MUTE_PREFIX}${ruleId}:${subjectId}`.slice(0, 191);
+    await getPrisma().accountDisposition.upsert({
+      where: { accountId },
+      create: { accountId, status: "parked", reason: "brief row muted" },
+      update: { status: "parked" },
+    });
+  });
+  done();
+}

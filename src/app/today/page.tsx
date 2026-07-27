@@ -77,7 +77,13 @@ import {
 } from "@/lib/today/build";
 import { SfCheckpoint } from "@/components/sf";
 import { ContactControl, EditableMessage, NoteSubmit } from "../today-client";
-import { clockShort, USER_TZ } from "@/lib/tz";
+import { clockShort, userDayKey, USER_TZ } from "@/lib/tz";
+import { corpusFor, extractDealIntel, type CorpusDoc } from "@/lib/intel/extract";
+import { digestFor, digestForCardName } from "@/lib/intel/digest";
+import { suggestChecks, type CheckSuggestion } from "@/lib/intel/evidence";
+import { buildMorningBrief, type BriefCard } from "@/lib/intel/brief";
+import type { DealIntel } from "@/lib/intel/types";
+import { MorningBrief } from "./morning-brief";
 import { addCard, toggleCheck } from "../dashboard/actions";
 import {
   addFieldNote,
@@ -600,6 +606,56 @@ export default async function TodayPage({
   ]);
   const touchMap = new Map(touches.map((t) => [t.subjectKey, t]));
   const followUps = partitionFollowUps(touches);
+
+  // --- Morning brief -------------------------------------------------------
+  // Same corpus wiring as the dashboard: per board card, assemble the
+  // account's docs, derive intel + suggestions, then let the rule engine
+  // decide what this morning actually needs.
+  const briefNow = new Date();
+  const briefDayKey = userDayKey(briefNow);
+  const briefIdByName = new Map(peos.map((p) => [p.name.toLowerCase(), p.id]));
+  const briefCards: BriefCard[] = [];
+  const docsByCard: Record<string, CorpusDoc[]> = {};
+  const intelByCard: Record<string, DealIntel> = {};
+  const suggByCard: Record<string, CheckSuggestion[]> = {};
+  for (const card of dash.cards) {
+    if (card.archived) continue;
+    const acctId =
+      briefIdByName.get(card.name.toLowerCase()) ??
+      digestForCardName(card.name)?.accountId ??
+      "";
+    const docs = corpusFor(acctId, card.name, {
+      acctNotes: acctNotes.get(acctId),
+      todos: todos.filter((t) => acctId && t.accountId === acctId),
+      touches: touches.filter(
+        (t) =>
+          (acctId && t.subjectKey === `acct:${acctId}`) ||
+          t.label.toLowerCase() === card.name.toLowerCase(),
+      ),
+    });
+    const dig = digestFor(acctId) ?? digestForCardName(card.name);
+    briefCards.push({
+      id: card.id,
+      name: card.name,
+      accountId: acctId,
+      states: card.states,
+    });
+    docsByCard[card.id] = docs;
+    intelByCard[card.id] = extractDealIntel(docs, dig);
+    const dismissed = new Set<string>();
+    const suggPrefix = `sugg-dismiss:${card.id}:`;
+    for (const key of dispositions.keys())
+      if (key.startsWith(suggPrefix)) dismissed.add(key.slice(suggPrefix.length));
+    suggByCard[card.id] = suggestChecks(docs, card, dismissed, briefNow);
+  }
+  const briefRows = buildMorningBrief({
+    cards: briefCards,
+    docsByCard,
+    intelByCard,
+    suggByCard,
+    dispositionKeys: new Set(dispositions.keys()),
+    now: briefNow,
+  });
 
   // ✕ HIDES, never deletes — hidden items leave every Today surface and wait
   // in the Archive's hidden bin, restorable.
@@ -1230,6 +1286,12 @@ export default async function TodayPage({
           {/* ══ LEFT — open notes/actions first, focus + check-ins, then
                  the day's completed history at the bottom ══ */}
           <div className={styles.cockCol}>
+            <MorningBrief
+              rows={briefRows}
+              canWrite={dash.canWrite}
+              dayKey={briefDayKey}
+            />
+
             <div className={styles.cockCap}>
               <span>Today&apos;s notes and actions</span>
             </div>
