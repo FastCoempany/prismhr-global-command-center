@@ -16,6 +16,10 @@ import { corpusFor, extractDealIntel } from "@/lib/intel/extract";
 import { digestFor, digestForCardName } from "@/lib/intel/digest";
 import { suggestChecks, type CheckSuggestion } from "@/lib/intel/evidence";
 import { liveContextFor, type LiveContextLine } from "@/lib/intel/live-context";
+import { askNextFor } from "@/lib/intel/ask-next";
+import { researchPrompt } from "@/lib/intel/research";
+import { COUNTRY_NAME } from "@/lib/intel/lexicon";
+import type { AskNextQ } from "./today/ask-next";
 import type { DealIntel } from "@/lib/intel/types";
 import { DashboardClient } from "./dashboard-client";
 import styles from "./command-center.module.css";
@@ -60,9 +64,14 @@ export default async function DashboardPage() {
   // rows + digest seed) — nothing stored. Cards are keyed by name; resolve the
   // account id via the book (exact name) with the digest's aliases as fallback.
   const idByName = new Map(peos.map((p) => [p.name.toLowerCase(), p.id]));
+  const dispositionKeySet = new Set(dispositions.keys());
   const intelByName: Record<string, DealIntel> = {};
   const suggByName: Record<string, CheckSuggestion[]> = {};
   const ctxByName: Record<string, LiveContextLine[]> = {};
+  const askByName: Record<
+    string,
+    { accountId: string; questions: AskNextQ[]; research: string }
+  > = {};
   for (const card of data.cards) {
     if (card.archived) continue;
     const acctId =
@@ -91,6 +100,34 @@ export default async function DashboardPage() {
     ctxByName[card.name] = liveContextFor(docs, {
       excludeTexts: (notesByName[card.name] ?? []).map((n) => n.body),
     }).lines;
+    const questions = askNextFor({
+      intel: intelByName[card.name],
+      states: card.states,
+      accountId: acctId,
+      doneKeys: dispositionKeySet,
+    });
+    if (questions.length > 0) {
+      const aIntel = intelByName[card.name];
+      askByName[card.name] = {
+        accountId: acctId,
+        questions: questions.map((q) => ({
+          id: q.id,
+          question: q.question,
+          why: q.why,
+          drumLine: q.drumLine,
+        })),
+        research: researchPrompt("custom", {
+          account: card.name,
+          countries: aIntel.countries.map((c) => COUNTRY_NAME[c.value] ?? c.value),
+          known: [
+            aIntel.direction?.line ?? "",
+            aIntel.incumbent ? `incumbent: ${aIntel.incumbent.value}` : "",
+            aIntel.timing?.value.phrase ?? "",
+          ].filter(Boolean),
+          question: questions[0].question,
+        }),
+      };
+    }
   }
 
   if (data.status === "unauthenticated") {
@@ -137,6 +174,7 @@ export default async function DashboardPage() {
           intelByName={intelByName}
           suggByName={suggByName}
           ctxByName={ctxByName}
+          askByName={askByName}
         />
       </main>
     </>

@@ -1,0 +1,130 @@
+/* Battlecard — the full discovery bank, filterable. */
+
+.board {
+  display: grid;
+  gap: 12px;
+}
+.filters {
+  display: grid;
+  gap: 6px;
+}
+.chipRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+}
+.chipLabel {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #5b6b86;
+  min-width: 68px;
+}
+.chip {
+  border: 1px solid #e6ebf3;
+  background: #fff;
+  color: #5b6b86;
+  border-radius: 999px;
+  padding: 2px 10px;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.chip:hover {
+  border-color: #2563eb;
+  color: #1d4ed8;
+}
+.chipOn {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #fff;
+}
+.count {
+  font-size: 11px;
+  color: #5b6b86;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 10px;
+}
+.card {
+  border: 1px solid #e6ebf3;
+  border-left: 3px solid #2563eb;
+  border-radius: 12px;
+  background: #fff;
+  padding: 12px 14px;
+  display: grid;
+  gap: 6px;
+  align-content: start;
+}
+.tags {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.tag {
+  border: 1px solid #e6ebf3;
+  background: #f6f8fb;
+  color: #5b6b86;
+  border-radius: 999px;
+  padding: 0 8px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.7;
+  text-transform: lowercase;
+}
+.q {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #0a1c40;
+  line-height: 1.45;
+}
+.why,
+.listen,
+.follow,
+.drum {
+  font-size: 12px;
+  color: #16233d;
+  line-height: 1.5;
+}
+.why {
+  color: #5b6b86;
+}
+.listen b,
+.follow b,
+.drum b {
+  color: #0a1c40;
+}
+.drum {
+  border-top: 1px dashed #e6ebf3;
+  padding-top: 6px;
+}
+.drum i {
+  color: #1d4ed8;
+  font-style: normal;
+}
+.copyBtn {
+  border: 1px solid #e6ebf3;
+  background: #fff;
+  color: #5b6b86;
+  border-radius: 6px;
+  padding: 0 6px;
+  font: inherit;
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1.7;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.copyBtn:hover {
+  border-color: #2563eb;
+  color: #1d4ed8;
+}
+.inline {
+  display: inline-flex;
+  margin-left: 4px;
+}

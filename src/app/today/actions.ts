@@ -1049,3 +1049,32 @@ export async function briefRowMute(formData: FormData) {
   });
   done();
 }
+
+// --- Ask next --------------------------------------------------------------
+// ✓ on an ask-next question retires it for that account permanently
+// (asknext-done:<accountId>:<questionId>). returnTo keeps the click on the
+// surface it came from (dashboard card, popover, battlecard).
+const ASKNEXT_DONE_PREFIX = "asknext-done:";
+
+export async function askNextDone(formData: FormData) {
+  const accountId = str(formData, "accountId", 80);
+  const questionId = str(formData, "questionId", 40);
+  const raw = str(formData, "returnTo", 80);
+  const to = raw === "/" || raw === "/battlecard" ? raw : "/today";
+  const finish = () => {
+    revalidatePath("/today");
+    revalidatePath("/");
+    revalidatePath("/battlecard");
+    redirect(to);
+  };
+  if (!(await requireWrite()) || !accountId || !questionId) finish();
+  await safeWrite(async () => {
+    const key = `${ASKNEXT_DONE_PREFIX}${accountId}:${questionId}`.slice(0, 191);
+    await getPrisma().accountDisposition.upsert({
+      where: { accountId: key },
+      create: { accountId: key, status: "parked", reason: "asked" },
+      update: { status: "parked" },
+    });
+  });
+  finish();
+}

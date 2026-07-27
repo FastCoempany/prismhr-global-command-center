@@ -82,6 +82,9 @@ import { corpusFor, extractDealIntel, type CorpusDoc } from "@/lib/intel/extract
 import { digestFor, digestForCardName } from "@/lib/intel/digest";
 import { suggestChecks, type CheckSuggestion } from "@/lib/intel/evidence";
 import { buildMorningBrief, type BriefCard } from "@/lib/intel/brief";
+import { askNextFor } from "@/lib/intel/ask-next";
+import { researchPrompt } from "@/lib/intel/research";
+import { COUNTRY_NAME } from "@/lib/intel/lexicon";
 import type { DealIntel } from "@/lib/intel/types";
 import { MorningBrief } from "./morning-brief";
 import { addCard, toggleCheck } from "../dashboard/actions";
@@ -648,14 +651,56 @@ export default async function TodayPage({
       if (key.startsWith(suggPrefix)) dismissed.add(key.slice(suggPrefix.length));
     suggByCard[card.id] = suggestChecks(docs, card, dismissed, briefNow);
   }
+  const dispositionKeySet = new Set(dispositions.keys());
   const briefRows = buildMorningBrief({
     cards: briefCards,
     docsByCard,
     intelByCard,
     suggByCard,
-    dispositionKeys: new Set(dispositions.keys()),
+    dispositionKeys: dispositionKeySet,
     now: briefNow,
   });
+
+  // "Ask next" for a focus account: reuse the card's derived intel when it's
+  // on the board, otherwise derive from notes + digest alone.
+  const askNextForAccount = (
+    a: { id: string; name: string },
+    dashCard: { id: string; states: Partial<Record<string, string>> } | undefined,
+  ) => {
+    const aIntel =
+      (dashCard && intelByCard[dashCard.id]) ??
+      extractDealIntel(
+        corpusFor(a.id, a.name, { acctNotes: acctNotes.get(a.id) }),
+        digestFor(a.id) ?? digestForCardName(a.name),
+      );
+    const questions = askNextFor({
+      intel: aIntel,
+      states: dashCard?.states ?? {},
+      accountId: a.id,
+      doneKeys: dispositionKeySet,
+    });
+    if (questions.length === 0) return null;
+    return {
+      questions: questions.map((q) => ({
+        id: q.id,
+        question: q.question,
+        why: q.why,
+        drumLine: q.drumLine,
+      })),
+      research: researchPrompt("custom", {
+        account: a.name,
+        countries: aIntel.countries.map((c) => COUNTRY_NAME[c.value] ?? c.value),
+        known: [
+          aIntel.direction?.line ?? "",
+          aIntel.incumbent ? `incumbent: ${aIntel.incumbent.value}` : "",
+          aIntel.timing?.value.phrase ?? "",
+        ].filter(Boolean),
+        question:
+          questions[0]?.question ??
+          `What should we verify about ${a.name}'s global payroll situation before the next conversation?`,
+      }),
+    };
+  };
 
   // ✕ HIDES, never deletes — hidden items leave every Today surface and wait
   // in the Archive's hidden bin, restorable.
@@ -1846,6 +1891,7 @@ export default async function TodayPage({
                             body: n.body,
                             createdAt: n.createdAt,
                           }))}
+                          askNext={askNextForAccount(a, dashCard)}
                         />
                       );
                     })}
