@@ -11,7 +11,7 @@ import { dealIntelFor } from "@/lib/intel/extract";
 import { digestFor, digestForCardName } from "@/lib/intel/digest";
 import { COUNTRY_NAME, redactMoney } from "@/lib/intel/lexicon";
 import { loadAccountNotes, loadTodos, loadTouches } from "@/lib/today/overlay";
-import type { TimelineEntry } from "@/lib/sf-timeline";
+import { cleanSfPaste, type TimelineEntry } from "@/lib/sf-timeline";
 
 async function requireWrite() {
   if (!hasDatabaseEnv()) return false;
@@ -184,7 +184,7 @@ export async function fileTranscript(
   text: string,
 ): Promise<{ ok: boolean }> {
   const id = (accountId ?? "").trim().slice(0, 40);
-  const body = redactMoney((text ?? "").trim()).slice(0, 6000);
+  const body = redactMoney(cleanSfPaste(text ?? "")).slice(0, 6000);
   if (!(await requireWrite()) || !id || !body) return { ok: false };
   try {
     await getPrisma().accountNote.create({
