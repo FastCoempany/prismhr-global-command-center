@@ -1636,6 +1636,88 @@ export default async function TodayPage({
               )}
             </div>
 
+            {/* ══ Completed today — the day's history, now-line at its foot ══ */}
+            <div className={styles.cockCap}>
+              <span>Completed today</span>
+            </div>
+            <div className={styles.atcRail}>
+              {/* Past — what already happened today, oldest first. */}
+              {pastEarlier.length > 0 && (
+                <details className={styles.lgEarlier}>
+                  <summary>earlier today ({pastEarlier.length}) ▸</summary>
+                  {pastEarlier.map((e, i) => (
+                    <PastRow key={`pe-${i}`} e={e} timeLabel={clockShort(e.at)} />
+                  ))}
+                </details>
+              )}
+              {pastRecent.map((e, i) => (
+                <PastRow key={`pr-${i}`} e={e} timeLabel={clockShort(e.at)} />
+              ))}
+              {pastEvents.length === 0 && doneActions.length === 0 && (
+                <div className={`${styles.lgRow} ${styles.lgPast}`}>
+                  <span className={styles.lgTm}></span>
+                  <span className={`${styles.lgDot} ${styles.lgDotDone}`} />
+                  <span className={styles.lgTx}>
+                    Nothing on the tab yet — it fills as the day happens.
+                  </span>
+                </div>
+              )}
+              {/* Actions finished today — ✓ above the line, then FILE it:
+                  the routing tech lives here now, offered after done. */}
+              {doneActions.map((t) => {
+                const { refs, label } = splitMarker(t.body);
+                const tg = todoTagsOf(t);
+                const txt = visibleText(t.body);
+                return (
+                  <LedgerRow
+                    key={t.id}
+                    tm={clockShort(new Date(Number(tg.doneAt)).toISOString())}
+                    tone="check"
+                    icon="done"
+                    text={txt}
+                    textTitle={txt}
+                    flag={
+                      tg.country ? (
+                        <CountryFlag code={tg.country} className={styles.flag} />
+                      ) : undefined
+                    }
+                    meta={refs ? `filed → ${label}` : undefined}
+                    primary={
+                      !refs ? (
+                        <form action={fileDoneAction} className={styles.fileLine}>
+                          <input type="hidden" name="id" value={t.id} />
+                          <span className={styles.fileLab}>File →</span>
+                          <select name="accountId" defaultValue="" aria-label="Account">
+                            <option value="">Account ▾</option>
+                            {noteAccounts.map((a) => (
+                              <option key={a.id} value={a.id}>
+                                {a.name}
+                              </option>
+                            ))}
+                          </select>
+                          <select name="partner" defaultValue="" aria-label="Partner">
+                            <option value="">Partner ▾</option>
+                            {kickoff.map((k) => (
+                              <option key={k.partner} value={k.partner}>
+                                {k.partner}
+                              </option>
+                            ))}
+                          </select>
+                          <button className={styles.atcBtn}>file ✓</button>
+                        </form>
+                      ) : undefined
+                    }
+                  />
+                );
+              })}
+              <div className={styles.lgNow}>
+                <span className={styles.lgNowLab}>now</span>
+                <span className={styles.lgNowLn} />
+              </div>
+              {/* The glyph key — a quiet footer, not a header. */}
+              <LedgerLegend />
+            </div>
+
             {/* Focus accounts + Check-ins due, side by side with a divider. */}
             <div className={styles.focusRow}>
               {focusAccounts.length > 0 && (
@@ -1750,88 +1832,6 @@ export default async function TodayPage({
                   <p className={styles.muted}>No check-ins due.</p>
                 )}
               </div>
-            </div>
-
-            {/* ══ Completed today — the day's history, now-line at its foot ══ */}
-            <div className={styles.cockCap}>
-              <span>Completed today</span>
-            </div>
-            <div className={styles.atcRail}>
-              {/* Past — what already happened today, oldest first. */}
-              {pastEarlier.length > 0 && (
-                <details className={styles.lgEarlier}>
-                  <summary>earlier today ({pastEarlier.length}) ▸</summary>
-                  {pastEarlier.map((e, i) => (
-                    <PastRow key={`pe-${i}`} e={e} timeLabel={clockShort(e.at)} />
-                  ))}
-                </details>
-              )}
-              {pastRecent.map((e, i) => (
-                <PastRow key={`pr-${i}`} e={e} timeLabel={clockShort(e.at)} />
-              ))}
-              {pastEvents.length === 0 && doneActions.length === 0 && (
-                <div className={`${styles.lgRow} ${styles.lgPast}`}>
-                  <span className={styles.lgTm}></span>
-                  <span className={`${styles.lgDot} ${styles.lgDotDone}`} />
-                  <span className={styles.lgTx}>
-                    Nothing on the tab yet — it fills as the day happens.
-                  </span>
-                </div>
-              )}
-              {/* Actions finished today — ✓ above the line, then FILE it:
-                  the routing tech lives here now, offered after done. */}
-              {doneActions.map((t) => {
-                const { refs, label } = splitMarker(t.body);
-                const tg = todoTagsOf(t);
-                const txt = visibleText(t.body);
-                return (
-                  <LedgerRow
-                    key={t.id}
-                    tm={clockShort(new Date(Number(tg.doneAt)).toISOString())}
-                    tone="check"
-                    icon="done"
-                    text={txt}
-                    textTitle={txt}
-                    flag={
-                      tg.country ? (
-                        <CountryFlag code={tg.country} className={styles.flag} />
-                      ) : undefined
-                    }
-                    meta={refs ? `filed → ${label}` : undefined}
-                    primary={
-                      !refs ? (
-                        <form action={fileDoneAction} className={styles.fileLine}>
-                          <input type="hidden" name="id" value={t.id} />
-                          <span className={styles.fileLab}>File →</span>
-                          <select name="accountId" defaultValue="" aria-label="Account">
-                            <option value="">Account ▾</option>
-                            {noteAccounts.map((a) => (
-                              <option key={a.id} value={a.id}>
-                                {a.name}
-                              </option>
-                            ))}
-                          </select>
-                          <select name="partner" defaultValue="" aria-label="Partner">
-                            <option value="">Partner ▾</option>
-                            {kickoff.map((k) => (
-                              <option key={k.partner} value={k.partner}>
-                                {k.partner}
-                              </option>
-                            ))}
-                          </select>
-                          <button className={styles.atcBtn}>file ✓</button>
-                        </form>
-                      ) : undefined
-                    }
-                  />
-                );
-              })}
-              <div className={styles.lgNow}>
-                <span className={styles.lgNowLab}>now</span>
-                <span className={styles.lgNowLn} />
-              </div>
-              {/* The glyph key — a quiet footer, not a header. */}
-              <LedgerLegend />
             </div>
           </div>
 
