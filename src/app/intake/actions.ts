@@ -29,7 +29,7 @@ const GLYPH: Record<TimelineEntry["kind"], string> = {
 // note reads right even though createdAt is "when filed".
 function noteBody(e: TimelineEntry): string {
   const when = [e.dayLabel, e.timeLabel].filter(Boolean).join(" ");
-  const who = `${e.from} → ${e.to}${e.others ? ` +${e.others}` : ""}`;
+  const who = `${e.from}${e.to ? ` → ${e.to}` : ""}${e.others ? ` +${e.others}` : ""}`;
   const head = `${GLYPH[e.kind] ?? "✉"} SF ${when || "activity"} — ${
     e.subject || "(no subject)"
   } · ${who}`;

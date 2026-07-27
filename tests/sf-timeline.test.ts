@@ -128,3 +128,103 @@ Wed or Fri works on my end — send an invite.
     assert.ok(!clean.includes("Expand All"));
   });
 });
+
+describe("ESC case-feed format (real 7/27 capture shape)", () => {
+  const RAW = `Skip to the bottom of the activity timeline
+Only show activities with insights
+Only show activities with insights
+Filters: Within 2 months • All activities • Logged calls, Email, Events, List email, Tasks, and LinkedIn
+Timeline Settings
+Refresh • Collapse All • View All
+Upcoming & Overdue
+Details for PrismHR Case 00685327: Additional Information Requested [ thread::p4gG42cbcVy2-FRBDOElHgE:: ]
+Prism/ESC: PrismOne Timeline
+Prism/ESC: PrismOne Timeline
+Jul 30, 2025
+Overdue
+Show more actions - Prism/ESC: PrismOne Timeline
+Lesha Cyphers has an upcoming task
+Priority
+Normal
+Created By
+HubSpot Integration User, 6/23/2026, 1:13 PM
+Description
+While we knew the enhanced security was coming, we find the schedule very aggressive.
+Lesha Cyphers is inviting you to a scheduled Zoom meeting.
+Join Zoom Meeting
+https://peo.zoom.us/j/82537740732?pwd=x
+Meeting ID: 825 3774 0732
+Passcode: 052296
+One tap mobile
++13017158592,,82537740732#,,,,*052296# US (Washington DC)
+Dial by your location
+• +1 312 626 6799 US (Chicago)
+Find your local number: https://peo.zoom.us/u/kbe3tZlgZZ
+July • 2026
+This Month
+Details for
+PrismHR Case 00685421: Suggested Solution [ thread::CzwvIr--evC19rUUXE871QE:: ]
+5:27 PM | Today
+Show more actions - PrismHR Case 00685421: Suggested Solution [ thread::CzwvIr--evC19rUUXE871QE:: ]
+customersupport@prismhr.com sent an email to Kristen Wolasz and 1 other
+From Address
+customersupport@prismhr.com
+To Address
+Kristen Wolasz
+Related To
+00685421
+Text Body
+Good afternoon,
+The employee record cannot be deleted while posted vouchers remain.
+Thank you,
+Jacob King
+NEVER include SSN or username/password combination in your reply or in an attachment.
+Responses via email to this case will result in a re-open of the case. If that is not your intention, simply read this email and the case will automatically be closed in 10 days. No further action is necessary.
+thread::CzwvIr--evC19rUUXE871QE::
+00X3k000001vPusEAE
+Skip to the top of the activity timeline`;
+
+  test("cleanSfPaste drops chrome, banners, invites, labels; dedupes doubles", () => {
+    const clean = cleanSfPaste(RAW);
+    for (const gone of [
+      "Only show activities",
+      "Timeline Settings",
+      "Show more actions",
+      "Details for",
+      "thread::",
+      "Meeting ID:",
+      "One tap mobile",
+      "Dial by your location",
+      "NEVER include SSN",
+      "Responses via email",
+      "From Address",
+      "Text Body",
+      "Overdue",
+    ])
+      assert.ok(!clean.includes(gone), `should strip: ${gone}`);
+    assert.ok(clean.includes("schedule very aggressive"));
+    // doubled subject collapses to one
+    assert.equal(clean.split("Prism/ESC: PrismOne Timeline").length, 2);
+  });
+
+  test("parses tasks and case emails: kind, subject, people, dates", () => {
+    const es = parseSfTimeline(RAW, new Date("2026-07-27T22:00:00Z"));
+    assert.equal(es.length, 2);
+    const [task, mail] = es;
+    assert.equal(task.kind, "task");
+    assert.equal(task.subject, "Prism/ESC: PrismOne Timeline");
+    assert.equal(task.from, "Lesha Cyphers");
+    assert.equal(task.dayIso, "2025-07-30");
+    assert.match(task.body, /schedule very aggressive/);
+    assert.ok(!task.body.includes("Meeting ID"));
+    assert.equal(mail.kind, "email");
+    assert.equal(mail.subject, "PrismHR Case 00685421: Suggested Solution");
+    assert.equal(mail.from, "customersupport@prismhr.com");
+    assert.equal(mail.to, "Kristen Wolasz");
+    assert.equal(mail.others, 1);
+    assert.equal(mail.dayIso, "2026-07-27");
+    assert.equal(mail.timeLabel, "5:27 PM");
+    assert.match(mail.body, /^Good afternoon,/);
+    assert.ok(!mail.body.includes("NEVER include SSN"));
+  });
+});
