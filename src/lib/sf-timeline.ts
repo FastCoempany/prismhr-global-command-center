@@ -131,19 +131,27 @@ type Anchor = {
   others: number;
 };
 
-// "Antaeus Coe to Bryce Rowley + 4 others" · "Eric Ronci had a task with
-// Andy Aziz" · "X logged a call with Y". The "+ N others" tail may ride the
-// same line or the next one (handled by the caller).
+// Case-feed senders are raw addresses ("customersupport@prismhr.com").
+const isEmailAddr = (s: string) => /^[\w.+-]+@[\w.-]+\.\w+$/.test(s.trim());
+const nameOk = (s: string) => looksLikeName(s) || isEmailAddr(s);
+
+// "Antaeus Coe to Bryce Rowley + 4 others" · "X sent an email to Y and 1
+// other" · "Eric Ronci had a task with Andy Aziz" · "Lesha Cyphers has an
+// upcoming task" · "X logged a call with Y". The "+ N others" tail may ride
+// the same line or the next one (handled by the caller).
 function parseAnchor(line: string): Anchor | null {
-  const others = /\+\s*(\d+)\s+others?\s*$/.exec(line);
+  const others = /(?:\+\s*(\d+)\s+others?|\band\s+(\d+)\s+others?)\s*$/.exec(line);
   const base = others ? line.slice(0, others.index).trim() : line.trim();
-  const n = others ? Number(others[1]) : 0;
+  const n = others ? Number(others[1] ?? others[2]) : 0;
   let m = /^(.+?)\s+sent an email to\s+(.+)$/.exec(base);
-  if (m && looksLikeName(m[1]) && looksLikeName(m[2]))
+  if (m && nameOk(m[1]) && nameOk(m[2]))
     return { kind: "email", from: m[1], to: m[2], others: n };
   m = /^(.+?)\s+to\s+(.+)$/.exec(base);
   if (m && looksLikeName(m[1]) && looksLikeName(m[2]))
     return { kind: "email", from: m[1], to: m[2], others: n };
+  m = /^(.+?)\s+(?:had|has) an? (?:upcoming )?task(?:\s+with\s+(.+))?$/.exec(base);
+  if (m && looksLikeName(m[1]) && (!m[2] || looksLikeName(m[2])))
+    return { kind: "task", from: m[1], to: m[2] ?? "", others: n };
   m = /^(.+?)\s+had a task with\s+(.+)$/.exec(base);
   if (m && looksLikeName(m[1]) && looksLikeName(m[2]))
     return { kind: "task", from: m[1], to: m[2], others: n };
@@ -153,49 +161,115 @@ function parseAnchor(line: string): Anchor | null {
   return null;
 }
 
-// Lightning junk that rides along in timeline innerText — thread markers,
-// bare record ids, and a11y skip links. Stripped before a paste files as a
-// transcript so the note reads like the conversation, not the DOM.
-const JUNK_LINE =
-  /^(?:thread::\S+|(?=[0-9A-Za-z]*\d)[0-9A-Za-z]{15}(?:[0-9A-Za-z]{3})?|Skip to the (?:top|bottom) of the activity timeline|Expand All|Collapse All|Refresh)$/;
+// Lightning + email junk that rides along in a timeline copy — UI chrome,
+// field labels, thread markers, record ids, security banners, meeting-invite
+// dial-in blocks, and support-desk boilerplate. Stripped before a paste is
+// parsed or filed, so what circulates is the conversation, not the DOM.
+const JUNK_LINES: RegExp[] = [
+  /^thread::\S+/,
+  /^(?=[0-9A-Za-z]*\d)[0-9A-Za-z]{15}(?:[0-9A-Za-z]{3})?$/, // bare SF record id
+  /^Skip to the (?:top|bottom) of the activity timeline$/,
+  /^Only show activities with insights$/,
+  /^Filters: /,
+  /^Timeline Settings$/,
+  /^Refresh(?: • Collapse All(?: • View All)?)?$/,
+  /^(?:Expand All|Collapse All|View All|View More)$/,
+  /^Upcoming & Overdue$/i,
+  /^(?:This Month|Last Month|Older|Overdue)$/i,
+  /^Details for\b/,
+  /^Show more actions\b/,
+  /^(?:Priority|Normal|Name)$/,
+  /^(?:From Address|To Address|Related To|Text Body|Description|Created By)$/,
+  /^(?:Preview|Ask to share|Show menu)$/,
+  /^Emails are not shared with you/,
+  /^(?:ZjQcmQRYFpfptBannerStart|ZjQcmQRYFpfptBannerEnd|sophospsmartbannerend)$/,
+  /^This Message Is From an External Sender$/,
+  /^DO NOT CLICK links or attachments/,
+  /^NEVER include SSN/,
+  /^Responses via email to this case will result in a re-open/,
+  /^Get Outlook for (?:iOS|Android)$/,
+  /^This message may contain confidential/,
+  /^W: Prismhr\.com/i,
+  // Meeting-invite plumbing (Zoom / Teams)
+  /^Microsoft Teams Need help\?$/,
+  /^Join (?:the meeting now|Zoom Meeting)$/,
+  /^https:\/\/[\w.-]*zoom\.us\//,
+  /^(?:Meeting ID|Passcode|Phone conference ID): /,
+  /^(?:One tap mobile|Dial by your location|Dial in by phone)$/,
+  /^• \+1[\d\s()#*,-]+/,
+  /^\+1[\d\s()#*,-]+(?:US|United States)/,
+  /^Find (?:your|a) local number/,
+  /^For organizers: Meeting options/,
+  /^Powered by Zoom$/,
+  /^_{5,}$/,
+  /^-{5,}\s*One tap mobile/,
+  /^.+, \d{1,2}\/\d{1,2}\/\d{4}, \d{1,2}:\d{2} (?:AM|PM)$/, // "Created By" value stamps
+];
+
+const isJunkLine = (t: string) => JUNK_LINES.some((re) => re.test(t));
 
 export function cleanSfPaste(text: string): string {
-  return (text ?? "")
-    .split(/\r?\n/)
-    .filter((l) => {
-      const t = l.trim();
-      if (!t) return true; // keep blank lines — paragraph structure
-      if (JUNK_LINE.test(t)) return false;
-      return true;
-    })
+  const out: string[] = [];
+  let prev = "";
+  for (const raw of (text ?? "").split(/\r?\n/)) {
+    // Inline thread markers ("Subject [ thread::abc:: ]") vanish in place.
+    const t = raw.replace(/\[\s*thread::\S+\s*\]/g, "").trim();
+    if (!t) {
+      out.push("");
+      continue;
+    }
+    if (isJunkLine(t)) continue;
+    if (t === prev) continue; // Lightning doubles subjects/previews
+    out.push(t);
+    prev = t;
+  }
+  return out
     .join("\n")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
 
 export function parseSfTimeline(text: string, now: Date = new Date()): TimelineEntry[] {
-  const lines = (text ?? "")
+  // Junk is stripped up front so both timeline shapes parse over clean lines
+  // and whatever survives into bodies is conversation, not chrome.
+  const lines = cleanSfPaste(text ?? "")
     .split(/\r?\n/)
     .map((l) => l.trim())
     .filter(Boolean);
   const entries: TimelineEntry[] = [];
 
+  // An entry "head" seen at index k — either the anchor itself, or the
+  // subject/stamp runway leading into one ([subject,] stamp, anchor). Used to
+  // stop a body before it swallows the next entry's header lines.
+  const anchorAt = (k: number) => k < lines.length && parseAnchor(lines[k]) != null;
+  const headAt = (k: number) =>
+    anchorAt(k) ||
+    anchorAt(k + 1) || // this line is the next entry's subject
+    (k + 2 < lines.length && parseStamp(lines[k + 1]) != null && anchorAt(k + 2));
+
   for (let i = 0; i < lines.length; i++) {
     const anchor = parseAnchor(lines[i]);
     if (!anchor) continue;
 
-    // Subject: nearest preceding line that isn't structure.
+    // Subject + (case-feed shape) a stamp BEFORE the anchor: look back a few
+    // lines — "Subject / 5:27 PM | Today / <anchor>".
     let subject = "";
-    for (let b = i - 1; b >= 0 && b >= i - 2; b--) {
+    let stamp: Stamp | null = null;
+    for (let b = i - 1; b >= 0 && b >= i - 3; b--) {
       const l = lines[b];
-      if (isNoise(l) || isMonthHeader(l) || parseStamp(l) || parseAnchor(l)) continue;
+      if (isNoise(l) || isMonthHeader(l) || parseAnchor(l)) continue;
+      const s = parseStamp(l);
+      if (s) {
+        if (!stamp) stamp = s;
+        continue;
+      }
       subject = l;
       break;
     }
 
-    // Stamp: within the next few lines ("+ N others" / chips may intervene).
+    // Classic shape: the stamp follows the anchor instead — prefer it when
+    // present ("+ N others" / chips may intervene).
     let j = i + 1;
-    let stamp: Stamp | null = null;
     let others = anchor.others;
     for (let k = 0; k < 3 && j < lines.length; k++, j++) {
       const tail = /^\+\s*(\d+)\s+others?$/.exec(lines[j]);
@@ -204,24 +278,29 @@ export function parseSfTimeline(text: string, now: Date = new Date()): TimelineE
         continue;
       }
       if (isNoise(lines[j])) continue;
-      stamp = parseStamp(lines[j]);
-      if (stamp) {
+      const s = parseStamp(lines[j]);
+      if (s) {
+        stamp = s;
         j++;
         break;
       }
-      break; // a real content line — no stamp for this entry
+      break; // a real content line — no trailing stamp for this entry
     }
 
-    // Body: everything until the next entry/section boundary. A line that is
-    // the SUBJECT of the next anchor also ends the body (peek one ahead).
+    // Body: everything until the next entry's head or a section boundary.
+    // Leading field VALUES (From/To addresses, "Related To" case number,
+    // task contact name) just repeat the anchor — skipped until real prose.
     const body: string[] = [];
     for (; j < lines.length; j++) {
       const l = lines[j];
-      if (parseAnchor(l) || isMonthHeader(l)) break;
+      if (headAt(j) || isMonthHeader(l)) break;
       if (/^(this month|last month|older|upcoming & overdue)$/i.test(l)) break;
-      if (lines[j + 1] && parseAnchor(lines[j + 1]) && !isNoise(l) && !parseStamp(l))
-        break;
       if (isNoise(l) || parseStamp(l)) continue;
+      if (
+        body.length === 0 &&
+        (l === anchor.from || l === anchor.to || /^\d{6,10}$/.test(l))
+      )
+        continue;
       body.push(l);
       if (body.join("\n").length > 4000) break;
     }
