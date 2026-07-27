@@ -8,7 +8,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { parseSfTimeline, type TimelineEntry } from "@/lib/sf-timeline";
-import { fileTimeline } from "./actions";
+import { fileTimeline, fileTranscript } from "./actions";
 import styles from "../command-center.module.css";
 
 type Acct = { id: string; name: string };
@@ -26,14 +26,34 @@ export function IntakeClient({ accounts }: { accounts: Acct[] }) {
   const [skipped, setSkipped] = useState<Set<number>>(new Set());
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<{ filed: number; account: string } | null>(null);
+  // Paste kind: SF timeline entries (parsed, many notes) or a meeting
+  // transcript (files whole as one ☰ note, money-redacted, capped).
+  const [kind, setKind] = useState<"timeline" | "transcript">("timeline");
   const bmRef = useRef<HTMLAnchorElement>(null);
 
   useEffect(() => {
     bmRef.current?.setAttribute("href", bookmarkletFor(window.location.origin));
   }, []);
 
-  const entries = useMemo(() => parseSfTimeline(raw), [raw]);
+  const entries = useMemo(
+    () => (kind === "timeline" ? parseSfTimeline(raw) : []),
+    [raw, kind],
+  );
   const chosen = entries.filter((_, i) => !skipped.has(i));
+
+  const fileAsTranscript = async () => {
+    if (!accountId || !raw.trim() || busy) return;
+    setBusy(true);
+    const r = await fileTranscript(accountId, raw);
+    setBusy(false);
+    if (r.ok) {
+      setResult({
+        filed: 1,
+        account: accounts.find((x) => x.id === accountId)?.name ?? "account",
+      });
+      setRaw("");
+    }
+  };
 
   const toggle = (i: number) =>
     setSkipped((prev) => {
@@ -71,6 +91,24 @@ export function IntakeClient({ accounts }: { accounts: Acct[] }) {
     <div className={styles.inkWrap}>
       <section className={styles.inkPane}>
         <div className={styles.inkBar}>
+          <label className={styles.toggle}>
+            <input
+              type="radio"
+              name="pasteKind"
+              checked={kind === "timeline"}
+              onChange={() => setKind("timeline")}
+            />
+            SF timeline
+          </label>
+          <label className={styles.toggle}>
+            <input
+              type="radio"
+              name="pasteKind"
+              checked={kind === "transcript"}
+              onChange={() => setKind("transcript")}
+            />
+            ☰ Transcript / meeting notes
+          </label>
           <button
             type="button"
             className={styles.atcBtn}
@@ -79,19 +117,51 @@ export function IntakeClient({ accounts }: { accounts: Acct[] }) {
           >
             Paste from clipboard
           </button>
-          <span className={styles.muted}>
-            …or Ctrl+V into the box: select the SF activity timeline, copy, paste.
-          </span>
+          {kind === "timeline" && (
+            <span className={styles.muted}>
+              …or Ctrl+V into the box: select the SF activity timeline, copy, paste.
+            </span>
+          )}
         </div>
         <textarea
           className={styles.inkPaste}
           value={raw}
           onChange={(e) => setRaw(e.target.value)}
-          placeholder={`Paste the Salesforce activity timeline here…\n\nAnything shaped like\n  Subject line\n  Someone to Someone Else + 2 others\n  3:47 PM | Jul 21\n  body text…\nbecomes a dated entry below.`}
+          placeholder={
+            kind === "timeline"
+              ? `Paste the Salesforce activity timeline here…\n\nAnything shaped like\n  Subject line\n  Someone to Someone Else + 2 others\n  3:47 PM | Jul 21\n  body text…\nbecomes a dated entry below.`
+              : `Paste meeting notes or a call transcript here…\n\nIt files whole as ONE ☰ note on the account (money figures stripped, capped at 6,000 characters).`
+          }
           rows={10}
         />
 
-        {raw.trim() && (
+        {kind === "transcript" && raw.trim() && (
+          <div className={styles.inkBar}>
+            <select
+              className={styles.inkSelect}
+              value={accountId}
+              onChange={(e) => setAccountId(e.target.value)}
+              aria-label="File transcript to account"
+            >
+              <option value="">File to account…</option>
+              {accounts.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.name}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              className={styles.atcBtn}
+              disabled={!accountId || !raw.trim() || busy}
+              onClick={fileAsTranscript}
+            >
+              {busy ? "Filing…" : "File as ☰ transcript"}
+            </button>
+          </div>
+        )}
+
+        {kind === "timeline" && raw.trim() && (
           <div className={styles.inkBar}>
             <b>
               {entries.length === 0

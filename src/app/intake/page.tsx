@@ -7,7 +7,7 @@ import Link from "next/link";
 import { AppWayfinder } from "@/components/app-wayfinder";
 import { getAppAccess } from "@/lib/auth";
 import { peos } from "@/lib/book";
-import { IntakeClient } from "./intake-client";
+import { IntakeTabs } from "./intake-tabs";
 import styles from "../command-center.module.css";
 
 export const dynamic = "force-dynamic";
@@ -36,14 +36,13 @@ export default async function IntakePage() {
       <AppWayfinder current="Intake" />
       <main className={styles.wrap}>
         <div className={styles.pageHead}>
-          <h1 className={styles.h1}>Intake — Salesforce activity</h1>
+          <h1 className={styles.h1}>Intake</h1>
           <p className={styles.sub}>
-            Copy an account&apos;s activity timeline in Salesforce (or click the
-            bookmarklet there), paste it here, file it to the account. The app never
-            writes to Salesforce.
+            The payroll intake form, prefilled from what the app already knows — and the
+            SF activity paste lane. The app never writes to Salesforce or Forms.
           </p>
         </div>
-        <IntakeClient accounts={accounts} />
+        <IntakeTabs accounts={accounts} />
       </main>
     </>
   );
