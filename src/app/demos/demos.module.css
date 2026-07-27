@@ -1,0 +1,36 @@
+/* Demos picker — three large cards. */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+  max-width: 980px;
+}
+.card {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  border: 1px solid #e6ebf3;
+  border-left: 4px solid #2563eb;
+  border-radius: 14px;
+  background: #fff;
+  padding: 20px 22px;
+  text-decoration: none;
+  transition:
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+.card:hover {
+  box-shadow: 0 8px 24px -12px rgba(10, 28, 64, 0.35);
+  transform: translateY(-1px);
+}
+.name {
+  font-size: 16px;
+  font-weight: 800;
+  color: #0a1c40;
+}
+.blurb {
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: #5b6b86;
+}

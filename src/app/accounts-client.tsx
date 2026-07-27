@@ -20,11 +20,27 @@ import {
 } from "@/lib/engagement";
 import { addCard } from "./dashboard/actions";
 import {
+  applyPlay,
   clearValidation,
   saveEngagement,
+  savePeo,
   toggleSfChecked,
   validateScore,
 } from "./accounts/actions";
+import {
+  APPROACHES,
+  INTENTS,
+  STAGES,
+  approachBlurb,
+  approachLabel,
+  priorityTier,
+  stageLabel,
+  suggestedAction,
+  type Approach,
+  type Intent,
+  type Stage,
+} from "@/lib/command-center/types";
+import { kitsFor, mergeText, type CampaignKit } from "@/lib/campaigns";
 import { EditableMessage } from "./today-client";
 import { getContacts } from "./accounts/actions";
 import type { BookContact } from "@/lib/book/contacts";
@@ -175,7 +191,181 @@ export type AccountRow = {
   notes: LinkedNote[];
   chipNotes: ChipNote[];
   contactCount: number;
+  // Working-the-deal state (absorbed from the Book).
+  stage: Stage;
+  approach: Approach;
+  intent: Intent;
+  blended: number; // fit + intent blended priority
+  nextAction: string | null;
+  nextActionDate: string | null;
+  peoNotes: string | null;
 };
+
+function StageBadge({ stage }: { stage: Stage }) {
+  const cls =
+    stage === "WON"
+      ? styles.stageWon
+      : stage === "NOT_TOUCHED" || stage === "PASSED"
+        ? styles.stage
+        : `${styles.stage} ${styles.stageActive}`;
+  return <span className={cls}>{stageLabel(stage)}</span>;
+}
+
+function ApproachChip({ approach }: { approach: Approach }) {
+  const cls =
+    approach === "DIRECT_OK"
+      ? `${styles.approach} ${styles.approachGo}`
+      : approach === "CHANNEL_OK"
+        ? `${styles.approach} ${styles.approachOk}`
+        : `${styles.approach} ${styles.approachHold}`;
+  return <span className={cls}>{approachLabel(approach)}</span>;
+}
+
+// "Working the deal" — the Book's editable form + plays, verbatim, living in
+// the account's expanded row. Posts the same savePeo/applyPlay actions.
+function WorkingDeal({ a, canWrite }: { a: AccountRow; canWrite: boolean }) {
+  const [copiedId, setCopiedId] = useState("");
+  const plays = kitsFor(a.stage, a.approach);
+  const copyKit = async (kit: CampaignKit) => {
+    const text = `Subject: ${mergeText(kit.subject, a)}\n\n${mergeText(kit.body, a)}`;
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedId(kit.id);
+      setTimeout(() => setCopiedId(""), 2000);
+    } catch {
+      setCopiedId("");
+    }
+  };
+  return (
+    <div className={styles.panel}>
+      <h3 className={styles.playsHead}>
+        Working the deal <StageBadge stage={a.stage} />{" "}
+        <ApproachChip approach={a.approach} />
+      </h3>
+      {canWrite ? (
+        <form action={savePeo} key={a.id}>
+          <input type="hidden" name="peoId" value={a.id} />
+          <input type="hidden" name="returnTo" value="/accounts" />
+          <div className={styles.field}>
+            <label>Stage</label>
+            <select name="stage" defaultValue={a.stage}>
+              {STAGES.map((s) => (
+                <option key={s.key} value={s.key}>
+                  {s.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className={styles.field}>
+            <label>Approach — what you&apos;re cleared to do</label>
+            <select name="approach" defaultValue={a.approach}>
+              {APPROACHES.map((ap) => (
+                <option key={ap.key} value={ap.key}>
+                  {ap.label}
+                </option>
+              ))}
+            </select>
+            <p className={styles.hint}>{approachBlurb(a.approach)}</p>
+          </div>
+          <div className={styles.field}>
+            <label>International hiring in their book</label>
+            <select name="intent" defaultValue={a.intent}>
+              {INTENTS.map((i) => (
+                <option key={i.key} value={i.key}>
+                  {i.label}
+                </option>
+              ))}
+            </select>
+            <p className={styles.hint}>Lifts or lowers priority to match real demand.</p>
+          </div>
+          <div className={styles.field}>
+            <label>Next action</label>
+            <input
+              name="nextAction"
+              defaultValue={a.nextAction ?? ""}
+              placeholder={suggestedAction(a) ?? "e.g. Brief the CSM"}
+            />
+            {!a.nextAction && suggestedAction(a) && (
+              <p className={styles.hint}>Suggested: {suggestedAction(a)}</p>
+            )}
+          </div>
+          <div className={styles.field}>
+            <label>Next action date</label>
+            <input
+              type="date"
+              name="nextActionDate"
+              defaultValue={a.nextActionDate ?? ""}
+            />
+          </div>
+          <div className={styles.field}>
+            <label>Notes</label>
+            <textarea name="notes" defaultValue={a.peoNotes ?? ""} />
+          </div>
+          <div className={styles.field}>
+            <label>Log activity (optional)</label>
+            <input
+              name="activity"
+              placeholder="e.g. Called Anika — she'll intro to 2 clients"
+            />
+          </div>
+          <div className={styles.saveRow}>
+            <button type="submit" className={styles.saveBtn}>
+              Save
+            </button>
+          </div>
+        </form>
+      ) : (
+        <p className={styles.muted}>Read-only access.</p>
+      )}
+
+      <div className={styles.plays}>
+        <h3 className={styles.playsHead}>Plays for this stage</h3>
+        {plays.length === 0 ? (
+          <p className={styles.muted}>
+            No play for this stage and approach — advance the stage or clear the approach
+            gate to unlock the next move.
+          </p>
+        ) : (
+          plays.map((k) => (
+            <div key={k.id} className={styles.play}>
+              <div className={styles.playTop}>
+                <strong>{k.name}</strong>
+                <span className={styles.chip}>{k.channel}</span>
+              </div>
+              <p className={styles.playAsk}>{mergeText(k.ask, a)}</p>
+              <details className={styles.playDetails}>
+                <summary>Preview message</summary>
+                <div className={styles.playSubject}>
+                  Subject: {mergeText(k.subject, a)}
+                </div>
+                <pre className={styles.playPre}>{mergeText(k.body, a)}</pre>
+              </details>
+              <div className={styles.playActions}>
+                <button
+                  type="button"
+                  className={styles.playCopy}
+                  onClick={() => copyKit(k)}
+                >
+                  {copiedId === k.id ? "Copied ✓" : "Copy message"}
+                </button>
+                {canWrite && (
+                  <form action={applyPlay}>
+                    <input type="hidden" name="peoId" value={a.id} />
+                    <input type="hidden" name="kitId" value={k.id} />
+                    <input type="hidden" name="returnTo" value="/accounts" />
+                    <button type="submit" className={styles.playApply}>
+                      Set as next action
+                    </button>
+                  </form>
+                )}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
 
 const fitClass: Record<string, string> = {
   high: styles.fitHigh,
@@ -314,10 +504,12 @@ function EngagementPanel({ a }: { a: AccountRow }) {
 export function AccountsClient({
   rows,
   canAdd,
+  canWrite = false,
   onDashboard,
 }: {
   rows: AccountRow[];
   canAdd: boolean;
+  canWrite?: boolean;
   onDashboard: string[];
 }) {
   const onDash = useMemo(() => new Set(onDashboard), [onDashboard]);
@@ -326,14 +518,18 @@ export function AccountsClient({
   const [industry, setIndustry] = useState("");
   const [tier, setTier] = useState("");
   const [play, setPlay] = useState("");
-  const [incOnly, setIncOnly] = useState(false);
+  const [stageF, setStageF] = useState("");
+  const [approachF, setApproachF] = useState("");
+  const [prioF, setPrioF] = useState("");
+  const [groupByCsm, setGroupByCsm] = useState(false);
   const [hotOnly, setHotOnly] = useState(false);
   const [sort, setSort] = useState("score");
   // Deep-link from Today (and elsewhere): /accounts?focus=<id> opens that
   // account's detail (initial openId, below) and scrolls it into view, so a link
-  // lands on the row, not the top of a 130-row table.
+  // lands on the row, not the top of a 130-row table. The savePeo redirect
+  // returns as ?peo=<id> — same treatment, so a saved row reopens.
   const params = useSearchParams();
-  const focusId = params.get("focus") ?? "";
+  const focusId = params.get("focus") ?? params.get("peo") ?? "";
   const [openId, setOpenId] = useState(focusId);
   const [copied, setCopied] = useState(false);
 
@@ -357,26 +553,6 @@ export function AccountsClient({
     [rows],
   );
 
-  // Per-partner rollup of real targets (books worth briefing on).
-  const rollup = useMemo(() => {
-    const m = new Map<
-      string,
-      { total: number; high: number; targets: number; hot: number }
-    >();
-    for (const name of partners) m.set(name, { total: 0, high: 0, targets: 0, hot: 0 });
-    for (const r of rows) {
-      const e = m.get(r.csm);
-      if (!e) continue;
-      e.total++;
-      if (r.tier === "high") e.high++;
-      if (r.play != null) e.targets++;
-      if (isHot(r)) e.hot++;
-    }
-    return [...m.entries()].sort(
-      (a, b) => b[1].hot - a[1].hot || b[1].targets - a[1].targets,
-    );
-  }, [rows, partners]);
-
   // Counts for every filter option, so each choice says how many it selects.
   const countBy = (pick: (r: AccountRow) => string) => {
     const m = new Map<string, number>();
@@ -390,7 +566,6 @@ export function AccountsClient({
   const indCounts = useMemo(() => countBy((r) => r.industry), [rows]); // eslint-disable-line react-hooks/exhaustive-deps
   const tierCounts = useMemo(() => countBy((r) => r.tier), [rows]); // eslint-disable-line react-hooks/exhaustive-deps
   const playCounts = useMemo(() => countBy((r) => r.play ?? ""), [rows]); // eslint-disable-line react-hooks/exhaustive-deps
-  const incCount = useMemo(() => rows.filter((r) => r.incumbent).length, [rows]);
   const hotCount = useMemo(() => rows.filter((r) => isHot(r)).length, [rows]);
 
   const filtered = useMemo(() => {
@@ -400,7 +575,9 @@ export function AccountsClient({
       if (industry && r.industry !== industry) return false;
       if (tier && r.tier !== tier) return false;
       if (play && r.play !== play) return false;
-      if (incOnly && !r.incumbent) return false;
+      if (stageF && r.stage !== stageF) return false;
+      if (approachF && r.approach !== approachF) return false;
+      if (prioF && priorityTier(r.blended) !== prioF) return false;
       if (hotOnly && !isHot(r)) return false;
       if (
         s &&
@@ -416,7 +593,18 @@ export function AccountsClient({
       if (sort === "demand") return (b.demand ?? -1) - (a.demand ?? -1);
       return b.score - a.score;
     });
-  }, [rows, q, csm, industry, tier, play, incOnly, hotOnly, sort]);
+  }, [rows, q, csm, industry, tier, play, stageF, approachF, prioF, hotOnly, sort]);
+
+  // Group-by-CSM view (the Book's grouping): per-CSM groups, largest first.
+  const grouped = useMemo(() => {
+    if (!groupByCsm) return null;
+    const m = new Map<string, AccountRow[]>();
+    for (const r of filtered) {
+      if (!m.has(r.csm)) m.set(r.csm, []);
+      m.get(r.csm)!.push(r);
+    }
+    return [...m.entries()].sort((a, b) => b[1].length - a[1].length);
+  }, [filtered, groupByCsm]);
 
   const copyList = async () => {
     const text = filtered
@@ -499,26 +687,6 @@ export function AccountsClient({
 
   return (
     <>
-      <div className={styles.rollup}>
-        {rollup.map(([name, e]) => (
-          <button
-            key={name}
-            type="button"
-            aria-pressed={csm === name}
-            className={`${styles.rollupCard} ${csm === name ? styles.rollupActive : ""}`}
-            onClick={() => setCsm(csm === name ? "" : name)}
-          >
-            <span className={styles.rollupName}>
-              {name} <span className={styles.rollupRole}>· {partnerRole(name)}</span>
-            </span>
-            <span className={styles.rollupNums}>
-              {e.total} account{e.total === 1 ? "" : "s"} · <b>{e.hot}</b> hot ·{" "}
-              {e.targets} targets · {e.high} high-fit
-            </span>
-          </button>
-        ))}
-      </div>
-
       <div className={styles.filters}>
         <input
           value={q}
@@ -569,6 +737,40 @@ export function AccountsClient({
             Greenfield ({playCounts.get("greenfield") ?? 0})
           </option>
         </select>
+        <select
+          value={stageF}
+          onChange={(e) => setStageF(e.target.value)}
+          aria-label="Stage"
+        >
+          <option value="">All stages</option>
+          {STAGES.map((s) => (
+            <option key={s.key} value={s.key}>
+              {s.label}
+            </option>
+          ))}
+        </select>
+        <select
+          value={approachF}
+          onChange={(e) => setApproachF(e.target.value)}
+          aria-label="Approach"
+        >
+          <option value="">Any approach</option>
+          {APPROACHES.map((a) => (
+            <option key={a.key} value={a.key}>
+              {a.label}
+            </option>
+          ))}
+        </select>
+        <select
+          value={prioF}
+          onChange={(e) => setPrioF(e.target.value)}
+          aria-label="Priority"
+        >
+          <option value="">All priority</option>
+          <option value="high">High priority</option>
+          <option value="medium">Medium</option>
+          <option value="low">Low</option>
+        </select>
         <select value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort">
           <option value="score">Sort: Global fit</option>
           <option value="demand">Sort: demand</option>
@@ -577,10 +779,10 @@ export function AccountsClient({
         <label className={styles.toggle}>
           <input
             type="checkbox"
-            checked={incOnly}
-            onChange={(e) => setIncOnly(e.target.checked)}
+            checked={groupByCsm}
+            onChange={(e) => setGroupByCsm(e.target.checked)}
           />
-          On PrismHR only ({incCount})
+          Group by CSM
         </label>
         <label className={styles.toggle}>
           <input
@@ -633,6 +835,8 @@ export function AccountsClient({
             <th>Account</th>
             <th>Global fit</th>
             <th>Demand</th>
+            <th>Stage</th>
+            <th>Next action</th>
             <th>Play</th>
             <th>Model</th>
             <th>PrismHR</th>
@@ -640,259 +844,302 @@ export function AccountsClient({
           </tr>
         </thead>
         <tbody>
-          {filtered.map((a) => (
-            <Fragment key={a.id}>
-              <tr
-                id={`acct-${a.id}`}
-                className={a.id === openId ? styles.rowActive : ""}
-                data-stash="1"
-                data-stash-account={a.id}
-                data-stash-source={`Accounts › ${a.name}`}
-                data-stash-label={`${a.name}${a.demand != null ? ` — demand ${a.demand}` : ""}${a.play ? `, ${a.play}` : ""}`}
-              >
-                <td>
-                  <button
-                    className={styles.rowBtn}
-                    onClick={() => setOpenId(openId === a.id ? "" : a.id)}
-                    aria-expanded={openId === a.id}
-                  >
-                    {a.name}
-                  </button>{" "}
-                  {a.disposition && (
-                    <span
-                      className={styles.dispoBadge}
-                      title={a.disposition.reason || undefined}
-                    >
-                      {a.disposition.status === "motion" ? "⚡ in motion" : "⏸ parked"}
-                    </span>
-                  )}{" "}
-                  <ValBadge v={a.validation} />
-                  <div className={styles.rowSub}>
-                    {a.city}
-                    {a.state ? `, ${a.state}` : ""}
-                    {a.csm ? ` · ${a.csm}` : ""}
-                  </div>
-                </td>
-                <td>
-                  <span className={`${styles.fit} ${fitClass[a.tier]}`}>{a.score}</span>
-                </td>
-                <td>
-                  {a.researched && a.demand != null ? (
-                    <span className={`${styles.fit} ${demandClass(a.demand)}`}>
-                      {a.demand}
-                    </span>
-                  ) : (
-                    <span className={styles.muted} title="Not researched">
-                      —
-                    </span>
-                  )}
-                </td>
-                <td>
-                  {a.play === "displacement" ? (
-                    <>
-                      <span className={`${styles.tag} ${styles.tagDisplace}`}>
-                        Displace
-                      </span>
-                      {a.competitors.length > 0 && (
-                        <div className={styles.rowSub}>
-                          <CompetitorLinks names={a.competitors} />
-                        </div>
-                      )}
-                    </>
-                  ) : a.play === "greenfield" ? (
-                    <span className={`${styles.tag} ${styles.tagGreen}`}>Greenfield</span>
-                  ) : (
-                    <span className={styles.muted}>—</span>
-                  )}
-                </td>
-                <td className={styles.rowSub}>{a.industry}</td>
-                <td>
-                  {a.incumbent ? (
-                    <span
-                      className={styles.chip}
-                      title={`PrismHR cloud tenant “${a.cloud}” — existing platform customer`}
-                    >
-                      {a.cloud}
-                    </span>
-                  ) : (
-                    <span
-                      className={styles.muted}
-                      title="Not a PrismHR platform customer"
-                    >
-                      —
-                    </span>
-                  )}
-                </td>
-                <td>
-                  {canAdd &&
-                    (onDash.has(a.name) ? (
-                      <span className={styles.onDash}>On dashboard ✓</span>
-                    ) : (
-                      <form action={addCard}>
-                        <input type="hidden" name="name" value={a.name} />
-                        <input
-                          type="hidden"
-                          name="subtitle"
-                          value={`${a.csm}${a.industry ? ` · ${a.industry}` : ""}`}
-                        />
-                        <input type="hidden" name="seedDiscovery" value={seedFor(a)} />
-                        <input type="hidden" name="returnTo" value="/accounts" />
-                        <AddButton />
-                      </form>
-                    ))}
-                </td>
-              </tr>
-              {openId === a.id && (
-                <tr>
-                  <td colSpan={7}>
-                    <div className={styles.acctDetail}>
-                      <SfCheckpoint when="account" id={a.id} name={a.name} />
-                      <AccountChipNotes notes={a.chipNotes} />
-                      <AccountNotes notes={a.notes} />
-                      <EngagementPanel a={a} />
-                      <div className={styles.demandBlock}>
-                        {a.researched && a.demand != null ? (
-                          <>
-                            <div className={styles.demandHead}>
-                              <span className={`${styles.fit} ${demandClass(a.demand)}`}>
-                                {a.demand}
-                              </span>
-                              <strong>Global-hiring demand</strong>
-                              <span className={styles.confChip}>
-                                {a.confidence} confidence
-                              </span>
-                            </div>
-                            {a.play === "displacement" && a.competitors.length > 0 && (
-                              <p className={styles.servedBy}>
-                                Displacement play — currently served by{" "}
-                                <strong>
-                                  <CompetitorLinks names={a.competitors} />
-                                </strong>
-                                . Pitch: bring it in-house on the platform they already
-                                run.
-                              </p>
-                            )}
-                            {a.play === "greenfield" && (
-                              <p className={styles.servedBy}>
-                                Greenfield — real demand, no incumbent EOR named in the
-                                research.
-                              </p>
-                            )}
-                            {a.summary && (
-                              <p className={styles.demandSummary}>{a.summary}</p>
-                            )}
-                            {a.signals.length > 0 && (
-                              <ul className={styles.signalList}>
-                                {a.signals.slice(0, 4).map((s, i) => (
-                                  <li key={i}>{s}</li>
-                                ))}
-                              </ul>
-                            )}
-                            {a.countries.length > 0 && (
-                              <div className={styles.countries}>
-                                {a.countries.map((c) => (
-                                  <span key={c} className={styles.countryChip}>
-                                    {c}
-                                  </span>
-                                ))}
-                              </div>
-                            )}
-                            {a.evidence.length > 0 && (
-                              <div className={styles.evidence}>
-                                {a.evidence.map((e, i) => (
-                                  <a
-                                    key={i}
-                                    href={e.url}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                  >
-                                    ↗ {hostOf(e.url)}
-                                  </a>
-                                ))}
-                              </div>
-                            )}
-                            <div className={styles.formula}>
-                              How this {a.score} is built: account profile {a.deskScore}{" "}
-                              (40% of the score) + global demand {a.demandAdj ?? a.demand}{" "}
-                              (60%).
-                              {a.confFactor < 1
-                                ? ` Raw demand ${a.demand} trimmed to ${a.demandAdj} because confidence is ${a.confidence}.`
-                                : ""}
-                            </div>
-                          </>
-                        ) : (
-                          <div className={styles.demandPending}>
-                            Not researched (no findable web presence, or missed on the
-                            run). Score is the account profile only — no demand signal
-                            yet.
-                          </div>
-                        )}
-                      </div>
-
-                      <div className={styles.bars}>
-                        <div className={styles.barsHead}>
-                          Account profile · {a.deskScore}/100 (firmographics, no research)
-                        </div>
-                        {(["scale", "incumbency", "model", "recency"] as const).map(
-                          (k) => (
-                            <div key={k} className={styles.barRow}>
-                              <span className={styles.barLabel}>{BAR_LABEL[k]}</span>
-                              <span className={styles.barTrack}>
-                                <span
-                                  className={styles.barFill}
-                                  style={{
-                                    width: `${(a.breakdown[k] / BAR_MAX[k]) * 100}%`,
-                                  }}
-                                />
-                              </span>
-                              <span className={styles.barVal}>
-                                {a.breakdown[k]}/{BAR_MAX[k]}
-                              </span>
-                            </div>
-                          ),
-                        )}
-                      </div>
-
-                      <div className={styles.acctMeta}>
-                        {a.sizeBucket ||
-                          (a.size ? `${a.size.toLocaleString()} WSE` : "size n/a")}
-                        {" · Partner: "}
-                        {a.csm} ({partnerRole(a.csm)})
-                        {a.contactName && (
-                          <>
-                            {" · "}
-                            {a.contactName} (Primary contact)
-                            {a.contactEmail && (
-                              <>
-                                {" — "}
-                                <a href={`mailto:${a.contactEmail}`}>{a.contactEmail}</a>
-                              </>
-                            )}
-                          </>
-                        )}
-                        {a.website && (
-                          <>
-                            {" · "}
-                            <a
-                              href={ensureHttp(a.website)}
-                              target="_blank"
-                              rel="noreferrer"
-                            >
-                              {a.website}
-                            </a>
-                          </>
-                        )}
-                      </div>
-
-                      <ContactsPanel accountId={a.id} count={a.contactCount} />
-
-                      {canAdd && <ValidateControls id={a.id} current={a.validation} />}
-                    </div>
+          {(grouped
+            ? grouped.flatMap(([gName, list]) => [
+                { __group: gName, count: list.length },
+                ...list,
+              ])
+            : filtered
+          ).map((item) => {
+            if ("__group" in item)
+              return (
+                <tr key={`grp-${item.__group}`}>
+                  <td colSpan={9} className={styles.grp}>
+                    {item.__group} · {item.count}
                   </td>
                 </tr>
-              )}
-            </Fragment>
-          ))}
+              );
+            const a = item;
+            return (
+              <Fragment key={a.id}>
+                <tr
+                  id={`acct-${a.id}`}
+                  className={a.id === openId ? styles.rowActive : ""}
+                  data-stash="1"
+                  data-stash-account={a.id}
+                  data-stash-source={`Accounts › ${a.name}`}
+                  data-stash-label={`${a.name}${a.demand != null ? ` — demand ${a.demand}` : ""}${a.play ? `, ${a.play}` : ""}`}
+                >
+                  <td>
+                    <button
+                      className={styles.rowBtn}
+                      onClick={() => setOpenId(openId === a.id ? "" : a.id)}
+                      aria-expanded={openId === a.id}
+                    >
+                      {a.name}
+                    </button>{" "}
+                    {a.disposition && (
+                      <span
+                        className={styles.dispoBadge}
+                        title={a.disposition.reason || undefined}
+                      >
+                        {a.disposition.status === "motion" ? "⚡ in motion" : "⏸ parked"}
+                      </span>
+                    )}{" "}
+                    <ValBadge v={a.validation} />
+                    <div className={styles.rowSub}>
+                      {a.city}
+                      {a.state ? `, ${a.state}` : ""}
+                      {a.csm ? ` · ${a.csm}` : ""}
+                    </div>
+                  </td>
+                  <td>
+                    <span className={`${styles.fit} ${fitClass[a.tier]}`}>{a.score}</span>
+                  </td>
+                  <td>
+                    {a.researched && a.demand != null ? (
+                      <span className={`${styles.fit} ${demandClass(a.demand)}`}>
+                        {a.demand}
+                      </span>
+                    ) : (
+                      <span className={styles.muted} title="Not researched">
+                        —
+                      </span>
+                    )}
+                  </td>
+                  <td>
+                    <StageBadge stage={a.stage} />
+                    <div className={styles.stackTop}>
+                      <ApproachChip approach={a.approach} />
+                    </div>
+                  </td>
+                  <td>
+                    {a.nextAction ? (
+                      <>
+                        <span className={styles.rowSub}>{a.nextAction}</span>
+                        {a.nextActionDate && (
+                          <div className={styles.rowSub}>{a.nextActionDate}</div>
+                        )}
+                      </>
+                    ) : (
+                      <span className={styles.muted}>—</span>
+                    )}
+                  </td>
+                  <td>
+                    {a.play === "displacement" ? (
+                      <>
+                        <span className={`${styles.tag} ${styles.tagDisplace}`}>
+                          Displace
+                        </span>
+                        {a.competitors.length > 0 && (
+                          <div className={styles.rowSub}>
+                            <CompetitorLinks names={a.competitors} />
+                          </div>
+                        )}
+                      </>
+                    ) : a.play === "greenfield" ? (
+                      <span className={`${styles.tag} ${styles.tagGreen}`}>
+                        Greenfield
+                      </span>
+                    ) : (
+                      <span className={styles.muted}>—</span>
+                    )}
+                  </td>
+                  <td className={styles.rowSub}>{a.industry}</td>
+                  <td>
+                    {a.incumbent ? (
+                      <span
+                        className={styles.chip}
+                        title={`PrismHR cloud tenant “${a.cloud}” — existing platform customer`}
+                      >
+                        {a.cloud}
+                      </span>
+                    ) : (
+                      <span
+                        className={styles.muted}
+                        title="Not a PrismHR platform customer"
+                      >
+                        —
+                      </span>
+                    )}
+                  </td>
+                  <td>
+                    {canAdd &&
+                      (onDash.has(a.name) ? (
+                        <span className={styles.onDash}>On dashboard ✓</span>
+                      ) : (
+                        <form action={addCard}>
+                          <input type="hidden" name="name" value={a.name} />
+                          <input
+                            type="hidden"
+                            name="subtitle"
+                            value={`${a.csm}${a.industry ? ` · ${a.industry}` : ""}`}
+                          />
+                          <input type="hidden" name="seedDiscovery" value={seedFor(a)} />
+                          <input type="hidden" name="returnTo" value="/accounts" />
+                          <AddButton />
+                        </form>
+                      ))}
+                  </td>
+                </tr>
+                {openId === a.id && (
+                  <tr>
+                    <td colSpan={9}>
+                      <div className={styles.acctDetail}>
+                        <SfCheckpoint when="account" id={a.id} name={a.name} />
+                        <AccountChipNotes notes={a.chipNotes} />
+                        <AccountNotes notes={a.notes} />
+                        <EngagementPanel a={a} />
+                        <WorkingDeal a={a} canWrite={canWrite} />
+                        <div className={styles.demandBlock}>
+                          {a.researched && a.demand != null ? (
+                            <>
+                              <div className={styles.demandHead}>
+                                <span
+                                  className={`${styles.fit} ${demandClass(a.demand)}`}
+                                >
+                                  {a.demand}
+                                </span>
+                                <strong>Global-hiring demand</strong>
+                                <span className={styles.confChip}>
+                                  {a.confidence} confidence
+                                </span>
+                              </div>
+                              {a.play === "displacement" && a.competitors.length > 0 && (
+                                <p className={styles.servedBy}>
+                                  Displacement play — currently served by{" "}
+                                  <strong>
+                                    <CompetitorLinks names={a.competitors} />
+                                  </strong>
+                                  . Pitch: bring it in-house on the platform they already
+                                  run.
+                                </p>
+                              )}
+                              {a.play === "greenfield" && (
+                                <p className={styles.servedBy}>
+                                  Greenfield — real demand, no incumbent EOR named in the
+                                  research.
+                                </p>
+                              )}
+                              {a.summary && (
+                                <p className={styles.demandSummary}>{a.summary}</p>
+                              )}
+                              {a.signals.length > 0 && (
+                                <ul className={styles.signalList}>
+                                  {a.signals.slice(0, 4).map((s, i) => (
+                                    <li key={i}>{s}</li>
+                                  ))}
+                                </ul>
+                              )}
+                              {a.countries.length > 0 && (
+                                <div className={styles.countries}>
+                                  {a.countries.map((c) => (
+                                    <span key={c} className={styles.countryChip}>
+                                      {c}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                              {a.evidence.length > 0 && (
+                                <div className={styles.evidence}>
+                                  {a.evidence.map((e, i) => (
+                                    <a
+                                      key={i}
+                                      href={e.url}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                    >
+                                      ↗ {hostOf(e.url)}
+                                    </a>
+                                  ))}
+                                </div>
+                              )}
+                              <div className={styles.formula}>
+                                How this {a.score} is built: account profile {a.deskScore}{" "}
+                                (40% of the score) + global demand{" "}
+                                {a.demandAdj ?? a.demand} (60%).
+                                {a.confFactor < 1
+                                  ? ` Raw demand ${a.demand} trimmed to ${a.demandAdj} because confidence is ${a.confidence}.`
+                                  : ""}
+                              </div>
+                            </>
+                          ) : (
+                            <div className={styles.demandPending}>
+                              Not researched (no findable web presence, or missed on the
+                              run). Score is the account profile only — no demand signal
+                              yet.
+                            </div>
+                          )}
+                        </div>
+
+                        <div className={styles.bars}>
+                          <div className={styles.barsHead}>
+                            Account profile · {a.deskScore}/100 (firmographics, no
+                            research)
+                          </div>
+                          {(["scale", "incumbency", "model", "recency"] as const).map(
+                            (k) => (
+                              <div key={k} className={styles.barRow}>
+                                <span className={styles.barLabel}>{BAR_LABEL[k]}</span>
+                                <span className={styles.barTrack}>
+                                  <span
+                                    className={styles.barFill}
+                                    style={{
+                                      width: `${(a.breakdown[k] / BAR_MAX[k]) * 100}%`,
+                                    }}
+                                  />
+                                </span>
+                                <span className={styles.barVal}>
+                                  {a.breakdown[k]}/{BAR_MAX[k]}
+                                </span>
+                              </div>
+                            ),
+                          )}
+                        </div>
+
+                        <div className={styles.acctMeta}>
+                          {a.sizeBucket ||
+                            (a.size ? `${a.size.toLocaleString()} WSE` : "size n/a")}
+                          {" · Partner: "}
+                          {a.csm} ({partnerRole(a.csm)})
+                          {a.contactName && (
+                            <>
+                              {" · "}
+                              {a.contactName} (Primary contact)
+                              {a.contactEmail && (
+                                <>
+                                  {" — "}
+                                  <a href={`mailto:${a.contactEmail}`}>
+                                    {a.contactEmail}
+                                  </a>
+                                </>
+                              )}
+                            </>
+                          )}
+                          {a.website && (
+                            <>
+                              {" · "}
+                              <a
+                                href={ensureHttp(a.website)}
+                                target="_blank"
+                                rel="noreferrer"
+                              >
+                                {a.website}
+                              </a>
+                            </>
+                          )}
+                        </div>
+
+                        <ContactsPanel accountId={a.id} count={a.contactCount} />
+
+                        {canAdd && <ValidateControls id={a.id} current={a.validation} />}
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </Fragment>
+            );
+          })}
         </tbody>
       </table>
     </>
