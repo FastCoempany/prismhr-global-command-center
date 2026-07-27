@@ -4,16 +4,32 @@ import { SfCheckpoint } from "@/components/sf";
 import type { ChipNote } from "@/components/account-notes";
 import { peos } from "@/lib/book";
 import { loadDashboard } from "@/lib/dashboard/data";
-import { loadAccountNotes } from "@/lib/today/overlay";
+import {
+  loadAccountNotes,
+  loadDispositions,
+  loadTodos,
+  loadTouches,
+} from "@/lib/today/overlay";
 import { accountIntel } from "@/lib/today/build";
 import { countryCode } from "@/lib/flags";
+import { corpusFor, extractDealIntel } from "@/lib/intel/extract";
+import { digestFor, digestForCardName } from "@/lib/intel/digest";
+import { suggestChecks, type CheckSuggestion } from "@/lib/intel/evidence";
+import { liveContextFor, type LiveContextLine } from "@/lib/intel/live-context";
+import type { DealIntel } from "@/lib/intel/types";
 import { DashboardClient } from "./dashboard-client";
 import styles from "./command-center.module.css";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const data = await loadDashboard();
+  const [data, acctNotesById, touches, todos, dispositions] = await Promise.all([
+    loadDashboard(),
+    loadAccountNotes(),
+    loadTouches(),
+    loadTodos(),
+    loadDispositions(),
+  ]);
 
   // Surface the chip-written account notes ("Worked notes" — yours + what the
   // partner said) on their card, matched by account name (cards are keyed by
@@ -27,7 +43,7 @@ export default async function DashboardPage() {
     if (code) countryByName[a.name] = code;
   }
   const notesByName: Record<string, ChipNote[]> = {};
-  for (const [accountId, list] of await loadAccountNotes()) {
+  for (const [accountId, list] of acctNotesById) {
     const name = nameById.get(accountId);
     if (!name) continue;
     notesByName[name] = list.map((n) => ({
@@ -37,6 +53,44 @@ export default async function DashboardPage() {
       body: n.body,
       createdAt: n.createdAt,
     }));
+  }
+
+  // --- Deal intel, per card ------------------------------------------------
+  // Derived at render from the account's full corpus (notes + touches + sheet
+  // rows + digest seed) — nothing stored. Cards are keyed by name; resolve the
+  // account id via the book (exact name) with the digest's aliases as fallback.
+  const idByName = new Map(peos.map((p) => [p.name.toLowerCase(), p.id]));
+  const intelByName: Record<string, DealIntel> = {};
+  const suggByName: Record<string, CheckSuggestion[]> = {};
+  const ctxByName: Record<string, LiveContextLine[]> = {};
+  for (const card of data.cards) {
+    if (card.archived) continue;
+    const acctId =
+      idByName.get(card.name.toLowerCase()) ??
+      digestForCardName(card.name)?.accountId ??
+      "";
+    const docs = corpusFor(acctId, card.name, {
+      acctNotes: acctNotesById.get(acctId),
+      todos: todos.filter((t) => acctId && t.accountId === acctId),
+      touches: touches.filter(
+        (t) =>
+          (acctId && t.subjectKey === `acct:${acctId}`) ||
+          t.label.toLowerCase() === card.name.toLowerCase(),
+      ),
+    });
+    const dig = digestFor(acctId) ?? digestForCardName(card.name);
+    intelByName[card.name] = extractDealIntel(docs, dig);
+    const dismissed = new Set<string>();
+    const prefix = `sugg-dismiss:${card.id}:`;
+    for (const key of dispositions.keys())
+      if (key.startsWith(prefix)) {
+        const rest = key.slice(prefix.length); // "<node>:<itemIdx>"
+        if (rest) dismissed.add(rest);
+      }
+    suggByName[card.name] = suggestChecks(docs, card, dismissed);
+    ctxByName[card.name] = liveContextFor(docs, {
+      excludeTexts: (notesByName[card.name] ?? []).map((n) => n.body),
+    }).lines;
   }
 
   if (data.status === "unauthenticated") {
@@ -80,6 +134,9 @@ export default async function DashboardPage() {
           labels={data.labels}
           notesByName={notesByName}
           countryByName={countryByName}
+          intelByName={intelByName}
+          suggByName={suggByName}
+          ctxByName={ctxByName}
         />
       </main>
     </>

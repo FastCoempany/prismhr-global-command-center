@@ -305,10 +305,6 @@
   font-size: 13.5px;
   color: var(--navy);
 }
-.progress {
-  font-size: 11.5px;
-  color: var(--muted);
-}
 .generalNote {
   display: grid;
   gap: 6px;
@@ -432,6 +428,12 @@
   gap: 6px;
   margin-top: 8px;
   flex-wrap: wrap;
+  opacity: 0.45;
+  transition: opacity 0.12s ease;
+}
+.block:hover .manage,
+.manage:focus-within {
+  opacity: 1;
 }
 .inlineForm {
   display: inline-flex;
@@ -531,33 +533,6 @@
   outline: none;
   border-color: var(--blue);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
-}
-
-/* "Next mandatory item" prompt on a card (opens that node's checklist) */
-.nextStep {
-  display: inline-block;
-  margin-top: 5px;
-  max-width: 100%;
-  text-align: left;
-  border: 1px solid #fed7aa;
-  background: #fff7ed;
-  color: #9a3412;
-  border-radius: 8px;
-  padding: 4px 9px;
-  font: inherit;
-  font-size: 11.5px;
-  line-height: 1.35;
-  cursor: pointer;
-}
-.nextStep:hover {
-  border-color: #fb923c;
-  background: #ffedd5;
-}
-.nextStepLabel {
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  font-size: 10px;
 }
 
 /* Deal details — deal size + stakeholders (collapsible) */
@@ -714,4 +689,200 @@
   height: 10px;
   border-radius: 2px;
   box-shadow: 0 0 0 0.5px rgba(10, 28, 64, 0.25);
+}
+
+/* --- Intelligence era (B3) ------------------------------------------------ */
+
+/* Deal intel strip — corpus-derived chips under the card name */
+.dintStrip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin-top: 5px;
+  max-width: 100%;
+}
+.dintChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  border: 1px solid var(--line);
+  background: #f6f8fb;
+  color: var(--muted);
+  border-radius: 999px;
+  padding: 1px 7px;
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+.dintChip i {
+  font-style: normal;
+  font-size: 10px;
+}
+.dintFlag {
+  width: 14px;
+  height: 9.5px;
+  border-radius: 2px;
+  box-shadow: 0 0 0 0.5px rgba(10, 28, 64, 0.25);
+}
+.dintDir {
+  background: #eef4ff;
+  border-color: #c7d8f7;
+  color: #1d4ed8;
+  white-space: normal;
+}
+.dintTiming {
+  background: #fff7ed;
+  border-color: #fed7aa;
+  color: #9a3412;
+}
+.dintWarn {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #b42318;
+}
+
+/* Per-stage mini progress dots on ACTIVE nodes (amber = suggested) */
+.nodeDots {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2.5px;
+  margin-top: 2px;
+  border: 0;
+  background: none;
+  padding: 2px 4px;
+  cursor: pointer;
+}
+.dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #dbe3ee;
+}
+.dotOn {
+  background: var(--blue);
+}
+.dotSugg {
+  background: #f59e0b;
+}
+
+/* Quiet manage icons + drag handle */
+.iconBtn {
+  border: 1px solid transparent;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.2;
+  padding: 1px 5px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.iconBtn:hover {
+  border-color: var(--line);
+  color: var(--navy);
+  background: #fff;
+}
+.iconDel:hover {
+  border-color: #dc2626;
+  color: #b42318;
+  background: #fdecec;
+}
+.dragHandle {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1;
+  padding: 1px 3px;
+  cursor: grab;
+  user-select: none;
+}
+.dragHandle:active {
+  cursor: grabbing;
+}
+
+/* Live context — dated corpus lines replacing the free-text context box */
+.ctxList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+.ctxLine {
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--navy);
+}
+.ctxAt {
+  display: inline-block;
+  min-width: 30px;
+  font-weight: 700;
+  font-size: 10px;
+  color: var(--muted);
+}
+.ctxNew {
+  color: #1d4ed8;
+}
+.judgment {
+  width: min(520px, 100%);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 5px 9px;
+  font: inherit;
+  font-size: 12px;
+}
+.judgment:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+/* Amber evidence suggestions on checklist items */
+.sugRow {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: 26px;
+  flex-wrap: wrap;
+}
+.sugChip {
+  border: 1px solid #fcd34d;
+  background: #fffbeb;
+  color: #92400e;
+  border-radius: 999px;
+  padding: 1px 8px;
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+.sugConfirm {
+  border: 1px solid #f59e0b;
+  background: #f59e0b;
+  color: #fff;
+  border-radius: 6px;
+  padding: 1px 7px;
+  font: inherit;
+  font-size: 10.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.sugConfirm:hover {
+  background: #d97706;
+  border-color: #d97706;
+}
+.sugDismiss {
+  border: 1px solid transparent;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 11px;
+  padding: 1px 4px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.sugDismiss:hover {
+  border-color: var(--line);
+  color: #b42318;
 }

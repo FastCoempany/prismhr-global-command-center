@@ -10,6 +10,7 @@ import {
   redactMoney,
 } from "@/lib/intel/lexicon";
 import { DISCOVERY, questionsFor } from "@/lib/intel/discovery";
+import { DASH_NODES, nodeBriefs } from "@/lib/dashboard/stages";
 import { MOTIONS, motionsFor } from "@/lib/intel/motions";
 import { DIGEST, digestFor, digestForCardName } from "@/lib/intel/digest";
 import { EMPTY_INTEL, type DealIntel } from "@/lib/intel/types";
@@ -160,5 +161,19 @@ describe("digest", () => {
     assert.equal(a.intelSeed.chair, "referral");
     assert.equal(a.stage, "contract");
     assert.ok(a.intelSeed.threads!.execSeen && a.intelSeed.threads!.opsSeen);
+  });
+});
+
+describe("BRIEFS pairing", () => {
+  test("every node's briefs pair 1:1 with its checklist", () => {
+    for (const n of DASH_NODES) {
+      const briefs = nodeBriefs(n.key);
+      assert.equal(
+        briefs.length,
+        n.checklist.length,
+        `${n.key}: ${briefs.length} briefs vs ${n.checklist.length} items`,
+      );
+      for (const b of briefs) assert.ok(b.trim().length > 0, `${n.key} empty brief`);
+    }
   });
 });
