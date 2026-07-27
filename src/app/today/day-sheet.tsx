@@ -448,7 +448,6 @@ export function DaySheet({
           ▾
         </button>
         <span className={styles.sheetCapT}>Day sheet — {dateLabel}</span>
-        <span className={styles.sheetCapR}>notes only — actions go to the ledger</span>
       </div>
       <div className={styles.sheetSeg}>
         <button
@@ -506,9 +505,6 @@ export function DaySheet({
         </div>
       )}
       <div className={styles.sheetNotes}>
-        {today.length === 0 && (
-          <p className={styles.sheetEmpty}>Nothing on today&apos;s sheet yet.</p>
-        )}
         {today.map((n) => (
           <NoteRow
             key={n.id}

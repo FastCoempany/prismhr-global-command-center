@@ -6939,3 +6939,31 @@
 .ctcName:hover {
   text-decoration: underline;
 }
+
+/* Focus accounts + Check-ins due, side by side with a delineating line. */
+.focusRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(250px, 330px);
+  gap: 0 18px;
+  align-items: start;
+  margin-top: 14px;
+}
+.focusRow .focusStrip {
+  margin-top: 0;
+}
+.chkPanel {
+  border-left: 1px solid #dfe5ee;
+  padding-left: 16px;
+  min-width: 0;
+}
+@media (max-width: 980px) {
+  .focusRow {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .chkPanel {
+    border-left: none;
+    border-top: 1px solid #dfe5ee;
+    padding-left: 0;
+    padding-top: 10px;
+  }
+}
