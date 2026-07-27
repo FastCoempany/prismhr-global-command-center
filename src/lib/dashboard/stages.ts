@@ -325,3 +325,35 @@ export function migrateCheckNotes(raw: unknown): Record<string, Record<string, s
   put("contract", shift(dec, -2, 2, 3));
   return out;
 }
+
+// Brief labels — the always-visible compact face of each checklist item
+// (full text stays as hover title). Parallel arrays: BRIEFS[key][i] pairs
+// with DASH_NODES[key].checklist[i]; a test enforces the pairing.
+export const BRIEFS: Record<DashNodeKey, string[]> = {
+  investigate: ["Trigger named", "Owner partner named", "Fit reviewed"],
+  first_meeting: [
+    "Partner briefed",
+    "Cleared to approach",
+    "Stakeholders mapped",
+    "Guardrails noted",
+    "First meeting held",
+  ],
+  needs_analysis: [
+    "Countries known",
+    "Pay method known",
+    "EE vs IC known",
+    "Incumbent known",
+    "Product matched",
+    "Options framed",
+    "Risk quantified",
+    "Scope drafted",
+  ],
+  demo: ["Availability confirmed", "Right attendees", "Demo tailored", "Demo delivered"],
+  exec_summary: ["Summary drafted", "Partner reviewed", "Delivered + reaction"],
+  proposal: ["Criteria confirmed", "Proposal delivered", "Pricing cleared"],
+  contract: ["Yes/no reached", "Partner debriefed", "Signature tracked"],
+};
+
+export function nodeBriefs(key: DashNodeKey): string[] {
+  return BRIEFS[key] ?? [];
+}

@@ -346,3 +346,46 @@ export async function removeStakeholder(formData: FormData) {
   });
   done();
 }
+
+// ✕ on an amber "suggested ✓" chip — this suggestion never comes back for
+// this card+node+item. Zero-schema: sugg-dismiss disposition.
+export async function dismissSuggestion(formData: FormData) {
+  const cardId = str(formData, "cardId", 40);
+  const node = str(formData, "node", 40);
+  const index = str(formData, "index", 4);
+  if (!(await requireWrite()) || !cardId || !node) done();
+  const key = `sugg-dismiss:${cardId}:${node}:${index}`.slice(0, 191);
+  await safeWrite(async () => {
+    await getPrisma().accountDisposition.upsert({
+      where: { accountId: key },
+      create: { accountId: key, status: "parked", reason: "" },
+      update: { status: "parked" },
+    });
+  });
+  done();
+}
+
+// Drag-reorder: an ordered CSV of non-archived card ids replaces ↑/↓.
+// Same full-sequential-reindex contract moveCard established.
+export async function reorderCards(ids: string[]): Promise<{ ok: boolean }> {
+  if (!(await requireWrite()) || !Array.isArray(ids)) return { ok: false };
+  try {
+    const prisma = getPrisma();
+    const current = await prisma.dashCard.findMany({
+      where: { archived: false },
+      select: { id: true },
+    });
+    const want = ids.filter((i) => typeof i === "string").slice(0, 200);
+    const have = new Set(current.map((c) => c.id));
+    if (want.length !== have.size || want.some((i) => !have.has(i))) return { ok: false };
+    await Promise.all(
+      want.map((id, i) =>
+        prisma.dashCard.update({ where: { id }, data: { position: i } }),
+      ),
+    );
+    revalidatePath("/");
+    return { ok: true };
+  } catch {
+    return { ok: false };
+  }
+}
