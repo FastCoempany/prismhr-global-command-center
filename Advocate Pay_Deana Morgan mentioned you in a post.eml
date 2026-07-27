@@ -1,0 +1,662 @@
+Received: from DS0PR11MB8113.namprd11.prod.outlook.com (2603:10b6:8:127::11)
+ by SAWPR11MB9546.namprd11.prod.outlook.com with HTTPS; Mon, 20 Jul 2026
+ 16:48:52 +0000
+Received: from CY5PR15CA0033.namprd15.prod.outlook.com (2603:10b6:930:1b::24)
+ by DS0PR11MB8113.namprd11.prod.outlook.com (2603:10b6:8:127::11) with
+ Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.21.223.18; Mon, 20 Jul
+ 2026 16:48:49 +0000
+Received: from CY4PEPF0000E9D5.namprd05.prod.outlook.com
+ (2603:10b6:930:1b:cafe::2c) by CY5PR15CA0033.outlook.office365.com
+ (2603:10b6:930:1b::24) with Microsoft SMTP Server (version=TLS1_3,
+ cipher=TLS_AES_256_GCM_SHA384) id 15.21.223.16 via Frontend Transport; Mon,
+ 20 Jul 2026 16:48:49 +0000
+Authentication-Results: spf=pass (sender IP is 23.21.233.217)
+ smtp.mailfrom=prismhr.com; dkim=fail (body hash did not verify)
+ header.d=prismhr.com;dmarc=pass action=none
+ header.from=prismhr.com;compauth=pass reason=100
+Received-SPF: Pass (protection.outlook.com: domain of prismhr.com designates
+ 23.21.233.217 as permitted sender) receiver=protection.outlook.com;
+ client-ip=23.21.233.217;
+ helo=smtp-0433f4c23cae3c21a.core1.sfdc-yfeipo.mta.salesforce.com; pr=E
+Received: from mx0b-00671b01.pphosted.com (205.220.179.86) by
+ CY4PEPF0000E9D5.mail.protection.outlook.com (10.167.241.68) with Microsoft
+ SMTP Server (version=TLS1_3, cipher=TLS_AES_256_GCM_SHA384) id 15.21.245.5
+ via Frontend Transport; Mon, 20 Jul 2026 16:48:49 +0000
+Received: from pps.filterd (m0429407.ppops.net [127.0.0.1])
+	by mx0b-00671b01.pphosted.com (8.18.1.11/8.18.1.11) with ESMTP id 66KGIIOe1829817
+	for <antaeus.coe@prismhr.com>; Mon, 20 Jul 2026 12:48:48 -0400
+Authentication-Results-Original: ppops.net;	spf=pass
+ smtp.mailfrom=salesforce_chatter@prismhr.com;	dkim=pass header.s=2023Q1SFALT
+ header.d=prismhr.com
+Received: from smtp-0433f4c23cae3c21a.core1.sfdc-yfeipo.mta.salesforce.com (smtp-0433f4c23cae3c21a.core1.sfdc-yfeipo.mta.salesforce.com [23.21.233.217])
+	by mx0b-00671b01.pphosted.com (PPS) with ESMTPS id 4fhkvprx2q-1
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT)
+	for <antaeus.coe@prismhr.com>; Mon, 20 Jul 2026 12:48:48 -0400 (EDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=prismhr.com;
+	s=2023Q1SFALT; t=1784566127;
+	bh=wNJpYdEL5oqLC7eiwUNIuTYE3RWDFcVaeUXrFLGBFvQ=;
+	h=Date:From:Reply-To:To:Message-ID:Subject:MIME-Version:
+	 Content-Type;
+	b=NARy7AjT/mBr4acnplv22xDJDtbIhEE8iFdbBjQlrPImMXld7hC6LPEOzZBzzQ/NP
+	 I38Fjf76AEuJg986oSPJNPRTwAp0+bvSSSRtB+hRwjqXFIXPnvlqj+VuCIgYGW+72E
+	 aPmjtzz7AKkAy0cWzmuWCTpQ6iEwa0xcPko/ImjJgq+QTTOfDHc2H15iUHzMEjwGBf
+	 hBkRGXbqo3qia384++SuayaIDeQy/5L+m5wglTogXv97EkAf0DxAnU1ftZZ99lCJGO
+	 Iu5YVrFLuMy1oDypU16+vg36c9jkCHv6h6IVKSqPUmsMFhawrUcl1O+bsnrX28cPIa
+	 Ug3Zwb0mFhLTQ==
+Received: from [127.0.0.1] ([127.0.0.1:34174] helo=eaas-30.eaas.emailinfra.svc.cluster.local)
+	by mx1.core1.sfdc-yfeipo.mta.salesforce.com (envelope-from <salesforce_chatter@prismhr.com>)
+	(ecelerity 4.7.0.20116 r(msys-ecelerity:salesforce/4.7/sb3)) with ESMTP
+	id 16/7A-01058-F615E5A6; Mon, 20 Jul 2026 16:48:47 +0000
+Received: from 127.0.0.1 (localhost. [127.0.0.1]) by eaas-30 (EaaS) id
+  <YjnBQ000000000000000000000000000000000000000000000TIHG1B00qQFaXMGrTYKx4Gb1y6LIvw@sfdc.net>
+  for <"antaeus.coe@prismhr.com" <antaeus.coe@prismhr.com>> Mon, 20 Jul 2026
+  16:48:47 GMT (GMT)
+Date: Mon, 20 Jul 2026 16:48:47 +0000 (GMT)
+From: PrismHR Salesforce Chatter <salesforce_chatter@prismhr.com>
+Reply-To: Reply to PrismHR
+ <kmkw7jf56dve8v36.qn585l9qvt9qaerj.kdkye2mou74o4gw0@r8vhpgiabv54sef7.kbzw20d0ezj45.f-4zxymaa.usa326.chatter.salesforce.com>
+To: "antaeus.coe@prismhr.com" <antaeus.coe@prismhr.com>
+Message-ID: <YjnBQ000000000000000000000000000000000000000000000TIHG1B00qQFaXMGrTYKx4Gb1y6LIvw@sfdc.net>
+Subject: Deana Morgan mentioned you in a post
+Content-Type: multipart/alternative; 
+	boundary="----=_Part_909_385835952.1784566127863"
+X-SFDC-CSN: aID MENTION_POST
+X-SFDC-LK: 00DF00000004zxy
+X-SFDC-User: 005F0000002QFbm
+X-Sender: postmaster@salesforce.com
+X-mail_abuse_inquiries: https://www.salesforce.com/company/legal/abuse
+X-SFDC-ORGTYPE: ACTIVE
+X-SFDC-TLS-NoRelay: 1
+X-SFDC-CORRELATION-ID: 00018jwr6601rduu
+X-SFDC-Binding: 1WrIRBV94myi25uB
+X-SFDC-App: coreapp
+X-SFDC-Pod-Cell: usa326
+X-SFDC-EmailCategory: chatterPostNotification
+X-SFDC-EntityId: aIDPb000000bigP
+X-SFDC-Interface: internal
+X-Proofpoint-Spam-Details-Enc: AW1haW4tMjYwNzIwMDE4NiBTYWx0ZWRfX69Kn27EkVjy9
+ trYlZYZmhvBXPbmp7kCv4JYHuGqoaNa064HOJukvfdtTzne1l9ZSxmtyZSjm9BMC54qBIDr5SkM
+ t2Yx4K3nNpn2gyDOoSYtiOLtReq89VumCGGruOQ9vbRm6lgexkDpn7OgjLb8hsjLOJeT+ebsJy5
+ ZodalQRC4tPbOdzOA78mDmVEDOWUKcbAXYkIO/MYZ68nZXX3u41uE36HDBUDX91YnR32b8HxqN+
+ RfPLGXf+NymYL/mFF56/PBrGeLtt2WAc68ITFFqdnh2PC8hxm/PUsVW+PG59MiwWG8zmdEty+bP
+ GzE+isKelR7myjiUSAYXpwbEt58JNPBLuLiUdxfdilhtURjljy9jx7OC8FpLY64XQ1Z/r8ai873
+ KV8VKVvz89u4BxMcr48HKri0a0C1WZRxQEVaWWwiU5kxRCndwRl+jGdxltQOnJqZLOawwjNcPqX
+ pfdVOTX+SEhnHrsiRSZXcO/w6SdhFRWviI7DgTfTRqswZsLpJnNzr9ja2r6/Ph/TOpsoFKyH/SF
+ 50QFTbFruLbl787gj8Ajz6gonCOEY=
+X-Authority-Analysis: v=2.4 cv=D5V37PRj c=1 sm=1 tr=0 ts=6a5e5170 b=1 cx=c_pps
+ a=QS1gCpNPThOZC0bLlrEziQ==:117 a=QS1gCpNPThOZC0bLlrEziQ==:17
+ a=KGjhK52YXX0A:10 a=RAioF0-LDSMA:10 a=-zwG2Eag5McA:10
+ a=Kan8h273Bse8B8Jy5C1n:22 a=NXUYhA8rPCHrvhuPNRKf:22 a=CP3GVAGkTZFtGyI8803i:22
+ a=FTg-WU4ZAAAA:8 a=eF4bi9_VAAAA:8 a=2aUT8WVK888WPfraV70A:9 a=QEXdDO2ut3YA:10
+ a=tKyUNxqEAAAA:8 a=Cs2wQjpYAAAA:8 a=SSmOFEACAAAA:8 a=flVmG1CWkDrsY4HHNgIA:9
+ a=edKibl0CtGi-orru:21 a=gKO2Hq4RSVkA:10 a=frz4AuCg-hUA:10 a=_W_S_7VecoQA:10
+ a=CkuJevFuRFoTrBw5AGMZ:22 a=5yU3S35YU4bGjq-dph-N:22 a=Bho9c0fBagfJEIQBS7DQ:22
+ cc=ntf
+X-CLX-Shades: MLX
+X-Proofpoint-ORIG-GUID: gf5RT5FZLGbAUxP6KglnFeIBC3ueFJwG
+X-CLX-Response: 1TFkXGRoaEQpMehcbHhoRCllEF25LHRkYb3BfYm1LEQpYWBdvG14FeUdQT38
+ SQREKeE4XYnkdc3ljcklDa0ERCnhLF28bXgV5R1BPfxJBEQp4TBdhfXtiRl1FREBEGBEKeUwXZR
+ xiXxhaUFsYckMRCkNIFwcYHh8RCkNZFwcZHBkRCkNeFwcbEQpeRBcbEQpDSRcaBBoaGhEKWU0XZ
+ 2ZyEQpZSRcacRoQGncGGxwacRkTEBp3BhgaBhsYGhEKWV4XbGx5EQpJRhdaWENZR0JYdUJFWV5P
+ ThEKSUcXeE9NEQpDThdNTB94fh9scGZtSGt/UnocYU1GRGxPY2hpGV9PbGBdbREKWFwXHwQaBB4
+ YGgUbGgQbGhoEGxkeBBkZEBseGh8aEQpeWRdCQQVzZhEKTVwXHRIaEQpMWhdpeGldTU0RCkVZF2
+ hraxEKTF8XegUFBQUFBQUFBR0RCkxGF297a2NraxEKQk8XYmRhSRJ7cEZuXHwRCkNaFxgZBBgbB
+ BgZGQQYGx0RCkJeFxsRCllFFxMRCkVJFxsRCkVmFx4RCkReFxgRCkJcFxsRCl5OFxsRCkJLF2Rb
+ G0EYUh5aW2tcEQpCSRdkWxtBGFIeWltrXBEKQkUXbmV+H2leBRlOT24RCkJOF2RbG0EYUh5aW2t
+ cEQpCTBdlGV1DGF95E3BubREKQmwXZx5EWmh4cxkSQEMRCkJAF2QSXU1zfVJdBV9yEQpCWBdmXX
+ NTXFh6aHlEGxEKWlgXHhEKeUMXYVh8HkRbQxNDHn0RCllLFx4YGRIRClpLFxsaGhMYEQpwZxd6c
+ 0VhXR5aSEJmfBAaEQpwaBdvT1BHZEFHW1sdfxAaEQpwaBdpbgFFHmlyQV5HWRAaEQpwaBdsQB4f
+ TQFjElITSBAaEQpwaBdnUB5tbWtbaX9tWxAaEQpwaBdifn9cTUhmTENnHxAaEQpwaBdiTRkTU0t
+ ARxtSZRAaEQpwaBdsEnNkQAV4cHtPWRAZGhEKcGgXYhtHXBpfE1NIE0AQGhEKcH0XbmcFe39EaR
+ NeR0kQGhEKcH0Xa3llRGN6fVpOQkUQGhEKcH0XbGJPGx55UhwZE1AQGhEKcH0XYHlLZ0JYSHhGS
+ BsQGhEKcH0XZxt/R1xcXWxtAXsQGhEKcH0Xa2RrclxbHX1ZZm4QGhEKcH0XYUxaaBldE0ddGmcQ
+ GhEKcH0XbF14UERnfWVpTm4QGhEKcH0XbVwfYx9zREtfGG0QGhEKcH0XbVAbHxxnZWsSbmIQGhE
+ KcH0XaEZ7S2JLRB5lb0sQGhEKcH0XaBpbGwFTExtncngQGhEKcH0XY2geQUhmcmNdXGgQGRoRCn
+ B9F24dQAVuQ29FWktrEBoRCnB9F2QTRxtma2xzGFhZEBkaEQpwfRdpTEEbUFxmX38dTxAaEQpwf
+ xdmflNkS3hbUEhvaRAbGxwRCnBfF2ISUEl9enpkXUF8EBkaEQpwXxdvaXpyeUcZfBp9eBAZGhEK
+ cF8XehNDT1xQawVNUE4QGhEKcF8XZR9eGGV+X1NmYkUQGhEKcF8Xen9uemhiWEMTXkMQGhEKcF8
+ XZRJFbWZNYXsfchsQGhEKcH8XbBJBaWQaUxNyfW8QGxscEQpwXxd6cnBdbVBwbUtObRAaEQpwXx
+ d6emVsGl5He21TXhAbGBwRCnBfF2RGZWRDYWx7bxx9EBoRCnBfF2NkYh9FcEtDWWVJEBkaEQpwX
+ xdhc3lGeG8YTm1+GBAZGhEKcF8XYX1vQmxwT0IfXWwQHhIRCnBfF2JAaHhjAQFuYlBeEBkaEQpw
+ bBdgRWIceR8cbR5eThAZGhEKbX4XGhEKWE0XSxEg
+X-Proofpoint-Spam-Info: AW1haW4tMjYwNzIwMDE4NiBTYWx0ZWRfXyp3CQ65OAtwV
+ UKElR0R7hekMMVoFN1c/XYfE3XYxIJYmCSZx+sddyEHmyo5v0/c1oh/soNbWWGq65N2u55AXzNp
+ S1Z/WmLPHYT8Oj7JOVN9zCk8NoFJbsQ=
+X-Proofpoint-GUID: gf5RT5FZLGbAUxP6KglnFeIBC3ueFJwG
+X-Proofpoint-Virus-Version: vendor=baseguard
+ engine=ICAP:2.0.293,Aquarius:18.0.1143,Hydra:6.1.134,FMLib:17.12.100.49
+ definitions=2026-07-20_03,2026-07-20_03,2025-10-01_01
+X-Proofpoint-Spam-Details: rule=inbound_notspam policy=inbound score=0
+ suspectscore=0 adultscore=0 impostorscore=0 phishscore=0 malwarescore=0
+ lowpriorityscore=0 spamscore=0 priorityscore=140 clxscore=300 bulkscore=0
+ classifier=typeunknown authscore=0 authtc= authcc=notification route=inbound
+ adjust=0 reason=mlx scancount=1 engine=8.22.0-2606150000
+ definitions=main-2607200186 domainage_hfrom=4238 domainage_replyto=10092
+Return-Path: salesforce_chatter@prismhr.com
+X-MS-Exchange-Organization-ExpirationStartTime: 20 Jul 2026 16:48:49.4785
+ (UTC)
+X-MS-Exchange-Organization-ExpirationStartTimeReason: OriginalSubmit
+X-MS-Exchange-Organization-ExpirationInterval: 1:00:00:00.0000000
+X-MS-Exchange-Organization-ExpirationIntervalReason: OriginalSubmit
+X-MS-Exchange-Organization-Network-Message-Id: 86db08ae-c690-4eae-7244-08dee67ec5f7
+X-EOPAttributedMessage: 0
+X-EOPTenantAttributedMessage: 2e8802e0-0b68-49d0-857f-46e74756f974:0
+X-MS-Exchange-Organization-MessageDirectionality: Incoming
+X-MS-Exchange-SkipListedInternetSender: ip=[23.21.233.217];domain=smtp-0433f4c23cae3c21a.core1.sfdc-yfeipo.mta.salesforce.com
+X-MS-Exchange-ExternalOriginalInternetSender: ip=[23.21.233.217];domain=smtp-0433f4c23cae3c21a.core1.sfdc-yfeipo.mta.salesforce.com
+X-MS-PublicTrafficType: Email
+X-MS-TrafficTypeDiagnostic: CY4PEPF0000E9D5:EE_|DS0PR11MB8113:EE_|SAWPR11MB9546:EE_
+X-MS-Exchange-Organization-AuthSource: CY4PEPF0000E9D5.namprd05.prod.outlook.com
+X-MS-Exchange-Organization-AuthAs: Anonymous
+X-MS-Office365-Filtering-Correlation-Id: 86db08ae-c690-4eae-7244-08dee67ec5f7
+X-MS-Exchange-AtpMessageProperties: SA|SL
+X-MS-Exchange-Organization-SCL: -1
+X-Microsoft-Antispam: BCL:0;ARA:13230040|704160111799003|240411011799012|82310400026|7149299003|69100299015|29132699027|3109299003|1032899013|7049299003|55112099003|18003699003|2066899003|8096899003|13003099007|19002099009|10067099003|56012099006|5063699009|11063799006;
+X-Forefront-Antispam-Report: CIP:205.220.179.86;CTRY:US;LANG:en;SCL:-1;SRV:;IPV:NLI;SFV:NSPM;H:smtp-0433f4c23cae3c21a.core1.sfdc-yfeipo.mta.salesforce.com;PTR:smtp-0433f4c23cae3c21a.core1.sfdc-yfeipo.mta.salesforce.com;CAT:NONE;SFS:(13230040)(704160111799003)(240411011799012)(82310400026)(7149299003)(69100299015)(29132699027)(3109299003)(1032899013)(7049299003)(55112099003)(18003699003)(2066899003)(8096899003)(13003099007)(19002099009)(10067099003)(56012099006)(5063699009)(11063799006);DIR:INB;
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 20 Jul 2026 16:48:49.1891
+ (UTC)
+X-MS-Exchange-CrossTenant-Network-Message-Id: 86db08ae-c690-4eae-7244-08dee67ec5f7
+X-MS-Exchange-CrossTenant-Id: 2e8802e0-0b68-49d0-857f-46e74756f974
+X-MS-Exchange-CrossTenant-AuthSource: CY4PEPF0000E9D5.namprd05.prod.outlook.com
+X-MS-Exchange-CrossTenant-AuthAs: Anonymous
+X-MS-Exchange-CrossTenant-FromEntityHeader: Internet
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: DS0PR11MB8113
+X-MS-Exchange-Transport-EndToEndLatency: 00:00:03.2848615
+X-MS-Exchange-Processed-By-BccFoldering: 15.21.0223.005
+X-Microsoft-Antispam-Mailbox-Delivery:
+	ucf:0;jmr:0;auth:0;dest:I;ENG:(910005)(944506478)(944626604)(920097)(930201)(20251009189)(140003);
+X-Microsoft-Antispam-Message-Info:
+	=?utf-8?B?WWdFNXhoR1RzaE92cDdnZmZhWmNROXEvN0lhMFFwejdlMTVsWjJscjVDb0Nn?=
+ =?utf-8?B?bU45N2pDbXowbXVlZ3drKytzV3FMZWJ6N3diSmk1d2dSQVRPYlBvNmxQZ01C?=
+ =?utf-8?B?VzBrRW1yNVAyOVFtcERXOWdGU3V0ZWlFMjJOMmQrKzhJblJyTkN4ckdpZ2Nm?=
+ =?utf-8?B?bW9nTTMyMWZoQW4rMHBidXVjT2FDeU11MkU0bC81TElEN1R0VGt4aG1BVWRG?=
+ =?utf-8?B?a1k4TjhXQlZERlNVY1lJQlNjSU52MjVNdUY2UjE3U29nQVR4RGhHWHNZQ25x?=
+ =?utf-8?B?cm5QT2pGRkZtc25EUEZqbjU2aHM0M3U2bGdVanBIYkVJWitUUUJHbnFSZ3dC?=
+ =?utf-8?B?UTFOcG8rZ3I2V1M5UmR0Y1pVb29Vd3hDTVhJU3p0WUR0aG9qTXprN1JzNDRk?=
+ =?utf-8?B?Tkcrd05LVU1xZUhvVmxTR3VTMEJxSFAzWGhsQTNQNnJKVlN2eUg1MlloNkNx?=
+ =?utf-8?B?SGVORXQvZjNJZXh3b3JsVExsRkFNL05oN3U3M0RDU0V1RmsvTFB6QUh4bUJr?=
+ =?utf-8?B?V3VmbFhad05DYU9QQ1RkWkRPOEVhUW1jZGJsaFVaT2Qzd0twZGVESUZvdld2?=
+ =?utf-8?B?TzFkRFloQUcwd0dSMmh5ZmFNZGJaRnAvQVZTVEQraVBhRHdibkhmNnJkcWtr?=
+ =?utf-8?B?c1ppcWQyd3hJaS9lanA5SEcxSk5rK1ZNWkxWNFY2TDBtd2o2aTE4akRaL0gw?=
+ =?utf-8?B?cERkN3o4WjJGUHdLekEzYmdTWTYxVWpvS2VHV25vOERiUjc0ODRweXR1Y3hX?=
+ =?utf-8?B?amljT2svQmt0N0gzUmR1eWFPd3RoQzNmdXZaME4rcDJZZmFwV3Q2M3J0MEx4?=
+ =?utf-8?B?em1tOUV6TEptU0pCWVh0TjI0N0FHdm0vTTk2cW1LRTByVWdxR3crL2NYK3pu?=
+ =?utf-8?B?eGRFWFg5L3Fsd2dqYjJQd0FJNUU0VzBZaXVSU0REbnByTXFlU094cHNtOHBw?=
+ =?utf-8?B?T05od2srVUlzS2ZHaTZNMmNoRmY5QkkrZjU1UDdDSUE1S3BmVG1CT1JZYmdv?=
+ =?utf-8?B?aGRoVjBXeCs2QUdrTnRqUG1Na1grVDZjcEZTdkhudlNNbFFVb0NBRzlUVWY4?=
+ =?utf-8?B?cHhHc2dOS3o1MWtUZnJGR3RaU29SNnZjaVlXTUp4RnFWeG1vcU95V2Q2cnhh?=
+ =?utf-8?B?bFZhN2FORzR6Tmo5RUIzU2c2dk1IZ2ZHWVIrWWd4S0pZeVpFaTRhYXNUT05U?=
+ =?utf-8?B?ZGkrZndDL29KNjhqbUNodWhhaW5aQmx6clRodkltZGdnMnMzQ3Z3c0liOGVq?=
+ =?utf-8?B?RzdReVNSQVM5UzlxQWRRTkpFSHlwVkN1cGx5N2w0dVYxZDQydnBXWmhORE5L?=
+ =?utf-8?B?c1QxRzZuV3BScjdCVjFxS1M0bGRaSEMyTUN0UHNuSUxVL2c1Q1JRQS9oMUky?=
+ =?utf-8?B?dm5yMGNGeXE2UDhsT2FnMlB1RmZCaExNamRsa3YrcWxRV1E2Yy9mSVVEYU94?=
+ =?utf-8?B?a1V3MFU4cGp6UEZ1RzVxUWtLcjZOVVYrcWhUWXhQRDVBN1lzZStNK1BXOU1j?=
+ =?utf-8?B?WmMwMjNnQ2ZodmUrVHVjWVFjaGhrQmFwaklRdGZ3V2pSR1dKTGZnYXd3SWQy?=
+ =?utf-8?B?RThPTkxtV1ZQTVBUTDluUk44bjdHMGFxR3NtNXpyMGVmdUgxbXZOWWY2dTlq?=
+ =?utf-8?B?NkdSZ1lrK3NubFZOQ2FDamplVTlXRXh4RWFtaXliZjZkbXgwNHVSME00TXJh?=
+ =?utf-8?B?R1AvVjhRUFVxdlhqclczWFpXUXByb1IvYklpaHdUZllVbmJFR1lSZ2xWSVp1?=
+ =?utf-8?B?ei81NUErTXJ5MHRQMmd3dStLWFQ4MFh4SnJBRDNwMnl4ZGlZUGpFNnBZTmhC?=
+ =?utf-8?B?TThvQnFUWDFVQkgvZGFUZG1JSlRheThjbDBidkxxRC8wMS9VeFN1U1k2a01U?=
+ =?utf-8?B?UEJlQ0ZMeVB1RFY2VWxYSllyckZVYlh0cWpZUlNwVmdXMkJ5eWgrSks0SUc4?=
+ =?utf-8?B?UGdiMGpMa25sWXF5aysxTFBUdlJ5NWpRYVRxTFo2aExzUXlrY1JjL1NSdUlC?=
+ =?utf-8?B?NnhCZjIrWjN5ajVCZFJpOXBIOVpqQlpsVWlmK1I5Qmc5TmFiTjdqTHF0RWJM?=
+ =?utf-8?B?L1FicWNSYmUzM2VVM0tKcEdQcytwSmhIcXF2NGgwSkZCeWt1VGNLK2twSWVE?=
+ =?utf-8?Q?vnHw=3D?=
+MIME-Version: 1.0
+
+------=_Part_909_385835952.1784566127863
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+Q-10322 =E2=80=94 Deana Morgan to PrismHR Only
+
+@RCA Contract Requests=E2=80=8B=C2=A0Please send the attached contract to t=
+he Signer. See ticket here: SR-007042 | Salesforce Request | Salesforce
+=C2=A0
+Please note: This deal is being worked prior to the overall Global product =
+and processes finalized. Please see me with questions as we work through th=
+e process flow.
+=C2=A0
+@Antaeus Coe=E2=80=8B=C2=A0Please remember that you need to send the prospe=
+ct the SMB Client T&Cs document that they can use to augment their current =
+CSA with their clients. The Docusign envelope contains ONLY the contract be=
+tween Prism and Advocate Pay.=20
+cc @Aleks Boruk=E2=80=8B=C2=A0
+
+
+View post in PrismHR:
+https://urldefense.com/v3/__https://prismhr.my.salesforce.com/0D5Pb00004drP=
+I8?fromEmail=3D1&s1oid=3D00DF00000004zxy&s1nid=3D000000000000000&s1uid=3D00=
+5Pb0000186gkE&s1ext=3D0&emkind=3DchatterPostNotification&emtm=3D17845661274=
+28&OpenCommentForEdit=3D1__;!!PCVGruIq!R5VeSgr0HOjA6uvMt9uSAhnhs_MmeKIp7fBW=
+u5ORC-gw4V9SweJOAF294mPRI6I6-V2sI5p5-s3AV6Iw0_TkgsO5iBxfnA$=20
+
+---
+
+You're receiving emails when someone "Mentions me in a post."
+To change or turn off PrismHR email, log in as antaeus.coe@prismhr.com at h=
+ttps://urldefense.com/v3/__https://prismhr.my.salesforce.com/_ui/core/feeds=
+/notification/ChatterEmailSettings?setupid=3DCollaborationEmailSettings&fro=
+mEmail=3D1&s1oid=3D00DF00000004zxy&s1nid=3D000000000000000&s1uid=3D005Pb000=
+0186gkE&s1ext=3D0&emkind=3DchatterPostNotification&emtm=3D1784566127428__;!=
+!PCVGruIq!R5VeSgr0HOjA6uvMt9uSAhnhs_MmeKIp7fBWu5ORC-gw4V9SweJOAF294mPRI6I6-=
+V2sI5p5-s3AV6Iw0_TkgsO01dJrKA$ .
+
+---
+
+Salesforce, Inc. Salesforce Tower, 415 Mission Street, 3rd Floor San Franci=
+sco, CA 94105=
+
+------=_Part_909_385835952.1784566127863
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org=
+/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns=3D"http://www.w3.org/1999/xht=
+ml" xmlns:v=3D"urn:schemas-microsoft-com:vml"><head>
+<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Dutf-8">
+</head>
+<body style=3D"margin-left: 0; margin-right: 0; margin-top: 0; margin-botto=
+m: 0; padding-left: 0; padding-right: 0; padding-top: 0; padding-bottom: 0;=
+ background-color: #F2F2F2;" bgcolor=3D"#F2F2F2">
+  <style type=3D"text/css">
+    @media only screen and (max-device-width: 480px) {
+      html { -webkit-text-size-adjust: 100%; }
+      table.container { width: 100% !important; }
+      .hidden-for-mobile { display: none !important; }
+      .callToAction, .callToAction td, .footer {
+        font-size: 12px !important;
+      }
+      .button .text { font-size: 12px !important; }
+      .defaultIndentation { width: 10 !important; }
+      .text { font-size: 12px !important; }
+      a.button { width: 96 !important; }
+      a.buttonWide { width: 118 !important; }
+      a.buttonAuto { padding-left:1em !important; padding-right:1em !import=
+ant;}
+      a.button, a.buttonWide, a.buttonAuto {
+        height: 23 !important;
+        line-height: 23px !important;
+        border-radius: 4px !important;=20
+        -webkit-border-radius: 4px !important;=20
+        -moz-border-radius: 4px !important;=20
+      }
+      td.buttonWrapper {
+        width: 98 !important;
+        height: 23 !important;
+      }
+      img { display: inline !important; }
+      .circle { border-radius: 50%; clip-path: circle(50px at center); }
+      .square { border-radius: 10%; clip-path: circle(10px at center); }
+    }
+    @media only screen and (min-device-width: 600px) {
+      table.container { width: 600px !important; }
+    }
+    @media screen {
+      @font-face {
+        font-family: 'Salesforce Sans';
+        font-style: normal;
+        src: local('Salesforce Sans'), local('SalesforceSans'), url(https:/=
+/prismhr.my.salesforce.com/fonts/SalesforceSans/SalesforceSans-Regular.woff=
+) format('woff');
+      }
+    }
+    a, a:visited { color: #015BA7; text-decoration:none; }
+    img { display: block; }
+    .preheader { display: none !important; }
+    table {
+        border-collapse: collapse;
+        mso-table-lspace: 0px;
+        mso-table-rspace: 0px;
+    }
+  </style>
+<span class=3D"preheader" style=3D"padding: 0px; font-size: 0px; line-heigh=
+t: 0px; max-height: 0px; mso-hide: all; color: #F2F2F2; margin: 0px; displa=
+y: none !important;">@RCA Contract Requests=E2=80=8B&nbsp;Please send the a=
+ttached contract to the Signer. See ticket here: SR-007042 | Salesforce Req=
+uest | Salesforce
+&nbsp;
+Please note: This deal is being worked prior to the overall Global product =
+and processes finalized. Please see me with questions as we work through th=
+e process flow.
+&nbsp;
+@Antaeus Coe=E2=80=8B&nbsp;Please remember that you need to send the prospe=
+ct the SMB Client T&amp;Cs document that they can use to augment their curr=
+ent CSA with their clients. The Docusign envelope contains ONLY the contrac=
+t between Prism and Advocate Pay.=20
+cc @Aleks Boruk=E2=80=8B&nbsp;
+</span><table role=3D"presentation" style=3D"color: #2A94D6; background-col=
+or: #2A94D6;" width=3D"100%" cellpadding=3D"0" cellspacing=3D"0" border=3D"=
+0"> <tr><td style=3D"line-height: 6px; font-size: 6px;" bgcolor=3D"#2A94D6"=
+ height=3D"6">&nbsp;</td></tr>
+</table><table role=3D"presentation" style=3D"color: #F2F2F2; background-co=
+lor: #F2F2F2;" width=3D"100%" cellpadding=3D"0" cellspacing=3D"0" border=3D=
+"0"> <tr><td style=3D"line-height: 25px; font-size: 25px;" bgcolor=3D"#F2F2=
+F2" height=3D"25">&nbsp;</td></tr>
+</table>    <table role=3D"presentation" class=3D"backgroundTable" border=
+=3D"0" cellpadding=3D"0" cellspacing=3D"0" bgcolor=3D"#F2F2F2" width=3D"100=
+%" align=3D"center">
+        <tr>
+            <td align=3D"center">
+                <!--[if (gte mso 9)|(IE)]>
+                    <table  role=3D"presentation" style=3D"background-color=
+: #F2F2F2;" width=3D"600px" cellpadding=3D"0" cellspacing=3D"0" border=3D"0=
+" align=3D"center" bgcolor=3D"#F2F2F2">
+                    <tbody>
+                        <tr>
+                            <td>
+                <![endif]--> =20
+                <table role=3D"presentation" class=3D"container" style=3D"b=
+ackground-color:#FFFFFF; max-width:600px;" cellpadding=3D"0" cellspacing=3D=
+"0" border=3D"0" align=3D"center" bgcolor=3D"#FFFFFF">
+                    <tbody>
+                        <tr>
+                            <td align=3D"left">        <!-- Start Body -->
+  <table role=3D"presentation" style=3D"box-shadow: 0px 2px 3px 0px rgba(0,=
+0,0,0.14);" cellpadding=3D"0" cellspacing=3D"0" width=3D"100%" border=3D"0"=
+>
+    <tbody>
+      <tr>
+        <td class=3D"defaultIndentation" width=3D"20" bgcolor=3D"#FFFFFF">&=
+nbsp;</td>
+        <td bgcolor=3D"#FFFFFF"><table role=3D"presentation" style=3D"color=
+: #FFFFFF; background-color: #FFFFFF;" width=3D"100%" cellpadding=3D"0" cel=
+lspacing=3D"0" border=3D"0"> <tr><td style=3D"line-height: 28px; font-size:=
+ 28px;" bgcolor=3D"#FFFFFF" height=3D"28">&nbsp;</td></tr>
+</table>  <table role=3D"presentation" style=3D"" cellpadding=3D"0" cellspa=
+cing=3D"0" width=3D"100%" border=3D"0">
+    <tbody>
+      <tr>
+        <td class=3D"defaultIndentation" width=3D"20" bgcolor=3D"#FFFFFF">&=
+nbsp;</td>
+        <td bgcolor=3D"#FFFFFF"><div emloc=3D"_feedItem_0D5Pb00004drPI8_"> =
+   <table border=3D"0" cellpadding=3D"0" cellspacing=3D"0" width=3D"100%">
+      <tr style=3D"vertical-align: top;">
+        <td width=3D"45" style=3D"font-family: 'Salesforce Sans', 'Helvetic=
+a Neue', Helvetica, Arial, 'Sans Serif'; font-size: 14px; vertical-align: t=
+op; width:45" valign=3D"top">
+<a href=3D"https://urldefense.com/v3/__https://prismhr.my.salesforce.com/00=
+5F0000002QFbm?fromEmail=3D1&amp;s1oid=3D00DF00000004zxy&amp;s1nid=3D0000000=
+00000000&amp;s1uid=3D005Pb0000186gkE&amp;s1ext=3D0&amp;emkind=3DchatterPost=
+Notification&amp;emtm=3D1784566127428__;!!PCVGruIq!R5VeSgr0HOjA6uvMt9uSAhnh=
+s_MmeKIp7fBWu5ORC-gw4V9SweJOAF294mPRI6I6-V2sI5p5-s3AV6Iw0_TkgsPOH0Gi6g$"><i=
+mg border=3D"0" src=3D"https://prismhr.my.salesforce.com/ncsphoto/d5Vxge1Uy=
+k3S6azJqpptAsY_NWMEmXE5ktUuqsEnBNHIkQho8CgL9DL749Hrhj2X?fromEmail=3D1" widt=
+h=3D"45" alt=3D"" style=3D"display: block; border-radius: 50%;" class=3D"ci=
+rcle" height=3D"45"></a>        </td>
+        <td width=3D"10">&nbsp;</td>
+        <td style=3D"font-family: 'Salesforce Sans', 'Helvetica Neue', Helv=
+etica, Arial, 'Sans Serif'; font-size: 14px; color: #000000; vertical-align=
+: top;" valign=3D"top" class=3D"text">
+	        <div style=3D"margin: 6px 0px 4px 0px">
+	            <span emloc=3D"_preamble_"><span class=3D"text"><a href=3D"htt=
+ps://urldefense.com/v3/__https://prismhr.my.salesforce.com/aIDPb000000bigP?=
+fromEmail=3D1&amp;s1oid=3D00DF00000004zxy&amp;s1nid=3D000000000000000&amp;s=
+1uid=3D005Pb0000186gkE&amp;s1ext=3D0&amp;emkind=3DchatterPostNotification&a=
+mp;emtm=3D1784566127428__;!!PCVGruIq!R5VeSgr0HOjA6uvMt9uSAhnhs_MmeKIp7fBWu5=
+ORC-gw4V9SweJOAF294mPRI6I6-V2sI5p5-s3AV6Iw0_TkgsNRtznqbQ$" target=3D"_blank=
+" style=3D"text-decoration: none; color: #015BA7;"><span style=3D"text-deco=
+ration: none; color: #015BA7;"><font color=3D"#015BA7">Q-10322</font></span=
+></a><span class=3D"badge" style=3D"color: #888888;" emloc=3D"_badge_aIDPb0=
+00000bigP_"></span> =E2=80=94 <a href=3D"https://urldefense.com/v3/__https:=
+//prismhr.my.salesforce.com/005F0000002QFbm?fromEmail=3D1&amp;s1oid=3D00DF0=
+0000004zxy&amp;s1nid=3D000000000000000&amp;s1uid=3D005Pb0000186gkE&amp;s1ex=
+t=3D0&amp;emkind=3DchatterPostNotification&amp;emtm=3D1784566127428__;!!PCV=
+GruIq!R5VeSgr0HOjA6uvMt9uSAhnhs_MmeKIp7fBWu5ORC-gw4V9SweJOAF294mPRI6I6-V2sI=
+5p5-s3AV6Iw0_TkgsPOH0Gi6g$" target=3D"_blank" style=3D"text-decoration: non=
+e; color: #015BA7;"><span style=3D"text-decoration: none; color: #015BA7;">=
+<font color=3D"#015BA7">Deana Morgan</font></span></a><span class=3D"badge"=
+ style=3D"color: #888888;" emloc=3D"_badge_005F0000002QFbm_"></span> to Pri=
+smHR Only</span></span>
+	        </div>
+		    <div></div>
+</td>
+      </tr>
+    </table>
+	<div style=3D"margin: 12px 0px 12px 0px; font-size:16px;font-family: 'Sale=
+sforce Sans', 'Helvetica Neue', Helvetica, Arial, 'Sans Serif';">
+    	<div class=3D"text" emloc=3D"_itemBody_"><span class=3D"feeditemtext">=
+<p style=3D"margin:0"><a href=3D"https://urldefense.com/v3/__https://prismh=
+r.my.salesforce.com/0F93k000000glWa?fromEmail=3D1&amp;s1oid=3D00DF00000004z=
+xy&amp;s1nid=3D000000000000000&amp;s1uid=3D005Pb0000186gkE&amp;s1ext=3D0&am=
+p;emkind=3DchatterPostNotification&amp;emtm=3D1784566127428__;!!PCVGruIq!R5=
+VeSgr0HOjA6uvMt9uSAhnhs_MmeKIp7fBWu5ORC-gw4V9SweJOAF294mPRI6I6-V2sI5p5-s3AV=
+6Iw0_TkgsNYwLdelQ$" style=3D"text-decoration:none; color: #015ba7;font-weig=
+ht: bold;">@RCA Contract Requests</a>=E2=80=8B&nbsp;Please send the attache=
+d contract to the Signer. See ticket here: <a href=3D"https://urldefense.co=
+m/v3/__https://prismhr.lightning.force.com/lightning/r/Salesforce_Request__=
+c/a87Pb0000002PITIA2/view__;!!PCVGruIq!R5VeSgr0HOjA6uvMt9uSAhnhs_MmeKIp7fBW=
+u5ORC-gw4V9SweJOAF294mPRI6I6-V2sI5p5-s3AV6Iw0_TkgsPgBgPviw$" title=3D"https=
+://prismhr.lightning.force.com/lightning/r/Salesforce_Request__c/a87Pb00000=
+02PITIA2/view" style=3D"text-decoration:none; color: #015ba7;">SR-007042 | =
+Salesforce Request | Salesforce</a></p><p style=3D"margin:0">&nbsp;</p><p s=
+tyle=3D"margin:0">Please note: This deal is being worked prior to the overa=
+ll Global product and processes finalized. Please see me with questions as =
+we work through the process flow.</p><p style=3D"margin:0">&nbsp;</p><p sty=
+le=3D"margin:0"><a href=3D"https://urldefense.com/v3/__https://prismhr.my.s=
+alesforce.com/005Pb0000186gkE?fromEmail=3D1&amp;s1oid=3D00DF00000004zxy&amp=
+;s1nid=3D000000000000000&amp;s1uid=3D005Pb0000186gkE&amp;s1ext=3D0&amp;emki=
+nd=3DchatterPostNotification&amp;emtm=3D1784566127428__;!!PCVGruIq!R5VeSgr0=
+HOjA6uvMt9uSAhnhs_MmeKIp7fBWu5ORC-gw4V9SweJOAF294mPRI6I6-V2sI5p5-s3AV6Iw0_T=
+kgsNseYbfgw$" style=3D"text-decoration:none; color: #015ba7;font-weight: bo=
+ld;">@Antaeus Coe</a>=E2=80=8B&nbsp;Please remember that <b>you need to sen=
+d the prospect the SMB Client T&amp;Cs document</b> that they can use to au=
+gment their current CSA with their clients. The Docusign envelope contains =
+ONLY the contract between Prism and Advocate Pay. </p><p style=3D"margin:0"=
+>cc <a href=3D"https://urldefense.com/v3/__https://prismhr.my.salesforce.co=
+m/005Pb00000FnWqv?fromEmail=3D1&amp;s1oid=3D00DF00000004zxy&amp;s1nid=3D000=
+000000000000&amp;s1uid=3D005Pb0000186gkE&amp;s1ext=3D0&amp;emkind=3Dchatter=
+PostNotification&amp;emtm=3D1784566127428__;!!PCVGruIq!R5VeSgr0HOjA6uvMt9uS=
+Ahnhs_MmeKIp7fBWu5ORC-gw4V9SweJOAF294mPRI6I6-V2sI5p5-s3AV6Iw0_TkgsMC7tRCkA$=
+" style=3D"text-decoration:none; color: #015ba7;font-weight: bold;">@Aleks =
+Boruk</a>=E2=80=8B&nbsp;</p></span></div>
+<table role=3D"presentation" style=3D"color: #FFFFFF; background-color: #FF=
+FFFF;" width=3D"100%" cellpadding=3D"0" cellspacing=3D"0" border=3D"0"> <tr=
+><td style=3D"line-height: 18px; font-size: 18px;" bgcolor=3D"#FFFFFF" heig=
+ht=3D"18">&nbsp;</td></tr>
+</table>        <table emloc=3D"_callToAction_" class=3D"callToAction" cell=
+padding=3D"0" cellspacing=3D"0" border=3D"0" width=3D"100%">
+            <tr>
+                <td>
+                    <table cellpadding=3D"0" cellspacing=3D"0" border=3D"0"=
+ width=3D"100%">
+                        <tr>
+                            <td class=3D"buttonWrapper" style=3D"font-famil=
+y: 'Salesforce Sans', 'Helvetica Neue', Helvetica, Arial, 'Sans Serif'; fon=
+t-size: 14px;" width=3D"116">
+                                <span class=3D"button" emloc=3D"_callToActi=
+onLink_">  <!--[if mso]>
+<a href=3D"https://urldefense.com/v3/__https://prismhr.my.salesforce.com/0D=
+5Pb00004drPI8?fromEmail=3D1&amp;s1oid=3D00DF00000004zxy&amp;s1nid=3D0000000=
+00000000&amp;s1uid=3D005Pb0000186gkE&amp;s1ext=3D0&amp;emkind=3DchatterPost=
+Notification&amp;emtm=3D1784566127428&amp;OpenCommentForEdit=3D1__;!!PCVGru=
+Iq!R5VeSgr0HOjA6uvMt9uSAhnhs_MmeKIp7fBWu5ORC-gw4V9SweJOAF294mPRI6I6-V2sI5p5=
+-s3AV6Iw0_TkgsO5iBxfnA$" target=3D"_blank" aria-label=3D"View/Comment">    =
+<v:roundrect xmlns:v=3D"urn:schemas-microsoft-com:vml" xmlns:w=3D"urn:schem=
+as-microsoft-com:office:word" href=3D"https://urldefense.com/v3/__https://p=
+rismhr.my.salesforce.com/0D5Pb00004drPI8?fromEmail=3D1&amp;s1oid=3D00DF0000=
+0004zxy&amp;s1nid=3D000000000000000&amp;s1uid=3D005Pb0000186gkE&amp;s1ext=
+=3D0&amp;emkind=3DchatterPostNotification&amp;emtm=3D1784566127428&amp;Open=
+CommentForEdit=3D1__;!!PCVGruIq!R5VeSgr0HOjA6uvMt9uSAhnhs_MmeKIp7fBWu5ORC-g=
+w4V9SweJOAF294mPRI6I6-V2sI5p5-s3AV6Iw0_TkgsO5iBxfnA$" target=3D"_blank" sty=
+le=3D"height:28px v-text-anchor: middle; width:114" strokecolor=3D"#137CBD"=
+ arcsize=3D"7%" fill=3D"t" alt=3D"">
+      <v:fill angle=3D"180" type=3D"gradient" color=3D"#137CBD" color2=3D"#=
+137CBD"/>
+      <w:anchorlock/>
+      <center style=3D"color: #FFFFFF; font-family: 'Salesforce Sans', 'Hel=
+vetica Neue', Helvetica, Arial, 'Sans Serif';; font-size:13px;font-weight:n=
+ormal;"><span style=3D"white-space: nowrap;">View/Comment</span></center>
+    </v:roundrect>
+</a>  <![endif]-->
+  <!--[if !mso] -->
+<a href=3D"https://urldefense.com/v3/__https://prismhr.my.salesforce.com/0D=
+5Pb00004drPI8?fromEmail=3D1&amp;s1oid=3D00DF00000004zxy&amp;s1nid=3D0000000=
+00000000&amp;s1uid=3D005Pb0000186gkE&amp;s1ext=3D0&amp;emkind=3DchatterPost=
+Notification&amp;emtm=3D1784566127428&amp;OpenCommentForEdit=3D1__;!!PCVGru=
+Iq!R5VeSgr0HOjA6uvMt9uSAhnhs_MmeKIp7fBWu5ORC-gw4V9SweJOAF294mPRI6I6-V2sI5p5=
+-s3AV6Iw0_TkgsO5iBxfnA$" style=3D"font-family: 'Salesforce Sans', 'Helvetic=
+a Neue', Helvetica, Arial, 'Sans Serif'; -webkit-text-size-adjust: none; fo=
+nt-size: 14px; color: #FFFFFF; background-color: #137CBD; text-decoration: =
+none; text-align: center; border: 1px solid #137CBD; border-radius: 4px; -w=
+ebkit-border-radius: 4px; -moz-border-radius: 4px;  background-image: linea=
+r-gradient(top, #137CBD, #137CBD); background-image: -o-linear-gradient(top=
+, #137CBD, #137CBD); background-image: -moz-linear-gradient(top, #137CBD, #=
+137CBD); background-image: -webkit-linear-gradient(top, #137CBD, #137CBD); =
+background-image: -ms-linear-gradient(top, #137CBD, #137CBD); display: inli=
+ne-block; line-height:28px; width:114px " class=3D"button" target=3D"_blank=
+"><span class=3D"text" style=3D"white-space: nowrap;">View/Comment</span></=
+a>
+  <!-- <![endif]-->
+</span>
+                            </td>
+                            <td style=3D"font-family: 'Salesforce Sans', 'H=
+elvetica Neue', Helvetica, Arial, 'Sans Serif';font-size: 14px;">
+                                <div class=3D"text" style=3D"color: #595959=
+; padding-left: 0; padding-right: 0; padding-top: 0; padding-bottom: 0; mar=
+gin-left: 0; margin-right: 0; margin-top: 0; margin-bottom: 0; white-space:=
+ nowrap;"> &nbsp; or <b>reply to this email</b></div>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+	</div>
+</div></td>
+        <td class=3D"defaultIndentation" width=3D"20" bgcolor=3D"#FFFFFF">&=
+nbsp;</td>
+      </tr>
+    </tbody>
+  </table>
+<table role=3D"presentation" style=3D"color: #FFFFFF; background-color: #FF=
+FFFF;" width=3D"100%" cellpadding=3D"0" cellspacing=3D"0" border=3D"0"> <tr=
+><td style=3D"line-height: 28px; font-size: 28px;" bgcolor=3D"#FFFFFF" heig=
+ht=3D"28">&nbsp;</td></tr>
+</table></td>
+        <td class=3D"defaultIndentation" width=3D"20" bgcolor=3D"#FFFFFF">&=
+nbsp;</td>
+      </tr>
+    </tbody>
+  </table>
+        <!-- End Body -->
+        <!-- Start Footer -->
+        <table width=3D"100%" cellpadding=3D"0" cellspacing=3D"0" bgcolor=
+=3D"#F2F2F2" style=3D"background-color: #F2F2F2;" border=3D"0">
+            <tbody>
+                <tr>
+                    <td class=3D"footer" emloc=3D"_footer_" bgcolor=3D"#F2F=
+2F2" style=3D"font-family: 'Salesforce Sans', 'Helvetica Neue', Helvetica, =
+Arial, 'Sans Serif'; font-size: 12px; color: #595959;">
+  <table role=3D"presentation" style=3D"font-family: 'Salesforce Sans', 'He=
+lvetica Neue', Helvetica, Arial, 'Sans Serif'; font-size: 12px; color: #595=
+959;" cellpadding=3D"0" cellspacing=3D"0" width=3D"100%" border=3D"0">
+    <tbody>
+      <tr>
+        <td class=3D"defaultIndentation" width=3D"20" bgcolor=3D"#F2F2F2">&=
+nbsp;</td>
+        <td bgcolor=3D"#F2F2F2">  <table role=3D"presentation" style=3D"fon=
+t-family: 'Salesforce Sans', 'Helvetica Neue', Helvetica, Arial, 'Sans Seri=
+f'; font-size: 12px; color: #595959;" cellpadding=3D"0" cellspacing=3D"0" w=
+idth=3D"100%" border=3D"0">
+    <tbody>
+ <tr><td style=3D"line-height: 18px; font-size: 18px;" bgcolor=3D"#F2F2F2" =
+height=3D"18">&nbsp;</td></tr>
+      <tr><td><!-- Start S1 App Store Badges -->
+<div emloc=3D"_s1AppStoreBadgesContainer_">
+Download Salesforce
+<br>
+	<a href=3D"https://urldefense.com/v3/__https://prismhr.my.salesforce.com/s=
+ervices/appstore/ios?fromEmail=3D1&amp;s1oid=3D00DF00000004zxy&amp;s1nid=3D=
+000000000000000&amp;s1uid=3D005Pb0000186gkE&amp;s1ext=3D0&amp;emkind=3Dchat=
+terPostNotification&amp;emtm=3D1784566127428__;!!PCVGruIq!R5VeSgr0HOjA6uvMt=
+9uSAhnhs_MmeKIp7fBWu5ORC-gw4V9SweJOAF294mPRI6I6-V2sI5p5-s3AV6Iw0_TkgsNIBZQr=
+zw$" emloc=3D"_s1AppStoreBadge_ios_"><img border=3D"0" src=3D"https://prism=
+hr.my.salesforce.com/img/en/appstore_badge_ios.png?fromEmail=3D1" alt=3D"Do=
+wnload on the App Store" title=3D"Download on the App Store" width=3D"103" =
+height=3D"31" style=3D"padding: .5rem 0 .5rem 0; vertical-align: middle; di=
+splay: inline;"></a>&nbsp;
+	<a href=3D"https://urldefense.com/v3/__https://prismhr.my.salesforce.com/s=
+ervices/appstore/android?fromEmail=3D1&amp;s1oid=3D00DF00000004zxy&amp;s1ni=
+d=3D000000000000000&amp;s1uid=3D005Pb0000186gkE&amp;s1ext=3D0&amp;emkind=3D=
+chatterPostNotification&amp;emtm=3D1784566127428__;!!PCVGruIq!R5VeSgr0HOjA6=
+uvMt9uSAhnhs_MmeKIp7fBWu5ORC-gw4V9SweJOAF294mPRI6I6-V2sI5p5-s3AV6Iw0_TkgsOn=
+A8UcCA$" emloc=3D"_s1AppStoreBadge_android_"><img border=3D"0" src=3D"https=
+://prismhr.my.salesforce.com/img/en/appstore_badge_android.png?fromEmail=3D=
+1" alt=3D"Get it on Google Play" title=3D"Get it on Google Play" width=3D"1=
+01" height=3D"30" style=3D"padding: .5rem 0 .5rem 0; vertical-align: middle=
+; display: inline;"></a>&nbsp;
+<hr>
+</div>
+<!-- End S1 App Store Badges -->
+                            <div>You're receiving emails when someone &quot=
+;Mentions me in a post.&quot;</div>
+<table role=3D"presentation" style=3D"color: #F2F2F2; background-color: #F2=
+F2F2;" width=3D"100%" cellpadding=3D"0" cellspacing=3D"0" border=3D"0"> <tr=
+><td style=3D"line-height: 2px; font-size: 2px;" bgcolor=3D"#F2F2F2" height=
+=3D"2">&nbsp;</td></tr>
+</table>                            <div>To change or turn off PrismHR emai=
+l, <a href=3D"https://urldefense.com/v3/__https://prismhr.my.salesforce.com=
+/_ui/core/feeds/notification/ChatterEmailSettings?setupid=3DCollaborationEm=
+ailSettings&amp;fromEmail=3D1&amp;s1oid=3D00DF00000004zxy&amp;s1nid=3D00000=
+0000000000&amp;s1uid=3D005Pb0000186gkE&amp;s1ext=3D0&amp;emkind=3DchatterPo=
+stNotification&amp;emtm=3D1784566127428__;!!PCVGruIq!R5VeSgr0HOjA6uvMt9uSAh=
+nhs_MmeKIp7fBWu5ORC-gw4V9SweJOAF294mPRI6I6-V2sI5p5-s3AV6Iw0_TkgsO01dJrKA$" =
+target=3D"_blank" style=3D"text-decoration: none; color: #015BA7;"><span st=
+yle=3D"text-decoration: none; color: #015BA7;"><font color=3D"#015BA7">log =
+in</font></span></a> as antaeus.coe@prismhr.com.</div>
+<table role=3D"presentation" style=3D"color: #F2F2F2; background-color: #F2=
+F2F2;" width=3D"100%" cellpadding=3D"0" cellspacing=3D"0" border=3D"0"> <tr=
+><td style=3D"line-height: 8px; font-size: 8px;" bgcolor=3D"#F2F2F2" height=
+=3D"8">&nbsp;</td></tr>
+</table>                            <div style=3D"text-decoration: none; co=
+lor: #727272; font-style:italic;">Salesforce, Inc. Salesforce Tower, 415 Mi=
+ssion Street, 3rd Floor San Francisco, CA 94105</div>
+<table role=3D"presentation" style=3D"color: #F2F2F2; background-color: #F2=
+F2F2;" width=3D"100%" cellpadding=3D"0" cellspacing=3D"0" border=3D"0"> <tr=
+><td style=3D"line-height: 10px; font-size: 10px;" bgcolor=3D"#F2F2F2" heig=
+ht=3D"10">&nbsp;</td></tr>
+</table>                            <div emloc=3D"_chatterLogo_"><img src=
+=3D"https://prismhr.file.force.com/servlet/servlet.ImageServer?id=3D0152A00=
+00074jxW&amp;oid=3D00DF00000004zxy&amp;fromEmail=3D1" alt=3D"PrismHR" title=
+=3D"PrismHR"></div>
+</td></tr>
+ <tr><td style=3D"line-height: 18px; font-size: 18px;" bgcolor=3D"#F2F2F2" =
+height=3D"18">&nbsp;</td></tr>
+    </tbody>
+  </table>
+</td>
+        <td class=3D"defaultIndentation" width=3D"20" bgcolor=3D"#F2F2F2">&=
+nbsp;</td>
+      </tr>
+    </tbody>
+  </table>
+                    </td>
+                </tr>
+ <tr><td style=3D"line-height: 20px; font-size: 20px;" bgcolor=3D"#F2F2F2" =
+height=3D"20">&nbsp;</td></tr>
+            </tbody>
+        </table>
+        <!-- End Footer -->
+</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <!--[if (gte mso 9)|(IE)]>
+                            </td>
+                        </tr>
+                    </tbody>
+                    </table>
+                <![endif]--> =20
+            </td>
+        </tr>
+    </table>
+<img src=3D"https://prismhr.my.salesforce.com/servlet/eMMetric?fromEmail=3D=
+1&amp;emoid=3D00DF00000004zxy&amp;emnid=3D000000000000000&amp;emuid=3D005Pb=
+0000186gkE&amp;emkind=3DchatterPostNotification&amp;emtm=3D1784566127431&am=
+p;emext=3D0" alt=3D"" emloc=3D"_trImage_" height=3D"1" title=3D"" width=3D"=
+2"></body>
+</html>
+
+------=_Part_909_385835952.1784566127863--
