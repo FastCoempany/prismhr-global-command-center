@@ -4,6 +4,7 @@ import { getAppAccess } from "@/lib/auth";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import { peos } from "@/lib/book";
 import { contactCount } from "@/lib/book/contacts";
+import { loadCommand } from "@/lib/command-center/data";
 import { compositeScore, deskScore } from "@/lib/book/scoring";
 import {
   analyzePlay,
@@ -63,6 +64,10 @@ export default async function AccountsPage() {
   const engagements = await loadEngagements();
   const chipNotes = await loadAccountNotes();
   const dispositions = await loadDispositions();
+  // Working-the-deal state (stage/approach/intent/next action) — the Book's
+  // store, now living inside each account's expanded row.
+  const command = await loadCommand();
+  const peoStateById = new Map(command.rows.map((r) => [r.id, r]));
 
   // Notetaker notes linked to accounts (surfaced read-only here).
   const notesByAccount = new Map<string, LinkedNote[]>();
@@ -152,6 +157,13 @@ export default async function AccountsPage() {
           body: n.body,
           createdAt: n.createdAt,
         })),
+        stage: peoStateById.get(p.id)?.stage ?? "NOT_TOUCHED",
+        approach: peoStateById.get(p.id)?.approach ?? "NEEDS_CSM",
+        intent: peoStateById.get(p.id)?.intent ?? "UNKNOWN",
+        blended: peoStateById.get(p.id)?.priority ?? 0,
+        nextAction: peoStateById.get(p.id)?.nextAction ?? null,
+        nextActionDate: peoStateById.get(p.id)?.nextActionDate ?? null,
+        peoNotes: peoStateById.get(p.id)?.notes ?? null,
       };
     })
     .sort((a, b) => b.score - a.score);
@@ -171,7 +183,12 @@ export default async function AccountsPage() {
             demand · research {researchGeneratedAt}.
           </p>
         </div>
-        <AccountsClient rows={rows} canAdd={canAdd} onDashboard={onDashboard} />
+        <AccountsClient
+          rows={rows}
+          canAdd={canAdd}
+          canWrite={canAdd}
+          onDashboard={onDashboard}
+        />
 
         {/* The exclusions ledger — accounts marked "not mine" leave the room
             but never vanish silently: name, reason, when, and an undo. */}

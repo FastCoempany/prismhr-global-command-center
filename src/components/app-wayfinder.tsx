@@ -9,6 +9,14 @@ type AppWayfinderProps = {
   trail?: string;
 };
 
+// The three demo rooms live under one nav entry — any of them lights "Demos".
+const DEMO_PAGES = new Set([
+  "Demos",
+  "Demo Sidekick",
+  "v3 Sidekick",
+  "Payroll Demo Sidekick",
+]);
+
 export async function AppWayfinder({
   current,
   onSignOut,
@@ -65,13 +73,6 @@ export async function AppWayfinder({
             Pricing
           </Link>
           <Link
-            aria-current={current === "Book" ? "page" : undefined}
-            className="app-route-link"
-            href="/book"
-          >
-            Book
-          </Link>
-          <Link
             aria-current={current === "Pipeline" ? "page" : undefined}
             className="app-route-link"
             href="/pipeline"
@@ -79,25 +80,18 @@ export async function AppWayfinder({
             Pipeline
           </Link>
           <Link
-            aria-current={current === "Demo Sidekick" ? "page" : undefined}
+            aria-current={DEMO_PAGES.has(current) ? "page" : undefined}
             className="app-route-link"
-            href="/sidekick"
+            href="/demos"
           >
-            Demo Sidekick
+            Demos
           </Link>
           <Link
-            aria-current={current === "v3 Sidekick" ? "page" : undefined}
+            aria-current={current === "Battlecard" ? "page" : undefined}
             className="app-route-link"
-            href="/sidekick-v3"
+            href="/battlecard"
           >
-            v3 Sidekick
-          </Link>
-          <Link
-            aria-current={current === "Payroll Demo Sidekick" ? "page" : undefined}
-            className="app-route-link"
-            href="/payroll-demo-sidekick"
-          >
-            Payroll Demo Sidekick
+            Battlecard
           </Link>
           <Link
             aria-current={current === "Intake" ? "page" : undefined}

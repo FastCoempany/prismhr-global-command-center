@@ -1,6 +1,18 @@
 "use server";
 
+import { applyPlay as applyPlayImpl, savePeo as savePeoImpl } from "../book/actions";
 import { revalidatePath } from "next/cache";
+
+// Working-the-deal actions (absorbed from the Book) — same store, same
+// behavior; the forms just live on /accounts now. ("use server" files can't
+// re-export directly, so these are thin async pass-throughs.)
+export async function savePeo(formData: FormData) {
+  return savePeoImpl(formData);
+}
+
+export async function applyPlay(formData: FormData) {
+  return applyPlayImpl(formData);
+}
 import { redirect } from "next/navigation";
 import { getAppAccess } from "@/lib/auth";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
