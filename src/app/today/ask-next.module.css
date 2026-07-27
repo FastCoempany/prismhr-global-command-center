@@ -1,0 +1,76 @@
+/* Ask next — compact question panel shared by the dashboard card and the
+   focus popover. Quiet by default; everything actionable on hover. */
+
+.wrap {
+  display: grid;
+  gap: 3px;
+  margin-top: 6px;
+  max-width: 100%;
+}
+.head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.cap {
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #5b6b86;
+}
+.all {
+  font-size: 10.5px;
+  color: #2563eb;
+  text-decoration: none;
+}
+.all:hover {
+  text-decoration: underline;
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+.q {
+  flex: 1;
+  min-width: 0;
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: #16233d;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.info {
+  color: #5b6b86;
+  font-size: 10.5px;
+  cursor: help;
+}
+.inline {
+  display: inline-flex;
+}
+.btn {
+  border: 1px solid #e6ebf3;
+  background: #fff;
+  color: #5b6b86;
+  border-radius: 6px;
+  padding: 0 6px;
+  font: inherit;
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1.7;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.btn:hover {
+  border-color: #2563eb;
+  color: #1d4ed8;
+}
+.foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+}

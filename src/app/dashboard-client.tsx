@@ -30,6 +30,7 @@ import { CountryFlag } from "@/lib/flags";
 import type { DealIntel } from "@/lib/intel/types";
 import type { CheckSuggestion } from "@/lib/intel/evidence";
 import type { LiveContextLine } from "@/lib/intel/live-context";
+import { AskNext, type AskNextQ } from "./today/ask-next";
 import styles from "./dashboard.module.css";
 
 type Props = {
@@ -42,6 +43,10 @@ type Props = {
   intelByName?: Record<string, DealIntel>; // derived deal intel per card name
   suggByName?: Record<string, CheckSuggestion[]>; // evidence → checkbox suggestions
   ctxByName?: Record<string, LiveContextLine[]>; // live context lines per card name
+  askByName?: Record<
+    string,
+    { accountId: string; questions: AskNextQ[]; research: string }
+  >; // ≤3 discovery questions per card name
 };
 
 const glyph = (state: NodeState) => (state === "done" ? "✓" : "");
@@ -249,6 +254,7 @@ export function DashboardClient({
   intelByName = {},
   suggByName = {},
   ctxByName = {},
+  askByName = {},
 }: Props) {
   const [renaming, setRenaming] = useState<string | null>(null);
   const [showRename, setShowRename] = useState(false);
@@ -404,6 +410,15 @@ export function DashboardClient({
                     </div>
                     {card.subtitle && <div className={styles.meta}>{card.subtitle}</div>}
                     {intel && <IntelStrip intel={intel} />}
+                    {askByName[card.name] && (
+                      <AskNext
+                        accountId={askByName[card.name].accountId}
+                        questions={askByName[card.name].questions}
+                        canWrite={canWrite}
+                        returnTo="/"
+                        research={askByName[card.name].research}
+                      />
+                    )}
                     {canWrite && (
                       <div className={styles.manage}>
                         <span

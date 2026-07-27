@@ -12,6 +12,7 @@ import {
   setDisposition,
 } from "./actions";
 import { addCard, setCardStage } from "../dashboard/actions";
+import { AskNext, type AskNextQ } from "./ask-next";
 import { LocalTime } from "../today-client";
 import { CountryFlag } from "@/lib/flags";
 import {
@@ -92,7 +93,7 @@ function ChipNoteRow({ n }: { n: ChipNote }) {
   );
 }
 
-type Panel = "notes" | "mine" | "partner" | "dash" | null;
+type Panel = "notes" | "mine" | "partner" | "dash" | "ask" | null;
 
 export function AccountChip({
   account,
@@ -106,6 +107,7 @@ export function AccountChip({
   notes = [],
   country = "",
   contact = null,
+  askNext = null,
 }: {
   account: { id: string; name: string; score: number; play: string | null };
   partner: string;
@@ -125,6 +127,9 @@ export function AccountChip({
   // "parked" (⏸ shelved). "not-mine" never reaches a chip — those accounts are
   // filtered out server-side.
   disposition?: Disposition | null;
+  // The ≤3 discovery questions worth asking this account right now, plus the
+  // pre-built research prompt for the copy loop.
+  askNext?: { questions: AskNextQ[]; research: string } | null;
 }) {
   const [open, setOpen] = useState(false);
   // Notes are the default panel when they exist — the box opens showing them.
@@ -276,6 +281,7 @@ export function AccountChip({
                       "notes",
                       `Notes (${notes.length}) ${panel === "notes" ? "▾" : "▸"}`,
                     )}
+                  {askNext && askNext.questions.length > 0 && pill("ask", "Ask next")}
                   <Link
                     href={`/accounts?focus=${account.id}`}
                     className={styles.chipPill}
@@ -350,6 +356,16 @@ export function AccountChip({
                       </a>
                     )}
                   </span>
+                )}
+
+                {panel === "ask" && askNext && (
+                  <AskNext
+                    accountId={account.id}
+                    questions={askNext.questions}
+                    canWrite
+                    returnTo="/today"
+                    research={askNext.research}
+                  />
                 )}
 
                 {panel === "mine" &&
