@@ -96,6 +96,7 @@ import {
   resumeLedgerRow,
   setPartnerLight,
   sheetActionBack,
+  skipFileAction,
   updateTouchAsk,
   setThreadStatus,
   toggleTaskDone,
@@ -604,6 +605,12 @@ export default async function TodayPage({
   // in the Archive's hidden bin, restorable.
   const hiddenKeys = new Set(
     [...dispositions.keys()].filter((k) => k.startsWith("hide:")),
+  );
+  // Done actions marked "skip" — nothing to file; the pickers stay gone.
+  const noFileIds = new Set(
+    [...dispositions.keys()]
+      .filter((k) => k.startsWith("nofile:"))
+      .map((k) => k.slice("nofile:".length)),
   );
   const visibleTodos = todos.filter((t) => !hiddenKeys.has(`hide:todo:${t.id}`));
 
@@ -1683,28 +1690,39 @@ export default async function TodayPage({
                     }
                     meta={refs ? `filed → ${label}` : undefined}
                     primary={
-                      !refs ? (
-                        <form action={fileDoneAction} className={styles.fileLine}>
-                          <input type="hidden" name="id" value={t.id} />
-                          <span className={styles.fileLab}>File →</span>
-                          <select name="accountId" defaultValue="" aria-label="Account">
-                            <option value="">Account ▾</option>
-                            {noteAccounts.map((a) => (
-                              <option key={a.id} value={a.id}>
-                                {a.name}
-                              </option>
-                            ))}
-                          </select>
-                          <select name="partner" defaultValue="" aria-label="Partner">
-                            <option value="">Partner ▾</option>
-                            {kickoff.map((k) => (
-                              <option key={k.partner} value={k.partner}>
-                                {k.partner}
-                              </option>
-                            ))}
-                          </select>
-                          <button className={styles.atcBtn}>file ✓</button>
-                        </form>
+                      !refs && !noFileIds.has(t.id) ? (
+                        <span className={styles.fileLine}>
+                          <form action={fileDoneAction} className={styles.fileLine}>
+                            <input type="hidden" name="id" value={t.id} />
+                            <span className={styles.fileLab}>File →</span>
+                            <select name="accountId" defaultValue="" aria-label="Account">
+                              <option value="">Account ▾</option>
+                              {noteAccounts.map((a) => (
+                                <option key={a.id} value={a.id}>
+                                  {a.name}
+                                </option>
+                              ))}
+                            </select>
+                            <select name="partner" defaultValue="" aria-label="Partner">
+                              <option value="">Partner ▾</option>
+                              {kickoff.map((k) => (
+                                <option key={k.partner} value={k.partner}>
+                                  {k.partner}
+                                </option>
+                              ))}
+                            </select>
+                            <button className={styles.atcBtn}>file ✓</button>
+                          </form>
+                          <form action={skipFileAction} className={styles.valInline}>
+                            <input type="hidden" name="id" value={t.id} />
+                            <button
+                              className={styles.sheetGhost}
+                              title="Nothing to file — just a done note; the pickers go away"
+                            >
+                              skip
+                            </button>
+                          </form>
+                        </span>
                       ) : undefined
                     }
                   />
