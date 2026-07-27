@@ -225,6 +225,23 @@ export async function fileDoneAction(formData: FormData) {
   done();
 }
 
+// "skip" on a done action's File→ row — nothing to file (personal errand,
+// internal chore); the pickers go away for good on that row. Zero-schema:
+// a nofile:<todoId> disposition.
+export async function skipFileAction(formData: FormData) {
+  const id = str(formData, "id", 40);
+  if (!(await requireWrite()) || !id) done();
+  await safeWrite(async () => {
+    const key = `nofile:${id}`.slice(0, 191);
+    await getPrisma().accountDisposition.upsert({
+      where: { accountId: key },
+      create: { accountId: key, status: "parked", reason: "" },
+      update: { status: "parked" },
+    });
+  });
+  done();
+}
+
 export async function addFieldNote(formData: FormData) {
   const body = str(formData, "body", 2000);
   if (!(await requireWrite()) || !body) done();
