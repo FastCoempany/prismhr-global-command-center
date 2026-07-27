@@ -6967,3 +6967,16 @@
     padding-top: 10px;
   }
 }
+
+/* Breathing room between the left column's stacked sections — a section cap
+   that follows content gets real air above it; caps inside the focus row and
+   at the top of the column stay tight. */
+.cockCol > .cockCap {
+  margin-top: 44px;
+}
+.cockCol > .cockCap:first-child {
+  margin-top: 0;
+}
+.cockCol > .focusRow {
+  margin-top: 44px;
+}
