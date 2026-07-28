@@ -114,7 +114,7 @@
   border-radius: 12px;
   box-shadow: 0 14px 38px rgba(10, 28, 64, 0.18);
   padding: 6px;
-  z-index: 30;
+  z-index: 150;
   text-align: left;
 }
 .mi {
@@ -294,7 +294,7 @@
   border-radius: 11px;
   box-shadow: 0 10px 28px rgba(10, 28, 64, 0.16);
   padding: 10px 14px;
-  z-index: 6;
+  z-index: 150;
   letter-spacing: 0;
 }
 .multi:hover .hovercard {
@@ -1071,7 +1071,9 @@ button.sdRadio:hover {
   border-left: 1px solid rgba(255, 255, 255, 0.8);
   box-shadow: -18px 0 44px rgba(10, 28, 64, 0.16);
   padding: 16px 20px 30px;
-  z-index: 40;
+  /* the brand scale: wayfinder 100 < drawer 200 — the ribbon never traps
+     the drawer's close row again */
+  z-index: var(--ds-z-drawer, 200);
 }
 .dpHead {
   display: flex;
