@@ -137,9 +137,15 @@ function Row({ row }: { row: RoomRow }) {
   const [pasteOpen, setPasteOpen] = useState(false);
   const [pasteText, setPasteText] = useState("");
   const [note, setNote] = useState<string | null>(null);
-  const [closed, setClosed] = useState(false);
+  // Which outstanding item was closed — keyed by doneKey so the strike never
+  // carries over onto the NEXT item after the panel refreshes.
+  const [closedKey, setClosedKey] = useState<string | null>(null);
+  const closed = !!row.outstanding && closedKey === row.outstanding.doneKey;
   const [stageOpen, setStageOpen] = useState<string | null>(null);
   const [pending, start] = useTransition();
+  // The move button owns its own spinner — a register-row op must never
+  // dress the Mark-it-done button in "Saving…".
+  const [closePending, startClose] = useTransition();
 
   const submitCompose = () => {
     const text = logText.trim();
@@ -216,9 +222,9 @@ function Row({ row }: { row: RoomRow }) {
     });
   };
   const submitClose = () => {
-    if (!row.outstanding || pending || closed) return;
+    if (!row.outstanding || closePending || closed) return;
     const o = row.outstanding;
-    start(async () => {
+    startClose(async () => {
       const r = await roomClose({
         accountId: row.accountId,
         cardId: row.cardId,
@@ -229,7 +235,7 @@ function Row({ row }: { row: RoomRow }) {
         cardName: row.name,
       });
       if (r.ok) {
-        setClosed(true);
+        setClosedKey(o.doneKey);
         setFreshInfo((f) => [{ text: `Closed: ${o.item}` }, ...f]);
       } else setNote(r.reason ?? "The close didn't save.");
     });
@@ -426,10 +432,10 @@ function Row({ row }: { row: RoomRow }) {
             <button
               type="button"
               className={row.rank === 0 ? styles.go : styles.ghost}
-              disabled={pending}
+              disabled={closePending}
               onClick={submitClose}
             >
-              {pending ? "Saving…" : "Mark it done ✓"}
+              {closePending ? "Saving…" : "Mark it done ✓"}
             </button>
           )}
         </div>
@@ -510,27 +516,44 @@ function Row({ row }: { row: RoomRow }) {
                 )}
               </div>
             </div>
-          ) : (
-            <div
-              key={`fc${i}`}
-              className={`${styles.it} ${styles.itOpen} ${styles.fresh}`}
-            >
-              <span className={`${styles.ic} ${styles.gAct}`}>✸</span>
-              <span className={`${styles.st} ${styles.stOpen}`}>
-                {c.kind === "scheduled" ? "SOON" : "OPEN"}
-              </span>
-              <span className={styles.tx}>{c.body}</span>
-              {c.todoId && (
-                <span className={styles.rail}>
-                  <button onClick={() => todoOp(c.todoId!, "done")} title="done">
-                    ✓
-                  </button>
-                  <button onClick={() => todoOp(c.todoId!, "drop")} title="park">
-                    ✕
-                  </button>
-                </span>
-              )}
-            </div>
+          ) : c.todoId && gone.has(c.todoId) ? null : (
+            (() => {
+              const did = !!c.todoId && doneIds.has(c.todoId);
+              return (
+                <div
+                  key={`fc${i}`}
+                  className={`${styles.it} ${did ? styles.itDid : styles.itOpen} ${styles.fresh}`}
+                >
+                  <span className={`${styles.ic} ${did ? styles.gDone : styles.gAct}`}>
+                    {did ? "✓" : "✸"}
+                  </span>
+                  {!did && (
+                    <span className={`${styles.st} ${styles.stOpen}`}>
+                      {c.kind === "scheduled" ? "SOON" : "OPEN"}
+                    </span>
+                  )}
+                  <span className={styles.tx}>{c.body}</span>
+                  {c.todoId && (
+                    <span className={styles.rail}>
+                      {did ? (
+                        <button onClick={() => todoOp(c.todoId!, "undo")} title="undo">
+                          ↩
+                        </button>
+                      ) : (
+                        <>
+                          <button onClick={() => todoOp(c.todoId!, "done")} title="done">
+                            ✓
+                          </button>
+                          <button onClick={() => todoOp(c.todoId!, "drop")} title="park">
+                            ✕
+                          </button>
+                        </>
+                      )}
+                    </span>
+                  )}
+                </div>
+              );
+            })()
           ),
         )}
         {freshInfo.map((f, i) => (
