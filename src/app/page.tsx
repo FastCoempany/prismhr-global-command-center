@@ -77,12 +77,15 @@ export default async function DashboardPage() {
     string,
     { accountId: string; questions: AskNextQ[]; research: string }
   > = {};
+  // Account-page deep links per card ("Account ↗" → /accounts?focus=<id>).
+  const acctIdByName: Record<string, string> = {};
   for (const card of data.cards) {
     if (card.archived) continue;
     const acctId =
       idByName.get(card.name.toLowerCase()) ??
       digestForCardName(card.name)?.accountId ??
       "";
+    if (acctId) acctIdByName[card.name] = acctId;
     const docs = corpusFor(acctId, card.name, {
       acctNotes: acctNotesById.get(acctId),
       todos: todos.filter((t) => acctId && t.accountId === acctId),
@@ -175,6 +178,7 @@ export default async function DashboardPage() {
           dbUnavailable={data.status === "database-unavailable"}
           labels={data.labels}
           notesByName={notesByName}
+          acctIdByName={acctIdByName}
           countryByName={countryByName}
           intelByName={intelByName}
           suggByName={suggByName}

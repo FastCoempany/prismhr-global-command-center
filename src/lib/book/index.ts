@@ -20,7 +20,31 @@ export type Peo = {
   fitTier: FitTier;
 };
 
-export const peos = book.peos as Peo[];
+// Deals that live outside the SF book export (direct/referral motions with no
+// CSM chair) still deserve a seat in the Account Room — their notes, intel,
+// and dashboard cards already key off these ids. Hand-authored; ids must match
+// the digest's accountId so everything lines up.
+const OFF_BOOK: Peo[] = [
+  {
+    id: "ADVOCATEPAY000001",
+    name: "Advocate Pay",
+    cloud: "",
+    csm: "Unassigned", // direct referral deal — no CSM chair
+    contactName: "Bryce Rowley",
+    contactEmail: "bryce@advocatepay.com",
+    size: 0,
+    sizeBucket: "",
+    industry: "Contractor payments",
+    city: "",
+    state: "",
+    website: "advocatepay.com",
+    lastActivity: "2026-07-21",
+    fit: 85,
+    fitTier: "high",
+  },
+];
+
+export const peos = [...(book.peos as Peo[]), ...OFF_BOOK];
 export const csms = book.csms as string[];
 
 const byId = new Map(peos.map((p) => [p.id, p]));

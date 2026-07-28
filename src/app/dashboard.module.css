@@ -886,3 +886,15 @@
   border-color: var(--line);
   color: #b42318;
 }
+
+.cardAcctLink {
+  margin-left: 4px;
+  font-size: 12px;
+  color: #64748b;
+  text-decoration: none;
+  opacity: 0.55;
+}
+.cardAcctLink:hover {
+  color: #0369a1;
+  opacity: 1;
+}

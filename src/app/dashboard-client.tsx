@@ -39,6 +39,7 @@ type Props = {
   dbUnavailable: boolean;
   labels: Record<string, string>;
   notesByName?: Record<string, ChipNote[]>; // chip-written worked notes, by card name
+  acctIdByName?: Record<string, string>; // account-page deep link target per card name
   countryByName?: Record<string, string>; // deal-country flag per card name (iso2)
   intelByName?: Record<string, DealIntel>; // derived deal intel per card name
   suggByName?: Record<string, CheckSuggestion[]>; // evidence → checkbox suggestions
@@ -250,6 +251,7 @@ export function DashboardClient({
   dbUnavailable,
   labels,
   notesByName = {},
+  acctIdByName = {},
   countryByName = {},
   intelByName = {},
   suggByName = {},
@@ -406,6 +408,15 @@ export function DashboardClient({
                           code={countryByName[card.name]}
                           className={styles.cardFlag}
                         />
+                      )}
+                      {acctIdByName[card.name] && (
+                        <a
+                          href={`/accounts?focus=${acctIdByName[card.name]}`}
+                          className={styles.cardAcctLink}
+                          title="Open this account in the Account Room"
+                        >
+                          ↗
+                        </a>
                       )}
                     </div>
                     {card.subtitle && <div className={styles.meta}>{card.subtitle}</div>}
