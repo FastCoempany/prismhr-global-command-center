@@ -29,7 +29,6 @@ import {
 } from "@/lib/today/build";
 import { partitionFollowUps, roundupDue } from "@/lib/today/follow-ups";
 import { splitAsk } from "@/lib/today/ledger";
-import { sameUserDay } from "@/lib/tz";
 import { DASH_NODES } from "@/lib/dashboard/stages";
 import { corpusFor, extractDealIntel } from "@/lib/intel/extract";
 import { digestFor, digestForCardName } from "@/lib/intel/digest";
@@ -37,6 +36,7 @@ import { COUNTRY_NAME } from "@/lib/intel/lexicon";
 import { suggestChecks } from "@/lib/intel/evidence";
 import { climbFraction, daysBetween, readDeal, type RoomRead } from "@/lib/room/engine";
 import { buildStageRail } from "@/lib/room/stages-view";
+import { buildAccountSheet } from "@/lib/room/sheet-view";
 import {
   RoomClient,
   type CadenceRow,
@@ -62,14 +62,6 @@ const HEALTH_ORDER = { red: 0, amber: 1, green: 2, quiet: 3 } as const;
 function firstName(s: string): string {
   return (s ?? "").trim().split(/\s+/)[0] ?? "";
 }
-function shortDay(iso: string): string {
-  const t = Date.parse(iso);
-  if (Number.isNaN(t)) return "";
-  return new Date(t)
-    .toLocaleDateString("en-US", { timeZone: "America/Chicago", weekday: "short" })
-    .toUpperCase();
-}
-
 export default async function RoomPage() {
   const data = await loadDashboard();
   if (data.status === "unauthenticated") {
@@ -201,24 +193,14 @@ export default async function RoomPage() {
       why: sg.reason.slice(0, 160),
     }));
 
-    // The sheet: this account's open work, delayed, and completed-today.
-    const acctTodos = todos.filter((t) => accountId && t.accountId === accountId);
-    const sheetOpen = acctTodos
-      .filter((t) => !t.done && (!t.remindAt || Date.parse(t.remindAt) <= now.getTime()))
-      .slice(0, 8)
-      .map((t) => ({ id: t.id, body: t.body.split("\n")[0].slice(0, 140) }));
-    const sheetDelayed = acctTodos
-      .filter((t) => !t.done && t.remindAt && Date.parse(t.remindAt) > now.getTime())
-      .slice(0, 5)
-      .map((t) => ({
-        id: t.id,
-        body: t.body.split("\n")[0].slice(0, 140),
-        when: shortDay(t.remindAt),
-      }));
-    const sheetDoneToday = acctTodos
-      .filter((t) => t.done && sameUserDay(t.updatedAt, now))
-      .slice(0, 6)
-      .map((t) => ({ id: t.id, body: t.body.split("\n")[0].slice(0, 140) }));
+    // The sheet, in Today's own dialect: k:a-tagged action todos, account
+    // linkage via the notetaker column OR the routing marker's note ids,
+    // same-day row delays, hides, and doneAt stamps.
+    const noteIds = new Set(allNotes.map((n) => n.id));
+    const sheet = buildAccountSheet(todos, accountId, noteIds, dispositions, now);
+    const sheetOpen = sheet.open;
+    const sheetDelayed = sheet.delayed;
+    const sheetDoneToday = sheet.doneToday;
 
     const stageLabel = step
       ? `${(data.labels[step.nodeKey] ?? step.nodeLabel).toUpperCase().slice(0, 16)} · ${doneInStage} OF ${totalInStage}`

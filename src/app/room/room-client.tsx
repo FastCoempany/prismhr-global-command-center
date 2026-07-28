@@ -264,7 +264,7 @@ function Row({ row }: { row: RoomRow }) {
             <span
               className={styles.clOut}
               style={{
-                left: `calc(${Math.round(Math.max(0.04, row.climb.frac) * 100)}% + 16px)`,
+                left: `calc(${Math.round(Math.max(0.04, row.climb.frac) * 100)}% + 18px)`,
               }}
             >
               {label}
