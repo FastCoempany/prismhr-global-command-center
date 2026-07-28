@@ -7,6 +7,7 @@ import Link from "next/link";
 import { AppWayfinder } from "@/components/app-wayfinder";
 import { getAppAccess } from "@/lib/auth";
 import { peos } from "@/lib/book";
+import { aiCleanAvailable } from "@/lib/intel/ai-clean";
 import { IntakeTabs } from "./intake-tabs";
 import styles from "../command-center.module.css";
 
@@ -42,7 +43,7 @@ export default async function IntakePage() {
             SF activity paste lane. The app never writes to Salesforce or Forms.
           </p>
         </div>
-        <IntakeTabs accounts={accounts} />
+        <IntakeTabs accounts={accounts} ai={aiCleanAvailable()} />
       </main>
     </>
   );

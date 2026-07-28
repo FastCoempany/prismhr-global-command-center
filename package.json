@@ -21,6 +21,7 @@
     "sidekick:frames:v3": "node tools/sidekick-import/extract-flow-frames.mjs"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.115.0",
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "7.8.0",
     "@tailwindcss/postcss": "4.3.1",

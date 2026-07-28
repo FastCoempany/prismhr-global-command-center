@@ -11,7 +11,7 @@ import styles from "../command-center.module.css";
 
 type Acct = { id: string; name: string };
 
-export function IntakeTabs({ accounts }: { accounts: Acct[] }) {
+export function IntakeTabs({ accounts, ai }: { accounts: Acct[]; ai: boolean }) {
   const [tab, setTab] = useState<"form" | "paste">("form");
   return (
     <>
@@ -36,7 +36,7 @@ export function IntakeTabs({ accounts }: { accounts: Acct[] }) {
       {tab === "form" ? (
         <PayrollForm accounts={accounts} />
       ) : (
-        <IntakeClient accounts={accounts} />
+        <IntakeClient accounts={accounts} ai={ai} />
       )}
     </>
   );

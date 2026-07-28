@@ -12,6 +12,7 @@ import { digestFor, digestForCardName } from "@/lib/intel/digest";
 import { COUNTRY_NAME, redactMoney } from "@/lib/intel/lexicon";
 import { loadAccountNotes, loadTodos, loadTouches } from "@/lib/today/overlay";
 import { cleanSfPaste, type TimelineEntry } from "@/lib/sf-timeline";
+import { aiCleanAvailable, aiCleanTimeline } from "@/lib/intel/ai-clean";
 
 async function requireWrite() {
   if (!hasDatabaseEnv()) return false;
@@ -33,7 +34,7 @@ function noteBody(e: TimelineEntry): string {
   const head = `${GLYPH[e.kind] ?? "✉"} SF ${when || "activity"} — ${
     e.subject || "(no subject)"
   } · ${who}`;
-  return (e.body ? `${head}\n${e.body}` : head).slice(0, 2000);
+  return redactMoney(e.body ? `${head}\n${e.body}` : head).slice(0, 2000);
 }
 
 export async function fileTimeline(
@@ -59,6 +60,38 @@ export async function fileTimeline(
     return { ok: true, filed };
   } catch {
     return { ok: filed > 0, filed };
+  }
+}
+
+// --- AI clean ---------------------------------------------------------------
+// The one LLM touchpoint in the whole app: raw paste in, clean structured
+// dated entries + signal flags out. Server-side only; the key never leaves
+// Vercel. Absent key or any failure, the caller keeps the rule-based parse.
+
+export type AiCleanReply =
+  | { ok: true; entries: TimelineEntry[]; signals: string[] }
+  | { ok: false; reason: string };
+
+export async function cleanWithAI(raw: string): Promise<AiCleanReply> {
+  const access = await getAppAccess();
+  if (access.status !== "active") return { ok: false, reason: "Not signed in." };
+  if (!aiCleanAvailable())
+    return { ok: false, reason: "AI cleaning isn't configured on this deployment." };
+  const text = (raw ?? "").trim().slice(0, 60000);
+  if (text.length < 40) return { ok: false, reason: "Paste something first." };
+  try {
+    const out = await aiCleanTimeline(text, new Date());
+    if (out.entries.length === 0)
+      return {
+        ok: false,
+        reason: "AI found no activity entries — try filing it whole as ☰ transcript.",
+      };
+    return { ok: true, ...out };
+  } catch {
+    return {
+      ok: false,
+      reason: "AI call failed — the rule-based parse below still works.",
+    };
   }
 }
 
