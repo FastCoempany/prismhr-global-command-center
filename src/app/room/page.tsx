@@ -5,14 +5,46 @@ import { loadDashboard } from "@/lib/dashboard/data";
 import { peos } from "@/lib/book";
 import { contactsFor } from "@/lib/book/contacts";
 import { peopleFor } from "@/lib/intel/people";
-import { loadAccountNotes, loadTouches } from "@/lib/today/overlay";
-import { cardNextStep, morningDoneKey } from "@/lib/today/build";
+import {
+  loadAccountNotes,
+  loadDispositions,
+  loadDoneKeys,
+  loadSnoozes,
+  loadTodos,
+  loadTouches,
+  loadValidations,
+} from "@/lib/today/overlay";
+import {
+  accountIntel,
+  applyValidations,
+  cardNextStep,
+  morningDoneKey,
+  partnerKickoff,
+  partnerOutreachKey,
+  roundupBullets,
+  roundupFrame,
+  signals,
+  partitionSignals,
+  triageDoneKey,
+} from "@/lib/today/build";
+import { partitionFollowUps, roundupDue } from "@/lib/today/follow-ups";
+import { splitAsk } from "@/lib/today/ledger";
+import { sameUserDay } from "@/lib/tz";
 import { DASH_NODES } from "@/lib/dashboard/stages";
 import { corpusFor, extractDealIntel } from "@/lib/intel/extract";
 import { digestFor, digestForCardName } from "@/lib/intel/digest";
 import { COUNTRY_NAME } from "@/lib/intel/lexicon";
-import { climbFraction, readDeal, type RoomRead } from "@/lib/room/engine";
-import { RoomClient, type RoomRow } from "./room-client";
+import { suggestChecks } from "@/lib/intel/evidence";
+import { climbFraction, daysBetween, readDeal, type RoomRead } from "@/lib/room/engine";
+import { buildStageRail } from "@/lib/room/stages-view";
+import {
+  RoomClient,
+  type CadenceRow,
+  type CheckinRow,
+  type LaterRow,
+  type RoomRow,
+  type WarmRow,
+} from "./room-client";
 import styles from "./room.module.css";
 
 export const dynamic = "force-dynamic";
@@ -30,6 +62,13 @@ const HEALTH_ORDER = { red: 0, amber: 1, green: 2, quiet: 3 } as const;
 function firstName(s: string): string {
   return (s ?? "").trim().split(/\s+/)[0] ?? "";
 }
+function shortDay(iso: string): string {
+  const t = Date.parse(iso);
+  if (Number.isNaN(t)) return "";
+  return new Date(t)
+    .toLocaleDateString("en-US", { timeZone: "America/Chicago", weekday: "short" })
+    .toUpperCase();
+}
 
 export default async function RoomPage() {
   const data = await loadDashboard();
@@ -46,9 +85,19 @@ export default async function RoomPage() {
     );
   }
 
-  const [notesById, touches] = await Promise.all([loadAccountNotes(), loadTouches()]);
+  const [notesById, touches, todos, dispositions, snoozes, validations, doneKeys] =
+    await Promise.all([
+      loadAccountNotes(),
+      loadTouches(),
+      loadTodos(),
+      loadDispositions(),
+      loadSnoozes(),
+      loadValidations(),
+      loadDoneKeys(),
+    ]);
   const idByName = new Map(peos.map((p) => [p.name.toLowerCase(), p.id]));
   const peoById = new Map(peos.map((p) => [p.id, p]));
+  const touchMap = new Map(touches.map((t) => [t.subjectKey, t]));
   const now = new Date();
 
   const rows: RoomRow[] = [];
@@ -62,10 +111,9 @@ export default async function RoomPage() {
     const allNotes = accountId ? (notesById.get(accountId) ?? []) : [];
     const mine = allNotes.filter((n) => n.lane === "mine");
 
-    // Deal intel — chair / timing / countries / products, derived not stored.
     const docs = corpusFor(accountId, card.name, {
       acctNotes: allNotes,
-      todos: [],
+      todos: todos.filter((t) => accountId && t.accountId === accountId),
       touches: touches.filter(
         (t) =>
           (accountId && t.subjectKey === `outreach:${accountId}`) ||
@@ -77,7 +125,6 @@ export default async function RoomPage() {
       digestFor(accountId) ?? digestForCardName(card.name),
     );
 
-    // Shape chip from the product mix.
     const prods = new Set(intel.products.map((p) => p.value));
     const shape = prods.has("eor")
       ? `EOR${prods.has("contractor") ? " +CP" : ""}${prods.has("wallet") ? " +W" : ""}`
@@ -85,7 +132,6 @@ export default async function RoomPage() {
         ? `CP${prods.has("wallet") ? " +W" : ""}`
         : "GP";
 
-    // Meta kicker: chair · timing · first country. No partner names on rows.
     const country = intel.countries[0]
       ? (COUNTRY_NAME[intel.countries[0].value] ?? intel.countries[0].value)
       : "";
@@ -99,12 +145,9 @@ export default async function RoomPage() {
       .toUpperCase()
       .slice(0, 72);
 
-    // People behind the MULTI badge — engaged / involved / cc'd, from the repo.
     const people = accountId ? peopleFor(allNotes, contactsFor(accountId), 6) : [];
-    const threadCount = people.length;
-    const multiTone = threadCount >= 3 ? "g" : threadCount === 2 ? "y" : "r";
+    const multiTone = people.length >= 3 ? "g" : people.length === 2 ? "y" : "r";
 
-    // Briefed mark — the stage record's own partner-brief item, checked.
     let briefed = false;
     for (const node of DASH_NODES) {
       node.checklist.forEach((item, i) => {
@@ -121,9 +164,7 @@ export default async function RoomPage() {
     const totalInStage = stageNode?.checklist.length ?? 0;
     const frac = climbFraction(step?.nodeKey ?? null, doneInStage, totalInStage);
 
-    const touch = accountId
-      ? touches.find((t) => t.subjectKey === `outreach:${accountId}`)
-      : undefined;
+    const touch = accountId ? touchMap.get(`outreach:${accountId}`) : undefined;
     const read: RoomRead = readDeal({
       accountName: card.name,
       step: step
@@ -147,6 +188,37 @@ export default async function RoomPage() {
       lastRecordAt: allNotes[0]?.createdAt ?? "",
       now,
     });
+
+    // The stage rail + suggestions for the drawer.
+    const dismissed = new Set<string>();
+    const prefix = `sugg-dismiss:${card.id}:`;
+    for (const key of dispositions.keys())
+      if (key.startsWith(prefix)) dismissed.add(key.slice(prefix.length));
+    const suggestions = suggestChecks(docs, card, dismissed).map((sg) => ({
+      node: sg.node as string,
+      index: sg.itemIdx,
+      item: DASH_NODES.find((n) => n.key === sg.node)?.checklist[sg.itemIdx] ?? "",
+      why: sg.reason.slice(0, 160),
+    }));
+
+    // The sheet: this account's open work, delayed, and completed-today.
+    const acctTodos = todos.filter((t) => accountId && t.accountId === accountId);
+    const sheetOpen = acctTodos
+      .filter((t) => !t.done && (!t.remindAt || Date.parse(t.remindAt) <= now.getTime()))
+      .slice(0, 8)
+      .map((t) => ({ id: t.id, body: t.body.split("\n")[0].slice(0, 140) }));
+    const sheetDelayed = acctTodos
+      .filter((t) => !t.done && t.remindAt && Date.parse(t.remindAt) > now.getTime())
+      .slice(0, 5)
+      .map((t) => ({
+        id: t.id,
+        body: t.body.split("\n")[0].slice(0, 140),
+        when: shortDay(t.remindAt),
+      }));
+    const sheetDoneToday = acctTodos
+      .filter((t) => t.done && sameUserDay(t.updatedAt, now))
+      .slice(0, 6)
+      .map((t) => ({ id: t.id, body: t.body.split("\n")[0].slice(0, 140) }));
 
     const stageLabel = step
       ? `${(data.labels[step.nodeKey] ?? step.nodeLabel).toUpperCase().slice(0, 16)} · ${doneInStage} OF ${totalInStage}`
@@ -178,15 +250,9 @@ export default async function RoomPage() {
         frac,
         capTone: read.health === "red" ? "risk" : read.health === "amber" ? "warn" : "ok",
         label: stageLabel,
-        metaLine:
-          read.health === "red"
-            ? "CURRENT STAGE RUNNING RED"
-            : read.health === "amber"
-              ? "CURRENT STAGE ON THE CLOCK"
-              : read.health === "quiet"
-                ? "WAITING ON FIRST SIGNAL"
-                : "CURRENT STAGE HEALTHY",
       },
+      stages: buildStageRail(card, data.labels),
+      suggestions,
       move: read.move,
       thin: read.thin,
       court: read.court,
@@ -202,6 +268,9 @@ export default async function RoomPage() {
             closedCount: doneInStage,
           }
         : null,
+      sheetOpen,
+      sheetDelayed,
+      sheetDoneToday,
       record: mine.slice(0, 6).map((n) => ({
         id: n.id,
         t: new Date(Date.parse(n.createdAt)).toLocaleDateString("en-US", {
@@ -217,12 +286,81 @@ export default async function RoomPage() {
       canWrite: data.canWrite,
     });
   }
-
   rows.sort(
     (a, b) =>
       HEALTH_ORDER[a.health] - HEALTH_ORDER[b.health] || a.name.localeCompare(b.name),
   );
   rows.forEach((r, i) => (r.rank = i));
+
+  // ── The pull-tab drawers' data ────────────────────────────────────────────
+  // Roundups: the whole engine, distilled — per partner: cadence state, the
+  // per-account composer sections, and the default message.
+  const intelList = applyValidations(accountIntel(), validations);
+  const parkedIds = new Set<string>();
+  for (const [id, d] of dispositions)
+    if (d.status === "parked" || d.status === "not-mine") parkedIds.add(id);
+  for (const id of snoozes.keys()) parkedIds.add(id);
+
+  const kickoff = partnerKickoff(intelList, parkedIds);
+  const mutedSet = new Set(
+    [...dispositions.keys()]
+      .filter((k) => k.startsWith("roundup-mute:"))
+      .map((k) => k.slice("roundup-mute:".length)),
+  );
+  const cadence: CadenceRow[] = kickoff.map((k) => {
+    const key = partnerOutreachKey(k.partner);
+    const touch = touchMap.get(key);
+    const bullets = roundupBullets(k.accounts);
+    const sections = k.accounts.map((a, i) => {
+      const d = dispositions.get(a.id);
+      const off = d?.status === "motion" || d?.status === "parked";
+      return { id: a.id, name: a.name, bullet: bullets[i] ?? "", on: !off };
+    });
+    const frame = roundupFrame(k.partner);
+    return {
+      partner: k.partner,
+      subjectKey: key,
+      status: touch ? touch.status : "none",
+      lastSent: touch ? touch.contactedAt : "",
+      daysAgo: touch ? daysBetween(touch.contactedAt, now) : null,
+      due: roundupDue(touch, now.getTime()),
+      muted: mutedSet.has(k.partner),
+      opener: frame.opener,
+      closer: frame.closer,
+      sections,
+      total: k.accounts.length,
+    };
+  });
+
+  // Check-ins & chases: every due thread, with its named ask when one is set.
+  const followUps = partitionFollowUps(touches, now.getTime());
+  const checkins: CheckinRow[] = followUps.due.slice(0, 12).map((t) => {
+    const ask = splitAsk(t.detail ?? "").ask;
+    return {
+      subjectKey: t.subjectKey,
+      label: t.label,
+      ask,
+      quietDays: daysBetween(t.contactedAt, now),
+      kind: t.kind,
+    };
+  });
+
+  // The eye: warming signals (triage) + the unlinked later list.
+  const onBoard = new Set(data.cards.filter((c) => !c.archived).map((c) => c.name));
+  const { active } = partitionSignals(signals(intelList), snoozes, now.getTime());
+  const warming: WarmRow[] = active
+    .filter((a) => !onBoard.has(a.name) && !doneKeys.has(triageDoneKey(a.id)))
+    .slice(0, 6)
+    .map((a) => ({
+      id: a.id,
+      name: a.name,
+      why: a.summary.slice(0, 140) || "Signal on file — open the account for the read.",
+      seedNote: "",
+    }));
+  const later: LaterRow[] = todos
+    .filter((t) => !t.done && !t.accountId)
+    .slice(0, 8)
+    .map((t) => ({ id: t.id, body: t.body.split("\n")[0].slice(0, 140) }));
 
   return (
     <>
@@ -230,16 +368,16 @@ export default async function RoomPage() {
       <main
         className={`${styles.room} ${serif.variable} ${sans.variable} ${mono.variable}`}
       >
-        <RoomClient rows={rows} dbUnavailable={data.status === "database-unavailable"} />
-        <div className={styles.edge}>
-          <Link href="/today" className={styles.edgeLink}>
-            <span>ROUNDUPS</span>
-          </Link>
-          <span className={styles.edgeDot}>·</span>
-          <Link href="/today" className={styles.edgeLink}>
-            <span>CHECK-INS</span>
-          </Link>
-        </div>
+        <RoomClient
+          rows={rows}
+          cadence={cadence}
+          checkins={checkins}
+          warming={warming}
+          later={later}
+          canWrite={data.canWrite}
+          dbUnavailable={data.status === "database-unavailable"}
+          boardNames={rows.map((r) => ({ id: r.accountId, name: r.name }))}
+        />
       </main>
     </>
   );

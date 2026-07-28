@@ -35,9 +35,11 @@ async function requireWrite() {
   return access.status === "active" && access.canWrite;
 }
 
-function done() {
+function done(fd?: FormData) {
   revalidatePath("/today");
-  redirect("/today");
+  revalidatePath("/room");
+  const raw = fd?.get("returnTo");
+  redirect(raw === "/room" ? "/room" : "/today");
 }
 
 // Run a DB write, but never let a missing/newer table 500 the page. If the
@@ -62,7 +64,7 @@ const ROUNDUP_MUTE_PREFIX = "roundup-mute:";
 
 export async function muteRoundupPartner(formData: FormData) {
   const partner = str(formData, "partner", 120);
-  if (!(await requireWrite()) || !partner) done();
+  if (!(await requireWrite()) || !partner) done(formData);
   await safeWrite(async () => {
     const accountId = `${ROUNDUP_MUTE_PREFIX}${partner}`;
     await getPrisma().accountDisposition.upsert({
@@ -71,18 +73,18 @@ export async function muteRoundupPartner(formData: FormData) {
       update: { status: "parked", reason: "roundup muted" },
     });
   });
-  done();
+  done(formData);
 }
 
 export async function unmuteRoundupPartner(formData: FormData) {
   const partner = str(formData, "partner", 120);
-  if (!(await requireWrite()) || !partner) done();
+  if (!(await requireWrite()) || !partner) done(formData);
   await safeWrite(async () => {
     await getPrisma().accountDisposition.deleteMany({
       where: { accountId: `${ROUNDUP_MUTE_PREFIX}${partner}` },
     });
   });
-  done();
+  done(formData);
 }
 
 // --- Partner attention lights ----------------------------------------------
@@ -274,7 +276,7 @@ export async function snoozeSignal(formData: FormData) {
   const accountId = str(formData, "accountId", 40);
   const reason = str(formData, "reason", 300) || "Parked";
   const days = parseInt(str(formData, "days", 4), 10);
-  if (!(await requireWrite()) || !accountId) done();
+  if (!(await requireWrite()) || !accountId) done(formData);
   const snoozedUntil =
     Number.isFinite(days) && days > 0 ? new Date(Date.now() + days * 86_400_000) : null;
   await safeWrite(async () => {
@@ -284,16 +286,16 @@ export async function snoozeSignal(formData: FormData) {
       update: { reason, snoozedUntil },
     });
   });
-  done();
+  done(formData);
 }
 
 export async function unsnoozeSignal(formData: FormData) {
   const accountId = str(formData, "accountId", 40);
-  if (!(await requireWrite()) || !accountId) done();
+  if (!(await requireWrite()) || !accountId) done(formData);
   await safeWrite(async () => {
     await getPrisma().signalSnooze.deleteMany({ where: { accountId } });
   });
-  done();
+  done(formData);
 }
 
 // Toggle a task's done-mark. The key already encodes the period (day/week), so
@@ -328,7 +330,7 @@ function touchLog(v: unknown): TouchLogEntry[] {
 export async function logTouch(formData: FormData) {
   const subjectKey = str(formData, "subjectKey", 200);
   const label = str(formData, "label", 160);
-  if (!(await requireWrite()) || !subjectKey || !label) done();
+  if (!(await requireWrite()) || !subjectKey || !label) done(formData);
   const kind = str(formData, "kind", 12) === "account" ? "account" : "partner";
   const detail = str(formData, "detail", 200);
   const message = str(formData, "message", 4000);
@@ -389,24 +391,24 @@ export async function logTouch(formData: FormData) {
       });
     }
   });
-  done();
+  done(formData);
 }
 
 // Undo — remove the logged contact entirely.
 export async function deleteTouch(formData: FormData) {
   const subjectKey = str(formData, "subjectKey", 200);
-  if (!(await requireWrite()) || !subjectKey) done();
+  if (!(await requireWrite()) || !subjectKey) done(formData);
   await safeWrite(async () => {
     await getPrisma().touch.deleteMany({ where: { subjectKey } });
   });
-  done();
+  done(formData);
 }
 
 // Close the loop — they replied; stop the cadence. The reply is stamped into the
 // thread history so the Partner Room timeline shows when the loop closed.
 export async function markReplied(formData: FormData) {
   const subjectKey = str(formData, "subjectKey", 200);
-  if (!(await requireWrite()) || !subjectKey) done();
+  if (!(await requireWrite()) || !subjectKey) done(formData);
   await safeWrite(async () => {
     const prisma = getPrisma();
     const t = await prisma.touch.findUnique({ where: { subjectKey } });
@@ -420,14 +422,14 @@ export async function markReplied(formData: FormData) {
       data: { status: "replied", log },
     });
   });
-  done();
+  done(formData);
 }
 
 // You answered their reply — ball back in their court; the check-in cadence
 // re-arms for the next business day and the exchange is stamped into history.
 export async function markResponded(formData: FormData) {
   const subjectKey = str(formData, "subjectKey", 200);
-  if (!(await requireWrite()) || !subjectKey) done();
+  if (!(await requireWrite()) || !subjectKey) done(formData);
   await safeWrite(async () => {
     const prisma = getPrisma();
     const t = await prisma.touch.findUnique({ where: { subjectKey } });
@@ -441,14 +443,14 @@ export async function markResponded(formData: FormData) {
       data: { status: "responded", followUpAt: nextCheckIn(Date.now(), "tomorrow"), log },
     });
   });
-  done();
+  done(formData);
 }
 
 // Close the thread. History stays on the row (Partner Room timeline); the
 // partner card resets to a fresh roundup generated from current research.
 export async function archiveThread(formData: FormData) {
   const subjectKey = str(formData, "subjectKey", 200);
-  if (!(await requireWrite()) || !subjectKey) done();
+  if (!(await requireWrite()) || !subjectKey) done(formData);
   await safeWrite(async () => {
     const prisma = getPrisma();
     const t = await prisma.touch.findUnique({ where: { subjectKey } });
@@ -465,28 +467,28 @@ export async function archiveThread(formData: FormData) {
       data: { status: "archived", log },
     });
   });
-  done();
+  done(formData);
 }
 
 // Bring a not-yet-due check-in forward to now, so it surfaces in the due list
 // today (the inverse of snooze).
 export async function bringFollowUpDue(formData: FormData) {
   const subjectKey = str(formData, "subjectKey", 200);
-  if (!(await requireWrite()) || !subjectKey) done();
+  if (!(await requireWrite()) || !subjectKey) done(formData);
   await safeWrite(async () => {
     await getPrisma().touch.updateMany({
       where: { subjectKey },
       data: { followUpAt: new Date(), status: "awaiting" },
     });
   });
-  done();
+  done(formData);
 }
 
 // Delay the check-in — later today or tomorrow (never a weekend). That's the
 // whole menu; there is no multi-day snooze.
 export async function delayFollowUp(formData: FormData) {
   const subjectKey = str(formData, "subjectKey", 200);
-  if (!(await requireWrite()) || !subjectKey) done();
+  if (!(await requireWrite()) || !subjectKey) done(formData);
   const when = asFollowUpWhen(str(formData, "when", 12));
   await safeWrite(async () => {
     await getPrisma().touch.updateMany({
@@ -494,7 +496,7 @@ export async function delayFollowUp(formData: FormData) {
       data: { followUpAt: nextCheckIn(Date.now(), when), status: "awaiting" },
     });
   });
-  done();
+  done(formData);
 }
 
 // Write in your own follow-up (not tied to a logged contact). Surfaces in the
@@ -502,7 +504,7 @@ export async function delayFollowUp(formData: FormData) {
 // of a partner nudge.
 export async function addFollowUp(formData: FormData) {
   const label = str(formData, "label", 200);
-  if (!(await requireWrite()) || !label) done();
+  if (!(await requireWrite()) || !label) done(formData);
   const when = asFollowUpWhen(str(formData, "when", 12));
   await safeWrite(async () => {
     const now = Date.now();
@@ -521,7 +523,7 @@ export async function addFollowUp(formData: FormData) {
       },
     });
   });
-  done();
+  done(formData);
 }
 
 // --- Account notes (from the partner-outreach chips) -------------------------
@@ -570,7 +572,7 @@ export async function deleteAccountNote(formData: FormData) {
 export async function updateTouchAsk(formData: FormData) {
   const subjectKey = str(formData, "subjectKey", 200);
   const ask = str(formData, "ask", 300);
-  if (!(await requireWrite()) || !subjectKey) done();
+  if (!(await requireWrite()) || !subjectKey) done(formData);
   await safeWrite(async () => {
     const prisma = getPrisma();
     const t = await prisma.touch.findUnique({ where: { subjectKey } });
@@ -580,7 +582,7 @@ export async function updateTouchAsk(formData: FormData) {
       data: { detail: withAsk(t.detail ?? "", ask) },
     });
   });
-  done();
+  done(formData);
 }
 
 // --- Off-structure dispositions ----------------------------------------------
@@ -1155,13 +1157,13 @@ export async function completeCommitment(formData: FormData) {
   revalidatePath("/accounts");
   revalidatePath("/");
   revalidatePath("/room");
-  done();
+  done(formData);
 }
 
 export async function dismissTriage(formData: FormData) {
   const accountId = str(formData, "accountId", 40);
   const name = str(formData, "name", 160);
-  if (!(await requireWrite()) || !accountId) done();
+  if (!(await requireWrite()) || !accountId) done(formData);
   await safeWrite(async () => {
     const prisma = getPrisma();
     const key = triageDoneKey(accountId);
@@ -1182,5 +1184,5 @@ export async function dismissTriage(formData: FormData) {
     );
   });
   revalidatePath("/accounts");
-  done();
+  done(formData);
 }

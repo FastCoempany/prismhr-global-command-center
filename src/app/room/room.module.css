@@ -1,6 +1,8 @@
-/* The Operating Room — Half-Light. Matte intelligence on the brand air;
-   the record side is glass. Tokens from the Antaeus system: bright field,
-   navy ink ladder, forest working green, orange rationed to the one move. */
+/* The Operating Room — Half-Light, consolidated. Matte intelligence on the
+   brand air; the record side is glass. Stage nodes live on the climb; the
+   roundups + check-ins engine and the eye live in glass drawers off the
+   right margin. Tokens from the Antaeus system: bright field, navy ink
+   ladder, forest working green, orange rationed to the one move. */
 
 .room {
   --field: #f5f7fb;
@@ -18,7 +20,7 @@
   --forest2: #2e7a5f;
   position: relative;
   min-height: 100vh;
-  padding: 14px 40px 70px 24px;
+  padding: 14px 44px 70px 24px;
   color: var(--ink);
   font-family: var(--f-sans), system-ui, sans-serif;
   font-size: 15px;
@@ -33,22 +35,32 @@
   padding: 40px;
 }
 .wrap {
-  max-width: 1080px;
+  max-width: 1120px;
   margin: 0 auto;
 }
 
+/* ── header: mark left, forest add center, clock right ──────────────── */
 .bar {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  padding: 8px 0 20px;
+}
+.ident {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 8px 0 16px;
+  gap: 9px;
+  justify-self: start;
 }
 .roomName {
+  font-family: var(--f-mono), Menlo, monospace;
   font-weight: 700;
-  font-size: 11px;
+  font-size: 10.5px;
   letter-spacing: 0.22em;
+  color: var(--soft);
 }
 .clock {
+  justify-self: end;
   font-family: var(--f-mono), Menlo, monospace;
   font-size: 10.5px;
   font-weight: 700;
@@ -56,43 +68,157 @@
   color: var(--faint);
   font-variant-numeric: tabular-nums;
 }
-.sp {
-  flex: 1;
+.addWrap {
+  position: relative;
+  justify-self: center;
 }
 .addBtn {
-  border: 1px solid var(--hair);
-  background: rgba(255, 255, 255, 0.6);
-  color: var(--ink);
-  border-radius: 6px;
-  padding: 5px 12px;
-  font-size: 13px;
-  font-weight: 600;
-  text-decoration: none;
+  border: 0;
+  background: linear-gradient(135deg, var(--forest), var(--forest2));
+  color: #fff;
+  border-radius: 999px;
+  padding: 8px 22px;
+  font-family: var(--f-sans), system-ui, sans-serif;
+  font-size: 13.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  box-shadow:
+    0 6px 18px rgba(30, 91, 70, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease;
 }
 .addBtn:hover {
-  border-color: var(--faint);
+  transform: translateY(-1px);
+  box-shadow:
+    0 9px 24px rgba(30, 91, 70, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+.car {
+  opacity: 0.75;
+  font-size: 10.5px;
+  margin-left: 3px;
+}
+.menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 348px;
+  background: rgba(255, 255, 255, 0.85);
+  -webkit-backdrop-filter: blur(18px) saturate(1.5);
+  backdrop-filter: blur(18px) saturate(1.5);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 12px;
+  box-shadow: 0 14px 38px rgba(10, 28, 64, 0.18);
+  padding: 6px;
+  z-index: 30;
+  text-align: left;
+}
+.mi {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 9px 10px;
+  border-radius: 8px;
+  text-decoration: none;
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.4;
+}
+.mi:hover {
+  background: rgba(30, 91, 70, 0.08);
+}
+.mi b {
+  display: block;
+  font-weight: 600;
+}
+.miIc {
+  flex: none;
+  width: 20px;
+  text-align: center;
+  color: var(--forest);
+  font-size: 14px;
+  padding-top: 1px;
+}
+.miD {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 400;
+  color: var(--faint);
+}
+.miForm {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 9px 10px;
+  border-top: 1px solid var(--hair);
+  margin-top: 4px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+.miForm b {
+  display: block;
+  font-weight: 600;
+}
+.miFormBody {
+  flex: 1;
+  min-width: 0;
+}
+.miRow {
+  display: flex;
+  gap: 6px;
+  margin-top: 5px;
+  align-items: center;
+}
+.miRow input,
+.miRow select {
+  border: 1px solid var(--hair);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-family: var(--f-sans), system-ui, sans-serif;
+  font-size: 12px;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.8);
+}
+.miRow input {
+  flex: 1;
+  min-width: 0;
 }
 
+/* ── the row: matte deal left, glass record right ───────────────────── */
 .row {
   display: grid;
   grid-template-columns: 1fr 1.08fr;
   gap: 0 34px;
-  padding: 12px 0 10px;
-  margin-bottom: 24px;
+  padding: 14px 0 12px;
 }
-@media (max-width: 860px) {
+.row + .row {
+  border-top: 1px solid var(--hair);
+  margin-top: 12px;
+}
+@media (max-width: 880px) {
   .row {
     grid-template-columns: 1fr;
     gap: 14px 0;
   }
 }
+.deal {
+  min-width: 0;
+}
 
-/* ── the matte half ─────────────────────────────────────────────────── */
+.nmline {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
 .nm {
   position: relative;
   display: inline-block;
   padding-left: 17px;
-  margin-right: 10px;
 }
 .nmLink {
   font-family: var(--f-serif), Georgia, serif;
@@ -109,7 +235,7 @@
 .briefed {
   position: absolute;
   left: 0;
-  top: -2px;
+  top: -1px;
   cursor: help;
 }
 .meta {
@@ -124,7 +250,6 @@
 .chips {
   display: inline-flex;
   gap: 6px;
-  vertical-align: 3px;
   align-items: center;
 }
 .chip {
@@ -161,7 +286,7 @@
   top: 24px;
   left: -10px;
   width: 300px;
-  background: rgba(255, 255, 255, 0.78);
+  background: rgba(255, 255, 255, 0.82);
   -webkit-backdrop-filter: blur(16px) saturate(1.5);
   backdrop-filter: blur(16px) saturate(1.5);
   border: 1px solid rgba(255, 255, 255, 0.75);
@@ -208,10 +333,15 @@
   color: var(--orange);
 }
 
+/* ── the climb: fill, cap, and the seven stage nodes ────────────────── */
 .climb {
   position: relative;
   height: 26px;
   margin: 12px 0 4px;
+}
+.track {
+  position: absolute;
+  inset: 0;
   border-radius: 7px;
   overflow: hidden;
   background: repeating-linear-gradient(
@@ -224,25 +354,15 @@
   position: absolute;
   inset: 0 auto 0 0;
   background: linear-gradient(90deg, var(--forest), var(--forest2));
-  border-radius: 7px 0 0 7px;
-  display: flex;
-  align-items: center;
-  padding-left: 12px;
-  min-width: 60px;
-}
-.gain span {
-  font-family: var(--f-mono), Menlo, monospace;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  color: #fff;
-  white-space: nowrap;
 }
 .cap {
   position: absolute;
   top: 0;
   bottom: 0;
   width: 9px;
+  transform: translateX(-100%);
+  z-index: 2;
+  border-radius: 0 2px 2px 0;
 }
 .capRisk {
   background: var(--red);
@@ -253,30 +373,213 @@
 .capOk {
   background: var(--forest2);
 }
-.climbMeta {
+.node {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 0 0 1px rgba(10, 28, 64, 0.18);
+  padding: 0;
+  cursor: pointer;
+  z-index: 3;
+  transition: transform 0.1s ease;
+}
+.node:hover {
+  transform: translate(-50%, -50%) scale(1.3);
+}
+.nodeDone {
+  background: var(--forest);
+}
+.nodeCur {
+  width: 14px;
+  height: 14px;
+  background: #fff;
+  border: 3px solid var(--forest);
+  box-shadow: 0 1px 4px rgba(10, 28, 64, 0.25);
+}
+.clIn {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #fff;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 2;
+}
+.clOut {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
   font-family: var(--f-mono), Menlo, monospace;
   font-size: 9.5px;
   font-weight: 700;
   letter-spacing: 0.1em;
   color: var(--faint);
-  margin-bottom: 8px;
-}
-.tRed {
-  color: var(--red);
-}
-.tAmber {
-  color: #8a5a00;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 2;
 }
 
-.nextmove {
-  font-size: 15px;
-  font-weight: 600;
-  line-height: 1.45;
-  margin-top: 4px;
+/* ── the whisper stage drawer under a node ──────────────────────────── */
+.stageDrawer {
+  margin: 8px 0 2px;
+  background: rgba(255, 255, 255, 0.66);
+  -webkit-backdrop-filter: blur(12px) saturate(1.4);
+  backdrop-filter: blur(12px) saturate(1.4);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(10, 28, 64, 0.08);
+  padding: 9px 12px;
+  font-size: 12.5px;
 }
-.thin {
-  font-weight: 400;
+.sdHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  margin-bottom: 5px;
+}
+.sdHead b {
+  font-weight: 600;
+}
+.sdClose {
+  border: 0;
+  background: none;
+  color: var(--quiet);
+  font-size: 11px;
+  cursor: pointer;
+}
+.sdClose:hover {
+  color: var(--ink);
+}
+.sdList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.sdList li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2.5px 0;
   color: var(--soft);
+}
+.sdDone .sdItem {
+  color: var(--quiet);
+  text-decoration: line-through;
+}
+.sdForm {
+  display: flex;
+}
+.sdRadio {
+  display: inline-block;
+  flex: none;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  border: 2px solid var(--quiet);
+  background: #fff;
+  padding: 0;
+}
+button.sdRadio {
+  cursor: pointer;
+}
+button.sdRadio:hover {
+  border-color: var(--forest);
+}
+.sdRadioOn {
+  border-color: var(--forest);
+  background: var(--forest);
+  box-shadow: inset 0 0 0 2px #fff;
+}
+.sdItem {
+  flex: 1;
+  min-width: 0;
+  font-size: 12.5px;
+}
+.sdNote {
+  color: var(--blue);
+  font-size: 13px;
+  cursor: help;
+}
+.sdSugg {
+  margin-top: 6px;
+  padding: 6px 9px;
+  background: rgba(37, 99, 235, 0.07);
+  border-left: 2px solid var(--blue);
+  border-radius: 0 7px 7px 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--soft);
+}
+.sdSugg b {
+  color: var(--ink);
+  font-weight: 600;
+}
+.sdSuggActs {
+  display: inline-flex;
+  gap: 6px;
+  margin-left: 8px;
+  vertical-align: 1px;
+}
+.inline {
+  display: inline;
+}
+.sdTag {
+  border: 1px solid var(--hair);
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 5px;
+  padding: 1px 8px;
+  font-family: var(--f-sans), system-ui, sans-serif;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--soft);
+  cursor: pointer;
+}
+.sdTag:hover {
+  border-color: var(--forest);
+  color: var(--forest);
+}
+.sdJudg {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  margin-top: 7px;
+  border-top: 1px solid var(--hair);
+  padding-top: 7px;
+}
+.sdJudg input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  outline: none;
+  font-family: var(--f-sans), system-ui, sans-serif;
+  font-size: 12.5px;
+  color: var(--ink);
+}
+.sdJudg input::placeholder {
+  color: var(--quiet);
+}
+.sdJudgRead {
+  margin: 7px 0 0;
+  font-size: 12.5px;
+  font-style: italic;
+  color: var(--soft);
+}
+
+/* ── the move (second loud voice) and what's still open ─────────────── */
+.movewrap {
+  margin-top: 12px;
 }
 .lbl {
   display: block;
@@ -284,8 +587,18 @@
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.2em;
-  color: var(--forest);
-  margin-bottom: 4px;
+  color: var(--faint);
+  margin-bottom: 3px;
+}
+.move {
+  margin: 0;
+  font-size: 16.5px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+.thin {
+  font-weight: 400;
+  color: var(--soft);
 }
 .go {
   background: var(--orange);
@@ -318,15 +631,6 @@
   font-size: 12.5px;
   color: var(--soft);
 }
-.k2 {
-  display: block;
-  font-family: var(--f-mono), Menlo, monospace;
-  font-size: 8.5px;
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  color: var(--quiet);
-  margin-bottom: 2px;
-}
 .closedct {
   color: var(--quiet);
   font-size: 12px;
@@ -336,7 +640,7 @@
   text-decoration: line-through;
 }
 
-/* ── the glass half ─────────────────────────────────────────────────── */
+/* ── the glass half: the account's day sheet and record ─────────────── */
 .rec {
   background: rgba(255, 255, 255, 0.55);
   -webkit-backdrop-filter: blur(14px) saturate(1.4);
@@ -346,6 +650,7 @@
   box-shadow: 0 10px 30px rgba(10, 28, 64, 0.08);
   padding: 12px 16px;
   align-self: start;
+  min-width: 0;
 }
 .court {
   font-family: var(--f-mono), Menlo, monospace;
@@ -353,7 +658,6 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   padding-bottom: 7px;
-  margin-bottom: 4px;
   border-bottom: 1px solid rgba(10, 28, 64, 0.12);
 }
 .c_you {
@@ -368,25 +672,34 @@
 .c_none {
   color: var(--quiet);
 }
-.lgr {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+.zone {
+  display: block;
+  margin: 10px 0 2px;
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--faint);
+}
+.it {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 2.5px 4px 2.5px 0;
   font-size: 13.5px;
+  border-radius: 5px;
 }
-.lgr li {
-  padding: 2.5px 0 2.5px 16px;
-  position: relative;
+.ic {
+  flex: none;
+  width: 16px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--forest2);
 }
-.lgr li::before {
-  content: "";
-  position: absolute;
-  left: 1px;
-  top: 11px;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--forest2);
+.tx {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .t {
   font-family: var(--f-mono), Menlo, monospace;
@@ -395,26 +708,50 @@
   margin-right: 7px;
   font-variant-numeric: tabular-nums;
 }
-.struck {
+.when {
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  color: #8a5a00;
+  white-space: nowrap;
+}
+.ctl {
+  display: inline-flex;
+  gap: 2px;
+  flex: none;
+}
+.ctl button,
+.chkCtl button {
+  border: 0;
+  background: none;
+  color: var(--quiet);
+  font-size: 12.5px;
+  padding: 0 3px;
+  cursor: pointer;
+}
+.ctl button:hover,
+.chkCtl button:hover {
+  color: var(--ink);
+}
+.itOpen .ic {
+  color: var(--ink);
+}
+.itDid .ic {
+  color: var(--green);
+}
+.itDid .tx {
   color: var(--quiet);
   text-decoration: line-through;
 }
-.struck::before {
-  background: var(--quiet) !important;
+.itDelayed .tx {
+  color: var(--soft);
 }
-.freshLi {
-  background: rgba(30, 91, 70, 0.09);
-  border-radius: 5px;
-}
-.freshLi::before {
-  background: #fff !important;
-  border: 2.2px solid var(--ink);
-}
-.emptyLi {
+.itEmpty .tx,
+.itEmpty .ic {
   color: var(--quiet);
 }
-.emptyLi::before {
-  background: var(--quiet) !important;
+.fresh {
+  background: rgba(30, 91, 70, 0.09);
 }
 
 .logbox {
@@ -430,7 +767,7 @@
   font-size: 8.5px;
   font-weight: 700;
   letter-spacing: 0.18em;
-  color: var(--forest);
+  color: var(--faint);
 }
 .logline {
   display: flex;
@@ -440,6 +777,7 @@
 }
 .logline input {
   flex: 1;
+  min-width: 0;
   border: 0;
   background: transparent;
   outline: none;
@@ -497,50 +835,282 @@
   font-size: 12px;
   color: var(--red);
 }
-
-.warming {
-  color: var(--soft);
-  font-size: 13.5px;
-  margin-top: 4px;
-}
-.warming a {
-  color: var(--blue);
-}
 .emptyBoard {
   color: var(--soft);
   padding: 30px 0;
 }
+.emptyBoard a {
+  color: var(--blue);
+}
 
-/* ── the quiet edge tab ─────────────────────────────────────────────── */
+/* ── the glass drawers off the right margin ─────────────────────────── */
+.drawerPane {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(420px, 92vw);
+  overflow-y: auto;
+  background: rgba(255, 255, 255, 0.78);
+  -webkit-backdrop-filter: blur(20px) saturate(1.5);
+  backdrop-filter: blur(20px) saturate(1.5);
+  border-left: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: -18px 0 44px rgba(10, 28, 64, 0.16);
+  padding: 16px 20px 30px;
+  z-index: 40;
+}
+.dpHead {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--hair);
+  margin-bottom: 8px;
+}
+.dpTab {
+  border: 0;
+  background: none;
+  padding: 2px 0;
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: var(--quiet);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+.dpTabOn {
+  color: var(--ink);
+  border-bottom-color: var(--forest);
+}
+.dpClose {
+  margin-left: auto;
+  border: 0;
+  background: none;
+  color: var(--quiet);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.dpClose:hover {
+  color: var(--ink);
+}
+.dpEmpty {
+  color: var(--soft);
+  font-size: 13px;
+  margin: 10px 0;
+}
+.dpEsub {
+  color: var(--faint);
+  font-size: 12px;
+  margin: 2px 0 8px;
+}
+.eyeTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--forest);
+}
+
+/* partner roundup cards inside the drawer */
+.pcard {
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid var(--hair);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin: 10px 0;
+}
+.pcHead {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 13.5px;
+}
+.pcHead b {
+  font-weight: 600;
+}
+.dueChip {
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  background: var(--amber);
+  color: #fff;
+  border-radius: 4px;
+  padding: 1px 6px;
+}
+.pcState {
+  margin-left: auto;
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--faint);
+  white-space: nowrap;
+}
+.muteBtn {
+  border: 0;
+  background: none;
+  font-size: 12px;
+  cursor: pointer;
+  opacity: 0.5;
+  padding: 0;
+}
+.muteBtn:hover {
+  opacity: 1;
+}
+.pcAccts {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 7px 0 2px;
+}
+.pcAccts label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  color: var(--soft);
+  cursor: pointer;
+}
+.pcAccts input {
+  accent-color: var(--forest);
+}
+.pcMsg {
+  white-space: pre-wrap;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--soft);
+  background: rgba(10, 28, 64, 0.04);
+  border-radius: 7px;
+  padding: 8px 10px;
+  margin: 6px 0;
+  max-height: 150px;
+  overflow-y: auto;
+}
+.pcActs {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 6px;
+}
+.pcPrimary {
+  display: inline-block;
+  background: var(--forest);
+  border: 0;
+  color: #fff;
+  border-radius: 7px;
+  padding: 6px 13px;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+}
+.pcPrimary:hover {
+  background: var(--forest2);
+}
+.pcBtn {
+  border: 1px solid var(--hair);
+  background: rgba(255, 255, 255, 0.6);
+  color: var(--soft);
+  border-radius: 7px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.pcBtn:hover {
+  border-color: var(--faint);
+  color: var(--ink);
+}
+.pcMutedRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--quiet);
+  padding: 4px 2px;
+}
+
+/* check-in rows inside the drawer */
+.chkRow {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 7px 2px;
+  border-bottom: 1px solid var(--hair);
+  font-size: 13px;
+}
+.chkWho {
+  font-weight: 600;
+}
+.chkAsk {
+  flex: 1;
+  min-width: 120px;
+  color: var(--soft);
+  font-size: 12.5px;
+}
+.chkOwed {
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #8a5a00;
+}
+.chkCtl {
+  display: inline-flex;
+  gap: 2px;
+}
+.wWhy {
+  margin: 5px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--soft);
+}
+
+/* ── the quiet edge tabs ────────────────────────────────────────────── */
 .edge {
   position: fixed;
   right: 0;
-  top: 50%;
   transform: translateY(-50%);
-  width: 20px;
-  padding: 14px 0;
+  width: 22px;
+  padding: 12px 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  border-left: 1px solid var(--hair);
+  border: 1px solid var(--hair);
+  border-right: 0;
   background: rgba(255, 255, 255, 0.7);
   border-radius: 6px 0 0 6px;
   z-index: 5;
-}
-.edgeLink {
-  writing-mode: vertical-rl;
-  text-decoration: none;
+  cursor: pointer;
   color: var(--quiet);
   font-family: var(--f-mono), Menlo, monospace;
-  font-size: 9px;
+  font-size: 8.5px;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.16em;
 }
-.edgeLink:hover {
-  color: var(--ink);
+.edge > span {
+  writing-mode: vertical-rl;
+}
+.edge:hover {
+  color: var(--forest);
 }
 .edgeDot {
-  color: var(--quiet);
   font-size: 10px;
+}
+.edgeCount {
+  writing-mode: horizontal-tb !important;
+  background: var(--forest);
+  color: #fff;
+  border-radius: 9px;
+  font-size: 9px;
+  letter-spacing: 0;
+  padding: 1px 5px;
+  min-width: 10px;
+  text-align: center;
 }
