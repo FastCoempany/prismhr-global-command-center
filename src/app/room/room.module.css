@@ -1,0 +1,546 @@
+/* The Operating Room — Half-Light. Matte intelligence on the brand air;
+   the record side is glass. Tokens from the Antaeus system: bright field,
+   navy ink ladder, forest working green, orange rationed to the one move. */
+
+.room {
+  --field: #f5f7fb;
+  --ink: #0a1c40;
+  --soft: rgba(10, 28, 64, 0.66);
+  --faint: rgba(10, 28, 64, 0.42);
+  --quiet: rgba(10, 28, 64, 0.22);
+  --hair: rgba(10, 28, 64, 0.12);
+  --orange: #e6701e;
+  --blue: #2563eb;
+  --green: #22c55e;
+  --amber: #f59e0b;
+  --red: #ef4444;
+  --forest: #1e5b46;
+  --forest2: #2e7a5f;
+  position: relative;
+  min-height: 100vh;
+  padding: 14px 40px 70px 24px;
+  color: var(--ink);
+  font-family: var(--f-sans), system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  background:
+    radial-gradient(720px 460px at 10% 4%, rgba(37, 99, 235, 0.12), transparent 62%),
+    radial-gradient(820px 560px at 92% 22%, rgba(30, 91, 70, 0.13), transparent 62%),
+    radial-gradient(640px 520px at 34% 96%, rgba(10, 28, 64, 0.09), transparent 62%),
+    var(--field);
+}
+.gate {
+  padding: 40px;
+}
+.wrap {
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0 16px;
+}
+.roomName {
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.22em;
+}
+.clock {
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--faint);
+  font-variant-numeric: tabular-nums;
+}
+.sp {
+  flex: 1;
+}
+.addBtn {
+  border: 1px solid var(--hair);
+  background: rgba(255, 255, 255, 0.6);
+  color: var(--ink);
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.addBtn:hover {
+  border-color: var(--faint);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1.08fr;
+  gap: 0 34px;
+  padding: 12px 0 10px;
+  margin-bottom: 24px;
+}
+@media (max-width: 860px) {
+  .row {
+    grid-template-columns: 1fr;
+    gap: 14px 0;
+  }
+}
+
+/* ── the matte half ─────────────────────────────────────────────────── */
+.nm {
+  position: relative;
+  display: inline-block;
+  padding-left: 17px;
+  margin-right: 10px;
+}
+.nmLink {
+  font-family: var(--f-serif), Georgia, serif;
+  font-size: 20px;
+  line-height: 1.2;
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 2px solid var(--quiet);
+}
+.nmLink:hover {
+  color: var(--forest);
+  border-color: var(--forest);
+}
+.briefed {
+  position: absolute;
+  left: 0;
+  top: -2px;
+  cursor: help;
+}
+.meta {
+  display: block;
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--faint);
+  margin-top: 3px;
+}
+.chips {
+  display: inline-flex;
+  gap: 6px;
+  vertical-align: 3px;
+  align-items: center;
+}
+.chip {
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.9;
+  padding: 0 8px;
+  border-radius: 5px;
+  border: 1px solid var(--hair);
+  color: var(--soft);
+  background: rgba(255, 255, 255, 0.4);
+}
+.multi {
+  composes: chip;
+  position: relative;
+  border: 0;
+  color: #fff;
+  cursor: help;
+}
+.m_g {
+  background: var(--green);
+}
+.m_y {
+  background: var(--amber);
+}
+.m_r {
+  background: var(--red);
+}
+.hovercard {
+  display: none;
+  position: absolute;
+  top: 24px;
+  left: -10px;
+  width: 300px;
+  background: rgba(255, 255, 255, 0.78);
+  -webkit-backdrop-filter: blur(16px) saturate(1.5);
+  backdrop-filter: blur(16px) saturate(1.5);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: 11px;
+  box-shadow: 0 10px 28px rgba(10, 28, 64, 0.16);
+  padding: 10px 14px;
+  z-index: 6;
+  letter-spacing: 0;
+}
+.multi:hover .hovercard {
+  display: block;
+}
+.hk {
+  display: block;
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--faint);
+  margin-bottom: 4px;
+}
+.hp {
+  display: block;
+  font-family: var(--f-sans), system-ui, sans-serif;
+  font-size: 12.5px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--soft);
+  padding: 1px 0;
+}
+.hp b {
+  color: var(--ink);
+  font-weight: 600;
+}
+.zap {
+  border: 0;
+  background: none;
+  color: var(--faint);
+  font-size: 14px;
+  padding: 0 2px;
+  cursor: pointer;
+}
+.zap:hover {
+  color: var(--orange);
+}
+
+.climb {
+  position: relative;
+  height: 26px;
+  margin: 12px 0 4px;
+  border-radius: 7px;
+  overflow: hidden;
+  background: repeating-linear-gradient(
+    -60deg,
+    rgba(10, 28, 64, 0.06) 0 6px,
+    transparent 6px 12px
+  );
+}
+.gain {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: linear-gradient(90deg, var(--forest), var(--forest2));
+  border-radius: 7px 0 0 7px;
+  display: flex;
+  align-items: center;
+  padding-left: 12px;
+  min-width: 60px;
+}
+.gain span {
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #fff;
+  white-space: nowrap;
+}
+.cap {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 9px;
+}
+.capRisk {
+  background: var(--red);
+}
+.capWarn {
+  background: var(--amber);
+}
+.capOk {
+  background: var(--forest2);
+}
+.climbMeta {
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--faint);
+  margin-bottom: 8px;
+}
+.tRed {
+  color: var(--red);
+}
+.tAmber {
+  color: #8a5a00;
+}
+
+.nextmove {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.45;
+  margin-top: 4px;
+}
+.thin {
+  font-weight: 400;
+  color: var(--soft);
+}
+.lbl {
+  display: block;
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: var(--forest);
+  margin-bottom: 4px;
+}
+.go {
+  background: var(--orange);
+  border: 0;
+  color: #fff;
+  border-radius: 7px;
+  padding: 8px 16px;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 9px;
+}
+.ghost {
+  border: 1px solid var(--ink);
+  background: rgba(255, 255, 255, 0.55);
+  color: var(--ink);
+  border-radius: 7px;
+  padding: 7px 15px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 9px;
+}
+.go:disabled,
+.ghost:disabled {
+  opacity: 0.5;
+}
+.outst {
+  margin-top: 10px;
+  font-size: 12.5px;
+  color: var(--soft);
+}
+.k2 {
+  display: block;
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--quiet);
+  margin-bottom: 2px;
+}
+.closedct {
+  color: var(--quiet);
+  font-size: 12px;
+}
+.donenow {
+  color: var(--quiet);
+  text-decoration: line-through;
+}
+
+/* ── the glass half ─────────────────────────────────────────────────── */
+.rec {
+  background: rgba(255, 255, 255, 0.55);
+  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  backdrop-filter: blur(14px) saturate(1.4);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(10, 28, 64, 0.08);
+  padding: 12px 16px;
+  align-self: start;
+}
+.court {
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding-bottom: 7px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid rgba(10, 28, 64, 0.12);
+}
+.c_you {
+  color: #8a5a00;
+}
+.c_them {
+  color: var(--blue);
+}
+.c_quiet {
+  color: var(--red);
+}
+.c_none {
+  color: var(--quiet);
+}
+.lgr {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 13.5px;
+}
+.lgr li {
+  padding: 2.5px 0 2.5px 16px;
+  position: relative;
+}
+.lgr li::before {
+  content: "";
+  position: absolute;
+  left: 1px;
+  top: 11px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--forest2);
+}
+.t {
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 10.5px;
+  color: var(--faint);
+  margin-right: 7px;
+  font-variant-numeric: tabular-nums;
+}
+.struck {
+  color: var(--quiet);
+  text-decoration: line-through;
+}
+.struck::before {
+  background: var(--quiet) !important;
+}
+.freshLi {
+  background: rgba(30, 91, 70, 0.09);
+  border-radius: 5px;
+}
+.freshLi::before {
+  background: #fff !important;
+  border: 2.2px solid var(--ink);
+}
+.emptyLi {
+  color: var(--quiet);
+}
+.emptyLi::before {
+  background: var(--quiet) !important;
+}
+
+.logbox {
+  margin-top: 10px;
+  border-top: 1.5px solid rgba(30, 91, 70, 0.7);
+  padding-top: 7px;
+}
+.logbox:focus-within {
+  border-top-color: var(--forest);
+}
+.lk {
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--forest);
+}
+.logline {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  margin-top: 4px;
+}
+.logline input {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  outline: none;
+  font-family: var(--f-sans), system-ui, sans-serif;
+  font-size: 14px;
+  color: var(--ink);
+}
+.logline input::placeholder {
+  color: var(--quiet);
+}
+.pastepane {
+  margin-top: 8px;
+}
+.pastepane textarea {
+  width: 100%;
+  min-height: 84px;
+  border: 1px solid var(--hair);
+  border-radius: 7px;
+  padding: 8px 10px;
+  font-family: var(--f-sans), system-ui, sans-serif;
+  font-size: 13px;
+  color: var(--ink);
+  resize: vertical;
+  background: rgba(255, 255, 255, 0.7);
+}
+.pasteRow {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+  justify-content: flex-end;
+}
+.file {
+  background: var(--forest);
+  border: 0;
+  color: #fff;
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.file:disabled {
+  opacity: 0.5;
+}
+.cancel {
+  background: none;
+  border: 0;
+  color: var(--faint);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.err {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--red);
+}
+
+.warming {
+  color: var(--soft);
+  font-size: 13.5px;
+  margin-top: 4px;
+}
+.warming a {
+  color: var(--blue);
+}
+.emptyBoard {
+  color: var(--soft);
+  padding: 30px 0;
+}
+
+/* ── the quiet edge tab ─────────────────────────────────────────────── */
+.edge {
+  position: fixed;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  padding: 14px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  border-left: 1px solid var(--hair);
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 6px 0 0 6px;
+  z-index: 5;
+}
+.edgeLink {
+  writing-mode: vertical-rl;
+  text-decoration: none;
+  color: var(--quiet);
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+.edgeLink:hover {
+  color: var(--ink);
+}
+.edgeDot {
+  color: var(--quiet);
+  font-size: 10px;
+}

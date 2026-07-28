@@ -8,17 +8,8 @@ import { randomUUID } from "node:crypto";
 import { asFieldNoteKind } from "@/lib/field-notes/data";
 import { asFollowUpWhen, nextCheckIn, type TouchLogEntry } from "@/lib/today/follow-ups";
 import { accountIntel, triageDoneKey } from "@/lib/today/build";
-import {
-  DASH_NODE_KEYS,
-  lightNext,
-  migrateActivated,
-  migrateChecks,
-  migrateStates,
-  nodeChecklist,
-  stateFromChecks,
-  syncActivation,
-  type DashNodeKey,
-} from "@/lib/dashboard/stages";
+import { DASH_NODE_KEYS, type DashNodeKey } from "@/lib/dashboard/stages";
+import { applyStepComplete } from "@/lib/dashboard/complete";
 import { digestForCardName } from "@/lib/intel/digest";
 import { createAccountNoteRow } from "@/lib/notes/write";
 import { hideKeyFor, withAsk, type LedgerSrc } from "@/lib/today/ledger";
@@ -1151,52 +1142,19 @@ export async function completeCommitment(formData: FormData) {
     done();
   }
   await safeWrite(async () => {
-    const prisma = getPrisma();
-    // 1. The durable part: check the box on the card itself so the move never
-    // regenerates (same mechanics as the dashboard's own toggle, set-only).
-    const card = await prisma.dashCard.findUnique({ where: { id: cardId } });
-    if (card) {
-      const count = nodeChecklist(node).length;
-      const allChecks = migrateChecks(card.checks);
-      const arr = Array.isArray(allChecks[node]) ? [...allChecks[node]] : [];
-      while (arr.length < count) arr.push(false);
-      if (index >= 0 && index < count && !arr[index]) {
-        arr[index] = true;
-        allChecks[node] = arr;
-        const states = migrateStates(card.states);
-        states[node] = stateFromChecks(arr, count);
-        if (states[node] === "done") lightNext(states, node);
-        const activated = migrateActivated(card.activated);
-        syncActivation(activated, states);
-        await prisma.dashCard.update({
-          where: { id: cardId },
-          data: { checks: allChecks, states, activated },
-        });
-      }
-    }
-    // 2. Today's completion stamp (feeds the ledger's done-time).
-    const existing = await prisma.taskDone.findUnique({ where: { key } });
-    if (!existing) await prisma.taskDone.create({ data: { key } });
-    // 3. The account's own history — the step lands as a worked action.
-    const accountId = accountIdForCardName(cardName);
-    if (accountId && item) {
-      const body = `✓ Closed: ${item}`.slice(0, 500);
-      const n = await createAccountNoteRow({
-        accountId,
-        kind: "account",
-        body,
-        lane: "mine",
-        source: "move",
-      });
-      await mirrorNoteToSheet(
-        body,
-        { accountNoteIds: [n.id], partnerNoteIds: [] },
-        cardName || "account",
-      );
-    }
+    await applyStepComplete({
+      cardId,
+      node,
+      index,
+      doneKey: key,
+      item,
+      cardName,
+      accountId: accountIdForCardName(cardName),
+    });
   });
   revalidatePath("/accounts");
   revalidatePath("/");
+  revalidatePath("/room");
   done();
 }
 
