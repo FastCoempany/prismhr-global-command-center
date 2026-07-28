@@ -174,12 +174,21 @@ export async function roomClose(args: {
 
 // --- The day sheet's mechanics, per account ---------------------------------
 // The composer speaks the sheet's grammar: plain text files a note; "▢ …"
-// opens an action; "⏲ wed …" schedules one. Actions live as account-linked
-// notetaker todos, so they surface here, on the account page, and on Today
-// until it retires.
+// opens an action; "⏲ wed …" schedules one. Actions are written in Today's
+// own dialect — the k:a tag in the body plus the notetaker account column —
+// so they surface identically here, on the ledger, and on the account page.
 
 import { nextRemindIso, parseLogInput } from "@/lib/room/bind";
 import { getPrisma } from "@/lib/db";
+import {
+  NO_TAGS,
+  splitMarker,
+  splitTags,
+  withMarker,
+  withTags,
+  type NoteTags,
+} from "@/lib/today/route-notes";
+import { routeSheetNote } from "@/app/today/sheet-actions";
 
 export async function roomCompose(
   accountId: string,
@@ -195,15 +204,21 @@ export async function roomCompose(
       const r = await roomLog(acct.id, parsed.body);
       return r.ok ? { ok: true, kind: "note" } : { ok: false, reason: r.reason };
     }
-    await getPrisma().todo.create({
+    const prisma = getPrisma();
+    const top = await prisma.todo.findFirst({
+      orderBy: { position: "desc" },
+      select: { position: true },
+    });
+    await prisma.todo.create({
       data: {
-        body: parsed.body,
+        body: withTags(parsed.body, { ...NO_TAGS, kind: "action" }),
         done: false,
+        position: (top?.position ?? -1) + 1,
         accountId: acct.id,
         remindAt:
           parsed.kind === "scheduled"
             ? new Date(nextRemindIso(parsed.remindDay, new Date()))
-            : null,
+            : new Date(),
       },
     });
     refresh();
@@ -213,8 +228,22 @@ export async function roomCompose(
   }
 }
 
-// ✓ / ↩ / ⏲ / ✕ on an open item. Ops are a closed set; ids must belong to the
-// bound account (an item can't be flipped from another row).
+// Rewrite a sheet todo's lifecycle tags in place — text, routing marker, and
+// every untouched tag ride through (same surgery Today's ledger performs).
+async function patchRoomTodoTags(id: string, body: string, patch: Partial<NoteTags>) {
+  const { text, refs, label } = splitMarker(body);
+  const { text: plain, tags } = splitTags(text);
+  const tagged = withTags(plain, { ...tags, ...patch });
+  await getPrisma().todo.update({
+    where: { id },
+    data: { body: refs ? withMarker(tagged, refs, label) : tagged },
+  });
+}
+
+// ✓ / ↩ / ⏲ / ✕ on an open item — Today's ledger lifecycle, spoken from the
+// room. Ops are a closed set; the todo must belong to the bound account,
+// either by its notetaker column or by a routing marker that references one
+// of the account's own note rows.
 export async function roomTodoSet(
   accountId: string,
   todoId: string,
@@ -229,19 +258,58 @@ export async function roomTodoSet(
   try {
     const prisma = getPrisma();
     const t = await prisma.todo.findUnique({ where: { id } });
-    if (!t || (t.accountId ?? "") !== acct.id)
-      return { ok: false, reason: "That item belongs to a different account." };
-    if (op === "drop") await prisma.todo.delete({ where: { id } });
-    else if (op === "done")
+    if (!t) return { ok: false, reason: "That item is gone." };
+    let owned = (t.accountId ?? "") === acct.id;
+    if (!owned) {
+      const refs = splitMarker(t.body).refs;
+      if (refs?.accountNoteIds?.length) {
+        const hit = await prisma.accountNote.findFirst({
+          where: { id: { in: refs.accountNoteIds }, accountId: acct.id },
+          select: { id: true },
+        });
+        owned = !!hit;
+      }
+    }
+    if (!owned) return { ok: false, reason: "That item belongs to a different account." };
+
+    if (op === "done") {
+      // Stamp the moment, close it, clear any delay — then file it to the
+      // account's record (the room knows the account, so no picker needed;
+      // already-routed items pass through untouched).
+      await patchRoomTodoTags(id, t.body, {
+        doneAt: String(Date.now()),
+        delay: "",
+      });
       await prisma.todo.update({ where: { id }, data: { done: true } });
-    else if (op === "undo")
+      await prisma.accountDisposition
+        .deleteMany({ where: { accountId: `row-delay:todo:${id}` } })
+        .catch(() => null);
+      await routeSheetNote(id, { accountId: acct.id }).catch(() => null);
+    } else if (op === "undo") {
+      await patchRoomTodoTags(id, t.body, { doneAt: "" });
       await prisma.todo.update({ where: { id }, data: { done: false } });
-    else if (op === "tomorrow")
+    } else if (op === "tomorrow") {
       await prisma.todo.update({
         where: { id },
         data: { remindAt: new Date(nextRemindIso("tomorrow", new Date())) },
       });
-    else await prisma.todo.update({ where: { id }, data: { remindAt: null } });
+    } else if (op === "now") {
+      await prisma.todo.update({ where: { id }, data: { remindAt: null } });
+      await prisma.accountDisposition
+        .deleteMany({ where: { accountId: `row-delay:todo:${id}` } })
+        .catch(() => null);
+    } else {
+      // ✕ parks the row in the Archive's hidden bin (restorable), exactly as
+      // the ledger's ✕ does — never a hard delete.
+      const snippet = splitTags(splitMarker(t.body).text).text.slice(0, 300);
+      const key = `hide:todo:${id}`.slice(0, 191);
+      await prisma.accountDisposition.upsert({
+        where: { accountId: key },
+        create: { accountId: key, status: "parked", reason: snippet },
+        update: { status: "parked", reason: snippet },
+      });
+      revalidatePath("/archive");
+    }
     refresh();
     return { ok: true };
   } catch {
