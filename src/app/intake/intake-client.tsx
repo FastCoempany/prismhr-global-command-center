@@ -8,7 +8,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { parseSfTimeline, type TimelineEntry } from "@/lib/sf-timeline";
-import { fileTimeline, fileTranscript } from "./actions";
+import { cleanWithAI, fileTimeline, fileTranscript } from "./actions";
 import styles from "../command-center.module.css";
 
 type Acct = { id: string; name: string };
@@ -20,8 +20,8 @@ function bookmarkletFor(origin: string): string {
   return `javascript:${js}`;
 }
 
-export function IntakeClient({ accounts }: { accounts: Acct[] }) {
-  const [raw, setRaw] = useState("");
+export function IntakeClient({ accounts, ai }: { accounts: Acct[]; ai: boolean }) {
+  const [raw, setRawState] = useState("");
   const [accountId, setAccountId] = useState("");
   const [skipped, setSkipped] = useState<Set<number>>(new Set());
   const [busy, setBusy] = useState(false);
@@ -29,17 +29,46 @@ export function IntakeClient({ accounts }: { accounts: Acct[] }) {
   // Paste kind: SF timeline entries (parsed, many notes) or a meeting
   // transcript (files whole as one ☰ note, money-redacted, capped).
   const [kind, setKind] = useState<"timeline" | "transcript">("timeline");
+  // AI-cleaned entries override the rule-based parse until the paste changes.
+  const [aiEntries, setAiEntries] = useState<TimelineEntry[] | null>(null);
+  const [aiSignals, setAiSignals] = useState<string[]>([]);
+  const [aiBusy, setAiBusy] = useState(false);
+  const [aiNote, setAiNote] = useState<string | null>(null);
   const bmRef = useRef<HTMLAnchorElement>(null);
 
   useEffect(() => {
     bmRef.current?.setAttribute("href", bookmarkletFor(window.location.origin));
   }, []);
 
-  const entries = useMemo(
+  // Any change to the paste invalidates a previous AI clean.
+  const setRaw = (t: string) => {
+    setRawState(t);
+    setAiEntries(null);
+    setAiSignals([]);
+    setAiNote(null);
+  };
+
+  const parsed = useMemo(
     () => (kind === "timeline" ? parseSfTimeline(raw) : []),
     [raw, kind],
   );
+  const entries = aiEntries ?? parsed;
   const chosen = entries.filter((_, i) => !skipped.has(i));
+
+  const aiClean = async () => {
+    if (!raw.trim() || aiBusy) return;
+    setAiBusy(true);
+    setAiNote(null);
+    const r = await cleanWithAI(raw);
+    setAiBusy(false);
+    if (r.ok) {
+      setAiEntries(r.entries);
+      setAiSignals(r.signals);
+      setSkipped(new Set());
+    } else {
+      setAiNote(r.reason);
+    }
+  };
 
   const fileAsTranscript = async () => {
     if (!accountId || !raw.trim() || busy) return;
@@ -164,11 +193,37 @@ export function IntakeClient({ accounts }: { accounts: Acct[] }) {
         {kind === "timeline" && raw.trim() && (
           <div className={styles.inkBar}>
             <b>
-              {entries.length === 0
-                ? "Nothing recognized — this page's timeline text is shaped differently."
-                : `${entries.length} entr${entries.length === 1 ? "y" : "ies"} found · ${chosen.length} selected`}
+              {aiEntries
+                ? `✨ AI-cleaned — ${entries.length} entr${entries.length === 1 ? "y" : "ies"} · ${chosen.length} selected`
+                : entries.length === 0
+                  ? "Nothing recognized — this page's timeline text is shaped differently."
+                  : `${entries.length} entr${entries.length === 1 ? "y" : "ies"} found · ${chosen.length} selected`}
             </b>
-            {entries.length === 0 && raw.trim().length > 120 && (
+            {ai && !aiEntries && (
+              <button
+                type="button"
+                className={styles.atcBtn}
+                disabled={aiBusy}
+                onClick={aiClean}
+                title="Sends this paste to Claude once, server-side — comes back as clean dated entries plus signal flags. Review before filing."
+              >
+                {aiBusy ? "Cleaning…" : "✨ Clean with AI"}
+              </button>
+            )}
+            {aiEntries && (
+              <button
+                type="button"
+                className={styles.atcBtn}
+                onClick={() => {
+                  setAiEntries(null);
+                  setAiSignals([]);
+                  setSkipped(new Set());
+                }}
+              >
+                Back to rule-based parse
+              </button>
+            )}
+            {entries.length === 0 && !aiBusy && raw.trim().length > 120 && (
               <button
                 type="button"
                 className={styles.atcBtn}
@@ -178,6 +233,22 @@ export function IntakeClient({ accounts }: { accounts: Acct[] }) {
                 File it whole as ☰ transcript instead →
               </button>
             )}
+          </div>
+        )}
+
+        {kind === "timeline" && aiNote && <p className={styles.mutedSm}>{aiNote}</p>}
+
+        {kind === "timeline" && aiSignals.length > 0 && (
+          <div className={styles.inkRow}>
+            <span className={styles.inkGlyph}>⚑</span>
+            <span className={styles.inkMain}>
+              {aiSignals.map((s, i) => (
+                <span key={i}>
+                  {s}
+                  {i < aiSignals.length - 1 ? " · " : ""}
+                </span>
+              ))}
+            </span>
           </div>
         )}
 
