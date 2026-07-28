@@ -5,6 +5,7 @@
 
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import type { ClientHealth, Engagement } from "@/lib/engagement";
+import { inferActors, inferLane, type Lane } from "@/lib/intel/provenance";
 import type { Snooze, Validation, ValidationStatus } from "./build";
 import type { Todo, Touch, TouchLogEntry } from "./follow-ups";
 
@@ -56,43 +57,89 @@ export async function loadDoneTimes(): Promise<Map<string, string>> {
 }
 
 // A dated, time-stamped account note written from a partner-outreach chip —
-// either yours ("mine") or what the partner said ("partner").
+// either yours ("mine") or what the partner said ("partner"). Every note also
+// carries provenance: whose lane it's in and who was in the activity.
 export type AccountNote = {
   id: string;
   accountId: string;
   partner: string;
   kind: "mine" | "partner" | "account";
   body: string;
+  lane: Lane;
+  actors: string;
+  source: string;
   createdAt: string; // ISO
 };
 
+// Column-safe select sets: if the provenance columns aren't migrated yet, fall
+// back to the stable set so existing notes still load (never silently vanish).
+const NOTE_STABLE = {
+  id: true,
+  accountId: true,
+  partner: true,
+  kind: true,
+  body: true,
+  createdAt: true,
+} as const;
+
+type NoteRow = {
+  id: string;
+  accountId: string;
+  partner: string;
+  kind: string;
+  body: string;
+  createdAt: Date;
+  lane?: string;
+  actors?: string;
+  source?: string;
+};
+
 // All account notes, newest first, grouped by account id. Defensive: degrades to
-// an empty map until the AccountNote table is migrated.
+// an empty map until the AccountNote table is migrated. Legacy rows (blank
+// provenance) get lane/actors inferred from the body at read time.
 export async function loadAccountNotes(): Promise<Map<string, AccountNote[]>> {
   if (!hasDatabaseEnv()) return new Map();
+  const prisma = getPrisma();
+  let rows: NoteRow[];
   try {
-    const rows = await getPrisma().accountNote.findMany({
+    rows = await prisma.accountNote.findMany({
       orderBy: { createdAt: "desc" },
+      select: { ...NOTE_STABLE, lane: true, actors: true, source: true },
     });
-    const out = new Map<string, AccountNote[]>();
-    for (const r of rows) {
-      const note: AccountNote = {
-        id: r.id,
-        accountId: r.accountId,
-        partner: r.partner,
-        kind:
-          r.kind === "partner" ? "partner" : r.kind === "account" ? "account" : "mine",
-        body: r.body,
-        createdAt: r.createdAt.toISOString(),
-      };
-      const list = out.get(r.accountId);
-      if (list) list.push(note);
-      else out.set(r.accountId, [note]);
-    }
-    return out;
   } catch {
-    return new Map();
+    try {
+      rows = await prisma.accountNote.findMany({
+        orderBy: { createdAt: "desc" },
+        select: NOTE_STABLE,
+      });
+    } catch {
+      return new Map();
+    }
   }
+  const out = new Map<string, AccountNote[]>();
+  for (const r of rows) {
+    const kind =
+      r.kind === "partner" ? "partner" : r.kind === "account" ? "account" : "mine";
+    const actors = r.actors || inferActors(r.body);
+    const note: AccountNote = {
+      id: r.id,
+      accountId: r.accountId,
+      partner: r.partner,
+      kind,
+      body: r.body,
+      lane:
+        r.lane === "mine" || r.lane === "background"
+          ? r.lane
+          : inferLane(kind, r.body, actors),
+      actors,
+      source: r.source ?? "",
+      createdAt: r.createdAt.toISOString(),
+    };
+    const list = out.get(r.accountId);
+    if (list) list.push(note);
+    else out.set(r.accountId, [note]);
+  }
+  return out;
 }
 
 // A dated, time-stamped partner note (from Stash routing or the Partner Room).

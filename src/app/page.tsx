@@ -50,13 +50,18 @@ export default async function DashboardPage() {
   for (const [accountId, list] of acctNotesById) {
     const name = nameById.get(accountId);
     if (!name) continue;
-    notesByName[name] = list.map((n) => ({
-      id: n.id,
-      partner: n.partner,
-      kind: n.kind,
-      body: n.body,
-      createdAt: n.createdAt,
-    }));
+    // Cards carry the working record only — background intel stays in the
+    // Account Room behind its own fold.
+    notesByName[name] = list
+      .filter((n) => n.lane === "mine")
+      .map((n) => ({
+        id: n.id,
+        partner: n.partner,
+        kind: n.kind,
+        body: n.body,
+        actors: n.actors,
+        createdAt: n.createdAt,
+      }));
   }
 
   // --- Deal intel, per card ------------------------------------------------

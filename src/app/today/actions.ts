@@ -7,7 +7,20 @@ import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import { randomUUID } from "node:crypto";
 import { asFieldNoteKind } from "@/lib/field-notes/data";
 import { asFollowUpWhen, nextCheckIn, type TouchLogEntry } from "@/lib/today/follow-ups";
-import { accountIntel } from "@/lib/today/build";
+import { accountIntel, triageDoneKey } from "@/lib/today/build";
+import {
+  DASH_NODE_KEYS,
+  lightNext,
+  migrateActivated,
+  migrateChecks,
+  migrateStates,
+  nodeChecklist,
+  stateFromChecks,
+  syncActivation,
+  type DashNodeKey,
+} from "@/lib/dashboard/stages";
+import { digestForCardName } from "@/lib/intel/digest";
+import { createAccountNoteRow } from "@/lib/notes/write";
 import { hideKeyFor, withAsk, type LedgerSrc } from "@/lib/today/ledger";
 import { mirrorNoteToSheet } from "@/lib/today/mirror";
 import {
@@ -372,6 +385,18 @@ export async function logTouch(formData: FormData) {
         log,
       },
     });
+    // Account outreach also files on the account's own ledger — the send is a
+    // worked action, and the account tab should remember it without a trip
+    // through Today's history.
+    if (kind === "account" && subjectKey.startsWith("outreach:")) {
+      await createAccountNoteRow({
+        accountId: subjectKey.slice("outreach:".length),
+        kind: "account",
+        body: `✉ Outreach sent${message ? ` — “${clipForLog(message)}”` : ""}`,
+        lane: "mine",
+        source: "touch",
+      });
+    }
   });
   done();
 }
@@ -522,8 +547,13 @@ export async function addAccountNote(formData: FormData) {
   // unattributed note on the account itself. All three refresh the chip clock.
   const kind = raw === "partner" ? "partner" : raw === "account" ? "account" : "mine";
   await safeWrite(async () => {
-    const n = await getPrisma().accountNote.create({
-      data: { accountId, partner: str(formData, "partner", 120), kind, body },
+    const n = await createAccountNoteRow({
+      accountId,
+      partner: str(formData, "partner", 120),
+      kind,
+      body,
+      lane: "mine",
+      source: "chip",
     });
     // Every note lands on the Day Sheet too — pre-routed, undo-able.
     const name = accountIntel().find((a) => a.id === accountId)?.name ?? "account";
@@ -598,13 +628,13 @@ export async function setDisposition(formData: FormData) {
       create: { accountId, status: status!, reason },
       update: { status: status!, reason },
     });
-    await prisma.accountNote.create({
-      data: {
-        accountId,
-        partner: str(formData, "partner", 120),
-        kind: "account",
-        body: `${DISPOSITION_LABEL[status!]}${reason ? ` — ${reason}` : ""}`,
-      },
+    await createAccountNoteRow({
+      accountId,
+      partner: str(formData, "partner", 120),
+      kind: "account",
+      body: `${DISPOSITION_LABEL[status!]}${reason ? ` — ${reason}` : ""}`,
+      lane: "mine",
+      source: "disposition",
     });
   });
   doneTo(formData);
@@ -616,8 +646,12 @@ export async function clearDisposition(formData: FormData) {
   await safeWrite(async () => {
     const prisma = getPrisma();
     await prisma.accountDisposition.deleteMany({ where: { accountId } });
-    await prisma.accountNote.create({
-      data: { accountId, partner: "", kind: "account", body: "↩ Returned to active" },
+    await createAccountNoteRow({
+      accountId,
+      kind: "account",
+      body: "↩ Returned to active",
+      lane: "mine",
+      source: "disposition",
     });
   });
   doneTo(formData);
@@ -633,8 +667,12 @@ export async function logHappening(formData: FormData) {
   const consequence = asDisposition(str(formData, "consequence", 12));
   await safeWrite(async () => {
     const prisma = getPrisma();
-    const n = await prisma.accountNote.create({
-      data: { accountId, partner: "", kind: "account", body: `⚡ ${body}` },
+    const n = await createAccountNoteRow({
+      accountId,
+      kind: "account",
+      body: `⚡ ${body}`,
+      lane: "mine",
+      source: "happening",
     });
     const name = accountIntel().find((a) => a.id === accountId)?.name ?? "account";
     await mirrorNoteToSheet(
@@ -1077,4 +1115,114 @@ export async function askNextDone(formData: FormData) {
     });
   });
   finish();
+}
+
+// --- Morning-move completion -------------------------------------------------
+// Completions are DURABLE and they FILE. Marking a move done used to write only
+// a per-day key — overnight the key expired, the generator re-derived the same
+// move, and accounts kept popping back (the Nextep loop). Now:
+//   · a commitment's "Done ✓" checks the actual box on the dashboard card, so
+//     the next derivation moves ON to the next step, and
+//   · a triage "Mark done" writes an undated key that permanently retires the
+//     signal from the morning list, and
+//   · both drop a ✓ note on the account, so the account's own ledger — not
+//     just Today's — remembers what was worked.
+
+function accountIdForCardName(cardName: string): string {
+  const n = cardName.trim().toLowerCase();
+  const hit = accountIntel().find((a) => a.name.trim().toLowerCase() === n);
+  return hit?.id ?? digestForCardName(cardName)?.accountId ?? "";
+}
+
+export async function completeCommitment(formData: FormData) {
+  const cardId = str(formData, "cardId", 40);
+  const node = str(formData, "node", 40) as DashNodeKey;
+  const index = parseInt(str(formData, "index", 4), 10);
+  const key = str(formData, "key", 160);
+  const item = str(formData, "item", 300);
+  const cardName = str(formData, "cardName", 160);
+  if (
+    !(await requireWrite()) ||
+    !cardId ||
+    !DASH_NODE_KEYS.includes(node) ||
+    Number.isNaN(index) ||
+    !key
+  ) {
+    done();
+  }
+  await safeWrite(async () => {
+    const prisma = getPrisma();
+    // 1. The durable part: check the box on the card itself so the move never
+    // regenerates (same mechanics as the dashboard's own toggle, set-only).
+    const card = await prisma.dashCard.findUnique({ where: { id: cardId } });
+    if (card) {
+      const count = nodeChecklist(node).length;
+      const allChecks = migrateChecks(card.checks);
+      const arr = Array.isArray(allChecks[node]) ? [...allChecks[node]] : [];
+      while (arr.length < count) arr.push(false);
+      if (index >= 0 && index < count && !arr[index]) {
+        arr[index] = true;
+        allChecks[node] = arr;
+        const states = migrateStates(card.states);
+        states[node] = stateFromChecks(arr, count);
+        if (states[node] === "done") lightNext(states, node);
+        const activated = migrateActivated(card.activated);
+        syncActivation(activated, states);
+        await prisma.dashCard.update({
+          where: { id: cardId },
+          data: { checks: allChecks, states, activated },
+        });
+      }
+    }
+    // 2. Today's completion stamp (feeds the ledger's done-time).
+    const existing = await prisma.taskDone.findUnique({ where: { key } });
+    if (!existing) await prisma.taskDone.create({ data: { key } });
+    // 3. The account's own history — the step lands as a worked action.
+    const accountId = accountIdForCardName(cardName);
+    if (accountId && item) {
+      const body = `✓ Closed: ${item}`.slice(0, 500);
+      const n = await createAccountNoteRow({
+        accountId,
+        kind: "account",
+        body,
+        lane: "mine",
+        source: "move",
+      });
+      await mirrorNoteToSheet(
+        body,
+        { accountNoteIds: [n.id], partnerNoteIds: [] },
+        cardName || "account",
+      );
+    }
+  });
+  revalidatePath("/accounts");
+  revalidatePath("/");
+  done();
+}
+
+export async function dismissTriage(formData: FormData) {
+  const accountId = str(formData, "accountId", 40);
+  const name = str(formData, "name", 160);
+  if (!(await requireWrite()) || !accountId) done();
+  await safeWrite(async () => {
+    const prisma = getPrisma();
+    const key = triageDoneKey(accountId);
+    const existing = await prisma.taskDone.findUnique({ where: { key } });
+    if (!existing) await prisma.taskDone.create({ data: { key } });
+    const body = "✓ Decided: not now — dismissed from Today's triage";
+    const n = await createAccountNoteRow({
+      accountId,
+      kind: "account",
+      body,
+      lane: "mine",
+      source: "move",
+    });
+    await mirrorNoteToSheet(
+      body,
+      { accountNoteIds: [n.id], partnerNoteIds: [] },
+      name || "account",
+    );
+  });
+  revalidatePath("/accounts");
+  done();
 }
