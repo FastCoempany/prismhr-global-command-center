@@ -8,6 +8,7 @@ import { revalidatePath } from "next/cache";
 import { getAppAccess } from "@/lib/auth";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import { accountIntel } from "@/lib/today/build";
+import { createAccountNoteRow } from "@/lib/notes/write";
 import {
   detectTargets,
   NO_TAGS,
@@ -66,8 +67,12 @@ async function writeRoutes(
   const refs: RouteRefs = { accountNoteIds: [], partnerNoteIds: [] };
   for (const a of targets.accounts) {
     try {
-      const n = await prisma.accountNote.create({
-        data: { accountId: a.id, partner: "", kind: "mine", body: text },
+      const n = await createAccountNoteRow({
+        accountId: a.id,
+        kind: "mine",
+        body: text,
+        lane: "mine",
+        source: "sheet",
       });
       refs.accountNoteIds.push(n.id);
     } catch {

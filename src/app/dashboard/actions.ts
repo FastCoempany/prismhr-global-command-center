@@ -7,6 +7,7 @@ import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import {
   DASH_NODE_KEYS,
   isNodeState,
+  lightNext,
   migrateActivated,
   migrateCheckNotes,
   migrateChecks,
@@ -14,31 +15,10 @@ import {
   migrateStates,
   nodeChecklist,
   stateFromChecks,
+  syncActivation,
   type DashNodeKey,
   type NodeState,
 } from "@/lib/dashboard/stages";
-
-function lightNext(states: Record<string, string>, node: DashNodeKey) {
-  const i = DASH_NODE_KEYS.indexOf(node);
-  const nextKey = DASH_NODE_KEYS[i + 1];
-  if (nextKey && (!isNodeState(states[nextKey]) || states[nextKey] === "todo")) {
-    states[nextKey] = "active";
-  }
-}
-
-// Keep the per-node activation stamps in sync with the final node states: stamp
-// the moment a node first goes active (so Today can age the commitment), clear it when
-// a node falls back to todo, and leave done nodes' stamps untouched.
-function syncActivation(
-  activated: Record<string, string>,
-  states: Record<string, string>,
-) {
-  const now = new Date().toISOString();
-  for (const key of DASH_NODE_KEYS) {
-    if (states[key] === "active" && !activated[key]) activated[key] = now;
-    else if (states[key] === "todo") delete activated[key];
-  }
-}
 
 function str(fd: FormData, key: string, max = 4000) {
   const v = fd.get(key);

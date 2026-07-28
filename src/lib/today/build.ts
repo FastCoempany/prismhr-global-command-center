@@ -460,6 +460,13 @@ export function morningDoneKey(moveKey: string, now: number = Date.now()): strin
   return `morning:${dayStamp(now)}:${moveKey}`;
 }
 
+// Triage decisions are DURABLE — a dismissed signal never re-enters the
+// morning list (the per-day morning keys reset overnight, which is right for
+// rituals but was wrong here: undecided accounts kept popping back forever).
+export function triageDoneKey(accountId: string): string {
+  return `triage-done:acct:${accountId}`;
+}
+
 // The "sent" mark for a partner's outreach roundup. A stable per-partner key so
 // the contacted state persists (this is a standing tracker you work through
 // once, not a weekly ritual that resets every Monday).

@@ -3,7 +3,8 @@ import { AppWayfinder } from "@/components/app-wayfinder";
 import { getAppAccess } from "@/lib/auth";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import { peos } from "@/lib/book";
-import { contactCount } from "@/lib/book/contacts";
+import { contactCount, contactsFor } from "@/lib/book/contacts";
+import { peopleFor } from "@/lib/intel/people";
 import { loadCommand } from "@/lib/command-center/data";
 import { compositeScore, deskScore } from "@/lib/book/scoring";
 import {
@@ -150,13 +151,29 @@ export default async function AccountsPage() {
         })(),
         notes: notesByAccount.get(p.id) ?? [],
         contactCount: contactCount(p.id),
-        chipNotes: (chipNotes.get(p.id) ?? []).map((n) => ({
-          id: n.id,
-          partner: n.partner,
-          kind: n.kind,
-          body: n.body,
-          createdAt: n.createdAt,
-        })),
+        // Two registers: the working record ("mine") renders by default; the
+        // background register (case/support traffic) sits behind a click.
+        chipNotes: (chipNotes.get(p.id) ?? [])
+          .filter((n) => n.lane === "mine")
+          .map((n) => ({
+            id: n.id,
+            partner: n.partner,
+            kind: n.kind,
+            body: n.body,
+            actors: n.actors,
+            createdAt: n.createdAt,
+          })),
+        bgNotes: (chipNotes.get(p.id) ?? [])
+          .filter((n) => n.lane === "background")
+          .map((n) => ({
+            id: n.id,
+            partner: n.partner,
+            kind: n.kind,
+            body: n.body,
+            actors: n.actors,
+            createdAt: n.createdAt,
+          })),
+        people: peopleFor(chipNotes.get(p.id) ?? [], contactsFor(p.id)),
         stage: peoStateById.get(p.id)?.stage ?? "NOT_TOUCHED",
         approach: peoStateById.get(p.id)?.approach ?? "NEEDS_CSM",
         intent: peoStateById.get(p.id)?.intent ?? "UNKNOWN",

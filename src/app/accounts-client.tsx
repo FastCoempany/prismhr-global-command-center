@@ -9,9 +9,12 @@ import { SfCheckpoint } from "@/components/sf";
 import {
   AccountChipNotes,
   AccountNotes,
+  BackgroundIntel,
+  PeopleIndex,
   type ChipNote,
   type LinkedNote,
 } from "@/components/account-notes";
+import type { PersonRow } from "@/lib/intel/people";
 import {
   askToJoinMessage,
   CADENCE_OPTIONS,
@@ -189,7 +192,9 @@ export type AccountRow = {
   // accounts never reach the room — they live in the exclusions ledger.
   disposition: { status: "motion" | "parked"; reason: string } | null;
   notes: LinkedNote[];
-  chipNotes: ChipNote[];
+  chipNotes: ChipNote[]; // the working record ("mine" lane)
+  bgNotes: ChipNote[]; // background register — behind a click
+  people: PersonRow[]; // everyone in the account's traffic
   contactCount: number;
   // Working-the-deal state (absorbed from the Book).
   stage: Stage;
@@ -989,6 +994,8 @@ export function AccountsClient({
                         <SfCheckpoint when="account" id={a.id} name={a.name} />
                         <AccountChipNotes notes={a.chipNotes} />
                         <AccountNotes notes={a.notes} />
+                        <PeopleIndex people={a.people} />
+                        <BackgroundIntel notes={a.bgNotes} />
                         <EngagementPanel a={a} />
                         <WorkingDeal a={a} canWrite={canWrite} />
                         <div className={styles.demandBlock}>

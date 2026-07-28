@@ -58,6 +58,7 @@ import {
   chipTone,
   partnerOutreachKey,
   morningDoneKey,
+  triageDoneKey,
   movedThisWeek,
   narrative,
   outreachGuidance,
@@ -98,6 +99,8 @@ import {
   addFollowUp,
   addTouchNote,
   bringFollowUpDue,
+  completeCommitment,
+  dismissTriage,
   delayFollowUp,
   deleteTouch,
   doneSheetAction,
@@ -283,8 +286,11 @@ function MorningMove({
     actions = (
       <div className={styles.gActions}>
         <SeedForm a={a} onBoard={false} label="Seed to dashboard" />
-        <form action={toggleTaskDone} className={styles.mvDoneForm}>
-          <input type="hidden" name="key" value={doneKey} />
+        {/* Durable: writes an undated key + a ✓ note on the account — this
+            signal never re-enters the morning list. */}
+        <form action={dismissTriage} className={styles.mvDoneForm}>
+          <input type="hidden" name="accountId" value={a.id} />
+          <input type="hidden" name="name" value={a.name} />
           <button className={styles.mvDoneBtn}>Mark done ✓</button>
         </form>
       </div>
@@ -294,11 +300,17 @@ function MorningMove({
     g = commitmentGuidance(s);
     kind = "close";
     meta = `dashboard · ${s.nodeLabel}`;
-    // The one button: mark the morning move done. Checking the step off on the
-    // board itself stays in the expansion.
+    // The one button: done here IS done on the dashboard — it checks the box
+    // on the card (so the move advances instead of regenerating tomorrow) and
+    // files a ✓ note on the account's own ledger.
     primary = (
-      <form action={toggleTaskDone} className={styles.valInline}>
+      <form action={completeCommitment} className={styles.valInline}>
+        <input type="hidden" name="cardId" value={s.cardId} />
+        <input type="hidden" name="node" value={s.nodeKey} />
+        <input type="hidden" name="index" value={s.index} />
         <input type="hidden" name="key" value={doneKey} />
+        <input type="hidden" name="item" value={s.item} />
+        <input type="hidden" name="cardName" value={s.cardName} />
         <button className={`${styles.atcBtn} ${styles.atcGo}`}>Done ✓</button>
       </form>
     );
@@ -947,8 +959,11 @@ export default async function TodayPage({
     s.ageDays != null && s.ageDays >= COMMITMENT_WINDOW_DAYS;
   const pastWindow = cardSteps.filter(overdue);
   const otherSteps = cardSteps.filter((s) => !overdue(s));
+  // Dismissed triage decisions are durable (undated keys) — a signal marked
+  // done never re-enters the morning list, for ANY account.
   const triageList = activeSignals.filter(
-    (a) => !onBoard.has(a.name) && a.id !== move?.id,
+    (a) =>
+      !onBoard.has(a.name) && a.id !== move?.id && !doneKeys.has(triageDoneKey(a.id)),
   );
 
   const allMoves: Mv[] = [
@@ -969,7 +984,9 @@ export default async function TodayPage({
       const t = touchMap.get(key);
       return { mv, key, done: !!t, touch: t };
     }
-    const key = morningDoneKey(mvId(mv));
+    // Triage completes durably; commitments keep the per-day key (their real
+    // completion is the dashboard box, which completeCommitment now checks).
+    const key = mv.kind === "triage" ? triageDoneKey(mv.a.id) : morningDoneKey(mvId(mv));
     return { mv, key, done: doneKeys.has(key), touch: undefined as Touch | undefined };
   });
   // Deliberate holds leave the numbered list entirely — they render as dim ⏸

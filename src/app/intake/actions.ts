@@ -5,7 +5,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getAppAccess } from "@/lib/auth";
-import { getPrisma, hasDatabaseEnv } from "@/lib/db";
+import { hasDatabaseEnv } from "@/lib/db";
 import { peos } from "@/lib/book";
 import { dealIntelFor } from "@/lib/intel/extract";
 import { digestFor, digestForCardName } from "@/lib/intel/digest";
@@ -13,6 +13,8 @@ import { COUNTRY_NAME, redactMoney } from "@/lib/intel/lexicon";
 import { loadAccountNotes, loadTodos, loadTouches } from "@/lib/today/overlay";
 import { cleanSfPaste, type TimelineEntry } from "@/lib/sf-timeline";
 import { aiCleanAvailable, aiCleanTimeline } from "@/lib/intel/ai-clean";
+import { actorsLine, laneFor } from "@/lib/intel/provenance";
+import { createAccountNoteRow } from "@/lib/notes/write";
 
 async function requireWrite() {
   if (!hasDatabaseEnv()) return false;
@@ -47,11 +49,18 @@ export async function fileTimeline(
   const batch = entries.slice(0, 50);
   let filed = 0;
   try {
-    const prisma = getPrisma();
     for (const e of batch) {
       if (!e || typeof e !== "object") continue;
-      await prisma.accountNote.create({
-        data: { accountId: id, partner: "", kind: "account", body: noteBody(e) },
+      // Provenance rides in with the entry: who was in it, and whether it's my
+      // working record or background account intel.
+      const actors = actorsLine(e.from ?? "", e.to ?? "", e.others ?? 0);
+      await createAccountNoteRow({
+        accountId: id,
+        kind: "account",
+        body: noteBody(e),
+        lane: laneFor(actors, `${e.subject ?? ""}\n${e.body ?? ""}`),
+        actors,
+        source: "sf",
       });
       filed++;
     }
@@ -220,13 +229,12 @@ export async function fileTranscript(
   const body = redactMoney(cleanSfPaste(text ?? "")).slice(0, 6000);
   if (!(await requireWrite()) || !id || !body) return { ok: false };
   try {
-    await getPrisma().accountNote.create({
-      data: {
-        accountId: id,
-        partner: "",
-        kind: "account",
-        body: `☰ transcript — filed from Intake\n${body}`,
-      },
+    await createAccountNoteRow({
+      accountId: id,
+      kind: "account",
+      body: `☰ transcript — filed from Intake\n${body}`,
+      lane: "mine",
+      source: "transcript",
     });
     revalidatePath("/accounts");
     revalidatePath("/today");

@@ -357,3 +357,31 @@ export const BRIEFS: Record<DashNodeKey, string[]> = {
 export function nodeBriefs(key: DashNodeKey): string[] {
   return BRIEFS[key] ?? [];
 }
+
+// --- Shared check-write mechanics ---------------------------------------------
+// Used by every action that flips a checklist box (the dashboard's own toggle
+// and Today's "Done ✓" on commitment moves) so state/activation stay in sync
+// no matter where the click happened.
+
+// When a node completes, light the next one (unless it's already in flight).
+export function lightNext(states: Record<string, string>, node: DashNodeKey) {
+  const i = DASH_NODE_KEYS.indexOf(node);
+  const nextKey = DASH_NODE_KEYS[i + 1];
+  if (nextKey && (!isNodeState(states[nextKey]) || states[nextKey] === "todo")) {
+    states[nextKey] = "active";
+  }
+}
+
+// Keep the per-node activation stamps in sync with the final node states: stamp
+// the moment a node first goes active (so Today can age the commitment), clear
+// it when a node falls back to todo, and leave done nodes' stamps untouched.
+export function syncActivation(
+  activated: Record<string, string>,
+  states: Record<string, string>,
+) {
+  const now = new Date().toISOString();
+  for (const key of DASH_NODE_KEYS) {
+    if (states[key] === "active" && !activated[key]) activated[key] = now;
+    else if (states[key] === "todo") delete activated[key];
+  }
+}

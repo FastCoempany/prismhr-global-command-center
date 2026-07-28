@@ -915,15 +915,15 @@ model PeoActivity {
 // from PeoState / the book / anything else. Every card and node state is set by
 // hand. `states` / `notes` are JSON maps keyed by dashboard node key.
 model DashCard {
-  id         String   @id @default(cuid())
-  name       String
-  subtitle   String?
-  position   Int      @default(0)
-  archived   Boolean  @default(false)
-  states     Json? // { nodeKey: "todo"|"active"|"done" }
-  notes      Json? // { nodeKey: string }  (general per-node note, e.g. research seed)
-  checks     Json? // { nodeKey: boolean[] }  (mandatory checkbox state)
-  checkNotes Json? // { nodeKey: { itemIndex: string } }  (per-checkbox note)
+  id           String   @id @default(cuid())
+  name         String
+  subtitle     String?
+  position     Int      @default(0)
+  archived     Boolean  @default(false)
+  states       Json? // { nodeKey: "todo"|"active"|"done" }
+  notes        Json? // { nodeKey: string }  (general per-node note, e.g. research seed)
+  checks       Json? // { nodeKey: boolean[] }  (mandatory checkbox state)
+  checkNotes   Json? // { nodeKey: { itemIndex: string } }  (per-checkbox note)
   activated    Json? // { nodeKey: isoString }  (when a node first went active — ages commitments)
   dealSize     String? // free-text estimated size ("$120k ARR", "300 EEs / 4 countries")
   stakeholders Json? // [{ name, role, note }]  (people on the deal, each its own box)
@@ -1095,6 +1095,10 @@ model AccountNote {
   partner   String   @default("") // whose outreach card it was written from
   kind      String   @default("mine") // "mine" | "partner"
   body      String
+  // Provenance (stamped at write; "" on legacy rows = infer at read):
+  lane      String   @default("") // "mine" (my working record) | "background" (ingested intel)
+  actors    String   @default("") // "Kim Bartolotti → Lesha Cyphers +2"
+  source    String   @default("") // "sf" | "sf-ai" | "transcript" | "chip" | "move" | "touch" | ...
   createdAt DateTime @default(now())
 
   @@index([accountId, createdAt])
