@@ -171,3 +171,80 @@ export async function roomClose(args: {
     return { ok: false, reason: "The close didn't save — try again." };
   }
 }
+
+// --- The day sheet's mechanics, per account ---------------------------------
+// The composer speaks the sheet's grammar: plain text files a note; "▢ …"
+// opens an action; "⏲ wed …" schedules one. Actions live as account-linked
+// notetaker todos, so they surface here, on the account page, and on Today
+// until it retires.
+
+import { nextRemindIso, parseLogInput } from "@/lib/room/bind";
+import { getPrisma } from "@/lib/db";
+
+export async function roomCompose(
+  accountId: string,
+  text: string,
+): Promise<{ ok: boolean; kind?: "note" | "action" | "scheduled"; reason?: string }> {
+  const acct = bindAccountId(accountId, peos);
+  if (!acct) return { ok: false, reason: "That row isn't bound to a known account." };
+  const parsed = parseLogInput(text);
+  if (!parsed) return { ok: false, reason: "Nothing to file." };
+  if (!(await requireWrite())) return { ok: false, reason: "Read-only session." };
+  try {
+    if (parsed.kind === "note") {
+      const r = await roomLog(acct.id, parsed.body);
+      return r.ok ? { ok: true, kind: "note" } : { ok: false, reason: r.reason };
+    }
+    await getPrisma().todo.create({
+      data: {
+        body: parsed.body,
+        done: false,
+        accountId: acct.id,
+        remindAt:
+          parsed.kind === "scheduled"
+            ? new Date(nextRemindIso(parsed.remindDay, new Date()))
+            : null,
+      },
+    });
+    refresh();
+    return { ok: true, kind: parsed.kind };
+  } catch {
+    return { ok: false, reason: "That didn't save — try again." };
+  }
+}
+
+// ✓ / ↩ / ⏲ / ✕ on an open item. Ops are a closed set; ids must belong to the
+// bound account (an item can't be flipped from another row).
+export async function roomTodoSet(
+  accountId: string,
+  todoId: string,
+  op: "done" | "undo" | "tomorrow" | "now" | "drop",
+): Promise<{ ok: boolean; reason?: string }> {
+  const acct = bindAccountId(accountId, peos);
+  const id = typeof todoId === "string" ? todoId.trim().slice(0, 40) : "";
+  if (!acct || !id) return { ok: false, reason: "Not a bound row." };
+  if (!["done", "undo", "tomorrow", "now", "drop"].includes(op))
+    return { ok: false, reason: "Unknown control." };
+  if (!(await requireWrite())) return { ok: false, reason: "Read-only session." };
+  try {
+    const prisma = getPrisma();
+    const t = await prisma.todo.findUnique({ where: { id } });
+    if (!t || (t.accountId ?? "") !== acct.id)
+      return { ok: false, reason: "That item belongs to a different account." };
+    if (op === "drop") await prisma.todo.delete({ where: { id } });
+    else if (op === "done")
+      await prisma.todo.update({ where: { id }, data: { done: true } });
+    else if (op === "undo")
+      await prisma.todo.update({ where: { id }, data: { done: false } });
+    else if (op === "tomorrow")
+      await prisma.todo.update({
+        where: { id },
+        data: { remindAt: new Date(nextRemindIso("tomorrow", new Date())) },
+      });
+    else await prisma.todo.update({ where: { id }, data: { remindAt: null } });
+    refresh();
+    return { ok: true };
+  } catch {
+    return { ok: false, reason: "That didn't save — try again." };
+  }
+}

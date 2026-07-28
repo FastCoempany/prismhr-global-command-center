@@ -33,13 +33,14 @@ async function requireWrite() {
 
 function safeReturn(fd: FormData): string {
   const raw = str(fd, "returnTo", 80);
-  return raw === "/accounts" ? "/accounts" : raw === "/today" ? "/today" : "/";
+  return raw === "/accounts" || raw === "/today" || raw === "/room" ? raw : "/";
 }
 
 function done(to = "/") {
   revalidatePath("/");
   revalidatePath("/accounts");
   revalidatePath("/today");
+  revalidatePath("/room");
   redirect(to);
 }
 
@@ -171,18 +172,18 @@ export async function saveCheckNote(formData: FormData) {
   const node = str(formData, "node", 40) as DashNodeKey;
   const index = str(formData, "index", 4);
   const note = str(formData, "note", 2000);
-  if (!(await requireWrite()) || !cardId || !DASH_NODE_KEYS.includes(node)) done();
+  if (!(await requireWrite()) || !cardId || !DASH_NODE_KEYS.includes(node)) done(safeReturn(formData));
 
   const prisma = getPrisma();
   const card = await prisma.dashCard.findUnique({ where: { id: cardId } });
-  if (!card) done();
+  if (!card) done(safeReturn(formData));
   const all: Record<string, Record<string, string>> = migrateCheckNotes(card!.checkNotes);
   const per = { ...(all[node] ?? {}) };
   if (note) per[index] = note;
   else delete per[index];
   all[node] = per;
   await prisma.dashCard.update({ where: { id: cardId }, data: { checkNotes: all } });
-  done();
+  done(safeReturn(formData));
 }
 
 // General per-node note (e.g. the research seed dropped on Discovery at add-time).
@@ -190,16 +191,16 @@ export async function saveNote(formData: FormData) {
   const cardId = str(formData, "cardId", 40);
   const node = str(formData, "node", 40) as DashNodeKey;
   const note = str(formData, "note", 4000);
-  if (!(await requireWrite()) || !cardId || !DASH_NODE_KEYS.includes(node)) done();
+  if (!(await requireWrite()) || !cardId || !DASH_NODE_KEYS.includes(node)) done(safeReturn(formData));
 
   const prisma = getPrisma();
   const card = await prisma.dashCard.findUnique({ where: { id: cardId } });
-  if (!card) done();
+  if (!card) done(safeReturn(formData));
   const notes: Record<string, string> = migrateNotes(card!.notes);
   if (note) notes[node] = note;
   else delete notes[node];
   await prisma.dashCard.update({ where: { id: cardId }, data: { notes } });
-  done();
+  done(safeReturn(formData));
 }
 
 export async function toggleArchive(formData: FormData) {
@@ -333,7 +334,8 @@ export async function dismissSuggestion(formData: FormData) {
   const cardId = str(formData, "cardId", 40);
   const node = str(formData, "node", 40);
   const index = str(formData, "index", 4);
-  if (!(await requireWrite()) || !cardId || !node) done();
+  const back = safeReturn(formData);
+  if (!(await requireWrite()) || !cardId || !node) done(back);
   const key = `sugg-dismiss:${cardId}:${node}:${index}`.slice(0, 191);
   await safeWrite(async () => {
     await getPrisma().accountDisposition.upsert({
@@ -342,7 +344,7 @@ export async function dismissSuggestion(formData: FormData) {
       update: { status: "parked" },
     });
   });
-  done();
+  done(back);
 }
 
 // Drag-reorder: an ordered CSV of non-archived card ids replaces ↑/↓.

@@ -104,12 +104,19 @@ export function readDeal(i: RoomInputs): RoomRead {
   // The move — one plain sentence built from what's actually known.
   let move: string;
   let thin = false;
+  // Timing phrases read differently by kind: a dated anchor ("Sept 1 target")
+  // is a wall to race; a bare descriptor ("time-sensitive") is the ask's nature.
+  const clock = i.timing
+    ? /\d/.test(i.timing.phrase)
+      ? `against ${i.timing.phrase}`
+      : `on a ${i.timing.phrase.toLowerCase()} ask`
+    : "";
   if (i.step) {
     const item = i.step.item.trim() || "the open item";
     if (quietLong && i.lastTouch) {
       const who = i.lastTouch.who || "them";
-      move = i.timing
-        ? `Chase ${who} on “${item.toLowerCase()}” — quiet ${quietDays} days against ${i.timing.phrase}.`
+      move = clock
+        ? `Chase ${who} on “${item.toLowerCase()}” — quiet ${quietDays} days ${clock}.`
         : `Chase ${who} on “${item.toLowerCase()}” — quiet ${quietDays} days.`;
     } else if (i.timing) {
       move = `Close “${item.toLowerCase()}” — ${i.timing.phrase} is the clock it's on.`;
