@@ -22,7 +22,7 @@ export type SheetDisposition = { reason: string; updatedAt: string };
 export type AccountSheet = {
   open: { id: string; body: string }[];
   delayed: { id: string; body: string; when: string }[];
-  doneToday: { id: string; body: string }[];
+  doneToday: { id: string; body: string; at: string }[];
 };
 
 const ROW_DELAY = "row-delay:";
@@ -108,11 +108,16 @@ export function buildAccountSheet(
     }
     if (!isAction) continue;
     const stamp = Number(doneAt);
-    const doneDay =
-      doneAt && !Number.isNaN(stamp)
-        ? sameLocalDayIso(new Date(stamp).toISOString(), now)
-        : sameLocalDayIso(t.updatedAt, now);
-    if (doneDay) out.doneToday.push({ id: t.id, body });
+    const stampOk = doneAt !== "" && !Number.isNaN(stamp);
+    const doneDay = stampOk
+      ? sameLocalDayIso(new Date(stamp).toISOString(), now)
+      : sameLocalDayIso(t.updatedAt, now);
+    if (doneDay)
+      out.doneToday.push({
+        id: t.id,
+        body,
+        at: stampOk ? new Date(stamp).toISOString() : t.updatedAt,
+      });
   }
   out.doneToday.sort((a, b) => {
     const at = Number(tagsOf(todos.find((t) => t.id === a.id)?.body ?? "").doneAt);

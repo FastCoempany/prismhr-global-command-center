@@ -21,7 +21,14 @@ import {
   unmuteRoundupPartner,
 } from "../today/actions";
 import { dismissSuggestion, saveNote, toggleCheck } from "../dashboard/actions";
-import { roomClose, roomCompose, roomPaste, roomTodoSet } from "./actions";
+import {
+  roomClose,
+  roomCompose,
+  roomNoteToAction,
+  roomPaste,
+  roomTodoSet,
+  roomUnlog,
+} from "./actions";
 import type { StageView } from "@/lib/room/stages-view";
 import styles from "./room.module.css";
 
@@ -49,8 +56,9 @@ export type RoomRow = {
   } | null;
   sheetOpen: { id: string; body: string }[];
   sheetDelayed: { id: string; body: string; when: string }[];
-  sheetDoneToday: { id: string; body: string }[];
+  sheetDoneToday: { id: string; body: string; at: string }[];
   record: { id: string; t: string; text: string; struck: boolean }[];
+  recordTotal: number;
   health: "red" | "amber" | "green" | "quiet";
   rank: number;
   canWrite: boolean;
@@ -106,12 +114,26 @@ function Briefed({ on }: { on: boolean }) {
   );
 }
 
+function firstWord(s: string): string {
+  return (s ?? "").trim().split(/\s+/)[0] ?? "";
+}
+
+type FreshCap = {
+  body: string;
+  kind: "note" | "action" | "scheduled";
+  todoId?: string;
+  promoted?: boolean;
+};
+
 function Row({ row }: { row: RoomRow }) {
-  const [freshRecord, setFreshRecord] = useState<{ text: string }[]>([]);
-  const [freshOpen, setFreshOpen] = useState<{ body: string }[]>([]);
+  const [freshCaps, setFreshCaps] = useState<FreshCap[]>([]);
+  const [freshInfo, setFreshInfo] = useState<{ text: string }[]>([]);
   const [gone, setGone] = useState<Set<string>>(new Set());
   const [doneIds, setDoneIds] = useState<Set<string>>(new Set());
+  const [promotedNotes, setPromotedNotes] = useState<Set<string>>(new Set());
   const [logText, setLogText] = useState("");
+  const [mode, setMode] = useState<"note" | "action">("note");
+  const [urg, setUrg] = useState<"" | "high" | "med" | "low">("");
   const [pasteOpen, setPasteOpen] = useState(false);
   const [pasteText, setPasteText] = useState("");
   const [note, setNote] = useState<string | null>(null);
@@ -123,16 +145,55 @@ function Row({ row }: { row: RoomRow }) {
     const text = logText.trim();
     if (!text || pending) return;
     start(async () => {
-      const r = await roomCompose(row.accountId, text);
-      if (r.ok) {
-        if (r.kind === "note") setFreshRecord((f) => [{ text: `✎ ${text}` }, ...f]);
-        else
-          setFreshOpen((f) => [
-            { body: text.replace(/^([▢⏲]|\[\s?\])\s*\S*\s*/, "") },
-            ...f,
-          ]);
+      const r = await roomCompose(row.accountId, text, { kind: mode, urgency: urg });
+      if (r.ok && r.kind) {
+        setFreshCaps((f) => [
+          {
+            body: text.replace(/^(?:▢|\[\s?\])\s*/, "").replace(/^⏲\s*\S+\s*/, ""),
+            kind: r.kind as FreshCap["kind"],
+            todoId: r.todoId,
+          },
+          ...f,
+        ]);
         setLogText("");
+        setUrg("");
         setNote(null);
+      } else if (!r.ok) setNote(r.reason ?? "That didn't save.");
+    });
+  };
+  const undoCap = (idx: number) => {
+    const c = freshCaps[idx];
+    if (!c?.todoId || pending) return;
+    const todoId = c.todoId;
+    start(async () => {
+      const r = await roomUnlog(row.accountId, todoId);
+      if (r.ok) setFreshCaps((f) => f.filter((_, i) => i !== idx));
+      else setNote(r.reason ?? "The undo didn't take.");
+    });
+  };
+  const promoteCap = (idx: number) => {
+    const c = freshCaps[idx];
+    if (!c?.todoId || pending) return;
+    const todoId = c.todoId;
+    start(async () => {
+      const r = await roomNoteToAction(row.accountId, { todoId });
+      if (r.ok)
+        setFreshCaps((f) =>
+          f.map((x, i) => (i === idx ? { ...x, kind: "action", promoted: true } : x)),
+        );
+      else setNote(r.reason ?? "That didn't save.");
+    });
+  };
+  const promoteNote = (noteId: string, text: string) => {
+    if (pending || promotedNotes.has(noteId)) return;
+    start(async () => {
+      const r = await roomNoteToAction(row.accountId, { noteId });
+      if (r.ok) {
+        setPromotedNotes((s) => new Set(s).add(noteId));
+        setFreshCaps((f) => [
+          { body: text.replace(/^[✉✓☰✎⚡▢]\s?/, ""), kind: "action", promoted: true },
+          ...f,
+        ]);
       } else setNote(r.reason ?? "That didn't save.");
     });
   };
@@ -142,9 +203,9 @@ function Row({ row }: { row: RoomRow }) {
     start(async () => {
       const r = await roomPaste(row.accountId, text);
       if (r.ok) {
-        setFreshRecord((f) => [
+        setFreshInfo((f) => [
           {
-            text: `☰ Paste filed — ${r.filed} entr${r.filed === 1 ? "y" : "ies"}${r.how === "ai" ? ", AI-cleaned" : ""}.`,
+            text: `Paste filed — ${r.filed} entr${r.filed === 1 ? "y" : "ies"}${r.how === "ai" ? ", AI-cleaned" : ""}.`,
           },
           ...f,
         ]);
@@ -169,7 +230,7 @@ function Row({ row }: { row: RoomRow }) {
       });
       if (r.ok) {
         setClosed(true);
-        setFreshRecord((f) => [{ text: `✓ Closed: ${o.item}` }, ...f]);
+        setFreshInfo((f) => [{ text: `Closed: ${o.item}` }, ...f]);
       } else setNote(r.reason ?? "The close didn't save.");
     });
   };
@@ -392,141 +453,182 @@ function Row({ row }: { row: RoomRow }) {
         <div className={`${styles.court} ${styles[`c_${row.court.tone}`]}`}>
           {row.court.line}
         </div>
+        <div className={styles.keybar}>
+          <span>
+            <b className={styles.kSend}>✉</b>send
+          </span>
+          <span>
+            <b>⚖</b>decide
+          </span>
+          <span>
+            <b className={styles.kOwed}>⚑</b>owed
+          </span>
+          <span>
+            <b className={styles.kAct}>✸</b>action
+          </span>
+          <span>
+            <b>➤</b>sent
+          </span>
+          <span>
+            <b className={styles.kDone}>✓</b>done
+          </span>
+          <span>
+            <b className={styles.kDly}>⏲</b>delayed
+          </span>
+          <span>
+            <b>✎</b>note
+          </span>
+        </div>
 
-        {(row.sheetOpen.length > 0 || freshOpen.length > 0) && (
-          <>
-            <span className={styles.zone}>OPEN — THIS ACCOUNT&apos;S WORK</span>
-            {freshOpen.map((f, i) => (
-              <div
-                key={`fo${i}`}
-                className={`${styles.it} ${styles.itOpen} ${styles.fresh}`}
-              >
-                <span className={styles.ic}>▢</span>
-                <span className={styles.tx}>{f.body}</span>
+        <div className={styles.dayrule}>TODAY</div>
+        {freshCaps.map((c, i) =>
+          c.kind === "note" && !c.promoted ? (
+            <div key={`fc${i}`}>
+              <div className={`${styles.it} ${styles.fresh}`}>
+                <span className={`${styles.ic} ${styles.gNote}`}>✎</span>
+                <span className={styles.tx}>{c.body}</span>
               </div>
-            ))}
-            {row.sheetOpen
-              .filter((t) => !gone.has(t.id))
-              .map((t) => {
-                const did = doneIds.has(t.id);
-                return (
-                  <div
-                    key={t.id}
-                    className={`${styles.it} ${did ? styles.itDid : styles.itOpen}`}
-                  >
-                    <span className={styles.ic}>{did ? "✓" : "▢"}</span>
-                    <span className={styles.tx}>{t.body}</span>
-                    {row.canWrite && (
-                      <span className={styles.ctl}>
-                        {did ? (
-                          <button onClick={() => todoOp(t.id, "undo")} title="undo">
-                            ↩
-                          </button>
-                        ) : (
-                          <>
-                            <button onClick={() => todoOp(t.id, "done")} title="done">
-                              ✓
-                            </button>
-                            <button
-                              onClick={() => todoOp(t.id, "tomorrow")}
-                              title="tomorrow"
-                            >
-                              ⏲
-                            </button>
-                            <button onClick={() => todoOp(t.id, "drop")} title="drop">
-                              ✕
-                            </button>
-                          </>
-                        )}
-                      </span>
-                    )}
-                  </div>
-                );
-              })}
-          </>
-        )}
-
-        {row.sheetDelayed.filter((t) => !gone.has(t.id)).length > 0 && (
-          <>
-            <span className={styles.zone}>SCHEDULED</span>
-            {row.sheetDelayed
-              .filter((t) => !gone.has(t.id))
-              .map((t) => (
-                <div key={t.id} className={`${styles.it} ${styles.itDelayed}`}>
-                  <span className={styles.ic}>⏲</span>
-                  <span className={styles.tx}>{t.body}</span>
-                  <span className={styles.when}>→ {t.when}</span>
-                  {row.canWrite && (
-                    <span className={styles.ctl}>
-                      <button
-                        onClick={() => todoOp(t.id, "now")}
-                        title="bring it back now"
-                      >
-                        ↩
-                      </button>
-                    </span>
-                  )}
-                </div>
-              ))}
-          </>
-        )}
-
-        {row.sheetDoneToday.length > 0 && (
-          <>
-            <span className={styles.zone}>COMPLETED TODAY</span>
-            {row.sheetDoneToday.map((t) => (
-              <div key={t.id} className={`${styles.it} ${styles.itDid}`}>
-                <span className={styles.ic}>✓</span>
-                <span className={styles.tx}>{t.body}</span>
-                {row.canWrite && (
-                  <span className={styles.ctl}>
-                    <button onClick={() => todoOp(t.id, "undo")} title="undo">
-                      ↩
+              <div className={styles.rcpt}>
+                <b>routed → {row.name}&apos;s record</b>
+                {c.todoId && (
+                  <>
+                    <button
+                      type="button"
+                      className={styles.rcptU}
+                      onClick={() => undoCap(i)}
+                    >
+                      ↩ undo
                     </button>
-                  </span>
+                    <button
+                      type="button"
+                      className={styles.rcptMk}
+                      onClick={() => promoteCap(i)}
+                    >
+                      ✸ make it an action →
+                    </button>
+                  </>
                 )}
               </div>
-            ))}
-          </>
+            </div>
+          ) : (
+            <div
+              key={`fc${i}`}
+              className={`${styles.it} ${styles.itOpen} ${styles.fresh}`}
+            >
+              <span className={`${styles.ic} ${styles.gAct}`}>✸</span>
+              <span className={`${styles.st} ${styles.stOpen}`}>
+                {c.kind === "scheduled" ? "SOON" : "OPEN"}
+              </span>
+              <span className={styles.tx}>{c.body}</span>
+              {c.todoId && (
+                <span className={styles.rail}>
+                  <button onClick={() => todoOp(c.todoId!, "done")} title="done">
+                    ✓
+                  </button>
+                  <button onClick={() => todoOp(c.todoId!, "drop")} title="park">
+                    ✕
+                  </button>
+                </span>
+              )}
+            </div>
+          ),
         )}
-
-        <span className={styles.zone}>THE RECORD</span>
-        {freshRecord.map((f, i) => (
-          <div key={`fr${i}`} className={`${styles.it} ${styles.fresh}`}>
-            <span className={styles.ic}>·</span>
+        {freshInfo.map((f, i) => (
+          <div key={`fi${i}`} className={`${styles.it} ${styles.fresh}`}>
+            <span className={`${styles.ic} ${styles.gDone}`}>✓</span>
             <span className={styles.tx}>{f.text}</span>
           </div>
         ))}
-        {row.record.map((e) => (
-          <div key={e.id} className={`${styles.it} ${e.struck ? styles.itDid : ""}`}>
-            <span className={styles.ic}>
-              {e.text.startsWith("✉")
-                ? "✉"
-                : e.text.startsWith("✓")
-                  ? "✓"
-                  : e.text.startsWith("☰")
-                    ? "☰"
-                    : "✎"}
-            </span>
-            <span className={styles.tx}>
-              <span className={styles.t}>{e.t}</span>
-              {e.text.replace(/^[✉✓☰✎⚡▢]\s?/, "")}
-            </span>
-          </div>
-        ))}
-        {row.record.length === 0 && freshRecord.length === 0 && (
-          <div className={`${styles.it} ${styles.itEmpty}`}>
-            <span className={styles.ic}>·</span>
-            <span className={styles.tx}>Nothing on file yet.</span>
-          </div>
-        )}
+        {row.sheetOpen
+          .filter((t) => !gone.has(t.id))
+          .map((t) => {
+            const did = doneIds.has(t.id);
+            return (
+              <div
+                key={t.id}
+                className={`${styles.it} ${did ? styles.itDid : styles.itOpen}`}
+              >
+                <span className={`${styles.ic} ${did ? styles.gDone : styles.gAct}`}>
+                  {did ? "✓" : "✸"}
+                </span>
+                {!did && <span className={`${styles.st} ${styles.stOpen}`}>OPEN</span>}
+                <span className={styles.tx}>{t.body}</span>
+                {row.canWrite && (
+                  <span className={styles.rail}>
+                    {did ? (
+                      <button onClick={() => todoOp(t.id, "undo")} title="undo">
+                        ↩
+                      </button>
+                    ) : (
+                      <>
+                        <button onClick={() => todoOp(t.id, "done")} title="done">
+                          ✓
+                        </button>
+                        <button
+                          onClick={() => todoOp(t.id, "tomorrow")}
+                          title="delay to tomorrow"
+                        >
+                          ⏲
+                        </button>
+                        <form action={addFollowUp} className={styles.inline}>
+                          <input
+                            type="hidden"
+                            name="label"
+                            value={t.body.slice(0, 140)}
+                          />
+                          <input type="hidden" name="when" value="tomorrow" />
+                          <input type="hidden" name="returnTo" value="/room" />
+                          <button title="arm a chase — someone owes this">⚑</button>
+                        </form>
+                        <button onClick={() => todoOp(t.id, "drop")} title="park">
+                          ✕
+                        </button>
+                      </>
+                    )}
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        {row.sheetDelayed
+          .filter((t) => !gone.has(t.id))
+          .map((t) => (
+            <div key={t.id} className={`${styles.it} ${styles.itDelayed}`}>
+              <span className={`${styles.ic} ${styles.gDly}`}>⏲</span>
+              <span className={`${styles.st} ${styles.stSched}`}>{t.when}</span>
+              <span className={styles.tx}>{t.body}</span>
+              {row.canWrite && (
+                <span className={styles.rail}>
+                  <button onClick={() => todoOp(t.id, "now")} title="bring it back now">
+                    ↩
+                  </button>
+                </span>
+              )}
+            </div>
+          ))}
+        {row.sheetDoneToday
+          .filter((t) => !gone.has(t.id))
+          .map((t) => (
+            <div key={t.id} className={`${styles.it} ${styles.itDid}`}>
+              <span className={`${styles.ic} ${styles.gDone}`}>✓</span>
+              <span className={`${styles.st} ${styles.stDone}`}>{t.at}</span>
+              <span className={styles.tx}>{t.body}</span>
+              {row.canWrite && (
+                <span className={styles.rail}>
+                  <button onClick={() => todoOp(t.id, "undo")} title="undo">
+                    ↩
+                  </button>
+                </span>
+              )}
+            </div>
+          ))}
 
         {row.canWrite && (
           <div className={styles.logbox}>
             <span className={styles.lk}>
               LOG IT — FILES TO {row.name.toUpperCase()}, EVERYWHERE
             </span>
-            <div className={styles.logline}>
+            <div className={styles.modes}>
               <button
                 type="button"
                 className={styles.zap}
@@ -535,16 +637,47 @@ function Row({ row }: { row: RoomRow }) {
               >
                 ⚡
               </button>
-              <input
-                value={logText}
-                onChange={(e) => setLogText(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") submitCompose();
-                }}
-                placeholder="Note ⏎ · start with ▢ for an action · ⏲ wed to schedule it…"
-                aria-label={`Log to ${row.name}`}
-              />
+              <button
+                type="button"
+                className={`${styles.mode} ${mode === "note" ? styles.modeOn : ""}`}
+                onClick={() => setMode("note")}
+              >
+                ▢ Note
+              </button>
+              <button
+                type="button"
+                className={`${styles.mode} ${mode === "action" ? styles.modeOn : ""}`}
+                onClick={() => setMode("action")}
+              >
+                ✸ Action
+              </button>
+              {(["high", "med", "low"] as const).map((u) => (
+                <button
+                  key={u}
+                  type="button"
+                  className={`${styles.urgc} ${urg === u ? styles.urgOn : ""}`}
+                  onClick={() => setUrg((v) => (v === u ? "" : u))}
+                >
+                  {u.toUpperCase()}
+                </button>
+              ))}
+              <span className={styles.hints}>
+                Enter files to {firstWord(row.name)} · Shift+Enter newline
+              </span>
             </div>
+            <textarea
+              className={styles.logta}
+              value={logText}
+              onChange={(e) => setLogText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  submitCompose();
+                }
+              }}
+              placeholder="Type the second it happens — call notes, Teams pastes, stray thoughts…"
+              aria-label={`Log to ${row.name}`}
+            />
             {pasteOpen && (
               <div className={styles.pastepane}>
                 <textarea
@@ -574,6 +707,63 @@ function Row({ row }: { row: RoomRow }) {
             {note && <p className={styles.err}>{note}</p>}
           </div>
         )}
+
+        <div className={styles.dayrule}>EARLIER</div>
+        {row.record.map((e) => {
+          const promoted = promotedNotes.has(e.id);
+          const glyph = e.text.startsWith("✉")
+            ? "✉"
+            : e.text.startsWith("✓")
+              ? "✓"
+              : e.text.startsWith("☰")
+                ? "☰"
+                : "✎";
+          return (
+            <div
+              key={e.id}
+              className={`${styles.it} ${e.struck || promoted ? styles.itDid : ""}`}
+            >
+              <span
+                className={`${styles.ic} ${
+                  glyph === "✉"
+                    ? styles.kSend
+                    : glyph === "✓"
+                      ? styles.gDone
+                      : styles.gNote
+                }`}
+              >
+                {glyph}
+              </span>
+              <span className={styles.tx}>
+                <span className={styles.t}>{e.t}</span>
+                {e.text.replace(/^[✉✓☰✎⚡▢]\s?/, "")}
+                {promoted && <span className={styles.promoted}> · now open above</span>}
+              </span>
+              {row.canWrite && !e.struck && !promoted && glyph !== "✓" && (
+                <span className={styles.rail}>
+                  <button
+                    onClick={() => promoteNote(e.id, e.text)}
+                    title="make it an action — opens on this register"
+                  >
+                    ✸
+                  </button>
+                </span>
+              )}
+            </div>
+          );
+        })}
+        {row.record.length === 0 && (
+          <div className={`${styles.it} ${styles.itEmpty}`}>
+            <span className={styles.ic}>·</span>
+            <span className={styles.tx}>Nothing on file yet.</span>
+          </div>
+        )}
+        <div className={styles.more}>
+          <Link href={`/accounts?focus=${row.accountId}`}>
+            the full record ({row.recordTotal}) ▸
+          </Link>
+          <Link href="/archive">archive →</Link>
+        </div>
       </div>
     </div>
   );

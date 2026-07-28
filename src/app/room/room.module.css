@@ -212,7 +212,8 @@
 .nmline {
   display: flex;
   align-items: baseline;
-  gap: 10px;
+  gap: 10px 10px;
+  row-gap: 10px;
   flex-wrap: wrap;
 }
 .nm {
@@ -600,15 +601,21 @@ button.sdRadio:hover {
   color: var(--soft);
 }
 .go {
-  background: var(--orange);
-  border: 0;
-  color: #fff;
+  background: rgba(230, 112, 30, 0.16);
+  -webkit-backdrop-filter: blur(10px) saturate(1.4);
+  backdrop-filter: blur(10px) saturate(1.4);
+  border: 1px solid rgba(230, 112, 30, 0.55);
+  color: var(--orange);
   border-radius: 7px;
   padding: 8px 16px;
   font-size: 13.5px;
   font-weight: 700;
   cursor: pointer;
   margin-top: 9px;
+  box-shadow: 0 4px 14px rgba(230, 112, 30, 0.14);
+}
+.go:hover {
+  background: rgba(230, 112, 30, 0.26);
 }
 .ghost {
   border: 1px solid var(--ink);
@@ -679,6 +686,164 @@ button.sdRadio:hover {
   font-weight: 700;
   letter-spacing: 0.18em;
   color: var(--faint);
+}
+
+/* ── the register's furniture: the glyph key, day rules, state chips ── */
+.keybar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px 12px;
+  padding: 7px 0 5px;
+  border-bottom: 1px dashed var(--hair);
+  font-size: 10px;
+  color: var(--faint);
+}
+.keybar b {
+  font-weight: 400;
+  margin-right: 2px;
+}
+.kSend {
+  color: var(--blue);
+}
+.kAct {
+  color: var(--orange);
+}
+.kDone {
+  color: var(--green);
+}
+.kDly {
+  color: #8a5a00;
+}
+.kOwed {
+  color: #8a5a00;
+}
+.dayrule {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 4px;
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--quiet);
+}
+.dayrule::after {
+  content: "";
+  flex: 1;
+  border-top: 1px solid var(--hair);
+}
+.st {
+  flex: none;
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.8;
+  padding: 0 6px;
+  border-radius: 4px;
+}
+.stOpen {
+  background: rgba(10, 28, 64, 0.07);
+  color: var(--ink);
+}
+.stSched {
+  background: rgba(138, 90, 0, 0.1);
+  color: #8a5a00;
+}
+.stDone {
+  background: rgba(34, 197, 94, 0.12);
+  color: #15803d;
+}
+.gSend {
+  color: var(--blue) !important;
+}
+.gAct {
+  color: var(--orange) !important;
+}
+.gDone {
+  color: var(--green) !important;
+}
+.gDly {
+  color: #8a5a00 !important;
+}
+.gNote {
+  color: var(--soft) !important;
+}
+.rail {
+  display: inline-flex;
+  gap: 7px;
+  flex: none;
+  align-items: baseline;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+.it:hover .rail,
+.itOpen .rail,
+.fresh .rail,
+.itDelayed .rail {
+  opacity: 1;
+}
+.rail button {
+  border: 0;
+  background: none;
+  color: var(--faint);
+  font-size: 12.5px;
+  padding: 0 2px;
+  cursor: pointer;
+}
+.rail button:hover {
+  color: var(--ink);
+}
+.rcpt {
+  margin: -1px 0 3px 24px;
+  font-size: 11.5px;
+  color: var(--soft);
+}
+.rcpt b {
+  color: var(--forest);
+  font-weight: 700;
+}
+.rcptU {
+  border: 0;
+  background: none;
+  color: var(--faint);
+  font-size: 11px;
+  cursor: pointer;
+  text-decoration: underline dotted;
+  margin-left: 6px;
+  padding: 0;
+}
+.rcptU:hover {
+  color: var(--ink);
+}
+.rcptMk {
+  border: 0;
+  background: none;
+  color: var(--orange);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: 10px;
+  padding: 0;
+}
+.promoted {
+  color: var(--quiet);
+  font-size: 11px;
+}
+.more {
+  display: flex;
+  gap: 16px;
+  margin-top: 9px;
+}
+.more a {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--faint);
+  text-decoration: none;
+}
+.more a:hover {
+  color: var(--forest);
 }
 .it {
   display: flex;
@@ -768,23 +933,73 @@ button.sdRadio:hover {
   letter-spacing: 0.18em;
   color: var(--faint);
 }
-.logline {
+.modes {
   display: flex;
-  gap: 9px;
+  gap: 7px;
   align-items: center;
-  margin-top: 4px;
+  flex-wrap: wrap;
+  margin: 8px 0 6px;
 }
-.logline input {
-  flex: 1;
-  min-width: 0;
-  border: 0;
-  background: transparent;
-  outline: none;
+.mode {
+  border: 1px solid var(--hair);
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 8px;
+  padding: 5px 13px;
+  font-family: var(--f-sans), system-ui, sans-serif;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--soft);
+  cursor: pointer;
+}
+.modeOn {
+  border: 1.6px solid var(--ink);
+  color: var(--ink);
+  background: #fff;
+}
+.urgc {
+  border: 1px solid var(--hair);
+  background: none;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--faint);
+  cursor: pointer;
+}
+.urgOn {
+  border-color: var(--ink);
+  color: var(--ink);
+  background: #fff;
+}
+.hints {
+  margin-left: auto;
+  font-style: italic;
+  font-size: 10.5px;
+  line-height: 1.4;
+  color: var(--quiet);
+  text-align: right;
+}
+.logta {
+  width: 100%;
+  min-height: 42px;
+  border: 1px dashed rgba(30, 91, 70, 0.5);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.6);
+  padding: 8px 10px;
   font-family: var(--f-sans), system-ui, sans-serif;
   font-size: 14px;
+  line-height: 1.5;
   color: var(--ink);
+  resize: vertical;
+  outline: none;
 }
-.logline input::placeholder {
+.logta:focus {
+  border-style: solid;
+  border-color: var(--forest);
+}
+.logta::placeholder {
   color: var(--quiet);
 }
 .pastepane {

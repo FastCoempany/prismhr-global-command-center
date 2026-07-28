@@ -11,7 +11,7 @@ export async function mirrorNoteToSheet(
   body: string,
   refs: RouteRefs,
   label: string,
-): Promise<void> {
+): Promise<string | null> {
   try {
     const prisma = getPrisma();
     const top = await prisma.todo.findFirst({
@@ -20,10 +20,12 @@ export async function mirrorNoteToSheet(
     });
     const position = (top?.position ?? -1) + 1;
     const b = withMarker(body.slice(0, 20000), refs, label);
-    await prisma.todo
+    const t = await prisma.todo
       .create({ data: { body: b, position, remindAt: new Date() } })
       .catch(() => prisma.todo.create({ data: { body: b, position } }));
+    return t.id;
   } catch {
     // Sheet mirror is best-effort; the original note already saved.
+    return null;
   }
 }
