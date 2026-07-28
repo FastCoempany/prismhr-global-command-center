@@ -23,6 +23,8 @@ describe("room client — every absorbed capability is wired", () => {
     // the old day sheet per account
     ["composer files notes/actions/schedules", "roomCompose"],
     ["sheet item ops (done/undo/delay/drop)", "roomTodoSet"],
+    ["a capture's receipt can undo", "roomUnlog"],
+    ["any note can become an action", "roomNoteToAction"],
     ["paste files to the account", "roomPaste"],
     ["the move closes for real", "roomClose"],
     // the roundups engine in the drawer
@@ -60,15 +62,24 @@ describe("room client — every absorbed capability is wired", () => {
     }
   });
 
-  test("the day sheet zones and the record all render", () => {
-    for (const zone of [
-      "OPEN — THIS ACCOUNT",
-      "SCHEDULED",
-      "COMPLETED TODAY",
-      "THE RECORD",
+  test("the one register renders whole: day rules, key, chips, composer", () => {
+    for (const marker of [
+      ">TODAY<",
+      ">EARLIER<",
+      "routed → ",
+      "make it an action",
+      "▢ Note",
+      "✸ Action",
+      "the full record",
     ]) {
-      assert.ok(client.includes(zone), `zone missing: ${zone}`);
+      assert.ok(client.includes(marker), `register marker missing: ${marker}`);
     }
+    // Today's glyph language, present and keyed
+    for (const glyph of ["✉", "⚖", "⚑", "✸", "➤", "✓", "⏲", "✎"]) {
+      assert.ok(client.includes(glyph), `glyph missing from the key: ${glyph}`);
+    }
+    // urgency chips ride the composer
+    assert.ok(/high.*med.*low/i.test(client));
   });
 
   test("the drawers keep their decreed names — never Cadence", () => {

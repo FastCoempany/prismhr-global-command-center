@@ -200,7 +200,18 @@ export default async function RoomPage() {
     const sheet = buildAccountSheet(todos, accountId, noteIds, dispositions, now);
     const sheetOpen = sheet.open;
     const sheetDelayed = sheet.delayed;
-    const sheetDoneToday = sheet.doneToday;
+    const sheetDoneToday = sheet.doneToday.map((d) => ({
+      id: d.id,
+      body: d.body,
+      at: new Date(Date.parse(d.at))
+        .toLocaleTimeString("en-US", {
+          timeZone: "America/Chicago",
+          hour: "numeric",
+          minute: "2-digit",
+        })
+        .toLowerCase()
+        .replace(" ", ""),
+    }));
 
     const stageLabel = step
       ? `${(data.labels[step.nodeKey] ?? step.nodeLabel).toUpperCase().slice(0, 16)} · ${doneInStage} OF ${totalInStage}`
@@ -263,6 +274,7 @@ export default async function RoomPage() {
         text: n.body.split("\n")[0].slice(0, 160),
         struck: n.body.startsWith("✓"),
       })),
+      recordTotal: mine.length,
       health: read.health,
       rank: 0,
       canWrite: data.canWrite,

@@ -33,11 +33,13 @@ function refresh() {
   revalidatePath("/");
 }
 
-// Type a line, press Enter → one note on THIS account, everywhere.
+// Type a line, press Enter → one note on THIS account, everywhere. Returns
+// the ids the receipt needs: the note row and its sheet mirror, so ↩ undo
+// and "make it an action →" can act on exactly what this keystroke created.
 export async function roomLog(
   accountId: string,
   text: string,
-): Promise<{ ok: boolean; reason?: string }> {
+): Promise<{ ok: boolean; reason?: string; noteId?: string; todoId?: string }> {
   const acct = bindAccountId(accountId, peos);
   const body = cleanLogBody(text);
   if (!acct) return { ok: false, reason: "That row isn't bound to a known account." };
@@ -51,13 +53,13 @@ export async function roomLog(
       lane: "mine",
       source: "room",
     });
-    await mirrorNoteToSheet(
+    const todoId = await mirrorNoteToSheet(
       `✎ ${body}`,
       { accountNoteIds: [n.id], partnerNoteIds: [] },
       acct.name,
     );
     refresh();
-    return { ok: true };
+    return { ok: true, noteId: n.id, todoId: todoId ?? undefined };
   } catch {
     return { ok: false, reason: "The note didn't save — try again." };
   }
@@ -190,28 +192,46 @@ import {
 } from "@/lib/today/route-notes";
 import { routeSheetNote } from "@/app/today/sheet-actions";
 
+// The register's composer. The Note | Action toggle and urgency chips arrive
+// as opts (Today's capture bar, transplanted); the typed grammar still wins
+// when the operator leads with a marker ("▢ …", "⏲ wed …").
 export async function roomCompose(
   accountId: string,
   text: string,
-): Promise<{ ok: boolean; kind?: "note" | "action" | "scheduled"; reason?: string }> {
+  opts?: { kind?: "note" | "action"; urgency?: "" | "low" | "med" | "high" },
+): Promise<{
+  ok: boolean;
+  kind?: "note" | "action" | "scheduled";
+  reason?: string;
+  noteId?: string;
+  todoId?: string;
+}> {
   const acct = bindAccountId(accountId, peos);
   if (!acct) return { ok: false, reason: "That row isn't bound to a known account." };
   const parsed = parseLogInput(text);
   if (!parsed) return { ok: false, reason: "Nothing to file." };
   if (!(await requireWrite())) return { ok: false, reason: "Read-only session." };
+  const wantAction =
+    parsed.kind !== "note" || (opts?.kind === "action" && parsed.kind === "note");
+  const urgency =
+    opts?.urgency === "low" || opts?.urgency === "med" || opts?.urgency === "high"
+      ? opts.urgency
+      : "";
   try {
-    if (parsed.kind === "note") {
+    if (!wantAction) {
       const r = await roomLog(acct.id, parsed.body);
-      return r.ok ? { ok: true, kind: "note" } : { ok: false, reason: r.reason };
+      return r.ok
+        ? { ok: true, kind: "note", noteId: r.noteId, todoId: r.todoId }
+        : { ok: false, reason: r.reason };
     }
     const prisma = getPrisma();
     const top = await prisma.todo.findFirst({
       orderBy: { position: "desc" },
       select: { position: true },
     });
-    await prisma.todo.create({
+    const t = await prisma.todo.create({
       data: {
-        body: withTags(parsed.body, { ...NO_TAGS, kind: "action" }),
+        body: withTags(parsed.body, { ...NO_TAGS, kind: "action", urgency }),
         done: false,
         position: (top?.position ?? -1) + 1,
         accountId: acct.id,
@@ -222,7 +242,120 @@ export async function roomCompose(
       },
     });
     refresh();
-    return { ok: true, kind: parsed.kind };
+    return {
+      ok: true,
+      kind: parsed.kind === "scheduled" ? "scheduled" : "action",
+      todoId: t.id,
+    };
+  } catch {
+    return { ok: false, reason: "That didn't save — try again." };
+  }
+}
+
+// ↩ on a capture's receipt — remove exactly what the keystroke created: the
+// note rows the mirror's marker references (only this account's), then the
+// mirror row itself. Today's undoSheetRoute semantics, completed.
+export async function roomUnlog(
+  accountId: string,
+  todoId: string,
+): Promise<{ ok: boolean; reason?: string }> {
+  const acct = bindAccountId(accountId, peos);
+  const id = typeof todoId === "string" ? todoId.trim().slice(0, 40) : "";
+  if (!acct || !id) return { ok: false, reason: "Not a bound row." };
+  if (!(await requireWrite())) return { ok: false, reason: "Read-only session." };
+  try {
+    const prisma = getPrisma();
+    const t = await prisma.todo.findUnique({ where: { id } });
+    if (!t) return { ok: false, reason: "That entry is gone." };
+    const refs = splitMarker(t.body).refs;
+    let owned = (t.accountId ?? "") === acct.id;
+    if (!owned && refs?.accountNoteIds?.length) {
+      const hit = await prisma.accountNote.findFirst({
+        where: { id: { in: refs.accountNoteIds }, accountId: acct.id },
+        select: { id: true },
+      });
+      owned = !!hit;
+    }
+    if (!owned)
+      return { ok: false, reason: "That entry belongs to a different account." };
+    if (refs?.accountNoteIds?.length) {
+      await prisma.accountNote
+        .deleteMany({
+          where: { id: { in: refs.accountNoteIds }, accountId: acct.id },
+        })
+        .catch(() => null);
+    }
+    await prisma.todo.delete({ where: { id } });
+    refresh();
+    return { ok: true };
+  } catch {
+    return { ok: false, reason: "The undo didn't take — try again." };
+  }
+}
+
+// ✸ make it an action → : promote a capture (its sheet mirror) or an old
+// record entry into open work on this account's register.
+export async function roomNoteToAction(
+  accountId: string,
+  src: { todoId?: string; noteId?: string },
+): Promise<{ ok: boolean; reason?: string }> {
+  const acct = bindAccountId(accountId, peos);
+  if (!acct) return { ok: false, reason: "That row isn't bound to a known account." };
+  if (!(await requireWrite())) return { ok: false, reason: "Read-only session." };
+  try {
+    const prisma = getPrisma();
+    const todoId = typeof src?.todoId === "string" ? src.todoId.trim().slice(0, 40) : "";
+    if (todoId) {
+      const t = await prisma.todo.findUnique({ where: { id: todoId } });
+      if (!t) return { ok: false, reason: "That entry is gone." };
+      let owned = (t.accountId ?? "") === acct.id;
+      if (!owned) {
+        const refs = splitMarker(t.body).refs;
+        if (refs?.accountNoteIds?.length) {
+          const hit = await prisma.accountNote.findFirst({
+            where: { id: { in: refs.accountNoteIds }, accountId: acct.id },
+            select: { id: true },
+          });
+          owned = !!hit;
+        }
+      }
+      if (!owned)
+        return { ok: false, reason: "That entry belongs to a different account." };
+      await patchRoomTodoTags(todoId, t.body, { kind: "action", doneAt: "", delay: "" });
+      await prisma.todo.update({
+        where: { id: todoId },
+        data: { done: false, accountId: acct.id },
+      });
+      refresh();
+      return { ok: true };
+    }
+    const noteId = typeof src?.noteId === "string" ? src.noteId.trim().slice(0, 40) : "";
+    if (!noteId) return { ok: false, reason: "Nothing to promote." };
+    const n = await prisma.accountNote.findFirst({
+      where: { id: noteId, accountId: acct.id },
+    });
+    if (!n) return { ok: false, reason: "That entry belongs to a different account." };
+    const text = n.body
+      .split("\n")[0]
+      .replace(/^[✎✉✓☰⚡▢✔☎]\s?/, "")
+      .trim()
+      .slice(0, 2000);
+    if (!text) return { ok: false, reason: "Nothing to promote." };
+    const top = await prisma.todo.findFirst({
+      orderBy: { position: "desc" },
+      select: { position: true },
+    });
+    await prisma.todo.create({
+      data: {
+        body: withTags(text, { ...NO_TAGS, kind: "action" }),
+        done: false,
+        position: (top?.position ?? -1) + 1,
+        accountId: acct.id,
+        remindAt: new Date(),
+      },
+    });
+    refresh();
+    return { ok: true };
   } catch {
     return { ok: false, reason: "That didn't save — try again." };
   }
