@@ -258,6 +258,11 @@ export function migrateNotes(raw: unknown): Record<string, string> {
   const r = rec(raw);
   const s = (v: unknown) => (typeof v === "string" ? v : "");
   const out: Record<string, string> = {};
+  // Reserved keys (a leading "__") are not stage notes — they carry card-level
+  // facts like the Closed Won / Closed Lost stamp. A key-whitelisting migration
+  // would silently drop them, so they ride through untouched.
+  for (const [k, v] of Object.entries(r))
+    if (k.startsWith("__") && typeof v === "string") out[k] = v;
   const put = (nk: string, legacy: string) => {
     const cur = s(r[nk]);
     const v = cur || legacy;

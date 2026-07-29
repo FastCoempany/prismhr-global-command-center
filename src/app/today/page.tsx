@@ -14,6 +14,7 @@ import {
   loadTodos,
   loadTouches,
   loadValidations,
+  isNamespacedAccountId,
 } from "@/lib/today/overlay";
 import {
   sameLocalDayIso,
@@ -1077,6 +1078,8 @@ export default async function TodayPage({
   const events: LedgerEvent[] = [];
   const seenBodies = new Set<string>();
   for (const [accId, list] of acctNotes) {
+    // The asks queue, the playbook and the research passes are not accounts.
+    if (isNamespacedAccountId(accId)) continue;
     for (const n of list) {
       if (!sameLocalDayIso(n.createdAt, nowD)) continue;
       if (hiddenKeys.has(`hide:acct:${n.id}`)) continue;

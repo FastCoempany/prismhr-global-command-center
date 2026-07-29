@@ -154,9 +154,7 @@ export function emptyBecause(
   f: Filters,
   scenario?: Scenario | null,
 ): string {
-  const active = (Object.entries(f) as [keyof Filters, string][]).filter(
-    ([, v]) => v,
-  );
+  const active = (Object.entries(f) as [keyof Filters, string][]).filter(([, v]) => v);
   if (active.length === 0) return "The bank is empty — that's a bug, not a filter.";
   // Find the single filter that, dropped, brings questions back.
   for (const [k] of active) {

@@ -185,7 +185,9 @@ export async function runResearch(input: {
   countries?: string[];
   now: Date;
 }): Promise<ResearchFinding> {
-  const client = new Anthropic({ timeout: 170_000, maxRetries: 1 });
+  // Sized to a long serverless budget, and no retry: a second full pass on
+  // timeout would double a slow call into a certain one.
+  const client = new Anthropic({ timeout: 170_000, maxRetries: 0 });
   const known = [
     input.site ? `Their site: ${input.site}` : "",
     input.people?.length ? `People already on the deal: ${input.people.join(", ")}` : "",
@@ -195,18 +197,31 @@ export async function runResearch(input: {
   ]
     .filter(Boolean)
     .join("\n");
-  const msg = await client.messages.create({
-    model: "claude-opus-5",
-    max_tokens: 8192,
-    system: SYSTEM,
-    tools: [{ type: "web_search_20260209", name: "web_search", max_uses: 8 }],
-    messages: [
-      {
-        role: "user",
-        content: `Today is ${input.now.toLocaleDateString("en-CA", { timeZone: "America/Chicago" })}.\n\nResearch this company: ${input.accountName}\n${known}`,
-      },
-    ],
-  });
+  const messages: Anthropic.MessageParam[] = [
+    {
+      role: "user",
+      content: `Today is ${input.now.toLocaleDateString("en-CA", { timeZone: "America/Chicago" })}.\n\nResearch this company: ${input.accountName}\n${known}`,
+    },
+  ];
+  const ask = () =>
+    client.messages.create({
+      model: "claude-opus-5",
+      max_tokens: 8192,
+      system: SYSTEM,
+      tools: [{ type: "web_search_20260209", name: "web_search", max_uses: 8 }],
+      messages,
+    });
+
+  // A long search run can come back paused rather than finished. Continue it
+  // once instead of filing a half-done pass; anything still unfinished after
+  // that is an error the operator should see, not an empty finding.
+  let msg = await ask();
+  if (msg.stop_reason === "pause_turn") {
+    messages.push({ role: "assistant", content: msg.content });
+    msg = await ask();
+  }
+  if (msg.stop_reason === "max_tokens")
+    throw new Error("the research pass ran long — try again");
   const text = msg.content
     .filter((b): b is Anthropic.TextBlock => b.type === "text")
     .map((b) => b.text)

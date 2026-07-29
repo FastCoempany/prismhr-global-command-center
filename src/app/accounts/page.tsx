@@ -115,6 +115,9 @@ export default async function AccountsPage() {
       return fresh;
     };
     for (const p of peos) {
+      // Not-mine accounts are excluded from the room above; counting them here
+      // would make a partner look busier than they are.
+      if (excludedIds.has(p.id)) continue;
       const row = seat(p.csm ?? "");
       if (row) row.accounts += 1;
     }

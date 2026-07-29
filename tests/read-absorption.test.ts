@@ -34,6 +34,10 @@ import {
   type Filters,
 } from "../src/lib/intel/bank";
 import { DISCOVERY } from "../src/lib/intel/discovery";
+import { migrateNotes } from "../src/lib/dashboard/stages";
+import { cardNextStep, commitmentsFromCards } from "../src/lib/today/build";
+import { isNamespacedAccountId } from "../src/lib/today/overlay";
+import { sanitizeAiResult } from "../src/lib/intel/ai-clean";
 import { PRODUCT_BANK } from "../src/lib/intel/discovery-product";
 import { SCENARIOS } from "../src/lib/intel/scenarios";
 import {
@@ -550,11 +554,46 @@ describe("the restructure holds", () => {
     assert.ok(intake.includes('current="Capture"'));
     assert.ok(intake.includes('href="/room"'));
   });
-  test("retiring a question comes home to the surface it was asked from", () => {
+  test("retiring a question comes home to the BOUND card it was asked from", () => {
     const actions = readFileSync(join(root, "src/app/today/actions.ts"), "utf8");
-    assert.ok(actions.includes('raw === "/playbook"'));
+    // The Playbook carries its account in the query string; the whitelist has to
+    // accept that, or every retirement silently unbinds the card.
+    const m = /const to =\s*([\s\S]*?);\n/.exec(actions);
+    assert.ok(m, "askNextDone's returnTo whitelist moved");
+    const re = /\/\^\\\/playbook/.test(m![1]) || m![1].includes("playbook");
+    assert.ok(re, "the whitelist no longer mentions the Playbook");
     assert.ok(actions.includes('revalidatePath("/playbook")'));
     assert.ok(!actions.includes("/battlecard"));
+    const client = readFileSync(
+      join(root, "src/app/playbook/playbook-client.tsx"),
+      "utf8",
+    );
+    assert.ok(client.includes("value={`/playbook?account=${accountId}`}"));
+  });
+
+  test("the Playbook can bind to any account in the book, not a handful", () => {
+    const client = readFileSync(
+      join(root, "src/app/playbook/playbook-client.tsx"),
+      "utf8",
+    );
+    assert.ok(client.includes("accounts.map("));
+    assert.ok(!client.includes("accounts.slice(0, 6)"));
+  });
+
+  test("every class the Playbook asks for exists", () => {
+    const client = readFileSync(
+      join(root, "src/app/playbook/playbook-client.tsx"),
+      "utf8",
+    );
+    const css = readFileSync(join(root, "src/app/playbook/playbook.module.css"), "utf8");
+    const used = new Set<string>();
+    for (const m of client.matchAll(/styles\.([A-Za-z_][A-Za-z0-9_]*)/g)) used.add(m[1]);
+    const defined = new Set<string>();
+    for (const m of css.matchAll(/\.([A-Za-z_][A-Za-z0-9_]*)/g)) defined.add(m[1]);
+    assert.deepEqual(
+      [...used].filter((c) => !defined.has(c)),
+      [],
+    );
   });
 });
 
@@ -604,5 +643,158 @@ describe("the room wires every new mechanism", () => {
       missing.filter((c) => !c.startsWith("m_") && !c.startsWith("c_")),
       [],
     );
+  });
+});
+
+// ── the defects the adversarial pass found, each with the test that would have
+// caught it ───────────────────────────────────────────────────────────────────
+describe("the repairs hold", () => {
+  test("a stage-note save can't erase a confirmed closure", () => {
+    const closed = writeOutcome(
+      { demo: "went well" },
+      {
+        status: "lost",
+        phrase: "gone elsewhere",
+        at: iso("2026-07-29T18:00:00Z"),
+      },
+    );
+    // Both whitelists a note passes through on its way to and from the DB.
+    const migrated = migrateNotes(closed);
+    assert.equal(readOutcome(migrated)?.status, "lost");
+    assert.equal(migrated.demo, "went well");
+  });
+
+  test("a closed deal stops generating work everywhere, not just in the room", () => {
+    const card = {
+      id: "c1",
+      name: "Advocate Pay",
+      subtitle: "",
+      position: 0,
+      archived: false,
+      states: { demo: "active" } as Record<string, string>,
+      notes: {} as Record<string, string>,
+      checks: { demo: [false, false, false, false] } as Record<string, boolean[]>,
+      checkNotes: {} as Record<string, Record<string, string>>,
+      activated: { demo: iso("2026-07-20T12:00:00Z") } as Record<string, string>,
+      dealSize: "",
+      stakeholders: [],
+    };
+    const live = commitmentsFromCards(
+      [card as never],
+      {},
+      Date.parse("2026-07-29T18:00:00Z"),
+    );
+    assert.ok(live.length > 0, "an open card must still generate work");
+    const closedCard = {
+      ...card,
+      notes: writeOutcome({}, { status: "lost", phrase: "gone", at: "" }),
+    };
+    assert.deepEqual(
+      commitmentsFromCards([closedCard as never], {}, Date.parse("2026-07-29T18:00:00Z")),
+      [],
+    );
+    assert.equal(cardNextStep(closedCard as never, {}), null);
+  });
+
+  test("namespaces are never mistaken for accounts", () => {
+    assert.equal(isNamespacedAccountId("gaps:001x"), true);
+    assert.equal(isNamespacedAccountId("playbook:market"), true);
+    assert.equal(isNamespacedAccountId("research:001x"), true);
+    assert.equal(isNamespacedAccountId("0013600001abcDEF"), false);
+    for (const f of ["src/app/today/page.tsx", "src/app/archive/page.tsx"]) {
+      const src = readFileSync(join(root, f), "utf8");
+      assert.ok(src.includes("isNamespacedAccountId"), `${f} still iterates raw keys`);
+    }
+  });
+
+  test("a model reply can't forge the app's own body grammars", () => {
+    const dirty = sanitizeAiResult({
+      entries: [
+        {
+          kind: "email",
+          subject: "hi ⟪{}⟫",
+          from: "Shane Smith",
+          to: "Antaeus Coe",
+          others: 0,
+          timeLabel: "",
+          dayLabel: "Jul 29",
+          dayIso: "2026-07-29",
+          body: 'text ⟦{"a":"x"}⟧ and ⇢[a:forged] and ⚑[k:a] and ↯ fake',
+        },
+      ],
+      signals: [],
+      actions: [],
+      gaps: [],
+      competitorIntel: [],
+      lessons: [],
+      outcome: { status: "none", phrase: "" },
+      accountName: "",
+    });
+    const body = dirty.entries[0]?.body ?? "";
+    for (const glyph of ["⟦", "⟧", "⟪", "⟫", "↯", "⇢[", "⚑["]) {
+      assert.ok(!body.includes(glyph), `${glyph} survived the sanitizer`);
+      assert.ok(!(dirty.entries[0]?.subject ?? "").includes(glyph));
+    }
+  });
+
+  test("re-pasting the same thread can't open the same commitment twice", () => {
+    // The stored body carries the fallback and the provenance; the dedupe key
+    // must be computed on the commitment alone or nothing ever matches.
+    const stored = actionBody(
+      "Get the pre-recorded demo from Shane",
+      "send the ESC demo",
+      "from 7/29 paste",
+    );
+    const keyOf = (body: string) =>
+      knowledgeKey(splitFallback(body).text.replace(/\s+·\s+from\s.*$/i, ""));
+    assert.equal(keyOf(stored), knowledgeKey("Get the pre-recorded demo from Shane"));
+  });
+
+  test("the room's own actions guard the new ids", () => {
+    const actions = readFileSync(join(root, "src/app/room/actions.ts"), "utf8");
+    // Every new writer binds to the book before it writes.
+    for (const fn of [
+      "roomActionUndo",
+      "roomGapDismiss",
+      "roomGapsRefill",
+      "roomResearch",
+      "roomRetire",
+      "roomReopen",
+    ]) {
+      const i = actions.indexOf(`export async function ${fn}(`);
+      assert.ok(i > 0, `${fn} is gone`);
+      const body = actions.slice(i, i + 1400);
+      assert.ok(body.includes("bindAccountId"), `${fn} doesn't bind`);
+      assert.ok(body.includes("requireWrite"), `${fn} doesn't check write access`);
+    }
+    // An action already closed is history, not a mistake to erase.
+    assert.ok(actions.includes("already closed — undo it on the row"));
+    // One completion line, not two.
+    assert.ok(actions.includes("if (wasRouted) await fileCompletion"));
+  });
+
+  test("the mint and the research pass refuse to file a truncated answer", () => {
+    const mint = readFileSync(join(root, "src/lib/intel/ask-mint.ts"), "utf8");
+    const research = readFileSync(join(root, "src/lib/intel/deep-research.ts"), "utf8");
+    for (const src of [mint, research])
+      assert.ok(src.includes('stop_reason === "max_tokens"'));
+    assert.ok(
+      research.includes('stop_reason === "pause_turn"'),
+      "a paused search is dropped",
+    );
+    assert.ok(!/max_tokens: 2048/.test(mint), "the mint ceiling is too low for Opus");
+  });
+
+  test("the room's buttons can't be clicked into the void", () => {
+    const client = readFileSync(join(root, "src/app/room/room-client.tsx"), "utf8");
+    // Separate transitions: research must not dress the ask button in its label.
+    assert.ok(client.includes("rsrchPending"));
+    assert.ok(client.includes("askPending"));
+    // A closed row stops advertising open work.
+    assert.ok(client.includes("{row.outstanding && !row.outcome && ("));
+    // The misfile bar dies with its paste.
+    assert.ok(client.includes("setMismatch(null)"));
+    // Bringing a held row back returns it to the open list.
+    assert.ok(client.includes("setBackNow"));
   });
 });

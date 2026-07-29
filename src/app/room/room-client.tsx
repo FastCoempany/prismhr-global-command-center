@@ -164,6 +164,9 @@ function Row({ row }: { row: RoomRow }) {
     text: string;
   } | null>(null);
   const [gone, setGone] = useState<Set<string>>(new Set());
+  // Rows the operator just un-held: they belong in the open list until the
+  // server round trip re-partitions them there.
+  const [backNow, setBackNow] = useState<Set<string>>(new Set());
   const [doneIds, setDoneIds] = useState<Set<string>>(new Set());
   const [promotedNotes, setPromotedNotes] = useState<Set<string>>(new Set());
   const [recOpen, setRecOpen] = useState(false);
@@ -280,6 +283,9 @@ function Row({ row }: { row: RoomRow }) {
           r.asks ? `${r.asks} new ask${r.asks === 1 ? "" : "s"} queued.` : "",
           r.learned ? `${r.learned} to the playbook.` : "",
           r.outcome ? `Reads ${r.outcome.status} — confirm below.` : "",
+          r.readFailed
+            ? "The read didn't complete — filed by rules only, so nothing was opened or asked."
+            : "",
         ].filter(Boolean);
         setFreshInfo((f) => [
           { text: parts.join(" "), noteIds: r.noteIds, opened: r.opened },
@@ -343,7 +349,7 @@ function Row({ row }: { row: RoomRow }) {
   const retireRow = () => {
     if (pending) return;
     start(async () => {
-      const r = await roomRetire(row.cardId);
+      const r = await roomRetire(row.accountId, row.cardId);
       if (r.ok) setFreshInfo((f) => [{ text: "Retired from the board." }, ...f]);
       else setNote(r.reason ?? "That didn't save.");
     });
@@ -352,9 +358,11 @@ function Row({ row }: { row: RoomRow }) {
   const [research, setResearch] = useState<{ note: string; changed: string[] } | null>(
     null,
   );
+  const [rsrchPending, startResearch] = useTransition();
+  const [askPending, startAsk] = useTransition();
   const runResearchPass = () => {
-    if (pending) return;
-    start(async () => {
+    if (rsrchPending) return;
+    startResearch(async () => {
       const r = await roomResearch(row.accountId);
       if (r.ok)
         setResearch({
@@ -365,8 +373,8 @@ function Row({ row }: { row: RoomRow }) {
     });
   };
   const refillAsks = () => {
-    if (pending) return;
-    start(async () => {
+    if (askPending) return;
+    startAsk(async () => {
       const r = await roomGapsRefill(row.accountId);
       if (r.ok)
         setFreshInfo((f) => [
@@ -381,9 +389,9 @@ function Row({ row }: { row: RoomRow }) {
     });
   };
   const dismissAsk = (id: string) => {
-    if (pending) return;
-    start(async () => {
-      const r = await roomGapDismiss(id);
+    if (askPending) return;
+    startAsk(async () => {
+      const r = await roomGapDismiss(row.accountId, id);
       if (r.ok) setAskGone((sx) => new Set(sx).add(id));
       else setNote(r.reason ?? "That didn't save.");
     });
@@ -466,8 +474,10 @@ function Row({ row }: { row: RoomRow }) {
           n.delete(id);
           return n;
         });
-      else if (op === "drop" || op === "tomorrow" || op === "now")
-        setGone((s) => new Set(s).add(id));
+      // "now" pulls a held row back into today's work — the row must reappear
+      // as open, not disappear the way a park or a delay does.
+      else if (op === "drop" || op === "tomorrow") setGone((s) => new Set(s).add(id));
+      else if (op === "now") setBackNow((s) => new Set(s).add(id));
     });
 
   const openStage = row.stages.find((s) => s.key === stageOpen);
@@ -509,7 +519,10 @@ function Row({ row }: { row: RoomRow }) {
                 type="button"
                 className={styles.zap}
                 title={`Paste — files to ${row.name}`}
-                onClick={() => setPasteOpen((v) => !v)}
+                onClick={() => {
+                  setPasteOpen((v) => !v);
+                  setMismatch(null);
+                }}
               >
                 ⚡
               </button>
@@ -525,11 +538,11 @@ function Row({ row }: { row: RoomRow }) {
             <button
               type="button"
               className={styles.rsrchBtn}
-              disabled={pending}
+              disabled={rsrchPending}
               onClick={runResearchPass}
               title="searches their site, their job postings, the news, and the people named on this deal"
             >
-              {pending
+              {rsrchPending
                 ? "Researching…"
                 : row.researchAt
                   ? "Refresh research"
@@ -755,7 +768,7 @@ function Row({ row }: { row: RoomRow }) {
             </>
           )}
         </div>
-        {row.outstanding && (
+        {row.outstanding && !row.outcome && (
           <div className={styles.outst}>
             <span className={styles.lbl}>STILL OPEN</span>
             <span className={closed ? styles.donenow : undefined}>
@@ -817,9 +830,15 @@ function Row({ row }: { row: RoomRow }) {
           </span>
         </div>
 
-        {row.gaps.filter((g) => !askGone.has(g.id)).length > 0 && (
+        {(row.gaps.filter((g) => !askGone.has(g.id)).length > 0 || row.canWrite) && (
           <div className={styles.askBox}>
             <span className={styles.lbl}>STILL UNKNOWN</span>
+            {row.gaps.filter((g) => !askGone.has(g.id)).length === 0 && (
+              <span className={styles.askQ}>
+                Nothing queued. A paste fills this, or mint asks from what the app already
+                knows.
+              </span>
+            )}
             {row.gaps
               .filter((g) => !askGone.has(g.id))
               .map((g) => (
@@ -829,6 +848,7 @@ function Row({ row }: { row: RoomRow }) {
                     <button
                       type="button"
                       className={styles.sdTag}
+                      disabled={askPending}
                       onClick={() => dismissAsk(g.id)}
                       title="not relevant to this one — swap in the next ask"
                     >
@@ -845,11 +865,11 @@ function Row({ row }: { row: RoomRow }) {
                 <button
                   type="button"
                   className={styles.sdTag}
-                  disabled={pending}
+                  disabled={askPending}
                   onClick={refillAsks}
                   title="mint sharper asks from the countries, the scenario, the research, and what other deals taught"
                 >
-                  {pending ? "minting…" : "better asks ⟳"}
+                  {askPending ? "minting…" : "better asks ⟳"}
                 </button>
               )}
             </span>
@@ -868,6 +888,7 @@ function Row({ row }: { row: RoomRow }) {
                   <button
                     type="button"
                     className={styles.sdTag}
+                    disabled={pending}
                     onClick={() => owedAccept(o)}
                   >
                     open it ✓
@@ -875,6 +896,7 @@ function Row({ row }: { row: RoomRow }) {
                   <button
                     type="button"
                     className={styles.sdTag}
+                    disabled={pending}
                     onClick={() => owedDismiss(o)}
                   >
                     dismiss ✕
@@ -968,39 +990,45 @@ function Row({ row }: { row: RoomRow }) {
                 </button>
               )}
             </div>
-            {/* Each opened commitment retires on its own. The paste's undo is
-                about the record; a wrong action is one ✕, not all of them. */}
-            {(f.opened ?? []).map((o) => (
-              <div
-                key={o.id}
-                className={`${styles.it} ${o.gone ? styles.itDid : styles.itOpen} ${styles.fresh}`}
-              >
-                <span className={`${styles.ic} ${o.gone ? styles.gDone : styles.gAct}`}>
-                  {o.gone ? "↩" : "✸"}
-                </span>
-                {!o.gone && (
-                  <span className={`${styles.st} ${styles.stOpen}`}>OPENED</span>
-                )}
-                <span className={`${styles.tx} ${o.gone ? styles.donenow : ""}`}>
-                  {o.text}
-                </span>
-                {row.canWrite && !o.gone && (
-                  <span className={styles.rail}>
-                    <button
-                      onClick={() => undoOpened(i, o.id)}
-                      title="the read got this one wrong — take it back"
-                    >
-                      ✕
-                    </button>
+            {/* Each opened commitment retires on its own — the paste's undo is
+                about the record, and a wrong action is one ✕, not all of them.
+                These are receipt chips, not a second copy of the work: the open
+                rows below are the real ones. */}
+            {(f.opened ?? []).length > 0 && (
+              <div className={styles.rcpt}>
+                <b>opened →</b>
+                {(f.opened ?? []).map((o) => (
+                  <span
+                    key={o.id}
+                    className={`${styles.openedChip} ${o.gone ? styles.openedGone : ""}`}
+                  >
+                    {o.text.slice(0, 60)}
+                    {row.canWrite && !o.gone && (
+                      <button
+                        type="button"
+                        className={styles.openedX}
+                        onClick={() => undoOpened(i, o.id)}
+                        title="the read got this one wrong — take it back"
+                      >
+                        ✕
+                      </button>
+                    )}
                   </span>
-                )}
+                ))}
               </div>
-            ))}
+            )}
           </div>
         ))}
-        {row.sheetOpen
+        {[
+          // An un-held row rejoins the open list; it carries no wall of its own
+          // until the server re-reads it.
+          ...row.sheetDelayed
+            .filter((t) => backNow.has(t.id))
+            .map((t) => ({ id: t.id, body: t.body })),
+          ...row.sheetOpen.filter((t) => !backNow.has(t.id)),
+        ]
           .filter((t) => !gone.has(t.id))
-          .map((t) => {
+          .map((t: { id: string; body: string; wall?: string; fallback?: string }) => {
             const did = doneIds.has(t.id);
             return (
               <div
@@ -1030,15 +1058,24 @@ function Row({ row }: { row: RoomRow }) {
                 {row.canWrite && (
                   <span className={styles.rail}>
                     {did ? (
-                      <button onClick={() => todoOp(t.id, "undo")} title="undo">
+                      <button
+                        disabled={pending}
+                        onClick={() => todoOp(t.id, "undo")}
+                        title="undo"
+                      >
                         ↩
                       </button>
                     ) : (
                       <>
-                        <button onClick={() => todoOp(t.id, "done")} title="done">
+                        <button
+                          disabled={pending}
+                          onClick={() => todoOp(t.id, "done")}
+                          title="done"
+                        >
                           ✓
                         </button>
                         <button
+                          disabled={pending}
                           onClick={() => todoOp(t.id, "tomorrow")}
                           title="delay to tomorrow"
                         >
@@ -1054,7 +1091,11 @@ function Row({ row }: { row: RoomRow }) {
                           <input type="hidden" name="returnTo" value="/room" />
                           <button title="arm a chase — someone owes this">⚑</button>
                         </form>
-                        <button onClick={() => todoOp(t.id, "drop")} title="park">
+                        <button
+                          disabled={pending}
+                          onClick={() => todoOp(t.id, "drop")}
+                          title="park"
+                        >
                           ✕
                         </button>
                       </>
@@ -1065,7 +1106,7 @@ function Row({ row }: { row: RoomRow }) {
             );
           })}
         {row.sheetDelayed
-          .filter((t) => !gone.has(t.id))
+          .filter((t) => !gone.has(t.id) && !backNow.has(t.id))
           .map((t) => (
             <div key={t.id} className={`${styles.it} ${styles.itDelayed}`}>
               <span className={`${styles.ic} ${styles.gDly}`}>⏲</span>
@@ -1073,7 +1114,11 @@ function Row({ row }: { row: RoomRow }) {
               <span className={styles.tx}>{t.body}</span>
               {row.canWrite && (
                 <span className={styles.rail}>
-                  <button onClick={() => todoOp(t.id, "now")} title="bring it back now">
+                  <button
+                    disabled={pending}
+                    onClick={() => todoOp(t.id, "now")}
+                    title="bring it back now"
+                  >
                     ↩
                   </button>
                 </span>
@@ -1107,7 +1152,10 @@ function Row({ row }: { row: RoomRow }) {
                 type="button"
                 className={styles.zap}
                 title={`Paste — files to ${row.name}`}
-                onClick={() => setPasteOpen((v) => !v)}
+                onClick={() => {
+                  setPasteOpen((v) => !v);
+                  setMismatch(null);
+                }}
               >
                 ⚡
               </button>
@@ -1163,7 +1211,10 @@ function Row({ row }: { row: RoomRow }) {
                   <button
                     type="button"
                     className={styles.cancel}
-                    onClick={() => setPasteOpen(false)}
+                    onClick={() => {
+                      setPasteOpen(false);
+                      setMismatch(null);
+                    }}
                   >
                     Cancel
                   </button>

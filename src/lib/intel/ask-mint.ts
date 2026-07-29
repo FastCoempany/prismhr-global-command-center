@@ -90,10 +90,14 @@ export async function mintAsks(c: MintContext, cap = 5): Promise<string[]> {
   const client = new Anthropic({ timeout: 55_000, maxRetries: 1 });
   const msg = await client.messages.create({
     model: "claude-opus-5",
-    max_tokens: 2048,
+    // Five grounded questions is a small answer, but the ceiling has to leave
+    // room for the model's own reasoning ahead of them — a truncated reply is a
+    // silent empty list otherwise.
+    max_tokens: 6144,
     system: SYSTEM,
     messages: [{ role: "user", content: mintPrompt(c) }],
   });
+  if (msg.stop_reason === "max_tokens") throw new Error("the mint ran long — try again");
   const text = msg.content
     .filter((b): b is Anthropic.TextBlock => b.type === "text")
     .map((b) => b.text)

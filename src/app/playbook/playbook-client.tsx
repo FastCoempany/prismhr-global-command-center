@@ -11,7 +11,6 @@
 // ANDed everything silently — two clicks and it read "0 of 25".
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import { DASH_NODES } from "@/lib/dashboard/stages";
 import {
   NO_FILTERS,
@@ -59,7 +58,7 @@ function CopyBtn({ payload, label }: { payload: string; label: string }) {
   return (
     <button
       type="button"
-      className={styles.copy}
+      className={styles.copyBtn}
       title={payload}
       onClick={() => {
         void navigator.clipboard.writeText(payload);
@@ -210,27 +209,24 @@ export function PlaybookClient({
         </button>
         {accounts.length > 0 && (
           <span className={styles.bind}>
-            {accountId ? (
-              <>
-                bound to this account ·{" "}
-                <Link href="/playbook" className={styles.bindLink}>
-                  unbind
-                </Link>
-              </>
-            ) : (
-              <>
-                bind to an account for its countries and its scenario:{" "}
-                {accounts.slice(0, 6).map((a) => (
-                  <Link
-                    key={a.id}
-                    href={`/playbook?account=${a.id}`}
-                    className={styles.bindLink}
-                  >
+            <label className={styles.bindPick}>
+              {accountId ? "bound to" : "bind to an account"}
+              <select
+                className={styles.bindSel}
+                defaultValue={accountId}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  window.location.href = v ? `/playbook?account=${v}` : "/playbook";
+                }}
+              >
+                <option value="">no account — the whole bank</option>
+                {accounts.map((a) => (
+                  <option key={a.id} value={a.id}>
                     {a.name}
-                  </Link>
+                  </option>
                 ))}
-              </>
-            )}
+              </select>
+            </label>
           </span>
         )}
       </div>
@@ -382,8 +378,12 @@ export function PlaybookClient({
                       <form action={askNextDone} className={styles.inline}>
                         <input type="hidden" name="accountId" value={accountId} />
                         <input type="hidden" name="questionId" value={q.id} />
-                        <input type="hidden" name="returnTo" value="/playbook" />
-                        <button className={styles.copy} title="asked — retire it here">
+                        <input
+                          type="hidden"
+                          name="returnTo"
+                          value={`/playbook?account=${accountId}`}
+                        />
+                        <button className={styles.copyBtn} title="asked — retire it here">
                           ✓ asked
                         </button>
                       </form>

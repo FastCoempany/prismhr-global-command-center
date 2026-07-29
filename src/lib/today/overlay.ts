@@ -97,6 +97,16 @@ type NoteRow = {
 // All account notes, newest first, grouped by account id. Defensive: degrades to
 // an empty map until the AccountNote table is migrated. Legacy rows (blank
 // provenance) get lane/actors inferred from the body at read time.
+// Some AccountNote rows are filed against a NAMESPACE rather than a real book
+// account — "gaps:<id>" (the asks queue), "playbook:market" / "playbook:lessons"
+// (cross-account knowledge), "research:<id>" (a research pass). The column has
+// no foreign key, which is what makes that work; the cost is that anything
+// iterating the whole map would otherwise render a phantom account. Every
+// whole-map consumer filters on this.
+export function isNamespacedAccountId(id: string): boolean {
+  return (id ?? "").includes(":");
+}
+
 export async function loadAccountNotes(): Promise<Map<string, AccountNote[]>> {
   if (!hasDatabaseEnv()) return new Map();
   const prisma = getPrisma();

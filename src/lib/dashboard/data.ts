@@ -42,6 +42,11 @@ function normNotes(raw: unknown): Record<DashNodeKey, string> {
   const out = {} as Record<DashNodeKey, string>;
   for (const n of DASH_NODES)
     out[n.key] = typeof src[n.key] === "string" ? (src[n.key] as string) : "";
+  // Card-level reserved keys survive normalization for the same reason they
+  // survive migration: the terminal Won/Lost stamp lives in one.
+  for (const [k, v] of Object.entries(src))
+    if (k.startsWith("__") && typeof v === "string")
+      (out as Record<string, string>)[k] = v;
   return out;
 }
 

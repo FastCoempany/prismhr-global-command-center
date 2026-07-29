@@ -11,6 +11,7 @@ import {
   loadDispositions,
   loadPartnerNotes,
   loadTodos,
+  isNamespacedAccountId,
 } from "@/lib/today/overlay";
 import { peos } from "@/lib/book";
 import { splitMarker, splitTags, visibleText } from "@/lib/today/route-notes";
@@ -123,6 +124,7 @@ export default async function ArchivePage({
       hits.push({ where: `sheet · ${state}`, when: t.createdAt, text });
     }
     for (const [accId, list] of acctNotes) {
+      if (isNamespacedAccountId(accId)) continue;
       for (const n of list) {
         if (!n.body.toLowerCase().includes(query)) continue;
         hits.push({

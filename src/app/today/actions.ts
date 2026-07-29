@@ -1091,7 +1091,14 @@ export async function askNextDone(formData: FormData) {
   const accountId = str(formData, "accountId", 80);
   const questionId = str(formData, "questionId", 40);
   const raw = str(formData, "returnTo", 80);
-  const to = raw === "/" || raw === "/playbook" || raw === "/room" ? raw : "/today";
+  // The Playbook carries its bound account in the query string; retiring a
+  // question must land back on THAT card, not on an unbound one.
+  const to =
+    raw === "/" ||
+    raw === "/room" ||
+    /^\/playbook(\?account=[A-Za-z0-9]{0,40})?$/.test(raw)
+      ? raw
+      : "/today";
   const finish = () => {
     revalidatePath("/today");
     revalidatePath("/");

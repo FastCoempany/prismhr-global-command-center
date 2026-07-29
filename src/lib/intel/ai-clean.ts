@@ -136,7 +136,7 @@ Rules:
 - The paste may instead be an OUTLOOK THREAD capture (a whole email conversation from the reading pane, possibly stamped "OUTLOOK THREAD") or a TEAMS chat copy. Outlook thread: one entry per message, newest first, from/to read from each message's own header; quoted history that repeats down the thread belongs to the message that first said it — never duplicate it. Ignore Outlook chrome (folder panes, ribbon labels, "Reply/Reply all/Forward", read receipts). Teams chat: one entry per conversation-day, kind "call"; keep speakers named inline ("Bryce: can we push to Sept 1?"); distill to decisions, asks, and owed items.
 - If the paste lists action items, keep them in the body as "Owed: <thing> — @<owner>" lines and surface the most deal-relevant as signals.
 - Strip ALL chrome and noise: Lightning UI labels ("Show more actions", "Expand All", field names like "From Address"/"Text Body"/"Priority"), security banners, "external sender" warnings, thread:: tokens, record ids, Zoom/Teams invite blocks (dial-ins, meeting ids, passcodes), email signatures, legal disclaimers, support-desk boilerplate ("NEVER include SSN…", "Responses via email to this case…").
-- body: the actual human substance only, concise, at most 600 characters. Never invent or embellish — omit rather than guess.
+- body: the actual human substance only, concise, at most 600 characters. Never invent or embellish — omit rather than guess. NEVER write header lines into the body — no "From:", "To:", "Sent:", "Cc:", "Subject:", no "authored by", no "written by". Who wrote to whom belongs in the from/to fields; the app renders that itself. Inside the body, name a person only when the sentence needs them ("Bryce wants the deposit language cut").
 - subject: the real subject with "RE:/FW:" kept but case-thread tokens removed.
 - from / to: person names, normalized: first-person forms ("You", "me") become "Antaeus Coe" (the operator whose mailbox this is); "Last, First" renders as "First Last"; email-address tails in angle brackets drop. others: count of additional recipients ("and 1 other" → 1), else 0.
 - Dates: dayIso is YYYY-MM-DD resolved against today's date given in the message ("Today"/"Yesterday"/"Jul 30, 2025" all resolve). dayLabel is a short human label ("Jul 30" or "Today"). timeLabel like "5:27 PM", or "" if none. Unknown dates: dayIso "".
@@ -199,8 +199,15 @@ export function sanitizeAiResult(raw: unknown): AiCleanResult {
     outcome?: unknown;
     accountName?: unknown;
   };
+  // The app parses several body grammars out of note and todo text — routing
+  // markers (⇢[…]), tag markers (⚑[…]), the playbook and research tails (⟦…⟧,
+  // ⟪…⟫), the ask prefix, and the fallback glyph. A model reply must never be
+  // able to forge one, so those tokens are stripped on the way in.
+  const GRAMMAR = /[⟦⟧⟪⟫↯]|[⇢⚑]\s*\[/g;
   const str = (v: unknown, cap: number) =>
-    typeof v === "string" ? redactMoney(v.trim()).slice(0, cap) : "";
+    typeof v === "string"
+      ? redactMoney(v.replace(GRAMMAR, " ").trim()).slice(0, cap)
+      : "";
   if (Array.isArray(r.entries)) {
     for (const e of r.entries.slice(0, MAX_ENTRIES)) {
       if (!e || typeof e !== "object") continue;
