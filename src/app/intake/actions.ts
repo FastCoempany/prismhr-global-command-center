@@ -11,7 +11,7 @@ import { dealIntelFor } from "@/lib/intel/extract";
 import { digestFor, digestForCardName } from "@/lib/intel/digest";
 import { COUNTRY_NAME, redactMoney } from "@/lib/intel/lexicon";
 import { loadAccountNotes, loadTodos, loadTouches } from "@/lib/today/overlay";
-import { cleanSfPaste, type TimelineEntry } from "@/lib/sf-timeline";
+import { cleanSfPaste, scrubSecrets, type TimelineEntry } from "@/lib/sf-timeline";
 import { aiCleanAvailable, aiCleanTimeline } from "@/lib/intel/ai-clean";
 import { actorsLine, laneFor } from "@/lib/intel/provenance";
 import { createAccountNoteRow } from "@/lib/notes/write";
@@ -28,25 +28,27 @@ const GLYPH: Record<TimelineEntry["kind"], string> = {
   call: "☎",
 };
 
-// One entry → one account note, stamped with the activity's own date so the
-// note reads right even though createdAt is "when filed".
-function noteBody(e: TimelineEntry): string {
+// One entry → one account note. The head carries the true capture dialect
+// (SF timeline vs OL Outlook thread), and the note files at the ACTIVITY's
+// own date so the record keeps real chronology.
+function noteBody(e: TimelineEntry, actors: string, dialect: string): string {
   const when = [e.dayLabel, e.timeLabel].filter(Boolean).join(" ");
-  const who = `${e.from}${e.to ? ` → ${e.to}` : ""}${e.others ? ` +${e.others}` : ""}`;
-  const head = `${GLYPH[e.kind] ?? "✉"} SF ${when || "activity"} — ${
+  const head = `${GLYPH[e.kind] ?? "✉"} ${dialect} ${when || "activity"} — ${
     e.subject || "(no subject)"
-  } · ${who}`;
-  return redactMoney(e.body ? `${head}\n${e.body}` : head).slice(0, 2000);
+  } · ${actors || "(unattributed)"}`;
+  return scrubSecrets(redactMoney(e.body ? `${head}\n${e.body}` : head)).slice(0, 4000);
 }
 
 export async function fileTimeline(
   accountId: string,
   entries: TimelineEntry[],
+  dialectIn?: string,
 ): Promise<{ ok: boolean; filed: number }> {
   const id = (accountId ?? "").trim().slice(0, 40);
+  const dialect = dialectIn === "OL" ? "OL" : "SF";
   if (!(await requireWrite()) || !id || !Array.isArray(entries))
     return { ok: false, filed: 0 };
-  const batch = entries.slice(0, 50);
+  const batch = entries.slice(0, 40);
   let filed = 0;
   try {
     for (const e of batch) {
@@ -57,10 +59,11 @@ export async function fileTimeline(
       await createAccountNoteRow({
         accountId: id,
         kind: "account",
-        body: noteBody(e),
+        body: noteBody(e, actors, dialect),
         lane: laneFor(actors, `${e.subject ?? ""}\n${e.body ?? ""}`),
         actors,
-        source: "sf",
+        source: dialect === "OL" ? "outlook" : "sf",
+        at: e.dayIso ? new Date(`${e.dayIso}T12:00:00Z`) : undefined,
       });
       filed++;
     }
@@ -96,10 +99,13 @@ export async function cleanWithAI(raw: string): Promise<AiCleanReply> {
         reason: "AI found no activity entries — try filing it whole as ☰ transcript.",
       };
     return { ok: true, ...out };
-  } catch {
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "";
     return {
       ok: false,
-      reason: "AI call failed — the rule-based parse below still works.",
+      reason: /too large/.test(msg)
+        ? "The paste is too large for one clean — split it in half and clean each."
+        : "AI call failed — the rule-based parse below still works.",
     };
   }
 }
@@ -170,7 +176,9 @@ export async function getDealIntel(accountId: string): Promise<PayrollPrefill | 
   const intel = dealIntelFor(id, peo.name, {
     acctNotes: acctNotes.get(id),
     todos: todos.filter((t) => t.accountId === id),
-    touches: touches.filter((t) => t.subjectKey === `acct:${id}`),
+    touches: touches.filter(
+      (t) => t.subjectKey === `outreach:${id}` || t.subjectKey === `acct:${id}`,
+    ),
   });
   const dig = digestFor(id) ?? digestForCardName(peo.name);
 
@@ -226,7 +234,13 @@ export async function fileTranscript(
   text: string,
 ): Promise<{ ok: boolean }> {
   const id = (accountId ?? "").trim().slice(0, 40);
-  const body = redactMoney(cleanSfPaste(text ?? "")).slice(0, 6000);
+  // Transcripts run OLDEST-first — when the cap bites, keep the TAIL (where
+  // decisions and owed items live) and say what was trimmed.
+  const whole = redactMoney(cleanSfPaste(text ?? ""));
+  const body =
+    whole.length > 6000
+      ? `[earlier portion trimmed — ${whole.length - 6000} characters]\n…${whole.slice(-6000)}`
+      : whole;
   if (!(await requireWrite()) || !id || !body) return { ok: false };
   try {
     await createAccountNoteRow({

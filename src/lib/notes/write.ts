@@ -13,15 +13,22 @@ export type NewAccountNote = {
   lane?: Lane;
   actors?: string;
   source?: string;
+  // The ACTIVITY's own moment (a pasted email's send time), not the filing
+  // moment — so the record and the intel clock keep true chronology. Omitted
+  // (or invalid) → the DB stamps now(), as before.
+  at?: Date;
 };
 
 export async function createAccountNoteRow(n: NewAccountNote): Promise<{ id: string }> {
   const prisma = getPrisma();
+  const at =
+    n.at instanceof Date && !Number.isNaN(n.at.getTime()) ? { createdAt: n.at } : {};
   const stable = {
     accountId: n.accountId,
     partner: n.partner ?? "",
     kind: n.kind,
     body: n.body,
+    ...at,
   };
   try {
     return await prisma.accountNote.create({

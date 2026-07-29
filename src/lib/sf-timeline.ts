@@ -190,15 +190,17 @@ const JUNK_LINES: RegExp[] = [
   /^Get Outlook for (?:iOS|Android)$/,
   /^This message may contain confidential/,
   /^W: Prismhr\.com/i,
-  // Meeting-invite plumbing (Zoom / Teams)
+  // Meeting-invite plumbing (Zoom / Teams / Meet)
   /^Microsoft Teams Need help\?$/,
-  /^Join (?:the meeting now|Zoom Meeting)$/,
-  /^https:\/\/[\w.-]*zoom\.us\//,
-  /^(?:Meeting ID|Passcode|Phone conference ID): /,
-  /^(?:One tap mobile|Dial by your location|Dial in by phone)$/,
+  /^Join (?:the meeting now|Zoom Meeting)$/i,
+  /^https:\/\/[\w.-]*zoom\.us\//i,
+  /^https:\/\/teams\.microsoft\.com\//i,
+  /^https:\/\/meet\.google\.com\//i,
+  /^(?:Meeting ID|Passcode|Phone conference ID)[:\s]/i,
+  /^(?:One tap mobile|Dial by your location|Dial in by phone)$/i,
   /^• \+1[\d\s()#*,-]+/,
   /^\+1[\d\s()#*,-]+(?:US|United States)/,
-  /^Find (?:your|a) local number/,
+  /^Find (?:your|a) local number/i,
   /^For organizers: Meeting options/,
   /^Powered by Zoom$/,
   /^_{5,}$/,
@@ -207,6 +209,21 @@ const JUNK_LINES: RegExp[] = [
 ];
 
 const isJunkLine = (t: string) => JUNK_LINES.some((re) => re.test(t));
+
+// Mask meeting credentials wherever they sit — MID-LINE passcodes, join links
+// carrying conference ids, one-tap dial strings. Line-anchored junk filters
+// miss these (a recording link with "Passcode: $NyT*&d9" inside a prose line
+// sailed straight into the record), and redactMoney never sees them.
+export function scrubSecrets(s: string): string {
+  return (s ?? "")
+    .replace(/\b(passcode|password|access code|pwd)\s*[:=]\s*\S+/gi, "$1: [—]")
+    .replace(
+      /https:\/\/(?:[\w.-]*zoom\.us|teams\.microsoft\.com|meet\.google\.com)\/\S+/gi,
+      "[meeting link]",
+    )
+    .replace(/\bMeeting ID[:\s]+[\d\s]{6,}/gi, "Meeting ID: [—]")
+    .replace(/\+1\s?\d{3}[\s.-]?\d{3}[\s.-]?\d{4},,\d+#?/g, "[dial-in]");
+}
 
 export function cleanSfPaste(text: string): string {
   const out: string[] = [];
@@ -223,13 +240,20 @@ export function cleanSfPaste(text: string): string {
     out.push(t);
     prev = t;
   }
-  return out
-    .join("\n")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
+  return scrubSecrets(
+    out
+      .join("\n")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim(),
+  );
 }
 
 export function parseSfTimeline(text: string, now: Date = new Date()): TimelineEntry[] {
+  // An Outlook-thread capture is a different dialect entirely — the SF anchor
+  // grammar ("X to Y") false-positives on subjects like "Welcome to PrismHR"
+  // and fabricates entries. Refuse it here so the caller takes the transcript
+  // path (or the AI, which reads the stamp) instead.
+  if (/^OUTLOOK THREAD\b/.test((text ?? "").trimStart())) return [];
   // Junk is stripped up front so both timeline shapes parse over clean lines
   // and whatever survives into bodies is conversation, not chrome.
   const lines = cleanSfPaste(text ?? "")

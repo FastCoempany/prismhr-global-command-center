@@ -16,7 +16,7 @@ import {
   dropNoiseEntries,
 } from "@/lib/intel/ai-clean";
 import { actorsLine, laneFor } from "@/lib/intel/provenance";
-import { cleanSfPaste, parseSfTimeline } from "@/lib/sf-timeline";
+import { cleanSfPaste, parseSfTimeline, scrubSecrets } from "@/lib/sf-timeline";
 import { redactMoney } from "@/lib/intel/lexicon";
 import { bindAccountId, cleanLogBody } from "@/lib/room/bind";
 import { createAccountNoteRow } from "@/lib/notes/write";
@@ -82,7 +82,17 @@ export async function roomPaste(
   noteIds?: string[];
 }> {
   const acct = bindAccountId(accountId, peos);
-  const text = typeof raw === "string" ? raw.trim().slice(0, 60000) : "";
+  const rawText = typeof raw === "string" ? raw.trim() : "";
+  // The capture's true dialect travels into the head token and source column —
+  // an Outlook thread must never masquerade as Salesforce activity.
+  const dialect = /^OUTLOOK THREAD\b/.test(rawText) ? "OL" : "SF";
+  // Head-keep suits newest-first captures (SF, Outlook). If a monster paste
+  // ever exceeds the cap, tell the model so instead of lying by omission.
+  const over = rawText.length - 60000;
+  const text =
+    over > 0
+      ? `${rawText.slice(0, 60000)}\n[NOTE: paste truncated — ${over} more characters omitted]`
+      : rawText;
   if (!acct)
     return {
       ok: false,
@@ -113,7 +123,13 @@ export async function roomPaste(
   try {
     const noteIds: string[] = [];
     if (entries.length === 0) {
-      const body = redactMoney(cleanSfPaste(text)).slice(0, 6000);
+      // Transcripts and Teams chats run OLDEST-first — keep the TAIL, where
+      // the decisions and owed items live, and say when the head was cut.
+      const whole = redactMoney(cleanSfPaste(text));
+      const body =
+        whole.length > 6000
+          ? `[earlier portion trimmed — ${whole.length - 6000} characters]\n…${whole.slice(-6000)}`
+          : whole;
       if (!body)
         return { ok: false, filed: 0, how, reason: "Nothing recognizable to file." };
       const n = await createAccountNoteRow({
@@ -127,19 +143,26 @@ export async function roomPaste(
       return { ok: true, filed: 1, how: "transcript", noteIds: [n.id] };
     }
     let filed = 0;
-    for (const e of entries.slice(0, 50)) {
+    for (const e of entries.slice(0, 40)) {
       const actors = actorsLine(e.from ?? "", e.to ?? "", e.others ?? 0);
       const when = [e.dayLabel, e.timeLabel].filter(Boolean).join(" ");
       const glyph = e.kind === "task" ? "✔" : e.kind === "call" ? "☎" : "✉";
-      const who = `${e.from}${e.to ? ` → ${e.to}` : ""}${e.others ? ` +${e.others}` : ""}`;
-      const head = `${glyph} SF ${when || "activity"} — ${e.subject || "(no subject)"} · ${who}`;
+      const who = actors || "(unattributed)";
+      const head = `${glyph} ${dialect} ${when || "activity"} — ${e.subject || "(no subject)"} · ${who}`;
+      // File at the ACTIVITY's own date (noon UTC — stable across timezones);
+      // no dayIso → the DB stamps the filing moment as before.
+      const at = e.dayIso ? new Date(`${e.dayIso}T12:00:00Z`) : undefined;
       const n = await createAccountNoteRow({
         accountId: acct.id,
         kind: "account",
-        body: redactMoney(e.body ? `${head}\n${e.body}` : head).slice(0, 2000),
+        body: scrubSecrets(redactMoney(e.body ? `${head}\n${e.body}` : head)).slice(
+          0,
+          4000,
+        ),
         lane: laneFor(actors, `${e.subject ?? ""}\n${e.body ?? ""}`),
         actors,
-        source: how === "ai" ? "sf-ai" : "sf",
+        source: `${dialect === "OL" ? "outlook" : "sf"}${how === "ai" ? "-ai" : ""}`,
+        at,
       });
       noteIds.push(n.id);
       filed++;
@@ -354,10 +377,18 @@ export async function roomRecordEdit(
       where: { id, accountId: acct.id },
     });
     if (!n) return { ok: false, reason: "That entry belongs to a different account." };
+    // The register shows (and edits) the FIRST LINE only — so the edit
+    // replaces only that line. Everything beneath it (a filed email's full
+    // body, a 6,000-char transcript) rides through untouched: fixing a typo
+    // in the head must never amputate the substance.
+    const lines = n.body.split("\n");
     const glyph = /^[✉✓☰✎✔☎]/.exec(n.body)?.[0];
+    // Strip any glyph the client's edit box carried back so glyphs never stack.
+    const bare = clean.replace(/^[✉✓☰✎✔☎⚡▢]\s?/, "").trim();
+    lines[0] = glyph ? `${glyph} ${bare}` : bare;
     await prisma.accountNote.update({
       where: { id },
-      data: { body: glyph ? `${glyph} ${clean}` : clean },
+      data: { body: lines.join("\n").slice(0, 8000) },
     });
     refresh();
     return { ok: true };
@@ -366,6 +397,9 @@ export async function roomRecordEdit(
   }
 }
 
+// ✕ on a record entry PARKS it (a hide:note: disposition) — the register's
+// own doctrine: never a hard delete, always restorable. The row vanishes
+// from every register view but the note itself survives in the table.
 export async function roomRecordDelete(
   accountId: string,
   noteId: string,
@@ -378,10 +412,15 @@ export async function roomRecordDelete(
     const prisma = getPrisma();
     const n = await prisma.accountNote.findFirst({
       where: { id, accountId: acct.id },
-      select: { id: true },
+      select: { id: true, body: true },
     });
     if (!n) return { ok: false, reason: "That entry belongs to a different account." };
-    await prisma.accountNote.delete({ where: { id } });
+    const key = `hide:note:${id}`.slice(0, 191);
+    await prisma.accountDisposition.upsert({
+      where: { accountId: key },
+      create: { accountId: key, status: "parked", reason: n.body.slice(0, 300) },
+      update: { status: "parked", reason: n.body.slice(0, 300) },
+    });
     refresh();
     return { ok: true };
   } catch {
@@ -431,11 +470,27 @@ export async function roomNoteToAction(
       where: { id: noteId, accountId: acct.id },
     });
     if (!n) return { ok: false, reason: "That entry belongs to a different account." };
-    const text = n.body
-      .split("\n")[0]
-      .replace(/^[✎✉✓☰⚡▢✔☎]\s?/, "")
-      .trim()
-      .slice(0, 2000);
+    // Find the SUBSTANCE, not the metadata. A paste-filed entry's first line
+    // is the head ("✉ SF Jul 22 — Subject · A → B") and a transcript's is a
+    // constant label — promoting those made actions that said nothing. Prefer
+    // the subject + first body line; skip generic labels entirely.
+    const lines = n.body
+      .split("\n")
+      .map((l) => l.trim())
+      .filter(Boolean);
+    const first = (lines[0] ?? "").replace(/^[✎✉✓☰⚡▢✔☎]\s?/, "").trim();
+    const headMatch = /^(?:SF|OL|TM)\b[^—]*—\s*(.+?)\s*·[^·]*$/.exec(first);
+    let text: string;
+    if (headMatch) {
+      const subject = headMatch[1].trim();
+      const bodyLine = lines[1] ?? "";
+      text = bodyLine ? `${subject} — ${bodyLine}` : subject;
+    } else if (/^transcript — filed from the room/.test(first)) {
+      text = lines[1] ?? "";
+    } else {
+      text = first;
+    }
+    text = text.trim().slice(0, 300);
     if (!text) return { ok: false, reason: "Nothing to promote." };
     const top = await prisma.todo.findFirst({
       orderBy: { position: "desc" },

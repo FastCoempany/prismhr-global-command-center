@@ -37,7 +37,7 @@ export const INCUMBENTS: { name: string; re: RegExp }[] = [
 ];
 
 export const URGENCY =
-  /\b(time[- ]sensitive|deadline|by (early |late |end of )?(january|february|march|april|may|june|july|august|september|october|november|december)( \d{1,2})?|quarterly review|leadership (team|review|meeting)|asap|as quickly as possible)\b/i;
+  /\b(time[- ]sensitive|deadline|by (early |late |end of )?(january|jan|february|feb|march|mar|april|apr|may|june|jun|july|jul|august|aug|september|sept?|october|oct|november|nov|december|dec)\b\.?( \d{1,2})?|quarterly review|leadership (team|review|meeting)|asap|as quickly as possible)\b/i;
 
 export const HEADCOUNT =
   /\b~?\s?(\d{1,4})\s*(?:independent\s+|international\s+|intl\s+)?(?:ee?s?\b|employees?\b|people\b|contractors?\b|workers?\b|folks\b)/i;
@@ -153,5 +153,11 @@ export function redactMoney(s: string): string {
   return s
     .replace(/[$€£]\s?\d[\d,.]*\s?[kKmM]?\b/g, "[—]")
     .replace(/\b\d[\d,.]*\s?(USD|EUR|GBP|CAD|dollars?|PEPM)\b/gi, "[—]")
-    .replace(/\b\d{1,3}(?:,\d{3})+(?:\.\d+)?\b/g, "[—]");
+    .replace(
+      // Bare comma-grouped numbers are money UNLESS they're plainly a
+      // quantity of people/things — "1,200 employees" is sizing intel the
+      // HEADCOUNT extractor needs, not a figure to strip.
+      /\b\d{1,3}(?:,\d{3})+(?:\.\d+)?\b(?!\s?(?:employees?|EEs?|workers?|contractors?|people|staff|seats?|hires?|heads?|headcount|clients?|locations?|worksites?))/gi,
+      "[—]",
+    );
 }

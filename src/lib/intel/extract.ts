@@ -12,6 +12,7 @@ import {
   countriesIn,
 } from "./lexicon";
 import { digestFor, digestForCardName, type DigestEntry } from "./digest";
+import { MINE_RE, inferActors } from "./provenance";
 import { EMPTY_INTEL, type DealIntel, type ProductKey, type SourcedFact } from "./types";
 
 const MONTHS: Record<string, number> = {
@@ -63,7 +64,13 @@ export function corpusFor(
   accountId: string,
   accountName: string,
   stores: {
-    acctNotes?: { id: string; body: string; createdAt: string; kind: string }[];
+    acctNotes?: {
+      id: string;
+      body: string;
+      createdAt: string;
+      kind: string;
+      actors?: string;
+    }[];
     partnerNotes?: { id: string; body: string; createdAt: string }[];
     todos?: { id: string; body: string; createdAt: string }[]; // pre-filtered to this account
     touches?: {
@@ -78,16 +85,20 @@ export function corpusFor(
   const docs: CorpusDoc[] = [];
   for (const n of stores.acctNotes ?? []) {
     const isSf = /^[✉✔☎☰] /.test(n.body);
+    // Direction from the ACTORS line's sender side — the head's em-dash slot
+    // holds the subject, so the old /—\s*Antaeus/ test classified the
+    // operator's own sends as inbound and pacified every went-dark detector.
+    const actors = n.actors || inferActors(n.body);
+    const sender = actors.split("→")[0] ?? "";
     docs.push({
       text: n.body,
       at: n.createdAt,
       src: `${isSf ? "sf-activity" : "note"} ${short(n.createdAt)}`,
-      direction:
-        isSf && /—\s*Antaeus/i.test(n.body.split("\n")[0] ?? "")
+      direction: !isSf
+        ? undefined
+        : MINE_RE.test(sender) || /—\s*Antaeus/i.test(n.body.split("\n")[0] ?? "")
           ? "out"
-          : isSf
-            ? "in"
-            : undefined,
+          : "in",
       people: peopleIn(n.body),
     });
   }
@@ -149,12 +160,13 @@ export function extractDealIntel(docs: CorpusDoc[], seedEntry?: DigestEntry): De
   const intel: DealIntel = structuredClone(EMPTY_INTEL);
   const seed = seedEntry?.intelSeed;
   if (seed) {
+    // Additive facts seed up front (pushes dedupe). The SINGLE-VALUE facts —
+    // chair, incumbent, timing — seed AFTER the doc loop instead: the seed is
+    // a research-time snapshot, and a fresher pasted doc must be able to
+    // revise it. Seeding first made those facts immutable forever.
     intel.countries = [...(seed.countries ?? [])];
     intel.headcounts = [...(seed.headcounts ?? [])];
     intel.products = [...(seed.products ?? [])];
-    intel.chair = seed.chair ?? "undecided";
-    intel.incumbent = seed.incumbent ?? null;
-    intel.timing = seed.timing ?? null;
     intel.threads = seed.threads
       ? { ...seed.threads, people: [...seed.threads.people] }
       : intel.threads;
@@ -181,7 +193,7 @@ export function extractDealIntel(docs: CorpusDoc[], seedEntry?: DigestEntry): De
       if (PRODUCT_TERMS[key].test(doc.text))
         push(intel.products, key, doc, (a, b) => a === b);
     }
-    // commercial chair — newest doc wins only if not already decided by seed
+    // commercial chair — docs run newest-first, so first hit = newest doc
     if (intel.chair === "undecided") {
       const ref = COMMERCIAL_TERMS.referral.test(doc.text);
       const res = COMMERCIAL_TERMS.resale.test(doc.text);
@@ -221,6 +233,13 @@ export function extractDealIntel(docs: CorpusDoc[], seedEntry?: DigestEntry): De
       intel.lastInbound = doc.at;
     if (doc.direction === "out" && (!intel.lastOutbound || doc.at > intel.lastOutbound))
       intel.lastOutbound = doc.at;
+  }
+
+  // The seed fills what no doc decided — a fallback, never a lock.
+  if (seed) {
+    if (intel.chair === "undecided" && seed.chair) intel.chair = seed.chair;
+    if (!intel.incumbent && seed.incumbent) intel.incumbent = seed.incumbent;
+    if (!intel.timing && seed.timing) intel.timing = seed.timing;
   }
 
   // direction (the likely product line) — derived last, from what was seen

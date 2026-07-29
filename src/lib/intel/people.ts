@@ -30,11 +30,18 @@ export type PersonRow = {
   lastContext: string; // subject of the most recent activity they appear in
 };
 
-// Never index myself, the support queue's shared inbox, or empty fragments.
-const SKIP_RE = /antaeus|customersupport@|no-?reply|donotreply/i;
+// Never index myself (in any rendering, including Outlook's "You"), the
+// support queue's shared inbox, or empty fragments.
+const SKIP_RE = /antaeus|^you$|^me$|customersupport@|no-?reply|donotreply/i;
 
 function splitActors(actors: string): string[] {
-  return actors
+  // "Last, First" pairs are ONE person — flip them before the comma split so
+  // "Bartolotti, Kim → Cyphers, Lesha" doesn't shatter into four phantoms.
+  const collapsed = (actors ?? "").replace(
+    /\b([A-Z][\w'’.-]+),\s+([A-Z][\w'’.-]+)\b(?=\s*(?:→|;|\+|$))/g,
+    "$2 $1",
+  );
+  return collapsed
     .split(/→|;|,|\band\b/)
     .map((s) => s.replace(/\+\d+\s*$/, "").trim())
     .filter((s) => s.length > 1 && !SKIP_RE.test(s));
