@@ -614,6 +614,46 @@ button.sdRadio:hover {
 .ghost:disabled {
   opacity: 0.5;
 }
+/* the loss read's confirm — red is real risk, semantically earned here */
+.lossBtns {
+  display: flex;
+  gap: 9px;
+  flex-wrap: wrap;
+  margin-top: 9px;
+}
+.lossBtn {
+  background: rgba(239, 68, 68, 0.12);
+  -webkit-backdrop-filter: blur(10px) saturate(1.4);
+  backdrop-filter: blur(10px) saturate(1.4);
+  border: 1px solid rgba(239, 68, 68, 0.55);
+  color: var(--red);
+  border-radius: 7px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.lossBtn:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+.lossBtn:disabled {
+  opacity: 0.5;
+}
+/* an owed-to-you suggestion — intelligence blue, like the stage evidence */
+.owedBox {
+  margin: 3px 0 5px;
+  padding: 6px 9px;
+  background: rgba(37, 99, 235, 0.07);
+  border-left: 2px solid var(--blue);
+  border-radius: 0 7px 7px 0;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--soft);
+}
+.owedBox b {
+  color: var(--ink);
+  font-weight: 600;
+}
 .outst {
   margin-top: 10px;
   font-size: 12.5px;

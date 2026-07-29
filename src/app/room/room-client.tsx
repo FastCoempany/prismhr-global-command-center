@@ -24,7 +24,11 @@ import { dismissSuggestion, saveNote, toggleCheck } from "../dashboard/actions";
 import {
   roomClose,
   roomCompose,
+  roomLossDismiss,
+  roomMarkLost,
   roomNoteToAction,
+  roomOwedAccept,
+  roomOwedDismiss,
   roomPaste,
   roomPasteUndo,
   roomRecordDelete,
@@ -63,6 +67,8 @@ export type RoomRow = {
   record: { id: string; t: string; text: string; struck: boolean }[];
   recordTotal: number;
   backgroundTotal: number;
+  loss: { noteId: string; phrase: string; date: string } | null;
+  owed: { noteId: string; key: string; text: string; src: string }[];
   health: "red" | "amber" | "green" | "quiet";
   rank: number;
   canWrite: boolean;
@@ -250,6 +256,53 @@ function Row({ row }: { row: RoomRow }) {
       } else setNote(r.reason ?? "The paste didn't file.");
     });
   };
+  // The loss read's two exits + the owed suggestions' two exits — all
+  // optimistic, all durable server-side.
+  const [lossState, setLossState] = useState<"live" | "lost" | "salvaging">("live");
+  const [owedGone, setOwedGone] = useState<Set<string>>(new Set());
+  const markLost = () => {
+    if (!row.loss || pending) return;
+    const l = row.loss;
+    start(async () => {
+      const r = await roomMarkLost(row.accountId, row.cardId, l.noteId);
+      if (r.ok) {
+        setLossState("lost");
+        setFreshInfo((f) => [
+          { text: "Marked lost — the card is retiring from the board." },
+          ...f,
+        ]);
+      } else setNote(r.reason ?? "That didn't save.");
+    });
+  };
+  const keepSalvaging = () => {
+    if (!row.loss || pending) return;
+    const l = row.loss;
+    start(async () => {
+      const r = await roomLossDismiss(row.accountId, row.cardId, l.noteId);
+      if (r.ok) setLossState("salvaging");
+      else setNote(r.reason ?? "That didn't save.");
+    });
+  };
+  const owedAccept = (o: { key: string; text: string }) => {
+    if (pending) return;
+    start(async () => {
+      const r = await roomOwedAccept(row.accountId, o.text, o.key);
+      if (r.ok) {
+        setOwedGone((s) => new Set(s).add(o.key));
+        setFreshCaps((f) => [{ body: o.text, kind: "action", promoted: true }, ...f]);
+      } else setNote(r.reason ?? "That didn't save.");
+    });
+  };
+  const owedDismiss = (o: { key: string }) => {
+    if (pending) return;
+    start(async () => {
+      const r = await roomOwedDismiss(row.accountId, o.key);
+      if (r.ok) setOwedGone((s) => new Set(s).add(o.key));
+      else setNote(r.reason ?? "That didn't save.");
+    });
+  };
+  const lossLive = !!row.loss && lossState === "live";
+
   const undoPaste = (idx: number) => {
     const f = freshInfo[idx];
     if (!f?.noteIds?.length || pending) return;
@@ -462,17 +515,58 @@ function Row({ row }: { row: RoomRow }) {
         )}
 
         <div className={styles.movewrap}>
-          <span className={styles.lbl}>NEXT MOVE</span>
-          <p className={`${styles.move} ${row.thin ? styles.thin : ""}`}>{row.move}</p>
-          {row.canWrite && row.outstanding && !closed && (
-            <button
-              type="button"
-              className={row.rank === 0 ? styles.go : styles.ghost}
-              disabled={closePending}
-              onClick={submitClose}
-            >
-              {closePending ? "Saving…" : "Mark it done ✓"}
-            </button>
+          {lossLive ? (
+            <>
+              <span className={styles.lbl}>THE RECORD READS LOST</span>
+              <p className={styles.move}>
+                “{row.loss!.phrase}” — filed {row.loss!.date}. Your call: retire it, or
+                keep working the salvage.
+              </p>
+              {row.canWrite && (
+                <span className={styles.lossBtns}>
+                  <button
+                    type="button"
+                    className={styles.lossBtn}
+                    disabled={pending}
+                    onClick={markLost}
+                  >
+                    Mark it lost — retire the card
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.ghost}
+                    disabled={pending}
+                    onClick={keepSalvaging}
+                  >
+                    Keep salvaging
+                  </button>
+                </span>
+              )}
+            </>
+          ) : lossState === "lost" ? (
+            <>
+              <span className={styles.lbl}>MARKED LOST</span>
+              <p className={`${styles.move} ${styles.thin}`}>
+                Retired from the board — the record keeps everything.
+              </p>
+            </>
+          ) : (
+            <>
+              <span className={styles.lbl}>NEXT MOVE</span>
+              <p className={`${styles.move} ${row.thin ? styles.thin : ""}`}>
+                {row.move}
+              </p>
+              {row.canWrite && row.outstanding && !closed && (
+                <button
+                  type="button"
+                  className={row.rank === 0 ? styles.go : styles.ghost}
+                  disabled={closePending}
+                  onClick={submitClose}
+                >
+                  {closePending ? "Saving…" : "Mark it done ✓"}
+                </button>
+              )}
+            </>
           )}
         </div>
         {row.outstanding && (
@@ -492,8 +586,10 @@ function Row({ row }: { row: RoomRow }) {
       </div>
 
       <div className={styles.rec}>
-        <div className={`${styles.court} ${styles[`c_${row.court.tone}`]}`}>
-          {row.court.line}
+        <div
+          className={`${styles.court} ${lossLive ? styles.c_quiet : styles[`c_${row.court.tone}`]}`}
+        >
+          {lossLive ? `THE RECORD READS LOST · ${row.loss!.date}` : row.court.line}
         </div>
         <div className={styles.keybar}>
           <span>
@@ -523,6 +619,32 @@ function Row({ row }: { row: RoomRow }) {
         </div>
 
         <div className={styles.dayrule}>TODAY</div>
+        {row.owed
+          .filter((o) => !owedGone.has(o.key))
+          .map((o) => (
+            <div key={o.key} className={styles.owedBox}>
+              <span className={styles.kOwed}>⚑</span> The record says you owe:{" "}
+              <b>{o.text}</b> — {o.src}.
+              {row.canWrite && (
+                <span className={styles.sdSuggActs}>
+                  <button
+                    type="button"
+                    className={styles.sdTag}
+                    onClick={() => owedAccept(o)}
+                  >
+                    open it ✓
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.sdTag}
+                    onClick={() => owedDismiss(o)}
+                  >
+                    dismiss ✕
+                  </button>
+                </span>
+              )}
+            </div>
+          ))}
         {freshCaps.map((c, i) =>
           c.kind === "note" && !c.promoted ? (
             <div key={`fc${i}`}>
