@@ -11,7 +11,24 @@ import { redactMoney } from "@/lib/intel/lexicon";
 import { normPerson } from "@/lib/intel/provenance";
 import type { TimelineEntry } from "@/lib/sf-timeline";
 
-export type AiCleanResult = { entries: TimelineEntry[]; signals: string[] };
+export type ReadAction = {
+  text: string;
+  owner: "me" | "them";
+  due: string; // YYYY-MM-DD or ""
+  fallback: string; // the if/then riding the commitment, or ""
+};
+export type AiCleanResult = {
+  entries: TimelineEntry[];
+  signals: string[];
+  // The full read — every field optional-by-emptiness so the timeline-only
+  // dialects cost nothing extra.
+  actions: ReadAction[];
+  gaps: string[]; // what the record still can't answer for THIS deal
+  competitorIntel: { fact: string; who: string }[]; // market facts, attributed
+  lessons: string[]; // process lessons a future deal should remember
+  outcome: { status: "none" | "lost" | "won"; phrase: string };
+  accountName: string; // the company this paste is ABOUT ("" if unclear)
+};
 
 export function aiCleanAvailable(): boolean {
   return Boolean(process.env.ANTHROPIC_API_KEY);
@@ -19,6 +36,10 @@ export function aiCleanAvailable(): boolean {
 
 const MAX_ENTRIES = 40;
 const MAX_SIGNALS = 8;
+const MAX_ACTIONS = 6;
+const MAX_GAPS = 5;
+const MAX_INTEL = 4;
+const MAX_LESSONS = 3;
 
 // Structured-output schema — the API guarantees the reply parses to this.
 const SCHEMA = {
@@ -54,8 +75,55 @@ const SCHEMA = {
       },
     },
     signals: { type: "array", items: { type: "string" } },
+    actions: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          text: { type: "string" },
+          owner: { type: "string", enum: ["me", "them"] },
+          due: { type: "string" },
+          fallback: { type: "string" },
+        },
+        required: ["text", "owner", "due", "fallback"],
+        additionalProperties: false,
+      },
+    },
+    gaps: { type: "array", items: { type: "string" } },
+    competitorIntel: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          fact: { type: "string" },
+          who: { type: "string" },
+        },
+        required: ["fact", "who"],
+        additionalProperties: false,
+      },
+    },
+    lessons: { type: "array", items: { type: "string" } },
+    outcome: {
+      type: "object",
+      properties: {
+        status: { type: "string", enum: ["none", "lost", "won"] },
+        phrase: { type: "string" },
+      },
+      required: ["status", "phrase"],
+      additionalProperties: false,
+    },
+    accountName: { type: "string" },
   },
-  required: ["entries", "signals"],
+  required: [
+    "entries",
+    "signals",
+    "actions",
+    "gaps",
+    "competitorIntel",
+    "lessons",
+    "outcome",
+    "accountName",
+  ],
   additionalProperties: false,
 } as const;
 
@@ -73,6 +141,13 @@ Rules:
 - from / to: person names, normalized: first-person forms ("You", "me") become "Antaeus Coe" (the operator whose mailbox this is); "Last, First" renders as "First Last"; email-address tails in angle brackets drop. others: count of additional recipients ("and 1 other" → 1), else 0.
 - Dates: dayIso is YYYY-MM-DD resolved against today's date given in the message ("Today"/"Yesterday"/"Jul 30, 2025" all resolve). dayLabel is a short human label ("Jul 30" or "Today"). timeLabel like "5:27 PM", or "" if none. Unknown dates: dayIso "".
 - kind: "email" for emails, "call" for logged calls, "task" for tasks/meetings/upcoming items.
+- ATTRIBUTION IS SACRED. Threads quote earlier messages: attribute every statement to the author of the message where it FIRST appears — the latest sender did NOT say the quoted words below their reply. First-person statements ("I worked at…", "we required…") belong to the author of the message containing them. The operator is Antaeus Coe; he writes from his own mailbox, and he previously worked at Remote.com — so a line like "at Remote we required a deposit" inside HIS message is his own market knowledge, not a competitor speaking, and not a colleague's claim.
+- actions: EXPLICIT commitments only — a "TO DO:" line, "I'll send…", a dated promise. owner "me" when the operator owes it, "them" when someone else does. due as YYYY-MM-DD only when actually stated. fallback carries an if/then riding the commitment ("if not, send the ESC demo — scrub proprietary"). NEVER invent an action from a musing ("we should probably…", "it might be worth…") — those are not commitments.
+- gaps: up to ${MAX_GAPS} questions the record still cannot answer that would MOST advance this specific deal — grounded in its countries, products, and stage ("Do the India workers need benefits parity?" beats "what is the timeline"). Never generic discovery boilerplate.
+- competitorIntel: market or competitor facts useful BEYOND this account — pricing models, deposit norms, competitor requirements, industry standards — each with WHO said it (attribution rule applies).
+- lessons: process lessons a future deal should remember (what slowed, killed, or won this one). Empty unless the paste actually teaches one.
+- outcome: "lost" only when the paste STATES the deal is lost (client chose another vendor, walked away); "won" only when signed/closed is stated; phrase = the exact evidence sentence, ≤120 chars. Otherwise "none" with "".
+- accountName: the prospect/client company this paste is ABOUT (not the operator's own company, not a competitor) — "" when unclear.
 - signals: 0-${MAX_SIGNALS} short flags a salesperson would want surfaced — a newly mentioned country or expansion, an implied or explicit deadline, hesitation or stalling tone, who actually holds the decision, a competitor or incumbent system named, escalation or frustration, an owed follow-up with its owner. Plain short sentences. Empty array if nothing notable.
 - Order entries newest first. At most ${MAX_ENTRIES} entries.`;
 
@@ -96,12 +171,34 @@ export function dropNoiseEntries(entries: TimelineEntry[]): TimelineEntry[] {
   return entries.filter((e) => !isNoiseEntry(e));
 }
 
+const EMPTY_READ: Omit<AiCleanResult, "entries" | "signals"> = {
+  actions: [],
+  gaps: [],
+  competitorIntel: [],
+  lessons: [],
+  outcome: { status: "none", phrase: "" },
+  accountName: "",
+};
+
 // Defensive pass over the model's (already schema-valid) reply: coerce, cap,
 // and money-redact everything before it reaches the client or the database.
 export function sanitizeAiResult(raw: unknown): AiCleanResult {
-  const out: AiCleanResult = { entries: [], signals: [] };
+  const out: AiCleanResult = {
+    entries: [],
+    signals: [],
+    ...structuredClone(EMPTY_READ),
+  };
   if (!raw || typeof raw !== "object") return out;
-  const r = raw as { entries?: unknown; signals?: unknown };
+  const r = raw as {
+    entries?: unknown;
+    signals?: unknown;
+    actions?: unknown;
+    gaps?: unknown;
+    competitorIntel?: unknown;
+    lessons?: unknown;
+    outcome?: unknown;
+    accountName?: unknown;
+  };
   const str = (v: unknown, cap: number) =>
     typeof v === "string" ? redactMoney(v.trim()).slice(0, cap) : "";
   if (Array.isArray(r.entries)) {
@@ -132,8 +229,70 @@ export function sanitizeAiResult(raw: unknown): AiCleanResult {
       .map((s) => str(s, 200))
       .filter(Boolean);
   }
+  if (Array.isArray(r.actions)) {
+    for (const a of r.actions.slice(0, MAX_ACTIONS)) {
+      if (!a || typeof a !== "object") continue;
+      const x = a as Record<string, unknown>;
+      const text = str(x.text, 200);
+      if (text.length < 6) continue;
+      out.actions.push({
+        text,
+        owner: x.owner === "them" ? "them" : "me",
+        due: typeof x.due === "string" && /^\d{4}-\d{2}-\d{2}$/.test(x.due) ? x.due : "",
+        fallback: str(x.fallback, 200),
+      });
+    }
+  }
+  if (Array.isArray(r.gaps))
+    out.gaps = r.gaps
+      .slice(0, MAX_GAPS)
+      .map((g) => str(g, 160))
+      .filter((g) => g.length >= 8);
+  if (Array.isArray(r.competitorIntel)) {
+    for (const c of r.competitorIntel.slice(0, MAX_INTEL)) {
+      if (!c || typeof c !== "object") continue;
+      const x = c as Record<string, unknown>;
+      const fact = str(x.fact, 240);
+      if (fact.length >= 12)
+        out.competitorIntel.push({ fact, who: normPerson(str(x.who, 60)) });
+    }
+  }
+  if (Array.isArray(r.lessons))
+    out.lessons = r.lessons
+      .slice(0, MAX_LESSONS)
+      .map((l) => str(l, 240))
+      .filter((l) => l.length >= 12);
+  if (r.outcome && typeof r.outcome === "object") {
+    const o = r.outcome as Record<string, unknown>;
+    out.outcome = {
+      status: o.status === "lost" || o.status === "won" ? o.status : "none",
+      phrase: str(o.phrase, 120),
+    };
+  }
+  out.accountName = str(r.accountName, 80);
   out.entries = dropNoiseEntries(out.entries);
   return out;
+}
+
+// Does the model's account claim agree with the row the operator is filing
+// to? Empty claim = no objection. Fuzzy on purpose: "Simploy" matches
+// "Simploy, Inc." and "Advocate Pay — SubcontractorHub" matches "Advocate
+// Pay LLC" by first significant token.
+export function accountMatches(claim: string, bound: string): boolean {
+  const norm = (s: string) =>
+    (s ?? "")
+      .toLowerCase()
+      .replace(/[^a-z0-9 ]+/g, " ")
+      .replace(/\b(inc|llc|corp|corporation|company|co|ltd|the)\b/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  const c = norm(claim);
+  const b = norm(bound);
+  if (!c || !b) return true;
+  if (b.includes(c) || c.includes(b)) return true;
+  const ct = c.split(" ")[0];
+  const bt = b.split(" ")[0];
+  return !!ct && !!bt && (ct === bt || b.includes(ct) || c.includes(bt));
 }
 
 // One call, one paste. Throws on API failure — the caller degrades to the
