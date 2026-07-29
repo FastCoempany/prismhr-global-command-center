@@ -28,6 +28,7 @@ describe("room client — every absorbed capability is wired", () => {
     ["record entries edit in place", "roomRecordEdit"],
     ["record entries can be deleted", "roomRecordDelete"],
     ["paste files to the account", "roomPaste"],
+    ["a paste can be undone whole", "roomPasteUndo"],
     ["the move closes for real", "roomClose"],
     // the roundups engine in the drawer
     ["copy & mark sent", "logTouch"],

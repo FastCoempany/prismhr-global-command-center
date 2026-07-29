@@ -74,7 +74,13 @@ export async function roomLog(
 export async function roomPaste(
   accountId: string,
   raw: string,
-): Promise<{ ok: boolean; filed: number; how: string; reason?: string }> {
+): Promise<{
+  ok: boolean;
+  filed: number;
+  how: string;
+  reason?: string;
+  noteIds?: string[];
+}> {
   const acct = bindAccountId(accountId, peos);
   const text = typeof raw === "string" ? raw.trim().slice(0, 60000) : "";
   if (!acct)
@@ -105,11 +111,12 @@ export async function roomPaste(
   }
 
   try {
+    const noteIds: string[] = [];
     if (entries.length === 0) {
       const body = redactMoney(cleanSfPaste(text)).slice(0, 6000);
       if (!body)
         return { ok: false, filed: 0, how, reason: "Nothing recognizable to file." };
-      await createAccountNoteRow({
+      const n = await createAccountNoteRow({
         accountId: acct.id,
         kind: "account",
         body: `☰ transcript — filed from the room\n${body}`,
@@ -117,7 +124,7 @@ export async function roomPaste(
         source: "transcript",
       });
       refresh();
-      return { ok: true, filed: 1, how: "transcript" };
+      return { ok: true, filed: 1, how: "transcript", noteIds: [n.id] };
     }
     let filed = 0;
     for (const e of entries.slice(0, 50)) {
@@ -126,7 +133,7 @@ export async function roomPaste(
       const glyph = e.kind === "task" ? "✔" : e.kind === "call" ? "☎" : "✉";
       const who = `${e.from}${e.to ? ` → ${e.to}` : ""}${e.others ? ` +${e.others}` : ""}`;
       const head = `${glyph} SF ${when || "activity"} — ${e.subject || "(no subject)"} · ${who}`;
-      await createAccountNoteRow({
+      const n = await createAccountNoteRow({
         accountId: acct.id,
         kind: "account",
         body: redactMoney(e.body ? `${head}\n${e.body}` : head).slice(0, 2000),
@@ -134,10 +141,11 @@ export async function roomPaste(
         actors,
         source: how === "ai" ? "sf-ai" : "sf",
       });
+      noteIds.push(n.id);
       filed++;
     }
     refresh();
-    return { ok: true, filed, how };
+    return { ok: true, filed, how, noteIds };
   } catch {
     return {
       ok: false,
@@ -294,6 +302,36 @@ export async function roomUnlog(
     return { ok: true };
   } catch {
     return { ok: false, reason: "The undo didn't take — try again." };
+  }
+}
+
+// ↩ on a paste receipt — remove the WHOLE batch this paste filed, and only
+// that batch: the delete is scoped to the ids the paste returned AND to this
+// account, so a stale or forged id list can't reach anyone else's record.
+export async function roomPasteUndo(
+  accountId: string,
+  noteIds: string[],
+): Promise<{ ok: boolean; removed: number; reason?: string }> {
+  const acct = bindAccountId(accountId, peos);
+  const ids = Array.isArray(noteIds)
+    ? noteIds
+        .filter((x): x is string => typeof x === "string")
+        .map((x) => x.trim().slice(0, 40))
+        .filter(Boolean)
+        .slice(0, 60)
+    : [];
+  if (!acct || ids.length === 0)
+    return { ok: false, removed: 0, reason: "Nothing to undo." };
+  if (!(await requireWrite()))
+    return { ok: false, removed: 0, reason: "Read-only session." };
+  try {
+    const r = await getPrisma().accountNote.deleteMany({
+      where: { id: { in: ids }, accountId: acct.id },
+    });
+    refresh();
+    return { ok: true, removed: r.count };
+  } catch {
+    return { ok: false, removed: 0, reason: "The undo didn't take — try again." };
   }
 }
 
