@@ -17,7 +17,9 @@ import {
   loadAccountNotes,
   loadDispositions,
   loadEngagements,
+  loadPartnerNotes,
   loadTodos,
+  loadTouches,
   loadValidations,
 } from "@/lib/today/overlay";
 import { clearDisposition } from "../today/actions";
@@ -65,6 +67,10 @@ export default async function AccountsPage() {
   const engagements = await loadEngagements();
   const chipNotes = await loadAccountNotes();
   const dispositions = await loadDispositions();
+  // The partner register, folded in. Partners used to own a tab; the work
+  // happens account by account now, so the roster lives here — present,
+  // countable, and out of the way.
+  const [partnerNotes, touches] = await Promise.all([loadPartnerNotes(), loadTouches()]);
   // Working-the-deal state (stage/approach/intent/next action) — the Book's
   // store, now living inside each account's expanded row.
   const command = await loadCommand();
@@ -86,6 +92,50 @@ export default async function AccountsPage() {
     .map((p) => ({ p, d: dispositions.get(p.id) }))
     .filter((x) => x.d?.status === "not-mine");
   const excludedIds = new Set(excluded.map((x) => x.p.id));
+
+  // One row per partner who actually owns something in the book.
+  const partnerRoster = (() => {
+    const acc = new Map<
+      string,
+      {
+        name: string;
+        accounts: number;
+        notes: number;
+        touches: number;
+        lastTouch: string;
+      }
+    >();
+    const seat = (name: string) => {
+      const key = name.trim();
+      if (!key || key === "Unassigned") return null;
+      const found = acc.get(key);
+      if (found) return found;
+      const fresh = { name: key, accounts: 0, notes: 0, touches: 0, lastTouch: "" };
+      acc.set(key, fresh);
+      return fresh;
+    };
+    for (const p of peos) {
+      // Not-mine accounts are excluded from the room above; counting them here
+      // would make a partner look busier than they are.
+      if (excludedIds.has(p.id)) continue;
+      const row = seat(p.csm ?? "");
+      if (row) row.accounts += 1;
+    }
+    for (const [partner, list] of partnerNotes) {
+      const row = seat(partner);
+      if (row) row.notes += list.length;
+    }
+    for (const t of touches) {
+      const row = seat(t.label ?? "");
+      if (!row) continue;
+      row.touches += 1;
+      if (!row.lastTouch || Date.parse(t.contactedAt) > Date.parse(row.lastTouch))
+        row.lastTouch = t.contactedAt;
+    }
+    return [...acc.values()].sort(
+      (a, b) => b.accounts - a.accounts || a.name.localeCompare(b.name),
+    );
+  })();
 
   const rows: AccountRow[] = peos
     .filter((p) => !excludedIds.has(p.id))
@@ -206,6 +256,38 @@ export default async function AccountsPage() {
           canWrite={canAdd}
           onDashboard={onDashboard}
         />
+
+        {/* The partner register — everything the Partners tab held, kept as an
+            archival fold: who owns which accounts, how much traffic each has,
+            and the way into their room. Quiet by construction. */}
+        {partnerRoster.length > 0 && (
+          <details className={styles.ledger}>
+            <summary className={styles.ledgerSummary}>
+              Partners — the roster ({partnerRoster.length})
+            </summary>
+            <ul className={styles.ledgerList}>
+              {partnerRoster.map((p) => (
+                <li key={p.name} className={styles.ledgerRow}>
+                  <b>{p.name}</b>
+                  <span className={styles.ledgerWhy}>
+                    {p.accounts} account{p.accounts === 1 ? "" : "s"}
+                    {p.notes > 0 ? ` · ${p.notes} filed` : ""}
+                    {p.touches > 0 ? ` · ${p.touches} outreach` : ""}
+                    {p.lastTouch ? (
+                      <>
+                        {" · last "}
+                        <LocalTime iso={p.lastTouch} />
+                      </>
+                    ) : null}
+                  </span>
+                  <Link href="/partners" className={styles.ledgerLink}>
+                    their room
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </details>
+        )}
 
         {/* The exclusions ledger — accounts marked "not mine" leave the room
             but never vanish silently: name, reason, when, and an undo. */}

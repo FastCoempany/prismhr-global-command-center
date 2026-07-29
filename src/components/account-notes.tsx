@@ -58,9 +58,9 @@ export function AccountChipNotes({ notes }: { notes: ChipNote[] }) {
   return (
     <div className={styles.wrap}>
       <div className={styles.head}>
-        <span className={styles.tag}>Worked notes &amp; actions</span>
+        <span className={styles.tag}>Record &amp; history</span>
         <span className={styles.count}>{notes.length}</span>
-        <span className={styles.hint}>your record — notes, sends, completed steps</span>
+        <span className={styles.hint}>notes, sends, and the work you closed — dated</span>
       </div>
       {notes.map((n) => (
         <NoteRow key={n.id} n={n} />

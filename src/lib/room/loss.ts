@@ -8,7 +8,21 @@ export type LossRead = {
   noteId: string; // the triggering record entry — dismissals key to it
   phrase: string; // the matched loss language, trimmed for display
   date: string; // M/D of the triggering entry (Chicago)
+  status: "lost" | "won"; // which way the record closed
 };
+
+// The read of a paste can state an outcome outright ("we've gone with another
+// provider"), and when it does it files a marker entry. A marker is a stated
+// fact, not an inference, so it outranks the phrase scan and never runs the
+// negation gauntlet — nobody writes one of these by accident.
+export const OUTCOME_MARK_LOST = "☒ THE RECORD READS LOST";
+export const OUTCOME_MARK_WON = "☑ THE RECORD READS WON";
+const MARK_RE = /^(☒ THE RECORD READS LOST|☑ THE RECORD READS WON)\s*—\s*(.*)$/m;
+
+export function outcomeMarkBody(status: "lost" | "won", phrase: string): string {
+  const head = status === "won" ? OUTCOME_MARK_WON : OUTCOME_MARK_LOST;
+  return `${head} — ${(phrase ?? "").trim().slice(0, 200) || "stated in the record"}`;
+}
 
 const LOSS_RE =
   /\b(?:found another (?:solution|provider|vendor|partner)|(?:we(?:'ve| have)?|they(?:'ve| have)?) lost (?:the|both|this)\b[^.\n]{0,60}|lost the deal|going (?:with|in) a different direction|went with (?:another|a competitor|someone else)|chose (?:a )?(?:competitor|another (?:provider|vendor|solution))|signed with (?:another|a competitor)|no longer moving forward|decided not to (?:move forward|proceed)|deal is (?:dead|lost|off)|passing on (?:us|this|the deal)|client (?:backed|pulled) out)\b/i;
@@ -45,6 +59,15 @@ export function readLoss(
     if (Number.isNaN(age) || age > FRESH_DAYS * 86_400_000) continue;
     if (dismissedNoteIds.has(n.id)) continue;
     const body = n.body ?? "";
+    const mark = MARK_RE.exec(body);
+    if (mark) {
+      return {
+        noteId: n.id,
+        phrase: (mark[2] || "").trim().slice(0, 90),
+        date: chicagoDay(n.createdAt),
+        status: mark[1] === OUTCOME_MARK_WON ? "won" : "lost",
+      };
+    }
     const m = LOSS_RE.exec(body);
     if (!m) continue;
     const before = body.slice(Math.max(0, m.index - 60), m.index);
@@ -53,6 +76,7 @@ export function readLoss(
       noteId: n.id,
       phrase: m[0].trim().slice(0, 90),
       date: chicagoDay(n.createdAt),
+      status: "lost",
     };
   }
   return null;

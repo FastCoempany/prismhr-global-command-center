@@ -17,6 +17,7 @@ import {
 } from "@/lib/book/research";
 import { DASH_NODES, type DashNodeKey } from "@/lib/dashboard/stages";
 import type { DashCardRow } from "@/lib/dashboard/data";
+import { readOutcome } from "@/lib/dashboard/outcome";
 
 // Which lead stream an account funnels through. The PEO channel is CSM-owned
 // (reach the client through their PEO). The HCM funnel is the other half of the
@@ -209,7 +210,10 @@ export function commitmentsFromCards(
 ): Commitment[] {
   const out: Commitment[] = [];
   for (const card of cards) {
-    if (card.archived) continue;
+    // A closed deal generates nothing. `archived` is the operator retiring the
+    // row; a Closed Won / Closed Lost stamp is the deal itself being over, and
+    // until now only the room honored it.
+    if (card.archived || readOutcome(card.notes)) continue;
     for (const node of DASH_NODES) {
       if (card.states[node.key] !== "active") continue;
       const ageDays = daysSince(card.activated?.[node.key] ?? "", now);
@@ -364,6 +368,8 @@ export function cardNextStep(
   labels: Record<string, string>,
   now: number = Date.now(),
 ): CardStep | null {
+  // Same rule as the commitment feed: a closed deal has no next move.
+  if (readOutcome(card.notes)) return null;
   for (const node of DASH_NODES) {
     if (card.states[node.key] !== "active") continue;
     const i = node.checklist.findIndex((_, idx) => !card.checks[node.key]?.[idx]);

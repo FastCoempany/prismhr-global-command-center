@@ -24,8 +24,14 @@ import { dismissSuggestion, saveNote, toggleCheck } from "../dashboard/actions";
 import {
   roomClose,
   roomCompose,
+  roomActionUndo,
+  roomGapDismiss,
+  roomGapsRefill,
   roomLossDismiss,
   roomMarkLost,
+  roomMarkWon,
+  roomResearch,
+  roomRetire,
   roomNoteToAction,
   roomOwedAccept,
   roomOwedDismiss,
@@ -61,14 +67,18 @@ export type RoomRow = {
     doneKey: string;
     closedCount: number;
   } | null;
-  sheetOpen: { id: string; body: string }[];
+  sheetOpen: { id: string; body: string; wall?: string; fallback?: string }[];
   sheetDelayed: { id: string; body: string; when: string }[];
   sheetDoneToday: { id: string; body: string; at: string }[];
   record: { id: string; t: string; text: string; struck: boolean }[];
   recordTotal: number;
   backgroundTotal: number;
-  loss: { noteId: string; phrase: string; date: string } | null;
+  loss: { noteId: string; phrase: string; date: string; status: "lost" | "won" } | null;
   owed: { noteId: string; key: string; text: string; src: string }[];
+  outcome: { status: "won" | "lost"; phrase: string; at: string } | null;
+  gaps: { id: string; question: string; at: string }[];
+  gapsQueued: number;
+  researchAt: string; // ISO of the last research pass, "" if never run
   health: "red" | "amber" | "green" | "quiet";
   rank: number;
   canWrite: boolean;
@@ -137,8 +147,26 @@ type FreshCap = {
 
 function Row({ row }: { row: RoomRow }) {
   const [freshCaps, setFreshCaps] = useState<FreshCap[]>([]);
-  const [freshInfo, setFreshInfo] = useState<{ text: string; noteIds?: string[] }[]>([]);
+  const [freshInfo, setFreshInfo] = useState<
+    {
+      text: string;
+      noteIds?: string[];
+      // Auto-opened commitments, each retired on its own — the paste's undo
+      // takes back the record it filed, never the work it opened.
+      opened?: { id: string; text: string; gone?: boolean }[];
+    }[]
+  >([]);
+  // The misfile guard's holding pen: the read thinks this paste belongs to
+  // another account, so nothing is written until the operator insists.
+  const [mismatch, setMismatch] = useState<{
+    claim: string;
+    bound: string;
+    text: string;
+  } | null>(null);
   const [gone, setGone] = useState<Set<string>>(new Set());
+  // Rows the operator just un-held: they belong in the open list until the
+  // server round trip re-partitions them there.
+  const [backNow, setBackNow] = useState<Set<string>>(new Set());
   const [doneIds, setDoneIds] = useState<Set<string>>(new Set());
   const [promotedNotes, setPromotedNotes] = useState<Set<string>>(new Set());
   const [recOpen, setRecOpen] = useState(false);
@@ -237,41 +265,135 @@ function Row({ row }: { row: RoomRow }) {
       else setNote(r.reason ?? "The delete didn't take.");
     });
   };
-  const submitPaste = () => {
-    const text = pasteText.trim();
-    if (!text || pending) return;
+  const filePaste = (text: string, force: boolean) => {
     start(async () => {
-      const r = await roomPaste(row.accountId, text);
+      const r = await roomPaste(row.accountId, text, force ? { force: true } : undefined);
+      if (r.mismatch) {
+        setMismatch({ ...r.mismatch, text });
+        return;
+      }
       if (r.ok) {
+        // One receipt, in the order the work matters: what filed, what opened,
+        // what it asked, what it learned, and whether it says this is over.
+        const parts = [
+          `Paste filed — ${r.filed} entr${r.filed === 1 ? "y" : "ies"}${r.how === "ai" ? ", read by Claude" : ""}.`,
+          r.opened?.length
+            ? `${r.opened.length} action${r.opened.length === 1 ? "" : "s"} opened.`
+            : "",
+          r.asks ? `${r.asks} new ask${r.asks === 1 ? "" : "s"} queued.` : "",
+          r.learned ? `${r.learned} to the playbook.` : "",
+          r.outcome ? `Reads ${r.outcome.status} — confirm below.` : "",
+          r.readFailed
+            ? "The read didn't complete — filed by rules only, so nothing was opened or asked."
+            : "",
+        ].filter(Boolean);
         setFreshInfo((f) => [
-          {
-            text: `Paste filed — ${r.filed} entr${r.filed === 1 ? "y" : "ies"}${r.how === "ai" ? ", AI-cleaned" : ""}.`,
-            noteIds: r.noteIds,
-          },
+          { text: parts.join(" "), noteIds: r.noteIds, opened: r.opened },
           ...f,
         ]);
         setPasteText("");
         setPasteOpen(false);
+        setMismatch(null);
         setNote(null);
       } else setNote(r.reason ?? "The paste didn't file.");
+    });
+  };
+  const submitPaste = () => {
+    const text = pasteText.trim();
+    if (!text || pending) return;
+    filePaste(text, false);
+  };
+  const undoOpened = (idx: number, id: string) => {
+    if (pending) return;
+    start(async () => {
+      const r = await roomActionUndo(row.accountId, id);
+      if (r.ok)
+        setFreshInfo((fs) =>
+          fs.map((x, i) =>
+            i === idx
+              ? {
+                  ...x,
+                  opened: (x.opened ?? []).map((o) =>
+                    o.id === id ? { ...o, gone: true } : o,
+                  ),
+                }
+              : x,
+          ),
+        );
+      else setNote(r.reason ?? "The undo didn't take.");
     });
   };
   // The loss read's two exits + the owed suggestions' two exits — all
   // optimistic, all durable server-side.
   const [lossState, setLossState] = useState<"live" | "lost" | "salvaging">("live");
   const [owedGone, setOwedGone] = useState<Set<string>>(new Set());
-  const markLost = () => {
+  const confirmClose = (status: "lost" | "won") => {
     if (!row.loss || pending) return;
     const l = row.loss;
     start(async () => {
-      const r = await roomMarkLost(row.accountId, row.cardId, l.noteId);
+      const call = status === "won" ? roomMarkWon : roomMarkLost;
+      const r = await call(row.accountId, row.cardId, l.noteId, l.phrase);
       if (r.ok) {
         setLossState("lost");
         setFreshInfo((f) => [
-          { text: "Marked lost — the card is retiring from the board." },
+          {
+            text: `${status === "won" ? "Closed Won" : "Closed Lost"} — the meter says so now. Retire the row when you're done with it.`,
+          },
           ...f,
         ]);
       } else setNote(r.reason ?? "That didn't save.");
+    });
+  };
+  const markLost = () => confirmClose("lost");
+  const markWon = () => confirmClose("won");
+  const retireRow = () => {
+    if (pending) return;
+    start(async () => {
+      const r = await roomRetire(row.accountId, row.cardId);
+      if (r.ok) setFreshInfo((f) => [{ text: "Retired from the board." }, ...f]);
+      else setNote(r.reason ?? "That didn't save.");
+    });
+  };
+  const [askGone, setAskGone] = useState<Set<string>>(new Set());
+  const [research, setResearch] = useState<{ note: string; changed: string[] } | null>(
+    null,
+  );
+  const [rsrchPending, startResearch] = useTransition();
+  const [askPending, startAsk] = useTransition();
+  const runResearchPass = () => {
+    if (rsrchPending) return;
+    startResearch(async () => {
+      const r = await roomResearch(row.accountId);
+      if (r.ok)
+        setResearch({
+          note: r.summary || "Filed to the record.",
+          changed: r.changed ?? [],
+        });
+      else setNote(r.reason ?? "The research pass didn't complete.");
+    });
+  };
+  const refillAsks = () => {
+    if (askPending) return;
+    startAsk(async () => {
+      const r = await roomGapsRefill(row.accountId);
+      if (r.ok)
+        setFreshInfo((f) => [
+          {
+            text: r.added
+              ? `${r.added} new ask${r.added === 1 ? "" : "s"} minted from what the app knows.`
+              : "Nothing new to ask that isn't already on the list.",
+          },
+          ...f,
+        ]);
+      else setNote(r.reason ?? "Minting didn't complete.");
+    });
+  };
+  const dismissAsk = (id: string) => {
+    if (askPending) return;
+    startAsk(async () => {
+      const r = await roomGapDismiss(row.accountId, id);
+      if (r.ok) setAskGone((sx) => new Set(sx).add(id));
+      else setNote(r.reason ?? "That didn't save.");
     });
   };
   const keepSalvaging = () => {
@@ -352,8 +474,10 @@ function Row({ row }: { row: RoomRow }) {
           n.delete(id);
           return n;
         });
-      else if (op === "drop" || op === "tomorrow" || op === "now")
-        setGone((s) => new Set(s).add(id));
+      // "now" pulls a held row back into today's work — the row must reappear
+      // as open, not disappear the way a park or a delay does.
+      else if (op === "drop" || op === "tomorrow") setGone((s) => new Set(s).add(id));
+      else if (op === "now") setBackNow((s) => new Set(s).add(id));
     });
 
   const openStage = row.stages.find((s) => s.key === stageOpen);
@@ -395,7 +519,10 @@ function Row({ row }: { row: RoomRow }) {
                 type="button"
                 className={styles.zap}
                 title={`Paste — files to ${row.name}`}
-                onClick={() => setPasteOpen((v) => !v)}
+                onClick={() => {
+                  setPasteOpen((v) => !v);
+                  setMismatch(null);
+                }}
               >
                 ⚡
               </button>
@@ -403,6 +530,50 @@ function Row({ row }: { row: RoomRow }) {
           </span>
         </div>
         {row.meta && <span className={styles.meta}>{row.meta}</span>}
+
+        {/* The research control. Labelled, dated, and impossible to miss — a
+            refresh button that doesn't say when it last ran gets re-run blind. */}
+        {row.canWrite && row.accountId && (
+          <div className={styles.rsrch}>
+            <button
+              type="button"
+              className={styles.rsrchBtn}
+              disabled={rsrchPending}
+              onClick={runResearchPass}
+              title="searches their site, their job postings, the news, and the people named on this deal"
+            >
+              {rsrchPending
+                ? "Researching…"
+                : row.researchAt
+                  ? "Refresh research"
+                  : "Research this company"}
+            </button>
+            <span className={styles.rsrchWhen}>
+              {row.researchAt
+                ? `last run ${new Date(row.researchAt).toLocaleDateString("en-US", {
+                    month: "numeric",
+                    day: "numeric",
+                  })}`
+                : "never run — the first pass is the deep one"}
+            </span>
+          </div>
+        )}
+        {research && (
+          <div className={styles.rsrchOut}>
+            {research.changed.length > 0 ? (
+              <>
+                <b>What changed:</b>
+                <ul className={styles.rsrchList}>
+                  {research.changed.map((c) => (
+                    <li key={c}>{c}</li>
+                  ))}
+                </ul>
+              </>
+            ) : (
+              <span>{research.note}</span>
+            )}
+          </div>
+        )}
 
         <div className={styles.climb}>
           <div className={styles.track}>
@@ -515,12 +686,38 @@ function Row({ row }: { row: RoomRow }) {
         )}
 
         <div className={styles.movewrap}>
-          {lossLive ? (
+          {row.outcome ? (
             <>
-              <span className={styles.lbl}>THE RECORD READS LOST</span>
+              <span className={styles.lbl}>
+                {row.outcome.status === "won" ? "CLOSED WON" : "CLOSED LOST"}
+              </span>
+              <p className={`${styles.move} ${styles.thin}`}>
+                {row.outcome.phrase ? `“${row.outcome.phrase}”` : "Closed by your call."}{" "}
+                The record keeps everything.
+              </p>
+              {row.canWrite && (
+                <span className={styles.lossBtns}>
+                  <button
+                    type="button"
+                    className={styles.ghost}
+                    disabled={pending}
+                    onClick={retireRow}
+                  >
+                    Retire the row
+                  </button>
+                </span>
+              )}
+            </>
+          ) : lossLive ? (
+            <>
+              <span className={styles.lbl}>
+                {row.loss!.status === "won"
+                  ? "THE RECORD READS WON"
+                  : "THE RECORD READS LOST"}
+              </span>
               <p className={styles.move}>
-                “{row.loss!.phrase}” — filed {row.loss!.date}. Your call: retire it, or
-                keep working the salvage.
+                “{row.loss!.phrase}” — filed {row.loss!.date}. Your call: stamp the meter,
+                or keep working it.
               </p>
               {row.canWrite && (
                 <span className={styles.lossBtns}>
@@ -528,9 +725,11 @@ function Row({ row }: { row: RoomRow }) {
                     type="button"
                     className={styles.lossBtn}
                     disabled={pending}
-                    onClick={markLost}
+                    onClick={row.loss!.status === "won" ? markWon : markLost}
                   >
-                    Mark it lost — retire the card
+                    {row.loss!.status === "won"
+                      ? "Confirm Closed Won"
+                      : "Confirm Closed Lost"}
                   </button>
                   <button
                     type="button"
@@ -538,16 +737,16 @@ function Row({ row }: { row: RoomRow }) {
                     disabled={pending}
                     onClick={keepSalvaging}
                   >
-                    Keep salvaging
+                    {row.loss!.status === "won" ? "Not yet" : "Keep salvaging"}
                   </button>
                 </span>
               )}
             </>
           ) : lossState === "lost" ? (
             <>
-              <span className={styles.lbl}>MARKED LOST</span>
+              <span className={styles.lbl}>CLOSED</span>
               <p className={`${styles.move} ${styles.thin}`}>
-                Retired from the board — the record keeps everything.
+                The meter reads it now — the record keeps everything.
               </p>
             </>
           ) : (
@@ -569,7 +768,7 @@ function Row({ row }: { row: RoomRow }) {
             </>
           )}
         </div>
-        {row.outstanding && (
+        {row.outstanding && !row.outcome && (
           <div className={styles.outst}>
             <span className={styles.lbl}>STILL OPEN</span>
             <span className={closed ? styles.donenow : undefined}>
@@ -587,9 +786,22 @@ function Row({ row }: { row: RoomRow }) {
 
       <div className={styles.rec}>
         <div
-          className={`${styles.court} ${lossLive ? styles.c_quiet : styles[`c_${row.court.tone}`]}`}
+          className={`${styles.court} ${
+            row.outcome || lossLive ? styles.c_quiet : styles[`c_${row.court.tone}`]
+          }`}
         >
-          {lossLive ? `THE RECORD READS LOST · ${row.loss!.date}` : row.court.line}
+          {row.outcome
+            ? `${row.outcome.status === "won" ? "CLOSED WON" : "CLOSED LOST"}${
+                row.outcome.at
+                  ? ` · ${new Date(row.outcome.at).toLocaleDateString("en-US", {
+                      month: "numeric",
+                      day: "numeric",
+                    })}`
+                  : ""
+              }`
+            : lossLive
+              ? `THE RECORD READS ${row.loss!.status === "won" ? "WON" : "LOST"} · ${row.loss!.date}`
+              : row.court.line}
         </div>
         <div className={styles.keybar}>
           <span>
@@ -618,6 +830,52 @@ function Row({ row }: { row: RoomRow }) {
           </span>
         </div>
 
+        {(row.gaps.filter((g) => !askGone.has(g.id)).length > 0 || row.canWrite) && (
+          <div className={styles.askBox}>
+            <span className={styles.lbl}>STILL UNKNOWN</span>
+            {row.gaps.filter((g) => !askGone.has(g.id)).length === 0 && (
+              <span className={styles.askQ}>
+                Nothing queued. A paste fills this, or mint asks from what the app already
+                knows.
+              </span>
+            )}
+            {row.gaps
+              .filter((g) => !askGone.has(g.id))
+              .map((g) => (
+                <div key={g.id} className={styles.askRow}>
+                  <span className={styles.askQ}>{g.question}</span>
+                  {row.canWrite && (
+                    <button
+                      type="button"
+                      className={styles.sdTag}
+                      disabled={askPending}
+                      onClick={() => dismissAsk(g.id)}
+                      title="not relevant to this one — swap in the next ask"
+                    >
+                      not this deal ✕
+                    </button>
+                  )}
+                </div>
+              ))}
+            <span className={styles.askFoot}>
+              {row.gapsQueued > 0 && (
+                <span className={styles.askMore}>{row.gapsQueued} more behind these</span>
+              )}
+              {row.canWrite && (
+                <button
+                  type="button"
+                  className={styles.sdTag}
+                  disabled={askPending}
+                  onClick={refillAsks}
+                  title="mint sharper asks from the countries, the scenario, the research, and what other deals taught"
+                >
+                  {askPending ? "minting…" : "better asks ⟳"}
+                </button>
+              )}
+            </span>
+          </div>
+        )}
+
         <div className={styles.dayrule}>TODAY</div>
         {row.owed
           .filter((o) => !owedGone.has(o.key))
@@ -630,6 +888,7 @@ function Row({ row }: { row: RoomRow }) {
                   <button
                     type="button"
                     className={styles.sdTag}
+                    disabled={pending}
                     onClick={() => owedAccept(o)}
                   >
                     open it ✓
@@ -637,6 +896,7 @@ function Row({ row }: { row: RoomRow }) {
                   <button
                     type="button"
                     className={styles.sdTag}
+                    disabled={pending}
                     onClick={() => owedDismiss(o)}
                   >
                     dismiss ✕
@@ -715,24 +975,65 @@ function Row({ row }: { row: RoomRow }) {
           ),
         )}
         {freshInfo.map((f, i) => (
-          <div key={`fi${i}`} className={`${styles.it} ${styles.fresh}`}>
-            <span className={`${styles.ic} ${styles.gDone}`}>✓</span>
-            <span className={styles.tx}>{f.text}</span>
-            {f.noteIds && f.noteIds.length > 0 && (
-              <button
-                type="button"
-                className={styles.rcptU}
-                onClick={() => undoPaste(i)}
-                title="remove everything this paste filed"
-              >
-                ↩ undo paste
-              </button>
+          <div key={`fi${i}`}>
+            <div className={`${styles.it} ${styles.fresh}`}>
+              <span className={`${styles.ic} ${styles.gDone}`}>✓</span>
+              <span className={styles.tx}>{f.text}</span>
+              {f.noteIds && f.noteIds.length > 0 && (
+                <button
+                  type="button"
+                  className={styles.rcptU}
+                  onClick={() => undoPaste(i)}
+                  title="removes the record this paste filed — the actions it opened stay"
+                >
+                  ↩ undo paste
+                </button>
+              )}
+            </div>
+            {/* Each opened commitment retires on its own — the paste's undo is
+                about the record, and a wrong action is one ✕, not all of them.
+                These are receipt chips, not a second copy of the work: the open
+                rows below are the real ones. */}
+            {(f.opened ?? []).length > 0 && (
+              <div className={styles.rcpt}>
+                <b>opened →</b>
+                {(f.opened ?? []).map((o) => (
+                  <span
+                    key={o.id}
+                    className={`${styles.openedChip} ${
+                      o.gone || doneIds.has(o.id) ? styles.openedGone : ""
+                    }`}
+                  >
+                    {o.text.slice(0, 60)}
+                    {/* Once the operator has closed or parked the row itself,
+                        the receipt's take-back is no longer the right verb —
+                        the register row owns it from then on. */}
+                    {row.canWrite && !o.gone && !doneIds.has(o.id) && !gone.has(o.id) && (
+                      <button
+                        type="button"
+                        className={styles.openedX}
+                        onClick={() => undoOpened(i, o.id)}
+                        title="the read got this one wrong — take it back"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </span>
+                ))}
+              </div>
             )}
           </div>
         ))}
-        {row.sheetOpen
+        {[
+          // An un-held row rejoins the open list; it carries no wall of its own
+          // until the server re-reads it.
+          ...row.sheetDelayed
+            .filter((t) => backNow.has(t.id))
+            .map((t) => ({ id: t.id, body: t.body })),
+          ...row.sheetOpen.filter((t) => !backNow.has(t.id)),
+        ]
           .filter((t) => !gone.has(t.id))
-          .map((t) => {
+          .map((t: { id: string; body: string; wall?: string; fallback?: string }) => {
             const did = doneIds.has(t.id);
             return (
               <div
@@ -742,20 +1043,44 @@ function Row({ row }: { row: RoomRow }) {
                 <span className={`${styles.ic} ${did ? styles.gDone : styles.gAct}`}>
                   {did ? "✓" : "✸"}
                 </span>
-                {!did && <span className={`${styles.st} ${styles.stOpen}`}>OPEN</span>}
-                <span className={styles.tx}>{t.body}</span>
+                {!did && (
+                  <span
+                    className={`${styles.st} ${t.wall ? styles.stWall : styles.stOpen}`}
+                  >
+                    {t.wall ? `${t.wall} PASSED` : "OPEN"}
+                  </span>
+                )}
+                <span className={styles.tx}>
+                  {t.body}
+                  {/* The if/then, run for you: the wall passed, so the
+                      contingency is the move now. */}
+                  {!did && t.fallback && (
+                    <span className={styles.fallback}>
+                      ↯ it didn&apos;t land — go to the fallback: {t.fallback}
+                    </span>
+                  )}
+                </span>
                 {row.canWrite && (
                   <span className={styles.rail}>
                     {did ? (
-                      <button onClick={() => todoOp(t.id, "undo")} title="undo">
+                      <button
+                        disabled={pending}
+                        onClick={() => todoOp(t.id, "undo")}
+                        title="undo"
+                      >
                         ↩
                       </button>
                     ) : (
                       <>
-                        <button onClick={() => todoOp(t.id, "done")} title="done">
+                        <button
+                          disabled={pending}
+                          onClick={() => todoOp(t.id, "done")}
+                          title="done"
+                        >
                           ✓
                         </button>
                         <button
+                          disabled={pending}
                           onClick={() => todoOp(t.id, "tomorrow")}
                           title="delay to tomorrow"
                         >
@@ -771,7 +1096,11 @@ function Row({ row }: { row: RoomRow }) {
                           <input type="hidden" name="returnTo" value="/room" />
                           <button title="arm a chase — someone owes this">⚑</button>
                         </form>
-                        <button onClick={() => todoOp(t.id, "drop")} title="park">
+                        <button
+                          disabled={pending}
+                          onClick={() => todoOp(t.id, "drop")}
+                          title="park"
+                        >
                           ✕
                         </button>
                       </>
@@ -782,7 +1111,7 @@ function Row({ row }: { row: RoomRow }) {
             );
           })}
         {row.sheetDelayed
-          .filter((t) => !gone.has(t.id))
+          .filter((t) => !gone.has(t.id) && !backNow.has(t.id))
           .map((t) => (
             <div key={t.id} className={`${styles.it} ${styles.itDelayed}`}>
               <span className={`${styles.ic} ${styles.gDly}`}>⏲</span>
@@ -790,7 +1119,11 @@ function Row({ row }: { row: RoomRow }) {
               <span className={styles.tx}>{t.body}</span>
               {row.canWrite && (
                 <span className={styles.rail}>
-                  <button onClick={() => todoOp(t.id, "now")} title="bring it back now">
+                  <button
+                    disabled={pending}
+                    onClick={() => todoOp(t.id, "now")}
+                    title="bring it back now"
+                  >
                     ↩
                   </button>
                 </span>
@@ -824,7 +1157,10 @@ function Row({ row }: { row: RoomRow }) {
                 type="button"
                 className={styles.zap}
                 title={`Paste — files to ${row.name}`}
-                onClick={() => setPasteOpen((v) => !v)}
+                onClick={() => {
+                  setPasteOpen((v) => !v);
+                  setMismatch(null);
+                }}
               >
                 ⚡
               </button>
@@ -880,7 +1216,10 @@ function Row({ row }: { row: RoomRow }) {
                   <button
                     type="button"
                     className={styles.cancel}
-                    onClick={() => setPasteOpen(false)}
+                    onClick={() => {
+                      setPasteOpen(false);
+                      setMismatch(null);
+                    }}
                   >
                     Cancel
                   </button>
@@ -890,9 +1229,34 @@ function Row({ row }: { row: RoomRow }) {
                     disabled={pending}
                     onClick={submitPaste}
                   >
-                    {pending ? "Filing…" : "✨ Clean & file"}
+                    {pending ? "Reading…" : "✨ Read & file"}
                   </button>
                 </div>
+              </div>
+            )}
+            {/* The misfile guard. Nothing was written; the operator decides
+                whether the read is wrong or the drop was. */}
+            {mismatch && (
+              <div className={styles.misfile}>
+                <b>This reads like {mismatch.claim}</b>, not {mismatch.bound}. Nothing
+                filed yet.
+                <span className={styles.sdSuggActs}>
+                  <button
+                    type="button"
+                    className={styles.sdTag}
+                    disabled={pending}
+                    onClick={() => filePaste(mismatch.text, true)}
+                  >
+                    file to {mismatch.bound} anyway ✓
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.sdTag}
+                    onClick={() => setMismatch(null)}
+                  >
+                    keep it out ✕
+                  </button>
+                </span>
               </div>
             )}
             {note && <p className={styles.err}>{note}</p>}

@@ -11,7 +11,24 @@ import { redactMoney } from "@/lib/intel/lexicon";
 import { normPerson } from "@/lib/intel/provenance";
 import type { TimelineEntry } from "@/lib/sf-timeline";
 
-export type AiCleanResult = { entries: TimelineEntry[]; signals: string[] };
+export type ReadAction = {
+  text: string;
+  owner: "me" | "them";
+  due: string; // YYYY-MM-DD or ""
+  fallback: string; // the if/then riding the commitment, or ""
+};
+export type AiCleanResult = {
+  entries: TimelineEntry[];
+  signals: string[];
+  // The full read — every field optional-by-emptiness so the timeline-only
+  // dialects cost nothing extra.
+  actions: ReadAction[];
+  gaps: string[]; // what the record still can't answer for THIS deal
+  competitorIntel: { fact: string; who: string }[]; // market facts, attributed
+  lessons: string[]; // process lessons a future deal should remember
+  outcome: { status: "none" | "lost" | "won"; phrase: string };
+  accountName: string; // the company this paste is ABOUT ("" if unclear)
+};
 
 export function aiCleanAvailable(): boolean {
   return Boolean(process.env.ANTHROPIC_API_KEY);
@@ -19,6 +36,10 @@ export function aiCleanAvailable(): boolean {
 
 const MAX_ENTRIES = 40;
 const MAX_SIGNALS = 8;
+const MAX_ACTIONS = 6;
+const MAX_GAPS = 5;
+const MAX_INTEL = 4;
+const MAX_LESSONS = 3;
 
 // Structured-output schema — the API guarantees the reply parses to this.
 const SCHEMA = {
@@ -54,8 +75,55 @@ const SCHEMA = {
       },
     },
     signals: { type: "array", items: { type: "string" } },
+    actions: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          text: { type: "string" },
+          owner: { type: "string", enum: ["me", "them"] },
+          due: { type: "string" },
+          fallback: { type: "string" },
+        },
+        required: ["text", "owner", "due", "fallback"],
+        additionalProperties: false,
+      },
+    },
+    gaps: { type: "array", items: { type: "string" } },
+    competitorIntel: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          fact: { type: "string" },
+          who: { type: "string" },
+        },
+        required: ["fact", "who"],
+        additionalProperties: false,
+      },
+    },
+    lessons: { type: "array", items: { type: "string" } },
+    outcome: {
+      type: "object",
+      properties: {
+        status: { type: "string", enum: ["none", "lost", "won"] },
+        phrase: { type: "string" },
+      },
+      required: ["status", "phrase"],
+      additionalProperties: false,
+    },
+    accountName: { type: "string" },
   },
-  required: ["entries", "signals"],
+  required: [
+    "entries",
+    "signals",
+    "actions",
+    "gaps",
+    "competitorIntel",
+    "lessons",
+    "outcome",
+    "accountName",
+  ],
   additionalProperties: false,
 } as const;
 
@@ -68,11 +136,18 @@ Rules:
 - The paste may instead be an OUTLOOK THREAD capture (a whole email conversation from the reading pane, possibly stamped "OUTLOOK THREAD") or a TEAMS chat copy. Outlook thread: one entry per message, newest first, from/to read from each message's own header; quoted history that repeats down the thread belongs to the message that first said it — never duplicate it. Ignore Outlook chrome (folder panes, ribbon labels, "Reply/Reply all/Forward", read receipts). Teams chat: one entry per conversation-day, kind "call"; keep speakers named inline ("Bryce: can we push to Sept 1?"); distill to decisions, asks, and owed items.
 - If the paste lists action items, keep them in the body as "Owed: <thing> — @<owner>" lines and surface the most deal-relevant as signals.
 - Strip ALL chrome and noise: Lightning UI labels ("Show more actions", "Expand All", field names like "From Address"/"Text Body"/"Priority"), security banners, "external sender" warnings, thread:: tokens, record ids, Zoom/Teams invite blocks (dial-ins, meeting ids, passcodes), email signatures, legal disclaimers, support-desk boilerplate ("NEVER include SSN…", "Responses via email to this case…").
-- body: the actual human substance only, concise, at most 600 characters. Never invent or embellish — omit rather than guess.
+- body: the actual human substance only, concise, at most 600 characters. Never invent or embellish — omit rather than guess. NEVER write header lines into the body — no "From:", "To:", "Sent:", "Cc:", "Subject:", no "authored by", no "written by". Who wrote to whom belongs in the from/to fields; the app renders that itself. Inside the body, name a person only when the sentence needs them ("Bryce wants the deposit language cut").
 - subject: the real subject with "RE:/FW:" kept but case-thread tokens removed.
 - from / to: person names, normalized: first-person forms ("You", "me") become "Antaeus Coe" (the operator whose mailbox this is); "Last, First" renders as "First Last"; email-address tails in angle brackets drop. others: count of additional recipients ("and 1 other" → 1), else 0.
 - Dates: dayIso is YYYY-MM-DD resolved against today's date given in the message ("Today"/"Yesterday"/"Jul 30, 2025" all resolve). dayLabel is a short human label ("Jul 30" or "Today"). timeLabel like "5:27 PM", or "" if none. Unknown dates: dayIso "".
 - kind: "email" for emails, "call" for logged calls, "task" for tasks/meetings/upcoming items.
+- ATTRIBUTION IS SACRED. Threads quote earlier messages: attribute every statement to the author of the message where it FIRST appears — the latest sender did NOT say the quoted words below their reply. First-person statements ("I worked at…", "we required…") belong to the author of the message containing them. The operator is Antaeus Coe; he writes from his own mailbox, and he previously worked at Remote.com — so a line like "at Remote we required a deposit" inside HIS message is his own market knowledge, not a competitor speaking, and not a colleague's claim.
+- actions: EXPLICIT commitments only — a "TO DO:" line, "I'll send…", a dated promise. owner "me" when the operator owes it, "them" when someone else does. due as YYYY-MM-DD only when actually stated. fallback carries an if/then riding the commitment ("if not, send the ESC demo — scrub proprietary"). NEVER invent an action from a musing ("we should probably…", "it might be worth…") — those are not commitments.
+- gaps: up to ${MAX_GAPS} questions the record still cannot answer that would MOST advance this specific deal — grounded in its countries, products, and stage ("Do the India workers need benefits parity?" beats "what is the timeline"). Never generic discovery boilerplate.
+- competitorIntel: market or competitor facts useful BEYOND this account — pricing models, deposit norms, competitor requirements, industry standards — each with WHO said it (attribution rule applies).
+- lessons: process lessons a future deal should remember (what slowed, killed, or won this one). Empty unless the paste actually teaches one.
+- outcome: "lost" only when the paste STATES the deal is lost (client chose another vendor, walked away); "won" only when signed/closed is stated; phrase = the exact evidence sentence, ≤120 chars. Otherwise "none" with "".
+- accountName: the prospect/client company this paste is ABOUT (not the operator's own company, not a competitor) — "" when unclear.
 - signals: 0-${MAX_SIGNALS} short flags a salesperson would want surfaced — a newly mentioned country or expansion, an implied or explicit deadline, hesitation or stalling tone, who actually holds the decision, a competitor or incumbent system named, escalation or frustration, an owed follow-up with its owner. Plain short sentences. Empty array if nothing notable.
 - Order entries newest first. At most ${MAX_ENTRIES} entries.`;
 
@@ -96,14 +171,43 @@ export function dropNoiseEntries(entries: TimelineEntry[]): TimelineEntry[] {
   return entries.filter((e) => !isNoiseEntry(e));
 }
 
+const EMPTY_READ: Omit<AiCleanResult, "entries" | "signals"> = {
+  actions: [],
+  gaps: [],
+  competitorIntel: [],
+  lessons: [],
+  outcome: { status: "none", phrase: "" },
+  accountName: "",
+};
+
 // Defensive pass over the model's (already schema-valid) reply: coerce, cap,
 // and money-redact everything before it reaches the client or the database.
 export function sanitizeAiResult(raw: unknown): AiCleanResult {
-  const out: AiCleanResult = { entries: [], signals: [] };
+  const out: AiCleanResult = {
+    entries: [],
+    signals: [],
+    ...structuredClone(EMPTY_READ),
+  };
   if (!raw || typeof raw !== "object") return out;
-  const r = raw as { entries?: unknown; signals?: unknown };
+  const r = raw as {
+    entries?: unknown;
+    signals?: unknown;
+    actions?: unknown;
+    gaps?: unknown;
+    competitorIntel?: unknown;
+    lessons?: unknown;
+    outcome?: unknown;
+    accountName?: unknown;
+  };
+  // The app parses several body grammars out of note and todo text — routing
+  // markers (⇢[…]), tag markers (⚑[…]), the playbook and research tails (⟦…⟧,
+  // ⟪…⟫), the ask prefix, and the fallback glyph. A model reply must never be
+  // able to forge one, so those tokens are stripped on the way in.
+  const GRAMMAR = /[⟦⟧⟪⟫↯]|[⇢⚑]\s*\[/g;
   const str = (v: unknown, cap: number) =>
-    typeof v === "string" ? redactMoney(v.trim()).slice(0, cap) : "";
+    typeof v === "string"
+      ? redactMoney(v.replace(GRAMMAR, " ").trim()).slice(0, cap)
+      : "";
   if (Array.isArray(r.entries)) {
     for (const e of r.entries.slice(0, MAX_ENTRIES)) {
       if (!e || typeof e !== "object") continue;
@@ -132,8 +236,98 @@ export function sanitizeAiResult(raw: unknown): AiCleanResult {
       .map((s) => str(s, 200))
       .filter(Boolean);
   }
+  if (Array.isArray(r.actions)) {
+    for (const a of r.actions.slice(0, MAX_ACTIONS)) {
+      if (!a || typeof a !== "object") continue;
+      const x = a as Record<string, unknown>;
+      const text = str(x.text, 200);
+      if (text.length < 6) continue;
+      out.actions.push({
+        text,
+        owner: x.owner === "them" ? "them" : "me",
+        due: typeof x.due === "string" && /^\d{4}-\d{2}-\d{2}$/.test(x.due) ? x.due : "",
+        fallback: str(x.fallback, 200),
+      });
+    }
+  }
+  if (Array.isArray(r.gaps))
+    out.gaps = r.gaps
+      .slice(0, MAX_GAPS)
+      .map((g) => str(g, 160))
+      .filter((g) => g.length >= 8);
+  if (Array.isArray(r.competitorIntel)) {
+    for (const c of r.competitorIntel.slice(0, MAX_INTEL)) {
+      if (!c || typeof c !== "object") continue;
+      const x = c as Record<string, unknown>;
+      const fact = str(x.fact, 240);
+      if (fact.length >= 12)
+        out.competitorIntel.push({ fact, who: normPerson(str(x.who, 60)) });
+    }
+  }
+  if (Array.isArray(r.lessons))
+    out.lessons = r.lessons
+      .slice(0, MAX_LESSONS)
+      .map((l) => str(l, 240))
+      .filter((l) => l.length >= 12);
+  if (r.outcome && typeof r.outcome === "object") {
+    const o = r.outcome as Record<string, unknown>;
+    out.outcome = {
+      status: o.status === "lost" || o.status === "won" ? o.status : "none",
+      phrase: str(o.phrase, 120),
+    };
+  }
+  out.accountName = str(r.accountName, 80);
   out.entries = dropNoiseEntries(out.entries);
   return out;
+}
+
+// Does the model's account claim agree with the row the operator is filing
+// to? Empty claim = no objection. Fuzzy on purpose: "Simploy" matches
+// "Simploy, Inc." and "Advocate Pay — SubcontractorHub" matches "Advocate
+// Pay LLC" by first significant token.
+export function accountMatches(claim: string, bound: string): boolean {
+  const norm = (s: string) =>
+    (s ?? "")
+      .toLowerCase()
+      .replace(/[^a-z0-9 ]+/g, " ")
+      .replace(/\b(inc|llc|corp|corporation|company|co|ltd|the)\b/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  const c = norm(claim);
+  const b = norm(bound);
+  if (!c || !b) return true;
+  if (b.includes(c) || c.includes(b)) return true;
+  const ct = c.split(" ")[0];
+  const bt = b.split(" ")[0];
+  return !!ct && !!bt && (ct === bt || b.includes(ct) || c.includes(bt));
+}
+
+// Which model reads this paste. A Salesforce timeline or an Outlook thread is
+// shaped work — headers, subjects, dates — and the cheap model does it well.
+// Freeform call notes are the opposite: no structure, all judgment, and the
+// commitments hide inside prose ("need the demo by 7/30, if not use ESC").
+// Those get the strong model, because a missed commitment there is a missed
+// deliverable in the real world.
+const SHAPED_HEAD =
+  /^\s*(OUTLOOK THREAD|TEAMS CHAT)\b|^\s*(From|To|Sent|Subject|Cc)\s*:/im;
+const SF_CHROME = /\b(Show more actions|Expand All|From Address|Text Body|thread::)\b/i;
+const NOTE_SCENT =
+  /\b(to\s*do|todo|action items?|next steps?|call (?:with|notes)|meeting (?:with|notes)|notes? from|debrief|recap)\b/i;
+
+export function looksLikeNotes(raw: string): boolean {
+  const text = (raw ?? "").trim();
+  if (!text) return false;
+  // Anything wearing mail or CRM clothing is shaped, whatever else it says.
+  if (SHAPED_HEAD.test(text) || SF_CHROME.test(text)) return false;
+  // Long walls of dialogue (transcripts) are notes-shaped too — they are pure
+  // judgment — but a wall past this size costs more than the read is worth.
+  if (text.length > 24_000) return false;
+  const lines = text.split("\n").filter((l) => l.trim()).length;
+  return NOTE_SCENT.test(text) || lines <= 40;
+}
+
+export function modelFor(raw: string): string {
+  return looksLikeNotes(raw) ? "claude-opus-5" : "claude-haiku-4-5";
 }
 
 // One call, one paste. Throws on API failure — the caller degrades to the
@@ -145,9 +339,10 @@ export function sanitizeAiResult(raw: unknown): AiCleanResult {
 export async function aiCleanTimeline(raw: string, now: Date): Promise<AiCleanResult> {
   const client = new Anthropic({ timeout: 55_000, maxRetries: 1 });
   const todayIso = now.toLocaleDateString("en-CA", { timeZone: "America/Chicago" });
+  const model = modelFor(raw);
   const request = (maxTokens: number) =>
     client.messages.create({
-      model: "claude-haiku-4-5",
+      model,
       max_tokens: maxTokens,
       system: SYSTEM,
       messages: [

@@ -1084,18 +1084,26 @@ export async function briefRowMute(formData: FormData) {
 // --- Ask next --------------------------------------------------------------
 // ✓ on an ask-next question retires it for that account permanently
 // (asknext-done:<accountId>:<questionId>). returnTo keeps the click on the
-// surface it came from (dashboard card, popover, battlecard).
+// surface it came from (the Playbook card, a dashboard card, the popover).
 const ASKNEXT_DONE_PREFIX = "asknext-done:";
 
 export async function askNextDone(formData: FormData) {
   const accountId = str(formData, "accountId", 80);
   const questionId = str(formData, "questionId", 40);
   const raw = str(formData, "returnTo", 80);
-  const to = raw === "/" || raw === "/battlecard" ? raw : "/today";
+  // The Playbook carries its bound account in the query string; retiring a
+  // question must land back on THAT card, not on an unbound one.
+  const to =
+    raw === "/" ||
+    raw === "/room" ||
+    /^\/playbook(\?account=[A-Za-z0-9]{0,40})?$/.test(raw)
+      ? raw
+      : "/today";
   const finish = () => {
     revalidatePath("/today");
     revalidatePath("/");
-    revalidatePath("/battlecard");
+    revalidatePath("/playbook");
+    revalidatePath("/room");
     redirect(to);
   };
   if (!(await requireWrite()) || !accountId || !questionId) finish();

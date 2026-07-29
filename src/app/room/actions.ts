@@ -9,19 +9,42 @@ import { revalidatePath } from "next/cache";
 import { getAppAccess } from "@/lib/auth";
 import { hasDatabaseEnv } from "@/lib/db";
 import { peos } from "@/lib/book";
-import { digestForCardName } from "@/lib/intel/digest";
+import { digestFor, digestForCardName } from "@/lib/intel/digest";
 import {
+  accountMatches,
   aiCleanAvailable,
   aiCleanTimeline,
   dropNoiseEntries,
 } from "@/lib/intel/ai-clean";
-import { actorsLine, laneFor } from "@/lib/intel/provenance";
+import {
+  PLAYBOOK_LESSONS,
+  PLAYBOOK_MARKET,
+  filePlaybook,
+  knowledgeKey,
+  parsePlaybookBody,
+} from "@/lib/playbook/store";
+import { fileGaps, gapDismissKey, gapNs, parseGapBody } from "@/lib/room/gaps";
+import { actionBody, splitFallback, urgencyForDue } from "@/lib/room/deliverables";
+import { outcomeMarkBody } from "@/lib/room/loss";
+import { MINE_RE, actorsLine, laneFor } from "@/lib/intel/provenance";
+import {
+  diffFindings,
+  parseResearchBody,
+  researchAvailable,
+  researchBody,
+  researchNs,
+  runResearch,
+} from "@/lib/intel/deep-research";
+import { mintAsks } from "@/lib/intel/ask-mint";
+import { SCENARIOS } from "@/lib/intel/scenarios";
+import { corpusFor, extractDealIntel } from "@/lib/intel/extract";
 import { cleanSfPaste, parseSfTimeline, scrubSecrets } from "@/lib/sf-timeline";
 import { redactMoney } from "@/lib/intel/lexicon";
 import { bindAccountId, cleanLogBody } from "@/lib/room/bind";
 import { createAccountNoteRow } from "@/lib/notes/write";
 import { applyStepComplete } from "@/lib/dashboard/complete";
 import { mirrorNoteToSheet } from "@/lib/today/mirror";
+import { OUTCOME_LABEL, writeOutcome, type OutcomeStatus } from "@/lib/dashboard/outcome";
 import type { DashNodeKey } from "@/lib/dashboard/stages";
 
 async function requireWrite() {
@@ -69,17 +92,32 @@ export async function roomLog(
   }
 }
 
-// ⚡ paste → AI clean when configured (rule engine otherwise) → dated entries
-// on THIS account; anything unparseable files whole as a transcript note.
+// ⚡ paste → the read. One call to Claude returns dated entries AND judgment:
+// the commitments in the text, the questions the record still can't answer, the
+// market facts worth keeping past this deal, the lessons, and whether the paste
+// says the deal closed. Entries file as the record; commitments OPEN as work,
+// each undoable on its own; knowledge files to the playbook where every other
+// account can reach it. Two-tier autonomy: an explicit commitment the operator
+// owes is opened without asking, and everything that changes the deal's
+// standing is only ever PROPOSED.
 export async function roomPaste(
   accountId: string,
   raw: string,
+  opts?: { force?: boolean },
 ): Promise<{
   ok: boolean;
   filed: number;
   how: string;
   reason?: string;
   noteIds?: string[];
+  // What the read did beyond filing the record:
+  opened?: { id: string; text: string }[]; // auto-created actions (undo one by one)
+  asks?: number; // new STILL UNKNOWN questions queued
+  learned?: number; // market facts + lessons filed to the playbook
+  outcome?: { status: "lost" | "won"; phrase: string } | null;
+  // The misfile guard: the read believes this belongs somewhere else.
+  mismatch?: { claim: string; bound: string };
+  readFailed?: boolean; // the read errored; the rule parser filed the record
 }> {
   const acct = bindAccountId(accountId, peos);
   const rawText = typeof raw === "string" ? raw.trim() : "";
@@ -105,19 +143,42 @@ export async function roomPaste(
   if (!(await requireWrite()))
     return { ok: false, filed: 0, how: "", reason: "Read-only session." };
 
+  const now = new Date();
+  let read: Awaited<ReturnType<typeof aiCleanTimeline>> | null = null;
   let entries: Awaited<ReturnType<typeof aiCleanTimeline>>["entries"] = [];
   let how = "rules";
+  // A read that fails degrades to the rule parser rather than losing the
+  // operator's text — but it says so, because a paste filed WITHOUT the read is
+  // a paste that opened no actions and asked no questions.
+  let readFailed = false;
   if (aiCleanAvailable()) {
     try {
-      entries = (await aiCleanTimeline(text, new Date())).entries;
+      read = await aiCleanTimeline(text, now);
+      entries = read.entries;
       how = "ai";
     } catch {
+      read = null;
       entries = [];
+      readFailed = true;
     }
   }
   if (entries.length === 0) {
     entries = dropNoiseEntries(parseSfTimeline(text));
     how = how === "ai" ? "rules" : how;
+  }
+
+  // The misfile guard. The read names the company the paste is ABOUT; if that
+  // disagrees with the row it was dropped on, nothing is written until the
+  // operator says file it anyway. Cheap to obey, expensive to skip — a paste
+  // filed to the wrong account poisons two deals at once.
+  if (read && !opts?.force && !accountMatches(read.accountName, acct.name)) {
+    return {
+      ok: false,
+      filed: 0,
+      how,
+      mismatch: { claim: read.accountName, bound: acct.name },
+      reason: `This reads like ${read.accountName}, not ${acct.name}.`,
+    };
   }
 
   try {
@@ -167,8 +228,11 @@ export async function roomPaste(
       noteIds.push(n.id);
       filed++;
     }
+    const absorbed = read
+      ? await absorbRead(read, { id: acct.id, name: acct.name }, now)
+      : { opened: [], asks: 0, learned: 0, outcome: null };
     refresh();
-    return { ok: true, filed, how, noteIds };
+    return { ok: true, filed, how, noteIds, readFailed, ...absorbed };
   } catch {
     return {
       ok: false,
@@ -176,6 +240,206 @@ export async function roomPaste(
       how,
       reason: "Filing failed partway — check the account page.",
     };
+  }
+}
+
+// Everything the read produced that ISN'T a record entry. Kept separate from
+// the filing loop so a failure here can never lose the record — each limb
+// swallows its own errors and reports what it managed.
+async function absorbRead(
+  read: Awaited<ReturnType<typeof aiCleanTimeline>>,
+  acct: { id: string; name: string },
+  now: Date,
+): Promise<{
+  opened: { id: string; text: string }[];
+  asks: number;
+  learned: number;
+  outcome: { status: "lost" | "won"; phrase: string } | null;
+}> {
+  const prisma = getPrisma();
+  const stamp = now.toLocaleDateString("en-US", {
+    timeZone: "America/Chicago",
+    month: "numeric",
+    day: "numeric",
+  });
+
+  // 1. Commitments the operator owes become real work, one row each, so each
+  // one can be undone on its own. What THEY owe stays in the record — the
+  // owed-to-you read already surfaces those as suggestions.
+  const opened: { id: string; text: string }[] = [];
+  const mine = read.actions.filter((a) => a.owner === "me");
+  if (mine.length) {
+    const openBodies = await prisma.todo
+      .findMany({
+        where: { accountId: acct.id, done: false },
+        select: { body: true },
+      })
+      .catch(() => [] as { body: string }[]);
+    // Compare commitment to commitment. The STORED body carries the fallback and
+    // the "· from M/D paste" provenance, so hashing it raw never matches the
+    // model's bare text and every re-paste opens the same work again.
+    const commitmentKey = (body: string) =>
+      knowledgeKey(
+        splitFallback(visibleText(body)).text.replace(/\s+·\s+from\s.*$/i, ""),
+      );
+    const seen = new Set(openBodies.map((t) => commitmentKey(t.body)));
+    let top =
+      (
+        await prisma.todo
+          .findFirst({ orderBy: { position: "desc" }, select: { position: true } })
+          .catch(() => null)
+      )?.position ?? -1;
+    for (const a of mine) {
+      const body = actionBody(a.text, a.fallback, `from ${stamp} paste`);
+      const key = knowledgeKey(a.text);
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      try {
+        const t = await prisma.todo.create({
+          data: {
+            body: withTags(body, {
+              ...NO_TAGS,
+              kind: "action",
+              urgency: urgencyForDue(a.due, now),
+              // The wall itself — the sheet reads this to know the date passed.
+              date: a.due,
+            }),
+            done: false,
+            position: ++top,
+            accountId: acct.id,
+            remindAt: a.due ? new Date(`${a.due}T12:00:00Z`) : new Date(),
+          },
+        });
+        opened.push({ id: t.id, text: a.text });
+      } catch {
+        // One commitment that won't open never costs the others.
+      }
+    }
+  }
+
+  // 2. The asks — questions the record still can't answer for THIS deal.
+  let asks = 0;
+  if (read.gaps.length) {
+    const priorAsks = await prisma.accountNote
+      .findMany({ where: { accountId: gapNs(acct.id) }, select: { body: true } })
+      .catch(() => [] as { body: string }[]);
+    const known = new Set(priorAsks.map((r) => knowledgeKey(parseGapBody(r.body))));
+    asks = (await fileGaps({ accountId: acct.id, questions: read.gaps, known })).length;
+  }
+
+  // 3. The playbook — knowledge that outlives the deal it came from. This is
+  // the cure for knowledge trapped per account: filed to a namespace, read by
+  // every account.
+  let learned = 0;
+  const market = read.competitorIntel.map((c) => ({ text: c.fact, who: c.who }));
+  const lessons = read.lessons.map((l) => ({ text: l, who: "" }));
+  for (const [kind, items] of [
+    ["market", market],
+    ["lesson", lessons],
+  ] as const) {
+    if (!items.length) continue;
+    const ns = kind === "market" ? PLAYBOOK_MARKET : PLAYBOOK_LESSONS;
+    const prior = await prisma.accountNote
+      .findMany({ where: { accountId: ns }, select: { body: true } })
+      .catch(() => [] as { body: string }[]);
+    const known = new Set(prior.map((r) => knowledgeKey(parsePlaybookBody(r.body).text)));
+    learned += (
+      await filePlaybook({
+        kind,
+        items,
+        accountId: acct.id,
+        accountName: acct.name,
+        known,
+      })
+    ).length;
+  }
+
+  // 4. The outcome. A closed deal is the biggest state change the app can
+  // make, so the read only files the marker that makes the row say it — the
+  // operator's click is what actually closes the card.
+  let outcome: { status: "lost" | "won"; phrase: string } | null = null;
+  if (read.outcome.status === "lost" || read.outcome.status === "won") {
+    outcome = { status: read.outcome.status, phrase: read.outcome.phrase };
+    try {
+      await createAccountNoteRow({
+        accountId: acct.id,
+        kind: "account",
+        body: outcomeMarkBody(read.outcome.status, read.outcome.phrase),
+        lane: "mine",
+        source: "outcome",
+      });
+    } catch {
+      outcome = null;
+    }
+  }
+
+  return { opened, asks, learned, outcome };
+}
+
+// The completion line, filed to the account's own history exactly once. Keyed
+// by todo id so done → undo → done can't stack duplicates on the record.
+async function fileCompletion(accountId: string, todoId: string, body: string) {
+  const prisma = getPrisma();
+  const key = `done-filed:${todoId}`.slice(0, 191);
+  try {
+    const already = await prisma.accountDisposition.findUnique({
+      where: { accountId: key },
+      select: { accountId: true },
+    });
+    if (already) return;
+    const text = splitFallback(visibleText(body)).text.slice(0, 300);
+    if (!text) return;
+    const day = new Date().toLocaleDateString("en-US", {
+      timeZone: "America/Chicago",
+      month: "numeric",
+      day: "numeric",
+    });
+    await createAccountNoteRow({
+      accountId,
+      kind: "account",
+      body: `✓ ${text} — done ${day}`,
+      lane: "mine",
+      source: "done",
+    });
+    await prisma.accountDisposition.upsert({
+      where: { accountId: key },
+      create: { accountId: key, status: "parked", reason: "completion filed" },
+      update: { status: "parked", reason: "completion filed" },
+    });
+  } catch {
+    // The close still stands even if its history line doesn't land.
+  }
+}
+
+// ✕ on ONE auto-created action. The paste's own undo removes the record it
+// filed; the work it opened is retired one commitment at a time, because a
+// paste that got three actions right and one wrong should keep the three.
+export async function roomActionUndo(
+  accountId: string,
+  todoId: string,
+): Promise<{ ok: boolean; reason?: string }> {
+  const acct = bindAccountId(accountId, peos);
+  const id = typeof todoId === "string" ? todoId.trim().slice(0, 40) : "";
+  if (!acct || !id) return { ok: false, reason: "Not a bound row." };
+  if (!(await requireWrite())) return { ok: false, reason: "Read-only session." };
+  try {
+    const prisma = getPrisma();
+    const t = await prisma.todo.findUnique({
+      where: { id },
+      select: { accountId: true, done: true, body: true },
+    });
+    if (!t) return { ok: false, reason: "That action is already gone." };
+    if ((t.accountId ?? "") !== acct.id)
+      return { ok: false, reason: "That action belongs to a different account." };
+    // Taking back a bad read is one thing; erasing work the operator has since
+    // finished is another. Once it's done, the record owns it.
+    if (t.done || splitTags(t.body).tags.doneAt)
+      return { ok: false, reason: "That one's already closed — undo it on the row." };
+    await prisma.todo.delete({ where: { id } });
+    refresh();
+    return { ok: true };
+  } catch {
+    return { ok: false, reason: "The undo didn't take — try again." };
   }
 }
 
@@ -221,6 +485,7 @@ import {
   NO_TAGS,
   splitMarker,
   splitTags,
+  visibleText,
   withMarker,
   withTags,
   type NoteTags,
@@ -358,45 +623,365 @@ export async function roomPasteUndo(
   }
 }
 
-// --- The loss read's two exits ----------------------------------------------
-// The record suggested the deal is lost; the operator decides. Mark-it-lost
-// archives the card and files the call; keep-salvaging retires THIS read
-// (keyed to the triggering note — new loss evidence resurfaces it).
-export async function roomMarkLost(
-  accountId: string,
-  cardId: string,
-  noteId: string,
-): Promise<{ ok: boolean; reason?: string }> {
-  const acct = bindAccountId(accountId, peos);
-  const cid = typeof cardId === "string" ? cardId.trim().slice(0, 40) : "";
+// --- Closing a deal ----------------------------------------------------------
+// The record suggested the deal closed; the operator decides. Confirming stamps
+// the terminal state on the card — Closed Won or Closed Lost, with the sentence
+// that proves it — retires it from the board, and files the call. Keep-salvaging
+// retires THIS read (keyed to the triggering note, so new evidence resurfaces).
+async function closeCard(args: {
+  accountId: string;
+  cardId: string;
+  noteId: string;
+  status: OutcomeStatus;
+  phrase: string;
+}): Promise<{ ok: boolean; reason?: string }> {
+  const acct = bindAccountId(args.accountId, peos);
+  const cid = typeof args.cardId === "string" ? args.cardId.trim().slice(0, 40) : "";
   if (!cid) return { ok: false, reason: "Not a bound row." };
   if (!(await requireWrite())) return { ok: false, reason: "Read-only session." };
   try {
     const prisma = getPrisma();
     const card = await prisma.dashCard.findUnique({
       where: { id: cid },
-      select: { id: true, name: true },
+      select: { id: true, name: true, notes: true },
     });
     if (!card) return { ok: false, reason: "That card is gone." };
-    await prisma.dashCard.update({ where: { id: cid }, data: { archived: true } });
+    const label = OUTCOME_LABEL[args.status];
+    // The card does NOT leave the board here. A closed deal still has to be
+    // able to SAY it closed — the stage meter reads Closed Won / Closed Lost
+    // and the row goes quiet at the bottom. Retiring it is its own decision.
+    await prisma.dashCard.update({
+      where: { id: cid },
+      data: {
+        notes: writeOutcome(card.notes, {
+          status: args.status,
+          phrase: redactMoney((args.phrase ?? "").trim()).slice(0, 200),
+          at: new Date().toISOString(),
+        }),
+      },
+    });
     if (acct) {
       await createAccountNoteRow({
         accountId: acct.id,
         kind: "account",
-        body: `✓ Marked lost — retired from the board (the record's loss read, confirmed).`,
+        body: `✓ ${label} — the record's read, confirmed.${
+          args.phrase ? ` The evidence: ${redactMoney(args.phrase).slice(0, 160)}` : ""
+        }`,
         lane: "mine",
-        source: "room",
+        source: "outcome",
       }).catch(() => null);
     }
-    // Quiet this read permanently for the archived card.
-    const key = `loss-dismiss:${cid}:${(noteId ?? "").slice(0, 40)}`.slice(0, 191);
+    // Quiet this read permanently for the closed card.
+    const key = `loss-dismiss:${cid}:${(args.noteId ?? "").slice(0, 40)}`.slice(0, 191);
     await prisma.accountDisposition
       .upsert({
         where: { accountId: key },
-        create: { accountId: key, status: "parked", reason: "marked lost" },
-        update: { status: "parked", reason: "marked lost" },
+        create: { accountId: key, status: "parked", reason: label },
+        update: { status: "parked", reason: label },
       })
       .catch(() => null);
+    refresh();
+    return { ok: true };
+  } catch {
+    return { ok: false, reason: "That didn't save — try again." };
+  }
+}
+
+export async function roomMarkLost(
+  accountId: string,
+  cardId: string,
+  noteId: string,
+  phrase?: string,
+): Promise<{ ok: boolean; reason?: string }> {
+  return closeCard({
+    accountId,
+    cardId,
+    noteId,
+    status: "lost",
+    phrase: phrase ?? "",
+  });
+}
+
+export async function roomMarkWon(
+  accountId: string,
+  cardId: string,
+  noteId: string,
+  phrase?: string,
+): Promise<{ ok: boolean; reason?: string }> {
+  return closeCard({ accountId, cardId, noteId, status: "won", phrase: phrase ?? "" });
+}
+
+// Retire a closed row from the board. Separate from closing on purpose: the
+// meter has to be able to read Closed Lost for as long as the operator wants to
+// see it, and disappearing the row is a different intention entirely.
+export async function roomRetire(
+  accountId: string,
+  cardId: string,
+): Promise<{ ok: boolean; reason?: string }> {
+  const cid = typeof cardId === "string" ? cardId.trim().slice(0, 40) : "";
+  if (!bindAccountId(accountId, peos) || !cid)
+    return { ok: false, reason: "Not a bound row." };
+  if (!(await requireWrite())) return { ok: false, reason: "Read-only session." };
+  try {
+    await getPrisma().dashCard.update({
+      where: { id: cid },
+      data: { archived: true },
+    });
+    refresh();
+    return { ok: true };
+  } catch {
+    return { ok: false, reason: "That didn't save — try again." };
+  }
+}
+
+// A closure recorded in error must be undoable — the card comes back to the
+// board with its stage rail intact and the terminal stamp removed.
+export async function roomReopen(
+  accountId: string,
+  cardId: string,
+): Promise<{ ok: boolean; reason?: string }> {
+  const cid = typeof cardId === "string" ? cardId.trim().slice(0, 40) : "";
+  if (!bindAccountId(accountId, peos) || !cid)
+    return { ok: false, reason: "Not a bound row." };
+  if (!(await requireWrite())) return { ok: false, reason: "Read-only session." };
+  try {
+    const prisma = getPrisma();
+    const card = await prisma.dashCard.findUnique({
+      where: { id: cid },
+      select: { notes: true },
+    });
+    if (!card) return { ok: false, reason: "That card is gone." };
+    await prisma.dashCard.update({
+      where: { id: cid },
+      data: {
+        archived: false,
+        notes: writeOutcome(card.notes, null),
+      },
+    });
+    refresh();
+    return { ok: true };
+  } catch {
+    return { ok: false, reason: "That didn't save — try again." };
+  }
+}
+
+// --- The research pass -------------------------------------------------------
+// The obvious button. First run is the deep one; every run files its findings as
+// a note on the account, so the record, the corpus, the intel extractor and the
+// People index all pick it up with no further wiring. A refresh also reports
+// what changed since the last pass, which is the only part worth reading twice.
+export async function roomResearch(
+  accountId: string,
+): Promise<{ ok: boolean; reason?: string; changed?: string[]; summary?: string }> {
+  const acct = bindAccountId(accountId, peos);
+  if (!acct) return { ok: false, reason: "That row isn't bound to a known account." };
+  if (!researchAvailable())
+    return { ok: false, reason: "No API key configured — research is off." };
+  if (!(await requireWrite())) return { ok: false, reason: "Read-only session." };
+  const now = new Date();
+  try {
+    const prisma = getPrisma();
+    const prior = await prisma.accountNote
+      .findMany({
+        where: { accountId: researchNs(acct.id) },
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: { body: true },
+      })
+      .catch(() => [] as { body: string }[]);
+    const previous = prior[0] ? parseResearchBody(prior[0].body) : null;
+
+    const notes = await prisma.accountNote
+      .findMany({
+        where: { accountId: acct.id },
+        orderBy: { createdAt: "desc" },
+        take: 60,
+        select: { body: true, actors: true },
+      })
+      .catch(() => [] as { body: string; actors: string }[]);
+    const people = [
+      ...new Set(
+        notes
+          .flatMap((n) => (n.actors ?? "").split(/→|\+|,/))
+          .map((x) => x.replace(/\s*\d+\s*(others?)?/gi, "").trim())
+          .filter((x) => x.length > 2 && !MINE_RE.test(x)),
+      ),
+    ].slice(0, 6);
+
+    // The book knows their site; bindAccountId only carries id + name, so read
+    // the fuller record for the one field the pass wants.
+    const site = peos.find((p) => p.id === acct.id)?.website ?? "";
+    const finding = await runResearch({
+      accountName: acct.name,
+      site: site || undefined,
+      people,
+      countries: previous?.countries ?? [],
+      now,
+    });
+    if (!finding.summary && finding.signals.length === 0)
+      return { ok: false, reason: "The pass came back empty — try again in a moment." };
+
+    await createAccountNoteRow({
+      accountId: researchNs(acct.id),
+      kind: "account",
+      body: researchBody(finding, now),
+      lane: "background",
+      source: "research",
+    });
+    // The readable half also lands on the account itself, so the record shows
+    // that the research happened and the corpus can read the findings.
+    await createAccountNoteRow({
+      accountId: acct.id,
+      kind: "account",
+      body: researchBody(finding, now).split("\n⟪")[0],
+      lane: "background",
+      source: "research",
+    }).catch(() => null);
+
+    // Anything the pass says is worth asking joins the carousel.
+    const priorAsks = await prisma.accountNote
+      .findMany({ where: { accountId: gapNs(acct.id) }, select: { body: true } })
+      .catch(() => [] as { body: string }[]);
+    await fileGaps({
+      accountId: acct.id,
+      questions: finding.asks,
+      known: new Set(priorAsks.map((r) => knowledgeKey(parseGapBody(r.body)))),
+    });
+
+    refresh();
+    return {
+      ok: true,
+      changed: diffFindings(previous, finding),
+      summary: finding.summary.slice(0, 300),
+    };
+  } catch {
+    return { ok: false, reason: "The research pass didn't complete — try again." };
+  }
+}
+
+// --- The asks (STILL UNKNOWN) -------------------------------------------------
+// Any ask can be irrelevant to this scenario. Waving one off parks it and the
+// carousel advances to the next ask behind it.
+// The queue ran dry (or the operator wants better asks). Mint more, grounded in
+// everything the app now knows about this deal — and in what other deals taught.
+export async function roomGapsRefill(
+  accountId: string,
+): Promise<{ ok: boolean; added?: number; reason?: string }> {
+  const acct = bindAccountId(accountId, peos);
+  if (!acct) return { ok: false, reason: "That row isn't bound to a known account." };
+  if (!aiCleanAvailable())
+    return { ok: false, reason: "No API key configured — minting is off." };
+  if (!(await requireWrite())) return { ok: false, reason: "Read-only session." };
+  try {
+    const prisma = getPrisma();
+    const [asks, research, lessons, market, scen, notes] = await Promise.all([
+      prisma.accountNote
+        .findMany({ where: { accountId: gapNs(acct.id) }, select: { body: true } })
+        .catch(() => [] as { body: string }[]),
+      prisma.accountNote
+        .findMany({
+          where: { accountId: researchNs(acct.id) },
+          orderBy: { createdAt: "desc" },
+          take: 1,
+          select: { body: true },
+        })
+        .catch(() => [] as { body: string }[]),
+      prisma.accountNote
+        .findMany({
+          where: { accountId: PLAYBOOK_LESSONS },
+          orderBy: { createdAt: "desc" },
+          take: 8,
+          select: { body: true },
+        })
+        .catch(() => [] as { body: string }[]),
+      prisma.accountNote
+        .findMany({
+          where: { accountId: PLAYBOOK_MARKET },
+          orderBy: { createdAt: "desc" },
+          take: 8,
+          select: { body: true },
+        })
+        .catch(() => [] as { body: string }[]),
+      prisma.accountDisposition
+        .findUnique({
+          where: { accountId: `scenario:${acct.id}`.slice(0, 191) },
+          select: { reason: true },
+        })
+        .catch(() => null),
+      prisma.accountNote
+        .findMany({
+          where: { accountId: acct.id },
+          orderBy: { createdAt: "desc" },
+          take: 40,
+          select: { body: true, actors: true, createdAt: true, kind: true },
+        })
+        .catch(
+          () => [] as { body: string; actors: string; createdAt: Date; kind: string }[],
+        ),
+    ]);
+
+    const found = research[0] ? parseResearchBody(research[0].body) : null;
+    const intel = extractDealIntel(
+      corpusFor(acct.id, acct.name, {
+        acctNotes: notes.map((n, i) => ({
+          id: String(i),
+          body: n.body,
+          actors: n.actors ?? "",
+          createdAt: n.createdAt.toISOString(),
+          kind: n.kind,
+        })),
+      }),
+      digestFor(acct.id) ?? digestForCardName(acct.name),
+    );
+    const scenario = SCENARIOS.find((x) => x.id === (scen?.reason ?? "")) ?? null;
+
+    const minted = await mintAsks({
+      accountName: acct.name,
+      countries: intel.countries.map((c) => c.value),
+      products: intel.products.map((p) => p.value),
+      stage: intel.timing?.value.phrase ?? "",
+      scenario: scenario ? { label: scenario.label, blurb: scenario.blurb } : null,
+      research: [found?.summary ?? "", ...(found?.signals ?? [])]
+        .filter(Boolean)
+        .join(" · ")
+        .slice(0, 900),
+      lessons: [...lessons, ...market].map((r) => parsePlaybookBody(r.body).text),
+      asked: asks.map((r) => parseGapBody(r.body)),
+    });
+    const added = await fileGaps({
+      accountId: acct.id,
+      questions: minted,
+      known: new Set(asks.map((r) => knowledgeKey(parseGapBody(r.body)))),
+    });
+    refresh();
+    return { ok: true, added: added.length };
+  } catch {
+    return { ok: false, reason: "Minting didn't complete — try again." };
+  }
+}
+
+export async function roomGapDismiss(
+  accountId: string,
+  noteId: string,
+): Promise<{ ok: boolean; reason?: string }> {
+  const acct = bindAccountId(accountId, peos);
+  const nid = typeof noteId === "string" ? noteId.trim().slice(0, 40) : "";
+  if (!acct || !nid) return { ok: false, reason: "Nothing to dismiss." };
+  if (!(await requireWrite())) return { ok: false, reason: "Read-only session." };
+  try {
+    // Bound like every other room write: the ask has to live in THIS account's
+    // own queue, so a stale or forged id can't park someone else's row.
+    const owned = await getPrisma().accountNote.findFirst({
+      where: { id: nid, accountId: gapNs(acct.id) },
+      select: { id: true },
+    });
+    if (!owned) return { ok: false, reason: "That ask belongs to a different account." };
+    const key = gapDismissKey(nid).slice(0, 191);
+    await getPrisma().accountDisposition.upsert({
+      where: { accountId: key },
+      create: { accountId: key, status: "parked", reason: "not relevant" },
+      update: { status: "parked", reason: "not relevant" },
+    });
     refresh();
     return { ok: true };
   } catch {
@@ -700,7 +1285,13 @@ export async function roomTodoSet(
       await prisma.accountDisposition
         .deleteMany({ where: { accountId: `row-delay:todo:${id}` } })
         .catch(() => null);
+      // routeSheetNote files an UNROUTED item's text to the account and then
+      // marks it; an already-routed item passes straight through, which is how
+      // the completion used to vanish for anything the paste or composer opened.
+      // So: file our dated line only when routing didn't already write one.
+      const wasRouted = !!splitMarker(t.body).refs;
       await routeSheetNote(id, { accountId: acct.id }).catch(() => null);
+      if (wasRouted) await fileCompletion(acct.id, id, t.body);
     } else if (op === "undo") {
       await patchRoomTodoTags(id, t.body, { doneAt: "" });
       await prisma.todo.update({ where: { id }, data: { done: false } });

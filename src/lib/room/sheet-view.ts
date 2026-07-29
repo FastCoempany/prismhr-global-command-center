@@ -8,6 +8,7 @@
 import { splitMarker, splitTags, visibleText } from "@/lib/today/route-notes";
 import { sameLocalDayIso } from "@/lib/today/ledger";
 import { redactMoney } from "@/lib/intel/lexicon";
+import { splitFallback } from "@/lib/room/deliverables";
 
 export type SheetTodo = {
   id: string;
@@ -20,7 +21,10 @@ export type SheetTodo = {
 };
 export type SheetDisposition = { reason: string; updatedAt: string };
 export type AccountSheet = {
-  open: { id: string; body: string }[];
+  // `wall` is the commitment's own date once it has passed, and `fallback` the
+  // if/then that rode in with it — the app runs the contingency instead of
+  // waiting for the operator to remember there was one.
+  open: { id: string; body: string; wall?: string; fallback?: string }[];
   delayed: { id: string; body: string; when: string }[];
   doneToday: { id: string; body: string; at: string }[];
 };
@@ -57,13 +61,25 @@ function displayLine(body: string): string {
   }
 }
 
-function tagsOf(body: string): { kind: string; doneAt: string } {
+function tagsOf(body: string): { kind: string; doneAt: string; date: string } {
   try {
-    const { kind, doneAt } = splitTags(splitMarker(body ?? "").text).tags;
-    return { kind, doneAt };
+    const { kind, doneAt, date } = splitTags(splitMarker(body ?? "").text).tags;
+    return { kind, doneAt, date };
   } catch {
-    return { kind: "", doneAt: "" };
+    return { kind: "", doneAt: "", date: "" };
   }
+}
+
+// M/D of a wall that has already passed — "" while the date is still ahead.
+function passedWall(dateIso: string, now: Date): string {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateIso)) return "";
+  const t = Date.parse(`${dateIso}T23:59:59Z`);
+  if (Number.isNaN(t) || t >= now.getTime()) return "";
+  return new Date(`${dateIso}T12:00:00Z`).toLocaleDateString("en-US", {
+    timeZone: "America/Chicago",
+    month: "numeric",
+    day: "numeric",
+  });
 }
 
 function chicagoDay(iso: string): string {
@@ -91,7 +107,7 @@ export function buildAccountSheet(
     if (dispositions.has(`${HIDE}todo:${t.id}`)) continue;
     const body = displayLine(t.body);
     if (!body) continue;
-    const { kind, doneAt } = tagsOf(t.body);
+    const { kind, doneAt, date } = tagsOf(t.body);
     const isAction = kind === "action";
     const remindT = t.remindAt ? Date.parse(t.remindAt) : NaN;
     const remindFuture = !Number.isNaN(remindT) && remindT > now.getTime();
@@ -103,7 +119,16 @@ export function buildAccountSheet(
         out.delayed.push({ id: t.id, body, when: chicagoDay(t.remindAt) });
       else if (isAction && delayedToday)
         out.delayed.push({ id: t.id, body, when: "HELD" });
-      else if (isAction) out.open.push({ id: t.id, body });
+      else if (isAction) {
+        const wall = passedWall(date, now);
+        const fallback = wall ? splitFallback(body).fallback : "";
+        out.open.push({
+          id: t.id,
+          body,
+          ...(wall ? { wall } : {}),
+          ...(fallback ? { fallback } : {}),
+        });
+      }
       continue;
     }
     if (!isAction) continue;

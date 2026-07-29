@@ -49,8 +49,19 @@ test("sanitize: money is redacted from every field, including signals", () => {
 });
 
 test("sanitize: malformed shapes degrade instead of throwing", () => {
-  assert.deepEqual(sanitizeAiResult(null), { entries: [], signals: [] });
-  assert.deepEqual(sanitizeAiResult("nope"), { entries: [], signals: [] });
+  // A junk payload degrades to the empty read: no entries, no signals, and
+  // every judgment field present-but-empty so callers never branch on undefined.
+  for (const junk of [null, "nope"]) {
+    const empty = sanitizeAiResult(junk);
+    assert.deepEqual(empty.entries, []);
+    assert.deepEqual(empty.signals, []);
+    assert.deepEqual(empty.actions, []);
+    assert.deepEqual(empty.gaps, []);
+    assert.deepEqual(empty.competitorIntel, []);
+    assert.deepEqual(empty.lessons, []);
+    assert.deepEqual(empty.outcome, { status: "none", phrase: "" });
+    assert.equal(empty.accountName, "");
+  }
   const r = sanitizeAiResult({
     entries: [
       null,

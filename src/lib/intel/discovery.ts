@@ -29,6 +29,11 @@ export type DiscoveryQ = {
   category: QCategory;
   phase: QPhase;
   audience: QAudience;
+  // Which product line the question belongs to, and how sophisticated the
+  // buyer has to be for it to land. Absent = it applies however the deal is
+  // shaped; the bank's original country-agnostic questions are all like that.
+  product?: "eor" | "contractor" | "payroll" | "any";
+  soph?: "naive" | "inhouse" | "displacement" | "any";
   question: string;
   why: string;
   listenFor: string[];

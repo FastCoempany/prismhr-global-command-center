@@ -946,6 +946,29 @@ textarea {
   border-bottom-color: var(--ds-blue);
 }
 
+/* The archive group — reachable, deliberately recessive. Quiet ink, a hairline
+   separator, and colour only on hover. */
+.app-route-archive {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ds-space-2);
+  margin-left: var(--ds-space-2);
+  padding-left: var(--ds-space-3);
+  border-left: 1px solid var(--ds-hair-strong);
+}
+
+.app-route-arch {
+  color: var(--ds-ink-faint);
+  font: 400 var(--ds-type-label) / 1.4 var(--ds-font-sans);
+  border-bottom: 1px dotted transparent;
+}
+
+.app-route-arch:hover,
+.app-route-arch[aria-current="page"] {
+  color: var(--ds-blue);
+  border-bottom-color: var(--ds-blue);
+}
+
 .app-route-badge {
   display: inline-grid;
   place-items: center;
