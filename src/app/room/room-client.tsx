@@ -26,6 +26,8 @@ import {
   roomCompose,
   roomNoteToAction,
   roomPaste,
+  roomRecordDelete,
+  roomRecordEdit,
   roomTodoSet,
   roomUnlog,
 } from "./actions";
@@ -131,6 +133,11 @@ function Row({ row }: { row: RoomRow }) {
   const [gone, setGone] = useState<Set<string>>(new Set());
   const [doneIds, setDoneIds] = useState<Set<string>>(new Set());
   const [promotedNotes, setPromotedNotes] = useState<Set<string>>(new Set());
+  const [recOpen, setRecOpen] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editText, setEditText] = useState("");
+  const [editedNotes, setEditedNotes] = useState<Map<string, string>>(new Map());
+  const [deletedNotes, setDeletedNotes] = useState<Set<string>>(new Set());
   const [logText, setLogText] = useState("");
   const [mode, setMode] = useState<"note" | "action">("note");
   const [urg, setUrg] = useState<"" | "high" | "med" | "low">("");
@@ -203,6 +210,25 @@ function Row({ row }: { row: RoomRow }) {
       } else setNote(r.reason ?? "That didn't save.");
     });
   };
+  const saveEdit = (noteId: string) => {
+    const text = editText.trim();
+    if (!text || pending) return;
+    start(async () => {
+      const r = await roomRecordEdit(row.accountId, noteId, text);
+      if (r.ok) {
+        setEditedNotes((m) => new Map(m).set(noteId, text));
+        setEditId(null);
+      } else setNote(r.reason ?? "The edit didn't save.");
+    });
+  };
+  const deleteNote = (noteId: string) => {
+    if (pending) return;
+    start(async () => {
+      const r = await roomRecordDelete(row.accountId, noteId);
+      if (r.ok) setDeletedNotes((s) => new Set(s).add(noteId));
+      else setNote(r.reason ?? "The delete didn't take.");
+    });
+  };
   const submitPaste = () => {
     const text = pasteText.trim();
     if (!text || pending) return;
@@ -257,7 +283,6 @@ function Row({ row }: { row: RoomRow }) {
 
   const openStage = row.stages.find((s) => s.key === stageOpen);
   const label = row.climb.label;
-  const labelInside = row.climb.frac >= 0.45;
 
   return (
     <div className={styles.row}>
@@ -325,19 +350,8 @@ function Row({ row }: { row: RoomRow }) {
               onClick={() => setStageOpen((k) => (k === s.key ? null : s.key))}
             />
           ))}
-          {labelInside ? (
-            <span className={styles.clIn}>{label}</span>
-          ) : (
-            <span
-              className={styles.clOut}
-              style={{
-                left: `calc(${Math.round(Math.max(0.04, row.climb.frac) * 100)}% + 18px)`,
-              }}
-            >
-              {label}
-            </span>
-          )}
         </div>
+        <div className={styles.climbCap}>{label}</div>
 
         {openStage && (
           <div className={styles.stageDrawer}>
@@ -731,62 +745,127 @@ function Row({ row }: { row: RoomRow }) {
           </div>
         )}
 
-        <div className={styles.dayrule}>EARLIER</div>
-        {row.record.map((e) => {
-          const promoted = promotedNotes.has(e.id);
-          const glyph = e.text.startsWith("✉")
-            ? "✉"
-            : e.text.startsWith("✓")
-              ? "✓"
-              : e.text.startsWith("☰")
-                ? "☰"
-                : "✎";
-          return (
-            <div
-              key={e.id}
-              className={`${styles.it} ${e.struck || promoted ? styles.itDid : ""}`}
-            >
-              <span
-                className={`${styles.ic} ${
-                  glyph === "✉"
-                    ? styles.kSend
-                    : glyph === "✓"
-                      ? styles.gDone
-                      : styles.gNote
-                }`}
-              >
-                {glyph}
-              </span>
-              <span className={styles.tx}>
-                <span className={styles.t}>{e.t}</span>
-                {e.text.replace(/^[✉✓☰✎⚡▢]\s?/, "")}
-                {promoted && <span className={styles.promoted}> · now open above</span>}
-              </span>
-              {row.canWrite && !e.struck && !promoted && glyph !== "✓" && (
-                <span className={styles.rail}>
-                  <button
-                    onClick={() => promoteNote(e.id, e.text)}
-                    title="make it an action — opens on this register"
+        <button
+          type="button"
+          className={`${styles.dayrule} ${styles.dayruleBtn}`}
+          onClick={() => setRecOpen((v) => !v)}
+          title={recOpen ? "collapse the record" : "open the record"}
+        >
+          EARLIER · {row.recordTotal} {recOpen ? "▾" : "▸"}
+        </button>
+        {recOpen && (
+          <>
+            {row.record
+              .filter((e) => !deletedNotes.has(e.id))
+              .map((e) => {
+                const promoted = promotedNotes.has(e.id);
+                const shown =
+                  editedNotes.get(e.id) ?? e.text.replace(/^[✉✓☰✎⚡▢]\s?/, "");
+                const glyph = e.text.startsWith("✉")
+                  ? "✉"
+                  : e.text.startsWith("✓")
+                    ? "✓"
+                    : e.text.startsWith("☰")
+                      ? "☰"
+                      : "✎";
+                if (editId === e.id)
+                  return (
+                    <div key={e.id} className={styles.it}>
+                      <span className={`${styles.ic} ${styles.gNote}`}>{glyph}</span>
+                      <span className={styles.recEdit}>
+                        <input
+                          value={editText}
+                          onChange={(ev) => setEditText(ev.target.value)}
+                          onKeyDown={(ev) => {
+                            if (ev.key === "Enter") saveEdit(e.id);
+                            if (ev.key === "Escape") setEditId(null);
+                          }}
+                          aria-label="edit this entry"
+                        />
+                        <button
+                          type="button"
+                          className={styles.sdTag}
+                          onClick={() => saveEdit(e.id)}
+                        >
+                          save
+                        </button>
+                        <button
+                          type="button"
+                          className={styles.sdTag}
+                          onClick={() => setEditId(null)}
+                        >
+                          cancel
+                        </button>
+                      </span>
+                    </div>
+                  );
+                return (
+                  <div
+                    key={e.id}
+                    className={`${styles.it} ${e.struck || promoted ? styles.itDid : ""}`}
                   >
-                    ✸
-                  </button>
-                </span>
-              )}
+                    <span
+                      className={`${styles.ic} ${
+                        glyph === "✉"
+                          ? styles.kSend
+                          : glyph === "✓"
+                            ? styles.gDone
+                            : styles.gNote
+                      }`}
+                    >
+                      {glyph}
+                    </span>
+                    <span className={styles.tx}>
+                      <span className={styles.t}>{e.t}</span>
+                      {shown}
+                      {promoted && (
+                        <span className={styles.promoted}> · now open above</span>
+                      )}
+                    </span>
+                    {row.canWrite && (
+                      <span className={styles.rail}>
+                        {!e.struck && !promoted && glyph !== "✓" && (
+                          <button
+                            onClick={() => promoteNote(e.id, shown)}
+                            title="make it an action — opens on this register"
+                          >
+                            ✸
+                          </button>
+                        )}
+                        <button
+                          onClick={() => {
+                            setEditId(e.id);
+                            setEditText(shown);
+                          }}
+                          title="edit this entry"
+                        >
+                          ✎
+                        </button>
+                        <button
+                          onClick={() => deleteNote(e.id)}
+                          title="delete from the record"
+                        >
+                          ✕
+                        </button>
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            {row.record.length === 0 && (
+              <div className={`${styles.it} ${styles.itEmpty}`}>
+                <span className={styles.ic}>·</span>
+                <span className={styles.tx}>Nothing on file yet.</span>
+              </div>
+            )}
+            <div className={styles.more}>
+              <Link href={`/accounts?focus=${row.accountId}`}>
+                the full record ({row.recordTotal}) ▸
+              </Link>
+              <Link href="/archive">archive →</Link>
             </div>
-          );
-        })}
-        {row.record.length === 0 && (
-          <div className={`${styles.it} ${styles.itEmpty}`}>
-            <span className={styles.ic}>·</span>
-            <span className={styles.tx}>Nothing on file yet.</span>
-          </div>
+          </>
         )}
-        <div className={styles.more}>
-          <Link href={`/accounts?focus=${row.accountId}`}>
-            the full record ({row.recordTotal}) ▸
-          </Link>
-          <Link href="/archive">archive →</Link>
-        </div>
       </div>
     </div>
   );
