@@ -58,18 +58,41 @@ const SCHEMA = {
   additionalProperties: false,
 } as const;
 
-const SYSTEM = `You clean raw pastes from a Salesforce activity timeline (or emails / meeting notes) into structured activity entries for a sales command center.
+const SYSTEM = `You clean raw pastes from a Salesforce activity timeline (or emails / meeting notes) into structured activity entries for a sales command center. The operator reads these entries to decide their next move — every entry must carry actionable substance, or not exist.
 
 Rules:
 - One entry per real activity (an email sent, a task, a logged call). Emails quoted inside another email are part of that email's body context, not separate entries — but DO surface their substance.
+- DROP ENTIRELY — do not emit an entry for: a collapsed email header with no readable body (subject + names + timestamp only); marketing/CRM tracking artifacts (survey Sent/Opened/Clicked tasks, "stopped by the booth" lead scans, list-email receipts, HubSpot activity stubs); "[No subject]" or "emails are not shared" placeholders; auto-generated support-desk or LMS notifications — unless the text states a decision, blocker, or commitment that affects the deal. An entry whose body would be empty must be dropped, never emitted as a bare subject line.
+- Long meeting summaries or transcripts: do NOT recap. Distill to the deal-relevant core — decisions made, stated preferences and constraints, objections, named people with their roles, explicit commitments with owners, and dates. Write it dense: "Prefers SmartPay/InsurePay (broker of record stays); eComp takes BoR — friction. Owed: SmartPay+InsurePay follow-up — @Lucas." beats a narrative paragraph.
+- If the paste lists action items, keep them in the body as "Owed: <thing> — @<owner>" lines and surface the most deal-relevant as signals.
 - Strip ALL chrome and noise: Lightning UI labels ("Show more actions", "Expand All", field names like "From Address"/"Text Body"/"Priority"), security banners, "external sender" warnings, thread:: tokens, record ids, Zoom/Teams invite blocks (dial-ins, meeting ids, passcodes), email signatures, legal disclaimers, support-desk boilerplate ("NEVER include SSN…", "Responses via email to this case…").
 - body: the actual human substance only, concise, at most 600 characters. Never invent or embellish — omit rather than guess.
 - subject: the real subject with "RE:/FW:" kept but case-thread tokens removed.
 - from / to: person or address names as written. others: count of additional recipients ("and 1 other" → 1), else 0.
 - Dates: dayIso is YYYY-MM-DD resolved against today's date given in the message ("Today"/"Yesterday"/"Jul 30, 2025" all resolve). dayLabel is a short human label ("Jul 30" or "Today"). timeLabel like "5:27 PM", or "" if none. Unknown dates: dayIso "".
 - kind: "email" for emails, "call" for logged calls, "task" for tasks/meetings/upcoming items.
-- signals: 0-${MAX_SIGNALS} short flags a salesperson would want surfaced — a newly mentioned country or expansion, an implied or explicit deadline, hesitation or stalling tone, who actually holds the decision, a competitor or incumbent system named, escalation or frustration. Plain short sentences. Empty array if nothing notable.
+- signals: 0-${MAX_SIGNALS} short flags a salesperson would want surfaced — a newly mentioned country or expansion, an implied or explicit deadline, hesitation or stalling tone, who actually holds the decision, a competitor or incumbent system named, escalation or frustration, an owed follow-up with its owner. Plain short sentences. Empty array if nothing notable.
 - Order entries newest first. At most ${MAX_ENTRIES} entries.`;
+
+// Deterministic noise gate — belt to the prompt's suspenders, and the same
+// gate the rule-based parser's output passes through. An entry survives only
+// if it carries substance a decision could rest on.
+const NOISE_SUBJECT =
+  /^(clicked|opened|sent)\b.*\bsurvey\b|\bstopped by\b.*\bbooth\b|^\[no subject\]$|^emails? are not shared/i;
+
+export function isNoiseEntry(e: TimelineEntry): boolean {
+  const subject = (e.subject ?? "").trim();
+  const body = (e.body ?? "").trim();
+  if (NOISE_SUBJECT.test(subject)) return true;
+  // A bare header — an email or task with no substance beneath the subject —
+  // is chrome, not intelligence.
+  if (!body && e.kind !== "call") return true;
+  return false;
+}
+
+export function dropNoiseEntries(entries: TimelineEntry[]): TimelineEntry[] {
+  return entries.filter((e) => !isNoiseEntry(e));
+}
 
 // Defensive pass over the model's (already schema-valid) reply: coerce, cap,
 // and money-redact everything before it reaches the client or the database.
@@ -107,6 +130,7 @@ export function sanitizeAiResult(raw: unknown): AiCleanResult {
       .map((s) => str(s, 200))
       .filter(Boolean);
   }
+  out.entries = dropNoiseEntries(out.entries);
   return out;
 }
 

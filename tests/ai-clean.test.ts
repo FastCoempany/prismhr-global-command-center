@@ -72,6 +72,7 @@ test("sanitize: malformed shapes degrade instead of throwing", () => {
 });
 
 test("sanitize: caps entry count at 40 and clamps others", () => {
+  // bodies carry substance — body-less stubs now die at the noise gate
   const many = Array.from({ length: 60 }, (_, i) => ({
     kind: "task",
     subject: `t${i}`,
@@ -81,7 +82,7 @@ test("sanitize: caps entry count at 40 and clamps others", () => {
     timeLabel: "",
     dayLabel: "",
     dayIso: "",
-    body: "",
+    body: `real substance ${i}`,
   }));
   const r = sanitizeAiResult({ entries: many, signals: [] });
   assert.equal(r.entries.length, 40);

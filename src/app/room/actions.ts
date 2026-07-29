@@ -10,7 +10,11 @@ import { getAppAccess } from "@/lib/auth";
 import { hasDatabaseEnv } from "@/lib/db";
 import { peos } from "@/lib/book";
 import { digestForCardName } from "@/lib/intel/digest";
-import { aiCleanAvailable, aiCleanTimeline } from "@/lib/intel/ai-clean";
+import {
+  aiCleanAvailable,
+  aiCleanTimeline,
+  dropNoiseEntries,
+} from "@/lib/intel/ai-clean";
 import { actorsLine, laneFor } from "@/lib/intel/provenance";
 import { cleanSfPaste, parseSfTimeline } from "@/lib/sf-timeline";
 import { redactMoney } from "@/lib/intel/lexicon";
@@ -96,7 +100,7 @@ export async function roomPaste(
     }
   }
   if (entries.length === 0) {
-    entries = parseSfTimeline(text);
+    entries = dropNoiseEntries(parseSfTimeline(text));
     how = how === "ai" ? "rules" : how;
   }
 
@@ -290,6 +294,60 @@ export async function roomUnlog(
     return { ok: true };
   } catch {
     return { ok: false, reason: "The undo didn't take — try again." };
+  }
+}
+
+// ✎ / ✕ on a record entry — the register's history is editable in place.
+// Both are bound: the note must belong to this account, or nothing moves.
+export async function roomRecordEdit(
+  accountId: string,
+  noteId: string,
+  text: string,
+): Promise<{ ok: boolean; reason?: string }> {
+  const acct = bindAccountId(accountId, peos);
+  const id = typeof noteId === "string" ? noteId.trim().slice(0, 40) : "";
+  const clean = cleanLogBody(text);
+  if (!acct || !id) return { ok: false, reason: "Not a bound row." };
+  if (!clean) return { ok: false, reason: "Nothing to save." };
+  if (!(await requireWrite())) return { ok: false, reason: "Read-only session." };
+  try {
+    const prisma = getPrisma();
+    const n = await prisma.accountNote.findFirst({
+      where: { id, accountId: acct.id },
+    });
+    if (!n) return { ok: false, reason: "That entry belongs to a different account." };
+    const glyph = /^[✉✓☰✎✔☎]/.exec(n.body)?.[0];
+    await prisma.accountNote.update({
+      where: { id },
+      data: { body: glyph ? `${glyph} ${clean}` : clean },
+    });
+    refresh();
+    return { ok: true };
+  } catch {
+    return { ok: false, reason: "The edit didn't save — try again." };
+  }
+}
+
+export async function roomRecordDelete(
+  accountId: string,
+  noteId: string,
+): Promise<{ ok: boolean; reason?: string }> {
+  const acct = bindAccountId(accountId, peos);
+  const id = typeof noteId === "string" ? noteId.trim().slice(0, 40) : "";
+  if (!acct || !id) return { ok: false, reason: "Not a bound row." };
+  if (!(await requireWrite())) return { ok: false, reason: "Read-only session." };
+  try {
+    const prisma = getPrisma();
+    const n = await prisma.accountNote.findFirst({
+      where: { id, accountId: acct.id },
+      select: { id: true },
+    });
+    if (!n) return { ok: false, reason: "That entry belongs to a different account." };
+    await prisma.accountNote.delete({ where: { id } });
+    refresh();
+    return { ok: true };
+  } catch {
+    return { ok: false, reason: "The delete didn't take — try again." };
   }
 }
 

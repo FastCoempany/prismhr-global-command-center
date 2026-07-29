@@ -25,6 +25,8 @@ describe("room client — every absorbed capability is wired", () => {
     ["sheet item ops (done/undo/delay/drop)", "roomTodoSet"],
     ["a capture's receipt can undo", "roomUnlog"],
     ["any note can become an action", "roomNoteToAction"],
+    ["record entries edit in place", "roomRecordEdit"],
+    ["record entries can be deleted", "roomRecordDelete"],
     ["paste files to the account", "roomPaste"],
     ["the move closes for real", "roomClose"],
     // the roundups engine in the drawer
@@ -65,7 +67,7 @@ describe("room client — every absorbed capability is wired", () => {
   test("the one register renders whole: day rules, key, chips, composer", () => {
     for (const marker of [
       ">TODAY<",
-      ">EARLIER<",
+      "EARLIER · ",
       "routed → ",
       "make it an action",
       "▢ Note",
