@@ -20,6 +20,14 @@ function bookmarkletFor(origin: string): string {
   return `javascript:${js}`;
 }
 
+// Grabs the open Outlook (web) conversation — the reading pane's whole thread,
+// headers and bodies — stamped so the cleaner knows the dialect. Works on
+// outlook.office.com / outlook.live.com; expand collapsed messages first.
+function outlookBookmarkletFor(origin: string): string {
+  const js = `(async()=>{const q=['div[role="main"]','[role="region"]','main'];let el=null;for(const s of q){try{el=document.querySelector(s)}catch(e){}if(el&&el.innerText&&el.innerText.length>200)break}const t='OUTLOOK THREAD - captured '+new Date().toLocaleString()+'\\n\\n'+((el||document.body).innerText);try{await navigator.clipboard.writeText(t)}catch(e){window.prompt('Auto-copy was blocked. Press Ctrl+C, then paste into Intake:',t.slice(0,4000))}window.open('${origin}/intake','_blank')})()`;
+  return `javascript:${js}`;
+}
+
 export function IntakeClient({ accounts, ai }: { accounts: Acct[]; ai: boolean }) {
   const [raw, setRawState] = useState("");
   const [accountId, setAccountId] = useState("");
@@ -35,9 +43,11 @@ export function IntakeClient({ accounts, ai }: { accounts: Acct[]; ai: boolean }
   const [aiBusy, setAiBusy] = useState(false);
   const [aiNote, setAiNote] = useState<string | null>(null);
   const bmRef = useRef<HTMLAnchorElement>(null);
+  const bmOutRef = useRef<HTMLAnchorElement>(null);
 
   useEffect(() => {
     bmRef.current?.setAttribute("href", bookmarkletFor(window.location.origin));
+    bmOutRef.current?.setAttribute("href", outlookBookmarkletFor(window.location.origin));
   }, []);
 
   // Any change to the paste invalidates a previous AI clean.
@@ -292,12 +302,24 @@ export function IntakeClient({ accounts, ai }: { accounts: Acct[]; ai: boolean }
       </section>
 
       <aside className={styles.inkAside}>
-        <h2 className={styles.h2}>The bookmarklet</h2>
+        <h2 className={styles.h2}>The bookmarklets</h2>
         <p className={styles.muted}>
-          Drag this button onto your browser&apos;s bookmarks bar (one time). Then, on any
-          Salesforce account/contact page: click it — the timeline is captured to your
-          clipboard and this page opens; hit “Paste from clipboard”, pick the account,
-          file.
+          Drag either button onto your browser&apos;s bookmarks bar (one time), then click
+          it on the page you&apos;re reading — the capture lands on your clipboard and
+          this page opens; hit “Paste from clipboard”, pick the account, file.
+        </p>
+        <a
+          ref={bmOutRef}
+          className={styles.inkBookmarklet}
+          title="Drag me to the bookmarks bar — don't click here"
+        >
+          ✉ Grab Outlook thread
+        </a>
+        <p className={styles.mutedSm}>
+          For Outlook on the web: open the conversation you want — the day&apos;s live
+          thread — and <b>expand the messages that matter</b> (a collapsed message ships
+          only its header, and no cleaner can read words that weren&apos;t captured). The
+          whole reading pane comes along, senders and timestamps included.
         </p>
         <a
           ref={bmRef}
@@ -307,11 +329,13 @@ export function IntakeClient({ accounts, ai }: { accounts: Acct[]; ai: boolean }
           ⚡ Grab SF activity
         </a>
         <p className={styles.mutedSm}>
-          It reads only the page you&apos;re looking at, at the moment you click, in your
-          own session. Content in inner scrollboxes comes through whole; entries behind a
-          “Load more” need loading first. If your browser blocks the auto-copy, it falls
-          back to a select-and-copy prompt — and plain copy-paste into the box always
-          works.
+          For a Salesforce account/contact page&apos;s activity timeline. Use SF&apos;s
+          “Expand All” first where you can — collapsed previews don&apos;t travel.
+        </p>
+        <p className={styles.mutedSm}>
+          <b>Teams:</b> no bookmarklet needed — select the chat, copy, and paste it
+          straight in (or into a row&apos;s ⚡ box). The cleaner reads the chat dialect:
+          speakers stay named, the noise dies, decisions and owed items survive.
         </p>
       </aside>
     </div>

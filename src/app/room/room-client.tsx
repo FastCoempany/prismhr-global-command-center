@@ -26,6 +26,7 @@ import {
   roomCompose,
   roomNoteToAction,
   roomPaste,
+  roomPasteUndo,
   roomRecordDelete,
   roomRecordEdit,
   roomTodoSet,
@@ -129,7 +130,7 @@ type FreshCap = {
 
 function Row({ row }: { row: RoomRow }) {
   const [freshCaps, setFreshCaps] = useState<FreshCap[]>([]);
-  const [freshInfo, setFreshInfo] = useState<{ text: string }[]>([]);
+  const [freshInfo, setFreshInfo] = useState<{ text: string; noteIds?: string[] }[]>([]);
   const [gone, setGone] = useState<Set<string>>(new Set());
   const [doneIds, setDoneIds] = useState<Set<string>>(new Set());
   const [promotedNotes, setPromotedNotes] = useState<Set<string>>(new Set());
@@ -238,6 +239,7 @@ function Row({ row }: { row: RoomRow }) {
         setFreshInfo((f) => [
           {
             text: `Paste filed — ${r.filed} entr${r.filed === 1 ? "y" : "ies"}${r.how === "ai" ? ", AI-cleaned" : ""}.`,
+            noteIds: r.noteIds,
           },
           ...f,
         ]);
@@ -245,6 +247,25 @@ function Row({ row }: { row: RoomRow }) {
         setPasteOpen(false);
         setNote(null);
       } else setNote(r.reason ?? "The paste didn't file.");
+    });
+  };
+  const undoPaste = (idx: number) => {
+    const f = freshInfo[idx];
+    if (!f?.noteIds?.length || pending) return;
+    const ids = f.noteIds;
+    start(async () => {
+      const r = await roomPasteUndo(row.accountId, ids);
+      if (r.ok)
+        setFreshInfo((fs) =>
+          fs.map((x, i) =>
+            i === idx
+              ? {
+                  text: `Paste undone — ${r.removed} entr${r.removed === 1 ? "y" : "ies"} removed.`,
+                }
+              : x,
+          ),
+        );
+      else setNote(r.reason ?? "The undo didn't take.");
     });
   };
   const submitClose = () => {
@@ -574,6 +595,16 @@ function Row({ row }: { row: RoomRow }) {
           <div key={`fi${i}`} className={`${styles.it} ${styles.fresh}`}>
             <span className={`${styles.ic} ${styles.gDone}`}>✓</span>
             <span className={styles.tx}>{f.text}</span>
+            {f.noteIds && f.noteIds.length > 0 && (
+              <button
+                type="button"
+                className={styles.rcptU}
+                onClick={() => undoPaste(i)}
+                title="remove everything this paste filed"
+              >
+                ↩ undo paste
+              </button>
+            )}
           </div>
         ))}
         {row.sheetOpen
