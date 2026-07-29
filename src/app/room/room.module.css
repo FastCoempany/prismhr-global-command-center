@@ -1434,3 +1434,17 @@ button.sdRadio:hover {
   color: var(--ink);
   font-weight: 600;
 }
+
+/* A wall that already passed is real risk, and the contingency that rode in
+   with the commitment becomes the move. */
+.stWall {
+  background: rgba(239, 68, 68, 0.12);
+  color: #b42318;
+}
+.fallback {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #b42318;
+}

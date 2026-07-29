@@ -57,13 +57,13 @@ export function AskNext({
   accountId: string;
   questions: AskNextQ[];
   canWrite: boolean;
-  returnTo: string; // "/" | "/today" | "/battlecard"
+  returnTo: string; // "/" | "/today" | "/playbook" | "/room"
   research?: string; // pre-built research prompt for this account
 }) {
   if (questions.length === 0) return null;
   const bcHref = accountId
-    ? `/battlecard?account=${encodeURIComponent(accountId)}`
-    : "/battlecard";
+    ? `/playbook?account=${encodeURIComponent(accountId)}`
+    : "/playbook";
   return (
     <div className={styles.wrap}>
       <div className={styles.head}>

@@ -1084,18 +1084,19 @@ export async function briefRowMute(formData: FormData) {
 // --- Ask next --------------------------------------------------------------
 // ✓ on an ask-next question retires it for that account permanently
 // (asknext-done:<accountId>:<questionId>). returnTo keeps the click on the
-// surface it came from (dashboard card, popover, battlecard).
+// surface it came from (the Playbook card, a dashboard card, the popover).
 const ASKNEXT_DONE_PREFIX = "asknext-done:";
 
 export async function askNextDone(formData: FormData) {
   const accountId = str(formData, "accountId", 80);
   const questionId = str(formData, "questionId", 40);
   const raw = str(formData, "returnTo", 80);
-  const to = raw === "/" || raw === "/battlecard" ? raw : "/today";
+  const to = raw === "/" || raw === "/playbook" || raw === "/room" ? raw : "/today";
   const finish = () => {
     revalidatePath("/today");
     revalidatePath("/");
-    revalidatePath("/battlecard");
+    revalidatePath("/playbook");
+    revalidatePath("/room");
     redirect(to);
   };
   if (!(await requireWrite()) || !accountId || !questionId) finish();

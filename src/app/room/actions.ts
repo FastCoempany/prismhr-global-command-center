@@ -24,7 +24,7 @@ import {
   parsePlaybookBody,
 } from "@/lib/playbook/store";
 import { fileGaps, gapDismissKey, gapNs, parseGapBody } from "@/lib/room/gaps";
-import { actionBody, urgencyForDue } from "@/lib/room/deliverables";
+import { actionBody, splitFallback, urgencyForDue } from "@/lib/room/deliverables";
 import { outcomeMarkBody } from "@/lib/room/loss";
 import { actorsLine, laneFor } from "@/lib/intel/provenance";
 import { cleanSfPaste, parseSfTimeline, scrubSecrets } from "@/lib/sf-timeline";
@@ -277,6 +277,8 @@ async function absorbRead(
               ...NO_TAGS,
               kind: "action",
               urgency: urgencyForDue(a.due, now),
+              // The wall itself — the sheet reads this to know the date passed.
+              date: a.due,
             }),
             done: false,
             position: ++top,
@@ -350,6 +352,41 @@ async function absorbRead(
   return { opened, asks, learned, outcome };
 }
 
+// The completion line, filed to the account's own history exactly once. Keyed
+// by todo id so done → undo → done can't stack duplicates on the record.
+async function fileCompletion(accountId: string, todoId: string, body: string) {
+  const prisma = getPrisma();
+  const key = `done-filed:${todoId}`.slice(0, 191);
+  try {
+    const already = await prisma.accountDisposition.findUnique({
+      where: { accountId: key },
+      select: { accountId: true },
+    });
+    if (already) return;
+    const text = splitFallback(visibleText(body)).text.slice(0, 300);
+    if (!text) return;
+    const day = new Date().toLocaleDateString("en-US", {
+      timeZone: "America/Chicago",
+      month: "numeric",
+      day: "numeric",
+    });
+    await createAccountNoteRow({
+      accountId,
+      kind: "account",
+      body: `✓ ${text} — done ${day}`,
+      lane: "mine",
+      source: "done",
+    });
+    await prisma.accountDisposition.upsert({
+      where: { accountId: key },
+      create: { accountId: key, status: "parked", reason: "completion filed" },
+      update: { status: "parked", reason: "completion filed" },
+    });
+  } catch {
+    // The close still stands even if its history line doesn't land.
+  }
+}
+
 // ✕ on ONE auto-created action. The paste's own undo removes the record it
 // filed; the work it opened is retired one commitment at a time, because a
 // paste that got three actions right and one wrong should keep the three.
@@ -420,6 +457,7 @@ import {
   NO_TAGS,
   splitMarker,
   splitTags,
+  visibleText,
   withMarker,
   withTags,
   type NoteTags,
@@ -1015,6 +1053,10 @@ export async function roomTodoSet(
         .deleteMany({ where: { accountId: `row-delay:todo:${id}` } })
         .catch(() => null);
       await routeSheetNote(id, { accountId: acct.id }).catch(() => null);
+      // routeSheetNote passes an already-routed item straight through, so on
+      // its own it loses the COMPLETION — the account history would never
+      // learn the work got done. File the dated line ourselves, once.
+      await fileCompletion(acct.id, id, t.body);
     } else if (op === "undo") {
       await patchRoomTodoTags(id, t.body, { doneAt: "" });
       await prisma.todo.update({ where: { id }, data: { done: false } });

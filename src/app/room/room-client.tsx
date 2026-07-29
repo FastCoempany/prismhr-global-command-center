@@ -65,7 +65,7 @@ export type RoomRow = {
     doneKey: string;
     closedCount: number;
   } | null;
-  sheetOpen: { id: string; body: string }[];
+  sheetOpen: { id: string; body: string; wall?: string; fallback?: string }[];
   sheetDelayed: { id: string; body: string; when: string }[];
   sheetDoneToday: { id: string; body: string; at: string }[];
   record: { id: string; t: string; text: string; struck: boolean }[];
@@ -919,8 +919,23 @@ function Row({ row }: { row: RoomRow }) {
                 <span className={`${styles.ic} ${did ? styles.gDone : styles.gAct}`}>
                   {did ? "✓" : "✸"}
                 </span>
-                {!did && <span className={`${styles.st} ${styles.stOpen}`}>OPEN</span>}
-                <span className={styles.tx}>{t.body}</span>
+                {!did && (
+                  <span
+                    className={`${styles.st} ${t.wall ? styles.stWall : styles.stOpen}`}
+                  >
+                    {t.wall ? `${t.wall} PASSED` : "OPEN"}
+                  </span>
+                )}
+                <span className={styles.tx}>
+                  {t.body}
+                  {/* The if/then, run for you: the wall passed, so the
+                      contingency is the move now. */}
+                  {!did && t.fallback && (
+                    <span className={styles.fallback}>
+                      ↯ it didn&apos;t land — go to the fallback: {t.fallback}
+                    </span>
+                  )}
+                </span>
                 {row.canWrite && (
                   <span className={styles.rail}>
                     {did ? (
