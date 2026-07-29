@@ -20,11 +20,12 @@ function bookmarkletFor(origin: string): string {
   return `javascript:${js}`;
 }
 
-// Grabs the open Outlook (web) conversation — the reading pane's whole thread,
-// headers and bodies — stamped so the cleaner knows the dialect. Works on
-// outlook.office.com / outlook.live.com; expand collapsed messages first.
+// Grabs the open Outlook (web) conversation — the READING PANE only, never
+// the message list (a wide grab would hoover other deals' inbox rows into
+// whichever account gets picked). Reading-pane selectors are tried tightest
+// first; if none hits, the grab refuses instead of falling back to the page.
 function outlookBookmarkletFor(origin: string): string {
-  const js = `(async()=>{const q=['div[role="main"]','[role="region"]','main'];let el=null;for(const s of q){try{el=document.querySelector(s)}catch(e){}if(el&&el.innerText&&el.innerText.length>200)break}const t='OUTLOOK THREAD - captured '+new Date().toLocaleString()+'\\n\\n'+((el||document.body).innerText);try{await navigator.clipboard.writeText(t)}catch(e){window.prompt('Auto-copy was blocked. Press Ctrl+C, then paste into Intake:',t.slice(0,4000))}window.open('${origin}/intake','_blank')})()`;
+  const js = `(async()=>{const q=['#ReadingPaneContainerId','[aria-label="Reading Pane"]','div[role="main"] [role="list"]','div[role="main"]'];let el=null;for(const s of q){try{el=document.querySelector(s)}catch(e){}if(el&&el.innerText&&el.innerText.length>200)break;el=null}if(!el){alert('Open the conversation first — the reading pane is what gets captured.');return}const t='OUTLOOK THREAD - captured '+new Date().toLocaleString()+'\\n\\n'+el.innerText;try{await navigator.clipboard.writeText(t)}catch(e){window.prompt('Auto-copy was blocked. Press Ctrl+C, then paste into Intake:',t.slice(0,4000))}window.open('${origin}/intake','_blank')})()`;
   return `javascript:${js}`;
 }
 
@@ -69,14 +70,21 @@ export function IntakeClient({ accounts, ai }: { accounts: Acct[]; ai: boolean }
     if (!raw.trim() || aiBusy) return;
     setAiBusy(true);
     setAiNote(null);
-    const r = await cleanWithAI(raw);
-    setAiBusy(false);
-    if (r.ok) {
-      setAiEntries(r.entries);
-      setAiSignals(r.signals);
-      setSkipped(new Set());
-    } else {
-      setAiNote(r.reason);
+    // try/finally: a rejected server action (platform duration kill, network
+    // drop mid-await) must never wedge the button at "Cleaning…" forever.
+    try {
+      const r = await cleanWithAI(raw);
+      if (r.ok) {
+        setAiEntries(r.entries);
+        setAiSignals(r.signals);
+        setSkipped(new Set());
+      } else {
+        setAiNote(r.reason);
+      }
+    } catch {
+      setAiNote("The clean didn't come back — try again, or file as ☰ transcript.");
+    } finally {
+      setAiBusy(false);
     }
   };
 
@@ -105,7 +113,8 @@ export function IntakeClient({ accounts, ai }: { accounts: Acct[]; ai: boolean }
   const file = async () => {
     if (!accountId || chosen.length === 0 || busy) return;
     setBusy(true);
-    const r = await fileTimeline(accountId, chosen);
+    const dialect = /^OUTLOOK THREAD\b/.test(raw.trimStart()) ? "OL" : "SF";
+    const r = await fileTimeline(accountId, chosen, dialect);
     setBusy(false);
     if (r.ok) {
       setResult({

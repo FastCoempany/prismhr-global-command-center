@@ -8,6 +8,7 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import { redactMoney } from "@/lib/intel/lexicon";
+import { normPerson } from "@/lib/intel/provenance";
 import type { TimelineEntry } from "@/lib/sf-timeline";
 
 export type AiCleanResult = { entries: TimelineEntry[]; signals: string[] };
@@ -69,7 +70,7 @@ Rules:
 - Strip ALL chrome and noise: Lightning UI labels ("Show more actions", "Expand All", field names like "From Address"/"Text Body"/"Priority"), security banners, "external sender" warnings, thread:: tokens, record ids, Zoom/Teams invite blocks (dial-ins, meeting ids, passcodes), email signatures, legal disclaimers, support-desk boilerplate ("NEVER include SSN…", "Responses via email to this case…").
 - body: the actual human substance only, concise, at most 600 characters. Never invent or embellish — omit rather than guess.
 - subject: the real subject with "RE:/FW:" kept but case-thread tokens removed.
-- from / to: person or address names as written. others: count of additional recipients ("and 1 other" → 1), else 0.
+- from / to: person names, normalized: first-person forms ("You", "me") become "Antaeus Coe" (the operator whose mailbox this is); "Last, First" renders as "First Last"; email-address tails in angle brackets drop. others: count of additional recipients ("and 1 other" → 1), else 0.
 - Dates: dayIso is YYYY-MM-DD resolved against today's date given in the message ("Today"/"Yesterday"/"Jul 30, 2025" all resolve). dayLabel is a short human label ("Jul 30" or "Today"). timeLabel like "5:27 PM", or "" if none. Unknown dates: dayIso "".
 - kind: "email" for emails, "call" for logged calls, "task" for tasks/meetings/upcoming items.
 - signals: 0-${MAX_SIGNALS} short flags a salesperson would want surfaced — a newly mentioned country or expansion, an implied or explicit deadline, hesitation or stalling tone, who actually holds the decision, a competitor or incumbent system named, escalation or frustration, an owed follow-up with its owner. Plain short sentences. Empty array if nothing notable.
@@ -112,8 +113,8 @@ export function sanitizeAiResult(raw: unknown): AiCleanResult {
       out.entries.push({
         kind,
         subject: str(x.subject, 200),
-        from: str(x.from, 80),
-        to: str(x.to, 80),
+        from: normPerson(str(x.from, 80)),
+        to: normPerson(str(x.to, 80)),
         others:
           typeof x.others === "number" && Number.isFinite(x.others)
             ? Math.max(0, Math.min(99, Math.round(x.others)))
@@ -137,21 +138,35 @@ export function sanitizeAiResult(raw: unknown): AiCleanResult {
 
 // One call, one paste. Throws on API failure — the caller degrades to the
 // rule-based parser. `now` is passed in so date resolution is testable.
+// The client gets an explicit timeout sized to serverless hosting (the SDK
+// default is ten minutes — the platform kills the function long before that),
+// and a truncated generation is surfaced as a REAL error instead of the
+// invalid-JSON parse failure it used to masquerade as.
 export async function aiCleanTimeline(raw: string, now: Date): Promise<AiCleanResult> {
-  const client = new Anthropic();
+  const client = new Anthropic({ timeout: 55_000, maxRetries: 1 });
   const todayIso = now.toLocaleDateString("en-CA", { timeZone: "America/Chicago" });
-  const msg = await client.messages.create({
-    model: "claude-haiku-4-5",
-    max_tokens: 8192,
-    system: SYSTEM,
-    messages: [
-      {
-        role: "user",
-        content: `Today's date is ${todayIso} (America/Chicago).\n\nRaw paste:\n\n${raw}`,
-      },
-    ],
-    output_config: { format: { type: "json_schema", schema: SCHEMA } },
+  const request = (maxTokens: number) =>
+    client.messages.create({
+      model: "claude-haiku-4-5",
+      max_tokens: maxTokens,
+      system: SYSTEM,
+      messages: [
+        {
+          role: "user",
+          content: `Today's date is ${todayIso} (America/Chicago).\n\nRaw paste:\n\n${raw}`,
+        },
+      ],
+      output_config: { format: { type: "json_schema", schema: SCHEMA } },
+    });
+  // 40 dense entries can run past 8k output tokens; ask high, fall back if
+  // the model tier rejects the ceiling.
+  const msg = await request(16384).catch((e: unknown) => {
+    const status = (e as { status?: number })?.status;
+    if (status === 400) return request(8192);
+    throw e;
   });
+  if (msg.stop_reason === "max_tokens")
+    throw new Error("paste too large for one clean — split it and try again");
   const text = msg.content.find((b) => b.type === "text");
   return sanitizeAiResult(JSON.parse(text?.type === "text" ? text.text : "{}"));
 }

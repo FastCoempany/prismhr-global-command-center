@@ -37,6 +37,7 @@ import { suggestChecks } from "@/lib/intel/evidence";
 import { climbFraction, daysBetween, readDeal, type RoomRead } from "@/lib/room/engine";
 import { buildStageRail } from "@/lib/room/stages-view";
 import { buildAccountSheet } from "@/lib/room/sheet-view";
+import { GLOBAL_SCENT_RE } from "@/lib/intel/provenance";
 import {
   RoomClient,
   type CadenceRow,
@@ -100,8 +101,12 @@ export default async function RoomPage() {
       digestForCardName(card.name)?.accountId ??
       "";
     const peo = peoById.get(accountId);
-    const allNotes = accountId ? (notesById.get(accountId) ?? []) : [];
+    const rawNotes = accountId ? (notesById.get(accountId) ?? []) : [];
+    // ✕-parked entries (hide:note: dispositions) leave every register view —
+    // the note survives in the table, the row does not.
+    const allNotes = rawNotes.filter((n) => !dispositions.has(`hide:note:${n.id}`));
     const mine = allNotes.filter((n) => n.lane === "mine");
+    const backgroundTotal = allNotes.length - mine.length;
 
     const docs = corpusFor(accountId, card.name, {
       acctNotes: allNotes,
@@ -175,6 +180,12 @@ export default async function RoomPage() {
             at: touch.contactedAt,
             awaitingReply: touch.status === "awaiting",
             who: firstName(peo?.contactName ?? "") || "them",
+          }
+        : null,
+      lastInbound: intel.lastInbound
+        ? {
+            at: intel.lastInbound,
+            who: firstName(peo?.contactName ?? "") || "they",
           }
         : null,
       lastRecordAt: allNotes[0]?.createdAt ?? "",
@@ -275,6 +286,7 @@ export default async function RoomPage() {
         struck: n.body.startsWith("✓"),
       })),
       recordTotal: mine.length,
+      backgroundTotal,
       health: read.health,
       rank: 0,
       canWrite: data.canWrite,
@@ -301,10 +313,34 @@ export default async function RoomPage() {
       .filter((k) => k.startsWith("roundup-mute:"))
       .map((k) => k.slice("roundup-mute:".length)),
   );
+  // The freshest filed line per account rides into every bullet with its
+  // date — hand-written bullets age; the record doesn't.
+  const latestByAccount = new Map<string, { line: string; date: string }>();
+  for (const [acctId, ns] of notesById) {
+    const newest = ns.find(
+      (n) => n.lane === "mine" && !dispositions.has(`hide:note:${n.id}`),
+    );
+    if (!newest) continue;
+    const line = newest.body
+      .split("\n")[0]
+      .replace(/^[✉✓☰✎⚡▢✔☎]\s?/, "")
+      .trim()
+      .slice(0, 110);
+    if (!line) continue;
+    const d = new Date(Date.parse(newest.createdAt));
+    latestByAccount.set(acctId, {
+      line,
+      date: d.toLocaleDateString("en-US", {
+        timeZone: "America/Chicago",
+        month: "numeric",
+        day: "numeric",
+      }),
+    });
+  }
   const cadence: CadenceRow[] = kickoff.map((k) => {
     const key = partnerOutreachKey(k.partner);
     const touch = touchMap.get(key);
-    const bullets = roundupBullets(k.accounts);
+    const bullets = roundupBullets(k.accounts, latestByAccount);
     const sections = k.accounts.map((a, i) => {
       const d = dispositions.get(a.id);
       const off = d?.status === "motion" || d?.status === "parked";
@@ -351,6 +387,34 @@ export default async function RoomPage() {
       why: a.summary.slice(0, 140) || "Signal on file — open the account for the read.",
       seedNote: "",
     }));
+  // The eye also watches FILED intel, not just the frozen research: an
+  // off-board account whose recent record carries the global scent warms
+  // here even if research-time demand never saw it.
+  const warmIds = new Set(warming.map((w) => w.id));
+  const boardIds = new Set(rows.map((r) => r.accountId));
+  const FRESH_DAYS = 14 * 86_400_000;
+  for (const p of peos) {
+    if (warming.length >= 10) break;
+    if (boardIds.has(p.id) || warmIds.has(p.id) || onBoard.has(p.name)) continue;
+    if (snoozes.has(p.id) || doneKeys.has(triageDoneKey(p.id))) continue;
+    const notes = notesById.get(p.id) ?? [];
+    const hit = notes.find(
+      (n) =>
+        now.getTime() - Date.parse(n.createdAt) < FRESH_DAYS &&
+        GLOBAL_SCENT_RE.test(n.body),
+    );
+    if (!hit) continue;
+    const line = hit.body
+      .split("\n")[0]
+      .replace(/^[✉✓☰✎⚡▢✔☎]\s?/, "")
+      .slice(0, 110);
+    warming.push({
+      id: p.id,
+      name: p.name,
+      why: `Fresh intel on file — “${line}”`,
+      seedNote: "",
+    });
+  }
   const later: LaterRow[] = todos
     .filter((t) => !t.done && !t.accountId)
     .slice(0, 8)

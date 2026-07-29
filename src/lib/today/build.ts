@@ -676,14 +676,27 @@ export function roundupBullet(a: AccountIntel, variant = 0): string {
 
 // Bullets for a whole roundup, rotating the phrasing per play so no two lines
 // in one message repeat — custom (hand-written) bullets don't consume a turn.
-export function roundupBullets(accounts: AccountIntel[]): string[] {
+// `latestByAccount` (accountId → newest record line + date) keeps a bullet
+// honest: the hand-written text was authored ONCE and the deal keeps moving —
+// a partner must never receive a claim the operator's own record contradicts,
+// so the freshest filed line rides along with its date.
+export function roundupBullets(
+  accounts: AccountIntel[],
+  latestByAccount?: ReadonlyMap<string, { line: string; date: string }>,
+): string[] {
   const seen = new Map<string, number>();
   return accounts.map((a) => {
-    if (ROUNDUP_BULLETS[a.id]) return roundupBullet(a);
-    const key = a.play ?? "gauge";
-    const v = seen.get(key) ?? 0;
-    seen.set(key, v + 1);
-    return roundupBullet(a, v);
+    let bullet: string;
+    if (ROUNDUP_BULLETS[a.id]) bullet = roundupBullet(a);
+    else {
+      const key = a.play ?? "gauge";
+      const v = seen.get(key) ?? 0;
+      seen.set(key, v + 1);
+      bullet = roundupBullet(a, v);
+    }
+    const latest = latestByAccount?.get(a.id);
+    if (latest?.line) bullet += ` (Latest on my side, ${latest.date}: ${latest.line})`;
+    return bullet;
   });
 }
 

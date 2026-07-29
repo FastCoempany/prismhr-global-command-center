@@ -43,7 +43,9 @@ test("sanitize: money is redacted from every field, including signals", () => {
     ],
     signals: ["Quoted $165 for the add-on"],
   });
-  assert.ok(!/385|550|165|1,200/.test(JSON.stringify(r)));
+  assert.ok(!/385|550|165/.test(JSON.stringify(r)));
+  // headcounts are sizing intel, not money — they survive by doctrine
+  assert.ok(/1,200 seats/.test(JSON.stringify(r)));
 });
 
 test("sanitize: malformed shapes degrade instead of throwing", () => {

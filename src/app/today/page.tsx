@@ -649,7 +649,9 @@ export default async function TodayPage({
       todos: todos.filter((t) => acctId && t.accountId === acctId),
       touches: touches.filter(
         (t) =>
-          (acctId && t.subjectKey === `acct:${acctId}`) ||
+          (acctId &&
+            (t.subjectKey === `outreach:${acctId}` ||
+              t.subjectKey === `acct:${acctId}`)) ||
           t.label.toLowerCase() === card.name.toLowerCase(),
       ),
     });

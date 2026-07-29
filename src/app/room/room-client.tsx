@@ -62,6 +62,7 @@ export type RoomRow = {
   sheetDoneToday: { id: string; body: string; at: string }[];
   record: { id: string; t: string; text: string; struck: boolean }[];
   recordTotal: number;
+  backgroundTotal: number;
   health: "red" | "amber" | "green" | "quiet";
   rank: number;
   canWrite: boolean;
@@ -205,7 +206,7 @@ function Row({ row }: { row: RoomRow }) {
       if (r.ok) {
         setPromotedNotes((s) => new Set(s).add(noteId));
         setFreshCaps((f) => [
-          { body: text.replace(/^[✉✓☰✎⚡▢]\s?/, ""), kind: "action", promoted: true },
+          { body: text.replace(/^[✉✓☰✎⚡▢✔☎]\s?/, ""), kind: "action", promoted: true },
           ...f,
         ]);
       } else setNote(r.reason ?? "That didn't save.");
@@ -791,14 +792,10 @@ function Row({ row }: { row: RoomRow }) {
               .map((e) => {
                 const promoted = promotedNotes.has(e.id);
                 const shown =
-                  editedNotes.get(e.id) ?? e.text.replace(/^[✉✓☰✎⚡▢]\s?/, "");
-                const glyph = e.text.startsWith("✉")
-                  ? "✉"
-                  : e.text.startsWith("✓")
-                    ? "✓"
-                    : e.text.startsWith("☰")
-                      ? "☰"
-                      : "✎";
+                  editedNotes.get(e.id) ?? e.text.replace(/^[✉✓☰✎⚡▢✔☎]\s?/, "");
+                // The full paste alphabet — ✔ tasks and ☎ calls included, so
+                // filed activities never misrender as hand-typed notes.
+                const glyph = /^[✉✓☰✎✔☎]/.exec(e.text)?.[0] ?? "✎";
                 if (editId === e.id)
                   return (
                     <div key={e.id} className={styles.it}>
@@ -839,9 +836,11 @@ function Row({ row }: { row: RoomRow }) {
                       className={`${styles.ic} ${
                         glyph === "✉"
                           ? styles.kSend
-                          : glyph === "✓"
+                          : glyph === "✓" || glyph === "✔"
                             ? styles.gDone
-                            : styles.gNote
+                            : glyph === "☎"
+                              ? styles.gDly
+                              : styles.gNote
                       }`}
                     >
                       {glyph}
@@ -893,6 +892,11 @@ function Row({ row }: { row: RoomRow }) {
               <Link href={`/accounts?focus=${row.accountId}`}>
                 the full record ({row.recordTotal}) ▸
               </Link>
+              {row.backgroundTotal > 0 && (
+                <Link href={`/accounts?focus=${row.accountId}`}>
+                  case traffic ({row.backgroundTotal}) ▸
+                </Link>
+              )}
               <Link href="/archive">archive →</Link>
             </div>
           </>
