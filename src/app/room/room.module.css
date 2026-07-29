@@ -1448,3 +1448,58 @@ button.sdRadio:hover {
   line-height: 1.45;
   color: #b42318;
 }
+
+/* ── the research control ─────────────────────────────────────────────────────
+   Says what it does and when it last did it. Blue: this is the system going and
+   finding things out, not the operator's own record. */
+.rsrch {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 7px;
+}
+.rsrchBtn {
+  border: 1px solid rgba(37, 99, 235, 0.45);
+  background: rgba(37, 99, 235, 0.07);
+  color: var(--blue);
+  border-radius: 7px;
+  padding: 3px 11px;
+  font-family: var(--f-sans), system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.rsrchBtn:hover:not(:disabled) {
+  background: rgba(37, 99, 235, 0.14);
+}
+.rsrchBtn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.rsrchWhen {
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.rsrchOut {
+  margin-top: 6px;
+  padding: 7px 9px;
+  background: rgba(37, 99, 235, 0.05);
+  border-left: 2px solid rgba(37, 99, 235, 0.5);
+  border-radius: 0 7px 7px 0;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--soft);
+}
+.rsrchList {
+  margin: 3px 0 0;
+  padding-left: 17px;
+}
+.askFoot {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 4px;
+}

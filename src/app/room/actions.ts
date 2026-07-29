@@ -9,7 +9,7 @@ import { revalidatePath } from "next/cache";
 import { getAppAccess } from "@/lib/auth";
 import { hasDatabaseEnv } from "@/lib/db";
 import { peos } from "@/lib/book";
-import { digestForCardName } from "@/lib/intel/digest";
+import { digestFor, digestForCardName } from "@/lib/intel/digest";
 import {
   accountMatches,
   aiCleanAvailable,
@@ -26,7 +26,18 @@ import {
 import { fileGaps, gapDismissKey, gapNs, parseGapBody } from "@/lib/room/gaps";
 import { actionBody, splitFallback, urgencyForDue } from "@/lib/room/deliverables";
 import { outcomeMarkBody } from "@/lib/room/loss";
-import { actorsLine, laneFor } from "@/lib/intel/provenance";
+import { MINE_RE, actorsLine, laneFor } from "@/lib/intel/provenance";
+import {
+  diffFindings,
+  parseResearchBody,
+  researchAvailable,
+  researchBody,
+  researchNs,
+  runResearch,
+} from "@/lib/intel/deep-research";
+import { mintAsks } from "@/lib/intel/ask-mint";
+import { SCENARIOS } from "@/lib/intel/scenarios";
+import { corpusFor, extractDealIntel } from "@/lib/intel/extract";
 import { cleanSfPaste, parseSfTimeline, scrubSecrets } from "@/lib/sf-timeline";
 import { redactMoney } from "@/lib/intel/lexicon";
 import { bindAccountId, cleanLogBody } from "@/lib/room/bind";
@@ -733,9 +744,201 @@ export async function roomReopen(
   }
 }
 
+// --- The research pass -------------------------------------------------------
+// The obvious button. First run is the deep one; every run files its findings as
+// a note on the account, so the record, the corpus, the intel extractor and the
+// People index all pick it up with no further wiring. A refresh also reports
+// what changed since the last pass, which is the only part worth reading twice.
+export async function roomResearch(
+  accountId: string,
+): Promise<{ ok: boolean; reason?: string; changed?: string[]; summary?: string }> {
+  const acct = bindAccountId(accountId, peos);
+  if (!acct) return { ok: false, reason: "That row isn't bound to a known account." };
+  if (!researchAvailable())
+    return { ok: false, reason: "No API key configured — research is off." };
+  if (!(await requireWrite())) return { ok: false, reason: "Read-only session." };
+  const now = new Date();
+  try {
+    const prisma = getPrisma();
+    const prior = await prisma.accountNote
+      .findMany({
+        where: { accountId: researchNs(acct.id) },
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: { body: true },
+      })
+      .catch(() => [] as { body: string }[]);
+    const previous = prior[0] ? parseResearchBody(prior[0].body) : null;
+
+    const notes = await prisma.accountNote
+      .findMany({
+        where: { accountId: acct.id },
+        orderBy: { createdAt: "desc" },
+        take: 60,
+        select: { body: true, actors: true },
+      })
+      .catch(() => [] as { body: string; actors: string }[]);
+    const people = [
+      ...new Set(
+        notes
+          .flatMap((n) => (n.actors ?? "").split(/→|\+|,/))
+          .map((x) => x.replace(/\s*\d+\s*(others?)?/gi, "").trim())
+          .filter((x) => x.length > 2 && !MINE_RE.test(x)),
+      ),
+    ].slice(0, 6);
+
+    // The book knows their site; bindAccountId only carries id + name, so read
+    // the fuller record for the one field the pass wants.
+    const site = peos.find((p) => p.id === acct.id)?.website ?? "";
+    const finding = await runResearch({
+      accountName: acct.name,
+      site: site || undefined,
+      people,
+      countries: previous?.countries ?? [],
+      now,
+    });
+    if (!finding.summary && finding.signals.length === 0)
+      return { ok: false, reason: "The pass came back empty — try again in a moment." };
+
+    await createAccountNoteRow({
+      accountId: researchNs(acct.id),
+      kind: "account",
+      body: researchBody(finding, now),
+      lane: "background",
+      source: "research",
+    });
+    // The readable half also lands on the account itself, so the record shows
+    // that the research happened and the corpus can read the findings.
+    await createAccountNoteRow({
+      accountId: acct.id,
+      kind: "account",
+      body: researchBody(finding, now).split("\n⟪")[0],
+      lane: "background",
+      source: "research",
+    }).catch(() => null);
+
+    // Anything the pass says is worth asking joins the carousel.
+    const priorAsks = await prisma.accountNote
+      .findMany({ where: { accountId: gapNs(acct.id) }, select: { body: true } })
+      .catch(() => [] as { body: string }[]);
+    await fileGaps({
+      accountId: acct.id,
+      questions: finding.asks,
+      known: new Set(priorAsks.map((r) => knowledgeKey(parseGapBody(r.body)))),
+    });
+
+    refresh();
+    return {
+      ok: true,
+      changed: diffFindings(previous, finding),
+      summary: finding.summary.slice(0, 300),
+    };
+  } catch {
+    return { ok: false, reason: "The research pass didn't complete — try again." };
+  }
+}
+
 // --- The asks (STILL UNKNOWN) -------------------------------------------------
 // Any ask can be irrelevant to this scenario. Waving one off parks it and the
 // carousel advances to the next ask behind it.
+// The queue ran dry (or the operator wants better asks). Mint more, grounded in
+// everything the app now knows about this deal — and in what other deals taught.
+export async function roomGapsRefill(
+  accountId: string,
+): Promise<{ ok: boolean; added?: number; reason?: string }> {
+  const acct = bindAccountId(accountId, peos);
+  if (!acct) return { ok: false, reason: "That row isn't bound to a known account." };
+  if (!aiCleanAvailable())
+    return { ok: false, reason: "No API key configured — minting is off." };
+  if (!(await requireWrite())) return { ok: false, reason: "Read-only session." };
+  try {
+    const prisma = getPrisma();
+    const [asks, research, lessons, market, scen, notes] = await Promise.all([
+      prisma.accountNote
+        .findMany({ where: { accountId: gapNs(acct.id) }, select: { body: true } })
+        .catch(() => [] as { body: string }[]),
+      prisma.accountNote
+        .findMany({
+          where: { accountId: researchNs(acct.id) },
+          orderBy: { createdAt: "desc" },
+          take: 1,
+          select: { body: true },
+        })
+        .catch(() => [] as { body: string }[]),
+      prisma.accountNote
+        .findMany({
+          where: { accountId: PLAYBOOK_LESSONS },
+          orderBy: { createdAt: "desc" },
+          take: 8,
+          select: { body: true },
+        })
+        .catch(() => [] as { body: string }[]),
+      prisma.accountNote
+        .findMany({
+          where: { accountId: PLAYBOOK_MARKET },
+          orderBy: { createdAt: "desc" },
+          take: 8,
+          select: { body: true },
+        })
+        .catch(() => [] as { body: string }[]),
+      prisma.accountDisposition
+        .findUnique({
+          where: { accountId: `scenario:${acct.id}`.slice(0, 191) },
+          select: { reason: true },
+        })
+        .catch(() => null),
+      prisma.accountNote
+        .findMany({
+          where: { accountId: acct.id },
+          orderBy: { createdAt: "desc" },
+          take: 40,
+          select: { body: true, actors: true, createdAt: true, kind: true },
+        })
+        .catch(
+          () => [] as { body: string; actors: string; createdAt: Date; kind: string }[],
+        ),
+    ]);
+
+    const found = research[0] ? parseResearchBody(research[0].body) : null;
+    const intel = extractDealIntel(
+      corpusFor(acct.id, acct.name, {
+        acctNotes: notes.map((n, i) => ({
+          id: String(i),
+          body: n.body,
+          actors: n.actors ?? "",
+          createdAt: n.createdAt.toISOString(),
+          kind: n.kind,
+        })),
+      }),
+      digestFor(acct.id) ?? digestForCardName(acct.name),
+    );
+    const scenario = SCENARIOS.find((x) => x.id === (scen?.reason ?? "")) ?? null;
+
+    const minted = await mintAsks({
+      accountName: acct.name,
+      countries: intel.countries.map((c) => c.value),
+      products: intel.products.map((p) => p.value),
+      stage: intel.timing?.value.phrase ?? "",
+      scenario: scenario ? { label: scenario.label, blurb: scenario.blurb } : null,
+      research: [found?.summary ?? "", ...(found?.signals ?? [])]
+        .filter(Boolean)
+        .join(" · ")
+        .slice(0, 900),
+      lessons: [...lessons, ...market].map((r) => parsePlaybookBody(r.body).text),
+      asked: asks.map((r) => parseGapBody(r.body)),
+    });
+    const added = await fileGaps({
+      accountId: acct.id,
+      questions: minted,
+      known: new Set(asks.map((r) => knowledgeKey(parseGapBody(r.body)))),
+    });
+    refresh();
+    return { ok: true, added: added.length };
+  } catch {
+    return { ok: false, reason: "Minting didn't complete — try again." };
+  }
+}
+
 export async function roomGapDismiss(
   noteId: string,
 ): Promise<{ ok: boolean; reason?: string }> {

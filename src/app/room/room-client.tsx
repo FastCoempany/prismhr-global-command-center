@@ -26,9 +26,11 @@ import {
   roomCompose,
   roomActionUndo,
   roomGapDismiss,
+  roomGapsRefill,
   roomLossDismiss,
   roomMarkLost,
   roomMarkWon,
+  roomResearch,
   roomRetire,
   roomNoteToAction,
   roomOwedAccept,
@@ -76,6 +78,7 @@ export type RoomRow = {
   outcome: { status: "won" | "lost"; phrase: string; at: string } | null;
   gaps: { id: string; question: string; at: string }[];
   gapsQueued: number;
+  researchAt: string; // ISO of the last research pass, "" if never run
   health: "red" | "amber" | "green" | "quiet";
   rank: number;
   canWrite: boolean;
@@ -346,6 +349,37 @@ function Row({ row }: { row: RoomRow }) {
     });
   };
   const [askGone, setAskGone] = useState<Set<string>>(new Set());
+  const [research, setResearch] = useState<{ note: string; changed: string[] } | null>(
+    null,
+  );
+  const runResearchPass = () => {
+    if (pending) return;
+    start(async () => {
+      const r = await roomResearch(row.accountId);
+      if (r.ok)
+        setResearch({
+          note: r.summary || "Filed to the record.",
+          changed: r.changed ?? [],
+        });
+      else setNote(r.reason ?? "The research pass didn't complete.");
+    });
+  };
+  const refillAsks = () => {
+    if (pending) return;
+    start(async () => {
+      const r = await roomGapsRefill(row.accountId);
+      if (r.ok)
+        setFreshInfo((f) => [
+          {
+            text: r.added
+              ? `${r.added} new ask${r.added === 1 ? "" : "s"} minted from what the app knows.`
+              : "Nothing new to ask that isn't already on the list.",
+          },
+          ...f,
+        ]);
+      else setNote(r.reason ?? "Minting didn't complete.");
+    });
+  };
   const dismissAsk = (id: string) => {
     if (pending) return;
     start(async () => {
@@ -483,6 +517,50 @@ function Row({ row }: { row: RoomRow }) {
           </span>
         </div>
         {row.meta && <span className={styles.meta}>{row.meta}</span>}
+
+        {/* The research control. Labelled, dated, and impossible to miss — a
+            refresh button that doesn't say when it last ran gets re-run blind. */}
+        {row.canWrite && row.accountId && (
+          <div className={styles.rsrch}>
+            <button
+              type="button"
+              className={styles.rsrchBtn}
+              disabled={pending}
+              onClick={runResearchPass}
+              title="searches their site, their job postings, the news, and the people named on this deal"
+            >
+              {pending
+                ? "Researching…"
+                : row.researchAt
+                  ? "Refresh research"
+                  : "Research this company"}
+            </button>
+            <span className={styles.rsrchWhen}>
+              {row.researchAt
+                ? `last run ${new Date(row.researchAt).toLocaleDateString("en-US", {
+                    month: "numeric",
+                    day: "numeric",
+                  })}`
+                : "never run — the first pass is the deep one"}
+            </span>
+          </div>
+        )}
+        {research && (
+          <div className={styles.rsrchOut}>
+            {research.changed.length > 0 ? (
+              <>
+                <b>What changed:</b>
+                <ul className={styles.rsrchList}>
+                  {research.changed.map((c) => (
+                    <li key={c}>{c}</li>
+                  ))}
+                </ul>
+              </>
+            ) : (
+              <span>{research.note}</span>
+            )}
+          </div>
+        )}
 
         <div className={styles.climb}>
           <div className={styles.track}>
@@ -759,9 +837,22 @@ function Row({ row }: { row: RoomRow }) {
                   )}
                 </div>
               ))}
-            {row.gapsQueued > 0 && (
-              <span className={styles.askMore}>{row.gapsQueued} more behind these</span>
-            )}
+            <span className={styles.askFoot}>
+              {row.gapsQueued > 0 && (
+                <span className={styles.askMore}>{row.gapsQueued} more behind these</span>
+              )}
+              {row.canWrite && (
+                <button
+                  type="button"
+                  className={styles.sdTag}
+                  disabled={pending}
+                  onClick={refillAsks}
+                  title="mint sharper asks from the countries, the scenario, the research, and what other deals taught"
+                >
+                  {pending ? "minting…" : "better asks ⟳"}
+                </button>
+              )}
+            </span>
           </div>
         )}
 

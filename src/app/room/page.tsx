@@ -39,6 +39,7 @@ import { buildStageRail } from "@/lib/room/stages-view";
 import { buildAccountSheet } from "@/lib/room/sheet-view";
 import { readLoss } from "@/lib/room/loss";
 import { GAP_DISMISS, readGaps } from "@/lib/room/gaps";
+import { researchNs } from "@/lib/intel/deep-research";
 import { OUTCOME_LABEL, readOutcome } from "@/lib/dashboard/outcome";
 import { owedToMe } from "@/lib/room/owed";
 import { GLOBAL_SCENT_RE } from "@/lib/intel/provenance";
@@ -253,6 +254,11 @@ export default async function RoomPage() {
     // STILL UNKNOWN — the asks the read queued for this deal, minus the ones
     // waved off as irrelevant. `queued` tells the operator whether dismissing
     // one costs them anything.
+    // When the research pass last ran — the refresh control states it, because a
+    // button that doesn't say when it last ran invites re-running it blindly.
+    const researchRows = accountId ? (notesById.get(researchNs(accountId)) ?? []) : [];
+    const researchAt = researchRows[0]?.createdAt ?? "";
+
     const gapDismissed = new Set(
       [...dispositions.keys()].filter((k) => k.startsWith(GAP_DISMISS)),
     );
@@ -307,6 +313,7 @@ export default async function RoomPage() {
       outcome,
       gaps: gaps.shown,
       gapsQueued: gaps.queued,
+      researchAt,
       stages: buildStageRail(card, data.labels),
       suggestions,
       move: read.move,
