@@ -358,6 +358,138 @@ export async function roomPasteUndo(
   }
 }
 
+// --- The loss read's two exits ----------------------------------------------
+// The record suggested the deal is lost; the operator decides. Mark-it-lost
+// archives the card and files the call; keep-salvaging retires THIS read
+// (keyed to the triggering note — new loss evidence resurfaces it).
+export async function roomMarkLost(
+  accountId: string,
+  cardId: string,
+  noteId: string,
+): Promise<{ ok: boolean; reason?: string }> {
+  const acct = bindAccountId(accountId, peos);
+  const cid = typeof cardId === "string" ? cardId.trim().slice(0, 40) : "";
+  if (!cid) return { ok: false, reason: "Not a bound row." };
+  if (!(await requireWrite())) return { ok: false, reason: "Read-only session." };
+  try {
+    const prisma = getPrisma();
+    const card = await prisma.dashCard.findUnique({
+      where: { id: cid },
+      select: { id: true, name: true },
+    });
+    if (!card) return { ok: false, reason: "That card is gone." };
+    await prisma.dashCard.update({ where: { id: cid }, data: { archived: true } });
+    if (acct) {
+      await createAccountNoteRow({
+        accountId: acct.id,
+        kind: "account",
+        body: `✓ Marked lost — retired from the board (the record's loss read, confirmed).`,
+        lane: "mine",
+        source: "room",
+      }).catch(() => null);
+    }
+    // Quiet this read permanently for the archived card.
+    const key = `loss-dismiss:${cid}:${(noteId ?? "").slice(0, 40)}`.slice(0, 191);
+    await prisma.accountDisposition
+      .upsert({
+        where: { accountId: key },
+        create: { accountId: key, status: "parked", reason: "marked lost" },
+        update: { status: "parked", reason: "marked lost" },
+      })
+      .catch(() => null);
+    refresh();
+    return { ok: true };
+  } catch {
+    return { ok: false, reason: "That didn't save — try again." };
+  }
+}
+
+export async function roomLossDismiss(
+  accountId: string,
+  cardId: string,
+  noteId: string,
+): Promise<{ ok: boolean; reason?: string }> {
+  const cid = typeof cardId === "string" ? cardId.trim().slice(0, 40) : "";
+  const nid = typeof noteId === "string" ? noteId.trim().slice(0, 40) : "";
+  if (!cid || !nid) return { ok: false, reason: "Not a bound row." };
+  if (!(await requireWrite())) return { ok: false, reason: "Read-only session." };
+  try {
+    const key = `loss-dismiss:${cid}:${nid}`.slice(0, 191);
+    await getPrisma().accountDisposition.upsert({
+      where: { accountId: key },
+      create: { accountId: key, status: "parked", reason: "keep salvaging" },
+      update: { status: "parked", reason: "keep salvaging" },
+    });
+    refresh();
+    return { ok: true };
+  } catch {
+    return { ok: false, reason: "That didn't save — try again." };
+  }
+}
+
+// --- Owed-to-you suggestions --------------------------------------------------
+// The record says someone put work on the operator's plate. Accept opens it
+// as a real register action; dismiss retires the suggestion durably.
+export async function roomOwedAccept(
+  accountId: string,
+  text: string,
+  key: string,
+): Promise<{ ok: boolean; reason?: string }> {
+  const acct = bindAccountId(accountId, peos);
+  const body = cleanLogBody(text);
+  const k = typeof key === "string" ? key.trim().slice(0, 191) : "";
+  if (!acct || !body || !k.startsWith("owed:"))
+    return { ok: false, reason: "Not a bound suggestion." };
+  if (!(await requireWrite())) return { ok: false, reason: "Read-only session." };
+  try {
+    const prisma = getPrisma();
+    const top = await prisma.todo.findFirst({
+      orderBy: { position: "desc" },
+      select: { position: true },
+    });
+    await prisma.todo.create({
+      data: {
+        body: withTags(body, { ...NO_TAGS, kind: "action" }),
+        done: false,
+        position: (top?.position ?? -1) + 1,
+        accountId: acct.id,
+        remindAt: new Date(),
+      },
+    });
+    await prisma.accountDisposition
+      .upsert({
+        where: { accountId: k },
+        create: { accountId: k, status: "parked", reason: "accepted" },
+        update: { status: "parked", reason: "accepted" },
+      })
+      .catch(() => null);
+    refresh();
+    return { ok: true };
+  } catch {
+    return { ok: false, reason: "That didn't save — try again." };
+  }
+}
+
+export async function roomOwedDismiss(
+  accountId: string,
+  key: string,
+): Promise<{ ok: boolean; reason?: string }> {
+  const k = typeof key === "string" ? key.trim().slice(0, 191) : "";
+  if (!k.startsWith("owed:")) return { ok: false, reason: "Not a bound suggestion." };
+  if (!(await requireWrite())) return { ok: false, reason: "Read-only session." };
+  try {
+    await getPrisma().accountDisposition.upsert({
+      where: { accountId: k },
+      create: { accountId: k, status: "parked", reason: "dismissed" },
+      update: { status: "parked", reason: "dismissed" },
+    });
+    refresh();
+    return { ok: true };
+  } catch {
+    return { ok: false, reason: "That didn't save — try again." };
+  }
+}
+
 // ✎ / ✕ on a record entry — the register's history is editable in place.
 // Both are bound: the note must belong to this account, or nothing moves.
 export async function roomRecordEdit(

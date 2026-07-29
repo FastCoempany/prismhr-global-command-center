@@ -44,6 +44,11 @@ describe("room client — every absorbed capability is wired", () => {
     ["dismiss a warming signal", "dismissTriage"],
     // the add menu
     ["arm a follow-up", "addFollowUp"],
+    // the judgment mechanisms — suggest, operator confirms
+    ["the loss read can retire the card", "roomMarkLost"],
+    ["the loss read can be waved off", "roomLossDismiss"],
+    ["an owed item can open as work", "roomOwedAccept"],
+    ["an owed suggestion can be dismissed", "roomOwedDismiss"],
   ];
   for (const [what, action] of wirings) {
     test(`${what} — ${action} is wired`, () => {

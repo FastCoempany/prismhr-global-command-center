@@ -37,6 +37,8 @@ import { suggestChecks } from "@/lib/intel/evidence";
 import { climbFraction, daysBetween, readDeal, type RoomRead } from "@/lib/room/engine";
 import { buildStageRail } from "@/lib/room/stages-view";
 import { buildAccountSheet } from "@/lib/room/sheet-view";
+import { readLoss } from "@/lib/room/loss";
+import { owedToMe } from "@/lib/room/owed";
 import { GLOBAL_SCENT_RE } from "@/lib/intel/provenance";
 import {
   RoomClient,
@@ -224,6 +226,28 @@ export default async function RoomPage() {
         .replace(" ", ""),
     }));
 
+    // The loss read — dismissals are keyed to the triggering note, so fresh
+    // loss evidence resurfaces while a "keep salvaging" call stays honored.
+    const lossDismissed = new Set<string>();
+    const lossPrefix = `loss-dismiss:${card.id}:`;
+    for (const key of dispositions.keys())
+      if (key.startsWith(lossPrefix)) lossDismissed.add(key.slice(lossPrefix.length));
+    const loss = readLoss(mine, lossDismissed, now);
+
+    // Owed-to-you: the record's action items with the operator's name on them,
+    // minus anything dismissed or already open on the register.
+    const owedDismissed = new Set(
+      [...dispositions.keys()].filter((k) => k.startsWith("owed:")),
+    );
+    const owed = accountId
+      ? owedToMe(
+          mine,
+          owedDismissed,
+          sheet.open.map((o) => o.body),
+          now,
+        ).map((o) => ({ noteId: o.noteId, key: o.key, text: o.text, src: o.src }))
+      : [];
+
     const stageLabel = step
       ? `${(data.labels[step.nodeKey] ?? step.nodeLabel).toUpperCase().slice(0, 16)} · ${doneInStage} OF ${totalInStage}`
       : "NOTHING IN FLIGHT";
@@ -287,6 +311,8 @@ export default async function RoomPage() {
       })),
       recordTotal: mine.length,
       backgroundTotal,
+      loss,
+      owed,
       health: read.health,
       rank: 0,
       canWrite: data.canWrite,
