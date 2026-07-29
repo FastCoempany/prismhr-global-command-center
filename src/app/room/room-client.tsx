@@ -1000,10 +1000,15 @@ function Row({ row }: { row: RoomRow }) {
                 {(f.opened ?? []).map((o) => (
                   <span
                     key={o.id}
-                    className={`${styles.openedChip} ${o.gone ? styles.openedGone : ""}`}
+                    className={`${styles.openedChip} ${
+                      o.gone || doneIds.has(o.id) ? styles.openedGone : ""
+                    }`}
                   >
                     {o.text.slice(0, 60)}
-                    {row.canWrite && !o.gone && (
+                    {/* Once the operator has closed or parked the row itself,
+                        the receipt's take-back is no longer the right verb —
+                        the register row owns it from then on. */}
+                    {row.canWrite && !o.gone && !doneIds.has(o.id) && !gone.has(o.id) && (
                       <button
                         type="button"
                         className={styles.openedX}
