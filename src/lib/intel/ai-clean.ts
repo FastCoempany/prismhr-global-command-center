@@ -295,6 +295,34 @@ export function accountMatches(claim: string, bound: string): boolean {
   return !!ct && !!bt && (ct === bt || b.includes(ct) || c.includes(bt));
 }
 
+// Which model reads this paste. A Salesforce timeline or an Outlook thread is
+// shaped work — headers, subjects, dates — and the cheap model does it well.
+// Freeform call notes are the opposite: no structure, all judgment, and the
+// commitments hide inside prose ("need the demo by 7/30, if not use ESC").
+// Those get the strong model, because a missed commitment there is a missed
+// deliverable in the real world.
+const SHAPED_HEAD =
+  /^\s*(OUTLOOK THREAD|TEAMS CHAT)\b|^\s*(From|To|Sent|Subject|Cc)\s*:/im;
+const SF_CHROME = /\b(Show more actions|Expand All|From Address|Text Body|thread::)\b/i;
+const NOTE_SCENT =
+  /\b(to\s*do|todo|action items?|next steps?|call (?:with|notes)|meeting (?:with|notes)|notes? from|debrief|recap)\b/i;
+
+export function looksLikeNotes(raw: string): boolean {
+  const text = (raw ?? "").trim();
+  if (!text) return false;
+  // Anything wearing mail or CRM clothing is shaped, whatever else it says.
+  if (SHAPED_HEAD.test(text) || SF_CHROME.test(text)) return false;
+  // Long walls of dialogue (transcripts) are notes-shaped too — they are pure
+  // judgment — but a wall past this size costs more than the read is worth.
+  if (text.length > 24_000) return false;
+  const lines = text.split("\n").filter((l) => l.trim()).length;
+  return NOTE_SCENT.test(text) || lines <= 40;
+}
+
+export function modelFor(raw: string): string {
+  return looksLikeNotes(raw) ? "claude-opus-5" : "claude-haiku-4-5";
+}
+
 // One call, one paste. Throws on API failure — the caller degrades to the
 // rule-based parser. `now` is passed in so date resolution is testable.
 // The client gets an explicit timeout sized to serverless hosting (the SDK
@@ -304,9 +332,10 @@ export function accountMatches(claim: string, bound: string): boolean {
 export async function aiCleanTimeline(raw: string, now: Date): Promise<AiCleanResult> {
   const client = new Anthropic({ timeout: 55_000, maxRetries: 1 });
   const todayIso = now.toLocaleDateString("en-CA", { timeZone: "America/Chicago" });
+  const model = modelFor(raw);
   const request = (maxTokens: number) =>
     client.messages.create({
-      model: "claude-haiku-4-5",
+      model,
       max_tokens: maxTokens,
       system: SYSTEM,
       messages: [

@@ -1385,3 +1385,52 @@ button.sdRadio:hover {
   padding: 1px 4px;
   text-align: center;
 }
+
+/* ── STILL UNKNOWN — the asks ─────────────────────────────────────────────────
+   System intelligence speaks in blue; these are the app's questions, not the
+   record's facts, so they sit in the same register as the owed suggestions but
+   read as a list rather than a claim. */
+.askBox {
+  margin: 3px 0 7px;
+  padding: 6px 9px;
+  background: rgba(37, 99, 235, 0.05);
+  border-left: 2px solid rgba(37, 99, 235, 0.5);
+  border-radius: 0 7px 7px 0;
+}
+.askRow {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 2px 0;
+}
+.askQ {
+  flex: 1;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--soft);
+}
+.askMore {
+  display: block;
+  margin-top: 3px;
+  font-family: var(--f-mono), monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--quiet);
+}
+
+/* The misfile guard — caution, not failure: nothing was written. */
+.misfile {
+  margin-top: 7px;
+  padding: 7px 9px;
+  background: rgba(245, 158, 11, 0.09);
+  border-left: 2px solid var(--amber);
+  border-radius: 0 7px 7px 0;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--soft);
+}
+.misfile b {
+  color: var(--ink);
+  font-weight: 600;
+}

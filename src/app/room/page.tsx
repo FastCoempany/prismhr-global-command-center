@@ -38,6 +38,8 @@ import { climbFraction, daysBetween, readDeal, type RoomRead } from "@/lib/room/
 import { buildStageRail } from "@/lib/room/stages-view";
 import { buildAccountSheet } from "@/lib/room/sheet-view";
 import { readLoss } from "@/lib/room/loss";
+import { GAP_DISMISS, readGaps } from "@/lib/room/gaps";
+import { OUTCOME_LABEL, readOutcome } from "@/lib/dashboard/outcome";
 import { owedToMe } from "@/lib/room/owed";
 import { GLOBAL_SCENT_RE } from "@/lib/intel/provenance";
 import {
@@ -248,9 +250,24 @@ export default async function RoomPage() {
         ).map((o) => ({ noteId: o.noteId, key: o.key, text: o.text, src: o.src }))
       : [];
 
-    const stageLabel = step
-      ? `${(data.labels[step.nodeKey] ?? step.nodeLabel).toUpperCase().slice(0, 16)} · ${doneInStage} OF ${totalInStage}`
-      : "NOTHING IN FLIGHT";
+    // STILL UNKNOWN — the asks the read queued for this deal, minus the ones
+    // waved off as irrelevant. `queued` tells the operator whether dismissing
+    // one costs them anything.
+    const gapDismissed = new Set(
+      [...dispositions.keys()].filter((k) => k.startsWith(GAP_DISMISS)),
+    );
+    const gaps = accountId
+      ? readGaps(notesById, accountId, gapDismissed)
+      : { shown: [], queued: 0 };
+
+    // Closed Won / Closed Lost — the terminal stamp, if the operator confirmed
+    // one. A closed row keeps its place until it's retired; the meter says so.
+    const outcome = readOutcome(card.notes);
+    const stageLabel = outcome
+      ? OUTCOME_LABEL[outcome.status].toUpperCase()
+      : step
+        ? `${(data.labels[step.nodeKey] ?? step.nodeLabel).toUpperCase().slice(0, 16)} · ${doneInStage} OF ${totalInStage}`
+        : "NOTHING IN FLIGHT";
 
     rows.push({
       accountId,
@@ -275,10 +292,21 @@ export default async function RoomPage() {
       })),
       briefed,
       climb: {
-        frac,
-        capTone: read.health === "red" ? "risk" : read.health === "amber" ? "warn" : "ok",
+        frac: outcome ? 1 : frac,
+        capTone: outcome
+          ? outcome.status === "won"
+            ? "ok"
+            : "risk"
+          : read.health === "red"
+            ? "risk"
+            : read.health === "amber"
+              ? "warn"
+              : "ok",
         label: stageLabel,
       },
+      outcome,
+      gaps: gaps.shown,
+      gapsQueued: gaps.queued,
       stages: buildStageRail(card, data.labels),
       suggestions,
       move: read.move,
@@ -318,9 +346,13 @@ export default async function RoomPage() {
       canWrite: data.canWrite,
     });
   }
+  // A closed deal keeps its row but stops competing for attention: closed
+  // sinks below everything live, whatever its health once was.
   rows.sort(
     (a, b) =>
-      HEALTH_ORDER[a.health] - HEALTH_ORDER[b.health] || a.name.localeCompare(b.name),
+      Number(!!a.outcome) - Number(!!b.outcome) ||
+      HEALTH_ORDER[a.health] - HEALTH_ORDER[b.health] ||
+      a.name.localeCompare(b.name),
   );
   rows.forEach((r, i) => (r.rank = i));
 
