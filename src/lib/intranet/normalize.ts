@@ -187,6 +187,8 @@ export function unseenMessages(fresh: Msg[], seenKeys: Set<string>): Msg[] {
 /** The receipt the operator reads after a capture. States what actually
  *  happened, including what was skipped — silence about a skip reads as a
  *  capture that took everything. */
+/** The receipt speaks in sentences, like a person would (IV.9) — never in
+ *  fragment-and-dot pipeline shorthand. */
 export function captureReceipt(input: {
   space: string;
   kept: number;
@@ -194,17 +196,18 @@ export function captureReceipt(input: {
   links: number;
   report: CaptureReport | null;
 }): string {
-  const bits: string[] = [];
-  bits.push(
-    `${input.kept} message${input.kept === 1 ? "" : "s"}${
-      input.space ? ` from ${input.space}` : ""
-    }`,
-  );
-  if (input.report?.oldest) bits.push(`back to ${input.report.oldest}`);
+  let head = `Got it — ${input.kept} message${input.kept === 1 ? "" : "s"}${
+    input.space ? ` from ${input.space}` : ""
+  }`;
+  if (input.report?.oldest) head += `, going back to ${input.report.oldest}`;
   if (input.links > 0)
-    bits.push(`${input.links} link${input.links === 1 ? "" : "s"} kept`);
-  if (input.skipped > 0) bits.push(`${input.skipped} already in the brain, skipped`);
+    head += `, with ${input.links} link${input.links === 1 ? "" : "s"}`;
+  const parts = [`${head}.`];
+  if (input.skipped > 0)
+    parts.push(`${input.skipped} already in the brain, so I skipped those.`);
   if (input.report?.ceilingHit)
-    bits.push("the scroll hit its ceiling — run it again from further up for more");
-  return `${bits.join(" · ")}.`;
+    parts.push(
+      "The scroll stopped at its safety ceiling — run it again from further up and I'll take the rest.",
+    );
+  return parts.join(" ");
 }

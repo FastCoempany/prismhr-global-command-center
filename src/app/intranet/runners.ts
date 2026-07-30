@@ -224,7 +224,7 @@ export async function syncApp(budget = 400): Promise<RunReport> {
 
     const { created, updated, skipped } = await upsertDocs(drafts);
     lines.push(
-      `The app: ${created} new, ${updated} changed, ${skipped} already current.`,
+      `Looked around the app — ${created} new, ${updated} changed, ${skipped} already known.`,
     );
 
     // C6 · a mirror whose home row has gone keeps its place and gains a stamp.
@@ -394,7 +394,9 @@ export async function ingestPlaybook(): Promise<RunReport> {
     }
 
     const { created, updated, skipped } = await upsertDocs(drafts);
-    lines.push(`The Playbook: ${created} new, ${updated} changed, ${skipped} current.`);
+    lines.push(
+      `The Playbook came along — ${created} new, ${updated} changed, ${skipped} unchanged.`,
+    );
 
     // C7 · the one part of the index allowed to exist before it is discovered.
     const seeded = await seedProspectTopics();
@@ -558,7 +560,7 @@ export async function extractPending(
 
     if (read > 0)
       lines.push(
-        `Read ${read} — kept ${claimsMade} thing${claimsMade === 1 ? "" : "s"} for the index.`,
+        `Read ${read} entr${read === 1 ? "y" : "ies"} and kept ${claimsMade} thing${claimsMade === 1 ? "" : "s"} worth remembering.`,
       );
     // IV.2 — a failure is named where the operator is looking, never swallowed.
     for (const [why, n] of failures) lines.push(`${n} couldn't be read — ${why}.`);
@@ -847,6 +849,20 @@ export async function decomposeTopics(budget = 2): Promise<RunReport> {
 
 // ═══ the ingest reaction (IV.3) ══════════════════════════════════════════════
 
+/** "a, b, and c" — the way a person lists things (IV.9). */
+function listOut(items: string[]): string {
+  if (items.length <= 1) return items[0] ?? "";
+  if (items.length === 2) return `${items[0]} and ${items[1]}`;
+  return `${items.slice(0, -1).join(", ")}, and ${items[items.length - 1]}`;
+}
+
+/** "The index grew — X picked up 6, and Y is brand new." */
+function grewSentence(grew: { label: string; n: number; fresh: boolean }[]): string {
+  const grown = grew.filter((g) => !g.fresh).map((g) => `${g.label} picked up ${g.n}`);
+  const fresh = grew.filter((g) => g.fresh).map((g) => `"${g.label}" is brand new`);
+  return `The index grew — ${listOut([...grown, ...fresh])}.`;
+}
+
 /** Read what was JUST pasted, settle the index, and report the visible
  *  consequence — which rows grew, which are new. This is what runs the moment
  *  the operator clicks "Keep it": the paste is never fire-and-forget. */
@@ -878,20 +894,21 @@ export async function readCapture(captureId: string): Promise<RunReport> {
     const idx = await indexTopics();
 
     const after = await prisma.intranetTopic.findMany({ where: { status: "live" } });
-    const grew: string[] = [];
+    const grew: { label: string; n: number; fresh: boolean }[] = [];
     for (const t of after) {
       const b = before.get(t.id);
       if (!b) {
-        if (t.claimCount > 0) grew.push(`new: ${t.label}`);
+        if (t.claimCount > 0) grew.push({ label: t.label, n: t.claimCount, fresh: true });
       } else if (t.claimCount > b.n) {
-        grew.push(`${t.label} +${t.claimCount - b.n}`);
+        grew.push({ label: t.label, n: t.claimCount - b.n, fresh: false });
       }
     }
 
     const lines = [...read.lines];
 
-    // The full digest (IV.3): not just the index, but what the paste actually
-    // was, what kinds of things it carried, and where they travel from here.
+    // The full digest (IV.3, voiced per IV.9): what the paste actually was,
+    // what it carried, and where it travels — said the way a person would say
+    // it, in whole sentences, never in pipeline shorthand.
     const docsRead = await prisma.intranetDoc.findMany({
       where: { captureId },
       select: { id: true, space: true, occurredAt: true },
@@ -909,13 +926,15 @@ export async function readCapture(captureId: string): Promise<RunReport> {
           day: "numeric",
           timeZone: "America/Chicago",
         });
-      const span =
-        times.length > 1 && day(times[0]) !== day(times[times.length - 1])
-          ? `, ${day(times[0])} → ${day(times[times.length - 1])}`
-          : times.length
-            ? `, ${day(times[0])}`
-            : "";
-      if (spaces.length) lines.push(`That was ${spaces.slice(0, 3).join(", ")}${span}.`);
+      if (spaces.length && times.length) {
+        const first = day(times[0]);
+        const last = day(times[times.length - 1]);
+        lines.push(
+          first === last
+            ? `What you pasted is ${spaces.slice(0, 3).join(" and ")} from ${first}.`
+            : `What you pasted covers ${spaces.slice(0, 3).join(" and ")} from ${first} through ${last}.`,
+        );
+      }
 
       const claims = await prisma.intranetClaim.findMany({
         where: { docId: { in: docsRead.map((d) => d.id) } },
@@ -925,25 +944,25 @@ export async function readCapture(captureId: string): Promise<RunReport> {
       const KIND_WORD: Record<string, string> = {
         fact: "facts",
         decision: "decisions",
-        commitment: "commitments",
-        process: "ways we do things",
+        commitment: "commitments people made",
+        process: "notes on how we do things",
         question: "open questions",
         opinion: "opinions",
-        "prospect-question": "things buyers asked",
+        "prospect-question": "questions buyers asked",
       };
       const tally = new Map<string, number>();
       for (const c of claims) tally.set(c.kind, (tally.get(c.kind) ?? 0) + 1);
-      const parts = Object.keys(KIND_WORD)
+      const found = Object.keys(KIND_WORD)
         .filter((k) => (tally.get(k) ?? 0) > 0)
         .map((k) => `${tally.get(k)} ${KIND_WORD[k]}`);
-      if (parts.length) lines.push(`In it: ${parts.join(" · ")}.`);
+      if (found.length) lines.push(`Inside it I found ${listOut(found)}.`);
 
-      if (grew.length) lines.push(`The index grew: ${grew.join(" · ")}.`);
+      if (grew.length) lines.push(grewSentence(grew));
 
       const buyers = tally.get("prospect-question") ?? 0;
       if (buyers > 0)
         lines.push(
-          `${buyers} buyer ask${buyers === 1 ? "" : "s"} filed under ${PROSPECT_ROOT.label} — proposals surface on the Playbook.`,
+          `${buyers === 1 ? "One of those is a question a real buyer asked — it's" : `${buyers} of those are questions real buyers asked — they're`} filed under ${PROSPECT_ROOT.label}, and any battlecard proposals from them will show up on the Playbook.`,
         );
 
       const named = accountsMentioned(
@@ -952,10 +971,10 @@ export async function readCapture(captureId: string): Promise<RunReport> {
       );
       if (named.length)
         lines.push(
-          `The book knows these names: ${named.map((a) => a.name).join(", ")} — their rows carry it from here.`,
+          `${listOut(named.map((a) => a.name))} came up by name — their account rows carry this from here.`,
         );
     } else if (grew.length) {
-      lines.push(`The index grew: ${grew.join(" · ")}.`);
+      lines.push(grewSentence(grew));
     }
 
     lines.push(...idx.lines.filter((l) => l !== "The index is settled."));

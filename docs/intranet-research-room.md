@@ -2261,3 +2261,19 @@ the room's face; the ingest-digest change below is already in production.
   from outside the record and indexed under the same country lenses. The
   by-country tab is built so that this lands as MORE ROWS under each flag,
   not as a new surface.
+
+## IV.9 · Voice and flags (founder feedback, 2026-07-30 night)
+
+- **The room talks like a person.** Receipts and ingest digests are whole
+  conversational sentences — "Got it — 214 messages from Global Sales Team,
+  going back to Jun 2, with 2 links." · "Inside it I found 12 facts, 6
+  decisions, 5 commitments people made, and 9 questions buyers asked." · "The
+  index grew — Implementation handover picked up 6, and 'Partner escalations
+  follow-through' is brand new." First person is allowed; fragment-and-dot
+  pipeline shorthand is not. Lists read "a, b, and c", never "a · b · c".
+- **The paste button says "Send it."** Never "Keep it" — you send something
+  to a brain; keeping is its job, not yours.
+- **Flags are real flag images, never emoji.** Windows renders no color emoji
+  flags — they degrade to bare letter pairs — so the by-country rail uses
+  actual flag icons (flag CDN images in mockups; inline SVG or self-hosted
+  assets in production), always beside the country's name in text.
