@@ -371,9 +371,9 @@ export function PlaybookClient({
                   <div className={styles.follow}>
                     <b>Then:</b> {q.followUp}
                   </div>
-                  <div className={styles.drum}>
-                    <b>Relay:</b> <i>{q.drumLine}</i>{" "}
-                    <CopyBtn payload={q.drumLine} label="copy relay" />
+                  <div className={styles.relay}>
+                    <b>Relay:</b> <i>{q.relayLine}</i>{" "}
+                    <CopyBtn payload={q.relayLine} label="copy relay" />
                     {accountId && (
                       <form action={askNextDone} className={styles.inline}>
                         <input type="hidden" name="accountId" value={accountId} />

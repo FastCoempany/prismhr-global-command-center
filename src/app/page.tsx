@@ -124,7 +124,7 @@ export default async function DashboardPage() {
           id: q.id,
           question: q.question,
           why: q.why,
-          drumLine: q.drumLine,
+          relayLine: q.relayLine,
         })),
         research: researchPrompt("custom", {
           account: card.name,

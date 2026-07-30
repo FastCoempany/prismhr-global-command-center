@@ -64,7 +64,7 @@ export type DiscoveryQ = {
   why: string;             // one sentence, shown on hover/expand
   listenFor: string[];     // phrases that mark the answer as significant
   followUp: string;        // the natural next probe
-  drumLine: string;        // the gauge/drum-up/campaign sentence (partner voice,
+  relayLine: string;        // the gauge/raise/campaign sentence (partner voice,
                            // direct question, no preamble — roundup voice rules)
 };
 export const DISCOVERY: DiscoveryQ[];
@@ -74,7 +74,7 @@ export function questionsFor(opts: {
 ```
 
 Seed content — minimum 24 questions, 3 per category, distilled from the
-corpus. Canonical seed set (abbreviated `question` → `drumLine`); full text
+corpus. Canonical seed set (abbreviated `question` → `relayLine`); full text
 written in code:
 
 | id | cat | question (essence) | corpus source |
@@ -101,7 +101,7 @@ written in code:
 | mt-exec | timing/multithread | Who besides {contact} feels this problem — exec and ops both? | Justin-vs-Nate split |
 | …plus ≥4 more per the code file. |
 
-Rule for every `drumLine`: a direct question a partner can ask verbatim
+Rule for every `relayLine`: a direct question a partner can ask verbatim
 ("Would you mind asking them who handles their international payroll
 today?") — never a directive with a period, no preamble words.
 
@@ -134,8 +134,8 @@ export function motionsFor(intel: DealIntel, stage: DashNodeKey): Motion[];
 ```
 Seed motions (≥12), e.g. `contract+contractsOut` → do: "chase signature
 state", say: "Anything blocking signature on your side I can clear today?";
-`any+singleThread` → do: "open a second thread", say: drumLine of `mt-exec`;
-`needs_analysis+chairUndecided` → co-chair drumLine; `any+deadlineNear` →
+`any+singleThread` → do: "open a second thread", say: relayLine of `mt-exec`;
+`needs_analysis+chairUndecided` → co-chair relayLine; `any+deadlineNear` →
 "confirm the real event behind {date} and what they need in hand for it."
 
 ### 0.4 `src/lib/intel/digest.ts` — the corpus deals, distilled
@@ -337,9 +337,9 @@ Canonical rules (id → trigger → row):
 - `suggested-checks` (w=60): ≥1 CheckSuggestion → "{card}: {n} stage checks
   look satisfiable — confirm" · confirmCheck opens board.
 - `single-thread` (w=50): threads.people.length<2 on an active card →
-  multithread drumLine · copy.
+  multithread relayLine · copy.
 - `stale-deal` (w=40): active card, no docs in 5 business days → check-in
-  drumLine · mailto.
+  relayLine · mailto.
 Row done/mute: forms post `briefRowDone` / `briefRowMute`
 (`today/actions.ts`) writing `brief-done:<ruleId>:<subjectId>:<dayKey>` /
 `brief-mute:<ruleId>:<subjectId>`; builder filters both (done is
@@ -358,7 +358,7 @@ done/mute dispositions suppress; weights order; cap respected.
 
 ---
 
-## Phase 4 — Battlecard + drum-up + research loop
+## Phase 4 — Battlecard + relay + research loop
 
 ### 4.1 "Ask next" — `src/app/today/ask-next.tsx`
 - Server computes per focus-account: `gaps: QCategory[]` from DealIntel
@@ -368,10 +368,10 @@ done/mute dispositions suppress; weights order; cap respected.
   minus `asknext-done:` dispositions → top 3.
 - Renders in the account popover as a new pill panel "Ask next" and on the
   dashboard card under the intel strip: question (brief) + ⓘ why +
-  **drum** button (copies drumLine) + ✓ (posts `askNextDone`).
+  **relay** button (copies relayLine) + ✓ (posts `askNextDone`).
 ### 4.2 Full battlecard page — `/battlecard`
 - Server page; filter chips (category / phase / audience); every question
-  card shows question, why, listenFor, followUp, drumLine + copy buttons;
+  card shows question, why, listenFor, followUp, relayLine + copy buttons;
   optional `?account=<id>` merges that account's countries + hides done.
   Nav: lives under the Demos-adjacent cluster; linked from Ask next "all ▸".
 ### 4.3 Research loop — `src/lib/intel/research.ts`

@@ -92,10 +92,10 @@ describe("redactMoney", () => {
 });
 
 describe("discovery bank", () => {
-  test("has ≥24 questions, every one with a drum line that is a direct question", () => {
+  test("has ≥24 questions, every one with a relay line that is a direct question", () => {
     assert.ok(DISCOVERY.length >= 24, `only ${DISCOVERY.length}`);
     for (const q of DISCOVERY) {
-      assert.ok(q.drumLine.trim().endsWith("?"), `${q.id} drumLine must end with ?`);
+      assert.ok(q.relayLine.trim().endsWith("?"), `${q.id} relayLine must end with ?`);
       assert.ok(q.listenFor.length > 0, `${q.id} needs listenFor`);
       assert.ok(q.why.length > 10, `${q.id} needs a why`);
     }

@@ -36,7 +36,7 @@ export function playbookQuestionDocs(): MirrorDoc[] {
       q.why ? `We ask it because ${q.why}` : "",
       q.listenFor?.length ? `What to listen for: ${q.listenFor.join("; ")}.` : "",
       q.followUp ? `The follow-up: ${q.followUp}` : "",
-      q.drumLine ? `Said plainly: "${q.drumLine}"` : "",
+      q.relayLine ? `Said plainly: "${q.relayLine}"` : "",
     ]
       .filter(Boolean)
       .join(" ");

@@ -74,7 +74,7 @@ export default async function PlaybookPage({
       why: q.why,
       listenFor: q.listenFor,
       followUp: q.followUp,
-      drumLine: fill(q.drumLine),
+      relayLine: fill(q.relayLine),
     }));
 
   // The scenario is remembered per account (a disposition row, reason = id).

@@ -4,8 +4,8 @@
 // XCEL/Infiniti threads. The problems repeat account to account; only the
 // countries change — so questions parameterize on {countries} at render.
 //
-// drumLine rule (doctrine point #3, made executable): the exact sentence to
-// say to gauge / drum up / campaign interest — a DIRECT question in the
+// relayLine rule (doctrine point #3, made executable): the exact sentence to
+// say to gauge / raise / campaign interest — a DIRECT question in the
 // roundup voice. No preamble words, never a directive with a period.
 
 import type { DashNodeKey } from "@/lib/dashboard/stages";
@@ -38,7 +38,7 @@ export type DiscoveryQ = {
   why: string;
   listenFor: string[];
   followUp: string;
-  drumLine: string;
+  relayLine: string;
 };
 
 const PHASE_ORDER: QPhase[] = [
@@ -63,7 +63,7 @@ export const DISCOVERY: DiscoveryQ[] = [
     why: "The whole deal parameterizes on this — pricing, entities, compliance, demo content.",
     listenFor: ["country names", "rough counts", '"I\'d have to check" (nobody owns it)'],
     followUp: "Which of those countries is growing next year?",
-    drumLine:
+    relayLine:
       "Would you mind asking them which countries they have workers in today, and roughly how many in each?",
   },
   {
@@ -80,7 +80,7 @@ export const DISCOVERY: DiscoveryQ[] = [
       "no one is the employer",
     ],
     followUp: "If they're employed by a local company, what notice periods bind them?",
-    drumLine:
+    relayLine:
       "Would you mind asking them whether their international workers are employees or contractors — and who legally employs them today?",
   },
   {
@@ -98,7 +98,7 @@ export const DISCOVERY: DiscoveryQ[] = [
       "someone's side job",
     ],
     followUp: "What does one payment run cost you in fees and hours?",
-    drumLine:
+    relayLine:
       "Would you mind asking them how they physically pay their international people today — wires, a platform, or something else?",
   },
   // ── Classification ─────────────────────────────────────────────────────
@@ -112,7 +112,7 @@ export const DISCOVERY: DiscoveryQ[] = [
     why: "Nate's own words on the demo: 'borderline their employees.' Open-ended, directed work is the misclassification tell.",
     listenFor: ["we manage them daily", "indefinite", "they only work for us"],
     followUp: "Has anyone assessed that risk country by country?",
-    drumLine:
+    relayLine:
       "Would you mind asking them how much day-to-day direction they give their contractors, and whether the work has an end date?",
   },
   {
@@ -125,7 +125,7 @@ export const DISCOVERY: DiscoveryQ[] = [
     why: "Shane's Bulgaria probe — notice periods stretch every timeline promise; Bryce made us caveat exactly this in client docs.",
     listenFor: ["they're a vendor's staff", "we don't know", "they own the company"],
     followUp: "Who can confirm that before we set a start date?",
-    drumLine:
+    relayLine:
       "Would you mind asking them whether any of these workers are on someone else's payroll with notice periods attached?",
   },
   {
@@ -138,7 +138,7 @@ export const DISCOVERY: DiscoveryQ[] = [
     why: "The Bulgarian living in Spain: employment happens where they LIVE, and work authorization there decides everything.",
     listenFor: ["remote inside the EU", "moved last year", "not sure where exactly"],
     followUp: "Do they hold work authorization where they live?",
-    drumLine:
+    relayLine:
       "Would you mind asking them whether any of their international people live somewhere other than their home country?",
   },
   // ── Risk ───────────────────────────────────────────────────────────────
@@ -152,7 +152,7 @@ export const DISCOVERY: DiscoveryQ[] = [
     why: "Justin was 'hyper-focused' on IP in Bulgaria; the accounting team wanted fee relief. The exec's driver is the deal's engine.",
     listenFor: ["IP", "audit", "a client asked", "board pressure", "we got scared by"],
     followUp: "If that risk landed tomorrow, what would it cost?",
-    drumLine:
+    relayLine:
       "Would you mind asking them what's making international employment urgent for them right now?",
   },
   {
@@ -165,7 +165,7 @@ export const DISCOVERY: DiscoveryQ[] = [
     why: "EOR employment contracts carry IP language a contractor invoice never does — the exact wedge that moved SubcontractorHub.",
     listenFor: ["we assume we do", "never looked", "their company owns it"],
     followUp: "Would your counsel want to layer your own IP agreement on top?",
-    drumLine:
+    relayLine:
       "Would you mind asking them who owns the work their overseas developers produce under the current setup?",
   },
   {
@@ -178,7 +178,7 @@ export const DISCOVERY: DiscoveryQ[] = [
     why: "Permanent-establishment exposure builds quietly from payment patterns; the wallet model exists to end that signal.",
     listenFor: ["bank questions", "compliance letter", "never thought about it"],
     followUp: "Has any bank ever queried those transfers?",
-    drumLine:
+    relayLine:
       "Would you mind asking them whether anyone has looked at what their recurring international wires signal to local authorities?",
   },
   // ── Incumbent ──────────────────────────────────────────────────────────
@@ -191,7 +191,7 @@ export const DISCOVERY: DiscoveryQ[] = [
     why: "SubcontractorHub tried G-P through TriNet and 'they don't integrate' — the incumbent's failure is the opening.",
     listenFor: ["G-P", "Deel", "didn't integrate", "too expensive", "no support"],
     followUp: "What would have to be true for you to move?",
-    drumLine:
+    relayLine:
       "Would you mind asking them who handles their international payroll or EOR today, and how that's going?",
   },
   {
@@ -203,7 +203,7 @@ export const DISCOVERY: DiscoveryQ[] = [
     why: "Renewal timing decides whether to open the conversation now or hold — the Infiniti/Nextep play.",
     listenFor: ["a date", "auto-renews", "month to month"],
     followUp: "Who owns that renewal decision?",
-    drumLine:
+    relayLine:
       "Would you mind asking them when their current global provider's contract renews?",
   },
   // ── Money mechanics ────────────────────────────────────────────────────
@@ -217,7 +217,7 @@ export const DISCOVERY: DiscoveryQ[] = [
     why: "Workers were eating conversion fees on their own pay; the company paid per-wire fees on ~25 people monthly. Concrete, monthly, fixable.",
     listenFor: ["per-wire fee", "workers complain", "we never added it up"],
     followUp: "Would one flat per-person fee with unlimited transfers change the math?",
-    drumLine:
+    relayLine:
       "Would you mind asking them what their international payment runs cost in wire and conversion fees each month?",
   },
   {
@@ -230,7 +230,7 @@ export const DISCOVERY: DiscoveryQ[] = [
     why: "The wallet's unlimited-transfer model is a genuine differentiator for contractor-heavy teams.",
     listenFor: ["they ask for advances", "monthly only because of fees"],
     followUp: "Which teams would you switch to weekly?",
-    drumLine:
+    relayLine:
       "Would you mind asking them whether flexible pay frequency for international workers would matter to their teams?",
   },
   // ── Timing ─────────────────────────────────────────────────────────────
@@ -244,7 +244,7 @@ export const DISCOVERY: DiscoveryQ[] = [
     why: "Chassie's Aug 6 wasn't a go-live; it was a leadership review needing a DIRECTION. Selling to the real event wins the real deadline.",
     listenFor: ["board/leadership meeting", "client promised date", "quarter end"],
     followUp: "What do you need in hand for that day — a decision, a price, a demo?",
-    drumLine:
+    relayLine:
       "Would you mind asking them what date they're working against and what happens on it?",
   },
   {
@@ -256,7 +256,7 @@ export const DISCOVERY: DiscoveryQ[] = [
     why: "Justin pushed hard on Sept 1; Bryce insisted on government-timing caveats. Knowing the slack prevents overpromising.",
     listenFor: ["nothing really", "a client walks", "we lose the hire"],
     followUp: "Should we stage a partial rollout for the critical group first?",
-    drumLine:
+    relayLine:
       "Would you mind asking them what actually breaks if this lands two weeks later than planned?",
   },
   // ── Commercial chair ───────────────────────────────────────────────────
@@ -274,7 +274,7 @@ export const DISCOVERY: DiscoveryQ[] = [
       "what's the margin",
     ],
     followUp: "What does your client experience need to look like under each?",
-    drumLine:
+    relayLine:
       "Would you mind asking them whether they'd rather hold the client contract themselves or have us contract directly and pay them a referral fee?",
   },
   {
@@ -287,7 +287,7 @@ export const DISCOVERY: DiscoveryQ[] = [
     why: "The deposit waiver exists INSIDE the partner structure; on referral, standard security applies — the exact friction that nearly stalled Advocate Pay.",
     listenFor: ["surprise at security terms", "our client won't like that"],
     followUp: "Should we walk your counsel through the pass-through language?",
-    drumLine:
+    relayLine:
       "Would you mind confirming with them who expects to carry the funding obligation, so the security terms don't surprise anyone at contract time?",
   },
   // ── Platform + scope ───────────────────────────────────────────────────
@@ -300,7 +300,7 @@ export const DISCOVERY: DiscoveryQ[] = [
     why: "Drives the demo, the integration story, and the intake form's platform field.",
     listenFor: ["PrismHR", "iSolved", "something else entirely"],
     followUp: "Any plans to change platforms this year?",
-    drumLine:
+    relayLine:
       "Would you mind confirming which platform runs their domestic payroll today?",
   },
   {
@@ -313,7 +313,7 @@ export const DISCOVERY: DiscoveryQ[] = [
     why: "The intake form asks; better to know in discovery. ESC's TLM need was 'unknown' in the licensing memo — a gap that stalls pricing.",
     listenFor: ["hourly workers", "expense chaos", "TLM"],
     followUp: "Which of those is day-one versus later?",
-    drumLine:
+    relayLine:
       "Would you mind asking them whether time tracking or expense management needs to be part of the picture?",
   },
   {
@@ -326,7 +326,7 @@ export const DISCOVERY: DiscoveryQ[] = [
     why: "ESC's real ask became MPEX licensing — operate, don't buy. Catching this early routes the deal to the right structure entirely.",
     listenFor: ["we want to run it", "licensing", "our own clients recurring"],
     followUp: "How many client companies would they onboard per year?",
-    drumLine:
+    relayLine:
       "Would you mind asking them whether they see themselves operating payroll on licensed technology or buying it as a service per client?",
   },
   // ── Multithreading (lives in timing category for gap math) ─────────────
@@ -340,7 +340,7 @@ export const DISCOVERY: DiscoveryQ[] = [
     why: "The SubcontractorHub call split exactly this way (CEO on IP, accounting on fees). One-thread deals stall when that person goes quiet.",
     listenFor: ["only one name", "the CEO cares about X, ops cares about Y"],
     followUp: "Can we get both voices in the next meeting?",
-    drumLine:
+    relayLine:
       "Would you mind asking them who else — on the executive side and the operations side — should be in this conversation?",
   },
   {
@@ -353,7 +353,7 @@ export const DISCOVERY: DiscoveryQ[] = [
     why: "Chassie carries a direction to leadership; arming the internal champion with answers wins meetings we're not in.",
     listenFor: ["I present to leadership", "the CEO decides", "finance will push back"],
     followUp: "What one-pager would make that meeting easy for you?",
-    drumLine:
+    relayLine:
       "Would you mind asking them who makes the final call and what that group will want to see?",
   },
   {
@@ -366,7 +366,7 @@ export const DISCOVERY: DiscoveryQ[] = [
     why: "Greenfield growth changes product fit (entities vs EOR) and gives the proposal a forward story.",
     listenFor: ["new markets", "doubling the team", "hiring freeze"],
     followUp: "What's the first role you'd hire there?",
-    drumLine:
+    relayLine:
       "Would you mind asking them where they plan to hire internationally over the next year?",
   },
   {
@@ -379,7 +379,7 @@ export const DISCOVERY: DiscoveryQ[] = [
     why: "Justin suspected wage scraping in Bulgaria — visibility into gross-to-net per worker is an EOR-only answer.",
     listenFor: ["we can't see that", "we trust the local lead", "suspicions"],
     followUp: "Would per-worker gross-to-net visibility settle it?",
-    drumLine:
+    relayLine:
       "Would you mind asking them how much visibility they have into what their overseas workers actually receive?",
   },
   {
@@ -392,7 +392,7 @@ export const DISCOVERY: DiscoveryQ[] = [
     why: "'They said they integrate, and essentially they don't' killed the G-P/TriNet path. Our one-platform story lands hardest here.",
     listenFor: ["double entry", "csv exports", "no sync"],
     followUp: "What would one platform for domestic and global change for your team?",
-    drumLine:
+    relayLine:
       "Would you mind asking them how well their global provider actually integrates with their payroll platform?",
   },
 ];
@@ -412,7 +412,7 @@ export function questionsFor(opts: {
     .map((q) => ({
       ...q,
       question: q.question.replaceAll("{countries}", merged),
-      drumLine: q.drumLine.replaceAll("{countries}", merged),
+      relayLine: q.relayLine.replaceAll("{countries}", merged),
     }))
     .sort((a, b) => {
       const ga = opts.gaps.includes(a.category) ? 0 : 1;

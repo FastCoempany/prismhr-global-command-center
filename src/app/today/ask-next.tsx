@@ -2,7 +2,7 @@
 
 // "Ask next" — the ≤3 questions worth asking this account right now, rendered
 // wherever the account is being worked (dashboard card, focus popover).
-// drum copies the exact roundup-voice sentence; ✓ retires the question for
+// relay copies the exact roundup-voice sentence; ✓ retires the question for
 // this account (asknext-done:). Footer carries the research loop: copy the
 // built prompt, open claude.ai, paste the answer back as a note.
 
@@ -16,7 +16,7 @@ export type AskNextQ = {
   id: string;
   question: string;
   why: string;
-  drumLine: string;
+  relayLine: string;
 };
 
 function CopyBtn({
@@ -80,7 +80,7 @@ export function AskNext({
           <span className={styles.info} title={q.why}>
             ⓘ
           </span>
-          <CopyBtn payload={q.drumLine} label="drum" title={q.drumLine} />
+          <CopyBtn payload={q.relayLine} label="relay" title={q.relayLine} />
           {canWrite && (
             <form action={askNextDone} className={styles.inline}>
               <input type="hidden" name="accountId" value={accountId} />
