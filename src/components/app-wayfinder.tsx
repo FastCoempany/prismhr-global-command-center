@@ -62,29 +62,19 @@ export async function AppWayfinder({
             Pricing
           </Link>
           <Link
-            aria-current={current === "Pipeline" ? "page" : undefined}
-            className="app-route-link"
-            href="/pipeline"
-          >
-            Pipeline
-          </Link>
-          <Link
             aria-current={DEMO_PAGES.has(current) ? "page" : undefined}
             className="app-route-link"
             href="/demos"
           >
             Demos
           </Link>
-          <Link
-            aria-current={current === "Capture" ? "page" : undefined}
-            className="app-route-link"
-            href="/intake"
-          >
-            Capture
-          </Link>
-          {/* Archived surfaces. Today and the board were the app's first two
-              rooms; the Room absorbed both. They stay reachable and stay
-              quiet — no colour, no weight, no competition for the eye. */}
+          {/* Archived surfaces. Today, the board and Pipeline were the app's
+              first three rooms; the Room is all three now — it holds the deals
+              in motion, so nothing else gets to hold a second opinion about
+              them. Capture keeps the bookmarklets and the intake form, which
+              need a page to be dragged from but aren't daily work. All four
+              stay reachable and stay quiet — no colour, no weight, no
+              competition for the eye. */}
           <span className="app-route-archive" aria-label="Archived surfaces">
             <Link
               aria-current={current === "Today" ? "page" : undefined}
@@ -99,6 +89,20 @@ export async function AppWayfinder({
               href="/"
             >
               Board
+            </Link>
+            <Link
+              aria-current={current === "Pipeline" ? "page" : undefined}
+              className="app-route-arch"
+              href="/pipeline"
+            >
+              Pipeline
+            </Link>
+            <Link
+              aria-current={current === "Capture" ? "page" : undefined}
+              className="app-route-arch"
+              href="/intake"
+            >
+              Capture
             </Link>
           </span>
         </nav>

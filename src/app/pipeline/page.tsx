@@ -33,19 +33,24 @@ export default async function PipelinePage() {
         <div className={styles.pageHead}>
           <h1 className={styles.h1}>Pipeline</h1>
 
-          <p className={styles.sub}>PEOs in motion across the channel.</p>
+          <p className={styles.sub}>
+            Archived. The <Link href="/room">Room</Link> is the pipeline — it holds every
+            deal in motion and the stage each one is actually at. This view reads the
+            older stage field kept on the account record, so it can lag what the Room
+            knows; it survives as a plain column count, nothing more.
+          </p>
         </div>
         {data.status === "database-unavailable" && (
           <div className={styles.banner}>
             Working state is read-only — run <code>docs/command-center-tables.sql</code>{" "}
-            in Supabase, then move PEOs through stages from the Book.
+            in Supabase, then set an account&apos;s stage from its row on Accounts.
           </div>
         )}
 
         {inPipeline.length === 0 ? (
           <div className={styles.empty}>
-            Nothing in motion yet. Head to <Link href="/book">Book</Link> and move a
-            high-fit PEO to a stage.
+            Nothing carries the old stage field. The live pipeline is the{" "}
+            <Link href="/room">Room</Link>.
           </div>
         ) : (
           <div className={styles.cols}>
@@ -60,7 +65,13 @@ export default async function PipelinePage() {
                     <span>{rows.length}</span>
                   </div>
                   {rows.map((r) => (
-                    <Link key={r.id} href={`/book?peo=${r.id}`} className={styles.pcard}>
+                    // The old Book route redirects to Accounts and drops the id on
+                    // the way. Link the account row directly so the click lands.
+                    <Link
+                      key={r.id}
+                      href={`/accounts?peo=${r.id}`}
+                      className={styles.pcard}
+                    >
                       <div className={styles.nm}>{r.name}</div>
                       <div className={styles.rowSub}>
                         {r.csm} · priority {r.priority}

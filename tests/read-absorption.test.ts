@@ -554,6 +554,35 @@ describe("the restructure holds", () => {
     assert.ok(intake.includes('current="Capture"'));
     assert.ok(intake.includes('href="/room"'));
   });
+  test("the main row is five: Room, Accounts, Playbook, Pricing, Demos", () => {
+    // Everything before the archive group is a place the operator works. The
+    // count is the contract — a sixth tab has to earn its way in on purpose.
+    const main = nav.split("app-route-archive")[0];
+    const links = [...main.matchAll(/href="(\/[a-z]*)"/g)].map((m) => m[1]);
+    assert.deepEqual(links, [
+      "/",
+      "/room",
+      "/accounts",
+      "/playbook",
+      "/pricing",
+      "/demos",
+    ]);
+  });
+  test("Capture and Pipeline are archived, not deleted", () => {
+    const arch = nav.split("app-route-archive")[1] ?? "";
+    for (const href of ["/today", "/", "/pipeline", "/intake"]) {
+      assert.ok(arch.includes(`href="${href}"`), `${href} left the archive group`);
+    }
+    assert.ok(existsSync(join(root, "src/app/pipeline/page.tsx")));
+    assert.ok(existsSync(join(root, "src/app/intake/page.tsx")));
+  });
+  test("Pipeline concedes the pipeline to the Room and links land", () => {
+    const pipe = readFileSync(join(root, "src/app/pipeline/page.tsx"), "utf8");
+    assert.ok(/Room<\/Link> is the pipeline/.test(pipe), "the concession is missing");
+    // /book redirects to /accounts and drops the query — no card may point there.
+    assert.ok(!pipe.includes("/book"), "a card still links at the retired Book");
+    assert.ok(pipe.includes("/accounts?peo="));
+  });
   test("retiring a question comes home to the BOUND card it was asked from", () => {
     const actions = readFileSync(join(root, "src/app/today/actions.ts"), "utf8");
     // The Playbook carries its account in the query string; the whitelist has to
