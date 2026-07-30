@@ -405,14 +405,30 @@ export async function ledgerEntries(opts?: {
       });
     }
     for (const c of captures) {
-      const meta = (c.meta ?? {}) as { space?: string; digest?: string[] };
+      const meta = (c.meta ?? {}) as {
+        space?: string;
+        digest?: string[];
+        report?: { messages?: number };
+      };
+      // A capture from before digests were stored still deserves a sentence —
+      // rebuilt from what its meta remembers, never a bare placeholder.
+      const fallback = meta.report?.messages
+        ? [
+            `Got it — ${meta.report.messages} messages${meta.space ? ` from ${meta.space}` : ""}.`,
+          ]
+        : c.title || meta.space
+          ? [`Got it — ${c.title || meta.space}.`]
+          : ["Sent to the brain."];
       entries.push({
         kind: "fed",
         id: c.id,
         at: iso(c.capturedAt),
         space: meta.space ?? "",
         title: c.title,
-        lines: Array.isArray(meta.digest) ? meta.digest.slice(0, 12) : [],
+        lines:
+          Array.isArray(meta.digest) && meta.digest.length
+            ? meta.digest.slice(0, 12)
+            : fallback,
       });
     }
 
