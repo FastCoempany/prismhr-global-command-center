@@ -45,7 +45,7 @@ export async function fileTimeline(
   dialectIn?: string,
 ): Promise<{ ok: boolean; filed: number }> {
   const id = (accountId ?? "").trim().slice(0, 40);
-  const dialect = dialectIn === "OL" ? "OL" : "SF";
+  const dialect = dialectIn === "OL" ? "OL" : dialectIn === "TM" ? "TM" : "SF";
   if (!(await requireWrite()) || !id || !Array.isArray(entries))
     return { ok: false, filed: 0 };
   const batch = entries.slice(0, 40);
@@ -62,7 +62,7 @@ export async function fileTimeline(
         body: noteBody(e, actors, dialect),
         lane: laneFor(actors, `${e.subject ?? ""}\n${e.body ?? ""}`),
         actors,
-        source: dialect === "OL" ? "outlook" : "sf",
+        source: dialect === "OL" ? "outlook" : dialect === "TM" ? "teams" : "sf",
         at: e.dayIso ? new Date(`${e.dayIso}T12:00:00Z`) : undefined,
       });
       filed++;

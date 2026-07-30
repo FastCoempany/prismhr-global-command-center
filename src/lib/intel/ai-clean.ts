@@ -309,7 +309,7 @@ export function accountMatches(claim: string, bound: string): boolean {
 // Those get the strong model, because a missed commitment there is a missed
 // deliverable in the real world.
 const SHAPED_HEAD =
-  /^\s*(OUTLOOK THREAD|TEAMS CHAT)\b|^\s*(From|To|Sent|Subject|Cc)\s*:/im;
+  /^\s*(OUTLOOK THREAD|TEAMS CHAT|TEAMS THREAD)\b|^\s*(From|To|Sent|Subject|Cc)\s*:/im;
 const SF_CHROME = /\b(Show more actions|Expand All|From Address|Text Body|thread::)\b/i;
 const NOTE_SCENT =
   /\b(to\s*do|todo|action items?|next steps?|call (?:with|notes)|meeting (?:with|notes)|notes? from|debrief|recap)\b/i;

@@ -441,7 +441,7 @@ export default async function RoomPage() {
   const manualTouches = touches.filter(
     (t) => isManual(t.subjectKey) && t.status !== "archived",
   );
-  const boardNamesForBrain = data.cards.filter((c) => !c.archived).map((c) => c.name);
+  const knownOrgs = [...data.cards.map((c) => c.name), ...peos.map((p) => p.name)];
   const followUpRows: FollowUpRow[] = manualTouches
     .sort((a, b) => Date.parse(b.contactedAt) - Date.parse(a.contactedAt))
     .slice(0, 40)
@@ -461,7 +461,10 @@ export default async function RoomPage() {
           .map((id) => peos.find((p) => p.id === id)?.name ?? "")
           .filter(Boolean),
         // The one open question: a name nobody on the board answers to.
-        newName: openCandidates(read, t.detail ?? "", boardNamesForBrain)[0] ?? "",
+        // The question is only asked about a name NOBODY already knows — not the
+        // board, and not the book behind Accounts. Offering to add a company
+        // that already has a record is how duplicates get made.
+        newName: openCandidates(read, t.detail ?? "", knownOrgs)[0] ?? "",
       };
     });
 

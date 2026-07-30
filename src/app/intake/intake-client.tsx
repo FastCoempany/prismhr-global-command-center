@@ -29,6 +29,16 @@ function outlookBookmarkletFor(origin: string): string {
   return `javascript:${js}`;
 }
 
+// Grabs the open Teams (web) chat or channel thread. Teams virtualises its
+// message list — only what has actually rendered is in the DOM — so the grab
+// scrolls the pane to the top a few times first, letting older messages load,
+// then reads the list region. Tightest selectors first; a miss refuses rather
+// than shipping the whole app chrome (rosters, nav, other chats) into a deal.
+function teamsBookmarkletFor(origin: string): string {
+  const js = `(async()=>{const sel=['[data-tid="message-pane-list-viewport"]','[data-tid="messagePaneList"]','[data-tid="chat-pane-list"]','[role="main"] [role="list"]','[data-tid="threadBodyContainer"]'];const find=()=>{for(const s of sel){let el=null;try{el=document.querySelector(s)}catch(e){}if(el&&el.innerText&&el.innerText.length>120)return el}return null};let el=find();if(!el){alert('Open the chat or channel thread first — Teams on the web only. The desktop app has no page for a bookmarklet to read.');return}const pane=(()=>{let p=el;for(let i=0;i<6&&p;i++){if(p.scrollHeight>p.clientHeight+40)return p;p=p.parentElement}return el})();const sleep=(ms)=>new Promise(r=>setTimeout(r,ms));let last=-1;for(let i=0;i<8;i++){if(pane.scrollHeight===last)break;last=pane.scrollHeight;pane.scrollTop=0;await sleep(650)}el=find()||el;const t='TEAMS THREAD - '+document.title.replace(/ \\| Microsoft Teams.*$/,'')+' - captured '+new Date().toLocaleString()+'\\n\\n'+el.innerText;try{await navigator.clipboard.writeText(t)}catch(e){window.prompt('Auto-copy was blocked. Press Ctrl+C, then paste into Capture:',t.slice(0,4000))}window.open('${origin}/intake','_blank')})()`;
+  return `javascript:${js}`;
+}
+
 export function IntakeClient({ accounts, ai }: { accounts: Acct[]; ai: boolean }) {
   const [raw, setRawState] = useState("");
   const [accountId, setAccountId] = useState("");
@@ -45,10 +55,12 @@ export function IntakeClient({ accounts, ai }: { accounts: Acct[]; ai: boolean }
   const [aiNote, setAiNote] = useState<string | null>(null);
   const bmRef = useRef<HTMLAnchorElement>(null);
   const bmOutRef = useRef<HTMLAnchorElement>(null);
+  const bmTeamsRef = useRef<HTMLAnchorElement>(null);
 
   useEffect(() => {
     bmRef.current?.setAttribute("href", bookmarkletFor(window.location.origin));
     bmOutRef.current?.setAttribute("href", outlookBookmarkletFor(window.location.origin));
+    bmTeamsRef.current?.setAttribute("href", teamsBookmarkletFor(window.location.origin));
   }, []);
 
   // Any change to the paste invalidates a previous AI clean.
@@ -113,7 +125,12 @@ export function IntakeClient({ accounts, ai }: { accounts: Acct[]; ai: boolean }
   const file = async () => {
     if (!accountId || chosen.length === 0 || busy) return;
     setBusy(true);
-    const dialect = /^OUTLOOK THREAD\b/.test(raw.trimStart()) ? "OL" : "SF";
+    const head = raw.trimStart();
+    const dialect = /^OUTLOOK THREAD\b/.test(head)
+      ? "OL"
+      : /^TEAMS THREAD\b/.test(head)
+        ? "TM"
+        : "SF";
     const r = await fileTimeline(accountId, chosen, dialect);
     setBusy(false);
     if (r.ok) {
@@ -341,10 +358,21 @@ export function IntakeClient({ accounts, ai }: { accounts: Acct[]; ai: boolean }
           For a Salesforce account/contact page&apos;s activity timeline. Use SF&apos;s
           “Expand All” first where you can — collapsed previews don&apos;t travel.
         </p>
+        <a
+          ref={bmTeamsRef}
+          className={styles.inkBookmarklet}
+          title="Drag me to the bookmarks bar — don't click here"
+        >
+          ☰ Grab Teams thread
+        </a>
         <p className={styles.mutedSm}>
-          <b>Teams:</b> no bookmarklet needed — select the chat, copy, and paste it
-          straight in (or into a row&apos;s ⚡ box). The cleaner reads the chat dialect:
-          speakers stay named, the noise dies, decisions and owed items survive.
+          For Teams <b>on the web</b> (teams.microsoft.com) — the desktop app isn&apos;t a
+          browser page, so nothing can read it there. Open the chat or channel thread and
+          click the bookmarklet: it scrolls the pane up a few times so Teams loads the
+          older messages it hides, then takes the whole conversation. Very long histories
+          may need a second run. Selecting and copying by hand still works too — the
+          cleaner reads the chat dialect either way: speakers stay named, the noise dies,
+          decisions and owed items survive.
         </p>
       </aside>
     </div>
