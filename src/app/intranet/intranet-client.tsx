@@ -367,7 +367,9 @@ export function IntranetClient({
     });
   };
 
-  const stampOf = (e: FeedEntry): { cls: string; text: string; peek: string } => {
+  const stampOf = (
+    e: FeedEntry,
+  ): { cls: string; edge: string; text: string; peek: string } => {
     const when = new Date(Date.parse(e.at)).toLocaleTimeString("en-US", {
       hour: "numeric",
       minute: "2-digit",
@@ -376,6 +378,7 @@ export function IntranetClient({
     if (e.kind === "fed")
       return {
         cls: styles.itKFed,
+        edge: styles.itLFed,
         text: `sent · ${when}`,
         peek: e.lines[0] ?? e.title ?? e.space,
       };
@@ -383,11 +386,17 @@ export function IntranetClient({
       const world = e.reply.ok && e.reply.world && e.reply.citations.length === 0;
       return {
         cls: world ? styles.itKWorld : styles.itKAsk,
+        edge: world ? styles.itLWorld : styles.itLAsked,
         text: `${world ? "from the world" : "asked"} · ${when}`,
         peek: e.reply.question,
       };
     }
-    return { cls: styles.itKAsk, text: `asked · ${when}`, peek: e.question };
+    return {
+      cls: styles.itKAsk,
+      edge: styles.itLAsked,
+      text: `asked · ${when}`,
+      peek: e.question,
+    };
   };
 
   const renderStored = (e: LedgerEntry) => {
@@ -731,7 +740,7 @@ export function IntranetClient({
               return (
                 <section
                   key={e.id}
-                  className={`${styles.itLEntry} ${min ? styles.itLMin : ""}`}
+                  className={`${styles.itLEntry} ${s.edge} ${min ? styles.itLMin : ""}`}
                 >
                   <div className={styles.itLStamp}>
                     <span className={s.cls}>{s.text}</span>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import {
   captureToStash,
   deleteTrayItem,
@@ -48,6 +49,10 @@ function selectionText(sel: Selection | null): string {
 }
 
 export function StashDock() {
+  // The Intranet pins its paste dock along the bottom edge — the chip rides
+  // above it there instead of sitting on the Send button.
+  const pathname = usePathname();
+  const lifted = pathname?.startsWith("/intranet");
   const [ready, setReady] = useState(false);
   const [enabled, setEnabled] = useState(false);
   const [items, setItems] = useState<StashTrayItem[]>([]);
@@ -524,6 +529,7 @@ export function StashDock() {
       <button
         type="button"
         className={`${styles.dock} ${dragOver ? styles.dockDrag : ""}`}
+        style={lifted ? { bottom: 102 } : undefined}
         onClick={() => setOpen((v) => !v)}
         onDragOver={(e) => {
           e.preventDefault();

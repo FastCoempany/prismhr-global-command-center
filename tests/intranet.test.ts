@@ -1944,3 +1944,37 @@ describe("the ledger surface holds the decrees (IV.8)", () => {
     assert.ok(client.includes("A country is a lens, not a copy"));
   });
 });
+
+describe("the room carries the brand's depth without breaking its rules (IV.9)", () => {
+  const css = readFileSync(join(root, "src/app/command-center.module.css"), "utf8");
+  const client = readFileSync(join(root, "src/app/intranet/intranet-client.tsx"), "utf8");
+  const stash = readFileSync(join(root, "src/components/stash/stash-dock.tsx"), "utf8");
+
+  test("the Ask is the one orange move — solid, and alone", () => {
+    const go = /\.itGo \{[\s\S]*?\n\}/.exec(css)?.[0] ?? "";
+    assert.ok(/background: var\(--orange\)/.test(go), "the move went pale again");
+    const wash = /\.itWrap \{[\s\S]*?\n\}/.exec(css)?.[0] ?? "";
+    assert.ok(!/230, 112, 30/.test(wash), "orange leaked into the field wash");
+  });
+  test("entries carry their semantic edge — navy asked, green fed, blue world", () => {
+    assert.ok(css.includes(".itLAsked"), "asked entries lost their edge");
+    assert.ok(css.includes(".itLFed"));
+    assert.ok(css.includes(".itLWorld"));
+    assert.ok(client.includes("itLFed"), "the client stopped applying the edges");
+  });
+  test("depth comes from the brand's own shadow ladder", () => {
+    assert.ok(css.includes("--ds-shadow-rest"), "cards sit flat on the field");
+    assert.ok(css.includes("--ds-shadow-lift"), "nothing lifts on hover");
+  });
+  test("the stash chip rides above the intranet's paste dock", () => {
+    assert.ok(stash.includes("usePathname"), "the chip doesn't know where it is");
+    assert.ok(/\/intranet/.test(stash), "the chip still sits on the Send button");
+  });
+  test("a pre-digest capture replays as a sentence, not a placeholder", () => {
+    const store = readFileSync(join(root, "src/lib/intranet/store.ts"), "utf8");
+    assert.ok(
+      /meta\.report\?\.messages/.test(store),
+      "the fallback ignores what meta remembers",
+    );
+  });
+});

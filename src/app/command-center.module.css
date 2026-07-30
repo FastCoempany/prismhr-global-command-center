@@ -7138,6 +7138,12 @@
    move this surface asks for, and appears nowhere else. Blue is system
    intelligence: the citations, the rail's selection, the links out. */
 .itWrap {
+  background: radial-gradient(
+    1100px 320px at 22% -80px,
+    rgba(37, 99, 235, 0.05),
+    transparent 70%
+  );
+  border-radius: 16px;
   display: grid;
   /* the index rail sits on the left — the page reads index -> work (IV.3) */
   grid-template-columns: 288px minmax(0, 1fr);
@@ -7148,20 +7154,53 @@
 .itMain {
   min-width: 0;
 }
+.itKicker {
+  margin: 0 0 4px;
+  color: var(--ds-blue, #2563eb);
+  font:
+    700 10px/1.2 var(--f-mono),
+    ui-monospace,
+    monospace;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+/* the ask bar is the room's hero — white card on the field, the orange
+   baseline the app's hero cards wear, and the ONE dominant move inside it */
 .itAskRow {
   display: flex;
-  gap: 9px;
+  gap: 10px;
+  background: #fff;
+  border: 1px solid var(--ds-hair-strong, rgba(10, 28, 64, 0.14));
+  border-bottom: 3px solid var(--orange);
+  border-radius: 12px;
+  box-shadow: var(
+    --ds-shadow-rest,
+    0 1px 2px rgba(10, 28, 64, 0.04),
+    0 4px 14px rgba(10, 28, 64, 0.05)
+  );
+  padding: 10px;
+  transition: box-shadow 0.15s ease;
+}
+.itAskRow:focus-within {
+  box-shadow: var(
+    --ds-shadow-lift,
+    0 2px 4px rgba(10, 28, 64, 0.05),
+    0 14px 36px rgba(10, 28, 64, 0.08)
+  );
 }
 .itAsk {
   flex: 1;
   min-width: 0;
-  border: 1px solid var(--line);
-  border-radius: 10px;
+  border: 0;
+  border-radius: 8px;
   padding: 12px 14px;
   font: inherit;
-  font-size: 15px;
+  font-size: 15.5px;
   color: var(--navy);
-  background: #fff;
+  background: transparent;
+}
+.itAsk:focus {
+  outline: none;
 }
 .itAsk::placeholder {
   color: rgba(10, 28, 64, 0.38);
@@ -7171,19 +7210,23 @@
   outline-offset: 1px;
 }
 .itGo {
-  border: 1px solid rgba(230, 112, 30, 0.45);
-  background: linear-gradient(180deg, rgba(230, 112, 30, 0.18), rgba(230, 112, 30, 0.1));
-  color: #a2450b;
+  border: 1px solid var(--ds-orange-strong, #d4661b);
+  background: var(--orange);
+  color: #fff;
   font: inherit;
   font-weight: 700;
   font-size: 14px;
-  border-radius: 10px;
-  padding: 0 22px;
+  border-radius: 9px;
+  padding: 0 26px;
   cursor: pointer;
   white-space: nowrap;
+  transition:
+    background 0.12s ease,
+    transform 0.12s ease;
 }
 .itGo:hover:not(:disabled) {
-  background: linear-gradient(180deg, rgba(230, 112, 30, 0.26), rgba(230, 112, 30, 0.14));
+  background: var(--ds-orange-strong, #d4661b);
+  transform: translateY(-1px);
 }
 .itGo:disabled {
   opacity: 0.45;
@@ -7330,14 +7373,19 @@
 /* ── the rail ───────────────────────────────────────────────────────────── */
 .itRail {
   background: #fff;
-  border: 1px solid var(--line);
-  border-radius: 11px;
+  border: 1px solid var(--ds-hair-strong, rgba(10, 28, 64, 0.14));
+  border-radius: 12px;
   overflow: hidden;
   position: sticky;
   top: 14px;
   display: flex;
   flex-direction: column;
   max-height: calc(100vh - 140px);
+  box-shadow: var(
+    --ds-shadow-rest,
+    0 1px 2px rgba(10, 28, 64, 0.04),
+    0 4px 14px rgba(10, 28, 64, 0.05)
+  );
 }
 .itRailHead {
   display: flex;
@@ -7741,12 +7789,19 @@
   border: 1px solid var(--navy);
   background: var(--navy);
   color: #fff;
-  border-radius: 9px;
+  border-radius: 10px;
   font: inherit;
-  font-size: 13.5px;
-  font-weight: 600;
-  padding: 8px 20px;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 13px 24px;
   cursor: pointer;
+  transition:
+    background 0.12s ease,
+    transform 0.12s ease;
+}
+.itKeep:hover:not(:disabled) {
+  background: #13275a;
+  transform: translateY(-1px);
 }
 .itKeep:hover:not(:disabled) {
   background: #13275a;
@@ -7780,6 +7835,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  padding-left: 2px;
   font-family: var(--f-mono), ui-monospace, Menlo, monospace;
   font-size: 10px;
   font-weight: 500;
@@ -7787,6 +7843,14 @@
   text-transform: uppercase;
   color: rgba(10, 28, 64, 0.42);
   margin: 22px 0 12px;
+}
+.itLDivider::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  background: var(--navy);
+  opacity: 0.55;
 }
 .itLDivider::after {
   content: "";
@@ -7810,9 +7874,36 @@
 .itLEntry {
   background: #fff;
   border: 1px solid var(--line);
+  border-left-width: 3px;
   border-radius: 11px;
   padding: 15px 20px 17px;
   margin-bottom: 12px;
+  box-shadow: var(
+    --ds-shadow-rest,
+    0 1px 2px rgba(10, 28, 64, 0.04),
+    0 4px 14px rgba(10, 28, 64, 0.05)
+  );
+  transition:
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+.itLEntry:hover {
+  box-shadow: var(
+    --ds-shadow-lift,
+    0 2px 4px rgba(10, 28, 64, 0.05),
+    0 14px 36px rgba(10, 28, 64, 0.08)
+  );
+}
+/* the record's semantic edges: navy for what you asked, green for what you
+   fed it, blue for the world speaking */
+.itLAsked {
+  border-left-color: var(--navy);
+}
+.itLFed {
+  border-left-color: var(--green, #22c55e);
+}
+.itLWorld {
+  border-left-color: var(--blue);
 }
 .itLEntry.itLMin {
   padding: 10px 20px;
@@ -7960,9 +8051,12 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(245, 247, 251, 0.93);
-  backdrop-filter: blur(6px);
-  border-top: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(8px);
+  border-top: 1px solid var(--ds-hair-strong, rgba(10, 28, 64, 0.14));
+  box-shadow:
+    0 -2px 4px rgba(10, 28, 64, 0.03),
+    0 -14px 36px rgba(10, 28, 64, 0.07);
   z-index: 40;
 }
 .itDockIn {
