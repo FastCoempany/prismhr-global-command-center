@@ -109,13 +109,16 @@ a widget in Salesforce rather than exporting the signal as fields. So
 the room never "pulls" intent; it **receives** it through three
 operator-gated lanes:
 
-1. **The D8 triage capture.** The daily triage ends with a capture:
-   typed quick-entry, or a fourth bookmarklet in the existing Grab
-   family (`SALESNAV` head token) that copies the dashboard rows already
-   on screen. The paste reader parses account names, intent levels,
-   activity counts, and alerts; matches them to book accounts; proposes
-   dated signals the operator confirms. Same pattern as the SF/Outlook/
-   Teams grabs — capture what's visible, never crawl.
+1. **The D8 triage capture.** The daily triage ends with a capture: the
+   ▤ "Grab Sales Nav intent" bookmarklet (shipped in the Capture shelf,
+   7/30) copies the accounts-list dashboard as rendered, with a
+   `SALESNAV ACCOUNTS` head token. Because it is a multi-account
+   snapshot it never lands in an account's ⚡ box — its destination is
+   Groundwork's own intent drop, which parses rows, matches names to
+   book accounts, and proposes dated signals the operator confirms.
+   Until that room ships, the bookmarklet opens the Intranet, whose
+   capture parks the snapshot whole for later re-parse. Same family as
+   the SF/Outlook/Teams grabs — capture what's visible, never crawl.
 2. **Sales Navigator's alert emails.** Intent-change alerts (the
    "My HR Pros: increase in buyer intent" flag arrived this way) land in
    the operator's inbox, and the existing Outlook grab already captures

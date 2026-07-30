@@ -42,8 +42,23 @@ function teamsBookmarklet(origin: string): string {
   return `javascript:${js}`;
 }
 
+// Grabs the Sales Navigator ACCOUNTS LIST as rendered — company names, buyer-
+// intent levels, activity counts, alerts. LinkedIn renders rows as they scroll
+// into view, so the grab takes what's on screen and says so; a second run after
+// scrolling catches the rest. Refuses anything that isn't a Sales Navigator
+// page. No API, no crawling — the page the operator is already reading.
+//
+// Destination: this capture is a MULTI-account snapshot, so it must never land
+// in an account's ⚡ box (single-account binding; the misfile guard would fight
+// it). It feeds the prospecting room's intent drop; until that room ships, it
+// opens the Intranet, whose capture stores the snapshot whole.
+function salesNavBookmarklet(origin: string): string {
+  const js = `(async()=>{if(location.hostname.indexOf('linkedin.com')<0||location.pathname.indexOf('/sales')<0){alert('Open the Sales Navigator Accounts list first - that dashboard is what gets captured.');return}const q=['main table','[role="table"]','main','#content'];let el=null;for(const s of q){try{el=document.querySelector(s)}catch(e){}if(el&&el.innerText&&el.innerText.length>200)break;el=null}if(!el){alert('Nothing readable found - is the Accounts list on screen?');return}const t='SALESNAV ACCOUNTS - captured '+new Date().toLocaleString()+'\\n\\n'+el.innerText;try{await navigator.clipboard.writeText(t)}catch(e){window.prompt('Auto-copy was blocked. Press Ctrl+C, then paste it in:',t.slice(0,4000))}window.open('${origin}/intranet','_blank')})()`;
+  return `javascript:${js}`;
+}
+
 type Tool = {
-  key: "outlook" | "sf" | "teams";
+  key: "outlook" | "sf" | "teams" | "salesnav";
   glyph: string;
   name: string;
   where: string;
@@ -89,6 +104,18 @@ const TOOLS: Tool[] = [
     refuses:
       "The desktop app, which isn't a page anything can read. A very long history may need a second run.",
     build: teamsBookmarklet,
+  },
+  {
+    key: "salesnav",
+    glyph: "▤",
+    name: "Sales Nav intent",
+    where: "accounts list",
+    label: "▤ Grab Sales Nav intent",
+    takes:
+      "The accounts-list dashboard as rendered — company names, buyer-intent levels, activity counts, alerts. A snapshot of many accounts, so it lands whole in the Intranet, never on one account's row.",
+    refuses:
+      "Any page that isn't Sales Navigator. Rows below the fold ship only after you scroll them into view.",
+    build: salesNavBookmarklet,
   },
 ];
 

@@ -127,7 +127,9 @@ export async function roomPaste(
     ? "OL"
     : /^TEAMS THREAD\b/.test(rawText)
       ? "TM"
-      : "SF";
+      : /^SALESNAV\b/.test(rawText)
+        ? "SN"
+        : "SF";
   // Head-keep suits newest-first captures (SF, Outlook). If a monster paste
   // ever exceeds the cap, tell the model so instead of lying by omission.
   const over = rawText.length - 60000;
@@ -226,7 +228,7 @@ export async function roomPaste(
         ),
         lane: laneFor(actors, `${e.subject ?? ""}\n${e.body ?? ""}`),
         actors,
-        source: `${dialect === "OL" ? "outlook" : dialect === "TM" ? "teams" : "sf"}${
+        source: `${dialect === "OL" ? "outlook" : dialect === "TM" ? "teams" : dialect === "SN" ? "salesnav" : "sf"}${
           how === "ai" ? "-ai" : ""
         }`,
         at,

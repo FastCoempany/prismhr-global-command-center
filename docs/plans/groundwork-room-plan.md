@@ -681,13 +681,24 @@ activities"). **The room re-ranks the relay motion on this** — an
 account whose people are already reading us outranks a colder account of
 equal fit, and its partner-manager briefing moves to the top of the
 cycle.
-*Where the data comes from:* LinkedIn exposes no intent API, so intent
-arrives through two operator-gated lanes only — the triage capture (typed
-quick-entry or a `SALESNAV` bookmarklet copying the rows already on
-screen) and Sales Navigator's own alert emails via the existing Outlook
-grab (armed for the whole book once D0 sets book of business). Readings
-decay after ~7 days without refresh; the ranking never rides a stale
-badge. Full mechanics: `docs/research/sales-navigator-anatomy.md` §5.
+*Where the data comes from:* LinkedIn exposes no intent API — none is
+wanted — so intent arrives through two operator-gated lanes only: the
+triage capture and Sales Navigator's own alert emails via the existing
+Outlook grab (armed for the whole book once D0 sets book of business).
+The capture bookmarklet is **built** (the ▤ "Grab Sales Nav intent" card
+in the Capture shelf, shipped 7/30): it copies the accounts-list
+dashboard as rendered with a `SALESNAV ACCOUNTS` head token.
+*Where the paste lands:* this capture is a **multi-account snapshot**, so
+it must never land in an account's ⚡ box — that lane binds one account
+and its misfile guard would fight a 118-row paste. The designed
+destination is **Groundwork's intent drop** (Phase 3): a paste lane owned
+by this room that parses rows, matches names against the book, and files
+dated per-account signals behind the operator's confirm. Until the room
+ships, the bookmarklet opens the Intranet, whose capture stores the
+snapshot whole — parked, deduped, searchable, re-parseable the day the
+drop exists. Readings decay after ~7 days without refresh; the ranking
+never rides a stale badge. Full mechanics:
+`docs/research/sales-navigator-anatomy.md` §5.
 
 **D9 — The alerts sweep.** *(daily, five minutes — new)*
 *Trigger:* every morning, after book-of-business is set so alerts key to
@@ -958,11 +969,17 @@ live data; the lint flags every seeded violation; copy produces clean plain
 text; the delta renders since-last-read; a dead deal produces the
 post-mortem view.
 
-**Phase 3 — directives.**
-Done when: D1–D7 fire on their triggers against fixtures; each renders
-why/recipe/bring-back/files-to; the three-per-day cap and session-done
-semantics hold; a confirmed stakeholder candidate lands in the account's
-candidate list without touching the canonical roster.
+**Phase 3 — directives + the intent drop.**
+Done when: D0–D11 fire on their triggers against fixtures; each renders
+why/recipe/bring-back/files-to; the daily pair and three-session cap and
+session-done semantics hold; a confirmed stakeholder candidate lands in
+the account's candidate list without touching the canonical roster. And
+the intent drop works end to end: the ▤ grab (already shipped in the
+Capture shelf) → paste into Groundwork's own drop lane → the
+`SALESNAV ACCOUNTS` dialect parses rows, matches names to book accounts,
+proposes dated signals → operator confirms → signals file and re-rank the
+queue; snapshots parked in the Intranet re-parse; a reading older than 7
+days stops ranking (decay test).
 
 **Phase 4 — the wire.**
 Done when: a sweep files deduped items with reads and matches; account
@@ -1019,6 +1036,23 @@ state rows, composed drafts and research recipes in the lens, and rows that
 stamp themselves with the time they were worked. Both share the wire, the
 institutions card, and the doctrine-voiced State of play. The decision
 between them is one sentence: does time organize the page, or does the book.
+
+**Round five — The Desk chosen (tentatively); three Desk builds (founder,
+2026-07-30):** `docs/mockups/groundwork-desk-triptych-2026-07-30.html` —
+the same content model held three ways, each opening with the provenance
+bar that names what fed today's ranking (HomeRoom pastes, the Intranet,
+this morning's ▤ grab — never an API):
+
+- **Queue & Lens** — two panes, one focus: the ranking stays in sight
+  while the lens works one account. Best for triage days.
+- **The Ledger** — the front of the book as one twelve-row surface
+  (situation in plain words · who's reading us · what you owe · when
+  worked), the lens expanding in place under any row. Best for maximum
+  book on screen.
+- **The Working File** — a deck strip to flip through, and below it one
+  account's entire file: story, people, the composed move, its recipe,
+  its history, and the exact paragraph Russ would hear. Best for deep
+  work and call prep.
 
 Rounds one through three are retained in-repo as recorded alternatives
 (`groundwork-triptych-2026-07-30.html`, `groundwork-triptych-v2-2026-07-30.html`,
