@@ -18,6 +18,7 @@ import {
   stalenessLine,
 } from "@/lib/intranet/index-topics";
 import { synthAvailable } from "@/lib/intranet/synthesize";
+import { brainQueue } from "./runners";
 import { IntranetClient, type RailTopic } from "./intranet-client";
 import styles from "../command-center.module.css";
 
@@ -39,7 +40,11 @@ export default async function IntranetPage() {
   }
 
   const nowIso = new Date().toISOString();
-  const [topics, stats] = await Promise.all([loadTopics(), brainStats()]);
+  const [topics, stats, queue] = await Promise.all([
+    loadTopics(),
+    brainStats(),
+    brainQueue(),
+  ]);
 
   // The rail: live top-level topics, prospect questions first, each carrying
   // its children so a click decomposes without a round trip.
@@ -82,6 +87,7 @@ export default async function IntranetPage() {
           rail={rail}
           stats={stats}
           staleness={stalenessLine(stats.lastCaptureAt, nowIso)}
+          queue={queue}
           canWrite={access.canWrite}
           canAnswer={synthAvailable()}
         />

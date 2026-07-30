@@ -11,6 +11,7 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useDismiss } from "@/components/use-dismiss";
 import { intranetAsk, intranetCapture, intranetPassage } from "./actions";
+import { runBrain } from "./runners";
 import type { AskReply, PassageReply } from "./actions";
 import styles from "../command-center.module.css";
 
@@ -35,12 +36,14 @@ export function IntranetClient({
   rail,
   stats,
   staleness,
+  queue,
   canWrite,
   canAnswer,
 }: {
   rail: RailTopic[];
   stats: Stats;
   staleness: string;
+  queue: { pending: number; unindexed: number };
   canWrite: boolean;
   canAnswer: boolean;
 }) {
@@ -55,6 +58,8 @@ export function IntranetClient({
   const [receipt, setReceipt] = useState("");
   const [busy, startAsk] = useTransition();
   const [capBusy, startCap] = useTransition();
+  const [runBusy, startRun] = useTransition();
+  const [runLines, setRunLines] = useState<string[]>([]);
 
   const drawerRef = useDismiss<HTMLDivElement>(passage !== null, () => setPassage(null));
   const addRef = useDismiss<HTMLDivElement>(addOpen, () => setAddOpen(false));
@@ -77,6 +82,18 @@ export function IntranetClient({
       const r = await intranetCapture(paste);
       setReceipt(r.ok ? r.receipt : (r.reason ?? "That didn't land."));
       if (r.ok) setPaste("");
+    });
+  };
+
+  // Bringing the brain up to date: mirror the app, take in the Playbook, read
+  // what hasn't been read, settle the index, open what has grown, reconcile
+  // what the record now disagrees with. Bounded — a big corpus is several
+  // passes, and the report says what is left.
+  const bringUpToDate = (deep: boolean) => {
+    if (runBusy) return;
+    startRun(async () => {
+      const r = await runBrain({ deep });
+      setRunLines(r.ok ? r.lines : [r.reason ?? "That didn't complete."]);
     });
   };
 
@@ -256,6 +273,43 @@ export function IntranetClient({
                 : ""}
             </p>
             <p className={styles.itStale}>{staleness}</p>
+          </div>
+        )}
+
+        {canWrite && (
+          <div className={styles.itRun}>
+            <div className={styles.itRunRow}>
+              <button
+                type="button"
+                className={styles.itRunBtn}
+                disabled={runBusy}
+                onClick={() => bringUpToDate(false)}
+              >
+                {runBusy ? "Working…" : "Bring the brain up to date"}
+              </button>
+              <button
+                type="button"
+                className={styles.itQuietBtn}
+                disabled={runBusy}
+                onClick={() => bringUpToDate(true)}
+                title="A longer pass — more documents read, more of the index settled"
+              >
+                deep pass
+              </button>
+              {queue.pending > 0 && (
+                <span className={styles.itQueue}>
+                  {queue.pending} document{queue.pending === 1 ? "" : "s"} waiting to be
+                  read
+                </span>
+              )}
+            </div>
+            {runLines.length > 0 && (
+              <ul className={styles.itRunLines}>
+                {runLines.map((l, i) => (
+                  <li key={i}>{l}</li>
+                ))}
+              </ul>
+            )}
           </div>
         )}
       </div>

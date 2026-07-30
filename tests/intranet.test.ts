@@ -75,6 +75,11 @@ import {
 } from "../src/lib/intranet/time";
 import { goneLine, syncVerdict } from "../src/lib/intranet/mirror";
 import { askShapeRead, isPlaybookNamespace } from "../src/lib/intranet/playbook-in";
+import {
+  sanitizeVerdicts,
+  summaryStale,
+  supersessionDirection,
+} from "../src/lib/intranet/verdicts";
 import type { Claim, Msg, Topic } from "../src/lib/intranet/types";
 
 const root = cwd();
@@ -842,5 +847,173 @@ describe("the room is wired where the operator can reach it", () => {
       [...used].filter((c) => !defined.has(c)),
       [],
     );
+  });
+});
+
+// ── the runners ─────────────────────────────────────────────────────────────
+describe("the chain that fills the brain is wired end to end", () => {
+  const runners = readFileSync(join(root, "src/app/intranet/runners.ts"), "utf8");
+  const client = readFileSync(join(root, "src/app/intranet/intranet-client.tsx"), "utf8");
+  const page = readFileSync(join(root, "src/app/intranet/page.tsx"), "utf8");
+
+  test("every phase has a runner, and the orchestrator calls them all", () => {
+    for (const fn of [
+      "syncApp", // 4 · the app mirror
+      "ingestPlaybook", // 5 · the Playbook and the prospect root
+      "extractPending", // 6 · reading documents into claims
+      "indexTopics", // 7 · promotion, folding, counts, summaries
+      "decomposeTopics", // 8 · splitting what has grown
+      "readTimeAcrossTopics", // 12 · superseded and disputed
+    ]) {
+      assert.ok(
+        runners.includes(`export async function ${fn}`),
+        `${fn} has no runner — its library would never be called`,
+      );
+      const orchestrator =
+        /export async function runBrain[\s\S]*?\n}\n/.exec(runners)?.[0] ?? "";
+      assert.ok(orchestrator.includes(fn), `runBrain never calls ${fn}`);
+    }
+  });
+  test("the operator can start it, and sees what it did", () => {
+    assert.ok(client.includes("runBrain"), "nothing in the room starts the chain");
+    assert.ok(client.includes("Bring the brain up to date"));
+    assert.ok(client.includes("deep pass"));
+    assert.ok(client.includes("itRunLines"), "the report is never shown");
+    assert.ok(page.includes("brainQueue"), "the room can't say what is waiting");
+  });
+  test("re-reading a document replaces its claims rather than doubling them", () => {
+    const extract =
+      /export async function extractPending[\s\S]*?\n}\n/.exec(runners)?.[0] ?? "";
+    assert.ok(
+      /intranetClaim\.deleteMany\(\{ where: \{ docId/.test(extract),
+      "a re-read would leave the old claims behind and double the record",
+    );
+    assert.ok(extract.includes("PROMPT_VERSION"), "a rubric bump would never re-read");
+  });
+  test("nothing but a re-read ever deletes (C6)", () => {
+    // The single deleteMany above is claims being rewritten in the same breath.
+    // Any other delete in the runners would break the promise.
+    const deletes = runners.match(/delete(Many)?\(/g) ?? [];
+    assert.equal(deletes.length, 1, "a second delete appeared in the runners");
+    assert.ok(
+      /originGone: new Date\(\)/.test(runners),
+      "a vanished app row is not being marked",
+    );
+  });
+  test("an unchanged app row costs nothing to re-sync (F10)", () => {
+    assert.ok(runners.includes("syncVerdict"), "the mirror stopped comparing checksums");
+    const upsert = /async function upsertDocs[\s\S]*?\n}\n/.exec(runners)?.[0] ?? "";
+    assert.ok(/=== "skip"/.test(upsert), "an unchanged row is re-extracted anyway");
+  });
+  test("a changed document is queued for re-reading, not left stale", () => {
+    const upsert = /async function upsertDocs[\s\S]*?\n}\n/.exec(runners)?.[0] ?? "";
+    assert.ok(/extractedAt: null/.test(upsert));
+  });
+  test("prospect questions are filed into their shape (C7)", () => {
+    assert.ok(runners.includes("fileProspectQuestions"));
+    assert.ok(runners.includes("PROSPECT_SHAPE_TOPICS"));
+    assert.ok(runners.includes("seedProspectTopics"));
+  });
+  test("every stage is bounded, so one pass never runs away", () => {
+    for (const sig of [
+      "syncApp(budget = 400)",
+      "extractPending(budget = 8)",
+      "decomposeTopics(budget = 2)",
+      "readTimeAcrossTopics(budget = 2)",
+    ]) {
+      assert.ok(runners.includes(sig), `unbounded runner: ${sig}`);
+    }
+  });
+  test("a failing stage never stops the ones after it", () => {
+    const orchestrator =
+      /export async function runBrain[\s\S]*?\n}\n/.exec(runners)?.[0] ?? "";
+    // The guard at the top may refuse the whole pass (no database, read-only).
+    // Inside the stage loop nothing may return: a stage that fails records its
+    // reason and the next one still runs.
+    const loop =
+      /for \(const \[, run\] of stages\) \{[\s\S]*?\n  \}/.exec(orchestrator)?.[0] ?? "";
+    assert.ok(loop, "the stage loop moved");
+    assert.ok(!/\breturn\b/.test(loop), "one bad stage aborts the pass");
+  });
+});
+
+// ── verdicts ────────────────────────────────────────────────────────────────
+describe("a contradiction has to justify itself", () => {
+  const a = claim({
+    id: "a",
+    text: "Standing up a Brazilian entity was quoted at four to six months",
+    saidAt: "2026-03-01T12:00:00Z",
+  });
+  const b = claim({
+    id: "b",
+    text: "Every Brazil deal since has gone out on EOR first",
+    saidAt: "2026-07-01T12:00:00Z",
+  });
+  const byId = new Map([
+    ["a", a],
+    ["b", b],
+  ]);
+
+  test("a verdict that cannot quote both claims is discarded", () => {
+    const kept = sanitizeVerdicts(
+      {
+        pairs: [
+          {
+            aId: "a",
+            bId: "b",
+            verdict: "supersedes",
+            why: "they conflict",
+            onSamePoint: "Brazil",
+          },
+        ],
+      },
+      byId,
+    );
+    assert.equal(kept.length, 0, "an unjustified verdict survived");
+  });
+  test("a verdict that quotes both is kept", () => {
+    const kept = sanitizeVerdicts(
+      {
+        pairs: [
+          {
+            aId: "a",
+            bId: "b",
+            verdict: "supersedes",
+            why: "The earlier line said standing up a Brazilian entity was quoted at four to six months; the later says every Brazil deal since has gone out on EOR first.",
+            onSamePoint: "how we enter Brazil",
+          },
+        ],
+      },
+      byId,
+    );
+    assert.equal(kept.length, 1);
+    assert.equal(kept[0].verdict, "supersedes");
+  });
+  test("unrelated needs no justification — it asserts nothing", () => {
+    const kept = sanitizeVerdicts(
+      { pairs: [{ aId: "a", bId: "b", verdict: "unrelated", why: "", onSamePoint: "" }] },
+      byId,
+    );
+    assert.equal(kept[0].verdict, "unrelated");
+  });
+  test("the later claim always supersedes the earlier", () => {
+    assert.equal(supersessionDirection(a, b).newer.id, "b");
+    assert.equal(supersessionDirection(b, a).newer.id, "b");
+  });
+  test("an unknown claim id is dropped rather than trusted", () => {
+    const kept = sanitizeVerdicts(
+      {
+        pairs: [
+          { aId: "a", bId: "ghost", verdict: "disputes", why: "x", onSamePoint: "" },
+        ],
+      },
+      byId,
+    );
+    assert.equal(kept.length, 0);
+  });
+  test("a summary is regenerated once its topic has grown a quarter", () => {
+    assert.equal(summaryStale(10, 8), true);
+    assert.equal(summaryStale(9, 8), false);
+    assert.equal(summaryStale(4, 0), true);
   });
 });

@@ -68,6 +68,9 @@ export type DraftClaim = {
   prompted: string;
   /** The exact source span. A claim whose quote can't be found is dropped. */
   quote: string;
+  /** Where that span sits in the document — what makes Level-2 drilldown work. */
+  offsetStart: number;
+  offsetEnd: number;
 };
 
 export type ExtractResult = {

@@ -258,6 +258,8 @@ export function sanitizeExtract(
       askShape: kind === "prospect-question" ? asShape(o.askShape) : "",
       prompted: kind === "prospect-question" ? str(o.prompted, 300) : "",
       quote: str(o.quote, 900),
+      offsetStart: span.start,
+      offsetEnd: span.end,
     });
     located.push(span);
   }
