@@ -1,481 +1,910 @@
-# Groundwork — the prospecting room. Plan.
+# Groundwork — the prospecting room. Plan, second draft.
 
-Status: **planned, not built.** Written 2026-07-30 from the founder's brief, on
-top of a full read of the book, the research corpus, the intelligence emails,
-the product canon, the playbook, and the design system. This document is the
-agreed shape before any code exists.
+Status: **planned, not built.** First draft 2026-07-30; this draft same day,
+after the founder's corrections. The corrections are folded in everywhere, but
+for the record they were:
 
-Working name: **Groundwork** — plain word, a peer would say it ("doing the
-groundwork"), and it is literally what pipeline building is. Route
-`/groundwork`. Alternates considered and parked: First Light, The Field, The
-Front. Founder renames at will; nothing below depends on the name.
+1. **The Global Chamber is an example, not a segment.** The real motion is a
+   nationwide program of engaging institutions that have reach across the
+   country into small businesses that may hire across borders. Section 6 is
+   now that program.
+2. **The purview is countrywide.** The book is the 150 PrismHR/PrismHCM
+   customer accounts on the Accounts page, wherever they sit. The Midwest was
+   only ever a proximity fact — Chicago makes certain rooms reachable in
+   person. Section 7 rebuilds the territory model on that basis.
+3. **The readout for Russ must read plain.** No trade shorthand, no numbers
+   without their origins, no sentence that raises a question it doesn't
+   answer. The founder asked for the writing rules themselves to be written
+   down; Section 3 is that doctrine, and it governs every string in the room.
+4. **Sales Navigator flips direction.** The room does not want pastes; it
+   wants to tell the operator *when going into Sales Navigator will add to
+   productivity* — which people, companies, and topics to research, with the
+   filter recipes ready. Section 8 is now a research-directives engine.
+   Founder screenshots of the actual filter surfaces are incoming and will
+   refine the recipes; the engine's shape does not depend on them.
+
+Working name: **Groundwork** — plain word, a peer would say it, and it is
+literally what pipeline building is. Route `/groundwork`. Founder renames at
+will; nothing below depends on the name.
 
 ---
 
 ## 1. What this room is
 
 Groundwork is where the operator's **pre-pipeline** day runs. HomeRoom works
-the deals that exist; Groundwork builds the deals that don't exist yet. It
-opens at 9:00 Central knowing what the operator should do, where, what to
-research, who to research, and why — every claim traceable to the book, the
-research corpus, the deal record, or an outside signal.
+the deals that exist; Groundwork manufactures the conditions for deals that
+don't exist yet — conversations opened, intelligence gathered, partners
+equipped, institutions cultivated — and it narrates all of it in language a
+VP can repeat to his boss without a translator.
 
-It carries five obligations:
+Six obligations:
 
-1. **Run the day from 9:00** — time-aware blocks, reordering as the clock moves.
-2. **State of play** — a self-updating strategic readout the operator can read
-   to Russ at any moment, covering real pipeline-building activity across the
-   whole app, not a task log.
-3. **Outside signals** — a news wire watching the EOR/PEO world and every
+1. **Run the day from 9:00 Central** — the room knows what to do, where, what
+   to research, who to research, and why, and it reorders itself as the clock
+   moves.
+2. **State of play** — a self-updating account of what is happening in the
+   operator's business, written so Russ Jones can read it once and carry it
+   to the chief of sales the same hour.
+3. **Direct the research** — every day the room names the people, companies,
+   and topics worth a Sales Navigator or LinkedIn session, with the exact
+   filter recipe and the reason, so tool time is never browsing time.
+4. **Work the institutions** — a standing program of national-reach
+   organizations that touch small businesses with cross-border needs, run
+   like a channel: selected, scheduled, scored, pruned.
+5. **Watch the outside** — a news wire over the EOR/PEO world and every
    account in the book, one click from a deep dive.
-4. **Per-account awareness** — every account rendered with its research,
-   demand, play, stakeholders, and next motion, live from the same stores the
-   Accounts page reads.
-5. **Sales Navigator intake** — a paste-first lane that turns LinkedIn Sales
-   Navigator material into filed intelligence.
+6. **Know every account** — everything rendered about an account comes live
+   from the same stores the Accounts page reads. No copies, no drift.
 
-What it is NOT: an outreach sequencer (doctrine forbids it — anything that
-leaves the building goes out behind a human click, `docs/automation-map.md`),
-a CRM mirror, or a second HomeRoom. Deals that reach the board stay worked in
-HomeRoom; Groundwork hands them off and keeps hunting.
+What it is NOT: an outreach sequencer (doctrine forbids automation of
+anything that leaves the building), a CRM mirror, a second HomeRoom, or a
+dashboard bundle. When a conversation becomes a deal, it graduates to the
+board and HomeRoom works it; Groundwork notes the graduation in the readout
+and keeps hunting.
 
 ---
 
-## 2. The situation the room is built for (what the app knows)
+## 2. The situation the room is built for
 
-Two months in, inaugural team — the operator and Shane Jacobs as the GBCs,
-Russ Jones (VP of Sales, PrismHR) now managing, Aleks Boruk (SVP CS & Client
-Growth) running the Global motion day-to-day since the founding VP of Sales
-for Global left pre-launch. The app's own record supports Russ's "not ready
-for a marketing campaign" call, precisely:
+Two months in. Inaugural team: the operator and Shane Jacobs as the Global
+Business Consultants; Russ Jones (VP of Sales, PrismHR) now managing; Aleks
+Boruk (SVP, Customer Success & Client Growth) running the Global motion
+day-to-day since the founding VP of Sales for Global left before launch. The
+app's own record supports Russ's "not ready for a marketing campaign" call
+with specifics:
 
 - **Contracting mechanics are young.** SF/CPQ contracting came online ~7/10
-  with a second training still owed; PEO-direct billing is "mechanics still
-  TBD ⚠"; Deana Morgan (RevOps) annotated the first live contract "this deal
-  is being worked prior to the overall Global product and processes finalized."
+  with a second training still owed. Billing the partner directly is
+  "mechanics still TBD." RevOps annotated the first live contract: "this deal
+  is being worked prior to the overall Global product and processes
+  finalized."
 - **Pricing accessibility is partial.** EOR has a tiered price book;
-  Contractor/COR has rates; Global Payroll has **no list rates at all** — every
-  country is individually priced through Anthony Falzone with Aleks copied.
-  There is no packaged pricing a partner can quote without coming back to us —
-  a named enablement gap.
-- **Rules of engagement are not yet canon.** Whether a GBC may contact a PEO's
-  client directly — and when, and who must be copied — is explicitly unsettled
-  (`docs/product/prismhr-global-codex-canon.md` Part 2 §4). On a referral deal
-  we sell and paper the client directly, which makes the question live on
-  every referral-shaped opportunity. The app's standing gates (NEEDS_CSM →
+  contractor products have rates; Global Payroll has no list rates at all —
+  every country individually priced through Anthony Falzone with Aleks
+  copied. Nothing exists a partner can quote without calling us. That gap is
+  on the enablement list by name.
+- **Rules of engagement are unsettled.** Whether and when a GBC may contact a
+  partner's client directly is explicitly not yet canon. On a referral deal
+  we sell and paper the client ourselves, so the question is live on every
+  referral-shaped opportunity. The app's permission gates (NEEDS_CSM →
   CHANNEL_OK → DIRECT_OK) are the operating answer until doctrine lands.
 
-Consequence for prospecting: the motions below are all **channel-first,
-permission-gated, enablement-heavy**. That is not a limitation of the room —
-it is the strategy the app's own evidence recommends while the contracting and
-pricing apparatus hardens.
+The products: **EOR** (we employ the worker abroad through our entities),
+**Contractor Management** (compliant engagement and pay for international
+contractors), **Contractor Management+** (we become the contractor's
+counterparty — contractor/agent of record — and absorb misclassification
+risk), plus Global Payroll and Talent in the wider canon. Every deal sits in
+one of two chairs: **resale** (the partner holds the client contract at
+wholesale and marks it up) or **referral** (we contract the client directly
+and pay the partner a fee; a deposit applies). The chair decides who touches
+the client and whose name is on the paper. The Advocate Pay post-mortem is
+the standing lesson: the chair was still moving at contract time and the
+paper bounced. The room keeps the settle-the-chair question in front of every
+new conversation.
 
-The three products (EOR · Contractor Management · Contractor Management+ =
-COR/AOR with misclassification protection, plus Global Payroll and Talent in
-the wider canon) each sell under one of two chairs: **resale** (partner holds
-the client contract, wholesale + markup) or **referral** (we contract the
-client directly, partner earns a fee, deposit applies). The chair decides who
-touches the client — settle it early; the Advocate Pay deal died late partly
-on chair-flip mechanics, and the room's discovery prompts keep the settle-chair
-question in front of every new conversation.
-
----
-
-## 3. The day engine — time-aware from 9:00
-
-The page derives everything at request time (the app's established pattern) and
-renders against the **Chicago clock** (`src/lib/tz.ts` — `userDayKey`, never
-`dayStamp()`, whose UTC day rolls over mid-evening; the room must not inherit
-that bug). Blocks, in the order the day meets them:
-
-- **9:00 — The opening read.** One serif sentence: the single most important
-  thing in the prospecting world today, with its reason ("Simploy decides 8/6 —
-  demo follow-through is the day's dominant move"). Below it, the day's queue,
-  capped at five primary items (decision-zone ceiling), each carrying
-  do + why + a ready relay line or message draft. Sources: live-deal
-  commitments, follow-ups due (`partitionFollowUps`), partner-kickoff cadence
-  (`partnerKickoff`, Monday ritual), research staleness, wire items worth a
-  dig, and Chamber actions.
-- **9:00–11:00 — Research window.** Who to research and why: accounts above
-  the demand gate with stale or missing research (research.json is dated
-  2026-07-02 — 28 days stale at time of writing; 8 of the 34 Midwest accounts
-  have no record at all), plus any account the wire mentioned overnight. One
-  click runs the existing deep-research pass (`runResearch`) or copies the
-  manual prompt.
-- **11:00–2:00 — Channel window.** Partner and CSM touches while the whole
-  country is at its desk: roundups due by cadence, CSM briefings for NEEDS_CSM
-  accounts, relay lines for CHANNEL_OK partners, demo/call prep for scheduled
-  meetings.
-- **2:00–4:30 — Follow-through window.** Chases, owed items, Sales Navigator
-  paste-downs from the morning's browsing, filing the day's captures.
-- **4:30 — The closing read.** What moved, what didn't, what tomorrow opens
-  with. Updates nothing by hand — State of play already knows; this block just
-  shows the delta and seeds tomorrow's 9:00.
-
-Time-awareness mechanics: the room compares `now` (Chicago) to block windows
-and collapses past blocks (Pulse discipline — the past compresses, never piles
-up). Done marks are day-scoped TaskDone keys namespaced
-`groundwork:<userDayKey>:<moveKey>`. Nothing fires on a timer; the room is
-time-aware, not time-triggered.
+Consequence for prospecting: the motions in Section 5 are channel-first,
+permission-gated, and enablement-heavy — not because the room is timid but
+because that is what the record says works while the apparatus hardens.
 
 ---
 
-## 4. Prospecting motions — what the operator should be doing, per the app
+## 3. The language doctrine — how everything in this room is written
 
-Ranked. Each motion names its evidence.
+The founder's test case, verbatim, was a readout line from the first draft of
+this plan: *"One live Midwest pursuit decides in seven days; two warm
+partners are asking to be worked; the channel is armed on two of six desks."*
+Every noun in that sentence is a door with nothing behind it. What is "live"?
+Which pursuit? Deciding what? Why seven days? Warm how? Worked how? What
+channel? Armed with what? What is a desk, and where did "six" come from? A
+reader can nod at the sentence and repeat none of it. That is the failure
+mode this section exists to kill.
 
-**M1 — Land the live Midwest deal (Simploy).** COO Chassie Smith, inbound 7/8
-post-LIVE, partner-selection decision **8/6**, demo week of 7/28 with Katie
-(Dir. Ops) and possibly Carson (CEO). Prefers resale (stays in the client
-relationship); has been referring global needs to G-P with **no rev share** —
-the displacement wedge writes itself. Two India contractors to reclassify =
-the first concrete piece of business. This is the reference win the whole
-Midwest channel motion will be sold with. Owner move cadence: demo recap →
-reclassification proposal → 8/6 decision support.
+The rule set below governs **every operator-facing string in Groundwork** and
+is the standard for the rest of the app as surfaces get touched. It extends
+the existing voice canon ("plain sentences a peer would say") with one
+sharpening: for anything meant to leave the app — the readout above all — the
+peer is someone who was **not there**. Russ was not on the call. The chief of
+sales has never heard of Simploy. Write for them.
 
-**M2 — Work the warm second wave.** XcelHR (Bill Laffey asked 7/27 for a call
-on relationship mechanics + pricing shape — a partner literally asking how to
-pitch us to a client), Infiniti HR (Jennifer Hardesty requested a call 7/21;
-Puerto Rico pain + broader international; G-P alliance = displacement keyed to
-renewal timing), ESC (Canada payroll demo accepted 7/22; MPEX licensing track
-with Rick Torrence). These are prospecting-adjacent: each is a partner not yet
-producing client flow — the motion is to convert partner interest into a
-repeatable client-referral lane, not just close the deal in hand.
+### 3.1 The rules
 
-**M3 — The relay motion through CSMs (greenfield).** For the ~140 accounts
-with no live thread: brief the CSM first (NEEDS_CSM gate), arm them with the
-partner-voice relay line for their top Global-fit accounts, and ask them to
-gauge client interest. The engine exists (`partnerKickoff`, relay lines in the
-discovery bank, campaign kits audience-gated by approach). Groundwork's job is
-to keep the weekly kickoff honest — every CSM roster armed, not just Lesha and
-Anika who already have hot signals.
+1. **Every sentence survives being forwarded.** Assume the reader was not in
+   the room, has not seen the thread, and will repeat the sentence to someone
+   who knows even less. If understanding it requires a second sentence that
+   isn't there, the first sentence is unfinished.
 
-**M4 — Displacement watch.** Accounts where a competitor EOR is genuinely
-named: Infiniti HR (G-P, renewal early fall — SBR timing), Nextep (G-P,
-renews 9/1/2028 — long game), Advocate Pay (Remote-class alternatives were on
-the radar). The play is consolidation onto the platform they already run
-domestically; the trigger is renewal timing; the wire watches for competitor
-price changes, outages, and layoffs that open the window early.
+2. **Every name introduces itself once.** Not "Simploy decides 8/6" but
+   "Simploy — a PEO in St. Louis that runs their business on our software —
+   picks their global-hiring partner on August 6th." First mention carries
+   who they are and why they matter; later mentions can be bare.
 
-**M5 — Platform-incumbent attach.** Every account with a PrismHR cloud tenant
-is one config away — "Global appears as a new tab, no integration." The room
-surfaces incumbent accounts (non-empty `cloud`) as the cheapest conversations
-in the book and feeds them into M3 briefings first.
+3. **Every number carries its base and its origin.** Not "3 of 5 replied"
+   but "3 of the 5 partner managers I sent updates to this week replied."
+   Not "coverage is 11" but "11 of my 150 accounts have had a real
+   conversation about global hiring since I started working the book on
+   July 8th." A number without a denominator and a source is a mood, not a
+   fact.
 
-**M6 — Enablement (the loud motion).** "At startup stage the constraint isn't
-leads, it's enablement." Named missing assets: a contractor-conversion
-one-pager, country-coverage sheets, packaged partner-quotable pricing. The
-room keeps a standing gap list and a weekly one-click "voice of the base"
-summary for Aleks/marketing — this is also, precisely, the evidence trail that
-answers Russ's marketing-readiness concerns with specifics instead of vibes.
+4. **Every date carries its meaning.** Not "8/6" but "August 6th — the day
+   Simploy's leadership picks their partner." A date is only useful when the
+   reader knows what happens on it.
 
-**M7 — The external channel (Chamber, §6).** Third lead-feeder, education-led,
-deliberately slow.
+5. **No trade shorthand in anything that leaves the app.** The banned-until-
+   translated list, built from the founder's own dissection: *live, warm,
+   pursuit, worked, channel, armed, desk, chair, greenfield, displacement,
+   motion, cadence, coverage, gate, incumbent, thread.* Inside the app these
+   are fine as control labels and internal terms of art; in the readout and
+   any copyable text, each appears only alongside its plain meaning — "the
+   resale chair (they hold the client contract and mark us up)" — or not at
+   all.
 
-Standing constraints on all motions: relationship permission beats everything
-(Chicago priority "cannot override relationship permission"); no money figures
-anywhere in the app (`redactMoney`); no automated outreach — every outbound is
-1-click edit → send behind a human hand.
+6. **Verbs people actually say.** Asked, sent, owes, told, picked, replied,
+   went quiet, came back. Never: engaged, actioned, leveraged, aligned,
+   socialized, worked (as a transitive verb on humans).
 
----
+7. **Thorough and concise are not opposites.** Thorough means no question is
+   raised and left unanswered inside the sentence. Concise means no word
+   survives that doesn't remove a question. The two cut in the same
+   direction: most bloat *is* unanswered questions dressed as brevity.
 
-## 5. Who to talk to internally, and why
+8. **State first, story second, ask last.** Lead with what is true now, then
+   the shortest version of how it got true, then what is needed. Never bury
+   the state under the narrative.
 
-| Person | Role | What Groundwork routes to them |
+9. **Attribute or drop.** "Chassie told me on the 21st" beats "we
+   understand." If a claim has no source the operator could name out loud,
+   it doesn't go in the readout.
+
+10. **Count what's real.** Replies, meetings held, questions answered,
+    contracts signed. Never sends, opens, activities, or touches. The system
+    rewards truth over activity by construction, and the language follows:
+    "I sent five updates and three came back" is honest about both halves.
+
+### 3.2 The Russ test
+
+Before any readout line ships, it passes this: **Russ reads it once, repeats
+it to the chief of sales from memory, and can answer the first follow-up
+question using only what the text gave him.** If the follow-up ("wait — who's
+Simploy?", "deciding what?", "why does that date matter?") isn't pre-answered,
+the line fails. The test is mechanical enough to encode: the readout builder
+runs a lint pass that flags bare dates, numbers without denominators, first-
+mention proper nouns without an appositive, and any word on the banned list.
+The lint is advisory — a flagged line renders with a quiet marker the operator
+can click to see what the sentence still owes its reader.
+
+### 3.3 Worked example — the same fact, three ways
+
+- **Fails (draft one):** "One live Midwest pursuit decides in seven days."
+- **Passes, short form (a queue row):** "Simploy — a St. Louis PEO on our
+  platform — picks their global-hiring partner August 6th. Your demo recap is
+  what's in front of their decision."
+- **Passes, readout form:** "Simploy is a PEO in St. Louis that runs their
+  business on our software. Their COO, Chassie Smith, came to us July 8th
+  after the conference: they're choosing one partner to handle global hiring
+  for their clients — employing and paying people abroad — and her leadership
+  decides August 6th. Today that business goes to a competitor, Globalization
+  Partners, and Simploy earns nothing on it; through us they'd resell it at a
+  margin inside the platform they already use. We demoed for her operations
+  director last week. I owe them one thing before the decision: the follow-up
+  that shows how we'd convert their two contractors in India into proper
+  employees. It goes out today."
+
+Same facts. The third version is longer *and* faster, because the reader
+never stops to wonder.
+
+### 3.4 Where each register applies
+
+| Register | Where | Rule set |
 | --- | --- | --- |
-| Russ Jones | VP of Sales, PrismHR | State of play readouts; post-mortems (he asked for the Bulgaria one himself, 20 minutes); exec weight on partner calls — he personally scheduled the ESC Canada call. Use him where a VP opening a door beats a consultant knocking. |
-| Aleks Boruk | SVP CS & Client Growth | The motion's day-to-day owner: contracting pacing, pricing doctrine, partner reads, training schedule. The 1:1 room already exists; Groundwork feeds it the enablement-gap list and channel decisions (e.g. Chamber membership). |
-| Shane Jacobs | The other GBC | Demo lead; deal originator; owes the pre-recorded demo (due 7/30). Coordinate book boundaries (PuzzleHR is his) and SE-staffing process. |
-| Deana Morgan | RevOps / contracts | Contract templates, SF/CPQ state, signature routing (@RCA Contract Requests). Ask: when does the second contracting training land; what's still manual. |
-| Anthony Falzone | Head of Global Ops | Global Payroll country quotes (always copy Aleks); Canada/MPEX cost story. |
-| Rick Torrence | Technology/licensing (MPEX) | The ESC licensing structure — the template for every future "partner wants to operate the tech" deal. |
-| Lesha Cyphers · Anika Steenstra · Whitney Dideon · John Hebert · Kathryn Maddox · Eric Ronci | CSMs / partner owners | The channel itself. Lesha (22 accounts incl. Simploy, ESC), Anika (10 incl. Infiniti, Nextep, XcelHR — she owns XcelHR timing), Whitney (HCM book, 3 weeks in seat — needs the most arming), John (payroll bureaus + the Vensure-acquisition early-warning), Kathryn (HCM), Eric (Advocate Pay history). |
-| Kim Roberts | Salesforce admin | Outlook→SF logging health; the LinkedIn activity type visible in SF timelines. |
-| Eduardo (Solvo) | BI/reports | Deep account detail and growth specs — the internal enrichment source before any external tool. |
+| Readout prose | State of play, anything copyable, post-mortems | All ten rules, lint on |
+| Queue rows | The day's moves, directives | Rules 1–8; terms of art allowed if the row's "why" expansion translates them |
+| Controls | Buttons, chips, stamps | Existing canon (verbs, no "steps," one dominant move); brevity wins |
+| The wire | Headlines + reads | Headline verbatim from source; the "read" line follows rules 1–8 |
 
 ---
 
-## 6. Global Chamber of Commerce — Chicago chapter
+## 4. The day engine — time-aware from 9:00
 
-What the repo actually knows: "Chicago Global Chamber" is a founder-named
-hypothesis channel (master prompt: "We need at least 3 lead-feeder sources
-outside the CSM motion. Known example: Chicago Global Chamber"), status
-explicitly unresolved (master plan open question #9; canon lists "whether
-Chicago Global Chamber has any special status" as not yet canon). No contact,
-event, cost, or chapter data exists anywhere in the app. The room treats that
-honestly: first job is to **resolve the hypothesis**, not to pretend a
-relationship exists.
+Everything derives at request time from pure builders (the app's established
+pattern), keyed to the **Chicago clock** via `userDayKey` — never `dayStamp()`,
+whose UTC day rolls over mid-evening; the room must not inherit that bug.
 
-Engagement plan, from the app's own field manual (`docs/research/deep-research-report.md`):
+### 4.1 The shape of the day
 
-1. **Verify** (week 1): run a research pass on the Global Chamber's Chicago
-   chapter — membership model, event cadence, who runs it, member profile.
-   Groundwork files the findings and opens the go/no-go decision to the
-   founder and Aleks.
-2. **Lead with education, never with a lead-ask.** "Ask too early for client
-   access and you look hungry." The offer is a compliance briefing or a
-   checklist: *hiring across borders without an entity — what Midwest
-   companies get wrong* (misclassification, permanent establishment, the
-   contractor-conversion story). This is exactly the collateral gap M6 is
-   already pushing marketing for — one asset serves both.
-3. **Show up on cadence, capture on cadence.** Attend monthly; every
-   conversation becomes a Groundwork capture (paste lane) and, where a real
-   company with a real cross-border need appears, a look-into item. The room's
-   Chamber tile tracks: events attended, conversations captured, qualified
-   follow-ups — because the manual's scoring says a chamber that yields
-   attendance but no qualified follow-up is a **medium-at-best** channel and
-   should be dropped for a better one.
-4. **Score the channel quarterly** on the manual's five dimensions:
-   recurrence, audience fit, reciprocity, conversion to conversations,
-   distinctiveness. "Chambers give you surface area; advisors give you
-   timing" — in parallel, cultivate the adjacent Chicago fabric: World
-   Business Chicago, Chicago Sister Cities, Illinois Hispanic Chamber, Food
-   Export-Midwest, 1871, mHUB.
-5. **Guardrail:** Chicago can raise an account's priority; it cannot override
-   relationship permission. A Chamber-met company that turns out to be a
-   partner's client routes back through the partner, full stop.
+- **9:00 — The opening read.** One serif sentence naming the most important
+  thing in the prospecting world today, written to the doctrine ("Simploy
+  decides in seven days — the recap you owe them is today's one move that
+  matters"). Under it, the day's queue: **five primary items maximum** (the
+  decision-zone ceiling), overflow behind a quiet "and N more that can wait."
+- **9:00–11:00 — The research window.** The day's research directives
+  (Section 8): who to look up, which accounts to refresh, which topics to
+  listen on — each with its recipe and its reason. Scheduled here because it
+  front-loads intelligence for the calls that follow.
+- **11:00–2:00 — The people window.** Partner-manager briefings due by
+  cadence, partner and prospect calls, relay asks, meeting preps. Scheduled
+  midday because the whole country is at its desk 11:00–2:00 Central.
+- **2:00–4:30 — The follow-through window.** Owed items, chases, filing what
+  the morning's research found, institution follow-ups after events.
+- **4:30 — The closing read.** The delta: what moved today, what didn't, what
+  tomorrow's 9:00 opens with. Nothing to author — State of play already
+  knows; this block shows the difference and seeds tomorrow.
 
----
+Past blocks compress as the clock passes them (the past compresses, never
+piles up); future blocks sit quiet at reduced emphasis. The room is
+time-aware, not time-triggered — nothing fires on a timer; the composition
+just answers "what should be in front of me right now."
 
-## 7. The Midwest book — PEO/ASO partners and their people
+### 4.2 How the queue is ranked
 
-34 of 150 accounts are Midwest (IL 4 · IN 6 · KS 4 · MI 8 · MN 1 · MO 4 ·
-OH 3 · WI 4); **21 carry industry PEO/ASO**. The rest are staffing/bureau/
-insurance. Verified against `book.json`; contacts from `contacts.json` (full
-rosters live there — 1,354 people across the 34).
+A weighted rule engine in the pattern of the morning brief, extended for
+prospecting. Rules, weights, and sources:
 
-Priority tier (demand-gated or live):
+| Rule | Weight | Fires when | Source |
+| --- | --- | --- | --- |
+| meeting-today | 100 | a call/demo is on today's calendar for an account | touches + notes |
+| decision-window | 95 | a named decision date is within 7 days | deal intel timing |
+| reply-owed | 90 | inbound newer than our last outbound on an active account | corpus direction |
+| pre-meeting-read | 85 | a meeting inside 48h lacks a person-read on an attendee | directives engine |
+| roundup-due | 80 | a partner manager's update cadence has lapsed | touch cadence |
+| institution-event | 75 | a tracked institution event is inside 7 days | `inst:` records |
+| stale-above-gate | 70 | research older than 21 days on an account above the demand gate | research generatedAt |
+| wire-dig | 60 | a wire item matched a book account and hasn't been dug | `wire:` records |
+| never-touched-high-fit | 50 | a high-fit platform-incumbent account has zero conversations | book + touches |
+| stakeholder-gap | 40 | an account in play has fewer than 2 known people | contacts + intel |
 
-| Partner | HQ | CSM | Why now | People to know |
-| --- | --- | --- | --- | --- |
-| **Simploy** | St. Louis, MO | Lesha | LIVE — decision 8/6, demo wk 7/28; demand 75/high | Chassie Smith (COO, the buyer) · Carson King (CEO) · Katie (Dir. Ops) · David Avakian (President) · Trish Holmes (CFO) |
-| **Fullstack PEO** | Indianapolis, IN | — | Only other Midwest account above the demand gate (32/med); tech-startup clientele = latent overseas contractor demand | Dawn Lively-Jenkins (CEO) · Gerry Bailey (CEO) · Ann Brandon (Dir. Ops) · Suzanne Higgs (HR Dir.) |
+Dedupe by subject; done marks are day-scoped keys
+`groundwork:<userDayKey>:<moveKey>`; mutes are durable dispositions. Every row
+carries do + why + the ready thing (a relay line, a draft, a recipe) — a move
+the operator can take without leaving the row.
 
-Channel-build tier (no global signal yet — M3/M5 relay targets; leadership
-contacts are the stakeholder map for CSM-cleared briefings):
+### 4.3 States
 
-| Partner | HQ | People to know |
-| --- | --- | --- |
-| WorkSmart Systems | Indianapolis, IN | Matt Thomas (CEO) · Jessica Carney (CSO) · Nanci Reynolds (Chief Payroll Officer, book primary) |
-| Syndeo Outsourcing | Wichita, KS | Bill Maness (CEO) · Jenna Marceau (CIO, book primary) · Kate Rhea (Dir. BD) |
-| Axcet HR Solutions | Overland Park, KS | Jerry Diddle (President) · Jo McClure (Dir. Payroll, book primary) · Janine Crockett (BD Mgr) |
-| Axios Inc | Grand Rapids, MI | Kellie Haines (President) · Daniel Barcheski (CEO) — caveat: PEO/ASO book sold to Engage PEO 3/2025; validate what remains |
-| CoStaff Services | Royal Oak, MI | Mike Bugarelli (Owner) · Danielle Hendzell (VP HR, book primary) · Michael Le Pire (VP Sales) |
-| CS Partners / Partner Solutions | Brighton, MI | Chris Matheson (CEO) · Carlie Lockwood (President) · Michelle Soltz (Dir. Payroll, book primary) — charter-school niche, thin global fit |
-| HR Plus | Clinton Twp, MI | Stephen Roux (President) · Dionne Weiand (VP Ops) |
-| Sequoia Trusted Advisors | Harsens Island, MI | Cheryl Brown (CEO) — small shop |
-| BestPEO | Southfield, MI | Rocky Mehta (Principal) |
-| The Employer Group | Verona, WI | Luke Anderson (President) · Kiarra Eith (VP) · Mindy Rowland (VP & CLO) |
-| SynchronyHR / Cornerstone | St. Louis, MO | Kyle Kelly (CEO) · Lecie Steinbaum (President) — Engage-owned since 8/2024; route awareness via Engage |
-| Centric HC (OPOC.us) | Worthington, OH | Greg Belhorn (VP Ops) · Lori Camper (VP Payroll) · Jill Wilder (VP Client Relations) |
-| American Payroll Service / Callos | Youngstown, OH | Donnie Loree (Dir. PEO & Payroll Ops, book primary) · Mary Beth Gunerra (President) |
-| Surety HR | Westlake, OH | Joe Spooner (President) · Andy Lembach (COO) — Ohio workers'-comp value prop, weak global fit |
-| Servant HR | Fishers, IN | Michael Yoder (CEO, book primary) · Jeff Leffew (Founder) |
-| Amplify HR Management | Northbrook, IL | Todd Beutel (CEO, book primary) · Danielle Achziger (VP Client Solutions) |
-| MedHQ | Westchester, IL | Tom Jacobs (book-level only; zero roster on file — a contact-acquisition target for the Sales Nav lane) |
-| XCEL HR | filed Fort Wayne, IN | Bill Laffey (VP Ops — the live contact) · Ted Bross (VP Tech, book primary) — caveat: real HQ is Rockville MD; Midwest filing is the branch |
-| Gordon J. Maier & Co | Racine, WI | Julie Craig (Managing Partner) — research says actually a CPA firm with an international-tax page; reclassify, don't pitch as PEO |
-| Premier Payroll & HR | Fort Wayne, IN | — DISQUALIFIED: Vensure-acquired 9/2025. Keep as the Vensure-vacuum early-warning example. |
-
-Data debts the room should surface as work: 3 Midwest accounts with zero
-contacts (MedHQ, Premier, Innovative Payroll Processing), 8 with no research
-record, 3 blank-state accounts unclassifiable (Meridian Payroll Group, Payroll
-Solutions Inc., WALCOR/Paymaster Pro).
+Per canon, every block renders five conditions deliberately. Empty (a fresh
+Monday with nothing due): "Nothing is owed this hour. The research window is
+open — two directives are ready." Sparse: one move renders as a real start,
+not a broken grid. Loading: skeletons hold silhouette. Error (research pass
+failed): the row keeps the operator's context and offers retry. Done: the
+compressed line names what changed downstream ("Recap sent — Simploy's row
+moves to waiting-on-them").
 
 ---
 
-## 8. State of play — the standing readout for Russ
+## 5. The prospecting motions — what the operator does, with the room's role in each
 
-The dossier is **derived, never authored** — the same doctrine as the intranet
-index. It is not a diary the operator maintains; it is a read the room
-composes at request time from every store, so it is self-updating by
-construction. Sections, in Russ's language (real pipeline activity, not
-busy-work):
+Each motion names its evidence, its entry and exit, its cadence, and what
+Groundwork specifically contributes. "Partner" throughout means a
+PrismHR/PrismHCM customer (a PEO, ASO, or payroll bureau) — the people who
+resell or refer us into their client base; that is the go-to-market.
 
-1. **The sentence.** One serif line: where the prospecting world stands today.
-2. **Live motion.** Each active pursuit with stage, last real event, next
-   committed move, and the chair (resale/referral) — Simploy, ESC, Infiniti,
-   XcelHR, plus whatever has since gone live. Sourced from DashCards + intel.
-3. **Channel activity.** Roundups sent and answered, CSMs briefed, partners
-   armed, cadence health — the evidence that the partner engine is being
-   cranked, with reply deltas, not send counts.
-4. **New demand.** Signals that crossed the gate since the last readout:
-   research findings, wire hits on book accounts, Sales Nav intelligence,
-   Chamber conversations.
-5. **Blockers, named.** The standing enablement/contracting asks with age
-   ("packaged partner-quotable pricing — asked 7/22, open 8 days"). This is
-   the section that keeps the marketing-readiness conversation concrete.
-6. **Next.** The three moves the coming week turns on.
+**M1 — Land the deal in hand (currently: Simploy).**
+*Evidence:* COO inbound 7/8; decision August 6th; demo delivered week of
+7/28; they refer global needs to Globalization Partners today with no revenue
+share; two India contractors need converting.
+*Entry:* a partner with a dated decision. *Exit:* signed, or a post-mortem.
+*Cadence:* daily until the date.
+*Groundwork's role:* the decision-window rule pins the account at the top of
+the queue every morning until 8/6; the pre-meeting-read directive fires for
+every attendee; the readout carries the plain-language version daily. The
+reference win matters beyond itself: every future partner briefing cites it.
 
-Mechanics: a pure builder (`src/lib/groundwork/readout.ts`) over existing
-stores; a "since last readout" delta powered by one TaskDone key
-(`groundwork:readout-read`) stamped when the operator opens/copies it; a
-one-click copy (and mailto) rendering clean plain text; `redactMoney` on every
-string. A 20-minute post-mortem view per dead deal (Russ's known ask) falls
-out of the same builder filtered to one account.
+**M2 — Convert warm partner interest into repeatable client flow.**
+*Evidence:* XcelHR's VP of operations asked (7/27) how a deal with us would
+work and how pricing shapes; Infiniti HR's director of implementation
+requested a call (7/21) with a Puerto Rico pain and "other international
+needs"; ESC accepted a Canada payroll demo (7/22) plus a licensing question.
+*Entry:* a partner asks a mechanics/pricing/how-does-this-work question.
+*Exit:* the partner has (a) a settled chair, (b) a first client conversation
+scheduled, or (c) an explicit not-now with a revisit date.
+*Groundwork's role:* tracks the ask → answer → first-client-conversation
+funnel per partner and keeps the settle-the-chair question ("would you rather
+hold the client contract yourselves, or have us contract directly and pay you
+a referral fee?") attached to every row until answered.
+
+**M3 — The relay through partner managers (the quiet 140).**
+*Evidence:* the app's whole permission architecture; the weekly kickoff
+builder; relay lines on every discovery question; the record that every live
+deal so far arrived through a partner manager's introduction.
+*Entry:* any account with no active conversation. *Exit:* the partner manager
+has briefed the partner and either interest surfaced (→ M2) or a dated
+revisit is set.
+*Cadence:* every partner manager's roster refreshed on a 2-business-day
+update rhythm when threads are open; full-roster kickoff weekly.
+*Groundwork's role:* composes each partner manager's briefing from the top
+Global-fit accounts on their roster with a relay line per account, tracks
+replies (never sends), and makes sure the rhythm covers all six partner
+managers — Lesha Cyphers, Anika Steenstra, Whitney Dideon, John Hebert,
+Kathryn Maddox, Eric Ronci — not just the two with hot signals. Whitney's
+roster is the standing gap: she is three weeks in seat and her accounts have
+never been introduced to Global.
+
+**M4 — Displacement watch (competitor renewals).**
+*Evidence:* Infiniti HR runs domestic on our platform, global on a
+Globalization Partners alliance renewing early fall; Nextep same shape,
+renewal 9/1/2028; Advocate Pay had Remote-class alternatives on its radar.
+*Entry:* a genuinely named competitor on a book account. *Exit:* renewal
+passed (won, lost, or deferred with a next date).
+*Groundwork's role:* holds the renewal calendar; the wire watches the named
+competitors for price changes, outages, layoffs, and coverage changes that
+open a window early; a matched wire item auto-attaches to the account's row.
+
+**M5 — Platform-incumbent attach.**
+*Evidence:* accounts with a live PrismHR tenant see Global as a new tab — no
+integration story to survive.
+*Entry:* incumbent + high fit + zero conversations. *Exit:* into M3's
+briefing flow at the top of the stack.
+*Groundwork's role:* ranks the incumbent-and-never-touched list and feeds it
+first into every kickoff.
+
+**M6 — Enablement (be loud about what's missing).**
+*Evidence:* the app's own guidance — "at startup stage the constraint isn't
+leads, it's enablement"; named missing assets: a contractor-conversion
+one-pager, country-coverage sheets, partner-quotable pricing.
+*Groundwork's role:* keeps the standing gap list with ages, rolls it into the
+readout's "what's blocking me" section, and drafts the weekly
+voice-of-the-base summary to Aleks/marketing behind one click. This is also
+the factual backbone of the marketing-readiness conversation: specifics
+instead of vibes.
+
+**M7 — The institutional program.** Section 6, run as its own standing
+channel.
+
+Standing constraints on every motion: partner permission beats everything;
+no money figures anywhere in the app; nothing outbound is automated — every
+send is one click behind a human hand; the metrics that count are replies,
+meetings, answers, and signatures.
 
 ---
 
-## 9. Outside signals — the intelligence wire
+## 6. The institutional program — organizations with reach into cross-border small business
 
-**What it watches.** Keyword registry, versioned in code
-(`src/lib/groundwork/wire-keywords.ts`):
+The founder's correction, restated as the program's charter: *engage early,
+often, and intentionally with institutions that have tentacles across the
+country into small businesses that may hire across borders.* The Global
+Chamber is one example of the species, not the program. The species is any
+organization where the operator's presence compounds: recurring rooms full of
+SMB owners and operators with international exposure, anywhere in the
+country, engaged deliberately rather than opportunistically.
 
+### 6.1 The taxonomy — three kinds of institution, three reasons to be there
+
+**A. Client-world institutions** — where SMBs with cross-border needs
+gather. The operator is there to learn the language of the buyer, become the
+recognized specialist, and surface companies worth a look — always routed
+back through partner permission if the company turns out to be a partner's
+client.
+Examples of the species: the Global Chamber (60+ metro chapters worldwide,
+Chicago among them); World Trade Centers Association affiliates; district
+export councils and the U.S. Commercial Service's export assistance network;
+state and metro economic development organizations; bilateral chambers
+(German-American, British-American, Mexican-American, and the rest — chosen
+to match where the book's demand signals point); CEO peer networks (Vistage,
+EO, YPO chapters) where the decision-maker for a first international hire
+actually sits; industry associations whose members are scaling SMBs
+(technology councils, manufacturing extension networks).
+
+**B. Partner-world institutions** — where PEOs, ASOs, and payroll bureaus
+gather. The operator is there because one conversation at a PEO conference
+reaches a whole client base.
+Examples: NAPEO (the PEO industry association — its annual conference and
+regional events are the densest partner rooms in the country), PrismHR LIVE
+(already the proven source: Simploy, XcelHR, and ESC all trace to it), state
+PEO associations, SHRM chapters where ASO leaders sit.
+
+**C. Home-turf institutions** — Chicago-specific rooms where showing up in
+person is nearly free because the operator lives there. World Business
+Chicago, the Chicago chapter of the Global Chamber, sister-cities programs,
+1871 and mHUB (startup/manufacturing density), the Illinois district export
+council. Same species as A, engaged at higher frequency because marginal cost
+is an el ride, not a flight.
+
+### 6.2 Selection — the scorecard
+
+Institutions are expensive in time; the program caps **active memberships at
+three** and **watched institutions at ten**, scored quarterly on the field
+manual's five dimensions, each 1–5:
+
+1. **Recurrence** — does it convene monthly or better, or once a year?
+2. **Audience fit** — are the people in the room SMB deciders (or PEO
+   leaders), or vendors selling to each other?
+3. **Reciprocity** — can the operator give something real (education, a
+   briefing, market insight) rather than only extract?
+4. **Conversion to conversations** — did the last quarter's attendance
+   produce qualified follow-up conversations? (The manual's verdict: a
+   chamber that yields attendance but no qualified follow-up is medium at
+   best.)
+5. **Distinctiveness** — does anyone else in our space own this room
+   already?
+
+Score 20+ = invest (membership, committee, speaking). 13–19 = attend and
+re-score. Under 13 = prune and replace from the watch list. The room renders
+the scorecard as sentences, not a chart ("The Global Chamber's Chicago
+chapter produced four real conversations from two events this quarter —
+invest posture holds").
+
+### 6.3 The engagement ladder
+
+Each institution climbs a ladder; the room tracks the rung:
+
+1. **Verify** — one research pass: who runs it, who attends, what the
+   calendar looks like, what membership costs in time.
+2. **Attend** — two events minimum before judging.
+3. **Contribute** — the education asset: a plain-language briefing on hiring
+   across borders without an entity (misclassification, the
+   contractor-conversion story, what a first international hire actually
+   involves). This is the same asset M6 is already demanding from marketing —
+   one artifact serves both, and until marketing ships it, a talk track
+   version exists that the operator can deliver from notes.
+4. **Host/speak** — a recurring slot: quarterly briefing, panel seat,
+   office-hours table.
+5. **Referral loop** — the institution's staff route cross-border questions
+   to the operator by habit. This rung is the destination; rungs 1–4 exist
+   to earn it.
+
+The ask discipline from the field manual holds at every rung: lead with
+education, never with a lead-ask — "ask too early for client access and you
+look hungry."
+
+### 6.4 Mechanics in the room
+
+- Institutions are first-class records in an `inst:` namespace: name, kind
+  (A/B/C), rung, score, next event, the people met, conversations captured.
+- The **institution-event rule** (weight 75) surfaces upcoming events into
+  the day queue with prep attached (who's likely in the room, per the last
+  capture; which accounts are headquartered in that metro — the proximity
+  join from Section 7).
+- Post-event, a capture flow: who, company, what they said, worth-a-look or
+  not. Worth-a-look companies go to the look-into lane, **never** straight to
+  outreach — if the company is a partner's client, the partner manager clears
+  the path first. The guardrail is doctrine: presence can raise an account's
+  priority; it cannot override relationship permission.
+- Quarterly, the scorecard composes itself from captures and conversations
+  and renders the invest/attend/prune read per institution.
+
+---
+
+## 7. The territory — the whole book, with a proximity lens
+
+### 7.1 The purview
+
+The book is **150 PrismHR/PrismHCM customer accounts, countrywide** — the
+Accounts page's roster is the territory, full stop. Fit and demand, not
+geography, rank them: the research corpus scores demand per account
+(the gate sits at 30), the desk score reads scale/platform/model-fit/recency,
+and the composite blends them. The top of the countrywide demand list as of
+the last research pass: ESC (Buffalo, 90), Advocate Pay (85, off-book),
+Infiniti HR (Maryland, 78), Simploy (St. Louis, 75), Nextep (Oklahoma, 48),
+MAU Workforce (Georgia, 48), Genesis HR (Massachusetts, 33), Fullstack PEO
+(Indianapolis, 32). Everything the room ranks starts from this whole-book
+view.
+
+The book is organized under six partner managers (the PrismHR customer
+success side): Lesha Cyphers (22 accounts), Anika Steenstra (10), Whitney
+Dideon (~28, the HCM side), John Hebert (payroll bureaus), Kathryn Maddox
+(2, HCM), Eric Ronci (enterprise side). The relay motion (M3) runs through
+them; the room's coverage math is per-roster so no roster goes dark.
+
+### 7.2 The proximity lens
+
+Chicago is not a segment; it is an advantage. The operator can meet anyone
+in the metro for the cost of an afternoon, and anyone within a day's drive
+for the cost of a day. The room carries proximity as a **lens over the same
+countrywide queue**, not a different list:
+
+- Each account carries its metro; the lens groups by drive-time bands from
+  the operator's location (Chicago default): metro (Amplify HR in Northbrook,
+  MedHQ in Westchester, Integrity Trade in Frankfort), day-drive
+  (Milwaukee/Madison, Indianapolis, Grand Rapids), short-flight clusters
+  (St. Louis — Simploy and SynchronyHR; Kansas City — Axcet, Opes, Allied;
+  Wichita — Syndeo, LSI).
+- The lens exists for two jobs: **when a conversation warms, propose meeting
+  in person** ("Simploy is a 45-minute flight; the decision is in seven days
+  — worth being in the room?"), and **when the operator plans a travel day,
+  pack it** (an Indianapolis day = WorkSmart + Fullstack + Servant HR +
+  Morales, plus whichever client-world institution meets that week).
+- Institution events join the same lens: an event in a metro pulls that
+  metro's accounts into the prep view.
+- The lens follows the operator: set the week's location and the bands
+  recompute. Nothing about ranking changes — proximity breaks ties and
+  shapes logistics, never priority.
+
+### 7.3 The data debts the room keeps visible
+
+Real gaps in the book, surfaced as work rather than papered over: accounts
+with zero known people (MedHQ, Premier Payroll, Innovative Payroll
+Processing); accounts with no research record (8 of the recent additions);
+three accounts with blank city/state that can't join the proximity lens;
+research corpus dated 7/02 — the staleness rule (Section 4.2) burns this
+down account by account, highest demand first.
+
+---
+
+## 8. Research directives — the room tells you when the tools are worth opening
+
+The correction, restated: the room's job is to know **when going into Sales
+Navigator (or LinkedIn generally) adds to productivity** — and to hand the
+operator the person, company, or topic, the filter recipe, and the reason.
+The tools' filters are deep; the room's job is to arrive with the filter
+already composed. (Founder screenshots of the live filter surfaces are
+incoming; they refine recipe fields, not the engine.)
+
+### 8.1 Directive types, their triggers, and their recipes
+
+Each directive renders as: **why now** (one doctrine-compliant sentence) →
+**the recipe** (copyable, mono) → **what to bring back** (the artifact) →
+**where it files** (always an existing store).
+
+**D1 — Fill a stakeholder gap.**
+*Trigger:* an account in play with fewer than two known people, or a
+zero-contact account entering a briefing cycle (MedHQ is the canonical
+case).
+*Recipe (lead search):* Current company = [account] · Function = Human
+Resources, Operations, Finance · Seniority = VP+, C-suite · Geography =
+[account metro].
+*Bring back:* three to five names with titles.
+*Files to:* stakeholder candidates on the account (a confirm flow — never
+auto-merged into the canonical roster).
+
+**D2 — Second-thread a one-person deal.**
+*Trigger:* an active conversation riding on a single contact (the app
+already computes thread width).
+*Recipe:* Current company = [account] · Function = the missing lane (ops if
+we only know the exec; finance if the money question is open) · Seniority =
+Director+.
+*Bring back:* one name worth asking the existing contact for an intro to.
+*Files to:* the account's ask queue, phrased as the relay it is ("who on
+your side runs the operations of this?").
+
+**D3 — Refresh a stale account.**
+*Trigger:* research older than 21 days on an account above the demand gate.
+*Recipe (account page):* headcount trend · department headcount changes ·
+posted jobs by geography (**jobs posted into other countries are the
+single strongest demand signal the research doctrine names**) · recent
+company posts.
+*Bring back:* anything that changes the demand read.
+*Files to:* the research trail, via the existing deep-research note format,
+so "what changed" diffs keep working.
+
+**D4 — Pre-meeting person read.**
+*Trigger:* any meeting inside 48 hours.
+*Recipe (profile):* current role tenure · prior companies (shared history
+with our world?) · recent posts and comments · mutual connections.
+*Bring back:* two sentences: who this person is, and one thing to open
+with.
+*Files to:* the meeting's prep note on the account.
+
+**D5 — Chase a wire hit.**
+*Trigger:* a wire item matched a book account or a named competitor on a
+book account.
+*Recipe:* the account's company page activity + posts from its leadership
+in the last two weeks + (for competitor news) who at our accounts follows
+or engages the competitor.
+*Bring back:* whether the news is real inside the account and who is
+talking about it.
+*Files to:* the account note trail, tagged to the wire item.
+
+**D6 — Map a partner's client world.**
+*Trigger:* a partner reaches M2 (asking mechanics) — the next question is
+always "which of your clients is this for?"
+*Recipe:* the partner's company page followers and post engagement ·
+their published case studies and client announcements · employees who list
+client-facing roles.
+*Bring back:* a picture of the client base's shape (industries, sizes,
+any visible international exposure) — **for the conversation with the
+partner**, never for direct outreach around them.
+*Files to:* the partner's notes.
+
+**D7 — Topic listening.**
+*Trigger:* weekly, and when a play needs fuel.
+*Recipe (content search):* keyword sets per product story —
+"employer of record," "hiring in [country]," "international contractor,"
+"misclassification" — posted in the last 30 days, by people in
+owner/founder/HR roles.
+*Bring back:* the language real buyers use (it feeds relay lines), and any
+poster who is a book account's employee or a partner's client (route
+through permission).
+*Files to:* the playbook's market-facts lane.
+
+### 8.2 How directives are generated and scheduled
+
+A pure builder computes the directive set from: contact counts and thread
+widths (D1, D2), research staleness against the demand gate (D3), the
+meeting calendar (D4), unmatched wire items (D5), M2 partner state (D6), and
+a weekly clock (D7). Directives rank into the 9:00–11:00 research window,
+capped at **three per day** — a directive is a session, not a to-do; three
+honest sessions beat ten open tabs. Each directive carries a done key; done
+means the artifact came back and filed, not that the tab was opened
+(rewarding truth, not activity).
+
+### 8.3 What never happens
+
+No scraping, no automation against LinkedIn, no browser extensions acting on
+the operator's behalf, no storing of profile data beyond what the operator
+types or confirms. The room composes queries and receives what the operator
+chooses to bring back. This keeps the program inside LinkedIn's terms and
+inside the app's own doctrine that external data is non-canonical until the
+operator promotes it.
+
+---
+
+## 9. State of play — the standing account of the operator's business
+
+**Derived, never authored.** The readout composes at request time from the
+stores that already exist — deal records, touches, notes, research, wire,
+institutions — so it is current by construction. The operator never writes
+it; the operator reads it, to Russ, on demand. Every sentence obeys Section
+3, lint on.
+
+### 9.1 The full worked sample (the caliber bar)
+
+> **State of play — Wednesday, July 30.**
+>
+> **Conversations that could become deals — four.**
+>
+> **Simploy** is a PEO in St. Louis that runs their business on our
+> software. Their COO, Chassie Smith, came to us July 8th after PrismHR
+> LIVE: they're choosing one partner to handle global hiring for their
+> clients — employing and paying people abroad — and her leadership decides
+> **August 6th**. Today that business goes to Globalization Partners and
+> Simploy earns nothing on it; through us they'd resell it at a margin
+> inside the platform they already use. We demoed for her operations
+> director last week. I owe them the follow-up showing how we'd convert
+> their two contractors in India into proper employees — it goes out today.
+>
+> **ESC** — Employer Services Corporation, a PEO in Buffalo — has two things
+> running. Their technology director wants to run Canadian payroll on our
+> software under a license; that structure question sits with Rick Torrence
+> on our side. Separately their VP of sales has a prospect with about 25
+> employees in Ontario who needs payroll soon. They accepted a Canada
+> payroll demo on July 22nd; scheduling now.
+>
+> **Infiniti HR** — a Maryland PEO with one of the biggest client bases we
+> serve — runs domestic on our software but sends global work to
+> Globalization Partners under an alliance that renews this fall. Their
+> director of implementation asked us for a call: they have a Puerto Rico
+> payroll problem right now, plus "other international needs" in her words.
+> I'm confirming Friday. The longer game is taking the whole global layer
+> when that alliance renews.
+>
+> **XcelHR** — a national PEO — has a client with workers in Mexico; whether
+> they're employees or contractors is the first question. Their VP of
+> operations asked this week for a call on how a deal with us would work
+> and how pricing takes shape. He's ready to pitch his client; I'm giving
+> him Wednesday or Friday.
+>
+> **The rest of the book.** I cover 150 PrismHR and PrismHCM customers
+> nationwide. Since I started working accounts July 8th: 11 have had a real
+> conversation about global hiring. This week I sent updates to 5 of the 6
+> partner managers who own these relationships; 3 replied, and two of those
+> replies became the calls above. The biggest untapped group: customers
+> already on our platform where turning on Global is configuration, not a
+> project — I'm feeding those to the partner managers first.
+>
+> **What's blocking me — three things, all internal.** Pricing our partners
+> can quote without calling me (asked July 22nd, still open). Country
+> coverage sheets partners can hand clients (same age). The second
+> contracting training (waiting on a date from Deana Morgan's team).
+>
+> **Next seven days:** Simploy decision support through August 6th. Infiniti
+> call Friday. XcelHR call midweek. Whitney Dideon's accounts get their
+> first Global briefing — she's three weeks in seat and her roster hasn't
+> been introduced yet.
+
+Every number above shows its base; every name introduces itself; Russ can
+carry any paragraph to the chief of sales verbatim. (The sample's counts are
+illustrative; the builder computes real ones.)
+
+### 9.2 Composition rules
+
+- **Sections, fixed order:** conversations that could become deals → the
+  rest of the book → what's blocking me → next seven days. A post-mortem
+  section appears only when a deal died since the last read.
+- Each deal paragraph assembles from: the account's identity line (from the
+  book), the origin event (first inbound/intro, dated), the state (last
+  real event), the money-shape in words never figures (resale/referral,
+  translated), the one owed thing, and the date that matters. All from
+  existing intel extraction; the builder's job is ordering and voice.
+- **The delta:** a `groundwork:readout-read` timestamp marks each read;
+  "since you last read this to Russ" renders changes first on request.
+- **Outputs:** copy as plain text; a two-minute spoken version (the same
+  text, sections collapsed to their lead sentences); the per-deal
+  post-mortem view (Russ's known format: 20 minutes, what happened, what we
+  learned, what changes).
+- `redactMoney` on every string, lint per Section 3.2, and the readout
+  never says "steps."
+
+---
+
+## 10. The wire — outside signals
+
+Unchanged in purpose from draft one; specified tighter.
+
+**Registry** (versioned in code, one file):
 - Category terms: EOR, employer of record, contractor management, contractor
-  of record, PEO, ASO, international hiring, global hiring, global hiring
-  compliance, international payroll, global payroll, worker
-  misclassification, permanent establishment, co-employment.
-- Competitors (the superset list in `src/lib/book/research.ts` COMPETITORS,
-  which already includes Rippling): Deel, Rippling, Remote, Globalization
-  Partners / G-P, Velocity Global (rebrand "Pebl"), Papaya Global, Oyster,
-  Multiplier, Safeguard Global, Omnipresent, Skuad, Playroll, Atlas HXM,
-  TriNet — reusing its NEG negation regex so "no Deel in place" never counts
-  as a mention.
-- The family: PrismHR, Vensure, Engage PEO (the acquirer moving through the
-  book), iSolved, Justworks, NAPEO.
-- **Every account in the book** — all 150 names from `peos`, plus the PEO/HR
-  companies named inside research records (Callos/Nesco, OPOC.us, Spooner,
-  AlphaStaffHCM, PeopLease…). Ambiguous names (Remote, Axios, Sequoia, QPS,
-  Allied Global) carry disambiguation qualifiers in the sweep prompt — the
-  research corpus already documents each collision.
+  of record, agent of record, PEO, ASO, international hiring, global hiring,
+  global hiring compliance, international payroll, global payroll, worker
+  misclassification, permanent establishment, co-employment, cross-border
+  employment.
+- Competitors (superset already in the codebase, including Rippling): Deel,
+  Rippling, Remote, Globalization Partners/G-P, Velocity Global (and its
+  rebrand Pebl), Papaya Global, Oyster, Multiplier, Safeguard Global,
+  Omnipresent, Skuad, Playroll, Atlas HXM, TriNet — with the existing
+  negation guard so "no Deel in place" never counts as a mention.
+- The family: PrismHR, Vensure, Engage PEO, iSolved, Justworks, NAPEO.
+- **Every account name in the book** (all 150, derived from the book module
+  at build), plus the adjacent companies the research corpus names
+  (Callos/Nesco, OPOC.us, Spooner, AlphaStaffHCM, PeopLease…). Ambiguous
+  names (Remote, Axios, Sequoia, QPS, Allied Global) carry disambiguators in
+  the sweep prompt — each collision is already documented in the research
+  corpus.
 
-**Sources (≥5, reputable, named in the sweep prompt):** SHRM, HR Dive,
-Staffing Industry Analysts, Bloomberg Law/Tax, Reuters, TechCrunch (venture
-EOR news: Deel/Rippling/Remote funding, lawsuits, layoffs), HR Executive, plus
-NAPEO's PEO Insider for industry-structure news. The sweep prefers these
-domains and always records the source URL.
+**Sources, preferred and named in the sweep:** SHRM, HR Dive, Staffing
+Industry Analysts, Bloomberg Law/Tax, Reuters, TechCrunch, HR Executive,
+NAPEO's PEO Insider. Every item stores its source URL.
 
-**How it works (honest to the repo's capabilities).** No RSS infra exists and
-the doctrine keeps external APIs non-canonical; the one sanctioned
-external-fetch mechanism is a Claude `web_search` pass
-(`src/lib/intel/deep-research.ts` is the template). So the wire is a **sweep**:
-a server action running batched web searches over the registry, returning
-structured items `{headline, source, url, at, keywords[], accountIds[], read}`
-— each with a one-sentence "why this matters here" read — filed as notes under
-a `wire:` namespace (immutable, deduped by URL hash). Refresh model:
-staleness-triggered on room entry (12h threshold) + a manual refresh control;
-`docs/automation-map.md` permits data-only scheduled refresh, but the repo has
-no scheduler today — adding Vercel cron is a founder decision the plan
-surfaces rather than assumes.
+**Mechanics:** the app's one sanctioned external-fetch path is a Claude
+web-search pass (the deep-research module is the template). The wire is a
+sweep: batched searches over the registry → structured items {headline,
+source, url, at, keywords, accountIds, read} — the read being one
+doctrine-compliant sentence on why it matters here → filed immutable under a
+`wire:` namespace, deduped by URL hash. Refresh: staleness-triggered on room
+entry (12-hour threshold) plus a manual sweep control; scheduled refresh is
+doctrine-permitted (data-only) but the repo has no scheduler — adding one is
+a founder decision this plan surfaces, not assumes.
 
-**Rendering.** Not a marquee — the motion vocabulary is closed (no scrolling
-loops; the only ambient motion in the system is the single pulse dot). The
-wire is a quiet column/strip of items, newest first, rotating through the
-`ds-read` crossfade where space is tight. Items mentioning a book account
-carry the account chip and rank first.
-
-**One click from a deep dive.** Clicking an item opens a drawer: the read, the
-source link, every matched keyword/account, and one move — "Dig deeper," which
-runs a focused research pass seeded with the item (URL + account context) and
-files the finding to the account's `research:` trail. Wire → dossier: items
-that touch a live pursuit surface automatically in State of play §4.
+**Rendering:** a quiet list, newest first, account-matched items first with
+the account chip. No marquee, no scrolling loop — the motion vocabulary is
+closed. Item click opens the drawer: the read, the source link, matched
+keywords and accounts, and two controls — **Dig deeper** (a focused research
+pass seeded with the item, filed to the account's research trail, which also
+arms directive D5) and **Skip — stay here**. Items that touch an active deal
+surface automatically in the readout's deal paragraphs.
 
 ---
 
-## 10. LinkedIn Sales Navigator — the intake lane
+## 11. Per-account awareness — the binding contract
 
-Sales Navigator's terms prohibit scraping/automation, so the lane is
-**paste-first by design** — the operator copies what they are already looking
-at; the app does the reading. Three levels:
+Everything the room renders about an account comes from the stores the
+Accounts page reads, at request time:
 
-1. **Paste box (ships first).** A capture box in Groundwork accepting any
-   Sales Nav copy — a lead list, an account page, saved-search alerts, a
-   profile. A structured Claude read (the `aiCleanTimeline` pattern with a
-   SalesNav-shaped schema) extracts: people {name, title, company, seniority},
-   company signals (headcount growth, **countries hiring into** — already the
-   research doctrine's top prospecting signal), job changes, and intent
-   crumbs. Output files as: contact candidates on the matched account
-   (surfaced for confirmation, never auto-merged into `contacts.json`),
-   `prospect:<accountId>` notes, and look-into items for unmatched companies.
-   The misfile guard (paste mentions a different company than the bound
-   account → nothing writes until forced) carries over.
-2. **Bookmarklet (fourth in the shelf).** Same pattern as the Outlook/SF/Teams
-   grabs: scoped DOM innerText, head token `SALESNAV — captured <date>`,
-   clipboard, opens Groundwork. It only captures what the operator already has
-   on screen — no crawling, no background requests. Dialect branch added
-   beside the existing three in the paste reader.
-3. **Routine, not integration.** The 9:00 research window lists the day's
-   saved searches to open (per-account and per-territory), so Sales Nav
-   browsing happens on cadence and every session ends in a paste-down. If the
-   org's Salesforce LinkedIn activity integration matures, SF pastes already
-   carry LinkedIn activity rows — no new work needed.
+- identity, fit, platform tenancy: the book module (`peos`, `getPeo`, desk
+  and composite scoring);
+- demand, play, countries, evidence: the research module (`getDemand`,
+  `analyzePlay`, `extractCountries`, `researchGeneratedAt`);
+- people: the server-only roster (`contactsFor`) joined with note actors
+  (`peopleFor`);
+- conversation state: command-center stage/approach overlays, touches,
+  todos, dispositions;
+- derived intelligence: corpus extraction (`dealIntelFor`), next motions
+  (`motionsFor`), the ≤3 questions worth asking (`askNextFor`), relay lines
+  from the discovery banks.
+
+The account lens is a drawer (never a route change): identity line ·
+fit/demand with the research date · the play in plain words · countries ·
+the stakeholder shortlist with the gap flagged · the next move with its
+relay line · last touch and next check-in · wire hits · open directives ·
+a plain link to the account's page. Account names are plain links.
 
 ---
 
-## 11. Per-account awareness
+## 12. Architecture
 
-Every account rendering in Groundwork binds to the same stores as the Accounts
-page — no copies, no drift:
+**Route:** `src/app/groundwork/page.tsx` — server component,
+`force-dynamic`, standard auth gate, wayfinder entry. Server actions in
+`src/app/groundwork/actions.ts` behind `requireWrite()`.
 
-- Identity/fit: `peos`/`getPeo` (`@/lib/book`), `deskScore`/`compositeScore`.
-- Research: `getDemand`, `analyzePlay`, `extractCountries`,
-  `researchGeneratedAt` (staleness), evidence claims for the "why."
-- People: `contactsFor` + `peopleFor` (server-only roster + note actors).
-- Live state: command-center stage/approach/intent overlays, dispositions,
-  touches, todos.
-- Intelligence: `dealIntelFor` corpus extraction; `motionsFor` for the next
-  motion; `askNextFor` for the ≤3 questions worth asking; relay lines from the
-  discovery banks.
+**Pure builders** in `src/lib/groundwork/`:
+- `day.ts` — blocks + ranked queue (Section 4), Chicago-keyed.
+- `readout.ts` — State of play composition + the lint pass (Section 3.2)
+  + the delta.
+- `directives.ts` — the directive engine (Section 8), recipes as data.
+- `institutions.ts` — `inst:` record shapes, ladder, scorecard math.
+- `wire.ts` + `wire-keywords.ts` — sweep, registry, dedupe, matching.
+- `proximity.ts` — metro bands from account cities (static table + the
+  operator's set location).
 
-The account lens (a drawer, not a route) shows: fit + demand + play,
-countries, competitors, the stakeholder shortlist, the next motion with its
-relay line, last touch/next check-in, wire hits, and a plain link to
-`/accounts?focus=<id>`. Account names are plain links — no glyphs.
+**Persistence** — the established recipe, nothing exotic:
+- durable text/knowledge → AccountNote namespaces: `wire:<hash>`,
+  `inst:<slug>`, `prospect:<accountId>` (directive artifacts, stakeholder
+  candidates pending confirm);
+- done marks → TaskDone keys `groundwork:<userDayKey>:<moveKey>` (day-scoped)
+  and durable keys for ladder rungs and readout reads;
+- mutes/dismissals → AccountDisposition namespaced keys;
+- anything with a follow-up rhythm (institution events, revisit dates) →
+  Touch rows with their existing cadence machinery.
+No new Prisma models required for phase one; if institution records outgrow
+the namespace pattern, a small `Institution` table is the phase-five
+decision.
 
----
+**Tests** (tsx, in `tests/`): queue ranking against fixture states; readout
+composition + lint (bare dates, missing denominators, banned-list hits,
+first-mention appositives); directive generation triggers; wire dedupe and
+negation; day-key behavior across the UTC-evening boundary; proximity band
+assignment.
 
-## 12. Build plan
-
-Phased, additive-isolated, each phase shippable behind the standing verify
-chain (`prettier → tsc → eslint (0 warnings) → tsx tests → next build`, branch
-→ PR → Vercel green → squash).
-
-**Phase 1 — The room and the day engine.** `src/app/groundwork/page.tsx`
-(force-dynamic, auth-gated, AppWayfinder entry), `src/lib/groundwork/day.ts`
-(pure block builder over existing stores, Chicago-keyed), done-keys +
-dispositions in the established namespaced pattern. Tests for the block
-builder and day-key behavior (including the 9:00-anchor and the
-UTC-rollover trap).
-
-**Phase 2 — State of play.** `src/lib/groundwork/readout.ts` pure builder +
-copy/mailto actions + last-read stamping. Tests: readout composes from
-fixtures, redacts money, delta logic.
-
-**Phase 3 — The wire.** `wire-keywords.ts` registry (exports the account-name
-watchlist derived from `peos` at build), `wire.ts` sweep via the deep-research
-template, `wire:` namespace filing + URL-hash dedupe, drawer + dig-deeper
-action. Staleness-on-entry refresh; founder decision logged on cron.
-
-**Phase 4 — Sales Nav lane.** Paste box + structured reader + contact-candidate
-confirm flow; bookmarklet added to the Capture shelf; misfile guard tests.
-
-**Phase 5 — Chamber tile + channel scorecard.** Verification research pass,
-capture lane, quarterly scoring per the field manual's five dimensions.
-
-Open decisions surfaced to the founder (not assumed): cron infrastructure
-(vercel.json) vs on-entry refresh only; Chamber go/no-go after the
-verification pass; whether contact candidates from Sales Nav may ever write
-into the canonical roster or stay a side ledger; XCEL HR's region filing;
-reclassifying Gordon J. Maier.
+**Verify chain per ship:** prettier → tsc → eslint (0 warnings) → tsx tests
+→ next build, joined by `&&`; branch → PR → Vercel green → squash.
 
 ---
 
-## 13. Design
+## 13. Build phases, with acceptance criteria
 
-Three structurally distinct options — same palette, same type, same
-components; distinctiveness by information architecture only, per the design
-canon — are built as an interactive triptych:
-`docs/mockups/groundwork-triptych-2026-07-30.html`.
+**Phase 1 — the room, the day engine, the queue.**
+Done when: the room renders the five-move day against real stores; past
+blocks compress on the real clock; done keys reset at Chicago midnight (test
+covers the UTC trap); every row carries do + why + a ready thing; empty and
+sparse states read as designed.
 
-- **Option A — Day Spine.** Pulse-first: the page is the 9:00→close time
-  axis; the wire is a right rail; State of play is an edge tab.
-- **Option B — The Desk.** Account-first FocalRail: ranked prospect queue
-  left (one offset item breaks rank), the focused account's working lens
-  center, the wire as a quiet strip; State of play as a drawer.
-- **Option C — The Briefing.** Dossier-first: State of play IS the page top —
-  always current, read-to-Russ ready; the day's queues and the wire hang off
-  it beneath.
+**Phase 2 — State of play.**
+Done when: the readout composes all four sections from fixtures and from
+live data; the lint flags every seeded violation; copy produces clean plain
+text; the delta renders since-last-read; a dead deal produces the
+post-mortem view.
 
-All three honor: bright field, ink ladder, orange spent once, blue for system
-intelligence, serif/sans/mono trio, no forbidden costumes, no money figures,
-no "steps" in operator copy, account names as plain links.
+**Phase 3 — directives.**
+Done when: D1–D7 fire on their triggers against fixtures; each renders
+why/recipe/bring-back/files-to; the three-per-day cap and session-done
+semantics hold; a confirmed stakeholder candidate lands in the account's
+candidate list without touching the canonical roster.
+
+**Phase 4 — the wire.**
+Done when: a sweep files deduped items with reads and matches; account
+matches rank first; the drawer's dig-deeper files to the research trail;
+negated competitor mentions don't match; the 12-hour staleness refresh
+works; the manual sweep control works.
+
+**Phase 5 — institutions + proximity.**
+Done when: `inst:` records render with rung and score; the event rule
+surfaces into the queue with prep; post-event capture files people and
+worth-a-looks into the look-into lane; the quarterly scorecard composes; the
+proximity lens groups the queue by the operator's set location and packs a
+travel day.
+
+Open decisions surfaced, not assumed: a scheduler (Vercel cron) for wire and
+research refresh; whether confirmed stakeholder candidates may ever write to
+the canonical roster; the first three institutions to verify (founder picks;
+the Global Chamber's Chicago chapter is the obvious first); whether the
+education asset ships as marketing collateral or operator talk-track first.
+
+---
+
+## 14. Design
+
+Second triptych (the first three shapes were rejected):
+`docs/mockups/groundwork-triptych-v2-2026-07-30.html` — three new structures,
+same locked system, all copy written to Section 3:
+
+- **The Dispatch** — read-led. The room composes the day as an authored
+  morning edition: a lead story in full plain language, stories beneath it
+  with their acts inline, the readout standing ready in a column that never
+  scrolls away. Acting on a story compresses it to a done line.
+- **The Answer Hunt** — question-led. The room is the day's open questions,
+  ranked by what answering unlocks; every question carries its fastest
+  answer paths (a person to call, a directive recipe, a wire dig, an event),
+  and answering visibly advances the book.
+- **The Circuit** — route-led. The day is a run of five stops picked from
+  the whole countrywide book (accounts, a research session, an institution,
+  the readout minute); a single honest meter tracks quarter-to-date real
+  conversations across the 150; the proximity toggle repacks the run when
+  the operator is traveling.
+
+First triptych retained in-repo as the recorded rejected alternative.
