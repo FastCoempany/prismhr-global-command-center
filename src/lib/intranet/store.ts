@@ -284,6 +284,67 @@ export async function commonEntities(limit = 300): Promise<string[]> {
   }
 }
 
+/** What the room has spent today, for the ceilings (Phase 13.4). Counted from
+ *  the rows themselves rather than a running total, so a restart never resets
+ *  the day. */
+export async function todayCounts(now = new Date()): Promise<{
+  docs: number;
+  asks: number;
+}> {
+  if (!hasDatabaseEnv()) return { docs: 0, asks: 0 };
+  const start = new Date(now);
+  start.setHours(0, 0, 0, 0);
+  try {
+    const p = getPrisma();
+    const [docs, asks] = await Promise.all([
+      p.intranetDoc.count({ where: { extractedAt: { gte: start } } }),
+      p.intranetAsk.count({ where: { askedAt: { gte: start } } }),
+    ]);
+    return { docs, asks };
+  } catch {
+    return { docs: 0, asks: 0 };
+  }
+}
+
+/** Every prospect question in the corpus, with the document context the bridges
+ *  need (C7). This is the material the harvest and the gap carousel run on. */
+export async function prospectAsks(limit = 400) {
+  if (!hasDatabaseEnv()) return [];
+  try {
+    const p = getPrisma();
+    const rows = await p.intranetClaim.findMany({
+      where: { kind: "prospect-question" },
+      orderBy: { saidAt: "desc" },
+      take: limit,
+      select: {
+        id: true,
+        docId: true,
+        text: true,
+        askShape: true,
+        entities: true,
+        saidAt: true,
+      },
+    });
+    if (rows.length === 0) return [];
+    const docs = await docsByIds([...new Set(rows.map((r) => r.docId))]);
+    return rows.map((r) => {
+      const d = docs.get(r.docId);
+      return {
+        claimId: r.id,
+        text: r.text,
+        shape: r.askShape ?? "",
+        entities: r.entities ?? [],
+        saidAt: iso(r.saidAt),
+        docId: r.docId,
+        accountId: d?.accountId ?? "",
+        space: d?.space ?? "",
+      };
+    });
+  } catch {
+    return [];
+  }
+}
+
 /** Recent asks, for the health view and for repeating a question. */
 export async function recentAsks(limit = 10) {
   if (!hasDatabaseEnv()) return [];

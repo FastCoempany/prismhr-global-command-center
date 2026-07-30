@@ -73,14 +73,49 @@ import {
   readTime,
   withSupersessions,
 } from "../src/lib/intranet/time";
-import { goneLine, syncVerdict } from "../src/lib/intranet/mirror";
-import { askShapeRead, isPlaybookNamespace } from "../src/lib/intranet/playbook-in";
+import {
+  goneLine,
+  mirrorAccountNote,
+  mirrorCard,
+  mirrorDemoNote,
+  mirrorTodo,
+  mirrorTouch,
+  syncVerdict,
+} from "../src/lib/intranet/mirror";
+import {
+  CEILINGS,
+  EVAL_SET,
+  TARGETS,
+  abstained,
+  attributionHolds,
+  groundedness,
+  healthLine,
+  readCeilings,
+  recallAt,
+  scoreCase,
+  summarise,
+} from "../src/lib/intranet/evals";
+import {
+  accountsMentioned,
+  askHref,
+  harvestBattlecards,
+  peerQuestions,
+  promotionDraft,
+  sameAsk,
+  scopedAsk,
+  type ProspectAsk,
+} from "../src/lib/intranet/bridges";
+import {
+  askShapeRead,
+  isPlaybookNamespace,
+  playbookKnowledgeDoc,
+} from "../src/lib/intranet/playbook-in";
 import {
   sanitizeVerdicts,
   summaryStale,
   supersessionDirection,
 } from "../src/lib/intranet/verdicts";
-import type { Claim, Msg, Topic } from "../src/lib/intranet/types";
+import type { Answer, Candidate, Claim, Msg, Topic } from "../src/lib/intranet/types";
 
 const root = cwd();
 const NOW = "2026-07-30T18:00:00.000Z";
@@ -1015,5 +1050,521 @@ describe("a contradiction has to justify itself", () => {
     assert.equal(summaryStale(10, 8), true);
     assert.equal(summaryStale(9, 8), false);
     assert.equal(summaryStale(4, 0), true);
+  });
+});
+
+// ── Phase 13 · evals, governance and the bridges ────────────────────────────
+describe("the measures that decide whether the room is any good", () => {
+  const cands = (texts: string[]): Candidate[] =>
+    texts.map((t, i) => ({
+      claim: claim({ id: `c${i}`, text: t }),
+      roads: ["topic"],
+      lexicalRank: 0,
+      corroboration: 1,
+      score: 1 - i / 100,
+    }));
+
+  test("the permanent set covers every commitment it was built to prove", () => {
+    const ids = EVAL_SET.map((c) => c.id);
+    for (const need of [
+      "cross-corpus",
+      "changed-position",
+      "absent",
+      "vocabulary",
+      "thin",
+      "prospect-questions",
+    ])
+      assert.ok(ids.includes(need), `the eval set lost ${need}`);
+    for (const c of EVAL_SET)
+      assert.ok(c.proves, `${c.id} stopped saying what it proves`);
+  });
+  test("attribution and abstention are held at 1.00 — the failures fluency hides", () => {
+    assert.equal(TARGETS.attribution, 1);
+    assert.equal(TARGETS.abstention, 1);
+    assert.ok(TARGETS.recall >= 0.85);
+    assert.ok(TARGETS.grounded >= 0.95);
+  });
+  test("recall counts what a human marked, not what came back", () => {
+    const found = cands([
+      "Implementation runs four to six weeks from signature to first payroll",
+      "Two of them slipped past that",
+    ]);
+    assert.equal(recallAt(found, ["four to six weeks", "slipped"]), 1);
+    assert.equal(recallAt(found, ["four to six weeks", "Reykjavik"]), 0.5);
+    assert.equal(recallAt(found, []), 1, "a question with nothing to find cannot fail");
+  });
+  test("recall only sees the top k — a claim ranked 40th was never read", () => {
+    const many = cands([...Array(30)].map((_, i) => `filler claim number ${i}`));
+    many.push(...cands(["the one that mattered"]));
+    assert.equal(recallAt(many, ["the one that mattered"], 20), 0);
+  });
+  test("a citation whose speaker has drifted is an attribution failure", () => {
+    const c = claim({ id: "x", text: "we quoted six weeks", speaker: "Jeanne Hogan" });
+    const byId = new Map([["x", c]]);
+    assert.equal(
+      attributionHolds([{ claimId: "x", speaker: "Jeanne Hogan" }], byId),
+      true,
+    );
+    assert.equal(
+      attributionHolds([{ claimId: "x", speaker: "Lesha Cyphers" }], byId),
+      false,
+    );
+    assert.equal(
+      attributionHolds([{ claimId: "ghost", speaker: "Jeanne Hogan" }], byId),
+      false,
+      "a citation to a claim that does not exist passed",
+    );
+  });
+  test("an abstention is the answer naming its own emptiness", () => {
+    const nothing = "Nothing in the record covers that.";
+    const answered: Answer = {
+      answer: "We tell people four to six weeks.",
+      citations: [1],
+      reasoning: "",
+      setAside: [],
+      confidence: "firm",
+      gaps: [],
+    };
+    assert.equal(
+      abstained({ ...answered, answer: nothing, citations: [] }, nothing),
+      true,
+    );
+    assert.equal(abstained(answered, nothing), false);
+  });
+  test("a citation handle pointing past the candidate set is fabricated", () => {
+    const a: Answer = {
+      answer: "x",
+      citations: [1, 2, 9],
+      reasoning: "",
+      setAside: [],
+      confidence: "firm",
+      gaps: [],
+    };
+    assert.equal(groundedness(a, 3), 2 / 3);
+    assert.equal(groundedness({ ...a, citations: [] }, 3), 1);
+  });
+  test("a case that misattributes fails however good its recall", () => {
+    const c = EVAL_SET[0];
+    const claims = cands([
+      "four to six weeks from signature to first payroll",
+      "slipped",
+    ]);
+    const byId = new Map(claims.map((x) => [x.claim.id, x.claim]));
+    const r = scoreCase(c, {
+      candidates: claims,
+      answer: {
+        answer: "Four to six weeks, and it has slipped twice.",
+        citations: [1, 2],
+        reasoning: "",
+        setAside: [],
+        confidence: "firm",
+        gaps: [],
+      },
+      cited: [{ claimId: "c0", speaker: "somebody else" }],
+      byId,
+      nothingLine: "Nothing in the record",
+    });
+    assert.equal(r.passed, false);
+    assert.equal(r.note, "a citation credited the wrong speaker");
+  });
+  test("a failure says which commitment broke", () => {
+    const summary = summarise([
+      {
+        id: "a",
+        proves: "C1",
+        recall: 1,
+        attribution: true,
+        abstention: true,
+        grounded: 1,
+        passed: true,
+        note: "",
+      },
+      {
+        id: "b",
+        proves: "C7",
+        recall: 0.2,
+        attribution: true,
+        abstention: true,
+        grounded: 1,
+        passed: false,
+        note: "retrieval missed material a human marked relevant",
+      },
+    ]);
+    assert.equal(summary.passed, 1);
+    assert.equal(summary.failed, 1);
+    assert.ok(summary.lines[1].includes("C7"));
+    assert.ok(summary.lines[1].includes("retrieval missed"));
+  });
+});
+
+describe("cost governance degrades the room, it never breaks it (F10)", () => {
+  test("under the ceilings nothing changes", () => {
+    const s = readCeilings({ docs: 10, asks: 4 });
+    assert.equal(s.breached, false);
+    assert.equal(s.line, "");
+  });
+  test("a breach says what happened and what still works", () => {
+    const s = readCeilings({ docs: 0, asks: CEILINGS.asksPerDay });
+    assert.equal(s.breached, true);
+    assert.equal(s.which, "asks");
+    assert.ok(/still work/.test(s.line), "the breach line stopped saying what survives");
+    assert.ok(!/error|failed/i.test(s.line), "a ceiling is not a failure");
+  });
+  test("the reading ceiling holds material rather than dropping it (C6)", () => {
+    const s = readCeilings({ docs: CEILINGS.docsPerDay, asks: 0 });
+    assert.equal(s.which, "docs");
+    assert.ok(/hold what you give it/.test(s.line));
+  });
+  test("a pathological candidate set is cut before it becomes a four-dollar question", () => {
+    const src = readFileSync(join(root, "src/app/intranet/actions.ts"), "utf8");
+    assert.ok(
+      /candidates\.slice\(0, CEILINGS\.claimsPerAsk\)/.test(src),
+      "synthesis stopped capping its input",
+    );
+    assert.ok(
+      /readCeilings\(await todayCounts\(\)\)/.test(src),
+      "the ask stopped checking the day",
+    );
+  });
+  test("the health line reads in two seconds", () => {
+    const line = healthLine({
+      docs: 240,
+      claims: 1800,
+      topics: 26,
+      pending: 3,
+      todayDocs: 12,
+      todayAsks: 4,
+    });
+    assert.ok(line.includes("1800 claims from 240 documents"));
+    assert.ok(line.includes("3 waiting to be read"));
+    assert.ok(line.includes("today: 12 read, 4 asked"));
+  });
+});
+
+describe("the bridges offer, they never file (Phase 13.6)", () => {
+  const ask = (
+    over: Partial<ProspectAsk> & { claimId: string; text: string },
+  ): ProspectAsk => ({
+    shape: "commercial",
+    entities: ["Brazil"],
+    saidAt: "2026-06-01T12:00:00.000Z",
+    docId: "d1",
+    accountId: "",
+    space: "Acme demo",
+    ...over,
+  });
+
+  test("a question asked in one room is not a pattern", () => {
+    const { propose } = harvestBattlecards(
+      [
+        ask({
+          claimId: "1",
+          text: "How do you handle contractor classification in Brazil?",
+        }),
+      ],
+      [],
+    );
+    assert.equal(propose.length, 0);
+  });
+  test("the same worry from two separate rooms becomes a proposal (C7)", () => {
+    const { propose } = harvestBattlecards(
+      [
+        ask({
+          claimId: "1",
+          text: "How do you handle contractor classification in Brazil?",
+        }),
+        ask({
+          claimId: "2",
+          docId: "d2",
+          text: "What happens if a contractor gets reclassified in Brazil?",
+        }),
+      ],
+      [],
+      { minDocs: 2 },
+    );
+    assert.equal(propose.length, 1);
+    assert.equal(propose[0].asked, 2);
+    assert.ok(propose[0].read, "the proposal lost the read on why they asked");
+  });
+  test("a question the Playbook already asks is not proposed again", () => {
+    const asks = [
+      ask({
+        claimId: "1",
+        text: "How do you handle contractor classification in Brazil?",
+      }),
+      ask({
+        claimId: "2",
+        docId: "d2",
+        text: "How do you handle contractor classification in Brazil?",
+      }),
+    ];
+    const { propose } = harvestBattlecards(asks, [
+      "How do you handle contractor classification in Brazil?",
+    ]);
+    assert.equal(propose.length, 0);
+  });
+  test("a battlecard question no buyer ever asked is ours, not theirs", () => {
+    const { oursNotTheirs } = harvestBattlecards(
+      [ask({ claimId: "1", text: "What does the Brazil entity cost to stand up?" })],
+      ["Who signs off on your global payroll strategy today?"],
+    );
+    assert.deepEqual(oursNotTheirs, [
+      "Who signs off on your global payroll strategy today?",
+    ]);
+  });
+  test("two different worries never collapse into one battlecard", () => {
+    assert.equal(
+      sameAsk(
+        "How long does payroll implementation take?",
+        "How long does onboarding a contractor take?",
+      ),
+      false,
+    );
+  });
+  test("a deal inherits what comparable deals provoked, never its own echo", () => {
+    const asks = [
+      ask({
+        claimId: "1",
+        text: "Who is liable if a Brazil contractor is reclassified?",
+        accountId: "acct-a",
+      }),
+      ask({
+        claimId: "2",
+        text: "What does Brazil cost?",
+        accountId: "acct-b",
+        entities: ["Brazil"],
+      }),
+    ];
+    const peers = peerQuestions(asks, {
+      entities: ["Brazil"],
+      excludeAccountId: "acct-a",
+    });
+    assert.equal(peers.length, 1);
+    assert.equal(peers[0].claimId, "2");
+    assert.deepEqual(peers[0].shared, ["Brazil"]);
+  });
+  test("no shared situation means no inherited question", () => {
+    assert.deepEqual(
+      peerQuestions([ask({ claimId: "1", text: "x", entities: ["Poland"] })], {
+        entities: ["Brazil"],
+      }),
+      [],
+    );
+    assert.deepEqual(
+      peerQuestions([ask({ claimId: "1", text: "x" })], { entities: [] }),
+      [],
+    );
+  });
+  test("an entity that names a book account offers a link into that deal", () => {
+    const book = [
+      { id: "a1", name: "Advocate Pay" },
+      { id: "a2", name: "Warren Averett" },
+    ];
+    assert.deepEqual(accountsMentioned(["Advocate Pay, Inc."], book), [
+      { id: "a1", name: "Advocate Pay" },
+    ]);
+    assert.deepEqual(accountsMentioned(["Brazil", "EOR"], book), []);
+  });
+  test("asking from anywhere starts at the account and still reads everything (C1)", () => {
+    const q = scopedAsk("Advocate Pay", ["eor", "contractor"]);
+    assert.ok(q.includes("Advocate Pay"));
+    assert.ok(askHref(q).startsWith("/intranet?q="));
+    assert.equal(scopedAsk("", []), "");
+  });
+  test("a promoted claim travels with where it came from", () => {
+    const d = promotionDraft(
+      {
+        text: "Brazil entity setup ran four months on the last two deals",
+        kind: "fact",
+        speaker: "Jeanne Hogan",
+        saidAt: "2026-05-04T12:00:00.000Z",
+      },
+      { space: "Global Sales Team", title: "", origin: "teams" },
+    );
+    assert.equal(d.ns, "market");
+    assert.ok(d.line.includes("Global Sales Team, 2026-05-04"));
+  });
+  test("a decision promotes as a lesson, a fact as market knowledge", () => {
+    const base = { text: "we lead with EOR first", speaker: "x", saidAt: "" };
+    assert.equal(
+      promotionDraft({ ...base, kind: "decision" }, { space: "", title: "", origin: "" })
+        .ns,
+      "lessons",
+    );
+    assert.equal(
+      promotionDraft({ ...base, kind: "fact" }, { space: "", title: "", origin: "" }).ns,
+      "market",
+    );
+  });
+  test("promotion composes text and writes nothing — the Playbook is written by hand", () => {
+    const src = readFileSync(join(root, "src/lib/intranet/bridges.ts"), "utf8");
+    assert.ok(!/prisma|create\(|update\(|upsert\(/.test(src), "a bridge started writing");
+  });
+  test("a demo pipes itself in rather than waiting to be pasted", () => {
+    const d = mirrorDemoNote(
+      {
+        id: "dn1",
+        screenId: "payroll-register",
+        body: "They asked twice how corrections are handled mid-cycle.",
+        createdAt: "2026-07-14T15:00:00.000Z",
+      },
+      { name: "Acme", company: "Acme Manufacturing", persona: "CFO" },
+      "Payroll Register",
+    );
+    assert.ok(d);
+    assert.equal(d.origin, "demo");
+    assert.equal(d.originRef, "dn1");
+    assert.ok(d.body.includes("Payroll Register"), "the screen was dropped");
+    assert.ok(d.body.includes("Acme Manufacturing"));
+    assert.equal(
+      mirrorDemoNote(
+        { id: "x", screenId: "s", body: "  ", createdAt: "" },
+        { name: "", company: "", persona: "" },
+        "",
+      ),
+      null,
+    );
+  });
+  test("a pasted demo transcript is never mistaken for a vanished sidekick note (C6)", () => {
+    const runners = readFileSync(join(root, "src/app/intranet/runners.ts"), "utf8");
+    assert.ok(
+      /m\.originRef\.includes\(":"\)/.test(runners),
+      "a pasted demo would be stamped as removed from the app",
+    );
+  });
+  test("the room still imports no write action after the bridges were built", () => {
+    const banned = /from "@\/app\/(room|today|accounts|playbook|dashboard)\/actions"/;
+    for (const f of [
+      "src/lib/intranet/bridges.ts",
+      "src/lib/intranet/evals.ts",
+      "src/app/intranet/actions.ts",
+      "src/app/intranet/health/page.tsx",
+    ])
+      assert.ok(
+        !banned.test(readFileSync(join(root, f), "utf8")),
+        `${f} writes elsewhere`,
+      );
+  });
+});
+
+describe("nothing sensitive reaches storage by any road (F8, Phase 13.5)", () => {
+  const nasty =
+    "They came back at $48,000 a year, about 12,500 USD a quarter. Dial-in https://teams.microsoft.com/l/meetup/abc, the passcode is 559 221 887#.";
+
+  const assertClean = (s: string, where: string) => {
+    assert.ok(!/\$\s?\d/.test(s), `a dollar figure reached ${where}`);
+    assert.ok(!/12,500|48,000/.test(s), `a figure reached ${where}`);
+    assert.ok(!/559 221 887/.test(s), `a passcode reached ${where}`);
+    assert.ok(!/teams\.microsoft\.com\/l\//.test(s), `a dial-in reached ${where}`);
+  };
+
+  test("a pasted thread is clean before its first write", () => {
+    const c = normalizeCapture(
+      `TEAMS THREAD - Pricing - captured 7/30/2026, 12:16 PM\n\n⟦MSG⟧ Eric Ronci ⟦AT⟧ 2026-07-30T13:00 ⟦BODY⟧\n${nasty}`,
+      {},
+    );
+    assertClean(c.body, "a capture");
+  });
+  test("an account note mirrored from the app is clean", () => {
+    const d = mirrorAccountNote(
+      {
+        id: "n1",
+        accountId: "a1",
+        body: nasty,
+        kind: "note",
+        lane: "mine",
+        actors: "",
+        source: "",
+        createdAt: "2026-07-01T12:00:00.000Z",
+      },
+      "Advocate Pay",
+    );
+    assert.ok(d);
+    assertClean(d.body, "an account note mirror");
+  });
+  test("an action, a follow-up, a card and a demo are all clean", () => {
+    const t = mirrorTodo(
+      {
+        id: "t1",
+        body: nasty,
+        accountId: "a1",
+        done: false,
+        remindAt: "",
+        createdAt: "2026-07-01T12:00:00.000Z",
+        updatedAt: "2026-07-01T12:00:00.000Z",
+      },
+      "Advocate Pay",
+    );
+    assertClean(t!.body, "an action mirror");
+
+    const touch = mirrorTouch({
+      subjectKey: "outreach:a1",
+      kind: "custom",
+      label: "chase pricing",
+      detail: "",
+      message: nasty,
+      contactedAt: "2026-07-01T12:00:00.000Z",
+      status: "awaiting",
+    });
+    assertClean(touch!.body, "a follow-up mirror");
+
+    const card = mirrorCard({
+      id: "c1",
+      name: "Advocate Pay",
+      states: { discovery: "active" },
+      notes: { discovery: nasty },
+      archived: false,
+      updatedAt: "2026-07-01T12:00:00.000Z",
+    });
+    assertClean(card!.body, "a card mirror");
+
+    const demo = mirrorDemoNote(
+      {
+        id: "d1",
+        screenId: "pricing",
+        body: nasty,
+        createdAt: "2026-07-01T12:00:00.000Z",
+      },
+      { name: "Acme", company: "Acme", persona: "" },
+      "Pricing",
+    );
+    assertClean(demo!.body, "a demo mirror");
+  });
+  test("a lesson promoted into the Playbook is clean before it is read back", () => {
+    const d = playbookKnowledgeDoc({
+      id: "k1",
+      ns: "lessons",
+      text: nasty,
+      account: "",
+      createdAt: "2026-07-01T12:00:00.000Z",
+    });
+    assertClean(d!.body, "a Playbook mirror");
+  });
+  test("headcount survives the redaction — it is sizing intel, not a figure", () => {
+    const d = mirrorAccountNote(
+      {
+        id: "n2",
+        accountId: "a1",
+        body: "They run 1,200 employees across four countries.",
+        kind: "note",
+        lane: "mine",
+        actors: "",
+        source: "",
+        createdAt: "2026-07-01T12:00:00.000Z",
+      },
+      "Advocate Pay",
+    );
+    assert.ok(d!.body.includes("1,200 employees"), "headcount was stripped as money");
+  });
+  test("every mirrored document leaves through the same gate", () => {
+    const src = readFileSync(join(root, "src/lib/intranet/mirror.ts"), "utf8");
+    // Every mirror composer returns an object whose first key is `origin`.
+    const returns = src.match(/\n  return (sealed\(\{|\{)\n    origin: /g) ?? [];
+    assert.ok(returns.length >= 6, "the mirror composers moved");
+    for (const r of returns)
+      assert.ok(
+        r.includes("sealed({"),
+        "a mirror composes a document without redacting it",
+      );
   });
 });

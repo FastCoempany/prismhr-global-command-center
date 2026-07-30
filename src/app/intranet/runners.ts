@@ -44,12 +44,14 @@ import {
 import {
   mirrorAccountNote,
   mirrorCard,
+  mirrorDemoNote,
   mirrorPartnerNote,
   mirrorTodo,
   mirrorTouch,
   syncVerdict,
   type MirrorDoc,
 } from "@/lib/intranet/mirror";
+import { getScreen } from "@/lib/catalog";
 import { isNamespacedAccountId } from "@/lib/today/overlay";
 import type { Claim, Topic } from "@/lib/intranet/types";
 
@@ -172,6 +174,33 @@ export async function syncApp(budget = 400): Promise<RunReport> {
       if (d) drafts.push(d);
     }
 
+    // Phase 13.6 · demos pipe in rather than being pasted. This is where most
+    // prospect questions come from (C7).
+    const demoNotes = await prisma.demoNote
+      .findMany({
+        orderBy: { createdAt: "desc" },
+        take: budget,
+        include: { account: true },
+      })
+      .catch(() => []);
+    for (const n of demoNotes) {
+      const d = mirrorDemoNote(
+        {
+          id: n.id,
+          screenId: n.screenId,
+          body: n.body,
+          createdAt: iso(n.createdAt),
+        },
+        {
+          name: n.account?.name ?? "",
+          company: n.account?.company ?? "",
+          persona: n.account?.personaLabel ?? "",
+        },
+        getScreen(n.screenId)?.title ?? "",
+      );
+      if (d) drafts.push(d);
+    }
+
     const { created, updated, skipped } = await upsertDocs(drafts);
     lines.push(
       `The app: ${created} new, ${updated} changed, ${skipped} already current.`,
@@ -243,7 +272,7 @@ async function markVanished(): Promise<number> {
   let n = 0;
   const mirrored = await prisma.intranetDoc.findMany({
     where: {
-      origin: { in: ["account-note", "todo", "touch", "partner-note", "card"] },
+      origin: { in: ["account-note", "todo", "touch", "partner-note", "card", "demo"] },
       originGone: null,
     },
     select: { id: true, origin: true, originRef: true },
@@ -287,6 +316,17 @@ async function markVanished(): Promise<number> {
             select: { id: true },
           }),
         );
+      else if (m.origin === "demo")
+        // A pasted demo transcript carries a "captureId:segment" ref and has no
+        // home row to check — only mirrored sidekick notes are checkable.
+        alive =
+          m.originRef.includes(":") ||
+          Boolean(
+            await prisma.demoNote.findUnique({
+              where: { id: m.originRef },
+              select: { id: true },
+            }),
+          );
     } catch {
       alive = true; // never mark on a query failure
     }

@@ -16,6 +16,8 @@
 import { splitFallback } from "@/lib/room/deliverables";
 import { splitTags } from "@/lib/today/route-notes";
 import { isNamespacedAccountId } from "@/lib/today/overlay";
+import { redactMoney } from "@/lib/intel/lexicon";
+import { scrubSecrets } from "@/lib/sf-timeline";
 import type { Origin } from "./doctrine";
 
 export type MirrorDoc = {
@@ -51,6 +53,26 @@ export function stripHead(body: string): string {
     .trim();
 }
 
+/** F8 · the redaction floor for the mirror.
+ *
+ *  Pasted text is cleaned inside normalizeCapture before its first write. The
+ *  app's own rows arrive by a different road — and an account note can carry a
+ *  quoted figure or a dial-in passcode just as easily as a Teams thread can. So
+ *  every mirrored line passes through here, and every composed document below
+ *  is built from `clean()` output rather than raw column text.
+ *
+ *  Headcount survives on purpose: "1,200 employees" is sizing intel. */
+export function clean(s: string): string {
+  return redactMoney(scrubSecrets(s ?? ""));
+}
+
+/** The one gate every mirrored document leaves through. Title, space and body
+ *  are all rendered somewhere and all reach a model, so all three are cleaned —
+ *  there is no "this field is internal" field. */
+function sealed(d: MirrorDoc): MirrorDoc {
+  return { ...d, space: clean(d.space), title: clean(d.title), body: clean(d.body) };
+}
+
 // ── account notes ───────────────────────────────────────────────────────────
 export function mirrorAccountNote(
   n: {
@@ -71,7 +93,7 @@ export function mirrorAccountNote(
   const text = stripHead(n.body);
   if (!text) return null;
   const who = n.lane === "mine" ? OPERATOR : n.actors || "the record";
-  return {
+  return sealed({
     origin: "account-note",
     originRef: n.id,
     space: accountName || n.accountId,
@@ -80,7 +102,7 @@ export function mirrorAccountNote(
     speakers: [who],
     occurredAt: n.createdAt,
     accountId: n.accountId,
-  };
+  });
 }
 
 // ── actions ─────────────────────────────────────────────────────────────────
@@ -112,7 +134,7 @@ export function mirrorTodo(
   const head = `${bits.join(", ")}.`;
   const tail = t.done ? ` It was completed ${dayOf(t.updatedAt)}.` : " It is still open.";
 
-  return {
+  return sealed({
     origin: "todo",
     originRef: t.id,
     space: accountName || t.accountId,
@@ -121,7 +143,7 @@ export function mirrorTodo(
     speakers: [OPERATOR],
     occurredAt: t.createdAt,
     accountId: t.accountId,
-  };
+  });
 }
 
 // ── follow-ups and roundups ─────────────────────────────────────────────────
@@ -149,7 +171,7 @@ export function mirrorTouch(t: {
         : t.status === "awaiting"
           ? " It is still waiting on them."
           : "";
-  return {
+  return sealed({
     origin: "touch",
     originRef: t.subjectKey,
     space: label,
@@ -160,7 +182,7 @@ export function mirrorTouch(t: {
     accountId: t.subjectKey.startsWith("outreach:")
       ? t.subjectKey.slice("outreach:".length)
       : "",
-  };
+  });
 }
 
 // ── board cards ─────────────────────────────────────────────────────────────
@@ -186,7 +208,7 @@ export function mirrorCard(c: {
     .filter(Boolean)
     .join(" ");
   if (!body.trim()) return null;
-  return {
+  return sealed({
     origin: "card",
     originRef: c.id,
     space: c.name,
@@ -195,7 +217,41 @@ export function mirrorCard(c: {
     speakers: [OPERATOR],
     occurredAt: c.updatedAt,
     accountId: "",
-  };
+  });
+}
+
+// ── demos (Phase 13.6) ──────────────────────────────────────────────────────
+/** A demo's own record, mirrored rather than pasted. The sidekick already
+ *  captures what was said on each screen; piping it in means the corpus gets the
+ *  demo the moment it ends instead of whenever someone remembers to paste it.
+ *
+ *  This is where most prospect questions come from (C7), so the composition
+ *  keeps the screen — a question asked on the payroll register screen is a
+ *  different question from the same words asked on pricing. */
+export function mirrorDemoNote(
+  n: {
+    id: string;
+    screenId: string;
+    body: string;
+    createdAt: string;
+  },
+  demo: { name: string; company: string; persona: string },
+  screenTitle: string,
+): MirrorDoc | null {
+  const text = stripHead(n.body);
+  if (!text) return null;
+  const who = demo.company || demo.name || "a prospect";
+  const where = screenTitle || n.screenId;
+  return sealed({
+    origin: "demo",
+    originRef: n.id,
+    space: who,
+    title: `Demo — ${who}, ${where.slice(0, 50)}`,
+    body: `In a demo for ${who}${demo.persona ? ` (${demo.persona})` : ""}, on ${where}: ${text}`,
+    speakers: ["the demo"],
+    occurredAt: n.createdAt,
+    accountId: "",
+  });
 }
 
 // ── partner notes ───────────────────────────────────────────────────────────
@@ -207,7 +263,7 @@ export function mirrorPartnerNote(n: {
 }): MirrorDoc | null {
   const text = stripHead(n.body);
   if (!text) return null;
-  return {
+  return sealed({
     origin: "partner-note",
     originRef: n.id,
     space: n.partner,
@@ -216,7 +272,7 @@ export function mirrorPartnerNote(n: {
     speakers: [OPERATOR],
     occurredAt: n.createdAt,
     accountId: "",
-  };
+  });
 }
 
 // ── the sync verdict ────────────────────────────────────────────────────────

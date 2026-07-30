@@ -10,9 +10,14 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useDismiss } from "@/components/use-dismiss";
-import { intranetAsk, intranetCapture, intranetPassage } from "./actions";
+import {
+  intranetAsk,
+  intranetCapture,
+  intranetHarvest,
+  intranetPassage,
+} from "./actions";
 import { runBrain } from "./runners";
-import type { AskReply, PassageReply } from "./actions";
+import type { AskReply, HarvestReply, PassageReply } from "./actions";
 import styles from "../command-center.module.css";
 
 export type RailTopic = {
@@ -34,6 +39,7 @@ type Stats = {
 
 export function IntranetClient({
   rail,
+  initialQ,
   stats,
   staleness,
   queue,
@@ -41,13 +47,14 @@ export function IntranetClient({
   canAnswer,
 }: {
   rail: RailTopic[];
+  initialQ: string;
   stats: Stats;
   staleness: string;
   queue: { pending: number; unindexed: number };
   canWrite: boolean;
   canAnswer: boolean;
 }) {
-  const [q, setQ] = useState("");
+  const [q, setQ] = useState(initialQ);
   const [reply, setReply] = useState<AskReply | null>(null);
   const [foldOpen, setFoldOpen] = useState(false);
   const [open, setOpen] = useState<Record<string, boolean>>({});
@@ -60,6 +67,9 @@ export function IntranetClient({
   const [capBusy, startCap] = useTransition();
   const [runBusy, startRun] = useTransition();
   const [runLines, setRunLines] = useState<string[]>([]);
+  const [harvest, setHarvest] = useState<HarvestReply | null>(null);
+  const [harvestBusy, startHarvest] = useTransition();
+  const [copied, setCopied] = useState("");
 
   const drawerRef = useDismiss<HTMLDivElement>(passage !== null, () => setPassage(null));
   const addRef = useDismiss<HTMLDivElement>(addOpen, () => setAddOpen(false));
@@ -95,6 +105,27 @@ export function IntranetClient({
       const r = await runBrain({ deep });
       setRunLines(r.ok ? r.lines : [r.reason ?? "That didn't complete."]);
     });
+  };
+
+  // C7 · the harvest. What buyers actually asked, grouped into something that
+  // could become a battlecard question — and the battlecard questions no buyer
+  // has ever needed answered. Proposals; the Playbook is written by hand.
+  const runHarvest = () => {
+    if (harvestBusy) return;
+    if (harvest) {
+      setHarvest(null);
+      return;
+    }
+    startHarvest(async () => setHarvest(await intranetHarvest()));
+  };
+
+  // Promotion travels by hand: the line is composed with its provenance and
+  // handed to the clipboard. The room writes nothing into the Playbook.
+  const promote = (line: string, id: string) => {
+    void navigator.clipboard?.writeText(line).then(
+      () => setCopied(id),
+      () => setCopied(""),
+    );
   };
 
   const drill = (claimId: string) => {
@@ -178,11 +209,14 @@ export function IntranetClient({
 
         {reply?.ok && (
           <section className={styles.itAnswer}>
+            {reply.degraded && <p className={styles.itBreach}>{reply.degraded}</p>}
             {reply.thin && <p className={styles.itThin}>{reply.thin}</p>}
-            {reply.answer.confidence === "mixed" && (
+            {reply.answer.confidence === "mixed" && !reply.degraded && (
               <p className={styles.itMixed}>The record disagrees with itself here.</p>
             )}
-            <p className={styles.itProse}>{reply.answer.answer}</p>
+            {reply.answer.answer && (
+              <p className={styles.itProse}>{reply.answer.answer}</p>
+            )}
 
             {reply.answer.gaps.length > 0 && (
               <p className={styles.itGaps}>
@@ -193,24 +227,49 @@ export function IntranetClient({
             {reply.citations.length > 0 && (
               <div className={styles.itCites}>
                 {reply.citations.map((c) => (
-                  <button
-                    key={c.n}
-                    type="button"
-                    className={styles.itCite}
-                    onClick={() => drill(c.claimId)}
-                  >
-                    <span className={styles.itCiteN}>[{c.n}]</span>
-                    <span className={styles.itCiteBody}>
-                      {c.text}
-                      <span className={styles.itCiteMeta}>
-                        {c.speaker || "unknown"} · {c.docTitle || c.origin} ·{" "}
-                        {c.saidAt.slice(0, 10)} · {c.kind}
-                        {c.originGone ? " · removed from the app since" : ""}
+                  <div key={c.n} className={styles.itCiteWrap}>
+                    <button
+                      type="button"
+                      className={styles.itCite}
+                      onClick={() => drill(c.claimId)}
+                    >
+                      <span className={styles.itCiteN}>[{c.n}]</span>
+                      <span className={styles.itCiteBody}>
+                        {c.text}
+                        <span className={styles.itCiteMeta}>
+                          {c.speaker || "unknown"} · {c.docTitle || c.origin} ·{" "}
+                          {c.saidAt.slice(0, 10)} · {c.kind}
+                          {c.originGone ? " · removed from the app since" : ""}
+                        </span>
                       </span>
-                    </span>
-                  </button>
+                    </button>
+                    {canWrite && (
+                      <button
+                        type="button"
+                        className={styles.itPromote}
+                        title={`Copy this, with where it came from, ready to keep in the Playbook's ${c.promoteNs}`}
+                        onClick={() => promote(c.promoteLine, c.claimId)}
+                      >
+                        {copied === c.claimId
+                          ? "copied — paste it in the Playbook"
+                          : `keep in the Playbook (${c.promoteNs})`}
+                      </button>
+                    )}
+                  </div>
                 ))}
               </div>
+            )}
+
+            {reply.accounts.length > 0 && (
+              <p className={styles.itGaps}>
+                On the board:{" "}
+                {reply.accounts.map((a, i) => (
+                  <span key={a.id}>
+                    {i > 0 ? " · " : ""}
+                    <Link href={`/accounts?peo=${a.id}`}>{a.name}</Link>
+                  </span>
+                ))}
+              </p>
             )}
 
             <button
@@ -302,6 +361,9 @@ export function IntranetClient({
                   read
                 </span>
               )}
+              <Link href="/intranet/health" className={styles.itQuiet}>
+                vital signs
+              </Link>
             </div>
             {runLines.length > 0 && (
               <ul className={styles.itRunLines}>
@@ -312,6 +374,57 @@ export function IntranetClient({
             )}
           </div>
         )}
+
+        {/* C7 · the window to winning deals, read both ways. */}
+        <div className={styles.itHarvest}>
+          <button
+            type="button"
+            className={styles.itFoldBtn}
+            disabled={harvestBusy}
+            onClick={runHarvest}
+            aria-expanded={harvest !== null}
+          >
+            {harvestBusy
+              ? "Reading what buyers asked…"
+              : harvest
+                ? "Hide what prospects ask"
+                : "What prospects ask"}
+          </button>
+
+          {harvest?.ok && harvest.propose.length === 0 && (
+            <p className={styles.itHarvestMeta}>
+              No question has come up in two separate rooms yet. Give it demos.
+            </p>
+          )}
+
+          {harvest?.ok &&
+            harvest.propose.map((p) => (
+              <div key={p.claimIds[0]} className={styles.itHarvestRow}>
+                {p.question}
+                <span className={styles.itHarvestMeta}>
+                  Asked in {p.asked} separate {p.asked === 1 ? "room" : "rooms"} —{" "}
+                  {p.read}
+                  {p.entities.length ? ` · ${p.entities.slice(0, 4).join(", ")}` : ""}
+                  <button
+                    type="button"
+                    className={styles.itPromote}
+                    onClick={() => promote(p.question, p.claimIds[0])}
+                  >
+                    {copied === p.claimIds[0]
+                      ? "copied — paste it in the Playbook"
+                      : "keep as a battlecard question"}
+                  </button>
+                </span>
+              </div>
+            ))}
+
+          {harvest?.ok && harvest.oursNotTheirs.length > 0 && (
+            <p className={styles.itHarvestMeta}>
+              Ours, not theirs — no buyer has ever needed these answered:{" "}
+              {harvest.oursNotTheirs.slice(0, 4).join(" · ")}
+            </p>
+          )}
+        </div>
       </div>
 
       <aside className={styles.itRail} aria-label="Index">

@@ -31,7 +31,19 @@ import {
   commonEntities,
   docsByIds,
   loadTopics,
+  prospectAsks,
+  todayCounts,
 } from "@/lib/intranet/store";
+import { CEILINGS, readCeilings } from "@/lib/intranet/evals";
+import {
+  accountsMentioned,
+  harvestBattlecards,
+  peerQuestions,
+  promotionDraft,
+  type BattlecardProposal,
+} from "@/lib/intranet/bridges";
+import { DISCOVERY } from "@/lib/intel/discovery";
+import { PRODUCT_BANK } from "@/lib/intel/discovery-product";
 import {
   coverageOf,
   fallbackPlan,
@@ -47,7 +59,13 @@ import {
   thinLine,
 } from "@/lib/intranet/synthesize";
 import { withSupersessions } from "@/lib/intranet/time";
-import type { Answer, Coverage, QueryPlan } from "@/lib/intranet/types";
+import type {
+  Answer,
+  Candidate,
+  Coverage,
+  DocRef,
+  QueryPlan,
+} from "@/lib/intranet/types";
 
 async function canRead() {
   const access = await getAppAccess();
@@ -188,12 +206,20 @@ export type AskReply = {
     accountId: string;
     originGone: string;
     road: string;
+    /** The claim drafted in the Playbook's voice, for a human to promote by
+     *  hand. Composed here; written nowhere (I.2). */
+    promoteNs: "market" | "lessons";
+    promoteLine: string;
   }[];
   coverage: Coverage | null;
   plan: QueryPlan | null;
   model: string;
   escalated: string;
   thin: string;
+  /** Set when a ceiling was hit — the room degraded and says so (F10). */
+  degraded: string;
+  /** Book accounts the answer's material names — a link, never a filing. */
+  accounts: { id: string; name: string }[];
   reason?: string;
 };
 
@@ -214,8 +240,52 @@ const EMPTY_ANSWER_REPLY = (question: string, reason: string): AskReply => ({
   model: "",
   escalated: "",
   thin: "",
+  degraded: "",
+  accounts: [],
   reason,
 });
+
+/** Turn citation handles into the rows the room renders — each carrying its
+ *  provenance and a promotion draft the operator can take to the Playbook. */
+function renderCitations(
+  handles: number[],
+  candidates: Candidate[],
+  docs: Map<string, DocRef>,
+): AskReply["citations"] {
+  const roadOf = new Map(candidates.map((c, i) => [i + 1, c.roads.join("+")]));
+  return handles
+    .map((n) => {
+      const c = candidates[n - 1];
+      if (!c) return null;
+      const d = docs.get(c.claim.docId);
+      const promote = promotionDraft(
+        {
+          text: c.claim.text,
+          kind: c.claim.kind,
+          speaker: c.claim.speaker,
+          saidAt: c.claim.saidAt,
+        },
+        { space: d?.space ?? "", title: d?.title ?? "", origin: d?.origin ?? "" },
+      );
+      return {
+        n,
+        claimId: c.claim.id,
+        text: c.claim.text,
+        speaker: c.claim.speaker,
+        saidAt: c.claim.saidAt,
+        kind: c.claim.kind,
+        docId: c.claim.docId,
+        docTitle: d?.title ?? "",
+        origin: (d?.origin ?? "") as string,
+        accountId: d?.accountId ?? "",
+        originGone: d?.originGone ?? "",
+        road: roadOf.get(n) ?? "",
+        promoteNs: promote.ns,
+        promoteLine: promote.line,
+      };
+    })
+    .filter(Boolean) as AskReply["citations"];
+}
 
 export async function intranetAsk(question: string): Promise<AskReply> {
   const q = (question ?? "").trim().slice(0, 500);
@@ -290,6 +360,12 @@ export async function intranetAsk(question: string): Promise<AskReply> {
   const docOrigin = new Map([...docs.values()].map((d) => [d.id, d.origin]));
   const coverage = coverageOf(candidates, docOrigin);
 
+  // A claim's account, if the book knows it — an offer, not a filing.
+  const named = accountsMentioned(
+    [...new Set(candidates.flatMap((c) => c.claim.entities))],
+    peos.map((p) => ({ id: p.id, name: p.name })),
+  );
+
   if (candidates.length === 0) {
     return {
       ok: true,
@@ -310,6 +386,39 @@ export async function intranetAsk(question: string): Promise<AskReply> {
       model: "",
       escalated: "",
       thin: "",
+      degraded: "",
+      accounts: named,
+    };
+  }
+
+  // 4 · the ceilings (F10). A breach degrades the room to what retrieval alone
+  //     can do — the claims, ranked, with their provenance — and says so.
+  //     Nothing silently stops working.
+  const ceiling = readCeilings(await todayCounts());
+  if (ceiling.breached && ceiling.which === "asks") {
+    return {
+      ok: true,
+      question: q,
+      answer: {
+        answer: "",
+        citations: candidates.slice(0, 10).map((_, i) => i + 1),
+        reasoning: "",
+        setAside: [],
+        confidence: "mixed",
+        gaps: [],
+      },
+      citations: renderCitations(
+        candidates.slice(0, 10).map((_, i) => i + 1),
+        candidates,
+        docs,
+      ),
+      coverage,
+      plan,
+      model: "",
+      escalated: "",
+      thin: "",
+      degraded: ceiling.line,
+      accounts: named,
     };
   }
 
@@ -320,13 +429,15 @@ export async function intranetAsk(question: string): Promise<AskReply> {
     );
   }
 
-  // 4 · the answer.
+  // 5 · the answer. A pathological candidate set is cut rather than allowed to
+  //     become a four-dollar question.
+  const forSynthesis = candidates.slice(0, CEILINGS.claimsPerAsk);
   let answer: Answer;
   let model = "";
   try {
     const r = await runSynthesis({
       question: q,
-      candidates,
+      candidates: forSynthesis,
       docLabel,
       plan,
     });
@@ -336,28 +447,7 @@ export async function intranetAsk(question: string): Promise<AskReply> {
     return EMPTY_ANSWER_REPLY(q, "The answer didn't come back — try again.");
   }
 
-  const roadOf = new Map(candidates.map((c, i) => [i + 1, c.roads.join("+")]));
-  const citations = answer.citations
-    .map((n) => {
-      const c = candidates[n - 1];
-      if (!c) return null;
-      const d = docs.get(c.claim.docId);
-      return {
-        n,
-        claimId: c.claim.id,
-        text: c.claim.text,
-        speaker: c.claim.speaker,
-        saidAt: c.claim.saidAt,
-        kind: c.claim.kind,
-        docId: c.claim.docId,
-        docTitle: d?.title ?? "",
-        origin: d?.origin ?? "",
-        accountId: d?.accountId ?? "",
-        originGone: d?.originGone ?? "",
-        road: roadOf.get(n) ?? "",
-      };
-    })
-    .filter(Boolean) as AskReply["citations"];
+  const citations = renderCitations(answer.citations, forSynthesis, docs);
 
   // Keep the ask — for the fold, for evals, and so a repeat is cheap.
   try {
@@ -386,9 +476,46 @@ export async function intranetAsk(question: string): Promise<AskReply> {
     coverage,
     plan,
     model,
-    escalated: escalationReason(candidates, plan),
-    thin: answer.confidence === "thin" ? thinLine(candidates) : "",
+    escalated: escalationReason(forSynthesis, plan),
+    thin: answer.confidence === "thin" ? thinLine(forSynthesis) : "",
+    degraded: ceiling.breached ? ceiling.line : "",
+    accounts: named,
   };
+}
+
+// ── the bridges (Phase 13.6) ────────────────────────────────────────────────
+
+export type HarvestReply = {
+  ok: boolean;
+  propose: BattlecardProposal[];
+  oursNotTheirs: string[];
+  reason?: string;
+};
+
+/** THE PROSPECT-QUESTION HARVEST (C7). What buyers actually asked, grouped and
+ *  ranked by how many separate rooms it came up in — and the inverse, the
+ *  battlecard questions no buyer has ever needed answered.
+ *
+ *  Proposals. The Playbook is written by hand. */
+export async function intranetHarvest(): Promise<HarvestReply> {
+  if (!(await canRead()))
+    return { ok: false, propose: [], oursNotTheirs: [], reason: "Sign in to continue." };
+  const asks = await prospectAsks(600);
+  const playbook = [...DISCOVERY, ...PRODUCT_BANK].map((q) => q.question);
+  const { propose, oursNotTheirs } = harvestBattlecards(asks, playbook);
+  return { ok: true, propose, oursNotTheirs };
+}
+
+/** THE GAP BRIDGE (C7). What prospects in comparable situations asked, so a
+ *  deal inherits the questions its peers provoked. Read-only; the carousel
+ *  shows them, it never files them. */
+export async function intranetPeerAsks(
+  accountId: string,
+  entities: string[],
+): Promise<{ question: string; shared: string[]; claimId: string; space: string }[]> {
+  if (!(await canRead())) return [];
+  const asks = await prospectAsks(600);
+  return peerQuestions(asks, { entities, excludeAccountId: accountId, cap: 3 });
 }
 
 // ── drilldown ───────────────────────────────────────────────────────────────

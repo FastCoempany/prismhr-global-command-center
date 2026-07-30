@@ -83,6 +83,10 @@ export type RoomRow = {
   outcome: { status: "won" | "lost"; phrase: string; at: string } | null;
   gaps: { id: string; question: string; at: string }[];
   gapsQueued: number;
+  /** What prospects in comparable situations asked (C7) — inherited, not owed. */
+  peers: { question: string; shared: string }[];
+  /** The same brain, the question pre-scoped to this deal. */
+  askHref: string;
   researchAt: string; // ISO of the last research pass, "" if never run
   health: "red" | "amber" | "green" | "quiet";
   rank: number;
@@ -850,7 +854,9 @@ function Row({ row }: { row: RoomRow }) {
           </span>
         </div>
 
-        {(row.gaps.filter((g) => !askGone.has(g.id)).length > 0 || row.canWrite) && (
+        {(row.gaps.filter((g) => !askGone.has(g.id)).length > 0 ||
+          row.peers.length > 0 ||
+          row.canWrite) && (
           <div className={styles.askBox}>
             <span className={styles.lbl}>STILL UNKNOWN</span>
             {row.gaps.filter((g) => !askGone.has(g.id)).length === 0 && (
@@ -877,10 +883,23 @@ function Row({ row }: { row: RoomRow }) {
                   )}
                 </div>
               ))}
+            {row.peers.map((p) => (
+              <div key={p.question} className={styles.askRow}>
+                <span className={styles.askQ}>
+                  {p.question}
+                  <span className={styles.askPeer}>
+                    asked on a comparable deal — {p.shared}
+                  </span>
+                </span>
+              </div>
+            ))}
             <span className={styles.askFoot}>
               {row.gapsQueued > 0 && (
                 <span className={styles.askMore}>{row.gapsQueued} more behind these</span>
               )}
+              <Link href={row.askHref} className={styles.sdTag} title="ask the brain">
+                ask the brain
+              </Link>
               {row.canWrite && (
                 <button
                   type="button"

@@ -17,7 +17,7 @@ import { PRODUCT_BANK } from "@/lib/intel/discovery-product";
 import { DISCOVERY } from "@/lib/intel/discovery";
 import { SCENARIOS } from "@/lib/intel/scenarios";
 import { PROSPECT_TOPIC_LABEL, type AskShape } from "./doctrine";
-import type { MirrorDoc } from "./mirror";
+import { clean, type MirrorDoc } from "./mirror";
 
 /** Every battlecard question as a document. The facets ride along as entities,
  *  so "what do we ask a prospect who has never run international payroll" finds
@@ -87,7 +87,8 @@ export function playbookKnowledgeDoc(row: {
   account: string;
   createdAt: string;
 }): MirrorDoc | null {
-  const text = (row.text ?? "").trim();
+  // F8 · a lesson is operator prose and can carry a quoted figure.
+  const text = clean((row.text ?? "").trim());
   if (!text) return null;
   return {
     origin: "playbook",

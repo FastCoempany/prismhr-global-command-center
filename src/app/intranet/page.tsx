@@ -24,7 +24,11 @@ import styles from "../command-center.module.css";
 
 export const dynamic = "force-dynamic";
 
-export default async function IntranetPage() {
+export default async function IntranetPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
   const access = await getAppAccess();
   if (access.status === "unauthenticated") {
     return (
@@ -40,11 +44,16 @@ export default async function IntranetPage() {
   }
 
   const nowIso = new Date().toISOString();
-  const [topics, stats, queue] = await Promise.all([
+  const [topics, stats, queue, params] = await Promise.all([
     loadTopics(),
     brainStats(),
     brainQueue(),
+    searchParams,
   ]);
+  // Ask from anywhere (Phase 13.6): another room can hand the brain a question
+  // pre-scoped to what it was looking at. Prefilled, never fired on arrival —
+  // the operator reads it first.
+  const initialQ = (params?.q ?? "").slice(0, 300);
 
   // The rail: live top-level topics, prospect questions first, each carrying
   // its children so a click decomposes without a round trip.
@@ -85,6 +94,7 @@ export default async function IntranetPage() {
         </div>
         <IntranetClient
           rail={rail}
+          initialQ={initialQ}
           stats={stats}
           staleness={stalenessLine(stats.lastCaptureAt, nowIso)}
           queue={queue}

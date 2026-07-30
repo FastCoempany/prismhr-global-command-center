@@ -1672,3 +1672,14 @@ button.sdRadio:hover {
 .fuCtl button:hover {
   color: var(--ink);
 }
+
+/* A question a comparable deal provoked — inherited, not owed (C7). */
+.askPeer {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--f-mono), ui-monospace, Menlo, monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(10, 28, 64, 0.42);
+}
