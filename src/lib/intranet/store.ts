@@ -11,6 +11,15 @@
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import type { Claim, DocRef, Topic } from "./types";
 import type { ClaimKind, Confidence } from "./doctrine";
+import {
+  archiveRollup,
+  chicagoDay,
+  countryTallies,
+  type ArchiveMonth,
+  type CountryRow,
+  type LedgerEntry,
+  type StoredCitation,
+} from "./ledger";
 
 const EMPTY_TOPICS: Topic[] = [];
 
@@ -340,6 +349,119 @@ export async function prospectAsks(limit = 400) {
         space: d?.space ?? "",
       };
     });
+  } catch {
+    return [];
+  }
+}
+
+// ── the ledger (IV.8) ───────────────────────────────────────────────────────
+// The record is rebuilt from the rows the room already keeps — an ask is an
+// IntranetAsk, a paste is an IntranetCapture with its digest saved in meta.
+
+/** The running record: asks and pastes as one dated stream, newest first.
+ *  Pass a day ("2026-07-30", operator's timezone) to read one archive slice. */
+export async function ledgerEntries(opts?: {
+  day?: string;
+  limit?: number;
+}): Promise<LedgerEntry[]> {
+  if (!hasDatabaseEnv()) return [];
+  const limit = opts?.limit ?? 40;
+  try {
+    const p = getPrisma();
+    const [asks, captures] = await Promise.all([
+      p.intranetAsk.findMany({
+        orderBy: { askedAt: "desc" },
+        take: 500,
+        select: {
+          id: true,
+          question: true,
+          answer: true,
+          reasoning: true,
+          model: true,
+          askedAt: true,
+          citations: true,
+        },
+      }),
+      p.intranetCapture.findMany({
+        orderBy: { capturedAt: "desc" },
+        take: 500,
+        select: { id: true, title: true, capturedAt: true, meta: true },
+      }),
+    ]);
+
+    const entries: LedgerEntry[] = [];
+    for (const a of asks) {
+      entries.push({
+        kind: "ask",
+        id: a.id,
+        at: iso(a.askedAt),
+        question: a.question,
+        answer: a.answer,
+        reasoning: a.reasoning,
+        model: a.model,
+        citations: (Array.isArray(a.citations)
+          ? a.citations
+          : []) as unknown as StoredCitation[],
+      });
+    }
+    for (const c of captures) {
+      const meta = (c.meta ?? {}) as { space?: string; digest?: string[] };
+      entries.push({
+        kind: "fed",
+        id: c.id,
+        at: iso(c.capturedAt),
+        space: meta.space ?? "",
+        title: c.title,
+        lines: Array.isArray(meta.digest) ? meta.digest.slice(0, 12) : [],
+      });
+    }
+
+    const filtered = opts?.day
+      ? entries.filter((e) => chicagoDay(e.at) === opts.day)
+      : entries;
+    return filtered.sort((a, b) => b.at.localeCompare(a.at)).slice(0, limit);
+  } catch {
+    return [];
+  }
+}
+
+/** Every day the record touched, calendarized with its counts. */
+export async function archiveDays(): Promise<ArchiveMonth[]> {
+  if (!hasDatabaseEnv()) return [];
+  try {
+    const p = getPrisma();
+    const [asks, captures] = await Promise.all([
+      p.intranetAsk.findMany({
+        orderBy: { askedAt: "desc" },
+        take: 1500,
+        select: { askedAt: true },
+      }),
+      p.intranetCapture.findMany({
+        orderBy: { capturedAt: "desc" },
+        take: 1500,
+        select: { capturedAt: true },
+      }),
+    ]);
+    return archiveRollup([
+      ...asks.map((a) => ({ at: iso(a.askedAt), kind: "ask" as const })),
+      ...captures.map((c) => ({ at: iso(c.capturedAt), kind: "fed" as const })),
+    ]);
+  } catch {
+    return [];
+  }
+}
+
+/** The by-country lens (IV.8): the same record, tallied by the countries it
+ *  names. Never a copy — a country row is a standing filter over entities. */
+export async function countryIndex(): Promise<CountryRow[]> {
+  if (!hasDatabaseEnv()) return [];
+  try {
+    const rows = await getPrisma().intranetClaim.findMany({
+      select: { kind: true, entities: true },
+      orderBy: { saidAt: "desc" },
+      take: 4000,
+    });
+    return countryTallies(rows);
   } catch {
     return [];
   }

@@ -30,9 +30,11 @@ import {
   claimsByTopics,
   commonEntities,
   docsByIds,
+  ledgerEntries,
   loadTopics,
   todayCounts,
 } from "@/lib/intranet/store";
+import type { LedgerEntry } from "@/lib/intranet/ledger";
 import { CEILINGS, readCeilings } from "@/lib/intranet/evals";
 import { accountsMentioned, promotionDraft } from "@/lib/intranet/bridges";
 import { redactMoney } from "@/lib/intel/lexicon";
@@ -500,6 +502,15 @@ export async function intranetAsk(question: string): Promise<AskReply> {
     accounts: named,
     world,
   };
+}
+
+// ── the archive (IV.8) ──────────────────────────────────────────────────────
+/** One day's slice of the record, for the archive tab. Read-only. */
+export async function intranetLedgerDay(day: string): Promise<LedgerEntry[]> {
+  if (!(await canRead())) return [];
+  const key = (day ?? "").slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(key)) return [];
+  return ledgerEntries({ day: key, limit: 100 });
 }
 
 // ── drilldown ───────────────────────────────────────────────────────────────

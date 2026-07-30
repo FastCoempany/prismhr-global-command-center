@@ -1,23 +1,41 @@
 "use client";
 
-// The Intranet's work surface, corrected to the operator's read (Part IV):
+// The Intranet's work surface — THE LEDGER (IV.8, IV.9).
 //
-//   · the index rail sits on the LEFT — the page reads index → work
-//   · the paste well is the room's second surface, always open, in the main
-//     column — pasting is how the room grows and the layout says so
-//   · one control brings the brain up to date, running passes back-to-back
-//     until the backlog is gone or the operator stops it
-//   · "Send it" reads the paste immediately and the operator watches the
-//     consequence: receipt → reading → the index growing
+// The room is a running record. Everything the brain does becomes one dated
+// stream: a question answered, a paste read. The record is rebuilt from the
+// database on every visit — close the tab, come back tomorrow, it's all here.
+//
+//   · the index rail sits on the LEFT, with two delineated tabs at its foot:
+//     By country (real flag images — countries are lenses, never copies) and
+//     The archive (the record, calendarized)
+//   · entries fold to a one-line stamp and reopen on a click; a day divider
+//     folds its whole day. Nothing is dismissed — C6 applies to the surface
+//   · the paste dock sits pinned at the bottom, always open. "Send it" reads
+//     the paste immediately and the operator watches the record and the index
+//     react
 //   · pipeline vocabulary never reaches the surface; failures always do
 
 import { useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useDismiss } from "@/components/use-dismiss";
-import { intranetAsk, intranetCapture, intranetPassage } from "./actions";
+import {
+  intranetAsk,
+  intranetCapture,
+  intranetLedgerDay,
+  intranetPassage,
+} from "./actions";
 import { readCapture, runBrain } from "./runners";
 import type { AskReply, PassageReply } from "./actions";
+import type { ArchiveMonth, CountryRow, LedgerEntry } from "@/lib/intranet/ledger";
+import {
+  archiveDayMeta,
+  chicagoDay,
+  dayLabel,
+  flagSrc,
+  flagSrc2x,
+} from "@/lib/intranet/ledger";
 import styles from "../command-center.module.css";
 
 export type RailTopic = {
@@ -29,12 +47,21 @@ export type RailTopic = {
   children: RailTopic[];
 };
 
+/** A live entry made this session — richer than a stored one (it can carry a
+ *  world answer, account links, warnings), rendered with the full treatment. */
+type LiveEntry = { kind: "live"; id: string; at: string; reply: AskReply };
+type FeedEntry = LedgerEntry | LiveEntry;
+
 export function IntranetClient({
   rail,
   initialQ,
   empty,
   staleness,
   queue,
+  ledger,
+  archive,
+  countries,
+  nowIso,
   canWrite,
   canAnswer,
 }: {
@@ -43,53 +70,104 @@ export function IntranetClient({
   empty: boolean;
   staleness: string;
   queue: { pending: number; unindexed: number };
+  ledger: LedgerEntry[];
+  archive: ArchiveMonth[];
+  countries: CountryRow[];
+  nowIso: string;
   canWrite: boolean;
   canAnswer: boolean;
 }) {
   const router = useRouter();
   const [q, setQ] = useState(initialQ);
-  const [reply, setReply] = useState<AskReply | null>(null);
-  const [foldOpen, setFoldOpen] = useState(false);
+  const [live, setLive] = useState<FeedEntry[]>([]);
+  const [foldOpen, setFoldOpen] = useState<Record<string, boolean>>({});
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const [scope, setScope] = useState<{ id: string; label: string } | null>(null);
   const [passage, setPassage] = useState<PassageReply | null>(null);
   const [paste, setPaste] = useState("");
   const [receipt, setReceipt] = useState("");
-  const [ingestLines, setIngestLines] = useState<string[]>([]);
   const [busy, startAsk] = useTransition();
   const [capBusy, startCap] = useTransition();
   const [runBusy, startRun] = useTransition();
+  const [dayBusy, startDay] = useTransition();
   const [runLines, setRunLines] = useState<string[]>([]);
   const [pendingNow, setPendingNow] = useState(queue.pending);
   const [copied, setCopied] = useState("");
+  const [railTab, setRailTab] = useState<"index" | "country" | "archive">("index");
+  const [openCountry, setOpenCountry] = useState<string>("");
+  const [archiveDay, setArchiveDay] = useState<{
+    key: string;
+    entries: LedgerEntry[];
+  } | null>(null);
+  // Collapse state — keyed by entry id. Default: today's entries open, older
+  // days folded to their stamps. Nothing disappears (C6).
+  const [minned, setMinned] = useState<Record<string, boolean>>({});
   const stopRef = useRef(false);
 
   const drawerRef = useDismiss<HTMLDivElement>(passage !== null, () => setPassage(null));
+  const today = chicagoDay(nowIso);
+  const isMin = (e: FeedEntry) => minned[e.id] ?? chicagoDay(e.at) !== today;
 
   const ask = (text: string) => {
     const question = text.trim();
     if (!question || busy) return;
-    setFoldOpen(false);
     startAsk(async () => {
       const r = await intranetAsk(
         scope ? `${question} (start with: ${scope.label})` : question,
       );
-      setReply(r);
+      setLive((l) => [
+        {
+          kind: "live",
+          id: `live-${Date.now()}`,
+          at: new Date().toISOString(),
+          reply: r,
+        },
+        ...l,
+      ]);
+      setQ("");
     });
   };
 
   // IV.3 · the paste is never fire-and-forget. Send it, then read it on the
-  // spot — and the operator watches the index grow as the consequence.
+  // spot — the record shows the receipt, then the digest, and the rail grows.
   const file = () => {
     if (!paste.trim() || capBusy) return;
     startCap(async () => {
       const r = await intranetCapture(paste);
-      setReceipt(r.ok ? r.receipt : (r.reason ?? "That didn't land."));
-      if (!r.ok) return;
+      if (!r.ok) {
+        setReceipt(r.reason ?? "That didn't land.");
+        return;
+      }
+      setReceipt("");
       setPaste("");
-      setIngestLines(["Reading what you pasted…"]);
+      const id = `fed-${Date.now()}`;
+      const at = new Date().toISOString();
+      setLive((l) => [
+        {
+          kind: "fed",
+          id,
+          at,
+          space: "",
+          title: "",
+          lines: [r.receipt, "Reading what you sent…"],
+        },
+        ...l,
+      ]);
       const g = await readCapture(r.captureId);
-      setIngestLines(g.ok ? g.lines : [g.reason ?? "The reading failed."]);
+      // the progress line is transient — replaced by the result (IV.8)
+      setLive((l) =>
+        l.map((e) =>
+          e.id === id && e.kind === "fed"
+            ? {
+                ...e,
+                lines: [
+                  r.receipt,
+                  ...(g.ok ? g.lines : [g.reason ?? "The reading failed."]),
+                ],
+              }
+            : e,
+        ),
+      );
       if (typeof g.pending === "number") setPendingNow(g.pending);
       router.refresh();
     });
@@ -133,6 +211,15 @@ export function IntranetClient({
     });
   };
 
+  const openArchiveDay = (key: string) => {
+    if (dayBusy) return;
+    startDay(async () => {
+      const entries = await intranetLedgerDay(key);
+      setArchiveDay({ key, entries });
+    });
+  };
+
+  // ── the rail ──────────────────────────────────────────────────────────────
   const renderTopic = (t: RailTopic, depth: number) => {
     const isOpen = open[t.id] === true;
     return (
@@ -159,20 +246,370 @@ export function IntranetClient({
     );
   };
 
+  const railBody =
+    railTab === "index" ? (
+      <>
+        {rail.length === 0 && (
+          <p className={styles.itRailEmpty}>
+            The index builds itself as you feed the brain.
+          </p>
+        )}
+        {rail.map((t) => renderTopic(t, 0))}
+      </>
+    ) : railTab === "country" ? (
+      <>
+        {countries.length === 0 && (
+          <p className={styles.itRailEmpty}>
+            Countries appear here as the record starts naming them.
+          </p>
+        )}
+        {countries.map((c) => (
+          <div key={c.code}>
+            <button
+              type="button"
+              className={`${styles.itTopic} ${openCountry === c.code ? styles.itTopicOn : ""}`}
+              aria-expanded={openCountry === c.code}
+              onClick={() => {
+                const on = openCountry === c.code;
+                setOpenCountry(on ? "" : c.code);
+                setScope(on ? null : { id: `country:${c.code}`, label: c.name });
+              }}
+            >
+              {/* real flags, never emoji — Windows renders none (IV.9) */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                className={styles.itFlag}
+                src={flagSrc(c.code)}
+                srcSet={`${flagSrc2x(c.code)} 2x`}
+                width={20}
+                height={15}
+                alt=""
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.visibility = "hidden";
+                }}
+              />
+              <span className={styles.itLabel}>{c.name}</span>
+              <span className={styles.itN}>{c.total}</span>
+            </button>
+            {openCountry === c.code &&
+              c.lenses.map((l) => (
+                <button
+                  key={l.label}
+                  type="button"
+                  className={styles.itTopic}
+                  style={{ paddingLeft: "39px" }}
+                  onClick={() =>
+                    setScope({
+                      id: `country:${c.code}`,
+                      label: `${c.name} — ${l.label.toLowerCase()}`,
+                    })
+                  }
+                >
+                  <span className={styles.itCar}>·</span>
+                  <span className={styles.itLabel}>{l.label}</span>
+                  <span className={styles.itN}>{l.n}</span>
+                </button>
+              ))}
+          </div>
+        ))}
+        {countries.length > 0 && (
+          <p className={styles.itLensNote}>
+            A country is a lens, not a copy — the same record, read through one place. One
+            brain, nothing duplicated.
+          </p>
+        )}
+      </>
+    ) : (
+      <>
+        {archive.length === 0 && (
+          <p className={styles.itRailEmpty}>The archive fills as days pass.</p>
+        )}
+        {archive.map((m) => (
+          <div key={m.month}>
+            <p className={styles.itMonth}>{m.month}</p>
+            {m.days.map((d) => (
+              <button
+                key={d.key}
+                type="button"
+                className={`${styles.itDay} ${archiveDay?.key === d.key ? styles.itTopicOn : ""}`}
+                onClick={() => openArchiveDay(d.key)}
+              >
+                <span>{d.label}</span>
+                <span className={styles.itDayMeta}>{archiveDayMeta(d)}</span>
+              </button>
+            ))}
+          </div>
+        ))}
+      </>
+    );
+
+  // ── the record ────────────────────────────────────────────────────────────
+  const feed: FeedEntry[] = archiveDay
+    ? archiveDay.entries
+    : [...live, ...ledger.filter((e) => !live.some((l) => l.id === e.id))];
+
+  const days: { key: string; label: string; entries: FeedEntry[] }[] = [];
+  for (const e of [...feed].sort((a, b) => b.at.localeCompare(a.at))) {
+    const key = chicagoDay(e.at);
+    const last = days[days.length - 1];
+    if (last && last.key === key) last.entries.push(e);
+    else days.push({ key, label: dayLabel(key, nowIso), entries: [e] });
+  }
+
+  const foldDay = (key: string) => {
+    const target = days.find((d) => d.key === key);
+    if (!target) return;
+    const anyOpenNow = target.entries.some((e) => !isMin(e));
+    setMinned((m) => {
+      const next = { ...m };
+      for (const e of target.entries) next[e.id] = anyOpenNow;
+      return next;
+    });
+  };
+
+  const stampOf = (e: FeedEntry): { cls: string; text: string; peek: string } => {
+    const when = new Date(Date.parse(e.at)).toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      timeZone: "America/Chicago",
+    });
+    if (e.kind === "fed")
+      return {
+        cls: styles.itKFed,
+        text: `sent · ${when}`,
+        peek: e.lines[0] ?? e.title ?? e.space,
+      };
+    if (e.kind === "live") {
+      const world = e.reply.ok && e.reply.world && e.reply.citations.length === 0;
+      return {
+        cls: world ? styles.itKWorld : styles.itKAsk,
+        text: `${world ? "from the world" : "asked"} · ${when}`,
+        peek: e.reply.question,
+      };
+    }
+    return { cls: styles.itKAsk, text: `asked · ${when}`, peek: e.question };
+  };
+
+  const renderStored = (e: LedgerEntry) => {
+    if (e.kind === "fed")
+      return (
+        <ul className={styles.itRunLines}>
+          {(e.lines.length ? e.lines : ["Sent to the brain."]).map((l, i) => (
+            <li key={i}>{l}</li>
+          ))}
+        </ul>
+      );
+    return (
+      <>
+        <p className={styles.itLQ}>{e.question}</p>
+        {e.answer && <p className={styles.itProse}>{e.answer}</p>}
+        {e.citations.length > 0 && (
+          <div className={styles.itCites}>
+            {e.citations.map((c) => (
+              <button
+                key={c.n}
+                type="button"
+                className={styles.itCite}
+                onClick={() => drill(c.claimId)}
+              >
+                <span className={styles.itCiteN}>[{c.n}]</span>
+                <span className={styles.itCiteBody}>
+                  {c.text}
+                  <span className={styles.itCiteMeta}>
+                    {c.speaker || "unknown"} · {c.docTitle || c.origin} ·{" "}
+                    {(c.saidAt ?? "").slice(0, 10)} · {c.kind}
+                    {c.originGone ? " · removed from the app since" : ""}
+                  </span>
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+        {e.reasoning && (
+          <>
+            <button
+              type="button"
+              className={styles.itFoldBtn}
+              onClick={() => setFoldOpen((f) => ({ ...f, [e.id]: !f[e.id] }))}
+              aria-expanded={foldOpen[e.id] === true}
+            >
+              {foldOpen[e.id] ? "Hide the reasoning" : "Show the reasoning"}
+            </button>
+            {foldOpen[e.id] && (
+              <div className={styles.itFold}>
+                <p>{e.reasoning}</p>
+                <p className={styles.itCoverage}>Answered by {e.model || "—"}.</p>
+              </div>
+            )}
+          </>
+        )}
+      </>
+    );
+  };
+
+  const renderLive = (e: LiveEntry) => {
+    const reply = e.reply;
+    if (!reply.ok) return <p className={styles.itWarn}>{reply.reason}</p>;
+    return (
+      <>
+        <p className={styles.itLQ}>{reply.question}</p>
+        {reply.degraded && <p className={styles.itBreach}>{reply.degraded}</p>}
+        {reply.thin && !reply.world && <p className={styles.itThin}>{reply.thin}</p>}
+        {reply.answer.confidence === "mixed" && !reply.degraded && (
+          <p className={styles.itMixed}>The record disagrees with itself here.</p>
+        )}
+        {reply.answer.answer && <p className={styles.itProse}>{reply.answer.answer}</p>}
+
+        {reply.world && (
+          <div className={styles.itWorld}>
+            <p className={styles.itWorldTag}>
+              From the world, not the record — general knowledge, nothing internal.
+            </p>
+            <p className={styles.itProse}>{reply.world}</p>
+          </div>
+        )}
+
+        {reply.answer.gaps.length > 0 && (
+          <p className={styles.itGaps}>
+            What the record doesn&apos;t cover: {reply.answer.gaps.join(" · ")}
+          </p>
+        )}
+
+        {reply.citations.length > 0 && (
+          <div className={styles.itCites}>
+            {reply.citations.map((c) => (
+              <div key={c.n} className={styles.itCiteWrap}>
+                <button
+                  type="button"
+                  className={styles.itCite}
+                  onClick={() => drill(c.claimId)}
+                >
+                  <span className={styles.itCiteN}>[{c.n}]</span>
+                  <span className={styles.itCiteBody}>
+                    {c.text}
+                    <span className={styles.itCiteMeta}>
+                      {c.speaker || "unknown"} · {c.docTitle || c.origin} ·{" "}
+                      {c.saidAt.slice(0, 10)} · {c.kind}
+                      {c.originGone ? " · removed from the app since" : ""}
+                    </span>
+                  </span>
+                </button>
+                {canWrite && (
+                  <button
+                    type="button"
+                    className={styles.itPromote}
+                    title={`Copy this, with where it came from, ready to keep in the Playbook's ${c.promoteNs}`}
+                    onClick={() => promote(c.promoteLine, c.claimId)}
+                  >
+                    {copied === c.claimId
+                      ? "copied — paste it in the Playbook"
+                      : `keep in the Playbook (${c.promoteNs})`}
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {reply.accounts.length > 0 && (
+          <p className={styles.itGaps}>
+            On the board:{" "}
+            {reply.accounts.map((a, i) => (
+              <span key={a.id}>
+                {i > 0 ? " · " : ""}
+                <Link href={`/accounts?peo=${a.id}`}>{a.name}</Link>
+              </span>
+            ))}
+          </p>
+        )}
+
+        {(reply.answer.reasoning || reply.citations.length > 0) && (
+          <>
+            <button
+              type="button"
+              className={styles.itFoldBtn}
+              onClick={() => setFoldOpen((f) => ({ ...f, [e.id]: !f[e.id] }))}
+              aria-expanded={foldOpen[e.id] === true}
+            >
+              {foldOpen[e.id] ? "Hide the reasoning" : "Show the reasoning"}
+            </button>
+            {foldOpen[e.id] && (
+              <div className={styles.itFold}>
+                {reply.answer.reasoning && <p>{reply.answer.reasoning}</p>}
+                {reply.answer.setAside.length > 0 && (
+                  <>
+                    <p className={styles.itFoldHead}>Set aside</p>
+                    <ul>
+                      {reply.answer.setAside.map((s) => (
+                        <li key={s.n}>
+                          [{s.n}] {s.why}
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+                {reply.coverage && (
+                  <p className={styles.itCoverage}>
+                    Drawn from {reply.coverage.claims} line
+                    {reply.coverage.claims === 1 ? "" : "s"} across {reply.coverage.docs}{" "}
+                    source{reply.coverage.docs === 1 ? "" : "s"}
+                    {reply.coverage.from
+                      ? `, ${reply.coverage.from.slice(0, 10)} → ${reply.coverage.to.slice(0, 10)}`
+                      : ""}
+                    .
+                  </p>
+                )}
+                <p className={styles.itCoverage}>
+                  Answered by {reply.model || "—"}
+                  {reply.escalated ? ` — escalated on ${reply.escalated}` : ""}.
+                </p>
+              </div>
+            )}
+          </>
+        )}
+      </>
+    );
+  };
+
   return (
-    <div className={styles.itWrap}>
+    <div className={`${styles.itWrap} ${canWrite ? styles.itDockPad : ""}`}>
       <aside className={styles.itRail} aria-label="Index">
         <div className={styles.itRailHead}>
-          <b>Index</b>
-          <span>{rail.length}</span>
+          <b>
+            {railTab === "index"
+              ? "Index"
+              : railTab === "country"
+                ? "By country"
+                : "The archive"}
+          </b>
+          <span>
+            {railTab === "index"
+              ? rail.length
+              : railTab === "country"
+                ? countries.length
+                : ""}
+          </span>
         </div>
-        <div className={styles.itRailList}>
-          {rail.length === 0 && (
-            <p className={styles.itRailEmpty}>
-              The index builds itself as you feed the brain.
-            </p>
-          )}
-          {rail.map((t) => renderTopic(t, 0))}
+        <div className={styles.itRailList}>{railBody}</div>
+        <div className={styles.itRailTabs}>
+          <button
+            type="button"
+            className={`${styles.itRailTab} ${railTab === "country" ? styles.itRailTabOn : ""}`}
+            onClick={() => setRailTab(railTab === "country" ? "index" : "country")}
+          >
+            <span>By country</span>
+            <span>{countries.length || ""}</span>
+          </button>
+          <button
+            type="button"
+            className={`${styles.itRailTab} ${railTab === "archive" ? styles.itRailTabOn : ""}`}
+            onClick={() => {
+              setRailTab(railTab === "archive" ? "index" : "archive");
+              if (railTab === "archive") setArchiveDay(null);
+            }}
+          >
+            <span>The archive</span>
+          </button>
         </div>
       </aside>
 
@@ -211,179 +648,24 @@ export function IntranetClient({
           </p>
         )}
 
+        {archiveDay && (
+          <p className={styles.itScope}>
+            Showing <b>{dayLabel(archiveDay.key, nowIso)}</b> from the archive.{" "}
+            <button
+              type="button"
+              className={styles.itClear}
+              onClick={() => setArchiveDay(null)}
+            >
+              back to today
+            </button>
+          </p>
+        )}
+
         {!canAnswer && (
           <p className={styles.itWarn}>
             No API key configured — the brain can hold what you give it and show its
             index, but it can&apos;t compose an answer yet.
           </p>
-        )}
-
-        {reply && !reply.ok && <p className={styles.itWarn}>{reply.reason}</p>}
-
-        {reply?.ok && (
-          <section className={styles.itAnswer}>
-            {reply.degraded && <p className={styles.itBreach}>{reply.degraded}</p>}
-            {reply.thin && !reply.world && <p className={styles.itThin}>{reply.thin}</p>}
-            {reply.answer.confidence === "mixed" && !reply.degraded && (
-              <p className={styles.itMixed}>The record disagrees with itself here.</p>
-            )}
-            {reply.answer.answer && (
-              <p className={styles.itProse}>{reply.answer.answer}</p>
-            )}
-
-            {reply.world && (
-              <div className={styles.itWorld}>
-                <p className={styles.itWorldTag}>
-                  From the world, not the record — general knowledge, nothing internal.
-                </p>
-                <p className={styles.itProse}>{reply.world}</p>
-              </div>
-            )}
-
-            {reply.answer.gaps.length > 0 && (
-              <p className={styles.itGaps}>
-                What the record doesn&apos;t cover: {reply.answer.gaps.join(" · ")}
-              </p>
-            )}
-
-            {reply.citations.length > 0 && (
-              <div className={styles.itCites}>
-                {reply.citations.map((c) => (
-                  <div key={c.n} className={styles.itCiteWrap}>
-                    <button
-                      type="button"
-                      className={styles.itCite}
-                      onClick={() => drill(c.claimId)}
-                    >
-                      <span className={styles.itCiteN}>[{c.n}]</span>
-                      <span className={styles.itCiteBody}>
-                        {c.text}
-                        <span className={styles.itCiteMeta}>
-                          {c.speaker || "unknown"} · {c.docTitle || c.origin} ·{" "}
-                          {c.saidAt.slice(0, 10)} · {c.kind}
-                          {c.originGone ? " · removed from the app since" : ""}
-                        </span>
-                      </span>
-                    </button>
-                    {canWrite && (
-                      <button
-                        type="button"
-                        className={styles.itPromote}
-                        title={`Copy this, with where it came from, ready to keep in the Playbook's ${c.promoteNs}`}
-                        onClick={() => promote(c.promoteLine, c.claimId)}
-                      >
-                        {copied === c.claimId
-                          ? "copied — paste it in the Playbook"
-                          : `keep in the Playbook (${c.promoteNs})`}
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {reply.accounts.length > 0 && (
-              <p className={styles.itGaps}>
-                On the board:{" "}
-                {reply.accounts.map((a, i) => (
-                  <span key={a.id}>
-                    {i > 0 ? " · " : ""}
-                    <Link href={`/accounts?peo=${a.id}`}>{a.name}</Link>
-                  </span>
-                ))}
-              </p>
-            )}
-
-            {(reply.answer.reasoning || reply.citations.length > 0) && (
-              <button
-                type="button"
-                className={styles.itFoldBtn}
-                onClick={() => setFoldOpen((v) => !v)}
-                aria-expanded={foldOpen}
-              >
-                {foldOpen ? "Hide the reasoning" : "Show the reasoning"}
-              </button>
-            )}
-
-            {foldOpen && (
-              <div className={styles.itFold}>
-                {reply.answer.reasoning && <p>{reply.answer.reasoning}</p>}
-                {reply.answer.setAside.length > 0 && (
-                  <>
-                    <p className={styles.itFoldHead}>Set aside</p>
-                    <ul>
-                      {reply.answer.setAside.map((s) => (
-                        <li key={s.n}>
-                          [{s.n}] {s.why}
-                        </li>
-                      ))}
-                    </ul>
-                  </>
-                )}
-                {reply.coverage && (
-                  <p className={styles.itCoverage}>
-                    Drawn from {reply.coverage.claims} line
-                    {reply.coverage.claims === 1 ? "" : "s"} across {reply.coverage.docs}{" "}
-                    source{reply.coverage.docs === 1 ? "" : "s"}
-                    {reply.coverage.from
-                      ? `, ${reply.coverage.from.slice(0, 10)} → ${reply.coverage.to.slice(0, 10)}`
-                      : ""}
-                    {reply.coverage.origins.length
-                      ? ` · from ${reply.coverage.origins.join(", ")}`
-                      : ""}
-                    .
-                  </p>
-                )}
-                <p className={styles.itCoverage}>
-                  Answered by {reply.model || "—"}
-                  {reply.escalated ? ` — escalated on ${reply.escalated}` : ""}.
-                  {reply.citations.length > 0 &&
-                    ` Found by ${[...new Set(reply.citations.map((c) => c.road))].join(", ")}.`}
-                </p>
-              </div>
-            )}
-          </section>
-        )}
-
-        {!reply && (
-          <div className={styles.itEmpty}>
-            {empty ? (
-              <p>The brain is empty. Paste something worth keeping.</p>
-            ) : (
-              <p className={styles.itStale}>{staleness}</p>
-            )}
-          </div>
-        )}
-
-        {canWrite && (
-          <div className={styles.itWell}>
-            <p className={styles.itWellHead}>Add to the brain</p>
-            <textarea
-              className={styles.itWellPaste}
-              value={paste}
-              onChange={(e) => setPaste(e.target.value)}
-              placeholder="Paste a Teams thread, a meeting transcript, a demo — anything worth keeping. It gets read the moment you send it."
-              aria-label="Paste into the brain"
-            />
-            <div className={styles.itAddRow}>
-              <button
-                type="button"
-                className={styles.itKeep}
-                disabled={capBusy || !paste.trim()}
-                onClick={file}
-              >
-                {capBusy ? "Sending…" : "Send it"}
-              </button>
-              {receipt && <span className={styles.itReceipt}>{receipt}</span>}
-            </div>
-            {ingestLines.length > 0 && (
-              <ul className={styles.itRunLines}>
-                {ingestLines.map((l, i) => (
-                  <li key={i}>{l}</li>
-                ))}
-              </ul>
-            )}
-          </div>
         )}
 
         {canWrite && (pendingNow > 0 || runLines.length > 0) && (
@@ -424,6 +706,55 @@ export function IntranetClient({
             )}
           </div>
         )}
+
+        {feed.length === 0 && (
+          <div className={styles.itEmpty}>
+            {empty ? (
+              <p>The brain is empty. Paste something worth keeping.</p>
+            ) : (
+              <p className={styles.itStale}>{staleness}</p>
+            )}
+          </div>
+        )}
+
+        {days.map((d) => (
+          <div key={d.key}>
+            <div className={styles.itLDivider}>
+              {d.label}
+              <button type="button" onClick={() => foldDay(d.key)}>
+                fold the day
+              </button>
+            </div>
+            {d.entries.map((e) => {
+              const s = stampOf(e);
+              const min = isMin(e);
+              return (
+                <section
+                  key={e.id}
+                  className={`${styles.itLEntry} ${min ? styles.itLMin : ""}`}
+                >
+                  <div className={styles.itLStamp}>
+                    <span className={s.cls}>{s.text}</span>
+                    {min && <span className={styles.itLPeek}>{s.peek}</span>}
+                    <button
+                      type="button"
+                      className={styles.itLFoldBtn}
+                      title={min ? "open this entry" : "fold this entry"}
+                      onClick={() => setMinned((m) => ({ ...m, [e.id]: !min }))}
+                    >
+                      {min ? "＋" : "—"}
+                    </button>
+                  </div>
+                  {!min && (
+                    <div className={styles.itLBody}>
+                      {e.kind === "live" ? renderLive(e) : renderStored(e)}
+                    </div>
+                  )}
+                </section>
+              );
+            })}
+          </div>
+        ))}
       </div>
 
       {passage && (
@@ -460,6 +791,30 @@ export function IntranetClient({
               </Link>
             </p>
           )}
+        </div>
+      )}
+
+      {canWrite && (
+        <div className={styles.itDock}>
+          <div className={styles.itDockIn}>
+            <span className={styles.itDockNote}>Add to the brain — always open</span>
+            <textarea
+              className={styles.itDockPaste}
+              value={paste}
+              onChange={(e) => setPaste(e.target.value)}
+              placeholder="Paste a Teams thread, a meeting transcript, a demo — anything worth keeping. It gets read the moment you send it."
+              aria-label="Paste into the brain"
+            />
+            <button
+              type="button"
+              className={styles.itKeep}
+              disabled={capBusy || !paste.trim()}
+              onClick={file}
+            >
+              {capBusy ? "Sending…" : "Send it"}
+            </button>
+          </div>
+          {receipt && <p className={styles.itDockErr}>{receipt}</p>}
         </div>
       )}
     </div>

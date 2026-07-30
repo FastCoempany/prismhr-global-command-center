@@ -979,6 +979,22 @@ export async function readCapture(captureId: string): Promise<RunReport> {
 
     lines.push(...idx.lines.filter((l) => l !== "The index is settled."));
     if (!read.ok && read.reason) lines.push(read.reason);
+
+    // The record keeps the digest (IV.8): stored on the capture itself, so the
+    // ledger can replay what this paste did long after this response is gone.
+    try {
+      const cap = await prisma.intranetCapture.findUnique({
+        where: { id: captureId },
+        select: { meta: true },
+      });
+      await prisma.intranetCapture.update({
+        where: { id: captureId },
+        data: { meta: { ...((cap?.meta ?? {}) as object), digest: lines } },
+      });
+    } catch {
+      // an unreplayable digest is not a failed read
+    }
+
     return { ok: true, lines, pending: read.pending };
   } catch (e) {
     return { ok: false, lines: [], reason: `The reading failed — ${reasonOf(e)}.` };

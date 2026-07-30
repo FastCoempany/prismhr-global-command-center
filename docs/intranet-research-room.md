@@ -2277,3 +2277,16 @@ the room's face; the ingest-digest change below is already in production.
   flags — they degrade to bare letter pairs — so the by-country rail uses
   actual flag icons (flag CDN images in mockups; inline SVG or self-hosted
   assets in production), always beside the country's name in text.
+
+## IV.10 · The Ledger is built (2026-07-30, late)
+
+IV.8 and IV.9 are production as of this section. The record is REBUILT from
+the rows the room already keeps — an ask is an IntranetAsk, a paste is an
+IntranetCapture whose digest is stored in its meta — so the ledger survives
+the tab, the day, and the deploy. Entries fold to their stamps (today open,
+older days folded); a divider folds its day; the archive tab calendarizes
+every day the record touched; the by-country tab reads the same claims
+through country lenses with real flag images (a flag CDN serves them —
+amended from IV.9's self-hosting note, with a graceful hide on load failure).
+The paste dock is pinned and always open; "Send it" reads on the spot and the
+record shows the receipt, then the digest, in place.

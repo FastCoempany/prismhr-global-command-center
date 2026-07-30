@@ -7335,6 +7335,9 @@
   overflow: hidden;
   position: sticky;
   top: 14px;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 140px);
 }
 .itRailHead {
   display: flex;
@@ -7350,6 +7353,8 @@
   color: rgba(10, 28, 64, 0.42);
 }
 .itRailList {
+  flex: 1;
+  overflow: auto;
   max-height: 62vh;
   overflow-y: auto;
 }
@@ -7765,4 +7770,242 @@
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--blue);
+}
+
+/* ── the Ledger (IV.8) ────────────────────────────────────────────────── */
+.itDockPad {
+  padding-bottom: 110px;
+}
+.itLDivider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--f-mono), ui-monospace, Menlo, monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: rgba(10, 28, 64, 0.42);
+  margin: 22px 0 12px;
+}
+.itLDivider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+.itLDivider button {
+  border: 0;
+  background: none;
+  font: inherit;
+  color: rgba(10, 28, 64, 0.42);
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  cursor: pointer;
+  order: 3;
+}
+.itLDivider button:hover {
+  color: var(--navy);
+}
+.itLEntry {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  padding: 15px 20px 17px;
+  margin-bottom: 12px;
+}
+.itLEntry.itLMin {
+  padding: 10px 20px;
+}
+.itLStamp {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--f-mono), ui-monospace, Menlo, monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.itKAsk {
+  color: #9a4a12;
+}
+.itKFed {
+  color: #15803d;
+}
+.itKWorld {
+  color: var(--blue);
+}
+.itLPeek {
+  font-family: var(--f-sans), system-ui, sans-serif;
+  font-size: 12px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: rgba(10, 28, 64, 0.66);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 560px;
+}
+.itLFoldBtn {
+  margin-left: auto;
+  border: 0;
+  background: none;
+  color: rgba(10, 28, 64, 0.42);
+  cursor: pointer;
+  font-family: var(--f-mono), ui-monospace, Menlo, monospace;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 0 2px;
+}
+.itLFoldBtn:hover {
+  color: var(--navy);
+}
+.itLBody {
+  margin-top: 9px;
+}
+.itLQ {
+  font-family: var(--f-serif), Georgia, serif;
+  font-size: 19px;
+  line-height: 1.35;
+  margin: 0 0 10px;
+  color: var(--navy);
+}
+
+/* the two delineated tabs at the foot of the rail */
+.itRailTabs {
+  border-top: 2px solid rgba(10, 28, 64, 0.22);
+}
+.itRailTab {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  border: 0;
+  background: none;
+  font-family: var(--f-mono), ui-monospace, Menlo, monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(10, 28, 64, 0.42);
+  padding: 10px 13px;
+  cursor: pointer;
+  text-align: left;
+  border-top: 1px solid var(--line);
+}
+.itRailTab:first-child {
+  border-top: 0;
+}
+.itRailTab:hover {
+  color: var(--navy);
+}
+.itRailTabOn {
+  color: var(--navy);
+  background: rgba(10, 28, 64, 0.04);
+}
+
+/* by country — real flags, never emoji (IV.9) */
+.itFlag {
+  flex: none;
+  display: block;
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px rgba(10, 28, 64, 0.14);
+}
+.itLensNote {
+  font-size: 11px;
+  color: rgba(10, 28, 64, 0.42);
+  padding: 9px 13px 11px;
+  border-top: 1px solid var(--line);
+  margin: 0;
+}
+
+/* the archive */
+.itMonth {
+  font-family: var(--f-mono), ui-monospace, Menlo, monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(10, 28, 64, 0.42);
+  padding: 10px 13px 4px;
+  margin: 0;
+}
+.itDay {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  width: 100%;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  color: var(--navy);
+  padding: 7px 13px;
+  cursor: pointer;
+  text-align: left;
+}
+.itDay:hover {
+  background: rgba(10, 28, 64, 0.035);
+}
+.itDayMeta {
+  margin-left: auto;
+  font-family: var(--f-mono), ui-monospace, Menlo, monospace;
+  font-size: 10.5px;
+  color: rgba(10, 28, 64, 0.42);
+}
+
+/* the paste dock — pinned, always open (IV.8) */
+.itDock {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(245, 247, 251, 0.93);
+  backdrop-filter: blur(6px);
+  border-top: 1px solid var(--line);
+  z-index: 40;
+}
+.itDockIn {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 12px 24px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  position: relative;
+}
+.itDockNote {
+  position: absolute;
+  right: 26px;
+  top: -22px;
+  font-family: var(--f-mono), ui-monospace, Menlo, monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(10, 28, 64, 0.42);
+}
+.itDockPaste {
+  flex: 1;
+  height: 52px;
+  resize: none;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  padding: 14px 16px;
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--navy);
+  transition: height 0.15s ease;
+}
+.itDockPaste:focus {
+  outline: none;
+  border-color: rgba(10, 28, 64, 0.35);
+  height: 104px;
+}
+.itDockErr {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 24px 10px;
+  font-size: 12px;
+  color: #7a4b00;
 }
