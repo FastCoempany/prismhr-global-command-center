@@ -31,19 +31,11 @@ import {
   commonEntities,
   docsByIds,
   loadTopics,
-  prospectAsks,
   todayCounts,
 } from "@/lib/intranet/store";
 import { CEILINGS, readCeilings } from "@/lib/intranet/evals";
-import {
-  accountsMentioned,
-  harvestBattlecards,
-  peerQuestions,
-  promotionDraft,
-  type BattlecardProposal,
-} from "@/lib/intranet/bridges";
-import { DISCOVERY } from "@/lib/intel/discovery";
-import { PRODUCT_BANK } from "@/lib/intel/discovery-product";
+import { accountsMentioned, promotionDraft } from "@/lib/intranet/bridges";
+import { redactMoney } from "@/lib/intel/lexicon";
 import {
   coverageOf,
   fallbackPlan,
@@ -55,6 +47,7 @@ import {
   NOTHING_IN_RECORD,
   escalationReason,
   runSynthesis,
+  runWorldAnswer,
   synthAvailable,
   thinLine,
 } from "@/lib/intranet/synthesize";
@@ -79,7 +72,13 @@ async function canWrite() {
 }
 
 // ── capture ─────────────────────────────────────────────────────────────────
-export type CaptureReply = { ok: boolean; receipt: string; reason?: string };
+export type CaptureReply = {
+  ok: boolean;
+  receipt: string;
+  /** What just landed, so the room can read it immediately (IV.3). */
+  captureId: string;
+  reason?: string;
+};
 
 /** Take a grab or a paste into the brain. Redaction happens inside
  *  normalizeCapture, before the first write — there is no pre-redaction text to
@@ -89,10 +88,10 @@ export async function intranetCapture(
   originHint?: "teams" | "meeting" | "demo" | "paste",
 ): Promise<CaptureReply> {
   if (!(await canWrite()))
-    return { ok: false, receipt: "", reason: "Read-only session." };
+    return { ok: false, receipt: "", captureId: "", reason: "Read-only session." };
   const text = (raw ?? "").trim();
   if (text.length < 20)
-    return { ok: false, receipt: "", reason: "Nothing there to keep." };
+    return { ok: false, receipt: "", captureId: "", reason: "Nothing there to keep." };
 
   const cap = normalizeCapture(text, { origin: originHint });
 
@@ -109,7 +108,11 @@ export async function intranetCapture(
         where: { id: seen.id },
         data: { capturedAt: new Date() },
       });
-      return { ok: true, receipt: "Already in the brain — nothing new to add." };
+      return {
+        ok: true,
+        receipt: "Already in the brain — nothing new to add.",
+        captureId: seen.id,
+      };
     }
 
     const capture = await prisma.intranetCapture.create({
@@ -176,11 +179,13 @@ export async function intranetCapture(
         links: cap.links.length,
         report: cap.report,
       }),
+      captureId: capture.id,
     };
   } catch {
     return {
       ok: false,
       receipt: "",
+      captureId: "",
       reason:
         "The brain's tables aren't there yet — run docs/intranet-tables.sql in Supabase.",
     };
@@ -220,6 +225,9 @@ export type AskReply = {
   degraded: string;
   /** Book accounts the answer's material names — a link, never a filing. */
   accounts: { id: string; name: string }[];
+  /** IV.6 — set only when the record had nothing: an answer from general
+   *  knowledge, explicitly labelled, never blended with the corpus. */
+  world: string;
   reason?: string;
 };
 
@@ -242,6 +250,7 @@ const EMPTY_ANSWER_REPLY = (question: string, reason: string): AskReply => ({
   thin: "",
   degraded: "",
   accounts: [],
+  world: "",
   reason,
 });
 
@@ -367,15 +376,17 @@ export async function intranetAsk(question: string): Promise<AskReply> {
   );
 
   if (candidates.length === 0) {
+    // IV.6 · the record has nothing — answer from the world instead, labelled.
+    const world = redactMoney(await runWorldAnswer(q).catch(() => ""));
     return {
       ok: true,
       question: q,
       answer: {
         answer: NOTHING_IN_RECORD,
         citations: [],
-        reasoning: `Looked in ${plan.topicIds.length} topic${
-          plan.topicIds.length === 1 ? "" : "s"
-        } for ${plan.phrases.join(", ") || "the question's own words"}.`,
+        reasoning: `Looked across the index for ${
+          plan.phrases.join(", ") || "the question's own words"
+        } and found nothing.`,
         setAside: [],
         confidence: "thin",
         gaps: [],
@@ -388,6 +399,7 @@ export async function intranetAsk(question: string): Promise<AskReply> {
       thin: "",
       degraded: "",
       accounts: named,
+      world,
     };
   }
 
@@ -419,6 +431,7 @@ export async function intranetAsk(question: string): Promise<AskReply> {
       thin: "",
       degraded: ceiling.line,
       accounts: named,
+      world: "",
     };
   }
 
@@ -448,6 +461,11 @@ export async function intranetAsk(question: string): Promise<AskReply> {
   }
 
   const citations = renderCitations(answer.citations, forSynthesis, docs);
+
+  // IV.6 · retrieval found material but the answer honestly abstained — the
+  // record still has nothing to say, so the world speaks, labelled.
+  const world =
+    citations.length === 0 ? redactMoney(await runWorldAnswer(q).catch(() => "")) : "";
 
   // Keep the ask — for the fold, for evals, and so a repeat is cheap.
   try {
@@ -480,42 +498,8 @@ export async function intranetAsk(question: string): Promise<AskReply> {
     thin: answer.confidence === "thin" ? thinLine(forSynthesis) : "",
     degraded: ceiling.breached ? ceiling.line : "",
     accounts: named,
+    world,
   };
-}
-
-// ── the bridges (Phase 13.6) ────────────────────────────────────────────────
-
-export type HarvestReply = {
-  ok: boolean;
-  propose: BattlecardProposal[];
-  oursNotTheirs: string[];
-  reason?: string;
-};
-
-/** THE PROSPECT-QUESTION HARVEST (C7). What buyers actually asked, grouped and
- *  ranked by how many separate rooms it came up in — and the inverse, the
- *  battlecard questions no buyer has ever needed answered.
- *
- *  Proposals. The Playbook is written by hand. */
-export async function intranetHarvest(): Promise<HarvestReply> {
-  if (!(await canRead()))
-    return { ok: false, propose: [], oursNotTheirs: [], reason: "Sign in to continue." };
-  const asks = await prospectAsks(600);
-  const playbook = [...DISCOVERY, ...PRODUCT_BANK].map((q) => q.question);
-  const { propose, oursNotTheirs } = harvestBattlecards(asks, playbook);
-  return { ok: true, propose, oursNotTheirs };
-}
-
-/** THE GAP BRIDGE (C7). What prospects in comparable situations asked, so a
- *  deal inherits the questions its peers provoked. Read-only; the carousel
- *  shows them, it never files them. */
-export async function intranetPeerAsks(
-  accountId: string,
-  entities: string[],
-): Promise<{ question: string; shared: string[]; claimId: string; space: string }[]> {
-  if (!(await canRead())) return [];
-  const asks = await prospectAsks(600);
-  return peerQuestions(asks, { entities, excludeAccountId: accountId, cap: 3 });
 }
 
 // ── drilldown ───────────────────────────────────────────────────────────────

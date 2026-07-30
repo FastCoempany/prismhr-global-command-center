@@ -89,7 +89,7 @@ export function thinLine(cands: Candidate[]): string {
       })
     : "";
   const n = cands.length;
-  return `Thin — ${n} claim${n === 1 ? "" : "s"}${when ? `, none newer than ${when}` : ""}.`;
+  return `Thin — the record holds only ${n} line${n === 1 ? "" : "s"} on this${when ? `, none newer than ${when}` : ""}.`;
 }
 
 // ── the verbatim ceiling (F11) ──────────────────────────────────────────────
@@ -149,6 +149,9 @@ State the position in the first sentence. "It depends" is acceptable ONLY when t
 
 DISTINGUISH
 A decision outranks an opinion, and say which you are leaning on. Never present a hedged or secondhand claim as established. Where two claims conflict, name both and say which is later or better supported.
+
+BUYERS' OWN QUESTIONS
+Some claims are of kind "prospect-question" — things real buyers asked in demos and calls. When the question at hand is one buyers have asked, or close to one, say so plainly ("buyers have asked exactly this") and cite those asks like any other claim. What was asked, and what provoked it, is intelligence in its own right.
 
 ANSWER FROM THIS RECORD ONLY
 You know things about payroll, EOR, contractor management and international employment. NONE of that belongs in this answer. If the claims do not support an answer, say "${NOTHING_IN_RECORD}" and use "gaps" to name what is missing. Filling a gap from your own knowledge is the single worst thing you can do here — it is invisible to the reader and it destroys the room's usefulness. Answer from this record only.
@@ -231,6 +234,33 @@ export function sanitizeAnswer(raw: unknown, maxHandle: number): Answer {
       .filter(Boolean)
       .slice(0, 3),
   };
+}
+
+// ── the world fallback (IV.6) ───────────────────────────────────────────────
+// The record-only doctrine's counterpart. When the corpus has NOTHING, the room
+// answers from general knowledge instead of stopping at a shrug — under an
+// explicit label, never presented as corpus truth, never blended with it.
+export const WORLD_SYSTEM = `The reader asked their internal knowledge base a question and it had nothing — so you are answering from general knowledge instead. Their app will label your answer as coming from outside their record.
+
+Be the most accurate, current, decisive briefing the reader could get on the question: 3 to 6 sentences, position first, plain speech. Name genuine uncertainty where it exists. Never invent facts about the reader's own company, deals, colleagues or record — you know nothing about those; this answer is about the world. Do not state currency amounts; describe magnitude in words where cost matters.`;
+
+/** A world answer, as text. Empty string on any failure — the caller already
+ *  has the honest "nothing in the record" line to fall back to. */
+export async function runWorldAnswer(question: string): Promise<string> {
+  if (!synthAvailable() || !question.trim()) return "";
+  const client = new Anthropic({ timeout: 90_000, maxRetries: 1 });
+  const res = await client.messages.create({
+    model: MODEL_SYNTH,
+    max_tokens: 2048,
+    thinking: { type: "adaptive" },
+    system: [{ type: "text", text: WORLD_SYSTEM, cache_control: { type: "ephemeral" } }],
+    messages: [{ role: "user", content: question }],
+  } as Anthropic.MessageCreateParamsNonStreaming);
+  return res.content
+    .map((b) => (b.type === "text" ? b.text : ""))
+    .join("")
+    .trim()
+    .slice(0, 2500);
 }
 
 export async function runSynthesis(input: {

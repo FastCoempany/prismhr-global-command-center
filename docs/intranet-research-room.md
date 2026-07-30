@@ -2115,3 +2115,113 @@ Three remain after the founder's last round.
    prospect's own words belong in the same brain as internal chatter? Proposed
    default: yes, clearly labelled by origin, because that is where the most
    valuable claims live.
+
+---
+
+# Part IV · The operator's correction (2026-07-30)
+
+The first production session exposed the gap between the pipeline and its face.
+The pipeline was sound; the face spoke the pipeline's language, hid its one
+fatal failure, and buried the control that matters. Everything below is
+founder-decreed and supersedes any conflicting line in Parts I–III.
+
+## IV.1 · The vocabulary rule
+
+The words **document**, **claim** and **topic** — and their counts — never
+appear on an operator surface. They are pipeline words. The only places
+granularity of that kind may show are:
+
+1. **Citations**, when a question has been answered — speaker, date, kind,
+   source, exactly as built.
+2. **The ingest receipt**, at the moment the index updates — what was just
+   read, which index rows grew, which rows are new.
+
+Everywhere else the room speaks plainly: "sources", "lines", "entries",
+"the index", "still to read". The stat line ("0 claims from 221 documents,
+7 topics") is deleted, not reworded — the index rail's own counts are the
+only standing numbers on the page. The staleness line ("Last added …")
+survives; it is the one nag the founder asked for.
+
+## IV.2 · Failure is loud, diagnostics are invisible
+
+The first production run read nothing and said nothing about it — 221 entries
+queued forever behind silent catch blocks and an unconfigured function
+timeout. Two rules replace that:
+
+- **Every read failure surfaces in the run report with its actual reason** —
+  "the model call timed out", "the API key was refused", the server's own
+  message — in plain words, where the operator is already looking.
+- **No diagnostics surface.** The vital-signs link is gone. A page of meters
+  is the pipeline talking to itself; the operator needs the failure line at
+  the moment of failure, not a dashboard.
+
+Mechanically: `maxDuration` is set explicitly on the room's route; every
+reading pass is deadline-aware and stops honestly before the platform kills
+it; every catch captures and reports the error instead of swallowing it.
+
+## IV.3 · One control, and the paste is the protagonist
+
+- **One button.** "Bring the brain up to date." No deep pass, no second
+  budget. The button runs bounded passes back-to-back until the backlog is
+  gone or the operator stops it, reporting as it goes.
+- **The paste well is the room's second surface, not an afterthought.** It
+  sits in the main column, always open — not folded behind a ＋ toggle on the
+  rail. Pasting is how the room grows; the layout says so.
+- **The reaction to a paste is the point.** "Keep it" immediately reads what
+  was pasted, and the operator watches the consequence: the receipt, then the
+  reading, then the index rows growing — new rows appearing, counts ticking —
+  then a summary of everything the app just ingested. Fire-and-forget is
+  abolished.
+- **The index rail sits on the left.** The page reads index → work, not
+  work → index.
+- **The page subtitle is gone.** The room explains itself by being usable.
+- **"the grabs" link is gone.** Capture is the Capture tab's job.
+
+## IV.4 · The grab takes the whole thread, structured
+
+The Teams grab is rebuilt to the standard Phase 2 always assumed:
+
+- **Whole thread.** It scrolls to the very top — not eight passes — harvesting
+  incrementally as it goes, because Teams unloads what scrolls out of view.
+  It stops only when the top is truly reached (no growth three passes
+  running) or a generous safety cap trips, and the report says which. Pacing
+  stays polite; the point is completeness, not speed.
+- **Structured, not a blob.** Every message is emitted with the delimiters
+  the parser was always built for — `⟦MSG⟧ speaker ⟦AT⟧ instant ⟦BODY⟧` —
+  read from the message DOM itself: author nodes, `<time datetime>` instants,
+  body containers. Attribution stops being inference. Links and file cards
+  land in `⟦LINKS⟧`; the completeness report lands in `⟦CAPTURED⟧`.
+- **Falls back rather than fails.** If Teams ships a DOM the selectors don't
+  recognise, the grab degrades to the old whole-pane text — a worse capture
+  is better than none, and the report says the structure was missed.
+- A changed bookmarklet must be re-dragged to the bookmarks bar; the shelf
+  says so.
+
+## IV.5 · Prospect-ask intelligence moves to where it belongs
+
+- **The harvest report leaves this room.** "What prospects ask" as a
+  reviewable report — proposals grouped from real buyer questions, plus the
+  battlecard questions no buyer has ever needed — lives on the **Playbook**
+  page, beside the lessons and market facts it feeds. On the Intranet it is
+  an index row and nothing else.
+- **The ask path uses it invisibly.** When a question comes in that buyers
+  have asked before — or close to it — the answer says so and cites those
+  asks alongside everything else. That is retrieval doing its job, not a
+  separate feature.
+
+## IV.6 · The world fallback
+
+The record-only doctrine (F12) gains its counterpart. When the corpus has
+**nothing** — no candidates, or an answer that honestly abstains — the room
+no longer stops at "nothing in the record." It answers from Claude's general
+knowledge instead, under an explicit label: **from the world, not the
+record**, styled as system intelligence (blue), never presented as corpus
+truth, never cited as if it were. `redactMoney` applies to world answers
+exactly as it does to everything else. The hierarchy is absolute: the record
+first, the world only when the record is empty, and never blended.
+
+## IV.7 · What Part IV deliberately does not change
+
+Extraction, indexing, retrieval, synthesis, time, the mirrors, C1–C7, the
+write ban, the eval set, the ceilings — untouched. This part is about the
+face and the feeder, not the brain.

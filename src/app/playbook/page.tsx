@@ -7,6 +7,8 @@ import { COUNTRY_NAME } from "@/lib/intel/lexicon";
 import { dealIntelFor } from "@/lib/intel/extract";
 import { readPlaybook } from "@/lib/playbook/store";
 import { loadAccountNotes, loadDispositions } from "@/lib/today/overlay";
+import { prospectAsks } from "@/lib/intranet/store";
+import { harvestBattlecards } from "@/lib/intranet/bridges";
 import { PlaybookClient } from "./playbook-client";
 import styles from "../command-center.module.css";
 
@@ -25,11 +27,20 @@ export default async function PlaybookPage({
   const accountId = typeof sp.account === "string" ? sp.account : "";
   const account = accountId ? (peos.find((p) => p.id === accountId) ?? null) : null;
 
-  const [acctNotes, dispositions] = await Promise.all([
+  const [acctNotes, dispositions, buyerAsks] = await Promise.all([
     loadAccountNotes(),
     loadDispositions(),
+    prospectAsks(600),
   ]);
   const { market, lessons } = readPlaybook(acctNotes);
+
+  // IV.5 · what real buyers asked, read from the brain — proposals beside the
+  // lessons and market facts they feed. The brain proposes; the Playbook is
+  // written by hand.
+  const harvest = harvestBattlecards(
+    buyerAsks,
+    [...DISCOVERY, ...PRODUCT_BANK].map((q) => q.question),
+  );
 
   // Country substitution runs off the bound account's own intel; with no
   // account the questions stay country-agnostic ("their countries").
@@ -115,6 +126,13 @@ export default async function PlaybookPage({
             from: m.accountName,
             at: m.at,
           }))}
+          prospectAsks={harvest.propose.map((p) => ({
+            question: p.question,
+            read: p.read,
+            asked: p.asked,
+            rooms: p.rooms.join(", "),
+          }))}
+          oursNotTheirs={harvest.oursNotTheirs}
           bankTotal={DISCOVERY.length + PRODUCT_BANK.length}
         />
       </main>

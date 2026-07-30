@@ -32,6 +32,15 @@ import styles from "./playbook.module.css";
 type Q = DiscoveryQ;
 type Knowledge = { id: string; text: string; from: string; at: string; who?: string };
 
+/** A battlecard question proposed from what real buyers asked (C7, IV.5). The
+ *  brain groups the asks; the Playbook is where a human decides. */
+export type ProspectProposal = {
+  question: string;
+  read: string;
+  asked: number;
+  rooms: string;
+};
+
 const CATEGORIES: QCategory[] = [
   "footprint",
   "classification",
@@ -132,6 +141,8 @@ export function PlaybookClient({
   accounts,
   lessons,
   market,
+  prospectAsks,
+  oursNotTheirs,
   bankTotal,
 }: {
   questions: Q[];
@@ -141,6 +152,8 @@ export function PlaybookClient({
   accounts: { id: string; name: string }[];
   lessons: Knowledge[];
   market: Knowledge[];
+  prospectAsks: ProspectProposal[];
+  oursNotTheirs: string[];
   bankTotal: number;
 }) {
   const [filters, setFilters] = useState<Filters>(NO_FILTERS);
@@ -205,7 +218,9 @@ export function PlaybookClient({
           onClick={() => setTab("learned")}
         >
           What the book learned
-          <span className={styles.chipN}>{lessons.length + market.length}</span>
+          <span className={styles.chipN}>
+            {lessons.length + market.length + prospectAsks.length}
+          </span>
         </button>
         {accounts.length > 0 && (
           <span className={styles.bind}>
@@ -396,6 +411,41 @@ export function PlaybookClient({
         </>
       ) : (
         <div className={styles.learned}>
+          <div className={styles.kBlock}>
+            <h2 className={styles.kHead}>
+              What prospects ask{" "}
+              <span className={styles.chipN}>{prospectAsks.length}</span>
+            </h2>
+            <p className={styles.kHint}>
+              Questions real buyers asked in more than one room — each a battlecard
+              candidate the bank doesn&apos;t cover yet. The brain proposes; you decide.
+            </p>
+            {prospectAsks.length === 0 ? (
+              <p className={styles.empty}>
+                Nothing yet. These arrive once the same question surfaces in two separate
+                demos or calls.
+              </p>
+            ) : (
+              prospectAsks.map((p) => (
+                <div key={p.question} className={styles.kRow}>
+                  <span className={styles.kText}>
+                    {p.question}
+                    <CopyBtn payload={p.question} label="copy" />
+                  </span>
+                  <span className={styles.kFrom}>
+                    asked in {p.asked} room{p.asked === 1 ? "" : "s"}
+                    {p.rooms ? ` (${p.rooms})` : ""} · {p.read}
+                  </span>
+                </div>
+              ))
+            )}
+            {oursNotTheirs.length > 0 && (
+              <p className={styles.kHint}>
+                Ours, not theirs — bank questions no buyer has ever needed answered:{" "}
+                {oursNotTheirs.slice(0, 4).join(" · ")}
+              </p>
+            )}
+          </div>
           <div className={styles.kBlock}>
             <h2 className={styles.kHead}>
               Lessons <span className={styles.chipN}>{lessons.length}</span>

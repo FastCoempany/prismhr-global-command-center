@@ -1,23 +1,23 @@
 "use client";
 
-// The Intranet's work surface: an ask bar, a written answer, citations that
-// drill, and the index rail that decomposes on click.
+// The Intranet's work surface, corrected to the operator's read (Part IV):
 //
-// The rail is navigation AND a report — it says what the brain has a lot of and
-// what it has just started to have. Selecting a topic scopes where a question
-// STARTS; it never limits where the answer can look (C1).
+//   · the index rail sits on the LEFT — the page reads index → work
+//   · the paste well is the room's second surface, always open, in the main
+//     column — pasting is how the room grows and the layout says so
+//   · one control brings the brain up to date, running passes back-to-back
+//     until the backlog is gone or the operator stops it
+//   · "Keep it" reads the paste immediately and the operator watches the
+//     consequence: receipt → reading → the index growing
+//   · pipeline vocabulary never reaches the surface; failures always do
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useDismiss } from "@/components/use-dismiss";
-import {
-  intranetAsk,
-  intranetCapture,
-  intranetHarvest,
-  intranetPassage,
-} from "./actions";
-import { runBrain } from "./runners";
-import type { AskReply, HarvestReply, PassageReply } from "./actions";
+import { intranetAsk, intranetCapture, intranetPassage } from "./actions";
+import { readCapture, runBrain } from "./runners";
+import type { AskReply, PassageReply } from "./actions";
 import styles from "../command-center.module.css";
 
 export type RailTopic = {
@@ -29,18 +29,10 @@ export type RailTopic = {
   children: RailTopic[];
 };
 
-type Stats = {
-  docs: number;
-  claims: number;
-  topics: number;
-  lastCaptureAt: string;
-  prospectQuestions: number;
-};
-
 export function IntranetClient({
   rail,
   initialQ,
-  stats,
+  empty,
   staleness,
   queue,
   canWrite,
@@ -48,31 +40,31 @@ export function IntranetClient({
 }: {
   rail: RailTopic[];
   initialQ: string;
-  stats: Stats;
+  empty: boolean;
   staleness: string;
   queue: { pending: number; unindexed: number };
   canWrite: boolean;
   canAnswer: boolean;
 }) {
+  const router = useRouter();
   const [q, setQ] = useState(initialQ);
   const [reply, setReply] = useState<AskReply | null>(null);
   const [foldOpen, setFoldOpen] = useState(false);
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const [scope, setScope] = useState<{ id: string; label: string } | null>(null);
   const [passage, setPassage] = useState<PassageReply | null>(null);
-  const [addOpen, setAddOpen] = useState(false);
   const [paste, setPaste] = useState("");
   const [receipt, setReceipt] = useState("");
+  const [ingestLines, setIngestLines] = useState<string[]>([]);
   const [busy, startAsk] = useTransition();
   const [capBusy, startCap] = useTransition();
   const [runBusy, startRun] = useTransition();
   const [runLines, setRunLines] = useState<string[]>([]);
-  const [harvest, setHarvest] = useState<HarvestReply | null>(null);
-  const [harvestBusy, startHarvest] = useTransition();
+  const [pendingNow, setPendingNow] = useState(queue.pending);
   const [copied, setCopied] = useState("");
+  const stopRef = useRef(false);
 
   const drawerRef = useDismiss<HTMLDivElement>(passage !== null, () => setPassage(null));
-  const addRef = useDismiss<HTMLDivElement>(addOpen, () => setAddOpen(false));
 
   const ask = (text: string) => {
     const question = text.trim();
@@ -86,37 +78,43 @@ export function IntranetClient({
     });
   };
 
+  // IV.3 · the paste is never fire-and-forget. Keep it, then read it on the
+  // spot — and the operator watches the index grow as the consequence.
   const file = () => {
     if (!paste.trim() || capBusy) return;
     startCap(async () => {
       const r = await intranetCapture(paste);
       setReceipt(r.ok ? r.receipt : (r.reason ?? "That didn't land."));
-      if (r.ok) setPaste("");
+      if (!r.ok) return;
+      setPaste("");
+      setIngestLines(["Reading what you pasted…"]);
+      const g = await readCapture(r.captureId);
+      setIngestLines(g.ok ? g.lines : [g.reason ?? "The reading failed."]);
+      if (typeof g.pending === "number") setPendingNow(g.pending);
+      router.refresh();
     });
   };
 
-  // Bringing the brain up to date: mirror the app, take in the Playbook, read
-  // what hasn't been read, settle the index, open what has grown, reconcile
-  // what the record now disagrees with. Bounded — a big corpus is several
-  // passes, and the report says what is left.
-  const bringUpToDate = (deep: boolean) => {
+  // One control (IV.3). Passes run back-to-back until the backlog is gone or
+  // the operator stops it; every pass reports, and the rail refreshes live.
+  const catchUp = () => {
     if (runBusy) return;
+    stopRef.current = false;
     startRun(async () => {
-      const r = await runBrain({ deep });
-      setRunLines(r.ok ? r.lines : [r.reason ?? "That didn't complete."]);
+      const all: string[] = [];
+      for (let pass = 0; pass < 12 && !stopRef.current; pass += 1) {
+        const r = await runBrain();
+        for (const l of r.lines) if (all[all.length - 1] !== l) all.push(l);
+        setRunLines([...all]);
+        if (typeof r.pending === "number") setPendingNow(r.pending);
+        router.refresh();
+        if (!r.ok) {
+          if (r.reason) setRunLines([...all, r.reason]);
+          break;
+        }
+        if (!r.pending) break;
+      }
     });
-  };
-
-  // C7 · the harvest. What buyers actually asked, grouped into something that
-  // could become a battlecard question — and the battlecard questions no buyer
-  // has ever needed answered. Proposals; the Playbook is written by hand.
-  const runHarvest = () => {
-    if (harvestBusy) return;
-    if (harvest) {
-      setHarvest(null);
-      return;
-    }
-    startHarvest(async () => setHarvest(await intranetHarvest()));
   };
 
   // Promotion travels by hand: the line is composed with its provenance and
@@ -163,6 +161,21 @@ export function IntranetClient({
 
   return (
     <div className={styles.itWrap}>
+      <aside className={styles.itRail} aria-label="Index">
+        <div className={styles.itRailHead}>
+          <b>Index</b>
+          <span>{rail.length}</span>
+        </div>
+        <div className={styles.itRailList}>
+          {rail.length === 0 && (
+            <p className={styles.itRailEmpty}>
+              The index builds itself as you feed the brain.
+            </p>
+          )}
+          {rail.map((t) => renderTopic(t, 0))}
+        </div>
+      </aside>
+
       <div className={styles.itMain}>
         <div className={styles.itAskRow}>
           <input
@@ -200,8 +213,8 @@ export function IntranetClient({
 
         {!canAnswer && (
           <p className={styles.itWarn}>
-            No API key configured — the brain can hold material and show its index, but it
-            can&apos;t compose an answer yet.
+            No API key configured — the brain can hold what you give it and show its
+            index, but it can&apos;t compose an answer yet.
           </p>
         )}
 
@@ -210,12 +223,21 @@ export function IntranetClient({
         {reply?.ok && (
           <section className={styles.itAnswer}>
             {reply.degraded && <p className={styles.itBreach}>{reply.degraded}</p>}
-            {reply.thin && <p className={styles.itThin}>{reply.thin}</p>}
+            {reply.thin && !reply.world && <p className={styles.itThin}>{reply.thin}</p>}
             {reply.answer.confidence === "mixed" && !reply.degraded && (
               <p className={styles.itMixed}>The record disagrees with itself here.</p>
             )}
             {reply.answer.answer && (
               <p className={styles.itProse}>{reply.answer.answer}</p>
+            )}
+
+            {reply.world && (
+              <div className={styles.itWorld}>
+                <p className={styles.itWorldTag}>
+                  From the world, not the record — general knowledge, nothing internal.
+                </p>
+                <p className={styles.itProse}>{reply.world}</p>
+              </div>
             )}
 
             {reply.answer.gaps.length > 0 && (
@@ -272,14 +294,16 @@ export function IntranetClient({
               </p>
             )}
 
-            <button
-              type="button"
-              className={styles.itFoldBtn}
-              onClick={() => setFoldOpen((v) => !v)}
-              aria-expanded={foldOpen}
-            >
-              {foldOpen ? "Hide the reasoning" : "Show the reasoning"}
-            </button>
+            {(reply.answer.reasoning || reply.citations.length > 0) && (
+              <button
+                type="button"
+                className={styles.itFoldBtn}
+                onClick={() => setFoldOpen((v) => !v)}
+                aria-expanded={foldOpen}
+              >
+                {foldOpen ? "Hide the reasoning" : "Show the reasoning"}
+              </button>
+            )}
 
             {foldOpen && (
               <div className={styles.itFold}>
@@ -298,9 +322,9 @@ export function IntranetClient({
                 )}
                 {reply.coverage && (
                   <p className={styles.itCoverage}>
-                    {reply.coverage.claims} claim
+                    Drawn from {reply.coverage.claims} line
                     {reply.coverage.claims === 1 ? "" : "s"} across {reply.coverage.docs}{" "}
-                    document{reply.coverage.docs === 1 ? "" : "s"}
+                    source{reply.coverage.docs === 1 ? "" : "s"}
                     {reply.coverage.from
                       ? `, ${reply.coverage.from.slice(0, 10)} → ${reply.coverage.to.slice(0, 10)}`
                       : ""}
@@ -323,47 +347,73 @@ export function IntranetClient({
 
         {!reply && (
           <div className={styles.itEmpty}>
-            <p>
-              {stats.docs > 0
-                ? `${stats.claims} claims from ${stats.docs} documents, ${stats.topics} topics.`
-                : "The brain is empty. Give it a Teams thread, a meeting transcript, or a demo."}
-              {stats.prospectQuestions > 0
-                ? ` ${stats.prospectQuestions} of them are questions prospects asked.`
-                : ""}
-            </p>
-            <p className={styles.itStale}>{staleness}</p>
+            {empty ? (
+              <p>The brain is empty. Paste something worth keeping.</p>
+            ) : (
+              <p className={styles.itStale}>{staleness}</p>
+            )}
           </div>
         )}
 
         {canWrite && (
+          <div className={styles.itWell}>
+            <p className={styles.itWellHead}>Add to the brain</p>
+            <textarea
+              className={styles.itWellPaste}
+              value={paste}
+              onChange={(e) => setPaste(e.target.value)}
+              placeholder="Paste a Teams thread, a meeting transcript, a demo — anything worth keeping. It gets read the moment you keep it."
+              aria-label="Paste into the brain"
+            />
+            <div className={styles.itAddRow}>
+              <button
+                type="button"
+                className={styles.itKeep}
+                disabled={capBusy || !paste.trim()}
+                onClick={file}
+              >
+                {capBusy ? "Keeping…" : "Keep it"}
+              </button>
+              {receipt && <span className={styles.itReceipt}>{receipt}</span>}
+            </div>
+            {ingestLines.length > 0 && (
+              <ul className={styles.itRunLines}>
+                {ingestLines.map((l, i) => (
+                  <li key={i}>{l}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+
+        {canWrite && (pendingNow > 0 || runLines.length > 0) && (
           <div className={styles.itRun}>
             <div className={styles.itRunRow}>
               <button
                 type="button"
                 className={styles.itRunBtn}
                 disabled={runBusy}
-                onClick={() => bringUpToDate(false)}
+                onClick={catchUp}
               >
                 {runBusy ? "Working…" : "Bring the brain up to date"}
               </button>
-              <button
-                type="button"
-                className={styles.itQuietBtn}
-                disabled={runBusy}
-                onClick={() => bringUpToDate(true)}
-                title="A longer pass — more documents read, more of the index settled"
-              >
-                deep pass
-              </button>
-              {queue.pending > 0 && (
+              {runBusy && (
+                <button
+                  type="button"
+                  className={styles.itQuietBtn}
+                  onClick={() => {
+                    stopRef.current = true;
+                  }}
+                >
+                  stop after this pass
+                </button>
+              )}
+              {pendingNow > 0 && (
                 <span className={styles.itQueue}>
-                  {queue.pending} document{queue.pending === 1 ? "" : "s"} waiting to be
-                  read
+                  {pendingNow} entr{pendingNow === 1 ? "y" : "ies"} it hasn&apos;t read
+                  yet
                 </span>
               )}
-              <Link href="/intranet/health" className={styles.itQuiet}>
-                vital signs
-              </Link>
             </div>
             {runLines.length > 0 && (
               <ul className={styles.itRunLines}>
@@ -374,110 +424,7 @@ export function IntranetClient({
             )}
           </div>
         )}
-
-        {/* C7 · the window to winning deals, read both ways. */}
-        <div className={styles.itHarvest}>
-          <button
-            type="button"
-            className={styles.itFoldBtn}
-            disabled={harvestBusy}
-            onClick={runHarvest}
-            aria-expanded={harvest !== null}
-          >
-            {harvestBusy
-              ? "Reading what buyers asked…"
-              : harvest
-                ? "Hide what prospects ask"
-                : "What prospects ask"}
-          </button>
-
-          {harvest?.ok && harvest.propose.length === 0 && (
-            <p className={styles.itHarvestMeta}>
-              No question has come up in two separate rooms yet. Give it demos.
-            </p>
-          )}
-
-          {harvest?.ok &&
-            harvest.propose.map((p) => (
-              <div key={p.claimIds[0]} className={styles.itHarvestRow}>
-                {p.question}
-                <span className={styles.itHarvestMeta}>
-                  Asked in {p.asked} separate {p.asked === 1 ? "room" : "rooms"} —{" "}
-                  {p.read}
-                  {p.entities.length ? ` · ${p.entities.slice(0, 4).join(", ")}` : ""}
-                  <button
-                    type="button"
-                    className={styles.itPromote}
-                    onClick={() => promote(p.question, p.claimIds[0])}
-                  >
-                    {copied === p.claimIds[0]
-                      ? "copied — paste it in the Playbook"
-                      : "keep as a battlecard question"}
-                  </button>
-                </span>
-              </div>
-            ))}
-
-          {harvest?.ok && harvest.oursNotTheirs.length > 0 && (
-            <p className={styles.itHarvestMeta}>
-              Ours, not theirs — no buyer has ever needed these answered:{" "}
-              {harvest.oursNotTheirs.slice(0, 4).join(" · ")}
-            </p>
-          )}
-        </div>
       </div>
-
-      <aside className={styles.itRail} aria-label="Index">
-        <div className={styles.itRailHead}>
-          <b>Index</b>
-          <span>{rail.length}</span>
-        </div>
-        <div className={styles.itRailList}>
-          {rail.length === 0 && (
-            <p className={styles.itRailEmpty}>
-              The index builds itself as documents arrive.
-            </p>
-          )}
-          {rail.map((t) => renderTopic(t, 0))}
-        </div>
-
-        {canWrite && (
-          <div className={styles.itAdd} ref={addRef}>
-            <button
-              type="button"
-              className={styles.itAddBtn}
-              onClick={() => setAddOpen((v) => !v)}
-              aria-expanded={addOpen}
-            >
-              {addOpen ? "✕ close" : "＋ add to the brain"}
-            </button>
-            {addOpen && (
-              <div className={styles.itAddPane}>
-                <textarea
-                  value={paste}
-                  onChange={(e) => setPaste(e.target.value)}
-                  placeholder="Paste a Teams thread, a meeting transcript, a demo — anything worth keeping."
-                  aria-label="Paste into the brain"
-                />
-                <div className={styles.itAddRow}>
-                  <button
-                    type="button"
-                    className={styles.itGo}
-                    disabled={capBusy || !paste.trim()}
-                    onClick={file}
-                  >
-                    {capBusy ? "Reading…" : "Keep it"}
-                  </button>
-                  <Link href="/intake" className={styles.itQuiet}>
-                    the grabs
-                  </Link>
-                </div>
-                {receipt && <p className={styles.itReceipt}>{receipt}</p>}
-              </div>
-            )}
-          </div>
-        )}
-      </aside>
 
       {passage && (
         <div className={styles.itDrawer} ref={drawerRef}>
