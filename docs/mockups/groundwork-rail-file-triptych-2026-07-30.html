@@ -1,0 +1,994 @@
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Groundwork — the rail &amp; the file, three ways</title>
+<style>
+  /* ── Antaeus token donor · bright field, one theme ────────────────── */
+  :root {
+    --field: #f5f7fb;
+    --surface: #ffffff;
+    --surface-sub: #fafbfd;
+    --surface-sunk: #eff2f7;
+    --ink: #0a1c40;
+    --ink-soft: rgba(10, 28, 64, 0.66);
+    --ink-faint: rgba(10, 28, 64, 0.42);
+    --ink-quiet: rgba(10, 28, 64, 0.22);
+    --hair: rgba(10, 28, 64, 0.07);
+    --hair-strong: rgba(10, 28, 64, 0.14);
+    --rule: rgba(10, 28, 64, 0.16);
+    --orange: #e6701e;
+    --orange-strong: #d4661b;
+    --orange-soft: rgba(230, 112, 30, 0.1);
+    --orange-tint: rgba(230, 112, 30, 0.05);
+    --blue: #2563eb;
+    --blue-soft: rgba(37, 99, 235, 0.08);
+    --green: #22c55e;
+    --green-soft: rgba(34, 197, 94, 0.1);
+    --amber: #f59e0b;
+    --amber-soft: rgba(245, 158, 11, 0.12);
+    --red: #ef4444;
+    --serif: "DM Serif Display", "Iowan Old Style", Georgia, serif;
+    --sans: "Public Sans", -apple-system, system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --sh-rest: 0 1px 2px rgba(10, 28, 64, 0.04), 0 4px 14px rgba(10, 28, 64, 0.05);
+    --sh-lift: 0 2px 4px rgba(10, 28, 64, 0.05), 0 14px 36px rgba(10, 28, 64, 0.08);
+    --sh-off: 0 4px 10px rgba(10, 28, 64, 0.06), 0 16px 36px rgba(10, 28, 64, 0.1);
+  }
+  html, body { background: var(--field); }
+  body { margin: 0; color: var(--ink); font: 400 15px/1.6 var(--sans); -webkit-font-smoothing: antialiased; }
+  * { box-sizing: border-box; }
+  a { color: var(--blue); text-decoration: none; }
+  a.acct { color: var(--ink); font-weight: 600; border-bottom: 1px dotted var(--rule); }
+  a.acct:hover { border-bottom-color: var(--ink); }
+  button { font: inherit; cursor: pointer; }
+  :focus-visible { outline: 3px solid var(--orange-soft); outline-offset: 1px; }
+  .kick { font: 600 10.5px/1.4 var(--mono); letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-faint); }
+
+  .studio { max-width: 1300px; margin: 0 auto; padding: 40px 40px 96px; }
+  .studio-head h1 { font: 400 clamp(30px, 4vw, 44px)/1.08 var(--serif); margin: 10px 0 12px; text-wrap: balance; }
+  .studio-head p { max-width: 80ch; color: var(--ink-soft); margin: 0 0 8px; }
+  .studio-head p b { color: var(--ink); font-weight: 600; }
+  .seg { display: inline-flex; gap: 2px; padding: 2px; background: var(--surface-sub); border: 1px solid var(--hair-strong); border-radius: 99px; margin: 18px 0 8px; }
+  .seg button { border: 0; background: transparent; border-radius: 99px; padding: 7px 18px; font: 600 12px/1 var(--sans); color: var(--ink-soft); }
+  .seg button[aria-selected="true"] { background: var(--surface); color: var(--orange); box-shadow: var(--sh-rest); }
+  .opt-note { font-size: 13px; color: var(--ink-faint); max-width: 88ch; margin: 6px 0 18px; }
+  .opt-note b { color: var(--ink-soft); font-weight: 600; }
+
+  .frame { background: var(--field); border: 1px solid var(--hair-strong); border-radius: 12px; box-shadow: var(--sh-lift); overflow: hidden; position: relative; }
+  .option { display: none; }
+  .option.on { display: block; }
+
+  .way { display: flex; align-items: center; gap: 14px; padding: 8px 20px; background: var(--surface); border-bottom: 1px solid var(--hair-strong); }
+  .way .trail { font: 600 10.5px/1.2 var(--mono); letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-quiet); }
+  .way .here { font: 600 13px/1.2 var(--sans); }
+  .way .here span { color: var(--ink-faint); font-weight: 400; }
+  .pulling { margin-left: auto; display: flex; align-items: center; gap: 10px; border: 1px solid var(--hair-strong); border-radius: 4px; background: var(--surface-sub); padding: 6px 12px 6px 0; }
+  .pulling .pg { width: 3px; align-self: stretch; background: var(--orange); border-radius: 2px; }
+  .pulling .pv { font: 400 15px/1.2 var(--serif); }
+  .pulling .po { font: 400 13px/1.2 var(--sans); color: var(--ink-soft); max-width: 38ch; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .kbd { font: 600 11px/1 var(--mono); border: 1px solid var(--hair-strong); border-radius: 4px; padding: 6px 10px; color: var(--ink-faint); background: var(--surface); }
+
+  .page { max-width: 1240px; margin: 0 auto; padding: 24px 36px 48px; }
+
+  .ribbon { display: flex; align-items: center; gap: 12px; margin: 18px 0 12px; }
+  .ribbon .rl { font: 600 10.5px/1.4 var(--mono); letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-faint); white-space: nowrap; }
+  .ribbon .rr { height: 1px; flex: 1; background: linear-gradient(90deg, var(--hair-strong), transparent); }
+  .ribbon .rc { font: 600 10.5px/1.4 var(--mono); letter-spacing: 0.16em; color: var(--ink-quiet); white-space: nowrap; }
+
+  .btn { border-radius: 4px; padding: 10px 16px; font: 600 13px/1 var(--sans); border: 1px solid transparent; }
+  .btn:active { transform: translateY(1px); }
+  .btn-accent { background: var(--orange); color: #fff; }
+  .btn-accent:hover { background: var(--orange-strong); }
+  .btn-2nd { background: var(--surface); color: var(--ink); border-color: var(--hair-strong); display: inline-flex; align-items: center; }
+  .btn-2nd:hover { border-color: var(--rule); background: var(--surface-sub); }
+  .btn-ghost { background: transparent; color: var(--ink-soft); border: 0; }
+  .btn-ghost:hover { background: var(--surface-sunk); color: var(--ink); }
+  .btn-sm { padding: 6px 10px; font-size: 12px; }
+
+  .chip { display: inline-flex; align-items: center; gap: 6px; font: 600 12px/1 var(--sans); padding: 4px 10px; border-radius: 99px; border: 1px solid; }
+  .chip-neutral { color: var(--ink-soft); border-color: var(--hair-strong); background: var(--surface); }
+  .chip-blue { color: var(--blue); border-color: var(--blue); background: var(--blue-soft); }
+  .intent { font: 600 10px/1.4 var(--sans); color: var(--blue); border: 1px solid var(--blue); border-radius: 99px; padding: 2px 8px; background: var(--blue-soft); white-space: nowrap; }
+  .prox-mark { font: 600 10px/1.4 var(--sans); color: #157f3d; border: 1px solid var(--green); border-radius: 99px; padding: 2px 8px; background: var(--green-soft); white-space: nowrap; }
+
+  .dot { width: 7px; height: 7px; border-radius: 99px; background: var(--orange); display: inline-block; animation: pulse 2s infinite; }
+  @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(0.72); opacity: 0.4; } 100% { transform: scale(1); opacity: 1; } }
+
+  .dropbar { display: flex; align-items: center; gap: 12px; background: var(--surface); border: 1px solid var(--hair-strong); border-radius: 8px; padding: 10px 14px; margin: 0 0 4px; flex-wrap: wrap; }
+  .dropbar .dglyph { font-size: 15px; color: var(--blue); }
+  .dropbar .dtext { font-size: 13px; color: var(--ink-soft); }
+  .dropbar .dtext b { color: var(--ink); font-weight: 600; }
+
+  .recipe { font: 400 12px/1.7 var(--mono); background: var(--surface-sub); border: 1px solid var(--hair-strong); border-radius: 4px; padding: 8px 10px; margin: 6px 0 10px; color: var(--ink-soft); overflow-x: auto; }
+  .recipe b { color: var(--ink); font-weight: 600; }
+  .draftbox { background: var(--surface-sub); border: 1px solid var(--hair-strong); border-radius: 4px; padding: 12px 14px; font-size: 13px; color: var(--ink-soft); max-width: 66ch; margin: 0 0 12px; }
+  .draftbox .kick { display: block; margin-bottom: 6px; }
+  .draftbox p { margin: 0 0 8px; }
+  .people-line { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; }
+  .acts { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .act-note { font-size: 12px; color: var(--ink-faint); }
+
+  /* Queue rail */
+  .queue-list { display: flex; flex-direction: column; gap: 8px; }
+  .acct-row { display: grid; grid-template-columns: 3px 1fr auto; gap: 12px; align-items: center; text-align: left; width: 100%; background: var(--surface); border: 1px solid var(--hair-strong); border-radius: 8px; padding: 10px 12px; }
+  .acct-row:hover { border-color: var(--rule); }
+  .acct-row[aria-selected="true"] { background: var(--orange-tint); border-color: var(--rule); }
+  .acct-row .ag { width: 3px; align-self: stretch; border-radius: 2px; background: var(--ink-quiet); }
+  .acct-row.h-amber .ag { background: var(--amber); }
+  .acct-row.h-blue .ag { background: var(--blue); }
+  .acct-row .an { font-weight: 600; font-size: 13.5px; }
+  .acct-row .am { font-size: 12px; color: var(--ink-faint); }
+  .acct-row .am b { color: var(--ink-soft); font-weight: 600; }
+  .acct-row .aw { font: 600 11px/1.5 var(--mono); color: var(--ink-quiet); text-align: right; white-space: nowrap; }
+  .acct-row.worked .an { color: var(--ink-faint); }
+  .acct-row.worked .aw { color: #157f3d; }
+  .acct-row.offrow { box-shadow: var(--sh-lift); border-bottom: 3px solid var(--orange); }
+  .offtag { font: 600 10.5px/1.4 var(--mono); letter-spacing: 0.16em; text-transform: uppercase; color: var(--orange); margin: 0 0 6px 2px; }
+  .queue-foot { font-size: 12.5px; color: var(--ink-faint); margin: 10px 2px 0; max-width: 46ch; }
+  .queue-foot b { color: var(--ink-soft); font-weight: 600; }
+
+  /* Wire item */
+  .wire { display: flex; flex-direction: column; gap: 8px; }
+  .wireitem { text-align: left; background: var(--surface); border: 1px solid var(--hair-strong); border-radius: 8px; padding: 10px 12px; display: block; width: 100%; }
+  .wireitem:hover { border-color: var(--rule); background: var(--surface-sub); }
+  .wireitem .wsrc { font: 600 10.5px/1.7 var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-faint); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .wireitem .whead { font-size: 13.5px; font-weight: 600; margin: 2px 0; }
+  .wireitem .wread { font-size: 12.5px; color: var(--ink-soft); }
+  .wireitem .wread i { color: var(--blue); font-style: normal; font-weight: 600; }
+  .wtag { font: 600 10px/1 var(--sans); color: var(--blue); border: 1px solid var(--blue); border-radius: 99px; padding: 2px 8px; background: var(--blue-soft); }
+  .wire-band { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 8px 0 4px; }
+  .instcard { background: var(--surface); border: 1px solid var(--hair-strong); border-bottom: 3px solid var(--ink-quiet); border-radius: 8px; padding: 12px 14px; font-size: 13px; color: var(--ink-soft); }
+  .instcard b { color: var(--ink); font-weight: 600; }
+
+  /* Working file */
+  .file { background: var(--surface); border: 1px solid var(--hair-strong); border-bottom: 3px solid var(--orange); border-radius: 8px; box-shadow: var(--sh-off); padding: 22px 24px; }
+  .file.quiet { border-bottom-color: var(--ink-quiet); box-shadow: var(--sh-rest); }
+  .file h3 { font: 400 25px/1.25 var(--serif); margin: 4px 0 10px; text-wrap: balance; }
+  .file .body { color: var(--ink-soft); font-size: 14px; max-width: 68ch; margin: 0 0 12px; }
+  .file .body b { color: var(--ink); font-weight: 600; }
+  .file .body i { color: var(--blue); font-style: normal; }
+  .file-grid { display: grid; grid-template-columns: minmax(0, 3fr) minmax(250px, 2fr); gap: 24px; align-items: start; }
+  .russ-quote { border-left: 3px solid var(--blue); background: var(--blue-soft); border-radius: 0 4px 4px 0; padding: 10px 14px; font-size: 13px; color: var(--ink-soft); margin: 0 0 12px; }
+  .russ-quote .kick { display: block; margin-bottom: 4px; color: var(--blue); }
+  .russ-quote b { color: var(--ink); font-weight: 600; }
+  .histline { display: flex; gap: 10px; align-items: baseline; font-size: 12.5px; color: var(--ink-soft); padding: 3px 0; }
+  .histline .rt { font: 600 10.5px/1.6 var(--mono); color: var(--ink-quiet); white-space: nowrap; }
+  .file-pane[hidden] { display: none; }
+
+  /* Layout grids per option */
+  .lay-rail { display: grid; grid-template-columns: minmax(320px, 2fr) minmax(0, 3fr); gap: 26px; align-items: start; }
+  .lay-band { display: grid; grid-template-columns: minmax(300px, 2fr) minmax(0, 3fr); gap: 26px; align-items: start; }
+  .lay-three { display: grid; grid-template-columns: minmax(270px, 3fr) minmax(0, 6fr) minmax(230px, 3fr); gap: 22px; align-items: start; }
+
+  /* Drawer */
+  .scrim { position: fixed; inset: 0; background: rgba(10, 28, 64, 0.35); z-index: 200; display: none; }
+  .scrim.on { display: block; }
+  .drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(560px, 94vw); background: var(--surface); border-left: 1px solid var(--hair-strong); box-shadow: var(--sh-off); z-index: 201; padding: 26px; transform: translateX(24px); opacity: 0; pointer-events: none; transition: transform 320ms cubic-bezier(0.2, 0, 0, 1), opacity 320ms cubic-bezier(0.2, 0, 0, 1); overflow-y: auto; }
+  .drawer.on { transform: translateX(0); opacity: 1; pointer-events: auto; }
+  .drawer h3 { font: 400 22px/1.3 var(--serif); margin: 10px 0 8px; text-wrap: balance; }
+  .drawer .dsec { border-top: 1px solid var(--hair); padding: 12px 0; }
+  .drawer .dsec .kick { display: block; margin-bottom: 4px; }
+  .drawer .dsec p { margin: 0 0 8px; font-size: 13.5px; color: var(--ink-soft); }
+  .drawer .dsec p b { color: var(--ink); font-weight: 600; }
+  .dclose { position: absolute; top: 14px; right: 14px; width: 32px; height: 32px; border: 1px solid var(--hair-strong); border-radius: 4px; background: var(--surface); color: var(--ink-soft); }
+
+  .footer-note { margin-top: 36px; font-size: 12.5px; color: var(--ink-faint); max-width: 84ch; }
+
+  @media (prefers-reduced-motion: reduce) { .dot { animation: none; } .drawer { transition: none; } }
+  @media (max-width: 1100px) {
+    .lay-rail, .lay-band, .lay-three, .file-grid, .wire-band { grid-template-columns: 1fr; }
+    .studio { padding: 24px 16px 64px; }
+    .page { padding: 20px 16px 40px; }
+  }
+</style>
+
+<div class="studio">
+  <header class="studio-head">
+    <div class="kick">Groundwork · the rail &amp; the file · 2026-07-30</div>
+    <h1>Your queue rail, the working file, and real buttons.</h1>
+    <p>
+      The hybrid you picked: the ranked queue rail on the left, the working
+      file on the right — with its verbatim Russ paragraph and its history.
+      Two corrections are built in everywhere. <b>Every control now does the
+      work it names</b>: copy buttons genuinely copy composed, addressed
+      text (try them — your clipboard will hold the note), links go where
+      the answer is printed, and the worked stamp lands as a side effect of
+      the real action, never as its own button. And the ownership language is
+      fixed: <b>you own every account and every Global pursuit here</b> —
+      the only "owners" the room ever names are colleagues on org-side HCM
+      conversations, and it resolves their names itself instead of sending
+      you hunting.
+    </p>
+    <p style="font-size: 13px; color: var(--ink-faint); max-width: 84ch;">
+      The three options answer your other question — <b>where the wire
+      lives</b>. It's never gone: account-matched wire items always appear
+      inside that account's file history too. What varies is the wire's
+      standing home.
+    </p>
+    <div class="seg" role="tablist" aria-label="The three placements">
+      <button role="tab" aria-selected="true" data-opt="1">1 · Wire in the rail</button>
+      <button role="tab" aria-selected="false" data-opt="2">2 · Wire as a band</button>
+      <button role="tab" aria-selected="false" data-opt="3">3 · Three panes</button>
+    </div>
+    <p class="opt-note" id="note-1"><b>The left rail holds the queue, then the outside.</b> Wire items and the institutions card sit under the queue — one column carries everything ranked or watching, the file gets the whole right side. Scroll cost: the wire sits below the fold on small screens.</p>
+    <p class="opt-note" id="note-2" hidden><b>The wire runs as a band across the top.</b> Three items under the provenance bar, always visible before the queue and file. Best glanceability; costs a little vertical space every day. (Queue abbreviated here — option 1 shows the full rail.)</p>
+    <p class="opt-note" id="note-3" hidden><b>Three panes: queue · file · outside.</b> The wire, the Sales Nav read, and the institutions get a standing third column on the right. Everything visible at once; the file gets a narrower measure. (Queue abbreviated here — option 1 shows the full rail.)</p>
+  </header>
+
+  <!-- ═══════════ OPTION 1 · WIRE IN THE RAIL ═══════════ -->
+  <section class="frame option on" id="opt-1" aria-label="Option 1: wire in the rail">
+    <div class="way">
+      <span class="trail">Homeroom ›</span>
+      <span class="here">Groundwork <span>· Wednesday, July 30 · 9:20a Central</span></span>
+      <div class="pulling">
+        <span class="pg"></span>
+        <span class="pv">Send</span>
+        <span class="po">Simploy's draft — their leadership decides August 6th</span>
+      </div>
+      <span class="kbd">Ctrl K</span>
+    </div>
+    <div class="page">
+      <div class="dropbar">
+        <span class="dglyph">▤</span>
+        <span class="dtext"><b>This morning's Sales Nav grab is in</b> — pasted 9:12a · 118 rows read · 5 accounts warming · signals dated 7/30. Readings older than 7 days expired out.</span>
+      </div>
+
+      <div class="lay-rail">
+        <div>
+          <div class="ribbon" style="margin-top: 8px;"><span class="rl">The queue · all 150, ranked</span><span class="rr"></span><span class="rc">6 in front · 144 held back</span></div>
+          <div class="offtag" style="margin-top: 10px;">— Most pressured today</div>
+          <div class="queue-list" role="tablist" aria-label="The ranked queue" data-qset="1">
+            <button class="acct-row h-amber offrow" role="tab" aria-selected="true" data-acct="simploy">
+              <span class="ag"></span>
+              <span><span class="an">Simploy</span> <span class="dot" style="width:6px;height:6px;"></span><br />
+                <span class="am">St. Louis PEO on our platform · <b>picking their global partner August 6th</b></span></span>
+              <span class="aw" data-aw="simploy">draft composed</span>
+            </button>
+            <button class="acct-row h-blue" role="tab" aria-selected="false" data-acct="amplify">
+              <span class="ag"></span>
+              <span><span class="an">Amplify HR Management</span> <span class="intent">High · 11</span> <span class="prox-mark">your metro</span><br />
+                <span class="am">Northbrook · <b>hottest intent + a colleague's HCM deal dated July 31st</b></span></span>
+              <span class="aw" data-aw="amplify">ask composed</span>
+            </button>
+            <button class="acct-row h-blue" role="tab" aria-selected="false" data-acct="myhrpros">
+              <span class="ag"></span>
+              <span><span class="an">My HR Pros</span> <span class="intent">High · 1w</span><br />
+                <span class="am">Van Buren AR · on our platform · <b>their people are reading us</b></span></span>
+              <span class="aw" data-aw="myhrpros">note to Lesha ready</span>
+            </button>
+            <button class="acct-row h-blue" role="tab" aria-selected="false" data-acct="xcelhr">
+              <span class="ag"></span>
+              <span><span class="an">XcelHR</span><br />
+                <span class="am">national PEO · <b>Bill asked for a call this week</b> — Mexico client</span></span>
+              <span class="aw" data-aw="xcelhr">times note ready</span>
+            </button>
+            <button class="acct-row h-blue" role="tab" aria-selected="false" data-acct="infiniti">
+              <span class="ag"></span>
+              <span><span class="an">Infiniti HR</span><br />
+                <span class="am">Maryland PEO · <b>asked us for a call</b> — one slot left, Friday</span></span>
+              <span class="aw" data-aw="infiniti">confirm ready</span>
+            </button>
+            <button class="acct-row h-amber" role="tab" aria-selected="false" data-acct="medhq">
+              <span class="ag"></span>
+              <span><span class="an">MedHQ</span> <span class="prox-mark">one town over</span><br />
+                <span class="am">Westchester IL · <b>one known contact in the book</b></span></span>
+              <span class="aw" data-aw="medhq">recipe ready</span>
+            </button>
+          </div>
+          <p class="queue-foot"><b>Blue marks came from this morning's pasted grab.</b> Green means an in-person visit is nearly free. Proximity breaks ties; it never sets priority.</p>
+
+          <div class="ribbon"><span class="rl">Outside · the wire</span><span class="rr"></span><span class="rc">sample sweep 9:02a</span></div>
+          <div class="wire">
+            <button class="wireitem" data-drawer="wire1">
+              <span class="wsrc">HR Dive <span class="wtag">Infiniti HR</span> <span class="wtag">Simploy</span></span>
+              <span class="whead">Globalization Partners raises platform fees for alliance partners</span>
+              <span class="wread"><i>Why it matters:</i> two live pursuits lean on G-P today — the renewal talk just got a reason to come early.</span>
+            </button>
+            <button class="wireitem" data-drawer="wire2">
+              <span class="wsrc">SHRM</span>
+              <span class="whead">Worker-misclassification enforcement widening in the EU</span>
+              <span class="wread"><i>Why it matters:</i> the worry that starts contractor-conversion conversations — Simploy's India pair included.</span>
+            </button>
+            <button class="wireitem" data-drawer="wire3">
+              <span class="wsrc">Staffing Industry Analysts</span>
+              <span class="whead">PEO acquisition pace holds through the quarter</span>
+              <span class="wread"><i>Why it matters:</i> the wire watches all 150 account names for deal news — Premier Payroll taught us why.</span>
+            </button>
+          </div>
+          <div class="ribbon"><span class="rl">The institutions</span><span class="rr"></span><span class="rc">next 7 days</span></div>
+          <div class="instcard">
+            <span class="kick" style="display:block;margin-bottom:4px;">Thursday, Aug 7 · Chicago</span>
+            <b>Global Chamber, Chicago chapter — monthly gathering.</b> The
+            verification pass runs this week; two events before judgment;
+            education first, never a lead request.
+          </div>
+        </div>
+
+        <div data-fileset="1">
+          <!-- Simploy file -->
+          <div class="file-pane" data-pane="simploy">
+            <div class="file">
+              <span class="kick"><span class="dot"></span>&nbsp; The working file · Simploy · Lesha Cyphers is the partner manager · sources: HomeRoom pastes · research 7/30 · the wire</span>
+              <h3>Seven days to their decision. The draft is on your clipboard in one click.</h3>
+              <div class="file-grid">
+                <div>
+                  <p class="body">
+                    Simploy is a PEO in St. Louis that runs their business on
+                    our software. Their COO, <b>Chassie Smith</b>, came to us
+                    July 8th after PrismHR LIVE: they're choosing one partner
+                    to employ and pay workers abroad for their clients, and
+                    her leadership decides <b>August 6th</b>. Today that
+                    business goes to Globalization Partners and Simploy earns
+                    nothing on it. Chassie prefers holding the client
+                    contract — her words: referral "takes Simploy out of the
+                    client relationship." We demoed for Katie last week; the
+                    one open item is the India contractor conversion.
+                  </p>
+                  <div class="draftbox">
+                    <span class="kick">The composed draft · to Chassie and Katie, Lesha copied</span>
+                    <p>"Chassie, Katie — thank you for the time last week. On
+                    the India question: both contractors can move to employed
+                    status under our entity there; onboarding runs about two
+                    weeks once we have their details, and the
+                    misclassification exposure ends the day they convert…"</p>
+                    <p style="margin:0;color:var(--ink-quiet);">— continues; nothing sends without your hand.</p>
+                  </div>
+                  <div class="people-line">
+                    <span class="chip chip-neutral">Chassie Smith · COO</span>
+                    <span class="chip chip-neutral">Katie · Dir. Operations</span>
+                    <span class="chip chip-blue">Lesha Cyphers · copied</span>
+                  </div>
+                  <div class="acts">
+                    <button class="btn btn-accent" data-copy="simploy-draft" data-stamp="simploy|✓ copied 9:41a">Copy the draft — to Chassie &amp; Katie</button>
+                    <a class="btn btn-2nd" href="#">Open the thread in Outlook</a>
+                    <button class="btn btn-ghost btn-sm" data-drawer="wire1">The wire item on this</button>
+                  </div>
+                  <p class="act-note" style="margin-top:8px;">Copy puts the full draft on your clipboard and stamps the row — the stamp is a side effect of the action, never its own button.</p>
+                </div>
+                <aside>
+                  <div class="russ-quote">
+                    <span class="kick">How this reads to Russ, verbatim</span>
+                    Simploy is a PEO in St. Louis that runs their business on
+                    our software. Their leadership picks a global-hiring
+                    partner <b>August 6th</b>; today that business goes to a
+                    competitor with no revenue share for them. I owe them one
+                    answer — how we'd convert their two India contractors
+                    into employees — <b>and it goes out today.</b>
+                  </div>
+                  <div class="kick" style="margin-bottom:4px;">The file's history</div>
+                  <div class="histline"><span class="rt">7/08</span><span>Chassie inbound after LIVE — Lesha's intro.</span></div>
+                  <div class="histline"><span class="rt">7/21</span><span>The call — resale preference; two India contractors named.</span></div>
+                  <div class="histline"><span class="rt">7/28</span><span>Demo delivered to Katie.</span></div>
+                  <div class="histline"><span class="rt">7/30</span><span>Wire: the competitor they refer to raised its fees.</span></div>
+                </aside>
+              </div>
+            </div>
+          </div>
+
+          <!-- Amplify file -->
+          <div class="file-pane" data-pane="amplify" hidden>
+            <div class="file">
+              <span class="kick">The working file · Amplify HR Management · source: Sales Nav grab 9:12a + the CRM</span>
+              <h3>Reading us harder than anyone — and a colleague is already in the building.</h3>
+              <div class="file-grid">
+                <div>
+                  <p class="body">
+                    Amplify is a PEO in Northbrook — your metro — serving all
+                    50 states. This morning's grab: <b>High intent, 11
+                    engagement activities</b>, 27 of 60 people reachable
+                    through existing paths. To be precise about ownership:
+                    <b>every Global pursuit in this book is yours</b> — what
+                    the CRM shows here is a colleague's <b>HCM-side</b>
+                    conversation, the "ClearCo" opportunity dated <b>July
+                    31st</b>. Their name is printed on that opportunity in
+                    Salesforce, one click away. The move is a ride-along: the
+                    ask below is composed and addressed — paste it to whoever
+                    the opportunity names.
+                  </p>
+                  <div class="draftbox">
+                    <span class="kick">The composed ask · to the colleague named on ClearCo</span>
+                    <p>"Quick one on Amplify. I see your ClearCo conversation
+                    dated July 31st. Their people have been reading our
+                    Global material all week — eleven separate engagements.
+                    Would you carry one Global sentence into that
+                    conversation, or would you rather I join? Either way it
+                    stays your room."</p>
+                  </div>
+                  <div class="people-line">
+                    <span class="chip chip-neutral">Todd Beutel · CEO</span>
+                    <span class="chip chip-neutral">Danielle Achziger · VP Client Solutions</span>
+                    <span class="chip chip-blue">ClearCo owner · named in Salesforce</span>
+                  </div>
+                  <div class="acts">
+                    <a class="btn btn-2nd" href="#">Open ClearCo in Salesforce — the owner's name is on it</a>
+                    <button class="btn btn-accent" data-copy="amplify-ask" data-stamp="amplify|✓ ask copied 9:46a">Copy the ask</button>
+                  </div>
+                  <p class="act-note" style="margin-top:8px;">Two real actions: the link goes where the name is printed; the copy puts the addressed ask on your clipboard. The next SF paste that mentions ClearCo teaches the app the owner's name, and this button starts addressing them directly.</p>
+                </div>
+                <aside>
+                  <div class="russ-quote">
+                    <span class="kick">How this reads to Russ, verbatim</span>
+                    Amplify — a Chicago-area PEO customer — is the hottest
+                    account on the intent read: eleven separate engagements
+                    with our content, and a teammate already has a
+                    conversation there dated July 31st. <b>I'm asking them to
+                    carry one Global sentence in.</b>
+                  </div>
+                  <div class="kick" style="margin-bottom:4px;">The file's history</div>
+                  <div class="histline"><span class="rt">7/30</span><span>Grab pasted 9:12a — hottest reading in the book.</span></div>
+                  <div class="histline"><span class="rt">7/31</span><span>Colleague's HCM-side conversation dated (from the CRM sync).</span></div>
+                </aside>
+              </div>
+            </div>
+          </div>
+
+          <!-- My HR Pros file -->
+          <div class="file-pane" data-pane="myhrpros" hidden>
+            <div class="file quiet">
+              <span class="kick">The working file · My HR Pros · Lesha Cyphers is the partner manager · source: Sales Nav grab 9:12a</span>
+              <h3>Their people have been reading us for a week. The note to Lesha is written.</h3>
+              <div class="file-grid">
+                <div>
+                  <p class="body">
+                    My HR Pros — Southern Personnel Management, a PEO in Van
+                    Buren, Arkansas, on our platform — was flagged in the
+                    grab: <b>High buyer intent, first raised a week ago</b>.
+                    Known contact: <b>Dianna Lyon-Wagner</b>; Lesha owns the
+                    relay. Warm rooms cool — the note below moves them to the
+                    top of her next roundup, today.
+                  </p>
+                  <div class="draftbox">
+                    <span class="kick">The composed note · to Lesha Cyphers</span>
+                    <p>"Lesha — My HR Pros lit up on LinkedIn this week:
+                    their people have been reading our Global material since
+                    around the 23rd. Can they take the top slot in your next
+                    roundup? The question to relay, word for word: 'Which
+                    countries do your clients have people in today?'"</p>
+                  </div>
+                  <div class="acts">
+                    <button class="btn btn-accent" data-copy="myhrpros-note" data-stamp="myhrpros|✓ note copied 9:44a">Copy the note — to Lesha</button>
+                    <button class="btn btn-2nd" data-copy="myhrpros-recipe" data-stamp="">Copy the who's-reading recipe</button>
+                  </div>
+                </div>
+                <aside>
+                  <div class="russ-quote">
+                    <span class="kick">How this reads to Russ, verbatim</span>
+                    LinkedIn's sales tool flagged a PEO customer in Arkansas
+                    — My HR Pros — as reading about us all week, unprompted.
+                    <b>They go to the top of their partner manager's briefing
+                    today.</b>
+                  </div>
+                  <div class="kick" style="margin-bottom:4px;">The file's history</div>
+                  <div class="histline"><span class="rt">7/23</span><span>Intent first flagged (per the grab).</span></div>
+                  <div class="histline"><span class="rt">7/30</span><span>Grab pasted 9:12a; signal dated and ranked.</span></div>
+                </aside>
+              </div>
+            </div>
+          </div>
+
+          <!-- XcelHR file -->
+          <div class="file-pane" data-pane="xcelhr" hidden>
+            <div class="file quiet">
+              <span class="kick">The working file · XcelHR · Anika Steenstra is the partner manager</span>
+              <h3>A partner asking how to buy. The times note is written.</h3>
+              <div class="file-grid">
+                <div>
+                  <p class="body">
+                    <b>Bill Laffey</b>, their VP of operations, wrote Sunday:
+                    a client with workers in Mexico — employees or
+                    contractors is the first question — and he wants the
+                    mechanics and pricing shape before he pitches. Anika sets
+                    the frame first; her note is part of the same copy.
+                  </p>
+                  <div class="draftbox">
+                    <span class="kick">The composed note · to Bill Laffey (and the heads-up to Anika)</span>
+                    <p>"Bill — happy to walk through how a deal works and how
+                    pricing takes shape. Wednesday or Friday? Worth thinking
+                    on before we talk: whether your client's people in Mexico
+                    are employees or contractors — it changes the answer."</p>
+                  </div>
+                  <div class="acts">
+                    <button class="btn btn-accent" data-copy="xcelhr-note" data-stamp="xcelhr|✓ copied 9:48a">Copy the times note — to Bill</button>
+                  </div>
+                </div>
+                <aside>
+                  <div class="russ-quote">
+                    <span class="kick">How this reads to Russ, verbatim</span>
+                    XcelHR's VP of operations asked this week how a deal with
+                    us works so he can pitch a client with workers in Mexico.
+                    <b>He's ready to sell us; I'm giving him a slot this
+                    week.</b>
+                  </div>
+                </aside>
+              </div>
+            </div>
+          </div>
+
+          <!-- Infiniti file -->
+          <div class="file-pane" data-pane="infiniti" hidden>
+            <div class="file quiet">
+              <span class="kick">The working file · Infiniti HR · Anika Steenstra is the partner manager</span>
+              <h3>She asked for the call. The confirm is written; the wire rides along.</h3>
+              <div class="file-grid">
+                <div>
+                  <p class="body">
+                    A Maryland PEO — domestic on our software, global on a
+                    Globalization Partners alliance renewing this fall.
+                    <b>Jennifer Hardesty</b> asked for the call herself:
+                    Puerto Rico pain now, "other international needs" in her
+                    words. This morning's wire — G-P raising alliance fees —
+                    is already attached to the prep.
+                  </p>
+                  <div class="draftbox">
+                    <span class="kick">The composed confirm · to Jennifer Hardesty</span>
+                    <p>"Jennifer — Friday works. Beyond Puerto Rico, which
+                    international needs should we come ready for?"</p>
+                  </div>
+                  <div class="acts">
+                    <button class="btn btn-accent" data-copy="infiniti-note" data-stamp="infiniti|✓ copied 9:52a">Copy the confirm — to Jennifer</button>
+                    <button class="btn btn-2nd btn-sm" data-drawer="wire1">The G-P item</button>
+                  </div>
+                </div>
+                <aside>
+                  <div class="russ-quote">
+                    <span class="kick">How this reads to Russ, verbatim</span>
+                    Infiniti HR asked us for a call — Puerto Rico payroll
+                    pain now, and their global work rides a competitor
+                    alliance that renews this fall. <b>Friday's call opens
+                    the door; the renewal is the prize.</b>
+                  </div>
+                </aside>
+              </div>
+            </div>
+          </div>
+
+          <!-- MedHQ file -->
+          <div class="file-pane" data-pane="medhq" hidden>
+            <div class="file quiet">
+              <span class="kick">The working file · MedHQ · research directive, 20 minutes</span>
+              <h3>One known contact. The session that fixes it is composed.</h3>
+              <div class="file-grid">
+                <div>
+                  <p class="body">
+                    A healthcare PEO in Westchester, Illinois — one town
+                    over. The book knows one name: <b>Tom Jacobs</b>. Run the
+                    recipe, bring back three to five names; they file as
+                    candidates you confirm. Check posted jobs by geography
+                    while you're there — <b>jobs posted into other countries
+                    are the strongest demand signal there is.</b>
+                  </p>
+                  <div class="recipe">Relationship explorer — Persona: <b>Recommended buyer persona</b> · Function: <b>HR, Operations, Finance</b> · Seniority: <b>Director, VP, CXO</b> → harvest <b>“! Update CRM”</b> cards → 3–5 names with titles</div>
+                  <div class="acts">
+                    <button class="btn btn-accent" data-copy="medhq-recipe" data-stamp="medhq|✓ session run 10:24a">Copy the recipe</button>
+                    <a class="btn btn-2nd" href="#">Open MedHQ in Sales Navigator</a>
+                  </div>
+                </div>
+                <aside>
+                  <div class="russ-quote">
+                    <span class="kick">How this reads to Russ, verbatim</span>
+                    MedHQ — a healthcare PEO one town over from me — had one
+                    known contact in our records. <b>As of this morning it
+                    has five,</b> and it joins the next briefing cycle.
+                  </div>
+                </aside>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ OPTION 2 · WIRE AS A BAND ═══════════ -->
+  <section class="frame option" id="opt-2" aria-label="Option 2: wire as a band">
+    <div class="way">
+      <span class="trail">Homeroom ›</span>
+      <span class="here">Groundwork <span>· Wednesday, July 30 · 9:20a Central</span></span>
+      <div class="pulling">
+        <span class="pg"></span>
+        <span class="pv">Send</span>
+        <span class="po">Simploy's draft — their leadership decides August 6th</span>
+      </div>
+      <span class="kbd">Ctrl K</span>
+    </div>
+    <div class="page">
+      <div class="dropbar">
+        <span class="dglyph">▤</span>
+        <span class="dtext"><b>Grab pasted 9:12a</b> · 118 rows read · 5 warming. </span>
+      </div>
+      <div class="ribbon" style="margin: 10px 0 6px;"><span class="rl">Outside · the wire</span><span class="rr"></span><span class="rc">always in view · sample sweep</span></div>
+      <div class="wire-band">
+        <button class="wireitem" data-drawer="wire1">
+          <span class="wsrc">HR Dive <span class="wtag">Infiniti HR</span> <span class="wtag">Simploy</span></span>
+          <span class="whead">G-P raises alliance fees</span>
+          <span class="wread"><i>Why it matters:</i> two live pursuits lean on G-P.</span>
+        </button>
+        <button class="wireitem" data-drawer="wire2">
+          <span class="wsrc">SHRM</span>
+          <span class="whead">Misclassification enforcement widens</span>
+          <span class="wread"><i>Why it matters:</i> starts contractor conversations.</span>
+        </button>
+        <button class="wireitem" data-drawer="wire3">
+          <span class="wsrc">SIA</span>
+          <span class="whead">PEO acquisition pace holds</span>
+          <span class="wread"><i>Why it matters:</i> the wire watches all 150 names.</span>
+        </button>
+      </div>
+
+      <div class="lay-band" style="margin-top: 14px;">
+        <div>
+          <div class="ribbon" style="margin-top: 0;"><span class="rl">The queue · abbreviated here</span><span class="rr"></span><span class="rc">option 1 holds the full rail</span></div>
+          <div class="queue-list" role="tablist" aria-label="The ranked queue" data-qset="2">
+            <button class="acct-row h-amber offrow" role="tab" aria-selected="true" data-acct="simploy">
+              <span class="ag"></span>
+              <span><span class="an">Simploy</span> <span class="dot" style="width:6px;height:6px;"></span><br />
+                <span class="am"><b>picking their global partner August 6th</b></span></span>
+              <span class="aw" data-aw="simploy">draft composed</span>
+            </button>
+            <button class="acct-row h-blue" role="tab" aria-selected="false" data-acct="amplify">
+              <span class="ag"></span>
+              <span><span class="an">Amplify HR Management</span> <span class="intent">High · 11</span><br />
+                <span class="am"><b>hottest intent + a colleague's deal July 31st</b></span></span>
+              <span class="aw" data-aw="amplify">ask composed</span>
+            </button>
+            <button class="acct-row h-blue" role="tab" aria-selected="false" data-acct="myhrpros">
+              <span class="ag"></span>
+              <span><span class="an">My HR Pros</span> <span class="intent">High · 1w</span><br />
+                <span class="am"><b>their people are reading us</b></span></span>
+              <span class="aw" data-aw="myhrpros">note ready</span>
+            </button>
+            <button class="acct-row h-amber" role="tab" aria-selected="false" data-acct="medhq">
+              <span class="ag"></span>
+              <span><span class="an">MedHQ</span> <span class="prox-mark">one town over</span><br />
+                <span class="am"><b>one known contact in the book</b></span></span>
+              <span class="aw" data-aw="medhq">recipe ready</span>
+            </button>
+          </div>
+        </div>
+        <div data-fileset="2">
+          <div class="file-pane" data-pane="simploy">
+            <div class="file">
+              <span class="kick"><span class="dot"></span>&nbsp; The working file · Simploy · Lesha is the partner manager</span>
+              <h3>Seven days to their decision. The draft is one click from your clipboard.</h3>
+              <p class="body">Full file as in option 1 — story, people, draft, history, and the verbatim Russ paragraph. The band above keeps the outside in view while you work.</p>
+              <div class="acts">
+                <button class="btn btn-accent" data-copy="simploy-draft" data-stamp="simploy|✓ copied 9:41a">Copy the draft — to Chassie &amp; Katie</button>
+                <button class="btn btn-ghost btn-sm" data-drawer="readout">How this reads to Russ</button>
+              </div>
+            </div>
+          </div>
+          <div class="file-pane" data-pane="amplify" hidden>
+            <div class="file">
+              <span class="kick">The working file · Amplify · source: grab 9:12a + the CRM</span>
+              <h3>Reading us harder than anyone — a colleague is already in the building.</h3>
+              <p class="body">You own every Global pursuit here; the July 31st "ClearCo" conversation is a colleague's HCM-side deal, and their name is printed on the opportunity — one click away. The ask is composed and addressed.</p>
+              <div class="acts">
+                <a class="btn btn-2nd" href="#">Open ClearCo in Salesforce</a>
+                <button class="btn btn-accent" data-copy="amplify-ask" data-stamp="amplify|✓ ask copied 9:46a">Copy the ask</button>
+              </div>
+            </div>
+          </div>
+          <div class="file-pane" data-pane="myhrpros" hidden>
+            <div class="file quiet">
+              <span class="kick">The working file · My HR Pros · Lesha is the partner manager</span>
+              <h3>Reading us for a week. The note to Lesha is written.</h3>
+              <div class="acts">
+                <button class="btn btn-accent" data-copy="myhrpros-note" data-stamp="myhrpros|✓ note copied 9:44a">Copy the note — to Lesha</button>
+              </div>
+            </div>
+          </div>
+          <div class="file-pane" data-pane="medhq" hidden>
+            <div class="file quiet">
+              <span class="kick">The working file · MedHQ · research directive</span>
+              <h3>One known contact. The session is composed.</h3>
+              <div class="acts">
+                <button class="btn btn-accent" data-copy="medhq-recipe" data-stamp="medhq|✓ session run 10:24a">Copy the recipe</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ OPTION 3 · THREE PANES ═══════════ -->
+  <section class="frame option" id="opt-3" aria-label="Option 3: three panes">
+    <div class="way">
+      <span class="trail">Homeroom ›</span>
+      <span class="here">Groundwork <span>· Wednesday, July 30 · 9:20a Central</span></span>
+      <div class="pulling">
+        <span class="pg"></span>
+        <span class="pv">Send</span>
+        <span class="po">Simploy's draft — their leadership decides August 6th</span>
+      </div>
+      <span class="kbd">Ctrl K</span>
+    </div>
+    <div class="page">
+      <div class="dropbar">
+        <span class="dglyph">▤</span>
+        <span class="dtext"><b>Grab pasted 9:12a</b> · 118 rows read · 5 warming.</span>
+      </div>
+      <div class="lay-three" style="margin-top: 12px;">
+        <div>
+          <div class="ribbon" style="margin-top: 0;"><span class="rl">The queue</span><span class="rr"></span><span class="rc">abbrev.</span></div>
+          <div class="queue-list" role="tablist" aria-label="The ranked queue" data-qset="3">
+            <button class="acct-row h-amber offrow" role="tab" aria-selected="true" data-acct="simploy">
+              <span class="ag"></span>
+              <span><span class="an">Simploy</span> <span class="dot" style="width:6px;height:6px;"></span><br />
+                <span class="am"><b>decides August 6th</b></span></span>
+              <span class="aw" data-aw="simploy">draft</span>
+            </button>
+            <button class="acct-row h-blue" role="tab" aria-selected="false" data-acct="amplify">
+              <span class="ag"></span>
+              <span><span class="an">Amplify HR</span> <span class="intent">High · 11</span><br />
+                <span class="am"><b>ride a colleague's deal</b></span></span>
+              <span class="aw" data-aw="amplify">ask</span>
+            </button>
+            <button class="acct-row h-blue" role="tab" aria-selected="false" data-acct="myhrpros">
+              <span class="ag"></span>
+              <span><span class="an">My HR Pros</span> <span class="intent">High</span><br />
+                <span class="am"><b>reading us</b></span></span>
+              <span class="aw" data-aw="myhrpros">note</span>
+            </button>
+            <button class="acct-row h-amber" role="tab" aria-selected="false" data-acct="medhq">
+              <span class="ag"></span>
+              <span><span class="an">MedHQ</span><br />
+                <span class="am"><b>one contact</b></span></span>
+              <span class="aw" data-aw="medhq">recipe</span>
+            </button>
+          </div>
+        </div>
+
+        <div data-fileset="3">
+          <div class="file-pane" data-pane="simploy">
+            <div class="file">
+              <span class="kick"><span class="dot"></span>&nbsp; The working file · Simploy</span>
+              <h3>Seven days to their decision.</h3>
+              <p class="body">The full file — story, draft, people, history, the Russ paragraph — at a narrower measure so the outside column keeps its seat. Everything else is as in option 1.</p>
+              <div class="acts">
+                <button class="btn btn-accent" data-copy="simploy-draft" data-stamp="simploy|✓ copied 9:41a">Copy the draft — to Chassie &amp; Katie</button>
+                <button class="btn btn-ghost btn-sm" data-drawer="readout">How this reads to Russ</button>
+              </div>
+            </div>
+          </div>
+          <div class="file-pane" data-pane="amplify" hidden>
+            <div class="file">
+              <span class="kick">The working file · Amplify HR Management</span>
+              <h3>A colleague is already in the building. Ride, don't knock.</h3>
+              <p class="body">The July 31st ClearCo conversation is a colleague's HCM-side deal — their name is printed on the opportunity. The ask is composed; both controls are real.</p>
+              <div class="acts">
+                <a class="btn btn-2nd" href="#">Open ClearCo in Salesforce</a>
+                <button class="btn btn-accent" data-copy="amplify-ask" data-stamp="amplify|✓ ask copied 9:46a">Copy the ask</button>
+              </div>
+            </div>
+          </div>
+          <div class="file-pane" data-pane="myhrpros" hidden>
+            <div class="file quiet">
+              <span class="kick">The working file · My HR Pros</span>
+              <h3>The note to Lesha is written.</h3>
+              <div class="acts"><button class="btn btn-accent" data-copy="myhrpros-note" data-stamp="myhrpros|✓ note copied 9:44a">Copy the note — to Lesha</button></div>
+            </div>
+          </div>
+          <div class="file-pane" data-pane="medhq" hidden>
+            <div class="file quiet">
+              <span class="kick">The working file · MedHQ</span>
+              <h3>The session is composed.</h3>
+              <div class="acts"><button class="btn btn-accent" data-copy="medhq-recipe" data-stamp="medhq|✓ session run 10:24a">Copy the recipe</button></div>
+            </div>
+          </div>
+        </div>
+
+        <aside>
+          <div class="ribbon" style="margin-top: 0;"><span class="rl">Outside</span><span class="rr"></span><span class="rc">standing</span></div>
+          <div class="wire">
+            <button class="wireitem" data-drawer="wire1">
+              <span class="wsrc">HR Dive <span class="wtag">2 accounts</span></span>
+              <span class="whead">G-P raises alliance fees</span>
+            </button>
+            <button class="wireitem" data-drawer="wire2">
+              <span class="wsrc">SHRM</span>
+              <span class="whead">Misclassification enforcement widens</span>
+            </button>
+            <button class="wireitem" data-drawer="wire3">
+              <span class="wsrc">SIA</span>
+              <span class="whead">PEO acquisition pace holds</span>
+            </button>
+          </div>
+          <div class="ribbon"><span class="rl">Sales Nav read</span><span class="rr"></span></div>
+          <div class="instcard" style="border-bottom-color: var(--blue);">
+            <b>Warming:</b> Amplify (High · 11) · My HR Pros (High · 1w) ·
+            Armhr (High + new hire) · AlphaStaffHCM · AscendHR.
+          </div>
+          <div class="ribbon"><span class="rl">Institutions</span><span class="rr"></span></div>
+          <div class="instcard">
+            <b>Global Chamber, Chicago — Aug 7.</b> Verification this week;
+            education first.
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <p class="footer-note">
+    Try the copy buttons — they put the real composed text on your clipboard
+    and stamp the queue row as a side effect, which is the control doctrine
+    now written into the plan: a button opens the composed thing, hands over
+    addressed words, or files what you brought back. Nothing ornamental.
+    Sample content from the book and the live Sales Navigator instance; no
+    LinkedIn API anywhere; no money figures, by doctrine.
+  </p>
+</div>
+
+<div class="scrim" id="scrim"></div>
+
+<aside class="drawer" id="drawer-wire1" role="dialog" aria-label="Wire item">
+  <button class="dclose" data-close>&#10005;</button>
+  <span class="kick">The wire · HR Dive · this morning · sample item</span>
+  <h3>Globalization Partners raises platform fees for alliance partners.</h3>
+  <div class="dsec"><span class="kick">Why this matters here</span>
+    <p><b>Infiniti HR</b> — global on a G-P alliance renewing this fall — is
+    exactly who this hits. <b>Nextep</b> has the same shape on a longer
+    clock. <b>Simploy</b> hears about this too: the provider they refer
+    business to just got more expensive. This item is already attached to
+    Infiniti's Friday prep and Simploy's file history.</p>
+  </div>
+  <div class="dsec"><span class="kick">Source</span><p><a href="#">hrdive.com — read the original</a></p></div>
+  <div class="dsec" style="border-top: 0; padding-top: 4px;">
+    <button class="btn btn-accent">Dig deeper and file to Infiniti</button>
+    <button class="btn btn-ghost" data-close>Skip — stay here</button>
+  </div>
+</aside>
+
+<aside class="drawer" id="drawer-wire2" role="dialog" aria-label="Wire item">
+  <button class="dclose" data-close>&#10005;</button>
+  <span class="kick">The wire · SHRM · yesterday · sample item</span>
+  <h3>Worker-misclassification enforcement widening in the EU.</h3>
+  <div class="dsec"><span class="kick">Why this matters here</span>
+    <p>The worry that starts contractor-conversion conversations —
+    <b>Simploy's</b> India pair included. Also the education story the
+    institutions program leads with.</p>
+  </div>
+  <div class="dsec"><span class="kick">Source</span><p><a href="#">shrm.org — read the original</a></p></div>
+  <div class="dsec" style="border-top: 0; padding-top: 4px;">
+    <button class="btn btn-accent">Dig deeper</button>
+    <button class="btn btn-ghost" data-close>Skip — stay here</button>
+  </div>
+</aside>
+
+<aside class="drawer" id="drawer-wire3" role="dialog" aria-label="Wire item">
+  <button class="dclose" data-close>&#10005;</button>
+  <span class="kick">The wire · Staffing Industry Analysts · yesterday · sample item</span>
+  <h3>PEO acquisition pace holds through the quarter.</h3>
+  <div class="dsec"><span class="kick">Why this matters here</span>
+    <p><b>Premier Payroll</b> was acquired out from under this book last
+    September. The wire watches all 150 account names in deal news so the
+    book hears it first.</p>
+  </div>
+  <div class="dsec"><span class="kick">Source</span><p><a href="#">staffingindustry.com — read the original</a></p></div>
+  <div class="dsec" style="border-top: 0; padding-top: 4px;">
+    <button class="btn btn-accent">Dig deeper</button>
+    <button class="btn btn-ghost" data-close>Skip — stay here</button>
+  </div>
+</aside>
+
+<aside class="drawer" id="drawer-readout" role="dialog" aria-label="State of play">
+  <button class="dclose" data-close>&#10005;</button>
+  <span class="kick">State of play · Wednesday, July 30 · composes itself from every store</span>
+  <h3>Read once. Repeat to anyone. Answer the follow-up from the text alone.</h3>
+  <div class="dsec"><span class="kick">Conversations that could become deals — four</span>
+    <p><b>Simploy</b> — a St. Louis PEO on our software — picks their
+    global-hiring partner <b>August 6th</b>; my India-conversion follow-up
+    goes out today. <b>ESC</b> in Buffalo: licensing question with Rick, and
+    a Canada demo getting a date today. <b>Infiniti HR</b>: Friday call;
+    their G-P alliance renews this fall and G-P just raised alliance fees.
+    <b>XcelHR</b>: their VP of operations is ready to pitch a client with
+    workers in Mexico; call this week.</p>
+  </div>
+  <div class="dsec"><span class="kick">Warming, before anyone calls</span>
+    <p>This morning's Sales Navigator grab — pasted into the app at 9:12 —
+    shows people at five of our uploaded accounts reading about us this
+    week: <b>Amplify</b> hardest (eleven engagements; a teammate already has
+    a conversation there dated July 31st, and I'm asking them to carry one
+    Global sentence in), <b>My HR Pros</b> (flagged a week ago; top of their
+    partner manager's briefing today), <b>Armhr</b> (reading us, and a new
+    leader just landed).</p>
+  </div>
+  <div class="dsec"><span class="kick">The rest of the book</span>
+    <p>150 PrismHR and PrismHCM customers nationwide; 11 have had a real
+    global-hiring conversation since July 8th; 3 of the 5 partner managers I
+    sent updates to this week replied, and two replies became calls.</p>
+  </div>
+  <div class="dsec" style="border-top: 0; padding-top: 4px;">
+    <button class="btn btn-accent" data-copy="readout" data-stamp="">Copy the readout</button>
+  </div>
+</aside>
+
+<script>
+  // Option tabs
+  var tabs = document.querySelectorAll(".seg [data-opt]");
+  tabs.forEach(function (t) {
+    t.addEventListener("click", function () {
+      tabs.forEach(function (x) { x.setAttribute("aria-selected", String(x === t)); });
+      ["1", "2", "3"].forEach(function (k) {
+        document.getElementById("opt-" + k).classList.toggle("on", t.dataset.opt === k);
+        document.getElementById("note-" + k).hidden = t.dataset.opt !== k;
+      });
+    });
+  });
+
+  // Queue → file per option
+  document.querySelectorAll("[data-qset]").forEach(function (q) {
+    var set = q.dataset.qset;
+    var fileset = document.querySelector('[data-fileset="' + set + '"]');
+    q.querySelectorAll(".acct-row[data-acct]").forEach(function (r) {
+      r.addEventListener("click", function () {
+        q.querySelectorAll(".acct-row").forEach(function (x) {
+          x.setAttribute("aria-selected", String(x === r));
+        });
+        fileset.querySelectorAll(".file-pane").forEach(function (p) {
+          p.hidden = p.dataset.pane !== r.dataset.acct;
+        });
+      });
+    });
+  });
+
+  // Real copy payloads — the buttons genuinely copy these.
+  var PAYLOADS = {
+    "simploy-draft":
+      "To: Chassie Smith; Katie  Cc: Lesha Cyphers\nSubject: The India answer, ahead of your decision\n\nChassie, Katie — thank you for the time last week. On the India question: both contractors can move to employed status under our entity there. Onboarding runs about two weeks once we have their details, and the misclassification exposure ends the day they convert. Happy to walk your leadership through exactly how the handoff works before the 6th — name the slot and we'll be there.",
+    "amplify-ask":
+      "To: [the colleague named on the ClearCo opportunity — open it in Salesforce, the owner's name is printed on it]\n\nQuick one on Amplify HR Management. I see your ClearCo conversation there dated July 31st. Their people have been reading our Global material all week — eleven separate engagements. Would you carry one Global sentence into that conversation, or would you rather I join? Either way it stays your room.",
+    "myhrpros-note":
+      "To: Lesha Cyphers\n\nLesha — My HR Pros lit up on LinkedIn this week: their people have been reading our Global material since around the 23rd (the tool flags it as high buyer intent). Can they take the top slot in your next roundup? The question to relay, word for word: \"Which countries do your clients have people in today?\"",
+    "myhrpros-recipe":
+      "Sales Navigator · Relationship explorer on My HR Pros — Persona: Recommended buyer persona · Function: HR, Operations · Seniority: Director+ → note any \"Follows your company\" marks; harvest \"! Update CRM\" cards as candidates.",
+    "xcelhr-note":
+      "To: Bill Laffey  (heads-up to Anika first)\n\nBill — happy to walk through how a deal works and how pricing takes shape. Wednesday or Friday? Worth thinking on before we talk: whether your client's people in Mexico are employees or contractors — it changes the answer.",
+    "infiniti-note":
+      "To: Jennifer Hardesty\n\nJennifer — Friday works. Beyond Puerto Rico, which international needs should we come ready for?",
+    "medhq-recipe":
+      "Sales Navigator · Relationship explorer on MedHQ — Persona: Recommended buyer persona · Function: HR, Operations, Finance · Seniority: Director, VP, CXO → harvest every \"! Update CRM\" card → bring back 3–5 names with titles. Also: posted jobs by geography.",
+    "readout":
+      "State of play — Wednesday, July 30\n\nCONVERSATIONS THAT COULD BECOME DEALS — FOUR. Simploy (St. Louis PEO on our software; leadership picks a global-hiring partner August 6th; my India-conversion follow-up goes out today). ESC (Buffalo; licensing question with Rick; Canada demo getting a date today). Infiniti HR (Friday call; their G-P alliance renews this fall and G-P just raised alliance fees). XcelHR (their VP of operations is ready to pitch a client with workers in Mexico; call this week).\n\nWARMING, BEFORE ANYONE CALLS. This morning's Sales Navigator grab — pasted into the app at 9:12 — shows people at five of our uploaded accounts reading about us this week: Amplify hardest (eleven engagements; a teammate already has a conversation there dated July 31st, and I'm asking them to carry one Global sentence in), My HR Pros (flagged a week ago; top of their partner manager's briefing today), Armhr (reading us, and a new leader just landed).\n\nTHE REST OF THE BOOK. 150 PrismHR and PrismHCM customers nationwide; 11 have had a real global-hiring conversation since July 8th; 3 of the 5 partner managers I sent updates to replied this week, and two replies became calls.",
+  };
+
+  // Copy → clipboard + stamp as a side effect
+  document.querySelectorAll("[data-copy]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var text = PAYLOADS[b.dataset.copy];
+      if (text && navigator.clipboard) navigator.clipboard.writeText(text);
+      var old = b.textContent;
+      b.textContent = "Copied — it's on your clipboard";
+      setTimeout(function () { b.textContent = old; }, 2400);
+      var stamp = b.dataset.stamp;
+      if (stamp && stamp.indexOf("|") > 0) {
+        var key = stamp.split("|")[0];
+        var label = stamp.split("|")[1];
+        // stamp every option's row for that account (shared demo state)
+        document.querySelectorAll('[data-aw="' + key + '"]').forEach(function (s) {
+          s.textContent = label;
+        });
+        document.querySelectorAll('.acct-row[data-acct="' + key + '"]').forEach(function (r) {
+          r.classList.add("worked");
+        });
+      }
+    });
+  });
+
+  // Drawers
+  var scrim = document.getElementById("scrim");
+  function closeDrawers() {
+    document.querySelectorAll(".drawer.on").forEach(function (d) { d.classList.remove("on"); });
+    scrim.classList.remove("on");
+  }
+  document.querySelectorAll("[data-drawer]").forEach(function (b) {
+    b.addEventListener("click", function (e) {
+      e.stopPropagation();
+      closeDrawers();
+      var d = document.getElementById("drawer-" + b.dataset.drawer);
+      if (d) { d.classList.add("on"); scrim.classList.add("on"); }
+    });
+  });
+  document.querySelectorAll("[data-close]").forEach(function (b) { b.addEventListener("click", closeDrawers); });
+  scrim.addEventListener("click", closeDrawers);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeDrawers(); });
+</script>

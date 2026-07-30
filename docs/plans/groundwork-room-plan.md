@@ -218,8 +218,39 @@ never stops to wonder.
 | --- | --- | --- |
 | Readout prose | State of play, anything copyable, post-mortems | All ten rules, lint on |
 | Queue rows | The day's moves, directives | Rules 1–8; terms of art allowed if the row's "why" expansion translates them |
-| Controls | Buttons, chips, stamps | Existing canon (verbs, no "steps," one dominant move); brevity wins |
+| Controls | Buttons, chips, stamps | Existing canon (verbs, no "steps," one dominant move); brevity wins; §3.5 |
 | The wire | Headlines + reads | Headline verbatim from source; the "read" line follows rules 1–8 |
+
+### 3.5 Controls do the work they name
+
+The founder's test case: a mockup button reading "Find the owner and ask."
+Two actions, neither performed — clicking it would only record that the
+operator claims to have done both. That is an ornamental button, and the
+room bans the species. Every control is one of three things:
+
+1. **It opens the composed thing** — the draft ready to edit, the recipe
+   ready to copy, the Salesforce page where the answer is printed.
+2. **It hands over the exact words, addressed to a named person** — copy
+   a note the room already wrote, to a recipient the room already
+   resolved from its own data. If the room means a colleague, it names
+   the colleague; it never sends the operator hunting for a name the
+   book, the SF pastes, or one deep link can supply.
+3. **It files what the operator brought back** — the confirm flows.
+
+Done marks are side effects of these real actions ("Copied — and the row
+is stamped 9:41a"), never a standalone button. A control that can't name
+which of the three it is doesn't ship.
+
+**The ownership model behind rule 2, corrected by the founder:** the
+operator owns every account and every Global pursuit in this app —
+"owner" is never a question inside the book. The only owners the room
+ever refers to are **colleagues on org-side conversations**: the
+CRM-synced deals visible in Sales Navigator (the 48 dated opportunities)
+are HCM-side Salesforce opportunities owned by named coworkers. When a
+move rides one of those, the room resolves the coworker's name — from the
+book's partner-manager roster, from SF pastes (which carry opportunity
+owners), or by linking straight to the opportunity page where the name is
+printed — and composes the ask to them by name.
 
 ---
 
@@ -718,9 +749,14 @@ opportunity dates riding on the uploaded list ("AlphaStaff- Healthee"
 *Bring back:* which book accounts have an HCM-side conversation already
 in flight.
 *Files to:* the account's plan. **Doctrine: these are riding lanes** — a
-dated deal means a partner manager is already talking to that account;
-the Global briefing rides that conversation, coordinated through the
-partner manager, never around it.
+dated deal means a colleague is already talking to that account. To be
+precise about ownership (per the founder): the operator owns every
+account and every Global pursuit in the app; these dated deals are the
+org's **HCM-side** opportunities, owned by named coworkers in
+Salesforce. The room resolves the coworker's name itself — from SF
+pastes (which carry opportunity owners) or by deep-linking to the
+opportunity page — and composes the ride-along ask to them by name. The
+Global briefing rides their conversation, coordinated, never around it.
 
 **D11 — Changed-jobs harvest.** *(weekly — new)*
 *Trigger:* weekly, scoped to the book.
@@ -1053,6 +1089,25 @@ this morning's ▤ grab — never an API):
   account's entire file: story, people, the composed move, its recipe,
   its history, and the exact paragraph Russ would hear. Best for deep
   work and call prep.
+
+**Round six — the hybrid locked; the wire placed (founder, 2026-07-30):**
+the founder chose the queue rail from Queue & Lens plus the Working File
+as the right pane, demanded real controls (§3.5 was written from this
+round's critique), and asked where the wire lives. Answer:
+account-matched wire items always appear inside that account's file
+history; the standing home is the choice —
+`docs/mockups/groundwork-rail-file-triptych-2026-07-30.html`:
+
+- **Wire in the rail** — the left column carries the queue, then the
+  wire, then the institutions card; the file gets the whole right side.
+- **Wire as a band** — three items always visible across the top, under
+  the provenance bar.
+- **Three panes** — queue · file · a standing outside column (wire, the
+  Sales Nav read, institutions).
+
+In all three, every control obeys §3.5: copy buttons copy composed,
+addressed text; links go where the answer is printed (the ClearCo
+opportunity page names its owner); worked stamps land as side effects.
 
 Rounds one through three are retained in-repo as recorded alternatives
 (`groundwork-triptych-2026-07-30.html`, `groundwork-triptych-v2-2026-07-30.html`,
