@@ -1,14 +1,13 @@
-// Capture — get Salesforce activity into the app without an API. Paste a
-// timeline (or let the bookmarklet capture+copy it for you), preview the
-// parsed entries, pick the account, file. Content under an inner scrollbar
-// on the SF page comes through whole; only never-loaded content can't.
+// Capture — the shelf the grabs live on. Three bookmarklets, each scoped to the
+// region that actually holds a conversation, each stating what it refuses as
+// plainly as what it takes. Filing happens at the account, in the ⚡ box on its
+// row; this page installs tools and never writes anything itself.
 
 import Link from "next/link";
 import { AppWayfinder } from "@/components/app-wayfinder";
 import { getAppAccess } from "@/lib/auth";
 import { peos } from "@/lib/book";
-import { aiCleanAvailable } from "@/lib/intel/ai-clean";
-import { IntakeTabs } from "./intake-tabs";
+import { CaptureShelf } from "./capture-shelf";
 import styles from "../command-center.module.css";
 
 export const dynamic = "force-dynamic";
@@ -39,14 +38,12 @@ export default async function IntakePage() {
         <div className={styles.pageHead}>
           <h1 className={styles.h1}>Capture</h1>
           <p className={styles.sub}>
-            The capture kit: the bookmarklets that grab an Outlook thread or a Salesforce
-            activity feed, and the payroll intake form prefilled from what the app already
-            knows. Day to day the ⚡ box on the account in the{" "}
-            <Link href="/room">HomeRoom</Link> is the faster road — it reads the paste and
-            files it against that deal. The app never writes to Salesforce or Forms.
+            Three grabs, installed once. Click the one that matches the window you&apos;re
+            reading — the capture lands on your clipboard, and you paste it into the ⚡
+            box on the account it belongs to in the <Link href="/room">HomeRoom</Link>.
           </p>
         </div>
-        <IntakeTabs accounts={accounts} ai={aiCleanAvailable()} />
+        <CaptureShelf accounts={accounts} />
       </main>
     </>
   );
