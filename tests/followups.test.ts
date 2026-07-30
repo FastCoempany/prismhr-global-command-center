@@ -1,6 +1,6 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { cwd } from "node:process";
 
@@ -279,12 +279,11 @@ describe("every open panel closes on a click away", () => {
 
 // ── the Teams capture ─────────────────────────────────────────────────────────
 describe("the Teams bookmarklet", () => {
-  const intake = readFileSync(join(root, "src/app/intake/intake-client.tsx"), "utf8");
-  const bm = /function teamsBookmarkletFor[\s\S]*?\n}\n/.exec(intake)?.[0] ?? "";
+  const intake = readFileSync(join(root, "src/app/intake/capture-shelf.tsx"), "utf8");
+  const bm = /function teamsBookmarklet\([\s\S]*?\n}\n/.exec(intake)?.[0] ?? "";
   test("it exists and is offered on Capture", () => {
     assert.ok(bm, "no Teams bookmarklet");
     assert.ok(intake.includes("Grab Teams thread"));
-    assert.ok(intake.includes("bmTeamsRef"));
   });
   test("it reads the thread, not the whole app chrome", () => {
     assert.ok(/message-pane-list-viewport|messagePaneList/.test(bm));
@@ -309,6 +308,56 @@ describe("the Teams bookmarklet", () => {
     assert.ok(
       room.includes('"teams"'),
       "the source column lies about where it came from",
+    );
+  });
+});
+
+// ── Capture, the shelf ────────────────────────────────────────────────────────
+describe("the Capture page is the shelf the grabs live on", () => {
+  const shelf = readFileSync(join(root, "src/app/intake/capture-shelf.tsx"), "utf8");
+  const page = readFileSync(join(root, "src/app/intake/page.tsx"), "utf8");
+  const css = readFileSync(join(root, "src/app/command-center.module.css"), "utf8");
+
+  test("all three grabs sit on it, each with what it refuses", () => {
+    for (const g of ["Grab Outlook thread", "Grab SF activity", "Grab Teams thread"]) {
+      assert.ok(shelf.includes(g), `${g} left the shelf`);
+    }
+    // one type declaration + one value per tool
+    assert.equal((shelf.match(/refuses:/g) ?? []).length, 4, "a grab hides its refusal");
+    assert.equal((shelf.match(/takes:/g) ?? []).length, 4);
+  });
+  test("the paste workflow is gone — filing happens at the account", () => {
+    assert.ok(!existsSync(join(root, "src/app/intake/intake-client.tsx")));
+    assert.ok(!existsSync(join(root, "src/app/intake/intake-tabs.tsx")));
+    for (const dead of [
+      "Paste from clipboard",
+      "SF activity paste",
+      "SF timeline",
+      "Transcript / meeting notes",
+    ]) {
+      assert.ok(!page.includes(dead) && !shelf.includes(dead), `${dead} survived`);
+    }
+    const actions = readFileSync(join(root, "src/app/intake/actions.ts"), "utf8");
+    assert.ok(!/export async function fileTimeline/.test(actions));
+    assert.ok(!/export async function fileTranscript/.test(actions));
+    assert.ok(!/export async function cleanWithAI/.test(actions));
+  });
+  test("the payroll form stays reachable, one click down", () => {
+    assert.ok(shelf.includes("PayrollForm"));
+    assert.ok(shelf.includes("Payroll intake form"));
+  });
+  test("the page still points at the account as the place work lands", () => {
+    assert.ok(page.includes('href="/room"') || page.includes('"/room"'));
+    assert.ok(page.includes('current="Capture"'));
+  });
+  test("every class the shelf asks for exists", () => {
+    const used = new Set<string>();
+    for (const m of shelf.matchAll(/styles\.([A-Za-z_][A-Za-z0-9_]*)/g)) used.add(m[1]);
+    const defined = new Set<string>();
+    for (const m of css.matchAll(/\.([A-Za-z_][A-Za-z0-9_]*)/g)) defined.add(m[1]);
+    assert.deepEqual(
+      [...used].filter((c) => !defined.has(c)),
+      [],
     );
   });
 });
