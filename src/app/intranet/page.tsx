@@ -14,7 +14,13 @@
 import Link from "next/link";
 import { AppWayfinder } from "@/components/app-wayfinder";
 import { getAppAccess } from "@/lib/auth";
-import { brainStats, loadTopics } from "@/lib/intranet/store";
+import {
+  archiveDays,
+  brainStats,
+  countryIndex,
+  ledgerEntries,
+  loadTopics,
+} from "@/lib/intranet/store";
 import {
   childrenOf,
   isFresh,
@@ -51,11 +57,14 @@ export default async function IntranetPage({
   }
 
   const nowIso = new Date().toISOString();
-  const [topics, stats, queue, params] = await Promise.all([
+  const [topics, stats, queue, params, ledger, archive, countries] = await Promise.all([
     loadTopics(),
     brainStats(),
     brainQueue(),
     searchParams,
+    ledgerEntries({ limit: 40 }),
+    archiveDays(),
+    countryIndex(),
   ]);
   // Ask from anywhere (Phase 13.6): another room can hand the brain a question
   // pre-scoped to what it was looking at. Prefilled, never fired on arrival —
@@ -100,6 +109,10 @@ export default async function IntranetPage({
           empty={stats.docs === 0}
           staleness={stalenessLine(stats.lastCaptureAt, nowIso)}
           queue={queue}
+          ledger={ledger}
+          archive={archive}
+          countries={countries}
+          nowIso={nowIso}
           canWrite={access.canWrite}
           canAnswer={synthAvailable()}
         />

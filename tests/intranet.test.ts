@@ -111,6 +111,17 @@ import {
   playbookKnowledgeDoc,
 } from "../src/lib/intranet/playbook-in";
 import {
+  archiveDayMeta,
+  archiveRollup,
+  chicagoDay,
+  countryOf,
+  countryTallies,
+  dayLabel,
+  flagSrc,
+  groupByDay,
+  type LedgerEntry,
+} from "../src/lib/intranet/ledger";
+import {
   sanitizeVerdicts,
   summaryStale,
   supersessionDirection,
@@ -1790,5 +1801,146 @@ describe("the ingest digest says where things went, not just that the index grew
     const cl = readFileSync(join(root, "src/app/intranet/intranet-client.tsx"), "utf8");
     assert.ok(cl.includes('"Send it"'));
     assert.ok(!cl.includes('"Keep it"'), "the old button name came back");
+  });
+});
+
+// ── the Ledger (IV.8) ───────────────────────────────────────────────────────
+describe("the room is a running record that survives the tab", () => {
+  const mkAsk = (id: string, at: string): LedgerEntry => ({
+    kind: "ask",
+    id,
+    at,
+    question: "q",
+    answer: "a",
+    reasoning: "",
+    model: "",
+    citations: [],
+  });
+  const mkFed = (id: string, at: string): LedgerEntry => ({
+    kind: "fed",
+    id,
+    at,
+    space: "Global Sales Team",
+    title: "",
+    lines: ["Got it."],
+  });
+
+  test("an instant lands on the operator's day, not UTC's", () => {
+    // 02:00 UTC on the 31st is still the evening of the 30th in Chicago.
+    assert.equal(chicagoDay("2026-07-31T02:00:00.000Z"), "2026-07-30");
+    assert.equal(chicagoDay("2026-07-30T15:00:00.000Z"), "2026-07-30");
+    assert.equal(chicagoDay("not a date"), "");
+  });
+  test("dividers speak: Today, Yesterday, then just the date", () => {
+    const now = "2026-07-30T18:00:00.000Z";
+    assert.ok(dayLabel("2026-07-30", now).startsWith("Today — "));
+    assert.ok(dayLabel("2026-07-29", now).startsWith("Yesterday — "));
+    assert.ok(!dayLabel("2026-07-22", now).includes("—"));
+  });
+  test("the record groups under day dividers, newest first", () => {
+    const days = groupByDay(
+      [
+        mkAsk("a1", "2026-07-29T20:00:00.000Z"),
+        mkFed("f1", "2026-07-30T19:00:00.000Z"),
+        mkAsk("a2", "2026-07-30T16:00:00.000Z"),
+      ],
+      "2026-07-30T21:00:00.000Z",
+    );
+    assert.equal(days.length, 2);
+    assert.equal(days[0].entries.map((e) => e.id).join(","), "f1,a2");
+    assert.equal(days[1].entries[0].id, "a1");
+  });
+  test("the archive rolls the record into months and days with counts", () => {
+    const months = archiveRollup([
+      { at: "2026-07-30T15:00:00.000Z", kind: "ask" },
+      { at: "2026-07-30T16:00:00.000Z", kind: "fed" },
+      { at: "2026-07-30T17:00:00.000Z", kind: "ask" },
+      { at: "2026-06-02T15:00:00.000Z", kind: "fed" },
+    ]);
+    assert.equal(months.length, 2);
+    assert.equal(months[0].month, "July 2026");
+    assert.equal(months[0].days[0].asks, 2);
+    assert.equal(months[0].days[0].pastes, 1);
+    assert.equal(archiveDayMeta(months[0].days[0]), "2 asks · 1 paste");
+    assert.equal(months[1].month, "June 2026");
+  });
+});
+
+describe("a country is a lens, never a copy (IV.8)", () => {
+  test("an entity that names a country is read as one — exactly, not by substring", () => {
+    assert.deepEqual(countryOf("Brazil"), { code: "br", name: "Brazil" });
+    assert.deepEqual(countryOf("  brazil "), { code: "br", name: "Brazil" });
+    assert.deepEqual(countryOf("gb"), { code: "gb", name: "United Kingdom" });
+    assert.equal(countryOf("brazil nut allergy"), null);
+    assert.equal(countryOf("EOR"), null);
+  });
+  test("the tally counts a claim once per country however noisy its entities", () => {
+    const rows = countryTallies([
+      { kind: "prospect-question", entities: ["Brazil", "brazil", "EOR"] },
+      { kind: "commitment", entities: ["Brazil"] },
+      { kind: "fact", entities: ["Germany"] },
+    ]);
+    assert.equal(rows[0].name, "Brazil");
+    assert.equal(rows[0].total, 2);
+    assert.ok(
+      rows[0].lenses.some((l) => l.label === "What buyers asked here" && l.n === 1),
+    );
+    assert.ok(rows[0].lenses.some((l) => l.label === "Commitments made" && l.n === 1));
+    assert.equal(rows[1].name, "Germany");
+  });
+  test("flags are real images, never emoji (IV.9)", () => {
+    assert.ok(flagSrc("br").endsWith("/br.png"));
+    const client = readFileSync(
+      join(root, "src/app/intranet/intranet-client.tsx"),
+      "utf8",
+    );
+    assert.ok(client.includes("flagSrc"), "the country rail lost its flags");
+    assert.ok(!/🇧🇷|🇬🇧/.test(client), "emoji flags crept in");
+    assert.ok(client.includes("onError"), "a broken flag renders as a broken image");
+  });
+});
+
+describe("the ledger surface holds the decrees (IV.8)", () => {
+  const client = readFileSync(join(root, "src/app/intranet/intranet-client.tsx"), "utf8");
+  const runners = readFileSync(join(root, "src/app/intranet/runners.ts"), "utf8");
+  const actions = readFileSync(join(root, "src/app/intranet/actions.ts"), "utf8");
+
+  test("entries fold, days fold, nothing disappears", () => {
+    assert.ok(client.includes("fold the day"));
+    assert.ok(client.includes("itLFoldBtn"), "entries lost their fold control");
+    assert.ok(
+      !/\.filter\(.*minned/.test(client),
+      "folding removes entries instead of folding them",
+    );
+  });
+  test("the rail carries its two delineated tabs", () => {
+    assert.ok(client.includes("By country"));
+    assert.ok(client.includes("The archive"));
+    assert.ok(client.includes("itRailTabs"));
+  });
+  test("an archive day opens its slice of the record", () => {
+    assert.ok(client.includes("intranetLedgerDay"));
+    assert.ok(actions.includes("export async function intranetLedgerDay"));
+    assert.ok(client.includes("back to today"));
+  });
+  test("the paste dock is pinned and always open, and it says Send it", () => {
+    assert.ok(client.includes("itDock"), "the dock is gone");
+    assert.ok(client.includes('"Send it"'));
+    assert.ok(client.includes("Add to the brain"));
+  });
+  test("the progress line is transient — replaced by the result", () => {
+    assert.ok(client.includes("Reading what you sent…"));
+    assert.ok(/l\.map\(\(e\) =>/.test(client), "the pending entry is never replaced");
+  });
+  test("the digest is stored on the capture, so the record can replay it", () => {
+    assert.ok(/digest: lines/.test(runners), "readCapture stopped persisting the digest");
+    const store = readFileSync(join(root, "src/lib/intranet/store.ts"), "utf8");
+    assert.ok(
+      store.includes("meta.digest"),
+      "the ledger loader ignores the stored digest",
+    );
+  });
+  test("the country lens note states the no-duplication doctrine", () => {
+    assert.ok(client.includes("A country is a lens, not a copy"));
   });
 });
