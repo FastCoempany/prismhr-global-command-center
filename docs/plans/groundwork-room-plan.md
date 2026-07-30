@@ -681,6 +681,13 @@ activities"). **The room re-ranks the relay motion on this** — an
 account whose people are already reading us outranks a colder account of
 equal fit, and its partner-manager briefing moves to the top of the
 cycle.
+*Where the data comes from:* LinkedIn exposes no intent API, so intent
+arrives through two operator-gated lanes only — the triage capture (typed
+quick-entry or a `SALESNAV` bookmarklet copying the rows already on
+screen) and Sales Navigator's own alert emails via the existing Outlook
+grab (armed for the whole book once D0 sets book of business). Readings
+decay after ~7 days without refresh; the ranking never rides a stale
+badge. Full mechanics: `docs/research/sales-navigator-anatomy.md` §5.
 
 **D9 — The alerts sweep.** *(daily, five minutes — new)*
 *Trigger:* every morning, after book-of-business is set so alerts key to

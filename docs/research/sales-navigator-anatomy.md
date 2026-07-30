@@ -100,3 +100,33 @@ dates and sources, exactly like the intranet keep pattern ("Read 6 —
 kept 41 things for the index"). Buyer-intent readings are typed back as
 dated signals ("Sales Nav 7/30: Amplify High intent, 11 activities") so
 the book's record survives even though the tool's view is ephemeral.
+
+## 5. Where the intent data physically comes from
+
+LinkedIn exposes no API for buyer intent — it exists only on Sales
+Navigator's own screens and in its alert emails, and the CRM sync embeds
+a widget in Salesforce rather than exporting the signal as fields. So
+the room never "pulls" intent; it **receives** it through three
+operator-gated lanes:
+
+1. **The D8 triage capture.** The daily triage ends with a capture:
+   typed quick-entry, or a fourth bookmarklet in the existing Grab
+   family (`SALESNAV` head token) that copies the dashboard rows already
+   on screen. The paste reader parses account names, intent levels,
+   activity counts, and alerts; matches them to book accounts; proposes
+   dated signals the operator confirms. Same pattern as the SF/Outlook/
+   Teams grabs — capture what's visible, never crawl.
+2. **Sales Navigator's alert emails.** Intent-change alerts (the
+   "My HR Pros: increase in buyer intent" flag arrived this way) land in
+   the operator's inbox, and the existing Outlook grab already captures
+   them — the reader just needs to recognize the Sales Nav email shape.
+   Setting book of business (D0) is what turns this lane on for the
+   whole 118-list. The closest thing to automatic that stays inside
+   LinkedIn's terms and the app's doctrine.
+3. **Nothing else.** No API, no scraping, no headless browser.
+
+Stored form: a dated signal on the account — source `salesnav` — which
+is what the queue ranking reads. **Readings decay:** after ~7 days
+without a fresh reading the room stops ranking on them; a stale "High"
+is a guess wearing a badge. The decay is what makes the daily ten
+minutes worth their spot in the research window.
