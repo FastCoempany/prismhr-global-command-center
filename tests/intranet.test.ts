@@ -962,7 +962,7 @@ describe("the chain that fills the brain is wired end to end", () => {
     const rc = /export async function readCapture[\s\S]*?\n}\n/.exec(runners)?.[0] ?? "";
     assert.ok(rc.includes("extractPending"), "readCapture never reads");
     assert.ok(rc.includes("indexTopics"), "readCapture never settles the index");
-    assert.ok(rc.includes("The index grew"), "the visible consequence is missing");
+    assert.ok(rc.includes("grewSentence"), "the visible consequence is missing");
   });
   test("re-reading a document replaces its claims rather than doubling them", () => {
     const extract =
@@ -1761,19 +1761,34 @@ describe("the ingest digest says where things went, not just that the index grew
   const runners = readFileSync(join(root, "src/app/intranet/runners.ts"), "utf8");
   const rc = /export async function readCapture[\s\S]*?\n}\n/.exec(runners)?.[0] ?? "";
 
-  test("it names what the paste was and when it spans", () => {
-    assert.ok(rc.includes("That was "), "the digest lost the paste's identity line");
+  test("it names what the paste was and when it spans, in a sentence (IV.9)", () => {
+    assert.ok(
+      rc.includes("What you pasted"),
+      "the digest lost the paste's identity line",
+    );
   });
-  test("it tallies what kinds of things were kept, in plain words", () => {
-    assert.ok(rc.includes("things buyers asked"), "buyer asks vanish into a number");
-    assert.ok(rc.includes("In it:"), "no kinds tally");
+  test("it tallies what was kept the way a person would say it", () => {
+    assert.ok(rc.includes("questions buyers asked"), "buyer asks vanish into a number");
+    assert.ok(rc.includes("Inside it I found"), "no kinds sentence");
     assert.ok(!/["`]claims?["`:]/.test(rc), "pipeline vocabulary in the digest");
   });
   test("it says where buyer asks travel — the Playbook", () => {
-    assert.ok(rc.includes("proposals surface on the Playbook"));
+    assert.ok(rc.includes("will show up on the Playbook"));
   });
   test("it names book accounts the paste mentioned", () => {
     assert.ok(rc.includes("accountsMentioned"), "account mentions are not surfaced");
-    assert.ok(rc.includes("their rows carry it from here"));
+    assert.ok(rc.includes("came up by name"));
+  });
+  test("the digest speaks in sentences, not fragment-and-dot shorthand", () => {
+    const runnersAll = readFileSync(join(root, "src/app/intranet/runners.ts"), "utf8");
+    assert.ok(runnersAll.includes("function listOut"), "the human list helper is gone");
+    assert.ok(runnersAll.includes("grewSentence"), "index growth fell back to shorthand");
+    const norm = readFileSync(join(root, "src/lib/intranet/normalize.ts"), "utf8");
+    assert.ok(norm.includes("Got it —"), "the receipt stopped talking like a person");
+  });
+  test("the button says Send it, and never Keep it (IV.9)", () => {
+    const cl = readFileSync(join(root, "src/app/intranet/intranet-client.tsx"), "utf8");
+    assert.ok(cl.includes('"Send it"'));
+    assert.ok(!cl.includes('"Keep it"'), "the old button name came back");
   });
 });

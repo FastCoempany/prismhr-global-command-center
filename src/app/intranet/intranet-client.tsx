@@ -7,7 +7,7 @@
 //     column — pasting is how the room grows and the layout says so
 //   · one control brings the brain up to date, running passes back-to-back
 //     until the backlog is gone or the operator stops it
-//   · "Keep it" reads the paste immediately and the operator watches the
+//   · "Send it" reads the paste immediately and the operator watches the
 //     consequence: receipt → reading → the index growing
 //   · pipeline vocabulary never reaches the surface; failures always do
 
@@ -78,7 +78,7 @@ export function IntranetClient({
     });
   };
 
-  // IV.3 · the paste is never fire-and-forget. Keep it, then read it on the
+  // IV.3 · the paste is never fire-and-forget. Send it, then read it on the
   // spot — and the operator watches the index grow as the consequence.
   const file = () => {
     if (!paste.trim() || capBusy) return;
@@ -362,7 +362,7 @@ export function IntranetClient({
               className={styles.itWellPaste}
               value={paste}
               onChange={(e) => setPaste(e.target.value)}
-              placeholder="Paste a Teams thread, a meeting transcript, a demo — anything worth keeping. It gets read the moment you keep it."
+              placeholder="Paste a Teams thread, a meeting transcript, a demo — anything worth keeping. It gets read the moment you send it."
               aria-label="Paste into the brain"
             />
             <div className={styles.itAddRow}>
@@ -372,7 +372,7 @@ export function IntranetClient({
                 disabled={capBusy || !paste.trim()}
                 onClick={file}
               >
-                {capBusy ? "Keeping…" : "Keep it"}
+                {capBusy ? "Sending…" : "Send it"}
               </button>
               {receipt && <span className={styles.itReceipt}>{receipt}</span>}
             </div>
