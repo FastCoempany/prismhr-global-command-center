@@ -1534,3 +1534,141 @@ button.sdRadio:hover {
   opacity: 1;
   color: var(--red);
 }
+
+/* ── the follow-up list — the add menu's own drawer ──────────────────────
+   A chase is work you owe yourself. The count rides the add button so the
+   number is visible without opening anything; the list itself is a hover
+   box that can be pinned with a click. Amber, because an unmet promise is
+   caution — never the orange, which belongs to the one move per surface. */
+.addBadge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 17px;
+  height: 17px;
+  margin-left: 7px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--amber);
+  color: #3a2600;
+  font-family: var(--f-mono), ui-monospace, monospace;
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+.fuHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.fuOpen {
+  border: 1px solid var(--hair);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--faint);
+  font-family: var(--f-mono), ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  cursor: pointer;
+}
+.fuOpen:hover {
+  color: var(--ink);
+  border-color: var(--quiet);
+}
+.fuOpenLive {
+  color: #7a4b00;
+  border-color: rgba(245, 158, 11, 0.5);
+  background: rgba(245, 158, 11, 0.1);
+}
+.fuBox {
+  display: block;
+  margin-top: 7px;
+  padding-top: 7px;
+  border-top: 1px solid var(--hair);
+  max-height: 268px;
+  overflow-y: auto;
+}
+.fuEmpty {
+  display: block;
+  color: var(--faint);
+  font-size: 12px;
+  padding: 2px 0 4px;
+}
+.fuRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 5px 0;
+}
+.fuRow + .fuRow {
+  border-top: 1px solid var(--hair);
+}
+.fuText {
+  flex: 1;
+  min-width: 0;
+  font-size: 12.5px;
+  line-height: 1.42;
+  color: var(--ink);
+}
+.fuFiled {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--f-mono), ui-monospace, monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.fuAsk {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  padding: 4px 7px;
+  border-radius: 7px;
+  background: rgba(37, 99, 235, 0.07);
+  color: #1e3a8a;
+  font-size: 11.5px;
+}
+.fuYes,
+.fuNo {
+  border: 1px solid rgba(37, 99, 235, 0.35);
+  border-radius: 999px;
+  background: transparent;
+  color: #1d4ed8;
+  font-family: var(--f-sans), system-ui, sans-serif;
+  font-size: 11px;
+  padding: 1px 9px;
+  cursor: pointer;
+}
+.fuNo {
+  border-color: var(--hair);
+  color: var(--faint);
+}
+.fuYes:hover {
+  background: rgba(37, 99, 235, 0.12);
+}
+.fuNo:hover {
+  color: var(--ink);
+}
+.fuCtl {
+  display: flex;
+  gap: 2px;
+  flex: 0 0 auto;
+}
+.fuCtl button {
+  border: 0;
+  background: transparent;
+  color: var(--faint);
+  font-size: 12px;
+  line-height: 1;
+  padding: 2px 4px;
+  cursor: pointer;
+}
+.fuCtl button:hover {
+  color: var(--ink);
+}

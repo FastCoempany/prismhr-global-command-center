@@ -31,3 +31,20 @@ export function contactsFor(accountId: string): BookContact[] {
 export function contactCount(accountId: string): number {
   return MAP[accountId]?.length ?? 0;
 }
+
+// Every person the book already knows, across all accounts — built once per
+// server process and held. The follow-up read uses it to keep from asking
+// whether a named contact should join the board: a person is not a deal.
+let ALL_PEOPLE: string[] | null = null;
+export function knownPeople(): string[] {
+  if (ALL_PEOPLE) return ALL_PEOPLE;
+  const seen = new Set<string>();
+  for (const list of Object.values(MAP)) {
+    for (const c of list) {
+      const full = `${c.first ?? ""} ${c.last ?? ""}`.trim();
+      if (full.length > 2) seen.add(full);
+    }
+  }
+  ALL_PEOPLE = [...seen];
+  return ALL_PEOPLE;
+}

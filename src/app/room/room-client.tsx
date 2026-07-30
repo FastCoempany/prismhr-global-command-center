@@ -13,6 +13,10 @@ import {
   archiveThread,
   delayFollowUp,
   dismissTriage,
+  followUpAddBoard,
+  followUpDone,
+  followUpDrop,
+  followUpWaveOff,
   logTouch,
   markReplied,
   markResponded,
@@ -103,6 +107,16 @@ export type CheckinRow = {
   ask: string;
   quietDays: number | null;
   kind: string;
+};
+// A chase the operator armed by hand. `filed` names the accounts it already
+// routed itself to; `newName` is the one open question — a name the board has
+// never heard of.
+export type FollowUpRow = {
+  subjectKey: string;
+  label: string;
+  armedAt: string;
+  filed: string[];
+  newName: string;
 };
 export type WarmRow = { id: string; name: string; why: string; seedNote: string };
 export type LaterRow = { id: string; body: string };
@@ -1092,7 +1106,6 @@ function Row({ row }: { row: RoomRow }) {
                             name="label"
                             value={t.body.slice(0, 140)}
                           />
-                          <input type="hidden" name="when" value="tomorrow" />
                           <input type="hidden" name="returnTo" value="/room" />
                           <button title="arm a chase — someone owes this">⚑</button>
                         </form>
@@ -1604,6 +1617,88 @@ function CadenceDrawer({
   );
 }
 
+// The follow-up block inside the add menu: the composer that arms a chase, and
+// beside it the count that raises the whole list. A chase is always "now" —
+// there is no when to pick, because writing it down is the deciding.
+function FollowUpBlock({ rows }: { rows: FollowUpRow[] }) {
+  const [open, setOpen] = useState(false);
+  const [pinned, setPinned] = useState(false);
+  const show = open || pinned;
+  return (
+    <div
+      className={styles.miForm}
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
+      <span className={styles.miIc}>⏲</span>
+      <span className={styles.miFormBody}>
+        <span className={styles.fuHead}>
+          <b>Follow-up</b>
+          <button
+            type="button"
+            className={`${styles.fuOpen} ${rows.length ? styles.fuOpenLive : ""}`}
+            onClick={() => setPinned((v) => !v)}
+            title="everything still owed"
+          >
+            {rows.length} open
+          </button>
+        </span>
+        <form action={addFollowUp} className={styles.miRow}>
+          <input name="label" placeholder="Chase what, with whom…" />
+          <input type="hidden" name="returnTo" value="/room" />
+          <button className={styles.sdTag}>arm</button>
+        </form>
+        {show && (
+          <span className={styles.fuBox}>
+            {rows.length === 0 && (
+              <span className={styles.fuEmpty}>Nothing owed. The list is clear.</span>
+            )}
+            {rows.map((f) => (
+              <span key={f.subjectKey} className={styles.fuRow}>
+                <span className={styles.fuText}>
+                  {f.label}
+                  {f.filed.length > 0 && (
+                    <span className={styles.fuFiled}>filed → {f.filed.join(" · ")}</span>
+                  )}
+                  {f.newName && (
+                    <span className={styles.fuAsk}>
+                      <b>{f.newName}</b> isn&apos;t on the board — add it?
+                      <form action={followUpAddBoard} className={styles.inline}>
+                        <input type="hidden" name="subjectKey" value={f.subjectKey} />
+                        <input type="hidden" name="name" value={f.newName} />
+                        <input type="hidden" name="returnTo" value="/room" />
+                        <button className={styles.fuYes}>add</button>
+                      </form>
+                      <form action={followUpWaveOff} className={styles.inline}>
+                        <input type="hidden" name="subjectKey" value={f.subjectKey} />
+                        <input type="hidden" name="name" value={f.newName} />
+                        <input type="hidden" name="returnTo" value="/room" />
+                        <button className={styles.fuNo}>no</button>
+                      </form>
+                    </span>
+                  )}
+                </span>
+                <span className={styles.fuCtl}>
+                  <form action={followUpDone} className={styles.inline}>
+                    <input type="hidden" name="subjectKey" value={f.subjectKey} />
+                    <input type="hidden" name="returnTo" value="/room" />
+                    <button title="done">✓</button>
+                  </form>
+                  <form action={followUpDrop} className={styles.inline}>
+                    <input type="hidden" name="subjectKey" value={f.subjectKey} />
+                    <input type="hidden" name="returnTo" value="/room" />
+                    <button title="drop it">✕</button>
+                  </form>
+                </span>
+              </span>
+            ))}
+          </span>
+        )}
+      </span>
+    </div>
+  );
+}
+
 function EyeDrawer({
   warming,
   later,
@@ -1682,6 +1777,7 @@ export function RoomClient({
   rows,
   cadence,
   checkins,
+  followUps,
   warming,
   later,
   canWrite,
@@ -1691,6 +1787,7 @@ export function RoomClient({
   rows: RoomRow[];
   cadence: CadenceRow[];
   checkins: CheckinRow[];
+  followUps: FollowUpRow[];
   warming: WarmRow[];
   later: LaterRow[];
   canWrite: boolean;
@@ -1720,7 +1817,7 @@ export function RoomClient({
             <path d="M18.2 28 h11.6" />
             <path d="M2 38 h44" />
           </svg>
-          <span className={styles.roomName}>OPERATING ROOM</span>
+          <span className={styles.roomName}>HOMEROOM</span>
         </span>
         <span className={styles.addWrap}>
           <button
@@ -1729,6 +1826,11 @@ export function RoomClient({
             onClick={() => setMenuOpen((v) => !v)}
           >
             ＋ add <span className={styles.car}>▾</span>
+            {followUps.length > 0 && (
+              <span className={styles.addBadge} title="follow-ups still owed">
+                {followUps.length}
+              </span>
+            )}
           </button>
           {menuOpen && (
             <div className={styles.menu}>
@@ -1771,23 +1873,7 @@ export function RoomClient({
                   </span>
                 </span>
               </Link>
-              {canWrite && (
-                <form action={addFollowUp} className={styles.miForm}>
-                  <span className={styles.miIc}>⏲</span>
-                  <span className={styles.miFormBody}>
-                    <b>Follow-up</b>
-                    <span className={styles.miRow}>
-                      <input name="label" placeholder="Chase what, with whom…" />
-                      <select name="when" defaultValue="tomorrow">
-                        <option value="today">today</option>
-                        <option value="tomorrow">tomorrow</option>
-                      </select>
-                      <input type="hidden" name="returnTo" value="/room" />
-                      <button className={styles.sdTag}>arm</button>
-                    </span>
-                  </span>
-                </form>
-              )}
+              {canWrite && <FollowUpBlock rows={followUps} />}
             </div>
           )}
         </span>
