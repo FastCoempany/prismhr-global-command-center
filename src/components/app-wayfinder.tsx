@@ -55,6 +55,13 @@ export async function AppWayfinder({
             Playbook
           </Link>
           <Link
+            aria-current={current === "Intranet" ? "page" : undefined}
+            className="app-route-link"
+            href="/intranet"
+          >
+            Intranet
+          </Link>
+          <Link
             aria-current={current === "Pricing" ? "page" : undefined}
             className="app-route-link"
             href="/pricing"

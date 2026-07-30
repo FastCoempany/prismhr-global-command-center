@@ -215,14 +215,22 @@ const isJunkLine = (t: string) => JUNK_LINES.some((re) => re.test(t));
 // miss these (a recording link with "Passcode: $NyT*&d9" inside a prose line
 // sailed straight into the record), and redactMoney never sees them.
 export function scrubSecrets(s: string): string {
-  return (s ?? "")
-    .replace(/\b(passcode|password|access code|pwd)\s*[:=]\s*\S+/gi, "$1: [—]")
-    .replace(
-      /https:\/\/(?:[\w.-]*zoom\.us|teams\.microsoft\.com|meet\.google\.com)\/\S+/gi,
-      "[meeting link]",
-    )
-    .replace(/\bMeeting ID[:\s]+[\d\s]{6,}/gi, "Meeting ID: [—]")
-    .replace(/\+1\s?\d{3}[\s.-]?\d{3}[\s.-]?\d{4},,\d+#?/g, "[dial-in]");
+  return (
+    (s ?? "")
+      // "Passcode: X", "passcode = X" and the way people actually type it in
+      // chat — "the passcode is 559 221 887#". A spaced digit run counts as one
+      // credential, or the mask would take only its first group.
+      .replace(
+        /\b(passcode|password|access code|pwd)\s*(?:[:=]|\s+is\b)\s*(?:[\d\s]{6,}#?|\S+)/gi,
+        "$1: [—]",
+      )
+      .replace(
+        /https:\/\/(?:[\w.-]*zoom\.us|teams\.microsoft\.com|meet\.google\.com)\/\S+/gi,
+        "[meeting link]",
+      )
+      .replace(/\bMeeting ID[:\s]+[\d\s]{6,}/gi, "Meeting ID: [—]")
+      .replace(/\+1\s?\d{3}[\s.-]?\d{3}[\s.-]?\d{4},,\d+#?/g, "[dial-in]")
+  );
 }
 
 export function cleanSfPaste(text: string): string {

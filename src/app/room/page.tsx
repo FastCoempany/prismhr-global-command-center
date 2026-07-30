@@ -50,6 +50,8 @@ import { researchNs } from "@/lib/intel/deep-research";
 import { OUTCOME_LABEL, readOutcome } from "@/lib/dashboard/outcome";
 import { owedToMe } from "@/lib/room/owed";
 import { GLOBAL_SCENT_RE } from "@/lib/intel/provenance";
+import { askHref, peerQuestions, scopedAsk } from "@/lib/intranet/bridges";
+import { prospectAsks } from "@/lib/intranet/store";
 import {
   RoomClient,
   type CadenceRow,
@@ -105,6 +107,11 @@ export default async function RoomPage() {
   const peoById = new Map(peos.map((p) => [p.id, p]));
   const touchMap = new Map(touches.map((t) => [t.subjectKey, t]));
   const now = new Date();
+
+  // Phase 13.6 · the gap bridge. What prospects in comparable situations asked,
+  // read once for the whole board. A deal inherits the questions its peers
+  // provoked. Empty until the brain has read a demo — the room degrades quietly.
+  const askedByPeers = await prospectAsks(600);
 
   const rows: RoomRow[] = [];
   for (const card of data.cards) {
@@ -274,6 +281,19 @@ export default async function RoomPage() {
       ? readGaps(notesById, accountId, gapDismissed)
       : { shown: [], queued: 0 };
 
+    // Comparability is the situation, not the name: same countries, same
+    // product line, same industry. A question a peer buyer asked belongs here
+    // even though nobody has asked it on this deal yet.
+    const peers = peerQuestions(askedByPeers, {
+      entities: [
+        ...intel.countries.map((c) => COUNTRY_NAME[c.value] ?? c.value),
+        ...prods,
+        peo?.industry ?? "",
+      ],
+      excludeAccountId: accountId,
+      cap: 2,
+    });
+
     // Closed Won / Closed Lost — the terminal stamp, if the operator confirmed
     // one. A closed row keeps its place until it's retired; the meter says so.
     const outcome = readOutcome(card.notes);
@@ -321,6 +341,8 @@ export default async function RoomPage() {
       outcome,
       gaps: gaps.shown,
       gapsQueued: gaps.queued,
+      peers: peers.map((p) => ({ question: p.question, shared: p.shared.join(", ") })),
+      askHref: askHref(scopedAsk(card.name, [...prods])),
       researchAt,
       stages: buildStageRail(card, data.labels),
       suggestions,

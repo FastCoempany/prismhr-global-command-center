@@ -1153,3 +1153,111 @@ model AccountDisposition {
 
   @@index([status])
 }
+
+// ─── The Intranet ───────────────────────────────────────────────────────────
+// The app's brain. Everything the operator has given it — Teams threads,
+// meeting and demo transcripts — plus a mirror of everything the app itself
+// knows, indexed into topics and answerable in plain words.
+//
+// Doctrine (docs/intranet-research-room.md):
+//   · source is provenance, never partition — nothing here partitions by origin
+//   · nothing is ever deleted; a vanished app row marks its mirror originGone
+//   · people are never entities; speakers are provenance only
+
+// The raw arrival, kept so a re-index never needs the operator to re-grab.
+// `raw` is ALWAYS post-redaction — the pre-redaction text is never persisted.
+model IntranetCapture {
+  id          String   @id @default(cuid())
+  origin      String // "teams" | "meeting" | "demo" | "paste"
+  raw         String
+  rawChecksum String   @unique
+  title       String   @default("")
+  capturedAt  DateTime @default(now())
+  segmented   Boolean  @default(false)
+  meta        Json?
+
+  @@index([capturedAt])
+}
+
+// A coherent unit of conversation. One capture becomes one or many.
+model IntranetDoc {
+  id            String    @id @default(cuid())
+  captureId     String    @default("")
+  origin        String
+  originRef     String    @default("")
+  space         String    @default("")
+  title         String    @default("")
+  body          String
+  speakers      String[]
+  occurredAt    DateTime
+  capturedAt    DateTime  @default(now())
+  accountId     String    @default("")
+  links         Json?
+  checksum      String
+  extractedAt   DateTime?
+  promptVersion String    @default("")
+  originGone    DateTime? // C6 — the app row went away; the memory does not
+
+  @@unique([origin, originRef])
+  @@index([checksum])
+  @@index([occurredAt])
+  @@index([extractedAt])
+}
+
+// A sentence-sized assertion. Claims are what retrieval matches and what
+// answers are built from.
+model IntranetClaim {
+  id           String   @id @default(cuid())
+  docId        String
+  text         String
+  speaker      String   @default("")
+  saidAt       DateTime
+  kind         String // fact|decision|commitment|opinion|question|process|prospect-question
+  confidence   String   @default("stated")
+  entities     String[]
+  topicIds     String[]
+  askShape     String   @default("") // prospect questions only
+  offsetStart  Int      @default(0)
+  offsetEnd    Int      @default(0)
+  supersededBy String   @default("")
+  disputedWith String[]
+  createdAt    DateTime @default(now())
+
+  @@index([docId])
+  @@index([saidAt])
+  @@index([kind])
+}
+
+// A node in the index. Derived, accumulated, hierarchical.
+model IntranetTopic {
+  id         String   @id @default(cuid())
+  label      String
+  parentId   String   @default("")
+  summary    String   @default("")
+  status     String   @default("pending") // pending|live|merged
+  mergedInto String   @default("")
+  docCount   Int      @default(0)
+  claimCount Int      @default(0)
+  firstSeen  DateTime @default(now())
+  lastSeen   DateTime @default(now())
+
+  @@index([status])
+  @@index([parentId])
+}
+
+// Every question and answer, kept for the fold, for evals, and for cache.
+model IntranetAsk {
+  id           String   @id @default(cuid())
+  question     String
+  plan         Json?
+  candidateIds String[]
+  answer       String   @default("")
+  reasoning    String   @default("")
+  citations    Json?
+  coverage     Json?
+  model        String   @default("")
+  ms           Int      @default(0)
+  askedAt      DateTime @default(now())
+
+  @@index([askedAt])
+}
