@@ -102,6 +102,54 @@ Hedging by default is a failure. "It depends" is only acceptable when the
 record genuinely contains an unresolved split, and then the answer names the
 split.
 
+### C6 · Nothing ever leaves the brain
+
+**Nothing is deleted. Ever.** Not a captured thread, not a mirrored note whose
+app row was removed, not a topic that went quiet, not a claim that turned out to
+be wrong. Aging handles relevance (Phase 12); deletion handles nothing.
+
+_Consequence, and it inverts the usual instinct:_ when an app row disappears,
+its mirror is **retained** and marked `originGone` with the date. The room can
+still answer from it, and says so plainly — _"from a note that has since been
+removed from the app."_ The record of what was once true is itself worth
+keeping; a deal that changed course is only legible if the earlier position
+survives.
+
+_What this costs:_ the corpus only grows. That is accepted deliberately — text
+is cheap, and the alternative is a brain that quietly forgets the thing you
+needed. Aging, superseding and ranking do the work that deletion would
+otherwise be asked to do.
+
+### C7 · Prospect questions are first-class intelligence
+
+_"A prospect's questions are the window to winning deals."_
+
+Every demo transcript, from every sidekick this app has built, is mined
+specifically for what the **prospect** asked — the logic, the substance, the
+minute detail. These are not ordinary claims:
+
+- they extract as `kind: "prospect-question"`, a first-class kind alongside
+  fact and decision
+- each carries the **shape** of the ask — `definitional | commercial | risk |
+technical | process | timeline` — plus what prompted it and which product
+  line it lands on
+- they accumulate into a standing top-level topic, **What prospects ask**, which
+  decomposes by shape and by product line. This is the one topic the index is
+  allowed to start with rather than discover, because the founder named it as
+  the window
+- they never age (Phase 12): what a buyer asked in March is still what they
+  asked
+
+**The distribution rule.** Intelligence about prospect questions flows
+_throughout the app_, not only inside this room:
+
+- the Playbook bridge proposes new battlecard questions drawn from what real
+  buyers actually asked, carrying the shape, the product line and the transcript
+  it came from (Phase 13.6)
+- an account's gap carousel can draw on what prospects in comparable situations
+  asked, so a deal inherits the questions its peers provoked
+- both are **proposals**. The room offers; it never writes (I.2).
+
 ## I.2 · What it is not
 
 **Not the Playbook.** The Playbook is authored, opinionated, small, and curated
@@ -414,6 +462,39 @@ What the room actually pays attention to, in priority order:
 at extraction time. A "handover" in `#payroll-ops` means something different
 from a "handover" in a partner chat, and telling the extractor which room it is
 reading improves its topic matching measurably.
+
+### I.7.1 · The room does not care about spaces
+
+The founder's correction, and it is stronger than "chats and channels are the
+same": **the Intranet does not care about spaces at all. It cares about
+information.**
+
+`space` is a disambiguation signal and a provenance label. Nothing more. The
+room does not organise by it, does not offer it as a filter, does not show a
+list of spaces, and does not track which ones are "covered." There is no
+per-space coverage model, because there is no such thing as a space the room is
+responsible for.
+
+### I.7.2 · The nag is global
+
+The room does tell the operator when it has stopped growing — but as one line
+about the corpus, never about a room:
+
+> **Nothing new since 30 Jul, 4:12p — 6 days.**
+
+It appears on the Intranet and quietly on the HomeRoom. It says only that the
+brain has stopped taking anything in.
+
+The reason it must be global rather than per-space: many of these conversations
+are private chats about a single deal, or a handful of people across
+departments, or subjects that have nothing to do with this book. **Only the
+operator knows which parts of which conversations are worth keeping.** He does
+his own sweep across chats, channels and whatever else, and brings in what
+matters. A room that named specific spaces would be presuming to know which
+ones deserve attention, and it does not.
+
+_What this rules out, deliberately:_ "the Global Sales Team chat hasn't been
+captured in nine days." The room will never say that.
 
 ## I.8 · Cost envelope
 
@@ -837,10 +918,13 @@ This is what makes "what have I actually committed to this week" answerable.
 - Each mirrored row carries the home row's `updatedAt`. Sync compares; unchanged
   rows are skipped entirely — no re-extraction, no cost.
 - A changed row updates the document, clears `extractedAt`, and re-extracts.
-- A row that has disappeared from its home table is **deleted** from the corpus
-  along with its claims — the brain must not remember what the app forgot.
+- A row that has disappeared from its home table is **kept** (C6). Its mirror is
+  stamped `originGone` with the date; its claims stay live and answerable. The
+  brain remembers what the app forgot — that is the point of it. Every citation
+  to such a document renders _"from a note that has since been removed from the
+  app"_, so the operator is never misled about what still exists upstream.
 - Full reconcile (the manual control) walks every home table; incremental sync
-  runs on the write paths that already exist.
+  runs on the write paths that already exist. Neither ever issues a delete.
 
 ### 4.5 · Backfill
 
@@ -854,15 +938,15 @@ and the room works (less completely) while it runs.
 | Risk                                          | Guard                                                  |
 | --------------------------------------------- | ------------------------------------------------------ |
 | Re-extracting the world on every deploy (F10) | `updatedAt` comparison; extraction keyed by checksum   |
-| Deleted notes lingering in the brain          | Reconcile deletes; tested                              |
+| A deleted note read as still live in the app  | `originGone` stamp shown on every citation (C6)        |
 | The mirror becoming the source of truth       | Home table always wins; mirror has no edit path        |
 | Volume blowing the prototype store            | Real tables land in this phase, before the volume does |
 
 ### 4.7 · Acceptance
 
 - A note filed in the HomeRoom is answerable from the Intranet within one sync.
-- Deleting that note removes it from the brain on the next sync, and any
-  citation to it degrades gracefully (Phase 11.6).
+- Deleting that note in the app leaves it answerable here, stamped `originGone`,
+  with every citation saying so (C6, Phase 11.6). Nothing is ever removed.
 - A second full reconcile immediately after the first makes zero model calls.
 - The composed form of an action reads as prose, not as a field dump.
 
@@ -877,12 +961,14 @@ Phases 1–3. Requires the founder to run `docs/intranet-tables.sql`.
 
 ---
 
-## Phase 5 · The Playbook, whole
+## Phase 5 · The Playbook and the demo corpus, whole
 
 ### 5.1 · Objective
 
 Put every word of the Playbook into the brain, structured well enough that a
-battlecard question is retrievable by what it is _for_, not just by its text.
+battlecard question is retrievable by what it is _for_ rather than by its text —
+and mine every demo transcript this app has ever produced for what the
+**prospect** asked (C7).
 
 ### 5.2 · What gets ingested
 
@@ -895,6 +981,40 @@ battlecard question is retrievable by what it is _for_, not just by its text.
   what it changes.
 - **Discovery bank metadata** — the facet counts, so "what do we have nothing to
   ask about" is answerable.
+- **Every demo transcript, from every sidekick** — the demo rooms, the payroll
+  demo sidekick, v3 — as documents, and mined for prospect questions (5.2a).
+
+### 5.2a · Prospect questions (C7)
+
+The founder's framing: a prospect's questions are the window to winning deals.
+So they are not treated as ordinary claims, and this is where that begins.
+
+**Extraction treats them as a distinct kind.** Every question a prospect asks in
+a demo becomes `kind: "prospect-question"`, carrying:
+
+- **`askShape`** — `definitional` (they don't know what a thing is),
+  `commercial` (price, terms, structure), `risk` (exposure, compliance,
+  liability), `technical` (integration, data, platform), `process` (how it
+  works day to day), `timeline` (how long, when).
+- **what prompted it** — the slide, the claim, or the moment in the demo that
+  provoked the question. This is the part that makes a question actionable: a
+  definitional question after the EOR slide means the framing failed.
+- **the product line it lands on** — EOR, contractor management, payroll.
+
+**They accumulate into a standing topic.** _"What prospects ask"_ is the one
+top-level topic the index is allowed to begin with rather than discover (Phase
+7 otherwise forbids authored topics) — because the founder named it, and because
+seeding it means the first demo transcript has somewhere to land. It decomposes
+by shape and by product line as the material arrives (Phase 8's mechanism, on a
+seeded root).
+
+**They never age** (Phase 12). What a buyer asked in March is still what they
+asked; nothing about the passage of time makes that less true.
+
+**They flow outward** (Phase 13.6). The harvest bridge proposes new battlecard
+questions from what real buyers actually asked, and an account's gap carousel
+can draw on the questions prospects in comparable situations raised. Proposals
+only — the room offers, it never writes.
 
 ### 5.3 · Mechanics
 
@@ -915,6 +1035,11 @@ a paste read). Its mirror follows the same `updatedAt` discipline as Phase 4.
 
 - _"What do we ask a prospect who's never run international payroll?"_ answered
   from the brain, citing specific questions, without navigating to the Playbook.
+- _"What do prospects actually ask about contractor classification?"_ — answered
+  across every demo ever captured, grouped by the shape of the ask, with the
+  moment that provoked each one.
+- _"Which of our battlecard questions has no prospect ever needed answered?"_ —
+  the inverse, and a real signal that a question is ours rather than theirs.
 - _"Has anything in the channels contradicted what our battlecard says about
   EOR versus contractor management?"_ — a question that spans two worlds and is
   only answerable because both are in one corpus (C1, C3).
@@ -935,6 +1060,8 @@ a paste read). Its mirror follows the same `updatedAt` discipline as Phase 4.
   question by its category and phase, with a Level-4 link into the Playbook.
 - Every one of the 99 questions is present as a document with its facets.
 - Ingest runs twice with no duplicates.
+- Every prospect question in a demo transcript extracts with its shape and the
+  moment that prompted it, and lands under _"What prospects ask"_.
 
 ### 5.7 · Cost / latency
 
@@ -1035,6 +1162,9 @@ Condensed; the real prompt is longer and versioned.
 - `opinion` — a view, not a decision.
 - `question` — an open question nobody answered. These matter: they are the
   organisation's known unknowns.
+- `prospect-question` — a question a **buyer** asked, in a demo (C7). Carries
+  `askShape`, what prompted it, and the product line. Never merged with
+  `question`: an internal unknown and a buyer's probe are different animals.
 
 **On confidence:**
 
@@ -1867,6 +1997,16 @@ stupid today"_ becomes a two-minute check instead of an afternoon.
 
 - **Demo sidekick transcripts** pipe in automatically at the end of a demo,
   instead of being pasted.
+- **The prospect-question harvest (C7).** The standing _"What prospects ask"_
+  topic proposes new battlecard questions drawn from what real buyers actually
+  asked — each proposal carrying the shape of the ask, the product line, the
+  moment that provoked it, and the transcript it came from. It also runs the
+  inverse: battlecard questions no prospect has ever needed answered, which is a
+  signal that a question is ours rather than theirs. Proposals only; the
+  Playbook is written by hand.
+- **The gap carousel bridge (C7).** An account's STILL UNKNOWN carousel can draw
+  on questions prospects in comparable situations asked — same product line,
+  same scenario — so a deal inherits the questions its peers provoked.
 - **Promotion to the Playbook.** A claim can be promoted, by hand, into
   `playbook:market` or `playbook:lessons`. One click, a confirm, and the claim
   travels with its provenance. Never automatic (I.2).
