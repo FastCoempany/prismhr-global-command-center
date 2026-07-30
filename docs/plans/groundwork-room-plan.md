@@ -254,6 +254,16 @@ piles up); future blocks sit quiet at reduced emphasis. The room is
 time-aware, not time-triggered — nothing fires on a timer; the composition
 just answers "what should be in front of me right now."
 
+**The day is full, and the room shows it.** A real working day in this
+seat holds twenty to twenty-five actions, not eight: one dominant move,
+four to six deal moves, three research sessions, six to ten partner-manager
+and relay touches, two to four filings, an institution action, and the
+readout. The five-item ceiling applies to the **matters-most tier** — the
+things that would make the day a loss if they slipped — never to the day
+itself. Every block renders its full working set, ranked, with overflow
+stated honestly ("and 4 more that can wait") rather than hidden. A day
+that looks light is lying, and the room does not lie.
+
 ### 4.2 How the queue is ranked
 
 A weighted rule engine in the pattern of the morning brief, extended for
@@ -544,8 +554,25 @@ The correction, restated: the room's job is to know **when going into Sales
 Navigator (or LinkedIn generally) adds to productivity** — and to hand the
 operator the person, company, or topic, the filter recipe, and the reason.
 The tools' filters are deep; the room's job is to arrive with the filter
-already composed. (Founder screenshots of the live filter surfaces are
-incoming; they refine recipe fields, not the engine.)
+already composed.
+
+This section is grounded in the operator's actual instance — the
+screenshots in the `salesnavscreenshots` release, read and stored in
+`docs/research/sales-navigator-anatomy.md`. The facts that reshape the
+engine: **Salesforce sync is live** (CRM badges everywhere; people missing
+from the CRM carry an `! Update CRM` flag — a built-in contact-gap
+detector); **the book is already uploaded** as the 118-account list
+`Astee Accounts Antaeus-2026-07-28`; **the book of business selector is
+still empty** — pointing it at that list is the highest-leverage five
+minutes available, because alerts and intent then key to the book;
+**buyer intent is already firing on book accounts** (My HR Pros: High,
+flagged a week ago; Amplify: High with 11 activities; AlphaStaffHCM,
+Armhr, AscendHR, Adapt: High) — employees of those accounts are engaging
+with our content right now; **48 of the 118 accounts carry dated CRM
+opportunities** — live HCM-side conversations Global can ride; and the
+**personas are fresh** (Function: HR, Operations · Seniority: Director,
+VP, CXO · Region: NAMER, updated 7/27), which makes the Relationship
+explorer a one-click stakeholder engine per account.
 
 ### 8.1 Directive types, their triggers, and their recipes
 
@@ -553,33 +580,47 @@ Each directive renders as: **why now** (one doctrine-compliant sentence) →
 **the recipe** (copyable, mono) → **what to bring back** (the artifact) →
 **where it files** (always an existing store).
 
+**D0 — Housekeeping that multiplies everything else.** *(one-time, then
+standing checks)*
+Set **Book of business** to the uploaded 118-account list (it still reads
+"My Current Accounts (0)"); keep the three personas current (last touched
+7/27); spot-check CRM sync health — the `CRM` / `! Update CRM` badges only
+mean something while the sync is trusted. The room keeps these as standing
+checks that surface only when broken.
+
 **D1 — Fill a stakeholder gap.**
 *Trigger:* an account in play with fewer than two known people, or a
 zero-contact account entering a briefing cycle (MedHQ is the canonical
 case).
-*Recipe (lead search):* Current company = [account] · Function = Human
-Resources, Operations, Finance · Seniority = VP+, C-suite · Geography =
-[account metro].
-*Bring back:* three to five names with titles.
+*Recipe (the account page's Relationship explorer — persona-driven, so
+most of the filter is pre-composed):* Persona = Recommended buyer persona ·
+Function = Human Resources, Operations, Finance · Seniority = Director,
+Vice President, CXO · Region = NAMER. Harvest **every `! Update CRM`
+card** — the tool is already flagging people Salesforce doesn't know.
+*Bring back:* three to five names with titles, plus the "Follows your
+company" marks (those people are warm).
 *Files to:* stakeholder candidates on the account (a confirm flow — never
 auto-merged into the canonical roster).
 
 **D2 — Second-thread a one-person deal.**
 *Trigger:* an active conversation riding on a single contact (the app
 already computes thread width).
-*Recipe:* Current company = [account] · Function = the missing lane (ops if
-we only know the exec; finance if the money question is open) · Seniority =
-Director+.
+*Recipe:* Relationship explorer on the account, Function = the missing
+lane (operations if we only know the exec; finance if the money question
+is open) · Seniority = Director+ · plus **Best path in → Connection** and
+TeamLink/mutual-connection marks — the warmest route to the second voice.
 *Bring back:* one name worth asking the existing contact for an intro to.
 *Files to:* the account's ask queue, phrased as the relay it is ("who on
 your side runs the operations of this?").
 
 **D3 — Refresh a stale account.**
 *Trigger:* research older than 21 days on an account above the demand gate.
-*Recipe (account page):* headcount trend · department headcount changes ·
-posted jobs by geography (**jobs posted into other countries are the
-single strongest demand signal the research doctrine names**) · recent
-company posts.
+*Recipe (account page):* **Account IQ** ("how [account] makes money" — the
+pre-composed brief) · company headcount growth · **department headcount
+growth** (an ops/HR team growing faster than the company is a tell) ·
+Spotlight: **Job opportunities** by geography (**jobs posted into other
+countries are the single strongest demand signal the research doctrine
+names**) · recent company posts.
 *Bring back:* anything that changes the demand read.
 *Files to:* the research trail, via the existing deep-research note format,
 so "what changed" diffs keep working.
@@ -587,7 +628,8 @@ so "what changed" diffs keep working.
 **D4 — Pre-meeting person read.**
 *Trigger:* any meeting inside 48 hours.
 *Recipe (profile):* current role tenure · prior companies (shared history
-with our world?) · recent posts and comments · mutual connections.
+with our world?) · Recent updates → **Posted on LinkedIn** (what they've
+said in the last 30 days) · mutual connections.
 *Bring back:* two sentences: who this person is, and one thing to open
 with.
 *Files to:* the meeting's prep note on the account.
@@ -595,9 +637,9 @@ with.
 **D5 — Chase a wire hit.**
 *Trigger:* a wire item matched a book account or a named competitor on a
 book account.
-*Recipe:* the account's company page activity + posts from its leadership
-in the last two weeks + (for competitor news) who at our accounts follows
-or engages the competitor.
+*Recipe:* the account page's Recent activities spotlight + posts from its
+leadership in the last two weeks + (for competitor news) who at our
+accounts follows or engages the competitor.
 *Bring back:* whether the news is real inside the account and who is
 talking about it.
 *Files to:* the account note trail, tagged to the wire item.
@@ -624,16 +666,65 @@ poster who is a book account's employee or a partner's client (route
 through permission).
 *Files to:* the playbook's market-facts lane.
 
+**D8 — Buyer-intent triage.** *(daily, ten minutes — new, from the
+instance read)*
+*Trigger:* every morning; urgently when the Accounts dashboard flags an
+intent increase (as it did for My HR Pros: "now expressing High buyer
+intent in your company," flagged a week ago).
+*Recipe:* Accounts dashboard → the **"Moderate or high buyer intent"**
+chip on the 118-list → read each flagged account's activity count and
+lead recommendations (Amplify was at High with **11 activities** — the
+hottest reading captured).
+*Bring back:* per-account intent readings, dated.
+*Files to:* signals on the account ("Sales Nav 7/30: High intent, 11
+activities"). **The room re-ranks the relay motion on this** — an
+account whose people are already reading us outranks a colder account of
+equal fit, and its partner-manager briefing moves to the top of the
+cycle.
+
+**D9 — The alerts sweep.** *(daily, five minutes — new)*
+*Trigger:* every morning, after book-of-business is set so alerts key to
+the book.
+*Recipe:* Home tab → All alerts → filter to the 118-account list. Triage
+three kinds: growth reads ("job openings have accelerated"), people moves,
+and book-account posts (Gordon J. Maier posting appeared in the captured
+feed).
+*Bring back:* only what changes a plan — everything else dismissed.
+*Files to:* the wire (as first-party items) or the account's signals.
+
+**D10 — Upcoming-deals cross-check.** *(weekly — new)*
+*Trigger:* Monday, with the kickoff.
+*Recipe:* Accounts dashboard → **"Upcoming deals (48)"** chip — the CRM
+opportunity dates riding on the uploaded list ("AlphaStaff- Healthee"
+7/31, "Amplify: ClearCo" 7/31, "Adapt: Compliance Amendment" 8/21…).
+*Bring back:* which book accounts have an HCM-side conversation already
+in flight.
+*Files to:* the account's plan. **Doctrine: these are riding lanes** — a
+dated deal means a partner manager is already talking to that account;
+the Global briefing rides that conversation, coordinated through the
+partner manager, never around it.
+
+**D11 — Changed-jobs harvest.** *(weekly — new)*
+*Trigger:* weekly, scoped to the book.
+*Recipe:* Lead search → Current company = the 118 list · Recent updates →
+**Changed jobs** toggle · Seniority = Director+.
+*Bring back:* leaders newly in seat at book accounts — a new operations VP
+is a natural briefing moment (the Armhr "Recently hired" alert is this
+signal arriving unasked).
+*Files to:* stakeholder candidates + a dated opening on the account.
+
 ### 8.2 How directives are generated and scheduled
 
 A pure builder computes the directive set from: contact counts and thread
 widths (D1, D2), research staleness against the demand gate (D3), the
-meeting calendar (D4), unmatched wire items (D5), M2 partner state (D6), and
-a weekly clock (D7). Directives rank into the 9:00–11:00 research window,
-capped at **three per day** — a directive is a session, not a to-do; three
-honest sessions beat ten open tabs. Each directive carries a done key; done
-means the artifact came back and filed, not that the tab was opened
-(rewarding truth, not activity).
+meeting calendar (D4), unmatched wire items (D5), M2 partner state (D6),
+weekly clocks (D7, D10, D11), and the standing daily pair (D8 intent
+triage, D9 alerts sweep). The two dailies are ten minutes combined and
+open the research window; beyond them, **three full sessions per day** —
+a directive is a session, not a to-do, and three honest sessions beat ten
+open tabs. Each directive carries a done key; done means the artifact
+came back and filed, not that the tab was opened (rewarding truth, not
+activity).
 
 ### 8.3 What never happens
 
