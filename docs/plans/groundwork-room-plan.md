@@ -911,5 +911,17 @@ corrected content: `docs/mockups/groundwork-triptych-v3-2026-07-30.html`.
   (Simploy's paragraph changes tense the moment the follow-up sends). The
   self-updating dossier demonstrated, not described.
 
-Rounds one and two are retained in-repo as recorded alternatives
-(`groundwork-triptych-2026-07-30.html`, `groundwork-triptych-v2-2026-07-30.html`).
+**Round four — the finalists, rebuilt (founder, 2026-07-30):** the two
+original shapes the founder pointed back to — Day Spine and The Desk —
+rebuilt with every correction folded in:
+`docs/mockups/groundwork-dayspine-desk-2026-07-30.html`. The Day Spine
+carries the plan-becomes-record clock; The Desk carries the countrywide
+ranked queue (proximity as a tie-breaker mark only, never priority), plain-
+state rows, composed drafts and research recipes in the lens, and rows that
+stamp themselves with the time they were worked. Both share the wire, the
+institutions card, and the doctrine-voiced State of play. The decision
+between them is one sentence: does time organize the page, or does the book.
+
+Rounds one through three are retained in-repo as recorded alternatives
+(`groundwork-triptych-2026-07-30.html`, `groundwork-triptych-v2-2026-07-30.html`,
+`groundwork-triptych-v3-2026-07-30.html`).
