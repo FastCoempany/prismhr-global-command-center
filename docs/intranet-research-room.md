@@ -2225,3 +2225,39 @@ first, the world only when the record is empty, and never blended.
 Extraction, indexing, retrieval, synthesis, time, the mirrors, C1–C7, the
 write ban, the eval set, the ceilings — untouched. This part is about the
 face and the feeder, not the brain.
+
+## IV.8 · The ledger direction (founder feedback, 2026-07-30 evening)
+
+The triptych round chose a direction: the **running record** (Concept 1, "the
+Ledger") is right, with corrections. These are decreed for the next build of
+the room's face; the ingest-digest change below is already in production.
+
+- **The ingest digest is the whole story, not the index alone.** After a
+  paste is read, the report says: what the paste was and the span it covered;
+  a plain-words tally of what it carried (facts, decisions, commitments,
+  open questions, things buyers asked); how the index grew; where buyer asks
+  travel (the Playbook's shelf); and which book accounts were named, with
+  their rows as the destination. Progress lines ("Reading what you pasted…")
+  are transient — replaced by the result, never left behind.
+- **The record collapses; it never disappears.** Every entry in the running
+  record folds to its one-line stamp and reopens on a click. Day dividers
+  collapse a whole day at once. Nothing is dismissed — C6 applies to the
+  surface too.
+- **The archive is a rail tab.** At the bottom of the index rail, a
+  delineated tab — **The archive** — holds the record calendarized: months,
+  then days, each day carrying its counts (asks · pastes), each day opening
+  that day's slice of the record.
+- **By country is a rail tab, and countries are lenses, not copies.** The
+  second delineated tab — **By country** — lists every country the record
+  touches, colored flag and name, each opening the same claims seen through
+  that country: its topics, its buyer asks, its commitments. Nothing is
+  duplicated: a country row is a standing filter over entities, so the
+  record stays single-copy (C1: one brain) while reading as if it were
+  indexed twice.
+- **Held for a later big haul, deliberately:** per-country world knowledge —
+  tax, payroll, government, employment contracts (EOR/contractor),
+  compliance, how people can and cannot be paid, paid time off, offboarding
+  and termination rules, social and required and health benefits — gathered
+  from outside the record and indexed under the same country lenses. The
+  by-country tab is built so that this lands as MORE ROWS under each flag,
+  not as a new surface.

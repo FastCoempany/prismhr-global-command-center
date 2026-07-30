@@ -1756,3 +1756,24 @@ describe("what prospects ask lives on the Playbook (IV.5)", () => {
     assert.deepEqual(propose[0].rooms.sort(), ["Acme demo", "Borealis call"]);
   });
 });
+
+describe("the ingest digest says where things went, not just that the index grew", () => {
+  const runners = readFileSync(join(root, "src/app/intranet/runners.ts"), "utf8");
+  const rc = /export async function readCapture[\s\S]*?\n}\n/.exec(runners)?.[0] ?? "";
+
+  test("it names what the paste was and when it spans", () => {
+    assert.ok(rc.includes("That was "), "the digest lost the paste's identity line");
+  });
+  test("it tallies what kinds of things were kept, in plain words", () => {
+    assert.ok(rc.includes("things buyers asked"), "buyer asks vanish into a number");
+    assert.ok(rc.includes("In it:"), "no kinds tally");
+    assert.ok(!/["`]claims?["`:]/.test(rc), "pipeline vocabulary in the digest");
+  });
+  test("it says where buyer asks travel — the Playbook", () => {
+    assert.ok(rc.includes("proposals surface on the Playbook"));
+  });
+  test("it names book accounts the paste mentioned", () => {
+    assert.ok(rc.includes("accountsMentioned"), "account mentions are not surfaced");
+    assert.ok(rc.includes("their rows carry it from here"));
+  });
+});
