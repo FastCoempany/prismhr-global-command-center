@@ -52,6 +52,7 @@ import {
   type MirrorDoc,
 } from "@/lib/intranet/mirror";
 import { getScreen } from "@/lib/catalog";
+import { accountsMentioned } from "@/lib/intranet/bridges";
 import { isNamespacedAccountId } from "@/lib/today/overlay";
 import type { Claim, Topic } from "@/lib/intranet/types";
 
@@ -888,7 +889,75 @@ export async function readCapture(captureId: string): Promise<RunReport> {
     }
 
     const lines = [...read.lines];
-    if (grew.length) lines.push(`The index grew: ${grew.join(" · ")}.`);
+
+    // The full digest (IV.3): not just the index, but what the paste actually
+    // was, what kinds of things it carried, and where they travel from here.
+    const docsRead = await prisma.intranetDoc.findMany({
+      where: { captureId },
+      select: { id: true, space: true, occurredAt: true },
+      take: 400,
+    });
+    if (docsRead.length > 0) {
+      const spaces = [...new Set(docsRead.map((d) => d.space).filter(Boolean))];
+      const times = docsRead
+        .map((d) => d.occurredAt?.getTime() ?? NaN)
+        .filter((t) => !Number.isNaN(t))
+        .sort((a, b) => a - b);
+      const day = (t: number) =>
+        new Date(t).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          timeZone: "America/Chicago",
+        });
+      const span =
+        times.length > 1 && day(times[0]) !== day(times[times.length - 1])
+          ? `, ${day(times[0])} → ${day(times[times.length - 1])}`
+          : times.length
+            ? `, ${day(times[0])}`
+            : "";
+      if (spaces.length) lines.push(`That was ${spaces.slice(0, 3).join(", ")}${span}.`);
+
+      const claims = await prisma.intranetClaim.findMany({
+        where: { docId: { in: docsRead.map((d) => d.id) } },
+        select: { kind: true, entities: true },
+        take: 2000,
+      });
+      const KIND_WORD: Record<string, string> = {
+        fact: "facts",
+        decision: "decisions",
+        commitment: "commitments",
+        process: "ways we do things",
+        question: "open questions",
+        opinion: "opinions",
+        "prospect-question": "things buyers asked",
+      };
+      const tally = new Map<string, number>();
+      for (const c of claims) tally.set(c.kind, (tally.get(c.kind) ?? 0) + 1);
+      const parts = Object.keys(KIND_WORD)
+        .filter((k) => (tally.get(k) ?? 0) > 0)
+        .map((k) => `${tally.get(k)} ${KIND_WORD[k]}`);
+      if (parts.length) lines.push(`In it: ${parts.join(" · ")}.`);
+
+      if (grew.length) lines.push(`The index grew: ${grew.join(" · ")}.`);
+
+      const buyers = tally.get("prospect-question") ?? 0;
+      if (buyers > 0)
+        lines.push(
+          `${buyers} buyer ask${buyers === 1 ? "" : "s"} filed under ${PROSPECT_ROOT.label} — proposals surface on the Playbook.`,
+        );
+
+      const named = accountsMentioned(
+        [...new Set(claims.flatMap((c) => c.entities))],
+        peos.map((p) => ({ id: p.id, name: p.name })),
+      );
+      if (named.length)
+        lines.push(
+          `The book knows these names: ${named.map((a) => a.name).join(", ")} — their rows carry it from here.`,
+        );
+    } else if (grew.length) {
+      lines.push(`The index grew: ${grew.join(" · ")}.`);
+    }
+
     lines.push(...idx.lines.filter((l) => l !== "The index is settled."));
     if (!read.ok && read.reason) lines.push(read.reason);
     return { ok: true, lines, pending: read.pending };
