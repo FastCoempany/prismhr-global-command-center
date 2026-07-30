@@ -1109,6 +1109,17 @@ In all three, every control obeys §3.5: copy buttons copy composed,
 addressed text; links go where the answer is printed (the ClearCo
 opportunity page names its owner); worked stamps land as side effects.
 
+**Round seven — refined; round eight — LOCKED (founder, 2026-07-30):**
+round seven folded in the founder's refinements (time-banded rail,
+single-column file, the To-Russ pull tab, history at the bottom, the
+quiet intent-due nudge, honest chrome and mail controls, and the ▤ grab
+upgraded to walk the whole Sales Navigator list). The founder then
+locked **wire in the rail** as the design. The element-by-element
+intelligence wiring for the locked layout — every surface element mapped
+to the exact stores and builders it reads across the app — is the build
+spec: `docs/plans/groundwork-build-spec.md`. Design exploration is
+closed; building is next.
+
 Rounds one through three are retained in-repo as recorded alternatives
 (`groundwork-triptych-2026-07-30.html`, `groundwork-triptych-v2-2026-07-30.html`,
 `groundwork-triptych-v3-2026-07-30.html`).
