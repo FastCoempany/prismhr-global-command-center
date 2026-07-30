@@ -7,6 +7,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
+import { useDismiss } from "@/components/use-dismiss";
 import { ChiClock } from "../today-client";
 import {
   addFollowUp,
@@ -199,6 +200,11 @@ function Row({ row }: { row: RoomRow }) {
   const [closedKey, setClosedKey] = useState<string | null>(null);
   const closed = !!row.outstanding && closedKey === row.outstanding.doneKey;
   const [stageOpen, setStageOpen] = useState<string | null>(null);
+  // The stage checklist closes on a click anywhere else — the nodes that open it
+  // sit inside this wrapper, so a node still toggles its own drawer.
+  const stageRef = useDismiss<HTMLDivElement>(stageOpen !== null, () =>
+    setStageOpen(null),
+  );
   const [pending, start] = useTransition();
   // The move button owns its own spinner — a register-row op must never
   // dress the Mark-it-done button in "Saving…".
@@ -589,7 +595,7 @@ function Row({ row }: { row: RoomRow }) {
           </div>
         )}
 
-        <div className={styles.climb}>
+        <div className={styles.climb} ref={stageRef}>
           <div className={styles.track}>
             <div
               className={styles.gain}
@@ -610,94 +616,94 @@ function Row({ row }: { row: RoomRow }) {
               onClick={() => setStageOpen((k) => (k === s.key ? null : s.key))}
             />
           ))}
-        </div>
-        <div className={styles.climbCap}>{label}</div>
+          <div className={styles.climbCap}>{label}</div>
 
-        {openStage && (
-          <div className={styles.stageDrawer}>
-            <div className={styles.sdHead}>
-              <b>{openStage.label}</b>
-              <button
-                type="button"
-                className={styles.sdClose}
-                onClick={() => setStageOpen(null)}
-              >
-                ✕
-              </button>
-            </div>
-            <ul className={styles.sdList}>
-              {openStage.items.map((it) => (
-                <li key={it.index} className={it.checked ? styles.sdDone : undefined}>
-                  {row.canWrite ? (
-                    <form action={toggleCheck} className={styles.sdForm}>
-                      <input type="hidden" name="cardId" value={row.cardId} />
-                      <input type="hidden" name="node" value={openStage.key} />
-                      <input type="hidden" name="index" value={it.index} />
-                      <input type="hidden" name="returnTo" value="/room" />
-                      <button
+          {openStage && (
+            <div className={styles.stageDrawer}>
+              <div className={styles.sdHead}>
+                <b>{openStage.label}</b>
+                <button
+                  type="button"
+                  className={styles.sdClose}
+                  onClick={() => setStageOpen(null)}
+                >
+                  ✕
+                </button>
+              </div>
+              <ul className={styles.sdList}>
+                {openStage.items.map((it) => (
+                  <li key={it.index} className={it.checked ? styles.sdDone : undefined}>
+                    {row.canWrite ? (
+                      <form action={toggleCheck} className={styles.sdForm}>
+                        <input type="hidden" name="cardId" value={row.cardId} />
+                        <input type="hidden" name="node" value={openStage.key} />
+                        <input type="hidden" name="index" value={it.index} />
+                        <input type="hidden" name="returnTo" value="/room" />
+                        <button
+                          className={`${styles.sdRadio} ${it.checked ? styles.sdRadioOn : ""}`}
+                          aria-label={it.checked ? "uncheck" : "check"}
+                        />
+                      </form>
+                    ) : (
+                      <span
                         className={`${styles.sdRadio} ${it.checked ? styles.sdRadioOn : ""}`}
-                        aria-label={it.checked ? "uncheck" : "check"}
                       />
-                    </form>
-                  ) : (
-                    <span
-                      className={`${styles.sdRadio} ${it.checked ? styles.sdRadioOn : ""}`}
-                    />
-                  )}
-                  <span className={styles.sdItem}>{it.item}</span>
-                  {it.note && (
-                    <span className={styles.sdNote} title={it.note}>
-                      ≡
-                    </span>
-                  )}
-                </li>
-              ))}
-            </ul>
-            {row.suggestions
-              .filter((sg) => sg.node === openStage.key)
-              .slice(0, 2)
-              .map((sg) => (
-                <div key={`${sg.node}:${sg.index}`} className={styles.sdSugg}>
-                  Evidence suggests <b>“{sg.item}” can be checked</b> — {sg.why}.
-                  {row.canWrite && (
-                    <span className={styles.sdSuggActs}>
-                      <form action={toggleCheck} className={styles.inline}>
-                        <input type="hidden" name="cardId" value={row.cardId} />
-                        <input type="hidden" name="node" value={sg.node} />
-                        <input type="hidden" name="index" value={sg.index} />
-                        <input type="hidden" name="returnTo" value="/room" />
-                        <button className={styles.sdTag}>accept ✓</button>
-                      </form>
-                      <form action={dismissSuggestion} className={styles.inline}>
-                        <input type="hidden" name="cardId" value={row.cardId} />
-                        <input type="hidden" name="node" value={sg.node} />
-                        <input type="hidden" name="index" value={sg.index} />
-                        <input type="hidden" name="returnTo" value="/room" />
-                        <button className={styles.sdTag}>dismiss ✕</button>
-                      </form>
-                    </span>
-                  )}
-                </div>
-              ))}
-            {row.canWrite ? (
-              <form action={saveNote} className={styles.sdJudg}>
-                <input type="hidden" name="cardId" value={row.cardId} />
-                <input type="hidden" name="node" value={openStage.key} />
-                <input type="hidden" name="returnTo" value="/room" />
-                <input
-                  name="note"
-                  defaultValue={openStage.judgment}
-                  placeholder="Your judgment — why this stage sits where it does…"
-                />
-                <button className={styles.sdTag}>save</button>
-              </form>
-            ) : (
-              openStage.judgment && (
-                <p className={styles.sdJudgRead}>{openStage.judgment}</p>
-              )
-            )}
-          </div>
-        )}
+                    )}
+                    <span className={styles.sdItem}>{it.item}</span>
+                    {it.note && (
+                      <span className={styles.sdNote} title={it.note}>
+                        ≡
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+              {row.suggestions
+                .filter((sg) => sg.node === openStage.key)
+                .slice(0, 2)
+                .map((sg) => (
+                  <div key={`${sg.node}:${sg.index}`} className={styles.sdSugg}>
+                    Evidence suggests <b>“{sg.item}” can be checked</b> — {sg.why}.
+                    {row.canWrite && (
+                      <span className={styles.sdSuggActs}>
+                        <form action={toggleCheck} className={styles.inline}>
+                          <input type="hidden" name="cardId" value={row.cardId} />
+                          <input type="hidden" name="node" value={sg.node} />
+                          <input type="hidden" name="index" value={sg.index} />
+                          <input type="hidden" name="returnTo" value="/room" />
+                          <button className={styles.sdTag}>accept ✓</button>
+                        </form>
+                        <form action={dismissSuggestion} className={styles.inline}>
+                          <input type="hidden" name="cardId" value={row.cardId} />
+                          <input type="hidden" name="node" value={sg.node} />
+                          <input type="hidden" name="index" value={sg.index} />
+                          <input type="hidden" name="returnTo" value="/room" />
+                          <button className={styles.sdTag}>dismiss ✕</button>
+                        </form>
+                      </span>
+                    )}
+                  </div>
+                ))}
+              {row.canWrite ? (
+                <form action={saveNote} className={styles.sdJudg}>
+                  <input type="hidden" name="cardId" value={row.cardId} />
+                  <input type="hidden" name="node" value={openStage.key} />
+                  <input type="hidden" name="returnTo" value="/room" />
+                  <input
+                    name="note"
+                    defaultValue={openStage.judgment}
+                    placeholder="Your judgment — why this stage sits where it does…"
+                  />
+                  <button className={styles.sdTag}>save</button>
+                </form>
+              ) : (
+                openStage.judgment && (
+                  <p className={styles.sdJudgRead}>{openStage.judgment}</p>
+                )
+              )}
+            </div>
+          )}
+        </div>
 
         <div className={styles.movewrap}>
           {row.outcome ? (
@@ -1624,8 +1630,10 @@ function FollowUpBlock({ rows }: { rows: FollowUpRow[] }) {
   const [open, setOpen] = useState(false);
   const [pinned, setPinned] = useState(false);
   const show = open || pinned;
+  const ref = useDismiss<HTMLDivElement>(pinned, () => setPinned(false));
   return (
     <div
+      ref={ref}
       className={styles.miForm}
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
@@ -1796,6 +1804,10 @@ export function RoomClient({
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [drawer, setDrawer] = useState<"cadence" | "eye" | null>(null);
+  // Click away (or press Escape) to leave any of them — the trigger lives
+  // inside each wrapper, so its own toggle still works.
+  const addRef = useDismiss<HTMLSpanElement>(menuOpen, () => setMenuOpen(false));
+  const drawerRef = useDismiss<HTMLDivElement>(drawer !== null, () => setDrawer(null));
   const dueCount = cadence.filter((c) => c.due && !c.muted).length + checkins.length;
   const eyeCount = warming.length + later.length;
 
@@ -1819,7 +1831,7 @@ export function RoomClient({
           </svg>
           <span className={styles.roomName}>HOMEROOM</span>
         </span>
-        <span className={styles.addWrap}>
+        <span className={styles.addWrap} ref={addRef}>
           <button
             type="button"
             className={styles.addBtn}
@@ -1898,49 +1910,51 @@ export function RoomClient({
       ))}
       {boardNames.length > 0 && null}
 
-      {drawer === "cadence" && (
-        <CadenceDrawer
-          cadence={cadence}
-          checkins={checkins}
-          onClose={() => setDrawer(null)}
-        />
-      )}
-      {drawer === "eye" && (
-        <EyeDrawer warming={warming} later={later} onClose={() => setDrawer(null)} />
-      )}
+      <div ref={drawerRef}>
+        {drawer === "cadence" && (
+          <CadenceDrawer
+            cadence={cadence}
+            checkins={checkins}
+            onClose={() => setDrawer(null)}
+          />
+        )}
+        {drawer === "eye" && (
+          <EyeDrawer warming={warming} later={later} onClose={() => setDrawer(null)} />
+        )}
 
-      <button
-        type="button"
-        className={styles.edge}
-        style={{ top: "40%" }}
-        onClick={() => setDrawer((d) => (d === "cadence" ? null : "cadence"))}
-        title="Roundups and Check-ins"
-      >
-        <span>ROUNDUPS</span>
-        <span className={styles.edgeDot}>·</span>
-        <span>CHECK-INS</span>
-        {dueCount > 0 && <span className={styles.edgeCount}>{dueCount}</span>}
-      </button>
-      <button
-        type="button"
-        className={styles.edge}
-        style={{ top: "68%" }}
-        onClick={() => setDrawer((d) => (d === "eye" ? null : "eye"))}
-        title="Keep an eye out"
-      >
-        <svg
-          viewBox="0 0 24 24"
-          width="13"
-          height="13"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
+        <button
+          type="button"
+          className={styles.edge}
+          style={{ top: "40%" }}
+          onClick={() => setDrawer((d) => (d === "cadence" ? null : "cadence"))}
+          title="Roundups and Check-ins"
         >
-          <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" />
-          <circle cx="12" cy="12" r="3" />
-        </svg>
-        {eyeCount > 0 && <span className={styles.edgeCount}>{eyeCount}</span>}
-      </button>
+          <span>ROUNDUPS</span>
+          <span className={styles.edgeDot}>·</span>
+          <span>CHECK-INS</span>
+          {dueCount > 0 && <span className={styles.edgeCount}>{dueCount}</span>}
+        </button>
+        <button
+          type="button"
+          className={styles.edge}
+          style={{ top: "68%" }}
+          onClick={() => setDrawer((d) => (d === "eye" ? null : "eye"))}
+          title="Keep an eye out"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            width="13"
+            height="13"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+          {eyeCount > 0 && <span className={styles.edgeCount}>{eyeCount}</span>}
+        </button>
+      </div>
     </div>
   );
 }

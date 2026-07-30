@@ -11,6 +11,7 @@ import {
   isManual,
   readFollowUp,
   routedIds,
+  sameOrg,
   wavedNames,
   withMarkers,
 } from "@/lib/today/followup-brain";
@@ -610,19 +611,29 @@ export async function followUpAddBoard(formData: FormData) {
   await safeWrite(async () => {
     const prisma = getPrisma();
     const t = await prisma.touch.findUnique({ where: { subjectKey } });
-    const top = await prisma.dashCard.findFirst({
-      orderBy: { position: "desc" },
-      select: { position: true },
-    });
-    await prisma.dashCard.create({
-      data: {
-        name,
-        subtitle: null,
-        position: (top?.position ?? -1) + 1,
-        states: {},
-        notes: t ? { discovery: `Came in on a follow-up: ${t.label}` } : {},
-      },
-    });
+
+    // Never create a second row for a deal that already exists. The board is
+    // checked first, then the book: if the account is in the book under its own
+    // spelling, the card takes THAT name so every intel path binds to it —
+    // notes, research, the meter. A near-miss spelling would strand the row.
+    const existing = await prisma.dashCard.findMany({ select: { id: true, name: true } });
+    const already = existing.find((c) => sameOrg(c.name, name));
+    const inBook = peos.find((p) => sameOrg(p.name, name));
+    if (!already) {
+      const top = await prisma.dashCard.findFirst({
+        orderBy: { position: "desc" },
+        select: { position: true },
+      });
+      await prisma.dashCard.create({
+        data: {
+          name: inBook?.name ?? name,
+          subtitle: null,
+          position: (top?.position ?? -1) + 1,
+          states: {},
+          notes: t ? { discovery: `Came in on a follow-up: ${t.label}` } : {},
+        },
+      });
+    }
     if (t) {
       await prisma.touch.update({
         where: { subjectKey },

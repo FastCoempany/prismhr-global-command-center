@@ -21,9 +21,12 @@ export type FollowUpRead = {
   candidates: string[];
 };
 
-// Words that start a sentence or a chase and mean nothing on their own. A chase
-// almost always opens with a verb, and a verb is not a company.
-const STOP = new Set(
+// Words that open a chase and mean nothing on their own — imperative verbs and
+// the connective tissue around them. ONLY these are trimmed off the ends of a
+// capitalised run. Domain nouns are deliberately absent: "Payroll Data Systems"
+// is a company whose name starts with a word we also use for the work, and
+// trimming it would report a firm nobody wrote down.
+const TRIM = new Set(
   [
     "chase",
     "call",
@@ -36,7 +39,6 @@ const STOP = new Set(
     "follow",
     "check",
     "confirm",
-    "book",
     "schedule",
     "remind",
     "tell",
@@ -56,6 +58,9 @@ const STOP = new Set(
     "need",
     "needs",
     "want",
+    "walk",
+    "explain",
+    "price",
     "the",
     "a",
     "an",
@@ -108,38 +113,6 @@ const STOP = new Set(
     "october",
     "november",
     "december",
-    "eor",
-    "cm",
-    "hr",
-    "us",
-    "usa",
-    "uk",
-    "sow",
-    "msa",
-    "nda",
-    "sf",
-    "salesforce",
-    "prismhr",
-    "prism",
-    "teams",
-    "outlook",
-    "zoom",
-    "demo",
-    "payroll",
-    "contractor",
-    "contractors",
-    "invoice",
-    "quote",
-    "pricing",
-    "proposal",
-    "contract",
-    "meeting",
-    "call",
-    "notes",
-    "note",
-    "deck",
-    "form",
-    "intake",
     "i",
     "me",
     "my",
@@ -200,7 +173,6 @@ const STOP = new Set(
     "asap",
     "eod",
     "eow",
-    "am",
     "pm",
   ].map((w) => w.toLowerCase()),
 );
@@ -235,6 +207,11 @@ function mentions(haystack: string, name: string): boolean {
 // Capitalised runs in the ORIGINAL text: "Bryce Rowley", "Advocate Pay", "Acme".
 // Sentence-initial words are kept — a chase often opens with the name — but the
 // stop list throws out the verbs that open most of them.
+//
+// Stop words are trimmed from the ENDS only, never from the middle. Cutting the
+// middle out of a run invents names that were never written: "Global Payroll
+// Platform" became "Global Platform", and the operator was asked to add a
+// company that appears nowhere in his sentence.
 function capitalRuns(raw: string): string[] {
   const runs: string[] = [];
   for (const m of raw.matchAll(
@@ -244,10 +221,13 @@ function capitalRuns(raw: string): string[] {
     if (!run) continue;
     // An ALL-CAPS shout ("TO DO", "ASAP") is emphasis, not a name.
     if (run === run.toUpperCase() && run.replace(/[^A-Za-z]/g, "").length <= 4) continue;
-    const words = run.split(/\s+/).filter((w) => !STOP.has(fold(w)));
-    if (!words.length) continue;
-    const kept = words.join(" ");
-    if (fold(kept).length < 3) continue;
+    const words = run.split(/\s+/);
+    let a = 0;
+    let b = words.length;
+    while (a < b && TRIM.has(fold(words[a]))) a++;
+    while (b > a && TRIM.has(fold(words[b - 1]))) b--;
+    const kept = words.slice(a, b).join(" ");
+    if (!kept || fold(kept).length < 3) continue;
     runs.push(kept);
   }
   return runs;
@@ -271,16 +251,95 @@ const PLACES = new Set(
   ].map((c) => key(c)),
 );
 
-// Corporate tells: a word that only ever appears in a company's name.
+// What we sell. Global Payroll, EOR and Contractor Management are the three
+// segments of the Prism Global platform — they are products, and a product is
+// never a company. Written out in the forms an operator actually types.
+const PRODUCTS = new Set(
+  [
+    "Global Payroll",
+    "Global Payroll Platform",
+    "Global Platform",
+    "Payroll Platform",
+    "Prism Global",
+    "PrismHR Global",
+    "Global",
+    "EOR",
+    "Employer of Record",
+    "Contractor Management",
+    "Contractor Payments",
+    "Global Wallet",
+    "Wallet",
+  ].map((p) => key(p)),
+);
+
+// Words that describe the work rather than name a party to it. A run made
+// entirely of these is a phrase, not a company — "Global Payroll Platform" is
+// something we sell, not something to put on the board.
+const GENERIC = new Set(
+  [
+    "global",
+    "payroll",
+    "platform",
+    "product",
+    "products",
+    "segment",
+    "segments",
+    "software",
+    "portal",
+    "module",
+    "suite",
+    "team",
+    "side",
+    "market",
+    "region",
+    "roadmap",
+    "timeline",
+    "update",
+    "recap",
+    "intro",
+    "kickoff",
+    "onboarding",
+    "implementation",
+    "migration",
+    "integration",
+    "support",
+    "ticket",
+    "case",
+    "thread",
+    "conversation",
+    "route",
+    "prospects",
+    "prospect",
+    "client",
+    "clients",
+    "customer",
+    "customers",
+    "employer",
+    "employers",
+    "record",
+    "wallet",
+  ].map((w) => w.toLowerCase()),
+);
+
+// Corporate tells: a word that reads as part of a company's registered name.
+// Deliberately excludes "payroll" and "hr" — in this book those two describe
+// the work far more often than they name the firm doing it.
 const ORG_WORD =
-  /\b(inc|llc|corp|corporation|co|ltd|limited|group|holdings|partners|solutions|services|staffing|payroll|hr|peo|technologies|tech|systems|labs|logistics|industries|consulting|management)\b/i;
+  /\b(inc|llc|corp|corporation|ltd|limited|holdings|staffing|technologies|systems|labs|logistics|industries|consulting)\b/i;
 
 // One capitalised word is usually a first name, a city, or the start of a
 // sentence — too thin to interrupt the operator over. A candidate has to carry
-// either two capitalised words or a corporate tell before it earns the question.
+// either two capitalised words or a corporate tell before it earns the question,
+// and it must name a party rather than describe the work.
 function looksLikeOrg(run: string): boolean {
+  const k = key(run);
+  if (!k) return false;
+  if (PRODUCTS.has(k)) return false;
+  const words = k.split(/\s+/).filter(Boolean);
+  // Every word describes the work → a phrase, not a party.
+  if (words.every((w) => GENERIC.has(w))) return false;
   if (ORG_WORD.test(run)) return true;
-  return run.trim().split(/\s+/).length >= 2;
+  return words.length >= 2;
 }
 
 // Read a chase against the book. `onBoard` is the set of card names already on
@@ -394,6 +453,15 @@ export function openCandidates(
   return read.candidates.filter(
     (c) => !waved.has(key(c)) && !board.some((b) => b === key(c)),
   );
+}
+
+// Two names for the same firm: case, punctuation and the legal suffix are noise.
+// "ACME LOGISTICS INC" and "Acme Logistics" are one deal, and the board must
+// never carry both.
+export function sameOrg(a: string, b: string): boolean {
+  const x = key(a);
+  const y = key(b);
+  return Boolean(x) && x === y;
 }
 
 // A manual follow-up is one the operator armed by hand — never a cadence thread.

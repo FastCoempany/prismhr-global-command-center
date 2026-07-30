@@ -9,6 +9,7 @@ import {
   openCandidates,
   readFollowUp,
   routedIds,
+  sameOrg,
   stripMarkers,
   wavedNames,
   withMarkers,
@@ -129,6 +130,57 @@ describe("the new-name question asks once and stays answered", () => {
   });
 });
 
+// ── what we sell is not who we sell to ────────────────────────────────────────
+describe("a product is never mistaken for a company", () => {
+  test("the Global Payroll Platform is a product of ours, not a prospect", () => {
+    const r = read(
+      "Lesha - What would be the best route to set up a demo about the Global Payroll Platform that Prism is rolling out?",
+    );
+    assert.deepEqual(r.candidates, []);
+  });
+  test("the other two segments are products too", () => {
+    assert.deepEqual(read("walk them through Contractor Management").candidates, []);
+    assert.deepEqual(read("explain how EOR differs from CM").candidates, []);
+    assert.deepEqual(read("the Employer of Record model").candidates, []);
+  });
+  test("a stop word inside a name is never cut out of the middle", () => {
+    // "Global Payroll Platform" must never be reported as "Global Platform" —
+    // a name the operator never wrote, offered as a company to create.
+    const r = readFollowUp("chase Payroll Data Systems for the file", BOOK, PARTNERS);
+    assert.ok(
+      r.candidates.every((c) => !/^Data Systems$/.test(c)),
+      "the middle of a name was cut away",
+    );
+  });
+  test("a real company that happens to carry a product word still reads", () => {
+    const r = read("chase Acme Payroll Services about Brazil");
+    assert.ok(r.candidates.some((c) => /Acme/.test(c)));
+  });
+});
+
+describe("the same firm is never two rows", () => {
+  test("case, punctuation and the legal suffix are noise", () => {
+    assert.equal(sameOrg("Acme Logistics", "ACME LOGISTICS INC"), true);
+    assert.equal(sameOrg("Simploy", "Simploy, LLC"), true);
+    assert.equal(sameOrg("Simploy", "Simploy HR"), false);
+    assert.equal(sameOrg("", "Acme"), false);
+  });
+  test("the add action checks the board and the book before creating", () => {
+    const actions = readFileSync(join(root, "src/app/today/actions.ts"), "utf8");
+    const add =
+      /export async function followUpAddBoard[\s\S]*?\n}\n/.exec(actions)?.[0] ?? "";
+    assert.ok(add.includes("sameOrg"), "no duplicate check at all");
+    assert.ok(/dashCard\.findMany/.test(add), "the board is never consulted");
+    assert.ok(/peos\.find/.test(add), "the book is never consulted");
+    assert.ok(add.includes("inBook?.name ?? name"), "a book account loses its own name");
+  });
+  test("the question is never asked about a name the book already carries", () => {
+    const page = readFileSync(join(root, "src/app/room/page.tsx"), "utf8");
+    assert.ok(/knownOrgs/.test(page));
+    assert.ok(/peos\.map\(\(p\) => p\.name\)/.test(page), "the book is left out");
+  });
+});
+
 describe("manual follow-ups are their own species", () => {
   test("a manual key is manual; a cadence key is not", () => {
     assert.equal(isManual("manual:abc-123"), true);
@@ -198,5 +250,65 @@ describe("the follow-up list is wired where the operator can reach it", () => {
     assert.ok(!/>\s*Room\s*</.test(nav), "a bare Room label survived");
     assert.ok(page.includes('current="HomeRoom"'));
     assert.ok(client.includes("HOMEROOM"));
+  });
+});
+
+// ── the click-away gesture ────────────────────────────────────────────────────
+describe("every open panel closes on a click away", () => {
+  const hook = readFileSync(join(root, "src/components/use-dismiss.ts"), "utf8");
+  const client = readFileSync(join(root, "src/app/room/room-client.tsx"), "utf8");
+  test("the hook answers to both gestures and cleans up after itself", () => {
+    assert.ok(hook.includes("pointerdown"), "an outside click does nothing");
+    assert.ok(/Escape/.test(hook), "Escape does nothing");
+    assert.ok(/removeEventListener/.test(hook), "the listener outlives the panel");
+    // The listener must not exist while the panel is shut.
+    assert.ok(/if \(!open\) return;/.test(hook));
+  });
+  test("the HomeRoom's panels all use it", () => {
+    assert.ok(client.includes("useDismiss"));
+    for (const m of ["addRef", "drawerRef", "stageRef"]) {
+      assert.ok(client.includes(m), `${m} never got wired`);
+    }
+  });
+  test("the paste box is deliberately left alone", () => {
+    // Typed-but-unfiled text must never vanish on a stray click; that panel
+    // keeps its explicit Cancel.
+    assert.ok(!/useDismiss<[^>]*>\(pasteOpen/.test(client));
+  });
+});
+
+// ── the Teams capture ─────────────────────────────────────────────────────────
+describe("the Teams bookmarklet", () => {
+  const intake = readFileSync(join(root, "src/app/intake/intake-client.tsx"), "utf8");
+  const bm = /function teamsBookmarkletFor[\s\S]*?\n}\n/.exec(intake)?.[0] ?? "";
+  test("it exists and is offered on Capture", () => {
+    assert.ok(bm, "no Teams bookmarklet");
+    assert.ok(intake.includes("Grab Teams thread"));
+    assert.ok(intake.includes("bmTeamsRef"));
+  });
+  test("it reads the thread, not the whole app chrome", () => {
+    assert.ok(/message-pane-list-viewport|messagePaneList/.test(bm));
+    assert.ok(!/document\.body/.test(bm), "it falls back to the whole page");
+    assert.ok(/alert\(/.test(bm), "a miss captures something rather than refusing");
+  });
+  test("it loads the messages Teams hides before reading", () => {
+    // Teams virtualises: without scrolling first, only the visible screenful is
+    // in the DOM and the capture silently loses the conversation's history.
+    assert.ok(/scrollTop=0/.test(bm), "no scroll-up pass");
+    assert.ok(/scrollHeight/.test(bm), "the pass never checks whether more loaded");
+  });
+  test("the capture stamps its own dialect, and the pipeline knows it", () => {
+    assert.ok(/TEAMS THREAD/.test(bm));
+    const sf = readFileSync(join(root, "src/lib/sf-timeline.ts"), "utf8");
+    assert.ok(
+      /\(OUTLOOK\|TEAMS\) THREAD/.test(sf),
+      "the SF parser would try to parse a Teams capture",
+    );
+    const room = readFileSync(join(root, "src/app/room/actions.ts"), "utf8");
+    assert.ok(room.includes('"TM"'), "a Teams paste files as Salesforce activity");
+    assert.ok(
+      room.includes('"teams"'),
+      "the source column lies about where it came from",
+    );
   });
 });
