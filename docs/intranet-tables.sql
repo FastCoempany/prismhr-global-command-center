@@ -126,6 +126,28 @@ CREATE TABLE IF NOT EXISTS "IntranetAsk" (
 );
 CREATE INDEX IF NOT EXISTS "IntranetAsk_askedAt_idx" ON "IntranetAsk" ("askedAt");
 
+-- ── row level security ──────────────────────────────────────────────────────
+-- Supabase warns when a table has no RLS, because the anon and authenticated
+-- API keys could otherwise read it. This corpus is internal — it should never
+-- be reachable by a browser key at all — so RLS goes ON with NO policies:
+-- the deny-by-default posture.
+--
+-- The app is unaffected. It connects over DATABASE_URL as the table owner, and
+-- an owner bypasses RLS unless FORCE ROW LEVEL SECURITY is set. It is not set
+-- here, and must not be — that single word is what would lock the app out of
+-- its own brain.
+ALTER TABLE "IntranetCapture" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "IntranetDoc"     ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "IntranetClaim"   ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "IntranetTopic"   ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "IntranetAsk"     ENABLE ROW LEVEL SECURITY;
+
+-- If the room ever reports it cannot write after this, the diagnosis is one
+-- query — it will show rowsecurity = true and forcerowsecurity = false, which
+-- is correct. A true in the second column is the fault:
+--   SELECT relname, relrowsecurity, relforcerowsecurity
+--   FROM pg_class WHERE relname LIKE 'Intranet%';
+
 -- ── check ───────────────────────────────────────────────────────────────────
 -- Expect five rows, all zero, on a fresh run.
 SELECT 'IntranetCapture' AS table, count(*) FROM "IntranetCapture"
