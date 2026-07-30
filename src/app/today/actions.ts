@@ -7,6 +7,17 @@ import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import { randomUUID } from "node:crypto";
 import { asFieldNoteKind } from "@/lib/field-notes/data";
 import { asFollowUpWhen, nextCheckIn, type TouchLogEntry } from "@/lib/today/follow-ups";
+import {
+  isManual,
+  readFollowUp,
+  routedIds,
+  wavedNames,
+  withMarkers,
+} from "@/lib/today/followup-brain";
+import { csms, peos } from "@/lib/book";
+import { EXTRA_PARTNERS } from "@/lib/book/partners";
+import { knownPeople } from "@/lib/book/contacts";
+import { roomCompose } from "@/app/room/actions";
 import { accountIntel, triageDoneKey } from "@/lib/today/build";
 import { DASH_NODE_KEYS, type DashNodeKey } from "@/lib/dashboard/stages";
 import { applyStepComplete } from "@/lib/dashboard/complete";
@@ -499,27 +510,151 @@ export async function delayFollowUp(formData: FormData) {
   done(formData);
 }
 
-// Write in your own follow-up (not tied to a logged contact). Surfaces in the
-// same due/upcoming buckets; kind "custom" so the card shows your words instead
-// of a partner nudge.
+// Arm a follow-up in your own words. There is no "when": a chase you write down
+// is a thing to do now, so it lands due on the spot and stays in the follow-up
+// list until you tick it off. It never joins the check-in cadence — those are
+// threads waiting on somebody else, and these are waiting on you.
+//
+// The brain runs at arm time. A chase that names a book account files itself
+// against that account — a note on the record and an action in its right-hand
+// panel — so a name you wrote once doesn't have to be written again. A name the
+// book has never heard of is NOT acted on: it becomes a question in the list,
+// and only a click puts a new row on the board.
 export async function addFollowUp(formData: FormData) {
   const label = str(formData, "label", 200);
   if (!(await requireWrite()) || !label) done(formData);
-  const when = asFollowUpWhen(str(formData, "when", 12));
+  const read = readFollowUp(
+    label,
+    peos.map((p) => ({ id: p.id, name: p.name })),
+    [...csms, ...EXTRA_PARTNERS, ...knownPeople()],
+  );
   await safeWrite(async () => {
     const now = Date.now();
+    const routed = await fileFollowUpToAccounts(label, read.accounts);
     await getPrisma().touch.create({
       data: {
         subjectKey: `manual:${randomUUID()}`,
         kind: "custom",
         label,
-        detail: str(formData, "detail", 400) || null,
+        detail: withMarkers(str(formData, "detail", 400), routed, []) || null,
         message: null,
         contactedAt: new Date(now),
-        followUpAt: nextCheckIn(now, when),
-        intervalDays: when === "today" ? 0 : 1,
+        // Due now — the list is the whole cadence.
+        followUpAt: new Date(now),
+        intervalDays: 0,
         status: "awaiting",
         log: [],
+      },
+    });
+  });
+  done(formData);
+}
+
+// File a chase against the accounts it named: one note on the record (so it
+// reaches the account's history on Accounts) and one action in the right-hand
+// panel (so it reaches the deal's own list of open work). Returns the ids that
+// actually took, so the follow-up can remember and never double-file.
+async function fileFollowUpToAccounts(
+  label: string,
+  hits: { id: string; name: string }[],
+): Promise<string[]> {
+  const filed: string[] = [];
+  for (const h of hits.slice(0, 3)) {
+    const r = await roomCompose(h.id, label, { kind: "action", urgency: "med" }).catch(
+      () => null,
+    );
+    if (!r?.ok) continue;
+    // The action is the work; the note is the memory. Without this line the
+    // chase never reaches the account's history on Accounts.
+    await createAccountNoteRow({
+      accountId: h.id,
+      kind: "account",
+      body: `⏲ Follow-up armed — ${label}`,
+      lane: "mine",
+      source: "followup",
+    }).catch(() => null);
+    filed.push(h.id);
+  }
+  return filed;
+}
+
+// Tick a follow-up off. Done is done — the row leaves the list and the badge.
+export async function followUpDone(formData: FormData) {
+  const subjectKey = str(formData, "subjectKey", 200);
+  if (!(await requireWrite()) || !subjectKey || !isManual(subjectKey)) done(formData);
+  await safeWrite(async () => {
+    await getPrisma().touch.updateMany({
+      where: { subjectKey },
+      data: { status: "archived" },
+    });
+  });
+  done(formData);
+}
+
+// Drop a follow-up outright — armed by mistake, or overtaken by events.
+export async function followUpDrop(formData: FormData) {
+  const subjectKey = str(formData, "subjectKey", 200);
+  if (!(await requireWrite()) || !subjectKey || !isManual(subjectKey)) done(formData);
+  await safeWrite(async () => {
+    await getPrisma().touch.deleteMany({ where: { subjectKey } });
+  });
+  done(formData);
+}
+
+// "Acme isn't on the board — add it?" — yes. The row joins the board carrying
+// the chase that introduced it, and the follow-up remembers so it stops asking.
+export async function followUpAddBoard(formData: FormData) {
+  const subjectKey = str(formData, "subjectKey", 200);
+  const name = str(formData, "name", 120);
+  if (!(await requireWrite()) || !subjectKey || !name) done(formData);
+  await safeWrite(async () => {
+    const prisma = getPrisma();
+    const t = await prisma.touch.findUnique({ where: { subjectKey } });
+    const top = await prisma.dashCard.findFirst({
+      orderBy: { position: "desc" },
+      select: { position: true },
+    });
+    await prisma.dashCard.create({
+      data: {
+        name,
+        subtitle: null,
+        position: (top?.position ?? -1) + 1,
+        states: {},
+        notes: t ? { discovery: `Came in on a follow-up: ${t.label}` } : {},
+      },
+    });
+    if (t) {
+      await prisma.touch.update({
+        where: { subjectKey },
+        data: {
+          detail: withMarkers(t.detail ?? "", routedIds(t.detail ?? ""), [
+            ...wavedNames(t.detail ?? ""),
+            name,
+          ]),
+        },
+      });
+    }
+  });
+  done(formData);
+}
+
+// "Acme isn't on the board — add it?" — no. The question retires for good on
+// this follow-up; the name stays in the sentence, it just stops being a prompt.
+export async function followUpWaveOff(formData: FormData) {
+  const subjectKey = str(formData, "subjectKey", 200);
+  const name = str(formData, "name", 120);
+  if (!(await requireWrite()) || !subjectKey || !name) done(formData);
+  await safeWrite(async () => {
+    const prisma = getPrisma();
+    const t = await prisma.touch.findUnique({ where: { subjectKey } });
+    if (!t) return;
+    await prisma.touch.update({
+      where: { subjectKey },
+      data: {
+        detail: withMarkers(t.detail ?? "", routedIds(t.detail ?? ""), [
+          ...wavedNames(t.detail ?? ""),
+          name,
+        ]),
       },
     });
   });

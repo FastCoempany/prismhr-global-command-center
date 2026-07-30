@@ -2,8 +2,15 @@ import Link from "next/link";
 import { DM_Serif_Display, JetBrains_Mono, Public_Sans } from "next/font/google";
 import { AppWayfinder } from "@/components/app-wayfinder";
 import { loadDashboard } from "@/lib/dashboard/data";
-import { peos } from "@/lib/book";
-import { contactsFor } from "@/lib/book/contacts";
+import { csms, peos } from "@/lib/book";
+import { EXTRA_PARTNERS } from "@/lib/book/partners";
+import {
+  isManual,
+  openCandidates,
+  readFollowUp,
+  routedIds,
+} from "@/lib/today/followup-brain";
+import { contactsFor, knownPeople } from "@/lib/book/contacts";
 import { peopleFor } from "@/lib/intel/people";
 import {
   loadAccountNotes,
@@ -47,6 +54,7 @@ import {
   RoomClient,
   type CadenceRow,
   type CheckinRow,
+  type FollowUpRow,
   type LaterRow,
   type RoomRow,
   type WarmRow,
@@ -73,7 +81,7 @@ export default async function RoomPage() {
   if (data.status === "unauthenticated") {
     return (
       <>
-        <AppWayfinder current="Room" />
+        <AppWayfinder current="HomeRoom" />
         <main className={styles.gate}>
           <p>
             Sign in to continue. <Link href="/login">Sign in</Link>.
@@ -427,8 +435,41 @@ export default async function RoomPage() {
     };
   });
 
+  // The follow-up list is the operator's own — chases he wrote by hand. It has
+  // nothing to do with the check-in cadence (threads waiting on somebody else),
+  // so it comes out of the touch pile first and never reaches that drawer.
+  const manualTouches = touches.filter(
+    (t) => isManual(t.subjectKey) && t.status !== "archived",
+  );
+  const boardNamesForBrain = data.cards.filter((c) => !c.archived).map((c) => c.name);
+  const followUpRows: FollowUpRow[] = manualTouches
+    .sort((a, b) => Date.parse(b.contactedAt) - Date.parse(a.contactedAt))
+    .slice(0, 40)
+    .map((t) => {
+      const read = readFollowUp(
+        t.label,
+        peos.map((p) => ({ id: p.id, name: p.name })),
+        [...csms, ...EXTRA_PARTNERS, ...knownPeople()],
+      );
+      return {
+        subjectKey: t.subjectKey,
+        label: t.label,
+        armedAt: t.contactedAt,
+        // Accounts this chase already filed itself against — shown as plain
+        // provenance, not as a control.
+        filed: routedIds(t.detail ?? "")
+          .map((id) => peos.find((p) => p.id === id)?.name ?? "")
+          .filter(Boolean),
+        // The one open question: a name nobody on the board answers to.
+        newName: openCandidates(read, t.detail ?? "", boardNamesForBrain)[0] ?? "",
+      };
+    });
+
   // Check-ins & chases: every due thread, with its named ask when one is set.
-  const followUps = partitionFollowUps(touches, now.getTime());
+  const followUps = partitionFollowUps(
+    touches.filter((t) => !isManual(t.subjectKey)),
+    now.getTime(),
+  );
   const checkins: CheckinRow[] = followUps.due.slice(0, 12).map((t) => {
     const ask = splitAsk(t.detail ?? "").ask;
     return {
@@ -487,7 +528,7 @@ export default async function RoomPage() {
 
   return (
     <>
-      <AppWayfinder current="Room" />
+      <AppWayfinder current="HomeRoom" />
       <main
         className={`${styles.room} ${serif.variable} ${sans.variable} ${mono.variable}`}
       >
@@ -495,6 +536,7 @@ export default async function RoomPage() {
           rows={rows}
           cadence={cadence}
           checkins={checkins}
+          followUps={followUpRows}
           warming={warming}
           later={later}
           canWrite={data.canWrite}

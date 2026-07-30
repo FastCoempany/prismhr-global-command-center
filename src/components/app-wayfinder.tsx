@@ -34,11 +34,11 @@ export async function AppWayfinder({
         <span className="ds-wayfinder__spacer" />
         <nav className="app-wayfinder-routes" aria-label="Primary routes">
           <Link
-            aria-current={current === "Room" ? "page" : undefined}
+            aria-current={current === "HomeRoom" ? "page" : undefined}
             className="app-route-link"
             href="/room"
           >
-            Room
+            HomeRoom
           </Link>
           <Link
             aria-current={current === "Accounts" ? "page" : undefined}

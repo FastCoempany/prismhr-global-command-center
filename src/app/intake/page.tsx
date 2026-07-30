@@ -42,7 +42,7 @@ export default async function IntakePage() {
             The capture kit: the bookmarklets that grab an Outlook thread or a Salesforce
             activity feed, and the payroll intake form prefilled from what the app already
             knows. Day to day the ⚡ box on the account in the{" "}
-            <Link href="/room">Room</Link> is the faster road — it reads the paste and
+            <Link href="/room">HomeRoom</Link> is the faster road — it reads the paste and
             files it against that deal. The app never writes to Salesforce or Forms.
           </p>
         </div>

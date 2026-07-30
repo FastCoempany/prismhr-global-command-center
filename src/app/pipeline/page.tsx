@@ -34,10 +34,10 @@ export default async function PipelinePage() {
           <h1 className={styles.h1}>Pipeline</h1>
 
           <p className={styles.sub}>
-            Archived. The <Link href="/room">Room</Link> is the pipeline — it holds every
-            deal in motion and the stage each one is actually at. This view reads the
-            older stage field kept on the account record, so it can lag what the Room
-            knows; it survives as a plain column count, nothing more.
+            Archived. The <Link href="/room">HomeRoom</Link> is the pipeline — it holds
+            every deal in motion and the stage each one is actually at. This view reads
+            the older stage field kept on the account record, so it can lag what the
+            HomeRoom knows; it survives as a plain column count, nothing more.
           </p>
         </div>
         {data.status === "database-unavailable" && (
@@ -50,7 +50,7 @@ export default async function PipelinePage() {
         {inPipeline.length === 0 ? (
           <div className={styles.empty}>
             Nothing carries the old stage field. The live pipeline is the{" "}
-            <Link href="/room">Room</Link>.
+            <Link href="/room">HomeRoom</Link>.
           </div>
         ) : (
           <div className={styles.cols}>
