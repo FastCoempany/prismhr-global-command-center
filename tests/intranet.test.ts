@@ -848,10 +848,37 @@ describe("the room is wired where the operator can reach it", () => {
     assert.ok(main.includes('href="/intranet"'), "the tab is missing or archived");
     assert.ok(page.includes('current="Intranet"'));
   });
-  test("the ask bar, the rail and the fold are all present", () => {
-    for (const marker of ["Ask", "Show the reasoning", "add to the brain", "itRail"]) {
+  test("the ask bar, the rail, the paste well and the fold are all present", () => {
+    for (const marker of ["Ask", "Show the reasoning", "Add to the brain", "itRail"]) {
       assert.ok(client.includes(marker), `missing: ${marker}`);
     }
+  });
+  test("the index rail sits on the left and the page has no subtitle (IV.3)", () => {
+    assert.ok(
+      client.indexOf("styles.itRail") < client.indexOf("styles.itMain"),
+      "the rail moved back to the right",
+    );
+    assert.ok(
+      /grid-template-columns:\s*288px minmax/.test(css),
+      "the grid no longer leads with the rail",
+    );
+    assert.ok(!page.includes("styles.sub"), "the page subtitle came back");
+  });
+  test("pipeline vocabulary never reaches the surface (IV.1)", () => {
+    for (const banned of [
+      "deep pass",
+      "vital signs",
+      "the grabs",
+      "intranetHarvest",
+      "claims from",
+      "documents waiting",
+      "document",
+    ]) {
+      assert.ok(!client.includes(banned), `pipeline word on the surface: ${banned}`);
+    }
+  });
+  test("the room survives the platform's clock (IV.2)", () => {
+    assert.ok(page.includes("maxDuration"), "reads die silently to the default timeout");
   });
   test("citations drill and the drawer closes on a click away", () => {
     assert.ok(client.includes("intranetPassage"));
@@ -909,12 +936,33 @@ describe("the chain that fills the brain is wired end to end", () => {
       assert.ok(orchestrator.includes(fn), `runBrain never calls ${fn}`);
     }
   });
-  test("the operator can start it, and sees what it did", () => {
+  test("one control, and it keeps going until the backlog is gone (IV.3)", () => {
     assert.ok(client.includes("runBrain"), "nothing in the room starts the chain");
     assert.ok(client.includes("Bring the brain up to date"));
-    assert.ok(client.includes("deep pass"));
+    assert.ok(client.includes("stop after this pass"), "the loop cannot be stopped");
+    assert.ok(/r\.pending/.test(client), "the loop never learns when it is done");
     assert.ok(client.includes("itRunLines"), "the report is never shown");
     assert.ok(page.includes("brainQueue"), "the room can't say what is waiting");
+  });
+  test("a paste is read on the spot and the operator watches the index grow (IV.3)", () => {
+    assert.ok(client.includes("readCapture"), "Keep it is fire-and-forget again");
+    assert.ok(client.includes("router.refresh"), "the rail never updates after ingest");
+  });
+  test("a read failure is named where the operator is looking (IV.2)", () => {
+    assert.ok(runners.includes("reasonOf"), "failures are swallowed again");
+    assert.ok(runners.includes("timed out"), "a timeout has no plain-language read");
+    assert.ok(runners.includes("the API key was refused"));
+    assert.ok(
+      /catch \(e\) \{\s*const why = reasonOf\(e\)/.test(runners),
+      "the extraction catch block swallows its error",
+    );
+  });
+  test("the ingest runner reads the capture and settles the index", () => {
+    assert.ok(runners.includes("export async function readCapture"));
+    const rc = /export async function readCapture[\s\S]*?\n}\n/.exec(runners)?.[0] ?? "";
+    assert.ok(rc.includes("extractPending"), "readCapture never reads");
+    assert.ok(rc.includes("indexTopics"), "readCapture never settles the index");
+    assert.ok(rc.includes("The index grew"), "the visible consequence is missing");
   });
   test("re-reading a document replaces its claims rather than doubling them", () => {
     const extract =
@@ -951,12 +999,12 @@ describe("the chain that fills the brain is wired end to end", () => {
   });
   test("every stage is bounded, so one pass never runs away", () => {
     for (const sig of [
-      "syncApp(budget = 400)",
-      "extractPending(budget = 8)",
-      "decomposeTopics(budget = 2)",
-      "readTimeAcrossTopics(budget = 2)",
+      /syncApp\(budget = 400\)/,
+      /extractPending\(\s*budget = 8/,
+      /decomposeTopics\(budget = 2\)/,
+      /readTimeAcrossTopics\(budget = 2\)/,
     ]) {
-      assert.ok(runners.includes(sig), `unbounded runner: ${sig}`);
+      assert.ok(sig.test(runners), `unbounded runner: ${sig}`);
     }
   });
   test("a failing stage never stops the ones after it", () => {
@@ -1566,5 +1614,145 @@ describe("nothing sensitive reaches storage by any road (F8, Phase 13.5)", () =>
         r.includes("sealed({"),
         "a mirror composes a document without redacting it",
       );
+  });
+});
+
+// ── Part IV · the operator's correction ─────────────────────────────────────
+describe("the grab takes the whole thread, structured (IV.4)", () => {
+  const shelf = readFileSync(join(root, "src/app/intake/capture-shelf.tsx"), "utf8");
+
+  test("every message is emitted with the delimiters the parser was built for", () => {
+    for (const mark of ["⟦MSG⟧", "⟦AT⟧", "⟦BODY⟧", "⟦LINKS⟧", "⟦CAPTURED"]) {
+      assert.ok(shelf.includes(mark), `the grab no longer emits ${mark}`);
+    }
+  });
+  test("attribution is read from the DOM, never inferred from layout", () => {
+    assert.ok(shelf.includes("message-author-name"), "the author node is not read");
+    assert.ok(shelf.includes("dateTime"), "the instant is not read from <time>");
+  });
+  test("it scrolls until the top stops yielding, not eight passes", () => {
+    assert.ok(shelf.includes("nogrow"), "the no-growth stop is gone");
+    assert.ok(/passes>300/.test(shelf), "the safety cap is gone");
+    assert.ok(!/for\(let i=0;i<8;i\+\+\)/.test(shelf), "the old eight-pass cap is back");
+  });
+  test("it harvests incrementally, because Teams unloads what scrolls away", () => {
+    assert.ok(/const seen=new Map\(\)/.test(shelf), "no incremental harvest map");
+    assert.ok(shelf.includes("harvest()"), "nothing harvests per pass");
+  });
+  test("an unrecognised DOM degrades to plain text and says so", () => {
+    assert.ok(shelf.includes("structure not recognised"));
+  });
+  test("a Teams grab opens the Intranet, and the shelf says to re-drag", () => {
+    assert.ok(shelf.includes("/intranet"), "the grab still opens the old room");
+    assert.ok(/re-drag/i.test(shelf), "nobody is told the bookmark went stale");
+  });
+  test("the grab's own output parses back into messages with speakers", () => {
+    const sample = [
+      "TEAMS THREAD - Global Sales Team - captured 7/30/2026, 2:16 PM",
+      "",
+      "⟦MSG⟧ Jeanne Hogan ⟦AT⟧ 2026-07-09T09:02:00.000Z ⟦BODY⟧",
+      "sell a deal, email implementation with the SOW.",
+      "⟦MSG⟧ Lindsey Forrest ⟦AT⟧ 2026-07-30T12:03:00.000Z ⟦BODY⟧",
+      "Plan Highlights first, then top targets.",
+      "⟦CAPTURED 2 messages · scrolled 41 · oldest 2026-07-09 · ceiling⟧",
+    ].join("\n");
+    const m = readMessages(sample, NOW);
+    assert.equal(m.length, 2);
+    assert.equal(m[0].speaker, "Jeanne Hogan");
+    const rep = readReport(sample);
+    assert.equal(rep?.messages, 2);
+    assert.equal(rep?.ceilingHit, true);
+  });
+});
+
+describe("the world speaks only when the record is empty (IV.6)", () => {
+  const synth = readFileSync(join(root, "src/lib/intranet/synthesize.ts"), "utf8");
+  const actions = readFileSync(join(root, "src/app/intranet/actions.ts"), "utf8");
+  const client = readFileSync(join(root, "src/app/intranet/intranet-client.tsx"), "utf8");
+
+  test("the world answer exists, and knows nothing about the reader's record", () => {
+    assert.ok(synth.includes("runWorldAnswer"));
+    assert.ok(
+      /Never invent facts about the reader's own company/.test(synth),
+      "the world prompt may hallucinate internal facts",
+    );
+  });
+  test("record synthesis still refuses to blend in world knowledge (F12)", () => {
+    assert.ok(/answer from this record only/i.test(synth));
+  });
+  test("money is redacted from world answers like everything else", () => {
+    assert.ok(
+      /redactMoney\(await runWorldAnswer/.test(actions),
+      "a world answer can carry a dollar figure to the screen",
+    );
+  });
+  test("it fires only when the record has nothing — never blended", () => {
+    assert.ok(
+      /candidates\.length === 0/.test(actions),
+      "the empty-record branch is gone",
+    );
+    assert.ok(
+      /citations\.length === 0\s*\?\s*redactMoney/.test(actions),
+      "an honest abstention no longer reaches for the world",
+    );
+  });
+  test("the surface labels it as from outside the record", () => {
+    assert.ok(client.includes("From the world, not the record"));
+    assert.ok(client.includes("itWorld"), "the world block has no distinct dress");
+  });
+  test("buyers' own questions are read as intelligence in the answer path (C7)", () => {
+    assert.ok(/BUYERS' OWN QUESTIONS/.test(synth), "the synthesis contract lost C7");
+  });
+});
+
+describe("what prospects ask lives on the Playbook (IV.5)", () => {
+  const pbClient = readFileSync(
+    join(root, "src/app/playbook/playbook-client.tsx"),
+    "utf8",
+  );
+  const pbPage = readFileSync(join(root, "src/app/playbook/page.tsx"), "utf8");
+  const itClient = readFileSync(
+    join(root, "src/app/intranet/intranet-client.tsx"),
+    "utf8",
+  );
+
+  test("the Playbook carries the shelf", () => {
+    assert.ok(pbClient.includes("What prospects ask"));
+    assert.ok(pbClient.includes("Ours, not theirs"), "the inverse list is missing");
+    assert.ok(pbPage.includes("harvestBattlecards"));
+    assert.ok(pbPage.includes("prospectAsks"));
+  });
+  test("on the Intranet it is an index row and nothing else", () => {
+    assert.ok(!itClient.includes("harvestBattlecards"));
+    assert.ok(!itClient.includes("oursNotTheirs"));
+  });
+  test("a proposal names its provenance — the rooms it was asked in", () => {
+    const { propose } = harvestBattlecards(
+      [
+        {
+          claimId: "1",
+          text: "How do you handle contractor classification in Brazil?",
+          shape: "risk",
+          entities: [],
+          saidAt: "2026-06-01T12:00:00.000Z",
+          docId: "d1",
+          accountId: "",
+          space: "Acme demo",
+        },
+        {
+          claimId: "2",
+          text: "What happens if a contractor gets reclassified in Brazil?",
+          shape: "risk",
+          entities: [],
+          saidAt: "2026-06-08T12:00:00.000Z",
+          docId: "d2",
+          accountId: "",
+          space: "Borealis call",
+        },
+      ],
+      [],
+    );
+    assert.equal(propose.length, 1);
+    assert.deepEqual(propose[0].rooms.sort(), ["Acme demo", "Borealis call"]);
   });
 });

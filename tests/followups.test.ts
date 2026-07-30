@@ -287,7 +287,9 @@ describe("the Teams bookmarklet", () => {
   });
   test("it reads the thread, not the whole app chrome", () => {
     assert.ok(/message-pane-list-viewport|messagePaneList/.test(bm));
-    assert.ok(!/document\.body/.test(bm), "it falls back to the whole page");
+    // document.body appears only to host the progress counter — never as a
+    // text source.
+    assert.ok(!/document\.body\.innerText/.test(bm), "it falls back to the whole page");
     assert.ok(/alert\(/.test(bm), "a miss captures something rather than refusing");
   });
   test("it loads the messages Teams hides before reading", () => {

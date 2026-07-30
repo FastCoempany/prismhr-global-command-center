@@ -6,6 +6,10 @@
 //
 // The room reads. It never writes to a deal, never files a note, never moves a
 // stage. Where an answer implies work it offers a link into the HomeRoom.
+//
+// The face keeps the pipeline's vocabulary out of sight (IV.1): the index rail
+// carries the only standing numbers, and granularity appears only in citations
+// and ingest receipts.
 
 import Link from "next/link";
 import { AppWayfinder } from "@/components/app-wayfinder";
@@ -23,6 +27,9 @@ import { IntranetClient, type RailTopic } from "./intranet-client";
 import styles from "../command-center.module.css";
 
 export const dynamic = "force-dynamic";
+// Reading a long thread through Opus 5 outlives the platform's default window;
+// the first production run died silently to exactly this (IV.2).
+export const maxDuration = 300;
 
 export default async function IntranetPage({
   searchParams,
@@ -86,16 +93,11 @@ export default async function IntranetPage({
       <main className={styles.wrap}>
         <div className={styles.pageHead}>
           <h1 className={styles.h1}>Intranet</h1>
-          <p className={styles.sub}>
-            Everything you&apos;ve given it and everything the app knows — internal
-            threads, meetings, demos, every note and action, and the whole Playbook. One
-            brain. Ask it something.
-          </p>
         </div>
         <IntranetClient
           rail={rail}
           initialQ={initialQ}
-          stats={stats}
+          empty={stats.docs === 0}
           staleness={stalenessLine(stats.lastCaptureAt, nowIso)}
           queue={queue}
           canWrite={access.canWrite}

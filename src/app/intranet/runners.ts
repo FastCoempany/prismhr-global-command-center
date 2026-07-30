@@ -59,8 +59,28 @@ export type RunReport = {
   ok: boolean;
   /** One line per stage, in the operator's language. */
   lines: string[];
+  /** How much is still unread after this pass, so the room can keep going. */
+  pending?: number;
   reason?: string;
 };
+
+/** A model failure, in words the operator can act on (IV.2). The first
+ *  production run read nothing and said nothing about it; that never happens
+ *  again. Not exported: a "use server" module may only export async actions. */
+function reasonOf(e: unknown): string {
+  const err = e as { status?: number; message?: string; name?: string };
+  const msg = (err?.message ?? "").replace(/\s+/g, " ").trim().slice(0, 160);
+  if (err?.status === 401) return "the API key was refused";
+  if (err?.status === 429)
+    return "the model is rate-limited right now — try again shortly";
+  if (err?.status === 529 || err?.status === 503)
+    return "the model is overloaded right now — try again shortly";
+  if (err?.status === 400)
+    return `the model refused the request${msg ? ` — ${msg}` : ""}`;
+  if (err?.name === "APIConnectionTimeoutError" || /timed? ?out|aborted/i.test(msg))
+    return "the model call timed out — a very long entry can do that; it will be retried next pass";
+  return msg || "an unknown failure";
+}
 
 async function guard(): Promise<string> {
   if (!hasDatabaseEnv()) return "The brain's store isn't reachable.";
@@ -426,8 +446,14 @@ async function seedProspectTopics(): Promise<number> {
 
 /** Read the documents nobody has read yet. This is the stage everything
  *  downstream starves without: no claims means no topics, and no topics means
- *  no answers. */
-export async function extractPending(budget = 8): Promise<RunReport> {
+ *  no answers.
+ *
+ *  Deadline-aware (IV.2): the pass stops itself honestly before the platform
+ *  would kill it, and reports what it did and what still waits. */
+export async function extractPending(
+  budget = 8,
+  opts?: { captureId?: string; deadlineMs?: number },
+): Promise<RunReport> {
   const bad = await guard();
   if (bad) return { ok: false, lines: [], reason: bad };
   if (!extractAvailable())
@@ -441,8 +467,11 @@ export async function extractPending(budget = 8): Promise<RunReport> {
   const lines: string[] = [];
 
   try {
+    const unread = {
+      OR: [{ extractedAt: null }, { promptVersion: { not: PROMPT_VERSION } }],
+    };
     const pending = await prisma.intranetDoc.findMany({
-      where: { OR: [{ extractedAt: null }, { promptVersion: { not: PROMPT_VERSION } }] },
+      where: opts?.captureId ? { AND: [unread, { captureId: opts.captureId }] } : unread,
       orderBy: { occurredAt: "desc" },
       take: budget,
     });
@@ -457,9 +486,14 @@ export async function extractPending(budget = 8): Promise<RunReport> {
 
     let claimsMade = 0;
     let read = 0;
-    let failed = 0;
+    let outOfTime = false;
+    const failures = new Map<string, number>();
 
     for (const doc of pending) {
+      if (opts?.deadlineMs && Date.now() > opts.deadlineMs) {
+        outOfTime = true;
+        break;
+      }
       let result;
       try {
         result = await runExtract({
@@ -470,8 +504,9 @@ export async function extractPending(budget = 8): Promise<RunReport> {
           accountName: nameById.get(doc.accountId) ?? undefined,
           topics,
         });
-      } catch {
-        failed += 1;
+      } catch (e) {
+        const why = reasonOf(e);
+        failures.set(why, (failures.get(why) ?? 0) + 1);
         continue;
       }
 
@@ -520,16 +555,21 @@ export async function extractPending(budget = 8): Promise<RunReport> {
       read += 1;
     }
 
-    lines.push(
-      `Read ${read} document${read === 1 ? "" : "s"} — ${claimsMade} claim${claimsMade === 1 ? "" : "s"}${failed ? `, ${failed} refused` : ""}.`,
-    );
+    if (read > 0)
+      lines.push(
+        `Read ${read} — kept ${claimsMade} thing${claimsMade === 1 ? "" : "s"} for the index.`,
+      );
+    // IV.2 — a failure is named where the operator is looking, never swallowed.
+    for (const [why, n] of failures) lines.push(`${n} couldn't be read — ${why}.`);
+    if (outOfTime)
+      lines.push("Ran out of time this pass — the rest waits for the next one.");
     const left = await prisma.intranetDoc.count({
       where: { OR: [{ extractedAt: null }, { promptVersion: { not: PROMPT_VERSION } }] },
     });
-    if (left > 0) lines.push(`${left} still waiting to be read.`);
-    return { ok: true, lines };
-  } catch {
-    return { ok: false, lines, reason: "Extraction couldn't complete." };
+    if (left > 0) lines.push(`${left} still to read.`);
+    return { ok: true, lines, pending: left };
+  } catch (e) {
+    return { ok: false, lines, reason: `The reading pass failed — ${reasonOf(e)}.` };
   }
 }
 
@@ -608,7 +648,7 @@ export async function indexTopics(): Promise<RunReport> {
       });
     if (ready.length)
       lines.push(
-        `${ready.length} topic${ready.length === 1 ? "" : "s"} joined the rail.`,
+        `${ready.length} new row${ready.length === 1 ? "" : "s"} joined the index.`,
       );
 
     // 2 · fold duplicates mechanically. Identical labels are one topic, and the
@@ -634,7 +674,9 @@ export async function indexTopics(): Promise<RunReport> {
       merged += 1;
     }
     if (merged)
-      lines.push(`${merged} duplicate topic${merged === 1 ? "" : "s"} folded together.`);
+      lines.push(
+        `${merged} duplicate index row${merged === 1 ? "" : "s"} folded together.`,
+      );
 
     // 3 · counts, from the claims themselves rather than from a running total
     //     that can drift.
@@ -795,10 +837,63 @@ export async function decomposeTopics(budget = 2): Promise<RunReport> {
       );
     }
 
-    if (lines.length === 0) lines.push("No topic has grown enough to open yet.");
+    if (lines.length === 0) lines.push("Nothing has grown enough to open yet.");
     return { ok: true, lines };
   } catch {
     return { ok: false, lines, reason: "The decomposition pass couldn't complete." };
+  }
+}
+
+// ═══ the ingest reaction (IV.3) ══════════════════════════════════════════════
+
+/** Read what was JUST pasted, settle the index, and report the visible
+ *  consequence — which rows grew, which are new. This is what runs the moment
+ *  the operator clicks "Keep it": the paste is never fire-and-forget. */
+export async function readCapture(captureId: string): Promise<RunReport> {
+  const bad = await guard();
+  if (bad) return { ok: false, lines: [], reason: bad };
+  if (!captureId) return { ok: false, lines: [], reason: "Nothing to read." };
+  if (!extractAvailable())
+    return {
+      ok: false,
+      lines: [],
+      reason:
+        "Kept — but no API key is configured, so it can't be read into the index yet.",
+    };
+
+  const prisma = getPrisma();
+  try {
+    const before = new Map(
+      (await prisma.intranetTopic.findMany({ where: { status: "live" } })).map((t) => [
+        t.id,
+        { label: t.label, n: t.claimCount },
+      ]),
+    );
+
+    const read = await extractPending(24, {
+      captureId,
+      deadlineMs: Date.now() + 220_000,
+    });
+    const idx = await indexTopics();
+
+    const after = await prisma.intranetTopic.findMany({ where: { status: "live" } });
+    const grew: string[] = [];
+    for (const t of after) {
+      const b = before.get(t.id);
+      if (!b) {
+        if (t.claimCount > 0) grew.push(`new: ${t.label}`);
+      } else if (t.claimCount > b.n) {
+        grew.push(`${t.label} +${t.claimCount - b.n}`);
+      }
+    }
+
+    const lines = [...read.lines];
+    if (grew.length) lines.push(`The index grew: ${grew.join(" · ")}.`);
+    lines.push(...idx.lines.filter((l) => l !== "The index is settled."));
+    if (!read.ok && read.reason) lines.push(read.reason);
+    return { ok: true, lines, pending: read.pending };
+  } catch (e) {
+    return { ok: false, lines: [], reason: `The reading failed — ${reasonOf(e)}.` };
   }
 }
 
@@ -884,25 +979,28 @@ export async function runBrain(opts?: { deep?: boolean }): Promise<RunReport> {
   if (bad) return { ok: false, lines: [], reason: bad };
 
   const deep = opts?.deep === true;
+  const deadline = Date.now() + 220_000;
   const lines: string[] = [];
   const stages: [string, () => Promise<RunReport>][] = [
     ["app", () => syncApp(deep ? 1500 : 300)],
     ["playbook", () => ingestPlaybook()],
-    ["read", () => extractPending(deep ? 24 : 6)],
+    ["read", () => extractPending(deep ? 24 : 6, { deadlineMs: deadline })],
     ["index", () => indexTopics()],
     ["open", () => decomposeTopics(deep ? 4 : 1)],
     ["time", () => readTimeAcrossTopics(deep ? 4 : 1)],
   ];
 
+  let pending = 0;
   for (const [, run] of stages) {
     const r = await run();
     lines.push(...r.lines);
+    if (typeof r.pending === "number") pending = r.pending;
     // A stage that fails does not stop the rest — each writes before the next
     // begins, so the corpus is always consistent, just possibly less complete.
     if (!r.ok && r.reason) lines.push(r.reason);
   }
 
-  return { ok: true, lines };
+  return { ok: true, lines, pending };
 }
 
 /** What is waiting, so the room can say so without running anything. */

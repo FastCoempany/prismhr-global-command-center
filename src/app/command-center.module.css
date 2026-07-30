@@ -7139,7 +7139,8 @@
    intelligence: the citations, the rail's selection, the links out. */
 .itWrap {
   display: grid;
-  grid-template-columns: 1fr 288px;
+  /* the index rail sits on the left — the page reads index -> work (IV.3) */
+  grid-template-columns: 288px minmax(0, 1fr);
   gap: 22px;
   align-items: start;
   position: relative;
@@ -7511,6 +7512,11 @@
   }
   .itRail {
     position: static;
+    /* on a narrow screen the work comes first; the index follows */
+    order: 2;
+  }
+  .itMain {
+    order: 1;
   }
   .itDrawer {
     right: 12px;
@@ -7691,4 +7697,72 @@
 }
 .itCiteWrap .itCite {
   border-top: 0;
+}
+
+/* The paste well — the room's second surface, always open (IV.3). */
+.itWell {
+  margin-top: 22px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  padding: 16px 18px;
+}
+.itWellHead {
+  margin: 0 0 10px;
+  font-family: var(--f-mono), ui-monospace, Menlo, monospace;
+  font-size: 10px;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: rgba(10, 28, 64, 0.42);
+}
+.itWellPaste {
+  width: 100%;
+  min-height: 96px;
+  resize: vertical;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--navy);
+  background: #fbfcfe;
+}
+.itWellPaste:focus {
+  outline: none;
+  border-color: rgba(10, 28, 64, 0.35);
+}
+.itKeep {
+  border: 1px solid var(--navy);
+  background: var(--navy);
+  color: #fff;
+  border-radius: 9px;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  padding: 8px 20px;
+  cursor: pointer;
+}
+.itKeep:hover:not(:disabled) {
+  background: #13275a;
+}
+.itKeep:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* IV.6 — an answer from the world, never dressed as the record. Blue is the
+   system-intelligence accent; the label does the honest work. */
+.itWorld {
+  margin-top: 14px;
+  border-left: 3px solid var(--blue);
+  padding: 2px 0 2px 14px;
+}
+.itWorldTag {
+  margin: 0 0 6px;
+  font-family: var(--f-mono), ui-monospace, Menlo, monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--blue);
 }

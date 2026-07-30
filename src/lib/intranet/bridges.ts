@@ -102,6 +102,8 @@ export type BattlecardProposal = {
   /** How many DISTINCT documents it was asked in. One loud demo is not a
    *  pattern; three separate buyers is. */
   asked: number;
+  /** The rooms it was asked in, so a proposal names its provenance. */
+  rooms: string[];
   firstAt: string;
   lastAt: string;
   claimIds: string[];
@@ -141,6 +143,7 @@ export function harvestBattlecards(
         read: askShapeRead(clearest.shape, ""),
         entities: [...new Set(g.flatMap((a) => a.entities))].slice(0, 8),
         asked: docs.size,
+        rooms: [...new Set(g.map((a) => a.space).filter(Boolean))].slice(0, 3),
         firstAt: dates[0] ?? "",
         lastAt: dates[dates.length - 1] ?? "",
         claimIds: g.map((a) => a.claimId),
