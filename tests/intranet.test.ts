@@ -859,8 +859,13 @@ describe("the room is wired where the operator can reach it", () => {
     assert.ok(main.includes('href="/intranet"'), "the tab is missing or archived");
     assert.ok(page.includes('current="Intranet"'));
   });
-  test("the ask bar, the rail, the paste well and the fold are all present", () => {
-    for (const marker of ["Ask", "Show the reasoning", "Add to the brain", "itRail"]) {
+  test("the ask bar, the rail, the paste dock and the fold are all present", () => {
+    for (const marker of [
+      "Ask",
+      "Show the reasoning",
+      "Paste into the brain",
+      "itRail",
+    ]) {
       assert.ok(client.includes(marker), `missing: ${marker}`);
     }
   });
@@ -874,6 +879,7 @@ describe("the room is wired where the operator can reach it", () => {
       "the grid no longer leads with the rail",
     );
     assert.ok(!page.includes("styles.sub"), "the page subtitle came back");
+    assert.ok(!page.includes("itKicker"), "the kicker came back");
   });
   test("pipeline vocabulary never reaches the surface (IV.1)", () => {
     for (const banned of [
@@ -946,6 +952,12 @@ describe("the chain that fills the brain is wired end to end", () => {
         /export async function runBrain[\s\S]*?\n}\n/.exec(runners)?.[0] ?? "";
       assert.ok(orchestrator.includes(fn), `runBrain never calls ${fn}`);
     }
+  });
+  test("the backlog line reads as words, not a suffix splice", () => {
+    assert.ok(
+      /\{pendingNow === 1 \? "entry" : "entries"\}/.test(client),
+      "the entry/entries splice is back — JSX eats the space",
+    );
   });
   test("one control, and it keeps going until the backlog is gone (IV.3)", () => {
     assert.ok(client.includes("runBrain"), "nothing in the room starts the chain");
@@ -1926,7 +1938,7 @@ describe("the ledger surface holds the decrees (IV.8)", () => {
   test("the paste dock is pinned and always open, and it says Send it", () => {
     assert.ok(client.includes("itDock"), "the dock is gone");
     assert.ok(client.includes('"Send it"'));
-    assert.ok(client.includes("Add to the brain"));
+    assert.ok(!client.includes("itDockNote"), "the dock label came back");
   });
   test("the progress line is transient — replaced by the result", () => {
     assert.ok(client.includes("Reading what you sent…"));

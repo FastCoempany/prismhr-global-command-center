@@ -701,8 +701,8 @@ export function IntranetClient({
               )}
               {pendingNow > 0 && (
                 <span className={styles.itQueue}>
-                  {pendingNow} entr{pendingNow === 1 ? "y" : "ies"} it hasn&apos;t read
-                  yet
+                  {pendingNow} {pendingNow === 1 ? "entry" : "entries"} it hasn&apos;t
+                  read yet
                 </span>
               )}
             </div>
@@ -806,7 +806,6 @@ export function IntranetClient({
       {canWrite && (
         <div className={styles.itDock}>
           <div className={styles.itDockIn}>
-            <span className={styles.itDockNote}>Add to the brain — always open</span>
             <textarea
               className={styles.itDockPaste}
               value={paste}

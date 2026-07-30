@@ -101,7 +101,6 @@ export default async function IntranetPage({
       <AppWayfinder current="Intranet" />
       <main className={styles.wrap}>
         <div className={styles.pageHead}>
-          <p className={styles.itKicker}>One brain · the running record</p>
           <h1 className={styles.h1}>Intranet</h1>
         </div>
         <IntranetClient
