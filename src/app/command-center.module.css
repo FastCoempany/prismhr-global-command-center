@@ -7132,3 +7132,389 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ═══ The Intranet — the app's brain ═══════════════════════════════════════
+   Work on the left, index on the right. The orange belongs to Ask, the one
+   move this surface asks for, and appears nowhere else. Blue is system
+   intelligence: the citations, the rail's selection, the links out. */
+.itWrap {
+  display: grid;
+  grid-template-columns: 1fr 288px;
+  gap: 22px;
+  align-items: start;
+  position: relative;
+}
+.itMain {
+  min-width: 0;
+}
+.itAskRow {
+  display: flex;
+  gap: 9px;
+}
+.itAsk {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px 14px;
+  font: inherit;
+  font-size: 15px;
+  color: var(--navy);
+  background: #fff;
+}
+.itAsk::placeholder {
+  color: rgba(10, 28, 64, 0.38);
+}
+.itAsk:focus-visible {
+  outline: 2px solid rgba(37, 99, 235, 0.35);
+  outline-offset: 1px;
+}
+.itGo {
+  border: 1px solid rgba(230, 112, 30, 0.45);
+  background: linear-gradient(180deg, rgba(230, 112, 30, 0.18), rgba(230, 112, 30, 0.1));
+  color: #a2450b;
+  font: inherit;
+  font-weight: 700;
+  font-size: 14px;
+  border-radius: 10px;
+  padding: 0 22px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.itGo:hover:not(:disabled) {
+  background: linear-gradient(180deg, rgba(230, 112, 30, 0.26), rgba(230, 112, 30, 0.14));
+}
+.itGo:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.itScope,
+.itWarn,
+.itStale {
+  font-size: 12.5px;
+  margin: 10px 0 0;
+  color: rgba(10, 28, 64, 0.55);
+}
+.itWarn {
+  color: #7a4b00;
+}
+.itClear {
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 12px;
+  color: var(--blue);
+  cursor: pointer;
+  padding: 0;
+}
+.itAnswer {
+  margin-top: 20px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  padding: 20px 22px 18px;
+}
+.itThin,
+.itMixed {
+  margin: 0 0 10px;
+  font-family: var(--f-mono), ui-monospace, Menlo, monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #7a4b00;
+}
+.itMixed {
+  color: #1e3a8a;
+}
+.itProse {
+  margin: 0;
+  font-size: 16.5px;
+  line-height: 1.6;
+  color: var(--navy);
+}
+.itGaps {
+  margin: 12px 0 0;
+  font-size: 13px;
+  color: rgba(10, 28, 64, 0.55);
+}
+.itCites {
+  margin-top: 16px;
+  border-top: 1px solid var(--line);
+  padding-top: 6px;
+}
+.itCite {
+  display: flex;
+  gap: 9px;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  border-top: 1px solid var(--line);
+  background: none;
+  font: inherit;
+  padding: 9px 2px;
+  cursor: pointer;
+  color: var(--navy);
+}
+.itCite:first-child {
+  border-top: 0;
+}
+.itCite:hover {
+  background: rgba(37, 99, 235, 0.04);
+}
+.itCiteN {
+  font-family: var(--f-mono), ui-monospace, Menlo, monospace;
+  font-size: 11px;
+  color: var(--blue);
+  flex: 0 0 auto;
+  padding-top: 2px;
+}
+.itCiteBody {
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+.itCiteMeta {
+  display: block;
+  margin-top: 3px;
+  font-family: var(--f-mono), ui-monospace, Menlo, monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgba(10, 28, 64, 0.42);
+}
+.itFoldBtn {
+  margin-top: 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  font: inherit;
+  font-size: 12px;
+  color: rgba(10, 28, 64, 0.6);
+  padding: 4px 13px;
+  cursor: pointer;
+}
+.itFoldBtn:hover {
+  color: var(--navy);
+}
+.itFold {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  font-size: 13px;
+  line-height: 1.55;
+  color: rgba(10, 28, 64, 0.66);
+}
+.itFold ul {
+  margin: 4px 0 0;
+  padding-left: 18px;
+}
+.itFoldHead {
+  font-family: var(--f-mono), ui-monospace, Menlo, monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: rgba(10, 28, 64, 0.42);
+  margin: 12px 0 0;
+}
+.itCoverage {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: rgba(10, 28, 64, 0.42);
+}
+.itEmpty {
+  margin-top: 26px;
+  color: rgba(10, 28, 64, 0.55);
+  font-size: 14px;
+}
+
+/* ── the rail ───────────────────────────────────────────────────────────── */
+.itRail {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  overflow: hidden;
+  position: sticky;
+  top: 14px;
+}
+.itRailHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 10px 13px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(10, 28, 64, 0.025);
+  font-family: var(--f-mono), ui-monospace, Menlo, monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: rgba(10, 28, 64, 0.42);
+}
+.itRailList {
+  max-height: 62vh;
+  overflow-y: auto;
+}
+.itRailEmpty {
+  padding: 14px 13px;
+  font-size: 12.5px;
+  color: rgba(10, 28, 64, 0.42);
+  margin: 0;
+}
+.itTopic {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  border-top: 1px solid var(--line);
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  padding: 9px 13px;
+  color: var(--navy);
+  cursor: pointer;
+}
+.itTopic:first-child {
+  border-top: 0;
+}
+.itTopic:hover {
+  background: rgba(37, 99, 235, 0.05);
+}
+.itTopicOn {
+  background: rgba(37, 99, 235, 0.08);
+  font-weight: 600;
+}
+.itCar {
+  color: rgba(10, 28, 64, 0.22);
+  font-size: 10px;
+  flex: 0 0 9px;
+}
+.itLabel {
+  flex: 1;
+  min-width: 0;
+}
+.itN {
+  font-family: var(--f-mono), ui-monospace, Menlo, monospace;
+  font-size: 10px;
+  color: rgba(10, 28, 64, 0.42);
+  font-variant-numeric: tabular-nums;
+}
+.itFresh {
+  color: #b45309;
+}
+.itAdd {
+  border-top: 1px solid var(--line);
+  padding: 10px 13px 12px;
+}
+.itAddBtn {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  font: inherit;
+  font-size: 12px;
+  color: rgba(10, 28, 64, 0.6);
+  padding: 4px 12px;
+  cursor: pointer;
+}
+.itAddBtn:hover {
+  color: var(--navy);
+}
+.itAddPane textarea {
+  width: 100%;
+  min-height: 120px;
+  margin-top: 9px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 9px 10px;
+  font: inherit;
+  font-size: 12.5px;
+  resize: vertical;
+}
+.itAddRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+.itQuiet {
+  font-size: 12px;
+  color: var(--blue);
+}
+.itReceipt {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: #15803d;
+}
+
+/* ── the drilldown drawer ───────────────────────────────────────────────── */
+.itDrawer {
+  position: fixed;
+  right: 22px;
+  top: 84px;
+  width: min(620px, 46vw);
+  max-height: 76vh;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid rgba(10, 28, 64, 0.18);
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(10, 28, 64, 0.18);
+  padding: 16px 18px 18px;
+  z-index: var(--ds-z-drawer, 200);
+}
+.itDrawerHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+  font-size: 14px;
+}
+.itDrawerMeta {
+  display: block;
+  font-family: var(--f-mono), ui-monospace, Menlo, monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(10, 28, 64, 0.42);
+  margin-top: 2px;
+}
+.itGone {
+  margin: 10px 0 0;
+  font-size: 12.5px;
+  color: #7a4b00;
+}
+.itPassage {
+  margin-top: 12px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+.itDim {
+  color: rgba(10, 28, 64, 0.42);
+}
+.itMark {
+  background: rgba(37, 99, 235, 0.14);
+  color: var(--navy);
+  border-radius: 3px;
+  padding: 1px 2px;
+}
+.itDrawerFoot {
+  margin: 14px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  font-size: 13px;
+}
+
+@media (max-width: 1000px) {
+  .itWrap {
+    grid-template-columns: 1fr;
+  }
+  .itRail {
+    position: static;
+  }
+  .itDrawer {
+    right: 12px;
+    left: 12px;
+    width: auto;
+  }
+}

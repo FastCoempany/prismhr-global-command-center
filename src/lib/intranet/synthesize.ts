@@ -109,20 +109,19 @@ export function longestVerbatimRun(answer: string, sources: string[]): number {
   for (const src of sources) {
     const b = words(src);
     if (b.length === 0) continue;
-    // Rolling comparison; the texts here are short enough that O(n·m) is fine.
-    const prev = new Array<number>(b.length + 1).fill(0);
+    // Longest common substring, two rows at a time. The texts here are short
+    // enough that O(n·m) is fine and a clear implementation beats a clever one.
+    let prev = new Array<number>(b.length + 1).fill(0);
+    let cur = new Array<number>(b.length + 1).fill(0);
     for (let i = 1; i <= a.length; i += 1) {
-      let diagPrev = 0;
       for (let j = 1; j <= b.length; j += 1) {
-        const tmp = prev[j];
-        if (a[i - 1] === b[j - 1]) {
-          prev[j] = diagPrev + 1;
-          if (prev[j] > best) best = prev[j];
-        } else {
-          prev[j] = 0;
-        }
-        diagPrev = tmp;
+        cur[j] = a[i - 1] === b[j - 1] ? prev[j - 1] + 1 : 0;
+        if (cur[j] > best) best = cur[j];
       }
+      const swap = prev;
+      prev = cur;
+      cur = swap;
+      cur.fill(0);
     }
   }
   return best;

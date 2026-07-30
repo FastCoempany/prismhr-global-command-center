@@ -50,15 +50,21 @@ const LABEL_STOP = new Set([
 /** Case, punctuation, plurals and connective words off; words sorted, so word
  *  order stops mattering. "Risks with EOR" and "EOR risk" fold identically. */
 export function foldLabel(label: string): string {
-  return (label ?? "")
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, " ")
-    .split(/\s+/)
-    .filter((w) => w && !LABEL_STOP.has(w))
-    .map((w) => (w.length > 3 && w.endsWith("s") ? w.slice(0, -1) : w))
-    .sort()
-    .join(" ")
-    .trim();
+  return (
+    (label ?? "")
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, " ")
+      .split(/\s+/)
+      .filter((w) => w && !LABEL_STOP.has(w))
+      // Singularise, but never inside a word that simply ends in s ("process",
+      // "status", "business") — a bad stem folds two real topics into one.
+      .map((w) =>
+        w.length > 3 && w.endsWith("s") && !/(ss|us|is)$/.test(w) ? w.slice(0, -1) : w,
+      )
+      .sort()
+      .join(" ")
+      .trim()
+  );
 }
 
 export function sameLabel(a: string, b: string): boolean {
