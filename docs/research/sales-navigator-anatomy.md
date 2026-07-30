@@ -111,14 +111,21 @@ operator-gated lanes:
 
 1. **The D8 triage capture.** The daily triage ends with a capture: the
    ▤ "Grab Sales Nav intent" bookmarklet (shipped in the Capture shelf,
-   7/30) copies the accounts-list dashboard as rendered, with a
-   `SALESNAV ACCOUNTS` head token. Because it is a multi-account
-   snapshot it never lands in an account's ⚡ box — its destination is
-   Groundwork's own intent drop, which parses rows, matches names to
-   book accounts, and proposes dated signals the operator confirms.
-   Until that room ships, the bookmarklet opens the Intranet, whose
-   capture parks the snapshot whole for later re-parse. Same family as
-   the SF/Outlook/Teams grabs — capture what's visible, never crawl.
+   7/30) captures **the whole accounts list, not just the rows on
+   screen** — Sales Navigator virtualises and paginates its list, so
+   the grab walks it: scroll-collect to the bottom, click Next, repeat,
+   deduping rows until no page remains (118 accounts in under a
+   minute), then emits everything under a `SALESNAV ACCOUNTS` head
+   token with a collected-row count. Because clipboard permission
+   expires during a long walk, a navy "Copy N rows" button hands over
+   the copy at the end. Because it is a multi-account snapshot it never
+   lands in an account's ⚡ box — its destination is Groundwork's own
+   intent drop, which parses rows, matches names to book accounts, and
+   proposes dated signals the operator confirms. Until that room ships,
+   the bookmarklet opens the Intranet, whose capture parks the snapshot
+   whole for later re-parse. Same family as the SF/Outlook/Teams grabs —
+   fired by the operator's click, on the operator's page, never a
+   background crawler.
 2. **Sales Navigator's alert emails.** Intent-change alerts (the
    "My HR Pros: increase in buyer intent" flag arrived this way) land in
    the operator's inbox, and the existing Outlook grab already captures

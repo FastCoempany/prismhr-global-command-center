@@ -42,18 +42,23 @@ function teamsBookmarklet(origin: string): string {
   return `javascript:${js}`;
 }
 
-// Grabs the Sales Navigator ACCOUNTS LIST as rendered — company names, buyer-
-// intent levels, activity counts, alerts. LinkedIn renders rows as they scroll
-// into view, so the grab takes what's on screen and says so; a second run after
-// scrolling catches the rest. Refuses anything that isn't a Sales Navigator
-// page. No API, no crawling — the page the operator is already reading.
+// Grabs the WHOLE Sales Navigator accounts list — company names, buyer-intent
+// levels, activity counts, alerts — not just the rows on screen. LinkedIn
+// virtualises the list (only rows near your scroll position exist in the page)
+// and paginates it, so the grab walks the list itself: scroll to the bottom
+// collecting rows, click Next, repeat, deduping as it goes, until there is no
+// next page. 118 accounts takes under a minute; keep the tab in front. Refuses
+// anything that isn't a Sales Navigator page. Long walks outlive the browser's
+// copy permission, so a navy "Copy N rows" button appears when the walk ends —
+// one click copies everything and opens the paste target. No API, no crawling —
+// only the list the operator opened, read the way scrolling would read it.
 //
 // Destination: this capture is a MULTI-account snapshot, so it must never land
 // in an account's ⚡ box (single-account binding; the misfile guard would fight
 // it). It feeds the prospecting room's intent drop; until that room ships, it
 // opens the Intranet, whose capture stores the snapshot whole.
 function salesNavBookmarklet(origin: string): string {
-  const js = `(async()=>{if(location.hostname.indexOf('linkedin.com')<0||location.pathname.indexOf('/sales')<0){alert('Open the Sales Navigator Accounts list first - that dashboard is what gets captured.');return}const q=['main table','[role="table"]','main','#content'];let el=null;for(const s of q){try{el=document.querySelector(s)}catch(e){}if(el&&el.innerText&&el.innerText.length>200)break;el=null}if(!el){alert('Nothing readable found - is the Accounts list on screen?');return}const t='SALESNAV ACCOUNTS - captured '+new Date().toLocaleString()+'\\n\\n'+el.innerText;try{await navigator.clipboard.writeText(t)}catch(e){window.prompt('Auto-copy was blocked. Press Ctrl+C, then paste it in:',t.slice(0,4000))}window.open('${origin}/intranet','_blank')})()`;
+  const js = `(async()=>{if(location.hostname.indexOf('linkedin.com')<0||location.pathname.indexOf('/sales')<0){alert('Open the Sales Navigator Accounts list first - that dashboard is what gets captured.');return}const sleep=(ms)=>new Promise(r=>setTimeout(r,ms));const rowsOf=()=>{let els=document.querySelectorAll('main table tbody tr');if(els.length<2)els=document.querySelectorAll('[role="table"] [role="row"]');if(els.length<2)els=document.querySelectorAll('main li');return els};const seen=new Set();const out=[];const collect=()=>{rowsOf().forEach((r)=>{const x=(r.innerText||'').replace(/\\s+$/,'');if(x&&x.length>10&&!seen.has(x)){seen.add(x);out.push(x)}})};const pane=(()=>{let p=document.querySelector('main')||document.body;for(let i=0;i<6&&p;i++){if(p.scrollHeight>p.clientHeight+80)return p;p=p.parentElement}return document.scrollingElement||document.body})();for(let page=0;page<20;page++){let last=-1;for(let i=0;i<24;i++){collect();const done=pane.scrollTop+pane.clientHeight>=pane.scrollHeight-4;if(done&&pane.scrollHeight===last)break;last=pane.scrollHeight;pane.scrollTop=pane.scrollHeight;await sleep(600)}collect();const next=document.querySelector('button[aria-label="Next"]:not([disabled]),button[aria-label="Next page"]:not([disabled])');if(!next)break;next.click();await sleep(1500);pane.scrollTop=0;await sleep(500)}if(out.length<2){alert('Nothing readable found - is the Accounts list on screen?');return}const t='SALESNAV ACCOUNTS - captured '+new Date().toLocaleString()+' - '+out.length+' rows collected\\n\\n'+out.join('\\n\\n----\\n\\n');let ok=false;try{await navigator.clipboard.writeText(t);ok=true}catch(e){}if(ok){window.open('${origin}/intranet','_blank');return}const d=document.createElement('button');d.textContent='Copy '+out.length+' rows and open the paste target';d.style.cssText='position:fixed;top:16px;right:16px;z-index:2147483647;background:#0a1c40;color:#fff;border:0;padding:14px 16px;border-radius:8px;font:600 13px sans-serif;cursor:pointer;box-shadow:0 8px 30px rgba(10,28,64,.35)';d.onclick=async()=>{try{await navigator.clipboard.writeText(t)}catch(e){window.prompt('Copy blocked. Press Ctrl+C:',t.slice(0,4000))}d.remove();window.open('${origin}/intranet','_blank')};document.body.appendChild(d)})()`;
   return `javascript:${js}`;
 }
 
@@ -112,9 +117,9 @@ const TOOLS: Tool[] = [
     where: "accounts list",
     label: "▤ Grab Sales Nav intent",
     takes:
-      "The accounts-list dashboard as rendered — company names, buyer-intent levels, activity counts, alerts. A snapshot of many accounts, so it lands whole in the Intranet, never on one account's row.",
+      "The whole accounts list — it scrolls and pages through every row itself (118 accounts in under a minute), collecting names, intent levels, activity counts, and alerts. Lands whole in the Intranet, never on one account's row.",
     refuses:
-      "Any page that isn't Sales Navigator. Rows below the fold ship only after you scroll them into view.",
+      "Any page that isn't Sales Navigator. Keep the tab in front while it walks the list; a navy button hands you the copy when it finishes.",
     build: salesNavBookmarklet,
   },
 ];
