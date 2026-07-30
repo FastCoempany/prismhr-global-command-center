@@ -1,0 +1,963 @@
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Groundwork — triptych, third round: the spine family</title>
+<style>
+  /* ── Antaeus token donor · bright field, one theme ────────────────── */
+  :root {
+    --field: #f5f7fb;
+    --surface: #ffffff;
+    --surface-sub: #fafbfd;
+    --surface-sunk: #eff2f7;
+    --ink: #0a1c40;
+    --ink-soft: rgba(10, 28, 64, 0.66);
+    --ink-faint: rgba(10, 28, 64, 0.42);
+    --ink-quiet: rgba(10, 28, 64, 0.22);
+    --hair: rgba(10, 28, 64, 0.07);
+    --hair-strong: rgba(10, 28, 64, 0.14);
+    --rule: rgba(10, 28, 64, 0.16);
+    --orange: #e6701e;
+    --orange-strong: #d4661b;
+    --orange-soft: rgba(230, 112, 30, 0.1);
+    --orange-tint: rgba(230, 112, 30, 0.05);
+    --blue: #2563eb;
+    --blue-soft: rgba(37, 99, 235, 0.08);
+    --green: #22c55e;
+    --green-soft: rgba(34, 197, 94, 0.1);
+    --amber: #f59e0b;
+    --amber-soft: rgba(245, 158, 11, 0.12);
+    --red: #ef4444;
+    --serif: "DM Serif Display", "Iowan Old Style", Georgia, serif;
+    --sans: "Public Sans", -apple-system, system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --sh-rest: 0 1px 2px rgba(10, 28, 64, 0.04), 0 4px 14px rgba(10, 28, 64, 0.05);
+    --sh-lift: 0 2px 4px rgba(10, 28, 64, 0.05), 0 14px 36px rgba(10, 28, 64, 0.08);
+    --sh-off: 0 4px 10px rgba(10, 28, 64, 0.06), 0 16px 36px rgba(10, 28, 64, 0.1);
+  }
+  html, body { background: var(--field); }
+  body { margin: 0; color: var(--ink); font: 400 15px/1.6 var(--sans); -webkit-font-smoothing: antialiased; }
+  * { box-sizing: border-box; }
+  a { color: var(--blue); text-decoration: none; }
+  a.acct { color: var(--ink); font-weight: 600; border-bottom: 1px dotted var(--rule); }
+  a.acct:hover { border-bottom-color: var(--ink); }
+  button { font: inherit; cursor: pointer; }
+  :focus-visible { outline: 3px solid var(--orange-soft); outline-offset: 1px; }
+  .kick { font: 600 10.5px/1.4 var(--mono); letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-faint); }
+
+  .studio { max-width: 1240px; margin: 0 auto; padding: 40px 40px 96px; }
+  .studio-head h1 { font: 400 clamp(30px, 4vw, 44px)/1.08 var(--serif); margin: 10px 0 12px; text-wrap: balance; }
+  .studio-head p { max-width: 74ch; color: var(--ink-soft); margin: 0; }
+  .seg { display: inline-flex; gap: 2px; padding: 2px; background: var(--surface-sub); border: 1px solid var(--hair-strong); border-radius: 99px; margin: 22px 0 8px; }
+  .seg button { border: 0; background: transparent; border-radius: 99px; padding: 7px 16px; font: 600 12px/1 var(--sans); color: var(--ink-soft); }
+  .seg button[aria-selected="true"] { background: var(--surface); color: var(--orange); box-shadow: var(--sh-rest); }
+  .opt-note { font-size: 13px; color: var(--ink-faint); max-width: 84ch; margin: 6px 0 18px; }
+  .opt-note b { color: var(--ink-soft); font-weight: 600; }
+
+  .frame { background: var(--field); border: 1px solid var(--hair-strong); border-radius: 12px; box-shadow: var(--sh-lift); overflow: hidden; position: relative; }
+  .option { display: none; }
+  .option.on { display: block; }
+
+  .way { display: flex; align-items: center; gap: 14px; padding: 8px 20px; background: var(--surface); border-bottom: 1px solid var(--hair-strong); }
+  .way .trail { font: 600 10.5px/1.2 var(--mono); letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-quiet); }
+  .way .here { font: 600 13px/1.2 var(--sans); }
+  .way .here span { color: var(--ink-faint); font-weight: 400; }
+  .pulling { margin-left: auto; display: flex; align-items: center; gap: 10px; border: 1px solid var(--hair-strong); border-radius: 4px; background: var(--surface-sub); padding: 6px 12px 6px 0; }
+  .pulling .pg { width: 3px; align-self: stretch; background: var(--orange); border-radius: 2px; }
+  .pulling .pv { font: 400 15px/1.2 var(--serif); }
+  .pulling .po { font: 400 13px/1.2 var(--sans); color: var(--ink-soft); max-width: 38ch; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .kbd { font: 600 11px/1 var(--mono); border: 1px solid var(--hair-strong); border-radius: 4px; padding: 6px 10px; color: var(--ink-faint); background: var(--surface); }
+
+  .page { max-width: 1160px; margin: 0 auto; padding: 26px 36px 48px; }
+
+  .ribbon { display: flex; align-items: center; gap: 12px; margin: 22px 0 12px; }
+  .ribbon .rl { font: 600 10.5px/1.4 var(--mono); letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-faint); white-space: nowrap; }
+  .ribbon .rr { height: 1px; flex: 1; background: linear-gradient(90deg, var(--hair-strong), transparent); }
+  .ribbon .rc { font: 600 10.5px/1.4 var(--mono); letter-spacing: 0.16em; color: var(--ink-quiet); white-space: nowrap; }
+
+  .btn { border-radius: 4px; padding: 10px 16px; font: 600 13px/1 var(--sans); border: 1px solid transparent; }
+  .btn:active { transform: translateY(1px); }
+  .btn-accent { background: var(--orange); color: #fff; }
+  .btn-accent:hover { background: var(--orange-strong); }
+  .btn-2nd { background: var(--surface); color: var(--ink); border-color: var(--hair-strong); }
+  .btn-2nd:hover { border-color: var(--rule); background: var(--surface-sub); }
+  .btn-ghost { background: transparent; color: var(--ink-soft); border: 0; }
+  .btn-ghost:hover { background: var(--surface-sunk); color: var(--ink); }
+  .btn-sm { padding: 6px 10px; font-size: 12px; }
+
+  .chip { display: inline-flex; align-items: center; gap: 6px; font: 600 12px/1 var(--sans); padding: 4px 10px; border-radius: 99px; border: 1px solid; }
+  .chip-neutral { color: var(--ink-soft); border-color: var(--hair-strong); background: var(--surface); }
+  .chip-blue { color: var(--blue); border-color: var(--blue); background: var(--blue-soft); }
+  .stamp { display: inline-block; font: 600 10.5px/1.4 var(--mono); letter-spacing: 0.16em; text-transform: uppercase; padding: 3px 8px; border-top: 1px solid; border-bottom: 1px solid; }
+  .stamp-neutral { color: var(--ink-faint); border-color: var(--rule); }
+
+  .dot { width: 7px; height: 7px; border-radius: 99px; background: var(--orange); display: inline-block; animation: pulse 2s infinite; }
+  @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(0.72); opacity: 0.4; } 100% { transform: scale(1); opacity: 1; } }
+
+  .scrub { display: flex; align-items: center; gap: 8px; margin: 2px 0 14px; }
+  .scrub .kick { margin-right: 6px; }
+  .scrub button { font: 600 11px/1 var(--mono); letter-spacing: 0.08em; border: 1px solid var(--hair-strong); background: var(--surface); color: var(--ink-soft); border-radius: 99px; padding: 6px 12px; }
+  .scrub button[aria-selected="true"] { color: var(--orange); border-color: var(--orange); background: var(--orange-tint); }
+  .scrub .scrub-note { font-size: 12px; color: var(--ink-quiet); margin-left: 6px; }
+
+  /* Cards & moves shared */
+  .offtag { font: 600 10.5px/1.4 var(--mono); letter-spacing: 0.16em; text-transform: uppercase; color: var(--orange); margin: 0 0 6px 2px; }
+  .off { background: var(--surface); border: 1px solid var(--hair-strong); border-bottom: 3px solid var(--orange); border-radius: 8px; box-shadow: var(--sh-off); padding: 18px 20px; }
+  .off h3 { font: 400 24px/1.3 var(--serif); margin: 0 0 8px; text-wrap: balance; }
+  .off .body, .mv .body { color: var(--ink-soft); font-size: 14px; max-width: 66ch; margin: 0 0 12px; }
+  .off .body b, .mv .body b, .rec-line b { color: var(--ink); font-weight: 600; }
+  .acts { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .mv { background: var(--surface); border: 1px solid var(--hair-strong); border-radius: 8px; padding: 12px 16px; display: grid; grid-template-columns: 3px 1fr; gap: 14px; }
+  .mv .g { width: 3px; align-self: stretch; border-radius: 2px; background: var(--ink-quiet); }
+  .mv.g-blue .g { background: var(--blue); }
+  .mv.g-amber .g { background: var(--amber); }
+  .mv h4 { font: 400 17px/1.35 var(--serif); margin: 0 0 4px; text-wrap: balance; }
+  .mv .body { margin-bottom: 8px; font-size: 13.5px; }
+  .recipe { font: 400 12px/1.7 var(--mono); background: var(--surface-sub); border: 1px solid var(--hair-strong); border-radius: 4px; padding: 8px 10px; margin: 6px 0 8px; color: var(--ink-soft); overflow-x: auto; }
+  .recipe b { color: var(--ink); font-weight: 600; }
+
+  /* Zones: plan → record */
+  .zone { transition: opacity 200ms cubic-bezier(0.2, 0, 0, 1); }
+  .zone .zbody { display: flex; flex-direction: column; gap: 10px; }
+  .zone .zrecord { display: none; }
+  .zone.past .zbody, .zone.past .offtag { display: none; }
+  .zone.past .zrecord { display: flex; flex-direction: column; gap: 4px; }
+  .zone.past { opacity: 0.78; }
+  .zone.future { opacity: 0.88; }
+  .rec-line { display: flex; gap: 10px; align-items: baseline; font-size: 13px; color: var(--ink-soft); padding: 4px 2px; }
+  .rec-line .rt { font: 600 11px/1.6 var(--mono); color: var(--ink-quiet); white-space: nowrap; }
+  .rec-line .rok { color: #157f3d; font-weight: 600; }
+
+  /* Option 1 grid */
+  .spine1 { display: grid; grid-template-columns: minmax(0, 5fr) minmax(280px, 2fr); gap: 28px; align-items: start; }
+  .wire { display: flex; flex-direction: column; gap: 8px; }
+  .wireitem { text-align: left; background: var(--surface); border: 1px solid var(--hair-strong); border-radius: 8px; padding: 10px 12px; display: block; width: 100%; }
+  .wireitem:hover { border-color: var(--rule); background: var(--surface-sub); }
+  .wireitem .wsrc { font: 600 10.5px/1.7 var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-faint); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .wireitem .whead { font-size: 13.5px; font-weight: 600; margin: 2px 0; }
+  .wireitem .wread { font-size: 12.5px; color: var(--ink-soft); }
+  .wireitem .wread i { color: var(--blue); font-style: normal; font-weight: 600; }
+  .wtag { font: 600 10px/1 var(--sans); color: var(--blue); border: 1px solid var(--blue); border-radius: 99px; padding: 2px 8px; background: var(--blue-soft); }
+  .edge { position: absolute; right: 0; top: 150px; writing-mode: vertical-rl; background: var(--surface); border: 1px solid var(--hair-strong); border-right: 0; border-radius: 10px 0 0 10px; font: 800 11px/1 var(--sans); letter-spacing: 0.06em; color: var(--ink-soft); padding: 12px 6px; box-shadow: -2px 2px 8px rgba(10, 28, 64, 0.08); }
+  .edge:hover { color: var(--orange); }
+  .instcard { background: var(--surface); border: 1px solid var(--hair-strong); border-bottom: 3px solid var(--ink-quiet); border-radius: 8px; padding: 12px 14px; font-size: 13px; color: var(--ink-soft); }
+  .instcard b { color: var(--ink); font-weight: 600; }
+
+  /* Option 2: rail + bench */
+  .bench { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 28px; align-items: start; }
+  .rail { display: flex; flex-direction: column; position: sticky; top: 16px; }
+  .rail-item { display: grid; grid-template-columns: 14px 1fr; gap: 10px; text-align: left; background: none; border: 0; padding: 0; }
+  .rail-item .ri-line { display: flex; flex-direction: column; align-items: center; }
+  .rail-item .ri-dot { width: 10px; height: 10px; border-radius: 99px; border: 2px solid var(--ink-quiet); background: var(--surface); margin-top: 5px; }
+  .rail-item .ri-rule { width: 1px; flex: 1; background: var(--hair-strong); min-height: 34px; }
+  .rail-item:last-child .ri-rule { display: none; }
+  .rail-item .ri-time { font: 600 11px/1.5 var(--mono); letter-spacing: 0.08em; color: var(--ink-quiet); }
+  .rail-item .ri-name { font: 600 13px/1.3 var(--sans); color: var(--ink-soft); padding-bottom: 18px; }
+  .rail-item[aria-selected="true"] .ri-dot { border-color: var(--orange); }
+  .rail-item[aria-selected="true"] .ri-time, .rail-item[aria-selected="true"] .ri-name { color: var(--orange); }
+  .rail-item.done .ri-dot { border-color: var(--green); background: var(--green-soft); }
+  .rail-item.done .ri-name { color: var(--ink-quiet); }
+  .rail-item:hover .ri-name { color: var(--ink); }
+  .benchpane[hidden] { display: none; }
+  .draftbox { background: var(--surface-sub); border: 1px solid var(--hair-strong); border-radius: 4px; padding: 12px 14px; font-size: 13px; color: var(--ink-soft); max-width: 66ch; margin: 0 0 12px; }
+  .draftbox .kick { display: block; margin-bottom: 6px; }
+  .draftbox p { margin: 0 0 8px; }
+  .bench-card { background: var(--surface); border: 1px solid var(--hair-strong); border-bottom: 3px solid var(--ink-quiet); border-radius: 8px; box-shadow: var(--sh-rest); padding: 18px 20px; }
+  .bench-card.now { border-bottom-color: var(--orange); box-shadow: var(--sh-off); }
+  .bench-card h3 { font: 400 23px/1.3 var(--serif); margin: 0 0 8px; text-wrap: balance; }
+  .bench-card .body { color: var(--ink-soft); font-size: 14px; max-width: 66ch; margin: 0 0 12px; }
+  .bench-card .body b { color: var(--ink); font-weight: 600; }
+  .people-line { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; }
+
+  /* Option 3: spine + running readout */
+  .runread { display: grid; grid-template-columns: minmax(0, 1fr) minmax(340px, 1fr); gap: 30px; align-items: start; }
+  .blk { background: var(--surface); border: 1px solid var(--hair-strong); border-radius: 8px; padding: 14px 16px; display: grid; grid-template-columns: 3px 1fr; gap: 14px; margin-bottom: 10px; }
+  .blk .g { width: 3px; align-self: stretch; border-radius: 2px; background: var(--ink-quiet); }
+  .blk.now-blk { border-bottom: 3px solid var(--orange); box-shadow: var(--sh-off); }
+  .blk.now-blk .g { background: var(--orange); }
+  .blk.done-blk { opacity: 0.75; }
+  .blk.done-blk .g { background: var(--green); }
+  .blk .bt { font: 600 10.5px/1.6 var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-faint); }
+  .blk h4 { font: 400 18px/1.35 var(--serif); margin: 2px 0 6px; text-wrap: balance; }
+  .blk .body { color: var(--ink-soft); font-size: 13.5px; max-width: 60ch; margin: 0 0 10px; }
+  .blk .body b { color: var(--ink); font-weight: 600; }
+  .blk .done-note { display: none; font-size: 13px; color: var(--ink-soft); }
+  .blk .done-note b { color: #157f3d; font-weight: 600; }
+  .blk.done-blk .body, .blk.done-blk .acts { display: none; }
+  .blk.done-blk .done-note { display: block; }
+  .readout { position: sticky; top: 16px; background: var(--surface); border: 1px solid var(--hair-strong); border-bottom: 3px solid var(--ink-quiet); border-radius: 8px; box-shadow: var(--sh-rest); padding: 20px 22px; }
+  .readout h3 { font: 400 21px/1.3 var(--serif); margin: 4px 0 10px; text-wrap: balance; }
+  .readout .rsec { border-top: 1px solid var(--hair); padding: 10px 0; font-size: 13.5px; color: var(--ink-soft); }
+  .readout .rsec .kick { display: block; margin-bottom: 4px; }
+  .readout .rsec p { margin: 0 0 8px; }
+  .readout .rsec b { color: var(--ink); font-weight: 600; }
+  .readout .updated { background: var(--green-soft); border-radius: 3px; transition: background 320ms cubic-bezier(0.2, 0, 0, 1); }
+  .readout .rfoot { display: flex; gap: 8px; align-items: center; border-top: 1px solid var(--hair); padding-top: 12px; }
+  .delta-chip { font: 600 11px/1 var(--mono); letter-spacing: 0.08em; color: #157f3d; border: 1px solid var(--green); border-radius: 99px; padding: 4px 10px; background: var(--green-soft); }
+
+  /* Drawer */
+  .scrim { position: fixed; inset: 0; background: rgba(10, 28, 64, 0.35); z-index: 200; display: none; }
+  .scrim.on { display: block; }
+  .drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(560px, 94vw); background: var(--surface); border-left: 1px solid var(--hair-strong); box-shadow: var(--sh-off); z-index: 201; padding: 26px; transform: translateX(24px); opacity: 0; pointer-events: none; transition: transform 320ms cubic-bezier(0.2, 0, 0, 1), opacity 320ms cubic-bezier(0.2, 0, 0, 1); overflow-y: auto; }
+  .drawer.on { transform: translateX(0); opacity: 1; pointer-events: auto; }
+  .drawer h3 { font: 400 22px/1.3 var(--serif); margin: 10px 0 8px; text-wrap: balance; }
+  .drawer .dsec { border-top: 1px solid var(--hair); padding: 12px 0; }
+  .drawer .dsec .kick { display: block; margin-bottom: 4px; }
+  .drawer .dsec p { margin: 0 0 8px; font-size: 13.5px; color: var(--ink-soft); }
+  .drawer .dsec p b { color: var(--ink); font-weight: 600; }
+  .dclose { position: absolute; top: 14px; right: 14px; width: 32px; height: 32px; border: 1px solid var(--hair-strong); border-radius: 4px; background: var(--surface); color: var(--ink-soft); }
+
+  .footer-note { margin-top: 36px; font-size: 12.5px; color: var(--ink-faint); max-width: 80ch; }
+
+  @media (prefers-reduced-motion: reduce) { .dot { animation: none; } .drawer, .zone, .readout .updated { transition: none; } }
+  @media (max-width: 1023px) {
+    .spine1, .bench, .runread { grid-template-columns: 1fr; }
+    .rail, .readout { position: static; }
+    .studio { padding: 24px 16px 64px; }
+    .page { padding: 20px 16px 40px; }
+  }
+</style>
+
+<div class="studio">
+  <header class="studio-head">
+    <div class="kick">Groundwork · triptych, third round · the spine family · 2026-07-30</div>
+    <h1>The day spine, three ways.</h1>
+    <p>
+      Direction locked: the room runs the day along a 9:00-to-close spine.
+      These are three builds of that one idea. In all three, the past
+      compresses into a record instead of disappearing, every sentence passes
+      the plain-language bar, and the readout for Russ is never more than one
+      gesture away. What differs is what sits beside the spine.
+    </p>
+    <div class="seg" role="tablist" aria-label="Design options">
+      <button role="tab" aria-selected="true" data-opt="1">1 · The Spine</button>
+      <button role="tab" aria-selected="false" data-opt="2">2 · Spine &amp; Bench</button>
+      <button role="tab" aria-selected="false" data-opt="3">3 · Spine &amp; Readout</button>
+    </div>
+    <p class="opt-note" id="note-1"><b>The pure form.</b> The day runs top to bottom; the wire and the institutions keep watch on the right; the readout waits on the edge. Scrub the clock: blocks you've passed compress into a diary of what actually happened — the spine reads forward as a plan and backward as the record Russ hears about.</p>
+    <p class="opt-note" id="note-2" hidden><b>The spine drives a workbench.</b> The hours live in a thin rail on the left; the middle of the screen is a full working surface for the block you're in — the Simploy pack at 9:00, the Sales Navigator session at 9:40, Whitney's briefing at 11:00. Click any hour to look ahead or back; the bench re-sets itself.</p>
+    <p class="opt-note" id="note-3" hidden><b>The spine writes the readout in front of you.</b> Day blocks on the left, State of play on the right — and working a block visibly rewrites the readout's sentences the moment you finish. The self-updating dossier stops being a promise and becomes something you watch happen.</p>
+  </header>
+
+  <!-- ═══════════ OPTION 1 · THE SPINE ═══════════ -->
+  <section class="frame option on" id="opt-1" aria-label="Option 1: The Spine">
+    <div class="way">
+      <span class="trail">Home ›</span>
+      <span class="here">Groundwork <span>· Wednesday, July 30 · <span class="clock">9:02a</span> Central</span></span>
+      <div class="pulling">
+        <span class="pg"></span>
+        <span class="pv">Send</span>
+        <span class="po">Simploy's follow-up — their leadership decides August 6th</span>
+      </div>
+      <span class="kbd">Ctrl K</span>
+    </div>
+    <button class="edge" data-drawer="readout">State of play</button>
+    <div class="page">
+      <div class="scrub" role="tablist" aria-label="Time of day">
+        <span class="kick">The clock</span>
+        <button role="tab" aria-selected="true" data-t="900">9:00</button>
+        <button role="tab" aria-selected="false" data-t="1130">11:30</button>
+        <button role="tab" aria-selected="false" data-t="1430">2:30</button>
+        <button role="tab" aria-selected="false" data-t="1645">4:45</button>
+        <span class="scrub-note">— scrub to see the spine become the record</span>
+      </div>
+
+      <div class="spine1">
+        <div>
+          <!-- 9:00 zone -->
+          <div class="zone" data-zone="900">
+            <div class="ribbon"><span class="rl"><span class="dot"></span>&nbsp; 9:00 · the opening read</span><span class="rr"></span><span class="rc">1 move that matters + 2</span></div>
+            <div class="zbody">
+              <div>
+                <div class="offtag">— Today's one move that matters</div>
+                <div class="off">
+                  <h3>Simploy picks their global-hiring partner August 6th. Your follow-up is what's in front of the decision.</h3>
+                  <p class="body">
+                    Simploy is a PEO in St. Louis that runs their business on our
+                    software. Their COO, <b>Chassie Smith</b>, came to us July 8th
+                    after the conference: they're choosing one partner to employ
+                    and pay workers abroad for their clients, and her leadership
+                    decides <b>August 6th</b>. Today that business goes to
+                    Globalization Partners and Simploy earns nothing on it. We
+                    demoed for her operations director last week; the open item
+                    is how we'd convert their <b>two contractors in India</b>
+                    into proper employees. The draft is composed — read, edit,
+                    send to Chassie and Katie, with Lesha copied.
+                  </p>
+                  <div class="acts">
+                    <button class="btn btn-accent">Open the draft</button>
+                    <button class="btn btn-ghost btn-sm" data-drawer="wire1">The wire item on this</button>
+                  </div>
+                </div>
+              </div>
+              <div class="mv g-blue">
+                <span class="g"></span>
+                <div>
+                  <h4>XcelHR — Bill Laffey asked for a call this week. Send him Wednesday or Friday.</h4>
+                  <p class="body">A national PEO on our platform; Bill (VP of operations) has a client with workers in Mexico and wants to know how a deal with us works. <b>Anika sets the frame first</b> — she owns the timing.</p>
+                  <div class="acts"><button class="btn btn-2nd btn-sm">Send times</button></div>
+                </div>
+              </div>
+              <div class="mv g-blue">
+                <span class="g"></span>
+                <div>
+                  <h4>Infiniti HR — confirm Friday with Jennifer Hardesty before the last slot lapses.</h4>
+                  <p class="body">She asked for the call herself: a Puerto Rico payroll problem now, "other international needs" in her words. Their Globalization Partners alliance renews this fall.</p>
+                  <div class="acts"><button class="btn btn-2nd btn-sm">Confirm Friday</button></div>
+                </div>
+              </div>
+            </div>
+            <div class="zrecord">
+              <div class="rec-line"><span class="rt">9:41a</span><span><span class="rok">✓</span> Simploy follow-up sent to Chassie and Katie, Lesha copied — the India conversion answer included.</span></div>
+              <div class="rec-line"><span class="rt">9:48a</span><span><span class="rok">✓</span> Times sent to Bill Laffey; Anika asked to set the frame first.</span></div>
+              <div class="rec-line"><span class="rt">9:52a</span><span><span class="rok">✓</span> Friday confirmed with Jennifer Hardesty; Puerto Rico answer requested from Anthony's team.</span></div>
+            </div>
+          </div>
+
+          <!-- 9:40 research zone -->
+          <div class="zone future" data-zone="1000">
+            <div class="ribbon"><span class="rl">9:40 · the research session</span><span class="rr"></span><span class="rc">1 of 3 directives today</span></div>
+            <div class="zbody">
+              <div class="mv g-amber">
+                <span class="g"></span>
+                <div>
+                  <h4>Twenty minutes in Sales Navigator: put people on MedHQ.</h4>
+                  <p class="body">A healthcare PEO in Westchester — one town over — with <b>one known name</b> in the book. No briefing can be composed for an account with no people. The recipe is ready:</p>
+                  <div class="recipe">Lead search — Current company: <b>MedHQ</b> · Function: <b>HR, Operations, Finance</b> · Seniority: <b>VP+, C-suite</b> · Geography: <b>Chicago metro</b> → bring back 3–5 names with titles</div>
+                  <div class="acts"><button class="btn btn-2nd btn-sm">Copy the recipe</button><span style="font-size:12px;color:var(--ink-quiet);">files as candidates — you confirm before anything sticks</span></div>
+                </div>
+              </div>
+            </div>
+            <div class="zrecord">
+              <div class="rec-line"><span class="rt">10:05a</span><span><span class="rok">✓</span> Four names brought back and filed as candidates on MedHQ — the account is briefable now.</span></div>
+            </div>
+          </div>
+
+          <!-- 11:00 people zone -->
+          <div class="zone future" data-zone="1100">
+            <div class="ribbon"><span class="rl">11:00 · the people window</span><span class="rr"></span><span class="rc">the country is at its desk</span></div>
+            <div class="zbody">
+              <div class="mv">
+                <span class="g"></span>
+                <div>
+                  <h4>Whitney Dideon's accounts get their first introduction to Global.</h4>
+                  <p class="body">She manages about <b>28 of the book's accounts</b> and is three weeks in seat — nobody has briefed her roster yet. The briefing is composed: her three best-fit accounts, each with the question she can relay word-for-word.</p>
+                  <div class="acts"><button class="btn btn-2nd btn-sm">Open the briefing</button></div>
+                </div>
+              </div>
+              <div class="mv">
+                <span class="g"></span>
+                <div>
+                  <h4>ESC — nudge the Canada demo onto the calendar.</h4>
+                  <p class="body">The Buffalo PEO accepted the demo July 22nd; a week later it still has no date. One line to Hatton Humphrey moves it.</p>
+                  <div class="acts"><button class="btn btn-2nd btn-sm">Send the nudge</button></div>
+                </div>
+              </div>
+            </div>
+            <div class="zrecord">
+              <div class="rec-line"><span class="rt">11:20a</span><span><span class="rok">✓</span> Whitney's briefing sent — three accounts, three relay questions.</span></div>
+              <div class="rec-line"><span class="rt">11:26a</span><span><span class="rok">✓</span> Nudge to Hatton sent; demo date pending.</span></div>
+            </div>
+          </div>
+
+          <!-- 2:00 follow-through -->
+          <div class="zone future" data-zone="1400">
+            <div class="ribbon"><span class="rl">2:00 · follow-through</span><span class="rr"></span><span class="rc">file what the morning found</span></div>
+            <div class="zbody">
+              <div class="mv">
+                <span class="g"></span>
+                <div>
+                  <h4>Confirm the four MedHQ candidates and route the wire dig to Infiniti's file.</h4>
+                  <p class="body">The morning's research becomes the book's knowledge only when it's filed. Two confirmations, five minutes.</p>
+                  <div class="acts"><button class="btn btn-2nd btn-sm">Review candidates</button></div>
+                </div>
+              </div>
+            </div>
+            <div class="zrecord">
+              <div class="rec-line"><span class="rt">2:12p</span><span><span class="rok">✓</span> MedHQ candidates confirmed; Globalization Partners fee finding filed to Infiniti HR ahead of Friday.</span></div>
+            </div>
+          </div>
+
+          <!-- 4:30 close -->
+          <div class="zone future" data-zone="1630">
+            <div class="ribbon"><span class="rl">4:30 · the closing read</span><span class="rr"></span><span class="rc">the delta</span></div>
+            <div class="zbody">
+              <div class="mv">
+                <span class="g"></span>
+                <div>
+                  <h4>What today changed, in the readout's own words.</h4>
+                  <p class="body">The follow-up Simploy's decision was waiting on is out. MedHQ went from one known name to five. Whitney's roster met Global for the first time. Tomorrow opens with Infiniti prep.</p>
+                  <div class="acts"><button class="btn btn-2nd btn-sm" data-drawer="readout">Read State of play</button></div>
+                </div>
+              </div>
+            </div>
+            <div class="zrecord">
+              <div class="rec-line"><span class="rt">4:45p</span><span><span class="rok">✓</span> Day closed. The spine above is the record; tomorrow's 9:00 is already seeded.</span></div>
+            </div>
+          </div>
+        </div>
+
+        <aside>
+          <div class="ribbon" style="margin-top: 2px;"><span class="rl">Outside · the wire</span><span class="rr"></span><span class="rc">sample sweep 9:02a</span></div>
+          <div class="wire">
+            <button class="wireitem" data-drawer="wire1">
+              <span class="wsrc">HR Dive · 7:40a <span class="wtag">Infiniti HR</span> <span class="wtag">Nextep</span></span>
+              <span class="whead">Globalization Partners raises platform fees for alliance partners</span>
+              <span class="wread"><i>Why it matters:</i> both accounts send global work to G-P; a fee raise opens the renewal conversation early.</span>
+            </button>
+            <button class="wireitem" data-drawer="wire2">
+              <span class="wsrc">SHRM · yesterday</span>
+              <span class="whead">Worker-misclassification enforcement widening in the EU</span>
+              <span class="wread"><i>Why it matters:</i> the exact worry that starts contractor-conversion conversations — Simploy's India situation included.</span>
+            </button>
+            <button class="wireitem" data-drawer="wire3">
+              <span class="wsrc">Staffing Industry Analysts · yesterday</span>
+              <span class="whead">PEO acquisition pace holds through the quarter</span>
+              <span class="wread"><i>Why it matters:</i> Premier Payroll was bought out from under the book last fall; acquisitions close doors or open them.</span>
+            </button>
+          </div>
+          <div class="ribbon"><span class="rl">The institutions</span><span class="rr"></span><span class="rc">next 7 days</span></div>
+          <div class="instcard">
+            <span class="kick" style="display:block;margin-bottom:4px;">Thursday, Aug 7 · Chicago</span>
+            <b>Global Chamber, Chicago chapter — monthly gathering.</b>
+            Verification runs this week: who convenes it, who attends, what
+            membership asks. If it holds up, this is the first standing room
+            in the institutions program — national reach into small
+            businesses that hire across borders.
+            <div style="margin-top:8px;"><button class="btn btn-2nd btn-sm">Run the verification</button></div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ OPTION 2 · SPINE & BENCH ═══════════ -->
+  <section class="frame option" id="opt-2" aria-label="Option 2: Spine and Bench">
+    <div class="way">
+      <span class="trail">Home ›</span>
+      <span class="here">Groundwork <span>· Wednesday, July 30 · 9:02a Central</span></span>
+      <div class="pulling">
+        <span class="pg"></span>
+        <span class="pv">Work</span>
+        <span class="po">the 9:00 block — Simploy's follow-up is on the bench</span>
+      </div>
+      <span class="kbd">Ctrl K</span>
+    </div>
+    <div class="page">
+      <div class="bench">
+        <nav class="rail" role="tablist" aria-label="The day's blocks">
+          <button class="rail-item" role="tab" aria-selected="true" data-bench="b1">
+            <span class="ri-line"><span class="ri-dot"></span><span class="ri-rule"></span></span>
+            <span><span class="ri-time">9:00</span><br /><span class="ri-name">The opening read</span></span>
+          </button>
+          <button class="rail-item" role="tab" aria-selected="false" data-bench="b2">
+            <span class="ri-line"><span class="ri-dot"></span><span class="ri-rule"></span></span>
+            <span><span class="ri-time">9:40</span><br /><span class="ri-name">Research session</span></span>
+          </button>
+          <button class="rail-item" role="tab" aria-selected="false" data-bench="b3">
+            <span class="ri-line"><span class="ri-dot"></span><span class="ri-rule"></span></span>
+            <span><span class="ri-time">11:00</span><br /><span class="ri-name">The people window</span></span>
+          </button>
+          <button class="rail-item" role="tab" aria-selected="false" data-bench="b4">
+            <span class="ri-line"><span class="ri-dot"></span><span class="ri-rule"></span></span>
+            <span><span class="ri-time">2:00</span><br /><span class="ri-name">Follow-through</span></span>
+          </button>
+          <button class="rail-item" role="tab" aria-selected="false" data-bench="b5">
+            <span class="ri-line"><span class="ri-dot"></span></span>
+            <span><span class="ri-time">4:30</span><br /><span class="ri-name">The closing read</span></span>
+          </button>
+        </nav>
+
+        <div>
+          <div class="benchpane" id="bench-b1">
+            <div class="bench-card now">
+              <span class="kick"><span class="dot"></span>&nbsp; Now · 9:00 · the one move that matters</span>
+              <h3>Simploy — send the follow-up their August 6th decision is waiting on.</h3>
+              <p class="body">
+                A St. Louis PEO on our software. COO <b>Chassie Smith</b> is
+                choosing one partner to employ and pay workers abroad for
+                their clients; leadership decides <b>August 6th</b>. The open
+                item from last week's demo: converting their two India
+                contractors into proper employees.
+              </p>
+              <div class="draftbox">
+                <span class="kick">The composed draft · edit before sending</span>
+                <p>"Chassie, Katie — thank you for the time last week. On the
+                India question: both contractors can move to employed status
+                under our entity there; onboarding runs about two weeks once
+                we have their details, and the misclassification exposure
+                ends the day they convert…"</p>
+                <p style="margin:0;color:var(--ink-quiet);">— continues; nothing sends without your hand.</p>
+              </div>
+              <div class="people-line">
+                <span class="chip chip-neutral">Chassie Smith · COO</span>
+                <span class="chip chip-neutral">Katie · Dir. Operations</span>
+                <span class="chip chip-blue">Lesha Cyphers · copied</span>
+              </div>
+              <div class="acts">
+                <button class="btn btn-accent" data-benchdone="b1">Send, and mark the block worked</button>
+                <button class="btn btn-ghost btn-sm" data-drawer="wire1">The wire item on this</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="benchpane" id="bench-b2" hidden>
+            <div class="bench-card">
+              <span class="kick">9:40 · research session · directive 1 of 3 today</span>
+              <h3>Sales Navigator, twenty minutes: put people on MedHQ.</h3>
+              <p class="body">
+                MedHQ is a healthcare PEO in Westchester, Illinois — one town
+                over from you — and the book knows <b>one name</b> there. The
+                bench composes the session so tool time is never browsing
+                time:
+              </p>
+              <div class="recipe">Lead search — Current company: <b>MedHQ</b> · Function: <b>HR, Operations, Finance</b> · Seniority: <b>VP+, C-suite</b> · Geography: <b>Chicago metro</b><br />Bring back: 3–5 names with titles → filed as candidates for your confirmation</div>
+              <p class="body">
+                While you're in the tool, the second look: <b>Infiniti HR's</b>
+                company page — is anyone there talking about the Globalization
+                Partners fee news before Friday's call?
+              </p>
+              <div class="acts">
+                <button class="btn btn-accent" data-benchdone="b2">Names filed — block worked</button>
+                <button class="btn btn-2nd btn-sm">Copy both recipes</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="benchpane" id="bench-b3" hidden>
+            <div class="bench-card">
+              <span class="kick">11:00 · the people window · the country is at its desk</span>
+              <h3>Whitney's roster meets Global for the first time.</h3>
+              <p class="body">
+                Whitney Dideon manages about <b>28 accounts</b> and is three
+                weeks in seat. The composed briefing gives her three best-fit
+                accounts, each with a question she can relay word-for-word —
+                the ask is a gauge, never a pitch:
+              </p>
+              <div class="draftbox">
+                <span class="kick">Her three, with the relay questions</span>
+                <p><b>WorkSmart Systems</b> (Indianapolis, ~500 clients, on our platform) — "Which countries do your clients have people in today?"</p>
+                <p><b>Amplify HR</b> (Northbrook, all 50 states) — "Has any client asked about hiring abroad this year?"</p>
+                <p style="margin:0;"><b>Fullstack PEO</b> (Indianapolis, startup clientele) — "Do any of your startup clients pay contractors overseas?"</p>
+              </div>
+              <div class="acts">
+                <button class="btn btn-accent" data-benchdone="b3">Briefing sent — block worked</button>
+                <button class="btn btn-ghost btn-sm">Also due: the ESC demo-date nudge</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="benchpane" id="bench-b4" hidden>
+            <div class="bench-card">
+              <span class="kick">2:00 · follow-through · file what the morning found</span>
+              <h3>Research becomes knowledge only when it's filed.</h3>
+              <p class="body">
+                Confirm the MedHQ candidates the morning session brought back.
+                Route the Globalization Partners finding to Infiniti's file so
+                Friday's call prep carries it. Both together: about five
+                minutes.
+              </p>
+              <div class="acts">
+                <button class="btn btn-accent" data-benchdone="b4">Filed — block worked</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="benchpane" id="bench-b5" hidden>
+            <div class="bench-card">
+              <span class="kick">4:30 · the closing read · two minutes for Russ</span>
+              <h3>The readout already knows what today changed.</h3>
+              <p class="body">
+                If Russ calls now: the Simploy follow-up their decision was
+                waiting on is out. MedHQ went from one known name to five.
+                Whitney's 28 accounts met Global for the first time. Friday's
+                Infiniti call is prepped with this morning's competitor news.
+              </p>
+              <div class="acts">
+                <button class="btn btn-accent" data-drawer="readout">Open State of play</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ OPTION 3 · SPINE & READOUT ═══════════ -->
+  <section class="frame option" id="opt-3" aria-label="Option 3: Spine and Readout">
+    <div class="way">
+      <span class="trail">Home ›</span>
+      <span class="here">Groundwork <span>· Wednesday, July 30 · 9:02a Central</span></span>
+      <div class="pulling">
+        <span class="pg"></span>
+        <span class="pv">Work</span>
+        <span class="po">the spine — and watch the readout rewrite itself</span>
+      </div>
+      <span class="kbd">Ctrl K</span>
+    </div>
+    <div class="page">
+      <div class="runread">
+        <div>
+          <div class="ribbon" style="margin-top:0;"><span class="rl">The day · work a block, watch the right column</span><span class="rr"></span><span class="rc">5 blocks</span></div>
+
+          <div class="blk now-blk" id="blk-1">
+            <span class="g"></span>
+            <div>
+              <span class="bt"><span class="dot"></span>&nbsp; 9:00 · the one move that matters</span>
+              <h4>Send Simploy the follow-up their August 6th decision is waiting on.</h4>
+              <p class="body">St. Louis PEO on our software; COO <b>Chassie Smith</b>; the open item is the India contractor conversion. Draft composed.</p>
+              <div class="acts"><button class="btn btn-accent" data-work="1">Send it</button></div>
+              <div class="done-note"><b>✓ 9:41a</b> — sent to Chassie and Katie, Lesha copied. Watch the readout: Simploy's paragraph just changed tense.</div>
+            </div>
+          </div>
+
+          <div class="blk" id="blk-2">
+            <span class="g"></span>
+            <div>
+              <span class="bt">9:40 · research session</span>
+              <h4>Twenty minutes in Sales Navigator: put people on MedHQ.</h4>
+              <p class="body">One known name today. Recipe: company <b>MedHQ</b> · HR/Operations/Finance · VP+ · Chicago metro → 3–5 names back.</p>
+              <div class="acts"><button class="btn btn-2nd" data-work="2">Names filed</button></div>
+              <div class="done-note"><b>✓ 10:05a</b> — four names filed as candidates. The readout's book paragraph picked it up.</div>
+            </div>
+          </div>
+
+          <div class="blk" id="blk-3">
+            <span class="g"></span>
+            <div>
+              <span class="bt">11:00 · the people window</span>
+              <h4>Whitney's 28 accounts get their first Global briefing.</h4>
+              <p class="body">Three weeks in seat, roster never introduced. Three accounts, three relay questions, composed and ready.</p>
+              <div class="acts"><button class="btn btn-2nd" data-work="3">Briefing sent</button></div>
+              <div class="done-note"><b>✓ 11:20a</b> — sent. The readout's channel line now says all six partner managers are briefed.</div>
+            </div>
+          </div>
+
+          <div class="blk" id="blk-4">
+            <span class="g"></span>
+            <div>
+              <span class="bt">2:00 · follow-through</span>
+              <h4>File the morning: confirm MedHQ's candidates, route the G-P finding to Infiniti.</h4>
+              <p class="body">Research becomes the book's knowledge only when filed. Five minutes.</p>
+              <div class="acts"><button class="btn btn-2nd" data-work="4">Filed</button></div>
+              <div class="done-note"><b>✓ 2:12p</b> — filed. Friday's Infiniti prep now carries the fee-raise finding.</div>
+            </div>
+          </div>
+
+          <div class="blk" id="blk-5">
+            <span class="g"></span>
+            <div>
+              <span class="bt">4:30 · the closing read</span>
+              <h4>Two minutes for Russ — the column on the right is already current.</h4>
+              <p class="body">Nothing to write up. Read it, copy it, done.</p>
+              <div class="acts"><button class="btn btn-2nd" data-drawer="readout">Open the full readout</button></div>
+              <div class="done-note"><b>✓ 4:45p</b> — day closed; tomorrow opens with Infiniti prep.</div>
+            </div>
+          </div>
+        </div>
+
+        <aside class="readout">
+          <span class="kick">State of play · rewrites itself as you work · <span class="delta-chip" id="delta-chip" hidden>updated</span></span>
+          <h3>If Russ calls right now, read him this.</h3>
+          <div class="rsec">
+            <span class="kick">The deal closest to real</span>
+            <p><b>Simploy</b> — a St. Louis PEO on our software — picks their
+            global-hiring partner <b>August 6th</b>. Their COO came to us July
+            8th; we demoed last week. <span id="r-simploy">I owe them one thing
+            before the decision — the India contractor conversion answer —
+            and <b>it goes out this morning</b>.</span></p>
+          </div>
+          <div class="rsec">
+            <span class="kick">Also moving</span>
+            <p>ESC in Buffalo: Canada payroll demo accepted, licensing
+            question with Rick Torrence. Infiniti HR: Friday call — Puerto
+            Rico pain now, their Globalization Partners alliance renews this
+            fall<span id="r-infiniti"></span>. XcelHR: their VP of operations
+            wants a call this week to pitch a client with workers in
+            Mexico.</p>
+          </div>
+          <div class="rsec">
+            <span class="kick">The book</span>
+            <p>150 customer accounts nationwide; <b>11</b> have had a real
+            global-hiring conversation since July 8th.
+            <span id="r-medhq">MedHQ — a healthcare PEO one town over — has
+            one known contact; today's research session fixes that.</span>
+            <span id="r-whitney">Five of the six partner managers who own
+            these relationships are briefed; <b>Whitney Dideon's 28 accounts
+            get their first briefing today.</b></span></p>
+          </div>
+          <div class="rsec">
+            <span class="kick">Blocking me — all internal</span>
+            <p>Partner-quotable pricing (asked July 22nd) · country coverage
+            sheets (same age) · the second contracting training (waiting on
+            a date).</p>
+          </div>
+          <div class="rfoot">
+            <button class="btn btn-accent btn-sm" id="copy-3">Copy the readout</button>
+            <span style="font-size:12px;color:var(--ink-faint);">last read to Russ: Monday</span>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <p class="footer-note">
+    Sample content throughout — real accounts and people from the book with
+    illustrative counts; the builders compute real ones. Wire items are a
+    sample sweep. Fonts fall back gracefully here; the product loads DM Serif
+    Display, Public Sans, and JetBrains Mono via next/font. No money figures
+    on any surface, by doctrine.
+  </p>
+</div>
+
+<div class="scrim" id="scrim"></div>
+
+<aside class="drawer" id="drawer-wire1" role="dialog" aria-label="Wire item">
+  <button class="dclose" data-close>&#10005;</button>
+  <span class="kick">The wire · HR Dive · this morning · sample item</span>
+  <h3>Globalization Partners raises platform fees for alliance partners.</h3>
+  <div class="dsec"><span class="kick">Why this matters here</span>
+    <p><b>Infiniti HR</b> — domestic on our software, global handed to
+    Globalization Partners under an alliance renewing this fall — is exactly
+    who this hits. It gives their finance team a reason to shop the renewal
+    early, and we're already inside the building. <b>Nextep</b> has the same
+    shape on a longer clock. <b>Simploy</b> hears about this too: the
+    provider they currently refer to just got more expensive.</p>
+  </div>
+  <div class="dsec"><span class="kick">Matched</span><p>Globalization Partners · PEO · <a class="acct" href="#">Infiniti HR</a> · <a class="acct" href="#">Nextep</a> · <a class="acct" href="#">Simploy</a></p></div>
+  <div class="dsec"><span class="kick">Source</span><p><a href="#">hrdive.com — read the original</a></p></div>
+  <div class="dsec" style="border-top: 0; padding-top: 4px;">
+    <button class="btn btn-accent">Dig deeper and file to Infiniti</button>
+    <button class="btn btn-ghost" data-close>Skip — stay here</button>
+  </div>
+</aside>
+
+<aside class="drawer" id="drawer-wire2" role="dialog" aria-label="Wire item">
+  <button class="dclose" data-close>&#10005;</button>
+  <span class="kick">The wire · SHRM · yesterday · sample item</span>
+  <h3>Worker-misclassification enforcement widening in the EU.</h3>
+  <div class="dsec"><span class="kick">Why this matters here</span>
+    <p>The exact worry that starts contractor-conversion conversations —
+    including <b>Simploy's</b> two India contractors and every partner whose
+    clients pay overseas contractors by wire. This is the education story
+    the institutions program leads with.</p>
+  </div>
+  <div class="dsec"><span class="kick">Matched</span><p>worker misclassification · global hiring compliance · EOR</p></div>
+  <div class="dsec"><span class="kick">Source</span><p><a href="#">shrm.org — read the original</a></p></div>
+  <div class="dsec" style="border-top: 0; padding-top: 4px;">
+    <button class="btn btn-accent">Dig deeper</button>
+    <button class="btn btn-ghost" data-close>Skip — stay here</button>
+  </div>
+</aside>
+
+<aside class="drawer" id="drawer-wire3" role="dialog" aria-label="Wire item">
+  <button class="dclose" data-close>&#10005;</button>
+  <span class="kick">The wire · Staffing Industry Analysts · yesterday · sample item</span>
+  <h3>PEO acquisition pace holds through the quarter.</h3>
+  <div class="dsec"><span class="kick">Why this matters here</span>
+    <p><b>Premier Payroll</b> — an Indiana account in this book — was
+    acquired out from under the motion last September. Acquisitions close
+    doors or open them; the wire watches for any of the 150 account names in
+    deal news so the book hears it first.</p>
+  </div>
+  <div class="dsec"><span class="kick">Matched</span><p>PEO · ASO · acquisition</p></div>
+  <div class="dsec"><span class="kick">Source</span><p><a href="#">staffingindustry.com — read the original</a></p></div>
+  <div class="dsec" style="border-top: 0; padding-top: 4px;">
+    <button class="btn btn-accent">Dig deeper</button>
+    <button class="btn btn-ghost" data-close>Skip — stay here</button>
+  </div>
+</aside>
+
+<aside class="drawer" id="drawer-readout" role="dialog" aria-label="State of play">
+  <button class="dclose" data-close>&#10005;</button>
+  <span class="kick">State of play · Wednesday, July 30 · composes itself from every store</span>
+  <h3>Read once. Repeat to anyone. Answer the follow-up from the text alone.</h3>
+  <div class="dsec"><span class="kick">Conversations that could become deals — four</span>
+    <p><b>Simploy</b> is a PEO in St. Louis that runs their business on our
+    software. Their COO, Chassie Smith, came to us July 8th after PrismHR
+    LIVE: they're choosing one partner to employ and pay workers abroad for
+    their clients, and her leadership decides <b>August 6th</b>. Today that
+    business goes to Globalization Partners and Simploy earns nothing on it;
+    through us they'd resell it at a margin inside the platform they already
+    use. We demoed for her operations director last week. I owe them the
+    answer on converting their two India contractors into employees — it
+    goes out today.</p>
+    <p><b>ESC</b> — Employer Services Corporation, a Buffalo PEO — has two
+    tracks: their technology director wants to run Canadian payroll on our
+    software under a license (the structure question sits with Rick
+    Torrence), and their VP of sales has a prospect with about 25 employees
+    in Ontario who needs payroll soon. Canada demo accepted July 22nd,
+    scheduling now.</p>
+    <p><b>Infiniti HR</b> — a Maryland PEO with one of the biggest client
+    bases we serve — runs domestic on our software and global on a
+    Globalization Partners alliance renewing this fall. Their director of
+    implementation asked us for a call: Puerto Rico payroll pain now, "other
+    international needs" in her words. Confirming Friday.</p>
+    <p><b>XcelHR</b> — a national PEO — has a client with workers in Mexico;
+    employees or contractors is the first question. Their VP of operations
+    asked this week how a deal with us works and how pricing takes shape.
+    He's ready to pitch; I'm giving him Wednesday or Friday.</p>
+  </div>
+  <div class="dsec"><span class="kick">The rest of the book</span>
+    <p>I cover 150 PrismHR and PrismHCM customers nationwide. Since July 8th
+    — my first week working accounts — 11 have had a real conversation about
+    global hiring. This week I sent updates to 5 of the 6 partner managers
+    who own these relationships; 3 replied, and two of those replies became
+    the calls above. The biggest untapped group: customers already on our
+    platform, where turning Global on is configuration, not a project.</p>
+  </div>
+  <div class="dsec"><span class="kick">What's blocking me — all internal</span>
+    <p>Pricing our partners can quote without calling me (asked July 22nd,
+    still open) · country coverage sheets partners can hand clients (same
+    age) · the second contracting training (waiting on a date from Deana
+    Morgan's team).</p>
+  </div>
+  <div class="dsec"><span class="kick">Next seven days</span>
+    <p>Simploy decision support through August 6th · Infiniti call Friday ·
+    XcelHR call midweek · Whitney Dideon's accounts get their first Global
+    briefing.</p>
+  </div>
+  <div class="dsec" style="border-top: 0; padding-top: 4px;">
+    <button class="btn btn-accent" id="copy-d">Copy the readout</button>
+  </div>
+</aside>
+
+<script>
+  // Option tabs
+  var tabs = document.querySelectorAll(".seg [data-opt]");
+  tabs.forEach(function (t) {
+    t.addEventListener("click", function () {
+      tabs.forEach(function (x) { x.setAttribute("aria-selected", String(x === t)); });
+      ["1", "2", "3"].forEach(function (k) {
+        document.getElementById("opt-" + k).classList.toggle("on", t.dataset.opt === k);
+        document.getElementById("note-" + k).hidden = t.dataset.opt !== k;
+      });
+    });
+  });
+
+  // Option 1: clock scrub → plan becomes record
+  var order = ["900", "1000", "1100", "1400", "1630"];
+  var scrubMap = { 900: 0, 1130: 2, 1430: 3, 1645: 5 };
+  var clockLabel = { 900: "9:02a", 1130: "11:30a", 1430: "2:30p", 1645: "4:45p" };
+  document.querySelectorAll("#opt-1 .scrub [data-t]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      document.querySelectorAll("#opt-1 .scrub [data-t]").forEach(function (x) {
+        x.setAttribute("aria-selected", String(x === b));
+      });
+      var passed = scrubMap[b.dataset.t];
+      document.querySelectorAll("#opt-1 .zone").forEach(function (z) {
+        var i = order.indexOf(z.dataset.zone);
+        z.classList.toggle("past", i < passed);
+        z.classList.toggle("future", i > passed);
+      });
+      var c = document.querySelector("#opt-1 .clock");
+      if (c) c.textContent = clockLabel[b.dataset.t];
+    });
+  });
+
+  // Option 2: rail → bench panes; done marks
+  document.querySelectorAll(".rail-item[data-bench]").forEach(function (r) {
+    r.addEventListener("click", function () {
+      document.querySelectorAll(".rail-item[data-bench]").forEach(function (x) {
+        x.setAttribute("aria-selected", String(x === r));
+      });
+      document.querySelectorAll(".benchpane").forEach(function (p) {
+        p.hidden = p.id !== "bench-" + r.dataset.bench;
+      });
+    });
+  });
+  document.querySelectorAll("[data-benchdone]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var key = b.dataset.benchdone;
+      var rail = document.querySelector('.rail-item[data-bench="' + key + '"]');
+      if (rail) rail.classList.add("done");
+      b.textContent = "✓ Worked";
+      b.disabled = true;
+      b.style.opacity = "0.45";
+      var next = rail && rail.nextElementSibling;
+      if (next && next.classList.contains("rail-item")) next.click();
+    });
+  });
+
+  // Option 3: work blocks → readout rewrites
+  function flash(el) {
+    if (!el) return;
+    el.classList.add("updated");
+    setTimeout(function () { el.classList.remove("updated"); }, 2000);
+    var chip = document.getElementById("delta-chip");
+    if (chip) { chip.hidden = false; }
+  }
+  var rewrites = {
+    1: function () {
+      var el = document.getElementById("r-simploy");
+      el.innerHTML = "The one thing they were waiting on — the India contractor conversion answer — <b>went out this morning at 9:41</b>. The next move is theirs.";
+      flash(el);
+    },
+    2: function () {
+      var el = document.getElementById("r-medhq");
+      el.innerHTML = "<b>MedHQ went from one known contact to five this morning</b> — a healthcare PEO one town over, now briefable.";
+      flash(el);
+    },
+    3: function () {
+      var el = document.getElementById("r-whitney");
+      el.innerHTML = "<b>All six partner managers are now briefed</b> — Whitney Dideon's 28 accounts met Global for the first time today.";
+      flash(el);
+    },
+    4: function () {
+      var el = document.getElementById("r-infiniti");
+      el.innerHTML = " — <b>and Friday's prep now carries this morning's news that G-P is raising alliance fees</b>";
+      flash(el);
+    },
+  };
+  document.querySelectorAll("[data-work]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var n = b.dataset.work;
+      var blk = document.getElementById("blk-" + n);
+      if (blk.classList.contains("done-blk")) return;
+      blk.classList.remove("now-blk");
+      blk.classList.add("done-blk");
+      var all = document.querySelectorAll("#opt-3 .blk");
+      for (var i = 0; i < all.length; i++) {
+        if (!all[i].classList.contains("done-blk")) { all[i].classList.add("now-blk"); break; }
+      }
+      if (rewrites[n]) rewrites[n]();
+    });
+  });
+
+  // Drawers
+  var scrim = document.getElementById("scrim");
+  function closeDrawers() {
+    document.querySelectorAll(".drawer.on").forEach(function (d) { d.classList.remove("on"); });
+    scrim.classList.remove("on");
+  }
+  document.querySelectorAll("[data-drawer]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      closeDrawers();
+      var d = document.getElementById("drawer-" + b.dataset.drawer);
+      if (d) { d.classList.add("on"); scrim.classList.add("on"); }
+    });
+  });
+  document.querySelectorAll("[data-close]").forEach(function (b) { b.addEventListener("click", closeDrawers); });
+  scrim.addEventListener("click", closeDrawers);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeDrawers(); });
+
+  // Copy the readout
+  var READOUT =
+    "State of play — Wednesday, July 30\n\n" +
+    "CONVERSATIONS THAT COULD BECOME DEALS — FOUR.\n\n" +
+    "Simploy is a PEO in St. Louis that runs their business on our software. Their COO, Chassie Smith, came to us July 8th after PrismHR LIVE: they're choosing one partner to employ and pay workers abroad for their clients, and her leadership decides August 6th. Today that business goes to Globalization Partners and Simploy earns nothing on it; through us they'd resell it at a margin inside the platform they already use. We demoed for her operations director last week. I owe them the answer on converting their two India contractors into employees — it goes out today.\n\n" +
+    "ESC — Employer Services Corporation, a Buffalo PEO — has two tracks: their technology director wants to run Canadian payroll on our software under a license (the structure question sits with Rick Torrence), and their VP of sales has a prospect with about 25 employees in Ontario who needs payroll soon. Canada demo accepted July 22nd, scheduling now.\n\n" +
+    "Infiniti HR — a Maryland PEO with one of the biggest client bases we serve — runs domestic on our software and global on a Globalization Partners alliance renewing this fall. Their director of implementation asked us for a call: Puerto Rico payroll pain now, plus other international needs in her words. Confirming Friday.\n\n" +
+    "XcelHR — a national PEO — has a client with workers in Mexico; employees or contractors is the first question. Their VP of operations asked this week how a deal with us works and how pricing takes shape. He's ready to pitch; I'm giving him Wednesday or Friday.\n\n" +
+    "THE REST OF THE BOOK. I cover 150 PrismHR and PrismHCM customers nationwide. Since July 8th, 11 have had a real conversation about global hiring. This week I sent updates to 5 of the 6 partner managers who own these relationships; 3 replied, and two of those replies became the calls above.\n\n" +
+    "WHAT'S BLOCKING ME — ALL INTERNAL. Pricing our partners can quote without calling me (asked July 22nd, still open). Country coverage sheets (same age). The second contracting training (waiting on a date from Deana Morgan's team).\n\n" +
+    "NEXT SEVEN DAYS. Simploy decision support through August 6th. Infiniti call Friday. XcelHR call midweek. Whitney Dideon's accounts get their first Global briefing.";
+  ["copy-3", "copy-d"].forEach(function (id) {
+    var b = document.getElementById(id);
+    if (!b) return;
+    b.addEventListener("click", function () {
+      if (navigator.clipboard) navigator.clipboard.writeText(READOUT);
+      var old = b.textContent;
+      b.textContent = "Copied — readout in hand";
+      setTimeout(function () { b.textContent = old; }, 2400);
+    });
+  });
+</script>

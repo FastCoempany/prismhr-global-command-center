@@ -889,22 +889,27 @@ education asset ships as marketing collateral or operator talk-track first.
 
 ## 14. Design
 
-Second triptych (the first three shapes were rejected):
-`docs/mockups/groundwork-triptych-v2-2026-07-30.html` — three new structures,
-same locked system, all copy written to Section 3:
+**Direction locked (founder, 2026-07-30): the day-spine family.** Of round
+one, the Day Spine's time-owns-the-page structure — combined with the
+Groundwork day-running concept — is the direction. Round three builds three
+variations of that one idea, all with round two's plain language and
+corrected content: `docs/mockups/groundwork-triptych-v3-2026-07-30.html`.
 
-- **The Dispatch** — read-led. The room composes the day as an authored
-  morning edition: a lead story in full plain language, stories beneath it
-  with their acts inline, the readout standing ready in a column that never
-  scrolls away. Acting on a story compresses it to a done line.
-- **The Answer Hunt** — question-led. The room is the day's open questions,
-  ranked by what answering unlocks; every question carries its fastest
-  answer paths (a person to call, a directive recipe, a wire dig, an event),
-  and answering visibly advances the book.
-- **The Circuit** — route-led. The day is a run of five stops picked from
-  the whole countrywide book (accounts, a research session, an institution,
-  the readout minute); a single honest meter tracks quarter-to-date real
-  conversations across the 150; the proximity toggle repacks the run when
-  the operator is traveling.
+- **The Spine (pure).** The day runs 9:00-to-close down the page; the wire
+  and the institutions keep watch in a right rail; the readout waits on the
+  edge tab. The defining behavior: as the clock passes a block, its plan
+  compresses into a **record** — timestamped lines of what actually
+  happened — so the spine reads forward as a plan and backward as the diary
+  that feeds the readout.
+- **Spine & Bench.** The hours become a thin left rail; the center of the
+  screen is a full working surface for the block you're in — the deal pack
+  with its composed draft at 9:00, the Sales Navigator session with its
+  recipe at 9:40, the partner-manager briefing at 11:00. Clicking any hour
+  looks ahead or back; working a block advances the rail.
+- **Spine & Readout.** Day blocks on the left, State of play on the right —
+  and working a block visibly rewrites the readout's sentences in place
+  (Simploy's paragraph changes tense the moment the follow-up sends). The
+  self-updating dossier demonstrated, not described.
 
-First triptych retained in-repo as the recorded rejected alternative.
+Rounds one and two are retained in-repo as recorded alternatives
+(`groundwork-triptych-2026-07-30.html`, `groundwork-triptych-v2-2026-07-30.html`).
