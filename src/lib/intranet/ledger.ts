@@ -43,8 +43,23 @@ export type LedgerEntry =
       at: string;
       space: string;
       title: string;
+      /** Where the paste came from — "teams" | "meeting" | "demo" | "paste". */
+      origin: string;
       lines: string[];
+      /** V.8 — what Claude wrote about what it received and did. The product. */
+      briefs: string[];
+      /** V.6 — the excessively-detailed version behind the one word "failed". */
+      detail: string[];
     };
+
+/** The sent stamp's provenance (V.4): where a paste came from, in words. */
+export function sentFrom(space: string, origin: string): string {
+  if (space) return `from ${space}`;
+  if (origin === "teams") return "from a Teams grab";
+  if (origin === "meeting") return "from a meeting transcript";
+  if (origin === "demo") return "from a demo transcript";
+  return "pasted by hand";
+}
 
 // ── days, in the operator's clock ───────────────────────────────────────────
 const TZ = "America/Chicago";
@@ -158,30 +173,30 @@ export type CountryRow = {
   code: string;
   name: string;
   total: number;
-  /** The lens sub-rows, in plain words, with counts. */
-  lenses: { label: string; n: number }[];
-};
-
-const LENS_LABEL: Record<string, string> = {
-  "prospect-question": "What buyers asked here",
-  commitment: "Commitments made",
-  decision: "Decisions",
-  fact: "Facts on the ground",
-  process: "How things run here",
-  question: "Open questions",
+  /** The lens sub-rows (V.4): concrete SUBJECTS the record holds for this
+   *  country — the same subject-matter heads as the index rail, never vague
+   *  kind-words. Each carries the parent topic id so a click opens it. */
+  lenses: { label: string; n: number; topicId: string }[];
 };
 
 /** Tally the record by country. One claim counts once per country it names,
- *  however many times the extractor repeated the entity. */
+ *  however many times the extractor repeated the entity. Sub-rows are the
+ *  index's subject parents, resolved from each claim's filed topics. */
 export function countryTallies(
-  claims: { kind: string; entities: string[] }[],
+  claims: { entities: string[]; topicIds: string[] }[],
+  subjectOf: (topicId: string) => { id: string; label: string } | null,
 ): CountryRow[] {
   const rows = new Map<
     string,
-    { name: string; total: number; kinds: Map<string, number> }
+    { name: string; total: number; subjects: Map<string, { label: string; n: number }> }
   >();
   for (const c of claims) {
     const seen = new Set<string>();
+    const subjects = new Map<string, string>();
+    for (const t of c.topicIds ?? []) {
+      const s = subjectOf(t);
+      if (s) subjects.set(s.id, s.label);
+    }
     for (const e of c.entities ?? []) {
       const hit = countryOf(e);
       if (!hit || seen.has(hit.code)) continue;
@@ -189,10 +204,14 @@ export function countryTallies(
       const row = rows.get(hit.code) ?? {
         name: hit.name,
         total: 0,
-        kinds: new Map<string, number>(),
+        subjects: new Map<string, { label: string; n: number }>(),
       };
       row.total += 1;
-      row.kinds.set(c.kind, (row.kinds.get(c.kind) ?? 0) + 1);
+      for (const [id, label] of subjects) {
+        const s = row.subjects.get(id) ?? { label, n: 0 };
+        s.n += 1;
+        row.subjects.set(id, s);
+      }
       rows.set(hit.code, row);
     }
   }
@@ -201,9 +220,9 @@ export function countryTallies(
       code,
       name: r.name,
       total: r.total,
-      lenses: Object.keys(LENS_LABEL)
-        .filter((k) => (r.kinds.get(k) ?? 0) > 0)
-        .map((k) => ({ label: LENS_LABEL[k], n: r.kinds.get(k) ?? 0 })),
+      lenses: [...r.subjects.entries()]
+        .map(([topicId, s]) => ({ label: s.label, n: s.n, topicId }))
+        .sort((a, b) => b.n - a.n || a.label.localeCompare(b.label)),
     }))
     .sort((a, b) => b.total - a.total || a.name.localeCompare(b.name));
 }

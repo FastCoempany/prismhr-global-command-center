@@ -385,7 +385,7 @@ export async function ledgerEntries(opts?: {
       p.intranetCapture.findMany({
         orderBy: { capturedAt: "desc" },
         take: 500,
-        select: { id: true, title: true, capturedAt: true, meta: true },
+        select: { id: true, title: true, origin: true, capturedAt: true, meta: true },
       }),
     ]);
 
@@ -408,6 +408,8 @@ export async function ledgerEntries(opts?: {
       const meta = (c.meta ?? {}) as {
         space?: string;
         digest?: string[];
+        briefs?: string[];
+        detail?: string[];
         report?: { messages?: number };
       };
       // A capture from before digests were stored still deserves a sentence —
@@ -425,10 +427,13 @@ export async function ledgerEntries(opts?: {
         at: iso(c.capturedAt),
         space: meta.space ?? "",
         title: c.title,
+        origin: c.origin,
         lines:
           Array.isArray(meta.digest) && meta.digest.length
             ? meta.digest.slice(0, 12)
             : fallback,
+        briefs: Array.isArray(meta.briefs) ? meta.briefs.slice(0, 6) : [],
+        detail: Array.isArray(meta.detail) ? meta.detail.slice(0, 12) : [],
       });
     }
 
@@ -468,16 +473,72 @@ export async function archiveDays(): Promise<ArchiveMonth[]> {
 }
 
 /** The by-country lens (IV.8): the same record, tallied by the countries it
- *  names. Never a copy — a country row is a standing filter over entities. */
+ *  names. Never a copy — a country row is a standing filter over entities, and
+ *  its sub-rows are the index's own subject parents (V.4), never vague words. */
 export async function countryIndex(): Promise<CountryRow[]> {
   if (!hasDatabaseEnv()) return [];
   try {
-    const rows = await getPrisma().intranetClaim.findMany({
-      select: { kind: true, entities: true },
-      orderBy: { saidAt: "desc" },
-      take: 4000,
+    const p = getPrisma();
+    const [rows, topics] = await Promise.all([
+      p.intranetClaim.findMany({
+        select: { entities: true, topicIds: true },
+        orderBy: { saidAt: "desc" },
+        take: 4000,
+      }),
+      p.intranetTopic.findMany({
+        where: { status: "live" },
+        select: { id: true, label: true, parentId: true },
+      }),
+    ]);
+    const byId = new Map(topics.map((t) => [t.id, t]));
+    const subjectOf = (topicId: string) => {
+      const t = byId.get(topicId);
+      if (!t) return null;
+      const top = t.parentId ? byId.get(t.parentId) : t;
+      return top ? { id: top.id, label: top.label } : null;
+    };
+    return countryTallies(rows, subjectOf);
+  } catch {
+    return [];
+  }
+}
+
+/** V.7 · every paste the room has ever received, raw and whole. Read-only —
+ *  the hidden archive renders these verbatim, nothing is rewritten. */
+export async function allCaptures(limit = 300): Promise<
+  {
+    id: string;
+    origin: string;
+    title: string;
+    space: string;
+    at: string;
+    chars: number;
+    raw: string;
+  }[]
+> {
+  if (!hasDatabaseEnv()) return [];
+  try {
+    const rows = await getPrisma().intranetCapture.findMany({
+      orderBy: { capturedAt: "desc" },
+      take: limit,
+      select: {
+        id: true,
+        origin: true,
+        title: true,
+        capturedAt: true,
+        meta: true,
+        raw: true,
+      },
     });
-    return countryTallies(rows);
+    return rows.map((c) => ({
+      id: c.id,
+      origin: c.origin,
+      title: c.title,
+      space: ((c.meta ?? {}) as { space?: string }).space ?? "",
+      at: iso(c.capturedAt),
+      chars: c.raw.length,
+      raw: c.raw.slice(0, 30_000),
+    }));
   } catch {
     return [];
   }

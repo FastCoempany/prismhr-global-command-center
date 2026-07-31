@@ -25,7 +25,15 @@ import {
   type ClaimKind,
 } from "@/lib/intranet/doctrine";
 import { checksum } from "@/lib/intranet/normalize";
-import { extractAvailable, runExtract } from "@/lib/intranet/extract";
+import { extractAvailable, runRead } from "@/lib/intranet/extract";
+import {
+  BANK,
+  BUYER_QUESTIONS_PARENT,
+  BUYER_QUESTIONS_SUB,
+  bankParentOf,
+  type BankParent,
+} from "@/lib/intranet/bank";
+import { PROSPECT_TOPIC_LABEL } from "@/lib/intranet/doctrine";
 import { foldLabel, sameLabel } from "@/lib/intranet/index-topics";
 import { runSplit, shouldConsiderSplit } from "@/lib/intranet/decompose";
 import { proposePairs } from "@/lib/intranet/time";
@@ -35,8 +43,6 @@ import {
   supersessionDirection,
 } from "@/lib/intranet/verdicts";
 import {
-  PROSPECT_ROOT,
-  PROSPECT_SHAPE_TOPICS,
   playbookKnowledgeDoc,
   playbookQuestionDocs,
   playbookScenarioDocs,
@@ -62,8 +68,25 @@ export type RunReport = {
   lines: string[];
   /** How much is still unread after this pass, so the room can keep going. */
   pending?: number;
+  /** V.6 — the excessive version behind "N failed · detail": stage, model,
+   *  the full untruncated server error, and which entries. For sharing. */
+  detail?: string[];
+  /** V.8 — the written briefs, when a paste was read. */
+  briefs?: string[];
   reason?: string;
 };
+
+/** The untruncated version of a failure, for the detail fold (V.6). */
+function rawOf(e: unknown): string {
+  const err = e as { status?: number; message?: string; name?: string };
+  return [
+    err?.name ? `[${err.name}]` : "",
+    err?.status ? `status ${err.status}` : "",
+    err?.message ?? String(e),
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
 
 /** A model failure, in words the operator can act on (IV.2). The first
  *  production run read nothing and said nothing about it; that never happens
@@ -402,9 +425,19 @@ export async function ingestPlaybook(): Promise<RunReport> {
       `The Playbook came along — ${created} new, ${updated} changed, ${skipped} unchanged.`,
     );
 
-    // C7 · the one part of the index allowed to exist before it is discovered.
-    const seeded = await seedProspectTopics();
-    if (seeded) lines.push(`Seeded the prospect-question index (${seeded} topics).`);
+    // V.3 · the foundational bank — the floor every filing lands on.
+    const seeded = await seedBank();
+    if (seeded)
+      lines.push(
+        `Laid the index floor — ${seeded} subject${seeded === 1 ? "" : "s"} seeded from the bank.`,
+      );
+
+    // V.4 · questions are content, not categories.
+    const retired = await retireQuestionRail();
+    if (retired)
+      lines.push(
+        `The question categories left the rail — what they held now lives under ${BUYER_QUESTIONS_PARENT}.`,
+      );
 
     return { ok: true, lines };
   } catch {
@@ -412,41 +445,74 @@ export async function ingestPlaybook(): Promise<RunReport> {
   }
 }
 
-/** The prospect-question root and its shapes. Seeded rather than discovered
- *  because the shapes are known in advance and an empty rail teaches nothing. */
-async function seedProspectTopics(): Promise<number> {
+/** V.3 · seed the foundational bank: subject parents and their subtopics, live
+ *  from day one. Idempotent — existing rows are left alone, only what's missing
+ *  is created. The labels are the interface (V.2); the rows resolve them. */
+async function seedBank(): Promise<number> {
   const prisma = getPrisma();
   const existing = await prisma.intranetTopic.findMany({
-    select: { id: true, label: true },
+    select: { id: true, label: true, parentId: true },
   });
-  const has = (label: string) => existing.some((t) => sameLabel(t.label, label));
   let n = 0;
-
-  let rootId = existing.find((t) => sameLabel(t.label, PROSPECT_ROOT.label))?.id ?? "";
-  if (!rootId) {
-    const root = await prisma.intranetTopic.create({
-      data: {
-        label: PROSPECT_ROOT.label,
-        summary: PROSPECT_ROOT.summary,
-        status: "live",
-      },
-    });
-    rootId = root.id;
-    n += 1;
-  }
-  for (const child of PROSPECT_SHAPE_TOPICS) {
-    if (has(child.label)) continue;
-    await prisma.intranetTopic.create({
-      data: {
-        label: child.label,
-        summary: child.summary,
-        parentId: rootId,
-        status: "live",
-      },
-    });
-    n += 1;
+  for (const parent of BANK) {
+    let parentRow = existing.find((t) => !t.parentId && sameLabel(t.label, parent.label));
+    if (!parentRow) {
+      const row = await prisma.intranetTopic.create({
+        data: { label: parent.label, summary: parent.summary, status: "live" },
+      });
+      parentRow = { id: row.id, label: row.label, parentId: "" };
+      existing.push(parentRow);
+      n += 1;
+    }
+    for (const sub of parent.subs) {
+      const here = parentRow.id;
+      if (existing.some((t) => t.parentId === here && sameLabel(t.label, sub.label)))
+        continue;
+      const row = await prisma.intranetTopic.create({
+        data: {
+          label: sub.label,
+          summary: sub.summary,
+          parentId: here,
+          status: "live",
+        },
+      });
+      existing.push({ id: row.id, label: row.label, parentId: here });
+      n += 1;
+    }
   }
   return n;
+}
+
+/** V.4 · retire the old "What prospects ask" family from the rail. Buyers'
+ *  words are content now — everything the shape bins held moves under
+ *  Deals & selling → Buyer questions. Nothing is deleted (C6): the retired
+ *  rows keep their place, marked merged, so every id ever issued resolves. */
+async function retireQuestionRail(): Promise<number> {
+  const prisma = getPrisma();
+  const all = await prisma.intranetTopic.findMany({
+    select: { id: true, label: true, parentId: true, status: true },
+  });
+  const root = all.find((t) => !t.parentId && sameLabel(t.label, PROSPECT_TOPIC_LABEL));
+  if (!root) return 0;
+  const family = [root, ...all.filter((t) => t.parentId === root.id)].filter(
+    (t) => t.status !== "merged",
+  );
+  if (family.length === 0) return 0;
+  const dealsRow = all.find(
+    (t) => !t.parentId && sameLabel(t.label, BUYER_QUESTIONS_PARENT),
+  );
+  const binRow = all.find(
+    (t) => t.parentId === dealsRow?.id && sameLabel(t.label, BUYER_QUESTIONS_SUB),
+  );
+  if (!binRow) return 0;
+  for (const t of family) {
+    await prisma.intranetTopic.update({
+      where: { id: t.id },
+      data: { status: "merged", mergedInto: binRow.id },
+    });
+    await reassignClaims(t.id, binRow.id);
+  }
+  return family.length;
 }
 
 // ═══ Phase 6 · extraction ════════════════════════════════════════════════════
@@ -484,17 +550,25 @@ export async function extractPending(
     });
     if (pending.length === 0) return { ok: true, lines: ["Everything has been read."] };
 
-    const topics = await prisma.intranetTopic.findMany({
+    // The living index, for the model as text (V.2) and for the app as rows.
+    // "Grown" is every subtopic beyond the seeded bank, offered back to the
+    // model so it files into them rather than re-inventing them.
+    const topicRows = await prisma.intranetTopic.findMany({
       where: { status: "live" },
-      select: { id: true, label: true, summary: true },
-      take: 200,
+      select: { id: true, label: true, parentId: true },
     });
+    const labelOf = new Map(topicRows.map((t) => [t.id, t.label]));
+    const grown = topicRows
+      .filter((t) => t.parentId && labelOf.has(t.parentId))
+      .map((t) => ({ parent: labelOf.get(t.parentId)!, label: t.label }));
     const nameById = new Map(peos.map((p) => [p.id, p.name]));
 
     let claimsMade = 0;
     let read = 0;
     let outOfTime = false;
-    const failures = new Map<string, number>();
+    let failed = 0;
+    const detail: string[] = [];
+    const briefs: string[] = [];
 
     // Reads run four at a time — the model is the slow part and the calls are
     // independent, so a pass gets four entries per model-latency instead of
@@ -508,13 +582,13 @@ export async function extractPending(
       const batch = pending.slice(i, i + CONCURRENT_READS);
       const settled = await Promise.allSettled(
         batch.map((d) =>
-          runExtract({
+          runRead({
             body: d.body,
             origin: d.origin,
             space: d.space,
             occurredAt: iso(d.occurredAt),
             accountName: nameById.get(d.accountId) ?? undefined,
-            topics,
+            grown,
           }),
         ),
       );
@@ -522,8 +596,11 @@ export async function extractPending(
         const doc = batch[b];
         const s = settled[b];
         if (s.status === "rejected") {
-          const why = reasonOf(s.reason);
-          failures.set(why, (failures.get(why) ?? 0) + 1);
+          // V.6 — the room says one word; the whole truth waits behind it.
+          failed += 1;
+          detail.push(
+            `${doc.space || doc.origin} · ${iso(doc.occurredAt).slice(0, 10)} — ${rawOf(s.reason)}`,
+          );
           continue;
         }
         const result = s.value;
@@ -533,42 +610,47 @@ export async function extractPending(
         // in the same breath — the document, and everything it said, remains.
         await prisma.intranetClaim.deleteMany({ where: { docId: doc.id } });
 
-        const topicIds = result.topicMatches.filter((id) =>
-          topics.some((t) => t.id === id),
-        );
-
-        for (const c of result.claims) {
-          await prisma.intranetClaim.create({
-            data: {
-              docId: doc.id,
-              text: c.text,
-              speaker: c.speaker,
-              saidAt: doc.occurredAt,
-              kind: c.kind,
-              confidence: c.confidence,
-              entities: c.entities,
-              topicIds,
-              askShape: c.askShape,
-              offsetStart: c.offsetStart,
-              offsetEnd: c.offsetEnd,
-            },
-          });
-          claimsMade += 1;
+        for (const filing of result.filings) {
+          // Text in, rows out (V.2): the model named a parent and a subtopic;
+          // the app resolves the words, growing the bank where it must.
+          const ids = await resolveFilingIds(filing.topic, filing.subtopic, topicRows);
+          for (const st of filing.statements) {
+            const topicIds = new Set(ids);
+            if (st.kind === "prospect-question")
+              for (const id of await resolveFilingIds(
+                BUYER_QUESTIONS_PARENT,
+                BUYER_QUESTIONS_SUB,
+                topicRows,
+              ))
+                topicIds.add(id);
+            await prisma.intranetClaim.create({
+              data: {
+                docId: doc.id,
+                text: st.text,
+                speaker: st.speaker,
+                saidAt: doc.occurredAt,
+                kind: st.kind,
+                confidence: "stated",
+                entities: st.countries,
+                topicIds: [...topicIds],
+                askShape: "",
+                offsetStart: st.offsetStart,
+                offsetEnd: st.offsetEnd,
+              },
+            });
+            claimsMade += 1;
+          }
         }
 
-        // Proposals become pending topics; the tally is what promotes them.
-        for (const p of result.topicProposals)
-          await tallyProposal(p.label, p.why, doc.id);
-
-        // Prospect questions join the seeded family by their shape (C7).
-        await fileProspectQuestions(doc.id);
+        // V.8 — the brief is the product of the paste; it travels with the pass.
+        if (result.brief) briefs.push(result.brief);
 
         await prisma.intranetDoc.update({
           where: { id: doc.id },
           data: {
             extractedAt: new Date(),
             promptVersion: PROMPT_VERSION,
-            title: doc.title || result.summary.slice(0, 90),
+            title: doc.title || result.brief.replace(/\s+/g, " ").slice(0, 90),
           },
         });
         read += 1;
@@ -577,71 +659,87 @@ export async function extractPending(
 
     if (read > 0)
       lines.push(
-        `Read ${read} entr${read === 1 ? "y" : "ies"} and kept ${claimsMade} thing${claimsMade === 1 ? "" : "s"} worth remembering.`,
+        `Read ${read} entr${read === 1 ? "y" : "ies"} and filed ${claimsMade} statement${claimsMade === 1 ? "" : "s"} into the index.`,
       );
-    // IV.2 — a failure is named where the operator is looking, never swallowed.
-    for (const [why, n] of failures) lines.push(`${n} couldn't be read — ${why}.`);
+    // V.6 — one word where the operator is looking; the detail rides along.
+    if (failed > 0) lines.push(`${failed} failed.`);
     if (outOfTime)
       lines.push("Ran out of time this pass — the rest waits for the next one.");
     const left = await prisma.intranetDoc.count({
       where: { OR: [{ extractedAt: null }, { promptVersion: { not: PROMPT_VERSION } }] },
     });
     if (left > 0) lines.push(`${left} still to read.`);
-    return { ok: true, lines, pending: left };
+    return {
+      ok: true,
+      lines,
+      pending: left,
+      detail: detail.length ? detail : undefined,
+      briefs: briefs.length ? briefs : undefined,
+    };
   } catch (e) {
     return { ok: false, lines, reason: `The reading pass failed — ${reasonOf(e)}.` };
   }
 }
 
-/** Record a proposal against the pending pool. Support is counted in DISTINCT
- *  documents, so one loud document cannot promote a topic on its own. */
-async function tallyProposal(label: string, why: string, docId: string): Promise<void> {
+/** Resolve a text filing to index rows, creating a grown subtopic when the
+ *  content genuinely fits nothing seeded (V.3). Returns [parentId, subId] —
+ *  a statement always carries both, which is what keeps a parent's material
+ *  at least the sum of its children's (V.4). Text that resolves to nothing
+ *  files nowhere, but the statement itself is kept on its document (C6). */
+async function resolveFilingIds(
+  topicLabel: string,
+  subLabel: string,
+  rows: { id: string; label: string; parentId: string }[],
+): Promise<string[]> {
   const prisma = getPrisma();
-  const all = await prisma.intranetTopic.findMany({
-    select: { id: true, label: true, status: true, summary: true, docCount: true },
-  });
-  const hit = all.find((t) => sameLabel(t.label, label));
-  if (hit) {
-    if (hit.status === "pending")
-      await prisma.intranetTopic.update({
-        where: { id: hit.id },
-        data: { docCount: { increment: 1 }, lastSeen: new Date() },
+
+  const ensureParent = async (bp: BankParent) => {
+    let row = rows.find((r) => !r.parentId && sameLabel(r.label, bp.label)) ?? null;
+    if (!row) {
+      const created = await prisma.intranetTopic.create({
+        data: { label: bp.label, summary: bp.summary, status: "live" },
       });
-    return;
-  }
-  await prisma.intranetTopic.create({
-    data: {
-      label: label.slice(0, 80),
-      summary: why.slice(0, 240),
-      status: "pending",
-      docCount: 1,
-    },
-  });
-  void docId;
-}
+      row = { id: created.id, label: created.label, parentId: "" };
+      rows.push(row);
+    }
+    return row;
+  };
 
-/** Attach a document's prospect questions to the shape topic they belong to. */
-async function fileProspectQuestions(docId: string): Promise<void> {
-  const prisma = getPrisma();
-  const qs = await prisma.intranetClaim.findMany({
-    where: { docId, kind: "prospect-question" },
-    select: { id: true, askShape: true, topicIds: true },
-  });
-  if (qs.length === 0) return;
-  const shapes = await prisma.intranetTopic.findMany({
-    where: { status: "live" },
-    select: { id: true, label: true, parentId: true },
-  });
-  const root = shapes.find((t) => sameLabel(t.label, PROSPECT_ROOT.label));
-  if (!root) return;
-
-  for (const q of qs) {
-    const child = PROSPECT_SHAPE_TOPICS.find((s) => s.shape === q.askShape);
-    const childRow = child ? shapes.find((t) => sameLabel(t.label, child.label)) : null;
-    const add = [root.id, childRow?.id ?? ""].filter(Boolean);
-    const next = [...new Set([...q.topicIds, ...add])];
-    await prisma.intranetClaim.update({ where: { id: q.id }, data: { topicIds: next } });
+  // The model named a bank parent — the intended path.
+  let parent = bankParentOf(topicLabel);
+  let sub = subLabel;
+  if (!parent) {
+    // Or it swapped the levels, or named a subtopic the bank already places.
+    const topicAsSub = BANK.find((p) =>
+      p.subs.some((s) => sameLabel(s.label, topicLabel)),
+    );
+    const subOfBank = BANK.find((p) => p.subs.some((s) => sameLabel(s.label, subLabel)));
+    if (topicAsSub) {
+      parent = topicAsSub;
+      sub = topicLabel;
+    } else if (subOfBank) {
+      parent = subOfBank;
+    } else {
+      // Or it named a subtopic the index has already grown, under whichever
+      // parent grew it.
+      const known =
+        rows.find((r) => r.parentId && sameLabel(r.label, subLabel)) ??
+        rows.find((r) => r.parentId && sameLabel(r.label, topicLabel));
+      if (known) return [known.parentId, known.id];
+    }
   }
+  if (!parent || !sub.trim()) return [];
+
+  const parentRow = await ensureParent(parent);
+  let subRow = rows.find((r) => r.parentId === parentRow.id && sameLabel(r.label, sub));
+  if (!subRow) {
+    const created = await prisma.intranetTopic.create({
+      data: { label: sub.trim().slice(0, 80), parentId: parentRow.id, status: "live" },
+    });
+    subRow = { id: created.id, label: created.label, parentId: parentRow.id };
+    rows.push(subRow);
+  }
+  return [parentRow.id, subRow.id];
 }
 
 // ═══ Phase 7 · the index ═════════════════════════════════════════════════════
@@ -671,14 +769,17 @@ export async function indexTopics(): Promise<RunReport> {
         `${ready.length} new row${ready.length === 1 ? "" : "s"} joined the index.`,
       );
 
-    // 2 · fold duplicates mechanically. Identical labels are one topic, and the
-    //     loser keeps its row so every id ever issued still resolves.
+    // 2 · fold duplicates mechanically. Identical labels UNDER THE SAME PARENT
+    //     are one topic — "Payments & banking" under Payroll operations and a
+    //     same-named grown row elsewhere are different drawers. The loser keeps
+    //     its row so every id ever issued still resolves.
     const live = await prisma.intranetTopic.findMany({ where: { status: "live" } });
     const byFold = new Map<string, (typeof live)[number]>();
     let merged = 0;
     for (const t of live) {
-      const key = foldLabel(t.label);
-      if (!key) continue;
+      const folded = foldLabel(t.label);
+      if (!folded) continue;
+      const key = `${t.parentId}|${folded}`;
       const winner = byFold.get(key);
       if (!winner) {
         byFold.set(key, t);
@@ -699,11 +800,19 @@ export async function indexTopics(): Promise<RunReport> {
       );
 
     // 3 · counts, from the claims themselves rather than from a running total
-    //     that can drift.
+    //     that can drift. A parent's material includes everything filed under
+    //     its subtopics — the invariant V.4 demands: a parent never holds less
+    //     than its children do.
     const current = await prisma.intranetTopic.findMany({ where: { status: "live" } });
+    const kidsOf = new Map<string, string[]>();
     for (const t of current) {
+      if (!t.parentId) continue;
+      kidsOf.set(t.parentId, [...(kidsOf.get(t.parentId) ?? []), t.id]);
+    }
+    for (const t of current) {
+      const family = [t.id, ...(kidsOf.get(t.id) ?? [])];
       const claims = await prisma.intranetClaim.findMany({
-        where: { topicIds: { has: t.id } },
+        where: { topicIds: { hasSome: family } },
         select: { docId: true },
       });
       const docs = new Set(claims.map((c) => c.docId));
@@ -979,7 +1088,7 @@ export async function readCapture(captureId: string): Promise<RunReport> {
       const buyers = tally.get("prospect-question") ?? 0;
       if (buyers > 0)
         lines.push(
-          `${buyers === 1 ? "One of those is a question a real buyer asked — it's" : `${buyers} of those are questions real buyers asked — they're`} filed under ${PROSPECT_ROOT.label}, and any battlecard proposals from them will show up on the Playbook.`,
+          `${buyers === 1 ? "One of those is a question a real buyer asked — it's" : `${buyers} of those are questions real buyers asked — they're`} filed under ${BUYER_QUESTIONS_PARENT}, in ${BUYER_QUESTIONS_SUB}, and any battlecard proposals from them will show up on the Playbook.`,
         );
 
       const named = accountsMentioned(
@@ -997,7 +1106,8 @@ export async function readCapture(captureId: string): Promise<RunReport> {
     lines.push(...idx.lines.filter((l) => l !== "The index is settled."));
     if (!read.ok && read.reason) lines.push(read.reason);
 
-    // The record keeps the digest (IV.8): stored on the capture itself, so the
+    // The record keeps the digest (IV.8) — and the brief itself (V.8), and the
+    // whole truth behind any failure (V.6): stored on the capture, so the
     // ledger can replay what this paste did long after this response is gone.
     try {
       const cap = await prisma.intranetCapture.findUnique({
@@ -1006,13 +1116,26 @@ export async function readCapture(captureId: string): Promise<RunReport> {
       });
       await prisma.intranetCapture.update({
         where: { id: captureId },
-        data: { meta: { ...((cap?.meta ?? {}) as object), digest: lines } },
+        data: {
+          meta: {
+            ...((cap?.meta ?? {}) as object),
+            digest: lines,
+            briefs: read.briefs ?? [],
+            detail: read.detail ?? [],
+          },
+        },
       });
     } catch {
       // an unreplayable digest is not a failed read
     }
 
-    return { ok: true, lines, pending: read.pending };
+    return {
+      ok: true,
+      lines,
+      pending: read.pending,
+      briefs: read.briefs,
+      detail: read.detail,
+    };
   } catch (e) {
     return { ok: false, lines: [], reason: `The reading failed — ${reasonOf(e)}.` };
   }
@@ -1121,16 +1244,26 @@ export async function runBrain(opts?: {
       : all;
 
   let pending = 0;
+  const detail: string[] = [];
+  const briefs: string[] = [];
   for (const [, run] of stages) {
     const r = await run();
     lines.push(...r.lines);
     if (typeof r.pending === "number") pending = r.pending;
+    if (r.detail) detail.push(...r.detail);
+    if (r.briefs) briefs.push(...r.briefs);
     // A stage that fails does not stop the rest — each writes before the next
     // begins, so the corpus is always consistent, just possibly less complete.
     if (!r.ok && r.reason) lines.push(r.reason);
   }
 
-  return { ok: true, lines, pending };
+  return {
+    ok: true,
+    lines,
+    pending,
+    detail: detail.length ? detail : undefined,
+    briefs: briefs.length ? briefs : undefined,
+  };
 }
 
 /** What is waiting, so the room can say so without running anything. */

@@ -34,8 +34,14 @@ import {
   loadTopics,
   todayCounts,
 } from "@/lib/intranet/store";
-import type { LedgerEntry } from "@/lib/intranet/ledger";
-import { CEILINGS, readCeilings } from "@/lib/intranet/evals";
+import { countryOf, type LedgerEntry } from "@/lib/intranet/ledger";
+import {
+  CEILINGS,
+  EVAL_SET,
+  TARGETS,
+  abstained,
+  readCeilings,
+} from "@/lib/intranet/evals";
 import { accountsMentioned, promotionDraft } from "@/lib/intranet/bridges";
 import { redactMoney } from "@/lib/intel/lexicon";
 import {
@@ -57,6 +63,7 @@ import { withSupersessions } from "@/lib/intranet/time";
 import type {
   Answer,
   Candidate,
+  Claim,
   Coverage,
   DocRef,
   QueryPlan,
@@ -79,6 +86,9 @@ export type CaptureReply = {
   receipt: string;
   /** What just landed, so the room can read it immediately (IV.3). */
   captureId: string;
+  /** Provenance for the sent stamp (V): where the paste came from. */
+  space: string;
+  origin: string;
   reason?: string;
 };
 
@@ -90,10 +100,24 @@ export async function intranetCapture(
   originHint?: "teams" | "meeting" | "demo" | "paste",
 ): Promise<CaptureReply> {
   if (!(await canWrite()))
-    return { ok: false, receipt: "", captureId: "", reason: "Read-only session." };
+    return {
+      ok: false,
+      receipt: "",
+      captureId: "",
+      space: "",
+      origin: "",
+      reason: "Read-only session.",
+    };
   const text = (raw ?? "").trim();
   if (text.length < 20)
-    return { ok: false, receipt: "", captureId: "", reason: "Nothing there to keep." };
+    return {
+      ok: false,
+      receipt: "",
+      captureId: "",
+      space: "",
+      origin: "",
+      reason: "Nothing there to keep.",
+    };
 
   const cap = normalizeCapture(text, { origin: originHint });
 
@@ -114,6 +138,8 @@ export async function intranetCapture(
         ok: true,
         receipt: "Already in the brain — nothing new to add.",
         captureId: seen.id,
+        space: cap.space,
+        origin: cap.origin,
       };
     }
 
@@ -182,12 +208,16 @@ export async function intranetCapture(
         report: cap.report,
       }),
       captureId: capture.id,
+      space: cap.space,
+      origin: cap.origin,
     };
   } catch {
     return {
       ok: false,
       receipt: "",
       captureId: "",
+      space: "",
+      origin: "",
       reason:
         "The brain's tables aren't there yet — run docs/intranet-tables.sql in Supabase.",
     };
@@ -502,6 +532,138 @@ export async function intranetAsk(question: string): Promise<AskReply> {
     accounts: named,
     world,
   };
+}
+
+// ── the reading pane (V.4) ──────────────────────────────────────────────────
+// Anything clicked in the rail shows what is filed inside it. Multi-select
+// reads the union; the search-within box narrows to the selected drawers only.
+
+export type ShelfScope =
+  | { type: "topic"; id: string; label: string }
+  | { type: "country"; code: string; label: string; topicId?: string };
+
+export type ShelfItem = {
+  claimId: string;
+  text: string;
+  speaker: string;
+  day: string;
+  kind: string;
+  space: string;
+  docTitle: string;
+  origin: string;
+  countries: string[];
+};
+
+export type ShelfReply = { ok: boolean; total: number; items: ShelfItem[] };
+
+export async function intranetContents(
+  scopes: ShelfScope[],
+  search: string,
+): Promise<ShelfReply> {
+  if (!(await canRead()) || !hasDatabaseEnv() || scopes.length === 0)
+    return { ok: false, total: 0, items: [] };
+
+  const allTopics = await loadTopics();
+  const byId = new Map<string, Claim>();
+
+  for (const s of scopes.slice(0, 12)) {
+    if (s.type === "topic") {
+      const reach = descendantIds(allTopics, s.id);
+      for (const c of await claimsByTopics(reach, 400)) byId.set(c.id, c);
+    } else {
+      const wanted = [s.label, s.code.toUpperCase(), s.code].filter(Boolean);
+      let found = await claimsByEntities(wanted, 400);
+      if (s.topicId) {
+        const reach = new Set(descendantIds(allTopics, s.topicId));
+        found = found.filter((c) => c.topicIds.some((t) => reach.has(t)));
+      }
+      for (const c of found) byId.set(c.id, c);
+    }
+  }
+
+  let claims = [...byId.values()];
+  const q = (search ?? "").trim().toLowerCase();
+  if (q)
+    claims = claims.filter(
+      (c) => c.text.toLowerCase().includes(q) || c.speaker.toLowerCase().includes(q),
+    );
+  claims.sort((a, b) => b.saidAt.localeCompare(a.saidAt));
+  const total = claims.length;
+  claims = claims.slice(0, 150);
+
+  const docs = await docsByIds([...new Set(claims.map((c) => c.docId))]);
+  const items: ShelfItem[] = claims.map((c) => {
+    const d = docs.get(c.docId);
+    return {
+      claimId: c.id,
+      text: c.text,
+      speaker: c.speaker,
+      day: c.saidAt.slice(0, 10),
+      kind: c.kind,
+      space: d?.space ?? "",
+      docTitle: d?.title ?? "",
+      origin: d?.origin ?? "",
+      countries: [
+        ...new Set(c.entities.map((e) => countryOf(e)?.name ?? "").filter(Boolean)),
+      ],
+    };
+  });
+  return { ok: true, total, items };
+}
+
+// ── the self-check (Phase 13, finally wired) ────────────────────────────────
+// The eval set was decoration — defined, never executed. Now it runs the real
+// pipeline end to end and reports in plain words. A recall case whose material
+// simply isn't in the record yet says so, rather than posing as a failure.
+
+export type SelfCheckReply = { ok: boolean; lines: string[]; reason?: string };
+
+export async function intranetSelfCheck(): Promise<SelfCheckReply> {
+  if (!(await canRead())) return { ok: false, lines: [], reason: "Sign in to continue." };
+  if (!synthAvailable())
+    return {
+      ok: false,
+      lines: [],
+      reason: "No API key configured — the room can't check itself yet.",
+    };
+
+  const lines: string[] = [];
+  let passed = 0;
+  for (const c of EVAL_SET) {
+    const r = await intranetAsk(c.question);
+    const cited = r.citations;
+    const didAbstain = abstained(r.answer, NOTHING_IN_RECORD) && cited.length === 0;
+    let ok: boolean;
+    let note: string;
+    if (c.shouldAbstain) {
+      ok = didAbstain;
+      note = ok ? "it declined, honestly" : "it answered what the record cannot support";
+    } else if (didAbstain) {
+      ok = false;
+      note = "the record has nothing on this yet — feed it and check again";
+    } else {
+      const hay = [r.answer.answer, ...cited.map((x) => x.text)]
+        .join(" • ")
+        .toLowerCase();
+      const found = c.wants.filter((w) => hay.includes(w.toLowerCase())).length;
+      const recall = c.wants.length ? found / c.wants.length : 1;
+      const real = await claimsByIds(cited.map((x) => x.claimId));
+      const byId = new Map(real.map((cl) => [cl.id, cl]));
+      const attribution = cited.every(
+        (x) => (byId.get(x.claimId)?.speaker ?? "") === (x.speaker ?? ""),
+      );
+      ok = recall >= TARGETS.recall && attribution;
+      note = !attribution
+        ? "a line was credited to the wrong person"
+        : recall < TARGETS.recall
+          ? "it missed material it should have found"
+          : "found, answered, credited correctly";
+    }
+    if (ok) passed += 1;
+    lines.push(`${ok ? "✓" : "✕"} ${c.question} — ${note}.`);
+  }
+  lines.unshift(`${passed} of ${EVAL_SET.length} checks passed.`);
+  return { ok: true, lines };
 }
 
 // ── the archive (IV.8) ──────────────────────────────────────────────────────

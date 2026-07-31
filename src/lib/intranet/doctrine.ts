@@ -141,5 +141,7 @@ export const AGE_DAYS: Record<ClaimKind, number> = {
   "prospect-question": Number.POSITIVE_INFINITY,
 };
 
-/** Bumped whenever the extraction rubric changes; drives the lazy re-index. */
-export const PROMPT_VERSION = "v1";
+/** Bumped whenever the reading rubric changes; drives the full re-read. "v2"
+ *  is the refounding (Part V): the liberal read against the seeded bank —
+ *  everything filed under v1 gets read again onto the strong floor. */
+export const PROMPT_VERSION = "v2";

@@ -1,41 +1,26 @@
-// Phase 6 · EXTRACT — documents become claims.
+// Phase 6, refounded by V.1 · THE LIBERAL READ.
 //
-// This phase determines the room's ceiling. A weak extraction cannot be rescued
-// by clever retrieval or eloquent synthesis; the answer will be fluent and
-// wrong. Everything downstream is arithmetic on what happens here.
+// A document is handed to Claude with one instruction: organize it topically
+// against the bank, file it, and write a brief — what you received, what you
+// did with it, where each piece went, and why. The reply structure below is
+// the minimum filing requires; nothing in it the API can refuse.
 //
-// Two guards carry most of the weight:
+// Two rules survive from the first build because they are the room's honor:
 //
-//   · ATTRIBUTION. This app has been burned once already — the operator's own
-//     line about a deposit at Remote was credited to a colleague because it sat
-//     in a thread that colleague had replied to most recently. The rubric below
-//     is explicit, and tests/intranet.test.ts holds fixtures for it forever.
-//
-//   · THE QUOTE CHECK. Every claim must carry a verbatim span from the source.
-//     A claim whose quote cannot be located is dropped, not stored — which is a
-//     cheap, deterministic catch for the hallucination that would otherwise
-//     look exactly like a good claim.
+//   · ATTRIBUTION IS SACRED. A statement belongs to the person whose message
+//     it appears in — quoted material to its original author, always.
+//   · Filing is TEXT-ONLY (V.2). The model names topics in words; the app
+//     resolves the words. No ids, no codes, no numbers in any prompt.
 
 import Anthropic from "@anthropic-ai/sdk";
 import {
-  ASK_SHAPES,
   CLAIM_KINDS,
-  CONFIDENCES,
   MODEL_EXTRACT_LIGHT,
   MODEL_EXTRACT_RICH,
   PROMPT_VERSION,
-  type AskShape,
   type ClaimKind,
-  type Confidence,
 } from "./doctrine";
-import type { DraftClaim, ExtractResult, Topic } from "./types";
-
-export const MAX_CLAIMS = 24;
-const MAX_TOPIC_MATCHES = 6;
-const MAX_PROPOSALS = 3;
-const MAX_LINK_REFS = 6;
-/** Above this share of unlocatable quotes, the whole extraction is rejected. */
-export const QUOTE_FAILURE_LIMIT = 0.2;
+import { bankPrompt } from "./bank";
 
 export function extractAvailable(): boolean {
   return Boolean(process.env.ANTHROPIC_API_KEY);
@@ -49,120 +34,81 @@ export function modelForOrigin(origin: string): string {
     : MODEL_EXTRACT_LIGHT;
 }
 
-// ── the rubric ──────────────────────────────────────────────────────────────
-export const SYSTEM = `You read one document from an internal corpus and pull out the assertions worth finding again months from now.
+// ── the instruction ─────────────────────────────────────────────────────────
+export const SYSTEM = `You are the reading half of an internal knowledge index. You receive one document — a chat thread, a transcript, a note, anything — and you organize what it contains.
 
-WHAT A CLAIM IS
-- One assertion, readable entirely on its own. "He said four to six weeks" is NOT a claim. "Implementation from signature to first payroll is quoted at four to six weeks" IS.
-- Extract what someone would want to find later. Not pleasantries, not scheduling logistics, not reactions, not "sounds good".
-- Prefer fewer, better claims. The cap is ${MAX_CLAIMS}; most documents should yield three to eight.
-- Never merge two people's statements into one claim.
+ORGANIZE TOPICALLY, AGAINST THE BANK
+You are given the index's subject bank: parents and their subtopics. File every statement worth keeping under the best-fitting subtopic. Check the bank FIRST. Only when something genuinely fits no existing subtopic, file it under the right parent with a new, concrete subtopic name — a label that answers "what's in here" before anyone clicks it. Never invent a new parent.
+
+WHAT TO KEEP
+Statements someone would want to find again: facts, decisions, commitments, how things are done, open questions, and questions buyers asked (keep those verbatim — file them under "Buyer questions"). Skip pleasantries, scheduling chatter, and reactions. Each statement must read entirely on its own, no pronouns pointing outside it.
 
 ATTRIBUTION IS SACRED
-- A claim belongs to the person whose message it appears in. Full stop.
-- Quoted or forwarded material belongs to its ORIGINAL author, never to whoever pasted or replied to it.
-- The operator is Antaeus Coe. He writes from his own account and previously worked at Remote.com — so market knowledge inside HIS message is HIS own, not a colleague's and not a prospect's.
-- If attribution genuinely cannot be determined, use "unknown". Guessing is worse than admitting.
+A statement belongs to the person whose message it appears in. Quoted or forwarded material belongs to its ORIGINAL author, never to whoever pasted it. The operator is Antaeus Coe; market knowledge inside HIS messages is his own. If attribution genuinely cannot be determined, write "unknown" — guessing is worse. NEVER people as tags: a person's name inside a statement's text is fine, but tag statements only with countries.
 
-KIND
-- "decision"  — a choice was made ("we're going EOR first")
-- "commitment" — someone owes something ("I'll have the SOW over by Friday")
-- "fact" — a state of the world ("13th salary pays in two instalments")
-- "process" — how something is done ("sell a deal, email implementation with SOW and handover, then drop the SOW in SharePoint")
-- "opinion" — a view, not a decision
-- "question" — an open question nobody answered; the organisation's known unknowns
-- "prospect-question" — a question a BUYER asked, in a demo or a customer call. Never merge these with "question": an internal unknown and a buyer's probe are different animals.
+THE BRIEF
+Write "brief" as a detailed report addressed to the operator: what this document was, what you did with it, where each piece went, and WHY you organized it that way. Name the subtopics you used and what went into each. Where content clearly concerns a specific customer account or belongs in the Playbook, say so in the brief — you file nothing outside the index; the operator does. Plain confident prose, a real read — not a list of counts.
 
-PROSPECT QUESTIONS ARE THE WINDOW TO WINNING DEALS
-When the speaker is a prospect or customer asking something, use kind "prospect-question" and fill:
-- askShape: definitional (they don't know what a thing is) | commercial (price, terms, structure) | risk (exposure, compliance, liability) | technical (integration, data, platform) | process (how it works day to day) | timeline (how long, when)
-- prompted: what in the conversation provoked the question — the claim, the slide, the moment. A definitional question right after the EOR explanation means the framing failed, and that is the intelligence.
-
-CONFIDENCE
-- "stated" — said plainly, first-hand
-- "hedged" — "I think", "probably", "we might"
-- "secondhand" — "X told me", "I heard"
-
-ENTITIES
-Organizations, countries, products, systems, named artifacts (a SOW, a handover doc).
-NEVER people. A person's name inside a claim's text is fine — that is prose. Do not list people as entities.
-
-TOPICS
-Match against the topic list you are given, always, first. Propose a new topic ONLY when the document genuinely does not fit anything on the list, and say why in one line.
-
-QUOTE
-Every claim carries "quote": the exact, verbatim span from the document that the claim is drawn from. Copy it character for character. If you cannot quote it, do not make the claim.`;
+For each statement also give:
+- kind: fact | decision | commitment | process | opinion | question | buyer-question
+- countries: any countries the statement is about (empty if none)
+- quote: the exact source span it came from, when one exists`;
 
 const SCHEMA = {
   type: "object",
   additionalProperties: false,
-  required: ["summary", "claims", "topicMatches", "topicProposals", "linkRefs"],
+  required: ["brief", "filings"],
   properties: {
-    summary: { type: "string", description: "Two sentences: what this document is." },
-    claims: {
+    brief: { type: "string" },
+    filings: {
       type: "array",
       items: {
         type: "object",
         additionalProperties: false,
-        required: [
-          "text",
-          "speaker",
-          "kind",
-          "confidence",
-          "entities",
-          "askShape",
-          "prompted",
-          "quote",
-        ],
+        required: ["topic", "subtopic", "statements"],
         properties: {
-          text: { type: "string" },
-          speaker: { type: "string" },
-          kind: { type: "string", enum: [...CLAIM_KINDS] },
-          confidence: { type: "string", enum: [...CONFIDENCES] },
-          entities: { type: "array", items: { type: "string" } },
-          askShape: { type: "string", enum: ["", ...ASK_SHAPES] },
-          prompted: { type: "string" },
-          quote: { type: "string" },
+          topic: { type: "string" },
+          subtopic: { type: "string" },
+          statements: {
+            type: "array",
+            items: {
+              type: "object",
+              additionalProperties: false,
+              required: ["text", "speaker", "kind", "countries", "quote"],
+              properties: {
+                text: { type: "string" },
+                speaker: { type: "string" },
+                kind: { type: "string" },
+                countries: { type: "array", items: { type: "string" } },
+                quote: { type: "string" },
+              },
+            },
+          },
         },
-      },
-    },
-    topicMatches: {
-      type: "array",
-      items: { type: "string" },
-    },
-    topicProposals: {
-      type: "array",
-      items: {
-        type: "object",
-        additionalProperties: false,
-        required: ["label", "why"],
-        properties: { label: { type: "string" }, why: { type: "string" } },
-      },
-    },
-    linkRefs: {
-      type: "array",
-      items: {
-        type: "object",
-        additionalProperties: false,
-        required: ["label", "why"],
-        properties: { label: { type: "string" }, why: { type: "string" } },
       },
     },
   },
 } as const;
 
-export const EMPTY_EXTRACT: ExtractResult = {
-  summary: "",
-  claims: [],
-  topicMatches: [],
-  topicProposals: [],
-  linkRefs: [],
+// ── shapes ──────────────────────────────────────────────────────────────────
+export type Statement = {
+  text: string;
+  speaker: string;
+  kind: ClaimKind;
+  countries: string[];
+  quote: string;
+  offsetStart: number;
+  offsetEnd: number;
 };
 
-// ── the quote check (F2) ────────────────────────────────────────────────────
-/** Whitespace-tolerant search for a quote inside the body. Returns the span, or
- *  null when the quote is not there — which is the strongest hallucination
- *  signal available and costs nothing. */
+export type Filing = { topic: string; subtopic: string; statements: Statement[] };
+
+export type LiberalRead = { brief: string; filings: Filing[] };
+
+export const EMPTY_READ: LiberalRead = { brief: "", filings: [] };
+
+// ── the quote check (kept — costless honesty) ───────────────────────────────
+/** Whitespace-tolerant search for a quote inside the body. Null = not there. */
 export function locateQuote(
   body: string,
   quote: string,
@@ -172,21 +118,19 @@ export function locateQuote(
   const direct = body.indexOf(q);
   if (direct >= 0) return { start: direct, end: direct + q.length };
 
-  // Whitespace-normalised comparison, mapping back to original offsets.
   const norm = (s: string) => s.replace(/\s+/g, " ");
   const flatBody = norm(body);
   const flatQ = norm(q);
   const at = flatBody.indexOf(flatQ);
   if (at < 0) return null;
 
-  // Walk the original, counting normalised characters, to recover real offsets.
   let seen = 0;
   let start = -1;
   let end = -1;
   for (let i = 0; i < body.length; i += 1) {
     const isWs = /\s/.test(body[i]);
     const prevWs = i > 0 && /\s/.test(body[i - 1]);
-    if (isWs && prevWs) continue; // collapsed run
+    if (isWs && prevWs) continue;
     if (seen === at && start < 0) start = i;
     seen += 1;
     if (seen === at + flatQ.length) {
@@ -198,138 +142,92 @@ export function locateQuote(
   return { start, end: end > start ? end : Math.min(body.length, start + q.length) };
 }
 
-// ── sanitising ──────────────────────────────────────────────────────────────
-function str(v: unknown, max = 600): string {
+// ── coercion ────────────────────────────────────────────────────────────────
+function str(v: unknown, max = 800): string {
   return typeof v === "string" ? v.trim().slice(0, max) : "";
 }
 
-function asKind(v: unknown): ClaimKind {
-  return (CLAIM_KINDS as readonly string[]).includes(v as string)
-    ? (v as ClaimKind)
-    : "fact";
+/** Loose words to the doctrine's kinds. Liberal in, canonical out. */
+export function asKind(v: unknown): ClaimKind {
+  const s = str(v, 40).toLowerCase().replace(/\s+/g, "-");
+  if ((CLAIM_KINDS as readonly string[]).includes(s)) return s as ClaimKind;
+  if (s.includes("buyer") || s.includes("prospect")) return "prospect-question";
+  if (s.includes("decision") || s.includes("decide")) return "decision";
+  if (s.includes("commit") || s.includes("promise")) return "commitment";
+  if (s.includes("process") || s.includes("how")) return "process";
+  if (s.includes("opinion") || s.includes("view")) return "opinion";
+  if (s.includes("question") || s.includes("ask")) return "question";
+  return "fact";
 }
 
-function asConfidence(v: unknown): Confidence {
-  return (CONFIDENCES as readonly string[]).includes(v as string)
-    ? (v as Confidence)
-    : "stated";
-}
-
-function asShape(v: unknown): AskShape | "" {
-  return (ASK_SHAPES as readonly string[]).includes(v as string) ? (v as AskShape) : "";
-}
-
-/** Coerce whatever came back into the shape the rest of the build expects, then
- *  drop every claim whose quote cannot be found in the body. */
-export function sanitizeExtract(
-  raw: unknown,
-  body: string,
-): ExtractResult & { located: { start: number; end: number }[]; dropped: number } {
+/** Coerce whatever came back. Liberal (V.1): a statement without a locatable
+ *  quote is KEPT — offsets stay zero and drilldown opens the document's top.
+ *  The quote check still runs so located statements drill precisely. */
+export function sanitizeRead(raw: unknown, body: string): LiberalRead {
   const r = (raw ?? {}) as Record<string, unknown>;
-  const claimsIn = Array.isArray(r.claims) ? r.claims : [];
+  const filingsIn = Array.isArray(r.filings) ? r.filings : [];
+  const filings: Filing[] = [];
 
-  const claims: DraftClaim[] = [];
-  const located: { start: number; end: number }[] = [];
-  let dropped = 0;
-
-  for (const c of claimsIn.slice(0, MAX_CLAIMS)) {
-    const o = (c ?? {}) as Record<string, unknown>;
-    const text = str(o.text, 600);
-    if (!text) continue;
-    const span = locateQuote(body, str(o.quote, 900));
-    if (!span) {
-      dropped += 1;
-      continue;
+  for (const f of filingsIn.slice(0, 40)) {
+    const o = (f ?? {}) as Record<string, unknown>;
+    const topic = str(o.topic, 80);
+    const subtopic = str(o.subtopic, 80);
+    if (!topic || !subtopic) continue;
+    const stIn = Array.isArray(o.statements) ? o.statements : [];
+    const statements: Statement[] = [];
+    for (const st of stIn.slice(0, 80)) {
+      const so = (st ?? {}) as Record<string, unknown>;
+      const text = str(so.text, 700);
+      if (!text) continue;
+      const quote = str(so.quote, 900);
+      const span = quote ? locateQuote(body, quote) : null;
+      statements.push({
+        text,
+        speaker: str(so.speaker, 120) || "unknown",
+        kind: asKind(so.kind),
+        countries: (Array.isArray(so.countries) ? so.countries : [])
+          .map((c) => str(c, 60))
+          .filter(Boolean)
+          .slice(0, 8),
+        quote,
+        offsetStart: span?.start ?? 0,
+        offsetEnd: span?.end ?? 0,
+      });
     }
-    const kind = asKind(o.kind);
-    claims.push({
-      text,
-      speaker: str(o.speaker, 120) || "unknown",
-      kind,
-      confidence: asConfidence(o.confidence),
-      entities: (Array.isArray(o.entities) ? o.entities : [])
-        .map((e) => str(e, 80))
-        .filter(Boolean)
-        .slice(0, 10),
-      askShape: kind === "prospect-question" ? asShape(o.askShape) : "",
-      prompted: kind === "prospect-question" ? str(o.prompted, 300) : "",
-      quote: str(o.quote, 900),
-      offsetStart: span.start,
-      offsetEnd: span.end,
-    });
-    located.push(span);
+    if (statements.length) filings.push({ topic, subtopic, statements });
   }
 
-  return {
-    summary: str(r.summary, 500),
-    claims,
-    topicMatches: (Array.isArray(r.topicMatches) ? r.topicMatches : [])
-      .map((t) => str(t, 60))
-      .filter(Boolean)
-      .slice(0, MAX_TOPIC_MATCHES),
-    topicProposals: (Array.isArray(r.topicProposals) ? r.topicProposals : [])
-      .map((p) => {
-        const o = (p ?? {}) as Record<string, unknown>;
-        return { label: str(o.label, 80), why: str(o.why, 200) };
-      })
-      .filter((p) => p.label)
-      .slice(0, MAX_PROPOSALS),
-    linkRefs: (Array.isArray(r.linkRefs) ? r.linkRefs : [])
-      .map((p) => {
-        const o = (p ?? {}) as Record<string, unknown>;
-        return { label: str(o.label, 200), why: str(o.why, 200) };
-      })
-      .filter((p) => p.label)
-      .slice(0, MAX_LINK_REFS),
-    located,
-    dropped,
-  };
-}
-
-/** Whether an extraction should be thrown away entirely (Phase 6.6). */
-export function extractionRejected(kept: number, dropped: number): boolean {
-  const total = kept + dropped;
-  if (total === 0) return false;
-  return dropped / total > QUOTE_FAILURE_LIMIT;
+  return { brief: str(r.brief, 6000), filings };
 }
 
 // ── the call ────────────────────────────────────────────────────────────────
-export type ExtractInput = {
+export type ReadInput = {
   body: string;
   origin: string;
-  /** The room it was said in — disambiguation only, never a partition (I.7). */
   space: string;
   occurredAt: string;
   accountName?: string;
-  /** The LIVE topic list, so the model matches rather than invents vocabulary. */
-  topics: Pick<Topic, "id" | "label" | "summary">[];
+  /** Subtopics the index has grown beyond the bank, so the model files into
+   *  them rather than re-inventing them. Labels only (V.2). */
+  grown: { parent: string; label: string }[];
 };
 
-function topicLines(topics: ExtractInput["topics"]): string {
-  if (!topics.length) return "(the index is empty — propose what this document is about)";
-  return topics
-    .slice(0, 120)
-    .map((t) => `${t.id} · ${t.label}${t.summary ? ` — ${t.summary}` : ""}`)
-    .join("\n");
-}
-
-export async function runExtract(input: ExtractInput): Promise<ExtractResult> {
-  if (!extractAvailable()) throw new Error("No API key configured — extraction is off.");
+export async function runRead(input: ReadInput): Promise<LiberalRead> {
+  if (!extractAvailable()) throw new Error("No API key configured — reading is off.");
   const client = new Anthropic({ timeout: 120_000, maxRetries: 1 });
 
-  const user = `Document from ${input.space || "an internal source"}${
-    input.accountName ? ` (about the account ${input.accountName})` : ""
-  }, said on ${input.occurredAt.slice(0, 10)}.
+  const user = `THE BANK — file against this first:
+${bankPrompt(input.grown)}
 
-TOPICS ALREADY IN THE INDEX — match these before proposing anything new:
-${topicLines(input.topics)}
+DOCUMENT — from ${input.space || "an internal source"}${
+    input.accountName ? `, about the account ${input.accountName}` : ""
+  }, pasted ${input.occurredAt.slice(0, 10)}:
 
-DOCUMENT
 ${input.body}`;
 
   const res = await client.messages.create({
     model: modelForOrigin(input.origin),
-    max_tokens: 8192,
+    max_tokens: 16384,
     thinking: { type: "adaptive" },
     system: [{ type: "text", text: SYSTEM, cache_control: { type: "ephemeral" } }],
     output_config: {
@@ -345,21 +243,11 @@ ${input.body}`;
     .map((b) => (b.type === "text" ? b.text : ""))
     .join("")
     .trim();
-  let parsed: unknown = {};
   try {
-    parsed = JSON.parse(text);
+    return sanitizeRead(JSON.parse(text), input.body);
   } catch {
-    return EMPTY_EXTRACT;
+    return EMPTY_READ;
   }
-  const clean = sanitizeExtract(parsed, input.body);
-  if (extractionRejected(clean.claims.length, clean.dropped)) return EMPTY_EXTRACT;
-  return {
-    summary: clean.summary,
-    claims: clean.claims,
-    topicMatches: clean.topicMatches,
-    topicProposals: clean.topicProposals,
-    linkRefs: clean.linkRefs,
-  };
 }
 
 export { PROMPT_VERSION };

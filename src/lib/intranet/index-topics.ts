@@ -13,7 +13,8 @@
 // only the merge ARBITRATION of near-but-not-identical labels needs judgment,
 // and that is a separate call the server action makes.
 
-import { PROSPECT_TOPIC_LABEL, TOPIC_PROMOTE_AT } from "./doctrine";
+import { TOPIC_PROMOTE_AT } from "./doctrine";
+import { BANK } from "./bank";
 import type { Topic } from "./types";
 
 /** A proposal waiting for enough support to join the rail. */
@@ -151,15 +152,17 @@ export function resolveTopic(topics: Topic[], id: string): Topic | null {
   return cur;
 }
 
-/** The rail's top level: live topics with no parent, prospect questions first
- *  (C7 — the founder named it the window), then by weight. */
+/** The rail's top level (V.4): the bank's subject parents in their decreed
+ *  order, then anything else by weight. Parents are subject-matter heads —
+ *  the counts belong to their subtopics, and the rail draws none here. */
 export function railTopics(topics: Topic[]): Topic[] {
+  const order = new Map(BANK.map((p, i) => [foldLabel(p.label), i]));
   return topics
     .filter((t) => t.status === "live" && !t.parentId)
     .sort((a, b) => {
-      const ap = a.label === PROSPECT_TOPIC_LABEL ? 0 : 1;
-      const bp = b.label === PROSPECT_TOPIC_LABEL ? 0 : 1;
-      if (ap !== bp) return ap - bp;
+      const ai = order.get(foldLabel(a.label)) ?? 99;
+      const bi = order.get(foldLabel(b.label)) ?? 99;
+      if (ai !== bi) return ai - bi;
       return b.claimCount - a.claimCount;
     });
 }

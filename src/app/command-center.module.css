@@ -8020,3 +8020,239 @@
   font-size: 12px;
   color: #7a4b00;
 }
+
+/* ── Part V · the refounded face ─────────────────────────────────────────── */
+/* Selection dots — the brand's accents doing identity work, nothing new. */
+.itDot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: 0 0 8px;
+  align-self: center;
+}
+
+/* ⟳ by the title — the one-flow refresh. */
+.itRefresh {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 9px;
+  width: 30px;
+  height: 30px;
+  margin-left: 12px;
+  font-size: 16px;
+  line-height: 1;
+  color: var(--navy);
+  cursor: pointer;
+  vertical-align: 4px;
+}
+.itRefresh:hover:not(:disabled) {
+  border-color: rgba(10, 28, 64, 0.35);
+}
+.itRefreshOn {
+  color: rgba(10, 28, 64, 0.42);
+  animation: itSpin 1.2s linear infinite;
+}
+@keyframes itSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* The selection chips — this IS the scope line. */
+.itChips {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0 0;
+}
+.itChipsWord {
+  font-family: var(--f-mono), ui-monospace, Menlo, monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(10, 28, 64, 0.42);
+}
+.itChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 999px;
+  padding: 4px 11px;
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--navy);
+  cursor: pointer;
+}
+.itChip:hover {
+  border-color: rgba(10, 28, 64, 0.35);
+}
+.itChipX {
+  color: rgba(10, 28, 64, 0.42);
+  font-size: 10px;
+}
+
+/* The reading pane — what's filed inside whatever is selected. */
+.itPane {
+  margin-top: 10px;
+  background: #fff;
+  border: 1px solid var(--ds-hair-strong, rgba(10, 28, 64, 0.14));
+  border-radius: 12px;
+  overflow: hidden;
+}
+.itPaneHead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+}
+.itWithin {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  color: var(--navy);
+}
+.itWithin:focus {
+  outline: none;
+}
+.itPaneCount {
+  font-family: var(--f-mono), ui-monospace, Menlo, monospace;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(10, 28, 64, 0.42);
+  white-space: nowrap;
+}
+.itPaneEmpty {
+  margin: 0;
+  padding: 14px;
+  font-size: 12.5px;
+  color: rgba(10, 28, 64, 0.42);
+}
+.itPaneList {
+  max-height: 44vh;
+  overflow-y: auto;
+}
+.itPaneItem {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  border-top: 1px solid var(--line);
+  background: none;
+  font: inherit;
+  padding: 10px 14px;
+  cursor: pointer;
+}
+.itPaneItem:first-child {
+  border-top: 0;
+}
+.itPaneItem:hover {
+  background: rgba(37, 99, 235, 0.05);
+}
+.itPaneText {
+  display: block;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--navy);
+}
+.itPaneMeta {
+  display: block;
+  margin-top: 3px;
+  font-family: var(--f-mono), ui-monospace, Menlo, monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(10, 28, 64, 0.42);
+}
+
+/* V.6 — the excessive detail behind the one word. */
+.itDetailPre {
+  margin: 0 0 8px;
+  padding: 10px 12px;
+  background: rgba(10, 28, 64, 0.04);
+  border-radius: 8px;
+  font-family: var(--f-mono), ui-monospace, Menlo, monospace;
+  font-size: 11px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--navy);
+}
+
+/* Quiet corners — the hidden archive and the vital signs. */
+.itHushLinks {
+  margin: 10px 0 4px;
+  padding: 0 13px;
+  font-size: 11px;
+}
+.itHushLinks a {
+  color: rgba(10, 28, 64, 0.42);
+  text-decoration: none;
+}
+.itHushLinks a:hover {
+  color: var(--blue);
+}
+
+/* V.7 — every paste, verbatim. */
+.itPasteArchive {
+  display: grid;
+  gap: 10px;
+}
+.itPasteRow {
+  background: #fff;
+  border: 1px solid var(--ds-hair-strong, rgba(10, 28, 64, 0.14));
+  border-radius: 12px;
+  padding: 0;
+}
+.itPasteRow summary {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 12px 16px;
+  cursor: pointer;
+  list-style: none;
+}
+.itPasteRow summary::-webkit-details-marker {
+  display: none;
+}
+.itPasteStamp {
+  font-family: var(--f-mono), ui-monospace, Menlo, monospace;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(10, 28, 64, 0.42);
+  white-space: nowrap;
+}
+.itPasteTitle {
+  flex: 1;
+  min-width: 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--navy);
+}
+.itPasteMeta {
+  font-size: 11.5px;
+  color: rgba(10, 28, 64, 0.42);
+  white-space: nowrap;
+}
+.itPasteRaw {
+  margin: 0;
+  padding: 12px 16px 16px;
+  border-top: 1px solid var(--line);
+  font-family: var(--f-mono), ui-monospace, Menlo, monospace;
+  font-size: 11.5px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--navy);
+  max-height: 60vh;
+  overflow-y: auto;
+}
