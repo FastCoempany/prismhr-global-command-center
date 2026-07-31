@@ -179,10 +179,19 @@ export function IntranetClient({
     if (runBusy) return;
     stopRef.current = false;
     startRun(async () => {
+      // Passes run until the backlog is gone — one click drains everything.
+      // Each pass is its own bounded server request; the cap is a runaway
+      // brake, not pacing. Repeated no-news lines are shown once.
       const all: string[] = [];
-      for (let pass = 0; pass < 12 && !stopRef.current; pass += 1) {
+      const seenLine = new Set<string>();
+      for (let pass = 0; pass < 60 && !stopRef.current; pass += 1) {
         const r = await runBrain();
-        for (const l of r.lines) if (all[all.length - 1] !== l) all.push(l);
+        for (const l of r.lines) {
+          if (/^(Read |The index grew)/.test(l) || !seenLine.has(l)) {
+            all.push(l);
+            seenLine.add(l);
+          }
+        }
         setRunLines([...all]);
         if (typeof r.pending === "number") setPendingNow(r.pending);
         router.refresh();
