@@ -975,6 +975,12 @@ describe("the chain that fills the brain is wired end to end", () => {
     assert.ok(client.includes("itRunLines"), "the report is never shown");
     assert.ok(page.includes("brainQueue"), "the room can't say what is waiting");
   });
+  test("reads run side by side, and catch-up passes give reading the whole clock", () => {
+    assert.ok(runners.includes("CONCURRENT_READS"), "reads went back to single file");
+    assert.ok(runners.includes("Promise.allSettled"), "a slow read blocks its batch");
+    assert.ok(/sweep === false/.test(runners), "every pass re-sweeps the app");
+    assert.ok(/sweep: false/.test(client), "the loop never skips the sweep");
+  });
   test("a paste is read on the spot and the operator watches the index grow (IV.3)", () => {
     assert.ok(client.includes("readCapture"), "Keep it is fire-and-forget again");
     assert.ok(client.includes("router.refresh"), "the rail never updates after ingest");
@@ -984,8 +990,8 @@ describe("the chain that fills the brain is wired end to end", () => {
     assert.ok(runners.includes("timed out"), "a timeout has no plain-language read");
     assert.ok(runners.includes("the API key was refused"));
     assert.ok(
-      /catch \(e\) \{\s*const why = reasonOf\(e\)/.test(runners),
-      "the extraction catch block swallows its error",
+      /reasonOf\(s\.reason\)/.test(runners),
+      "a rejected read no longer surfaces its reason",
     );
   });
   test("the ingest runner reads the capture and settles the index", () => {

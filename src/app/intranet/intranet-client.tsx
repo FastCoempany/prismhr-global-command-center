@@ -185,7 +185,9 @@ export function IntranetClient({
       const all: string[] = [];
       const seenLine = new Set<string>();
       for (let pass = 0; pass < 60 && !stopRef.current; pass += 1) {
-        const r = await runBrain();
+        // First pass sweeps the app and the Playbook; the rest give their
+        // whole clock to reading.
+        const r = await runBrain(pass === 0 ? undefined : { sweep: false });
         for (const l of r.lines) {
           if (/^(Read |The index grew)/.test(l) || !seenLine.has(l)) {
             all.push(l);
