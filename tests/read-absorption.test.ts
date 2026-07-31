@@ -395,23 +395,23 @@ describe("the bank keeps the house doctrine", () => {
   const BANK = [...DISCOVERY, ...PRODUCT_BANK];
   test("no money figures anywhere", () => {
     for (const q of BANK) {
-      const blob = [q.question, q.why, q.followUp, q.drumLine, ...q.listenFor].join(" ");
+      const blob = [q.question, q.why, q.followUp, q.relayLine, ...q.listenFor].join(" ");
       assert.ok(!/\$\s?\d/.test(blob), `${q.id} carries a figure`);
     }
   });
   test("the word steps never appears", () => {
     for (const q of BANK) {
-      const blob = [q.question, q.why, q.followUp, q.drumLine, ...q.listenFor].join(" ");
+      const blob = [q.question, q.why, q.followUp, q.relayLine, ...q.listenFor].join(" ");
       assert.ok(!/\bsteps?\b/i.test(blob), `${q.id} says steps`);
     }
   });
   test("every relay line is a relayable question", () => {
     for (const q of PRODUCT_BANK) {
       assert.ok(
-        q.drumLine.startsWith("Would you mind asking them"),
-        `${q.id} drum line breaks the relay voice`,
+        q.relayLine.startsWith("Would you mind asking them"),
+        `${q.id} relay line breaks the relay voice`,
       );
-      assert.ok(q.drumLine.trim().endsWith("?"), `${q.id} drum line isn't a question`);
+      assert.ok(q.relayLine.trim().endsWith("?"), `${q.id} relay line is not a question`);
     }
   });
   test("one question per question", () => {

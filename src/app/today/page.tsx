@@ -750,7 +750,7 @@ export default async function TodayPage({
         id: q.id,
         question: q.question,
         why: q.why,
-        drumLine: q.drumLine,
+        relayLine: q.relayLine,
       })),
       research: researchPrompt("custom", {
         account: a.name,
@@ -2544,10 +2544,10 @@ export default async function TodayPage({
                       </p>
                     </div>
                     <div className={styles.card}>
-                      <h3>3 · What language drums up the intent?</h3>
+                      <h3>3 · What language raises the intent?</h3>
                       <p className={styles.muted}>
                         The partner question: what do I say to{" "}
-                        <b>gauge, drum up, or campaign</b> a client&apos;s interest in
+                        <b>gauge, raise, or campaign</b> a client&apos;s interest in
                         Global? <b>Record</b> the answer on the Dashboard node.
                       </p>
                     </div>

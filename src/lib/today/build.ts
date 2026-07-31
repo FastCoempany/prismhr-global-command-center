@@ -238,7 +238,7 @@ export function commitmentsFromCards(
 }
 
 // The partner-engagement line — the third question the owner brings to every
-// partner touch: what language gauges / drums up / campaigns the Global product
+// partner touch: what language gauges / raises / campaigns the Global product
 // for this specific client. Shaped by whether it's a displacement or greenfield.
 export function partnerAngle(a: AccountIntel): string {
   const comp = a.competitors[0];
@@ -485,7 +485,7 @@ export function partnerOutreachKey(partner: string): string {
 // top Global-fit accounts, plus a ready-to-send opener that names them. Every
 // partner is included — the point is to arm the whole roster, not just the two
 // who already have hot signals; a book with no researched play still gets its
-// best-fit accounts as conversation starters (that's the drum-up motion).
+// best-fit accounts as conversation starters (that's the relay motion).
 
 // True on Sunday/Monday (UTC) — the window to plan the week. A default-param now
 // keeps the impure clock read out of the React render path.

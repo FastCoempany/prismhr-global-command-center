@@ -1,0 +1,442 @@
+/* Groundwork — the rail & the file, wire in the rail. Tokens only; the
+   palette, type trio, radii, and shadows come from the design-token layer. */
+
+.wrap {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 22px 36px 48px;
+  color: var(--color-ink);
+  font: 400 15px/1.6 var(--font-sans);
+}
+
+.lay {
+  display: grid;
+  grid-template-columns: minmax(320px, 2fr) minmax(0, 3fr);
+  gap: 26px;
+  align-items: start;
+}
+
+@media (max-width: 1023px) {
+  .lay {
+    grid-template-columns: 1fr;
+  }
+  .wrap {
+    padding: 16px 16px 40px;
+  }
+}
+
+.kick {
+  font: 600 10.5px/1.4 var(--font-mono);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-ink-disabled);
+}
+
+.ribbon {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0 10px;
+}
+.ribbonLabel {
+  composes: kick;
+  white-space: nowrap;
+}
+.ribbonRule {
+  height: 1px;
+  flex: 1;
+  background: linear-gradient(90deg, var(--color-line), transparent);
+}
+.ribbonCount {
+  composes: kick;
+  color: var(--ds-ink-quiet);
+  white-space: nowrap;
+}
+
+.band {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 14px 0 8px;
+}
+.bandLabel {
+  composes: kick;
+  white-space: nowrap;
+}
+.bandNow {
+  color: var(--ds-orange);
+}
+.bandRule {
+  height: 1px;
+  flex: 1;
+  background: linear-gradient(90deg, var(--color-line), transparent);
+}
+/* A window that has already closed today reads quieter — done is past. */
+.bandPast {
+  opacity: 0.55;
+}
+
+.due {
+  display: grid;
+  grid-template-columns: 3px 1fr;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  background: var(--color-medium-bg);
+  border: 1px solid var(--color-line);
+  border-radius: 8px;
+  padding: 7px 10px;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--color-ink-soft);
+}
+.dueBar {
+  width: 3px;
+  align-self: stretch;
+  border-radius: 2px;
+  background: var(--ds-amber);
+}
+.due b {
+  color: var(--color-ink);
+}
+
+.queue {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.row {
+  display: grid;
+  grid-template-columns: 3px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: inherit;
+  text-decoration: none;
+}
+.row:hover {
+  border-color: var(--color-line-strong);
+}
+.rowFocused {
+  background: var(--ds-orange-tint);
+  border-color: var(--color-line-strong);
+}
+.rowOff {
+  box-shadow: var(--shadow-raised);
+  border-bottom: 3px solid var(--ds-orange);
+}
+.gauge {
+  width: 3px;
+  align-self: stretch;
+  border-radius: 2px;
+  background: var(--ds-ink-quiet);
+}
+.gaugeBlue {
+  background: var(--ds-blue);
+}
+.gaugeAmber {
+  background: var(--ds-amber);
+}
+.rowName {
+  font-weight: 600;
+  font-size: 13.5px;
+}
+.rowMeta {
+  font-size: 12px;
+  color: var(--color-ink-disabled);
+}
+.rowMeta b {
+  color: var(--color-ink-soft);
+  font-weight: 600;
+}
+.rowOwed {
+  font: 600 11px/1.5 var(--font-mono);
+  color: var(--ds-ink-quiet);
+  text-align: right;
+  white-space: nowrap;
+}
+.rowWorked {
+  color: var(--ds-green);
+}
+
+.intent {
+  font: 600 10px/1.4 var(--font-sans);
+  color: var(--ds-blue);
+  border: 1px solid var(--ds-blue);
+  border-radius: 99px;
+  padding: 1px 8px;
+  background: var(--ds-blue-soft);
+  white-space: nowrap;
+}
+/* Proximity is a tiebreak, not health — the chip stays quiet ink; the word
+   carries the meaning. */
+.prox {
+  font: 600 10px/1.4 var(--font-sans);
+  color: var(--color-ink-soft);
+  border: 1px solid var(--color-line-strong);
+  border-radius: 99px;
+  padding: 1px 8px;
+  background: var(--color-surface-mist);
+  white-space: nowrap;
+}
+
+.queueFoot {
+  font-size: 12.5px;
+  color: var(--color-ink-disabled);
+  margin: 10px 2px 0;
+  max-width: 46ch;
+}
+
+.wire {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.wireItem {
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+.wireSrc {
+  composes: kick;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  letter-spacing: 0.14em;
+}
+.wireHead {
+  font-size: 13.5px;
+  font-weight: 600;
+  margin: 2px 0;
+}
+.wireHead a {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px dotted var(--color-line-strong);
+}
+.wireRead {
+  font-size: 12.5px;
+  color: var(--color-ink-soft);
+}
+.wireActs {
+  margin-top: 6px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.wtag {
+  font: 600 10px/1.4 var(--font-sans);
+  color: var(--ds-blue);
+  border: 1px solid var(--ds-blue);
+  border-radius: 99px;
+  padding: 1px 8px;
+  background: var(--ds-blue-soft);
+}
+
+.instCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-bottom: 3px solid var(--ds-ink-quiet);
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 13px;
+  color: var(--color-ink-soft);
+}
+.instCard b {
+  color: var(--color-ink);
+}
+
+.file {
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-bottom: 3px solid var(--ds-orange);
+  border-radius: 8px;
+  box-shadow: var(--shadow-raised);
+  padding: 22px 24px 0;
+  display: flex;
+  flex-direction: column;
+}
+.fileTitle {
+  font: 400 26px/1.25 var(--font-serif);
+  margin: 6px 0 10px;
+  text-wrap: balance;
+}
+.fileStory {
+  color: var(--color-ink-soft);
+  font-size: 14px;
+  margin: 0 0 12px;
+}
+.draft {
+  background: var(--color-surface-mist);
+  border: 1px solid var(--color-line);
+  border-radius: 4px;
+  padding: 12px 16px;
+  font-size: 13.5px;
+  color: var(--color-ink-soft);
+  margin: 0 0 12px;
+  white-space: pre-wrap;
+}
+.people {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 12px;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  font: 600 12px/1 var(--font-sans);
+  padding: 4px 10px;
+  border-radius: 99px;
+  border: 1px solid var(--color-line);
+  color: var(--color-ink-soft);
+  background: var(--color-surface);
+}
+.chipCsm {
+  color: var(--ds-blue);
+  border-color: var(--ds-blue);
+  background: var(--ds-blue-soft);
+}
+.acts {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.actNote {
+  font-size: 12px;
+  color: var(--color-ink-disabled);
+  margin-top: 8px;
+}
+
+.btnAccent {
+  border-radius: 4px;
+  padding: 10px 16px;
+  font: 600 13px/1 var(--font-sans);
+  border: 1px solid transparent;
+  background: var(--ds-orange);
+  color: var(--ds-on-ink);
+  cursor: pointer;
+}
+.btnAccent:hover {
+  background: var(--ds-orange-strong);
+}
+.btnAccent:active {
+  transform: translateY(1px);
+}
+.btn2nd {
+  border-radius: 4px;
+  padding: 10px 16px;
+  font: 600 13px/1 var(--font-sans);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  border: 1px solid var(--color-line);
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+.btn2nd:hover {
+  border-color: var(--color-line-strong);
+  background: var(--color-surface-mist);
+}
+.btnSmall {
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+.russ {
+  margin-top: 14px;
+}
+.russ summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--color-line);
+  border-left: 3px solid var(--ds-blue);
+  border-radius: 4px;
+  background: var(--ds-blue-soft);
+  padding: 8px 12px;
+  cursor: pointer;
+  list-style: none;
+  font-size: 13px;
+  color: var(--color-ink-soft);
+}
+.russ summary::-webkit-details-marker {
+  display: none;
+}
+.russKick {
+  composes: kick;
+  color: var(--ds-blue);
+}
+.russNote {
+  font-size: 12px;
+  color: var(--color-ink-disabled);
+  margin-left: auto;
+}
+.russBody {
+  border: 1px solid var(--color-line);
+  border-top: 0;
+  border-radius: 0 0 4px 4px;
+  padding: 12px 16px;
+  font-size: 13.5px;
+  color: var(--color-ink-soft);
+  background: var(--color-surface-mist);
+}
+
+.hist {
+  border-top: 1px solid var(--color-line);
+  margin: 18px -24px 0;
+  padding: 12px 24px 16px;
+}
+.histLine {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  font-size: 12.5px;
+  color: var(--color-ink-soft);
+  padding: 3px 0;
+}
+.histAt {
+  font: 600 10.5px/1.6 var(--font-mono);
+  color: var(--ds-ink-quiet);
+  white-space: nowrap;
+}
+
+/* The threading badge — reads exactly MULTI, colored by the semantic ladder
+   (red 1 thread / amber 2 / green 3+), per standing decree. */
+.multi {
+  font: 700 10px/1.4 var(--font-mono);
+  letter-spacing: 0.14em;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 3px;
+  padding: 2px 7px;
+  border: 1px solid currentColor;
+}
+.multiRed {
+  color: var(--ds-red);
+  background: var(--ds-red-soft);
+}
+.multiAmber {
+  color: var(--ds-amber);
+  background: var(--ds-amber-soft);
+}
+.multiGreen {
+  color: var(--ds-green);
+  background: var(--ds-green-soft);
+}
+
+.empty {
+  border: 1px dashed var(--color-line);
+  background: var(--color-surface-mist);
+  border-radius: 8px;
+  padding: 20px 16px;
+  font-size: 13.5px;
+  color: var(--color-ink-soft);
+}

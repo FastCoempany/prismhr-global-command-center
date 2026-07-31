@@ -10,7 +10,7 @@
 // Written and then adversarially reviewed on three lenses — technical accuracy
 // (no rule asserted that isn't actually universal, no invented anecdotes or
 // statistics), format doctrine (one question per question, no amounts, relay
-// voice on every drum line), and coverage (duplicates dropped, empty
+// voice on every relay line), and coverage (duplicates dropped, empty
 // category/phase/audience cells filled). Ids are permanent: a retired question
 // is keyed by id, so renaming one un-retires it everywhere.
 
@@ -35,7 +35,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     ],
     followUp:
       "Which of your US benefits would feel wrong to withhold from someone doing the same job abroad?",
-    drumLine:
+    relayLine:
       "Would you mind asking them whether they want their people in {countries} on local statutory benefits or on something closer to their US package?",
   },
   {
@@ -56,7 +56,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     ],
     followUp:
       "Can your counsel send the language they want, so we can check what each country will actually enforce?",
-    drumLine:
+    relayLine:
       "Would you mind asking them whether their counsel wants specific confidentiality or restrictive terms written into the employment contracts for {countries}?",
   },
   {
@@ -77,7 +77,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     ],
     followUp:
       "If counsel is involved, can we get their open questions in writing before the first meeting?",
-    drumLine:
+    relayLine:
       "Would you mind asking them whether their legal or tax adviser has already weighed in on employing people in {countries}?",
   },
   {
@@ -97,7 +97,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     ],
     followUp:
       "Does your current privacy notice cover employees outside the US, and who would update it?",
-    drumLine:
+    relayLine:
       "Would you mind asking them where employee data for {countries} is stored today?",
   },
   {
@@ -118,7 +118,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     ],
     followUp:
       "How many people would you need in one country before carrying that overhead felt worth it?",
-    drumLine:
+    relayLine:
       "Would you mind asking them who inside their company would handle the local accounting and statutory filings if they set up their own entity in {countries}?",
   },
   {
@@ -139,7 +139,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     ],
     followUp:
       "Would you want the transfer terms written in now, while there's no pressure on either side?",
-    drumLine:
+    relayLine:
       "Would you mind asking them what they'd want to happen to their people in {countries} if they later moved them onto their own entity?",
   },
   {
@@ -159,7 +159,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
       "their local company holds the paperwork",
     ],
     followUp: "Who can get those documents to us before we quote anyone a start date?",
-    drumLine:
+    relayLine:
       "Would you mind asking them whether they can share what their people in {countries} actually signed?",
   },
   {
@@ -180,7 +180,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     ],
     followUp:
       "Would you rather we chase the worker directly, or keep everything routed through your coordinator?",
-    drumLine:
+    relayLine:
       "Would you mind asking them who on their side will chase candidates in {countries} for documents and bank details once an offer is out?",
   },
   {
@@ -200,7 +200,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     ],
     followUp:
       "If there is an entity, is it already registered as an employer with social contributions running through it?",
-    drumLine:
+    relayLine:
       "Would you mind asking them whether they own a legal entity in any of {countries}?",
   },
   {
@@ -221,7 +221,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     ],
     followUp:
       "Has your tax adviser looked at whether any of those roles create a taxable presence for the company itself?",
-    drumLine:
+    relayLine:
       "Would you mind asking them what their people in {countries} do day to day — internal work, or selling and signing with local customers?",
   },
   {
@@ -242,7 +242,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     ],
     followUp:
       "Can we hold them to a range rather than a date until registration timing per country is confirmed?",
-    drumLine:
+    relayLine:
       "Would you mind asking them what start date they have in mind for {countries}, so we can check it against in-country registration timing before anyone commits to it?",
   },
   {
@@ -263,7 +263,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     ],
     followUp:
       "Which roles would you most want a long probation on, so we can check what each country actually permits?",
-    drumLine:
+    relayLine:
       "Would you mind asking them what they're expecting on probation and notice periods for hires in {countries}?",
   },
   {
@@ -284,7 +284,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     ],
     followUp:
       "Would a country-by-country view of employer cost structure help you re-baseline before offers go out?",
-    drumLine:
+    relayLine:
       "Would you mind asking them whether their budget for {countries} accounts for employer contributions and any locally mandated additional payments, or only salary?",
   },
   {
@@ -305,7 +305,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     ],
     followUp:
       "Should the escalation path go into the onboarding pack your managers receive?",
-    drumLine:
+    relayLine:
       "Would you mind asking them who on their side would be allowed to tell an employee abroad that a termination is happening?",
   },
   {
@@ -326,7 +326,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     ],
     followUp:
       "Would you want exit exposure modeled country by country before these offers go out?",
-    drumLine:
+    relayLine:
       "Would you mind asking them whose budget would absorb the exit cost if a hire in {countries} had to be let go after a few months?",
   },
   {
@@ -347,7 +347,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     ],
     followUp:
       "Can we get each person's status and permit type confirmed before we set any start date?",
-    drumLine:
+    relayLine:
       "Would you mind asking them whether any of their people in {countries} hold a work permit that's tied to a specific employer?",
   },
   {
@@ -368,7 +368,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     ],
     followUp:
       "Who locally could confirm which agreement applies to these job classifications?",
-    drumLine:
+    relayLine:
       "Would you mind asking them whether any of their roles in {countries} fall under a collective agreement, or whether there's an employee representative body involved?",
   },
   {
@@ -389,7 +389,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     ],
     followUp:
       "Can you find out whose name is on the agreement with the contractor before we meet?",
-    drumLine:
+    relayLine:
       "Would you mind asking them whether their current contractor provider actually contracts the worker, or only processes the payments?",
   },
   {
@@ -409,7 +409,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
       "we'd have to reconstruct it",
     ],
     followUp: "Who would you put on that if it landed this week?",
-    drumLine:
+    relayLine:
       "Would you mind asking them whether they could produce a complete file on a single international contractor — agreement, invoices and proof of payment — if an authority asked for it?",
   },
   {
@@ -430,7 +430,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     ],
     followUp:
       "Do you want your counsel and ours on one call before this goes out for signature?",
-    drumLine:
+    relayLine:
       "Would you mind asking them who they understand to be making the classification determination on each contractor, so the contract says the same thing everyone is assuming?",
   },
   {
@@ -451,7 +451,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     ],
     followUp:
       "Is there anyone on their contractor list right now they'd convert if the route were straightforward?",
-    drumLine:
+    relayLine:
       "Would you mind asking them whether there's an international contractor they'd make a permanent employee today if the route were straightforward?",
   },
   {
@@ -471,7 +471,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
       "we only pay monthly because it's a hassle",
     ],
     followUp: "How long between you releasing a payment and the contractor seeing it?",
-    drumLine:
+    relayLine:
       "Would you mind asking them which countries cause trouble getting contractor payments to land?",
   },
   {
@@ -491,7 +491,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
       "nobody has looked country by country",
     ],
     followUp: "Which country holds your longest-running contractor?",
-    drumLine:
+    relayLine:
       "Would you mind asking them whether their contractor agreements were reviewed against each country's own rules, or written once and reused everywhere?",
   },
   {
@@ -511,7 +511,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     ],
     followUp:
       "Has anyone come back asking for a rate change because of the exchange rate?",
-    drumLine:
+    relayLine:
       "Would you mind asking them which currency their contractors' rates are set in?",
   },
   {
@@ -530,7 +530,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
       "I'd have to ask the manager",
     ],
     followUp: "How long has the longest-running one been with you?",
-    drumLine:
+    relayLine:
       "Would you mind asking them whether any of their international contractors work for them full time with no other clients?",
   },
   {
@@ -550,7 +550,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
       "we hold the payment until it turns up",
     ],
     followUp: "What happens when the invoice is late — do they get paid anyway?",
-    drumLine:
+    relayLine:
       "Would you mind asking them who ends up chasing their international contractors for missing invoices each month?",
   },
   {
@@ -570,7 +570,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
       "the code sits in our repo, so...",
     ],
     followUp: "Does that same agreement bind confidentiality after the engagement ends?",
-    drumLine:
+    relayLine:
       "Would you mind asking them whether anyone has confirmed the IP assignment in their contractor agreements is enforceable in the countries those contractors live in?",
   },
   {
@@ -591,7 +591,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     ],
     followUp:
       "Would you rather that exposure sat with you, or with a party that takes on the employment relationship in-country?",
-    drumLine:
+    relayLine:
       "Would you mind asking them who inside their business would own the outcome if an authority reclassified one of their overseas contractors as an employee?",
   },
   {
@@ -612,7 +612,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     ],
     followUp:
       "Who on their side actually knows the full list — payroll, finance, or the hiring managers?",
-    drumLine:
+    relayLine:
       "Would you mind asking them how many people they pay as contractors internationally?",
   },
   {
@@ -632,7 +632,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
       "they're not in the HR system at all",
     ],
     followUp: "When a contractor stops working with you, who takes them off that list?",
-    drumLine:
+    relayLine:
       "Would you mind asking them whether their international contractors are tracked in the same system as their employees, or somewhere separate?",
   },
   {
@@ -653,7 +653,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     ],
     followUp:
       "Does the agreement say anything about how the work gets done, or only what gets delivered?",
-    drumLine:
+    relayLine:
       "Would you mind asking them whether their international contractors use company equipment and accounts and report to internal managers the way employees do?",
   },
   {
@@ -674,7 +674,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     ],
     followUp:
       "Does the invoice carry a tax registration number, or just a name and a total?",
-    drumLine:
+    relayLine:
       "Would you mind asking them whether any of their international contractors invoice as a registered business with VAT or GST added?",
   },
   {
@@ -694,7 +694,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
       "some of them, not all",
     ],
     followUp: "Are they all on the same version, or has it drifted with each hire?",
-    drumLine:
+    relayLine:
       "Would you mind asking them what's actually signed with each international contractor — a real agreement, a purchase order, or just email?",
   },
   {
@@ -714,7 +714,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
       "what obligation?",
     ],
     followUp: "Which advisor made that determination, and how recently?",
-    drumLine:
+    relayLine:
       "Would you mind asking them whether anyone has checked if paying contractors in {countries} creates a withholding or reporting obligation on their side?",
   },
   {
@@ -735,7 +735,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     ],
     followUp:
       "Which part of that hand-off breaks most often — new hires, leavers, or changes made after the cut-off?",
-    drumLine:
+    relayLine:
       "Would you mind asking them how pay data gets to each country's payroll today, and whether it's re-keyed by hand anywhere along the way?",
   },
   {
@@ -755,7 +755,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
       "we've never measured it",
     ],
     followUp: "If that person were unavailable for a full cycle, who could run it?",
-    drumLine:
+    relayLine:
       "Would you mind asking them how many hours a month their international payroll takes across the team?",
   },
   {
@@ -776,7 +776,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     ],
     followUp:
       "Can you put your hands on the registration numbers for each country, or would you rather we confirm what's missing?",
-    drumLine:
+    relayLine:
       "Would you mind asking them whether each of their entities is registered as an employer with the local tax and social security authorities, not just incorporated?",
   },
   {
@@ -796,7 +796,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
       "we'll deal with it when it comes",
     ],
     followUp: "Who would own that accrual — your controller or the local accountant?",
-    drumLine:
+    relayLine:
       "Would you mind asking them whether their plan for {countries} includes any mandated extra pay periods or allowances?",
   },
   {
@@ -816,7 +816,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
       "we've never seen a filing confirmation",
     ],
     followUp: "When was the last time you saw proof that a filing was actually accepted?",
-    drumLine:
+    relayLine:
       "Would you mind asking them who tracks each country's statutory filing deadlines today?",
   },
   {
@@ -836,7 +836,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
       "we've been late before",
     ],
     followUp: "Who can release funds if the usual approver is unavailable that week?",
-    drumLine:
+    relayLine:
       "Would you mind asking them how many days before pay date each country's payroll has to be funded?",
   },
   {
@@ -857,7 +857,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     ],
     followUp:
       "Can you see payroll cost by country and cost center today without rebuilding it by hand?",
-    drumLine:
+    relayLine:
       "Would you mind asking them how each country's payroll gets into their accounting system?",
   },
   {
@@ -877,7 +877,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
       "we don't really track it abroad",
     ],
     followUp: "When someone leaves, who calculates what leave has to be paid out?",
-    drumLine:
+    relayLine:
       "Would you mind asking them whether leave balances for their international employees are tracked in their HR system or by whoever runs payroll in-country?",
   },
   {
@@ -898,7 +898,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     ],
     followUp:
       "What was the last error you found, and how long had it been running before anyone noticed?",
-    drumLine:
+    relayLine:
       "Would you mind asking them how they check that a country's gross-to-net is correct before the payroll goes out?",
   },
   {
@@ -919,7 +919,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     ],
     followUp:
       "Who on your side would do that comparison, and how much of their week can they give it?",
-    drumLine:
+    relayLine:
       "Would you mind asking them what they'd need to see in a parallel run before they'd approve going live in a country?",
   },
   {
@@ -940,7 +940,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     ],
     followUp:
       "The last time you questioned a number, how long did an answer take and who gave it to you?",
-    drumLine:
+    relayLine:
       "Would you mind asking them whether their current provider runs payroll in-country themselves or through local firms?",
   },
   {
@@ -960,7 +960,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
       "no one compares the two",
     ],
     followUp: "Has anyone compared the scheme's records to the payroll for a full year?",
-    drumLine:
+    relayLine:
       "Would you mind asking them who handles statutory benefit and pension enrollment in each country?",
   },
   {
@@ -981,7 +981,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     ],
     followUp:
       "Does that local director know they'd be the one authorizing these filings?",
-    drumLine:
+    relayLine:
       "Would you mind asking them who authorizes statutory payroll filings in each country today, and whether that person expects to keep doing it?",
   },
   {
@@ -1002,7 +1002,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     ],
     followUp:
       "Who on your team would own the in-country obligations that have no US equivalent?",
-    drumLine:
+    relayLine:
       "Would you mind asking them what they expect to be different about running payroll in {countries} compared with the US payroll they run themselves today?",
   },
   {
@@ -1022,7 +1022,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
       "there's a collective agreement",
     ],
     followUp: "Is any of that governed by a collective agreement you can share with me?",
-    drumLine:
+    relayLine:
       "Would you mind asking them which pay elements beyond base salary they run in {countries}?",
   },
   {
@@ -1042,7 +1042,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
       "I don't think anyone has asked",
     ],
     followUp: "Which of those countries would they call the hardest to close each month?",
-    drumLine:
+    relayLine:
       "Would you mind asking them who runs each country's payroll today — an internal person, a local accountant, or an outside provider?",
   },
   {
@@ -1063,7 +1063,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     ],
     followUp:
       "Did last year's annual filing tie to the periodic remittances without a correction?",
-    drumLine:
+    relayLine:
       "Would you mind asking them who handles year-end filings and employee annual statements in each country, and whether last year went cleanly?",
   },
   {
@@ -1083,7 +1083,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     ],
     followUp:
       "Has anything of this shape gone through that route before, and how long did it take?",
-    drumLine:
+    relayLine:
       "Would you mind asking them whose budget the international people sit under?",
   },
   {
@@ -1104,7 +1104,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     ],
     followUp:
       "How much of that person's week can genuinely go to this in the first month?",
-    drumLine:
+    relayLine:
       "Would you mind asking them who on their side would own getting international people onboarded, and how much time that person actually has?",
   },
   {
@@ -1125,7 +1125,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     ],
     followUp:
       "And when does that decision need to happen — is something forcing the date?",
-    drumLine:
+    relayLine:
       "Would you mind asking them what will actually decide this for them, and who else they're weighing it against?",
   },
   {
@@ -1145,7 +1145,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
       "someone would eventually ask questions",
     ],
     followUp: "Who inside the company would be answering for it if that happened?",
-    drumLine:
+    relayLine:
       "Would you mind asking them what happens if they leave the international side exactly as it is for another year?",
   },
   {
@@ -1165,7 +1165,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     ],
     followUp:
       "Is that entity registered as an employer for payroll and social contributions yet, or only incorporated?",
-    drumLine:
+    relayLine:
       "Would you mind asking them whether they own a legal entity in {countries}?",
   },
   {
@@ -1186,7 +1186,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     ],
     followUp:
       "Has anyone asked you for that in the last year, and what did you end up sending?",
-    drumLine:
+    relayLine:
       "Would you mind asking them what they'd want to be able to pull out of a system the day an auditor or an authority asks them a question?",
   },
   {
@@ -1207,7 +1207,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     ],
     followUp:
       "Which of those are already committed to a customer or a hire, rather than still a maybe?",
-    drumLine:
+    relayLine:
       "Would you mind asking them which countries they expect to have people in a year from now that they don't have people in today?",
   },
   {
@@ -1227,7 +1227,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     ],
     followUp:
       "Have you asked them what happens to the employees' accrued entitlements and service dates if you move?",
-    drumLine:
+    relayLine:
       "Would you mind asking them whether they're under contract with their current international provider?",
   },
   {
@@ -1248,7 +1248,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     ],
     followUp:
       "Has any of them asked to be made an employee, or asked for local benefits?",
-    drumLine:
+    relayLine:
       "Would you mind asking them whether the people they have in {countries} are meant to be employees, or are genuinely independent businesses serving other clients too?",
   },
   {
@@ -1268,7 +1268,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
       "nothing dramatic, it's just slow",
     ],
     followUp: "Did one person there own it end to end, or did you keep re-explaining it?",
-    drumLine:
+    relayLine:
       "Would you mind asking them what the last thing to go wrong with their current international provider was, and how long it took to get sorted?",
   },
   {
@@ -1288,7 +1288,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
       "we don't really have that view",
     ],
     followUp: "Who asks you for that, and what do they do with it when they get it?",
-    drumLine:
+    relayLine:
       "Would you mind asking them where they get headcount and cost by country today, and how long it takes to pull together?",
   },
   {
@@ -1308,7 +1308,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     ],
     followUp:
       "What would the person doing the work need in hand to make that case upward?",
-    drumLine: "Would you mind asking them who handles international pay week to week?",
+    relayLine: "Would you mind asking them who handles international pay week to week?",
   },
   {
     id: "x-partner-chair",
@@ -1328,7 +1328,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     ],
     followUp:
       "If you hold the paper, who on your side covers the cycle when the client pays you late?",
-    drumLine:
+    relayLine:
       "Would you mind asking them whether they'd expect to be invoiced by you or by us for the international people, so the commercial route is set up the way they want it?",
   },
   {
@@ -1349,7 +1349,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     ],
     followUp:
       "How do you want to hear back after the call — a note to you first, or all of us on one thread?",
-    drumLine:
+    relayLine:
       "Would you mind asking them who on their side should be the first point of contact for anything international, and whether anyone else needs to be looped in before we talk?",
   },
   {
@@ -1368,7 +1368,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
       "it's never come up",
     ],
     followUp: "What stopped it last time — the structure, the timing, or the person?",
-    drumLine:
+    relayLine:
       "Would you mind asking them whether they've looked at an international provider before, and what stopped it going ahead?",
   },
   {
@@ -1389,7 +1389,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     ],
     followUp:
       "Who on your side would own that data coming back — support, implementation, or nobody yet?",
-    drumLine:
+    relayLine:
       "Would you mind asking them whether they'd expect their international people to show up in the system they already use with you, or whether that can sit somewhere else?",
   },
   {
@@ -1409,7 +1409,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
       "finance handles it, not payroll",
     ],
     followUp: "Who runs that path each cycle, and what happens the week they're away?",
-    drumLine:
+    relayLine:
       "Would you mind asking them how money physically reaches their international people today — individual wires, a provider, or a local account?",
   },
   {
@@ -1430,7 +1430,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     ],
     followUp:
       "Who owns that review, and can we start it in parallel rather than after agreement?",
-    drumLine:
+    relayLine:
       "Would you mind asking them what security, legal or data protection review a new vendor has to clear on their side, and who owns it?",
   },
   {
@@ -1450,7 +1450,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
       "that's right, as written",
     ],
     followUp: "Is anyone reading this document who hasn't been in the conversation yet?",
-    drumLine:
+    relayLine:
       "Would you mind asking them which people and which of {countries} are in the first wave?",
   },
   {
@@ -1470,7 +1470,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
       "we assumed all of them together",
     ],
     followUp: "Which of those agreements renews first, and how much notice does it need?",
-    drumLine:
+    relayLine:
       "Would you mind asking them which country they'd want moved first, and whether any of their current agreements renew before the others?",
   },
   {
@@ -1491,7 +1491,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     ],
     followUp:
       "What route does the document actually take — who sends it, who signs, who countersigns?",
-    drumLine:
+    relayLine:
       "Would you mind asking them whether anyone other than their usual signatory has to sign or approve before this can be executed?",
   },
   {
@@ -1512,7 +1512,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     ],
     followUp:
       "Which of their people did they name first — that one is usually the real trigger.",
-    drumLine:
+    relayLine:
       "Would you mind asking them whether the need is hiring new people abroad, or fixing how they already pay the people they have?",
   },
   {
@@ -1532,7 +1532,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
       "we've been meaning to for a while",
     ],
     followUp: "And by when does it need to be handled — is something forcing that date?",
-    drumLine:
+    relayLine:
       "Would you mind asking them what changed recently that made international hiring or payment something they have to solve now?",
   },
 ];

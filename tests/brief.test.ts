@@ -212,7 +212,7 @@ describe("buildMorningBrief rules", () => {
     assert.deepEqual(row.control.check, { cardId: "c1", node: "demo", idx: 3 });
   });
 
-  test("single-thread nudges with the multithread drum line", () => {
+  test("single-thread nudges with the multithread relay line", () => {
     const inp = input({
       intel: { threads: { people: ["Chassie"], execSeen: false, opsSeen: false } },
     });

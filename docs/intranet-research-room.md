@@ -67,7 +67,7 @@ or done or dropped, every follow-up and what became of it, every partner thread,
 every board card with its stage and checklist judgments and closure, every
 research finding, every gap, and the **entire Playbook** — market facts,
 lessons, all ninety-nine battlecard questions with their why / listen-for /
-follow-up / drum lines, all eight scenarios, word for word.
+follow-up / relay lines, all eight scenarios, word for word.
 
 _Consequence:_ "What did we tell Simploy about implementation timelines, and
 does anything in the channels contradict it?" is one question with one answer.
@@ -975,7 +975,7 @@ and mine every demo transcript this app has ever produced for what the
 - **Market facts** and **lessons** (`playbook:market`, `playbook:lessons`) — each
   one a document, carrying the account that produced it and the date.
 - **All 99 battlecard questions** — each as a document composed of its question,
-  why, listen-for, follow-up and drum line, tagged with its category, phase,
+  why, listen-for, follow-up and relay line, tagged with its category, phase,
   audience, product line and scenario fit.
 - **All 8 scenarios** — each as a document describing the buyer situation and
   what it changes.

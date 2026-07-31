@@ -66,7 +66,7 @@ const agoWord = (iso: string, now: Date): string => {
   return d === 0 ? "today" : d === 1 ? "yesterday" : `${d}d ago`;
 };
 
-const drum = (id: string): string => DISCOVERY.find((q) => q.id === id)?.drumLine ?? "";
+const relay = (id: string): string => DISCOVERY.find((q) => q.id === id)?.relayLine ?? "";
 
 const CONTRACTS_OUT =
   /contracts? (for signature|sent|attached|out)|referral agreement|MSSA/i;
@@ -241,7 +241,7 @@ export function buildMorningBrief(inp: BriefInput): BriefRow[] {
         icon: "note",
         text: `${card.name} rides on ${intel.threads.people[0]} alone — widen the thread`,
         why: "one-thread deals stall when that person goes quiet",
-        control: { kind: "copy", payload: drum("mt-exec") },
+        control: { kind: "copy", payload: relay("mt-exec") },
         weight: 50,
       });
     }
@@ -258,7 +258,7 @@ export function buildMorningBrief(inp: BriefInput): BriefRow[] {
           why: newest ? `last movement ${newest.src}` : "no corpus yet",
           control: {
             kind: "mailto",
-            href: `mailto:?subject=${encodeURIComponent(`Checking in — ${card.name}`)}&body=${encodeURIComponent(drum("fp-status"))}`,
+            href: `mailto:?subject=${encodeURIComponent(`Checking in — ${card.name}`)}&body=${encodeURIComponent(relay("fp-status"))}`,
           },
           weight: 40,
         });

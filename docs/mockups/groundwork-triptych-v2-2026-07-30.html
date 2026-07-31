@@ -1,0 +1,972 @@
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Groundwork — triptych, second round</title>
+<style>
+  /* ── Antaeus token donor · bright field, one theme ────────────────── */
+  :root {
+    --field: #f5f7fb;
+    --surface: #ffffff;
+    --surface-sub: #fafbfd;
+    --surface-sunk: #eff2f7;
+    --ink: #0a1c40;
+    --ink-soft: rgba(10, 28, 64, 0.66);
+    --ink-faint: rgba(10, 28, 64, 0.42);
+    --ink-quiet: rgba(10, 28, 64, 0.22);
+    --hair: rgba(10, 28, 64, 0.07);
+    --hair-strong: rgba(10, 28, 64, 0.14);
+    --rule: rgba(10, 28, 64, 0.16);
+    --orange: #e6701e;
+    --orange-strong: #d4661b;
+    --orange-soft: rgba(230, 112, 30, 0.1);
+    --orange-tint: rgba(230, 112, 30, 0.05);
+    --blue: #2563eb;
+    --blue-soft: rgba(37, 99, 235, 0.08);
+    --green: #22c55e;
+    --green-soft: rgba(34, 197, 94, 0.1);
+    --amber: #f59e0b;
+    --amber-soft: rgba(245, 158, 11, 0.12);
+    --red: #ef4444;
+    --serif: "DM Serif Display", "Iowan Old Style", Georgia, serif;
+    --sans: "Public Sans", -apple-system, system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --sh-rest: 0 1px 2px rgba(10, 28, 64, 0.04), 0 4px 14px rgba(10, 28, 64, 0.05);
+    --sh-lift: 0 2px 4px rgba(10, 28, 64, 0.05), 0 14px 36px rgba(10, 28, 64, 0.08);
+    --sh-off: 0 4px 10px rgba(10, 28, 64, 0.06), 0 16px 36px rgba(10, 28, 64, 0.1);
+  }
+  html, body { background: var(--field); }
+  body { margin: 0; color: var(--ink); font: 400 15px/1.6 var(--sans); -webkit-font-smoothing: antialiased; }
+  * { box-sizing: border-box; }
+  a { color: var(--blue); text-decoration: none; }
+  a.acct { color: var(--ink); font-weight: 600; border-bottom: 1px dotted var(--rule); }
+  a.acct:hover { border-bottom-color: var(--ink); }
+  button { font: inherit; cursor: pointer; }
+  :focus-visible { outline: 3px solid var(--orange-soft); outline-offset: 1px; }
+  .kick { font: 600 10.5px/1.4 var(--mono); letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-faint); }
+
+  .studio { max-width: 1240px; margin: 0 auto; padding: 40px 40px 96px; }
+  .studio-head h1 { font: 400 clamp(30px, 4vw, 44px)/1.08 var(--serif); margin: 10px 0 12px; text-wrap: balance; }
+  .studio-head p { max-width: 72ch; color: var(--ink-soft); margin: 0; }
+  .seg { display: inline-flex; gap: 2px; padding: 2px; background: var(--surface-sub); border: 1px solid var(--hair-strong); border-radius: 99px; margin: 22px 0 8px; }
+  .seg button { border: 0; background: transparent; border-radius: 99px; padding: 7px 16px; font: 600 12px/1 var(--sans); color: var(--ink-soft); }
+  .seg button[aria-selected="true"] { background: var(--surface); color: var(--orange); box-shadow: var(--sh-rest); }
+  .opt-note { font-size: 13px; color: var(--ink-faint); max-width: 82ch; margin: 6px 0 18px; }
+  .opt-note b { color: var(--ink-soft); font-weight: 600; }
+
+  .frame { background: var(--field); border: 1px solid var(--hair-strong); border-radius: 12px; box-shadow: var(--sh-lift); overflow: hidden; position: relative; }
+  .option { display: none; }
+  .option.on { display: block; }
+
+  .way { display: flex; align-items: center; gap: 14px; padding: 8px 20px; background: var(--surface); border-bottom: 1px solid var(--hair-strong); }
+  .way .trail { font: 600 10.5px/1.2 var(--mono); letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-quiet); }
+  .way .here { font: 600 13px/1.2 var(--sans); }
+  .way .here span { color: var(--ink-faint); font-weight: 400; }
+  .pulling { margin-left: auto; display: flex; align-items: center; gap: 10px; border: 1px solid var(--hair-strong); border-radius: 4px; background: var(--surface-sub); padding: 6px 12px 6px 0; }
+  .pulling .pg { width: 3px; align-self: stretch; background: var(--orange); border-radius: 2px; }
+  .pulling .pv { font: 400 15px/1.2 var(--serif); }
+  .pulling .po { font: 400 13px/1.2 var(--sans); color: var(--ink-soft); max-width: 38ch; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .kbd { font: 600 11px/1 var(--mono); border: 1px solid var(--hair-strong); border-radius: 4px; padding: 6px 10px; color: var(--ink-faint); background: var(--surface); }
+
+  .page { max-width: 1160px; margin: 0 auto; padding: 28px 36px 48px; }
+
+  .ribbon { display: flex; align-items: center; gap: 12px; margin: 24px 0 12px; }
+  .ribbon .rl { font: 600 10.5px/1.4 var(--mono); letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-faint); white-space: nowrap; }
+  .ribbon .rr { height: 1px; flex: 1; background: linear-gradient(90deg, var(--hair-strong), transparent); }
+  .ribbon .rc { font: 600 10.5px/1.4 var(--mono); letter-spacing: 0.16em; color: var(--ink-quiet); white-space: nowrap; }
+
+  .btn { border-radius: 4px; padding: 10px 16px; font: 600 13px/1 var(--sans); border: 1px solid transparent; }
+  .btn:active { transform: translateY(1px); }
+  .btn-accent { background: var(--orange); color: #fff; }
+  .btn-accent:hover { background: var(--orange-strong); }
+  .btn-2nd { background: var(--surface); color: var(--ink); border-color: var(--hair-strong); }
+  .btn-2nd:hover { border-color: var(--rule); background: var(--surface-sub); }
+  .btn-ghost { background: transparent; color: var(--ink-soft); border: 0; }
+  .btn-ghost:hover { background: var(--surface-sunk); color: var(--ink); }
+  .btn-sm { padding: 6px 10px; font-size: 12px; }
+
+  .chip { display: inline-flex; align-items: center; gap: 6px; font: 600 12px/1 var(--sans); padding: 4px 10px; border-radius: 99px; border: 1px solid; }
+  .chip-neutral { color: var(--ink-soft); border-color: var(--hair-strong); background: var(--surface); }
+  .chip-blue { color: var(--blue); border-color: var(--blue); background: var(--blue-soft); }
+  .stamp { display: inline-block; font: 600 10.5px/1.4 var(--mono); letter-spacing: 0.16em; text-transform: uppercase; padding: 3px 8px; border-top: 1px solid; border-bottom: 1px solid; }
+  .stamp-amber { color: #92600a; border-color: var(--amber); }
+  .stamp-green { color: #157f3d; border-color: var(--green); }
+  .stamp-neutral { color: var(--ink-faint); border-color: var(--rule); }
+
+  .dot { width: 7px; height: 7px; border-radius: 99px; background: var(--orange); display: inline-block; animation: pulse 2s infinite; }
+  @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(0.72); opacity: 0.4; } 100% { transform: scale(1); opacity: 1; } }
+
+  /* ═══ Option 1 · THE DISPATCH ═══ */
+  .dispatch { display: grid; grid-template-columns: minmax(0, 5fr) minmax(300px, 3fr); gap: 32px; align-items: start; }
+  .edition-head { border-bottom: 3px solid var(--ink); padding-bottom: 10px; margin-bottom: 4px; display: flex; align-items: baseline; gap: 14px; }
+  .edition-head .eh-title { font: 400 24px/1.2 var(--serif); }
+  .edition-head .eh-meta { font: 600 10.5px/1.4 var(--mono); letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-faint); margin-left: auto; }
+  .story { border-bottom: 1px solid var(--hair-strong); padding: 18px 0 20px; }
+  .story.lead-story { border-bottom-width: 1px; }
+  .story .s-kick { display: flex; gap: 10px; align-items: center; margin-bottom: 6px; }
+  .story h3 { font: 400 22px/1.3 var(--serif); margin: 0 0 8px; text-wrap: balance; }
+  .story.lead-story h3 { font-size: 27px; }
+  .story .s-body { color: var(--ink-soft); font-size: 14.5px; max-width: 66ch; margin: 0 0 12px; }
+  .story .s-body b { color: var(--ink); font-weight: 600; }
+  .story .s-acts { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .story .s-more { display: none; }
+  .story.open .s-more { display: block; }
+  .s-more { border-left: 3px solid var(--blue); background: var(--blue-soft); border-radius: 0 4px 4px 0; padding: 10px 14px; margin: 0 0 12px; font-size: 13.5px; color: var(--ink-soft); max-width: 62ch; }
+  .s-more .kick { display: block; margin-bottom: 3px; color: var(--blue); }
+  .story.done-story { padding: 8px 0; }
+  .story.done-story h3, .story.done-story .s-body, .story.done-story .s-acts, .story.done-story .s-more, .story.done-story .margin-note { display: none; }
+  .story .done-line { display: none; }
+  .story.done-story .done-line { display: flex; gap: 10px; align-items: center; font-size: 13px; color: var(--ink-faint); }
+  .story.done-story .done-line b { color: #157f3d; font-weight: 600; }
+  .margin-note { margin-top: 10px; border-top: 1px dashed var(--hair-strong); padding-top: 8px; }
+  .margin-note button { border: 0; background: none; text-align: left; padding: 0; font-size: 12.5px; color: var(--ink-soft); }
+  .margin-note button:hover .mn-h { color: var(--blue); }
+  .margin-note .kick { margin-right: 8px; }
+  .margin-note .mn-h { font-weight: 600; }
+  .to-russ { position: sticky; top: 16px; background: var(--surface); border: 1px solid var(--hair-strong); border-bottom: 3px solid var(--ink-quiet); border-radius: 8px; box-shadow: var(--sh-rest); padding: 18px 20px; }
+  .to-russ h3 { font: 400 20px/1.3 var(--serif); margin: 4px 0 10px; }
+  .to-russ .tr-body { font-size: 13.5px; color: var(--ink-soft); }
+  .to-russ .tr-body p { margin: 0 0 10px; }
+  .to-russ .tr-body b { color: var(--ink); font-weight: 600; }
+  .to-russ .tr-foot { display: flex; gap: 8px; align-items: center; border-top: 1px solid var(--hair); padding-top: 12px; margin-top: 4px; }
+
+  /* ═══ Option 2 · THE ANSWER HUNT ═══ */
+  .hunt-head { max-width: 70ch; margin-bottom: 6px; }
+  .hunt-head .lede { font: 400 24px/1.35 var(--serif); margin: 6px 0 4px; text-wrap: balance; }
+  .hunt-head .sub { color: var(--ink-soft); font-size: 13.5px; }
+  .qcard { background: var(--surface); border: 1px solid var(--hair-strong); border-bottom: 3px solid var(--ink-quiet); border-radius: 8px; box-shadow: var(--sh-rest); padding: 16px 18px; margin-bottom: 14px; }
+  .qcard.q-first { border-bottom-color: var(--orange); box-shadow: var(--sh-off); }
+  .qcard .q-top { display: flex; align-items: baseline; gap: 12px; }
+  .qcard h3 { font: 400 21px/1.3 var(--serif); margin: 0 0 6px; text-wrap: balance; flex: 1; }
+  .qcard .q-why { color: var(--ink-soft); font-size: 13.5px; max-width: 66ch; margin: 0 0 10px; }
+  .qcard .q-why b { color: var(--ink); font-weight: 600; }
+  .q-unlock { display: none; border-left: 3px solid var(--green); background: var(--green-soft); border-radius: 0 4px 4px 0; padding: 8px 12px; margin: 0 0 10px; font-size: 13px; color: var(--ink-soft); max-width: 62ch; }
+  .qcard.answered .q-unlock { display: block; }
+  .qcard.answered { border-bottom-color: var(--green); }
+  .qcard.answered h3 { color: var(--ink-faint); }
+  .paths { display: none; flex-direction: column; gap: 8px; margin: 4px 0 10px; }
+  .qcard.open .paths { display: flex; }
+  .path { display: grid; grid-template-columns: 84px 1fr auto; gap: 12px; align-items: start; border: 1px solid var(--hair); border-radius: 4px; padding: 10px 12px; background: var(--surface-sub); }
+  .path .p-kind { font: 600 10.5px/1.8 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--blue); }
+  .path .p-what { font-size: 13.5px; color: var(--ink-soft); }
+  .path .p-what b { color: var(--ink); font-weight: 600; }
+  .recipe { font: 400 12px/1.7 var(--mono); background: var(--surface); border: 1px solid var(--hair-strong); border-radius: 4px; padding: 8px 10px; margin-top: 6px; color: var(--ink-soft); overflow-x: auto; }
+  .recipe b { color: var(--ink); font-weight: 600; }
+  .q-foot { display: flex; gap: 8px; align-items: center; }
+
+  /* ═══ Option 3 · THE CIRCUIT ═══ */
+  .circuit-top { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; background: var(--surface); border: 1px solid var(--hair-strong); border-radius: 8px; box-shadow: var(--sh-rest); padding: 14px 18px; }
+  .meterwrap { flex: 1; min-width: 280px; }
+  .meter-sentence { font-size: 13.5px; color: var(--ink-soft); margin-bottom: 6px; }
+  .meter-sentence b { color: var(--ink); font-weight: 600; }
+  .meter { height: 6px; background: var(--surface-sunk); border-radius: 99px; overflow: hidden; }
+  .meter i { display: block; height: 100%; width: 7.3%; background: var(--blue); border-radius: 99px; transition: width 320ms cubic-bezier(0.2, 0, 0, 1); }
+  .prox { display: inline-flex; gap: 2px; padding: 2px; background: var(--surface-sub); border: 1px solid var(--hair-strong); border-radius: 99px; }
+  .prox button { border: 0; background: transparent; border-radius: 99px; padding: 6px 14px; font: 600 12px/1 var(--sans); color: var(--ink-soft); }
+  .prox button[aria-selected="true"] { background: var(--surface); color: var(--orange); box-shadow: var(--sh-rest); }
+  .run { margin-top: 20px; display: flex; flex-direction: column; gap: 10px; }
+  .stop { display: grid; grid-template-columns: 46px 1fr; gap: 16px; }
+  .stop .s-rail { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .stop .s-num { width: 30px; height: 30px; border-radius: 99px; border: 1px solid var(--hair-strong); background: var(--surface); font: 600 12px/28px var(--mono); text-align: center; color: var(--ink-faint); }
+  .stop .s-line { flex: 1; width: 1px; background: var(--hair-strong); min-height: 10px; }
+  .stop-card { background: var(--surface); border: 1px solid var(--hair-strong); border-bottom: 3px solid var(--ink-quiet); border-radius: 8px; padding: 12px 16px; margin-bottom: 8px; }
+  .stop.now .s-num { border-color: var(--orange); color: var(--orange); }
+  .stop.now .stop-card { border-bottom-color: var(--orange); box-shadow: var(--sh-off); }
+  .stop.done .s-num { border-color: var(--green); color: #157f3d; background: var(--green-soft); }
+  .stop.done .stop-card { padding: 8px 16px; }
+  .stop.done .stop-body, .stop.done .stop-acts { display: none; }
+  .stop.done .stop-title { color: var(--ink-faint); font-size: 14px; }
+  .stop .stop-kick { display: flex; gap: 10px; align-items: center; margin-bottom: 2px; }
+  .stop .stop-title { font: 400 19px/1.3 var(--serif); margin: 2px 0 6px; text-wrap: balance; }
+  .stop .stop-body { color: var(--ink-soft); font-size: 13.5px; max-width: 66ch; margin: 0 0 10px; }
+  .stop .stop-body b { color: var(--ink); font-weight: 600; }
+  .stop .stop-acts { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .stop[hidden] { display: none; }
+
+  /* Drawer */
+  .scrim { position: fixed; inset: 0; background: rgba(10, 28, 64, 0.35); z-index: 200; display: none; }
+  .scrim.on { display: block; }
+  .drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(560px, 94vw); background: var(--surface); border-left: 1px solid var(--hair-strong); box-shadow: var(--sh-off); z-index: 201; padding: 26px; transform: translateX(24px); opacity: 0; pointer-events: none; transition: transform 320ms cubic-bezier(0.2, 0, 0, 1), opacity 320ms cubic-bezier(0.2, 0, 0, 1); overflow-y: auto; }
+  .drawer.on { transform: translateX(0); opacity: 1; pointer-events: auto; }
+  .drawer h3 { font: 400 22px/1.3 var(--serif); margin: 10px 0 8px; text-wrap: balance; }
+  .drawer .dsec { border-top: 1px solid var(--hair); padding: 12px 0; }
+  .drawer .dsec .kick { display: block; margin-bottom: 4px; }
+  .drawer .dsec p { margin: 0 0 8px; font-size: 13.5px; color: var(--ink-soft); }
+  .drawer .dsec p b { color: var(--ink); font-weight: 600; }
+  .dclose { position: absolute; top: 14px; right: 14px; width: 32px; height: 32px; border: 1px solid var(--hair-strong); border-radius: 4px; background: var(--surface); color: var(--ink-soft); }
+
+  .footer-note { margin-top: 36px; font-size: 12.5px; color: var(--ink-faint); max-width: 80ch; }
+
+  @media (prefers-reduced-motion: reduce) { .dot { animation: none; } .drawer, .meter i { transition: none; } }
+  @media (max-width: 1023px) {
+    .dispatch { grid-template-columns: 1fr; }
+    .to-russ { position: static; }
+    .studio { padding: 24px 16px 64px; }
+    .page { padding: 20px 16px 40px; }
+  }
+</style>
+
+<div class="studio">
+  <header class="studio-head">
+    <div class="kick">Groundwork · triptych, second round · 2026-07-30</div>
+    <h1>Three new shapes, and every word rewritten.</h1>
+    <p>
+      The first round was rejected; these are different structures, not
+      re-costumes. And every sentence on every surface now passes the plain-
+      language bar: names introduce themselves, numbers carry their origins,
+      dates say what happens on them. Read anything below out loud to someone
+      who wasn't there — it should hold.
+    </p>
+    <div class="seg" role="tablist" aria-label="Design options">
+      <button role="tab" aria-selected="true" data-opt="1">1 · The Dispatch</button>
+      <button role="tab" aria-selected="false" data-opt="2">2 · The Answer Hunt</button>
+      <button role="tab" aria-selected="false" data-opt="3">3 · The Circuit</button>
+    </div>
+    <p class="opt-note" id="note-1"><b>You read the day, then act on it.</b> The room writes a morning edition: a lead story with everything a stranger would need, stories beneath it with their actions inline, and the readout for Russ standing in a column that never scrolls away. Acting on a story collapses it to a done line — the paper shortens as the day gets worked.</p>
+    <p class="opt-note" id="note-2" hidden><b>The day is a set of open questions.</b> Ranked by what answering each one unlocks. Every question carries its fastest paths to an answer — a person to call, a Sales Navigator recipe ready to run, a news item to dig. Mark one answered and the room shows what just moved. Research directives live here natively.</p>
+    <p class="opt-note" id="note-3" hidden><b>The day is a route with five stops.</b> Picked each morning from the whole 150-account book — a deal, a research session, a partner-manager briefing, an institution, and two minutes for Russ. One honest meter across the top. Flip the location toggle and the run repacks around where you physically are.</p>
+  </header>
+
+  <!-- ═══════════ OPTION 1 · THE DISPATCH ═══════════ -->
+  <section class="frame option on" id="opt-1" aria-label="Option 1: The Dispatch">
+    <div class="way">
+      <span class="trail">Home ›</span>
+      <span class="here">Groundwork <span>· Wednesday, July 30 · 9:02a Central</span></span>
+      <div class="pulling">
+        <span class="pg"></span>
+        <span class="pv">Send</span>
+        <span class="po">Simploy's demo follow-up — their leadership decides August 6th</span>
+      </div>
+      <span class="kbd">Ctrl K</span>
+    </div>
+    <div class="page">
+      <div class="dispatch">
+        <div>
+          <div class="edition-head">
+            <span class="eh-title">This morning's edition</span>
+            <span class="eh-meta">composed 9:02a · recomposes as the day moves · <span id="done-count">0</span> of 5 worked</span>
+          </div>
+
+          <article class="story lead-story" id="story-1">
+            <div class="s-kick"><span class="dot"></span><span class="kick">The lead · seven days to a decision</span></div>
+            <h3>Simploy picks their global-hiring partner August 6th. Your follow-up is what's in front of the decision.</h3>
+            <p class="s-body">
+              Simploy is a PEO in St. Louis that runs their business on our
+              software. Their COO, <b>Chassie Smith</b>, came to us July 8th
+              after the conference: they're choosing one partner to employ and
+              pay workers abroad for their clients, and her leadership decides
+              <b>August 6th</b>. Today that business goes to a competitor —
+              Globalization Partners — and Simploy earns nothing on it. We
+              demoed for her operations director last week. You owe them one
+              thing: the answer on converting their <b>two contractors in
+              India into proper employees</b>.
+            </p>
+            <div class="s-more">
+              <span class="kick">The fuller picture</span>
+              Chassie prefers holding the client contract herself and marking
+              us up — she told us the referral route "takes Simploy out of the
+              client relationship." Lesha Cyphers is the partner manager and
+              favors this account. If we win, Simploy resells our global
+              hiring service into their whole client base.
+            </div>
+            <div class="s-acts">
+              <button class="btn btn-accent" data-done="1" data-doneline="Follow-up drafted and sent to Chassie and Katie, Lesha copied.">Draft the follow-up</button>
+              <button class="btn btn-ghost btn-sm" data-expand="1">The fuller picture ▾</button>
+            </div>
+            <div class="margin-note">
+              <button data-drawer="wire1"><span class="kick">From the wire</span><span class="mn-h">Globalization Partners raises fees on alliance partners</span> — lands directly on this story. Read it before the call.</button>
+            </div>
+            <div class="done-line"><b>✓ Worked.</b> <span>Follow-up drafted and sent to Chassie and Katie, Lesha copied.</span></div>
+          </article>
+
+          <article class="story" id="story-2">
+            <div class="s-kick"><span class="kick">Story two · a partner asking to buy</span></div>
+            <h3>XcelHR's VP of operations wants a call this week. He's ready to pitch a client.</h3>
+            <p class="s-body">
+              XcelHR is a national PEO on our platform. <b>Bill Laffey</b>, their
+              VP of operations, wrote Sunday: he has a client with workers in
+              Mexico — whether they're employees or contractors is the first
+              thing to establish — and he wants to understand how a deal with
+              us works and how the pricing takes shape. Offer him Wednesday or
+              Friday, and settle the biggest open question early: <b>does
+              XcelHR hold the client's contract, or do we?</b>
+            </p>
+            <div class="s-more">
+              <span class="kick">Before the call</span>
+              Anika Steenstra is the partner manager and owns timing — she can
+              set the frame first. The room's prep read on Bill: 12 years at
+              XcelHR, operations his whole career, posts rarely. Open with the
+              client's situation, not ours.
+            </div>
+            <div class="s-acts">
+              <button class="btn btn-2nd" data-done="2" data-doneline="Times sent to Bill; Anika asked to set the frame.">Send times</button>
+              <button class="btn btn-ghost btn-sm" data-expand="2">Before the call ▾</button>
+            </div>
+            <div class="done-line"><b>✓ Worked.</b> <span>Times sent to Bill; Anika asked to set the frame.</span></div>
+          </article>
+
+          <article class="story" id="story-3">
+            <div class="s-kick"><span class="kick">Story three · a call to confirm</span></div>
+            <h3>Infiniti HR offered Friday. Two of the three slots she gave you have already passed.</h3>
+            <p class="s-body">
+              Infiniti HR is a Maryland PEO with one of the biggest client
+              bases we serve — domestic on our software, global handed to
+              Globalization Partners under an alliance that renews this fall.
+              <b>Jennifer Hardesty</b>, their director of implementation, asked
+              for this call herself: a Puerto Rico payroll problem now, plus
+              "other international needs" in her words. Confirm Friday and come
+              with the Puerto Rico answer.
+            </p>
+            <div class="s-acts">
+              <button class="btn btn-2nd" data-done="3" data-doneline="Friday confirmed with Jennifer; Puerto Rico answer requested from Anthony's team.">Confirm Friday</button>
+            </div>
+            <div class="done-line"><b>✓ Worked.</b> <span>Friday confirmed with Jennifer; Puerto Rico answer requested from Anthony's team.</span></div>
+          </article>
+
+          <article class="story" id="story-4">
+            <div class="s-kick"><span class="kick">Story four · the research window</span></div>
+            <h3>MedHQ has zero people on file. Twenty minutes in Sales Navigator fixes that.</h3>
+            <p class="s-body">
+              MedHQ is a healthcare-focused PEO in Westchester, Illinois — a
+              town over from you — and the book knows exactly one name there.
+              Before any briefing can happen, we need to know who runs HR,
+              operations, and finance. The recipe is composed; run it, bring
+              back three to five names, and the room files them as candidates.
+            </p>
+            <div class="s-more">
+              <span class="kick">The composed recipe</span>
+              Current company: MedHQ · Function: HR, Operations, Finance ·
+              Seniority: VP and above · Geography: Chicago metro. Bring back
+              names and titles only — the room never stores what you don't
+              confirm.
+            </div>
+            <div class="s-acts">
+              <button class="btn btn-2nd" data-done="4" data-doneline="Four names brought back and filed as candidates on MedHQ.">Open the recipe</button>
+              <button class="btn btn-ghost btn-sm" data-expand="4">The composed recipe ▾</button>
+            </div>
+            <div class="done-line"><b>✓ Worked.</b> <span>Four names brought back and filed as candidates on MedHQ.</span></div>
+          </article>
+
+          <article class="story" id="story-5">
+            <div class="s-kick"><span class="kick">Story five · the institutions</span></div>
+            <h3>The Global Chamber's Chicago chapter meets next Thursday. Decide this week if we're in that room.</h3>
+            <p class="s-body">
+              This is the first institution on the verification list — the kind
+              of organization with chapters across the country full of small-
+              business owners who hire across borders. The room's research pass
+              on the chapter is ready to run: who convenes it, who attends,
+              what membership asks of you. Two events before we judge it; the
+              offer we lead with is education — a plain briefing on hiring
+              abroad without an entity — never a request for leads.
+            </p>
+            <div class="s-acts">
+              <button class="btn btn-2nd" data-done="5" data-doneline="Verification pass run; chapter calendar and convener filed.">Run the verification</button>
+            </div>
+            <div class="done-line"><b>✓ Worked.</b> <span>Verification pass run; chapter calendar and convener filed.</span></div>
+          </article>
+        </div>
+
+        <aside class="to-russ">
+          <span class="kick">To Russ · current as of this minute</span>
+          <h3>If he calls right now, read him this.</h3>
+          <div class="tr-body">
+            <p><b>Four conversations could become deals.</b> Simploy — a St.
+            Louis PEO on our software — decides August 6th; my demo follow-up
+            goes out today. ESC in Buffalo accepted a Canada payroll demo and
+            has a licensing question with Rick. Infiniti HR asked us for a
+            Friday call — Puerto Rico pain now, and their Globalization
+            Partners alliance renews this fall. XcelHR's VP of operations
+            wants a call this week to pitch a client with workers in Mexico.</p>
+            <p><b>The wider book:</b> 150 customer accounts nationwide. 11
+            have had a real global-hiring conversation since I started
+            working accounts July 8th. This week, 3 of the 5 partner managers
+            I sent updates to replied — two of those replies became the calls
+            above.</p>
+            <p><b>Blocking me, all internal:</b> partner-quotable pricing
+            (asked July 22nd) · country coverage sheets (same day) · the
+            second contracting training (waiting on a date).</p>
+          </div>
+          <div class="tr-foot">
+            <button class="btn btn-accent btn-sm" id="copy-1">Copy the readout</button>
+            <button class="btn btn-ghost btn-sm" data-drawer="readout">The full version</button>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ OPTION 2 · THE ANSWER HUNT ═══════════ -->
+  <section class="frame option" id="opt-2" aria-label="Option 2: The Answer Hunt">
+    <div class="way">
+      <span class="trail">Home ›</span>
+      <span class="here">Groundwork <span>· Wednesday, July 30 · 9:02a Central</span></span>
+      <div class="pulling">
+        <span class="pg"></span>
+        <span class="pv">Answer</span>
+        <span class="po">the first question — it protects the August 6th decision</span>
+      </div>
+      <span class="kbd">Ctrl K</span>
+    </div>
+    <div class="page">
+      <div class="hunt-head">
+        <div class="kick">Today's open questions · ranked by what answering unlocks · <span id="answered-count">0</span> answered</div>
+        <p class="lede">Prospecting is closing the gaps between what you know and what you'd need to know to start a conversation. Here are today's five, in order.</p>
+        <p class="sub">Every question carries its fastest paths to an answer. Answer it — by call, by research, by reading — and the room shows what just moved.</p>
+      </div>
+
+      <div class="qcard q-first" id="q1">
+        <div class="q-top"><h3>1 · What does Simploy still need from us before their leadership votes on August 6th?</h3><span class="dot"></span></div>
+        <p class="q-why">
+          Simploy — a St. Louis PEO on our software — is choosing their
+          global-hiring partner in seven days. Their COO told us they prefer
+          holding the client contract and marking us up. The one open item
+          from last week's demo: <b>how we'd convert their two India
+          contractors into proper employees.</b>
+        </p>
+        <div class="q-unlock"><b>Answered.</b> The follow-up went out; Simploy's row moves to waiting-on-them, and the readout's lead paragraph updates itself.</div>
+        <div class="paths">
+          <div class="path">
+            <span class="p-kind">Ask</span>
+            <span class="p-what"><b>Chassie Smith, COO</b> — one direct question closes it: <i>"Beyond the India conversion answer, what does your leadership want in hand before the 6th?"</i></span>
+            <button class="btn btn-2nd btn-sm">Copy the question</button>
+          </div>
+          <div class="path">
+            <span class="p-kind">Research</span>
+            <span class="p-what">Pre-read on <b>Katie, director of operations</b> — she carries the recommendation into the vote.
+              <span class="recipe">Profile: role tenure · prior companies · posts last 30 days → bring back two sentences: who she is, one thing to open with.</span>
+            </span>
+            <button class="btn btn-2nd btn-sm">Open recipe</button>
+          </div>
+        </div>
+        <div class="q-foot">
+          <button class="btn btn-accent" data-answer="1">Mark answered</button>
+          <button class="btn btn-ghost btn-sm" data-paths="1">The paths ▾</button>
+        </div>
+      </div>
+
+      <div class="qcard" id="q2">
+        <div class="q-top"><h3>2 · Who besides Bill Laffey should be in the XcelHR conversation?</h3></div>
+        <p class="q-why">
+          XcelHR's VP of operations asked for a call this week about a client
+          with workers in Mexico. Right now the whole conversation rides on
+          one person — if Bill goes quiet, the deal does. A second voice on
+          their side protects it.
+        </p>
+        <div class="q-unlock"><b>Answered.</b> A second name is on the account; the one-person-deal warning clears.</div>
+        <div class="paths">
+          <div class="path">
+            <span class="p-kind">Ask</span>
+            <span class="p-what"><b>Bill himself</b>, on the call: <i>"Who on your side runs the operations of this once it's live?"</i> — the widening question that never feels like going around him.</span>
+            <button class="btn btn-2nd btn-sm">Copy the question</button>
+          </div>
+          <div class="path">
+            <span class="p-kind">Research</span>
+            <span class="p-what">Find the operational lane before the call.
+              <span class="recipe">Lead search — Current company: <b>XcelHR</b> · Function: <b>Operations, HR</b> · Seniority: <b>Director+</b> → bring back one name worth an intro ask.</span>
+            </span>
+            <button class="btn btn-2nd btn-sm">Open recipe</button>
+          </div>
+          <div class="path">
+            <span class="p-kind">Ask</span>
+            <span class="p-what"><b>Anika Steenstra</b> — she's the partner manager and knows the org: <i>"Who at XcelHR actually runs implementations?"</i></span>
+            <button class="btn btn-2nd btn-sm">Copy the question</button>
+          </div>
+        </div>
+        <div class="q-foot">
+          <button class="btn btn-2nd" data-answer="2">Mark answered</button>
+          <button class="btn btn-ghost btn-sm" data-paths="2">The paths ▾</button>
+        </div>
+      </div>
+
+      <div class="qcard" id="q3">
+        <div class="q-top"><h3>3 · Is the Globalization Partners fee raise real inside Infiniti HR?</h3></div>
+        <p class="q-why">
+          This morning's wire carried a report that Globalization Partners is
+          raising fees on alliance partners. Infiniti HR — domestic on our
+          software, global on a G-P alliance renewing this fall — is exactly
+          who that hits. If it's real, Friday's call gets a second agenda
+          item and the fall renewal gets a reason to come early.
+        </p>
+        <div class="q-unlock"><b>Answered.</b> The finding files to Infiniti's research trail and attaches to Friday's call prep.</div>
+        <div class="paths">
+          <div class="path">
+            <span class="p-kind">Read</span>
+            <span class="p-what">The wire item itself, then the dig — the room runs a focused pass on what G-P announced and when it bites.</span>
+            <button class="btn btn-2nd btn-sm" data-drawer="wire1">Read + dig</button>
+          </div>
+          <div class="path">
+            <span class="p-kind">Research</span>
+            <span class="p-what">Listen for it inside the account.
+              <span class="recipe">Company page: <b>Infiniti HR</b> — leadership posts, last 14 days · anyone discussing global providers → bring back whether anyone there is talking about it.</span>
+            </span>
+            <button class="btn btn-2nd btn-sm">Open recipe</button>
+          </div>
+        </div>
+        <div class="q-foot">
+          <button class="btn btn-2nd" data-answer="3">Mark answered</button>
+          <button class="btn btn-ghost btn-sm" data-paths="3">The paths ▾</button>
+        </div>
+      </div>
+
+      <div class="qcard" id="q4">
+        <div class="q-top"><h3>4 · Who actually runs HR, operations, and finance at MedHQ?</h3></div>
+        <p class="q-why">
+          MedHQ is a healthcare PEO one town over from you, and the book
+          knows one name there. No briefing can be composed for an account
+          with no people. Twenty minutes of directed research closes a gap
+          that's been open since the book was built.
+        </p>
+        <div class="q-unlock"><b>Answered.</b> Candidates filed on MedHQ; the account becomes briefable and joins the next partner-manager cycle.</div>
+        <div class="paths">
+          <div class="path">
+            <span class="p-kind">Research</span>
+            <span class="p-what">The composed stakeholder recipe.
+              <span class="recipe">Lead search — Current company: <b>MedHQ</b> · Function: <b>HR, Operations, Finance</b> · Seniority: <b>VP+, C-suite</b> · Geography: <b>Chicago metro</b> → bring back three to five names with titles.</span>
+            </span>
+            <button class="btn btn-2nd btn-sm">Open recipe</button>
+          </div>
+          <div class="path">
+            <span class="p-kind">Ask</span>
+            <span class="p-what"><b>Tom Jacobs</b> — the one name we do have: a direct note asking who runs payroll operations today.</span>
+            <button class="btn btn-2nd btn-sm">Copy the note</button>
+          </div>
+        </div>
+        <div class="q-foot">
+          <button class="btn btn-2nd" data-answer="4">Mark answered</button>
+          <button class="btn btn-ghost btn-sm" data-paths="4">The paths ▾</button>
+        </div>
+      </div>
+
+      <div class="qcard" id="q5">
+        <div class="q-top"><h3>5 · Is the Global Chamber's Chicago chapter worth two evenings a month?</h3></div>
+        <p class="q-why">
+          The institutions program starts with a verification, not a
+          membership. The question is concrete: who convenes the chapter, who
+          actually attends, and would two events put you in rooms with
+          small-business operators who hire across borders — or with vendors
+          selling to each other?
+        </p>
+        <div class="q-unlock"><b>Answered.</b> The chapter gets a scorecard and a go/no-go recommendation files to Aleks's 1:1 agenda.</div>
+        <div class="paths">
+          <div class="path">
+            <span class="p-kind">Read</span>
+            <span class="p-what">The room's verification pass — convener, calendar, member profile, cost in time — ready to run.</span>
+            <button class="btn btn-2nd btn-sm">Run the pass</button>
+          </div>
+          <div class="path">
+            <span class="p-kind">Ask</span>
+            <span class="p-what">One Chicago peer who's attended: <i>"Who was actually in the room, and did anything come of it?"</i></span>
+            <button class="btn btn-2nd btn-sm">Copy the question</button>
+          </div>
+        </div>
+        <div class="q-foot">
+          <button class="btn btn-2nd" data-answer="5">Mark answered</button>
+          <button class="btn btn-ghost btn-sm" data-paths="5">The paths ▾</button>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 10px; align-items: center; border-top: 1px solid var(--hair-strong); padding-top: 14px;">
+        <span class="kick">Standing by</span>
+        <button class="btn btn-2nd btn-sm" data-drawer="readout">Read State of play to Russ</button>
+        <span style="font-size: 12.5px; color: var(--ink-faint);">— it already reflects every answer you mark.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ OPTION 3 · THE CIRCUIT ═══════════ -->
+  <section class="frame option" id="opt-3" aria-label="Option 3: The Circuit">
+    <div class="way">
+      <span class="trail">Home ›</span>
+      <span class="here">Groundwork <span>· Wednesday, July 30 · 9:02a Central</span></span>
+      <div class="pulling">
+        <span class="pg"></span>
+        <span class="pv">Run</span>
+        <span class="po">today's five stops — Simploy first, Russ last</span>
+      </div>
+      <span class="kbd">Ctrl K</span>
+    </div>
+    <div class="page">
+      <div class="circuit-top">
+        <div class="meterwrap">
+          <div class="meter-sentence" id="meter-sentence"><b>11 of the 150 accounts</b> in the book have had a real global-hiring conversation this quarter — the run below exists to move that number.</div>
+          <div class="meter"><i id="meter-fill"></i></div>
+        </div>
+        <div>
+          <div class="kick" style="margin-bottom: 4px;">This week you are</div>
+          <div class="prox" role="tablist" aria-label="Location">
+            <button role="tab" aria-selected="true" data-loc="chi">In Chicago</button>
+            <button role="tab" aria-selected="false" data-loc="ind">Indianapolis trip</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="run" id="run-chi">
+        <div class="stop now" data-stop="1">
+          <div class="s-rail"><span class="s-num">1</span><span class="s-line"></span></div>
+          <div class="stop-card">
+            <div class="stop-kick"><span class="kick">9:00 · the deal that can't wait</span><span class="dot"></span></div>
+            <div class="stop-title">Simploy — send the follow-up their decision is waiting on.</div>
+            <p class="stop-body">
+              A St. Louis PEO on our software; their leadership picks a
+              global-hiring partner <b>August 6th</b>. The demo happened last
+              week; the open item is how we'd convert their two India
+              contractors into employees. Draft is composed — read, edit,
+              send to Chassie and Katie with Lesha copied.
+            </p>
+            <div class="stop-acts">
+              <button class="btn btn-accent" data-advance>Send, then next stop</button>
+              <button class="btn btn-ghost btn-sm" data-drawer="wire1">The wire item on this</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="stop" data-stop="2">
+          <div class="s-rail"><span class="s-num">2</span><span class="s-line"></span></div>
+          <div class="stop-card">
+            <div class="stop-kick"><span class="kick">9:40 · the research session</span></div>
+            <div class="stop-title">Twenty minutes in Sales Navigator: put people on MedHQ.</div>
+            <p class="stop-body">
+              MedHQ — a healthcare PEO in Westchester, one town over — has one
+              known name. The recipe is composed: company MedHQ, HR/operations/
+              finance functions, VP and above, Chicago metro. Bring back three
+              to five names; the room files them as candidates for you to
+              confirm.
+            </p>
+            <div class="stop-acts">
+              <button class="btn btn-2nd" data-advance>Done — filed. Next stop</button>
+              <button class="btn btn-ghost btn-sm">Copy the recipe</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="stop" data-stop="3">
+          <div class="s-rail"><span class="s-num">3</span><span class="s-line"></span></div>
+          <div class="stop-card">
+            <div class="stop-kick"><span class="kick">11:00 · the people window</span></div>
+            <div class="stop-title">Whitney's accounts get their first introduction to Global.</div>
+            <p class="stop-body">
+              Whitney Dideon manages about 28 of the book's accounts and is
+              three weeks into the seat — nobody has briefed her roster on
+              Global yet. The briefing is composed: her three best-fit
+              accounts, each with the question she can relay to them
+              word-for-word. Read, edit, send.
+            </p>
+            <div class="stop-acts">
+              <button class="btn btn-2nd" data-advance>Sent — next stop</button>
+              <button class="btn btn-ghost btn-sm">Open the briefing</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="stop" data-stop="4">
+          <div class="s-rail"><span class="s-num">4</span><span class="s-line"></span></div>
+          <div class="stop-card">
+            <div class="stop-kick"><span class="kick">2:00 · the institutions</span></div>
+            <div class="stop-title">Verify the Global Chamber's Chicago chapter — is that room worth your evenings?</div>
+            <p class="stop-body">
+              First rung of the institutions ladder: a research pass on who
+              convenes the chapter, who attends, and what membership asks. The
+              program's rule holds — we lead with education (the
+              hiring-abroad-without-an-entity briefing), never with a lead
+              request. Two events before judgment.
+            </p>
+            <div class="stop-acts">
+              <button class="btn btn-2nd" data-advance>Pass run — next stop</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="stop" data-stop="5">
+          <div class="s-rail"><span class="s-num">5</span></div>
+          <div class="stop-card">
+            <div class="stop-kick"><span class="kick">4:30 · two minutes for Russ</span></div>
+            <div class="stop-title">Read the state of play — it already knows what today changed.</div>
+            <p class="stop-body">
+              The readout recomposed itself as you ran the circuit. If Russ
+              calls now: four conversations could become deals, the Simploy
+              follow-up is out, Whitney's roster is briefed, MedHQ has people.
+              Every line written to be repeated to the chief of sales.
+            </p>
+            <div class="stop-acts">
+              <button class="btn btn-2nd" data-drawer="readout">Open the readout</button>
+              <button class="btn btn-ghost btn-sm" data-advance>Circuit complete</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="run" id="run-ind" hidden>
+        <div class="stop now" data-stop="1">
+          <div class="s-rail"><span class="s-num">1</span><span class="s-line"></span></div>
+          <div class="stop-card">
+            <div class="stop-kick"><span class="kick">morning · in the room</span><span class="dot"></span></div>
+            <div class="stop-title">WorkSmart Systems, Indianapolis — the in-person visit.</div>
+            <p class="stop-body">
+              A 500-client PEO on our platform, never introduced to Global.
+              You're in their city: Matt Thomas (CEO), Jessica Carney (chief
+              sales officer), Nanci Reynolds (chief payroll officer, the book's
+              contact). Lesha cleared the visit. The ask is one question:
+              which countries do their clients have people in today?
+            </p>
+            <div class="stop-acts"><button class="btn btn-accent" data-advance>Visited — next stop</button></div>
+          </div>
+        </div>
+        <div class="stop" data-stop="2">
+          <div class="s-rail"><span class="s-num">2</span><span class="s-line"></span></div>
+          <div class="stop-card">
+            <div class="stop-kick"><span class="kick">midday · second room</span></div>
+            <div class="stop-title">Fullstack PEO — the startup-book PEO worth meeting while you're here.</div>
+            <p class="stop-body">
+              Indianapolis PEO whose clients are tech startups and scaleups —
+              the kind of book that quietly hires contractors overseas. The
+              only account besides Simploy whose research demand clears the
+              bar. Dawn Lively-Jenkins (CEO) or Ann Brandon (operations).
+            </p>
+            <div class="stop-acts"><button class="btn btn-2nd" data-advance>Met — next stop</button></div>
+          </div>
+        </div>
+        <div class="stop" data-stop="3">
+          <div class="s-rail"><span class="s-num">3</span><span class="s-line"></span></div>
+          <div class="stop-card">
+            <div class="stop-kick"><span class="kick">afternoon · keep the wires warm</span></div>
+            <div class="stop-title">The Simploy follow-up and the Infiniti confirmation still go out today.</div>
+            <p class="stop-body">
+              Travel doesn't pause the deals. Both drafts are composed;
+              twenty minutes from the hotel lobby covers them.
+            </p>
+            <div class="stop-acts"><button class="btn btn-2nd" data-advance>Sent — next stop</button></div>
+          </div>
+        </div>
+        <div class="stop" data-stop="4">
+          <div class="s-rail"><span class="s-num">4</span></div>
+          <div class="stop-card">
+            <div class="stop-kick"><span class="kick">evening · two minutes for Russ</span></div>
+            <div class="stop-title">The readout, with today's two in-person visits already in it.</div>
+            <p class="stop-body">
+              "I was in Indianapolis today — sat with WorkSmart's CEO and
+              Fullstack's operations director; both briefings landed, both
+              have follow-ups on the calendar." The room wrote that line the
+              moment you marked the visits.
+            </p>
+            <div class="stop-acts"><button class="btn btn-2nd" data-drawer="readout">Open the readout</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <p class="footer-note">
+    Sample content throughout — real accounts and people from the book, with
+    illustrative counts; the builders compute real ones. Wire items are a
+    sample sweep. Fonts fall back gracefully here; the product loads DM Serif
+    Display, Public Sans, and JetBrains Mono via next/font. No money figures
+    appear on any surface, by doctrine.
+  </p>
+</div>
+
+<div class="scrim" id="scrim"></div>
+
+<aside class="drawer" id="drawer-wire1" role="dialog" aria-label="Wire item">
+  <button class="dclose" data-close>&#10005;</button>
+  <span class="kick">The wire · HR Dive · this morning · sample item</span>
+  <h3>Globalization Partners raises platform fees for alliance partners.</h3>
+  <div class="dsec"><span class="kick">Why this matters here</span>
+    <p><b>Infiniti HR</b> — a Maryland PEO, domestic on our software — sends
+    its global work to Globalization Partners under an alliance that renews
+    this fall. A fee raise gives their finance team a reason to shop the
+    renewal early, and we are the consolidation option already inside the
+    building. <b>Nextep</b> (Oklahoma) has the same shape on a longer clock.</p>
+  </div>
+  <div class="dsec"><span class="kick">Matched</span><p>Globalization Partners · PEO · <a class="acct" href="#">Infiniti HR</a> · <a class="acct" href="#">Nextep</a></p></div>
+  <div class="dsec"><span class="kick">Source</span><p><a href="#">hrdive.com — read the original</a></p></div>
+  <div class="dsec" style="border-top: 0; padding-top: 4px;">
+    <button class="btn btn-accent">Dig deeper and file to Infiniti</button>
+    <button class="btn btn-ghost" data-close>Skip — stay here</button>
+  </div>
+</aside>
+
+<aside class="drawer" id="drawer-readout" role="dialog" aria-label="State of play">
+  <button class="dclose" data-close>&#10005;</button>
+  <span class="kick">State of play · Wednesday, July 30 · composes itself from every store</span>
+  <h3>Read once. Repeat to anyone. Answer the follow-up from the text alone.</h3>
+  <div class="dsec"><span class="kick">Conversations that could become deals — four</span>
+    <p><b>Simploy</b> is a PEO in St. Louis that runs their business on our
+    software. Their COO, Chassie Smith, came to us July 8th after PrismHR
+    LIVE: they're choosing one partner to employ and pay workers abroad for
+    their clients, and her leadership decides <b>August 6th</b>. Today that
+    business goes to Globalization Partners and Simploy earns nothing on it;
+    through us they'd resell it at a margin inside the platform they already
+    use. We demoed for her operations director last week. I owe them the
+    answer on converting their two India contractors into employees — it
+    goes out today.</p>
+    <p><b>ESC</b> — Employer Services Corporation, a Buffalo PEO — has two
+    tracks: their technology director wants to run Canadian payroll on our
+    software under a license (the structure question sits with Rick
+    Torrence), and their VP of sales has a prospect with about 25 employees
+    in Ontario who needs payroll soon. Canada demo accepted July 22nd,
+    scheduling now.</p>
+    <p><b>Infiniti HR</b> — a Maryland PEO with one of the biggest client
+    bases we serve — runs domestic on our software and global on a
+    Globalization Partners alliance renewing this fall. Their director of
+    implementation asked us for a call: Puerto Rico payroll pain now, "other
+    international needs" in her words. Confirming Friday. The longer game is
+    the whole global layer at renewal.</p>
+    <p><b>XcelHR</b> — a national PEO — has a client with workers in Mexico;
+    employees or contractors is the first question. Their VP of operations
+    asked this week how a deal with us works and how pricing takes shape.
+    He's ready to pitch; I'm giving him Wednesday or Friday.</p>
+  </div>
+  <div class="dsec"><span class="kick">The rest of the book</span>
+    <p>I cover 150 PrismHR and PrismHCM customers nationwide. Since July 8th
+    — my first week working accounts — 11 have had a real conversation about
+    global hiring. This week I sent updates to 5 of the 6 partner managers
+    who own these relationships; 3 replied, and two of those replies became
+    the calls above. The biggest untapped group: customers already on our
+    platform, where turning Global on is configuration, not a project.</p>
+  </div>
+  <div class="dsec"><span class="kick">What's blocking me — all internal</span>
+    <p>Pricing our partners can quote without calling me (asked July 22nd,
+    still open) · country coverage sheets partners can hand clients (same
+    age) · the second contracting training (waiting on a date from Deana
+    Morgan's team).</p>
+  </div>
+  <div class="dsec"><span class="kick">Next seven days</span>
+    <p>Simploy decision support through August 6th · Infiniti call Friday ·
+    XcelHR call midweek · Whitney Dideon's accounts get their first Global
+    briefing — she's three weeks in seat and her roster hasn't been
+    introduced yet.</p>
+  </div>
+  <div class="dsec" style="border-top: 0; padding-top: 4px;">
+    <button class="btn btn-accent" id="copy-2">Copy the readout</button>
+  </div>
+</aside>
+
+<script>
+  // Option tabs
+  var tabs = document.querySelectorAll(".seg [data-opt]");
+  tabs.forEach(function (t) {
+    t.addEventListener("click", function () {
+      tabs.forEach(function (x) { x.setAttribute("aria-selected", String(x === t)); });
+      ["1", "2", "3"].forEach(function (k) {
+        document.getElementById("opt-" + k).classList.toggle("on", t.dataset.opt === k);
+        document.getElementById("note-" + k).hidden = t.dataset.opt !== k;
+      });
+    });
+  });
+
+  // Dispatch: expanders + done compression
+  document.querySelectorAll("[data-expand]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var s = document.getElementById("story-" + b.dataset.expand);
+      var open = s.classList.toggle("open");
+      b.textContent = b.textContent.replace(open ? "▾" : "▴", open ? "▴" : "▾");
+    });
+  });
+  var doneCount = 0;
+  document.querySelectorAll("[data-done]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var s = document.getElementById("story-" + b.dataset.done);
+      if (s.classList.contains("done-story")) return;
+      s.classList.add("done-story");
+      doneCount++;
+      var c = document.getElementById("done-count");
+      if (c) c.textContent = String(doneCount);
+    });
+  });
+
+  // Hunt: paths + answered
+  document.querySelectorAll("[data-paths]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var q = document.getElementById("q" + b.dataset.paths);
+      var open = q.classList.toggle("open");
+      b.textContent = open ? "The paths ▴" : "The paths ▾";
+    });
+  });
+  var answered = 0;
+  document.querySelectorAll("[data-answer]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var q = document.getElementById("q" + b.dataset.answer);
+      if (q.classList.contains("answered")) return;
+      q.classList.add("answered");
+      answered++;
+      var c = document.getElementById("answered-count");
+      if (c) c.textContent = String(answered);
+      b.textContent = "Answered";
+      b.disabled = true;
+      b.style.opacity = "0.45";
+    });
+  });
+
+  // Circuit: advance stops + proximity toggle + meter
+  var convo = 11;
+  function wireRun(runId) {
+    var run = document.getElementById(runId);
+    var stops = run.querySelectorAll(".stop");
+    run.querySelectorAll("[data-advance]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var stop = b.closest(".stop");
+        if (stop.classList.contains("done")) return;
+        stop.classList.remove("now");
+        stop.classList.add("done");
+        for (var i = 0; i < stops.length; i++) {
+          if (!stops[i].classList.contains("done")) { stops[i].classList.add("now"); break; }
+        }
+        if (stop.dataset.stop === "1" || stop.dataset.stop === "3") {
+          convo++;
+          var f = document.getElementById("meter-fill");
+          var ms = document.getElementById("meter-sentence");
+          if (f) f.style.width = (convo / 150) * 100 + "%";
+          if (ms) ms.innerHTML = "<b>" + convo + " of the 150 accounts</b> in the book have had a real global-hiring conversation this quarter — today's run just moved it.";
+        }
+      });
+    });
+  }
+  wireRun("run-chi");
+  wireRun("run-ind");
+  document.querySelectorAll(".prox [data-loc]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      document.querySelectorAll(".prox [data-loc]").forEach(function (x) {
+        x.setAttribute("aria-selected", String(x === b));
+      });
+      document.getElementById("run-chi").hidden = b.dataset.loc !== "chi";
+      document.getElementById("run-ind").hidden = b.dataset.loc !== "ind";
+    });
+  });
+
+  // Drawers
+  var scrim = document.getElementById("scrim");
+  function closeDrawers() {
+    document.querySelectorAll(".drawer.on").forEach(function (d) { d.classList.remove("on"); });
+    scrim.classList.remove("on");
+  }
+  document.querySelectorAll("[data-drawer]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      closeDrawers();
+      var d = document.getElementById("drawer-" + b.dataset.drawer);
+      if (d) { d.classList.add("on"); scrim.classList.add("on"); }
+    });
+  });
+  document.querySelectorAll("[data-close]").forEach(function (b) { b.addEventListener("click", closeDrawers); });
+  scrim.addEventListener("click", closeDrawers);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeDrawers(); });
+
+  // Copy the readout
+  var READOUT =
+    "State of play — Wednesday, July 30\n\n" +
+    "CONVERSATIONS THAT COULD BECOME DEALS — FOUR.\n\n" +
+    "Simploy is a PEO in St. Louis that runs their business on our software. Their COO, Chassie Smith, came to us July 8th after PrismHR LIVE: they're choosing one partner to employ and pay workers abroad for their clients, and her leadership decides August 6th. Today that business goes to Globalization Partners and Simploy earns nothing on it; through us they'd resell it at a margin inside the platform they already use. We demoed for her operations director last week. I owe them the answer on converting their two India contractors into employees — it goes out today.\n\n" +
+    "ESC — Employer Services Corporation, a Buffalo PEO — has two tracks: their technology director wants to run Canadian payroll on our software under a license (the structure question sits with Rick Torrence), and their VP of sales has a prospect with about 25 employees in Ontario who needs payroll soon. Canada demo accepted July 22nd, scheduling now.\n\n" +
+    "Infiniti HR — a Maryland PEO with one of the biggest client bases we serve — runs domestic on our software and global on a Globalization Partners alliance renewing this fall. Their director of implementation asked us for a call: Puerto Rico payroll pain now, plus other international needs in her words. Confirming Friday.\n\n" +
+    "XcelHR — a national PEO — has a client with workers in Mexico; employees or contractors is the first question. Their VP of operations asked this week how a deal with us works and how pricing takes shape. He's ready to pitch; I'm giving him Wednesday or Friday.\n\n" +
+    "THE REST OF THE BOOK. I cover 150 PrismHR and PrismHCM customers nationwide. Since July 8th, 11 have had a real conversation about global hiring. This week I sent updates to 5 of the 6 partner managers who own these relationships; 3 replied, and two of those replies became the calls above.\n\n" +
+    "WHAT'S BLOCKING ME — ALL INTERNAL. Pricing our partners can quote without calling me (asked July 22nd, still open). Country coverage sheets (same age). The second contracting training (waiting on a date from Deana Morgan's team).\n\n" +
+    "NEXT SEVEN DAYS. Simploy decision support through August 6th. Infiniti call Friday. XcelHR call midweek. Whitney Dideon's accounts get their first Global briefing.";
+  ["copy-1", "copy-2"].forEach(function (id) {
+    var b = document.getElementById(id);
+    if (!b) return;
+    b.addEventListener("click", function () {
+      if (navigator.clipboard) navigator.clipboard.writeText(READOUT);
+      var old = b.textContent;
+      b.textContent = "Copied — readout in hand";
+      setTimeout(function () { b.textContent = old; }, 2400);
+    });
+  });
+</script>

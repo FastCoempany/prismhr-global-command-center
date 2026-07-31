@@ -1,4 +1,4 @@
-// Stage + signal → the next motion, with the drum-up line attached.
+// Stage + signal → the next motion, with the relay line attached.
 // A Motion is what to DO and what to SAY — the say lines follow the roundup
 // voice: direct questions, no preamble, never a directive with a period.
 
