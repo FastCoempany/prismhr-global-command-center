@@ -71,10 +71,11 @@ describe("the read routes notes-shaped pastes to the strong model", () => {
     assert.equal(looksLikeNotes(raw), true);
     assert.equal(modelFor(raw), "claude-opus-5");
   });
-  test("an Outlook thread is shaped work, not notes", () => {
+  test("an Outlook thread is shaped work, not notes — and still reads on opus", () => {
     const raw = `OUTLOOK THREAD\nFrom: Shane Smith\nTo: Antaeus Coe\nSubject: RE: contracts\n\nthat works`;
     assert.equal(looksLikeNotes(raw), false);
-    assert.equal(modelFor(raw), "claude-haiku-4-5");
+    // Opus or better, always (decreed 2026-07-31) — shape no longer downgrades.
+    assert.equal(modelFor(raw), "claude-opus-5");
   });
   test("a Salesforce timeline is shaped work even without mail headers", () => {
     const raw = [

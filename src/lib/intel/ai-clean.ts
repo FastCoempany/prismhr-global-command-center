@@ -326,8 +326,12 @@ export function looksLikeNotes(raw: string): boolean {
   return NOTE_SCENT.test(text) || lines <= 40;
 }
 
+/** Opus or better, always — founder-decreed 2026-07-31. Haiku is never a
+ *  model this app uses. The signature keeps its argument so callers and tests
+ *  never notice the roster change. */
 export function modelFor(raw: string): string {
-  return looksLikeNotes(raw) ? "claude-opus-5" : "claude-haiku-4-5";
+  void raw;
+  return "claude-opus-5";
 }
 
 // One call, one paste. Throws on API failure — the caller degrades to the

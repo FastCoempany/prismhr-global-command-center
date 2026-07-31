@@ -397,10 +397,10 @@ describe("the liberal read organizes, files, and briefs", () => {
     assert.equal(asKind("how we do it"), "process");
     assert.equal(asKind("gibberish"), "fact");
   });
-  test("transcripts get the parent brain, app rows get the light one", () => {
+  test("every read gets opus or better — never haiku (decreed 2026-07-31)", () => {
     assert.equal(modelForOrigin("demo"), "claude-opus-5");
     assert.equal(modelForOrigin("teams"), "claude-opus-5");
-    assert.equal(modelForOrigin("todo"), "claude-haiku-4-5");
+    assert.equal(modelForOrigin("todo"), "claude-opus-5");
   });
   test("junk degrades to empty rather than throwing", () => {
     const r = sanitizeRead(null, body);
@@ -2043,6 +2043,23 @@ describe("the room carries the brand's depth without breaking its rules (IV.9)",
       /meta\.report\?\.messages/.test(store),
       "the fallback ignores what meta remembers",
     );
+  });
+});
+
+describe("opus or better, always (founder-decreed 2026-07-31)", () => {
+  test("haiku appears nowhere in the app's source", () => {
+    const walk = (dir: string): string[] =>
+      readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
+        e.isDirectory()
+          ? walk(join(dir, e.name))
+          : /\.(ts|tsx)$/.test(e.name)
+            ? [join(dir, e.name)]
+            : [],
+      );
+    const offenders = walk(join(root, "src")).filter((f) =>
+      readFileSync(f, "utf8").includes("claude-haiku"),
+    );
+    assert.deepEqual(offenders, [], "a haiku model id crept back into src");
   });
 });
 
