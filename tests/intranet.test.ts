@@ -125,6 +125,7 @@ import {
   dayLabel,
   flagSrc,
   groupByDay,
+  launderDigest,
   type LedgerEntry,
 } from "../src/lib/intranet/ledger";
 import {
@@ -2042,6 +2043,52 @@ describe("the room carries the brand's depth without breaking its rules (IV.9)",
       /meta\.report\?\.messages/.test(store),
       "the fallback ignores what meta remembers",
     );
+  });
+});
+
+describe("one catch-up at a time, and replayed history obeys V.6", () => {
+  const runners = readFileSync(join(root, "src/app/intranet/runners.ts"), "utf8");
+  const client = readFileSync(join(root, "src/app/intranet/intranet-client.tsx"), "utf8");
+  const store = readFileSync(join(root, "src/lib/intranet/store.ts"), "utf8");
+
+  test("the run lock exists, expires, and always releases", () => {
+    assert.ok(runners.includes("acquireRunLock"), "overlapping runs can stack again");
+    assert.ok(runners.includes("releaseRunLock"));
+    assert.ok(runners.includes("RUN_LOCK_TTL_MS"), "a crashed run would wedge the room");
+    assert.ok(/finally\s*\{\s*await releaseRunLock/.test(runners), "the lock can leak");
+  });
+  test("a second run watches instead of stacking", () => {
+    assert.ok(/busy: true/.test(runners), "runBrain never says it is busy");
+    assert.ok(/r\.busy/.test(client), "the client stacks catch-ups anyway");
+  });
+  test("the sentinel row is invisible on every surface", () => {
+    const hits = store.match(/rawChecksum: \{ not: RUN_LOCK_CHECKSUM \}/g) ?? [];
+    assert.ok(hits.length >= 3, "a surface still shows the lock row");
+  });
+  test("old stored digests replay laundered — raw JSON never renders (V.6)", () => {
+    const w = launderDigest([
+      "Got it — 12 messages.",
+      '3 couldn\'t be read — the model refused the request — 400 {"type":"error","error":{"type":"invalid_request_error","message":"maxItems is not supported"}}',
+      "234 still to read.",
+    ]);
+    assert.deepEqual(w.lines, [
+      "Got it — 12 messages.",
+      "234 still to read.",
+      "3 failed.",
+    ]);
+    assert.equal(w.detail.length, 1);
+    assert.ok(!w.lines.some((l) => l.includes('{"type"')), "raw JSON still renders");
+  });
+  test("new-style digests pass through untouched", () => {
+    const w = launderDigest([
+      "Read 4 entries and filed 12 statements into the index.",
+      "2 failed.",
+    ]);
+    assert.deepEqual(w.lines, [
+      "Read 4 entries and filed 12 statements into the index.",
+      "2 failed.",
+    ]);
+    assert.deepEqual(w.detail, []);
   });
 });
 

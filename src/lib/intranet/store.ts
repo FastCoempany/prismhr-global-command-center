@@ -10,11 +10,13 @@
 
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import type { Claim, DocRef, Topic } from "./types";
+import { RUN_LOCK_CHECKSUM } from "./doctrine";
 import type { ClaimKind, Confidence } from "./doctrine";
 import {
   archiveRollup,
   chicagoDay,
   countryTallies,
+  launderDigest,
   type ArchiveMonth,
   type CountryRow,
   type LedgerEntry,
@@ -383,6 +385,7 @@ export async function ledgerEntries(opts?: {
         },
       }),
       p.intranetCapture.findMany({
+        where: { rawChecksum: { not: RUN_LOCK_CHECKSUM } },
         orderBy: { capturedAt: "desc" },
         take: 500,
         select: { id: true, title: true, origin: true, capturedAt: true, meta: true },
@@ -421,6 +424,13 @@ export async function ledgerEntries(opts?: {
         : c.title || meta.space
           ? [`Got it — ${c.title || meta.space}.`]
           : ["Sent to the brain."];
+      // V.6 covers replayed history too: digests written by earlier builds
+      // carried raw failure text — laundered here, original behind the fold.
+      const washed = launderDigest(
+        Array.isArray(meta.digest) && meta.digest.length
+          ? meta.digest.slice(0, 12)
+          : fallback,
+      );
       entries.push({
         kind: "fed",
         id: c.id,
@@ -428,12 +438,12 @@ export async function ledgerEntries(opts?: {
         space: meta.space ?? "",
         title: c.title,
         origin: c.origin,
-        lines:
-          Array.isArray(meta.digest) && meta.digest.length
-            ? meta.digest.slice(0, 12)
-            : fallback,
+        lines: washed.lines,
         briefs: Array.isArray(meta.briefs) ? meta.briefs.slice(0, 6) : [],
-        detail: Array.isArray(meta.detail) ? meta.detail.slice(0, 12) : [],
+        detail: [
+          ...washed.detail,
+          ...(Array.isArray(meta.detail) ? meta.detail : []),
+        ].slice(0, 12),
       });
     }
 
@@ -458,6 +468,7 @@ export async function archiveDays(): Promise<ArchiveMonth[]> {
         select: { askedAt: true },
       }),
       p.intranetCapture.findMany({
+        where: { rawChecksum: { not: RUN_LOCK_CHECKSUM } },
         orderBy: { capturedAt: "desc" },
         take: 1500,
         select: { capturedAt: true },
@@ -519,6 +530,7 @@ export async function allCaptures(limit = 300): Promise<
   if (!hasDatabaseEnv()) return [];
   try {
     const rows = await getPrisma().intranetCapture.findMany({
+      where: { rawChecksum: { not: RUN_LOCK_CHECKSUM } },
       orderBy: { capturedAt: "desc" },
       take: limit,
       select: {

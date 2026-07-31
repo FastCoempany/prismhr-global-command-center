@@ -97,6 +97,12 @@ export type Origin = (typeof ORIGINS)[number];
 /** The one topic the index is allowed to start with (C7). */
 export const PROSPECT_TOPIC_LABEL = "What prospects ask";
 
+/** The catch-up run lock's sentinel checksum. One catch-up at a time: a hard
+ *  refresh mid-run must WATCH the running pass, never stack a second one on
+ *  top of it — overlapping runs double-read the same entries and starve the
+ *  page of connections. The sentinel row is invisible on every surface. */
+export const RUN_LOCK_CHECKSUM = "brain-run-lock";
+
 // ── ranking weights (Phase 9) ───────────────────────────────────────────────
 // Nothing here references origin. That is C1, in arithmetic.
 export const RANK = {

@@ -20,6 +20,7 @@ import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import { peos } from "@/lib/book";
 import {
   PROMPT_VERSION,
+  RUN_LOCK_CHECKSUM,
   TOPIC_PROMOTE_AT,
   TOPIC_SPLIT_AT,
   type ClaimKind,
@@ -68,6 +69,8 @@ export type RunReport = {
   lines: string[];
   /** How much is still unread after this pass, so the room can keep going. */
   pending?: number;
+  /** Another catch-up already holds the run lock — watch it, don't stack. */
+  busy?: boolean;
   /** V.6 — the excessive version behind "N failed · detail": stage, model,
    *  the full untruncated server error, and which entries. For sharing. */
   detail?: string[];
@@ -1215,6 +1218,60 @@ export async function readTimeAcrossTopics(budget = 2): Promise<RunReport> {
 
 // ═══ the orchestrator ════════════════════════════════════════════════════════
 
+// The run lock. One catch-up at a time — a hard refresh or a second tab must
+// WATCH the running pass, never stack another on top of it. Overlapping runs
+// read the same entries twice, fight for connections, and can starve the page
+// itself. The lock is a sentinel capture row (no new tables), invisible on
+// every surface, with a TTL so a crashed run can never wedge the room.
+const RUN_LOCK_TTL_MS = 240_000;
+
+async function acquireRunLock(): Promise<boolean> {
+  const prisma = getPrisma();
+  const now = Date.now();
+  try {
+    const row = await prisma.intranetCapture.findUnique({
+      where: { rawChecksum: RUN_LOCK_CHECKSUM },
+      select: { id: true, meta: true },
+    });
+    if (!row) {
+      try {
+        await prisma.intranetCapture.create({
+          data: {
+            origin: "paste",
+            raw: "the room's own run lock — not a paste",
+            rawChecksum: RUN_LOCK_CHECKSUM,
+            title: "",
+            meta: { lockedUntil: now + RUN_LOCK_TTL_MS },
+          },
+        });
+        return true;
+      } catch {
+        return false; // two runs raced the create; the other one won
+      }
+    }
+    const until = Number((row.meta as { lockedUntil?: number })?.lockedUntil ?? 0);
+    if (until > now) return false;
+    await prisma.intranetCapture.update({
+      where: { id: row.id },
+      data: { meta: { lockedUntil: now + RUN_LOCK_TTL_MS } },
+    });
+    return true;
+  } catch {
+    return true; // a lock that can't be read must never stop the work itself
+  }
+}
+
+async function releaseRunLock(): Promise<void> {
+  try {
+    await getPrisma().intranetCapture.update({
+      where: { rawChecksum: RUN_LOCK_CHECKSUM },
+      data: { meta: { lockedUntil: 0 } },
+    });
+  } catch {
+    // the TTL frees it either way
+  }
+}
+
 /** Bring the brain up to date: mirror, ingest, read, index, decompose, reconcile.
  *  Bounded on purpose — a big corpus is many small passes rather than one that
  *  times out halfway and leaves the operator guessing what happened. */
@@ -1226,6 +1283,11 @@ export async function runBrain(opts?: {
 }): Promise<RunReport> {
   const bad = await guard();
   if (bad) return { ok: false, lines: [], reason: bad };
+
+  if (!(await acquireRunLock())) {
+    const q = await brainQueue();
+    return { ok: true, busy: true, lines: [], pending: q.pending };
+  }
 
   const deep = opts?.deep === true;
   const deadline = Date.now() + 220_000;
@@ -1246,15 +1308,19 @@ export async function runBrain(opts?: {
   let pending = 0;
   const detail: string[] = [];
   const briefs: string[] = [];
-  for (const [, run] of stages) {
-    const r = await run();
-    lines.push(...r.lines);
-    if (typeof r.pending === "number") pending = r.pending;
-    if (r.detail) detail.push(...r.detail);
-    if (r.briefs) briefs.push(...r.briefs);
-    // A stage that fails does not stop the rest — each writes before the next
-    // begins, so the corpus is always consistent, just possibly less complete.
-    if (!r.ok && r.reason) lines.push(r.reason);
+  try {
+    for (const [, run] of stages) {
+      const r = await run();
+      lines.push(...r.lines);
+      if (typeof r.pending === "number") pending = r.pending;
+      if (r.detail) detail.push(...r.detail);
+      if (r.briefs) briefs.push(...r.briefs);
+      // A stage that fails does not stop the rest — each writes before the next
+      // begins, so the corpus is always consistent, just possibly less complete.
+      if (!r.ok && r.reason) lines.push(r.reason);
+    }
+  } finally {
+    await releaseRunLock();
   }
 
   return {
