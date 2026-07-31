@@ -701,8 +701,7 @@ export function IntranetClient({
               )}
               {pendingNow > 0 && (
                 <span className={styles.itQueue}>
-                  {pendingNow} {pendingNow === 1 ? "entry" : "entries"} it hasn&apos;t
-                  read yet
+                  {`${pendingNow} ${pendingNow === 1 ? "entry" : "entries"} it hasn't read yet`}
                 </span>
               )}
             </div>
