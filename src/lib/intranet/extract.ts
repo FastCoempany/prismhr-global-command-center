@@ -26,8 +26,9 @@ export function extractAvailable(): boolean {
   return Boolean(process.env.ANTHROPIC_API_KEY);
 }
 
-/** Rich documents get the parent brain; app rows are short and already
- *  half-parsed, so they take the light one. */
+/** Opus or better, always (founder-decreed 2026-07-31). Both roster slots
+ *  point at the parent brain now; the split survives only so a future decree
+ *  can raise the rich side without touching the callers. */
 export function modelForOrigin(origin: string): string {
   return origin === "teams" || origin === "meeting" || origin === "demo"
     ? MODEL_EXTRACT_RICH

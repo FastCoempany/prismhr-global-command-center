@@ -13,17 +13,17 @@
 //   C7  prospect questions are first-class intelligence
 
 // ── the model roster ────────────────────────────────────────────────────────
-// Claude is the parent brain. Opus 5 carries every judgment that matters;
-// Fable 5 escalates when the record is large or contradicts itself; Haiku does
-// only mechanical work. A later "cost saving" that quietly downgrades the room
-// fails the doctrine test.
+// Claude is the parent brain. Opus 5 carries every judgment; Fable 5 escalates
+// when the record is large or contradicts itself. OPUS OR BETTER, ALWAYS —
+// founder-decreed 2026-07-31: Haiku is never a model this room uses. A later
+// "cost saving" that quietly downgrades the room fails the doctrine test.
 export const MODEL_EXTRACT_RICH = "claude-opus-5";
-export const MODEL_EXTRACT_LIGHT = "claude-haiku-4-5";
+export const MODEL_EXTRACT_LIGHT = "claude-opus-5";
 export const MODEL_PLAN = "claude-opus-5";
 export const MODEL_SYNTH = "claude-opus-5";
 export const MODEL_SYNTH_HARD = "claude-fable-5";
 export const MODEL_TOPIC = "claude-opus-5";
-export const MODEL_SEGMENT = "claude-haiku-4-5";
+export const MODEL_SEGMENT = "claude-opus-5";
 
 // ── the thresholds ──────────────────────────────────────────────────────────
 /** Documents that must want a proposed topic before it joins the rail. */
