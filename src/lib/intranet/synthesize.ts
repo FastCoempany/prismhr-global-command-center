@@ -170,11 +170,10 @@ const SCHEMA = {
   required: ["answer", "citations", "reasoning", "setAside", "confidence", "gaps"],
   properties: {
     answer: { type: "string" },
-    citations: { type: "array", maxItems: 20, items: { type: "integer" } },
+    citations: { type: "array", items: { type: "integer" } },
     reasoning: { type: "string" },
     setAside: {
       type: "array",
-      maxItems: 10,
       items: {
         type: "object",
         additionalProperties: false,
@@ -183,7 +182,7 @@ const SCHEMA = {
       },
     },
     confidence: { type: "string", enum: ["firm", "mixed", "thin"] },
-    gaps: { type: "array", maxItems: 3, items: { type: "string" } },
+    gaps: { type: "array", items: { type: "string" } },
   },
 } as const;
 

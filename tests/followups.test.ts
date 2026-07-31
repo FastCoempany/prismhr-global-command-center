@@ -320,13 +320,18 @@ describe("the Capture page is the shelf the grabs live on", () => {
   const page = readFileSync(join(root, "src/app/intake/page.tsx"), "utf8");
   const css = readFileSync(join(root, "src/app/command-center.module.css"), "utf8");
 
-  test("all three grabs sit on it, each with what it refuses", () => {
-    for (const g of ["Grab Outlook thread", "Grab SF activity", "Grab Teams thread"]) {
+  test("all four grabs sit on it, each with what it takes and refuses", () => {
+    for (const g of [
+      "Grab Outlook thread",
+      "Grab SF activity",
+      "Grab Teams thread",
+      "Grab Sales Nav intent",
+    ]) {
       assert.ok(shelf.includes(g), `${g} left the shelf`);
     }
-    // one type declaration + one value per tool
-    assert.equal((shelf.match(/refuses:/g) ?? []).length, 4, "a grab hides its refusal");
-    assert.equal((shelf.match(/takes:/g) ?? []).length, 4);
+    // one type declaration + one value per tool — four grabs since Sales Nav
+    assert.equal((shelf.match(/refuses:/g) ?? []).length, 5, "a grab hides its refusal");
+    assert.equal((shelf.match(/takes:/g) ?? []).length, 5, "a grab hides what it takes");
   });
   test("the paste workflow is gone — filing happens at the account", () => {
     assert.ok(!existsSync(join(root, "src/app/intake/intake-client.tsx")));

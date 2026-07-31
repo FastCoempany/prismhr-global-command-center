@@ -554,16 +554,18 @@ describe("the restructure holds", () => {
     assert.ok(intake.includes('current="Capture"'));
     assert.ok(intake.includes('href="/room"'));
   });
-  test("the main row is six: HomeRoom, Accounts, Playbook, Intranet, Pricing, Demos", () => {
+  test("the main row is seven: HomeRoom, Accounts, Groundwork, Playbook, Intranet, Pricing, Demos", () => {
     // Everything before the archive group is a place the operator works. The
-    // count is the contract — a new tab has to earn its way in on purpose, and
-    // the Intranet did: it is the app's brain, asked for by name.
+    // count is the contract — a new tab has to earn its way in on purpose.
+    // The Intranet did (the app's brain, asked for by name), and Groundwork
+    // did (the prospecting room, founder-directed).
     const main = nav.split("app-route-archive")[0];
     const links = [...main.matchAll(/href="(\/[a-z]*)"/g)].map((m) => m[1]);
     assert.deepEqual(links, [
       "/",
       "/room",
       "/accounts",
+      "/groundwork",
       "/playbook",
       "/intranet",
       "/pricing",

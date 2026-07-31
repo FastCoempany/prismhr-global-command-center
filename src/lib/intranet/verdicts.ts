@@ -39,7 +39,6 @@ const SCHEMA = {
   properties: {
     pairs: {
       type: "array",
-      maxItems: 60,
       items: {
         type: "object",
         additionalProperties: false,

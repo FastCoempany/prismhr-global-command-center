@@ -72,9 +72,9 @@ const PLAN_SCHEMA = {
       type: "string",
       enum: ["lookup", "comparative", "counterfactual", "status", "enumerate"],
     },
-    topicIds: { type: "array", maxItems: 6, items: { type: "string" } },
-    entities: { type: "array", maxItems: 10, items: { type: "string" } },
-    phrases: { type: "array", maxItems: 8, items: { type: "string" } },
+    topicIds: { type: "array", items: { type: "string" } },
+    entities: { type: "array", items: { type: "string" } },
+    phrases: { type: "array", items: { type: "string" } },
     timeframe: {
       type: ["object", "null"],
       additionalProperties: false,
