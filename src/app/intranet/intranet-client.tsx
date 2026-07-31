@@ -238,6 +238,16 @@ export function IntranetClient({
         // A sweep pass looks around the app and the Playbook first; catch-up
         // passes give their whole clock to reading.
         const r = await runBrain(pass === 0 && sweep ? undefined : { sweep: false });
+        if (r.busy) {
+          // another catch-up already holds the room — watch it, don't stack
+          if (typeof r.pending === "number") setPendingNow(r.pending);
+          setRunLines([
+            ...all,
+            "Already catching up — the running pass finishes on its own.",
+          ]);
+          router.refresh();
+          break;
+        }
         for (const l of r.lines) {
           if (/^(Read |The index grew)/.test(l) || !seenLine.has(l)) {
             all.push(l);

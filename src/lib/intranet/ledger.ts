@@ -52,6 +52,37 @@ export type LedgerEntry =
       detail: string[];
     };
 
+/** V.6 applied to REPLAYED history: digests stored by earlier builds carried
+ *  failure language and even raw backend JSON. The decree covers the whole
+ *  record — so the replay layer launders what old code wrote: failure lines
+ *  collapse to the one word, and the original text moves behind the detail
+ *  fold where it belongs. New-style digests pass through untouched. */
+export function launderDigest(stored: string[]): { lines: string[]; detail: string[] } {
+  const lines: string[] = [];
+  const detail: string[] = [];
+  let failed = 0;
+  let anyRaw = false;
+  for (const l of stored) {
+    const counted = /^(\d+) couldn't be read\b/.exec(l);
+    const raw =
+      /\{"type"\s*:\s*"error"/.test(l) ||
+      /invalid_request_error/.test(l) ||
+      /"message"\s*:/.test(l) ||
+      /^The reading (pass )?failed\b/.test(l) ||
+      /couldn't be read\b/.test(l);
+    if (counted || raw) {
+      if (counted) failed += Number(counted[1]);
+      else anyRaw = true;
+      detail.push(l);
+      continue;
+    }
+    lines.push(l);
+  }
+  if (failed > 0) lines.push(`${failed} failed.`);
+  else if (anyRaw) lines.push("failed.");
+  return { lines, detail };
+}
+
 /** The sent stamp's provenance (V.4): where a paste came from, in words. */
 export function sentFrom(space: string, origin: string): string {
   if (space) return `from ${space}`;
