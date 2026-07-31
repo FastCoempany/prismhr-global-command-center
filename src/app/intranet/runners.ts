@@ -228,7 +228,7 @@ export async function syncApp(budget = 400): Promise<RunReport> {
 
     const { created, updated, skipped } = await upsertDocs(drafts);
     lines.push(
-      `Looked around the app — ${created} new, ${updated} changed, ${skipped} already known.`,
+      `Looked around the app — ${created} new, ${updated} changed, ${skipped} already in hand.`,
     );
 
     // C6 · a mirror whose home row has gone keeps its place and gains a stamp.
@@ -496,70 +496,83 @@ export async function extractPending(
     let outOfTime = false;
     const failures = new Map<string, number>();
 
-    for (const doc of pending) {
+    // Reads run four at a time — the model is the slow part and the calls are
+    // independent, so a pass gets four entries per model-latency instead of
+    // one. Persistence stays sequential, one document at a time, below.
+    const CONCURRENT_READS = 4;
+    for (let i = 0; i < pending.length; i += CONCURRENT_READS) {
       if (opts?.deadlineMs && Date.now() > opts.deadlineMs) {
         outOfTime = true;
         break;
       }
-      let result;
-      try {
-        result = await runExtract({
-          body: doc.body,
-          origin: doc.origin,
-          space: doc.space,
-          occurredAt: iso(doc.occurredAt),
-          accountName: nameById.get(doc.accountId) ?? undefined,
-          topics,
-        });
-      } catch (e) {
-        const why = reasonOf(e);
-        failures.set(why, (failures.get(why) ?? 0) + 1);
-        continue;
-      }
-
-      // Re-reading a document replaces its claims rather than doubling them.
-      // This is the one place rows leave a table, and they leave to be rewritten
-      // in the same breath — the document, and everything it said, remains.
-      await prisma.intranetClaim.deleteMany({ where: { docId: doc.id } });
-
-      const topicIds = result.topicMatches.filter((id) =>
-        topics.some((t) => t.id === id),
+      const batch = pending.slice(i, i + CONCURRENT_READS);
+      const settled = await Promise.allSettled(
+        batch.map((d) =>
+          runExtract({
+            body: d.body,
+            origin: d.origin,
+            space: d.space,
+            occurredAt: iso(d.occurredAt),
+            accountName: nameById.get(d.accountId) ?? undefined,
+            topics,
+          }),
+        ),
       );
+      for (let b = 0; b < batch.length; b += 1) {
+        const doc = batch[b];
+        const s = settled[b];
+        if (s.status === "rejected") {
+          const why = reasonOf(s.reason);
+          failures.set(why, (failures.get(why) ?? 0) + 1);
+          continue;
+        }
+        const result = s.value;
 
-      for (const c of result.claims) {
-        await prisma.intranetClaim.create({
+        // Re-reading a document replaces its claims rather than doubling them.
+        // This is the one place rows leave a table, and they leave to be rewritten
+        // in the same breath — the document, and everything it said, remains.
+        await prisma.intranetClaim.deleteMany({ where: { docId: doc.id } });
+
+        const topicIds = result.topicMatches.filter((id) =>
+          topics.some((t) => t.id === id),
+        );
+
+        for (const c of result.claims) {
+          await prisma.intranetClaim.create({
+            data: {
+              docId: doc.id,
+              text: c.text,
+              speaker: c.speaker,
+              saidAt: doc.occurredAt,
+              kind: c.kind,
+              confidence: c.confidence,
+              entities: c.entities,
+              topicIds,
+              askShape: c.askShape,
+              offsetStart: c.offsetStart,
+              offsetEnd: c.offsetEnd,
+            },
+          });
+          claimsMade += 1;
+        }
+
+        // Proposals become pending topics; the tally is what promotes them.
+        for (const p of result.topicProposals)
+          await tallyProposal(p.label, p.why, doc.id);
+
+        // Prospect questions join the seeded family by their shape (C7).
+        await fileProspectQuestions(doc.id);
+
+        await prisma.intranetDoc.update({
+          where: { id: doc.id },
           data: {
-            docId: doc.id,
-            text: c.text,
-            speaker: c.speaker,
-            saidAt: doc.occurredAt,
-            kind: c.kind,
-            confidence: c.confidence,
-            entities: c.entities,
-            topicIds,
-            askShape: c.askShape,
-            offsetStart: c.offsetStart,
-            offsetEnd: c.offsetEnd,
+            extractedAt: new Date(),
+            promptVersion: PROMPT_VERSION,
+            title: doc.title || result.summary.slice(0, 90),
           },
         });
-        claimsMade += 1;
+        read += 1;
       }
-
-      // Proposals become pending topics; the tally is what promotes them.
-      for (const p of result.topicProposals) await tallyProposal(p.label, p.why, doc.id);
-
-      // Prospect questions join the seeded family by their shape (C7).
-      await fileProspectQuestions(doc.id);
-
-      await prisma.intranetDoc.update({
-        where: { id: doc.id },
-        data: {
-          extractedAt: new Date(),
-          promptVersion: PROMPT_VERSION,
-          title: doc.title || result.summary.slice(0, 90),
-        },
-      });
-      read += 1;
     }
 
     if (read > 0)
@@ -1082,14 +1095,19 @@ export async function readTimeAcrossTopics(budget = 2): Promise<RunReport> {
 /** Bring the brain up to date: mirror, ingest, read, index, decompose, reconcile.
  *  Bounded on purpose — a big corpus is many small passes rather than one that
  *  times out halfway and leaves the operator guessing what happened. */
-export async function runBrain(opts?: { deep?: boolean }): Promise<RunReport> {
+export async function runBrain(opts?: {
+  deep?: boolean;
+  /** false = a catch-up pass: skip the app/Playbook sweeps done moments ago —
+   *  the clock belongs to reading (IV.3). */
+  sweep?: boolean;
+}): Promise<RunReport> {
   const bad = await guard();
   if (bad) return { ok: false, lines: [], reason: bad };
 
   const deep = opts?.deep === true;
   const deadline = Date.now() + 220_000;
   const lines: string[] = [];
-  const stages: [string, () => Promise<RunReport>][] = [
+  const all: [string, () => Promise<RunReport>][] = [
     ["app", () => syncApp(deep ? 1500 : 300)],
     ["playbook", () => ingestPlaybook()],
     ["read", () => extractPending(24, { deadlineMs: deadline })],
@@ -1097,6 +1115,10 @@ export async function runBrain(opts?: { deep?: boolean }): Promise<RunReport> {
     ["open", () => decomposeTopics(deep ? 4 : 1)],
     ["time", () => readTimeAcrossTopics(deep ? 4 : 1)],
   ];
+  const stages =
+    opts?.sweep === false
+      ? all.filter(([name]) => name === "read" || name === "index")
+      : all;
 
   let pending = 0;
   for (const [, run] of stages) {
