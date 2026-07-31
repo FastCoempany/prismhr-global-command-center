@@ -10,7 +10,11 @@
 import { getAppAccess } from "@/lib/auth";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import { peos } from "@/lib/book";
-import { CANDIDATE_CAP } from "@/lib/intranet/doctrine";
+import {
+  CANDIDATE_CAP,
+  PROMPT_VERSION,
+  RUN_LOCK_CHECKSUM,
+} from "@/lib/intranet/doctrine";
 import {
   normalizeCapture,
   unseenMessages,
@@ -609,6 +613,60 @@ export async function intranetContents(
     };
   });
   return { ok: true, total, items };
+}
+
+// ── the pulse (the bench gadget's read side) ────────────────────────────────
+// The workers write a status blob on the run-lock sentinel as they work; the
+// instrument on the page polls this every two seconds. Read-only.
+
+export type PulseReply = {
+  active: boolean;
+  kind: string;
+  startedAt: number;
+  total: number;
+  done: number;
+  failed: number;
+  now: string;
+  unit: string;
+  lanes: { src: string; what: string; sinceMs: number }[];
+  log: { at: number; text: string; bad?: boolean }[];
+  detail: string[];
+  pending: number;
+};
+
+export async function intranetPulse(): Promise<PulseReply | null> {
+  if (!(await canRead()) || !hasDatabaseEnv()) return null;
+  try {
+    const p = getPrisma();
+    const [row, pending] = await Promise.all([
+      p.intranetCapture.findUnique({
+        where: { rawChecksum: RUN_LOCK_CHECKSUM },
+        select: { meta: true },
+      }),
+      p.intranetDoc.count({
+        where: {
+          OR: [{ extractedAt: null }, { promptVersion: { not: PROMPT_VERSION } }],
+        },
+      }),
+    ]);
+    const s = ((row?.meta ?? {}) as { status?: Partial<PulseReply> }).status ?? {};
+    return {
+      active: Boolean(s.active),
+      kind: s.kind ?? "",
+      startedAt: s.startedAt ?? 0,
+      total: s.total ?? 0,
+      done: s.done ?? 0,
+      failed: s.failed ?? 0,
+      now: s.now ?? "",
+      unit: s.unit ?? "",
+      lanes: Array.isArray(s.lanes) ? s.lanes.slice(0, 4) : [],
+      log: Array.isArray(s.log) ? s.log.slice(0, 40) : [],
+      detail: Array.isArray(s.detail) ? s.detail.slice(0, 20) : [],
+      pending,
+    };
+  } catch {
+    return null;
+  }
 }
 
 // ── the self-check (Phase 13, finally wired) ────────────────────────────────

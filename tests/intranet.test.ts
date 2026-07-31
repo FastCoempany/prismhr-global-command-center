@@ -1071,7 +1071,9 @@ describe("the chain that fills the brain is wired end to end", () => {
     // Inside the stage loop nothing may return: a stage that fails records its
     // reason and the next one still runs.
     const loop =
-      /for \(const \[, run\] of stages\) \{[\s\S]*?\n  \}/.exec(orchestrator)?.[0] ?? "";
+      /for \(const \[name, run\] of stages\) \{[\s\S]*?\n    \}/.exec(
+        orchestrator,
+      )?.[0] ?? "";
     assert.ok(loop, "the stage loop moved");
     assert.ok(!/\breturn\b/.test(loop), "one bad stage aborts the pass");
   });
@@ -2106,6 +2108,47 @@ describe("one catch-up at a time, and replayed history obeys V.6", () => {
       "2 failed.",
     ]);
     assert.deepEqual(w.detail, []);
+  });
+});
+
+describe("the bench gadget is wired to the truth", () => {
+  const runners = readFileSync(join(root, "src/app/intranet/runners.ts"), "utf8");
+  const actions = readFileSync(join(root, "src/app/intranet/actions.ts"), "utf8");
+  const client = readFileSync(join(root, "src/app/intranet/intranet-client.tsx"), "utf8");
+
+  test("the workers write the pulse as they work — lanes, counts, log", () => {
+    assert.ok(runners.includes("async function pulse("), "nobody writes status");
+    assert.ok(runners.includes("readPulse"), "nobody reads it back");
+    assert.ok(/lanes: held\.map/.test(runners), "the lanes never say what they hold");
+    assert.ok(
+      runners.includes("the total shrinks so 100 stays honest"),
+      "a failure lets the bar lie",
+    );
+    assert.ok(/kind: "sendit"/.test(runners), "a paste never stamps its own run");
+    assert.ok(
+      runners.includes("Your brief just landed"),
+      "the send-it run never announces the brief",
+    );
+  });
+  test("the instrument never gets to break the machine", () => {
+    const p = /async function pulse\([\s\S]*?\n\}/.exec(runners)?.[0] ?? "";
+    assert.ok(p.includes("catch"), "a status write failure would kill the read");
+  });
+  test("the page reads the pulse — it never invents it", () => {
+    assert.ok(actions.includes("export async function intranetPulse"));
+    assert.ok(client.includes("intranetPulse"), "the gadget has no wire");
+    assert.ok(/setInterval\(read, 2000\)/.test(client), "the two-second poll is gone");
+  });
+  test("the gadget is docked, stamps its run, and takes you to it on Send it", () => {
+    assert.ok(client.includes("itBgPlate"), "the gadget lost its plate");
+    assert.ok(client.includes("scrollIntoView"), "Send it no longer brings you to it");
+    assert.ok(client.includes("Send-it run — your paste"));
+    assert.ok(client.includes("Refresh run — the whole backlog"));
+    assert.ok(client.includes("At rest — caught up"), "rest is not stated honestly");
+  });
+  test("a failure holds the gadget open until it is seen (V.6)", () => {
+    assert.ok(client.includes("failHold"), "a failed run folds away unseen");
+    assert.ok(client.includes("dismiss"));
   });
 });
 
