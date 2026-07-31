@@ -953,10 +953,18 @@ describe("the chain that fills the brain is wired end to end", () => {
       assert.ok(orchestrator.includes(fn), `runBrain never calls ${fn}`);
     }
   });
-  test("the backlog line reads as words, not a suffix splice", () => {
+  test("the backlog line is ONE string — JSX can never eat its spaces", () => {
+    // The first fix kept separate JSX expressions and text; prettier wrapped
+    // the line and JSX deleted the whitespace at the boundary — "entriesit"
+    // survived a "fix" whose test checked source, not the render. A single
+    // template literal has no boundary to eat.
     assert.ok(
-      /\{pendingNow === 1 \? "entry" : "entries"\}/.test(client),
-      "the entry/entries splice is back — JSX eats the space",
+      client.includes("} it hasn't read yet`"),
+      "the backlog sentence is no longer one unsplittable string",
+    );
+    assert.ok(
+      !/entries"\}\s*\n\s*it/.test(client),
+      "an expression/text line boundary is back in the backlog line",
     );
   });
   test("one control, and it keeps going until the backlog is gone (IV.3)", () => {
