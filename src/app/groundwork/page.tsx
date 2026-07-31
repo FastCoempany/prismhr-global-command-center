@@ -20,8 +20,9 @@ import {
   loadTouches,
 } from "@/lib/today/overlay";
 import { clockShort, userDayKey } from "@/lib/tz";
+import { sfAccountUrl } from "@/lib/salesforce";
 import { buildQueue, currentBand, moveKey, type Band } from "@/lib/groundwork/day";
-import { buildFile, workedStamp } from "@/lib/groundwork/file";
+import { READOUT_READ_KEY, buildFile, workedStamp } from "@/lib/groundwork/file";
 import { proximityMark } from "@/lib/groundwork/proximity";
 import {
   intentFor,
@@ -44,7 +45,7 @@ import {
   type WireItem,
 } from "@/lib/groundwork/wire";
 import { buildReadout, lint, readoutText } from "@/lib/groundwork/readout";
-import { attachWireToAccount, markWorked, sweepWire } from "./actions";
+import { attachWireToAccount, markReadoutRead, markWorked, sweepWire } from "./actions";
 import { CopyStamp } from "./copy-stamp";
 import styles from "./groundwork.module.css";
 
@@ -56,6 +57,19 @@ const BAND_LABEL: Record<Band, string> = {
   two: "After 2:00 · research & filing",
 };
 const BAND_ORDER: Band[] = ["now", "eleven", "two"];
+
+// A date in prose — month name spelled out, per the §3 bar. Day-only ISO reads
+// in UTC noon; full timestamps read in Chicago.
+const monthDay = (iso: string): string => {
+  const dayOnly = iso.length === 10;
+  const t = Date.parse(dayOnly ? `${iso}T12:00:00Z` : iso);
+  if (Number.isNaN(t)) return "";
+  return new Date(t).toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    timeZone: dayOnly ? "UTC" : "America/Chicago",
+  });
+};
 
 export default async function GroundworkPage({
   searchParams,
@@ -96,7 +110,11 @@ export default async function GroundworkPage({
   for (const [id, notes] of notesMap) {
     if (id.startsWith(WIRE_NS)) {
       const item = parseWireBody(notes[0]?.body ?? "");
-      if (item) wireItems.push(item);
+      if (item) {
+        // A malformed envelope may ship at:"" — the note's own clock stands in.
+        if (!item.at) item.at = notes[0]?.createdAt ?? "";
+        wireItems.push(item);
+      }
       continue;
     }
     if (id.startsWith(INST_NS)) {
@@ -124,12 +142,17 @@ export default async function GroundworkPage({
   const intentById = new Map<string, IntentSignal>();
   for (const p of peos) {
     const notes = accountNotes.get(p.id);
+    // SN grabs and wire filings have their own parsers — they never join the
+    // mail corpus, where their glyph heads would read as inbound messages.
+    const intelNotes = (notes ?? []).filter(
+      (n) => !n.source.startsWith("salesnav") && n.source !== "wire",
+    );
     const acctTouches = touchesByAccount.get(p.id);
-    if (notes?.length || acctTouches?.length) {
+    if (intelNotes.length || acctTouches?.length) {
       intelById.set(
         p.id,
         dealIntelFor(p.id, p.name, {
-          acctNotes: (notes ?? []).map((n, i) => ({
+          acctNotes: intelNotes.map((n, i) => ({
             id: `${p.id}:${i}`,
             body: n.body,
             createdAt: n.createdAt,
@@ -149,7 +172,11 @@ export default async function GroundworkPage({
     if (sig) intentById.set(p.id, sig);
   }
 
-  const { items: queue, overflow } = buildQueue({
+  const {
+    items: queue,
+    overflow,
+    all: rankedAll,
+  } = buildQueue({
     accounts: peos,
     intelById,
     notesById: accountNotes,
@@ -186,17 +213,46 @@ export default async function GroundworkPage({
         })
       : null;
 
-  // The readout — one builder for the drawer AND every file's pull tab.
-  const outreachAccountIds = new Set(touchesByAccount.keys());
+  const idToName = (id: string) => getPeo(id)?.name ?? id;
+
+  // The readout — one builder for the drawer AND every file's pull tab. It
+  // reads the UNCAPPED ranked list, so a file's paragraph always has its
+  // right-hand side in the full readout. "Open conversation" means a live
+  // thread — an archived one is closed, not open.
+  const outreachAccountIds = new Set<string>();
+  for (const t of touches) {
+    const m = /^outreach:(.+)$/.exec(t.subjectKey);
+    if (m && t.status !== "archived") outreachAccountIds.add(m[1]);
+  }
   const weekAgo = now.getTime() - 7 * 86_400_000;
   const partnerTouches = touches.filter(
     (t) =>
       t.subjectKey.startsWith("partner-outreach:") &&
       Date.parse(t.contactedAt) >= weekAgo,
   );
+  // The dated week ahead — follow-ups on live threads plus decisions the
+  // record carries, inside 7 days, phrased plainly.
+  const withinWeek = (iso: string | null | undefined): boolean => {
+    if (!iso) return false;
+    const t = Date.parse(iso.length === 10 ? `${iso}T12:00:00Z` : iso);
+    if (Number.isNaN(t)) return false;
+    const days = (t - now.getTime()) / 86_400_000;
+    return days >= -0.5 && days <= 7;
+  };
+  const nextSevenDays: string[] = [];
+  for (const t of touches) {
+    const m = /^outreach:(.+)$/.exec(t.subjectKey);
+    if (!m || t.status === "archived" || !withinWeek(t.followUpAt)) continue;
+    nextSevenDays.push(`${idToName(m[1])} — dated follow-up ${monthDay(t.followUpAt)}`);
+  }
+  for (const [id, intel] of intelById) {
+    const d = intel.timing?.value.dateIso;
+    if (d && withinWeek(d))
+      nextSevenDays.push(`${idToName(id)} — their decision is dated ${monthDay(d)}`);
+  }
   const readout = buildReadout({
     accounts: peos,
-    queue,
+    queue: rankedAll,
     intelById,
     intentById,
     outreachAccountIds,
@@ -204,10 +260,12 @@ export default async function GroundworkPage({
     partnerUpdatesReplied: partnerTouches.filter(
       (t) => t.status === "replied" || t.status === "responded",
     ).length,
+    nextSevenDays: nextSevenDays.slice(0, 6),
     now,
   });
   const readoutPayload = readoutText(readout);
   const lintIssues = lint(readoutPayload);
+  const readoutReadAt = doneTimes.get(READOUT_READ_KEY);
 
   const nudge = intentReadDue(accountNotes, now);
   const wireOrdered = orderWire(wireItems);
@@ -215,7 +273,19 @@ export default async function GroundworkPage({
   const inst = institutionCard(institutions, now);
   const band = currentBand(now);
   const dayKey = userDayKey(now);
-  const idToName = (id: string) => getPeo(id)?.name ?? id;
+  // A wire timestamp: today's items carry the clock, older ones their date.
+  const wireWhen = (at: string): string => {
+    const t = Date.parse(at);
+    if (Number.isNaN(t)) return "";
+    const d = new Date(t);
+    return userDayKey(d) === dayKey
+      ? clockShort(at)
+      : d.toLocaleDateString("en-US", {
+          month: "numeric",
+          day: "numeric",
+          timeZone: "America/Chicago",
+        });
+  };
 
   return (
     <>
@@ -226,12 +296,10 @@ export default async function GroundworkPage({
           <div>
             <div className={styles.ribbon}>
               <span className={styles.ribbonLabel}>
-                The queue · all {peos.length}, ranked
+                The queue · ranked from the whole book
               </span>
               <span className={styles.ribbonRule} />
-              <span className={styles.ribbonCount}>
-                {queue.length} in front · {peos.length - queue.length} held back
-              </span>
+              <span className={styles.ribbonCount}>{queue.length} in front</span>
             </div>
 
             {nudge && (
@@ -239,17 +307,19 @@ export default async function GroundworkPage({
                 <span className={styles.dueBar} />
                 <span>
                   ▤ <b>Intent read due</b> — run the Sales Nav grab (installed on the{" "}
-                  <Link href="/intake">Capture page</Link>), paste it in the{" "}
-                  <Link href="/intranet">Intranet</Link>, and the queue re-ranks on who is
-                  reading us. Ten minutes.
+                  <Link href="/intake">Capture page</Link>). An account&rsquo;s rows
+                  pasted at the <Link href="/">HomeRoom</Link> ⚡ re-rank this queue on
+                  who is reading us; the full snapshot parks in the{" "}
+                  <Link href="/intranet">Intranet</Link> for the record. Ten minutes.
                 </span>
               </div>
             )}
 
             {BAND_ORDER.map((b) => {
               const items = queue.filter((q) => q.band === b);
+              const past = BAND_ORDER.indexOf(b) < BAND_ORDER.indexOf(band);
               return (
-                <div key={b}>
+                <div key={b} className={past ? styles.bandPast : undefined}>
                   <div className={styles.band}>
                     <span
                       className={`${styles.bandLabel} ${b === band ? styles.bandNow : ""}`}
@@ -267,7 +337,7 @@ export default async function GroundworkPage({
                         const acct = getPeo(q.accountId);
                         const prox = acct ? proximityMark(acct) : null;
                         const focused = focusItem?.accountId === q.accountId;
-                        const off = b === "now" && i === 0;
+                        const off = b === band && i === 0;
                         return (
                           <Link
                             key={q.accountId}
@@ -285,7 +355,8 @@ export default async function GroundworkPage({
                                 styles.gauge,
                                 q.intent
                                   ? styles.gaugeBlue
-                                  : q.weight >= 85
+                                  : q.ruleId === "decision-window" ||
+                                      q.ruleId === "meeting-prep"
                                     ? styles.gaugeAmber
                                     : "",
                               ]
@@ -297,7 +368,9 @@ export default async function GroundworkPage({
                               {q.intent && (
                                 <span className={styles.intent}>
                                   {q.intent.level === "high" ? "High" : "Moderate"} intent
-                                  {q.intent.activities ? ` · ${q.intent.activities}` : ""}
+                                  {q.intent.activities
+                                    ? ` · ${q.intent.activities} activities`
+                                    : ""}
                                 </span>
                               )}{" "}
                               {prox && <span className={styles.prox}>{prox}</span>}
@@ -322,9 +395,9 @@ export default async function GroundworkPage({
             {overflow > 0 && (
               <p className={styles.queueFoot}>
                 And {overflow} more that can wait — nothing is hidden, it just is not in
-                front of you. Blue marks come from your pasted Sales Nav read; green means
-                meeting in person is nearly free. Proximity breaks ties; it never sets
-                priority.
+                front of you. A blue mark means their people are reading us, from your
+                pasted Sales Nav read; &ldquo;your metro&rdquo; means meeting in person is
+                nearly free. Proximity breaks ties; it never sets priority.
               </p>
             )}
 
@@ -353,7 +426,7 @@ export default async function GroundworkPage({
                 {wireOrdered.slice(0, 3).map((w) => (
                   <div key={w.url} className={styles.wireItem}>
                     <span className={styles.wireSrc}>
-                      {w.source} · {clockShort(w.at) || w.at.slice(0, 10)}
+                      {w.source} · {wireWhen(w.at) || w.at.slice(0, 10)}
                       {w.accountIds.slice(0, 2).map((id) => (
                         <span key={id} className={styles.wtag}>
                           {idToName(id)}
@@ -405,13 +478,15 @@ export default async function GroundworkPage({
             <div className={styles.ribbon}>
               <span className={styles.ribbonLabel}>The institutions</span>
               <span className={styles.ribbonRule} />
-              <span className={styles.ribbonCount}>next 7 days</span>
+              <span className={styles.ribbonCount}>
+                {inst?.eventSoon ? "next 7 days" : "standing"}
+              </span>
             </div>
             {inst ? (
               <div className={styles.instCard}>
                 <b>{inst.inst.name}</b>
                 {inst.inst.nextEventIso && inst.eventSoon
-                  ? ` — gathering ${inst.inst.nextEventIso}.`
+                  ? ` — gathering ${monthDay(inst.inst.nextEventIso)}.`
                   : "."}{" "}
                 {inst.inst.note ?? ""}
               </div>
@@ -429,7 +504,7 @@ export default async function GroundworkPage({
               <span className={styles.ribbonRule} />
               {lintIssues.length > 0 && (
                 <span className={styles.ribbonCount}>
-                  {lintIssues.length} line{lintIssues.length === 1 ? "" : "s"} owe their
+                  {lintIssues.length} flag{lintIssues.length === 1 ? "" : "s"} for the
                   reader
                 </span>
               )}
@@ -453,7 +528,16 @@ export default async function GroundworkPage({
                     ))}
                   </div>
                 ))}
-                <CopyStamp payload={readoutPayload} label="Copy the readout" accent />
+                <CopyStamp
+                  payload={readoutPayload}
+                  label="Copy the readout"
+                  action={canWrite ? markReadoutRead : undefined}
+                />
+                {readoutReadAt && (
+                  <p className={styles.actNote}>
+                    Last read to Russ {monthDay(readoutReadAt)}.
+                  </p>
+                )}
               </div>
             </details>
           </div>
@@ -481,6 +565,21 @@ export default async function GroundworkPage({
                   {file.composed.payload}
                 </div>
                 <div className={styles.people}>
+                  {file.threadCount >= 1 && (
+                    <span
+                      className={[
+                        styles.multi,
+                        file.threadCount === 1
+                          ? styles.multiRed
+                          : file.threadCount === 2
+                            ? styles.multiAmber
+                            : styles.multiGreen,
+                      ].join(" ")}
+                      title={`${file.threadCount} ${file.threadCount === 1 ? "person carries" : "people carry"} this conversation`}
+                    >
+                      MULTI
+                    </span>
+                  )}
                   {file.people.map((person) => (
                     <span
                       key={person.name}
@@ -509,15 +608,26 @@ export default async function GroundworkPage({
                     }
                   />
                   {(file.composed.kind === "send-draft" ||
-                    file.composed.kind === "reply-frame" ||
-                    file.composed.kind === "relay-note") && (
+                    file.composed.kind === "reply-frame") &&
+                    file.contactEmail && (
+                      <a
+                        className={styles.btn2nd}
+                        href={`mailto:${encodeURIComponent(file.contactEmail)}?subject=${encodeURIComponent(
+                          `${file.name} — from Groundwork`,
+                        )}&body=${encodeURIComponent(file.composed.payload)}`}
+                      >
+                        Draft in your mail app — addressed to {file.composed.to}
+                      </a>
+                    )}
+                  {file.composed.kind === "ride-ask" && sfAccountUrl(file.accountId) && (
                     <a
                       className={styles.btn2nd}
-                      href={`mailto:?subject=${encodeURIComponent(
-                        `${file.name} — from Groundwork`,
-                      )}&body=${encodeURIComponent(file.composed.payload)}`}
+                      href={sfAccountUrl(file.accountId) ?? "#"}
+                      target="_blank"
+                      rel="noreferrer"
                     >
-                      Compose in your mail app — pre-filled
+                      Open the account in Salesforce — the owner&rsquo;s name is printed
+                      on it
                     </a>
                   )}
                   <Link

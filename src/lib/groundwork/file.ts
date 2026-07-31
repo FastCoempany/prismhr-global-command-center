@@ -7,10 +7,11 @@
 import type { Peo } from "@/lib/book";
 import type { DealIntel } from "@/lib/intel/types";
 import { getDemand, researchGeneratedAt } from "@/lib/book/research";
+import { redactMoney } from "@/lib/intel/lexicon";
 import { clockShort, userDayKey } from "@/lib/tz";
 import type { IntentSignal } from "./signals";
 import type { QueueItem } from "./day";
-import { composeFor, type Composed } from "./compose";
+import { composeFor, WIDENING_LINE, type Composed } from "./compose";
 import { paragraphFor } from "./readout";
 import { WIRE_NS, type WireItem } from "./wire";
 
@@ -27,6 +28,8 @@ export type FileModel = {
   composed: Composed;
   people: FilePerson[];
   singleThread: boolean;
+  threadCount: number; // known people carrying the conversation (MULTI ladder)
+  contactEmail: string; // the book primary's email, for a truly addressed mailto
   russ: string; // the To-Russ pull tab paragraph (shared builder)
   history: FileHistoryLine[]; // oldest → newest, capped
 };
@@ -86,22 +89,32 @@ export function buildFile(
 ): FileModel {
   const { queueItem, intel, intent, notes, touches, wire, contacts, laneDate } = deps;
 
-  // Sources line — provenance, computed (spec F1).
+  // Sources line — provenance, computed (spec F1): it lists only stores that
+  // actually contributed, labeled as what they are.
   const sources: string[] = [];
-  const newestNote = notes[0];
-  const pasteNotes = notes.filter((n) => !n.source.startsWith("salesnav"));
+  const isPaste = (src: string) => /^(sf|outlook|teams|transcript|room)/.test(src);
+  const pasteNotes = notes.filter((n) => isPaste(n.source));
+  const filedWire = notes.filter((n) => n.source === "wire");
+  const otherNotes = notes.filter(
+    (n) => !isPaste(n.source) && n.source !== "wire" && !n.source.startsWith("salesnav"),
+  );
   if (pasteNotes.length > 0)
     sources.push(`HomeRoom pastes ${shortDate(pasteNotes[0].createdAt)}`);
-  if (getDemand(p.id)?.researched && researchGeneratedAt)
+  const demandRec = getDemand(p.id);
+  if (demandRec?.summary && researchGeneratedAt)
     sources.push(`research ${shortDate(`${researchGeneratedAt}T12:00:00Z`)}`);
   if (intent) sources.push(`Sales Nav read ${shortDate(intent.at)}`);
   const wireMatches = wire.filter((w) => w.accountIds.includes(p.id));
-  if (wireMatches.length > 0) sources.push(`the wire ${shortDate(wireMatches[0].at)}`);
-  if (sources.length === 0 && newestNote)
-    sources.push(`notes ${shortDate(newestNote.createdAt)}`);
+  if (wireMatches.length > 0 || filedWire.length > 0)
+    sources.push(
+      `the wire ${shortDate(wireMatches[0]?.at ?? filedWire[0]?.createdAt ?? "")}`,
+    );
+  if (touches.length > 0) sources.push(`touch log ${shortDate(touches[0].contactedAt)}`);
+  if (sources.length === 0 && otherNotes.length > 0)
+    sources.push(`notes ${shortDate(otherNotes[0].createdAt)}`);
 
   // Story — identity + the situation + what the research adds (§3 voice).
-  const demand = getDemand(p.id);
+  const demand = demandRec;
   const storyBits: string[] = [];
   storyBits.push(
     `${queueItem.situation.charAt(0).toUpperCase()}${queueItem.situation.slice(1)}.`,
@@ -144,23 +157,39 @@ export function buildFile(
   }
   hist.sort((a, b) => a.atIso.localeCompare(b.atIso));
 
+  const composed = composeFor({
+    ruleId: queueItem.ruleId,
+    account: p,
+    intel,
+    intent,
+    contactName: p.contactName,
+    laneDate,
+  });
+  const threadCount = intel?.threads.people.length ?? 0;
+  const singleThread = threadCount === 1;
+  // The widening question travels INSIDE the composed text when one person
+  // carries the conversation — so the file's claim about it is always true.
+  if (
+    singleThread &&
+    (composed.kind === "send-draft" ||
+      composed.kind === "reply-frame" ||
+      composed.kind === "relay-note")
+  ) {
+    composed.payload = `${composed.payload}\n\n${WIDENING_LINE}`;
+  }
+
   return {
     accountId: p.id,
     name: p.name,
     csm: p.csm,
     sourcesLine: sources.join(" · "),
     title: titleFor(queueItem, p),
-    story: storyBits.join(" "),
-    composed: composeFor({
-      ruleId: queueItem.ruleId,
-      account: p,
-      intel,
-      intent,
-      contactName: p.contactName,
-      laneDate,
-    }),
+    story: redactMoney(storyBits.join(" ")),
+    composed,
     people,
-    singleThread: (intel?.threads.people.length ?? 0) === 1,
+    singleThread,
+    threadCount,
+    contactEmail: p.contactEmail ?? "",
     russ: paragraphFor(p, { intel, intent, queueItem }),
     history: hist.slice(-HISTORY_CAP),
   };
@@ -179,5 +208,9 @@ export function workedStamp(
 export function groundworkDoneKey(now: Date, mk: string): string {
   return `groundwork:${userDayKey(now)}:${mk}`;
 }
+
+// The durable readout-read stamp key — Russ's pull tab records its last copy
+// against this, doneAt moving forward on each read (never day-scoped).
+export const READOUT_READ_KEY = "groundwork:readout-read";
 
 export { WIRE_NS };

@@ -5,7 +5,9 @@
 // the queue's warm signals, and decides when the room may nag for a new read.
 //
 // Decay doctrine (plan §8 D8): a reading older than DECAY_DAYS ranks as
-// nothing — a stale "High" is a guess wearing a badge.
+// nothing — a stale "High" is a guess wearing a badge. And only the NEWEST
+// pasted reading counts: if the latest grab shows no intent, an older High is
+// dead, not dormant.
 
 export const DECAY_DAYS = 7;
 
@@ -38,17 +40,16 @@ export function parseIntent(body: string): Omit<IntentSignal, "at"> | null {
   };
 }
 
-// The freshest un-decayed reading on one account's notes (newest-first input,
-// the shape loadAccountNotes returns).
+// The newest salesnav reading on one account decides — and only if it is
+// fresh. A newer grab with no intent kills an older High (superseded, not
+// dormant); a reading past DECAY_DAYS ranks as nothing.
 export function intentFor(notes: NoteLike[] | undefined, now: Date): IntentSignal | null {
-  for (const n of notes ?? []) {
-    if (!isSalesNav(n)) continue;
-    const ageDays = (now.getTime() - Date.parse(n.createdAt)) / 86_400_000;
-    if (!(ageDays <= DECAY_DAYS)) continue;
-    const parsed = parseIntent(n.body);
-    if (parsed) return { ...parsed, at: n.createdAt };
-  }
-  return null;
+  const newest = (notes ?? []).find(isSalesNav);
+  if (!newest) return null;
+  const ageDays = (now.getTime() - Date.parse(newest.createdAt)) / 86_400_000;
+  if (!(ageDays <= DECAY_DAYS)) return null;
+  const parsed = parseIntent(newest.body);
+  return parsed ? { ...parsed, at: newest.createdAt } : null;
 }
 
 // The newest salesnav-sourced note anywhere in the book — the fact the nudge
@@ -90,8 +91,9 @@ export function intentReadDue(
 }
 
 // A CRM opportunity date riding in a pasted Sales Nav row ("8/21/2026",
-// "10/21/2026") — the riding-lane rule's evidence. Only parses the grab's own
-// notes, and only dates that land in a plausible window.
+// "10/21/2026") — the riding-lane rule's evidence. Guards against the grab's
+// own furniture: the capture-header line is skipped, and a date that merely
+// restates the day the paste landed is the paste's clock, not a deal.
 export function ridingLaneDate(
   notes: NoteLike[] | undefined,
   now: Date,
@@ -99,13 +101,19 @@ export function ridingLaneDate(
 ): string | null {
   for (const n of notes ?? []) {
     if (!isSalesNav(n)) continue;
-    for (const m of n.body.matchAll(/\b(\d{1,2})\/(\d{1,2})\/(\d{4})\b/g)) {
-      const t = Date.parse(
-        `${m[3]}-${m[1].padStart(2, "0")}-${m[2].padStart(2, "0")}T12:00:00Z`,
-      );
-      if (Number.isNaN(t)) continue;
-      const days = (t - now.getTime()) / 86_400_000;
-      if (days >= -1 && days <= windowDays) return new Date(t).toISOString().slice(0, 10);
+    const noteDay = n.createdAt.slice(0, 10);
+    const lines = n.body
+      .split("\n")
+      .filter((l) => !/SALESNAV ACCOUNTS\s*-\s*captured/i.test(l));
+    for (const line of lines) {
+      for (const m of line.matchAll(/\b(\d{1,2})\/(\d{1,2})\/(\d{4})\b/g)) {
+        const iso = `${m[3]}-${m[1].padStart(2, "0")}-${m[2].padStart(2, "0")}`;
+        if (iso === noteDay) continue; // the paste's own clock line
+        const t = Date.parse(`${iso}T12:00:00Z`);
+        if (Number.isNaN(t)) continue;
+        const days = (t - now.getTime()) / 86_400_000;
+        if (days >= -1 && days <= windowDays) return iso;
+      }
     }
   }
   return null;

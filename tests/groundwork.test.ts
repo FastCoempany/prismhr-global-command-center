@@ -28,7 +28,7 @@ import {
 } from "../src/lib/groundwork/wire";
 import { lint, paragraphFor, buildReadout } from "../src/lib/groundwork/readout";
 import { buildFile } from "../src/lib/groundwork/file";
-import { composeFor } from "../src/lib/groundwork/compose";
+import { composeFor, WIDENING_LINE } from "../src/lib/groundwork/compose";
 import {
   institutionCard,
   instNoteBody,
@@ -410,7 +410,239 @@ describe("groundwork readout and lint", () => {
         `${ruleId} carries no figures`,
       );
       assert.ok(c.to.length > 0, `${ruleId} is addressed`);
+      assert.ok(!/\bsteps?\b/i.test(c.payload), `${ruleId} never says "steps"`);
     }
+  });
+});
+
+describe("groundwork adversarial regressions", () => {
+  const base = {
+    intelById: new Map<string, DealIntel>(),
+    notesById: new Map<string, { body: string; source: string; createdAt: string }[]>(),
+    touches: [] as {
+      subjectKey: string;
+      contactedAt: string;
+      followUpAt: string;
+      status: string;
+    }[],
+    todos: [] as {
+      accountId?: string | null;
+      remindAt?: string | null;
+      done?: boolean;
+    }[],
+    contactCountById: () => 5,
+    now: NOW,
+  };
+
+  test("a newer grab with no intent kills an older High — superseded, not dormant", () => {
+    const sup = intentFor(
+      [
+        salesnavNote(
+          "SALESNAV ACCOUNTS - captured Jul 30 - 118 rows",
+          "2026-07-30T12:00:00Z",
+        ),
+        salesnavNote("High buyer intent", "2026-07-28T12:00:00Z"),
+      ],
+      NOW,
+    );
+    assert.equal(sup, null);
+  });
+
+  test("the grab's own furniture never reads as a riding lane", () => {
+    const header = ridingLaneDate(
+      [
+        salesnavNote(
+          "SALESNAV ACCOUNTS - captured 7/31/2026 - 118 rows collected",
+          "2026-07-30T12:00:00Z",
+        ),
+      ],
+      NOW,
+    );
+    const ownDay = ridingLaneDate(
+      [salesnavNote("Comm Hub 7/30/2026", "2026-07-30T12:00:00Z")],
+      NOW,
+    );
+    assert.equal(header, null);
+    assert.equal(ownDay, null);
+  });
+
+  test("wire matching survives corporate suffixes and refuses partial words", () => {
+    const nextep = peos.find((p) => p.name === "Nextep, Inc.");
+    if (nextep) {
+      assert.ok(
+        matchAccounts("Nextep announces European expansion").includes(nextep.id),
+        "a headline without the ', Inc.' tail still matches the book name",
+      );
+    }
+    const simploy = peos.find((p) => p.name === "Simploy");
+    if (simploy) {
+      assert.ok(
+        !matchAccounts("Simploys are trending this quarter").includes(simploy.id),
+        "a longer word never matches a shorter book name inside it",
+      );
+    }
+  });
+
+  test("composers say plainly when the book has no name to address", () => {
+    const bare = acct({
+      id: "B4RE000000000001",
+      name: "Bare Book",
+      contactName: "",
+      csm: "Unassigned",
+    });
+    const draft = composeFor({
+      ruleId: "decision-window",
+      account: bare,
+      intel: intelWith({}),
+      intent: null,
+      contactName: "",
+      laneDate: null,
+    });
+    assert.ok(draft.to.includes("add before sending"));
+    assert.ok(draft.payload.includes("Hi —"));
+    const relay = composeFor({
+      ruleId: "roundup-slot",
+      account: bare,
+      intel: intelWith({}),
+      intent: null,
+      contactName: "",
+      laneDate: null,
+    });
+    assert.ok(relay.to.includes("route it with Aleks"));
+  });
+
+  test("an archived thread or a done reminder never asks for meeting prep", () => {
+    const p = acct({ id: "P0000000000000001", name: "Prepped" });
+    const closed = buildQueue({
+      ...base,
+      accounts: [p],
+      touches: [
+        {
+          subjectKey: `outreach:${p.id}`,
+          contactedAt: "2026-07-28T12:00:00Z",
+          followUpAt: "2026-07-31T15:00:00Z",
+          status: "archived",
+        },
+      ],
+      todos: [{ accountId: p.id, remindAt: "2026-07-31T15:00:00Z", done: true }],
+    });
+    assert.equal(
+      closed.items.some((i) => i.ruleId === "meeting-prep"),
+      false,
+    );
+    const live = buildQueue({
+      ...base,
+      accounts: [p],
+      touches: [
+        {
+          subjectKey: `outreach:${p.id}`,
+          contactedAt: "2026-07-28T12:00:00Z",
+          followUpAt: "2026-07-31T15:00:00Z",
+          status: "awaiting",
+        },
+      ],
+    });
+    assert.equal(
+      live.items.some((i) => i.ruleId === "meeting-prep"),
+      true,
+    );
+  });
+
+  test("a live partner thread suppresses the roundup slot; an archived stale one opens it", () => {
+    const p = acct({ id: "P0000000000000002", name: "Rounder", csm: "Kim Bartolotti" });
+    const live = buildQueue({
+      ...base,
+      accounts: [p],
+      touches: [
+        {
+          subjectKey: "partner-outreach:Kim Bartolotti",
+          contactedAt: "2026-07-29T12:00:00Z",
+          followUpAt: "2026-08-05T12:00:00Z",
+          status: "awaiting",
+        },
+      ],
+    });
+    assert.equal(
+      live.items.some((i) => i.ruleId === "roundup-slot"),
+      false,
+    );
+    const due = buildQueue({
+      ...base,
+      accounts: [p],
+      touches: [
+        {
+          subjectKey: "partner-outreach:Kim Bartolotti",
+          contactedAt: "2026-07-25T12:00:00Z",
+          followUpAt: "2026-07-27T12:00:00Z",
+          status: "archived",
+        },
+      ],
+    });
+    assert.equal(
+      due.items.some((i) => i.ruleId === "roundup-slot"),
+      true,
+    );
+  });
+
+  test("one thread appends the widening question inside the composed text", () => {
+    const p = acct({ id: "W0000000000000001", name: "Narrow" });
+    const intel = intelWith({
+      threads: { people: ["Pat Example"], execSeen: false, opsSeen: false },
+      lastInbound: "2026-07-29T12:00:00Z",
+    });
+    const file = buildFile(p, {
+      queueItem: {
+        accountId: p.id,
+        name: p.name,
+        ruleId: "reply-owed",
+        weight: 90,
+        band: "now",
+        situation: "their message is the newest thing between you — answer first",
+        owed: "reply owed",
+        intent: null,
+      },
+      intel,
+      intent: null,
+      notes: [],
+      touches: [],
+      wire: [],
+      contacts: [],
+      now: NOW,
+    });
+    assert.equal(file.threadCount, 1);
+    assert.equal(file.singleThread, true);
+    assert.ok(file.composed.payload.endsWith(WIDENING_LINE));
+    assert.equal(file.contactEmail, "pat@example.com");
+  });
+
+  test("the readout's ranked tail lands under 'Also in front of me today'", () => {
+    const p = acct({ id: "T0000000000000001", name: "Tail" });
+    const r = buildReadout({
+      accounts: [p],
+      queue: [
+        {
+          accountId: p.id,
+          name: p.name,
+          ruleId: "stakeholder-gap",
+          weight: 55,
+          band: "two",
+          situation: "the book knows one person here",
+          owed: "recipe ready",
+          intent: null,
+        },
+      ],
+      intelById: new Map(),
+      intentById: new Map(),
+      outreachAccountIds: new Set(),
+      partnerUpdatesSent: 0,
+      partnerUpdatesReplied: 0,
+      nextSevenDays: ["Tail — dated follow-up August 4"],
+      now: NOW,
+    });
+    const also = r.sections.find((s) => s.title === "Also in front of me today");
+    assert.ok(also && also.paragraphs.length === 1);
+    const week = r.sections.find((s) => s.title === "Next seven days");
+    assert.ok(week && week.paragraphs[0].text.includes("August 4"));
   });
 });
 

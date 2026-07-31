@@ -49,7 +49,7 @@
 }
 .ribbonCount {
   composes: kick;
-  color: rgba(10, 28, 64, 0.22);
+  color: var(--ds-ink-quiet);
   white-space: nowrap;
 }
 
@@ -70,6 +70,10 @@
   height: 1px;
   flex: 1;
   background: linear-gradient(90deg, var(--color-line), transparent);
+}
+/* A window that has already closed today reads quieter — done is past. */
+.bandPast {
+  opacity: 0.55;
 }
 
 .due {
@@ -128,7 +132,7 @@
   width: 3px;
   align-self: stretch;
   border-radius: 2px;
-  background: rgba(10, 28, 64, 0.22);
+  background: var(--ds-ink-quiet);
 }
 .gaugeBlue {
   background: var(--ds-blue);
@@ -150,12 +154,12 @@
 }
 .rowOwed {
   font: 600 11px/1.5 var(--font-mono);
-  color: rgba(10, 28, 64, 0.22);
+  color: var(--ds-ink-quiet);
   text-align: right;
   white-space: nowrap;
 }
 .rowWorked {
-  color: #157f3d;
+  color: var(--ds-green);
 }
 
 .intent {
@@ -167,13 +171,15 @@
   background: var(--ds-blue-soft);
   white-space: nowrap;
 }
+/* Proximity is a tiebreak, not health — the chip stays quiet ink; the word
+   carries the meaning. */
 .prox {
   font: 600 10px/1.4 var(--font-sans);
-  color: #157f3d;
-  border: 1px solid var(--ds-green);
+  color: var(--color-ink-soft);
+  border: 1px solid var(--color-line-strong);
   border-radius: 99px;
   padding: 1px 8px;
-  background: var(--ds-green-soft);
+  background: var(--color-surface-mist);
   white-space: nowrap;
 }
 
@@ -235,7 +241,7 @@
 .instCard {
   background: var(--color-surface);
   border: 1px solid var(--color-line);
-  border-bottom: 3px solid rgba(10, 28, 64, 0.22);
+  border-bottom: 3px solid var(--ds-ink-quiet);
   border-radius: 8px;
   padding: 12px 14px;
   font-size: 13px;
@@ -314,7 +320,7 @@
   font: 600 13px/1 var(--font-sans);
   border: 1px solid transparent;
   background: var(--ds-orange);
-  color: #fff;
+  color: var(--ds-on-ink);
   cursor: pointer;
 }
 .btnAccent:hover {
@@ -398,8 +404,32 @@
 }
 .histAt {
   font: 600 10.5px/1.6 var(--font-mono);
-  color: rgba(10, 28, 64, 0.22);
+  color: var(--ds-ink-quiet);
   white-space: nowrap;
+}
+
+/* The threading badge — reads exactly MULTI, colored by the semantic ladder
+   (red 1 thread / amber 2 / green 3+), per standing decree. */
+.multi {
+  font: 700 10px/1.4 var(--font-mono);
+  letter-spacing: 0.14em;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 3px;
+  padding: 2px 7px;
+  border: 1px solid currentColor;
+}
+.multiRed {
+  color: var(--ds-red);
+  background: var(--ds-red-soft);
+}
+.multiAmber {
+  color: var(--ds-amber);
+  background: var(--ds-amber-soft);
+}
+.multiGreen {
+  color: var(--ds-green);
+  background: var(--ds-green-soft);
 }
 
 .empty {

@@ -46,7 +46,11 @@ type TouchLike = {
   followUpAt: string;
   status: string;
 };
-type TodoLike = { accountId?: string | null; remindAt?: string | null };
+type TodoLike = {
+  accountId?: string | null;
+  remindAt?: string | null;
+  done?: boolean;
+};
 
 export type QueueInput = {
   accounts: Peo[];
@@ -112,6 +116,7 @@ function researchAgeDays(now: Date): number {
 export function buildQueue(inp: QueueInput): {
   items: QueueItem[];
   overflow: number;
+  all: QueueItem[]; // the full ranked list, uncapped — the readout counts from this
 } {
   const candidates: QueueItem[] = [];
   const touchesByAccount = new Map<string, TouchLike[]>();
@@ -167,7 +172,7 @@ export function buildQueue(inp: QueueInput): {
         ruleId: "reply-owed",
         weight: 90,
         band: BAND_OF["reply-owed"],
-        situation: "their message is the newest thing on the thread — answer first",
+        situation: "their message is the newest thing between you — answer first",
         owed: "reply owed",
         intent,
       });
@@ -180,8 +185,11 @@ export function buildQueue(inp: QueueInput): {
       return dd >= -0.5 && dd <= 2;
     };
     if (
-      acctTouches.some((t) => soon(t.followUpAt)) ||
-      inp.todos.some((t) => t.accountId === p.id && soon(t.remindAt))
+      acctTouches.some(
+        (t) =>
+          (t.status === "awaiting" || t.status === "responded") && soon(t.followUpAt),
+      ) ||
+      inp.todos.some((t) => !t.done && t.accountId === p.id && soon(t.remindAt))
     ) {
       candidates.push({
         accountId: p.id,
@@ -219,7 +227,7 @@ export function buildQueue(inp: QueueInput): {
         ruleId: "riding-lane",
         weight: 75,
         band: BAND_OF["riding-lane"],
-        situation: `a colleague's conversation there is dated ${monthDay(lane)} — ride it, never around it`,
+        situation: `a colleague's Salesforce opportunity there closes ${monthDay(lane)} — ride it, never around it`,
         owed: "ask composed",
         intent,
       });
@@ -291,8 +299,14 @@ export function buildQueue(inp: QueueInput): {
     if (!best || comp > best.score) rosterBest.set(p.csm, { id: p.id, score: comp });
   }
   for (const [csm, best] of rosterBest) {
+    // The shared cadence rule: never stack an update on a live thread — due
+    // only when there's no thread, or the last one is archived and 2+ days
+    // old (src/lib/today/follow-ups.ts roundupDue semantics).
     const t = outreachByPartner.get(csm);
-    const due = !t || (inp.now.getTime() - Date.parse(t.contactedAt)) / DAY >= 2;
+    const due =
+      !t ||
+      (t.status === "archived" &&
+        (inp.now.getTime() - Date.parse(t.contactedAt)) / DAY >= 2);
     if (!due) continue;
     const p = byId.get(best.id);
     if (!p) continue;
@@ -302,7 +316,7 @@ export function buildQueue(inp: QueueInput): {
       ruleId: "roundup-slot",
       weight: 70,
       band: BAND_OF["roundup-slot"],
-      situation: `${csm}'s update is due — this is the roster's best fit, briefed first`,
+      situation: `${csm}'s account update is due — this is the strongest fit on their list, briefed first`,
       owed: `note to ${csm.split(" ")[0]} ready`,
       intent: intentFor(inp.notesById.get(p.id), inp.now),
     });
@@ -333,5 +347,6 @@ export function buildQueue(inp: QueueInput): {
   return {
     items: items.slice(0, QUEUE_CAP),
     overflow: Math.max(0, items.length - QUEUE_CAP),
+    all: items,
   };
 }

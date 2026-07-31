@@ -25,11 +25,16 @@ export function CopyStamp({
       type="button"
       className={accent ? styles.btnAccent : styles.btn2nd}
       onClick={async () => {
+        let ok = true;
         try {
           await navigator.clipboard.writeText(payload);
         } catch {
-          window.prompt("Copy blocked — press Ctrl+C:", payload.slice(0, 4000));
+          // The fallback prompt returns null on cancel — no copy, no stamp.
+          ok =
+            window.prompt("Copy blocked — press Ctrl+C:", payload.slice(0, 4000)) !==
+            null;
         }
+        if (!ok) return;
         setCopied(true);
         setTimeout(() => setCopied(false), 2400);
         if (action) start(() => action());

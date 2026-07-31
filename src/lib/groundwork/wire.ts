@@ -62,13 +62,22 @@ export function parseWireBody(body: string): WireItem | null {
   }
 }
 
-// Match a headline+summary against the book roster by name. Word-boundary,
-// case-insensitive; short/ambiguous names must match exactly as words.
+// Match a headline+summary against the book roster by name. Corporate tails
+// (", Inc.", " LLC") come off before matching — news never prints them — and
+// the boundary check uses lookarounds, because \b fails at names that end in
+// punctuation. Case-insensitive; names must still land as whole words.
+const matchableName = (name: string): string =>
+  name
+    .replace(/[,.]?\s+(inc|llc|l\.l\.c|ltd|co|corp|corporation|company)\.?$/i, "")
+    .trim();
+
 export function matchAccounts(text: string): string[] {
   const hits: string[] = [];
   for (const p of peos) {
-    const name = p.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    if (new RegExp(`\\b${name}\\b`, "i").test(text)) hits.push(p.id);
+    const base = matchableName(p.name) || p.name;
+    const esc = base.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    if (new RegExp(`(?<![A-Za-z0-9])${esc}(?![A-Za-z0-9])`, "i").test(text))
+      hits.push(p.id);
   }
   return hits;
 }
@@ -166,11 +175,14 @@ Disambiguation: ${disambig}.`;
   const items: WireItem[] = [];
   for (const raw of parsed.items ?? []) {
     const r = raw as Record<string, unknown>;
-    const headline = redactMoney(String(r.headline ?? "").trim());
+    const headline = redactMoney(String(r.headline ?? "").trim()).slice(0, 220);
     const url = String(r.url ?? "").trim();
-    const source = String(r.source ?? "").trim();
+    const source = String(r.source ?? "")
+      .trim()
+      .slice(0, 60);
     if (!headline || !url || !source) continue;
-    const read = redactMoney(String(r.read ?? "").trim());
+    if (!/^https?:\/\//i.test(url)) continue;
+    const read = redactMoney(String(r.read ?? "").trim()).slice(0, 500);
     const named = Array.isArray(r.accounts) ? r.accounts.map(String).join(" · ") : "";
     items.push({
       headline,
