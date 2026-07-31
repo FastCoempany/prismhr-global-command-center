@@ -1092,7 +1092,7 @@ export async function runBrain(opts?: { deep?: boolean }): Promise<RunReport> {
   const stages: [string, () => Promise<RunReport>][] = [
     ["app", () => syncApp(deep ? 1500 : 300)],
     ["playbook", () => ingestPlaybook()],
-    ["read", () => extractPending(deep ? 24 : 6, { deadlineMs: deadline })],
+    ["read", () => extractPending(24, { deadlineMs: deadline })],
     ["index", () => indexTopics()],
     ["open", () => decomposeTopics(deep ? 4 : 1)],
     ["time", () => readTimeAcrossTopics(deep ? 4 : 1)],
