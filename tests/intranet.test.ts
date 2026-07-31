@@ -13,7 +13,6 @@ import {
   MODEL_SYNTH,
   MODEL_SYNTH_HARD,
   NOTHING_DELETED,
-  PROSPECT_TOPIC_LABEL,
   RANK,
   TOPIC_PROMOTE_AT,
 } from "../src/lib/intranet/doctrine";
@@ -34,11 +33,18 @@ import {
   segmentTranscript,
 } from "../src/lib/intranet/segment";
 import {
-  extractionRejected,
+  asKind,
   locateQuote,
   modelForOrigin,
-  sanitizeExtract,
+  sanitizeRead,
 } from "../src/lib/intranet/extract";
+import {
+  BANK,
+  BUYER_QUESTIONS_PARENT,
+  BUYER_QUESTIONS_SUB,
+  bankParentOf,
+  bankPrompt,
+} from "../src/lib/intranet/bank";
 import {
   descendantIds,
   foldLabel,
@@ -334,8 +340,8 @@ describe("one capture becomes the conversations it holds", () => {
   });
 });
 
-// ── extraction ──────────────────────────────────────────────────────────────
-describe("extraction refuses what it cannot source", () => {
+// ── the liberal read (V.1) ──────────────────────────────────────────────────
+describe("the liberal read organizes, files, and briefs", () => {
   const body =
     "Lesha Cyphers: Every Brazil deal we have won went out on EOR first, with the entity deferred to year two.";
 
@@ -349,81 +355,46 @@ describe("extraction refuses what it cannot source", () => {
   test("a quote that isn't there returns null — that is the hallucination catch", () => {
     assert.equal(locateQuote(body, "we always require a deposit"), null);
   });
-  test("an unsourceable claim is dropped, not stored (F2)", () => {
-    const r = sanitizeExtract(
+  test("a statement without a locatable quote is KEPT — liberal, not rigid (V.1)", () => {
+    const r = sanitizeRead(
       {
-        summary: "s",
-        claims: [
+        brief: "what I did",
+        filings: [
           {
-            text: "real",
-            speaker: "Lesha",
-            kind: "decision",
-            confidence: "stated",
-            entities: [],
-            askShape: "",
-            prompted: "",
-            quote: "went out on EOR first",
-          },
-          {
-            text: "invented",
-            speaker: "Lesha",
-            kind: "fact",
-            confidence: "stated",
-            entities: [],
-            askShape: "",
-            prompted: "",
-            quote: "nothing like this appears",
+            topic: "EOR",
+            subtopic: "EOR transitions & conversions",
+            statements: [
+              {
+                text: "Brazil deals go EOR first",
+                speaker: "Lesha Cyphers",
+                kind: "decision",
+                countries: ["Brazil"],
+                quote: "went out on EOR first",
+              },
+              {
+                text: "kept even without a source span",
+                speaker: "Lesha Cyphers",
+                kind: "fact",
+                countries: [],
+                quote: "nothing like this appears",
+              },
+            ],
           },
         ],
-        topicMatches: [],
-        topicProposals: [],
-        linkRefs: [],
       },
       body,
     );
-    assert.equal(r.claims.length, 1);
-    assert.equal(r.dropped, 1);
-    assert.equal(r.claims[0].text, "real");
+    assert.equal(r.brief, "what I did");
+    assert.equal(r.filings.length, 1);
+    assert.equal(r.filings[0].statements.length, 2);
+    assert.ok(r.filings[0].statements[0].offsetStart > 0);
+    assert.equal(r.filings[0].statements[1].offsetStart, 0);
   });
-  test("too many failures reject the whole extraction", () => {
-    assert.equal(extractionRejected(4, 1), false);
-    assert.equal(extractionRejected(1, 4), true);
-  });
-  test("askShape only survives on a prospect question (C7)", () => {
-    const r = sanitizeExtract(
-      {
-        summary: "",
-        claims: [
-          {
-            text: "a",
-            speaker: "buyer",
-            kind: "prospect-question",
-            confidence: "stated",
-            entities: [],
-            askShape: "definitional",
-            prompted: "the EOR slide",
-            quote: "went out on EOR first",
-          },
-          {
-            text: "b",
-            speaker: "x",
-            kind: "fact",
-            confidence: "stated",
-            entities: [],
-            askShape: "commercial",
-            prompted: "nonsense",
-            quote: "entity deferred to year two",
-          },
-        ],
-        topicMatches: [],
-        topicProposals: [],
-        linkRefs: [],
-      },
-      body,
-    );
-    assert.equal(r.claims[0].askShape, "definitional");
-    assert.equal(r.claims[0].prompted, "the EOR slide");
-    assert.equal(r.claims[1].askShape, "");
+  test("loose kind words land on the doctrine's kinds", () => {
+    assert.equal(asKind("buyer-question"), "prospect-question");
+    assert.equal(asKind("Decision"), "decision");
+    assert.equal(asKind("how we do it"), "process");
+    assert.equal(asKind("gibberish"), "fact");
   });
   test("transcripts get the parent brain, app rows get the light one", () => {
     assert.equal(modelForOrigin("demo"), "claude-opus-5");
@@ -431,9 +402,37 @@ describe("extraction refuses what it cannot source", () => {
     assert.equal(modelForOrigin("todo"), "claude-haiku-4-5");
   });
   test("junk degrades to empty rather than throwing", () => {
-    const r = sanitizeExtract(null, body);
-    assert.deepEqual(r.claims, []);
-    assert.equal(r.summary, "");
+    const r = sanitizeRead(null, body);
+    assert.deepEqual(r.filings, []);
+    assert.equal(r.brief, "");
+  });
+});
+
+// ── the foundational bank (V.3) ─────────────────────────────────────────────
+describe("the bank is the floor every filing lands on", () => {
+  test("every parent carries concrete subtopics", () => {
+    assert.ok(BANK.length >= 10, "the bank thinned out");
+    for (const p of BANK) {
+      assert.ok(p.subs.length >= 3, `${p.label} has too few subtopics`);
+      assert.ok(p.summary.length > 0);
+    }
+  });
+  test("buyer questions are content under Deals & selling, not a rail category (V.4)", () => {
+    const parent = bankParentOf(BUYER_QUESTIONS_PARENT);
+    assert.ok(parent, "the buyer-questions parent left the bank");
+    assert.ok(parent!.subs.some((s) => s.label === BUYER_QUESTIONS_SUB));
+  });
+  test("the rendered bank is text only — no ids, no codes (V.2)", () => {
+    const prompt = bankPrompt([{ parent: "EOR", label: "A grown subtopic" }]);
+    assert.ok(prompt.includes("EOR"));
+    assert.ok(prompt.includes("A grown subtopic"));
+    assert.ok(!/\bc[a-z0-9]{20,}\b/.test(prompt), "a database id leaked into the prompt");
+    assert.ok(!/\d{3,}/.test(prompt), "numeric codes leaked into the prompt");
+  });
+  test("a grown subtopic that duplicates a seeded one is not offered twice", () => {
+    const prompt = bankPrompt([{ parent: "EOR", label: "how eor works" }]);
+    const hits = prompt.match(/How EOR works/gi) ?? [];
+    assert.equal(hits.length, 1);
   });
 });
 
@@ -482,12 +481,15 @@ describe("the index accumulates and stays still", () => {
     ];
     assert.deepEqual(descendantIds(topics, "root").sort(), ["grand", "kid", "root"]);
   });
-  test("prospect questions lead the rail (C7)", () => {
+  test("the rail leads with the bank's subjects, in their decreed order (V.4)", () => {
     const rail = railTopics([
       topic({ id: "a", label: "Handover", claimCount: 90 }),
-      topic({ id: "b", label: PROSPECT_TOPIC_LABEL, claimCount: 4 }),
+      topic({ id: "b", label: "Deals & selling", claimCount: 4 }),
+      topic({ id: "c", label: "Payroll operations", claimCount: 1 }),
     ]);
-    assert.equal(rail[0].label, PROSPECT_TOPIC_LABEL);
+    assert.equal(rail[0].label, "Payroll operations");
+    assert.equal(rail[1].label, "Deals & selling");
+    assert.equal(rail[2].label, "Handover");
   });
   test("the nag is global and says how long it has been (I.7.2)", () => {
     const line = stalenessLine("2026-07-24T16:12:00Z", NOW);
@@ -953,23 +955,31 @@ describe("the chain that fills the brain is wired end to end", () => {
       assert.ok(orchestrator.includes(fn), `runBrain never calls ${fn}`);
     }
   });
-  test("the backlog line is ONE string — JSX can never eat its spaces", () => {
-    // The first fix kept separate JSX expressions and text; prettier wrapped
-    // the line and JSX deleted the whitespace at the boundary — "entriesit"
-    // survived a "fix" whose test checked source, not the render. A single
-    // template literal has no boundary to eat.
+  test("the standing backlog message never exists — the room catches itself up (V)", () => {
+    // The founder: "'215 entries it hasn't read yet' as a standing message
+    // should never be the case." The room reads on open, on send, on ⟳ — the
+    // count appears only while it is actively working through it.
     assert.ok(
-      client.includes("} it hasn't read yet`"),
-      "the backlog sentence is no longer one unsplittable string",
+      !client.includes("hasn't read yet"),
+      "the standing backlog message came back",
     );
+    assert.ok(client.includes("wokeRef"), "the room no longer catches up on open");
     assert.ok(
-      !/entries"\}\s*\n\s*it/.test(client),
-      "an expression/text line boundary is back in the backlog line",
+      /queue\.pending > 0.*catchUp/.test(client),
+      "the wake-up never looks at what is waiting",
     );
   });
-  test("one control, and it keeps going until the backlog is gone (IV.3)", () => {
+  test("one flow: Send it reads AND drains, ⟳ sweeps, stop always works (V)", () => {
     assert.ok(client.includes("runBrain"), "nothing in the room starts the chain");
-    assert.ok(client.includes("Bring the brain up to date"));
+    assert.ok(
+      !client.includes("Bring the brain up to date"),
+      "the second button is back",
+    );
+    assert.ok(client.includes("itRefresh"), "the ⟳ by the title is gone");
+    assert.ok(
+      /g\.pending \?\? 0\) > 0/.test(client),
+      "Send it no longer drains the rest",
+    );
     assert.ok(client.includes("stop after this pass"), "the loop cannot be stopped");
     assert.ok(/r\.pending/.test(client), "the loop never learns when it is done");
     assert.ok(client.includes("itRunLines"), "the report is never shown");
@@ -985,14 +995,15 @@ describe("the chain that fills the brain is wired end to end", () => {
     assert.ok(client.includes("readCapture"), "Keep it is fire-and-forget again");
     assert.ok(client.includes("router.refresh"), "the rail never updates after ingest");
   });
-  test("a read failure is named where the operator is looking (IV.2)", () => {
+  test("a read failure says one word, and keeps the whole truth behind it (V.6)", () => {
     assert.ok(runners.includes("reasonOf"), "failures are swallowed again");
     assert.ok(runners.includes("timed out"), "a timeout has no plain-language read");
     assert.ok(runners.includes("the API key was refused"));
     assert.ok(
-      /reasonOf\(s\.reason\)/.test(runners),
-      "a rejected read no longer surfaces its reason",
+      /rawOf\(s\.reason\)/.test(runners),
+      "a rejected read no longer keeps its untruncated detail",
     );
+    assert.ok(/failed\./.test(runners), "the one-word failure line is gone");
   });
   test("the ingest runner reads the capture and settles the index", () => {
     assert.ok(runners.includes("export async function readCapture"));
@@ -1029,10 +1040,18 @@ describe("the chain that fills the brain is wired end to end", () => {
     const upsert = /async function upsertDocs[\s\S]*?\n}\n/.exec(runners)?.[0] ?? "";
     assert.ok(/extractedAt: null/.test(upsert));
   });
-  test("prospect questions are filed into their shape (C7)", () => {
-    assert.ok(runners.includes("fileProspectQuestions"));
-    assert.ok(runners.includes("PROSPECT_SHAPE_TOPICS"));
-    assert.ok(runners.includes("seedProspectTopics"));
+  test("the bank is seeded and the question categories left the rail (V.3, V.4)", () => {
+    assert.ok(runners.includes("seedBank"), "the floor is never laid");
+    assert.ok(runners.includes("retireQuestionRail"), "the shape bins still stand");
+    assert.ok(
+      runners.includes("BUYER_QUESTIONS_SUB"),
+      "buyer questions lost their drawer",
+    );
+    assert.ok(runners.includes("resolveFilingIds"), "filings no longer resolve by text");
+    assert.ok(
+      !/topicMatches/.test(runners),
+      "the id-matching filing path came back (V.2 forbids it)",
+    );
   });
   test("every stage is bounded, so one pass never runs away", () => {
     for (const sig of [
@@ -1848,7 +1867,10 @@ describe("the room is a running record that survives the tab", () => {
     at,
     space: "Global Sales Team",
     title: "",
+    origin: "teams",
     lines: ["Got it."],
+    briefs: [],
+    detail: [],
   });
 
   test("an instant lands on the operator's day, not UTC's", () => {
@@ -1901,17 +1923,35 @@ describe("a country is a lens, never a copy (IV.8)", () => {
     assert.equal(countryOf("EOR"), null);
   });
   test("the tally counts a claim once per country however noisy its entities", () => {
-    const rows = countryTallies([
-      { kind: "prospect-question", entities: ["Brazil", "brazil", "EOR"] },
-      { kind: "commitment", entities: ["Brazil"] },
-      { kind: "fact", entities: ["Germany"] },
-    ]);
+    // Sub-rows are the index's own subject parents (V.4) — concrete nouns,
+    // never kind-words like "facts on the ground".
+    const subjectOf = (id: string) =>
+      id === "sub-payroll" || id === "top-payroll"
+        ? { id: "top-payroll", label: "Payroll operations" }
+        : id === "top-deals"
+          ? { id: "top-deals", label: "Deals & selling" }
+          : null;
+    const rows = countryTallies(
+      [
+        { entities: ["Brazil", "brazil", "EOR"], topicIds: ["top-deals"] },
+        { entities: ["Brazil"], topicIds: ["sub-payroll", "top-payroll"] },
+        { entities: ["Germany"], topicIds: [] },
+      ],
+      subjectOf,
+    );
     assert.equal(rows[0].name, "Brazil");
     assert.equal(rows[0].total, 2);
     assert.ok(
-      rows[0].lenses.some((l) => l.label === "What buyers asked here" && l.n === 1),
+      rows[0].lenses.some(
+        (l) =>
+          l.label === "Payroll operations" && l.n === 1 && l.topicId === "top-payroll",
+      ),
     );
-    assert.ok(rows[0].lenses.some((l) => l.label === "Commitments made" && l.n === 1));
+    assert.ok(rows[0].lenses.some((l) => l.label === "Deals & selling" && l.n === 1));
+    assert.ok(
+      rows[0].lenses.every((l) => l.label !== "Facts on the ground"),
+      "a vague kind-word survived as a sub-row",
+    );
     assert.equal(rows[1].name, "Germany");
   });
   test("flags are real images, never emoji (IV.9)", () => {
@@ -2023,7 +2063,14 @@ describe("structured-output schemas stay inside what the API accepts", () => {
   });
   test("the sanitize layer still enforces every cap the schemas dropped", () => {
     const extract = readFileSync(join(root, "src/lib/intranet/extract.ts"), "utf8");
-    assert.ok(extract.includes("slice(0, MAX_CLAIMS)"));
+    assert.ok(
+      /\.slice\(0, 40\)/.test(extract),
+      "the filings cap left the sanitize layer",
+    );
+    assert.ok(
+      /\.slice\(0, 80\)/.test(extract),
+      "the statements cap left the sanitize layer",
+    );
     const verdicts = readFileSync(join(root, "src/lib/intranet/verdicts.ts"), "utf8");
     assert.ok(verdicts.includes("slice(0, 60)"));
     const synth = readFileSync(join(root, "src/lib/intranet/synthesize.ts"), "utf8");

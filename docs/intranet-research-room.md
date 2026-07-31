@@ -2290,3 +2290,81 @@ through country lenses with real flag images (a flag CDN serves them —
 amended from IV.9's self-hosting note, with a graceful hide on load failure).
 The paste dock is pinned and always open; "Send it" reads on the spot and the
 record shows the receipt, then the digest, in place.
+
+---
+
+# Part V · The refounding (founder decrees, 2026-07-31)
+
+The first live week taught more than the plan did. These decrees supersede
+any conflicting line above.
+
+## V.1 · The liberal read
+
+The rigid extraction template is gone. A paste is handed to Claude with one
+instruction: **organize this topically against the bank, file it into the
+index, and write a detailed brief** — what you received, what you did with
+it, where each piece went, and why. Where content clearly belongs to an
+account or the Playbook, the brief NAMES it and offers the link — filing in
+other rooms stays the operator's hand (V.9). The reply structure is the
+minimum that filing requires (topic label · subtopic label · the statements
+· the brief); no counts, no enums beyond what coercion needs, nothing the
+API can refuse.
+
+## V.2 · Filing is text-only. Canonical.
+
+No database ids, numerics, or codes in any prompt or any filing decision —
+label text, syntax, and context ONLY. The model files by naming a topic; the
+app resolves the name. A name that resolves nowhere becomes a new subtopic
+under the named parent.
+
+## V.3 · The foundational bank
+
+The index does not discover its own skeleton. A deep, seeded, canonical bank
+of subject parents and subtopics (src/lib/intranet/bank.ts) is the floor;
+every filing is checked against it FIRST. New subtopics may grow under bank
+parents when content genuinely fits nothing; parents change only by decree.
+
+## V.4 · The rail is subject matter only
+
+Questions are content, never categories. "What prospects ask" and its six
+shapes leave the rail (kept in storage, hidden); buyer questions remain
+first-class content — searchable, and shelved on the Playbook. Parents are
+subject-matter heads and carry NO counts; counts belong to subtopics only;
+the Index title carries no number. Rail sections (Index · By country · The
+archive) stack and expand downward in one column — nothing covers anything.
+
+## V.5 · The paste day is the date of record
+
+When a grab cannot read source timestamps, they are ignored — no inference,
+no worry. Who said it is sacred; when, the source app remembers better than
+we can guess. The paste day is the date of record.
+
+## V.6 · Failure is one word plus a fold
+
+Surfaces say "N failed · detail". The fold carries the excessive version —
+stage, model, full untruncated server error, affected entries — built to be
+copied and shared. Failure prose never renders inline, including replayed
+history.
+
+## V.7 · The paste archive
+
+Every paste ever received is kept whole (it already is — IntranetCapture.raw)
+and gets a hidden surface to read it back. Quiet link, no nav presence.
+
+## V.8 · The brief is the product of a paste
+
+The stream renders what Claude DID: a written brief per paste — received,
+organized, filed where, why — not pipeline receipts.
+
+## V.9 · Read-only stands. Permanently.
+
+Considered and REJECTED by the founder (2026-07-31): Intranet ingest never
+writes to the HomeRoom, the accounts page, the Playbook, or any other room.
+The HomeRoom owns its own account-based pastes; the Intranet PULLS the
+freshest data from the other rooms (the sweep) and pushes nothing back. The
+reasons are structural, not stylistic: a misfiled note poisons every engine
+that consumes account notes; a second writer to the same tables breeds
+duplicates; and a room that writes what it later mirrors back in eats its
+own exhaust. Information flows one way — in. Out only as answers, briefs,
+and offered links. I.2 is reaffirmed and this section exists so it is never
+"reversed" again.

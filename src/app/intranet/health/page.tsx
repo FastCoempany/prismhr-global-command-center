@@ -20,9 +20,12 @@ import {
 } from "@/lib/intranet/evals";
 import { PROMPT_VERSION } from "@/lib/intranet/doctrine";
 import { brainQueue } from "../runners";
+import { SelfCheck } from "./self-check";
 import styles from "../../command-center.module.css";
 
 export const dynamic = "force-dynamic";
+// The self-check runs six real questions back to back.
+export const maxDuration = 300;
 
 export default async function IntranetHealthPage() {
   const access = await getAppAccess();
@@ -98,7 +101,7 @@ export default async function IntranetHealthPage() {
               <span className={styles.itMeterN}>{queue.unindexed}</span>
             </div>
             <div className={styles.itMeter}>
-              <span>Extraction rubric</span>
+              <span>Reading rubric</span>
               <span className={styles.itMeterN}>{PROMPT_VERSION}</span>
             </div>
           </section>
@@ -125,7 +128,7 @@ export default async function IntranetHealthPage() {
           </section>
 
           <section className={styles.itPanel}>
-            <p className={styles.itPanelHead}>What the eval set watches</p>
+            <p className={styles.itPanelHead}>What the self-check watches</p>
             <div className={styles.itMeter}>
               <span>Recall on what a human marked relevant</span>
               <span className={styles.itMeterN}>≥ {TARGETS.recall}</span>
@@ -151,6 +154,8 @@ export default async function IntranetHealthPage() {
               </div>
             ))}
           </section>
+
+          <SelfCheck />
 
           <section className={styles.itPanel}>
             <p className={styles.itPanelHead}>The last ten questions</p>

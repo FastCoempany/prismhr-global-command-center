@@ -100,9 +100,6 @@ export default async function IntranetPage({
     <>
       <AppWayfinder current="Intranet" />
       <main className={styles.wrap}>
-        <div className={styles.pageHead}>
-          <h1 className={styles.h1}>Intranet</h1>
-        </div>
         <IntranetClient
           rail={rail}
           initialQ={initialQ}
