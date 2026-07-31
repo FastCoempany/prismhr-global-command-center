@@ -8256,3 +8256,250 @@
   max-height: 60vh;
   overflow-y: auto;
 }
+
+/* ── THE BENCH GADGET — the run terminal, docked (founder-picked Jul 31) ──
+   Forest green on the bright field: chassis lines, corner brackets, a
+   segmented bar, LED lanes. Blue plate = refresh run; orange plate = your
+   paste. The instrument states rest honestly and never fakes motion. */
+.itBg {
+  position: relative;
+  margin-top: 10px;
+  background: #fff;
+  border: 1px solid rgba(27, 77, 54, 0.35);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.itBgC1,
+.itBgC2,
+.itBgC3,
+.itBgC4 {
+  position: absolute;
+  width: 13px;
+  height: 13px;
+  border: 2px solid rgba(27, 77, 54, 0.4);
+  pointer-events: none;
+  z-index: 1;
+}
+.itBgC1 {
+  top: 5px;
+  left: 5px;
+  border-right: 0;
+  border-bottom: 0;
+  border-top-left-radius: 7px;
+}
+.itBgC2 {
+  top: 5px;
+  right: 5px;
+  border-left: 0;
+  border-bottom: 0;
+  border-top-right-radius: 7px;
+}
+.itBgC3 {
+  bottom: 5px;
+  left: 5px;
+  border-right: 0;
+  border-top: 0;
+  border-bottom-left-radius: 7px;
+}
+.itBgC4 {
+  bottom: 5px;
+  right: 5px;
+  border-left: 0;
+  border-top: 0;
+  border-bottom-right-radius: 7px;
+}
+.itBgPlate {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 18px;
+  background: rgba(10, 28, 64, 0.04);
+  font-family: var(--f-mono), ui-monospace, Menlo, monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(10, 28, 64, 0.42);
+}
+.itBgPlateRefresh {
+  background: rgba(37, 99, 235, 0.09);
+  color: #2563eb;
+}
+.itBgPlateSendit {
+  background: rgba(230, 112, 30, 0.1);
+  color: #e6701e;
+}
+.itBgRun {
+  font-weight: 700;
+  flex: 1;
+  min-width: 0;
+}
+.itBgLed {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex: 0 0 9px;
+}
+.itBgLedOn {
+  background: #22c55e;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.18);
+}
+.itBgLedDim {
+  background: rgba(10, 28, 64, 0.15);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .itBgLedOn {
+    animation: itBgBlink 1.3s ease-in-out infinite;
+  }
+  @keyframes itBgBlink {
+    50% {
+      opacity: 0.35;
+    }
+  }
+}
+.itBgHead {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding: 13px 18px 0;
+}
+.itBgNow {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-family: var(--f-serif), Georgia, serif;
+  font-size: 18px;
+  line-height: 1.35;
+  color: var(--navy);
+}
+.itBgPct {
+  font-family: var(--f-mono), ui-monospace, Menlo, monospace;
+  font-weight: 700;
+  font-size: 28px;
+  line-height: 1;
+  color: #14532d;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.itBgPct small {
+  font-size: 13px;
+  font-weight: 400;
+}
+.itBgBarWrap {
+  padding: 11px 18px 0;
+}
+.itBgBar {
+  position: relative;
+  height: 12px;
+  border-radius: 4px;
+  background: rgba(10, 28, 64, 0.08);
+  overflow: hidden;
+}
+.itBgFill {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #1b4d36, #15803d);
+  transition: width 0.5s ease;
+}
+.itBgBar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(90deg, transparent 0 10px, #fff 10px 12px);
+  pointer-events: none;
+}
+.itBgUnitRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 18px 0;
+  font-family: var(--f-mono), ui-monospace, Menlo, monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(10, 28, 64, 0.42);
+  flex-wrap: wrap;
+}
+.itBgLanes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: rgba(10, 28, 64, 0.12);
+  margin-top: 12px;
+  border-top: 1px solid rgba(10, 28, 64, 0.12);
+}
+.itBgLane {
+  background: #fff;
+  padding: 9px 16px;
+  min-height: 54px;
+  display: grid;
+  grid-template-columns: 12px 1fr;
+  gap: 10px;
+  align-items: start;
+}
+.itBgLane .itBgLed {
+  margin-top: 5px;
+}
+.itBgSrc {
+  margin: 0 0 2px;
+  font-family: var(--f-mono), ui-monospace, Menlo, monospace;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(10, 28, 64, 0.42);
+}
+.itBgWhat {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--navy);
+}
+.itBgSt {
+  margin: 1px 0 0;
+  font-family: var(--f-mono), ui-monospace, Menlo, monospace;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.itBgStReading {
+  color: #14532d;
+}
+.itBgStIdle {
+  color: rgba(10, 28, 64, 0.42);
+}
+.itBgLog {
+  border-top: 1px solid rgba(10, 28, 64, 0.12);
+  max-height: 230px;
+  overflow-y: auto;
+}
+.itBgLogLine {
+  display: grid;
+  grid-template-columns: 82px 1fr;
+  gap: 12px;
+  padding: 6px 18px;
+  border-top: 1px solid rgba(10, 28, 64, 0.05);
+  font-size: 12.5px;
+  color: var(--navy);
+}
+.itBgLogLine:first-child {
+  border-top: 0;
+}
+.itBgJt {
+  font-family: var(--f-mono), ui-monospace, Menlo, monospace;
+  font-size: 10px;
+  color: rgba(10, 28, 64, 0.42);
+  padding-top: 2px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.itBgBad {
+  color: #b91c1c;
+}
+.itBgFoldWrap {
+  padding: 4px 18px 12px;
+}
+@media (max-width: 640px) {
+  .itBgLanes {
+    grid-template-columns: 1fr;
+  }
+}

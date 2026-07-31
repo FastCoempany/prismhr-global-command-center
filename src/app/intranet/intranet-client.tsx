@@ -27,9 +27,16 @@ import {
   intranetContents,
   intranetLedgerDay,
   intranetPassage,
+  intranetPulse,
 } from "./actions";
 import { readCapture, runBrain } from "./runners";
-import type { AskReply, PassageReply, ShelfReply, ShelfScope } from "./actions";
+import type {
+  AskReply,
+  PassageReply,
+  PulseReply,
+  ShelfReply,
+  ShelfScope,
+} from "./actions";
 import type { ArchiveMonth, CountryRow, LedgerEntry } from "@/lib/intranet/ledger";
 import {
   archiveDayMeta,
@@ -102,9 +109,11 @@ export function IntranetClient({
   const [runBusy, startRun] = useTransition();
   const [dayBusy, startDay] = useTransition();
   const [paneBusy, startPane] = useTransition();
-  const [runLines, setRunLines] = useState<string[]>([]);
-  const [runDetail, setRunDetail] = useState<string[]>([]);
-  const [pendingNow, setPendingNow] = useState(queue.pending);
+  // The bench gadget's live signal — the pulse the workers write as they work.
+  const [pulseS, setPulseS] = useState<PulseReply | null>(null);
+  const [dismissedRun, setDismissedRun] = useState(0);
+  const [nowMs, setNowMs] = useState(0);
+  const gadgetRef = useRef<HTMLElement | null>(null);
   const [copied, setCopied] = useState("");
   const [railTab, setRailTab] = useState<"index" | "country" | "archive">("index");
   const [openCountry, setOpenCountry] = useState<string>("");
@@ -151,6 +160,59 @@ export function IntranetClient({
     return () => clearTimeout(t);
   }, [sel, within]);
 
+  // ── the bench gadget's wire ───────────────────────────────────────────────
+  // Poll the pulse every two seconds while anything runs (here or in another
+  // tab — the pulse is server truth, not this tab's opinion). One read on
+  // mount catches a run that was already going when the page opened.
+  const gadgetLive = (pulseS?.active ?? false) || runBusy || capBusy;
+  const failHold = (pulseS?.failed ?? 0) > 0 && (pulseS?.startedAt ?? 0) !== dismissedRun;
+  const gadgetOpen = gadgetLive || failHold;
+
+  useEffect(() => {
+    if (!canWrite) return;
+    let alive = true;
+    const read = async () => {
+      const p = await intranetPulse();
+      if (alive && p) setPulseS(p);
+    };
+    void read();
+    if (!gadgetLive)
+      return () => {
+        alive = false;
+      };
+    const id = setInterval(read, 2000);
+    return () => {
+      alive = false;
+      clearInterval(id);
+    };
+  }, [gadgetLive, canWrite]);
+
+  // The lane clocks tick every second while the gadget is open. The current
+  // time travels through state — render stays pure.
+  useEffect(() => {
+    if (!gadgetOpen) return;
+    const id = setInterval(() => setNowMs(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [gadgetOpen]);
+
+  const pct =
+    pulseS && pulseS.total > 0
+      ? Math.min(100, Math.round((pulseS.done / pulseS.total) * 100))
+      : pulseS?.active
+        ? 0
+        : 100;
+  const mmss = (sinceMs: number, now: number) => {
+    const s = Math.max(0, Math.floor(((now || sinceMs) - sinceMs) / 1000));
+    return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+  };
+  const logTime = (at: number) =>
+    new Date(at).toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      second: "2-digit",
+      timeZone: "America/Chicago",
+    });
+
   const ask = (text: string) => {
     const question = text.trim();
     if (!question || busy) return;
@@ -177,6 +239,9 @@ export function IntranetClient({
   // ELSE is waiting the room keeps going on its own — "Send it" knows.
   const file = () => {
     if (!paste.trim() || capBusy) return;
+    // The gadget unfolds up top — take the operator to the instrument, so the
+    // SEND-IT RUN is in front of them within a second of pressing.
+    gadgetRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
     startCap(async () => {
       const r = await intranetCapture(paste);
       if (!r.ok) {
@@ -218,7 +283,6 @@ export function IntranetClient({
             : e,
         ),
       );
-      if (typeof g.pending === "number") setPendingNow(g.pending);
       router.refresh();
       // whatever else waits gets read in the same breath — no second button
       if ((g.pending ?? 0) > 0) catchUp(false);
@@ -226,43 +290,21 @@ export function IntranetClient({
   };
 
   // The catch-up loop. Passes run back-to-back until the backlog is gone or
-  // the operator stops it; every pass reports, and the rail refreshes live.
+  // the operator stops it. The gadget narrates from the server's pulse — this
+  // loop only drives the passes and keeps the rail fresh.
   const catchUp = (sweep: boolean) => {
     if (runBusy) return;
     stopRef.current = false;
     startRun(async () => {
-      const all: string[] = [];
-      const allDetail: string[] = [];
-      const seenLine = new Set<string>();
       for (let pass = 0; pass < 60 && !stopRef.current; pass += 1) {
         // A sweep pass looks around the app and the Playbook first; catch-up
         // passes give their whole clock to reading.
         const r = await runBrain(pass === 0 && sweep ? undefined : { sweep: false });
-        if (r.busy) {
-          // another catch-up already holds the room — watch it, don't stack
-          if (typeof r.pending === "number") setPendingNow(r.pending);
-          setRunLines([
-            ...all,
-            "Already catching up — the running pass finishes on its own.",
-          ]);
-          router.refresh();
-          break;
-        }
-        for (const l of r.lines) {
-          if (/^(Read |The index grew)/.test(l) || !seenLine.has(l)) {
-            all.push(l);
-            seenLine.add(l);
-          }
-        }
-        if (r.detail) allDetail.push(...r.detail);
-        setRunLines([...all]);
-        setRunDetail([...allDetail]);
-        if (typeof r.pending === "number") setPendingNow(r.pending);
         router.refresh();
-        if (!r.ok) {
-          if (r.reason) setRunLines([...all, r.reason]);
-          break;
-        }
+        // r.busy: another catch-up already holds the room — the gadget shows
+        // THAT run's pulse; watch it, don't stack.
+        if (r.busy) break;
+        if (!r.ok) break;
         if (!r.pending) break;
       }
     });
@@ -837,6 +879,123 @@ export function IntranetClient({
             </button>
           </div>
 
+          {/* THE BENCH GADGET — the run terminal, docked where the strip was.
+              At rest it is one plate line; a run unfolds it in place. */}
+          {canWrite && (
+            <section
+              ref={gadgetRef}
+              className={styles.itBg}
+              aria-label="The room, working"
+            >
+              <span className={styles.itBgC1} />
+              <span className={styles.itBgC2} />
+              <span className={styles.itBgC3} />
+              <span className={styles.itBgC4} />
+              <div
+                className={`${styles.itBgPlate} ${
+                  gadgetLive && pulseS?.kind === "sendit"
+                    ? styles.itBgPlateSendit
+                    : gadgetLive
+                      ? styles.itBgPlateRefresh
+                      : ""
+                }`}
+              >
+                <span
+                  className={`${styles.itBgLed} ${gadgetLive ? styles.itBgLedOn : styles.itBgLedDim}`}
+                />
+                <span className={styles.itBgRun}>
+                  {gadgetLive
+                    ? pulseS?.kind === "sendit"
+                      ? "Send-it run — your paste"
+                      : "Refresh run — the whole backlog"
+                    : "At rest — caught up"}
+                </span>
+                {runBusy || capBusy ? (
+                  <button
+                    type="button"
+                    className={styles.itQuietBtn}
+                    onClick={() => {
+                      stopRef.current = true;
+                    }}
+                  >
+                    stop after this pass
+                  </button>
+                ) : gadgetOpen ? (
+                  <button
+                    type="button"
+                    className={styles.itQuietBtn}
+                    onClick={() => setDismissedRun(pulseS?.startedAt ?? 0)}
+                  >
+                    dismiss
+                  </button>
+                ) : null}
+              </div>
+              {gadgetOpen && (
+                <>
+                  <div className={styles.itBgHead}>
+                    <p className={styles.itBgNow}>{pulseS?.now || "Warming up…"}</p>
+                    <span className={styles.itBgPct}>
+                      {pct}
+                      <small>%</small>
+                    </span>
+                  </div>
+                  <div className={styles.itBgBarWrap}>
+                    <div className={styles.itBgBar}>
+                      <i className={styles.itBgFill} style={{ width: `${pct}%` }} />
+                    </div>
+                  </div>
+                  <div className={styles.itBgUnitRow}>
+                    <span>Measuring: {pulseS?.unit || "…"}</span>
+                    <span>
+                      {pulseS && pulseS.failed > 0 ? `${pulseS.failed} failed` : ""}
+                    </span>
+                  </div>
+                  <div className={styles.itBgLanes}>
+                    {Array.from({ length: 4 }, (_, i) => {
+                      const L = pulseS?.lanes[i];
+                      const held = gadgetLive && L;
+                      return (
+                        <div key={i} className={styles.itBgLane}>
+                          <span
+                            className={`${styles.itBgLed} ${held ? styles.itBgLedOn : styles.itBgLedDim}`}
+                          />
+                          <div>
+                            <p className={styles.itBgSrc}>{held ? L.src : "—"}</p>
+                            <p className={styles.itBgWhat}>
+                              {held ? L.what : "Lane open"}
+                            </p>
+                            <p
+                              className={`${styles.itBgSt} ${held ? styles.itBgStReading : styles.itBgStIdle}`}
+                            >
+                              {held ? `reading · ${mmss(L.sinceMs, nowMs)}` : "at rest"}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {(pulseS?.log.length ?? 0) > 0 && (
+                    <div className={styles.itBgLog}>
+                      {(pulseS?.log ?? []).map((l, i) => (
+                        <div key={`${l.at}-${i}`} className={styles.itBgLogLine}>
+                          <span className={styles.itBgJt}>{logTime(l.at)}</span>
+                          <span className={l.bad ? styles.itBgBad : undefined}>
+                            {l.text}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {(pulseS?.detail.length ?? 0) > 0 && (
+                    <div className={styles.itBgFoldWrap}>
+                      {renderDetailFold("pulse", pulseS?.detail ?? [])}
+                    </div>
+                  )}
+                </>
+              )}
+            </section>
+          )}
+
           {/* the selection, as chips with their dots — this IS the scope line */}
           {sel.length > 0 && (
             <div className={styles.itChips}>
@@ -935,51 +1094,6 @@ export function IntranetClient({
               No API key configured — the brain can hold what you give it and show its
               index, but it can&apos;t compose an answer yet.
             </p>
-          )}
-
-          {/* the room working, quietly — never a standing backlog message */}
-          {canWrite && (runBusy || runLines.length > 0) && (
-            <div className={styles.itRun}>
-              <div className={styles.itRunRow}>
-                <span className={styles.itQueue}>
-                  {runBusy
-                    ? pendingNow > 0
-                      ? `Catching up — ${pendingNow} to go…`
-                      : "Catching up…"
-                    : "Caught up."}
-                </span>
-                {runBusy ? (
-                  <button
-                    type="button"
-                    className={styles.itQuietBtn}
-                    onClick={() => {
-                      stopRef.current = true;
-                    }}
-                  >
-                    stop after this pass
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    className={styles.itQuietBtn}
-                    onClick={() => {
-                      setRunLines([]);
-                      setRunDetail([]);
-                    }}
-                  >
-                    dismiss
-                  </button>
-                )}
-              </div>
-              {runLines.length > 0 && (
-                <ul className={styles.itRunLines}>
-                  {runLines.map((l, i) => (
-                    <li key={i}>{l}</li>
-                  ))}
-                </ul>
-              )}
-              {renderDetailFold("run", runDetail)}
-            </div>
           )}
 
           {feed.length === 0 && (

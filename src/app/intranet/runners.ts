@@ -573,6 +573,20 @@ export async function extractPending(
     const detail: string[] = [];
     const briefs: string[] = [];
 
+    // The instrument's counts. The bar declares its unit — your paste in a
+    // send-it run, the whole backlog otherwise — and the total is recounted
+    // from the table so a sweep that found more makes the bar own up.
+    const backlog = await prisma.intranetDoc.count({
+      where: opts?.captureId ? { AND: [unread, { captureId: opts.captureId }] } : unread,
+    });
+    const st = await readPulse();
+    const doneBase = st.active ? st.done : 0;
+    const unitWord =
+      st.kind === "sendit" && opts?.captureId ? "your paste" : "the whole backlog";
+    const partWord = st.kind === "sendit" && opts?.captureId ? "parts read" : "read";
+    let total = doneBase + backlog;
+    await pulse({ total, unit: `${unitWord} — ${doneBase} of ${total} ${partWord}` });
+
     // Reads run four at a time — the model is the slow part and the calls are
     // independent, so a pass gets four entries per model-latency instead of
     // one. Persistence stays sequential, one document at a time, below.
@@ -583,6 +597,17 @@ export async function extractPending(
         break;
       }
       const batch = pending.slice(i, i + CONCURRENT_READS);
+
+      // The lanes: what each of the four hands holds, this second.
+      const held = batch.map((d) => laneWords(d));
+      await pulse({
+        lanes: held.map((w) => ({ ...w, sinceMs: Date.now() })),
+        now:
+          held.length === 1
+            ? `Reading ${held[0].what}.`
+            : `Reading ${held[0].what} and ${held.length - 1} more.`,
+      });
+
       const settled = await Promise.allSettled(
         batch.map((d) =>
           runRead({
@@ -601,8 +626,24 @@ export async function extractPending(
         if (s.status === "rejected") {
           // V.6 — the room says one word; the whole truth waits behind it.
           failed += 1;
-          detail.push(
-            `${doc.space || doc.origin} · ${iso(doc.occurredAt).slice(0, 10)} — ${rawOf(s.reason)}`,
+          const raw = `${doc.space || doc.origin} · ${iso(doc.occurredAt).slice(0, 10)} — ${rawOf(s.reason)}`;
+          detail.push(raw);
+          total -= 1; // the total shrinks so 100 stays honest
+          await pulse(
+            {
+              failed,
+              total,
+              unit: `${unitWord} — ${doneBase + read} of ${total} ${partWord} · ${failed} queued for retry`,
+            },
+            {
+              log: [
+                {
+                  text: "One entry failed — it retries next pass; the total shrinks so 100 stays honest.",
+                  bad: true,
+                },
+              ],
+              detail: [raw],
+            },
           );
           continue;
         }
@@ -657,6 +698,26 @@ export async function extractPending(
           },
         });
         read += 1;
+
+        // The instrument hears about every entry the moment it lands.
+        const w = laneWords(doc);
+        const subs = [...new Set(result.filings.map((f) => f.subtopic))].slice(0, 3);
+        const nSt = result.filings.reduce((n, f) => n + f.statements.length, 0);
+        await pulse(
+          {
+            done: doneBase + read,
+            unit: `${unitWord} — ${doneBase + read} of ${total} ${partWord}`,
+          },
+          {
+            log: [
+              {
+                text: nSt
+                  ? `${w.what} read — ${nSt} statement${nSt === 1 ? "" : "s"} filed under ${subs.join(", ")}.`
+                  : `${w.what} read clean — nothing worth keeping, and that's fine.`,
+              },
+            ],
+          },
+        );
       }
     }
 
@@ -1016,6 +1077,42 @@ export async function readCapture(captureId: string): Promise<RunReport> {
       ]),
     );
 
+    // The instrument stamps itself SEND-IT RUN: the bar now measures YOUR
+    // paste — parts read of parts split — and says so.
+    const parts = await prisma.intranetDoc.count({
+      where: {
+        captureId,
+        OR: [{ extractedAt: null }, { promptVersion: { not: PROMPT_VERSION } }],
+      },
+    });
+    const capRow = await prisma.intranetCapture.findUnique({
+      where: { id: captureId },
+      select: { meta: true },
+    });
+    const capSpace = ((capRow?.meta ?? {}) as { space?: string }).space ?? "";
+    await pulse(
+      {
+        active: true,
+        kind: "sendit",
+        startedAt: Date.now(),
+        total: parts,
+        done: 0,
+        failed: 0,
+        now: "Your paste arrived — reading it before anything else.",
+        unit: `your paste — 0 of ${parts} part${parts === 1 ? "" : "s"} read`,
+        lanes: [],
+        log: [],
+        detail: [],
+      },
+      {
+        log: [
+          {
+            text: `Your paste arrived${capSpace ? ` — ${capSpace}` : ""}, kept verbatim in the archive. Split into ${parts} part${parts === 1 ? "" : "s"}.`,
+          },
+        ],
+      },
+    );
+
     const read = await extractPending(24, {
       captureId,
       deadlineMs: Date.now() + 220_000,
@@ -1131,6 +1228,23 @@ export async function readCapture(captureId: string): Promise<RunReport> {
     } catch {
       // an unreplayable digest is not a failed read
     }
+
+    // The bar completes on YOUR paste; the handoff to whatever else waits is
+    // announced, never silent.
+    await pulse(
+      { now: "Your paste is fully read and briefed." },
+      { log: [{ text: "Your brief just landed on its card in the record." }] },
+    );
+    if ((read.pending ?? 0) === 0)
+      await pulse(
+        {
+          active: false,
+          now: "Caught up — nothing waiting.",
+          unit: "nothing — at rest",
+          lanes: [],
+        },
+        { log: [{ text: "Done — the backlog is clear." }] },
+      );
 
     return {
       ok: true,
@@ -1253,7 +1367,9 @@ async function acquireRunLock(): Promise<boolean> {
     if (until > now) return false;
     await prisma.intranetCapture.update({
       where: { id: row.id },
-      data: { meta: { lockedUntil: now + RUN_LOCK_TTL_MS } },
+      data: {
+        meta: { ...((row.meta ?? {}) as object), lockedUntil: now + RUN_LOCK_TTL_MS },
+      },
     });
     return true;
   } catch {
@@ -1263,13 +1379,139 @@ async function acquireRunLock(): Promise<boolean> {
 
 async function releaseRunLock(): Promise<void> {
   try {
-    await getPrisma().intranetCapture.update({
+    const prisma = getPrisma();
+    const row = await prisma.intranetCapture.findUnique({
       where: { rawChecksum: RUN_LOCK_CHECKSUM },
-      data: { meta: { lockedUntil: 0 } },
+      select: { id: true, meta: true },
+    });
+    if (!row) return;
+    await prisma.intranetCapture.update({
+      where: { id: row.id },
+      data: { meta: { ...((row.meta ?? {}) as object), lockedUntil: 0 } },
     });
   } catch {
     // the TTL frees it either way
   }
+}
+
+// ── the pulse (the bench gadget's wire) ─────────────────────────────────────
+// The instrument on the Intranet page is only as honest as what the workers
+// write. So the workers write: a status blob on the run-lock sentinel — which
+// run, what each lane holds this second, the counts, a plain-language log.
+// The page polls it every two seconds. Writing status must NEVER break the
+// work: every pulse swallows its own failures.
+
+type PulseLane = { src: string; what: string; sinceMs: number };
+type PulseLog = { at: number; text: string; bad?: boolean };
+type PulseStatus = {
+  active: boolean;
+  kind: "refresh" | "sendit" | "";
+  startedAt: number;
+  lastAt: number;
+  total: number;
+  done: number;
+  failed: number;
+  /** The now-sentence — what the room would say out loud. */
+  now: string;
+  /** What the bar measures, declared: "the whole backlog — 3 of 8 read". */
+  unit: string;
+  lanes: PulseLane[];
+  log: PulseLog[];
+  detail: string[];
+};
+
+function emptyPulse(): PulseStatus {
+  return {
+    active: false,
+    kind: "",
+    startedAt: 0,
+    lastAt: 0,
+    total: 0,
+    done: 0,
+    failed: 0,
+    now: "",
+    unit: "",
+    lanes: [],
+    log: [],
+    detail: [],
+  };
+}
+
+async function readPulse(): Promise<PulseStatus> {
+  try {
+    const row = await getPrisma().intranetCapture.findUnique({
+      where: { rawChecksum: RUN_LOCK_CHECKSUM },
+      select: { meta: true },
+    });
+    const meta = (row?.meta ?? {}) as { status?: PulseStatus };
+    return meta.status ?? emptyPulse();
+  } catch {
+    return emptyPulse();
+  }
+}
+
+async function pulse(
+  patch: Partial<PulseStatus>,
+  add?: { log?: { text: string; bad?: boolean }[]; detail?: string[] },
+): Promise<void> {
+  try {
+    const prisma = getPrisma();
+    const row = await prisma.intranetCapture.findUnique({
+      where: { rawChecksum: RUN_LOCK_CHECKSUM },
+      select: { id: true, meta: true },
+    });
+    const meta = (row?.meta ?? {}) as Record<string, unknown> & {
+      status?: PulseStatus;
+    };
+    const prev = meta.status ?? emptyPulse();
+    const next: PulseStatus = { ...prev, ...patch, lastAt: Date.now() };
+    if (add?.log?.length)
+      next.log = [
+        ...add.log.map((l) => ({ at: Date.now(), ...l })),
+        ...(patch.log ?? prev.log),
+      ].slice(0, 40);
+    if (add?.detail?.length)
+      next.detail = [...(patch.detail ?? prev.detail), ...add.detail].slice(-20);
+    const data = { meta: { ...meta, status: next } };
+    if (row) await prisma.intranetCapture.update({ where: { id: row.id }, data });
+    else
+      await prisma.intranetCapture.create({
+        data: {
+          origin: "paste",
+          raw: "the room's own run lock — not a paste",
+          rawChecksum: RUN_LOCK_CHECKSUM,
+          title: "",
+          meta: { lockedUntil: 0, status: next },
+        },
+      });
+  } catch {
+    // the instrument never gets to break the machine
+  }
+}
+
+/** A document named the way the gadget's lane says it (IV.9, plain words). */
+function laneWords(doc: { origin: string; space: string; title: string }): {
+  src: string;
+  what: string;
+} {
+  const SRC: Record<string, string> = {
+    "account-note": "accounts page",
+    todo: "accounts page",
+    touch: "accounts page",
+    card: "the dashboard",
+    "partner-note": "partners page",
+    demo: "demo notes",
+    playbook: "the playbook",
+    research: "the playbook",
+    gap: "the playbook",
+    teams: "your paste",
+    meeting: "your paste",
+    paste: "your paste",
+  };
+  return {
+    src: SRC[doc.origin] ?? doc.origin,
+    what: (doc.title || doc.space || "an entry").slice(0, 60),
+  };
 }
 
 /** Bring the brain up to date: mirror, ingest, read, index, decompose, reconcile.
@@ -1287,6 +1529,44 @@ export async function runBrain(opts?: {
   if (!(await acquireRunLock())) {
     const q = await brainQueue();
     return { ok: true, busy: true, lines: [], pending: q.pending };
+  }
+
+  const sweep = opts?.sweep !== false;
+
+  // The instrument's run header. A sweep pass opens a fresh REFRESH RUN; a
+  // catch-up pass continues the one already narrating; a run that follows a
+  // paste converts the send-it run into "continuing the backlog".
+  const prevPulse = await readPulse();
+  if (sweep || !prevPulse.active || Date.now() - prevPulse.lastAt > RUN_LOCK_TTL_MS) {
+    await pulse(
+      {
+        active: true,
+        kind: "refresh",
+        startedAt: Date.now(),
+        total: 0,
+        done: 0,
+        failed: 0,
+        now: sweep ? "Looking around the whole app first…" : "Continuing the backlog.",
+        unit: "the whole backlog — sweep first, then reads",
+        lanes: [],
+        log: [],
+        detail: [],
+      },
+      {
+        log: [
+          {
+            text: sweep
+              ? "Sweep started — the accounts page, the Playbook, partners, demo notes."
+              : "Continuing the backlog.",
+          },
+        ],
+      },
+    );
+  } else if (prevPulse.kind === "sendit") {
+    await pulse(
+      { kind: "refresh", now: "Continuing the backlog." },
+      { log: [{ text: "Continuing with what was still waiting." }] },
+    );
   }
 
   const deep = opts?.deep === true;
@@ -1309,12 +1589,16 @@ export async function runBrain(opts?: {
   const detail: string[] = [];
   const briefs: string[] = [];
   try {
-    for (const [, run] of stages) {
+    for (const [name, run] of stages) {
       const r = await run();
       lines.push(...r.lines);
       if (typeof r.pending === "number") pending = r.pending;
       if (r.detail) detail.push(...r.detail);
       if (r.briefs) briefs.push(...r.briefs);
+      // The sweep stages narrate through the instrument too; the read stage
+      // narrates itself, entry by entry, from inside extractPending.
+      if ((name === "app" || name === "playbook") && r.lines.length)
+        await pulse({}, { log: r.lines.map((text) => ({ text })) });
       // A stage that fails does not stop the rest — each writes before the next
       // begins, so the corpus is always consistent, just possibly less complete.
       if (!r.ok && r.reason) lines.push(r.reason);
@@ -1322,6 +1606,17 @@ export async function runBrain(opts?: {
   } finally {
     await releaseRunLock();
   }
+
+  if (pending === 0)
+    await pulse(
+      {
+        active: false,
+        now: "Caught up — nothing waiting.",
+        unit: "nothing — at rest",
+        lanes: [],
+      },
+      { log: [{ text: "Done — the backlog is clear." }] },
+    );
 
   return {
     ok: true,
