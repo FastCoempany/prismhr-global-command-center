@@ -1990,3 +1990,33 @@ describe("the room carries the brand's depth without breaking its rules (IV.9)",
     );
   });
 });
+
+describe("structured-output schemas stay inside what the API accepts", () => {
+  // The API's schema validator rejects maxItems/minItems on arrays — with it,
+  // EVERY model call 400s and the brain reads nothing. The caps live in the
+  // sanitize layer instead, where they always did the real work.
+  test("no schema carries an array-size constraint", () => {
+    for (const f of [
+      "src/lib/intranet/extract.ts",
+      "src/lib/intranet/retrieve.ts",
+      "src/lib/intranet/verdicts.ts",
+      "src/lib/intranet/synthesize.ts",
+      "src/lib/intranet/decompose.ts",
+    ]) {
+      const src = readFileSync(join(root, f), "utf8");
+      assert.ok(!/maxItems|minItems/.test(src), `${f} still carries an array cap`);
+    }
+  });
+  test("the sanitize layer still enforces every cap the schemas dropped", () => {
+    const extract = readFileSync(join(root, "src/lib/intranet/extract.ts"), "utf8");
+    assert.ok(extract.includes("slice(0, MAX_CLAIMS)"));
+    const verdicts = readFileSync(join(root, "src/lib/intranet/verdicts.ts"), "utf8");
+    assert.ok(verdicts.includes("slice(0, 60)"));
+    const synth = readFileSync(join(root, "src/lib/intranet/synthesize.ts"), "utf8");
+    assert.ok(synth.includes("slice(0, 20)"));
+  });
+  test("a server error surfaces as its message, not a JSON blob", () => {
+    const runners = readFileSync(join(root, "src/app/intranet/runners.ts"), "utf8");
+    assert.ok(/"message"/.test(runners), "reasonOf stopped unwrapping the server error");
+  });
+});

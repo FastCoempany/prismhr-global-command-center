@@ -101,7 +101,6 @@ const SCHEMA = {
     summary: { type: "string", description: "Two sentences: what this document is." },
     claims: {
       type: "array",
-      maxItems: MAX_CLAIMS,
       items: {
         type: "object",
         additionalProperties: false,
@@ -120,7 +119,7 @@ const SCHEMA = {
           speaker: { type: "string" },
           kind: { type: "string", enum: [...CLAIM_KINDS] },
           confidence: { type: "string", enum: [...CONFIDENCES] },
-          entities: { type: "array", maxItems: 10, items: { type: "string" } },
+          entities: { type: "array", items: { type: "string" } },
           askShape: { type: "string", enum: ["", ...ASK_SHAPES] },
           prompted: { type: "string" },
           quote: { type: "string" },
@@ -129,12 +128,10 @@ const SCHEMA = {
     },
     topicMatches: {
       type: "array",
-      maxItems: MAX_TOPIC_MATCHES,
       items: { type: "string" },
     },
     topicProposals: {
       type: "array",
-      maxItems: MAX_PROPOSALS,
       items: {
         type: "object",
         additionalProperties: false,
@@ -144,7 +141,6 @@ const SCHEMA = {
     },
     linkRefs: {
       type: "array",
-      maxItems: MAX_LINK_REFS,
       items: {
         type: "object",
         additionalProperties: false,

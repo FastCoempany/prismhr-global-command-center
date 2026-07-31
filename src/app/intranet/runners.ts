@@ -70,7 +70,11 @@ export type RunReport = {
  *  again. Not exported: a "use server" module may only export async actions. */
 function reasonOf(e: unknown): string {
   const err = e as { status?: number; message?: string; name?: string };
-  const msg = (err?.message ?? "").replace(/\s+/g, " ").trim().slice(0, 160);
+  let msg = (err?.message ?? "").replace(/\s+/g, " ").trim();
+  // The SDK wraps server errors in a JSON blob; the human part is "message".
+  const inner = /"message"\s*:\s*"([^"]+)"/.exec(msg);
+  if (inner) msg = inner[1];
+  msg = msg.slice(0, 160);
   if (err?.status === 401) return "the API key was refused";
   if (err?.status === 429)
     return "the model is rate-limited right now — try again shortly";

@@ -52,7 +52,6 @@ const SCHEMA = {
     why: { type: "string" },
     children: {
       type: "array",
-      maxItems: TOPIC_CHILD_MAX,
       items: {
         type: "object",
         additionalProperties: false,
