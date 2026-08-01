@@ -304,6 +304,9 @@ export function IntranetClient({
         // r.busy: another catch-up already holds the room — the gadget shows
         // THAT run's pulse; watch it, don't stack.
         if (r.busy) break;
+        // r.halt: every read failed the same way (credits, key, outage) —
+        // stop the loop; the gadget says what to fix and ⟳ resumes later.
+        if (r.halt) break;
         if (!r.ok) break;
         if (!r.pending) break;
       }
@@ -908,7 +911,9 @@ export function IntranetClient({
                     ? pulseS?.kind === "sendit"
                       ? "Send-it run — your paste"
                       : "Refresh run — the whole backlog"
-                    : "At rest — caught up"}
+                    : failHold
+                      ? "Paused — the log says why"
+                      : "At rest — caught up"}
                 </span>
                 {runBusy || capBusy ? (
                   <button

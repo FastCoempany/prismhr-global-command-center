@@ -2150,6 +2150,24 @@ describe("the bench gadget is wired to the truth", () => {
     assert.ok(client.includes("failHold"), "a failed run folds away unseen");
     assert.ok(client.includes("dismiss"));
   });
+  test("an empty credit balance is named, not mumbled", () => {
+    assert.ok(
+      runners.includes("out of credits"),
+      "the credits failure hides behind 'the model refused the request'",
+    );
+  });
+  test("a whole pass of doomed calls trips the breaker", () => {
+    assert.ok(/halt/.test(runners), "nothing stops a systemic failure loop");
+    assert.ok(runners.includes("Reading is paused"), "the pause never says itself");
+    assert.ok(/r\.halt/.test(client), "the client hammers on regardless");
+  });
+  test("repeated failures collapse to one line per pass", () => {
+    assert.ok(runners.includes("failed this pass — queued for retry"));
+    assert.ok(
+      !runners.includes("One entry failed — it retries next pass"),
+      "the wall of identical red lines is back",
+    );
+  });
 });
 
 describe("structured-output schemas stay inside what the API accepts", () => {

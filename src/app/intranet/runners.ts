@@ -71,6 +71,9 @@ export type RunReport = {
   pending?: number;
   /** Another catch-up already holds the run lock — watch it, don't stack. */
   busy?: boolean;
+  /** Every read failed the same way — stop the run instead of hammering the
+   *  same doomed calls for sixty more passes. The reason says what to fix. */
+  halt?: boolean;
   /** V.6 — the excessive version behind "N failed · detail": stage, model,
    *  the full untruncated server error, and which entries. For sharing. */
   detail?: string[];
@@ -101,6 +104,8 @@ function reasonOf(e: unknown): string {
   const inner = /"message"\s*:\s*"([^"]+)"/.exec(msg);
   if (inner) msg = inner[1];
   msg = msg.slice(0, 160);
+  if (/credit balance is too low/i.test(msg))
+    return "the API account is out of credits — add credits under Plans & Billing, then press ⟳; everything that failed retries automatically";
   if (err?.status === 401) return "the API key was refused";
   if (err?.status === 429)
     return "the model is rate-limited right now — try again shortly";
@@ -570,6 +575,7 @@ export async function extractPending(
     let read = 0;
     let outOfTime = false;
     let failed = 0;
+    let firstWhy = "";
     const detail: string[] = [];
     const briefs: string[] = [];
 
@@ -625,7 +631,10 @@ export async function extractPending(
         const s = settled[b];
         if (s.status === "rejected") {
           // V.6 — the room says one word; the whole truth waits behind it.
+          // Repeats collapse: the counter carries the arithmetic, and one line
+          // per pass says it — never a wall of identical red.
           failed += 1;
+          if (!firstWhy) firstWhy = reasonOf(s.reason);
           const raw = `${doc.space || doc.origin} · ${iso(doc.occurredAt).slice(0, 10)} — ${rawOf(s.reason)}`;
           detail.push(raw);
           total -= 1; // the total shrinks so 100 stays honest
@@ -635,15 +644,7 @@ export async function extractPending(
               total,
               unit: `${unitWord} — ${doneBase + read} of ${total} ${partWord} · ${failed} queued for retry`,
             },
-            {
-              log: [
-                {
-                  text: "One entry failed — it retries next pass; the total shrinks so 100 stays honest.",
-                  bad: true,
-                },
-              ],
-              detail: [raw],
-            },
+            { detail: [raw] },
           );
           continue;
         }
@@ -726,17 +727,42 @@ export async function extractPending(
         `Read ${read} entr${read === 1 ? "y" : "ies"} and filed ${claimsMade} statement${claimsMade === 1 ? "" : "s"} into the index.`,
       );
     // V.6 — one word where the operator is looking; the detail rides along.
-    if (failed > 0) lines.push(`${failed} failed.`);
+    if (failed > 0) {
+      lines.push(`${failed} failed.`);
+      await pulse(
+        {},
+        {
+          log: [
+            {
+              text: `${failed} failed this pass — queued for retry.`,
+              bad: true,
+            },
+          ],
+        },
+      );
+    }
     if (outOfTime)
       lines.push("Ran out of time this pass — the rest waits for the next one.");
     const left = await prisma.intranetDoc.count({
       where: { OR: [{ extractedAt: null }, { promptVersion: { not: PROMPT_VERSION } }] },
     });
     if (left > 0) lines.push(`${left} still to read.`);
+
+    // The circuit breaker: when a whole pass failed and nothing was read, the
+    // problem is systemic — credits, key, outage. Running sixty more passes of
+    // doomed calls helps nobody; stop, and say what to fix.
+    const halted = read === 0 && failed > 0 && !outOfTime;
+    if (halted)
+      await pulse(
+        { active: false, now: `Reading is paused — ${firstWhy}.`, lanes: [] },
+        { log: [{ text: `Reading is paused — ${firstWhy}.`, bad: true }] },
+      );
+
     return {
       ok: true,
       lines,
       pending: left,
+      halt: halted || undefined,
       detail: detail.length ? detail : undefined,
       briefs: briefs.length ? briefs : undefined,
     };
@@ -1508,9 +1534,17 @@ function laneWords(doc: { origin: string; space: string; title: string }): {
     meeting: "your paste",
     paste: "your paste",
   };
+  // The app's own note syntax (⚑[k:a], →[…], pencil glyphs) never reaches the
+  // lane — the instrument speaks plain words only.
+  const plain = (doc.title || doc.space || "an entry")
+    .replace(/[✎⚑⟪⟫]/g, " ")
+    .replace(/\[[a-z]+:[^\]]*\]?/gi, " ")
+    .replace(/→\s*/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
   return {
     src: SRC[doc.origin] ?? doc.origin,
-    what: (doc.title || doc.space || "an entry").slice(0, 60),
+    what: (plain || "an entry").slice(0, 60),
   };
 }
 
@@ -1586,6 +1620,7 @@ export async function runBrain(opts?: {
       : all;
 
   let pending = 0;
+  let halt = false;
   const detail: string[] = [];
   const briefs: string[] = [];
   try {
@@ -1593,6 +1628,7 @@ export async function runBrain(opts?: {
       const r = await run();
       lines.push(...r.lines);
       if (typeof r.pending === "number") pending = r.pending;
+      if (r.halt) halt = true;
       if (r.detail) detail.push(...r.detail);
       if (r.briefs) briefs.push(...r.briefs);
       // The sweep stages narrate through the instrument too; the read stage
@@ -1622,6 +1658,7 @@ export async function runBrain(opts?: {
     ok: true,
     lines,
     pending,
+    halt: halt || undefined,
     detail: detail.length ? detail : undefined,
     briefs: briefs.length ? briefs : undefined,
   };
