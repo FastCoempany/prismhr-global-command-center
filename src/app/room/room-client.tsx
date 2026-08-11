@@ -48,7 +48,8 @@ import {
   roomTodoSet,
   roomUnlog,
 } from "./actions";
-import { emlToPaste, msgToPaste, readerFor, sniffPaste } from "@/lib/paste-files";
+import { sniffPaste } from "@/lib/paste-files";
+import { readFileToText } from "./read-file";
 import type { StageView } from "@/lib/room/stages-view";
 import styles from "./room.module.css";
 
@@ -340,54 +341,15 @@ function Row({ row }: { row: RoomRow }) {
   // The Drop reads a dropped or picked file into paste text, then files it
   // through the same read-and-file path as a paste. One file at a time.
   const readDroppedFile = async (f: File) => {
-    const kind = readerFor(f.name);
-    if (kind === "unsupported") {
-      setNote(`Can't read ${f.name}. Drop .eml, .msg, .pdf, or plain text.`);
-      return;
-    }
     setReading(f.name);
     setNote(null);
-    try {
-      let text = "";
-      if (kind === "eml") text = emlToPaste(await f.text(), f.name);
-      else if (kind === "text") text = (await f.text()).trim();
-      else if (kind === "msg") {
-        const { default: MsgReader } = await import("@kenjiuno/msgreader");
-        const data = new MsgReader(await f.arrayBuffer()).getFileData();
-        text = msgToPaste(
-          {
-            subject: data.subject,
-            senderName: data.senderName,
-            senderEmail: data.senderEmail,
-            recipients: (data.recipients ?? []).map((r) => ({
-              name: r.name,
-              email: r.email ?? r.smtpAddress,
-            })),
-            body: data.body,
-            messageDeliveryTime: data.messageDeliveryTime,
-          },
-          f.name,
-        );
-      } else {
-        const fd = new FormData();
-        fd.append("file", f);
-        const r = await roomReadPdf(row.accountId, fd);
-        if (!r.ok || !r.text) {
-          setNote(r.reason ?? "The document read failed. Paste the text instead.");
-          return;
-        }
-        text = r.text;
-      }
-      if (text.length < 20) {
-        setNote(`${f.name} came back empty. Paste the text instead.`);
-        return;
-      }
-      filePaste(text, false);
-    } catch {
-      setNote(`Reading ${f.name} failed. Paste the text instead.`);
-    } finally {
-      setReading(null);
+    const read = await readFileToText(f, (fd) => roomReadPdf(row.accountId, fd));
+    setReading(null);
+    if (!read.ok) {
+      setNote(read.reason);
+      return;
     }
+    filePaste(read.text, false);
   };
   const handleFiles = (list: FileList | null) => {
     const f = list?.[0];

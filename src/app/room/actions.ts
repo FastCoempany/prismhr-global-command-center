@@ -1334,21 +1334,15 @@ export async function roomTodoSet(
   }
 }
 
-// The Drop's PDF reader — Claude transcribes the document to paste text the
-// room's readers understand. An email thread comes back headed OUTLOOK
-// THREAD, a chat as TEAMS THREAD, anything else as a plain transcript. The
-// bytes never persist; only the filed entries do.
-export async function roomReadPdf(
-  accountId: string,
-  formData: FormData,
+// The PDF transcriber — Claude reads the document to paste text the room's
+// readers understand. An email thread comes back headed OUTLOOK THREAD, a
+// chat as TEAMS THREAD, anything else as a plain transcript. The bytes never
+// persist; only the filed entries do.
+async function transcribePdf(
+  file: File,
 ): Promise<{ ok: boolean; text?: string; reason?: string }> {
-  const acct = bindAccountId(accountId, peos);
-  if (!acct) return { ok: false, reason: "That row isn't bound to a known account." };
-  if (!(await requireWrite())) return { ok: false, reason: "Read-only session." };
   if (!process.env.ANTHROPIC_API_KEY)
     return { ok: false, reason: "The reader needs the API key. Paste the text instead." };
-  const file = formData.get("file");
-  if (!(file instanceof File)) return { ok: false, reason: "No file arrived." };
   if (file.size > 8 * 1024 * 1024)
     return { ok: false, reason: "That file is over 8 MB. Export a smaller one." };
   const data = Buffer.from(await file.arrayBuffer()).toString("base64");
@@ -1390,4 +1384,28 @@ export async function roomReadPdf(
   } catch {
     return { ok: false, reason: "The document read failed. Paste the text instead." };
   }
+}
+
+// The Drop's PDF reader — bound to the row the file was dropped on.
+export async function roomReadPdf(
+  accountId: string,
+  formData: FormData,
+): Promise<{ ok: boolean; text?: string; reason?: string }> {
+  const acct = bindAccountId(accountId, peos);
+  if (!acct) return { ok: false, reason: "That row isn't bound to a known account." };
+  if (!(await requireWrite())) return { ok: false, reason: "Read-only session." };
+  const file = formData.get("file");
+  if (!(file instanceof File)) return { ok: false, reason: "No file arrived." };
+  return transcribePdf(file);
+}
+
+// The Chute's PDF reader — no row yet; the router names the account from the
+// transcription afterward. Same permission gate, same transcriber.
+export async function chuteReadPdf(
+  formData: FormData,
+): Promise<{ ok: boolean; text?: string; reason?: string }> {
+  if (!(await requireWrite())) return { ok: false, reason: "Read-only session." };
+  const file = formData.get("file");
+  if (!(file instanceof File)) return { ok: false, reason: "No file arrived." };
+  return transcribePdf(file);
 }

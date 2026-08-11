@@ -86,6 +86,17 @@ owed, decision windows, meeting prep) belongs to the HomeRoom. The accounts
 page's stores and the deep-research notes (`research:<account>`) are backbone
 inputs to the queue brain.
 
+## The Chute (decided 2026-08-11)
+
+The HomeRoom carries ONE intake at the top: the Chute. Files (.eml/.msg/.pdf/
+text) thrown at it are read on the spot, routed to their account by the book's
+own signals (known contact email > company domain > account name — pure rules,
+no API needed), and filed through the same pipeline a paste takes, so the
+intelligence in each file fans out app-wide: record entries, opened
+commitments, gaps, playbook intel, outcomes, and every tab re-derives. Nothing
+files blind: no sure match or a disputed read waits for the operator's pick.
+The per-row Drop stays; the Chute is the throw-it-all-here door.
+
 ## Other standing decrees
 
 - The word "steps" never appears in operator-facing copy.
