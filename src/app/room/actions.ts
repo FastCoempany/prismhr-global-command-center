@@ -5,6 +5,7 @@
 // itself. These return values (the room updates in place) instead of
 // redirecting.
 
+import Anthropic from "@anthropic-ai/sdk";
 import { revalidatePath } from "next/cache";
 import { getAppAccess } from "@/lib/auth";
 import { hasDatabaseEnv } from "@/lib/db";
@@ -57,6 +58,7 @@ function refresh() {
   revalidatePath("/room");
   revalidatePath("/accounts");
   revalidatePath("/today");
+  revalidatePath("/groundwork");
   revalidatePath("/");
 }
 
@@ -1329,5 +1331,63 @@ export async function roomTodoSet(
     return { ok: true };
   } catch {
     return { ok: false, reason: "That didn't save. Try again." };
+  }
+}
+
+// The Drop's PDF reader — Claude transcribes the document to paste text the
+// room's readers understand. An email thread comes back headed OUTLOOK
+// THREAD, a chat as TEAMS THREAD, anything else as a plain transcript. The
+// bytes never persist; only the filed entries do.
+export async function roomReadPdf(
+  accountId: string,
+  formData: FormData,
+): Promise<{ ok: boolean; text?: string; reason?: string }> {
+  const acct = bindAccountId(accountId, peos);
+  if (!acct) return { ok: false, reason: "That row isn't bound to a known account." };
+  if (!(await requireWrite())) return { ok: false, reason: "Read-only session." };
+  if (!process.env.ANTHROPIC_API_KEY)
+    return { ok: false, reason: "The reader needs the API key. Paste the text instead." };
+  const file = formData.get("file");
+  if (!(file instanceof File)) return { ok: false, reason: "No file arrived." };
+  if (file.size > 8 * 1024 * 1024)
+    return { ok: false, reason: "That file is over 8 MB. Export a smaller one." };
+  const data = Buffer.from(await file.arrayBuffer()).toString("base64");
+  try {
+    const client = new Anthropic({ timeout: 110_000, maxRetries: 1 });
+    const res = await client.messages.create({
+      model: "claude-opus-5",
+      max_tokens: 16000,
+      output_config: { effort: "low" },
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "document",
+              source: { type: "base64", media_type: "application/pdf", data },
+            },
+            {
+              type: "text",
+              text: `Transcribe this document to plain text for a sales record. If it is an email thread, start the output with "OUTLOOK THREAD — ${file.name}" and give each message its own From / To / Sent / Subject header block, newest first, with the message text under it. If it is a chat transcript, start with "TEAMS THREAD — ${file.name}" and keep speakers named inline. Otherwise output the document's text as-is, reading order, no commentary. Output only the transcription.`,
+            },
+          ],
+        },
+      ],
+    });
+    if (res.stop_reason === "refusal")
+      return { ok: false, reason: "The reader declined this document." };
+    const text = res.content
+      .filter(
+        (b): b is Extract<(typeof res.content)[number], { type: "text" }> =>
+          b.type === "text",
+      )
+      .map((b) => b.text)
+      .join("\n")
+      .trim();
+    if (text.length < 20)
+      return { ok: false, reason: "Nothing readable came back from the document." };
+    return { ok: true, text: text.slice(0, 60000) };
+  } catch {
+    return { ok: false, reason: "The document read failed. Paste the text instead." };
   }
 }

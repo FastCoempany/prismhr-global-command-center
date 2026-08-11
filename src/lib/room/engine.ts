@@ -3,7 +3,7 @@
 // derives from state the app already holds; nothing here guesses. When there
 // isn't enough signal to call a move, it says so instead of inventing one.
 
-import { DASH_NODE_KEYS } from "@/lib/dashboard/stages";
+import { DASH_NODES, DASH_NODE_KEYS } from "@/lib/dashboard/stages";
 
 export type Health = "red" | "amber" | "green" | "quiet";
 
@@ -24,6 +24,9 @@ export type RoomInputs = {
   lastInbound?: { at: string; who: string } | null;
   // most recent record entry of ANY kind ("" = empty record)
   lastRecordAt: string;
+  // every gate on every stage is checked but no outcome is stamped — the deal
+  // is finished work waiting on the operator's call, never "not enough signal"
+  allGatesDone?: boolean;
   now: Date;
 };
 
@@ -56,6 +59,83 @@ export function climbFraction(
   const total = totalInStage > 0 ? totalInStage : 1;
   const inner = Math.min(1, Math.max(0, doneInStage / total));
   return Math.min(1, Math.max(0, (idx + inner) / stages));
+}
+
+// ── The meter's own read ─────────────────────────────────────────────────────
+// Where the deal sits and why, stated for the hover bubble. Position is the
+// further of two truths: the board (checked gates) and the record (evidence
+// the suggestion rules found for stages the board hasn't confirmed yet).
+// Evidence sits the meter at the START of the evidenced stage — proof the
+// stage is in play, never proof it's done.
+
+export type MeterEvidence = { nodeKey: string; why: string };
+
+export type MeterRead = {
+  frac: number; // 0..1 meter position
+  label: string; // the mono line under the bar
+  why: string[]; // the hover bubble, line by line
+};
+
+const stageName = (key: string, labels?: Record<string, string>): string =>
+  labels?.[key] ?? DASH_NODES.find((n) => n.key === key)?.label ?? key;
+
+export function meterRead(i: {
+  outcome: { status: "won" | "lost" } | null;
+  step: { nodeKey: string; nodeLabel: string; item: string } | null;
+  doneInStage: number;
+  totalInStage: number;
+  allGatesDone: boolean;
+  evidence: MeterEvidence[];
+  labels?: Record<string, string>;
+}): MeterRead {
+  const stages = DASH_NODE_KEYS.length || 1;
+  if (i.outcome) {
+    const word = i.outcome.status === "won" ? "Won" : "Lost";
+    return {
+      frac: 1,
+      label: `CLOSED ${word.toUpperCase()}`,
+      why: [`Stamped Closed ${word}. The meter is full.`],
+    };
+  }
+  if (!i.step && i.allGatesDone) {
+    return {
+      frac: 1,
+      label: "EVERY GATE CLOSED",
+      why: ["Every gate on every stage is checked.", "Stamp Closed Won or Closed Lost."],
+    };
+  }
+
+  const boardIdx = i.step ? DASH_NODE_KEYS.indexOf(i.step.nodeKey as never) : -1;
+  const evIdx = i.evidence.reduce(
+    (m, e) => Math.max(m, DASH_NODE_KEYS.indexOf(e.nodeKey as never)),
+    -1,
+  );
+  const why: string[] = [];
+  if (i.step) {
+    why.push(
+      `${i.step.nodeLabel}: ${i.doneInStage} of ${i.totalInStage} gates checked.`,
+      `Next gate: ${i.step.item.slice(0, 90)}${i.step.item.length > 90 ? "…" : ""}`,
+    );
+  } else {
+    why.push("No stage is active on the board.");
+  }
+  const ahead = i.evidence.filter(
+    (e) => DASH_NODE_KEYS.indexOf(e.nodeKey as never) > boardIdx,
+  );
+  for (const e of ahead.slice(0, 2))
+    why.push(`The record shows ${stageName(e.nodeKey, i.labels)} evidence: ${e.why}.`);
+  if (ahead.length > 0) why.push("Confirm it in the stage drawer. The meter moves.");
+  if (!i.step && i.evidence.length === 0)
+    why.push("Check a gate or file a paste. The meter moves on evidence.");
+
+  const boardFrac = climbFraction(i.step?.nodeKey ?? null, i.doneInStage, i.totalInStage);
+  const evFrac = evIdx >= 0 ? Math.min(1, (evIdx + 0.15) / stages) : 0;
+  const label = i.step
+    ? `${i.step.nodeLabel.toUpperCase().slice(0, 16)} · ${i.doneInStage} OF ${i.totalInStage}`
+    : evIdx >= 0
+      ? `RECORD SAYS ${stageName(DASH_NODE_KEYS[evIdx], i.labels).toUpperCase().slice(0, 16)}`
+      : "NOTHING IN FLIGHT";
+  return { frac: Math.max(boardFrac, evFrac), label, why };
 }
 
 const QUIET_RED_DAYS = 5;
@@ -99,12 +179,14 @@ export function readDeal(i: RoomInputs): RoomRead {
         : { line: `THEIR MOVE · ${who} · ${q} DAYS`, tone: "them" };
   } else if (i.step) {
     court = { line: "YOUR MOVE", tone: "you" };
+  } else if (i.allGatesDone) {
+    court = { line: "YOUR MOVE · STAMP THE OUTCOME", tone: "you" };
   } else {
     court = { line: "NO THREAD OPEN YET", tone: "none" };
   }
 
   // Not enough signal — an honest read, never a fabricated move.
-  if (!i.step && !hasRecord && !i.lastTouch) {
+  if (!i.step && !hasRecord && !i.lastTouch && !i.allGatesDone) {
     return {
       move: "File a paste or a note. Not enough signal yet.",
       thin: true,
@@ -127,7 +209,7 @@ export function readDeal(i: RoomInputs): RoomRead {
     (i.step && i.step.ageDays != null && i.step.ageDays >= 3)
   )
     health = "amber";
-  if (!i.step && !i.lastTouch && !inboundNewest) health = "quiet";
+  if (!i.step && !i.lastTouch && !inboundNewest && !i.allGatesDone) health = "quiet";
 
   // The move — one plain sentence built from what's actually known.
   let move: string;
@@ -168,6 +250,10 @@ export function readDeal(i: RoomInputs): RoomRead {
     } else {
       move = `Close “${item.toLowerCase()}”. The stage needs nothing else.`;
     }
+  } else if (i.allGatesDone) {
+    // The whole board is checked and nothing is stamped — the row stays loud
+    // until the operator calls it, never a hollow "not enough signal".
+    move = "Stamp the outcome. Every gate is closed.";
   } else if (i.lastTouch && i.lastTouch.awaitingReply) {
     move = quietLong
       ? `Nudge ${i.lastTouch.who || "the thread"}. Quiet ${quietDays} days.`
