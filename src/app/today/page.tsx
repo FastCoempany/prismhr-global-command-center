@@ -1421,11 +1421,10 @@ export default async function TodayPage({
                   controls={<DelayControl rowKey={`reply:${r.subjectKey}`} />}
                   text={
                     <>
-                      <b>{r.partner}</b> replied. Draft the response. (same fix on the
-                      textTitle at line 1429)
+                      <b>{r.partner}</b> replied. Draft the response.
                     </>
                   }
-                  textTitle={`${r.partner} replied — draft the response`}
+                  textTitle={`${r.partner} replied. Draft the response.`}
                   primary={
                     <>
                       <a
