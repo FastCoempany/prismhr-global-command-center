@@ -483,6 +483,82 @@
   color: var(--color-ink-soft);
 }
 
+/* The Klaxon — the band's command and countdown run the masthead
+   (triptych winner, 2026-08-11). */
+.klaxon {
+  padding: 6px 2px 14px;
+  border-bottom: 1px solid var(--color-line);
+  margin-bottom: 14px;
+}
+.kxTop {
+  display: flex;
+  align-items: baseline;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.kxVerb {
+  font: 400 clamp(38px, 5.6vw, 66px) / 1 var(--font-serif);
+  color: var(--color-ink);
+}
+.kxCount {
+  font: 700 clamp(34px, 5vw, 60px) / 1 var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--ds-orange);
+  margin-left: auto;
+}
+.kxSub {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  font: 600 10.5px/1.5 var(--font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ds-ink-quiet);
+  margin: 8px 0 10px;
+}
+.kxSub b {
+  color: var(--color-ink);
+}
+.kxCap {
+  margin-left: auto;
+  color: var(--color-ink-disabled);
+  font-variant-numeric: tabular-nums;
+}
+.kxBurn {
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(10, 28, 64, 0.07);
+  overflow: hidden;
+}
+.kxBurn i {
+  display: block;
+  height: 100%;
+  background: var(--ds-orange);
+  border-radius: 4px;
+  transition: width 0.4s;
+}
+.kxLate .kxCount {
+  color: var(--ds-red);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .kxLate .kxCount {
+    animation: kxThrob 1s steps(2, end) infinite;
+  }
+  @keyframes kxThrob {
+    50% {
+      opacity: 0.5;
+    }
+  }
+}
+@media (max-width: 700px) {
+  .kxCount {
+    margin-left: 0;
+  }
+  .kxCap {
+    margin-left: 0;
+  }
+}
+
 /* The wings grid: done · stage · waiting. */
 .wings {
   display: grid;

@@ -1,16 +1,44 @@
 "use client";
 
-// The instrument capsule — Chicago clock with ticking seconds, the date, the
-// weather outside, and the band the working day is in. Decreed part of the
-// winged stage (CLAUDE.md). Hydration-safe: em-dashes on the server, real
-// readings after mount. The weather is a keyless open-meteo read for the
-// desk's own city; if the fetch fails the slot stays quiet — the room never
-// invents a sky.
+// The Klaxon — the time instrument that runs the room (triptych winner,
+// decided 2026-08-11). The band's command and its countdown are the masthead:
+// serif verb left, burning count right, a full-width burn bar draining as the
+// window empties. Inside the last five minutes the count turns red and
+// throbs. The capsule facts (Chicago clock, date, weather) ride the sub-row.
+// Hydration-safe: em-dashes on the server, real readings after mount. Weather
+// is a keyless open-meteo read; if the fetch fails the slot stays quiet — the
+// room never invents a sky.
 
 import { useEffect, useState } from "react";
 import styles from "./groundwork.module.css";
 
 const CHICAGO = { latitude: 41.8781, longitude: -87.6298 };
+
+// The working day's bands, minutes from midnight, Chicago.
+const BANDS = [
+  {
+    from: 7 * 60,
+    to: 11 * 60,
+    label: "THE SEND WINDOW",
+    verb: "Send.",
+    next: "NEXT · THE PEOPLE WINDOW · 11:00–14:00",
+  },
+  {
+    from: 11 * 60,
+    to: 14 * 60,
+    label: "THE PEOPLE WINDOW",
+    verb: "Get on the phone.",
+    next: "NEXT · RESEARCH & FILING · 14:00–17:00",
+  },
+  {
+    from: 14 * 60,
+    to: 17 * 60,
+    label: "RESEARCH & FILING",
+    verb: "Research and file.",
+    next: "NEXT · TOMORROW'S SENDS · 07:00",
+  },
+] as const;
+const DAY_TO = BANDS[2].to;
 
 // Open-meteo WMO weather codes, folded to one plain word.
 function skyWord(code: number): string {
@@ -25,6 +53,8 @@ function skyWord(code: number): string {
   if (code <= 86) return "snow";
   return "storms";
 }
+
+const pad = (n: number) => (n < 10 ? `0${n}` : String(n));
 
 export function Instrument() {
   const [now, setNow] = useState<Date | null>(null);
@@ -66,57 +96,67 @@ export function Instrument() {
     };
   }, []);
 
-  const time = now
-    ? now.toLocaleTimeString("en-US", {
-        timeZone: "America/Chicago",
-        hour: "numeric",
-        minute: "2-digit",
-        second: "2-digit",
-      })
+  // Chicago wall-clock minutes, derived once per tick.
+  const chi = now
+    ? new Date(
+        now.toLocaleString("en-US", { timeZone: "America/Chicago", hour12: false }),
+      )
+    : null;
+  const min = chi ? chi.getHours() * 60 + chi.getMinutes() + chi.getSeconds() / 60 : null;
+  const sec = chi ? chi.getSeconds() : 0;
+
+  const band = min == null ? BANDS[0] : (BANDS.find((b) => min < b.to) ?? BANDS[2]);
+  const afterDay = min != null && min >= DAY_TO;
+  const left = min == null ? null : Math.max(0, band.to - min);
+  const frac =
+    min == null ? 0 : Math.min(1, Math.max(0, (min - band.from) / (band.to - band.from)));
+  const late = left != null && left <= 5 && !afterDay;
+
+  const clock = chi
+    ? `${chi.getHours()}:${pad(chi.getMinutes())}:${pad(sec)}`
     : "—:——:——";
-  const date = now
-    ? now
-        .toLocaleDateString("en-US", {
-          timeZone: "America/Chicago",
-          weekday: "short",
-          month: "short",
-          day: "numeric",
-        })
+  const date = chi
+    ? chi
+        .toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })
         .toUpperCase()
         .replace(/,/g, " ·")
     : "—";
-  const hour = now
-    ? Number(
-        now.toLocaleString("en-US", {
-          hour: "numeric",
-          hour12: false,
-          timeZone: "America/Chicago",
-        }),
-      )
-    : null;
-  const band =
-    hour == null
-      ? "—"
-      : hour < 11
-        ? "sends · until 11:00"
-        : hour < 14
-          ? "the people window"
-          : "research & filing";
+  const count =
+    left == null
+      ? "—:——"
+      : afterDay
+        ? "—"
+        : left >= 60
+          ? `${Math.floor(left / 60)}:${pad(Math.floor(left % 60))}:${pad(Math.floor((left % 1) * 60))}`
+          : `${Math.floor(left)}:${pad(Math.floor((left % 1) * 60))}`;
 
   return (
     <div
-      className={styles.instr}
-      aria-label="Chicago time, weather, and the working band"
+      className={`${styles.klaxon} ${late ? styles.kxLate : ""}`}
+      aria-label="The working band, its countdown, and Chicago time"
     >
-      <span className={styles.instrDigits} suppressHydrationWarning>
-        {time}
-      </span>
-      <span>America/Chicago</span>
-      <span suppressHydrationWarning>{date}</span>
-      {wx && <span className={styles.instrWx}>{wx}</span>}
-      <span className={styles.instrBand} suppressHydrationWarning>
-        {band}
-      </span>
+      <div className={styles.kxTop}>
+        <span className={styles.kxVerb} suppressHydrationWarning>
+          {afterDay ? "The day is worked." : band.verb}
+        </span>
+        <span className={styles.kxCount} suppressHydrationWarning>
+          {count}
+        </span>
+      </div>
+      <div className={styles.kxSub}>
+        <span suppressHydrationWarning>
+          <b>{band.label}</b>
+          {afterDay ? "" : ` · CLOSES ${Math.floor(band.to / 60)}:00`}
+        </span>
+        <span suppressHydrationWarning>{afterDay ? "" : band.next}</span>
+        <span className={styles.kxCap} suppressHydrationWarning>
+          {clock} · AMERICA/CHICAGO · {date}
+          {wx ? ` · ${wx.toUpperCase()}` : ""}
+        </span>
+      </div>
+      <div className={styles.kxBurn}>
+        <i style={{ width: `${Math.round((1 - frac) * 100)}%` }} />
+      </div>
     </div>
   );
 }

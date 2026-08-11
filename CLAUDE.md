@@ -78,9 +78,12 @@ The Stage won the triptych, and the **winged stage** won the variations
 (2026-08-10): one account center stage with an action line and a reason line;
 a left wing holding the day's worked stamps; a right wing holding the waiting
 queue heat-mapped (solid amber burns today, half amber dated this week, quiet
-ink keeps), each name with its trigger whispered beneath. The room keeps the
-instrument capsule (Chicago clock · date · weather · the working band) and the
-lower deck (the wire · the institutions · State of play). Groundwork is outbound only — activities the
+ink keeps), each name with its trigger whispered beneath. The instrument is
+**the Klaxon** (triptych winner, 2026-08-11): the band's command and countdown
+run the masthead — serif verb left, orange count right, a full-width burn bar
+draining as the window empties, red and throbbing inside the last five
+minutes; the capsule facts (Chicago clock · date · weather) ride the sub-row.
+The room keeps the lower deck (the wire · the institutions · State of play). Groundwork is outbound only — activities the
 operator initiates today to build pipeline; reactive account motion (replies
 owed, decision windows, meeting prep) belongs to the HomeRoom. The accounts
 page's stores and the deep-research notes (`research:<account>`) are backbone
