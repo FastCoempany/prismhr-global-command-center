@@ -5,7 +5,7 @@
 // check-ins engine in the right-margin drawer; the eye drawer holding what
 // used to be "then, if there's time". Every composer is bound to its row.
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useDismiss } from "@/components/use-dismiss";
 import { ChiClock } from "../today-client";
@@ -42,11 +42,13 @@ import {
   roomOwedDismiss,
   roomPaste,
   roomPasteUndo,
+  roomReadPdf,
   roomRecordDelete,
   roomRecordEdit,
   roomTodoSet,
   roomUnlog,
 } from "./actions";
+import { emlToPaste, msgToPaste, readerFor, sniffPaste } from "@/lib/paste-files";
 import type { StageView } from "@/lib/room/stages-view";
 import styles from "./room.module.css";
 
@@ -59,7 +61,13 @@ export type RoomRow = {
   multiTone: "g" | "y" | "r";
   people: { name: string; line: string }[];
   briefed: boolean;
-  climb: { frac: number; capTone: "risk" | "warn" | "ok"; label: string };
+  climb: {
+    frac: number;
+    capTone: "risk" | "warn" | "ok";
+    label: string;
+    /** why the meter sits where it does — the hover bubble, line by line */
+    why: string[];
+  };
   stages: StageView[];
   suggestions: { node: string; index: number; item: string; why: string }[];
   move: string;
@@ -199,9 +207,16 @@ function Row({ row }: { row: RoomRow }) {
   const [pasteOpen, setPasteOpen] = useState(false);
   const [pasteText, setPasteText] = useState("");
   const [note, setNote] = useState<string | null>(null);
+  // The Drop's file path: hot while a file hovers, named while one is read.
+  const [dropHot, setDropHot] = useState(false);
+  const [reading, setReading] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   // Which outstanding item was closed — keyed by doneKey so the strike never
   // carries over onto the NEXT item after the panel refreshes.
   const [closedKey, setClosedKey] = useState<string | null>(null);
+  // Fresh receipts show two deep; the rest collapse behind one quiet toggle so
+  // a run of closes never stacks a wall of struck lines into the pane.
+  const [freshAll, setFreshAll] = useState(false);
   const closed = !!row.outstanding && closedKey === row.outstanding.doneKey;
   const [stageOpen, setStageOpen] = useState<string | null>(null);
   // The stage checklist closes on a click anywhere else — the nodes that open it
@@ -322,6 +337,63 @@ function Row({ row }: { row: RoomRow }) {
       } else setNote(r.reason ?? "The paste didn't file.");
     });
   };
+  // The Drop reads a dropped or picked file into paste text, then files it
+  // through the same read-and-file path as a paste. One file at a time.
+  const readDroppedFile = async (f: File) => {
+    const kind = readerFor(f.name);
+    if (kind === "unsupported") {
+      setNote(`Can't read ${f.name}. Drop .eml, .msg, .pdf, or plain text.`);
+      return;
+    }
+    setReading(f.name);
+    setNote(null);
+    try {
+      let text = "";
+      if (kind === "eml") text = emlToPaste(await f.text(), f.name);
+      else if (kind === "text") text = (await f.text()).trim();
+      else if (kind === "msg") {
+        const { default: MsgReader } = await import("@kenjiuno/msgreader");
+        const data = new MsgReader(await f.arrayBuffer()).getFileData();
+        text = msgToPaste(
+          {
+            subject: data.subject,
+            senderName: data.senderName,
+            senderEmail: data.senderEmail,
+            recipients: (data.recipients ?? []).map((r) => ({
+              name: r.name,
+              email: r.email ?? r.smtpAddress,
+            })),
+            body: data.body,
+            messageDeliveryTime: data.messageDeliveryTime,
+          },
+          f.name,
+        );
+      } else {
+        const fd = new FormData();
+        fd.append("file", f);
+        const r = await roomReadPdf(row.accountId, fd);
+        if (!r.ok || !r.text) {
+          setNote(r.reason ?? "The document read failed. Paste the text instead.");
+          return;
+        }
+        text = r.text;
+      }
+      if (text.length < 20) {
+        setNote(`${f.name} came back empty. Paste the text instead.`);
+        return;
+      }
+      filePaste(text, false);
+    } catch {
+      setNote(`Reading ${f.name} failed. Paste the text instead.`);
+    } finally {
+      setReading(null);
+    }
+  };
+  const handleFiles = (list: FileList | null) => {
+    const f = list?.[0];
+    if (f && !pending && !reading) void readDroppedFile(f);
+  };
+
   const submitPaste = () => {
     const text = pasteText.trim();
     if (!text || pending) return;
@@ -600,26 +672,42 @@ function Row({ row }: { row: RoomRow }) {
         )}
 
         <div className={styles.climb} ref={stageRef}>
-          <div className={styles.track}>
+          {/* The bar lives in its own 16px zone so the label below never sits
+              under the fill; hovering the zone opens the why bubble. */}
+          <div className={styles.meterZone}>
+            <div className={styles.track}>
+              <div
+                className={styles.gain}
+                style={{
+                  width: `${Math.round(Math.max(0.04, row.climb.frac) * 100)}%`,
+                }}
+              />
+            </div>
             <div
-              className={styles.gain}
-              style={{ width: `${Math.round(Math.max(0.04, row.climb.frac) * 100)}%` }}
+              className={`${styles.cap} ${row.climb.capTone === "risk" ? styles.capRisk : row.climb.capTone === "warn" ? styles.capWarn : styles.capOk}`}
+              style={{ left: `${Math.round(Math.max(0.04, row.climb.frac) * 100)}%` }}
             />
+            {row.stages.map((s, i) => (
+              <button
+                key={s.key}
+                type="button"
+                className={`${styles.node} ${s.state === "done" ? styles.nodeDone : ""} ${s.state === "cur" ? styles.nodeCur : ""}`}
+                style={{ left: `${2 + i * 14.3}%` }}
+                title={`${s.label}. Open its checklist.`}
+                onClick={() => setStageOpen((k) => (k === s.key ? null : s.key))}
+              />
+            ))}
+            {row.climb.why.length > 0 && (
+              <div className={styles.meterCard}>
+                <span className={styles.hk}>WHY THE METER SITS HERE</span>
+                {row.climb.why.map((w) => (
+                  <span key={w} className={styles.hp}>
+                    {w}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
-          <div
-            className={`${styles.cap} ${row.climb.capTone === "risk" ? styles.capRisk : row.climb.capTone === "warn" ? styles.capWarn : styles.capOk}`}
-            style={{ left: `${Math.round(Math.max(0.04, row.climb.frac) * 100)}%` }}
-          />
-          {row.stages.map((s, i) => (
-            <button
-              key={s.key}
-              type="button"
-              className={`${styles.node} ${s.state === "done" ? styles.nodeDone : ""} ${s.state === "cur" ? styles.nodeCur : ""}`}
-              style={{ left: `${2 + i * 14.3}%` }}
-              title={`${s.label}. Open its checklist.`}
-              onClick={() => setStageOpen((k) => (k === s.key ? null : s.key))}
-            />
-          ))}
           <div className={styles.climbCap}>{label}</div>
 
           {openStage && (
@@ -1013,7 +1101,7 @@ function Row({ row }: { row: RoomRow }) {
             })()
           ),
         )}
-        {freshInfo.map((f, i) => (
+        {(freshAll ? freshInfo : freshInfo.slice(0, 2)).map((f, i) => (
           <div key={`fi${i}`}>
             <div className={`${styles.it} ${styles.fresh}`}>
               <span className={`${styles.ic} ${styles.gDone}`}>✓</span>
@@ -1063,6 +1151,15 @@ function Row({ row }: { row: RoomRow }) {
             )}
           </div>
         ))}
+        {freshInfo.length > 2 && (
+          <button
+            type="button"
+            className={styles.moreFresh}
+            onClick={() => setFreshAll((v) => !v)}
+          >
+            {freshAll ? "Collapse ▴" : `Show ${freshInfo.length - 2} more ▸`}
+          </button>
+        )}
         {[
           // An un-held row rejoins the open list; it carries no wall of its own
           // until the server re-reads it.
@@ -1186,9 +1283,21 @@ function Row({ row }: { row: RoomRow }) {
           ))}
 
         {row.canWrite && (
-          <div className={styles.logbox}>
+          <div
+            className={`${styles.logbox} ${dropHot ? styles.dropHot : ""}`}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDropHot(true);
+            }}
+            onDragLeave={() => setDropHot(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setDropHot(false);
+              handleFiles(e.dataTransfer.files);
+            }}
+          >
             <span className={styles.lk}>
-              LOG IT · FILES TO {row.name.toUpperCase()}, EVERYWHERE
+              THE DROP · FILES TO {row.name.toUpperCase()}, EVERYWHERE
             </span>
             <div className={styles.modes}>
               <button
@@ -1226,8 +1335,28 @@ function Row({ row }: { row: RoomRow }) {
                   {u.toUpperCase()}
                 </button>
               ))}
+              <button
+                type="button"
+                className={styles.mode}
+                disabled={pending || !!reading}
+                onClick={() => fileInputRef.current?.click()}
+                title="Read a file: .eml, .msg, .pdf, or plain text"
+              >
+                ⇪ File
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".eml,.msg,.pdf,.txt,.md,.csv,.log,.json"
+                style={{ display: "none" }}
+                onChange={(e) => {
+                  handleFiles(e.target.files);
+                  e.target.value = "";
+                }}
+              />
               <span className={styles.hints}>
-                Enter files to {firstWord(row.name)} · Shift+Enter newline
+                Enter files to {firstWord(row.name)} · Shift+Enter newline · drop a file
+                anywhere on the Drop
               </span>
             </div>
             <textarea
@@ -1248,8 +1377,13 @@ function Row({ row }: { row: RoomRow }) {
                 <textarea
                   value={pasteText}
                   onChange={(e) => setPasteText(e.target.value)}
-                  placeholder={`Paste the Salesforce capture, an email, or meeting notes. It files to ${row.name}.`}
+                  placeholder={`Paste the Salesforce capture, an email, or meeting notes. Or drop a .eml, .msg, or .pdf file. It files to ${row.name}.`}
                 />
+                {pasteText.trim().length > 0 && (
+                  <span className={styles.sniff}>
+                    Reads as {sniffPaste(pasteText).label}.
+                  </span>
+                )}
                 <div className={styles.pasteRow}>
                   <button
                     type="button"
@@ -1297,6 +1431,7 @@ function Row({ row }: { row: RoomRow }) {
                 </span>
               </div>
             )}
+            {reading && <p className={styles.sniff}>Reading {reading}…</p>}
             {note && <p className={styles.err}>{note}</p>}
           </div>
         )}

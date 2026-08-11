@@ -41,13 +41,13 @@ import { corpusFor, extractDealIntel } from "@/lib/intel/extract";
 import { digestFor, digestForCardName } from "@/lib/intel/digest";
 import { COUNTRY_NAME } from "@/lib/intel/lexicon";
 import { suggestChecks } from "@/lib/intel/evidence";
-import { climbFraction, daysBetween, readDeal, type RoomRead } from "@/lib/room/engine";
+import { daysBetween, meterRead, readDeal, type RoomRead } from "@/lib/room/engine";
 import { buildStageRail } from "@/lib/room/stages-view";
 import { buildAccountSheet } from "@/lib/room/sheet-view";
 import { readLoss } from "@/lib/room/loss";
 import { GAP_DISMISS, readGaps } from "@/lib/room/gaps";
 import { researchNs } from "@/lib/intel/deep-research";
-import { OUTCOME_LABEL, readOutcome } from "@/lib/dashboard/outcome";
+import { readOutcome } from "@/lib/dashboard/outcome";
 import { owedToMe } from "@/lib/room/owed";
 import { GLOBAL_SCENT_RE } from "@/lib/intel/provenance";
 import { askHref, peerQuestions, scopedAsk } from "@/lib/intranet/bridges";
@@ -179,7 +179,19 @@ export default async function RoomPage() {
       ? (card.checks[stageNode.key] ?? []).filter(Boolean).length
       : 0;
     const totalInStage = stageNode?.checklist.length ?? 0;
-    const frac = climbFraction(step?.nodeKey ?? null, doneInStage, totalInStage);
+
+    // Closed Won / Closed Lost — the terminal stamp, if the operator confirmed
+    // one. A closed row keeps its place until it's retired; the meter says so.
+    const outcome = readOutcome(card.notes);
+    // Every gate on every stage checked but nothing stamped: finished work
+    // waiting on the operator's call — the row stays loud, it never hollows.
+    const allGatesDone =
+      !outcome &&
+      !step &&
+      DASH_NODES.every((n) => {
+        const checks = card.checks[n.key] ?? [];
+        return n.checklist.every((_, idx) => checks[idx]);
+      });
 
     const touch = accountId ? touchMap.get(`outreach:${accountId}`) : undefined;
     const read: RoomRead = readDeal({
@@ -209,6 +221,7 @@ export default async function RoomPage() {
           }
         : null,
       lastRecordAt: allNotes[0]?.createdAt ?? "",
+      allGatesDone,
       now,
     });
 
@@ -294,14 +307,23 @@ export default async function RoomPage() {
       cap: 2,
     });
 
-    // Closed Won / Closed Lost — the terminal stamp, if the operator confirmed
-    // one. A closed row keeps its place until it's retired; the meter says so.
-    const outcome = readOutcome(card.notes);
-    const stageLabel = outcome
-      ? OUTCOME_LABEL[outcome.status].toUpperCase()
-      : step
-        ? `${(data.labels[step.nodeKey] ?? step.nodeLabel).toUpperCase().slice(0, 16)} · ${doneInStage} OF ${totalInStage}`
-        : "NOTHING IN FLIGHT";
+    // The meter's read: position from the further of board truth and record
+    // evidence, plus the why lines the hover bubble states.
+    const meter = meterRead({
+      outcome,
+      step: step
+        ? {
+            nodeKey: step.nodeKey,
+            nodeLabel: data.labels[step.nodeKey] ?? step.nodeLabel,
+            item: step.item,
+          }
+        : null,
+      doneInStage,
+      totalInStage,
+      allGatesDone,
+      evidence: suggestions.map((s) => ({ nodeKey: s.node, why: s.why })),
+      labels: data.labels,
+    });
 
     rows.push({
       accountId,
@@ -326,7 +348,7 @@ export default async function RoomPage() {
       })),
       briefed,
       climb: {
-        frac: outcome ? 1 : frac,
+        frac: meter.frac,
         capTone: outcome
           ? outcome.status === "won"
             ? "ok"
@@ -336,7 +358,8 @@ export default async function RoomPage() {
             : read.health === "amber"
               ? "warn"
               : "ok",
-        label: stageLabel,
+        label: meter.label,
+        why: meter.why,
       },
       outcome,
       gaps: gaps.shown,
