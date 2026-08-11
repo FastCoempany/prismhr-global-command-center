@@ -27,7 +27,7 @@ Say this, then ask this — one page at a time, one high-level question per page
 
 ## 2. The clock
 
-Measured from the words below at 150 a minute, plus an allowance for each answer. **18:35** as written, against a twenty-minute ceiling. Nothing is compressed to hit a number — every page gets the room to actually explain itself, and the answer allowances assume they talk. Slides 1, 5, 8, 11 and 13 are where the time should go; if you need to make some back, shorten the answers on 2, 3, 7, 12 and 14 rather than cutting what you say.
+Measured from the words below at 150 a minute, plus an allowance for each answer. **18:39** as written, against a twenty-minute ceiling. Nothing is compressed to hit a number — every page gets the room to actually explain itself, and the answer allowances assume they talk. Slides 1, 5, 8, 11 and 13 are where the time should go; if you need to make some back, shorten the answers on 2, 3, 7, 12 and 14 rather than cutting what you say.
 
 | #   | Slide                                             | You  | Them | Total     |
 | --- | ------------------------------------------------- | ---- | ---- | --------- |
@@ -45,8 +45,8 @@ Measured from the words below at 150 a minute, plus an allowance for each answer
 | 12  | Global Talent                                     | 0:30 | 0:08 | 0:38      |
 | 13  | The Operating Model                               | 0:58 | 0:50 | 1:48      |
 | 14  | Provider Success Story                            | 0:38 | 0:12 | 0:50      |
-| 15  | Help Your Clients Go Global                       | 0:34 | 0:40 | 1:14      |
-|     | **All fifteen**                                   |      |      | **18:35** |
+| 15  | Help Your Clients Go Global                       | 0:38 | 0:40 | 1:18      |
+|     | **All fifteen**                                   |      |      | **18:39** |
 
 ---
 
@@ -386,7 +386,7 @@ _Why this one._ The story is a software team in Costa Rica, so it won’t look m
 
 ## Slide 15 — Help Your Clients Go Global
 
-_0:34 you · 0:40 them_ · **never skip**
+_0:38 you · 0:40 them_ · **never skip**
 
 **On the page:** Closing slide — “It’s time to build your borderless business.”
 
@@ -395,13 +395,15 @@ _0:34 you · 0:40 them_ · **never skip**
 > What I’d suggest next is small. One client, one country, and we scope it together — your implementation people, whoever owns that client, and me. You’d see what’s involved and what it costs before anybody promises a client anything.
 > And I’ll send the corrected Puerto Rico guide on the day I said.
 
-> **One client, one country. That’s the whole ask.**
+> **That’s everything I planned to cover.**
 
-**ASK THIS** — Ask it, then stop talking. Don't fill the silence.
+**ASK THIS** — Ask it, get the name, then hand them the floor.
 
-> **The easiest place to start is a client who already has someone overseas — the problem is real and nobody’s guessing. Which client is that?**
+> **You’ve already got Puerto Rico in front of you. Do we start there, or is there a better client to scope first?**
 
-_Why this one._ A named client turns a maybe into a next meeting. Once they name one, ask what timing they’re working against — that lets them raise their own deadline without you mentioning it. Whatever date they say is the date everything else runs on.
+> And then the rest of the time is yours — what questions do you have?
+
+_Why this one._ Don’t ask them to go find a client — they already brought you one. Naming Puerto Rico back to them makes the next move concrete instead of hypothetical, and it gives them an easy out to name a better account if Puerto Rico turns out to be their own staff rather than a client’s. Once they name one, ask what timing they’re working against — that lets them raise their own deadline without you mentioning it. Whatever date they say is the date the account plan runs on. Then stop presenting and take questions; what they ask tells you what actually landed.
 
 ---
 
