@@ -27,32 +27,32 @@ Say this, then ask this — one page at a time, one high-level question per page
 
 ## 2. The clock
 
-Measured from the words below at 150 a minute, plus an allowance for each answer. **18:20** as written, against a twenty-minute ceiling. Nothing is compressed to hit a number — every page gets the room to actually explain itself, and the answer allowances assume they talk. Slides 1, 5, 8, 11 and 13 are where the time should go; if you need to make some back, shorten the answers on 2, 3, 7, 12 and 14 rather than cutting what you say.
+Measured from the words below at 150 a minute, plus an allowance for each answer. **18:35** as written, against a twenty-minute ceiling. Nothing is compressed to hit a number — every page gets the room to actually explain itself, and the answer allowances assume they talk. Slides 1, 5, 8, 11 and 13 are where the time should go; if you need to make some back, shorten the answers on 2, 3, 7, 12 and 14 rather than cutting what you say.
 
 | #   | Slide                                             | You  | Them | Total     |
 | --- | ------------------------------------------------- | ---- | ---- | --------- |
-| 1   | Compete Without Borders                           | 0:54 | 0:35 | 1:29      |
-| 2   | Agenda                                            | 0:44 | 0:12 | 0:56      |
+| 1   | Compete Without Borders                           | 0:56 | 0:35 | 1:31      |
+| 2   | Agenda                                            | 0:46 | 0:12 | 0:58      |
 | 3   | PrismHR Solutions                                 | 0:28 | 0:12 | 0:40      |
-| 4   | Why Your Clients Go Global                        | 0:38 | 0:22 | 1:00      |
+| 4   | Why Your Clients Go Global                        | 0:40 | 0:22 | 1:02      |
 | 5   | The Global Challenges Your Clients Bring to You   | 1:10 | 0:28 | 1:38      |
 | 6   | Enter PrismHR Global                              | 0:46 | 0:18 | 1:04      |
-| 7   | Help Clients Grow Globally                        | 0:45 | 0:12 | 0:57      |
-| 8   | Why Service Providers Partner With PrismHR Global | 0:38 | 0:40 | 1:18      |
+| 7   | Help Clients Grow Globally                        | 0:47 | 0:12 | 0:59      |
+| 8   | Why Service Providers Partner With PrismHR Global | 0:39 | 0:40 | 1:19      |
 | 9   | Global Employer of Record                         | 0:54 | 0:12 | 1:06      |
-| 10  | Global Contractor Solutions                       | 1:06 | 0:22 | 1:28      |
+| 10  | Global Contractor Solutions                       | 1:12 | 0:22 | 1:34      |
 | 11  | Global Payroll                                    | 1:39 | 0:35 | 2:14      |
 | 12  | Global Talent                                     | 0:30 | 0:08 | 0:38      |
 | 13  | The Operating Model                               | 0:58 | 0:50 | 1:48      |
 | 14  | Provider Success Story                            | 0:38 | 0:12 | 0:50      |
 | 15  | Help Your Clients Go Global                       | 0:34 | 0:40 | 1:14      |
-|     | **All fifteen**                                   |      |      | **18:20** |
+|     | **All fifteen**                                   |      |      | **18:35** |
 
 ---
 
 ## Slide 1 — Compete Without Borders
 
-_0:54 you · 0:35 them_ · **never skip**
+_0:56 you · 0:35 them_ · **never skip**
 
 **On the page:** Title slide.
 
@@ -70,7 +70,7 @@ _0:54 you · 0:35 them_ · **never skip**
 
 **ASK THIS** — Ask it, then stop. Let all three answer.
 
-> **Jennifer’s note was about global payroll, and all three of you are here. What’s driving it?**
+> **Jennifer’s note was about global payroll, and all three of you are here. What are you trying to solve?**
 
 _Why this one._ You can’t win credibility back later — everything you say after minute one gets heard through TZP whether anyone mentions it or not. One sentence, then forward. And the last line matters: it turns the Puerto Rico admission on slide 11 into the thing you promised rather than a gap in your knowledge.
 
@@ -81,7 +81,7 @@ _Why this one._ You can’t win credibility back later — everything you say af
 
 ## Slide 2 — Agenda
 
-_0:44 you · 0:12 them_
+_0:46 you · 0:12 them_
 
 **On the page:** Ten-line contents list for the deck.
 
@@ -94,7 +94,7 @@ _0:44 you · 0:12 them_
 
 **ASK THIS** — Say it flat, then let them place themselves.
 
-> **Most of the middle is background. The two that usually matter are how a deal works between us, and what it takes to stand up. Where do you want the time?**
+> **Most of the middle is background. The two that usually matter are how a deal between us works, and what it would take to get this running on your side. Where do you want the time?**
 
 _Why this one._ It tells you where to spend the time, and gives you permission to move fast through anything they didn’t pick.
 
@@ -122,7 +122,7 @@ _Why this one._ This is the first real read on how much they know. A PEO can pla
 
 ## Slide 4 — Why Your Clients Go Global
 
-_0:38 you · 0:22 them_
+_0:40 you · 0:22 them_
 
 **On the page:** Five reasons companies expand: specialist talent, faster market entry, lower operating cost, serving international customers, and coverage across time zones.
 
@@ -135,7 +135,7 @@ _0:38 you · 0:22 them_
 
 **ASK THIS** — Give the two, let them pick.
 
-> **It’s usually one of two things — a client won a customer abroad, or they can’t hire the skill here. Which is more common with yours?**
+> **When a client does ask, it’s usually one of two things — they won a customer abroad, or they can’t hire the skill here. Which is more common with yours?**
 
 _Why this one._ Ask it rather than assume it. If the answer is yes you have a live use case to aim the rest of the deck at; if it’s no, the conversation is about being ready before the first one asks — which is a fine reason to keep talking.
 
@@ -193,7 +193,7 @@ _Why this one._ She runs implementation and technology. The difference between a
 
 ## Slide 7 — Help Clients Grow Globally
 
-_0:45 you · 0:12 them_
+_0:47 you · 0:12 them_
 
 **On the page:** The four products named: Global EOR, contractor support, Global Payroll, Global Talent.
 
@@ -209,7 +209,7 @@ _0:45 you · 0:12 them_
 
 **ASK THIS** — State the order, let them reorder it.
 
-> **For most PEO books the first need is contractors rather than EOR — people are already being paid overseas and it needs cleaning up. Does that order hold for your clients?**
+> **For most PEO books the order is contractors first, then payroll, then EOR — people are already being paid overseas and it needs cleaning up before anyone hires properly. Does that order hold for your clients?**
 
 _Why this one._ This is the whole offering in thirty seconds, and their answer tells you which of the next four pages to slow down on.
 
@@ -217,7 +217,7 @@ _Why this one._ This is the whole offering in thirty seconds, and their answer t
 
 ## Slide 8 — Why Service Providers Partner With PrismHR Global
 
-_0:38 you · 0:40 them_ · **never skip**
+_0:39 you · 0:40 them_ · **never skip**
 
 **On the page:** Five reasons: one connected offering, operational efficiency, in-country expertise, a model that scales from the first hire, and flexible payment options.
 
@@ -230,7 +230,7 @@ _0:38 you · 0:40 them_ · **never skip**
 
 **ASK THIS** — Scott's question. Ask it, then stop talking.
 
-> **Most providers refer this out and don’t earn anything on it. Where does that sit with Infiniti today?**
+> **Most providers refer international work out and don’t earn anything on it. Where does that sit with Infiniti today?**
 
 _Why this one._ The commercial argument in one question, and it belongs to the CEO. If the answer is no, stop selling and go to slide 13 — the rest of the meeting is how the money would work instead.
 
@@ -264,7 +264,7 @@ _Why this one._ The Poland sentence is the whole product. If they take one thing
 
 ## Slide 10 — Global Contractor Solutions
 
-_1:06 you · 0:22 them_
+_1:12 you · 0:22 them_
 
 **On the page:** Two contractor models — contractor management, and contractor of record where PrismHR acts as agent of record.
 
@@ -279,7 +279,7 @@ _1:06 you · 0:22 them_
 
 **ASK THIS** — Either answer gives you a first project.
 
-> **Overseas contractors usually get paid out of accounts payable, so they never touch the PEO’s system. Would it be useful to know which of your clients have them?**
+> **A contractor in another country usually gets paid through accounts payable, as a vendor invoice — not through payroll. So they never show up in your system. Would it be worth finding out how many of your clients are paying people outside the US?**
 
 _Why this one._ Contractors overseas are usually paid out of accounts payable and never show up in the PEO’s system, so “we’re not sure” is common and honest. Either answer gives you a small, safe first project: find out.
 
