@@ -52,6 +52,8 @@ import { owedToMe } from "@/lib/room/owed";
 import { GLOBAL_SCENT_RE } from "@/lib/intel/provenance";
 import { askHref, peerQuestions, scopedAsk } from "@/lib/intranet/bridges";
 import { prospectAsks } from "@/lib/intranet/store";
+import { Chute } from "./chute";
+import { domainOf } from "@/lib/route-capture";
 import {
   RoomClient,
   type CadenceRow,
@@ -574,12 +576,32 @@ export default async function RoomPage() {
     .slice(0, 8)
     .map((t) => ({ id: t.id, body: t.body.split("\n")[0].slice(0, 140) }));
 
+  // The Chute's routing roster — every account the book knows, with the
+  // signals that identify it in a dropped file: contact emails and company
+  // domains. Built server-side; the contacts module never reaches the client.
+  const chuteRoster = peos.map((p) => {
+    const emails = [p.contactEmail, ...contactsFor(p.id).map((c) => c.email)]
+      .map((e) => (e ?? "").toLowerCase().trim())
+      .filter(Boolean);
+    const domains = [
+      domainOf(p.website),
+      ...emails.map((e) => e.split("@")[1] ?? ""),
+    ].filter(Boolean);
+    return {
+      id: p.id,
+      name: p.name,
+      emails: [...new Set(emails)],
+      domains: [...new Set(domains)],
+    };
+  });
+
   return (
     <>
       <AppWayfinder current="HomeRoom" />
       <main
         className={`${styles.room} ${serif.variable} ${sans.variable} ${mono.variable}`}
       >
+        <Chute roster={chuteRoster} canWrite={data.canWrite} />
         <RoomClient
           rows={rows}
           cadence={cadence}
