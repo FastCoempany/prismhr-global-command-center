@@ -216,6 +216,32 @@
 
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 
+  /* ── paper fallback ────────────────────────────────────── */
+  @media print {
+    @page { margin: 14mm 15mm; }
+    .bar, .rail, .foot, .hint { display: none !important; }
+    body { background: #fff; font-size: 11pt; }
+    .shell { display: block; max-width: none; padding: 0; }
+    .card {
+      box-shadow: none;
+      border: 0;
+      border-top: 1.5pt solid var(--ink);
+      border-radius: 0;
+      min-height: 0;
+      padding: 10mm 0 0;
+      margin: 0 0 9mm;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+    .card + .card { break-before: page; page-break-before: always; }
+    h1 { font-size: 20pt; margin-bottom: 5mm; }
+    .say { font-size: 12.5pt; line-height: 1.5; max-width: none; }
+    .ask q { font-size: 13pt; max-width: none; }
+    .note, .branch { font-size: 9.5pt; }
+    .facts li, .rules li { font-size: 10.5pt; }
+    .flag, .delta { border: 0.5pt solid currentColor; color: inherit !important; background: transparent !important; }
+  }
+
   @media (max-width: 880px) {
     .shell { grid-template-columns: minmax(0, 1fr); gap: 20px; padding: 20px 16px 92px; }
     .rail { position: static; flex-direction: row; overflow-x: auto; gap: 4px; padding-bottom: 6px; }
@@ -241,6 +267,7 @@
     <button id="run" aria-pressed="false">Start</button>
     <button id="reset">Reset</button>
     <button id="mode" aria-pressed="true">Pre-cut run</button>
+    <button id="print">Print</button>
   </div>
 </header>
 
@@ -304,13 +331,7 @@
     });
   }
 
-  function draw() {
-    var list = active();
-    if (idx >= list.length) idx = list.length - 1;
-    if (idx < 0) idx = 0;
-    var c = list[idx];
-    var stage = document.getElementById("stage");
-
+  function cardHTML(c, i) {
     var html = "";
     if (c.n === 0) {
       html =
@@ -348,7 +369,15 @@
         '<p class="hint">← →  to move · space to start and stop the clock</p>' +
         "</article>";
     }
-    stage.innerHTML = html;
+    return html;
+  }
+
+  function draw() {
+    var list = active();
+    if (idx >= list.length) idx = list.length - 1;
+    if (idx < 0) idx = 0;
+    var c = list[idx];
+    document.getElementById("stage").innerHTML = cardHTML(c, idx);
 
     Array.prototype.forEach.call(document.querySelectorAll("#rail button"), function (b) {
       b.setAttribute("aria-current", String(Number(b.dataset.n) === c.n));
@@ -394,6 +423,15 @@
     this.setAttribute("aria-pressed", String(precut));
     idx = 0; renderRail(); draw();
   };
+  function renderAll() {
+    document.getElementById("stage").innerHTML = active()
+      .map(function (c, i) { return cardHTML(c, i); })
+      .join("");
+  }
+  document.getElementById("print").onclick = function () { window.print(); };
+  window.addEventListener("beforeprint", renderAll);
+  window.addEventListener("afterprint", draw);
+
   document.getElementById("prev").onclick = function () { idx -= 1; draw(); };
   document.getElementById("next").onclick = function () { idx += 1; draw(); };
 
