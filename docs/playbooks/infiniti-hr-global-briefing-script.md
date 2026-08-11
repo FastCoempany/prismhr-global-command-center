@@ -1,385 +1,509 @@
 # Infiniti HR — PrismHR Global briefing script
 
-**Deck:** PrismHR Global — Service Provider (Short), 15 slides · **Drafted:** 2026-08-11
+**Deck:** PrismHR Global — Service Provider (Short), all 15 slides · **Drafted:** 2026-08-11
 **Room:** Jennifer Hardesty (Director of Implementation & Technology), Scott Smrkovski (CEO), Javier Ramirez (COO)
 **Relationship owner:** Anika Steenstra, CSM
 
-Say-this / ask-this, one page at a time. One high-level question per slide. Five pages come out before you start — see section 2.
+Say this, then ask this — one page at a time, one high-level question per page. Nothing is cut: assume they have never bought this, and let the deck explain the offering.
 
 ---
 
 ## 1. What is true about this room
 
-1. Jennifer asked for this call. She wrote to Anika on 7/14 about “the global payroll solution Prism integrates with,” then asked for the meeting herself on 7/21 and offered three days. This is inbound. Don’t pitch it like it isn’t.
-2. She thinks Global is somebody else’s product. It isn’t. Correcting that is the most valuable thing you say all meeting, and it goes in the first thirty seconds.
-3. Her real question is already on the record. Her words: “Is this an add-on INF would need to implement in our account, or could a client specifically add this on?” That’s slide 13. Answer it or the meeting didn’t happen.
-4. Puerto Rico is the live pain. It is on our list — there’s a published guide. But it’s a US territory, not a foreign country, and three sections of our own guide carry Portugal’s content. Check the live page and flag it internally before you go in.
-5. Their global work leaves their P&L today. Domestic runs on our software; the international side rides an outside alliance that comes up for review this fall. Let them name that vendor. You never do.
+1. Jennifer asked for this call. She wrote to Anika on 7/14 asking about “the global payroll solution Prism integrates with,” then asked for the meeting herself on 7/21. This is inbound.
+2. She thinks Global is somebody else’s product. It isn’t. Correcting that is the most valuable thing you say, and it goes in the first thirty seconds.
+3. Her real question is already on the record. Her words: “Is this an add-on INF would need to implement in our account, or could a client specifically add this on?” That’s slide 13.
+4. Assume they have never bought this. They may place global work with somebody else, but that is not the same as having done it. Explain the offering as if it is new to them, because it probably is.
+5. Puerto Rico is the live pain. It is on our list. But it’s a US territory, not a foreign country, and three sections of our own guide carry Portugal’s content. Check the live page and flag it internally before you go in.
 6. The scar. TZP — one of their clients — cancelled Performance Management in the spring because the 360 review didn’t do what it was pitched as doing. Jennifer was on that thread. You say this out loud on slide 1.
 
-### Rules for this one
+### How to talk in this one
 
-- Name TZP before you claim anything. One sentence, forward-facing, then move on. You can’t earn it back later — everything you say after minute one gets heard through it.
-- Never say the competitor’s name first. If they name it, you can ask about it. If they don’t, you don’t need it today.
-- Talk structure, not price. You don’t have a rate sheet you can hand them. Asking Scott which shape he wants is a real question. Making up a number you’d walk back next week is the TZP mistake in a new suit.
+- Describe the page, don’t argue with it. Say what’s on the slide in plain words, then ask your question. You’re teaching an offering they haven’t bought, not winning a debate.
+- Don’t tell them about their own business. No “in a book your size,” no “somebody in your book has already asked.” You don’t know that. Ask instead.
+- Short sentences. Ordinary words. Say “we become the legal employer” rather than “we assume the employer-of-record obligation.”
+- Never say the competitor’s name first. If they name it, you can ask about it.
+- Talk structure, not price. You don’t have a rate sheet yet. The Q&A tab has what you’d need from them before anyone can quote.
 
-## 2. Five pages come out before you start
+## 2. The clock
 
-All fifteen pages with real answers runs about fifteen and a half minutes, and that’s before anyone interrupts. Three executives will interrupt. So five pages come out — and none of them are pages this room needs. Every one is either something they already know, or detail that sits below the altitude of a first conversation with a CEO and a COO. Take them out of the file before you present. Clicking past a slide you’ve decided to skip looks like you’re behind.
+Measured from the words below at 150 a minute, plus an allowance for each answer. All fifteen slides fit — **14:57** — but only just. Let the answers run on slides 1, 8, 11, 13 and 15; keep the rest to a sentence.
 
-**Slide 03 — PrismHR Solutions — the stats page**
-
-- _What's on it._ Payroll volume, worksite employees, brands in the family, countries, founding dates. A credibility page.
-- _Why it goes._ It introduces PrismHR to people who already run their business on PrismHR. Scott has been a customer for years. Reciting our size to him spends a minute buying something you already own.
-- _If it comes up._ The one fact worth keeping — that we own the company in forty-five countries rather than renting a local partner — is folded into slide 6, so nothing is lost.
-
-**Slide 05 — The Global Challenges Your Clients Bring to You**
-
-- _What's on it._ Five problems: compliance risk, slow market entry, payroll complexity, talent shortages, entity cost.
-- _Why it goes._ Everyone in that room runs a PEO. They know global hiring is hard — it’s why they took the meeting. Explaining the problem to the people living it is the most common way a good deck wastes its best minutes.
-- _If it comes up._ If someone raises one of the five, you’re better off than if you’d read it to them. Answer it and move on.
-
-**Slide 09 — Employer of Record — Core and Plus**
-
-- _What's on it._ The two EOR tiers: Core when the client already has the person, Plus when we recruit them too.
-- _Why it goes._ Product detail. The tier split only matters once somebody has decided to use EOR at all, and slide 7 already names employer of record at the altitude this conversation is running at.
-- _If it comes up._ “Two versions — one where you’ve already got the person, one where we go find them. Happy to walk through both when we scope a real client.”
-
-**Slide 12 — Global Talent**
-
-- _What's on it._ Recruiting, plus a premium tier that runs the whole employment relationship in select countries.
-- _Why it goes._ The weakest page for this account and the thing they’re least likely to need first. Selling it here spends credibility you built on slide 1.
-- _If it comes up._ “We recruit too. It’s the piece you’re least likely to need first, so I skipped it.” Saying that out loud is worth more than the page was.
-
-**Slide 14 — Provider Success Story**
-
-- _What's on it._ A dental technology company that built a software team in Costa Rica — sixty-plus people in under four months.
-- _Why it goes._ The hardest cut, because it’s the only proof on the deck. But it’s a software company in Costa Rica, not a PEO with a book the size of theirs. It doesn’t look like them, so it doesn’t land like proof.
-- _If it comes up._ Keep it in your back pocket. If Scott asks whether anyone has actually done this, tell the story from memory in twenty seconds — it’s better spoken than read.
-
-That leaves ten pages and about twelve and three-quarter minutes with real answers in them — a little over two minutes of room for a conversation that runs long. Slides 1, 8, 11, 13 and 15 never come out — one and eleven are why they’ll believe you, eight and thirteen are the business, fifteen is the ask. If you’re still running long, slow down rather than cut further. Better to end on slide 13 having actually talked than to reach slide 15 having recited.
-
-## 3. The clock
-
-Measured from the words below at 150 a minute, plus an allowance for each answer.
-
-| #   | Slide                                             | You         | Them | Total     |           |
-| --- | ------------------------------------------------- | ----------- | ---- | --------- | --------- |
-| 1   | Compete Without Borders                           | 0:23 + 0:30 | 0:30 | 1:25      | never cut |
-| 2   | Agenda                                            | 0:14        | —    | 0:20      |           |
-| 3   | PrismHR Solutions                                 | 0:21        | 0:10 | 0:34      | **cut**   |
-| 4   | Why Your Clients Go Global                        | 0:29        | 0:15 | 0:48      |           |
-| 5   | The Global Challenges Your Clients Bring to You   | 0:26        | —    | 0:32      | **cut**   |
-| 6   | Enter PrismHR Global                              | 0:40        | 0:15 | 1:01      |           |
-| 7   | Help Clients Grow Globally with PrismHR Global    | 0:28        | 0:12 | 0:44      |           |
-| 8   | Why Service Providers Partner With PrismHR Global | 0:40        | 0:45 | 1:31      | never cut |
-| 9   | Global Employer of Record                         | 0:31        | —    | 0:38      | **cut**   |
-| 10  | Global Contractor Solutions                       | 0:40        | 0:15 | 1:00      |           |
-| 11  | Global Payroll — and Puerto Rico                  | 0:43 + 1:15 | 0:45 | 2:47      | never cut |
-| 12  | Global Talent                                     | 0:22        | —    | 0:27      | **cut**   |
-| 13  | The Operating Model                               | 0:45        | 0:50 | 1:55      | never cut |
-| 14  | Provider Success Story                            | 0:34        | —    | 0:40      | **cut**   |
-| 15  | Help Your Clients Go Global                       | 0:30        | 0:40 | 1:12      | never cut |
-|     | **All fifteen**                                   |             |      | **15:34** |           |
-|     | **Short run** (drop 3, 5, 9, 12, 14)              |             |      | **12:43** |           |
+| #   | Slide                                             | You  | Them | Total     |
+| --- | ------------------------------------------------- | ---- | ---- | --------- |
+| 1   | Compete Without Borders                           | 0:44 | 0:30 | 1:14      |
+| 2   | Agenda                                            | 0:20 | —    | 0:20      |
+| 3   | PrismHR Solutions                                 | 0:26 | 0:12 | 0:38      |
+| 4   | Why Your Clients Go Global                        | 0:33 | 0:25 | 0:58      |
+| 5   | The Global Challenges Your Clients Bring to You   | 0:40 | 0:25 | 1:05      |
+| 6   | Enter PrismHR Global                              | 0:34 | 0:15 | 0:49      |
+| 7   | Help Clients Grow Globally                        | 0:32 | 0:12 | 0:44      |
+| 8   | Why Service Providers Partner With PrismHR Global | 0:36 | 0:35 | 1:11      |
+| 9   | Global Employer of Record                         | 0:41 | 0:12 | 0:53      |
+| 10  | Global Contractor Solutions                       | 0:41 | 0:20 | 1:01      |
+| 11  | Global Payroll                                    | 1:38 | 0:35 | 2:13      |
+| 12  | Global Talent                                     | 0:22 | 0:10 | 0:32      |
+| 13  | The Operating Model                               | 0:53 | 0:45 | 1:38      |
+| 14  | Provider Success Story                            | 0:28 | 0:12 | 0:40      |
+| 15  | Help Your Clients Go Global                       | 0:26 | 0:35 | 1:01      |
+|     | **All fifteen**                                   |      |      | **14:57** |
 
 ---
 
 ## Slide 1 — Compete Without Borders
 
-_0:23 + 0:30 you · 0:30 them_ · **never cut**
+_0:44 you · 0:30 them_ · **never skip**
+
+**On the page:** Title slide.
 
 **SAY THIS**
 
-> Thanks for making the time, all three of you. I’ll take about fifteen minutes and then it’s yours. Jump in whenever — I’d rather answer questions than talk at you.
-> Quick correction first. Jennifer, your note asked about the global payroll company Prism integrates with. There isn’t one. PrismHR Global is us. Same company, same platform, same login.
+> Thanks for the time. I’ll take about fifteen minutes and leave room for questions.
+> This is PrismHR Global. First thing: it’s ours. Not a company we partner with or resell. It’s our product, inside the same PrismHR system you already use.
 
-**THEN SAY THIS** — Slow down. This is the most important thirty seconds of the meeting.
+**THEN SAY THIS** — Slow down here.
 
-> One more thing before I sell you anything. Earlier this year TZP cancelled Performance Management. The reason was that the 360 review didn’t do what we said it would. Jennifer, you were on that thread. I read it.
-> So here’s how I’m going to talk today. What this does. What it doesn’t. And where I don’t know, I’ll tell you I don’t know. You’ll watch me do that once in the next fifteen minutes.
+> One thing before I start selling. Earlier this year TZP cancelled Performance Management, because the 360 review didn’t do what we said it would. Jennifer, you were on that thread. I read it.
+> So today I’ll tell you what this does, what it doesn’t, and where I don’t know something I’ll say so. You’ll see me do that once in the next fifteen minutes.
 
-**ASK THIS** — Stop and wait. Let all three answer if they want to.
+**ASK THIS** — Stop and wait. Let all three answer.
 
 > **What made you take this meeting?**
 
-_Why this one._ You can’t apologise your way back to credibility later — everything after minute one gets heard through TZP whether anyone says it or not. One sentence, then forward. No apology, no defending the product, no relitigating. And don’t drop the last line: it turns the Puerto Rico admission on slide 11 into the thing you promised rather than a hole in your knowledge. Then the question tells you who in the room is actually driving this, and it often gets you the incumbent for free.
+_Why this one._ You can’t win credibility back later — everything you say after minute one gets heard through TZP whether anyone mentions it or not. One sentence, then forward. And the last line matters: it turns the Puerto Rico admission on slide 11 into the thing you promised rather than a gap in your knowledge.
 
-- **If Scott picks up TZP** — Take it graciously and don’t expand. “I wasn’t in it and I’m not going to relitigate it — I just didn’t want to stand here and pretend it didn’t happen.” Then slide 2.
-- **If they say Puerto Rico** — Tell them it lands on slide 11, and keep that promise.
-- **If they say a client asked** — Get that client’s shape now. The rest of the deck reads through it.
+- **If Scott raises TZP** — Take it and don’t expand. “I wasn’t in it and I’m not going to relitigate it — I just didn’t want to pretend it didn’t happen.” Then move.
+- **If they say Puerto Rico** — Tell them it comes up on slide 11, and keep that promise.
 
 ---
 
 ## Slide 2 — Agenda
 
-_0:14 you_
+_0:20 you_
+
+**On the page:** Ten-line contents list for the deck.
 
 **SAY THIS**
 
-> That’s the agenda. I’ll move quickly through the middle — it’s mostly reference. Where I want to spend the time is how a deal between us actually works, and where the money ends up.
+> Here’s what I’ll cover. Who we are on the global side. What your clients run into when they hire outside the US. The four things we sell. And how a deal between us would actually work.
 
-**ASK THIS** — Quick answer, then steer the rest of the meeting toward it.
+**ASK THIS** — Quick answer, then steer toward it.
 
-> **If you only get one thing out of the next fifteen minutes, what should it be?**
+> **If you only get one thing out of today, what should it be?**
 
-_Why this one._ It gives you permission to skip things later without looking like you ran out of time. And if the answer is “how the money works,” go to slides 8 and 13 early and treat everything else as reference.
+_Why this one._ It tells you where to spend the time, and gives you permission to move fast through anything they didn’t pick.
 
 ---
 
 ## Slide 3 — PrismHR Solutions
 
-_0:21 you · 0:10 them_ · **cut this one**
+_0:26 you · 0:12 them_
+
+**On the page:** Company numbers — payroll volume, worksite employees, businesses served, brands in the Vensure family, countries, owned entities, founding dates.
 
 **SAY THIS**
 
-> One number worth noticing. We reach a hundred seventy-five countries, and we own the company in forty-five of them. Owned matters — where we own it, we’re the employer. We’re not handing you off to a local firm and hoping. The rest of this page you already know, because you run on us.
+> Quick background, because the global side is newer than the part you use.
+> We can hire and pay people in more than a hundred and seventy-five countries. In forty-five of those we own the local company ourselves. Where we own it, we’re the legal employer — not a broker.
 
-**ASK THIS** — Quick answer, then move.
+**ASK THIS** — Quick answer. It tells you whether any of this is familiar to them.
 
-> **How much of your business is global today?**
+> **Does Infiniti have anyone outside the US today — your own people, or your clients’?**
 
-_Why this one._ Cut this page. It sells PrismHR to a PrismHR customer. The owned-entity fact is folded into slide 6, so nothing is lost.
+_Why this one._ This is the first real read on how much they know. A PEO can place global work with somebody else for years and still never have set up a foreign employee. Their answer changes how much you explain from here on.
 
 ---
 
 ## Slide 4 — Why Your Clients Go Global
 
-_0:29 you · 0:15 them_
+_0:33 you · 0:25 them_
+
+**On the page:** Five reasons companies expand: specialist talent, faster market entry, lower operating cost, serving international customers, and coverage across time zones.
 
 **SAY THIS**
 
-> This page is written for your clients. I’d read it as your revenue.
-> Your clients are already doing this. Somebody in your book has already asked about a developer in Mexico or a contractor in India. In a book your size that’s happening whether it reaches this floor or not. So the question isn’t whether the demand is there. It’s whether you make money on it, or hand it to somebody else.
+> This page is about why a company hires outside its home country. There are five common reasons.
+> They need a skill they can’t find locally. They want into a new market quickly. It costs less. They have customers somewhere and want people on the ground. Or they want coverage across more hours of the day.
+> Any of those ends with a client calling you about hiring somebody in another country.
 
-**ASK THIS** — Quick answer. If it’s “sometimes,” ask what happens to those asks.
+**ASK THIS** — Stop and wait. This is the demand question.
 
-> **Are your clients asking you to go global with them?**
+> **Are any of your clients asking you about hiring outside the US?**
 
-_Why this one._ It turns their clients’ story into their revenue story in one move, and whatever they say becomes your reference point on slide 8. If the honest answer is “we don’t really know,” that’s the finding — and it makes the small ask on slide 15 easy to say yes to.
+_Why this one._ Ask it rather than assume it. If the answer is yes you have a live use case to aim the rest of the deck at; if it’s no, the conversation is about being ready before the first one asks — which is a fine reason to keep talking.
 
 ---
 
 ## Slide 5 — The Global Challenges Your Clients Bring to You
 
-_0:26 you_ · **cut this one**
+_0:40 you · 0:25 them_
+
+**On the page:** Five numbered problems: compliance risk, slow market entry, payroll complexity, talent shortages, high entity cost.
 
 **SAY THIS**
 
-> Five problems, from your client’s side. From your side there’s really only one. The minute you say yes, their problem becomes your problem. Misclassification, permanent establishment, a firing rule nobody read — that lands on whoever signed the paper.
-> The one I’d point at is the last. Most clients don’t need a company set up somewhere. They need one person, in one country, next month.
+> And this is what makes it hard. Five things.
+> Compliance. Every country has its own labor law, tax rules and definition of an employee. Getting it wrong is expensive.
+> Speed. Setting yourself up in a new country takes months and local expertise.
+> Payroll. Different currencies, different tax authorities, usually a different vendor in each country.
+> Talent. The people they want aren’t always where they are.
+> And cost. Opening a company in another country is slow and expensive — and for one or two hires, unnecessary.
 
-**ASK THIS** — Answer it yourself if they don’t: usually both.
+**ASK THIS** — Stop and wait. The answer tells you how they see their own exposure.
 
-> **When a client goes global on you, is that an opportunity or a headache?**
+> **Which of those would land on Infiniti, and which would land on the client?**
 
-_Why this one._ Cut this page. Three people who run a PEO don’t need the problem explained to them. If someone raises one of the five, answer it and move — you’re better off than if you’d read the list to them.
+_Why this one._ Don’t skip this page on the theory that they run a PEO so they must know. Placing global work with another provider is not the same as having carried the risk. This question finds out which of the five they’d actually own, and that’s the fastest read on their experience you’ll get.
 
 ---
 
 ## Slide 6 — Enter PrismHR Global
 
-_0:40 you · 0:15 them_
+_0:34 you · 0:15 them_
+
+**On the page:** The four-word promise — Find, Hire, Pay, Manage — over 175+ countries.
 
 **SAY THIS**
 
-> Here’s the whole thing in a sentence. Find, hire, pay, manage — in a hundred seventy-five countries, without you or your client building anything anywhere. And in forty-five of those we own the company outright, so we’re the actual employer, not a middleman.
-> The part worth repeating: this isn’t a partner we hand you off to. It’s ours, and it sits inside the system Infiniti already runs. For your team it’s another tab. Same login. Nothing to integrate, nothing to sync, nothing for your IT people to own.
-> That’s the difference between adding a vendor and switching something on.
+> So here’s what we do about it. Four words on the page.
+> Find — we recruit the person. Hire — we employ them in that country, so nobody sets up a company. Pay — payroll in local currency, local taxes handled. Manage — we keep it compliant after that.
+> All of it inside the PrismHR system you already log into. Nothing to integrate, nothing for your IT people to build.
 
-**ASK THIS** — Aim it at Jennifer. Stop and wait — this is her question.
+**ASK THIS** — Aim it at Jennifer. Stop and wait.
 
-> **Would it change anything for you if this lived inside the system you already run?**
+> **Would it make a difference to have this inside the system you already use?**
 
-_Why this one._ This is the correction from slide 1, made concrete. Jennifer runs implementation; “another tab, same login” is the difference between a project and a setting. Her answer tells you how big a lift her team thinks this is, which sizes what you can ask for on slide 15.
+_Why this one._ She runs implementation and technology. The difference between a new vendor and a new tab is her whole job, and her answer tells you how big a lift her team thinks this would be.
 
 ---
 
-## Slide 7 — Help Clients Grow Globally with PrismHR Global
+## Slide 7 — Help Clients Grow Globally
 
-_0:28 you · 0:12 them_
+_0:32 you · 0:12 them_
+
+**On the page:** The four products named: Global EOR, contractor support, Global Payroll, Global Talent.
 
 **SAY THIS**
 
-> Four things, one relationship. Employer of record, when your client needs a real employee somewhere they’ve got no company. Contractor support, when the work genuinely is project work. Global payroll, when they’ve already got people overseas and paying them is the mess. And recruiting, when they don’t know who to hire yet.
-> You don’t pick one. You pick per client, per country. Same agreement with us underneath all of it.
+> Those four words are sold as four products.
+> Employer of Record — we become the legal employer of your client’s worker in that country.
+> Contractor management — we handle the contracts and payments for people who genuinely are contractors.
+> Global payroll — for people your client already employs overseas.
+> And global talent — we find the people.
+> A client doesn’t pick one forever. It’s whichever fits that person, in that country.
 
-**ASK THIS** — Quick answer. Whatever they say is where the pilot starts.
+**ASK THIS** — Quick answer. Whatever they name is where a pilot starts.
 
-> **Which of these would your clients ask for first?**
+> **Which of those four sounds most useful to your clients?**
 
-_Why this one._ This is the whole product story at the altitude a CEO and a COO want it. It’s also why slides 9 and 12 come out — this page covers what they cover, without detail nobody needs in a first conversation.
+_Why this one._ This is the whole offering in thirty seconds, and their answer tells you which of the next four pages to slow down on.
 
 ---
 
 ## Slide 8 — Why Service Providers Partner With PrismHR Global
 
-_0:40 you · 0:45 them_ · **never cut**
+_0:36 you · 0:35 them_ · **never skip**
+
+**On the page:** Five reasons: one connected offering, operational efficiency, in-country expertise, a model that scales from the first hire, and flexible payment options.
 
 **SAY THIS**
 
-> I’d have written this page differently. Here’s the version that’s true for a company your size.
-> The line that’s missing is the one that matters. Right now, when one of your clients hires overseas, that money leaves your P&L. Somebody earns it. It isn’t you.
-> What I’m offering is that it stays inside your relationship and inside your margin. Your team stays the people they call. Your name stays on the front. Your client never has to meet us at all if you don’t want them to.
-> The four bullets that are up there are real. They’re just second.
+> This page is about why a service provider would work with us instead of building it themselves.
+> One place for employees, contractors, EOR and payroll. Fewer vendors. People in-country who know the local rules. Start with one hire and grow. And several ways to move money across borders.
+> One more isn’t on the page. If your clients hire overseas and you’re not providing it, somebody else earns that. This is how it stays with you.
 
 **ASK THIS** — Scott’s question. Nobody else can answer it. Stop and wait.
 
-> **Today, when one of your clients hires overseas — does Infiniti make anything on it?**
+> **Today, if one of your clients hires someone overseas — does Infiniti make anything on it?**
 
-_Why this one._ The CEO’s slide, and the whole commercial argument in one question. If the answer is no, you’re done selling — go to slide 13 and spend the rest of the time there.
+_Why this one._ The commercial argument in one question, and it belongs to the CEO. If the answer is no, stop selling and go to slide 13 — the rest of the meeting is how the money would work instead.
 
-- **“No, we refer it out”** — Stop selling. Go to 13. The rest of the meeting is how the money would work instead.
-- **“We have an arrangement”** — Don’t name it. Ask: “Is it working, and when does it next come up for review?”
-- **“We don’t see those asks”** — “Then the first thing worth building isn’t a product — it’s a way to hear the asks. That’s a smaller project than this deck.”
+- **“No, we refer it out”** — Stop selling. Go to 13.
+- **“We have an arrangement”** — Don’t name it. Ask: “Is it working, and when does it come up for review?”
+- **“We don’t see those asks”** — “Then the first thing to build isn’t a product — it’s a way to hear the asks.”
 
 ---
 
 ## Slide 9 — Global Employer of Record
 
-_0:31 you_ · **cut this one**
+_0:41 you · 0:12 them_
+
+**On the page:** The two EOR tiers — Core and Plus — and what each includes.
 
 **SAY THIS**
 
-> Employer of record, two versions. Core is when your client already has the person — a name, a country, a start date. We employ them, your client runs the work, we carry the legal side. Plus is the same thing when they haven’t got anybody yet, and we go find them.
-> How it actually works: the employment contract is between the worker and PrismHR. Our agreement with your client assigns that person to them. That’s the whole trick.
+> Employer of Record. This is the main one, so let me be plain about what it actually is.
+> Say your client wants to hire somebody in Poland. They have no company in Poland. We do. So we employ that person under our Polish company. They work for your client day to day. We handle the contract, payroll, taxes and benefits under Polish law.
+> Two versions here. Core is when your client already knows who they want. Plus is when they don’t, and we find the person too.
 
-**ASK THIS** — Quick answer.
+**ASK THIS** — Quick answer. It splits Core from Plus.
 
-> **Do your clients usually know who they want to hire, or do they need help finding them?**
+> **When a client needs someone overseas, do they usually have a person in mind already?**
 
-_Why this one._ Cut this page. It’s product detail, and the tier split only matters once somebody has decided to use EOR at all — slide 7 names it at the right altitude. If it comes up: “two versions — one where you’ve got the person, one where we find them. Happy to walk through both when we scope a real client.”
+_Why this one._ The Poland sentence is the whole product. If they take one thing away from the meeting, make it that one — a company they don’t have, that we do.
 
 ---
 
 ## Slide 10 — Global Contractor Solutions
 
-_0:40 you · 0:15 them_
+_0:41 you · 0:20 them_
+
+**On the page:** Two contractor models — contractor management, and contractor of record where PrismHR acts as agent of record.
 
 **SAY THIS**
 
-> Contractors. Two roads, and the difference is who holds the paper.
-> Contractor management — the contract is between your client and the contractor, and we’re how they get paid. Contractor of record — the contract sits with us, and we run a classification check before anybody gets paid at all.
-> Let me be straight about that second one. Classification isn’t paperwork that turns an employee into a contractor. If the job looks like a job — set hours, one client, a manager — the real answer is employer of record. We’d tell your client that. And we’d tell you first.
+> Contractors. Two versions here as well, and the difference is who signs with the contractor.
+> Contractor management — the contract is between your client and the contractor. We handle payments and paperwork.
+> Contractor of record — the contract is between the contractor and us. We take more of the risk, and we check the classification before anyone gets paid.
+> On that last part: if somebody works set hours, for one company, with a manager, most countries call that an employee — whatever the contract says. If we see it, we’ll tell you first.
 
-**ASK THIS** — Stop and wait. “No” is the most useful answer you can get.
+**ASK THIS** — Stop and wait. “We’re not sure” is a useful answer.
 
-> **Do you know how many of your clients have people overseas right now?**
+> **Do your clients use contractors outside the US today?**
 
-_Why this one._ Contractor sprawl is invisible to a PEO until it becomes the PEO’s problem, and “would you even know?” is the part that lands. If the answer is no, you’ve just defined a first project that costs them nothing to say yes to.
+_Why this one._ Contractors overseas are usually paid out of accounts payable and never show up in the PEO’s system, so “we’re not sure” is common and honest. Either answer gives you a small, safe first project: find out.
 
 ---
 
-## Slide 11 — Global Payroll — and Puerto Rico
+## Slide 11 — Global Payroll
 
-_0:43 + 1:15 you · 0:45 them_ · **never cut**
+_1:38 you · 0:35 them_ · **never skip**
+
+**On the page:** Global payroll capability — local processing and filing, multi-currency, country benefits and deductions, consolidated reporting, and integration with existing HCM or finance systems.
 
 **SAY THIS**
 
-> Payroll’s the boring page, and the one your finance people will care about most. Local processing and filing, multiple currencies, country-specific deductions, one report across all of it, and a file that drops straight into whatever ledger they already use.
-> The part worth knowing is how the money moves. Your client pays one invoice, in dollars, into a US bank. We convert it, pay people locally in their own currency, and send the taxes to that country. No wires leaving your client’s bank — which also means they’re not signalling to a foreign tax authority that they’ve got people there before anyone’s decided that’s a good idea.
+> Global payroll is for people your client already employs somewhere else and just needs paid correctly.
+> We run the payroll locally, file the local taxes, handle that country’s required deductions, and give you one report across all of them. It exports into whatever accounting system you already use.
+> One thing about how the money moves. Your client pays one invoice, in dollars, into a US bank. We convert it, pay each person locally in their own currency, and pay the taxes to that country. Nothing gets wired out of their bank.
 
-**THEN SAY THIS** — Change your tone here. This is what you promised on slide 1.
+**THEN SAY THIS** — Change your tone. This is what you promised on slide 1.
 
-> Now — Puerto Rico. This is the one I told you about.
-> Good news first. Puerto Rico’s on our list. We’ve got a country guide for it, and we can hire and pay there.
-> Now the part that actually matters. Puerto Rico is a US territory, not a foreign country. So it isn’t the story I just told you. There’s no company to avoid setting up — it’s US soil. Social Security, Medicare, unemployment, ACA, ERISA, all of it still applies. What’s genuinely local is the part that bites: retirement plans have to go through Hacienda, firing runs through Law 80, and workers’ comp is only available through the State Insurance Fund — no private carrier, no self-insuring.
-> And here’s the part I’d rather you hear from me than find on your own. Our published Puerto Rico guide has mistakes in it. The time-off, leave and severance sections are Portugal’s content — wrong country. The severance section actually contradicts the firing section on the same page. I’ve flagged it. Don’t let your team plan anything off that page until it’s fixed, and I’ll send you the corrected version.
+> Now, Puerto Rico — this is the one I said you’d see.
+> Good news first: Puerto Rico is on our list, and we can hire and pay there.
+> But it isn’t like the rest of this page. Puerto Rico is a US territory, not a foreign country. It’s US soil, so Social Security, Medicare and unemployment tax all still apply. What’s local is the part that catches people: retirement plans need approval from the Puerto Rico treasury, firing runs through their own severance law, and workers’ comp can only be bought from the state fund.
+> And here’s the part I’d rather you hear from me. Our published Puerto Rico guide has mistakes in it. Three sections — time off, leave and severance — carry another country’s rules. I’ve flagged it. Don’t plan anything off that page, and I’ll send you a corrected version.
 
 **ASK THIS** — Jennifer’s question. Stop and wait — the answer decides who you bring next.
 
-> **Is Puerto Rico a client problem, or your own?**
+> **Is Puerto Rico something a client needs, or something Infiniti needs?**
 
-_Why this one._ This is the whole meeting, and it’s far stronger than the version where you simply didn’t know. You confirm you can do it, you show you understand why a US territory isn’t a foreign country — which a PEO implementation lead will absolutely test — and then you hand them a defect in your own company’s marketing before it can cost them anything. Say “the guide is wrong, not the service” out loud: it protects the product without softening the admission. And don’t overstate it — three sections are wrong, the rest of the page is genuinely Puerto Rico-specific.
+_Why this one._ You confirm you can do it, you show you know why a US territory is different, and then you hand them a problem in our own marketing before it costs them anything. Say “the guide is wrong, not the service” out loud. And don’t overstate it — three sections are wrong; wages, hours, overtime, notice and workers’ comp all read correctly.
 
-- **Before you go in** — Open the live guide and check the Portugal content is still there. If it’s been fixed, this beat shrinks — a good problem.
-- **Flag it first** — Report it internally the day before, so “I’ve flagged it” is true in the past tense. Disclosing something you haven’t reported reads as gossip.
-- **“How bad is it?”** — Three sections — time off, leave, severance. Wages, hours, overtime, probation, notice, safety and workers’ comp all read as genuinely Puerto Rican.
+- **Before you go in** — Open the live guide and confirm the wrong content is still there. If it’s been fixed, this shrinks — a good problem.
+- **Flag it first** — Report it internally the day before, so “I’ve flagged it” is true in the past tense.
 
 ---
 
 ## Slide 12 — Global Talent
 
-_0:22 you_ · **cut this one**
+_0:22 you · 0:10 them_
+
+**On the page:** Two offerings — talent recruitment, and talent management as a premium EOR tier in select countries.
 
 **SAY THIS**
 
-> Quick one. Two things — we recruit and place people, or we recruit and then run the whole employment relationship for you: desk space, HR, local support, in the countries where we offer it.
-> This is the one you’re least likely to need first, and I’d rather say that than sell it to you.
+> Global talent. Two things.
+> Recruiting — we find, screen and place candidates in other countries.
+> And in some countries, a fuller version where we also give them a workspace, local HR support and day-to-day help. That one includes the recruiting.
 
-**ASK THIS** — Answer it yourself and move on: most people haven’t.
+**ASK THIS** — Quick answer, then move.
 
-> **Have you ever lost a client because you couldn’t cover a country?**
+> **Do your clients ever need help finding people, or do they usually know who they want?**
 
-_Why this one._ Cut this page. It’s the weakest thing on the deck for this account. If it comes up: “we recruit too — it’s the piece you’re least likely to need first, so I skipped it.” Saying that is worth more than the page was.
+_Why this one._ This is the piece most providers need last, and it’s fine to say so. It matters most when a client can’t fill a role where they are.
 
 ---
 
 ## Slide 13 — The Operating Model
 
-_0:45 you · 0:50 them_ · **never cut**
+_0:53 you · 0:45 them_ · **never skip**
+
+**On the page:** Three boxes — service provider, SMB client, and PrismHR Global behind both.
 
 **SAY THIS**
 
-> If we only had one page, this is the one.
-> Three boxes. Your client works with Infiniti — the same people they already call. Infiniti delivers the service and owns the relationship. We sit behind you: the companies, the compliance, the employer-of-record and contractor work, the back end.
-> There’s one decision inside that picture, and it’s yours, not mine. Either Infiniti holds the client contract and sells this at your margin — you’re the provider, we’re your supplier. Or we contract with the client directly and pay you a fee. Both are real. They’re different businesses, and they change who’s on the hook when something goes wrong at eleven at night in Manila.
+> This is how it works between the three of us.
+> Your client deals with Infiniti — the same people they already call. Infiniti delivers the service. We sit behind you and do the work: the local companies, the compliance, the payroll.
+> One decision to make, and it’s yours. Either you hold the contract with your client and sell this at your own price, or we hold it and pay you a fee. Both work. They’re different businesses, and they change who’s responsible when something goes wrong.
 
-**ASK THIS** — Scott and Javier together. Stop and wait — this is the answer you came for.
+**ASK THIS** — Scott and Javier. Stop and wait — this is the answer you came for.
 
-> **Do you want to hold the client contract, or would you rather we did and paid you?**
+> **Would you rather hold the client contract yourselves, or have us hold it and pay you?**
 
-> And I’m asking about the shape, not the price. I don’t have a rate sheet for you today, and I’m not going to invent one in the room and correct it next week.
+> And I’m asking about the shape, not the price. I don’t have a rate sheet to hand you today, and I’d rather not invent one and correct it next week.
 
-_Why this one._ This is the answer to Jennifer’s original question — service-provider level or client level — and it’s the one piece of information that changes what happens next inside their building. Saying the pricing gap out loud costs nothing they wouldn’t find anyway, and in this account it’s the proof the TZP pattern isn’t repeating.
+_Why this one._ This is the answer to Jennifer’s original question — whether Infiniti adds this at their level or a client adds it themselves — and it’s the one thing that changes what happens next inside their building.
 
-- **“We’d hold it”** — They want margin and control. Next conversation is commercial terms, and you need pricing before it.
-- **“You contract, pay us”** — They want no service obligation. Next conversation is the referral mechanic and who touches the client.
-- **“Depends on the client”** — Best answer. “Then let’s pick the client and let it decide” — which is exactly slide 15.
+- **“We’d hold it”** — They want margin and control. Next conversation is commercial terms.
+- **“You hold it, pay us”** — They want no service obligation. Next conversation is the referral mechanics.
+- **“Depends on the client”** — Best answer. “Then let’s pick a client and let it decide.” That’s slide 15.
 
 ---
 
 ## Slide 14 — Provider Success Story
 
-_0:34 you_ · **cut this one**
+_0:28 you · 0:12 them_
+
+**On the page:** A dental technology company building a development team in Costa Rica — hires, timeline, target team size, and savings against traditional fees.
 
 **SAY THIS**
 
-> One story, quickly. A dental technology company wanted a software team in Costa Rica, fast, without setting up their own company down there. We recruited and employed them — sixty-plus people in under four months, heading toward a hundred.
-> What their provider cared about was flat monthly pricing with no surprises, one vendor instead of four, and a client they kept instead of losing to somebody who had a global answer. The number on the page is theirs. It isn’t a promise about you.
+> One example of it working.
+> A dental technology company wanted a software team in Costa Rica, fast, without setting up a company there. We recruited and employed them — more than sixty people in under four months, heading toward a hundred.
+> For the provider in the middle: flat monthly pricing, one vendor, and a client they kept.
 
-**ASK THIS** — Stop and wait. This is the question that shapes the pilot.
+**ASK THIS** — Quick answer. If yes, that’s a follow-up you can deliver.
 
-> **What would you need to see work before you’d put a real client on this?**
+> **Would it help to talk to a provider who’s already done this?**
 
-_Why this one._ Cut this page — but keep the story. It’s a software team in Costa Rica, not a PEO with a book their size, so it doesn’t look enough like them to land as proof. If Scott asks whether anyone has actually done this, tell it from memory in twenty seconds; it’s better spoken than read. The question moves into your follow-up note.
+_Why this one._ The story is a software team in Costa Rica, so it won’t look much like their book. Offering a reference call is worth more than the slide — it turns a claim into something they can check.
 
 ---
 
 ## Slide 15 — Help Your Clients Go Global
 
-_0:30 you · 0:40 them_ · **never cut**
+_0:26 you · 0:35 them_ · **never skip**
+
+**On the page:** Closing slide — “It’s time to build your borderless business.”
 
 **SAY THIS**
 
-> That’s the fifteen minutes, and I’m not going to ask what you thought of it.
-> I’ll ask for something smaller. One client, one country, one working session — Jennifer’s implementation people, whoever owns that client, and me. We scope it end to end, and you see exactly what it costs you to deliver before anybody promises a client anything.
-> And the corrected Puerto Rico guide reaches you on the day I said it would.
+> That’s the overview.
+> What I’d suggest next is small. Pick one client and one country, and we’ll scope it together — your implementation people, whoever owns that client, and me. You’d see exactly what’s involved and what it costs before anybody promises a client anything.
+> And I’ll send the corrected Puerto Rico guide on the day I said.
 
-**ASK THIS** — Ask it, then stop talking. Do not fill the silence.
+**ASK THIS** — Ask it, then stop talking. Don’t fill the silence.
 
-> **Which client would you try first?**
+> **Which client would you want to try first?**
 
-_Why this one._ One question doing two jobs: it gets you a named account, and naming one is how a maybe becomes a next meeting. Once they name a client, ask what timing they’re working against — that invites them to raise their own deadline, the alliance or a client commitment, without you ever mentioning it. Whatever date comes out of their mouths is the date the whole account plan runs on.
+_Why this one._ A named client turns a maybe into a next meeting. Once they name one, ask what timing they’re working against — that lets them raise their own deadline without you mentioning it. Whatever date they say is the date everything else runs on.
+
+---
+
+# Q&A · scoping
+
+## What it takes to set up an EOR hire
+
+These are the questions that come up right after someone says yes. Answer them plainly — the goal is to make the process sound ordinary, because it is.
+
+**How does a hire actually start?**
+
+With the country, not the person. Where someone lives is where they’re employed — not where they’re a citizen. If they hold a Bulgarian passport but live in Spain, they’re employed in Spain, and the platform asks whether they’re allowed to work there.
+
+After that it’s ordinary hiring information: job title, description, team, location and a start date.
+
+**How long does it take?**
+
+Start dates are normally set about two weeks out. That window is what covers getting the employment set up in-country.
+
+Don’t promise faster than that without checking. Country and role change it.
+
+**Who signs what?**
+
+The employment contract is between the worker and PrismHR, because we’re the legal employer in that country. Our agreement with the client then assigns that person to work for them.
+
+An implementation manager checks everything and produces the offer letter. The client reviews it before it goes to the candidate. Any back-and-forth on salary or benefits happens at that stage. Once it’s signed, the employee gets their own login.
+
+**Do you check they can legally work there?**
+
+Yes. Our team verifies the documentation. We don’t take the worker’s word for it.
+
+**What benefits does the person get?**
+
+Every country sets a legal minimum — holidays, leave, pension, healthcare contributions. We always meet the local minimum and can’t go below it. The client can add more on top if they want to.
+
+Supplemental health cover is available as an optional add-on, priced per person per month.
+
+**What about a laptop?**
+
+The client's choice. Shipping equipment from the US usually gets stuck in customs and gets expensive, so most people either use a third party that delivers equipment in-country, or let the new hire use their own and expense it.
+
+## What it takes to set up global payroll
+
+Payroll is for people the client already employs somewhere else. It’s a different starting point from EOR, and worth keeping separate in the conversation.
+
+**Who is this for?**
+
+A client who already has employees in another country — usually because they set up their own company there — and wants the payroll run properly rather than by a local bookkeeper.
+
+**What do you actually run?**
+
+Local payroll processing and tax filing, in local currency. The country’s required deductions and benefits. One consolidated report across every country they’re in.
+
+**How does the money move?**
+
+The client pays one invoice, in US dollars, into a US bank account. We convert it, pay each person locally in their own currency, and pay the taxes to that country’s authority. Nothing gets wired out of the client’s bank.
+
+**Does it connect to their accounting system?**
+
+There’s a general-ledger export, and the GL codes are set up inside the platform, so it lands in whatever system they already use.
+
+**What about Puerto Rico?**
+
+It’s on our list, but it isn’t a foreign country — it’s a US territory. Social Security, Medicare and unemployment tax all still apply. What’s local: retirement plans need Puerto Rico treasury approval, dismissal runs through their own severance law, and workers’ comp can only be bought from the state fund.
+
+Our published Puerto Rico guide currently has another country’s rules in three sections — time off, leave and severance. Flag it, don’t scope from it.
+
+## What we need before anyone can quote
+
+There is no rate card you can hand them today. What you can do is leave the meeting with everything needed to produce a real number. The platform has a calculator that takes a country and a salary and returns the full employer cost and the employee’s take-home — that is how the number gets built, and this is what it needs.
+
+- Which country — and which region inside it, where that matters (Canadian provinces, Australian states, some Chinese and Swiss cities are priced separately).
+- Employee or contractor. If they’re not sure, that’s a classification conversation before it’s a pricing one.
+- The salary or rate, and which currency it’s quoted in.
+- How many people, and over what period — one hire now, or five over six months.
+- Target start date. Two weeks out is the normal window.
+- Benefits expectation — statutory minimum only, or supplemental cover on top.
+- Is the person already identified, or do we need to recruit them? That’s the difference between EOR Core and Plus.
+- Whose people are they — a client’s workers, or Infiniti’s own staff?
+- Who holds the contract — Infiniti reselling, or us contracting directly and paying a referral. It changes the whole commercial shape.
+
+If you get the first three for one real person, you can come back with a number. Getting one concrete example is worth more than a general conversation about pricing.
+
+## The questions we forget to ask
+
+These get skipped almost every time, and they’re the ones that tell you which countries will come up and which product they’ll need. Ask them even if the meeting is running long — the answers are worth more than another slide.
+
+- What do your clients actually do? Which industries are you strongest in?
+- Where are they? Which states, which cities — is the book concentrated or national?
+- Which of your clients already have people outside the US? Employees, contractors, or both?
+- Which countries? Name them. Country is the first input for everything downstream.
+- How are those people paid today? A local payroll company, an EOR, or out of accounts payable?
+- Are they full-time employees now, or contractors? And has anyone checked whether that’s the right classification?
+- Does Infiniti itself have anyone outside the US? Their own first hire is often the easiest place to start.
+- Has a client ever asked for something international that you had to turn down? That’s the clearest signal there is.
+
+Industry and location predict the countries. Manufacturing and logistics bring up Mexico and Asia; software brings up eastern Europe and Latin America; anything with a services arm brings up the Philippines and India. Once you know the countries, you know which product to lead with.
+
+## What we cannot answer yet
+
+Say these plainly if they come up. In this account especially, a clean “I don’t know, here’s when I’ll know” is worth more than a confident guess.
+
+**What does it cost?**
+
+No partner-quotable pricing yet. What you can say: “Give me one real example — country, salary, employee or contractor — and I’ll come back with a real number.”
+
+**Which countries exactly, and what’s covered in each?**
+
+Country coverage sheets aren’t ready to hand out. You can name the countries you know, and there are published country guides — with the Puerto Rico caveat above.
+
+**How does the contract actually read?**
+
+The employment contract is between the worker and PrismHR, and there’s a company-to-company agreement with the client that carries IP protection. Both can be reviewed by their attorneys. Don’t characterise terms beyond that.
+
+**Can our clients buy it themselves, without us?**
+
+That’s the slide 13 question, and it’s theirs to decide — resell at their margin, or we contract directly and pay them a fee. Get their preference; don’t offer terms.
 
 ---
 
 ## After the call
 
-1. **Anika first.** She owns the relationship and she brought you in. Private debrief before anything goes to Infiniti: what you heard, what you committed to, what you held back.
-2. **Then Jennifer**, copying whoever was in the room. Three lines: where the contract-shape question landed, the Puerto Rico date in writing, and two proposed times for the scoping session.
-3. **Send the corrected Puerto Rico guide on the day you named.** If the fix isn't ready, send a note on the day saying so with a new date. The discipline is the deliverable, not the document.
-4. **Chase the guide fix until it ships.** You have now told a customer their vendor's published country guide is wrong. If it's still wrong in a month, you own that — and so does every other rep pointing a prospect at that page.
-5. **File it:** the account's disposition, the contract-shape answer, the client they named, and the date they gave you.
+1. **Anika first.** She owns the relationship and brought you in. Private debrief before anything goes to Infiniti.
+2. **Then Jennifer**, copying the room: where the contract-shape question landed, the Puerto Rico date, and two times for the scoping session.
+3. **Send the corrected Puerto Rico guide on the day you named.** If the fix isn't ready, send a note on the day with a new date.
+4. **Chase the guide fix until it ships.** You've told a customer our published guide is wrong; if it's still wrong in a month, that's on you.
+5. **File it:** disposition, the contract-shape answer, the client they named, and the date they gave you.
 
 _Money figures are written as words or omitted throughout, per the redactMoney doctrine._

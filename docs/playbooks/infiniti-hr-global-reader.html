@@ -17,9 +17,9 @@
     --move-tint: rgba(230, 112, 30, 0.07);
     --move-edge: rgba(230, 112, 30, 0.3);
     --sys: #2563eb;
-    --health: #22c55e;
     --caution: #f59e0b;
     --risk: #ef4444;
+    --health: #22c55e;
     --serif: "DM Serif Display", Georgia, "Times New Roman", serif;
     --sans: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
     --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
@@ -29,14 +29,9 @@
   * { box-sizing: border-box; }
 
   body {
-    margin: 0;
-    background: var(--field);
-    color: var(--ink);
-    font-family: var(--sans);
-    font-size: 16px;
-    line-height: 1.5;
-    -webkit-font-smoothing: antialiased;
-    overflow-x: hidden;
+    margin: 0; background: var(--field); color: var(--ink);
+    font-family: var(--sans); font-size: 16px; line-height: 1.5;
+    -webkit-font-smoothing: antialiased; overflow-x: hidden;
   }
 
   .kicker { font-family: var(--mono); font-size: 10.5px; font-weight: 500; letter-spacing: 0.13em; text-transform: uppercase; color: var(--ink-42); }
@@ -44,18 +39,21 @@
   /* ── top bar ───────────────────────────────────────────── */
   .bar {
     position: sticky; top: 0; z-index: 20;
-    display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
-    padding: 12px 28px;
-    background: rgba(245, 247, 251, 0.94);
-    backdrop-filter: blur(10px);
-    border-bottom: 1px solid var(--ink-10);
+    display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+    padding: 11px 28px; background: rgba(245, 247, 251, 0.94);
+    backdrop-filter: blur(10px); border-bottom: 1px solid var(--ink-10);
   }
-  .bar-id { display: flex; flex-direction: column; gap: 1px; margin-right: auto; }
+  .bar-id { display: flex; flex-direction: column; gap: 1px; }
   .bar-id b { font-family: var(--serif); font-size: 18px; font-weight: 400; letter-spacing: -0.01em; }
   .bar-id span { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.11em; text-transform: uppercase; color: var(--ink-42); }
 
+  .tabs { display: flex; gap: 2px; margin-right: auto; }
+  .tabs button { border: 0; border-radius: 4px; padding: 8px 14px; font-size: 11px; }
+  .tabs button[aria-selected="true"] { background: var(--ink); color: #fff; }
+  .tabs button[aria-selected="false"]:hover { background: var(--ink-06); }
+
   .clock { display: flex; align-items: baseline; gap: 10px; }
-  .clock-now { font-family: var(--mono); font-size: 26px; font-weight: 500; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+  .clock-now { font-family: var(--mono); font-size: 24px; font-weight: 500; font-variant-numeric: tabular-nums; }
   .clock-of { font-family: var(--mono); font-size: 12px; font-variant-numeric: tabular-nums; color: var(--ink-42); }
   .delta {
     font-family: var(--mono); font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums;
@@ -63,6 +61,7 @@
   }
   .delta[data-state="ahead"] { background: var(--health); }
   .delta[data-state="behind"] { background: var(--risk); }
+  .clock[hidden], .delta[hidden] { display: none; }
 
   button {
     font-family: var(--mono); font-size: 10.5px; font-weight: 500; letter-spacing: 0.11em; text-transform: uppercase;
@@ -71,17 +70,17 @@
   }
   button:hover { color: var(--ink); border-color: var(--ink-42); }
   button:focus-visible { outline: 2px solid var(--sys); outline-offset: 2px; }
-  button[aria-pressed="true"] { color: var(--ink); border-color: var(--ink); background: var(--ink-06); }
   .btn-row { display: flex; gap: 8px; }
 
   /* ── shell ─────────────────────────────────────────────── */
-  .shell { display: grid; grid-template-columns: 186px minmax(0, 1fr); gap: 32px; max-width: 1180px; margin: 0 auto; padding: 26px 28px 96px; align-items: start; }
+  .shell { display: grid; grid-template-columns: 196px minmax(0, 1fr); gap: 32px; max-width: 1180px; margin: 0 auto; padding: 26px 28px 96px; align-items: start; }
 
   /* ── rail ──────────────────────────────────────────────── */
   .rail { position: sticky; top: 92px; display: flex; flex-direction: column; gap: 1px; }
-  .rail-head { padding: 0 0 10px 2px; }
+  .rail-head { padding: 14px 0 8px 2px; }
+  .rail-head:first-child { padding-top: 0; }
   .rail button {
-    display: grid; grid-template-columns: 22px 1fr auto; align-items: center; gap: 8px;
+    display: grid; grid-template-columns: 24px 1fr; align-items: center; gap: 8px;
     width: 100%; text-align: left; text-transform: none; letter-spacing: 0;
     font-family: var(--sans); font-size: 12.5px; border: 0; border-radius: 4px; padding: 6px 8px; color: var(--ink-66);
   }
@@ -90,25 +89,20 @@
   .rail button:hover { background: var(--ink-06); color: var(--ink); }
   .rail button[aria-current="true"] { background: var(--ink); color: #fff; }
   .rail button[aria-current="true"] .n { color: rgba(255, 255, 255, 0.6); }
-  .rail button.dropped { opacity: 0.34; }
-  .rail button.dropped .t { text-decoration: line-through; }
-  .dot { width: 5px; height: 5px; border-radius: 50%; }
-  .dot.hold { background: var(--risk); }
-  .dot.cut { background: var(--caution); }
 
   /* ── card ──────────────────────────────────────────────── */
-  .card { background: var(--surface); border: 1px solid var(--ink-10); border-radius: 6px; box-shadow: var(--lift); padding: 30px 38px 34px; min-height: 62vh; }
+  .card { background: var(--surface); border: 1px solid var(--ink-10); border-radius: 6px; box-shadow: var(--lift); padding: 30px 38px 34px; min-height: 60vh; }
   .card-head { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 4px; }
   .card-head .num { font-family: var(--mono); font-size: 11px; font-weight: 600; letter-spacing: 0.12em; color: var(--ink-42); }
-  .flag { font-family: var(--mono); font-size: 10px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; padding: 2px 7px; border-radius: 3px; color: #fff; }
-  .flag.hold { background: var(--risk); }
-  .flag.cut { background: var(--caution); }
-  h1 { font-family: var(--serif); font-weight: 400; font-size: clamp(29px, 3.3vw, 39px); line-height: 1.12; letter-spacing: -0.015em; margin: 0 0 26px; text-wrap: balance; }
+  .flag { font-family: var(--mono); font-size: 10px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; padding: 2px 7px; border-radius: 3px; color: #fff; background: var(--risk); }
+  h1 { font-family: var(--serif); font-weight: 400; font-size: clamp(29px, 3.3vw, 38px); line-height: 1.12; letter-spacing: -0.015em; margin: 0 0 24px; text-wrap: balance; }
+  .onpage { margin: -14px 0 24px; font-size: 13.5px; line-height: 1.55; color: var(--ink-42); max-width: 40em; }
+  .onpage b { color: var(--ink-66); font-weight: 600; }
 
-  /* ── the instruction blocks ────────────────────────────── */
+  /* ── instruction blocks ────────────────────────────────── */
   .block { margin-top: 26px; }
   .block-label {
-    display: flex; align-items: center; gap: 9px; margin-bottom: 13px;
+    display: flex; align-items: center; gap: 9px; margin-bottom: 13px; flex-wrap: wrap;
     font-family: var(--mono); font-size: 12px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink);
   }
   .block-label .bar-mark { width: 22px; height: 2px; background: var(--ink); }
@@ -132,7 +126,7 @@
   .branch { display: grid; grid-template-columns: minmax(120px, 27%) 1fr; gap: 14px; font-size: 13.5px; line-height: 1.55; padding: 9px 0; border-top: 1px solid var(--ink-06); color: var(--ink-66); }
   .branch em { font-style: normal; font-weight: 600; color: var(--ink); }
 
-  /* ── brief + cuts ──────────────────────────────────────── */
+  /* ── brief ─────────────────────────────────────────────── */
   .stack { display: grid; gap: 26px; }
   .stack h2 { font-family: var(--serif); font-weight: 400; font-size: 22px; margin: 0 0 13px; letter-spacing: -0.01em; }
   .facts { display: grid; gap: 13px; margin: 0; padding: 0; list-style: none; max-width: 46em; }
@@ -143,16 +137,23 @@
   .rules li { font-size: 15.5px; line-height: 1.55; color: var(--ink-66); padding-left: 15px; border-left: 1px solid var(--ink-22); }
   .rules li b { color: var(--ink); font-weight: 600; }
 
-  .lede { margin: 0 0 4px; font-size: 16.5px; line-height: 1.6; color: var(--ink-66); max-width: 44em; }
+  /* ── Q&A ───────────────────────────────────────────────── */
+  .lede { margin: -10px 0 26px; font-size: 16.5px; line-height: 1.6; color: var(--ink-66); max-width: 44em; }
   .lede b { color: var(--ink); font-weight: 600; }
-  .cutlist { display: grid; max-width: 47em; }
-  .cutrow { display: grid; grid-template-columns: 92px 1fr; gap: 20px; padding: 18px 0; border-top: 1px solid var(--ink-10); }
-  .cutrow:last-child { border-bottom: 1px solid var(--ink-10); }
-  .cutrow .who { font-family: var(--mono); font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--caution); padding-top: 3px; }
-  .cutrow h3 { font-family: var(--sans); font-size: 16px; font-weight: 600; margin: 0 0 8px; }
-  .cutrow p { margin: 0 0 7px; font-size: 14.5px; line-height: 1.58; color: var(--ink-66); }
-  .cutrow p:last-child { margin-bottom: 0; }
-  .cutrow p b { color: var(--ink); font-weight: 600; }
+  .qa { display: grid; max-width: 47em; }
+  .qa-item { padding: 20px 0; border-top: 1px solid var(--ink-10); }
+  .qa-item:last-child { border-bottom: 1px solid var(--ink-10); }
+  .qa-item h3 { font-family: var(--sans); font-size: 17px; font-weight: 600; margin: 0 0 9px; line-height: 1.35; }
+  .qa-item p { margin: 0 0 8px; font-size: 15px; line-height: 1.6; color: var(--ink-66); }
+  .qa-item p:last-child { margin-bottom: 0; }
+  .qa-item p b { color: var(--ink); font-weight: 600; }
+  .qa-item .unknown { color: var(--caution); font-weight: 600; }
+  .checklist { display: grid; gap: 0; max-width: 47em; }
+  .chk { display: grid; grid-template-columns: 26px 1fr; gap: 12px; padding: 13px 0; border-top: 1px solid var(--ink-06); font-size: 15px; line-height: 1.55; color: var(--ink-66); }
+  .chk:first-child { border-top: 1px solid var(--ink-10); }
+  .chk:last-child { border-bottom: 1px solid var(--ink-10); }
+  .chk .box { width: 15px; height: 15px; border: 1.5px solid var(--ink-22); border-radius: 3px; margin-top: 3px; }
+  .chk b { color: var(--ink); font-weight: 600; }
 
   /* ── foot ──────────────────────────────────────────────── */
   .foot {
@@ -160,12 +161,11 @@
     display: flex; align-items: center; justify-content: center; gap: 12px; padding: 11px;
     background: rgba(245, 247, 251, 0.94); backdrop-filter: blur(10px); border-top: 1px solid var(--ink-10);
   }
-  .foot .where { font-family: var(--mono); font-size: 11px; font-variant-numeric: tabular-nums; color: var(--ink-42); min-width: 140px; text-align: center; }
+  .foot .where { font-family: var(--mono); font-size: 11px; font-variant-numeric: tabular-nums; color: var(--ink-42); min-width: 150px; text-align: center; }
   .hint { text-align: center; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.11em; text-transform: uppercase; color: var(--ink-22); padding: 24px 0 0; }
 
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 
-  /* ── paper ─────────────────────────────────────────────── */
   @media print {
     @page { margin: 13mm 15mm; }
     .bar, .rail, .foot, .hint { display: none !important; }
@@ -179,7 +179,7 @@
     .block-label { font-size: 9.5pt; margin-bottom: 2.5mm; }
     .block.ask { background: transparent; border: 0.75pt solid var(--ink); padding: 4mm 5mm; }
     .block.ask q { font-size: 13pt; max-width: none; }
-    .note, .branch, .cutrow p { font-size: 9.5pt; }
+    .note, .branch, .qa-item p, .chk { font-size: 9.5pt; }
     .facts li, .rules li, .lede { font-size: 10.5pt; }
     .flag { border: 0.5pt solid currentColor; color: inherit !important; background: transparent !important; }
   }
@@ -189,33 +189,37 @@
     .rail { position: static; flex-direction: row; overflow-x: auto; gap: 4px; padding-bottom: 6px; }
     .rail-head { display: none; }
     .rail button { grid-template-columns: auto; width: auto; padding: 7px 11px; }
-    .rail button .t, .rail button .dot { display: none; }
+    .rail button .t { display: none; }
     .card { padding: 24px 20px 28px; }
     .block.ask { padding: 18px 16px 20px; }
-    .branch, .cutrow { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+    .branch { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+    .tabs { width: 100%; order: 3; }
   }
 </style>
 
 <header class="bar">
   <div class="bar-id">
     <b>Infiniti HR — the 15-minute read</b>
-    <span>Hardesty · Smrkovski · Ramirez &nbsp;·&nbsp; PrismHR Global, service-provider deck</span>
+    <span>Hardesty · Smrkovski · Ramirez</span>
   </div>
-  <div class="clock">
+  <div class="tabs" role="tablist">
+    <button id="tab-deck" role="tab" aria-selected="true">The deck</button>
+    <button id="tab-qa" role="tab" aria-selected="false">Q&amp;A · scoping</button>
+  </div>
+  <div class="clock" id="clockwrap">
     <span class="clock-now" id="elapsed">0:00</span>
-    <span class="clock-of" id="target">of 12:43</span>
+    <span class="clock-of" id="target">of 15:00</span>
     <span class="delta" id="delta">READY</span>
   </div>
   <div class="btn-row">
     <button id="run" aria-pressed="false">Start</button>
     <button id="reset">Reset</button>
-    <button id="mode" aria-pressed="true">Short run</button>
     <button id="print">Print</button>
   </div>
 </header>
 
 <div class="shell">
-  <nav class="rail" id="rail" aria-label="Slides"><div class="rail-head kicker">The deck</div></nav>
+  <nav class="rail" id="rail" aria-label="Contents"></nav>
   <main class="stage" id="stage" tabindex="-1"></main>
 </div>
 
@@ -226,113 +230,113 @@
 </div>
 
 <script>
-  var CARDS = [{"n": -2, "short": "The brief", "title": "What is true about this room", "secs": 0, "facts": ["<b>Jennifer asked for this call.</b> She wrote to Anika on 7/14 about “the global payroll solution Prism integrates with,” then asked for the meeting herself on 7/21 and offered three days. This is inbound. Don’t pitch it like it isn’t.", "<b>She thinks Global is somebody else’s product.</b> It isn’t. Correcting that is the most valuable thing you say all meeting, and it goes in the first thirty seconds.", "<b>Her real question is already on the record.</b> Her words: “Is this an add-on INF would need to implement in our account, or could a client specifically add this on?” That’s slide 13. Answer it or the meeting didn’t happen.", "<b>Puerto Rico is the live pain.</b> It <b>is</b> on our list — there’s a published guide. But it’s a US territory, not a foreign country, and <b>three sections of our own guide carry Portugal’s content</b>. Check the live page and flag it internally before you go in.", "<b>Their global work leaves their P&amp;L today.</b> Domestic runs on our software; the international side rides an outside alliance that comes up for review this fall. Let <i>them</i> name that vendor. You never do.", "<b>The scar.</b> TZP — one of their clients — cancelled Performance Management in the spring because the 360 review didn’t do what it was pitched as doing. Jennifer was on that thread. <b>You say this out loud on slide 1.</b>"], "rules": ["<b>Name TZP before you claim anything.</b> One sentence, forward-facing, then move on. You can’t earn it back later — everything you say after minute one gets heard through it.", "<b>Never say the competitor’s name first.</b> If they name it, you can ask about it. If they don’t, you don’t need it today.", "<b>Talk structure, not price.</b> You don’t have a rate sheet you can hand them. Asking Scott which shape he wants is a real question. Making up a number you’d walk back next week is the TZP mistake in a new suit."]}, {"n": -1, "short": "What I cut", "title": "Five pages come out before you start", "secs": 0, "intro": "All fifteen pages with real answers runs about fifteen and a half minutes, and that’s before anyone interrupts. Three executives will interrupt. So five pages come out — and none of them are pages this room needs. Every one is either something they already know, or detail that sits below the altitude of a first conversation with a CEO and a COO. <b>Take them out of the file before you present.</b> Clicking past a slide you’ve decided to skip looks like you’re behind.", "rows": [{"n": "03", "title": "PrismHR Solutions — the stats page", "what": "Payroll volume, worksite employees, brands in the family, countries, founding dates. A credibility page.", "why": "It introduces PrismHR to people who already run their business on PrismHR. Scott has been a customer for years. Reciting our size to him spends a minute buying something you already own.", "say": "The one fact worth keeping — that we own the company in forty-five countries rather than renting a local partner — is folded into slide 6, so nothing is lost."}, {"n": "05", "title": "The Global Challenges Your Clients Bring to You", "what": "Five problems: compliance risk, slow market entry, payroll complexity, talent shortages, entity cost.", "why": "Everyone in that room runs a PEO. They know global hiring is hard — it’s why they took the meeting. Explaining the problem to the people living it is the most common way a good deck wastes its best minutes.", "say": "If someone raises one of the five, you’re better off than if you’d read it to them. Answer it and move on."}, {"n": "09", "title": "Employer of Record — Core and Plus", "what": "The two EOR tiers: Core when the client already has the person, Plus when we recruit them too.", "why": "Product detail. The tier split only matters once somebody has decided to use EOR at all, and slide 7 already names employer of record at the altitude this conversation is running at.", "say": "“Two versions — one where you’ve already got the person, one where we go find them. Happy to walk through both when we scope a real client.”"}, {"n": "12", "title": "Global Talent", "what": "Recruiting, plus a premium tier that runs the whole employment relationship in select countries.", "why": "The weakest page for this account and the thing they’re least likely to need first. Selling it here spends credibility you built on slide 1.", "say": "“We recruit too. It’s the piece you’re least likely to need first, so I skipped it.” Saying that out loud is worth more than the page was."}, {"n": "14", "title": "Provider Success Story", "what": "A dental technology company that built a software team in Costa Rica — sixty-plus people in under four months.", "why": "The hardest cut, because it’s the only proof on the deck. But it’s a software company in Costa Rica, not a PEO with a book the size of theirs. It doesn’t look like them, so it doesn’t land like proof.", "say": "Keep it in your back pocket. If Scott asks whether anyone has actually done this, tell the story from memory in twenty seconds — it’s better spoken than read."}], "outro": "That leaves ten pages and about twelve and three-quarter minutes with real answers in them — a little over two minutes of room for a conversation that runs long. <b>Slides 1, 8, 11, 13 and 15 never come out</b> — one and eleven are why they’ll believe you, eight and thirteen are the business, fifteen is the ask. If you’re still running long, slow down rather than cut further. Better to end on slide 13 having actually talked than to reach slide 15 having recited."}, {"n": 1, "short": "Compete Without Borders", "title": "Compete Without Borders", "you": "0:23 + 0:30", "them": "0:30", "secs": 85, "flag": "hold", "say": ["Thanks for making the time, all three of you. I’ll take about fifteen minutes and then it’s yours. Jump in whenever — I’d rather answer questions than talk at you.", "Quick correction first. Jennifer, your note asked about the global payroll company Prism integrates with. There isn’t one. PrismHR Global is us. Same company, same platform, same login."], "then": {"note": "Slow down. This is the most important thirty seconds of the meeting.", "say": ["One more thing before I sell you anything. Earlier this year TZP cancelled Performance Management. The reason was that the 360 review didn’t do what we said it would. Jennifer, you were on that thread. I read it.", "So here’s how I’m going to talk today. What this does. What it doesn’t. And where I don’t know, I’ll tell you I don’t know. You’ll watch me do that once in the next fifteen minutes."]}, "ask": "What made you take this meeting?", "askNote": "Stop and wait. Let all three answer if they want to.", "why": "You can’t apologise your way back to credibility later — everything after minute one gets heard through TZP whether anyone says it or not. One sentence, then forward. No apology, no defending the product, no relitigating. And don’t drop the last line: it turns the Puerto Rico admission on slide 11 into the thing you promised rather than a hole in your knowledge. Then the question tells you who in the room is actually driving this, and it often gets you the incumbent for free.", "branches": [["If Scott picks up TZP", "Take it graciously and don’t expand. “I wasn’t in it and I’m not going to relitigate it — I just didn’t want to stand here and pretend it didn’t happen.” Then slide 2."], ["If they say Puerto Rico", "Tell them it lands on slide 11, and keep that promise."], ["If they say a client asked", "Get that client’s shape now. The rest of the deck reads through it."]]}, {"n": 2, "short": "Agenda", "title": "Agenda", "you": "0:14", "them": "", "secs": 20, "say": ["That’s the agenda. I’ll move quickly through the middle — it’s mostly reference. Where I want to spend the time is how a deal between us actually works, and where the money ends up."], "ask": "If you only get one thing out of the next fifteen minutes, what should it be?", "askNote": "Quick answer, then steer the rest of the meeting toward it.", "why": "It gives you permission to skip things later without looking like you ran out of time. And if the answer is “how the money works,” go to slides 8 and 13 early and treat everything else as reference."}, {"n": 3, "short": "PrismHR stats", "title": "PrismHR Solutions", "you": "0:21", "them": "0:10", "secs": 34, "flag": "cut", "say": ["One number worth noticing. We reach a hundred seventy-five countries, and we own the company in forty-five of them. Owned matters — where we own it, we’re the employer. We’re not handing you off to a local firm and hoping. The rest of this page you already know, because you run on us."], "ask": "How much of your business is global today?", "askNote": "Quick answer, then move.", "why": "Cut this page. It sells PrismHR to a PrismHR customer. The owned-entity fact is folded into slide 6, so nothing is lost."}, {"n": 4, "short": "Why clients go global", "title": "Why Your Clients Go Global", "you": "0:29", "them": "0:15", "secs": 48, "say": ["This page is written for your clients. I’d read it as your revenue.", "Your clients are already doing this. Somebody in your book has already asked about a developer in Mexico or a contractor in India. In a book your size that’s happening whether it reaches this floor or not. So the question isn’t whether the demand is there. It’s whether you make money on it, or hand it to somebody else."], "ask": "Are your clients asking you to go global with them?", "askNote": "Quick answer. If it’s “sometimes,” ask what happens to those asks.", "why": "It turns their clients’ story into their revenue story in one move, and whatever they say becomes your reference point on slide 8. If the honest answer is “we don’t really know,” that’s the finding — and it makes the small ask on slide 15 easy to say yes to."}, {"n": 5, "short": "The challenges", "title": "The Global Challenges Your Clients Bring to You", "you": "0:26", "them": "", "secs": 32, "flag": "cut", "say": ["Five problems, from your client’s side. From your side there’s really only one. The minute you say yes, their problem becomes your problem. Misclassification, permanent establishment, a firing rule nobody read — that lands on whoever signed the paper.", "The one I’d point at is the last. Most clients don’t need a company set up somewhere. They need one person, in one country, next month."], "ask": "When a client goes global on you, is that an opportunity or a headache?", "askNote": "Answer it yourself if they don’t: usually both.", "why": "Cut this page. Three people who run a PEO don’t need the problem explained to them. If someone raises one of the five, answer it and move — you’re better off than if you’d read the list to them."}, {"n": 6, "short": "Enter Global", "title": "Enter PrismHR Global", "you": "0:40", "them": "0:15", "secs": 61, "say": ["Here’s the whole thing in a sentence. Find, hire, pay, manage — in a hundred seventy-five countries, without you or your client building anything anywhere. And in forty-five of those we own the company outright, so we’re the actual employer, not a middleman.", "The part worth repeating: this isn’t a partner we hand you off to. It’s ours, and it sits inside the system Infiniti already runs. For your team it’s another tab. Same login. Nothing to integrate, nothing to sync, nothing for your IT people to own.", "That’s the difference between adding a vendor and switching something on."], "ask": "Would it change anything for you if this lived inside the system you already run?", "askNote": "Aim it at Jennifer. Stop and wait — this is her question.", "why": "This is the correction from slide 1, made concrete. Jennifer runs implementation; “another tab, same login” is the difference between a project and a setting. Her answer tells you how big a lift her team thinks this is, which sizes what you can ask for on slide 15."}, {"n": 7, "short": "Four products", "title": "Help Clients Grow Globally with PrismHR Global", "you": "0:28", "them": "0:12", "secs": 44, "say": ["Four things, one relationship. Employer of record, when your client needs a real employee somewhere they’ve got no company. Contractor support, when the work genuinely is project work. Global payroll, when they’ve already got people overseas and paying them is the mess. And recruiting, when they don’t know who to hire yet.", "You don’t pick one. You pick per client, per country. Same agreement with us underneath all of it."], "ask": "Which of these would your clients ask for first?", "askNote": "Quick answer. Whatever they say is where the pilot starts.", "why": "This is the whole product story at the altitude a CEO and a COO want it. It’s also why slides 9 and 12 come out — this page covers what they cover, without detail nobody needs in a first conversation."}, {"n": 8, "short": "Why partner with us", "title": "Why Service Providers Partner With PrismHR Global", "you": "0:40", "them": "0:45", "secs": 91, "flag": "hold", "say": ["I’d have written this page differently. Here’s the version that’s true for a company your size.", "The line that’s missing is the one that matters. Right now, when one of your clients hires overseas, that money leaves your P&L. Somebody earns it. It isn’t you.", "What I’m offering is that it stays inside your relationship and inside your margin. Your team stays the people they call. Your name stays on the front. Your client never has to meet us at all if you don’t want them to.", "The four bullets that are up there are real. They’re just second."], "ask": "Today, when one of your clients hires overseas — does Infiniti make anything on it?", "askNote": "Scott’s question. Nobody else can answer it. Stop and wait.", "why": "The CEO’s slide, and the whole commercial argument in one question. If the answer is no, you’re done selling — go to slide 13 and spend the rest of the time there.", "branches": [["“No, we refer it out”", "Stop selling. Go to 13. The rest of the meeting is how the money would work instead."], ["“We have an arrangement”", "Don’t name it. Ask: “Is it working, and when does it next come up for review?”"], ["“We don’t see those asks”", "“Then the first thing worth building isn’t a product — it’s a way to hear the asks. That’s a smaller project than this deck.”"]]}, {"n": 9, "short": "Employer of Record", "title": "Global Employer of Record", "you": "0:31", "them": "", "secs": 38, "flag": "cut", "say": ["Employer of record, two versions. Core is when your client already has the person — a name, a country, a start date. We employ them, your client runs the work, we carry the legal side. Plus is the same thing when they haven’t got anybody yet, and we go find them.", "How it actually works: the employment contract is between the worker and PrismHR. Our agreement with your client assigns that person to them. That’s the whole trick."], "ask": "Do your clients usually know who they want to hire, or do they need help finding them?", "askNote": "Quick answer.", "why": "Cut this page. It’s product detail, and the tier split only matters once somebody has decided to use EOR at all — slide 7 names it at the right altitude. If it comes up: “two versions — one where you’ve got the person, one where we find them. Happy to walk through both when we scope a real client.”"}, {"n": 10, "short": "Contractors", "title": "Global Contractor Solutions", "you": "0:40", "them": "0:15", "secs": 60, "say": ["Contractors. Two roads, and the difference is who holds the paper.", "Contractor management — the contract is between your client and the contractor, and we’re how they get paid. Contractor of record — the contract sits with us, and we run a classification check before anybody gets paid at all.", "Let me be straight about that second one. Classification isn’t paperwork that turns an employee into a contractor. If the job looks like a job — set hours, one client, a manager — the real answer is employer of record. We’d tell your client that. And we’d tell you first."], "ask": "Do you know how many of your clients have people overseas right now?", "askNote": "Stop and wait. “No” is the most useful answer you can get.", "why": "Contractor sprawl is invisible to a PEO until it becomes the PEO’s problem, and “would you even know?” is the part that lands. If the answer is no, you’ve just defined a first project that costs them nothing to say yes to."}, {"n": 11, "short": "Payroll · Puerto Rico", "title": "Global Payroll — and Puerto Rico", "you": "0:43 + 1:15", "them": "0:45", "secs": 167, "flag": "hold", "say": ["Payroll’s the boring page, and the one your finance people will care about most. Local processing and filing, multiple currencies, country-specific deductions, one report across all of it, and a file that drops straight into whatever ledger they already use.", "The part worth knowing is how the money moves. Your client pays one invoice, in dollars, into a US bank. We convert it, pay people locally in their own currency, and send the taxes to that country. No wires leaving your client’s bank — which also means they’re not signalling to a foreign tax authority that they’ve got people there before anyone’s decided that’s a good idea."], "then": {"note": "Change your tone here. This is what you promised on slide 1.", "say": ["Now — Puerto Rico. This is the one I told you about.", "Good news first. Puerto Rico’s on our list. We’ve got a country guide for it, and we can hire and pay there.", "Now the part that actually matters. Puerto Rico is a US territory, not a foreign country. So it isn’t the story I just told you. There’s no company to avoid setting up — it’s US soil. Social Security, Medicare, unemployment, ACA, ERISA, all of it still applies. What’s genuinely local is the part that bites: retirement plans have to go through Hacienda, firing runs through Law 80, and workers’ comp is only available through the State Insurance Fund — no private carrier, no self-insuring.", "And here’s the part I’d rather you hear from me than find on your own. Our published Puerto Rico guide has mistakes in it. The time-off, leave and severance sections are Portugal’s content — wrong country. The severance section actually contradicts the firing section on the same page. I’ve flagged it. Don’t let your team plan anything off that page until it’s fixed, and I’ll send you the corrected version."]}, "ask": "Is Puerto Rico a client problem, or your own?", "askNote": "Jennifer’s question. Stop and wait — the answer decides who you bring next.", "why": "This is the whole meeting, and it’s far stronger than the version where you simply didn’t know. You confirm you can do it, you show you understand why a US territory isn’t a foreign country — which a PEO implementation lead will absolutely test — and then you hand them a defect in your own company’s marketing before it can cost them anything. Say <b>“the guide is wrong, not the service”</b> out loud: it protects the product without softening the admission. And don’t overstate it — three sections are wrong, the rest of the page is genuinely Puerto Rico-specific.", "branches": [["Before you go in", "Open the live guide and check the Portugal content is still there. If it’s been fixed, this beat shrinks — a good problem."], ["Flag it first", "Report it internally the day before, so “I’ve flagged it” is true in the past tense. Disclosing something you haven’t reported reads as gossip."], ["“How bad is it?”", "Three sections — time off, leave, severance. Wages, hours, overtime, probation, notice, safety and workers’ comp all read as genuinely Puerto Rican."]]}, {"n": 12, "short": "Global Talent", "title": "Global Talent", "you": "0:22", "them": "", "secs": 27, "flag": "cut", "say": ["Quick one. Two things — we recruit and place people, or we recruit and then run the whole employment relationship for you: desk space, HR, local support, in the countries where we offer it.", "This is the one you’re least likely to need first, and I’d rather say that than sell it to you."], "ask": "Have you ever lost a client because you couldn’t cover a country?", "askNote": "Answer it yourself and move on: most people haven’t.", "why": "Cut this page. It’s the weakest thing on the deck for this account. If it comes up: “we recruit too — it’s the piece you’re least likely to need first, so I skipped it.” Saying that is worth more than the page was."}, {"n": 13, "short": "The operating model", "title": "The Operating Model", "you": "0:45", "them": "0:50", "secs": 115, "flag": "hold", "say": ["If we only had one page, this is the one.", "Three boxes. Your client works with Infiniti — the same people they already call. Infiniti delivers the service and owns the relationship. We sit behind you: the companies, the compliance, the employer-of-record and contractor work, the back end.", "There’s one decision inside that picture, and it’s yours, not mine. Either Infiniti holds the client contract and sells this at your margin — you’re the provider, we’re your supplier. Or we contract with the client directly and pay you a fee. Both are real. They’re different businesses, and they change who’s on the hook when something goes wrong at eleven at night in Manila."], "ask": "Do you want to hold the client contract, or would you rather we did and paid you?", "askNote": "Scott and Javier together. Stop and wait — this is the answer you came for.", "after": "And I’m asking about the shape, not the price. I don’t have a rate sheet for you today, and I’m not going to invent one in the room and correct it next week.", "why": "This is the answer to Jennifer’s original question — service-provider level or client level — and it’s the one piece of information that changes what happens next inside their building. Saying the pricing gap out loud costs nothing they wouldn’t find anyway, and in this account it’s the proof the TZP pattern isn’t repeating.", "branches": [["“We’d hold it”", "They want margin and control. Next conversation is commercial terms, and you need pricing before it."], ["“You contract, pay us”", "They want no service obligation. Next conversation is the referral mechanic and who touches the client."], ["“Depends on the client”", "Best answer. “Then let’s pick the client and let it decide” — which is exactly slide 15."]]}, {"n": 14, "short": "Success story", "title": "Provider Success Story", "you": "0:34", "them": "", "secs": 40, "flag": "cut", "say": ["One story, quickly. A dental technology company wanted a software team in Costa Rica, fast, without setting up their own company down there. We recruited and employed them — sixty-plus people in under four months, heading toward a hundred.", "What their provider cared about was flat monthly pricing with no surprises, one vendor instead of four, and a client they kept instead of losing to somebody who had a global answer. The number on the page is theirs. It isn’t a promise about you."], "ask": "What would you need to see work before you’d put a real client on this?", "askNote": "Stop and wait. This is the question that shapes the pilot.", "why": "Cut this page — but keep the story. It’s a software team in Costa Rica, not a PEO with a book their size, so it doesn’t look enough like them to land as proof. If Scott asks whether anyone has actually done this, tell it from memory in twenty seconds; it’s better spoken than read. The question moves into your follow-up note."}, {"n": 15, "short": "The close", "title": "Help Your Clients Go Global", "you": "0:30", "them": "0:40", "secs": 72, "flag": "hold", "say": ["That’s the fifteen minutes, and I’m not going to ask what you thought of it.", "I’ll ask for something smaller. One client, one country, one working session — Jennifer’s implementation people, whoever owns that client, and me. We scope it end to end, and you see exactly what it costs you to deliver before anybody promises a client anything.", "And the corrected Puerto Rico guide reaches you on the day I said it would."], "ask": "Which client would you try first?", "askNote": "Ask it, then stop talking. Do not fill the silence.", "why": "One question doing two jobs: it gets you a named account, and naming one is how a maybe becomes a next meeting. Once they name a client, ask what timing they’re working against — that invites them to raise their own deadline, the alliance or a client commitment, without you ever mentioning it. Whatever date comes out of their mouths is the date the whole account plan runs on."}];
-  var DROP = [3, 5, 9, 12, 14];
+  var CARDS = [{"n": 0, "short": "Before you go in", "title": "What is true about this room", "secs": 0, "facts": ["<b>Jennifer asked for this call.</b> She wrote to Anika on 7/14 asking about “the global payroll solution Prism integrates with,” then asked for the meeting herself on 7/21. This is inbound.", "<b>She thinks Global is somebody else’s product.</b> It isn’t. Correcting that is the most valuable thing you say, and it goes in the first thirty seconds.", "<b>Her real question is already on the record.</b> Her words: “Is this an add-on INF would need to implement in our account, or could a client specifically add this on?” That’s slide 13.", "<b>Assume they have never bought this.</b> They may place global work with somebody else, but that is not the same as having done it. Explain the offering as if it is new to them, because it probably is.", "<b>Puerto Rico is the live pain.</b> It <b>is</b> on our list. But it’s a US territory, not a foreign country, and <b>three sections of our own guide carry Portugal’s content</b>. Check the live page and flag it internally before you go in.", "<b>The scar.</b> TZP — one of their clients — cancelled Performance Management in the spring because the 360 review didn’t do what it was pitched as doing. Jennifer was on that thread. <b>You say this out loud on slide 1.</b>"], "rules": ["<b>Describe the page, don’t argue with it.</b> Say what’s on the slide in plain words, then ask your question. You’re teaching an offering they haven’t bought, not winning a debate.", "<b>Don’t tell them about their own business.</b> No “in a book your size,” no “somebody in your book has already asked.” You don’t know that. Ask instead.", "<b>Short sentences. Ordinary words.</b> Say “we become the legal employer” rather than “we assume the employer-of-record obligation.”", "<b>Never say the competitor’s name first.</b> If they name it, you can ask about it.", "<b>Talk structure, not price.</b> You don’t have a rate sheet yet. The Q&amp;A tab has what you’d need from them before anyone can quote."]}, {"n": 1, "short": "Compete Without Borders", "title": "Compete Without Borders", "onpage": "Title slide.", "flag": "hold", "say": ["Thanks for the time. I’ll take about fifteen minutes and leave room for questions.", "This is PrismHR Global. First thing: it’s ours. Not a company we partner with or resell. It’s our product, inside the same PrismHR system you already use."], "then": {"note": "Slow down here.", "say": ["One thing before I start selling. Earlier this year TZP cancelled Performance Management, because the 360 review didn’t do what we said it would. Jennifer, you were on that thread. I read it.", "So today I’ll tell you what this does, what it doesn’t, and where I don’t know something I’ll say so. You’ll see me do that once in the next fifteen minutes."]}, "ask": "What made you take this meeting?", "askNote": "Stop and wait. Let all three answer.", "why": "You can’t win credibility back later — everything you say after minute one gets heard through TZP whether anyone mentions it or not. One sentence, then forward. And the last line matters: it turns the Puerto Rico admission on slide 11 into the thing you promised rather than a gap in your knowledge.", "branches": [["If Scott raises TZP", "Take it and don’t expand. “I wasn’t in it and I’m not going to relitigate it — I just didn’t want to pretend it didn’t happen.” Then move."], ["If they say Puerto Rico", "Tell them it comes up on slide 11, and keep that promise."]], "you": "0:44", "them": "0:30", "secs": 74}, {"n": 2, "short": "Agenda", "title": "Agenda", "onpage": "Ten-line contents list for the deck.", "say": ["Here’s what I’ll cover. Who we are on the global side. What your clients run into when they hire outside the US. The four things we sell. And how a deal between us would actually work."], "ask": "If you only get one thing out of today, what should it be?", "askNote": "Quick answer, then steer toward it.", "why": "It tells you where to spend the time, and gives you permission to move fast through anything they didn’t pick.", "you": "0:20", "them": "", "secs": 20}, {"n": 3, "short": "PrismHR Solutions", "title": "PrismHR Solutions", "onpage": "Company numbers — payroll volume, worksite employees, businesses served, brands in the Vensure family, countries, owned entities, founding dates.", "say": ["Quick background, because the global side is newer than the part you use.", "We can hire and pay people in more than a hundred and seventy-five countries. In forty-five of those we own the local company ourselves. Where we own it, we’re the legal employer — not a broker."], "ask": "Does Infiniti have anyone outside the US today — your own people, or your clients’?", "askNote": "Quick answer. It tells you whether any of this is familiar to them.", "why": "This is the first real read on how much they know. A PEO can place global work with somebody else for years and still never have set up a foreign employee. Their answer changes how much you explain from here on.", "you": "0:26", "them": "0:12", "secs": 38}, {"n": 4, "short": "Why clients go global", "title": "Why Your Clients Go Global", "onpage": "Five reasons companies expand: specialist talent, faster market entry, lower operating cost, serving international customers, and coverage across time zones.", "say": ["This page is about why a company hires outside its home country. There are five common reasons.", "They need a skill they can’t find locally. They want into a new market quickly. It costs less. They have customers somewhere and want people on the ground. Or they want coverage across more hours of the day.", "Any of those ends with a client calling you about hiring somebody in another country."], "ask": "Are any of your clients asking you about hiring outside the US?", "askNote": "Stop and wait. This is the demand question.", "why": "Ask it rather than assume it. If the answer is yes you have a live use case to aim the rest of the deck at; if it’s no, the conversation is about being ready before the first one asks — which is a fine reason to keep talking.", "you": "0:33", "them": "0:25", "secs": 58}, {"n": 5, "short": "The challenges", "title": "The Global Challenges Your Clients Bring to You", "onpage": "Five numbered problems: compliance risk, slow market entry, payroll complexity, talent shortages, high entity cost.", "say": ["And this is what makes it hard. Five things.", "Compliance. Every country has its own labor law, tax rules and definition of an employee. Getting it wrong is expensive.", "Speed. Setting yourself up in a new country takes months and local expertise.", "Payroll. Different currencies, different tax authorities, usually a different vendor in each country.", "Talent. The people they want aren’t always where they are.", "And cost. Opening a company in another country is slow and expensive — and for one or two hires, unnecessary."], "ask": "Which of those would land on Infiniti, and which would land on the client?", "askNote": "Stop and wait. The answer tells you how they see their own exposure.", "why": "Don’t skip this page on the theory that they run a PEO so they must know. Placing global work with another provider is not the same as having carried the risk. This question finds out which of the five they’d actually own, and that’s the fastest read on their experience you’ll get.", "you": "0:40", "them": "0:25", "secs": 65}, {"n": 6, "short": "Enter PrismHR Global", "title": "Enter PrismHR Global", "onpage": "The four-word promise — Find, Hire, Pay, Manage — over 175+ countries.", "say": ["So here’s what we do about it. Four words on the page.", "Find — we recruit the person. Hire — we employ them in that country, so nobody sets up a company. Pay — payroll in local currency, local taxes handled. Manage — we keep it compliant after that.", "All of it inside the PrismHR system you already log into. Nothing to integrate, nothing for your IT people to build."], "ask": "Would it make a difference to have this inside the system you already use?", "askNote": "Aim it at Jennifer. Stop and wait.", "why": "She runs implementation and technology. The difference between a new vendor and a new tab is her whole job, and her answer tells you how big a lift her team thinks this would be.", "you": "0:34", "them": "0:15", "secs": 49}, {"n": 7, "short": "Four products", "title": "Help Clients Grow Globally", "onpage": "The four products named: Global EOR, contractor support, Global Payroll, Global Talent.", "say": ["Those four words are sold as four products.", "Employer of Record — we become the legal employer of your client’s worker in that country.", "Contractor management — we handle the contracts and payments for people who genuinely are contractors.", "Global payroll — for people your client already employs overseas.", "And global talent — we find the people.", "A client doesn’t pick one forever. It’s whichever fits that person, in that country."], "ask": "Which of those four sounds most useful to your clients?", "askNote": "Quick answer. Whatever they name is where a pilot starts.", "why": "This is the whole offering in thirty seconds, and their answer tells you which of the next four pages to slow down on.", "you": "0:32", "them": "0:12", "secs": 44}, {"n": 8, "short": "Why partner with us", "title": "Why Service Providers Partner With PrismHR Global", "onpage": "Five reasons: one connected offering, operational efficiency, in-country expertise, a model that scales from the first hire, and flexible payment options.", "flag": "hold", "say": ["This page is about why a service provider would work with us instead of building it themselves.", "One place for employees, contractors, EOR and payroll. Fewer vendors. People in-country who know the local rules. Start with one hire and grow. And several ways to move money across borders.", "One more isn’t on the page. If your clients hire overseas and you’re not providing it, somebody else earns that. This is how it stays with you."], "ask": "Today, if one of your clients hires someone overseas — does Infiniti make anything on it?", "askNote": "Scott’s question. Nobody else can answer it. Stop and wait.", "why": "The commercial argument in one question, and it belongs to the CEO. If the answer is no, stop selling and go to slide 13 — the rest of the meeting is how the money would work instead.", "branches": [["“No, we refer it out”", "Stop selling. Go to 13."], ["“We have an arrangement”", "Don’t name it. Ask: “Is it working, and when does it come up for review?”"], ["“We don’t see those asks”", "“Then the first thing to build isn’t a product — it’s a way to hear the asks.”"]], "you": "0:36", "them": "0:35", "secs": 71}, {"n": 9, "short": "Employer of Record", "title": "Global Employer of Record", "onpage": "The two EOR tiers — Core and Plus — and what each includes.", "say": ["Employer of Record. This is the main one, so let me be plain about what it actually is.", "Say your client wants to hire somebody in Poland. They have no company in Poland. We do. So we employ that person under our Polish company. They work for your client day to day. We handle the contract, payroll, taxes and benefits under Polish law.", "Two versions here. Core is when your client already knows who they want. Plus is when they don’t, and we find the person too."], "ask": "When a client needs someone overseas, do they usually have a person in mind already?", "askNote": "Quick answer. It splits Core from Plus.", "why": "The Poland sentence is the whole product. If they take one thing away from the meeting, make it that one — a company they don’t have, that we do.", "you": "0:41", "them": "0:12", "secs": 53}, {"n": 10, "short": "Contractors", "title": "Global Contractor Solutions", "onpage": "Two contractor models — contractor management, and contractor of record where PrismHR acts as agent of record.", "say": ["Contractors. Two versions here as well, and the difference is who signs with the contractor.", "Contractor management — the contract is between your client and the contractor. We handle payments and paperwork.", "Contractor of record — the contract is between the contractor and us. We take more of the risk, and we check the classification before anyone gets paid.", "On that last part: if somebody works set hours, for one company, with a manager, most countries call that an employee — whatever the contract says. If we see it, we’ll tell you first."], "ask": "Do your clients use contractors outside the US today?", "askNote": "Stop and wait. “We’re not sure” is a useful answer.", "why": "Contractors overseas are usually paid out of accounts payable and never show up in the PEO’s system, so “we’re not sure” is common and honest. Either answer gives you a small, safe first project: find out.", "you": "0:41", "them": "0:20", "secs": 61}, {"n": 11, "short": "Global Payroll · PR", "title": "Global Payroll", "flag": "hold", "onpage": "Global payroll capability — local processing and filing, multi-currency, country benefits and deductions, consolidated reporting, and integration with existing HCM or finance systems.", "say": ["Global payroll is for people your client already employs somewhere else and just needs paid correctly.", "We run the payroll locally, file the local taxes, handle that country’s required deductions, and give you one report across all of them. It exports into whatever accounting system you already use.", "One thing about how the money moves. Your client pays one invoice, in dollars, into a US bank. We convert it, pay each person locally in their own currency, and pay the taxes to that country. Nothing gets wired out of their bank."], "then": {"note": "Change your tone. This is what you promised on slide 1.", "say": ["Now, Puerto Rico — this is the one I said you’d see.", "Good news first: Puerto Rico is on our list, and we can hire and pay there.", "But it isn’t like the rest of this page. Puerto Rico is a US territory, not a foreign country. It’s US soil, so Social Security, Medicare and unemployment tax all still apply. What’s local is the part that catches people: retirement plans need approval from the Puerto Rico treasury, firing runs through their own severance law, and workers’ comp can only be bought from the state fund.", "And here’s the part I’d rather you hear from me. Our published Puerto Rico guide has mistakes in it. Three sections — time off, leave and severance — carry another country’s rules. I’ve flagged it. Don’t plan anything off that page, and I’ll send you a corrected version."]}, "ask": "Is Puerto Rico something a client needs, or something Infiniti needs?", "askNote": "Jennifer’s question. Stop and wait — the answer decides who you bring next.", "why": "You confirm you can do it, you show you know why a US territory is different, and then you hand them a problem in our own marketing before it costs them anything. Say <b>“the guide is wrong, not the service”</b> out loud. And don’t overstate it — three sections are wrong; wages, hours, overtime, notice and workers’ comp all read correctly.", "branches": [["Before you go in", "Open the live guide and confirm the wrong content is still there. If it’s been fixed, this shrinks — a good problem."], ["Flag it first", "Report it internally the day before, so “I’ve flagged it” is true in the past tense."]], "you": "1:38", "them": "0:35", "secs": 133}, {"n": 12, "short": "Global Talent", "title": "Global Talent", "onpage": "Two offerings — talent recruitment, and talent management as a premium EOR tier in select countries.", "say": ["Global talent. Two things.", "Recruiting — we find, screen and place candidates in other countries.", "And in some countries, a fuller version where we also give them a workspace, local HR support and day-to-day help. That one includes the recruiting."], "ask": "Do your clients ever need help finding people, or do they usually know who they want?", "askNote": "Quick answer, then move.", "why": "This is the piece most providers need last, and it’s fine to say so. It matters most when a client can’t fill a role where they are.", "you": "0:22", "them": "0:10", "secs": 32}, {"n": 13, "short": "The operating model", "title": "The Operating Model", "flag": "hold", "onpage": "Three boxes — service provider, SMB client, and PrismHR Global behind both.", "say": ["This is how it works between the three of us.", "Your client deals with Infiniti — the same people they already call. Infiniti delivers the service. We sit behind you and do the work: the local companies, the compliance, the payroll.", "One decision to make, and it’s yours. Either you hold the contract with your client and sell this at your own price, or we hold it and pay you a fee. Both work. They’re different businesses, and they change who’s responsible when something goes wrong."], "ask": "Would you rather hold the client contract yourselves, or have us hold it and pay you?", "askNote": "Scott and Javier. Stop and wait — this is the answer you came for.", "after": "And I’m asking about the shape, not the price. I don’t have a rate sheet to hand you today, and I’d rather not invent one and correct it next week.", "why": "This is the answer to Jennifer’s original question — whether Infiniti adds this at their level or a client adds it themselves — and it’s the one thing that changes what happens next inside their building.", "branches": [["“We’d hold it”", "They want margin and control. Next conversation is commercial terms."], ["“You hold it, pay us”", "They want no service obligation. Next conversation is the referral mechanics."], ["“Depends on the client”", "Best answer. “Then let’s pick a client and let it decide.” That’s slide 15."]], "you": "0:53", "them": "0:45", "secs": 98}, {"n": 14, "short": "Success story", "title": "Provider Success Story", "onpage": "A dental technology company building a development team in Costa Rica — hires, timeline, target team size, and savings against traditional fees.", "say": ["One example of it working.", "A dental technology company wanted a software team in Costa Rica, fast, without setting up a company there. We recruited and employed them — more than sixty people in under four months, heading toward a hundred.", "For the provider in the middle: flat monthly pricing, one vendor, and a client they kept."], "ask": "Would it help to talk to a provider who’s already done this?", "askNote": "Quick answer. If yes, that’s a follow-up you can deliver.", "why": "The story is a software team in Costa Rica, so it won’t look much like their book. Offering a reference call is worth more than the slide — it turns a claim into something they can check.", "you": "0:28", "them": "0:12", "secs": 40}, {"n": 15, "short": "The close", "title": "Help Your Clients Go Global", "flag": "hold", "onpage": "Closing slide — “It’s time to build your borderless business.”", "say": ["That’s the overview.", "What I’d suggest next is small. Pick one client and one country, and we’ll scope it together — your implementation people, whoever owns that client, and me. You’d see exactly what’s involved and what it costs before anybody promises a client anything.", "And I’ll send the corrected Puerto Rico guide on the day I said."], "ask": "Which client would you want to try first?", "askNote": "Ask it, then stop talking. Don’t fill the silence.", "why": "A named client turns a maybe into a next meeting. Once they name one, ask what timing they’re working against — that lets them raise their own deadline without you mentioning it. Whatever date they say is the date everything else runs on.", "you": "0:26", "them": "0:35", "secs": 61}];
+  var QA = [{"short": "Setting up EOR", "head": "What it takes", "kicker": "Q&A · Employer of Record", "title": "What it takes to set up an EOR hire", "lede": "These are the questions that come up right after someone says yes. Answer them plainly — the goal is to make the process sound ordinary, because it is.", "items": [{"q": "How does a hire actually start?", "a": ["With the country, not the person. <b>Where someone lives is where they’re employed</b> — not where they’re a citizen. If they hold a Bulgarian passport but live in Spain, they’re employed in Spain, and the platform asks whether they’re allowed to work there.", "After that it’s ordinary hiring information: job title, description, team, location and a start date."]}, {"q": "How long does it take?", "a": ["Start dates are normally set about <b>two weeks out</b>. That window is what covers getting the employment set up in-country.", "<span class=\"unknown\">Don’t promise faster than that</span> without checking. Country and role change it."]}, {"q": "Who signs what?", "a": ["The <b>employment contract is between the worker and PrismHR</b>, because we’re the legal employer in that country. Our agreement with the client then assigns that person to work for them.", "An implementation manager checks everything and produces the offer letter. <b>The client reviews it before it goes to the candidate.</b> Any back-and-forth on salary or benefits happens at that stage. Once it’s signed, the employee gets their own login."]}, {"q": "Do you check they can legally work there?", "a": ["Yes. Our team verifies the documentation. We don’t take the worker’s word for it."]}, {"q": "What benefits does the person get?", "a": ["Every country sets a legal minimum — holidays, leave, pension, healthcare contributions. <b>We always meet the local minimum and can’t go below it.</b> The client can add more on top if they want to.", "Supplemental health cover is available as an optional add-on, priced per person per month."]}, {"q": "What about a laptop?", "a": ["The client's choice. Shipping equipment from the US usually gets stuck in customs and gets expensive, so most people either use a third party that delivers equipment in-country, or let the new hire use their own and expense it."]}]}, {"short": "Setting up payroll", "kicker": "Q&A · Global Payroll", "title": "What it takes to set up global payroll", "lede": "Payroll is for people the client <b>already employs</b> somewhere else. It’s a different starting point from EOR, and worth keeping separate in the conversation.", "items": [{"q": "Who is this for?", "a": ["A client who already has employees in another country — usually because they set up their own company there — and wants the payroll run properly rather than by a local bookkeeper."]}, {"q": "What do you actually run?", "a": ["Local payroll processing and tax filing, in local currency. The country’s required deductions and benefits. One consolidated report across every country they’re in."]}, {"q": "How does the money move?", "a": ["The client pays <b>one invoice, in US dollars, into a US bank account</b>. We convert it, pay each person locally in their own currency, and pay the taxes to that country’s authority. Nothing gets wired out of the client’s bank."]}, {"q": "Does it connect to their accounting system?", "a": ["There’s a general-ledger export, and the GL codes are set up inside the platform, so it lands in whatever system they already use."]}, {"q": "What about Puerto Rico?", "a": ["It’s on our list, but it isn’t a foreign country — it’s a US territory. Social Security, Medicare and unemployment tax all still apply. What’s local: retirement plans need Puerto Rico treasury approval, dismissal runs through their own severance law, and <b>workers’ comp can only be bought from the state fund</b>.", "<span class=\"unknown\">Our published Puerto Rico guide currently has another country’s rules in three sections</span> — time off, leave and severance. Flag it, don’t scope from it."]}]}, {"short": "Before we can price", "head": "Getting to a number", "kicker": "Q&A · Pricing inputs", "title": "What we need before anyone can quote", "lede": "There is no rate card you can hand them today. What you <b>can</b> do is leave the meeting with everything needed to produce a real number. The platform has a calculator that takes a country and a salary and returns the full employer cost and the employee’s take-home — that is how the number gets built, and this is what it needs.", "checklist": ["<b>Which country</b> — and which region inside it, where that matters (Canadian provinces, Australian states, some Chinese and Swiss cities are priced separately).", "<b>Employee or contractor.</b> If they’re not sure, that’s a classification conversation before it’s a pricing one.", "<b>The salary or rate</b>, and which currency it’s quoted in.", "<b>How many people</b>, and over what period — one hire now, or five over six months.", "<b>Target start date.</b> Two weeks out is the normal window.", "<b>Benefits expectation</b> — statutory minimum only, or supplemental cover on top.", "<b>Is the person already identified</b>, or do we need to recruit them? That’s the difference between EOR Core and Plus.", "<b>Whose people are they</b> — a client’s workers, or Infiniti’s own staff?", "<b>Who holds the contract</b> — Infiniti reselling, or us contracting directly and paying a referral. It changes the whole commercial shape."], "foot": "If you get the first three for one real person, you can come back with a number. <b>Getting one concrete example is worth more than a general conversation about pricing.</b>"}, {"short": "About their clients", "kicker": "Q&A · Discovery", "title": "The questions we forget to ask", "lede": "These get skipped almost every time, and they’re the ones that tell you which countries will come up and which product they’ll need. Ask them even if the meeting is running long — the answers are worth more than another slide.", "checklist": ["<b>What do your clients actually do?</b> Which industries are you strongest in?", "<b>Where are they?</b> Which states, which cities — is the book concentrated or national?", "<b>Which of your clients already have people outside the US?</b> Employees, contractors, or both?", "<b>Which countries?</b> Name them. Country is the first input for everything downstream.", "<b>How are those people paid today?</b> A local payroll company, an EOR, or out of accounts payable?", "<b>Are they full-time employees now, or contractors?</b> And has anyone checked whether that’s the right classification?", "<b>Does Infiniti itself have anyone outside the US?</b> Their own first hire is often the easiest place to start.", "<b>Has a client ever asked for something international that you had to turn down?</b> That’s the clearest signal there is."], "foot": "Industry and location predict the countries. Manufacturing and logistics bring up Mexico and Asia; software brings up eastern Europe and Latin America; anything with a services arm brings up the Philippines and India. <b>Once you know the countries, you know which product to lead with.</b>"}, {"short": "What we can’t answer", "head": "Be honest", "kicker": "Q&A · Open items", "title": "What we cannot answer yet", "lede": "Say these plainly if they come up. In this account especially, a clean “I don’t know, here’s when I’ll know” is worth more than a confident guess.", "items": [{"q": "What does it cost?", "a": ["<span class=\"unknown\">No partner-quotable pricing yet.</span> What you can say: “Give me one real example — country, salary, employee or contractor — and I’ll come back with a real number.”"]}, {"q": "Which countries exactly, and what’s covered in each?", "a": ["<span class=\"unknown\">Country coverage sheets aren’t ready to hand out.</span> You can name the countries you know, and there are published country guides — with the Puerto Rico caveat above."]}, {"q": "How does the contract actually read?", "a": ["The employment contract is between the worker and PrismHR, and there’s a company-to-company agreement with the client that carries IP protection. <b>Both can be reviewed by their attorneys.</b> Don’t characterise terms beyond that."]}, {"q": "Can our clients buy it themselves, without us?", "a": ["That’s the slide 13 question, and it’s theirs to decide — resell at their margin, or we contract directly and pay them a fee. Get their preference; don’t offer terms."]}]}];
 
-  var precut = true, idx = 0, running = false, elapsed = 0, ticker = null;
+  var view = "deck", idx = 0, qaIdx = 0, running = false, elapsed = 0, ticker = null;
 
   function mmss(s) { s = Math.max(0, Math.round(s)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }
-  function active() { return CARDS.filter(function (c) { return !precut || c.n <= 0 || DROP.indexOf(c.n) === -1; }); }
-  function totalSecs() { return active().reduce(function (a, c) { return a + (c.secs || 0); }, 0); }
-  function targetAt(i) { return active().slice(0, i + 1).reduce(function (a, c) { return a + (c.secs || 0); }, 0); }
+  function totalSecs() { return CARDS.reduce(function (a, c) { return a + (c.secs || 0); }, 0); }
+  function targetAt(i) { return CARDS.slice(0, i + 1).reduce(function (a, c) { return a + (c.secs || 0); }, 0); }
   function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
   function paras(a) { return a.map(function (p) { return "<p>" + esc(p) + "</p>"; }).join(""); }
 
   function block(label, note, inner, cls) {
-    return (
-      '<section class="block ' + (cls || "") + '">' +
+    return '<section class="block ' + (cls || "") + '">' +
       '<div class="block-label"><span class="bar-mark"></span>' + esc(label) +
-      (note ? '<span class="block-note">' + esc(note) + "</span>" : "") +
-      "</div>" + inner + "</section>"
-    );
+      (note ? '<span class="block-note">' + esc(note) + "</span>" : "") + "</div>" + inner + "</section>";
   }
 
   function cardHTML(c) {
-    if (c.n === -2) {
-      return (
-        '<article class="card"><div class="card-head"><span class="num">Before you go in</span></div>' +
+    if (c.n === 0) {
+      return '<article class="card"><div class="card-head"><span class="num">Before you go in</span></div>' +
         "<h1>" + esc(c.title) + '</h1><div class="stack">' +
         '<section><h2>What you already know about this room</h2><ul class="facts">' +
         c.facts.map(function (f, i) { return "<li><span>" + String(i + 1).padStart(2, "0") + "</span><div>" + f + "</div></li>"; }).join("") +
-        '</ul></section><section><h2>Rules for this one</h2><ul class="rules">' +
-        c.rules.map(function (r) { return "<li>" + r + "</li>"; }).join("") +
-        "</ul></section></div></article>"
-      );
+        '</ul></section><section><h2>How to talk in this one</h2><ul class="rules">' +
+        c.rules.map(function (r) { return "<li>" + r + "</li>"; }).join("") + "</ul></section></div></article>";
     }
-    if (c.n === -1) {
-      return (
-        '<article class="card"><div class="card-head"><span class="num">Before you go in</span>' +
-        '<span class="flag cut">Five pages out</span></div>' +
-        "<h1>" + esc(c.title) + "</h1>" +
-        '<p class="lede">' + c.intro + "</p>" +
-        '<div class="cutlist">' +
-        c.rows.map(function (r) {
-          return (
-            '<div class="cutrow"><div class="who">Slide ' + r.n + "</div><div>" +
-            "<h3>" + esc(r.title) + "</h3>" +
-            "<p><b>What's on it.</b> " + r.what + "</p>" +
-            "<p><b>Why it goes.</b> " + r.why + "</p>" +
-            "<p><b>If it comes up.</b> " + r.say + "</p></div></div>"
-          );
-        }).join("") +
-        "</div><p class=\"note\">" + c.outro + "</p></article>"
-      );
-    }
-    var flag = c.flag === "hold" ? '<span class="flag hold">Never cut</span>'
-      : c.flag === "cut" ? '<span class="flag cut">Cut this one</span>'
-      : c.flag === "next" ? '<span class="flag cut">Next to go</span>' : "";
-    return (
-      '<article class="card"><div class="card-head"><span class="num">Slide ' + String(c.n).padStart(2, "0") +
-      " · " + c.you + (c.them ? " you · " + c.them + " them" : "") + "</span>" + flag + "</div>" +
+    return '<article class="card"><div class="card-head"><span class="num">Slide ' + String(c.n).padStart(2, "0") +
+      " · " + c.you + (c.them ? " you · " + c.them + " them" : "") + "</span>" +
+      (c.flag === "hold" ? '<span class="flag">Never skip</span>' : "") + "</div>" +
       "<h1>" + esc(c.title) + "</h1>" +
+      (c.onpage ? '<p class="onpage"><b>On the page:</b> ' + esc(c.onpage) + "</p>" : "") +
       block("Say this", "", '<div class="say">' + paras(c.say) + "</div>") +
       (c.then ? block("Then say this", c.then.note || "", '<div class="say">' + paras(c.then.say) + "</div>") : "") +
       block("Ask this", c.askNote, "<q>" + esc(c.ask) + "</q>" + (c.after ? '<p class="after">' + esc(c.after) + "</p>" : ""), "ask") +
       (c.why ? '<p class="note"><b>Why this one.</b> ' + c.why + "</p>" : "") +
-      (c.branches
-        ? '<div class="branches">' + c.branches.map(function (b) { return '<div class="branch"><em>' + esc(b[0]) + "</em><div>" + esc(b[1]) + "</div></div>"; }).join("") + "</div>"
-        : "") +
-      '<p class="hint">← →  to move · space starts and stops the clock</p></article>'
-    );
+      (c.branches ? '<div class="branches">' + c.branches.map(function (b) { return '<div class="branch"><em>' + esc(b[0]) + "</em><div>" + esc(b[1]) + "</div></div>"; }).join("") + "</div>" : "") +
+      '<p class="hint">← →  to move · space starts and stops the clock</p></article>';
+  }
+
+  function qaHTML(s) {
+    var body = "";
+    if (s.items) {
+      body += '<div class="qa">' + s.items.map(function (it) {
+        return '<div class="qa-item"><h3>' + esc(it.q) + "</h3>" +
+          it.a.map(function (p) { return "<p>" + p + "</p>"; }).join("") + "</div>";
+      }).join("") + "</div>";
+    }
+    if (s.checklist) {
+      body += '<div class="checklist">' + s.checklist.map(function (c) {
+        return '<div class="chk"><span class="box"></span><div>' + c + "</div></div>";
+      }).join("") + "</div>";
+    }
+    return '<article class="card"><div class="card-head"><span class="num">' + esc(s.kicker) + "</span></div>" +
+      "<h1>" + esc(s.title) + "</h1>" +
+      (s.lede ? '<p class="lede">' + s.lede + "</p>" : "") + body +
+      (s.foot ? '<p class="note">' + s.foot + "</p>" : "") + "</article>";
   }
 
   function renderRail() {
     var rail = document.getElementById("rail");
-    rail.innerHTML = '<div class="rail-head kicker">The deck</div>';
-    CARDS.forEach(function (c) {
-      var dropped = precut && c.n > 0 && DROP.indexOf(c.n) > -1;
+    rail.innerHTML = "";
+    var list = view === "deck" ? CARDS : QA;
+    if (view === "deck") rail.innerHTML = '<div class="rail-head kicker">The deck</div>';
+    list.forEach(function (c, i) {
+      if (view === "qa" && c.head) rail.insertAdjacentHTML("beforeend", '<div class="rail-head kicker">' + esc(c.head) + "</div>");
       var b = document.createElement("button");
-      b.className = dropped ? "dropped" : "";
-      b.innerHTML =
-        '<span class="n">' + (c.n <= 0 ? "··" : String(c.n).padStart(2, "0")) + "</span>" +
-        '<span class="t">' + esc(c.short) + "</span>" +
-        (c.flag === "hold" ? '<span class="dot hold"></span>' : c.flag ? '<span class="dot cut"></span>' : '<span class="dot"></span>');
-      b.dataset.n = c.n;
-      b.onclick = function () { var at = active().indexOf(c); if (at > -1) { idx = at; draw(); } };
+      b.innerHTML = '<span class="n">' + (view === "deck" ? (c.n === 0 ? "··" : String(c.n).padStart(2, "0")) : "·") + "</span>" +
+        '<span class="t">' + esc(view === "deck" ? c.short : c.short) + "</span>";
+      b.dataset.i = i;
+      b.onclick = function () { if (view === "deck") { idx = i; } else { qaIdx = i; } draw(); };
       rail.appendChild(b);
     });
   }
 
   function draw() {
-    var list = active();
-    if (idx >= list.length) idx = list.length - 1;
-    if (idx < 0) idx = 0;
-    var c = list[idx];
-    document.getElementById("stage").innerHTML = cardHTML(c);
+    var stage = document.getElementById("stage");
+    if (view === "qa") {
+      if (qaIdx >= QA.length) qaIdx = QA.length - 1;
+      if (qaIdx < 0) qaIdx = 0;
+      stage.innerHTML = qaHTML(QA[qaIdx]);
+      document.getElementById("where").textContent = QA[qaIdx].short;
+    } else {
+      if (idx >= CARDS.length) idx = CARDS.length - 1;
+      if (idx < 0) idx = 0;
+      var c = CARDS[idx];
+      stage.innerHTML = cardHTML(c);
+      document.getElementById("where").textContent = c.n === 0 ? "Before you go in" : "Slide " + c.n + " · mark " + mmss(targetAt(idx));
+      document.getElementById("target").textContent = "of " + mmss(totalSecs());
+    }
+    var cur = view === "deck" ? idx : qaIdx;
     Array.prototype.forEach.call(document.querySelectorAll("#rail button"), function (b) {
-      b.setAttribute("aria-current", String(Number(b.dataset.n) === c.n));
+      b.setAttribute("aria-current", String(Number(b.dataset.i) === cur));
     });
-    document.getElementById("where").textContent = c.n <= 0 ? "Before you go in" : "Slide " + c.n + " · mark " + mmss(targetAt(idx));
-    document.getElementById("target").textContent = "of " + mmss(totalSecs());
+    document.getElementById("clockwrap").hidden = view !== "deck";
     tick();
   }
 
-  function renderAll() { document.getElementById("stage").innerHTML = active().map(cardHTML).join(""); }
+  function renderAll() {
+    document.getElementById("stage").innerHTML =
+      CARDS.map(cardHTML).join("") + QA.map(qaHTML).join("");
+  }
 
   function tick() {
+    if (view !== "deck") return;
     document.getElementById("elapsed").textContent = mmss(elapsed);
-    var d = document.getElementById("delta"), list = active();
-    var mark = list[idx] && list[idx].n <= 0 ? 0 : targetAt(idx);
+    var d = document.getElementById("delta");
+    var mark = CARDS[idx] && CARDS[idx].n === 0 ? 0 : targetAt(idx);
     if (!running && elapsed === 0) { d.textContent = "READY"; d.dataset.state = ""; return; }
     var diff = elapsed - mark;
     if (Math.abs(diff) < 15) { d.textContent = "ON PACE"; d.dataset.state = ""; }
@@ -349,26 +353,28 @@
     else clearInterval(ticker);
   }
 
+  function setView(v) {
+    view = v;
+    document.getElementById("tab-deck").setAttribute("aria-selected", String(v === "deck"));
+    document.getElementById("tab-qa").setAttribute("aria-selected", String(v === "qa"));
+    renderRail(); draw();
+  }
+
+  document.getElementById("tab-deck").onclick = function () { setView("deck"); };
+  document.getElementById("tab-qa").onclick = function () { setView("qa"); };
   document.getElementById("run").onclick = toggleRun;
-  document.getElementById("reset").onclick = function () { if (running) toggleRun(); elapsed = 0; idx = 0; draw(); };
-  document.getElementById("mode").onclick = function () {
-    precut = !precut;
-    this.textContent = precut ? "Short run" : "All fifteen";
-    this.setAttribute("aria-pressed", String(precut));
-    idx = 0; renderRail(); draw();
-  };
+  document.getElementById("reset").onclick = function () { if (running) toggleRun(); elapsed = 0; idx = 0; setView("deck"); };
   document.getElementById("print").onclick = function () { window.print(); };
   window.addEventListener("beforeprint", renderAll);
   window.addEventListener("afterprint", draw);
-  document.getElementById("prev").onclick = function () { idx -= 1; draw(); };
-  document.getElementById("next").onclick = function () { idx += 1; draw(); };
+  document.getElementById("prev").onclick = function () { if (view === "deck") idx -= 1; else qaIdx -= 1; draw(); };
+  document.getElementById("next").onclick = function () { if (view === "deck") idx += 1; else qaIdx += 1; draw(); };
   document.addEventListener("keydown", function (e) {
     if (e.target.tagName === "BUTTON" && e.key === " ") return;
-    if (e.key === "ArrowRight") { idx += 1; draw(); }
-    else if (e.key === "ArrowLeft") { idx -= 1; draw(); }
+    if (e.key === "ArrowRight") { if (view === "deck") idx += 1; else qaIdx += 1; draw(); }
+    else if (e.key === "ArrowLeft") { if (view === "deck") idx -= 1; else qaIdx -= 1; draw(); }
     else if (e.key === " ") { e.preventDefault(); toggleRun(); }
   });
 
-  renderRail();
-  draw();
+  setView("deck");
 </script>
