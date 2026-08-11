@@ -27,7 +27,7 @@ Say this, then ask this — one page at a time, one high-level question per page
 
 ## 2. The clock
 
-Measured from the words below at 150 a minute, plus an allowance for each answer. **18:39** as written, against a twenty-minute ceiling. Nothing is compressed to hit a number — every page gets the room to actually explain itself, and the answer allowances assume they talk. Slides 1, 5, 8, 11 and 13 are where the time should go; if you need to make some back, shorten the answers on 2, 3, 7, 12 and 14 rather than cutting what you say.
+Measured from the words below at 150 a minute, plus an allowance for each answer. **19:13** as written, against a twenty-minute ceiling. Nothing is compressed to hit a number — every page gets the room to actually explain itself, and the answer allowances assume they talk. Slides 1, 5, 8, 11 and 13 are where the time should go; if you need to make some back, shorten the answers on 2, 3, 7, 12 and 14 rather than cutting what you say.
 
 | #   | Slide                                             | You  | Them | Total     |
 | --- | ------------------------------------------------- | ---- | ---- | --------- |
@@ -39,14 +39,14 @@ Measured from the words below at 150 a minute, plus an allowance for each answer
 | 6   | Enter PrismHR Global                              | 0:46 | 0:18 | 1:04      |
 | 7   | Help Clients Grow Globally                        | 0:47 | 0:12 | 0:59      |
 | 8   | Why Service Providers Partner With PrismHR Global | 0:39 | 0:40 | 1:19      |
-| 9   | Global Employer of Record                         | 0:54 | 0:12 | 1:06      |
+| 9   | Global Employer of Record                         | 1:11 | 0:12 | 1:23      |
 | 10  | Global Contractor Solutions                       | 1:12 | 0:22 | 1:34      |
-| 11  | Global Payroll                                    | 1:39 | 0:35 | 2:14      |
+| 11  | Global Payroll                                    | 1:56 | 0:35 | 2:31      |
 | 12  | Global Talent                                     | 0:30 | 0:08 | 0:38      |
 | 13  | The Operating Model                               | 0:58 | 0:50 | 1:48      |
 | 14  | Provider Success Story                            | 0:38 | 0:12 | 0:50      |
 | 15  | Help Your Clients Go Global                       | 0:38 | 0:40 | 1:18      |
-|     | **All fifteen**                                   |      |      | **18:39** |
+|     | **All fifteen**                                   |      |      | **19:13** |
 
 ---
 
@@ -242,7 +242,7 @@ _Why this one._ The commercial argument in one question, and it belongs to the C
 
 ## Slide 9 — Global Employer of Record
 
-_0:54 you · 0:12 them_
+_1:11 you · 0:12 them_
 
 **On the page:** The two EOR tiers — Core and Plus — and what each includes.
 
@@ -251,6 +251,7 @@ _0:54 you · 0:12 them_
 > Employer of Record. This is the one to be plain about.
 > Your client wants to hire somebody in Poland. They have no company there. We do. So we employ that person under our Polish company. They work for your client day to day; we handle the contract, payroll, taxes and benefits under Polish law.
 > There are two versions. Core is when your client already knows who they want to hire. Plus is when they don’t, and we go find the person as well.
+> And the money is simple here. Your client pays us one invoice, in US dollars, into a US bank. We convert it, pay the person locally in their own currency, and pay the local taxes. Nothing gets wired out of their bank.
 
 > **To your client it looks like hiring an employee. To you it’s a service you sell. To us it’s a company we already own.**
 
@@ -287,7 +288,7 @@ _Why this one._ Contractors overseas are usually paid out of accounts payable an
 
 ## Slide 11 — Global Payroll
 
-_1:39 you · 0:35 them_ · **never skip**
+_1:56 you · 0:35 them_ · **never skip**
 
 **On the page:** Global payroll capability — local processing and filing, multi-currency, country benefits and deductions, consolidated reporting, and integration with existing HCM or finance systems.
 
@@ -295,7 +296,8 @@ _1:39 you · 0:35 them_ · **never skip**
 
 > Global payroll is for people your client already employs somewhere else and just needs paid correctly.
 > We run the payroll locally, file the local taxes, handle that country’s required deductions and benefits, and give you one report across every country they’re in. It exports straight into whatever accounting system they already use.
-> And the money moves simply. Your client pays one invoice, in dollars, into a US bank. We convert it, pay each person locally in their own currency, and pay the taxes to that country’s authority.
+> The money doesn’t move through us on this one. Your client keeps their own bank account in that country. We produce the payroll file, they upload it to their bank, and their bank pays the employees and the tax authorities directly.
+> In some countries that isn’t a preference, it’s the law — pensions and the like have to come from the employer’s own account, not a third party’s.
 
 **THEN SAY THIS** — Change your tone. This is what you promised on slide 1.
 
@@ -304,7 +306,7 @@ _1:39 you · 0:35 them_ · **never skip**
 > Puerto Rico is different. It’s a US territory — US soil — so Social Security, Medicare and unemployment tax all still apply. What’s local is what catches people: retirement plans need Puerto Rico treasury approval, firing runs through their own severance law, and workers’ comp can only be bought from the state fund.
 > And here’s the part I’d rather you hear from me. Our published Puerto Rico guide has mistakes in it — three sections carry another country’s rules. I’ve flagged it. Don’t plan anything off that page; I’ll send you a corrected version.
 
-> **So nothing gets wired out of your client's bank, and nobody has to open an account overseas.**
+> **So no wage money ever sits with us. Their paper trail is the payroll reports plus that bank file — and the only invoice they get is yours.**
 
 **ASK THIS** — Jennifer's question. The answer decides who you bring next.
 
@@ -441,6 +443,12 @@ Every country sets a legal minimum — holidays, leave, pension, healthcare cont
 
 Supplemental health cover is available as an optional add-on, priced per person per month.
 
+**How does the money move? (EOR — the opposite of global payroll)**
+
+The client pays one invoice, in US dollars, into a US bank account. We convert it, pay each person locally in their own currency, and remit the taxes to that country’s authority. No international wires leave the client’s bank.
+
+This is the reverse of the global payroll model, where funds never touch us. Be sure which one you’re describing.
+
 **What about a laptop?**
 
 The client's choice. Shipping equipment from the US usually gets stuck in customs and gets expensive, so most people either use a third party that delivers equipment in-country, or let the new hire use their own and expense it.
@@ -457,9 +465,23 @@ A client who already has employees in another country — usually because they s
 
 Local payroll processing and tax filing, in local currency. The country’s required deductions and benefits. One consolidated report across every country they’re in.
 
-**How does the money move?**
+**How does the money move? (different from EOR — don’t mix these up)**
 
-The client pays one invoice, in US dollars, into a US bank account. We convert it, pay each person locally in their own currency, and pay the taxes to that country’s authority. Nothing gets wired out of the client’s bank.
+It doesn’t move through us. The client’s own in-country bank pays everyone. We run the payroll and produce a bank file; the client uploads that file to their bank; their bank pays the employees and the tax authorities directly.
+
+Funds never flow through PrismHR or through you. In some countries that’s a legal requirement — certain payments, pensions especially, have to come from the employer’s own account rather than a third party’s. It’s why remitting on the client’s behalf isn’t possible in this model.
+
+So the client never gets a wage invoice from anyone. Their paper trail is the gross-to-net reports plus the bank file. The only true invoice they receive is yours.
+
+**What does the client need in place first?**
+
+Three things: an entity in that country, payroll registration, and an in-country bank account. Without those there is no global payroll engagement — that’s the EOR conversation instead.
+
+**What does the monthly cycle look like?**
+
+Employees are onboarded once. Each cycle has cutoff dates for changes, additions and removals. After cutoff our team runs the payroll on a compliant local engine and posts it to the dashboard for the client to review and approve.
+
+It’s a managed payroll, not a process-it-yourself system.
 
 **Does it connect to their accounting system?**
 
@@ -473,7 +495,7 @@ Our published Puerto Rico guide currently has another country’s rules in three
 
 ## What we need before anyone can quote
 
-There is no rate card you can hand them today. What you can do is leave the meeting with everything needed to produce a real number. The platform has a calculator that takes a country and a salary and returns the full employer cost and the employee’s take-home — that is how the number gets built, and this is what it needs.
+The wholesale-and-markup structure is confirmed — the service is sold to you at a wholesale price for you to mark up and re-invoice. What there isn’t is a rate card you can hand them today. What you can do is leave the meeting with everything needed to produce a real number. The platform has a calculator that takes a country and a salary and returns the full employer cost and the employee’s take-home — that is how the number gets built, and this is what it needs.
 
 - Which country — and which region inside it, where that matters (Canadian provinces, Australian states, some Chinese and Swiss cities are priced separately).
 - Employee or contractor. If they’re not sure, that’s a classification conversation before it’s a pricing one.
@@ -513,6 +535,16 @@ No partner-quotable pricing yet. What you can say: “Give me one real example �
 **Which countries exactly, and what’s covered in each?**
 
 Country coverage sheets aren’t ready to hand out. You can name the countries you know, and there are published country guides — with the Puerto Rico caveat above.
+
+**What exchange rate do you use, and who absorbs the movement?**
+
+Not documented anywhere. What is confirmed: on EOR the platform converts local pay to the payer’s currency and shows it as an estimate, “subject to foreign exchange rates, which may fluctuate.” The rate source, any spread, when the rate is struck, and who bears movement between invoice and distribution are all unanswered.
+
+Say the estimate language, and take the rest back. Their finance people will ask, and a made-up answer here is unrecoverable.
+
+**Can our fee ride on the regular US invoice as a line item?**
+
+Open. The wholesale-and-markup structure is confirmed — the service is sold to you at wholesale for you to mark up and re-invoice. Whether your marked-up fee can appear as a line item on the existing US-platform invoice instead of a second invoice was taken as a follow-up on a live call and hasn’t come back.
 
 **How does the contract actually read?**
 
