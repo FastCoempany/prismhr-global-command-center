@@ -31,57 +31,64 @@ Six facts from the file. They change every line below.
    _them_ name that vendor. You never do.
 6. **The scar.** TZP Group — one of Infiniti's clients — cancelled PrismHR Performance
    Management in the spring because the 360-review capability fell short of what was
-   pitched, and Jennifer was on that thread. **Precision over promises with this account.** Every overclaim you make
-   in this room costs more than it earns.
+   pitched, and Jennifer was on that thread. **You say this out loud on slide 1.** Every
+   overclaim you make in this room costs more than it earns.
 
 ## 2. Three rules for this room
 
-- **Under-claim.** Where you don't know, say you don't know and say when you'll know.
-  One honest gap buys more than five capabilities.
+- **Name TZP before you claim anything.** One sentence on slide 1, forward-facing, then
+  move. It cannot be earned back later in the meeting — every claim after minute one is
+  heard through it.
+- **Under-claim, then date it.** Where you don't know, say you don't know and name the day
+  you'll answer. One honest gap with a date on it buys more than five capabilities.
 - **Let them name the incumbent.** You never say the competitor's name first. If they
   name it, you get to ask about it. If they don't, you don't need it today.
 - **Ask about structure, not price.** Partner-quotable pricing and country coverage sheets
   are still open internally. Asking Scott which contracting shape he wants is a real
   question you can act on. Quoting a number you'd have to walk back is the TZP mistake
-  in a new costume.
+  wearing a new suit, in the one room that will recognise it.
 
 ## 3. The clock
 
 Timings below are measured, not estimated: every scripted line counted at 150 words a
 minute, which is a normal presenting pace. "They talk" is the allowance for the answer.
 
-| #   | Slide                         | You       | Them     | Question | Cut?        |
-| --- | ----------------------------- | --------- | -------- | -------- | ----------- |
-| 1   | Compete Without Borders       | 0:36      | 0:30     | **Live** | keep        |
-| 2   | Agenda                        | 0:26      | —        | Planted  | keep        |
-| 3   | PrismHR Solutions             | 0:32      | 0:12     | Quick    | **cut 2nd** |
-| 4   | Why Your Clients Go Global    | 0:42      | 0:12     | Quick    | keep        |
-| 5   | The Global Challenges         | 0:41      | —        | Planted  | keep        |
-| 6   | Enter PrismHR Global          | 0:42      | 0:12     | Quick    | keep        |
-| 7   | Help Clients Grow Globally    | 0:38      | —        | Planted  | keep        |
-| 8   | Why Providers Partner With Us | 1:04      | 0:40     | **Live** | never       |
-| 9   | Employer of Record            | 0:46      | —        | Planted  | **cut 3rd** |
-| 10  | Global Contractors            | 0:48      | 0:12     | Quick    | keep        |
-| 11  | Global Payroll · Puerto Rico  | 1:19      | 0:40     | **Live** | never       |
-| 12  | Global Talent                 | 0:33      | —        | Planted  | **cut 1st** |
-| 13  | The Operating Model           | 1:05      | 0:50     | **Live** | never       |
-| 14  | Provider Success Story        | 0:52      | —        | Planted  | keep        |
-| 15  | Close                         | 0:34      | 0:40     | **Live** | never       |
-|     | **All fifteen**               | **11:22** | **4:08** |          | **15:30**   |
-|     | **Pre-cut (drop 3, 9, 12)**   | **9:31**  | **3:56** |          | **13:27**   |
+| #   | Slide                          | You       | Them     | Question | Cut?        |
+| --- | ------------------------------ | --------- | -------- | -------- | ----------- |
+| 1   | Compete Without Borders + TZP  | 1:08      | 0:30     | **Live** | never       |
+| 2   | Agenda                         | 0:27      | —        | Planted  | keep        |
+| 3   | PrismHR Solutions              | 0:32      | 0:12     | Quick    | **pre-cut** |
+| 4   | Why Your Clients Go Global     | 0:42      | 0:12     | Quick    | keep        |
+| 5   | The Global Challenges          | 0:41      | —        | Planted  | cut 5th     |
+| 6   | Enter PrismHR Global           | 0:43      | 0:12     | Quick    | keep        |
+| 7   | Help Clients Grow Globally     | 0:38      | —        | Planted  | **pre-cut** |
+| 8   | Why Providers Partner With Us  | 1:04      | 0:40     | **Live** | never       |
+| 9   | Employer of Record             | 0:46      | —        | Planted  | **pre-cut** |
+| 10  | Global Contractors             | 0:48      | 0:12     | Quick    | keep        |
+| 11  | Global Payroll · Puerto Rico   | 1:34      | 0:40     | **Live** | never       |
+| 12  | Global Talent                  | 0:33      | —        | Planted  | **pre-cut** |
+| 13  | The Operating Model            | 1:05      | 0:50     | **Live** | never       |
+| 14  | Provider Success Story         | 0:52      | —        | Planted  | keep        |
+| 15  | Close                          | 0:33      | 0:40     | **Live** | never       |
+|     | **All fifteen**                | **12:06** | **4:08** |          | **16:14**   |
+|     | **Pre-cut (drop 3, 7, 9, 12)** | **9:37**  | **3:56** |          | **13:33**   |
 
 **Live** — ask it, then stop talking and wait. **Quick** — expect a sentence, move on.
 **Planted** — you ask it _and answer it yourself_; it steers attention without opening the
 floor.
 
-**Read the bottom row, not the one above it.** All fifteen slides with real answers is
-15:30 — over, before anyone interrupts, and three executives will interrupt. For this room,
-pre-cut slides 3, 9 and 12 before you walk in. That's 13:27 with a minute and a half of
-drift, and the three questions you dropped go into the follow-up note instead, where they
-read as thoughtful rather than rushed.
+**Read the bottom row.** The two beats that make this meeting work — naming TZP on slide 1
+and the Puerto Rico commitment on slide 11 — cost about fifty seconds of talking between
+them, and they are worth more than any four product pages in the deck. So the product pages
+pay for them: pre-cut slides 3, 7, 9 and 12 before you walk in. That lands at 13:33 with
+about ninety seconds of drift, which three executives will use.
 
-If you're still behind after the pre-cut, take slide 7 and then slide 5. Slides 8, 11, 13
-and 15 survive at any cost — they are the meeting. Everything else is scaffolding.
+Their questions aren't lost — they go into the follow-up note, where they read as
+considered rather than rushed.
+
+If you're still behind, take slide 5 next, then slide 14. **Slides 1, 8, 11, 13 and 15
+survive at any cost.** One and eleven are the trust argument; eight, thirteen and fifteen
+are the business. Everything else is scaffolding.
 
 ---
 
@@ -96,6 +103,16 @@ and 15 survive at any cost — they are the meeting. Everything else is scaffold
 > Prism integrates with. There's no integration. PrismHR Global is ours. Same company,
 > same platform, same login.
 
+**Then say this, before you claim anything** _(0:26)_ — the TZP beat
+
+> And one thing before I pitch you on anything. Earlier this year TZP cancelled
+> Performance Management, and the reason was that the 360 review didn't do what it was
+> pitched as doing. Jennifer was on that thread. I've read it.
+>
+> So here's how I'm going to talk for the next fifteen minutes. What this does, what it
+> doesn't, and where I don't know, I'll say I don't know and come back with a date. You'll
+> watch me do that once today.
+
 **Ask — LIVE, to the room**
 
 > Before I start: when the three of you put this on the calendar, what put it there?
@@ -109,6 +126,31 @@ _Branches:_ **Puerto Rico** → promise it lands on slide 11 and hold the promis
 **A client asked** → get the client's shape now; the rest of the deck reads through it.
 **"How global works for us today"** → the meeting is economics. Consider going to slide 8
 and 13 early and treating 4 through 12 as reference.
+
+### Why the TZP beat goes here and not later
+
+It cannot be earned retroactively. Every claim you make after minute one is heard through
+a doubt Jennifer is already carrying, whether or not anyone says it out loud — so the
+acknowledgment has to precede the claims, not follow them. Saying it first converts an
+unspoken reservation into evidence that you're the kind of vendor who volunteers the hard
+thing, and it costs you eight seconds.
+
+Three disciplines make it work rather than backfire:
+
+- **One sentence of history, then forward.** You are not apologizing, re-opening the
+  cancellation, or explaining what went wrong. You name it, you say what you'll do
+  differently, you move. Dwelling turns a deposit into a liability.
+- **No defense of the product.** If Scott or Javier picks it up, do not explain Performance
+  Management. "I wasn't in it and I'm not going to relitigate it — I just didn't want to
+  stand here and pretend it didn't happen." Then return to the deck.
+- **Pre-announce the proof.** "You'll watch me do that once today" is the load-bearing
+  line: it turns the Puerto Rico gap on slide 11 from a weakness into the demonstration
+  you promised. Setup here, payoff there. If you drop this line, slide 11 reads as not
+  knowing your product instead of as keeping your word.
+
+_If they engage:_ Scott may say some version of "that was a while ago" or "Jennifer took
+the brunt of it." Take that graciously and do not expand — "appreciated. It's why I'd
+rather under-promise you." One line, then slide 2.
 
 ---
 
@@ -342,14 +384,17 @@ the pilot: finding out is a small, safe first move.
 > authority. No international wires leaving your client's bank — which also keeps them from
 > signalling to a foreign tax authority that they're paying people there.
 
-**Then stop and change tone** _(0:25)_ — this beat is not optional
+**Then stop and change tone** _(0:35)_ — this is the beat you promised on slide 1
 
-> Now — Puerto Rico. I'm going to be precise instead of fast.
+> Now — Puerto Rico. This is the one I told you about.
 >
 > Puerto Rico isn't an international country for this. It's a US territory with its own tax
-> code and its own filings. It is not solved by the page you're looking at, and I'm not
-> going to tell you it is. Let me take it back and come to you with a real answer instead
-> of a maybe.
+> code and its own filings, so it isn't solved by the page you're looking at, and I'm not
+> going to stand here and tell you it is.
+>
+> What you'll get instead. By `<name the day>` you'll have it in writing: whether we run
+> Puerto Rico payroll today, what it covers if we do, and who owns it if we don't. If the
+> answer is that we don't, that's what the note will say. You won't have to chase me for it.
 
 **Ask — LIVE, to Jennifer**
 
@@ -357,13 +402,21 @@ the pilot: finding out is a small, safe first move.
 > agency side? Those are two different fixes, and I'd rather bring you the right one than
 > the fast one.
 
-_Why:_ this is the most valuable forty seconds in the meeting and it has nothing to do with
-the deck. Jennifer watched a PrismHR capability get sold past what it could do earlier this
-year. Declining to oversell the exact thing she asked about — in front of her CEO — is the
-one move that buys back that credit. The question itself is also genuinely diagnostic:
-processing and filings are different problems with different owners.
+_Why:_ the most valuable forty seconds in the meeting, and it has nothing to do with the
+deck. Jennifer watched a PrismHR capability get sold past what it could do this spring.
+Declining to oversell the exact thing she asked about — in front of her CEO, after telling
+them on slide 1 that they'd watch you do it — is the whole trust argument, executed rather
+than asserted. The question is also genuinely diagnostic: processing and filings are
+different problems with different owners inside her building.
 
-**Do not** improvise a Puerto Rico capability. Taking it away is the answer.
+**Pick the day before you walk in.** The date is the deliverable, not the capability. Make
+it inside forty-eight hours, say it out loud rather than reading it off a slide, and put
+the reminder in your own calendar during the call so they see you do it. A missed date here
+does more damage than the gap it was covering — it would be the TZP pattern with your name
+on it.
+
+**Do not** improvise a Puerto Rico capability to fill the silence. The commitment is the
+answer.
 
 ---
 
@@ -459,7 +512,7 @@ small, which is what a CEO and COO both want and neither will say first.
 > implementation people, whoever owns that client, and me. We scope it end to end and you
 > see exactly what it costs Infiniti to deliver before anybody promises a client anything.
 >
-> And separately, I come back to you on Puerto Rico.
+> And the Puerto Rico note lands `<the day you named>`, as promised.
 
 **Ask — LIVE, to the room, then stop talking**
 
@@ -481,7 +534,7 @@ mouths is the date the whole account plan runs on. Do not fill the silence.
 | "How is this different from what we use?" | Don't compare. "I'd be guessing at their contract. What I can tell you is what ours does and where it sits — inside the platform you already run." Then let them do the comparing.            |
 | "Which countries?"                        | Country coverage sheets are still coming. Name the countries you _know_, say the sheet is coming, and give the date. Don't gesture at a hundred seventy-five and hope.                        |
 | "Can our clients buy it themselves?"      | This is Jennifer's original question. Go to slide 13 and answer it with the two structures.                                                                                                   |
-| "Does this handle Puerto Rico?"           | No — US territory, own tax code and filings. Say that, then take it away and answer it properly.                                                                                              |
+| "Does this handle Puerto Rico?"           | No — US territory, own tax code and its own filings. Say that, then name the day the written answer lands.                                                                                    |
 
 ## 5. What you do not say
 
@@ -496,11 +549,14 @@ mouths is the date the whole account plan runs on. Do not fill the silence.
 1. **Anika first.** She owns this relationship and she brought you in. Private debrief
    before anything goes to Infiniti: what you heard, what you committed to, what you held.
 2. **Then Jennifer**, copying whoever was in the room: three lines — the structure question
-   and where it landed, the Puerto Rico commitment, and the scoping session with two
-   proposed times.
-3. **File it:** the account's disposition, the structure answer from slide 13, the client
-   named on slide 15, and the date they gave you. The date is the thing everything else
-   hangs on.
+   and where it landed, the Puerto Rico date restated in writing, and the scoping session
+   with two proposed times.
+3. **Put the Puerto Rico answer on your own calendar for the day you named**, not the day
+   after. This is the single commitment the whole meeting was built to demonstrate. Send it
+   on the day even if the answer is no — especially if the answer is no.
+4. **File it:** the account's disposition, the structure answer from slide 13, the client
+   named on slide 15, and the date they gave you. Their date is what the account plan runs
+   on; yours is what your credibility runs on.
 
 ---
 
