@@ -39,8 +39,8 @@ export default async function IntakePage() {
           <h1 className={styles.h1}>Capture</h1>
           <p className={styles.sub}>
             Three grabs, installed once. Click the one that matches the window you&apos;re
-            reading — the capture lands on your clipboard, and you paste it into the ⚡
-            box on the account it belongs to in the <Link href="/room">HomeRoom</Link>.
+            reading. The capture lands on your clipboard, and you paste it into the ⚡ box
+            on the account it belongs to in the <Link href="/room">HomeRoom</Link>.
           </p>
         </div>
         <CaptureShelf accounts={accounts} />

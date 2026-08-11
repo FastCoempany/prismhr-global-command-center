@@ -172,7 +172,8 @@ export async function saveCheckNote(formData: FormData) {
   const node = str(formData, "node", 40) as DashNodeKey;
   const index = str(formData, "index", 4);
   const note = str(formData, "note", 2000);
-  if (!(await requireWrite()) || !cardId || !DASH_NODE_KEYS.includes(node)) done(safeReturn(formData));
+  if (!(await requireWrite()) || !cardId || !DASH_NODE_KEYS.includes(node))
+    done(safeReturn(formData));
 
   const prisma = getPrisma();
   const card = await prisma.dashCard.findUnique({ where: { id: cardId } });
@@ -191,7 +192,8 @@ export async function saveNote(formData: FormData) {
   const cardId = str(formData, "cardId", 40);
   const node = str(formData, "node", 40) as DashNodeKey;
   const note = str(formData, "note", 4000);
-  if (!(await requireWrite()) || !cardId || !DASH_NODE_KEYS.includes(node)) done(safeReturn(formData));
+  if (!(await requireWrite()) || !cardId || !DASH_NODE_KEYS.includes(node))
+    done(safeReturn(formData));
 
   const prisma = getPrisma();
   const card = await prisma.dashCard.findUnique({ where: { id: cardId } });

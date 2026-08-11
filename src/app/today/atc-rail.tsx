@@ -171,7 +171,7 @@ export function AtcRow({ it }: { it: RailItem }) {
               <form
                 action={setThreadStatus}
                 className={styles.atcStateForm}
-                title="Manual override for when reality skipped steps — sets the thread's lifecycle state directly and stamps the override into the history"
+                title="Manual override. Sets the thread's state directly and stamps the override into the history."
               >
                 <input type="hidden" name="subjectKey" value={it.subjectKey} />
                 <select
@@ -182,7 +182,7 @@ export function AtcRow({ it }: { it: RailItem }) {
                   <option value="awaiting">awaiting reply</option>
                   <option value="replied">they replied</option>
                   <option value="responded">I replied</option>
-                  <option value="open">↔ open-ended — not waiting</option>
+                  <option value="open">↔ open-ended · not waiting</option>
                   <option value="archived">archived</option>
                 </select>
                 <button className={styles.atcBtn}>Set state</button>
@@ -219,7 +219,7 @@ export function AtcRow({ it }: { it: RailItem }) {
               name="body"
               required
               maxLength={4000}
-              placeholder={`What happened with ${it.partner.split(" ")[0]}? (dated — lands in the Partner Room)`}
+              placeholder={`What happened with ${it.partner.split(" ")[0]}? A dated note lands in the Partner Room.`}
               aria-label="Activity note"
             />
             <button className={styles.atcBtn}>Log it ✓</button>
@@ -264,7 +264,7 @@ export function CurveballButton({
         className={styles.atcCurveBtn}
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        title="Something happened off-script — log it once and let every surface reconcile"
+        title="Something happened off-script. Log it once and let every surface reconcile."
       >
         ⚡ Curveball
       </button>
@@ -284,14 +284,14 @@ export function CurveballButton({
             name="body"
             required
             maxLength={2000}
-            placeholder="What happened? (dated note lands on the account)"
+            placeholder="What happened? The dated note lands on the account."
             aria-label="What happened"
           />
           <select name="consequence" defaultValue="" aria-label="And so…">
             <option value="">…just log it</option>
-            <option value="motion">…it&apos;s in motion — skip the roundup</option>
+            <option value="motion">…it&apos;s in motion · skip the roundup</option>
             <option value="parked">…park it for now</option>
-            <option value="not-mine">…not mine — remove from my book</option>
+            <option value="not-mine">…not mine · remove from my book</option>
           </select>
           <button className={styles.atcBtn}>Log it ✓</button>
         </form>

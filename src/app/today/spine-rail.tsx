@@ -24,7 +24,7 @@ export function SpineRail({
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-label="State of play"
-        title="State of play — click to pull the curtain"
+        title="State of play. Click to pull the curtain."
       >
         {hot && <span className={styles.spineDot} />}
         <span className={styles.spineGrip} aria-hidden>

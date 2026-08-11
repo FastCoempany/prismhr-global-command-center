@@ -101,7 +101,7 @@ export default async function PlaybookPage({
           <h1 className={styles.h1}>Playbook{accountName ? ` — ${accountName}` : ""}</h1>
           <p className={styles.sub}>
             {questions.length} questions across EOR, contractor management, and global
-            payroll — shaped by the scenario you&apos;re actually in. Below: what the book
+            payroll, shaped by the scenario you&apos;re actually in. Below: what the book
             has learned, carried across every account.
           </p>
         </div>

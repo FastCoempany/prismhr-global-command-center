@@ -51,7 +51,7 @@ function timelineFor(
     if (t.kind !== "partner" || t.label !== partner) continue;
     out.push({
       at: t.contactedAt,
-      body: t.message ? `Outreach sent — “${clip(t.message)}”` : "Outreach logged",
+      body: t.message ? `Outreach sent · “${clip(t.message)}”` : "Outreach logged",
       tag: "outreach",
     });
     for (const e of t.log) {
@@ -142,7 +142,7 @@ export default async function PartnersPage() {
           <h1 className={styles.h1}>Partner Room</h1>
 
           <p className={styles.sub}>
-            Every outreach, reply, and note — dated, time-stamped, synced with{" "}
+            Every outreach, reply, and note, dated and time-stamped, synced with{" "}
             <Link href="/today">Today</Link>.
           </p>
         </div>
@@ -169,9 +169,9 @@ export default async function PartnersPage() {
                 <span className={styles.prNext}>
                   {t
                     ? t.status === "replied"
-                      ? `Replied ✓ · sent ${shortDate(t.contactedAt)} — your move`
+                      ? `Replied ✓ · sent ${shortDate(t.contactedAt)} · your move`
                       : t.status === "responded"
-                        ? `You replied ✓ · check-in ${shortDate(t.followUpAt)} — their move`
+                        ? `You replied ✓ · check-in ${shortDate(t.followUpAt)} · their move`
                         : t.status === "archived"
                           ? "Thread archived · fresh roundup ready on Today"
                           : `Awaiting reply · check-in ${shortDate(t.followUpAt)}`
@@ -200,7 +200,7 @@ export default async function PartnersPage() {
 
               {entries.length === 0 ? (
                 <p className={styles.prEmpty}>
-                  Nothing here yet — mark them contacted on Today or add a note above.
+                  Nothing here yet. Mark them contacted on Today or add a note above.
                 </p>
               ) : (
                 <ul className={styles.prTimeline}>

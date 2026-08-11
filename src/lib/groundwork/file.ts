@@ -50,27 +50,10 @@ const shortDate = (iso: string) => {
   });
 };
 
-function titleFor(item: QueueItem, p: Peo): string {
-  switch (item.ruleId) {
-    case "decision-window":
-      return "Their decision is days away. What you owe them is composed.";
-    case "reply-owed":
-      return "Their message is the newest thing between you. Answer first.";
-    case "meeting-prep":
-      return "A dated follow-up lands inside 48 hours. Walk in prepared.";
-    case "intent-warm":
-      return "Their people are reading us. Warm rooms cool.";
-    case "riding-lane":
-      return "A colleague is already in the building. Ride, never knock.";
-    case "roundup-slot":
-      return `${p.csm.split(" ")[0]}'s update is due — this account goes first.`;
-    case "stale-above-gate":
-      return "Real demand on file, research gone quiet. Refresh before anyone calls.";
-    case "stakeholder-gap":
-      return "The book barely knows anyone here. Twenty minutes fixes that.";
-    case "never-touched-incumbent":
-      return "Already on our platform, never introduced. The cheapest conversation in the book.";
-  }
+// The file's title IS the queue row's pair: the action, then the trigger.
+// One writing, two surfaces — the rail and the file never disagree.
+function titleFor(item: QueueItem): string {
+  return `${item.action} ${item.reason}`;
 }
 
 export function buildFile(
@@ -84,10 +67,12 @@ export function buildFile(
     wire: WireItem[]; // full wire; matched items join the history
     contacts: ContactLike[]; // roster (may be huge; we take the head)
     laneDate?: string | null;
+    research?: { at: string; line: string } | null; // newest deep-research note
     now: Date;
   },
 ): FileModel {
-  const { queueItem, intel, intent, notes, touches, wire, contacts, laneDate } = deps;
+  const { queueItem, intel, intent, notes, touches, wire, contacts, laneDate, research } =
+    deps;
 
   // Sources line — provenance, computed (spec F1): it lists only stores that
   // actually contributed, labeled as what they are.
@@ -101,6 +86,7 @@ export function buildFile(
   if (pasteNotes.length > 0)
     sources.push(`HomeRoom pastes ${shortDate(pasteNotes[0].createdAt)}`);
   const demandRec = getDemand(p.id);
+  if (research) sources.push(`deep research ${shortDate(research.at)}`);
   if (demandRec?.summary && researchGeneratedAt)
     sources.push(`research ${shortDate(`${researchGeneratedAt}T12:00:00Z`)}`);
   if (intent) sources.push(`Sales Nav read ${shortDate(intent.at)}`);
@@ -113,12 +99,17 @@ export function buildFile(
   if (sources.length === 0 && otherNotes.length > 0)
     sources.push(`notes ${shortDate(otherNotes[0].createdAt)}`);
 
-  // Story — identity + the situation + what the research adds (§3 voice).
+  // Story — the carryover fact first when there is one, then what the
+  // research adds (§3 voice). The action and its trigger live in the title;
+  // the story never repeats them.
   const demand = demandRec;
   const storyBits: string[] = [];
-  storyBits.push(
-    `${queueItem.situation.charAt(0).toUpperCase()}${queueItem.situation.slice(1)}.`,
-  );
+  if (queueItem.carried) {
+    storyBits.push("Surfaced yesterday. Left unworked.");
+  }
+  if (research?.line) {
+    storyBits.push(research.line.endsWith(".") ? research.line : `${research.line}.`);
+  }
   if (demand?.summary) {
     const s = demand.summary.split(/(?<=\.)\s+/)[0];
     if (s) storyBits.push(s.endsWith(".") ? s : `${s}.`);
@@ -164,6 +155,7 @@ export function buildFile(
     intent,
     contactName: p.contactName,
     laneDate,
+    wireHeadline: wireMatches[0]?.headline ?? null,
   });
   const threadCount = intel?.threads.people.length ?? 0;
   const singleThread = threadCount === 1;
@@ -171,9 +163,7 @@ export function buildFile(
   // carries the conversation — so the file's claim about it is always true.
   if (
     singleThread &&
-    (composed.kind === "send-draft" ||
-      composed.kind === "reply-frame" ||
-      composed.kind === "relay-note")
+    (composed.kind === "send-draft" || composed.kind === "relay-note")
   ) {
     composed.payload = `${composed.payload}\n\n${WIDENING_LINE}`;
   }
@@ -183,7 +173,7 @@ export function buildFile(
     name: p.name,
     csm: p.csm,
     sourcesLine: sources.join(" · "),
-    title: titleFor(queueItem, p),
+    title: titleFor(queueItem),
     story: redactMoney(storyBits.join(" ")),
     composed,
     people,

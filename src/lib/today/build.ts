@@ -243,12 +243,12 @@ export function commitmentsFromCards(
 export function partnerAngle(a: AccountIntel): string {
   const comp = a.competitors[0];
   if (a.play === "displacement" && comp) {
-    return `Ask ${a.csm}: how is ${a.name} feeling about ${comp}? When's the renewal? We can bring that same coverage onto the PrismHR platform they already run — one bill, one system of record.`;
+    return `Ask ${a.csm}: how is ${a.name} feeling about ${comp}? When's the renewal? We can bring that same coverage onto the PrismHR platform they already run: one bill, one system of record.`;
   }
   if (a.play === "greenfield") {
-    return `Ask ${a.csm}: is ${a.name} hiring anywhere they don't have a legal entity, or converting contractors? That misclassification exposure is our opening — Global lets them do it compliantly without standing up entities.`;
+    return `Ask ${a.csm}: is ${a.name} hiring anywhere they don't have a legal entity, or converting contractors? That misclassification exposure is our opening. Global lets them do it compliantly without standing up entities.`;
   }
-  return `Ask ${a.csm} what ${a.name}'s cross-border footprint looks like — entities, how they pay, employees vs contractors. Gauge before you campaign.`;
+  return `Ask ${a.csm} what ${a.name}'s cross-border footprint looks like: entities, how they pay, employees or contractors. Gauge before you campaign.`;
 }
 
 // --- "This morning" composition ---------------------------------------------
@@ -266,12 +266,12 @@ export function partnerMessage(a: AccountIntel): string {
   const who = firstNameOf(a.csm);
   const comp = a.competitors[0];
   if (a.play === "displacement" && comp) {
-    return `Hi ${who} — quick one on ${a.name}. I've been looking at them for PrismHR Global. From the research, they already run their domestic PEO on PrismHR but handle their international hiring through ${comp} — so the opening here isn't a fresh sale or a win-back, it's consolidation: bringing that global/EOR layer onto the platform they already use, instead of running it separately through ${comp}. Before I take any step, I'd really value your read on the ${comp} relationship: how happy do you think ${a.name} is with it right now, and do you have any sense of when that contract comes up for renewal? Renewal timing basically tells me whether it's worth opening a Global conversation soon or holding off. I completely want to move at your pace and not get out ahead of the relationship — just trying to figure out if there's an opening and, if so, roughly when. Thanks so much.`;
+    return `Hi ${who} — quick one on ${a.name}. I've been looking at them for PrismHR Global. From the research, they already run their domestic PEO on PrismHR but handle their international hiring through ${comp} — so the opening here isn't a fresh sale or a win-back, it's consolidation: bringing that global/EOR layer onto the platform they already use, instead of running it separately through ${comp}. Two things from you: how is ${a.name} feeling about ${comp} right now, and when does that contract come up for renewal? Renewal timing tells me whether to open the Global conversation soon or hold. Thanks so much.`;
   }
   if (a.play === "greenfield") {
-    return `Hi ${who} — quick one on ${a.name}. I've been looking at them for PrismHR Global and there's a real signal they're hiring across borders, with no Employer-of-Record provider in place yet — so this could be a clean introduction rather than a switch. Before I take any step, could you help me understand the account a bit: are they hiring in countries where they don't have a legal entity, or converting contractors to employees anywhere? That's usually where the Global fit is clearest. I want to move at your pace and not get ahead of the relationship — just gauging whether there's an opening worth exploring. Thanks so much.`;
+    return `Hi ${who} — quick one on ${a.name}. I've been looking at them for PrismHR Global and there's a real signal they're hiring across borders, with no Employer-of-Record provider in place yet — so this could be a clean introduction rather than a switch. Before I take any step, could you help me understand the account a bit: are they hiring in countries where they don't have a legal entity, or converting contractors to employees anywhere? That's usually where the Global fit is clearest. Thanks so much.`;
   }
-  return `Hi ${who} — quick one on ${a.name}. I've been looking at them for PrismHR Global and wanted your read before I do anything. Could you help me understand their cross-border footprint — where they're hiring, how they pay international workers today, and whether they lean on employees or contractors? That'll tell me whether there's a real Global opening. I want to move at your pace and not get ahead of the relationship. Thanks so much.`;
+  return `Hi ${who} — quick one on ${a.name}. I've been looking at them for PrismHR Global and wanted your read before I do anything. Could you help me understand their cross-border footprint — where they're hiring, how they pay international workers today, and whether they lean on employees or contractors? That'll tell me whether there's a real Global opening. Thanks so much.`;
 }
 
 // Granular, spoon-fed guidance for a task. do = the one standout action; how =
@@ -289,45 +289,45 @@ export function outreachGuidance(a: AccountIntel): Guidance {
   const comp = a.competitors[0];
   if (a.play === "displacement" && comp) {
     return {
-      do: `Message ${a.csm} about ${a.name} — and do NOT contact ${a.name} directly. This is a partner-first consolidation play: they already run PrismHR domestically, and the aim is to bring their global layer onto the same platform.`,
+      do: `Message ${a.csm} about ${a.name}.`,
       how: [
-        `Check Salesforce on ${a.name} FIRST — recent activity, open cases, notes, and any contract/renewal dates. Never message ${who} without the current picture in front of you.`,
+        `Check Salesforce on ${a.name} first: recent activity, open cases, notes, contract and renewal dates. Never message ${who} without the current picture.`,
         `Open Slack, Teams, or email to ${a.csm} — the CSM who owns the ${a.name} relationship.`,
-        `Paste the message below (edit anything that doesn't sound like you), then send it.`,
+        `Edit the message below into your own voice, then send it.`,
         `The one thing you must find out: when ${a.name}'s ${comp} contract renews. That date is the realistic window to move their global/EOR layer onto PrismHR.`,
-        `Do not reach out to anyone at ${a.name} until ${who} clears the path.`,
+        `Go direct to ${a.name} when that is the fastest door. ${who}'s read helps time the renewal move.`,
         `When you've sent it, log the outreach in Salesforce (activity + note) so the record stays current, then hit "Mark sent ✓" below.`,
       ],
       say: partnerMessage(a),
-      consider: `${a.name} already runs their domestic PEO on PrismHR but uses ${comp} for global — consolidation onto the platform they already have (demand ${a.demand}/100, ${a.confidence} confidence). Pace with ${who}, never ahead of the partner — but don't confuse patience with silence: every quiet week is renewal runway ${comp} keeps for free, and displacement windows close exactly once.`,
+      consider: `${a.name} runs their domestic PEO on PrismHR and uses ${comp} for global. Demand ${a.demand} of 100, ${a.confidence} confidence. Every quiet week is renewal runway ${comp} keeps for free. Displacement windows close exactly once.`,
     };
   }
   if (a.play === "greenfield") {
     return {
-      do: `Message ${a.csm} about ${a.name} to open a Global conversation — go through the partner, not the client.`,
+      do: `Message ${a.csm} about ${a.name}.`,
       how: [
         `Check Salesforce on ${a.name} FIRST — recent activity, notes, open cases. Don't message ${who} without knowing the account's current state.`,
         `Open Slack, Teams, or email to ${a.csm} — the CSM who owns ${a.name}.`,
-        `Paste the message below (edit to taste), then send it.`,
+        `Edit the message below, then send it.`,
         `You're probing one thing: are they hiring where they have no legal entity, or converting contractors? That's the Global opening.`,
-        `Let ${who} judge whether ${a.name} is ready before anything reaches the client.`,
+        `Take ${who}'s read on timing, then go direct.`,
         `When it's sent, log it in Salesforce (activity + note), then hit "Mark sent ✓" below.`,
       ],
       say: partnerMessage(a),
-      consider: `No incumbent EOR was found (demand ${a.demand}/100, ${a.confidence} confidence) — a clean introduction, which means speed is the entire advantage. Greenfields don't stay green: the first vendor to frame the problem usually writes the contract. Let ${who} set the pace, but be the reason a pace exists.`,
+      consider: `No incumbent EOR was found. Demand ${a.demand} of 100, ${a.confidence} confidence. A clean introduction, so speed is the entire advantage. The first vendor to frame the problem usually writes the contract.`,
     };
   }
   return {
-    do: `Message ${a.csm} about ${a.name} to gauge whether there's a Global opening — start with the partner.`,
+    do: `Message ${a.csm} about ${a.name}.`,
     how: [
       `Check Salesforce on ${a.name} FIRST — recent activity, notes, open cases — so you're not gauging from stale data.`,
       `Open Slack, Teams, or email to ${a.csm}.`,
-      `Paste the message below (edit to taste), then send it.`,
+      `Edit the message below, then send it.`,
       `Ask about their cross-border footprint — where they hire, how they pay international workers, employees vs contractors.`,
       `When it's sent, log it in Salesforce (activity + note), then hit "Mark sent ✓" below.`,
     ],
     say: partnerMessage(a),
-    consider: `The shape isn't fully clear yet (demand ${a.demand}/100, ${a.confidence} confidence) — you're gauging, not pitching. But gauge with a date on it: a probe with no follow-up is a no you never got to hear, and it costs you the account without ever telling you.`,
+    consider: `The shape isn't clear yet. Demand ${a.demand} of 100, ${a.confidence} confidence. Gauge, don't pitch. Put a date on the probe. A probe with no follow-up is a no you never got to hear.`,
   };
 }
 
@@ -339,15 +339,15 @@ export function triageGuidance(a: AccountIntel): Guidance {
         ? "No incumbent EOR was found, so it'd be a clean introduction."
         : "No play is flagged yet — this is a gauge-and-see.";
   return {
-    do: `Decide right now what happens to ${a.name}: seed it to your dashboard, or park it. Don't leave it undecided.`,
+    do: `Decide on ${a.name} now.`,
     how: [
       `Check Salesforce on ${a.name} first — current status, notes, open activity — so you decide on the live picture, not just the research.`,
       `Read the fit: demand ${a.demand}/100, ${a.confidence} confidence, ${a.play ?? "no play flagged yet"}. ${playLine}`,
       `If it's worth working now → hit "Seed to dashboard". It creates a card with all the research attached so you can start.`,
-      `If not now → hit "Park", type one line on why, and it resurfaces later (it's never lost).`,
+      `If not now → hit "Park" and type one line on why. It resurfaces later. It is never lost.`,
       `Either choice clears it from this list. That's the whole task.`,
     ],
-    consider: `${a.name} sits in ${a.csm}'s book. Seeded means worked; parked means an honest no-for-now. Undecided is the only answer that costs you: a signal left floating decays to zero while you look at it, and you paid full price to surface it.`,
+    consider: `${a.name} sits in ${a.csm}'s book. Seeded means worked. Parked means an honest no for now. Undecided is the only answer that costs you.`,
   };
 }
 
@@ -394,20 +394,20 @@ export function commitmentGuidance(step: CardStep): Guidance {
       ? ""
       : ` It's been open ${step.ageDays} day${step.ageDays === 1 ? "" : "s"} in ${step.nodeLabel}.`;
   return {
-    do: `Close the step you owe on ${step.cardName}: “${step.item}”.${age} Do the step; if you're waiting on someone, write down exactly what (and who) you're waiting for so it's tracked rather than silently slipping; reflect it in Salesforce with a note and any field or stage update; then check it off on the dashboard so the deal advances.`,
+    do: `Close “${step.item}” on ${step.cardName}.${age}`,
     how: [
-      `Open ${step.cardName} on the dashboard — it's in the ${step.nodeLabel} stage.`,
-      `Do the step: ${step.item}.`,
+      `Open ${step.cardName} on the dashboard. It is in the ${step.nodeLabel} stage.`,
+      `Do it: ${step.item}.`,
       `If you're waiting on someone, note exactly what you're waiting for so it's tracked, not silently slipping.`,
       `Reflect it in Salesforce — a note plus any field/stage update — so the record matches the dashboard.`,
-      `When it's done, hit "Mark done ✓" — the dashboard advances to the next step.`,
+      `When it's done, hit "Mark done ✓". The dashboard advances.`,
     ],
     consider:
       step.ageDays == null
-        ? "This just started — close it before it needs managing."
+        ? "This just started. Close it before it needs managing."
         : overdue
-          ? `${step.ageDays} days open; the ${COMMITMENT_WINDOW_DAYS}-day window is blown. Steps don't age into done — they age into dead. Either this closes today, or you name the blocker out loud and chase THAT. Anything else is watching a live deal rot on your own dashboard.`
-          : `Open ${step.ageDays} day${step.ageDays === 1 ? "" : "s"} — inside the window, but runway burns silently. Put a finish date on it now, while it's still cheap; the version of you at day ${COMMITMENT_WINDOW_DAYS} will not thank the one reading this.`,
+          ? `${step.ageDays} days open. The ${COMMITMENT_WINDOW_DAYS}-day window is blown. Close it today, or name the blocker and chase that.`
+          : `Open ${step.ageDays} day${step.ageDays === 1 ? "" : "s"}, inside the window. Put a finish date on it now, while it's still cheap.`,
   };
 }
 
@@ -427,11 +427,11 @@ export const STEP_HOLDS: Record<string, StepHold> = {
 
 export function holdGuidance(step: CardStep, hold: StepHold): Guidance {
   return {
-    do: `${step.cardName} — “${step.item}” is on hold. ${hold.reason} The move that's still yours: ${hold.recheck}, and the day the hold clears, close the step, log the exchange in Salesforce, and check it off on the dashboard.`,
+    do: `${step.cardName}: “${step.item}” is on hold. ${hold.reason} Own the re-check: ${hold.recheck}. The day it clears, close it, log the exchange in Salesforce, and check it off.`,
     how: [
-      `Confirm the hold still stands (it was set deliberately — check before pressing).`,
+      `Confirm the hold still stands. It was set deliberately.`,
       `Put the re-check on your calendar so the hold has an owner and a date.`,
-      `The day it clears: do the step, log it in Salesforce, check it off on the dashboard.`,
+      `The day it clears: do it, log it in Salesforce, check it off on the dashboard.`,
     ],
     consider: hold.consider,
   };
@@ -641,7 +641,7 @@ const DISPLACEMENT_VARIANTS: ((competitor: string) => string)[] = [
   (c) =>
     `their global work sits with ${c} while everything domestic already lives on PrismHR. If there's any friction over there — service, price, integration headaches — that's our opening. Heard anything lately?`,
   (c) =>
-    `${c} holds their global/EOR business even though we're already their platform for everything else. No urgency, but — who owns that vendor relationship on their side, and would they take a call?`,
+    `${c} holds their global/EOR business even though we're already their platform for everything else. Who owns that vendor relationship on their side, and would they take a call?`,
   (c) =>
     `they're already hiring globally (through ${c}), so it's not an "if" question — it's whether they'd rather run it where the rest of their operation lives. Worth me poking at this, or is that relationship rock solid?`,
 ];
@@ -657,7 +657,7 @@ const GAUGE_VARIANTS: string[] = [
   `no specific global-hiring signal has surfaced yet, but the profile fits the kind of company that runs into cross-border needs. Quick gut check: do they hire or pay anyone outside the US?`,
   `nothing in the research points international on this one — it's purely a knowledge check. Has anyone in their client base ever asked about paying people overseas?`,
   `quiet on the global front from everything I can see, so I'd rather borrow your context than guess. Any chatter about overseas contractors or clients expanding abroad?`,
-  `no cross-border signal yet, but they're the type where one client with two contractors abroad turns into a real conversation. Your call — worth it, or skip it?`,
+  `no cross-border signal yet, but they're the type where one client with two contractors abroad turns into a real conversation. Should I dig in, or skip it?`,
   `this one made the list on shape, not signal — companies like them tend to bump into international questions sooner or later. Have you ever heard even a whisper of it from them?`,
   `no research hit on global activity, so treat this as a standing question rather than a pitch. Next time you're with them, could you ask whether any of their clients have people overseas?`,
 ];
@@ -715,8 +715,7 @@ export function roundupFrame(partner: string): { opener: string; closer: string 
       `Hi ${who} — as I work through my set of the PrismHR Global leads assigned to me, I pulled a ` +
       `few of your accounts I'd love your read on for global-hiring potential:`,
     closer:
-      `None of these are urgent, and I don't want to get ahead of any of your relationships — I'm ` +
-      `really just trying to find where there might be a global opening worth a conversation.\n\n` +
+      `None of these are urgent.\n\n` +
       `A quick “yes / no / not yet” on each would help me prioritize. Thanks so much!\n\n` +
       `Looking forward to winning some business together!`,
   };
@@ -814,20 +813,18 @@ export function aleksLineGuidance(
     `you: [air cover / an intro / a specific marketing asset] — I'll be precise on that in the meeting.`;
   return {
     do:
-      `Lock the one line you carry into your 1:1 with Aleks` +
-      (convert
-        ? ` — built around ${convert.name}, the account you're converting this week`
-        : "") +
+      `Lock the one line for your 1:1 with Aleks` +
+      (convert ? `, built around ${convert.name}` : "") +
       `. Honest headline, one real deal, one concrete ask.`,
     how: [
       `Read the five numbers above — every one is derived from your own account research, not a guess. That's your evidence, and it's what lets you be honest without sounding thin.`,
-      `Lead with the honest headline: ${nar.strongDemand} strong${nar.emerging > 0 ? `, ${nar.emerging} emerging` : ""}. Do not round up — a hedged number you can defend beats a big one you can't, especially in a first-ever 1:1.`,
+      `Lead with the honest headline: ${nar.strongDemand} strong${nar.emerging > 0 ? `, ${nar.emerging} emerging` : ""}. Do not round up. A number you can defend beats a big one you can't.`,
       `Name the one account you're converting this week${convert ? ` — right now that's ${convert.name}` : ""}. A specific deal in motion turns "there's potential" into "this is happening."`,
       `End with a single concrete ask — air cover, an intro, or a marketing asset. Never walk into the 1:1 without one; that's how you convert a status update into support.`,
       `Paste the script below into your 1:1 notes and edit it into your own voice before Monday.`,
     ],
     say,
-    consider: `Aleks carries this line upward to her leadership, so it has to survive scrutiny. Every figure here traces back to research you can point to — keep it exactly that honest and it holds under any question.`,
+    consider: `Aleks carries this line upward, so it has to survive scrutiny. Every figure traces back to research you can point to. Keep it exactly that honest.`,
   };
 }
 
@@ -836,12 +833,12 @@ export function aleksLineGuidance(
 export function armPartnersGuidance(nar: Narrative): Guidance {
   const conversations = nar.strongDemand + nar.emerging;
   return {
-    do: `Arm Eric and the CSMs to be dangerous on Global — be loud, to Aleks and marketing, about what you have, what you're missing, and what you need. Nothing sells through a partner you haven't equipped.`,
+    do: `Arm Eric and the CSMs on Global. Be loud to Aleks and marketing about what you have, what's missing, and what you need. Nothing sells through a partner you haven't equipped.`,
     how: [
       `Write down what you can already brief a partner with today: your Account Room research on their accounts, the displacement/greenfield plays, and the per-account openers Today generates for you.`,
-      `Name the gaps out loud — the contractor-conversion one-pager, country-coverage sheets, packaged pricing, whatever's missing. Log each one as a voice-of-the-base note below so it reaches marketing, not just your memory.`,
+      `Name the gaps out loud: the contractor-conversion one-pager, country-coverage sheets, packaged pricing. Log each one as a voice-of-the-base note below so it reaches marketing.`,
       `Decide who you arm first: Eric on the HCM enterprise side, then the CSMs whose books carry the strongest signals. Sequence by where the demand already is.`,
-      `Turn every gap into a specific, named ask for Aleks or marketing — "I need X to arm Y for account Z" — so it's actionable, not a complaint.`,
+      `Turn every gap into a specific, named ask for Aleks or marketing: "I need X to arm Y for account Z."`,
     ],
     say:
       `Quick enablement read for the Global push.\n\n` +
@@ -855,7 +852,7 @@ export function armPartnersGuidance(nar: Narrative): Guidance {
       `• Packaged pricing partners can quote without coming back to me\n\n` +
       `If we close those gaps, roughly ${conversations} accounts across the base become real partner ` +
       `conversations instead of me improvising. Can we prioritize the single biggest gap this week?`,
-    consider: `At startup stage the constraint isn't leads, it's enablement — and every week a gap goes unnamed, your partners sell around Global instead of selling it. A named gap with a date gets fixed; an ambient complaint gets sympathy. One of those multiplies across every partner and every account you'll ever touch.`,
+    consider: `At startup stage the constraint isn't leads, it's enablement. Every week a gap goes unnamed, your partners sell around Global instead of selling it. A named gap with a date gets fixed.`,
   };
 }
 
@@ -863,7 +860,7 @@ export function armPartnersGuidance(nar: Narrative): Guidance {
 // — it points at the capture box below and the Aleks 1:1 it feeds.
 export function voiceOfBaseGuidance(): Guidance {
   return {
-    do: `Log one voice-of-the-base note if a pattern showed up across the base today. It's the raw material for your Aleks 1:1 — and it's gone by tomorrow if you don't write it down now.`,
+    do: `Log one voice-of-the-base note if a pattern showed up today. It's the raw material for your Aleks 1:1, and it's gone by tomorrow.`,
     how: [
       `Think back over today's touches: did the same ask, objection, or missing-tool come up on more than one account?`,
       `Scroll to "Voice of the base & enablement gaps" below.`,
@@ -871,7 +868,7 @@ export function voiceOfBaseGuidance(): Guidance {
       `That's the whole task — it accrues into the narrative above on its own.`,
     ],
     say: `Pattern I'm seeing: [e.g. 3rd account this month asking about contractor conversion] — we need [a one-pager / a country sheet / a pricing answer] to arm partners on it.`,
-    consider: `You will not remember this in the 1:1 — nobody does. An unlogged signal is field intel you paid for and then chose to forget; it's also exactly the ammunition Aleks needs to fight for resources upstairs. Two lines now, or it never happened.`,
+    consider: `You will not remember this in the 1:1. An unlogged signal is field intel you paid for and then forgot. Two lines now, or it never happened.`,
   };
 }
 

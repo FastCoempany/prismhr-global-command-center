@@ -17,7 +17,7 @@ function PromptCopy({ prompt }: { prompt: string }) {
     <button
       type="button"
       className={styles.atcBtn}
-      title="Copy the research prompt — run it in claude.ai, paste the answer back as a note"
+      title="Copy the research prompt. Run it in claude.ai, then paste the answer back as a note."
       onClick={() => {
         void navigator.clipboard.writeText(prompt);
         setOk(true);
@@ -60,7 +60,7 @@ export function LookIntoBand({
               {canWrite && (
                 <form action={resolveLiveLookInto} className={styles.valInline}>
                   <input type="hidden" name="itemId" value={it.id} />
-                  <button className={styles.atcBtn} title="Resolved — clears this loop">
+                  <button className={styles.atcBtn} title="Resolved. Clears this loop.">
                     ✓
                   </button>
                 </form>

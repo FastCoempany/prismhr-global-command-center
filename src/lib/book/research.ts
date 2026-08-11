@@ -44,7 +44,8 @@ const COMPETITORS: { name: string; re: RegExp }[] = [
 // found none".
 // Negation / uncertainty cues. Word-negations OR any "…n't" contraction — the
 // contraction arm requires an apostrophe so it can't false-match "net"/"nut".
-const NEG = /\b(no|not|without|zero|none|nor|lacks?|absence|unlike|neither|minimal|cannot)\b|[a-z]+n['’]t/i;
+const NEG =
+  /\b(no|not|without|zero|none|nor|lacks?|absence|unlike|neither|minimal|cannot)\b|[a-z]+n['’]t/i;
 
 // Light country extraction from the research text — surfaces "where" without a
 // new research pass. Curated to common cross-border hiring destinations.
@@ -94,14 +95,20 @@ const COUNTRIES = [
 
 export function extractCountries(d: DemandRecord | undefined): string[] {
   if (!d) return [];
-  const text = [d.summary, ...(d.signals ?? []), ...(d.evidence ?? []).map((e) => e.claim)].join(" ");
+  const text = [
+    d.summary,
+    ...(d.signals ?? []),
+    ...(d.evidence ?? []).map((e) => e.claim),
+  ].join(" ");
   const found: string[] = [];
   for (const c of COUNTRIES) {
     const re = new RegExp(`\\b${c.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i");
     if (re.test(text) && !found.includes(c)) found.push(c);
   }
   // Normalize UK/UAE duplicates
-  const norm = found.map((c) => (c === "UK" ? "United Kingdom" : c === "UAE" ? "United Arab Emirates" : c));
+  const norm = found.map((c) =>
+    c === "UK" ? "United Kingdom" : c === "UAE" ? "United Arab Emirates" : c,
+  );
   return [...new Set(norm)].slice(0, 6);
 }
 
@@ -140,8 +147,13 @@ export function analyzePlay(d: DemandRecord | undefined): {
   play: PlayType;
   competitors: string[];
 } {
-  if (!d || !d.researched || d.demandScore == null) return { play: null, competitors: [] };
-  const parts = [d.summary, ...(d.signals ?? []), ...(d.evidence ?? []).map((e) => e.claim)];
+  if (!d || !d.researched || d.demandScore == null)
+    return { play: null, competitors: [] };
+  const parts = [
+    d.summary,
+    ...(d.signals ?? []),
+    ...(d.evidence ?? []).map((e) => e.claim),
+  ];
   const sentences = parts.flatMap((p) => String(p).split(/(?<=[.;:])\s+|\n/));
   const found = new Set<string>();
   for (const s of sentences) {

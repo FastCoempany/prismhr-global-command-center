@@ -56,8 +56,8 @@ export function liveLookInto(inp: LiveLookIntoInput): LiveLookIntoItem[] {
       out.push({
         id: `li-live:research:${card.id}`,
         kind: "research",
-        title: `Research ${names.slice(0, 3).join(", ")} statutory basics before the demo`,
-        why: `${card.name}: countries are named but the demo hasn't landed — walk in knowing notice periods, employer costs, onboarding time`,
+        title: `Research ${names.slice(0, 3).join(", ")} statutory basics.`,
+        why: `${card.name}: demo ahead, countries named.`,
         weight: "medium",
         prompt: researchPrompt("country", {
           account: card.name,
@@ -77,8 +77,8 @@ export function liveLookInto(inp: LiveLookIntoInput): LiveLookIntoItem[] {
       out.push({
         id: `li-live:contradiction:${card.id}`,
         kind: "contradiction",
-        title: `${card.name}: board disagrees with the evidence — ${nodeLabel(stale.node)}`,
-        why: `${stale.reason} — suggested for 3+ days without confirm or dismiss`,
+        title: `Settle the ${nodeLabel(stale.node)} check.`,
+        why: `${stale.reason}. Still unanswered.`,
         weight: "high",
       });
     }
@@ -92,9 +92,9 @@ export function liveLookInto(inp: LiveLookIntoInput): LiveLookIntoItem[] {
       id: `li-live:ask:${n.id}`,
       kind: "ask",
       title: n.body.replace(/\s+/g, " ").trim().slice(0, 110),
-      why: `${n.kind === "ask" ? "an ask" : "an enablement gap"} logged ${Math.floor(
+      why: `${n.kind === "ask" ? "An ask" : "An enablement gap"} logged ${Math.floor(
         (inp.now.getTime() - Date.parse(n.createdAt)) / DAY,
-      )}d ago, still unresolved`,
+      )} days ago, still unresolved.`,
       weight: "high",
     });
   }

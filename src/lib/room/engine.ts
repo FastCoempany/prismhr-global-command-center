@@ -87,7 +87,7 @@ export function readDeal(i: RoomInputs): RoomRead {
   if (inboundNewest) {
     const who = (inboundWho || "they").toUpperCase().slice(0, 24);
     court = {
-      line: `YOUR MOVE — ${who} WROTE · ${inboundDays ?? 0}D AGO`,
+      line: `YOUR MOVE · ${who} WROTE ${inboundDays ?? 0} DAYS AGO`,
       tone: "you",
     };
   } else if (i.lastTouch && i.lastTouch.awaitingReply) {
@@ -95,8 +95,8 @@ export function readDeal(i: RoomInputs): RoomRead {
     const q = quietDays ?? 0;
     court =
       q >= QUIET_RED_DAYS
-        ? { line: `THEIR MOVE — ${who} · QUIET ${q}D`, tone: "quiet" }
-        : { line: `THEIR MOVE — ${who} · ${q}D`, tone: "them" };
+        ? { line: `THEIR MOVE · ${who} · QUIET ${q} DAYS`, tone: "quiet" }
+        : { line: `THEIR MOVE · ${who} · ${q} DAYS`, tone: "them" };
   } else if (i.step) {
     court = { line: "YOUR MOVE", tone: "you" };
   } else {
@@ -106,7 +106,7 @@ export function readDeal(i: RoomInputs): RoomRead {
   // Not enough signal — an honest read, never a fabricated move.
   if (!i.step && !hasRecord && !i.lastTouch) {
     return {
-      move: "Not enough signal yet to call a move — file a paste or a note and the room will call it.",
+      move: "File a paste or a note. Not enough signal yet.",
       thin: true,
       health: "quiet",
       court,
@@ -144,36 +144,36 @@ export function readDeal(i: RoomInputs): RoomRead {
   if (inboundNewest && i.step) {
     const item = i.step.item.trim() || "the open item";
     const who = inboundWho || "they";
-    const ago = inboundDays != null && inboundDays > 0 ? `${inboundDays}d ago` : "today";
+    const ago =
+      inboundDays != null && inboundDays > 0 ? `${inboundDays} days ago` : "today";
     move = wallOverdue
-      ? `Answer ${who} — they wrote ${ago} ${clock}. Then close “${item.toLowerCase()}”.`
-      : `Answer ${who} — they wrote ${ago} and the reply is owed. Then close “${item.toLowerCase()}”.`;
+      ? `Answer ${who}. They wrote ${ago}. The ${i.timing!.phrase} wall passed. Then close “${item.toLowerCase()}”.`
+      : `Answer ${who}. They wrote ${ago}. Then close “${item.toLowerCase()}”.`;
   } else if (inboundNewest) {
     const who = inboundWho || "they";
-    move = `Answer ${who} — their message from ${
-      inboundDays != null && inboundDays > 0 ? `${inboundDays}d ago` : "today"
-    } is waiting on you.`;
+    move = `Answer ${who}. They wrote ${
+      inboundDays != null && inboundDays > 0 ? `${inboundDays} days ago` : "today"
+    }. The reply is owed.`;
   } else if (i.step) {
     const item = i.step.item.trim() || "the open item";
     if (quietLong && i.lastTouch) {
       const who = i.lastTouch.who || "them";
       move = clock
-        ? `Chase ${who} on “${item.toLowerCase()}” — quiet ${quietDays} days ${clock}.`
-        : `Chase ${who} on “${item.toLowerCase()}” — quiet ${quietDays} days.`;
+        ? `Chase ${who} on “${item.toLowerCase()}”. Quiet ${quietDays} days. ${i.timing!.phrase} is the wall.`
+        : `Chase ${who} on “${item.toLowerCase()}”. Quiet ${quietDays} days.`;
     } else if (i.timing && wallOverdue) {
-      move = `Close “${item.toLowerCase()}” ${clock} — decide whether the date moved or the deal did.`;
+      move = `Close “${item.toLowerCase()}”. The ${i.timing.phrase} wall passed ${wallDaysPast} days ago. Decide whether the date moved or the deal did.`;
     } else if (i.timing) {
-      move = `Close “${item.toLowerCase()}” — ${i.timing.phrase} is the clock it's on.`;
+      move = `Close “${item.toLowerCase()}”. ${i.timing.phrase} is the clock.`;
     } else {
-      move = `Close “${item.toLowerCase()}” — it's the one thing this stage still needs.`;
+      move = `Close “${item.toLowerCase()}”. The stage needs nothing else.`;
     }
   } else if (i.lastTouch && i.lastTouch.awaitingReply) {
     move = quietLong
-      ? `Nudge ${i.lastTouch.who || "the thread"} — quiet ${quietDays} days with nothing owed on your side.`
-      : `Waiting on ${i.lastTouch.who || "their reply"} — nothing owed on your side today.`;
+      ? `Nudge ${i.lastTouch.who || "the thread"}. Quiet ${quietDays} days.`
+      : `Wait on ${i.lastTouch.who || "their reply"}. Nothing owed on your side today.`;
   } else {
-    move =
-      "Not enough signal yet to call a move — file a paste or a note and the room will call it.";
+    move = "File a paste or a note. Not enough signal yet.";
     thin = true;
     health = "quiet";
   }

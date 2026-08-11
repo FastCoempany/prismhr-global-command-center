@@ -34,22 +34,24 @@ export const APPROACHES: { key: Approach; label: string; blurb: string }[] = [
   {
     key: "NEEDS_CSM",
     label: "Clear with CSM",
-    blurb: "Prep only — don't approach the PEO until the CSM clears the path.",
+    blurb: "Brief the CSM. Direct outreach stays open.",
   },
   {
     key: "CHANNEL_OK",
     label: "OK to engage PEO",
-    blurb: "CSM has cleared it — work the PEO directly.",
+    blurb: "The CSM is briefed. Work the PEO directly.",
   },
   {
     key: "DIRECT_OK",
     label: "Cleared for client outreach",
-    blurb: "PEO engaged — you may approach their SMB clients.",
+    blurb: "PEO engaged. Reach their clients directly.",
   },
 ];
 
-export const approachLabel = (a: Approach) => APPROACHES.find((x) => x.key === a)?.label ?? a;
-export const approachBlurb = (a: Approach) => APPROACHES.find((x) => x.key === a)?.blurb ?? "";
+export const approachLabel = (a: Approach) =>
+  APPROACHES.find((x) => x.key === a)?.label ?? a;
+export const approachBlurb = (a: Approach) =>
+  APPROACHES.find((x) => x.key === a)?.blurb ?? "";
 
 // True when a suggested next step would jump the channel — i.e. we haven't been
 // cleared by the CSM yet. Today uses this to hold direct-motion suggestions.
@@ -84,22 +86,26 @@ export function priorityTier(priority: number): "high" | "medium" | "low" {
 
 // --- Suggested next action (feature 3) ---------------------------------------
 // Fills the blank when an active PEO has no next step, keyed off its stage.
-export function suggestedAction(row: { stage: Stage; name: string; csm: string }): string | null {
+export function suggestedAction(row: {
+  stage: Stage;
+  name: string;
+  csm: string;
+}): string | null {
   switch (row.stage) {
     case "NOT_TOUCHED":
       return `Brief ${row.csm} on ${row.name}'s global-hiring angle`;
     case "CSM_BRIEFED":
-      return `Ask ${row.csm} to introduce you to ${row.name}`;
+      return `Ask ${row.csm} for a ${row.name} intro`;
     case "PEO_ENGAGED":
-      return `Ask ${row.name} for 2 client intros hiring internationally`;
+      return `Ask ${row.name} for two client intros`;
     case "CLIENT_CAMPAIGN":
-      return `Follow up on client outreach and book a demo`;
+      return `Chase replies and book the demo`;
     case "LEAD":
-      return `Qualify the lead and schedule a demo`;
+      return `Qualify the lead, book the demo`;
     case "DEMO":
-      return `Send the demo recap and a next-step proposal`;
+      return `Send the recap and the proposal`;
     case "OPPORTUNITY":
-      return `Confirm the decision timeline and close plan`;
+      return `Confirm the timeline and close plan`;
     default:
       return null;
   }

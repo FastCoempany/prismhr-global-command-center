@@ -142,39 +142,28 @@ describe("groundwork proximity", () => {
 describe("groundwork queue", () => {
   const base = {
     touches: [],
-    todos: [],
     contactCountById: () => 5,
     now: NOW,
   };
 
-  test("a dated decision outranks a fresh intent reading on the same book", () => {
-    const a = acct({ id: "A0000000000000001", name: "Decider" });
+  test("a fresh wire hit outranks a fresh intent reading on the same book", () => {
+    const a = acct({ id: "A0000000000000001", name: "Newsmaker" });
     const b = acct({ id: "B0000000000000001", name: "Warm" });
     const { items } = buildQueue({
       ...base,
       accounts: [a, b],
-      intelById: new Map([
-        [
-          a.id,
-          intelWith({
-            timing: {
-              value: { phrase: "decision", dateIso: "2026-08-04" },
-              src: "t",
-              at: "2026-07-28",
-            },
-          }),
-        ],
-      ]),
+      intelById: new Map(),
       notesById: new Map([
-        [a.id, [{ body: "x", source: "sf", createdAt: "2026-07-28T12:00:00Z" }]],
         [
           b.id,
           [salesnavNote("high buyer intent · 11 activities", "2026-07-29T12:00:00Z")],
         ],
       ]),
+      wireAtById: new Map([[a.id, "2026-07-29T12:00:00Z"]]),
     });
-    assert.equal(items[0].name, "Decider");
-    assert.equal(items[0].ruleId, "decision-window");
+    assert.equal(items[0].name, "Newsmaker");
+    assert.equal(items[0].ruleId, "wire-trigger");
+    assert.equal(items[0].band, "now");
     const warm = items.find((i) => i.name === "Warm");
     assert.equal(warm?.ruleId, "intent-warm");
     assert.equal(warm?.band, "eleven");
@@ -185,25 +174,29 @@ describe("groundwork queue", () => {
     const { items } = buildQueue({
       ...base,
       accounts: [a],
-      intelById: new Map([
-        [
-          a.id,
-          intelWith({
-            timing: {
-              value: { phrase: "decision", dateIso: "2026-08-03" },
-              src: "t",
-              at: "2026-07-28",
-            },
-            lastInbound: "2026-07-29T12:00:00Z",
-          }),
-        ],
-      ]),
+      intelById: new Map(),
       notesById: new Map([
         [a.id, [salesnavNote("high buyer intent", "2026-07-29T12:00:00Z")]],
       ]),
+      wireAtById: new Map([[a.id, "2026-07-29T12:00:00Z"]]),
     });
     assert.equal(items.filter((i) => i.accountId === a.id).length, 1);
-    assert.equal(items[0].ruleId, "decision-window");
+    assert.equal(items[0].ruleId, "wire-trigger");
+  });
+
+  test("a stale wire hit ranks as nothing — the trigger is perishable", () => {
+    const a = acct({ id: "A0000000000000003", name: "Old News" });
+    const { items } = buildQueue({
+      ...base,
+      accounts: [a],
+      intelById: new Map(),
+      notesById: new Map(),
+      wireAtById: new Map([[a.id, "2026-07-20T12:00:00Z"]]),
+    });
+    assert.equal(
+      items.some((i) => i.ruleId === "wire-trigger"),
+      false,
+    );
   });
 
   test("proximity breaks ties only — same evidence, closer account first", () => {
@@ -256,6 +249,27 @@ describe("groundwork queue", () => {
     });
     assert.equal(items.length, QUEUE_CAP);
     assert.equal(overflow, 4);
+  });
+
+  test("yesterday's unworked move returns carried; a stamped one does not", () => {
+    const p = acct({ id: "Y0000000000000001", name: "Yesterday" });
+    const inp = {
+      ...base,
+      accounts: [p],
+      intelById: new Map<string, DealIntel>(),
+      notesById: new Map([
+        [p.id, [salesnavNote("high buyer intent", "2026-07-28T12:00:00Z")]],
+      ]),
+    };
+    const un = buildQueue({ ...inp, doneKeys: new Set<string>() });
+    assert.equal(un.items[0].ruleId, "intent-warm");
+    assert.equal(un.items[0].carried, true);
+    const mk = moveKey(un.items[0]);
+    const done = buildQueue({
+      ...inp,
+      doneKeys: new Set([`groundwork:2026-07-29:${mk}`]),
+    });
+    assert.equal(done.items[0].carried, false);
   });
 
   test("the clock bands: 10a is sends, 12p is people, 3p is filing", () => {
@@ -334,10 +348,11 @@ describe("groundwork readout and lint", () => {
       intelById: new Map([[p.id, intel]]),
       notesById: new Map([[p.id, notes]]),
       touches: [],
-      todos: [],
       contactCountById: () => 5,
+      wireAtById: new Map([[p.id, "2026-07-29T12:00:00Z"]]),
       now: NOW,
     });
+    assert.equal(items[0].ruleId, "wire-trigger");
     const file = buildFile(p, {
       queueItem: items[0],
       intel,
@@ -350,7 +365,7 @@ describe("groundwork readout and lint", () => {
     });
     const direct = paragraphFor(p, { intel, intent: null, queueItem: items[0] });
     assert.equal(file.russ, direct);
-    assert.ok(file.russ.includes("August 6"));
+    assert.ok(file.russ.includes("made the wire"));
     assert.ok(file.russ.includes("Globalization Partners"));
   });
 
@@ -384,13 +399,13 @@ describe("groundwork readout and lint", () => {
   test("every composed payload survives the lint's money check", () => {
     const p = acct({ id: "C0000000000000001", name: "Composed" });
     const rules = [
-      "decision-window",
-      "reply-owed",
-      "meeting-prep",
+      "wire-trigger",
       "intent-warm",
       "riding-lane",
+      "silence-bump",
       "roundup-slot",
       "stale-above-gate",
+      "cold-revival",
       "stakeholder-gap",
       "never-touched-incumbent",
     ] as const;
@@ -424,11 +439,6 @@ describe("groundwork adversarial regressions", () => {
       contactedAt: string;
       followUpAt: string;
       status: string;
-    }[],
-    todos: [] as {
-      accountId?: string | null;
-      remindAt?: string | null;
-      done?: boolean;
     }[],
     contactCountById: () => 5,
     now: NOW,
@@ -491,14 +501,14 @@ describe("groundwork adversarial regressions", () => {
       csm: "Unassigned",
     });
     const draft = composeFor({
-      ruleId: "decision-window",
+      ruleId: "wire-trigger",
       account: bare,
       intel: intelWith({}),
       intent: null,
       contactName: "",
       laneDate: null,
     });
-    assert.ok(draft.to.includes("add before sending"));
+    assert.ok(draft.to.includes("Add the name before sending"));
     assert.ok(draft.payload.includes("Hi —"));
     const relay = composeFor({
       ruleId: "roundup-slot",
@@ -508,44 +518,42 @@ describe("groundwork adversarial regressions", () => {
       contactName: "",
       laneDate: null,
     });
-    assert.ok(relay.to.includes("route it with Aleks"));
+    assert.ok(relay.to.includes("Route it with Aleks"));
   });
 
-  test("an archived thread or a done reminder never asks for meeting prep", () => {
-    const p = acct({ id: "P0000000000000001", name: "Prepped" });
-    const closed = buildQueue({
+  test("the drumbeat: quiet awaiting threads bump, cold ones revive, fresh ones wait", () => {
+    const p = acct({ id: "P0000000000000001", name: "Bumped", csm: "Unassigned" });
+    const touch = (contactedAt: string, status: string) => [
+      {
+        subjectKey: `outreach:${p.id}`,
+        contactedAt,
+        followUpAt: "",
+        status,
+      },
+    ];
+    const bump = buildQueue({
       ...base,
       accounts: [p],
-      touches: [
-        {
-          subjectKey: `outreach:${p.id}`,
-          contactedAt: "2026-07-28T12:00:00Z",
-          followUpAt: "2026-07-31T15:00:00Z",
-          status: "archived",
-        },
-      ],
-      todos: [{ accountId: p.id, remindAt: "2026-07-31T15:00:00Z", done: true }],
+      touches: touch("2026-07-21T12:00:00Z", "awaiting"), // quiet 9 days
+    });
+    assert.equal(bump.items[0]?.ruleId, "silence-bump");
+    const fresh = buildQueue({
+      ...base,
+      accounts: [p],
+      touches: touch("2026-07-28T12:00:00Z", "awaiting"), // quiet 2 days
     });
     assert.equal(
-      closed.items.some((i) => i.ruleId === "meeting-prep"),
+      fresh.items.some(
+        (i) => i.ruleId === "silence-bump" || i.ruleId === "cold-revival",
+      ),
       false,
     );
-    const live = buildQueue({
+    const cold = buildQueue({
       ...base,
       accounts: [p],
-      touches: [
-        {
-          subjectKey: `outreach:${p.id}`,
-          contactedAt: "2026-07-28T12:00:00Z",
-          followUpAt: "2026-07-31T15:00:00Z",
-          status: "awaiting",
-        },
-      ],
+      touches: touch("2026-06-01T12:00:00Z", "archived"), // quiet 59 days
     });
-    assert.equal(
-      live.items.some((i) => i.ruleId === "meeting-prep"),
-      true,
-    );
+    assert.equal(cold.items[0]?.ruleId, "cold-revival");
   });
 
   test("a live partner thread suppresses the roundup slot; an archived stale one opens it", () => {
@@ -594,11 +602,13 @@ describe("groundwork adversarial regressions", () => {
       queueItem: {
         accountId: p.id,
         name: p.name,
-        ruleId: "reply-owed",
-        weight: 90,
+        ruleId: "silence-bump",
+        weight: 72,
         band: "now",
-        situation: "their message is the newest thing between you — answer first",
-        owed: "reply owed",
+        action: "Send the second touch.",
+        reason: "No reply since July 21.",
+        owed: "draft composed",
+        carried: false,
         intent: null,
       },
       intel,
@@ -626,8 +636,10 @@ describe("groundwork adversarial regressions", () => {
           ruleId: "stakeholder-gap",
           weight: 55,
           band: "two",
-          situation: "the book knows one person here",
+          action: "Find a second name.",
+          reason: "One person carries everything.",
           owed: "recipe ready",
+          carried: false,
           intent: null,
         },
       ],

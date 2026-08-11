@@ -96,7 +96,7 @@ export function MorningBrief({
                   <input type="hidden" name="subjectId" value={r.subjectId} />
                   <button
                     className={styles.lgChev}
-                    title="Mute — never show this row again"
+                    title="Mute. Never show this row again."
                     aria-label="Mute this brief row"
                   >
                     ✕

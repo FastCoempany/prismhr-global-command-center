@@ -74,27 +74,33 @@ export function paragraphFor(
   const dateIso = args.intel?.timing?.value.dateIso;
   const rule = args.queueItem?.ruleId;
 
-  if (dateIso && (rule === "decision-window" || !rule)) {
+  if (rule === "wire-trigger") {
     bits.push(
-      `${identityClause(p)} — has a decision on their side dated ${monthDay(dateIso)}; the answer they asked us for is composed and ready to send.`,
+      `${identityClause(p)} — made the wire; the note that turns the news into a conversation is composed, addressed to them directly.`,
+    );
+  } else if (rule === "silence-bump") {
+    bits.push(
+      `${identityClause(p)} — got a first touch and has not answered; the second touch is composed and goes today.`,
+    );
+  } else if (rule === "cold-revival") {
+    bits.push(
+      `${identityClause(p)} — the thread with them went quiet months ago; the re-open with something new to say is composed.`,
+    );
+  } else if (dateIso && !rule) {
+    bits.push(
+      `${identityClause(p)} — has a decision on their side dated ${monthDay(dateIso)}; the HomeRoom carries what we owe them.`,
     );
   } else if (
-    rule === "reply-owed" ||
-    (!rule &&
-      args.intel?.lastInbound &&
-      (!args.intel.lastOutbound || args.intel.lastInbound > args.intel.lastOutbound))
+    !rule &&
+    args.intel?.lastInbound &&
+    (!args.intel.lastOutbound || args.intel.lastInbound > args.intel.lastOutbound)
   ) {
-    const when = args.intel?.lastInbound ? ` (${monthDay(args.intel.lastInbound)})` : "";
     bits.push(
-      `${identityClause(p)} — wrote to us last${when}; the reply is composed and ready to send.`,
-    );
-  } else if (rule === "meeting-prep") {
-    bits.push(
-      `${identityClause(p)} — a dated follow-up with them lands inside 48 hours; the prep sheet is composed.`,
+      `${identityClause(p)} — wrote to us last, on ${monthDay(args.intel.lastInbound)}; the reply lives in the HomeRoom.`,
     );
   } else if (rule === "riding-lane") {
     bits.push(
-      `${identityClause(p)} — a coworker's Salesforce opportunity there closes soon; the note asking them to carry one Global sentence in is composed.`,
+      `${identityClause(p)} — a coworker's Salesforce opportunity there closes soon; the note asking them to carry one Global sentence into that conversation is composed.`,
     );
   } else if (rule === "roundup-slot") {
     bits.push(
@@ -110,11 +116,11 @@ export function paragraphFor(
     );
   } else if (rule === "never-touched-incumbent") {
     bits.push(
-      `${identityClause(p)} — already on our software and never introduced to Global; the introduction note for ${pmClause(p)} next touch is composed.`,
+      `${identityClause(p)} — already on our software and never introduced to Global; the first note to them is composed and ready to send.`,
     );
   } else if (args.intent) {
     bits.push(
-      `${identityClause(p)} — their people have been reading our Global material this week${args.intent.activities ? ` (${args.intent.activities} separate engagements)` : ""}, unprompted; they move to the top of ${pmClause(p)} next briefing.`,
+      `${identityClause(p)} — their people have been reading our Global material this week${args.intent.activities ? `, ${args.intent.activities} separate engagements,` : ","} unprompted${rule === "intent-warm" ? "; the note to them is composed and ready to send" : ""}.`,
     );
   } else {
     bits.push(`${identityClause(p)} — in the book, no open conversation yet.`);

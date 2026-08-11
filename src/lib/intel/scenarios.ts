@@ -34,7 +34,7 @@ export const SCENARIOS: Scenario[] = [
       {
         objection: "Can we just pay them as a contractor and keep it simple?",
         counter:
-          "Sometimes yes — where the person genuinely runs their own business and serves other clients. Where you set the hours and direct the work, the label does not hold, and the exposure lands on you rather than on them. Worth testing against how the work will actually be done before you choose.",
+          "Sometimes yes — where the person genuinely runs their own business and serves other clients. Where you set the hours and direct the work, the label does not hold, and the exposure lands on you rather than on them. Test it against how the work will actually be done before you choose.",
       },
       {
         objection: "This seems like a lot of machinery for one or two people.",
@@ -80,7 +80,7 @@ export const SCENARIOS: Scenario[] = [
       {
         objection: "You'd be adding a fee where we pay nothing today.",
         counter:
-          "You are paying now — per-transfer bank charges, the conversion spread your workers absorb, and the hours of whoever runs the sheet. The comparison worth doing is structure against structure, not a fee against zero.",
+          "You are paying now — per-transfer bank charges, the conversion spread your workers absorb, and the hours of whoever runs the sheet. Compare structure against structure, not a fee against zero.",
       },
     ],
   },
@@ -98,7 +98,7 @@ export const SCENARIOS: Scenario[] = [
       "Moving employees between EOR providers is not a data migration. In most countries the outgoing local employer terminates and the incoming one hires, which can mean termination formalities, accrued-leave payout, a fresh probation, and reset seniority depending on the country.",
       "Notice periods run against the incumbent's local entity, so the termination date there and the start date here have to line up or the worker has a gap in pay and coverage.",
       "Changing employer mid-year can leave the worker with two part-year filings and a personal reconciliation. That lands on the employee, and it becomes your problem the moment they notice.",
-      "'They said they integrate' is worth testing concretely — ask what actually syncs, in which direction, and how often, because CSV exports and re-keying are often what integration turned out to mean.",
+      "Test 'they said they integrate' concretely. Ask what actually syncs, in which direction, and how often; CSV exports and re-keying are often what integration turned out to mean.",
       "Some of their countries may be served by the incumbent's own in-country partner rather than by the incumbent itself, which changes what is actually being transferred and who holds the local registrations.",
       "The complaint they open with is rarely the whole reason. Support responsiveness, invoice legibility, and conversion handling tend to surface only when you ask what the last thing to go wrong was.",
     ],
@@ -106,12 +106,12 @@ export const SCENARIOS: Scenario[] = [
       {
         objection: "We just finished an implementation. We're not doing that again.",
         counter:
-          "Fair, and I won't pretend the work is not real. That is an argument for timing a move to renewal rather than mid-term. What is worth scoping now is whether the thing frustrating you actually gets fixed, because it will still be there when renewal arrives.",
+          "Fair, and I won't pretend the work is not real. That is an argument for timing a move to renewal rather than mid-term. Scope now whether the thing frustrating you actually gets fixed, because it will still be there when renewal arrives.",
       },
       {
         objection: "Our current provider is cheaper.",
         counter:
-          "Could be, and I am not going to argue a number I cannot see. What is worth comparing is the whole structure — what sits inside the recurring fee, what arrives as a pass-through, how conversion is handled, and what security or deposit stands behind it. That is usually where two comparisons stop matching.",
+          "Could be, and I am not going to argue a number I cannot see. Compare the whole structure — what sits inside the recurring fee, what arrives as a pass-through, how conversion is handled, and what security or deposit stands behind it. That is usually where two comparisons stop matching.",
       },
       {
         objection: "Switching means re-papering every employee.",
@@ -135,7 +135,7 @@ export const SCENARIOS: Scenario[] = [
       "The accountant is often doing bookkeeping and statutory filing rather than payroll operations — no system of record, no worker self-service, no audit trail beyond email attachments.",
       "'We already have the entity' does not mean payroll can simply move. Registrations, filing authority, and sometimes a local signatory sit with whoever files today, and that has to be transferred deliberately.",
       "A mid-year cutover means part-year accumulations have to carry into the new system so year-end filings and the worker's payslips reconcile. The clean boundaries are the country's tax year, or at minimum a quarter end.",
-      "Some of those entities exist only because of one or two people. Unwinding one in favor of EOR is a live option worth naming — but a dormant entity keeps its filing obligations until it is formally closed.",
+      "Some of those entities exist only because of one or two people. Name the option of unwinding one in favor of EOR; a dormant entity keeps its filing obligations until it is formally closed.",
       "Payroll data currently lives in a bookkeeper's inbox. Moving it into a system is an improvement they often have not considered, and in some regions the transfer itself carries requirements.",
     ],
     objections: [
@@ -152,7 +152,7 @@ export const SCENARIOS: Scenario[] = [
       {
         objection: "Consolidating means cutting people we have relationships with.",
         counter:
-          "Not necessarily. Plenty of groups keep their local advisers for tax and statutory work and move only the payroll operation. Worth deciding which part of what they do is the part you actually value.",
+          "Not necessarily. Plenty of groups keep their local advisers for tax and statutory work and move only the payroll operation. Decide which part of what they do you actually value.",
       },
     ],
   },
@@ -172,14 +172,14 @@ export const SCENARIOS: Scenario[] = [
       "Partners relay the client's words without the facts behind them. Nobody has asked where the worker lives, whether they hold authorization to work there, or who employs them today.",
       "Asking the partner classification or risk questions directly gets a guess. Those go out as relay lines for the client; the partner's own questions are about structure, timing, and their platform.",
       "A partner who wants to hold the client contract is also taking on the client's obligations to us. A partner who refers avoids that but gives up the markup. Neither is wrong, and assuming which one they want is what stalls the paper.",
-      "If the client cannot be reached directly, the deal moves at the partner's cadence — worth agreeing early who asks the client what, and by when.",
+      "If the client cannot be reached directly, the deal moves at the partner's cadence. Agree early who asks the client what, and by when.",
     ],
     objections: [
       {
         objection:
           "Our client won't talk to a vendor directly. Everything goes through us.",
         counter:
-          "That works, and it means the questions have to be tight enough to relay without me in the room. What it costs is speed, because every clarification becomes a round trip. Worth agreeing which few answers you will get first so we do not spend a week scoping the wrong thing.",
+          "That works, and it means the questions have to be tight enough to relay without me in the room. What it costs is speed, because every clarification becomes a round trip. Agree which few answers you will get first so we do not spend a week scoping the wrong thing.",
       },
       {
         objection: "Just send me pricing and I'll take it from there.",
@@ -256,7 +256,7 @@ export const SCENARIOS: Scenario[] = [
       {
         objection: "Our counsel already says we're fine.",
         counter:
-          "They may well be right, and it is worth having that confirmed in writing country by country, because employment status abroad turns on local tests. If the review covered one country and you have people in three, the answer only covers one.",
+          "They may well be right, so have that confirmed in writing country by country, because employment status abroad turns on local tests. If the review covered one country and you have people in three, the answer only covers one.",
       },
       {
         objection: "If we change anything now, doesn't that admit there was a problem?",
@@ -281,7 +281,7 @@ export const SCENARIOS: Scenario[] = [
       "Nobody owns the whole picture, so the person describing it is describing their slice. The tell is 'I'd have to check' on headcount or on who files in a given country.",
       "Some of those vendors may resell the same underlying in-country provider, so consolidating removes fewer real relationships than the list suggests.",
       "Exit terms vary across the vendor set — auto-renewal dates, notice windows, data-return obligations — and one badly timed exit leaves a country paying two providers or none.",
-      "The consolidated view they want is sometimes reporting rather than payroll. Worth checking whether the real ask is one platform running payroll or one place to see it.",
+      "The consolidated view they want is sometimes reporting rather than payroll. Check whether the real ask is one platform running payroll or one place to see it.",
       "A phased plan needs a first country chosen for a reason: the loudest pain, the cleanest data, or the nearest contract exit. Letting them pick alphabetically wastes the pilot.",
     ],
     objections: [
@@ -299,7 +299,7 @@ export const SCENARIOS: Scenario[] = [
       {
         objection: "We tried consolidating before and it went badly.",
         counter:
-          "Then it is worth knowing exactly where it broke. Usually it is a cutover with no parallel run, or part-year accumulations that did not carry across. Both are avoidable with sequencing, and they are the questions I would want answered before we agreed a date.",
+          "Then find exactly where it broke. Usually it is a cutover with no parallel run, or part-year accumulations that did not carry across. Both are avoidable with sequencing, and they are the questions I would want answered before we agreed a date.",
       },
     ],
   },

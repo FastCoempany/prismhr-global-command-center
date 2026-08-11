@@ -42,10 +42,10 @@ export function DraftDesk({
     const res: DraftResult = await draftFollowUp(partner, recipient, pasted);
     if (res.ok) {
       setDraft(res.draft);
-      setNotice("Draft generated — edit below, then copy.");
+      setNotice("Draft generated. Edit below, then copy.");
     } else if (res.reason === "no-key") {
       setNotice(
-        "No ANTHROPIC_API_KEY configured — use “Copy prompt & open claude.ai” instead (your subscription does the writing), or add the key in Vercel to draft in-app.",
+        "No ANTHROPIC_API_KEY configured. Use “Copy prompt & open claude.ai” and your subscription does the writing, or add the key in Vercel to draft in-app.",
       );
     } else {
       setNotice(
@@ -62,9 +62,9 @@ export function DraftDesk({
       const prompt = await getFollowUpPrompt(partner, recipient, pasted);
       await navigator.clipboard.writeText(prompt);
       window.open("https://claude.ai/new", "_blank", "noopener");
-      setNotice("Prompt copied ✓ — paste it into the claude.ai tab that just opened.");
+      setNotice("Prompt copied ✓. Paste it into the claude.ai tab that just opened.");
     } catch {
-      setNotice("Couldn't copy the prompt — try again.");
+      setNotice("Couldn't copy the prompt. Try again.");
     }
     setBusy(null);
   };
@@ -72,7 +72,7 @@ export function DraftDesk({
   return (
     <details className={styles.desk}>
       <summary className={styles.deskSummary}>
-        ✍ Drafting desk — have Claude write the follow-up
+        ✍ Drafting desk. Have Claude write the follow-up.
       </summary>
       <div className={styles.deskBody}>
         <label className={styles.deskField}>
@@ -93,19 +93,19 @@ export function DraftDesk({
             <input
               value={customName}
               onChange={(e) => setCustomName(e.target.value)}
-              placeholder="Name (say who they are in the context box)"
+              placeholder="Name. Say who they are in the paste box."
               aria-label="Custom recipient"
             />
           )}
         </label>
 
         <label className={styles.deskField}>
-          <span>Paste anything (their reply, call notes — optional; unlimited)</span>
+          <span>Paste anything: their reply, call notes. Optional, unlimited.</span>
           <textarea
             value={pasted}
             onChange={(e) => setPasted(e.target.value)}
             rows={5}
-            placeholder="Fork 2: paste context here. Leave empty for Fork 1 — the draft builds from the app's to-date intel alone (thread, notes, research)."
+            placeholder="Paste context here, or leave it empty. An empty box drafts from the app's intel alone: thread, notes, research."
           />
         </label>
 

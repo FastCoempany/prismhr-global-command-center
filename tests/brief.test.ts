@@ -81,7 +81,7 @@ describe("buildMorningBrief rules", () => {
     const row = rows.find((r) => r.ruleId === "reply-waiting")!;
     assert.ok(row);
     assert.equal(row.weight, 100);
-    assert.match(row.text, /Bryce Rowley wrote yesterday — reply/);
+    assert.match(row.text, /Reply to Bryce Rowley\./);
     assert.equal(row.control.kind, "mailto");
   });
 
@@ -118,7 +118,7 @@ describe("buildMorningBrief rules", () => {
     const row = buildMorningBrief(inp).find((r) => r.ruleId === "meeting-ask")!;
     assert.ok(row);
     assert.equal(row.weight, 95);
-    assert.match(row.text, /Bill Laffey asked for times/);
+    assert.match(row.text, /Send Bill Laffey times\./);
     assert.match(row.control.href ?? "", /^mailto:/);
   });
 
@@ -131,7 +131,7 @@ describe("buildMorningBrief rules", () => {
     const row = buildMorningBrief(inp).find((r) => r.ruleId === "contract-chase")!;
     assert.ok(row);
     assert.equal(row.weight, 90);
-    assert.match(row.text, /chase signature/);
+    assert.match(row.text, /Chase the signature\./);
   });
 
   test("contract-chase stays quiet when they answered recently", () => {
@@ -155,7 +155,7 @@ describe("buildMorningBrief rules", () => {
     });
     const row = buildMorningBrief(near).find((r) => r.ruleId === "deadline-near")!;
     assert.ok(row);
-    assert.match(row.text, /what do they need in hand\?/);
+    assert.match(row.text, /List what they need in hand\./);
     assert.equal(row.control.kind, "copy");
     const far = input({
       intel: {
@@ -185,7 +185,7 @@ describe("buildMorningBrief rules", () => {
     const row = buildMorningBrief(inp).find((r) => r.ruleId === "owed-item")!;
     assert.ok(row);
     assert.equal(row.weight, 80);
-    assert.match(row.text, /you owe Bryce Rowley/);
+    assert.match(row.text, /Send Bryce Rowley what you promised\./);
   });
 
   test("suggested-checks summarizes pending board evidence", () => {
@@ -207,7 +207,7 @@ describe("buildMorningBrief rules", () => {
     });
     const row = buildMorningBrief(inp).find((r) => r.ruleId === "suggested-checks")!;
     assert.ok(row);
-    assert.match(row.text, /2 stage checks look satisfiable/);
+    assert.match(row.text, /Confirm .*stage checks\./);
     assert.equal(row.control.kind, "confirmCheck");
     assert.deepEqual(row.control.check, { cardId: "c1", node: "demo", idx: 3 });
   });
@@ -218,7 +218,7 @@ describe("buildMorningBrief rules", () => {
     });
     const row = buildMorningBrief(inp).find((r) => r.ruleId === "single-thread")!;
     assert.ok(row);
-    assert.match(row.text, /rides on Chassie alone/);
+    assert.match(row.text, /Widen the .* thread\./);
     assert.match(row.control.payload ?? "", /who else/);
   });
 

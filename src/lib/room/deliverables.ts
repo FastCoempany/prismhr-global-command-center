@@ -50,7 +50,7 @@ export function fallbackMove(body: string): string {
   const { text, fallback } = splitFallback(body);
   if (!fallback) return "";
   const what = text.replace(/\s+·\s+from\s.*$/i, "").trim();
-  return `${what} didn't land — go to the fallback: ${fallback}`;
+  return `${what} didn't land. Go to the fallback: ${fallback}`;
 }
 
 // Urgency a dated commitment deserves. Anything due inside two days is high,

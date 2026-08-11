@@ -88,7 +88,7 @@ export async function roomLog(
     refresh();
     return { ok: true, noteId: n.id, todoId: todoId ?? undefined };
   } catch {
-    return { ok: false, reason: "The note didn't save — try again." };
+    return { ok: false, reason: "The note didn't save. Try again." };
   }
 }
 
@@ -195,7 +195,7 @@ export async function roomPaste(
       const whole = redactMoney(cleanSfPaste(text));
       const body =
         whole.length > 6000
-          ? `[earlier portion trimmed — ${whole.length - 6000} characters]\n…${whole.slice(-6000)}`
+          ? `[earlier portion trimmed: ${whole.length - 6000} characters]\n…${whole.slice(-6000)}`
           : whole;
       if (!body)
         return { ok: false, filed: 0, how, reason: "Nothing recognizable to file." };
@@ -246,7 +246,7 @@ export async function roomPaste(
       ok: false,
       filed: 0,
       how,
-      reason: "Filing failed partway — check the account page.",
+      reason: "Filing failed partway. Check the account page.",
     };
   }
 }
@@ -442,12 +442,12 @@ export async function roomActionUndo(
     // Taking back a bad read is one thing; erasing work the operator has since
     // finished is another. Once it's done, the record owns it.
     if (t.done || splitTags(t.body).tags.doneAt)
-      return { ok: false, reason: "That one's already closed — undo it on the row." };
+      return { ok: false, reason: "That one's already closed. Undo it on the row." };
     await prisma.todo.delete({ where: { id } });
     refresh();
     return { ok: true };
   } catch {
-    return { ok: false, reason: "The undo didn't take — try again." };
+    return { ok: false, reason: "The undo didn't take. Try again." };
   }
 }
 
@@ -477,7 +477,7 @@ export async function roomClose(args: {
     refresh();
     return { ok: true };
   } catch {
-    return { ok: false, reason: "The close didn't save — try again." };
+    return { ok: false, reason: "The close didn't save. Try again." };
   }
 }
 
@@ -556,7 +556,7 @@ export async function roomCompose(
       todoId: t.id,
     };
   } catch {
-    return { ok: false, reason: "That didn't save — try again." };
+    return { ok: false, reason: "That didn't save. Try again." };
   }
 }
 
@@ -597,7 +597,7 @@ export async function roomUnlog(
     refresh();
     return { ok: true };
   } catch {
-    return { ok: false, reason: "The undo didn't take — try again." };
+    return { ok: false, reason: "The undo didn't take. Try again." };
   }
 }
 
@@ -627,7 +627,7 @@ export async function roomPasteUndo(
     refresh();
     return { ok: true, removed: r.count };
   } catch {
-    return { ok: false, removed: 0, reason: "The undo didn't take — try again." };
+    return { ok: false, removed: 0, reason: "The undo didn't take. Try again." };
   }
 }
 
@@ -672,7 +672,7 @@ async function closeCard(args: {
       await createAccountNoteRow({
         accountId: acct.id,
         kind: "account",
-        body: `✓ ${label} — the record's read, confirmed.${
+        body: `✓ ${label}. Confirmed by your call.${
           args.phrase ? ` The evidence: ${redactMoney(args.phrase).slice(0, 160)}` : ""
         }`,
         lane: "mine",
@@ -691,7 +691,7 @@ async function closeCard(args: {
     refresh();
     return { ok: true };
   } catch {
-    return { ok: false, reason: "That didn't save — try again." };
+    return { ok: false, reason: "That didn't save. Try again." };
   }
 }
 
@@ -738,7 +738,7 @@ export async function roomRetire(
     refresh();
     return { ok: true };
   } catch {
-    return { ok: false, reason: "That didn't save — try again." };
+    return { ok: false, reason: "That didn't save. Try again." };
   }
 }
 
@@ -769,7 +769,7 @@ export async function roomReopen(
     refresh();
     return { ok: true };
   } catch {
-    return { ok: false, reason: "That didn't save — try again." };
+    return { ok: false, reason: "That didn't save. Try again." };
   }
 }
 
@@ -784,7 +784,7 @@ export async function roomResearch(
   const acct = bindAccountId(accountId, peos);
   if (!acct) return { ok: false, reason: "That row isn't bound to a known account." };
   if (!researchAvailable())
-    return { ok: false, reason: "No API key configured — research is off." };
+    return { ok: false, reason: "No API key configured. Research is off." };
   if (!(await requireWrite())) return { ok: false, reason: "Read-only session." };
   const now = new Date();
   try {
@@ -827,7 +827,7 @@ export async function roomResearch(
       now,
     });
     if (!finding.summary && finding.signals.length === 0)
-      return { ok: false, reason: "The pass came back empty — try again in a moment." };
+      return { ok: false, reason: "The pass came back empty. Try again in a moment." };
 
     await createAccountNoteRow({
       accountId: researchNs(acct.id),
@@ -863,7 +863,7 @@ export async function roomResearch(
       summary: finding.summary.slice(0, 300),
     };
   } catch {
-    return { ok: false, reason: "The research pass didn't complete — try again." };
+    return { ok: false, reason: "The research pass didn't complete. Try again." };
   }
 }
 
@@ -878,7 +878,7 @@ export async function roomGapsRefill(
   const acct = bindAccountId(accountId, peos);
   if (!acct) return { ok: false, reason: "That row isn't bound to a known account." };
   if (!aiCleanAvailable())
-    return { ok: false, reason: "No API key configured — minting is off." };
+    return { ok: false, reason: "No API key configured. Minting is off." };
   if (!(await requireWrite())) return { ok: false, reason: "Read-only session." };
   try {
     const prisma = getPrisma();
@@ -964,7 +964,7 @@ export async function roomGapsRefill(
     refresh();
     return { ok: true, added: added.length };
   } catch {
-    return { ok: false, reason: "Minting didn't complete — try again." };
+    return { ok: false, reason: "Minting didn't complete. Try again." };
   }
 }
 
@@ -993,7 +993,7 @@ export async function roomGapDismiss(
     refresh();
     return { ok: true };
   } catch {
-    return { ok: false, reason: "That didn't save — try again." };
+    return { ok: false, reason: "That didn't save. Try again." };
   }
 }
 
@@ -1016,7 +1016,7 @@ export async function roomLossDismiss(
     refresh();
     return { ok: true };
   } catch {
-    return { ok: false, reason: "That didn't save — try again." };
+    return { ok: false, reason: "That didn't save. Try again." };
   }
 }
 
@@ -1059,7 +1059,7 @@ export async function roomOwedAccept(
     refresh();
     return { ok: true };
   } catch {
-    return { ok: false, reason: "That didn't save — try again." };
+    return { ok: false, reason: "That didn't save. Try again." };
   }
 }
 
@@ -1079,7 +1079,7 @@ export async function roomOwedDismiss(
     refresh();
     return { ok: true };
   } catch {
-    return { ok: false, reason: "That didn't save — try again." };
+    return { ok: false, reason: "That didn't save. Try again." };
   }
 }
 
@@ -1118,7 +1118,7 @@ export async function roomRecordEdit(
     refresh();
     return { ok: true };
   } catch {
-    return { ok: false, reason: "The edit didn't save — try again." };
+    return { ok: false, reason: "The edit didn't save. Try again." };
   }
 }
 
@@ -1149,7 +1149,7 @@ export async function roomRecordDelete(
     refresh();
     return { ok: true };
   } catch {
-    return { ok: false, reason: "The delete didn't take — try again." };
+    return { ok: false, reason: "The delete didn't take. Try again." };
   }
 }
 
@@ -1233,7 +1233,7 @@ export async function roomNoteToAction(
     refresh();
     return { ok: true };
   } catch {
-    return { ok: false, reason: "That didn't save — try again." };
+    return { ok: false, reason: "That didn't save. Try again." };
   }
 }
 
@@ -1328,6 +1328,6 @@ export async function roomTodoSet(
     refresh();
     return { ok: true };
   } catch {
-    return { ok: false, reason: "That didn't save — try again." };
+    return { ok: false, reason: "That didn't save. Try again." };
   }
 }

@@ -42,10 +42,10 @@ export default function GuidedDemoFlowPage() {
         <header className={styles.head}>
           <h1>PrismHR Global Guided Demo Flow</h1>
           <p className={styles.lede}>
-            Account-neutral curated flow ({flow.version}) — {flow.screens.length}{" "}
-            screens distilled from a recorded demo (Zoom recording + dense frame
-            review). Read-only reference: nothing on this page writes to the
-            database or the editable Sidekick catalog.
+            Account-neutral curated flow ({flow.version}) — {flow.screens.length} screens
+            distilled from a recorded demo (Zoom recording + dense frame review).
+            Read-only reference: nothing on this page writes to the database or the
+            editable Sidekick catalog.
           </p>
           <p className={styles.backLink}>
             <Link href="/sidekick">← Back to Demo Sidekick</Link>
@@ -83,9 +83,7 @@ export default function GuidedDemoFlowPage() {
 
               <div className={styles.block}>
                 <div className={styles.blockLabel}>Transcript anchor</div>
-                <blockquote className={styles.anchor}>
-                  {s.transcriptAnchor}
-                </blockquote>
+                <blockquote className={styles.anchor}>{s.transcriptAnchor}</blockquote>
               </div>
 
               <Text label="Say" text={s.say} />

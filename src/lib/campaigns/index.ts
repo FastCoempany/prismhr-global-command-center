@@ -37,13 +37,13 @@ export const KITS: CampaignKit[] = [
     subject: "{PEO} — quick global-hiring angle",
     body: `Hi {CSMfirst},
 
-Looking at {PEO}'s book I think there's a clean global-payroll angle worth a warm intro. Odds are a few of their {industry} clients are already hiring internationally or running contractors abroad — that's exactly where PrismHR Global fits: EOR, contractor compliance, and consolidated global payroll, all on the platform they already sit on.
+There's a clean global-payroll angle in {PEO}'s book. A few of their {industry} clients are already hiring internationally or running contractors abroad — that's exactly where PrismHR Global fits: EOR, contractor compliance, and consolidated global payroll, all on the platform they already sit on.
 
 Could you make a quick intro to the right person at {PEO}, or point me to them? I'll keep it low-key and lead with value, not a pitch.
 
 Thanks,
 Antaeus`,
-    ask: "Ask {CSM} for a warm intro to {PEO}",
+    ask: "Ask {CSM} to intro {PEO}",
     dueInDays: 3,
   },
   {
@@ -59,11 +59,11 @@ Antaeus`,
 
 When one of your SMB clients wants a developer in Poland or a contractor in Brazil, the usual blockers are entity setup, misclassification risk, and local payroll. PrismHR Global handles all of it as the employer of record and contractor-compliance layer — so it stays on your platform and your books, and you look like the hero.
 
-Worth 20 minutes to look at how it maps to {PEO}'s book?
+Do you have 20 minutes this week to map it to {PEO}'s book?
 
 Best,
 Antaeus`,
-    ask: "Email {contactFirst} at {PEO} the global-hiring value angle",
+    ask: "Email {contactFirst} the global-hiring angle",
     dueInDays: 4,
   },
   {
@@ -81,7 +81,7 @@ If you can point me to a couple — or forward a short note — I'll keep it con
 
 Appreciate it,
 Antaeus`,
-    ask: "Ask {PEO} for 2 client intros hiring internationally",
+    ask: "Ask {PEO} for two client intros",
     dueInDays: 5,
   },
   {
@@ -137,7 +137,7 @@ Proposed next step: pick one role/country to run as a pilot, and I'll send a sho
 
 Best,
 Antaeus`,
-    ask: "Send {contactFirst} the demo recap + pilot proposal",
+    ask: "Send {contactFirst} the recap and proposal",
     dueInDays: 2,
   },
 ];
@@ -173,4 +173,5 @@ export function kitsFor(stage: Stage, approach: Approach): CampaignKit[] {
   return KITS.filter((k) => k.stage === stage && allowed.includes(k.audience));
 }
 
-export const getKit = (id: string): CampaignKit | undefined => KITS.find((k) => k.id === id);
+export const getKit = (id: string): CampaignKit | undefined =>
+  KITS.find((k) => k.id === id);

@@ -60,7 +60,7 @@ export function AccountChipNotes({ notes }: { notes: ChipNote[] }) {
       <div className={styles.head}>
         <span className={styles.tag}>Record &amp; history</span>
         <span className={styles.count}>{notes.length}</span>
-        <span className={styles.hint}>notes, sends, and the work you closed — dated</span>
+        <span className={styles.hint}>notes, sends, and the work you closed, dated</span>
       </div>
       {notes.map((n) => (
         <NoteRow key={n.id} n={n} />
@@ -86,7 +86,7 @@ export function BackgroundIntel({ notes }: { notes: ChipNote[] }) {
         {open ? "▾" : "▸"} Background intel
         <span className={styles.count}>{notes.length}</span>
         <span className={styles.hint}>
-          case &amp; support traffic around this account — same stakeholders, other
+          case and support traffic around this account. Same stakeholders, other
           conversations
         </span>
       </button>
@@ -106,7 +106,7 @@ export function PeopleIndex({ people }: { people: PersonRow[] }) {
         <span className={styles.tag}>People</span>
         <span className={styles.count}>{people.length}</span>
         <span className={styles.hint}>
-          everyone in this account&apos;s traffic — your threads and the background
+          everyone in this account&apos;s traffic, your threads and the background
         </span>
       </div>
       {people.map((p) => (

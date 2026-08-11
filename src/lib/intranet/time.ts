@@ -122,7 +122,7 @@ export function readTime(
     if (Number.isFinite(age) && age > limit) {
       return {
         state: "aging",
-        line: `Said in ${fmt(claim.saidAt)} — worth confirming.`,
+        line: `Said in ${fmt(claim.saidAt)}. Confirm it.`,
       };
     }
   }

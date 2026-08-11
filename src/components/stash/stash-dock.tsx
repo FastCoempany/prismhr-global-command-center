@@ -388,7 +388,7 @@ export function StashDock() {
               onChange={(e) => setCompose(e.target.value)}
               onPaste={(e) => smartPaste(e, compose, setCompose)}
               rows={2}
-              placeholder="Quick note from anywhere — type, then route it…"
+              placeholder="Type a quick note, then route it."
               aria-label="Quick note"
             />
             {compose.trim() && (
@@ -432,7 +432,7 @@ export function StashDock() {
           </div>
           {count === 0 ? (
             <div className={styles.empty}>
-              Nothing waiting. Highlight text, right-click, or drag anything here — it
+              Nothing waiting. Highlight text, right-click, or drag anything here. It
               lands with a micro-note to sort into To-do, Follow-up, or Gap.
             </div>
           ) : (
@@ -498,7 +498,7 @@ export function StashDock() {
           )}
           {partners.length > 0 && (
             <div className={styles.partnerZone}>
-              <div className={styles.partnerZoneHead}>Partners — drop text on a name</div>
+              <div className={styles.partnerZoneHead}>Partners. Drop text on a name.</div>
               <div className={styles.partnerChips}>
                 {partners.map((p) => (
                   <span
@@ -518,9 +518,8 @@ export function StashDock() {
             </div>
           )}
           <div className={styles.panelFoot}>
-            Right-click routes on the spot. Highlight &amp; drag land here — saved until
-            you sort them. Anything routed to a partner shows on their outreach card on
-            Today.
+            Right-click routes on the spot. Highlight and drag land here, saved until you
+            sort them. Anything routed to a partner shows on their outreach card on Today.
           </div>
         </div>
       )}

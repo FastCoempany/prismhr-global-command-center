@@ -152,6 +152,18 @@
   color: var(--color-ink-soft);
   font-weight: 600;
 }
+.rowReason {
+  color: var(--color-ink-disabled);
+}
+/* The carryover mark — amber, because an unworked yesterday is a caution. */
+.carry {
+  font: 600 10px/1.4 var(--font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ds-amber);
+  margin-left: 6px;
+  white-space: nowrap;
+}
 .rowOwed {
   font: 600 11px/1.5 var(--font-mono);
   color: var(--ds-ink-quiet);
@@ -439,4 +451,234 @@
   padding: 20px 16px;
   font-size: 13.5px;
   color: var(--color-ink-soft);
+}
+
+/* ── The winged stage (CLAUDE.md, decided 2026-08-10) ──────────────────── */
+
+/* The instrument capsule — clock · date · weather · the working band. */
+.instr {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 8px 2px 10px;
+  border-bottom: 1px solid var(--color-line);
+  font: 600 11px/1.5 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-ink-disabled);
+  margin-bottom: 14px;
+}
+.instrDigits {
+  font-size: 15px;
+  letter-spacing: 0.04em;
+  color: var(--color-ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+.instrWx {
+  color: var(--color-ink-disabled);
+}
+.instrBand {
+  margin-left: auto;
+  color: var(--color-ink-soft);
+}
+
+/* The wings grid: done · stage · waiting. */
+.wings {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr) 200px;
+  align-items: start;
+  gap: 0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-bottom: 3px solid var(--ds-orange);
+  border-radius: 8px;
+  box-shadow: var(--shadow-raised);
+}
+.wing {
+  padding: 22px 16px;
+  font-size: 12.5px;
+  color: var(--color-ink-disabled);
+  align-self: stretch;
+}
+.wingL {
+  border-right: 1px solid var(--color-line);
+  text-align: left;
+}
+.wingR {
+  border-left: 1px solid var(--color-line);
+  text-align: right;
+}
+.wingKick {
+  font: 600 10px/1.4 var(--font-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-ink-faint, var(--color-ink-disabled));
+  display: block;
+  margin-bottom: 8px;
+}
+.wingItem {
+  display: block;
+  padding: 5px 0;
+  color: var(--color-ink-disabled);
+  text-decoration: none;
+}
+a.wingItem:hover .wingNm {
+  color: var(--color-ink);
+}
+.wingDone {
+  color: var(--color-ink-disabled);
+}
+.wingTick {
+  color: var(--ds-green);
+  font-weight: 700;
+}
+.wingTm {
+  font: 600 10.5px/1.4 var(--font-mono);
+  color: var(--ds-ink-quiet);
+}
+.wingNm {
+  font-weight: 600;
+}
+/* The wing's heat ladder rides ink opacity on the name… */
+.h3 {
+  color: var(--color-ink);
+}
+.h2 {
+  color: var(--color-ink-soft);
+}
+.h1 {
+  color: var(--color-ink-disabled);
+}
+/* …and an amber tick beside it: solid burns today, half is dated this
+   week, quiet ink keeps. */
+.tickHeat {
+  display: inline-block;
+  width: 4px;
+  height: 11px;
+  border-radius: 1px;
+  margin-left: 7px;
+  vertical-align: -1px;
+}
+.tick3 {
+  background: var(--ds-amber);
+}
+.tick2 {
+  background: color-mix(in srgb, var(--ds-amber) 45%, transparent);
+}
+.tick1 {
+  background: var(--color-line);
+}
+.wingWhy {
+  display: block;
+  font-size: 10.5px;
+  line-height: 1.35;
+  color: var(--color-ink-disabled);
+}
+.wingCarry {
+  font: 700 9.5px/1.4 var(--font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ds-amber);
+  cursor: help;
+}
+.wingFoot {
+  display: block;
+  margin-top: 10px;
+  font-size: 11px;
+  color: var(--ds-ink-quiet);
+}
+
+/* Center stage. */
+.stage {
+  padding: 46px 36px 36px;
+  text-align: center;
+  min-width: 0;
+}
+.stgCarry {
+  font: 700 10px/1.4 var(--font-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ds-amber);
+  display: block;
+  margin-bottom: 8px;
+  cursor: help;
+}
+.stgName {
+  font: 600 12px/1.5 var(--font-mono);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-ink-soft);
+}
+.stgName a {
+  color: inherit;
+  text-decoration: none;
+}
+.stgName a:hover {
+  color: var(--color-ink);
+}
+.stgAct {
+  font: 400 40px/1.12 var(--font-serif);
+  margin: 14px auto 10px;
+  max-width: 18ch;
+  text-wrap: balance;
+}
+.stgWhy {
+  font-size: 16px;
+  color: var(--color-ink-soft);
+  margin: 0;
+}
+.stgActs {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+  margin-top: 26px;
+  flex-wrap: wrap;
+}
+.btnQuiet {
+  background: none;
+  border: none;
+  color: var(--color-ink-disabled);
+  font-size: 13px;
+  padding: 7px 4px;
+  text-decoration: none;
+}
+.btnQuiet:hover {
+  color: var(--color-ink-soft);
+}
+.stgFile {
+  max-width: 620px;
+  margin: 22px auto 0;
+  text-align: left;
+  border-top: 1px dashed var(--color-line);
+  padding-top: 16px;
+}
+.stgClear {
+  font: 400 26px/1.3 var(--font-serif);
+  padding: 70px 20px;
+  color: var(--color-ink-soft);
+}
+
+/* The lower deck — the wire, the institutions, State of play. */
+.ldeck {
+  margin-top: 22px;
+}
+
+@media (max-width: 900px) {
+  .wings {
+    grid-template-columns: 1fr;
+  }
+  .wingL {
+    border-right: none;
+    border-bottom: 1px solid var(--color-line);
+  }
+  .wingR {
+    border-left: none;
+    border-top: 1px solid var(--color-line);
+    text-align: left;
+  }
+  .stgAct {
+    font-size: 30px;
+  }
 }

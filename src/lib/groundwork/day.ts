@@ -1,9 +1,13 @@
-// The Groundwork queue — the rail's brain. A pure weighted rule engine in the
-// morning-brief pattern: each rule reads one kind of evidence the rest of the
-// app already writes, emits a candidate row, and the strongest evidence per
-// account wins. Time bands come from the KIND of move a rule composes (a send,
-// a person touch, a session), never from a separate scheduler; the clock only
-// decides which band is "now". Build spec: docs/plans/groundwork-build-spec.md.
+// The Groundwork queue — the stage's brain. A pure weighted rule engine in
+// the morning-brief pattern: each rule reads one kind of evidence the rest of
+// the app already writes, emits a candidate row, and the strongest evidence
+// per account wins. Groundwork is outbound only (CLAUDE.md): every rule
+// starts motion the operator initiates today to build pipeline. Reactive
+// account motion — replies owed, decision windows, meeting prep — belongs to
+// the HomeRoom's own brain and never fires here. Row copy obeys the writing
+// canon: an imperative action line and a trigger reason line, six words or
+// fewer each, the deadline always in the reason and never in the action. A
+// move surfaced yesterday and left unworked comes back carrying that fact.
 
 import type { Peo } from "@/lib/book";
 import type { DealIntel } from "@/lib/intel/types";
@@ -11,18 +15,18 @@ import { compositeScore, deskScore } from "@/lib/book/scoring";
 import { getDemand, researchGeneratedAt, DEMAND_GATE } from "@/lib/book/research";
 import { proximityRank } from "./proximity";
 import { intentFor, ridingLaneDate, type IntentSignal } from "./signals";
-import { USER_TZ } from "@/lib/tz";
+import { USER_TZ, userDayKey } from "@/lib/tz";
 
 export type Band = "now" | "eleven" | "two";
 
 export type QueueRuleId =
-  | "decision-window"
-  | "reply-owed"
-  | "meeting-prep"
+  | "wire-trigger"
   | "intent-warm"
   | "riding-lane"
+  | "silence-bump"
   | "roundup-slot"
   | "stale-above-gate"
+  | "cold-revival"
   | "stakeholder-gap"
   | "never-touched-incumbent";
 
@@ -32,12 +36,24 @@ export type QueueItem = {
   ruleId: QueueRuleId;
   weight: number;
   band: Band;
-  situation: string; // the row's plain-language line (§3 voice)
+  action: string; // the imperative line — do this today, six words or fewer
+  reason: string; // the trigger — a date, a promise, an unanswered message
   owed: string; // the mono column — the composed thing's readiness label
+  carried: boolean; // surfaced yesterday, left unworked
   intent: IntentSignal | null;
 };
 
 export const QUEUE_CAP = 6;
+
+// The silence-bump cadence: a first touch left unanswered gets its second
+// touch after BUMP_QUIET_DAYS; past REVIVAL_QUIET_DAYS the thread is cold and
+// the move becomes a deliberate re-open instead of a bump.
+export const BUMP_QUIET_DAYS = 7;
+export const REVIVAL_QUIET_DAYS = 45;
+
+// A wire hit older than this no longer justifies a news note — the trigger
+// is perishable by design.
+export const WIRE_FRESH_DAYS = 5;
 
 type NoteLike = { body: string; source: string; createdAt: string };
 type TouchLike = {
@@ -46,33 +62,30 @@ type TouchLike = {
   followUpAt: string;
   status: string;
 };
-type TodoLike = {
-  accountId?: string | null;
-  remindAt?: string | null;
-  done?: boolean;
-};
 
 export type QueueInput = {
   accounts: Peo[];
   intelById: Map<string, DealIntel>; // present only for accounts with a corpus
   notesById: Map<string, NoteLike[]>; // newest first, real accounts only
   touches: TouchLike[];
-  todos: TodoLike[];
   contactCountById: (id: string) => number;
+  wireAtById?: Map<string, string>; // newest matched wire item per account, ISO
+  researchAtById?: Map<string, string>; // newest deep-research note per account, ISO
+  doneKeys?: Set<string>; // raw done-stamp keys, for the carryover read
   now: Date;
 };
 
 const DAY = 86_400_000;
 
-const daysUntil = (iso: string, now: Date) =>
-  (Date.parse(`${iso}T12:00:00Z`) - now.getTime()) / DAY;
-
+// A date in prose, day-only or full ISO — month name spelled out.
 const monthDay = (iso: string) => {
-  const t = Date.parse(`${iso}T12:00:00Z`);
+  const dayOnly = iso.length === 10;
+  const t = Date.parse(dayOnly ? `${iso}T12:00:00Z` : iso);
+  if (Number.isNaN(t)) return "";
   return new Date(t).toLocaleDateString("en-US", {
     month: "long",
     day: "numeric",
-    timeZone: "UTC",
+    timeZone: dayOnly ? "UTC" : USER_TZ,
   });
 };
 
@@ -89,35 +102,53 @@ export function currentBand(now: Date): Band {
 }
 
 const BAND_OF: Record<QueueRuleId, Band> = {
-  "decision-window": "now",
-  "reply-owed": "now",
-  "meeting-prep": "now",
+  "wire-trigger": "now",
+  "silence-bump": "now",
   "riding-lane": "now",
   "intent-warm": "eleven",
   "roundup-slot": "eleven",
   "never-touched-incumbent": "eleven",
+  "cold-revival": "eleven",
   "stale-above-gate": "two",
   "stakeholder-gap": "two",
 };
+
+// The wing's heat ladder: 3 burns today (a perishable signal or a carried
+// move), 2 is dated inside the week (a cadence day, a closing lane, a due
+// update), 1 keeps until worked.
+const HEAT_OF: Record<QueueRuleId, 1 | 2 | 3> = {
+  "wire-trigger": 3,
+  "intent-warm": 3,
+  "riding-lane": 2,
+  "silence-bump": 2,
+  "roundup-slot": 2,
+  "stale-above-gate": 1,
+  "cold-revival": 1,
+  "stakeholder-gap": 1,
+  "never-touched-incumbent": 1,
+};
+
+export function heatOf(item: Pick<QueueItem, "ruleId" | "carried">): 1 | 2 | 3 {
+  return item.carried ? 3 : HEAT_OF[item.ruleId];
+}
 
 export function moveKey(item: Pick<QueueItem, "accountId" | "ruleId">): string {
   return `${item.accountId}:${item.ruleId}`;
 }
 
-// Research staleness in days against the corpus stamp. The corpus carries one
-// generatedAt for the whole book; per-account passes land as research: notes
-// and would refresh intel, not this stamp.
-function researchAgeDays(now: Date): number {
-  const t = Date.parse(researchGeneratedAt);
+// Research staleness in days: the per-account deep-research note when one
+// exists, else the corpus's one book-wide stamp.
+function researchAgeDays(inp: QueueInput, accountId: string, now: Date): number {
+  const perAccount = inp.researchAtById?.get(accountId);
+  const t = Date.parse(perAccount ?? researchGeneratedAt);
   if (Number.isNaN(t)) return Infinity;
   return (now.getTime() - t) / DAY;
 }
 
-export function buildQueue(inp: QueueInput): {
-  items: QueueItem[];
-  overflow: number;
-  all: QueueItem[]; // the full ranked list, uncapped — the readout counts from this
-} {
+// The full ranked list for one day — the pure heart buildQueue calls twice:
+// once for today, once for yesterday, so the carryover read stays derived and
+// nothing is stored.
+function rankAll(inp: QueueInput, now: Date): QueueItem[] {
   const candidates: QueueItem[] = [];
   const touchesByAccount = new Map<string, TouchLike[]>();
   for (const t of inp.touches) {
@@ -133,74 +164,31 @@ export function buildQueue(inp: QueueInput): {
     if (m) outreachByPartner.set(m[1], t);
   }
 
-  const researchAge = researchAgeDays(inp.now);
-
   for (const p of inp.accounts) {
     const notes = inp.notesById.get(p.id);
-    const intel = inp.intelById.get(p.id);
-    const intent = intentFor(notes, inp.now);
+    const intent = intentFor(notes, now);
     const acctTouches = touchesByAccount.get(p.id) ?? [];
     const hasActivity = (notes?.length ?? 0) > 0 || acctTouches.length > 0;
 
-    // decision-window (95): a dated decision inside 7 days.
-    const dateIso = intel?.timing?.value.dateIso;
-    if (dateIso) {
-      const dd = daysUntil(dateIso, inp.now);
-      if (dd >= -1 && dd <= 7) {
+    // wire-trigger (88): the wire filed news matched to this account inside
+    // the fresh window — event-led outreach, direct.
+    const wireAt = inp.wireAtById?.get(p.id);
+    if (wireAt) {
+      const age = (now.getTime() - Date.parse(wireAt)) / DAY;
+      if (age >= 0 && age <= WIRE_FRESH_DAYS) {
         candidates.push({
           accountId: p.id,
           name: p.name,
-          ruleId: "decision-window",
-          weight: 95,
-          band: BAND_OF["decision-window"],
-          situation: `their decision lands ${monthDay(dateIso)} — what you owe them goes first`,
+          ruleId: "wire-trigger",
+          weight: 88,
+          band: BAND_OF["wire-trigger"],
+          action: "Send the note about the news.",
+          reason: `They made the wire ${monthDay(wireAt)}.`,
           owed: "draft composed",
+          carried: false,
           intent,
         });
       }
-    }
-
-    // reply-owed (90): their message is the newest thing on a live thread.
-    if (
-      intel?.lastInbound &&
-      (!intel.lastOutbound || intel.lastInbound > intel.lastOutbound) &&
-      (inp.now.getTime() - Date.parse(intel.lastInbound)) / DAY <= 21
-    ) {
-      candidates.push({
-        accountId: p.id,
-        name: p.name,
-        ruleId: "reply-owed",
-        weight: 90,
-        band: BAND_OF["reply-owed"],
-        situation: "their message is the newest thing between you — answer first",
-        owed: "reply owed",
-        intent,
-      });
-    }
-
-    // meeting-prep (85): a dated follow-up or reminder inside 48 hours.
-    const soon = (iso: string | null | undefined) => {
-      if (!iso) return false;
-      const dd = (Date.parse(iso) - inp.now.getTime()) / DAY;
-      return dd >= -0.5 && dd <= 2;
-    };
-    if (
-      acctTouches.some(
-        (t) =>
-          (t.status === "awaiting" || t.status === "responded") && soon(t.followUpAt),
-      ) ||
-      inp.todos.some((t) => !t.done && t.accountId === p.id && soon(t.remindAt))
-    ) {
-      candidates.push({
-        accountId: p.id,
-        name: p.name,
-        ruleId: "meeting-prep",
-        weight: 85,
-        band: BAND_OF["meeting-prep"],
-        situation: "a dated follow-up lands inside 48 hours — walk in prepared",
-        owed: "prep composed",
-        intent,
-      });
     }
 
     // intent-warm (80): a fresh High reading from the pasted grab.
@@ -211,15 +199,18 @@ export function buildQueue(inp: QueueInput): {
         ruleId: "intent-warm",
         weight: 80,
         band: BAND_OF["intent-warm"],
-        situation: "their people are reading us — warm rooms cool",
+        action: "Send the reading-us note.",
+        reason: "Their people are reading us.",
         owed: "note ready",
+        carried: false,
         intent,
       });
     }
 
     // riding-lane (75): a colleague's CRM conversation dated inside 14 days,
-    // visible in the pasted grab rows.
-    const lane = ridingLaneDate(notes, inp.now);
+    // visible in the pasted grab rows. One door of two, per the direct
+    // doctrine — ride when it is faster, go direct when it is not.
+    const lane = ridingLaneDate(notes, now);
     if (lane) {
       candidates.push({
         accountId: p.id,
@@ -227,13 +218,58 @@ export function buildQueue(inp: QueueInput): {
         ruleId: "riding-lane",
         weight: 75,
         band: BAND_OF["riding-lane"],
-        situation: `a colleague's Salesforce opportunity there closes ${monthDay(lane)} — ride it, never around it`,
+        action: "Ask to be carried in.",
+        reason: `Their opportunity closes ${monthDay(lane)}.`,
         owed: "ask composed",
+        carried: false,
         intent,
       });
     }
 
+    // silence-bump (72) and cold-revival (60): the drumbeat on open outbound
+    // threads. A first touch awaiting a reply gets its second touch on the
+    // cadence day; a thread quiet past the cold line gets one deliberate
+    // re-open with something new to say.
+    const newestTouch = acctTouches
+      .slice()
+      .sort((a, b) => b.contactedAt.localeCompare(a.contactedAt))[0];
+    if (newestTouch) {
+      const quiet = (now.getTime() - Date.parse(newestTouch.contactedAt)) / DAY;
+      if (
+        newestTouch.status === "awaiting" &&
+        quiet >= BUMP_QUIET_DAYS &&
+        quiet < REVIVAL_QUIET_DAYS
+      ) {
+        candidates.push({
+          accountId: p.id,
+          name: p.name,
+          ruleId: "silence-bump",
+          weight: 72,
+          band: BAND_OF["silence-bump"],
+          action: "Send the second touch.",
+          reason: `No reply since ${monthDay(newestTouch.contactedAt)}.`,
+          owed: "draft composed",
+          carried: false,
+          intent,
+        });
+      } else if (quiet >= REVIVAL_QUIET_DAYS) {
+        candidates.push({
+          accountId: p.id,
+          name: p.name,
+          ruleId: "cold-revival",
+          weight: 60,
+          band: BAND_OF["cold-revival"],
+          action: "Revive the thread.",
+          reason: `Quiet since ${monthDay(newestTouch.contactedAt)}.`,
+          owed: "draft composed",
+          carried: false,
+          intent,
+        });
+      }
+    }
+
     // stale-above-gate (65): real demand, research old.
+    const researchAge = researchAgeDays(inp, p.id, now);
     const demand = getDemand(p.id);
     if (
       (demand?.demandScore ?? 0) >= DEMAND_GATE &&
@@ -246,8 +282,10 @@ export function buildQueue(inp: QueueInput): {
         ruleId: "stale-above-gate",
         weight: 65,
         band: BAND_OF["stale-above-gate"],
-        situation: `real demand on file, research ${Math.floor(researchAge)} days old — refresh before anyone calls`,
+        action: "Refresh the account research.",
+        reason: `Real demand. Research ${Math.floor(researchAge)} days old.`,
         owed: "recipe ready",
+        carried: false,
         intent,
       });
     }
@@ -260,13 +298,19 @@ export function buildQueue(inp: QueueInput): {
         ruleId: "stakeholder-gap",
         weight: 55,
         band: BAND_OF["stakeholder-gap"],
-        situation: `the book knows ${inp.contactCountById(p.id) === 0 ? "no one" : "one person"} here — the session that fixes it is composed`,
+        action: "Find a second name.",
+        reason:
+          inp.contactCountById(p.id) === 0
+            ? "The book knows no one."
+            : "One person carries everything.",
         owed: "recipe ready",
+        carried: false,
         intent,
       });
     }
 
     // never-touched-incumbent (50): on the platform, high fit, never worked.
+    // The backbone rule of the direct era: the first conversation, direct.
     const desk = deskScore(p);
     if (desk.incumbent && p.fitTier === "high" && !hasActivity) {
       candidates.push({
@@ -275,16 +319,18 @@ export function buildQueue(inp: QueueInput): {
         ruleId: "never-touched-incumbent",
         weight: 50,
         band: BAND_OF["never-touched-incumbent"],
-        situation:
-          "already on our platform, never introduced to Global — the cheapest conversation in the book",
-        owed: "roundup slot",
+        action: "Open the first conversation.",
+        reason: "On our platform. Never introduced.",
+        owed: "draft composed",
+        carried: false,
         intent,
       });
     }
   }
 
   // roundup-slot (70): a partner manager's update rhythm has lapsed — their
-  // roster's best-fit account takes the slot.
+  // roster's best-fit account takes the slot. The CSM door, chosen when it
+  // is the fastest one, never the toll.
   const byId = new Map(inp.accounts.map((p) => [p.id, p]));
   const rosterBest = new Map<string, { id: string; score: number }>();
   for (const p of inp.accounts) {
@@ -305,20 +351,22 @@ export function buildQueue(inp: QueueInput): {
     const t = outreachByPartner.get(csm);
     const due =
       !t ||
-      (t.status === "archived" &&
-        (inp.now.getTime() - Date.parse(t.contactedAt)) / DAY >= 2);
+      (t.status === "archived" && (now.getTime() - Date.parse(t.contactedAt)) / DAY >= 2);
     if (!due) continue;
     const p = byId.get(best.id);
     if (!p) continue;
+    const csmFirst = csm.split(" ")[0];
     candidates.push({
       accountId: p.id,
       name: p.name,
       ruleId: "roundup-slot",
       weight: 70,
       band: BAND_OF["roundup-slot"],
-      situation: `${csm}'s account update is due — this is the strongest fit on their list, briefed first`,
-      owed: `note to ${csm.split(" ")[0]} ready`,
-      intent: intentFor(inp.notesById.get(p.id), inp.now),
+      action: `Brief ${csmFirst}.`,
+      reason: `${csmFirst}'s update is due.`,
+      owed: `note to ${csmFirst} ready`,
+      carried: false,
+      intent: intentFor(inp.notesById.get(p.id), now),
     });
   }
 
@@ -335,7 +383,7 @@ export function buildQueue(inp: QueueInput): {
     return compositeScore(deskScore(p).score, d?.demandScore ?? null, d?.confidence)
       .score;
   };
-  const items = [...bestByAccount.values()].sort((a, b) => {
+  return [...bestByAccount.values()].sort((a, b) => {
     if (b.weight !== a.weight) return b.weight - a.weight;
     const cb = compOf(b.accountId) - compOf(a.accountId);
     if (cb !== 0) return cb;
@@ -343,10 +391,35 @@ export function buildQueue(inp: QueueInput): {
     const pb = byId.get(b.accountId);
     return (pa ? proximityRank(pa) : 3) - (pb ? proximityRank(pb) : 3);
   });
+}
+
+export function buildQueue(inp: QueueInput): {
+  items: QueueItem[];
+  overflow: number;
+  all: QueueItem[]; // the full ranked list, uncapped — the readout counts from this
+} {
+  const ranked = rankAll(inp, inp.now);
+
+  // The carryover read (canon: yesterday carries). A move that was on
+  // yesterday's visible queue and never got its done stamp returns marked —
+  // derived by re-ranking as of yesterday, never stored.
+  const yesterday = new Date(inp.now.getTime() - DAY);
+  const yesterKey = userDayKey(yesterday);
+  const shownYesterday = new Set(
+    rankAll(inp, yesterday)
+      .slice(0, QUEUE_CAP)
+      .map((q) => moveKey(q)),
+  );
+  const done = inp.doneKeys ?? new Set<string>();
+  const all = ranked.map((q) => {
+    const mk = moveKey(q);
+    const carried = shownYesterday.has(mk) && !done.has(`groundwork:${yesterKey}:${mk}`);
+    return carried ? { ...q, carried } : q;
+  });
 
   return {
-    items: items.slice(0, QUEUE_CAP),
-    overflow: Math.max(0, items.length - QUEUE_CAP),
-    all: items,
+    items: all.slice(0, QUEUE_CAP),
+    overflow: Math.max(0, all.length - QUEUE_CAP),
+    all,
   };
 }

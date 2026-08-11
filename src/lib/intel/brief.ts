@@ -47,6 +47,18 @@ export type BriefInput = {
 const DAY = 86_400_000;
 
 // Weekday count between two instants (UTC-day granularity, endpoints open).
+
+// A date in prose — month name spelled out, day-only ISO read at UTC noon.
+function monthDayOf(iso: string): string {
+  const t = Date.parse(iso.length === 10 ? `${iso}T12:00:00Z` : iso);
+  if (Number.isNaN(t)) return "";
+  return new Date(t).toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    timeZone: "UTC",
+  });
+}
+
 export function businessDaysBetween(fromIso: string, to: Date): number {
   const from = Date.parse(fromIso);
   if (Number.isNaN(from) || from >= to.getTime()) return 0;
@@ -60,11 +72,6 @@ export function businessDaysBetween(fromIso: string, to: Date): number {
 
 const isLive = (card: BriefCard) =>
   Object.values(card.states).some((s) => s === "active");
-
-const agoWord = (iso: string, now: Date): string => {
-  const d = Math.max(0, Math.floor((now.getTime() - Date.parse(iso)) / DAY));
-  return d === 0 ? "today" : d === 1 ? "yesterday" : `${d}d ago`;
-};
 
 const relay = (id: string): string => DISCOVERY.find((q) => q.id === id)?.relayLine ?? "";
 
@@ -108,8 +115,8 @@ export function buildMorningBrief(inp: BriefInput): BriefRow[] {
         ruleId: "reply-waiting",
         subjectId: card.id,
         icon: "send",
-        text: `${person} wrote ${agoWord(intel.lastInbound, inp.now)} — reply`,
-        why: `${card.name}: their message is the newest thing on the thread`,
+        text: `Reply to ${person}.`,
+        why: `${card.name}: unanswered since ${monthDayOf(intel.lastInbound)}.`,
         control: {
           kind: "mailto",
           href: `mailto:?subject=${encodeURIComponent(`Re: ${card.name}`)}`,
@@ -125,8 +132,8 @@ export function buildMorningBrief(inp: BriefInput): BriefRow[] {
         ruleId: "meeting-ask",
         subjectId: card.id,
         icon: "send",
-        text: `${person} asked for times — send them`,
-        why: `${card.name}: times-ask spotted in the latest inbound (${latestInbound.src})`,
+        text: `Send ${person} times.`,
+        why: `${card.name}: they asked for times.`,
         control: {
           kind: "mailto",
           href: `mailto:?subject=${encodeURIComponent(`Times for a call — ${card.name}`)}&body=${encodeURIComponent(
@@ -144,16 +151,12 @@ export function buildMorningBrief(inp: BriefInput): BriefRow[] {
         ? true
         : businessDaysBetween(intel.lastInbound, inp.now) >= 2;
       if (paper && quiet) {
-        const n = Math.max(
-          1,
-          Math.floor((inp.now.getTime() - Date.parse(paper.at)) / DAY),
-        );
         add({
           ruleId: "contract-chase",
           subjectId: card.id,
           icon: "owed",
-          text: `contracts out ${n}d — chase signature`,
-          why: `${card.name}: ${paper.src} shows paper moving, nothing inbound since`,
+          text: `Chase the signature.`,
+          why: `${card.name}: contracts out since ${monthDayOf(paper.at)}, nothing signed.`,
           control: {
             kind: "sflog",
             href:
@@ -178,11 +181,11 @@ export function buildMorningBrief(inp: BriefInput): BriefRow[] {
           ruleId: "deadline-near",
           subjectId: card.id,
           icon: "decide",
-          text: `${card.name}: ${intel.timing.value.phrase} on ${intel.timing.value.dateIso.slice(5)} — what do they need in hand?`,
-          why: `timing sourced from ${intel.timing.src}`,
+          text: `List what they need in hand.`,
+          why: `${intel.timing.value.phrase}, ${monthDayOf(intel.timing.value.dateIso)}.`,
           control: {
             kind: "copy",
-            payload: `Before ${card.name}'s ${intel.timing.value.phrase} (${intel.timing.value.dateIso}): list what they need in hand from us — documents, answers, approvals — and what we're still owed from them.`,
+            payload: `List what ${card.name} needs from us for the ${intel.timing.value.phrase}, and what they still owe us.`,
           },
           weight: 85,
         });
@@ -205,8 +208,8 @@ export function buildMorningBrief(inp: BriefInput): BriefRow[] {
           ruleId: "owed-item",
           subjectId: card.id,
           icon: "owed",
-          text: `you owe ${person}: “${thing}…”`,
-          why: `${card.name}: promised in ${latestOutbound.src}, no outbound since`,
+          text: `Send ${person} what you promised.`,
+          why: `${card.name}: you promised “${thing}”.`,
           control: {
             kind: "mailto",
             href: `mailto:?subject=${encodeURIComponent(`Following through — ${card.name}`)}`,
@@ -222,7 +225,7 @@ export function buildMorningBrief(inp: BriefInput): BriefRow[] {
         ruleId: "suggested-checks",
         subjectId: card.id,
         icon: "check",
-        text: `${card.name}: ${sugg.length} stage check${sugg.length === 1 ? "" : "s"} look satisfiable — confirm`,
+        text: `Confirm ${card.name}'s stage checks.`,
         why: sugg.map((s) => s.reason).join(" · "),
         control: {
           kind: "confirmCheck",
@@ -239,8 +242,8 @@ export function buildMorningBrief(inp: BriefInput): BriefRow[] {
         ruleId: "single-thread",
         subjectId: card.id,
         icon: "note",
-        text: `${card.name} rides on ${intel.threads.people[0]} alone — widen the thread`,
-        why: "one-thread deals stall when that person goes quiet",
+        text: `Widen the ${card.name} thread.`,
+        why: "Only ${intel.threads.people[0]} carries this deal.",
         control: { kind: "copy", payload: relay("mt-exec") },
         weight: 50,
       });
@@ -254,8 +257,8 @@ export function buildMorningBrief(inp: BriefInput): BriefRow[] {
           ruleId: "stale-deal",
           subjectId: card.id,
           icon: "check",
-          text: `${card.name} quiet ${newest ? businessDaysBetween(newest.at, inp.now) : 5}+ business days — check in`,
-          why: newest ? `last movement ${newest.src}` : "no corpus yet",
+          text: `Check in with ${card.name}.`,
+          why: newest ? `Quiet since ${monthDayOf(newest.at)}.` : "no corpus yet",
           control: {
             kind: "mailto",
             href: `mailto:?subject=${encodeURIComponent(`Checking in — ${card.name}`)}&body=${encodeURIComponent(relay("fp-status"))}`,

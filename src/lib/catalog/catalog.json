@@ -319,7 +319,7 @@
         "Reimbursement Details (row drilldown, e.g. Pablo Contractorplus)",
         "Import Distribution data",
         "Add one-time distribution",
-        "Approve $58,579.23 USD (submits approval)"
+        "Approve the pay-period total (submits approval)"
       ],
       "tags": [
         "pay-periods",
@@ -336,8 +336,7 @@
         {
           "name": "Approve action",
           "actions": [
-            "Approve $58",
-            "579.23 USD"
+            "Approve total"
           ]
         },
         {
@@ -421,9 +420,9 @@
       ],
       "what": "The full approval view for a monthly pay period, itemizing every payment component — additional allowances, one-time payments, hourly and fixed-rate wages, and reimbursements — behind a single \"Approve\" action for the whole run's total.",
       "capabilities": [
-        "One approvable total (\"Approve $58,579.23 USD\") covering an entire pay period in a single action",
+        "One approvable total covering an entire pay period in a single action",
         "Distinct itemized sections: Additional Payments (allowances), One time Payments (bonuses), Hourly Workers (rate x hours), Fixed Rate Workers (monthly rate, with proration noted, e.g. \"prorated from starting date Jun 15, 2026\"), and Reimbursements",
-        "Line items across many currencies (USD, CAD, GBP, EGP) shown natively, including a one-time Equipment payment ($200.00) flowing in from the Add One-Time Payment flow",
+        "Line items across many currencies (USD, CAD, GBP, EGP) shown natively, including a one-time Equipment payment flowing in from the Add One-Time Payment flow",
         "**Detailed Currency View** overlay that rolls native amounts into a global total with an approximate USD conversion, flagged as an FX estimate that may fluctuate",
         "Per-row **Reimbursement Details** drilldown (amount, status, requester, expense date, description)",
         "\"Import Distribution data\" and \"Add one-time distribution\" to adjust the run before approving"
@@ -497,7 +496,7 @@
           ]
         }
       ],
-      "what": "The status detail for a single pay period, showing its key dates and lifecycle stage (here, \"Pending Approval\") with the Approve, Invoice, and Distribute steps.",
+      "what": "The status detail for a single pay period, showing its key dates and lifecycle stage (here, \"Pending Approval\") with Approve, Invoice, and Distribute in order.",
       "capabilities": [
         "Key dates for the period: Pay Period Id, Target Distribution Date, Required Approval Date, and Anticipated Invoice Date",
         "The pay period lifecycle exposed as ordered actions: **Approve → Invoice → Distribute**",
@@ -1116,15 +1115,15 @@
       "capabilities": [
         "Optional benefits toggle (Yes / No) — \"Do you want to offer private supplemental benefits?",
         "Three priced tiers, each with coverage and a plan link (SafetyWing):",
-        "**Standard** — from $130/month — Inpatient Treatments, Outpatient Cover, Dental & Vision Cover",
-        "**Premium** (MOST POPULAR) — from $210/month — Inpatient Treatments, Outpatient Cover,",
-        "**Premium + Maternity** — from $260/month — the Premium coverage plus Maternity and Newborn Cover",
+        "**Standard** — the entry tier — Inpatient Treatments, Outpatient Cover, Dental & Vision Cover",
+        "**Premium** (MOST POPULAR) — the middle tier — Inpatient Treatments, Outpatient Cover,",
+        "**Premium + Maternity** — the top tier — the Premium coverage plus Maternity and Newborn Cover",
         "Pricing disclaimer on each tier: \"*Priced for ages 18-39\"",
         "Per-tier select actions (Select Standard / Premium / Premium+); selecting a tier marks it chosen"
       ],
       "sp": [
         "Supplemental benefits are a packaged, priced add-on attached to any global hire in one click —",
-        "Transparent per-tier monthly pricing (`$130`, `$210`, `$260`) lets the global offering be"
+        "Transparent per-tier monthly pricing lets the global offering be"
       ],
       "de": [
         "Competitive private coverage (medical, dental, vision, maternity) comes as three clear tiers —",
@@ -1195,7 +1194,7 @@
         "Single review surface consolidating every prior step:",
         "**Employee Info:** name, email, nationality, working country (e.g. nationality Mexico,",
         "**Job Info:** job title, seniority, description, sub-department, direct manager, start date",
-        "**Compensation:** compensation type, contract amount (e.g. $2,000.00 per month), employment",
+        "**Compensation:** compensation type, a monthly contract amount, employment",
         "**Equipment:** policy (e.g. Yes (Reimbursed))",
         "**Benefits:** benefit package (e.g. Premium)",
         "Submit routes the offer to **PrismHR for approval** (the EOR/backer handles the compliant"
@@ -2086,10 +2085,10 @@
       ],
       "what": "Step 05 of the Payroll wizard: a **single review** of the whole hire — titled \"Submit Offer Letter to {approver} for Approval\" — before **Onboard Employee** commits it.",
       "capabilities": [
-        "Consolidated read-only summary across all prior steps:",
+        "Consolidated read-only summary of the whole wizard:",
         "**Employee Info**: Name (Antaeus Coe), Email, Nationality (Canada - Nova Scotia),",
         "**Job Info**: Job title (Engineer), Seniority (Senior), Description, Sub-department,",
-        "**Compensation**: type (Salary), Contract amount ($3,500.00 per month), Employment",
+        "**Compensation**: type (Salary), a monthly contract amount, Employment",
         "Header frames the submission as **\"Submit Offer Letter to {approver} for Approval\"** —",
         "Confirms the attached agreement (\"Employment agreement uploaded successfully\")",
         "**Onboard Employee** commits the hire and hands off to the worker invite"
@@ -2213,7 +2212,7 @@
       "what": "The terminal **Success!** screen of the Payroll new-hire path, confirming the hire and laying out exactly what the platform does next.",
       "capabilities": [
         "Explicit \"**Success!**\" confirmation that the payroll hire is complete",
-        "**\"Here's what happens next\"** steps:",
+        "**\"Here's what happens next\"** sequence:",
         "**Invitation to Join PrismHR** — \"The employee will receive an invitation to join the PrismHR platform.\"",
         "**Employee Information** — \"Once the employee completes their profile, they can start receiving payments.\"",
         "Reassurance (\"We'll keep you updated every step of the way\") and a **Contact us** support link",
@@ -2229,7 +2228,7 @@
       ],
       "branching": [
         "**If** the demo is showing the end-to-end motion **then** land here to prove the hire is complete, then click **Go to Dashboard** to return to the approvals home.",
-        "**If** the client worries about follow-up work **then** point at the two \"what happens next\" steps as the guaranteed, hands-off path to a paid worker."
+        "**If** the client worries about follow-up work **then** point at the \"what happens next\" sequence as the guaranteed, hands-off path to a paid worker."
       ],
       "say": "\"Done. From here the platform invites the employee to join PrismHR, they complete their profile, and they're ready to be paid — and we keep you updated every step of the way. Nothing else lands on your client's desk. Back to the dashboard.\""
     },
@@ -2362,7 +2361,7 @@
           "actions": []
         },
         {
-          "name": "What happens next steps",
+          "name": "What happens next sequence",
           "actions": []
         },
         {
@@ -2378,7 +2377,7 @@
           ]
         }
       ],
-      "what": "The **Success!** confirmation shown after starting an Employer of Record hire, laying out the sequence of steps that will happen next to complete onboarding.",
+      "what": "The **Success!** confirmation shown after starting an Employer of Record hire, laying out what will happen next to complete onboarding.",
       "capabilities": [
         "Explicit **\"Here's what happens next\"** sequence: **Offer Letter Generated** → **Invitation to Join PrismHR** → **Onboarding** → **Employment Agreement Signed**",
         "**Offer Letter Generated** — auto-created \"based on the information you have provided\" and sent back to the client for review and approval",
@@ -2396,7 +2395,7 @@
         "You stay CC'd on all communications while the **CX team** walks your new hire through onboarding to a signed **Employment Agreement** — the same done-for-you safety net your PEO gives you domestically, now getting someone compliantly employed abroad."
       ],
       "branching": [
-        "**If** the concern is \"what happens after I hit submit\" **then** walk the four steps top to bottom as the guaranteed path from **Offer Letter Generated** to **Employment Agreement Signed**.",
+        "**If** the concern is \"what happens after I hit submit\" **then** walk the four stages top to bottom as the guaranteed path from **Offer Letter Generated** to **Employment Agreement Signed**.",
         "**If** the client worries about support burden **then** emphasize the **CX team** guiding the candidate with the client kept in CC on all communications."
       ],
       "say": "\"The moment your client submits an EOR hire, they get this. We generate the offer letter from what they entered, send it back for their approval, then invite the candidate to join, accept, and complete their info. Our CX team guides that candidate through onboarding and keeps your client in CC the whole way — and it always ends with a signed employment agreement. That's a fully compliant hire abroad with no entity and no legal team on their side.\""
@@ -6404,7 +6403,7 @@
         "Local-currency, local-detail capture is built in, so the same acceptance motion works whoever the client and wherever the worker sits, keeping the offering consistent as you extend it to your book."
       ],
       "de": [
-        "Your new overseas hire self-drives their own onboarding: they see the exact offer — salary in their currency, start date, title — and complete their details in three clear steps, so the SMB isn't building an HR onboarding process.",
+        "Your new overseas hire self-drives their own onboarding: they see the exact offer — salary in their currency, start date, title — and complete their details in three short screens, so the SMB isn't building an HR onboarding process.",
         "Data the worker enters flows straight into the contract, so the SMB isn't re-keying offer details or chasing missing fields — it's genuinely done-for-them."
       ],
       "branching": [
@@ -6412,7 +6411,7 @@
         "**If** onboarding effort is the pain **then** anchor on the worker self-completing details that auto-draft the contract, with inline validation preventing bad data.",
         "**If** the SMB is small or first-hire **then** stress that the whole acceptance is guided and done-for-them, no HR ops required."
       ],
-      "say": "\"This is what a new hire sees when they accept. Their offer is right in front of them — salary in their own currency, start date, title — and they confirm their own details in three guided steps. What they enter drafts their contract automatically, so your SMB client onboards a worker anywhere in the world without building HR ops. For you, that's a done-for-them global onboarding you can hand your clients and be the hero.\""
+      "say": "\"This is what a new hire sees when they accept. Their offer is right in front of them — salary in their own currency, start date, title — and they confirm their own details across three guided screens. What they enter drafts their contract automatically, so your SMB client onboards a worker anywhere in the world without building HR ops. For you, that's a done-for-them global onboarding you can hand your clients and be the hero.\""
     },
     {
       "id": "211",

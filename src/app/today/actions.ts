@@ -358,7 +358,7 @@ export async function logTouch(formData: FormData) {
           ...touchLog(prev.log),
           {
             at: prev.contactedAt.toISOString(),
-            body: `Outreach sent${prev.message ? ` — “${clipForLog(prev.message)}”` : ""}${
+            body: `Outreach sent${prev.message ? `: “${clipForLog(prev.message)}”` : ""}${
               prev.status === "replied" ? " · replied" : ""
             }`,
           },
@@ -397,7 +397,7 @@ export async function logTouch(formData: FormData) {
       await createAccountNoteRow({
         accountId: subjectKey.slice("outreach:".length),
         kind: "account",
-        body: `✉ Outreach sent${message ? ` — “${clipForLog(message)}”` : ""}`,
+        body: `✉ Outreach sent${message ? `: “${clipForLog(message)}”` : ""}`,
         lane: "mine",
         source: "touch",
       });
@@ -471,7 +471,7 @@ export async function archiveThread(formData: FormData) {
       ...touchLog(t.log),
       {
         at: new Date().toISOString(),
-        body: `Thread archived ✓${t.message ? ` — closed: “${clipForLog(t.message, 160)}”` : ""}`,
+        body: `Thread archived ✓${t.message ? `. Closed: “${clipForLog(t.message, 160)}”` : ""}`,
       },
     ];
     await prisma.touch.update({
@@ -570,7 +570,7 @@ async function fileFollowUpToAccounts(
     await createAccountNoteRow({
       accountId: h.id,
       kind: "account",
-      body: `⏲ Follow-up armed — ${label}`,
+      body: `⏲ Follow-up armed: ${label}`,
       lane: "mine",
       source: "followup",
     }).catch(() => null);
@@ -744,7 +744,7 @@ function asDisposition(v: string): "motion" | "not-mine" | "parked" | null {
 
 const DISPOSITION_LABEL = {
   motion: "⚡ Marked in motion",
-  "not-mine": "🚫 Marked not mine — excluded from my book",
+  "not-mine": "🚫 Marked not mine. Excluded from my book.",
   parked: "⏸ Parked",
 } as const;
 
@@ -849,7 +849,7 @@ export async function setThreadStatus(formData: FormData) {
         at: new Date().toISOString(),
         body:
           status === "open"
-            ? "Marked open-ended — not waiting on a reply; cadence off"
+            ? "Marked open-ended. Not waiting on a reply. Cadence off."
             : `State set manually → ${status}`,
       },
     ];
@@ -1323,7 +1323,7 @@ export async function dismissTriage(formData: FormData) {
     const key = triageDoneKey(accountId);
     const existing = await prisma.taskDone.findUnique({ where: { key } });
     if (!existing) await prisma.taskDone.create({ data: { key } });
-    const body = "✓ Decided: not now — dismissed from Today's triage";
+    const body = "✓ Decided: not now. Dismissed from Today's triage.";
     const n = await createAccountNoteRow({
       accountId,
       kind: "account",

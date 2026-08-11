@@ -50,7 +50,7 @@ function PnRow({ n }: { n: Note }) {
         <input type="hidden" name="returnTo" value="/today" />
         <button
           className={styles.pnDel}
-          title="Delete this note (this partner's copy only)"
+          title="Delete this note. This partner's copy only."
         >
           ×
         </button>
