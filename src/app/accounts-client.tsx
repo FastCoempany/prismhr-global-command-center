@@ -76,7 +76,7 @@ function AddButton() {
   const { pending } = useFormStatus();
   return (
     <button className={styles.addMini} disabled={pending}>
-      {pending ? "Adding…" : "+ Dashboard"}
+      {pending ? "Adding…" : "Add to dashboard"}
     </button>
   );
 }
@@ -86,7 +86,7 @@ function ValBadge({ v }: { v: AccountRow["validation"] }) {
   if (v.status === "confirmed")
     return <span className={styles.valConfirmed}>✓ confirmed</span>;
   if (v.status === "flagged") return <span className={styles.valFlagged}>⚠ flagged</span>;
-  return <span className={styles.valAdjusted}>adj → {v.adjustedDemand}</span>;
+  return <span className={styles.valAdjusted}>adjusted to {v.adjustedDemand}</span>;
 }
 
 // The trust layer: Confirm the AI score, Flag it as wrong (visibly distrusted
@@ -137,7 +137,7 @@ function ValidateControls({
           <input
             name="note"
             maxLength={500}
-            placeholder="Why? (optional)"
+            placeholder="Why? Optional."
             aria-label="Adjust note"
           />
           <button className={styles.parkBtn}>Set</button>
@@ -262,7 +262,7 @@ function WorkingDeal({ a, canWrite }: { a: AccountRow; canWrite: boolean }) {
             </select>
           </div>
           <div className={styles.field}>
-            <label>Approach — what you&apos;re cleared to do</label>
+            <label>Approach</label>
             <select name="approach" defaultValue={a.approach}>
               {APPROACHES.map((ap) => (
                 <option key={ap.key} value={ap.key}>
@@ -288,10 +288,10 @@ function WorkingDeal({ a, canWrite }: { a: AccountRow; canWrite: boolean }) {
             <input
               name="nextAction"
               defaultValue={a.nextAction ?? ""}
-              placeholder={suggestedAction(a) ?? "e.g. Brief the CSM"}
+              placeholder={suggestedAction(a) ?? "Brief the CSM"}
             />
             {!a.nextAction && suggestedAction(a) && (
-              <p className={styles.hint}>Suggested: {suggestedAction(a)}</p>
+              <p className={styles.hint}>{suggestedAction(a)}</p>
             )}
           </div>
           <div className={styles.field}>
@@ -307,10 +307,10 @@ function WorkingDeal({ a, canWrite }: { a: AccountRow; canWrite: boolean }) {
             <textarea name="notes" defaultValue={a.peoNotes ?? ""} />
           </div>
           <div className={styles.field}>
-            <label>Log activity (optional)</label>
+            <label>Log activity</label>
             <input
               name="activity"
-              placeholder="e.g. Called Anika — she'll intro to 2 clients"
+              placeholder="Called Anika. She'll introduce two clients."
             />
           </div>
           <div className={styles.saveRow}>
@@ -327,8 +327,8 @@ function WorkingDeal({ a, canWrite }: { a: AccountRow; canWrite: boolean }) {
         <h3 className={styles.playsHead}>Plays for this stage</h3>
         {plays.length === 0 ? (
           <p className={styles.muted}>
-            No play for this stage and approach — advance the stage or clear the approach
-            gate to unlock the next move.
+            No play for this stage and approach. Advance the stage or clear the approach
+            gate.
           </p>
         ) : (
           plays.map((k) => (
@@ -407,7 +407,7 @@ function EngagementPanel({ a }: { a: AccountRow }) {
   return (
     <div className={styles.engage}>
       <div className={styles.engageHead}>
-        <span className={styles.engageTitle}>CSM engagement — {a.csm}</span>
+        <span className={styles.engageTitle}>CSM engagement with {a.csm}</span>
         <span className={styles.engageGates}>
           Prep {gates.count}/3
           <span className={gates.sf ? styles.gateOn : styles.gateOff}>SF</span>
@@ -487,19 +487,17 @@ function EngagementPanel({ a }: { a: AccountRow }) {
             defaultValue={e.csmNotes}
             rows={3}
             maxLength={4000}
-            placeholder="What the CSM said — the client's world, health, timing, any cross-border hints…"
+            placeholder="What the CSM said: the client's world, health, timing, any cross-border hints."
           />
         </label>
         <button className={styles.engageSave}>Save engagement</button>
       </form>
 
       <details className={styles.engageAsk}>
-        <summary className={styles.engageAskSummary}>
-          ✎ &ldquo;Can I join?&rdquo; — message to {who}
-        </summary>
+        <summary className={styles.engageAskSummary}>Ask {who} if you can join.</summary>
         <EditableMessage
           text={askToJoinMessage(a.csm, a.name, e)}
-          copyLabel={`Copy the ask-to-join to ${who}`}
+          copyLabel={`Copy the message for ${who}`}
         />
       </details>
     </div>
@@ -955,7 +953,7 @@ export function AccountsClient({
                     {a.incumbent ? (
                       <span
                         className={styles.chip}
-                        title={`PrismHR cloud tenant “${a.cloud}” — existing platform customer`}
+                        title={`Already a platform customer, on PrismHR cloud tenant “${a.cloud}”.`}
                       >
                         {a.cloud}
                       </span>
@@ -1014,7 +1012,7 @@ export function AccountsClient({
                               </div>
                               {a.play === "displacement" && a.competitors.length > 0 && (
                                 <p className={styles.servedBy}>
-                                  Displacement play — currently served by{" "}
+                                  Displacement play. Currently served by{" "}
                                   <strong>
                                     <CompetitorLinks names={a.competitors} />
                                   </strong>
@@ -1024,7 +1022,7 @@ export function AccountsClient({
                               )}
                               {a.play === "greenfield" && (
                                 <p className={styles.servedBy}>
-                                  Greenfield — real demand, no incumbent EOR named in the
+                                  Greenfield. Real demand, no incumbent EOR named in the
                                   research.
                                 </p>
                               )}
@@ -1062,9 +1060,9 @@ export function AccountsClient({
                                 </div>
                               )}
                               <div className={styles.formula}>
-                                How this {a.score} is built: account profile {a.deskScore}{" "}
-                                (40% of the score) + global demand{" "}
-                                {a.demandAdj ?? a.demand} (60%).
+                                How this {a.score} is built: 40% account profile at{" "}
+                                {a.deskScore}, 60% global demand at{" "}
+                                {a.demandAdj ?? a.demand}.
                                 {a.confFactor < 1
                                   ? ` Raw demand ${a.demand} trimmed to ${a.demandAdj} because confidence is ${a.confidence}.`
                                   : ""}
@@ -1072,8 +1070,8 @@ export function AccountsClient({
                             </>
                           ) : (
                             <div className={styles.demandPending}>
-                              Not researched (no findable web presence, or missed on the
-                              run). Score is the account profile only — no demand signal
+                              Not researched: no findable web presence, or missed on the
+                              run. Score is the account profile only. No demand signal
                               yet.
                             </div>
                           )}
@@ -1081,8 +1079,8 @@ export function AccountsClient({
 
                         <div className={styles.bars}>
                           <div className={styles.barsHead}>
-                            Account profile · {a.deskScore}/100 (firmographics, no
-                            research)
+                            Account profile · {a.deskScore}/100, firmographics only, no
+                            research
                           </div>
                           {(["scale", "incumbency", "model", "recency"] as const).map(
                             (k) => (
@@ -1106,13 +1104,13 @@ export function AccountsClient({
 
                         <div className={styles.acctMeta}>
                           {a.sizeBucket ||
-                            (a.size ? `${a.size.toLocaleString()} WSE` : "size n/a")}
+                            (a.size ? `${a.size.toLocaleString()} WSE` : "size unknown")}
                           {" · Partner: "}
-                          {a.csm} ({partnerRole(a.csm)})
+                          {a.csm}, {partnerRole(a.csm)}
                           {a.contactName && (
                             <>
                               {" · "}
-                              {a.contactName} (Primary contact)
+                              {a.contactName}, primary contact
                               {a.contactEmail && (
                                 <>
                                   {" — "}
@@ -1263,17 +1261,17 @@ function hostOf(url: string) {
   }
 }
 
-// One-time seed dropped into a new dashboard card's Discovery note on "+ Dashboard".
+// One-time seed dropped into a new dashboard card's Discovery note on "Add to dashboard".
 function seedFor(a: AccountRow): string {
   if (!a.researched || a.demand == null) return "";
   const play =
     a.play === "displacement"
-      ? `Displacement — currently on ${a.competitors.join(", ") || "a competitor EOR"}.`
+      ? `Displacement. Currently on ${a.competitors.join(", ") || "a competitor EOR"}.`
       : a.play === "greenfield"
-        ? "Greenfield — no incumbent EOR named."
+        ? "Greenfield. No incumbent EOR named."
         : "";
   const countries = a.countries.length
     ? ` Countries seen: ${a.countries.join(", ")}.`
     : "";
-  return `Demand ${a.demand}/100 (${a.confidence} confidence). ${play}${countries} ${a.summary}`.trim();
+  return `Demand ${a.demand}/100 at ${a.confidence} confidence. ${play}${countries} ${a.summary}`.trim();
 }

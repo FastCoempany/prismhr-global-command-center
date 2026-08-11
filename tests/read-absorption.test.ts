@@ -542,7 +542,7 @@ describe("the restructure holds", () => {
     assert.ok(!/href="\/partners"/.test(nav));
     const accounts = readFileSync(join(root, "src/app/accounts/page.tsx"), "utf8");
     assert.ok(accounts.includes("partnerRoster"));
-    assert.ok(accounts.includes("Partners — the roster"));
+    assert.ok(accounts.includes("Partner roster"));
   });
   test("Today and the board are archived, not deleted", () => {
     assert.ok(nav.includes("app-route-archive"));
@@ -648,7 +648,7 @@ describe("the room wires every new mechanism", () => {
       assert.ok(actions.includes(`export async function ${wired}`)));
   }
   test("the paste's undo says what it does and doesn't touch", () => {
-    assert.ok(client.includes("the actions it opened stay"));
+    assert.ok(client.includes("The actions it opened stay"));
   });
   test("the research control states when it last ran", () => {
     assert.ok(client.includes("last run"));
@@ -802,7 +802,7 @@ describe("the repairs hold", () => {
       assert.ok(body.includes("requireWrite"), `${fn} doesn't check write access`);
     }
     // An action already closed is history, not a mistake to erase.
-    assert.ok(actions.includes("already closed — undo it on the row"));
+    assert.ok(actions.includes("already closed. Undo it on the row."));
     // One completion line, not two.
     assert.ok(actions.includes("if (wasRouted) await fileCompletion"));
   });

@@ -62,13 +62,15 @@ export function composeFor(args: {
 }): Composed {
   const { ruleId, account, intel, intent, contactName, laneDate } = args;
   const first = firstName(contactName);
-  const toContact = first ? contactName : "the client contact (add before sending)";
+  const toContact = first
+    ? contactName
+    : "the client contact. Add the name before sending.";
   const greet = first ? `${first} —` : "Hi —";
   const labelTo = first ? ` — to ${first}` : "";
   const pm = pmName(account.csm);
   const pmFirst = pm ? pm.split(/\s+/)[0] : "";
   const toPm =
-    pm || "their partner manager (unassigned in the book — route it with Aleks)";
+    pm || "their partner manager. Unassigned in the book. Route it with Aleks.";
   const pmGreet = pm ? `${pmFirst} —` : "Quick one —";
   const pmLabel = pm ? ` — to ${pmFirst}` : "";
   const countries = countryNames(intel);
@@ -107,21 +109,23 @@ export function composeFor(args: {
         ),
       };
     case "intent-warm":
+      // Direct doctrine: the reading-us note goes to the account's own
+      // person, not through the partner manager.
       return {
-        kind: "relay-note",
-        label: `Copy the note${pmLabel || " — for the account's partner manager"}`,
-        to: toPm,
+        kind: "send-draft",
+        label: `Copy the note${labelTo}`,
+        to: toContact,
         payload: redactMoney(
-          `To: ${toPm}\n\n${pmGreet} ${account.name} lit up on LinkedIn this week: their people have been reading our Global material${intent?.activities ? ` (${intent.activities} separate engagements)` : ""}. Can they take the top slot in your next update? The question to relay, word for word: "${relayLine("fp-where")}"`,
+          `To: ${toContact}\nSubject: The question forming on your side\n\n${greet} a few people on your side have been reading our Global material this week${intent?.activities ? ` (${intent.activities} separate engagements)` : ""}, so a question is already taking shape. Here it is, asked straight: ${relayLine("fp-where").toLowerCase()} If a walkthrough is faster than email, name a slot and I'll bring answers.`,
         ),
       };
     case "riding-lane":
       return {
         kind: "ride-ask",
         label: "Copy the ask — to the coworker named on the opportunity",
-        to: "the coworker named on the Salesforce opportunity (their name is printed on it — the link below opens it)",
+        to: "the coworker named on the Salesforce opportunity. The name is printed on it. The link below opens it.",
         payload: redactMoney(
-          `To: [the coworker named on the opportunity — open the account in Salesforce; the owner's name is printed on it]\n\nQuick one on ${account.name}. I see your opportunity there closing ${laneDate ? monthDay(laneDate) : "this month"}. ${intent ? "Their people have been reading our Global material this week. " : ""}Would you carry one Global sentence into that conversation, or would you rather I join? Either way it stays your room.`,
+          `To: [the coworker named on the opportunity. Open the account in Salesforce. The owner's name is printed on it.]\n\nQuick one on ${account.name}. I see your opportunity there closing ${laneDate ? monthDay(laneDate) : "this month"}. ${intent ? "Their people have been reading our Global material this week. " : ""}Would you carry one Global sentence into that conversation, or would you rather I join? Either way it stays your room.`,
         ),
       };
     case "roundup-slot":
@@ -139,7 +143,7 @@ export function composeFor(args: {
         label: "Copy the refresh recipe",
         to: "your research session",
         payload: redactMoney(
-          `Research refresh — ${account.name}\nAccount page: Account IQ (how they make money) · company + department headcount growth · Spotlight: job opportunities BY GEOGRAPHY (jobs posted into other countries are the strongest demand signal there is) · recent company posts.\nBring back: anything that changes the demand read. It files to the research trail.`,
+          `Research refresh — ${account.name}\nAccount page: Account IQ for how they make money · company and department headcount growth · Spotlight: job opportunities by geography · recent company posts. Jobs posted into other countries are the strongest demand signal there is.\nBring back: anything that changes the demand read. It files to the research trail.`,
         ),
       };
     case "stakeholder-gap":
@@ -152,12 +156,15 @@ export function composeFor(args: {
         ),
       };
     case "never-touched-incumbent":
+      // Direct doctrine: the first conversation opens with the account
+      // itself. The partner manager is a door you may still choose, never
+      // the toll.
       return {
-        kind: "relay-note",
-        label: `Copy the note${pmLabel || " — for the account's partner manager"}`,
-        to: toPm,
+        kind: "send-draft",
+        label: `Copy the first touch${labelTo}`,
+        to: toContact,
         payload: redactMoney(
-          `To: ${toPm}\n\n${pmGreet} ${account.name} already runs on our platform and has never been introduced to Global; for them it's a tab to turn on, not a project. Worth a line in your next touch? The question to relay, word for word: "${relayLine("fp-where")}"`,
+          `To: ${toContact}\nSubject: Global, on the platform you already run\n\n${greet} ${account.name} runs on PrismHR today, which makes this the shortest version of this conversation anyone gets: Global is a capability you switch on, not a project you buy. If your clients have people outside the US, or ask about it, I'd like fifteen minutes to show you what switching it on looks like. ${relayLine("fp-where")}`,
         ),
       };
   }
@@ -166,4 +173,4 @@ export function composeFor(args: {
 // The widening question — appended by the file when a conversation rides on
 // one person, so the claim "it's part of the composed text" is always true.
 export const WIDENING_LINE =
-  'And the widening question, when it fits: "Who else on your side — leadership or operations — should be in this conversation?"';
+  "And one more question: who else on your side, leadership or operations, should be in this conversation?";

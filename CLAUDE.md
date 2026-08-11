@@ -39,6 +39,53 @@ surface:
 Distinctiveness between concepts must come from **structure and information
 architecture**, not from costume changes.
 
+## The writing canon (binding, founder-decreed 2026-08-10)
+
+Operator-facing copy — queue lines, buttons, nudges, empty states, generated
+prose the operator reads — obeys these rules everywhere in the app:
+
+1. **Imperative mood.** The app tells the operator to do the thing. Verbs,
+   never noun-forms: "Send the model," not "model delivery is pending."
+2. **Actions are for the day.** An action line never carries a deadline —
+   "call the CSM before Friday" is banned. The action is today's; the date
+   lives in the reason line: "Call the CSM." / "Renewal meeting Monday."
+3. **The reason is the trigger, not a description** — a deadline, a promise
+   made, an unanswered message, a date, a deliverable owed. Recency alone is
+   never a reason.
+4. **No hedging, no framing:** cut "it may be worth," "you might want to,"
+   "consider," "worth a line?", "this account appears to."
+5. **No em-dash asides, no parentheticals,** no sentence needing a second read.
+6. **Top-level action and reason lines: six words or fewer.** Depth lives in
+   the drilldown, never on arrival.
+7. **Yesterday carries.** A move surfaced yesterday and left unworked returns
+   today saying so. The room never quietly forgets what it asked for.
+
+## The direct doctrine (Russ Jones, SVP of Sales — SKO, Kansas City, 2026-08-03/06)
+
+The CSM gate is down. Sellers are greenlit to market, sell, and reach out
+directly to the PEOs. Be careful, but do what it takes. In this app that means:
+
+- Direct outreach to account people is the default move; routing through the
+  CSM is a tool chosen when it is genuinely the fastest door, never a toll.
+- "Ride it, never around it" copy is retired. A colleague's lane is one door
+  of two.
+- When a send crosses a hot, live CSM thread, the composed thing carries a
+  quiet flag so the operator knows. It informs; it never blocks.
+
+## Groundwork face (decided 2026-08-10)
+
+The Stage won the triptych, and the **winged stage** won the variations
+(2026-08-10): one account center stage with an action line and a reason line;
+a left wing holding the day's worked stamps; a right wing holding the waiting
+queue heat-mapped (solid amber burns today, half amber dated this week, quiet
+ink keeps), each name with its trigger whispered beneath. The room keeps the
+instrument capsule (Chicago clock · date · weather · the working band) and the
+lower deck (the wire · the institutions · State of play). Groundwork is outbound only — activities the
+operator initiates today to build pipeline; reactive account motion (replies
+owed, decision windows, meeting prep) belongs to the HomeRoom. The accounts
+page's stores and the deep-research notes (`research:<account>`) are backbone
+inputs to the queue brain.
+
 ## Other standing decrees
 
 - The word "steps" never appears in operator-facing copy.

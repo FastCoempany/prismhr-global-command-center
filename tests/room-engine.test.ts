@@ -58,7 +58,7 @@ describe("readDeal — the loud cases stay loud and legal", () => {
     assert.equal(r.health, "red");
     assert.match(r.move, /Chase Bryce/);
     assert.match(r.move, /Sept 1 target/);
-    assert.match(r.court.line, /THEIR MOVE — BRYCE · QUIET \dD/);
+    assert.match(r.court.line, /THEIR MOVE · BRYCE · QUIET \d DAYS/);
   });
   test("fresh step, no thread → your move, green-or-amber, sentence uses the item", () => {
     const r = readDeal({ ...base, step: { ...step, ageDays: 0 } });

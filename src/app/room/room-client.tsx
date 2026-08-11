@@ -132,8 +132,8 @@ function Briefed({ on }: { on: boolean }) {
       className={styles.briefed}
       title={
         on
-          ? "Partner briefed — the stage record's partner-brief item is closed."
-          : "Partner not yet briefed — turns green when a partner-brief item closes in the stage record."
+          ? "Partner briefed. The partner-brief item is closed in the stage record."
+          : "Partner not briefed yet. This turns green when a partner-brief item closes in the stage record."
       }
     >
       <svg
@@ -300,15 +300,15 @@ function Row({ row }: { row: RoomRow }) {
         // One receipt, in the order the work matters: what filed, what opened,
         // what it asked, what it learned, and whether it says this is over.
         const parts = [
-          `Paste filed — ${r.filed} entr${r.filed === 1 ? "y" : "ies"}${r.how === "ai" ? ", read by Claude" : ""}.`,
+          `Filed ${r.filed} entr${r.filed === 1 ? "y" : "ies"}${r.how === "ai" ? ", read by Claude" : ""}.`,
           r.opened?.length
             ? `${r.opened.length} action${r.opened.length === 1 ? "" : "s"} opened.`
             : "",
           r.asks ? `${r.asks} new ask${r.asks === 1 ? "" : "s"} queued.` : "",
           r.learned ? `${r.learned} to the playbook.` : "",
-          r.outcome ? `Reads ${r.outcome.status} — confirm below.` : "",
+          r.outcome ? `Reads ${r.outcome.status}. Confirm below.` : "",
           r.readFailed
-            ? "The read didn't complete — filed by rules only, so nothing was opened or asked."
+            ? "The read didn't complete. The rules filed the entries. Nothing was opened or asked."
             : "",
         ].filter(Boolean);
         setFreshInfo((f) => [
@@ -361,7 +361,7 @@ function Row({ row }: { row: RoomRow }) {
         setLossState("lost");
         setFreshInfo((f) => [
           {
-            text: `${status === "won" ? "Closed Won" : "Closed Lost"} — the meter says so now. Retire the row when you're done with it.`,
+            text: `${status === "won" ? "Closed Won" : "Closed Lost"}. The meter says so now. Retire the row when you're done.`,
           },
           ...f,
         ]);
@@ -405,7 +405,7 @@ function Row({ row }: { row: RoomRow }) {
           {
             text: r.added
               ? `${r.added} new ask${r.added === 1 ? "" : "s"} minted from what the app knows.`
-              : "Nothing new to ask that isn't already on the list.",
+              : "Nothing new to ask. The list already has it all.",
           },
           ...f,
         ]);
@@ -460,7 +460,7 @@ function Row({ row }: { row: RoomRow }) {
           fs.map((x, i) =>
             i === idx
               ? {
-                  text: `Paste undone — ${r.removed} entr${r.removed === 1 ? "y" : "ies"} removed.`,
+                  text: `Paste undone. Removed ${r.removed} entr${r.removed === 1 ? "y" : "ies"}.`,
                 }
               : x,
           ),
@@ -523,11 +523,11 @@ function Row({ row }: { row: RoomRow }) {
               MULTI
               <span className={styles.hovercard}>
                 <span className={styles.hk}>
-                  WHO&apos;S IN THIS DEAL — FROM THE REPOSITORY
+                  WHO&apos;S IN THIS DEAL · FROM THE REPOSITORY
                 </span>
                 {row.people.length === 0 && (
                   <span className={styles.hp}>
-                    No stakeholders on file yet — paste activity and they appear here.
+                    No stakeholders on file yet. Paste activity and they appear here.
                   </span>
                 )}
                 {row.people.map((p) => (
@@ -542,7 +542,7 @@ function Row({ row }: { row: RoomRow }) {
               <button
                 type="button"
                 className={styles.zap}
-                title={`Paste — files to ${row.name}`}
+                title={`Paste. Files to ${row.name}.`}
                 onClick={() => {
                   setPasteOpen((v) => !v);
                   setMismatch(null);
@@ -578,7 +578,7 @@ function Row({ row }: { row: RoomRow }) {
                     month: "numeric",
                     day: "numeric",
                   })}`
-                : "never run — the first pass is the deep one"}
+                : "never run. The first pass is the deep one."}
             </span>
           </div>
         )}
@@ -616,7 +616,7 @@ function Row({ row }: { row: RoomRow }) {
               type="button"
               className={`${styles.node} ${s.state === "done" ? styles.nodeDone : ""} ${s.state === "cur" ? styles.nodeCur : ""}`}
               style={{ left: `${2 + i * 14.3}%` }}
-              title={`${s.label} — open its checklist`}
+              title={`${s.label}. Open its checklist.`}
               onClick={() => setStageOpen((k) => (k === s.key ? null : s.key))}
             />
           ))}
@@ -667,7 +667,7 @@ function Row({ row }: { row: RoomRow }) {
                 .slice(0, 2)
                 .map((sg) => (
                   <div key={`${sg.node}:${sg.index}`} className={styles.sdSugg}>
-                    Evidence suggests <b>“{sg.item}” can be checked</b> — {sg.why}.
+                    Check <b>“{sg.item}”</b>. {sg.why}.
                     {row.canWrite && (
                       <span className={styles.sdSuggActs}>
                         <form action={toggleCheck} className={styles.inline}>
@@ -696,7 +696,7 @@ function Row({ row }: { row: RoomRow }) {
                   <input
                     name="note"
                     defaultValue={openStage.judgment}
-                    placeholder="Your judgment — why this stage sits where it does…"
+                    placeholder="Say why this stage sits where it does…"
                   />
                   <button className={styles.sdTag}>save</button>
                 </form>
@@ -740,7 +740,7 @@ function Row({ row }: { row: RoomRow }) {
                   : "THE RECORD READS LOST"}
               </span>
               <p className={styles.move}>
-                “{row.loss!.phrase}” — filed {row.loss!.date}. Your call: stamp the meter,
+                Filed {row.loss!.date}: “{row.loss!.phrase}”. Your call: stamp the meter,
                 or keep working it.
               </p>
               {row.canWrite && (
@@ -770,7 +770,7 @@ function Row({ row }: { row: RoomRow }) {
             <>
               <span className={styles.lbl}>CLOSED</span>
               <p className={`${styles.move} ${styles.thin}`}>
-                The meter reads it now — the record keeps everything.
+                The meter reads it now. The record keeps everything.
               </p>
             </>
           ) : (
@@ -861,7 +861,7 @@ function Row({ row }: { row: RoomRow }) {
             <span className={styles.lbl}>STILL UNKNOWN</span>
             {row.gaps.filter((g) => !askGone.has(g.id)).length === 0 && (
               <span className={styles.askQ}>
-                Nothing queued. A paste fills this, or mint asks from what the app already
+                Nothing queued. File a paste, or mint asks from what the app already
                 knows.
               </span>
             )}
@@ -876,7 +876,7 @@ function Row({ row }: { row: RoomRow }) {
                       className={styles.sdTag}
                       disabled={askPending}
                       onClick={() => dismissAsk(g.id)}
-                      title="not relevant to this one — swap in the next ask"
+                      title="Not relevant here. The next ask swaps in."
                     >
                       not this deal ✕
                     </button>
@@ -888,7 +888,7 @@ function Row({ row }: { row: RoomRow }) {
                 <span className={styles.askQ}>
                   {p.question}
                   <span className={styles.askPeer}>
-                    asked on a comparable deal — {p.shared}
+                    asked on a comparable deal · {p.shared}
                   </span>
                 </span>
               </div>
@@ -908,7 +908,7 @@ function Row({ row }: { row: RoomRow }) {
                   onClick={refillAsks}
                   title="mint sharper asks from the countries, the scenario, the research, and what other deals taught"
                 >
-                  {askPending ? "minting…" : "better asks ⟳"}
+                  {askPending ? "minting…" : "mint better asks ⟳"}
                 </button>
               )}
             </span>
@@ -921,7 +921,7 @@ function Row({ row }: { row: RoomRow }) {
           .map((o) => (
             <div key={o.key} className={styles.owedBox}>
               <span className={styles.kOwed}>⚑</span> The record says you owe:{" "}
-              <b>{o.text}</b> — {o.src}.
+              <b>{o.text}</b>. {o.src}.
               {row.canWrite && (
                 <span className={styles.sdSuggActs}>
                   <button
@@ -1023,7 +1023,7 @@ function Row({ row }: { row: RoomRow }) {
                   type="button"
                   className={styles.rcptU}
                   onClick={() => undoPaste(i)}
-                  title="removes the record this paste filed — the actions it opened stay"
+                  title="Removes the record this paste filed. The actions it opened stay."
                 >
                   ↩ undo paste
                 </button>
@@ -1052,7 +1052,7 @@ function Row({ row }: { row: RoomRow }) {
                         type="button"
                         className={styles.openedX}
                         onClick={() => undoOpened(i, o.id)}
-                        title="the read got this one wrong — take it back"
+                        title="Take it back. The read got this one wrong."
                       >
                         ✕
                       </button>
@@ -1095,7 +1095,7 @@ function Row({ row }: { row: RoomRow }) {
                       contingency is the move now. */}
                   {!did && t.fallback && (
                     <span className={styles.fallback}>
-                      ↯ it didn&apos;t land — go to the fallback: {t.fallback}
+                      ↯ It didn&apos;t land. Go to the fallback: {t.fallback}
                     </span>
                   )}
                 </span>
@@ -1132,7 +1132,7 @@ function Row({ row }: { row: RoomRow }) {
                             value={t.body.slice(0, 140)}
                           />
                           <input type="hidden" name="returnTo" value="/room" />
-                          <button title="arm a chase — someone owes this">⚑</button>
+                          <button title="Arm a chase. Someone owes this.">⚑</button>
                         </form>
                         <button
                           disabled={pending}
@@ -1188,13 +1188,13 @@ function Row({ row }: { row: RoomRow }) {
         {row.canWrite && (
           <div className={styles.logbox}>
             <span className={styles.lk}>
-              LOG IT — FILES TO {row.name.toUpperCase()}, EVERYWHERE
+              LOG IT · FILES TO {row.name.toUpperCase()}, EVERYWHERE
             </span>
             <div className={styles.modes}>
               <button
                 type="button"
                 className={styles.zap}
-                title={`Paste — files to ${row.name}`}
+                title={`Paste. Files to ${row.name}.`}
                 onClick={() => {
                   setPasteOpen((v) => !v);
                   setMismatch(null);
@@ -1240,7 +1240,7 @@ function Row({ row }: { row: RoomRow }) {
                   submitCompose();
                 }
               }}
-              placeholder="Type the second it happens — call notes, Teams pastes, stray thoughts…"
+              placeholder="Type the second it happens: call notes, Teams pastes, stray thoughts…"
               aria-label={`Log to ${row.name}`}
             />
             {pasteOpen && (
@@ -1248,7 +1248,7 @@ function Row({ row }: { row: RoomRow }) {
                 <textarea
                   value={pasteText}
                   onChange={(e) => setPasteText(e.target.value)}
-                  placeholder={`Paste the Salesforce capture, an email, or meeting notes — it files to ${row.name}.`}
+                  placeholder={`Paste the Salesforce capture, an email, or meeting notes. It files to ${row.name}.`}
                 />
                 <div className={styles.pasteRow}>
                   <button
@@ -1381,7 +1381,7 @@ function Row({ row }: { row: RoomRow }) {
                         {!e.struck && !promoted && glyph !== "✓" && (
                           <button
                             onClick={() => promoteNote(e.id, shown)}
-                            title="make it an action — opens on this register"
+                            title="Make it an action. It opens on this register."
                           >
                             ✸
                           </button>
@@ -1441,7 +1441,7 @@ function PartnerCard({ c }: { c: CadenceRow }) {
   const stateLine =
     c.status === "none" || c.status === "archived"
       ? c.due
-        ? "DUE — NEVER SENT"
+        ? "DUE · NEVER SENT"
         : "FRESH"
       : c.status === "awaiting"
         ? `SENT${c.daysAgo != null ? ` ${c.daysAgo}D AGO` : ""} · AWAITING`
@@ -1582,7 +1582,7 @@ function CadenceDrawer({
           ))}
           {visible.length === 0 && (
             <p className={styles.dpEmpty}>
-              Nothing to round up — every partner is either live or muted.
+              Nothing to round up. Every partner is live or muted.
             </p>
           )}
           {muted.length > 0 && (
@@ -1608,7 +1608,7 @@ function CadenceDrawer({
             <div key={t.subjectKey} className={styles.chkRow}>
               <span className={styles.chkWho}>{t.label}</span>
               <span className={styles.chkAsk}>
-                {t.ask ? `owes: ${t.ask}` : "quiet check — nothing owed"}
+                {t.ask ? `owes: ${t.ask}` : "quiet check · nothing owed"}
               </span>
               {t.quietDays != null && t.quietDays > 0 && (
                 <span className={styles.chkOwed}>{t.quietDays}D</span>
@@ -1634,7 +1634,7 @@ function CadenceDrawer({
             </div>
           ))}
           {checkins.length === 0 && (
-            <p className={styles.dpEmpty}>No check-ins due — the cadence is quiet.</p>
+            <p className={styles.dpEmpty}>No check-ins due. The cadence is quiet.</p>
           )}
         </>
       )}
@@ -1689,7 +1689,7 @@ function FollowUpBlock({ rows }: { rows: FollowUpRow[] }) {
                   )}
                   {f.newName && (
                     <span className={styles.fuAsk}>
-                      <b>{f.newName}</b> isn&apos;t on the board — add it?
+                      <b>{f.newName}</b> isn&apos;t on the board. Add it?
                       <form action={followUpAddBoard} className={styles.inline}>
                         <input type="hidden" name="subjectKey" value={f.subjectKey} />
                         <input type="hidden" name="name" value={f.newName} />
@@ -1759,7 +1759,7 @@ function EyeDrawer({
       <p className={styles.dpEsub}>
         Watched, not worked. Things leave here by being seeded, scheduled, or dismissed.
       </p>
-      <span className={styles.zone}>WARMING — SIGNALS WORTH A LOOK</span>
+      <span className={styles.zone}>WARMING · SIGNALS ON FILE</span>
       {warming.map((w) => (
         <div key={w.id} className={styles.pcard}>
           <div className={styles.pcHead}>
@@ -1775,7 +1775,7 @@ function EyeDrawer({
               <input type="hidden" name="reason" value="parked from the eye" />
               <input type="hidden" name="days" value="14" />
               <input type="hidden" name="returnTo" value="/room" />
-              <button className={styles.pcBtn}>Park 2w</button>
+              <button className={styles.pcBtn}>Park two weeks</button>
             </form>
             <form action={dismissTriage} className={styles.inline}>
               <input type="hidden" name="accountId" value={w.id} />
@@ -1789,7 +1789,7 @@ function EyeDrawer({
       {warming.length === 0 && (
         <p className={styles.dpEmpty}>Nothing warming right now.</p>
       )}
-      <span className={styles.zone}>LATER — REAL, JUST NOT NOW</span>
+      <span className={styles.zone}>LATER · REAL, JUST NOT NOW</span>
       {later.map((t) => (
         <div key={t.id} className={styles.chkRow}>
           <span className={styles.chkAsk}>{t.body}</span>
@@ -1874,7 +1874,7 @@ export function RoomClient({
                 <span>
                   <b>Account to the board</b>
                   <span className={styles.miD}>
-                    Pick from the book — the row appears with its intel attached.
+                    Pick from the book. The row appears with its intel attached.
                   </span>
                 </span>
               </Link>
@@ -1887,7 +1887,8 @@ export function RoomClient({
                 <span>
                   <b>File a paste</b>
                   <span className={styles.miD}>
-                    SF capture, email, or notes — cleans and files to any account.
+                    Salesforce capture, email, or notes. It cleans and files to any
+                    account.
                   </span>
                 </span>
               </Link>
@@ -1900,7 +1901,7 @@ export function RoomClient({
                 <span>
                   <b>Payroll intake form</b>
                   <span className={styles.miD}>
-                    The MS-form mirror, prefilled from the deal&apos;s intel.
+                    The Microsoft form mirror, prefilled from the deal&apos;s intel.
                   </span>
                 </span>
               </Link>
@@ -1915,12 +1916,12 @@ export function RoomClient({
 
       {dbUnavailable && (
         <p className={styles.emptyBoard}>
-          The database isn&apos;t reachable — the room shows nothing until it is.
+          The database isn&apos;t reachable. The room shows nothing until it is.
         </p>
       )}
       {!dbUnavailable && rows.length === 0 && (
         <p className={styles.emptyBoard}>
-          Nothing on the board yet — open the <Link href="/accounts">Account Room</Link>{" "}
+          Nothing on the board yet. Open the <Link href="/accounts">Account Room</Link>{" "}
           and add the deals you&apos;re working.
         </p>
       )}

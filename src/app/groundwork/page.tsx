@@ -183,6 +183,7 @@ export default async function GroundworkPage({
     touches,
     todos,
     contactCountById: contactCount,
+    doneKeys: new Set(doneTimes.keys()),
     now,
   });
 
@@ -306,11 +307,11 @@ export default async function GroundworkPage({
               <div className={styles.due}>
                 <span className={styles.dueBar} />
                 <span>
-                  ▤ <b>Intent read due</b> — run the Sales Nav grab (installed on the{" "}
-                  <Link href="/intake">Capture page</Link>). An account&rsquo;s rows
-                  pasted at the <Link href="/">HomeRoom</Link> ⚡ re-rank this queue on
-                  who is reading us; the full snapshot parks in the{" "}
-                  <Link href="/intranet">Intranet</Link> for the record. Ten minutes.
+                  ▤ <b>Run the Sales Nav grab.</b> The intent read is due. The grab lives
+                  on the <Link href="/intake">Capture page</Link>. Paste the rows at the{" "}
+                  <Link href="/">HomeRoom</Link> ⚡. The queue re-ranks on who is reading
+                  us. The full snapshot parks in the{" "}
+                  <Link href="/intranet">Intranet</Link>. Ten minutes.
                 </span>
               </div>
             )}
@@ -376,7 +377,13 @@ export default async function GroundworkPage({
                               {prox && <span className={styles.prox}>{prox}</span>}
                               <br />
                               <span className={styles.rowMeta}>
-                                <b>{q.situation}</b>
+                                <b>{q.action}</b>{" "}
+                                <span className={styles.rowReason}>{q.reason}</span>
+                                {q.carried && (
+                                  <span className={styles.carry}>
+                                    left from yesterday
+                                  </span>
+                                )}
                               </span>
                             </span>
                             <span
@@ -394,10 +401,10 @@ export default async function GroundworkPage({
             })}
             {overflow > 0 && (
               <p className={styles.queueFoot}>
-                And {overflow} more that can wait — nothing is hidden, it just is not in
+                And {overflow} more that can wait. Nothing is hidden; it just is not in
                 front of you. A blue mark means their people are reading us, from your
-                pasted Sales Nav read; &ldquo;your metro&rdquo; means meeting in person is
-                nearly free. Proximity breaks ties; it never sets priority.
+                pasted Sales Nav read. &ldquo;Your metro&rdquo; means meeting in person is
+                nearly free; proximity breaks ties, never priority.
               </p>
             )}
 
@@ -410,8 +417,8 @@ export default async function GroundworkPage({
             </div>
             {wireOrdered.length === 0 ? (
               <div className={styles.empty}>
-                The wire watches the outside — the EOR and PEO world, the named
-                competitors, and every account name in the book — and files what matters
+                The wire watches the outside: the EOR and PEO world, the named
+                competitors, and every account name in the book. It files what matters
                 with a one-sentence read. Nothing has been swept yet.
                 {canWrite && wireAvailable() && (
                   <form action={sweepWire} style={{ marginTop: 8 }}>
@@ -468,7 +475,7 @@ export default async function GroundworkPage({
                       className={`${styles.btn2nd} ${styles.btnSmall}`}
                       type="submit"
                     >
-                      Sweep again — the last one is stale
+                      Sweep again. The last sweep is stale.
                     </button>
                   </form>
                 )}
@@ -492,10 +499,10 @@ export default async function GroundworkPage({
               </div>
             ) : (
               <div className={styles.instCard}>
-                No institution on the calendar yet. The program starts with a
-                verification, not a membership — the Global Chamber&rsquo;s Chicago
-                chapter is first on the list: who convenes it, who attends, what
-                membership asks. Education first, never a lead request.
+                No institution on the calendar yet. Start with a verification, not a
+                membership. Verify the Global Chamber&rsquo;s Chicago chapter first: who
+                convenes it, who attends, what membership asks. Education first, never a
+                lead request.
               </div>
             )}
 
@@ -592,8 +599,8 @@ export default async function GroundworkPage({
                 </div>
                 {file.singleThread && (
                   <p className={styles.actNote}>
-                    This conversation rides on one person — the widening question is part
-                    of the composed text.
+                    One person carries this conversation. The widening question is inside
+                    the composed text.
                   </p>
                 )}
                 <div className={styles.acts}>
@@ -616,7 +623,7 @@ export default async function GroundworkPage({
                           `${file.name} — from Groundwork`,
                         )}&body=${encodeURIComponent(file.composed.payload)}`}
                       >
-                        Draft in your mail app — addressed to {file.composed.to}
+                        Draft in your mail app
                       </a>
                     )}
                   {file.composed.kind === "ride-ask" && sfAccountUrl(file.accountId) && (
@@ -626,8 +633,7 @@ export default async function GroundworkPage({
                       target="_blank"
                       rel="noreferrer"
                     >
-                      Open the account in Salesforce — the owner&rsquo;s name is printed
-                      on it
+                      Open the account in Salesforce. The owner&rsquo;s name is on it.
                     </a>
                   )}
                   <Link
@@ -638,8 +644,7 @@ export default async function GroundworkPage({
                   </Link>
                 </div>
                 <p className={styles.actNote}>
-                  Copy puts the exact text on your clipboard and stamps the row — the
-                  stamp is a side effect of the action, never its own button.
+                  Copy puts the exact text on your clipboard and stamps the row.
                 </p>
                 <details className={styles.russ}>
                   <summary>
@@ -658,7 +663,7 @@ export default async function GroundworkPage({
                   </span>
                   {file.history.length === 0 ? (
                     <p className={styles.histLine}>
-                      Nothing on file yet — the first paste starts the record.
+                      Nothing on file yet. The first paste starts the record.
                     </p>
                   ) : (
                     file.history.map((h, i) => (
@@ -674,9 +679,8 @@ export default async function GroundworkPage({
               </div>
             ) : (
               <div className={styles.empty}>
-                The queue is clear — no evidence anywhere in the book puts an account in
-                front of you right now. That is a real state, not a fault: the next paste,
-                read, or reply re-ranks everything.
+                The queue is clear. No evidence in the book puts an account in front of
+                you right now. The next paste, read, or reply re-ranks everything.
               </div>
             )}
           </div>

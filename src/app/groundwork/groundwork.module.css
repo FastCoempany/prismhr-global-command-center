@@ -152,6 +152,18 @@
   color: var(--color-ink-soft);
   font-weight: 600;
 }
+.rowReason {
+  color: var(--color-ink-disabled);
+}
+/* The carryover mark — amber, because an unworked yesterday is a caution. */
+.carry {
+  font: 600 10px/1.4 var(--font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ds-amber);
+  margin-left: 6px;
+  white-space: nowrap;
+}
 .rowOwed {
   font: 600 11px/1.5 var(--font-mono);
   color: var(--ds-ink-quiet);

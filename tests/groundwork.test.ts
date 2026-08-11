@@ -258,6 +258,27 @@ describe("groundwork queue", () => {
     assert.equal(overflow, 4);
   });
 
+  test("yesterday's unworked move returns carried; a stamped one does not", () => {
+    const p = acct({ id: "Y0000000000000001", name: "Yesterday" });
+    const inp = {
+      ...base,
+      accounts: [p],
+      intelById: new Map<string, DealIntel>(),
+      notesById: new Map([
+        [p.id, [salesnavNote("high buyer intent", "2026-07-28T12:00:00Z")]],
+      ]),
+    };
+    const un = buildQueue({ ...inp, doneKeys: new Set<string>() });
+    assert.equal(un.items[0].ruleId, "intent-warm");
+    assert.equal(un.items[0].carried, true);
+    const mk = moveKey(un.items[0]);
+    const done = buildQueue({
+      ...inp,
+      doneKeys: new Set([`groundwork:2026-07-29:${mk}`]),
+    });
+    assert.equal(done.items[0].carried, false);
+  });
+
   test("the clock bands: 10a is sends, 12p is people, 3p is filing", () => {
     assert.equal(currentBand(new Date("2026-07-30T15:00:00Z")), "now"); // 10a CT
     assert.equal(currentBand(new Date("2026-07-30T17:30:00Z")), "eleven"); // 12:30p CT
@@ -498,7 +519,7 @@ describe("groundwork adversarial regressions", () => {
       contactName: "",
       laneDate: null,
     });
-    assert.ok(draft.to.includes("add before sending"));
+    assert.ok(draft.to.includes("Add the name before sending"));
     assert.ok(draft.payload.includes("Hi —"));
     const relay = composeFor({
       ruleId: "roundup-slot",
@@ -508,7 +529,7 @@ describe("groundwork adversarial regressions", () => {
       contactName: "",
       laneDate: null,
     });
-    assert.ok(relay.to.includes("route it with Aleks"));
+    assert.ok(relay.to.includes("Route it with Aleks"));
   });
 
   test("an archived thread or a done reminder never asks for meeting prep", () => {
@@ -597,8 +618,10 @@ describe("groundwork adversarial regressions", () => {
         ruleId: "reply-owed",
         weight: 90,
         band: "now",
-        situation: "their message is the newest thing between you — answer first",
+        action: "Answer their last message.",
+        reason: "Unanswered since July 29.",
         owed: "reply owed",
+        carried: false,
         intent: null,
       },
       intel,
@@ -626,8 +649,10 @@ describe("groundwork adversarial regressions", () => {
           ruleId: "stakeholder-gap",
           weight: 55,
           band: "two",
-          situation: "the book knows one person here",
+          action: "Find a second name.",
+          reason: "One person carries everything.",
           owed: "recipe ready",
+          carried: false,
           intent: null,
         },
       ],

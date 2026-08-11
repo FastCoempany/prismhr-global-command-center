@@ -50,27 +50,10 @@ const shortDate = (iso: string) => {
   });
 };
 
-function titleFor(item: QueueItem, p: Peo): string {
-  switch (item.ruleId) {
-    case "decision-window":
-      return "Their decision is days away. What you owe them is composed.";
-    case "reply-owed":
-      return "Their message is the newest thing between you. Answer first.";
-    case "meeting-prep":
-      return "A dated follow-up lands inside 48 hours. Walk in prepared.";
-    case "intent-warm":
-      return "Their people are reading us. Warm rooms cool.";
-    case "riding-lane":
-      return "A colleague is already in the building. Ride, never knock.";
-    case "roundup-slot":
-      return `${p.csm.split(" ")[0]}'s update is due — this account goes first.`;
-    case "stale-above-gate":
-      return "Real demand on file, research gone quiet. Refresh before anyone calls.";
-    case "stakeholder-gap":
-      return "The book barely knows anyone here. Twenty minutes fixes that.";
-    case "never-touched-incumbent":
-      return "Already on our platform, never introduced. The cheapest conversation in the book.";
-  }
+// The file's title IS the queue row's pair: the action, then the trigger.
+// One writing, two surfaces — the rail and the file never disagree.
+function titleFor(item: QueueItem): string {
+  return `${item.action} ${item.reason}`;
 }
 
 export function buildFile(
@@ -113,12 +96,14 @@ export function buildFile(
   if (sources.length === 0 && otherNotes.length > 0)
     sources.push(`notes ${shortDate(otherNotes[0].createdAt)}`);
 
-  // Story — identity + the situation + what the research adds (§3 voice).
+  // Story — the carryover fact first when there is one, then what the
+  // research adds (§3 voice). The action and its trigger live in the title;
+  // the story never repeats them.
   const demand = demandRec;
   const storyBits: string[] = [];
-  storyBits.push(
-    `${queueItem.situation.charAt(0).toUpperCase()}${queueItem.situation.slice(1)}.`,
-  );
+  if (queueItem.carried) {
+    storyBits.push("Surfaced yesterday. Left unworked.");
+  }
   if (demand?.summary) {
     const s = demand.summary.split(/(?<=\.)\s+/)[0];
     if (s) storyBits.push(s.endsWith(".") ? s : `${s}.`);
@@ -183,7 +168,7 @@ export function buildFile(
     name: p.name,
     csm: p.csm,
     sourcesLine: sources.join(" · "),
-    title: titleFor(queueItem, p),
+    title: titleFor(queueItem),
     story: redactMoney(storyBits.join(" ")),
     composed,
     people,

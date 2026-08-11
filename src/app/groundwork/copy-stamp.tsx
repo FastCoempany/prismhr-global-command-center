@@ -31,8 +31,7 @@ export function CopyStamp({
         } catch {
           // The fallback prompt returns null on cancel — no copy, no stamp.
           ok =
-            window.prompt("Copy blocked — press Ctrl+C:", payload.slice(0, 4000)) !==
-            null;
+            window.prompt("Copy blocked. Press Ctrl+C:", payload.slice(0, 4000)) !== null;
         }
         if (!ok) return;
         setCopied(true);
@@ -40,7 +39,7 @@ export function CopyStamp({
         if (action) start(() => action());
       }}
     >
-      {copied ? "Copied — it's on your clipboard" : label}
+      {copied ? "Copied. It's on your clipboard." : label}
     </button>
   );
 }

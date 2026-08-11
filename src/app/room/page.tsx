@@ -515,7 +515,7 @@ export default async function RoomPage() {
     .map((a) => ({
       id: a.id,
       name: a.name,
-      why: a.summary.slice(0, 140) || "Signal on file — open the account for the read.",
+      why: a.summary.slice(0, 140) || "Signal on file. Open the account to read it.",
       seedNote: "",
     }));
   // The eye also watches FILED intel, not just the frozen research: an
@@ -542,7 +542,7 @@ export default async function RoomPage() {
     warming.push({
       id: p.id,
       name: p.name,
-      why: `Fresh intel on file — “${line}”`,
+      why: `On the record: “${line}”`,
       seedNote: "",
     });
   }

@@ -84,7 +84,9 @@ export function paragraphFor(
       args.intel?.lastInbound &&
       (!args.intel.lastOutbound || args.intel.lastInbound > args.intel.lastOutbound))
   ) {
-    const when = args.intel?.lastInbound ? ` (${monthDay(args.intel.lastInbound)})` : "";
+    const when = args.intel?.lastInbound
+      ? `, on ${monthDay(args.intel.lastInbound)}`
+      : "";
     bits.push(
       `${identityClause(p)} — wrote to us last${when}; the reply is composed and ready to send.`,
     );
@@ -110,11 +112,11 @@ export function paragraphFor(
     );
   } else if (rule === "never-touched-incumbent") {
     bits.push(
-      `${identityClause(p)} — already on our software and never introduced to Global; the introduction note for ${pmClause(p)} next touch is composed.`,
+      `${identityClause(p)} — already on our software and never introduced to Global; the first note to them is composed and ready to send.`,
     );
   } else if (args.intent) {
     bits.push(
-      `${identityClause(p)} — their people have been reading our Global material this week${args.intent.activities ? ` (${args.intent.activities} separate engagements)` : ""}, unprompted; they move to the top of ${pmClause(p)} next briefing.`,
+      `${identityClause(p)} — their people have been reading our Global material this week${args.intent.activities ? `, ${args.intent.activities} separate engagements,` : ","} unprompted${rule === "intent-warm" ? "; the note to them is composed and ready to send" : ""}.`,
     );
   } else {
     bits.push(`${identityClause(p)} — in the book, no open conversation yet.`);

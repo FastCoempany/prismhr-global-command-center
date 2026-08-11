@@ -244,10 +244,10 @@ export default async function AccountsPage() {
 
           <p
             className={styles.sub}
-            title="Global fit = 40% account profile (size · on-PrismHR · model · recency) + 60% researched demand (confidence-weighted). Play flags a competitor EOR already in place."
+            title="Global fit blends 40% account profile with 60% researched demand, weighted by confidence. The profile covers size, platform, model, and recency. Play flags a competitor EOR already in place."
           >
-            All {rows.length} accounts, heat-scored for Global fit — 40% profile · 60%
-            demand · research {researchGeneratedAt}.
+            All {rows.length} accounts, scored for Global fit: 40% profile, 60% demand.
+            Research from {researchGeneratedAt}.
           </p>
         </div>
         <AccountsClient
@@ -263,7 +263,7 @@ export default async function AccountsPage() {
         {partnerRoster.length > 0 && (
           <details className={styles.ledger}>
             <summary className={styles.ledgerSummary}>
-              Partners — the roster ({partnerRoster.length})
+              Partner roster ({partnerRoster.length})
             </summary>
             <ul className={styles.ledgerList}>
               {partnerRoster.map((p) => (
@@ -294,7 +294,7 @@ export default async function AccountsPage() {
         {excluded.length > 0 && (
           <details className={styles.ledger}>
             <summary className={styles.ledgerSummary}>
-              Excluded — not mine ({excluded.length})
+              Excluded as not mine ({excluded.length})
             </summary>
             <ul className={styles.ledgerList}>
               {excluded.map(({ p, d }) => (

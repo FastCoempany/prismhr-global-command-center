@@ -3,7 +3,11 @@
 // app already writes, emits a candidate row, and the strongest evidence per
 // account wins. Time bands come from the KIND of move a rule composes (a send,
 // a person touch, a session), never from a separate scheduler; the clock only
-// decides which band is "now". Build spec: docs/plans/groundwork-build-spec.md.
+// decides which band is "now". Row copy obeys the writing canon (CLAUDE.md):
+// an imperative action line and a trigger reason line, six words or fewer
+// each, the deadline always in the reason and never in the action. A move
+// surfaced yesterday and left unworked comes back carrying that fact.
+// Build spec: docs/plans/groundwork-build-spec.md.
 
 import type { Peo } from "@/lib/book";
 import type { DealIntel } from "@/lib/intel/types";
@@ -11,7 +15,7 @@ import { compositeScore, deskScore } from "@/lib/book/scoring";
 import { getDemand, researchGeneratedAt, DEMAND_GATE } from "@/lib/book/research";
 import { proximityRank } from "./proximity";
 import { intentFor, ridingLaneDate, type IntentSignal } from "./signals";
-import { USER_TZ } from "@/lib/tz";
+import { USER_TZ, userDayKey } from "@/lib/tz";
 
 export type Band = "now" | "eleven" | "two";
 
@@ -32,8 +36,10 @@ export type QueueItem = {
   ruleId: QueueRuleId;
   weight: number;
   band: Band;
-  situation: string; // the row's plain-language line (§3 voice)
+  action: string; // the imperative line — do this today, six words or fewer
+  reason: string; // the trigger — a date, a promise, an unanswered message
   owed: string; // the mono column — the composed thing's readiness label
+  carried: boolean; // surfaced yesterday, left unworked
   intent: IntentSignal | null;
 };
 
@@ -59,6 +65,7 @@ export type QueueInput = {
   touches: TouchLike[];
   todos: TodoLike[];
   contactCountById: (id: string) => number;
+  doneKeys?: Set<string>; // raw done-stamp keys, for the carryover read
   now: Date;
 };
 
@@ -67,12 +74,15 @@ const DAY = 86_400_000;
 const daysUntil = (iso: string, now: Date) =>
   (Date.parse(`${iso}T12:00:00Z`) - now.getTime()) / DAY;
 
+// A date in prose, day-only or full ISO — month name spelled out.
 const monthDay = (iso: string) => {
-  const t = Date.parse(`${iso}T12:00:00Z`);
+  const dayOnly = iso.length === 10;
+  const t = Date.parse(dayOnly ? `${iso}T12:00:00Z` : iso);
+  if (Number.isNaN(t)) return "";
   return new Date(t).toLocaleDateString("en-US", {
     month: "long",
     day: "numeric",
-    timeZone: "UTC",
+    timeZone: dayOnly ? "UTC" : USER_TZ,
   });
 };
 
@@ -113,11 +123,10 @@ function researchAgeDays(now: Date): number {
   return (now.getTime() - t) / DAY;
 }
 
-export function buildQueue(inp: QueueInput): {
-  items: QueueItem[];
-  overflow: number;
-  all: QueueItem[]; // the full ranked list, uncapped — the readout counts from this
-} {
+// The full ranked list for one day — the pure heart buildQueue calls twice:
+// once for today, once for yesterday, so the carryover read stays derived and
+// nothing is stored.
+function rankAll(inp: QueueInput, now: Date): QueueItem[] {
   const candidates: QueueItem[] = [];
   const touchesByAccount = new Map<string, TouchLike[]>();
   for (const t of inp.touches) {
@@ -133,19 +142,19 @@ export function buildQueue(inp: QueueInput): {
     if (m) outreachByPartner.set(m[1], t);
   }
 
-  const researchAge = researchAgeDays(inp.now);
+  const researchAge = researchAgeDays(now);
 
   for (const p of inp.accounts) {
     const notes = inp.notesById.get(p.id);
     const intel = inp.intelById.get(p.id);
-    const intent = intentFor(notes, inp.now);
+    const intent = intentFor(notes, now);
     const acctTouches = touchesByAccount.get(p.id) ?? [];
     const hasActivity = (notes?.length ?? 0) > 0 || acctTouches.length > 0;
 
     // decision-window (95): a dated decision inside 7 days.
     const dateIso = intel?.timing?.value.dateIso;
     if (dateIso) {
-      const dd = daysUntil(dateIso, inp.now);
+      const dd = daysUntil(dateIso, now);
       if (dd >= -1 && dd <= 7) {
         candidates.push({
           accountId: p.id,
@@ -153,8 +162,10 @@ export function buildQueue(inp: QueueInput): {
           ruleId: "decision-window",
           weight: 95,
           band: BAND_OF["decision-window"],
-          situation: `their decision lands ${monthDay(dateIso)} — what you owe them goes first`,
+          action: "Send what you owe them.",
+          reason: `Decision lands ${monthDay(dateIso)}.`,
           owed: "draft composed",
+          carried: false,
           intent,
         });
       }
@@ -164,7 +175,7 @@ export function buildQueue(inp: QueueInput): {
     if (
       intel?.lastInbound &&
       (!intel.lastOutbound || intel.lastInbound > intel.lastOutbound) &&
-      (inp.now.getTime() - Date.parse(intel.lastInbound)) / DAY <= 21
+      (now.getTime() - Date.parse(intel.lastInbound)) / DAY <= 21
     ) {
       candidates.push({
         accountId: p.id,
@@ -172,8 +183,10 @@ export function buildQueue(inp: QueueInput): {
         ruleId: "reply-owed",
         weight: 90,
         band: BAND_OF["reply-owed"],
-        situation: "their message is the newest thing between you — answer first",
+        action: "Answer their last message.",
+        reason: `Unanswered since ${monthDay(intel.lastInbound)}.`,
         owed: "reply owed",
+        carried: false,
         intent,
       });
     }
@@ -181,24 +194,31 @@ export function buildQueue(inp: QueueInput): {
     // meeting-prep (85): a dated follow-up or reminder inside 48 hours.
     const soon = (iso: string | null | undefined) => {
       if (!iso) return false;
-      const dd = (Date.parse(iso) - inp.now.getTime()) / DAY;
+      const dd = (Date.parse(iso) - now.getTime()) / DAY;
       return dd >= -0.5 && dd <= 2;
     };
-    if (
-      acctTouches.some(
-        (t) =>
-          (t.status === "awaiting" || t.status === "responded") && soon(t.followUpAt),
-      ) ||
-      inp.todos.some((t) => !t.done && t.accountId === p.id && soon(t.remindAt))
-    ) {
+    const prepDates = [
+      ...acctTouches
+        .filter(
+          (t) =>
+            (t.status === "awaiting" || t.status === "responded") && soon(t.followUpAt),
+        )
+        .map((t) => t.followUpAt),
+      ...inp.todos
+        .filter((t) => !t.done && t.accountId === p.id && soon(t.remindAt))
+        .map((t) => t.remindAt as string),
+    ].sort();
+    if (prepDates.length > 0) {
       candidates.push({
         accountId: p.id,
         name: p.name,
         ruleId: "meeting-prep",
         weight: 85,
         band: BAND_OF["meeting-prep"],
-        situation: "a dated follow-up lands inside 48 hours — walk in prepared",
+        action: "Prep the meeting.",
+        reason: `Follow-up dated ${monthDay(prepDates[0])}.`,
         owed: "prep composed",
+        carried: false,
         intent,
       });
     }
@@ -211,15 +231,18 @@ export function buildQueue(inp: QueueInput): {
         ruleId: "intent-warm",
         weight: 80,
         band: BAND_OF["intent-warm"],
-        situation: "their people are reading us — warm rooms cool",
+        action: "Send the reading-us note.",
+        reason: "Their people are reading us.",
         owed: "note ready",
+        carried: false,
         intent,
       });
     }
 
     // riding-lane (75): a colleague's CRM conversation dated inside 14 days,
-    // visible in the pasted grab rows.
-    const lane = ridingLaneDate(notes, inp.now);
+    // visible in the pasted grab rows. One door of two, per the direct
+    // doctrine — ride when it is faster, go direct when it is not.
+    const lane = ridingLaneDate(notes, now);
     if (lane) {
       candidates.push({
         accountId: p.id,
@@ -227,8 +250,10 @@ export function buildQueue(inp: QueueInput): {
         ruleId: "riding-lane",
         weight: 75,
         band: BAND_OF["riding-lane"],
-        situation: `a colleague's Salesforce opportunity there closes ${monthDay(lane)} — ride it, never around it`,
+        action: "Ask to be carried in.",
+        reason: `Their opportunity closes ${monthDay(lane)}.`,
         owed: "ask composed",
+        carried: false,
         intent,
       });
     }
@@ -246,8 +271,10 @@ export function buildQueue(inp: QueueInput): {
         ruleId: "stale-above-gate",
         weight: 65,
         band: BAND_OF["stale-above-gate"],
-        situation: `real demand on file, research ${Math.floor(researchAge)} days old — refresh before anyone calls`,
+        action: "Refresh the account research.",
+        reason: `Real demand. Research ${Math.floor(researchAge)} days old.`,
         owed: "recipe ready",
+        carried: false,
         intent,
       });
     }
@@ -260,8 +287,13 @@ export function buildQueue(inp: QueueInput): {
         ruleId: "stakeholder-gap",
         weight: 55,
         band: BAND_OF["stakeholder-gap"],
-        situation: `the book knows ${inp.contactCountById(p.id) === 0 ? "no one" : "one person"} here — the session that fixes it is composed`,
+        action: "Find a second name.",
+        reason:
+          inp.contactCountById(p.id) === 0
+            ? "The book knows no one."
+            : "One person carries everything.",
         owed: "recipe ready",
+        carried: false,
         intent,
       });
     }
@@ -275,9 +307,10 @@ export function buildQueue(inp: QueueInput): {
         ruleId: "never-touched-incumbent",
         weight: 50,
         band: BAND_OF["never-touched-incumbent"],
-        situation:
-          "already on our platform, never introduced to Global — the cheapest conversation in the book",
-        owed: "roundup slot",
+        action: "Open the first conversation.",
+        reason: "On our platform. Never introduced.",
+        owed: "draft composed",
+        carried: false,
         intent,
       });
     }
@@ -305,20 +338,22 @@ export function buildQueue(inp: QueueInput): {
     const t = outreachByPartner.get(csm);
     const due =
       !t ||
-      (t.status === "archived" &&
-        (inp.now.getTime() - Date.parse(t.contactedAt)) / DAY >= 2);
+      (t.status === "archived" && (now.getTime() - Date.parse(t.contactedAt)) / DAY >= 2);
     if (!due) continue;
     const p = byId.get(best.id);
     if (!p) continue;
+    const csmFirst = csm.split(" ")[0];
     candidates.push({
       accountId: p.id,
       name: p.name,
       ruleId: "roundup-slot",
       weight: 70,
       band: BAND_OF["roundup-slot"],
-      situation: `${csm}'s account update is due — this is the strongest fit on their list, briefed first`,
-      owed: `note to ${csm.split(" ")[0]} ready`,
-      intent: intentFor(inp.notesById.get(p.id), inp.now),
+      action: `Brief ${csmFirst}.`,
+      reason: `${csmFirst}'s update is due.`,
+      owed: `note to ${csmFirst} ready`,
+      carried: false,
+      intent: intentFor(inp.notesById.get(p.id), now),
     });
   }
 
@@ -335,7 +370,7 @@ export function buildQueue(inp: QueueInput): {
     return compositeScore(deskScore(p).score, d?.demandScore ?? null, d?.confidence)
       .score;
   };
-  const items = [...bestByAccount.values()].sort((a, b) => {
+  return [...bestByAccount.values()].sort((a, b) => {
     if (b.weight !== a.weight) return b.weight - a.weight;
     const cb = compOf(b.accountId) - compOf(a.accountId);
     if (cb !== 0) return cb;
@@ -343,10 +378,35 @@ export function buildQueue(inp: QueueInput): {
     const pb = byId.get(b.accountId);
     return (pa ? proximityRank(pa) : 3) - (pb ? proximityRank(pb) : 3);
   });
+}
+
+export function buildQueue(inp: QueueInput): {
+  items: QueueItem[];
+  overflow: number;
+  all: QueueItem[]; // the full ranked list, uncapped — the readout counts from this
+} {
+  const ranked = rankAll(inp, inp.now);
+
+  // The carryover read (canon: yesterday carries). A move that was on
+  // yesterday's visible queue and never got its done stamp returns marked —
+  // derived by re-ranking as of yesterday, never stored.
+  const yesterday = new Date(inp.now.getTime() - DAY);
+  const yesterKey = userDayKey(yesterday);
+  const shownYesterday = new Set(
+    rankAll(inp, yesterday)
+      .slice(0, QUEUE_CAP)
+      .map((q) => moveKey(q)),
+  );
+  const done = inp.doneKeys ?? new Set<string>();
+  const all = ranked.map((q) => {
+    const mk = moveKey(q);
+    const carried = shownYesterday.has(mk) && !done.has(`groundwork:${yesterKey}:${mk}`);
+    return carried ? { ...q, carried } : q;
+  });
 
   return {
-    items: items.slice(0, QUEUE_CAP),
-    overflow: Math.max(0, items.length - QUEUE_CAP),
-    all: items,
+    items: all.slice(0, QUEUE_CAP),
+    overflow: Math.max(0, all.length - QUEUE_CAP),
+    all,
   };
 }
