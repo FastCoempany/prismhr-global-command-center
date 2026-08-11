@@ -27,7 +27,7 @@ Say this, then ask this — one page at a time, one high-level question per page
 
 ## 2. The clock
 
-Measured from the words below at 150 a minute, plus an allowance for each answer. **19:13** as written, against a twenty-minute ceiling. Nothing is compressed to hit a number — every page gets the room to actually explain itself, and the answer allowances assume they talk. Slides 1, 5, 8, 11 and 13 are where the time should go; if you need to make some back, shorten the answers on 2, 3, 7, 12 and 14 rather than cutting what you say.
+Measured from the words below at 150 a minute, plus an allowance for each answer. **19:36** as written, against a twenty-minute ceiling. Nothing is compressed to hit a number — every page gets the room to actually explain itself, and the answer allowances assume they talk. Slides 1, 5, 8, 11 and 13 are where the time should go; if you need to make some back, shorten the answers on 2, 3, 7, 12 and 14 rather than cutting what you say.
 
 | #   | Slide                                             | You  | Them | Total     |
 | --- | ------------------------------------------------- | ---- | ---- | --------- |
@@ -40,13 +40,13 @@ Measured from the words below at 150 a minute, plus an allowance for each answer
 | 7   | Help Clients Grow Globally                        | 0:47 | 0:12 | 0:59      |
 | 8   | Why Service Providers Partner With PrismHR Global | 0:39 | 0:40 | 1:19      |
 | 9   | Global Employer of Record                         | 1:11 | 0:12 | 1:23      |
-| 10  | Global Contractor Solutions                       | 1:12 | 0:22 | 1:34      |
+| 10  | Global Contractor Solutions                       | 1:35 | 0:22 | 1:57      |
 | 11  | Global Payroll                                    | 1:56 | 0:35 | 2:31      |
 | 12  | Global Talent                                     | 0:30 | 0:08 | 0:38      |
 | 13  | The Operating Model                               | 0:58 | 0:50 | 1:48      |
 | 14  | Provider Success Story                            | 0:38 | 0:12 | 0:50      |
 | 15  | Help Your Clients Go Global                       | 0:38 | 0:40 | 1:18      |
-|     | **All fifteen**                                   |      |      | **19:13** |
+|     | **All fifteen**                                   |      |      | **19:36** |
 
 ---
 
@@ -265,7 +265,7 @@ _Why this one._ The Poland sentence is the whole product. If they take one thing
 
 ## Slide 10 — Global Contractor Solutions
 
-_1:12 you · 0:22 them_
+_1:35 you · 0:22 them_
 
 **On the page:** Two contractor models — contractor management, and contractor of record where PrismHR acts as agent of record.
 
@@ -274,6 +274,7 @@ _1:12 you · 0:22 them_
 > Contractors. Two versions, and the difference is who signs with the contractor.
 > Contractor management — the contract stays between your client and the contractor. We’re how they get paid, and we handle the paperwork around it.
 > Contractor of record — the contract is with us instead. We take on more of the risk, and we run a classification check before anybody gets paid.
+> On paying them: your client pays us in US dollars, US account to US account. The contractor gets a digital wallet that holds US dollars, and they convert it themselves whenever they withdraw — to their bank, a mobile wallet, however they want. That’s the contractor model specifically; employer of record and payroll each work differently.
 > Let me be straight about that check. Classification isn’t paperwork that turns an employee into a contractor. Set hours, one company, a manager telling them what to do — most countries call that an employee, whatever the contract says. If we see it, we’ll tell you before it becomes a problem.
 
 > **So contractors are the faster, cheaper route — as long as they really are contractors. We check that, so you don't have to.**
@@ -445,9 +446,13 @@ Supplemental health cover is available as an optional add-on, priced per person 
 
 **How does the money move? (EOR — the opposite of global payroll)**
 
-The client pays one invoice, in US dollars, into a US bank account. We convert it, pay each person locally in their own currency, and remit the taxes to that country’s authority. No international wires leave the client’s bank.
+Three models, three different answers — say which one you mean. EOR: the client pays us in US dollars and we convert and pay locally. Global payroll: funds never touch us — the client’s own in-country bank pays everyone. Contractors: the client pays us in US dollars, the worker holds dollars, and the worker converts when they withdraw.
 
-This is the reverse of the global payroll model, where funds never touch us. Be sure which one you’re describing.
+Then the EOR detail. The client pays one invoice, in US dollars, into a US bank account. We convert it, pay each person locally in their own currency, and remit the taxes to that country’s authority. No international wires leave the client’s bank.
+
+This is the reverse of the global payroll model, where funds never touch us, and different again from contractors, where the worker converts at withdrawal. Be sure which one you’re describing.
+
+Where it runs out: which entity receives and holds the money between invoice and payday, whether that account is segregated, who the FX counterparty is, and which rail carries the payment into the local market are not documented anywhere for EOR. If finance asks, take it back.
 
 **What about a laptop?**
 
@@ -467,11 +472,27 @@ Local payroll processing and tax filing, in local currency. The country’s requ
 
 **How does the money move? (different from EOR — don’t mix these up)**
 
-It doesn’t move through us. The client’s own in-country bank pays everyone. We run the payroll and produce a bank file; the client uploads that file to their bank; their bank pays the employees and the tax authorities directly.
+Three models, three different answers — say which one you mean. EOR: the client pays us in US dollars and we convert and pay locally. Global payroll: funds never touch us — the client’s own in-country bank pays everyone. Contractors: the client pays us in US dollars, the worker holds dollars, and the worker converts when they withdraw.
+
+Then the payroll detail. It doesn’t move through us. The client’s own in-country bank pays everyone. We run the payroll and produce a bank file; the client uploads that file to their bank; their bank pays the employees and the tax authorities directly.
 
 Funds never flow through PrismHR or through you. In some countries that’s a legal requirement — certain payments, pensions especially, have to come from the employer’s own account rather than a third party’s. It’s why remitting on the client’s behalf isn’t possible in this model.
 
 So the client never gets a wage invoice from anyone. Their paper trail is the gross-to-net reports plus the bank file. The only true invoice they receive is yours.
+
+**Contractors: how does that money move? (a third model — we don’t convert at all)**
+
+Three models, three different answers — say which one you mean. EOR: the client pays us in US dollars and we convert and pay locally. Global payroll: funds never touch us — the client’s own in-country bank pays everyone. Contractors: the client pays us in US dollars, the worker holds dollars, and the worker converts when they withdraw.
+
+Then the contractor detail. The client pays PrismHR in US dollars, US account to US account — no international transfer, and nothing that signals to a foreign tax authority that they’re paying people there.
+
+The contractor is credited to a digital wallet — described as Venmo-style — and the balance sits in a US-dollar stablecoin. Between the client paying and the worker spending it, nothing is converted.
+
+The worker converts it, when they choose to withdraw. To their own bank (conversion happens at that moment, a one-to-three dollar fee, and the client pays none of it), to a mobile wallet such as GCash, into crypto, onto a virtual card tied to the wallet, or across to Wise. Where the local currency is unstable they can just leave it in dollars.
+
+Contractors paid conventionally often lose forty to fifty dollars getting their own money out; here it’s a couple at most.
+
+On the rail: ListoPay is named in the product, but only on the contractor screens. Nothing in what we have says it carries EOR or global payroll. Don’t present it as the rail for all three.
 
 **What does the client need in place first?**
 
@@ -540,7 +561,7 @@ Country coverage sheets aren’t ready to hand out. You can name the countries y
 
 Not documented anywhere. What is confirmed: on EOR the platform converts local pay to the payer’s currency and shows it as an estimate, “subject to foreign exchange rates, which may fluctuate.” The rate source, any spread, when the rate is struck, and who bears movement between invoice and distribution are all unanswered.
 
-Say the estimate language, and take the rest back. Their finance people will ask, and a made-up answer here is unrecoverable.
+On contractors there is no rate question to answer — the worker converts at withdrawal and sees the rate themselves. On EOR, say the estimate language and take the rest back. Their finance people will ask, and a made-up answer here is unrecoverable.
 
 **Can our fee ride on the regular US invoice as a line item?**
 
