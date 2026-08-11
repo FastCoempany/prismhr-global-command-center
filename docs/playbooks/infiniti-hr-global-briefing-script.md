@@ -29,9 +29,9 @@ Six facts from the file. They change every line below.
 5. **Global work currently leaves their P&L.** Domestic runs on our platform; the
    international side rides an outside alliance that comes up for a look this fall. Let
    _them_ name that vendor. You never do.
-6. **The scar.** An Infiniti client cancelled PrismHR Performance Management earlier this
-   year because the 360-review capability fell short of what was pitched, and Jennifer was
-   on that thread. **Precision over promises with this account.** Every overclaim you make
+6. **The scar.** TZP Group — one of Infiniti's clients — cancelled PrismHR Performance
+   Management in the spring because the 360-review capability fell short of what was
+   pitched, and Jennifer was on that thread. **Precision over promises with this account.** Every overclaim you make
    in this room costs more than it earns.
 
 ## 2. Three rules for this room
@@ -347,9 +347,9 @@ the pilot: finding out is a small, safe first move.
 > Now — Puerto Rico. I'm going to be precise instead of fast.
 >
 > Puerto Rico isn't an international country for this. It's a US territory with its own tax
-> code and filings. It is not solved by the page you're looking at, and I'm not going to
-> tell you it is. Here's exactly where I am on getting you a real answer: `<state the
-current status and the date you'll come back>`.
+> code and its own filings. It is not solved by the page you're looking at, and I'm not
+> going to tell you it is. Let me take it back and come to you with a real answer instead
+> of a maybe.
 
 **Ask — LIVE, to Jennifer**
 
@@ -363,8 +363,7 @@ year. Declining to oversell the exact thing she asked about — in front of her 
 one move that buys back that credit. The question itself is also genuinely diagnostic:
 processing and filings are different problems with different owners.
 
-**Do not** improvise a Puerto Rico capability. If you don't have the answer yet, the answer
-is the date.
+**Do not** improvise a Puerto Rico capability. Taking it away is the answer.
 
 ---
 
@@ -460,7 +459,7 @@ small, which is what a CEO and COO both want and neither will say first.
 > implementation people, whoever owns that client, and me. We scope it end to end and you
 > see exactly what it costs Infiniti to deliver before anybody promises a client anything.
 >
-> And separately, I come back on Puerto Rico with a real answer rather than a maybe.
+> And separately, I come back to you on Puerto Rico.
 
 **Ask — LIVE, to the room, then stop talking**
 
@@ -482,7 +481,7 @@ mouths is the date the whole account plan runs on. Do not fill the silence.
 | "How is this different from what we use?" | Don't compare. "I'd be guessing at their contract. What I can tell you is what ours does and where it sits — inside the platform you already run." Then let them do the comparing.            |
 | "Which countries?"                        | Country coverage sheets are still coming. Name the countries you _know_, say the sheet is coming, and give the date. Don't gesture at a hundred seventy-five and hope.                        |
 | "Can our clients buy it themselves?"      | This is Jennifer's original question. Go to slide 13 and answer it with the two structures.                                                                                                   |
-| "Does this handle Puerto Rico?"           | No, and here's why, and here's when I'll have the real answer.                                                                                                                                |
+| "Does this handle Puerto Rico?"           | No — US territory, own tax code and filings. Say that, then take it away and answer it properly.                                                                                              |
 
 ## 5. What you do not say
 
@@ -497,8 +496,8 @@ mouths is the date the whole account plan runs on. Do not fill the silence.
 1. **Anika first.** She owns this relationship and she brought you in. Private debrief
    before anything goes to Infiniti: what you heard, what you committed to, what you held.
 2. **Then Jennifer**, copying whoever was in the room: three lines — the structure question
-   and where it landed, the Puerto Rico commitment with its date, and the scoping session
-   with two proposed times.
+   and where it landed, the Puerto Rico commitment, and the scoping session with two
+   proposed times.
 3. **File it:** the account's disposition, the structure answer from slide 13, the client
    named on slide 15, and the date they gave you. The date is the thing everything else
    hangs on.
