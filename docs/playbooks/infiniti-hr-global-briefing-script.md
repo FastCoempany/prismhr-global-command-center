@@ -27,26 +27,26 @@ Say this, then ask this — one page at a time, one high-level question per page
 
 ## 2. The clock
 
-Measured from the words below at 150 a minute, plus an allowance for each answer. **18:24** as written, against a twenty-minute ceiling. Nothing is compressed to hit a number — every page gets the room to actually explain itself, and the answer allowances assume they talk. Slides 1, 5, 8, 11 and 13 are where the time should go; if you need to make some back, shorten the answers on 2, 3, 7, 12 and 14 rather than cutting what you say.
+Measured from the words below at 150 a minute, plus an allowance for each answer. **18:20** as written, against a twenty-minute ceiling. Nothing is compressed to hit a number — every page gets the room to actually explain itself, and the answer allowances assume they talk. Slides 1, 5, 8, 11 and 13 are where the time should go; if you need to make some back, shorten the answers on 2, 3, 7, 12 and 14 rather than cutting what you say.
 
 | #   | Slide                                             | You  | Them | Total     |
 | --- | ------------------------------------------------- | ---- | ---- | --------- |
 | 1   | Compete Without Borders                           | 0:54 | 0:35 | 1:29      |
 | 2   | Agenda                                            | 0:44 | 0:12 | 0:56      |
-| 3   | PrismHR Solutions                                 | 0:34 | 0:12 | 0:46      |
-| 4   | Why Your Clients Go Global                        | 0:37 | 0:22 | 0:59      |
+| 3   | PrismHR Solutions                                 | 0:28 | 0:12 | 0:40      |
+| 4   | Why Your Clients Go Global                        | 0:38 | 0:22 | 1:00      |
 | 5   | The Global Challenges Your Clients Bring to You   | 1:10 | 0:28 | 1:38      |
-| 6   | Enter PrismHR Global                              | 0:48 | 0:18 | 1:06      |
-| 7   | Help Clients Grow Globally                        | 0:46 | 0:12 | 0:58      |
-| 8   | Why Service Providers Partner With PrismHR Global | 0:29 | 0:40 | 1:09      |
-| 9   | Global Employer of Record                         | 0:56 | 0:12 | 1:08      |
+| 6   | Enter PrismHR Global                              | 0:46 | 0:18 | 1:04      |
+| 7   | Help Clients Grow Globally                        | 0:45 | 0:12 | 0:57      |
+| 8   | Why Service Providers Partner With PrismHR Global | 0:38 | 0:40 | 1:18      |
+| 9   | Global Employer of Record                         | 0:54 | 0:12 | 1:06      |
 | 10  | Global Contractor Solutions                       | 1:06 | 0:22 | 1:28      |
-| 11  | Global Payroll                                    | 1:41 | 0:35 | 2:16      |
+| 11  | Global Payroll                                    | 1:39 | 0:35 | 2:14      |
 | 12  | Global Talent                                     | 0:30 | 0:08 | 0:38      |
 | 13  | The Operating Model                               | 0:58 | 0:50 | 1:48      |
 | 14  | Provider Success Story                            | 0:38 | 0:12 | 0:50      |
-| 15  | Help Your Clients Go Global                       | 0:35 | 0:40 | 1:15      |
-|     | **All fifteen**                                   |      |      | **18:24** |
+| 15  | Help Your Clients Go Global                       | 0:34 | 0:40 | 1:14      |
+|     | **All fifteen**                                   |      |      | **18:20** |
 
 ---
 
@@ -90,7 +90,7 @@ _0:44 you · 0:12 them_
 > Here’s the run of show. A bit about us. Why your clients go global, and what goes wrong when they do.
 > Then the services themselves — employer of record, contractor management and contractor of record, global payroll and global talent. Then why service providers work with us, how the operating model works, and one customer story.
 
-> **Most of the time goes to the operating model — the page that decides whether this is something you sell or something we sell.**
+> **Most of the time goes to the operating model — that’s what decides whether this is something you sell or something we sell.**
 
 **ASK THIS** — Say it flat, then let them place themselves.
 
@@ -102,13 +102,13 @@ _Why this one._ It tells you where to spend the time, and gives you permission t
 
 ## Slide 3 — PrismHR Solutions
 
-_0:34 you · 0:12 them_
+_0:28 you · 0:12 them_
 
 **On the page:** Company numbers — payroll volume, worksite employees, businesses served, brands in the Vensure family, countries, owned entities, founding dates.
 
 **SAY THIS**
 
-> Quick background, because the global side is newer than the part you use. We can hire and pay people in more than a hundred and seventy-five countries, and in forty-five of them we own the local company ourselves.
+> We can hire and pay people in more than a hundred and seventy-five countries. In forty-five of them we own the local company ourselves.
 
 > **So when I say we can hire someone in another country, I mean our company hires them — not a referral to a local firm.**
 
@@ -122,13 +122,13 @@ _Why this one._ This is the first real read on how much they know. A PEO can pla
 
 ## Slide 4 — Why Your Clients Go Global
 
-_0:37 you · 0:22 them_
+_0:38 you · 0:22 them_
 
 **On the page:** Five reasons companies expand: specialist talent, faster market entry, lower operating cost, serving international customers, and coverage across time zones.
 
 **SAY THIS**
 
-> Five reasons a company hires outside its home country.
+> There are five reasons a company hires outside its home country.
 > They need a skill they can’t find here. They want into a new market quickly. It costs less. They’ve got customers somewhere and want people on the ground. Or they want work covered across more hours of the day.
 
 > **It never arrives sounding like global expansion. It arrives as one client asking about one person in one country.**
@@ -149,7 +149,7 @@ _1:10 you · 0:28 them_
 
 **SAY THIS**
 
-> And this is what makes it hard. Five things.
+> And here’s what makes it hard. Five things.
 > Compliance. Every country has its own labor law, its own tax rules, and its own definition of who counts as an employee. Get that wrong and it’s expensive — back pay, penalties, sometimes the tax authority deciding the company itself is now taxable there.
 > Speed. Setting up properly in a new country takes months, and it takes somebody local who knows how.
 > Payroll. Different currency, different tax authority, different filing calendar — and usually a different vendor in every country.
@@ -168,13 +168,13 @@ _Why this one._ Don’t skip this page on the theory that they run a PEO so they
 
 ## Slide 6 — Enter PrismHR Global
 
-_0:48 you · 0:18 them_
+_0:46 you · 0:18 them_
 
 **On the page:** The four-word promise — Find, Hire, Pay, Manage — over 175+ countries.
 
 **SAY THIS**
 
-> So here’s what we do about it. Four words on the page.
+> Here’s what we do about it. Four parts.
 > Find — we recruit the person, if your client doesn’t already have somebody.
 > Hire — we employ them in that country, so nobody has to set up a company.
 > Pay — payroll in local currency, and the local taxes go where they’re supposed to go.
@@ -193,13 +193,13 @@ _Why this one._ She runs implementation and technology. The difference between a
 
 ## Slide 7 — Help Clients Grow Globally
 
-_0:46 you · 0:12 them_
+_0:45 you · 0:12 them_
 
 **On the page:** The four products named: Global EOR, contractor support, Global Payroll, Global Talent.
 
 **SAY THIS**
 
-> Those four words are sold as four products.
+> It’s sold as four products.
 > Employer of Record — we become the legal employer of your client’s worker in that country.
 > Contractor management — we handle the contracts and the payments for people who genuinely are contractors.
 > Global payroll — for people your client already employs overseas and just needs paid right.
@@ -217,15 +217,16 @@ _Why this one._ This is the whole offering in thirty seconds, and their answer t
 
 ## Slide 8 — Why Service Providers Partner With PrismHR Global
 
-_0:29 you · 0:40 them_ · **never skip**
+_0:38 you · 0:40 them_ · **never skip**
 
 **On the page:** Five reasons: one connected offering, operational efficiency, in-country expertise, a model that scales from the first hire, and flexible payment options.
 
 **SAY THIS**
 
-> Why a service provider works with us instead of building it. One place for employees, contractors, EOR and payroll. Fewer vendors. People in-country who know the rules. Start with one hire and grow.
+> Why service providers work with us instead of building it themselves. One place for employees, contractors, EOR and payroll. Fewer vendors. People in-country who know the rules. Start with one hire and grow.
+> And the one that matters most. When a client hires someone overseas, that revenue goes somewhere. For most providers, it doesn’t go to them.
 
-> **The one that isn’t on the page: this is a service you can sell using companies and people already in place.**
+> **This is how it stays inside your relationship, and inside your margin — sold using companies and people already in place.**
 
 **ASK THIS** — Scott's question. Ask it, then stop talking.
 
@@ -241,13 +242,13 @@ _Why this one._ The commercial argument in one question, and it belongs to the C
 
 ## Slide 9 — Global Employer of Record
 
-_0:56 you · 0:12 them_
+_0:54 you · 0:12 them_
 
 **On the page:** The two EOR tiers — Core and Plus — and what each includes.
 
 **SAY THIS**
 
-> Employer of Record — the main one, so let me be plain about it.
+> Employer of Record. This is the one to be plain about.
 > Your client wants to hire somebody in Poland. They have no company there. We do. So we employ that person under our Polish company. They work for your client day to day; we handle the contract, payroll, taxes and benefits under Polish law.
 > There are two versions. Core is when your client already knows who they want to hire. Plus is when they don’t, and we go find the person as well.
 
@@ -286,7 +287,7 @@ _Why this one._ Contractors overseas are usually paid out of accounts payable an
 
 ## Slide 11 — Global Payroll
 
-_1:41 you · 0:35 them_ · **never skip**
+_1:39 you · 0:35 them_ · **never skip**
 
 **On the page:** Global payroll capability — local processing and filing, multi-currency, country benefits and deductions, consolidated reporting, and integration with existing HCM or finance systems.
 
@@ -300,7 +301,7 @@ _1:41 you · 0:35 them_ · **never skip**
 
 > Now, Puerto Rico — this is the one I said you’d see.
 > Good news first: Puerto Rico is on our list. We can hire and pay there.
-> But it isn’t like the rest of this page. Puerto Rico is a US territory — US soil, so Social Security, Medicare and unemployment tax still apply. What’s local is what catches people: retirement plans need Puerto Rico treasury approval, firing runs through their own severance law, and workers’ comp can only be bought from the state fund.
+> Puerto Rico is different. It’s a US territory — US soil — so Social Security, Medicare and unemployment tax all still apply. What’s local is what catches people: retirement plans need Puerto Rico treasury approval, firing runs through their own severance law, and workers’ comp can only be bought from the state fund.
 > And here’s the part I’d rather you hear from me. Our published Puerto Rico guide has mistakes in it — three sections carry another country’s rules. I’ve flagged it. Don’t plan anything off that page; I’ll send you a corrected version.
 
 > **So nothing gets wired out of your client's bank, and nobody has to open an account overseas.**
@@ -330,7 +331,7 @@ _0:30 you · 0:08 them_
 
 **ASK THIS** — Quick answer, then move.
 
-> **Recruiting is usually the last piece a provider needs, because clients normally know who they want. Has that held true for you?**
+> **Recruiting is usually the last piece a provider needs — clients normally know who they want. Has that held true for you?**
 
 _Why this one._ This is the piece most providers need last, and it’s fine to say so. It matters most when a client can’t fill a role where they are.
 
@@ -385,13 +386,13 @@ _Why this one._ The story is a software team in Costa Rica, so it won’t look m
 
 ## Slide 15 — Help Your Clients Go Global
 
-_0:35 you · 0:40 them_ · **never skip**
+_0:34 you · 0:40 them_ · **never skip**
 
 **On the page:** Closing slide — “It’s time to build your borderless business.”
 
 **SAY THIS**
 
-> That’s the overview. What I’d suggest next is small: one client, one country, and we scope it together — your implementation people, whoever owns that client, and me. You’d see what’s involved and what it costs before anybody promises a client anything.
+> What I’d suggest next is small. One client, one country, and we scope it together — your implementation people, whoever owns that client, and me. You’d see what’s involved and what it costs before anybody promises a client anything.
 > And I’ll send the corrected Puerto Rico guide on the day I said.
 
 > **One client, one country. That’s the whole ask.**
