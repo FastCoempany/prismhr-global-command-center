@@ -67,10 +67,12 @@ export function buildFile(
     wire: WireItem[]; // full wire; matched items join the history
     contacts: ContactLike[]; // roster (may be huge; we take the head)
     laneDate?: string | null;
+    research?: { at: string; line: string } | null; // newest deep-research note
     now: Date;
   },
 ): FileModel {
-  const { queueItem, intel, intent, notes, touches, wire, contacts, laneDate } = deps;
+  const { queueItem, intel, intent, notes, touches, wire, contacts, laneDate, research } =
+    deps;
 
   // Sources line — provenance, computed (spec F1): it lists only stores that
   // actually contributed, labeled as what they are.
@@ -84,6 +86,7 @@ export function buildFile(
   if (pasteNotes.length > 0)
     sources.push(`HomeRoom pastes ${shortDate(pasteNotes[0].createdAt)}`);
   const demandRec = getDemand(p.id);
+  if (research) sources.push(`deep research ${shortDate(research.at)}`);
   if (demandRec?.summary && researchGeneratedAt)
     sources.push(`research ${shortDate(`${researchGeneratedAt}T12:00:00Z`)}`);
   if (intent) sources.push(`Sales Nav read ${shortDate(intent.at)}`);
@@ -103,6 +106,9 @@ export function buildFile(
   const storyBits: string[] = [];
   if (queueItem.carried) {
     storyBits.push("Surfaced yesterday. Left unworked.");
+  }
+  if (research?.line) {
+    storyBits.push(research.line.endsWith(".") ? research.line : `${research.line}.`);
   }
   if (demand?.summary) {
     const s = demand.summary.split(/(?<=\.)\s+/)[0];
@@ -149,6 +155,7 @@ export function buildFile(
     intent,
     contactName: p.contactName,
     laneDate,
+    wireHeadline: wireMatches[0]?.headline ?? null,
   });
   const threadCount = intel?.threads.people.length ?? 0;
   const singleThread = threadCount === 1;
@@ -156,9 +163,7 @@ export function buildFile(
   // carries the conversation — so the file's claim about it is always true.
   if (
     singleThread &&
-    (composed.kind === "send-draft" ||
-      composed.kind === "reply-frame" ||
-      composed.kind === "relay-note")
+    (composed.kind === "send-draft" || composed.kind === "relay-note")
   ) {
     composed.payload = `${composed.payload}\n\n${WIDENING_LINE}`;
   }

@@ -1,10 +1,11 @@
-// Composers — the "composed thing" every file carries (spec F3). Controls
-// doctrine (plan §3.5): a control opens the composed thing, hands over exact
-// words addressed to a named person, or files a bring-back. These builders
-// make the words; nothing here sends anything. Every string passes redactMoney
-// and stays inside the §3 voice: names introduce themselves, dates carry their
+// Composers — the "composed thing" every file carries. Controls doctrine
+// (plan §3.5): a control opens the composed thing, hands over exact words
+// addressed to a named person, or files a bring-back. These builders make the
+// words; nothing here sends anything. Every string passes redactMoney and
+// stays inside the §3 voice: names introduce themselves, dates carry their
 // meaning, no trade shorthand — and when the book has no name to address, the
-// text says so plainly instead of garbling.
+// text says so plainly instead of garbling. Direct doctrine: sends go to the
+// account's own people by default; the partner manager is a door you choose.
 
 import type { Peo } from "@/lib/book";
 import type { DealIntel } from "@/lib/intel/types";
@@ -14,14 +15,15 @@ import type { IntentSignal } from "./signals";
 import type { QueueRuleId } from "./day";
 
 export type Composed = {
-  kind: "send-draft" | "relay-note" | "ride-ask" | "recipe" | "reply-frame" | "prep";
+  kind: "send-draft" | "relay-note" | "ride-ask" | "recipe";
   label: string; // the button text — names the recipient where one exists
   to: string; // who the words are addressed to, plainly
   payload: string; // the exact text the copy control puts on the clipboard
 };
 
 const monthDay = (iso: string) => {
-  const t = Date.parse(`${iso}T12:00:00Z`);
+  const t = Date.parse(iso.length === 10 ? `${iso}T12:00:00Z` : iso);
+  if (Number.isNaN(t)) return "";
   return new Date(t).toLocaleDateString("en-US", {
     month: "long",
     day: "numeric",
@@ -59,8 +61,9 @@ export function composeFor(args: {
   intent: IntentSignal | null;
   contactName: string; // book primary, may be ""
   laneDate?: string | null; // riding-lane CRM date, ISO day
+  wireHeadline?: string | null; // wire-trigger: the matched item's headline
 }): Composed {
-  const { ruleId, account, intel, intent, contactName, laneDate } = args;
+  const { ruleId, account, intel, intent, contactName, laneDate, wireHeadline } = args;
   const first = firstName(contactName);
   const toContact = first
     ? contactName
@@ -77,35 +80,13 @@ export function composeFor(args: {
   const where = countries.length ? countries.join(", ") : "the countries on the table";
 
   switch (ruleId) {
-    case "decision-window": {
-      const when = intel?.timing?.value.dateIso
-        ? ` before ${monthDay(intel.timing.value.dateIso)}`
-        : "";
+    case "wire-trigger":
       return {
         kind: "send-draft",
-        label: `Copy the draft${labelTo}`,
+        label: `Copy the note${labelTo}`,
         to: toContact,
         payload: redactMoney(
-          `To: ${toContact}\nSubject: The answer you're waiting on\n\n${greet} ahead of your decision${when}: here is the piece you asked for, in plain terms. On ${where}: we can carry the setup end to end, and the compliance exposure ends the day the switch happens. Name the slot and we'll walk your leadership through exactly how the handoff works.`,
-        ),
-      };
-    }
-    case "reply-owed":
-      return {
-        kind: "reply-frame",
-        label: `Copy the reply frame${labelTo}`,
-        to: toContact,
-        payload: redactMoney(
-          `To: ${toContact}\n\n${greet} thanks for this. Answering your note point by point below, and one question back so we keep moving: what would you need in hand from us to move forward on your side?`,
-        ),
-      };
-    case "meeting-prep":
-      return {
-        kind: "prep",
-        label: "Copy the prep sheet",
-        to: "yourself, before the meeting",
-        payload: redactMoney(
-          `Prep — ${account.name}\n· Who's in the room and what each cares about\n· The one open question on the record: ${intel?.direction?.line ?? "confirm the current state in their words"}\n· Countries in play: ${where}\n· The one thing to leave with: a dated commitment`,
+          `To: ${toContact}\nSubject: Saw the news\n\n${greet} saw the news${wireHeadline ? `: ${wireHeadline}` : ` about ${account.name}`}. A move like that usually puts people and payroll questions on the table across borders, and that is the seam Global exists for. One question while plans are still forming: ${relayLine("fp-where").toLowerCase()} If a walkthrough is faster than email, name a slot and I'll bring answers. On ${where}: the setup is a capability you switch on, not a project you buy.`,
         ),
       };
     case "intent-warm":
@@ -128,6 +109,15 @@ export function composeFor(args: {
           `To: [the coworker named on the opportunity. Open the account in Salesforce. The owner's name is printed on it.]\n\nQuick one on ${account.name}. I see your opportunity there closing ${laneDate ? monthDay(laneDate) : "this month"}. ${intent ? "Their people have been reading our Global material this week. " : ""}Would you carry one Global sentence into that conversation, or would you rather I join? Either way it stays your room.`,
         ),
       };
+    case "silence-bump":
+      return {
+        kind: "send-draft",
+        label: `Copy the second touch${labelTo}`,
+        to: toContact,
+        payload: redactMoney(
+          `To: ${toContact}\nSubject: One question, then I'll leave it with you\n\n${greet} following my last note with the one question that decides whether this is worth your time: ${relayLine("fp-where").toLowerCase()} If the answer is none, tell me and I'll close the file. If it is anything else, fifteen minutes shows you what turning Global on looks like on the platform you already run.`,
+        ),
+      };
     case "roundup-slot":
       return {
         kind: "relay-note",
@@ -144,6 +134,15 @@ export function composeFor(args: {
         to: "your research session",
         payload: redactMoney(
           `Research refresh — ${account.name}\nAccount page: Account IQ for how they make money · company and department headcount growth · Spotlight: job opportunities by geography · recent company posts. Jobs posted into other countries are the strongest demand signal there is.\nBring back: anything that changes the demand read. It files to the research trail.`,
+        ),
+      };
+    case "cold-revival":
+      return {
+        kind: "send-draft",
+        label: `Copy the re-open${labelTo}`,
+        to: toContact,
+        payload: redactMoney(
+          `To: ${toContact}\nSubject: Picking this back up, with something new\n\n${greet} picking this back up with something new rather than a nudge: the global side of the PEO world has moved since we last talked, and the question that decides whether it is worth reopening is the same one as before: ${relayLine("fp-where").toLowerCase()} If the answer is still none, say so and I'll leave it closed.`,
         ),
       };
     case "stakeholder-gap":

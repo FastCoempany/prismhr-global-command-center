@@ -1,8 +1,10 @@
-// Groundwork — the prospecting room. The rail tells you what you are doing
-// right now; the file does it with you. Locked design: the rail & the file,
-// wire in the rail (docs/plans/groundwork-build-spec.md). Everything below is
-// derived per request from stores the rest of the app writes — this room
-// authors nothing.
+// Groundwork — the prospecting room, outbound only. Locked design: the
+// winged stage (CLAUDE.md, decided 2026-08-10). One account center stage with
+// an action line and a reason line; the day's worked stamps in the left wing;
+// the waiting queue heat-mapped in the right wing with each trigger whispered
+// beneath its name; the instrument capsule up top; the lower deck below (the
+// wire · the institutions · State of play). Everything is derived per request
+// from stores the rest of the app writes — this room authors nothing.
 
 import Link from "next/link";
 import { AppWayfinder } from "@/components/app-wayfinder";
@@ -12,17 +14,17 @@ import { peos, getPeo } from "@/lib/book";
 import { contactCount, contactsFor } from "@/lib/book/contacts";
 import { dealIntelFor } from "@/lib/intel/extract";
 import type { DealIntel } from "@/lib/intel/types";
+import { RESEARCH_NS } from "@/lib/intel/deep-research";
 import {
   isNamespacedAccountId,
   loadAccountNotes,
   loadDoneTimes,
-  loadTodos,
   loadTouches,
 } from "@/lib/today/overlay";
 import { clockShort, userDayKey } from "@/lib/tz";
 import { sfAccountUrl } from "@/lib/salesforce";
-import { buildQueue, currentBand, moveKey, type Band } from "@/lib/groundwork/day";
-import { READOUT_READ_KEY, buildFile, workedStamp } from "@/lib/groundwork/file";
+import { buildQueue, heatOf, moveKey } from "@/lib/groundwork/day";
+import { READOUT_READ_KEY, buildFile } from "@/lib/groundwork/file";
 import { proximityMark } from "@/lib/groundwork/proximity";
 import {
   intentFor,
@@ -47,16 +49,10 @@ import {
 import { buildReadout, lint, readoutText } from "@/lib/groundwork/readout";
 import { attachWireToAccount, markReadoutRead, markWorked, sweepWire } from "./actions";
 import { CopyStamp } from "./copy-stamp";
+import { Instrument } from "./instrument";
 import styles from "./groundwork.module.css";
 
 export const dynamic = "force-dynamic";
-
-const BAND_LABEL: Record<Band, string> = {
-  now: "Now · sends · until 11:00",
-  eleven: "At 11:00 · the people window",
-  two: "After 2:00 · research & filing",
-};
-const BAND_ORDER: Band[] = ["now", "eleven", "two"];
 
 // A date in prose — month name spelled out, per the §3 bar. Day-only ISO reads
 // in UTC noon; full timestamps read in Chicago.
@@ -74,7 +70,7 @@ const monthDay = (iso: string): string => {
 export default async function GroundworkPage({
   searchParams,
 }: {
-  searchParams: Promise<{ focus?: string }>;
+  searchParams: Promise<{ focus?: string; file?: string }>;
 }) {
   const access = await getAppAccess();
   if (access.status === "unauthenticated") {
@@ -92,21 +88,21 @@ export default async function GroundworkPage({
   const canWrite = access.canWrite && hasDatabaseEnv();
   const now = new Date();
 
-  const [notesMap, touches, todos, doneTimes] = await Promise.all([
+  const [notesMap, touches, doneTimes] = await Promise.all([
     loadAccountNotes(),
     loadTouches(),
-    loadTodos(),
     loadDoneTimes(),
   ]);
 
   // Split the note map: real accounts feed the corpus; namespaces feed the
-  // wire and the institutions program.
+  // wire, the institutions program, and the deep-research backbone.
   const accountNotes = new Map<
     string,
     { body: string; source: string; createdAt: string }[]
   >();
   const wireItems: WireItem[] = [];
   const institutions: Institution[] = [];
+  const researchByAccount = new Map<string, { at: string; line: string }>();
   for (const [id, notes] of notesMap) {
     if (id.startsWith(WIRE_NS)) {
       const item = parseWireBody(notes[0]?.body ?? "");
@@ -120,6 +116,24 @@ export default async function GroundworkPage({
     if (id.startsWith(INST_NS)) {
       const inst = parseInstBody(notes[0]?.body ?? "");
       if (inst) institutions.push(inst);
+      continue;
+    }
+    if (id.startsWith(RESEARCH_NS)) {
+      // The deep-research pass files as research:<account> — the newest note
+      // is the account's live research read, and it feeds the queue brain.
+      const accountId = id.slice(RESEARCH_NS.length);
+      const newest = notes[0];
+      if (accountId && newest) {
+        const line =
+          newest.body
+            .split("\n")
+            .map((l) => l.trim())
+            .find((l) => l.length > 0) ?? "";
+        researchByAccount.set(accountId, {
+          at: newest.createdAt,
+          line: line.slice(0, 160),
+        });
+      }
       continue;
     }
     if (isNamespacedAccountId(id)) continue;
@@ -172,44 +186,79 @@ export default async function GroundworkPage({
     if (sig) intentById.set(p.id, sig);
   }
 
-  const {
-    items: queue,
-    overflow,
-    all: rankedAll,
-  } = buildQueue({
+  // The wire's newest hit per account — the wire-trigger rule's evidence.
+  const wireAtById = new Map<string, string>();
+  for (const w of wireItems) {
+    for (const id of w.accountIds) {
+      const cur = wireAtById.get(id);
+      if (!cur || w.at > cur) wireAtById.set(id, w.at);
+    }
+  }
+  const researchAtById = new Map<string, string>();
+  for (const [id, r] of researchByAccount) researchAtById.set(id, r.at);
+
+  const { all: rankedAll } = buildQueue({
     accounts: peos,
     intelById,
     notesById: accountNotes,
     touches,
-    todos,
     contactCountById: contactCount,
+    wireAtById,
+    researchAtById,
     doneKeys: new Set(doneTimes.keys()),
     now,
   });
 
-  const { focus } = await searchParams;
-  const focusItem =
-    (focus && queue.find((q) => q.accountId === focus)) || queue[0] || null;
-  const focusAccount = focusItem ? getPeo(focusItem.accountId) : undefined;
+  const dayKey = userDayKey(now);
+
+  // Worked moves leave the queue for the left wing; the rest stay live. The
+  // wing reads the stamps themselves, so a stamp survives even if its rule
+  // stops firing later in the day.
+  const doneToday: { name: string; at: string }[] = [];
+  for (const [key, at] of doneTimes) {
+    const m = new RegExp(`^groundwork:${dayKey}:([^:]+):(.+)$`).exec(key);
+    if (!m) continue;
+    const name = getPeo(m[1])?.name;
+    if (name) doneToday.push({ name, at: clockShort(at) });
+  }
+  doneToday.sort((a, b) => a.at.localeCompare(b.at));
+
+  const live = rankedAll.filter(
+    (q) => !doneTimes.has(`groundwork:${dayKey}:${moveKey(q)}`),
+  );
+  const QUEUE_SHOW = 6;
+  const liveTop = live.slice(0, QUEUE_SHOW);
+  const overflow = Math.max(0, live.length - liveTop.length);
+
+  const { focus, file: fileParam } = await searchParams;
+  const stageItem =
+    (focus && liveTop.find((q) => q.accountId === focus)) || liveTop[0] || null;
+  const stageAccount = stageItem ? getPeo(stageItem.accountId) : undefined;
+  const waiting = liveTop.filter((q) => q !== stageItem);
+  const nextItem = stageItem
+    ? liveTop[(liveTop.indexOf(stageItem) + 1) % liveTop.length]
+    : null;
+  const fileOpen = fileParam === "1";
 
   const file =
-    focusItem && focusAccount
-      ? buildFile(focusAccount, {
-          queueItem: focusItem,
-          intel: intelById.get(focusItem.accountId),
-          intent: intentById.get(focusItem.accountId) ?? null,
-          notes: accountNotes.get(focusItem.accountId) ?? [],
-          touches: (touchesByAccount.get(focusItem.accountId) ?? []).map((t) => ({
+    stageItem && stageAccount
+      ? buildFile(stageAccount, {
+          queueItem: stageItem,
+          intel: intelById.get(stageItem.accountId),
+          intent: intentById.get(stageItem.accountId) ?? null,
+          notes: accountNotes.get(stageItem.accountId) ?? [],
+          touches: (touchesByAccount.get(stageItem.accountId) ?? []).map((t) => ({
             subjectKey: t.subjectKey,
             label: t.label,
             contactedAt: t.contactedAt,
           })),
           wire: wireItems,
-          contacts: contactsFor(focusItem.accountId).map((c) => ({
+          contacts: contactsFor(stageItem.accountId).map((c) => ({
             name: [c.first, c.last].filter(Boolean).join(" "),
             title: c.title,
           })),
-          laneDate: ridingLaneDate(accountNotes.get(focusItem.accountId), now),
+          laneDate: ridingLaneDate(accountNotes.get(stageItem.accountId), now),
+          research: researchByAccount.get(stageItem.accountId) ?? null,
           now,
         })
       : null;
@@ -272,8 +321,6 @@ export default async function GroundworkPage({
   const wireOrdered = orderWire(wireItems);
   const wireIsDue = sweepDue(wireItems, now);
   const inst = institutionCard(institutions, now);
-  const band = currentBand(now);
-  const dayKey = userDayKey(now);
   // A wire timestamp: today's items carry the clock, older ones their date.
   const wireWhen = (at: string): string => {
     const t = Date.parse(at);
@@ -287,403 +334,394 @@ export default async function GroundworkPage({
           timeZone: "America/Chicago",
         });
   };
+  const stageHref = (q: { accountId: string }, open?: boolean) =>
+    `/groundwork?focus=${encodeURIComponent(q.accountId)}${open ? "&file=1" : ""}`;
 
   return (
     <>
       <AppWayfinder current="Groundwork" trail="Homeroom" />
       <main className={styles.wrap}>
-        <div className={styles.lay}>
-          {/* ── The rail ─────────────────────────────────────────────── */}
-          <div>
-            <div className={styles.ribbon}>
-              <span className={styles.ribbonLabel}>
-                The queue · ranked from the whole book
-              </span>
-              <span className={styles.ribbonRule} />
-              <span className={styles.ribbonCount}>{queue.length} in front</span>
-            </div>
+        <Instrument />
 
-            {nudge && (
-              <div className={styles.due}>
-                <span className={styles.dueBar} />
-                <span>
-                  ▤ <b>Run the Sales Nav grab.</b> The intent read is due. The grab lives
-                  on the <Link href="/intake">Capture page</Link>. Paste the rows at the{" "}
-                  <Link href="/">HomeRoom</Link> ⚡. The queue re-ranks on who is reading
-                  us. The full snapshot parks in the{" "}
-                  <Link href="/intranet">Intranet</Link>. Ten minutes.
+        {nudge && (
+          <div className={styles.due}>
+            <span className={styles.dueBar} />
+            <span>
+              ▤ <b>Run the Sales Nav grab.</b> The intent read is due. The grab lives on
+              the <Link href="/intake">Capture page</Link>. Paste the rows at the{" "}
+              <Link href="/">HomeRoom</Link> ⚡. The queue re-ranks on who is reading us.
+              The full snapshot parks in the <Link href="/intranet">Intranet</Link>. Ten
+              minutes.
+            </span>
+          </div>
+        )}
+
+        {/* ── The wings ─────────────────────────────────────────────── */}
+        <div className={styles.wings}>
+          <aside className={`${styles.wing} ${styles.wingL}`} aria-label="Done today">
+            <span className={styles.wingKick}>Done today</span>
+            {doneToday.length === 0 ? (
+              <span className={styles.wingItem}>Nothing worked yet.</span>
+            ) : (
+              doneToday.map((d, i) => (
+                <span key={i} className={`${styles.wingItem} ${styles.wingDone}`}>
+                  <span className={styles.wingTick}>✓</span> {d.name}{" "}
+                  <span className={styles.wingTm}>{d.at}</span>
                 </span>
+              ))
+            )}
+          </aside>
+
+          {/* ── Center stage ────────────────────────────────────────── */}
+          <section className={styles.stage}>
+            {stageItem && stageAccount ? (
+              <>
+                {stageItem.carried && (
+                  <span
+                    className={styles.stgCarry}
+                    title="Surfaced yesterday and left unworked. A carried move ranks first among equals until it is worked."
+                  >
+                    left from yesterday
+                  </span>
+                )}
+                <div className={styles.stgName}>
+                  <Link
+                    href={`/accounts?focus=${encodeURIComponent(stageItem.accountId)}`}
+                  >
+                    {stageItem.name}
+                  </Link>
+                  {proximityMark(stageAccount) && (
+                    <span className={styles.prox}>{proximityMark(stageAccount)}</span>
+                  )}
+                </div>
+                <h1 className={styles.stgAct}>{stageItem.action}</h1>
+                <p className={styles.stgWhy}>{stageItem.reason}</p>
+                <div className={styles.stgActs}>
+                  {canWrite && (
+                    <form action={markWorked.bind(null, moveKey(stageItem))}>
+                      <button className={styles.btnAccent} type="submit">
+                        Worked it
+                      </button>
+                    </form>
+                  )}
+                  <Link className={styles.btn2nd} href={stageHref(stageItem, !fileOpen)}>
+                    {fileOpen ? "Close the file" : "Open the file ▾"}
+                  </Link>
+                  {nextItem && nextItem !== stageItem && (
+                    <Link className={styles.btnQuiet} href={stageHref(nextItem)}>
+                      Not now
+                    </Link>
+                  )}
+                </div>
+
+                {fileOpen && file && (
+                  <div className={styles.stgFile}>
+                    <span className={styles.kick}>
+                      The working file
+                      {file.csm && file.csm !== "Unassigned"
+                        ? ` · ${file.csm} is the partner manager`
+                        : ""}
+                      {file.sourcesLine ? ` · sources: ${file.sourcesLine}` : ""}
+                    </span>
+                    {file.story && <p className={styles.fileStory}>{file.story}</p>}
+                    <div className={styles.draft}>
+                      <span
+                        className={styles.kick}
+                        style={{ display: "block", marginBottom: 6 }}
+                      >
+                        The composed thing · to {file.composed.to}
+                      </span>
+                      {file.composed.payload}
+                    </div>
+                    <div className={styles.people}>
+                      {file.threadCount >= 1 && (
+                        <span
+                          className={[
+                            styles.multi,
+                            file.threadCount === 1
+                              ? styles.multiRed
+                              : file.threadCount === 2
+                                ? styles.multiAmber
+                                : styles.multiGreen,
+                          ].join(" ")}
+                          title={`${file.threadCount} ${file.threadCount === 1 ? "person carries" : "people carry"} this conversation`}
+                        >
+                          MULTI
+                        </span>
+                      )}
+                      {file.people.map((person) => (
+                        <span
+                          key={person.name}
+                          className={`${styles.chip} ${person.flag === "csm" ? styles.chipCsm : ""}`}
+                        >
+                          {person.name}
+                          {person.title ? ` · ${person.title}` : ""}
+                        </span>
+                      ))}
+                    </div>
+                    {file.singleThread && (
+                      <p className={styles.actNote}>
+                        One person carries this conversation. The widening question is
+                        inside the composed text.
+                      </p>
+                    )}
+                    <div className={styles.acts}>
+                      <CopyStamp
+                        payload={file.composed.payload}
+                        label={file.composed.label}
+                        accent
+                        action={
+                          canWrite ? markWorked.bind(null, moveKey(stageItem)) : undefined
+                        }
+                      />
+                      {file.composed.kind === "send-draft" && file.contactEmail && (
+                        <a
+                          className={styles.btn2nd}
+                          href={`mailto:${encodeURIComponent(file.contactEmail)}?subject=${encodeURIComponent(
+                            `${file.name} — from Groundwork`,
+                          )}&body=${encodeURIComponent(file.composed.payload)}`}
+                        >
+                          Draft in your mail app
+                        </a>
+                      )}
+                      {file.composed.kind === "ride-ask" &&
+                        sfAccountUrl(file.accountId) && (
+                          <a
+                            className={styles.btn2nd}
+                            href={sfAccountUrl(file.accountId) ?? "#"}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            Open the account in Salesforce. The owner&rsquo;s name is on
+                            it.
+                          </a>
+                        )}
+                      <Link
+                        className={`${styles.btn2nd} ${styles.btnSmall}`}
+                        href={`/accounts?focus=${encodeURIComponent(file.accountId)}`}
+                      >
+                        Open in Accounts
+                      </Link>
+                    </div>
+                    <p className={styles.actNote}>
+                      Copy puts the exact text on your clipboard and stamps the move.
+                    </p>
+                    <details className={styles.russ}>
+                      <summary>
+                        <span className={styles.russKick}>To Russ ▾</span>
+                        <span>the paragraph he&rsquo;d hear about this account</span>
+                        <span className={styles.russNote}>recomposes as you work</span>
+                      </summary>
+                      <div className={styles.russBody}>{file.russ}</div>
+                    </details>
+                    <div className={styles.hist}>
+                      <span
+                        className={styles.kick}
+                        style={{ display: "block", marginBottom: 4 }}
+                      >
+                        The file&rsquo;s history
+                      </span>
+                      {file.history.length === 0 ? (
+                        <p className={styles.histLine}>
+                          Nothing on file yet. The first paste starts the record.
+                        </p>
+                      ) : (
+                        file.history.map((h, i) => (
+                          <div key={i} className={styles.histLine}>
+                            <span className={styles.histAt}>
+                              {h.atIso.slice(5, 10).replace("-", "/")}
+                            </span>
+                            <span>{h.line}</span>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className={styles.stgClear}>
+                The queue is clear. The next paste, read, or reply re-ranks everything.
               </div>
             )}
+          </section>
 
-            {BAND_ORDER.map((b) => {
-              const items = queue.filter((q) => q.band === b);
-              const past = BAND_ORDER.indexOf(b) < BAND_ORDER.indexOf(band);
-              return (
-                <div key={b} className={past ? styles.bandPast : undefined}>
-                  <div className={styles.band}>
+          <aside
+            className={`${styles.wing} ${styles.wingR}`}
+            aria-label="Waiting, by heat"
+          >
+            <span className={styles.wingKick}>Waiting · by heat</span>
+            {waiting.length === 0 ? (
+              <span className={styles.wingItem}>No one behind this.</span>
+            ) : (
+              waiting.map((q) => (
+                <Link
+                  key={q.accountId}
+                  className={styles.wingItem}
+                  href={stageHref(q)}
+                  title={`Ranked by the queue brain. The trigger: ${q.reason}`}
+                >
+                  <span className={`${styles.wingNm} ${styles[`h${heatOf(q)}`]}`}>
+                    {q.name}
+                  </span>
+                  <span className={`${styles.tickHeat} ${styles[`tick${heatOf(q)}`]}`} />
+                  {q.carried && (
                     <span
-                      className={`${styles.bandLabel} ${b === band ? styles.bandNow : ""}`}
+                      className={styles.wingCarry}
+                      title="Surfaced yesterday and left unworked. The room never quietly forgets what it asked for."
                     >
-                      {BAND_LABEL[b]}
+                      {" "}
+                      carried
                     </span>
-                    <span className={styles.bandRule} />
-                  </div>
-                  {items.length === 0 ? (
-                    <p className={styles.queueFoot}>Nothing waiting in this window.</p>
-                  ) : (
-                    <div className={styles.queue}>
-                      {items.map((q, i) => {
-                        const stamp = workedStamp(doneTimes, dayKey, moveKey(q));
-                        const acct = getPeo(q.accountId);
-                        const prox = acct ? proximityMark(acct) : null;
-                        const focused = focusItem?.accountId === q.accountId;
-                        const off = b === band && i === 0;
-                        return (
-                          <Link
-                            key={q.accountId}
-                            href={`/groundwork?focus=${encodeURIComponent(q.accountId)}`}
-                            className={[
-                              styles.row,
-                              focused ? styles.rowFocused : "",
-                              off ? styles.rowOff : "",
-                            ]
-                              .filter(Boolean)
-                              .join(" ")}
-                          >
-                            <span
-                              className={[
-                                styles.gauge,
-                                q.intent
-                                  ? styles.gaugeBlue
-                                  : q.ruleId === "decision-window" ||
-                                      q.ruleId === "meeting-prep"
-                                    ? styles.gaugeAmber
-                                    : "",
-                              ]
-                                .filter(Boolean)
-                                .join(" ")}
-                            />
-                            <span>
-                              <span className={styles.rowName}>{q.name}</span>{" "}
-                              {q.intent && (
-                                <span className={styles.intent}>
-                                  {q.intent.level === "high" ? "High" : "Moderate"} intent
-                                  {q.intent.activities
-                                    ? ` · ${q.intent.activities} activities`
-                                    : ""}
-                                </span>
-                              )}{" "}
-                              {prox && <span className={styles.prox}>{prox}</span>}
-                              <br />
-                              <span className={styles.rowMeta}>
-                                <b>{q.action}</b>{" "}
-                                <span className={styles.rowReason}>{q.reason}</span>
-                                {q.carried && (
-                                  <span className={styles.carry}>
-                                    left from yesterday
-                                  </span>
-                                )}
-                              </span>
-                            </span>
-                            <span
-                              className={`${styles.rowOwed} ${stamp ? styles.rowWorked : ""}`}
-                            >
-                              {stamp ?? q.owed}
-                            </span>
-                          </Link>
-                        );
-                      })}
+                  )}
+                  <span className={styles.wingWhy}>{q.reason}</span>
+                </Link>
+              ))
+            )}
+            {overflow > 0 && (
+              <span className={styles.wingFoot}>And {overflow} more that can wait.</span>
+            )}
+          </aside>
+        </div>
+
+        {/* ── The lower deck ───────────────────────────────────────── */}
+        <div className={styles.ldeck}>
+          <div className={styles.ribbon}>
+            <span className={styles.ribbonLabel}>Outside · the wire</span>
+            <span className={styles.ribbonRule} />
+            <span className={styles.ribbonCount}>
+              {wireItems.length === 0 ? "no sweep yet" : `${wireItems.length} on file`}
+            </span>
+          </div>
+          {wireOrdered.length === 0 ? (
+            <div className={styles.empty}>
+              The wire watches the outside: the EOR and PEO world, the named competitors,
+              and every account name in the book. It files what matters with a
+              one-sentence read. Nothing has been swept yet.
+              {canWrite && wireAvailable() && (
+                <form action={sweepWire} style={{ marginTop: 8 }}>
+                  <button className={styles.btn2nd} type="submit">
+                    Run the first sweep
+                  </button>
+                </form>
+              )}
+            </div>
+          ) : (
+            <div className={styles.wire}>
+              {wireOrdered.slice(0, 3).map((w) => (
+                <div key={w.url} className={styles.wireItem}>
+                  <span className={styles.wireSrc}>
+                    {w.source} · {wireWhen(w.at) || w.at.slice(0, 10)}
+                    {w.accountIds.slice(0, 2).map((id) => (
+                      <span key={id} className={styles.wtag}>
+                        {idToName(id)}
+                      </span>
+                    ))}
+                  </span>
+                  <span className={styles.wireHead}>
+                    <a href={w.url} target="_blank" rel="noreferrer">
+                      {w.headline}
+                    </a>
+                  </span>
+                  <span className={styles.wireRead}>{w.read}</span>
+                  {canWrite && w.accountIds.length > 0 && (
+                    <div className={styles.wireActs}>
+                      <form
+                        action={attachWireToAccount.bind(
+                          null,
+                          w.accountIds[0],
+                          w.headline,
+                          w.source,
+                          w.url,
+                          w.read,
+                        )}
+                      >
+                        <button
+                          className={`${styles.btn2nd} ${styles.btnSmall}`}
+                          type="submit"
+                        >
+                          File to {idToName(w.accountIds[0])}
+                        </button>
+                      </form>
                     </div>
                   )}
                 </div>
-              );
-            })}
-            {overflow > 0 && (
-              <p className={styles.queueFoot}>
-                And {overflow} more that can wait. Nothing is hidden; it just is not in
-                front of you. A blue mark means their people are reading us. It comes from
-                your pasted Sales Nav read. &ldquo;Your metro&rdquo; means meeting in
-                person is nearly free; proximity breaks ties, never priority.
-              </p>
-            )}
-
-            <div className={styles.ribbon}>
-              <span className={styles.ribbonLabel}>Outside · the wire</span>
-              <span className={styles.ribbonRule} />
-              <span className={styles.ribbonCount}>
-                {wireItems.length === 0 ? "no sweep yet" : `${wireItems.length} on file`}
-              </span>
-            </div>
-            {wireOrdered.length === 0 ? (
-              <div className={styles.empty}>
-                The wire watches the outside: the EOR and PEO world, the named
-                competitors, and every account name in the book. It files what matters
-                with a one-sentence read. Nothing has been swept yet.
-                {canWrite && wireAvailable() && (
-                  <form action={sweepWire} style={{ marginTop: 8 }}>
-                    <button className={styles.btn2nd} type="submit">
-                      Run the first sweep
-                    </button>
-                  </form>
-                )}
-              </div>
-            ) : (
-              <div className={styles.wire}>
-                {wireOrdered.slice(0, 3).map((w) => (
-                  <div key={w.url} className={styles.wireItem}>
-                    <span className={styles.wireSrc}>
-                      {w.source} · {wireWhen(w.at) || w.at.slice(0, 10)}
-                      {w.accountIds.slice(0, 2).map((id) => (
-                        <span key={id} className={styles.wtag}>
-                          {idToName(id)}
-                        </span>
-                      ))}
-                    </span>
-                    <span className={styles.wireHead}>
-                      <a href={w.url} target="_blank" rel="noreferrer">
-                        {w.headline}
-                      </a>
-                    </span>
-                    <span className={styles.wireRead}>{w.read}</span>
-                    {canWrite && w.accountIds.length > 0 && (
-                      <div className={styles.wireActs}>
-                        <form
-                          action={attachWireToAccount.bind(
-                            null,
-                            w.accountIds[0],
-                            w.headline,
-                            w.source,
-                            w.url,
-                            w.read,
-                          )}
-                        >
-                          <button
-                            className={`${styles.btn2nd} ${styles.btnSmall}`}
-                            type="submit"
-                          >
-                            File to {idToName(w.accountIds[0])}
-                          </button>
-                        </form>
-                      </div>
-                    )}
-                  </div>
-                ))}
-                {canWrite && wireAvailable() && wireIsDue && (
-                  <form action={sweepWire}>
-                    <button
-                      className={`${styles.btn2nd} ${styles.btnSmall}`}
-                      type="submit"
-                    >
-                      Sweep again. The last sweep is stale.
-                    </button>
-                  </form>
-                )}
-              </div>
-            )}
-
-            <div className={styles.ribbon}>
-              <span className={styles.ribbonLabel}>The institutions</span>
-              <span className={styles.ribbonRule} />
-              <span className={styles.ribbonCount}>
-                {inst?.eventSoon ? "next 7 days" : "standing"}
-              </span>
-            </div>
-            {inst ? (
-              <div className={styles.instCard}>
-                <b>{inst.inst.name}</b>
-                {inst.inst.nextEventIso && inst.eventSoon
-                  ? ` — gathering ${monthDay(inst.inst.nextEventIso)}.`
-                  : "."}{" "}
-                {inst.inst.note ?? ""}
-              </div>
-            ) : (
-              <div className={styles.instCard}>
-                No institution on the calendar yet. Start with a verification, not a
-                membership. Verify the Global Chamber&rsquo;s Chicago chapter first: who
-                convenes it, who attends, what membership asks. Education first, never a
-                lead request.
-              </div>
-            )}
-
-            <div className={styles.ribbon}>
-              <span className={styles.ribbonLabel}>Standing by</span>
-              <span className={styles.ribbonRule} />
-              {lintIssues.length > 0 && (
-                <span className={styles.ribbonCount}>
-                  {lintIssues.length} flag{lintIssues.length === 1 ? "" : "s"} for the
-                  reader
-                </span>
+              ))}
+              {canWrite && wireAvailable() && wireIsDue && (
+                <form action={sweepWire}>
+                  <button className={`${styles.btn2nd} ${styles.btnSmall}`} type="submit">
+                    Sweep again. The last sweep is stale.
+                  </button>
+                </form>
               )}
             </div>
-            <details className={styles.russ}>
-              <summary>
-                <span className={styles.russKick}>State of play ▾</span>
-                <span>read this to Russ, any moment he asks</span>
-                <span className={styles.russNote}>composes itself</span>
-              </summary>
-              <div className={styles.russBody}>
-                {readout.sections.map((s) => (
-                  <div key={s.title} style={{ marginBottom: 10 }}>
-                    <span className={styles.kick} style={{ display: "block" }}>
-                      {s.title}
-                    </span>
-                    {s.paragraphs.map((para, i) => (
-                      <p key={i} style={{ margin: "4px 0 8px" }}>
-                        {para.text}
-                      </p>
-                    ))}
-                  </div>
-                ))}
-                <CopyStamp
-                  payload={readoutPayload}
-                  label="Copy the readout"
-                  action={canWrite ? markReadoutRead : undefined}
-                />
-                {readoutReadAt && (
-                  <p className={styles.actNote}>
-                    Last read to Russ {monthDay(readoutReadAt)}.
-                  </p>
-                )}
-              </div>
-            </details>
-          </div>
+          )}
 
-          {/* ── The file ─────────────────────────────────────────────── */}
-          <div>
-            {file ? (
-              <div className={styles.file}>
-                <span className={styles.kick}>
-                  The working file · {file.name}
-                  {file.csm && file.csm !== "Unassigned"
-                    ? ` · ${file.csm} is the partner manager`
-                    : ""}
-                  {file.sourcesLine ? ` · sources: ${file.sourcesLine}` : ""}
-                </span>
-                <h1 className={styles.fileTitle}>{file.title}</h1>
-                <p className={styles.fileStory}>{file.story}</p>
-                <div className={styles.draft}>
-                  <span
-                    className={styles.kick}
-                    style={{ display: "block", marginBottom: 6 }}
-                  >
-                    The composed thing · to {file.composed.to}
-                  </span>
-                  {file.composed.payload}
-                </div>
-                <div className={styles.people}>
-                  {file.threadCount >= 1 && (
-                    <span
-                      className={[
-                        styles.multi,
-                        file.threadCount === 1
-                          ? styles.multiRed
-                          : file.threadCount === 2
-                            ? styles.multiAmber
-                            : styles.multiGreen,
-                      ].join(" ")}
-                      title={`${file.threadCount} ${file.threadCount === 1 ? "person carries" : "people carry"} this conversation`}
-                    >
-                      MULTI
-                    </span>
-                  )}
-                  {file.people.map((person) => (
-                    <span
-                      key={person.name}
-                      className={`${styles.chip} ${person.flag === "csm" ? styles.chipCsm : ""}`}
-                    >
-                      {person.name}
-                      {person.title ? ` · ${person.title}` : ""}
-                    </span>
-                  ))}
-                </div>
-                {file.singleThread && (
-                  <p className={styles.actNote}>
-                    One person carries this conversation. The widening question is inside
-                    the composed text.
-                  </p>
-                )}
-                <div className={styles.acts}>
-                  <CopyStamp
-                    payload={file.composed.payload}
-                    label={file.composed.label}
-                    accent
-                    action={
-                      canWrite && focusItem
-                        ? markWorked.bind(null, moveKey(focusItem))
-                        : undefined
-                    }
-                  />
-                  {(file.composed.kind === "send-draft" ||
-                    file.composed.kind === "reply-frame") &&
-                    file.contactEmail && (
-                      <a
-                        className={styles.btn2nd}
-                        href={`mailto:${encodeURIComponent(file.contactEmail)}?subject=${encodeURIComponent(
-                          `${file.name} — from Groundwork`,
-                        )}&body=${encodeURIComponent(file.composed.payload)}`}
-                      >
-                        Draft in your mail app
-                      </a>
-                    )}
-                  {file.composed.kind === "ride-ask" && sfAccountUrl(file.accountId) && (
-                    <a
-                      className={styles.btn2nd}
-                      href={sfAccountUrl(file.accountId) ?? "#"}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Open the account in Salesforce. The owner&rsquo;s name is on it.
-                    </a>
-                  )}
-                  <Link
-                    className={`${styles.btn2nd} ${styles.btnSmall}`}
-                    href={`/accounts?focus=${encodeURIComponent(file.accountId)}`}
-                  >
-                    Open in Accounts
-                  </Link>
-                </div>
-                <p className={styles.actNote}>
-                  Copy puts the exact text on your clipboard and stamps the row.
-                </p>
-                <details className={styles.russ}>
-                  <summary>
-                    <span className={styles.russKick}>To Russ ▾</span>
-                    <span>the paragraph he&rsquo;d hear about this account</span>
-                    <span className={styles.russNote}>recomposes as you work</span>
-                  </summary>
-                  <div className={styles.russBody}>{file.russ}</div>
-                </details>
-                <div className={styles.hist}>
-                  <span
-                    className={styles.kick}
-                    style={{ display: "block", marginBottom: 4 }}
-                  >
-                    The file&rsquo;s history
-                  </span>
-                  {file.history.length === 0 ? (
-                    <p className={styles.histLine}>
-                      Nothing on file yet. The first paste starts the record.
-                    </p>
-                  ) : (
-                    file.history.map((h, i) => (
-                      <div key={i} className={styles.histLine}>
-                        <span className={styles.histAt}>
-                          {h.atIso.slice(5, 10).replace("-", "/")}
-                        </span>
-                        <span>{h.line}</span>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            ) : (
-              <div className={styles.empty}>
-                The queue is clear. No evidence in the book puts an account in front of
-                you right now. The next paste, read, or reply re-ranks everything.
-              </div>
+          <div className={styles.ribbon}>
+            <span className={styles.ribbonLabel}>The institutions</span>
+            <span className={styles.ribbonRule} />
+            <span className={styles.ribbonCount}>
+              {inst?.eventSoon ? "next 7 days" : "standing"}
+            </span>
+          </div>
+          {inst ? (
+            <div className={styles.instCard}>
+              <b>{inst.inst.name}</b>
+              {inst.inst.nextEventIso && inst.eventSoon
+                ? ` — gathering ${monthDay(inst.inst.nextEventIso)}.`
+                : "."}{" "}
+              {inst.inst.note ?? ""}
+            </div>
+          ) : (
+            <div className={styles.instCard}>
+              No institution on the calendar yet. Start with a verification, not a
+              membership. Verify the Global Chamber&rsquo;s Chicago chapter first: who
+              convenes it, who attends, what membership asks. Education first, never a
+              lead request.
+            </div>
+          )}
+
+          <div className={styles.ribbon}>
+            <span className={styles.ribbonLabel}>Standing by</span>
+            <span className={styles.ribbonRule} />
+            {lintIssues.length > 0 && (
+              <span className={styles.ribbonCount}>
+                {lintIssues.length} flag{lintIssues.length === 1 ? "" : "s"} for the
+                reader
+              </span>
             )}
           </div>
+          <details className={styles.russ}>
+            <summary>
+              <span className={styles.russKick}>State of play ▾</span>
+              <span>read this to Russ, any moment he asks</span>
+              <span className={styles.russNote}>composes itself</span>
+            </summary>
+            <div className={styles.russBody}>
+              {readout.sections.map((s) => (
+                <div key={s.title} style={{ marginBottom: 10 }}>
+                  <span className={styles.kick} style={{ display: "block" }}>
+                    {s.title}
+                  </span>
+                  {s.paragraphs.map((para, i) => (
+                    <p key={i} style={{ margin: "4px 0 8px" }}>
+                      {para.text}
+                    </p>
+                  ))}
+                </div>
+              ))}
+              <CopyStamp
+                payload={readoutPayload}
+                label="Copy the readout"
+                action={canWrite ? markReadoutRead : undefined}
+              />
+              {readoutReadAt && (
+                <p className={styles.actNote}>
+                  Last read to Russ {monthDay(readoutReadAt)}.
+                </p>
+              )}
+            </div>
+          </details>
         </div>
       </main>
     </>

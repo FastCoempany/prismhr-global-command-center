@@ -74,25 +74,29 @@ export function paragraphFor(
   const dateIso = args.intel?.timing?.value.dateIso;
   const rule = args.queueItem?.ruleId;
 
-  if (dateIso && (rule === "decision-window" || !rule)) {
+  if (rule === "wire-trigger") {
     bits.push(
-      `${identityClause(p)} — has a decision on their side dated ${monthDay(dateIso)}; the answer they asked us for is composed and ready to send.`,
+      `${identityClause(p)} — made the wire; the note that turns the news into a conversation is composed, addressed to them directly.`,
+    );
+  } else if (rule === "silence-bump") {
+    bits.push(
+      `${identityClause(p)} — got a first touch and has not answered; the second touch is composed and goes today.`,
+    );
+  } else if (rule === "cold-revival") {
+    bits.push(
+      `${identityClause(p)} — the thread with them went quiet months ago; the re-open with something new to say is composed.`,
+    );
+  } else if (dateIso && !rule) {
+    bits.push(
+      `${identityClause(p)} — has a decision on their side dated ${monthDay(dateIso)}; the HomeRoom carries what we owe them.`,
     );
   } else if (
-    rule === "reply-owed" ||
-    (!rule &&
-      args.intel?.lastInbound &&
-      (!args.intel.lastOutbound || args.intel.lastInbound > args.intel.lastOutbound))
+    !rule &&
+    args.intel?.lastInbound &&
+    (!args.intel.lastOutbound || args.intel.lastInbound > args.intel.lastOutbound)
   ) {
-    const when = args.intel?.lastInbound
-      ? `, on ${monthDay(args.intel.lastInbound)}`
-      : "";
     bits.push(
-      `${identityClause(p)} — wrote to us last${when}; the reply is composed and ready to send.`,
-    );
-  } else if (rule === "meeting-prep") {
-    bits.push(
-      `${identityClause(p)} — a dated follow-up with them lands inside 48 hours; the prep sheet is composed.`,
+      `${identityClause(p)} — wrote to us last, on ${monthDay(args.intel.lastInbound)}; the reply lives in the HomeRoom.`,
     );
   } else if (rule === "riding-lane") {
     bits.push(
