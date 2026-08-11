@@ -87,7 +87,12 @@ export function compositeScore(
   desk: number,
   demand: number | null,
   confidence: "high" | "medium" | "low" = "low",
-): { score: number; tier: "high" | "medium" | "low"; demandAdj: number | null; confFactor: number } {
+): {
+  score: number;
+  tier: "high" | "medium" | "low";
+  demandAdj: number | null;
+  confFactor: number;
+} {
   const confFactor = CONF_FACTOR[confidence] ?? 0.7;
   const demandAdj = demand == null ? null : Math.round(demand * confFactor);
   const score = demandAdj == null ? desk : Math.round(0.4 * desk + 0.6 * demandAdj);
@@ -102,7 +107,8 @@ export function deskScore(p: Peo): DeskScore {
     model: modelPts(p),
     recency: recencyPts(p),
   };
-  const score = breakdown.scale + breakdown.incumbency + breakdown.model + breakdown.recency;
+  const score =
+    breakdown.scale + breakdown.incumbency + breakdown.model + breakdown.recency;
   const tier = score >= 70 ? "high" : score >= 45 ? "medium" : "low";
   return { score, tier, incumbent: isIncumbent(p), breakdown };
 }

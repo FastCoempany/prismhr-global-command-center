@@ -231,7 +231,7 @@ function GuidanceBody({
         ? sayNode
         : g.say && (
             <div className={styles.gSay}>
-              <span className={styles.gLabel}>Say this — edit anything, then copy</span>
+              <span className={styles.gLabel}>Say this. Edit anything, then copy.</span>
               <EditableMessage text={g.say} />
             </div>
           )}
@@ -274,7 +274,7 @@ function MorningMove({
     const a = mv.a;
     g = outreachGuidance(a);
     kind = "send";
-    meta = `demand ${a.demand ?? "—"}${a.play ? ` · ${a.play}` : ""} · ⟳ SF first`;
+    meta = `demand ${a.demand ?? "—"}${a.play ? ` · ${a.play}` : ""} · ⟳ Salesforce first`;
     primaryLabel = "Send ▸";
   } else if (mv.kind === "triage") {
     const a = mv.a;
@@ -325,7 +325,7 @@ function MorningMove({
           <input type="hidden" name="node" value={s.nodeKey} />
           <input type="hidden" name="index" value={s.index} />
           <input type="hidden" name="returnTo" value="/today" />
-          <button className={styles.closeBtn}>Check the step off on the dashboard</button>
+          <button className={styles.closeBtn}>Check it off on the dashboard</button>
         </form>
       </div>
     );
@@ -369,7 +369,7 @@ function MorningMove({
   const sayNode = isOutreach ? (
     <div className={styles.gSay}>
       <span className={styles.gLabel}>
-        Send this — edit, copy, send, then mark it sent
+        Send this. Edit, copy, send, then mark it sent.
       </span>
       <ContactControl
         subjectKey={outreachSubjectKey(mv.a.id)}
@@ -377,7 +377,7 @@ function MorningMove({
         label={mv.a.name}
         detail={`${mv.a.csm}${mv.a.play ? ` · ${mv.a.play}` : ""}`}
         defaultMessage={g.say ?? ""}
-        sentLabel="Mark sent ✓ (arms the next check-in)"
+        sentLabel="Mark sent ✓ · arms the next check-in"
         doneText="Sent"
         editLabel={`Edit & copy the message to ${firstNameOf(mv.a.csm)}`}
         status={
@@ -534,7 +534,7 @@ function FollowUpDue({ t }: { t: Touch }) {
       )}
       {!custom && (
         <>
-          <div className={styles.fuSayLab}>Send a nudge — edit anything, then copy</div>
+          <div className={styles.fuSayLab}>Send a nudge. Edit anything, then copy.</div>
           <EditableMessage
             text={followUpMessage(t)}
             copyLabel={`Copy the nudge to ${firstNameOf(t.label)}`}
@@ -569,9 +569,7 @@ function FollowUpDue({ t }: { t: Touch }) {
             name="body"
             required
             maxLength={500}
-            placeholder={
-              custom ? "Add a note…" : "Log what happened (e.g. left a voicemail)…"
-            }
+            placeholder={custom ? "Add a note…" : "Log what happened…"}
             aria-label="Add a note"
           />
           <button className={styles.fuNoteBtn}>{custom ? "Note" : "Log & re-arm"}</button>
@@ -867,24 +865,24 @@ export default async function TodayPage({
         roundupDue(touch);
       const phrase =
         status === "replied"
-          ? `Replied ${touch ? shortDate(touch.contactedAt) : ""} — your move`
+          ? `Replied ${touch ? shortDate(touch.contactedAt) : ""}. Your move.`
           : status === "open"
-            ? `Open-ended — not waiting on a reply${touch?.contactedAt ? ` · last exchange ${shortDate(touch.contactedAt)}` : ""}`
+            ? `Open-ended. Not waiting on a reply${touch?.contactedAt ? ` · last exchange ${shortDate(touch.contactedAt)}` : ""}`
             : status === "responded"
               ? due
-                ? "You replied — check-in due now"
-                : `You replied · check-in ${touch ? shortDate(touch.followUpAt) : ""} — their move`
+                ? "You replied. Check in now."
+                : `You replied · check-in ${touch ? shortDate(touch.followUpAt) : ""}. Their move.`
               : status === "awaiting"
                 ? due
-                  ? `Sent ${touch ? shortDate(touch.contactedAt) : ""} — check-in due now`
+                  ? `Sent ${touch ? shortDate(touch.contactedAt) : ""}. Check-in due now.`
                   : `Sent ${touch ? shortDate(touch.contactedAt) : ""} · check-in ${touch ? shortDate(touch.followUpAt) : ""}`
                 : nothingToSend
-                  ? `${offPhrase || "No accounts"} — nothing to send`
+                  ? `${offPhrase || "No accounts"}. Nothing to send.`
                   : status === "archived"
                     ? cadenceDue
-                      ? `New roundup due — last sent ${touch ? shortDate(touch.contactedAt) : ""}`
-                      : `Fresh roundup ready — last sent ${touch ? shortDate(touch.contactedAt) : ""}`
-                    : `New roundup due — never sent (${sendAccts.length}${offPhrase ? ` · ${offPhrase}` : ""})`;
+                      ? `New roundup due · last sent ${touch ? shortDate(touch.contactedAt) : ""}`
+                      : `Fresh roundup ready · last sent ${touch ? shortDate(touch.contactedAt) : ""}`
+                    : `Send the first roundup · never sent (${sendAccts.length}${offPhrase ? ` · ${offPhrase}` : ""})`;
       const dot: RailItem["dot"] =
         status === "replied"
           ? "green"
@@ -1054,7 +1052,7 @@ export default async function TodayPage({
   const dueRoundupRows = sortedFresh.filter((r) => r.cadenceDue);
   const dueRoundupLabel = cadenceVisible
     .filter((c) => c.due)
-    .map((c) => `${firstNameOf(c.partner)} (${c.sendable} ready)`)
+    .map((c) => `${firstNameOf(c.partner)} · ${c.sendable} ready`)
     .join(" · ");
 
   // Ledger ordering: SEND → DECIDE → CLOSE; due threads split into real
@@ -1184,7 +1182,7 @@ export default async function TodayPage({
         text:
           t.kind === "custom"
             ? t.label
-            : `Check in with ${t.label} — cadence${ask ? ` · owes: ${ask}` : ""}`,
+            : `Check in with ${t.label} · cadence${ask ? ` · owes: ${ask}` : ""}`,
         kind: "check" as const,
         subjectKey: t.subjectKey,
       };
@@ -1200,7 +1198,7 @@ export default async function TodayPage({
         at: new Date(
           Date.parse(c.lastSent) + ROUNDUP_CADENCE_DAYS * 86_400_000,
         ).toISOString(),
-        text: `Roundup window opens — ${c.partner} (${c.sendable} ready)`,
+        text: `Roundup window opens · ${c.partner} · ${c.sendable} ready`,
         kind: "window" as const,
         partner: c.partner,
       })),
@@ -1215,7 +1213,7 @@ export default async function TodayPage({
   // ── The action system: today's delays, sheet-actions, country flags ──
   // A delay is a namespaced disposition set TODAY; yesterday's delays expire
   // by simply not counting. Delayed rows leave the open register and reappear
-  // in "Delayed — and why" wearing their reason.
+  // in "Delayed, and why" wearing their reason.
   const ROW_DELAY = "row-delay:";
   const delayedReasons = new Map<string, string>();
   for (const [k, d] of dispositions) {
@@ -1237,7 +1235,7 @@ export default async function TodayPage({
         ? `Message ${firstNameOf(mv.a.csm)} about ${mv.a.name}`
         : `Decide on ${mv.a.name}`;
   const replyLive = replyRows.filter(
-    (r) => !isDelayed(`reply:${r.subjectKey}`, "send", `${r.partner} replied — respond`),
+    (r) => !isDelayed(`reply:${r.subjectKey}`, "send", `${r.partner} replied. Respond.`),
   );
   const pendingLive = pendingLedger.filter(
     (it) =>
@@ -1262,7 +1260,7 @@ export default async function TodayPage({
   );
   const roundupDelayed =
     dueRoundupRows.length > 0 &&
-    isDelayed("roundup", "roundup", `Roundup due — ${dueRoundupLabel}`);
+    isDelayed("roundup", "roundup", `Send the roundup · ${dueRoundupLabel}`);
   // Then-if-time rows: Done ✓ retires them (task-done key), ⏲ delays them.
   const laterLive = laterTriage.filter(
     (a) =>
@@ -1423,7 +1421,8 @@ export default async function TodayPage({
                   controls={<DelayControl rowKey={`reply:${r.subjectKey}`} />}
                   text={
                     <>
-                      <b>{r.partner}</b> replied — draft the response
+                      <b>{r.partner}</b> replied. Draft the response. (same fix on the
+                      textTitle at line 1429)
                     </>
                   }
                   textTitle={`${r.partner} replied — draft the response`}
@@ -1472,8 +1471,8 @@ export default async function TodayPage({
                     key={key}
                     tone="check"
                     kind="⏸ HOLD"
-                    text={`${mv.step.cardName} — “${mv.step.item}” on hold`}
-                    textTitle={`${mv.step.cardName} — “${mv.step.item}” on hold`}
+                    text={`${mv.step.cardName}: “${mv.step.item}” on hold`}
+                    textTitle={`${mv.step.cardName}: “${mv.step.item}” on hold`}
                     meta={`dashboard · ${mv.step.nodeLabel} · ${hold.recheck}`}
                     primaryLabel="Open ▸"
                   >
@@ -1492,7 +1491,7 @@ export default async function TodayPage({
                           <input type="hidden" name="index" value={mv.step.index} />
                           <input type="hidden" name="returnTo" value="/today" />
                           <button className={styles.closeBtn}>
-                            Hold cleared — check the step off
+                            Hold cleared. Check it off.
                           </button>
                         </form>
                       </div>
@@ -1568,7 +1567,7 @@ export default async function TodayPage({
                           <input type="hidden" name="status" value="open" />
                           <button
                             className={styles.notWaitingBtn}
-                            title="Not waiting on a reply — stop chasing"
+                            title="Not waiting on a reply. Stop chasing."
                           >
                             ↔ not waiting
                           </button>
@@ -1642,8 +1641,8 @@ export default async function TodayPage({
                   tone="open"
                   icon="roundup"
                   controls={<DelayControl rowKey="roundup" />}
-                  text={`Roundup due — ${dueRoundupLabel}`}
-                  textTitle={`Roundup due — ${dueRoundupLabel}`}
+                  text={`Send the roundup · ${dueRoundupLabel}`}
+                  textTitle={`Send the roundup · ${dueRoundupLabel}`}
                   primaryLabel="Open ▸"
                   primaryHot
                 >
@@ -1653,11 +1652,11 @@ export default async function TodayPage({
                 </LedgerRow>
               )}
 
-              {/* Delayed — and why. Rows sink here for the day, wearing their
+              {/* Delayed, and why. Rows sink here for the day, wearing their
                   reason; ↩ resume puts them straight back in the open list. */}
               {delayedLedger.length > 0 && (
                 <>
-                  <div className={styles.lgSub}>Delayed — and why</div>
+                  <div className={styles.lgSub}>Delayed, and why</div>
                   {delayedLedger.map((d) => (
                     <LedgerRow
                       key={d.key}
@@ -1682,7 +1681,7 @@ export default async function TodayPage({
                 replyRows.length === 0 &&
                 freshRows.length === 0 && (
                   <p className={`${styles.muted} ${styles.deckEmpty}`}>
-                    Nothing needs you right now — no aging commitments, no untriaged
+                    Nothing needs you right now. No aging commitments, no untriaged
                     signals, no play waiting. Seed a signal from the{" "}
                     <Link href="/accounts">Account Room</Link> or advance a loop on the{" "}
                     <Link href="/">Dashboard</Link>.
@@ -1760,7 +1759,7 @@ export default async function TodayPage({
                   rows join the open list on their day. */}
               {upShown.length > 0 && (
                 <>
-                  <div className={styles.lgSub}>Upcoming — joins the tab when due</div>
+                  <div className={styles.lgSub}>Upcoming. Joins the tab when due.</div>
                   {upShown.map((u, i) => (
                     <div
                       className={`${styles.lgRow} ${styles.lgUp}`}
@@ -1844,7 +1843,7 @@ export default async function TodayPage({
                   <span className={styles.lgTm}></span>
                   <span className={`${styles.lgDot} ${styles.lgDotDone}`} />
                   <span className={styles.lgTx}>
-                    Nothing on the tab yet — it fills as the day happens.
+                    Nothing on the tab yet. It fills as the day happens.
                   </span>
                 </div>
               )}
@@ -1896,7 +1895,7 @@ export default async function TodayPage({
                             <input type="hidden" name="id" value={t.id} />
                             <button
                               className={styles.sheetGhost}
-                              title="Nothing to file — just a done note; the pickers go away"
+                              title="Nothing to file. The pickers go away."
                             >
                               skip
                             </button>
@@ -2020,7 +2019,7 @@ export default async function TodayPage({
                         <input type="hidden" name="status" value="open" />
                         <button
                           className={styles.notWaitingBtn}
-                          title="Not waiting on a reply — stop chasing"
+                          title="Not waiting on a reply. Stop chasing."
                         >
                           ↔ not waiting
                         </button>
@@ -2078,22 +2077,22 @@ export default async function TodayPage({
                         {litPartners.has(c.partner) && (
                           <span
                             className={styles.cadBulb}
-                            title="Your light is on — something to tend to here"
+                            title="Your light is on. Tend to something here."
                           />
                         )}
                         {c.due && <span className={styles.cadDue}>DUE</span>}
                         <span className={styles.cadMeta}>
                           {c.lastSent
-                            ? `sent ${shortDate(c.lastSent)} · ${c.daysAgo}d ago · ${
+                            ? `sent ${shortDate(c.lastSent)} · ${c.daysAgo} days ago · ${
                                 c.sentCount != null ? c.sentCount : c.sendable
                               }/${c.total} accts`
-                            : `never sent · ${c.sendable}/${c.total} accts ready`}
+                            : `never sent · ${c.sendable} of ${c.total} accounts ready`}
                         </span>
                         <form action={muteRoundupPartner} className={styles.valInline}>
                           <input type="hidden" name="partner" value={c.partner} />
                           <button
                             className={styles.cadHide}
-                            title="Remove from the roundup list — restore anytime under hidden"
+                            title="Remove from the roundup list. Restore anytime under hidden."
                           >
                             ✕
                           </button>
@@ -2111,8 +2110,8 @@ export default async function TodayPage({
                             }`}
                             title={
                               litPartners.has(c.partner)
-                                ? `Flip the light off — done tending to ${c.partner}`
-                                : `Flip the light on — something to tend to for ${c.partner}`
+                                ? `Flip the light off. Done tending to ${c.partner}.`
+                                : `Flip the light on. Something to tend to for ${c.partner}.`
                             }
                           >
                             <span className={styles.lightKnob} />
@@ -2131,7 +2130,7 @@ export default async function TodayPage({
                             />
                             <b>{c.partner}</b>
                             <span className={styles.cadMeta}>
-                              off the list · {c.sendable}/{c.total} accts
+                              off the list · {c.sendable} of {c.total} accounts
                             </span>
                             <form
                               action={unmuteRoundupPartner}
@@ -2193,11 +2192,11 @@ export default async function TodayPage({
                 body: (
                   <div className={styles.trayBody}>
                     <p className={styles.trayHint}>
-                      never due — due things join the tab on their day
+                      Never due. Due things join the tab on their day.
                     </p>
                     {followUps.upcoming.length === 0 && futureNotes.length === 0 && (
                       <p className={`${styles.muted} ${styles.deckEmpty}`}>
-                        Nothing scheduled — log an outreach or add a check-in below.
+                        Nothing scheduled. Log an outreach or add a check-in below.
                       </p>
                     )}
                     {groupUpcomingByDay(followUps.upcoming).map((g) => (
@@ -2225,7 +2224,7 @@ export default async function TodayPage({
                               />
                               <button
                                 className={styles.fuUpDone}
-                                title="Close it — already done"
+                                title="Close it. Already done."
                               >
                                 Done ✓
                               </button>
@@ -2317,7 +2316,7 @@ export default async function TodayPage({
                                   />
                                   <button
                                     className={styles.fuUpBtn}
-                                    title="Reopen — bring it back due"
+                                    title="Reopen. Bring it back due."
                                   >
                                     Reopen
                                   </button>
@@ -2363,7 +2362,7 @@ export default async function TodayPage({
                       <div>
                         <h2 className={styles.bandTitle}>Narrative forming</h2>
                         <p className={styles.bandSub}>
-                          Voice of the base — the honest pattern in the data, and the line
+                          Voice of the base. The honest pattern in the data, and the line
                           it&apos;s accruing toward your 1:1 with Aleks.
                         </p>
                       </div>
@@ -2416,7 +2415,7 @@ export default async function TodayPage({
                     Voice of the base &amp; enablement gaps
                   </h2>
                   <p className={styles.sub}>
-                    The running list you carry into the Aleks 1:1 and to marketing — what
+                    The running list you carry into the Aleks 1:1 and to marketing. What
                     the base keeps asking for, what&apos;s missing to arm partners, and
                     what you need from the org. Resolve an item once you&apos;ve raised
                     it.
@@ -2424,7 +2423,7 @@ export default async function TodayPage({
                   <div className={styles.notesWrap}>
                     {!notes.available && (
                       <p className={styles.muted}>
-                        Capture isn&apos;t connected yet — run{" "}
+                        Capture isn&apos;t connected yet. Run{" "}
                         <code>docs/dashboard-tables.sql</code> in Supabase to start
                         logging.
                       </p>
@@ -2443,7 +2442,7 @@ export default async function TodayPage({
                             name="body"
                             required
                             maxLength={2000}
-                            placeholder="e.g. 3rd account this month asking about contractor conversion — need a one-pager"
+                            placeholder="e.g. third account this month asking about contractor conversion. Need a one-pager"
                             aria-label="Note body"
                           />
                           <NoteSubmit />
@@ -2487,7 +2486,7 @@ export default async function TodayPage({
                   {hcm.length > 0 && (
                     <div className={styles.hcmStrip}>
                       <span className={styles.hcmLabel}>
-                        HCM funnel ({hcmAll.length}) — top {hcm.length}, routes to you
+                        HCM funnel ({hcmAll.length}). Top {hcm.length}, routes to you
                         directly:
                       </span>
                       {hcm.map((a) => (
@@ -2510,7 +2509,7 @@ export default async function TodayPage({
                           <span className={styles.parkedReason}>
                             “{snooze.reason}”
                             {snooze.snoozedUntil
-                              ? ` · back ${snooze.snoozedUntil.slice(0, 10)}`
+                              ? ` · back ${shortDate(snooze.snoozedUntil)}`
                               : " · until un-parked"}
                           </span>
                           <form action={unsnoozeSignal} className={styles.noteResolve}>
@@ -2532,15 +2531,15 @@ export default async function TodayPage({
                       <h3>1 · What changed in the base?</h3>
                       <p className={styles.muted}>
                         New global-hiring evidence, a partner flag, an inbound.{" "}
-                        <b>Read</b> the signal before anything else — the Do rail is the
+                        <b>Read</b> the signal before anything else. The Do rail is the
                         answer.
                       </p>
                     </div>
                     <div className={styles.card}>
                       <h3>2 · What do I owe, and who do I clear?</h3>
                       <p className={styles.muted}>
-                        <b>Route</b> through the partner. Clear the commitments and
-                        chases, and never jump a client before the CSM has cleared them.
+                        <b>Go</b> direct by default. Clear the commitments and chases;
+                        take the CSM&apos;s door when it is the fastest one.
                       </p>
                     </div>
                     <div className={styles.card}>

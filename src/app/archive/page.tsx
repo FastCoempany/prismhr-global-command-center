@@ -150,7 +150,7 @@ export default async function ArchivePage({
         <div className={styles.pageHead}>
           <h1 className={styles.h1}>Archive</h1>
           <p className={styles.sub}>
-            Done notes and the hidden bin — nothing here is lost.{" "}
+            Done notes and the hidden bin. Nothing here is lost.{" "}
             <Link href="/today">← Today</Link>
           </p>
         </div>
@@ -161,7 +161,7 @@ export default async function ArchivePage({
             type="search"
             name="q"
             defaultValue={q}
-            placeholder="Search every note ever written — any word, any state…"
+            placeholder="Search every note ever written. Any word, any state."
             aria-label="Search notes"
           />
           <button className={styles.atcBtn}>Search</button>
@@ -179,7 +179,7 @@ export default async function ArchivePage({
             </h2>
             {hits.length === 0 && (
               <p className={styles.muted}>
-                Nothing contains “{q}”. Try a fragment — even three letters match.
+                Nothing contains “{q}”. Try a fragment. Even three letters match.
               </p>
             )}
             {hits.slice(0, 100).map((h, i) => (
@@ -224,7 +224,7 @@ export default async function ArchivePage({
           <h2 className={styles.h2}>Hidden bin ({hidden.length})</h2>
           {hidden.length === 0 && (
             <p className={styles.muted}>
-              Empty — ✕ anywhere hides an item into this bin instead of deleting it.
+              Empty. ✕ anywhere hides an item here instead of deleting it.
             </p>
           )}
           {hidden.map((h) => (
@@ -242,7 +242,7 @@ export default async function ArchivePage({
                 <input type="hidden" name="key" value={h.key} />
                 <button
                   className={styles.arcDelete}
-                  title="Delete forever — the only real delete in the app"
+                  title="Delete forever. The only real delete in the app."
                 >
                   delete forever
                 </button>

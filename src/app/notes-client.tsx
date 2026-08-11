@@ -339,19 +339,19 @@ export function NotesPanel({
         <span className={styles.notesMeta}>{openCount} open · autosaved as you type</span>
         {selected.size > 0 && (
           <button className={styles.noteCopyBtn} onClick={copySelected}>
-            {copied > 0 ? `Copied ${copied} ✓` : `Copy selected (${selected.size})`}
+            {copied > 0 ? `Copied ${copied} ✓` : `Copy ${selected.size} selected`}
           </button>
         )}
       </div>
 
       {notes.length === 0 && (
         <p className={styles.todoEmpty}>
-          No notes yet — hit “＋ New note” and start typing.
+          No notes yet. Hit “＋ New note” and start typing.
         </p>
       )}
       {notes.length > 0 && openNotes.length === 0 && (
         <p className={styles.todoEmpty}>
-          All caught up — done notes are in the archive below.
+          All caught up. Done notes are in the archive below.
         </p>
       )}
 
@@ -418,7 +418,7 @@ export function NotesPanel({
               maxLength={20000}
               autoFocus={n.id === focusId}
               spellCheck
-              placeholder="Type a note… (Shift+Enter or Enter for a new line — it autosaves)"
+              placeholder="Type a note. Enter starts a new line; it autosaves."
               onChange={(e) => update(n.id, { body: e.target.value })}
               onPaste={(e) =>
                 smartPaste(e, n.body, (next) => update(n.id, { body: next }))

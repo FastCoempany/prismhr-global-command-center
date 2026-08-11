@@ -23,7 +23,7 @@ export function DelayControl({ rowKey }: { rowKey: string }) {
       <button
         type="button"
         className={`${styles.ctlBtn} ${open ? styles.ctlBtnOn : ""}`}
-        title="Delay — say why"
+        title="Delay. Say why."
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
       >
@@ -67,7 +67,7 @@ export function FlagPickControl({ id }: { id: string }) {
       <button
         type="button"
         className={styles.flagPickBtn}
-        title="No country detected — pick one"
+        title="No country detected. Pick one."
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
       >

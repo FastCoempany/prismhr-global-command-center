@@ -134,7 +134,7 @@ export const PRODUCT_CANON: Product[] = [
       },
     ],
     keyFacts: [
-      "Placement fees: contingent search 20–25% of first-year salary (15% for existing clients), 60-day replacement guarantee, Net 21; retained search adds a 50% non-refundable deposit; HireFinder subscription $999–$3,996/month by number of openings",
+      "Placement fees: contingent search as a share of first-year salary, discounted for existing clients, 60-day replacement guarantee, Net 21; retained search adds a non-refundable deposit; HireFinder subscription priced monthly by number of openings",
     ],
   },
 ];
@@ -161,8 +161,8 @@ export const CANON_FACTS: string[] = [
   "Global onboarding: country-specific contracts, benefits and documentation; built-in classification guidance; centralized status tracking",
   "Global Client Service Team per account: Global Account Manager + Global HR Specialist (compliance/local labor law) + Payroll Analyst",
   "Additional offerings: Global Benefits (175+ countries, no medical underwriting), immigration/visa services, IT asset management",
-  "Scale: $100B in payroll processed, 2.2M+ worksite employees served, 90 brands in the Vensure family (PrismHR founded 1985, Vensure 2004)",
-  "Market: EOR projected to grow from $4.2B (2021) to $6.8B (2028); 36% of employers report talent shortages",
+  "Scale: payroll processed at the hundred-billion scale, 2.2M+ worksite employees served, 90 brands in the Vensure family (PrismHR founded 1985, Vensure 2004)",
+  "Market: EOR projected to grow by more than half between 2021 and 2028; 36% of employers report talent shortages",
 ];
 
 export const CANON_SOURCE =

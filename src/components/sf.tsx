@@ -9,23 +9,23 @@ import styles from "./sf.module.css";
 const COPY: Record<string, { lead: string; text: string }> = {
   standing: {
     lead: "Salesforce discipline",
-    text: "Every account touch runs through Salesforce: check it before you act, update it after. Before you reach out to any partner about an account, its current state comes from SF — not memory, not this app.",
+    text: "Every account touch runs through Salesforce: check it before you act, update it after. Before you reach out about an account, its current state comes from Salesforce, not memory, not this app.",
   },
   "before-outreach": {
     lead: "Salesforce first",
-    text: "Before you message the partner: open this account in Salesforce and check recent activity, open cases, notes, and any contract/renewal dates. Log the outreach back in SF right after.",
+    text: "Before you message the partner, open this account in Salesforce and check recent activity, open cases, notes, and any contract or renewal dates. Log the outreach back in Salesforce right after.",
   },
   kickoff: {
     lead: "Salesforce first",
-    text: "Check Salesforce on each teed-up account before you send — recent activity, notes, open items — then log each touch in SF after.",
+    text: "Check Salesforce on each teed-up account before you send: recent activity, notes, open items. Log each touch in Salesforce after.",
   },
   followup: {
     lead: "Check Salesforce",
-    text: "Look in Salesforce for anything new since you last reached out (a reply, a case, an activity) before you nudge — and update the record after.",
+    text: "Before you nudge, look in Salesforce for anything new since you last reached out: a reply, a case, an activity. Update the record after.",
   },
   account: {
-    lead: "Salesforce = system of record",
-    text: "Check Salesforce before you act on this account, and update it (note / activity / fields) after. The app is your operating layer; SF is the truth.",
+    lead: "Salesforce is the record",
+    text: "Check Salesforce before you act on this account, and update its notes, activity, and fields after. The app is your operating layer; Salesforce is the truth.",
   },
   triage: {
     lead: "Check Salesforce",
@@ -33,7 +33,7 @@ const COPY: Record<string, { lead: string; text: string }> = {
   },
   dashboard: {
     lead: "Keep Salesforce in sync",
-    text: "As this deal moves, update the account in Salesforce and log a note — the board is your view, SF is the record.",
+    text: "As this deal moves, update the account in Salesforce and log a note. The board is your view; Salesforce is the record.",
   },
 };
 
@@ -54,7 +54,7 @@ function SfId({ id }: { id: string }) {
         }
       }}
     >
-      {copied ? "Copied ✓" : `Copy SF ID (${id.slice(0, 8)}…)`}
+      {copied ? "Copied ✓" : `Copy Salesforce ID ${id.slice(0, 8)}…`}
     </button>
   );
 }
@@ -73,7 +73,7 @@ export function SfLink({ id, name }: { id: string; name?: string }) {
   if (isRealSfId(id)) return <SfId id={id} />;
   return (
     <span className={styles.inline}>
-      No Salesforce record on file yet — create/link one
+      No Salesforce record on file yet. Create or link one.
     </span>
   );
 }

@@ -1,7 +1,13 @@
 import { getAppAccess } from "@/lib/auth";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import { peos, type Peo } from "@/lib/book";
-import { priorityScore, type Approach, type Intent, type PeoRow, type Stage } from "./types";
+import {
+  priorityScore,
+  type Approach,
+  type Intent,
+  type PeoRow,
+  type Stage,
+} from "./types";
 
 export type { PeoRow, Stage } from "./types";
 export { STAGES, stageLabel } from "./types";
@@ -61,7 +67,9 @@ export async function loadCommand(): Promise<CommandData> {
         intent,
         priority: priorityScore(r.fit, intent),
         nextAction: s.nextAction,
-        nextActionDate: s.nextActionDate ? s.nextActionDate.toISOString().slice(0, 10) : null,
+        nextActionDate: s.nextActionDate
+          ? s.nextActionDate.toISOString().slice(0, 10)
+          : null,
         notes: s.notes,
       };
     });

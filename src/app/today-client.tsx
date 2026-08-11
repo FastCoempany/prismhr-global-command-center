@@ -105,7 +105,7 @@ export function EditableMessage({
             }
           }}
         >
-          {copied ? "Copied ✓ — paste into Slack, Teams, or email" : copyLabel}
+          {copied ? "Copied ✓. Paste into Slack, Teams, or email." : copyLabel}
         </button>
         {val !== text && (
           <button
@@ -333,7 +333,7 @@ export function ContactControl({
         {sections && sections.length > 0 && (
           <div className={styles.composerRow}>
             <span className={styles.composerHint}>
-              In this roundup (toggling rebuilds the message):
+              In this roundup. Toggling rebuilds the message:
             </span>
             {sections.map((s) => (
               <label
@@ -347,9 +347,9 @@ export function ContactControl({
                 }`}
                 title={
                   s.mark === "motion"
-                    ? `${s.name} is already in motion — left out by default`
+                    ? `${s.name} is already in motion. Left out by default.`
                     : s.mark === "parked"
-                      ? `${s.name} is parked — left out by default`
+                      ? `${s.name} is parked. Left out by default.`
                       : s.name
                 }
               >
@@ -388,7 +388,7 @@ export function ContactControl({
                 }
               }}
             >
-              {copied ? "Copied ✓ — paste into Slack, Teams, or email" : "Copy message"}
+              {copied ? "Copied ✓. Paste into Slack, Teams, or email." : "Copy message"}
             </button>
             {val !== defaultMessage && (
               <button
@@ -418,9 +418,9 @@ export function ContactControl({
   if (status !== "none") {
     const statusLine =
       status === "replied"
-        ? `Replied ✓${contactedLabel ? ` · sent ${contactedLabel}` : ""} — your move`
+        ? `Replied ✓ · sent August 8. Your move.`
         : status === "responded"
-          ? `You replied ✓${followUpLabel ? ` · check-in ${followUpLabel}` : ""} — their move`
+          ? `You replied ✓ · check-in August 12. Their move.`
           : `${doneText} ✓${contactedLabel ? ` · sent ${contactedLabel}` : ""}${
               followUpLabel ? ` · check-in ${followUpLabel}` : ""
             }`;
@@ -445,7 +445,7 @@ export function ContactControl({
               <input type="hidden" name="subjectKey" value={subjectKey} />
               <button
                 className={styles.mvUndoBtn}
-                title="Close the thread — history stays in the Partner Room; the card resets to a fresh roundup from current research"
+                title="Close the thread. History stays in the Partner Room and the card resets to a fresh roundup."
               >
                 Archive thread ✓
               </button>

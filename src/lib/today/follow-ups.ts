@@ -205,15 +205,13 @@ export function followUpMessage(t: Touch, now: number = Date.now()): string {
     days <= 0 ? "the other day" : days === 1 ? "yesterday" : `${days} days ago`;
   if (t.kind === "partner") {
     return (
-      `Hi ${who} — circling back on the accounts I flagged ${when} (${t.detail}). No pressure at ` +
-      `all, and I don't want to nag — I just want to make sure it didn't get buried. Even a quick ` +
+      `Hi ${who} — circling back on the accounts I flagged ${when} (${t.detail}). A quick ` +
       `"yes / no / not yet" on each would help me prioritize where to spend time. Happy to grab 15 ` +
       `minutes whenever suits you. Thanks so much!`
     );
   }
   return (
-    `Hi ${who} — following up on ${t.label} from ${when}. Totally understand if now isn't the ` +
-    `moment; I just didn't want it to slip. Whenever you have a second, even a quick read on ` +
-    `whether there's anything worth exploring would be a big help. Thanks!`
+    `Hi ${who} — following up on ${t.label} from ${when}. A quick read on whether ` +
+    `there's an opening would be a big help. Thanks!`
   );
 }

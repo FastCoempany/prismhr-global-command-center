@@ -34,7 +34,7 @@ export default async function PipelinePage() {
           <h1 className={styles.h1}>Pipeline</h1>
 
           <p className={styles.sub}>
-            Archived. The <Link href="/room">HomeRoom</Link> is the pipeline — it holds
+            Archived. The <Link href="/room">HomeRoom</Link> is the pipeline. It holds
             every deal in motion and the stage each one is actually at. This view reads
             the older stage field kept on the account record, so it can lag what the
             HomeRoom knows; it survives as a plain column count, nothing more.
@@ -42,8 +42,8 @@ export default async function PipelinePage() {
         </div>
         {data.status === "database-unavailable" && (
           <div className={styles.banner}>
-            Working state is read-only — run <code>docs/command-center-tables.sql</code>{" "}
-            in Supabase, then set an account&apos;s stage from its row on Accounts.
+            Working state is read-only. Run <code>docs/command-center-tables.sql</code> in
+            Supabase, then set an account&apos;s stage from its row on Accounts.
           </div>
         )}
 

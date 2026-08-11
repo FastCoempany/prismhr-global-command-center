@@ -224,8 +224,10 @@ export function AccountChip({
           disposition
             ? ` · ${disposition.status === "motion" ? "in motion" : "parked"}${disposition.reason ? ` — ${disposition.reason}` : ""}`
             : ""
-        } — ${
-          lastNoteAt ? "worked; click for the box" : "not worked yet; click to add a note"
+        }. ${
+          lastNoteAt
+            ? "Worked; click for the box."
+            : "Not worked yet; click to add a note."
         }`}
       >
         <span className={styles.tileZ}>
@@ -319,7 +321,7 @@ export function AccountChip({
                       }
                       target="_blank"
                       rel="noreferrer"
-                      title={`Opens Salesforce's New Opportunity form pre-filled — Type "Existing Client Add-On", Stage "${sfStageFromCard(card)}" (from this deal's board position), close date 60 days out. Review and Save there.`}
+                      title={`Opens Salesforce's New Opportunity form pre-filled. Type "Existing Client Add-On", Stage "${sfStageFromCard(card)}" from this deal's board position, close date 60 days out. Review and Save there.`}
                     >
                       + Opp (pre-filled) ↗
                     </a>
@@ -350,7 +352,7 @@ export function AccountChip({
                         }
                         target="_blank"
                         rel="noreferrer"
-                        title={`Opens Salesforce's New Contact form pre-filled with ${contact.name} on this account — for when the right contact doesn't exist in SF yet. Save it, then pick it on the opp.`}
+                        title={`Opens Salesforce's New Contact form pre-filled with ${contact.name} on this account — for when the right contact doesn't exist in Salesforce yet. Save it, then pick it on the opportunity.`}
                       >
                         + Contact: {contact.name.split(/\s+/)[0]} ↗
                       </a>
@@ -403,7 +405,7 @@ export function AccountChip({
                     {card ? (
                       <span className={styles.chipStageBlock}>
                         <span className={styles.chipStageHead}>
-                          On dashboard — set the stage
+                          On dashboard. Set the stage.
                         </span>
                         <span className={styles.chipStageList}>
                           {card.stages.map((s) => (
@@ -487,7 +489,7 @@ export function AccountChip({
                           <input
                             name="reason"
                             maxLength={400}
-                            placeholder="Why? (optional — lands as a dated note)"
+                            placeholder="Why? Optional. Lands as a dated note."
                             aria-label="Reason"
                           />
                           <button className={styles.chipSaveBtn}>Apply</button>
@@ -505,7 +507,7 @@ export function AccountChip({
                           required
                           maxLength={2000}
                           rows={3}
-                          placeholder={`A plain note on ${account.name} — lands on its account page…`}
+                          placeholder={`A plain note on ${account.name}. Lands on its account page…`}
                         />
                         <button className={styles.chipSaveBtn}>Save note</button>
                       </form>

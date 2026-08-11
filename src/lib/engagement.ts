@@ -25,7 +25,13 @@ export const EMPTY_ENGAGEMENT: Engagement = {
   sfCheckedAt: "",
 };
 
-export const CADENCE_OPTIONS = ["Weekly", "Biweekly", "Monthly", "Quarterly", "Ad hoc"] as const;
+export const CADENCE_OPTIONS = [
+  "Weekly",
+  "Biweekly",
+  "Monthly",
+  "Quarterly",
+  "Ad hoc",
+] as const;
 
 // The three prep gates you owe yourself before reaching out about an account.
 // Not a hard block — a visible checklist so you're not acting on stale ground.
@@ -45,8 +51,13 @@ function firstNameOf(name: string): string {
 // without adding a meeting to anyone's calendar. Shaped by whatever cadence is set.
 export function askToJoinMessage(csm: string, account: string, e: Engagement): string {
   const who = firstNameOf(csm);
-  const rhythm = [e.cadence, e.meetingDay ? `(${e.meetingDay})` : ""].filter(Boolean).join(" ").trim();
-  const when = rhythm ? `your ${rhythm} check-in with ${account}` : `your next check-in with ${account}`;
+  const rhythm = [e.cadence, e.meetingDay ? `(${e.meetingDay})` : ""]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+  const when = rhythm
+    ? `your ${rhythm} check-in with ${account}`
+    : `your next check-in with ${account}`;
   return (
     `Hi ${who} — I know you have ${when} coming up. Would it be alright if I sat in for a few ` +
     `minutes? I'd stay in the background — I just want to get a feel for ${account}'s world before ` +

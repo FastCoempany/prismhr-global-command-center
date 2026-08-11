@@ -96,7 +96,7 @@ export function paragraphFor(
     );
   } else if (rule === "riding-lane") {
     bits.push(
-      `${identityClause(p)} — a coworker's Salesforce opportunity there closes soon; the note asking them to carry one Global sentence in is composed.`,
+      `${identityClause(p)} — a coworker's Salesforce opportunity there closes soon; the note asking them to carry one Global sentence into that conversation is composed.`,
     );
   } else if (rule === "roundup-slot") {
     bits.push(

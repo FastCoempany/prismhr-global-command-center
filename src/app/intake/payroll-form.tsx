@@ -100,7 +100,7 @@ function copyAllText(a: Answers): string {
 // question container by its heading text, and sets values with the React
 // native-setter trick (plain .value assignment gets reverted by React).
 function fillBookmarklet(): string {
-  const js = `(async()=>{let d;try{d=JSON.parse(await navigator.clipboard.readText())}catch(e){alert('First click "Copy for bookmarklet" in the app, then click this on the form page.');return}if(!Array.isArray(d)){alert('Clipboard does not hold the form payload — click "Copy for bookmarklet" first.');return}const items=[...document.querySelectorAll('[data-automation-id="questionItem"]')];if(items.length===0){alert('No form questions found — open the intake form first.');return}const setV=(el,v)=>{const proto=el.tagName==='TEXTAREA'?HTMLTextAreaElement.prototype:HTMLInputElement.prototype;const s=Object.getOwnPropertyDescriptor(proto,'value').set;s.call(el,v);el.dispatchEvent(new Event('input',{bubbles:true}))};let n=0;for(const f of d){const it=items.find(x=>x.innerText.replace(/\\s+/g,' ').includes(f.q));if(!it)continue;if(f.t==='text'){if(!f.v)continue;const inp=it.querySelector('input[type="text"],textarea');if(inp){setV(inp,f.v);n++}}else{for(const c of f.v){const labs=[...it.querySelectorAll('label')];const lab=labs.find(l=>l.innerText.replace(/\\s+/g,' ').trim().startsWith(c.slice(0,28)));if(lab){lab.click();n++}}}}alert('Filled '+n+' answers - review and Submit.')})()`;
+  const js = `(async()=>{let d;try{d=JSON.parse(await navigator.clipboard.readText())}catch(e){alert('First click "Copy for bookmarklet" in the app, then click this on the form page.');return}if(!Array.isArray(d)){alert('Clipboard does not hold the form payload. Click "Copy for bookmarklet" first.');return}const items=[...document.querySelectorAll('[data-automation-id="questionItem"]')];if(items.length===0){alert('No form questions found. Open the intake form first.');return}const setV=(el,v)=>{const proto=el.tagName==='TEXTAREA'?HTMLTextAreaElement.prototype:HTMLInputElement.prototype;const s=Object.getOwnPropertyDescriptor(proto,'value').set;s.call(el,v);el.dispatchEvent(new Event('input',{bubbles:true}))};let n=0;for(const f of d){const it=items.find(x=>x.innerText.replace(/\\s+/g,' ').includes(f.q));if(!it)continue;if(f.t==='text'){if(!f.v)continue;const inp=it.querySelector('input[type="text"],textarea');if(inp){setV(inp,f.v);n++}}else{for(const c of f.v){const labs=[...it.querySelectorAll('label')];const lab=labs.find(l=>l.innerText.replace(/\\s+/g,' ').trim().startsWith(c.slice(0,28)));if(lab){lab.click();n++}}}}alert('Filled '+n+' answers. Review and Submit.')})()`;
   return `javascript:${js}`;
 }
 
@@ -292,7 +292,7 @@ export function PayrollForm({ accounts }: { accounts: { id: string; name: string
       <aside className={styles.inkAside}>
         <h2 className={styles.h2}>Send it to the MS Form</h2>
         <p className={styles.muted}>
-          Forms has no URL-prefill — three ways in, best first:
+          Forms has no URL-prefill. Three ways in, best first:
         </p>
         <div className={styles.inkBar}>
           <button
@@ -310,13 +310,13 @@ export function PayrollForm({ accounts }: { accounts: { id: string; name: string
         <a
           ref={bmRef}
           className={styles.inkBookmarklet}
-          title="Drag me to the bookmarks bar — don't click here"
+          title="Drag me to the bookmarks bar. Don't click here."
         >
           ⚡ Fill form
         </a>
         <p className={styles.mutedSm}>
           One-time: drag ⚡ Fill form to your bookmarks bar. Then: click “Copy for
-          bookmarklet” here, open the form, click the bookmarklet — it fills every matched
+          bookmarklet” here, open the form, click the bookmarklet. It fills every matched
           question; you review and Submit. Radios and checkboxes click their labels; text
           lands via the React-safe setter.
         </p>

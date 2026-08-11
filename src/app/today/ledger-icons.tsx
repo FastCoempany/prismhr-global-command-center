@@ -20,8 +20,8 @@ export type GlyphKind =
 const GLYPHS: Record<GlyphKind, { char: string; cls: string; word: string }> = {
   send: { char: "✉", cls: "gSend", word: "send" },
   decide: { char: "⚖", cls: "gDecide", word: "decide" },
-  close: { char: "◫", cls: "gClose", word: "close the step" },
-  owed: { char: "⚑", cls: "gOwed", word: "owed — chase" },
+  close: { char: "◫", cls: "gClose", word: "close" },
+  owed: { char: "⚑", cls: "gOwed", word: "owed · chase" },
   action: { char: "", cls: "gAct", word: "action" },
   roundup: { char: "⟳", cls: "gRound", word: "roundup" },
   sent: { char: "➤", cls: "gSent", word: "sent" },

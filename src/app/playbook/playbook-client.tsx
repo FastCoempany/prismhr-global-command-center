@@ -59,7 +59,7 @@ const PHASE_LABEL = new Map(DASH_NODES.map((n) => [n.key as string, n.label]));
 function shortDate(iso: string): string {
   const t = Date.parse(iso);
   if (Number.isNaN(t)) return "";
-  return new Date(t).toLocaleDateString("en-US", { month: "numeric", day: "numeric" });
+  return new Date(t).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
 function CopyBtn({ payload, label }: { payload: string; label: string }) {
@@ -234,7 +234,7 @@ export function PlaybookClient({
                   window.location.href = v ? `/playbook?account=${v}` : "/playbook";
                 }}
               >
-                <option value="">no account — the whole bank</option>
+                <option value="">No account. The whole bank.</option>
                 {accounts.map((a) => (
                   <option key={a.id} value={a.id}>
                     {a.name}
@@ -256,7 +256,7 @@ export function PlaybookClient({
                 className={`${styles.scen} ${!scenarioId ? styles.scenOn : ""}`}
                 onClick={() => pickScenario("")}
               >
-                No scenario — the whole bank
+                No scenario. The whole bank.
               </button>
               {scenarios.map((s) => (
                 <button
@@ -398,7 +398,10 @@ export function PlaybookClient({
                           name="returnTo"
                           value={`/playbook?account=${accountId}`}
                         />
-                        <button className={styles.copyBtn} title="asked — retire it here">
+                        <button
+                          className={styles.copyBtn}
+                          title="Asked. Retire it on this account."
+                        >
                           ✓ asked
                         </button>
                       </form>
@@ -417,7 +420,7 @@ export function PlaybookClient({
               <span className={styles.chipN}>{prospectAsks.length}</span>
             </h2>
             <p className={styles.kHint}>
-              Questions real buyers asked in more than one room — each a battlecard
+              Questions real buyers asked in more than one room. Each is a battlecard
               candidate the bank doesn&apos;t cover yet. The brain proposes; you decide.
             </p>
             {prospectAsks.length === 0 ? (
@@ -441,7 +444,7 @@ export function PlaybookClient({
             )}
             {oursNotTheirs.length > 0 && (
               <p className={styles.kHint}>
-                Ours, not theirs — bank questions no buyer has ever needed answered:{" "}
+                Ours, not theirs. Bank questions no buyer has ever needed answered:{" "}
                 {oursNotTheirs.slice(0, 4).join(" · ")}
               </p>
             )}
@@ -451,7 +454,7 @@ export function PlaybookClient({
               Lessons <span className={styles.chipN}>{lessons.length}</span>
             </h2>
             <p className={styles.kHint}>
-              What a deal taught — filed once, readable from every account.
+              What a deal taught. Filed once, readable from every account.
             </p>
             {lessons.length === 0 ? (
               <p className={styles.empty}>
@@ -474,7 +477,7 @@ export function PlaybookClient({
               <span className={styles.chipN}>{market.length}</span>
             </h2>
             <p className={styles.kHint}>
-              True beyond the account that produced it — each one keeps who said it.
+              True beyond the account that produced it. Each one keeps who said it.
             </p>
             {market.length === 0 ? (
               <p className={styles.empty}>

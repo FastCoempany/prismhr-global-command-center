@@ -140,7 +140,9 @@ export async function loadSidekickV3(
       ]);
       // Only v3-namespaced rows reach this client — never the other Sidekick's.
       notes = Object.fromEntries(
-        noteRows.filter((n) => v3ScreenIds.has(n.screenId)).map((n) => [n.screenId, n.body]),
+        noteRows
+          .filter((n) => v3ScreenIds.has(n.screenId))
+          .map((n) => [n.screenId, n.body]),
       );
       // Only v3-namespaced playbooks — legacy /sidekick playbooks never show
       // here (and v3 actions refuse to mutate them). Prefix stripped for display.

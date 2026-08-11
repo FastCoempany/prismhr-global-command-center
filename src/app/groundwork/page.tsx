@@ -402,9 +402,9 @@ export default async function GroundworkPage({
             {overflow > 0 && (
               <p className={styles.queueFoot}>
                 And {overflow} more that can wait. Nothing is hidden; it just is not in
-                front of you. A blue mark means their people are reading us, from your
-                pasted Sales Nav read. &ldquo;Your metro&rdquo; means meeting in person is
-                nearly free; proximity breaks ties, never priority.
+                front of you. A blue mark means their people are reading us. It comes from
+                your pasted Sales Nav read. &ldquo;Your metro&rdquo; means meeting in
+                person is nearly free; proximity breaks ties, never priority.
               </p>
             )}
 

@@ -241,7 +241,7 @@ export const BANK: BankParent[] = [
     subs: [
       {
         label: "Internal processes",
-        summary: "How things are done here — the real steps of work.",
+        summary: "How things actually get done here.",
       },
       { label: "Roles & responsibilities", summary: "Who owns what." },
       { label: "Tools & systems", summary: "The stack we run on and how to use it." },

@@ -30,7 +30,7 @@ function sfBookmarklet(origin: string): string {
 // message list (a wide grab would hoover other deals' inbox rows into whichever
 // account gets picked). Selectors tightest first; a miss refuses.
 function outlookBookmarklet(origin: string): string {
-  const js = `(async()=>{const q=['#ReadingPaneContainerId','[aria-label="Reading Pane"]','div[role="main"] [role="list"]','div[role="main"]'];let el=null;for(const s of q){try{el=document.querySelector(s)}catch(e){}if(el&&el.innerText&&el.innerText.length>200)break;el=null}if(!el){alert('Open the conversation first — the reading pane is what gets captured.');return}const t='OUTLOOK THREAD - captured '+new Date().toLocaleString()+'\\n\\n'+el.innerText;try{await navigator.clipboard.writeText(t)}catch(e){window.prompt('Auto-copy was blocked. Press Ctrl+C, then paste onto the account:',t.slice(0,4000))}window.open('${origin}/room','_blank')})()`;
+  const js = `(async()=>{const q=['#ReadingPaneContainerId','[aria-label="Reading Pane"]','div[role="main"] [role="list"]','div[role="main"]'];let el=null;for(const s of q){try{el=document.querySelector(s)}catch(e){}if(el&&el.innerText&&el.innerText.length>200)break;el=null}if(!el){alert('Open the conversation first. The reading pane is what gets captured.');return}const t='OUTLOOK THREAD - captured '+new Date().toLocaleString()+'\\n\\n'+el.innerText;try{await navigator.clipboard.writeText(t)}catch(e){window.prompt('Auto-copy was blocked. Press Ctrl+C, then paste onto the account:',t.slice(0,4000))}window.open('${origin}/room','_blank')})()`;
   return `javascript:${js}`;
 }
 
@@ -54,7 +54,7 @@ function teamsBookmarklet(origin: string): string {
     `const sel=['[data-tid="message-pane-list-viewport"]','[data-tid="messagePaneList"]','[data-tid="chat-pane-list"]','[role="main"] [role="list"]','[data-tid="threadBodyContainer"]'];` +
     `const find=()=>{for(const s of sel){let el=null;try{el=document.querySelector(s)}catch(e){}if(el&&el.innerText&&el.innerText.length>120)return el}return null};` +
     `let el=find();` +
-    `if(!el){alert('Open the chat or channel thread first — Teams on the web only. The desktop app has no page for a bookmarklet to read.');return}` +
+    `if(!el){alert('Open the chat or channel thread first. Teams on the web only; the desktop app has no page for a bookmarklet to read.');return}` +
     `const pane=(()=>{let p=el;for(let i=0;i<6&&p;i++){if(p.scrollHeight>p.clientHeight+40)return p;p=p.parentElement}return el})();` +
     `const sleep=(ms)=>new Promise(r=>setTimeout(r,ms));` +
     `const hud=document.createElement('div');` +
@@ -103,7 +103,7 @@ function teamsBookmarklet(origin: string): string {
     `out+='⟦CAPTURED '+msgs.length+' messages · scrolled '+passes+' · oldest '+(oldest?oldest.slice(0,10):'unknown')+(capped?' · ceiling':'')+'⟧';` +
     `}else{` +
     `el=find()||el;` +
-    `out+=el.innerText+'\\n\\n(structure not recognised — captured as plain text)';` +
+    `out+=el.innerText+'\\n\\nStructure not recognised. Captured as plain text.';` +
     `}` +
     `try{await navigator.clipboard.writeText(out)}catch(e){window.prompt('Auto-copy was blocked. Press Ctrl+C:',out.slice(0,4000))}` +
     `window.open('${origin}/intranet','_blank')` +
@@ -127,7 +127,7 @@ function teamsBookmarklet(origin: string): string {
 // it). It feeds the prospecting room's intent drop; until that room ships, it
 // opens the Intranet, whose capture stores the snapshot whole.
 function salesNavBookmarklet(origin: string): string {
-  const js = `(async()=>{if(location.hostname.indexOf('linkedin.com')<0||location.pathname.indexOf('/sales')<0){alert('Open the Sales Navigator Accounts list first - that dashboard is what gets captured.');return}const sleep=(ms)=>new Promise(r=>setTimeout(r,ms));const rowsOf=()=>{let els=document.querySelectorAll('main table tbody tr');if(els.length<2)els=document.querySelectorAll('[role="table"] [role="row"]');if(els.length<2)els=document.querySelectorAll('main li');return els};const seen=new Set();const out=[];const collect=()=>{rowsOf().forEach((r)=>{const x=(r.innerText||'').replace(/\\s+$/,'');if(x&&x.length>10&&!seen.has(x)){seen.add(x);out.push(x)}})};const pane=(()=>{let p=document.querySelector('main')||document.body;for(let i=0;i<6&&p;i++){if(p.scrollHeight>p.clientHeight+80)return p;p=p.parentElement}return document.scrollingElement||document.body})();for(let page=0;page<20;page++){let last=-1;for(let i=0;i<24;i++){collect();const done=pane.scrollTop+pane.clientHeight>=pane.scrollHeight-4;if(done&&pane.scrollHeight===last)break;last=pane.scrollHeight;pane.scrollTop=pane.scrollHeight;await sleep(600)}collect();const next=document.querySelector('button[aria-label="Next"]:not([disabled]),button[aria-label="Next page"]:not([disabled])');if(!next)break;next.click();await sleep(1500);pane.scrollTop=0;await sleep(500)}if(out.length<2){alert('Nothing readable found - is the Accounts list on screen?');return}const t='SALESNAV ACCOUNTS - captured '+new Date().toLocaleString()+' - '+out.length+' rows collected\\n\\n'+out.join('\\n\\n----\\n\\n');let ok=false;try{await navigator.clipboard.writeText(t);ok=true}catch(e){}if(ok){window.open('${origin}/intranet','_blank');return}const d=document.createElement('button');d.textContent='Copy '+out.length+' rows and open the paste target';d.style.cssText='position:fixed;top:16px;right:16px;z-index:2147483647;background:#0a1c40;color:#fff;border:0;padding:14px 16px;border-radius:8px;font:600 13px sans-serif;cursor:pointer;box-shadow:0 8px 30px rgba(10,28,64,.35)';d.onclick=async()=>{try{await navigator.clipboard.writeText(t)}catch(e){window.prompt('Copy blocked. Press Ctrl+C:',t.slice(0,4000))}d.remove();window.open('${origin}/intranet','_blank')};document.body.appendChild(d)})()`;
+  const js = `(async()=>{if(location.hostname.indexOf('linkedin.com')<0||location.pathname.indexOf('/sales')<0){alert('Open the Sales Navigator Accounts list first. That dashboard is what gets captured.');return}const sleep=(ms)=>new Promise(r=>setTimeout(r,ms));const rowsOf=()=>{let els=document.querySelectorAll('main table tbody tr');if(els.length<2)els=document.querySelectorAll('[role="table"] [role="row"]');if(els.length<2)els=document.querySelectorAll('main li');return els};const seen=new Set();const out=[];const collect=()=>{rowsOf().forEach((r)=>{const x=(r.innerText||'').replace(/\\s+$/,'');if(x&&x.length>10&&!seen.has(x)){seen.add(x);out.push(x)}})};const pane=(()=>{let p=document.querySelector('main')||document.body;for(let i=0;i<6&&p;i++){if(p.scrollHeight>p.clientHeight+80)return p;p=p.parentElement}return document.scrollingElement||document.body})();for(let page=0;page<20;page++){let last=-1;for(let i=0;i<24;i++){collect();const done=pane.scrollTop+pane.clientHeight>=pane.scrollHeight-4;if(done&&pane.scrollHeight===last)break;last=pane.scrollHeight;pane.scrollTop=pane.scrollHeight;await sleep(600)}collect();const next=document.querySelector('button[aria-label="Next"]:not([disabled]),button[aria-label="Next page"]:not([disabled])');if(!next)break;next.click();await sleep(1500);pane.scrollTop=0;await sleep(500)}if(out.length<2){alert('Nothing readable found. Is the Accounts list on screen?');return}const t='SALESNAV ACCOUNTS - captured '+new Date().toLocaleString()+' - '+out.length+' rows collected\\n\\n'+out.join('\\n\\n----\\n\\n');let ok=false;try{await navigator.clipboard.writeText(t);ok=true}catch(e){}if(ok){window.open('${origin}/intranet','_blank');return}const d=document.createElement('button');d.textContent='Copy '+out.length+' rows and open the paste target';d.style.cssText='position:fixed;top:16px;right:16px;z-index:2147483647;background:#0a1c40;color:#fff;border:0;padding:14px 16px;border-radius:8px;font:600 13px sans-serif;cursor:pointer;box-shadow:0 8px 30px rgba(10,28,64,.35)';d.onclick=async()=>{try{await navigator.clipboard.writeText(t)}catch(e){window.prompt('Copy blocked. Press Ctrl+C:',t.slice(0,4000))}d.remove();window.open('${origin}/intranet','_blank')};document.body.appendChild(d)})()`;
   return `javascript:${js}`;
 }
 
@@ -150,7 +150,7 @@ const TOOLS: Tool[] = [
     where: "web",
     label: "✉ Grab Outlook thread",
     takes:
-      "The whole reading pane — every expanded message, senders and timestamps with it.",
+      "The whole reading pane. Every expanded message, senders and timestamps with it.",
     refuses:
       "The inbox list. A collapsed message ships only its header, so expand what matters first.",
     build: outlookBookmarklet,
@@ -164,7 +164,7 @@ const TOOLS: Tool[] = [
     takes:
       "The activity timeline entire, including the entries that have scrolled out of view.",
     refuses:
-      "Collapsed previews — they travel as headers only. Hit SF's “Expand All” where the page offers it.",
+      "Collapsed previews travel as headers only. Hit Salesforce's “Expand All” where the page offers it.",
     build: sfBookmarklet,
   },
   {
@@ -174,7 +174,7 @@ const TOOLS: Tool[] = [
     where: "web only",
     label: "☰ Grab Teams thread",
     takes:
-      "The whole thread, top to bottom — every name, every timestamp, every link. A long history takes a minute or two; a counter shows progress.",
+      "The whole thread, top to bottom. Every name, every timestamp, every link. A long history takes a minute or two; a counter shows progress.",
     refuses:
       "The desktop app, which isn't a page anything can read. Open the same chat at teams.microsoft.com.",
     build: teamsBookmarklet,
@@ -186,7 +186,7 @@ const TOOLS: Tool[] = [
     where: "accounts list",
     label: "▤ Grab Sales Nav intent",
     takes:
-      "The whole accounts list — it scrolls and pages through every row itself (118 accounts in under a minute), collecting names, intent levels, activity counts, and alerts. Lands whole in the Intranet, never on one account's row.",
+      "The whole accounts list. It scrolls and pages through every row itself, 118 accounts in under a minute, collecting names, intent levels, activity counts, and alerts. Lands whole in the Intranet, never on one account's row.",
     refuses:
       "Any page that isn't Sales Navigator. Keep the tab in front while it walks the list; a navy button hands you the copy when it finishes.",
     build: salesNavBookmarklet,
@@ -224,7 +224,7 @@ export function CaptureShelf({ accounts }: { accounts: Acct[] }) {
                 refs.current[t.key] = el;
               }}
               className={styles.toolDrag}
-              title="Drag me to the bookmarks bar — don't click here"
+              title="Drag me to the bookmarks bar. Don't click here."
             >
               {t.label}
               <span className={styles.toolDragRail}>drag</span>
@@ -249,7 +249,7 @@ export function CaptureShelf({ accounts }: { accounts: Acct[] }) {
           <Link href="/intranet">Intranet</Link>; account activity goes to the ⚡ box on
           the account in the <Link href="/room">HomeRoom</Link>. This page files nothing,
           and nothing here writes back to Salesforce or Forms. When a grab changes, the
-          bookmarks bar keeps the old copy — re-drag it to pick up the new one.
+          bookmarks bar keeps the old copy. Re-drag it to pick up the new one.
         </span>
         <button
           type="button"

@@ -1699,7 +1699,7 @@ describe("the grab takes the whole thread, structured (IV.4)", () => {
     assert.ok(shelf.includes("harvest()"), "nothing harvests per pass");
   });
   test("an unrecognised DOM degrades to plain text and says so", () => {
-    assert.ok(shelf.includes("structure not recognised"));
+    assert.ok(shelf.includes("Structure not recognised"));
   });
   test("a Teams grab opens the Intranet, and the shelf says to re-drag", () => {
     assert.ok(shelf.includes("/intranet"), "the grab still opens the old room");

@@ -65,8 +65,11 @@ const PRODUCT_LABEL: Record<string, string> = {
 const shortDay = (iso: string) => {
   const t = Date.parse(iso);
   if (Number.isNaN(t)) return "";
-  const d = new Date(t);
-  return `${d.getUTCMonth() + 1}/${d.getUTCDate()}`;
+  return new Date(t).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  });
 };
 
 // The always-on intel strip under a card's name: what the corpus says this
@@ -189,8 +192,8 @@ function Track({
                     type="submit"
                     className={`${styles.node} ${styles[state]}`}
                     style={heat}
-                    title={`${label(n.key)} — ${stateWord(state)} (override: click to advance)`}
-                    aria-label={`${label(n.key)}: ${stateWord(state)}. Override — click to advance.`}
+                    title={`${label(n.key)}: ${stateWord(state)}. Click to advance.`}
+                    aria-label={`${label(n.key)}: ${stateWord(state)}. Click to advance.`}
                   >
                     <span className={styles.glyph}>{glyph(state)}</span>
                   </button>
@@ -350,7 +353,7 @@ export function DashboardClient({
         <div className={styles.empty}>
           {dbUnavailable
             ? "Run docs/dashboard-tables.sql in Supabase, then add accounts from the Account Room."
-            : "No accounts yet — open the Account Room and use “+ Dashboard” to add them here."}
+            : "No accounts yet. Open the Account Room and use “+ Dashboard” to add them here."}
         </div>
       )}
 
@@ -402,21 +405,21 @@ export function DashboardClient({
                 ) : (
                   <>
                     <div className={styles.name}>
-                      {card.name}
+                      {acctIdByName[card.name] ? (
+                        <a
+                          href={`/accounts?focus=${acctIdByName[card.name]}`}
+                          title="Open this account in the Account Room"
+                        >
+                          {card.name}
+                        </a>
+                      ) : (
+                        card.name
+                      )}
                       {countryByName[card.name] && (
                         <CountryFlag
                           code={countryByName[card.name]}
                           className={styles.cardFlag}
                         />
-                      )}
-                      {acctIdByName[card.name] && (
-                        <a
-                          href={`/accounts?focus=${acctIdByName[card.name]}`}
-                          className={styles.cardAcctLink}
-                          title="Open this account in the Account Room"
-                        >
-                          ↗
-                        </a>
                       )}
                     </div>
                     {card.subtitle && <div className={styles.meta}>{card.subtitle}</div>}
@@ -536,7 +539,7 @@ export function DashboardClient({
                       <input
                         name="note"
                         defaultValue={card.notes[openN.key]}
-                        placeholder="Your judgment — why this stage is where it is"
+                        placeholder="Write why this stage is where it is."
                         aria-label={`${label(openN.key)} judgment`}
                         className={styles.judgment}
                       />
@@ -618,7 +621,7 @@ export function DashboardClient({
                               className={styles.sugChip}
                               title={`evidence dated ${shortDay(suggestion.srcAt)}`}
                             >
-                              suggested ✓ — {suggestion.reason}
+                              Check this. {suggestion.reason}
                             </span>
                             {canWrite && (
                               <>
@@ -641,7 +644,7 @@ export function DashboardClient({
                                     type="submit"
                                     className={styles.sugDismiss}
                                     aria-label="Dismiss suggestion"
-                                    title="Dismiss — won't suggest again"
+                                    title="Dismiss. It never suggests again."
                                   >
                                     ✕
                                   </button>
@@ -699,7 +702,7 @@ export function DashboardClient({
                       <input
                         name="dealSize"
                         defaultValue={card.dealSize}
-                        placeholder={`e.g. "$120k ARR" or "300 EEs / 4 countries"`}
+                        placeholder={`For example: 300 employees across four countries`}
                         aria-label="Deal size"
                       />
                       <button type="submit" className={styles.miniSave}>
@@ -752,7 +755,7 @@ export function DashboardClient({
                       />
                       <input
                         name="note"
-                        placeholder="Note (optional)"
+                        placeholder="Optional note"
                         aria-label="Stakeholder note"
                       />
                       <button type="submit" className={styles.miniSave}>

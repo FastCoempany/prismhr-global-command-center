@@ -128,7 +128,7 @@ export function PastRow({ e, timeLabel }: { e: LedgerEvent; timeLabel: string })
               <button
                 type="button"
                 className={styles.pastToAction}
-                title="Make this an action — it moves below the now-line, open"
+                title="Make this an action. It moves below the now-line, open."
                 disabled={busy}
                 onClick={toAction}
               >
@@ -141,8 +141,8 @@ export function PastRow({ e, timeLabel }: { e: LedgerEvent; timeLabel: string })
                 className={styles.sheetGhost}
                 title={
                   src
-                    ? "Undo the ✓ — reopen on the Day Sheet"
-                    : "Undo the ✓ — the move reopens below the now-line"
+                    ? "Undo the ✓. Reopen on the Day Sheet."
+                    : "Undo the ✓. The move reopens below the now-line."
                 }
                 disabled={busy}
                 onClick={reopen}
@@ -154,7 +154,7 @@ export function PastRow({ e, timeLabel }: { e: LedgerEvent; timeLabel: string })
               <button
                 type="button"
                 className={styles.sheetGhost}
-                title="Hide — moves to the Archive (restorable)"
+                title="Hide. Moves to the Archive, restorable."
                 disabled={busy}
                 onClick={hide}
               >

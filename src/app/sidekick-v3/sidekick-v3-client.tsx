@@ -70,10 +70,7 @@ export function SidekickV3Client(props: Props) {
   const router = useRouter();
 
   const byId = useMemo(() => new Map(screens.map((s) => [s.id, s])), [screens]);
-  const stepOf = useMemo(
-    () => new Map(screens.map((s, i) => [s.id, i + 1])),
-    [screens],
-  );
+  const stepOf = useMemo(() => new Map(screens.map((s, i) => [s.id, i + 1])), [screens]);
 
   const [view, setView] = useState<View>({
     kind: "screen",
@@ -152,7 +149,11 @@ export function SidekickV3Client(props: Props) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const el = e.target as HTMLElement;
-      if (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.tagName === "SELECT") {
+      if (
+        el.tagName === "INPUT" ||
+        el.tagName === "TEXTAREA" ||
+        el.tagName === "SELECT"
+      ) {
         return;
       }
       if (e.key === "/") {
@@ -212,7 +213,8 @@ export function SidekickV3Client(props: Props) {
     return parts.map((part, i) => {
       const m = part.match(/(?:step|screen) (\d+)/i);
       const n = m ? parseInt(m[1], 10) : NaN;
-      const dest = Number.isFinite(n) && n >= 1 && n <= screens.length ? screens[n - 1] : null;
+      const dest =
+        Number.isFinite(n) && n >= 1 && n <= screens.length ? screens[n - 1] : null;
       if (!dest) return <Fragment key={i}>{part}</Fragment>;
       return (
         <button key={i} className={styles.stepLink} onClick={() => selectScreen(dest.id)}>
@@ -249,7 +251,11 @@ export function SidekickV3Client(props: Props) {
               <input name="name" placeholder="Account / prospect name" required />
               <input name="company" placeholder="Company (optional)" />
               <input name="personaLabel" placeholder="Persona (e.g. PEO Owner)" />
-              <select name="defaultAudience" defaultValue="BOTH" aria-label="Default audience">
+              <select
+                name="defaultAudience"
+                defaultValue="BOTH"
+                aria-label="Default audience"
+              >
                 <option value="BOTH">Both audiences</option>
                 <option value="SERVICE_PROVIDER">PEO Partner</option>
                 <option value="DIRECT_EMPLOYER">SMB Client</option>
@@ -307,7 +313,11 @@ export function SidekickV3Client(props: Props) {
                 <form action={deletePlaybook}>
                   {hidden(selected?.id)}
                   <input type="hidden" name="playbookId" value={activePlaybook.id} />
-                  <button type="submit" className={styles.ghostBtnSm} title="Delete playbook">
+                  <button
+                    type="submit"
+                    className={styles.ghostBtnSm}
+                    title="Delete playbook"
+                  >
                     🗑
                   </button>
                 </form>
@@ -360,23 +370,41 @@ export function SidekickV3Client(props: Props) {
                       <span className={styles.pbControls}>
                         <form action={movePlaybookItem}>
                           {hidden(s.id)}
-                          <input type="hidden" name="playbookId" value={activePlaybook.id} />
+                          <input
+                            type="hidden"
+                            name="playbookId"
+                            value={activePlaybook.id}
+                          />
                           <input type="hidden" name="itemId" value={it.id} />
                           <input type="hidden" name="direction" value="up" />
-                          <button type="submit" title="Move up">↑</button>
+                          <button type="submit" title="Move up">
+                            ↑
+                          </button>
                         </form>
                         <form action={movePlaybookItem}>
                           {hidden(s.id)}
-                          <input type="hidden" name="playbookId" value={activePlaybook.id} />
+                          <input
+                            type="hidden"
+                            name="playbookId"
+                            value={activePlaybook.id}
+                          />
                           <input type="hidden" name="itemId" value={it.id} />
                           <input type="hidden" name="direction" value="down" />
-                          <button type="submit" title="Move down">↓</button>
+                          <button type="submit" title="Move down">
+                            ↓
+                          </button>
                         </form>
                         <form action={removePlaybookItem}>
                           {hidden(s.id)}
-                          <input type="hidden" name="playbookId" value={activePlaybook.id} />
+                          <input
+                            type="hidden"
+                            name="playbookId"
+                            value={activePlaybook.id}
+                          />
                           <input type="hidden" name="itemId" value={it.id} />
-                          <button type="submit" title="Remove">✕</button>
+                          <button type="submit" title="Remove">
+                            ✕
+                          </button>
                         </form>
                       </span>
                     )}
@@ -476,8 +504,8 @@ export function SidekickV3Client(props: Props) {
 
         {props.dbUnavailable && (
           <p className={styles.banner}>
-            Database unavailable — accounts, notes, playbooks, and edits are off; the
-            flow itself still works.
+            Database unavailable — accounts, notes, playbooks, and edits are off; the flow
+            itself still works.
           </p>
         )}
         {props.justSaved && <p className={styles.bannerOk}>Saved.</p>}
@@ -540,9 +568,7 @@ export function SidekickV3Client(props: Props) {
               <header className={styles.cardHead}>
                 <h1>{selected.title}</h1>
                 <div className={styles.chips}>
-                  <span className={styles.chip}>
-                    {v3ModuleLabel(selected.module)}
-                  </span>
+                  <span className={styles.chip}>{v3ModuleLabel(selected.module)}</span>
                   <span className={styles.chip}>{selected.screenType}</span>
                   <span className={styles.chip}>
                     ⏱ {selected.timestampStart}–{selected.timestampEnd}
@@ -670,9 +696,7 @@ export function SidekickV3Client(props: Props) {
               {activeAccount && (
                 <form action={saveNote} className={styles.noteForm}>
                   {hidden(selected.id)}
-                  <div className={styles.blockLabel}>
-                    Note for {activeAccount.name}
-                  </div>
+                  <div className={styles.blockLabel}>Note for {activeAccount.name}</div>
                   <textarea
                     key={`${activeAccount.id}:${selected.id}`}
                     name="body"
@@ -730,7 +754,12 @@ export function SidekickV3Client(props: Props) {
           <h1>{selected.title}</h1>
           <p className={styles.presenterSay}>{selected.say}</p>
           <ul className={styles.presenterPoints}>
-            {(audience === "de" ? selected.de : audience === "sp" ? selected.sp : [...selected.sp, ...selected.de])
+            {(audience === "de"
+              ? selected.de
+              : audience === "sp"
+                ? selected.sp
+                : [...selected.sp, ...selected.de]
+            )
               .slice(0, 3)
               .map((it) => (
                 <li key={it}>{it}</li>
@@ -740,12 +769,14 @@ export function SidekickV3Client(props: Props) {
             <p className={styles.presenterBranch}>↳ {selected.branching[0]}</p>
           )}
           {orderIdx < order.length - 1 && (
-            <p className={styles.presenterNext}>
-              Next: {order[orderIdx + 1].title}
-            </p>
+            <p className={styles.presenterNext}>Next: {order[orderIdx + 1].title}</p>
           )}
           <div className={styles.pager}>
-            <button className={styles.ghostBtn} onClick={() => step(-1)} disabled={orderIdx <= 0}>
+            <button
+              className={styles.ghostBtn}
+              onClick={() => step(-1)}
+              disabled={orderIdx <= 0}
+            >
               ← Prev
             </button>
             <button

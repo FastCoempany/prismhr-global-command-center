@@ -93,8 +93,8 @@ export default async function PricingPage() {
           <h1 className={styles.h1}>EOR Pricing</h1>
 
           <p className={styles.sub}>
-            EOR list pricing by country ({countries.length} countries) · PEPM · updated{" "}
-            {pricingGeneratedAt}.
+            EOR list pricing for {countries.length} countries · per employee per month ·
+            updated {pricingGeneratedAt}.
           </p>
         </div>
 
@@ -103,11 +103,13 @@ export default async function PricingPage() {
         </div>
 
         {/* ── Build-to-contract pricing (SF / CPQ) ─────────────────────── */}
-        <h2 className={styles.h2}>Contract pricing — build-to-contract (SF / CPQ)</h2>
+        <h2 className={styles.h2}>
+          Contract pricing, built to contract in Salesforce CPQ
+        </h2>
         <p className={styles.sub}>
-          What&apos;s being built to contract in Salesforce / CPQ — leverage this on
-          in-process opportunities. Every country carries a designated tier (1–3). If a
-          PEO doesn&apos;t know its countries yet, quote the tier range — e.g.{" "}
+          Salesforce CPQ is building these to contract. Leverage them on in-process
+          opportunities. Every country carries a designated tier (1–3). If a PEO
+          doesn&apos;t know its countries yet, quote the tier range — e.g.{" "}
           <b>$500–$650 PEPM</b> for SMB-direct EOR. All prices are PEPM (per employee, per
           month) unless marked one-time. ETA for contracts / SF CPQ setup:{" "}
           <b>July 10 at the earliest</b>; a 2nd training will walk through contracting.
@@ -143,19 +145,19 @@ export default async function PricingPage() {
         <h2 className={styles.h2}>Two billing options</h2>
         <div className={styles.narGrid}>
           <div className={styles.narCard}>
-            <h4>① Bill the SMB directly — lean here ✅</h4>
+            <h4>① Bill the SMB directly. Lean here. ✅</h4>
             <p>
               Use the <b>List Price (SMB pricing)</b>. The PEO earns the{" "}
-              <b>revenue share</b> (the Recommended Markup column). This is what the
-              system is set up to accommodate today — favor it.
+              <b>revenue share</b> (the Recommended Markup column). The system is set up
+              for this today. Favor it.
             </p>
           </div>
           <div className={styles.narCard}>
-            <h4>② Bill the PEO directly — mechanics still TBD ⚠</h4>
+            <h4>② Bill the PEO directly. Mechanics still TBD. ⚠</h4>
             <p>
               Use the <b>PEO pricing</b>. The PEO then has the option to bill their SMB
               themselves, at the Recommended List Price or a price of their choice. Some
-              elements are still being worked out — harder to execute for now.
+              elements are still being worked out, so it is harder to execute for now.
             </p>
           </div>
         </div>

@@ -202,7 +202,7 @@ function NoteRow({
                     : styles.sheetUrgLow
               }`}
               onClick={openTagger}
-              title="Urgency — click to change"
+              title="Urgency. Click to change."
             >
               {tags.urgency}
             </button>
@@ -263,7 +263,7 @@ function NoteRow({
           type="button"
           className={styles.sheetGhost}
           disabled={busy}
-          title="Hide — moves to the Archive (restorable)"
+          title="Hide. Moves to the Archive, restorable."
           onClick={async () => {
             const r = await hideTodoNote(n.id);
             if (r.ok) onRemove(n.id);
@@ -426,11 +426,10 @@ export function DaySheet({
         <button type="button" className={styles.sheetToggle} onClick={toggle}>
           ▸
         </button>
-        <span className={styles.sheetCapT}>Day sheet — {dateLabel}</span>
+        <span className={styles.sheetCapT}>Day sheet · {dateLabel}</span>
         <span className={styles.sheetCapR}>
           {today.length} note{today.length === 1 ? "" : "s"} today
-          {later.length ? ` · ${later.length} later` : ""}
-          {earlier.length ? ` · ${earlier.length} earlier` : ""} — click ▸ to open
+          {later.length ? ` · ${later.length} later` : ""}… · click ▸ to open
         </span>
       </div>
     );
@@ -447,7 +446,7 @@ export function DaySheet({
         >
           ▾
         </button>
-        <span className={styles.sheetCapT}>Day sheet — {dateLabel}</span>
+        <span className={styles.sheetCapT}>Day sheet · {dateLabel}</span>
       </div>
       <div className={styles.sheetSeg}>
         <button
@@ -496,7 +495,7 @@ export function DaySheet({
         onChange={(e) => setText(e.target.value)}
         onPaste={(e) => smartPaste(e, text, setText)}
         onKeyDown={onKeyDown}
-        placeholder="Type the second it happens — call notes, Teams pastes, stray thoughts…"
+        placeholder="Type the second it happens: call notes, Teams pastes, stray thoughts…"
         rows={2}
       />
       {pendingPlain && (
