@@ -24,8 +24,11 @@ Six facts from the file. They change every line below.
    this on?"_ That is the service-provider-level versus client-level question, and it is
    the same question as the operating-model slide. Answer it explicitly or the meeting
    didn't happen.
-4. **Puerto Rico is the live pain**, plus "other international needs." Puerto Rico is a
-   US territory, not an EOR country. This deck does not solve it. Say so.
+4. **Puerto Rico is the live pain**, plus "other international needs." Puerto Rico **is**
+   on the PrismHR Global roster — there is a published country guide for it. But it is a
+   US territory, not a foreign EOR country, and the mechanics differ accordingly. **And our
+   own guide is currently wrong in three sections** — see the pre-meeting actions below.
+   This is the single most important thing you carry into the room.
 5. **Global work currently leaves their P&L.** Domestic runs on our platform; the
    international side rides an outside alliance that comes up for a look this fall. Let
    _them_ name that vendor. You never do.
@@ -48,47 +51,68 @@ Six facts from the file. They change every line below.
   question you can act on. Quoting a number you'd have to walk back is the TZP mistake
   wearing a new suit, in the one room that will recognise it.
 
-## 3. The clock
+## 3. Do these before you walk in
+
+Two of them are non-negotiable, and the first one has a dependency inside PrismHR.
+
+1. **Open the live Puerto Rico guide and read the Time Off, Leave Policies and Severance
+   Pay sections yourself.** As captured, all three carry Portugal's content: "Employees in
+   Portugal are entitled to 22 working days," Portugal's 308 municipalities, a Portuguese
+   national-holiday list, and a Portuguese severance formula that contradicts the same
+   page's own termination section. Confirm it is still live before you say it out loud —
+   if it has been corrected since, the slide 11 beat changes and you have less to disclose,
+   which is a good problem.
+2. **Flag it internally first.** You want to be able to say "I've flagged it," in the past
+   tense, truthfully. Send it to whoever owns the country guides the day before, and ask
+   for a corrected Puerto Rico section you can forward. Disclosing a defect you have not
+   reported reads as gossip; disclosing one you reported reads as ownership.
+3. **Name the day you'll send the corrected guide**, and put it in your own calendar during
+   the call so they watch you do it. Inside forty-eight hours. A missed date here would be
+   the TZP pattern with your name on it.
+4. **Decide the pre-cut** — slides 3, 7, 9 and 12 come out before you start, not while
+   you're standing there.
+
+## 4. The clock
 
 Timings below are measured, not estimated: every scripted line counted at 150 words a
 minute, which is a normal presenting pace. "They talk" is the allowance for the answer.
 
-| #   | Slide                          | You       | Them     | Question | Cut?        |
-| --- | ------------------------------ | --------- | -------- | -------- | ----------- |
-| 1   | Compete Without Borders + TZP  | 1:08      | 0:30     | **Live** | never       |
-| 2   | Agenda                         | 0:27      | —        | Planted  | keep        |
-| 3   | PrismHR Solutions              | 0:32      | 0:12     | Quick    | **pre-cut** |
-| 4   | Why Your Clients Go Global     | 0:42      | 0:12     | Quick    | keep        |
-| 5   | The Global Challenges          | 0:41      | —        | Planted  | cut 5th     |
-| 6   | Enter PrismHR Global           | 0:43      | 0:12     | Quick    | keep        |
-| 7   | Help Clients Grow Globally     | 0:38      | —        | Planted  | **pre-cut** |
-| 8   | Why Providers Partner With Us  | 1:04      | 0:40     | **Live** | never       |
-| 9   | Employer of Record             | 0:46      | —        | Planted  | **pre-cut** |
-| 10  | Global Contractors             | 0:48      | 0:12     | Quick    | keep        |
-| 11  | Global Payroll · Puerto Rico   | 1:34      | 0:40     | **Live** | never       |
-| 12  | Global Talent                  | 0:33      | —        | Planted  | **pre-cut** |
-| 13  | The Operating Model            | 1:05      | 0:50     | **Live** | never       |
-| 14  | Provider Success Story         | 0:52      | —        | Planted  | keep        |
-| 15  | Close                          | 0:33      | 0:40     | **Live** | never       |
-|     | **All fifteen**                | **12:06** | **4:08** |          | **16:14**   |
-|     | **Pre-cut (drop 3, 7, 9, 12)** | **9:37**  | **3:56** |          | **13:33**   |
+| #   | Slide                             | You       | Them     | Question | Cut?        |
+| --- | --------------------------------- | --------- | -------- | -------- | ----------- |
+| 1   | Compete Without Borders + TZP     | 1:08      | 0:30     | **Live** | never       |
+| 2   | Agenda                            | 0:27      | —        | Planted  | keep        |
+| 3   | PrismHR Solutions                 | 0:32      | 0:12     | Quick    | **pre-cut** |
+| 4   | Why Your Clients Go Global        | 0:42      | 0:12     | Quick    | keep        |
+| 5   | The Global Challenges             | 0:41      | —        | Planted  | **pre-cut** |
+| 6   | Enter PrismHR Global              | 0:43      | 0:12     | Quick    | keep        |
+| 7   | Help Clients Grow Globally        | 0:38      | —        | Planted  | **pre-cut** |
+| 8   | Why Providers Partner With Us     | 1:04      | 0:40     | **Live** | never       |
+| 9   | Employer of Record                | 0:46      | —        | Planted  | **pre-cut** |
+| 10  | Global Contractors                | 0:48      | 0:12     | Quick    | keep        |
+| 11  | Global Payroll · Puerto Rico      | 2:09      | 0:45     | **Live** | never       |
+| 12  | Global Talent                     | 0:33      | —        | Planted  | **pre-cut** |
+| 13  | The Operating Model               | 1:05      | 0:50     | **Live** | never       |
+| 14  | Provider Success Story            | 0:52      | —        | Planted  | cut 6th     |
+| 15  | Close                             | 0:34      | 0:40     | **Live** | never       |
+|     | **All fifteen**                   | **12:42** | **4:13** |          | **16:55**   |
+|     | **Pre-cut (drop 3, 5, 7, 9, 12)** | **9:32**  | **4:01** |          | **13:33**   |
 
 **Live** — ask it, then stop talking and wait. **Quick** — expect a sentence, move on.
 **Planted** — you ask it _and answer it yourself_; it steers attention without opening the
 floor.
 
-**Read the bottom row.** The two beats that make this meeting work — naming TZP on slide 1
-and the Puerto Rico commitment on slide 11 — cost about fifty seconds of talking between
-them, and they are worth more than any four product pages in the deck. So the product pages
-pay for them: pre-cut slides 3, 7, 9 and 12 before you walk in. That lands at 13:33 with
-about ninety seconds of drift, which three executives will use.
+**Slide 11 is now the longest page in the deck at 2:54, and that is the correct trade.**
+Confirming the capability, drawing the US-territory distinction, and disclosing the guide
+defect is three minutes that no product page in this deck can outperform — in this account
+it is the whole reason the other twelve pages get believed.
 
-Their questions aren't lost — they go into the follow-up note, where they read as
-considered rather than rushed.
+So the product pages pay for it. Pre-cut slides 3, 5, 7, 9 and 12 before you walk in, which
+lands at 13:33 with about ninety seconds of drift. Their questions aren't lost — they go
+into the follow-up note, where they read as considered rather than rushed.
 
-If you're still behind, take slide 5 next, then slide 14. **Slides 1, 8, 11, 13 and 15
-survive at any cost.** One and eleven are the trust argument; eight, thirteen and fifteen
-are the business. Everything else is scaffolding.
+If you're still behind, slide 14 goes next; the success story is the most expendable thing
+left. **Slides 1, 8, 11, 13 and 15 survive at any cost.** One and eleven are the trust
+argument; eight, thirteen and fifteen are the business. Everything else is scaffolding.
 
 ---
 
@@ -384,39 +408,65 @@ the pilot: finding out is a small, safe first move.
 > authority. No international wires leaving your client's bank — which also keeps them from
 > signalling to a foreign tax authority that they're paying people there.
 
-**Then stop and change tone** _(0:35)_ — this is the beat you promised on slide 1
+**Then stop and change tone** _(1:04)_ — this is the beat you promised on slide 1
 
 > Now — Puerto Rico. This is the one I told you about.
 >
-> Puerto Rico isn't an international country for this. It's a US territory with its own tax
-> code and its own filings, so it isn't solved by the page you're looking at, and I'm not
-> going to stand here and tell you it is.
+> First, the good news: Puerto Rico is on our list. We publish a country guide on it and we
+> can hire and pay there.
 >
-> What you'll get instead. By `<name the day>` you'll have it in writing: whether we run
-> Puerto Rico payroll today, what it covers if we do, and who owns it if we don't. If the
-> answer is that we don't, that's what the note will say. You won't have to chase me for it.
+> Then the precision that matters for you. It's a US territory, so this isn't the story I
+> just told you about Bulgaria — there's no entity to avoid, it's US soil, and Social
+> Security, Medicare, FUTA, SUTA, ACA and ERISA all apply. What's genuinely local is the
+> part that bites: retirement plans have to qualify through Hacienda, dismissal runs
+> through Law 80, and workers' comp is compulsory through the State Insurance Fund only —
+> no private carrier, no self-insurance.
+>
+> And here's the part I'd rather you hear from me than find on your own. Our published
+> Puerto Rico guide has errors in it. The time-off, leave and severance sections carry
+> Portugal's content, not Puerto Rico's — the severance section contradicts the termination
+> section on the same page. I've flagged it internally. Don't let your team scope anything
+> off that page until it's corrected, and I'll send you the corrected version.
 
 **Ask — LIVE, to Jennifer**
 
-> So tell me which half hurts — running the payroll itself, or the filings and the local
-> agency side? Those are two different fixes, and I'd rather bring you the right one than
-> the fast one.
+> So which is it — a client's workers in Puerto Rico, or Infiniti's own? And is the pain the
+> processing, or the Hacienda and State Insurance Fund side? Those route to completely
+> different work, and I'd rather bring you the right one than the fast one.
 
-_Why:_ the most valuable forty seconds in the meeting, and it has nothing to do with the
-deck. Jennifer watched a PrismHR capability get sold past what it could do this spring.
-Declining to oversell the exact thing she asked about — in front of her CEO, after telling
-them on slide 1 that they'd watch you do it — is the whole trust argument, executed rather
-than asserted. The question is also genuinely diagnostic: processing and filings are
-different problems with different owners inside her building.
+_Why:_ this is the whole meeting in ninety seconds, and it is now much stronger than the
+version where you simply didn't know. You confirm the capability, you demonstrate you
+understand why a US territory is not a foreign country, and then you hand them a defect in
+your own company's marketing before it can cost them anything. That is slide 1 executed
+rather than asserted — and it is the exact inverse of what happened to TZP.
 
-**Pick the day before you walk in.** The date is the deliverable, not the capability. Make
-it inside forty-eight hours, say it out loud rather than reading it off a slide, and put
-the reminder in your own calendar during the call so they see you do it. A missed date here
-does more damage than the gap it was covering — it would be the TZP pattern with your name
-on it.
+The question itself routes real work. A client's workers versus Infiniti's own decides
+whether this is a service they resell or an internal fix. Processing versus the agency
+layer decides who at PrismHR you bring next.
 
-**Do not** improvise a Puerto Rico capability to fill the silence. The commitment is the
-answer.
+### The guide disclosure — why it's worth the discomfort
+
+Telling a prospect your own marketing page is wrong, in front of their CEO, is not an
+obvious move. It is the right one here, for four reasons:
+
+- **She is going to read that page.** It is the first thing anyone does after a meeting
+  like this. If Jennifer finds the Portugal content herself, the meeting is dead and the
+  TZP pattern is confirmed with your name on it. Discovery by her is the worst available
+  outcome; disclosure by you is the best.
+- **It is a content defect, not a capability defect.** Say that distinction out loud. The
+  service can be sound while the web page is wrong, and separating the two protects the
+  product without softening the admission.
+- **It is checkable in thirty seconds.** Anyone in that room can open the page and see the
+  word Portugal. Credibility that verifies instantly is worth more than credibility that
+  has to be taken on trust — especially in this account.
+- **It converts your weakest slide into your strongest.** You promised on slide 1 that
+  they'd watch you say the hard thing once. This is better than the "I don't know" you
+  were going to give them.
+
+**Do not** overstate it. Three sections are wrong; the rest of the page — wage floor,
+hours, overtime, probation, termination notice, discrimination, safety, workers' comp —
+reads as genuinely Puerto Rico-specific. "Three sections carry another country's content"
+is true and sufficient. "The guide is garbage" is neither.
 
 ---
 
@@ -512,7 +562,7 @@ small, which is what a CEO and COO both want and neither will say first.
 > implementation people, whoever owns that client, and me. We scope it end to end and you
 > see exactly what it costs Infiniti to deliver before anybody promises a client anything.
 >
-> And the Puerto Rico note lands `<the day you named>`, as promised.
+> And the corrected Puerto Rico guide reaches you `<the day you named>`, as promised.
 
 **Ask — LIVE, to the room, then stop talking**
 
@@ -525,7 +575,7 @@ mouths is the date the whole account plan runs on. Do not fill the silence.
 
 ---
 
-## 4. If they push where you can't go
+## 5. If they push where you can't go
 
 | They say                                  | You say                                                                                                                                                                                       |
 | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -534,9 +584,9 @@ mouths is the date the whole account plan runs on. Do not fill the silence.
 | "How is this different from what we use?" | Don't compare. "I'd be guessing at their contract. What I can tell you is what ours does and where it sits — inside the platform you already run." Then let them do the comparing.            |
 | "Which countries?"                        | Country coverage sheets are still coming. Name the countries you _know_, say the sheet is coming, and give the date. Don't gesture at a hundred seventy-five and hope.                        |
 | "Can our clients buy it themselves?"      | This is Jennifer's original question. Go to slide 13 and answer it with the two structures.                                                                                                   |
-| "Does this handle Puerto Rico?"           | No — US territory, own tax code and its own filings. Say that, then name the day the written answer lands.                                                                                    |
+| "Does this handle Puerto Rico?"           | Yes — it's on the roster with a published guide. Then the territory nuance, then the guide defect. In that order: capability, precision, disclosure.                                          |
 
-## 5. What you do not say
+## 6. What you do not say
 
 - The incumbent's name, unless they say it first.
 - Any number that would have to be corrected later — price, country count for a specific
@@ -544,17 +594,21 @@ mouths is the date the whole account plan runs on. Do not fill the silence.
 - Anything about their alliance renewal timing. You know it. They didn't tell you.
 - "It integrates." It doesn't integrate. It's ours.
 
-## 6. Inside an hour of hanging up
+## 7. Inside an hour of hanging up
 
 1. **Anika first.** She owns this relationship and she brought you in. Private debrief
    before anything goes to Infiniti: what you heard, what you committed to, what you held.
 2. **Then Jennifer**, copying whoever was in the room: three lines — the structure question
    and where it landed, the Puerto Rico date restated in writing, and the scoping session
    with two proposed times.
-3. **Put the Puerto Rico answer on your own calendar for the day you named**, not the day
-   after. This is the single commitment the whole meeting was built to demonstrate. Send it
-   on the day even if the answer is no — especially if the answer is no.
-4. **File it:** the account's disposition, the structure answer from slide 13, the client
+3. **Send the corrected Puerto Rico guide on the day you named**, not the day after. This
+   is the single commitment the whole meeting was built to demonstrate. If the correction
+   isn't ready, send a note on the day saying so and giving the new date — the discipline
+   is the deliverable, not the document.
+4. **Chase the guide fix until it ships.** You have now told a customer their vendor's
+   published country guide is wrong. If it is still wrong in a month, you own that, and so
+   does every other rep pointing a prospect at that page.
+5. **File it:** the account's disposition, the structure answer from slide 13, the client
    named on slide 15, and the date they gave you. Their date is what the account plan runs
    on; yours is what your credibility runs on.
 
