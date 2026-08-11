@@ -119,6 +119,18 @@ export function Chute({
         />
       </div>
 
+      <p className={styles.chutePact}>
+        <b>The pact:</b> Emails and text read free in your browser; PDFs read through
+        Claude. Every file routes by the book — contact email, then company domain, then
+        account name — and files like a paste: with the API key on, Claude splits the
+        thread into dated entries, opens the commitments it finds, queues the unknowns as
+        asks, files competitor intel and lessons to the Playbook, detects Closed Won or
+        Lost, and flags a file that reads like the wrong account; without the key the
+        record still files by rules. Nothing files blind — no sure match waits for your
+        pick — and HomeRoom, Groundwork, Accounts, and Today re-read the record at once,
+        the Intranet mirroring it on its next sync.
+      </p>
+
       {items.length > 0 && (
         <ul className={styles.chuteList}>
           {items.map((it) => (

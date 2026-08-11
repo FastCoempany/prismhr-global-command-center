@@ -1767,6 +1767,16 @@ button.sdRadio:hover {
 .chuteBtn:hover {
   border-color: var(--ink);
 }
+.chutePact {
+  margin: 8px 0 0;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--quiet);
+}
+.chutePact b {
+  color: var(--soft);
+  font-weight: 600;
+}
 .chuteList {
   list-style: none;
   margin: 8px 0 0;
