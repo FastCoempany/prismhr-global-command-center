@@ -958,7 +958,7 @@ function Row({ row }: { row: RoomRow }) {
                   onClick={refillAsks}
                   title="mint sharper asks from the countries, the scenario, the research, and what other deals taught"
                 >
-                  {askPending ? "minting…" : "mint mint better asks ⟳"}
+                  {askPending ? "minting…" : "mint better asks ⟳"}
                 </button>
               )}
             </span>

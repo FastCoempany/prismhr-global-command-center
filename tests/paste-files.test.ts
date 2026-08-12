@@ -10,6 +10,7 @@ import {
   emlToPaste,
   msgToPaste,
   htmlToText,
+  pasteFingerprint,
   readerFor,
 } from "../src/lib/paste-files";
 
@@ -176,6 +177,21 @@ test("htmlToText drops style blocks and decodes entities", () => {
     "<style>p{color:red}</style><p>Q3 &amp; Q4 &quot;hold&quot;</p><p>next</p>",
   );
   assert.equal(t, 'Q3 & Q4 "hold"\nnext');
+});
+
+// ── pasteFingerprint ────────────────────────────────────────────────────────
+
+test("fingerprint survives whitespace and casing drift", () => {
+  const a = pasteFingerprint("From: Dana\n\nThe board  meets Thursday.");
+  const b = pasteFingerprint("  from: dana\n\n the BOARD meets thursday.  ");
+  assert.equal(a, b);
+});
+
+test("different captures fingerprint differently", () => {
+  const a = pasteFingerprint("From: Dana\n\nThe board meets Thursday.");
+  const b = pasteFingerprint("From: Dana\n\nThe board meets Friday.");
+  assert.notEqual(a, b);
+  assert.notEqual(pasteFingerprint(""), a);
 });
 
 test("readerFor dispatches by extension", () => {
