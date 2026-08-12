@@ -11,6 +11,8 @@ export type PasteKind = "outlook" | "teams" | "salesnav" | "sf" | "transcript" |
 // What the Drop thinks it is holding, in plain words for the live chip.
 export function sniffPaste(text: string): { kind: PasteKind; label: string } {
   const t = (text ?? "").trimStart();
+  if (/^CALL TRANSCRIPT\b/.test(t))
+    return { kind: "transcript", label: "a call transcript" };
   if (/^OUTLOOK THREAD\b/.test(t)) return { kind: "outlook", label: "an Outlook thread" };
   if (/^(TEAMS THREAD|TEAMS CHAT)\b/.test(t))
     return { kind: "teams", label: "a Teams chat" };
@@ -203,6 +205,58 @@ export function emlToPaste(raw: string, filename: string): string {
   return `${head}\n\n${m.body}`.trim();
 }
 
+// ── WebVTT (.vtt) reading — call transcripts, the richest capture there is ──
+// Teams and Zoom export call recordings as WebVTT: cue numbers, timing lines,
+// and text — Teams wraps each line in a voice span (<v Speaker Name>…</v>).
+// The reader strips the machinery, names the speakers, and merges a speaker's
+// consecutive cues into one line, so the paste reads like the conversation.
+
+export function parseVtt(raw: string): string {
+  const lines = (raw ?? "").replace(/\r\n/g, "\n").split("\n");
+  const out: { speaker: string; text: string }[] = [];
+  let cur: { speaker: string; text: string } | null = null;
+  for (const line of lines) {
+    const t = line.trim();
+    if (!t) continue;
+    if (/^WEBVTT/i.test(t)) continue;
+    if (/^(NOTE|STYLE|REGION)\b/.test(t)) continue;
+    if (t.includes("-->")) continue; // the timing line
+    if (/^\d+$/.test(t)) continue; // the cue number
+    let speaker = "";
+    let text = t;
+    const v = /^<v\s+([^>]+?)\s*>/i.exec(t);
+    if (v) {
+      speaker = v[1].trim();
+      text = t.replace(/^<v[^>]*>/i, "");
+    }
+    text = text.replace(/<[^>]+>/g, "").trim();
+    if (!text) continue;
+    // A speaker line without voice tags ("Dana Ellis: …") names itself.
+    if (!speaker) {
+      const m = /^([A-Z][\w.'-]+(?:\s[A-Z][\w.'-]+){0,3}):\s+(.*)$/.exec(text);
+      if (m) {
+        speaker = m[1];
+        text = m[2];
+      }
+    }
+    if (cur && cur.speaker === speaker) cur.text += ` ${text}`;
+    else {
+      cur = { speaker, text };
+      out.push(cur);
+    }
+  }
+  return out
+    .map((c) => (c.speaker ? `${c.speaker}: ${c.text}` : c.text))
+    .join("\n")
+    .trim();
+}
+
+// The paste text a .vtt becomes — headed CALL TRANSCRIPT so the dialect
+// detector, the rule parsers, and the AI read all know what they hold.
+export function vttToPaste(raw: string, filename: string): string {
+  return `CALL TRANSCRIPT — dropped file ${filename}\n\n${parseVtt(raw)}`.trim();
+}
+
 // ── Outlook .msg reading — fields come from the caller's msgreader pass ─────
 
 export type MsgFields = {
@@ -236,13 +290,14 @@ export function msgToPaste(fields: MsgFields, filename: string): string {
 }
 
 // File-type dispatch for the Drop: which reader a filename gets.
-export type DropReader = "eml" | "msg" | "pdf" | "text" | "unsupported";
+export type DropReader = "eml" | "msg" | "pdf" | "vtt" | "text" | "unsupported";
 
 export function readerFor(filename: string): DropReader {
   const ext = (filename.split(".").pop() ?? "").toLowerCase();
   if (ext === "eml") return "eml";
   if (ext === "msg") return "msg";
   if (ext === "pdf") return "pdf";
+  if (ext === "vtt") return "vtt";
   if (["txt", "md", "csv", "log", "json", "text"].includes(ext)) return "text";
   return "unsupported";
 }

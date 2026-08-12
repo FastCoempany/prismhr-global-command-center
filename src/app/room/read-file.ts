@@ -3,7 +3,7 @@
 // browser; a PDF goes through the caller's transcriber action. Returns paste
 // text the room's readers understand, or the reason it couldn't.
 
-import { emlToPaste, msgToPaste, readerFor } from "@/lib/paste-files";
+import { emlToPaste, msgToPaste, readerFor, vttToPaste } from "@/lib/paste-files";
 
 export type PdfReader = (
   fd: FormData,
@@ -17,11 +17,12 @@ export async function readFileToText(
   if (kind === "unsupported")
     return {
       ok: false,
-      reason: `Can't read ${f.name}. Drop .eml, .msg, .pdf, or plain text.`,
+      reason: `Can't read ${f.name}. Drop .eml, .msg, .pdf, .vtt, or plain text.`,
     };
   try {
     let text = "";
     if (kind === "eml") text = emlToPaste(await f.text(), f.name);
+    else if (kind === "vtt") text = vttToPaste(await f.text(), f.name);
     else if (kind === "text") text = (await f.text()).trim();
     else if (kind === "msg") {
       const { default: MsgReader } = await import("@kenjiuno/msgreader");

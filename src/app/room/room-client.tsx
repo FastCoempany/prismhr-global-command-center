@@ -1323,7 +1323,7 @@ function Row({ row }: { row: RoomRow }) {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".eml,.msg,.pdf,.txt,.md,.csv,.log,.json"
+                accept=".eml,.msg,.pdf,.vtt,.txt,.md,.csv,.log,.json"
                 style={{ display: "none" }}
                 onChange={(e) => {
                   handleFiles(e.target.files);

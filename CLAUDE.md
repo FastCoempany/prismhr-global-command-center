@@ -92,7 +92,9 @@ inputs to the queue brain.
 ## The Chute (decided 2026-08-11)
 
 The HomeRoom carries ONE intake at the top: the Chute. Files (.eml/.msg/.pdf/
-text) thrown at it are read on the spot, routed to their account by the book's
+.vtt call transcripts/text) thrown at it are read on the spot — VTT is the
+richest capture and parses free in the browser to speaker-labeled lines headed
+CALL TRANSCRIPT — routed to their account by the book's
 own signals (known contact email > company domain > account name — pure rules,
 no API needed), and filed through the same pipeline a paste takes, so the
 intelligence in each file fans out app-wide: record entries, opened
@@ -103,6 +105,17 @@ ledger survives a reload (per Chicago day; mid-flight reads come back as
 "interrupted — drop it again"), and the paste pipeline refuses duplicates
 app-wide: the same capture filed to the same account twice returns "Already on
 file. Nothing filed twice." (pastehash markers; an undo clears its marker).
+
+## The Scratchpaper (decided 2026-08-12)
+
+The stash floater is retired — component, actions, and lib deleted. In its
+seat on every page: the Scratchpaper, the Float (triptych winner). A ✎ button
+bottom-right opens one running pad: write, Enter, the line lands date-and-time
+stamped (Chicago), newest first under TODAY/YESTERDAY/dated kickers. One
+durable store (`scratch:pad` namespaced notes — outside every account view and
+the intranet mirror by construction). The pact: it stays there and only there;
+nothing routes, nothing files, nothing becomes an action. Money is redacted on
+write like everywhere else. Delete is per line and deliberate.
 
 ## Other standing decrees
 

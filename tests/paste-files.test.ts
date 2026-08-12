@@ -10,8 +10,10 @@ import {
   emlToPaste,
   msgToPaste,
   htmlToText,
+  parseVtt,
   pasteFingerprint,
   readerFor,
+  vttToPaste,
 } from "../src/lib/paste-files";
 
 // ── sniffPaste ──────────────────────────────────────────────────────────────
@@ -179,6 +181,57 @@ test("htmlToText drops style blocks and decodes entities", () => {
   assert.equal(t, 'Q3 & Q4 "hold"\nnext');
 });
 
+// ── parseVtt / vttToPaste ───────────────────────────────────────────────────
+
+const TEAMS_VTT = [
+  "WEBVTT",
+  "",
+  "1",
+  "00:00:03.120 --> 00:00:06.480",
+  "<v Dana Ellis>Thanks for making time today.</v>",
+  "",
+  "2",
+  "00:00:06.900 --> 00:00:09.100",
+  "<v Dana Ellis>We're serious about India this quarter.</v>",
+  "",
+  "3",
+  "00:00:09.400 --> 00:00:14.000",
+  "<v Marc Coe>Good. Let's talk about the entity question first.</v>",
+].join("\n");
+
+test("parseVtt strips the machinery and merges a speaker's run", () => {
+  const t = parseVtt(TEAMS_VTT);
+  assert.equal(
+    t,
+    [
+      "Dana Ellis: Thanks for making time today. We're serious about India this quarter.",
+      "Marc Coe: Good. Let's talk about the entity question first.",
+    ].join("\n"),
+  );
+});
+
+test("parseVtt reads speaker-prefixed cues without voice tags", () => {
+  const zoom = [
+    "WEBVTT",
+    "",
+    "00:00:01.000 --> 00:00:04.000",
+    "Dana Ellis: We have workers in Poland already.",
+    "00:00:04.200 --> 00:00:06.000",
+    "Dana Ellis: Hungary is next.",
+  ].join("\n");
+  const t = parseVtt(zoom);
+  assert.equal(t, "Dana Ellis: We have workers in Poland already. Hungary is next.");
+});
+
+test("vttToPaste heads the capture as a CALL TRANSCRIPT", () => {
+  const p = vttToPaste(TEAMS_VTT, "esc-discovery.vtt");
+  assert.match(p, /^CALL TRANSCRIPT — dropped file esc-discovery\.vtt\n/);
+  assert.match(p, /Dana Ellis: Thanks for making time/);
+  const s = sniffPaste(p);
+  assert.equal(s.kind, "transcript");
+  assert.equal(s.label, "a call transcript");
+});
+
 // ── pasteFingerprint ────────────────────────────────────────────────────────
 
 test("fingerprint survives whitespace and casing drift", () => {
@@ -198,6 +251,7 @@ test("readerFor dispatches by extension", () => {
   assert.equal(readerFor("thread.eml"), "eml");
   assert.equal(readerFor("Thread.MSG"), "msg");
   assert.equal(readerFor("deck.pdf"), "pdf");
+  assert.equal(readerFor("call.vtt"), "vtt");
   assert.equal(readerFor("notes.txt"), "text");
   assert.equal(readerFor("export.csv"), "text");
   assert.equal(readerFor("photo.heic"), "unsupported");
