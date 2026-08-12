@@ -93,7 +93,7 @@ export type RoomRow = {
   gaps: { id: string; question: string; at: string }[];
   gapsQueued: number;
   /** What prospects in comparable situations asked (C7) — inherited, not owed. */
-  peers: { question: string; shared: string }[];
+  peers: { question: string; shared: string; findHref: string }[];
   /** The same brain, the question pre-scoped to this deal. */
   askHref: string;
   researchAt: string; // ISO of the last research pass, "" if never run
@@ -911,8 +911,7 @@ function Row({ row }: { row: RoomRow }) {
             <span className={styles.lbl}>STILL UNKNOWN</span>
             {row.gaps.filter((g) => !askGone.has(g.id)).length === 0 && (
               <span className={styles.askQ}>
-                Nothing queued. File a paste, or mint asks from what the app already
-                knows.
+                Nothing of this deal&apos;s own yet. File a paste, or mint asks.
               </span>
             )}
             {row.gaps
@@ -933,16 +932,31 @@ function Row({ row }: { row: RoomRow }) {
                   )}
                 </div>
               ))}
-            {row.peers.map((p) => (
-              <div key={p.question} className={styles.askRow}>
-                <span className={styles.askQ}>
-                  {p.question}
-                  <span className={styles.askPeer}>
-                    asked on a comparable deal · {p.shared}
-                  </span>
-                </span>
-              </div>
-            ))}
+            {row.peers.length > 0 && (
+              <>
+                <div className={styles.peerRule}>
+                  <span className={styles.peerRuleLbl}>ASKED ON COMPARABLE DEALS</span>
+                  <span className={styles.peerRuleLine} />
+                </div>
+                {row.peers.map((p) => (
+                  <div key={p.question} className={styles.askRow}>
+                    <span className={styles.askQ}>
+                      <span className={styles.peerCtry}>
+                        {p.shared.toUpperCase() || "SHARED SITUATION"}
+                      </span>
+                      {p.question}
+                    </span>
+                    <Link
+                      href={p.findHref}
+                      className={styles.sdTag}
+                      title="Ask the brain what we answered when this came up."
+                    >
+                      find the answer
+                    </Link>
+                  </div>
+                ))}
+              </>
+            )}
             <span className={styles.askFoot}>
               {row.gapsQueued > 0 && (
                 <span className={styles.askMore}>{row.gapsQueued} more behind these</span>
