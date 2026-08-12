@@ -212,37 +212,52 @@ export function emlToPaste(raw: string, filename: string): string {
 // consecutive cues into one line, so the paste reads like the conversation.
 
 export function parseVtt(raw: string): string {
-  const lines = (raw ?? "").replace(/\r\n/g, "\n").split("\n");
+  // Block-based, per the WebVTT grammar: cues separate on blank lines, and a
+  // cue is [optional identifier line] + [timing line] + [text lines]. Reading
+  // block-wise is what keeps Teams' GUID cue identifiers out of the text —
+  // everything up to and including the "-->" line is machinery, never words.
+  const blocks = (raw ?? "").replace(/\r\n/g, "\n").split(/\n{2,}/);
   const out: { speaker: string; text: string }[] = [];
   let cur: { speaker: string; text: string } | null = null;
-  for (const line of lines) {
-    const t = line.trim();
-    if (!t) continue;
-    if (/^WEBVTT/i.test(t)) continue;
-    if (/^(NOTE|STYLE|REGION)\b/.test(t)) continue;
-    if (t.includes("-->")) continue; // the timing line
-    if (/^\d+$/.test(t)) continue; // the cue number
-    let speaker = "";
-    let text = t;
-    const v = /^<v\s+([^>]+?)\s*>/i.exec(t);
-    if (v) {
-      speaker = v[1].trim();
-      text = t.replace(/^<v[^>]*>/i, "");
-    }
-    text = text.replace(/<[^>]+>/g, "").trim();
-    if (!text) continue;
-    // A speaker line without voice tags ("Dana Ellis: …") names itself.
-    if (!speaker) {
-      const m = /^([A-Z][\w.'-]+(?:\s[A-Z][\w.'-]+){0,3}):\s+(.*)$/.exec(text);
-      if (m) {
-        speaker = m[1];
-        text = m[2];
+  for (const block of blocks) {
+    const lines = block.split("\n").filter((l) => l.trim());
+    if (lines.length === 0) continue;
+    const head = lines[0].trim();
+    if (/^WEBVTT/i.test(head) || /^(NOTE|STYLE|REGION)\b/.test(head)) continue;
+    const timingAt = lines.findIndex((l) => l.includes("-->"));
+    // No timing line = not a cue (a stray header block); nothing here is words.
+    if (timingAt === -1) continue;
+    for (const line of lines.slice(timingAt + 1)) {
+      const t = line.trim();
+      if (!t) continue;
+      // Some exporters skip the blank line between cues — a timing line inside
+      // the text run is a new cue's machinery, never words.
+      if (t.includes("-->")) continue;
+      let speaker = "";
+      let text = t;
+      const v = /^<v\s+([^>]+?)\s*>/i.exec(t);
+      if (v) {
+        speaker = v[1].trim();
+        text = t.replace(/^<v[^>]*>/i, "");
       }
-    }
-    if (cur && cur.speaker === speaker) cur.text += ` ${text}`;
-    else {
-      cur = { speaker, text };
-      out.push(cur);
+      text = text.replace(/<[^>]+>/g, "").trim();
+      if (!text) continue;
+      // A speaker line without voice tags ("Dana Ellis: …") names itself.
+      if (!speaker) {
+        const m = /^([A-Z][\w.'-]+(?:\s[A-Z][\w.'-]+){0,3}):\s+(.*)$/.exec(text);
+        if (m) {
+          speaker = m[1];
+          text = m[2];
+        } else if (cur) {
+          // A continuation line inside a voiced cue keeps its cue's speaker.
+          speaker = cur.speaker;
+        }
+      }
+      if (cur && cur.speaker === speaker) cur.text += ` ${text}`;
+      else {
+        cur = { speaker, text };
+        out.push(cur);
+      }
     }
   }
   return out
