@@ -34,6 +34,7 @@ type ChuteItem = {
   opened?: number;
   reason?: string;
   claim?: string; // the read's own account name, on a mismatch
+  batch?: number; // files thrown together — one drop, one batch
 };
 
 // The ledger survives a reload: receipts persist per Chicago day, minus the
@@ -142,22 +143,45 @@ export function Chute({
     else patch(key, { state: "error", reason: r.reason ?? "The file didn't take." });
   };
 
-  const swallow = async (f: File) => {
+  const swallow = async (f: File, batch: number) => {
     const key = ++seq.current;
-    setItems((xs) => [{ key, filename: f.name, state: "reading" }, ...xs]);
-    const read = await readFileToText(f, chuteReadPdf);
-    if (!read.ok) {
-      patch(key, { state: "error", reason: read.reason });
-      return;
+    setItems((xs) => [{ key, filename: f.name, state: "reading", batch }, ...xs]);
+    try {
+      const read = await readFileToText(f, chuteReadPdf);
+      if (!read.ok) {
+        patch(key, { state: "error", reason: read.reason });
+        return;
+      }
+      const { best, candidates } = routeCapture(read.text, roster);
+      if (best)
+        await fileTo(key, read.text, { id: best.id, name: best.name }, best.why, false);
+      else patch(key, { state: "pick", text: read.text, candidates });
+    } catch {
+      // Nothing dies silently — a broken filing says so.
+      patch(key, { state: "error", reason: "The filing broke. Drop it again." });
     }
-    const { best, candidates } = routeCapture(read.text, roster);
-    if (best)
-      await fileTo(key, read.text, { id: best.id, name: best.name }, best.why, false);
-    else patch(key, { state: "pick", text: read.text, candidates });
   };
 
+  const batchSeq = useRef(0);
   const handleFiles = (list: FileList | null) => {
-    for (const f of Array.from(list ?? [])) void swallow(f);
+    const batch = ++batchSeq.current;
+    for (const f of Array.from(list ?? [])) void swallow(f, batch);
+  };
+
+  // Files thrown together are almost always one account's export. When an
+  // unsure file's batch-mates filed somewhere, that account is the one-click
+  // suggestion; the picker stays as the fallback.
+  const batchMate = (it: ChuteItem): { id: string; name: string } | null => {
+    if (it.batch == null) return null;
+    const counts = new Map<string, { id: string; name: string; n: number }>();
+    for (const x of items) {
+      if (x.batch !== it.batch || x.state !== "filed" || !x.account) continue;
+      const c = counts.get(x.account.id) ?? { ...x.account, n: 0 };
+      c.n += 1;
+      counts.set(x.account.id, c);
+    }
+    const top = [...counts.values()].sort((a, b) => b.n - a.n)[0];
+    return top ? { id: top.id, name: top.name } : null;
   };
 
   if (!canWrite) return null;
@@ -241,6 +265,11 @@ export function Chute({
               {it.state === "interrupted" && (
                 <span className={styles.chuteWarn}>{it.reason}</span>
               )}
+              {(it.state === "pick" || it.state === "mismatch") && !it.text && (
+                <span className={styles.chuteWarn}>
+                  The pick did not survive. Drop the file again.
+                </span>
+              )}
               {(it.state === "pick" || it.state === "mismatch") && it.text && (
                 <span className={styles.chutePick}>
                   {it.state === "mismatch" ? (
@@ -250,6 +279,30 @@ export function Chute({
                   ) : (
                     <span>No sure match. Pick the account.</span>
                   )}
+                  {(() => {
+                    const mate = it.state === "pick" ? batchMate(it) : null;
+                    return (
+                      mate && (
+                        <button
+                          type="button"
+                          className={styles.chuteBtn}
+                          title="The rest of this drop filed there."
+                          onClick={() => {
+                            if (it.text)
+                              void fileTo(
+                                it.key,
+                                it.text,
+                                mate,
+                                "the rest of this drop went there",
+                                true,
+                              );
+                          }}
+                        >
+                          File to {mate.name}
+                        </button>
+                      )
+                    );
+                  })()}
                   <select
                     className={styles.chuteSel}
                     defaultValue=""

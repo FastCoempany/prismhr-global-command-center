@@ -78,6 +78,17 @@ const BLAND = new Set([
 const AUTO_ROUTE_SCORE = 60;
 const AUTO_ROUTE_GAP = 20;
 
+// A book name's initials — the abbreviation people actually type ("ESC" for
+// Employer Services Corporation). Computed from the raw name, suffixes and
+// all, because the abbreviation keeps them. Three to five letters only:
+// two-letter initials collide with ordinary words.
+export function initialsOf(name: string): string {
+  const words = (name ?? "").split(/[^A-Za-z]+/).filter(Boolean);
+  if (words.length < 3) return "";
+  const init = words.map((w) => w[0]!.toUpperCase()).join("");
+  return init.length >= 3 && init.length <= 5 ? init : "";
+}
+
 export function routeCapture(
   text: string,
   roster: RouteAccount[],
@@ -116,6 +127,7 @@ export function routeCapture(
           why = `named in the text`;
         } else {
           const head = n.split(" ")[0] ?? "";
+          const init = initialsOf(a.name);
           if (
             head.length >= 5 &&
             !BLAND.has(head) &&
@@ -123,6 +135,11 @@ export function routeCapture(
           ) {
             score = 55;
             why = `“${head}” appears in the text`;
+          } else if (init && new RegExp(`\\b${init}\\b`).test(raw)) {
+            // Initials are a candidate signal, never a filing signal — below
+            // the auto-route bar by design (ESC fits more than one account).
+            score = 50;
+            why = `“${init}” matches the initials`;
           }
         }
       }
