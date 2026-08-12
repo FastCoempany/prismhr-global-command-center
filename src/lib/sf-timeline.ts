@@ -261,7 +261,8 @@ export function parseSfTimeline(text: string, now: Date = new Date()): TimelineE
   // grammar ("X to Y") false-positives on subjects like "Welcome to PrismHR"
   // and fabricates entries. Refuse it here so the caller takes the transcript
   // path (or the AI, which reads the stamp) instead.
-  if (/^(OUTLOOK|TEAMS) THREAD\b/.test((text ?? "").trimStart())) return [];
+  if (/^((OUTLOOK|TEAMS) THREAD|CALL TRANSCRIPT)\b/.test((text ?? "").trimStart()))
+    return [];
   // Junk is stripped up front so both timeline shapes parse over clean lines
   // and whatever survives into bodies is conversation, not chrome.
   const lines = cleanSfPaste(text ?? "")
