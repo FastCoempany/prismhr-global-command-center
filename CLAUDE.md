@@ -98,7 +98,11 @@ no API needed), and filed through the same pipeline a paste takes, so the
 intelligence in each file fans out app-wide: record entries, opened
 commitments, gaps, playbook intel, outcomes, and every tab re-derives. Nothing
 files blind: no sure match or a disputed read waits for the operator's pick.
-The per-row Drop stays; the Chute is the throw-it-all-here door.
+The per-row Drop stays; the Chute is the throw-it-all-here door. The receipt
+ledger survives a reload (per Chicago day; mid-flight reads come back as
+"interrupted — drop it again"), and the paste pipeline refuses duplicates
+app-wide: the same capture filed to the same account twice returns "Already on
+file. Nothing filed twice." (pastehash markers; an undo clears its marker).
 
 ## Other standing decrees
 

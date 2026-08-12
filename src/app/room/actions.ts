@@ -40,6 +40,7 @@ import { mintAsks } from "@/lib/intel/ask-mint";
 import { SCENARIOS } from "@/lib/intel/scenarios";
 import { corpusFor, extractDealIntel } from "@/lib/intel/extract";
 import { cleanSfPaste, parseSfTimeline, scrubSecrets } from "@/lib/sf-timeline";
+import { pasteFingerprint } from "@/lib/paste-files";
 import { redactMoney } from "@/lib/intel/lexicon";
 import { bindAccountId, cleanLogBody } from "@/lib/room/bind";
 import { createAccountNoteRow } from "@/lib/notes/write";
@@ -102,6 +103,27 @@ export async function roomLog(
 // account can reach it. Two-tier autonomy: an explicit commitment the operator
 // owes is opened without asking, and everything that changes the deal's
 // standing is only ever PROPOSED.
+// The filed-capture marker: key carries the fingerprint, reason carries the
+// filing moment and the first note id (so an undo can find and clear it).
+async function stampPasteMark(pasteKey: string, firstNoteId: string) {
+  try {
+    await getPrisma().accountDisposition.upsert({
+      where: { accountId: pasteKey },
+      create: {
+        accountId: pasteKey,
+        status: "filed",
+        reason: `${new Date().toISOString()}·${firstNoteId}`,
+      },
+      update: {
+        status: "filed",
+        reason: `${new Date().toISOString()}·${firstNoteId}`,
+      },
+    });
+  } catch {
+    // the marker is a guard, never a gate — filing already succeeded
+  }
+}
+
 export async function roomPaste(
   accountId: string,
   raw: string,
@@ -120,6 +142,8 @@ export async function roomPaste(
   // The misfile guard: the read believes this belongs somewhere else.
   mismatch?: { claim: string; bound: string };
   readFailed?: boolean; // the read errored; the rule parser filed the record
+  // The duplicate guard: this exact capture already filed to this account.
+  duplicate?: boolean;
 }> {
   const acct = bindAccountId(accountId, peos);
   const rawText = typeof raw === "string" ? raw.trim() : "";
@@ -150,6 +174,36 @@ export async function roomPaste(
     return { ok: false, filed: 0, how: "", reason: "Paste something first." };
   if (!(await requireWrite()))
     return { ok: false, filed: 0, how: "", reason: "Read-only session." };
+
+  // The duplicate guard — app-wide, since every door (row paste, the Drop,
+  // the Chute) files through here. The same capture filed to the same account
+  // twice is refused BEFORE any read spends a cent. A guard that errors never
+  // blocks a filing.
+  const pasteKey = `pastehash:${acct.id}:${pasteFingerprint(rawText)}`.slice(0, 191);
+  try {
+    const prior = await getPrisma().accountDisposition.findUnique({
+      where: { accountId: pasteKey },
+    });
+    if (prior) {
+      const at = Date.parse((prior.reason ?? "").split("·")[0] ?? "");
+      const when = Number.isNaN(at)
+        ? ""
+        : ` Filed ${new Date(at).toLocaleDateString("en-US", {
+            month: "numeric",
+            day: "numeric",
+            timeZone: "America/Chicago",
+          })}.`;
+      return {
+        ok: false,
+        filed: 0,
+        how: "",
+        duplicate: true,
+        reason: `Already on file.${when} Nothing filed twice.`,
+      };
+    }
+  } catch {
+    // guard unavailable — file anyway
+  }
 
   const now = new Date();
   let read: Awaited<ReturnType<typeof aiCleanTimeline>> | null = null;
@@ -208,6 +262,7 @@ export async function roomPaste(
         lane: "mine",
         source: "transcript",
       });
+      await stampPasteMark(pasteKey, n.id);
       refresh();
       return { ok: true, filed: 1, how: "transcript", noteIds: [n.id] };
     }
@@ -238,6 +293,7 @@ export async function roomPaste(
       noteIds.push(n.id);
       filed++;
     }
+    if (noteIds[0]) await stampPasteMark(pasteKey, noteIds[0]);
     const absorbed = read
       ? await absorbRead(read, { id: acct.id, name: acct.name }, now)
       : { opened: [], asks: 0, learned: 0, outcome: null };
@@ -623,9 +679,22 @@ export async function roomPasteUndo(
   if (!(await requireWrite()))
     return { ok: false, removed: 0, reason: "Read-only session." };
   try {
-    const r = await getPrisma().accountNote.deleteMany({
+    const prisma = getPrisma();
+    const r = await prisma.accountNote.deleteMany({
       where: { id: { in: ids }, accountId: acct.id },
     });
+    // The duplicate guard's marker carries the paste's first note id — an
+    // undone paste must be re-fileable, so the marker goes with the notes.
+    try {
+      await prisma.accountDisposition.deleteMany({
+        where: {
+          accountId: { startsWith: `pastehash:${acct.id}:` },
+          reason: { contains: ids[0] },
+        },
+      });
+    } catch {
+      // marker cleanup is best-effort; the notes are already gone
+    }
     refresh();
     return { ok: true, removed: r.count };
   } catch {

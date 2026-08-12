@@ -1804,6 +1804,27 @@ button.sdRadio:hover {
 .chuteErr {
   color: var(--red, #ef4444);
 }
+.chuteDupe {
+  color: var(--quiet);
+}
+.chuteWarn {
+  color: var(--amber, #f59e0b);
+}
+.chuteClear {
+  border: 0;
+  background: none;
+  padding: 2px 0;
+  cursor: pointer;
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--faint);
+  text-transform: uppercase;
+}
+.chuteClear:hover {
+  color: var(--ink);
+}
 .chutePick {
   display: inline-flex;
   align-items: center;

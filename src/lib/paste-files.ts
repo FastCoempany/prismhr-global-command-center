@@ -31,6 +31,25 @@ export function sniffPaste(text: string): { kind: PasteKind; label: string } {
   return { kind: "note", label: "notes" };
 }
 
+// ── The duplicate guard's fingerprint ───────────────────────────────────────
+// The same capture filed to the same account must never enter the record
+// twice. The fingerprint survives whitespace and casing drift (a re-export or
+// a re-copy of the same thread), and two FNV-1a passes with different seeds
+// keep accidental collisions out of range for a book this size.
+
+export function pasteFingerprint(text: string): string {
+  const norm = (text ?? "").toLowerCase().replace(/\s+/g, " ").trim();
+  const fnv = (seed: number): number => {
+    let h = seed >>> 0;
+    for (let i = 0; i < norm.length; i++) {
+      h ^= norm.charCodeAt(i);
+      h = Math.imul(h, 0x01000193) >>> 0;
+    }
+    return h >>> 0;
+  };
+  return `${fnv(0x811c9dc5).toString(16)}${fnv(0x1000193).toString(16)}${norm.length.toString(16)}`;
+}
+
 // ── RFC 822 (.eml) reading ──────────────────────────────────────────────────
 
 export type EmlMessage = {
