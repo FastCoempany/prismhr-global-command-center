@@ -223,6 +223,48 @@ test("parseVtt reads speaker-prefixed cues without voice tags", () => {
   assert.equal(t, "Dana Ellis: We have workers in Poland already. Hungary is next.");
 });
 
+test("parseVtt drops Teams GUID cue identifiers and joins split cues", () => {
+  // The real-world shape: GUID/segment identifiers above every timing line,
+  // one sentence split across cues, continuation lines without voice tags.
+  const teams = [
+    "WEBVTT",
+    "",
+    "a1239971-07e0-4b71-844e-f23bf5b55120/13-0",
+    "00:00:06.521 --> 00:00:11.401",
+    "<v Sharon Murray>Okay, my name is Sharon Murray.",
+    "I'm the payroll manager here at XLHR.</v>",
+    "",
+    "a1239971-07e0-4b71-844e-f23bf5b55120/15-0",
+    "00:00:12.681 --> 00:00:16.897",
+    "<v Antaeus Coe>Wonderful. So the plan today,</v>",
+    "",
+    "a1239971-07e0-4b71-844e-f23bf5b55120/15-1",
+    "00:00:16.897 --> 00:00:21.298",
+    "<v Antaeus Coe>is to walk through the platform.</v>",
+  ].join("\n");
+  const t = parseVtt(teams);
+  assert.equal(
+    t,
+    [
+      "Sharon Murray: Okay, my name is Sharon Murray. I'm the payroll manager here at XLHR.",
+      "Antaeus Coe: Wonderful. So the plan today, is to walk through the platform.",
+    ].join("\n"),
+  );
+  assert.ok(!/a1239971/.test(t));
+});
+
+test("parseVtt survives cues with no blank line between them", () => {
+  const tight = [
+    "WEBVTT",
+    "",
+    "00:00:01.000 --> 00:00:04.000",
+    "<v Dana>First thought.</v>",
+    "00:00:04.200 --> 00:00:06.000",
+    "<v Dana>Second thought.</v>",
+  ].join("\n");
+  assert.equal(parseVtt(tight), "Dana: First thought. Second thought.");
+});
+
 test("vttToPaste heads the capture as a CALL TRANSCRIPT", () => {
   const p = vttToPaste(TEAMS_VTT, "esc-discovery.vtt");
   assert.match(p, /^CALL TRANSCRIPT — dropped file esc-discovery\.vtt\n/);

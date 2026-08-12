@@ -31,6 +31,12 @@ export type ChipNote = {
 };
 
 function NoteRow({ n }: { n: ChipNote }) {
+  // Archive entries (☰ head line) fold: the register shows the head line;
+  // the full text opens on demand. Long captures stay accessible, never
+  // spelled out on arrival.
+  const body = n.body.trim();
+  const isArchive = body.startsWith("☰") && body.includes("\n");
+  const cut = isArchive ? body.indexOf("\n") : -1;
   return (
     <div className={styles.note}>
       <span className={styles.body}>
@@ -43,7 +49,14 @@ function NoteRow({ n }: { n: ChipNote }) {
             </b>{" "}
           </>
         )}
-        {n.body.trim()}
+        {isArchive ? (
+          <details className={styles.fold}>
+            <summary>{body.slice(0, cut)}</summary>
+            <pre className={styles.foldBody}>{body.slice(cut + 1)}</pre>
+          </details>
+        ) : (
+          body
+        )}
       </span>
       <span className={styles.when}>🕐 {fmtWhen(n.createdAt)}</span>
     </div>

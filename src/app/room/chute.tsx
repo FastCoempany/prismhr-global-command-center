@@ -9,7 +9,7 @@
 // operator's call.
 
 import { useEffect, useRef, useState } from "react";
-import { chuteReadPdf, roomPaste } from "./actions";
+import { chuteReadPdf, roomPaste, roomPasteUndo } from "./actions";
 import { readFileToText } from "./read-file";
 import { routeCapture, type RouteAccount, type RouteHit } from "@/lib/route-capture";
 import styles from "./room.module.css";
@@ -25,7 +25,8 @@ type ChuteItem = {
     | "mismatch"
     | "error"
     | "dupe"
-    | "interrupted";
+    | "interrupted"
+    | "undone";
   text?: string;
   account?: { id: string; name: string };
   why?: string;
@@ -35,6 +36,8 @@ type ChuteItem = {
   reason?: string;
   claim?: string; // the read's own account name, on a mismatch
   batch?: number; // files thrown together — one drop, one batch
+  archived?: boolean; // a call transcript's full text rode along
+  noteIds?: string[]; // what this filing wrote — the undo's reach
 };
 
 // The ledger survives a reload: receipts persist per Chicago day, minus the
@@ -87,6 +90,9 @@ function saveLedger(items: ChuteItem[]) {
       opened: x.opened,
       reason: x.reason,
       claim: x.claim,
+      batch: x.batch,
+      archived: x.archived,
+      noteIds: x.noteIds,
     }));
     localStorage.setItem(LEDGER_KEY, JSON.stringify({ day: chicagoDay(), items: slim }));
   } catch {
@@ -135,7 +141,13 @@ export function Chute({
     patch(key, { state: "filing", account, why });
     const r = await roomPaste(account.id, text, { force });
     if (r.ok)
-      patch(key, { state: "filed", filed: r.filed, opened: (r.opened ?? []).length });
+      patch(key, {
+        state: "filed",
+        filed: r.filed,
+        opened: (r.opened ?? []).length,
+        archived: r.archived,
+        noteIds: r.noteIds,
+      });
     else if (r.duplicate)
       patch(key, { state: "dupe", reason: r.reason ?? "Already on file." });
     else if (r.mismatch)
@@ -253,9 +265,34 @@ export function Chute({
               {it.state === "filed" && it.account && (
                 <span className={styles.chuteDone}>
                   ✓ {it.account.name} · {it.filed} filed
+                  {it.archived ? " · transcript on file" : ""}
                   {(it.opened ?? 0) > 0 ? ` · ${it.opened} actions opened` : ""}
                   {it.why ? ` · ${it.why}` : ""}
+                  {(it.noteIds?.length ?? 0) > 0 && (
+                    <button
+                      type="button"
+                      className={styles.chuteUndo}
+                      title="Wrong account? Removes this filing's record entries."
+                      onClick={() => {
+                        const acct = it.account;
+                        const ids = it.noteIds;
+                        if (!acct || !ids?.length) return;
+                        void roomPasteUndo(acct.id, ids).then((r) => {
+                          if (r.ok)
+                            patch(it.key, {
+                              state: "undone",
+                              reason: `Taken back from ${acct.name}. ${r.removed} removed.`,
+                            });
+                        });
+                      }}
+                    >
+                      ↩ undo
+                    </button>
+                  )}
                 </span>
+              )}
+              {it.state === "undone" && (
+                <span className={styles.chuteDupe}>{it.reason}</span>
               )}
               {it.state === "error" && (
                 <span className={styles.chuteErr}>{it.reason}</span>

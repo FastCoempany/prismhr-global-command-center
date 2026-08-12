@@ -6,7 +6,12 @@
 // Nothing routes, nothing files, nothing becomes an action.
 
 import { useEffect, useRef, useState } from "react";
-import { scratchAdd, scratchDelete, scratchList, type ScratchLine } from "@/app/scratch/actions";
+import {
+  scratchAdd,
+  scratchDelete,
+  scratchList,
+  type ScratchLine,
+} from "@/app/scratch/actions";
 import { dayLabelFor, timeLabelFor } from "@/lib/scratch";
 import styles from "./scratchpad.module.css";
 

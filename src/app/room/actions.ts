@@ -144,6 +144,8 @@ export async function roomPaste(
   readFailed?: boolean; // the read errored; the rule parser filed the record
   // The duplicate guard: this exact capture already filed to this account.
   duplicate?: boolean;
+  // A call transcript's full text was archived alongside the read's entries.
+  archived?: boolean;
 }> {
   const acct = bindAccountId(accountId, peos);
   const rawText = typeof raw === "string" ? raw.trim() : "";
@@ -158,12 +160,16 @@ export async function roomPaste(
         : /^SALESNAV\b/.test(rawText)
           ? "SN"
           : "SF";
-  // Head-keep suits newest-first captures (SF, Outlook). If a monster paste
-  // ever exceeds the cap, tell the model so instead of lying by omission.
-  const over = rawText.length - 60000;
+  // Head-keep suits newest-first captures (SF, Outlook). A call transcript is
+  // different: the decisions live at the END of the call and the whole
+  // conversation is the intelligence, so transcripts get a far higher ceiling
+  // (a three-hour call still fits). If a monster paste ever exceeds its cap,
+  // tell the model so instead of lying by omission.
+  const cap = dialect === "CT" ? 400000 : 60000;
+  const over = rawText.length - cap;
   const text =
     over > 0
-      ? `${rawText.slice(0, 60000)}\n[NOTE: paste truncated — ${over} more characters omitted]`
+      ? `${rawText.slice(0, cap)}\n[NOTE: paste truncated — ${over} more characters omitted]`
       : rawText;
   if (!acct)
     return {
@@ -245,9 +251,40 @@ export async function roomPaste(
     };
   }
 
+  // The transcript archive — a call's full conversation, kept whole behind
+  // one head line. The registers show the head line only; the full text sits
+  // under the fold, searchable and citable, never spelled out on arrival.
+  const archiveNote = async (): Promise<string> => {
+    const label =
+      /^CALL TRANSCRIPT\s*—\s*(.+)$/m.exec(rawText.split("\n")[0] ?? "")?.[1] ??
+      "filed from the room";
+    const whole = redactMoney(cleanSfPaste(text)).slice(0, 150000);
+    const voices = new Set(
+      whole
+        .split("\n")
+        .map((l) => /^([^:]{2,30}):\s/.exec(l)?.[1])
+        .filter(Boolean),
+    ).size;
+    const n = await createAccountNoteRow({
+      accountId: acct.id,
+      kind: "account",
+      body: `☰ Call transcript — ${label}${voices > 1 ? ` · ${voices} voices` : ""} · full text under the fold\n${whole}`,
+      lane: "mine",
+      source: "transcript",
+    });
+    return n.id;
+  };
+
   try {
     const noteIds: string[] = [];
     if (entries.length === 0) {
+      if (dialect === "CT") {
+        // A call with no read still keeps its whole conversation.
+        const id = await archiveNote();
+        await stampPasteMark(pasteKey, id);
+        refresh();
+        return { ok: true, filed: 1, how: "transcript", noteIds: [id], archived: true };
+      }
       // Transcripts and Teams chats run OLDEST-first — keep the TAIL, where
       // the decisions and owed items live, and say when the head was cut.
       const whole = redactMoney(cleanSfPaste(text));
@@ -303,12 +340,19 @@ export async function roomPaste(
       noteIds.push(n.id);
       filed++;
     }
+    // A call transcript keeps its whole conversation alongside the read's
+    // entries — the entries are the judgment, the archive is the evidence.
+    let archived = false;
+    if (dialect === "CT") {
+      noteIds.push(await archiveNote());
+      archived = true;
+    }
     if (noteIds[0]) await stampPasteMark(pasteKey, noteIds[0]);
     const absorbed = read
       ? await absorbRead(read, { id: acct.id, name: acct.name }, now)
       : { opened: [], asks: 0, learned: 0, outcome: null };
     refresh();
-    return { ok: true, filed, how, noteIds, readFailed, ...absorbed };
+    return { ok: true, filed, how, noteIds, readFailed, archived, ...absorbed };
   } catch {
     return {
       ok: false,

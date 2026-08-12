@@ -135,3 +135,38 @@
   color: #92400e;
   background: #fef3c7;
 }
+
+/* An archive entry folds: head line as the summary, full text on demand. */
+.fold {
+  display: inline;
+}
+.fold summary {
+  cursor: pointer;
+  list-style: none;
+}
+.fold summary::-webkit-details-marker {
+  display: none;
+}
+.fold summary::after {
+  content: " ▸ open";
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: rgba(10, 28, 64, 0.42);
+}
+.fold[open] summary::after {
+  content: " ▾ close";
+}
+.foldBody {
+  margin: 6px 0 2px;
+  padding: 8px 10px;
+  max-height: 320px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  font-family: inherit;
+  font-size: 12px;
+  line-height: 1.5;
+  background: rgba(10, 28, 64, 0.03);
+  border: 1px solid rgba(10, 28, 64, 0.1);
+  border-radius: 8px;
+}
