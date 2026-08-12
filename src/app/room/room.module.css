@@ -1711,15 +1711,36 @@ button.sdRadio:hover {
   color: var(--ink);
 }
 
-/* A question a comparable deal provoked — inherited, not owed (C7). */
-.askPeer {
-  display: block;
-  margin-top: 2px;
+/* Questions comparable deals provoked — inherited, not owed (C7). One rule
+   and one label for the whole section; each question leads with the shared
+   countries so the label never repeats. */
+.peerRule {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0 4px;
+}
+.peerRuleLbl {
   font-family: var(--f-mono), ui-monospace, Menlo, monospace;
-  font-size: 9.5px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: rgba(10, 28, 64, 0.42);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: var(--faint);
+  white-space: nowrap;
+}
+.peerRuleLine {
+  height: 1px;
+  flex: 1;
+  background: linear-gradient(90deg, rgba(10, 28, 64, 0.14), transparent);
+}
+.peerCtry {
+  display: block;
+  margin-bottom: 1px;
+  font-family: var(--f-mono), ui-monospace, Menlo, monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--faint);
 }
 
 /* ── The Drop — file drag-and-drop on the log box ─────────────────────── */

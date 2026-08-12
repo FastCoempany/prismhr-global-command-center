@@ -366,7 +366,15 @@ export default async function RoomPage() {
       outcome,
       gaps: gaps.shown,
       gapsQueued: gaps.queued,
-      peers: peers.map((p) => ({ question: p.question, shared: p.shared.join(", ") })),
+      peers: peers.map((p) => ({
+        question: p.question,
+        shared: p.shared.join(" · "),
+        // One click to the brain, pre-filled with the answer hunt. The ask box
+        // never fires on arrival; the operator reads it first.
+        findHref: askHref(
+          `What did we answer when a buyer asked: "${p.question.slice(0, 200)}"`,
+        ),
+      })),
       askHref: askHref(scopedAsk(card.name, [...prods])),
       researchAt,
       stages: buildStageRail(card, data.labels),
