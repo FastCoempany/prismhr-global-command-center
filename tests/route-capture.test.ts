@@ -3,7 +3,7 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { domainOf, routeCapture } from "../src/lib/route-capture";
+import { domainOf, initialsOf, routeCapture } from "../src/lib/route-capture";
 
 const ROSTER = [
   {
@@ -78,6 +78,45 @@ test("two accounts in the same text refuse to auto-route", () => {
 test("empty text routes nothing", () => {
   const r = routeCapture("", ROSTER);
   assert.equal(r.best, null);
+});
+
+test("initials come from the raw name, suffixes and all", () => {
+  assert.equal(initialsOf("Employer Services Corporation"), "ESC");
+  assert.equal(initialsOf("Employer Pay-Care Services Inc."), "EPCSI");
+  assert.equal(initialsOf("Simploy, Inc."), ""); // two words — too collision-prone
+  assert.equal(initialsOf("Global Group"), "");
+});
+
+test("initials surface candidates but never auto-route", () => {
+  const ROSTER2 = [
+    { id: "ESC1", name: "Employer Services Corporation", emails: [], domains: [] },
+    { id: "ESC2", name: "Empower Services Corporation", emails: [], domains: [] },
+    { id: "OTHER", name: "Simploy, Inc.", emails: [], domains: ["simploy.com"] },
+  ];
+  const r = routeCapture(
+    "OUTLOOK THREAD — dropped file ESC_Re_ ESC.eml\nSubject: Re: ESC\n\nlicensing need",
+    ROSTER2,
+  );
+  assert.equal(r.best, null);
+  assert.equal(r.candidates.length, 2);
+  assert.ok(r.candidates.every((c) => /matches the initials/.test(c.why)));
+});
+
+test("a contact email still beats matching initials", () => {
+  const ROSTER3 = [
+    {
+      id: "ESC1",
+      name: "Employer Services Corporation",
+      emails: ["chumphrey@myesc.com"],
+      domains: ["myesc.com"],
+    },
+    { id: "ESC2", name: "Empower Services Corporation", emails: [], domains: [] },
+  ];
+  const r = routeCapture(
+    "From: chumphrey@myesc.com\nSubject: ESC licensing\n\nbody",
+    ROSTER3,
+  );
+  assert.equal(r.best?.id, "ESC1");
 });
 
 test("domainOf strips scheme and www", () => {
