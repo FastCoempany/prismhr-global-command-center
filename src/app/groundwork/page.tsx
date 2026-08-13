@@ -13,6 +13,7 @@ import { hasDatabaseEnv } from "@/lib/db";
 import { peos, getPeo } from "@/lib/book";
 import { contactCount, contactsFor } from "@/lib/book/contacts";
 import { dealIntelFor } from "@/lib/intel/extract";
+import { relationshipFor } from "@/lib/intel/relationship";
 import type { DealIntel } from "@/lib/intel/types";
 import { RESEARCH_NS } from "@/lib/intel/deep-research";
 import {
@@ -285,6 +286,11 @@ export default async function GroundworkPage({
           })),
           laneDate: ridingLaneDate(accountNotes.get(stageItem.accountId), now),
           research: researchByAccount.get(stageItem.accountId) ?? null,
+          relationship: relationshipFor(
+            notesMap.get(stageItem.accountId) ?? [],
+            contactsFor(stageItem.accountId),
+            { name: stageAccount.contactName, email: stageAccount.contactEmail },
+          ),
           now,
         })
       : null;

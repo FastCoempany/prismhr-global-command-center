@@ -38,6 +38,7 @@ import { partitionFollowUps, roundupDue } from "@/lib/today/follow-ups";
 import { splitAsk } from "@/lib/today/ledger";
 import { DASH_NODES } from "@/lib/dashboard/stages";
 import { corpusFor, extractDealIntel } from "@/lib/intel/extract";
+import { relationshipFor } from "@/lib/intel/relationship";
 import { digestFor, digestForCardName } from "@/lib/intel/digest";
 import { COUNTRY_NAME } from "@/lib/intel/lexicon";
 import { suggestChecks } from "@/lib/intel/evidence";
@@ -167,6 +168,13 @@ export default async function RoomPage() {
     const people = accountId ? peopleFor(allNotes, contactsFor(accountId), 6) : [];
     const multiTone = people.length >= 3 ? "g" : people.length === 2 ? "y" : "r";
 
+    // Who this deal runs through — the record's most-seen person outranks the
+    // book's seeded primary the moment real communication files.
+    const rel = relationshipFor(allNotes, accountId ? contactsFor(accountId) : [], {
+      name: peo?.contactName,
+      email: peo?.contactEmail,
+    });
+
     let briefed = false;
     for (const node of DASH_NODES) {
       node.checklist.forEach((item, i) => {
@@ -213,13 +221,13 @@ export default async function RoomPage() {
         ? {
             at: touch.contactedAt,
             awaitingReply: touch.status === "awaiting",
-            who: firstName(peo?.contactName ?? "") || "them",
+            who: firstName(rel.name) || "them",
           }
         : null,
       lastInbound: intel.lastInbound
         ? {
             at: intel.lastInbound,
-            who: firstName(peo?.contactName ?? "") || "they",
+            who: firstName(rel.name) || "they",
           }
         : null,
       lastRecordAt: allNotes[0]?.createdAt ?? "",
