@@ -87,7 +87,13 @@ The room keeps the lower deck (the wire · the institutions · State of play). G
 operator initiates today to build pipeline; reactive account motion (replies
 owed, decision windows, meeting prep) belongs to the HomeRoom. The accounts
 page's stores and the deep-research notes (`research:<account>`) are backbone
-inputs to the queue brain.
+inputs to the queue brain. The queue reads the board (2026-08-13): an account
+whose deal sits at demo or later, or carries a Closed Won/Lost stamp, leaves
+the queue entirely — Groundwork prospects the book it is NOT actively closing.
+One rule holds at most two leading slots (its overflow sinks below other
+rules), and the book-wide research stamp going stale is ONE move ("Run the
+research pass.") carried by the strongest above-gate account, never a wall of
+per-account clones.
 
 ## The Chute (decided 2026-08-11)
 

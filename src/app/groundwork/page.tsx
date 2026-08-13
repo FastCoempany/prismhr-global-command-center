@@ -24,6 +24,9 @@ import {
 import { clockShort, userDayKey } from "@/lib/tz";
 import { sfAccountUrl } from "@/lib/salesforce";
 import { buildQueue, heatOf, moveKey } from "@/lib/groundwork/day";
+import { loadDashboard } from "@/lib/dashboard/data";
+import { readOutcome } from "@/lib/dashboard/outcome";
+import { digestForCardName } from "@/lib/intel/digest";
 import { READOUT_READ_KEY, buildFile } from "@/lib/groundwork/file";
 import { proximityMark } from "@/lib/groundwork/proximity";
 import {
@@ -197,6 +200,28 @@ export default async function GroundworkPage({
   const researchAtById = new Map<string, string>();
   for (const [id, r] of researchByAccount) researchAtById.set(id, r.at);
 
+  // What the board already knows: a deal at demo or later is the HomeRoom's
+  // to work, and a stamped outcome is over. Groundwork prospects the book it
+  // is NOT actively closing — those accounts leave the queue entirely.
+  const excludedIds = new Set<string>();
+  const dash = await loadDashboard();
+  if (dash.status !== "unauthenticated" && dash.status !== "database-unavailable") {
+    const idByName = new Map(peos.map((p) => [p.name.toLowerCase(), p.id]));
+    const LATE = ["demo", "exec_summary", "proposal", "contract"] as const;
+    for (const card of dash.cards) {
+      if (card.archived) continue;
+      const id =
+        idByName.get(card.name.toLowerCase()) ??
+        digestForCardName(card.name)?.accountId ??
+        "";
+      if (!id) continue;
+      const late = LATE.some(
+        (k) => card.states[k] === "active" || card.states[k] === "done",
+      );
+      if (late || readOutcome(card.notes)) excludedIds.add(id);
+    }
+  }
+
   const { all: rankedAll } = buildQueue({
     accounts: peos,
     intelById,
@@ -206,6 +231,7 @@ export default async function GroundworkPage({
     wireAtById,
     researchAtById,
     doneKeys: new Set(doneTimes.keys()),
+    excludedIds,
     now,
   });
 
