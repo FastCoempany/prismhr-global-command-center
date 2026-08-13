@@ -344,6 +344,13 @@ export async function aiCleanTimeline(raw: string, now: Date): Promise<AiCleanRe
   const client = new Anthropic({ timeout: 55_000, maxRetries: 1 });
   const todayIso = now.toLocaleDateString("en-CA", { timeZone: "America/Chicago" });
   const model = modelFor(raw);
+  // A full call transcript is the richest capture the app ever reads, and the
+  // costliest to under-read: a live demo routinely leaves several promises on
+  // the table, and each one the read misses is a deliverable missed in the
+  // real world. Say so, explicitly, when the paste is a transcript.
+  const ctHunt = /^CALL TRANSCRIPT\b/.test(raw.trimStart())
+    ? `\n\nThis is a complete call transcript. Hunt every commitment made on the call: "I'll send", "we'll get you", "let me pull together", "I'll check with", a recap or follow-up owed, a question someone promises to answer later. Each is an action with its owner. A demo or discovery call routinely leaves three to six commitments; finding only one usually means some were missed — sweep the closing minutes especially, where owed items concentrate. Mine the whole call for gaps, competitor intel, and lessons too.`
+    : "";
   const request = (maxTokens: number) =>
     client.messages.create({
       model,
@@ -352,7 +359,7 @@ export async function aiCleanTimeline(raw: string, now: Date): Promise<AiCleanRe
       messages: [
         {
           role: "user",
-          content: `Today's date is ${todayIso} (America/Chicago).\n\nRaw paste:\n\n${raw}`,
+          content: `Today's date is ${todayIso} (America/Chicago).${ctHunt}\n\nRaw paste:\n\n${raw}`,
         },
       ],
       output_config: { format: { type: "json_schema", schema: SCHEMA } },
