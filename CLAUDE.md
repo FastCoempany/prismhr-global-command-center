@@ -123,6 +123,29 @@ the intranet mirror by construction). The pact: it stays there and only there;
 nothing routes, nothing files, nothing becomes an action. Money is redacted on
 write like everywhere else. Delete is per line and deliberate.
 
+## The Spring (triptych winner, decided 2026-08-13)
+
+The HomeRoom row's right panel runs on springs. Each register — UNKNOWN,
+COMPARABLE (only when peers exist), TODAY — rests as ONE summary line: mono
+kicker, live count, top entry trailing off, ⊕. Pressing ⊕ springs the register
+out in place; ⊖ or a sibling's ⊕ folds it back — one register out at a time
+per row. Filing or composing anything springs TODAY open so receipts never
+land behind a fold. Attendant decrees, permanent:
+
+- The court line is retired — the move already says who and when.
+- The per-row icon keybar is retired; ONE legend lives at the page foot.
+- Minimalist controls: "not this deal" is a hover-revealed ✕; "ask the brain"
+  is ⌕; "mint sharper asks" is ⟳; "find the answer" is →; all tooltip-titled,
+  never spelled out on the surface.
+- The research control is a dated mono chip (`RESEARCH 7/2 ⟳`) reading the
+  LATEST of both stores — the on-demand deep pass (research: notes) AND the
+  book-wide sweep. "NEVER" only when neither has touched the account.
+- Sheet lines are editable in place (✎ on hover): the visible text changes,
+  tags and routing markers survive verbatim (roomTodoEdit).
+- Concepts never ship; winners do. Triptychs are judged as downloadable
+  documents (interactive when mechanics matter) — production only ever
+  receives the decreed winner.
+
 ## Other standing decrees
 
 - The word "steps" never appears in operator-facing copy.

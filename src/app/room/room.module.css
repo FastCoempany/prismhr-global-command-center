@@ -1919,3 +1919,144 @@ button.sdRadio:hover {
   color: var(--color-ink-disabled);
   margin-top: 4px;
 }
+
+/* ── The Spring (triptych winner, 2026-08-13): registers rest as summary
+   lines; ⊕ springs one out in place; ⊖ or a sibling ⊕ folds it back. ── */
+.sumline {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--hair);
+  min-width: 0;
+}
+.sumOpen {
+  border-bottom: 0;
+  padding-top: 0;
+}
+.sumk {
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: var(--faint);
+  white-space: nowrap;
+}
+.sumkOn {
+  color: var(--ink);
+}
+.sumn {
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 9.5px;
+  color: var(--soft);
+  white-space: nowrap;
+}
+.sumtx {
+  font-size: 12.5px;
+  color: var(--soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+.splayBtn {
+  margin-left: auto;
+  border: 0;
+  background: none;
+  padding: 0 2px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--faint);
+  flex: none;
+}
+.splayBtn:hover {
+  color: var(--ink);
+}
+.sumline .splayBtn {
+  margin-left: 0;
+}
+.splayed {
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid var(--hair);
+  border-radius: 7px;
+  padding: 8px 11px;
+  margin: 4px 0 6px;
+  animation: springout 0.16s ease;
+}
+@keyframes springout {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.sic {
+  border: 0;
+  background: none;
+  padding: 0 2px;
+  cursor: pointer;
+  font-size: 11px;
+  color: var(--faint);
+  text-decoration: none;
+  flex: none;
+}
+.sic:hover {
+  color: var(--ink);
+}
+.askX {
+  border: 0;
+  background: none;
+  padding: 0 2px;
+  cursor: pointer;
+  font-size: 10px;
+  color: var(--quiet);
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.askRow:hover .askX {
+  opacity: 1;
+}
+.askX:hover {
+  color: var(--red);
+}
+.askGo {
+  font-size: 11px;
+  color: var(--faint);
+  text-decoration: none;
+  flex: none;
+}
+.askGo:hover {
+  color: var(--ink);
+}
+.rsrchChip {
+  border: 0;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--blue);
+  margin-top: 2px;
+  text-align: left;
+}
+.rsrchChip:hover {
+  text-decoration: underline;
+}
+.footLegend {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-top: 26px;
+  padding-top: 14px;
+  border-top: 1px solid var(--hair);
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: var(--faint);
+}

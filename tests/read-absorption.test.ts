@@ -651,8 +651,10 @@ describe("the room wires every new mechanism", () => {
     assert.ok(client.includes("The actions it opened stay"));
   });
   test("the research control states when it last ran", () => {
-    assert.ok(client.includes("last run"));
-    assert.ok(client.includes("never run"));
+    // The Spring's chip grammar (2026-08-13): a dated stamp, or NEVER when
+    // neither research store has touched the account.
+    assert.ok(client.includes("RESEARCH ${new Date(row.researchAt)"));
+    assert.ok(client.includes("RESEARCH — NEVER"));
   });
   test("a closed row can still be read, and retired separately", () => {
     assert.ok(client.includes("CLOSED WON"));

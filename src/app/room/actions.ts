@@ -1462,6 +1462,53 @@ export async function roomTodoSet(
   }
 }
 
+// ✎ on a sheet line: the operator rewrites the item's visible text in place.
+// Tags (urgency, k:a, delays) and the routing marker survive verbatim — the
+// edit touches only what the eye reads. Money redacts like everywhere else.
+export async function roomTodoEdit(
+  accountId: string,
+  todoId: string,
+  text: string,
+): Promise<{ ok: boolean; reason?: string }> {
+  const acct = bindAccountId(accountId, peos);
+  const id = typeof todoId === "string" ? todoId.trim().slice(0, 40) : "";
+  const next = typeof text === "string" ? redactMoney(text.trim()).slice(0, 500) : "";
+  if (!acct || !id) return { ok: false, reason: "Not a bound row." };
+  if (!next) return { ok: false, reason: "An empty line is a delete. Use ✕." };
+  if (!(await requireWrite())) return { ok: false, reason: "Read-only session." };
+  try {
+    const prisma = getPrisma();
+    const t = await prisma.todo.findUnique({ where: { id } });
+    if (!t) return { ok: false, reason: "That item is gone." };
+    let owned = (t.accountId ?? "") === acct.id;
+    if (!owned) {
+      const refs = splitMarker(t.body).refs;
+      if (refs?.accountNoteIds?.length) {
+        const hit = await prisma.accountNote.findFirst({
+          where: { id: { in: refs.accountNoteIds }, accountId: acct.id },
+          select: { id: true },
+        });
+        owned = !!hit;
+      }
+    }
+    if (!owned) return { ok: false, reason: "That item belongs to a different account." };
+    const marker = splitMarker(t.body);
+    const { tags } = splitTags(marker.text);
+    // Hand-typed grammar must never masquerade as real markers.
+    const clean = next
+      .replace(/[⟦⟧⟪⟫]|[⇢⚑]\s*\[/g, " ")
+      .replace(/[ \t]+/g, " ")
+      .trim();
+    let body = withTags(clean, tags);
+    if (marker.refs) body = withMarker(body, marker.refs, marker.label);
+    await prisma.todo.update({ where: { id }, data: { body } });
+    refresh();
+    return { ok: true };
+  } catch {
+    return { ok: false, reason: "The edit didn't save." };
+  }
+}
+
 // The PDF transcriber — Claude reads the document to paste text the room's
 // readers understand. An email thread comes back headed OUTLOOK THREAD, a
 // chat as TEAMS THREAD, anything else as a plain transcript. The bytes never
