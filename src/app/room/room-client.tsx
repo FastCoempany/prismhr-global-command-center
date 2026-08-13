@@ -230,9 +230,22 @@ function Row({ row }: { row: RoomRow }) {
   // dress the Mark-it-done button in "Saving…".
   const [closePending, startClose] = useTransition();
 
+  // The box decides (founder-decreed 2026-08-13): a jot stays an instant
+  // note, but anything that reads like a capture — a pasted thread, meeting
+  // notes, a multi-line summary — goes through the full read, so its
+  // commitments, asks, and playbook intel fan out instead of dying as one
+  // dumb note. Explicit Action mode always files the action verbatim.
+  const readsRich = (t: string): boolean => {
+    if (sniffPaste(t).kind !== "note") return true;
+    return t.length >= 280 || t.split("\n").filter((l) => l.trim()).length >= 3;
+  };
   const submitCompose = () => {
     const text = logText.trim();
     if (!text || pending) return;
+    if (mode === "note" && readsRich(text)) {
+      filePaste(text, false);
+      return;
+    }
     start(async () => {
       const r = await roomCompose(row.accountId, text, { kind: mode, urgency: urg });
       if (r.ok && r.kind) {
@@ -332,6 +345,7 @@ function Row({ row }: { row: RoomRow }) {
           ...f,
         ]);
         setPasteText("");
+        setLogText("");
         setPasteOpen(false);
         setMismatch(null);
         setNote(null);
@@ -1335,19 +1349,30 @@ function Row({ row }: { row: RoomRow }) {
                 anywhere on the Drop
               </span>
             </div>
-            <textarea
-              className={styles.logta}
-              value={logText}
-              onChange={(e) => setLogText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  submitCompose();
-                }
-              }}
-              placeholder="Type the second it happens: call notes, Teams pastes, stray thoughts…"
-              aria-label={`Log to ${row.name}`}
-            />
+            {/* One box at a time: the composer steps aside while the ⚡ pane
+                is open, and comes back on Cancel. */}
+            {!pasteOpen && (
+              <>
+                <textarea
+                  className={styles.logta}
+                  value={logText}
+                  onChange={(e) => setLogText(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      submitCompose();
+                    }
+                  }}
+                  placeholder="Type the second it happens: call notes, Teams pastes, stray thoughts…"
+                  aria-label={`Log to ${row.name}`}
+                />
+                {mode === "note" && readsRich(logText.trim()) && (
+                  <span className={styles.sniff}>
+                    Reads as {sniffPaste(logText).label}. Enter runs the full read.
+                  </span>
+                )}
+              </>
+            )}
             {pasteOpen && (
               <div className={styles.pastepane}>
                 <textarea

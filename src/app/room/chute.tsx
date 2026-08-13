@@ -33,6 +33,8 @@ type ChuteItem = {
   candidates?: RouteHit[];
   filed?: number;
   opened?: number;
+  asks?: number; // questions the read queued for the record
+  learned?: number; // facts and lessons the read filed to the playbook
   reason?: string;
   claim?: string; // the read's own account name, on a mismatch
   batch?: number; // files thrown together — one drop, one batch
@@ -88,6 +90,8 @@ function saveLedger(items: ChuteItem[]) {
       why: x.why,
       filed: x.filed,
       opened: x.opened,
+      asks: x.asks,
+      learned: x.learned,
       reason: x.reason,
       claim: x.claim,
       batch: x.batch,
@@ -145,6 +149,8 @@ export function Chute({
         state: "filed",
         filed: r.filed,
         opened: (r.opened ?? []).length,
+        asks: r.asks,
+        learned: r.learned,
         archived: r.archived,
         noteIds: r.noteIds,
       });
@@ -266,7 +272,13 @@ export function Chute({
                 <span className={styles.chuteDone}>
                   ✓ {it.account.name} · {it.filed} filed
                   {it.archived ? " · transcript on file" : ""}
-                  {(it.opened ?? 0) > 0 ? ` · ${it.opened} actions opened` : ""}
+                  {(it.opened ?? 0) > 0
+                    ? ` · ${it.opened} action${it.opened === 1 ? "" : "s"} opened`
+                    : ""}
+                  {(it.asks ?? 0) > 0
+                    ? ` · ${it.asks} ask${it.asks === 1 ? "" : "s"} queued`
+                    : ""}
+                  {(it.learned ?? 0) > 0 ? ` · ${it.learned} to the playbook` : ""}
                   {it.why ? ` · ${it.why}` : ""}
                   {(it.noteIds?.length ?? 0) > 0 && (
                     <button

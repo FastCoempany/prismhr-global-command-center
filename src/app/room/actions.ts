@@ -106,21 +106,26 @@ export async function roomLog(
 // The filed-capture marker: key carries the fingerprint, reason carries the
 // filing moment and the first note id (so an undo can find and clear it).
 async function stampPasteMark(pasteKey: string, firstNoteId: string) {
-  try {
-    await getPrisma().accountDisposition.upsert({
-      where: { accountId: pasteKey },
-      create: {
-        accountId: pasteKey,
-        status: "filed",
-        reason: `${new Date().toISOString()}·${firstNoteId}`,
-      },
-      update: {
-        status: "filed",
-        reason: `${new Date().toISOString()}·${firstNoteId}`,
-      },
-    });
-  } catch {
-    // the marker is a guard, never a gate — filing already succeeded
+  const reason = `${new Date().toISOString()}·${firstNoteId}`;
+  // Verify after write: a marker that silently fails to land lets the same
+  // capture file twice (it happened — 2026-08-13). Two attempts, each read
+  // back; still fail-open after that, because the marker is a guard, never
+  // a gate — the filing already succeeded.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      await getPrisma().accountDisposition.upsert({
+        where: { accountId: pasteKey },
+        create: { accountId: pasteKey, status: "filed", reason },
+        update: { status: "filed", reason },
+      });
+      const check = await getPrisma().accountDisposition.findUnique({
+        where: { accountId: pasteKey },
+        select: { status: true },
+      });
+      if (check?.status === "filed") return;
+    } catch {
+      // retry once, then let it go
+    }
   }
 }
 
