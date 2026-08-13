@@ -113,6 +113,10 @@ export function Chute({
 }) {
   const [items, setItems] = useState<ChuteItem[]>([]);
   const [hot, setHot] = useState(false);
+  // The ledger folds: the meter line says what is running, anything waiting
+  // on the operator's pick stays visible, and at most two other rows show —
+  // the page belongs to the opportunities, not the receipts.
+  const [ledgerOpen, setLedgerOpen] = useState(false);
   const seq = useRef(0);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const byName = [...roster].sort((a, b) => a.name.localeCompare(b.name));
@@ -202,6 +206,130 @@ export function Chute({
     return top ? { id: top.id, name: top.name } : null;
   };
 
+  // One receipt row — shared by the folded view and the open ledger.
+  const renderItem = (it: ChuteItem) => (
+    <li key={it.key} className={styles.chuteItem}>
+      <span className={styles.chuteFile}>{it.filename}</span>
+      {it.state === "reading" && <span>Reading…</span>}
+      {it.state === "filing" && it.account && (
+        <span>
+          Filing to {it.account.name}… {it.why ? `(${it.why})` : ""}
+        </span>
+      )}
+      {it.state === "filed" && it.account && (
+        <span className={styles.chuteDone}>
+          ✓ {it.account.name} · {it.filed} filed
+          {it.archived ? " · transcript on file" : ""}
+          {(it.opened ?? 0) > 0
+            ? ` · ${it.opened} action${it.opened === 1 ? "" : "s"} opened`
+            : ""}
+          {(it.asks ?? 0) > 0
+            ? ` · ${it.asks} ask${it.asks === 1 ? "" : "s"} queued`
+            : ""}
+          {(it.learned ?? 0) > 0 ? ` · ${it.learned} to the playbook` : ""}
+          {it.why ? ` · ${it.why}` : ""}
+          {(it.noteIds?.length ?? 0) > 0 && (
+            <button
+              type="button"
+              className={styles.chuteUndo}
+              title="Wrong account? Removes this filing's record entries."
+              onClick={() => {
+                const acct = it.account;
+                const ids = it.noteIds;
+                if (!acct || !ids?.length) return;
+                void roomPasteUndo(acct.id, ids).then((r) => {
+                  if (r.ok)
+                    patch(it.key, {
+                      state: "undone",
+                      reason: `Taken back from ${acct.name}. ${r.removed} removed.`,
+                    });
+                });
+              }}
+            >
+              ↩ undo
+            </button>
+          )}
+        </span>
+      )}
+      {it.state === "undone" && <span className={styles.chuteDupe}>{it.reason}</span>}
+      {it.state === "error" && <span className={styles.chuteErr}>{it.reason}</span>}
+      {it.state === "dupe" && <span className={styles.chuteDupe}>{it.reason}</span>}
+      {it.state === "interrupted" && (
+        <span className={styles.chuteWarn}>{it.reason}</span>
+      )}
+      {(it.state === "pick" || it.state === "mismatch") && !it.text && (
+        <span className={styles.chuteWarn}>
+          The pick did not survive. Drop the file again.
+        </span>
+      )}
+      {(it.state === "pick" || it.state === "mismatch") && it.text && (
+        <span className={styles.chutePick}>
+          {it.state === "mismatch" ? (
+            <span className={styles.chuteErr}>
+              Reads like {it.claim || "another account"}. Pick the account.
+            </span>
+          ) : (
+            <span>No sure match. Pick the account.</span>
+          )}
+          {(() => {
+            const mate = it.state === "pick" ? batchMate(it) : null;
+            return (
+              mate && (
+                <button
+                  type="button"
+                  className={styles.chuteBtn}
+                  title="The rest of this drop filed there."
+                  onClick={() => {
+                    if (it.text)
+                      void fileTo(
+                        it.key,
+                        it.text,
+                        mate,
+                        "the rest of this drop went there",
+                        true,
+                      );
+                  }}
+                >
+                  File to {mate.name}
+                </button>
+              )
+            );
+          })()}
+          <select
+            className={styles.chuteSel}
+            defaultValue=""
+            onChange={(e) => {
+              const id = e.target.value;
+              const a = roster.find((x) => x.id === id);
+              if (a && it.text)
+                void fileTo(
+                  it.key,
+                  it.text,
+                  { id: a.id, name: a.name },
+                  "your call",
+                  true,
+                );
+            }}
+          >
+            <option value="" disabled>
+              Pick the account…
+            </option>
+            {(it.candidates ?? []).map((c) => (
+              <option key={`c${c.id}`} value={c.id}>
+                {c.name} · {c.why}
+              </option>
+            ))}
+            {byName.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.name}
+              </option>
+            ))}
+          </select>
+        </span>
+      )}
+    </li>
+  );
+
   if (!canWrite) return null;
 
   return (
@@ -257,147 +385,68 @@ export function Chute({
         next sync.
       </p>
 
-      {items.length > 0 && (
-        <ul className={styles.chuteList}>
-          {items.map((it) => (
-            <li key={it.key} className={styles.chuteItem}>
-              <span className={styles.chuteFile}>{it.filename}</span>
-              {it.state === "reading" && <span>Reading…</span>}
-              {it.state === "filing" && it.account && (
-                <span>
-                  Filing to {it.account.name}… {it.why ? `(${it.why})` : ""}
-                </span>
-              )}
-              {it.state === "filed" && it.account && (
-                <span className={styles.chuteDone}>
-                  ✓ {it.account.name} · {it.filed} filed
-                  {it.archived ? " · transcript on file" : ""}
-                  {(it.opened ?? 0) > 0
-                    ? ` · ${it.opened} action${it.opened === 1 ? "" : "s"} opened`
-                    : ""}
-                  {(it.asks ?? 0) > 0
-                    ? ` · ${it.asks} ask${it.asks === 1 ? "" : "s"} queued`
-                    : ""}
-                  {(it.learned ?? 0) > 0 ? ` · ${it.learned} to the playbook` : ""}
-                  {it.why ? ` · ${it.why}` : ""}
-                  {(it.noteIds?.length ?? 0) > 0 && (
+      {items.length > 0 &&
+        (() => {
+          const running = items.filter(
+            (x) => x.state === "reading" || x.state === "filing",
+          );
+          const waiting = items.filter(
+            (x) => x.state === "pick" || x.state === "mismatch",
+          );
+          const meter = [
+            running.length > 0 ? `${running.length} running` : "",
+            waiting.length > 0
+              ? `${waiting.length} need${waiting.length === 1 ? "s" : ""} your pick`
+              : "",
+            `${items.length - running.length - waiting.length} settled today`,
+          ]
+            .filter(Boolean)
+            .join(" · ");
+          // Folded: everything waiting on the operator, then the freshest two
+          // of the rest. items is newest-first; keep that order.
+          const visible = new Set<number>(waiting.map((x) => x.key));
+          if (!ledgerOpen) {
+            let extra = 0;
+            for (const x of items) {
+              if (visible.has(x.key)) continue;
+              if (extra >= 2) break;
+              visible.add(x.key);
+              extra++;
+            }
+          }
+          const shown = ledgerOpen ? items : items.filter((x) => visible.has(x.key));
+          const hidden = items.length - shown.length;
+          return (
+            <>
+              <div className={styles.chuteMeter}>
+                <span className={styles.chuteMeterLine}>{meter}</span>
+                {(hidden > 0 || ledgerOpen) && (
+                  <button
+                    type="button"
+                    className={styles.chuteFold}
+                    onClick={() => setLedgerOpen((v) => !v)}
+                  >
+                    {ledgerOpen ? "Fold the ledger" : `Open the ledger · ${items.length}`}
+                  </button>
+                )}
+              </div>
+              <ul className={styles.chuteList}>
+                {shown.map(renderItem)}
+                {ledgerOpen && (
+                  <li>
                     <button
                       type="button"
-                      className={styles.chuteUndo}
-                      title="Wrong account? Removes this filing's record entries."
-                      onClick={() => {
-                        const acct = it.account;
-                        const ids = it.noteIds;
-                        if (!acct || !ids?.length) return;
-                        void roomPasteUndo(acct.id, ids).then((r) => {
-                          if (r.ok)
-                            patch(it.key, {
-                              state: "undone",
-                              reason: `Taken back from ${acct.name}. ${r.removed} removed.`,
-                            });
-                        });
-                      }}
+                      className={styles.chuteClear}
+                      onClick={() => setItems([])}
                     >
-                      ↩ undo
+                      Clear the receipts
                     </button>
-                  )}
-                </span>
-              )}
-              {it.state === "undone" && (
-                <span className={styles.chuteDupe}>{it.reason}</span>
-              )}
-              {it.state === "error" && (
-                <span className={styles.chuteErr}>{it.reason}</span>
-              )}
-              {it.state === "dupe" && (
-                <span className={styles.chuteDupe}>{it.reason}</span>
-              )}
-              {it.state === "interrupted" && (
-                <span className={styles.chuteWarn}>{it.reason}</span>
-              )}
-              {(it.state === "pick" || it.state === "mismatch") && !it.text && (
-                <span className={styles.chuteWarn}>
-                  The pick did not survive. Drop the file again.
-                </span>
-              )}
-              {(it.state === "pick" || it.state === "mismatch") && it.text && (
-                <span className={styles.chutePick}>
-                  {it.state === "mismatch" ? (
-                    <span className={styles.chuteErr}>
-                      Reads like {it.claim || "another account"}. Pick the account.
-                    </span>
-                  ) : (
-                    <span>No sure match. Pick the account.</span>
-                  )}
-                  {(() => {
-                    const mate = it.state === "pick" ? batchMate(it) : null;
-                    return (
-                      mate && (
-                        <button
-                          type="button"
-                          className={styles.chuteBtn}
-                          title="The rest of this drop filed there."
-                          onClick={() => {
-                            if (it.text)
-                              void fileTo(
-                                it.key,
-                                it.text,
-                                mate,
-                                "the rest of this drop went there",
-                                true,
-                              );
-                          }}
-                        >
-                          File to {mate.name}
-                        </button>
-                      )
-                    );
-                  })()}
-                  <select
-                    className={styles.chuteSel}
-                    defaultValue=""
-                    onChange={(e) => {
-                      const id = e.target.value;
-                      const a = roster.find((x) => x.id === id);
-                      if (a && it.text)
-                        void fileTo(
-                          it.key,
-                          it.text,
-                          { id: a.id, name: a.name },
-                          "your call",
-                          true,
-                        );
-                    }}
-                  >
-                    <option value="" disabled>
-                      Pick the account…
-                    </option>
-                    {(it.candidates ?? []).map((c) => (
-                      <option key={`c${c.id}`} value={c.id}>
-                        {c.name} · {c.why}
-                      </option>
-                    ))}
-                    {byName.map((a) => (
-                      <option key={a.id} value={a.id}>
-                        {a.name}
-                      </option>
-                    ))}
-                  </select>
-                </span>
-              )}
-            </li>
-          ))}
-          <li>
-            <button
-              type="button"
-              className={styles.chuteClear}
-              onClick={() => setItems([])}
-            >
-              Clear the receipts
-            </button>
-          </li>
-        </ul>
-      )}
+                  </li>
+                )}
+              </ul>
+            </>
+          );
+        })()}
     </section>
   );
 }

@@ -1798,6 +1798,35 @@ button.sdRadio:hover {
   color: var(--soft);
   font-weight: 600;
 }
+.chuteMeter {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-top: 8px;
+}
+.chuteMeterLine {
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--quiet);
+}
+.chuteFold {
+  border: 0;
+  background: none;
+  padding: 2px 0;
+  cursor: pointer;
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.chuteFold:hover {
+  color: var(--ink);
+}
 .chuteList {
   list-style: none;
   margin: 8px 0 0;

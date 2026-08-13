@@ -29,7 +29,7 @@ export type FileModel = {
   people: FilePerson[];
   singleThread: boolean;
   threadCount: number; // known people carrying the conversation (MULTI ladder)
-  contactEmail: string; // the book primary's email, for a truly addressed mailto
+  contactEmail: string; // the relationship's email, for a truly addressed mailto
   russ: string; // the To-Russ pull tab paragraph (shared builder)
   history: FileHistoryLine[]; // oldest → newest, capped
 };
@@ -68,11 +68,22 @@ export function buildFile(
     contacts: ContactLike[]; // roster (may be huge; we take the head)
     laneDate?: string | null;
     research?: { at: string; line: string } | null; // newest deep-research note
+    // The relationship read, when the caller derived one from the record —
+    // it outranks the book primary in the people head and the compose.
+    relationship?: { name: string; email: string; source: "record" | "book" } | null;
     now: Date;
   },
 ): FileModel {
   const { queueItem, intel, intent, notes, touches, wire, contacts, laneDate, research } =
     deps;
+  const rel =
+    deps.relationship && deps.relationship.name
+      ? deps.relationship
+      : {
+          name: p.contactName ?? "",
+          email: p.contactEmail ?? "",
+          source: "book" as const,
+        };
 
   // Sources line — provenance, computed (spec F1): it lists only stores that
   // actually contributed, labeled as what they are.
@@ -123,12 +134,16 @@ export function buildFile(
     );
   }
 
-  // People — roster head + the partner manager, single-thread flag from intel.
+  // People — the relationship first, then the roster head + partner manager.
   const people: FilePerson[] = [];
-  if (p.contactName)
-    people.push({ name: p.contactName, title: "book primary", flag: "contact" });
+  if (rel.name)
+    people.push({
+      name: rel.name,
+      title: rel.source === "record" ? "the relationship" : "book primary",
+      flag: "contact",
+    });
   for (const c of contacts.slice(0, 3)) {
-    if (c.name && c.name !== p.contactName)
+    if (c.name && c.name !== rel.name)
       people.push({ name: c.name, title: c.title ?? "", flag: "" });
   }
   if (p.csm && p.csm !== "Unassigned")
@@ -153,7 +168,7 @@ export function buildFile(
     account: p,
     intel,
     intent,
-    contactName: p.contactName,
+    contactName: rel.name,
     laneDate,
     wireHeadline: wireMatches[0]?.headline ?? null,
   });
@@ -179,7 +194,7 @@ export function buildFile(
     people,
     singleThread,
     threadCount,
-    contactEmail: p.contactEmail ?? "",
+    contactEmail: rel.email || (p.contactEmail ?? ""),
     russ: paragraphFor(p, { intel, intent, queueItem }),
     history: hist.slice(-HISTORY_CAP),
   };
