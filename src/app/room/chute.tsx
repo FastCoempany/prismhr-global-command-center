@@ -12,6 +12,7 @@ import { useEffect, useRef, useState } from "react";
 import { chuteReadPdf, roomPaste, roomPasteUndo } from "./actions";
 import { readFileToText } from "./read-file";
 import { routeCapture, type RouteAccount, type RouteHit } from "@/lib/route-capture";
+import { chicagoDayOf } from "@/lib/room/fold";
 import styles from "./room.module.css";
 
 type ChuteItem = {
@@ -49,9 +50,9 @@ type ChuteItem = {
 // forgets what was thrown at it.
 const LEDGER_KEY = "chute-ledger-v1";
 const LEDGER_CAP = 40;
+const PACT_KEY = "chute-pact-seen";
 
-const chicagoDay = (): string =>
-  new Date().toLocaleDateString("en-CA", { timeZone: "America/Chicago" });
+const chicagoDay = (): string => chicagoDayOf();
 
 type StoredItem = Omit<ChuteItem, "text" | "candidates">;
 
@@ -114,9 +115,21 @@ export function Chute({
   const [items, setItems] = useState<ChuteItem[]>([]);
   const [hot, setHot] = useState(false);
   // The ledger folds: the meter line says what is running, anything waiting
-  // on the operator's pick stays visible, and at most two other rows show —
-  // the page belongs to the opportunities, not the receipts.
+  // on the operator stays visible, and at most two other rows show — the
+  // page belongs to the opportunities, not the receipts.
   const [ledgerOpen, setLedgerOpen] = useState(false);
+  // The pact opens on the first-ever visit and stays folded once read.
+  const [pactOpen, setPactOpen] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => {
+      try {
+        setPactOpen(!localStorage.getItem(PACT_KEY));
+      } catch {
+        // storage blocked — the pact stays folded
+      }
+    }, 0);
+    return () => clearTimeout(t);
+  }, []);
   const seq = useRef(0);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const byName = [...roster].sort((a, b) => a.name.localeCompare(b.name));
@@ -371,40 +384,73 @@ export function Chute({
         />
       </div>
 
-      <p className={styles.chutePact}>
-        <b>The pact:</b> Emails, call transcripts (.vtt), and text read free in your
-        browser; PDFs read through Claude. Every file routes by the book — contact email,
-        then company domain, then account name — and files like a paste: with the API key
-        on, Claude splits the thread into dated entries, opens the commitments it finds,
-        queues the unknowns as asks, files competitor intel and lessons to the Playbook,
-        detects Closed Won or Lost, and flags a file that reads like the wrong account;
-        without the key the record still files by rules. Nothing files blind — no sure
-        match waits for your pick — nothing files twice — a re-drop of something already
-        on file is refused — receipts survive a reload, and HomeRoom, Groundwork,
-        Accounts, and Today re-read the record at once, the Intranet mirroring it on its
-        next sync.
-      </p>
+      <button
+        type="button"
+        className={styles.chuteFold}
+        onClick={() => {
+          setPactOpen((v) => {
+            try {
+              localStorage.setItem(PACT_KEY, "seen");
+            } catch {
+              // storage blocked — the pact just reopens next visit
+            }
+            return !v;
+          });
+        }}
+      >
+        the pact {pactOpen ? "▴" : "▸"}
+      </button>
+      {pactOpen && (
+        <p className={styles.chutePact}>
+          <b>The pact:</b> Emails, call transcripts (.vtt), and text read free in your
+          browser; PDFs read through Claude. Every file routes by the book — contact
+          email, then company domain, then account name — and files like a paste: with the
+          API key on, Claude splits the thread into dated entries, opens the commitments
+          it finds, queues the unknowns as asks, files competitor intel and lessons to the
+          Playbook, detects Closed Won or Lost, and flags a file that reads like the wrong
+          account; without the key the record still files by rules. Nothing files blind —
+          no sure match waits for your pick — nothing files twice — a re-drop of something
+          already on file is refused — receipts survive a reload, and HomeRoom,
+          Groundwork, Accounts, and Today re-read the record at once, the Intranet
+          mirroring it on its next sync.
+        </p>
+      )}
 
       {items.length > 0 &&
         (() => {
-          const running = items.filter(
+          // Progress is text, never fill. The never-fold whitelist keys on
+          // state, never recency — a file waiting on the operator, an error,
+          // an interruption, or a refused duplicate can never hide.
+          const reading = items.filter(
             (x) => x.state === "reading" || x.state === "filing",
-          );
-          const waiting = items.filter(
-            (x) => x.state === "pick" || x.state === "mismatch",
-          );
-          const meter = [
-            running.length > 0 ? `${running.length} running` : "",
-            waiting.length > 0
-              ? `${waiting.length} need${waiting.length === 1 ? "s" : ""} your pick`
-              : "",
-            `${items.length - running.length - waiting.length} settled today`,
-          ]
+          ).length;
+          const filed = items.filter((x) => x.state === "filed").length;
+          const picks = items.filter((x) => x.state === "pick" || x.state === "mismatch");
+          const NEVER_FOLD = new Set([
+            "pick",
+            "mismatch",
+            "error",
+            "interrupted",
+            "dupe",
+          ]);
+          const meter = [reading > 0 ? `${reading} reading` : "", `${filed} filed`]
             .filter(Boolean)
             .join(" · ");
-          // Folded: everything waiting on the operator, then the freshest two
-          // of the rest. items is newest-first; keep that order.
-          const visible = new Set<number>(waiting.map((x) => x.key));
+          // One batch, one door: when every waiting pick's batch-mates filed
+          // to the same account, resolve them all in one press.
+          const mates = picks
+            .filter((x) => x.state === "pick" && x.text)
+            .map((x) => ({ it: x, mate: batchMate(x) }))
+            .filter((m) => m.mate != null);
+          const oneMate =
+            mates.length > 1 && mates.every((m) => m.mate!.id === mates[0].mate!.id)
+              ? mates[0].mate!
+              : null;
+          // Folded: the whitelist, then the freshest two of the rest.
+          // items is newest-first; keep that order.
+          const visible = new Set<number>(
+            items.filter((x) => NEVER_FOLD.has(x.state)).map((x) => x.key),
+          );
           if (!ledgerOpen) {
             let extra = 0;
             for (const x of items) {
@@ -420,16 +466,43 @@ export function Chute({
             <>
               <div className={styles.chuteMeter}>
                 <span className={styles.chuteMeterLine}>{meter}</span>
+                {picks.length > 0 && (
+                  <span className={styles.chuteNeedYou}>
+                    {picks.length === 1
+                      ? "Pick this file's account."
+                      : `Pick accounts for ${picks.length} files.`}
+                  </span>
+                )}
                 {(hidden > 0 || ledgerOpen) && (
                   <button
                     type="button"
                     className={styles.chuteFold}
                     onClick={() => setLedgerOpen((v) => !v)}
                   >
-                    {ledgerOpen ? "Fold the ledger" : `Open the ledger · ${items.length}`}
+                    {ledgerOpen ? "Fold the receipts ▴" : `${filed} FILED ▸`}
                   </button>
                 )}
               </div>
+              {oneMate && (
+                <button
+                  type="button"
+                  className={styles.chuteBtn}
+                  title="Every unsure file's batch-mates filed there."
+                  onClick={() => {
+                    for (const m of mates)
+                      if (m.it.text)
+                        void fileTo(
+                          m.it.key,
+                          m.it.text,
+                          m.mate!,
+                          "the rest of this drop went there",
+                          true,
+                        );
+                  }}
+                >
+                  File all {mates.length} to {oneMate.name} ✓
+                </button>
+              )}
               <ul className={styles.chuteList}>
                 {shown.map(renderItem)}
                 {ledgerOpen && (

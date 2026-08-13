@@ -1812,6 +1812,14 @@ button.sdRadio:hover {
   text-transform: uppercase;
   color: var(--quiet);
 }
+.chuteNeedYou {
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #8a5a00;
+}
 .chuteFold {
   border: 0;
   background: none;
@@ -1918,4 +1926,362 @@ button.sdRadio:hover {
   text-transform: uppercase;
   color: var(--color-ink-disabled);
   margin-top: 4px;
+}
+
+/* ── The triptych (2026-08-13): three collapsed faces over one wall. ── */
+
+/* The face tabs — thin and inconspicuous, quiet ink, color on press. */
+.faceTabs {
+  display: inline-flex;
+  gap: 10px;
+  margin-left: auto;
+  margin-right: 14px;
+}
+.faceTab {
+  border: 0;
+  background: none;
+  padding: 2px 0;
+  cursor: pointer;
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--quiet);
+}
+.faceTab:hover {
+  color: var(--soft);
+}
+.faceTabOn {
+  color: var(--ink);
+  border-bottom: 1px solid var(--ink);
+}
+
+/* ── The Register: one ledger line per deal. ── */
+.entry + .entry {
+  border-top: 1px solid var(--hair);
+}
+.line {
+  display: grid;
+  grid-template-columns: 14px minmax(200px, 0.9fr) 132px minmax(0, 1.7fr) 148px 18px;
+  gap: 0 14px;
+  align-items: center;
+  min-height: 42px;
+  cursor: pointer;
+}
+.lineOpen {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  background: var(--field);
+  border-bottom: 1px solid var(--hair);
+}
+.tick {
+  width: 8px;
+  height: 8px;
+  justify-self: center;
+}
+.tick_green {
+  background: var(--green);
+}
+.tick_amber {
+  background: var(--amber);
+}
+.tick_red {
+  background: var(--red);
+}
+.tick_quiet {
+  border: 1px solid var(--quiet);
+}
+.lineNm {
+  font-family: var(--f-serif), Georgia, serif;
+  font-size: 16px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.miniMeter {
+  display: block;
+}
+.miniTrack {
+  display: block;
+  position: relative;
+  height: 6px;
+  background: var(--hair);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.miniGain {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--forest), var(--forest2));
+  border-radius: 3px;
+}
+.lineMove {
+  font-size: 13.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.lineLead {
+  border-left: 3px solid var(--orange);
+  padding-left: 8px;
+  font-weight: 700;
+}
+.lineThin {
+  font-weight: 400;
+  color: var(--soft);
+}
+.stampWon,
+.stampLost {
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+.stampWon {
+  color: var(--green);
+}
+.stampLost {
+  color: var(--red);
+}
+.lineCounts {
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  align-items: baseline;
+}
+.lineCourtTag {
+  color: var(--faint);
+  font-weight: 700;
+}
+.cntAct {
+  color: var(--ink);
+  font-weight: 700;
+}
+.cntOwed {
+  color: #8a5a00;
+  font-weight: 700;
+}
+.cntDly {
+  color: #8a5a00;
+}
+.cntDone {
+  color: var(--green);
+}
+.cntNil {
+  color: var(--quiet);
+}
+.lineCaret {
+  border: 0;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  font-size: 10px;
+  color: var(--faint);
+}
+.lineCaret:hover {
+  color: var(--ink);
+}
+.entry .row {
+  padding-top: 6px;
+}
+@media (max-width: 880px) {
+  .line {
+    grid-template-columns: 14px minmax(0, 1fr) 148px 18px;
+  }
+  .miniMeter {
+    display: none;
+  }
+  .cntDly,
+  .cntDone {
+    display: none;
+  }
+}
+
+/* ── The Marquee: headline over count handles; one pane per board. ── */
+.mqRow {
+  padding: 10px 0;
+}
+.mqRow + .mqRow {
+  border-top: 1px solid var(--hair);
+}
+.mqMove {
+  margin: 2px 0 0;
+  font-size: 16.5px;
+}
+.mqStrip {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  margin-top: 6px;
+}
+.mqHandle {
+  border: 0;
+  background: none;
+  padding: 2px 0;
+  cursor: pointer;
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  font-variant-numeric: tabular-nums;
+  color: var(--faint);
+}
+.mqHandle:hover {
+  color: var(--ink);
+}
+.mqInk {
+  color: var(--ink);
+}
+.mqRed {
+  color: var(--red);
+}
+.mqOn {
+  color: var(--ink);
+  border-bottom: 1px solid var(--ink);
+}
+.mqDone {
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--quiet);
+  text-decoration: line-through;
+}
+.mqSpacer {
+  flex: 1;
+}
+.mqCourt {
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  color: var(--faint);
+}
+.mqPane {
+  margin-top: 10px;
+}
+
+/* ── The Jamb: the workbench card with its door rail. ── */
+.jbRow {
+  display: grid;
+  grid-template-columns: 3px minmax(0, 1fr) 96px;
+  column-gap: 14px;
+  padding: 10px 0;
+}
+.jbRow + .jbRow {
+  border-top: 1px solid var(--hair);
+}
+.jbEdge {
+  border-radius: 2px;
+  background: var(--hair);
+}
+.edge_green {
+  background: var(--green);
+}
+.edge_amber {
+  background: var(--amber);
+}
+.edge_red {
+  background: var(--red);
+}
+.edge_quiet {
+  background: var(--hair);
+}
+.jbBody {
+  min-width: 0;
+}
+.jbMove {
+  margin: 2px 0 0;
+  font-size: 16.5px;
+}
+.jbSub {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  margin-top: 3px;
+}
+.jbMeta {
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  color: var(--faint);
+}
+.jbCourt {
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  color: var(--faint);
+  margin-left: auto;
+}
+.jbPane {
+  margin-top: 10px;
+}
+.jbRail {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: stretch;
+  padding-top: 4px;
+}
+.jbTab {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  border: 0;
+  border-left: 1px solid var(--hair);
+  background: none;
+  padding: 1px 0 1px 8px;
+  cursor: pointer;
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--faint);
+  text-align: left;
+}
+.jbTab:hover {
+  color: var(--ink);
+}
+.jbTabOn {
+  color: var(--ink);
+  border-left-color: var(--ink);
+}
+.jbTabNil {
+  color: var(--quiet);
+}
+.jbTabRed {
+  color: var(--red);
+}
+.jbN {
+  font-variant-numeric: tabular-nums;
+  font-weight: 400;
+}
+@media (max-width: 880px) {
+  .jbRow {
+    grid-template-columns: 3px minmax(0, 1fr);
+  }
+  .jbRail {
+    display: none;
+  }
+}
+
+/* Shared pane furniture. */
+.paneFold {
+  border: 0;
+  background: none;
+  padding: 4px 0 0;
+  cursor: pointer;
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--faint);
+  text-transform: uppercase;
+}
+.paneFold:hover {
+  color: var(--ink);
 }
