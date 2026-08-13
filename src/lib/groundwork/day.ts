@@ -72,8 +72,17 @@ export type QueueInput = {
   wireAtById?: Map<string, string>; // newest matched wire item per account, ISO
   researchAtById?: Map<string, string>; // newest deep-research note per account, ISO
   doneKeys?: Set<string>; // raw done-stamp keys, for the carryover read
+  // Accounts the queue must not stage: a deal at demo or later is the
+  // HomeRoom's to work, and a stamped Closed Won/Lost is over. Groundwork
+  // prospects the book it is NOT actively closing.
+  excludedIds?: Set<string>;
   now: Date;
 };
+
+// One rule may hold at most this many of the day's top slots — a rule that
+// fires book-wide must never wall the wing. The rest of its hits sink below
+// every other rule's, still ranked, never lost.
+export const RULE_SLOT_CAP = 2;
 
 const DAY = 86_400_000;
 
@@ -136,12 +145,18 @@ export function moveKey(item: Pick<QueueItem, "accountId" | "ruleId">): string {
   return `${item.accountId}:${item.ruleId}`;
 }
 
-// Research staleness in days: the per-account deep-research note when one
-// exists, else the corpus's one book-wide stamp.
-function researchAgeDays(inp: QueueInput, accountId: string, now: Date): number {
+// Research staleness in days, per-account notes ONLY — null when the account
+// has never had its own pass. The book-wide stamp is handled once, outside
+// the per-account loop: one stale book is one move, never a wall of clones.
+function perAccountResearchAge(
+  inp: QueueInput,
+  accountId: string,
+  now: Date,
+): number | null {
   const perAccount = inp.researchAtById?.get(accountId);
-  const t = Date.parse(perAccount ?? researchGeneratedAt);
-  if (Number.isNaN(t)) return Infinity;
+  if (!perAccount) return null;
+  const t = Date.parse(perAccount);
+  if (Number.isNaN(t)) return null;
   return (now.getTime() - t) / DAY;
 }
 
@@ -165,6 +180,7 @@ function rankAll(inp: QueueInput, now: Date): QueueItem[] {
   }
 
   for (const p of inp.accounts) {
+    if (inp.excludedIds?.has(p.id)) continue;
     const notes = inp.notesById.get(p.id);
     const intent = intentFor(notes, now);
     const acctTouches = touchesByAccount.get(p.id) ?? [];
@@ -268,12 +284,14 @@ function rankAll(inp: QueueInput, now: Date): QueueItem[] {
       }
     }
 
-    // stale-above-gate (65): real demand, research old.
-    const researchAge = researchAgeDays(inp, p.id, now);
+    // stale-above-gate (65): real demand, and the account's OWN research pass
+    // has gone stale. Fires only on a per-account pass — the book-wide stamp
+    // collapses to a single move after this loop.
+    const researchAge = perAccountResearchAge(inp, p.id, now);
     const demand = getDemand(p.id);
     if (
       (demand?.demandScore ?? 0) >= DEMAND_GATE &&
-      Number.isFinite(researchAge) &&
+      researchAge != null &&
       researchAge > 21
     ) {
       candidates.push({
@@ -328,12 +346,52 @@ function rankAll(inp: QueueInput, now: Date): QueueItem[] {
     }
   }
 
+  // The book-wide research stamp, collapsed to ONE move. When no per-account
+  // pass exists, six accounts "going stale" on the same day is one fact about
+  // the book, not six moves — the strongest above-gate account carries it.
+  const globalAgeT = Date.parse(researchGeneratedAt);
+  const globalAge = Number.isNaN(globalAgeT) ? null : (now.getTime() - globalAgeT) / DAY;
+  if (globalAge != null && globalAge > 21) {
+    const bearer = inp.accounts
+      .filter(
+        (p) =>
+          !inp.excludedIds?.has(p.id) &&
+          !inp.researchAtById?.get(p.id) &&
+          (getDemand(p.id)?.demandScore ?? 0) >= DEMAND_GATE,
+      )
+      .sort((a, b) => {
+        const da = getDemand(a.id);
+        const db = getDemand(b.id);
+        return (
+          compositeScore(deskScore(b).score, db?.demandScore ?? null, db?.confidence)
+            .score -
+          compositeScore(deskScore(a).score, da?.demandScore ?? null, da?.confidence)
+            .score
+        );
+      })[0];
+    if (bearer) {
+      candidates.push({
+        accountId: bearer.id,
+        name: bearer.name,
+        ruleId: "stale-above-gate",
+        weight: 65,
+        band: BAND_OF["stale-above-gate"],
+        action: "Run the research pass.",
+        reason: `Book research ${Math.floor(globalAge)} days old.`,
+        owed: "recipe ready",
+        carried: false,
+        intent: intentFor(inp.notesById.get(bearer.id), now),
+      });
+    }
+  }
+
   // roundup-slot (70): a partner manager's update rhythm has lapsed — their
   // roster's best-fit account takes the slot. The CSM door, chosen when it
   // is the fastest one, never the toll.
   const byId = new Map(inp.accounts.map((p) => [p.id, p]));
   const rosterBest = new Map<string, { id: string; score: number }>();
   for (const p of inp.accounts) {
+    if (inp.excludedIds?.has(p.id)) continue;
     if (!p.csm || p.csm === "Unassigned") continue;
     const d = getDemand(p.id);
     const comp = compositeScore(
@@ -383,7 +441,7 @@ function rankAll(inp: QueueInput, now: Date): QueueItem[] {
     return compositeScore(deskScore(p).score, d?.demandScore ?? null, d?.confidence)
       .score;
   };
-  return [...bestByAccount.values()].sort((a, b) => {
+  const sorted = [...bestByAccount.values()].sort((a, b) => {
     if (b.weight !== a.weight) return b.weight - a.weight;
     const cb = compOf(b.accountId) - compOf(a.accountId);
     if (cb !== 0) return cb;
@@ -391,6 +449,21 @@ function rankAll(inp: QueueInput, now: Date): QueueItem[] {
     const pb = byId.get(b.accountId);
     return (pa ? proximityRank(pa) : 3) - (pb ? proximityRank(pb) : 3);
   });
+
+  // The slot cap: one rule holds at most RULE_SLOT_CAP of the leading order;
+  // its overflow sinks below every other rule's hits, still ranked, never
+  // dropped. A monotone wall becomes two slots and an open wing.
+  const leading: QueueItem[] = [];
+  const sunk: QueueItem[] = [];
+  const perRule = new Map<QueueRuleId, number>();
+  for (const q of sorted) {
+    const n = perRule.get(q.ruleId) ?? 0;
+    if (n < RULE_SLOT_CAP) {
+      perRule.set(q.ruleId, n + 1);
+      leading.push(q);
+    } else sunk.push(q);
+  }
+  return [...leading, ...sunk];
 }
 
 export function buildQueue(inp: QueueInput): {
