@@ -48,6 +48,7 @@ import { buildAccountSheet } from "@/lib/room/sheet-view";
 import { readLoss } from "@/lib/room/loss";
 import { GAP_DISMISS, readGaps } from "@/lib/room/gaps";
 import { researchNs } from "@/lib/intel/deep-research";
+import { getDemand, researchGeneratedAt } from "@/lib/book/research";
 import { readOutcome } from "@/lib/dashboard/outcome";
 import { owedToMe } from "@/lib/room/owed";
 import { GLOBAL_SCENT_RE } from "@/lib/intel/provenance";
@@ -295,7 +296,15 @@ export default async function RoomPage() {
     // When the research pass last ran — the refresh control states it, because a
     // button that doesn't say when it last ran invites re-running it blindly.
     const researchRows = accountId ? (notesById.get(researchNs(accountId)) ?? []) : [];
-    const researchAt = researchRows[0]?.createdAt ?? "";
+    // The chip reads the LATEST of both research stores: the on-demand deep
+    // pass (research: notes) and the book-wide sweep. "Never" only when
+    // neither store has touched this account — the stamp must not claim
+    // "never run" over a researched book record (founder-caught 2026-08-13).
+    const bookResearchAt =
+      accountId && getDemand(accountId)?.researched && researchGeneratedAt
+        ? `${researchGeneratedAt}T12:00:00Z`
+        : "";
+    const researchAt = researchRows[0]?.createdAt || bookResearchAt;
 
     const gapDismissed = new Set(
       [...dispositions.keys()].filter((k) => k.startsWith(GAP_DISMISS)),

@@ -45,6 +45,7 @@ import {
   roomReadPdf,
   roomRecordDelete,
   roomRecordEdit,
+  roomTodoEdit,
   roomTodoSet,
   roomUnlog,
 } from "./actions";
@@ -199,6 +200,13 @@ function Row({ row }: { row: RoomRow }) {
   const [promotedNotes, setPromotedNotes] = useState<Set<string>>(new Set());
   const [recOpen, setRecOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
+  // The Spring (triptych winner, 2026-08-13): each register rests as one
+  // summary line; ⊕ springs it out in place, one register out at a time.
+  const [spring, setSpring] = useState<"unknown" | "peers" | "today" | null>(null);
+  // ✎ on a sheet line — the operator rewrites it in place.
+  const [todoEditId, setTodoEditId] = useState<string | null>(null);
+  const [todoEditText, setTodoEditText] = useState("");
+  const [editedTodos, setEditedTodos] = useState<Map<string, string>>(new Map());
   const [editText, setEditText] = useState("");
   const [editedNotes, setEditedNotes] = useState<Map<string, string>>(new Map());
   const [deletedNotes, setDeletedNotes] = useState<Set<string>>(new Set());
@@ -260,6 +268,7 @@ function Row({ row }: { row: RoomRow }) {
         setLogText("");
         setUrg("");
         setNote(null);
+        setSpring("today");
       } else if (!r.ok) setNote(r.reason ?? "That didn't save.");
     });
   };
@@ -310,6 +319,17 @@ function Row({ row }: { row: RoomRow }) {
       } else setNote(r.reason ?? "The edit didn't save.");
     });
   };
+  const saveTodoEdit = (todoId: string) => {
+    const text = todoEditText.trim();
+    if (!text || pending) return;
+    start(async () => {
+      const r = await roomTodoEdit(row.accountId, todoId, text);
+      if (r.ok) {
+        setEditedTodos((m) => new Map(m).set(todoId, text));
+        setTodoEditId(null);
+      } else setNote(r.reason ?? "The edit didn't save.");
+    });
+  };
   const deleteNote = (noteId: string) => {
     if (pending) return;
     start(async () => {
@@ -349,6 +369,7 @@ function Row({ row }: { row: RoomRow }) {
         setPasteOpen(false);
         setMismatch(null);
         setNote(null);
+        setSpring("today");
       } else setNote(r.reason ?? "The paste didn't file.");
     });
   };
@@ -555,6 +576,16 @@ function Row({ row }: { row: RoomRow }) {
   const openStage = row.stages.find((s) => s.key === stageOpen);
   const label = row.climb.label;
 
+  // The springs' counts — each numeral is the length of exactly the list its
+  // register shows. One derivation, no second bookkeeping.
+  const liveAsks = row.gaps.filter((g) => !askGone.has(g.id));
+  const liveOpen = row.sheetOpen.filter((t) => !gone.has(t.id) && !doneIds.has(t.id));
+  const liveOwed = row.owed.filter((o) => !owedGone.has(o.key));
+  const doneCount =
+    row.sheetDoneToday.filter((t) => !gone.has(t.id)).length +
+    row.sheetOpen.filter((t) => !gone.has(t.id) && doneIds.has(t.id)).length;
+  const topToday = liveOpen[0]?.body ?? liveOwed[0]?.text ?? "";
+
   return (
     <div className={styles.row}>
       <div className={styles.deal}>
@@ -606,29 +637,19 @@ function Row({ row }: { row: RoomRow }) {
         {/* The research control. Labelled, dated, and impossible to miss — a
             refresh button that doesn't say when it last ran gets re-run blind. */}
         {row.canWrite && row.accountId && (
-          <div className={styles.rsrch}>
-            <button
-              type="button"
-              className={styles.rsrchBtn}
-              disabled={rsrchPending}
-              onClick={runResearchPass}
-              title="searches their site, their job postings, the news, and the people named on this deal"
-            >
-              {rsrchPending
-                ? "Researching…"
-                : row.researchAt
-                  ? "Refresh research"
-                  : "Research this company"}
-            </button>
-            <span className={styles.rsrchWhen}>
-              {row.researchAt
-                ? `last run ${new Date(row.researchAt).toLocaleDateString("en-US", {
-                    month: "numeric",
-                    day: "numeric",
-                  })}`
-                : "never run. The first pass is the deep one."}
-            </span>
-          </div>
+          <button
+            type="button"
+            className={styles.rsrchChip}
+            disabled={rsrchPending}
+            onClick={runResearchPass}
+            title="Runs the deep pass: their site, their postings, the news, the people on this deal. The first pass is the deep one."
+          >
+            {rsrchPending
+              ? "RESEARCHING…"
+              : row.researchAt
+                ? `RESEARCH ${new Date(row.researchAt).toLocaleDateString("en-US", { month: "numeric", day: "numeric" })} ⟳`
+                : "RESEARCH — NEVER ⟳"}
+          </button>
         )}
         {research && (
           <div className={styles.rsrchOut}>
@@ -873,404 +894,517 @@ function Row({ row }: { row: RoomRow }) {
       </div>
 
       <div className={styles.rec}>
-        <div
-          className={`${styles.court} ${
-            row.outcome || lossLive ? styles.c_quiet : styles[`c_${row.court.tone}`]
-          }`}
-        >
-          {row.outcome
-            ? `${row.outcome.status === "won" ? "CLOSED WON" : "CLOSED LOST"}${
-                row.outcome.at
-                  ? ` · ${new Date(row.outcome.at).toLocaleDateString("en-US", {
-                      month: "numeric",
-                      day: "numeric",
-                    })}`
-                  : ""
-              }`
-            : lossLive
-              ? `THE RECORD READS ${row.loss!.status === "won" ? "WON" : "LOST"} · ${row.loss!.date}`
-              : row.court.line}
-        </div>
-        <div className={styles.keybar}>
-          <span>
-            <b className={styles.kSend}>✉</b>send
-          </span>
-          <span>
-            <b>⚖</b>decide
-          </span>
-          <span>
-            <b className={styles.kOwed}>⚑</b>owed
-          </span>
-          <span>
-            <b className={styles.kAct}>✸</b>action
-          </span>
-          <span>
-            <b>➤</b>sent
-          </span>
-          <span>
-            <b className={styles.kDone}>✓</b>done
-          </span>
-          <span>
-            <b className={styles.kDly}>⏲</b>delayed
-          </span>
-          <span>
-            <b>✎</b>note
-          </span>
-        </div>
-
-        {(row.gaps.filter((g) => !askGone.has(g.id)).length > 0 ||
-          row.peers.length > 0 ||
-          row.canWrite) && (
-          <div className={styles.askBox}>
-            <span className={styles.lbl}>STILL UNKNOWN</span>
-            {row.gaps.filter((g) => !askGone.has(g.id)).length === 0 && (
-              <span className={styles.askQ}>
-                Nothing of this deal&apos;s own yet. File a paste, or mint asks.
+        {spring !== "unknown" && (
+          <div className={styles.sumline}>
+            <span className={styles.sumk}>UNKNOWN</span>
+            <span className={styles.sumn}>
+              {liveAsks.length}
+              {row.gapsQueued > 0 ? ` · ${row.gapsQueued} queued` : ""}
+            </span>
+            <span className={styles.sumtx}>
+              {liveAsks[0]?.question ?? "Nothing of this deal's own yet."}
+            </span>
+            <Link href={row.askHref} className={styles.sic} title="Ask the brain">
+              ⌕
+            </Link>
+            {row.canWrite && (
+              <button
+                type="button"
+                className={styles.sic}
+                disabled={askPending}
+                onClick={refillAsks}
+                title="Mint sharper asks"
+              >
+                {askPending ? "…" : "⟳"}
+              </button>
+            )}
+            <button
+              type="button"
+              className={styles.splayBtn}
+              title="Expand them out"
+              onClick={() => setSpring("unknown")}
+            >
+              ⊕
+            </button>
+          </div>
+        )}
+        {spring === "unknown" && (
+          <div className={styles.splayed}>
+            <div className={`${styles.sumline} ${styles.sumOpen}`}>
+              <span className={`${styles.sumk} ${styles.sumkOn}`}>STILL UNKNOWN</span>
+              <span className={styles.sumn}>
+                {liveAsks.length}
+                {row.gapsQueued > 0 ? ` · ${row.gapsQueued} queued` : ""}
               </span>
-            )}
-            {row.gaps
-              .filter((g) => !askGone.has(g.id))
-              .map((g) => (
-                <div key={g.id} className={styles.askRow}>
-                  <span className={styles.askQ}>{g.question}</span>
-                  {row.canWrite && (
-                    <button
-                      type="button"
-                      className={styles.sdTag}
-                      disabled={askPending}
-                      onClick={() => dismissAsk(g.id)}
-                      title="Not relevant here. The next ask swaps in."
-                    >
-                      not this deal ✕
-                    </button>
-                  )}
-                </div>
-              ))}
-            {row.peers.length > 0 && (
-              <>
-                <div className={styles.peerRule}>
-                  <span className={styles.peerRuleLbl}>ASKED ON COMPARABLE DEALS</span>
-                  <span className={styles.peerRuleLine} />
-                </div>
-                {row.peers.map((p) => (
-                  <div key={p.question} className={styles.askRow}>
-                    <span className={styles.askQ}>
-                      <span className={styles.peerCtry}>
-                        {p.shared.toUpperCase() || "SHARED SITUATION"}
-                      </span>
-                      {p.question}
-                    </span>
-                    <Link
-                      href={p.findHref}
-                      className={styles.sdTag}
-                      title="Ask the brain what we answered when this came up."
-                    >
-                      find the answer
-                    </Link>
-                  </div>
-                ))}
-              </>
-            )}
-            <span className={styles.askFoot}>
-              {row.gapsQueued > 0 && (
-                <span className={styles.askMore}>{row.gapsQueued} more behind these</span>
-              )}
-              <Link href={row.askHref} className={styles.sdTag} title="ask the brain">
-                ask the brain
+              <Link href={row.askHref} className={styles.sic} title="Ask the brain">
+                ⌕
               </Link>
               {row.canWrite && (
                 <button
                   type="button"
-                  className={styles.sdTag}
+                  className={styles.sic}
                   disabled={askPending}
                   onClick={refillAsks}
-                  title="mint sharper asks from the countries, the scenario, the research, and what other deals taught"
+                  title="Mint sharper asks"
                 >
-                  {askPending ? "minting…" : "mint better asks ⟳"}
+                  {askPending ? "…" : "⟳"}
                 </button>
               )}
+              <button
+                type="button"
+                className={styles.splayBtn}
+                title="Fold them back"
+                onClick={() => setSpring(null)}
+              >
+                ⊖
+              </button>
+            </div>
+            {liveAsks.length === 0 && (
+              <span className={styles.askQ}>
+                Nothing of this deal&apos;s own yet. File a paste, or mint asks.
+              </span>
+            )}
+            {liveAsks.map((g) => (
+              <div key={g.id} className={styles.askRow}>
+                <span className={styles.askQ}>{g.question}</span>
+                {row.canWrite && (
+                  <button
+                    type="button"
+                    className={styles.askX}
+                    disabled={askPending}
+                    onClick={() => dismissAsk(g.id)}
+                    title="Not this deal"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+        {row.peers.length > 0 && spring !== "peers" && (
+          <div className={styles.sumline}>
+            <span className={styles.sumk}>COMPARABLE</span>
+            <span className={styles.sumn}>{row.peers.length}</span>
+            <span className={styles.sumtx}>
+              {(row.peers[0].shared || "shared situation").toUpperCase()} —{" "}
+              {row.peers[0].question}
             </span>
+            <button
+              type="button"
+              className={styles.splayBtn}
+              title="Expand them out"
+              onClick={() => setSpring("peers")}
+            >
+              ⊕
+            </button>
+          </div>
+        )}
+        {row.peers.length > 0 && spring === "peers" && (
+          <div className={styles.splayed}>
+            <div className={`${styles.sumline} ${styles.sumOpen}`}>
+              <span className={`${styles.sumk} ${styles.sumkOn}`}>
+                ASKED ON COMPARABLE DEALS
+              </span>
+              <span className={styles.sumn}>{row.peers.length}</span>
+              <button
+                type="button"
+                className={styles.splayBtn}
+                title="Fold them back"
+                onClick={() => setSpring(null)}
+              >
+                ⊖
+              </button>
+            </div>
+            {row.peers.map((p) => (
+              <div key={p.question} className={styles.askRow}>
+                <span className={styles.askQ}>
+                  <span className={styles.peerCtry}>
+                    {p.shared.toUpperCase() || "SHARED SITUATION"}
+                  </span>
+                  {p.question}
+                </span>
+                <Link href={p.findHref} className={styles.askGo} title="Find the answer">
+                  →
+                </Link>
+              </div>
+            ))}
           </div>
         )}
 
-        <div className={styles.dayrule}>TODAY</div>
-        {row.owed
-          .filter((o) => !owedGone.has(o.key))
-          .map((o) => (
-            <div key={o.key} className={styles.owedBox}>
-              <span className={styles.kOwed}>⚑</span> The record says you owe:{" "}
-              <b>{o.text}</b>. {o.src}.
-              {row.canWrite && (
-                <span className={styles.sdSuggActs}>
-                  <button
-                    type="button"
-                    className={styles.sdTag}
-                    disabled={pending}
-                    onClick={() => owedAccept(o)}
-                  >
-                    open it ✓
-                  </button>
-                  <button
-                    type="button"
-                    className={styles.sdTag}
-                    disabled={pending}
-                    onClick={() => owedDismiss(o)}
-                  >
-                    dismiss ✕
-                  </button>
-                </span>
-              )}
+        {spring !== "today" && (
+          <div className={styles.sumline}>
+            <span className={styles.sumk}>TODAY</span>
+            <span className={styles.sumn}>
+              {liveOpen.length}
+              {doneCount > 0 ? ` · ${doneCount} done` : ""}
+            </span>
+            <span className={styles.sumtx}>{topToday || "Nothing open today."}</span>
+            <button
+              type="button"
+              className={styles.splayBtn}
+              title="Expand them out"
+              onClick={() => setSpring("today")}
+            >
+              ⊕
+            </button>
+          </div>
+        )}
+        {spring === "today" && (
+          <div className={styles.splayed}>
+            <div className={`${styles.sumline} ${styles.sumOpen}`}>
+              <span className={`${styles.sumk} ${styles.sumkOn}`}>TODAY</span>
+              <span className={styles.sumn}>
+                {liveOpen.length}
+                {doneCount > 0 ? ` · ${doneCount} done` : ""}
+              </span>
+              <button
+                type="button"
+                className={styles.splayBtn}
+                title="Fold them back"
+                onClick={() => setSpring(null)}
+              >
+                ⊖
+              </button>
             </div>
-          ))}
-        {freshCaps.map((c, i) =>
-          c.kind === "note" && !c.promoted ? (
-            <div key={`fc${i}`}>
-              <div className={`${styles.it} ${styles.fresh}`}>
-                <span className={`${styles.ic} ${styles.gNote}`}>✎</span>
-                <span className={styles.tx}>{c.body}</span>
-              </div>
-              <div className={styles.rcpt}>
-                <b>routed → {row.name}&apos;s record</b>
-                {c.todoId && (
-                  <>
-                    <button
-                      type="button"
-                      className={styles.rcptU}
-                      onClick={() => undoCap(i)}
-                    >
-                      ↩ undo
-                    </button>
-                    <button
-                      type="button"
-                      className={styles.rcptMk}
-                      onClick={() => promoteCap(i)}
-                    >
-                      ✸ make it an action →
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-          ) : c.todoId && gone.has(c.todoId) ? null : (
-            (() => {
-              const did = !!c.todoId && doneIds.has(c.todoId);
-              return (
-                <div
-                  key={`fc${i}`}
-                  className={`${styles.it} ${did ? styles.itDid : styles.itOpen} ${styles.fresh}`}
-                >
-                  <span className={`${styles.ic} ${did ? styles.gDone : styles.gAct}`}>
-                    {did ? "✓" : "✸"}
-                  </span>
-                  {!did && (
-                    <span className={`${styles.st} ${styles.stOpen}`}>
-                      {c.kind === "scheduled" ? "SOON" : "OPEN"}
-                    </span>
-                  )}
-                  <span className={styles.tx}>{c.body}</span>
-                  {c.todoId && (
-                    <span className={styles.rail}>
-                      {did ? (
-                        <button onClick={() => todoOp(c.todoId!, "undo")} title="undo">
-                          ↩
-                        </button>
-                      ) : (
-                        <>
-                          <button onClick={() => todoOp(c.todoId!, "done")} title="done">
-                            ✓
-                          </button>
-                          <button onClick={() => todoOp(c.todoId!, "drop")} title="park">
-                            ✕
-                          </button>
-                        </>
-                      )}
+            {row.owed
+              .filter((o) => !owedGone.has(o.key))
+              .map((o) => (
+                <div key={o.key} className={styles.owedBox}>
+                  <span className={styles.kOwed}>⚑</span> The record says you owe:{" "}
+                  <b>{o.text}</b>. {o.src}.
+                  {row.canWrite && (
+                    <span className={styles.sdSuggActs}>
+                      <button
+                        type="button"
+                        className={styles.sdTag}
+                        disabled={pending}
+                        onClick={() => owedAccept(o)}
+                      >
+                        open it ✓
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.sdTag}
+                        disabled={pending}
+                        onClick={() => owedDismiss(o)}
+                      >
+                        dismiss ✕
+                      </button>
                     </span>
                   )}
                 </div>
-              );
-            })()
-          ),
-        )}
-        {(freshAll ? freshInfo : freshInfo.slice(0, 2)).map((f, i) => (
-          <div key={`fi${i}`}>
-            <div className={`${styles.it} ${styles.fresh}`}>
-              <span className={`${styles.ic} ${styles.gDone}`}>✓</span>
-              <span className={styles.tx}>{f.text}</span>
-              {f.noteIds && f.noteIds.length > 0 && (
-                <button
-                  type="button"
-                  className={styles.rcptU}
-                  onClick={() => undoPaste(i)}
-                  title="Removes the record this paste filed. The actions it opened stay."
-                >
-                  ↩ undo paste
-                </button>
-              )}
-            </div>
-            {/* Each opened commitment retires on its own — the paste's undo is
-                about the record, and a wrong action is one ✕, not all of them.
-                These are receipt chips, not a second copy of the work: the open
-                rows below are the real ones. */}
-            {(f.opened ?? []).length > 0 && (
-              <div className={styles.rcpt}>
-                <b>opened →</b>
-                {(f.opened ?? []).map((o) => (
-                  <span
-                    key={o.id}
-                    className={`${styles.openedChip} ${
-                      o.gone || doneIds.has(o.id) ? styles.openedGone : ""
-                    }`}
-                  >
-                    {o.text.slice(0, 60)}
-                    {/* Once the operator has closed or parked the row itself,
-                        the receipt's take-back is no longer the right verb —
-                        the register row owns it from then on. */}
-                    {row.canWrite && !o.gone && !doneIds.has(o.id) && !gone.has(o.id) && (
-                      <button
-                        type="button"
-                        className={styles.openedX}
-                        onClick={() => undoOpened(i, o.id)}
-                        title="Take it back. The read got this one wrong."
-                      >
-                        ✕
-                      </button>
-                    )}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
-        {freshInfo.length > 2 && (
-          <button
-            type="button"
-            className={styles.moreFresh}
-            onClick={() => setFreshAll((v) => !v)}
-          >
-            {freshAll ? "Collapse ▴" : `Show ${freshInfo.length - 2} more ▸`}
-          </button>
-        )}
-        {[
-          // An un-held row rejoins the open list; it carries no wall of its own
-          // until the server re-reads it.
-          ...row.sheetDelayed
-            .filter((t) => backNow.has(t.id))
-            .map((t) => ({ id: t.id, body: t.body })),
-          ...row.sheetOpen.filter((t) => !backNow.has(t.id)),
-        ]
-          .filter((t) => !gone.has(t.id))
-          .map((t: { id: string; body: string; wall?: string; fallback?: string }) => {
-            const did = doneIds.has(t.id);
-            return (
-              <div
-                key={t.id}
-                className={`${styles.it} ${did ? styles.itDid : styles.itOpen}`}
-              >
-                <span className={`${styles.ic} ${did ? styles.gDone : styles.gAct}`}>
-                  {did ? "✓" : "✸"}
-                </span>
-                {!did && (
-                  <span
-                    className={`${styles.st} ${t.wall ? styles.stWall : styles.stOpen}`}
-                  >
-                    {t.wall ? `${t.wall} PASSED` : "OPEN"}
-                  </span>
-                )}
-                <span className={styles.tx}>
-                  {t.body}
-                  {/* The if/then, run for you: the wall passed, so the
-                      contingency is the move now. */}
-                  {!did && t.fallback && (
-                    <span className={styles.fallback}>
-                      ↯ It didn&apos;t land. Go to the fallback: {t.fallback}
-                    </span>
-                  )}
-                </span>
-                {row.canWrite && (
-                  <span className={styles.rail}>
-                    {did ? (
-                      <button
-                        disabled={pending}
-                        onClick={() => todoOp(t.id, "undo")}
-                        title="undo"
-                      >
-                        ↩
-                      </button>
-                    ) : (
+              ))}
+            {freshCaps.map((c, i) =>
+              c.kind === "note" && !c.promoted ? (
+                <div key={`fc${i}`}>
+                  <div className={`${styles.it} ${styles.fresh}`}>
+                    <span className={`${styles.ic} ${styles.gNote}`}>✎</span>
+                    <span className={styles.tx}>{c.body}</span>
+                  </div>
+                  <div className={styles.rcpt}>
+                    <b>routed → {row.name}&apos;s record</b>
+                    {c.todoId && (
                       <>
                         <button
-                          disabled={pending}
-                          onClick={() => todoOp(t.id, "done")}
-                          title="done"
+                          type="button"
+                          className={styles.rcptU}
+                          onClick={() => undoCap(i)}
                         >
-                          ✓
+                          ↩ undo
                         </button>
                         <button
-                          disabled={pending}
-                          onClick={() => todoOp(t.id, "tomorrow")}
-                          title="delay to tomorrow"
+                          type="button"
+                          className={styles.rcptMk}
+                          onClick={() => promoteCap(i)}
                         >
-                          ⏲
-                        </button>
-                        <form action={addFollowUp} className={styles.inline}>
-                          <input
-                            type="hidden"
-                            name="label"
-                            value={t.body.slice(0, 140)}
-                          />
-                          <input type="hidden" name="returnTo" value="/room" />
-                          <button title="Arm a chase. Someone owes this.">⚑</button>
-                        </form>
-                        <button
-                          disabled={pending}
-                          onClick={() => todoOp(t.id, "drop")}
-                          title="park"
-                        >
-                          ✕
+                          ✸ make it an action →
                         </button>
                       </>
                     )}
-                  </span>
+                  </div>
+                </div>
+              ) : c.todoId && gone.has(c.todoId) ? null : (
+                (() => {
+                  const did = !!c.todoId && doneIds.has(c.todoId);
+                  return (
+                    <div
+                      key={`fc${i}`}
+                      className={`${styles.it} ${did ? styles.itDid : styles.itOpen} ${styles.fresh}`}
+                    >
+                      <span
+                        className={`${styles.ic} ${did ? styles.gDone : styles.gAct}`}
+                      >
+                        {did ? "✓" : "✸"}
+                      </span>
+                      {!did && (
+                        <span className={`${styles.st} ${styles.stOpen}`}>
+                          {c.kind === "scheduled" ? "SOON" : "OPEN"}
+                        </span>
+                      )}
+                      <span className={styles.tx}>{c.body}</span>
+                      {c.todoId && (
+                        <span className={styles.rail}>
+                          {did ? (
+                            <button
+                              onClick={() => todoOp(c.todoId!, "undo")}
+                              title="undo"
+                            >
+                              ↩
+                            </button>
+                          ) : (
+                            <>
+                              <button
+                                onClick={() => todoOp(c.todoId!, "done")}
+                                title="done"
+                              >
+                                ✓
+                              </button>
+                              <button
+                                onClick={() => todoOp(c.todoId!, "drop")}
+                                title="park"
+                              >
+                                ✕
+                              </button>
+                            </>
+                          )}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })()
+              ),
+            )}
+            {(freshAll ? freshInfo : freshInfo.slice(0, 2)).map((f, i) => (
+              <div key={`fi${i}`}>
+                <div className={`${styles.it} ${styles.fresh}`}>
+                  <span className={`${styles.ic} ${styles.gDone}`}>✓</span>
+                  <span className={styles.tx}>{f.text}</span>
+                  {f.noteIds && f.noteIds.length > 0 && (
+                    <button
+                      type="button"
+                      className={styles.rcptU}
+                      onClick={() => undoPaste(i)}
+                      title="Removes the record this paste filed. The actions it opened stay."
+                    >
+                      ↩ undo paste
+                    </button>
+                  )}
+                </div>
+                {/* Each opened commitment retires on its own — the paste's undo is
+                about the record, and a wrong action is one ✕, not all of them.
+                These are receipt chips, not a second copy of the work: the open
+                rows below are the real ones. */}
+                {(f.opened ?? []).length > 0 && (
+                  <div className={styles.rcpt}>
+                    <b>opened →</b>
+                    {(f.opened ?? []).map((o) => (
+                      <span
+                        key={o.id}
+                        className={`${styles.openedChip} ${
+                          o.gone || doneIds.has(o.id) ? styles.openedGone : ""
+                        }`}
+                      >
+                        {o.text.slice(0, 60)}
+                        {/* Once the operator has closed or parked the row itself,
+                        the receipt's take-back is no longer the right verb —
+                        the register row owns it from then on. */}
+                        {row.canWrite &&
+                          !o.gone &&
+                          !doneIds.has(o.id) &&
+                          !gone.has(o.id) && (
+                            <button
+                              type="button"
+                              className={styles.openedX}
+                              onClick={() => undoOpened(i, o.id)}
+                              title="Take it back. The read got this one wrong."
+                            >
+                              ✕
+                            </button>
+                          )}
+                      </span>
+                    ))}
+                  </div>
                 )}
               </div>
-            );
-          })}
-        {row.sheetDelayed
-          .filter((t) => !gone.has(t.id) && !backNow.has(t.id))
-          .map((t) => (
-            <div key={t.id} className={`${styles.it} ${styles.itDelayed}`}>
-              <span className={`${styles.ic} ${styles.gDly}`}>⏲</span>
-              <span className={`${styles.st} ${styles.stSched}`}>{t.when}</span>
-              <span className={styles.tx}>{t.body}</span>
-              {row.canWrite && (
-                <span className={styles.rail}>
-                  <button
-                    disabled={pending}
-                    onClick={() => todoOp(t.id, "now")}
-                    title="bring it back now"
-                  >
-                    ↩
-                  </button>
-                </span>
+            ))}
+            {freshInfo.length > 2 && (
+              <button
+                type="button"
+                className={styles.moreFresh}
+                onClick={() => setFreshAll((v) => !v)}
+              >
+                {freshAll ? "Collapse ▴" : `Show ${freshInfo.length - 2} more ▸`}
+              </button>
+            )}
+            {[
+              // An un-held row rejoins the open list; it carries no wall of its own
+              // until the server re-reads it.
+              ...row.sheetDelayed
+                .filter((t) => backNow.has(t.id))
+                .map((t) => ({ id: t.id, body: t.body })),
+              ...row.sheetOpen.filter((t) => !backNow.has(t.id)),
+            ]
+              .filter((t) => !gone.has(t.id))
+              .map(
+                (t: { id: string; body: string; wall?: string; fallback?: string }) => {
+                  const did = doneIds.has(t.id);
+                  if (todoEditId === t.id)
+                    return (
+                      <div key={t.id} className={`${styles.it} ${styles.itOpen}`}>
+                        <span className={`${styles.ic} ${styles.gAct}`}>✸</span>
+                        <span className={styles.recEdit}>
+                          <input
+                            value={todoEditText}
+                            onChange={(ev) => setTodoEditText(ev.target.value)}
+                            onKeyDown={(ev) => {
+                              if (ev.key === "Enter") saveTodoEdit(t.id);
+                              if (ev.key === "Escape") setTodoEditId(null);
+                            }}
+                            aria-label="edit this line"
+                          />
+                          <button
+                            type="button"
+                            className={styles.sdTag}
+                            onClick={() => saveTodoEdit(t.id)}
+                          >
+                            save
+                          </button>
+                          <button
+                            type="button"
+                            className={styles.sdTag}
+                            onClick={() => setTodoEditId(null)}
+                          >
+                            cancel
+                          </button>
+                        </span>
+                      </div>
+                    );
+                  return (
+                    <div
+                      key={t.id}
+                      className={`${styles.it} ${did ? styles.itDid : styles.itOpen}`}
+                    >
+                      <span
+                        className={`${styles.ic} ${did ? styles.gDone : styles.gAct}`}
+                      >
+                        {did ? "✓" : "✸"}
+                      </span>
+                      {!did && (
+                        <span
+                          className={`${styles.st} ${t.wall ? styles.stWall : styles.stOpen}`}
+                        >
+                          {t.wall ? `${t.wall} PASSED` : "OPEN"}
+                        </span>
+                      )}
+                      <span className={styles.tx}>
+                        {editedTodos.get(t.id) ?? t.body}
+                        {/* The if/then, run for you: the wall passed, so the
+                      contingency is the move now. */}
+                        {!did && t.fallback && (
+                          <span className={styles.fallback}>
+                            ↯ It didn&apos;t land. Go to the fallback: {t.fallback}
+                          </span>
+                        )}
+                      </span>
+                      {row.canWrite && (
+                        <span className={styles.rail}>
+                          {did ? (
+                            <button
+                              disabled={pending}
+                              onClick={() => todoOp(t.id, "undo")}
+                              title="undo"
+                            >
+                              ↩
+                            </button>
+                          ) : (
+                            <>
+                              <button
+                                disabled={pending}
+                                onClick={() => todoOp(t.id, "done")}
+                                title="done"
+                              >
+                                ✓
+                              </button>
+                              <button
+                                disabled={pending}
+                                onClick={() => todoOp(t.id, "tomorrow")}
+                                title="delay to tomorrow"
+                              >
+                                ⏲
+                              </button>
+                              <form action={addFollowUp} className={styles.inline}>
+                                <input
+                                  type="hidden"
+                                  name="label"
+                                  value={t.body.slice(0, 140)}
+                                />
+                                <input type="hidden" name="returnTo" value="/room" />
+                                <button title="Arm a chase. Someone owes this.">⚑</button>
+                              </form>
+                              <button
+                                disabled={pending}
+                                onClick={() => {
+                                  setTodoEditId(t.id);
+                                  setTodoEditText(editedTodos.get(t.id) ?? t.body);
+                                }}
+                                title="edit this line"
+                              >
+                                ✎
+                              </button>
+                              <button
+                                disabled={pending}
+                                onClick={() => todoOp(t.id, "drop")}
+                                title="park"
+                              >
+                                ✕
+                              </button>
+                            </>
+                          )}
+                        </span>
+                      )}
+                    </div>
+                  );
+                },
               )}
-            </div>
-          ))}
-        {row.sheetDoneToday
-          .filter((t) => !gone.has(t.id))
-          .map((t) => (
-            <div key={t.id} className={`${styles.it} ${styles.itDid}`}>
-              <span className={`${styles.ic} ${styles.gDone}`}>✓</span>
-              <span className={`${styles.st} ${styles.stDone}`}>{t.at}</span>
-              <span className={styles.tx}>{t.body}</span>
-              {row.canWrite && (
-                <span className={styles.rail}>
-                  <button onClick={() => todoOp(t.id, "undo")} title="undo">
-                    ↩
-                  </button>
-                </span>
-              )}
-            </div>
-          ))}
+            {row.sheetDelayed
+              .filter((t) => !gone.has(t.id) && !backNow.has(t.id))
+              .map((t) => (
+                <div key={t.id} className={`${styles.it} ${styles.itDelayed}`}>
+                  <span className={`${styles.ic} ${styles.gDly}`}>⏲</span>
+                  <span className={`${styles.st} ${styles.stSched}`}>{t.when}</span>
+                  <span className={styles.tx}>{t.body}</span>
+                  {row.canWrite && (
+                    <span className={styles.rail}>
+                      <button
+                        disabled={pending}
+                        onClick={() => todoOp(t.id, "now")}
+                        title="bring it back now"
+                      >
+                        ↩
+                      </button>
+                    </span>
+                  )}
+                </div>
+              ))}
+            {row.sheetDoneToday
+              .filter((t) => !gone.has(t.id))
+              .map((t) => (
+                <div key={t.id} className={`${styles.it} ${styles.itDid}`}>
+                  <span className={`${styles.ic} ${styles.gDone}`}>✓</span>
+                  <span className={`${styles.st} ${styles.stDone}`}>{t.at}</span>
+                  <span className={styles.tx}>{t.body}</span>
+                  {row.canWrite && (
+                    <span className={styles.rail}>
+                      <button onClick={() => todoOp(t.id, "undo")} title="undo">
+                        ↩
+                      </button>
+                    </span>
+                  )}
+                </div>
+              ))}
+          </div>
+        )}
 
         {row.canWrite && (
           <div
@@ -2065,6 +2199,25 @@ export function RoomClient({
         <Row key={r.cardId} row={r} />
       ))}
       {boardNames.length > 0 && null}
+
+      {/* The legend, retired here — once, at the foot (founder-decreed
+          2026-08-13). No row carries it. */}
+      {rows.length > 0 && (
+        <div className={styles.footLegend}>
+          <span>✉ send</span>
+          <span>⚖ decide</span>
+          <span className={styles.kOwed}>⚑ owed</span>
+          <span className={styles.kAct}>✸ action</span>
+          <span>➤ sent</span>
+          <span className={styles.kDone}>✓ done</span>
+          <span className={styles.kDly}>⏲ delayed</span>
+          <span>✎ note</span>
+          <span>⌕ ask the brain</span>
+          <span>⟳ mint sharper asks</span>
+          <span>→ find the answer</span>
+          <span>✕ not this deal</span>
+        </div>
+      )}
 
       <div ref={drawerRef}>
         {drawer === "cadence" && (
