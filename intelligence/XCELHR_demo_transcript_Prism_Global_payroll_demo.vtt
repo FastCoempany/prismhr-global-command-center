@@ -1,0 +1,5410 @@
+WEBVTT
+
+a1239971-07e0-4b71-844e-f23bf5b55120/11-0
+00:00:03.641 --> 00:00:06.201
+<v Antaeus Coe>Miss around our introductions,
+and you were the last one.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/13-0
+00:00:06.521 --> 00:00:11.401
+<v Sharon Murray>Okay, my name is Sharon Murray.
+I'm the payroll manager here at XLHR.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/12-0
+00:00:08.921 --> 00:00:09.321
+<v Antaeus Coe>The.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/15-0
+00:00:12.681 --> 00:00:16.897
+<v Antaeus Coe>Wonderful. Very nice to meet you.
+So the plan today, Bill and team,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/15-1
+00:00:16.897 --> 00:00:21.298
+<v Antaeus Coe>is to walk through the platform.
+We'll show you both our client-facing</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/15-2
+00:00:21.298 --> 00:00:25.265
+<v Antaeus Coe>side of our platform,
+as well as the administrative side of the</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/15-3
+00:00:25.265 --> 00:00:30.348
+<v Antaeus Coe>platform that would be facing you guys.
+And there's no way you can possibly throw</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/15-4
+00:00:30.348 --> 00:00:31.401
+<v Antaeus Coe>Shane off as he's</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/16-0
+00:00:31.761 --> 00:00:37.168
+<v Antaeus Coe>walking through the platform.
+So if you have any questions that pop out,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/16-1
+00:00:37.168 --> 00:00:39.241
+<v Antaeus Coe>please feel free to jump in.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/17-0
+00:00:40.561 --> 00:00:43.721
+<v Antaeus Coe>And I'll, without further further ado,
+just turn it over to Shane here.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/21-0
+00:00:47.121 --> 00:00:50.216
+<v Shane Jacobs>Hey, thanks, Antaeus.
+Let me share my screen.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/21-1
+00:00:50.216 --> 00:00:55.128
+<v Shane Jacobs>And for even from what Bill saw at Prism
+Live, things have been updated,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/21-2
+00:00:55.128 --> 00:00:58.626
+<v Shane Jacobs>improved upon.
+The feedback we've received from our</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/21-3
+00:00:58.626 --> 00:01:03.067
+<v Shane Jacobs>service providers has been very valuable
+so that we're, you know,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/21-4
+00:01:03.067 --> 00:01:07.641
+<v Shane Jacobs>introducing this and providing the right
+tools that you might need.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/23-0
+00:01:07.961 --> 00:01:11.637
+<v Shane Jacobs>to service your clients.
+So this is what Prism Global is.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/23-1
+00:01:11.637 --> 00:01:15.375
+<v Shane Jacobs>It resides within Prism as a module.
+So you go into Prism,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/23-2
+00:01:15.375 --> 00:01:19.557
+<v Shane Jacobs>click on the single sign-on,
+it takes you directly into the Prism</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/23-3
+00:01:19.557 --> 00:01:22.852
+<v Shane Jacobs>Global module.
+So as our service providers have all</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/23-4
+00:01:22.852 --> 00:01:27.097
+<v Shane Jacobs>their US employees in Prism,
+this would be all their international</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/23-5
+00:01:27.097 --> 00:01:28.681
+<v Shane Jacobs>employees outside the US.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/24-0
+00:01:29.001 --> 00:01:32.625
+<v Shane Jacobs>on Prism Global.
+And this platform manages pay for kind of</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/24-1
+00:01:32.625 --> 00:01:36.925
+<v Shane Jacobs>three types of classifications.
+Contractors, independent contractors,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/24-2
+00:01:36.925 --> 00:01:41.838
+<v Shane Jacobs>people you're paying in other countries
+on a project basis or an interim basis.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/24-3
+00:01:41.838 --> 00:01:46.445
+<v Shane Jacobs>EOR, we're worthy employer of record,
+full-time regular employees that are</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/24-4
+00:01:46.445 --> 00:01:48.041
+<v Shane Jacobs>living in another country.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/25-0
+00:01:48.601 --> 00:01:53.388
+<v Shane Jacobs>And then also when you have clients that
+might have a entity established where</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/25-1
+00:01:53.388 --> 00:01:57.993
+<v Shane Jacobs>they have a branch, a subsidiary,
+some legal structure in a foreign country</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/25-2
+00:01:57.993 --> 00:02:02.052
+<v Shane Jacobs>and are paying employees directly,
+which we just consider payroll,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/25-3
+00:02:02.052 --> 00:02:07.081
+<v Shane Jacobs>we're going to run the payroll for those
+employees or that client in that country.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/26-0
+00:02:07.481 --> 00:02:11.736
+<v Shane Jacobs>And so the main key question is,
+do they have an entity or do they not?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/26-1
+00:02:11.736 --> 00:02:15.164
+<v Shane Jacobs>If they don't,
+we use our employer of record. If they do,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/26-2
+00:02:15.164 --> 00:02:18.236
+<v Shane Jacobs>we're running the payroll for them in
+that country.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/26-3
+00:02:18.236 --> 00:02:20.837
+<v Shane Jacobs>The nice thing is it's all in one
+platform.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/26-4
+00:02:20.837 --> 00:02:25.564
+<v Shane Jacobs>So whether your client has contractors,
+EOR, direct payroll, it doesn't matter.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/26-5
+00:02:25.564 --> 00:02:29.878
+<v Shane Jacobs>We can all see them in one platform.
+And this is what you would see as a</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/26-6
+00:02:29.878 --> 00:02:32.241
+<v Shane Jacobs>service provider when you first log into</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/27-0
+00:02:32.321 --> 00:02:37.200
+<v Shane Jacobs>Of the system is kind of an overall view
+of all your clients and their headcount,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/27-1
+00:02:37.200 --> 00:02:41.364
+<v Shane Jacobs>so it does distinguish between
+contractors, direct payroll employees,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/27-2
+00:02:41.364 --> 00:02:45.171
+<v Shane Jacobs>and employer of record,
+so you can quickly see that from a kind</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/27-3
+00:02:45.171 --> 00:02:49.455
+<v Shane Jacobs>of overall headcount perspective.
+You can see here my different clients</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/27-4
+00:02:49.455 --> 00:02:51.001
+<v Shane Jacobs>that I have and all the...</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/30-0
+00:02:51.161 --> 00:02:54.311
+<v Shane Jacobs>workers that they might have,
+the growth that they're seeing,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/30-1
+00:02:54.311 --> 00:02:57.715
+<v Shane Jacobs>and then kind of where that distribution
+is by countrywide, right?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/30-2
+00:02:57.715 --> 00:03:01.728
+<v Shane Jacobs>So you're seeing all your clients and
+their international employees kind of in</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/30-3
+00:03:01.728 --> 00:03:04.979
+<v Shane Jacobs>one spot. I can, of course,
+toggle between EOR, direct payroll,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/30-4
+00:03:04.979 --> 00:03:08.281
+<v Shane Jacobs>or contractors and kind of see where
+things are at in the world.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/39-0
+00:03:10.681 --> 00:03:13.526
+<v Shane Jacobs>As I go through this,
+I'll go through this briefly,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/39-1
+00:03:13.526 --> 00:03:18.177
+<v Shane Jacobs>then I'll jump right into the client side,
+which is where most of the magic happens.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/39-2
+00:03:18.177 --> 00:03:22.827
+<v Shane Jacobs>Here's just my client list where I can go
+in there and see all my different clients.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/39-3
+00:03:22.827 --> 00:03:27.259
+<v Shane Jacobs>And then a general overall worker view of
+all the different types. So of course,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/39-4
+00:03:27.259 --> 00:03:29.995
+<v Shane Jacobs>I can look at just different types of
+engagement.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/39-5
+00:03:29.995 --> 00:03:33.441
+<v Shane Jacobs>If it's just my direct payroll employees,
+I can see them here.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/42-0
+00:03:33.881 --> 00:03:38.071
+<v Shane Jacobs>If I want to include EOR or others,
+I can always toggle to see what that</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/42-1
+00:03:38.071 --> 00:03:41.514
+<v Shane Jacobs>employee looks like.
+I'm seeing them also in terms of going</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/42-2
+00:03:41.514 --> 00:03:44.383
+<v Shane Jacobs>through the onboarding and those that are
+active.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/42-3
+00:03:44.383 --> 00:03:49.089
+<v Shane Jacobs>So I can see that general view of like,
+I've got a few that are still onboarding,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/42-4
+00:03:49.089 --> 00:03:52.761
+<v Shane Jacobs>where are they at in that process versus
+those that are active.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/45-0
+00:03:53.001 --> 00:03:54.521
+<v Shane Jacobs>And up and going, OK.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/48-0
+00:03:55.881 --> 00:04:00.464
+<v Shane Jacobs>The invoices here is the invoice section.
+There's two different types of invoices</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/48-1
+00:04:00.464 --> 00:04:03.370
+<v Shane Jacobs>depending on how you want to get set up
+with Prism.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/48-2
+00:04:03.370 --> 00:04:08.009
+<v Shane Jacobs>We have a reseller model where we would
+invoice you for the services and so forth.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/48-3
+00:04:08.009 --> 00:04:10.915
+<v Shane Jacobs>You would then turn around and invoice
+your client.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/48-4
+00:04:10.915 --> 00:04:15.330
+<v Shane Jacobs>We also have a referral model where we
+have a direct relationship with the end</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/48-5
+00:04:15.330 --> 00:04:15.721
+<v Shane Jacobs>client.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/49-0
+00:04:16.081 --> 00:04:20.611
+<v Shane Jacobs>And so we invoice them directly and then
+refer back to a referral commission,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/49-1
+00:04:20.611 --> 00:04:23.457
+<v Shane Jacobs>if you will.
+So those are different types there.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/49-2
+00:04:23.457 --> 00:04:27.173
+<v Shane Jacobs>In this scenario right here,
+this would be the service provider</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/49-3
+00:04:27.173 --> 00:04:30.541
+<v Shane Jacobs>invoice. Again,
+the invoice that we're sending from PRISM</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/49-4
+00:04:30.541 --> 00:04:35.129
+<v Shane Jacobs>to you in terms of what the services are
+provided. You can see what those are.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/49-5
+00:04:35.129 --> 00:04:37.161
+<v Shane Jacobs>Again, there's contractor invoices.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/50-0
+00:04:37.561 --> 00:04:41.241
+<v Shane Jacobs>Direct payroll and EOR,
+and so I could click on that.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/51-0
+00:04:42.521 --> 00:04:47.367
+<v Shane Jacobs>I can view the invoice and this is going
+to show simply the fees for our payroll</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/51-1
+00:04:47.367 --> 00:04:49.161
+<v Shane Jacobs>service in that country. Okay.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/58-0
+00:04:50.041 --> 00:04:54.542
+<v Shane Jacobs>And then the client invoice here is where
+you can have an invoice that would be</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/58-1
+00:04:54.542 --> 00:04:58.423
+<v Shane Jacobs>from you to your client with the
+recommended rates and so forth that</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/58-2
+00:04:58.423 --> 00:05:02.136
+<v Shane Jacobs>you're really selling this for. And again,
+you can see that here.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/58-3
+00:05:02.136 --> 00:05:06.411
+<v Shane Jacobs>Whether you're using our system or just
+rolling that up to your own system,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/58-4
+00:05:06.411 --> 00:05:10.180
+<v Shane Jacobs>you have all the back office
+documentation for what those invoices</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/58-5
+00:05:10.180 --> 00:05:11.361
+<v Shane Jacobs>look like right here.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/59-0
+00:05:13.681 --> 00:05:17.680
+<v Shane Jacobs>And then from an admin perspective,
+these are just the different admins that</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/59-1
+00:05:17.680 --> 00:05:20.796
+<v Shane Jacobs>I have in my system so that you can
+provide access to them.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/59-2
+00:05:20.796 --> 00:05:24.587
+<v Shane Jacobs>They can see different clients,
+you can segregate that so they only have</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/59-3
+00:05:24.587 --> 00:05:28.482
+<v Shane Jacobs>permission to see certain clients,
+or they can have a global overall view,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/59-4
+00:05:28.482 --> 00:05:29.001
+<v Shane Jacobs>et cetera.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/62-0
+00:05:30.361 --> 00:05:34.188
+<v Shane Jacobs>In the settings section is where the bank
+account information is going to go and</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/62-1
+00:05:34.188 --> 00:05:37.354
+<v Shane Jacobs>then your client pricing.
+So what you are going to be charging the</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/62-2
+00:05:37.354 --> 00:05:39.763
+<v Shane Jacobs>client if you're in a reseller
+environment, right?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/62-3
+00:05:39.763 --> 00:05:43.590
+<v Shane Jacobs>We're going to be providing the invoice
+and selling to you at a wholesale price.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/62-4
+00:05:43.590 --> 00:05:46.567
+<v Shane Jacobs>You in turn then resell that at a resale
+price to your client.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/62-5
+00:05:46.567 --> 00:05:49.401
+<v Shane Jacobs>And this is where you can set up all
+those different rates.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/63-0
+00:05:49.681 --> 00:05:50.601
+<v Shane Jacobs>and so forth here.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/70-0
+00:05:52.521 --> 00:05:55.773
+<v Shane Jacobs>From a payroll perspective,
+there's set up fees, ongoing fees,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/70-1
+00:05:55.773 --> 00:05:58.664
+<v Shane Jacobs>monthly fees, et cetera.
+I can provide price overrides.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/70-2
+00:05:58.664 --> 00:06:02.483
+<v Shane Jacobs>So if there's a particular country,
+and this happens very often in global</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/70-3
+00:06:02.483 --> 00:06:04.806
+<v Shane Jacobs>payroll,
+some countries are just really more</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/70-4
+00:06:04.806 --> 00:06:07.645
+<v Shane Jacobs>complicated.
+Brazil is always going to be complicated.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/70-5
+00:06:07.645 --> 00:06:11.103
+<v Shane Jacobs>So it usually is more expensive to do
+payroll, employer of record,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/70-6
+00:06:11.103 --> 00:06:13.374
+<v Shane Jacobs>and so forth in Brazil and other
+countries.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/70-7
+00:06:13.374 --> 00:06:16.161
+<v Shane Jacobs>So there's some overrides that we can
+adjust the pay.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/71-0
+00:06:16.521 --> 00:06:19.081
+<v Shane Jacobs>Those invoice amounts accordingly, OK?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/72-0
+00:06:20.361 --> 00:06:24.051
+<v Shane Jacobs>So that's kind of what you're seeing from
+an overall service provider view,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/72-1
+00:06:24.051 --> 00:06:27.983
+<v Shane Jacobs>is this service provider dashboard and
+all the settings that you can have there.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/72-2
+00:06:27.983 --> 00:06:30.313
+<v Shane Jacobs>Okay.
+Any questions on this before I dive right</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/72-3
+00:06:30.313 --> 00:06:33.274
+<v Shane Jacobs>into the client view?
+This is kind of more of an overview of</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/72-4
+00:06:33.274 --> 00:06:36.041
+<v Shane Jacobs>kind of what you would experience as a
+service provider.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/74-0
+00:06:36.721 --> 00:06:39.648
+<v Helen Niemcewicz>Can I just ask a question? This is Helen.
+I'm in sales.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/73-0
+00:06:39.401 --> 00:06:39.641
+<v Shane Jacobs>Yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/74-1
+00:06:39.648 --> 00:06:42.784
+<v Helen Niemcewicz>Probably a really dumb question because I
+don't do payroll,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/74-2
+00:06:42.784 --> 00:06:47.121
+<v Helen Niemcewicz>but what is the difference between direct
+payroll and EOR, the employee of record?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/75-0
+00:06:47.921 --> 00:06:51.739
+<v Shane Jacobs>Great question.
+It really determines on if your client</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/75-1
+00:06:51.739 --> 00:06:56.041
+<v Shane Jacobs>has a legal entity established in that
+foreign country. Okay.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/76-0
+00:06:55.481 --> 00:06:57.401
+<v Helen Niemcewicz>Legal, legal entity. OK.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/78-0
+00:06:57.081 --> 00:06:59.973
+<v Shane Jacobs>Yeah,
+and that entity could be a branch office,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/77-0
+00:06:59.801 --> 00:07:00.121
+<v Helen Niemcewicz>Right.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/78-1
+00:06:59.973 --> 00:07:02.925
+<v Shane Jacobs>a subsidiary, an LLC, something.
+If they do not,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/78-2
+00:07:02.925 --> 00:07:07.081
+<v Shane Jacobs>and they want to hire someone in that
+country, they must use an EOR.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/79-0
+00:07:07.001 --> 00:07:09.401
+<v Helen Niemcewicz>ER understood. Got it. Thank you.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/82-0
+00:07:08.441 --> 00:07:11.457
+<v Shane Jacobs>Yeah. Now,
+you will run across clients that are</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/82-1
+00:07:11.457 --> 00:07:14.598
+<v Shane Jacobs>doing that where they're paying someone
+directly.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/82-2
+00:07:14.598 --> 00:07:19.875
+<v Shane Jacobs>They don't have an entity in that country.
+You can do that, but it's not compliant.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/82-3
+00:07:19.875 --> 00:07:23.204
+<v Shane Jacobs>And it can,
+there's a really high risk and liability</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/82-4
+00:07:23.204 --> 00:07:26.597
+<v Shane Jacobs>associated with that,
+which is why employer of record</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/82-5
+00:07:26.597 --> 00:07:28.481
+<v Shane Jacobs>eliminates all that liability.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/85-0
+00:07:28.681 --> 00:07:32.380
+<v Helen Niemcewicz>Well, I have a,
+what if I have an existing client in the</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/83-0
+00:07:28.761 --> 00:07:29.081
+<v Shane Jacobs>Right.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/85-1
+00:07:32.380 --> 00:07:36.921
+<v Helen Niemcewicz>States and they now want to open a branch
+or put employees in Mexico?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/84-0
+00:07:32.441 --> 00:07:32.921
+<v Shane Jacobs>Mmh.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/86-0
+00:07:37.801 --> 00:07:38.761
+<v Shane Jacobs>Yeah, if...</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/87-0
+00:07:38.081 --> 00:07:40.521
+<v Helen Niemcewicz>No, no office in Mexico, just employees.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/88-0
+00:07:41.721 --> 00:07:44.681
+<v Shane Jacobs>Are they looking to establish an entity
+in Mexico?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/89-0
+00:07:44.841 --> 00:07:45.241
+<v Helen Niemcewicz>No.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/92-0
+00:07:45.881 --> 00:07:50.966
+<v Shane Jacobs>then they could use employer of record in
+Mexico. Absolutely. Yep. Yep.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/90-0
+00:07:49.401 --> 00:07:50.441
+<v Helen Niemcewicz>Okay, got it. Understood.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/92-1
+00:07:50.966 --> 00:07:56.333
+<v Shane Jacobs>Mexico actually has some pretty strict
+rules as it relates to employment in</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/92-2
+00:07:56.333 --> 00:08:00.429
+<v Shane Jacobs>Mexico, having an entity or not.
+They do not mess around.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/91-0
+00:07:56.561 --> 00:07:56.761
+<v Helen Niemcewicz>M.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/92-3
+00:08:00.429 --> 00:08:05.655
+<v Shane Jacobs>So they for sure do not want to just be
+wiring money to people in Mexico.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/92-4
+00:08:05.655 --> 00:08:06.361
+<v Shane Jacobs>But again,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/93-0
+00:08:06.641 --> 00:08:09.614
+<v Shane Jacobs>That entity piece is important,
+and it happens all the time.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/93-1
+00:08:09.614 --> 00:08:13.074
+<v Shane Jacobs>We want to hire these people,
+but we don't want to expand our business</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/93-2
+00:08:13.074 --> 00:08:15.657
+<v Shane Jacobs>into that country.
+So how do we legally employ them?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/93-3
+00:08:15.657 --> 00:08:18.921
+<v Shane Jacobs>And that's where employer of record
+happens in Mexico. Absolutely.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/94-0
+00:08:18.281 --> 00:08:21.881
+<v Helen Niemcewicz>But would you would you recommend that
+they establish an entity?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/95-0
+00:08:23.081 --> 00:08:23.401
+<v Antaeus Coe>The.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/97-0
+00:08:23.081 --> 00:08:26.444
+<v Helen Niemcewicz>In in your experience,
+as opposed to to do as opposed to to the</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/97-1
+00:08:26.444 --> 00:08:29.018
+<v Helen Niemcewicz>employer of record,
+if they establish an entity,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/97-2
+00:08:29.018 --> 00:08:30.121
+<v Helen Niemcewicz>what's the advantage?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/103-0
+00:08:31.321 --> 00:08:35.616
+<v Shane Jacobs>It's more of a business decision.
+From a strictly an employment perspective,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/98-0
+00:08:33.801 --> 00:08:34.321
+<v Helen Niemcewicz>Okay.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/103-1
+00:08:35.616 --> 00:08:39.018
+<v Shane Jacobs>I would not recommend it because
+establishing an entity now,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/99-0
+00:08:37.161 --> 00:08:37.641
+<v Helen Niemcewicz>Okay.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/100-0
+00:08:37.441 --> 00:08:37.921
+<v Antaeus Coe>Mhm.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/103-2
+00:08:39.018 --> 00:08:42.978
+<v Shane Jacobs>I have a legal presence in Mexico.
+I need to have a registered office.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/103-3
+00:08:42.978 --> 00:08:46.491
+<v Shane Jacobs>I need to have legal representation.
+I've got to report taxes.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/103-4
+00:08:46.491 --> 00:08:50.340
+<v Shane Jacobs>All these other things come in.
+So I always look at it as a business</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/102-0
+00:08:46.841 --> 00:08:49.161
+<v Helen Niemcewicz>Understood. Understood. Got it.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/101-0
+00:08:47.361 --> 00:08:47.881
+<v Antaeus Coe>Mmh.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/103-5
+00:08:50.340 --> 00:08:50.841
+<v Shane Jacobs>decision.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/108-0
+00:08:51.001 --> 00:08:54.910
+<v Shane Jacobs>What's your business looking to do in
+Mexico? If it's just access talent,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/104-0
+00:08:53.881 --> 00:08:54.361
+<v Antaeus Coe>Mmh.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/108-1
+00:08:54.910 --> 00:08:58.185
+<v Shane Jacobs>EOR all day long. If it's, no,
+I want to put a branch office,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/105-0
+00:08:57.401 --> 00:08:58.121
+<v Helen Niemcewicz>Understood.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/108-2
+00:08:58.185 --> 00:09:01.618
+<v Shane Jacobs>I want to be a sell directly,
+those other things come into play,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/106-0
+00:09:01.161 --> 00:09:01.401
+<v Helen Niemcewicz>No.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/108-3
+00:09:01.618 --> 00:09:04.840
+<v Shane Jacobs>then you would want to have an entity.
+So go ahead, Antaeus.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/108-4
+00:09:04.840 --> 00:09:08.801
+<v Shane Jacobs>You were going to mention something or
+some, or maybe it was someone else.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/107-0
+00:09:06.041 --> 00:09:06.681
+<v Bill Laffey>Yeah, and...</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/110-0
+00:09:08.601 --> 00:09:12.434
+<v Antaeus Coe>No, no, no, you covered it all.
+It's formal complex, especially...</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/110-1
+00:09:12.434 --> 00:09:16.038
+<v Antaeus Coe>Shane just nailed it.
+I don't want to beat a dead horse there.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/110-2
+00:09:16.038 --> 00:09:19.241
+<v Antaeus Coe>It was a great question, though. Great,
+great question.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/109-0
+00:09:16.921 --> 00:09:18.281
+<v Helen Niemcewicz>Okay, understood.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/112-0
+00:09:17.561 --> 00:09:22.679
+<v Bill Laffey>Yeah, and I was going to say, Helen, like,
+given our experience in the past with a</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/112-1
+00:09:22.679 --> 00:09:27.427
+<v Bill Laffey>certain big client of yours that we used
+to service that was in all kinds of</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/111-0
+00:09:26.121 --> 00:09:26.521
+<v Helen Niemcewicz>Right.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/112-2
+00:09:27.427 --> 00:09:30.387
+<v Bill Laffey>places,
+there was the talk of getting the legal</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/112-3
+00:09:30.387 --> 00:09:34.642
+<v Bill Laffey>entity put in place for them,
+but even getting an application filled</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/112-4
+00:09:34.642 --> 00:09:37.601
+<v Bill Laffey>out was complicated and cumbersome for
+them. So</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/113-0
+00:09:38.201 --> 00:09:42.441
+<v Bill Laffey>We essentially did the outsource PEO
+route, right?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/114-0
+00:09:41.161 --> 00:09:45.080
+<v Helen Niemcewicz>Right, okay. Well, it has no advantage.
+It sounds like there's no advantage to</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/114-1
+00:09:45.080 --> 00:09:47.361
+<v Helen Niemcewicz>establishing the entity, just problems.
+Okay.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/115-0
+00:09:48.281 --> 00:09:51.645
+<v Shane Jacobs>Yeah, yeah. Again,
+it's more of a business decision overall.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/115-1
+00:09:51.645 --> 00:09:54.458
+<v Shane Jacobs>I mean,
+now I've planted my flag in Mexico, right?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/115-2
+00:09:54.458 --> 00:09:57.988
+<v Shane Jacobs>And it's a big, that's a big deal.
+If it's just to hire people,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/115-3
+00:09:57.988 --> 00:10:00.579
+<v Shane Jacobs>it's usually not the right way to go.
+So yeah,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/115-4
+00:10:00.579 --> 00:10:04.605
+<v Shane Jacobs>and we could talk about some of those
+reasons why, but yeah, in general,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/115-5
+00:10:04.605 --> 00:10:06.921
+<v Shane Jacobs>that's the big decision they need to make.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/116-0
+00:10:06.961 --> 00:10:11.102
+<v Shane Jacobs>Do I want to establish an entity there?
+It's also really expensive.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/116-1
+00:10:11.102 --> 00:10:14.085
+<v Shane Jacobs>So if only talking about a handful of
+employees,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/116-2
+00:10:14.085 --> 00:10:18.651
+<v Shane Jacobs>the costs associated far outweigh the
+benefits of that entity versus we've</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/116-3
+00:10:18.651 --> 00:10:22.121
+<v Shane Jacobs>already done the legwork,
+just hire them through us. So.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/118-0
+00:10:22.761 --> 00:10:27.600
+<v Bill Laffey>Are there countries where you have to
+establish an entity because the EOR</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/117-0
+00:10:23.281 --> 00:10:23.481
+<v Shane Jacobs>Ring.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/118-1
+00:10:27.600 --> 00:10:30.281
+<v Bill Laffey>doesn't work? Or can you do EOR anywhere?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/121-0
+00:10:31.961 --> 00:10:34.891
+<v Shane Jacobs>I don't know of any.
+EOR is available everywhere.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/119-0
+00:10:33.641 --> 00:10:34.041
+<v Bill Laffey>Okay.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/121-1
+00:10:34.891 --> 00:10:38.348
+<v Shane Jacobs>The Isle of Man,
+if you ever just try to go to the Isle of</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/121-2
+00:10:38.348 --> 00:10:42.976
+<v Shane Jacobs>Man, you cannot do EOR there because they,
+but you also can't set up a foreign</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/121-3
+00:10:42.976 --> 00:10:45.789
+<v Shane Jacobs>entity.
+And a citizen of the Isle of Man has to</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/121-4
+00:10:45.789 --> 00:10:50.007
+<v Shane Jacobs>set up the entity themselves.
+I don't think you're going to the Isle of</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/120-0
+00:10:48.681 --> 00:10:49.321
+<v Bill Laffey>All right, well.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/121-5
+00:10:50.007 --> 00:10:50.241
+<v Shane Jacobs>Man.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/122-0
+00:10:50.321 --> 00:10:51.881
+<v Shane Jacobs>But that's the only one I can think of.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/124-0
+00:10:50.481 --> 00:10:53.775
+<v Bill Laffey>Yeah, Helen, that's on the list.
+That's on the blacklist,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/124-1
+00:10:53.775 --> 00:10:55.081
+<v Bill Laffey>then we can't go there.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/128-0
+00:10:54.441 --> 00:10:58.295
+<v Shane Jacobs>Yeah, yeah. There are some countries,
+and this is very common,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/125-0
+00:10:54.601 --> 00:10:55.921
+<v Helen Niemcewicz>Yeah, yeah, exactly.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/128-1
+00:10:58.295 --> 00:11:02.515
+<v Shane Jacobs>it's even a practice of ours.
+If you have an entity in that country,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/128-2
+00:11:02.515 --> 00:11:06.123
+<v Shane Jacobs>you may not use EOR.
+You would have to hire them directly.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/127-0
+00:11:06.121 --> 00:11:06.681
+<v Bill Laffey>Gotcha.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/128-3
+00:11:06.123 --> 00:11:10.649
+<v Shane Jacobs>So that's something that also comes into
+play. Canada, Mexico especially,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/128-4
+00:11:10.649 --> 00:11:14.441
+<v Shane Jacobs>if I have a legal entity,
+I cannot use an employer of record.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/130-0
+00:11:14.841 --> 00:11:18.725
+<v Shane Jacobs>One of the main reasons why is there is a
+law that they established,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/130-1
+00:11:18.725 --> 00:11:22.103
+<v Shane Jacobs>I want to say five or six years ago.
+It's a profit sharing,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/130-2
+00:11:22.103 --> 00:11:26.099
+<v Shane Jacobs>basically payment to all your employees.
+If I have a Mexican business,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/130-3
+00:11:26.099 --> 00:11:28.632
+<v Shane Jacobs>the end of the year,
+I have certain profits.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/130-4
+00:11:28.632 --> 00:11:31.165
+<v Shane Jacobs>The government calculates through a
+formula,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/130-5
+00:11:31.165 --> 00:11:33.641
+<v Shane Jacobs>the profit sharing I send to the
+employees.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/129-0
+00:11:31.481 --> 00:11:34.921
+<v Helen Niemcewicz>And you have to share, yeah,
+you have to share, yes.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/131-0
+00:11:34.241 --> 00:11:38.011
+<v Shane Jacobs>what companies were doing was like, oh,
+they're not my employees that are through</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/131-1
+00:11:38.011 --> 00:11:40.907
+<v Shane Jacobs>an employer of record.
+So I don't have to share those profits.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/131-2
+00:11:40.907 --> 00:11:43.573
+<v Shane Jacobs>And the Mexican government said,
+that's not how it works.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/131-3
+00:11:43.573 --> 00:11:46.515
+<v Shane Jacobs>So they stopped that and said,
+if you have an entity in Mexico,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/131-4
+00:11:46.515 --> 00:11:50.192
+<v Shane Jacobs>you may not use an employer of record.
+So anyway, so yeah, lots of reasons why,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/131-5
+00:11:50.192 --> 00:11:52.261
+<v Shane Jacobs>but most of the time,
+if you have an entity,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/131-6
+00:11:52.261 --> 00:11:53.961
+<v Shane Jacobs>you cannot use an employer of record.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/132-0
+00:11:54.201 --> 00:11:54.601
+<v Shane Jacobs>Sun.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/133-0
+00:11:56.161 --> 00:11:58.882
+<v Shane Jacobs>Okay,
+so let me jump right into what your</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/133-1
+00:11:58.882 --> 00:12:02.899
+<v Shane Jacobs>client would be seeing directly with
+interfacing with theirs.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/133-2
+00:12:02.899 --> 00:12:08.211
+<v Shane Jacobs>And the nice thing about the platform is
+that you can go into and impersonate and</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/133-3
+00:12:08.211 --> 00:12:12.422
+<v Shane Jacobs>basically dive into their instance, right?
+If you're a reseller,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/133-4
+00:12:12.422 --> 00:12:15.401
+<v Shane Jacobs>I can look inside my client's Prism
+platform.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/136-0
+00:12:15.441 --> 00:12:19.181
+<v Shane Jacobs>which is located here,
+and either provide any support or answer</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/136-1
+00:12:19.181 --> 00:12:21.985
+<v Shane Jacobs>questions.
+But this is where they now would see</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/136-2
+00:12:21.985 --> 00:12:25.665
+<v Shane Jacobs>their global employees, right?
+This dashboard gives us a quick</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/136-3
+00:12:25.665 --> 00:12:29.989
+<v Shane Jacobs>indication on what we need to do,
+and it depends on the type of employee,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/136-4
+00:12:29.989 --> 00:12:32.735
+<v Shane Jacobs>right?
+If I have employer of record employees,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/136-5
+00:12:32.735 --> 00:12:33.961
+<v Shane Jacobs>I could go into here.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/145-0
+00:12:34.521 --> 00:12:37.793
+<v Shane Jacobs>and make sure that the pay period looks
+correct. Now,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/145-1
+00:12:37.793 --> 00:12:41.308
+<v Shane Jacobs>I've got a lot of different countries
+associated in here,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/145-2
+00:12:41.308 --> 00:12:45.792
+<v Shane Jacobs>but if I quickly open up Ava's,
+I can see all her wages, taxes, benefits.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/145-3
+00:12:45.792 --> 00:12:50.336
+<v Shane Jacobs>I can expand this to see everything to
+make sure everything looks correct.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/145-4
+00:12:50.336 --> 00:12:55.001
+<v Shane Jacobs>Down here below, this is a great feature.
+It shows quickly what the employee</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/148-0
+00:12:55.041 --> 00:12:58.599
+<v Shane Jacobs>gross to net looks like.
+You see there's quite a bit of taxes here</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/148-1
+00:12:58.599 --> 00:13:01.307
+<v Shane Jacobs>and what the total employer costs are
+going to be.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/148-2
+00:13:01.307 --> 00:13:05.289
+<v Shane Jacobs>And that's something that as you get
+involved in global payroll and EOR is</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/148-3
+00:13:05.289 --> 00:13:08.794
+<v Shane Jacobs>that the social charges,
+the payroll taxes in other countries are</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/148-4
+00:13:08.794 --> 00:13:13.148
+<v Shane Jacobs>very different and can be very expensive.
+So just having an understanding of what</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/148-5
+00:13:13.148 --> 00:13:16.121
+<v Shane Jacobs>that looks like here.
+And it actually gives you a quick</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/151-0
+00:13:16.921 --> 00:13:19.694
+<v Shane Jacobs>currency conversion from Canadian to US
+dollars.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/151-1
+00:13:19.694 --> 00:13:22.749
+<v Shane Jacobs>So you just kind of see quickly what that
+looks like.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/151-2
+00:13:22.749 --> 00:13:25.238
+<v Shane Jacobs>So this would be an EOR type of pay
+period.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/151-3
+00:13:25.238 --> 00:13:29.707
+<v Shane Jacobs>If I go back to the dashboard and they
+have a direct entity and they're paying</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/151-4
+00:13:29.707 --> 00:13:33.101
+<v Shane Jacobs>them directly. Again, similarly,
+here's the one for Mexico.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/151-5
+00:13:33.101 --> 00:13:35.081
+<v Shane Jacobs>I would show them in Mexican pesos.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/154-0
+00:13:35.801 --> 00:13:40.171
+<v Shane Jacobs>their wages, taxes, everything here,
+broken down and then converted quickly</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/154-1
+00:13:40.171 --> 00:13:44.770
+<v Shane Jacobs>into US dollars. Also the employer costs.
+There's quite a bit of employer costs</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/154-2
+00:13:44.770 --> 00:13:48.449
+<v Shane Jacobs>associated with Mexico,
+so they can quickly see what that looks</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/154-3
+00:13:48.449 --> 00:13:49.081
+<v Shane Jacobs>like. Okay.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/155-0
+00:13:50.361 --> 00:13:52.201
+<v Shane Jacobs>So, this is where that would, yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/158-0
+00:13:50.601 --> 00:13:53.881
+<v Bill Laffey>Is there a way to drill down into those
+costs?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/162-0
+00:13:55.721 --> 00:14:01.260
+<v Bill Laffey>Like I see, like, uh,
+tax and contributions, like, is, ohh,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/164-0
+00:13:58.841 --> 00:14:02.488
+<v Shane Jacobs>Yeah, you can drill into that.
+So you can see what the specific</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/162-1
+00:14:01.260 --> 00:14:02.921
+<v Bill Laffey>right there, okay.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/164-1
+00:14:02.488 --> 00:14:05.279
+<v Shane Jacobs>insurance, payroll tax, et cetera.
+Each country,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/164-2
+00:14:05.279 --> 00:14:09.210
+<v Shane Jacobs>they have a list of all the required
+taxes. You can drill into that.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/164-3
+00:14:09.210 --> 00:14:10.121
+<v Shane Jacobs>Absolutely. Yep.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/168-0
+00:14:12.521 --> 00:14:19.492
+<v Bill Laffey>And is there an option to not show the
+detail either or or like other than that,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/168-1
+00:14:19.492 --> 00:14:22.761
+<v Bill Laffey>like like to bundle an invoice versus?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/169-0
+00:14:24.041 --> 00:14:24.361
+<v Shane Jacobs>Um...</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/170-0
+00:14:24.281 --> 00:14:24.921
+<v Bill Laffey>Ors.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/171-0
+00:14:25.841 --> 00:14:27.561
+<v Antaeus Coe>What should worry there, Bill?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/175-0
+00:14:29.001 --> 00:14:34.617
+<v Bill Laffey>We just have clients on the PEO side
+domestically where we bundle the invoice</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/175-1
+00:14:34.617 --> 00:14:39.945
+<v Bill Laffey>and there's like a service fee and that
+might include like taxes as well.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/175-2
+00:14:39.945 --> 00:14:45.705
+<v Bill Laffey>So everything's just one number basically.
+Like if we say we're charging them a</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/174-0
+00:14:40.841 --> 00:14:41.401
+<v Shane Jacobs>Oh, okay.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/175-3
+00:14:45.705 --> 00:14:49.161
+<v Bill Laffey>percentage of payroll, of gross payroll,
+right?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/176-0
+00:14:49.641 --> 00:14:54.129
+<v Bill Laffey>gross wages, we wouldn't show the detail.
+But I don't know if it really matters so</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/176-1
+00:14:54.129 --> 00:14:57.481
+<v Bill Laffey>much. I just wondered,
+because we were looking at the detail.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/177-0
+00:14:57.881 --> 00:15:01.101
+<v Shane Jacobs>Yeah, and um,
+have you decided or did on Tancy discuss</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/177-1
+00:15:01.101 --> 00:15:05.081
+<v Shane Jacobs>whether they wanted to be a reseller or a
+referral arrangement yet?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/179-0
+00:15:05.481 --> 00:15:09.001
+<v Antaeus Coe>We didn't get that that deep,
+I don't believe. Yeah, yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/178-0
+00:15:07.001 --> 00:15:08.041
+<v Shane Jacobs>Okay, that's fine.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/180-0
+00:15:08.121 --> 00:15:13.107
+<v Bill Laffey>Yeah, I mean, honestly, we would be,
+I mean, we could, we would be a reseller,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/181-0
+00:15:12.601 --> 00:15:14.401
+<v Helen Niemcewicz>Reseller would be a reseller, yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/180-1
+00:15:13.107 --> 00:15:13.801
+<v Bill Laffey>absolutely.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/183-0
+00:15:13.641 --> 00:15:16.684
+<v Shane Jacobs>Okay. So in that, yeah, in that respect,
+absolutely,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/182-0
+00:15:15.321 --> 00:15:16.761
+<v Bill Laffey>That's why Helen's on the phone.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/183-1
+00:15:16.684 --> 00:15:20.243
+<v Shane Jacobs>you would not need to share all the
+details with your client.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/183-2
+00:15:20.243 --> 00:15:23.516
+<v Shane Jacobs>You could just simply roll that number up
+and say, well,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/183-3
+00:15:23.516 --> 00:15:26.673
+<v Shane Jacobs>here's the total amount here.
+And that gets, you know,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/183-4
+00:15:26.673 --> 00:15:31.380
+<v Shane Jacobs>there's your payroll or overall taxes or
+however you want to do that through your</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/183-5
+00:15:31.380 --> 00:15:32.241
+<v Shane Jacobs>payroll system.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/184-0
+00:15:32.521 --> 00:15:34.804
+<v Shane Jacobs>So yeah,
+so you don't necessarily need to show all</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/184-1
+00:15:34.804 --> 00:15:36.281
+<v Shane Jacobs>the details if you don't want to.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/186-0
+00:15:37.641 --> 00:15:40.838
+<v Bill Laffey>Yeah,
+I don't know how it would go into our</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/185-0
+00:15:38.041 --> 00:15:40.281
+<v Shane Jacobs>But what we're going to provide to you is
+this level.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/186-1
+00:15:40.838 --> 00:15:45.850
+<v Bill Laffey>system. No, I get it. Okay.
+And then I guess just from a quick thing</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/186-2
+00:15:45.850 --> 00:15:51.152
+<v Bill Laffey>on the billing perspective, like,
+is everything like a per check type of</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/186-3
+00:15:51.152 --> 00:15:56.818
+<v Bill Laffey>fee that you charge us that we would
+charge or there's no like license fee or</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/186-4
+00:15:56.818 --> 00:15:58.561
+<v Bill Laffey>anything. It's just a...</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/187-0
+00:15:59.161 --> 00:16:01.881
+<v Bill Laffey>based on employees and number of checks
+being run.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/189-0
+00:16:02.361 --> 00:16:04.718
+<v Shane Jacobs>Yeah,
+so are we talking about employer of</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/189-1
+00:16:04.718 --> 00:16:08.927
+<v Shane Jacobs>record, that service specifically? Yeah.
+There's just a monthly fee. Yeah,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/188-0
+00:16:05.721 --> 00:16:07.881
+<v Bill Laffey>Yeah, yeah, I think generally, yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/189-2
+00:16:08.927 --> 00:16:12.686
+<v Shane Jacobs>there's just one monthly fee.
+They're in the invoice that you see.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/189-3
+00:16:12.686 --> 00:16:14.201
+<v Shane Jacobs>And let me go back to that.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/191-0
+00:16:15.601 --> 00:16:20.750
+<v Helen Niemcewicz>Does that fee is that fee affected by the
+number of employees or just the monthly</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/190-0
+00:16:16.401 --> 00:16:17.281
+<v Shane Jacobs>In fact, I will go to the end.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/191-1
+00:16:20.750 --> 00:16:21.001
+<v Helen Niemcewicz>fee?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/198-0
+00:16:21.761 --> 00:16:25.603
+<v Shane Jacobs>there's a per employee per month fee.
+And if I go to the EOR,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/198-1
+00:16:25.603 --> 00:16:29.010
+<v Shane Jacobs>this is just an example.
+If I go to this invoice here,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/198-2
+00:16:29.010 --> 00:16:33.719
+<v Shane Jacobs>then you will see that it's pretty simple,
+our invoices. There's the wages,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/198-3
+00:16:33.719 --> 00:16:38.242
+<v Shane Jacobs>the actual payment to the employee,
+the social charges and taxes in that</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/198-4
+00:16:38.242 --> 00:16:41.401
+<v Shane Jacobs>country, and then our fee.
+So it's a really pretty</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/202-0
+00:16:41.441 --> 00:16:44.449
+<v Shane Jacobs>basic,
+it's a per employee per month fee for the</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/202-1
+00:16:44.449 --> 00:16:48.132
+<v Shane Jacobs>EOR services. Yeah.
+There's some setup fees and deposit and</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/199-0
+00:16:46.281 --> 00:16:46.761
+<v Bill Laffey>Okay.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/202-2
+00:16:48.132 --> 00:16:52.368
+<v Shane Jacobs>some other things that Antaeus will
+outline, but on a monthly basis,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/202-3
+00:16:52.368 --> 00:16:54.761
+<v Shane Jacobs>it's just payroll, taxes, and our fees.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/203-0
+00:16:55.641 --> 00:16:58.803
+<v Helen Niemcewicz>Question,
+is it a setup fee just for us or is it a</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/203-1
+00:16:58.803 --> 00:17:02.521
+<v Helen Niemcewicz>setup fee for each of the people that we
+use as a reseller?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/204-0
+00:17:03.601 --> 00:17:08.906
+<v Shane Jacobs>It would be a it would be a setup fee per
+employee that it gets onboarded onto the</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/204-1
+00:17:08.906 --> 00:17:09.161
+<v Shane Jacobs>EOR.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/205-0
+00:17:11.161 --> 00:17:11.561
+<v Bill Laffey>Okay.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/207-0
+00:17:11.481 --> 00:17:14.665
+<v Shane Jacobs>So each time your client onboards a new
+employee in Mexico,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/207-1
+00:17:14.665 --> 00:17:16.681
+<v Shane Jacobs>there's a setup fee for that employee.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/209-0
+00:17:17.001 --> 00:17:19.284
+<v Helen Niemcewicz>Okay,
+what happens if I have a second client?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/206-0
+00:17:17.161 --> 00:17:17.401
+<v Bill Laffey>Yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/209-1
+00:17:19.284 --> 00:17:22.361
+<v Helen Niemcewicz>Is there another setup fee or is it just
+one setup fee to us?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/208-0
+00:17:20.841 --> 00:17:21.321
+<v Shane Jacobs>Yes.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/212-0
+00:17:22.681 --> 00:17:26.292
+<v Shane Jacobs>Nope, it's a per employee setup fee.
+So even another client, yep,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/210-0
+00:17:24.521 --> 00:17:25.961
+<v Helen Niemcewicz>per client.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/212-1
+00:17:26.292 --> 00:17:30.450
+<v Shane Jacobs>it's always dependent on the employee.
+So all the fees are **** around that</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/211-0
+00:17:26.961 --> 00:17:27.641
+<v Helen Niemcewicz>Matt per client.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/212-2
+00:17:30.450 --> 00:17:34.499
+<v Shane Jacobs>employee. So there's a setup fee,
+a deposit, another fees for that setup,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/212-3
+00:17:34.499 --> 00:17:37.508
+<v Shane Jacobs>and then there's a monthly fee just for
+that employee.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/212-4
+00:17:37.508 --> 00:17:39.641
+<v Shane Jacobs>And that's always associated with that.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/213-0
+00:17:41.401 --> 00:17:46.210
+<v Bill Laffey>Is this like, is this number here,
+like $599 per month, like,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/213-1
+00:17:46.210 --> 00:17:49.001
+<v Bill Laffey>is that typical? That's pretty high.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/216-0
+00:17:48.281 --> 00:17:51.662
+<v Shane Jacobs>That's a good average.
+That's kind of an average for the end</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/216-1
+00:17:51.662 --> 00:17:54.322
+<v Shane Jacobs>client,
+what they would pay from an employer of</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/214-0
+00:17:52.601 --> 00:17:54.201
+<v Antaeus Coe>Right, that's the client, yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/216-2
+00:17:54.322 --> 00:17:57.703
+<v Shane Jacobs>record. Yeah. Yeah.
+You as a reseller would have a wholesale</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/215-0
+00:17:55.081 --> 00:17:57.041
+<v Bill Laffey>Yeah, I know it definitely.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/216-3
+00:17:57.703 --> 00:17:58.201
+<v Shane Jacobs>rate. So.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/218-0
+00:17:59.241 --> 00:18:04.065
+<v Bill Laffey>Okay, okay, good. But I, I mean,
+what kind of number are we talking about?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/217-0
+00:18:01.321 --> 00:18:02.201
+<v Shane Jacobs>But that is what...</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/218-1
+00:18:04.065 --> 00:18:05.801
+<v Bill Laffey>The wholesale rate, like...</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/221-0
+00:18:07.001 --> 00:18:10.372
+<v Bill Laffey>80% of that or just generally. I mean,
+you know, I'm not holding you to anything.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/219-0
+00:18:07.161 --> 00:18:07.801
+<v Shane Jacobs>Yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/220-0
+00:18:09.321 --> 00:18:10.121
+<v Shane Jacobs>Yeah, it's...</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/221-1
+00:18:10.372 --> 00:18:11.481
+<v Bill Laffey>I'm just kind of wondering.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/226-0
+00:18:11.641 --> 00:18:15.206
+<v Shane Jacobs>I think it's 40% is about what the rate
+is lower than that.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/226-1
+00:18:15.206 --> 00:18:19.482
+<v Shane Jacobs>So it's right in there in the contract.
+So we have the table built out.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/222-0
+00:18:16.281 --> 00:18:16.841
+<v Bill Laffey>Okay.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/223-0
+00:18:19.241 --> 00:18:19.641
+<v Bill Laffey>Okay.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/226-2
+00:18:19.482 --> 00:18:22.928
+<v Shane Jacobs>There's 3 different tiers of countries
+that, like I said,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/226-3
+00:18:22.928 --> 00:18:27.442
+<v Shane Jacobs>there's some countries that are more or
+less expensive or more complicated,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/224-0
+00:18:25.641 --> 00:18:26.121
+<v Bill Laffey>Yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/226-4
+00:18:27.442 --> 00:18:31.481
+<v Shane Jacobs>but it's about a 40% right. Now,
+that's our suggested retail price.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/225-0
+00:18:28.921 --> 00:18:29.401
+<v Bill Laffey>Okay.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/228-0
+00:18:31.721 --> 00:18:35.830
+<v Shane Jacobs>But if you want to lower or raise that
+based on what you're selling it for,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/228-1
+00:18:35.830 --> 00:18:38.966
+<v Shane Jacobs>that's up to you.
+But we kind of give you guidance what's</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/227-0
+00:18:37.401 --> 00:18:37.881
+<v Bill Laffey>Gotcha.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/228-2
+00:18:38.966 --> 00:18:41.561
+<v Shane Jacobs>pretty much market average for those
+countries.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/231-0
+00:18:41.641 --> 00:18:44.168
+<v Bill Laffey>Yeah,
+and I know I've been shopping some of</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/231-1
+00:18:44.168 --> 00:18:48.703
+<v Bill Laffey>this stuff in the past, outsourcing it,
+like it's pretty expensive in a lot of</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/229-0
+00:18:46.921 --> 00:18:47.241
+<v Shane Jacobs>Yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/231-2
+00:18:48.703 --> 00:18:51.401
+<v Bill Laffey>countries, but way more than the US,
+honestly.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/230-0
+00:18:49.161 --> 00:18:50.281
+<v Shane Jacobs>Yeah, yeah, it can be.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/235-0
+00:18:51.641 --> 00:18:54.485
+<v Shane Jacobs>Absolutely.
+That's sometimes the biggest hurdle in</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/232-0
+00:18:52.521 --> 00:18:52.921
+<v Bill Laffey>Yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/235-1
+00:18:54.485 --> 00:18:57.720
+<v Shane Jacobs>discussing EOR,
+especially if they've only dealt with the</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/235-2
+00:18:57.720 --> 00:19:00.229
+<v Shane Jacobs>US.
+They're used to single digit or very low</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/235-3
+00:19:00.229 --> 00:19:03.575
+<v Shane Jacobs>headcount PEPMs.
+But when they're going to another country,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/235-4
+00:19:03.575 --> 00:19:07.702
+<v Shane Jacobs>it is a lot more because like we
+discussed earlier, we've done the setup.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/235-5
+00:19:07.702 --> 00:19:11.103
+<v Shane Jacobs>We set up a company,
+we're doing all the required government</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/235-6
+00:19:11.103 --> 00:19:12.441
+<v Shane Jacobs>regulations, accounting.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/236-0
+00:19:13.081 --> 00:19:17.052
+<v Shane Jacobs>all those things where they're now not
+having to do that. So there's,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/236-1
+00:19:17.052 --> 00:19:20.229
+<v Shane Jacobs>it's a more expensive offering,
+but it comes with that.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/236-2
+00:19:20.229 --> 00:19:23.802
+<v Shane Jacobs>The other alternative,
+I got to set up an entity that's 10s of</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/236-3
+00:19:23.802 --> 00:19:27.603
+<v Shane Jacobs>thousands of dollars and ongoing
+maintenance. There's a lot to it.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/236-4
+00:19:27.603 --> 00:19:31.119
+<v Shane Jacobs>So sometimes when they're new to the EOR
+type of arrangement,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/236-5
+00:19:31.119 --> 00:19:33.161
+<v Shane Jacobs>it can be a little bit shocking, but</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/237-0
+00:19:33.281 --> 00:19:36.641
+<v Shane Jacobs>Once they understand it,
+then it usually is like, okay,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/237-1
+00:19:36.641 --> 00:19:39.521
+<v Shane Jacobs>that makes more sense. So yeah, okay.
+So again,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/237-2
+00:19:39.521 --> 00:19:44.561
+<v Shane Jacobs>this is what I'm looking at from a client
+perspective. I guess quickly go in there,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/237-3
+00:19:44.561 --> 00:19:48.401
+<v Shane Jacobs>make sure all the payroll looks good and
+approve it from there.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/237-4
+00:19:48.401 --> 00:19:52.721
+<v Shane Jacobs>Reimbursements happen through our system.
+So employees would submit any</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/237-5
+00:19:52.721 --> 00:19:54.041
+<v Shane Jacobs>reimbursable expenses.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/238-0
+00:19:54.361 --> 00:19:56.841
+<v Shane Jacobs>expenses, I can go and review all those.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/241-0
+00:19:59.561 --> 00:20:03.033
+<v Shane Jacobs>And I can do it by engagement.
+I can go into my EOR employees here,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/241-1
+00:20:03.033 --> 00:20:04.921
+<v Shane Jacobs>and then that will pull up just them.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/250-0
+00:20:06.281 --> 00:20:09.793
+<v Shane Jacobs>Let's look through all of them.
+There we go. All the expenses, right?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/250-1
+00:20:09.793 --> 00:20:12.803
+<v Shane Jacobs>And I can look into those quickly,
+see what the expense is.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/250-2
+00:20:12.803 --> 00:20:16.565
+<v Shane Jacobs>The receipt gets popped up here,
+just like any other expense system you're</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/250-3
+00:20:16.565 --> 00:20:18.772
+<v Shane Jacobs>using. Now we want to,
+those EOR employees,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/250-4
+00:20:18.772 --> 00:20:22.584
+<v Shane Jacobs>we want to do the reimbursable expenses
+through us as we're the employer of</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/250-5
+00:20:22.584 --> 00:20:24.841
+<v Shane Jacobs>record.
+We need to double check that they're</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/251-0
+00:20:25.081 --> 00:20:28.527
+<v Shane Jacobs>obviously legitimate and that in some
+countries, they may or may not be taxable.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/251-1
+00:20:28.527 --> 00:20:31.036
+<v Shane Jacobs>So we just always have to process that
+through the system.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/251-2
+00:20:31.036 --> 00:20:33.418
+<v Shane Jacobs>And as long as they're approved before
+the cutoff date,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/251-3
+00:20:33.418 --> 00:20:35.161
+<v Shane Jacobs>they'll be paid out in the next paycheck.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/257-0
+00:20:37.801 --> 00:20:41.885
+<v Shane Jacobs>Time off as well.
+I can view all my time off requests here.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/257-1
+00:20:41.885 --> 00:20:45.764
+<v Shane Jacobs>Now in as an employer of record in Mexico,
+particularly,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/257-2
+00:20:45.764 --> 00:20:50.869
+<v Shane Jacobs>we will have all and honor all the
+statutory holidays that are provided in</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/257-3
+00:20:50.869 --> 00:20:56.041
+<v Shane Jacobs>Mexico, along with any paid time off,
+leaves, any of those types of things.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/260-0
+00:20:56.521 --> 00:21:00.160
+<v Shane Jacobs>As the employee of record,
+we must honor what the Mexican government</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/260-1
+00:21:00.160 --> 00:21:02.850
+<v Shane Jacobs>states as the baseline.
+You can always offer more.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/260-2
+00:21:02.850 --> 00:21:07.121
+<v Shane Jacobs>Talking to another client the other week
+where they give all their international</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/260-3
+00:21:07.121 --> 00:21:10.233
+<v Shane Jacobs>employees US holidays off as an extra
+bonus. But we can't,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/260-4
+00:21:10.233 --> 00:21:14.135
+<v Shane Jacobs>unless you are paying in holiday pay,
+you have to honor the vacations and</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/260-5
+00:21:14.135 --> 00:21:17.721
+<v Shane Jacobs>holidays that they have in Mexico,
+which are going to be different.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/261-0
+00:21:17.761 --> 00:21:20.215
+<v Shane Jacobs>in the United States,
+sometimes a lot more than what we're used</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/261-1
+00:21:20.215 --> 00:21:20.521
+<v Shane Jacobs>to here.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/263-0
+00:21:21.801 --> 00:21:25.322
+<v Shane Jacobs>Well, we manage that all for you.
+You don't have to worry about what those</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/262-0
+00:21:22.041 --> 00:21:22.441
+<v Bill Laffey>Okay.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/263-1
+00:21:25.322 --> 00:21:27.950
+<v Shane Jacobs>are. We manage all the vacation,
+all the paid time off,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/263-2
+00:21:27.950 --> 00:21:31.001
+<v Shane Jacobs>all the accruals and so forth,
+and I'll show you how that looks.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/266-0
+00:21:33.161 --> 00:21:35.728
+<v Shane Jacobs>Yeah,
+and there's other reminders and so forth.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/266-1
+00:21:35.728 --> 00:21:40.006
+<v Shane Jacobs>So that's kind of what the dashboard
+looks like. I can look at my overall team.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/266-2
+00:21:40.006 --> 00:21:42.413
+<v Shane Jacobs>Again,
+if I can look at the types of workers</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/266-3
+00:21:42.413 --> 00:21:43.161
+<v Shane Jacobs>that they are.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/271-0
+00:21:45.401 --> 00:21:49.386
+<v Shane Jacobs>Here's the type in my EOR workers here.
+I can look and see where they're at.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/271-1
+00:21:49.386 --> 00:21:52.077
+<v Shane Jacobs>Some are pending signature.
+They've been onboarded,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/271-2
+00:21:52.077 --> 00:21:56.373
+<v Shane Jacobs>but still hasn't completed that process.
+And then here I can look at all my active</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/271-3
+00:21:56.373 --> 00:22:00.358
+<v Shane Jacobs>employees here from an EOR perspective.
+And I can look at them specifically,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/271-4
+00:22:00.358 --> 00:22:02.687
+<v Shane Jacobs>look at their contract,
+what they're making.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/271-5
+00:22:02.687 --> 00:22:04.601
+<v Shane Jacobs>Let's look at their profile directly.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/278-0
+00:22:04.881 --> 00:22:08.683
+<v Shane Jacobs>And I can see all the documentation that
+might be listed there,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/278-1
+00:22:08.683 --> 00:22:12.247
+<v Shane Jacobs>any payments that I have made to her
+throughout the months,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/278-2
+00:22:12.247 --> 00:22:17.059
+<v Shane Jacobs>what her contract looks like, time off,
+reimbursement, all that is located here.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/278-3
+00:22:17.059 --> 00:22:20.267
+<v Shane Jacobs>So this is kind of your HR system that
+you're seeing,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/278-4
+00:22:20.267 --> 00:22:22.761
+<v Shane Jacobs>that your client is seeing for their team.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/279-0
+00:22:25.561 --> 00:22:27.721
+<v Shane Jacobs>Let's see, I want to get over to here.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/288-0
+00:22:30.441 --> 00:22:33.576
+<v Shane Jacobs>There we go. So here's,
+I'm just let me look at Anna real quick</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/288-1
+00:22:33.576 --> 00:22:37.005
+<v Shane Jacobs>and show you a little bit more
+information as an EOR employee. Again,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/288-2
+00:22:37.005 --> 00:22:39.992
+<v Shane Jacobs>the time off is important.
+It's going to have all the public</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/288-3
+00:22:39.992 --> 00:22:42.344
+<v Shane Jacobs>holidays.
+So here's the Netherlands is going to</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/288-4
+00:22:42.344 --> 00:22:44.841
+<v Shane Jacobs>show all the public holidays that she has
+allowed.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/293-0
+00:22:46.321 --> 00:22:50.541
+<v Shane Jacobs>what type of sick leave, annual leave.
+There's lots of different categories in</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/293-1
+00:22:50.541 --> 00:22:53.318
+<v Shane Jacobs>different countries,
+but we track all of that here.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/293-2
+00:22:53.318 --> 00:22:57.110
+<v Shane Jacobs>And so when I want to create a request,
+I just go into here, you know,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/293-3
+00:22:57.110 --> 00:22:59.994
+<v Shane Jacobs>what is this going to be for?
+When is this happening?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/293-4
+00:22:59.994 --> 00:23:03.412
+<v Shane Jacobs>Is it an annual leave, sick leave,
+et cetera, partial full day,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/293-5
+00:23:03.412 --> 00:23:05.601
+<v Shane Jacobs>and then that gets sent off for approval.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/294-0
+00:23:05.721 --> 00:23:07.881
+<v Shane Jacobs>The nice thing is that you can...</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/303-0
+00:23:09.721 --> 00:23:14.664
+<v Shane Jacobs>set up who is going to approve that work
+off. I can set up as a direct manager.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/303-1
+00:23:14.664 --> 00:23:19.731
+<v Shane Jacobs>I can have different levels of approval,
+but all that happens here in the system.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/303-2
+00:23:19.731 --> 00:23:22.943
+<v Shane Jacobs>So then Anna can then see exactly how
+many days up.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/303-3
+00:23:22.943 --> 00:23:28.010
+<v Shane Jacobs>There's my reminder that my employee has
+just submitted a time off request when I</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/303-4
+00:23:28.010 --> 00:23:29.801
+<v Shane Jacobs>go in there and approve that.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/304-0
+00:23:30.041 --> 00:23:30.521
+<v Shane Jacobs>Some.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/305-0
+00:23:31.961 --> 00:23:35.051
+<v Shane Jacobs>So that's kind of the some of the things
+that you can look at from an employee</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/305-1
+00:23:35.051 --> 00:23:35.481
+<v Shane Jacobs>standpoint.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/308-0
+00:23:36.281 --> 00:23:41.388
+<v Bill Laffey>If, if we do,
+if we happen to do payroll only for a</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/308-1
+00:23:41.388 --> 00:23:46.004
+<v Bill Laffey>client,
+is all of the holiday stuff tracked as</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/308-2
+00:23:46.004 --> 00:23:48.361
+<v Bill Laffey>well? Like, is it still?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/310-0
+00:23:49.721 --> 00:23:52.013
+<v Bill Laffey>Do you still make sure they're compliant?
+I mean,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/310-1
+00:23:52.013 --> 00:23:54.121
+<v Bill Laffey>all that's the same interface and
+everything.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/309-0
+00:23:52.041 --> 00:23:52.521
+<v Shane Jacobs>Yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/316-0
+00:23:54.361 --> 00:23:57.377
+<v Shane Jacobs>It is all the same interface.
+It has all that same information. Yeah,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/314-0
+00:23:55.961 --> 00:23:57.641
+<v Bill Laffey>OKOK, got it.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/316-1
+00:23:57.377 --> 00:24:00.780
+<v Shane Jacobs>that's the nice thing about this platform
+is regardless of the classification,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/316-2
+00:24:00.780 --> 00:24:04.269
+<v Shane Jacobs>we're going to load into the system all
+of that. So if they are taking time off,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/315-0
+00:24:02.761 --> 00:24:03.241
+<v Bill Laffey>Okay.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/316-3
+00:24:04.269 --> 00:24:07.414
+<v Shane Jacobs>they can go into our system. Now,
+if they have their own tracking system</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/316-4
+00:24:07.414 --> 00:24:10.645
+<v Shane Jacobs>that they want to use in that country,
+that's perfectly fine because their</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/316-5
+00:24:10.645 --> 00:24:12.281
+<v Shane Jacobs>company, their entity in that country,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/317-0
+00:24:12.561 --> 00:24:15.924
+<v Shane Jacobs>They just need to report that here to us
+through payroll, that hey,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/317-1
+00:24:15.924 --> 00:24:18.446
+<v Shane Jacobs>so and so took time off,
+please apply accordingly.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/317-2
+00:24:18.446 --> 00:24:22.303
+<v Shane Jacobs>Or they can use our system as well.
+So kind of depending on what they want to</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/317-3
+00:24:22.303 --> 00:24:24.281
+<v Shane Jacobs>do, if they've already set up an entity.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/318-0
+00:24:24.841 --> 00:24:31.047
+<v Helen Niemcewicz>I have a question. This is Helen.
+So what I'm hearing is that you say we,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/318-1
+00:24:31.047 --> 00:24:31.801
+<v Helen Niemcewicz>we, this.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/320-0
+00:24:32.761 --> 00:24:36.769
+<v Helen Niemcewicz>Through this global program,
+Prism is actually handling this</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/320-1
+00:24:36.769 --> 00:24:40.316
+<v Helen Niemcewicz>themselves.
+This is not something that surely our new</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/320-2
+00:24:40.316 --> 00:24:44.914
+<v Helen Niemcewicz>client manager would do as far as set it
+up. If I came with a client,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/320-3
+00:24:44.914 --> 00:24:48.461
+<v Helen Niemcewicz>I'd give the information to you.
+You would set it up.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/320-4
+00:24:48.461 --> 00:24:52.534
+<v Helen Niemcewicz>You would set the holidays up.
+If there was any HR handbooks,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/320-5
+00:24:52.534 --> 00:24:55.161
+<v Helen Niemcewicz>this is something that you would all do.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/321-0
+00:24:55.561 --> 00:24:57.961
+<v Helen Niemcewicz>in the language of the country that I'm
+in.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/322-0
+00:24:59.041 --> 00:25:02.766
+<v Helen Niemcewicz>Or is this something that we just work,
+you give us the platform and we do the</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/322-1
+00:25:02.766 --> 00:25:03.001
+<v Helen Niemcewicz>work?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/323-0
+00:25:03.681 --> 00:25:06.921
+<v Shane Jacobs>Yeah, it's all loaded into the platform,
+so all the...</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/324-0
+00:25:05.801 --> 00:25:07.641
+<v Helen Niemcewicz>OK, and we we handle it.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/329-0
+00:25:08.121 --> 00:25:11.890
+<v Shane Jacobs>Correct, yeah. So from it,
+and it really depends on, again,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/325-0
+00:25:08.761 --> 00:25:09.561
+<v Helen Niemcewicz>Okay, bye.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/329-1
+00:25:11.890 --> 00:25:15.784
+<v Shane Jacobs>the classification. If you're,
+if it's an employer of record,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/329-2
+00:25:15.784 --> 00:25:19.050
+<v Shane Jacobs>then they are our employees.
+So we manage all that.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/329-3
+00:25:19.050 --> 00:25:23.635
+<v Shane Jacobs>Most of what you would consider in a
+handbook is actually outlined in an</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/329-4
+00:25:23.635 --> 00:25:27.404
+<v Shane Jacobs>employment contract.
+So a lot of that is signed between the</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/328-0
+00:25:23.961 --> 00:25:24.121
+<v Bill Laffey>Pitt.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/329-5
+00:25:27.404 --> 00:25:30.041
+<v Shane Jacobs>employee and us as the employer of record.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/334-0
+00:25:30.281 --> 00:25:34.960
+<v Helen Niemcewicz>You being you being you being you, right?
+Not XLHR, you being FRISM.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/330-0
+00:25:30.521 --> 00:25:31.401
+<v Shane Jacobs>So, a lot of that.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/331-0
+00:25:33.721 --> 00:25:34.201
+<v Shane Jacobs>Prism.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/334-1
+00:25:34.960 --> 00:25:39.909
+<v Helen Niemcewicz>So this is so if it's an EOR,
+then you handle everything, not my office.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/332-0
+00:25:35.281 --> 00:25:36.921
+<v Shane Jacobs>Correct. Yes.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/334-2
+00:25:39.909 --> 00:25:43.638
+<v Helen Niemcewicz>It's all handled by,
+so it's a whole different a whole</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/333-0
+00:25:42.481 --> 00:25:42.761
+<v Shane Jacobs>Correct.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/334-3
+00:25:43.638 --> 00:25:46.757
+<v Helen Niemcewicz>different service team that I'm dealing
+with,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/334-4
+00:25:46.757 --> 00:25:49.401
+<v Helen Niemcewicz>as opposed to my internal service team.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/335-0
+00:25:49.481 --> 00:25:51.681
+<v Helen Niemcewicz>Okay, understood. Okay.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/337-0
+00:25:50.281 --> 00:25:52.950
+<v Shane Jacobs>Yeah, yeah. So,
+and that's a great question.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/337-1
+00:25:52.950 --> 00:25:57.042
+<v Shane Jacobs>Once the employee is identified and we
+start the onboarding process,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/337-2
+00:25:57.042 --> 00:26:01.193
+<v Shane Jacobs>then our Prism HR global team,
+they're the ones that are managing the</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/337-3
+00:26:01.193 --> 00:26:05.581
+<v Shane Jacobs>onboarding, the implementation,
+answering any questions from either your,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/336-0
+00:26:04.401 --> 00:26:06.761
+<v Helen Niemcewicz>The communications, right? Got it.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/337-4
+00:26:05.581 --> 00:26:08.665
+<v Shane Jacobs>absolutely. Yeah.
+And the way that works is you are</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/337-5
+00:26:08.665 --> 00:26:10.681
+<v Shane Jacobs>assigned a global account manager.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/341-0
+00:26:10.841 --> 00:26:15.177
+<v Shane Jacobs>that person resides in the United States.
+So it's not too bad with time zone.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/341-1
+00:26:15.177 --> 00:26:18.235
+<v Shane Jacobs>I'm in Arizona, I know East Coast,
+that's three hours,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/341-2
+00:26:18.235 --> 00:26:22.460
+<v Shane Jacobs>but they're in the United States.
+So you can ask questions on anything that</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/338-0
+00:26:18.561 --> 00:26:18.921
+<v Helen Niemcewicz>Right.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/339-0
+00:26:21.161 --> 00:26:21.521
+<v Helen Niemcewicz>Okay.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/341-3
+00:26:22.460 --> 00:26:25.128
+<v Shane Jacobs>comes up.
+We also have HR managers in region or</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/340-0
+00:26:23.001 --> 00:26:23.401
+<v Helen Niemcewicz>Okay.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/341-4
+00:26:25.128 --> 00:26:27.963
+<v Shane Jacobs>sometimes in country for the employee or
+yourself.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/341-5
+00:26:27.963 --> 00:26:32.521
+<v Shane Jacobs>So if there's a more detailed HR question
+that your account manager doesn't know,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/344-0
+00:26:32.841 --> 00:26:36.179
+<v Shane Jacobs>They'll reach out to the HR manager in
+that region or country,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/344-1
+00:26:36.179 --> 00:26:40.522
+<v Shane Jacobs>get the specific information, et cetera.
+So you have people you can reach out to.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/342-0
+00:26:38.361 --> 00:26:39.001
+<v Helen Niemcewicz>Understood.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/344-2
+00:26:40.522 --> 00:26:44.548
+<v Shane Jacobs>In this world of AI, which is great,
+there's lots of information out there,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/343-0
+00:26:41.001 --> 00:26:41.801
+<v Helen Niemcewicz>Under 6.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/344-3
+00:26:44.548 --> 00:26:48.838
+<v Shane Jacobs>but it's always nice to have someone that
+lives in country or region to talk to.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/344-4
+00:26:48.838 --> 00:26:52.281
+<v Shane Jacobs>Sometimes when you get into different
+leaves is really critical.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/346-0
+00:26:52.601 --> 00:26:55.689
+<v Shane Jacobs>The maternity leave is coming up.
+How does that work in Mexico?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/346-1
+00:26:55.689 --> 00:26:58.825
+<v Shane Jacobs>Talking through that,
+you'll have someone you can talk with, so.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/345-0
+00:26:58.761 --> 00:26:59.081
+<v Helen Niemcewicz>Right.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/346-2
+00:26:58.825 --> 00:26:58.921
+<v Shane Jacobs>..</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/350-0
+00:26:59.241 --> 00:27:01.966
+<v Bill Laffey>Yeah,
+and I guess one thing to note is if it's</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/350-1
+00:27:01.966 --> 00:27:04.922
+<v Bill Laffey>our client,
+like we're probably communicating with</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/350-2
+00:27:04.922 --> 00:27:09.038
+<v Bill Laffey>our client, but with the EOR,
+you communicate with the employee to get</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/350-3
+00:27:09.038 --> 00:27:13.095
+<v Bill Laffey>them on board and the contract signed and
+all that stuff. Like, yeah,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/350-4
+00:27:13.095 --> 00:27:16.052
+<v Bill Laffey>that's how it's been in the past, Helen,
+same way.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/347-0
+00:27:15.801 --> 00:27:17.081
+<v Helen Niemcewicz>Yep, correct.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/348-0
+00:27:15.801 --> 00:27:17.121
+<v Shane Jacobs>Yeah, yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/350-5
+00:27:16.052 --> 00:27:19.761
+<v Bill Laffey>But we're still the interface for our
+client, right? It's just.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/349-0
+00:27:18.601 --> 00:27:20.721
+<v Helen Niemcewicz>Right, exactly. Yes. Okay.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/352-0
+00:27:19.401 --> 00:27:22.061
+<v Shane Jacobs>Yeah, yeah, yeah.
+And can we work on the best way to</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/351-0
+00:27:20.201 --> 00:27:20.681
+<v Bill Laffey>Yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/352-1
+00:27:22.061 --> 00:27:24.369
+<v Shane Jacobs>communicate that, you know,
+that information,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/352-2
+00:27:24.369 --> 00:27:28.433
+<v Shane Jacobs>whether the client or the employee is
+going directly to us or going through you,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/352-3
+00:27:28.433 --> 00:27:32.497
+<v Shane Jacobs>we can work through the mechanics of that.
+We just want to make sure that you or</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/352-4
+00:27:32.497 --> 00:27:35.809
+<v Shane Jacobs>they have a direct contact.
+You have people that you're going to,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/352-5
+00:27:35.809 --> 00:27:39.321
+<v Shane Jacobs>that are supporting this employee and
+your client in those countries.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/353-0
+00:27:40.281 --> 00:27:44.680
+<v Shane Jacobs>Now, something to be mindful of,
+if they have an entity that they've</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/353-1
+00:27:44.680 --> 00:27:49.333
+<v Shane Jacobs>established in another country and
+they're paying these people directly,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/353-2
+00:27:49.333 --> 00:27:52.202
+<v Shane Jacobs>then all we are doing is processing
+payroll.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/353-3
+00:27:52.202 --> 00:27:56.154
+<v Shane Jacobs>The HR is being done by your client in
+that country directly.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/353-4
+00:27:56.154 --> 00:28:00.361
+<v Shane Jacobs>Employment contracts, handbooks,
+any other policies and so forth.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/355-0
+00:28:00.721 --> 00:28:04.350
+<v Shane Jacobs>that HR aspect would be handled by them
+in that country.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/355-1
+00:28:04.350 --> 00:28:07.724
+<v Shane Jacobs>We can provide some ancillary HR
+consulting support,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/355-2
+00:28:07.724 --> 00:28:11.798
+<v Shane Jacobs>but because we are not the employer of
+record in that scenario,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/355-3
+00:28:11.798 --> 00:28:16.700
+<v Shane Jacobs>their legal entity is the employer of
+record, they have that responsibility.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/355-4
+00:28:16.700 --> 00:28:20.201
+<v Shane Jacobs>Well, does that make sense?
+I hope that I was able to.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/357-0
+00:28:19.721 --> 00:28:22.441
+<v Helen Niemcewicz>It does. Yeah, no,
+you answered my questions. Thank you.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/356-0
+00:28:20.521 --> 00:28:20.921
+<v Shane Jacobs>Okay.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/354-0
+00:28:20.681 --> 00:28:20.961
+<v Bill Laffey>Yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/360-0
+00:28:22.361 --> 00:28:25.261
+<v Shane Jacobs>Good. Okay.
+Let me show you how that onboarding looks</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/360-1
+00:28:25.261 --> 00:28:28.107
+<v Shane Jacobs>like, if that's okay.
+And it's really pretty simple.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/360-2
+00:28:28.107 --> 00:28:31.974
+<v Shane Jacobs>The platform goes through all of this.
+So a new employee is identified,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/360-3
+00:28:31.974 --> 00:28:36.216
+<v Shane Jacobs>we want to hire this person. The client,
+or if you're helping a client on your</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/360-4
+00:28:36.216 --> 00:28:38.687
+<v Shane Jacobs>side,
+you could also do this on their behalf,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/360-5
+00:28:38.687 --> 00:28:42.070
+<v Shane Jacobs>would then need to start and initiate
+that onboarding process.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/360-6
+00:28:42.070 --> 00:28:45.721
+<v Shane Jacobs>And the first question they ask,
+is it a contractor or an employee?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/361-0
+00:28:46.041 --> 00:28:49.828
+<v Shane Jacobs>and the selection would be employee and
+then is it an employer of record or</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/361-1
+00:28:49.828 --> 00:28:52.917
+<v Shane Jacobs>through their entity.
+Let's take the scenario in Mexico where</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/361-2
+00:28:52.917 --> 00:28:54.361
+<v Shane Jacobs>it was an employer of record.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/362-0
+00:28:55.561 --> 00:28:57.847
+<v Shane Jacobs>First,
+I would just fill in the information here,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/362-1
+00:28:57.847 --> 00:28:58.121
+<v Shane Jacobs>right?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/363-0
+00:28:59.361 --> 00:28:59.441
+<v Shane Jacobs>On.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/364-0
+00:29:00.841 --> 00:29:04.201
+<v Shane Jacobs>And then the address,
+let me just put my address in there.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/367-0
+00:29:09.321 --> 00:29:12.673
+<v Shane Jacobs>There we go.
+This is key information that seems</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/367-1
+00:29:12.673 --> 00:29:17.911
+<v Shane Jacobs>intuitive, but it's worth noting.
+What is the employee's nationality? Now,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/367-2
+00:29:17.911 --> 00:29:22.869
+<v Shane Jacobs>we'll say Mexico. There we go.
+And where is the employee working from?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/367-3
+00:29:22.869 --> 00:29:28.805
+<v Shane Jacobs>Okay, they're also working in Mexico. Now,
+you may run across clients that are like,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/367-4
+00:29:28.805 --> 00:29:30.201
+<v Shane Jacobs>oh, he's a Canadian.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/370-0
+00:29:30.761 --> 00:29:34.029
+<v Shane Jacobs>working in Mexico.
+Those scenarios pop up once in a while.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/370-1
+00:29:34.029 --> 00:29:37.074
+<v Shane Jacobs>That would require visa, immigration,
+or work permits.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/370-2
+00:29:37.074 --> 00:29:40.729
+<v Shane Jacobs>So those two questions are important that
+you always need to ask.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/370-3
+00:29:40.729 --> 00:29:44.771
+<v Shane Jacobs>What country are they working in and are
+they a citizen of that country?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/370-4
+00:29:44.771 --> 00:29:47.263
+<v Shane Jacobs>They may go, oh no,
+they're not from Mexico,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/370-5
+00:29:47.263 --> 00:29:49.201
+<v Shane Jacobs>they're from Guatemala. Okay, well,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/373-0
+00:29:49.641 --> 00:29:52.923
+<v Shane Jacobs>Do they have a work permit?
+So there's other questions. Now,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/373-1
+00:29:52.923 --> 00:29:56.742
+<v Shane Jacobs>if I put in here their nationality was
+from Malawi, then it would say,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/373-2
+00:29:56.742 --> 00:29:59.861
+<v Shane Jacobs>is this employee authorized to work in
+Mexico, yes or no?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/373-3
+00:29:59.861 --> 00:30:04.111
+<v Shane Jacobs>And then that gets us the information
+that we need to get our immigration team</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/373-4
+00:30:04.111 --> 00:30:08.521
+<v Shane Jacobs>involved if there's any work permit visas
+that need to come up. Most of the time,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/374-0
+00:30:08.601 --> 00:30:12.101
+<v Shane Jacobs>The person's a nationality is the place
+they're working in.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/374-1
+00:30:12.101 --> 00:30:16.884
+<v Shane Jacobs>But just be mindful that we can support
+visas and work permits in most countries,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/374-2
+00:30:16.884 --> 00:30:20.441
+<v Shane Jacobs>but that's a different process.
+So let's just go here. Okay.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/375-0
+00:30:22.201 --> 00:30:26.485
+<v Shane Jacobs>We have now published on our website,
+so you can go to that actually at any</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/375-1
+00:30:26.485 --> 00:30:31.163
+<v Shane Jacobs>moment. Antaeus maybe can drop the link.
+But we have Global Glides out or out now.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/375-2
+00:30:31.163 --> 00:30:35.109
+<v Shane Jacobs>So you can go into Sea in Mexico,
+get all the details of holidays and</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/375-3
+00:30:35.109 --> 00:30:39.561
+<v Shane Jacobs>vacations and leaves and all the things
+that go into that available to anyone.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/378-0
+00:30:41.081 --> 00:30:43.729
+<v Shane Jacobs>We'll go next, job title,
+let's just make something up.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/378-1
+00:30:43.729 --> 00:30:46.377
+<v Shane Jacobs>They're project manager, maybe mid-level,
+they're a PM.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/378-2
+00:30:46.377 --> 00:30:50.396
+<v Shane Jacobs>This would be where you'd fill in some of
+that information on their job description.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/378-3
+00:30:50.396 --> 00:30:52.855
+<v Shane Jacobs>Beforehand,
+I can set up different divisions for my</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/378-4
+00:30:52.855 --> 00:30:55.219
+<v Shane Jacobs>client,
+whether they're engineering or product or</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/378-5
+00:30:55.219 --> 00:30:57.346
+<v Shane Jacobs>whatever division you'd like to put them
+in.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/378-6
+00:30:57.346 --> 00:30:59.521
+<v Shane Jacobs>So maybe they're in the engineering
+division.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/379-0
+00:31:00.121 --> 00:31:02.662
+<v Shane Jacobs>back-end development and they're on the
+operations team.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/379-1
+00:31:02.662 --> 00:31:06.361
+<v Shane Jacobs>However you like to classify that or your
+client, you can set that up accordingly.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/385-0
+00:31:07.721 --> 00:31:10.596
+<v Shane Jacobs>Location-wise,
+I can put in specific cities,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/385-1
+00:31:10.596 --> 00:31:13.854
+<v Shane Jacobs>office locations, remote,
+whatever I'd like to do.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/385-2
+00:31:13.854 --> 00:31:18.261
+<v Shane Jacobs>Maybe they're just in the field.
+I can now assign a manager to them.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/385-3
+00:31:18.261 --> 00:31:22.477
+<v Shane Jacobs>So let's go into here and let's assign
+John Manager as a manager,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/385-4
+00:31:22.477 --> 00:31:24.201
+<v Shane Jacobs>and that's all set up here.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/388-0
+00:31:25.561 --> 00:31:30.503
+<v Shane Jacobs>Start date, if this was being done today,
+you can see that the 26th is the earliest</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/388-1
+00:31:30.503 --> 00:31:33.738
+<v Shane Jacobs>I could start.
+We usually need about a two-week window</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/388-2
+00:31:33.738 --> 00:31:38.385
+<v Shane Jacobs>to do all the required onboarding and
+other requirements to start that person.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/388-3
+00:31:38.385 --> 00:31:42.561
+<v Shane Jacobs>So starting someone the next day
+internationally is not common at all,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/388-4
+00:31:42.561 --> 00:31:46.856
+<v Shane Jacobs>but usually a two-week window is
+sufficient in all countries to get that</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/388-5
+00:31:46.856 --> 00:31:48.561
+<v Shane Jacobs>person onboarded and started.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/389-0
+00:31:48.681 --> 00:31:50.201
+<v Shane Jacobs>So, I'll select that.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/392-0
+00:31:52.561 --> 00:31:56.837
+<v Shane Jacobs>Okay. Information on their pay,
+the gross salary would be in pesos,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/392-1
+00:31:56.837 --> 00:32:00.610
+<v Shane Jacobs>something to consider.
+All our employer of record services,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/392-2
+00:32:00.610 --> 00:32:04.005
+<v Shane Jacobs>we pay the individuals in their local
+currency. Okay.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/392-3
+00:32:04.005 --> 00:32:07.086
+<v Shane Jacobs>The invoice we send between us is in US
+dollars,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/392-4
+00:32:07.086 --> 00:32:11.801
+<v Shane Jacobs>but we always pay the employees and of
+course the taxes in local currency.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/395-0
+00:32:12.841 --> 00:32:17.321
+<v Shane Jacobs>And I forget exactly what the ratio is
+there, et cetera. OK.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/398-0
+00:32:19.001 --> 00:32:23.327
+<v Shane Jacobs>Full-time employment, indefinite.
+If I wanted to add a different allowances,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/398-1
+00:32:23.327 --> 00:32:26.921
+<v Shane Jacobs>say I want to add a mobile allowance,
+right, at a monthly rate.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/403-0
+00:32:28.081 --> 00:32:32.145
+<v Shane Jacobs>1000 pesos, I can add that payment here.
+Okay. Vacation, again,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/403-1
+00:32:32.145 --> 00:32:35.256
+<v Shane Jacobs>they're all getting the statutory
+vacation days,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/403-2
+00:32:35.256 --> 00:32:40.399
+<v Shane Jacobs>but if they want to have any that are
+additional to that, you can add that here.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/403-3
+00:32:40.399 --> 00:32:44.145
+<v Shane Jacobs>So as I do next,
+this is a good indication on did I put in</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/403-4
+00:32:44.145 --> 00:32:47.509
+<v Shane Jacobs>the right amount?
+I put in 10 million pesos is $500,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/403-5
+00:32:47.509 --> 00:32:51.001
+<v Shane Jacobs>000 a month. That's not quite right.
+So let me go back</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/404-0
+00:32:51.361 --> 00:32:56.201
+<v Shane Jacobs>and adjust that. Put too many zeros.
+Let's go next.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/411-0
+00:32:57.881 --> 00:33:00.653
+<v Shane Jacobs>10,000 pesos of 500.
+We'll use that for those purposes.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/411-1
+00:33:00.653 --> 00:33:04.810
+<v Shane Jacobs>But I really like that feature because if
+you a little fat thumb and put an extra 0</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/411-2
+00:33:04.810 --> 00:33:07.136
+<v Shane Jacobs>and suddenly they're getting 5,000 or 50,
+000,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/411-3
+00:33:07.136 --> 00:33:09.957
+<v Shane Jacobs>it gives you an idea of what the currency
+conversion is,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/411-4
+00:33:09.957 --> 00:33:13.471
+<v Shane Jacobs>especially in those currencies where it's
+a big number, right? Indian,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/411-5
+00:33:13.471 --> 00:33:16.639
+<v Shane Jacobs>Real or in the millions,
+but what does that mean in US dollars?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/411-6
+00:33:16.639 --> 00:33:18.321
+<v Shane Jacobs>So it's a nice little calculation.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/412-0
+00:33:19.281 --> 00:33:20.361
+<v Shane Jacobs>So let me confirm that.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/416-0
+00:33:22.561 --> 00:33:25.372
+<v Shane Jacobs>Equipment,
+the next question that comes up is how is</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/416-1
+00:33:25.372 --> 00:33:29.668
+<v Shane Jacobs>that person going to get their laptop,
+cell phone, any of those types of things.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/416-2
+00:33:29.668 --> 00:33:33.062
+<v Shane Jacobs>And we have a partnership.
+It's actually a new partnership that</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/416-3
+00:33:33.062 --> 00:33:35.926
+<v Shane Jacobs>we're going to be uploading here soon
+called TextPal.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/416-4
+00:33:35.926 --> 00:33:39.267
+<v Shane Jacobs>They can get equipment to anyone in the
+world in about 3 days.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/416-5
+00:33:39.267 --> 00:33:41.760
+<v Shane Jacobs>So through that partnership, you can say,
+yes,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/416-6
+00:33:41.760 --> 00:33:43.881
+<v Shane Jacobs>I'd like to have this equipment sent to.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/418-0
+00:33:44.201 --> 00:33:47.282
+<v Shane Jacobs>my worker there.
+One thing we've noticed and that is very</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/418-1
+00:33:47.282 --> 00:33:49.725
+<v Shane Jacobs>common,
+sending laptops or computer equipment</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/418-2
+00:33:49.725 --> 00:33:53.603
+<v Shane Jacobs>internationally is very lengthy and
+sometimes gets caught in customs for</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/418-3
+00:33:53.603 --> 00:33:56.205
+<v Shane Jacobs>quite a while.
+So this partnership that we have,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/418-4
+00:33:56.205 --> 00:33:58.967
+<v Shane Jacobs>you can use,
+or if you want to just reimburse them,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/418-5
+00:33:58.967 --> 00:34:02.367
+<v Shane Jacobs>they purchase the equipment outright,
+they can do that as well.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/418-6
+00:34:02.367 --> 00:34:03.641
+<v Shane Jacobs>So your client has those</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/419-0
+00:34:03.961 --> 00:34:05.081
+<v Shane Jacobs>Options available.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/422-0
+00:34:07.361 --> 00:34:09.799
+<v Shane Jacobs>And then last would be any premium
+benefits.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/422-1
+00:34:09.799 --> 00:34:12.507
+<v Shane Jacobs>So let me explain that how that works.
+In Mexico,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/422-2
+00:34:12.507 --> 00:34:16.948
+<v Shane Jacobs>they're going to have statutory benefits
+that come automatic through your payroll</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/422-3
+00:34:16.948 --> 00:34:20.848
+<v Shane Jacobs>taxes that they're going to be paying.
+And a lot of European countries,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/422-4
+00:34:20.848 --> 00:34:24.585
+<v Shane Jacobs>South American countries,
+they have a lot of socialized health care.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/422-5
+00:34:24.585 --> 00:34:28.052
+<v Shane Jacobs>So that it comes included.
+There's nothing you can do about it.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/422-6
+00:34:28.052 --> 00:34:30.001
+<v Shane Jacobs>It's automatic. If you would like to</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/423-0
+00:34:30.081 --> 00:34:34.244
+<v Shane Jacobs>or your client would like to offer
+additional benefits over and above that,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/423-1
+00:34:34.244 --> 00:34:38.626
+<v Shane Jacobs>these are what these plans are about.
+Many times I look at it as the government</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/423-2
+00:34:38.626 --> 00:34:42.514
+<v Shane Jacobs>sponsored programs is public health care.
+This is private health care.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/423-3
+00:34:42.514 --> 00:34:46.732
+<v Shane Jacobs>So in some countries, it's very common.
+Other countries, it's not as common.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/423-4
+00:34:46.732 --> 00:34:50.401
+<v Shane Jacobs>Your client can elect to pay for this
+over and above their salary.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/426-0
+00:34:50.761 --> 00:34:53.260
+<v Shane Jacobs>And as you can see,
+they're pretty reasonable.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/426-1
+00:34:53.260 --> 00:34:56.183
+<v Shane Jacobs>This is a per person rate.
+So if they have dependents,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/426-2
+00:34:56.183 --> 00:34:59.850
+<v Shane Jacobs>it would be 130 or 210 per month per
+person that they'd be covering.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/426-3
+00:34:59.850 --> 00:35:03.943
+<v Shane Jacobs>And the client would need either to cover
+all of this or elect not to. Okay,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/426-4
+00:35:03.943 --> 00:35:06.281
+<v Shane Jacobs>so that's an option that they have as
+well.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/433-0
+00:35:07.801 --> 00:35:11.530
+<v Shane Jacobs>And if they choose that,
+then we have national partners and I can</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/433-1
+00:35:11.530 --> 00:35:16.161
+<v Shane Jacobs>even look at the plans are right here so
+they could see exactly what those health</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/433-2
+00:35:16.161 --> 00:35:18.929
+<v Shane Jacobs>plans look like, the coverages, et cetera.
+Okay.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/433-3
+00:35:18.929 --> 00:35:23.279
+<v Shane Jacobs>But these are global plans that we have
+in place to supplement what might be</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/433-4
+00:35:23.279 --> 00:35:24.521
+<v Shane Jacobs>offered automatically.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/440-0
+00:35:26.321 --> 00:35:28.850
+<v Shane Jacobs>Okay,
+so we'll just select this one and move on.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/440-1
+00:35:28.850 --> 00:35:31.378
+<v Shane Jacobs>And then here's just all the information.
+Again,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/440-2
+00:35:31.378 --> 00:35:34.423
+<v Shane Jacobs>a snapshot to make sure everything got
+everything correct.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/440-3
+00:35:34.423 --> 00:35:37.571
+<v Shane Jacobs>And once I submit that,
+it tells you exactly what's going to</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/440-4
+00:35:37.571 --> 00:35:41.028
+<v Shane Jacobs>happen next. So with employer of record,
+like I mentioned earlier,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/440-5
+00:35:41.028 --> 00:35:45.001
+<v Shane Jacobs>there's an employment contract that's
+generated, and that's between Prism HR</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/443-0
+00:35:45.561 --> 00:35:48.499
+<v Shane Jacobs>and the employee directly.
+Before we get to that point,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/443-1
+00:35:48.499 --> 00:35:52.591
+<v Shane Jacobs>we send an offer letter to the employee.
+And that just contains their salary,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/443-2
+00:35:52.591 --> 00:35:56.000
+<v Shane Jacobs>any additional benefits,
+everything that they would need to know</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/443-3
+00:35:56.000 --> 00:35:59.567
+<v Shane Jacobs>in that employment contract.
+And we work through that offer letter.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/443-4
+00:35:59.567 --> 00:36:03.134
+<v Shane Jacobs>Once everything's approved,
+then we set out the employment contract</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/443-5
+00:36:03.134 --> 00:36:05.914
+<v Shane Jacobs>for signature.
+Only when that employment contract is</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/443-6
+00:36:05.914 --> 00:36:06.281
+<v Shane Jacobs>signed,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/444-0
+00:36:06.481 --> 00:36:10.851
+<v Shane Jacobs>with the start date in that contract is
+when the official employment begins.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/444-1
+00:36:10.851 --> 00:36:14.937
+<v Shane Jacobs>But we manage that entire process.
+The employee is also going to get an</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/444-2
+00:36:14.937 --> 00:36:19.420
+<v Shane Jacobs>e-mail and allows them to enter into
+their own platform and fill out all their</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/444-3
+00:36:19.420 --> 00:36:22.825
+<v Shane Jacobs>personal information,
+their banking information, et cetera,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/444-4
+00:36:22.825 --> 00:36:25.321
+<v Shane Jacobs>so that we can get them paid
+appropriately.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/445-0
+00:36:27.641 --> 00:36:29.001
+<v Shane Jacobs>So if I go to onboarding.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/448-0
+00:36:30.081 --> 00:36:34.173
+<v Shane Jacobs>And I can see my employer record.
+There's John Smith in Mexico is a waiting</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/448-1
+00:36:34.173 --> 00:36:37.080
+<v Shane Jacobs>offer letter.
+That's when your global account manager</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/448-2
+00:36:37.080 --> 00:36:40.634
+<v Shane Jacobs>will get that information,
+get everything confirmed, let you see,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/448-3
+00:36:40.634 --> 00:36:44.187
+<v Shane Jacobs>or let your, I always say you,
+but I'm talking about your client,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/448-4
+00:36:44.187 --> 00:36:48.117
+<v Shane Jacobs>would be able to see that offer letter
+before we initiate the employment</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/448-5
+00:36:48.117 --> 00:36:48.601
+<v Shane Jacobs>contract.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/451-0
+00:36:51.321 --> 00:36:52.708
+<v Shane Jacobs>So,
+I know I went through that kind of</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/453-0
+00:36:51.641 --> 00:36:54.634
+<v Bill Laffey>What is,
+let me let me ask a question about the</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/451-1
+00:36:52.708 --> 00:36:53.241
+<v Shane Jacobs>quickly, but...</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/453-1
+00:36:54.634 --> 00:36:55.881
+<v Bill Laffey>employment contract.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/452-0
+00:36:55.641 --> 00:36:56.521
+<v Shane Jacobs>Yeah, yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/454-0
+00:36:57.801 --> 00:37:01.161
+<v Bill Laffey>Who's the actual employer?
+Is it Prism HR or?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/455-0
+00:37:02.121 --> 00:37:06.022
+<v Shane Jacobs>Yes, in most countries it is.
+In some countries we do have a partner.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/455-1
+00:37:06.022 --> 00:37:09.755
+<v Shane Jacobs>So I'd say throughout Africa,
+maybe some Southeast Asia countries,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/455-2
+00:37:09.755 --> 00:37:13.935
+<v Shane Jacobs>we don't have our own direct entity.
+We would have a partner that would be</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/455-3
+00:37:13.935 --> 00:37:17.947
+<v Shane Jacobs>providing that actual employment boots on
+the ground. All the services,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/455-4
+00:37:17.947 --> 00:37:21.401
+<v Shane Jacobs>everything flows through this platform,
+that nothing changes.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/456-0
+00:37:21.721 --> 00:37:24.398
+<v Shane Jacobs>But most of the time,
+we are the employer directly in that</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/456-1
+00:37:24.398 --> 00:37:24.761
+<v Shane Jacobs>country.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/457-0
+00:37:26.521 --> 00:37:27.081
+<v Bill Laffey>Okay.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/458-0
+00:37:27.721 --> 00:37:30.601
+<v Helen Niemcewicz>So, we're just back, Bill,
+we're just a reseller, actually.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/463-0
+00:37:31.721 --> 00:37:34.564
+<v Bill Laffey>Yeah, no, that's fine. I mean,
+it's fine because we're,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/460-0
+00:37:32.121 --> 00:37:35.081
+<v Helen Niemcewicz>There, there the, yeah, yeah, yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/463-1
+00:37:34.564 --> 00:37:38.726
+<v Bill Laffey>we know what we're paying and what we're
+charging, right? But I'm just wondering,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/461-0
+00:37:36.681 --> 00:37:37.801
+<v Helen Niemcewicz>Right, exactly, yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/462-0
+00:37:37.321 --> 00:37:38.121
+<v Shane Jacobs>Right, yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/463-2
+00:37:38.726 --> 00:37:39.081
+<v Bill Laffey>like...</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/464-0
+00:37:39.881 --> 00:37:43.050
+<v Bill Laffey>You know,
+if this is like an extension of our</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/464-1
+00:37:43.050 --> 00:37:44.841
+<v Bill Laffey>domestic business, like...</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/465-0
+00:37:45.961 --> 00:37:48.681
+<v Helen Niemcewicz>It's not because it's not XLHR.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/469-0
+00:37:47.161 --> 00:37:50.936
+<v Bill Laffey>I guess it's, well,
+there's no conflict of interest is what</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/469-1
+00:37:50.936 --> 00:37:55.590
+<v Bill Laffey>I'm trying to get to, right? Like,
+no one's going to talk to our domestic</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/469-2
+00:37:55.590 --> 00:38:00.749
+<v Bill Laffey>clients. But they don't now, so it's fine.
+It's fine. But is it, I was wondering,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/466-0
+00:37:56.921 --> 00:37:57.161
+<v Shane Jacobs>No.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/467-0
+00:37:58.601 --> 00:37:59.801
+<v Shane Jacobs>Yeah, yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/469-3
+00:38:00.749 --> 00:38:02.761
+<v Bill Laffey>is it venture or is it Prism HR?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/468-0
+00:38:03.561 --> 00:38:04.361
+<v Shane Jacobs>It's.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/470-0
+00:38:05.801 --> 00:38:09.801
+<v Shane Jacobs>The legal entity,
+I'm not sure what the name is per se.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/473-0
+00:38:12.201 --> 00:38:16.056
+<v Shane Jacobs>Because we also, yeah,
+I'm not sure exactly each country how</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/473-1
+00:38:16.056 --> 00:38:20.542
+<v Shane Jacobs>it's listed, if it's Prism HR,
+if there's a company we acquired called</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/471-0
+00:38:16.681 --> 00:38:17.161
+<v Bill Laffey>Yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/473-2
+00:38:20.542 --> 00:38:23.512
+<v Shane Jacobs>Listo,
+it's all the back office support of all</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/473-3
+00:38:23.512 --> 00:38:28.377
+<v Shane Jacobs>this. It might be under their name,
+but it's all under the venture corporate</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/472-0
+00:38:27.081 --> 00:38:31.321
+<v Bill Laffey>Yeah, OK. Yeah, I guess it would be OK.
+That's fine.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/473-4
+00:38:28.377 --> 00:38:30.841
+<v Shane Jacobs>umbrella under Prism. Yeah, yeah, yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/475-0
+00:38:31.801 --> 00:38:35.268
+<v Shane Jacobs>And we're adding more and more countries
+every year to this.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/475-1
+00:38:35.268 --> 00:38:39.302
+<v Shane Jacobs>It helps us have a closer pulse on the
+direct market, on the HR rules,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/475-2
+00:38:39.302 --> 00:38:43.109
+<v Shane Jacobs>everything going on there.
+It just provides a much cleaner type of</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/475-3
+00:38:43.109 --> 00:38:45.837
+<v Shane Jacobs>system.
+There will always be countries where we</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/475-4
+00:38:45.837 --> 00:38:50.041
+<v Shane Jacobs>use a partner for business purposes,
+or like I said, there's not a lot of</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/474-0
+00:38:49.641 --> 00:38:50.041
+<v Bill Laffey>Yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/476-0
+00:38:50.161 --> 00:38:53.379
+<v Shane Jacobs>U.S. interest in that country,
+so we're gonna use a partner in that</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/476-1
+00:38:53.379 --> 00:38:54.041
+<v Shane Jacobs>country, so...</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/481-0
+00:38:56.521 --> 00:39:00.886
+<v Shane Jacobs>So that's going to be your team there.
+Again, invoices are very cut and dry.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/481-1
+00:39:00.886 --> 00:39:05.251
+<v Shane Jacobs>I showed you that. Time off, again,
+I can go in there and approve all those.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/481-2
+00:39:05.251 --> 00:39:08.709
+<v Shane Jacobs>Reimbursements. Reports.
+Let me show you quickly some of the</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/481-3
+00:39:08.709 --> 00:39:11.827
+<v Shane Jacobs>reporting functionality here in the time
+we have left.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/481-4
+00:39:11.827 --> 00:39:15.001
+<v Shane Jacobs>EOR report here is I can see the employer
+gross report.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/482-0
+00:39:15.441 --> 00:39:17.321
+<v Shane Jacobs>So if I back up that a little bit.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/487-0
+00:39:18.521 --> 00:39:22.562
+<v Shane Jacobs>I can see in each country,
+I can see the wages and all the taxes and</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/487-1
+00:39:22.562 --> 00:39:25.958
+<v Shane Jacobs>to see my total burden, right?
+So my wages are one thing.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/487-2
+00:39:25.958 --> 00:39:29.530
+<v Shane Jacobs>We all know that taxes, you know,
+on that total burden rate,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/487-3
+00:39:29.530 --> 00:39:33.921
+<v Shane Jacobs>I can see what that is on a per country
+basis. So that report's available.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/487-4
+00:39:33.921 --> 00:39:37.961
+<v Shane Jacobs>I can also see what the gross to net
+report is for all my employees.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/494-0
+00:39:38.601 --> 00:39:41.935
+<v Shane Jacobs>So if I go back,
+I can see here's my gross wages.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/494-1
+00:39:41.935 --> 00:39:45.001
+<v Shane Jacobs>Here's all the taxes and so forth
+calculated.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/494-2
+00:39:45.001 --> 00:39:49.935
+<v Shane Jacobs>I have a general ledger report.
+So if they want to import this into their</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/494-3
+00:39:49.935 --> 00:39:53.935
+<v Shane Jacobs>general ledger, they can do that here.
+At the current time,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/494-4
+00:39:53.935 --> 00:39:56.601
+<v Shane Jacobs>this would be an export import function.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/495-0
+00:39:56.881 --> 00:40:00.595
+<v Shane Jacobs>but we're working on more APIs and so
+forth, so that can be more automatic.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/495-1
+00:40:00.595 --> 00:40:03.625
+<v Shane Jacobs>But as of right now,
+exporting this into a format that can be</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/495-2
+00:40:03.625 --> 00:40:05.481
+<v Shane Jacobs>imported in the general ledger system.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/500-0
+00:40:06.961 --> 00:40:11.613
+<v Shane Jacobs>And then the variance report as well,
+this kind of shows the variances between</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/500-1
+00:40:11.613 --> 00:40:15.263
+<v Shane Jacobs>different pay periods.
+One other tool that I like, and again,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/500-2
+00:40:15.263 --> 00:40:18.089
+<v Shane Jacobs>all these tools,
+these reports are per employee</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/500-3
+00:40:18.089 --> 00:40:21.327
+<v Shane Jacobs>classification.
+So I'm going to see a similar thing in</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/500-4
+00:40:21.327 --> 00:40:22.681
+<v Shane Jacobs>the payroll side. Okay.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/511-0
+00:40:26.201 --> 00:40:30.943
+<v Shane Jacobs>Right here in the tools and resources,
+this is one of the coolest things that</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/511-1
+00:40:30.943 --> 00:40:35.077
+<v Shane Jacobs>you quickly can see in Mexico.
+If I want to know what that employer</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/511-2
+00:40:35.077 --> 00:40:39.150
+<v Shane Jacobs>burden and the gross to net is,
+I can quickly go into here, right?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/511-3
+00:40:39.150 --> 00:40:43.648
+<v Shane Jacobs>Let's do 50,000, calculate that,
+and it's going to tell me precisely what</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/511-4
+00:40:43.648 --> 00:40:44.681
+<v Shane Jacobs>the employer pays</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/514-0
+00:40:44.761 --> 00:40:48.841
+<v Shane Jacobs>what all the contributions are.
+This is that detail we talked about</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/514-1
+00:40:48.841 --> 00:40:53.401
+<v Shane Jacobs>earlier for Mexico specifically. You see,
+there's a lot of taxes in Mexico.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/514-2
+00:40:53.401 --> 00:40:56.701
+<v Shane Jacobs>What the employee gets,
+their gross to net here. Okay.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/514-3
+00:40:56.701 --> 00:40:59.401
+<v Shane Jacobs>So you're going to see what, yeah,
+go ahead.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/517-0
+00:40:59.641 --> 00:41:05.077
+<v Helen Niemcewicz>I have a question. This is Helen.
+So does PRISM provide all the necessary</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/517-1
+00:41:05.077 --> 00:41:08.750
+<v Helen Niemcewicz>insurances that a state or a country may
+require?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/517-2
+00:41:08.750 --> 00:41:11.321
+<v Helen Niemcewicz>So these are all provided by PRISM?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/520-0
+00:41:12.481 --> 00:41:16.138
+<v Helen Niemcewicz>Okay,
+and second question is that since we're a</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/520-1
+00:41:16.138 --> 00:41:19.947
+<v Helen Niemcewicz>reseller,
+do we have any administrative access to</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/520-2
+00:41:19.947 --> 00:41:26.041
+<v Helen Niemcewicz>our client that we gave you or put there?
+Do we have any access to those files?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/519-0
+00:41:26.841 --> 00:41:27.401
+<v Shane Jacobs>You do.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/521-0
+00:41:27.001 --> 00:41:28.441
+<v Helen Niemcewicz>If we want to, okay, alright.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/530-0
+00:41:28.281 --> 00:41:31.263
+<v Shane Jacobs>Yeah, and I'll quickly show you.
+I left it open.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/522-0
+00:41:29.801 --> 00:41:31.161
+<v Helen Niemcewicz>Okay, alright.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/530-1
+00:41:31.263 --> 00:41:34.669
+<v Shane Jacobs>Here is your administrative view as a
+service provider.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/524-0
+00:41:32.921 --> 00:41:34.521
+<v Helen Niemcewicz>Okay. Okay.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/530-2
+00:41:34.669 --> 00:41:38.259
+<v Shane Jacobs>Here's a list of all your clients.
+I could then in person,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/525-0
+00:41:36.441 --> 00:41:36.921
+<v Helen Niemcewicz>Okay.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/530-3
+00:41:38.259 --> 00:41:41.727
+<v Shane Jacobs>let's go to Cervelo Corporation.
+I can impersonate them.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/530-4
+00:41:41.727 --> 00:41:46.411
+<v Shane Jacobs>Now I'm diving into their system.
+So now I, you can see all the information,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/526-0
+00:41:44.121 --> 00:41:45.681
+<v Helen Niemcewicz>If you want to look at it, okay, good.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/530-5
+00:41:46.411 --> 00:41:48.601
+<v Shane Jacobs>help them with reporting, et cetera.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/529-0
+00:41:47.401 --> 00:41:47.801
+<v Helen Niemcewicz>Okay.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/532-0
+00:41:48.881 --> 00:41:52.601
+<v Shane Jacobs>But that's how you would have access to
+that. Yep. OK. Yep.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/531-0
+00:41:50.361 --> 00:41:51.321
+<v Helen Niemcewicz>OK, alright, thanks.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/537-0
+00:41:54.961 --> 00:41:58.978
+<v Shane Jacobs>I want to say this tool is very valuable.
+In previous companies,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/537-1
+00:41:58.978 --> 00:42:02.933
+<v Shane Jacobs>it would take me days,
+sometimes weeks to get this information.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/537-2
+00:42:02.933 --> 00:42:06.765
+<v Shane Jacobs>The fact that I can see it at my
+fingertips is very valuable.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/537-3
+00:42:06.765 --> 00:42:11.461
+<v Shane Jacobs>The nice thing about this, again,
+if I go back to Mexico and I can see that</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/537-4
+00:42:11.461 --> 00:42:15.355
+<v Shane Jacobs>salary in US dollars.
+So I feel like I want to pay that person</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/537-5
+00:42:15.355 --> 00:42:16.281
+<v Shane Jacobs>$5,000 a month.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/540-0
+00:42:16.921 --> 00:42:21.658
+<v Shane Jacobs>I can calculate that all in US dollars.
+So I can really see what those taxes are</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/540-1
+00:42:21.658 --> 00:42:24.464
+<v Shane Jacobs>in USD,
+knowing that they'll be paid in Mexican</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/540-2
+00:42:24.464 --> 00:42:28.850
+<v Shane Jacobs>peso, but then I can say, okay,
+that makes more sense to me in US dollars.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/540-3
+00:42:28.850 --> 00:42:32.065
+<v Shane Jacobs>My $5,000 employee,
+I'm going to roughly pay almost 6,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/540-4
+00:42:32.065 --> 00:42:36.041
+<v Shane Jacobs>300 with the taxes included.
+So I can show that in both currencies.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/543-0
+00:42:38.201 --> 00:42:40.658
+<v Shane Jacobs>Annually,
+this is going to account for any caps</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/543-1
+00:42:40.658 --> 00:42:44.751
+<v Shane Jacobs>that might happen with taxes, right?
+Certain caps and then no longer available.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/543-2
+00:42:44.751 --> 00:42:48.281
+<v Shane Jacobs>So if I toggle back and forth,
+that's calculating those accordingly.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/544-0
+00:42:49.441 --> 00:42:54.002
+<v Shane Jacobs>But to be able to see that in US dollars
+or local currency is a very powerful tool</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/544-1
+00:42:54.002 --> 00:42:57.243
+<v Shane Jacobs>that your client would have access to,
+you have access to,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/544-2
+00:42:57.243 --> 00:43:01.034
+<v Shane Jacobs>that they can immediately see that impact
+that that's going to have.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/544-3
+00:43:01.034 --> 00:43:05.210
+<v Shane Jacobs>Some of our clients that are debating,
+especially in Europe, France, Italy,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/544-4
+00:43:05.210 --> 00:43:08.121
+<v Shane Jacobs>I'm not sure exactly where I want that
+person to be.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/545-0
+00:43:08.521 --> 00:43:11.832
+<v Shane Jacobs>By running these calculations,
+you can see that there's a very different</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/545-1
+00:43:11.832 --> 00:43:15.052
+<v Shane Jacobs>tax burden based on the country.
+So sometimes that's a helpful tool in</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/545-2
+00:43:15.052 --> 00:43:15.641
+<v Shane Jacobs>that respect.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/546-0
+00:43:20.201 --> 00:43:22.521
+<v Shane Jacobs>I want to be mindful of time, Antaeus,
+how we doing.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/549-0
+00:43:24.041 --> 00:43:27.897
+<v Shane Jacobs>Any questions that you guys have,
+anything else that you want me to show?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/549-1
+00:43:27.897 --> 00:43:31.024
+<v Shane Jacobs>Hopefully this gives you an idea of how
+the platforms work.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/549-2
+00:43:31.024 --> 00:43:34.254
+<v Shane Jacobs>It's all very intuitive.
+I like to say we have a tech-enabled</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/549-3
+00:43:34.254 --> 00:43:36.807
+<v Shane Jacobs>platform,
+but we have a human component that you</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/549-4
+00:43:36.807 --> 00:43:39.881
+<v Shane Jacobs>always can have someone to talk to to go
+through all this.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/550-0
+00:43:41.481 --> 00:43:46.054
+<v Antaeus Coe>Yeah, I think we're right at time.
+How about we open the floor to see if,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/550-1
+00:43:46.054 --> 00:43:49.081
+<v Antaeus Coe>see Bill,
+what are your thoughts overall so far?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/551-0
+00:43:50.361 --> 00:43:54.851
+<v Bill Laffey>Yeah, this was helpful.
+I think it's like pretty intuitive.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/551-1
+00:43:54.851 --> 00:43:58.892
+<v Bill Laffey>And I know Shane,
+I had asked you like at Prism Live,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/551-2
+00:43:58.892 --> 00:44:03.905
+<v Bill Laffey>how is this gonna like be more integrated
+with the regular normal,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/551-3
+00:44:03.905 --> 00:44:10.041
+<v Bill Laffey>the domestic Prism HR over time? I don't,
+I'm sure nothing's changed since we've.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/557-0
+00:44:10.441 --> 00:44:13.608
+<v Bill Laffey>We talked only a couple,
+a month ago or whatever,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/557-1
+00:44:13.608 --> 00:44:18.231
+<v Bill Laffey>but a couple months. But like,
+I'd be interested in that and just really</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/557-2
+00:44:18.231 --> 00:44:23.425
+<v Bill Laffey>like to want to know if you have like a
+rate card or something that shows kind of</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/557-3
+00:44:23.425 --> 00:44:28.681
+<v Bill Laffey>those fees by like EOR versus payroll or
+both like by country, that sort of thing.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/558-0
+00:44:29.481 --> 00:44:36.463
+<v Bill Laffey>or if there's a matrix or something,
+or how we would get this quoted each time</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/558-1
+00:44:36.463 --> 00:44:37.081
+<v Bill Laffey>around.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/565-0
+00:44:36.601 --> 00:44:39.199
+<v Shane Jacobs>Yeah, yeah,
+Antaeus can provide that to you.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/565-1
+00:44:39.199 --> 00:44:44.106
+<v Shane Jacobs>I just want to quickly show, here's Prism,
+Prism HR. Right now, it's single sign-on.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/565-2
+00:44:44.106 --> 00:44:47.166
+<v Shane Jacobs>So if I go to payroll and then go to
+global payroll,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/565-3
+00:44:47.166 --> 00:44:50.803
+<v Shane Jacobs>that will take me into your system.
+That's where we're at now.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/565-4
+00:44:50.803 --> 00:44:55.075
+<v Shane Jacobs>I know we talked at Prism Live.
+The report center functionality is what's</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/565-5
+00:44:55.075 --> 00:44:57.961
+<v Shane Jacobs>really top of mind and really priority
+right now.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/568-0
+00:44:58.321 --> 00:45:00.869
+<v Shane Jacobs>So at the moment,
+the reports I showed you,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/568-1
+00:45:00.869 --> 00:45:05.502
+<v Shane Jacobs>you have to go into the Prism global
+system to get those reports. Future State,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/568-2
+00:45:05.502 --> 00:45:08.918
+<v Shane Jacobs>which is coming up,
+will there in Report Center be able to</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/568-3
+00:45:08.918 --> 00:45:13.724
+<v Shane Jacobs>pull all that global data in as well and
+then use that along with your US employee</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/568-4
+00:45:13.724 --> 00:45:17.372
+<v Shane Jacobs>data. So that's coming.
+And then just more of that integration</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/568-5
+00:45:17.372 --> 00:45:18.761
+<v Shane Jacobs>with Prism is happening.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/570-0
+00:45:19.321 --> 00:45:22.523
+<v Shane Jacobs>I don't know at one,
+I don't know at a future point if</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/570-1
+00:45:22.523 --> 00:45:26.946
+<v Shane Jacobs>everything will be in one platform.
+That gets into some GDPR compliance and</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/569-0
+00:45:25.081 --> 00:45:25.481
+<v Bill Laffey>Yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/570-2
+00:45:26.946 --> 00:45:31.078
+<v Shane Jacobs>some international standards that it
+might still be a separate module,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/570-3
+00:45:31.078 --> 00:45:35.734
+<v Shane Jacobs>but a lot more reporting integration,
+right? So we're working all through that.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/570-4
+00:45:35.734 --> 00:45:40.448
+<v Shane Jacobs>But I know the reporting is a big deal
+and to be able to have one place to go to</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/570-5
+00:45:40.448 --> 00:45:41.321
+<v Shane Jacobs>to get all your</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/571-0
+00:45:41.961 --> 00:45:45.186
+<v Shane Jacobs>US and international reporting is
+something that they're really working on</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/571-1
+00:45:45.186 --> 00:45:45.401
+<v Shane Jacobs>hard.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/572-0
+00:45:46.401 --> 00:45:46.761
+<v Bill Laffey>Okay.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/573-0
+00:45:46.441 --> 00:45:49.691
+<v Antaeus Coe>Bill, as far as pricing,
+what would you say is like the immediate</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/573-1
+00:45:49.691 --> 00:45:52.201
+<v Antaeus Coe>need right now for any given client that
+you have?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/574-0
+00:45:53.881 --> 00:45:54.601
+<v Helen Niemcewicz>Mexico.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/576-0
+00:45:55.081 --> 00:45:57.081
+<v Bill Laffey>Yeah, Mexico, maybe Canada.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/575-0
+00:45:55.441 --> 00:45:56.081
+<v Shane Jacobs>Next account.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/577-0
+00:45:57.881 --> 00:46:01.272
+<v Bill Laffey>And then, I don't know,
+if we could throw a couple other</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/577-1
+00:46:01.272 --> 00:46:05.555
+<v Bill Laffey>countries out just because we've had some
+experience looking into this,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/577-2
+00:46:05.555 --> 00:46:07.161
+<v Bill Laffey>just to get a general idea.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/579-0
+00:46:08.121 --> 00:46:12.060
+<v Bill Laffey>Um, we like Helen and I was saying,
+there's probably a few clients that we</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/579-1
+00:46:12.060 --> 00:46:15.001
+<v Bill Laffey>could go back to and say, "Hey,
+we have potential now."</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/580-0
+00:46:15.241 --> 00:46:16.321
+<v Helen Niemcewicz>Absolutely, I agree.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/578-0
+00:46:16.241 --> 00:46:16.521
+<v Shane Jacobs>Yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/581-0
+00:46:16.761 --> 00:46:20.728
+<v Bill Laffey>So, I, you know, I think like,
+I know Spain, I don't know,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/581-1
+00:46:20.728 --> 00:46:24.761
+<v Bill Laffey>there'd probably be a few other countries
+I could think of.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/582-0
+00:46:26.441 --> 00:46:29.025
+<v Shane Jacobs>One thing that my clients,
+that I'm doing with them,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/582-1
+00:46:29.025 --> 00:46:32.974
+<v Shane Jacobs>the other service providers I work with,
+is that they're bringing me on to calls</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/582-2
+00:46:32.974 --> 00:46:35.363
+<v Shane Jacobs>with their clients.
+So we can talk through this,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/582-3
+00:46:35.363 --> 00:46:38.386
+<v Shane Jacobs>get really specific,
+especially when you talk about different</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/582-4
+00:46:38.386 --> 00:46:42.091
+<v Shane Jacobs>countries. Once you get into Europe,
+there's a lot of different things that</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/582-5
+00:46:42.091 --> 00:46:44.285
+<v Shane Jacobs>kind of blows people's minds.
+South America,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/582-6
+00:46:44.285 --> 00:46:47.161
+<v Shane Jacobs>once you start talking about 13th and
+14th month payrolls,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/583-0
+00:46:47.521 --> 00:46:49.485
+<v Shane Jacobs>People are like,
+what are you talking about?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/583-1
+00:46:49.485 --> 00:46:52.846
+<v Shane Jacobs>So there's some of those things that
+we're always open to having those joint</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/583-2
+00:46:52.846 --> 00:46:56.163
+<v Shane Jacobs>calls. Antaeus can jump on those.
+He's been in the business for a long time</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/583-3
+00:46:56.163 --> 00:46:59.131
+<v Shane Jacobs>to answer some of those specifics.
+So they're not caught off guard.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/583-4
+00:46:59.131 --> 00:47:01.750
+<v Shane Jacobs>Or sometimes they hear this from their
+Brazilian employees,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/583-5
+00:47:01.750 --> 00:47:05.023
+<v Shane Jacobs>like there's a 14th month payroll.
+What are you talking about? We're like,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/583-6
+00:47:05.023 --> 00:47:07.161
+<v Shane Jacobs>no, there really is.
+And here's how it works. So</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/584-0
+00:47:07.521 --> 00:47:10.681
+<v Shane Jacobs>We're always available to help support
+you in those sales processes.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/585-0
+00:47:12.681 --> 00:47:17.001
+<v Bill Laffey>Yo, Laura, what was the one we just had?
+Somewhere in Africa? I forget the country.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/586-0
+00:47:18.521 --> 00:47:19.241
+<v Bill Laffey>Oh.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/587-0
+00:47:20.201 --> 00:47:21.401
+<v Laura Davis>Yeah, it was Africa.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/591-0
+00:47:22.601 --> 00:47:26.921
+<v Laura Davis>The employees moving to Africa from the U.
+S.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/588-0
+00:47:22.841 --> 00:47:23.401
+<v Bill Laffey>So.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/590-0
+00:47:25.561 --> 00:47:25.961
+<v Bill Laffey>Right.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/592-0
+00:47:27.161 --> 00:47:33.059
+<v Bill Laffey>So it's a U.S. citizen going there.
+They were working in the embassy, right?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/592-1
+00:47:33.059 --> 00:47:34.361
+<v Bill Laffey>The U.S. Embassy.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/594-0
+00:47:33.241 --> 00:47:38.921
+<v Laura Davis>Her, I think her husband is a diplomat,
+and that meant something to her.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/593-0
+00:47:35.721 --> 00:47:36.441
+<v Bill Laffey>Yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/600-0
+00:47:39.641 --> 00:47:44.614
+<v Bill Laffey>They were trying to say they wouldn't be
+subject to any taxes in this,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/600-1
+00:47:44.614 --> 00:47:50.076
+<v Bill Laffey>whichever country it was, but like,
+it was Kenya, right? Okay. So like, yeah,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/595-0
+00:47:45.401 --> 00:47:46.281
+<v Shirley Schultz>It was Kenya.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/596-0
+00:47:49.041 --> 00:47:49.161
+<v Shane Jacobs>Yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/597-0
+00:47:49.961 --> 00:47:50.601
+<v Antaeus Coe>Interesting.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/600-2
+00:47:50.076 --> 00:47:55.609
+<v Bill Laffey>we looked into it and we determined that
+they would be subject to their Kenyan</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/600-3
+00:47:55.609 --> 00:48:00.441
+<v Bill Laffey>taxes. And so that's an example,
+like where, you know, we would say,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/598-0
+00:47:55.881 --> 00:47:56.361
+<v Shane Jacobs>Okay.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/599-0
+00:47:59.401 --> 00:47:59.721
+<v Shane Jacobs>Yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/601-0
+00:48:00.921 --> 00:48:02.601
+<v Bill Laffey>a US citizen working here.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/602-0
+00:48:04.441 --> 00:48:05.801
+<v Bill Laffey>And everything, but...</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/603-0
+00:48:06.681 --> 00:48:07.681
+<v Bill Laffey>You know, they had a...</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/604-0
+00:48:06.761 --> 00:48:09.961
+<v Shane Jacobs>Yeah, those situations, yeah, are tricky.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/607-0
+00:48:11.601 --> 00:48:14.767
+<v Shane Jacobs>What they're saying may be true,
+but it depends on what they're doing for</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/607-1
+00:48:14.767 --> 00:48:17.589
+<v Shane Jacobs>work in that country in Kenya.
+If they're working in the embassy,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/605-0
+00:48:15.561 --> 00:48:16.041
+<v Antaeus Coe>Mhm.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/607-2
+00:48:17.589 --> 00:48:20.498
+<v Shane Jacobs>probably. But if they're not,
+they're working for a Kenyan company,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/607-3
+00:48:20.498 --> 00:48:23.920
+<v Shane Jacobs>they're going to pay Kenyan taxes and
+they're going to need a work permit and a</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/607-4
+00:48:23.920 --> 00:48:25.887
+<v Shane Jacobs>visa.
+So there's all these little things that</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/607-5
+00:48:25.887 --> 00:48:27.983
+<v Shane Jacobs>come into play that we can absolutely
+help with.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/607-6
+00:48:27.983 --> 00:48:30.121
+<v Shane Jacobs>We have an immigration team that would
+say, okay,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/606-0
+00:48:29.641 --> 00:48:29.961
+<v Bill Laffey>Yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/608-0
+00:48:30.161 --> 00:48:32.921
+<v Shane Jacobs>What's the scenario?
+Here's how we can help.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/609-0
+00:48:33.881 --> 00:48:37.730
+<v Shane Jacobs>Most countries we can help.
+There are some countries that don't allow</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/609-1
+00:48:37.730 --> 00:48:41.360
+<v Shane Jacobs>EORs to sponsor work permits and visas.
+Canada is a good example.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/609-2
+00:48:41.360 --> 00:48:44.604
+<v Shane Jacobs>As an employer of record,
+we cannot sponsor an individual,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/609-3
+00:48:44.604 --> 00:48:48.948
+<v Shane Jacobs>a foreign individual to work in there.
+They have to be hired directly from the</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/609-4
+00:48:48.948 --> 00:48:52.687
+<v Shane Jacobs>client. So there's, again,
+different rules for different countries,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/609-5
+00:48:52.687 --> 00:48:53.401
+<v Shane Jacobs>but we can...</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/610-0
+00:48:54.281 --> 00:48:56.761
+<v Shane Jacobs>Spell everything out so everyone's on
+board with what's going on.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/613-0
+00:48:56.721 --> 00:49:00.685
+<v Helen Niemcewicz>What is your minimum?
+What's your minimum employee acceptance?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/611-0
+00:48:57.241 --> 00:48:57.801
+<v Bill Laffey>Okay.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/613-1
+00:49:00.685 --> 00:49:03.641
+<v Helen Niemcewicz>If we come to you, one, okay. All right,
+good.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/612-0
+00:49:00.921 --> 00:49:03.401
+<v Antaeus Coe>One, yeah, just one.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/614-0
+00:49:04.121 --> 00:49:05.161
+<v Bill Laffey>I already asked that one.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/615-0
+00:49:04.321 --> 00:49:05.801
+<v Shane Jacobs>Yeah, no, no minimums, yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/616-0
+00:49:05.241 --> 00:49:06.641
+<v Helen Niemcewicz>Okay, good. Okay.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/617-0
+00:49:06.841 --> 00:49:07.081
+<v Bill Laffey>Yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/619-0
+00:49:09.161 --> 00:49:11.481
+<v Shane Jacobs>It often starts with one,
+but it goes from there, yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/618-0
+00:49:09.321 --> 00:49:11.081
+<v Bill Laffey>Yeah, I think, I think that Canada...</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/623-0
+00:49:12.281 --> 00:49:16.568
+<v Bill Laffey>Yeah, the Canada example,
+I believe they are Canadians in that case,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/620-0
+00:49:15.481 --> 00:49:15.881
+<v Shane Jacobs>OK.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/623-1
+00:49:16.568 --> 00:49:20.046
+<v Bill Laffey>so that's good.
+But there have definitely been a lot of</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/621-0
+00:49:17.721 --> 00:49:18.441
+<v Shane Jacobs>Yeah, yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/623-2
+00:49:20.046 --> 00:49:24.953
+<v Bill Laffey>like US citizens, retired military,
+that sort of thing, working on like naval,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/623-3
+00:49:24.953 --> 00:49:28.059
+<v Bill Laffey>you know,
+bases and all kinds of stuff there with</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/623-4
+00:49:28.059 --> 00:49:32.345
+<v Bill Laffey>different contracts and stuff.
+So that's where the immigration teams</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/622-0
+00:49:30.201 --> 00:49:31.881
+<v Shane Jacobs>Yeah, you should.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/623-5
+00:49:32.345 --> 00:49:33.401
+<v Bill Laffey>will come in and.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/624-0
+00:49:33.441 --> 00:49:34.201
+<v Bill Laffey>And everything.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/626-0
+00:49:34.361 --> 00:49:38.566
+<v Shane Jacobs>Yeah, and in my experience,
+usually when they're US going and working</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/626-1
+00:49:38.566 --> 00:49:41.869
+<v Shane Jacobs>on military bases,
+they're covered under SOFA or other</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/626-2
+00:49:41.869 --> 00:49:45.172
+<v Shane Jacobs>agreements with that country,
+and they actually don't,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/625-0
+00:49:42.441 --> 00:49:43.641
+<v Bill Laffey>Yeah, yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/626-3
+00:49:45.172 --> 00:49:49.196
+<v Shane Jacobs>we don't even get involved.
+They stay on the US payroll. So again,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/626-4
+00:49:49.196 --> 00:49:52.920
+<v Shane Jacobs>it depends on the situation.
+It can get a little complicated,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/626-5
+00:49:52.920 --> 00:49:54.841
+<v Shane Jacobs>but in some of those situations,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/628-0
+00:49:56.521 --> 00:50:00.382
+<v Shane Jacobs>because they're technically working on US
+soil in a foreign country.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/628-1
+00:50:00.382 --> 00:50:04.691
+<v Shane Jacobs>They don't have to, but the spouses,
+that's a scenario happens A lot, right?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/628-2
+00:50:04.691 --> 00:50:08.663
+<v Shane Jacobs>I'm moving because of my spouse.
+They're working through that company,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/627-0
+00:50:05.401 --> 00:50:05.721
+<v Antaeus Coe>Yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/628-3
+00:50:08.663 --> 00:50:12.244
+<v Shane Jacobs>but now what do I do?
+Now that their spouse gets a work permit,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/628-4
+00:50:12.244 --> 00:50:15.881
+<v Shane Jacobs>they work for their company in the UK,
+but my spouse can't work.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/629-0
+00:50:16.281 --> 00:50:20.397
+<v Shane Jacobs>we can look at hiring through employer of
+record and sponsoring the spouse to work.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/629-1
+00:50:20.397 --> 00:50:22.601
+<v Shane Jacobs>So there's lots of ways we can help do
+that.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/636-0
+00:50:22.921 --> 00:50:25.550
+<v Bill Laffey>Yeah, okay,
+we've had every scenario there.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/631-0
+00:50:25.401 --> 00:50:26.441
+<v Helen Niemcewicz>I think so, yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/636-1
+00:50:25.550 --> 00:50:29.613
+<v Bill Laffey>And I mean, the whole thing is,
+we had the people working on bases,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/630-0
+00:50:25.561 --> 00:50:26.041
+<v Shane Jacobs>Yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/633-0
+00:50:26.921 --> 00:50:28.361
+<v Shane Jacobs>Yeah, and you'll see more, right?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/632-0
+00:50:27.881 --> 00:50:28.201
+<v Sharon Murray>Yep.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/636-2
+00:50:29.613 --> 00:50:33.078
+<v Bill Laffey>but like Germany,
+they had to pay social tax and all that</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/636-3
+00:50:33.078 --> 00:50:37.380
+<v Bill Laffey>stuff in Germany. So, you know,
+the same client had people in all these</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/634-0
+00:50:34.761 --> 00:50:35.081
+<v Helen Niemcewicz>Yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/636-4
+00:50:37.380 --> 00:50:41.681
+<v Bill Laffey>different places and they were all
+different rules in each country. So.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/635-0
+00:50:42.121 --> 00:50:42.521
+<v Shane Jacobs>Yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/637-0
+00:50:43.001 --> 00:50:44.761
+<v Bill Laffey>Yeah, we kind of pieced it together.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/638-0
+00:50:46.281 --> 00:50:48.279
+<v Antaeus Coe>So, Bill,
+you guys have a smorgasbord of</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/638-1
+00:50:48.279 --> 00:50:51.446
+<v Antaeus Coe>opportunity, it sounds like.
+Different clients, different needs,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/638-2
+00:50:51.446 --> 00:50:54.417
+<v Antaeus Coe>different countries,
+which is all fantastic now that we have</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/638-3
+00:50:54.417 --> 00:50:57.194
+<v Antaeus Coe>our global offering. But I'm curious,
+like, what do you,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/638-4
+00:50:57.194 --> 00:51:00.312
+<v Antaeus Coe>I want to hear from you,
+what do you think would be helpful for</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/638-5
+00:51:00.312 --> 00:51:01.481
+<v Antaeus Coe>you as a next best step?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/639-0
+00:51:03.081 --> 00:51:08.331
+<v Bill Laffey>I think it would be knowing what we would
+be charged so that we could build a</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/639-1
+00:51:08.331 --> 00:51:13.580
+<v Bill Laffey>proposal as we would either go back to
+these guys or as the new opportunities</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/639-2
+00:51:13.580 --> 00:51:18.291
+<v Bill Laffey>really come to fruition here.
+There's one that we just need to get in</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/639-3
+00:51:18.291 --> 00:51:23.001
+<v Bill Laffey>touch with our client to see what the
+Mexico opportunity actually is.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/640-0
+00:51:24.281 --> 00:51:25.801
+<v Bill Laffey>So that's the most immediate.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/641-0
+00:51:24.921 --> 00:51:27.481
+<v Antaeus Coe>You would say that that's probably the
+most immediate, yeah, okay, yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/645-0
+00:51:27.241 --> 00:51:32.392
+<v Bill Laffey>Yeah, but you know, like they,
+that same client had people in Canada and</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/645-1
+00:51:32.392 --> 00:51:38.249
+<v Bill Laffey>we actually referred that somewhere else.
+So we could look at potentially bringing</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/643-0
+00:51:35.001 --> 00:51:35.241
+<v Helen Niemcewicz>Yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/644-0
+00:51:37.801 --> 00:51:39.641
+<v Helen Niemcewicz>Bring that, yeah,
+we can probably bring that back.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/645-2
+00:51:38.249 --> 00:51:39.801
+<v Bill Laffey>that back in the fold.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/647-0
+00:51:38.761 --> 00:51:42.427
+<v Antaeus Coe>Do you know if they,
+so you don't think they've engaged a</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/647-1
+00:51:42.427 --> 00:51:45.081
+<v Antaeus Coe>third party yet, the Canadian opportunity?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/648-0
+00:51:43.481 --> 00:51:46.361
+<v Helen Niemcewicz>Yes, they have, they have, yes, yes.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/649-0
+00:51:43.721 --> 00:51:49.531
+<v Bill Laffey>I think they have, yeah,
+but they would probably be open to,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/651-0
+00:51:49.161 --> 00:51:52.881
+<v Helen Niemcewicz>We could prop, yeah, we could,
+we could circle back on it, yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/649-1
+00:51:49.531 --> 00:51:51.721
+<v Bill Laffey>you know, looking at...</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/650-0
+00:51:53.081 --> 00:51:53.481
+<v Bill Laffey>Yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/652-0
+00:51:53.241 --> 00:51:55.833
+<v Antaeus Coe>And how many employees,
+you may or may not know this,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/652-1
+00:51:55.833 --> 00:51:58.953
+<v Antaeus Coe>the Mexican opportunity,
+the Mexico opportunity and the Canadian</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/652-2
+00:51:58.953 --> 00:52:01.545
+<v Antaeus Coe>opportunity.
+Do you know how many employees they were</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/652-3
+00:52:01.545 --> 00:52:03.081
+<v Antaeus Coe>looking to hire in each country?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/653-0
+00:52:03.321 --> 00:52:06.441
+<v Helen Niemcewicz>Well, Canada, there's 10 already hired.
+They're already working.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/654-0
+00:52:06.921 --> 00:52:07.401
+<v Bill Laffey>Yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/656-0
+00:52:07.561 --> 00:52:08.681
+<v Helen Niemcewicz>Yeah, so I know that.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/657-0
+00:52:07.841 --> 00:52:09.001
+<v Antaeus Coe>What's the what's this?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/655-0
+00:52:08.481 --> 00:52:08.841
+<v Bill Laffey>And.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/659-0
+00:52:10.441 --> 00:52:12.441
+<v Antaeus Coe>You said already hired, so is there...</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/662-0
+00:52:11.721 --> 00:52:14.670
+<v Helen Niemcewicz>Yes,
+they they've already they've been they've</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/660-0
+00:52:13.401 --> 00:52:14.041
+<v Antaeus Coe>How many are they?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/662-1
+00:52:14.670 --> 00:52:17.681
+<v Helen Niemcewicz>already proposed 2 months of payroll in
+Canada,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/662-2
+00:52:17.681 --> 00:52:20.441
+<v Helen Niemcewicz>so that's that job is completely
+onboarded.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/661-0
+00:52:18.681 --> 00:52:19.161
+<v Antaeus Coe>Okay.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/666-0
+00:52:21.481 --> 00:52:24.534
+<v Antaeus Coe>Oh,
+so 10 is the number or are they do they</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/663-0
+00:52:21.521 --> 00:52:21.801
+<v Helen Niemcewicz>But...</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/664-0
+00:52:21.641 --> 00:52:22.281
+<v Bill Laffey>Yeah, and...</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/666-1
+00:52:24.534 --> 00:52:29.321
+<v Antaeus Coe>have more headcount space that they're
+looking to fill in in Canada?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/665-0
+00:52:29.561 --> 00:52:30.041
+<v Helen Niemcewicz>Yes.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/667-0
+00:52:31.521 --> 00:52:33.401
+<v Antaeus Coe>But we don't know that number.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/671-0
+00:52:33.441 --> 00:52:36.834
+<v Helen Niemcewicz>No, we don't know the number,
+but you know we we can possibly go back</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/668-0
+00:52:34.601 --> 00:52:35.561
+<v Antaeus Coe>Okay, understood.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/669-0
+00:52:36.121 --> 00:52:36.601
+<v Bill Laffey>So...</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/671-1
+00:52:36.834 --> 00:52:38.481
+<v Helen Niemcewicz>and get their business back, yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/674-0
+00:52:38.521 --> 00:52:41.728
+<v Bill Laffey>One thing we don't know either, Helen,
+or maybe you do,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/670-0
+00:52:38.881 --> 00:52:39.321
+<v Antaeus Coe>Sure.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/674-1
+00:52:41.728 --> 00:52:46.137
+<v Bill Laffey>but did they do like an EOR in Canada
+with that partner we referred them to,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/674-2
+00:52:46.137 --> 00:52:49.401
+<v Bill Laffey>or did they do payroll and do they have
+an entity there?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/672-0
+00:52:48.121 --> 00:52:48.601
+<v Helen Niemcewicz>Payroll.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/673-0
+00:52:49.681 --> 00:52:50.601
+<v Helen Niemcewicz>They they did payroll.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/676-0
+00:52:51.161 --> 00:52:53.523
+<v Bill Laffey>Yeah,
+so they probably have an entity</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/675-0
+00:52:51.561 --> 00:52:54.281
+<v Shane Jacobs>Ohh, OK, so they have an entity there, OK.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/676-1
+00:52:53.523 --> 00:52:57.189
+<v Bill Laffey>established already,
+which would make it easier to switch,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/676-2
+00:52:57.189 --> 00:52:58.121
+<v Bill Laffey>I would assume.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/677-0
+00:52:58.361 --> 00:52:59.561
+<v Shane Jacobs>Yeah, and then...</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/682-0
+00:53:00.761 --> 00:53:04.796
+<v Shane Jacobs>We would just manage it all through the
+platform, right, that payroll instance.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/680-0
+00:53:04.281 --> 00:53:04.761
+<v Bill Laffey>Yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/679-0
+00:53:04.561 --> 00:53:04.761
+<v Antaeus Coe>No.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/682-1
+00:53:04.796 --> 00:53:08.426
+<v Shane Jacobs>Some key things as you're talking to your
+clients and they're like, oh,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/682-2
+00:53:08.426 --> 00:53:12.057
+<v Shane Jacobs>we have an entity we set up in Canada.
+Always ask the next question is,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/682-3
+00:53:12.057 --> 00:53:15.284
+<v Shane Jacobs>is it registered for payroll?
+There's those two components that</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/681-0
+00:53:15.041 --> 00:53:15.321
+<v Antaeus Coe>M.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/682-4
+00:53:15.284 --> 00:53:18.814
+<v Shane Jacobs>sometimes get missed. Oh yeah,
+our attorney set up the entity. Great,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/682-5
+00:53:18.814 --> 00:53:19.721
+<v Shane Jacobs>we're ready to go.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/684-0
+00:53:20.201 --> 00:53:22.483
+<v Shane Jacobs>Not quite.
+You need to register that entity for</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/684-1
+00:53:22.483 --> 00:53:24.669
+<v Shane Jacobs>payroll.
+I always tell the example when I was</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/684-2
+00:53:24.669 --> 00:53:27.663
+<v Shane Jacobs>hired at another company,
+I was the first employee in Arizona.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/684-3
+00:53:27.663 --> 00:53:30.466
+<v Shane Jacobs>And as you guys know,
+if you've never done business in the</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/684-4
+00:53:30.466 --> 00:53:32.748
+<v Shane Jacobs>state,
+you've got to register in that state for</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/684-5
+00:53:32.748 --> 00:53:36.502
+<v Shane Jacobs>payroll taxes. Same thing with countries.
+So that's always a good little like,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/684-6
+00:53:36.502 --> 00:53:39.638
+<v Shane Jacobs>are you registered yet? And if not,
+then we can talk through what</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/683-0
+00:53:38.201 --> 00:53:38.601
+<v Bill Laffey>Yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/684-7
+00:53:39.638 --> 00:53:40.921
+<v Shane Jacobs>registrations are required.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/685-0
+00:53:41.281 --> 00:53:44.097
+<v Shane Jacobs>And then once that's complete,
+we can run their payroll in that country,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/685-1
+00:53:44.097 --> 00:53:44.521
+<v Shane Jacobs>no problem.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/686-0
+00:53:45.481 --> 00:53:45.961
+<v Bill Laffey>Okay.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/687-0
+00:53:45.681 --> 00:53:46.441
+<v Helen Niemcewicz>Yeah, Bill and Jer.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/689-0
+00:53:45.881 --> 00:53:49.714
+<v Antaeus Coe>And you're able to say now,
+Bill and Helen, yeah, we can do all that.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/689-1
+00:53:49.714 --> 00:53:53.821
+<v Antaeus Coe>We're already, I mean, if we just,
+you know, break it down to brass tacks,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/688-0
+00:53:50.201 --> 00:53:50.841
+<v Helen Niemcewicz>We do.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/689-2
+00:53:53.821 --> 00:53:57.654
+<v Antaeus Coe>that's literally what we raised this
+product for. So go ahead, Helen,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/689-3
+00:53:57.654 --> 00:53:58.201
+<v Antaeus Coe>I'm sorry.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/690-0
+00:53:59.641 --> 00:54:03.094
+<v Helen Niemcewicz>No, in Germany, yes,
+each employee had to register with the</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/690-1
+00:54:03.094 --> 00:54:06.028
+<v Helen Niemcewicz>country.
+Each individual employee had to register.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/690-2
+00:54:06.028 --> 00:54:08.041
+<v Helen Niemcewicz>I remember that. It was a disaster.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/695-0
+00:54:08.481 --> 00:54:12.375
+<v Shane Jacobs>Yeah, Mexico has a, yeah, yeah,
+Mexico has a specific registration</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/691-0
+00:54:08.521 --> 00:54:09.561
+<v Bill Laffey>Well, it's yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/692-0
+00:54:09.401 --> 00:54:11.041
+<v Antaeus Coe>A disaster.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/695-1
+00:54:12.375 --> 00:54:15.512
+<v Shane Jacobs>process. Some countries, Europe,
+Philippines, France,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/695-2
+00:54:15.512 --> 00:54:18.418
+<v Shane Jacobs>they have medical checks you have to go
+to. Yeah,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/695-3
+00:54:18.418 --> 00:54:22.601
+<v Shane Jacobs>so it depends on what's going on.
+There's a lot, lots that goes on, so.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/693-0
+00:54:22.601 --> 00:54:22.921
+<v Helen Niemcewicz>Okay.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/696-0
+00:54:22.841 --> 00:54:26.343
+<v Bill Laffey>So let me ask you this with payroll only
+in Canada,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/694-0
+00:54:23.481 --> 00:54:23.881
+<v Antaeus Coe>So...</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/696-1
+00:54:26.343 --> 00:54:31.662
+<v Bill Laffey>like if these guys were registered for
+payroll, everything, and they switched,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/696-2
+00:54:31.662 --> 00:54:36.038
+<v Bill Laffey>is it like the US where you would have to
+bring in like, I mean,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/696-3
+00:54:36.038 --> 00:54:41.357
+<v Bill Laffey>do they have like the equivalent of a W-2
+so you would need to have the annual</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/696-4
+00:54:41.357 --> 00:54:41.761
+<v Bill Laffey>wages?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/697-0
+00:54:42.281 --> 00:54:43.881
+<v Bill Laffey>All the history in there as well.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/698-0
+00:54:44.961 --> 00:54:45.721
+<v Bill Laffey>OKOK.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/701-0
+00:54:45.641 --> 00:54:48.643
+<v Shane Jacobs>Yep, similar process.
+I don't know what the W-2 is called in</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/701-1
+00:54:48.643 --> 00:54:51.545
+<v Shane Jacobs>Canada, but yeah,
+all those tax information we would have.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/699-0
+00:54:49.161 --> 00:54:49.641
+<v Bill Laffey>Yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/701-2
+00:54:51.545 --> 00:54:54.153
+<v Shane Jacobs>Our teams would then migrate that system
+over to us.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/701-3
+00:54:54.153 --> 00:54:57.006
+<v Shane Jacobs>We usually do a parallel run or test the
+system the last,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/700-0
+00:54:57.001 --> 00:54:58.201
+<v Antaeus Coe>T2 or something.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/701-4
+00:54:57.006 --> 00:55:00.942
+<v Shane Jacobs>they would do the last run on their side.
+We'd test it on our side and then cut</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/701-5
+00:55:00.942 --> 00:55:04.041
+<v Shane Jacobs>over on the cutoff date and we'd take
+over payroll from there.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/703-0
+00:55:04.601 --> 00:55:09.001
+<v Shane Jacobs>And then we manage all the tax forms and
+submissions from there. So</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/705-0
+00:55:08.761 --> 00:55:11.843
+<v Helen Niemcewicz>Yeah, Bill, Bill,
+you just need to get us rates as to what</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/702-0
+00:55:08.921 --> 00:55:09.761
+<v Bill Laffey>Yeah, okay.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/705-1
+00:55:11.843 --> 00:55:15.081
+<v Helen Niemcewicz>the cost would be in Canada,
+because we would do a January 1.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/704-0
+00:55:13.001 --> 00:55:13.321
+<v Shane Jacobs>Yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/707-0
+00:55:15.721 --> 00:55:17.961
+<v Bill Laffey>Yeah, that's another thing option there,
+yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/706-0
+00:55:15.801 --> 00:55:16.121
+<v Shane Jacobs>Yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/708-0
+00:55:16.721 --> 00:55:18.601
+<v Helen Niemcewicz>Yeah, just we just need rates, yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/709-0
+00:55:19.241 --> 00:55:19.721
+<v Bill Laffey>Okay.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/710-0
+00:55:19.401 --> 00:55:22.538
+<v Shane Jacobs>Yeah, in that respect,
+we're processing the payroll.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/710-1
+00:55:22.538 --> 00:55:26.622
+<v Shane Jacobs>We even create the bank file,
+which tells their bank in Canada which</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/710-2
+00:55:26.622 --> 00:55:31.001
+<v Shane Jacobs>employees to pay what and to pay the tax
+authorities. So in that respect,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/710-3
+00:55:31.001 --> 00:55:35.617
+<v Shane Jacobs>they're not paying through us like an
+employer of record model does. Instead,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/710-4
+00:55:35.617 --> 00:55:39.641
+<v Shane Jacobs>we're processing the payroll and then
+directing their Canadian bank</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/711-0
+00:55:40.121 --> 00:55:41.321
+<v Shane Jacobs>Who to pay and when to pay?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/713-0
+00:55:42.681 --> 00:55:46.893
+<v Shane Jacobs>With an employer of record, you,
+the client, I keep saying you,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/713-1
+00:55:46.893 --> 00:55:50.250
+<v Shane Jacobs>I mean the client,
+pay us all the salaries, taxes,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/713-2
+00:55:50.250 --> 00:55:54.659
+<v Shane Jacobs>and fees they pay to us,
+because we're the employer than we pay in</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/713-3
+00:55:54.659 --> 00:55:56.041
+<v Shane Jacobs>local currency. Yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/712-0
+00:55:55.641 --> 00:55:56.441
+<v Bill Laffey>Right, right.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/714-0
+00:55:55.801 --> 00:55:57.721
+<v Helen Niemcewicz>Yeah, that, that's like, that's like us,
+yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/715-0
+00:55:57.961 --> 00:55:58.681
+<v Shane Jacobs>Yeah, OK.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/716-0
+00:56:00.521 --> 00:56:04.226
+<v Antaeus Coe>So I'll wrap all this up for us, Bill,
+Helen, and team.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/716-1
+00:56:04.226 --> 00:56:09.319
+<v Antaeus Coe>I just heard right there at the end,
+Helen said it would be good to see what</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/716-2
+00:56:09.319 --> 00:56:14.081
+<v Antaeus Coe>our payroll offering pricing would be for
+Canada. Is that what I heard?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/717-0
+00:56:13.081 --> 00:56:16.793
+<v Helen Niemcewicz>Yeah, right. Yes,
+and I'd like Mexico also, so I can,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/718-0
+00:56:16.601 --> 00:56:19.619
+<v Antaeus Coe>Yep. Yes,
+I'll break out payroll EOR for those two</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/717-1
+00:56:16.793 --> 00:56:17.961
+<v Helen Niemcewicz>you know, please.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/718-1
+00:56:19.619 --> 00:56:22.637
+<v Antaeus Coe>to start,
+because like you've been hearing us say,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/718-2
+00:56:22.637 --> 00:56:26.365
+<v Antaeus Coe>it just, I mean, right,
+every country is a different bottle of</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/718-3
+00:56:26.365 --> 00:56:26.601
+<v Antaeus Coe>wax.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/719-0
+00:56:29.001 --> 00:56:32.930
+<v Antaeus Coe>And I'll also send over,
+just so you guys have it for your other</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/719-1
+00:56:32.930 --> 00:56:35.710
+<v Antaeus Coe>clients,
+just like the top few questions that</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/719-2
+00:56:35.710 --> 00:56:40.121
+<v Antaeus Coe>you'll want to know that'll help us be
+able to provide you with pricing.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/720-0
+00:56:42.161 --> 00:56:46.368
+<v Antaeus Coe>For any given country that your clients
+come back to you and say, "Hey,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/720-1
+00:56:46.368 --> 00:56:49.406
+<v Antaeus Coe>we need we need we need support in these
+countries,</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/720-2
+00:56:49.406 --> 00:56:51.801
+<v Antaeus Coe>" but we'll start with Canada and Mexico.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/722-0
+00:56:55.081 --> 00:56:58.502
+<v Antaeus Coe>Yeah, anything else?
+Thank you guys for staying over a little</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/721-0
+00:56:56.241 --> 00:56:56.481
+<v Helen Niemcewicz>Yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/722-1
+00:56:58.502 --> 00:56:59.881
+<v Antaeus Coe>bit. Any other questions?</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/723-0
+00:57:01.161 --> 00:57:02.681
+<v Bill Laffey>I don't think I have any.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/724-0
+00:57:03.201 --> 00:57:03.481
+<v Shane Jacobs>Yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/726-0
+00:57:05.521 --> 00:57:07.093
+<v Shane Jacobs>Okay,
+well so good to meet with all of you.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/726-1
+00:57:07.093 --> 00:57:09.701
+<v Shane Jacobs>Let us know what we need to help.
+It was good to meet you and go through</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/725-0
+00:57:07.401 --> 00:57:07.721
+<v Antaeus Coe>Yeah.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/726-2
+00:57:09.701 --> 00:57:10.201
+<v Shane Jacobs>this with you.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/732-0
+00:57:10.841 --> 00:57:14.361
+<v Helen Niemcewicz>Thank you so much. Appreciate your time.
+All right. Bye.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/727-0
+00:57:10.921 --> 00:57:11.641
+<v Laura Davis>Thank you.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/730-0
+00:57:11.241 --> 00:57:13.641
+<v Bill Laffey>Alright, yep. Thanks a lot, guys.
+Appreciate it.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/728-0
+00:57:12.041 --> 00:57:12.761
+<v Sherry Bauer>Thank you.</v>
+
+a1239971-07e0-4b71-844e-f23bf5b55120/736-0
+00:57:13.081 --> 00:57:15.081
+<v Antaeus Coe>Thanks, everybody. Yep. Talk soon. Bye.</v>
