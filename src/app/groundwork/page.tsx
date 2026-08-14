@@ -26,7 +26,7 @@ import {
 } from "@/lib/today/overlay";
 import { clockShort, userDayKey } from "@/lib/tz";
 import { sfAccountUrl } from "@/lib/salesforce";
-import { buildQueue, heatOf, moveKey } from "@/lib/groundwork/day";
+import { buildQueue, heatOf, liveMotionIds, moveKey } from "@/lib/groundwork/day";
 import { loadDashboard } from "@/lib/dashboard/data";
 import { readOutcome } from "@/lib/dashboard/outcome";
 import { digestForCardName } from "@/lib/intel/digest";
@@ -252,6 +252,10 @@ export default async function GroundworkPage({
     if (d.status === "not-mine" || d.status === "parked") excludedIds.add(id);
   }
   for (const id of snoozes.keys()) if (!id.includes(":")) excludedIds.add(id);
+  // The record's live motion excludes too: a recent inbound or a fresh
+  // meeting on file means the deal is being WORKED — the HomeRoom's job,
+  // whatever the lagging board says.
+  for (const id of liveMotionIds(accountNotes, intelById, now)) excludedIds.add(id);
 
   const { all: rankedAll } = buildQueue({
     accounts: peos,

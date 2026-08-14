@@ -93,7 +93,11 @@ the queue entirely — Groundwork prospects the book it is NOT actively closing.
 One rule holds at most two leading slots (its overflow sinks below other
 rules), and the book-wide research stamp going stale is ONE move ("Run the
 research pass.") carried by the strongest above-gate account, never a wall of
-per-account clones.
+per-account clones. The record's live motion excludes too (2026-08-14): a
+real inbound within 21 days, or a meeting/call/transcript filed within 14,
+means the deal is being worked — the HomeRoom's job, whatever the lagging
+board says. The operator's own outbound never excludes; the drumbeat rules
+need it.
 
 ## The Chute (decided 2026-08-11)
 
