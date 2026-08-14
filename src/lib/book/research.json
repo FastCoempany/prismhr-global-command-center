@@ -3637,6 +3637,33 @@
       "summary": "Live, first-party EOR deal running through Advocate Pay for their client SubcontractorHub: the international roster is in hand (Bulgaria 'Frontier' group is the primary W-2/EOR conversion; the rest stay 1099), the proposal is EOR CORE with the deposit waived, pricing went to Bryce 7/8, and the contracts (final, client-shareable as of 7/13) went out 7/10 with the IP-protection walkthrough Renee requested. Shane Jacobs is OOO until 7/20, so I run point. Next: SubcontractorHub's reaction to pricing + contracts, then signature and Bulgaria onboarding — paced per Aleks (7/13): give it time while contracts are solidified on our side.",
       "researched": true,
       "verified": true
+    },
+    "AXCETHR000000001": {
+      "demandScore": 12,
+      "confidence": "medium",
+      "signals": [
+        "IRS-Certified PEO (CPEO) — the only KC-founded PEO holding it; compliance-forward shop.",
+        "Clients sit in 46 states, but the target book is SMBs within 250 miles of Kansas City.",
+        "Full PEO stack in-house: HR, benefits, payroll and tax, workers' comp and safety.",
+        "No international, EOR, or global payroll service named anywhere on the site or blog.",
+        "Family-owned since 1988; founder Jerry Diddle remains president — long-tenure staff."
+      ],
+      "evidence": [
+        {
+          "claim": "PEO services, KC roots, CPEO designation, clients in 46 states",
+          "url": "https://www.axcethr.com/about-us/"
+        },
+        {
+          "claim": "Founded 1988 by Jerry Diddle; 30+ year family-owned history",
+          "url": "https://blog.axcethr.com/kansas-citys-peo-axcet-hr-solutions-celebrates-30-year-anniversary"
+        },
+        {
+          "claim": "NAPEO member listing",
+          "url": "https://napeo.org/intro-to-peos/find-a-peo/axcet-hr-solutions/"
+        }
+      ],
+      "summary": "Axcet HR Solutions is a family-owned Kansas City CPEO (Overland Park, KS), founded 1988 by Jerry Diddle, serving SMB clients across 46 states with a full domestic PEO stack: HR, benefits, payroll and tax, and risk management. Nothing on the site, blog, or directory listings names international hiring, EOR, or global payroll — no live cross-border demand signal found. Greenfield if their clients ever hire abroad; the compliance-forward CPEO posture suggests they would want it handled inside a certified structure rather than referred out.",
+      "researched": true
     }
   }
 }

@@ -243,131 +243,145 @@ function WorkingDeal({ a, canWrite }: { a: AccountRow; canWrite: boolean }) {
   };
   return (
     <div className={styles.panel}>
-      <h3 className={styles.playsHead}>
-        Working the deal <StageBadge stage={a.stage} />{" "}
-        <ApproachChip approach={a.approach} />
-      </h3>
-      {canWrite ? (
-        <form action={savePeo} key={a.id}>
-          <input type="hidden" name="peoId" value={a.id} />
-          <input type="hidden" name="returnTo" value="/accounts" />
-          <div className={styles.field}>
-            <label>Stage</label>
-            <select name="stage" defaultValue={a.stage}>
-              {STAGES.map((s) => (
-                <option key={s.key} value={s.key}>
-                  {s.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className={styles.field}>
-            <label>Approach</label>
-            <select name="approach" defaultValue={a.approach}>
-              {APPROACHES.map((ap) => (
-                <option key={ap.key} value={ap.key}>
-                  {ap.label}
-                </option>
-              ))}
-            </select>
-            <p className={styles.hint}>{approachBlurb(a.approach)}</p>
-          </div>
-          <div className={styles.field}>
-            <label>International hiring in their book</label>
-            <select name="intent" defaultValue={a.intent}>
-              {INTENTS.map((i) => (
-                <option key={i.key} value={i.key}>
-                  {i.label}
-                </option>
-              ))}
-            </select>
-            <p className={styles.hint}>Lifts or lowers priority to match real demand.</p>
-          </div>
-          <div className={styles.field}>
-            <label>Next action</label>
-            <input
-              name="nextAction"
-              defaultValue={a.nextAction ?? ""}
-              placeholder={suggestedAction(a) ?? "Brief the CSM"}
-            />
-            {!a.nextAction && suggestedAction(a) && (
-              <p className={styles.hint}>{suggestedAction(a)}</p>
-            )}
-          </div>
-          <div className={styles.field}>
-            <label>Next action date</label>
-            <input
-              type="date"
-              name="nextActionDate"
-              defaultValue={a.nextActionDate ?? ""}
-            />
-          </div>
-          <div className={styles.field}>
-            <label>Notes</label>
-            <textarea name="notes" defaultValue={a.peoNotes ?? ""} />
-          </div>
-          <div className={styles.field}>
-            <label>Log activity</label>
-            <input
-              name="activity"
-              placeholder="Called Anika. She'll introduce two clients."
-            />
-          </div>
-          <div className={styles.saveRow}>
-            <button type="submit" className={styles.saveBtn}>
-              Save
-            </button>
-          </div>
-        </form>
-      ) : (
-        <p className={styles.muted}>Read-only access.</p>
-      )}
-
-      <div className={styles.plays}>
-        <h3 className={styles.playsHead}>Plays for this stage</h3>
-        {plays.length === 0 ? (
-          <p className={styles.muted}>
-            No play for this stage and approach. Advance the stage or clear the approach
-            gate.
-          </p>
-        ) : (
-          plays.map((k) => (
-            <div key={k.id} className={styles.play}>
-              <div className={styles.playTop}>
-                <strong>{k.name}</strong>
-                <span className={styles.chip}>{k.channel}</span>
-              </div>
-              <p className={styles.playAsk}>{mergeText(k.ask, a)}</p>
-              <details className={styles.playDetails}>
-                <summary>Preview message</summary>
-                <div className={styles.playSubject}>
-                  Subject: {mergeText(k.subject, a)}
-                </div>
-                <pre className={styles.playPre}>{mergeText(k.body, a)}</pre>
-              </details>
-              <div className={styles.playActions}>
-                <button
-                  type="button"
-                  className={styles.playCopy}
-                  onClick={() => copyKit(k)}
-                >
-                  {copiedId === k.id ? "Copied ✓" : "Copy message"}
-                </button>
-                {canWrite && (
-                  <form action={applyPlay}>
-                    <input type="hidden" name="peoId" value={a.id} />
-                    <input type="hidden" name="kitId" value={k.id} />
-                    <input type="hidden" name="returnTo" value="/accounts" />
-                    <button type="submit" className={styles.playApply}>
-                      Set as next action
-                    </button>
-                  </form>
-                )}
-              </div>
+      {/* Folded by decree (2026-08-14): the drilldown leads with the
+          research; the working furniture opens on demand. */}
+      <details className={styles.foldSect}>
+        <summary className={styles.foldSum}>
+          <h3 className={styles.playsHead}>
+            Working the deal <StageBadge stage={a.stage} />{" "}
+            <ApproachChip approach={a.approach} />
+          </h3>
+        </summary>
+        {canWrite ? (
+          <form action={savePeo} key={a.id}>
+            <input type="hidden" name="peoId" value={a.id} />
+            <input type="hidden" name="returnTo" value="/accounts" />
+            <div className={styles.field}>
+              <label>Stage</label>
+              <select name="stage" defaultValue={a.stage}>
+                {STAGES.map((s) => (
+                  <option key={s.key} value={s.key}>
+                    {s.label}
+                  </option>
+                ))}
+              </select>
             </div>
-          ))
+            <div className={styles.field}>
+              <label>Approach</label>
+              <select name="approach" defaultValue={a.approach}>
+                {APPROACHES.map((ap) => (
+                  <option key={ap.key} value={ap.key}>
+                    {ap.label}
+                  </option>
+                ))}
+              </select>
+              <p className={styles.hint}>{approachBlurb(a.approach)}</p>
+            </div>
+            <div className={styles.field}>
+              <label>International hiring in their book</label>
+              <select name="intent" defaultValue={a.intent}>
+                {INTENTS.map((i) => (
+                  <option key={i.key} value={i.key}>
+                    {i.label}
+                  </option>
+                ))}
+              </select>
+              <p className={styles.hint}>
+                Lifts or lowers priority to match real demand.
+              </p>
+            </div>
+            <div className={styles.field}>
+              <label>Next action</label>
+              <input
+                name="nextAction"
+                defaultValue={a.nextAction ?? ""}
+                placeholder={suggestedAction(a) ?? "Brief the CSM"}
+              />
+              {!a.nextAction && suggestedAction(a) && (
+                <p className={styles.hint}>{suggestedAction(a)}</p>
+              )}
+            </div>
+            <div className={styles.field}>
+              <label>Next action date</label>
+              <input
+                type="date"
+                name="nextActionDate"
+                defaultValue={a.nextActionDate ?? ""}
+              />
+            </div>
+            <div className={styles.field}>
+              <label>Notes</label>
+              <textarea name="notes" defaultValue={a.peoNotes ?? ""} />
+            </div>
+            <div className={styles.field}>
+              <label>Log activity</label>
+              <input
+                name="activity"
+                placeholder="Called Anika. She'll introduce two clients."
+              />
+            </div>
+            <div className={styles.saveRow}>
+              <button type="submit" className={styles.saveBtn}>
+                Save
+              </button>
+            </div>
+          </form>
+        ) : (
+          <p className={styles.muted}>Read-only access.</p>
         )}
-      </div>
+      </details>
+
+      <details className={styles.foldSect}>
+        <summary className={styles.foldSum}>
+          <h3 className={styles.playsHead}>
+            Plays for this stage{plays.length > 0 ? ` · ${plays.length}` : ""}
+          </h3>
+        </summary>
+        <div className={styles.plays}>
+          {plays.length === 0 ? (
+            <p className={styles.muted}>
+              No play for this stage and approach. Advance the stage or clear the approach
+              gate.
+            </p>
+          ) : (
+            plays.map((k) => (
+              <div key={k.id} className={styles.play}>
+                <div className={styles.playTop}>
+                  <strong>{k.name}</strong>
+                  <span className={styles.chip}>{k.channel}</span>
+                </div>
+                <p className={styles.playAsk}>{mergeText(k.ask, a)}</p>
+                <details className={styles.playDetails}>
+                  <summary>Preview message</summary>
+                  <div className={styles.playSubject}>
+                    Subject: {mergeText(k.subject, a)}
+                  </div>
+                  <pre className={styles.playPre}>{mergeText(k.body, a)}</pre>
+                </details>
+                <div className={styles.playActions}>
+                  <button
+                    type="button"
+                    className={styles.playCopy}
+                    onClick={() => copyKit(k)}
+                  >
+                    {copiedId === k.id ? "Copied ✓" : "Copy message"}
+                  </button>
+                  {canWrite && (
+                    <form action={applyPlay}>
+                      <input type="hidden" name="peoId" value={a.id} />
+                      <input type="hidden" name="kitId" value={k.id} />
+                      <input type="hidden" name="returnTo" value="/accounts" />
+                      <button type="submit" className={styles.playApply}>
+                        Set as next action
+                      </button>
+                    </form>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </details>
     </div>
   );
 }
@@ -986,12 +1000,7 @@ export function AccountsClient({
                     <td colSpan={9}>
                       <div className={styles.acctDetail}>
                         <SfCheckpoint when="account" id={a.id} name={a.name} />
-                        <AccountChipNotes notes={a.chipNotes} />
-                        <AccountNotes notes={a.notes} />
-                        <PeopleIndex people={a.people} />
-                        <BackgroundIntel notes={a.bgNotes} />
-                        <EngagementPanel a={a} />
-                        <WorkingDeal a={a} canWrite={canWrite} />
+                        {/* The research leads (founder-decreed 2026-08-14): the drilldown opens with what the research knows; the working furniture follows, folded. */}
                         <div className={styles.demandBlock}>
                           {a.researched && a.demand != null ? (
                             <>
@@ -1072,6 +1081,12 @@ export function AccountsClient({
                             </div>
                           )}
                         </div>
+                        <AccountChipNotes notes={a.chipNotes} />
+                        <AccountNotes notes={a.notes} />
+                        <PeopleIndex people={a.people} />
+                        <BackgroundIntel notes={a.bgNotes} />
+                        <EngagementPanel a={a} />
+                        <WorkingDeal a={a} canWrite={canWrite} />
 
                         <div className={styles.bars}>
                           <div className={styles.barsHead}>

@@ -8503,3 +8503,38 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Folded drilldown sections (decreed 2026-08-14): the research leads; the
+   working furniture opens on demand. */
+.foldSect {
+  border-top: 1px solid rgba(10, 28, 64, 0.12);
+  padding-top: 8px;
+  margin-top: 8px;
+}
+.foldSect:first-child {
+  border-top: 0;
+  margin-top: 0;
+  padding-top: 0;
+}
+.foldSum {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.foldSum::-webkit-details-marker {
+  display: none;
+}
+.foldSum::after {
+  content: "▸";
+  font-size: 11px;
+  color: rgba(10, 28, 64, 0.42);
+  margin-left: auto;
+}
+.foldSect[open] > .foldSum::after {
+  content: "▾";
+}
+.foldSum h3 {
+  margin: 0;
+}
