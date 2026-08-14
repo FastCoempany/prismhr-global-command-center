@@ -32,6 +32,26 @@ describe("readLoss — fires on the real thing, never on fear of it", () => {
     assert.equal(r?.noteId, "n1");
     assert.ok(/found another solution/i.test(r?.phrase ?? ""));
   });
+  test("the operator's own verdict triggers the read — the ESC note", () => {
+    const r = readLoss(
+      [
+        note(
+          "esc",
+          "✎ ESC is an MPEX deal which is handled solely by Russ and his team. Close lost it",
+        ),
+      ],
+      none,
+      now,
+    );
+    assert.ok(r);
+    assert.equal(r?.status, "lost");
+    assert.ok(/close lost/i.test(r?.phrase ?? ""));
+  });
+  test("more operator verdict spellings trigger", () => {
+    for (const body of ["Mark it lost — Russ owns this one.", "Closed-lost. Not ours."]) {
+      assert.ok(readLoss([note("n", body)], none, now), body);
+    }
+  });
   test("negations and near-misses stay silent", () => {
     for (const body of [
       "Let's move fast so we don't lose the deal to the deposit issue.",

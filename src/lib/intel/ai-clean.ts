@@ -146,7 +146,7 @@ Rules:
 - gaps: up to ${MAX_GAPS} questions the record still cannot answer that would MOST advance this specific deal — grounded in its countries, products, and stage ("Do the India workers need benefits parity?" beats "what is the timeline"). Never generic discovery boilerplate.
 - competitorIntel: market or competitor facts useful BEYOND this account — pricing models, deposit norms, competitor requirements, industry standards — each with WHO said it (attribution rule applies).
 - lessons: process lessons a future deal should remember (what slowed, killed, or won this one). Empty unless the paste actually teaches one.
-- outcome: "lost" only when the paste STATES the deal is lost (client chose another vendor, walked away); "won" only when signed/closed is stated; phrase = the exact evidence sentence, ≤120 chars. Otherwise "none" with "".
+- outcome: "lost" when the paste STATES the deal is lost — the client's words (chose another vendor, walked away) OR the operator's own verdict ("close lost it", "mark it lost", "this one is dead, X's team owns it"); "won" only when signed/closed is stated; phrase = the exact evidence sentence, ≤120 chars. Otherwise "none" with "".
 - accountName: the prospect/client company this paste is ABOUT (not the operator's own company, not a competitor) — "" when unclear.
 - signals: 0-${MAX_SIGNALS} short flags a salesperson would want surfaced — a newly mentioned country or expansion, an implied or explicit deadline, hesitation or stalling tone, who actually holds the decision, a competitor or incumbent system named, escalation or frustration, an owed follow-up with its owner. Plain short sentences. Empty array if nothing notable.
 - Order entries newest first. At most ${MAX_ENTRIES} entries.`;
