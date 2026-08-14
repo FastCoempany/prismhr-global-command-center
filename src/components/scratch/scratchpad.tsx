@@ -23,10 +23,9 @@ export function Scratchpad() {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const fetched = useRef(false);
 
-  // The pad reads once per session, on first open; adds keep it current.
+  // The pad reads once per session, on mount — the button needs to know
+  // whether lines are still sitting on the paper before anyone opens it.
   useEffect(() => {
-    if (!open) return;
-    inputRef.current?.focus();
     if (fetched.current) return;
     fetched.current = true;
     void scratchList().then((r) => {
@@ -36,6 +35,10 @@ export function Scratchpad() {
         setNote(r.reason ?? "The pad didn't load.");
       }
     });
+  }, []);
+
+  useEffect(() => {
+    if (open) inputRef.current?.focus();
   }, [open]);
 
   useEffect(() => {
@@ -83,12 +86,17 @@ export function Scratchpad() {
     }
   }
 
+  // The glow: lines still on the paper light the button red until every one
+  // is crossed out. The pad never routes or files, so the paper itself is the
+  // only place that can say "unfinished."
+  const lit = (lines?.length ?? 0) > 0;
+
   return (
     <>
       <button
         type="button"
-        className={styles.fab}
-        title="Scratchpaper"
+        className={lit ? `${styles.fab} ${styles.fabLit}` : styles.fab}
+        title={lit ? "Lines still on the pad." : "Scratchpaper"}
         aria-label={open ? "Close the scratchpaper" : "Open the scratchpaper"}
         onClick={() => setOpen((v) => !v)}
       >
