@@ -6,7 +6,7 @@ import { peos } from "@/lib/book";
 import { contactCount, contactsFor } from "@/lib/book/contacts";
 import { peopleFor } from "@/lib/intel/people";
 import { relationshipFor } from "@/lib/intel/relationship";
-import { researchNs } from "@/lib/intel/deep-research";
+import { parseResearchBody, researchNs } from "@/lib/intel/deep-research";
 import { loadCommand } from "@/lib/command-center/data";
 import { compositeScore, deskScore } from "@/lib/book/scoring";
 import {
@@ -174,7 +174,21 @@ export default async function AccountsPage() {
       });
       // Research reads BOTH stores: the book-wide sweep and the live
       // deep-pass notes — a paid pass must never render "Not researched."
+      // The stores merge by latest (Ted doctrine): whichever pass spoke last
+      // supplies each field; the other stands in where it is silent.
       const liveResearch = (chipNotes.get(researchNs(p.id)) ?? [])[0];
+      const liveFinding = liveResearch ? parseResearchBody(liveResearch.body) : null;
+      const liveNewer =
+        !!liveResearch &&
+        (Number.isNaN(Date.parse(researchGeneratedAt)) ||
+          Date.parse(liveResearch.createdAt) >= Date.parse(researchGeneratedAt));
+      const seedSignals = dem?.signals ?? [];
+      const liveSignals = liveFinding?.signals ?? [];
+      const seedEvidence = dem?.evidence ?? [];
+      const liveEvidence = (liveFinding?.sources ?? []).map((s) => ({
+        claim: s.title,
+        url: s.url,
+      }));
       const researchedDemand = dem?.researched ? dem.demandScore : null;
       const v = validations.get(p.id);
       const demand =
@@ -210,13 +224,29 @@ export default async function AccountsPage() {
         deskScore: d.score,
         demand,
         confidence: dem?.confidence ?? "low",
-        signals: dem?.signals ?? [],
-        evidence: dem?.evidence ?? [],
-        summary: dem?.summary || firstLineOf(liveResearch?.body ?? ""),
+        signals:
+          liveNewer && liveSignals.length
+            ? liveSignals
+            : seedSignals.length
+              ? seedSignals
+              : liveSignals,
+        evidence:
+          liveNewer && liveEvidence.length
+            ? liveEvidence
+            : seedEvidence.length
+              ? seedEvidence
+              : liveEvidence,
+        summary:
+          (liveNewer ? liveFinding?.summary : "") ||
+          dem?.summary ||
+          liveFinding?.summary ||
+          firstLineOf(liveResearch?.body ?? ""),
         researched: (dem?.researched ?? false) || !!liveResearch,
         play: play as AccountRow["play"],
         competitors: basePl.competitors,
-        countries: extractCountries(dem),
+        countries: [
+          ...new Set([...extractCountries(dem), ...(liveFinding?.countries ?? [])]),
+        ],
         demandAdj: c.demandAdj,
         confFactor: c.confFactor,
         score: c.score,

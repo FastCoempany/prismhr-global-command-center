@@ -1002,17 +1002,21 @@ export function AccountsClient({
                         <SfCheckpoint when="account" id={a.id} name={a.name} />
                         {/* The research leads (founder-decreed 2026-08-14): the drilldown opens with what the research knows; the working furniture follows, folded. */}
                         <div className={styles.demandBlock}>
-                          {a.researched && a.demand != null ? (
+                          {a.researched ? (
                             <>
                               <div className={styles.demandHead}>
-                                <span
-                                  className={`${styles.fit} ${demandClass(a.demand)}`}
-                                >
-                                  {a.demand}
-                                </span>
+                                {a.demand != null && (
+                                  <span
+                                    className={`${styles.fit} ${demandClass(a.demand)}`}
+                                  >
+                                    {a.demand}
+                                  </span>
+                                )}
                                 <strong>Global-hiring demand</strong>
                                 <span className={styles.confChip}>
-                                  {a.confidence} confidence
+                                  {a.demand != null
+                                    ? `${a.confidence} confidence`
+                                    : "live pass, unscored"}
                                 </span>
                               </div>
                               {a.play === "displacement" && a.competitors.length > 0 && (
@@ -1064,14 +1068,16 @@ export function AccountsClient({
                                   ))}
                                 </div>
                               )}
-                              <div className={styles.formula}>
-                                How this {a.score} is built: 40% account profile at{" "}
-                                {a.deskScore}, 60% global demand at{" "}
-                                {a.demandAdj ?? a.demand}.
-                                {a.confFactor < 1
-                                  ? ` Raw demand ${a.demand} trimmed to ${a.demandAdj} because confidence is ${a.confidence}.`
-                                  : ""}
-                              </div>
+                              {a.demand != null && (
+                                <div className={styles.formula}>
+                                  How this {a.score} is built: 40% account profile at{" "}
+                                  {a.deskScore}, 60% global demand at{" "}
+                                  {a.demandAdj ?? a.demand}.
+                                  {a.confFactor < 1
+                                    ? ` Raw demand ${a.demand} trimmed to ${a.demandAdj} because confidence is ${a.confidence}.`
+                                    : ""}
+                                </div>
+                              )}
                             </>
                           ) : (
                             <div className={styles.demandPending}>

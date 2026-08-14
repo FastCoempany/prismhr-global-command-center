@@ -214,9 +214,9 @@ describe("groundwork queue", () => {
         [gap.id, [{ body: "note", source: "room", createdAt: "2026-07-29T12:00:00Z" }]],
       ]),
       researchAtById: new Map([
-        [s1.id, "2026-06-01T12:00:00Z"],
-        [s2.id, "2026-06-01T12:00:00Z"],
-        [s3.id, "2026-06-01T12:00:00Z"],
+        [s1.id, "2026-04-01T12:00:00Z"],
+        [s2.id, "2026-04-01T12:00:00Z"],
+        [s3.id, "2026-04-01T12:00:00Z"],
       ]),
     });
     const rules = all.map((q) => q.ruleId);
@@ -231,8 +231,11 @@ describe("groundwork queue", () => {
   test("a stale book-wide stamp collapses to one research-pass move", () => {
     const a = acct({ id: "001F000000w38ItIAI", name: "Big Demand", csm: "Unassigned" });
     const b = acct({ id: "001F000000w38OIIAY", name: "Also Demand", csm: "Unassigned" });
+    // A quarter past the book sweep — research holds for 90 days before the
+    // queue puts pressure out front.
     const { all } = buildQueue({
       ...base,
+      now: new Date("2026-10-15T15:00:00Z"),
       accounts: [a, b],
       intelById: new Map(),
       notesById: new Map(),
@@ -243,6 +246,21 @@ describe("groundwork queue", () => {
     assert.match(stale[0].reason, /^Book research \d+ days old\.$/);
     // The strongest demand carries it.
     assert.equal(stale[0].name, "Big Demand");
+  });
+
+  test("research inside the 90-day hold puts no pressure out front", () => {
+    const a = acct({ id: "001F000000w38ItIAI", name: "Fresh Enough", csm: "Unassigned" });
+    const { all } = buildQueue({
+      ...base,
+      accounts: [a],
+      intelById: new Map(),
+      notesById: new Map(),
+      researchAtById: new Map([[a.id, "2026-06-01T12:00:00Z"]]),
+    });
+    assert.equal(
+      all.some((q) => q.ruleId === "stale-above-gate"),
+      false,
+    );
   });
 
   test("a stale wire hit ranks as nothing — the trigger is perishable", () => {
@@ -604,9 +622,7 @@ describe("groundwork adversarial regressions", () => {
       touches: touch("2026-07-28T12:00:00Z", "awaiting"), // quiet 2 days
     });
     assert.equal(
-      fresh.items.some(
-        (i) => i.ruleId === "silence-bump" || i.ruleId === "cold-revival",
-      ),
+      fresh.items.some((i) => i.ruleId === "silence-bump" || i.ruleId === "cold-revival"),
       false,
     );
     const cold = buildQueue({

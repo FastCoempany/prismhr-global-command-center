@@ -508,6 +508,17 @@ export default async function GroundworkPage({
                       </button>
                     </form>
                   )}
+                  {canWrite && stageItem.ruleId !== "stale-above-gate" && (
+                    <form action={runResearchNow.bind(null, null, stageItem.accountId)}>
+                      <button
+                        className={styles.btn2nd}
+                        type="submit"
+                        title="Runs the deep pass on this account. The move stays open. Takes a minute."
+                      >
+                        Run fresh research
+                      </button>
+                    </form>
+                  )}
                   <Link className={styles.btn2nd} href={stageHref(stageItem, !fileOpen)}>
                     {fileOpen ? "Close the file" : "Open the file ▾"}
                   </Link>
