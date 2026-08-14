@@ -12,6 +12,7 @@ import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import { createAccountNoteRow } from "@/lib/notes/write";
 import { getPeo } from "@/lib/book";
 import { READOUT_READ_KEY, groundworkDoneKey } from "@/lib/groundwork/file";
+import { roomResearch } from "@/app/room/actions";
 import {
   WIRE_NS,
   parseWireBody,
@@ -33,6 +34,17 @@ async function requireWrite() {
 // The worked stamp — called by the copy control AFTER the copy happened.
 // Day-scoped: the key carries the Chicago day, so the row resets tomorrow
 // while doneAt keeps the exact stamp time.
+// The stage's own research button (founder-decreed 2026-08-14): when the
+// queue says "Run the research pass.", the pass runs right here — one press
+// files the deep pass to the account and stamps the move worked.
+export async function runResearchNow(mk: string, accountId: string): Promise<void> {
+  if (!(await requireWrite())) return;
+  const r = await roomResearch(accountId);
+  if (r.ok) await markWorked(mk);
+  revalidatePath("/groundwork");
+  revalidatePath("/room");
+}
+
 export async function markWorked(mk: string): Promise<void> {
   if (!(await requireWrite()) || !mk || mk.length > 200) return;
   const key = groundworkDoneKey(new Date(), mk);

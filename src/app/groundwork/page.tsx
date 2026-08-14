@@ -53,7 +53,13 @@ import {
   type WireItem,
 } from "@/lib/groundwork/wire";
 import { buildReadout, lint, readoutText } from "@/lib/groundwork/readout";
-import { attachWireToAccount, markReadoutRead, markWorked, sweepWire } from "./actions";
+import {
+  attachWireToAccount,
+  markReadoutRead,
+  markWorked,
+  runResearchNow,
+  sweepWire,
+} from "./actions";
 import { CopyStamp } from "./copy-stamp";
 import { Instrument } from "./instrument";
 import styles from "./groundwork.module.css";
@@ -471,9 +477,33 @@ export default async function GroundworkPage({
                 <h1 className={styles.stgAct}>{stageItem.action}</h1>
                 <p className={styles.stgWhy}>{stageItem.reason}</p>
                 <div className={styles.stgActs}>
+                  {canWrite && stageItem.ruleId === "stale-above-gate" && (
+                    <form
+                      action={runResearchNow.bind(
+                        null,
+                        moveKey(stageItem),
+                        stageItem.accountId,
+                      )}
+                    >
+                      <button
+                        className={styles.btnAccent}
+                        type="submit"
+                        title="Runs the deep pass on this account and stamps the move worked. Takes a minute."
+                      >
+                        Run it now
+                      </button>
+                    </form>
+                  )}
                   {canWrite && (
                     <form action={markWorked.bind(null, moveKey(stageItem))}>
-                      <button className={styles.btnAccent} type="submit">
+                      <button
+                        className={
+                          stageItem.ruleId === "stale-above-gate"
+                            ? styles.btn2nd
+                            : styles.btnAccent
+                        }
+                        type="submit"
+                      >
                         Worked it
                       </button>
                     </form>
