@@ -245,12 +245,22 @@ function rankAll(inp: QueueInput, now: Date): QueueItem[] {
     // silence-bump (72) and cold-revival (60): the drumbeat on open outbound
     // threads. A first touch awaiting a reply gets its second touch on the
     // cadence day; a thread quiet past the cold line gets one deliberate
-    // re-open with something new to say.
+    // re-open with something new to say. The clock reads the LATEST of the
+    // touch log and the record's own traffic (Ted doctrine): a filed
+    // outbound resets the drumbeat, and a filed REPLY silences it entirely —
+    // an answered thread is the HomeRoom's motion, not Groundwork's.
     const newestTouch = acctTouches
       .slice()
       .sort((a, b) => b.contactedAt.localeCompare(a.contactedAt))[0];
-    if (newestTouch) {
-      const quiet = (now.getTime() - Date.parse(newestTouch.contactedAt)) / DAY;
+    const intelHere = inp.intelById.get(p.id);
+    const lastOutIso = [newestTouch?.contactedAt ?? "", intelHere?.lastOutbound ?? ""]
+      .filter(Boolean)
+      .sort()
+      .pop();
+    const answered =
+      !!intelHere?.lastInbound && !!lastOutIso && intelHere.lastInbound > lastOutIso;
+    if (newestTouch && lastOutIso && !answered) {
+      const quiet = (now.getTime() - Date.parse(lastOutIso)) / DAY;
       if (
         newestTouch.status === "awaiting" &&
         quiet >= BUMP_QUIET_DAYS &&
@@ -263,7 +273,7 @@ function rankAll(inp: QueueInput, now: Date): QueueItem[] {
           weight: 72,
           band: BAND_OF["silence-bump"],
           action: "Send the second touch.",
-          reason: `No reply since ${monthDay(newestTouch.contactedAt)}.`,
+          reason: `No reply since ${monthDay(lastOutIso)}.`,
           owed: "draft composed",
           carried: false,
           intent,
@@ -276,7 +286,7 @@ function rankAll(inp: QueueInput, now: Date): QueueItem[] {
           weight: 60,
           band: BAND_OF["cold-revival"],
           action: "Revive the thread.",
-          reason: `Quiet since ${monthDay(newestTouch.contactedAt)}.`,
+          reason: `Quiet since ${monthDay(lastOutIso)}.`,
           owed: "draft composed",
           carried: false,
           intent,
@@ -484,9 +494,19 @@ export function buildQueue(inp: QueueInput): {
       .map((q) => moveKey(q)),
   );
   const done = inp.doneKeys ?? new Set<string>();
+  // The record clears a carry too (Ted doctrine): an outbound filed since
+  // yesterday IS the work — the stamp table only knows about the copy button.
+  const yesterdayIso = yesterday.toISOString();
+  const workedByRecord = (accountId: string): boolean => {
+    const out = inp.intelById.get(accountId)?.lastOutbound ?? "";
+    return !!out && out >= yesterdayIso;
+  };
   const all = ranked.map((q) => {
     const mk = moveKey(q);
-    const carried = shownYesterday.has(mk) && !done.has(`groundwork:${yesterKey}:${mk}`);
+    const carried =
+      shownYesterday.has(mk) &&
+      !done.has(`groundwork:${yesterKey}:${mk}`) &&
+      !workedByRecord(q.accountId);
     return carried ? { ...q, carried } : q;
   });
 

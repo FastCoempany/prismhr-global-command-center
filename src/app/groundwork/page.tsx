@@ -19,7 +19,9 @@ import { RESEARCH_NS } from "@/lib/intel/deep-research";
 import {
   isNamespacedAccountId,
   loadAccountNotes,
+  loadDispositions,
   loadDoneTimes,
+  loadSnoozes,
   loadTouches,
 } from "@/lib/today/overlay";
 import { clockShort, userDayKey } from "@/lib/tz";
@@ -92,10 +94,12 @@ export default async function GroundworkPage({
   const canWrite = access.canWrite && hasDatabaseEnv();
   const now = new Date();
 
-  const [notesMap, touches, doneTimes] = await Promise.all([
+  const [notesMap, touches, doneTimes, dispositions, snoozes] = await Promise.all([
     loadAccountNotes(),
     loadTouches(),
     loadDoneTimes(),
+    loadDispositions(),
+    loadSnoozes(),
   ]);
 
   // Split the note map: real accounts feed the corpus; namespaces feed the
@@ -143,7 +147,10 @@ export default async function GroundworkPage({
     if (isNamespacedAccountId(id)) continue;
     accountNotes.set(
       id,
-      notes.map((n) => ({ body: n.body, source: n.source, createdAt: n.createdAt })),
+      notes
+        // ✕-parked entries leave every register view — here too.
+        .filter((n) => !dispositions.has(`hide:note:${n.id}`))
+        .map((n) => ({ body: n.body, source: n.source, createdAt: n.createdAt })),
     );
   }
 
@@ -191,11 +198,20 @@ export default async function GroundworkPage({
   }
 
   // The wire's newest hit per account — the wire-trigger rule's evidence.
+  // BOTH stores (Ted doctrine): the sweep's auto-matches AND wire items the
+  // operator filed onto the record — the filed note outlives the namespace.
   const wireAtById = new Map<string, string>();
   for (const w of wireItems) {
     for (const id of w.accountIds) {
       const cur = wireAtById.get(id);
       if (!cur || w.at > cur) wireAtById.set(id, w.at);
+    }
+  }
+  for (const [id, notes] of accountNotes) {
+    for (const n of notes) {
+      if (n.source !== "wire") continue;
+      const cur = wireAtById.get(id);
+      if (!cur || n.createdAt > cur) wireAtById.set(id, n.createdAt);
     }
   }
   const researchAtById = new Map<string, string>();
@@ -210,25 +226,43 @@ export default async function GroundworkPage({
     const idByName = new Map(peos.map((p) => [p.name.toLowerCase(), p.id]));
     const LATE = ["demo", "exec_summary", "proposal", "contract"] as const;
     for (const card of dash.cards) {
-      if (card.archived) continue;
       const id =
         idByName.get(card.name.toLowerCase()) ??
         digestForCardName(card.name)?.accountId ??
         "";
       if (!id) continue;
+      // The outcome stamp survives archiving — a retired Closed Won/Lost
+      // deal must never re-enter the book as a virgin prospect.
+      if (readOutcome(card.notes)) {
+        excludedIds.add(id);
+        continue;
+      }
+      if (card.archived) continue;
       const late = LATE.some(
         (k) => card.states[k] === "active" || card.states[k] === "done",
       );
-      if (late || readOutcome(card.notes)) excludedIds.add(id);
+      if (late) excludedIds.add(id);
     }
   }
+  // The disposition ledger holds too (Ted doctrine): not-mine is excluded
+  // everywhere by decree, parked was shelved by the operator's own hand, and
+  // a snoozed account was told to be quiet.
+  for (const [id, d] of dispositions) {
+    if (id.includes(":")) continue; // namespaced keys are not accounts
+    if (d.status === "not-mine" || d.status === "parked") excludedIds.add(id);
+  }
+  for (const id of snoozes.keys()) if (!id.includes(":")) excludedIds.add(id);
 
   const { all: rankedAll } = buildQueue({
     accounts: peos,
     intelById,
     notesById: accountNotes,
     touches,
-    contactCountById: contactCount,
+    // The widest people count the app holds (Ted doctrine): the frozen SF
+    // export AND the record's live thread roster — "find a second name" must
+    // never fire under a green MULTI chip.
+    contactCountById: (id: string) =>
+      Math.max(contactCount(id), intelById.get(id)?.threads.people.length ?? 0),
     wireAtById,
     researchAtById,
     doneKeys: new Set(doneTimes.keys()),
@@ -306,6 +340,10 @@ export default async function GroundworkPage({
     const m = /^outreach:(.+)$/.exec(t.subjectKey);
     if (m && t.status !== "archived") outreachAccountIds.add(m[1]);
   }
+  // The record's threads count too (Ted doctrine): a filed conversation is
+  // as open as a logged one — the number spoken to Russ must not undercount.
+  for (const [id, intel] of intelById)
+    if (intel.lastInbound || intel.lastOutbound) outreachAccountIds.add(id);
   const weekAgo = now.getTime() - 7 * 86_400_000;
   const partnerTouches = touches.filter(
     (t) =>

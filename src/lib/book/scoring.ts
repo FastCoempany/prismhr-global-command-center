@@ -51,12 +51,17 @@ function modelPts(p: Peo): number {
   return MODEL_PTS[p.industry] ?? 5;
 }
 
-function recencyPts(p: Peo): number {
-  const raw = (p.lastActivity ?? "").trim();
-  if (!raw) return 4;
-  const t = Date.parse(raw);
+// Recency reads the record's own clock when the caller has one (Ted
+// doctrine): the newest filed activity outranks the export's lastActivity
+// column, and the yardstick is the caller's real now — never the frozen
+// snapshot date, which made every account "recent" forever.
+function recencyPts(p: Peo, liveActivityIso?: string, now?: Date): number {
+  const live = liveActivityIso ? Date.parse(liveActivityIso) : NaN;
+  const seed = Date.parse((p.lastActivity ?? "").trim());
+  const t = Number.isNaN(live) ? seed : Number.isNaN(seed) ? live : Math.max(live, seed);
   if (Number.isNaN(t)) return 4;
-  const days = (Date.parse(REFERENCE_ISO) - t) / 86_400_000;
+  const ref = now ? now.getTime() : Date.parse(REFERENCE_ISO);
+  const days = (ref - t) / 86_400_000;
   if (days <= 120) return 15;
   if (days <= 365) return 10;
   if (days <= 730) return 6;
@@ -100,12 +105,15 @@ export function compositeScore(
   return { score, tier, demandAdj, confFactor };
 }
 
-export function deskScore(p: Peo): DeskScore {
+export function deskScore(
+  p: Peo,
+  live?: { lastActivityIso?: string; now?: Date },
+): DeskScore {
   const breakdown: DeskBreakdown = {
     scale: scalePts(p),
     incumbency: isIncumbent(p) ? 25 : 0,
     model: modelPts(p),
-    recency: recencyPts(p),
+    recency: recencyPts(p, live?.lastActivityIso, live?.now),
   };
   const score =
     breakdown.scale + breakdown.incumbency + breakdown.model + breakdown.recency;

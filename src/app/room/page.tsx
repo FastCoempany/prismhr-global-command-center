@@ -28,6 +28,7 @@ import {
   morningDoneKey,
   partnerKickoff,
   partnerOutreachKey,
+  latestLineByAccount,
   roundupBullets,
   roundupFrame,
   signals,
@@ -43,6 +44,7 @@ import { digestFor, digestForCardName } from "@/lib/intel/digest";
 import { COUNTRY_NAME } from "@/lib/intel/lexicon";
 import { suggestChecks } from "@/lib/intel/evidence";
 import { daysBetween, meterRead, readDeal, type RoomRead } from "@/lib/room/engine";
+import { lastTouchRead } from "@/lib/room/touch";
 import { buildStageRail } from "@/lib/room/stages-view";
 import { buildAccountSheet } from "@/lib/room/sheet-view";
 import { readLoss } from "@/lib/room/loss";
@@ -167,7 +169,11 @@ export default async function RoomPage() {
       .slice(0, 72);
 
     const people = accountId ? peopleFor(allNotes, contactsFor(accountId), 6) : [];
-    const multiTone = people.length >= 3 ? "g" : people.length === 2 ? "y" : "r";
+    // MULTI reads the widest count the app holds: filed actors AND the
+    // digest's thread roster — a record-quiet deal with a known room must
+    // never render "nobody exists."
+    const peopleCount = Math.max(people.length, intel.threads.people.length);
+    const multiTone = peopleCount >= 3 ? "g" : peopleCount === 2 ? "y" : "r";
 
     // Who this deal runs through — the record's most-seen person outranks the
     // book's seeded primary the moment real communication files.
@@ -205,6 +211,19 @@ export default async function RoomPage() {
       });
 
     const touch = accountId ? touchMap.get(`outreach:${accountId}`) : undefined;
+    // The touch clock reads the LATEST of the outreach log and the record's
+    // own outbound entries — a filed email is as real a touch as a logged
+    // send, so the room never demands an answer the record proves was given.
+    const touchRead = lastTouchRead(
+      allNotes,
+      touch
+        ? {
+            contactedAt: touch.contactedAt,
+            awaitingReply: touch.status === "awaiting",
+            who: firstName(rel.name) || "them",
+          }
+        : null,
+    );
     const read: RoomRead = readDeal({
       accountName: card.name,
       step: step
@@ -218,17 +237,19 @@ export default async function RoomPage() {
       timing: intel.timing
         ? { phrase: intel.timing.value.phrase, dateIso: intel.timing.value.dateIso ?? "" }
         : null,
-      lastTouch: touch
+      lastTouch: touchRead
         ? {
-            at: touch.contactedAt,
-            awaitingReply: touch.status === "awaiting",
-            who: firstName(rel.name) || "them",
+            at: touchRead.at,
+            awaitingReply: touchRead.awaitingReply,
+            who: firstName(touchRead.who) || firstName(rel.name) || "them",
           }
         : null,
       lastInbound: intel.lastInbound
         ? {
             at: intel.lastInbound,
-            who: firstName(rel.name) || "they",
+            // The person who actually wrote — the doc's own sender; the
+            // relationship rollup only stands in when the doc is anonymous.
+            who: firstName(intel.lastInboundWho) || firstName(rel.name) || "they",
           }
         : null,
       lastRecordAt: allNotes[0]?.createdAt ?? "",
@@ -274,7 +295,9 @@ export default async function RoomPage() {
     const lossPrefix = `loss-dismiss:${card.id}:`;
     for (const key of dispositions.keys())
       if (key.startsWith(lossPrefix)) lossDismissed.add(key.slice(lossPrefix.length));
-    const loss = readLoss(mine, lossDismissed, now);
+    // BOTH lanes: a loss stated in case traffic is still a loss (Ted
+    // doctrine — the fate reads must see everything the corpus sees).
+    const loss = readLoss(allNotes, lossDismissed, now);
 
     // Owed-to-you: the record's action items with the operator's name on them,
     // minus anything dismissed or already open on the register.
@@ -283,7 +306,7 @@ export default async function RoomPage() {
     );
     const owed = accountId
       ? owedToMe(
-          mine,
+          allNotes,
           owedDismissed,
           sheet.open.map((o) => o.body),
           now,
@@ -460,28 +483,7 @@ export default async function RoomPage() {
   );
   // The freshest filed line per account rides into every bullet with its
   // date — hand-written bullets age; the record doesn't.
-  const latestByAccount = new Map<string, { line: string; date: string }>();
-  for (const [acctId, ns] of notesById) {
-    const newest = ns.find(
-      (n) => n.lane === "mine" && !dispositions.has(`hide:note:${n.id}`),
-    );
-    if (!newest) continue;
-    const line = newest.body
-      .split("\n")[0]
-      .replace(/^[✉✓☰✎⚡▢✔☎]\s?/, "")
-      .trim()
-      .slice(0, 110);
-    if (!line) continue;
-    const d = new Date(Date.parse(newest.createdAt));
-    latestByAccount.set(acctId, {
-      line,
-      date: d.toLocaleDateString("en-US", {
-        timeZone: "America/Chicago",
-        month: "numeric",
-        day: "numeric",
-      }),
-    });
-  }
+  const latestByAccount = latestLineByAccount(notesById, dispositions);
   const cadence: CadenceRow[] = kickoff.map((k) => {
     const key = partnerOutreachKey(k.partner);
     const touch = touchMap.get(key);

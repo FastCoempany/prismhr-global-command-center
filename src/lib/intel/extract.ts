@@ -48,6 +48,7 @@ export type CorpusDoc = {
   src: string; // "sf-activity 7/21" | "note 7/24" | …
   direction?: "in" | "out";
   people?: string[];
+  sender?: string; // the inbound doc's own author — "" when it's the operator
 };
 
 const short = (iso: string) => {
@@ -90,6 +91,13 @@ export function corpusFor(
     // operator's own sends as inbound and pacified every went-dark detector.
     const actors = n.actors || inferActors(n.body);
     const sender = actors.split("→")[0] ?? "";
+    // A doc with no attributed sender is NOT inbound — a filed transcript or
+    // an unattributed activity must never fire "the reply is owed" (Ted
+    // doctrine). And an auto-reply is machinery, not the client writing.
+    const attributed = sender.trim().length > 0;
+    const autoReply = /automatic reply|out of office|auto-?reply|autoreply/i.test(
+      n.body.split("\n")[0] ?? "",
+    );
     docs.push({
       text: n.body,
       at: n.createdAt,
@@ -98,8 +106,11 @@ export function corpusFor(
         ? undefined
         : MINE_RE.test(sender) || /—\s*Antaeus/i.test(n.body.split("\n")[0] ?? "")
           ? "out"
-          : "in",
-      people: peopleIn(n.body),
+          : attributed && !autoReply
+            ? "in"
+            : undefined,
+      people: actors ? peopleFromActors(actors) : peopleIn(n.body),
+      sender: attributed && !MINE_RE.test(sender) ? sender.trim() : "",
     });
   }
   for (const n of stores.partnerNotes ?? [])
@@ -132,6 +143,16 @@ export function corpusFor(
         src: `digest ${dig.asOf.slice(5)}`,
       });
   return docs.sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
+}
+
+// The actors column is the authority when it exists: "Sender → Target +n",
+// possibly with semicolon/comma lists. The head-line regex is the fallback
+// for legacy notes filed before actors were stamped.
+function peopleFromActors(actors: string): string[] {
+  return actors
+    .split(/→|;|,/)
+    .map((s) => s.replace(/\+\d+\s*$/, "").trim())
+    .filter((s) => s.length > 1);
 }
 
 // "Name → Name" / "From: Name" headers inside filed activities.
@@ -229,8 +250,11 @@ export function extractDealIntel(docs: CorpusDoc[], seedEntry?: DigestEntry): De
       if (!intel.threads.people.includes(p) && !/antaeus/i.test(p))
         intel.threads.people.push(p);
     // inbound/outbound stamps
-    if (doc.direction === "in" && (!intel.lastInbound || doc.at > intel.lastInbound))
+    if (doc.direction === "in" && (!intel.lastInbound || doc.at > intel.lastInbound)) {
       intel.lastInbound = doc.at;
+      // Who actually wrote — the doc's own sender, never a rollup guess.
+      intel.lastInboundWho = doc.sender ?? "";
+    }
     if (doc.direction === "out" && (!intel.lastOutbound || doc.at > intel.lastOutbound))
       intel.lastOutbound = doc.at;
   }

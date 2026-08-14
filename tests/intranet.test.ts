@@ -2017,7 +2017,6 @@ describe("the ledger surface holds the decrees (IV.8)", () => {
 describe("the room carries the brand's depth without breaking its rules (IV.9)", () => {
   const css = readFileSync(join(root, "src/app/command-center.module.css"), "utf8");
   const client = readFileSync(join(root, "src/app/intranet/intranet-client.tsx"), "utf8");
-  const stash = readFileSync(join(root, "src/components/stash/stash-dock.tsx"), "utf8");
 
   test("the Ask is the one orange move — solid, and alone", () => {
     const go = /\.itGo \{[\s\S]*?\n\}/.exec(css)?.[0] ?? "";
@@ -2035,10 +2034,8 @@ describe("the room carries the brand's depth without breaking its rules (IV.9)",
     assert.ok(css.includes("--ds-shadow-rest"), "cards sit flat on the field");
     assert.ok(css.includes("--ds-shadow-lift"), "nothing lifts on hover");
   });
-  test("the stash chip rides above the intranet's paste dock", () => {
-    assert.ok(stash.includes("usePathname"), "the chip doesn't know where it is");
-    assert.ok(/\/intranet/.test(stash), "the chip still sits on the Send button");
-  });
+  // The stash chip test retired with the stash (the Scratchpaper replaced
+  // it, 2026-08-12) — its floater needs no per-page positioning exception.
   test("a pre-digest capture replays as a sentence, not a placeholder", () => {
     const store = readFileSync(join(root, "src/lib/intranet/store.ts"), "utf8");
     assert.ok(

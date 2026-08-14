@@ -26,6 +26,7 @@ export type DealIntel = {
   incumbent: SourcedFact<string> | null;
   threads: { people: string[]; execSeen: boolean; opsSeen: boolean };
   lastInbound: string;
+  lastInboundWho: string; // the newest inbound doc's own author ("" unknown)
   lastOutbound: string;
 };
 
@@ -39,5 +40,6 @@ export const EMPTY_INTEL: DealIntel = {
   incumbent: null,
   threads: { people: [], execSeen: false, opsSeen: false },
   lastInbound: "",
+  lastInboundWho: "",
   lastOutbound: "",
 };

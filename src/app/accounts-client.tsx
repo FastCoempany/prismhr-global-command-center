@@ -1106,7 +1106,7 @@ export function AccountsClient({
                           {a.contactName && (
                             <>
                               {" · "}
-                              {a.contactName}, primary contact
+                              {a.contactName}, the relationship
                               {a.contactEmail && (
                                 <>
                                   {" — "}

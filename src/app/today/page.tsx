@@ -27,6 +27,7 @@ import { SpineRail } from "./spine-rail";
 import { DASH_NODES } from "@/lib/dashboard/stages";
 import { peos } from "@/lib/book";
 import { contactsFor } from "@/lib/book/contacts";
+import { relationshipFor } from "@/lib/intel/relationship";
 import { AccountChip } from "./account-chip";
 import { AtcRow, CurveballButton, type RailItem } from "./atc-rail";
 import { CockpitDrawers } from "./cockpit-drawers";
@@ -65,6 +66,7 @@ import {
   outreachGuidance,
   partitionSignals,
   partnerKickoff,
+  latestLineByAccount,
   roundupBullets,
   roundupFrame,
   signals,
@@ -835,7 +837,10 @@ export default async function TodayPage({
       // the message; the default roundup is built from what's still checked.
       // Bullets come from the rotating builder so a message with several
       // same-play accounts never repeats a line.
-      const bullets = roundupBullets(k.accounts);
+      const bullets = roundupBullets(
+        k.accounts,
+        latestLineByAccount(acctNotes, dispositions),
+      );
       const sections = k.accounts.map((a, i) => {
         const d = dispositions.get(a.id);
         const mark =
@@ -1291,23 +1296,27 @@ export default async function TodayPage({
       .map((a) => [a.name, countryCode(a.countries[0] ?? "")] as const)
       .filter(([, c]) => c),
   );
-  // Known client contact per account — the book's primary (enriched with its
-  // SF contact id from the roster when we can match it), else the roster's
-  // first contact. Feeds the chip's pre-filled New Contact link AND the opp
-  // form's contact lookup.
+  // Known client contact per account — the RELATIONSHIP (Ted doctrine: the
+  // record's person outranks the book seed), enriched with its SF contact id
+  // from the roster when we can match it, else the roster's first contact.
+  // Feeds the chip's pre-filled New Contact link AND the opp form's lookup —
+  // a wrong name here becomes a wrong CRM record.
   const contactById = new Map<string, { name: string; email: string; sfId: string }>();
   for (const p of peos) {
     const roster = contactsFor(p.id);
-    if (p.contactName) {
+    const rel = relationshipFor(acctNotes.get(p.id) ?? [], roster, {
+      name: p.contactName,
+      email: p.contactEmail,
+    });
+    if (rel.name) {
       const hit = roster.find(
         (c) =>
-          (p.contactEmail && c.email.toLowerCase() === p.contactEmail.toLowerCase()) ||
-          `${c.first} ${c.last}`.trim().toLowerCase() ===
-            p.contactName.trim().toLowerCase(),
+          (rel.email && c.email.toLowerCase() === rel.email.toLowerCase()) ||
+          `${c.first} ${c.last}`.trim().toLowerCase() === rel.name.trim().toLowerCase(),
       );
       contactById.set(p.id, {
-        name: p.contactName,
-        email: p.contactEmail,
+        name: rel.name,
+        email: rel.email,
         sfId: hit?.id ?? "",
       });
     } else if (roster[0]?.first || roster[0]?.last) {

@@ -4,7 +4,14 @@ import { getAppAccess } from "@/lib/auth";
 import { hasDatabaseEnv } from "@/lib/db";
 import { csms, getPeo } from "@/lib/book";
 import { EXTRA_PARTNERS, partnerRole } from "@/lib/book/partners";
-import { loadDispositions, loadPartnerNotes, loadTouches } from "@/lib/today/overlay";
+import {
+  loadAccountNotes,
+  loadDispositions,
+  loadPartnerNotes,
+  loadTouches,
+} from "@/lib/today/overlay";
+import { contactsFor } from "@/lib/book/contacts";
+import { relationshipFor } from "@/lib/intel/relationship";
 import { accountIntel, partnerKickoff, partnerOutreachKey } from "@/lib/today/build";
 import type { Touch } from "@/lib/today/follow-ups";
 import type { DraftRecipient } from "@/lib/claude/prompt";
@@ -97,10 +104,11 @@ export default async function PartnersPage() {
   }
   const canWrite = access.canWrite && hasDatabaseEnv();
 
-  const [touches, partnerNotes, dispositions] = await Promise.all([
+  const [touches, partnerNotes, dispositions, acctNotes] = await Promise.all([
     loadTouches(),
     loadPartnerNotes(),
     loadDispositions(),
+    loadAccountNotes(),
   ]);
   // Not-mine accounts are excluded here too — same rule as Today/Accounts.
   const kickoff = partnerKickoff(
@@ -108,15 +116,21 @@ export default async function PartnersPage() {
     new Set(),
   );
 
-  // Recipient intelligence for the drafting desk: the partner themselves, then
-  // the named contact at each of their teed-up accounts (from the book).
+  // Recipient intelligence for the drafting desk: the partner themselves,
+  // then the RELATIONSHIP at each teed-up account — the record's person, the
+  // book seed only when the record is silent (Ted doctrine). A draft to the
+  // wrong name here leaves the building as prose.
   const recipientsFor = (partner: string): DraftRecipient[] => {
     const out: DraftRecipient[] = [
       { name: partner, role: `${partnerRole(partner)} partner at PrismHR` },
     ];
     for (const a of kickoff.find((k) => k.partner === partner)?.accounts ?? []) {
-      const contact = getPeo(a.id)?.contactName?.trim();
-      if (contact) out.push({ name: contact, role: `contact at ${a.name}` });
+      const p = getPeo(a.id);
+      const rel = relationshipFor(acctNotes.get(a.id) ?? [], contactsFor(a.id), {
+        name: p?.contactName,
+        email: p?.contactEmail,
+      });
+      if (rel.name) out.push({ name: rel.name, role: `contact at ${a.name}` });
     }
     return out;
   };
