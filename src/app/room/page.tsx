@@ -43,6 +43,7 @@ import { digestFor, digestForCardName } from "@/lib/intel/digest";
 import { COUNTRY_NAME } from "@/lib/intel/lexicon";
 import { suggestChecks } from "@/lib/intel/evidence";
 import { daysBetween, meterRead, readDeal, type RoomRead } from "@/lib/room/engine";
+import { lastTouchRead } from "@/lib/room/touch";
 import { buildStageRail } from "@/lib/room/stages-view";
 import { buildAccountSheet } from "@/lib/room/sheet-view";
 import { readLoss } from "@/lib/room/loss";
@@ -205,6 +206,19 @@ export default async function RoomPage() {
       });
 
     const touch = accountId ? touchMap.get(`outreach:${accountId}`) : undefined;
+    // The touch clock reads the LATEST of the outreach log and the record's
+    // own outbound entries — a filed email is as real a touch as a logged
+    // send, so the room never demands an answer the record proves was given.
+    const touchRead = lastTouchRead(
+      allNotes,
+      touch
+        ? {
+            contactedAt: touch.contactedAt,
+            awaitingReply: touch.status === "awaiting",
+            who: firstName(rel.name) || "them",
+          }
+        : null,
+    );
     const read: RoomRead = readDeal({
       accountName: card.name,
       step: step
@@ -218,11 +232,11 @@ export default async function RoomPage() {
       timing: intel.timing
         ? { phrase: intel.timing.value.phrase, dateIso: intel.timing.value.dateIso ?? "" }
         : null,
-      lastTouch: touch
+      lastTouch: touchRead
         ? {
-            at: touch.contactedAt,
-            awaitingReply: touch.status === "awaiting",
-            who: firstName(rel.name) || "them",
+            at: touchRead.at,
+            awaitingReply: touchRead.awaitingReply,
+            who: firstName(touchRead.who) || firstName(rel.name) || "them",
           }
         : null,
       lastInbound: intel.lastInbound
