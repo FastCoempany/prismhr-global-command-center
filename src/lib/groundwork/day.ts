@@ -51,6 +51,43 @@ export const QUEUE_CAP = 6;
 export const BUMP_QUIET_DAYS = 7;
 export const REVIVAL_QUIET_DAYS = 45;
 
+// The record's live motion excludes an account from prospecting (canon:
+// Groundwork is outbound only; reactive motion belongs to the HomeRoom —
+// enforced from the record 2026-08-14, because the board lags). THEY are
+// engaging when a real inbound landed inside the window, or a meeting, call,
+// or transcript filed fresh. The operator's own outbound never excludes —
+// the drumbeat rules need it.
+export const MOTION_INBOUND_DAYS = 21;
+export const MOTION_MEETING_DAYS = 14;
+const MEETING_SOURCE = new Set(["call", "call-ai", "transcript"]);
+const MEETING_RE =
+  /\b(met with|meeting with|call with|demo(?:'d)? (?:with|for|to)|walked (?:them|him|her) through)\b/i;
+
+export function liveMotionIds(
+  notesById: Map<string, { body: string; source: string; createdAt: string }[]>,
+  intelById: Map<string, Pick<DealIntel, "lastInbound">>,
+  now: Date,
+): Set<string> {
+  const out = new Set<string>();
+  for (const [id, intel] of intelById) {
+    const inAt = Date.parse(intel.lastInbound || "");
+    if (!Number.isNaN(inAt) && (now.getTime() - inAt) / DAY <= MOTION_INBOUND_DAYS)
+      out.add(id);
+  }
+  for (const [id, notes] of notesById) {
+    if (out.has(id)) continue;
+    for (const n of notes) {
+      const at = Date.parse(n.createdAt);
+      if (Number.isNaN(at) || (now.getTime() - at) / DAY > MOTION_MEETING_DAYS) continue;
+      if (MEETING_SOURCE.has(n.source) || MEETING_RE.test(n.body.slice(0, 200))) {
+        out.add(id);
+        break;
+      }
+    }
+  }
+  return out;
+}
+
 // A wire hit older than this no longer justifies a news note — the trigger
 // is perishable by design.
 export const WIRE_FRESH_DAYS = 5;
