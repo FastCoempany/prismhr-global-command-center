@@ -146,6 +146,24 @@ land behind a fold. Attendant decrees, permanent:
   documents (interactive when mechanics matter) — production only ever
   receives the decreed winner.
 
+## The Ted doctrine (founder-decreed 2026-08-14)
+
+Named for the day the room told the operator to chase Ted — a man the record
+had never seen — because a July export seeded him as primary contact. The
+rule, binding on every surface: **the record outranks every seed.** A static
+store (book.json contacts, contacts.json roster, research.json sweep, digest
+prose, the touch log, hand-written bullets, board-state maps) only ever
+STANDS IN until the live record — filed communications, their actors, their
+dates, dispositions, outcome stamps — speaks; the moment it speaks, the
+surface reads the record first and the seed becomes the fallback. Derived
+facts (who the relationship is, when we last touched, whether a reply is
+owed, whether a deal is over, who said a thing) must read the WIDEST live
+source the app holds, never a private narrow one; a fact's two stores merge
+by latest, never by whichever the surface happened to import. An
+unattributed document is never inbound; an auto-reply is machinery, never
+the client writing. New surfaces are audited against this doctrine before
+they ship.
+
 ## Other standing decrees
 
 - The word "steps" never appears in operator-facing copy.

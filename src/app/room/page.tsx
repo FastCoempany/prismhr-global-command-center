@@ -28,6 +28,7 @@ import {
   morningDoneKey,
   partnerKickoff,
   partnerOutreachKey,
+  latestLineByAccount,
   roundupBullets,
   roundupFrame,
   signals,
@@ -168,7 +169,11 @@ export default async function RoomPage() {
       .slice(0, 72);
 
     const people = accountId ? peopleFor(allNotes, contactsFor(accountId), 6) : [];
-    const multiTone = people.length >= 3 ? "g" : people.length === 2 ? "y" : "r";
+    // MULTI reads the widest count the app holds: filed actors AND the
+    // digest's thread roster — a record-quiet deal with a known room must
+    // never render "nobody exists."
+    const peopleCount = Math.max(people.length, intel.threads.people.length);
+    const multiTone = peopleCount >= 3 ? "g" : peopleCount === 2 ? "y" : "r";
 
     // Who this deal runs through — the record's most-seen person outranks the
     // book's seeded primary the moment real communication files.
@@ -242,7 +247,9 @@ export default async function RoomPage() {
       lastInbound: intel.lastInbound
         ? {
             at: intel.lastInbound,
-            who: firstName(rel.name) || "they",
+            // The person who actually wrote — the doc's own sender; the
+            // relationship rollup only stands in when the doc is anonymous.
+            who: firstName(intel.lastInboundWho) || firstName(rel.name) || "they",
           }
         : null,
       lastRecordAt: allNotes[0]?.createdAt ?? "",
@@ -288,7 +295,9 @@ export default async function RoomPage() {
     const lossPrefix = `loss-dismiss:${card.id}:`;
     for (const key of dispositions.keys())
       if (key.startsWith(lossPrefix)) lossDismissed.add(key.slice(lossPrefix.length));
-    const loss = readLoss(mine, lossDismissed, now);
+    // BOTH lanes: a loss stated in case traffic is still a loss (Ted
+    // doctrine — the fate reads must see everything the corpus sees).
+    const loss = readLoss(allNotes, lossDismissed, now);
 
     // Owed-to-you: the record's action items with the operator's name on them,
     // minus anything dismissed or already open on the register.
@@ -297,7 +306,7 @@ export default async function RoomPage() {
     );
     const owed = accountId
       ? owedToMe(
-          mine,
+          allNotes,
           owedDismissed,
           sheet.open.map((o) => o.body),
           now,
@@ -474,28 +483,7 @@ export default async function RoomPage() {
   );
   // The freshest filed line per account rides into every bullet with its
   // date — hand-written bullets age; the record doesn't.
-  const latestByAccount = new Map<string, { line: string; date: string }>();
-  for (const [acctId, ns] of notesById) {
-    const newest = ns.find(
-      (n) => n.lane === "mine" && !dispositions.has(`hide:note:${n.id}`),
-    );
-    if (!newest) continue;
-    const line = newest.body
-      .split("\n")[0]
-      .replace(/^[✉✓☰✎⚡▢✔☎]\s?/, "")
-      .trim()
-      .slice(0, 110);
-    if (!line) continue;
-    const d = new Date(Date.parse(newest.createdAt));
-    latestByAccount.set(acctId, {
-      line,
-      date: d.toLocaleDateString("en-US", {
-        timeZone: "America/Chicago",
-        month: "numeric",
-        day: "numeric",
-      }),
-    });
-  }
+  const latestByAccount = latestLineByAccount(notesById, dispositions);
   const cadence: CadenceRow[] = kickoff.map((k) => {
     const key = partnerOutreachKey(k.partner);
     const touch = touchMap.get(key);

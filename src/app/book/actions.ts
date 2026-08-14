@@ -7,6 +7,9 @@ import { getAppAccess } from "@/lib/auth";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import { getPeo } from "@/lib/book";
 import { getKit, mergeText } from "@/lib/campaigns";
+import { contactsFor } from "@/lib/book/contacts";
+import { relationshipFor } from "@/lib/intel/relationship";
+import { loadAccountNotes } from "@/lib/today/overlay";
 
 const stageValues = new Set<string>(Object.values(PeoStage));
 const approachValues = new Set<string>(Object.values(PeoApproach));
@@ -88,7 +91,14 @@ export async function applyPlay(formData: FormData) {
     redirect(backTo(formData, peoId, { error: "1" }));
   }
 
-  const nextAction = mergeText(kit.ask, peo).slice(0, 400);
+  // The relationship's name rides the durable next action, not the book
+  // seed's (Ted doctrine) — "Email Bryce" outlives Bryce otherwise.
+  const rel = relationshipFor(
+    (await loadAccountNotes()).get(peoId) ?? [],
+    contactsFor(peoId),
+    { name: peo.contactName, email: peo.contactEmail },
+  );
+  const nextAction = mergeText(kit.ask, { ...peo, contactName: rel.name }).slice(0, 400);
   const nextActionDate = new Date(Date.now() + kit.dueInDays * 86_400_000);
 
   const prisma = getPrisma();

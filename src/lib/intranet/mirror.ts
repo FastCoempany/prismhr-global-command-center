@@ -17,6 +17,7 @@ import { splitFallback } from "@/lib/room/deliverables";
 import { splitTags } from "@/lib/today/route-notes";
 import { isNamespacedAccountId } from "@/lib/today/overlay";
 import { redactMoney } from "@/lib/intel/lexicon";
+import { readOutcome } from "@/lib/dashboard/outcome";
 import { scrubSecrets } from "@/lib/sf-timeline";
 import type { Origin } from "./doctrine";
 
@@ -92,13 +93,16 @@ export function mirrorAccountNote(
   if (isNamespacedAccountId(n.accountId)) return null;
   const text = stripHead(n.body);
   if (!text) return null;
-  const who = n.lane === "mine" ? OPERATOR : n.actors || "the record";
+  // The actors column outranks the lane flag (Ted doctrine): a mine-lane
+  // filed thread carries the CLIENT's words — attributing them to the
+  // operator poisons every future citation. The lane is only who FILED it.
+  const who = n.actors || (n.lane === "mine" ? OPERATOR : "the record");
   return sealed({
     origin: "account-note",
     originRef: n.id,
     space: accountName || n.accountId,
     title: `${accountName || n.accountId} — note of ${dayOf(n.createdAt)}`,
-    body: `On ${accountName || "this account"}, ${dayOf(n.createdAt)}: ${text}`,
+    body: `On ${accountName || "this account"}, ${dayOf(n.createdAt)} (${who}): ${text}`,
     speakers: [who],
     occurredAt: n.createdAt,
     accountId: n.accountId,
@@ -179,9 +183,7 @@ export function mirrorTouch(t: {
     body: `${what}${said}${state}`,
     speakers: [OPERATOR],
     occurredAt: t.contactedAt,
-    accountId: t.subjectKey.startsWith("outreach:")
-      ? t.subjectKey.slice("outreach:".length)
-      : "",
+    accountId: /^(outreach|acct):(.+)$/.exec(t.subjectKey)?.[2] ?? "",
   });
 }
 
@@ -195,18 +197,21 @@ export function mirrorCard(c: {
   updatedAt: string;
 }): MirrorDoc | null {
   const stage = Object.entries(c.states ?? {}).find(([, v]) => v === "active")?.[0] ?? "";
+  // The terminal stamp outranks the stage map (Ted doctrine): a Closed
+  // Won/Lost deal must never mirror into the brain as live — and the raw
+  // reserved-key JSON never belongs in a corpus body.
+  const outcome = readOutcome(c.notes);
   const judgments = Object.entries(c.notes ?? {})
-    .filter(([k, v]) => k !== "discovery" && v)
+    .filter(([k, v]) => k !== "discovery" && !k.startsWith("__") && v)
     .map(([k, v]) => `On ${k}: ${v}`)
     .join(" ");
   const discovery = (c.notes ?? {}).discovery ?? "";
-  const body = [
-    `${c.name} sits at ${stage || "no stage"} on the board${c.archived ? ", retired" : ""}.`,
-    discovery,
-    judgments,
-  ]
-    .filter(Boolean)
-    .join(" ");
+  const standing = outcome
+    ? `${c.name} is ${outcome.status === "won" ? "Closed Won" : "Closed Lost"}${
+        outcome.phrase ? ` — "${outcome.phrase}"` : ""
+      }. The deal is over.`
+    : `${c.name} sits at ${stage || "no stage"} on the board${c.archived ? ", retired" : ""}.`;
+  const body = [standing, discovery, judgments].filter(Boolean).join(" ");
   if (!body.trim()) return null;
   return sealed({
     origin: "card",

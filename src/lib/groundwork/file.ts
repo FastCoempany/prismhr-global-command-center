@@ -194,7 +194,11 @@ export function buildFile(
     people,
     singleThread,
     threadCount,
-    contactEmail: rel.email || (p.contactEmail ?? ""),
+    // The relationship's email or NOTHING — the book's seed must never ride
+    // under a letter greeting the record's person (Ted doctrine). No address
+    // beats the wrong address; the draft button simply doesn't render.
+    contactEmail:
+      rel.source === "record" ? rel.email : rel.email || (p.contactEmail ?? ""),
     russ: paragraphFor(p, { intel, intent, queueItem }),
     history: hist.slice(-HISTORY_CAP),
   };

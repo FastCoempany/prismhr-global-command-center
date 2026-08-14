@@ -5,6 +5,8 @@ import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import { peos } from "@/lib/book";
 import { contactCount, contactsFor } from "@/lib/book/contacts";
 import { peopleFor } from "@/lib/intel/people";
+import { relationshipFor } from "@/lib/intel/relationship";
+import { researchNs } from "@/lib/intel/deep-research";
 import { loadCommand } from "@/lib/command-center/data";
 import { compositeScore, deskScore } from "@/lib/book/scoring";
 import {
@@ -31,6 +33,17 @@ import styles from "../command-center.module.css";
 
 export const dynamic = "force-dynamic";
 
+// The live research note's first human line — the summary fallback when the
+// book-wide sweep never met the account but a paid deep pass did.
+function firstLineOf(body: string): string {
+  return (
+    body
+      .split("\n")
+      .map((l) => l.trim())
+      .find((l) => l.length > 0 && !/^[☰✎⚡▢✔☎✉✓]/.test(l)) ?? ""
+  ).slice(0, 240);
+}
+
 export default async function AccountsPage() {
   const access = await getAppAccess();
 
@@ -48,6 +61,7 @@ export default async function AccountsPage() {
   }
 
   const canAdd = access.canWrite && hasDatabaseEnv();
+  const now = new Date();
 
   // Which accounts are already on the dashboard (matched by name) — so the
   // "+ Dashboard" button can show an added state instead of doing nothing visible.
@@ -123,7 +137,13 @@ export default async function AccountsPage() {
     }
     for (const [partner, list] of partnerNotes) {
       const row = seat(partner);
-      if (row) row.notes += list.length;
+      if (!row) continue;
+      row.notes += list.length;
+      // A filed partner note is as real a touch as a logged send (Ted
+      // doctrine) — "last" reads the latest of both stores.
+      for (const n of list)
+        if (!row.lastTouch || Date.parse(n.createdAt) > Date.parse(row.lastTouch))
+          row.lastTouch = n.createdAt;
     }
     for (const t of touches) {
       const row = seat(t.label ?? "");
@@ -140,8 +160,21 @@ export default async function AccountsPage() {
   const rows: AccountRow[] = peos
     .filter((p) => !excludedIds.has(p.id))
     .map((p) => {
-      const d = deskScore(p);
+      const d = deskScore(p, {
+        lastActivityIso: (chipNotes.get(p.id) ?? [])[0]?.createdAt,
+        now,
+      });
       const dem = getDemand(p.id);
+      // The relationship outranks the book seed here too (Ted doctrine):
+      // the contact this page names, mails, exports, and merges into
+      // campaign copy is the record's person, book seed only as fallback.
+      const rel = relationshipFor(chipNotes.get(p.id) ?? [], contactsFor(p.id), {
+        name: p.contactName,
+        email: p.contactEmail,
+      });
+      // Research reads BOTH stores: the book-wide sweep and the live
+      // deep-pass notes — a paid pass must never render "Not researched."
+      const liveResearch = (chipNotes.get(researchNs(p.id)) ?? [])[0];
       const researchedDemand = dem?.researched ? dem.demandScore : null;
       const v = validations.get(p.id);
       const demand =
@@ -171,16 +204,16 @@ export default async function AccountsPage() {
         csm: p.csm,
         cloud: p.cloud,
         website: p.website,
-        contactName: p.contactName,
-        contactEmail: p.contactEmail,
+        contactName: rel.name,
+        contactEmail: rel.email,
         incumbent: d.incumbent,
         deskScore: d.score,
         demand,
         confidence: dem?.confidence ?? "low",
         signals: dem?.signals ?? [],
         evidence: dem?.evidence ?? [],
-        summary: dem?.summary ?? "",
-        researched: dem?.researched ?? false,
+        summary: dem?.summary || firstLineOf(liveResearch?.body ?? ""),
+        researched: (dem?.researched ?? false) || !!liveResearch,
         play: play as AccountRow["play"],
         competitors: basePl.competitors,
         countries: extractCountries(dem),
@@ -247,7 +280,7 @@ export default async function AccountsPage() {
             title="Global fit blends 40% account profile with 60% researched demand, weighted by confidence. The profile covers size, platform, model, and recency. Play flags a competitor EOR already in place."
           >
             All {rows.length} accounts, scored for Global fit: 40% profile, 60% demand.
-            Research from {researchGeneratedAt}.
+            Book research from {researchGeneratedAt}; live passes read per account.
           </p>
         </div>
         <AccountsClient

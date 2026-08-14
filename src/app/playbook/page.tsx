@@ -1,5 +1,5 @@
 import { AppWayfinder } from "@/components/app-wayfinder";
-import { peos } from "@/lib/book";
+import { getPeo, peos } from "@/lib/book";
 import { DISCOVERY, questionsFor } from "@/lib/intel/discovery";
 import { PRODUCT_BANK } from "@/lib/intel/discovery-product";
 import { SCENARIOS } from "@/lib/intel/scenarios";
@@ -116,14 +116,16 @@ export default async function PlaybookPage({
           lessons={lessons.map((l) => ({
             id: l.id,
             text: l.text,
-            from: l.accountName,
+            // The live book name outranks the frozen tail — accounts rename
+            // (Ted doctrine). Who SAID it stays frozen; that's point-in-time.
+            from: getPeo(l.accountId)?.name ?? l.accountName,
             at: l.at,
           }))}
           market={market.map((m) => ({
             id: m.id,
             text: m.text,
             who: m.who,
-            from: m.accountName,
+            from: getPeo(m.accountId)?.name ?? m.accountName,
             at: m.at,
           }))}
           prospectAsks={harvest.propose.map((p) => ({

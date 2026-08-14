@@ -4,6 +4,8 @@
 // never demand an answer the record proves was already given (the Simploy
 // Aug 5 nudge, caught 2026-08-14). Pure — testable.
 
+import { MINE_RE } from "@/lib/intel/provenance";
+
 export type TouchSource = {
   contactedAt: string; // ISO
   awaitingReply: boolean;
@@ -22,17 +24,18 @@ export type TouchRead = {
   source: "log" | "record";
 };
 
-const OPERATOR = /^\s*antaeus\b/i;
-
 // The record's newest outbound: an entry whose actors name the operator as
-// the sender. Inbound traffic and unattributed notes never count.
+// the sender. Inbound traffic and unattributed notes never count. MINE_RE is
+// the app's one spelling of the operator — a private narrower regex here
+// would miss "acoe@prismhr" renderings and resurrect the very bug this file
+// exists to kill.
 export function newestOutbound(notes: NoteForTouch[]): NoteForTouch | null {
   let best: NoteForTouch | null = null;
   for (const n of notes) {
     const arrow = (n.actors ?? "").indexOf("→");
     if (arrow < 0) continue;
     const sender = n.actors.slice(0, arrow);
-    if (!OPERATOR.test(sender)) continue;
+    if (!MINE_RE.test(sender)) continue;
     const t = Date.parse(n.createdAt);
     if (Number.isNaN(t)) continue;
     if (!best || t > Date.parse(best.createdAt)) best = n;
