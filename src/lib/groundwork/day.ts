@@ -51,6 +51,11 @@ export const QUEUE_CAP = 6;
 export const BUMP_QUIET_DAYS = 7;
 export const REVIVAL_QUIET_DAYS = 45;
 
+// Research holds for a quarter (founder-decreed 2026-08-14): Groundwork puts
+// no pressure out front until a pass — per-account or book-wide — is 90 days
+// old. Fresh research on demand is the stage button's job, not the queue's.
+export const RESEARCH_STALE_DAYS = 90;
+
 // The record's live motion excludes an account from prospecting (canon:
 // Groundwork is outbound only; reactive motion belongs to the HomeRoom —
 // enforced from the record 2026-08-14, because the board lags). THEY are
@@ -339,7 +344,7 @@ function rankAll(inp: QueueInput, now: Date): QueueItem[] {
     if (
       (demand?.demandScore ?? 0) >= DEMAND_GATE &&
       researchAge != null &&
-      researchAge > 21
+      researchAge > RESEARCH_STALE_DAYS
     ) {
       candidates.push({
         accountId: p.id,
@@ -398,7 +403,7 @@ function rankAll(inp: QueueInput, now: Date): QueueItem[] {
   // the book, not six moves — the strongest above-gate account carries it.
   const globalAgeT = Date.parse(researchGeneratedAt);
   const globalAge = Number.isNaN(globalAgeT) ? null : (now.getTime() - globalAgeT) / DAY;
-  if (globalAge != null && globalAge > 21) {
+  if (globalAge != null && globalAge > RESEARCH_STALE_DAYS) {
     const bearer = inp.accounts
       .filter(
         (p) =>

@@ -34,13 +34,18 @@ async function requireWrite() {
 // The worked stamp — called by the copy control AFTER the copy happened.
 // Day-scoped: the key carries the Chicago day, so the row resets tomorrow
 // while doneAt keeps the exact stamp time.
-// The stage's own research button (founder-decreed 2026-08-14): when the
-// queue says "Run the research pass.", the pass runs right here — one press
-// files the deep pass to the account and stamps the move worked.
-export async function runResearchNow(mk: string, accountId: string): Promise<void> {
+// The stage's own research button (founder-decreed 2026-08-14): fresh
+// research runs on demand for whatever account is on deck. When the move
+// itself IS the research pass, one press also stamps the move worked; on any
+// other move the pass files quietly and the move stays open — running
+// research never completes work it didn't do.
+export async function runResearchNow(
+  mk: string | null,
+  accountId: string,
+): Promise<void> {
   if (!(await requireWrite())) return;
   const r = await roomResearch(accountId);
-  if (r.ok) await markWorked(mk);
+  if (r.ok && mk) await markWorked(mk);
   revalidatePath("/groundwork");
   revalidatePath("/room");
 }
