@@ -20,6 +20,18 @@
   color: #e6701e;
   border-color: #e6701e;
 }
+/* Lines still on the paper — the button burns red until the pad is clear. */
+.fabLit {
+  border-color: rgba(239, 68, 68, 0.75);
+  box-shadow:
+    0 8px 22px rgba(10, 28, 64, 0.16),
+    0 0 0 1px rgba(239, 68, 68, 0.45),
+    0 0 16px 4px rgba(239, 68, 68, 0.38);
+}
+.fabLit:hover {
+  color: #ef4444;
+  border-color: #ef4444;
+}
 .fab:focus-visible {
   outline: 2px solid #2563eb;
   outline-offset: 2px;
