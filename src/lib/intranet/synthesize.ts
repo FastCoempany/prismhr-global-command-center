@@ -250,7 +250,8 @@ export async function runWorldAnswer(question: string): Promise<string> {
   const client = new Anthropic({ timeout: 90_000, maxRetries: 1 });
   const res = await client.messages.create({
     model: MODEL_SYNTH,
-    max_tokens: 2048,
+    // Thinking and the answer share this budget — leave real room for both.
+    max_tokens: 8192,
     thinking: { type: "adaptive" },
     system: [{ type: "text", text: WORLD_SYSTEM, cache_control: { type: "ephemeral" } }],
     messages: [{ role: "user", content: question }],
@@ -286,7 +287,10 @@ export async function runSynthesis(input: {
   const call = () =>
     client.messages.create({
       model,
-      max_tokens: 4096,
+      // Adaptive thinking spends from the same budget as the written answer;
+      // 4096 let a hard synthesis think the whole budget away and emit NO
+      // text at all — every production ask parsed empty (caught 2026-08-18).
+      max_tokens: 16384,
       thinking: { type: "adaptive" },
       system: [{ type: "text", text: SYSTEM, cache_control: { type: "ephemeral" } }],
       output_config: {
@@ -309,9 +313,23 @@ export async function runSynthesis(input: {
       .join("")
       .trim();
 
+  // Parse hard: structured output should be clean JSON, but a stray preamble
+  // or trailing text must not turn a written answer into a silent empty one —
+  // slice the outermost braces before giving up (the ai-clean idiom).
+  const parseJson = (text: string): unknown => {
+    try {
+      return JSON.parse(text);
+    } catch {
+      const i = text.indexOf("{");
+      const j = text.lastIndexOf("}");
+      if (i >= 0 && j > i) return JSON.parse(text.slice(i, j + 1));
+      throw new Error("no JSON in response");
+    }
+  };
+
   let parsed: unknown = {};
   try {
-    parsed = JSON.parse(read(await call()));
+    parsed = parseJson(read(await call()));
   } catch {
     return { answer: EMPTY_ANSWER, model };
   }
@@ -323,7 +341,7 @@ export async function runSynthesis(input: {
     try {
       const res2 = await client.messages.create({
         model,
-        max_tokens: 4096,
+        max_tokens: 16384,
         thinking: { type: "adaptive" },
         system: [{ type: "text", text: SYSTEM, cache_control: { type: "ephemeral" } }],
         output_config: {
@@ -339,7 +357,7 @@ export async function runSynthesis(input: {
           },
         ],
       } as Anthropic.MessageCreateParamsNonStreaming);
-      answer = sanitizeAnswer(JSON.parse(read(res2)), input.candidates.length);
+      answer = sanitizeAnswer(parseJson(read(res2)), input.candidates.length);
     } catch {
       // keep the first answer rather than losing it
     }
