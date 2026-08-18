@@ -45,6 +45,7 @@ import { COUNTRY_NAME } from "@/lib/intel/lexicon";
 import { suggestChecks } from "@/lib/intel/evidence";
 import { daysBetween, meterRead, readDeal, type RoomRead } from "@/lib/room/engine";
 import { lastTouchRead } from "@/lib/room/touch";
+import { isMeetingNote } from "@/lib/intel/meeting";
 import { buildStageRail } from "@/lib/room/stages-view";
 import { buildAccountSheet } from "@/lib/room/sheet-view";
 import { readLoss } from "@/lib/room/loss";
@@ -252,6 +253,12 @@ export default async function RoomPage() {
             who: firstName(intel.lastInboundWho) || firstName(rel.name) || "they",
           }
         : null,
+      // The newest meeting record — a meeting newer than any outbound makes
+      // the recap the move, never a "wait" (Staff Leasing 1:00 PM, 8/18).
+      lastMeeting: (() => {
+        const m = allNotes.find((n) => isMeetingNote(n));
+        return m ? { at: m.createdAt, who: firstName(rel.name) || "them" } : null;
+      })(),
       lastRecordAt: allNotes[0]?.createdAt ?? "",
       allGatesDone,
       now,

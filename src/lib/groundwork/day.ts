@@ -12,6 +12,7 @@
 import type { Peo } from "@/lib/book";
 import type { DealIntel } from "@/lib/intel/types";
 import { compositeScore, deskScore } from "@/lib/book/scoring";
+import { isMeetingNote } from "@/lib/intel/meeting";
 import { getDemand, researchGeneratedAt, DEMAND_GATE } from "@/lib/book/research";
 import { proximityRank } from "./proximity";
 import { intentFor, ridingLaneDate, type IntentSignal } from "./signals";
@@ -64,9 +65,6 @@ export const RESEARCH_STALE_DAYS = 90;
 // the drumbeat rules need it.
 export const MOTION_INBOUND_DAYS = 21;
 export const MOTION_MEETING_DAYS = 14;
-const MEETING_SOURCE = new Set(["call", "call-ai", "transcript"]);
-const MEETING_RE =
-  /\b(met with|meeting with|call with|demo(?:'d)? (?:with|for|to)|walked (?:them|him|her) through)\b/i;
 
 export function liveMotionIds(
   notesById: Map<string, { body: string; source: string; createdAt: string }[]>,
@@ -84,7 +82,9 @@ export function liveMotionIds(
     for (const n of notes) {
       const at = Date.parse(n.createdAt);
       if (Number.isNaN(at) || (now.getTime() - at) / DAY > MOTION_MEETING_DAYS) continue;
-      if (MEETING_SOURCE.has(n.source) || MEETING_RE.test(n.body.slice(0, 200))) {
+      // The one shared spelling of "this note records a meeting" — the same
+      // read the touch clock and the room's recap rule use.
+      if (isMeetingNote(n)) {
         out.add(id);
         break;
       }
