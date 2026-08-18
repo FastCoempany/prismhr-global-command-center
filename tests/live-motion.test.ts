@@ -2,9 +2,10 @@
 // 2026-08-14, the day Infiniti HR kept staging for prospecting two days
 // after its record filed the leadership meeting.
 
-import { test } from "node:test";
+import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 import { liveMotionIds } from "../src/lib/groundwork/day";
+import { isMeetingNote } from "../src/lib/intel/meeting";
 
 const NOW = new Date("2026-08-14T12:00:00Z");
 const note = (body: string, source: string, createdAt: string) => ({
@@ -100,4 +101,33 @@ test("the operator's own fresh outbound never excludes — the drumbeat needs it
     NOW,
   );
   assert.ok(!ids.has("a1"));
+});
+
+describe("isMeetingNote — the one shared spelling", () => {
+  test("logged activities naming a meeting/call/demo are meetings", () => {
+    assert.ok(
+      isMeetingNote({ body: "✔ SF Today 1:00 PM — Staff Leasing meeting — Ireland/UK" }),
+    );
+    assert.ok(
+      isMeetingNote({ body: "✔ TM Today 2:00 PM — Call with Tom Boell — 2:00 PM" }),
+    );
+  });
+  test("sources call/call-ai/transcript are meetings whatever the words", () => {
+    assert.ok(isMeetingNote({ body: "raw vtt", source: "transcript" }));
+  });
+  test("plain sends and tasks are not meetings", () => {
+    assert.ok(
+      !isMeetingNote({
+        body: "✉ OL Aug 17 — Re: Prism Global payroll demo · Antaeus Coe → Bill",
+      }),
+    );
+    assert.ok(
+      !isMeetingNote({ body: "✔ SF Jul 3 — Task completed: send the entity list" }),
+    );
+    assert.ok(
+      !isMeetingNote({
+        body: "☎ TM Aug 12 2:32 PM — SMS — reschedule · Antaeus Coe → Tom Boell",
+      }),
+    );
+  });
 });

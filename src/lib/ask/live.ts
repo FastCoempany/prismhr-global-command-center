@@ -11,6 +11,7 @@ import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import { peos } from "@/lib/book";
 import { contactsFor } from "@/lib/book/contacts";
 import { relationshipFor } from "@/lib/intel/relationship";
+import { isMeetingNote } from "@/lib/intel/meeting";
 import { lastTouchRead } from "@/lib/room/touch";
 import { todoBelongsTo } from "@/lib/room/sheet-view";
 import { visibleText } from "@/lib/today/route-notes";
@@ -112,6 +113,7 @@ export async function liveReadFor(question: string): Promise<LiveRead | null> {
       id: n.id,
       body: n.body,
       actors: n.actors ?? "",
+      source: n.source ?? "",
       lane: (n.lane === "background" ? "background" : "mine") as "mine" | "background",
       createdAt: n.createdAt.toISOString(),
     }));
@@ -137,7 +139,17 @@ export async function liveReadFor(question: string): Promise<LiveRead | null> {
           }
         : null,
     );
-    if (touchRead?.awaitingReply)
+    // A meeting record beats the correspondence clock — the recap is the
+    // owed move, and the ask's answer should know a meeting just happened.
+    const meeting = noteLike.find((n) => isMeetingNote(n));
+    const meetingNewer =
+      meeting &&
+      (!touchRead || Date.parse(meeting.createdAt) >= Date.parse(touchRead.at));
+    if (meeting && meetingNewer)
+      lines.push(
+        `A meeting with ${hit.name} was held ${monthDay(meeting.createdAt)} — the record of it is filed; the follow-up recap is the operator's to send.`,
+      );
+    else if (touchRead?.awaitingReply)
       lines.push(
         `The room's live read: waiting on ${touchRead.who || first} since ${monthDay(
           touchRead.at,

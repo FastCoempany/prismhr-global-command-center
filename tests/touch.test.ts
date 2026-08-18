@@ -2,7 +2,7 @@
 // Born 2026-08-14, the day the room said "Answer Chassie. The reply is
 // owed." over a record holding the operator's own Aug 5 nudge.
 
-import { test } from "node:test";
+import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 import { lastTouchRead, newestOutbound } from "../src/lib/room/touch";
 
@@ -63,4 +63,39 @@ test("the +n recipient tail strips from who", () => {
     null,
   );
   assert.equal(r?.who, "Bill Laffey");
+});
+
+describe("a meeting is a thing that happened, never a send awaiting a reply", () => {
+  // The Staff Leasing 1:00 PM (8/18): a filed meeting carried the operator's
+  // name in its actors and the row read "Wait on Tom." The clock must skip it.
+  test("a logged meeting with my name in the actors is not an outbound", () => {
+    const notes = [
+      {
+        actors: "Antaeus Coe → Tom +3",
+        createdAt: "2026-08-18T17:00:00Z",
+        body: "✔ SF Today 1:00 PM — Staff Leasing meeting — Ireland/UK opportunity · Antaeus Coe → Tom +3\nTom talked Ireland.",
+        source: "sf-ai",
+      },
+      {
+        actors: "Antaeus Coe → Tom Boell",
+        createdAt: "2026-08-12T19:32:00Z",
+        body: "☎ TM Aug 12 2:32 PM — SMS — reschedule to Tuesday Aug 18 · Antaeus Coe → Tom Boell\nAntaeus asked to move.",
+        source: "teams-ai",
+      },
+    ];
+    const out = newestOutbound(notes);
+    assert.ok(out);
+    assert.equal(out?.createdAt, "2026-08-12T19:32:00Z");
+  });
+  test("call/transcript sources are meetings whatever the body says", () => {
+    const out = newestOutbound([
+      {
+        actors: "Antaeus Coe → Chassie",
+        createdAt: "2026-08-18T16:00:00Z",
+        body: "notes from the call",
+        source: "transcript",
+      },
+    ]);
+    assert.equal(out, null);
+  });
 });

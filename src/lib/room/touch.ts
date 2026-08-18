@@ -5,6 +5,7 @@
 // Aug 5 nudge, caught 2026-08-14). Pure — testable.
 
 import { MINE_RE } from "@/lib/intel/provenance";
+import { isMeetingNote } from "@/lib/intel/meeting";
 
 export type TouchSource = {
   contactedAt: string; // ISO
@@ -15,6 +16,11 @@ export type TouchSource = {
 export type NoteForTouch = {
   actors: string; // "Sender → Target [+n]" — "" when unattributed
   createdAt: string; // ISO, activity's own moment
+  // Optional but load-bearing: a meeting RECORD carries the operator's name
+  // in its actors, yet it is a thing that happened, never a send awaiting a
+  // reply — the discriminator needs the body head and source to see that.
+  body?: string;
+  source?: string;
 };
 
 export type TouchRead = {
@@ -36,6 +42,9 @@ export function newestOutbound(notes: NoteForTouch[]): NoteForTouch | null {
     if (arrow < 0) continue;
     const sender = n.actors.slice(0, arrow);
     if (!MINE_RE.test(sender)) continue;
+    // A meeting record is not correspondence — nobody awaits a reply to a
+    // meeting that already happened (the Staff Leasing 1:00 PM, 2026-08-18).
+    if (isMeetingNote(n)) continue;
     const t = Date.parse(n.createdAt);
     if (Number.isNaN(t)) continue;
     if (!best || t > Date.parse(best.createdAt)) best = n;

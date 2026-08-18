@@ -22,6 +22,9 @@ export type RoomInputs = {
   // newest INBOUND evidence in the record (a pasted client reply) — when it
   // postdates the last outbound touch, the court flips: you owe the answer.
   lastInbound?: { at: string; who: string } | null;
+  // newest MEETING record — a meeting newer than any outbound puts the
+  // follow-up on the operator: the recap is owed, never a "wait".
+  lastMeeting?: { at: string; who: string } | null;
   // most recent record entry of ANY kind ("" = empty record)
   lastRecordAt: string;
   // every gate on every stage is checked but no outcome is stamped — the deal
@@ -140,6 +143,9 @@ export function meterRead(i: {
 
 const QUIET_RED_DAYS = 5;
 const AGE_RED_DAYS = 7;
+// A meeting's recap stays the move for this long; past it the meeting is
+// history and the ordinary rules speak again.
+const RECAP_DAYS = 5;
 
 export function readDeal(i: RoomInputs): RoomRead {
   const quietDays = i.lastTouch ? daysBetween(i.lastTouch.at, i.now) : null;
@@ -155,6 +161,23 @@ export function readDeal(i: RoomInputs): RoomRead {
   const inboundDays = inboundNewest ? daysBetween(inboundAt, i.now) : null;
   const inboundWho = (i.lastInbound?.who || "").trim();
 
+  // A meeting newer than any outbound (and not yet answered by an inbound)
+  // puts the follow-up on the operator — the recap is owed, never a "wait"
+  // (the Staff Leasing 1:00 PM read, founder-decreed 2026-08-18). A recap
+  // left unsent goes stale after RECAP_DAYS and the ordinary rules resume.
+  const meetingAt = i.lastMeeting?.at ?? "";
+  const meetingDays = meetingAt ? daysBetween(meetingAt, i.now) : null;
+  const meetingNewest =
+    !!meetingAt &&
+    !Number.isNaN(Date.parse(meetingAt)) &&
+    !inboundNewest &&
+    (!i.lastTouch || Date.parse(meetingAt) >= Date.parse(i.lastTouch.at)) &&
+    meetingDays != null &&
+    meetingDays <= RECAP_DAYS;
+  const meetingWho = (i.lastMeeting?.who || "").trim();
+  const meetingAgo =
+    meetingDays != null && meetingDays > 0 ? `${meetingDays} days ago` : "today";
+
   // A dated wall is a real calendar fact — expire and escalate it.
   const wallMs = i.timing?.dateIso ? Date.parse(i.timing.dateIso) : NaN;
   const wallDaysPast = Number.isNaN(wallMs)
@@ -168,6 +191,12 @@ export function readDeal(i: RoomInputs): RoomRead {
     const who = (inboundWho || "they").toUpperCase().slice(0, 24);
     court = {
       line: `YOUR MOVE · ${who} WROTE ${inboundDays ?? 0} DAYS AGO`,
+      tone: "you",
+    };
+  } else if (meetingNewest) {
+    const who = (meetingWho || "them").toUpperCase().slice(0, 24);
+    court = {
+      line: `YOUR MOVE · MET ${who} ${meetingDays === 0 ? "TODAY" : `${meetingDays}D AGO`}`,
       tone: "you",
     };
   } else if (i.lastTouch && i.lastTouch.awaitingReply) {
@@ -236,6 +265,11 @@ export function readDeal(i: RoomInputs): RoomRead {
     move = `Answer ${who}. They wrote ${
       inboundDays != null && inboundDays > 0 ? `${inboundDays} days ago` : "today"
     }. The reply is owed.`;
+  } else if (meetingNewest && i.step) {
+    const item = i.step.item.trim() || "the open item";
+    move = `Send ${meetingWho || "them"} the recap. You met ${meetingAgo}. Then close “${item.toLowerCase()}”.`;
+  } else if (meetingNewest) {
+    move = `Send ${meetingWho || "them"} the recap. You met ${meetingAgo}.`;
   } else if (i.step) {
     const item = i.step.item.trim() || "the open item";
     if (quietLong && i.lastTouch) {
