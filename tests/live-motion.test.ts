@@ -112,8 +112,45 @@ describe("isMeetingNote — the one shared spelling", () => {
       isMeetingNote({ body: "✔ TM Today 2:00 PM — Call with Tom Boell — 2:00 PM" }),
     );
   });
-  test("sources call/call-ai/transcript are meetings whatever the words", () => {
-    assert.ok(isMeetingNote({ body: "raw vtt", source: "transcript" }));
+  test("call/call-ai sources are meetings whatever the words", () => {
+    assert.ok(isMeetingNote({ body: "quick notes", source: "call" }));
+    assert.ok(isMeetingNote({ body: "read of the call", source: "call-ai" }));
+  });
+  test("a transcript-source note is a meeting only when it reads like a call", () => {
+    // The room's zero-entry fallback labels typed one-liners "transcript" —
+    // the exact Axcet notes that lit a false "You met today."
+    assert.ok(
+      !isMeetingNote({
+        body: "☰ transcript — filed from the room\ni did not meet with them today",
+        source: "transcript",
+      }),
+    );
+    assert.ok(
+      !isMeetingNote({
+        body: "☰ transcript — filed from the room\ni answered yes today to anika that i'd like to attend the sept 10 meeting",
+        source: "transcript",
+      }),
+    );
+    // Real archives pass: the room's archive head, the VTT pipeline head,
+    // and any body with two speaker-labeled voices.
+    assert.ok(
+      isMeetingNote({
+        body: "☰ Call transcript — XcelHR demo · 3 voices · full text under the fold\nBill: hi\nAntaeus: hey",
+        source: "transcript",
+      }),
+    );
+    assert.ok(
+      isMeetingNote({
+        body: "CALL TRANSCRIPT — dropped file demo.vtt\nTom: morning\nAntaeus: morning",
+        source: "transcript",
+      }),
+    );
+    assert.ok(
+      isMeetingNote({
+        body: "☰ transcript — filed from the room\nTom: we want Ireland\nAntaeus: let's scope it",
+        source: "transcript",
+      }),
+    );
   });
   test("plain sends and tasks are not meetings", () => {
     assert.ok(
