@@ -4,6 +4,7 @@ import {
   ACTIVE_GRACE_MS,
   CLOCK_FREEZE_MS,
   PASSIVE_STOP_MS,
+  deskParts,
   fmtDesk,
   parsePresenceReason,
   presenceDayKey,
@@ -57,6 +58,13 @@ describe("the day row's counters survive the round trip", () => {
     assert.equal(fmtDesk(840), "14m");
     assert.equal(fmtDesk(0), "0m");
     assert.equal(fmtDesk(-30), "0m");
+  });
+  test("the instrument's digits split exactly and never go negative", () => {
+    assert.deepEqual(deskParts(2 * 3600 + 14 * 60 + 33), { h: 2, m: 14, s: 33 });
+    assert.deepEqual(deskParts(59), { h: 0, m: 0, s: 59 });
+    assert.deepEqual(deskParts(3600), { h: 1, m: 0, s: 0 });
+    assert.deepEqual(deskParts(-4), { h: 0, m: 0, s: 0 });
+    assert.deepEqual(deskParts(NaN), { h: 0, m: 0, s: 0 });
   });
   test("the meter's day is Chicago's day", () => {
     // 04:30 UTC on Aug 15 is still Aug 14 in Chicago (CDT, UTC-5).

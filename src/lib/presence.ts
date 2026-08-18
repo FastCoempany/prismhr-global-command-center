@@ -25,7 +25,14 @@ export function presenceDayKey(d: Date): string {
   return d.toLocaleDateString("en-CA", { timeZone: "America/Chicago" });
 }
 
-// "2h 14m" · "14m" · "0m" — the capsule's read.
+// The instrument's three digits — hours, minutes, seconds, always all three,
+// so the readout never changes width mid-tick.
+export function deskParts(sec: number): { h: number; m: number; s: number } {
+  const t = Number.isFinite(sec) && sec > 0 ? Math.floor(sec) : 0;
+  return { h: Math.floor(t / 3600), m: Math.floor((t % 3600) / 60), s: t % 60 };
+}
+
+// "2h 14m" · "14m" · "0m" — the tooltip's read.
 export function fmtDesk(sec: number): string {
   const s = Number.isFinite(sec) && sec > 0 ? Math.floor(sec) : 0;
   const h = Math.floor(s / 3600);

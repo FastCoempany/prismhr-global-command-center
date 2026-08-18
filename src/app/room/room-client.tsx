@@ -2196,9 +2196,11 @@ export function RoomClient({
             </div>
           )}
         </span>
-        <span className={styles.clock}>
+        <span className={styles.barRight}>
           <DeskMeter />
-          <ChiClock />
+          <span className={styles.clock}>
+            <ChiClock />
+          </span>
         </span>
       </div>
 
