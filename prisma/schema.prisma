@@ -1257,6 +1257,9 @@ model IntranetAsk {
   coverage     Json?
   model        String   @default("")
   ms           Int      @default(0)
+  // IV.6 — the labelled general-knowledge answer, kept so the bank can show
+  // it after a reload. Set only when the record itself had nothing to cite.
+  world        String   @default("")
   askedAt      DateTime @default(now())
 
   @@index([askedAt])

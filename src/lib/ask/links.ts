@@ -19,6 +19,8 @@ const ACCOUNT_ORIGINS = new Set([
   "touch",
   "card",
   "partner-note",
+  // the app's own live read, cited — its door is the account it derives from
+  "live",
 ]);
 const CAPTURE_ORIGINS = new Set(["teams", "meeting", "demo", "paste"]);
 const CAP = 6;

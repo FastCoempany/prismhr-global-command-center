@@ -347,7 +347,9 @@ export function Scratchpad() {
                         </span>
                       </div>
                     ) : (
-                      <div className={styles.quiet}>The record held nothing on this.</div>
+                      <div className={styles.quiet}>
+                        {a.note || "The record held nothing on this."}
+                      </div>
                     )}
                     {a.links.length > 0 && (
                       <div className={styles.askLinks}>

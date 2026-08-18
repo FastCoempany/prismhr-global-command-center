@@ -267,6 +267,9 @@ export type AskReply = {
   /** IV.6 — set only when the record had nothing: an answer from general
    *  knowledge, explicitly labelled, never blended with the corpus. */
   world: string;
+  /** How many lines the brain actually weighed — the honest number behind an
+   *  empty answer ("read 31 lines, couldn't answer" is not "nothing on file"). */
+  considered: number;
   reason?: string;
 };
 
@@ -290,6 +293,7 @@ const EMPTY_ANSWER_REPLY = (question: string, reason: string): AskReply => ({
   degraded: "",
   accounts: [],
   world: "",
+  considered: 0,
   reason,
 });
 
@@ -336,7 +340,10 @@ function renderCitations(
     .filter(Boolean) as AskReply["citations"];
 }
 
-export async function intranetAsk(question: string): Promise<AskReply> {
+export async function intranetAsk(
+  question: string,
+  live?: { accountId: string; name: string; lines: string[] } | null,
+): Promise<AskReply> {
   const q = (question ?? "").trim().slice(0, 500);
   if (!q) return EMPTY_ANSWER_REPLY(q, "Ask it something.");
   if (!(await canRead())) return EMPTY_ANSWER_REPLY(q, "Sign in to continue.");
@@ -409,11 +416,60 @@ export async function intranetAsk(question: string): Promise<AskReply> {
   const docOrigin = new Map([...docs.values()].map((d) => [d.id, d.origin]));
   const coverage = coverageOf(candidates, docOrigin);
 
-  // A claim's account, if the book knows it — an offer, not a filing.
-  const named = accountsMentioned(
+  // The app's own live read rides as claims (founder-decreed 2026-08-18,
+  // after the XcelHR miss: the room said "Wait on Bill" while the ask claimed
+  // nothing). Derived seconds ago by the same readers the room uses, speaker-
+  // stamped and citable like anything else. The mirror lags extraction; the
+  // live read never lags. It leads the candidate list so the synthesis cap
+  // can't cut it.
+  if (live?.lines?.length) {
+    const liveDocId = `live:${live.accountId}`;
+    const liveCands: Candidate[] = live.lines.slice(0, 14).map((text, i) => ({
+      claim: {
+        id: `live-${i}`,
+        docId: liveDocId,
+        text,
+        speaker: "the app's live read",
+        saidAt: nowIso,
+        kind: "fact",
+        confidence: "stated",
+        entities: [],
+        topicIds: [],
+        askShape: "",
+        offsetStart: 0,
+        offsetEnd: 0,
+        supersededBy: "",
+        disputedWith: [],
+      },
+      roads: ["lexical"],
+      lexicalRank: 1,
+      corroboration: 1,
+      score: 1,
+    }));
+    candidates = [...liveCands, ...candidates];
+    docLabel.set(liveDocId, `${live.name} — derived live`);
+    docs.set(liveDocId, {
+      id: liveDocId,
+      origin: "live",
+      originRef: `account:${live.accountId}`,
+      space: "Live",
+      title: `${live.name} — the app's live read`,
+      accountId: live.accountId,
+      occurredAt: nowIso,
+      originGone: "",
+    });
+  }
+
+  // A claim's account, if the book knows it — an offer, not a filing. The
+  // live read's account always rides along.
+  const mentioned = accountsMentioned(
     [...new Set(candidates.flatMap((c) => c.claim.entities))],
     peos.map((p) => ({ id: p.id, name: p.name })),
   );
+  const named =
+    live && !mentioned.some((a) => a.id === live.accountId)
+      ? [{ id: live.accountId, name: live.name }, ...mentioned]
+      : mentioned;
 
   if (candidates.length === 0) {
     // IV.6 · the record has nothing — answer from the world instead, labelled.
@@ -440,6 +496,7 @@ export async function intranetAsk(question: string): Promise<AskReply> {
       degraded: "",
       accounts: named,
       world,
+      considered: 0,
     };
   }
 
@@ -472,6 +529,7 @@ export async function intranetAsk(question: string): Promise<AskReply> {
       degraded: ceiling.line,
       accounts: named,
       world: "",
+      considered: candidates.length,
     };
   }
 
@@ -507,7 +565,9 @@ export async function intranetAsk(question: string): Promise<AskReply> {
   const world =
     citations.length === 0 ? redactMoney(await runWorldAnswer(q).catch(() => "")) : "";
 
-  // Keep the ask — for the fold, for evals, and so a repeat is cheap.
+  // Keep the ask — for the fold, for evals, and so a repeat is cheap. The
+  // world answer keeps too (founder-decreed 2026-08-18): a labelled outside
+  // answer the operator read once must survive a reload in the bank.
   try {
     await getPrisma().intranetAsk.create({
       data: {
@@ -520,6 +580,7 @@ export async function intranetAsk(question: string): Promise<AskReply> {
         coverage: coverage as unknown as object,
         model,
         ms: Date.now() - started,
+        world,
       },
     });
   } catch {
@@ -539,6 +600,7 @@ export async function intranetAsk(question: string): Promise<AskReply> {
     degraded: ceiling.breached ? ceiling.line : "",
     accounts: named,
     world,
+    considered: candidates.length,
   };
 }
 

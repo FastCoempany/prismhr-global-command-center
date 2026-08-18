@@ -40,7 +40,9 @@ export default async function AsksPage() {
     id: string;
     question: string;
     answer: string;
+    world: string;
     citations: unknown;
+    candidateIds: string[];
     model: string;
     askedAt: Date;
   }[] = [];
@@ -53,7 +55,9 @@ export default async function AsksPage() {
           id: true,
           question: true,
           answer: true,
+          world: true,
           citations: true,
+          candidateIds: true,
           model: true,
           askedAt: true,
         },
@@ -70,10 +74,16 @@ export default async function AsksPage() {
     const cites = Array.isArray(r.citations) ? (r.citations as StoredCite[]) : [];
     const day = days[i];
     const showDay = i === 0 || day !== days[i - 1];
+    const considered = Array.isArray(r.candidateIds) ? r.candidateIds.length : 0;
     return {
       id: r.id,
       question: r.question,
       answer: r.answer,
+      world: r.world,
+      nothing:
+        considered > 0
+          ? `Read ${considered} lines; couldn't build an answer from them.`
+          : "The record held nothing when this was asked.",
       model: r.model,
       at: r.askedAt.toISOString(),
       day,
@@ -133,10 +143,16 @@ export default async function AsksPage() {
                 <div className={styles.q}>{e.question}</div>
                 {e.answer ? (
                   <div className={styles.a}>{e.answer}</div>
-                ) : (
-                  <div className={styles.nothing}>
-                    The record held nothing on this when it was asked.
+                ) : e.world ? (
+                  <div className={styles.a}>
+                    {e.world}
+                    <span className={styles.worldTag}>
+                      {" "}
+                      — general knowledge, not the record
+                    </span>
                   </div>
+                ) : (
+                  <div className={styles.nothing}>{e.nothing}</div>
                 )}
                 {e.links.length > 0 && (
                   <div className={styles.links}>

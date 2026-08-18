@@ -121,3 +121,8 @@
   color: rgba(10, 28, 64, 0.42);
   padding: 40px 0;
 }
+
+.worldTag {
+  color: rgba(10, 28, 64, 0.42);
+  font-size: 12px;
+}

@@ -13,7 +13,9 @@ import { createAccountNoteRow } from "@/lib/notes/write";
 import { redactMoney } from "@/lib/intel/lexicon";
 import { SCRATCH_NS } from "@/lib/scratch";
 import { intranetAsk } from "@/app/intranet/actions";
+import { extractPending } from "@/app/intranet/runners";
 import { askLinks, type AskLink } from "@/lib/ask/links";
+import { liveReadFor } from "@/lib/ask/live";
 import { getPeo } from "@/lib/book";
 
 const ASKPAD_READ_KEY = "askpad:read";
@@ -89,6 +91,9 @@ export type PadAskEntry = {
   gaps: string[];
   links: AskLink[];
   at: string;
+  // The honest line behind an empty answer: "read N lines, couldn't answer"
+  // is not "nothing on file", and a reading backlog names itself.
+  note: string;
 };
 
 type StoredCite = {
@@ -120,9 +125,37 @@ function linksFrom(
   );
 }
 
-// Ask the app. Runs the intranet's whole brain — plan, three retrieval roads,
-// synthesis — and returns the answer with doors that land pre-loaded. The
-// ledger row is written by the brain itself; the pad adds nothing to store.
+async function unreadDocs(): Promise<number> {
+  try {
+    return await getPrisma().intranetDoc.count({
+      where: { extractedAt: null, originGone: null },
+    });
+  } catch {
+    return 0;
+  }
+}
+
+// The honest empty-state line. An answer that read material and abstained is
+// a different fact from a record that held nothing, and a reading backlog
+// names itself instead of hiding behind either.
+function emptyNote(considered: number, backlog: number): string {
+  const read =
+    considered > 0
+      ? `Read ${considered} lines; couldn't build an answer from them.`
+      : "The record held nothing on this.";
+  const behind =
+    backlog > 0
+      ? ` The brain is ${backlog} docs behind on reading — ask again in a minute.`
+      : "";
+  return `${read}${behind}`;
+}
+
+// Ask the app. Self-healing first (founder-decreed 2026-08-18): an ask that
+// finds an unread backlog chews a bounded bite of it before answering, so
+// every ask leaves the brain smarter. Then the live read derives the named
+// account's own state — the same waiting-on/next-move layer the room shows —
+// and rides into synthesis beside the mirrored claims. The ledger row is
+// written by the brain itself; the pad adds nothing to store.
 export async function padAsk(question: string): Promise<{
   ok: boolean;
   entry?: PadAskEntry;
@@ -132,8 +165,14 @@ export async function padAsk(question: string): Promise<{
   if (access !== "write") return { ok: false, reason: "Read-only session." };
   const q = redactMoney((question ?? "").trim()).slice(0, 300);
   if (!q) return { ok: false, reason: "Ask something first." };
-  const r = await intranetAsk(q);
+
+  if ((await unreadDocs()) > 0)
+    await extractPending(10, { deadlineMs: 30_000 }).catch(() => null);
+
+  const live = await liveReadFor(q).catch(() => null);
+  const r = await intranetAsk(q, live);
   if (!r.ok) return { ok: false, reason: r.reason ?? "The answer didn't come back." };
+  const backlog = await unreadDocs();
   return {
     ok: true,
     entry: {
@@ -145,6 +184,7 @@ export async function padAsk(question: string): Promise<{
       gaps: r.answer.gaps ?? [],
       links: linksFrom(r.question, r.citations, r.accounts),
       at: new Date().toISOString(),
+      note: !r.answer.answer && !r.world ? emptyNote(r.considered, backlog) : "",
     },
   };
 }
@@ -169,7 +209,9 @@ export async function padAskFeed(): Promise<{
           id: true,
           question: true,
           answer: true,
+          world: true,
           citations: true,
+          candidateIds: true,
           askedAt: true,
         },
       }),
@@ -178,15 +220,22 @@ export async function padAskFeed(): Promise<{
     const readAt = stamp?.doneAt ? stamp.doneAt.getTime() : 0;
     const entries = rows.map((r) => {
       const cites = Array.isArray(r.citations) ? (r.citations as StoredCite[]) : [];
+      const considered = Array.isArray(r.candidateIds) ? r.candidateIds.length : 0;
       return {
         id: r.id,
         question: r.question,
         answer: r.answer,
-        world: "",
+        world: r.world,
         confidence: "",
         gaps: [],
         links: linksFrom(r.question, cites, []),
         at: r.askedAt.toISOString(),
+        note:
+          !r.answer && !r.world
+            ? considered > 0
+              ? `Read ${considered} lines; couldn't build an answer from them.`
+              : "The record held nothing when this was asked."
+            : "",
       };
     });
     return {
