@@ -82,9 +82,15 @@ export type RoomRow = {
     doneKey: string;
     closedCount: number;
   } | null;
-  sheetOpen: { id: string; body: string; wall?: string; fallback?: string }[];
-  sheetDelayed: { id: string; body: string; when: string }[];
-  sheetDoneToday: { id: string; body: string; at: string }[];
+  sheetOpen: {
+    id: string;
+    body: string;
+    edit?: string;
+    wall?: string;
+    fallback?: string;
+  }[];
+  sheetDelayed: { id: string; body: string; edit?: string; when: string }[];
+  sheetDoneToday: { id: string; body: string; edit?: string; at: string }[];
   record: { id: string; t: string; text: string; struck: boolean }[];
   recordTotal: number;
   backgroundTotal: number;
@@ -1247,7 +1253,13 @@ function Row({ row }: { row: RoomRow }) {
             ]
               .filter((t) => !gone.has(t.id))
               .map(
-                (t: { id: string; body: string; wall?: string; fallback?: string }) => {
+                (t: {
+                  id: string;
+                  body: string;
+                  edit?: string;
+                  wall?: string;
+                  fallback?: string;
+                }) => {
                   const did = doneIds.has(t.id);
                   if (todoEditId === t.id)
                     return (
@@ -1346,7 +1358,11 @@ function Row({ row }: { row: RoomRow }) {
                                 disabled={pending}
                                 onClick={() => {
                                   setTodoEditId(t.id);
-                                  setTodoEditText(editedTodos.get(t.id) ?? t.body);
+                                  // The FULL stored line, never the display cap —
+                                  // saving an untouched row must not truncate it.
+                                  setTodoEditText(
+                                    editedTodos.get(t.id) ?? t.edit ?? t.body,
+                                  );
                                 }}
                                 title="edit this line"
                               >

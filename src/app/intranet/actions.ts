@@ -244,6 +244,9 @@ export type AskReply = {
     docId: string;
     docTitle: string;
     origin: string;
+    /** The mirrored row's own key (e.g. "question:gp-funding") — what a deep
+     *  link needs to land on the exact thing, not just its page. */
+    originRef: string;
     accountId: string;
     originGone: string;
     road: string;
@@ -322,6 +325,7 @@ function renderCitations(
         docId: c.claim.docId,
         docTitle: d?.title ?? "",
         origin: (d?.origin ?? "") as string,
+        originRef: d?.originRef ?? "",
         accountId: d?.accountId ?? "",
         originGone: d?.originGone ?? "",
         road: roadOf.get(n) ?? "",
