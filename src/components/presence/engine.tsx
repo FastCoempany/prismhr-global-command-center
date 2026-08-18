@@ -10,7 +10,7 @@
 
 import { useEffect, useSyncExternalStore } from "react";
 import { presenceLog, presenceToday } from "@/app/presence/actions";
-import { fmtDesk, presenceOf, type PresenceState } from "@/lib/presence";
+import { deskParts, fmtDesk, presenceOf, type PresenceState } from "@/lib/presence";
 import styles from "./presence.module.css";
 
 type Snap = {
@@ -122,11 +122,20 @@ export function PresenceTracker() {
   return null;
 }
 
-// The capsule: today's active time leads; passive rides the tooltip. Inactive
-// dims the meter — it has stopped, and says so.
+// The instrument: a status lamp (green breathing = active, amber = passive,
+// hollow = stopped), the kicker, and live h/m/s digits that tick with the
+// desk. Today's active time leads; passive rides the tooltip. Inactive dims
+// the whole meter — it has stopped, and says so.
+const LAMP: Record<PresenceState, string> = {
+  active: styles.lampActive,
+  passive: styles.lampPassive,
+  inactive: styles.lampStopped,
+};
+
 export function DeskMeter() {
   const s = usePresence();
   const stopped = s.state === "inactive";
+  const t = deskParts(s.activeSec);
   return (
     <span
       className={stopped ? `${styles.meter} ${styles.meterStopped}` : styles.meter}
@@ -135,9 +144,17 @@ export function DeskMeter() {
         `Two quiet minutes stay active; fifteen stop the meter. Resets at Chicago midnight.`
       }
     >
-      <span className={styles.meterKick}>AT THE DESK</span>
-      <span className={styles.meterVal} suppressHydrationWarning>
-        {fmtDesk(s.activeSec)}
+      <span className={`${styles.lamp} ${LAMP[s.state]}`} />
+      <span className={styles.meterCol}>
+        <span className={styles.meterKick}>AT THE DESK</span>
+        <span className={styles.meterDigits} suppressHydrationWarning>
+          <span className={styles.dig}>{t.h}</span>
+          <span className={styles.unit}>h</span>
+          <span className={styles.dig}>{String(t.m).padStart(2, "0")}</span>
+          <span className={styles.unit}>m</span>
+          <span className={styles.dig}>{String(t.s).padStart(2, "0")}</span>
+          <span className={styles.unit}>s</span>
+        </span>
       </span>
     </span>
   );
