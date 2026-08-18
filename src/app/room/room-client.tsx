@@ -5,7 +5,7 @@
 // check-ins engine in the right-margin drawer; the eye drawer holding what
 // used to be "then, if there's time". Every composer is bound to its row.
 
-import { useMemo, useRef, useState, useTransition } from "react";
+import { Fragment, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useDismiss } from "@/components/use-dismiss";
 import { ChiClock } from "../today-client";
@@ -593,7 +593,7 @@ function Row({ row }: { row: RoomRow }) {
   const topToday = liveOpen[0]?.body ?? liveOwed[0]?.text ?? "";
 
   return (
-    <div className={styles.row}>
+    <div className={row.outcome ? `${styles.row} ${styles.rowClosed}` : styles.row}>
       <div className={styles.deal}>
         <div className={styles.nmline}>
           <span className={styles.nm}>
@@ -601,6 +601,15 @@ function Row({ row }: { row: RoomRow }) {
             <Link href={`/accounts?focus=${row.accountId}`} className={styles.nmLink}>
               {row.name}
             </Link>
+            {row.outcome && (
+              <span
+                className={
+                  row.outcome.status === "won" ? styles.stampWon : styles.stampLost
+                }
+              >
+                {row.outcome.status === "won" ? "CLOSED WON" : "CLOSED LOST"}
+              </span>
+            )}
           </span>
           <span className={styles.chips}>
             <span className={styles.chip}>{row.shape}</span>
@@ -2211,8 +2220,18 @@ export function RoomClient({
           and add the deals you&apos;re working.
         </p>
       )}
-      {rows.map((r) => (
-        <Row key={r.cardId} row={r} />
+      {rows.map((r, i) => (
+        <Fragment key={r.cardId}>
+          {!!r.outcome && !rows[i - 1]?.outcome && (
+            <div className={styles.closedRule}>
+              <span>
+                CLOSED · {rows.filter((x) => !!x.outcome).length} · THE RECORD KEEPS
+                EVERYTHING
+              </span>
+            </div>
+          )}
+          <Row row={r} />
+        </Fragment>
       ))}
       {boardNames.length > 0 && null}
 

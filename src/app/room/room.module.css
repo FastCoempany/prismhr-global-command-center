@@ -2063,3 +2063,54 @@ button.sdRadio:hover {
   letter-spacing: 0.1em;
   color: var(--faint);
 }
+
+/* ── the closed ledger ─────────────────────────────────────────────────
+   Closed deals stay on the board (the record keeps everything) but they
+   read as ledger, not work: the whole row recedes to quiet ink and wakes
+   under the hand; the stamp rides the name; one mono rule splits the
+   working book from the closed ledger. */
+.rowClosed {
+  opacity: 0.52;
+  transition: opacity 0.25s ease;
+}
+.rowClosed:hover,
+.rowClosed:focus-within {
+  opacity: 1;
+}
+.stampWon,
+.stampLost {
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  border-radius: 4px;
+  padding: 2px 7px;
+  margin-left: 10px;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+.stampWon {
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.45);
+}
+.stampLost {
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.45);
+}
+.closedRule {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 34px 0 10px;
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--faint);
+}
+.closedRule::before,
+.closedRule::after {
+  content: "";
+  flex: 1;
+  border-top: 1px solid rgba(10, 28, 64, 0.14);
+}
