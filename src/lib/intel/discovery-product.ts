@@ -718,6 +718,27 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
       "Would you mind asking them whether anyone has checked if paying contractors in {countries} creates a withholding or reporting obligation on their side?",
   },
   {
+    id: "gp-bonus-equity",
+    category: "money",
+    phase: "needs_analysis",
+    audience: "ops",
+    product: "payroll",
+    soph: "any",
+    question:
+      "How do bonuses get paid in {countries} — with the regular run or off cycle, and is any of it share-based?",
+    why: "A bonus that rides the regular run is a pay element; a bonus paid off cycle is an extra payroll, with its own cut-off, funding event and remittances, and it has to be scoped as one. Share awards are the deeper trap: in many countries a vesting or exercise event is taxable through payroll, with employer withholding and reporting attached, and the client's equity plan usually lives with a US administrator that has never spoken to an in-country payroll. If equity exists and nobody owns that hand-off, the first vesting event becomes a scramble instead of a run.",
+    listenFor: [
+      "annual bonus in December",
+      "sales comp pays quarterly",
+      "some of them have options",
+      "we run it whenever finance approves",
+    ],
+    followUp:
+      "Who tells whoever runs payroll that a vesting or exercise event happened, and how quickly?",
+    relayLine:
+      "Would you mind asking them whether bonuses in {countries} pay with the regular run or off cycle, and whether any of their people hold share awards?",
+  },
+  {
     id: "gp-data-in",
     category: "platform",
     phase: "needs_analysis",
@@ -737,6 +758,27 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
       "Which part of that hand-off breaks most often — new hires, leavers, or changes made after the cut-off?",
     relayLine:
       "Would you mind asking them how pay data gets to each country's payroll today, and whether it's re-keyed by hand anywhere along the way?",
+  },
+  {
+    id: "gp-distribution",
+    category: "platform",
+    phase: "first_meeting",
+    audience: "ops",
+    product: "payroll",
+    soph: "any",
+    question:
+      "On payday in {countries}, how do net pay and payslips actually reach your people?",
+    why: "Distribution is where the arrangement shows its real shape. Net pay leaving a US account crosses a currency and puts the timing risk on the worker; a local bank account means an entity with signatories and filings sitting behind it; a provider disbursing means an agreement someone should be able to produce. Payslips are not a courtesy either — most countries mandate their content and some their language, and a worker who cannot get one struggles to rent a flat or file a return. Whoever touches payday last is also the person the workers already trust, which matters to how any transition gets announced.",
+    listenFor: [
+      "we wire from the US account",
+      "there's a local account the accountant uses",
+      "payslips go out by email, mostly",
+      "people ask us where their payslip is",
+    ],
+    followUp:
+      "Is there a local bank account in each country, or does everything leave the US?",
+    relayLine:
+      "Would you mind asking them how net pay and payslips reach their people in {countries} on payday today?",
   },
   {
     id: "gp-effort-cost",
@@ -820,6 +862,26 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
       "Would you mind asking them who tracks each country's statutory filing deadlines today?",
   },
   {
+    id: "gp-first-cycle",
+    category: "timing",
+    phase: "first_meeting",
+    audience: "ops",
+    product: "payroll",
+    soph: "any",
+    question: "What date does the first payroll have to land in {countries}?",
+    why: "Everything runs backward from that date: employer registrations where they are missing, parallel-run scope, the incumbent's notice, data collection, and the country's own cut-off — which sits days before pay date, not on it. A new hire with a promised start date makes the deadline hard rather than preferred, and a hard date discovered late is how an implementation opens with an apology. The date also arbitrates between a clean cutover at the start of a tax year and a mid-year takeover that has to carry the incumbent's year-to-date figures.",
+    listenFor: [
+      "first of next month",
+      "we have new hires starting on the 1st",
+      "whenever it's ready",
+      "the current contract ends in the spring",
+    ],
+    followUp:
+      "Is anything already promised against that date — an offer letter, a client commitment, a contract end?",
+    relayLine:
+      "Would you mind asking them what date the first payroll in {countries} has to land, and whether anything is already promised against it?",
+  },
+  {
     id: "gp-funding",
     category: "money",
     phase: "needs_analysis",
@@ -861,6 +923,25 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
       "Would you mind asking them how each country's payroll gets into their accounting system?",
   },
   {
+    id: "gp-headcount",
+    category: "footprint",
+    phase: "investigate",
+    audience: "partner",
+    product: "payroll",
+    soph: "any",
+    question: "Do we know how many employees they'd be running in each of {countries}?",
+    why: "The count per country sets the shape of the work before any meeting happens. One or two people in a country is a conversation about whether carrying an entity is worth it at all; dozens means an established process, an incumbent producing it today, and probably a collective dimension. The split also decides which proof to bring — a single-country cluster wants depth in that country's mechanics, a long thin tail wants the consolidation story. A total with no per-country split is the tell that nobody has actually scoped it yet.",
+    listenFor: [
+      "a handful in each",
+      "most of them are in one country",
+      "it's growing every quarter",
+      "I only know the total",
+    ],
+    followUp: "Which country holds the most people, and which one causes the most noise?",
+    relayLine:
+      "Would you mind asking them how many employees they have in each of {countries}?",
+  },
+  {
     id: "gp-leave",
     category: "platform",
     phase: "needs_analysis",
@@ -879,6 +960,27 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     followUp: "When someone leaves, who calculates what leave has to be paid out?",
     relayLine:
       "Would you mind asking them whether leave balances for their international employees are tracked in their HR system or by whoever runs payroll in-country?",
+  },
+  {
+    id: "gp-nationality",
+    category: "classification",
+    phase: "needs_analysis",
+    audience: "ops",
+    product: "payroll",
+    soph: "any",
+    question:
+      "Are all the employees in {countries} local nationals, or are any of them foreign nationals?",
+    why: "A local national with an ordinary tax residence is the payroll the country's rules were written for. A foreign national brings questions that sit before payroll: what permit they hold, whether it is tied to a specific employer, and whether their right to work survives a change in who employs or pays them. Several countries also run special expatriate tax regimes with their own registrations and deadlines, and an assignment allowance or housing benefit changes the gross-to-net. Every one of those facts is per person, and clients usually know the mix without knowing why it matters.",
+    listenFor: [
+      "all locals",
+      "two are on permits",
+      "one is an expat we relocated",
+      "we've never checked",
+    ],
+    followUp:
+      "For each foreign national — what permit do they hold, and is it tied to an employer?",
+    relayLine:
+      "Would you mind asking them whether everyone in {countries} is a local national, or whether any are foreign nationals on permits?",
   },
   {
     id: "gp-net-check",
@@ -900,6 +1002,47 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
       "What was the last error you found, and how long had it been running before anyone noticed?",
     relayLine:
       "Would you mind asking them how they check that a country's gross-to-net is correct before the payroll goes out?",
+  },
+  {
+    id: "gp-notice-period",
+    category: "incumbent",
+    phase: "first_meeting",
+    audience: "ops",
+    product: "payroll",
+    soph: "displacement",
+    question:
+      "What notice period does your current provider hold you to — and have you already given it?",
+    why: "The incumbent's notice period is the real go-live calendar, whatever the plan says. Notice not yet given means the clock has not started; notice already given means a hard end date exists and the transition inherits it, cooperative or not. Providers also behave differently after notice — data exports slow down, the assigned contact changes, goodwill drains — so whatever has to be extracted from them belongs at the start of that window, not the end. Which way the client answers decides whether timing is a choice we make or a wall we work back from.",
+    listenFor: [
+      "ninety days, I think",
+      "we already sent the letter",
+      "it auto-renewed on us",
+      "we haven't looked at the contract",
+    ],
+    followUp: "Can you pull the exact notice clause before we set any dates?",
+    relayLine:
+      "Would you mind asking them what notice their current payroll provider requires, and whether they've already given it?",
+  },
+  {
+    id: "gp-nre",
+    category: "risk",
+    phase: "first_meeting",
+    audience: "ops",
+    product: "payroll",
+    soph: "naive",
+    question:
+      "Are you employing in {countries} through a registered entity, or as a foreign employer under a non-resident registration?",
+    why: "Some countries let a foreign company register as a non-resident employer and run a compliant local payroll with no entity at all; others do not recognize the route, and a few push employers toward it. Which door the client is standing in decides the whole setup: what registrations exist, who withholds and remits, and whether the arrangement is real. The trap is second-hand certainty — when a lawyer set the structure up, the payroll registrations are exactly the part a corporate filing does not include, so the claim has to be checked against registration numbers rather than taken from memory.",
+    listenFor: [
+      "our attorney set it up",
+      "we're registered as a foreign employer",
+      "what's a non-resident employer",
+      "I'd have to find the paperwork",
+    ],
+    followUp:
+      "Can you put your hands on the actual registration numbers per country, so we verify rather than assume?",
+    relayLine:
+      "Would you mind asking them whether they employ in {countries} through their own entity or under a foreign-employer registration?",
   },
   {
     id: "gp-parallel",
@@ -942,6 +1085,25 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
       "The last time you questioned a number, how long did an answer take and who gave it to you?",
     relayLine:
       "Would you mind asking them whether their current provider runs payroll in-country themselves or through local firms?",
+  },
+  {
+    id: "gp-pay-frequency",
+    category: "platform",
+    phase: "needs_analysis",
+    audience: "ops",
+    product: "payroll",
+    soph: "any",
+    question: "How many pay cycles a month do you run in each of {countries}?",
+    why: "Pay frequency abroad is often not the employer's choice: a number of countries set a minimum frequency or fixed payment windows by statute or collective agreement, so a US semi-monthly habit may be impossible to export and a monthly assumption may fall short of what a country requires. Every additional cycle is a full run — cut-off, approval, funding, remittance — so the count per country is a workload fact as well as a compliance one. Off-cycle habits hide here too: a client who just runs another payroll whenever something was missed is describing a process without a gate.",
+    listenFor: [
+      "monthly everywhere, we think",
+      "the US is semi-monthly so they are too",
+      "one country insists on a different date",
+      "we run extras when something's missed",
+    ],
+    followUp: "Which of those frequencies did the country choose, and which did you?",
+    relayLine:
+      "Would you mind asking them how many pay cycles a month they run in each of {countries}?",
   },
   {
     id: "gp-pension",
@@ -1034,7 +1196,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     soph: "any",
     question:
       "Country by country, do you know who actually produces their payroll today — someone internal, a local accountant, an aggregator, or a global provider?",
-    why: 'gp-who-runs: "Knowing this before the first meeting keeps me from selling a consolidation story to someone who already bought one."  gp-trigger: "The trigger dates the deal and tells me which proof to lead with."  gp-us-lens: "Their answer tells me whether this conversation needs teaching or comparing."  gp-data-in: "The answer also tells me exactly what integration work an implementation requires..."  gp-effort-cost: "Framing the comparison in hours and corrections lets me make the case without discussing amounts at all...',
+    why: "Knowing this before the first meeting keeps me from selling a consolidation story to someone who already bought one. Who actually produces each country's payroll — an internal person, a local accountant, an aggregator, or a global provider — decides whether the conversation is a displacement, a cleanup, or a greenfield build, and each of those is a different meeting with different proof. It also names the incumbent whose notice terms and cooperation will set the transition calendar.",
     listenFor: [
       "their accountant handles it",
       "one provider for everything",
@@ -1044,6 +1206,26 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     followUp: "Which of those countries would they call the hardest to close each month?",
     relayLine:
       "Would you mind asking them who runs each country's payroll today — an internal person, a local accountant, or an outside provider?",
+  },
+  {
+    id: "gp-worker-mix",
+    category: "classification",
+    phase: "needs_analysis",
+    audience: "ops",
+    product: "payroll",
+    soph: "any",
+    question:
+      "Are these all salaried office roles, or are there hourly and shift workers with timesheets behind their pay?",
+    why: "A salaried population is a fixed gross with occasional changes; an hourly or shift population makes the payroll variable every cycle, and the variability has rules attached — overtime premiums, night and shift allowances, and rest-time limits are commonly set by statute or collective agreement rather than company policy, and blue-collar classifications are the ones sector agreements most often reach. Timesheets also make pay data operational: hours need a capture method, an approver, and a cut-off, and a late timesheet becomes a wrong or late payment. The mix decides how much of the payroll is calculation and how much is collection.",
+    listenFor: [
+      "all salaried",
+      "the warehouse crew clocks in",
+      "shifts rotate weekly",
+      "managers approve hours in a spreadsheet",
+    ],
+    followUp: "How do approved hours reach whoever runs the payroll today, and by when?",
+    relayLine:
+      "Would you mind asking them whether their people in {countries} are all salaried, or whether some are hourly or shift workers on timesheets?",
   },
   {
     id: "gp-year-end",
@@ -1095,7 +1277,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     soph: "any",
     question:
       "Who on your side will actually do the work of getting this live — gathering worker data, approving local terms, answering in-country questions?",
-    why: 'listenFor: ["that would be me", "HR is one person", "we have an ops lead for it", "nobody\'s been assigned"]',
+    why: "Implementations stall on the client side, not the provider side. Gathering worker data, approving local terms, and answering in-country questions is real work, and it usually lands on one person who already has a full job. Naming that person and their genuine capacity before the plan is written is the difference between a timeline and a wish — and if nobody has been assigned, that gap is the first thing the plan has to fix.",
     listenFor: [
       "that would be me on top of everything else",
       "HR is one person",
