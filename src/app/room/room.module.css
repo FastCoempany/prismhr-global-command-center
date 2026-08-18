@@ -59,17 +59,8 @@
   letter-spacing: 0.22em;
   color: var(--soft);
 }
-/* The bar's right cell: the desk meter seats at its left edge — right of the
-   add door — and the clock keeps the far corner. */
-.barRight {
-  justify-self: stretch;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding-left: 18px;
-}
 .clock {
+  justify-self: end;
   display: inline-flex;
   align-items: center;
   gap: 10px;
