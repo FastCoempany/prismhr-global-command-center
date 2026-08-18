@@ -49,7 +49,7 @@ import {
   roomTodoSet,
   roomUnlog,
 } from "./actions";
-import { sniffPaste } from "@/lib/paste-files";
+import { DROP_ACCEPT, sniffPaste } from "@/lib/paste-files";
 import { readFileToText } from "./read-file";
 import type { StageView } from "@/lib/room/stages-view";
 import styles from "./room.module.css";
@@ -218,8 +218,11 @@ function Row({ row }: { row: RoomRow }) {
   const [deletedNotes, setDeletedNotes] = useState<Set<string>>(new Set());
   const [logText, setLogText] = useState("");
   const [mode, setMode] = useState<"note" | "action">("note");
-  const [urg, setUrg] = useState<"" | "high" | "med" | "low">("");
+  // Urgency chips retired (founder-decreed 2026-08-18) — the composer files
+  // at the default weight; the sheet's own ladder does the ranking.
+  const urg = "" as const;
   const [pasteOpen, setPasteOpen] = useState(false);
+  const [composerOpen, setComposerOpen] = useState(false);
   const [pasteText, setPasteText] = useState("");
   const [note, setNote] = useState<string | null>(null);
   // The Drop's file path: hot while a file hovers, named while one is read.
@@ -272,7 +275,6 @@ function Row({ row }: { row: RoomRow }) {
           ...f,
         ]);
         setLogText("");
-        setUrg("");
         setNote(null);
         setSpring("today");
       } else if (!r.ok) setNote(r.reason ?? "That didn't save.");
@@ -613,6 +615,7 @@ function Row({ row }: { row: RoomRow }) {
           </span>
           <span className={styles.chips}>
             <span className={styles.chip}>{row.shape}</span>
+            {row.meta && <span className={styles.metaIn}>{row.meta}</span>}
             <span className={`${styles.multi} ${styles[`m_${row.multiTone}`]}`}>
               MULTI
               <span className={styles.hovercard}>
@@ -647,7 +650,6 @@ function Row({ row }: { row: RoomRow }) {
             )}
           </span>
         </div>
-        {row.meta && <span className={styles.meta}>{row.meta}</span>}
 
         {/* The research control. Labelled, dated, and impossible to miss — a
             refresh button that doesn't say when it last ran gets re-run blind. */}
@@ -878,6 +880,18 @@ function Row({ row }: { row: RoomRow }) {
               <span className={styles.lbl}>NEXT MOVE</span>
               <p className={`${styles.move} ${row.thin ? styles.thin : ""}`}>
                 {row.move}
+                {/* The board gate, said ONCE — a quiet chip, never a second
+                    sentence and never a second block (decreed 2026-08-18). */}
+                {row.outstanding && (
+                  <span
+                    className={closed ? `${styles.gate} ${styles.gateDone}` : styles.gate}
+                  >
+                    GATE · {row.outstanding.item.slice(0, 60)}
+                    {row.outstanding.closedCount > 0
+                      ? ` · ${row.outstanding.closedCount + (closed ? 1 : 0)} BEHIND IT`
+                      : ""}
+                  </span>
+                )}
               </p>
               {row.canWrite && row.outstanding && !closed && (
                 <button
@@ -892,20 +906,6 @@ function Row({ row }: { row: RoomRow }) {
             </>
           )}
         </div>
-        {row.outstanding && !row.outcome && (
-          <div className={styles.outst}>
-            <span className={styles.lbl}>STILL OPEN</span>
-            <span className={closed ? styles.donenow : undefined}>
-              {row.outstanding.item}
-            </span>
-            {row.outstanding.closedCount > 0 && (
-              <span className={styles.closedct}>
-                {" "}
-                · {row.outstanding.closedCount + (closed ? 1 : 0)} closed behind it
-              </span>
-            )}
-          </div>
-        )}
       </div>
 
       <div className={styles.rec}>
@@ -1448,13 +1448,17 @@ function Row({ row }: { row: RoomRow }) {
             <span className={styles.lk}>
               THE DROP · FILES TO {row.name.toUpperCase()}, EVERYWHERE
             </span>
+            {/* Four doors, each its own thing (founder-decreed 2026-08-18):
+                ⚡ the bolt's smart paste; ▢ a quick note; ✸ an action; ⇪ a
+                file. The composer rests shut and opens on command. */}
             <div className={styles.modes}>
               <button
                 type="button"
-                className={styles.zap}
-                title={`Paste. Files to ${row.name}.`}
+                className={`${styles.door} ${styles.doorZap} ${pasteOpen ? styles.doorOn : ""}`}
+                title={`The bolt — paste anything. It reads and files to ${row.name}.`}
                 onClick={() => {
                   setPasteOpen((v) => !v);
+                  setComposerOpen(false);
                   setMismatch(null);
                 }}
               >
@@ -1462,56 +1466,58 @@ function Row({ row }: { row: RoomRow }) {
               </button>
               <button
                 type="button"
-                className={`${styles.mode} ${mode === "note" ? styles.modeOn : ""}`}
-                onClick={() => setMode("note")}
+                className={`${styles.door} ${styles.doorNote} ${composerOpen && mode === "note" ? styles.doorOn : ""}`}
+                title={`Note — a line for the record on ${row.name}.`}
+                onClick={() => {
+                  const on = composerOpen && mode === "note";
+                  setMode("note");
+                  setComposerOpen(!on);
+                  setPasteOpen(false);
+                }}
               >
-                ▢ Note
+                ▢
               </button>
               <button
                 type="button"
-                className={`${styles.mode} ${mode === "action" ? styles.modeOn : ""}`}
-                onClick={() => setMode("action")}
+                className={`${styles.door} ${styles.doorAct} ${composerOpen && mode === "action" ? styles.doorOn : ""}`}
+                title={`Action — open work on the sheet for ${row.name}.`}
+                onClick={() => {
+                  const on = composerOpen && mode === "action";
+                  setMode("action");
+                  setComposerOpen(!on);
+                  setPasteOpen(false);
+                }}
               >
-                ✸ Action
+                ✸
               </button>
-              {(["high", "med", "low"] as const).map((u) => (
-                <button
-                  key={u}
-                  type="button"
-                  className={`${styles.urgc} ${urg === u ? styles.urgOn : ""}`}
-                  onClick={() => setUrg((v) => (v === u ? "" : u))}
-                >
-                  {u.toUpperCase()}
-                </button>
-              ))}
               <button
                 type="button"
-                className={styles.mode}
+                className={`${styles.door} ${styles.doorFile}`}
                 disabled={pending || !!reading}
                 onClick={() => fileInputRef.current?.click()}
-                title="Read a file: .eml, .msg, .pdf, or plain text"
+                title="File — email, PDF, transcript, spreadsheet, document, or image."
               >
-                ⇪ File
+                ⇪
               </button>
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".eml,.msg,.pdf,.vtt,.txt,.md,.csv,.log,.json"
+                accept={DROP_ACCEPT}
                 style={{ display: "none" }}
                 onChange={(e) => {
                   handleFiles(e.target.files);
                   e.target.value = "";
                 }}
               />
-              <span className={styles.hints}>
-                Enter files to {firstWord(row.name)} · Shift+Enter newline · drop a file
-                anywhere on the Drop
-              </span>
             </div>
             {/* One box at a time: the composer steps aside while the ⚡ pane
                 is open, and comes back on Cancel. */}
-            {!pasteOpen && (
+            {!pasteOpen && composerOpen && (
               <>
+                <span className={styles.hints}>
+                  Enter files to {firstWord(row.name)} · Shift+Enter newline · drop a file
+                  anywhere on the Drop
+                </span>
                 <textarea
                   className={styles.logta}
                   value={logText}

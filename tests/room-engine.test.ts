@@ -248,9 +248,6 @@ describe("the recap rule — a fresh meeting puts the follow-up on the operator"
       lastTouch: null,
       lastMeeting: { at: "2026-08-18T17:00:00Z", who: "Tom" },
     });
-    assert.match(
-      r.move,
-      /^Send Tom the recap\. You met today\. Then close “book the demo”\./,
-    );
+    assert.match(r.move, /^Send Tom the recap\. You met today\./);
   });
 });

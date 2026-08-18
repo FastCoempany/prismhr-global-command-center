@@ -296,5 +296,12 @@ test("readerFor dispatches by extension", () => {
   assert.equal(readerFor("call.vtt"), "vtt");
   assert.equal(readerFor("notes.txt"), "text");
   assert.equal(readerFor("export.csv"), "text");
-  assert.equal(readerFor("photo.heic"), "unsupported");
+  // The widened gullet (decreed 2026-08-18): spreadsheets, documents, images.
+  assert.equal(readerFor("book.xlsx"), "sheet");
+  assert.equal(readerFor("Legacy.XLS"), "sheet");
+  assert.equal(readerFor("proposal.docx"), "docx");
+  assert.equal(readerFor("photo.heic"), "image");
+  assert.equal(readerFor("shot.PNG"), "image");
+  assert.equal(readerFor("pic.jpeg"), "image");
+  assert.equal(readerFor("mystery.zip"), "unsupported");
 });

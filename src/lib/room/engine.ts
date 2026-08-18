@@ -253,36 +253,37 @@ export function readDeal(i: RoomInputs): RoomRead {
         : `on a ${i.timing.phrase.toLowerCase()} ask`
     : "";
   if (inboundNewest && i.step) {
-    const item = i.step.item.trim() || "the open item";
+    // The board gate rides the row as its own chip — the move never says a
+    // thing twice, and "close" the jargon is retired (decreed 2026-08-18).
     const who = inboundWho || "they";
     const ago =
       inboundDays != null && inboundDays > 0 ? `${inboundDays} days ago` : "today";
     move = wallOverdue
-      ? `Answer ${who}. They wrote ${ago}. The ${i.timing!.phrase} wall passed. Then close “${item.toLowerCase()}”.`
-      : `Answer ${who}. They wrote ${ago}. Then close “${item.toLowerCase()}”.`;
+      ? `Answer ${who}. They wrote ${ago}. The ${i.timing!.phrase} wall passed.`
+      : `Answer ${who}. They wrote ${ago}.`;
   } else if (inboundNewest) {
     const who = inboundWho || "they";
     move = `Answer ${who}. They wrote ${
       inboundDays != null && inboundDays > 0 ? `${inboundDays} days ago` : "today"
     }. The reply is owed.`;
-  } else if (meetingNewest && i.step) {
-    const item = i.step.item.trim() || "the open item";
-    move = `Send ${meetingWho || "them"} the recap. You met ${meetingAgo}. Then close “${item.toLowerCase()}”.`;
   } else if (meetingNewest) {
     move = `Send ${meetingWho || "them"} the recap. You met ${meetingAgo}.`;
   } else if (i.step) {
-    const item = i.step.item.trim() || "the open item";
+    // The gate item is already an imperative ("Book the demo") — say it
+    // plainly; never "close" it (decreed 2026-08-18).
+    const raw = i.step.item.trim() || "Work the open item";
+    const item = raw.charAt(0).toUpperCase() + raw.slice(1).replace(/\.+$/, "");
     if (quietLong && i.lastTouch) {
       const who = i.lastTouch.who || "them";
       move = clock
-        ? `Chase ${who} on “${item.toLowerCase()}”. Quiet ${quietDays} days. ${i.timing!.phrase} is the wall.`
-        : `Chase ${who} on “${item.toLowerCase()}”. Quiet ${quietDays} days.`;
+        ? `Chase ${who} on “${raw.toLowerCase()}”. Quiet ${quietDays} days. ${i.timing!.phrase} is the wall.`
+        : `Chase ${who} on “${raw.toLowerCase()}”. Quiet ${quietDays} days.`;
     } else if (i.timing && wallOverdue) {
-      move = `Close “${item.toLowerCase()}”. The ${i.timing.phrase} wall passed ${wallDaysPast} days ago. Decide whether the date moved or the deal did.`;
+      move = `${item}. The ${i.timing.phrase} wall passed ${wallDaysPast} days ago. Decide whether the date moved or the deal did.`;
     } else if (i.timing) {
-      move = `Close “${item.toLowerCase()}”. ${i.timing.phrase} is the clock.`;
+      move = `${item}. ${i.timing.phrase} is the clock.`;
     } else {
-      move = `Close “${item.toLowerCase()}”. The stage needs nothing else.`;
+      move = `${item}. The stage asks nothing else.`;
     }
   } else if (i.allGatesDone) {
     // The whole board is checked and nothing is stamped — the row stays loud

@@ -76,8 +76,10 @@ describe("room client — every absorbed capability is wired", () => {
       "EARLIER · ",
       "routed → ",
       "make it an action",
-      "▢ Note",
-      "✸ Action",
+      // The doors (decreed 2026-08-18): note and action are icon doors now.
+      "doorNote",
+      "doorAct",
+      "doorFile",
       "the full record",
     ]) {
       assert.ok(client.includes(marker), `register marker missing: ${marker}`);
@@ -86,8 +88,8 @@ describe("room client — every absorbed capability is wired", () => {
     for (const glyph of ["✉", "⚖", "⚑", "✸", "➤", "✓", "⏲", "✎"]) {
       assert.ok(client.includes(glyph), `glyph missing from the key: ${glyph}`);
     }
-    // urgency chips ride the composer
-    assert.ok(/high.*med.*low/i.test(client));
+    // The urgency chips are retired — the composer files at default weight.
+    assert.ok(!client.includes("styles.urgc"), "urgency chips should be retired");
   });
 
   test("the drawers keep their decreed names — never Cadence", () => {

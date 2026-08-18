@@ -341,17 +341,17 @@
       ABOVE the dots so they are never covered ─────────────────────────── */
 .climb {
   position: relative;
-  margin: 18px 0 0;
+  margin: 9px 0 0;
 }
-/* The bar's own 16px zone — the label below flows clear of the fill. */
+/* The hairline (decreed 2026-08-18): a 5px zone, the label clear below. */
 .meterZone {
   position: relative;
-  height: 16px;
+  height: 5px;
 }
 .track {
   position: absolute;
   inset: 0;
-  border-radius: 5px;
+  border-radius: 3px;
   overflow: hidden;
   background: repeating-linear-gradient(
     -60deg,
@@ -362,14 +362,14 @@
 .gain {
   position: absolute;
   inset: 0 auto 0 0;
-  border-radius: 5px 0 0 5px;
+  border-radius: 3px 0 0 3px;
   background: linear-gradient(90deg, var(--forest), var(--forest2));
 }
 .cap {
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 7px;
+  width: 4px;
   z-index: 2;
 }
 .capRisk {
@@ -385,10 +385,10 @@
   position: absolute;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: 7px;
-  height: 7px;
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
-  border: 1.4px solid rgba(10, 28, 64, 0.28);
+  border: 1.2px solid rgba(10, 28, 64, 0.28);
   background: rgba(255, 255, 255, 0.85);
   padding: 0;
   cursor: pointer;
@@ -402,10 +402,10 @@
   border-color: rgba(255, 255, 255, 0.8);
 }
 .nodeCur {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   background: #fff;
-  border: 2.4px solid var(--ink);
+  border: 2px solid var(--ink);
 }
 /* the stage words live BELOW the bar — never on it, never under a dot */
 /* The meter's why bubble — same glass as the MULTI hovercard. */
@@ -2113,4 +2113,82 @@ button.sdRadio:hover {
   content: "";
   flex: 1;
   border-top: 1px solid rgba(10, 28, 64, 0.14);
+}
+
+/* ── the Hairline patch (decreed 2026-08-18) ─────────────────────────── */
+/* The meta rides the title line now — same mono voice, inline. */
+.metaIn {
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--faint);
+}
+/* The board gate, said once — a quiet dashed chip after the move. */
+.gate {
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--soft);
+  border: 1px dashed var(--quiet);
+  border-radius: 5px;
+  padding: 1px 8px;
+  margin-left: 9px;
+  vertical-align: 3px;
+  white-space: nowrap;
+}
+.gateDone {
+  color: var(--quiet);
+  text-decoration: line-through;
+}
+/* Four doors, each its own thing: the bolt orange, the note forest, the
+   action ink, the file blue — glyph and accent both distinct. */
+.door {
+  border: 1px solid var(--hair);
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--soft);
+  width: 27px;
+  height: 27px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.12s ease;
+  padding: 0;
+}
+.door:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.doorZap {
+  color: var(--orange);
+  border-color: rgba(230, 112, 30, 0.35);
+}
+.doorZap:hover {
+  background: rgba(230, 112, 30, 0.1);
+}
+.doorNote:hover {
+  color: var(--forest);
+  border-color: var(--forest);
+}
+.doorAct:hover {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+.doorFile:hover {
+  color: var(--blue);
+  border-color: var(--blue);
+}
+.doorOn {
+  background: var(--ink);
+  color: #fff !important;
+  border-color: var(--ink);
+}
+.doorOn.doorZap {
+  background: var(--orange);
+  border-color: var(--orange);
 }
