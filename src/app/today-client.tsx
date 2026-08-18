@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import styles from "./command-center.module.css";
 import { USER_TZ } from "@/lib/tz";
+import { CLOCK_FREEZE_MS } from "@/lib/presence";
+import { presenceLastInput } from "@/components/presence/engine";
 import {
   archiveThread,
   deleteTouch,
@@ -14,11 +16,19 @@ import {
 
 // The digital clock — Chicago time with ticking seconds, in a precise
 // instrument capsule at the top of Today. Hydration-safe: renders em-dashes on
-// the server, real time after mount.
+// the server, real time after mount. Presence-aware (founder-decreed
+// 2026-08-18): five quiet minutes and the clock FREEZES at the last second it
+// saw you, dimmed — the frozen face says when the room last sensed the desk.
+// The first input wakes it and it snaps to true time.
 export function ChiClock() {
   const [now, setNow] = useState<Date | null>(null);
+  const [frozen, setFrozen] = useState(false);
   useEffect(() => {
-    const update = () => setNow(new Date());
+    const update = () => {
+      const idle = Date.now() - presenceLastInput() > CLOCK_FREEZE_MS;
+      setFrozen(idle);
+      if (!idle) setNow(new Date());
+    };
     const first = setTimeout(update, 0);
     const id = setInterval(update, 1000);
     return () => {
@@ -46,7 +56,12 @@ export function ChiClock() {
         .replace(/,/g, " ·")
     : "";
   return (
-    <span className={styles.chiClock} aria-label="Current time in Chicago">
+    <span
+      className={styles.chiClock}
+      aria-label="Current time in Chicago"
+      style={frozen ? { opacity: 0.42 } : undefined}
+      title={frozen ? "Stopped — five quiet minutes. Move to wake it." : undefined}
+    >
       <span className={styles.chiClockDigits} suppressHydrationWarning>
         {time}
       </span>
