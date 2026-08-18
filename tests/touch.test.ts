@@ -87,15 +87,26 @@ describe("a meeting is a thing that happened, never a send awaiting a reply", ()
     assert.ok(out);
     assert.equal(out?.createdAt, "2026-08-12T19:32:00Z");
   });
-  test("call/transcript sources are meetings whatever the body says", () => {
+  test("call sources are meetings whatever the body says", () => {
     const out = newestOutbound([
       {
         actors: "Antaeus Coe → Chassie",
         createdAt: "2026-08-18T16:00:00Z",
         body: "notes from the call",
-        source: "transcript",
+        source: "call",
       },
     ]);
     assert.equal(out, null);
+  });
+  test("a typed note mislabeled 'transcript' still counts as the send it is", () => {
+    const out = newestOutbound([
+      {
+        actors: "Antaeus Coe → Anika",
+        createdAt: "2026-08-18T16:00:00Z",
+        body: "☰ transcript — filed from the room\nconfirmed sept 10 with anika",
+        source: "transcript",
+      },
+    ]);
+    assert.ok(out);
   });
 });
