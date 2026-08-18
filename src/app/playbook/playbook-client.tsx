@@ -10,7 +10,7 @@
 // The old card had three phase chips with no questions behind them at all and
 // ANDed everything silently — two clicks and it read "0 of 25".
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { DASH_NODES } from "@/lib/dashboard/stages";
 import {
   NO_FILTERS,
@@ -144,6 +144,7 @@ export function PlaybookClient({
   prospectAsks,
   oursNotTheirs,
   bankTotal,
+  initialOpen = "",
 }: {
   questions: Q[];
   scenarios: Scenario[];
@@ -155,10 +156,27 @@ export function PlaybookClient({
   prospectAsks: ProspectProposal[];
   oursNotTheirs: string[];
   bankTotal: number;
+  initialOpen?: string;
 }) {
+  // A deep link to one card arrives with every filter down so the card is
+  // guaranteed visible, then scrolls to it and lights it briefly.
   const [filters, setFilters] = useState<Filters>(NO_FILTERS);
-  const [scenarioId, setScenarioId] = useState(savedScenario);
+  const [scenarioId, setScenarioId] = useState(initialOpen ? "" : savedScenario);
   const [tab, setTab] = useState<"card" | "learned">("card");
+  const [flashId, setFlashId] = useState(initialOpen);
+  useEffect(() => {
+    if (!initialOpen) return;
+    const t = window.setTimeout(() => {
+      document
+        .getElementById(`q-${initialOpen}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 150);
+    const off = window.setTimeout(() => setFlashId(""), 3500);
+    return () => {
+      window.clearTimeout(t);
+      window.clearTimeout(off);
+    };
+  }, [initialOpen]);
 
   const scenario = useMemo(
     () => scenarios.find((s) => s.id === scenarioId) ?? null,
@@ -360,7 +378,13 @@ export function PlaybookClient({
           ) : (
             <div className={styles.grid}>
               {shown.map((q) => (
-                <div key={q.id} className={styles.card}>
+                <div
+                  key={q.id}
+                  id={`q-${q.id}`}
+                  className={
+                    flashId === q.id ? `${styles.card} ${styles.cardLanded}` : styles.card
+                  }
+                >
                   <div className={styles.tags}>
                     <span className={styles.tag}>{q.category}</span>
                     <span className={styles.tag}>

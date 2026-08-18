@@ -25,6 +25,9 @@ export default async function PlaybookPage({
 }) {
   const sp = await searchParams;
   const accountId = typeof sp.account === "string" ? sp.account : "";
+  // ?open=<questionId> — a deep link from an answer lands on the exact card,
+  // scrolled to and lit, never a page the operator has to search again.
+  const openId = typeof sp.open === "string" ? sp.open.slice(0, 60) : "";
   const account = accountId ? (peos.find((p) => p.id === accountId) ?? null) : null;
 
   const [acctNotes, dispositions, buyerAsks] = await Promise.all([
@@ -109,6 +112,7 @@ export default async function PlaybookPage({
           questions={questions}
           scenarios={SCENARIOS}
           savedScenario={savedScenario}
+          initialOpen={openId}
           accountId={accountId}
           accounts={peos
             .map((p) => ({ id: p.id, name: p.name }))

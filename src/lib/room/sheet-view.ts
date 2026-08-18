@@ -23,10 +23,12 @@ export type SheetDisposition = { reason: string; updatedAt: string };
 export type AccountSheet = {
   // `wall` is the commitment's own date once it has passed, and `fallback` the
   // if/then that rode in with it — the app runs the contingency instead of
-  // waiting for the operator to remember there was one.
-  open: { id: string; body: string; wall?: string; fallback?: string }[];
-  delayed: { id: string; body: string; when: string }[];
-  doneToday: { id: string; body: string; at: string }[];
+  // waiting for the operator to remember there was one. `edit` is the FULL
+  // visible line: the display body is capped for the row, and an edit box fed
+  // the capped body would silently truncate the stored line on save.
+  open: { id: string; body: string; edit: string; wall?: string; fallback?: string }[];
+  delayed: { id: string; body: string; edit: string; when: string }[];
+  doneToday: { id: string; body: string; edit: string; at: string }[];
 };
 
 const ROW_DELAY = "row-delay:";
@@ -50,15 +52,31 @@ export function todoBelongsTo(
   }
 }
 
-function displayLine(body: string): string {
+const LINE_CAP = 140;
+
+// The full visible line — what the edit box gets, so saving an untouched row
+// never truncates the stored text.
+function fullLine(body: string): string {
   try {
     return redactMoney(visibleText(body ?? ""))
       .split("\n")[0]
-      .trim()
-      .slice(0, 140);
+      .trim();
   } catch {
     return "";
   }
+}
+
+// The row's display line. Over the cap, the provenance tail ("· from 8/14
+// paste") goes first — it is the least important segment — and whatever still
+// overruns trims on a word boundary with an ellipsis, never mid-word.
+function displayLine(body: string): string {
+  const line = fullLine(body);
+  if (line.length <= LINE_CAP) return line;
+  const bare = line.replace(/\s+·\s+from\s.*$/i, "").trimEnd();
+  if (bare.length <= LINE_CAP) return bare;
+  const cut = bare.slice(0, LINE_CAP - 1);
+  const sp = cut.lastIndexOf(" ");
+  return `${sp > LINE_CAP / 2 ? cut.slice(0, sp) : cut}…`;
 }
 
 function tagsOf(body: string): { kind: string; doneAt: string; date: string } {
@@ -107,6 +125,7 @@ export function buildAccountSheet(
     if (dispositions.has(`${HIDE}todo:${t.id}`)) continue;
     const body = displayLine(t.body);
     if (!body) continue;
+    const edit = fullLine(t.body);
     const { kind, doneAt, date } = tagsOf(t.body);
     const isAction = kind === "action";
     const remindT = t.remindAt ? Date.parse(t.remindAt) : NaN;
@@ -116,15 +135,18 @@ export function buildAccountSheet(
 
     if (!t.done) {
       if (remindFuture)
-        out.delayed.push({ id: t.id, body, when: chicagoDay(t.remindAt) });
+        out.delayed.push({ id: t.id, body, edit, when: chicagoDay(t.remindAt) });
       else if (isAction && delayedToday)
-        out.delayed.push({ id: t.id, body, when: "HELD" });
+        out.delayed.push({ id: t.id, body, edit, when: "HELD" });
       else if (isAction) {
         const wall = passedWall(date, now);
-        const fallback = wall ? splitFallback(body).fallback : "";
+        // The fallback reads from the FULL line — the display cap must never
+        // swallow the contingency.
+        const fallback = wall ? splitFallback(edit).fallback : "";
         out.open.push({
           id: t.id,
           body,
+          edit,
           ...(wall ? { wall } : {}),
           ...(fallback ? { fallback } : {}),
         });
@@ -141,6 +163,7 @@ export function buildAccountSheet(
       out.doneToday.push({
         id: t.id,
         body,
+        edit,
         at: stampOk ? new Date(stamp).toISOString() : t.updatedAt,
       });
   }
