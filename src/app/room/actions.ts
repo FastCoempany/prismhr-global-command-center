@@ -1509,10 +1509,13 @@ export async function roomTodoEdit(
   }
 }
 
-// The PDF transcriber — Claude reads the document to paste text the room's
+// The document transcriber — Claude reads a PDF or an image (a screenshot of
+// an email, a chat, a whiteboard, a business card) to paste text the room's
 // readers understand. An email thread comes back headed OUTLOOK THREAD, a
 // chat as TEAMS THREAD, anything else as a plain transcript. The bytes never
 // persist; only the filed entries do.
+const IMAGE_MEDIA = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
+
 async function transcribePdf(
   file: File,
 ): Promise<{ ok: boolean; text?: string; reason?: string }> {
@@ -1520,7 +1523,11 @@ async function transcribePdf(
     return { ok: false, reason: "The reader needs the API key. Paste the text instead." };
   if (file.size > 8 * 1024 * 1024)
     return { ok: false, reason: "That file is over 8 MB. Export a smaller one." };
+  const isImage = IMAGE_MEDIA.has(file.type);
+  if (!isImage && file.type !== "application/pdf" && !/\.pdf$/i.test(file.name))
+    return { ok: false, reason: "The reader takes PDFs and images here." };
   const data = Buffer.from(await file.arrayBuffer()).toString("base64");
+  const imageMedia = file.type as "image/jpeg" | "image/png" | "image/webp" | "image/gif";
   try {
     const client = new Anthropic({ timeout: 110_000, maxRetries: 1 });
     const res = await client.messages.create({
@@ -1531,13 +1538,22 @@ async function transcribePdf(
         {
           role: "user",
           content: [
-            {
-              type: "document",
-              source: { type: "base64", media_type: "application/pdf", data },
-            },
+            isImage
+              ? {
+                  type: "image" as const,
+                  source: { type: "base64" as const, media_type: imageMedia, data },
+                }
+              : {
+                  type: "document" as const,
+                  source: {
+                    type: "base64" as const,
+                    media_type: "application/pdf" as const,
+                    data,
+                  },
+                },
             {
               type: "text",
-              text: `Transcribe this document to plain text for a sales record. If it is an email thread, start the output with "OUTLOOK THREAD — ${file.name}" and give each message its own From / To / Sent / Subject header block, newest first, with the message text under it. If it is a chat transcript, start with "TEAMS THREAD — ${file.name}" and keep speakers named inline. Otherwise output the document's text as-is, reading order, no commentary. Output only the transcription.`,
+              text: `Transcribe this ${isImage ? "image" : "document"} to plain text for a sales record. If it shows an email thread, start the output with "OUTLOOK THREAD — ${file.name}" and give each message its own From / To / Sent / Subject header block, newest first, with the message text under it. If it shows a chat, start with "TEAMS THREAD — ${file.name}" and keep speakers named inline. If it is a screenshot of anything else — a slide, a whiteboard, a card, handwriting — transcribe every readable word in reading order and describe only what is needed to make the text make sense. Output only the transcription.`,
             },
           ],
         },

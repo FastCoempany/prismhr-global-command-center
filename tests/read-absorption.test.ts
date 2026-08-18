@@ -826,8 +826,10 @@ describe("the repairs hold", () => {
     // Separate transitions: research must not dress the ask button in its label.
     assert.ok(client.includes("rsrchPending"));
     assert.ok(client.includes("askPending"));
-    // A closed row stops advertising open work.
-    assert.ok(client.includes("{row.outstanding && !row.outcome && ("));
+    // The gate is said once as a chip; the old STILL OPEN block is retired,
+    // and a closed row never reaches the gate (it renders the outcome branch).
+    assert.ok(client.includes("GATE · "));
+    assert.ok(!client.includes("STILL OPEN"), "the STILL OPEN block is retired");
     // The misfile bar dies with its paste.
     assert.ok(client.includes("setMismatch(null)"));
     // Bringing a held row back returns it to the open list.

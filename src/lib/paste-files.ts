@@ -305,7 +305,23 @@ export function msgToPaste(fields: MsgFields, filename: string): string {
 }
 
 // File-type dispatch for the Drop: which reader a filename gets.
-export type DropReader = "eml" | "msg" | "pdf" | "vtt" | "text" | "unsupported";
+export type DropReader =
+  | "eml"
+  | "msg"
+  | "pdf"
+  | "vtt"
+  | "text"
+  | "sheet"
+  | "docx"
+  | "image"
+  | "unsupported";
+
+// The one accept list both doors share — the row's Drop and the Chute must
+// never disagree about what the app can swallow.
+export const DROP_ACCEPT =
+  ".eml,.msg,.pdf,.vtt,.txt,.md,.csv,.log,.json,.xlsx,.xls,.docx,.png,.jpg,.jpeg,.webp,.gif,.heic,.heif";
+
+const IMAGE_EXTS = new Set(["png", "jpg", "jpeg", "webp", "gif", "heic", "heif"]);
 
 export function readerFor(filename: string): DropReader {
   const ext = (filename.split(".").pop() ?? "").toLowerCase();
@@ -313,6 +329,38 @@ export function readerFor(filename: string): DropReader {
   if (ext === "msg") return "msg";
   if (ext === "pdf") return "pdf";
   if (ext === "vtt") return "vtt";
+  if (ext === "xlsx" || ext === "xls") return "sheet";
+  if (ext === "docx") return "docx";
+  if (IMAGE_EXTS.has(ext)) return "image";
   if (["txt", "md", "csv", "log", "json", "text"].includes(ext)) return "text";
   return "unsupported";
+}
+
+// A spreadsheet as paste text: sheet by sheet, tab-separated, capped hard so
+// a 40k-row export can't flood the read. The reader downstream treats it as
+// plain text intelligence like anything else.
+export function sheetToPaste(
+  sheets: { name: string; rows: unknown[][] }[],
+  filename: string,
+): string {
+  const out: string[] = [`SPREADSHEET — ${filename}`];
+  let budget = 30000;
+  for (const s of sheets.slice(0, 4)) {
+    out.push(`\n== sheet: ${s.name} ==`);
+    for (const row of s.rows.slice(0, 400)) {
+      const line = row
+        .map((c) => (c == null ? "" : String(c).replace(/\s+/g, " ").trim()))
+        .join("\t")
+        .replace(/\t+$/g, "");
+      if (!line.trim()) continue;
+      budget -= line.length;
+      if (budget <= 0) {
+        out.push("[trimmed — the sheet continues]");
+        return out.join("\n");
+      }
+      out.push(line);
+    }
+    if (s.rows.length > 400) out.push(`[${s.rows.length - 400} more rows trimmed]`);
+  }
+  return out.join("\n");
 }
