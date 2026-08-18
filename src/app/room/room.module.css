@@ -61,6 +61,9 @@
 }
 .clock {
   justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
   font-family: var(--f-mono), Menlo, monospace;
   font-size: 10.5px;
   font-weight: 700;

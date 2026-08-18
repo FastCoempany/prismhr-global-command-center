@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DM_Serif_Display, JetBrains_Mono, Public_Sans } from "next/font/google";
 import { Scratchpad } from "@/components/scratch/scratchpad";
+import { PresenceTracker } from "@/components/presence/engine";
 import "./globals.css";
 
 const dmSerif = DM_Serif_Display({
@@ -39,6 +40,7 @@ export default function RootLayout({
       <body>
         {children}
         <Scratchpad />
+        <PresenceTracker />
       </body>
     </html>
   );
