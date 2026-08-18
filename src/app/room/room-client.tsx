@@ -9,7 +9,6 @@ import { useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useDismiss } from "@/components/use-dismiss";
 import { ChiClock } from "../today-client";
-import { DeskMeter } from "@/components/presence/engine";
 import {
   addFollowUp,
   archiveThread,
@@ -2196,11 +2195,8 @@ export function RoomClient({
             </div>
           )}
         </span>
-        <span className={styles.barRight}>
-          <DeskMeter />
-          <span className={styles.clock}>
-            <ChiClock />
-          </span>
+        <span className={styles.clock}>
+          <ChiClock />
         </span>
       </div>
 

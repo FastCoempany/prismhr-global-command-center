@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { ProductLockup } from "@/components/brand";
+import { DeskMeter } from "@/components/presence/engine";
 
 type AppWayfinderProps = {
   current: string;
@@ -120,6 +121,7 @@ export async function AppWayfinder({
             </Link>
           </span>
         </nav>
+        <DeskMeter />
         {onSignOut}
       </div>
     </header>
