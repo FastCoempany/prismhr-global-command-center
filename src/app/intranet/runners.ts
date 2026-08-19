@@ -551,9 +551,13 @@ export async function extractPending(
     const unread = {
       OR: [{ extractedAt: null }, { promptVersion: { not: PROMPT_VERSION } }],
     };
+    // Never-tried docs first ("" sorts before "fail:N"), failures last — a
+    // document that keeps timing out must never head the queue every pass and
+    // starve the three hundred behind it (the 3-of-306 crawl, caught
+    // 2026-08-19). occurredAt breaks ties, newest first.
     const pending = await prisma.intranetDoc.findMany({
       where: opts?.captureId ? { AND: [unread, { captureId: opts.captureId }] } : unread,
-      orderBy: { occurredAt: "desc" },
+      orderBy: [{ promptVersion: "asc" }, { occurredAt: "desc" }],
       take: budget,
     });
     if (pending.length === 0) return { ok: true, lines: ["Everything has been read."] };
@@ -637,6 +641,16 @@ export async function extractPending(
           if (!firstWhy) firstWhy = reasonOf(s.reason);
           const raw = `${doc.space || doc.origin} · ${iso(doc.occurredAt).slice(0, 10)} — ${rawOf(s.reason)}`;
           detail.push(raw);
+          // The failure is stamped so the doc sorts behind never-tried work
+          // next pass. It stays pending — promptVersion "fail:N" is still
+          // not the live version — it just stops hogging the front.
+          const priorFails = Number(/^fail:(\d+)$/.exec(doc.promptVersion)?.[1] ?? 0);
+          await prisma.intranetDoc
+            .update({
+              where: { id: doc.id },
+              data: { promptVersion: `fail:${priorFails + 1}` },
+            })
+            .catch(() => null);
           total -= 1; // the total shrinks so 100 stays honest
           await pulse(
             {

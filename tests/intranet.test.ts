@@ -2133,8 +2133,23 @@ describe("the bench gadget is wired to the truth", () => {
   });
   test("the page reads the pulse — it never invents it", () => {
     assert.ok(actions.includes("export async function intranetPulse"));
-    assert.ok(client.includes("intranetPulse"), "the gadget has no wire");
+    // The wire is a plain GET, never a server action: an action response
+    // re-applies the current route and cancels in-flight navigations — the
+    // stuck Playbook tab, caught 2026-08-19.
+    assert.ok(client.includes('fetch("/intranet/pulse"'), "the gadget has no wire");
+    assert.ok(
+      !/intranetPulse\(\)/.test(client),
+      "the poll must never be a server action",
+    );
     assert.ok(/setInterval\(read, 2000\)/.test(client), "the two-second poll is gone");
+  });
+  test("a failing doc steps aside instead of starving the queue", () => {
+    const runners = readFileSync(join(root, "src/app/intranet/runners.ts"), "utf8");
+    // Never-tried docs first, stamped failures last — the 3-of-306 crawl.
+    assert.ok(runners.includes('{ promptVersion: "asc" }'), "the queue order is blind");
+    assert.ok(runners.includes("fail:${priorFails + 1}"), "a failure leaves no stamp");
+    const extract = readFileSync(join(root, "src/lib/intranet/extract.ts"), "utf8");
+    assert.ok(extract.includes("READ_BODY_CAP"), "a giant body can still eat the clock");
   });
   test("the gadget is docked, stamps its run, and takes you to it on Send it", () => {
     assert.ok(client.includes("itBgPlate"), "the gadget lost its plate");
