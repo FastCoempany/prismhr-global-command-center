@@ -66,6 +66,7 @@ import {
   markWorked,
   runResearchNow,
   sweepWire,
+  unWork,
 } from "./actions";
 import { ChannelAsk } from "./channel-ask";
 import { CopyStamp } from "./copy-stamp";
@@ -347,12 +348,39 @@ export default async function GroundworkPage({
       .join(" · ");
   };
 
-  const doneToday: { name: string; at: string; sub: string }[] = [];
+  // When no channel line exists (a copy-stamp, a pre-register stamp), the
+  // rule itself says what was done — the wing never stamps mutely.
+  const RULE_LABELS: Record<string, string> = {
+    "wire-trigger": "THE NEWS NOTE",
+    "intent-warm": "THE READING-US NOTE",
+    "riding-lane": "THE CARRY-IN ASK",
+    "silence-bump": "THE SECOND TOUCH",
+    "cold-revival": "THE REVIVAL NOTE",
+    "roundup-slot": "THE CSM BRIEF",
+    "stale-above-gate": "THE RESEARCH PASS",
+    "stakeholder-gap": "THE SECOND NAME",
+    "never-touched-incumbent": "THE FIRST NOTE",
+  };
+
+  const doneToday: {
+    name: string;
+    at: string;
+    sub: string;
+    mk: string;
+    accountId: string;
+  }[] = [];
   for (const [key, at] of doneTimes) {
     const m = new RegExp(`^groundwork:${dayKey}:([^:]+):(.+)$`).exec(key);
     if (!m) continue;
     const name = getPeo(m[1])?.name;
-    if (name) doneToday.push({ name, at: clockShort(at), sub: subFor(m[1]) });
+    if (name)
+      doneToday.push({
+        name,
+        at: clockShort(at),
+        sub: subFor(m[1]) || RULE_LABELS[m[2]] || "",
+        mk: `${m[1]}:${m[2]}`,
+        accountId: m[1],
+      });
   }
   doneToday.sort((a, b) => a.at.localeCompare(b.at));
 
@@ -521,6 +549,20 @@ export default async function GroundworkPage({
                 <span key={i} className={`${styles.wingItem} ${styles.wingDone}`}>
                   <span className={styles.wingTick}>✓</span> {d.name}{" "}
                   <span className={styles.wingTm}>{d.at}</span>
+                  {canWrite && (
+                    <form
+                      action={unWork.bind(null, d.mk, d.accountId)}
+                      className={styles.wingUndoForm}
+                    >
+                      <button
+                        className={styles.wingUndo}
+                        type="submit"
+                        title="Take it back. The move returns to the queue; the tapped touch comes out of the register. A filed email stays — the record is never unwritten."
+                      >
+                        ↺
+                      </button>
+                    </form>
+                  )}
                   {d.sub && <span className={styles.wingSub}>{d.sub}</span>}
                 </span>
               ))

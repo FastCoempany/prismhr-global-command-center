@@ -811,3 +811,22 @@ a.wingItem:hover .wingNm {
 .tallyfoot:hover {
   color: var(--color-ink);
 }
+.wingUndoForm {
+  display: inline;
+}
+.wingUndo {
+  border: 0;
+  background: none;
+  cursor: pointer;
+  color: var(--ds-ink-quiet);
+  font-size: 12px;
+  padding: 0 2px;
+  opacity: 0;
+}
+.wingItem:hover .wingUndo,
+.wingUndo:focus-visible {
+  opacity: 1;
+}
+.wingUndo:hover {
+  color: var(--color-ink);
+}

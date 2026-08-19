@@ -66,6 +66,8 @@ test("the record's sends are the operator's non-meeting glyph entries", () => {
   ]);
   assert.equal(sends.length, 1);
   assert.equal(sends[0].at, "2026-08-17T18:00:00.000Z");
+  // The recipient rides along — the wing's "to whom" for a filed send.
+  assert.equal(sends[0].who, "Bill Laffey");
 });
 
 test("machinery and unattributed entries are never inbound", () => {
@@ -142,6 +144,7 @@ test("a tapped EMAIL folds into the record's same-day send", () => {
   });
   assert.equal(lines.length, 1);
   assert.equal(lines[0].from, "record");
+  assert.equal(lines[0].contact, "Bill Laffey");
 });
 
 test("the week head counts touches, channels, accounts, and replies", () => {

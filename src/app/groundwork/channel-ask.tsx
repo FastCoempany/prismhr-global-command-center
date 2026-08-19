@@ -88,6 +88,17 @@ export function ChannelAsk({
         >
           skip
         </button>
+        <button
+          type="button"
+          className={`${styles.chChip} ${styles.chChipMore}`}
+          title="Never mind. Nothing files."
+          onClick={() => {
+            setStage("idle");
+            setMore(false);
+          }}
+        >
+          ✕
+        </button>
       </span>
     );
 
@@ -125,6 +136,17 @@ export function ChannelAsk({
           ···
         </button>
       )}
+      <button
+        type="button"
+        className={`${styles.chChip} ${styles.chChipMore}`}
+        title="Never mind. Nothing files."
+        onClick={() => {
+          setStage("idle");
+          setMore(false);
+        }}
+      >
+        ✕
+      </button>
     </span>
   );
 }
