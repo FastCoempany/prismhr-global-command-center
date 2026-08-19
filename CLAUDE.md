@@ -148,7 +148,9 @@ land behind a fold. Attendant decrees, permanent:
   tags and routing markers survive verbatim (roomTodoEdit).
 - Concepts never ship; winners do. Triptychs are judged as downloadable
   documents (interactive when mechanics matter) — production only ever
-  receives the decreed winner.
+  receives the decreed winner, and (founder-decreed 2026-08-19) mockup
+  work NEVER ships without an explicit ship order — naming a winner or
+  amending a face is judging, not shipping. Ask first, every time.
 
 ## The Ted doctrine (founder-decreed 2026-08-14)
 

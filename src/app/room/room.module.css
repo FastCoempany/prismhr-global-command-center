@@ -34,9 +34,10 @@
 .gate {
   padding: 40px;
 }
+/* Full width (founder-decreed 2026-08-19): the rows run the same span the
+   Chute does — the room's own padding is the only frame. */
 .wrap {
-  max-width: 1120px;
-  margin: 0 auto;
+  width: 100%;
 }
 
 /* ── header: mark left, forest add center, clock right ──────────────── */
