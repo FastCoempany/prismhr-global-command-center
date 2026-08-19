@@ -1,6 +1,7 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 import { askLinks } from "@/lib/ask/links";
+import { cleanAskText } from "@/lib/ask/clean";
 
 // The doors an answer carries must land pre-loaded: the account drilldown
 // already open, the Playbook scrolled to the card, the archive already
@@ -75,5 +76,24 @@ describe("askLinks — every door lands on the exact thing", () => {
     assert.ok(out.length <= 6);
     assert.equal(new Set(out.map((l) => l.href)).size, out.length);
     assert.ok(out.some((l) => l.href.startsWith("/intranet?q=who%20said")));
+  });
+});
+
+describe("the reader's cut — stored answers render without citation marks", () => {
+  test("bracketed handles strip cleanly, punctuation survives", () => {
+    assert.equal(
+      cleanAskText(
+        "The interest is EOR-shaped, not payroll [1][5], and a review turned up nothing [6]; demand is very low [7].",
+      ),
+      "The interest is EOR-shaped, not payroll, and a review turned up nothing; demand is very low.",
+    );
+  });
+  test("hyphen bullets and blank lines pass through untouched", () => {
+    const s =
+      "Payroll, most likely.\n\n- The client is forming an NI entity\n- No reply since August 5";
+    assert.equal(cleanAskText(s), s);
+  });
+  test("a real bracketed year is not a citation handle", () => {
+    assert.equal(cleanAskText("filed [2026] style"), "filed [2026] style");
   });
 });
