@@ -85,15 +85,22 @@ export function parseSendbookBody(
 // the intel corpus use: a glyph-headed activity whose actors name the operator
 // as sender, that is not a meeting record (nobody "sends" a meeting that
 // already happened).
-export function recordSends(notes: NoteLike[]): { at: string; head: string }[] {
-  const out: { at: string; head: string }[] = [];
+export function recordSends(
+  notes: NoteLike[],
+): { at: string; head: string; who: string }[] {
+  const out: { at: string; head: string; who: string }[] = [];
   for (const n of notes) {
     if (!/^[✉✔☎☰] /.test(n.body)) continue;
     const actors = n.actors || inferActors(n.body);
-    const sender = actors.split("→")[0] ?? "";
+    const arrow = actors.indexOf("→");
+    const sender = arrow >= 0 ? actors.slice(0, arrow) : "";
     if (!MINE_RE.test(sender)) continue;
     if (isMeetingNote(n)) continue;
-    out.push({ at: n.createdAt, head: n.body.split("\n")[0] ?? "" });
+    const who = actors
+      .slice(arrow + 1)
+      .replace(/\+\d+\s*$/, "")
+      .trim();
+    out.push({ at: n.createdAt, head: n.body.split("\n")[0] ?? "", who });
   }
   return out;
 }
@@ -202,7 +209,7 @@ export function buildSendbook(inp: SendbookInput): Sendbook {
         accountId: id,
         at: s.at,
         channel: "EMAIL",
-        contact: "",
+        contact: s.who,
         clause: clauseFromHead(s.head),
         from: "record",
       });

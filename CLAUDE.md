@@ -148,7 +148,11 @@ stamps carry subtext (`EMAIL · STEP 1 · CRISTINA B.`). Lanes by decree:
 the operator's own outbound never warms an account, and a CSM intro doesn't
 either; prior warmth marks the line GONE COLD. Replies annotate from the
 record only (↩ REPLIED); outcomes are never asked. The register tells what
-happened; what is due next stays Groundwork's.
+happened; what is due next stays Groundwork's. The take-back: every stamp
+carries a hover ↺ that returns the move to the queue and withdraws its tap —
+the record's own entries are never unwritten; the chip rows carry ✕ to close
+without filing. The wing never stamps mutely: no channel line means the
+rule's own label speaks.
 
 ## The Spring (triptych winner, decided 2026-08-13)
 

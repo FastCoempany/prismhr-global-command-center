@@ -95,6 +95,54 @@ export async function workedChannel(
   revalidatePath("/sendbook");
 }
 
+// The take-back (founder-decreed 2026-08-19): an accidental stamp must be
+// reversible in place. Un-stamping deletes today's done mark — the move
+// returns to the queue — and withdraws the tap note the stamp filed, if one
+// rode along today. The record's own entries are never touched: a filed
+// email is a fact, not a stamp.
+export async function unWork(mk: string, accountId: string): Promise<void> {
+  if (!(await requireWrite()) || !mk || mk.length > 200) return;
+  const key = groundworkDoneKey(new Date(), mk);
+  const prisma = getPrisma();
+  try {
+    await prisma.taskDone.deleteMany({ where: { key } });
+  } catch {
+    return;
+  }
+  if (accountId && getPeo(accountId)) {
+    try {
+      // Only the newest tap filed today comes back out — Chicago's day, the
+      // same day the stamp itself was scoped to.
+      const chi = new Date().toLocaleDateString("en-CA", {
+        timeZone: "America/Chicago",
+      });
+      // Coarse fetch window (UTC midnight minus a buffer covers every
+      // Chicago offset); the exact day check is the per-row comparison below.
+      const windowStart = new Date(Date.parse(`${chi}T00:00:00Z`) - 12 * 3_600_000);
+      const candidates = await prisma.accountNote.findMany({
+        where: {
+          accountId: `${SENDBOOK_NS}${accountId}`,
+          createdAt: { gte: windowStart },
+        },
+        orderBy: { createdAt: "desc" },
+        take: 3,
+        select: { id: true, createdAt: true },
+      });
+      const todays = candidates.find(
+        (c) =>
+          c.createdAt.toLocaleDateString("en-CA", { timeZone: "America/Chicago" }) ===
+          chi,
+      );
+      if (todays) await prisma.accountNote.delete({ where: { id: todays.id } });
+    } catch {
+      // a leftover tap line is visible in the register and strikable later;
+      // the stamp itself is already back out
+    }
+  }
+  revalidatePath("/groundwork");
+  revalidatePath("/sendbook");
+}
+
 export async function markWorked(mk: string): Promise<void> {
   if (!(await requireWrite()) || !mk || mk.length > 200) return;
   const key = groundworkDoneKey(new Date(), mk);
