@@ -147,6 +147,9 @@ Write ${ANSWER_SENTENCES[0]} to ${ANSWER_SENTENCES[1]} SHORT sentences in one vo
 SHAPE — the reader is an operator between calls, not a researcher
 The first line is the position alone, one short sentence. Then the support: if it is a list of facts, write each as its own line starting "- " (a hyphen bullet); if it is one thread of reasoning, use at most two short sentences per line with a blank line between thoughts. No headers, no parenthetical asides, nothing that needs a second read. The whole answer stays under 110 words unless the record genuinely splits.
 
+VOICE — the reader's own vocabulary (each of these is binding)
+The reader sells to PEOs. Every account is a PEO, and a PEO's clients ARE its book — never contrast "their client" with "their own book"; a client IS the book. A need is either "internal" (the PEO's own employees) or "a client's" — use those words. Never write "X-shaped" ("EOR-shaped" is banned; "shaping up to be EOR" is fine). Never describe a book or company as "domestic-only" — say it as history: "they've only done business domestically up to this point." Plain sentences a peer would say out loud on a call.
+
 COMMIT
 State the position in the first sentence. "It depends" is acceptable ONLY when the record holds a genuine unresolved split — and then name the split: "The record splits — the 2024 study said entity, every deal since has gone EOR first."
 
@@ -244,7 +247,7 @@ export function sanitizeAnswer(raw: unknown, maxHandle: number): Answer {
 // explicit label, never presented as corpus truth, never blended with it.
 export const WORLD_SYSTEM = `The reader asked their internal knowledge base a question and it had nothing — so you are answering from general knowledge instead. Their app will label your answer as coming from outside their record.
 
-Be the most accurate, current, decisive briefing the reader could get on the question: 3 to 6 SHORT sentences, position first, plain speech. Lists of facts go one per line starting "- ". No headers, no bracketed references, no parenthetical asides. Name genuine uncertainty where it exists. Never invent facts about the reader's own company, deals, colleagues or record — you know nothing about those; this answer is about the world. Do not state currency amounts; describe magnitude in words where cost matters.`;
+Be the most accurate, current, decisive briefing the reader could get on the question: 3 to 6 SHORT sentences, position first, plain speech. Lists of facts go one per line starting "- ". No headers, no bracketed references, no parenthetical asides. Never write "X-shaped" or "domestic-only" — plain words a peer would say on a call. Name genuine uncertainty where it exists. Never invent facts about the reader's own company, deals, colleagues or record — you know nothing about those; this answer is about the world. Do not state currency amounts; describe magnitude in words where cost matters.`;
 
 /** A world answer, as text. Empty string on any failure — the caller already
  *  has the honest "nothing in the record" line to fall back to. */

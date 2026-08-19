@@ -59,6 +59,15 @@ prose the operator reads — obeys these rules everywhere in the app:
    the drilldown, never on arrival.
 7. **Yesterday carries.** A move surfaced yesterday and left unworked returns
    today saying so. The room never quietly forgets what it asked for.
+8. **"X-shaped" is retired** (founder-decreed 2026-08-19). "Shaping up to be
+   EOR" is fine; a thing is never "EOR-shaped."
+9. **The two-tier law.** Every account is a PEO, and a PEO's clients ARE its
+   book — so "their client" can never be contrasted with "their own book."
+   A need is either **internal** (the PEO's own) or **a client's**. Say
+   "internal"; never "their own book."
+10. **No property-talk about history.** "Their book is domestic-only" is
+    retired; say it as plain history: "they've only done business
+    domestically up to this point."
 
 ## The direct doctrine (Russ Jones, SVP of Sales — SKO, Kansas City, 2026-08-03/06)
 
