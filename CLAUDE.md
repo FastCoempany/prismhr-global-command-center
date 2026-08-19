@@ -125,7 +125,30 @@ stamped (Chicago), newest first under TODAY/YESTERDAY/dated kickers. One
 durable store (`scratch:pad` namespaced notes — outside every account view and
 the intranet mirror by construction). The pact: it stays there and only there;
 nothing routes, nothing files, nothing becomes an action. Money is redacted on
-write like everywhere else. Delete is per line and deliberate.
+write like everywhere else. ✕ is per line and deliberate — and it archives,
+never destroys (2026-08-19): the line moves to `scratch:gone`, readable under
+the pad's STRUCK fold, restorable by ↺. Nothing on the paper ever dies.
+
+## The Sendbook (triptych winner, decided 2026-08-19)
+
+The outreach register lives at `/sendbook`, doored from Groundwork's page-foot
+Tallyfoot line (`THIS WEEK · N WORKED · …`) — never in the top wayfinder. One
+merged view (Ted doctrine), two doors in: the record's own outbound entries
+(a Chute-dropped .eml IS the touch), and the **Channel Ask** — Groundwork's
+Worked-it springs a chip row (EMAIL · CALL · VOICEMAIL · TEXT · LINKEDIN ·
+INMAIL · ··· ENGAGED/CONNECT/VIDEO/EVENT/MAILER/INTRO/CSM RELAY) filing a
+`sendbook:<account>` note; a second chip row asks who only when the book knows
+more than one name. The **pre-answer rule**: an outbound the record already
+holds today answers the ask before it opens — the app never asks what it can
+read. Steps are counted, never asked: per run, reset by a 45-day quiet or by
+the account speaking. Tapped touches are synthesized into the queue's drumbeat
+clocks at read time, never written to the touch log. The wing's done-today
+stamps carry subtext (`EMAIL · STEP 1 · CRISTINA B.`). Lanes by decree:
+**NEVER MET means they have never replied and no meeting was ever held** —
+the operator's own outbound never warms an account, and a CSM intro doesn't
+either; prior warmth marks the line GONE COLD. Replies annotate from the
+record only (↩ REPLIED); outcomes are never asked. The register tells what
+happened; what is due next stays Groundwork's.
 
 ## The Spring (triptych winner, decided 2026-08-13)
 

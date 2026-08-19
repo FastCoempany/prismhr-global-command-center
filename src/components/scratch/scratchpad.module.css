@@ -274,3 +274,29 @@
     width: auto;
   }
 }
+
+/* The struck history (decreed 2026-08-19) — the fold under the paper. */
+.struckKick {
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font: 700 9px/1 var(--font-donor-mono, ui-monospace, monospace);
+  letter-spacing: 0.18em;
+  color: rgba(10, 28, 64, 0.42);
+  padding: 8px 0 2px;
+  text-align: left;
+}
+.struckKick:hover {
+  color: #0a1c40;
+}
+.struckList {
+  max-height: 160px;
+  overflow-y: auto;
+  border-top: 1px dashed rgba(10, 28, 64, 0.22);
+  padding-top: 4px;
+}
+.struckBody {
+  color: rgba(10, 28, 64, 0.42);
+  text-decoration: line-through;
+  text-decoration-color: rgba(10, 28, 64, 0.22);
+}

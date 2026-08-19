@@ -5,6 +5,12 @@
 
 export const SCRATCH_NS = "scratch:pad";
 
+// The struck archive (founder-decreed 2026-08-19): a crossed-out line moves
+// here instead of dying — history keeps everything, ✕ just takes it off the
+// paper. Same namespace family, so it stays out of every account view and
+// the intranet mirror by the same construction.
+export const SCRATCH_GONE_NS = "scratch:gone";
+
 const CHI = "America/Chicago";
 
 const chicagoDayKey = (d: Date): string =>

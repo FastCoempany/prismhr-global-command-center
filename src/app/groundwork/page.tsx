@@ -54,12 +54,20 @@ import {
 } from "@/lib/groundwork/wire";
 import { buildReadout, lint, readoutText } from "@/lib/groundwork/readout";
 import {
+  SENDBOOK_NS,
+  buildSendbook,
+  shortName,
+  weekStats,
+  type NoteLike as SendNote,
+} from "@/lib/sendbook/read";
+import {
   attachWireToAccount,
   markReadoutRead,
   markWorked,
   runResearchNow,
   sweepWire,
 } from "./actions";
+import { ChannelAsk } from "./channel-ask";
 import { CopyStamp } from "./copy-stamp";
 import { Instrument } from "./instrument";
 import styles from "./groundwork.module.css";
@@ -112,12 +120,23 @@ export default async function GroundworkPage({
   // wire, the institutions program, and the deep-research backbone.
   const accountNotes = new Map<
     string,
-    { body: string; source: string; createdAt: string }[]
+    { body: string; source: string; createdAt: string; actors?: string }[]
   >();
   const wireItems: WireItem[] = [];
   const institutions: Institution[] = [];
   const researchByAccount = new Map<string, { at: string; line: string }>();
+  const sendTapsById = new Map<string, SendNote[]>();
   for (const [id, notes] of notesMap) {
+    if (id.startsWith(SENDBOOK_NS)) {
+      // The Channel Ask's tapped touches — the Sendbook's second door.
+      const accountId = id.slice(SENDBOOK_NS.length);
+      if (accountId)
+        sendTapsById.set(
+          accountId,
+          notes.map((n) => ({ body: n.body, source: n.source, createdAt: n.createdAt })),
+        );
+      continue;
+    }
     if (id.startsWith(WIRE_NS)) {
       const item = parseWireBody(notes[0]?.body ?? "");
       if (item) {
@@ -156,9 +175,24 @@ export default async function GroundworkPage({
       notes
         // ✕-parked entries leave every register view — here too.
         .filter((n) => !dispositions.has(`hide:note:${n.id}`))
-        .map((n) => ({ body: n.body, source: n.source, createdAt: n.createdAt })),
+        .map((n) => ({
+          body: n.body,
+          source: n.source,
+          createdAt: n.createdAt,
+          actors: n.actors,
+        })),
     );
   }
+
+  // The Sendbook's merged read — record sends + tapped touches, stepped and
+  // laned. The wing subtext, the drumbeat synthetics, and the Tallyfoot all
+  // read this one view.
+  const sendbook = buildSendbook({
+    notesById: accountNotes,
+    tapsById: sendTapsById,
+    now,
+  });
+  const sendWeek = weekStats(sendbook, now);
 
   // Intel only where a corpus exists — regex extraction over notes + touches.
   const touchesByAccount = new Map<string, typeof touches>();
@@ -263,11 +297,23 @@ export default async function GroundworkPage({
   // whatever the lagging board says.
   for (const id of liveMotionIds(accountNotes, intelById, now)) excludedIds.add(id);
 
+  // A tapped touch is a logged touch (Ted doctrine: the drumbeat reads the
+  // widest store) — synthesized at read time for the queue's clocks, never
+  // written into the touch log itself.
+  const sendTapTouches = [...sendTapsById.entries()].flatMap(([id, notes]) =>
+    notes.map((n) => ({
+      subjectKey: `outreach:${id}`,
+      contactedAt: n.createdAt,
+      followUpAt: "",
+      status: "awaiting",
+    })),
+  );
+
   const { all: rankedAll } = buildQueue({
     accounts: peos,
     intelById,
     notesById: accountNotes,
-    touches,
+    touches: [...touches, ...sendTapTouches],
     // The widest people count the app holds (Ted doctrine): the frozen SF
     // export AND the record's live thread roster — "find a second name" must
     // never fire under a green MULTI chip.
@@ -285,14 +331,40 @@ export default async function GroundworkPage({
   // Worked moves leave the queue for the left wing; the rest stay live. The
   // wing reads the stamps themselves, so a stamp survives even if its rule
   // stops firing later in the day.
-  const doneToday: { name: string; at: string }[] = [];
+  // The stamp's subtext reads the Sendbook: the newest touch filed today for
+  // that account says what was done — channel, step, who.
+  const sendToday = new Map<string, { channel: string; step: number; contact: string }>();
+  for (const l of sendbook.lines) {
+    const t = Date.parse(l.at);
+    if (Number.isNaN(t) || userDayKey(new Date(t)) !== dayKey) continue;
+    if (!sendToday.has(l.accountId)) sendToday.set(l.accountId, l); // newest first
+  }
+  const subFor = (accountId: string): string => {
+    const s = sendToday.get(accountId);
+    if (!s) return "";
+    return [`${s.channel} · STEP ${s.step}`, s.contact ? shortName(s.contact) : ""]
+      .filter(Boolean)
+      .join(" · ");
+  };
+
+  const doneToday: { name: string; at: string; sub: string }[] = [];
   for (const [key, at] of doneTimes) {
     const m = new RegExp(`^groundwork:${dayKey}:([^:]+):(.+)$`).exec(key);
     if (!m) continue;
     const name = getPeo(m[1])?.name;
-    if (name) doneToday.push({ name, at: clockShort(at) });
+    if (name) doneToday.push({ name, at: clockShort(at), sub: subFor(m[1]) });
   }
   doneToday.sort((a, b) => a.at.localeCompare(b.at));
+
+  // The pre-answer rule (decreed 2026-08-19): an outbound the record already
+  // holds today answers the Channel Ask before it opens — the chip row never
+  // shows for an account whose send is on file.
+  const recordSendToday = new Set<string>();
+  for (const l of sendbook.lines) {
+    const t = Date.parse(l.at);
+    if (l.from === "record" && !Number.isNaN(t) && userDayKey(new Date(t)) === dayKey)
+      recordSendToday.add(l.accountId);
+  }
 
   const live = rankedAll.filter(
     (q) => !doneTimes.has(`groundwork:${dayKey}:${moveKey(q)}`),
@@ -354,6 +426,8 @@ export default async function GroundworkPage({
   // as open as a logged one — the number spoken to Russ must not undercount.
   for (const [id, intel] of intelById)
     if (intel.lastInbound || intel.lastOutbound) outreachAccountIds.add(id);
+  // And the Sendbook's tapped touches — a LinkedIn message is an open door.
+  for (const id of sendTapsById.keys()) outreachAccountIds.add(id);
   const weekAgo = now.getTime() - 7 * 86_400_000;
   const partnerTouches = touches.filter(
     (t) =>
@@ -447,6 +521,7 @@ export default async function GroundworkPage({
                 <span key={i} className={`${styles.wingItem} ${styles.wingDone}`}>
                   <span className={styles.wingTick}>✓</span> {d.name}{" "}
                   <span className={styles.wingTm}>{d.at}</span>
+                  {d.sub && <span className={styles.wingSub}>{d.sub}</span>}
                 </span>
               ))
             )}
@@ -494,20 +569,33 @@ export default async function GroundworkPage({
                       </button>
                     </form>
                   )}
-                  {canWrite && (
-                    <form action={markWorked.bind(null, moveKey(stageItem))}>
-                      <button
-                        className={
-                          stageItem.ruleId === "stale-above-gate"
-                            ? styles.btn2nd
-                            : styles.btnAccent
-                        }
-                        type="submit"
-                      >
-                        Worked it
-                      </button>
-                    </form>
-                  )}
+                  {canWrite &&
+                    (recordSendToday.has(stageItem.accountId) ? (
+                      <form action={markWorked.bind(null, moveKey(stageItem))}>
+                        <button
+                          className={
+                            stageItem.ruleId === "stale-above-gate"
+                              ? styles.btn2nd
+                              : styles.btnAccent
+                          }
+                          type="submit"
+                          title="The record already holds today's send — the stamp reads it."
+                        >
+                          Worked it
+                        </button>
+                      </form>
+                    ) : (
+                      <ChannelAsk
+                        mk={moveKey(stageItem)}
+                        accountId={stageItem.accountId}
+                        contacts={contactsFor(stageItem.accountId)
+                          .map((c) => [c.first, c.last].filter(Boolean).join(" "))
+                          .filter(Boolean)
+                          .slice(0, 6)}
+                        clause={stageItem.action}
+                        accent={stageItem.ruleId !== "stale-above-gate"}
+                      />
+                    ))}
                   {canWrite && stageItem.ruleId !== "stale-above-gate" && (
                     <form action={runResearchNow.bind(null, null, stageItem.accountId)}>
                       <button
@@ -838,6 +926,27 @@ export default async function GroundworkPage({
             </div>
           </details>
         </div>
+
+        {/* ── The Tallyfoot — the Sendbook's door ──────────────────── */}
+        <Link
+          href="/sendbook"
+          className={styles.tallyfoot}
+          title="The Sendbook — every touch, kept."
+        >
+          {sendWeek.total === 0 ? (
+            <>THIS WEEK · NOTHING WORKED YET · THE SENDBOOK →</>
+          ) : (
+            <>
+              THIS WEEK · <b>{sendWeek.total} WORKED</b>
+              {sendWeek.byChannel.map(([ch, n]) => ` · ${n} ${ch}`).join("")} ·{" "}
+              <b>
+                {sendWeek.accounts} ACCOUNT{sendWeek.accounts === 1 ? "" : "S"}
+              </b>
+              {sendWeek.replied > 0 ? ` · ${sendWeek.replied} REPLIED` : ""} · THE
+              SENDBOOK →
+            </>
+          )}
+        </Link>
       </main>
     </>
   );

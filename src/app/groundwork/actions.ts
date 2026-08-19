@@ -14,6 +14,12 @@ import { getPeo } from "@/lib/book";
 import { READOUT_READ_KEY, groundworkDoneKey } from "@/lib/groundwork/file";
 import { roomResearch } from "@/app/room/actions";
 import {
+  CHANNELS,
+  SENDBOOK_NS,
+  sendbookNoteBody,
+  type Channel,
+} from "@/lib/sendbook/read";
+import {
   WIRE_NS,
   parseWireBody,
   runWireSweep,
@@ -48,6 +54,45 @@ export async function runResearchNow(
   if (r.ok && mk) await markWorked(mk);
   revalidatePath("/groundwork");
   revalidatePath("/room");
+}
+
+// The Channel Ask's landing (the Sendbook, decreed 2026-08-19): a worked
+// stamp that names its channel files a sendbook:<account> touch beside the
+// TaskDone stamp, so the register and the wing subtext read a real store.
+// Channels that leave a file behind never come through here — the record's
+// own outbound IS the touch, and the ask pre-answers.
+export async function workedChannel(
+  mk: string,
+  accountId: string,
+  channel: string,
+  contact: string,
+  clause: string,
+): Promise<void> {
+  if (!(await requireWrite())) return;
+  if (!getPeo(accountId)) return;
+  if (!(CHANNELS as readonly string[]).includes(channel)) {
+    await markWorked(mk);
+    return;
+  }
+  try {
+    await createAccountNoteRow({
+      accountId: `${SENDBOOK_NS}${accountId}`,
+      kind: "account",
+      body: sendbookNoteBody(
+        channel as Channel,
+        contact.slice(0, 60),
+        clause.slice(0, 160),
+      ),
+      lane: "background",
+      actors: "",
+      source: "sendbook",
+    });
+  } catch {
+    // the stamp still lands below — a lost touch line costs the register a
+    // row, never the day its checkmark
+  }
+  await markWorked(mk);
+  revalidatePath("/sendbook");
 }
 
 export async function markWorked(mk: string): Promise<void> {
