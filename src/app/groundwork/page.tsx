@@ -417,7 +417,7 @@ export default async function GroundworkPage({
       case "stakeholder-gap":
         return "DUG UP A SECOND CONTACT NAME";
       case "never-touched-incumbent":
-        return "OPENED THE FIRST GLOBAL CONVERSATION · THEY RUN PRISM";
+        return "SENT FIRST COLD EMAIL · STEP 1";
       default:
         return "";
     }
