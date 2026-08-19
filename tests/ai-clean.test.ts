@@ -101,3 +101,24 @@ test("sanitize: caps entry count at 40 and clamps others", () => {
   assert.equal(r.entries.length, 40);
   assert.equal(r.entries[0].others, 99);
 });
+
+// The fulfillment rule (founder-decreed 2026-08-19, born on the Trend HR
+// Philippines thread): a promise the same document later shows KEPT is
+// history, never an open action. The rule lives in the reader's contract —
+// this pins it there, with the exact shape that taught it.
+test("the reader's contract carries the fulfillment rule", async () => {
+  const { readFileSync } = await import("node:fs");
+  const src = readFileSync(
+    new URL("../src/lib/intel/ai-clean.ts", import.meta.url),
+    "utf8",
+  );
+  assert.ok(src.includes("THE FULFILLMENT RULE"), "the rule left the contract");
+  assert.ok(
+    src.includes("Please see pricing attached"),
+    "the Trend thread shape is the rule's example",
+  );
+  assert.ok(
+    src.includes("Only commitments the document leaves hanging become actions"),
+    "the rule must state what DOES open",
+  );
+});
