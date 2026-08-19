@@ -349,17 +349,18 @@ export default async function GroundworkPage({
   };
 
   // When no channel line exists (a copy-stamp, a pre-register stamp), the
-  // rule itself says what was done — the wing never stamps mutely.
+  // subtext says plainly what was done: the queue's own action line, past
+  // tense — no ceremony (founder-decreed 2026-08-19).
   const RULE_LABELS: Record<string, string> = {
-    "wire-trigger": "THE NEWS NOTE",
-    "intent-warm": "THE READING-US NOTE",
-    "riding-lane": "THE CARRY-IN ASK",
-    "silence-bump": "THE SECOND TOUCH",
-    "cold-revival": "THE REVIVAL NOTE",
-    "roundup-slot": "THE CSM BRIEF",
-    "stale-above-gate": "THE RESEARCH PASS",
-    "stakeholder-gap": "THE SECOND NAME",
-    "never-touched-incumbent": "THE FIRST NOTE",
+    "wire-trigger": "SENT THE NEWS NOTE",
+    "intent-warm": "SENT THE READING-US NOTE",
+    "riding-lane": "ASKED TO BE CARRIED IN",
+    "silence-bump": "SENT THE SECOND TOUCH",
+    "cold-revival": "REVIVED THE THREAD",
+    "roundup-slot": "BRIEFED THE CSM",
+    "stale-above-gate": "RAN THE RESEARCH",
+    "stakeholder-gap": "FOUND A SECOND NAME",
+    "never-touched-incumbent": "OPENED THE FIRST CONVERSATION",
   };
 
   const doneToday: {
