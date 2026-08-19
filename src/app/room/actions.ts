@@ -1600,3 +1600,32 @@ export async function chuteReadPdf(
   if (!(file instanceof File)) return { ok: false, reason: "No file arrived." };
   return transcribePdf(file);
 }
+
+// The partner-brief notifier's own hand (founder-decreed 2026-08-19): a click
+// sets the status directly — "opp created" or plain done — instead of waiting
+// on a stage-record item to close. Stored as day-less TaskDone keys so the
+// mark survives every reload; "clear" takes it back.
+export async function roomBriefedSet(
+  accountId: string,
+  value: "opp" | "done" | "clear",
+): Promise<{ ok: boolean; reason?: string }> {
+  const acct = bindAccountId(accountId, peos);
+  if (!acct) return { ok: false, reason: "Not a bound row." };
+  if (!["opp", "done", "clear"].includes(value))
+    return { ok: false, reason: "Not a status." };
+  if (!(await requireWrite())) return { ok: false, reason: "Read-only session." };
+  try {
+    const prisma = getPrisma();
+    await prisma.taskDone.deleteMany({
+      where: { key: { in: [`briefed:${acct.id}:opp`, `briefed:${acct.id}:done`] } },
+    });
+    if (value !== "clear") {
+      const key = `briefed:${acct.id}:${value}`;
+      await prisma.taskDone.upsert({ where: { key }, create: { key }, update: {} });
+    }
+  } catch {
+    return { ok: false, reason: "The status didn't keep. Try again." };
+  }
+  revalidatePath("/room");
+  return { ok: true };
+}

@@ -56,6 +56,7 @@ import { readOutcome } from "@/lib/dashboard/outcome";
 import { owedToMe } from "@/lib/room/owed";
 import { GLOBAL_SCENT_RE } from "@/lib/intel/provenance";
 import { askHref, peerQuestions, scopedAsk } from "@/lib/intranet/bridges";
+import { sfAccountUrl } from "@/lib/salesforce";
 import { prospectAsks } from "@/lib/intranet/store";
 import { Chute } from "./chute";
 import { domainOf } from "@/lib/route-capture";
@@ -190,6 +191,13 @@ export default async function RoomPage() {
           briefed = true;
       });
     }
+    // The notifier's own hand outranks the derived read (decreed 2026-08-19):
+    // the operator can set "opp created" or done directly from the row.
+    const briefedManual: "opp" | "done" | null = doneKeys.has(`briefed:${accountId}:opp`)
+      ? "opp"
+      : doneKeys.has(`briefed:${accountId}:done`)
+        ? "done"
+        : null;
 
     const step = cardNextStep(card, data.labels, now.getTime());
     const stageNode = step ? DASH_NODES.find((n) => n.key === step.nodeKey) : null;
@@ -396,6 +404,8 @@ export default async function RoomPage() {
           .join(" · "),
       })),
       briefed,
+      briefedManual,
+      sfUrl: accountId ? sfAccountUrl(accountId) : null,
       climb: {
         frac: meter.frac,
         capTone: outcome

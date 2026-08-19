@@ -237,11 +237,105 @@
   color: var(--forest);
   border-color: var(--forest);
 }
-.briefed {
+/* The name's left column: the partner notifier stacked over the SF door,
+   capped to the name's own height (founder-decreed 2026-08-19). */
+.nmSide {
   position: absolute;
   left: 0;
   top: -1px;
-  cursor: help;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  max-height: 24px;
+}
+.briefed {
+  border: 0;
+  background: none;
+  padding: 0;
+  line-height: 0;
+  cursor: pointer;
+}
+.bfWrap {
+  position: relative;
+  line-height: 0;
+}
+.bfPop {
+  position: absolute;
+  left: 18px;
+  top: -4px;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 8px 10px;
+  box-shadow: 0 4px 14px rgba(10, 28, 64, 0.12);
+  min-width: 118px;
+}
+.bfOpt {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font:
+    600 11px/1.4 var(--f-sans),
+    sans-serif;
+  color: var(--ink);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.bfOpt input {
+  accent-color: #1e5b46;
+  margin: 0;
+}
+.bfClear {
+  border: 0;
+  background: none;
+  padding: 0;
+  text-align: left;
+  font:
+    600 9.5px/1.4 var(--f-mono),
+    Menlo,
+    monospace;
+  letter-spacing: 0.08em;
+  color: var(--faint);
+  cursor: pointer;
+}
+.bfClear:hover {
+  color: var(--ink);
+}
+.sfMini {
+  font:
+    700 8px/1 var(--f-mono),
+    Menlo,
+    monospace;
+  letter-spacing: 0.08em;
+  color: var(--faint);
+  text-decoration: none;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 1px 2px;
+}
+.sfMini:hover {
+  color: var(--blue, #2563eb);
+  border-color: var(--blue, #2563eb);
+}
+.gateTag {
+  display: inline-block;
+  margin-left: 8px;
+  font:
+    700 8.5px/1.4 var(--f-mono),
+    Menlo,
+    monospace;
+  letter-spacing: 0.1em;
+  color: var(--faint);
+  border: 1px dashed var(--line);
+  border-radius: 999px;
+  padding: 1px 7px;
+  vertical-align: 1px;
+  white-space: nowrap;
 }
 .meta {
   display: block;

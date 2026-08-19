@@ -826,9 +826,11 @@ describe("the repairs hold", () => {
     // Separate transitions: research must not dress the ask button in its label.
     assert.ok(client.includes("rsrchPending"));
     assert.ok(client.includes("askPending"));
-    // The gate is said once as a chip; the old STILL OPEN block is retired,
-    // and a closed row never reaches the gate (it renders the outcome branch).
-    assert.ok(client.includes("GATE · "));
+    // The gate chip is retired (decreed 2026-08-19): the stage's open
+    // question lives in the UNKNOWN register with its own ✓, and the old
+    // STILL OPEN block stays dead.
+    assert.ok(client.includes("STAGE GATE"));
+    assert.ok(!client.includes("GATE · "), "the movewrap gate chip is retired");
     assert.ok(!client.includes("STILL OPEN"), "the STILL OPEN block is retired");
     // The misfile bar dies with its paste.
     assert.ok(client.includes("setMismatch(null)"));
