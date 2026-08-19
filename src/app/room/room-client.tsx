@@ -27,6 +27,7 @@ import {
 } from "../today/actions";
 import { dismissSuggestion, saveNote, toggleCheck } from "../dashboard/actions";
 import {
+  roomBriefedSet,
   roomClose,
   roomCompose,
   roomActionUndo,
@@ -63,6 +64,8 @@ export type RoomRow = {
   multiTone: "g" | "y" | "r";
   people: { name: string; line: string }[];
   briefed: boolean;
+  briefedManual: "opp" | "done" | null;
+  sfUrl: string | null;
   climb: {
     frac: number;
     capTone: "risk" | "warn" | "ok";
@@ -142,29 +145,92 @@ export type FollowUpRow = {
 export type WarmRow = { id: string; name: string; why: string; seedNote: string };
 export type LaterRow = { id: string; body: string };
 
-function Briefed({ on }: { on: boolean }) {
+// The partner notifier: green from the stage record OR from the operator's
+// own hand — a click springs a radio (Opp created / Briefed — done / clear)
+// filed durably (founder-decreed 2026-08-19).
+function Briefed({
+  on,
+  manual,
+  accountId,
+  canWrite,
+}: {
+  on: boolean;
+  manual: "opp" | "done" | null;
+  accountId: string;
+  canWrite: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const [local, setLocal] = useState<"opp" | "done" | null>(manual);
+  const [pending, start] = useTransition();
+  const lit = on || local !== null;
+  const set = (v: "opp" | "done" | "clear") => {
+    setLocal(v === "clear" ? null : v);
+    setOpen(false);
+    start(async () => {
+      await roomBriefedSet(accountId, v);
+    });
+  };
+  const title = lit
+    ? local === "opp"
+      ? "Opportunity created. Click to change."
+      : "Partner briefed. Click to change."
+    : "Partner not briefed yet. Click to set the status by hand; it also turns green when a partner-brief item closes in the stage record.";
   return (
-    <span
-      className={styles.briefed}
-      title={
-        on
-          ? "Partner briefed. The partner-brief item is closed in the stage record."
-          : "Partner not briefed yet. This turns green when a partner-brief item closes in the stage record."
-      }
-    >
-      <svg
-        viewBox="0 0 20 20"
-        width="13"
-        height="13"
-        fill="none"
-        stroke={on ? "#1E5B46" : "rgba(10,28,64,.25)"}
-        strokeWidth="2.4"
-        strokeLinecap="butt"
-        strokeLinejoin="miter"
+    <span className={styles.bfWrap}>
+      <button
+        type="button"
+        className={styles.briefed}
+        title={title}
+        onClick={() => canWrite && setOpen((v) => !v)}
       >
-        <path d="M5 11 l4 4 7-8" />
-        <path d="M2 18 h16" />
-      </svg>
+        <svg
+          viewBox="0 0 20 20"
+          width="13"
+          height="13"
+          fill="none"
+          stroke={lit ? "#1E5B46" : "rgba(10,28,64,.25)"}
+          strokeWidth="2.4"
+          strokeLinecap="butt"
+          strokeLinejoin="miter"
+        >
+          <path d="M5 11 l4 4 7-8" />
+          <path d="M2 18 h16" />
+        </svg>
+      </button>
+      {open && canWrite && (
+        <span className={styles.bfPop}>
+          <label className={styles.bfOpt}>
+            <input
+              type="radio"
+              name={`bf-${accountId}`}
+              checked={local === "opp"}
+              disabled={pending}
+              onChange={() => set("opp")}
+            />
+            Opp created
+          </label>
+          <label className={styles.bfOpt}>
+            <input
+              type="radio"
+              name={`bf-${accountId}`}
+              checked={local === "done"}
+              disabled={pending}
+              onChange={() => set("done")}
+            />
+            Done
+          </label>
+          {local !== null && (
+            <button
+              type="button"
+              className={styles.bfClear}
+              disabled={pending}
+              onClick={() => set("clear")}
+            >
+              clear ↺
+            </button>
+          )}
+        </span>
+      )}
     </span>
   );
 }
@@ -602,7 +668,25 @@ function Row({ row }: { row: RoomRow }) {
       <div className={styles.deal}>
         <div className={styles.nmline}>
           <span className={styles.nm}>
-            <Briefed on={row.briefed} />
+            <span className={styles.nmSide}>
+              <Briefed
+                on={row.briefed}
+                manual={row.briefedManual}
+                accountId={row.accountId}
+                canWrite={row.canWrite}
+              />
+              {row.sfUrl && (
+                <a
+                  className={styles.sfMini}
+                  href={row.sfUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  title="Open the account in Salesforce to create the opportunity."
+                >
+                  SF
+                </a>
+              )}
+            </span>
             <Link href={`/accounts?focus=${row.accountId}`} className={styles.nmLink}>
               {row.name}
             </Link>
@@ -881,38 +965,27 @@ function Row({ row }: { row: RoomRow }) {
           ) : (
             <>
               <span className={styles.lbl}>NEXT MOVE</span>
+              {/* The gate chip is retired (founder-decreed 2026-08-19): the
+                  stage's open question lives in the UNKNOWN register with
+                  its own ✓ — the move line carries only the move. */}
               <p className={`${styles.move} ${row.thin ? styles.thin : ""}`}>
                 {row.move}
-                {/* The board gate, said ONCE — a quiet chip, never a second
-                    sentence and never a second block (decreed 2026-08-18). */}
-                {row.outstanding &&
-                  // The move never says a thing twice: when the step itself
-                  // leads the row, the gate chip stands down.
-                  !row.move
-                    .toLowerCase()
-                    .includes(row.outstanding.item.slice(0, 40).toLowerCase()) && (
-                    <span
-                      className={
-                        closed ? `${styles.gate} ${styles.gateDone}` : styles.gate
-                      }
-                    >
-                      GATE · {row.outstanding.item.slice(0, 60)}
-                      {row.outstanding.closedCount > 0
-                        ? ` · ${row.outstanding.closedCount + (closed ? 1 : 0)} BEHIND IT`
-                        : ""}
-                    </span>
-                  )}
               </p>
-              {row.canWrite && row.outstanding && !closed && (
-                <button
-                  type="button"
-                  className={row.rank === 0 ? styles.go : styles.ghost}
-                  disabled={closePending}
-                  onClick={submitClose}
-                >
-                  {closePending ? "Saving…" : "Mark it done ✓"}
-                </button>
-              )}
+              {row.canWrite &&
+                row.outstanding &&
+                !closed &&
+                row.move
+                  .toLowerCase()
+                  .includes(row.outstanding.item.slice(0, 40).toLowerCase()) && (
+                  <button
+                    type="button"
+                    className={row.rank === 0 ? styles.go : styles.ghost}
+                    disabled={closePending}
+                    onClick={submitClose}
+                  >
+                    {closePending ? "Saving…" : "Mark it done ✓"}
+                  </button>
+                )}
             </>
           )}
         </div>
@@ -923,11 +996,13 @@ function Row({ row }: { row: RoomRow }) {
           <div className={styles.sumline}>
             <span className={styles.sumk}>UNKNOWN</span>
             <span className={styles.sumn}>
-              {liveAsks.length}
+              {(row.outstanding && !closed ? 1 : 0) + liveAsks.length}
               {row.gapsQueued > 0 ? ` · ${row.gapsQueued} queued` : ""}
             </span>
             <span className={styles.sumtx}>
-              {liveAsks[0]?.question ?? "Nothing of this deal's own yet."}
+              {row.outstanding && !closed
+                ? row.outstanding.item
+                : (liveAsks[0]?.question ?? "Nothing of this deal's own yet.")}
             </span>
             <Link href={row.askHref} className={styles.sic} title="Ask the brain">
               ⌕
@@ -984,7 +1059,33 @@ function Row({ row }: { row: RoomRow }) {
                 ⊖
               </button>
             </div>
-            {liveAsks.length === 0 && (
+            {/* The stage's open question leads the register (founder-decreed
+                2026-08-19) — ✓ checks it in the stage record. */}
+            {row.outstanding && !closed && (
+              <div className={styles.askRow}>
+                <span className={styles.askQ}>
+                  {row.outstanding.item}
+                  <span className={styles.gateTag}>
+                    STAGE GATE
+                    {row.outstanding.closedCount > 0
+                      ? ` · ${row.outstanding.closedCount} BEHIND IT`
+                      : ""}
+                  </span>
+                </span>
+                {row.canWrite && (
+                  <button
+                    type="button"
+                    className={styles.askX}
+                    disabled={closePending}
+                    onClick={submitClose}
+                    title="Mark it done — checks the gate in the stage record."
+                  >
+                    {closePending ? "…" : "✓"}
+                  </button>
+                )}
+              </div>
+            )}
+            {liveAsks.length === 0 && (!row.outstanding || closed) && (
               <span className={styles.askQ}>
                 Nothing of this deal&apos;s own yet. File a paste, or mint asks.
               </span>
