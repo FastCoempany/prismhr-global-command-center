@@ -4,6 +4,7 @@ import { getAppAccess } from "@/lib/auth";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import { getPeo } from "@/lib/book";
 import { askLinks } from "@/lib/ask/links";
+import { cleanAskText } from "@/lib/ask/clean";
 import { dayLabelFor, timeLabelFor } from "@/lib/scratch";
 import { bankAsk } from "./actions";
 import styles from "./asks.module.css";
@@ -78,8 +79,8 @@ export default async function AsksPage() {
     return {
       id: r.id,
       question: r.question,
-      answer: r.answer,
-      world: r.world,
+      answer: cleanAskText(r.answer),
+      world: cleanAskText(r.world),
       nothing:
         considered > 0
           ? `Read ${considered} lines; couldn't build an answer from them.`

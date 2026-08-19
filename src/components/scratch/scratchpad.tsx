@@ -26,6 +26,7 @@ import {
   type ScratchLine,
 } from "@/app/scratch/actions";
 import { dayLabelFor, timeLabelFor } from "@/lib/scratch";
+import { cleanAskText } from "@/lib/ask/clean";
 import styles from "./scratchpad.module.css";
 
 const PENDING_KEY = "askpad:pending";
@@ -396,10 +397,10 @@ export function Scratchpad() {
                     <div className={styles.tm}>{timeLabelFor(a.at)}</div>
                     <div className={styles.askQ}>{a.question}</div>
                     {a.answer ? (
-                      <div className={styles.askA}>{a.answer}</div>
+                      <div className={styles.askA}>{cleanAskText(a.answer)}</div>
                     ) : a.world ? (
                       <div className={styles.askA}>
-                        {a.world}
+                        {cleanAskText(a.world)}
                         <span className={styles.worldTag}>
                           {" "}
                           — general knowledge, not the record

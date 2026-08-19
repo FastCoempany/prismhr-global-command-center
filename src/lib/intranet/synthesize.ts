@@ -142,7 +142,10 @@ export function violatesVerbatim(answer: string, sources: string[]): boolean {
 export const SYSTEM = `You answer a question using ONLY the numbered claims you are given. Each claim carries who said it, when, and what kind of statement it is.
 
 COMPOSE, NEVER DUMP
-Write ${ANSWER_SENTENCES[0]} to ${ANSWER_SENTENCES[1]} sentences in one voice, explaining a position. Do not stitch other people's sentences together. Never reproduce more than ${VERBATIM_MAX_WORDS} consecutive words from a claim unless you present it as a quotation with its speaker.
+Write ${ANSWER_SENTENCES[0]} to ${ANSWER_SENTENCES[1]} SHORT sentences in one voice, explaining a position. Do not stitch other people's sentences together. Never reproduce more than ${VERBATIM_MAX_WORDS} consecutive words from a claim unless you present it as a quotation with its speaker.
+
+SHAPE — the reader is an operator between calls, not a researcher
+The first line is the position alone, one short sentence. Then the support: if it is a list of facts, write each as its own line starting "- " (a hyphen bullet); if it is one thread of reasoning, use at most two short sentences per line with a blank line between thoughts. No headers, no parenthetical asides, nothing that needs a second read. The whole answer stays under 110 words unless the record genuinely splits.
 
 COMMIT
 State the position in the first sentence. "It depends" is acceptable ONLY when the record holds a genuine unresolved split — and then name the split: "The record splits — the 2024 study said entity, every deal since has gone EOR first."
@@ -156,8 +159,8 @@ Some claims are of kind "prospect-question" — things real buyers asked in demo
 ANSWER FROM THIS RECORD ONLY
 You know things about payroll, EOR, contractor management and international employment. NONE of that belongs in this answer. If the claims do not support an answer, say "${NOTHING_IN_RECORD}" and use "gaps" to name what is missing. Filling a gap from your own knowledge is the single worst thing you can do here — it is invisible to the reader and it destroys the room's usefulness. Answer from this record only.
 
-CITE
-Every substantive assertion carries a bracketed handle from the claims you were given, e.g. [7]. "citations" lists the handles you used. Never invent a handle.
+CITE — in the array, never in the prose
+"citations" lists the handles of every claim you leaned on. The answer text itself carries NO bracketed handles — the reader sees clean prose; the app renders your sourcing as links from "citations". Put per-assertion tracing in "reasoning" (e.g. "the payroll-manager line came from [5]"). Never invent a handle.
 
 REASONING
 "reasoning" is the fold the operator opens: which claims you weighed and why, in plain sentences. "setAside" names claims you retrieved but did not use, with the reason.
@@ -241,7 +244,7 @@ export function sanitizeAnswer(raw: unknown, maxHandle: number): Answer {
 // explicit label, never presented as corpus truth, never blended with it.
 export const WORLD_SYSTEM = `The reader asked their internal knowledge base a question and it had nothing — so you are answering from general knowledge instead. Their app will label your answer as coming from outside their record.
 
-Be the most accurate, current, decisive briefing the reader could get on the question: 3 to 6 sentences, position first, plain speech. Name genuine uncertainty where it exists. Never invent facts about the reader's own company, deals, colleagues or record — you know nothing about those; this answer is about the world. Do not state currency amounts; describe magnitude in words where cost matters.`;
+Be the most accurate, current, decisive briefing the reader could get on the question: 3 to 6 SHORT sentences, position first, plain speech. Lists of facts go one per line starting "- ". No headers, no bracketed references, no parenthetical asides. Name genuine uncertainty where it exists. Never invent facts about the reader's own company, deals, colleagues or record — you know nothing about those; this answer is about the world. Do not state currency amounts; describe magnitude in words where cost matters.`;
 
 /** A world answer, as text. Empty string on any failure — the caller already
  *  has the honest "nothing in the record" line to fall back to. */

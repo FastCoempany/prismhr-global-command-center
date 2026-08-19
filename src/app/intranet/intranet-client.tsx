@@ -30,6 +30,7 @@ import {
   intranetPulse,
 } from "./actions";
 import { readCapture, runBrain } from "./runners";
+import { cleanAskText } from "@/lib/ask/clean";
 import type {
   AskReply,
   PassageReply,
@@ -638,7 +639,7 @@ export function IntranetClient({
     return (
       <>
         <p className={styles.itLQ}>{e.question}</p>
-        {e.answer && <p className={styles.itProse}>{e.answer}</p>}
+        {e.answer && <p className={styles.itProse}>{cleanAskText(e.answer)}</p>}
         {e.citations.length > 0 && (
           <div className={styles.itCites}>
             {e.citations.map((c) => (
@@ -694,7 +695,9 @@ export function IntranetClient({
         {reply.answer.confidence === "mixed" && !reply.degraded && (
           <p className={styles.itMixed}>The record disagrees with itself here.</p>
         )}
-        {reply.answer.answer && <p className={styles.itProse}>{reply.answer.answer}</p>}
+        {reply.answer.answer && (
+          <p className={styles.itProse}>{cleanAskText(reply.answer.answer)}</p>
+        )}
 
         {reply.world && (
           <div className={styles.itWorld}>
