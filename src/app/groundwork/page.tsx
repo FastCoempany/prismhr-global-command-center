@@ -349,18 +349,78 @@ export default async function GroundworkPage({
   };
 
   // When no channel line exists (a copy-stamp, a pre-register stamp), the
-  // subtext says plainly what was done: the queue's own action line, past
-  // tense — no ceremony (founder-decreed 2026-08-19).
-  const RULE_LABELS: Record<string, string> = {
-    "wire-trigger": "SENT THE NEWS NOTE",
-    "intent-warm": "SENT THE READING-US NOTE",
-    "riding-lane": "ASKED TO BE CARRIED IN",
-    "silence-bump": "SENT THE SECOND TOUCH",
-    "cold-revival": "REVIVED THE THREAD",
-    "roundup-slot": "BRIEFED THE CSM",
-    "stale-above-gate": "RAN THE RESEARCH",
-    "stakeholder-gap": "FOUND A SECOND NAME",
-    "never-touched-incumbent": "OPENED THE FIRST CONVERSATION",
+  // subtext carries the move's own specifics — the headline, the thread
+  // subject, the quiet date, the CSM's name — never a bare label
+  // (founder-decreed 2026-08-19: the subtext answers what it means).
+  const clip = (s: string, n: number) =>
+    s.length > n ? `${s.slice(0, n - 1).trimEnd()}…` : s;
+  const threadSubjectOf = (id: string): string => {
+    const l = sendbook.lines.find(
+      (x) => x.accountId === id && x.from === "record" && x.clause,
+    );
+    return l ? l.clause : "";
+  };
+  const lastSendDateOf = (id: string): string => {
+    const l = sendbook.lines.find((x) => x.accountId === id);
+    return l ? monthDay(l.at) : "";
+  };
+  const wireHeadFor = (id: string): string => {
+    let best: WireItem | null = null;
+    for (const w of wireItems)
+      if (w.accountIds.includes(id) && (!best || w.at > best.at)) best = w;
+    return best?.headline ?? "";
+  };
+  const ruleSub = (id: string, ruleId: string): string => {
+    switch (ruleId) {
+      case "wire-trigger": {
+        const h = wireHeadFor(id);
+        return h
+          ? `SENT THE NEWS NOTE · ${clip(h.toUpperCase(), 46)}`
+          : "SENT A NOTE ABOUT THEIR NEWS";
+      }
+      case "intent-warm": {
+        const n = intentById.get(id)?.activities;
+        return n
+          ? `SENT THE READING-US NOTE · ${n} SALES NAV READS`
+          : "SENT THE READING-US NOTE · SALES NAV SHOWS THEM READING US";
+      }
+      case "riding-lane": {
+        const d = ridingLaneDate(accountNotes.get(id), now);
+        return d
+          ? `ASKED INTO THE COLLEAGUE'S OPEN DEAL · CLOSES ${monthDay(d).toUpperCase()}`
+          : "ASKED INTO THE COLLEAGUE'S OPEN DEAL";
+      }
+      case "silence-bump": {
+        const s = threadSubjectOf(id);
+        const d = lastSendDateOf(id);
+        return `NUDGED ${s ? `THE '${clip(s.toUpperCase(), 34)}' THREAD` : "THE OPEN THREAD"}${d ? ` · NO REPLY SINCE ${d.toUpperCase()}` : ""}`;
+      }
+      case "cold-revival": {
+        const s = threadSubjectOf(id);
+        const d = lastSendDateOf(id);
+        return `REVIVED ${s ? `THE '${clip(s.toUpperCase(), 34)}' THREAD` : "THE COLD THREAD"}${d ? ` · QUIET SINCE ${d.toUpperCase()}` : ""}`;
+      }
+      case "roundup-slot": {
+        const csm = getPeo(id)?.csm ?? "";
+        return csm && csm !== "Unassigned"
+          ? `BRIEFED ${csm.toUpperCase()} ON THIS ACCOUNT`
+          : "BRIEFED THE PARTNER MANAGER ON THIS ACCOUNT";
+      }
+      case "stale-above-gate": {
+        const r = researchByAccount.get(id);
+        if (r) {
+          const age = Math.floor((now.getTime() - Date.parse(r.at)) / 86_400_000);
+          return `REFRESHED THE ACCOUNT RESEARCH · WAS ${age} DAYS OLD`;
+        }
+        return "RAN THE BOOK-WIDE RESEARCH PASS";
+      }
+      case "stakeholder-gap":
+        return "DUG UP A SECOND CONTACT NAME";
+      case "never-touched-incumbent":
+        return "OPENED THE FIRST GLOBAL CONVERSATION · THEY RUN PRISM";
+      default:
+        return "";
+    }
   };
 
   const doneToday: {
@@ -378,7 +438,7 @@ export default async function GroundworkPage({
       doneToday.push({
         name,
         at: clockShort(at),
-        sub: subFor(m[1]) || RULE_LABELS[m[2]] || "",
+        sub: subFor(m[1]) || ruleSub(m[1], m[2]),
         mk: `${m[1]}:${m[2]}`,
         accountId: m[1],
       });
