@@ -27,7 +27,6 @@ import {
   intranetContents,
   intranetLedgerDay,
   intranetPassage,
-  intranetPulse,
 } from "./actions";
 import { readCapture, runBrain } from "./runners";
 import { cleanAskText } from "@/lib/ask/clean";
@@ -172,9 +171,18 @@ export function IntranetClient({
   useEffect(() => {
     if (!canWrite) return;
     let alive = true;
+    // A plain GET, never a server action: an action response re-applies the
+    // current route and cancels in-flight navigations — on a 2-second drum
+    // that made the top tabs feel dead (caught 2026-08-19).
     const read = async () => {
-      const p = await intranetPulse();
-      if (alive && p) setPulseS(p);
+      try {
+        const res = await fetch("/intranet/pulse", { cache: "no-store" });
+        if (!res.ok) return;
+        const p = (await res.json()) as PulseReply | null;
+        if (alive && p) setPulseS(p);
+      } catch {
+        // a missed beat costs one gadget tick, never the page
+      }
     };
     void read();
     if (!gadgetLive)
