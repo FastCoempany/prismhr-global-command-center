@@ -20,6 +20,8 @@ import {
   scratchAdd,
   scratchDelete,
   scratchList,
+  scratchRestore,
+  scratchStruckList,
   type PadAskEntry,
   type ScratchLine,
 } from "@/app/scratch/actions";
@@ -165,13 +167,41 @@ export function Scratchpad() {
     } else setNote(r.reason ?? "The line didn't keep.");
   };
 
+  // The struck history (decreed 2026-08-19): ✕ moves the line off the paper
+  // into the archive — nothing dies. Fetched lazily on first unfold.
+  const [struck, setStruck] = useState<ScratchLine[] | null>(null);
+  const [struckOpen, setStruckOpen] = useState(false);
+
   const crossOut = async (id: string) => {
     const prev = lines;
+    const gone = (lines ?? []).find((l) => l.id === id) ?? null;
     setLines((xs) => (xs ?? []).filter((l) => l.id !== id));
+    if (gone) setStruck((xs) => (xs === null ? xs : [gone, ...xs]));
     const r = await scratchDelete(id);
     if (!r.ok) {
       setLines(prev);
+      if (gone) setStruck((xs) => (xs === null ? xs : xs.filter((l) => l.id !== id)));
       setNote(r.reason ?? "The cross-out didn't take.");
+    }
+  };
+
+  const toggleStruck = () => {
+    const opening = !struckOpen;
+    setStruckOpen(opening);
+    if (opening && struck === null)
+      void scratchStruckList().then((r) => setStruck(r.ok ? r.lines : []));
+  };
+
+  const bringBack = async (id: string) => {
+    const line = (struck ?? []).find((l) => l.id === id) ?? null;
+    if (!line) return;
+    setStruck((xs) => (xs ?? []).filter((l) => l.id !== id));
+    setLines((xs) => [line, ...(xs ?? [])].sort((a, b) => b.at.localeCompare(a.at)));
+    const r = await scratchRestore(id);
+    if (!r.ok) {
+      setLines((xs) => (xs ?? []).filter((l) => l.id !== id));
+      setStruck((xs) => [line, ...(xs ?? [])]);
+      setNote(r.reason ?? "The restore didn't take.");
     }
   };
 
@@ -294,7 +324,7 @@ export function Scratchpad() {
                       <button
                         type="button"
                         className={styles.del}
-                        title="Cross it out. Gone for good."
+                        title="Cross it out. The history keeps it."
                         onClick={() => void crossOut(l.id)}
                       >
                         ✕
@@ -303,6 +333,35 @@ export function Scratchpad() {
                   </div>
                 ))}
               </div>
+              <button type="button" className={styles.struckKick} onClick={toggleStruck}>
+                STRUCK {struckOpen ? "▾" : "▸"}
+              </button>
+              {struckOpen && (
+                <div className={styles.struckList}>
+                  {struck === null && (
+                    <div className={styles.quiet}>Reading the history…</div>
+                  )}
+                  {struck?.length === 0 && (
+                    <div className={styles.quiet}>Nothing struck yet.</div>
+                  )}
+                  {(struck ?? []).map((l) => (
+                    <div key={l.id} className={styles.row}>
+                      <span className={styles.tm}>{timeLabelFor(l.at)}</span>
+                      <span className={`${styles.body} ${styles.struckBody}`}>
+                        {l.body}
+                      </span>
+                      <button
+                        type="button"
+                        className={styles.del}
+                        title="Bring it back onto the paper."
+                        onClick={() => void bringBack(l.id)}
+                      >
+                        ↺
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
               <div className={styles.hint}>
                 Stays here and only here. Nothing files anywhere.
               </div>

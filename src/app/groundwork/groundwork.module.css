@@ -758,3 +758,56 @@ a.wingItem:hover .wingNm {
     font-size: 30px;
   }
 }
+
+/* ── The Channel Ask + the Sendbook's door (decreed 2026-08-19) ─────────── */
+.wingSub {
+  display: block;
+  font: 600 9.5px/1.5 var(--font-mono);
+  letter-spacing: 0.08em;
+  color: var(--ds-ink-quiet);
+  padding-left: 16px;
+}
+.chipRow {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.chChip {
+  font: 600 10.5px/1 var(--font-mono);
+  letter-spacing: 0.08em;
+  background: var(--color-surface);
+  color: var(--color-ink-disabled);
+  border: 1px solid var(--color-line);
+  border-radius: 999px;
+  padding: 7px 12px;
+  cursor: pointer;
+}
+.chChip:hover {
+  color: var(--color-ink);
+  border-color: var(--color-ink-disabled);
+}
+.chChip:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.chChipMore {
+  border-style: dashed;
+}
+.tallyfoot {
+  display: block;
+  margin-top: 28px;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-line);
+  font: 600 10.5px/1.6 var(--font-mono);
+  letter-spacing: 0.1em;
+  color: var(--ds-ink-quiet);
+  text-decoration: none;
+}
+.tallyfoot b {
+  color: var(--color-ink);
+  font-weight: 600;
+}
+.tallyfoot:hover {
+  color: var(--color-ink);
+}
