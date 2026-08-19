@@ -268,6 +268,17 @@ export function readDeal(i: RoomInputs): RoomRead {
     }. The reply is owed.`;
   } else if (meetingNewest) {
     move = `Send ${meetingWho || "them"} the recap. You met ${meetingAgo}.`;
+  } else if (
+    i.lastTouch &&
+    i.lastTouch.awaitingReply &&
+    quietDays === 0 &&
+    !i.allGatesDone
+  ) {
+    // The operator already moved today — a filed send or a logged touch puts
+    // the ball with them until tomorrow. The open gate rides its own chip;
+    // the row must acknowledge the send it just read (the Infiniti
+    // demo-times drop, founder-decreed 2026-08-19).
+    move = `Wait on ${i.lastTouch.who || "their reply"}. You wrote today.`;
   } else if (i.step) {
     // The gate item is already an imperative ("Book the demo") — say it
     // plainly; never "close" it (decreed 2026-08-18).

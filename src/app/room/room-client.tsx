@@ -349,6 +349,7 @@ function Row({ row }: { row: RoomRow }) {
   const filePaste = (text: string, force: boolean) => {
     start(async () => {
       const r = await roomPaste(row.accountId, text, force ? { force: true } : undefined);
+      setReading(null);
       if (r.mismatch) {
         setMismatch({ ...r.mismatch, text });
         return;
@@ -387,11 +388,13 @@ function Row({ row }: { row: RoomRow }) {
     setReading(f.name);
     setNote(null);
     const read = await readFileToText(f, (fd) => roomReadPdf(row.accountId, fd));
-    setReading(null);
     if (!read.ok) {
+      setReading(null);
       setNote(read.reason);
       return;
     }
+    // The label holds through the server filing too — the slow part is the
+    // brain reading the text, and a silent row reads as a dead drop.
     filePaste(read.text, false);
   };
   const handleFiles = (list: FileList | null) => {
@@ -882,16 +885,23 @@ function Row({ row }: { row: RoomRow }) {
                 {row.move}
                 {/* The board gate, said ONCE — a quiet chip, never a second
                     sentence and never a second block (decreed 2026-08-18). */}
-                {row.outstanding && (
-                  <span
-                    className={closed ? `${styles.gate} ${styles.gateDone}` : styles.gate}
-                  >
-                    GATE · {row.outstanding.item.slice(0, 60)}
-                    {row.outstanding.closedCount > 0
-                      ? ` · ${row.outstanding.closedCount + (closed ? 1 : 0)} BEHIND IT`
-                      : ""}
-                  </span>
-                )}
+                {row.outstanding &&
+                  // The move never says a thing twice: when the step itself
+                  // leads the row, the gate chip stands down.
+                  !row.move
+                    .toLowerCase()
+                    .includes(row.outstanding.item.slice(0, 40).toLowerCase()) && (
+                    <span
+                      className={
+                        closed ? `${styles.gate} ${styles.gateDone}` : styles.gate
+                      }
+                    >
+                      GATE · {row.outstanding.item.slice(0, 60)}
+                      {row.outstanding.closedCount > 0
+                        ? ` · ${row.outstanding.closedCount + (closed ? 1 : 0)} BEHIND IT`
+                        : ""}
+                    </span>
+                  )}
               </p>
               {row.canWrite && row.outstanding && !closed && (
                 <button
