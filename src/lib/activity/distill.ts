@@ -112,6 +112,7 @@ THE LAWS:
 - Never contradict the FIRST RECORD lines provided: if the operator already answered, met, or wrote, the act must build on that, not re-ask it. Weave the first record in where it sharpens the reason.
 - Money figures never appear anywhere in your output.
 - A need is either internal (the PEO's own) or a client's — never "their own book". Nothing is "X-shaped".
+- Never name the operator themself as a person to reach or coordinate with — their motion IS the first record.
 - If nothing clears the bar, return zero gems and say precisely why in whyNone (one sentence). An honest empty beats a stretched find.`;
 
 export async function runDistill(inp: {
