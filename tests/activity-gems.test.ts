@@ -152,6 +152,7 @@ test("the intent grammar round-trips", () => {
   const body = renderIntentBody({
     dropSha: "d942e0f2ffffffff",
     windows: {
+      w7: { s: 0, o: 0, c: 0 },
       w30: { s: 812, o: 240, c: 31 },
       w60: { s: 1500, o: 400, c: 60 },
       w90: { s: 2100, o: 540, c: 87 },

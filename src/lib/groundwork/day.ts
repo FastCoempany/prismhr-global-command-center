@@ -16,6 +16,15 @@ import { isMeetingNote } from "@/lib/intel/meeting";
 import { getDemand, researchGeneratedAt, DEMAND_GATE } from "@/lib/book/research";
 import { proximityRank } from "./proximity";
 import { intentFor, ridingLaneDate, type IntentSignal } from "./signals";
+import {
+  engagedNeverIntroduced,
+  intentWarm,
+  orgInboundKey,
+  orgInboundHolder,
+  outreachGem,
+  verifiedCold,
+  type SecondRecord,
+} from "@/lib/activity/read";
 import { USER_TZ, userDayKey } from "@/lib/tz";
 
 export type Band = "now" | "eleven" | "two";
@@ -29,7 +38,9 @@ export type QueueRuleId =
   | "stale-above-gate"
   | "cold-revival"
   | "stakeholder-gap"
-  | "never-touched-incumbent";
+  | "never-touched-incumbent"
+  | "engaged-never-introduced"
+  | "second-record-gem";
 
 export type QueueItem = {
   accountId: string;
@@ -118,6 +129,11 @@ export type QueueInput = {
   // HomeRoom's to work, and a stamped Closed Won/Lost is over. Groundwork
   // prospects the book it is NOT actively closing.
   excludedIds?: Set<string>;
+  /** The second record, parsed once for the whole book (read.ts). */
+  secondById?: Map<string, SecondRecord>;
+  /** Accounts holding ANY live board card — engaged-never-introduced only
+   *  fires where no deal exists at all, whatever its stage. */
+  boardIds?: Set<string>;
   now: Date;
 };
 
@@ -154,6 +170,8 @@ export function currentBand(now: Date): Band {
 
 const BAND_OF: Record<QueueRuleId, Band> = {
   "wire-trigger": "now",
+  "second-record-gem": "now",
+  "engaged-never-introduced": "eleven",
   "silence-bump": "now",
   "riding-lane": "now",
   "intent-warm": "eleven",
@@ -169,6 +187,8 @@ const BAND_OF: Record<QueueRuleId, Band> = {
 // update), 1 keeps until worked.
 const HEAT_OF: Record<QueueRuleId, 1 | 2 | 3> = {
   "wire-trigger": 3,
+  "second-record-gem": 3,
+  "engaged-never-introduced": 2,
   "intent-warm": 3,
   "riding-lane": 2,
   "silence-bump": 2,
@@ -249,17 +269,63 @@ function rankAll(inp: QueueInput, now: Date): QueueItem[] {
       }
     }
 
-    // intent-warm (80): a fresh High reading from the pasted grab.
-    if (intent?.level === "high") {
+    // intent-warm (84): warm on EITHER store, merged by latest and never
+    // double-counted — the weekly export's open/click tallies (3·clicks +
+    // 1·opens, 10-day half-life, threshold 6) or a fresh High reading from
+    // the pasted SN grab. One candidate either way.
+    const sr = inp.secondById?.get(p.id);
+    const warm = intentWarm(sr, now);
+    if (warm || intent?.level === "high") {
       candidates.push({
         accountId: p.id,
         name: p.name,
         ruleId: "intent-warm",
-        weight: 80,
+        weight: 84,
         band: BAND_OF["intent-warm"],
         action: "Send the reading-us note.",
-        reason: "Their people are reading us.",
+        reason: warm
+          ? `They opened ${warm.opens30} of ours.`
+          : "Their people are reading us.",
         owed: "note ready",
+        carried: false,
+        intent,
+      });
+    }
+
+    // engaged-never-introduced (78): heavy support traffic, still warm, on an
+    // account nobody ever pitched — no first-record motion, no board card.
+    // The file card carries the support pulse as ammunition.
+    const eni = engagedNeverIntroduced(sr, now);
+    if (eni && !hasActivity && !inp.boardIds?.has(p.id)) {
+      candidates.push({
+        accountId: p.id,
+        name: p.name,
+        ruleId: "engaged-never-introduced",
+        weight: 78,
+        band: BAND_OF["engaged-never-introduced"],
+        action: "Open the first conversation.",
+        reason: `${eni.cases} support cases. Never pitched.`,
+        owed: "draft composed",
+        carried: false,
+        intent,
+      });
+    }
+
+    // second-record-gem (84): a verified, un-acted gem whose act points at
+    // account people is wire-class evidence — the act line IS the move, the
+    // refuter already checked the canon on it. Coordination gems stay in the
+    // rooms; the queue is outbound only.
+    const gem = outreachGem(sr);
+    if (gem) {
+      candidates.push({
+        accountId: p.id,
+        name: p.name,
+        ruleId: "second-record-gem",
+        weight: 84,
+        band: BAND_OF["second-record-gem"],
+        action: gem.act,
+        reason: gem.reason,
+        owed: "evidence attached",
         carried: false,
         intent,
       });
@@ -299,8 +365,30 @@ function rankAll(inp: QueueInput, now: Date): QueueItem[] {
       .filter(Boolean)
       .sort()
       .pop();
-    const answered =
+    // The answered check reads the WIDEST inbound the app holds (the second
+    // record law): a reply that landed in a colleague's inbox still answers
+    // the thread — no bump; the move flips to coordination instead.
+    const orgIn = orgInboundKey(sr);
+    const answeredMine =
       !!intelHere?.lastInbound && !!lastOutIso && intelHere.lastInbound > lastOutIso;
+    const answeredOrg = !answeredMine && !!orgIn && !!lastOutIso && orgIn > lastOutIso;
+    if (newestTouch && lastOutIso && answeredOrg) {
+      const holder = orgInboundHolder(sr);
+      const first = holder.split(" ")[0] || "";
+      candidates.push({
+        accountId: p.id,
+        name: p.name,
+        ruleId: "silence-bump",
+        weight: 72,
+        band: BAND_OF["silence-bump"],
+        action: first ? `Ask ${first} what they said.` : "Find the reply org-side.",
+        reason: first ? `Their reply went to ${first}.` : "Their reply landed org-side.",
+        owed: "ask composed",
+        carried: false,
+        intent,
+      });
+    }
+    const answered = answeredMine || answeredOrg;
     if (newestTouch && lastOutIso && !answered) {
       const quiet = (now.getTime() - Date.parse(lastOutIso)) / DAY;
       if (
@@ -383,14 +471,20 @@ function rankAll(inp: QueueInput, now: Date): QueueItem[] {
     // The backbone rule of the direct era: the first conversation, direct.
     const desk = deskScore(p);
     if (desk.incumbent && p.fitTier === "high" && !hasActivity) {
+      // Cold-validated (the second record law): zero account-person motion
+      // on BOTH records upgrades confidence — the cold is verified, not
+      // assumed, and the reason says so.
+      const cold = verifiedCold(sr);
       candidates.push({
         accountId: p.id,
         name: p.name,
         ruleId: "never-touched-incumbent",
-        weight: 50,
+        weight: cold ? 52 : 50,
         band: BAND_OF["never-touched-incumbent"],
         action: "Open the first conversation.",
-        reason: "On our platform. Never introduced.",
+        reason: cold
+          ? "Verified cold. Ninety quiet days."
+          : "On our platform. Never introduced.",
         owed: "draft composed",
         carried: false,
         intent,

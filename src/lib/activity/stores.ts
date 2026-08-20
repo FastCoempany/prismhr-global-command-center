@@ -287,6 +287,7 @@ export function renderIntentBody(inp: {
     `${label} · sent ${x.s} · opened ${x.o} · clicked ${x.c}`;
   const lines = [
     `⌗ INTENT · drop ${sha8(inp.dropSha)} · last open ${w.lastOpen || "never"}`,
+    row("7D", w.w7),
     row("30D", w.w30),
     row("60D", w.w60),
     row("90D", w.w90),
@@ -313,6 +314,7 @@ export function parseIntentBody(body: string): {
   const out = {
     dropSha: head[1],
     windows: {
+      w7: zero(),
       w30: zero(),
       w60: zero(),
       w90: zero(),
@@ -323,13 +325,17 @@ export function parseIntentBody(body: string): {
   };
   for (const line of lines.slice(1)) {
     let m: RegExpExecArray | null;
-    if ((m = /^(30D|60D|90D) · sent (\d+) · opened (\d+) · clicked (\d+)$/.exec(line))) {
+    if (
+      (m = /^(7D|30D|60D|90D) · sent (\d+) · opened (\d+) · clicked (\d+)$/.exec(line))
+    ) {
       const w =
-        m[1] === "30D"
-          ? out.windows.w30
-          : m[1] === "60D"
-            ? out.windows.w60
-            : out.windows.w90;
+        m[1] === "7D"
+          ? out.windows.w7
+          : m[1] === "30D"
+            ? out.windows.w30
+            : m[1] === "60D"
+              ? out.windows.w60
+              : out.windows.w90;
       w.s = Number(m[2]);
       w.o = Number(m[3]);
       w.c = Number(m[4]);

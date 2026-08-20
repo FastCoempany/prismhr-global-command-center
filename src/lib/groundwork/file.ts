@@ -20,6 +20,8 @@ export type FileHistoryLine = { atIso: string; line: string };
 
 export type FileModel = {
   accountId: string;
+  /** The collision guard's quiet flag — informs, never blocks. "" = clear. */
+  collisionLine: string;
   name: string;
   csm: string;
   sourcesLine: string; // computed provenance — only stores that contributed
@@ -71,6 +73,15 @@ export function buildFile(
     // The relationship read, when the caller derived one from the record —
     // it outranks the book primary in the people head and the compose.
     relationship?: { name: string; email: string; source: "record" | "book" } | null;
+    /** The second record's fuel for the composer and the collision gate. */
+    second?: {
+      supportCases?: number;
+      gem?: { act: string; reason: string; term: string; who: string[] } | null;
+      collision?: {
+        mktgSends7: number;
+        colleague: { who: string; day: string } | null;
+      } | null;
+    } | null;
     now: Date;
   },
 ): FileModel {
@@ -171,7 +182,18 @@ export function buildFile(
     contactName: rel.name,
     laneDate,
     wireHeadline: wireMatches[0]?.headline ?? null,
+    supportCases: deps.second?.supportCases,
+    gem: deps.second?.gem ?? null,
   });
+  // The collision guard speaks on the stage first (the chips) and rides the
+  // composed thing here — the same quiet-flag pattern the CSM-thread flag
+  // set. It informs; it never blocks (the direct doctrine).
+  const col = deps.second?.collision;
+  const collisionLine = col
+    ? col.mktgSends7 > 0
+      ? `MKTG CADENCE LIVE · ${col.mktgSends7} SEND${col.mktgSends7 === 1 ? "" : "S"} THIS WEEK`
+      : `${(col.colleague?.who ?? "A COLLEAGUE").toUpperCase()}'S THREAD · ${(col.colleague?.day ?? "").slice(5).replace("-", "/")}`
+    : "";
   const threadCount = intel?.threads.people.length ?? 0;
   const singleThread = threadCount === 1;
   // The widening question travels INSIDE the composed text when one person
@@ -185,6 +207,7 @@ export function buildFile(
 
   return {
     accountId: p.id,
+    collisionLine,
     name: p.name,
     csm: p.csm,
     sourcesLine: sources.join(" · "),
