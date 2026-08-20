@@ -225,6 +225,9 @@ export type AccountRow = {
     adjustedDemand?: number;
   } | null;
   engagement: Engagement;
+  // Salesforce's Account Risk Level, from the risk: register — "HIGH" lights
+  // the row; anything else rides the chip's own word.
+  risk: string | null;
   // Off-structure state: ⚡ in motion (live conversation) or ⏸ parked. Not-mine
   // accounts never reach the room — they live in the exclusions ledger.
   disposition: {
@@ -980,6 +983,14 @@ export function AccountsClient({
                               : a.disposition.status === "lost"
                                 ? "✕ closed lost"
                                 : "⌁ engaged"}
+                      </span>
+                    )}{" "}
+                    {a.risk && (
+                      <span
+                        className={styles.riskChip}
+                        title="Salesforce marks this account's risk level. Handle with care."
+                      >
+                        ⚠ {a.risk} RISK
                       </span>
                     )}{" "}
                     <ValBadge v={a.validation} />
