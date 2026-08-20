@@ -283,7 +283,9 @@
   font: 700 9px/1 var(--font-donor-mono, ui-monospace, monospace);
   letter-spacing: 0.18em;
   color: rgba(10, 28, 64, 0.42);
-  padding: 8px 0 2px;
+  /* the fold sits outside .list — it carries the card's own 14px gutters
+     so STRUCK lines up with the paper, never the card edge */
+  padding: 8px 14px 2px;
   text-align: left;
 }
 .struckKick:hover {
@@ -293,7 +295,7 @@
   max-height: 160px;
   overflow-y: auto;
   border-top: 1px dashed rgba(10, 28, 64, 0.22);
-  padding-top: 4px;
+  padding: 4px 14px 0;
 }
 .struckBody {
   color: rgba(10, 28, 64, 0.42);
