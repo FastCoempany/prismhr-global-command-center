@@ -86,6 +86,20 @@ export default async function AccountsPage() {
   const engagements = await loadEngagements();
   const chipNotes = await loadAccountNotes();
   const dispositions = await loadDispositions();
+  // The risk register (founder-decreed 2026-08-20, from the SF banner on LSI
+  // Staffing): risk:<accountId> notes carry Salesforce's Account Risk Level;
+  // the newest note is the level. HIGH lights the row red — real risk is the
+  // one thing red is for.
+  const riskById = new Map<string, string>();
+  for (const [id, list] of chipNotes) {
+    if (!id.startsWith("risk:")) continue;
+    const accountId = id.slice("risk:".length);
+    const head = (list[0]?.body ?? "")
+      .split(/[\n—·]/)[0]
+      .trim()
+      .toUpperCase();
+    if (accountId && head) riskById.set(accountId, head);
+  }
   // The partner register, folded in. Partners used to own a tab; the work
   // happens account by account now, so the roster lives here — present,
   // countable, and out of the way.
@@ -300,6 +314,7 @@ export default async function AccountsPage() {
           ? { status: v.status, note: v.note, adjustedDemand: v.adjustedDemand }
           : null,
         engagement: engagements.get(p.id) ?? EMPTY_ENGAGEMENT,
+        risk: riskById.get(p.id) ?? null,
         disposition: (() => {
           const board = boardById.get(p.id);
           // The stamp outranks everything: a Closed deal is never "in motion".
