@@ -66,9 +66,11 @@ const DISTILL_SCHEMA = {
   additionalProperties: false,
   required: ["gems", "whyNone"],
   properties: {
+    // NOTE: the structured-output validator rejects minItems/maxItems on
+    // arrays (measured 2026-08-20 — a 400 on every call). Caps live in code:
+    // gems slice to three, empty citations die in the mechanical gauntlet.
     gems: {
       type: "array",
-      maxItems: 3,
       items: {
         type: "object",
         additionalProperties: false,
@@ -84,7 +86,7 @@ const DISTILL_SCHEMA = {
           "citedRowKeys",
         ],
         properties: {
-          who: { type: "array", items: { type: "string" }, maxItems: 4 },
+          who: { type: "array", items: { type: "string" } },
           whoKind: { type: "string", enum: ["colleague", "account", "mixed"] },
           what: { type: "string" },
           whenDay: { type: "string", description: "YYYY-MM-DD, the max cited row date" },
@@ -92,7 +94,7 @@ const DISTILL_SCHEMA = {
           term: { type: "string", description: "at most two words, a label" },
           act: { type: "string", description: "imperative, six words or fewer" },
           reason: { type: "string", description: "the trigger, eight words or fewer" },
-          citedRowKeys: { type: "array", items: { type: "string" }, minItems: 1 },
+          citedRowKeys: { type: "array", items: { type: "string" } },
         },
       },
     },
@@ -160,7 +162,13 @@ ${rowsText(inp.rows)}${inp.retryNote ? `\n\nRETRY: ${inp.retryNote}` : ""}`;
   try {
     const raw = JSON.parse(text) as DistillResult;
     return {
-      gems: Array.isArray(raw.gems) ? raw.gems.slice(0, 3) : [],
+      gems: Array.isArray(raw.gems)
+        ? raw.gems.slice(0, 3).map((g) => ({
+            ...g,
+            who: Array.isArray(g.who) ? g.who.slice(0, 4) : [],
+            citedRowKeys: Array.isArray(g.citedRowKeys) ? g.citedRowKeys : [],
+          }))
+        : [],
       whyNone: String(raw.whyNone ?? ""),
     };
   } catch {
