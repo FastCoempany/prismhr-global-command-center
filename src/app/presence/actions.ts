@@ -48,6 +48,19 @@ export async function presenceLog(activeSec: number, passiveSec: number): Promis
   }
 }
 
+// The reset (founder-decreed 2026-08-19): today's row comes out and the
+// clock starts from zero. Only today's — history stays history.
+export async function presenceReset(): Promise<void> {
+  if ((await accessLevel()) !== "write") return;
+  try {
+    await getPrisma().accountDisposition.deleteMany({
+      where: { accountId: `${PRESENCE_NS}${presenceDayKey(new Date())}` },
+    });
+  } catch {
+    // a failed reset leaves the tally standing — press it again
+  }
+}
+
 // Today's tally, for seeding the capsule on page load.
 export async function presenceToday(): Promise<{ a: number; p: number }> {
   if ((await accessLevel()) === "none") return { a: 0, p: 0 };
