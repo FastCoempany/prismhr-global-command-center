@@ -8795,3 +8795,53 @@
   font-size: 11px;
   color: rgba(10, 28, 64, 0.42);
 }
+
+/* The grab's landing receipt (caught 2026-08-20). */
+.itGrab {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: rgba(37, 99, 235, 0.07);
+  border: 1px solid rgba(37, 99, 235, 0.3);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin: 10px 0;
+}
+.itGrabKick {
+  font-family: var(--font-donor-mono), ui-monospace, Menlo, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: #2563eb;
+  white-space: nowrap;
+}
+.itGrabTx {
+  flex: 1;
+  min-width: 220px;
+  font-size: 13px;
+  color: rgba(10, 28, 64, 0.8);
+}
+.itGrabBtn {
+  border: 0;
+  border-radius: 6px;
+  background: #2563eb;
+  color: #fff;
+  font-weight: 700;
+  font-size: 12.5px;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+.itGrabBtn:hover {
+  filter: brightness(0.95);
+}
+.itGrabX {
+  border: 0;
+  background: none;
+  color: rgba(10, 28, 64, 0.42);
+  cursor: pointer;
+  font-size: 13px;
+}
+.itGrabX:hover {
+  color: #0a1c40;
+}
