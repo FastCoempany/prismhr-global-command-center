@@ -3,6 +3,7 @@ import { DM_Serif_Display, JetBrains_Mono, Public_Sans } from "next/font/google"
 import { AppWayfinder } from "@/components/app-wayfinder";
 import { loadDashboard } from "@/lib/dashboard/data";
 import { csms, peos } from "@/lib/book";
+import { fetchSecondRecords } from "@/lib/activity/read";
 import { EXTRA_PARTNERS } from "@/lib/book/partners";
 import {
   isManual,
@@ -123,6 +124,12 @@ export default async function RoomPage() {
   // read once for the whole board. A deal inherits the questions its peers
   // provoked. Empty until the brain has read a demo — the room degrades quietly.
   const askedByPeers = await prospectAsks(600);
+
+  // The second record, one query for the whole board — the THEIRS line reads
+  // the verified gems; acted gems have already left the arrival surface.
+  const secondById = await fetchSecondRecords().catch(
+    () => new Map<string, never>() as Awaited<ReturnType<typeof fetchSecondRecords>>,
+  );
 
   const rows: RoomRow[] = [];
   for (const card of data.cards) {
@@ -385,8 +392,35 @@ export default async function RoomPage() {
       labels: data.labels,
     });
 
+    const theirs = (() => {
+      const sr = accountId ? secondById.get(accountId) : undefined;
+      const live = (sr?.gems ?? []).filter((g) => !g.actedDay).slice(0, 2);
+      if (live.length === 0) return null;
+      const g = live[0];
+      const first = (g.who[0] ?? "").split(" ")[0].toUpperCase();
+      const day = g.whenDay ? g.whenDay.slice(5).replace("-", "/") : "";
+      const label = [
+        first ? `${first}’S ${g.term}` : g.term,
+        day,
+        live.length > 1 ? `+${live.length - 1}` : "",
+      ]
+        .filter(Boolean)
+        .join(" · ");
+      return {
+        label,
+        gems: live.map((x) => ({
+          term: x.term,
+          act: x.act,
+          reason: x.reason,
+          whenDay: x.whenDay,
+          cites: x.cites,
+        })),
+      };
+    })();
+
     rows.push({
       accountId,
+      theirs,
       cardId: card.id,
       name: card.name,
       meta,

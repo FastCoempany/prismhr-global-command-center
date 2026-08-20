@@ -54,9 +54,13 @@ import { DROP_ACCEPT, sniffPaste } from "@/lib/paste-files";
 import { readFileToText } from "./read-file";
 import type { StageView } from "@/lib/room/stages-view";
 import styles from "./room.module.css";
+import TheirsLine, { type TheirsGem } from "./theirs-line";
 
 export type RoomRow = {
   accountId: string;
+  /** The THEIRS line (decreed 2026-08-20): the second record's verified
+   *  read — null when the drop holds no live gems for this account. */
+  theirs: { label: string; gems: TheirsGem[] } | null;
   cardId: string;
   name: string;
   meta: string;
@@ -992,6 +996,13 @@ function Row({ row }: { row: RoomRow }) {
       </div>
 
       <div className={styles.rec}>
+        {row.theirs && (
+          <TheirsLine
+            accountId={row.accountId}
+            label={row.theirs.label}
+            gems={row.theirs.gems}
+          />
+        )}
         {spring !== "unknown" && (
           <div className={styles.sumline}>
             <span className={styles.sumk}>UNKNOWN</span>
