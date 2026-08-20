@@ -958,3 +958,28 @@ a.wingItem:hover .wingNm {
 .staleFoot {
   color: #b6791a;
 }
+
+/* The roundup brief's prep (5.3) — the CSM's own motion, folded by default. */
+.prepFold {
+  margin-top: 8px;
+  border-top: 1px solid rgba(10, 28, 64, 0.08);
+  padding-top: 6px;
+}
+.prepFold summary {
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--faint);
+  cursor: pointer;
+  list-style: none;
+}
+.prepFold summary:hover {
+  color: var(--ink);
+}
+.prepLine {
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 10.5px;
+  line-height: 1.9;
+  color: var(--soft);
+}

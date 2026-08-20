@@ -32,11 +32,14 @@ import {
   dropAgeDays,
   engagedNeverIntroduced,
   fetchSecondRecords,
+  fetchStageRows,
   intentWarm,
   outreachGem,
+  verifiedCold,
   DROP_STALE_DAYS,
   type SecondRecord,
 } from "@/lib/activity/read";
+import { cleanSubject } from "@/lib/activity/excerpt";
 import EvidenceChips from "./evidence-chips";
 import { loadDashboard } from "@/lib/dashboard/data";
 import { readOutcome } from "@/lib/dashboard/outcome";
@@ -519,16 +522,27 @@ export default async function GroundworkPage({
             contactsFor(stageItem.accountId),
             { name: stageAccount.contactName, email: stageAccount.contactEmail },
           ),
-          second: (() => {
+          second: await (async () => {
             const sr = secondById.get(stageItem.accountId);
             if (!sr) return null;
             const gem = outreachGem(sr);
+            // The roundup brief's prep (5.3): the CSM's own last five rows on
+            // this account — heads only, from the staged slice, read for this
+            // one account only when the slot is on stage.
+            const csmPrep =
+              stageItem.ruleId === "roundup-slot" && stageAccount.csm
+                ? (await fetchStageRows(stageItem.accountId).catch(() => []))
+                    .filter((r) => r.a === stageAccount.csm)
+                    .slice(0, 5)
+                    .map((r) => ({ day: r.d, subject: cleanSubject(r.s).slice(0, 70) }))
+                : [];
             return {
               supportCases: engagedNeverIntroduced(sr, now)?.cases ?? sr.support?.total,
               gem: gem
                 ? { act: gem.act, reason: gem.reason, term: gem.term, who: gem.who }
                 : null,
               collision: collisionFor(sr, now),
+              csmPrep,
             };
           })(),
           now,
@@ -578,7 +592,23 @@ export default async function GroundworkPage({
     if (d && withinWeek(d))
       nextSevenDays.push(`${idToName(id)} — their decision is dated ${monthDay(d)}`);
   }
+  // The second record's arithmetic for the readout — counts, never model text.
+  const srStats = (() => {
+    if (secondById.size === 0) return null;
+    let active30 = 0;
+    let cold = 0;
+    for (const [id, sr] of secondById) {
+      if (!peos.some((p) => p.id === id)) continue;
+      const lh = sr.rollup?.lastHuman?.day ?? "";
+      if (lh && (now.getTime() - Date.parse(`${lh}T12:00:00Z`)) / 86_400_000 <= 30)
+        active30 += 1;
+      if (verifiedCold(sr)) cold += 1;
+    }
+    return { active30, verifiedCold: cold };
+  })();
+
   const readout = buildReadout({
+    secondRecord: srStats,
     accounts: peos,
     queue: rankedAll,
     intelById,
@@ -829,6 +859,23 @@ export default async function GroundworkPage({
                         </span>
                       )}
                       {file.composed.payload}
+                      {file.csmPrep.length > 0 && (
+                        <details className={styles.prepFold}>
+                          <summary>
+                            THE CSM&rsquo;S OWN LAST{" "}
+                            {file.csmPrep.length === 1 ? "ROW" : "FIVE"} · SHARPEN THE ASK
+                            ▾
+                          </summary>
+                          {file.csmPrep.map((x) => (
+                            <div
+                              key={`${x.day}|${x.subject}`}
+                              className={styles.prepLine}
+                            >
+                              {x.day.slice(5).replace("-", "/")} · {x.subject}
+                            </div>
+                          ))}
+                        </details>
+                      )}
                     </div>
                     <div className={styles.people}>
                       {file.threadCount >= 1 && (

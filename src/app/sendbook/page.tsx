@@ -5,6 +5,7 @@
 // disagree with the queue. The forward motion (what is due next) stays
 // Groundwork's; this page tells what happened.
 
+import { fetchSecondRecords, orgInboundKey } from "@/lib/activity/read";
 import Link from "next/link";
 import { AppWayfinder } from "@/components/app-wayfinder";
 import { getAppAccess } from "@/lib/auth";
@@ -90,7 +91,18 @@ export default async function SendbookPage({
     );
   }
 
-  const book = buildSendbook({ notesById, tapsById, now });
+  // The second record's signals — org inbound flips lanes; a live cadence
+  // marks the line. Informs, never blocks.
+  const secondById = await fetchSecondRecords().catch(
+    () => new Map<string, never>() as Awaited<ReturnType<typeof fetchSecondRecords>>,
+  );
+  const orgSignals = new Map<string, { inboundAt: string; mktgLive: boolean }>();
+  for (const [id, sr] of secondById) {
+    const inboundAt = orgInboundKey(sr);
+    const mktgLive = (sr.intent?.windows.w7?.s ?? 0) > 0;
+    if (inboundAt || mktgLive) orgSignals.set(id, { inboundAt, mktgLive });
+  }
+  const book = buildSendbook({ notesById, tapsById, now, orgSignals });
   const week = weekStats(book, now);
 
   const { ch } = await searchParams;
@@ -176,10 +188,18 @@ export default async function SendbookPage({
                 {l.clause}
                 {l.contact ? (l.clause ? ` — ${l.contact}` : l.contact) : ""}
               </span>
+              {orgSignals.get(l.accountId)?.mktgLive && (
+                <span
+                  className={styles.mktgLive}
+                  title="Marketing sent this account a blast inside seven days — your note lands beside it. It informs; it never blocks."
+                >
+                  MKTG LIVE
+                </span>
+              )}
               {book.laneById.get(l.accountId) === "gone-cold" && (
                 <span
                   className={styles.cold}
-                  title="They have spoken before — a reply or a meeting is on file. The thread went cold; this is a re-open, not an introduction."
+                  title="They have spoken before — a reply or a meeting on the record, or their voice reaching the org in the weekly export. The widest record decides the lane. This is a re-open, not an introduction."
                 >
                   GONE COLD
                 </span>

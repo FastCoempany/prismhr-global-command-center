@@ -52,6 +52,16 @@ export function askLinks(
 
   for (const c of input.citations ?? []) {
     if (!c) continue;
+    // A second-record digest cited → the account IS the evidence door (§6).
+    if (c.origin === "activity") {
+      const id = (c.originRef ?? "").split(":")[0];
+      if (id)
+        push(
+          `Open ${nameOf?.(id) || "the account"}.`,
+          `/accounts?focus=${encodeURIComponent(id)}`,
+        );
+      continue;
+    }
     // A playbook question cited → the Playbook, scrolled to that exact card.
     const qm = /^question:(.+)$/.exec(c.originRef ?? "");
     if (c.origin === "playbook" && qm) {

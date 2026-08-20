@@ -16,8 +16,10 @@ import {
   parseGemsBody,
   parseIntentBody,
   parseRollupBody,
+  parseStageBody,
   parseSupportBody,
 } from "./stores";
+import type { StagedRow } from "./types";
 import type { Rollup, SupportTheme, IntentWindows } from "./rollup";
 
 export type SecondRecord = {
@@ -78,6 +80,19 @@ export async function fetchSecondRecords(): Promise<Map<string, SecondRecord>> {
     }
   }
   return out;
+}
+
+/** One account's staged rows — the evidence store, read one account at a
+ *  time (the covenant: only the drill and the prep read bodies). */
+export async function fetchStageRows(accountId: string): Promise<StagedRow[]> {
+  const prisma = getPrisma();
+  const rows = await prisma.accountNote.findMany({
+    where: { accountId: `${STAGE_NS}${accountId}` },
+    orderBy: { createdAt: "desc" },
+    take: 1,
+  });
+  if (rows.length === 0) return [];
+  return parseStageBody(rows[0].body)?.slice.rows ?? [];
 }
 
 const DAY = 86_400_000;
