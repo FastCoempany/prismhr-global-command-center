@@ -230,8 +230,37 @@ refuses to run, and every run carries its three adversarial passes — coverage
 (100% or the run marks itself failed), refutation (mechanical canon lint,
 then an independent refuter that defaults to refute), and staleness/acted
 (the first record kills the nag). Verdicts and every rendered count are
-arithmetic from the rollup builder, never model text. Faces (§4–§6) wait for
-their triptychs and their own ship orders.
+arithmetic from the rollup builder, never model text.
+
+The faces were judged and shipped 2026-08-20 (winners decreed by the founder,
+ship order "ship the picks for those 3 rooms and the second ring as well"):
+**Groundwork — the Evidence Chips** (a mono chip row beneath the stage's
+reason, each chip a door); **Accounts — three columns** (MODEL and PRISMHR
+retire into the drilldown, + Dashboard is a hover glyph at the name, LAST
+HUMAN TOUCH · THE SIGNAL · ACT take the width, the gem folds open beneath
+the row); **HomeRoom — the THEIRS line** (one ochre mono line atop the
+register panel; the move keeps its seat unconditionally). The second ring
+shipped with them: the draft desk's one cited line, the Sendbook's org-wide
+warmth (their voice warms whoever's inbox caught it; the operator's outbound
+and CSM intros still never warm), the roundup brief's folded CSM prep, the
+readout's arithmetic sentence, the Playbook's draft queue (approve by hand,
+nothing auto-publishes), and the intranet digest (rollup + gems only —
+staged bodies never enter the brain, guarded by test).
+
+**The meat law (founder-decreed 2026-08-20, amends the click-depth law):**
+every citation, theme, count, and case on every surface drills to row-level
+meat — citation → cleaned email excerpt; support theme → case list → per-case
+excerpt timeline — as many layers as the evidence holds. Excerpts are cleaned
+of banners, quoted trails, signatures, and disclaimers (src/lib/activity/
+excerpt.ts), money-redacted, and served only by the evidence route (a GET,
+never a server action) — the one place staged bodies leave the store. Arrival
+budgets never grow; the operator never goes back to Salesforce for detail the
+export already carried.
+
+**The vehicle rule (2026-08-20):** a queue rule that rides an account as a
+vehicle for someone else's cadence (roundup-slot, the book-wide research
+stamp) must prefer an account with no candidate of its own — a briefing slot
+never swallows an account's own move.
 
 ## Other standing decrees
 
