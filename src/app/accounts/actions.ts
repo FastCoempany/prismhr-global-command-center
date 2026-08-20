@@ -17,6 +17,8 @@ import { redirect } from "next/navigation";
 import { getAppAccess } from "@/lib/auth";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import { contactsFor, type BookContact } from "@/lib/book/contacts";
+import { getPeo } from "@/lib/book";
+import { discoveredContacts, domainOfAccount } from "@/lib/book/live-contacts";
 
 function str(fd: FormData, key: string, max = 4000) {
   const v = fd.get(key);
@@ -115,8 +117,32 @@ export async function toggleSfChecked(formData: FormData) {
 // The account's full contact roster (from the 7/24 SF contact reports) —
 // fetched on demand when a Contacts panel opens, so the 1.5MB roster never
 // rides in the page payload.
-export async function getContacts(accountId: string): Promise<BookContact[]> {
+export type ContactRow = BookContact & { fromRecord?: boolean; firstSeen?: string };
+
+// The roster PLUS the record's own discoveries (founder-decreed 2026-08-20):
+// a person who arrived in a filed capture with an address on the account's
+// domain joins the list, derived fresh on every read — never stored.
+export async function getContacts(accountId: string): Promise<ContactRow[]> {
   const access = await getAppAccess();
   if (access.status !== "active") return [];
-  return contactsFor((accountId ?? "").slice(0, 40));
+  const id = (accountId ?? "").slice(0, 40);
+  const roster = contactsFor(id);
+  const peo = getPeo(id);
+  if (!peo || !hasDatabaseEnv()) return roster;
+  try {
+    const notes = await getPrisma().accountNote.findMany({
+      where: { accountId: id },
+      select: { body: true, createdAt: true },
+      orderBy: { createdAt: "desc" },
+      take: 400,
+    });
+    const found = discoveredContacts(
+      notes.map((n) => ({ body: n.body, createdAt: n.createdAt.toISOString() })),
+      domainOfAccount(peo.website ?? "", peo.contactEmail ?? ""),
+      new Set(roster.map((c) => c.email.toLowerCase()).filter(Boolean)),
+    );
+    return [...found, ...roster];
+  } catch {
+    return roster;
+  }
 }
