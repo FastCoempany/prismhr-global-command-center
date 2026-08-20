@@ -69,6 +69,7 @@ import {
   unWork,
 } from "./actions";
 import { ChannelAsk } from "./channel-ask";
+import { SweepButton } from "./sweep-button";
 import { CopyStamp } from "./copy-stamp";
 import { Instrument } from "./instrument";
 import styles from "./groundwork.module.css";
@@ -906,9 +907,7 @@ export default async function GroundworkPage({
               one-sentence read. Nothing has been swept yet.
               {canWrite && wireAvailable() && (
                 <form action={sweepWire} style={{ marginTop: 8 }}>
-                  <button className={styles.btn2nd} type="submit">
-                    Run the first sweep
-                  </button>
+                  <SweepButton label="Run the first sweep" />
                 </form>
               )}
             </div>
@@ -955,9 +954,7 @@ export default async function GroundworkPage({
               ))}
               {canWrite && wireAvailable() && wireIsDue && (
                 <form action={sweepWire}>
-                  <button className={`${styles.btn2nd} ${styles.btnSmall}`} type="submit">
-                    Sweep again. The last sweep is stale.
-                  </button>
+                  <SweepButton label="Sweep again. The last sweep is stale." small />
                 </form>
               )}
             </div>

@@ -68,17 +68,24 @@ function NoteRow({ n }: { n: ChipNote }) {
 // actions completed from Today. This is the default register — background
 // intel lives in its own fold below.
 export function AccountChipNotes({ notes }: { notes: ChipNote[] }) {
+  // Rests as one line (founder-decreed 2026-08-20): the record is depth, not
+  // arrival — a double-click into the account is looking for the high-level
+  // read and the people, never a wall of dated entries.
+  const [open, setOpen] = useState(false);
   if (!notes || notes.length === 0) return null;
   return (
     <div className={styles.wrap}>
-      <div className={styles.head}>
-        <span className={styles.tag}>Record &amp; history</span>
+      <button
+        type="button"
+        className={styles.bgToggle}
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+      >
+        {open ? "▾" : "▸"} Record &amp; history
         <span className={styles.count}>{notes.length}</span>
         <span className={styles.hint}>notes, sends, and the work you closed, dated</span>
-      </div>
-      {notes.map((n) => (
-        <NoteRow key={n.id} n={n} />
-      ))}
+      </button>
+      {open && notes.map((n) => <NoteRow key={n.id} n={n} />)}
     </div>
   );
 }

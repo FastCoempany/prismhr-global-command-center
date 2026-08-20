@@ -9,7 +9,7 @@
 // this is time IN THE APP, honestly counted, not machine time.
 
 import { useEffect, useSyncExternalStore } from "react";
-import { presenceLog, presenceReset, presenceToday } from "@/app/presence/actions";
+import { presenceReset } from "@/app/presence/actions";
 import {
   deskParts,
   fmtDesk,
@@ -51,13 +51,22 @@ function refreshSnap(state: PresenceState) {
   };
 }
 
+// Banking rides plain fetch, never a server action: an action response
+// re-applies the current route and cancels in-flight navigations — a
+// once-a-minute drum on every page made tab clicks feel dead
+// (caught 2026-08-20).
 function flush() {
   if (pendA === 0 && pendP === 0) return;
   const a = pendA;
   const p = pendP;
   pendA = 0;
   pendP = 0;
-  void presenceLog(a, p).catch(() => {
+  void fetch("/presence/beat", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ a, p }),
+    keepalive: true,
+  }).catch(() => {
     pendA += a;
     pendP += p;
   });
@@ -92,8 +101,10 @@ export function ensureStarted() {
   for (const ev of ["mousemove", "mousedown", "keydown", "wheel", "touchstart"])
     window.addEventListener(ev, heard, { passive: true });
 
-  void presenceToday()
-    .then((t) => {
+  void fetch("/presence/beat", { cache: "no-store" })
+    .then(async (r) => {
+      if (!r.ok) return;
+      const t = (await r.json()) as { a: number; p: number };
       storedA = t.a;
       storedP = t.p;
       refreshSnap(snap.state);

@@ -8550,3 +8550,22 @@
   color: #ef4444;
   border-color: rgba(239, 68, 68, 0.45);
 }
+
+/* The engagement panel's fold (decreed 2026-08-20): one line at rest. */
+.engageFold {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  border: 0;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink, #0a1c40);
+  text-align: left;
+}
+.engageFold:hover {
+  color: #1e5b46;
+}

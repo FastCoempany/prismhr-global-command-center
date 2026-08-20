@@ -53,6 +53,18 @@ function writePending(p: Pending | null) {
   }
 }
 
+// The feed rides a plain GET (caught 2026-08-20): a server-action poll
+// re-applies the current route and cancels tab clicks.
+const readFeed = async (): Promise<Awaited<ReturnType<typeof padAskFeed>>> => {
+  try {
+    const r = await fetch("/scratch/feed", { cache: "no-store" });
+    if (!r.ok) return { ok: false, entries: [], unread: false };
+    return (await r.json()) as Awaited<ReturnType<typeof padAskFeed>>;
+  } catch {
+    return { ok: false, entries: [], unread: false };
+  }
+};
+
 export function Scratchpad() {
   const [open, setOpen] = useState(false);
   const [reg, setReg] = useState<"paper" | "ask">("paper");
@@ -91,7 +103,7 @@ export function Scratchpad() {
       }
     });
     const p = readPending();
-    void padAskFeed().then((r) => {
+    void readFeed().then((r) => {
       if (!r.ok) return;
       setAsks(r.entries);
       setPulse(r.unread);
@@ -114,7 +126,7 @@ export function Scratchpad() {
   useEffect(() => {
     if (!pending) return;
     const iv = window.setInterval(() => {
-      void padAskFeed().then((r) => {
+      void readFeed().then((r) => {
         if (!r.ok) return;
         const landed = r.entries.some((e) => Date.parse(e.at) >= pending.at);
         if (landed) {

@@ -418,13 +418,42 @@ const HEALTHS = ["green", "yellow", "red"] as const;
 // gates (SF pulled · notes · health), and a ready "can I join?" message. This is
 // the partner-first motion made concrete — ride the CSM's existing meetings.
 function EngagementPanel({ a }: { a: AccountRow }) {
+  // Rests as one line (founder-decreed 2026-08-20): the panel is ahead of
+  // where the ramp is — present, expandable, out of the way.
+  const [open, setOpen] = useState(false);
   const e = a.engagement;
   const gates = engagementGates(e);
   const who = a.csm.trim().split(/\s+/)[0] || a.csm;
+  if (!open)
+    return (
+      <div className={styles.engage}>
+        <button
+          type="button"
+          className={styles.engageFold}
+          onClick={() => setOpen(true)}
+          aria-expanded={false}
+        >
+          ▸ CSM engagement with {a.csm}
+          <span className={styles.engageGates}>
+            Prep {gates.count}/3
+            <span className={gates.sf ? styles.gateOn : styles.gateOff}>SF</span>
+            <span className={gates.notes ? styles.gateOn : styles.gateOff}>Notes</span>
+            <span className={gates.health ? styles.gateOn : styles.gateOff}>Health</span>
+          </span>
+        </button>
+      </div>
+    );
   return (
     <div className={styles.engage}>
       <div className={styles.engageHead}>
-        <span className={styles.engageTitle}>CSM engagement with {a.csm}</span>
+        <button
+          type="button"
+          className={styles.engageFold}
+          onClick={() => setOpen(false)}
+          aria-expanded={true}
+        >
+          ▾ CSM engagement with {a.csm}
+        </button>
         <span className={styles.engageGates}>
           Prep {gates.count}/3
           <span className={gates.sf ? styles.gateOn : styles.gateOff}>SF</span>
