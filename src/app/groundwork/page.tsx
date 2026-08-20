@@ -27,6 +27,17 @@ import {
 import { clockShort, userDayKey } from "@/lib/tz";
 import { sfAccountUrl } from "@/lib/salesforce";
 import { buildQueue, heatOf, liveMotionIds, moveKey } from "@/lib/groundwork/day";
+import {
+  collisionFor,
+  dropAgeDays,
+  engagedNeverIntroduced,
+  fetchSecondRecords,
+  intentWarm,
+  outreachGem,
+  DROP_STALE_DAYS,
+  type SecondRecord,
+} from "@/lib/activity/read";
+import EvidenceChips from "./evidence-chips";
 import { loadDashboard } from "@/lib/dashboard/data";
 import { readOutcome } from "@/lib/dashboard/outcome";
 import { digestForCardName } from "@/lib/intel/digest";
@@ -263,6 +274,14 @@ export default async function GroundworkPage({
   // to work, and a stamped outcome is over. Groundwork prospects the book it
   // is NOT actively closing — those accounts leave the queue entirely.
   const excludedIds = new Set<string>();
+  // The second record, parsed once for the whole book — rule fuel, the chips,
+  // and the collision gate all read this one map.
+  const secondById: Map<string, SecondRecord> = await fetchSecondRecords().catch(
+    () => new Map(),
+  );
+  // Accounts holding ANY live board card — engaged-never-introduced fires
+  // only where no deal exists at all, whatever its stage.
+  const boardIds = new Set<string>();
   const dash = await loadDashboard();
   if (dash.status !== "unauthenticated" && dash.status !== "database-unavailable") {
     const idByName = new Map(peos.map((p) => [p.name.toLowerCase(), p.id]));
@@ -273,6 +292,7 @@ export default async function GroundworkPage({
         digestForCardName(card.name)?.accountId ??
         "";
       if (!id) continue;
+      if (!card.archived) boardIds.add(id);
       // The outcome stamp survives archiving — a retired Closed Won/Lost
       // deal must never re-enter the book as a virgin prospect.
       if (readOutcome(card.notes)) {
@@ -325,6 +345,8 @@ export default async function GroundworkPage({
     researchAtById,
     doneKeys: new Set(doneTimes.keys()),
     excludedIds,
+    secondById,
+    boardIds,
     now,
   });
 
@@ -497,6 +519,18 @@ export default async function GroundworkPage({
             contactsFor(stageItem.accountId),
             { name: stageAccount.contactName, email: stageAccount.contactEmail },
           ),
+          second: (() => {
+            const sr = secondById.get(stageItem.accountId);
+            if (!sr) return null;
+            const gem = outreachGem(sr);
+            return {
+              supportCases: engagedNeverIntroduced(sr, now)?.cases ?? sr.support?.total,
+              gem: gem
+                ? { act: gem.act, reason: gem.reason, term: gem.term, who: gem.who }
+                : null,
+              collision: collisionFor(sr, now),
+            };
+          })(),
           now,
         })
       : null;
@@ -655,6 +689,54 @@ export default async function GroundworkPage({
                 </div>
                 <h1 className={styles.stgAct}>{stageItem.action}</h1>
                 <p className={styles.stgWhy}>{stageItem.reason}</p>
+                {(() => {
+                  const sr = secondById.get(stageItem.accountId);
+                  if (!sr) return null;
+                  const warm = intentWarm(sr, now);
+                  const col = collisionFor(sr, now);
+                  return (
+                    <EvidenceChips
+                      accountId={stageItem.accountId}
+                      support={
+                        sr.support && sr.support.total > 0
+                          ? {
+                              total: sr.support.total,
+                              spikeDay: sr.support.spike?.day ?? "",
+                              spikeN: sr.support.spike?.n ?? 0,
+                            }
+                          : null
+                      }
+                      intent={
+                        sr.intent
+                          ? {
+                              opens30: sr.intent.windows.w30.o,
+                              clicks30: sr.intent.windows.w30.c,
+                              lastOpen: sr.intent.windows.lastOpen,
+                              sends7: sr.intent.windows.w7?.s ?? 0,
+                            }
+                          : warm
+                            ? {
+                                opens30: warm.opens30,
+                                clicks30: warm.clicks30,
+                                lastOpen: warm.lastOpen,
+                                sends7: 0,
+                              }
+                            : null
+                      }
+                      collision={col}
+                      gems={sr.gems
+                        .filter((g) => !g.actedDay)
+                        .slice(0, 2)
+                        .map((g) => ({
+                          term: g.term,
+                          act: g.act,
+                          reason: g.reason,
+                          whenDay: g.whenDay,
+                          cites: g.cites,
+                        }))}
+                    />
+                  );
+                })()}
                 <div className={styles.stgActs}>
                   {canWrite && stageItem.ruleId === "stale-above-gate" && (
                     <form
@@ -738,6 +820,14 @@ export default async function GroundworkPage({
                       >
                         The composed thing · to {file.composed.to}
                       </span>
+                      {file.collisionLine && (
+                        <span
+                          className={styles.collideFlag}
+                          title="Your note lands beside live motion. It informs; it never blocks."
+                        >
+                          ⚠ {file.collisionLine}
+                        </span>
+                      )}
                       {file.composed.payload}
                     </div>
                     <div className={styles.people}>
@@ -1033,6 +1123,14 @@ export default async function GroundworkPage({
           className={styles.tallyfoot}
           title="The Sendbook — every touch, kept."
         >
+          {(() => {
+            const age = dropAgeDays(secondById, now);
+            return age != null && age > DROP_STALE_DAYS ? (
+              <span className={styles.staleFoot}>
+                SECOND RECORD · {Math.floor(age)} DAYS OLD · DROP THE FRESH EXPORT ·{" "}
+              </span>
+            ) : null;
+          })()}
           {sendWeek.total === 0 ? (
             <>THIS WEEK · NOTHING WORKED YET · THE SENDBOOK →</>
           ) : (

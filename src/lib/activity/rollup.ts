@@ -217,6 +217,8 @@ export function verdictLine(r: Rollup): string {
 // ── intent windows (the intent:<id> store's arithmetic) ─────────────────────
 
 export type IntentWindows = {
+  /** The collision gate's window — live marketing sends inside 7 days. */
+  w7: { s: number; o: number; c: number };
   w30: { s: number; o: number; c: number };
   w60: { s: number; o: number; c: number };
   w90: { s: number; o: number; c: number };
@@ -291,6 +293,7 @@ export function intentWindows(
   const t0 = Date.parse(`${todayKey}T00:00:00Z`);
   const zero = () => ({ s: 0, o: 0, c: 0 });
   const out: IntentWindows = {
+    w7: zero(),
     w30: zero(),
     w60: zero(),
     w90: zero(),
@@ -302,6 +305,7 @@ export function intentWindows(
     if (Number.isNaN(t)) continue;
     const age = Math.floor((t0 - t) / dayMs);
     for (const [w, span] of [
+      [out.w7, 7],
       [out.w30, 30],
       [out.w60, 60],
       [out.w90, 90],

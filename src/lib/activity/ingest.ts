@@ -4,6 +4,7 @@
 // production does.
 
 import { redactMoney } from "@/lib/intel/lexicon";
+import { cleanExcerpt } from "./excerpt";
 import { laneOf, type ActivityLane } from "./classify";
 import {
   activityRowKey,
@@ -206,7 +207,11 @@ export function createIngest(book: { id: string; name: string }[]): Ingest {
       rt: r.recordType,
       ct: r.callType,
       fl: flagsOf(read.flags),
-      c: r.comments ? redactMoney(r.comments).slice(0, COMMENT_CAP) : undefined,
+      // The meat law: banners, quoted trails, and signatures go BEFORE the
+      // cap, so the budget is spent on words a person wrote.
+      c: r.comments
+        ? redactMoney(cleanExcerpt(r.comments, COMMENT_CAP)) || undefined
+        : undefined,
     });
     return {};
   };

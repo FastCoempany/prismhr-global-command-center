@@ -830,3 +830,131 @@ a.wingItem:hover .wingNm {
 .wingUndo:hover {
   color: var(--color-ink);
 }
+
+/* ── The Evidence Chips (decreed winner, 2026-08-20) — the stage wears its
+     proof; every chip a door; the drill goes as deep as the evidence holds. */
+.evWrap {
+  margin-top: 12px;
+}
+.evChips {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.evChip {
+  composes: kick;
+  border: 1px solid rgba(10, 28, 64, 0.22);
+  border-radius: 3px;
+  background: none;
+  padding: 4px 9px;
+  cursor: pointer;
+  letter-spacing: 0.1em;
+}
+.evChip:hover {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+.evChipGem {
+  color: var(--orange);
+  border-color: rgba(230, 112, 30, 0.5);
+}
+.evChipAmber {
+  color: #b6791a;
+  border-color: rgba(245, 158, 11, 0.5);
+}
+.evChipBlue {
+  color: var(--blue);
+  border-color: rgba(37, 99, 235, 0.4);
+}
+.evFold {
+  max-width: 560px;
+  margin: 10px auto 0;
+  text-align: left;
+  border: 1px solid rgba(10, 28, 64, 0.1);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.7);
+  padding: 10px 13px;
+}
+.evGem + .evGem {
+  margin-top: 10px;
+  border-top: 1px solid rgba(10, 28, 64, 0.08);
+  padding-top: 10px;
+}
+.evGemTerm {
+  composes: kick;
+  color: var(--orange);
+}
+.evGemAct {
+  font-size: 14.5px;
+  font-weight: 700;
+  margin: 3px 0 1px;
+}
+.evGemWhy {
+  font-size: 12.5px;
+  color: var(--soft);
+  margin-bottom: 4px;
+}
+.evCite {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 10.5px;
+  line-height: 1.9;
+  color: var(--soft);
+  padding: 0;
+}
+.evCite:hover {
+  color: var(--ink);
+}
+.evCite b {
+  color: var(--blue);
+  font-weight: 500;
+}
+.evExcerpt {
+  margin: 3px 0 8px 12px;
+  padding: 7px 11px;
+  border-left: 2px solid rgba(10, 28, 64, 0.12);
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 0 6px 6px 0;
+  font-size: 12.5px;
+  color: var(--ink);
+}
+.evStamp {
+  display: block;
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--faint);
+  margin-bottom: 2px;
+}
+.evQuiet {
+  font-size: 12.5px;
+  color: var(--faint);
+  font-style: italic;
+}
+
+/* The collision guard's quiet flag on the composed thing — informs, never
+   blocks (the direct doctrine). */
+.collideFlag {
+  display: block;
+  margin: 0 0 8px;
+  padding: 5px 9px;
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  border-radius: 5px;
+  background: rgba(245, 158, 11, 0.06);
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #b6791a;
+}
+
+/* The Tallyfoot's staleness pressure — a quiet line, never a wall. */
+.staleFoot {
+  color: #b6791a;
+}

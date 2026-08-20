@@ -62,8 +62,20 @@ export function composeFor(args: {
   contactName: string; // book primary, may be ""
   laneDate?: string | null; // riding-lane CRM date, ISO day
   wireHeadline?: string | null; // wire-trigger: the matched item's headline
+  supportCases?: number; // engaged-never-introduced: the pulse as ammunition
+  gem?: { act: string; reason: string; term: string; who: string[] } | null;
 }): Composed {
-  const { ruleId, account, intel, intent, contactName, laneDate, wireHeadline } = args;
+  const {
+    ruleId,
+    account,
+    intel,
+    intent,
+    contactName,
+    laneDate,
+    wireHeadline,
+    supportCases,
+    gem,
+  } = args;
   const first = firstName(contactName);
   const toContact = first
     ? contactName
@@ -152,6 +164,29 @@ export function composeFor(args: {
         to: "your research session",
         payload: redactMoney(
           `Sales Navigator · Relationship explorer on ${account.name} — Persona: Recommended buyer persona · Function: HR, Operations, Finance · Seniority: Director, VP, CXO → harvest every "! Update CRM" card and any "Follows your company" mark → bring back 3–5 names with titles. They file as candidates; you confirm before anything sticks.`,
+        ),
+      };
+    case "engaged-never-introduced":
+      // The support pulse is the door-opener: their teams already live on the
+      // platform every day — the global conversation just never happened.
+      return {
+        kind: "send-draft",
+        label: `Copy the first touch${labelTo}`,
+        to: toContact,
+        payload: redactMoney(
+          `To: ${toContact}\nSubject: Your team already runs on us — one thing you may not know\n\n${greet} your team works with our platform every week${supportCases ? ` — ${supportCases} support threads this quarter alone` : ""} — and in all that traffic, one conversation has never happened: Global. It is a capability you switch on, not a project you buy. If any of your clients have people outside the US, or ask about it, fifteen minutes shows you what switching it on looks like. ${relayLine("fp-where")}`,
+        ),
+      };
+    case "second-record-gem":
+      // The gem's act IS the move; the file hands you the note that acts on
+      // it, grounded in the cited motion. Evidence rides the card, not the
+      // payload — the recipient never sees the machinery.
+      return {
+        kind: "send-draft",
+        label: `Copy the note${labelTo}`,
+        to: toContact,
+        payload: redactMoney(
+          `To: ${toContact}\nSubject: Picking up the live thread\n\n${greet} ${gem?.reason ? `${gem.reason} ` : ""}That is exactly the kind of motion the Global conversation belongs inside. ${relayLine("fp-where")} If a walkthrough is faster than email, name a slot and I'll bring answers.`,
         ),
       };
     case "never-touched-incumbent":
