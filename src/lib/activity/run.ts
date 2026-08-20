@@ -517,7 +517,8 @@ export async function runActivityPass(opts?: {
   const today = chiDay();
   const nameById = new Map(m.accounts.map((a) => [a.id, a.name]));
   const colleagues = deriveColleagues(m.colleagues, csms, EXTRA_PARTNERS);
-  const totalWork = run.distillQueue.length + run.intentQueue.length;
+  const totalWork =
+    Object.keys(run.covered).length + run.distillQueue.length + run.intentQueue.length;
   const doneAlready = Object.keys(run.covered).length;
 
   // ⚔ 3 · staleness & acted — sweep at the head of every pass (§3.9).
@@ -578,7 +579,11 @@ export async function runActivityPass(opts?: {
       colleagues,
       accountPeople,
     });
+    // Themes and examples read from the staged slice; the TOTAL is the full
+    // lane count — the slice cap must never understate the number the
+    // operator quotes (Axcet read 151 of its true 197 on the first drop).
     const support = supportThemes(slice.rows);
+    support.total = Math.max(support.total, slice.laneCounts.support);
     if (support.total > 0)
       await replaceNote(
         `${SUPPORT_NS}${id}`,
