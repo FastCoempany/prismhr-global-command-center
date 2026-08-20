@@ -109,7 +109,9 @@ export function buildRollup(inp: {
       ? "account"
       : inp.colleagues.has(r.a)
         ? "colleague"
-        : "unresolved";
+        : inp.accountPeople.has(r.a)
+          ? "account"
+          : "unresolved";
     lastHuman = {
       day: r.d,
       how: HOW_WORD(r),
@@ -133,11 +135,20 @@ export function buildRollup(inp: {
       tally.set(key, t);
     }
     const a = (r.a ?? "").trim();
-    if (a && inp.colleagues.has(a) && !seen.has(a)) {
-      const key = `${a}|colleague`;
-      const t = tally.get(key) ?? { name: a, kind: "colleague", lane: r.lane, n: 0 };
-      t.n += 1;
-      tally.set(key, t);
+    if (a && !seen.has(a)) {
+      // The logger: a colleague when the file shows them across accounts, an
+      // account person when this account is the only place they appear.
+      const kind = inp.colleagues.has(a)
+        ? "colleague"
+        : inp.accountPeople.has(a)
+          ? "account"
+          : "";
+      if (kind) {
+        const key = `${a}|${kind}`;
+        const t = tally.get(key) ?? { name: a, kind, lane: r.lane, n: 0 };
+        t.n += 1;
+        tally.set(key, t);
+      }
     }
   }
   const actors = [...tally.values()].sort((x, y) => y.n - x.n).slice(0, 6);

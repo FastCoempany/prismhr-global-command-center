@@ -59,10 +59,15 @@ export function createIngest(book: { id: string; name: string }[]): Ingest {
   const bookById = new Map(book.map((b) => [b.id, b.name]));
   let headers: string[] | null = null;
   let fingerprint: Fingerprint | null = null;
-  const seen = new Set<string>();
+  const seen = new Map<string, number>();
   const buckets = new Map<string, Bucket>();
   const unmatched = new Map<string, { name: string; id18: string; rows: number }>();
-  const assigned = new Set<string>();
+  // name → the accounts it was Assigned on. The colleague rule is ≥2 distinct
+  // accounts: the export's Assigned column carries ACCOUNT PEOPLE too (their
+  // captured emails log under their own name — Natalie Borland, measured
+  // 2026-08-20), and an account person only ever assigns on their own
+  // account. Book CSMs and EXTRA_PARTNERS join server-side regardless.
+  const assigned = new Map<string, Set<string>>();
   const contacts = new Set<string>();
   const laneTotals: Record<ActivityLane, number> = {
     human: 0,
@@ -89,18 +94,28 @@ export function createIngest(book: { id: string; name: string }[]): Ingest {
     }
     if (raw.length === 1 && raw[0].trim() === "") return {};
     const r: ActivityRow = rowRecord(headers, raw);
-    const key = activityRowKey(r);
-    if (seen.has(key)) {
-      dupes += 1;
-      return {};
-    }
-    seen.add(key);
+    // Identical rows are REAL: a blast to forty recipients at one account is
+    // forty rows whose nineteen visible columns match exactly (measured
+    // 2026-08-20 — 70,778 of 98,455 rows repeat; dropping them erased 72% of
+    // the record on the first live drop). Every row is kept and counted;
+    // repeats get occurrence-suffixed keys so citations stay unique, and the
+    // multiplicity is reported, never silently folded.
+    const key0 = activityRowKey(r);
+    const occurrence = seen.get(key0) ?? 0;
+    seen.set(key0, occurrence + 1);
+    if (occurrence > 0) dupes += 1;
+    const key = occurrence > 0 ? `${key0}#${occurrence}` : key0;
     rowCount += 1;
 
     const read = laneOf(r);
     laneTotals[read.lane] += 1;
     if (read.flags.receipt) receiptRows += 1;
-    if ((r.assigned ?? "").trim()) assigned.add(r.assigned.trim());
+    const who = (r.assigned ?? "").trim();
+    if (who) {
+      const set = assigned.get(who) ?? new Set<string>();
+      set.add(r.id18 || "~none");
+      assigned.set(who, set);
+    }
     for (const n of [r.primaryContact, r.lastContact])
       if (n && n.trim().includes(" ")) contacts.add(n.trim());
 
@@ -236,10 +251,16 @@ export function createIngest(book: { id: string; name: string }[]): Ingest {
       rowCount,
     );
 
-    // The colleague roster, derived from Assigned; the server unions in the
-    // book's CSMs and EXTRA_PARTNERS (Appendix C). Collisions named now.
-    const colleagues = [...assigned].sort();
-    const collisions = [...contacts].filter((c) => assigned.has(c)).sort();
+    // The colleague roster: assigned on two or more distinct accounts. A
+    // single-account assigned name reads as that account's person, not a
+    // colleague. The server unions in the book's CSMs and EXTRA_PARTNERS
+    // (Appendix C). Collisions named now.
+    const colleagues = [...assigned.entries()]
+      .filter(([, accts]) => accts.size >= 2)
+      .map(([name]) => name)
+      .sort();
+    const colleagueSet = new Set(colleagues);
+    const collisions = [...contacts].filter((c) => colleagueSet.has(c)).sort();
 
     const manifest: DropManifest = {
       dropSha,

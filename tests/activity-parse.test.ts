@@ -134,10 +134,10 @@ test("hostile fixture: BOM, fake header in comment, dupe, money, unmatched — a
     dropDay: "2026-08-20",
   });
 
-  // The exact duplicate collapsed to one, counted in the receipt object.
+  // The identical repeat is KEPT (multi-recipient sends look alike) and
+  // counted; its citation key gains an occurrence suffix.
   assert.equal(manifest.dupes, 1);
-  // 6 distinct data rows (7 minus the dupe).
-  assert.equal(manifest.rowCount, 6);
+  assert.equal(manifest.rowCount, 7);
   // The unmatched account is counted AND named.
   assert.equal(manifest.unmatched.length, 1);
   assert.equal(manifest.unmatched[0].name, "Advocate Pay LLC");
@@ -154,8 +154,16 @@ test("hostile fixture: BOM, fake header in comment, dupe, money, unmatched — a
   // The human row staged with its multiline comment INTACT — the fake header
   // line inside it parsed as text, never as a header (recognition reads only
   // the parsed first row).
-  const human = trend.rows.find((r) => r.s === "Re: Global payroll question");
+  const humanPair = trend.rows.filter((r) => r.s === "Re: Global payroll question");
+  assert.equal(humanPair.length, 2);
+  assert.notEqual(humanPair[0].k, humanPair[1].k);
+  assert.ok(humanPair.some((r) => r.k.endsWith("#1")));
+  const human = humanPair[0];
   assert.ok(human);
+  // The colleague rule: assigned on ≥2 distinct accounts. Colleague Two spans
+  // two; Colleague One only ever appears on Trend — an account person's shape.
+  assert.ok(manifest.colleagues.includes("Colleague Two"));
+  assert.ok(!manifest.colleagues.includes("Colleague One"));
   assert.ok(human.c?.includes("Subject,Account Name"));
   // Money redacted at staging; the headcount survives (it is sizing, not money).
   assert.ok(!/\$\s?12,000|12,000 PEPM/i.test(human.c ?? ""));

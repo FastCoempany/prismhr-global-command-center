@@ -318,7 +318,7 @@ export async function stageActivityBatch(batch: StageBatch): Promise<StageReply>
     }
 
     const receipt: string[] = [
-      `The drop landed — ${m.rowCount} rows across ${m.accounts.length} accounts${m.dupes > 0 ? `, ${m.dupes} exact duplicates folded` : ""}.`,
+      `The drop landed — ${m.rowCount} rows across ${m.accounts.length} accounts${m.dupes > 0 ? `, ${m.dupes} of them identical repeats (kept — multi-recipient sends look alike)` : ""}.`,
     ];
     if (m.headerDiff.missing.length > 0)
       receipt.push(
@@ -401,7 +401,9 @@ export async function stageActivityBatch(batch: StageBatch): Promise<StageReply>
 
 async function contextPackFor(accountId: string, name: string): Promise<ContextPack> {
   const prisma = getPrisma();
-  const lines: string[] = [];
+  const lines: string[] = [
+    "the operator is Antaeus Coe — their own logged motion is the first record, never a door to walk through",
+  ];
   try {
     const notes = await prisma.accountNote.findMany({
       where: { accountId },
@@ -548,6 +550,12 @@ export async function runActivityPass(opts?: {
     }
     for (const n of [slice.meta.primaryContact, slice.meta.lastContact])
       if (n && n.trim().includes(" ")) out.add(n.trim());
+    // A name Assigned only on this account is this account's person — the
+    // export logs captured emails under their own name (measured 2026-08-20).
+    for (const r of slice.rows) {
+      const a = (r.a ?? "").trim();
+      if (a && a.includes(" ") && !colleagues.has(a)) out.add(a);
+    }
     return out;
   };
 
@@ -600,6 +608,10 @@ export async function runActivityPass(opts?: {
       const rollupText = renderRollupBody(rollup);
 
       const attempt = async (retryNote?: string): Promise<Gem[]> => {
+        // A transport failure THROWS — the account re-queues and the circuit
+        // breaker names the error. A failed call is never "nothing found":
+        // the first live drop filed 126 straight-faced verdicts over a
+        // swallowed uniform failure, and that never happens again.
         const res = await runDistill({
           accountName: name,
           rows: slice.rows,
@@ -607,7 +619,7 @@ export async function runActivityPass(opts?: {
           pack,
           rich: Boolean(card),
           retryNote,
-        }).catch(() => ({ gems: [], whyNone: "the distiller call failed" }));
+        });
         run.born += res.gems.length;
         const out: Gem[] = [];
         for (const cand of res.gems) {
@@ -629,12 +641,7 @@ export async function runActivityPass(opts?: {
               .filter((c) => cand.who.includes(c) || m.colleagues.includes(c))
               .slice(0, 20),
             accountPeople: [...accountPeople].slice(0, 20),
-          }).catch(() => ({
-            refuted: true,
-            failedCheck: "",
-            why: "call failed",
-            verifiedDates: [],
-          }));
+          });
           if (verdict.refuted) {
             run.died += 1;
             continue;
@@ -713,31 +720,34 @@ export async function runActivityPass(opts?: {
         // A failed account sinks behind the fresh work and retries next pass —
         // the starvation fix pattern, reused.
         run.distillQueue = [...run.distillQueue.filter((x) => x !== batch[i]), batch[i]];
+        const errText = String(
+          (s.reason as { message?: string })?.message ?? s.reason ?? "unknown",
+        ).slice(0, 200);
         logs.push({
-          text: `${nameById.get(batch[i]) ?? batch[i]} failed this pass — queued for retry.`,
+          text: `${nameById.get(batch[i]) ?? batch[i]} failed this pass — ${errText} — queued for retry.`,
           bad: true,
         });
         // A uniform failure (key, credits, outage) must not loop forever: if
         // every account in the batch failed and nothing has ever succeeded
-        // this run, stop and say why.
+        // this run, stop and say the ACTUAL error out loud.
         if (
           settled.every((x) => x.status === "rejected") &&
           Object.keys(run.covered).length === 0
         ) {
           run.receipt.push(
-            "Every distillation failed — check the API key or credits, then run again.",
+            `Every distillation failed — ${errText}. Fix it and run again.`,
           );
           await writeManifestStore(store);
           await pulse(
-            { active: false, now: "Distillation is paused — every call failed." },
-            [{ text: "Distillation is paused — every call failed.", bad: true }],
+            { active: false, now: `Distillation is paused — ${errText.slice(0, 120)}` },
+            [{ text: `Distillation is paused — ${errText.slice(0, 120)}`, bad: true }],
           );
           return {
             ok: false,
             done: false,
             remaining: run.distillQueue.length,
             receipt: run.receipt,
-            reason: "Every distillation failed.",
+            reason: `Every distillation failed — ${errText}`,
           };
         }
       }
