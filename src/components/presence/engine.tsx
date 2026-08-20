@@ -9,7 +9,7 @@
 // this is time IN THE APP, honestly counted, not machine time.
 
 import { useEffect, useSyncExternalStore } from "react";
-import { presenceLog, presenceToday } from "@/app/presence/actions";
+import { presenceLog, presenceReset, presenceToday } from "@/app/presence/actions";
 import { deskParts, fmtDesk, presenceOf, type PresenceState } from "@/lib/presence";
 import styles from "./presence.module.css";
 
@@ -98,6 +98,20 @@ export function ensureStarted() {
   window.addEventListener("pagehide", flush);
 }
 
+// The reset (founder-decreed 2026-08-19): zero today, locally and banked —
+// the meter restarts from 0h 00m 00s on the next tick.
+export function resetDesk(): void {
+  storedA = 0;
+  storedP = 0;
+  sessA = 0;
+  sessP = 0;
+  pendA = 0;
+  pendP = 0;
+  refreshSnap(snap.state);
+  notify();
+  void presenceReset().catch(() => null);
+}
+
 // The masthead clock asks this to decide whether to keep ticking.
 export function presenceLastInput(): number {
   return started ? lastInput : Date.now();
@@ -156,6 +170,14 @@ export function DeskMeter() {
           <span className={styles.unit}>s</span>
         </span>
       </span>
+      <button
+        type="button"
+        className={styles.meterReset}
+        title="Reset the desk clock. Today's tally starts from zero — history keeps its days."
+        onClick={resetDesk}
+      >
+        ↺
+      </button>
     </span>
   );
 }

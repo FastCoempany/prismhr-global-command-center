@@ -90,3 +90,20 @@
 .meterStopped {
   opacity: 0.5;
 }
+
+.meterReset {
+  border: 0;
+  background: none;
+  cursor: pointer;
+  color: transparent;
+  font-size: 12px;
+  padding: 0 2px;
+  line-height: 1;
+}
+.meter:hover .meterReset,
+.meterReset:focus-visible {
+  color: rgba(10, 28, 64, 0.42);
+}
+.meterReset:hover {
+  color: #0a1c40;
+}
