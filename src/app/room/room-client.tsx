@@ -751,7 +751,7 @@ function Row({ row }: { row: RoomRow }) {
             {rsrchPending
               ? "RESEARCHING…"
               : row.researchAt
-                ? `RESEARCH ${new Date(row.researchAt).toLocaleDateString("en-US", { month: "numeric", day: "numeric" })} ⟳`
+                ? `RESEARCH ${new Date(row.researchAt).toLocaleDateString("en-US", { timeZone: "America/Chicago", month: "numeric", day: "numeric" })} ⟳`
                 : "RESEARCH — NEVER ⟳"}
           </button>
         )}

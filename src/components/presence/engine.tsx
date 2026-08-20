@@ -10,7 +10,13 @@
 
 import { useEffect, useSyncExternalStore } from "react";
 import { presenceLog, presenceReset, presenceToday } from "@/app/presence/actions";
-import { deskParts, fmtDesk, presenceOf, type PresenceState } from "@/lib/presence";
+import {
+  deskParts,
+  fmtDesk,
+  presenceDayKey,
+  presenceOf,
+  type PresenceState,
+} from "@/lib/presence";
 import styles from "./presence.module.css";
 
 type Snap = {
@@ -95,7 +101,22 @@ export function ensureStarted() {
     })
     .catch(() => null);
 
+  let dayKey = presenceDayKey(new Date());
   window.setInterval(() => {
+    // The Chicago midnight rollover (decreed 2026-08-20): the display resets
+    // with the day the bank already keys by — a tab left open overnight must
+    // never keep counting yesterday's number. Unbanked seconds flush first.
+    const dk = presenceDayKey(new Date());
+    if (dk !== dayKey) {
+      dayKey = dk;
+      flush();
+      storedA = 0;
+      storedP = 0;
+      sessA = 0;
+      sessP = 0;
+      refreshSnap(snap.state);
+      notify();
+    }
     const state = presenceOf(Date.now() - lastInput);
     if (document.visibilityState === "visible") {
       if (state === "active") {

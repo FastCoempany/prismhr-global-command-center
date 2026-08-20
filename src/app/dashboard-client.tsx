@@ -65,10 +65,12 @@ const PRODUCT_LABEL: Record<string, string> = {
 const shortDay = (iso: string) => {
   const t = Date.parse(iso);
   if (Number.isNaN(t)) return "";
+  // Day-only stamps read in UTC (a bare date must never shift a day);
+  // full timestamps read on the Chicago clock like every clock in the app.
   return new Date(t).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
-    timeZone: "UTC",
+    timeZone: iso.length === 10 ? "UTC" : "America/Chicago",
   });
 };
 
