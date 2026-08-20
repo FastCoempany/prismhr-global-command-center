@@ -22,6 +22,8 @@ export type FileModel = {
   accountId: string;
   /** The collision guard's quiet flag — informs, never blocks. "" = clear. */
   collisionLine: string;
+  /** The CSM's own recent motion — the brief's prep, folded (5.3). */
+  csmPrep: { day: string; subject: string }[];
   name: string;
   csm: string;
   sourcesLine: string; // computed provenance — only stores that contributed
@@ -81,6 +83,9 @@ export function buildFile(
         mktgSends7: number;
         colleague: { who: string; day: string } | null;
       } | null;
+      /** roundup-slot only: the CSM's own last five rows on this account —
+       *  date and subject head, from the staged slice. */
+      csmPrep?: { day: string; subject: string }[];
     } | null;
     now: Date;
   },
@@ -208,6 +213,7 @@ export function buildFile(
   return {
     accountId: p.id,
     collisionLine,
+    csmPrep: deps.second?.csmPrep ?? [],
     name: p.name,
     csm: p.csm,
     sourcesLine: sources.join(" · "),

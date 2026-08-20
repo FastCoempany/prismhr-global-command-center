@@ -91,6 +91,8 @@ export const ORIGINS = [
   "playbook",
   "research",
   "gap",
+  // the second record's digests (§6) — rollup + gems, never staged bodies
+  "activity",
 ] as const;
 export type Origin = (typeof ORIGINS)[number];
 

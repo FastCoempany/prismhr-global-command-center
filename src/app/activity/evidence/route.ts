@@ -8,6 +8,7 @@
 //   ?acct=<id>&case=<number>   → a case's timeline (rows + excerpts)
 //   ?acct=<id>&theme=<label>   → the theme's case list (numbers · dates · actors)
 //   ?acct=<id>&camps=1         → the intent store's campaign table
+//   ?acct=<id>&who=<name>      → the draft desk's one line for a recipient
 
 import { NextResponse } from "next/server";
 import { getAppAccess } from "@/lib/auth";
@@ -15,8 +16,10 @@ import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import {
   STAGE_NS,
   INTENT_NS,
+  ACTIVITY_NS,
   parseStageBody,
   parseIntentBody,
+  parseRollupBody,
 } from "@/lib/activity/stores";
 import { caseNumberOf, cleanExcerpt, cleanSubject } from "@/lib/activity/excerpt";
 import type { StagedRow } from "@/lib/activity/types";
@@ -57,6 +60,7 @@ export async function GET(req: Request) {
   if (!acct) return NextResponse.json({ ok: false }, { status: 400, ...noStore });
 
   const k = url.searchParams.get("k");
+  const who = url.searchParams.get("who");
   const caseNo = url.searchParams.get("case");
   const theme = url.searchParams.get("theme");
   const camps = url.searchParams.get("camps");
@@ -72,6 +76,69 @@ export async function GET(req: Request) {
       { ok: true, windows: parsed?.windows ?? null, receipts: parsed?.receipts ?? 0 },
       noStore,
     );
+  }
+
+  if (who != null) {
+    // The draft desk's per-person read (5.2): exact words from both records,
+    // one line, cited or silent — no fuzzy maybes. Priority: a row naming the
+    // person → the org's inbound → the measured silence. An unmatched
+    // recipient with no rollup renders nothing at all.
+    const prisma = getPrisma();
+    const [rows, rollupNote] = await Promise.all([
+      stageRows(acct),
+      prisma.accountNote.findFirst({
+        where: { accountId: `${ACTIVITY_NS}${acct}` },
+        orderBy: { createdAt: "desc" },
+      }),
+    ]);
+    const rollup = rollupNote ? parseRollupBody(rollupNote.body) : null;
+    const needle = who.trim().toLowerCase();
+    const nameBits = needle
+      .split(/[@\s.]+/)
+      .filter((x) => x.length >= 3)
+      .slice(0, 2);
+    const hit =
+      needle.length >= 3
+        ? rows.find((r) => {
+            const hay = `${r.s} ${r.a} ${r.c ?? ""}`.toLowerCase();
+            return (
+              hay.includes(needle) ||
+              (nameBits.length > 1 && nameBits.every((b) => hay.includes(b)))
+            );
+          })
+        : undefined;
+    const mmdd = (d: string) => (d ? d.slice(5).replace("-", "/") : "");
+    if (hit) {
+      const first = hit.a.split(" ")[0] || "Someone";
+      return NextResponse.json(
+        {
+          ok: true,
+          line: `${first} was in their traffic ${mmdd(hit.d)} — ${cleanSubject(hit.s).slice(0, 60)}.`,
+          cite: rowOut(hit),
+        },
+        noStore,
+      );
+    }
+    if (rollup?.lastOrgInbound) {
+      const day = rollup.lastOrgInbound.slice(0, 10);
+      return NextResponse.json(
+        { ok: true, line: `They wrote org-side ${mmdd(day)}.`, cite: null },
+        noStore,
+      );
+    }
+    if (rollup?.lastHuman?.day) {
+      const days = Math.max(
+        0,
+        Math.floor(
+          (Date.now() - Date.parse(`${rollup.lastHuman.day}T12:00:00Z`)) / 86_400_000,
+        ),
+      );
+      return NextResponse.json(
+        { ok: true, line: `Nobody has touched them in ${days} days.`, cite: null },
+        noStore,
+      );
+    }
+    return NextResponse.json({ ok: true, line: "", cite: null }, noStore);
   }
 
   const rows = await stageRows(acct);

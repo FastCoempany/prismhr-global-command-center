@@ -168,6 +168,10 @@ export type SendbookInput = {
   // sendbook:<id> notes keyed by the REAL account id — the taps.
   tapsById: Map<string, NoteLike[]>;
   now: Date;
+  /** The second record's per-account signals: the org-wide inbound (their
+   *  voice, whoever's inbox caught it) and the live marketing cadence. The
+   *  operator's outbound and CSM intros still never warm (the decree). */
+  orgSignals?: Map<string, { inboundAt: string; mktgLive: boolean }>;
 };
 
 export type Sendbook = {
@@ -186,8 +190,15 @@ export function buildSendbook(inp: SendbookInput): Sendbook {
 
   for (const id of accountIds) {
     const notes = inp.notesById.get(id) ?? [];
-    const warm = warmDates(notes).sort();
-    const inbound = inboundDates(notes).sort();
+    // Their voice warms, no matter whose inbox caught it: the org-wide
+    // inbound joins the warm and inbound sets, merged by latest. Runs reset
+    // on it, replies annotate from it, and the lane flips on it.
+    const org = inp.orgSignals?.get(id);
+    const warm = [...warmDates(notes), ...(org?.inboundAt ? [org.inboundAt] : [])].sort();
+    const inbound = [
+      ...inboundDates(notes),
+      ...(org?.inboundAt ? [org.inboundAt] : []),
+    ].sort();
     laneById.set(id, warm.length > 0 ? "gone-cold" : "never-met");
 
     type Raw = Omit<SendLine, "step" | "repliedAt">;

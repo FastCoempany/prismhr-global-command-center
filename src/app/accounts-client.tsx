@@ -1380,6 +1380,36 @@ function DraftDialog({
 
   // The template shelf (founder-decreed 2026-08-20): named drafts, reused
   // from a dropdown; {{first}} {{last}} {{name}} {{account}} fill on apply.
+  // The draft desk's one line (5.2): a per-person read of both records —
+  // exact words, cited or silent. Fetched once when the desk opens.
+  const [deskLine, setDeskLine] = useState<{
+    line: string;
+    cite: { k: string; day: string; who: string; subject: string } | null;
+  } | null>(null);
+  const [deskExcerpt, setDeskExcerpt] = useState<string | null>(null);
+  useEffect(() => {
+    const q = contact.email || name;
+    if (!q) return;
+    void fetch(
+      `/activity/evidence?acct=${encodeURIComponent(accountId)}&who=${encodeURIComponent(q)}`,
+      { cache: "no-store" },
+    )
+      .then((r) => r.json())
+      .then(
+        (j: {
+          ok: boolean;
+          line?: string;
+          cite?: typeof deskLine extends null
+            ? never
+            : NonNullable<typeof deskLine>["cite"];
+        }) => {
+          if (j.ok && j.line) setDeskLine({ line: j.line, cite: j.cite ?? null });
+        },
+      )
+      .catch(() => null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accountId, contact.email]);
+
   const [templates, setTemplates] = useState<MailTemplate[]>([]);
   const [tplSel, setTplSel] = useState("");
   const [tplSaving, setTplSaving] = useState(false);
@@ -1451,6 +1481,49 @@ function DraftDialog({
             ✕
           </button>
         </div>
+        {deskLine && (
+          <div className={styles.deskLine}>
+            {deskLine.line}
+            {(() => {
+              const cite = deskLine.cite;
+              if (!cite) return null;
+              return (
+                <button
+                  type="button"
+                  className={styles.deskLineRead}
+                  onClick={async () => {
+                    if (deskExcerpt !== null) {
+                      setDeskExcerpt(null);
+                      return;
+                    }
+                    try {
+                      const r = await fetch(
+                        `/activity/evidence?acct=${encodeURIComponent(accountId)}&k=${encodeURIComponent(cite.k)}`,
+                        { cache: "no-store" },
+                      );
+                      const j = (await r.json()) as {
+                        ok: boolean;
+                        row?: { excerpt: string };
+                      };
+                      setDeskExcerpt(
+                        j.ok
+                          ? j.row?.excerpt || "The subject is the whole entry."
+                          : "The row isn't in the staged slice.",
+                      );
+                    } catch {
+                      setDeskExcerpt("The evidence store didn't answer.");
+                    }
+                  }}
+                >
+                  {deskExcerpt !== null ? "▾" : "▸ read it"}
+                </button>
+              );
+            })()}
+            {deskExcerpt !== null && (
+              <div className={styles.srExcerpt}>{deskExcerpt}</div>
+            )}
+          </div>
+        )}
         <div className={styles.draftTpl}>
           <select
             className={styles.draftTplSel}

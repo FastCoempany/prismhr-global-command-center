@@ -312,3 +312,40 @@ export function goneLine(originGoneIso: string): string {
       });
   return `From a note that has since been removed from the app${when ? ` (${when})` : ""}.`;
 }
+
+// ── the second record's digest (§6, shipped 2026-08-20) ─────────────────────
+/** One document per account per drop: the rollup's arithmetic and the
+ *  surviving gems, ≤4KB. Blast rows and staged slices never enter the brain —
+ *  this builder accepts only the rollup and gems note bodies (the covenant's
+ *  import guard is a test). Idempotent by originRef: accountId + dropSha. */
+export function mirrorActivityDigest(inp: {
+  accountId: string;
+  accountName: string;
+  dropSha: string;
+  dropDay: string;
+  rollupBody: string;
+  gemsBody: string;
+}): MirrorDoc | null {
+  const rollup = (inp.rollupBody ?? "").trim();
+  if (!rollup) return null;
+  const gems = (inp.gemsBody ?? "").trim();
+  const name = inp.accountName || inp.accountId;
+  const body = [
+    `The weekly Salesforce activity export's read on ${name}, drop of ${inp.dropDay}. Counts are arithmetic from the rollup; gems are refuter-verified.`,
+    rollup,
+    gems ? `\n${gems}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n")
+    .slice(0, 4000);
+  return sealed({
+    origin: "activity",
+    originRef: `${inp.accountId}:${inp.dropSha}`,
+    space: name,
+    title: `${name} — the second record, ${inp.dropDay}`,
+    body,
+    speakers: ["the second record"],
+    occurredAt: `${inp.dropDay}T12:00:00Z`,
+    accountId: inp.accountId,
+  });
+}

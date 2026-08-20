@@ -9043,3 +9043,23 @@ tr:hover .rowDash {
   color: var(--muted);
   margin: 4px 0 8px;
 }
+
+/* The draft desk's one line (5.2) — a per-person read of both records. */
+.deskLine {
+  margin: 6px 0 8px;
+  padding: 6px 10px;
+  border-left: 2px solid rgba(37, 99, 235, 0.35);
+  background: #f8fafd;
+  border-radius: 0 6px 6px 0;
+  font-size: 12.5px;
+  color: var(--ink);
+}
+.deskLineRead {
+  border: 0;
+  background: none;
+  padding: 0 0 0 8px;
+  cursor: pointer;
+  font-family: var(--font-donor-mono), ui-monospace, Menlo, monospace;
+  font-size: 10px;
+  color: var(--blue);
+}

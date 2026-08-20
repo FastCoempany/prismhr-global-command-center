@@ -50,6 +50,7 @@ import {
 } from "@/lib/intranet/playbook-in";
 import {
   mirrorAccountNote,
+  mirrorActivityDigest,
   mirrorCard,
   mirrorDemoNote,
   mirrorPartnerNote,
@@ -254,6 +255,41 @@ export async function syncApp(budget = 400): Promise<RunReport> {
         },
         getScreen(n.screenId)?.title ?? "",
       );
+      if (d) drafts.push(d);
+    }
+
+    // §6 · the second record's digests — one per account per drop, rollup +
+    // gems only. Blast tallies and staged slices never enter the brain.
+    const activityNotes = await prisma.accountNote.findMany({
+      where: { accountId: { startsWith: "activity:" } },
+      orderBy: { createdAt: "desc" },
+      take: 400,
+    });
+    const gemsNotes = await prisma.accountNote.findMany({
+      where: { accountId: { startsWith: "gems:" } },
+      orderBy: { createdAt: "desc" },
+      take: 400,
+    });
+    const gemsById = new Map(
+      gemsNotes.map((n) => [n.accountId.slice("gems:".length), n.body]),
+    );
+    for (const n of activityNotes) {
+      if (
+        n.accountId.startsWith("activity:stage:") ||
+        n.accountId === "activity:manifest"
+      )
+        continue;
+      const accountId = n.accountId.slice("activity:".length);
+      const head = /^⌗ ACTIVITY · drop (\S+) · (\S+)/.exec(n.body ?? "");
+      if (!head) continue;
+      const d = mirrorActivityDigest({
+        accountId,
+        accountName: nameById.get(accountId) ?? "",
+        dropSha: head[1],
+        dropDay: head[2],
+        rollupBody: n.body,
+        gemsBody: gemsById.get(accountId) ?? "",
+      });
       if (d) drafts.push(d);
     }
 

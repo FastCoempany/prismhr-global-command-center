@@ -20,6 +20,10 @@ import {
   type SecondRecord,
 } from "../src/lib/activity/read";
 import { buildQueue } from "../src/lib/groundwork/day";
+import { buildSendbook } from "../src/lib/sendbook/read";
+import { buildReadout } from "../src/lib/groundwork/readout";
+import { mirrorActivityDigest } from "../src/lib/intranet/mirror";
+import { readFileSync } from "node:fs";
 import { composeFor } from "../src/lib/groundwork/compose";
 import type { Peo } from "../src/lib/book";
 import type { Rollup, IntentWindows } from "../src/lib/activity/rollup";
@@ -545,5 +549,87 @@ describe("the queue reads the second record", () => {
     });
     assert.equal(g.kind, "send-draft");
     assert.ok(g.payload.includes("Aug 19 reply wants to discuss switching."));
+  });
+});
+
+// ═══ the second ring ═════════════════════════════════════════════════════════
+
+describe("the ring reads the second record", () => {
+  test("an org-side inbound flips the Sendbook lane and annotates the reply", () => {
+    const notes = [
+      {
+        body: "✉ Sent the first note →[to Pat]",
+        source: "room",
+        createdAt: "2026-08-01T12:00:00Z",
+        actors: "Antaeus → Pat",
+        kind: "email",
+      },
+    ];
+    const base = {
+      notesById: new Map([["A1", notes]]),
+      tapsById: new Map(),
+      now: NOW,
+    };
+    const before = buildSendbook(base as never);
+    assert.equal(before.laneById.get("A1"), "never-met");
+    const after = buildSendbook({
+      ...base,
+      orgSignals: new Map([
+        ["A1", { inboundAt: "2026-08-10T09:00:00", mktgLive: false }],
+      ]),
+    } as never);
+    assert.equal(after.laneById.get("A1"), "gone-cold");
+    const line = after.lines.find((l) => l.accountId === "A1");
+    assert.ok(line && line.repliedAt === "2026-08-10T09:00:00");
+    // The operator's own outbound still never warms (the decree).
+    assert.equal(before.laneById.get("A1"), "never-met");
+  });
+
+  test("the readout's second-record sentence is arithmetic and lint-clean", () => {
+    const r = buildReadout({
+      accounts: [acct({})],
+      queue: [],
+      intelById: new Map(),
+      intentById: new Map(),
+      outreachAccountIds: new Set(),
+      partnerUpdatesSent: 0,
+      partnerUpdatesReplied: 0,
+      secondRecord: { active30: 124, verifiedCold: 9 },
+      now: NOW,
+    } as never);
+    const book = r.sections.find((x) => x.title === "The rest of the book");
+    assert.ok(book);
+    assert.ok(book.paragraphs[0].text.includes("124 of the 1 saw human motion"));
+    assert.ok(book.paragraphs[0].text.includes("9 are verified cold"));
+  });
+
+  test("the digest carries rollup and gems, never staged bodies (§6 guard)", () => {
+    const d = mirrorActivityDigest({
+      accountId: "A1",
+      accountName: "Test Partner",
+      dropSha: "037742a0",
+      dropDay: "2026-08-20",
+      rollupBody: "⌗ ACTIVITY · drop 037742a0 · 2026-08-20 · window a→b\nLANES · human 4",
+      gemsBody: "◆ GEM · drop 037742a0 · CONFIRMED · created 2026-08-20 · acted:no",
+    });
+    assert.ok(d);
+    assert.equal(d.origin, "activity");
+    assert.equal(d.originRef, "A1:037742a0");
+    assert.ok(d.body.length <= 4200);
+    assert.equal(
+      mirrorActivityDigest({
+        accountId: "A1",
+        accountName: "",
+        dropSha: "x",
+        dropDay: "2026-08-20",
+        rollupBody: "",
+        gemsBody: "whatever",
+      }),
+      null,
+    );
+    // The covenant's import guard: the mirror must never touch staged slices.
+    const src = readFileSync("src/lib/intranet/mirror.ts", "utf8");
+    assert.ok(!src.includes("parseStageBody"));
+    assert.ok(!src.includes("activity:stage"));
   });
 });

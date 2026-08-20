@@ -151,3 +151,17 @@
   color: rgba(10, 28, 64, 0.42);
   max-width: 70ch;
 }
+
+/* The live-cadence marker (5.1, shipped 2026-08-20) — quiet mono, click-deep
+   by title; informs, never blocks. */
+.mktgLive {
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #b6791a;
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  border-radius: 4px;
+  padding: 1px 6px;
+  white-space: nowrap;
+}

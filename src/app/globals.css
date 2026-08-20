@@ -1385,3 +1385,48 @@ textarea {
     display: none;
   }
 }
+
+/* ── The second record's draft queue on the Playbook (5.5) ── */
+.srDraftQueue {
+  margin: 14px 0 4px;
+  border: 1px solid var(--line, #e6ebf3);
+  border-radius: 10px;
+  background: #fff;
+  padding: 10px 14px;
+}
+.srDraftQueue > summary {
+  font-family: var(--ds-font-mono, ui-monospace), Menlo, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: #5b6b86;
+  cursor: pointer;
+  list-style: none;
+}
+.srDraftQueue > summary:hover {
+  color: #0a1c40;
+}
+.srDraftCard {
+  border-top: 1px solid #eef1f6;
+  margin-top: 8px;
+  padding-top: 8px;
+  font-size: 13.5px;
+  color: #0a1c40;
+}
+.srDraftCard p {
+  margin: 0 0 6px;
+}
+.srDraftCard button {
+  border: 1px solid #cdd7e6;
+  background: #fff;
+  border-radius: 6px;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  color: #1d4ed8;
+  margin-right: 8px;
+}
+.srDraftCard button:hover {
+  border-color: #1d4ed8;
+}
