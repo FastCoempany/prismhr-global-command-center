@@ -72,6 +72,9 @@ import {
 import styles from "./room.module.css";
 
 export const dynamic = "force-dynamic";
+// A distillation pass (activityRun via the Chute) runs to a 220s deadline —
+// the platform's default window would kill it mid-account.
+export const maxDuration = 300;
 
 const serif = DM_Serif_Display({
   weight: "400",

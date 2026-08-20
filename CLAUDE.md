@@ -206,6 +206,33 @@ unattributed document is never inbound; an auto-reply is machinery, never
 the client writing. New surfaces are audited against this doctrine before
 they ship.
 
+## The click-depth law (founder-decreed 2026-08-20)
+
+Every compression opens. A two-word term, a count, a theme, an abbreviation —
+every shortened thing on every surface is a door to its evidence, exactly one
+click deep. Nothing compressed is ever a dead end, and nothing deep ever
+surfaces uninvited. Arrival budgets are hard limits; when budget and
+intelligence conflict, the budget wins and the intelligence moves a click
+down.
+
+## The second record (founder-decreed 2026-08-20)
+
+The weekly Salesforce activity export is a second record beside the
+operator's own. It inherits every law of the first: the record outranks every
+seed, machinery is never a person, money never renders, derived facts read
+the widest merge of both records by latest. Blast receipts are intent, never
+touches. A colleague's motion produces coordination moves; an account
+person's motion produces outreach moves. Every gem cites the rows it stands
+on or does not exist. The backbone lives in `src/lib/activity/` (SECOND-
+RECORD-PLAN §3, blessed 2026-08-20): the browser tallies the blast 81% and
+never uploads it, slices post in checksummed batches, an incomplete upload
+refuses to run, and every run carries its three adversarial passes — coverage
+(100% or the run marks itself failed), refutation (mechanical canon lint,
+then an independent refuter that defaults to refute), and staleness/acted
+(the first record kills the nag). Verdicts and every rendered count are
+arithmetic from the rollup builder, never model text. Faces (§4–§6) wait for
+their triptychs and their own ship orders.
+
 ## Other standing decrees
 
 - The word "steps" never appears in operator-facing copy.
