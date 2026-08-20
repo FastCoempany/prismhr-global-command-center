@@ -8861,3 +8861,185 @@
   vertical-align: 1px;
   white-space: nowrap;
 }
+
+/* ── The second record's columns and fold (Concept I, decreed 2026-08-20) ── */
+.srTouch {
+  font-family: var(--font-donor-mono), ui-monospace, Menlo, monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.03em;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.srTouchAcct {
+  color: var(--ink);
+  font-weight: 700;
+}
+.srTerm {
+  font-family: var(--font-donor-mono), ui-monospace, Menlo, monospace;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--blue);
+  border: 0;
+  border-bottom: 1px dashed rgba(37, 99, 235, 0.4);
+  background: none;
+  padding: 0 0 1px;
+  cursor: pointer;
+  text-transform: uppercase;
+  text-align: left;
+}
+.srTermSupport {
+  color: #b6791a;
+  border-bottom-color: rgba(245, 158, 11, 0.5);
+}
+.srMore {
+  color: #9aa7bd;
+  font-weight: 500;
+}
+.srVerdict {
+  color: var(--muted);
+  font-size: 12px;
+  font-style: italic;
+  display: inline-block;
+  max-width: 210px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: bottom;
+}
+.srActCell {
+  font-size: 13px;
+  font-weight: 600;
+}
+.srFoldTd {
+  background: #f8fafd;
+  padding: 12px 16px;
+}
+.srPanel {
+  max-width: 760px;
+}
+.srGem {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--orange);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin: 4px 0 10px;
+}
+.srGemHead {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+.srGemTerm {
+  font-family: var(--font-donor-mono), ui-monospace, Menlo, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: var(--orange);
+}
+.srGemStamp {
+  font-family: var(--font-donor-mono), ui-monospace, Menlo, monospace;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+}
+.srGemAct {
+  font-size: 15.5px;
+  font-weight: 700;
+  margin: 6px 0 2px;
+}
+.srGemWhy {
+  color: var(--muted);
+  font-size: 12.5px;
+}
+.srCites {
+  margin-top: 8px;
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+}
+.srCite {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font-family: var(--font-donor-mono), ui-monospace, Menlo, monospace;
+  font-size: 11px;
+  line-height: 2;
+  color: var(--muted);
+  padding: 0;
+}
+.srCite:hover {
+  color: var(--ink);
+}
+.srCite b {
+  color: var(--blue);
+  font-weight: 500;
+}
+.srExcerpt {
+  margin: 4px 0 8px 14px;
+  padding: 8px 12px;
+  border-left: 2px solid var(--line);
+  background: #fbfcfe;
+  border-radius: 0 6px 6px 0;
+  font-size: 12.5px;
+  color: var(--ink);
+}
+.srStamp {
+  display: block;
+  font-family: var(--font-donor-mono), ui-monospace, Menlo, monospace;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: #9aa7bd;
+  margin-bottom: 2px;
+}
+.srVerdictLine {
+  color: var(--muted);
+  font-size: 12.5px;
+  font-style: italic;
+  margin: 4px 0;
+}
+.srSupport {
+  margin-top: 4px;
+}
+.srCaseBlock {
+  margin-left: 14px;
+}
+
+/* The dashboard door as a hover glyph at the name (decreed move). */
+.rowDashForm {
+  display: inline;
+}
+.rowDash {
+  border: 0;
+  background: none;
+  padding: 0 2px;
+  cursor: pointer;
+  font-size: 12px;
+  color: #9aa7bd;
+  visibility: hidden;
+}
+tr:hover .rowDash {
+  visibility: visible;
+}
+.rowDash:hover {
+  color: var(--blue);
+}
+.rowDashOn {
+  font-size: 11px;
+  color: var(--green);
+}
+
+/* MODEL · PRISMHR — retired from the table into the drilldown's head. */
+.acctMetaLine {
+  font-family: var(--font-donor-mono), ui-monospace, Menlo, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  margin: 4px 0 8px;
+}

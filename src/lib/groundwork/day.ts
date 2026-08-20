@@ -498,7 +498,7 @@ function rankAll(inp: QueueInput, now: Date): QueueItem[] {
   const globalAgeT = Date.parse(researchGeneratedAt);
   const globalAge = Number.isNaN(globalAgeT) ? null : (now.getTime() - globalAgeT) / DAY;
   if (globalAge != null && globalAge > RESEARCH_STALE_DAYS) {
-    const bearer = inp.accounts
+    const bearers = inp.accounts
       .filter(
         (p) =>
           !inp.excludedIds?.has(p.id) &&
@@ -514,7 +514,9 @@ function rankAll(inp: QueueInput, now: Date): QueueItem[] {
           compositeScore(deskScore(a).score, da?.demandScore ?? null, da?.confidence)
             .score
         );
-      })[0];
+      });
+    const taken = new Set(candidates.map((c) => c.accountId));
+    const bearer = bearers.find((p) => !taken.has(p.id)) ?? bearers[0];
     if (bearer) {
       candidates.push({
         accountId: bearer.id,
@@ -535,7 +537,12 @@ function rankAll(inp: QueueInput, now: Date): QueueItem[] {
   // roster's best-fit account takes the slot. The CSM door, chosen when it
   // is the fastest one, never the toll.
   const byId = new Map(inp.accounts.map((p) => [p.id, p]));
-  const rosterBest = new Map<string, { id: string; score: number }>();
+  // Accounts already carrying their OWN evidence. The roundup slot and the
+  // book-wide research stamp are about the CSM and the book — they ride an
+  // account as a vehicle, and a vehicle must never swallow the account's own
+  // move (caught 2026-08-20: a briefing slot ate a verified-cold first touch).
+  const occupied = new Set(candidates.map((c) => c.accountId));
+  const rosterRanked = new Map<string, { id: string; score: number }[]>();
   for (const p of inp.accounts) {
     if (inp.excludedIds?.has(p.id)) continue;
     if (!p.csm || p.csm === "Unassigned") continue;
@@ -545,8 +552,16 @@ function rankAll(inp: QueueInput, now: Date): QueueItem[] {
       d?.demandScore ?? null,
       d?.confidence,
     ).score;
-    const best = rosterBest.get(p.csm);
-    if (!best || comp > best.score) rosterBest.set(p.csm, { id: p.id, score: comp });
+    const list = rosterRanked.get(p.csm) ?? [];
+    list.push({ id: p.id, score: comp });
+    rosterRanked.set(p.csm, list);
+  }
+  const rosterBest = new Map<string, { id: string; score: number }>();
+  for (const [csm, list] of rosterRanked) {
+    list.sort((a, b) => b.score - a.score);
+    // The best-fit FREE account carries the slot; only a roster with no free
+    // account falls back to colliding, where weight resolves it as before.
+    rosterBest.set(csm, list.find((x) => !occupied.has(x.id)) ?? list[0]);
   }
   for (const [csm, best] of rosterBest) {
     // The shared cadence rule: never stack an update on a live thread — due
