@@ -190,7 +190,10 @@ export type AccountRow = {
   engagement: Engagement;
   // Off-structure state: ⚡ in motion (live conversation) or ⏸ parked. Not-mine
   // accounts never reach the room — they live in the exclusions ledger.
-  disposition: { status: "motion" | "parked"; reason: string } | null;
+  disposition: {
+    status: "motion" | "parked" | "won" | "lost" | "engaged";
+    reason: string;
+  } | null;
   notes: LinkedNote[];
   chipNotes: ChipNote[]; // the working record ("mine" lane)
   bgNotes: ChipNote[]; // background register — behind a click
@@ -893,10 +896,24 @@ export function AccountsClient({
                     </button>{" "}
                     {a.disposition && (
                       <span
-                        className={styles.dispoBadge}
+                        className={[
+                          styles.dispoBadge,
+                          a.disposition.status === "won" ? styles.dispoWon : "",
+                          a.disposition.status === "lost" ? styles.dispoLost : "",
+                        ]
+                          .filter(Boolean)
+                          .join(" ")}
                         title={a.disposition.reason || undefined}
                       >
-                        {a.disposition.status === "motion" ? "⚡ in motion" : "⏸ parked"}
+                        {a.disposition.status === "motion"
+                          ? "⚡ in motion"
+                          : a.disposition.status === "parked"
+                            ? "⏸ parked"
+                            : a.disposition.status === "won"
+                              ? "✓ closed won"
+                              : a.disposition.status === "lost"
+                                ? "✕ closed lost"
+                                : "⌁ engaged"}
                       </span>
                     )}{" "}
                     <ValBadge v={a.validation} />

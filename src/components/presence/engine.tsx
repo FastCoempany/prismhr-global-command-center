@@ -57,6 +57,25 @@ function flush() {
   });
 }
 
+// The unload flush. A reload kills in-flight fetches, so the server-action
+// flush never landed on ctrl+R and every reload ate up to a minute
+// (caught 2026-08-20). sendBeacon survives unload; the banked totals fold
+// into storedA/P immediately so the display never double-counts.
+function flushBeacon() {
+  if (pendA === 0 && pendP === 0) return;
+  const payload = JSON.stringify({ a: pendA, p: pendP });
+  const sent = navigator.sendBeacon?.(
+    "/presence/beat",
+    new Blob([payload], { type: "application/json" }),
+  );
+  if (sent) {
+    pendA = 0;
+    pendP = 0;
+  } else {
+    flush();
+  }
+}
+
 export function ensureStarted() {
   if (started || typeof window === "undefined") return;
   started = true;
@@ -95,7 +114,10 @@ export function ensureStarted() {
   }, 1000);
 
   window.setInterval(flush, 60_000);
-  window.addEventListener("pagehide", flush);
+  window.addEventListener("pagehide", flushBeacon);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") flushBeacon();
+  });
 }
 
 // The reset (founder-decreed 2026-08-19): zero today, locally and banked —

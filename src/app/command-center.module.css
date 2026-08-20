@@ -8539,3 +8539,14 @@
 .foldSum h3 {
   margin: 0;
 }
+
+/* The board's word on the accounts page (decreed 2026-08-20): a stamp
+   outranks "in motion"; won green, lost red — the semantic ladder. */
+.dispoWon {
+  color: #1e8e4a;
+  border-color: rgba(34, 197, 94, 0.5);
+}
+.dispoLost {
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.45);
+}
