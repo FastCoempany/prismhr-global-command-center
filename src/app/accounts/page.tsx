@@ -8,6 +8,10 @@ import { peopleFor } from "@/lib/intel/people";
 import { relationshipFor } from "@/lib/intel/relationship";
 import { parseResearchBody, researchNs } from "@/lib/intel/deep-research";
 import { loadCommand } from "@/lib/command-center/data";
+import { loadDashboard } from "@/lib/dashboard/data";
+import { readOutcome } from "@/lib/dashboard/outcome";
+import { digestForCardName } from "@/lib/intel/digest";
+import { SENDBOOK_NS, recordSends } from "@/lib/sendbook/read";
 import { compositeScore, deskScore } from "@/lib/book/scoring";
 import {
   analyzePlay,
@@ -106,6 +110,38 @@ export default async function AccountsPage() {
     .map((p) => ({ p, d: dispositions.get(p.id) }))
     .filter((x) => x.d?.status === "not-mine");
   const excludedIds = new Set(excluded.map((x) => x.p.id));
+
+  // The board's word on every account (founder-decreed 2026-08-20): a
+  // stamped outcome outranks any "in motion" read, a live row IS motion,
+  // and cold outreach without a row reads ENGAGED — never "in motion".
+  const boardById = new Map<string, { outcome: "won" | "lost" | null; live: boolean }>();
+  {
+    const dash = await loadDashboard();
+    if (dash.status !== "unauthenticated" && dash.status !== "database-unavailable") {
+      const idByName = new Map(peos.map((p) => [p.name.toLowerCase(), p.id]));
+      for (const card of dash.cards) {
+        const id =
+          idByName.get(card.name.toLowerCase()) ??
+          digestForCardName(card.name)?.accountId ??
+          "";
+        if (!id) continue;
+        const b = boardById.get(id) ?? { outcome: null, live: false };
+        const o = readOutcome(card.notes);
+        if (o) b.outcome = o.status;
+        else if (!card.archived) b.live = true;
+        boardById.set(id, b);
+      }
+    }
+  }
+  // Cold outreach on the record: a logged touch, a tapped Sendbook channel,
+  // or a filed outbound — the widest merge the app holds (Ted doctrine).
+  const engagedIds = new Set<string>();
+  for (const t of touches) {
+    const m = /^outreach:(.+)$/.exec(t.subjectKey);
+    if (m) engagedIds.add(m[1]);
+  }
+  for (const key of chipNotes.keys())
+    if (key.startsWith(SENDBOOK_NS)) engagedIds.add(key.slice(SENDBOOK_NS.length));
 
   // One row per partner who actually owns something in the book.
   const partnerRoster = (() => {
@@ -257,10 +293,24 @@ export default async function AccountsPage() {
           : null,
         engagement: engagements.get(p.id) ?? EMPTY_ENGAGEMENT,
         disposition: (() => {
+          const board = boardById.get(p.id);
+          // The stamp outranks everything: a Closed deal is never "in motion".
+          if (board?.outcome)
+            return {
+              status: board.outcome,
+              reason: "Stamped on the HomeRoom board. The record keeps everything.",
+            };
           const d = dispositions.get(p.id);
-          return d && (d.status === "motion" || d.status === "parked")
-            ? { status: d.status, reason: d.reason }
-            : null;
+          if (d && (d.status === "motion" || d.status === "parked"))
+            return { status: d.status, reason: d.reason };
+          if (board?.live)
+            return { status: "motion" as const, reason: "On the HomeRoom board." };
+          if (engagedIds.has(p.id) || recordSends(chipNotes.get(p.id) ?? []).length > 0)
+            return {
+              status: "engaged" as const,
+              reason: "Cold outreach on the record. No HomeRoom row yet.",
+            };
+          return null;
         })(),
         notes: notesByAccount.get(p.id) ?? [],
         contactCount: contactCount(p.id),
