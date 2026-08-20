@@ -40,7 +40,7 @@ export const maxDuration = 300;
 export default async function IntranetPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string; grab?: string }>;
 }) {
   const access = await getAppAccess();
   if (access.status === "unauthenticated") {
@@ -70,6 +70,7 @@ export default async function IntranetPage({
   // pre-scoped to what it was looking at. Prefilled, never fired on arrival —
   // the operator reads it first.
   const initialQ = (params?.q ?? "").slice(0, 300);
+  const grabArrived = params?.grab === "1";
 
   // The rail: live top-level topics, prospect questions first, each carrying
   // its children so a click decomposes without a round trip.
@@ -103,6 +104,7 @@ export default async function IntranetPage({
         <IntranetClient
           rail={rail}
           initialQ={initialQ}
+          grabArrived={grabArrived}
           empty={stats.docs === 0}
           staleness={stalenessLine(stats.lastCaptureAt, nowIso)}
           queue={queue}

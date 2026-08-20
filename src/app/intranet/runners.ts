@@ -597,10 +597,11 @@ export async function extractPending(
     let total = doneBase + backlog;
     await pulse({ total, unit: `${unitWord} — ${doneBase} of ${total} ${partWord}` });
 
-    // Reads run four at a time — the model is the slow part and the calls are
-    // independent, so a pass gets four entries per model-latency instead of
-    // one. Persistence stays sequential, one document at a time, below.
-    const CONCURRENT_READS = 4;
+    // Reads run eight at a time — the model is the slow part and the calls
+    // are independent, so a pass gets eight entries per model-latency instead
+    // of one (doubled 2026-08-20; the 300-doc backlog crawled at four).
+    // Persistence stays sequential, one document at a time, below.
+    const CONCURRENT_READS = 8;
     for (let i = 0; i < pending.length; i += CONCURRENT_READS) {
       if (opts?.deadlineMs && Date.now() > opts.deadlineMs) {
         outOfTime = true;

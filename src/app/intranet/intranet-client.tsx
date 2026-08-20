@@ -71,6 +71,7 @@ const DOTS = ["#2563EB", "#E6701E", "#22C55E", "#F59E0B", "#0A1C40"];
 export function IntranetClient({
   rail,
   initialQ,
+  grabArrived = false,
   empty,
   staleness,
   queue,
@@ -83,6 +84,7 @@ export function IntranetClient({
 }: {
   rail: RailTopic[];
   initialQ: string;
+  grabArrived?: boolean;
   empty: boolean;
   staleness: string;
   queue: { pending: number; unindexed: number };
@@ -104,6 +106,9 @@ export function IntranetClient({
   const [passage, setPassage] = useState<PassageReply | null>(null);
   const [paste, setPaste] = useState("");
   const [receipt, setReceipt] = useState("");
+  // The grab's receipt (caught 2026-08-20): the bookmarklet copies the rows
+  // and opens this page — landing cold said nothing about what just happened.
+  const [grabOpen, setGrabOpen] = useState(grabArrived);
   const [busy, startAsk] = useTransition();
   const [capBusy, startCap] = useTransition();
   const [runBusy, startRun] = useTransition();
@@ -1199,6 +1204,40 @@ export function IntranetClient({
           </div>
         )}
 
+        {canWrite && grabOpen && (
+          <div className={styles.itGrab}>
+            <span className={styles.itGrabKick}>THE GRAB LANDED</span>
+            <span className={styles.itGrabTx}>
+              Your Sales Nav capture is on the clipboard. Paste it in the box below and
+              press Send it — it files, gets read, and fans out from there.
+            </span>
+            <button
+              type="button"
+              className={styles.itGrabBtn}
+              onClick={async () => {
+                try {
+                  const t = await navigator.clipboard.readText();
+                  if (t.trim()) {
+                    setPaste(t);
+                    setGrabOpen(false);
+                  }
+                } catch {
+                  // clipboard read refused — the manual paste path stands
+                }
+              }}
+            >
+              Paste it here
+            </button>
+            <button
+              type="button"
+              className={styles.itGrabX}
+              onClick={() => setGrabOpen(false)}
+              title="Dismiss"
+            >
+              ✕
+            </button>
+          </div>
+        )}
         {canWrite && (
           <div className={styles.itDock}>
             <div className={styles.itDockIn}>
