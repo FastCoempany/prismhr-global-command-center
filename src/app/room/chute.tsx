@@ -10,6 +10,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { chuteReadPdf, roomPaste, roomPasteUndo } from "./actions";
+import { activityRun, activityStage } from "../activity/actions";
+import { probeActivityReport, uploadActivityReport } from "@/lib/activity/upload";
 import { DROP_ACCEPT } from "@/lib/paste-files";
 import { readFileToText } from "./read-file";
 import { routeCapture, type RouteAccount, type RouteHit } from "@/lib/route-capture";
@@ -27,7 +29,9 @@ type ChuteItem = {
     | "error"
     | "dupe"
     | "interrupted"
-    | "undone";
+    | "undone"
+    | "activity"
+    | "activityDone";
   text?: string;
   account?: { id: string; name: string };
   why?: string;
@@ -67,7 +71,8 @@ function loadLedger(): { items: StoredItem[]; maxKey: number } {
       x.state === "reading" ||
       x.state === "filing" ||
       x.state === "pick" ||
-      x.state === "mismatch"
+      x.state === "mismatch" ||
+      x.state === "activity"
         ? {
             ...x,
             state: "interrupted" as const,
@@ -166,10 +171,67 @@ export function Chute({
     else patch(key, { state: "error", reason: r.reason ?? "The file didn't take." });
   };
 
+  // The activity report is the one file the Chute reads for the BOOK, not an
+  // account: blasts tally in the browser and never upload, slices post in
+  // verified batches, and the distillation narrates through the Intranet's
+  // gadget. Recognition is by parsed header fingerprint, first 4 KB only.
+  const swallowActivity = async (f: File, key: number) => {
+    patch(key, {
+      state: "activity",
+      reason: "The activity report. Reading it here — blasts tally in the browser.",
+    });
+    try {
+      const res = await uploadActivityReport({
+        file: f,
+        book: roster.map((r) => ({ id: r.id, name: r.name })),
+        post: activityStage,
+        progress: (line) => patch(key, { reason: line }),
+      });
+      if (!res.ok) {
+        patch(key, { state: "error", reason: res.reason ?? "The drop didn't take." });
+        return;
+      }
+      if (res.reply?.unchanged) {
+        patch(key, {
+          state: "dupe",
+          reason: "Nothing changed — the record already holds this drop.",
+        });
+        return;
+      }
+      patch(key, {
+        reason: `Verified complete — ${res.reply?.queued?.distill ?? 0} accounts to distill. Watch the gadget on the Intranet.`,
+      });
+      for (;;) {
+        const r = await activityRun();
+        if (r.done || !r.ok) {
+          patch(key, {
+            state: r.ok ? "activityDone" : "error",
+            reason: r.ok
+              ? (r.receipt[r.receipt.length - 1] ?? "The second record is distilled.")
+              : (r.reason ?? "The run stopped — the Intranet dock holds the receipt."),
+          });
+          return;
+        }
+        patch(key, {
+          reason: `Distilling — ${r.remaining} account${r.remaining === 1 ? "" : "s"} to go.`,
+        });
+      }
+    } catch {
+      patch(key, {
+        state: "error",
+        reason: "The drop broke midway. Drop it again — staging replaces wholesale.",
+      });
+    }
+  };
+
   const swallow = async (f: File, batch: number) => {
     const key = ++seq.current;
     setItems((xs) => [{ key, filename: f.name, state: "reading", batch }, ...xs]);
     try {
+      if (/\.csv$/i.test(f.name) && (await probeActivityReport(f))) {
+        await swallowActivity(f, key);
+        return;
+      }
       const read = await readFileToText(f, chuteReadPdf);
       if (!read.ok) {
         patch(key, { state: "error", reason: read.reason });
@@ -253,6 +315,13 @@ export function Chute({
         </span>
       )}
       {it.state === "undone" && <span className={styles.chuteDupe}>{it.reason}</span>}
+      {it.state === "activity" && <span>{it.reason}</span>}
+      {it.state === "activityDone" && (
+        <span className={styles.chuteDone}>
+          ✓ the second record · {it.reason}{" "}
+          <a href="/intranet">The receipt waits on the Intranet.</a>
+        </span>
+      )}
       {it.state === "error" && <span className={styles.chuteErr}>{it.reason}</span>}
       {it.state === "dupe" && <span className={styles.chuteDupe}>{it.reason}</span>}
       {it.state === "interrupted" && (
@@ -390,7 +459,8 @@ export function Chute({
       {items.length > 0 &&
         (() => {
           const running = items.filter(
-            (x) => x.state === "reading" || x.state === "filing",
+            (x) =>
+              x.state === "reading" || x.state === "filing" || x.state === "activity",
           );
           const waiting = items.filter(
             (x) => x.state === "pick" || x.state === "mismatch",

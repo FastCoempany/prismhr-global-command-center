@@ -926,7 +926,9 @@ export function IntranetClient({
                   {gadgetLive
                     ? pulseS?.kind === "sendit"
                       ? "Send-it run — your paste"
-                      : "Refresh run — the whole backlog"
+                      : pulseS?.kind === "activity"
+                        ? "Activity run — the second record"
+                        : "Refresh run — the whole backlog"
                     : failHold
                       ? "Paused — the log says why"
                       : "At rest — caught up"}

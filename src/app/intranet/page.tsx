@@ -29,6 +29,8 @@ import {
 } from "@/lib/intranet/index-topics";
 import { synthAvailable } from "@/lib/intranet/synthesize";
 import { brainQueue } from "./runners";
+import { peos } from "@/lib/book";
+import { ActivityDock } from "../activity/dock";
 import { IntranetClient, type RailTopic } from "./intranet-client";
 import styles from "../command-center.module.css";
 
@@ -114,6 +116,10 @@ export default async function IntranetPage({
           nowIso={nowIso}
           canWrite={access.canWrite}
           canAnswer={synthAvailable()}
+        />
+        <ActivityDock
+          book={peos.map((p) => ({ id: p.id, name: p.name }))}
+          canWrite={access.canWrite}
         />
       </main>
     </>
