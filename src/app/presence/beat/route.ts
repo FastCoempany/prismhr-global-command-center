@@ -5,7 +5,7 @@
 // same auth as every presence write.
 
 import { NextResponse } from "next/server";
-import { presenceLog } from "../actions";
+import { presenceLog, presenceToday } from "../actions";
 
 export const dynamic = "force-dynamic";
 
@@ -17,4 +17,12 @@ export async function POST(req: Request) {
     // a malformed beacon drops; the next minute flush carries the time
   }
   return new NextResponse(null, { status: 204 });
+}
+
+// The engine's seed read, as a plain GET for the same reason: a server-action
+// call re-applies the current route, and every page mounts the engine.
+export async function GET() {
+  return NextResponse.json(await presenceToday(), {
+    headers: { "cache-control": "no-store" },
+  });
 }
