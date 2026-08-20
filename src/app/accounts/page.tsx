@@ -3,6 +3,7 @@ import { AppWayfinder } from "@/components/app-wayfinder";
 import { getAppAccess } from "@/lib/auth";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import { peos } from "@/lib/book";
+import { EXTRA_PARTNERS } from "@/lib/book/partners";
 import { contactCount, contactsFor } from "@/lib/book/contacts";
 import { peopleFor } from "@/lib/intel/people";
 import { relationshipFor } from "@/lib/intel/relationship";
@@ -155,9 +156,16 @@ export default async function AccountsPage() {
         lastTouch: string;
       }
     >();
+    // Membership comes from the book alone (founder-decreed 2026-08-20): a
+    // partner is a CSM who owns accounts, or a name on the known-partners
+    // list. The touch log's freeform labels ENRICH a seat — they never mint
+    // one, or every early jotting ("send pricing to bryce", a pasted message)
+    // becomes a person with 0 accounts and a broken row.
+    const KNOWN = new Set<string>(EXTRA_PARTNERS.map((n) => n.trim()));
+    for (const p of peos) if (p.csm && p.csm !== "Unassigned") KNOWN.add(p.csm.trim());
     const seat = (name: string) => {
       const key = name.trim();
-      if (!key || key === "Unassigned") return null;
+      if (!key || key === "Unassigned" || !KNOWN.has(key)) return null;
       const found = acc.get(key);
       if (found) return found;
       const fresh = { name: key, accounts: 0, notes: 0, touches: 0, lastTouch: "" };
