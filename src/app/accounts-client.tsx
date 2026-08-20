@@ -2,7 +2,6 @@
 
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { useFormStatus } from "react-dom";
 import { EXTRA_PARTNERS, partnerRole } from "@/lib/book/partners";
 import { competitorUrl } from "@/lib/book/research";
 import { SfCheckpoint } from "@/components/sf";
@@ -55,6 +54,7 @@ import {
 } from "./accounts/draft-actions";
 import { sfContactUrl } from "@/lib/salesforce";
 import styles from "./command-center.module.css";
+import SecondRecordPanel, { type RowSecond } from "./accounts/second-record-panel";
 
 function CompetitorLinks({ names }: { names: string[] }) {
   return (
@@ -75,15 +75,6 @@ function CompetitorLinks({ names }: { names: string[] }) {
         );
       })}
     </>
-  );
-}
-
-function AddButton() {
-  const { pending } = useFormStatus();
-  return (
-    <button className={styles.addMini} disabled={pending}>
-      {pending ? "Adding…" : "Add to dashboard"}
-    </button>
   );
 }
 
@@ -192,6 +183,8 @@ function Fold({
 
 export type AccountRow = {
   id: string;
+  /** The second record's row read — null when the drop holds nothing. */
+  second: RowSecond | null;
   name: string;
   industry: string;
   sizeBucket: string;
@@ -248,6 +241,19 @@ export type AccountRow = {
   nextActionDate: string | null;
   peoNotes: string | null;
 };
+
+// The touch cell's voice: first name + last initial, mono, dates as M/D.
+function shortWho(full: string): string {
+  const parts = (full ?? "").trim().split(/\s+/);
+  if (parts.length === 0 || !parts[0]) return "—";
+  const first = parts[0].toUpperCase();
+  return parts.length > 1
+    ? `${first} ${parts[parts.length - 1][0].toUpperCase()}`
+    : first;
+}
+function mmddOf(day: string): string {
+  return day ? day.slice(5).replace("-", "/") : "";
+}
 
 function StageBadge({ stage }: { stage: Stage }) {
   const cls =
@@ -620,6 +626,8 @@ export function AccountsClient({
   const params = useSearchParams();
   const focusId = params.get("focus") ?? params.get("peo") ?? "";
   const [openId, setOpenId] = useState(focusId);
+  // The second-record fold — one open at a time, from THE SIGNAL cell.
+  const [srOpenId, setSrOpenId] = useState("");
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -927,9 +935,9 @@ export function AccountsClient({
             <th>Stage</th>
             <th>Next action</th>
             <th>Play</th>
-            <th>Model</th>
-            <th>PrismHR</th>
-            <th />
+            <th>Last human touch</th>
+            <th>The signal</th>
+            <th>Act</th>
           </tr>
         </thead>
         <tbody>
@@ -963,6 +971,30 @@ export function AccountsClient({
                     >
                       {a.name}
                     </button>{" "}
+                    {canAdd &&
+                      (onDash.has(a.name) ? (
+                        <span className={styles.rowDashOn} title="On the dashboard">
+                          ⊞✓
+                        </span>
+                      ) : (
+                        <form action={addCard} className={styles.rowDashForm}>
+                          <input type="hidden" name="name" value={a.name} />
+                          <input
+                            type="hidden"
+                            name="subtitle"
+                            value={`${a.csm}${a.industry ? ` · ${a.industry}` : ""}`}
+                          />
+                          <input type="hidden" name="seedDiscovery" value={seedFor(a)} />
+                          <input type="hidden" name="returnTo" value="/accounts" />
+                          <button
+                            className={styles.rowDash}
+                            title="Add to dashboard"
+                            type="submit"
+                          >
+                            ⊞
+                          </button>
+                        </form>
+                      ))}{" "}
                     {a.disposition && (
                       <span
                         className={[
@@ -1052,48 +1084,86 @@ export function AccountsClient({
                       <span className={styles.muted}>—</span>
                     )}
                   </td>
-                  <td className={styles.rowSub}>{a.industry}</td>
                   <td>
-                    {a.incumbent ? (
+                    {a.second?.touch ? (
                       <span
-                        className={styles.chip}
-                        title={`Already a platform customer, on PrismHR cloud tenant “${a.cloud}”.`}
+                        className={styles.srTouch}
+                        title={`The second record's last human row — ${a.second.touch.kind === "account" ? "their side wrote" : "a colleague's motion"}`}
                       >
-                        {a.cloud}
+                        <span
+                          className={
+                            a.second.touch.kind === "account"
+                              ? styles.srTouchAcct
+                              : undefined
+                          }
+                        >
+                          {shortWho(a.second.touch.who)}
+                        </span>{" "}
+                        · {mmddOf(a.second.touch.day)}
                       </span>
                     ) : (
-                      <span
-                        className={styles.muted}
-                        title="Not a PrismHR platform customer"
-                      >
-                        —
-                      </span>
+                      <span className={styles.muted}>—</span>
                     )}
                   </td>
                   <td>
-                    {canAdd &&
-                      (onDash.has(a.name) ? (
-                        <span className={styles.onDash}>On dashboard ✓</span>
-                      ) : (
-                        <form action={addCard}>
-                          <input type="hidden" name="name" value={a.name} />
-                          <input
-                            type="hidden"
-                            name="subtitle"
-                            value={`${a.csm}${a.industry ? ` · ${a.industry}` : ""}`}
-                          />
-                          <input type="hidden" name="seedDiscovery" value={seedFor(a)} />
-                          <input type="hidden" name="returnTo" value="/accounts" />
-                          <AddButton />
-                        </form>
-                      ))}
+                    {a.second && a.second.gems.length > 0 ? (
+                      <button
+                        type="button"
+                        className={styles.srTerm}
+                        onClick={() => setSrOpenId(srOpenId === a.id ? "" : a.id)}
+                        aria-expanded={srOpenId === a.id}
+                        title="A verified gem — opens the card, citations, and the email meat"
+                      >
+                        {a.second.gems[0].term}
+                        {a.second.gems.length > 1 && (
+                          <span className={styles.srMore}>
+                            {" "}
+                            +{a.second.gems.length - 1}
+                          </span>
+                        )}
+                      </button>
+                    ) : a.second && a.second.supportTotal >= 8 ? (
+                      <button
+                        type="button"
+                        className={`${styles.srTerm} ${styles.srTermSupport}`}
+                        onClick={() => setSrOpenId(srOpenId === a.id ? "" : a.id)}
+                        aria-expanded={srOpenId === a.id}
+                        title="Heavy support traffic — opens the case list and the meat"
+                      >
+                        ▮ {a.second.supportTotal} CASES
+                      </button>
+                    ) : a.second?.verdict ? (
+                      <span className={styles.srVerdict} title={a.second.verdict}>
+                        {a.second.verdict}
+                      </span>
+                    ) : (
+                      <span className={styles.muted}>—</span>
+                    )}
+                  </td>
+                  <td className={styles.srActCell}>
+                    {a.second?.act ? (
+                      <span title="The gem's act — six words, refuter-verified">
+                        {a.second.act}
+                      </span>
+                    ) : null}
                   </td>
                 </tr>
+                {srOpenId === a.id && a.second && (
+                  <tr>
+                    <td colSpan={9} className={styles.srFoldTd}>
+                      <SecondRecordPanel accountId={a.id} second={a.second} />
+                    </td>
+                  </tr>
+                )}
                 {openId === a.id && (
                   <tr>
                     <td colSpan={9}>
                       <div className={styles.acctDetail}>
                         <SfCheckpoint when="account" id={a.id} name={a.name} />
+                        <p className={styles.acctMetaLine}>
+                          MODEL · {a.industry || "—"} · PRISMHR ·{" "}
+                          {a.incumbent ? a.cloud : "not a platform customer"}
+                        </p>
                         {/* The people lead (founder-decreed 2026-08-20): the
                             double-click is looking for contacts first. */}
                         <ContactsPanel

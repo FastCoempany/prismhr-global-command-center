@@ -483,12 +483,22 @@ describe("the queue reads the second record", () => {
         }),
       ],
     ]);
-    // industry PEO/ASO + high fit + no activity → incumbent rule fires. The
-    // CSM is unassigned so roundup-slot can't outrank it in the one-per-
-    // account contest.
+    // industry PEO/ASO + high fit + no activity → incumbent rule fires. A
+    // sibling account gives the CSM's roundup slot a free vehicle — the
+    // cadence must never swallow this account's own move (the vehicle rule,
+    // fixed 2026-08-20).
     const { all } = buildQueue(
-      baseInput({ secondById: second, accounts: [acct({ csm: "Unassigned" })] }) as never,
+      baseInput({
+        secondById: second,
+        accounts: [
+          acct({}),
+          acct({ id: "TEST0000000000002", name: "Second Partner", fitTier: "low" }),
+        ],
+      }) as never,
     );
+    const roundup = all.find((q) => q.ruleId === "roundup-slot");
+    assert.ok(roundup, "the cadence still fires");
+    assert.equal(roundup.accountId, "TEST0000000000002", "…riding the free account");
     const hit = all.find((q) => q.ruleId === "never-touched-incumbent");
     assert.ok(hit);
     assert.equal(hit.weight, 52);

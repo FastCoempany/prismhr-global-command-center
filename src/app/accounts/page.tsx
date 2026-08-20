@@ -7,6 +7,7 @@ import { EXTRA_PARTNERS } from "@/lib/book/partners";
 import { contactCount, contactsFor } from "@/lib/book/contacts";
 import { peopleFor } from "@/lib/intel/people";
 import { relationshipFor } from "@/lib/intel/relationship";
+import { anyLiveGem, fetchSecondRecords } from "@/lib/activity/read";
 import { parseResearchBody, researchNs } from "@/lib/intel/deep-research";
 import { loadCommand } from "@/lib/command-center/data";
 import { loadDashboard } from "@/lib/dashboard/data";
@@ -215,6 +216,12 @@ export default async function AccountsPage() {
     );
   })();
 
+  // The second record, one query for the whole book — the three new columns
+  // and the in-row fold read from this map.
+  const secondById = await fetchSecondRecords().catch(
+    () => new Map<string, never>() as Awaited<ReturnType<typeof fetchSecondRecords>>,
+  );
+
   const rows: AccountRow[] = peos
     .filter((p) => !excludedIds.has(p.id))
     .map((p) => {
@@ -315,6 +322,27 @@ export default async function AccountsPage() {
           : null,
         engagement: engagements.get(p.id) ?? EMPTY_ENGAGEMENT,
         risk: riskById.get(p.id) ?? null,
+        second: (() => {
+          const sr = secondById.get(p.id);
+          if (!sr) return null;
+          const lh = sr.rollup?.lastHuman ?? null;
+          const gem = anyLiveGem(sr);
+          const live = sr.gems.filter((g) => !g.actedDay).slice(0, 3);
+          return {
+            touch: lh ? { who: lh.who, day: lh.day, kind: lh.kind } : null,
+            gems: live.map((g) => ({
+              term: g.term,
+              act: g.act,
+              reason: g.reason,
+              whenDay: g.whenDay,
+              cites: g.cites,
+            })),
+            act: gem && !gem.actedDay ? gem.act : null,
+            verdict: sr.rollup?.verdict ?? "",
+            supportTotal: sr.support?.total ?? 0,
+            spikeDay: sr.support?.spike?.day ?? "",
+          };
+        })(),
         disposition: (() => {
           const board = boardById.get(p.id);
           // The stamp outranks everything: a Closed deal is never "in motion".
