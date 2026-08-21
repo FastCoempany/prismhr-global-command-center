@@ -110,6 +110,51 @@
   align-self: center;
   margin-left: auto;
 }
+
+/* The filter rail (founder-decreed 2026-08-21): the dropdowns leave the top
+   bar for a quiet left rail beside the sheet. It rides sticky under the
+   wayfinder so the filters stay in reach on a 130-row scroll. */
+.railWrap {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+.rail {
+  flex: 0 0 168px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: sticky;
+  top: 74px;
+}
+.rail select {
+  width: 100%;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: #fff;
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--ink);
+}
+.railMain {
+  flex: 1;
+  min-width: 0;
+}
+@media (max-width: 900px) {
+  .railWrap {
+    flex-direction: column;
+  }
+  .rail {
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: 100%;
+  }
+  .rail select {
+    width: auto;
+  }
+}
 .toggle {
   display: inline-flex;
   align-items: center;
