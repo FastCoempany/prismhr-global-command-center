@@ -62,7 +62,11 @@ export async function scratchAdd(
 ): Promise<{ ok: boolean; line?: ScratchLine; reason?: string }> {
   const access = await padAccess();
   if (access !== "write") return { ok: false, reason: "Read-only session." };
-  const text = redactMoney((body ?? "").trim()).slice(0, 500);
+  // The paper keeps figures (founder-decreed 2026-08-21): the pad routes
+  // nowhere by construction — no account view, no mirror, no brain — so the
+  // money doctrine's boundary holds at the pad's edge. The ask door still
+  // redacts; asks leave the paper.
+  const text = (body ?? "").trim().slice(0, 500);
   if (!text) return { ok: false, reason: "Write something first." };
   try {
     const at = new Date();
@@ -259,6 +263,32 @@ export async function padAskRead(): Promise<void> {
     });
   } catch {
     // an unstamped read costs one extra pulse, never the answer
+  }
+}
+
+// Edit in place (founder-decreed 2026-08-21): the visible text changes, the
+// line keeps its seat and its timestamp — the same ✎ gesture the room's
+// sheet lines carry. Money is redacted on the rewrite like on the write.
+export async function scratchEdit(
+  id: string,
+  body: string,
+): Promise<{ ok: boolean; body?: string; reason?: string }> {
+  const access = await padAccess();
+  if (access !== "write") return { ok: false, reason: "Read-only session." };
+  const clean = (id ?? "").trim().slice(0, 40);
+  // Figures survive here too — the paper's pact, not the record's.
+  const text = (body ?? "").trim().slice(0, 500);
+  if (!clean) return { ok: false, reason: "Nothing to edit." };
+  if (!text) return { ok: false, reason: "Write something first. ✕ crosses out." };
+  try {
+    const r = await getPrisma().accountNote.updateMany({
+      where: { id: clean, accountId: SCRATCH_NS },
+      data: { body: text },
+    });
+    if (r.count === 0) return { ok: false, reason: "That line isn't on the paper." };
+    return { ok: true, body: text };
+  } catch {
+    return { ok: false, reason: "The edit didn't keep. Try again." };
   }
 }
 

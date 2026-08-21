@@ -19,6 +19,7 @@ import {
   padAskRead,
   scratchAdd,
   scratchDelete,
+  scratchEdit,
   scratchList,
   scratchRestore,
   scratchStruckList,
@@ -198,6 +199,33 @@ export function Scratchpad() {
     }
   };
 
+  // Edit in place (founder-decreed 2026-08-21): ✎ on hover, the line becomes
+  // its own input, Enter keeps, Escape puts it back. The timestamp and the
+  // seat never move — only the words.
+  const [editId, setEditId] = useState("");
+  const editRef = useRef<HTMLInputElement | null>(null);
+  useEffect(() => {
+    if (editId) editRef.current?.focus();
+  }, [editId]);
+
+  const keepEdit = async (id: string) => {
+    const body = editRef.current?.value.trim() ?? "";
+    const cur = (lines ?? []).find((l) => l.id === id);
+    if (!cur) return setEditId("");
+    if (!body || body === cur.body) return setEditId("");
+    const prev = cur.body;
+    setLines((xs) => (xs ?? []).map((l) => (l.id === id ? { ...l, body } : l)));
+    setEditId("");
+    const r = await scratchEdit(id, body);
+    if (r.ok && r.body) {
+      const kept = r.body;
+      setLines((xs) => (xs ?? []).map((l) => (l.id === id ? { ...l, body: kept } : l)));
+    } else if (!r.ok) {
+      setLines((xs) => (xs ?? []).map((l) => (l.id === id ? { ...l, body: prev } : l)));
+      setNote(r.reason ?? "The edit didn't keep.");
+    }
+  };
+
   const toggleStruck = () => {
     const opening = !struckOpen;
     setStruckOpen(opening);
@@ -333,7 +361,35 @@ export function Scratchpad() {
                     {divider && <div className={styles.day}>{divider}</div>}
                     <div className={styles.row}>
                       <span className={styles.tm}>{timeLabelFor(l.at)}</span>
-                      <span className={styles.body}>{l.body}</span>
+                      {editId === l.id ? (
+                        <input
+                          ref={editRef}
+                          className={styles.editIn}
+                          defaultValue={l.body}
+                          maxLength={500}
+                          aria-label="Edit the line"
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") void keepEdit(l.id);
+                            if (e.key === "Escape") {
+                              e.stopPropagation();
+                              setEditId("");
+                            }
+                          }}
+                          onBlur={() => void keepEdit(l.id)}
+                        />
+                      ) : (
+                        <span className={styles.body}>{l.body}</span>
+                      )}
+                      {editId !== l.id && (
+                        <button
+                          type="button"
+                          className={styles.edit}
+                          title="Edit the line in place. Enter keeps it."
+                          onClick={() => setEditId(l.id)}
+                        >
+                          ✎
+                        </button>
+                      )}
                       <button
                         type="button"
                         className={styles.del}

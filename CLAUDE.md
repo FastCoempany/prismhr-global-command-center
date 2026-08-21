@@ -133,8 +133,13 @@ bottom-right opens one running pad: write, Enter, the line lands date-and-time
 stamped (Chicago), newest first under TODAY/YESTERDAY/dated kickers. One
 durable store (`scratch:pad` namespaced notes — outside every account view and
 the intranet mirror by construction). The pact: it stays there and only there;
-nothing routes, nothing files, nothing becomes an action. Money is redacted on
-write like everywhere else. ✕ is per line and deliberate — and it archives,
+nothing routes, nothing files, nothing becomes an action. The paper keeps
+figures (amended 2026-08-21): because the pad routes nowhere by construction,
+the money doctrine's boundary holds at the pad's edge — scratch lines are NOT
+money-redacted; the ask door still redacts, because asks leave the paper.
+Lines are editable in place (✎ on hover, decreed 2026-08-21): Enter keeps,
+Escape puts it back, the timestamp and seat never move. ✕ is per line and
+deliberate — and it archives,
 never destroys (2026-08-19): the line moves to `scratch:gone`, readable under
 the pad's STRUCK fold, restorable by ↺. Nothing on the paper ever dies.
 
