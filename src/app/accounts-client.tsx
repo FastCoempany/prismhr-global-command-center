@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { EXTRA_PARTNERS, partnerRole } from "@/lib/book/partners";
 import { competitorUrl } from "@/lib/book/research";
 import { SfCheckpoint } from "@/components/sf";
@@ -54,6 +54,8 @@ import {
 import { sfContactUrl } from "@/lib/salesforce";
 import styles from "./command-center.module.css";
 import SecondRecordPanel, { type RowSecond } from "./accounts/second-record-panel";
+import ActLane, { type LaneAct } from "./accounts/act-lane";
+import { markActActed, unmarkActActed } from "./accounts/act-actions";
 
 function CompetitorLinks({ names }: { names: string[] }) {
   return (
@@ -184,6 +186,14 @@ export type AccountRow = {
   id: string;
   /** The second record's row read — null when the drop holds nothing. */
   second: RowSecond | null;
+  /** The Act Lane's saved, unsent draft — the pad never eats your words. */
+  actDraft: { to: string; subject: string; body: string } | null;
+  /** The newest gem's acted day ("" when un-acted) — the ✓ stamp's date. */
+  actedDay: string;
+  /** That gem's term, for the stamp's take-back. */
+  actedTerm: string;
+  /** A live board card (by id, digest-matched) — the fork's HomeRoom half. */
+  onBoard: boolean;
   name: string;
   industry: string;
   sizeBucket: string;
@@ -257,24 +267,12 @@ function mmddOf(day: string): string {
 // The sheet sorts at the column title (founder-decreed 2026-08-21). Each
 // column carries its own comparator and a sensible first direction: names
 // A→Z, everything measured biggest-or-newest first.
-type ColKey =
-  | "name"
-  | "score"
-  | "demand"
-  | "nextAction"
-  | "play"
-  | "touch"
-  | "signal"
-  | "act";
+type ColKey = "name" | "score" | "demand" | "touch" | "signal" | "act";
 
 const COL_CMP: Record<ColKey, (a: AccountRow, b: AccountRow) => number> = {
   name: (a, b) => a.name.localeCompare(b.name),
   score: (a, b) => a.score - b.score,
   demand: (a, b) => (a.demand ?? -1) - (b.demand ?? -1),
-  nextAction: (a, b) =>
-    (a.nextActionDate ?? "").localeCompare(b.nextActionDate ?? "") ||
-    (a.nextAction ? 1 : 0) - (b.nextAction ? 1 : 0),
-  play: (a, b) => (a.play ?? "").localeCompare(b.play ?? ""),
   touch: (a, b) => (a.second?.touch?.day ?? "").localeCompare(b.second?.touch?.day ?? ""),
   signal: (a, b) =>
     (a.second?.gems.length ?? 0) - (b.second?.gems.length ?? 0) ||
@@ -286,8 +284,6 @@ const COL_DEFAULT_DIR: Record<ColKey, 1 | -1> = {
   name: 1,
   score: -1,
   demand: -1,
-  nextAction: -1,
-  play: 1,
   touch: -1,
   signal: -1,
   act: -1,
@@ -652,6 +648,9 @@ export function AccountsClient({
   const [tier, setTier] = useState("");
   const [play, setPlay] = useState("");
   const [stageF, setStageF] = useState("");
+  // The Filter Door (founder-decreed 2026-08-21): the strip rests closed; a
+  // live filter keeps the door lit and named even while the strip is folded.
+  const [filtersOpen, setFiltersOpen] = useState(false);
   // Column-header sort (founder-decreed 2026-08-21): clicking a title sorts
   // the sheet by that column; a second click flips it. The Sort dropdown is
   // retired (2026-08-21) — the titles are the only sort, Global fit at rest.
@@ -665,6 +664,10 @@ export function AccountsClient({
   const [openId, setOpenId] = useState(focusId);
   // The second-record fold — one open at a time, from THE SIGNAL cell.
   const [srOpenId, setSrOpenId] = useState("");
+  // The Act Lane (Version C, decreed 2026-08-21): one standing workbench,
+  // reloaded chip to chip. The lane component saves a touched draft on hop.
+  const [laneId, setLaneId] = useState("");
+  const router = useRouter();
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -708,12 +711,52 @@ export function AccountsClient({
     });
   }, [rows, q, csm, industry, tier, play, stageF, colSort]);
 
+  // The door stays lit and named while any filter is live — filtered state
+  // is never invisible behind a closed strip.
+  const activeFilters = [
+    csm && "PARTNERS",
+    industry && "MODELS",
+    tier && "FIT",
+    play && "PLAYS",
+    stageF && "STAGES",
+  ].filter((f): f is string => Boolean(f));
+
   const clickSort = (key: ColKey) =>
     setColSort(
       colSort?.key === key
         ? { key, dir: colSort.dir === 1 ? -1 : 1 }
         : { key, dir: COL_DEFAULT_DIR[key] },
     );
+
+  const tickActed = async (id: string, term: string) => {
+    await markActActed({ accountId: id, term });
+    if (laneId === id) setLaneId("");
+    router.refresh();
+  };
+  const tickUnacted = async (id: string, term: string) => {
+    await unmarkActActed({ accountId: id, term });
+    router.refresh();
+  };
+
+  const laneRow = laneId ? rows.find((r) => r.id === laneId) : undefined;
+  const laneGem = laneRow?.second?.gems[0];
+  const laneAct: LaneAct | null =
+    laneRow && laneRow.second?.act && laneGem
+      ? {
+          accountId: laneRow.id,
+          accountName: laneRow.name,
+          term: laneGem.term,
+          act: laneRow.second.act,
+          reason: laneGem.reason,
+          whenDay: laneGem.whenDay,
+          cites: laneGem.cites,
+          to: laneRow.actDraft?.to ?? laneRow.contactName,
+          toEmail: laneRow.contactEmail,
+          subject: laneRow.actDraft?.subject ?? laneRow.second.act,
+          body: laneRow.actDraft?.body ?? "",
+          onBoard: laneRow.onBoard,
+        }
+      : null;
 
   const copyList = async () => {
     const text = filtered
@@ -796,17 +839,8 @@ export function AccountsClient({
 
   return (
     <>
-      <div className={styles.filters}>
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Search account, city, contact…"
-          aria-label="Search accounts"
-        />
-        <span className={styles.count}>
-          <b>{filtered.length}</b> of {rows.length}
-          {csm ? ` — ${csm.split(" ")[0]}'s` : ""}
-        </span>
+      <div className={styles.pageHead}>
+        <h1 className={styles.h1}>Account Room</h1>
         <button
           type="button"
           className={styles.iconBtn}
@@ -826,11 +860,34 @@ export function AccountsClient({
           ⇩
         </button>
       </div>
+      <div className={styles.filters}>
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Search account, city, contact…"
+          aria-label="Search accounts"
+        />
+      </div>
 
-      {/* The filters ride a left rail (founder-decreed 2026-08-21); the
-          hot-signal bar is retired. */}
-      <div className={styles.railWrap}>
-        <aside className={styles.rail} aria-label="Filters">
+      {/* The Filter Door (founder-decreed 2026-08-21, from the patch-list
+          triptych): no rail — the sheet runs full width, the five filters
+          live behind one mono door at the top-right shoulder, and a live
+          filter keeps the door lit and named. The hot-signal bar stays
+          retired. */}
+      <div className={styles.fdoorRow}>
+        <button
+          type="button"
+          className={
+            activeFilters.length ? `${styles.fdoor} ${styles.fdoorLive}` : styles.fdoor
+          }
+          onClick={() => setFiltersOpen(!filtersOpen)}
+          aria-expanded={filtersOpen}
+        >
+          FILTERS{activeFilters.map((f) => ` · ${f}`).join("")} ▾
+        </button>
+      </div>
+      {filtersOpen && (
+        <div className={styles.fstrip}>
           <select
             value={csm}
             onChange={(e) => setCsm(e.target.value)}
@@ -886,8 +943,10 @@ export function AccountsClient({
               </option>
             ))}
           </select>
-        </aside>
-        <div className={styles.railMain}>
+        </div>
+      )}
+      <div className={styles.laneWrap}>
+        <div className={styles.laneMain}>
           <table className={styles.table}>
             <thead>
               <tr>
@@ -896,8 +955,6 @@ export function AccountsClient({
                     ["name", "Account"],
                     ["score", "Global fit"],
                     ["demand", "Demand"],
-                    ["nextAction", "Next action"],
-                    ["play", "Play"],
                     ["touch", "Last human touch"],
                     ["signal", "The signal"],
                     ["act", "Act"],
@@ -926,6 +983,11 @@ export function AccountsClient({
                         </span>
                       )}
                     </button>
+                    {key === "name" && (
+                      <span className={styles.thCount}>
+                        {filtered.length} of {rows.length}
+                      </span>
+                    )}
                   </th>
                 ))}
               </tr>
@@ -995,38 +1057,6 @@ export function AccountsClient({
                         )}
                       </td>
                       <td>
-                        {a.nextAction ? (
-                          <>
-                            <span className={styles.rowSub}>{a.nextAction}</span>
-                            {a.nextActionDate && (
-                              <div className={styles.rowSub}>{a.nextActionDate}</div>
-                            )}
-                          </>
-                        ) : (
-                          <span className={styles.muted}>—</span>
-                        )}
-                      </td>
-                      <td>
-                        {a.play === "displacement" ? (
-                          <>
-                            <span className={`${styles.tag} ${styles.tagDisplace}`}>
-                              Displace
-                            </span>
-                            {a.competitors.length > 0 && (
-                              <div className={styles.rowSub}>
-                                <CompetitorLinks names={a.competitors} />
-                              </div>
-                            )}
-                          </>
-                        ) : a.play === "greenfield" ? (
-                          <span className={`${styles.tag} ${styles.tagGreen}`}>
-                            Greenfield
-                          </span>
-                        ) : (
-                          <span className={styles.muted}>—</span>
-                        )}
-                      </td>
-                      <td>
                         {a.second?.touch ? (
                           <span
                             className={styles.srTouch}
@@ -1083,23 +1113,62 @@ export function AccountsClient({
                         )}
                       </td>
                       <td className={styles.srActCell}>
-                        {a.second?.act ? (
-                          <span title="The gem's act — six words, refuter-verified">
-                            {a.second.act}
+                        {a.second?.act && a.second.gems.length > 0 ? (
+                          <span className={styles.mchipWrap}>
+                            <button
+                              type="button"
+                              className={styles.mchip}
+                              onClick={() => setLaneId(laneId === a.id ? "" : a.id)}
+                              aria-expanded={laneId === a.id}
+                              title="Work the act on the lane — the draft, the evidence, the fork"
+                            >
+                              {a.second.act}
+                              <span className={styles.mchipSrc}>
+                                ◆ {a.second.gems[0].term} ·{" "}
+                                {mmddOf(a.second.gems[0].whenDay)}
+                              </span>
+                            </button>
+                            {canWrite && (
+                              <button
+                                type="button"
+                                className={styles.mtick}
+                                title="Mark acted — files the stamp, clears the nag"
+                                onClick={() => tickActed(a.id, a.second!.gems[0].term)}
+                              >
+                                ✓
+                              </button>
+                            )}
+                          </span>
+                        ) : a.actedDay ? (
+                          <span className={styles.actedStamp}>
+                            <b>✓ ACTED</b> · {mmddOf(a.actedDay)}
+                            {canWrite && a.actedTerm && (
+                              <>
+                                {" · "}
+                                <button
+                                  type="button"
+                                  className={styles.actedTb}
+                                  title="Take it back — the chip returns"
+                                  onClick={() => tickUnacted(a.id, a.actedTerm)}
+                                >
+                                  ↺
+                                </button>
+                              </>
+                            )}
                           </span>
                         ) : null}
                       </td>
                     </tr>
                     {srOpenId === a.id && a.second && (
                       <tr>
-                        <td colSpan={8} className={styles.srFoldTd}>
+                        <td colSpan={6} className={styles.srFoldTd}>
                           <SecondRecordPanel accountId={a.id} second={a.second} />
                         </td>
                       </tr>
                     )}
                     {openId === a.id && (
                       <tr>
-                        <td colSpan={8}>
+                        <td colSpan={6}>
                           <div className={styles.acctDetail}>
                             <SfCheckpoint when="account" id={a.id} name={a.name} />
                             <p className={styles.acctMetaLine}>
@@ -1109,6 +1178,10 @@ export function AccountsClient({
                                 ? ` · ${a.city.toUpperCase()}${a.state ? `, ${a.state.toUpperCase()}` : ""}`
                                 : ""}
                               {a.csm ? ` · CSM ${a.csm.toUpperCase()}` : ""}
+                              {a.play === "greenfield" ? " · PLAY · GREENFIELD" : ""}
+                              {a.play === "displacement"
+                                ? ` · PLAY · DISPLACE${a.competitors.length ? ` (${a.competitors.join(" / ").toUpperCase()})` : ""}`
+                                : ""}
                             </p>
                             {canAdd &&
                               (onDash.has(a.name) ? (
@@ -1328,6 +1401,14 @@ export function AccountsClient({
             </tbody>
           </table>
         </div>
+        {laneAct && (
+          <ActLane
+            key={laneAct.accountId}
+            act={laneAct}
+            canWrite={canWrite}
+            onClose={() => setLaneId("")}
+          />
+        )}
       </div>
     </>
   );

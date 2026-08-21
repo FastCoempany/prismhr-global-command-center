@@ -111,49 +111,46 @@
   margin-left: auto;
 }
 
-/* The filter rail (founder-decreed 2026-08-21): the dropdowns leave the top
-   bar for a quiet left rail beside the sheet. It rides sticky under the
-   wayfinder so the filters stay in reach on a 130-row scroll. */
-.railWrap {
+/* The Filter Door (founder-decreed 2026-08-21): the rail is retired — the
+   sheet runs full width and the five filters live behind one mono door at
+   the top-right shoulder. A live filter keeps the door lit and named. */
+.fdoorRow {
   display: flex;
-  gap: 16px;
-  align-items: flex-start;
+  justify-content: flex-end;
+  margin: 0 0 6px;
 }
-.rail {
-  flex: 0 0 168px;
+.fdoor {
+  border: 0;
+  background: none;
+  cursor: pointer;
+  padding: 2px 4px;
+  font-family: var(--font-donor-mono), ui-monospace, Menlo, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: rgba(10, 28, 64, 0.42);
+}
+.fdoor:hover {
+  color: var(--blue);
+}
+.fdoorLive {
+  color: var(--blue);
+}
+.fstrip {
   display: flex;
-  flex-direction: column;
   gap: 8px;
-  position: sticky;
-  top: 74px;
+  margin: 0 0 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
-.rail select {
-  width: 100%;
-  padding: 7px 10px;
-  border-radius: 8px;
+.fstrip select {
+  padding: 4px 6px;
+  border-radius: 7px;
   border: 1px solid var(--line);
   background: #fff;
   font: inherit;
-  font-size: 12.5px;
-  color: var(--ink);
-}
-.railMain {
-  flex: 1;
-  min-width: 0;
-}
-@media (max-width: 900px) {
-  .railWrap {
-    flex-direction: column;
-  }
-  .rail {
-    position: static;
-    flex-direction: row;
-    flex-wrap: wrap;
-    width: 100%;
-  }
-  .rail select {
-    width: auto;
-  }
+  font-size: 12px;
+  color: rgba(10, 28, 64, 0.66);
 }
 .toggle {
   display: inline-flex;
@@ -9077,6 +9074,277 @@
 }
 .iconBtn:hover {
   color: var(--ink);
+}
+
+/* The live count rides the Account column title (founder-decreed 2026-08-21). */
+.thCount {
+  margin-left: 8px;
+  font-weight: 400;
+  letter-spacing: 0.4px;
+  color: rgba(10, 28, 64, 0.42);
+  white-space: nowrap;
+}
+
+/* The Move Chip (decreed winner, 2026-08-21): the ACT cell's one shape —
+   fixed edge, orange left tick, the source line whispered beneath. */
+.mchipWrap {
+  position: relative;
+  display: inline-block;
+}
+.mchip {
+  display: inline-block;
+  text-align: left;
+  cursor: pointer;
+  border: 1px solid var(--line);
+  border-left: 3px solid #e6701e;
+  background: #fff;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--ink);
+  max-width: 200px;
+}
+.mchip:hover {
+  border-color: #e6701e;
+  box-shadow: 0 1px 4px rgba(230, 112, 30, 0.15);
+}
+.mchipSrc {
+  display: block;
+  font-family: var(--font-donor-mono), ui-monospace, Menlo, monospace;
+  font-size: 9px;
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  color: rgba(10, 28, 64, 0.42);
+}
+.mtick {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: rgba(10, 28, 64, 0.42);
+  font-size: 10px;
+  line-height: 16px;
+  text-align: center;
+  cursor: pointer;
+  padding: 0;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.mchipWrap:hover .mtick {
+  opacity: 1;
+}
+.mtick:hover {
+  color: #fff;
+  background: var(--green);
+  border-color: var(--green);
+}
+.actedStamp {
+  font-family: var(--font-donor-mono), ui-monospace, Menlo, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(10, 28, 64, 0.42);
+  white-space: nowrap;
+}
+.actedStamp b {
+  color: #15803d;
+}
+.actedTb {
+  border: 0;
+  background: none;
+  cursor: pointer;
+  padding: 0;
+  font: inherit;
+  color: rgba(10, 28, 64, 0.42);
+}
+.actedTb:hover {
+  color: var(--blue);
+}
+
+/* The Act Lane (Version C winner, 2026-08-21): a standing workbench beside
+   the sheet — evidence up top, the editable draft mid, Send/File/fork at
+   the foot. Sticky so it holds while the sheet scrolls. */
+.laneWrap {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+.laneMain {
+  flex: 1;
+  min-width: 0;
+}
+.actLane {
+  flex: 0 0 380px;
+  position: sticky;
+  top: 74px;
+  background: #fafbfe;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px 16px;
+  max-height: calc(100vh - 90px);
+  overflow-y: auto;
+}
+.actLaneKick {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-donor-mono), ui-monospace, Menlo, monospace;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: rgba(10, 28, 64, 0.42);
+}
+.actLaneX {
+  border: 0;
+  background: none;
+  cursor: pointer;
+  color: rgba(10, 28, 64, 0.42);
+  font-size: 13px;
+  padding: 0 2px;
+}
+.actLaneX:hover {
+  color: var(--ink);
+}
+.actLaneName {
+  font-size: 12px;
+  font-weight: 700;
+  margin-top: 8px;
+  color: rgba(10, 28, 64, 0.66);
+}
+.actLaneAct {
+  font-family: var(--font-donor-serif), Georgia, serif;
+  font-size: 17px;
+  line-height: 1.3;
+  margin: 4px 0 2px;
+}
+.actLaneWhy {
+  color: rgba(10, 28, 64, 0.66);
+  font-size: 12.5px;
+  margin-bottom: 8px;
+}
+.actLaneField {
+  display: flex;
+  gap: 8px;
+  margin: 8px 0 0;
+  align-items: center;
+}
+.actLaneField label {
+  flex: 0 0 54px;
+  font-family: var(--font-donor-mono), ui-monospace, Menlo, monospace;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: rgba(10, 28, 64, 0.42);
+}
+.actLaneField input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 5px 9px;
+  font: inherit;
+  font-size: 13px;
+  background: #fff;
+}
+.actLaneBody {
+  width: 100%;
+  min-height: 110px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 9px 11px;
+  font: inherit;
+  font-size: 13px;
+  background: #fff;
+  resize: vertical;
+  color: var(--ink);
+  margin-top: 8px;
+}
+.actLaneBtns {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+.actLaneGo {
+  color: #fff;
+  background: var(--blue);
+  border-color: var(--blue);
+}
+.actLaneGo:hover:not(:disabled) {
+  background: #1d4fc4;
+  border-color: #1d4fc4;
+}
+.actLaneSaved {
+  margin-top: 8px;
+  font-size: 12px;
+  color: rgba(10, 28, 64, 0.66);
+}
+.actLaneFork {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--line);
+  font-size: 12px;
+  color: rgba(10, 28, 64, 0.66);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.actLaneForkWhy {
+  font-size: 11.5px;
+}
+.actLaneForkWhy b {
+  font-family: var(--font-donor-mono), ui-monospace, Menlo, monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  color: var(--ink);
+}
+.actLaneForkBtn {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 7px;
+  padding: 3px 10px;
+  font-family: var(--font-donor-mono), ui-monospace, Menlo, monospace;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #e6701e;
+  cursor: pointer;
+}
+.actLaneForkBtn:hover:not(:disabled) {
+  border-color: #e6701e;
+}
+.actLaneForkAlt {
+  border: 0;
+  background: none;
+  color: rgba(10, 28, 64, 0.42);
+  font-size: 11px;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+.actLaneReceipt {
+  font-family: var(--font-donor-mono), ui-monospace, Menlo, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: #15803d;
+}
+.actLaneTb {
+  border: 0;
+  background: none;
+  cursor: pointer;
+  padding: 0;
+  font: inherit;
+  font-weight: 400;
+  color: rgba(10, 28, 64, 0.42);
+  text-decoration: underline;
 }
 
 /* Sortable column titles: the header text is the control. */

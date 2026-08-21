@@ -8,6 +8,7 @@ import { contactCount, contactsFor } from "@/lib/book/contacts";
 import { peopleFor } from "@/lib/intel/people";
 import { relationshipFor } from "@/lib/intel/relationship";
 import { anyLiveGem, fetchSecondRecords } from "@/lib/activity/read";
+import { ACT_DRAFT_NS, parseActDraftBody } from "@/lib/act/lane";
 import { parseResearchBody, researchNs } from "@/lib/intel/deep-research";
 import { loadCommand } from "@/lib/command-center/data";
 import { loadDashboard } from "@/lib/dashboard/data";
@@ -322,6 +323,25 @@ export default async function AccountsPage() {
           : null,
         engagement: engagements.get(p.id) ?? EMPTY_ENGAGEMENT,
         risk: riskById.get(p.id) ?? null,
+        // The Act Lane's saved draft — one per account, newest wins.
+        actDraft: (() => {
+          const n = (chipNotes.get(`${ACT_DRAFT_NS}${p.id}`) ?? [])[0];
+          const d = n ? parseActDraftBody(n.body) : null;
+          return d ? { to: d.to, subject: d.subject, body: d.body } : null;
+        })(),
+        // The ✓ stamp: the newest acted gem's day and term (take-back needs
+        // the term). "" when nothing is stamped.
+        actedDay: (() => {
+          const sr = secondById.get(p.id);
+          const g = (sr?.gems ?? []).find((x) => x.actedDay);
+          return g?.actedDay ?? "";
+        })(),
+        actedTerm: (() => {
+          const sr = secondById.get(p.id);
+          const g = (sr?.gems ?? []).find((x) => x.actedDay);
+          return g?.term ?? "";
+        })(),
+        onBoard: boardById.has(p.id),
         second: (() => {
           const sr = secondById.get(p.id);
           if (!sr) return null;
@@ -403,17 +423,8 @@ export default async function AccountsPage() {
     <>
       <AppWayfinder current="Accounts" />
       <main className={styles.wrap}>
-        <div className={styles.pageHead}>
-          <h1 className={styles.h1}>Account Room</h1>
-
-          <p
-            className={styles.sub}
-            title="Global fit blends 40% account profile with 60% researched demand, weighted by confidence. The profile covers size, platform, model, and recency. Play flags a competitor EOR already in place."
-          >
-            All {rows.length} accounts, scored for Global fit: 40% profile, 60% demand.
-            Book research from {researchGeneratedAt}; live passes read per account.
-          </p>
-        </div>
+        {/* The header lives in the client (founder-decreed 2026-08-21): the
+            subtext is retired; the copy/CSV icons ride beside the title. */}
         <AccountsClient
           rows={rows}
           canAdd={canAdd}
