@@ -186,7 +186,12 @@ export async function padAsk(question: string): Promise<{
       world: r.world,
       confidence: r.answer.confidence,
       gaps: r.answer.gaps ?? [],
-      links: linksFrom(r.question, r.citations, r.accounts),
+      links: r.priced
+        ? [
+            { href: "/pricing", label: "The Pricing page →" },
+            ...linksFrom(r.question, r.citations, r.accounts),
+          ]
+        : linksFrom(r.question, r.citations, r.accounts),
       at: new Date().toISOString(),
       note: !r.answer.answer && !r.world ? emptyNote(r.considered, backlog) : "",
     },
@@ -217,6 +222,7 @@ export async function padAskFeed(): Promise<{
           citations: true,
           candidateIds: true,
           askedAt: true,
+          model: true,
         },
       }),
       prisma.taskDone.findUnique({ where: { key: ASKPAD_READ_KEY } }).catch(() => null),
@@ -232,7 +238,13 @@ export async function padAskFeed(): Promise<{
         world: r.world,
         confidence: "",
         gaps: [],
-        links: linksFrom(r.question, cites, []),
+        links:
+          r.model === "price-desk"
+            ? [
+                { href: "/pricing", label: "The Pricing page →" },
+                ...linksFrom(r.question, cites, []),
+              ]
+            : linksFrom(r.question, cites, []),
         at: r.askedAt.toISOString(),
         note:
           !r.answer && !r.world

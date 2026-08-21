@@ -8,6 +8,7 @@
 // (I.2).
 
 import { getAppAccess } from "@/lib/auth";
+import { priceQuoteFor } from "@/lib/pricing/quote";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import { peos } from "@/lib/book";
 import {
@@ -270,6 +271,9 @@ export type AskReply = {
   /** How many lines the brain actually weighed — the honest number behind an
    *  empty answer ("read 31 lines, couldn't answer" is not "nothing on file"). */
   considered: number;
+  /** Set when the price desk answered — the figure came from the Pricing
+   *  page at read time; surfaces add the page's link. */
+  priced?: boolean;
   reason?: string;
 };
 
@@ -351,6 +355,59 @@ export async function intranetAsk(
     return EMPTY_ANSWER_REPLY(q, "The brain's store isn't reachable.");
 
   const started = Date.now();
+
+  // The price desk (founder-decreed 2026-08-21): a pricing question answers
+  // from the Pricing page's own numbers — arithmetic, no model, instantly.
+  // The brain's stores are money-redacted by doctrine and can never hold a
+  // figure, so this is the ONE road a price travels: computed at read time,
+  // shown live, and banked as its redacted twin with the pointer back.
+  {
+    const quote = priceQuoteFor(q);
+    if (quote) {
+      try {
+        await getPrisma().intranetAsk.create({
+          data: {
+            question: q,
+            plan: { priceDesk: true } as unknown as object,
+            candidateIds: [],
+            answer: `${redactMoney(quote.answer)} Priced live from the Pricing page — open it for the figures.`,
+            reasoning: "",
+            citations: [] as unknown as object,
+            coverage: {} as unknown as object,
+            model: "price-desk",
+            ms: Date.now() - started,
+            world: "",
+          },
+        });
+      } catch {
+        // an unrecorded quote is still a served quote
+      }
+      return {
+        ok: true,
+        question: q,
+        answer: {
+          answer: quote.answer,
+          citations: [],
+          reasoning: "",
+          setAside: [],
+          confidence: "firm",
+          gaps: [],
+        },
+        citations: [],
+        coverage: null,
+        plan: null,
+        model: "price-desk",
+        escalated: "",
+        thin: "",
+        degraded: "",
+        accounts: [],
+        world: "",
+        considered: 0,
+        priced: true,
+      };
+    }
+  }
+
   const nowIso = new Date().toISOString();
 
   // 1 · plan. Claude decides what to look for; the database does the looking.
