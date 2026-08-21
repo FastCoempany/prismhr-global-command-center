@@ -16,6 +16,7 @@ import { intranetAsk } from "@/app/intranet/actions";
 import { extractPending } from "@/app/intranet/runners";
 import { askLinks, type AskLink } from "@/lib/ask/links";
 import { liveReadFor } from "@/lib/ask/live";
+import { priceDeskDisplay } from "@/lib/pricing/quote";
 import { getPeo } from "@/lib/book";
 
 const ASKPAD_READ_KEY = "askpad:read";
@@ -234,7 +235,10 @@ export async function padAskFeed(): Promise<{
       return {
         id: r.id,
         question: r.question,
-        answer: r.answer,
+        // The price desk's stored twin is redacted; the figures re-derive
+        // from the Pricing page at render time, every time.
+        answer:
+          r.model === "price-desk" ? priceDeskDisplay(r.question, r.answer) : r.answer,
         world: r.world,
         confidence: "",
         gaps: [],
