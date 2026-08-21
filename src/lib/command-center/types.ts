@@ -57,6 +57,20 @@ export const approachBlurb = (a: Approach) =>
 // cleared by the CSM yet. Today uses this to hold direct-motion suggestions.
 export const isGated = (a: Approach) => a === "NEEDS_CSM";
 
+// The board's word outranks the hand-edited seed (founder-decreed 2026-08-21):
+// putting an account on the dashboard IS clearing it with the CSM and touching
+// it. The stored state only ever ADVANCES the derived one — a card never drags
+// a real stage back.
+export function boardLift(
+  stage: Stage,
+  approach: Approach,
+): { stage: Stage; approach: Approach } {
+  return {
+    stage: stage === "NOT_TOUCHED" ? "CSM_BRIEFED" : stage,
+    approach: approach === "NEEDS_CSM" ? "CHANNEL_OK" : approach,
+  };
+}
+
 // --- International-hiring intent signal (feature 2) ---------------------------
 // How much cross-border hiring demand sits in the PEO's book. Layered on top of
 // the structural fit score to re-rank toward where the real demand is.

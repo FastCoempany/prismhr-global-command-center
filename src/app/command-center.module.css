@@ -9011,27 +9011,49 @@
 }
 
 /* The dashboard door as a hover glyph at the name (decreed move). */
-.rowDashForm {
-  display: inline;
+/* The dashboard door lives in the drilldown now (founder-decreed
+   2026-08-21): plain words behind the account's own click, never a glyph
+   floating at the name. */
+.dashRow {
+  margin: 0 0 10px;
 }
-.rowDash {
+
+/* Copy list · Export CSV, folded to two quiet icons at the filter bar's end. */
+.iconBtn {
   border: 0;
   background: none;
-  padding: 0 2px;
+  padding: 2px 4px;
+  align-self: center;
   cursor: pointer;
-  font-size: 12px;
-  color: #9aa7bd;
-  visibility: hidden;
+  font: inherit;
+  font-size: 15px;
+  line-height: 1;
+  color: rgba(10, 28, 64, 0.42);
 }
-tr:hover .rowDash {
-  visibility: visible;
+.iconBtn:hover {
+  color: var(--ink);
 }
-.rowDash:hover {
+
+/* Sortable column titles: the header text is the control. */
+.thSort {
+  border: 0;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+  font-size: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  text-align: inherit;
+}
+.thSort:hover {
+  color: var(--ink);
+}
+.thArrow {
+  margin-left: 4px;
+  font-size: 8px;
   color: var(--blue);
-}
-.rowDashOn {
-  font-size: 11px;
-  color: var(--green);
 }
 
 /* MODEL · PRISMHR — retired from the table into the drilldown's head. */
