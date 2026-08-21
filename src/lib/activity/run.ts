@@ -807,7 +807,7 @@ export async function runActivityPass(opts?: {
   );
   if (mortalityFlag(run.born, run.died))
     run.receipt.push(
-      `Distiller quality flag: ${run.died} of ${run.born} candidates died — worth a look at the receipt before trusting this drop's gems.`,
+      `Distiller quality flag: ${run.died} of ${run.born} candidates died. Read the receipt before trusting this drop's gems.`,
     );
   if (uncovered.length > 0) {
     run.phase = "failed-coverage";

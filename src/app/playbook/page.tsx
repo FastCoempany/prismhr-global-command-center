@@ -82,7 +82,7 @@ export default async function PlaybookPage({
         .sort((a, b) => b.n - a.n)
         .slice(0, 3)
         .map((a) => {
-          const text = `Support traffic keeps hitting "${a.label}" — ${a.n} cases across ${a.accounts.size} account${a.accounts.size === 1 ? "" : "s"} this window. Worth a line on how Global sits beside it.`;
+          const text = `Support traffic keeps hitting "${a.label}": ${a.n} cases across ${a.accounts.size} account${a.accounts.size === 1 ? "" : "s"} this window. Say how Global sits beside it.`;
           return {
             key: knowledgeKey(text),
             text,

@@ -214,7 +214,7 @@ export default function EvidenceChips({
       {open === "gems" && (
         <div className={styles.evFold}>
           {gems.map((g) => (
-            <div key={g.term} className={styles.evGem}>
+            <div key={`${g.term}|${g.whenDay}`} className={styles.evGem}>
               <span className={styles.evGemTerm}>◆ {g.term} · CONFIRMED</span>
               <div className={styles.evGemAct}>{g.act}</div>
               <div className={styles.evGemWhy}>{g.reason}</div>

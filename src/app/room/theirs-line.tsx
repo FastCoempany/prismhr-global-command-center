@@ -83,7 +83,7 @@ export default function TheirsLine({
       {open && (
         <div className={styles.theirsFold}>
           {gems.map((g) => (
-            <div key={g.term} className={styles.theirsGem}>
+            <div key={`${g.term}|${g.whenDay}`} className={styles.theirsGem}>
               <span className={styles.theirsTerm}>◆ {g.term} · CONFIRMED</span>
               <div className={styles.theirsAct}>{g.act}</div>
               <div className={styles.theirsWhy}>{g.reason}</div>
