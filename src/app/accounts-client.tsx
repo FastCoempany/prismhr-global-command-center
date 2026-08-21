@@ -255,6 +255,45 @@ function mmddOf(day: string): string {
   return day ? day.slice(5).replace("-", "/") : "";
 }
 
+// The sheet sorts at the column title (founder-decreed 2026-08-21). Each
+// column carries its own comparator and a sensible first direction: names
+// A→Z, everything measured biggest-or-newest first.
+type ColKey =
+  | "name"
+  | "score"
+  | "demand"
+  | "nextAction"
+  | "play"
+  | "touch"
+  | "signal"
+  | "act";
+
+const COL_CMP: Record<ColKey, (a: AccountRow, b: AccountRow) => number> = {
+  name: (a, b) => a.name.localeCompare(b.name),
+  score: (a, b) => a.score - b.score,
+  demand: (a, b) => (a.demand ?? -1) - (b.demand ?? -1),
+  nextAction: (a, b) =>
+    (a.nextActionDate ?? "").localeCompare(b.nextActionDate ?? "") ||
+    (a.nextAction ? 1 : 0) - (b.nextAction ? 1 : 0),
+  play: (a, b) => (a.play ?? "").localeCompare(b.play ?? ""),
+  touch: (a, b) => (a.second?.touch?.day ?? "").localeCompare(b.second?.touch?.day ?? ""),
+  signal: (a, b) =>
+    (a.second?.gems.length ?? 0) - (b.second?.gems.length ?? 0) ||
+    (a.second?.supportTotal ?? 0) - (b.second?.supportTotal ?? 0),
+  act: (a, b) => (a.second?.act ? 1 : 0) - (b.second?.act ? 1 : 0),
+};
+
+const COL_DEFAULT_DIR: Record<ColKey, 1 | -1> = {
+  name: 1,
+  score: -1,
+  demand: -1,
+  nextAction: -1,
+  play: 1,
+  touch: -1,
+  signal: -1,
+  act: -1,
+};
+
 function StageBadge({ stage }: { stage: Stage }) {
   const cls =
     stage === "WON"
@@ -616,9 +655,12 @@ export function AccountsClient({
   const [stageF, setStageF] = useState("");
   const [approachF, setApproachF] = useState("");
   const [prioF, setPrioF] = useState("");
-  const [groupByCsm, setGroupByCsm] = useState(false);
   const [hotOnly, setHotOnly] = useState(false);
   const [sort, setSort] = useState("score");
+  // Column-header sort (founder-decreed 2026-08-21): clicking a title sorts
+  // the sheet by that column; a second click flips it. The Sort dropdown
+  // clears it, so the two never fight.
+  const [colSort, setColSort] = useState<{ key: ColKey; dir: 1 | -1 } | null>(null);
   // Deep-link from Today (and elsewhere): /accounts?focus=<id> opens that
   // account's detail (initial openId, below) and scrolls it into view, so a link
   // lands on the row, not the top of a 130-row table. The savePeo redirect
@@ -650,21 +692,6 @@ export function AccountsClient({
     [rows],
   );
 
-  // Counts for every filter option, so each choice says how many it selects.
-  const countBy = (pick: (r: AccountRow) => string) => {
-    const m = new Map<string, number>();
-    for (const r of rows) {
-      const k = pick(r);
-      if (k) m.set(k, (m.get(k) ?? 0) + 1);
-    }
-    return m;
-  };
-  const csmCounts = useMemo(() => countBy((r) => r.csm), [rows]); // eslint-disable-line react-hooks/exhaustive-deps
-  const indCounts = useMemo(() => countBy((r) => r.industry), [rows]); // eslint-disable-line react-hooks/exhaustive-deps
-  const tierCounts = useMemo(() => countBy((r) => r.tier), [rows]); // eslint-disable-line react-hooks/exhaustive-deps
-  const playCounts = useMemo(() => countBy((r) => r.play ?? ""), [rows]); // eslint-disable-line react-hooks/exhaustive-deps
-  const hotCount = useMemo(() => rows.filter((r) => isHot(r)).length, [rows]);
-
   const filtered = useMemo(() => {
     const s = q.toLowerCase();
     const list = rows.filter((r) => {
@@ -686,22 +713,32 @@ export function AccountsClient({
       return true;
     });
     return [...list].sort((a, b) => {
+      if (colSort) return COL_CMP[colSort.key](a, b) * colSort.dir || b.score - a.score;
       if (sort === "name") return a.name.localeCompare(b.name);
       if (sort === "demand") return (b.demand ?? -1) - (a.demand ?? -1);
       return b.score - a.score;
     });
-  }, [rows, q, csm, industry, tier, play, stageF, approachF, prioF, hotOnly, sort]);
+  }, [
+    rows,
+    q,
+    csm,
+    industry,
+    tier,
+    play,
+    stageF,
+    approachF,
+    prioF,
+    hotOnly,
+    sort,
+    colSort,
+  ]);
 
-  // Group-by-CSM view (the Book's grouping): per-CSM groups, largest first.
-  const grouped = useMemo(() => {
-    if (!groupByCsm) return null;
-    const m = new Map<string, AccountRow[]>();
-    for (const r of filtered) {
-      if (!m.has(r.csm)) m.set(r.csm, []);
-      m.get(r.csm)!.push(r);
-    }
-    return [...m.entries()].sort((a, b) => b[1].length - a[1].length);
-  }, [filtered, groupByCsm]);
+  const clickSort = (key: ColKey) =>
+    setColSort(
+      colSort?.key === key
+        ? { key, dir: colSort.dir === 1 ? -1 : 1 }
+        : { key, dir: COL_DEFAULT_DIR[key] },
+    );
 
   const copyList = async () => {
     const text = filtered
@@ -792,10 +829,10 @@ export function AccountsClient({
           aria-label="Search accounts"
         />
         <select value={csm} onChange={(e) => setCsm(e.target.value)} aria-label="Partner">
-          <option value="">All partners ({rows.length})</option>
+          <option value="">All partners</option>
           {partners.map((c) => (
             <option key={c} value={c}>
-              {c} — {partnerRole(c)} ({csmCounts.get(c) ?? 0})
+              {c} — {partnerRole(c)}
             </option>
           ))}
         </select>
@@ -804,10 +841,10 @@ export function AccountsClient({
           onChange={(e) => setIndustry(e.target.value)}
           aria-label="Industry"
         >
-          <option value="">All models ({rows.length})</option>
+          <option value="">All models</option>
           {inds.map((i) => (
             <option key={i} value={i}>
-              {i} ({indCounts.get(i) ?? 0})
+              {i}
             </option>
           ))}
         </select>
@@ -816,23 +853,19 @@ export function AccountsClient({
           onChange={(e) => setTier(e.target.value)}
           aria-label="Fit tier"
         >
-          <option value="">All fit ({rows.length})</option>
-          <option value="high">High fit ({tierCounts.get("high") ?? 0})</option>
-          <option value="medium">Medium ({tierCounts.get("medium") ?? 0})</option>
-          <option value="low">Low ({tierCounts.get("low") ?? 0})</option>
+          <option value="">All fit</option>
+          <option value="high">High fit</option>
+          <option value="medium">Medium</option>
+          <option value="low">Low</option>
         </select>
         <select
           value={play}
           onChange={(e) => setPlay(e.target.value)}
           aria-label="Play type"
         >
-          <option value="">All plays ({rows.length})</option>
-          <option value="displacement">
-            Displacement ({playCounts.get("displacement") ?? 0})
-          </option>
-          <option value="greenfield">
-            Greenfield ({playCounts.get("greenfield") ?? 0})
-          </option>
+          <option value="">All plays</option>
+          <option value="displacement">Displacement</option>
+          <option value="greenfield">Greenfield</option>
         </select>
         <select
           value={stageF}
@@ -868,40 +901,58 @@ export function AccountsClient({
           <option value="medium">Medium</option>
           <option value="low">Low</option>
         </select>
-        <select value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort">
+        <select
+          value={sort}
+          onChange={(e) => {
+            setSort(e.target.value);
+            setColSort(null);
+          }}
+          aria-label="Sort"
+        >
           <option value="score">Sort: Global fit</option>
           <option value="demand">Sort: demand</option>
           <option value="name">Sort: name</option>
         </select>
-        <label className={styles.toggle}>
-          <input
-            type="checkbox"
-            checked={groupByCsm}
-            onChange={(e) => setGroupByCsm(e.target.checked)}
-          />
-          Group by CSM
-        </label>
-        <label className={styles.toggle}>
-          <input
-            type="checkbox"
-            checked={hotOnly}
-            onChange={(e) => setHotOnly(e.target.checked)}
-          />
-          Hot targets ({hotCount})
-        </label>
-        <button type="button" className={styles.addMini} onClick={copyList}>
-          {copied ? "Copied ✓" : "Copy list"}
-        </button>
-        <button type="button" className={styles.addMini} onClick={exportCsv}>
-          Export CSV
-        </button>
         <span className={styles.count}>
           <b>{filtered.length}</b> of {rows.length}
           {csm ? ` — ${csm.split(" ")[0]}'s` : ""}
         </span>
+        <button
+          type="button"
+          className={styles.iconBtn}
+          onClick={copyList}
+          title="Copy the list"
+          aria-label="Copy the list"
+        >
+          {copied ? "✓" : "⧉"}
+        </button>
+        <button
+          type="button"
+          className={styles.iconBtn}
+          onClick={exportCsv}
+          title="Export CSV"
+          aria-label="Export CSV"
+        >
+          ⇩
+        </button>
       </div>
 
       {(() => {
+        // The hot-targets checkbox is retired (founder-decreed 2026-08-21);
+        // this banner is the one door in, and its own door out.
+        if (hotOnly)
+          return (
+            <div className={styles.triage}>
+              <span>Showing hot targets only.</span>
+              <button
+                type="button"
+                className={styles.addMini}
+                onClick={() => setHotOnly(false)}
+              >
+                Show all
+              </button>
+            </div>
+          );
         const hotOffBoard = rows.filter((r) => isHot(r) && !onDash.has(r.name));
         if (hotOffBoard.length === 0 || !canAdd) return null;
         return (
@@ -929,34 +980,47 @@ export function AccountsClient({
       <table className={styles.table}>
         <thead>
           <tr>
-            <th>Account</th>
-            <th>Global fit</th>
-            <th>Demand</th>
-            <th>Stage</th>
-            <th>Next action</th>
-            <th>Play</th>
-            <th>Last human touch</th>
-            <th>The signal</th>
-            <th>Act</th>
+            {(
+              [
+                ["name", "Account"],
+                ["score", "Global fit"],
+                ["demand", "Demand"],
+                ["nextAction", "Next action"],
+                ["play", "Play"],
+                ["touch", "Last human touch"],
+                ["signal", "The signal"],
+                ["act", "Act"],
+              ] as [ColKey, string][]
+            ).map(([key, label]) => (
+              <th
+                key={key}
+                aria-sort={
+                  colSort?.key === key
+                    ? colSort.dir === 1
+                      ? "ascending"
+                      : "descending"
+                    : undefined
+                }
+              >
+                <button
+                  type="button"
+                  className={styles.thSort}
+                  onClick={() => clickSort(key)}
+                  title={`Sort by ${label.toLowerCase()}`}
+                >
+                  {label}
+                  {colSort?.key === key && (
+                    <span className={styles.thArrow}>
+                      {colSort.dir === 1 ? "▲" : "▼"}
+                    </span>
+                  )}
+                </button>
+              </th>
+            ))}
           </tr>
         </thead>
         <tbody>
-          {(grouped
-            ? grouped.flatMap(([gName, list]) => [
-                { __group: gName, count: list.length },
-                ...list,
-              ])
-            : filtered
-          ).map((item) => {
-            if ("__group" in item)
-              return (
-                <tr key={`grp-${item.__group}`}>
-                  <td colSpan={9} className={styles.grp}>
-                    {item.__group} · {item.count}
-                  </td>
-                </tr>
-              );
-            const a = item;
+          {filtered.map((a) => {
             return (
               <Fragment key={a.id}>
                 <tr
@@ -971,30 +1035,6 @@ export function AccountsClient({
                     >
                       {a.name}
                     </button>{" "}
-                    {canAdd &&
-                      (onDash.has(a.name) ? (
-                        <span className={styles.rowDashOn} title="On the dashboard">
-                          ⊞✓
-                        </span>
-                      ) : (
-                        <form action={addCard} className={styles.rowDashForm}>
-                          <input type="hidden" name="name" value={a.name} />
-                          <input
-                            type="hidden"
-                            name="subtitle"
-                            value={`${a.csm}${a.industry ? ` · ${a.industry}` : ""}`}
-                          />
-                          <input type="hidden" name="seedDiscovery" value={seedFor(a)} />
-                          <input type="hidden" name="returnTo" value="/accounts" />
-                          <button
-                            className={styles.rowDash}
-                            title="Add to dashboard"
-                            type="submit"
-                          >
-                            ⊞
-                          </button>
-                        </form>
-                      ))}{" "}
                     {a.disposition && (
                       <span
                         className={[
@@ -1026,11 +1066,6 @@ export function AccountsClient({
                       </span>
                     )}{" "}
                     <ValBadge v={a.validation} />
-                    <div className={styles.rowSub}>
-                      {a.city}
-                      {a.state ? `, ${a.state}` : ""}
-                      {a.csm ? ` · ${a.csm}` : ""}
-                    </div>
                   </td>
                   <td>
                     <span className={`${styles.fit} ${fitClass[a.tier]}`}>{a.score}</span>
@@ -1045,12 +1080,6 @@ export function AccountsClient({
                         —
                       </span>
                     )}
-                  </td>
-                  <td>
-                    <StageBadge stage={a.stage} />
-                    <div className={styles.stackTop}>
-                      <ApproachChip approach={a.approach} />
-                    </div>
                   </td>
                   <td>
                     {a.nextAction ? (
@@ -1150,20 +1179,48 @@ export function AccountsClient({
                 </tr>
                 {srOpenId === a.id && a.second && (
                   <tr>
-                    <td colSpan={9} className={styles.srFoldTd}>
+                    <td colSpan={8} className={styles.srFoldTd}>
                       <SecondRecordPanel accountId={a.id} second={a.second} />
                     </td>
                   </tr>
                 )}
                 {openId === a.id && (
                   <tr>
-                    <td colSpan={9}>
+                    <td colSpan={8}>
                       <div className={styles.acctDetail}>
                         <SfCheckpoint when="account" id={a.id} name={a.name} />
                         <p className={styles.acctMetaLine}>
                           MODEL · {a.industry || "—"} · PRISMHR ·{" "}
                           {a.incumbent ? a.cloud : "not a platform customer"}
+                          {a.city
+                            ? ` · ${a.city.toUpperCase()}${a.state ? `, ${a.state.toUpperCase()}` : ""}`
+                            : ""}
+                          {a.csm ? ` · CSM ${a.csm.toUpperCase()}` : ""}
                         </p>
+                        {canAdd &&
+                          (onDash.has(a.name) ? (
+                            <p className={styles.acctMetaLine}>
+                              ON THE DASHBOARD · CLEARED WITH THE CSM
+                            </p>
+                          ) : (
+                            <form action={addCard} className={styles.dashRow}>
+                              <input type="hidden" name="name" value={a.name} />
+                              <input
+                                type="hidden"
+                                name="subtitle"
+                                value={`${a.csm}${a.industry ? ` · ${a.industry}` : ""}`}
+                              />
+                              <input
+                                type="hidden"
+                                name="seedDiscovery"
+                                value={seedFor(a)}
+                              />
+                              <input type="hidden" name="returnTo" value="/accounts" />
+                              <button className={styles.addMini} type="submit">
+                                Put it on the dashboard
+                              </button>
+                            </form>
+                          ))}
                         {/* The people lead (founder-decreed 2026-08-20): the
                             double-click is looking for contacts first. */}
                         <ContactsPanel
