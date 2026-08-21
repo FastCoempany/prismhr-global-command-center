@@ -111,6 +111,46 @@
   margin-left: auto;
 }
 
+/* The search carries depth (founder-decreed 2026-08-21): inset glyph,
+   layered shadow, gradient field, a real focus ring. */
+.searchWrap {
+  position: relative;
+  margin-bottom: 12px;
+}
+.searchGlyph {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgba(10, 28, 64, 0.42);
+  font-size: 15px;
+  pointer-events: none;
+}
+.searchDeep {
+  width: 100%;
+  padding: 11px 14px 11px 38px;
+  border: 1px solid rgba(10, 28, 64, 0.14);
+  border-radius: 11px;
+  background: linear-gradient(#ffffff, #fdfdfe);
+  box-shadow:
+    0 1px 2px rgba(10, 28, 64, 0.06),
+    0 3px 10px rgba(10, 28, 64, 0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  font: inherit;
+  font-size: 14px;
+  color: var(--ink);
+}
+.searchDeep::placeholder {
+  color: rgba(10, 28, 64, 0.42);
+}
+.searchDeep:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow:
+    0 0 0 3px rgba(37, 99, 235, 0.13),
+    0 3px 10px rgba(10, 28, 64, 0.07);
+}
+
 /* The Filter Door (founder-decreed 2026-08-21): the rail is retired — the
    sheet runs full width and the five filters live behind one mono door at
    the top-right shoulder. A live filter keeps the door lit and named. */
