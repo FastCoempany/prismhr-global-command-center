@@ -6,6 +6,7 @@
 // drill route reads one account at a time (the covenant's import guard).
 
 import { getPrisma } from "@/lib/db";
+import { MINE_RE } from "@/lib/intel/provenance";
 import type { Gem } from "./stores";
 import {
   ACTIVITY_NS,
@@ -47,11 +48,15 @@ const empty = (): SecondRecord => ({
 export async function fetchSecondRecords(): Promise<Map<string, SecondRecord>> {
   const out = new Map<string, SecondRecord>();
   const prisma = getPrisma();
+  // The staged slices share the activity: prefix but are ~120KB each — they
+  // must never ride this query (caught 2026-08-21: every page load was
+  // hauling ~15MB of slice bodies just to skip them in the loop).
   const rows = await prisma.accountNote.findMany({
     where: {
       OR: [ACTIVITY_NS, GEMS_NS, SUPPORT_NS, INTENT_NS].map((ns) => ({
         accountId: { startsWith: ns },
       })),
+      NOT: [{ accountId: { startsWith: STAGE_NS } }, { accountId: "activity:manifest" }],
     },
     orderBy: { createdAt: "desc" },
     select: { accountId: true, body: true },
@@ -162,7 +167,10 @@ export function orgInboundKey(sr: SecondRecord | undefined): string {
  *  when it names a colleague. "" when the record can't say who. */
 export function orgInboundHolder(sr: SecondRecord | undefined): string {
   const lh = sr?.rollup?.lastHuman;
-  return lh && lh.kind === "colleague" ? lh.who : "";
+  // The operator's own rows log as colleague motion in the export — but
+  // "their reply went to Antaeus" is nonsense; you'd know.
+  if (!lh || lh.kind !== "colleague" || MINE_RE.test(lh.who)) return "";
+  return lh.who;
 }
 
 // ── the collision guard (a gate, not a rule) ────────────────────────────────
@@ -180,7 +188,8 @@ export function collisionFor(sr: SecondRecord | undefined, now: Date): Collision
   const mktgSends7 = sr?.intent?.windows.w7?.s ?? 0;
   let colleague: Collision["colleague"] = null;
   const lh = sr?.rollup?.lastHuman;
-  if (lh && lh.kind === "colleague") {
+  // Your own thread never collides with your own outreach.
+  if (lh && lh.kind === "colleague" && !MINE_RE.test(lh.who)) {
     const age = ageDays(lh.day, now);
     if (age != null && age <= 7) colleague = { who: lh.who, day: lh.day };
   }

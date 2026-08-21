@@ -661,3 +661,137 @@ describe("the same-sha re-drop costs nothing", () => {
     assert.equal(free.distillQueue.length + free.intentQueue.length, 0);
   });
 });
+
+// ═══ the adversarial-pass patches (2026-08-21) ═══════════════════════════════
+
+describe("the adversarial patches hold", () => {
+  test("the operator is never a collision and never holds their reply", () => {
+    const mine = sr({
+      rollup: rollup({
+        lastOrgInbound: "2026-08-19 09:00",
+        lastHuman: {
+          day: "2026-08-19",
+          how: "email",
+          who: "Antaeus Coe",
+          kind: "colleague",
+          subject: "Re: global",
+        },
+      }),
+    });
+    assert.equal(collisionFor(mine, NOW), null);
+    assert.equal(orgInboundHolder(mine), "");
+    // A real colleague still registers both ways.
+    const real = sr({
+      rollup: rollup({
+        lastHuman: {
+          day: "2026-08-19",
+          how: "email",
+          who: "Anika Steenstra",
+          kind: "colleague",
+          subject: "Re: intro",
+        },
+      }),
+    });
+    assert.equal(collisionFor(real, NOW)?.colleague?.who, "Anika Steenstra");
+    assert.equal(orgInboundHolder(real), "Anika Steenstra");
+  });
+
+  test("intent-warm never claims opens it doesn't have", () => {
+    const second = new Map([
+      [
+        "TEST0000000000001",
+        sr({
+          intent: {
+            dropSha: "x",
+            windows: windows({ w30: { s: 40, o: 0, c: 3 }, lastOpen: "2026-08-19" }),
+            receipts: 0,
+          },
+        }),
+      ],
+    ]);
+    const { all } = buildQueue(baseInput({ secondById: second }) as never);
+    const hit = all.find((q) => q.ruleId === "intent-warm");
+    assert.ok(hit);
+    assert.equal(hit.reason, "They clicked 3 of ours.");
+  });
+
+  test("a background note never silences engaged-never-introduced; a send does", () => {
+    const second = new Map([
+      [
+        "TEST0000000000001",
+        sr({
+          support: {
+            dropSha: "x",
+            total: 40,
+            spike: null,
+            themes: [
+              {
+                label: "Update Provided",
+                n: 20,
+                firstDay: "2026-07-01",
+                lastDay: "2026-08-19",
+                examples: [],
+              },
+            ],
+          },
+        }),
+      ],
+    ]);
+    const bg = buildQueue(
+      baseInput({
+        secondById: second,
+        notesById: new Map([
+          [
+            "TEST0000000000001",
+            [
+              {
+                body: "☰ filed case intel from the export",
+                source: "sf",
+                createdAt: "2026-08-10T12:00:00Z",
+              },
+            ],
+          ],
+        ]),
+      }) as never,
+    ).all.find((q) => q.ruleId === "engaged-never-introduced");
+    // ☰ heads are meeting/thread glyphs — that IS conversation motion; use a
+    // plain intel note instead for the background case.
+    const bg2 = buildQueue(
+      baseInput({
+        secondById: second,
+        notesById: new Map([
+          [
+            "TEST0000000000001",
+            [
+              {
+                body: "case traffic summary, filed for intel",
+                source: "sf",
+                createdAt: "2026-08-10T12:00:00Z",
+              },
+            ],
+          ],
+        ]),
+      }) as never,
+    ).all.find((q) => q.ruleId === "engaged-never-introduced");
+    assert.ok(bg2, "plain filed intel does not silence the rule");
+    assert.equal(bg, undefined, "a send/meeting head is a conversation");
+    const sent = buildQueue(
+      baseInput({
+        secondById: second,
+        notesById: new Map([
+          [
+            "TEST0000000000001",
+            [
+              {
+                body: "✉ Sent the first note",
+                source: "room",
+                createdAt: "2026-08-10T12:00:00Z",
+              },
+            ],
+          ],
+        ]),
+      }) as never,
+    ).all.find((q) => q.ruleId === "engaged-never-introduced");
+    assert.equal(sent, undefined, "a filed send is a conversation");
+  });
+});

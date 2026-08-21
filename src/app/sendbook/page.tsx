@@ -103,6 +103,11 @@ export default async function SendbookPage({
     if (inboundAt || mktgLive) orgSignals.set(id, { inboundAt, mktgLive });
   }
   const book = buildSendbook({ notesById, tapsById, now, orgSignals });
+  // The cadence marker speaks once per account — on its newest line — never
+  // as a wall down the register (quiet ink, the canon's way).
+  const newestLineAt = new Map<string, string>();
+  for (const l of book.lines)
+    if (!newestLineAt.has(l.accountId)) newestLineAt.set(l.accountId, l.at);
   const week = weekStats(book, now);
 
   const { ch } = await searchParams;
@@ -188,14 +193,15 @@ export default async function SendbookPage({
                 {l.clause}
                 {l.contact ? (l.clause ? ` — ${l.contact}` : l.contact) : ""}
               </span>
-              {orgSignals.get(l.accountId)?.mktgLive && (
-                <span
-                  className={styles.mktgLive}
-                  title="Marketing sent this account a blast inside seven days — your note lands beside it. It informs; it never blocks."
-                >
-                  MKTG LIVE
-                </span>
-              )}
+              {orgSignals.get(l.accountId)?.mktgLive &&
+                newestLineAt.get(l.accountId) === l.at && (
+                  <span
+                    className={styles.mktgLive}
+                    title="Marketing sent this account a blast inside seven days — your note lands beside it. It informs; it never blocks."
+                  >
+                    MKTG LIVE
+                  </span>
+                )}
               {book.laneById.get(l.accountId) === "gone-cold" && (
                 <span
                   className={styles.cold}
