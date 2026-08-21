@@ -403,17 +403,8 @@ export default async function AccountsPage() {
     <>
       <AppWayfinder current="Accounts" />
       <main className={styles.wrap}>
-        <div className={styles.pageHead}>
-          <h1 className={styles.h1}>Account Room</h1>
-
-          <p
-            className={styles.sub}
-            title="Global fit blends 40% account profile with 60% researched demand, weighted by confidence. The profile covers size, platform, model, and recency. Play flags a competitor EOR already in place."
-          >
-            All {rows.length} accounts, scored for Global fit: 40% profile, 60% demand.
-            Book research from {researchGeneratedAt}; live passes read per account.
-          </p>
-        </div>
+        {/* The header lives in the client (founder-decreed 2026-08-21): the
+            subtext is retired; the copy/CSV icons ride beside the title. */}
         <AccountsClient
           rows={rows}
           canAdd={canAdd}

@@ -120,22 +120,22 @@
   align-items: flex-start;
 }
 .rail {
-  flex: 0 0 168px;
+  flex: 0 0 108px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   position: sticky;
   top: 74px;
 }
 .rail select {
   width: 100%;
-  padding: 7px 10px;
-  border-radius: 8px;
+  padding: 4px 6px;
+  border-radius: 7px;
   border: 1px solid var(--line);
   background: #fff;
   font: inherit;
-  font-size: 12.5px;
-  color: var(--ink);
+  font-size: 12px;
+  color: rgba(10, 28, 64, 0.66);
 }
 .railMain {
   flex: 1;
@@ -9077,6 +9077,15 @@
 }
 .iconBtn:hover {
   color: var(--ink);
+}
+
+/* The live count rides the Account column title (founder-decreed 2026-08-21). */
+.thCount {
+  margin-left: 8px;
+  font-weight: 400;
+  letter-spacing: 0.4px;
+  color: rgba(10, 28, 64, 0.42);
+  white-space: nowrap;
 }
 
 /* Sortable column titles: the header text is the control. */

@@ -796,17 +796,8 @@ export function AccountsClient({
 
   return (
     <>
-      <div className={styles.filters}>
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Search account, city, contact…"
-          aria-label="Search accounts"
-        />
-        <span className={styles.count}>
-          <b>{filtered.length}</b> of {rows.length}
-          {csm ? ` — ${csm.split(" ")[0]}'s` : ""}
-        </span>
+      <div className={styles.pageHead}>
+        <h1 className={styles.h1}>Account Room</h1>
         <button
           type="button"
           className={styles.iconBtn}
@@ -825,6 +816,14 @@ export function AccountsClient({
         >
           ⇩
         </button>
+      </div>
+      <div className={styles.filters}>
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Search account, city, contact…"
+          aria-label="Search accounts"
+        />
       </div>
 
       {/* The filters ride a left rail (founder-decreed 2026-08-21); the
@@ -926,6 +925,11 @@ export function AccountsClient({
                         </span>
                       )}
                     </button>
+                    {key === "name" && (
+                      <span className={styles.thCount}>
+                        {filtered.length} of {rows.length}
+                      </span>
+                    )}
                   </th>
                 ))}
               </tr>
