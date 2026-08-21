@@ -131,7 +131,7 @@ export default function SecondRecordPanel({
   return (
     <div className={styles.srPanel}>
       {second.gems.map((g) => (
-        <div key={g.term} className={styles.srGem}>
+        <div key={`${g.term}|${g.whenDay}`} className={styles.srGem}>
           <div className={styles.srGemHead}>
             <span className={styles.srGemTerm}>◆ {g.term}</span>
             <span className={styles.srGemStamp}>
