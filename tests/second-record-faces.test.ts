@@ -20,6 +20,7 @@ import {
   type SecondRecord,
 } from "../src/lib/activity/read";
 import { buildQueue } from "../src/lib/groundwork/day";
+import { dropQueues } from "../src/lib/activity/harness";
 import { buildSendbook } from "../src/lib/sendbook/read";
 import { buildReadout } from "../src/lib/groundwork/readout";
 import { mirrorActivityDigest } from "../src/lib/intranet/mirror";
@@ -631,5 +632,32 @@ describe("the ring reads the second record", () => {
     const src = readFileSync("src/lib/intranet/mirror.ts", "utf8");
     assert.ok(!src.includes("parseStageBody"));
     assert.ok(!src.includes("activity:stage"));
+  });
+});
+
+describe("the same-sha re-drop costs nothing", () => {
+  test("covered accounts never re-queue; the rest follow change detection", () => {
+    const accounts = [
+      { id: "A", rowsSum: "r1", tallySum: "t1" },
+      { id: "B", rowsSum: "r2", tallySum: "t2" },
+      { id: "C", rowsSum: "r3", tallySum: "t3" },
+      { id: "D", rowsSum: "r4", tallySum: "t4" },
+    ];
+    const prior = new Map([
+      ["B", { rowsSum: "r2", tallySum: "OLD" }],
+      ["C", { rowsSum: "r3", tallySum: "t3" }],
+    ]);
+    const { distillQueue, intentQueue } = dropQueues(
+      accounts,
+      prior,
+      new Set(["A", "C"]),
+    );
+    // A covered → skipped even with no prior. C covered → skipped.
+    // B unchanged rows, changed tally → intent. D never seen → distill.
+    assert.deepEqual(distillQueue, ["D"]);
+    assert.deepEqual(intentQueue, ["B"]);
+    // A full coverage set queues nothing at all — the re-drop is free.
+    const free = dropQueues(accounts, prior, new Set(["A", "B", "C", "D"]));
+    assert.equal(free.distillQueue.length + free.intentQueue.length, 0);
   });
 });
