@@ -262,6 +262,36 @@ vehicle for someone else's cadence (roundup-slot, the book-wide research
 stamp) must prefer an account with no candidate of its own — a briefing slot
 never swallows an account's own move.
 
+## The Act Lane (Version C winner, decreed 2026-08-21)
+
+The Accounts sheet works the act right there. The ACT column is the Move
+Chip (Concept I): the gem's act as a fixed-edge chip, orange left tick,
+source line whispered beneath, hover ✓ stamps acted (the gems store's own
+actedDay — the acted sweep can re-stamp from the record any time it truly
+speaks; every stamp carries ↺). Clicking the chip opens the Act Lane — a
+sticky workbench beside the sheet: evidence up top (citations drill to
+cleaned excerpts by the meat law), the editable draft mid (TO/SUBJECT/BODY
+seeded from the relationship contact and the act), Send/File/fork at the
+foot. Drafts SAVE (actdraft:<id> notes, one per account, money-redacted;
+a touched draft saves on close or chip-hop — the pad never eats your
+words; Send consumes it). Send files a real ✉ outbound to the record and
+opens mail — the record then clears the nag itself. The fork files the
+follow-up where it belongs, both meaning TODAY: a board account's move
+lands as a HomeRoom action todo; an off-board account's as a seat:<id>
+note Groundwork reads FIRST — rank 95, at most three seats lead
+(SEAT_SLOT_CAP), a seat counts as the account's own move so no vehicle
+rule swallows it, and it rides until worked, taken back, or the record
+shows the outbound after it. Retired from the sheet the same day: the
+Stage, Next-action, and Play columns (Play reads in the drilldown's meta
+line), the filter rail (the Filter Door — one mono FILTERS ▾ at the
+sheet's top-right shoulder, lit and named while a filter is live), the
+Sort dropdown (column titles are the only sort), the header subtext, the
+hot-signal bar, and the hover ⊞ (the dashboard door is plain words in the
+drilldown). The count rides the Account column title; ⧉/⇩ ride the page
+title; the search bar carries depth. The board lift holds app-wide: an
+account on the dashboard is cleared with the CSM and touched — stored
+state only ever advances the derived one (boardLift, loadCommand).
+
 ## Other standing decrees
 
 - The word "steps" never appears in operator-facing copy.

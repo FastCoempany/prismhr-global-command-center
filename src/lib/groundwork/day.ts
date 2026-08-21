@@ -30,6 +30,7 @@ import { USER_TZ, userDayKey } from "@/lib/tz";
 export type Band = "now" | "eleven" | "two";
 
 export type QueueRuleId =
+  | "seated"
   | "wire-trigger"
   | "intent-warm"
   | "riding-lane"
@@ -134,8 +135,16 @@ export type QueueInput = {
   /** Accounts holding ANY live board card — engaged-never-introduced only
    *  fires where no deal exists at all, whatever its stage. */
   boardIds?: Set<string>;
+  /** The Act Lane's seats (founder-decreed 2026-08-21): moves the operator
+   *  filed from the accounts sheet. A seat outranks every rule and counts
+   *  as the account's own move; at most SEAT_SLOT_CAP lead the day. */
+  seats?: Map<string, { act: string; term: string; day: string }>;
   now: Date;
 };
+
+// The operator can't bury the drumbeat: at most three seated moves hold
+// leading slots; the rest sink below other rules, still ranked, never lost.
+export const SEAT_SLOT_CAP = 3;
 
 // One rule may hold at most this many of the day's top slots — a rule that
 // fires book-wide must never wall the wing. The rest of its hits sink below
@@ -169,6 +178,7 @@ export function currentBand(now: Date): Band {
 }
 
 const BAND_OF: Record<QueueRuleId, Band> = {
+  seated: "now",
   "wire-trigger": "now",
   "second-record-gem": "now",
   "engaged-never-introduced": "eleven",
@@ -186,6 +196,7 @@ const BAND_OF: Record<QueueRuleId, Band> = {
 // move), 2 is dated inside the week (a cadence day, a closing lane, a due
 // update), 1 keeps until worked.
 const HEAT_OF: Record<QueueRuleId, 1 | 2 | 3> = {
+  seated: 3,
   "wire-trigger": 3,
   "second-record-gem": 3,
   "engaged-never-introduced": 2,
@@ -540,6 +551,30 @@ function rankAll(inp: QueueInput, now: Date): QueueItem[] {
     }
   }
 
+  // seated (95): the operator filed this move from the accounts sheet's Act
+  // Lane — an explicit seat outranks every rule and rides until worked,
+  // taken back, or the record shows the outbound (the page filters those
+  // before they arrive here). The seat is the account's own move: it lands
+  // before the vehicle rules compute `occupied`, so no briefing slot ever
+  // swallows it.
+  const nameOf = new Map(inp.accounts.map((p) => [p.id, p.name]));
+  for (const [id, seat] of inp.seats ?? []) {
+    const name = nameOf.get(id);
+    if (!name) continue;
+    candidates.push({
+      accountId: id,
+      name,
+      ruleId: "seated",
+      weight: 95,
+      band: BAND_OF["seated"],
+      action: seat.act,
+      reason: `Seated ${monthDay(seat.day)} from the sheet.`,
+      owed: "draft on the lane",
+      carried: false,
+      intent: intentFor(inp.notesById.get(id), now),
+    });
+  }
+
   // roundup-slot (70): a partner manager's update rhythm has lapsed — their
   // roster's best-fit account takes the slot. The CSM door, chosen when it
   // is the fastest one, never the toll.
@@ -626,7 +661,8 @@ function rankAll(inp: QueueInput, now: Date): QueueItem[] {
   const perRule = new Map<QueueRuleId, number>();
   for (const q of sorted) {
     const n = perRule.get(q.ruleId) ?? 0;
-    if (n < RULE_SLOT_CAP) {
+    const cap = q.ruleId === "seated" ? SEAT_SLOT_CAP : RULE_SLOT_CAP;
+    if (n < cap) {
       perRule.set(q.ruleId, n + 1);
       leading.push(q);
     } else sunk.push(q);

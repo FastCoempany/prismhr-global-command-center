@@ -70,10 +70,12 @@ import { buildReadout, lint, readoutText } from "@/lib/groundwork/readout";
 import {
   SENDBOOK_NS,
   buildSendbook,
+  recordSends,
   shortName,
   weekStats,
   type NoteLike as SendNote,
 } from "@/lib/sendbook/read";
+import { SEAT_NS, parseSeatBody } from "@/lib/act/lane";
 import {
   attachWireToAccount,
   markReadoutRead,
@@ -334,6 +336,24 @@ export default async function GroundworkPage({
     })),
   );
 
+  // The Act Lane's seats (founder-decreed 2026-08-21): a move the operator
+  // filed from the accounts sheet leads the wing until it is worked, taken
+  // back, or the record shows the outbound after the seat.
+  const seats = new Map<string, { act: string; term: string; day: string }>();
+  for (const [id, notes] of notesMap) {
+    if (!id.startsWith(SEAT_NS)) continue;
+    const accountId = id.slice(SEAT_NS.length);
+    const seatNote = notes[0];
+    if (!accountId || !seatNote) continue;
+    const seat = parseSeatBody(seatNote.body);
+    if (!seat) continue;
+    const seatAt = Date.parse(seatNote.createdAt);
+    const worked = recordSends(notesMap.get(accountId) ?? []).some(
+      (s) => Date.parse(s.at) > seatAt,
+    );
+    if (!worked) seats.set(accountId, seat);
+  }
+
   const { all: rankedAll } = buildQueue({
     accounts: peos,
     intelById,
@@ -350,6 +370,7 @@ export default async function GroundworkPage({
     excludedIds,
     secondById,
     boardIds,
+    seats,
     now,
   });
 

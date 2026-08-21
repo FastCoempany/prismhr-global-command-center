@@ -92,6 +92,18 @@ export function composeFor(args: {
   const where = countries.length ? countries.join(", ") : "the countries on the table";
 
   switch (ruleId) {
+    case "seated":
+      // The operator seated this from the accounts sheet's Act Lane — the
+      // gem's act is the move, its reason the grounding, and any saved lane
+      // draft outranks this composed fallback at the stage.
+      return {
+        kind: "send-draft",
+        label: `Copy the note${labelTo}`,
+        to: toContact,
+        payload: redactMoney(
+          `To: ${toContact}\nSubject: Picking up the thread\n\n${greet} ${gem?.reason ? `${gem.reason} ` : ""}${gem?.act ?? "The seated move goes here."} ${relayLine("fp-where")} If a walkthrough is faster than email, name a slot and I'll bring answers.`,
+        ),
+      };
     case "wire-trigger":
       return {
         kind: "send-draft",
