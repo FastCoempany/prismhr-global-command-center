@@ -70,3 +70,10 @@ export function priceQuoteFor(question: string): PriceQuote | null {
     matched: [...hitCountries.map((c) => c.country), ...hitAddOns.map((a) => a.label)],
   };
 }
+
+/** The ledger's stored twin is redacted by doctrine; render surfaces call
+ *  this to re-derive the figures from the pricing source at read time —
+ *  money is never stored, always fresh (founder-decreed 2026-08-21). */
+export function priceDeskDisplay(question: string, stored: string): string {
+  return priceQuoteFor(question)?.answer ?? stored;
+}

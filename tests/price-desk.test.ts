@@ -47,3 +47,19 @@ describe("the price desk", () => {
     assert.doesNotMatch(redactMoney(q.answer), /\$\d/);
   });
 });
+
+describe("the stored twin re-derives at render", () => {
+  test("a price-desk row shows fresh figures, never the redacted copy", async () => {
+    const { priceDeskDisplay } = await import("../src/lib/pricing/quote");
+    const shown = priceDeskDisplay(
+      "price quote for 1 employee EOR Mexico",
+      "Mexico: [—]per employee per month. Priced live from the Pricing page.",
+    );
+    assert.match(shown, /Mexico: \$\d/);
+  });
+
+  test("a non-matching question falls back to the stored text", async () => {
+    const { priceDeskDisplay } = await import("../src/lib/pricing/quote");
+    assert.equal(priceDeskDisplay("who is the CSM", "stored text"), "stored text");
+  });
+});

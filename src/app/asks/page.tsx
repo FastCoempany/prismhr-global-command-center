@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { priceDeskDisplay } from "@/lib/pricing/quote";
 import { AppWayfinder } from "@/components/app-wayfinder";
 import { getAppAccess } from "@/lib/auth";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
@@ -79,7 +80,10 @@ export default async function AsksPage() {
     return {
       id: r.id,
       question: r.question,
-      answer: cleanAskText(r.answer),
+      answer:
+        r.model === "price-desk"
+          ? priceDeskDisplay(r.question, cleanAskText(r.answer))
+          : cleanAskText(r.answer),
       world: cleanAskText(r.world),
       nothing:
         considered > 0
