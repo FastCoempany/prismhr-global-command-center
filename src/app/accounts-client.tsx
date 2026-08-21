@@ -860,8 +860,14 @@ export function AccountsClient({
           ⇩
         </button>
       </div>
-      <div className={styles.filters}>
+      {/* The search carries depth (founder-decreed 2026-08-21): inset
+          glyph, layered shadow, a real focus ring. */}
+      <div className={styles.searchWrap}>
+        <span className={styles.searchGlyph} aria-hidden="true">
+          ⌕
+        </span>
         <input
+          className={styles.searchDeep}
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Search account, city, contact…"
