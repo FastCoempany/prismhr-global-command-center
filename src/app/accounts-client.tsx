@@ -652,6 +652,9 @@ export function AccountsClient({
   const [tier, setTier] = useState("");
   const [play, setPlay] = useState("");
   const [stageF, setStageF] = useState("");
+  // The Filter Door (founder-decreed 2026-08-21): the strip rests closed; a
+  // live filter keeps the door lit and named even while the strip is folded.
+  const [filtersOpen, setFiltersOpen] = useState(false);
   // Column-header sort (founder-decreed 2026-08-21): clicking a title sorts
   // the sheet by that column; a second click flips it. The Sort dropdown is
   // retired (2026-08-21) — the titles are the only sort, Global fit at rest.
@@ -707,6 +710,16 @@ export function AccountsClient({
       return b.score - a.score;
     });
   }, [rows, q, csm, industry, tier, play, stageF, colSort]);
+
+  // The door stays lit and named while any filter is live — filtered state
+  // is never invisible behind a closed strip.
+  const activeFilters = [
+    csm && "PARTNERS",
+    industry && "MODELS",
+    tier && "FIT",
+    play && "PLAYS",
+    stageF && "STAGES",
+  ].filter((f): f is string => Boolean(f));
 
   const clickSort = (key: ColKey) =>
     setColSort(
@@ -826,10 +839,25 @@ export function AccountsClient({
         />
       </div>
 
-      {/* The filters ride a left rail (founder-decreed 2026-08-21); the
-          hot-signal bar is retired. */}
-      <div className={styles.railWrap}>
-        <aside className={styles.rail} aria-label="Filters">
+      {/* The Filter Door (founder-decreed 2026-08-21, from the patch-list
+          triptych): no rail — the sheet runs full width, the five filters
+          live behind one mono door at the top-right shoulder, and a live
+          filter keeps the door lit and named. The hot-signal bar stays
+          retired. */}
+      <div className={styles.fdoorRow}>
+        <button
+          type="button"
+          className={
+            activeFilters.length ? `${styles.fdoor} ${styles.fdoorLive}` : styles.fdoor
+          }
+          onClick={() => setFiltersOpen(!filtersOpen)}
+          aria-expanded={filtersOpen}
+        >
+          FILTERS{activeFilters.map((f) => ` · ${f}`).join("")} ▾
+        </button>
+      </div>
+      {filtersOpen && (
+        <div className={styles.fstrip}>
           <select
             value={csm}
             onChange={(e) => setCsm(e.target.value)}
@@ -885,454 +913,442 @@ export function AccountsClient({
               </option>
             ))}
           </select>
-        </aside>
-        <div className={styles.railMain}>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                {(
-                  [
-                    ["name", "Account"],
-                    ["score", "Global fit"],
-                    ["demand", "Demand"],
-                    ["nextAction", "Next action"],
-                    ["play", "Play"],
-                    ["touch", "Last human touch"],
-                    ["signal", "The signal"],
-                    ["act", "Act"],
-                  ] as [ColKey, string][]
-                ).map(([key, label]) => (
-                  <th
-                    key={key}
-                    aria-sort={
-                      colSort?.key === key
-                        ? colSort.dir === 1
-                          ? "ascending"
-                          : "descending"
-                        : undefined
-                    }
-                  >
+        </div>
+      )}
+      <table className={styles.table}>
+        <thead>
+          <tr>
+            {(
+              [
+                ["name", "Account"],
+                ["score", "Global fit"],
+                ["demand", "Demand"],
+                ["nextAction", "Next action"],
+                ["play", "Play"],
+                ["touch", "Last human touch"],
+                ["signal", "The signal"],
+                ["act", "Act"],
+              ] as [ColKey, string][]
+            ).map(([key, label]) => (
+              <th
+                key={key}
+                aria-sort={
+                  colSort?.key === key
+                    ? colSort.dir === 1
+                      ? "ascending"
+                      : "descending"
+                    : undefined
+                }
+              >
+                <button
+                  type="button"
+                  className={styles.thSort}
+                  onClick={() => clickSort(key)}
+                  title={`Sort by ${label.toLowerCase()}`}
+                >
+                  {label}
+                  {colSort?.key === key && (
+                    <span className={styles.thArrow}>
+                      {colSort.dir === 1 ? "▲" : "▼"}
+                    </span>
+                  )}
+                </button>
+                {key === "name" && (
+                  <span className={styles.thCount}>
+                    {filtered.length} of {rows.length}
+                  </span>
+                )}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {filtered.map((a) => {
+            return (
+              <Fragment key={a.id}>
+                <tr
+                  id={`acct-${a.id}`}
+                  className={a.id === openId ? styles.rowActive : ""}
+                >
+                  <td>
                     <button
-                      type="button"
-                      className={styles.thSort}
-                      onClick={() => clickSort(key)}
-                      title={`Sort by ${label.toLowerCase()}`}
+                      className={styles.rowBtn}
+                      onClick={() => setOpenId(openId === a.id ? "" : a.id)}
+                      aria-expanded={openId === a.id}
                     >
-                      {label}
-                      {colSort?.key === key && (
-                        <span className={styles.thArrow}>
-                          {colSort.dir === 1 ? "▲" : "▼"}
-                        </span>
-                      )}
-                    </button>
-                    {key === "name" && (
-                      <span className={styles.thCount}>
-                        {filtered.length} of {rows.length}
+                      {a.name}
+                    </button>{" "}
+                    {a.disposition && (
+                      <span
+                        className={[
+                          styles.dispoBadge,
+                          a.disposition.status === "won" ? styles.dispoWon : "",
+                          a.disposition.status === "lost" ? styles.dispoLost : "",
+                        ]
+                          .filter(Boolean)
+                          .join(" ")}
+                        title={a.disposition.reason || undefined}
+                      >
+                        {a.disposition.status === "motion"
+                          ? "⚡ in motion"
+                          : a.disposition.status === "parked"
+                            ? "⏸ parked"
+                            : a.disposition.status === "won"
+                              ? "✓ closed won"
+                              : a.disposition.status === "lost"
+                                ? "✕ closed lost"
+                                : "⌁ engaged"}
+                      </span>
+                    )}{" "}
+                    {a.risk && (
+                      <span
+                        className={styles.riskChip}
+                        title="Salesforce marks this account's risk level. Handle with care."
+                      >
+                        ⚠ {a.risk} RISK
+                      </span>
+                    )}{" "}
+                    <ValBadge v={a.validation} />
+                  </td>
+                  <td>
+                    <span className={`${styles.fit} ${fitClass[a.tier]}`}>{a.score}</span>
+                  </td>
+                  <td>
+                    {a.researched && a.demand != null ? (
+                      <span className={`${styles.fit} ${demandClass(a.demand)}`}>
+                        {a.demand}
+                      </span>
+                    ) : (
+                      <span className={styles.muted} title="Not researched">
+                        —
                       </span>
                     )}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((a) => {
-                return (
-                  <Fragment key={a.id}>
-                    <tr
-                      id={`acct-${a.id}`}
-                      className={a.id === openId ? styles.rowActive : ""}
-                    >
-                      <td>
-                        <button
-                          className={styles.rowBtn}
-                          onClick={() => setOpenId(openId === a.id ? "" : a.id)}
-                          aria-expanded={openId === a.id}
-                        >
-                          {a.name}
-                        </button>{" "}
-                        {a.disposition && (
-                          <span
-                            className={[
-                              styles.dispoBadge,
-                              a.disposition.status === "won" ? styles.dispoWon : "",
-                              a.disposition.status === "lost" ? styles.dispoLost : "",
-                            ]
-                              .filter(Boolean)
-                              .join(" ")}
-                            title={a.disposition.reason || undefined}
-                          >
-                            {a.disposition.status === "motion"
-                              ? "⚡ in motion"
-                              : a.disposition.status === "parked"
-                                ? "⏸ parked"
-                                : a.disposition.status === "won"
-                                  ? "✓ closed won"
-                                  : a.disposition.status === "lost"
-                                    ? "✕ closed lost"
-                                    : "⌁ engaged"}
-                          </span>
-                        )}{" "}
-                        {a.risk && (
-                          <span
-                            className={styles.riskChip}
-                            title="Salesforce marks this account's risk level. Handle with care."
-                          >
-                            ⚠ {a.risk} RISK
-                          </span>
-                        )}{" "}
-                        <ValBadge v={a.validation} />
-                      </td>
-                      <td>
-                        <span className={`${styles.fit} ${fitClass[a.tier]}`}>
-                          {a.score}
-                        </span>
-                      </td>
-                      <td>
-                        {a.researched && a.demand != null ? (
-                          <span className={`${styles.fit} ${demandClass(a.demand)}`}>
-                            {a.demand}
-                          </span>
-                        ) : (
-                          <span className={styles.muted} title="Not researched">
-                            —
-                          </span>
+                  </td>
+                  <td>
+                    {a.nextAction ? (
+                      <>
+                        <span className={styles.rowSub}>{a.nextAction}</span>
+                        {a.nextActionDate && (
+                          <div className={styles.rowSub}>{a.nextActionDate}</div>
                         )}
-                      </td>
-                      <td>
-                        {a.nextAction ? (
-                          <>
-                            <span className={styles.rowSub}>{a.nextAction}</span>
-                            {a.nextActionDate && (
-                              <div className={styles.rowSub}>{a.nextActionDate}</div>
-                            )}
-                          </>
-                        ) : (
-                          <span className={styles.muted}>—</span>
-                        )}
-                      </td>
-                      <td>
-                        {a.play === "displacement" ? (
-                          <>
-                            <span className={`${styles.tag} ${styles.tagDisplace}`}>
-                              Displace
-                            </span>
-                            {a.competitors.length > 0 && (
-                              <div className={styles.rowSub}>
-                                <CompetitorLinks names={a.competitors} />
-                              </div>
-                            )}
-                          </>
-                        ) : a.play === "greenfield" ? (
-                          <span className={`${styles.tag} ${styles.tagGreen}`}>
-                            Greenfield
-                          </span>
-                        ) : (
-                          <span className={styles.muted}>—</span>
-                        )}
-                      </td>
-                      <td>
-                        {a.second?.touch ? (
-                          <span
-                            className={styles.srTouch}
-                            title={`The second record's last human row — ${a.second.touch.kind === "account" ? "their side wrote" : "a colleague's motion"}`}
-                          >
-                            <span
-                              className={
-                                a.second.touch.kind === "account"
-                                  ? styles.srTouchAcct
-                                  : undefined
-                              }
-                            >
-                              {shortWho(a.second.touch.who)}
-                            </span>{" "}
-                            · {mmddOf(a.second.touch.day)}
-                          </span>
-                        ) : (
-                          <span className={styles.muted}>—</span>
-                        )}
-                      </td>
-                      <td>
-                        {a.second && a.second.gems.length > 0 ? (
-                          <button
-                            type="button"
-                            className={styles.srTerm}
-                            onClick={() => setSrOpenId(srOpenId === a.id ? "" : a.id)}
-                            aria-expanded={srOpenId === a.id}
-                            title="A verified gem — opens the card, citations, and the email meat"
-                          >
-                            {a.second.gems[0].term}
-                            {a.second.gems.length > 1 && (
-                              <span className={styles.srMore}>
-                                {" "}
-                                +{a.second.gems.length - 1}
-                              </span>
-                            )}
-                          </button>
-                        ) : a.second && a.second.supportTotal >= 8 ? (
-                          <button
-                            type="button"
-                            className={`${styles.srTerm} ${styles.srTermSupport}`}
-                            onClick={() => setSrOpenId(srOpenId === a.id ? "" : a.id)}
-                            aria-expanded={srOpenId === a.id}
-                            title="Heavy support traffic — opens the case list and the meat"
-                          >
-                            ▮ {a.second.supportTotal} CASES
-                          </button>
-                        ) : a.second?.verdict ? (
-                          <span className={styles.srVerdict} title={a.second.verdict}>
-                            {a.second.verdict}
-                          </span>
-                        ) : (
-                          <span className={styles.muted}>—</span>
-                        )}
-                      </td>
-                      <td className={styles.srActCell}>
-                        {a.second?.act ? (
-                          <span title="The gem's act — six words, refuter-verified">
-                            {a.second.act}
-                          </span>
-                        ) : null}
-                      </td>
-                    </tr>
-                    {srOpenId === a.id && a.second && (
-                      <tr>
-                        <td colSpan={8} className={styles.srFoldTd}>
-                          <SecondRecordPanel accountId={a.id} second={a.second} />
-                        </td>
-                      </tr>
+                      </>
+                    ) : (
+                      <span className={styles.muted}>—</span>
                     )}
-                    {openId === a.id && (
-                      <tr>
-                        <td colSpan={8}>
-                          <div className={styles.acctDetail}>
-                            <SfCheckpoint when="account" id={a.id} name={a.name} />
+                  </td>
+                  <td>
+                    {a.play === "displacement" ? (
+                      <>
+                        <span className={`${styles.tag} ${styles.tagDisplace}`}>
+                          Displace
+                        </span>
+                        {a.competitors.length > 0 && (
+                          <div className={styles.rowSub}>
+                            <CompetitorLinks names={a.competitors} />
+                          </div>
+                        )}
+                      </>
+                    ) : a.play === "greenfield" ? (
+                      <span className={`${styles.tag} ${styles.tagGreen}`}>
+                        Greenfield
+                      </span>
+                    ) : (
+                      <span className={styles.muted}>—</span>
+                    )}
+                  </td>
+                  <td>
+                    {a.second?.touch ? (
+                      <span
+                        className={styles.srTouch}
+                        title={`The second record's last human row — ${a.second.touch.kind === "account" ? "their side wrote" : "a colleague's motion"}`}
+                      >
+                        <span
+                          className={
+                            a.second.touch.kind === "account"
+                              ? styles.srTouchAcct
+                              : undefined
+                          }
+                        >
+                          {shortWho(a.second.touch.who)}
+                        </span>{" "}
+                        · {mmddOf(a.second.touch.day)}
+                      </span>
+                    ) : (
+                      <span className={styles.muted}>—</span>
+                    )}
+                  </td>
+                  <td>
+                    {a.second && a.second.gems.length > 0 ? (
+                      <button
+                        type="button"
+                        className={styles.srTerm}
+                        onClick={() => setSrOpenId(srOpenId === a.id ? "" : a.id)}
+                        aria-expanded={srOpenId === a.id}
+                        title="A verified gem — opens the card, citations, and the email meat"
+                      >
+                        {a.second.gems[0].term}
+                        {a.second.gems.length > 1 && (
+                          <span className={styles.srMore}>
+                            {" "}
+                            +{a.second.gems.length - 1}
+                          </span>
+                        )}
+                      </button>
+                    ) : a.second && a.second.supportTotal >= 8 ? (
+                      <button
+                        type="button"
+                        className={`${styles.srTerm} ${styles.srTermSupport}`}
+                        onClick={() => setSrOpenId(srOpenId === a.id ? "" : a.id)}
+                        aria-expanded={srOpenId === a.id}
+                        title="Heavy support traffic — opens the case list and the meat"
+                      >
+                        ▮ {a.second.supportTotal} CASES
+                      </button>
+                    ) : a.second?.verdict ? (
+                      <span className={styles.srVerdict} title={a.second.verdict}>
+                        {a.second.verdict}
+                      </span>
+                    ) : (
+                      <span className={styles.muted}>—</span>
+                    )}
+                  </td>
+                  <td className={styles.srActCell}>
+                    {a.second?.act ? (
+                      <span title="The gem's act — six words, refuter-verified">
+                        {a.second.act}
+                      </span>
+                    ) : null}
+                  </td>
+                </tr>
+                {srOpenId === a.id && a.second && (
+                  <tr>
+                    <td colSpan={8} className={styles.srFoldTd}>
+                      <SecondRecordPanel accountId={a.id} second={a.second} />
+                    </td>
+                  </tr>
+                )}
+                {openId === a.id && (
+                  <tr>
+                    <td colSpan={8}>
+                      <div className={styles.acctDetail}>
+                        <SfCheckpoint when="account" id={a.id} name={a.name} />
+                        <p className={styles.acctMetaLine}>
+                          MODEL · {a.industry || "—"} · PRISMHR ·{" "}
+                          {a.incumbent ? a.cloud : "not a platform customer"}
+                          {a.city
+                            ? ` · ${a.city.toUpperCase()}${a.state ? `, ${a.state.toUpperCase()}` : ""}`
+                            : ""}
+                          {a.csm ? ` · CSM ${a.csm.toUpperCase()}` : ""}
+                        </p>
+                        {canAdd &&
+                          (onDash.has(a.name) ? (
                             <p className={styles.acctMetaLine}>
-                              MODEL · {a.industry || "—"} · PRISMHR ·{" "}
-                              {a.incumbent ? a.cloud : "not a platform customer"}
-                              {a.city
-                                ? ` · ${a.city.toUpperCase()}${a.state ? `, ${a.state.toUpperCase()}` : ""}`
-                                : ""}
-                              {a.csm ? ` · CSM ${a.csm.toUpperCase()}` : ""}
+                              ON THE DASHBOARD · CLEARED WITH THE CSM
                             </p>
-                            {canAdd &&
-                              (onDash.has(a.name) ? (
-                                <p className={styles.acctMetaLine}>
-                                  ON THE DASHBOARD · CLEARED WITH THE CSM
-                                </p>
-                              ) : (
-                                <form action={addCard} className={styles.dashRow}>
-                                  <input type="hidden" name="name" value={a.name} />
-                                  <input
-                                    type="hidden"
-                                    name="subtitle"
-                                    value={`${a.csm}${a.industry ? ` · ${a.industry}` : ""}`}
-                                  />
-                                  <input
-                                    type="hidden"
-                                    name="seedDiscovery"
-                                    value={seedFor(a)}
-                                  />
-                                  <input
-                                    type="hidden"
-                                    name="returnTo"
-                                    value="/accounts"
-                                  />
-                                  <button className={styles.addMini} type="submit">
-                                    Put it on the dashboard
-                                  </button>
-                                </form>
-                              ))}
-                            {/* The people lead (founder-decreed 2026-08-20): the
+                          ) : (
+                            <form action={addCard} className={styles.dashRow}>
+                              <input type="hidden" name="name" value={a.name} />
+                              <input
+                                type="hidden"
+                                name="subtitle"
+                                value={`${a.csm}${a.industry ? ` · ${a.industry}` : ""}`}
+                              />
+                              <input
+                                type="hidden"
+                                name="seedDiscovery"
+                                value={seedFor(a)}
+                              />
+                              <input type="hidden" name="returnTo" value="/accounts" />
+                              <button className={styles.addMini} type="submit">
+                                Put it on the dashboard
+                              </button>
+                            </form>
+                          ))}
+                        {/* The people lead (founder-decreed 2026-08-20): the
                             double-click is looking for contacts first. */}
-                            <ContactsPanel
-                              accountId={a.id}
-                              accountName={a.name}
-                              count={a.contactCount}
-                            />
-                            {/* The research leads (founder-decreed 2026-08-14): the drilldown opens with what the research knows; the working furniture follows, folded. */}
-                            <Fold
-                              label="Research read"
-                              hint="what the research knows about this account"
-                              defaultOpen
-                            >
-                              <div className={styles.demandBlock}>
-                                {a.researched ? (
-                                  <>
-                                    <div className={styles.demandHead}>
-                                      {a.demand != null && (
-                                        <span
-                                          className={`${styles.fit} ${demandClass(a.demand)}`}
-                                        >
-                                          {a.demand}
-                                        </span>
-                                      )}
-                                      <strong>Global-hiring demand</strong>
-                                      <span className={styles.confChip}>
-                                        {a.demand != null
-                                          ? `${a.confidence} confidence`
-                                          : "live pass, unscored"}
-                                      </span>
-                                    </div>
-                                    {a.play === "displacement" &&
-                                      a.competitors.length > 0 && (
-                                        <p className={styles.servedBy}>
-                                          Displacement play. Currently served by{" "}
-                                          <strong>
-                                            <CompetitorLinks names={a.competitors} />
-                                          </strong>
-                                          . Pitch: bring it in-house on the platform they
-                                          already run.
-                                        </p>
-                                      )}
-                                    {a.play === "greenfield" && (
-                                      <p className={styles.servedBy}>
-                                        Greenfield. Real demand, no incumbent EOR named in
-                                        the research.
-                                      </p>
-                                    )}
-                                    {a.summary && (
-                                      <p className={styles.demandSummary}>{a.summary}</p>
-                                    )}
-                                    {a.signals.length > 0 && (
-                                      <ul className={styles.signalList}>
-                                        {a.signals.slice(0, 4).map((s, i) => (
-                                          <li key={i}>{s}</li>
-                                        ))}
-                                      </ul>
-                                    )}
-                                    {a.countries.length > 0 && (
-                                      <div className={styles.countries}>
-                                        {a.countries.map((c) => (
-                                          <span key={c} className={styles.countryChip}>
-                                            {c}
-                                          </span>
-                                        ))}
-                                      </div>
-                                    )}
-                                    {a.evidence.length > 0 && (
-                                      <div className={styles.evidence}>
-                                        {a.evidence.map((e, i) => (
-                                          <a
-                                            key={i}
-                                            href={e.url}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                          >
-                                            ↗ {hostOf(e.url)}
-                                          </a>
-                                        ))}
-                                      </div>
-                                    )}
-                                    {a.demand != null && (
-                                      <div className={styles.formula}>
-                                        How this {a.score} is built: 40% account profile
-                                        at {a.deskScore}, 60% global demand at{" "}
-                                        {a.demandAdj ?? a.demand}.
-                                        {a.confFactor < 1
-                                          ? ` Raw demand ${a.demand} trimmed to ${a.demandAdj} because confidence is ${a.confidence}.`
-                                          : ""}
-                                      </div>
-                                    )}
-                                  </>
-                                ) : (
-                                  <div className={styles.demandPending}>
-                                    Not researched: no findable web presence, or missed on
-                                    the run. Score is the account profile only. No demand
-                                    signal yet.
-                                  </div>
-                                )}
-                              </div>
-                            </Fold>
-                            <AccountChipNotes notes={a.chipNotes} />
-                            <AccountNotes notes={a.notes} />
-                            <PeopleIndex people={a.people} />
-                            <BackgroundIntel notes={a.bgNotes} />
-                            <EngagementPanel a={a} />
-                            <Fold label="Working the deal" hint="stage, approach, plays">
-                              <WorkingDeal a={a} canWrite={canWrite} />
-                            </Fold>
-
-                            <Fold
-                              label="Account profile"
-                              hint="firmographics and the score's parts"
-                            >
-                              <div className={styles.bars}>
-                                <div className={styles.barsHead}>
-                                  Account profile · {a.deskScore}/100, firmographics only,
-                                  no research
-                                </div>
-                                {(
-                                  ["scale", "incumbency", "model", "recency"] as const
-                                ).map((k) => (
-                                  <div key={k} className={styles.barRow}>
-                                    <span className={styles.barLabel}>
-                                      {BAR_LABEL[k]}
-                                    </span>
-                                    <span className={styles.barTrack}>
-                                      <span
-                                        className={styles.barFill}
-                                        style={{
-                                          width: `${(a.breakdown[k] / BAR_MAX[k]) * 100}%`,
-                                        }}
-                                      />
-                                    </span>
-                                    <span className={styles.barVal}>
-                                      {a.breakdown[k]}/{BAR_MAX[k]}
-                                    </span>
-                                  </div>
-                                ))}
-                              </div>
-
-                              <div className={styles.acctMeta}>
-                                {a.sizeBucket ||
-                                  (a.size
-                                    ? `${a.size.toLocaleString()} WSE`
-                                    : "size unknown")}
-                                {" · Partner: "}
-                                {a.csm}, {partnerRole(a.csm)}
-                                {a.contactName && (
-                                  <>
-                                    {" · "}
-                                    {a.contactName}, the relationship
-                                    {a.contactEmail && (
-                                      <>
-                                        {" — "}
-                                        <a href={`mailto:${a.contactEmail}`}>
-                                          {a.contactEmail}
-                                        </a>
-                                      </>
-                                    )}
-                                  </>
-                                )}
-                                {a.website && (
-                                  <>
-                                    {" · "}
-                                    <a
-                                      href={ensureHttp(a.website)}
-                                      target="_blank"
-                                      rel="noreferrer"
+                        <ContactsPanel
+                          accountId={a.id}
+                          accountName={a.name}
+                          count={a.contactCount}
+                        />
+                        {/* The research leads (founder-decreed 2026-08-14): the drilldown opens with what the research knows; the working furniture follows, folded. */}
+                        <Fold
+                          label="Research read"
+                          hint="what the research knows about this account"
+                          defaultOpen
+                        >
+                          <div className={styles.demandBlock}>
+                            {a.researched ? (
+                              <>
+                                <div className={styles.demandHead}>
+                                  {a.demand != null && (
+                                    <span
+                                      className={`${styles.fit} ${demandClass(a.demand)}`}
                                     >
-                                      {a.website}
+                                      {a.demand}
+                                    </span>
+                                  )}
+                                  <strong>Global-hiring demand</strong>
+                                  <span className={styles.confChip}>
+                                    {a.demand != null
+                                      ? `${a.confidence} confidence`
+                                      : "live pass, unscored"}
+                                  </span>
+                                </div>
+                                {a.play === "displacement" &&
+                                  a.competitors.length > 0 && (
+                                    <p className={styles.servedBy}>
+                                      Displacement play. Currently served by{" "}
+                                      <strong>
+                                        <CompetitorLinks names={a.competitors} />
+                                      </strong>
+                                      . Pitch: bring it in-house on the platform they
+                                      already run.
+                                    </p>
+                                  )}
+                                {a.play === "greenfield" && (
+                                  <p className={styles.servedBy}>
+                                    Greenfield. Real demand, no incumbent EOR named in the
+                                    research.
+                                  </p>
+                                )}
+                                {a.summary && (
+                                  <p className={styles.demandSummary}>{a.summary}</p>
+                                )}
+                                {a.signals.length > 0 && (
+                                  <ul className={styles.signalList}>
+                                    {a.signals.slice(0, 4).map((s, i) => (
+                                      <li key={i}>{s}</li>
+                                    ))}
+                                  </ul>
+                                )}
+                                {a.countries.length > 0 && (
+                                  <div className={styles.countries}>
+                                    {a.countries.map((c) => (
+                                      <span key={c} className={styles.countryChip}>
+                                        {c}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+                                {a.evidence.length > 0 && (
+                                  <div className={styles.evidence}>
+                                    {a.evidence.map((e, i) => (
+                                      <a
+                                        key={i}
+                                        href={e.url}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                      >
+                                        ↗ {hostOf(e.url)}
+                                      </a>
+                                    ))}
+                                  </div>
+                                )}
+                                {a.demand != null && (
+                                  <div className={styles.formula}>
+                                    How this {a.score} is built: 40% account profile at{" "}
+                                    {a.deskScore}, 60% global demand at{" "}
+                                    {a.demandAdj ?? a.demand}.
+                                    {a.confFactor < 1
+                                      ? ` Raw demand ${a.demand} trimmed to ${a.demandAdj} because confidence is ${a.confidence}.`
+                                      : ""}
+                                  </div>
+                                )}
+                              </>
+                            ) : (
+                              <div className={styles.demandPending}>
+                                Not researched: no findable web presence, or missed on the
+                                run. Score is the account profile only. No demand signal
+                                yet.
+                              </div>
+                            )}
+                          </div>
+                        </Fold>
+                        <AccountChipNotes notes={a.chipNotes} />
+                        <AccountNotes notes={a.notes} />
+                        <PeopleIndex people={a.people} />
+                        <BackgroundIntel notes={a.bgNotes} />
+                        <EngagementPanel a={a} />
+                        <Fold label="Working the deal" hint="stage, approach, plays">
+                          <WorkingDeal a={a} canWrite={canWrite} />
+                        </Fold>
+
+                        <Fold
+                          label="Account profile"
+                          hint="firmographics and the score's parts"
+                        >
+                          <div className={styles.bars}>
+                            <div className={styles.barsHead}>
+                              Account profile · {a.deskScore}/100, firmographics only, no
+                              research
+                            </div>
+                            {(["scale", "incumbency", "model", "recency"] as const).map(
+                              (k) => (
+                                <div key={k} className={styles.barRow}>
+                                  <span className={styles.barLabel}>{BAR_LABEL[k]}</span>
+                                  <span className={styles.barTrack}>
+                                    <span
+                                      className={styles.barFill}
+                                      style={{
+                                        width: `${(a.breakdown[k] / BAR_MAX[k]) * 100}%`,
+                                      }}
+                                    />
+                                  </span>
+                                  <span className={styles.barVal}>
+                                    {a.breakdown[k]}/{BAR_MAX[k]}
+                                  </span>
+                                </div>
+                              ),
+                            )}
+                          </div>
+
+                          <div className={styles.acctMeta}>
+                            {a.sizeBucket ||
+                              (a.size
+                                ? `${a.size.toLocaleString()} WSE`
+                                : "size unknown")}
+                            {" · Partner: "}
+                            {a.csm}, {partnerRole(a.csm)}
+                            {a.contactName && (
+                              <>
+                                {" · "}
+                                {a.contactName}, the relationship
+                                {a.contactEmail && (
+                                  <>
+                                    {" — "}
+                                    <a href={`mailto:${a.contactEmail}`}>
+                                      {a.contactEmail}
                                     </a>
                                   </>
                                 )}
-                              </div>
-                            </Fold>
-
-                            {canAdd && (
-                              <ValidateControls id={a.id} current={a.validation} />
+                              </>
+                            )}
+                            {a.website && (
+                              <>
+                                {" · "}
+                                <a
+                                  href={ensureHttp(a.website)}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                >
+                                  {a.website}
+                                </a>
+                              </>
                             )}
                           </div>
-                        </td>
-                      </tr>
-                    )}
-                  </Fragment>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                        </Fold>
+
+                        {canAdd && <ValidateControls id={a.id} current={a.validation} />}
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </Fragment>
+            );
+          })}
+        </tbody>
+      </table>
     </>
   );
 }

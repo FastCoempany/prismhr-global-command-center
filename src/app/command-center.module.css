@@ -111,24 +111,39 @@
   margin-left: auto;
 }
 
-/* The filter rail (founder-decreed 2026-08-21): the dropdowns leave the top
-   bar for a quiet left rail beside the sheet. It rides sticky under the
-   wayfinder so the filters stay in reach on a 130-row scroll. */
-.railWrap {
+/* The Filter Door (founder-decreed 2026-08-21): the rail is retired — the
+   sheet runs full width and the five filters live behind one mono door at
+   the top-right shoulder. A live filter keeps the door lit and named. */
+.fdoorRow {
   display: flex;
-  gap: 16px;
-  align-items: flex-start;
+  justify-content: flex-end;
+  margin: 0 0 6px;
 }
-.rail {
-  flex: 0 0 108px;
+.fdoor {
+  border: 0;
+  background: none;
+  cursor: pointer;
+  padding: 2px 4px;
+  font-family: var(--font-donor-mono), ui-monospace, Menlo, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: rgba(10, 28, 64, 0.42);
+}
+.fdoor:hover {
+  color: var(--blue);
+}
+.fdoorLive {
+  color: var(--blue);
+}
+.fstrip {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
-  position: sticky;
-  top: 74px;
+  gap: 8px;
+  margin: 0 0 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
-.rail select {
-  width: 100%;
+.fstrip select {
   padding: 4px 6px;
   border-radius: 7px;
   border: 1px solid var(--line);
@@ -136,24 +151,6 @@
   font: inherit;
   font-size: 12px;
   color: rgba(10, 28, 64, 0.66);
-}
-.railMain {
-  flex: 1;
-  min-width: 0;
-}
-@media (max-width: 900px) {
-  .railWrap {
-    flex-direction: column;
-  }
-  .rail {
-    position: static;
-    flex-direction: row;
-    flex-wrap: wrap;
-    width: 100%;
-  }
-  .rail select {
-    width: auto;
-  }
 }
 .toggle {
   display: inline-flex;
