@@ -288,7 +288,14 @@ export async function roomPaste(
         const id = await archiveNote();
         await stampPasteMark(pasteKey, id);
         refresh();
-        return { ok: true, filed: 1, how: "transcript", noteIds: [id], archived: true };
+        return {
+          ok: true,
+          filed: 1,
+          how: "transcript",
+          noteIds: [id],
+          archived: true,
+          readFailed,
+        };
       }
       // Transcripts and Teams chats run OLDEST-first — keep the TAIL, where
       // the decisions and owed items live, and say when the head was cut.
@@ -308,7 +315,7 @@ export async function roomPaste(
       });
       await stampPasteMark(pasteKey, n.id);
       refresh();
-      return { ok: true, filed: 1, how: "transcript", noteIds: [n.id] };
+      return { ok: true, filed: 1, how: "transcript", noteIds: [n.id], readFailed };
     }
     let filed = 0;
     for (const e of entries.slice(0, 40)) {

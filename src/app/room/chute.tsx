@@ -44,6 +44,7 @@ type ChuteItem = {
   claim?: string; // the read's own account name, on a mismatch
   batch?: number; // files thrown together — one drop, one batch
   archived?: boolean; // a call transcript's full text rode along
+  degraded?: boolean; // the reader was down; raw text filed, nothing routed
   noteIds?: string[]; // what this filing wrote — the undo's reach
 };
 
@@ -102,6 +103,7 @@ function saveLedger(items: ChuteItem[]) {
       claim: x.claim,
       batch: x.batch,
       archived: x.archived,
+      degraded: x.degraded,
       noteIds: x.noteIds,
     }));
     localStorage.setItem(LEDGER_KEY, JSON.stringify({ day: chicagoDay(), items: slim }));
@@ -162,6 +164,7 @@ export function Chute({
         asks: r.asks,
         learned: r.learned,
         archived: r.archived,
+        degraded: r.readFailed,
         noteIds: r.noteIds,
       });
     else if (r.duplicate)
@@ -282,7 +285,11 @@ export function Chute({
       {it.state === "filed" && it.account && (
         <span className={styles.chuteDone}>
           ✓ {it.account.name} · {it.filed} filed
-          {it.archived ? " · transcript on file" : ""}
+          {it.degraded
+            ? " · the reader was down — raw text only, nothing routed; ↩ undo and re-drop when it's back"
+            : it.archived
+              ? " · transcript on file"
+              : ""}
           {(it.opened ?? 0) > 0
             ? ` · ${it.opened} action${it.opened === 1 ? "" : "s"} opened`
             : ""}

@@ -436,7 +436,9 @@ function Row({ row }: { row: RoomRow }) {
           r.learned ? `${r.learned} to the playbook.` : "",
           r.outcome ? `Reads ${r.outcome.status}. Confirm below.` : "",
           r.readFailed
-            ? "The read didn't complete. The rules filed the entries. Nothing was opened or asked."
+            ? r.how === "transcript"
+              ? "The reader is down, so the raw text filed as one line and nothing routed. Cross it out and drop it again when the reader is back."
+              : "The read didn't complete. The rules filed the entries. Nothing was opened or asked."
             : "",
         ].filter(Boolean);
         setFreshInfo((f) => [
