@@ -200,6 +200,39 @@
   font-size: 11px;
   padding: 0 2px;
 }
+
+/* Edit in place (founder-decreed 2026-08-21): ✎ reveals on hover like ✕;
+   the line becomes its own input, Enter keeps, Escape puts it back. */
+.edit {
+  flex: none;
+  border: 0;
+  background: none;
+  color: transparent;
+  cursor: pointer;
+  font-size: 11px;
+  padding: 0 2px;
+}
+.row:hover .edit {
+  color: rgba(10, 28, 64, 0.22);
+}
+.row .edit:hover {
+  color: #2563eb;
+}
+.editIn {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid rgba(37, 99, 235, 0.45);
+  border-radius: 6px;
+  padding: 2px 7px;
+  font: inherit;
+  font-size: 12.5px;
+  color: inherit;
+  background: #fff;
+}
+.editIn:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.13);
+}
 .row:hover .del {
   color: rgba(10, 28, 64, 0.22);
 }
