@@ -261,7 +261,15 @@ export async function syncApp(budget = 400): Promise<RunReport> {
     // §6 · the second record's digests — one per account per drop, rollup +
     // gems only. Blast tallies and staged slices never enter the brain.
     const activityNotes = await prisma.accountNote.findMany({
-      where: { accountId: { startsWith: "activity:" } },
+      where: {
+        accountId: { startsWith: "activity:" },
+        // The staged slices are ~120KB each and never enter the brain — they
+        // must never ride this query either.
+        NOT: [
+          { accountId: { startsWith: "activity:stage:" } },
+          { accountId: "activity:manifest" },
+        ],
+      },
       orderBy: { createdAt: "desc" },
       take: 400,
     });

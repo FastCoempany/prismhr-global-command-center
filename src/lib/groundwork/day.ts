@@ -284,7 +284,9 @@ function rankAll(inp: QueueInput, now: Date): QueueItem[] {
         band: BAND_OF["intent-warm"],
         action: "Send the reading-us note.",
         reason: warm
-          ? `They opened ${warm.opens30} of ours.`
+          ? warm.opens30 > 0
+            ? `They opened ${warm.opens30} of ours.`
+            : `They clicked ${warm.clicks30} of ours.`
           : "Their people are reading us.",
         owed: "note ready",
         carried: false,
@@ -295,8 +297,13 @@ function rankAll(inp: QueueInput, now: Date): QueueItem[] {
     // engaged-never-introduced (78): heavy support traffic, still warm, on an
     // account nobody ever pitched — no first-record motion, no board card.
     // The file card carries the support pulse as ammunition.
+    // "Never pitched" means no CONVERSATION — no outreach touch and no filed
+    // send or meeting. A background case note filed for intel is not a
+    // conversation and must not silence the rule.
+    const hasConversation =
+      acctTouches.length > 0 || (notes ?? []).some((n) => /^[✉✔☎☰] /.test(n.body));
     const eni = engagedNeverIntroduced(sr, now);
-    if (eni && !hasActivity && !inp.boardIds?.has(p.id)) {
+    if (eni && !hasConversation && !inp.boardIds?.has(p.id)) {
       candidates.push({
         accountId: p.id,
         name: p.name,

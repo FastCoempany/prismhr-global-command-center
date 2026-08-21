@@ -394,7 +394,7 @@ export default async function RoomPage() {
 
     const theirs = (() => {
       const sr = accountId ? secondById.get(accountId) : undefined;
-      const live = (sr?.gems ?? []).filter((g) => !g.actedDay).slice(0, 2);
+      const live = (sr?.gems ?? []).filter((g) => !g.actedDay).slice(0, 3);
       if (live.length === 0) return null;
       const g = live[0];
       const first = (g.who[0] ?? "").split(" ")[0].toUpperCase();
