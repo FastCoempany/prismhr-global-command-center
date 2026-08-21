@@ -61,7 +61,7 @@ import {
   runRefute,
   type ContextPack,
 } from "./distill";
-import { coverageGaps, mechanicalKill, mortalityFlag } from "./harness";
+import { coverageGaps, dropQueues, mechanicalKill, mortalityFlag } from "./harness";
 import type { AccountSlice, StageBatch, StageReply } from "./types";
 
 const CHI = "America/Chicago";
@@ -308,14 +308,24 @@ export async function stageActivityBatch(batch: StageBatch): Promise<StageReply>
     }
 
     // Change detection (§3.3): rows changed → distill; tally alone → arithmetic.
-    const priorById = new Map((store.prior?.accounts ?? []).map((a) => [a.id, a]));
-    const distillQueue: string[] = [];
-    const intentQueue: string[] = [];
-    for (const a of m.accounts) {
-      const p = priorById.get(a.id);
-      if (!p || p.rowsSum !== a.rowsSum) distillQueue.push(a.id);
-      else if (p.tallySum !== a.tallySum) intentQueue.push(a.id);
+    // A re-drop of the SAME file refreshes staging but never re-distills what
+    // this sha already produced — an account counts as covered when the run's
+    // covered map holds it OR its rollup note already exists (rollups replace
+    // per drop, so an existing rollup under the same manifest IS this drop's
+    // product). Same rows, same gems, zero calls.
+    const sameSha = store.manifest.dropSha === m.dropSha;
+    const shaCovered = new Set<string>(sameSha ? Object.keys(store.run.covered) : []);
+    if (sameSha) {
+      const holders = await getPrisma().accountNote.findMany({
+        where: { accountId: { startsWith: ACTIVITY_NS } },
+        select: { accountId: true },
+      });
+      for (const n of holders)
+        if (isRollupNoteId(n.accountId))
+          shaCovered.add(n.accountId.slice(ACTIVITY_NS.length));
     }
+    const priorById = new Map((store.prior?.accounts ?? []).map((a) => [a.id, a]));
+    const { distillQueue, intentQueue } = dropQueues(m.accounts, priorById, shaCovered);
 
     const receipt: string[] = [
       `The drop landed — ${m.rowCount} rows across ${m.accounts.length} accounts${m.dupes > 0 ? `, ${m.dupes} of them identical repeats (kept — multi-recipient sends look alike)` : ""}.`,
@@ -356,6 +366,10 @@ export async function stageActivityBatch(batch: StageBatch): Promise<StageReply>
           );
       }
     }
+    if (sameSha && shaCovered.size > 0)
+      receipt.push(
+        `Same file re-dropped — staging refreshed; ${shaCovered.size} accounts already covered stay covered.`,
+      );
     receipt.push(
       `${distillQueue.length} accounts changed and wait for distillation; ${intentQueue.length} need only their tallies refreshed.`,
     );
@@ -367,6 +381,8 @@ export async function stageActivityBatch(batch: StageBatch): Promise<StageReply>
       distillQueue,
       intentQueue,
       receipt,
+      // A same-sha re-drop keeps its coverage — the work already happened.
+      covered: sameSha ? store.run.covered : {},
       batchesSeen: store.run.batchesSeen,
       startedAt: "",
       finishedAt: "",

@@ -76,3 +76,23 @@ export function coverageGaps(
 export function mortalityFlag(born: number, died: number): boolean {
   return born > 0 && died / born > 0.5;
 }
+
+/** The drop's work queues (§3.3), pure. An account already covered under the
+ *  incoming sha never re-queues — the same rows distill to the same gems, and
+ *  a re-drop of the same file must cost zero model calls (burned once,
+ *  2026-08-21 — never again). */
+export function dropQueues(
+  accounts: { id: string; rowsSum: string; tallySum: string }[],
+  prior: Map<string, { rowsSum: string; tallySum: string }>,
+  shaCovered: Set<string>,
+): { distillQueue: string[]; intentQueue: string[] } {
+  const distillQueue: string[] = [];
+  const intentQueue: string[] = [];
+  for (const a of accounts) {
+    if (shaCovered.has(a.id)) continue;
+    const p = prior.get(a.id);
+    if (!p || p.rowsSum !== a.rowsSum) distillQueue.push(a.id);
+    else if (p.tallySum !== a.tallySum) intentQueue.push(a.id);
+  }
+  return { distillQueue, intentQueue };
+}
