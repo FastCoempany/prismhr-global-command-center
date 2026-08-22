@@ -1114,7 +1114,7 @@ export function IntranetClient({
 
           {!canAnswer && (
             <p className={styles.itWarn}>
-              No API key configured — asks answer from the record&apos;s own closest
+              The brain is unreachable — asks answer from the record&apos;s own closest
               lines, and new pastes wait to be read into the index.
             </p>
           )}

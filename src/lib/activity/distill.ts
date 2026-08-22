@@ -6,6 +6,7 @@
 // every count the app renders traces to the rollup's arithmetic (§7.2).
 
 import Anthropic from "@anthropic-ai/sdk";
+import { claudeClient, claudeAvailable } from "@/lib/claude/health";
 import { redactMoney } from "@/lib/intel/lexicon";
 import type { Gem, GemCite } from "./stores";
 import type { StagedRow } from "./types";
@@ -16,7 +17,7 @@ export const MODEL_DISTILL_LIGHT = "claude-opus-5";
 export const MODEL_REFUTE = "claude-opus-5";
 
 export function distillAvailable(): boolean {
-  return Boolean(process.env.ANTHROPIC_API_KEY);
+  return claudeAvailable();
 }
 
 // ── shared context ──────────────────────────────────────────────────────────
@@ -127,7 +128,7 @@ export async function runDistill(inp: {
   retryNote?: string;
 }): Promise<DistillResult> {
   if (!distillAvailable()) throw new Error("No API key configured.");
-  const client = new Anthropic({ timeout: 120_000, maxRetries: 1 });
+  const client = claudeClient({ timeout: 120_000, maxRetries: 1 });
   const user = `ACCOUNT: ${inp.accountName}
 
 THE ROLLUP (arithmetic, already verified):
@@ -227,7 +228,7 @@ export async function runRefute(inp: {
   accountPeople: string[];
 }): Promise<RefuteResult> {
   if (!distillAvailable()) throw new Error("No API key configured.");
-  const client = new Anthropic({ timeout: 120_000, maxRetries: 1 });
+  const client = claudeClient({ timeout: 120_000, maxRetries: 1 });
   const user = `ACCOUNT: ${inp.accountName}
 
 THE GEM CANDIDATE:

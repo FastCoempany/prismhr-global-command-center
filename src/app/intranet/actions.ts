@@ -840,7 +840,7 @@ export async function intranetSelfCheck(): Promise<SelfCheckReply> {
     return {
       ok: false,
       lines: [],
-      reason: "No API key configured — the room can't check itself yet.",
+      reason: "The brain is unreachable — the room can't check itself right now.",
     };
 
   const lines: string[] = [];

@@ -6,7 +6,7 @@
 // redirecting.
 
 import { rulesRead } from "@/lib/intel/rules-read";
-import Anthropic from "@anthropic-ai/sdk";
+import { claudeClient, claudeAvailable } from "@/lib/claude/health";
 import { revalidatePath } from "next/cache";
 import { getAppAccess } from "@/lib/auth";
 import { hasDatabaseEnv } from "@/lib/db";
@@ -945,7 +945,7 @@ export async function roomResearch(
   const acct = bindAccountId(accountId, peos);
   if (!acct) return { ok: false, reason: "That row isn't bound to a known account." };
   if (!researchAvailable())
-    return { ok: false, reason: "No API key configured. Research is off." };
+    return { ok: false, reason: "The brain is unreachable. Research is off." };
   if (!(await requireWrite())) return { ok: false, reason: "Read-only session." };
   const now = new Date();
   try {
@@ -1039,7 +1039,7 @@ export async function roomGapsRefill(
   const acct = bindAccountId(accountId, peos);
   if (!acct) return { ok: false, reason: "That row isn't bound to a known account." };
   if (!aiCleanAvailable())
-    return { ok: false, reason: "No API key configured. Minting is off." };
+    return { ok: false, reason: "The brain is unreachable. Minting is off." };
   if (!(await requireWrite())) return { ok: false, reason: "Read-only session." };
   try {
     const prisma = getPrisma();
@@ -1550,8 +1550,8 @@ const IMAGE_MEDIA = new Set(["image/jpeg", "image/png", "image/webp", "image/gif
 async function transcribePdf(
   file: File,
 ): Promise<{ ok: boolean; text?: string; reason?: string }> {
-  if (!process.env.ANTHROPIC_API_KEY)
-    return { ok: false, reason: "The reader needs the API key. Paste the text instead." };
+  if (!claudeAvailable())
+    return { ok: false, reason: "The reader is unreachable. Paste the text instead." };
   if (file.size > 8 * 1024 * 1024)
     return { ok: false, reason: "That file is over 8 MB. Export a smaller one." };
   const isImage = IMAGE_MEDIA.has(file.type);
@@ -1560,7 +1560,7 @@ async function transcribePdf(
   const data = Buffer.from(await file.arrayBuffer()).toString("base64");
   const imageMedia = file.type as "image/jpeg" | "image/png" | "image/webp" | "image/gif";
   try {
-    const client = new Anthropic({ timeout: 110_000, maxRetries: 1 });
+    const client = claudeClient({ timeout: 110_000, maxRetries: 1 });
     const res = await client.messages.create({
       model: "claude-opus-5",
       max_tokens: 16000,

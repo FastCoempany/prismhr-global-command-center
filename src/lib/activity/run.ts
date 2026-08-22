@@ -55,6 +55,12 @@ import {
   type ManifestStore,
 } from "./stores";
 import {
+  claudeConfigured,
+  claudeDead,
+  markClaudeUp,
+  noteClaudeFailure,
+} from "@/lib/claude/health";
+import {
   distillAvailable,
   gemFromCandidate,
   runDistill,
@@ -304,6 +310,10 @@ export async function stageActivityBatch(batch: StageBatch): Promise<StageReply>
     const heldPrior = Object.entries(store.run.covered)
       .filter(([, v]) => v === "held")
       .map(([id]) => id);
+    // A re-drop is the operator's own probe: a configured key gets one fresh
+    // chance even if the latch is down — success clears it, failure
+    // re-latches and the drop completes arithmetically again.
+    if (heldPrior.length > 0 && claudeConfigured() && claudeDead()) markClaudeUp();
     const rejudge = heldPrior.length > 0 && distillAvailable();
 
     // Same drop as the prior one? Nothing changed — zero writes, zero calls.
@@ -781,7 +791,19 @@ export async function runActivityPass(opts?: {
           text: `${nameById.get(batch[i]) ?? batch[i]} failed this pass — ${errText} — queued for retry.`,
           bad: true,
         });
-        // A uniform failure (key, credits, outage) must not loop forever: if
+        // A DEAD key (auth or credits) is not a failure to loop on or to
+        // stall the drop over: the latch flips and the re-queued accounts
+        // take the held path next pass — the drop completes arithmetically
+        // and the receipt says what held (founder-decreed 2026-08-22).
+        noteClaudeFailure(s.reason);
+        if (claudeDead()) {
+          if (!run.receipt.some((r) => r.includes("completes arithmetically")))
+            run.receipt.push(
+              "The key is dead — the rest of this drop completes arithmetically and gems hold from the last funded pass.",
+            );
+          continue;
+        }
+        // A uniform failure (outage, network) must not loop forever: if
         // every account in the batch failed and nothing has ever succeeded
         // this run, stop and say the ACTUAL error out loud.
         if (

@@ -7,6 +7,7 @@
 // only makes it coarse.
 
 import Anthropic from "@anthropic-ai/sdk";
+import { claudeClient, claudeAvailable } from "@/lib/claude/health";
 import {
   MODEL_TOPIC,
   TOPIC_CHILD_MAX,
@@ -103,8 +104,8 @@ export function sanitizeSplit(raw: unknown, validIds: Set<string>): SplitProposa
 }
 
 export async function runSplit(topic: Topic, claims: Claim[]): Promise<SplitProposal> {
-  if (!process.env.ANTHROPIC_API_KEY) return KEEP;
-  const client = new Anthropic({ timeout: 90_000, maxRetries: 1 });
+  if (!claudeAvailable()) return KEEP;
+  const client = claudeClient({ timeout: 90_000, maxRetries: 1 });
 
   // Claims go in as text + kind + date only. Full documents would blow the
   // context and add nothing to a question about how claims group.

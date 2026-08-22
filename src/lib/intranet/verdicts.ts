@@ -9,6 +9,7 @@
 // understands perfectly, and that costs more trust than silence does.
 
 import Anthropic from "@anthropic-ai/sdk";
+import { claudeClient, claudeAvailable } from "@/lib/claude/health";
 import { MODEL_TOPIC } from "./doctrine";
 import type { Claim } from "./types";
 
@@ -124,8 +125,8 @@ export function supersessionDirection(
 }
 
 export async function runVerdicts(pairs: [Claim, Claim][]): Promise<Verdict[]> {
-  if (!process.env.ANTHROPIC_API_KEY || pairs.length === 0) return [];
-  const client = new Anthropic({ timeout: 90_000, maxRetries: 1 });
+  if (!claudeAvailable() || pairs.length === 0) return [];
+  const client = claudeClient({ timeout: 90_000, maxRetries: 1 });
 
   const rendered = pairs
     .map(
@@ -170,8 +171,8 @@ export async function runVerdicts(pairs: [Claim, Claim][]): Promise<Verdict[]> {
  *  planner reads when deciding where a question points — so a stale one
  *  misdirects retrieval, not just the eye. */
 export async function runTopicSummary(label: string, claims: Claim[]): Promise<string> {
-  if (!process.env.ANTHROPIC_API_KEY || claims.length === 0) return "";
-  const client = new Anthropic({ timeout: 45_000, maxRetries: 1 });
+  if (!claudeAvailable() || claims.length === 0) return "";
+  const client = claudeClient({ timeout: 45_000, maxRetries: 1 });
   const res = await client.messages.create({
     model: MODEL_TOPIC,
     max_tokens: 300,
