@@ -13,6 +13,7 @@
 //     resolves the words. No ids, no codes, no numbers in any prompt.
 
 import Anthropic from "@anthropic-ai/sdk";
+import { claudeClient, claudeAvailable } from "@/lib/claude/health";
 import {
   CLAIM_KINDS,
   MODEL_EXTRACT_LIGHT,
@@ -23,7 +24,7 @@ import {
 import { bankPrompt } from "./bank";
 
 export function extractAvailable(): boolean {
-  return Boolean(process.env.ANTHROPIC_API_KEY);
+  return claudeAvailable();
 }
 
 /** Opus or better, always (founder-decreed 2026-07-31). Both roster slots
@@ -222,7 +223,7 @@ export const READ_BODY_CAP = 48_000;
 
 export async function runRead(input: ReadInput): Promise<LiberalRead> {
   if (!extractAvailable()) throw new Error("No API key configured — reading is off.");
-  const client = new Anthropic({ timeout: 120_000, maxRetries: 1 });
+  const client = claudeClient({ timeout: 120_000, maxRetries: 1 });
 
   const body =
     input.body.length > READ_BODY_CAP

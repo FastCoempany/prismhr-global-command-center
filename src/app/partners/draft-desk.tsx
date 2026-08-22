@@ -45,7 +45,7 @@ export function DraftDesk({
       setNotice("Draft generated. Edit below, then copy.");
     } else if (res.reason === "no-key") {
       setNotice(
-        "No ANTHROPIC_API_KEY configured. Use “Copy prompt & open claude.ai” and your subscription does the writing, or add the key in Vercel to draft in-app.",
+        "The API key is missing or not working. Use “Copy prompt & open claude.ai” and your subscription does the writing, or fix the key in Vercel to draft in-app.",
       );
     } else {
       setNotice(

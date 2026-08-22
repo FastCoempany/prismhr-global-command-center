@@ -585,7 +585,7 @@ export async function extractPending(
     return {
       ok: false,
       lines: [],
-      reason: "No API key configured — nothing can be read.",
+      reason: "The brain is unreachable — nothing can be read right now.",
     };
 
   const prisma = getPrisma();
@@ -1150,7 +1150,7 @@ export async function readCapture(captureId: string): Promise<RunReport> {
       ok: false,
       lines: [],
       reason:
-        "Kept — but no API key is configured, so it can't be read into the index yet.",
+        "Kept — but the brain is unreachable, so it can't be read into the index yet.",
     };
 
   const prisma = getPrisma();

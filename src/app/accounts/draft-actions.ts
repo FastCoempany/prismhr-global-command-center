@@ -7,6 +7,7 @@
 // its job when the sent mail comes back as an .eml.
 
 import Anthropic from "@anthropic-ai/sdk";
+import { claudeClient, claudeAvailable } from "@/lib/claude/health";
 import { getAppAccess } from "@/lib/auth";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import { getPeo, type Peo } from "@/lib/book";
@@ -117,7 +118,7 @@ export async function draftOutreach(
   if (!ask && !draft) return { ok: false, reason: "Say what the email should do." };
   // No brain: the template desk drafts from the plays — but it never
   // overwrites words the operator already has on the pad.
-  if (!process.env.ANTHROPIC_API_KEY) {
+  if (!claudeAvailable()) {
     if (draft)
       return {
         ok: false,
@@ -162,7 +163,7 @@ ${recent || "(nothing filed yet — this is a first touch)"}
 ${draft ? `CURRENT DRAFT — revise it per the instruction, keep what works:\n${draft}\n\n` : ""}INSTRUCTION FROM ANTAEUS: ${ask || "Sharpen the current draft."}`;
 
   try {
-    const client = new Anthropic({ timeout: 90_000, maxRetries: 1 });
+    const client = claudeClient({ timeout: 90_000, maxRetries: 1 });
     const res = await client.messages.create({
       model: "claude-opus-5",
       max_tokens: 8192,

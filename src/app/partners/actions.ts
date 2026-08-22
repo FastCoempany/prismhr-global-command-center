@@ -79,6 +79,7 @@ import {
   loadTouches,
 } from "@/lib/today/overlay";
 import { buildFollowUpPrompt, type DraftRecipient } from "@/lib/claude/prompt";
+import { claudeDead, markClaudeDown, markClaudeUp } from "@/lib/claude/health";
 
 export async function getFollowUpPrompt(
   partner: string,
@@ -123,7 +124,9 @@ export async function draftFollowUp(
   pastedContext: string,
 ): Promise<DraftResult> {
   const key = process.env.ANTHROPIC_API_KEY;
-  if (!key) return { ok: false, reason: "no-key" };
+  // A dead key takes the same door as a missing one: the copy-prompt path
+  // does the writing on the operator's subscription.
+  if (!key || claudeDead()) return { ok: false, reason: "no-key" };
   const prompt = await getFollowUpPrompt(partner, recipient, pastedContext);
   try {
     const res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -139,6 +142,14 @@ export async function draftFollowUp(
         messages: [{ role: "user", content: prompt }],
       }),
     });
+    if (res.status === 401 || res.status === 403) markClaudeDown();
+    else if (res.status === 400) {
+      const body = await res
+        .clone()
+        .text()
+        .catch(() => "");
+      if (/credit balance|billing|insufficient credit/i.test(body)) markClaudeDown();
+    } else if (res.ok) markClaudeUp();
     if (!res.ok) return { ok: false, reason: "error", detail: `API ${res.status}` };
     const j = (await res.json()) as { content?: { type: string; text?: string }[] };
     const draft = (j.content ?? [])

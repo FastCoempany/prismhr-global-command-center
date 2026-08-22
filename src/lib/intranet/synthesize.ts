@@ -14,6 +14,7 @@
 //         model happens to know about payroll.
 
 import Anthropic from "@anthropic-ai/sdk";
+import { claudeClient, claudeAvailable } from "@/lib/claude/health";
 import {
   ANSWER_SENTENCES,
   CANDIDATE_CAP,
@@ -36,7 +37,7 @@ export const EMPTY_ANSWER: Answer = {
 };
 
 export function synthAvailable(): boolean {
-  return Boolean(process.env.ANTHROPIC_API_KEY);
+  return claudeAvailable();
 }
 
 // ── escalation (I.4.2) ──────────────────────────────────────────────────────
@@ -253,7 +254,7 @@ Be the most accurate, current, decisive briefing the reader could get on the que
  *  has the honest "nothing in the record" line to fall back to. */
 export async function runWorldAnswer(question: string): Promise<string> {
   if (!synthAvailable() || !question.trim()) return "";
-  const client = new Anthropic({ timeout: 90_000, maxRetries: 1 });
+  const client = claudeClient({ timeout: 90_000, maxRetries: 1 });
   const res = await client.messages.create({
     model: MODEL_SYNTH,
     // Thinking and the answer share this budget — leave real room for both.
@@ -280,7 +281,7 @@ export async function runSynthesis(input: {
   if (input.candidates.length === 0)
     return { answer: { ...EMPTY_ANSWER, answer: NOTHING_IN_RECORD }, model: "" };
 
-  const client = new Anthropic({ timeout: 120_000, maxRetries: 1 });
+  const client = claudeClient({ timeout: 120_000, maxRetries: 1 });
   const model = modelFor(input.candidates, input.plan);
   const rendered = renderCandidates(input.candidates, input.docLabel);
 

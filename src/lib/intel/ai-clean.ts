@@ -6,7 +6,7 @@
 // path. When ANTHROPIC_API_KEY is absent the app falls back to the
 // rule-based parser and nothing here runs.
 
-import Anthropic from "@anthropic-ai/sdk";
+import { claudeClient, claudeAvailable } from "@/lib/claude/health";
 import { redactMoney } from "@/lib/intel/lexicon";
 import { normPerson } from "@/lib/intel/provenance";
 import type { TimelineEntry } from "@/lib/sf-timeline";
@@ -31,7 +31,7 @@ export type AiCleanResult = {
 };
 
 export function aiCleanAvailable(): boolean {
-  return Boolean(process.env.ANTHROPIC_API_KEY);
+  return claudeAvailable();
 }
 
 const MAX_ENTRIES = 40;
@@ -341,7 +341,7 @@ export function modelFor(raw: string): string {
 // and a truncated generation is surfaced as a REAL error instead of the
 // invalid-JSON parse failure it used to masquerade as.
 export async function aiCleanTimeline(raw: string, now: Date): Promise<AiCleanResult> {
-  const client = new Anthropic({ timeout: 55_000, maxRetries: 1 });
+  const client = claudeClient({ timeout: 55_000, maxRetries: 1 });
   const todayIso = now.toLocaleDateString("en-CA", { timeZone: "America/Chicago" });
   const model = modelFor(raw);
   // A full call transcript is the richest capture the app ever reads, and the

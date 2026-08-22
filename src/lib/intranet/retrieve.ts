@@ -14,6 +14,7 @@
 // arithmetic rather than in prose.
 
 import Anthropic from "@anthropic-ai/sdk";
+import { claudeClient, claudeAvailable } from "@/lib/claude/health";
 import {
   CANDIDATE_CAP,
   CONFIDENCE_WEIGHT,
@@ -88,7 +89,7 @@ const PLAN_SCHEMA = {
 } as const;
 
 export function planAvailable(): boolean {
-  return Boolean(process.env.ANTHROPIC_API_KEY);
+  return claudeAvailable();
 }
 
 export function sanitizePlan(raw: unknown, liveTopicIds: Set<string>): QueryPlan {
@@ -127,7 +128,7 @@ export async function runPlan(
   entities: string[],
 ): Promise<QueryPlan> {
   if (!planAvailable()) return EMPTY_PLAN;
-  const client = new Anthropic({ timeout: 45_000, maxRetries: 1 });
+  const client = claudeClient({ timeout: 45_000, maxRetries: 1 });
   const list = topics
     .slice(0, 120)
     .map((t) => `${t.id} · ${t.label}${t.summary ? ` — ${t.summary}` : ""}`)
