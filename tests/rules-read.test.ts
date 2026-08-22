@@ -8,6 +8,7 @@
 import { strict as assert } from "node:assert";
 import { describe, test } from "node:test";
 import { parseChatPaste, parseEmailPaste, rulesRead } from "../src/lib/intel/rules-read";
+import { inferActors } from "../src/lib/intel/provenance";
 
 const NOW = new Date("2026-08-21T20:00:00Z"); // 3:00 PM Chicago
 
@@ -123,6 +124,31 @@ describe("the Teams-chat rules read", () => {
       NOW,
     );
     assert.equal(entries.length, 0);
+  });
+
+  test("a body line ending in a clock never shifts the chat's day", () => {
+    const entries = parseChatPaste(
+      `Lesha Cyphers 1:49 PM\nLet's lock Yesterday 4:30 PM\nLesha Cyphers 1:51 PM\nWorks for me.`,
+      NOW,
+    );
+    assert.equal(entries.length, 2);
+    assert.equal(entries[0].dayIso, "2026-08-21");
+    assert.equal(entries[1].dayIso, "2026-08-21");
+    assert.match(entries[0].body, /Let's lock Yesterday 4:30 PM/);
+  });
+
+  test("the (unattributed) head label never resurrects as a sender", () => {
+    // The filing loop writes "· (unattributed)" into the head when actors
+    // are empty; inferActors must refuse it or the placeholder becomes a
+    // phantom third party that warms accounts and registers inbound.
+    assert.equal(
+      inferActors("✉ TM Today 1:50 PM — fantastic to hear · (unattributed)\nbody"),
+      "",
+    );
+    assert.equal(
+      inferActors("✉ TM Today 1:49 PM — Hey there · Lesha Cyphers → Antaeus Coe\nbody"),
+      "Lesha Cyphers → Antaeus Coe",
+    );
   });
 });
 

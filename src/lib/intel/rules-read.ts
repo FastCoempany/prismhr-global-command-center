@@ -126,20 +126,21 @@ export function parseChatPaste(raw: string, now: Date): TimelineEntry[] {
     const turn = TURN_RE.exec(line);
     if (turn) {
       // The hover-stamp style carries a day word before the clock:
-      // "Lesha Cyphers Yesterday 1:49 PM".
+      // "Lesha Cyphers Yesterday 1:49 PM". The day state only moves once
+      // the name validates — a body line ending in a clock must not shift
+      // the whole chat's day (refuted 2026-08-22).
       let name = turn[1].trim();
       const trail = /\s+(Today|Yesterday)$/i.exec(name);
-      if (trail) {
-        name = name.slice(0, trail.index).trim();
-        dayLabel = trail[1];
-        dayIso = /yesterday/i.test(trail[1]) ? shiftDays(now, 1) : chiDayIso(now);
-      } else {
-        const wk = /\s+(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)$/i.exec(
-          name,
-        );
-        if (wk) name = name.slice(0, wk.index).trim();
-      }
+      const wk = trail
+        ? null
+        : /\s+(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)$/i.exec(name);
+      if (trail) name = name.slice(0, trail.index).trim();
+      else if (wk) name = name.slice(0, wk.index).trim();
       if (looksLikeName(name)) {
+        if (trail) {
+          dayLabel = trail[1];
+          dayIso = /yesterday/i.test(trail[1]) ? shiftDays(now, 1) : chiDayIso(now);
+        }
         cur = { who: name, time: turn[2].toUpperCase(), dayIso, dayLabel, body: [] };
         turns.push(cur);
         continue;
