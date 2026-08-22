@@ -211,6 +211,24 @@ unattributed document is never inbound; an auto-reply is machinery, never
 the client writing. New surfaces are audited against this doctrine before
 they ship.
 
+## The closer rule (founder-decreed 2026-08-22)
+
+A courtesy sign-off — "No problem!", "thanks!", "sounds good", a thumbs-up,
+emoji-only — is conversational punctuation, the human sibling of the Ted
+doctrine's auto-reply clause. Closers are TRANSPARENT: the ledger reads
+through them to the last substantive message, which alone sets state. A
+closer never opens a loop (no reply-owed off a sign-off) and never closes
+one (a "No problem!" after the operator's promise ratifies it — expectation
+set — never settles it). Closers don't count as inbound for reply-owed or
+Groundwork's live-motion exclusion; they stay real for Sendbook warmth
+(their voice is still their voice). A promise closes only by delivery or
+explicit release; "no rush, next month" is a reschedule. Due clocks:
+"today" is live on the stage at filing; a blown promise carries as
+PROMISED with its date — stronger than a plain wall, because a person
+heard the day and the day ended. All days are Chicago days, theirs or ours.
+The classifier lives in src/lib/intel/closer.ts, deliberately conservative:
+short, no question, no digits, no names — content always wins.
+
 ## The click-depth law (founder-decreed 2026-08-20)
 
 Every compression opens. A two-word term, a count, a theme, an abbreviation —

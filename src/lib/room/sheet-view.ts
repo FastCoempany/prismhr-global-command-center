@@ -26,7 +26,17 @@ export type AccountSheet = {
   // waiting for the operator to remember there was one. `edit` is the FULL
   // visible line: the display body is capped for the row, and an edit box fed
   // the capped body would silently truncate the stored line on save.
-  open: { id: string; body: string; edit: string; wall?: string; fallback?: string }[];
+  open: {
+    id: string;
+    body: string;
+    edit: string;
+    wall?: string;
+    // The wall belongs to a commitment the operator SPOKE — a paste-opened
+    // promise whose date passed reads "PROMISED 8/21", not a generic wall:
+    // the counterparty heard the day and the day ended (decreed 2026-08-22).
+    promised?: boolean;
+    fallback?: string;
+  }[];
   delayed: { id: string; body: string; edit: string; when: string }[];
   doneToday: { id: string; body: string; edit: string; at: string }[];
 };
@@ -143,11 +153,13 @@ export function buildAccountSheet(
         // The fallback reads from the FULL line — the display cap must never
         // swallow the contingency.
         const fallback = wall ? splitFallback(edit).fallback : "";
+        const promised = !!wall && /·\s*from\s+\d{1,2}\/\d{1,2}\s+paste/i.test(edit);
         out.open.push({
           id: t.id,
           body,
           edit,
           ...(wall ? { wall } : {}),
+          ...(promised ? { promised } : {}),
           ...(fallback ? { fallback } : {}),
         });
       }

@@ -12,6 +12,7 @@ import {
   countriesIn,
 } from "./lexicon";
 import { digestFor, digestForCardName, type DigestEntry } from "./digest";
+import { isCloser } from "./closer";
 import { MINE_RE, inferActors } from "./provenance";
 import { EMPTY_INTEL, type DealIntel, type ProductKey, type SourcedFact } from "./types";
 
@@ -93,11 +94,16 @@ export function corpusFor(
     const sender = actors.split("→")[0] ?? "";
     // A doc with no attributed sender is NOT inbound — a filed transcript or
     // an unattributed activity must never fire "the reply is owed" (Ted
-    // doctrine). And an auto-reply is machinery, not the client writing.
+    // doctrine). An auto-reply is machinery, not the client writing. And a
+    // courtesy sign-off ("No problem!", "thanks!") is transparent (founder-
+    // decreed 2026-08-22): it never counts as inbound, so it never opens a
+    // reply-owed and never resets the motion clocks — the ledger reads
+    // through it to the last substantive message.
     const attributed = sender.trim().length > 0;
     const autoReply = /automatic reply|out of office|auto-?reply|autoreply/i.test(
       n.body.split("\n")[0] ?? "",
     );
+    const closer = isSf && isCloser(n.body.split("\n").slice(1).join("\n"));
     docs.push({
       text: n.body,
       at: n.createdAt,
@@ -106,7 +112,7 @@ export function corpusFor(
         ? undefined
         : MINE_RE.test(sender) || /—\s*Antaeus/i.test(n.body.split("\n")[0] ?? "")
           ? "out"
-          : attributed && !autoReply
+          : attributed && !autoReply && !closer
             ? "in"
             : undefined,
       people: actors ? peopleFromActors(actors) : peopleIn(n.body),

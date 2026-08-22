@@ -1391,6 +1391,7 @@ function Row({ row }: { row: RoomRow }) {
                   body: string;
                   edit?: string;
                   wall?: string;
+                  promised?: boolean;
                   fallback?: string;
                 }) => {
                   const did = doneIds.has(t.id);
@@ -1439,7 +1440,11 @@ function Row({ row }: { row: RoomRow }) {
                         <span
                           className={`${styles.st} ${t.wall ? styles.stWall : styles.stOpen}`}
                         >
-                          {t.wall ? `${t.wall} PASSED` : "OPEN"}
+                          {t.wall
+                            ? t.promised
+                              ? `PROMISED ${t.wall}`
+                              : `${t.wall} PASSED`
+                            : "OPEN"}
                         </span>
                       )}
                       <span className={styles.tx}>
