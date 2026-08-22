@@ -32,7 +32,7 @@ Return ONLY a JSON object: {"subject": "...", "body": "..."} — body is plain t
 // point instead of staring at an error.
 function steerKit(instruction: string): CampaignKit | undefined {
   const ask = instruction.toLowerCase();
-  if (/\brecap\b|\bfollow[- ]?up\b/.test(ask)) return getKit("client-demo-recap");
+  if (/\brecap\b/.test(ask)) return getKit("client-demo-recap");
   if (/\bdemo\b/.test(ask)) return getKit("client-demo-invite");
   if (/\bcsm\b/.test(ask)) return getKit("csm-brief-intro");
   if (/\breferral|client intro/.test(ask)) return getKit("peo-client-intros");
@@ -45,7 +45,10 @@ async function templateDraft(
   peo: Peo,
   toNames: string[],
   instruction: string,
-): Promise<{ ok: true; subject: string; body: string; note: string }> {
+): Promise<
+  | { ok: true; subject: string; body: string; note: string }
+  | { ok: false; reason: string }
+> {
   let kit = steerKit(instruction);
   if (!kit && hasDatabaseEnv()) {
     try {
@@ -56,25 +59,39 @@ async function templateDraft(
       let stage = (state?.stage ?? "NOT_TOUCHED") as Stage;
       let approach = (state?.approach ?? "NEEDS_CSM") as Approach;
       if (card) ({ stage, approach } = boardLift(stage, approach));
-      kit = kitsFor(stage, approach)[0];
+      // A deal past the plays never gets a cold first-touch template.
+      if (stage === "OPPORTUNITY" || stage === "WON" || stage === "PASSED")
+        return {
+          ok: false,
+          reason:
+            "This deal is past the plays, so no template fits. Name a play (recap, demo, referral) or write it by hand.",
+        };
+      // The audience gate steps aside before the cold nudge does: the direct
+      // doctrine keeps every stage's own play available.
+      kit = kitsFor(stage, approach)[0] ?? KITS.find((k) => k.stage === stage);
     } catch {
       kit = undefined;
     }
   }
   kit = kit ?? getKit("peo-value-nudge") ?? KITS[0];
+  // "Unassigned" is a seat, not a person, and the operator's chosen recipient
+  // outranks the seeded contact even when nameless (the Ted doctrine).
+  const csm = peo.csm === "Unassigned" ? "" : peo.csm;
   const ctx = {
     name: peo.name,
-    csm: peo.csm,
-    contactName: toNames.filter(Boolean)[0] || peo.contactName,
+    csm,
+    contactName: toNames.filter(Boolean)[0] || "",
     city: peo.city,
     state: peo.state,
     industry: peo.industry,
   };
+  let body = mergeText(kit.body, ctx);
+  if (!csm) body = body.replace(/the CSM suggested I reach out\.\s*/, "");
   return {
     ok: true,
     subject: mergeText(kit.subject, ctx).slice(0, 140),
-    body: mergeText(kit.body, ctx),
-    note: `The brain is down — drafted from the "${kit.name}" play. Edit before it goes.`,
+    body,
+    note: `The brain is down. Drafted from the "${kit.name}" play. Edit before it goes.`,
   };
 }
 
@@ -105,7 +122,7 @@ export async function draftOutreach(
       return {
         ok: false,
         reason:
-          "The brain is down, so revision is off. Your draft is untouched — clear it to start from a play template.",
+          "The brain is down, so revision is off. Your draft is untouched. Clear it to start from a play template.",
       };
     return templateDraft(peo, toNames, ask);
   }
