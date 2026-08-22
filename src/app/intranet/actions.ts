@@ -638,6 +638,15 @@ export async function intranetAsk(
       answer = recordLinesAnswer(forSynthesis);
       model = "record-lines";
     }
+    // A dead key surfaces as a SWALLOWED transport error: runSynthesis
+    // returns EMPTY_ANSWER as if it succeeded (caught live 2026-08-22 —
+    // the pad read 74 lines and answered nothing). An empty mouth with
+    // material in hand is never an answer; the record's own lines speak.
+    // A genuine abstention is not empty — it says the record holds nothing.
+    if (!answer.answer.trim() && answer.citations.length === 0) {
+      answer = recordLinesAnswer(forSynthesis);
+      model = "record-lines";
+    }
   }
 
   const citations = renderCitations(answer.citations, forSynthesis, docs);
