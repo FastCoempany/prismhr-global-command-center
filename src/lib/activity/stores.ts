@@ -383,7 +383,9 @@ export type RunState = {
   distillQueue: string[];
   /** Account ids whose tally alone changed — arithmetic update, no model. */
   intentQueue: string[];
-  /** Accounts covered so far this run: id → "gems" | "verdict". */
+  /** Accounts covered so far this run: id → "gems" | "verdict" | "held"
+   *  ("held" = the distiller was down; arithmetic covered, gems owed a
+   *  re-judge on the next drop with the key back). */
   covered: Record<string, string>;
   /** Accounts that got their one re-distillation already (§3.7.2). */
   retried: string[];

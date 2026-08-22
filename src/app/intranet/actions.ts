@@ -677,7 +677,8 @@ export async function intranetAsk(
     coverage,
     plan,
     model,
-    escalated: escalationReason(forSynthesis, plan),
+    // Nothing escalates when no model ran at all.
+    escalated: model === "record-lines" ? "" : escalationReason(forSynthesis, plan),
     thin: answer.confidence === "thin" ? thinLine(forSynthesis) : "",
     degraded: ceiling.breached ? ceiling.line : "",
     accounts: named,

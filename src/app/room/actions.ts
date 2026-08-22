@@ -249,12 +249,20 @@ export async function roomPaste(
   // lines. The deep intelligence (commitments, asks, lessons) waits for the
   // reader; the receipt says so.
   let liveDialect = dialect;
-  if (entries.length === 0 && dialect !== "CT") {
-    const rr = rulesRead(text, now);
-    if (rr) {
-      entries = rr.entries;
-      if (dialect === "SF") liveDialect = rr.dialect;
-      how = "rules";
+  if (dialect !== "CT" && how !== "ai") {
+    // The SF anchor grammar can fabricate one stamp-less garbage entry from
+    // a chat line ("Talk to Chassie") — a stamped rules read outranks it
+    // (refuted 2026-08-22). A TEAMS THREAD paste reads chat-first so a
+    // quoted email inside it never swallows the conversation.
+    const stampless =
+      entries.length > 0 && entries.every((e) => !e.dayIso && !e.timeLabel);
+    if (entries.length === 0 || (dialect === "SF" && stampless)) {
+      const rr = rulesRead(text, now, dialect === "TM" ? "TM" : "");
+      if (rr && (entries.length === 0 || rr.entries.length >= 2)) {
+        entries = rr.entries;
+        if (dialect === "SF") liveDialect = rr.dialect;
+        how = "rules";
+      }
     }
   }
 

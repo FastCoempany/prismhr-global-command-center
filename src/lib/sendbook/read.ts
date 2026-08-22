@@ -10,6 +10,7 @@
 
 import { MINE_RE, inferActors } from "@/lib/intel/provenance";
 import { isMeetingNote } from "@/lib/intel/meeting";
+import { csms } from "@/lib/book";
 
 export const SENDBOOK_NS = "sendbook:";
 
@@ -105,9 +106,14 @@ export function recordSends(
   return out;
 }
 
-// A genuine inbound: attributed to someone who is not the operator, and not
-// machinery. An unattributed document is never inbound (Ted doctrine).
+// A genuine inbound: attributed to someone who is not the operator, not a
+// CSM, and not machinery. An unattributed document is never inbound (Ted
+// doctrine), and a CSM's voice never warms — NEVER MET means THEY have never
+// replied; a colleague chatting about the account is coordination, not the
+// account speaking (decreed 2026-08-19; enforced here 2026-08-22).
 const AUTO_RE = /automatic reply|out of office|auto-?reply|autoreply/i;
+const CSM_NAMES = new Set(csms.map((c) => c.trim().toLowerCase()));
+const isCsmVoice = (sender: string) => CSM_NAMES.has(sender.trim().toLowerCase());
 
 export function warmDates(notes: NoteLike[]): string[] {
   const out: string[] = [];
@@ -119,7 +125,7 @@ export function warmDates(notes: NoteLike[]): string[] {
     if (!/^[✉✔☎☰] /.test(n.body)) continue;
     const actors = n.actors || inferActors(n.body);
     const sender = (actors.split("→")[0] ?? "").trim();
-    if (!sender || MINE_RE.test(sender)) continue;
+    if (!sender || MINE_RE.test(sender) || isCsmVoice(sender)) continue;
     if (AUTO_RE.test(n.body.split("\n")[0] ?? "")) continue;
     out.push(n.createdAt);
   }
@@ -135,7 +141,7 @@ export function inboundDates(notes: NoteLike[]): string[] {
     if (isMeetingNote(n)) continue;
     const actors = n.actors || inferActors(n.body);
     const sender = (actors.split("→")[0] ?? "").trim();
-    if (!sender || MINE_RE.test(sender)) continue;
+    if (!sender || MINE_RE.test(sender) || isCsmVoice(sender)) continue;
     if (AUTO_RE.test(n.body.split("\n")[0] ?? "")) continue;
     out.push(n.createdAt);
   }

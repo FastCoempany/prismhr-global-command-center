@@ -298,8 +298,16 @@ export async function stageActivityBatch(batch: StageBatch): Promise<StageReply>
       };
     }
 
+    // Accounts held while the distiller was down owe a re-judge: their
+    // coverage is arithmetic only, and the moment the key is back a re-drop
+    // of the same file re-queues exactly them (refuted 2026-08-22).
+    const heldPrior = Object.entries(store.run.covered)
+      .filter(([, v]) => v === "held")
+      .map(([id]) => id);
+    const rejudge = heldPrior.length > 0 && distillAvailable();
+
     // Same drop as the prior one? Nothing changed — zero writes, zero calls.
-    if (store.prior && store.prior.dropSha === m.dropSha) {
+    if (store.prior && store.prior.dropSha === m.dropSha && !rejudge) {
       store.manifest = m;
       store.run.phase = "done";
       store.run.receipt = ["Nothing changed — the record already holds this drop."];
@@ -323,9 +331,17 @@ export async function stageActivityBatch(batch: StageBatch): Promise<StageReply>
       for (const n of holders)
         if (isRollupNoteId(n.accountId))
           shaCovered.add(n.accountId.slice(ACTIVITY_NS.length));
+      // A hold is not coverage of the gems: with the distiller back, held
+      // accounts re-queue on the same sha.
+      if (rejudge) for (const id of heldPrior) shaCovered.delete(id);
     }
     const priorById = new Map((store.prior?.accounts ?? []).map((a) => [a.id, a]));
     const { distillQueue, intentQueue } = dropQueues(m.accounts, priorById, shaCovered);
+    if (rejudge) {
+      const inDrop = new Set(m.accounts.map((a) => a.id));
+      for (const id of heldPrior)
+        if (inDrop.has(id) && !distillQueue.includes(id)) distillQueue.push(id);
+    }
 
     const receipt: string[] = [
       `The drop landed — ${m.rowCount} rows across ${m.accounts.length} accounts${m.dupes > 0 ? `, ${m.dupes} of them identical repeats (kept — multi-recipient sends look alike)` : ""}.`,
@@ -707,13 +723,14 @@ export async function runActivityPass(opts?: {
     } else {
       // The distiller never ran — a dead key is not a verdict on the
       // standing gems. Hold whatever the last funded pass filed; the
-      // arithmetic stores above still moved, and the next funded drop
-      // re-judges everything.
+      // arithmetic stores above still moved. "held" is coverage of the
+      // arithmetic only: a re-drop of the SAME file with the distiller
+      // back re-queues exactly these accounts.
       const standing = await getPrisma()
         .accountNote.findFirst({ where: { accountId: `${GEMS_NS}${id}` } })
         .catch(() => null);
       rollup.verdict = verdictLine(rollup);
-      run.covered[id] = "verdict";
+      run.covered[id] = "held";
       log.push(
         standing
           ? `${name}: ${rollup.verdict}. Gems held from the last pass — the distiller is down.`
@@ -818,9 +835,14 @@ export async function runActivityPass(opts?: {
   run.finishedAt = new Date().toISOString();
   const gemsN = Object.values(run.covered).filter((v) => v === "gems").length;
   const verdictsN = Object.values(run.covered).filter((v) => v === "verdict").length;
+  const heldN = Object.values(run.covered).filter((v) => v === "held").length;
   run.receipt.push(
     `${Object.keys(run.covered).length} accounts distilled — ${gemsN} hold confirmed gems, ${verdictsN} filed honest verdicts, ${run.died} candidates died in refutation.`,
   );
+  if (heldN > 0)
+    run.receipt.push(
+      `The distiller was down for ${heldN} account${heldN === 1 ? "" : "s"} — their gems hold from the last funded pass. Re-drop the file once the key is back and they re-judge.`,
+    );
   if (mortalityFlag(run.born, run.died))
     run.receipt.push(
       `Distiller quality flag: ${run.died} of ${run.born} candidates died. Read the receipt before trusting this drop's gems.`,
