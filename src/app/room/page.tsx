@@ -269,6 +269,7 @@ export default async function RoomPage() {
             // The person who actually wrote — the doc's own sender; the
             // relationship rollup only stands in when the doc is anonymous.
             who: firstName(intel.lastInboundWho) || firstName(rel.name) || "they",
+            promise: intel.lastInboundPromise,
           }
         : null,
       // The newest meeting record — a meeting newer than any outbound makes

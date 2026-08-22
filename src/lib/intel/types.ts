@@ -27,6 +27,9 @@ export type DealIntel = {
   threads: { people: string[]; execSeen: boolean; opsSeen: boolean };
   lastInbound: string;
   lastInboundWho: string; // the newest inbound doc's own author ("" unknown)
+  // The newest inbound reads as THEIR promise ("will be in touch", "owes
+  // you…") — an await, never a reply owed (the closer rule, 2026-08-22).
+  lastInboundPromise: boolean;
   lastOutbound: string;
 };
 
@@ -41,5 +44,6 @@ export const EMPTY_INTEL: DealIntel = {
   threads: { people: [], execSeen: false, opsSeen: false },
   lastInbound: "",
   lastInboundWho: "",
+  lastInboundPromise: false,
   lastOutbound: "",
 };

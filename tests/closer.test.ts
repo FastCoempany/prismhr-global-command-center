@@ -101,6 +101,64 @@ describe("closers are transparent in the ledger", () => {
   });
 });
 
+describe("their promise is an await, never a reply owed", () => {
+  const NOW = new Date("2026-08-22T17:00:00Z");
+  const ago = (days: number) => new Date(NOW.getTime() - days * 86_400_000).toISOString();
+  const base = {
+    accountName: "Simploy",
+    step: null,
+    timing: null,
+    lastTouch: { at: ago(17), awaitingReply: true, who: "Chassie" },
+    lastRecordAt: ago(1),
+    now: NOW,
+  };
+
+  test("the Lesha relay holds an await instead of demanding an answer", async () => {
+    const { readDeal } = await import("../src/lib/room/engine");
+    const r = readDeal({
+      ...base,
+      lastInbound: { at: ago(1), who: "Lesha", promise: true },
+    });
+    assert.match(r.move, /^Hold for their follow-up\. Promised yesterday\.$/);
+    assert.ok(!/Answer/.test(r.move));
+  });
+
+  test("a week of silence turns the await into the chase", async () => {
+    const { readDeal } = await import("../src/lib/room/engine");
+    const r = readDeal({
+      ...base,
+      lastInbound: { at: ago(8), who: "Lesha", promise: true },
+    });
+    assert.match(r.move, /^Chase the follow-up\. Promised 8 days ago\.$/);
+  });
+
+  test("a real ask still demands the answer", async () => {
+    const { readDeal } = await import("../src/lib/room/engine");
+    const r = readDeal({
+      ...base,
+      lastInbound: { at: ago(1), who: "Chassie", promise: false },
+    });
+    assert.match(r.move, /^Answer Chassie\. They wrote yesterday\.$/);
+  });
+
+  test("the live Simploy entry reads as their promise", async () => {
+    const { corpusFor, extractDealIntel } = await import("../src/lib/intel/extract");
+    const docs = corpusFor("SIMPLOY01", "Simploy", {
+      acctNotes: [
+        {
+          id: "n9",
+          kind: "account",
+          body: "☎ SF Yesterday 1:49 PM — Teams chat — Simploy moving forward with reseller option · Lesha Cyphers → Antaeus Coe\nLesha: just spoke with Chassie at Simploy — they are planning to move forward with the reseller option for global. Chassie still owes Antaeus some information and will be in touch.",
+          actors: "Lesha Cyphers → Antaeus Coe",
+          createdAt: "2026-08-21T12:00:00Z",
+        },
+      ],
+    });
+    const intel = extractDealIntel(docs);
+    assert.equal(intel.lastInboundPromise, true);
+  });
+});
+
 describe("an overdue paste-opened promise reads PROMISED", () => {
   const now = new Date("2026-08-22T18:00:00Z");
   const todo = (body: string, date: string) => ({
