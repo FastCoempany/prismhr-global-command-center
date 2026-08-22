@@ -438,7 +438,7 @@ function Row({ row }: { row: RoomRow }) {
           r.readFailed
             ? r.how === "transcript"
               ? "The reader is down, so the raw text filed as one line and nothing routed. Cross it out and drop it again when the reader is back."
-              : "The read didn't complete. The rules filed the entries. Nothing was opened or asked."
+              : "The read didn't complete. The rules filed the entries. Nothing was opened or asked, and the account check did not run — cross it out if it landed on the wrong row."
             : "",
         ].filter(Boolean);
         setFreshInfo((f) => [

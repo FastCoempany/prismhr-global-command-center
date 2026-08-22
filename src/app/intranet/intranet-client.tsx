@@ -1114,8 +1114,8 @@ export function IntranetClient({
 
           {!canAnswer && (
             <p className={styles.itWarn}>
-              No API key configured — the brain can hold what you give it and show its
-              index, but it can&apos;t compose an answer yet.
+              No API key configured — asks answer from the record&apos;s own closest
+              lines, and new pastes wait to be read into the index.
             </p>
           )}
 

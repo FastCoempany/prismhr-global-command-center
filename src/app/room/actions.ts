@@ -5,6 +5,7 @@
 // itself. These return values (the room updates in place) instead of
 // redirecting.
 
+import { rulesRead } from "@/lib/intel/rules-read";
 import Anthropic from "@anthropic-ai/sdk";
 import { revalidatePath } from "next/cache";
 import { getAppAccess } from "@/lib/auth";
@@ -226,6 +227,7 @@ export async function roomPaste(
   // operator's text — but it says so, because a paste filed WITHOUT the read is
   // a paste that opened no actions and asked no questions.
   let readFailed = false;
+  if (!aiCleanAvailable()) readFailed = true;
   if (aiCleanAvailable()) {
     try {
       read = await aiCleanTimeline(text, now);
@@ -240,6 +242,28 @@ export async function roomPaste(
   if (entries.length === 0) {
     entries = dropNoiseEntries(parseSfTimeline(text));
     how = how === "ai" ? "rules" : how;
+  }
+  // The rules reader (founder-decreed 2026-08-21): when the deep read is
+  // down and the SF parser finds nothing, a Teams chat or Outlook thread
+  // still parses deterministically — real actors, real dates, real record
+  // lines. The deep intelligence (commitments, asks, lessons) waits for the
+  // reader; the receipt says so.
+  let liveDialect = dialect;
+  if (dialect !== "CT" && how !== "ai") {
+    // The SF anchor grammar can fabricate one stamp-less garbage entry from
+    // a chat line ("Talk to Chassie") — a stamped rules read outranks it
+    // (refuted 2026-08-22). A TEAMS THREAD paste reads chat-first so a
+    // quoted email inside it never swallows the conversation.
+    const stampless =
+      entries.length > 0 && entries.every((e) => !e.dayIso && !e.timeLabel);
+    if (entries.length === 0 || (dialect === "SF" && stampless)) {
+      const rr = rulesRead(text, now, dialect === "TM" ? "TM" : "");
+      if (rr && (entries.length === 0 || rr.entries.length >= 2)) {
+        entries = rr.entries;
+        if (dialect === "SF") liveDialect = rr.dialect;
+        how = "rules";
+      }
+    }
   }
 
   // The misfile guard. The read names the company the paste is ABOUT; if that
@@ -323,7 +347,7 @@ export async function roomPaste(
       const when = [e.dayLabel, e.timeLabel].filter(Boolean).join(" ");
       const glyph = e.kind === "task" ? "✔" : e.kind === "call" ? "☎" : "✉";
       const who = actors || "(unattributed)";
-      const head = `${glyph} ${dialect} ${when || "activity"} — ${e.subject || "(no subject)"} · ${who}`;
+      const head = `${glyph} ${liveDialect} ${when || "activity"} — ${e.subject || "(no subject)"} · ${who}`;
       // File at the ACTIVITY's own date (noon UTC — stable across timezones);
       // no dayIso → the DB stamps the filing moment as before.
       const at = e.dayIso ? new Date(`${e.dayIso}T12:00:00Z`) : undefined;
@@ -337,13 +361,13 @@ export async function roomPaste(
         lane: laneFor(actors, `${e.subject ?? ""}\n${e.body ?? ""}`),
         actors,
         source: `${
-          dialect === "OL"
+          liveDialect === "OL"
             ? "outlook"
-            : dialect === "TM"
+            : liveDialect === "TM"
               ? "teams"
-              : dialect === "CT"
+              : liveDialect === "CT"
                 ? "call"
-                : dialect === "SN"
+                : liveDialect === "SN"
                   ? "salesnav"
                   : "sf"
         }${how === "ai" ? "-ai" : ""}`,
