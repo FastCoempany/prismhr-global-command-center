@@ -43,6 +43,11 @@ export type RoomRead = {
 
 const DAY = 86_400_000;
 
+// Day grammar (founder-decreed 2026-08-22): one day back is "yesterday",
+// never "1 days ago"; a one-day quiet is "Quiet 1 day."
+const daysAgo = (n: number): string => (n === 1 ? "yesterday" : `${n} days ago`);
+const nDays = (n: number): string => `${n} day${n === 1 ? "" : "s"}`;
+
 export function daysBetween(iso: string, now: Date): number | null {
   const t = Date.parse(iso);
   if (Number.isNaN(t)) return null;
@@ -176,7 +181,7 @@ export function readDeal(i: RoomInputs): RoomRead {
     meetingDays <= RECAP_DAYS;
   const meetingWho = (i.lastMeeting?.who || "").trim();
   const meetingAgo =
-    meetingDays != null && meetingDays > 0 ? `${meetingDays} days ago` : "today";
+    meetingDays != null && meetingDays > 0 ? daysAgo(meetingDays) : "today";
 
   // A dated wall is a real calendar fact — expire and escalate it.
   const wallMs = i.timing?.dateIso ? Date.parse(i.timing.dateIso) : NaN;
@@ -256,16 +261,17 @@ export function readDeal(i: RoomInputs): RoomRead {
     // The board gate rides the row as its own chip — the move never says a
     // thing twice, and "close" the jargon is retired (decreed 2026-08-18).
     const who = inboundWho || "they";
-    const ago =
-      inboundDays != null && inboundDays > 0 ? `${inboundDays} days ago` : "today";
+    const ago = inboundDays != null && inboundDays > 0 ? daysAgo(inboundDays) : "today";
     move = wallOverdue
       ? `Answer ${who}. They wrote ${ago}. The ${i.timing!.phrase} wall passed.`
       : `Answer ${who}. They wrote ${ago}.`;
   } else if (inboundNewest) {
     const who = inboundWho || "they";
+    // "Answer" already says the reply is owed — the reason is just the
+    // trigger (founder-decreed 2026-08-22).
     move = `Answer ${who}. They wrote ${
-      inboundDays != null && inboundDays > 0 ? `${inboundDays} days ago` : "today"
-    }. The reply is owed.`;
+      inboundDays != null && inboundDays > 0 ? daysAgo(inboundDays) : "today"
+    }.`;
   } else if (meetingNewest) {
     move = `Send ${meetingWho || "them"} the recap. You met ${meetingAgo}.`;
   } else if (
@@ -287,10 +293,10 @@ export function readDeal(i: RoomInputs): RoomRead {
     if (quietLong && i.lastTouch) {
       const who = i.lastTouch.who || "them";
       move = clock
-        ? `Chase ${who} on “${raw.toLowerCase()}”. Quiet ${quietDays} days. ${i.timing!.phrase} is the wall.`
-        : `Chase ${who} on “${raw.toLowerCase()}”. Quiet ${quietDays} days.`;
+        ? `Chase ${who} on “${raw.toLowerCase()}”. Quiet ${nDays(quietDays)}. ${i.timing!.phrase} is the wall.`
+        : `Chase ${who} on “${raw.toLowerCase()}”. Quiet ${nDays(quietDays)}.`;
     } else if (i.timing && wallOverdue) {
-      move = `${item}. The ${i.timing.phrase} wall passed ${wallDaysPast} days ago. Decide whether the date moved or the deal did.`;
+      move = `${item}. The ${i.timing.phrase} wall passed ${daysAgo(wallDaysPast)}. Decide whether the date moved or the deal did.`;
     } else if (i.timing) {
       move = `${item}. ${i.timing.phrase} is the clock.`;
     } else {
@@ -302,7 +308,7 @@ export function readDeal(i: RoomInputs): RoomRead {
     move = "Stamp the outcome. Every gate is closed.";
   } else if (i.lastTouch && i.lastTouch.awaitingReply) {
     move = quietLong
-      ? `Nudge ${i.lastTouch.who || "the thread"}. Quiet ${quietDays} days.`
+      ? `Nudge ${i.lastTouch.who || "the thread"}. Quiet ${nDays(quietDays)}.`
       : `Wait on ${i.lastTouch.who || "their reply"}. Nothing owed on your side today.`;
   } else {
     move = "File a paste or a note. Not enough signal yet.";

@@ -28,7 +28,7 @@ import {
   intranetLedgerDay,
   intranetPassage,
 } from "./actions";
-import { readCapture, runBrain } from "./runners";
+import type { RunReport } from "./runners";
 import { cleanAskText } from "@/lib/ask/clean";
 import type {
   AskReply,
@@ -280,7 +280,16 @@ export function IntranetClient({
         },
         ...l,
       ]);
-      const g = await readCapture(r.captureId);
+      // A plain POST, never a server action — a long read must not lock the
+      // tabs (caught 2026-08-22).
+      const g: RunReport = await fetch("/intranet/read", {
+        method: "POST",
+        cache: "no-store",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ captureId: r.captureId }),
+      })
+        .then((res) => res.json() as Promise<RunReport>)
+        .catch(() => ({ ok: false, lines: [], reason: "The reading didn't come back." }));
       // the progress line is transient — replaced by the result (IV.8)
       setLive((l) =>
         l.map((e) =>
@@ -305,7 +314,11 @@ export function IntranetClient({
 
   // The catch-up loop. Passes run back-to-back until the backlog is gone or
   // the operator stops it. The gadget narrates from the server's pulse — this
-  // loop only drives the passes and keeps the rail fresh.
+  // loop only drives the passes and keeps the rail fresh. It drives through
+  // a plain POST route, never a server action: Next blocks navigation while
+  // an action is in flight, and with the key alive a long catch-up locked
+  // the operator inside this room (caught 2026-08-22, same lesson as the
+  // pulse on 2026-08-19).
   const catchUp = (sweep: boolean) => {
     if (runBusy) return;
     stopRef.current = false;
@@ -313,7 +326,19 @@ export function IntranetClient({
       for (let pass = 0; pass < 60 && !stopRef.current; pass += 1) {
         // A sweep pass looks around the app and the Playbook first; catch-up
         // passes give their whole clock to reading.
-        const r = await runBrain(pass === 0 && sweep ? undefined : { sweep: false });
+        let r: { ok: boolean; busy?: boolean; halt?: boolean; pending?: number };
+        try {
+          const res = await fetch("/intranet/run", {
+            method: "POST",
+            cache: "no-store",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ sweep: pass === 0 && sweep }),
+          });
+          if (!res.ok) break;
+          r = (await res.json()) as typeof r;
+        } catch {
+          break; // a dropped pass ends the loop; ⟳ resumes it
+        }
         router.refresh();
         // r.busy: another catch-up already holds the room — the gadget shows
         // THAT run's pulse; watch it, don't stack.

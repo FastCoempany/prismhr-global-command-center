@@ -971,7 +971,15 @@ describe("the chain that fills the brain is wired end to end", () => {
     );
   });
   test("one flow: Send it reads AND drains, ⟳ sweeps, stop always works (V)", () => {
-    assert.ok(client.includes("runBrain"), "nothing in the room starts the chain");
+    // The chain drives through a plain POST route, never a server action —
+    // Next blocks navigation while an action is in flight, and a long
+    // catch-up locked the operator in the room (caught 2026-08-22).
+    assert.ok(client.includes('"/intranet/run"'), "nothing in the room starts the chain");
+    const runRoute = readFileSync(
+      join(root, "src/app/intranet/run/route.ts"),
+      "utf8",
+    );
+    assert.ok(runRoute.includes("runBrain"), "the run route never runs the brain");
     assert.ok(
       !client.includes("Bring the brain up to date"),
       "the second button is back",
@@ -990,10 +998,18 @@ describe("the chain that fills the brain is wired end to end", () => {
     assert.ok(runners.includes("CONCURRENT_READS"), "reads went back to single file");
     assert.ok(runners.includes("Promise.allSettled"), "a slow read blocks its batch");
     assert.ok(/sweep === false/.test(runners), "every pass re-sweeps the app");
-    assert.ok(/sweep: false/.test(client), "the loop never skips the sweep");
+    assert.ok(
+      client.includes("sweep: pass === 0 && sweep"),
+      "the loop never skips the sweep",
+    );
   });
   test("a paste is read on the spot and the operator watches the index grow (IV.3)", () => {
-    assert.ok(client.includes("readCapture"), "Keep it is fire-and-forget again");
+    assert.ok(client.includes('"/intranet/read"'), "Keep it is fire-and-forget again");
+    const readRoute = readFileSync(
+      join(root, "src/app/intranet/read/route.ts"),
+      "utf8",
+    );
+    assert.ok(readRoute.includes("readCapture"), "the read route never reads");
     assert.ok(client.includes("router.refresh"), "the rail never updates after ingest");
   });
   test("a read failure says one word, and keeps the whole truth behind it (V.6)", () => {

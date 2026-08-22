@@ -92,9 +92,11 @@ export function liveLookInto(inp: LiveLookIntoInput): LiveLookIntoItem[] {
       id: `li-live:ask:${n.id}`,
       kind: "ask",
       title: n.body.replace(/\s+/g, " ").trim().slice(0, 110),
-      why: `${n.kind === "ask" ? "An ask" : "An enablement gap"} logged ${Math.floor(
-        (inp.now.getTime() - Date.parse(n.createdAt)) / DAY,
-      )} days ago, still unresolved.`,
+      why: (() => {
+        const d = Math.floor((inp.now.getTime() - Date.parse(n.createdAt)) / DAY);
+        const ago = d === 1 ? "yesterday" : `${d} days ago`;
+        return `${n.kind === "ask" ? "An ask" : "An enablement gap"} logged ${ago}, still unresolved.`;
+      })(),
       weight: "high",
     });
   }
