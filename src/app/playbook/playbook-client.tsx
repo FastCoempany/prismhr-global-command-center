@@ -25,8 +25,6 @@ import {
   type Scenario,
 } from "@/lib/intel/bank";
 import type { DiscoveryQ, QAudience, QCategory, QPhase } from "@/lib/intel/discovery";
-import { askNextDone } from "../today/actions";
-import { setScenario } from "./actions";
 import styles from "./playbook.module.css";
 
 type Q = DiscoveryQ;
@@ -136,32 +134,24 @@ function Facet<K extends keyof Filters>({
 export function PlaybookClient({
   questions,
   scenarios,
-  savedScenario,
-  accountId,
-  accounts,
   lessons,
   market,
   prospectAsks,
   oursNotTheirs,
-  bankTotal,
   initialOpen = "",
 }: {
   questions: Q[];
   scenarios: Scenario[];
-  savedScenario: string;
-  accountId: string;
-  accounts: { id: string; name: string }[];
   lessons: Knowledge[];
   market: Knowledge[];
   prospectAsks: ProspectProposal[];
   oursNotTheirs: string[];
-  bankTotal: number;
   initialOpen?: string;
 }) {
   // A deep link to one card arrives with every filter down so the card is
   // guaranteed visible, then scrolls to it and lights it briefly.
   const [filters, setFilters] = useState<Filters>(NO_FILTERS);
-  const [scenarioId, setScenarioId] = useState(initialOpen ? "" : savedScenario);
+  const [scenarioId, setScenarioId] = useState("");
   const [tab, setTab] = useState<"card" | "learned">("card");
   const [flashId, setFlashId] = useState(initialOpen);
   useEffect(() => {
@@ -193,7 +183,6 @@ export function PlaybookClient({
       product: next && next.product !== "any" ? next.product : "",
       soph: next && next.sophistication !== "any" ? next.sophistication : "",
     }));
-    if (accountId) void setScenario(accountId, next ? id : "");
   };
 
   const shown = useMemo(
@@ -240,28 +229,6 @@ export function PlaybookClient({
             {lessons.length + market.length + prospectAsks.length}
           </span>
         </button>
-        {accounts.length > 0 && (
-          <span className={styles.bind}>
-            <label className={styles.bindPick}>
-              {accountId ? "bound to" : "bind to an account"}
-              <select
-                className={styles.bindSel}
-                defaultValue={accountId}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  window.location.href = v ? `/playbook?account=${v}` : "/playbook";
-                }}
-              >
-                <option value="">No account. The whole bank.</option>
-                {accounts.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </span>
-        )}
       </div>
 
       {tab === "card" ? (
@@ -365,12 +332,6 @@ export function PlaybookClient({
 
           <div className={styles.count}>
             {shown.length} of {questions.length} showing
-            {questions.length !== bankTotal && (
-              <span className={styles.countNote}>
-                {" "}
-                · {bankTotal - questions.length} retired on this account
-              </span>
-            )}
           </div>
 
           {shown.length === 0 ? (
@@ -413,23 +374,6 @@ export function PlaybookClient({
                   <div className={styles.relay}>
                     <b>Relay:</b> <i>{q.relayLine}</i>{" "}
                     <CopyBtn payload={q.relayLine} label="copy relay" />
-                    {accountId && (
-                      <form action={askNextDone} className={styles.inline}>
-                        <input type="hidden" name="accountId" value={accountId} />
-                        <input type="hidden" name="questionId" value={q.id} />
-                        <input
-                          type="hidden"
-                          name="returnTo"
-                          value={`/playbook?account=${accountId}`}
-                        />
-                        <button
-                          className={styles.copyBtn}
-                          title="Asked. Retire it on this account."
-                        >
-                          ✓ asked
-                        </button>
-                      </form>
-                    )}
                   </div>
                 </div>
               ))}

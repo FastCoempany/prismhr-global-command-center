@@ -588,30 +588,20 @@ describe("the restructure holds", () => {
     assert.ok(!pipe.includes("/book"), "a card still links at the retired Book");
     assert.ok(pipe.includes("/accounts?peo="));
   });
-  test("retiring a question comes home to the BOUND card it was asked from", () => {
-    const actions = readFileSync(join(root, "src/app/today/actions.ts"), "utf8");
-    // The Playbook carries its account in the query string; the whitelist has to
-    // accept that, or every retirement silently unbinds the card.
-    const m = /const to =\s*([\s\S]*?);\n/.exec(actions);
-    assert.ok(m, "askNextDone's returnTo whitelist moved");
-    const re = /\/\^\\\/playbook/.test(m![1]) || m![1].includes("playbook");
-    assert.ok(re, "the whitelist no longer mentions the Playbook");
-    assert.ok(actions.includes('revalidatePath("/playbook")'));
-    assert.ok(!actions.includes("/battlecard"));
+  test("the binding feature stays retired (founder-decreed 2026-08-22)", () => {
+    // The card is account-less: no bind dropdown, no per-account retirement,
+    // no scenario persistence. If any of these come back, it is a decree
+    // reversal, not a drive-by.
     const client = readFileSync(
       join(root, "src/app/playbook/playbook-client.tsx"),
       "utf8",
     );
-    assert.ok(client.includes("value={`/playbook?account=${accountId}`}"));
-  });
-
-  test("the Playbook can bind to any account in the book, not a handful", () => {
-    const client = readFileSync(
-      join(root, "src/app/playbook/playbook-client.tsx"),
-      "utf8",
-    );
-    assert.ok(client.includes("accounts.map("));
-    assert.ok(!client.includes("accounts.slice(0, 6)"));
+    assert.ok(!client.includes("bind to an account"), "the bind dropdown is back");
+    assert.ok(!client.includes("askNextDone"), "the ✓-asked retirement is back");
+    assert.ok(!client.includes('from "./actions"'), "per-account scenario save is back");
+    const page = readFileSync(join(root, "src/app/playbook/page.tsx"), "utf8");
+    assert.ok(!page.includes("sp.account"), "the ?account= param is read again");
+    assert.ok(!page.includes("asknext-done"), "per-account retirement is read again");
   });
 
   test("every class the Playbook asks for exists", () => {

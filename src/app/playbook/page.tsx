@@ -3,8 +3,6 @@ import { getPeo, peos } from "@/lib/book";
 import { DISCOVERY, questionsFor } from "@/lib/intel/discovery";
 import { PRODUCT_BANK } from "@/lib/intel/discovery-product";
 import { SCENARIOS } from "@/lib/intel/scenarios";
-import { COUNTRY_NAME } from "@/lib/intel/lexicon";
-import { dealIntelFor } from "@/lib/intel/extract";
 import { knowledgeKey, readPlaybook } from "@/lib/playbook/store";
 import { fetchSecondRecords } from "@/lib/activity/read";
 import { approveSecondDraft, dismissSecondDraft } from "./actions";
@@ -26,11 +24,9 @@ export default async function PlaybookPage({
   searchParams: Promise<{ [k: string]: string | string[] | undefined }>;
 }) {
   const sp = await searchParams;
-  const accountId = typeof sp.account === "string" ? sp.account : "";
   // ?open=<questionId> — a deep link from an answer lands on the exact card,
   // scrolled to and lit, never a page the operator has to search again.
   const openId = typeof sp.open === "string" ? sp.open.slice(0, 60) : "";
-  const account = accountId ? (peos.find((p) => p.id === accountId) ?? null) : null;
 
   const [acctNotes, dispositions, buyerAsks] = await Promise.all([
     loadAccountNotes(),
@@ -104,63 +100,38 @@ export default async function PlaybookPage({
     [...DISCOVERY, ...PRODUCT_BANK].map((q) => q.question),
   );
 
-  // Country substitution runs off the bound account's own intel; with no
-  // account the questions stay country-agnostic ("their countries").
-  let countries: string[] = [];
-  let accountName = "";
-  if (accountId) {
-    accountName = account?.name ?? accountId;
-    const intel = dealIntelFor(accountId, accountName, {
-      acctNotes: acctNotes.get(accountId),
-    });
-    countries = intel.countries.map((c) => c.value);
-  }
-  const names = countries.map((c) => COUNTRY_NAME[c] ?? c.toUpperCase());
-  const merged = names.length > 0 ? names.join(", ") : "their countries";
-  const fill = (s: string) => s.replaceAll("{countries}", merged);
+  // The card is account-less (binding retired, founder-decreed 2026-08-22):
+  // questions stay country-agnostic.
+  const fill = (s: string) => s.replaceAll("{countries}", "their countries");
 
   // The whole bank: the original country-agnostic questions plus the
   // product-line depth. `questionsFor` handles the originals' phase ordering;
   // here every question is available and the card does the shaping.
   const bank = [
-    ...questionsFor({ phase: "contract", gaps: [], countries }),
+    ...questionsFor({ phase: "contract", gaps: [], countries: [] }),
     ...PRODUCT_BANK,
   ];
 
-  // A question retired for this account stays retired — keyed by (account, id),
-  // which is why question ids are permanent.
-  const retired = new Set(
-    [...dispositions.keys()]
-      .filter((k) => k.startsWith(`asknext-done:${accountId}:`))
-      .map((k) => k.slice(`asknext-done:${accountId}:`.length)),
-  );
-  const questions = bank
-    .filter((q) => !accountId || !retired.has(q.id))
-    .map((q) => ({
-      id: q.id,
-      category: q.category,
-      phase: q.phase,
-      audience: q.audience,
-      product: q.product ?? "any",
-      soph: q.soph ?? "any",
-      question: fill(q.question),
-      why: q.why,
-      listenFor: q.listenFor,
-      followUp: q.followUp,
-      relayLine: fill(q.relayLine),
-    }));
-
-  // The scenario is remembered per account (a disposition row, reason = id).
-  const savedScenario = accountId
-    ? (dispositions.get(`scenario:${accountId}`)?.reason ?? "")
-    : "";
+  const questions = bank.map((q) => ({
+    id: q.id,
+    category: q.category,
+    phase: q.phase,
+    audience: q.audience,
+    product: q.product ?? "any",
+    soph: q.soph ?? "any",
+    question: fill(q.question),
+    why: q.why,
+    listenFor: q.listenFor,
+    followUp: q.followUp,
+    relayLine: fill(q.relayLine),
+  }));
 
   return (
     <>
       <AppWayfinder current="Playbook" />
       <main className={styles.wrap}>
         <div className={styles.pageHead}>
-          <h1 className={styles.h1}>Playbook{accountName ? ` — ${accountName}` : ""}</h1>
+          <h1 className={styles.h1}>Playbook</h1>
           <p className={styles.sub}>
             {questions.length} questions across EOR, contractor management, and global
             payroll, shaped by the scenario you&apos;re actually in. Below: what the book
@@ -202,12 +173,7 @@ export default async function PlaybookPage({
         <PlaybookClient
           questions={questions}
           scenarios={SCENARIOS}
-          savedScenario={savedScenario}
           initialOpen={openId}
-          accountId={accountId}
-          accounts={peos
-            .map((p) => ({ id: p.id, name: p.name }))
-            .sort((a, b) => a.name.localeCompare(b.name))}
           lessons={lessons.map((l) => ({
             id: l.id,
             text: l.text,
@@ -230,7 +196,6 @@ export default async function PlaybookPage({
             rooms: p.rooms.join(", "),
           }))}
           oursNotTheirs={harvest.oursNotTheirs}
-          bankTotal={DISCOVERY.length + PRODUCT_BANK.length}
         />
       </main>
     </>
