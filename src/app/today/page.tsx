@@ -2091,7 +2091,7 @@ export default async function TodayPage({
                         {c.due && <span className={styles.cadDue}>DUE</span>}
                         <span className={styles.cadMeta}>
                           {c.lastSent
-                            ? `sent ${shortDate(c.lastSent)} · ${c.daysAgo} days ago · ${
+                            ? `sent ${shortDate(c.lastSent)} · ${c.daysAgo === 1 ? "yesterday" : `${c.daysAgo} days ago`} · ${
                                 c.sentCount != null ? c.sentCount : c.sendable
                               }/${c.total} accts`
                             : `never sent · ${c.sendable} of ${c.total} accounts ready`}

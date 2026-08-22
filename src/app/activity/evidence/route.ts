@@ -134,7 +134,11 @@ export async function GET(req: Request) {
         ),
       );
       return NextResponse.json(
-        { ok: true, line: `Nobody has touched them in ${days} days.`, cite: null },
+        {
+          ok: true,
+          line: `Nobody has touched them in ${days} day${days === 1 ? "" : "s"}.`,
+          cite: null,
+        },
         noStore,
       );
     }
