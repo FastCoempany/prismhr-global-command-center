@@ -21,7 +21,7 @@ export type RoomInputs = {
   lastTouch: { at: string; awaitingReply: boolean; who: string } | null;
   // newest INBOUND evidence in the record (a pasted client reply) — when it
   // postdates the last outbound touch, the court flips: you owe the answer.
-  lastInbound?: { at: string; who: string } | null;
+  lastInbound?: { at: string; who: string; promise?: boolean } | null;
   // newest MEETING record — a meeting newer than any outbound puts the
   // follow-up on the operator: the recap is owed, never a "wait".
   lastMeeting?: { at: string; who: string } | null;
@@ -47,6 +47,11 @@ const DAY = 86_400_000;
 // never "1 days ago"; a one-day quiet is "Quiet 1 day."
 const daysAgo = (n: number): string => (n === 1 ? "yesterday" : `${n} days ago`);
 const nDays = (n: number): string => `${n} day${n === 1 ? "" : "s"}`;
+
+// Their promise holds an await this long before the chase resumes — a
+// "will be in touch" is theirs to keep for a week, then it's yours to chase
+// (the closer rule's case table, founder-decreed 2026-08-22).
+const PROMISE_AWAIT_DAYS = 7;
 
 export function daysBetween(iso: string, now: Date): number | null {
   const t = Date.parse(iso);
@@ -257,7 +262,16 @@ export function readDeal(i: RoomInputs): RoomRead {
         ? `against ${i.timing.phrase}`
         : `on a ${i.timing.phrase.toLowerCase()} ask`
     : "";
-  if (inboundNewest && i.step) {
+  if (inboundNewest && i.lastInbound?.promise) {
+    // The newest inbound is THEIR promise — relayed or direct. Nothing is
+    // owed from this side: hold the await, then chase the promise itself,
+    // never "Answer" the person who made it.
+    const ago = inboundDays != null && inboundDays > 0 ? daysAgo(inboundDays) : "today";
+    move =
+      inboundDays != null && inboundDays > PROMISE_AWAIT_DAYS
+        ? `Chase the follow-up. Promised ${ago}.`
+        : `Hold for their follow-up. Promised ${ago}.`;
+  } else if (inboundNewest && i.step) {
     // The board gate rides the row as its own chip — the move never says a
     // thing twice, and "close" the jargon is retired (decreed 2026-08-18).
     const who = inboundWho || "they";

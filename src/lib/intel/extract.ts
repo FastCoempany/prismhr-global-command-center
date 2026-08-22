@@ -183,6 +183,10 @@ function push<T>(
     list.push({ value, src: doc.src, at: doc.at });
 }
 
+// The relayed-or-direct shapes of "they owe you the next move".
+const THEIR_PROMISE_RE =
+  /\b(?:will|going to|gonna|she'?ll|he'?ll|they'?ll|i'?ll)\s+(?:be in touch|reach out|get back|follow up|circle back|send|call you|contact you)|owes?\s+(?:you|us|antaeus)\b|\bOwed:.*—\s*@/i;
+
 export function extractDealIntel(docs: CorpusDoc[], seedEntry?: DigestEntry): DealIntel {
   const intel: DealIntel = structuredClone(EMPTY_INTEL);
   const seed = seedEntry?.intelSeed;
@@ -260,6 +264,9 @@ export function extractDealIntel(docs: CorpusDoc[], seedEntry?: DigestEntry): De
       intel.lastInbound = doc.at;
       // Who actually wrote — the doc's own sender, never a rollup guess.
       intel.lastInboundWho = doc.sender ?? "";
+      // Their promise is an await, never a reply owed: "will be in touch",
+      // "owes you information" (the closer rule's case table, 2026-08-22).
+      intel.lastInboundPromise = THEIR_PROMISE_RE.test(doc.text);
     }
     if (doc.direction === "out" && (!intel.lastOutbound || doc.at > intel.lastOutbound))
       intel.lastOutbound = doc.at;
