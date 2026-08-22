@@ -9,8 +9,10 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { getAppAccess } from "@/lib/auth";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
-import { getPeo } from "@/lib/book";
+import { getPeo, type Peo } from "@/lib/book";
 import { redactMoney } from "@/lib/intel/lexicon";
+import { KITS, getKit, kitsFor, mergeText, type CampaignKit } from "@/lib/campaigns";
+import { boardLift, type Approach, type Stage } from "@/lib/command-center/types";
 
 const SYSTEM = `You draft outreach email for Antaeus Coe, Sr. Global Business Consultant at PrismHR Global. He sells global payroll, EOR, and contractor management to PEOs that already run on PrismHR software.
 
@@ -22,22 +24,91 @@ Voice, binding:
 
 Return ONLY a JSON object: {"subject": "...", "body": "..."} — body is plain text with blank lines between paragraphs, no markdown.`;
 
+// The template desk (founder-decreed 2026-08-22): when the brain is down the
+// desk still drafts — from the campaign kits, the app's own hand-written
+// plays, merged with the account's real names. The instruction steers which
+// play; the stored stage (board-lifted) breaks ties. The note says plainly
+// where the draft came from, and the operator edits from a real starting
+// point instead of staring at an error.
+function steerKit(instruction: string): CampaignKit | undefined {
+  const ask = instruction.toLowerCase();
+  if (/\brecap\b|\bfollow[- ]?up\b/.test(ask)) return getKit("client-demo-recap");
+  if (/\bdemo\b/.test(ask)) return getKit("client-demo-invite");
+  if (/\bcsm\b/.test(ask)) return getKit("csm-brief-intro");
+  if (/\breferral|client intro/.test(ask)) return getKit("peo-client-intros");
+  if (/\bcompliance|contractor|entity\b/.test(ask))
+    return getKit("client-compliance-hook");
+  return undefined;
+}
+
+async function templateDraft(
+  peo: Peo,
+  toNames: string[],
+  instruction: string,
+): Promise<{ ok: true; subject: string; body: string; note: string }> {
+  let kit = steerKit(instruction);
+  if (!kit && hasDatabaseEnv()) {
+    try {
+      const [state, card] = await Promise.all([
+        getPrisma().peoState.findUnique({ where: { peoId: peo.id } }),
+        getPrisma().dashCard.findFirst({ where: { name: peo.name } }),
+      ]);
+      let stage = (state?.stage ?? "NOT_TOUCHED") as Stage;
+      let approach = (state?.approach ?? "NEEDS_CSM") as Approach;
+      if (card) ({ stage, approach } = boardLift(stage, approach));
+      kit = kitsFor(stage, approach)[0];
+    } catch {
+      kit = undefined;
+    }
+  }
+  kit = kit ?? getKit("peo-value-nudge") ?? KITS[0];
+  const ctx = {
+    name: peo.name,
+    csm: peo.csm,
+    contactName: toNames.filter(Boolean)[0] || peo.contactName,
+    city: peo.city,
+    state: peo.state,
+    industry: peo.industry,
+  };
+  return {
+    ok: true,
+    subject: mergeText(kit.subject, ctx).slice(0, 140),
+    body: mergeText(kit.body, ctx),
+    note: `The brain is down — drafted from the "${kit.name}" play. Edit before it goes.`,
+  };
+}
+
 export async function draftOutreach(
   accountId: string,
   toNames: string[],
   instruction: string,
   current: string,
-): Promise<{ ok: boolean; subject?: string; body?: string; reason?: string }> {
+): Promise<{
+  ok: boolean;
+  subject?: string;
+  body?: string;
+  reason?: string;
+  note?: string;
+}> {
   const access = await getAppAccess();
   if (access.status !== "active" || !access.canWrite)
     return { ok: false, reason: "Read-only session." };
-  if (!process.env.ANTHROPIC_API_KEY)
-    return { ok: false, reason: "No API key configured — drafting is off." };
   const peo = getPeo((accountId ?? "").slice(0, 40));
   if (!peo) return { ok: false, reason: "Not a book account." };
   const ask = redactMoney((instruction ?? "").trim()).slice(0, 600);
   const draft = redactMoney((current ?? "").trim()).slice(0, 4000);
   if (!ask && !draft) return { ok: false, reason: "Say what the email should do." };
+  // No brain: the template desk drafts from the plays — but it never
+  // overwrites words the operator already has on the pad.
+  if (!process.env.ANTHROPIC_API_KEY) {
+    if (draft)
+      return {
+        ok: false,
+        reason:
+          "The brain is down, so revision is off. Your draft is untouched — clear it to start from a play template.",
+      };
+    return templateDraft(peo, toNames, ask);
+  }
 
   // The account's recent record, heads only — the draft grounds in what
   // actually happened, money redacted like everywhere else.
@@ -101,7 +172,15 @@ ${draft ? `CURRENT DRAFT — revise it per the instruction, keep what works:\n${
       body,
     };
   } catch {
-    return { ok: false, reason: "The drafting call failed. Try again." };
+    // A dead or unreachable key lands here. Same law as above: draft from
+    // the plays when the pad is blank, never over the operator's words.
+    if (draft)
+      return {
+        ok: false,
+        reason:
+          "The brain didn't answer, so your draft is untouched. Clear it to start from a play template, or try again.",
+      };
+    return templateDraft(peo, toNames, ask);
   }
 }
 

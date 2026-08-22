@@ -229,6 +229,30 @@ export async function intranetCapture(
   }
 }
 
+// The record-lines fallback (founder-decreed 2026-08-21): when the brain's
+// mouth is down — no key, or the synthesis call fails — the ask still
+// answers with the record's own closest lines, deterministically ranked by
+// the same retrieval that feeds synthesis. Honest about what it is; the
+// claims are already money-redacted at write.
+function recordLinesAnswer(cands: Candidate[]): Answer {
+  const lines = cands.slice(0, 5).map((c) => {
+    const d = (c.claim.saidAt ?? "").slice(5, 10).replace("-", "/");
+    const who =
+      c.claim.speaker && c.claim.speaker !== "unknown" ? `${c.claim.speaker}` : "";
+    const tag = [who, d].filter(Boolean).join(", ");
+    return `• ${tag ? `[${tag}] ` : ""}${c.claim.text}`;
+  });
+  return {
+    answer: `Composed without the brain — the record's own closest lines:\n${lines.join("\n")}`,
+    // The printed lines ARE claims 1..n — they keep their provenance doors.
+    citations: lines.map((_, i) => i + 1),
+    reasoning: "",
+    setAside: [],
+    confidence: "thin",
+    gaps: [],
+  };
+}
+
 // ── asking ──────────────────────────────────────────────────────────────────
 export type AskReply = {
   ok: boolean;
@@ -590,29 +614,30 @@ export async function intranetAsk(
     };
   }
 
-  if (!synthAvailable()) {
-    return EMPTY_ANSWER_REPLY(
-      q,
-      "No API key configured — the brain can hold material but can't answer yet.",
-    );
-  }
-
   // 5 · the answer. A pathological candidate set is cut rather than allowed to
-  //     become a four-dollar question.
+  //     become a four-dollar question. When the mouth is down — no key, or
+  //     the call fails — the record's own closest lines answer instead of
+  //     silence (the record-lines fallback, founder-decreed 2026-08-21).
   const forSynthesis = candidates.slice(0, CEILINGS.claimsPerAsk);
   let answer: Answer;
   let model = "";
-  try {
-    const r = await runSynthesis({
-      question: q,
-      candidates: forSynthesis,
-      docLabel,
-      plan,
-    });
-    answer = r.answer;
-    model = r.model;
-  } catch {
-    return EMPTY_ANSWER_REPLY(q, "The answer didn't come back — try again.");
+  if (!synthAvailable()) {
+    answer = recordLinesAnswer(forSynthesis);
+    model = "record-lines";
+  } else {
+    try {
+      const r = await runSynthesis({
+        question: q,
+        candidates: forSynthesis,
+        docLabel,
+        plan,
+      });
+      answer = r.answer;
+      model = r.model;
+    } catch {
+      answer = recordLinesAnswer(forSynthesis);
+      model = "record-lines";
+    }
   }
 
   const citations = renderCitations(answer.citations, forSynthesis, docs);

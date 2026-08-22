@@ -618,9 +618,10 @@ export async function runActivityPass(opts?: {
     const hasSubstance = slice.rows.some(
       (r) => (r.lane === "human" || r.lane === "csm") && !r.fl.includes("r"),
     );
+    const distillerRan = hasSubstance && distillAvailable();
     let gems: Gem[] = [];
 
-    if (hasSubstance && distillAvailable()) {
+    if (distillerRan) {
       const pack = await contextPackFor(id, name);
       const rowsByKey = new Map(slice.rows.map((r) => [r.k, r]));
       const card = await getPrisma()
@@ -695,7 +696,7 @@ export async function runActivityPass(opts?: {
       rollup.verdict = "";
       run.covered[id] = "gems";
       log.push(`${name}: ${gems.length} gem${gems.length === 1 ? "" : "s"} confirmed.`);
-    } else {
+    } else if (distillAvailable()) {
       // A changed account whose gems all died keeps no stale gems note.
       await getPrisma().accountNote.deleteMany({
         where: { accountId: `${GEMS_NS}${id}` },
@@ -703,6 +704,21 @@ export async function runActivityPass(opts?: {
       rollup.verdict = verdictLine(rollup);
       run.covered[id] = "verdict";
       log.push(`${name}: ${rollup.verdict}.`);
+    } else {
+      // The distiller never ran — a dead key is not a verdict on the
+      // standing gems. Hold whatever the last funded pass filed; the
+      // arithmetic stores above still moved, and the next funded drop
+      // re-judges everything.
+      const standing = await getPrisma()
+        .accountNote.findFirst({ where: { accountId: `${GEMS_NS}${id}` } })
+        .catch(() => null);
+      rollup.verdict = verdictLine(rollup);
+      run.covered[id] = "verdict";
+      log.push(
+        standing
+          ? `${name}: ${rollup.verdict}. Gems held from the last pass — the distiller is down.`
+          : `${name}: ${rollup.verdict}.`,
+      );
     }
     await replaceNote(`${ACTIVITY_NS}${id}`, renderRollupBody(rollup));
     return log;

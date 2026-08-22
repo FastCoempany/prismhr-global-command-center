@@ -1528,6 +1528,7 @@ function DraftDialog({
     if (r.ok) {
       setBody(r.body ?? "");
       if (r.subject) setSubject(r.subject);
+      setNote(r.note ?? "");
     } else setNote(r.reason ?? "The draft didn't come back.");
   };
 
