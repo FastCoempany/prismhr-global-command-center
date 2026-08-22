@@ -312,7 +312,9 @@ export async function stageActivityBatch(batch: StageBatch): Promise<StageReply>
       .map(([id]) => id);
     // A re-drop is the operator's own probe: a configured key gets one fresh
     // chance even if the latch is down — success clears it, failure
-    // re-latches and the drop completes arithmetically again.
+    // re-latches and the drop completes arithmetically again. The latch is
+    // per-instance, so the pass may land on an instance still latched; that
+    // re-drop holds again and the latch expires within ten minutes.
     if (heldPrior.length > 0 && claudeConfigured() && claudeDead()) markClaudeUp();
     const rejudge = heldPrior.length > 0 && distillAvailable();
 
@@ -644,7 +646,11 @@ export async function runActivityPass(opts?: {
     const hasSubstance = slice.rows.some(
       (r) => (r.lane === "human" || r.lane === "csm") && !r.fl.includes("r"),
     );
-    const distillerRan = hasSubstance && distillAvailable();
+    // One availability read per account: a sibling's mid-batch latch must
+    // never flip THIS account's funded judgment to "held" after its
+    // distiller already ran (refuted 2026-08-22).
+    const distillerCould = distillAvailable();
+    const distillerRan = hasSubstance && distillerCould;
     let gems: Gem[] = [];
 
     if (distillerRan) {
@@ -722,7 +728,7 @@ export async function runActivityPass(opts?: {
       rollup.verdict = "";
       run.covered[id] = "gems";
       log.push(`${name}: ${gems.length} gem${gems.length === 1 ? "" : "s"} confirmed.`);
-    } else if (distillAvailable()) {
+    } else if (distillerCould) {
       // A changed account whose gems all died keeps no stale gems note.
       await getPrisma().accountNote.deleteMany({
         where: { accountId: `${GEMS_NS}${id}` },

@@ -79,7 +79,7 @@ import {
   loadTouches,
 } from "@/lib/today/overlay";
 import { buildFollowUpPrompt, type DraftRecipient } from "@/lib/claude/prompt";
-import { claudeDead, markClaudeDown } from "@/lib/claude/health";
+import { claudeDead, markClaudeDown, markClaudeUp } from "@/lib/claude/health";
 
 export async function getFollowUpPrompt(
   partner: string,
@@ -143,6 +143,13 @@ export async function draftFollowUp(
       }),
     });
     if (res.status === 401 || res.status === 403) markClaudeDown();
+    else if (res.status === 400) {
+      const body = await res
+        .clone()
+        .text()
+        .catch(() => "");
+      if (/credit balance|billing|insufficient credit/i.test(body)) markClaudeDown();
+    } else if (res.ok) markClaudeUp();
     if (!res.ok) return { ok: false, reason: "error", detail: `API ${res.status}` };
     const j = (await res.json()) as { content?: { type: string; text?: string }[] };
     const draft = (j.content ?? [])
