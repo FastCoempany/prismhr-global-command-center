@@ -10,16 +10,28 @@
 // Written and then adversarially reviewed on three lenses — technical accuracy
 // (no rule asserted that isn't actually universal, no invented anecdotes or
 // statistics), format doctrine (one question per question, no amounts, relay
-// voice on every relay line), and coverage (duplicates dropped, empty
-// category/phase/audience cells filled). Ids are permanent: a retired question
-// is keyed by id, so renaming one un-retires it everywhere.
+// voice on every relay line), and coverage (empty category/phase/audience
+// cells filled). Ids are permanent: a retired question is keyed by id, so
+// renaming one un-retires it everywhere — asknext-done rows, intranet mirror
+// refs, and /playbook?open= deep links all key on the id.
+//
+// The twins retirement (2026-08-24, pass-two program step 1): eight questions
+// whose ground a DISCOVERY sibling already held were removed — x-payment-path
+// (fp-paid), x-footprint-forward (fp-growth), x-partner-chair (co-chair),
+// eor-own-entity (x-entity-own), gp-headcount (fp-where), gp-employer-reg
+// (gp-nre), gp-nationality (cl-residence), cm-ip-assignment (rk-ip). Their
+// unique ground was folded into the survivors; the intranet sweep marks their
+// mirror docs gone. Never reuse a retired id.
 
 import type { DiscoveryQ } from "./discovery";
 
 export const PRODUCT_BANK: DiscoveryQ[] = [
   {
     id: "eor-benefits-parity",
-    category: "commercial",
+    // Money, not commercial (refiled 2026-08-24): statutory-vs-matched is a
+    // cost-structure decision. Safe now that scenario avoid-lists demote
+    // instead of hide — the urgent-hire trap still finds it.
+    category: "money",
     phase: "needs_analysis",
     audience: "ops",
     product: "eor",
@@ -182,26 +194,6 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
       "Would you rather we chase the worker directly, or keep everything routed through your coordinator?",
     relayLine:
       "Would you mind asking them who on their side will chase candidates in {countries} for documents and bank details once an offer is out?",
-  },
-  {
-    id: "eor-own-entity",
-    category: "footprint",
-    phase: "investigate",
-    audience: "partner",
-    product: "eor",
-    soph: "any",
-    question: "Do they own a registered legal entity in any of {countries}?",
-    why: "An owned entity is the fork in the road for the whole deal. Where the entity is registered as an employer, payroll can run on their own registrations and an employer of record is usually unnecessary for that country. Where it exists on paper only — incorporated but not employer-registered, dormant, or a branch or representative office that may not be permitted to employ and remit — EOR can still be the faster route. Clients routinely conflate having an office, a bank account, or a sales rep with having a registered employing entity, and either assumption rebuilds the proposal later.",
-    listenFor: [
-      "we have a subsidiary in",
-      "just a rep office",
-      "we registered years ago and never used it",
-      "what counts as an entity",
-    ],
-    followUp:
-      "If there is an entity, is it already registered as an employer with social contributions running through it?",
-    relayLine:
-      "Would you mind asking them whether they own a legal entity in any of {countries}?",
   },
   {
     id: "eor-pe-activity",
@@ -450,7 +442,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
       "they did ask about one country recently",
     ],
     followUp:
-      "Is there anyone on their contractor list right now they'd convert if the route were straightforward?",
+      "Has any one of them ever come up by name — someone the client said they wished they could just hire?",
     relayLine:
       "Would you mind asking them whether there's an international contractor they'd make a permanent employee today if the route were straightforward?",
   },
@@ -535,7 +527,9 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
   },
   {
     id: "cm-invoice-chase",
-    category: "platform",
+    // Money, not platform (refiled 2026-08-24): the chase is workflow cost —
+    // invisible labor concentrated on one person — which is the money story.
+    category: "money",
     phase: "demo",
     audience: "ops",
     product: "contractor",
@@ -552,26 +546,6 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     followUp: "What happens when the invoice is late — do they get paid anyway?",
     relayLine:
       "Would you mind asking them who ends up chasing their international contractors for missing invoices each month?",
-  },
-  {
-    id: "cm-ip-assignment",
-    category: "risk",
-    phase: "needs_analysis",
-    audience: "exec",
-    product: "contractor",
-    soph: "any",
-    question:
-      "Has anyone confirmed the IP assignment in your contractor agreements is enforceable in the countries those contractors actually live in?",
-    why: "Work created by an employee commonly vests with the employer by default, while work created by an independent contractor generally stays with the contractor unless the agreement assigns it — and some countries restrict how future rights or moral rights can be transferred at all. A US-drafted assignment signed by a contractor abroad can therefore be weaker than it reads on the page. That matters most when the work is the product and someone later runs diligence on it.",
-    listenFor: [
-      "our standard agreement covers it",
-      "we assume we own it",
-      "never checked whether it's enforceable there",
-      "the code sits in our repo, so...",
-    ],
-    followUp: "Does that same agreement bind confidentiality after the engagement ends?",
-    relayLine:
-      "Would you mind asking them whether anyone has confirmed the IP assignment in their contractor agreements is enforceable in the countries those contractors live in?",
   },
   {
     id: "cm-reclass-owner",
@@ -801,27 +775,6 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
       "Would you mind asking them how many hours a month their international payroll takes across the team?",
   },
   {
-    id: "gp-employer-reg",
-    category: "risk",
-    phase: "first_meeting",
-    audience: "ops",
-    product: "payroll",
-    soph: "naive",
-    question:
-      "In each country where you own the entity, is that entity registered as an employer with the tax and social security authorities?",
-    why: 'Incorporation and employer registration are separate acts in most countries. A company can be properly formed and still have no employer or social security registration number, which means it cannot legally withhold or remit — and no payroll can run until those exist. A client who assumes the entity is "done" discovers this after they have already promised someone a start date.',
-    listenFor: [
-      "the entity is set up, so yes",
-      "corporate counsel did the filing",
-      "we've never hired there yet",
-      "I'd have to ask the accountant",
-    ],
-    followUp:
-      "Can you put your hands on the registration numbers for each country, or would you rather we confirm what's missing?",
-    relayLine:
-      "Would you mind asking them whether each of their entities is registered as an employer with the local tax and social security authorities, not just incorporated?",
-  },
-  {
     id: "gp-extra-periods",
     category: "money",
     phase: "exec_summary",
@@ -903,7 +856,10 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
   },
   {
     id: "gp-gl-map",
-    category: "money",
+    // Platform, not money (refiled 2026-08-24): how payroll lands in the
+    // finance system is integration, and the money filing buried it in the
+    // own-entities scenario where it belongs near the top.
+    category: "platform",
     phase: "needs_analysis",
     audience: "ops",
     product: "payroll",
@@ -921,25 +877,6 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
       "Can you see payroll cost by country and cost center today without rebuilding it by hand?",
     relayLine:
       "Would you mind asking them how each country's payroll gets into their accounting system?",
-  },
-  {
-    id: "gp-headcount",
-    category: "footprint",
-    phase: "investigate",
-    audience: "partner",
-    product: "payroll",
-    soph: "any",
-    question: "Do we know how many employees they'd be running in each of {countries}?",
-    why: "The count per country sets the shape of the work before any meeting happens. One or two people in a country is a conversation about whether carrying an entity is worth it at all; dozens means an established process, an incumbent producing it today, and probably a collective dimension. The split also decides which proof to bring — a single-country cluster wants depth in that country's mechanics, a long thin tail wants the consolidation story. A total with no per-country split is the tell that nobody has actually scoped it yet.",
-    listenFor: [
-      "a handful in each",
-      "most of them are in one country",
-      "it's growing every quarter",
-      "I only know the total",
-    ],
-    followUp: "Which country holds the most people, and which one causes the most noise?",
-    relayLine:
-      "Would you mind asking them how many employees they have in each of {countries}?",
   },
   {
     id: "gp-leave",
@@ -960,27 +897,6 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     followUp: "When someone leaves, who calculates what leave has to be paid out?",
     relayLine:
       "Would you mind asking them whether leave balances for their international employees are tracked in their HR system or by whoever runs payroll in-country?",
-  },
-  {
-    id: "gp-nationality",
-    category: "classification",
-    phase: "needs_analysis",
-    audience: "ops",
-    product: "payroll",
-    soph: "any",
-    question:
-      "Are all the employees in {countries} local nationals, or are any of them foreign nationals?",
-    why: "A local national with an ordinary tax residence is the payroll the country's rules were written for. A foreign national brings questions that sit before payroll: what permit they hold, whether it is tied to a specific employer, and whether their right to work survives a change in who employs or pays them. Several countries also run special expatriate tax regimes with their own registrations and deadlines, and an assignment allowance or housing benefit changes the gross-to-net. Every one of those facts is per person, and clients usually know the mix without knowing why it matters.",
-    listenFor: [
-      "all locals",
-      "two are on permits",
-      "one is an expat we relocated",
-      "we've never checked",
-    ],
-    followUp:
-      "For each foreign national — what permit do they hold, and is it tied to an employer?",
-    relayLine:
-      "Would you mind asking them whether everyone in {countries} is a local national, or whether any are foreign nationals on permits?",
   },
   {
     id: "gp-net-check",
@@ -1008,7 +924,10 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     category: "incumbent",
     phase: "first_meeting",
     audience: "ops",
-    product: "payroll",
+    // Product "any" (2026-08-24): the incumbent's notice clause gates an EOR
+    // displacement exactly as hard as a payroll one, and the competitor-EOR
+    // scenario's product filter was locking out its own best-fitting question.
+    product: "any",
     soph: "displacement",
     question:
       "What notice period does your current provider hold you to — and have you already given it?",
@@ -1038,6 +957,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
       "we're registered as a foreign employer",
       "what's a non-resident employer",
       "I'd have to find the paperwork",
+      "the entity is set up, so yes",
     ],
     followUp:
       "Can you put your hands on the actual registration numbers per country, so we verify rather than assume?",
@@ -1142,7 +1062,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
       "nobody's sure who's on the hook",
     ],
     followUp:
-      "Does that local director know they'd be the one authorizing these filings?",
+      "Which filings do you expect to stay in your name even with a provider in place?",
     relayLine:
       "Would you mind asking them who authorizes statutory payroll filings in each country today, and whether that person expects to keep doing it?",
   },
@@ -1209,7 +1129,11 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
   },
   {
     id: "gp-worker-mix",
-    category: "classification",
+    // Platform, not classification (refiled 2026-08-24): hourly-vs-salaried is
+    // the payroll's operating shape, a different sense than the bank's
+    // employee-vs-contractor meaning — and the classification filing hid it
+    // from the payroll scenario it was written for.
+    category: "platform",
     phase: "needs_analysis",
     audience: "ops",
     product: "payroll",
@@ -1326,7 +1250,8 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
       "our accountant is nervous about it",
       "someone would eventually ask questions",
     ],
-    followUp: "Who inside the company would be answering for it if that happened?",
+    followUp:
+      "And if that turned out wrong — say a contractor filed for local benefits — who'd be answering for it?",
     relayLine:
       "Would you mind asking them what happens if they leave the international side exactly as it is for another year?",
   },
@@ -1342,6 +1267,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     listenFor: [
       "our lawyer set something up",
       "we have a branch there",
+      "just a rep office",
       "we never want entities",
       "we just incorporated",
     ],
@@ -1367,30 +1293,9 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
       "nobody has ever asked us",
     ],
     followUp:
-      "Has anyone asked you for that in the last year, and what did you end up sending?",
+      "And if they asked next quarter, what would you actually be able to send today?",
     relayLine:
       "Would you mind asking them what they'd want to be able to pull out of a system the day an auditor or an authority asks them a question?",
-  },
-  {
-    id: "x-footprint-forward",
-    category: "footprint",
-    phase: "needs_analysis",
-    audience: "exec",
-    product: "any",
-    soph: "any",
-    question:
-      "A year from now, which countries do you expect to have people in that you don't have people in today?",
-    why: "Everything downstream parameterizes on the country list, and the list an executive is planning to is usually longer than the one operations described. A country arriving next quarter changes whether carrying an entity is worth it, which structure to recommend, and which market a first wave should start in. Executives are also the only people in the building who know which markets are already committed to a customer or a candidate and which are still speculative.",
-    listenFor: [
-      "two more in Europe next year",
-      "wherever we win the next deal",
-      "we're pulling out of one",
-      "nobody has decided that yet",
-    ],
-    followUp:
-      "Which of those are already committed to a customer or a hire, rather than still a maybe?",
-    relayLine:
-      "Would you mind asking them which countries they expect to have people in a year from now that they don't have people in today?",
   },
   {
     id: "x-incumbent-exit",
@@ -1493,27 +1398,6 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     relayLine: "Would you mind asking them who handles international pay week to week?",
   },
   {
-    id: "x-partner-chair",
-    category: "money",
-    phase: "investigate",
-    audience: "partner",
-    product: "any",
-    soph: "any",
-    question:
-      "On the commercial side — do you want to hold the client paper and invoice them yourself, or refer and let us bill direct?",
-    why: "That one choice sets the shape of everything after it: whose name is on the agreement, who carries the funding obligation each cycle, who the client escalates to at month end, and who keeps the markup. Partners usually have a preference they have never said out loud, and assuming the wrong one strands the deal at contract when everything else is agreed. Asking first also tells me who I am actually papering with.",
-    listenFor: [
-      "we'd want to bill them ourselves",
-      "we don't want funding sitting with us",
-      "we're only making the introduction",
-      "how does that normally work",
-    ],
-    followUp:
-      "If you hold the paper, who on your side covers the cycle when the client pays you late?",
-    relayLine:
-      "Would you mind asking them whether they'd expect to be invoiced by you or by us for the international people, so the commercial route is set up the way they want it?",
-  },
-  {
     id: "x-partner-guardrails",
     category: "commercial",
     phase: "investigate",
@@ -1575,26 +1459,6 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
       "Would you mind asking them whether they'd expect their international people to show up in the system they already use with you, or whether that can sit somewhere else?",
   },
   {
-    id: "x-payment-path",
-    category: "money",
-    phase: "first_meeting",
-    audience: "ops",
-    product: "any",
-    soph: "any",
-    question:
-      "How does money physically reach these people today — individual wires, a card, a local account, a provider?",
-    why: "The payment path is the fastest concrete pain in the room and the one thing anyone in the conversation can describe without checking. Individual wires mean per-transfer charges, a conversion spread that somebody absorbs, and a person whose week includes a payment run; a provider means an agreement to read; a local account means an entity with filings sitting behind it. It puts the current arrangement's cost structure on the table without either of us naming a number.",
-    listenFor: [
-      "we wire each one",
-      "through our accountant there",
-      "one of them is on a card",
-      "finance handles it, not payroll",
-    ],
-    followUp: "Who runs that path each cycle, and what happens the week they're away?",
-    relayLine:
-      "Would you mind asking them how money physically reaches their international people today — individual wires, a provider, or a local account?",
-  },
-  {
     id: "x-review-gates",
     category: "risk",
     phase: "exec_summary",
@@ -1633,7 +1497,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     ],
     followUp: "Is anyone reading this document who hasn't been in the conversation yet?",
     relayLine:
-      "Would you mind asking them which people and which of {countries} are in the first wave?",
+      "Would you mind asking them to confirm the scope — these people, in {countries}, on this arrangement, with everyone else staying as they are?",
   },
   {
     id: "x-sequence-first",
@@ -1685,7 +1549,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     soph: "naive",
     question:
       "When this client describes the problem to you, do they say they need to hire someone abroad, or that they already have people abroad and paying them is a mess?",
-    why: 'The client\'s own framing sorts the three product lines before I ever get in the room. "We need to hire in {countries}" with nothing on the ground is employer of record. "We already have people and payroll is painful" is either in-country payroll on an entity they own or a cleanup of whoever employs them now. "We pay a pile of overseas freelancers" is contractor management with a classification question sitting underneath it. Getting the framing from the partner first means the first meeting confirms instead of discovering.',
+    why: 'The client\'s own framing sorts the three product lines before I ever get in the room. "We need to hire abroad" with nothing on the ground is employer of record. "We already have people and payroll is painful" is either in-country payroll on an entity they own or a cleanup of whoever employs them now. "We pay a pile of overseas freelancers" is contractor management with a classification question sitting underneath it. Getting the framing from the partner first means the first meeting confirms instead of discovering.',
     listenFor: [
       "they want to hire someone",
       "they already have people there",
@@ -1716,5 +1580,277 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     followUp: "And by when does it need to be handled — is something forcing that date?",
     relayLine:
       "Would you mind asking them what changed recently that made international hiring or payment something they have to solve now?",
+  },
+  // ── The program questions (added 2026-08-24, pass-two program step 6) ─────
+  // Round one proved the bank asks a PEO about one client's deal and never
+  // about taking global across its whole book. These are the book-scale
+  // questions; sc-program-rollout leads commercial so they surface.
+  {
+    id: "x-prog-book",
+    category: "commercial",
+    phase: "first_meeting",
+    audience: "partner",
+    product: "any",
+    soph: "any",
+    question:
+      "Across your whole book, how many clients have international people today — not just the one who asked?",
+    why: "One client asking is a deal; a book with a dozen quiet international populations is a program, and the partner usually has never counted. The count decides whether this conversation is about a referral or about building global into what they offer every client — two different agreements, two different prices of getting it wrong.",
+    listenFor: [
+      "just this one, as far as I know",
+      "a handful have contractors",
+      "we've never surveyed the book",
+      "more than you'd think",
+    ],
+    followUp: "Who inside your team could actually pull that count together?",
+    relayLine:
+      "Would you mind asking them how many of their clients have international people today, beyond the one that raised it?",
+  },
+  {
+    id: "x-prog-margin",
+    category: "commercial",
+    phase: "needs_analysis",
+    audience: "partner",
+    product: "any",
+    soph: "any",
+    question:
+      "If this runs across your book, how do you want your side of the economics to work — a markup you set client by client, or terms we agree once up front?",
+    why: "A one-off referral can settle its economics per deal; a program cannot, because the partner's sellers need to quote without a phone call. Per-client markup keeps the partner in control and slows every quote; agreed program terms trade control for speed. Partners rarely know there is a choice until it is asked out loud.",
+    listenFor: [
+      "we'd want to set it ourselves",
+      "just make it simple",
+      "what do other partners do",
+      "our sellers can't be doing math on calls",
+    ],
+    followUp:
+      "Who on your side has to bless whatever we agree — sales leadership or finance?",
+    relayLine:
+      "Would you mind asking them whether they'd want their economics set client by client or agreed once for the whole program?",
+  },
+  {
+    id: "x-prog-whitelabel",
+    category: "commercial",
+    phase: "needs_analysis",
+    audience: "partner",
+    product: "any",
+    soph: "any",
+    question:
+      "When your clients see this, whose name do you want on it — yours with us behind it, or ours beside yours?",
+    why: "White-label and co-brand are different products to the client even when the service is identical. A partner whose brand fronts the service owns the client's trust and the client's complaints; a named vendor beside them shares both. The answer shapes the paper, the support routing, and what the partner's own sellers say in the room — and partners usually have a strong preference nobody asked about.",
+    listenFor: [
+      "our clients only want to see us",
+      "co-branded is fine",
+      "depends on the client",
+      "we hadn't thought about the name",
+    ],
+    followUp:
+      "Does your client agreement today let you put another provider's service under your name?",
+    relayLine:
+      "Would you mind asking them whether their clients should see this under the partner's name or as a named provider beside them?",
+  },
+  {
+    id: "x-prog-enablement",
+    category: "platform",
+    phase: "needs_analysis",
+    audience: "partner",
+    product: "any",
+    soph: "any",
+    question: "Who on your team would be talking about global with clients week to week?",
+    why: "A program lives or dies on whether the partner's own people can open the subject without us in the room. If nobody is named, every international conversation waits for a joint call and the program never compounds. Naming the people also names what they need in hand — the one-pager, the questions to ask, the moment to hand off — which is the real enablement scope.",
+    listenFor: [
+      "our CSMs would carry it",
+      "we'd route everything to you",
+      "nobody's owned it before",
+      "our sellers avoid the topic",
+    ],
+    followUp: "What would those people need in hand before they'd feel safe raising it?",
+    relayLine:
+      "Would you mind asking them who on their team would raise international with clients day to day?",
+  },
+  {
+    id: "x-prog-support",
+    category: "platform",
+    phase: "needs_analysis",
+    audience: "partner",
+    product: "any",
+    soph: "any",
+    question:
+      "When a client's international worker has a pay question, do you want that call landing on your team or on ours?",
+    why: "First-line support is the program decision partners feel every week after go-live. Routing through the partner keeps their client relationship whole and puts a population in their queue they have never supported; routing direct keeps their queue clean and puts our name in front of their client monthly. Neither is wrong, and not deciding means the worker decides.",
+    listenFor: [
+      "everything comes through us",
+      "we don't want those tickets",
+      "depends what it's about",
+      "our support has never seen payroll abroad",
+    ],
+    followUp:
+      "What does your support team do today when a question is out of their depth?",
+    relayLine:
+      "Would you mind asking them whether client questions about international pay should route through their team or come straight to us?",
+  },
+  // ── EOR gaps (pass-two coverage findings): first-meeting and displacement ─
+  {
+    id: "eor-first-priority",
+    category: "footprint",
+    phase: "first_meeting",
+    audience: "ops",
+    product: "eor",
+    soph: "any",
+    question:
+      "Of the people you want covered, who has to be employed first — and what's driving that order?",
+    why: "The first person carries the whole timeline: their country's registration pace, their document readiness, and whatever was promised to them set the date everyone else gets judged against. A deliberate first choice also reveals the real driver — a candidate about to walk, a client commitment, a compliance worry — which the country list alone never says.",
+    listenFor: [
+      "the new hire in one country",
+      "whoever's most at risk",
+      "all of them at once",
+      "no real order",
+    ],
+    followUp: "What's already been promised to that first person?",
+    relayLine:
+      "Would you mind asking them which person needs to be employed first, and what's driving that order?",
+  },
+  {
+    id: "eor-offer-stage",
+    category: "timing",
+    phase: "first_meeting",
+    audience: "exec",
+    product: "eor",
+    soph: "any",
+    question:
+      "Where is the hiring actually at — offer out, candidate accepted, or still interviewing?",
+    why: "An accepted offer means a person is waiting and every week costs goodwill; an offer not yet out means the local terms can still be shaped before the candidate sees them, which is the cheap moment to get probation, notice, and benefits right. The stage decides whether this conversation is about speed or about doing it properly — rarely both.",
+    listenFor: [
+      "they've accepted, we're scrambling",
+      "offer goes out this week",
+      "still interviewing",
+      "we lost one waiting already",
+    ],
+    followUp:
+      "Has the candidate seen any terms yet, or can the offer still be shaped locally?",
+    relayLine:
+      "Would you mind asking them where the hiring stands — offer out, accepted, or still interviewing?",
+  },
+  {
+    id: "eor-switch-people",
+    category: "incumbent",
+    phase: "needs_analysis",
+    audience: "ops",
+    product: "eor",
+    soph: "displacement",
+    question:
+      "Have you told your people anything yet about moving off the current provider?",
+    why: "Moving between EOR providers means the workers change legal employer, so they have to sign new local contracts — the move needs their consent, not just the buyer's. People told early and honestly sign; people surprised by new paper from a company they have never heard of stall, negotiate, or panic, and one refusal can hold the whole cutover. What has been said so far is the real starting position.",
+    listenFor: [
+      "they don't know yet",
+      "we mentioned a change is coming",
+      "one of them is nervous already",
+      "they hate the current provider too",
+    ],
+    followUp: "Who do the workers trust most on your side to carry that message?",
+    relayLine:
+      "Would you mind asking them what their people have been told so far about a possible provider change?",
+  },
+  {
+    id: "eor-switch-terms",
+    category: "incumbent",
+    phase: "needs_analysis",
+    audience: "exec",
+    product: "eor",
+    soph: "displacement",
+    question:
+      "Do you know what your people would keep in a move — service dates, accrued leave, their current terms?",
+    why: "In most countries the outgoing employer terminates and the incoming one hires, which by default resets seniority and pays out accrued leave — and in some places notice and severance entitlements ride on those service dates. A buyer who can say what carries over can sell the move to their own people; one who cannot is asking them to sign blind, and the workers know it.",
+    listenFor: [
+      "we assumed everything transfers",
+      "nobody's looked at the contracts",
+      "the leave balances are a mess",
+      "one has real seniority there",
+    ],
+    followUp:
+      "Can we get one person's current contract and leave balance as the worked example?",
+    relayLine:
+      "Would you mind asking them whether anyone has worked out what their people keep — service dates, accrued leave — if they move providers?",
+  },
+  // ── The naive contractor buyer (pass-two coverage finding) ────────────────
+  {
+    id: "cm-first-time",
+    category: "classification",
+    phase: "first_meeting",
+    audience: "ops",
+    product: "contractor",
+    soph: "naive",
+    question:
+      "When you say contractor, what do you actually mean — a freelancer with other clients, or a full-timer you pay on invoices?",
+    why: "New buyers use one word for two different arrangements, and everything downstream depends on which they mean. A genuine freelancer needs a payment path and clean paper; a full-timer on invoices is an employment relationship wearing the wrong costume, and the honest conversation is about making it right before someone else makes it expensive. Asking for the definition first keeps the meeting from answering the wrong question.",
+    listenFor: [
+      "they're basically full time",
+      "real freelancers, several clients",
+      "a bit of both honestly",
+      "what's the difference",
+    ],
+    followUp: "Take the one you'd miss most if they left — which kind are they?",
+    relayLine:
+      "Would you mind asking them whether their contractors are genuine freelancers with other clients, or full-timers paid on invoices?",
+  },
+  // ── Round one's named gaps: visa, proof, consolidated billing ─────────────
+  {
+    id: "x-visa-need",
+    category: "footprint",
+    phase: "needs_analysis",
+    audience: "ops",
+    product: "any",
+    soph: "any",
+    question:
+      "Does anyone in this picture need a visa or new work authorization before they can start?",
+    why: "Sponsorship is the one requirement that can make a start date impossible rather than tight, and an employer of record is not a sponsorship route in every country. A candidate who needs a permit puts an authority's queue in the middle of the plan, and nobody controls that clock. Better to find the one person who needs it now than to discover them the week before go-live.",
+    listenFor: [
+      "everyone can already work there",
+      "one needs sponsorship",
+      "we assumed you'd handle visas",
+      "we honestly don't know",
+    ],
+    followUp: "For that person — what do they hold today, and when does it run out?",
+    relayLine:
+      "Would you mind asking them whether anyone involved needs a visa or new work authorization before they could start?",
+  },
+  {
+    id: "x-proof",
+    category: "commercial",
+    phase: "exec_summary",
+    audience: "exec",
+    product: "any",
+    soph: "any",
+    question:
+      "Before you'd put your name on this internally, what would you need to see from us — references, a live account, security answers?",
+    why: "Every champion carries this to a room we are not in, and what convinces that room is rarely what convinced the champion. A named proof — a reference call with someone like them, a walkthrough of a live account, a completed security questionnaire — is deliverable this week; an unnamed doubt surfaces at contract as a stall nobody can answer. Asking for the proof list early turns diligence from an ambush into an agenda.",
+    listenFor: [
+      "a reference like us",
+      "our board will ask who else uses this",
+      "security will want answers",
+      "honestly, just a clean demo",
+    ],
+    followUp: "Who else reads what we send before it comes back signed?",
+    relayLine:
+      "Would you mind asking them what they'd need to see from us before they'd back this internally — references, a live account, security answers?",
+  },
+  {
+    id: "x-billing-consolidation",
+    category: "money",
+    phase: "proposal",
+    audience: "ops",
+    product: "any",
+    soph: "any",
+    question:
+      "How many separate invoices and currencies does the international side put in front of your finance team each month?",
+    why: "A pile of per-country invoices in different currencies is a monthly tax on finance that nobody budgeted: reconciliation, conversion, and a close that waits on the slowest vendor. One consolidated bill is often the most concrete thing a proposal can promise — but some finance teams prefer the per-country detail for their own allocation, so the shape of the bill is theirs to choose, not ours to assume.",
+    listenFor: [
+      "one per country, it's a mess",
+      "finance dreads month end",
+      "we actually need the detail",
+      "never counted",
+    ],
+    followUp:
+      "Would one consolidated bill actually help your finance team, or do they need the per-country detail?",
+    relayLine:
+      "Would you mind asking them how many separate invoices and currencies international puts in front of their finance team each month?",
   },
 ];

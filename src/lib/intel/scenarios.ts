@@ -20,7 +20,6 @@ export const SCENARIOS: Scenario[] = [
       "Runs US payroll in-house, has never employed anyone abroad, and uses 'contractor' and 'EOR' interchangeably.",
     product: "any",
     sophistication: "naive",
-    posture: "self_run",
     leadWith: ["footprint", "classification", "risk", "timing"],
     avoid: ["commercial", "incumbent"],
     traps: [
@@ -55,12 +54,11 @@ export const SCENARIOS: Scenario[] = [
       "Already pays international contractors directly — bank wires, invoices, and a spreadsheet somebody maintains on the side.",
     product: "contractor",
     sophistication: "inhouse",
-    posture: "any",
     leadWith: ["classification", "risk", "money", "footprint"],
     avoid: ["commercial", "incumbent"],
     traps: [
       "A signed contractor agreement is not a defense by itself; many countries test substance — set hours, exclusivity, company equipment, a manager, indefinite duration — and can reclassify regardless of what the paper says.",
-      "They believe paying from a US bank keeps the arrangement American. Recurring transfers into a country are visible to local banks and tax authorities and can support a claim that the company is operating there.",
+      "They believe paying from a US bank keeps the arrangement American. The receiving banks see recurring transfers to individuals, and the workers' own filings put the arrangement in front of the local tax authority — what follows is a question about undeclared employment obligations, not anything a US account protects against.",
       "The spreadsheet understates what the arrangement really costs, because the worker absorbs the conversion spread and the receiving-bank charges while the company only sees its own side.",
       "Invoices rarely carry IP assignment or confidentiality that hold up locally. In a number of jurisdictions the author keeps rights absent a written assignment valid under that country's law, so having paid for the work does not always mean owning it.",
       "Some of their 'contractors' may actually be employed by a local company that invoices them, which changes who can move them and what notice binds them first.",
@@ -91,7 +89,6 @@ export const SCENARIOS: Scenario[] = [
       "Employees already sit with another global EOR, so the conversation is about what that provider isn't doing.",
     product: "eor",
     sophistication: "displacement",
-    posture: "other_platform",
     leadWith: ["incumbent", "platform", "timing", "commercial"],
     avoid: ["classification", "risk"],
     traps: [
@@ -127,7 +124,6 @@ export const SCENARIOS: Scenario[] = [
       "Owns legal entities abroad and pays people through a different local accountant or bookkeeper in each country.",
     product: "payroll",
     sophistication: "inhouse",
-    posture: "self_run",
     leadWith: ["platform", "footprint", "risk", "money"],
     avoid: ["classification", "commercial"],
     traps: [
@@ -163,7 +159,6 @@ export const SCENARIOS: Scenario[] = [
       "A CSM or service provider is asking on behalf of their own client, with no direct line to the client yet.",
     product: "any",
     sophistication: "any",
-    posture: "through_partner",
     leadWith: ["commercial", "platform", "footprint", "timing"],
     avoid: ["classification"],
     traps: [
@@ -200,7 +195,6 @@ export const SCENARIOS: Scenario[] = [
       "A named candidate in a single new country with a start date already floated, and nothing else global on the table.",
     product: "eor",
     sophistication: "any",
-    posture: "on_prismhr",
     leadWith: ["timing", "footprint", "classification"],
     avoid: ["incumbent", "money"],
     traps: [
@@ -236,7 +230,6 @@ export const SCENARIOS: Scenario[] = [
       "The trigger was an event — an authority letter, a diligence question, a worker claim — and someone senior is watching.",
     product: "any",
     sophistication: "any",
-    posture: "any",
     leadWith: ["risk", "classification", "timing", "footprint"],
     avoid: ["money", "platform"],
     traps: [
@@ -272,7 +265,6 @@ export const SCENARIOS: Scenario[] = [
       "Global payroll works country by country through a different vendor in each, with no consolidated view and no single owner.",
     product: "any",
     sophistication: "displacement",
-    posture: "any",
     leadWith: ["incumbent", "platform", "timing", "money"],
     avoid: ["classification"],
     traps: [
@@ -300,6 +292,79 @@ export const SCENARIOS: Scenario[] = [
         objection: "We tried consolidating before and it went badly.",
         counter:
           "Then find exactly where it broke. Usually it is a cutover with no parallel run, or part-year accumulations that did not carry across. Both are avoidable with sequencing, and they are the questions I would want answered before we agreed a date.",
+      },
+    ],
+  },
+  {
+    id: "sc-program-rollout",
+    label: "Taking global to the whole book",
+    blurb:
+      "The partner wants global as something they offer every client, not a favor for the one who asked — economics, name, and support all have to be decided at book scale.",
+    product: "any",
+    sophistication: "any",
+    leadWith: ["commercial", "platform", "footprint", "timing"],
+    avoid: ["classification"],
+    traps: [
+      "The one client who asked is treated as the program. A program is the book — the quiet international populations nobody has surveyed — and sizing it off a single deal prices everything wrong.",
+      "The economics get settled per deal because that is how the first deal worked. At book scale the partner's sellers have to quote without a phone call, and terms nobody wrote down become a different answer for every client.",
+      "Whose name fronts the service gets decided by default, at contract, by whoever drafted the paper. White-label and co-brand are different products to the client even when the service is identical.",
+      "Support routing goes undecided until the first worker calls someone. Routed through the partner, a population lands in a queue that has never seen payroll abroad; routed direct, our name is in front of their client monthly. Not choosing means the worker chooses.",
+      "Enablement is assumed rather than built. If the partner's own people cannot open the subject without us in the room, every conversation waits for a joint call and the program never compounds.",
+      "The rollout is announced to the whole book at once. The clients with live international pain convert; the rest hear noise — a sequenced launch through the CSMs who know which clients have people abroad beats a blast every time.",
+    ],
+    objections: [
+      {
+        objection:
+          "We don't want to be in the international business — it's not what we do.",
+        counter:
+          "You are already in it the day one of your clients hires abroad; the only question is whether it happens through you or around you. The program shape decides how much of it you carry — referral keeps you out of the operations entirely and still keeps the relationship yours.",
+      },
+      {
+        objection: "Our sellers can't talk about this credibly.",
+        counter:
+          "They don't have to be experts — they have to recognize the moment and know the hand-off. The three questions that surface an international need fit on a card, and everything after the hand-off is ours. That is the whole enablement ask.",
+      },
+      {
+        objection:
+          "What if it goes wrong for one of our clients? It's our name on the line.",
+        counter:
+          "That is the real reason to decide the name and the support routing up front rather than by accident. Where your name fronts it, we agree what your client sees and who answers before anything launches. Where ours sits beside yours, the accountability is visibly shared.",
+      },
+    ],
+  },
+  {
+    id: "sc-live-and-growing",
+    label: "Already live and growing",
+    blurb:
+      "The account is running with us today and adding people or countries — the conversation is expansion, not persuasion, and the record already knows most answers.",
+    product: "any",
+    sophistication: "any",
+    leadWith: ["footprint", "timing", "platform", "money"],
+    avoid: ["incumbent"],
+    traps: [
+      "The expansion gets sold like a new deal. They already bought; re-pitching the category insults the relationship, and the only questions worth asking are the ones the record cannot already answer.",
+      "A new country is treated as a copy of the last one. Every country resets the registration clock, the statutory obligations, and the first-payroll cut-off — the service is the same, the timeline is not.",
+      "The people already live somewhere in the arrangement — a contractor becoming an employee, a new country for an existing worker. What carries over — service dates, accrued leave, their current terms — has to be named before anyone signs new paper.",
+      "Growth hides scope drift. Time tracking, expenses, or a new worker type arrives quietly inside an expansion request, and unscoped additions surface as invoice surprises that damage the trust the expansion was built on.",
+      "Nobody re-checks the commercial chair. The structure that fit three people may not fit thirty, and the moment of expansion is the cheap moment to revisit it — at renewal it is a fight.",
+      "The existing account's service debt rides along. An open support issue or a late payslip from last quarter walks into the expansion meeting first; settle it or name it before asking for more.",
+    ],
+    objections: [
+      {
+        objection:
+          "Why does adding one more country take so long when we're already set up?",
+        counter:
+          "Everything about our relationship carries over; the country's own machinery does not. Registrations, statutory enrollments, and the first payroll cut-off run on that country's clock no matter how long we have worked together. What being live buys you is that everything on our side is already done.",
+      },
+      {
+        objection: "We're a bigger account now — the terms should reflect that.",
+        counter:
+          "Growth is exactly when terms get revisited, and it is a conversation I would rather have with you at expansion than against a renewal deadline. Bring the growth plan, and the structure conversation comes with it.",
+      },
+      {
+        objection: "Can we just add them quietly without a whole project?",
+        counter:
+          "For a country we already run for you, often yes — that is the point of being live. For a new country, the registrations and the first cut-off exist whether we call it a project or not, and naming the dates up front is what keeps quiet from becoming late.",
       },
     ],
   },

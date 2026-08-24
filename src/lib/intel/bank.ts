@@ -18,12 +18,6 @@ import type { DashNodeKey } from "@/lib/dashboard/stages";
 
 export type QProduct = "eor" | "contractor" | "payroll" | "any";
 export type QSoph = "naive" | "inhouse" | "displacement" | "any";
-export type Posture =
-  | "self_run"
-  | "on_prismhr"
-  | "other_platform"
-  | "through_partner"
-  | "any";
 
 export const PRODUCT_LABEL: Record<QProduct, string> = {
   eor: "EOR",
@@ -45,7 +39,6 @@ export type Scenario = {
   blurb: string;
   product: QProduct;
   sophistication: QSoph;
-  posture: Posture;
   leadWith: QCategory[];
   avoid: QCategory[];
   traps: string[];
@@ -106,6 +99,17 @@ const PHASE_RANK: Record<DashNodeKey, number> = {
   contract: 6,
 };
 
+// The no-scenario arrival order used to be an alphabetical accident: phase
+// then id put a niche contractor-displacement partner question first on every
+// arrival. These openers lead when no scenario is shaping the card — the
+// natural first questions of any conversation, in the order a seller reaches
+// for them (pass-two verdict, 2026-08-24).
+const OPENERS = new Map(
+  ["x-triage-language", "x-why-now", "fp-where", "x-intent-employee", "x-entity-own"].map(
+    (id, i) => [id, i],
+  ),
+);
+
 export function selectQuestions(
   bank: readonly DiscoveryQ[],
   f: Filters,
@@ -113,17 +117,26 @@ export function selectQuestions(
 ): DiscoveryQ[] {
   const lead = new Map((scenario?.leadWith ?? []).map((c, i) => [c, i]));
   const avoid = new Set(scenario?.avoid ?? []);
-  const out = bank.filter((q) => {
-    if (!matches(q, f)) return false;
-    // A scenario's noise categories drop out — unless the operator asked for
-    // that category by name, in which case they know what they want.
-    if (!f.category && avoid.has(q.category)) return false;
-    return true;
-  });
+  const out = bank.filter((q) => matches(q, f));
   return out.sort((a, b) => {
+    // A scenario's noise categories sink to the tail instead of vanishing
+    // (decided 2026-08-24): the scenario's own traps sometimes demand a
+    // question its avoid list holds, so nothing hides — noise just waits.
+    // An explicit category ask suspends the demotion; the operator knows
+    // what they want.
+    if (!f.category) {
+      const na = avoid.has(a.category) ? 1 : 0;
+      const nb = avoid.has(b.category) ? 1 : 0;
+      if (na !== nb) return na - nb;
+    }
     const la = lead.has(a.category) ? lead.get(a.category)! : 99;
     const lb = lead.has(b.category) ? lead.get(b.category)! : 99;
     if (la !== lb) return la - lb;
+    if (!scenario) {
+      const oa = OPENERS.has(a.id) ? OPENERS.get(a.id)! : 99;
+      const ob = OPENERS.has(b.id) ? OPENERS.get(b.id)! : 99;
+      if (oa !== ob) return oa - ob;
+    }
     const pa = PHASE_RANK[a.phase] ?? 9;
     const pb = PHASE_RANK[b.phase] ?? 9;
     if (pa !== pb) return pa - pb;
@@ -148,6 +161,17 @@ export function facetCounts<K extends keyof Filters>(
   return out;
 }
 
+// The names the empty state speaks match the labels on screen — the rail says
+// "Line" and "Buyer", so the message never asks the operator to drop a filter
+// no row is named after.
+const FILTER_LABEL: Record<keyof Filters, string> = {
+  category: "Category",
+  phase: "Phase",
+  audience: "Audience",
+  product: "Line",
+  soph: "Buyer",
+};
+
 // Why the list is empty, in words the operator can act on. Never a bare zero.
 export function emptyBecause(
   bank: readonly DiscoveryQ[],
@@ -160,7 +184,7 @@ export function emptyBecause(
   for (const [k] of active) {
     const without = { ...f, [k]: "" } as Filters;
     if (selectQuestions(bank, without, scenario).length > 0)
-      return `Nothing asks that. Drop the ${String(k)} filter and there are questions again.`;
+      return `Nothing asks that. Drop the ${FILTER_LABEL[k]} filter and there are questions again.`;
   }
   return "No question in the bank fits that combination yet.";
 }
