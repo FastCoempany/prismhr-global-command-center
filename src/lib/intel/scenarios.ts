@@ -297,20 +297,20 @@ export const SCENARIOS: Scenario[] = [
   },
   {
     id: "sc-program-rollout",
-    label: "Taking global to the whole book",
+    label: "Offering global to every client",
     blurb:
-      "The partner wants global as something they offer every client, not a favor for the one who asked — economics, name, and support all have to be decided at book scale.",
+      "The partner wants global as something they offer every client, not a favor for the one who asked — the money, the name on it, and who answers support all get decided once, for everyone.",
     product: "any",
     sophistication: "any",
     leadWith: ["commercial", "platform", "footprint", "timing"],
     avoid: ["classification"],
     traps: [
-      "The one client who asked is treated as the program. A program is the book — the quiet international populations nobody has surveyed — and sizing it off a single deal prices everything wrong.",
-      "The economics get settled per deal because that is how the first deal worked. At book scale the partner's sellers have to quote without a phone call, and terms nobody wrote down become a different answer for every client.",
+      "The one client who asked is treated as the whole program. The real program is every client quietly paying people overseas — most of them uncounted — and sizing it off a single deal prices everything wrong.",
+      "The money gets settled per deal because that is how the first deal worked. Once every client can buy this, the partner's sellers have to quote without a phone call, and terms nobody wrote down become a different answer for every client.",
       "Whose name fronts the service gets decided by default, at contract, by whoever drafted the paper. White-label and co-brand are different products to the client even when the service is identical.",
       "Support routing goes undecided until the first worker calls someone. Routed through the partner, a population lands in a queue that has never seen payroll abroad; routed direct, our name is in front of their client monthly. Not choosing means the worker chooses.",
       "Enablement is assumed rather than built. If the partner's own people cannot open the subject without us in the room, every conversation waits for a joint call and the program never compounds.",
-      "The rollout is announced to the whole book at once. The clients with live international pain convert; the rest hear noise — a sequenced launch through the CSMs who know which clients have people abroad beats a blast every time.",
+      "The launch gets announced to every client at once. The ones with live international pain convert; the rest hear noise — going client by client through the CSMs who know who has people abroad beats a blast every time.",
     ],
     objections: [
       {

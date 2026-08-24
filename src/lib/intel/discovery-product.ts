@@ -42,7 +42,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     listenFor: [
       "whatever's required",
       "we want it to feel the same",
-      "our recruiter says candidates expect",
+      "our recruiter says candidates expect more there",
       "we don't know what's standard there",
     ],
     followUp:
@@ -863,7 +863,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     soph: "any",
     question:
       "Once a payroll runs in {countries}, how does it land in your finance system?",
-    why: "Payroll is the largest recurring entry in most books, and abroad it arrives as country-specific pay elements and employer charges that have no native match in a US chart of accounts. If someone hand-builds the journal every period, close is slow and the mapping is undocumented — and that person, usually in finance rather than HR, is often the one who actually feels the pain and can fund a change.",
+    why: "Payroll is the largest recurring entry in most companies' accounts, and abroad it arrives as country-specific pay elements and employer charges that have no native match in a US chart of accounts. If someone hand-builds the journal every period, close is slow and the mapping is undocumented — and that person, usually in finance rather than HR, is often the one who actually feels the pain and can fund a change.",
     listenFor: [
       "our controller rebuilds the entry",
       "we book it as one lump",
@@ -972,7 +972,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
       "What would you need to see from a parallel run before signing off the first live payroll?",
     why: "Parallel-run scope is the largest hidden driver of an implementation timeline: one cycle or two, which countries, and whose figures are treated as truth when the two disagree. They can differ legitimately, because the incumbent calculation may have been wrong. Settling that while the plan is still being written prevents a go-live date everyone privately doubts, and it names who on their side has to do the comparing and how much time they actually have.",
     listenFor: [
-      "two clean cycles",
+      "we'd want two clean cycles side by side",
       "our controller has to tie it out",
       "whatever you normally do",
       "we just want to switch",
@@ -1218,9 +1218,9 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     question: "What are the two or three things that will actually decide this?",
     why: "Buyers new to this compare on the only axis they understand — cost structure — and then get blindsided by the axes that matter in operation: who carries employer liability, how fast a person can be onboarded compliantly in a specific country, whether it runs as one system alongside their domestic payroll. Hearing their criteria out loud tells me whether they have priced the risk axes at all, and which of the three product lines they believe they are buying, which is often not the one they need.",
     listenFor: [
-      "lowest cost structure",
-      "speed to onboard",
-      "one system",
+      "whatever's cheapest, honestly",
+      "how fast we can get someone on",
+      "it all has to sit in one system",
       "whatever our lawyer is comfortable with",
     ],
     followUp:
@@ -1280,9 +1280,9 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
       "The day an auditor asks you a question, what would you want to pull out of the system?",
     why: "A demo that shows how the work gets done answers the wrong question for whoever is carrying the compliance worry; what they need to see is what the record looks like afterwards. Naming the artifact in advance — one worker's whole file, a filing confirmation, an approval trail, a payslip in the local language — turns the demo into a test they set themselves and surfaces the evidence they cannot produce today. It is also the cheapest way to learn whether anyone has ever asked them for it.",
     listenFor: [
-      "proof the filing was accepted",
-      "one worker's whole history",
-      "who approved the change",
+      "show me a filing was actually accepted",
+      "pull up one worker's whole history",
+      "show me who approved a change",
       "nobody has ever asked us",
     ],
     followUp:
@@ -1564,7 +1564,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     question: "Why are you looking into solving this now?",
     why: "International pay problems get tolerated for years before anyone calls, so the thing that broke the tolerance is the most useful fact in the deal — it names the deadline, the people who care, and usually the product. A hire abroad who needs a local contract points one way; a contractor asking for benefits points at classification; an entity that just got registered points at in-country payroll. Without a trigger I am selling to a wish rather than an event, and wishes do not survive a budget conversation.",
     listenFor: [
-      "a specific hire we can't paper",
+      "there's a hire we have no way to employ properly",
       "a contractor asked for benefits",
       "our accountant flagged it",
       "we've been meaning to for a while",
@@ -1575,7 +1575,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
   },
   // ── The program questions (added 2026-08-24, pass-two program step 6) ─────
   // Round one proved the bank asks a PEO about one client's deal and never
-  // about taking global across its whole book. These are the book-scale
+  // about offering global to every client it serves. These are those
   // questions; sc-program-rollout leads commercial so they surface.
   {
     id: "x-prog-book",
@@ -1585,12 +1585,12 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     product: "any",
     soph: "any",
     question:
-      "How many clients across your whole book have international people today — not just the one who asked?",
-    why: "One client asking is a deal; a book with a dozen quiet international populations is a program, and the partner usually has never counted. The count decides whether this conversation is about a referral or about building global into what they offer every client — two different agreements, two different prices of getting it wrong.",
+      "How many of your clients have people overseas today — not just the one who asked?",
+    why: "One client asking is a deal; a dozen clients quietly paying people overseas is a program, and the partner has usually never counted. The count decides whether this is a one-off referral or a service they offer every client — two different agreements, two different prices of getting it wrong.",
     listenFor: [
       "just this one, as far as I know",
       "a handful have contractors",
-      "we've never surveyed the book",
+      "we've never asked all our clients",
       "more than you'd think",
     ],
     followUp: "Who inside your team could actually pull that count together?",
@@ -1691,10 +1691,10 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
       "Which of the people are the priority — who needs to be set up most immediately?",
     why: "The first person carries the whole timeline: their country's registration pace, their document readiness, and whatever was promised to them set the date everyone else gets judged against. A deliberate first choice also reveals the real driver — a candidate about to walk, a client commitment, a compliance worry — which the country list alone never says.",
     listenFor: [
-      "the new hire in one country",
+      "the new hire first — they're waiting",
       "whoever's most at risk",
       "all of them at once",
-      "no real order",
+      "no real order, honestly",
     ],
     followUp: "What's already been promised to that first person?",
     relayLine:
@@ -1813,7 +1813,7 @@ export const PRODUCT_BANK: DiscoveryQ[] = [
     question: "What would you need to see from us before you'd back this internally?",
     why: "Every champion carries this to a room we are not in, and what convinces that room is rarely what convinced the champion. A named proof — a reference call with someone like them, a walkthrough of a live account, a completed security questionnaire — is deliverable this week; an unnamed doubt surfaces at contract as a stall nobody can answer. Asking for the proof list early turns diligence from an ambush into an agenda.",
     listenFor: [
-      "a reference like us",
+      "a reference — someone like us",
       "our board will ask who else uses this",
       "security will want answers",
       "honestly, just a clean demo",
