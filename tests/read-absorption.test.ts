@@ -378,11 +378,20 @@ describe("the card's filters tell the truth", () => {
     assert.ok(why.length > 20);
     assert.ok(!/^0 of/.test(why));
   });
-  test("a scenario leads with its own categories and drops its noise", () => {
+  test("a scenario leads with its own categories and sinks its noise to the tail", () => {
+    // Avoid demotes instead of hiding (2026-08-24): a scenario's own traps
+    // sometimes demand a question its avoid list holds, so nothing vanishes —
+    // every avoided-category question sorts after every kept one.
     const scen = SCENARIOS.find((s) => s.avoid.length > 0 && s.leadWith.length > 0)!;
     const shown = selectQuestions(BANK, NO_FILTERS, scen);
     assert.equal(shown[0].category, scen.leadWith[0]);
-    for (const q of shown) assert.ok(!scen.avoid.includes(q.category));
+    const firstAvoided = shown.findIndex((q) => scen.avoid.includes(q.category));
+    assert.ok(firstAvoided > 0, "avoided questions still render");
+    for (let i = firstAvoided; i < shown.length; i++)
+      assert.ok(
+        scen.avoid.includes(shown[i].category),
+        `${shown[i].id} (kept) sorts below avoided noise`,
+      );
   });
   test("asking for a scenario's avoided category by name still works", () => {
     const scen = SCENARIOS.find((s) => s.avoid.length > 0)!;

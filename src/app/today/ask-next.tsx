@@ -61,9 +61,9 @@ export function AskNext({
   research?: string; // pre-built research prompt for this account
 }) {
   if (questions.length === 0) return null;
-  const bcHref = accountId
-    ? `/playbook?account=${encodeURIComponent(accountId)}`
-    : "/playbook";
+  // Plain door — the Playbook stopped reading ?account= when the binding
+  // retired (2026-08-22); the parameter implied scoping that no longer exists.
+  const bcHref = "/playbook";
   return (
     <div className={styles.wrap}>
       <div className={styles.head}>

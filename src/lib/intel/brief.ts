@@ -243,7 +243,7 @@ export function buildMorningBrief(inp: BriefInput): BriefRow[] {
         subjectId: card.id,
         icon: "note",
         text: `Widen the ${card.name} thread.`,
-        why: "Only ${intel.threads.people[0]} carries this deal.",
+        why: `Only ${intel.threads.people[0]} carries this deal.`,
         control: { kind: "copy", payload: relay("mt-exec") },
         weight: 50,
       });

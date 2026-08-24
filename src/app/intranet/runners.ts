@@ -366,13 +366,22 @@ async function upsertDocs(drafts: MirrorDoc[]) {
 }
 
 /** Mark mirrors whose home rows have disappeared. Never a delete — the brain
- *  remembers what the app forgot, which is the whole point of C6. */
+ *  remembers what the app forgot, which is the whole point of C6. The playbook
+ *  origin joined 2026-08-24: a retired question's mirror doc otherwise teaches
+ *  a question the bank no longer asks, forever. */
 async function markVanished(): Promise<number> {
   const prisma = getPrisma();
   let n = 0;
+  const { DISCOVERY } = await import("@/lib/intel/discovery");
+  const { PRODUCT_BANK } = await import("@/lib/intel/discovery-product");
+  const { SCENARIOS } = await import("@/lib/intel/scenarios");
+  const bankIds = new Set([...DISCOVERY, ...PRODUCT_BANK].map((q) => q.id));
+  const scenarioIds = new Set(SCENARIOS.map((s) => s.id));
   const mirrored = await prisma.intranetDoc.findMany({
     where: {
-      origin: { in: ["account-note", "todo", "touch", "partner-note", "card", "demo"] },
+      origin: {
+        in: ["account-note", "todo", "touch", "partner-note", "card", "demo", "playbook"],
+      },
       originGone: null,
     },
     select: { id: true, origin: true, originRef: true },
@@ -427,6 +436,14 @@ async function markVanished(): Promise<number> {
               select: { id: true },
             }),
           );
+      else if (m.origin === "playbook") {
+        // question:/scenario: refs check against the static banks; market:/
+        // lessons: refs keep their own app rows and stay out of this sweep.
+        if (m.originRef.startsWith("question:"))
+          alive = bankIds.has(m.originRef.slice("question:".length));
+        else if (m.originRef.startsWith("scenario:"))
+          alive = scenarioIds.has(m.originRef.slice("scenario:".length));
+      }
     } catch {
       alive = true; // never mark on a query failure
     }

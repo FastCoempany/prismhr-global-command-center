@@ -92,21 +92,25 @@ export default async function PlaybookPage({
     }
   })();
 
+  // The card is account-less (binding retired, founder-decreed 2026-08-22):
+  // questions stay country-agnostic. "those countries" reads correctly in both
+  // the second-person questions and the third-person relays; "their countries"
+  // flipped the possessor mid-sentence (pass-two finding, 2026-08-24).
+  const fill = (s: string) => s.replaceAll("{countries}", "those countries");
+
   // IV.5 · what real buyers asked, read from the brain — proposals beside the
   // lessons and market facts they feed. The brain proposes; the Playbook is
-  // written by hand.
+  // written by hand. The harvest reads FILLED text so no raw token can reach
+  // the "ours, not theirs" line or skew the dedupe.
   const harvest = harvestBattlecards(
     buyerAsks,
-    [...DISCOVERY, ...PRODUCT_BANK].map((q) => q.question),
+    [...DISCOVERY, ...PRODUCT_BANK].map((q) => fill(q.question)),
   );
 
-  // The card is account-less (binding retired, founder-decreed 2026-08-22):
-  // questions stay country-agnostic.
-  const fill = (s: string) => s.replaceAll("{countries}", "their countries");
-
   // The whole bank: the original country-agnostic questions plus the
-  // product-line depth. `questionsFor` handles the originals' phase ordering;
-  // here every question is available and the card does the shaping.
+  // product-line depth. `questionsFor` at the contract phase passes all the
+  // originals through with the fill applied; the client's selectQuestions owns
+  // the order the operator actually sees.
   const bank = [
     ...questionsFor({ phase: "contract", gaps: [], countries: [] }),
     ...PRODUCT_BANK,
@@ -120,9 +124,9 @@ export default async function PlaybookPage({
     product: q.product ?? "any",
     soph: q.soph ?? "any",
     question: fill(q.question),
-    why: q.why,
-    listenFor: q.listenFor,
-    followUp: q.followUp,
+    why: fill(q.why),
+    listenFor: q.listenFor.map(fill),
+    followUp: fill(q.followUp),
     relayLine: fill(q.relayLine),
   }));
 
