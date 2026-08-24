@@ -58,8 +58,7 @@ export const DISCOVERY: DiscoveryQ[] = [
     category: "footprint",
     phase: "first_meeting",
     audience: "ops",
-    question:
-      "Which countries do you have people in today, and roughly how many in each?",
+    question: "Where are your people today, and roughly how many in each country?",
     why: "The whole deal parameterizes on this — pricing, entities, compliance, demo content.",
     listenFor: ["country names", "rough counts", '"I\'d have to check" (nobody owns it)'],
     followUp: "Who could pull that list together for us this week?",
@@ -72,7 +71,7 @@ export const DISCOVERY: DiscoveryQ[] = [
     phase: "first_meeting",
     audience: "ops",
     question:
-      "In each country — are they employees or contractors, and who is their legal employer today?",
+      "Are these folks employees or contractors — and who's the legal employer today?",
     why: "SubcontractorHub's 'contractors' in Bulgaria were another company's employees — that changed the whole onboarding path (notice periods).",
     listenFor: [
       "vendor relationships",
@@ -89,7 +88,7 @@ export const DISCOVERY: DiscoveryQ[] = [
     phase: "first_meeting",
     audience: "ops",
     question:
-      "How does money physically reach them today — individual wires, a platform, a local entity?",
+      "How do they physically get paid today? — individual wires, a platform, a local entity",
     why: "Individual wires (SubcontractorHub paid ~25 people that way) mean fees, effort, and compliance signals — the fastest pain to name.",
     listenFor: [
       "individual wires",
@@ -109,7 +108,7 @@ export const DISCOVERY: DiscoveryQ[] = [
     phase: "needs_analysis",
     audience: "ops",
     question:
-      "How much direction and control do you exercise over the contractors — and is the work open-ended?",
+      "How much direction do you give the contractors day to day — and is the work open-ended?",
     why: "Nate's own words on the demo: 'borderline their employees.' Open-ended, directed work is the misclassification tell — and buyers minimize control when asked directly, so the clean-sounding answer needs a branch too.",
     listenFor: [
       "we manage them daily",
@@ -127,8 +126,7 @@ export const DISCOVERY: DiscoveryQ[] = [
     category: "classification",
     phase: "needs_analysis",
     audience: "ops",
-    question:
-      "If any of them are employed by a local company, what notice periods or obligations bind them before they could move?",
+    question: "Are any of them on someone else's payroll with notice periods attached?",
     why: "Shane's Bulgaria probe — notice periods stretch every timeline promise; Bryce made us caveat exactly this in client docs.",
     listenFor: ["they're a vendor's staff", "we don't know", "they own the company"],
     followUp: "Who can confirm that before we set a start date?",
@@ -141,7 +139,7 @@ export const DISCOVERY: DiscoveryQ[] = [
     phase: "needs_analysis",
     audience: "ops",
     question:
-      "Does anyone live in a different country than their nationality — or than where you think they are?",
+      "Does anyone live somewhere different than you think — or than their passport says?",
     why: "The Bulgarian living in Spain: employment happens where they LIVE, and work authorization there decides everything. Foreign nationals on permits carry the same question in payroll costume.",
     listenFor: [
       "remote inside the EU",
@@ -159,8 +157,7 @@ export const DISCOVERY: DiscoveryQ[] = [
     category: "risk",
     phase: "first_meeting",
     audience: "exec",
-    question:
-      "What makes this urgent right now — IP, compliance, an audit, a client demand?",
+    question: "What's making this urgent right now?",
     why: "Justin was 'hyper-focused' on IP in Bulgaria; the accounting team wanted fee relief. The exec's driver is the deal's engine — and no named driver means this is research, so qualify it as research.",
     listenFor: [
       "IP",
@@ -178,8 +175,7 @@ export const DISCOVERY: DiscoveryQ[] = [
     category: "risk",
     phase: "needs_analysis",
     audience: "exec",
-    question:
-      "Who owns the IP your international workers create under today's contracts?",
+    question: "Who owns the IP your international workers are creating today?",
     why: "EOR employment contracts carry IP language a contractor invoice never does — the exact wedge that moved SubcontractorHub. Whether a US-drafted assignment even holds where the worker lives is a local-law question, and some countries restrict how future or moral rights transfer at all.",
     listenFor: ["we assume we do", "never looked", "their company owns it"],
     followUp:
@@ -193,7 +189,7 @@ export const DISCOVERY: DiscoveryQ[] = [
     phase: "needs_analysis",
     audience: "ops",
     question:
-      "Have the recurring wires into those countries ever drawn questions — from your own finance team or from a bank?",
+      "Have the wires into those countries ever drawn questions — from your finance team or a bank?",
     why: "Recurring transfers to individuals invite bank compliance queries and make the underlying arrangement visible, and finance feels the fees and the effort every cycle. The tax question itself turns on what the people do in-country, not on how they're paid — eor-pe-activity carries that one.",
     listenFor: [
       "bank questions",
@@ -211,7 +207,7 @@ export const DISCOVERY: DiscoveryQ[] = [
     category: "incumbent",
     phase: "first_meeting",
     audience: "ops",
-    question: "Who handles global for you today — and what's working and what isn't?",
+    question: "Who handles global for you today, and how's that going?",
     why: "SubcontractorHub tried G-P through TriNet and 'they don't integrate' — the incumbent's failure is the opening.",
     listenFor: ["G-P", "Deel", "didn't integrate", "too expensive", "no support"],
     followUp: "What would have to be true for you to move?",
@@ -223,7 +219,7 @@ export const DISCOVERY: DiscoveryQ[] = [
     category: "incumbent",
     phase: "needs_analysis",
     audience: "partner",
-    question: "When does the current provider's contract come up for renewal?",
+    question: "When does the current provider's contract renew?",
     why: "Renewal timing decides whether to open the conversation now or hold — the Infiniti/Nextep play.",
     listenFor: ["a date", "auto-renews", "month to month", "I'd have to check"],
     followUp: "Who owns that renewal decision?",
@@ -236,8 +232,7 @@ export const DISCOVERY: DiscoveryQ[] = [
     category: "money",
     phase: "needs_analysis",
     audience: "ops",
-    question:
-      "What do the wires and conversions cost per payment — on your side and theirs?",
+    question: "What do the wires and conversions cost you per payment run?",
     why: "Workers were eating conversion fees on their own pay; the company paid per-wire fees on ~25 people monthly. Concrete, monthly, fixable.",
     listenFor: ["per-wire fee", "workers complain", "we never added it up"],
     followUp: "Would one flat per-person fee with unlimited transfers change the math?",
@@ -250,7 +245,7 @@ export const DISCOVERY: DiscoveryQ[] = [
     phase: "demo",
     audience: "ops",
     question:
-      "If you could pay weekly or monthly without extra transfer cost, would that change how you operate?",
+      "If you could pay weekly without extra transfer cost, would that change anything?",
     why: "The wallet's unlimited-transfer model is a genuine differentiator for contractor-heavy teams — and an indifferent 'monthly's fine' is the most common real answer, so the card has to hear it.",
     listenFor: [
       "they ask for advances",
@@ -268,7 +263,7 @@ export const DISCOVERY: DiscoveryQ[] = [
     phase: "first_meeting",
     audience: "exec",
     question:
-      "What's the date you're working against — and what actually happens on that date?",
+      "What date are you working against — and what actually happens on that date?",
     why: "Chassie's Aug 6 wasn't a go-live; it was a leadership review needing a DIRECTION. Selling to the real event wins the real deadline.",
     listenFor: ["board/leadership meeting", "client promised date", "quarter end"],
     followUp: "What do you need in hand for that day — a decision, a price, a demo?",
@@ -280,7 +275,7 @@ export const DISCOVERY: DiscoveryQ[] = [
     category: "timing",
     phase: "needs_analysis",
     audience: "exec",
-    question: "If the timeline slips two weeks, what breaks?",
+    question: "If this slips two weeks, what breaks?",
     why: "Justin pushed hard on Sept 1; Bryce insisted on government-timing caveats. Knowing the slack prevents overpromising.",
     listenFor: ["nothing really", "a client walks", "we lose the hire"],
     followUp: "So is that date a commitment or a preference — and whose?",
@@ -297,7 +292,7 @@ export const DISCOVERY: DiscoveryQ[] = [
     phase: "investigate",
     audience: "partner",
     question:
-      "Do you want to hold the client contract yourself (resale, your markup) or refer it and we contract direct?",
+      "Do you want to hold the client contract yourself, or refer it and we contract direct?",
     why: "Bryce flipped to referral to dodge the liability chain; Chassie wants resale to stay in the relationship. The chair defines the whole deal shape: whose name is on the agreement, who carries the funding obligation each cycle, and who keeps the markup.",
     listenFor: [
       "we want the relationship",
@@ -314,8 +309,7 @@ export const DISCOVERY: DiscoveryQ[] = [
     category: "commercial",
     phase: "proposal",
     audience: "partner",
-    question:
-      "When the client pays late, whose cash covers the payroll that cycle — and does everyone know what security applies either way?",
+    question: "When the client pays late, whose cash covers payroll that cycle?",
     why: "The deposit waiver exists INSIDE the partner structure; on referral, standard security applies — the exact friction that nearly stalled Advocate Pay.",
     listenFor: [
       "surprise at security terms",
@@ -345,7 +339,7 @@ export const DISCOVERY: DiscoveryQ[] = [
     phase: "needs_analysis",
     audience: "ops",
     question:
-      "Beyond payroll — do you need time and labor, expense management, or contractor tiers in scope?",
+      "Beyond payroll — do you need time and labor, expenses, or contractor tiers in scope?",
     why: "The intake form asks; better to know in discovery. ESC's TLM need was 'unknown' in the licensing memo — a gap that stalls pricing.",
     listenFor: ["hourly workers", "expense chaos", "TLM"],
     followUp: "Which of those is day-one versus later?",
@@ -358,7 +352,7 @@ export const DISCOVERY: DiscoveryQ[] = [
     phase: "needs_analysis",
     audience: "partner",
     question:
-      "Do they want to BUY a global service, or OPERATE payroll themselves on licensed technology?",
+      "Do they want to buy a global service, or run payroll themselves on licensed tech?",
     why: "ESC's real ask became MPEX licensing — operate, don't buy. Catching this early routes the deal to the right structure entirely.",
     listenFor: [
       "we want to run it",
@@ -377,7 +371,7 @@ export const DISCOVERY: DiscoveryQ[] = [
     phase: "first_meeting",
     audience: "partner",
     question:
-      "Who besides your main contact feels this problem — who's the executive voice and who's the operator voice?",
+      "Who else feels this problem — who's the exec voice and who's the operator voice?",
     why: "The SubcontractorHub call split exactly this way (CEO on IP, accounting on fees). One-thread deals stall when that person goes quiet.",
     listenFor: ["only one name", "the CEO cares about X, ops cares about Y"],
     followUp: "Can we get both voices in the next meeting?",
@@ -389,8 +383,7 @@ export const DISCOVERY: DiscoveryQ[] = [
     category: "commercial",
     phase: "demo",
     audience: "exec",
-    question:
-      "When you take this to a decision, who's in the room and what will they ask?",
+    question: "Who's in the room when this goes to a decision, and what will they ask?",
     why: "Chassie carries a direction to leadership; arming the internal champion with answers wins meetings we're not in.",
     listenFor: ["I present to leadership", "the CEO decides", "finance will push back"],
     followUp: "What one-pager would make that meeting easy for you?",
@@ -402,8 +395,7 @@ export const DISCOVERY: DiscoveryQ[] = [
     category: "footprint",
     phase: "needs_analysis",
     audience: "exec",
-    question:
-      "Where do you plan to hire next — new countries or deepening the ones you're in?",
+    question: "Where are you planning to hire next?",
     why: "Greenfield growth changes product fit (entities vs EOR) and gives the proposal a forward story. Executives are the only people who know which markets are already committed to a customer or a candidate and which are still speculative.",
     listenFor: ["new markets", "doubling the team", "hiring freeze"],
     followUp:
@@ -417,7 +409,7 @@ export const DISCOVERY: DiscoveryQ[] = [
     phase: "needs_analysis",
     audience: "exec",
     question:
-      "How confident are you that pay actually reaching the workers matches what you're sending?",
+      "How confident are you that what reaches the workers matches what you're sending?",
     why: "Justin suspected wage scraping in Bulgaria — visibility the current intermediary arrangement can never give. A direct-wire buyer sees their own side clearly; the live thread there is the conversion spread the worker eats, which hands off to mo-fees.",
     listenFor: [
       "we can't see that",
@@ -434,8 +426,7 @@ export const DISCOVERY: DiscoveryQ[] = [
     category: "incumbent",
     phase: "demo",
     audience: "ops",
-    question:
-      "What did integration with your current stack actually look like — and where did it fall short?",
+    question: "How well does the current provider actually integrate with your stack?",
     why: "'They said they integrate, and essentially they don't' killed the G-P/TriNet path. Our one-platform story lands hardest here — and a buyer whose integration genuinely works needs a different door, not the same pitch.",
     listenFor: ["double entry", "csv exports", "no sync", "it actually works fine"],
     followUp: "What's the one thing you'd still change about the current setup?",
