@@ -216,7 +216,7 @@ export function PlaybookClient({
           className={`${styles.tab} ${tab === "learned" ? styles.tabOn : ""}`}
           onClick={() => setTab("learned")}
         >
-          What the book learned
+          What we&apos;ve learned
           <span className={styles.chipN}>
             {lessons.length + market.length + prospectAsks.length}
           </span>
