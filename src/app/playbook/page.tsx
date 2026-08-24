@@ -140,7 +140,7 @@ export default async function PlaybookPage({
             {/* One template string: the compiler drops the boundary space
                 between an expression child and its text sibling here, which
                 rendered "113questions" (caught live, 2026-08-24). */}
-            {`${questions.length} questions across EOR, contractor management, and global payroll, shaped by the scenario you're actually in. Below: what the book has learned, carried across every account.`}
+            {`${questions.length} questions across EOR, contractor management, and global payroll, shaped by the scenario you're actually in. Below: what we've learned, carried across every account.`}
           </p>
         </div>
         {srDrafts.length > 0 && (
