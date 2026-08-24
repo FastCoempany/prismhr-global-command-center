@@ -205,3 +205,23 @@ describe("new content keeps the house doctrine", () => {
     assert.ok(cmNaive.length > 0, "contractor still has no naive question");
   });
 });
+
+describe("the branch map routes only to real questions", () => {
+  test("every branch link lands on a bank id and never overruns listenFor", async () => {
+    const { BRANCH_NEXT } = await import("@/lib/intel/branches");
+    const byId = new Map([...DISCOVERY, ...PRODUCT_BANK].map((q) => [q.id, q]));
+    for (const [qid, row] of Object.entries(BRANCH_NEXT)) {
+      const q = byId.get(qid);
+      assert.ok(q, `${qid} left the bank but still carries branches`);
+      assert.ok(
+        row.length <= q!.listenFor.length,
+        `${qid} has more branches than listenFor entries`,
+      );
+      for (const next of row) {
+        if (next === null) continue;
+        assert.ok(byId.has(next), `${qid} branches to unknown question ${next}`);
+        assert.notEqual(next, qid, `${qid} branches to itself`);
+      }
+    }
+  });
+});
