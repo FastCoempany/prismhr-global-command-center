@@ -100,6 +100,66 @@ needs ("not an office, not a bank account, a registered company"). The test,
 line by line: read it flat — does it still do work, and would a person say it
 without feeling like they're delivering a line?
 
+## The playbook authoring canon (founder-decreed 2026-08-25)
+
+Binding on every playbook surface — concept files now, production when the
+freeze lifts. The playbook is a universal tool: no account or person names on
+any surface, ever, unless explicitly directed.
+
+1. **The consult register.** Thirty minutes of consultation every call, all
+   scenarios. Every question carries its own why in the same breath or on its
+   tail — and the spoken why is the prospect's why, what answering gets THEM.
+   Seller-side narration is banned from spoken lines ("we've got a live deal
+   to work" is pipeline talk); tactical framing lives only in operator-facing
+   leads the prospect never hears.
+2. **Teach on every don't-know.** A don't-know is never a dead end: hand them
+   the exact list to gather, send it today, and book time to go through the
+   answers together. Every don't-know routes to a teach or files a question
+   to the client list. Loaded questions name their kinds ("promised anything
+   — a start date, a salary, benefits, a title?").
+3. **The secondhand law.** A PEO holds its client's facts secondhand at best.
+   Asks about a client's hiring stage, pay, or registrations speak in relayed
+   knowledge ("did the client say…"), answer rows reflect what a PEO would
+   actually know, and a don't-know option always exists on client-fact asks.
+4. **The give-back law.** Before any next-step ask, play back what their
+   answers add up to — a read-out per arc, bulleted, ending on a check
+   question. The teach paths' give-back is the list itself. Gathering all
+   call and then asking for a next step is banned.
+5. **The sweep law.** A path arriving at the close with a next step already
+   set and dated skips the ritual ask (never re-ask a settled thing) and runs
+   the room sweep instead — which explicitly steps past the client on deck
+   before fishing for the next one. A surfaced client loops back into the
+   consult on the same call.
+6. **The close ritual.** Every path ends with a next step on the calendar.
+   The ritual ask is the taped verbatim; the locks (demo booked with the room
+   named, numbers with a review call booked, the internal-meeting re-convene
+   with the one-pager out, the digest menu with a Friday time theirs to
+   cancel) close every call.
+7. **Discovery progresses naturally and anticipates nuance.** Each question
+   grows out of the answer before it — no checklists. Answer rows carry the
+   nuance a real PEO brings: mixed setups, "it depends on the client," the
+   wrong person on the call (files internal homework and moves on), "we
+   haven't thought about what we'd charge." The PEO's own operation (systems,
+   service front, billing, the go-to person) gets discovery, not just the
+   client's deal — the record shows prospects volunteering exactly this when
+   unasked.
+8. **The conversational register.** The test is how people converse, not how
+   they write. No mid-sentence noun catalogs ("— the cost, the timeline, and
+   the contract"); deliverables get said as spoken clauses ("what it would
+   cost, how long it would take, and what everyone signs"). Abstract claims
+   name a couple of concrete examples ("required employer costs — pension
+   and social contributions, in some places a mandated extra month's pay"),
+   never figures. Enumerations render as bullets with a plain subtext line
+   explaining each.
+9. **The armer doctrine.** This is a channel sale — the same partner across
+   the table for years. Offers of help keep us on their side of the table; a
+   probe that makes them account for themselves moves us across it. Every
+   ask and follow-up passes that test.
+10. **Evidence or nothing.** Every lead and cite reads a rung of the ladder
+    (ON TAPE / FILED THREAD / CALL NOTES / ❖ LESSON); nothing is invented —
+    no origin stories, no facts the record doesn't hold. Cite labels are
+    evidence, never coined doctrine slogans.
+
 ## The direct doctrine (Russ Jones, SVP of Sales — SKO, Kansas City, 2026-08-03/06)
 
 The CSM gate is down. Sellers are greenlit to market, sell, and reach out
