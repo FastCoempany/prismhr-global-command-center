@@ -43,7 +43,12 @@ import { corpusFor, extractDealIntel } from "@/lib/intel/extract";
 import { cleanSfPaste, parseSfTimeline, scrubSecrets } from "@/lib/sf-timeline";
 import { pasteFingerprint } from "@/lib/paste-files";
 import { redactMoney } from "@/lib/intel/lexicon";
-import { bindAccountId, cleanLogBody, moveDoneKey } from "@/lib/room/bind";
+import {
+  bindAccountId,
+  cleanLogBody,
+  moveDoneKey,
+  MOVE_DONE_STATUS,
+} from "@/lib/room/bind";
 import { createAccountNoteRow } from "@/lib/notes/write";
 import { applyStepComplete } from "@/lib/dashboard/complete";
 import { mirrorNoteToSheet } from "@/lib/today/mirror";
@@ -619,8 +624,12 @@ export async function roomMoveDone(
     } else {
       await prisma.accountDisposition.upsert({
         where: { accountId: key },
-        create: { accountId: key, status: "worked", reason: new Date().toISOString() },
-        update: { status: "worked", reason: new Date().toISOString() },
+        create: {
+          accountId: key,
+          status: MOVE_DONE_STATUS,
+          reason: new Date().toISOString(),
+        },
+        update: { status: MOVE_DONE_STATUS, reason: new Date().toISOString() },
       });
     }
     refresh();
