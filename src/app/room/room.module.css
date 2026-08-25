@@ -1890,3 +1890,87 @@ button.sdRadio:hover {
   color: var(--color-ink-disabled);
   margin-top: 4px;
 }
+
+/* ── the fold ──────────────────────────────────────────────────────────────
+   A row reads as a page when you're working it and as a line when you're
+   scanning. Folding takes the whole row — the deal column AND the record
+   glass — leaving the account line and nothing else. The caret is the sign;
+   the whole header line is the target, because an 11px glyph isn't one. */
+.shut {
+  border: 0;
+  background: none;
+  color: var(--faint);
+  font-size: 12px;
+  line-height: 1;
+  padding: 0 2px 0 0;
+  cursor: pointer;
+  align-self: center;
+}
+.shut:hover {
+  color: var(--ink);
+}
+.nmline {
+  cursor: pointer;
+  border-radius: 8px;
+}
+.nmline:hover {
+  background: rgba(10, 28, 64, 0.03);
+  box-shadow: 0 0 0 7px rgba(10, 28, 64, 0.03);
+}
+.rowShut {
+  grid-template-columns: 1fr;
+  padding: 8px 0 7px;
+}
+.rowShut .deal > *:not(.nmline) {
+  display: none;
+}
+.rowShut .rec {
+  display: none;
+}
+.shutAll {
+  margin-left: 10px;
+  border: 1px solid var(--hair);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.5);
+  color: var(--soft);
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  cursor: pointer;
+}
+.shutAll:hover {
+  border-color: var(--quiet);
+  color: var(--ink);
+}
+
+/* The day's mark. Forest, because it is real work done — and on the title
+   line, so a folded board still says who has been worked. */
+.worked {
+  border: 1px solid rgba(30, 91, 70, 0.4);
+  background: rgba(34, 197, 94, 0.1);
+  color: var(--forest);
+  border-radius: 5px;
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  padding: 1px 8px;
+  cursor: pointer;
+}
+.worked:hover:not(:disabled) {
+  border-color: var(--forest);
+}
+.worked:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* Research now rides the chip run, so it takes the chips' scale. */
+.chips .rsrchBtn {
+  font-size: 10.5px;
+  padding: 1px 9px;
+  border-radius: 5px;
+}

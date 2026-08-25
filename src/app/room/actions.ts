@@ -42,7 +42,7 @@ import { corpusFor, extractDealIntel } from "@/lib/intel/extract";
 import { cleanSfPaste, parseSfTimeline, scrubSecrets } from "@/lib/sf-timeline";
 import { pasteFingerprint } from "@/lib/paste-files";
 import { redactMoney } from "@/lib/intel/lexicon";
-import { bindAccountId, cleanLogBody } from "@/lib/room/bind";
+import { bindAccountId, cleanLogBody, moveDoneKey } from "@/lib/room/bind";
 import { createAccountNoteRow } from "@/lib/notes/write";
 import { applyStepComplete } from "@/lib/dashboard/complete";
 import { mirrorNoteToSheet } from "@/lib/today/mirror";
@@ -560,6 +560,37 @@ export async function roomActionUndo(
     return { ok: true };
   } catch {
     return { ok: false, reason: "The undo didn't take. Try again." };
+  }
+}
+
+// "I worked this one." The stage close is the richer signal and stays the
+// primary path, but it only exists when something is staged — a row reading
+// "Chase Bill. Quiet 9 days." asked for a move and gave the operator no way to
+// answer. This is that way. The mark is the day's, not the deal's: it clears
+// overnight, so tomorrow's read stands on its own.
+export async function roomMoveDone(
+  accountId: string,
+  undo?: boolean,
+): Promise<{ ok: boolean; reason?: string }> {
+  const acct = bindAccountId(accountId, peos);
+  if (!acct) return { ok: false, reason: "That row isn't bound to a known account." };
+  if (!(await requireWrite())) return { ok: false, reason: "Read-only session." };
+  const key = moveDoneKey(acct.id);
+  try {
+    const prisma = getPrisma();
+    if (undo) {
+      await prisma.accountDisposition.deleteMany({ where: { accountId: key } });
+    } else {
+      await prisma.accountDisposition.upsert({
+        where: { accountId: key },
+        create: { accountId: key, status: "worked", reason: new Date().toISOString() },
+        update: { status: "worked", reason: new Date().toISOString() },
+      });
+    }
+    refresh();
+    return { ok: true };
+  } catch {
+    return { ok: false, reason: "That didn't save. Try again." };
   }
 }
 
