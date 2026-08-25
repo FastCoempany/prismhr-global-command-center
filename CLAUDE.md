@@ -130,7 +130,16 @@ any surface, ever, unless explicitly directed.
    tail — and the spoken why is the prospect's why, what answering gets THEM.
    Seller-side narration is banned from spoken lines ("we've got a live deal
    to work" is pipeline talk); tactical framing lives only in operator-facing
-   leads the prospect never hears. Thirty minutes is the depth of the design,
+   leads the prospect never hears. The why explains the world, never the
+   interview: it talks about the thing (what clients mean, what countries
+   do, what breaks) — never about the craft of asking ("I ask for the
+   words," "I press on this one," "the reason I start there") — and it never
+   echoes the question's own phrasing back ("in their words? I ask for the
+   words…"). "I ask because" is one attachment among many, not a template;
+   when every ask carries the same connective, the formula itself becomes a
+   device. Often the strongest form is no connective at all: the question,
+   then the reason as its own plain sentence. Thirty minutes is the depth of
+   the design,
    not a stopwatch: no path exits before the give-back and the close, and
    nothing pads to fill a clock. When the prospect ends the call early, the
    close ritual still runs.
