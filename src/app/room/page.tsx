@@ -45,6 +45,7 @@ import { digestFor, digestForCardName } from "@/lib/intel/digest";
 import { COUNTRY_NAME } from "@/lib/intel/lexicon";
 import { suggestChecks } from "@/lib/intel/evidence";
 import { daysBetween, meterRead, readDeal, type RoomRead } from "@/lib/room/engine";
+import { moveDoneKey } from "@/lib/room/bind";
 import { lastTouchRead } from "@/lib/room/touch";
 import { isMeetingNote } from "@/lib/intel/meeting";
 import { buildStageRail } from "@/lib/room/stages-view";
@@ -170,9 +171,14 @@ export default async function RoomPage() {
     const country = intel.countries[0]
       ? (COUNTRY_NAME[intel.countries[0].value] ?? intel.countries[0].value)
       : "";
+    // Identity only: what the deal IS, not when it's due. The timing phrase used
+    // to ride here, but it is whatever fragment the urgency regex matched in the
+    // record — "deadline" on one row, a full sentence on the next — so the strip
+    // read like an alarm on whichever account happened to have prose. The wall
+    // still lands where the canon puts it: the move's own reason line, which
+    // readDeal() writes from the same intel.timing below.
     const meta = [
       intel.chair === "resale" ? "RESALE" : intel.chair === "referral" ? "REFERRAL" : "",
-      intel.timing?.value.phrase ?? "",
       country,
     ]
       .filter(Boolean)
@@ -508,6 +514,7 @@ export default async function RoomPage() {
       owed,
       health: read.health,
       rank: 0,
+      workedToday: accountId ? dispositions.has(moveDoneKey(accountId, now)) : false,
       canWrite: data.canWrite,
     });
   }

@@ -5,7 +5,14 @@
 // check-ins engine in the right-margin drawer; the eye drawer holding what
 // used to be "then, if there's time". Every composer is bound to its row.
 
-import { Fragment, useMemo, useRef, useState, useTransition } from "react";
+import {
+  Fragment,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  useTransition,
+} from "react";
 import Link from "next/link";
 import { useDismiss } from "@/components/use-dismiss";
 import { ChiClock } from "../today-client";
@@ -35,6 +42,7 @@ import {
   roomGapsRefill,
   roomLossDismiss,
   roomMarkLost,
+  roomMoveDone,
   roomMarkWon,
   roomResearch,
   roomRetire,
@@ -55,6 +63,26 @@ import { readFileToText } from "./read-file";
 import type { StageView } from "@/lib/room/stages-view";
 import styles from "./room.module.css";
 import TheirsLine, { type TheirsGem } from "./theirs-line";
+
+// The fold, remembered per browser. A no-op subscription is enough for
+// useSyncExternalStore's hydration probe: the server renders every row open,
+// and the stored preference only applies once the client has taken over.
+const SHUT_KEY = "room:shut";
+const EMPTY_SHUT: ReadonlySet<string> = new Set();
+
+function subscribeNoop() {
+  return () => {};
+}
+
+function readShut(): Set<string> {
+  if (typeof window === "undefined") return new Set();
+  try {
+    const raw = JSON.parse(localStorage.getItem(SHUT_KEY) ?? "[]") as unknown;
+    return new Set(Array.isArray(raw) ? raw.filter((x) => typeof x === "string") : []);
+  } catch {
+    return new Set();
+  }
+}
 
 export type RoomRow = {
   accountId: string;
@@ -113,6 +141,8 @@ export type RoomRow = {
   researchAt: string; // ISO of the last research pass, "" if never run
   health: "red" | "amber" | "green" | "quiet";
   rank: number;
+  /** The day's move already closed on this row (Chicago day; clears overnight). */
+  workedToday: boolean;
   canWrite: boolean;
 };
 
@@ -250,7 +280,19 @@ type FreshCap = {
   promoted?: boolean;
 };
 
-function Row({ row }: { row: RoomRow }) {
+function Row({
+  row,
+  collapsed,
+  onToggle,
+}: {
+  row: RoomRow;
+  collapsed: boolean;
+  onToggle: () => void;
+}) {
+  // The day's mark, held locally so the ✓ lands the instant it's clicked; the
+  // server round trip re-derives it on the next paint.
+  const [workedNow, setWorkedNow] = useState(false);
+  const worked = row.workedToday || workedNow;
   const [freshCaps, setFreshCaps] = useState<FreshCap[]>([]);
   const [freshInfo, setFreshInfo] = useState<
     {
@@ -620,25 +662,45 @@ function Row({ row }: { row: RoomRow }) {
       else setNote(r.reason ?? "The undo didn't take.");
     });
   };
+  // Done means two things at once, and the row needs both. A staged item closes
+  // where it always closed — that's the record's version of the truth. The
+  // day's mark rides alongside it so EVERY row can answer the read, including
+  // the ones with nothing staged, which had no way to answer at all.
   const submitClose = () => {
-    if (!row.outstanding || closePending || closed) return;
+    if (closePending || (closed && worked)) return;
     const o = row.outstanding;
     startClose(async () => {
-      const r = await roomClose({
-        accountId: row.accountId,
-        cardId: row.cardId,
-        node: o.node,
-        index: o.index,
-        doneKey: o.doneKey,
-        item: o.item,
-        cardName: row.name,
-      });
-      if (r.ok) {
-        setClosedKey(o.doneKey);
-        setFreshInfo((f) => [{ text: `Closed: ${o.item}` }, ...f]);
-      } else setNote(r.reason ?? "The close didn't save.");
+      if (o && !closed) {
+        const r = await roomClose({
+          accountId: row.accountId,
+          cardId: row.cardId,
+          node: o.node,
+          index: o.index,
+          doneKey: o.doneKey,
+          item: o.item,
+          cardName: row.name,
+        });
+        if (r.ok) {
+          setClosedKey(o.doneKey);
+          setFreshInfo((f) => [{ text: `Closed: ${o.item}` }, ...f]);
+        } else {
+          setNote(r.reason ?? "The close didn't save.");
+          return;
+        }
+      }
+      const m = await roomMoveDone(row.accountId);
+      if (m.ok) setWorkedNow(true);
+      else setNote(m.reason ?? "That didn't save.");
     });
   };
+
+  // Taking the mark back — the operator's own correction, same day only.
+  const undoWorked = () =>
+    startClose(async () => {
+      const r = await roomMoveDone(row.accountId, true);
+      if (r.ok) setWorkedNow(false);
+      else setNote(r.reason ?? "That didn't save.");
+    });
   const todoOp = (id: string, op: "done" | "undo" | "tomorrow" | "now" | "drop") =>
     start(async () => {
       const r = await roomTodoSet(row.accountId, id, op);
@@ -670,9 +732,34 @@ function Row({ row }: { row: RoomRow }) {
   const topToday = liveOpen[0]?.body ?? liveOwed[0]?.text ?? "";
 
   return (
-    <div className={row.outcome ? `${styles.row} ${styles.rowClosed}` : styles.row}>
+    <div
+      className={[
+        styles.row,
+        row.outcome ? styles.rowClosed : "",
+        collapsed ? styles.rowShut : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
       <div className={styles.deal}>
-        <div className={styles.nmline}>
+        {/* The whole line folds the row — a caret this small can't be the only
+            target. Links, controls, and the MULTI hovercard keep their clicks. */}
+        <div
+          className={styles.nmline}
+          onClick={(e) => {
+            if ((e.target as HTMLElement).closest(`a,button,.${styles.multi}`)) return;
+            onToggle();
+          }}
+        >
+          <button
+            type="button"
+            className={styles.shut}
+            aria-expanded={!collapsed}
+            title={collapsed ? "Open this row" : "Collapse this row"}
+            onClick={onToggle}
+          >
+            {collapsed ? "▸" : "▾"}
+          </button>
           <span className={styles.nm}>
             <span className={styles.nmSide}>
               <Briefed
@@ -741,26 +828,146 @@ function Row({ row }: { row: RoomRow }) {
                 ⚡
               </button>
             )}
+            {/* Research rides the title line. The run date leaves the label
+                for the tooltip: it matters when you're about to re-run, not on
+                every glance down the page. */}
+            {row.canWrite && row.accountId && (
+              <button
+                type="button"
+                className={styles.rsrchChip}
+                disabled={rsrchPending}
+                onClick={runResearchPass}
+                title={`${
+                  row.researchAt
+                    ? `Last run ${new Date(row.researchAt).toLocaleDateString("en-US", {
+                        timeZone: "America/Chicago",
+                        month: "numeric",
+                        day: "numeric",
+                      })}.`
+                    : "Never run. The first pass is the deep one."
+                } Runs the deep pass: their site, their postings, the news, the people on this deal.`}
+              >
+                {rsrchPending
+                  ? "RESEARCHING…"
+                  : row.researchAt
+                    ? "RESEARCH ⟳"
+                    : "RESEARCH — NEVER ⟳"}
+              </button>
+            )}
+            {/* The day's mark. It rides the title line so it survives the fold —
+                a folded board still says who has been worked. */}
+            {worked && (
+              <button
+                type="button"
+                className={styles.worked}
+                disabled={closePending}
+                onClick={undoWorked}
+                title="Worked today. Click to take the mark back."
+              >
+                ✓ WORKED
+              </button>
+            )}
           </span>
         </div>
 
-        {/* The research control. Labelled, dated, and impossible to miss — a
-            refresh button that doesn't say when it last ran gets re-run blind. */}
-        {row.canWrite && row.accountId && (
-          <button
-            type="button"
-            className={styles.rsrchChip}
-            disabled={rsrchPending}
-            onClick={runResearchPass}
-            title="Runs the deep pass: their site, their postings, the news, the people on this deal. The first pass is the deep one."
-          >
-            {rsrchPending
-              ? "RESEARCHING…"
-              : row.researchAt
-                ? `RESEARCH ${new Date(row.researchAt).toLocaleDateString("en-US", { timeZone: "America/Chicago", month: "numeric", day: "numeric" })} ⟳`
-                : "RESEARCH — NEVER ⟳"}
-          </button>
-        )}
+        {/* The move sits under the identity line, where the research control
+            used to be: the row's one instruction, before the instruments that
+            explain it. The whole slot moves — it carries the closed states
+            too, so it is the row's verdict line, not just its next move. */}
+        <div className={styles.movewrap}>
+          {row.outcome ? (
+            <>
+              <span className={styles.lbl}>
+                {row.outcome.status === "won" ? "CLOSED WON" : "CLOSED LOST"}
+              </span>
+              <p className={`${styles.move} ${styles.thin}`}>
+                {row.outcome.phrase ? `“${row.outcome.phrase}”` : "Closed by your call."}{" "}
+                The record keeps everything.
+              </p>
+              {row.canWrite && (
+                <span className={styles.lossBtns}>
+                  <button
+                    type="button"
+                    className={styles.ghost}
+                    disabled={pending}
+                    onClick={retireRow}
+                  >
+                    Retire the row
+                  </button>
+                </span>
+              )}
+            </>
+          ) : lossLive ? (
+            <>
+              <span className={styles.lbl}>
+                {row.loss!.status === "won"
+                  ? "THE RECORD READS WON"
+                  : "THE RECORD READS LOST"}
+              </span>
+              <p className={styles.move}>
+                Filed {row.loss!.date}: “{row.loss!.phrase}”. Your call: stamp the meter,
+                or keep working it.
+              </p>
+              {row.canWrite && (
+                <span className={styles.lossBtns}>
+                  <button
+                    type="button"
+                    className={styles.lossBtn}
+                    disabled={pending}
+                    onClick={row.loss!.status === "won" ? markWon : markLost}
+                  >
+                    {row.loss!.status === "won"
+                      ? "Confirm Closed Won"
+                      : "Confirm Closed Lost"}
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.ghost}
+                    disabled={pending}
+                    onClick={keepSalvaging}
+                  >
+                    {row.loss!.status === "won" ? "Not yet" : "Keep salvaging"}
+                  </button>
+                </span>
+              )}
+            </>
+          ) : lossState === "lost" ? (
+            <>
+              <span className={styles.lbl}>CLOSED</span>
+              <p className={`${styles.move} ${styles.thin}`}>
+                The meter reads it now. The record keeps everything.
+              </p>
+            </>
+          ) : (
+            <>
+              <span className={styles.lbl}>NEXT MOVE</span>
+              {/* The gate chip is retired (founder-decreed 2026-08-19): the
+                  stage's open question lives in the UNKNOWN register with
+                  its own ✓ — the move line carries only the move. */}
+              <p className={`${styles.move} ${row.thin ? styles.thin : ""}`}>
+                {row.move}
+              </p>
+              {/* Every row can answer now. When the move names the staged item
+                  this still closes it; otherwise it marks the day — the case
+                  that used to leave the operator with no reply at all. */}
+              {row.canWrite && !worked && !(closed && !row.outstanding) && (
+                <button
+                  type="button"
+                  className={row.rank === 0 ? styles.go : styles.ghost}
+                  disabled={closePending}
+                  onClick={submitClose}
+                  title={
+                    row.outstanding && !closed
+                      ? `Closes “${row.outstanding.item}” and marks the day worked.`
+                      : "Marks the day worked. Nothing is staged to close."
+                  }
+                >
+                  {closePending ? "Saving…" : "Mark it done ✓"}
+                </button>
+              )}
+            </>
+          )}
+        </div>
         {research && (
           <div className={styles.rsrchOut}>
             {research.changed.length > 0 ? (
@@ -901,98 +1108,6 @@ function Row({ row }: { row: RoomRow }) {
                 )
               )}
             </div>
-          )}
-        </div>
-
-        <div className={styles.movewrap}>
-          {row.outcome ? (
-            <>
-              <span className={styles.lbl}>
-                {row.outcome.status === "won" ? "CLOSED WON" : "CLOSED LOST"}
-              </span>
-              <p className={`${styles.move} ${styles.thin}`}>
-                {row.outcome.phrase ? `“${row.outcome.phrase}”` : "Closed by your call."}{" "}
-                The record keeps everything.
-              </p>
-              {row.canWrite && (
-                <span className={styles.lossBtns}>
-                  <button
-                    type="button"
-                    className={styles.ghost}
-                    disabled={pending}
-                    onClick={retireRow}
-                  >
-                    Retire the row
-                  </button>
-                </span>
-              )}
-            </>
-          ) : lossLive ? (
-            <>
-              <span className={styles.lbl}>
-                {row.loss!.status === "won"
-                  ? "THE RECORD READS WON"
-                  : "THE RECORD READS LOST"}
-              </span>
-              <p className={styles.move}>
-                Filed {row.loss!.date}: “{row.loss!.phrase}”. Your call: stamp the meter,
-                or keep working it.
-              </p>
-              {row.canWrite && (
-                <span className={styles.lossBtns}>
-                  <button
-                    type="button"
-                    className={styles.lossBtn}
-                    disabled={pending}
-                    onClick={row.loss!.status === "won" ? markWon : markLost}
-                  >
-                    {row.loss!.status === "won"
-                      ? "Confirm Closed Won"
-                      : "Confirm Closed Lost"}
-                  </button>
-                  <button
-                    type="button"
-                    className={styles.ghost}
-                    disabled={pending}
-                    onClick={keepSalvaging}
-                  >
-                    {row.loss!.status === "won" ? "Not yet" : "Keep salvaging"}
-                  </button>
-                </span>
-              )}
-            </>
-          ) : lossState === "lost" ? (
-            <>
-              <span className={styles.lbl}>CLOSED</span>
-              <p className={`${styles.move} ${styles.thin}`}>
-                The meter reads it now. The record keeps everything.
-              </p>
-            </>
-          ) : (
-            <>
-              <span className={styles.lbl}>NEXT MOVE</span>
-              {/* The gate chip is retired (founder-decreed 2026-08-19): the
-                  stage's open question lives in the UNKNOWN register with
-                  its own ✓ — the move line carries only the move. */}
-              <p className={`${styles.move} ${row.thin ? styles.thin : ""}`}>
-                {row.move}
-              </p>
-              {row.canWrite &&
-                row.outstanding &&
-                !closed &&
-                row.move
-                  .toLowerCase()
-                  .includes(row.outstanding.item.slice(0, 40).toLowerCase()) && (
-                  <button
-                    type="button"
-                    className={row.rank === 0 ? styles.go : styles.ghost}
-                    disabled={closePending}
-                    onClick={submitClose}
-                  >
-                    {closePending ? "Saving…" : "Mark it done ✓"}
-                  </button>
-                )}
-            </>
           )}
         </div>
       </div>
@@ -2253,6 +2368,34 @@ export function RoomClient({
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [drawer, setDrawer] = useState<"cadence" | "eye" | null>(null);
+  // Which rows are folded. Kept per browser, not per account: this is how the
+  // operator wants to READ the board today, not a fact about the deal. The
+  // server paints expanded and the stored preference applies once hydrated, so
+  // the first paint can never disagree with itself.
+  const hydrated = useSyncExternalStore(
+    subscribeNoop,
+    () => true,
+    () => false,
+  );
+  const [shutPref, setShutPref] = useState<Set<string>>(() => readShut());
+  const shut = hydrated ? shutPref : EMPTY_SHUT;
+  const allShut = rows.length > 0 && rows.every((r) => shut.has(r.cardId));
+  const writeShut = (next: Set<string>) => {
+    setShutPref(next);
+    try {
+      localStorage.setItem(SHUT_KEY, JSON.stringify([...next]));
+    } catch {
+      /* private mode — the fold still works, it just won't survive a reload */
+    }
+  };
+  const toggleRow = (cardId: string) => {
+    const next = new Set(shut);
+    if (next.has(cardId)) next.delete(cardId);
+    else next.add(cardId);
+    writeShut(next);
+  };
+  const toggleAll = () =>
+    writeShut(allShut ? new Set() : new Set(rows.map((r) => r.cardId)));
   // Click away (or press Escape) to leave any of them — the trigger lives
   // inside each wrapper, so its own toggle still works.
   const addRef = useDismiss<HTMLSpanElement>(menuOpen, () => setMenuOpen(false));
@@ -2279,6 +2422,16 @@ export function RoomClient({
             <path d="M2 38 h44" />
           </svg>
           <span className={styles.roomName}>HOMEROOM</span>
+          {rows.length > 0 && (
+            <button
+              type="button"
+              className={styles.shutAll}
+              onClick={toggleAll}
+              title={allShut ? "Open every row" : "Fold every row to its account line"}
+            >
+              {allShut ? "Open all" : "Collapse all"}
+            </button>
+          )}
         </span>
         <span className={styles.addWrap} ref={addRef}>
           <button
@@ -2365,7 +2518,11 @@ export function RoomClient({
               </span>
             </div>
           )}
-          <Row row={r} />
+          <Row
+            row={r}
+            collapsed={shut.has(r.cardId)}
+            onToggle={() => toggleRow(r.cardId)}
+          />
         </Fragment>
       ))}
       {boardNames.length > 0 && null}

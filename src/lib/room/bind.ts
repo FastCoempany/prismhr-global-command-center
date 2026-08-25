@@ -5,8 +5,18 @@
 // it. Pure — adversarially tested.
 
 import { redactMoney } from "@/lib/intel/lexicon";
+import { chicagoDay } from "@/lib/intranet/ledger";
 
 export type KnownAccount = { id: string; name: string };
+
+// The day's move, closed. Keyed by account AND the operator's own day, so the
+// mark expires overnight on its own: tomorrow the read asks again, and a move
+// left unworked comes back saying so. Namespaced like every other marker the
+// app keeps in AccountDisposition (pastehash:, gap-dismiss:, done-filed:), so
+// it costs no migration and never collides with a real account id.
+export function moveDoneKey(accountId: string, now: Date = new Date()): string {
+  return `move-done:${accountId}:${chicagoDay(now.toISOString())}`.slice(0, 191);
+}
 
 // Resolve a submitted account id against the book. Unknown, empty, padded,
 // or look-alike ids are rejected — a row can only ever file to itself.
