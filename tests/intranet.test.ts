@@ -971,7 +971,15 @@ describe("the chain that fills the brain is wired end to end", () => {
     );
   });
   test("one flow: Send it reads AND drains, ⟳ sweeps, stop always works (V)", () => {
-    assert.ok(client.includes("runBrain"), "nothing in the room starts the chain");
+    // The chain drives through a plain POST route, never a server action —
+    // Next blocks navigation while an action is in flight, and a long
+    // catch-up locked the operator in the room (caught 2026-08-22).
+    assert.ok(client.includes('"/intranet/run"'), "nothing in the room starts the chain");
+    const runRoute = readFileSync(
+      join(root, "src/app/intranet/run/route.ts"),
+      "utf8",
+    );
+    assert.ok(runRoute.includes("runBrain"), "the run route never runs the brain");
     assert.ok(
       !client.includes("Bring the brain up to date"),
       "the second button is back",
@@ -990,10 +998,18 @@ describe("the chain that fills the brain is wired end to end", () => {
     assert.ok(runners.includes("CONCURRENT_READS"), "reads went back to single file");
     assert.ok(runners.includes("Promise.allSettled"), "a slow read blocks its batch");
     assert.ok(/sweep === false/.test(runners), "every pass re-sweeps the app");
-    assert.ok(/sweep: false/.test(client), "the loop never skips the sweep");
+    assert.ok(
+      client.includes("sweep: pass === 0 && sweep"),
+      "the loop never skips the sweep",
+    );
   });
   test("a paste is read on the spot and the operator watches the index grow (IV.3)", () => {
-    assert.ok(client.includes("readCapture"), "Keep it is fire-and-forget again");
+    assert.ok(client.includes('"/intranet/read"'), "Keep it is fire-and-forget again");
+    const readRoute = readFileSync(
+      join(root, "src/app/intranet/read/route.ts"),
+      "utf8",
+    );
+    assert.ok(readRoute.includes("readCapture"), "the read route never reads");
     assert.ok(client.includes("router.refresh"), "the rail never updates after ingest");
   });
   test("a read failure says one word, and keeps the whole truth behind it (V.6)", () => {
@@ -2017,7 +2033,6 @@ describe("the ledger surface holds the decrees (IV.8)", () => {
 describe("the room carries the brand's depth without breaking its rules (IV.9)", () => {
   const css = readFileSync(join(root, "src/app/command-center.module.css"), "utf8");
   const client = readFileSync(join(root, "src/app/intranet/intranet-client.tsx"), "utf8");
-  const stash = readFileSync(join(root, "src/components/stash/stash-dock.tsx"), "utf8");
 
   test("the Ask is the one orange move — solid, and alone", () => {
     const go = /\.itGo \{[\s\S]*?\n\}/.exec(css)?.[0] ?? "";
@@ -2035,10 +2050,8 @@ describe("the room carries the brand's depth without breaking its rules (IV.9)",
     assert.ok(css.includes("--ds-shadow-rest"), "cards sit flat on the field");
     assert.ok(css.includes("--ds-shadow-lift"), "nothing lifts on hover");
   });
-  test("the stash chip rides above the intranet's paste dock", () => {
-    assert.ok(stash.includes("usePathname"), "the chip doesn't know where it is");
-    assert.ok(/\/intranet/.test(stash), "the chip still sits on the Send button");
-  });
+  // The stash chip test retired with the stash (the Scratchpaper replaced
+  // it, 2026-08-12) — its floater needs no per-page positioning exception.
   test("a pre-digest capture replays as a sentence, not a placeholder", () => {
     const store = readFileSync(join(root, "src/lib/intranet/store.ts"), "utf8");
     assert.ok(
@@ -2136,8 +2149,23 @@ describe("the bench gadget is wired to the truth", () => {
   });
   test("the page reads the pulse — it never invents it", () => {
     assert.ok(actions.includes("export async function intranetPulse"));
-    assert.ok(client.includes("intranetPulse"), "the gadget has no wire");
+    // The wire is a plain GET, never a server action: an action response
+    // re-applies the current route and cancels in-flight navigations — the
+    // stuck Playbook tab, caught 2026-08-19.
+    assert.ok(client.includes('fetch("/intranet/pulse"'), "the gadget has no wire");
+    assert.ok(
+      !/intranetPulse\(\)/.test(client),
+      "the poll must never be a server action",
+    );
     assert.ok(/setInterval\(read, 2000\)/.test(client), "the two-second poll is gone");
+  });
+  test("a failing doc steps aside instead of starving the queue", () => {
+    const runners = readFileSync(join(root, "src/app/intranet/runners.ts"), "utf8");
+    // Never-tried docs first, stamped failures last — the 3-of-306 crawl.
+    assert.ok(runners.includes('{ promptVersion: "asc" }'), "the queue order is blind");
+    assert.ok(runners.includes("fail:${priorFails + 1}"), "a failure leaves no stamp");
+    const extract = readFileSync(join(root, "src/lib/intranet/extract.ts"), "utf8");
+    assert.ok(extract.includes("READ_BODY_CAP"), "a giant body can still eat the clock");
   });
   test("the gadget is docked, stamps its run, and takes you to it on Send it", () => {
     assert.ok(client.includes("itBgPlate"), "the gadget lost its plate");

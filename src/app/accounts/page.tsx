@@ -3,9 +3,18 @@ import { AppWayfinder } from "@/components/app-wayfinder";
 import { getAppAccess } from "@/lib/auth";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import { peos } from "@/lib/book";
+import { EXTRA_PARTNERS } from "@/lib/book/partners";
 import { contactCount, contactsFor } from "@/lib/book/contacts";
 import { peopleFor } from "@/lib/intel/people";
+import { relationshipFor } from "@/lib/intel/relationship";
+import { anyLiveGem, fetchSecondRecords } from "@/lib/activity/read";
+import { ACT_DRAFT_NS, parseActDraftBody } from "@/lib/act/lane";
+import { parseResearchBody, researchNs } from "@/lib/intel/deep-research";
 import { loadCommand } from "@/lib/command-center/data";
+import { loadDashboard } from "@/lib/dashboard/data";
+import { readOutcome } from "@/lib/dashboard/outcome";
+import { digestForCardName } from "@/lib/intel/digest";
+import { SENDBOOK_NS, recordSends } from "@/lib/sendbook/read";
 import { compositeScore, deskScore } from "@/lib/book/scoring";
 import {
   analyzePlay,
@@ -31,6 +40,17 @@ import styles from "../command-center.module.css";
 
 export const dynamic = "force-dynamic";
 
+// The live research note's first human line — the summary fallback when the
+// book-wide sweep never met the account but a paid deep pass did.
+function firstLineOf(body: string): string {
+  return (
+    body
+      .split("\n")
+      .map((l) => l.trim())
+      .find((l) => l.length > 0 && !/^[☰✎⚡▢✔☎✉✓]/.test(l)) ?? ""
+  ).slice(0, 240);
+}
+
 export default async function AccountsPage() {
   const access = await getAppAccess();
 
@@ -48,6 +68,7 @@ export default async function AccountsPage() {
   }
 
   const canAdd = access.canWrite && hasDatabaseEnv();
+  const now = new Date();
 
   // Which accounts are already on the dashboard (matched by name) — so the
   // "+ Dashboard" button can show an added state instead of doing nothing visible.
@@ -67,6 +88,20 @@ export default async function AccountsPage() {
   const engagements = await loadEngagements();
   const chipNotes = await loadAccountNotes();
   const dispositions = await loadDispositions();
+  // The risk register (founder-decreed 2026-08-20, from the SF banner on LSI
+  // Staffing): risk:<accountId> notes carry Salesforce's Account Risk Level;
+  // the newest note is the level. HIGH lights the row red — real risk is the
+  // one thing red is for.
+  const riskById = new Map<string, string>();
+  for (const [id, list] of chipNotes) {
+    if (!id.startsWith("risk:")) continue;
+    const accountId = id.slice("risk:".length);
+    const head = (list[0]?.body ?? "")
+      .split(/[\n—·]/)[0]
+      .trim()
+      .toUpperCase();
+    if (accountId && head) riskById.set(accountId, head);
+  }
   // The partner register, folded in. Partners used to own a tab; the work
   // happens account by account now, so the roster lives here — present,
   // countable, and out of the way.
@@ -93,6 +128,38 @@ export default async function AccountsPage() {
     .filter((x) => x.d?.status === "not-mine");
   const excludedIds = new Set(excluded.map((x) => x.p.id));
 
+  // The board's word on every account (founder-decreed 2026-08-20): a
+  // stamped outcome outranks any "in motion" read, a live row IS motion,
+  // and cold outreach without a row reads ENGAGED — never "in motion".
+  const boardById = new Map<string, { outcome: "won" | "lost" | null; live: boolean }>();
+  {
+    const dash = await loadDashboard();
+    if (dash.status !== "unauthenticated" && dash.status !== "database-unavailable") {
+      const idByName = new Map(peos.map((p) => [p.name.toLowerCase(), p.id]));
+      for (const card of dash.cards) {
+        const id =
+          idByName.get(card.name.toLowerCase()) ??
+          digestForCardName(card.name)?.accountId ??
+          "";
+        if (!id) continue;
+        const b = boardById.get(id) ?? { outcome: null, live: false };
+        const o = readOutcome(card.notes);
+        if (o) b.outcome = o.status;
+        else if (!card.archived) b.live = true;
+        boardById.set(id, b);
+      }
+    }
+  }
+  // Cold outreach on the record: a logged touch, a tapped Sendbook channel,
+  // or a filed outbound — the widest merge the app holds (Ted doctrine).
+  const engagedIds = new Set<string>();
+  for (const t of touches) {
+    const m = /^outreach:(.+)$/.exec(t.subjectKey);
+    if (m) engagedIds.add(m[1]);
+  }
+  for (const key of chipNotes.keys())
+    if (key.startsWith(SENDBOOK_NS)) engagedIds.add(key.slice(SENDBOOK_NS.length));
+
   // One row per partner who actually owns something in the book.
   const partnerRoster = (() => {
     const acc = new Map<
@@ -105,9 +172,16 @@ export default async function AccountsPage() {
         lastTouch: string;
       }
     >();
+    // Membership comes from the book alone (founder-decreed 2026-08-20): a
+    // partner is a CSM who owns accounts, or a name on the known-partners
+    // list. The touch log's freeform labels ENRICH a seat — they never mint
+    // one, or every early jotting ("send pricing to bryce", a pasted message)
+    // becomes a person with 0 accounts and a broken row.
+    const KNOWN = new Set<string>(EXTRA_PARTNERS.map((n) => n.trim()));
+    for (const p of peos) if (p.csm && p.csm !== "Unassigned") KNOWN.add(p.csm.trim());
     const seat = (name: string) => {
       const key = name.trim();
-      if (!key || key === "Unassigned") return null;
+      if (!key || key === "Unassigned" || !KNOWN.has(key)) return null;
       const found = acc.get(key);
       if (found) return found;
       const fresh = { name: key, accounts: 0, notes: 0, touches: 0, lastTouch: "" };
@@ -123,7 +197,13 @@ export default async function AccountsPage() {
     }
     for (const [partner, list] of partnerNotes) {
       const row = seat(partner);
-      if (row) row.notes += list.length;
+      if (!row) continue;
+      row.notes += list.length;
+      // A filed partner note is as real a touch as a logged send (Ted
+      // doctrine) — "last" reads the latest of both stores.
+      for (const n of list)
+        if (!row.lastTouch || Date.parse(n.createdAt) > Date.parse(row.lastTouch))
+          row.lastTouch = n.createdAt;
     }
     for (const t of touches) {
       const row = seat(t.label ?? "");
@@ -137,11 +217,44 @@ export default async function AccountsPage() {
     );
   })();
 
+  // The second record, one query for the whole book — the three new columns
+  // and the in-row fold read from this map.
+  const secondById = await fetchSecondRecords().catch(
+    () => new Map<string, never>() as Awaited<ReturnType<typeof fetchSecondRecords>>,
+  );
+
   const rows: AccountRow[] = peos
     .filter((p) => !excludedIds.has(p.id))
     .map((p) => {
-      const d = deskScore(p);
+      const d = deskScore(p, {
+        lastActivityIso: (chipNotes.get(p.id) ?? [])[0]?.createdAt,
+        now,
+      });
       const dem = getDemand(p.id);
+      // The relationship outranks the book seed here too (Ted doctrine):
+      // the contact this page names, mails, exports, and merges into
+      // campaign copy is the record's person, book seed only as fallback.
+      const rel = relationshipFor(chipNotes.get(p.id) ?? [], contactsFor(p.id), {
+        name: p.contactName,
+        email: p.contactEmail,
+      });
+      // Research reads BOTH stores: the book-wide sweep and the live
+      // deep-pass notes — a paid pass must never render "Not researched."
+      // The stores merge by latest (Ted doctrine): whichever pass spoke last
+      // supplies each field; the other stands in where it is silent.
+      const liveResearch = (chipNotes.get(researchNs(p.id)) ?? [])[0];
+      const liveFinding = liveResearch ? parseResearchBody(liveResearch.body) : null;
+      const liveNewer =
+        !!liveResearch &&
+        (Number.isNaN(Date.parse(researchGeneratedAt)) ||
+          Date.parse(liveResearch.createdAt) >= Date.parse(researchGeneratedAt));
+      const seedSignals = dem?.signals ?? [];
+      const liveSignals = liveFinding?.signals ?? [];
+      const seedEvidence = dem?.evidence ?? [];
+      const liveEvidence = (liveFinding?.sources ?? []).map((s) => ({
+        claim: s.title,
+        url: s.url,
+      }));
       const researchedDemand = dem?.researched ? dem.demandScore : null;
       const v = validations.get(p.id);
       const demand =
@@ -171,19 +284,35 @@ export default async function AccountsPage() {
         csm: p.csm,
         cloud: p.cloud,
         website: p.website,
-        contactName: p.contactName,
-        contactEmail: p.contactEmail,
+        contactName: rel.name,
+        contactEmail: rel.email,
         incumbent: d.incumbent,
         deskScore: d.score,
         demand,
         confidence: dem?.confidence ?? "low",
-        signals: dem?.signals ?? [],
-        evidence: dem?.evidence ?? [],
-        summary: dem?.summary ?? "",
-        researched: dem?.researched ?? false,
+        signals:
+          liveNewer && liveSignals.length
+            ? liveSignals
+            : seedSignals.length
+              ? seedSignals
+              : liveSignals,
+        evidence:
+          liveNewer && liveEvidence.length
+            ? liveEvidence
+            : seedEvidence.length
+              ? seedEvidence
+              : liveEvidence,
+        summary:
+          (liveNewer ? liveFinding?.summary : "") ||
+          dem?.summary ||
+          liveFinding?.summary ||
+          firstLineOf(liveResearch?.body ?? ""),
+        researched: (dem?.researched ?? false) || !!liveResearch,
         play: play as AccountRow["play"],
         competitors: basePl.competitors,
-        countries: extractCountries(dem),
+        countries: [
+          ...new Set([...extractCountries(dem), ...(liveFinding?.countries ?? [])]),
+        ],
         demandAdj: c.demandAdj,
         confFactor: c.confFactor,
         score: c.score,
@@ -193,11 +322,66 @@ export default async function AccountsPage() {
           ? { status: v.status, note: v.note, adjustedDemand: v.adjustedDemand }
           : null,
         engagement: engagements.get(p.id) ?? EMPTY_ENGAGEMENT,
+        risk: riskById.get(p.id) ?? null,
+        // The Act Lane's saved draft — one per account, newest wins.
+        actDraft: (() => {
+          const n = (chipNotes.get(`${ACT_DRAFT_NS}${p.id}`) ?? [])[0];
+          const d = n ? parseActDraftBody(n.body) : null;
+          return d ? { to: d.to, subject: d.subject, body: d.body } : null;
+        })(),
+        // The ✓ stamp: the newest acted gem's day and term (take-back needs
+        // the term). "" when nothing is stamped.
+        actedDay: (() => {
+          const sr = secondById.get(p.id);
+          const g = (sr?.gems ?? []).find((x) => x.actedDay);
+          return g?.actedDay ?? "";
+        })(),
+        actedTerm: (() => {
+          const sr = secondById.get(p.id);
+          const g = (sr?.gems ?? []).find((x) => x.actedDay);
+          return g?.term ?? "";
+        })(),
+        onBoard: boardById.has(p.id),
+        second: (() => {
+          const sr = secondById.get(p.id);
+          if (!sr) return null;
+          const lh = sr.rollup?.lastHuman ?? null;
+          const gem = anyLiveGem(sr);
+          const live = sr.gems.filter((g) => !g.actedDay).slice(0, 3);
+          return {
+            touch: lh ? { who: lh.who, day: lh.day, kind: lh.kind } : null,
+            gems: live.map((g) => ({
+              term: g.term,
+              act: g.act,
+              reason: g.reason,
+              whenDay: g.whenDay,
+              cites: g.cites,
+            })),
+            act: gem && !gem.actedDay ? gem.act : null,
+            verdict: sr.rollup?.verdict ?? "",
+            supportTotal: sr.support?.total ?? 0,
+            spikeDay: sr.support?.spike?.day ?? "",
+          };
+        })(),
         disposition: (() => {
+          const board = boardById.get(p.id);
+          // The stamp outranks everything: a Closed deal is never "in motion".
+          if (board?.outcome)
+            return {
+              status: board.outcome,
+              reason: "Stamped on the HomeRoom board. The record keeps everything.",
+            };
           const d = dispositions.get(p.id);
-          return d && (d.status === "motion" || d.status === "parked")
-            ? { status: d.status, reason: d.reason }
-            : null;
+          if (d && (d.status === "motion" || d.status === "parked"))
+            return { status: d.status, reason: d.reason };
+          if (board?.live)
+            return { status: "motion" as const, reason: "On the HomeRoom board." };
+          if (engagedIds.has(p.id) || recordSends(chipNotes.get(p.id) ?? []).length > 0)
+            return {
+              status: "engaged" as const,
+              reason: "Cold outreach on the record. No HomeRoom row yet.",
+            };
+          return null;
         })(),
         notes: notesByAccount.get(p.id) ?? [],
         contactCount: contactCount(p.id),
@@ -239,17 +423,8 @@ export default async function AccountsPage() {
     <>
       <AppWayfinder current="Accounts" />
       <main className={styles.wrap}>
-        <div className={styles.pageHead}>
-          <h1 className={styles.h1}>Account Room</h1>
-
-          <p
-            className={styles.sub}
-            title="Global fit blends 40% account profile with 60% researched demand, weighted by confidence. The profile covers size, platform, model, and recency. Play flags a competitor EOR already in place."
-          >
-            All {rows.length} accounts, scored for Global fit: 40% profile, 60% demand.
-            Research from {researchGeneratedAt}.
-          </p>
-        </div>
+        {/* The header lives in the client (founder-decreed 2026-08-21): the
+            subtext is retired; the copy/CSV icons ride beside the title. */}
         <AccountsClient
           rows={rows}
           canAdd={canAdd}

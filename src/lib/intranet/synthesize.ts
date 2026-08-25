@@ -14,6 +14,7 @@
 //         model happens to know about payroll.
 
 import Anthropic from "@anthropic-ai/sdk";
+import { claudeClient, claudeAvailable } from "@/lib/claude/health";
 import {
   ANSWER_SENTENCES,
   CANDIDATE_CAP,
@@ -36,7 +37,7 @@ export const EMPTY_ANSWER: Answer = {
 };
 
 export function synthAvailable(): boolean {
-  return Boolean(process.env.ANTHROPIC_API_KEY);
+  return claudeAvailable();
 }
 
 // ── escalation (I.4.2) ──────────────────────────────────────────────────────
@@ -142,7 +143,13 @@ export function violatesVerbatim(answer: string, sources: string[]): boolean {
 export const SYSTEM = `You answer a question using ONLY the numbered claims you are given. Each claim carries who said it, when, and what kind of statement it is.
 
 COMPOSE, NEVER DUMP
-Write ${ANSWER_SENTENCES[0]} to ${ANSWER_SENTENCES[1]} sentences in one voice, explaining a position. Do not stitch other people's sentences together. Never reproduce more than ${VERBATIM_MAX_WORDS} consecutive words from a claim unless you present it as a quotation with its speaker.
+Write ${ANSWER_SENTENCES[0]} to ${ANSWER_SENTENCES[1]} SHORT sentences in one voice, explaining a position. Do not stitch other people's sentences together. Never reproduce more than ${VERBATIM_MAX_WORDS} consecutive words from a claim unless you present it as a quotation with its speaker.
+
+SHAPE — the reader is an operator between calls, not a researcher
+The first line is the position alone, one short sentence. Then the support: if it is a list of facts, write each as its own line starting "- " (a hyphen bullet); if it is one thread of reasoning, use at most two short sentences per line with a blank line between thoughts. No headers, no parenthetical asides, nothing that needs a second read. The whole answer stays under 110 words unless the record genuinely splits.
+
+VOICE — the reader's own vocabulary (each of these is binding)
+The reader sells to PEOs. Every account is a PEO, and a PEO's clients ARE its book — never contrast "their client" with "their own book"; a client IS the book. A need is either "internal" (the PEO's own employees) or "a client's" — use those words. Never write "X-shaped" ("EOR-shaped" is banned; "shaping up to be EOR" is fine). Never describe a book or company as "domestic-only" — say it as history: "they've only done business domestically up to this point." Plain sentences a peer would say out loud on a call.
 
 COMMIT
 State the position in the first sentence. "It depends" is acceptable ONLY when the record holds a genuine unresolved split — and then name the split: "The record splits — the 2024 study said entity, every deal since has gone EOR first."
@@ -156,8 +163,8 @@ Some claims are of kind "prospect-question" — things real buyers asked in demo
 ANSWER FROM THIS RECORD ONLY
 You know things about payroll, EOR, contractor management and international employment. NONE of that belongs in this answer. If the claims do not support an answer, say "${NOTHING_IN_RECORD}" and use "gaps" to name what is missing. Filling a gap from your own knowledge is the single worst thing you can do here — it is invisible to the reader and it destroys the room's usefulness. Answer from this record only.
 
-CITE
-Every substantive assertion carries a bracketed handle from the claims you were given, e.g. [7]. "citations" lists the handles you used. Never invent a handle.
+CITE — in the array, never in the prose
+"citations" lists the handles of every claim you leaned on. The answer text itself carries NO bracketed handles — the reader sees clean prose; the app renders your sourcing as links from "citations". Put per-assertion tracing in "reasoning" (e.g. "the payroll-manager line came from [5]"). Never invent a handle.
 
 REASONING
 "reasoning" is the fold the operator opens: which claims you weighed and why, in plain sentences. "setAside" names claims you retrieved but did not use, with the reason.
@@ -241,16 +248,17 @@ export function sanitizeAnswer(raw: unknown, maxHandle: number): Answer {
 // explicit label, never presented as corpus truth, never blended with it.
 export const WORLD_SYSTEM = `The reader asked their internal knowledge base a question and it had nothing — so you are answering from general knowledge instead. Their app will label your answer as coming from outside their record.
 
-Be the most accurate, current, decisive briefing the reader could get on the question: 3 to 6 sentences, position first, plain speech. Name genuine uncertainty where it exists. Never invent facts about the reader's own company, deals, colleagues or record — you know nothing about those; this answer is about the world. Do not state currency amounts; describe magnitude in words where cost matters.`;
+Be the most accurate, current, decisive briefing the reader could get on the question: 3 to 6 SHORT sentences, position first, plain speech. Lists of facts go one per line starting "- ". No headers, no bracketed references, no parenthetical asides. Never write "X-shaped" or "domestic-only" — plain words a peer would say on a call. Name genuine uncertainty where it exists. Never invent facts about the reader's own company, deals, colleagues or record — you know nothing about those; this answer is about the world. Do not state currency amounts; describe magnitude in words where cost matters.`;
 
 /** A world answer, as text. Empty string on any failure — the caller already
  *  has the honest "nothing in the record" line to fall back to. */
 export async function runWorldAnswer(question: string): Promise<string> {
   if (!synthAvailable() || !question.trim()) return "";
-  const client = new Anthropic({ timeout: 90_000, maxRetries: 1 });
+  const client = claudeClient({ timeout: 90_000, maxRetries: 1 });
   const res = await client.messages.create({
     model: MODEL_SYNTH,
-    max_tokens: 2048,
+    // Thinking and the answer share this budget — leave real room for both.
+    max_tokens: 8192,
     thinking: { type: "adaptive" },
     system: [{ type: "text", text: WORLD_SYSTEM, cache_control: { type: "ephemeral" } }],
     messages: [{ role: "user", content: question }],
@@ -273,7 +281,7 @@ export async function runSynthesis(input: {
   if (input.candidates.length === 0)
     return { answer: { ...EMPTY_ANSWER, answer: NOTHING_IN_RECORD }, model: "" };
 
-  const client = new Anthropic({ timeout: 120_000, maxRetries: 1 });
+  const client = claudeClient({ timeout: 120_000, maxRetries: 1 });
   const model = modelFor(input.candidates, input.plan);
   const rendered = renderCandidates(input.candidates, input.docLabel);
 
@@ -286,7 +294,10 @@ export async function runSynthesis(input: {
   const call = () =>
     client.messages.create({
       model,
-      max_tokens: 4096,
+      // Adaptive thinking spends from the same budget as the written answer;
+      // 4096 let a hard synthesis think the whole budget away and emit NO
+      // text at all — every production ask parsed empty (caught 2026-08-18).
+      max_tokens: 16384,
       thinking: { type: "adaptive" },
       system: [{ type: "text", text: SYSTEM, cache_control: { type: "ephemeral" } }],
       output_config: {
@@ -309,9 +320,23 @@ export async function runSynthesis(input: {
       .join("")
       .trim();
 
+  // Parse hard: structured output should be clean JSON, but a stray preamble
+  // or trailing text must not turn a written answer into a silent empty one —
+  // slice the outermost braces before giving up (the ai-clean idiom).
+  const parseJson = (text: string): unknown => {
+    try {
+      return JSON.parse(text);
+    } catch {
+      const i = text.indexOf("{");
+      const j = text.lastIndexOf("}");
+      if (i >= 0 && j > i) return JSON.parse(text.slice(i, j + 1));
+      throw new Error("no JSON in response");
+    }
+  };
+
   let parsed: unknown = {};
   try {
-    parsed = JSON.parse(read(await call()));
+    parsed = parseJson(read(await call()));
   } catch {
     return { answer: EMPTY_ANSWER, model };
   }
@@ -323,7 +348,7 @@ export async function runSynthesis(input: {
     try {
       const res2 = await client.messages.create({
         model,
-        max_tokens: 4096,
+        max_tokens: 16384,
         thinking: { type: "adaptive" },
         system: [{ type: "text", text: SYSTEM, cache_control: { type: "ephemeral" } }],
         output_config: {
@@ -339,7 +364,7 @@ export async function runSynthesis(input: {
           },
         ],
       } as Anthropic.MessageCreateParamsNonStreaming);
-      answer = sanitizeAnswer(JSON.parse(read(res2)), input.candidates.length);
+      answer = sanitizeAnswer(parseJson(read(res2)), input.candidates.length);
     } catch {
       // keep the first answer rather than losing it
     }

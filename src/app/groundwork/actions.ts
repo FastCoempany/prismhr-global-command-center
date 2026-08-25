@@ -12,6 +12,13 @@ import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import { createAccountNoteRow } from "@/lib/notes/write";
 import { getPeo } from "@/lib/book";
 import { READOUT_READ_KEY, groundworkDoneKey } from "@/lib/groundwork/file";
+import { roomResearch } from "@/app/room/actions";
+import {
+  CHANNELS,
+  SENDBOOK_NS,
+  sendbookNoteBody,
+  type Channel,
+} from "@/lib/sendbook/read";
 import {
   WIRE_NS,
   parseWireBody,
@@ -33,6 +40,109 @@ async function requireWrite() {
 // The worked stamp — called by the copy control AFTER the copy happened.
 // Day-scoped: the key carries the Chicago day, so the row resets tomorrow
 // while doneAt keeps the exact stamp time.
+// The stage's own research button (founder-decreed 2026-08-14): fresh
+// research runs on demand for whatever account is on deck. When the move
+// itself IS the research pass, one press also stamps the move worked; on any
+// other move the pass files quietly and the move stays open — running
+// research never completes work it didn't do.
+export async function runResearchNow(
+  mk: string | null,
+  accountId: string,
+): Promise<void> {
+  if (!(await requireWrite())) return;
+  const r = await roomResearch(accountId);
+  if (r.ok && mk) await markWorked(mk);
+  revalidatePath("/groundwork");
+  revalidatePath("/room");
+}
+
+// The Channel Ask's landing (the Sendbook, decreed 2026-08-19): a worked
+// stamp that names its channel files a sendbook:<account> touch beside the
+// TaskDone stamp, so the register and the wing subtext read a real store.
+// Channels that leave a file behind never come through here — the record's
+// own outbound IS the touch, and the ask pre-answers.
+export async function workedChannel(
+  mk: string,
+  accountId: string,
+  channel: string,
+  contact: string,
+  clause: string,
+): Promise<void> {
+  if (!(await requireWrite())) return;
+  if (!getPeo(accountId)) return;
+  if (!(CHANNELS as readonly string[]).includes(channel)) {
+    await markWorked(mk);
+    return;
+  }
+  try {
+    await createAccountNoteRow({
+      accountId: `${SENDBOOK_NS}${accountId}`,
+      kind: "account",
+      body: sendbookNoteBody(
+        channel as Channel,
+        contact.slice(0, 60),
+        clause.slice(0, 160),
+      ),
+      lane: "background",
+      actors: "",
+      source: "sendbook",
+    });
+  } catch {
+    // the stamp still lands below — a lost touch line costs the register a
+    // row, never the day its checkmark
+  }
+  await markWorked(mk);
+  revalidatePath("/sendbook");
+}
+
+// The take-back (founder-decreed 2026-08-19): an accidental stamp must be
+// reversible in place. Un-stamping deletes today's done mark — the move
+// returns to the queue — and withdraws the tap note the stamp filed, if one
+// rode along today. The record's own entries are never touched: a filed
+// email is a fact, not a stamp.
+export async function unWork(mk: string, accountId: string): Promise<void> {
+  if (!(await requireWrite()) || !mk || mk.length > 200) return;
+  const key = groundworkDoneKey(new Date(), mk);
+  const prisma = getPrisma();
+  try {
+    await prisma.taskDone.deleteMany({ where: { key } });
+  } catch {
+    return;
+  }
+  if (accountId && getPeo(accountId)) {
+    try {
+      // Only the newest tap filed today comes back out — Chicago's day, the
+      // same day the stamp itself was scoped to.
+      const chi = new Date().toLocaleDateString("en-CA", {
+        timeZone: "America/Chicago",
+      });
+      // Coarse fetch window (UTC midnight minus a buffer covers every
+      // Chicago offset); the exact day check is the per-row comparison below.
+      const windowStart = new Date(Date.parse(`${chi}T00:00:00Z`) - 12 * 3_600_000);
+      const candidates = await prisma.accountNote.findMany({
+        where: {
+          accountId: `${SENDBOOK_NS}${accountId}`,
+          createdAt: { gte: windowStart },
+        },
+        orderBy: { createdAt: "desc" },
+        take: 3,
+        select: { id: true, createdAt: true },
+      });
+      const todays = candidates.find(
+        (c) =>
+          c.createdAt.toLocaleDateString("en-CA", { timeZone: "America/Chicago" }) ===
+          chi,
+      );
+      if (todays) await prisma.accountNote.delete({ where: { id: todays.id } });
+    } catch {
+      // a leftover tap line is visible in the register and strikable later;
+      // the stamp itself is already back out
+    }
+  }
+  revalidatePath("/groundwork");
+  revalidatePath("/sendbook");
+}
+
 export async function markWorked(mk: string): Promise<void> {
   if (!(await requireWrite()) || !mk || mk.length > 200) return;
   const key = groundworkDoneKey(new Date(), mk);

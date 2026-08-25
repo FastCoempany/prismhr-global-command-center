@@ -5,7 +5,8 @@
 // itself. These return values (the room updates in place) instead of
 // redirecting.
 
-import Anthropic from "@anthropic-ai/sdk";
+import { rulesRead } from "@/lib/intel/rules-read";
+import { claudeClient, claudeAvailable } from "@/lib/claude/health";
 import { revalidatePath } from "next/cache";
 import { getAppAccess } from "@/lib/auth";
 import { hasDatabaseEnv } from "@/lib/db";
@@ -106,21 +107,26 @@ export async function roomLog(
 // The filed-capture marker: key carries the fingerprint, reason carries the
 // filing moment and the first note id (so an undo can find and clear it).
 async function stampPasteMark(pasteKey: string, firstNoteId: string) {
-  try {
-    await getPrisma().accountDisposition.upsert({
-      where: { accountId: pasteKey },
-      create: {
-        accountId: pasteKey,
-        status: "filed",
-        reason: `${new Date().toISOString()}·${firstNoteId}`,
-      },
-      update: {
-        status: "filed",
-        reason: `${new Date().toISOString()}·${firstNoteId}`,
-      },
-    });
-  } catch {
-    // the marker is a guard, never a gate — filing already succeeded
+  const reason = `${new Date().toISOString()}·${firstNoteId}`;
+  // Verify after write: a marker that silently fails to land lets the same
+  // capture file twice (it happened — 2026-08-13). Two attempts, each read
+  // back; still fail-open after that, because the marker is a guard, never
+  // a gate — the filing already succeeded.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      await getPrisma().accountDisposition.upsert({
+        where: { accountId: pasteKey },
+        create: { accountId: pasteKey, status: "filed", reason },
+        update: { status: "filed", reason },
+      });
+      const check = await getPrisma().accountDisposition.findUnique({
+        where: { accountId: pasteKey },
+        select: { status: true },
+      });
+      if (check?.status === "filed") return;
+    } catch {
+      // retry once, then let it go
+    }
   }
 }
 
@@ -221,6 +227,7 @@ export async function roomPaste(
   // operator's text — but it says so, because a paste filed WITHOUT the read is
   // a paste that opened no actions and asked no questions.
   let readFailed = false;
+  if (!aiCleanAvailable()) readFailed = true;
   if (aiCleanAvailable()) {
     try {
       read = await aiCleanTimeline(text, now);
@@ -235,6 +242,28 @@ export async function roomPaste(
   if (entries.length === 0) {
     entries = dropNoiseEntries(parseSfTimeline(text));
     how = how === "ai" ? "rules" : how;
+  }
+  // The rules reader (founder-decreed 2026-08-21): when the deep read is
+  // down and the SF parser finds nothing, a Teams chat or Outlook thread
+  // still parses deterministically — real actors, real dates, real record
+  // lines. The deep intelligence (commitments, asks, lessons) waits for the
+  // reader; the receipt says so.
+  let liveDialect = dialect;
+  if (dialect !== "CT" && how !== "ai") {
+    // The SF anchor grammar can fabricate one stamp-less garbage entry from
+    // a chat line ("Talk to Chassie") — a stamped rules read outranks it
+    // (refuted 2026-08-22). A TEAMS THREAD paste reads chat-first so a
+    // quoted email inside it never swallows the conversation.
+    const stampless =
+      entries.length > 0 && entries.every((e) => !e.dayIso && !e.timeLabel);
+    if (entries.length === 0 || (dialect === "SF" && stampless)) {
+      const rr = rulesRead(text, now, dialect === "TM" ? "TM" : "");
+      if (rr && (entries.length === 0 || rr.entries.length >= 2)) {
+        entries = rr.entries;
+        if (dialect === "SF") liveDialect = rr.dialect;
+        how = "rules";
+      }
+    }
   }
 
   // The misfile guard. The read names the company the paste is ABOUT; if that
@@ -283,7 +312,14 @@ export async function roomPaste(
         const id = await archiveNote();
         await stampPasteMark(pasteKey, id);
         refresh();
-        return { ok: true, filed: 1, how: "transcript", noteIds: [id], archived: true };
+        return {
+          ok: true,
+          filed: 1,
+          how: "transcript",
+          noteIds: [id],
+          archived: true,
+          readFailed,
+        };
       }
       // Transcripts and Teams chats run OLDEST-first — keep the TAIL, where
       // the decisions and owed items live, and say when the head was cut.
@@ -303,7 +339,7 @@ export async function roomPaste(
       });
       await stampPasteMark(pasteKey, n.id);
       refresh();
-      return { ok: true, filed: 1, how: "transcript", noteIds: [n.id] };
+      return { ok: true, filed: 1, how: "transcript", noteIds: [n.id], readFailed };
     }
     let filed = 0;
     for (const e of entries.slice(0, 40)) {
@@ -311,7 +347,7 @@ export async function roomPaste(
       const when = [e.dayLabel, e.timeLabel].filter(Boolean).join(" ");
       const glyph = e.kind === "task" ? "✔" : e.kind === "call" ? "☎" : "✉";
       const who = actors || "(unattributed)";
-      const head = `${glyph} ${dialect} ${when || "activity"} — ${e.subject || "(no subject)"} · ${who}`;
+      const head = `${glyph} ${liveDialect} ${when || "activity"} — ${e.subject || "(no subject)"} · ${who}`;
       // File at the ACTIVITY's own date (noon UTC — stable across timezones);
       // no dayIso → the DB stamps the filing moment as before.
       const at = e.dayIso ? new Date(`${e.dayIso}T12:00:00Z`) : undefined;
@@ -325,13 +361,13 @@ export async function roomPaste(
         lane: laneFor(actors, `${e.subject ?? ""}\n${e.body ?? ""}`),
         actors,
         source: `${
-          dialect === "OL"
+          liveDialect === "OL"
             ? "outlook"
-            : dialect === "TM"
+            : liveDialect === "TM"
               ? "teams"
-              : dialect === "CT"
+              : liveDialect === "CT"
                 ? "call"
-                : dialect === "SN"
+                : liveDialect === "SN"
                   ? "salesnav"
                   : "sf"
         }${how === "ai" ? "-ai" : ""}`,
@@ -940,7 +976,7 @@ export async function roomResearch(
   const acct = bindAccountId(accountId, peos);
   if (!acct) return { ok: false, reason: "That row isn't bound to a known account." };
   if (!researchAvailable())
-    return { ok: false, reason: "No API key configured. Research is off." };
+    return { ok: false, reason: "The brain is unreachable. Research is off." };
   if (!(await requireWrite())) return { ok: false, reason: "Read-only session." };
   const now = new Date();
   try {
@@ -1034,7 +1070,7 @@ export async function roomGapsRefill(
   const acct = bindAccountId(accountId, peos);
   if (!acct) return { ok: false, reason: "That row isn't bound to a known account." };
   if (!aiCleanAvailable())
-    return { ok: false, reason: "No API key configured. Minting is off." };
+    return { ok: false, reason: "The brain is unreachable. Minting is off." };
   if (!(await requireWrite())) return { ok: false, reason: "Read-only session." };
   try {
     const prisma = getPrisma();
@@ -1265,11 +1301,16 @@ export async function roomRecordEdit(
     const lines = n.body.split("\n");
     const glyph = /^[✉✓☰✎✔☎]/.exec(n.body)?.[0];
     // Strip any glyph the client's edit box carried back so glyphs never stack.
-    const bare = clean.replace(/^[✉✓☰✎✔☎⚡▢]\s?/, "").trim();
+    const bare = clean
+      .replace(/^[✉✓☰✎✔☎⚡▢]\s?/, "")
+      .trim()
+      .slice(0, 500);
     lines[0] = glyph ? `${glyph} ${bare}` : bare;
+    // Cap the EDITED LINE, never the whole body — a whole-body cap here once
+    // amputated a 60k-char archived transcript down to its first 8,000 chars.
     await prisma.accountNote.update({
       where: { id },
-      data: { body: lines.join("\n").slice(0, 8000) },
+      data: { body: lines.join("\n") },
     });
     refresh();
     return { ok: true };
@@ -1488,20 +1529,74 @@ export async function roomTodoSet(
   }
 }
 
-// The PDF transcriber — Claude reads the document to paste text the room's
+// ✎ on a sheet line: the operator rewrites the item's visible text in place.
+// Tags (urgency, k:a, delays) and the routing marker survive verbatim — the
+// edit touches only what the eye reads. Money redacts like everywhere else.
+export async function roomTodoEdit(
+  accountId: string,
+  todoId: string,
+  text: string,
+): Promise<{ ok: boolean; reason?: string }> {
+  const acct = bindAccountId(accountId, peos);
+  const id = typeof todoId === "string" ? todoId.trim().slice(0, 40) : "";
+  const next = typeof text === "string" ? redactMoney(text.trim()).slice(0, 500) : "";
+  if (!acct || !id) return { ok: false, reason: "Not a bound row." };
+  if (!next) return { ok: false, reason: "An empty line is a delete. Use ✕." };
+  if (!(await requireWrite())) return { ok: false, reason: "Read-only session." };
+  try {
+    const prisma = getPrisma();
+    const t = await prisma.todo.findUnique({ where: { id } });
+    if (!t) return { ok: false, reason: "That item is gone." };
+    let owned = (t.accountId ?? "") === acct.id;
+    if (!owned) {
+      const refs = splitMarker(t.body).refs;
+      if (refs?.accountNoteIds?.length) {
+        const hit = await prisma.accountNote.findFirst({
+          where: { id: { in: refs.accountNoteIds }, accountId: acct.id },
+          select: { id: true },
+        });
+        owned = !!hit;
+      }
+    }
+    if (!owned) return { ok: false, reason: "That item belongs to a different account." };
+    const marker = splitMarker(t.body);
+    const { tags } = splitTags(marker.text);
+    // Hand-typed grammar must never masquerade as real markers.
+    const clean = next
+      .replace(/[⟦⟧⟪⟫]|[⇢⚑]\s*\[/g, " ")
+      .replace(/[ \t]+/g, " ")
+      .trim();
+    let body = withTags(clean, tags);
+    if (marker.refs) body = withMarker(body, marker.refs, marker.label);
+    await prisma.todo.update({ where: { id }, data: { body } });
+    refresh();
+    return { ok: true };
+  } catch {
+    return { ok: false, reason: "The edit didn't save." };
+  }
+}
+
+// The document transcriber — Claude reads a PDF or an image (a screenshot of
+// an email, a chat, a whiteboard, a business card) to paste text the room's
 // readers understand. An email thread comes back headed OUTLOOK THREAD, a
 // chat as TEAMS THREAD, anything else as a plain transcript. The bytes never
 // persist; only the filed entries do.
+const IMAGE_MEDIA = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
+
 async function transcribePdf(
   file: File,
 ): Promise<{ ok: boolean; text?: string; reason?: string }> {
-  if (!process.env.ANTHROPIC_API_KEY)
-    return { ok: false, reason: "The reader needs the API key. Paste the text instead." };
+  if (!claudeAvailable())
+    return { ok: false, reason: "The reader is unreachable. Paste the text instead." };
   if (file.size > 8 * 1024 * 1024)
     return { ok: false, reason: "That file is over 8 MB. Export a smaller one." };
+  const isImage = IMAGE_MEDIA.has(file.type);
+  if (!isImage && file.type !== "application/pdf" && !/\.pdf$/i.test(file.name))
+    return { ok: false, reason: "The reader takes PDFs and images here." };
   const data = Buffer.from(await file.arrayBuffer()).toString("base64");
+  const imageMedia = file.type as "image/jpeg" | "image/png" | "image/webp" | "image/gif";
   try {
-    const client = new Anthropic({ timeout: 110_000, maxRetries: 1 });
+    const client = claudeClient({ timeout: 110_000, maxRetries: 1 });
     const res = await client.messages.create({
       model: "claude-opus-5",
       max_tokens: 16000,
@@ -1510,13 +1605,22 @@ async function transcribePdf(
         {
           role: "user",
           content: [
-            {
-              type: "document",
-              source: { type: "base64", media_type: "application/pdf", data },
-            },
+            isImage
+              ? {
+                  type: "image" as const,
+                  source: { type: "base64" as const, media_type: imageMedia, data },
+                }
+              : {
+                  type: "document" as const,
+                  source: {
+                    type: "base64" as const,
+                    media_type: "application/pdf" as const,
+                    data,
+                  },
+                },
             {
               type: "text",
-              text: `Transcribe this document to plain text for a sales record. If it is an email thread, start the output with "OUTLOOK THREAD — ${file.name}" and give each message its own From / To / Sent / Subject header block, newest first, with the message text under it. If it is a chat transcript, start with "TEAMS THREAD — ${file.name}" and keep speakers named inline. Otherwise output the document's text as-is, reading order, no commentary. Output only the transcription.`,
+              text: `Transcribe this ${isImage ? "image" : "document"} to plain text for a sales record. If it shows an email thread, start the output with "OUTLOOK THREAD — ${file.name}" and give each message its own From / To / Sent / Subject header block, newest first, with the message text under it. If it shows a chat, start with "TEAMS THREAD — ${file.name}" and keep speakers named inline. If it is a screenshot of anything else — a slide, a whiteboard, a card, handwriting — transcribe every readable word in reading order and describe only what is needed to make the text make sense. Output only the transcription.`,
             },
           ],
         },
@@ -1562,4 +1666,33 @@ export async function chuteReadPdf(
   const file = formData.get("file");
   if (!(file instanceof File)) return { ok: false, reason: "No file arrived." };
   return transcribePdf(file);
+}
+
+// The partner-brief notifier's own hand (founder-decreed 2026-08-19): a click
+// sets the status directly — "opp created" or plain done — instead of waiting
+// on a stage-record item to close. Stored as day-less TaskDone keys so the
+// mark survives every reload; "clear" takes it back.
+export async function roomBriefedSet(
+  accountId: string,
+  value: "opp" | "done" | "clear",
+): Promise<{ ok: boolean; reason?: string }> {
+  const acct = bindAccountId(accountId, peos);
+  if (!acct) return { ok: false, reason: "Not a bound row." };
+  if (!["opp", "done", "clear"].includes(value))
+    return { ok: false, reason: "Not a status." };
+  if (!(await requireWrite())) return { ok: false, reason: "Read-only session." };
+  try {
+    const prisma = getPrisma();
+    await prisma.taskDone.deleteMany({
+      where: { key: { in: [`briefed:${acct.id}:opp`, `briefed:${acct.id}:done`] } },
+    });
+    if (value !== "clear") {
+      const key = `briefed:${acct.id}:${value}`;
+      await prisma.taskDone.upsert({ where: { key }, create: { key }, update: {} });
+    }
+  } catch {
+    return { ok: false, reason: "The status didn't keep. Try again." };
+  }
+  revalidatePath("/room");
+  return { ok: true };
 }

@@ -110,6 +110,88 @@
   align-self: center;
   margin-left: auto;
 }
+
+/* The search carries depth (founder-decreed 2026-08-21): inset glyph,
+   layered shadow, gradient field, a real focus ring. */
+.searchWrap {
+  position: relative;
+  margin-bottom: 12px;
+}
+.searchGlyph {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgba(10, 28, 64, 0.42);
+  font-size: 15px;
+  pointer-events: none;
+}
+.searchDeep {
+  width: 100%;
+  padding: 11px 14px 11px 38px;
+  border: 1px solid rgba(10, 28, 64, 0.14);
+  border-radius: 11px;
+  background: linear-gradient(#ffffff, #fdfdfe);
+  box-shadow:
+    0 1px 2px rgba(10, 28, 64, 0.06),
+    0 3px 10px rgba(10, 28, 64, 0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  font: inherit;
+  font-size: 14px;
+  color: var(--ink);
+}
+.searchDeep::placeholder {
+  color: rgba(10, 28, 64, 0.42);
+}
+.searchDeep:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow:
+    0 0 0 3px rgba(37, 99, 235, 0.13),
+    0 3px 10px rgba(10, 28, 64, 0.07);
+}
+
+/* The Filter Door (founder-decreed 2026-08-21): the rail is retired — the
+   sheet runs full width and the five filters live behind one mono door at
+   the top-right shoulder. A live filter keeps the door lit and named. */
+.fdoorRow {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0 0 6px;
+}
+.fdoor {
+  border: 0;
+  background: none;
+  cursor: pointer;
+  padding: 2px 4px;
+  font-family: var(--font-donor-mono), ui-monospace, Menlo, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: rgba(10, 28, 64, 0.42);
+}
+.fdoor:hover {
+  color: var(--blue);
+}
+.fdoorLive {
+  color: var(--blue);
+}
+.fstrip {
+  display: flex;
+  gap: 8px;
+  margin: 0 0 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.fstrip select {
+  padding: 4px 6px;
+  border-radius: 7px;
+  border: 1px solid var(--line);
+  background: #fff;
+  font: inherit;
+  font-size: 12px;
+  color: rgba(10, 28, 64, 0.66);
+}
 .toggle {
   display: inline-flex;
   align-items: center;
@@ -7274,6 +7356,7 @@
   margin: 0;
   font-size: 16.5px;
   line-height: 1.6;
+  white-space: pre-wrap;
   color: var(--navy);
 }
 .itGaps {
@@ -8502,4 +8585,856 @@
   .itBgLanes {
     grid-template-columns: 1fr;
   }
+}
+
+/* Folded drilldown sections (decreed 2026-08-14): the research leads; the
+   working furniture opens on demand. */
+.foldSect {
+  border-top: 1px solid rgba(10, 28, 64, 0.12);
+  padding-top: 8px;
+  margin-top: 8px;
+}
+.foldSect:first-child {
+  border-top: 0;
+  margin-top: 0;
+  padding-top: 0;
+}
+.foldSum {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.foldSum::-webkit-details-marker {
+  display: none;
+}
+.foldSum::after {
+  content: "▸";
+  font-size: 11px;
+  color: rgba(10, 28, 64, 0.42);
+  margin-left: auto;
+}
+.foldSect[open] > .foldSum::after {
+  content: "▾";
+}
+.foldSum h3 {
+  margin: 0;
+}
+
+/* The board's word on the accounts page (decreed 2026-08-20): a stamp
+   outranks "in motion"; won green, lost red — the semantic ladder. */
+.dispoWon {
+  color: #1e8e4a;
+  border-color: rgba(34, 197, 94, 0.5);
+}
+.dispoLost {
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.45);
+}
+
+/* The engagement panel's fold (decreed 2026-08-20): one line at rest. */
+.engageFold {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  border: 0;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink, #0a1c40);
+  text-align: left;
+}
+.engageFold:hover {
+  color: #1e5b46;
+}
+
+/* The drilldown folds + the contacts lead (decreed 2026-08-20). */
+.foldSec {
+  margin-top: 10px;
+}
+.foldHead {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  width: 100%;
+  border: 0;
+  background: none;
+  padding: 4px 0;
+  cursor: pointer;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #0a1c40;
+  text-align: left;
+}
+.foldHead:hover {
+  color: #1e5b46;
+}
+.foldHint {
+  font-weight: 400;
+  font-size: 11px;
+  color: rgba(10, 28, 64, 0.42);
+}
+.ctcLead {
+  font-size: 14px;
+  font-weight: 800;
+}
+.ctcFromRec {
+  margin-left: 8px;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #2563eb;
+  border: 1px dashed rgba(37, 99, 235, 0.45);
+  border-radius: 999px;
+  padding: 0 7px;
+  white-space: nowrap;
+}
+.ctcDraft {
+  margin-left: 8px;
+  border: 1px solid rgba(10, 28, 64, 0.22);
+  background: #fff;
+  border-radius: 999px;
+  padding: 1px 9px;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: rgba(10, 28, 64, 0.66);
+  cursor: pointer;
+}
+.ctcDraft:hover {
+  color: #e6701e;
+  border-color: #e6701e;
+}
+
+/* The draft desk. */
+.draftBack {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 28, 64, 0.32);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.draftBox {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 18px 50px rgba(10, 28, 64, 0.3);
+  width: min(680px, 100%);
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.draftHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 14px;
+}
+.draftX {
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: rgba(10, 28, 64, 0.42);
+}
+.draftX:hover {
+  color: #ef4444;
+}
+.draftTpl {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.draftTplSel,
+.draftTplName {
+  border: 1px solid rgba(10, 28, 64, 0.22);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 12px;
+  color: #0a1c40;
+  background: #fff;
+}
+.draftTplHint {
+  font-size: 10px;
+  color: rgba(10, 28, 64, 0.32);
+}
+.draftCc {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.draftLbl {
+  font-size: 11.5px;
+  color: rgba(10, 28, 64, 0.42);
+}
+.draftChip,
+.draftChipOn {
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.draftChip {
+  border: 1px solid rgba(10, 28, 64, 0.22);
+  background: #fff;
+  color: rgba(10, 28, 64, 0.66);
+}
+.draftChip:hover {
+  color: #0a1c40;
+}
+.draftChip:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.draftChipOn {
+  border: 1px solid #0a1c40;
+  background: #0a1c40;
+  color: #fff;
+}
+.draftAsk,
+.draftSubject {
+  border: 1px solid rgba(10, 28, 64, 0.22);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: #0a1c40;
+}
+.draftAsk:focus-visible,
+.draftSubject:focus-visible,
+.draftBody:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 1px;
+}
+.draftBody {
+  border: 1px solid rgba(10, 28, 64, 0.22);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #0a1c40;
+  font-family: inherit;
+  resize: vertical;
+}
+.draftNote {
+  font-size: 12px;
+  color: #ef4444;
+}
+.draftActs {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.draftGo {
+  border: 0;
+  border-radius: 8px;
+  background: #e6701e;
+  color: #fff;
+  font-weight: 700;
+  padding: 8px 18px;
+  cursor: pointer;
+}
+.draftGo:hover {
+  filter: brightness(0.95);
+}
+.draftGo:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.draftOutlook {
+  font-weight: 700;
+  color: #2563eb;
+  text-decoration: none;
+}
+.draftOutlookOff {
+  font-weight: 700;
+  color: rgba(10, 28, 64, 0.22);
+  cursor: default;
+  text-decoration: none;
+}
+.draftCopy {
+  border: 1px solid rgba(10, 28, 64, 0.22);
+  background: #fff;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  color: rgba(10, 28, 64, 0.66);
+}
+.draftFoot {
+  font-size: 11px;
+  color: rgba(10, 28, 64, 0.42);
+}
+
+/* The grab's landing receipt (caught 2026-08-20). */
+.itGrab {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: rgba(37, 99, 235, 0.07);
+  border: 1px solid rgba(37, 99, 235, 0.3);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin: 10px 0;
+}
+.itGrabKick {
+  font-family: var(--font-donor-mono), ui-monospace, Menlo, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: #2563eb;
+  white-space: nowrap;
+}
+.itGrabTx {
+  flex: 1;
+  min-width: 220px;
+  font-size: 13px;
+  color: rgba(10, 28, 64, 0.8);
+}
+.itGrabBtn {
+  border: 0;
+  border-radius: 6px;
+  background: #2563eb;
+  color: #fff;
+  font-weight: 700;
+  font-size: 12.5px;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+.itGrabBtn:hover {
+  filter: brightness(0.95);
+}
+.itGrabX {
+  border: 0;
+  background: none;
+  color: rgba(10, 28, 64, 0.42);
+  cursor: pointer;
+  font-size: 13px;
+}
+.itGrabX:hover {
+  color: #0a1c40;
+}
+
+/* Salesforce's account-risk flag (decreed 2026-08-20). Red is real risk. */
+.riskChip {
+  display: inline-block;
+  font-family: var(--font-donor-mono), ui-monospace, Menlo, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.45);
+  border-radius: 999px;
+  padding: 1px 8px;
+  margin-left: 6px;
+  vertical-align: 1px;
+  white-space: nowrap;
+}
+
+/* ── The second record's columns and fold (Concept I, decreed 2026-08-20) ── */
+.srTouch {
+  font-family: var(--font-donor-mono), ui-monospace, Menlo, monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.03em;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.srTouchAcct {
+  color: var(--ink);
+  font-weight: 700;
+}
+.srTerm {
+  font-family: var(--font-donor-mono), ui-monospace, Menlo, monospace;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--blue);
+  border: 0;
+  border-bottom: 1px dashed rgba(37, 99, 235, 0.4);
+  background: none;
+  padding: 0 0 1px;
+  cursor: pointer;
+  text-transform: uppercase;
+  text-align: left;
+}
+.srTermSupport {
+  color: #b6791a;
+  border-bottom-color: rgba(245, 158, 11, 0.5);
+}
+.srMore {
+  color: #9aa7bd;
+  font-weight: 500;
+}
+.srVerdict {
+  color: var(--muted);
+  font-size: 12px;
+  font-style: italic;
+  display: inline-block;
+  max-width: 210px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: bottom;
+}
+.srActCell {
+  font-size: 13px;
+  font-weight: 600;
+}
+.srFoldTd {
+  background: #f8fafd;
+  padding: 12px 16px;
+}
+.srPanel {
+  max-width: 760px;
+}
+.srGem {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--orange);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin: 4px 0 10px;
+}
+.srGemHead {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+.srGemTerm {
+  font-family: var(--font-donor-mono), ui-monospace, Menlo, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: var(--orange);
+}
+.srGemStamp {
+  font-family: var(--font-donor-mono), ui-monospace, Menlo, monospace;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+}
+.srGemAct {
+  font-size: 15.5px;
+  font-weight: 700;
+  margin: 6px 0 2px;
+}
+.srGemWhy {
+  color: var(--muted);
+  font-size: 12.5px;
+}
+.srCites {
+  margin-top: 8px;
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+}
+.srCite {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font-family: var(--font-donor-mono), ui-monospace, Menlo, monospace;
+  font-size: 11px;
+  line-height: 2;
+  color: var(--muted);
+  padding: 0;
+}
+.srCite:hover {
+  color: var(--ink);
+}
+.srCite b {
+  color: var(--blue);
+  font-weight: 500;
+}
+.srExcerpt {
+  margin: 4px 0 8px 14px;
+  padding: 8px 12px;
+  border-left: 2px solid var(--line);
+  background: #fbfcfe;
+  border-radius: 0 6px 6px 0;
+  font-size: 12.5px;
+  color: var(--ink);
+}
+.srStamp {
+  display: block;
+  font-family: var(--font-donor-mono), ui-monospace, Menlo, monospace;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: #9aa7bd;
+  margin-bottom: 2px;
+}
+.srVerdictLine {
+  color: var(--muted);
+  font-size: 12.5px;
+  font-style: italic;
+  margin: 4px 0;
+}
+.srSupport {
+  margin-top: 4px;
+}
+.srCaseBlock {
+  margin-left: 14px;
+}
+
+/* The dashboard door as a hover glyph at the name (decreed move). */
+/* The dashboard door lives in the drilldown now (founder-decreed
+   2026-08-21): plain words behind the account's own click, never a glyph
+   floating at the name. */
+.dashRow {
+  margin: 0 0 10px;
+}
+
+/* Copy list · Export CSV, folded to two quiet icons at the filter bar's end. */
+.iconBtn {
+  border: 0;
+  background: none;
+  padding: 2px 4px;
+  align-self: center;
+  cursor: pointer;
+  font: inherit;
+  font-size: 15px;
+  line-height: 1;
+  color: rgba(10, 28, 64, 0.42);
+}
+.iconBtn:hover {
+  color: var(--ink);
+}
+
+/* The live count rides the Account column title (founder-decreed 2026-08-21). */
+.thCount {
+  margin-left: 8px;
+  font-weight: 400;
+  letter-spacing: 0.4px;
+  color: rgba(10, 28, 64, 0.42);
+  white-space: nowrap;
+}
+
+/* The Move Chip (decreed winner, 2026-08-21): the ACT cell's one shape —
+   fixed edge, orange left tick, the source line whispered beneath. */
+.mchipWrap {
+  position: relative;
+  display: inline-block;
+}
+.mchip {
+  display: inline-block;
+  text-align: left;
+  cursor: pointer;
+  border: 1px solid var(--line);
+  border-left: 3px solid #e6701e;
+  background: #fff;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--ink);
+  max-width: 200px;
+}
+.mchip:hover {
+  border-color: #e6701e;
+  box-shadow: 0 1px 4px rgba(230, 112, 30, 0.15);
+}
+.mchipSrc {
+  display: block;
+  font-family: var(--font-donor-mono), ui-monospace, Menlo, monospace;
+  font-size: 9px;
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  color: rgba(10, 28, 64, 0.42);
+}
+.mtick {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: rgba(10, 28, 64, 0.42);
+  font-size: 10px;
+  line-height: 16px;
+  text-align: center;
+  cursor: pointer;
+  padding: 0;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.mchipWrap:hover .mtick {
+  opacity: 1;
+}
+.mtick:hover {
+  color: #fff;
+  background: var(--green);
+  border-color: var(--green);
+}
+.actedStamp {
+  font-family: var(--font-donor-mono), ui-monospace, Menlo, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(10, 28, 64, 0.42);
+  white-space: nowrap;
+}
+.actedStamp b {
+  color: #15803d;
+}
+.actedTb {
+  border: 0;
+  background: none;
+  cursor: pointer;
+  padding: 0;
+  font: inherit;
+  color: rgba(10, 28, 64, 0.42);
+}
+.actedTb:hover {
+  color: var(--blue);
+}
+
+/* The Act Lane (Version C winner, 2026-08-21): a standing workbench beside
+   the sheet — evidence up top, the editable draft mid, Send/File/fork at
+   the foot. Sticky so it holds while the sheet scrolls. */
+.laneWrap {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+.laneMain {
+  flex: 1;
+  min-width: 0;
+}
+.actLane {
+  flex: 0 0 380px;
+  position: sticky;
+  top: 74px;
+  background: #fafbfe;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px 16px;
+  max-height: calc(100vh - 90px);
+  overflow-y: auto;
+}
+.actLaneKick {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-donor-mono), ui-monospace, Menlo, monospace;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: rgba(10, 28, 64, 0.42);
+}
+.actLaneX {
+  border: 0;
+  background: none;
+  cursor: pointer;
+  color: rgba(10, 28, 64, 0.42);
+  font-size: 13px;
+  padding: 0 2px;
+}
+.actLaneX:hover {
+  color: var(--ink);
+}
+.actLaneName {
+  font-size: 12px;
+  font-weight: 700;
+  margin-top: 8px;
+  color: rgba(10, 28, 64, 0.66);
+}
+.actLaneAct {
+  font-family: var(--font-donor-serif), Georgia, serif;
+  font-size: 17px;
+  line-height: 1.3;
+  margin: 4px 0 2px;
+}
+.actLaneWhy {
+  color: rgba(10, 28, 64, 0.66);
+  font-size: 12.5px;
+  margin-bottom: 8px;
+}
+.actLaneField {
+  display: flex;
+  gap: 8px;
+  margin: 8px 0 0;
+  align-items: center;
+}
+.actLaneField label {
+  flex: 0 0 54px;
+  font-family: var(--font-donor-mono), ui-monospace, Menlo, monospace;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: rgba(10, 28, 64, 0.42);
+}
+.actLaneField input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 5px 9px;
+  font: inherit;
+  font-size: 13px;
+  background: #fff;
+}
+.actLaneBody {
+  width: 100%;
+  min-height: 110px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 9px 11px;
+  font: inherit;
+  font-size: 13px;
+  background: #fff;
+  resize: vertical;
+  color: var(--ink);
+  margin-top: 8px;
+}
+.actLaneBtns {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+.actLaneGo {
+  color: #fff;
+  background: var(--blue);
+  border-color: var(--blue);
+}
+.actLaneGo:hover:not(:disabled) {
+  background: #1d4fc4;
+  border-color: #1d4fc4;
+}
+.actLaneSaved {
+  margin-top: 8px;
+  font-size: 12px;
+  color: rgba(10, 28, 64, 0.66);
+}
+.actLaneFork {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--line);
+  font-size: 12px;
+  color: rgba(10, 28, 64, 0.66);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.actLaneForkWhy {
+  font-size: 11.5px;
+}
+.actLaneForkWhy b {
+  font-family: var(--font-donor-mono), ui-monospace, Menlo, monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  color: var(--ink);
+}
+.actLaneForkBtn {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 7px;
+  padding: 3px 10px;
+  font-family: var(--font-donor-mono), ui-monospace, Menlo, monospace;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #e6701e;
+  cursor: pointer;
+}
+.actLaneForkBtn:hover:not(:disabled) {
+  border-color: #e6701e;
+}
+.actLaneForkAlt {
+  border: 0;
+  background: none;
+  color: rgba(10, 28, 64, 0.42);
+  font-size: 11px;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+.actLaneReceipt {
+  font-family: var(--font-donor-mono), ui-monospace, Menlo, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: #15803d;
+}
+.actLaneTb {
+  border: 0;
+  background: none;
+  cursor: pointer;
+  padding: 0;
+  font: inherit;
+  font-weight: 400;
+  color: rgba(10, 28, 64, 0.42);
+  text-decoration: underline;
+}
+
+/* Sortable column titles: the header text is the control. */
+.thSort {
+  border: 0;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+  font-size: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  text-align: inherit;
+}
+.thSort:hover {
+  color: var(--ink);
+}
+.thArrow {
+  margin-left: 4px;
+  font-size: 8px;
+  color: var(--blue);
+}
+
+/* MODEL · PRISMHR — retired from the table into the drilldown's head. */
+.acctMetaLine {
+  font-family: var(--font-donor-mono), ui-monospace, Menlo, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  margin: 4px 0 8px;
+}
+
+/* The draft desk's one line (5.2) — a per-person read of both records. */
+.deskLine {
+  margin: 6px 0 8px;
+  padding: 6px 10px;
+  border-left: 2px solid rgba(37, 99, 235, 0.35);
+  background: #f8fafd;
+  border-radius: 0 6px 6px 0;
+  font-size: 12.5px;
+  color: var(--ink);
+}
+.deskLineRead {
+  border: 0;
+  background: none;
+  padding: 0 0 0 8px;
+  cursor: pointer;
+  font-family: var(--font-donor-mono), ui-monospace, Menlo, monospace;
+  font-size: 10px;
+  color: var(--blue);
 }

@@ -57,10 +57,14 @@ export function actorsLine(from: string, to: string, others: number): string {
 const SF_HEAD_RE = /^[✉✔☎] (?:SF|OL|TM) [^—\n]*— .*? · (.+?)$/mu;
 
 // Recover the actors from a legacy note body (written before the column
-// existed). "" when the body has no SF head.
+// existed). "" when the body has no SF head. The head's "(unattributed)"
+// placeholder is a label, never a person — it must not resurrect as a
+// sender (refuted 2026-08-22: a phantom "(unattributed)" was warming
+// accounts and registering inbound).
 export function inferActors(body: string): string {
   const m = SF_HEAD_RE.exec(body ?? "");
-  return m ? m[1].trim() : "";
+  const a = m ? m[1].trim() : "";
+  return a === "(unattributed)" ? "" : a;
 }
 
 // Lane for a legacy row. Only paste-filed entries can be background —

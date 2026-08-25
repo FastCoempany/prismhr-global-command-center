@@ -13,17 +13,37 @@ import { hasDatabaseEnv } from "@/lib/db";
 import { peos, getPeo } from "@/lib/book";
 import { contactCount, contactsFor } from "@/lib/book/contacts";
 import { dealIntelFor } from "@/lib/intel/extract";
+import { relationshipFor } from "@/lib/intel/relationship";
 import type { DealIntel } from "@/lib/intel/types";
 import { RESEARCH_NS } from "@/lib/intel/deep-research";
 import {
   isNamespacedAccountId,
   loadAccountNotes,
+  loadDispositions,
   loadDoneTimes,
+  loadSnoozes,
   loadTouches,
 } from "@/lib/today/overlay";
 import { clockShort, userDayKey } from "@/lib/tz";
 import { sfAccountUrl } from "@/lib/salesforce";
-import { buildQueue, heatOf, moveKey } from "@/lib/groundwork/day";
+import { buildQueue, heatOf, liveMotionIds, moveKey } from "@/lib/groundwork/day";
+import {
+  collisionFor,
+  dropAgeDays,
+  engagedNeverIntroduced,
+  fetchSecondRecords,
+  fetchStageRows,
+  intentWarm,
+  outreachGem,
+  verifiedCold,
+  DROP_STALE_DAYS,
+  type SecondRecord,
+} from "@/lib/activity/read";
+import { cleanSubject } from "@/lib/activity/excerpt";
+import EvidenceChips from "./evidence-chips";
+import { loadDashboard } from "@/lib/dashboard/data";
+import { readOutcome } from "@/lib/dashboard/outcome";
+import { digestForCardName } from "@/lib/intel/digest";
 import { READOUT_READ_KEY, buildFile } from "@/lib/groundwork/file";
 import { proximityMark } from "@/lib/groundwork/proximity";
 import {
@@ -47,7 +67,25 @@ import {
   type WireItem,
 } from "@/lib/groundwork/wire";
 import { buildReadout, lint, readoutText } from "@/lib/groundwork/readout";
-import { attachWireToAccount, markReadoutRead, markWorked, sweepWire } from "./actions";
+import {
+  SENDBOOK_NS,
+  buildSendbook,
+  recordSends,
+  shortName,
+  weekStats,
+  type NoteLike as SendNote,
+} from "@/lib/sendbook/read";
+import { SEAT_NS, parseSeatBody } from "@/lib/act/lane";
+import {
+  attachWireToAccount,
+  markReadoutRead,
+  markWorked,
+  runResearchNow,
+  sweepWire,
+  unWork,
+} from "./actions";
+import { ChannelAsk } from "./channel-ask";
+import { SweepButton } from "./sweep-button";
 import { CopyStamp } from "./copy-stamp";
 import { Instrument } from "./instrument";
 import styles from "./groundwork.module.css";
@@ -88,22 +126,35 @@ export default async function GroundworkPage({
   const canWrite = access.canWrite && hasDatabaseEnv();
   const now = new Date();
 
-  const [notesMap, touches, doneTimes] = await Promise.all([
+  const [notesMap, touches, doneTimes, dispositions, snoozes] = await Promise.all([
     loadAccountNotes(),
     loadTouches(),
     loadDoneTimes(),
+    loadDispositions(),
+    loadSnoozes(),
   ]);
 
   // Split the note map: real accounts feed the corpus; namespaces feed the
   // wire, the institutions program, and the deep-research backbone.
   const accountNotes = new Map<
     string,
-    { body: string; source: string; createdAt: string }[]
+    { body: string; source: string; createdAt: string; actors?: string }[]
   >();
   const wireItems: WireItem[] = [];
   const institutions: Institution[] = [];
   const researchByAccount = new Map<string, { at: string; line: string }>();
+  const sendTapsById = new Map<string, SendNote[]>();
   for (const [id, notes] of notesMap) {
+    if (id.startsWith(SENDBOOK_NS)) {
+      // The Channel Ask's tapped touches — the Sendbook's second door.
+      const accountId = id.slice(SENDBOOK_NS.length);
+      if (accountId)
+        sendTapsById.set(
+          accountId,
+          notes.map((n) => ({ body: n.body, source: n.source, createdAt: n.createdAt })),
+        );
+      continue;
+    }
     if (id.startsWith(WIRE_NS)) {
       const item = parseWireBody(notes[0]?.body ?? "");
       if (item) {
@@ -139,9 +190,27 @@ export default async function GroundworkPage({
     if (isNamespacedAccountId(id)) continue;
     accountNotes.set(
       id,
-      notes.map((n) => ({ body: n.body, source: n.source, createdAt: n.createdAt })),
+      notes
+        // ✕-parked entries leave every register view — here too.
+        .filter((n) => !dispositions.has(`hide:note:${n.id}`))
+        .map((n) => ({
+          body: n.body,
+          source: n.source,
+          createdAt: n.createdAt,
+          actors: n.actors,
+        })),
     );
   }
+
+  // The Sendbook's merged read — record sends + tapped touches, stepped and
+  // laned. The wing subtext, the drumbeat synthetics, and the Tallyfoot all
+  // read this one view.
+  const sendbook = buildSendbook({
+    notesById: accountNotes,
+    tapsById: sendTapsById,
+    now,
+  });
+  const sendWeek = weekStats(sendbook, now);
 
   // Intel only where a corpus exists — regex extraction over notes + touches.
   const touchesByAccount = new Map<string, typeof touches>();
@@ -187,6 +256,8 @@ export default async function GroundworkPage({
   }
 
   // The wire's newest hit per account — the wire-trigger rule's evidence.
+  // BOTH stores (Ted doctrine): the sweep's auto-matches AND wire items the
+  // operator filed onto the record — the filed note outlives the namespace.
   const wireAtById = new Map<string, string>();
   for (const w of wireItems) {
     for (const id of w.accountIds) {
@@ -194,18 +265,112 @@ export default async function GroundworkPage({
       if (!cur || w.at > cur) wireAtById.set(id, w.at);
     }
   }
+  for (const [id, notes] of accountNotes) {
+    for (const n of notes) {
+      if (n.source !== "wire") continue;
+      const cur = wireAtById.get(id);
+      if (!cur || n.createdAt > cur) wireAtById.set(id, n.createdAt);
+    }
+  }
   const researchAtById = new Map<string, string>();
   for (const [id, r] of researchByAccount) researchAtById.set(id, r.at);
+
+  // What the board already knows: a deal at demo or later is the HomeRoom's
+  // to work, and a stamped outcome is over. Groundwork prospects the book it
+  // is NOT actively closing — those accounts leave the queue entirely.
+  const excludedIds = new Set<string>();
+  // The second record, parsed once for the whole book — rule fuel, the chips,
+  // and the collision gate all read this one map.
+  const secondById: Map<string, SecondRecord> = await fetchSecondRecords().catch(
+    () => new Map(),
+  );
+  // Accounts holding ANY live board card — engaged-never-introduced fires
+  // only where no deal exists at all, whatever its stage.
+  const boardIds = new Set<string>();
+  const dash = await loadDashboard();
+  if (dash.status !== "unauthenticated" && dash.status !== "database-unavailable") {
+    const idByName = new Map(peos.map((p) => [p.name.toLowerCase(), p.id]));
+    const LATE = ["demo", "exec_summary", "proposal", "contract"] as const;
+    for (const card of dash.cards) {
+      const id =
+        idByName.get(card.name.toLowerCase()) ??
+        digestForCardName(card.name)?.accountId ??
+        "";
+      if (!id) continue;
+      if (!card.archived) boardIds.add(id);
+      // The outcome stamp survives archiving — a retired Closed Won/Lost
+      // deal must never re-enter the book as a virgin prospect.
+      if (readOutcome(card.notes)) {
+        excludedIds.add(id);
+        continue;
+      }
+      if (card.archived) continue;
+      const late = LATE.some(
+        (k) => card.states[k] === "active" || card.states[k] === "done",
+      );
+      if (late) excludedIds.add(id);
+    }
+  }
+  // The disposition ledger holds too (Ted doctrine): not-mine is excluded
+  // everywhere by decree, parked was shelved by the operator's own hand, and
+  // a snoozed account was told to be quiet.
+  for (const [id, d] of dispositions) {
+    if (id.includes(":")) continue; // namespaced keys are not accounts
+    if (d.status === "not-mine" || d.status === "parked") excludedIds.add(id);
+  }
+  for (const id of snoozes.keys()) if (!id.includes(":")) excludedIds.add(id);
+  // The record's live motion excludes too: a recent inbound or a fresh
+  // meeting on file means the deal is being WORKED — the HomeRoom's job,
+  // whatever the lagging board says.
+  for (const id of liveMotionIds(accountNotes, intelById, now)) excludedIds.add(id);
+
+  // A tapped touch is a logged touch (Ted doctrine: the drumbeat reads the
+  // widest store) — synthesized at read time for the queue's clocks, never
+  // written into the touch log itself.
+  const sendTapTouches = [...sendTapsById.entries()].flatMap(([id, notes]) =>
+    notes.map((n) => ({
+      subjectKey: `outreach:${id}`,
+      contactedAt: n.createdAt,
+      followUpAt: "",
+      status: "awaiting",
+    })),
+  );
+
+  // The Act Lane's seats (founder-decreed 2026-08-21): a move the operator
+  // filed from the accounts sheet leads the wing until it is worked, taken
+  // back, or the record shows the outbound after the seat.
+  const seats = new Map<string, { act: string; term: string; day: string }>();
+  for (const [id, notes] of notesMap) {
+    if (!id.startsWith(SEAT_NS)) continue;
+    const accountId = id.slice(SEAT_NS.length);
+    const seatNote = notes[0];
+    if (!accountId || !seatNote) continue;
+    const seat = parseSeatBody(seatNote.body);
+    if (!seat) continue;
+    const seatAt = Date.parse(seatNote.createdAt);
+    const worked = recordSends(notesMap.get(accountId) ?? []).some(
+      (s) => Date.parse(s.at) > seatAt,
+    );
+    if (!worked) seats.set(accountId, seat);
+  }
 
   const { all: rankedAll } = buildQueue({
     accounts: peos,
     intelById,
     notesById: accountNotes,
-    touches,
-    contactCountById: contactCount,
+    touches: [...touches, ...sendTapTouches],
+    // The widest people count the app holds (Ted doctrine): the frozen SF
+    // export AND the record's live thread roster — "find a second name" must
+    // never fire under a green MULTI chip.
+    contactCountById: (id: string) =>
+      Math.max(contactCount(id), intelById.get(id)?.threads.people.length ?? 0),
     wireAtById,
     researchAtById,
     doneKeys: new Set(doneTimes.keys()),
+    excludedIds,
+    secondById,
+    boardIds,
+    seats,
     now,
   });
 
@@ -214,14 +379,128 @@ export default async function GroundworkPage({
   // Worked moves leave the queue for the left wing; the rest stay live. The
   // wing reads the stamps themselves, so a stamp survives even if its rule
   // stops firing later in the day.
-  const doneToday: { name: string; at: string }[] = [];
+  // The stamp's subtext reads the Sendbook: the newest touch filed today for
+  // that account says what was done — channel, step, who.
+  const sendToday = new Map<string, { channel: string; step: number; contact: string }>();
+  for (const l of sendbook.lines) {
+    const t = Date.parse(l.at);
+    if (Number.isNaN(t) || userDayKey(new Date(t)) !== dayKey) continue;
+    if (!sendToday.has(l.accountId)) sendToday.set(l.accountId, l); // newest first
+  }
+  const subFor = (accountId: string): string => {
+    const s = sendToday.get(accountId);
+    if (!s) return "";
+    return [`${s.channel} · STEP ${s.step}`, s.contact ? shortName(s.contact) : ""]
+      .filter(Boolean)
+      .join(" · ");
+  };
+
+  // When no channel line exists (a copy-stamp, a pre-register stamp), the
+  // subtext carries the move's own specifics — the headline, the thread
+  // subject, the quiet date, the CSM's name — never a bare label
+  // (founder-decreed 2026-08-19: the subtext answers what it means).
+  const clip = (s: string, n: number) =>
+    s.length > n ? `${s.slice(0, n - 1).trimEnd()}…` : s;
+  const threadSubjectOf = (id: string): string => {
+    const l = sendbook.lines.find(
+      (x) => x.accountId === id && x.from === "record" && x.clause,
+    );
+    return l ? l.clause : "";
+  };
+  const lastSendDateOf = (id: string): string => {
+    const l = sendbook.lines.find((x) => x.accountId === id);
+    return l ? monthDay(l.at) : "";
+  };
+  const wireHeadFor = (id: string): string => {
+    let best: WireItem | null = null;
+    for (const w of wireItems)
+      if (w.accountIds.includes(id) && (!best || w.at > best.at)) best = w;
+    return best?.headline ?? "";
+  };
+  const ruleSub = (id: string, ruleId: string): string => {
+    switch (ruleId) {
+      case "wire-trigger": {
+        const h = wireHeadFor(id);
+        return h
+          ? `SENT THE NEWS NOTE · ${clip(h.toUpperCase(), 46)}`
+          : "SENT A NOTE ABOUT THEIR NEWS";
+      }
+      case "intent-warm": {
+        const n = intentById.get(id)?.activities;
+        return n
+          ? `SENT THE READING-US NOTE · ${n} SALES NAV READS`
+          : "SENT THE READING-US NOTE · SALES NAV SHOWS THEM READING US";
+      }
+      case "riding-lane": {
+        const d = ridingLaneDate(accountNotes.get(id), now);
+        return d
+          ? `ASKED INTO THE COLLEAGUE'S OPEN DEAL · CLOSES ${monthDay(d).toUpperCase()}`
+          : "ASKED INTO THE COLLEAGUE'S OPEN DEAL";
+      }
+      case "silence-bump": {
+        const s = threadSubjectOf(id);
+        const d = lastSendDateOf(id);
+        return `NUDGED ${s ? `THE '${clip(s.toUpperCase(), 34)}' THREAD` : "THE OPEN THREAD"}${d ? ` · NO REPLY SINCE ${d.toUpperCase()}` : ""}`;
+      }
+      case "cold-revival": {
+        const s = threadSubjectOf(id);
+        const d = lastSendDateOf(id);
+        return `REVIVED ${s ? `THE '${clip(s.toUpperCase(), 34)}' THREAD` : "THE COLD THREAD"}${d ? ` · QUIET SINCE ${d.toUpperCase()}` : ""}`;
+      }
+      case "roundup-slot": {
+        const csm = getPeo(id)?.csm ?? "";
+        return csm && csm !== "Unassigned"
+          ? `BRIEFED ${csm.toUpperCase()} ON THIS ACCOUNT`
+          : "BRIEFED THE PARTNER MANAGER ON THIS ACCOUNT";
+      }
+      case "stale-above-gate": {
+        const r = researchByAccount.get(id);
+        if (r) {
+          const age = Math.floor((now.getTime() - Date.parse(r.at)) / 86_400_000);
+          return `REFRESHED THE ACCOUNT RESEARCH · WAS ${age} DAYS OLD`;
+        }
+        return "RAN THE BOOK-WIDE RESEARCH PASS";
+      }
+      case "stakeholder-gap":
+        return "DUG UP A SECOND CONTACT NAME";
+      case "never-touched-incumbent":
+        return "SENT FIRST COLD EMAIL · STEP 1";
+      default:
+        return "";
+    }
+  };
+
+  const doneToday: {
+    name: string;
+    at: string;
+    sub: string;
+    mk: string;
+    accountId: string;
+  }[] = [];
   for (const [key, at] of doneTimes) {
     const m = new RegExp(`^groundwork:${dayKey}:([^:]+):(.+)$`).exec(key);
     if (!m) continue;
     const name = getPeo(m[1])?.name;
-    if (name) doneToday.push({ name, at: clockShort(at) });
+    if (name)
+      doneToday.push({
+        name,
+        at: clockShort(at),
+        sub: subFor(m[1]) || ruleSub(m[1], m[2]),
+        mk: `${m[1]}:${m[2]}`,
+        accountId: m[1],
+      });
   }
   doneToday.sort((a, b) => a.at.localeCompare(b.at));
+
+  // The pre-answer rule (decreed 2026-08-19): an outbound the record already
+  // holds today answers the Channel Ask before it opens — the chip row never
+  // shows for an account whose send is on file.
+  const recordSendToday = new Set<string>();
+  for (const l of sendbook.lines) {
+    const t = Date.parse(l.at);
+    if (l.from === "record" && !Number.isNaN(t) && userDayKey(new Date(t)) === dayKey)
+      recordSendToday.add(l.accountId);
+  }
 
   const live = rankedAll.filter(
     (q) => !doneTimes.has(`groundwork:${dayKey}:${moveKey(q)}`),
@@ -259,6 +538,34 @@ export default async function GroundworkPage({
           })),
           laneDate: ridingLaneDate(accountNotes.get(stageItem.accountId), now),
           research: researchByAccount.get(stageItem.accountId) ?? null,
+          relationship: relationshipFor(
+            notesMap.get(stageItem.accountId) ?? [],
+            contactsFor(stageItem.accountId),
+            { name: stageAccount.contactName, email: stageAccount.contactEmail },
+          ),
+          second: await (async () => {
+            const sr = secondById.get(stageItem.accountId);
+            if (!sr) return null;
+            const gem = outreachGem(sr);
+            // The roundup brief's prep (5.3): the CSM's own last five rows on
+            // this account — heads only, from the staged slice, read for this
+            // one account only when the slot is on stage.
+            const csmPrep =
+              stageItem.ruleId === "roundup-slot" && stageAccount.csm
+                ? (await fetchStageRows(stageItem.accountId).catch(() => []))
+                    .filter((r) => r.a === stageAccount.csm)
+                    .slice(0, 5)
+                    .map((r) => ({ day: r.d, subject: cleanSubject(r.s).slice(0, 70) }))
+                : [];
+            return {
+              supportCases: engagedNeverIntroduced(sr, now)?.cases ?? sr.support?.total,
+              gem: gem
+                ? { act: gem.act, reason: gem.reason, term: gem.term, who: gem.who }
+                : null,
+              collision: collisionFor(sr, now),
+              csmPrep,
+            };
+          })(),
           now,
         })
       : null;
@@ -274,6 +581,12 @@ export default async function GroundworkPage({
     const m = /^outreach:(.+)$/.exec(t.subjectKey);
     if (m && t.status !== "archived") outreachAccountIds.add(m[1]);
   }
+  // The record's threads count too (Ted doctrine): a filed conversation is
+  // as open as a logged one — the number spoken to Russ must not undercount.
+  for (const [id, intel] of intelById)
+    if (intel.lastInbound || intel.lastOutbound) outreachAccountIds.add(id);
+  // And the Sendbook's tapped touches — a LinkedIn message is an open door.
+  for (const id of sendTapsById.keys()) outreachAccountIds.add(id);
   const weekAgo = now.getTime() - 7 * 86_400_000;
   const partnerTouches = touches.filter(
     (t) =>
@@ -300,7 +613,23 @@ export default async function GroundworkPage({
     if (d && withinWeek(d))
       nextSevenDays.push(`${idToName(id)} — their decision is dated ${monthDay(d)}`);
   }
+  // The second record's arithmetic for the readout — counts, never model text.
+  const srStats = (() => {
+    if (secondById.size === 0) return null;
+    let active30 = 0;
+    let cold = 0;
+    for (const [id, sr] of secondById) {
+      if (!peos.some((p) => p.id === id)) continue;
+      const lh = sr.rollup?.lastHuman?.day ?? "";
+      if (lh && (now.getTime() - Date.parse(`${lh}T12:00:00Z`)) / 86_400_000 <= 30)
+        active30 += 1;
+      if (verifiedCold(sr)) cold += 1;
+    }
+    return { active30, verifiedCold: cold };
+  })();
+
   const readout = buildReadout({
+    secondRecord: srStats,
     accounts: peos,
     queue: rankedAll,
     intelById,
@@ -367,6 +696,21 @@ export default async function GroundworkPage({
                 <span key={i} className={`${styles.wingItem} ${styles.wingDone}`}>
                   <span className={styles.wingTick}>✓</span> {d.name}{" "}
                   <span className={styles.wingTm}>{d.at}</span>
+                  {canWrite && (
+                    <form
+                      action={unWork.bind(null, d.mk, d.accountId)}
+                      className={styles.wingUndoForm}
+                    >
+                      <button
+                        className={styles.wingUndo}
+                        type="submit"
+                        title="Take it back. The move returns to the queue; the tapped touch comes out of the register. A filed email stays — the record is never unwritten."
+                      >
+                        ↺
+                      </button>
+                    </form>
+                  )}
+                  {d.sub && <span className={styles.wingSub}>{d.sub}</span>}
                 </span>
               ))
             )}
@@ -396,11 +740,107 @@ export default async function GroundworkPage({
                 </div>
                 <h1 className={styles.stgAct}>{stageItem.action}</h1>
                 <p className={styles.stgWhy}>{stageItem.reason}</p>
+                {(() => {
+                  const sr = secondById.get(stageItem.accountId);
+                  if (!sr) return null;
+                  const warm = intentWarm(sr, now);
+                  const col = collisionFor(sr, now);
+                  return (
+                    <EvidenceChips
+                      accountId={stageItem.accountId}
+                      support={
+                        sr.support && sr.support.total > 0
+                          ? {
+                              total: sr.support.total,
+                              spikeDay: sr.support.spike?.day ?? "",
+                              spikeN: sr.support.spike?.n ?? 0,
+                            }
+                          : null
+                      }
+                      intent={
+                        sr.intent
+                          ? {
+                              opens30: sr.intent.windows.w30.o,
+                              clicks30: sr.intent.windows.w30.c,
+                              lastOpen: sr.intent.windows.lastOpen,
+                              sends7: sr.intent.windows.w7?.s ?? 0,
+                            }
+                          : warm
+                            ? {
+                                opens30: warm.opens30,
+                                clicks30: warm.clicks30,
+                                lastOpen: warm.lastOpen,
+                                sends7: 0,
+                              }
+                            : null
+                      }
+                      collision={col}
+                      gems={sr.gems
+                        .filter((g) => !g.actedDay)
+                        .slice(0, 2)
+                        .map((g) => ({
+                          term: g.term,
+                          act: g.act,
+                          reason: g.reason,
+                          whenDay: g.whenDay,
+                          cites: g.cites,
+                        }))}
+                    />
+                  );
+                })()}
                 <div className={styles.stgActs}>
-                  {canWrite && (
-                    <form action={markWorked.bind(null, moveKey(stageItem))}>
-                      <button className={styles.btnAccent} type="submit">
-                        Worked it
+                  {canWrite && stageItem.ruleId === "stale-above-gate" && (
+                    <form
+                      action={runResearchNow.bind(
+                        null,
+                        moveKey(stageItem),
+                        stageItem.accountId,
+                      )}
+                    >
+                      <button
+                        className={styles.btnAccent}
+                        type="submit"
+                        title="Runs the deep pass on this account and stamps the move worked. Takes a minute."
+                      >
+                        Run it now
+                      </button>
+                    </form>
+                  )}
+                  {canWrite &&
+                    (recordSendToday.has(stageItem.accountId) ? (
+                      <form action={markWorked.bind(null, moveKey(stageItem))}>
+                        <button
+                          className={
+                            stageItem.ruleId === "stale-above-gate"
+                              ? styles.btn2nd
+                              : styles.btnAccent
+                          }
+                          type="submit"
+                          title="The record already holds today's send — the stamp reads it."
+                        >
+                          Worked it
+                        </button>
+                      </form>
+                    ) : (
+                      <ChannelAsk
+                        mk={moveKey(stageItem)}
+                        accountId={stageItem.accountId}
+                        contacts={contactsFor(stageItem.accountId)
+                          .map((c) => [c.first, c.last].filter(Boolean).join(" "))
+                          .filter(Boolean)
+                          .slice(0, 6)}
+                        clause={stageItem.action}
+                        accent={stageItem.ruleId !== "stale-above-gate"}
+                      />
+                    ))}
+                  {canWrite && stageItem.ruleId !== "stale-above-gate" && (
+                    <form action={runResearchNow.bind(null, null, stageItem.accountId)}>
+                      <button
+                        className={styles.btn2nd}
+                        type="submit"
+                        title="Runs the deep pass on this account. The move stays open. Takes a minute."
+                      >
+                        Run fresh research
                       </button>
                     </form>
                   )}
@@ -431,7 +871,32 @@ export default async function GroundworkPage({
                       >
                         The composed thing · to {file.composed.to}
                       </span>
+                      {file.collisionLine && (
+                        <span
+                          className={styles.collideFlag}
+                          title="Your note lands beside live motion. It informs; it never blocks."
+                        >
+                          ⚠ {file.collisionLine}
+                        </span>
+                      )}
                       {file.composed.payload}
+                      {file.csmPrep.length > 0 && (
+                        <details className={styles.prepFold}>
+                          <summary>
+                            THE CSM&rsquo;S OWN LAST{" "}
+                            {file.csmPrep.length === 1 ? "ROW" : "FIVE"} · SHARPEN THE ASK
+                            ▾
+                          </summary>
+                          {file.csmPrep.map((x) => (
+                            <div
+                              key={`${x.day}|${x.subject}`}
+                              className={styles.prepLine}
+                            >
+                              {x.day.slice(5).replace("-", "/")} · {x.subject}
+                            </div>
+                          ))}
+                        </details>
+                      )}
                     </div>
                     <div className={styles.people}>
                       {file.threadCount >= 1 && (
@@ -600,9 +1065,7 @@ export default async function GroundworkPage({
               one-sentence read. Nothing has been swept yet.
               {canWrite && wireAvailable() && (
                 <form action={sweepWire} style={{ marginTop: 8 }}>
-                  <button className={styles.btn2nd} type="submit">
-                    Run the first sweep
-                  </button>
+                  <SweepButton label="Run the first sweep" />
                 </form>
               )}
             </div>
@@ -649,9 +1112,7 @@ export default async function GroundworkPage({
               ))}
               {canWrite && wireAvailable() && wireIsDue && (
                 <form action={sweepWire}>
-                  <button className={`${styles.btn2nd} ${styles.btnSmall}`} type="submit">
-                    Sweep again. The last sweep is stale.
-                  </button>
+                  <SweepButton label="Sweep again. The last sweep is stale." small />
                 </form>
               )}
             </div>
@@ -723,6 +1184,35 @@ export default async function GroundworkPage({
             </div>
           </details>
         </div>
+
+        {/* ── The Tallyfoot — the Sendbook's door ──────────────────── */}
+        <Link
+          href="/sendbook"
+          className={styles.tallyfoot}
+          title="The Sendbook — every touch, kept."
+        >
+          {(() => {
+            const age = dropAgeDays(secondById, now);
+            return age != null && age > DROP_STALE_DAYS ? (
+              <span className={styles.staleFoot}>
+                SECOND RECORD · {Math.floor(age)} DAYS OLD · DROP THE FRESH EXPORT ·{" "}
+              </span>
+            ) : null;
+          })()}
+          {sendWeek.total === 0 ? (
+            <>THIS WEEK · NOTHING WORKED YET · THE SENDBOOK →</>
+          ) : (
+            <>
+              THIS WEEK · <b>{sendWeek.total} WORKED</b>
+              {sendWeek.byChannel.map(([ch, n]) => ` · ${n} ${ch}`).join("")} ·{" "}
+              <b>
+                {sendWeek.accounts} ACCOUNT{sendWeek.accounts === 1 ? "" : "S"}
+              </b>
+              {sendWeek.replied > 0 ? ` · ${sendWeek.replied} REPLIED` : ""} · THE
+              SENDBOOK →
+            </>
+          )}
+        </Link>
       </main>
     </>
   );

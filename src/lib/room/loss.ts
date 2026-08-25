@@ -24,8 +24,11 @@ export function outcomeMarkBody(status: "lost" | "won", phrase: string): string 
   return `${head} — ${(phrase ?? "").trim().slice(0, 200) || "stated in the record"}`;
 }
 
+// Two voices close a deal: the CLIENT's ("went with another provider") and
+// the OPERATOR's own verdict ("close lost it", "mark it lost") — the record
+// must hear both (caught 2026-08-14 on ESC).
 const LOSS_RE =
-  /\b(?:found another (?:solution|provider|vendor|partner)|(?:we(?:'ve| have)?|they(?:'ve| have)?) lost (?:the|both|this)\b[^.\n]{0,60}|lost the deal|going (?:with|in) a different direction|went with (?:another|a competitor|someone else)|chose (?:a )?(?:competitor|another (?:provider|vendor|solution))|signed with (?:another|a competitor)|no longer moving forward|decided not to (?:move forward|proceed)|deal is (?:dead|lost|off)|passing on (?:us|this|the deal)|client (?:backed|pulled) out)\b/i;
+  /\b(?:found another (?:solution|provider|vendor|partner)|(?:we(?:'ve| have)?|they(?:'ve| have)?) lost (?:the|both|this)\b[^.\n]{0,60}|lost the deal|going (?:with|in) a different direction|went with (?:another|a competitor|someone else)|chose (?:a )?(?:competitor|another (?:provider|vendor|solution))|signed with (?:another|a competitor)|no longer moving forward|decided not to (?:move forward|proceed)|deal is (?:dead|lost|off)|passing on (?:us|this|the deal)|client (?:backed|pulled) out|close[d]?[- ]lost(?:\s+it)?|mark (?:it|this) lost|call (?:it|this) lost|write (?:it|this) off)\b/i;
 
 // Words that flip the meaning when they sit just before the match — "so we
 // don't lose the deal", "at risk of losing", "almost lost this one".

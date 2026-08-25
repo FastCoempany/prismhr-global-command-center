@@ -21,7 +21,10 @@ export type RoomInputs = {
   lastTouch: { at: string; awaitingReply: boolean; who: string } | null;
   // newest INBOUND evidence in the record (a pasted client reply) — when it
   // postdates the last outbound touch, the court flips: you owe the answer.
-  lastInbound?: { at: string; who: string } | null;
+  lastInbound?: { at: string; who: string; promise?: boolean } | null;
+  // newest MEETING record — a meeting newer than any outbound puts the
+  // follow-up on the operator: the recap is owed, never a "wait".
+  lastMeeting?: { at: string; who: string } | null;
   // most recent record entry of ANY kind ("" = empty record)
   lastRecordAt: string;
   // every gate on every stage is checked but no outcome is stamped — the deal
@@ -39,6 +42,16 @@ export type RoomRead = {
 };
 
 const DAY = 86_400_000;
+
+// Day grammar (founder-decreed 2026-08-22): one day back is "yesterday",
+// never "1 days ago"; a one-day quiet is "Quiet 1 day."
+const daysAgo = (n: number): string => (n === 1 ? "yesterday" : `${n} days ago`);
+const nDays = (n: number): string => `${n} day${n === 1 ? "" : "s"}`;
+
+// Their promise holds an await this long before the chase resumes — a
+// "will be in touch" is theirs to keep for a week, then it's yours to chase
+// (the closer rule's case table, founder-decreed 2026-08-22).
+const PROMISE_AWAIT_DAYS = 7;
 
 export function daysBetween(iso: string, now: Date): number | null {
   const t = Date.parse(iso);
@@ -140,6 +153,9 @@ export function meterRead(i: {
 
 const QUIET_RED_DAYS = 5;
 const AGE_RED_DAYS = 7;
+// A meeting's recap stays the move for this long; past it the meeting is
+// history and the ordinary rules speak again.
+const RECAP_DAYS = 5;
 
 export function readDeal(i: RoomInputs): RoomRead {
   const quietDays = i.lastTouch ? daysBetween(i.lastTouch.at, i.now) : null;
@@ -155,6 +171,23 @@ export function readDeal(i: RoomInputs): RoomRead {
   const inboundDays = inboundNewest ? daysBetween(inboundAt, i.now) : null;
   const inboundWho = (i.lastInbound?.who || "").trim();
 
+  // A meeting newer than any outbound (and not yet answered by an inbound)
+  // puts the follow-up on the operator — the recap is owed, never a "wait"
+  // (the Staff Leasing 1:00 PM read, founder-decreed 2026-08-18). A recap
+  // left unsent goes stale after RECAP_DAYS and the ordinary rules resume.
+  const meetingAt = i.lastMeeting?.at ?? "";
+  const meetingDays = meetingAt ? daysBetween(meetingAt, i.now) : null;
+  const meetingNewest =
+    !!meetingAt &&
+    !Number.isNaN(Date.parse(meetingAt)) &&
+    !inboundNewest &&
+    (!i.lastTouch || Date.parse(meetingAt) >= Date.parse(i.lastTouch.at)) &&
+    meetingDays != null &&
+    meetingDays <= RECAP_DAYS;
+  const meetingWho = (i.lastMeeting?.who || "").trim();
+  const meetingAgo =
+    meetingDays != null && meetingDays > 0 ? daysAgo(meetingDays) : "today";
+
   // A dated wall is a real calendar fact — expire and escalate it.
   const wallMs = i.timing?.dateIso ? Date.parse(i.timing.dateIso) : NaN;
   const wallDaysPast = Number.isNaN(wallMs)
@@ -168,6 +201,12 @@ export function readDeal(i: RoomInputs): RoomRead {
     const who = (inboundWho || "they").toUpperCase().slice(0, 24);
     court = {
       line: `YOUR MOVE · ${who} WROTE ${inboundDays ?? 0} DAYS AGO`,
+      tone: "you",
+    };
+  } else if (meetingNewest) {
+    const who = (meetingWho || "them").toUpperCase().slice(0, 24);
+    court = {
+      line: `YOUR MOVE · MET ${who} ${meetingDays === 0 ? "TODAY" : `${meetingDays}D AGO`}`,
       tone: "you",
     };
   } else if (i.lastTouch && i.lastTouch.awaitingReply) {
@@ -223,32 +262,59 @@ export function readDeal(i: RoomInputs): RoomRead {
         ? `against ${i.timing.phrase}`
         : `on a ${i.timing.phrase.toLowerCase()} ask`
     : "";
-  if (inboundNewest && i.step) {
-    const item = i.step.item.trim() || "the open item";
+  if (inboundNewest && i.lastInbound?.promise) {
+    // The newest inbound is THEIR promise — relayed or direct. Nothing is
+    // owed from this side: hold the await, then chase the promise itself,
+    // never "Answer" the person who made it.
+    const ago = inboundDays != null && inboundDays > 0 ? daysAgo(inboundDays) : "today";
+    move =
+      inboundDays != null && inboundDays > PROMISE_AWAIT_DAYS
+        ? `Chase the follow-up. Promised ${ago}.`
+        : `Hold for their follow-up. Promised ${ago}.`;
+  } else if (inboundNewest && i.step) {
+    // The board gate rides the row as its own chip — the move never says a
+    // thing twice, and "close" the jargon is retired (decreed 2026-08-18).
     const who = inboundWho || "they";
-    const ago =
-      inboundDays != null && inboundDays > 0 ? `${inboundDays} days ago` : "today";
+    const ago = inboundDays != null && inboundDays > 0 ? daysAgo(inboundDays) : "today";
     move = wallOverdue
-      ? `Answer ${who}. They wrote ${ago}. The ${i.timing!.phrase} wall passed. Then close “${item.toLowerCase()}”.`
-      : `Answer ${who}. They wrote ${ago}. Then close “${item.toLowerCase()}”.`;
+      ? `Answer ${who}. They wrote ${ago}. The ${i.timing!.phrase} wall passed.`
+      : `Answer ${who}. They wrote ${ago}.`;
   } else if (inboundNewest) {
     const who = inboundWho || "they";
+    // "Answer" already says the reply is owed — the reason is just the
+    // trigger (founder-decreed 2026-08-22).
     move = `Answer ${who}. They wrote ${
-      inboundDays != null && inboundDays > 0 ? `${inboundDays} days ago` : "today"
-    }. The reply is owed.`;
+      inboundDays != null && inboundDays > 0 ? daysAgo(inboundDays) : "today"
+    }.`;
+  } else if (meetingNewest) {
+    move = `Send ${meetingWho || "them"} the recap. You met ${meetingAgo}.`;
+  } else if (
+    i.lastTouch &&
+    i.lastTouch.awaitingReply &&
+    quietDays === 0 &&
+    !i.allGatesDone
+  ) {
+    // The operator already moved today — a filed send or a logged touch puts
+    // the ball with them until tomorrow. The open gate rides its own chip;
+    // the row must acknowledge the send it just read (the Infiniti
+    // demo-times drop, founder-decreed 2026-08-19).
+    move = `Wait on ${i.lastTouch.who || "their reply"}. You wrote today.`;
   } else if (i.step) {
-    const item = i.step.item.trim() || "the open item";
+    // The gate item is already an imperative ("Book the demo") — say it
+    // plainly; never "close" it (decreed 2026-08-18).
+    const raw = i.step.item.trim() || "Work the open item";
+    const item = raw.charAt(0).toUpperCase() + raw.slice(1).replace(/\.+$/, "");
     if (quietLong && i.lastTouch) {
       const who = i.lastTouch.who || "them";
       move = clock
-        ? `Chase ${who} on “${item.toLowerCase()}”. Quiet ${quietDays} days. ${i.timing!.phrase} is the wall.`
-        : `Chase ${who} on “${item.toLowerCase()}”. Quiet ${quietDays} days.`;
+        ? `Chase ${who} on “${raw.toLowerCase()}”. Quiet ${nDays(quietDays)}. ${i.timing!.phrase} is the wall.`
+        : `Chase ${who} on “${raw.toLowerCase()}”. Quiet ${nDays(quietDays)}.`;
     } else if (i.timing && wallOverdue) {
-      move = `Close “${item.toLowerCase()}”. The ${i.timing.phrase} wall passed ${wallDaysPast} days ago. Decide whether the date moved or the deal did.`;
+      move = `${item}. The ${i.timing.phrase} wall passed ${daysAgo(wallDaysPast)}. Decide whether the date moved or the deal did.`;
     } else if (i.timing) {
-      move = `Close “${item.toLowerCase()}”. ${i.timing.phrase} is the clock.`;
+      move = `${item}. ${i.timing.phrase} is the clock.`;
     } else {
-      move = `Close “${item.toLowerCase()}”. The stage needs nothing else.`;
+      move = `${item}. The stage asks nothing else.`;
     }
   } else if (i.allGatesDone) {
     // The whole board is checked and nothing is stamped — the row stays loud
@@ -256,7 +322,7 @@ export function readDeal(i: RoomInputs): RoomRead {
     move = "Stamp the outcome. Every gate is closed.";
   } else if (i.lastTouch && i.lastTouch.awaitingReply) {
     move = quietLong
-      ? `Nudge ${i.lastTouch.who || "the thread"}. Quiet ${quietDays} days.`
+      ? `Nudge ${i.lastTouch.who || "the thread"}. Quiet ${nDays(quietDays)}.`
       : `Wait on ${i.lastTouch.who || "their reply"}. Nothing owed on your side today.`;
   } else {
     move = "File a paste or a note. Not enough signal yet.";

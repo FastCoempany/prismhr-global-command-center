@@ -378,11 +378,20 @@ describe("the card's filters tell the truth", () => {
     assert.ok(why.length > 20);
     assert.ok(!/^0 of/.test(why));
   });
-  test("a scenario leads with its own categories and drops its noise", () => {
+  test("a scenario leads with its own categories and sinks its noise to the tail", () => {
+    // Avoid demotes instead of hiding (2026-08-24): a scenario's own traps
+    // sometimes demand a question its avoid list holds, so nothing vanishes —
+    // every avoided-category question sorts after every kept one.
     const scen = SCENARIOS.find((s) => s.avoid.length > 0 && s.leadWith.length > 0)!;
     const shown = selectQuestions(BANK, NO_FILTERS, scen);
     assert.equal(shown[0].category, scen.leadWith[0]);
-    for (const q of shown) assert.ok(!scen.avoid.includes(q.category));
+    const firstAvoided = shown.findIndex((q) => scen.avoid.includes(q.category));
+    assert.ok(firstAvoided > 0, "avoided questions still render");
+    for (let i = firstAvoided; i < shown.length; i++)
+      assert.ok(
+        scen.avoid.includes(shown[i].category),
+        `${shown[i].id} (kept) sorts below avoided noise`,
+      );
   });
   test("asking for a scenario's avoided category by name still works", () => {
     const scen = SCENARIOS.find((s) => s.avoid.length > 0)!;
@@ -588,30 +597,20 @@ describe("the restructure holds", () => {
     assert.ok(!pipe.includes("/book"), "a card still links at the retired Book");
     assert.ok(pipe.includes("/accounts?peo="));
   });
-  test("retiring a question comes home to the BOUND card it was asked from", () => {
-    const actions = readFileSync(join(root, "src/app/today/actions.ts"), "utf8");
-    // The Playbook carries its account in the query string; the whitelist has to
-    // accept that, or every retirement silently unbinds the card.
-    const m = /const to =\s*([\s\S]*?);\n/.exec(actions);
-    assert.ok(m, "askNextDone's returnTo whitelist moved");
-    const re = /\/\^\\\/playbook/.test(m![1]) || m![1].includes("playbook");
-    assert.ok(re, "the whitelist no longer mentions the Playbook");
-    assert.ok(actions.includes('revalidatePath("/playbook")'));
-    assert.ok(!actions.includes("/battlecard"));
+  test("the binding feature stays retired (founder-decreed 2026-08-22)", () => {
+    // The card is account-less: no bind dropdown, no per-account retirement,
+    // no scenario persistence. If any of these come back, it is a decree
+    // reversal, not a drive-by.
     const client = readFileSync(
       join(root, "src/app/playbook/playbook-client.tsx"),
       "utf8",
     );
-    assert.ok(client.includes("value={`/playbook?account=${accountId}`}"));
-  });
-
-  test("the Playbook can bind to any account in the book, not a handful", () => {
-    const client = readFileSync(
-      join(root, "src/app/playbook/playbook-client.tsx"),
-      "utf8",
-    );
-    assert.ok(client.includes("accounts.map("));
-    assert.ok(!client.includes("accounts.slice(0, 6)"));
+    assert.ok(!client.includes("bind to an account"), "the bind dropdown is back");
+    assert.ok(!client.includes("askNextDone"), "the ✓-asked retirement is back");
+    assert.ok(!client.includes('from "./actions"'), "per-account scenario save is back");
+    const page = readFileSync(join(root, "src/app/playbook/page.tsx"), "utf8");
+    assert.ok(!page.includes("sp.account"), "the ?account= param is read again");
+    assert.ok(!page.includes("asknext-done"), "per-account retirement is read again");
   });
 
   test("every class the Playbook asks for exists", () => {
@@ -651,8 +650,10 @@ describe("the room wires every new mechanism", () => {
     assert.ok(client.includes("The actions it opened stay"));
   });
   test("the research control states when it last ran", () => {
-    assert.ok(client.includes("last run"));
-    assert.ok(client.includes("never run"));
+    // The Spring's chip grammar (2026-08-13): a dated stamp, or NEVER when
+    // neither research store has touched the account.
+    assert.ok(client.includes("RESEARCH ${new Date(row.researchAt)"));
+    assert.ok(client.includes("RESEARCH — NEVER"));
   });
   test("a closed row can still be read, and retired separately", () => {
     assert.ok(client.includes("CLOSED WON"));
@@ -824,8 +825,12 @@ describe("the repairs hold", () => {
     // Separate transitions: research must not dress the ask button in its label.
     assert.ok(client.includes("rsrchPending"));
     assert.ok(client.includes("askPending"));
-    // A closed row stops advertising open work.
-    assert.ok(client.includes("{row.outstanding && !row.outcome && ("));
+    // The gate chip is retired (decreed 2026-08-19): the stage's open
+    // question lives in the UNKNOWN register with its own ✓, and the old
+    // STILL OPEN block stays dead.
+    assert.ok(client.includes("STAGE GATE"));
+    assert.ok(!client.includes("GATE · "), "the movewrap gate chip is retired");
+    assert.ok(!client.includes("STILL OPEN"), "the STILL OPEN block is retired");
     // The misfile bar dies with its paste.
     assert.ok(client.includes("setMismatch(null)"));
     // Bringing a held row back returns it to the open list.

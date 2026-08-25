@@ -59,6 +59,15 @@ prose the operator reads — obeys these rules everywhere in the app:
    the drilldown, never on arrival.
 7. **Yesterday carries.** A move surfaced yesterday and left unworked returns
    today saying so. The room never quietly forgets what it asked for.
+8. **"X-shaped" is retired** (founder-decreed 2026-08-19). "Shaping up to be
+   EOR" is fine; a thing is never "EOR-shaped."
+9. **The two-tier law.** Every account is a PEO, and a PEO's clients ARE its
+   book — so "their client" can never be contrasted with "their own book."
+   A need is either **internal** (the PEO's own) or **a client's**. Say
+   "internal"; never "their own book."
+10. **No property-talk about history.** "Their book is domestic-only" is
+    retired; say it as plain history: "they've only done business
+    domestically up to this point."
 
 ## The direct doctrine (Russ Jones, SVP of Sales — SKO, Kansas City, 2026-08-03/06)
 
@@ -87,7 +96,17 @@ The room keeps the lower deck (the wire · the institutions · State of play). G
 operator initiates today to build pipeline; reactive account motion (replies
 owed, decision windows, meeting prep) belongs to the HomeRoom. The accounts
 page's stores and the deep-research notes (`research:<account>`) are backbone
-inputs to the queue brain.
+inputs to the queue brain. The queue reads the board (2026-08-13): an account
+whose deal sits at demo or later, or carries a Closed Won/Lost stamp, leaves
+the queue entirely — Groundwork prospects the book it is NOT actively closing.
+One rule holds at most two leading slots (its overflow sinks below other
+rules), and the book-wide research stamp going stale is ONE move ("Run the
+research pass.") carried by the strongest above-gate account, never a wall of
+per-account clones. The record's live motion excludes too (2026-08-14): a
+real inbound within 21 days, or a meeting/call/transcript filed within 14,
+means the deal is being worked — the HomeRoom's job, whatever the lagging
+board says. The operator's own outbound never excludes; the drumbeat rules
+need it.
 
 ## The Chute (decided 2026-08-11)
 
@@ -114,8 +133,187 @@ bottom-right opens one running pad: write, Enter, the line lands date-and-time
 stamped (Chicago), newest first under TODAY/YESTERDAY/dated kickers. One
 durable store (`scratch:pad` namespaced notes — outside every account view and
 the intranet mirror by construction). The pact: it stays there and only there;
-nothing routes, nothing files, nothing becomes an action. Money is redacted on
-write like everywhere else. Delete is per line and deliberate.
+nothing routes, nothing files, nothing becomes an action. The paper keeps
+figures (amended 2026-08-21): because the pad routes nowhere by construction,
+the money doctrine's boundary holds at the pad's edge — scratch lines are NOT
+money-redacted; the ask door still redacts, because asks leave the paper.
+Lines are editable in place (✎ on hover, decreed 2026-08-21): Enter keeps,
+Escape puts it back, the timestamp and seat never move. ✕ is per line and
+deliberate — and it archives,
+never destroys (2026-08-19): the line moves to `scratch:gone`, readable under
+the pad's STRUCK fold, restorable by ↺. Nothing on the paper ever dies.
+
+## The Sendbook (triptych winner, decided 2026-08-19)
+
+The outreach register lives at `/sendbook`, doored from Groundwork's page-foot
+Tallyfoot line (`THIS WEEK · N WORKED · …`) — never in the top wayfinder. One
+merged view (Ted doctrine), two doors in: the record's own outbound entries
+(a Chute-dropped .eml IS the touch), and the **Channel Ask** — Groundwork's
+Worked-it springs a chip row (EMAIL · CALL · VOICEMAIL · TEXT · LINKEDIN ·
+INMAIL · ··· ENGAGED/CONNECT/VIDEO/EVENT/MAILER/INTRO/CSM RELAY) filing a
+`sendbook:<account>` note; a second chip row asks who only when the book knows
+more than one name. The **pre-answer rule**: an outbound the record already
+holds today answers the ask before it opens — the app never asks what it can
+read. Steps are counted, never asked: per run, reset by a 45-day quiet or by
+the account speaking. Tapped touches are synthesized into the queue's drumbeat
+clocks at read time, never written to the touch log. The wing's done-today
+stamps carry subtext (`EMAIL · STEP 1 · CRISTINA B.`). Lanes by decree:
+**NEVER MET means they have never replied and no meeting was ever held** —
+the operator's own outbound never warms an account, and a CSM intro doesn't
+either; prior warmth marks the line GONE COLD. Replies annotate from the
+record only (↩ REPLIED); outcomes are never asked. The register tells what
+happened; what is due next stays Groundwork's. The take-back: every stamp
+carries a hover ↺ that returns the move to the queue and withdraws its tap —
+the record's own entries are never unwritten; the chip rows carry ✕ to close
+without filing. The wing never stamps mutely: no channel line means the
+rule's own label speaks.
+
+## The Spring (triptych winner, decided 2026-08-13)
+
+The HomeRoom row's right panel runs on springs. Each register — UNKNOWN,
+COMPARABLE (only when peers exist), TODAY — rests as ONE summary line: mono
+kicker, live count, top entry trailing off, ⊕. Pressing ⊕ springs the register
+out in place; ⊖ or a sibling's ⊕ folds it back — one register out at a time
+per row. Filing or composing anything springs TODAY open so receipts never
+land behind a fold. Attendant decrees, permanent:
+
+- The court line is retired — the move already says who and when.
+- The per-row icon keybar is retired; ONE legend lives at the page foot.
+- Minimalist controls: "not this deal" is a hover-revealed ✕; "ask the brain"
+  is ⌕; "mint sharper asks" is ⟳; "find the answer" is →; all tooltip-titled,
+  never spelled out on the surface.
+- The research control is a dated mono chip (`RESEARCH 7/2 ⟳`) reading the
+  LATEST of both stores — the on-demand deep pass (research: notes) AND the
+  book-wide sweep. "NEVER" only when neither has touched the account.
+- Sheet lines are editable in place (✎ on hover): the visible text changes,
+  tags and routing markers survive verbatim (roomTodoEdit).
+- Concepts never ship; winners do. Triptychs are judged as downloadable
+  documents (interactive when mechanics matter) — production only ever
+  receives the decreed winner, and (founder-decreed 2026-08-19) mockup
+  work NEVER ships without an explicit ship order — naming a winner or
+  amending a face is judging, not shipping. Ask first, every time.
+
+## The Ted doctrine (founder-decreed 2026-08-14)
+
+Named for the day the room told the operator to chase Ted — a man the record
+had never seen — because a July export seeded him as primary contact. The
+rule, binding on every surface: **the record outranks every seed.** A static
+store (book.json contacts, contacts.json roster, research.json sweep, digest
+prose, the touch log, hand-written bullets, board-state maps) only ever
+STANDS IN until the live record — filed communications, their actors, their
+dates, dispositions, outcome stamps — speaks; the moment it speaks, the
+surface reads the record first and the seed becomes the fallback. Derived
+facts (who the relationship is, when we last touched, whether a reply is
+owed, whether a deal is over, who said a thing) must read the WIDEST live
+source the app holds, never a private narrow one; a fact's two stores merge
+by latest, never by whichever the surface happened to import. An
+unattributed document is never inbound; an auto-reply is machinery, never
+the client writing. New surfaces are audited against this doctrine before
+they ship.
+
+## The closer rule (founder-decreed 2026-08-22)
+
+A courtesy sign-off — "No problem!", "thanks!", "sounds good", a thumbs-up,
+emoji-only — is conversational punctuation, the human sibling of the Ted
+doctrine's auto-reply clause. Closers are TRANSPARENT: the ledger reads
+through them to the last substantive message, which alone sets state. A
+closer never opens a loop (no reply-owed off a sign-off) and never closes
+one (a "No problem!" after the operator's promise ratifies it — expectation
+set — never settles it). Closers don't count as inbound for reply-owed or
+Groundwork's live-motion exclusion; they stay real for Sendbook warmth
+(their voice is still their voice). A promise closes only by delivery or
+explicit release; "no rush, next month" is a reschedule. Due clocks:
+"today" is live on the stage at filing; a blown promise carries as
+PROMISED with its date — stronger than a plain wall, because a person
+heard the day and the day ended. All days are Chicago days, theirs or ours.
+The classifier lives in src/lib/intel/closer.ts, deliberately conservative:
+short, no question, no digits, no names — content always wins.
+
+## The click-depth law (founder-decreed 2026-08-20)
+
+Every compression opens. A two-word term, a count, a theme, an abbreviation —
+every shortened thing on every surface is a door to its evidence, exactly one
+click deep. Nothing compressed is ever a dead end, and nothing deep ever
+surfaces uninvited. Arrival budgets are hard limits; when budget and
+intelligence conflict, the budget wins and the intelligence moves a click
+down.
+
+## The second record (founder-decreed 2026-08-20)
+
+The weekly Salesforce activity export is a second record beside the
+operator's own. It inherits every law of the first: the record outranks every
+seed, machinery is never a person, money never renders, derived facts read
+the widest merge of both records by latest. Blast receipts are intent, never
+touches. A colleague's motion produces coordination moves; an account
+person's motion produces outreach moves. Every gem cites the rows it stands
+on or does not exist. The backbone lives in `src/lib/activity/` (SECOND-
+RECORD-PLAN §3, blessed 2026-08-20): the browser tallies the blast 81% and
+never uploads it, slices post in checksummed batches, an incomplete upload
+refuses to run, and every run carries its three adversarial passes — coverage
+(100% or the run marks itself failed), refutation (mechanical canon lint,
+then an independent refuter that defaults to refute), and staleness/acted
+(the first record kills the nag). Verdicts and every rendered count are
+arithmetic from the rollup builder, never model text.
+
+The faces were judged and shipped 2026-08-20 (winners decreed by the founder,
+ship order "ship the picks for those 3 rooms and the second ring as well"):
+**Groundwork — the Evidence Chips** (a mono chip row beneath the stage's
+reason, each chip a door); **Accounts — three columns** (MODEL and PRISMHR
+retire into the drilldown, + Dashboard is a hover glyph at the name, LAST
+HUMAN TOUCH · THE SIGNAL · ACT take the width, the gem folds open beneath
+the row); **HomeRoom — the THEIRS line** (one ochre mono line atop the
+register panel; the move keeps its seat unconditionally). The second ring
+shipped with them: the draft desk's one cited line, the Sendbook's org-wide
+warmth (their voice warms whoever's inbox caught it; the operator's outbound
+and CSM intros still never warm), the roundup brief's folded CSM prep, the
+readout's arithmetic sentence, the Playbook's draft queue (approve by hand,
+nothing auto-publishes), and the intranet digest (rollup + gems only —
+staged bodies never enter the brain, guarded by test).
+
+**The meat law (founder-decreed 2026-08-20, amends the click-depth law):**
+every citation, theme, count, and case on every surface drills to row-level
+meat — citation → cleaned email excerpt; support theme → case list → per-case
+excerpt timeline — as many layers as the evidence holds. Excerpts are cleaned
+of banners, quoted trails, signatures, and disclaimers (src/lib/activity/
+excerpt.ts), money-redacted, and served only by the evidence route (a GET,
+never a server action) — the one place staged bodies leave the store. Arrival
+budgets never grow; the operator never goes back to Salesforce for detail the
+export already carried.
+
+**The vehicle rule (2026-08-20):** a queue rule that rides an account as a
+vehicle for someone else's cadence (roundup-slot, the book-wide research
+stamp) must prefer an account with no candidate of its own — a briefing slot
+never swallows an account's own move.
+
+## The Act Lane (Version C winner, decreed 2026-08-21)
+
+The Accounts sheet works the act right there. The ACT column is the Move
+Chip (Concept I): the gem's act as a fixed-edge chip, orange left tick,
+source line whispered beneath, hover ✓ stamps acted (the gems store's own
+actedDay — the acted sweep can re-stamp from the record any time it truly
+speaks; every stamp carries ↺). Clicking the chip opens the Act Lane — a
+sticky workbench beside the sheet: evidence up top (citations drill to
+cleaned excerpts by the meat law), the editable draft mid (TO/SUBJECT/BODY
+seeded from the relationship contact and the act), Send/File/fork at the
+foot. Drafts SAVE (actdraft:<id> notes, one per account, money-redacted;
+a touched draft saves on close or chip-hop — the pad never eats your
+words; Send consumes it). Send files a real ✉ outbound to the record and
+opens mail — the record then clears the nag itself. The fork files the
+follow-up where it belongs, both meaning TODAY: a board account's move
+lands as a HomeRoom action todo; an off-board account's as a seat:<id>
+note Groundwork reads FIRST — rank 95, at most three seats lead
+(SEAT_SLOT_CAP), a seat counts as the account's own move so no vehicle
+rule swallows it, and it rides until worked, taken back, or the record
+shows the outbound after it. Retired from the sheet the same day: the
+Stage, Next-action, and Play columns (Play reads in the drilldown's meta
+line), the filter rail (the Filter Door — one mono FILTERS ▾ at the
+sheet's top-right shoulder, lit and named while a filter is live), the
+Sort dropdown (column titles are the only sort), the header subtext, the
+hot-signal bar, and the hover ⊞ (the dashboard door is plain words in the
+drilldown). The count rides the Account column title; ⧉/⇩ ride the page
+title; the search bar carries depth. The board lift holds app-wide: an
+account on the dashboard is cleared with the CSM and touched — stored
+state only ever advances the derived one (boardLift, loadCommand).
 
 ## Other standing decrees
 

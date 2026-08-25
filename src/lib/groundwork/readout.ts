@@ -26,6 +26,9 @@ export type ReadoutInput = {
   partnerUpdatesSent: number; // partner-manager updates sent, last 7 days
   partnerUpdatesReplied: number;
   nextSevenDays?: string[]; // dated items, already phrased plainly
+  /** The second record's arithmetic — counts from the rollup builder, never
+   *  model text. Absent when no drop has landed. */
+  secondRecord?: { active30: number; verifiedCold: number } | null;
   now: Date;
 };
 
@@ -174,7 +177,11 @@ export function buildReadout(inp: ReadoutInput): Readout {
     inp.accounts.map((p) => p.csm).filter((c) => c && c !== "Unassigned"),
   ).size;
   const bookText = redactMoney(
-    `I cover ${total} PrismHR and PrismHCM customer accounts nationwide. ${open} of the ${total} have an open conversation on file right now. In the last 7 days I sent updates to ${inp.partnerUpdatesSent} of the ${pmCount} partner managers who own these relationships${inp.partnerUpdatesSent > 0 ? `; ${inp.partnerUpdatesReplied} replied` : ""}.`,
+    `I cover ${total} PrismHR and PrismHCM customer accounts nationwide. ${open} of the ${total} have an open conversation on file right now. In the last 7 days I sent updates to ${inp.partnerUpdatesSent} of the ${pmCount} partner managers who own these relationships${inp.partnerUpdatesSent > 0 ? `; ${inp.partnerUpdatesReplied} replied` : ""}.${
+      inp.secondRecord
+        ? ` The weekly activity export says ${inp.secondRecord.active30} of the ${total} saw human motion in the last thirty days, and ${inp.secondRecord.verifiedCold} are verified cold on both records.`
+        : ""
+    }`,
   );
 
   const sections: ReadoutSection[] = [];

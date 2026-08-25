@@ -8,6 +8,7 @@
 // (I.2).
 
 import { getAppAccess } from "@/lib/auth";
+import { priceQuoteFor } from "@/lib/pricing/quote";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import { peos } from "@/lib/book";
 import {
@@ -228,6 +229,30 @@ export async function intranetCapture(
   }
 }
 
+// The record-lines fallback (founder-decreed 2026-08-21): when the brain's
+// mouth is down — no key, or the synthesis call fails — the ask still
+// answers with the record's own closest lines, deterministically ranked by
+// the same retrieval that feeds synthesis. Honest about what it is; the
+// claims are already money-redacted at write.
+function recordLinesAnswer(cands: Candidate[]): Answer {
+  const lines = cands.slice(0, 5).map((c) => {
+    const d = (c.claim.saidAt ?? "").slice(5, 10).replace("-", "/");
+    const who =
+      c.claim.speaker && c.claim.speaker !== "unknown" ? `${c.claim.speaker}` : "";
+    const tag = [who, d].filter(Boolean).join(", ");
+    return `• ${tag ? `[${tag}] ` : ""}${c.claim.text}`;
+  });
+  return {
+    answer: `Composed without the brain — the record's own closest lines:\n${lines.join("\n")}`,
+    // The printed lines ARE claims 1..n — they keep their provenance doors.
+    citations: lines.map((_, i) => i + 1),
+    reasoning: "",
+    setAside: [],
+    confidence: "thin",
+    gaps: [],
+  };
+}
+
 // ── asking ──────────────────────────────────────────────────────────────────
 export type AskReply = {
   ok: boolean;
@@ -244,6 +269,9 @@ export type AskReply = {
     docId: string;
     docTitle: string;
     origin: string;
+    /** The mirrored row's own key (e.g. "question:gp-funding") — what a deep
+     *  link needs to land on the exact thing, not just its page. */
+    originRef: string;
     accountId: string;
     originGone: string;
     road: string;
@@ -264,6 +292,12 @@ export type AskReply = {
   /** IV.6 — set only when the record had nothing: an answer from general
    *  knowledge, explicitly labelled, never blended with the corpus. */
   world: string;
+  /** How many lines the brain actually weighed — the honest number behind an
+   *  empty answer ("read 31 lines, couldn't answer" is not "nothing on file"). */
+  considered: number;
+  /** Set when the price desk answered — the figure came from the Pricing
+   *  page at read time; surfaces add the page's link. */
+  priced?: boolean;
   reason?: string;
 };
 
@@ -287,6 +321,7 @@ const EMPTY_ANSWER_REPLY = (question: string, reason: string): AskReply => ({
   degraded: "",
   accounts: [],
   world: "",
+  considered: 0,
   reason,
 });
 
@@ -322,6 +357,7 @@ function renderCitations(
         docId: c.claim.docId,
         docTitle: d?.title ?? "",
         origin: (d?.origin ?? "") as string,
+        originRef: d?.originRef ?? "",
         accountId: d?.accountId ?? "",
         originGone: d?.originGone ?? "",
         road: roadOf.get(n) ?? "",
@@ -332,7 +368,10 @@ function renderCitations(
     .filter(Boolean) as AskReply["citations"];
 }
 
-export async function intranetAsk(question: string): Promise<AskReply> {
+export async function intranetAsk(
+  question: string,
+  live?: { accountId: string; name: string; lines: string[] } | null,
+): Promise<AskReply> {
   const q = (question ?? "").trim().slice(0, 500);
   if (!q) return EMPTY_ANSWER_REPLY(q, "Ask it something.");
   if (!(await canRead())) return EMPTY_ANSWER_REPLY(q, "Sign in to continue.");
@@ -340,6 +379,59 @@ export async function intranetAsk(question: string): Promise<AskReply> {
     return EMPTY_ANSWER_REPLY(q, "The brain's store isn't reachable.");
 
   const started = Date.now();
+
+  // The price desk (founder-decreed 2026-08-21): a pricing question answers
+  // from the Pricing page's own numbers — arithmetic, no model, instantly.
+  // The brain's stores are money-redacted by doctrine and can never hold a
+  // figure, so this is the ONE road a price travels: computed at read time,
+  // shown live, and banked as its redacted twin with the pointer back.
+  {
+    const quote = priceQuoteFor(q);
+    if (quote) {
+      try {
+        await getPrisma().intranetAsk.create({
+          data: {
+            question: q,
+            plan: { priceDesk: true } as unknown as object,
+            candidateIds: [],
+            answer: `${redactMoney(quote.answer)} Priced live from the Pricing page — open it for the figures.`,
+            reasoning: "",
+            citations: [] as unknown as object,
+            coverage: {} as unknown as object,
+            model: "price-desk",
+            ms: Date.now() - started,
+            world: "",
+          },
+        });
+      } catch {
+        // an unrecorded quote is still a served quote
+      }
+      return {
+        ok: true,
+        question: q,
+        answer: {
+          answer: quote.answer,
+          citations: [],
+          reasoning: "",
+          setAside: [],
+          confidence: "firm",
+          gaps: [],
+        },
+        citations: [],
+        coverage: null,
+        plan: null,
+        model: "price-desk",
+        escalated: "",
+        thin: "",
+        degraded: "",
+        accounts: [],
+        world: "",
+        considered: 0,
+        priced: true,
+      };
+    }
+  }
+
   const nowIso = new Date().toISOString();
 
   // 1 · plan. Claude decides what to look for; the database does the looking.
@@ -405,11 +497,60 @@ export async function intranetAsk(question: string): Promise<AskReply> {
   const docOrigin = new Map([...docs.values()].map((d) => [d.id, d.origin]));
   const coverage = coverageOf(candidates, docOrigin);
 
-  // A claim's account, if the book knows it — an offer, not a filing.
-  const named = accountsMentioned(
+  // The app's own live read rides as claims (founder-decreed 2026-08-18,
+  // after the XcelHR miss: the room said "Wait on Bill" while the ask claimed
+  // nothing). Derived seconds ago by the same readers the room uses, speaker-
+  // stamped and citable like anything else. The mirror lags extraction; the
+  // live read never lags. It leads the candidate list so the synthesis cap
+  // can't cut it.
+  if (live?.lines?.length) {
+    const liveDocId = `live:${live.accountId}`;
+    const liveCands: Candidate[] = live.lines.slice(0, 14).map((text, i) => ({
+      claim: {
+        id: `live-${i}`,
+        docId: liveDocId,
+        text,
+        speaker: "the app's live read",
+        saidAt: nowIso,
+        kind: "fact",
+        confidence: "stated",
+        entities: [],
+        topicIds: [],
+        askShape: "",
+        offsetStart: 0,
+        offsetEnd: 0,
+        supersededBy: "",
+        disputedWith: [],
+      },
+      roads: ["lexical"],
+      lexicalRank: 1,
+      corroboration: 1,
+      score: 1,
+    }));
+    candidates = [...liveCands, ...candidates];
+    docLabel.set(liveDocId, `${live.name} — derived live`);
+    docs.set(liveDocId, {
+      id: liveDocId,
+      origin: "live",
+      originRef: `account:${live.accountId}`,
+      space: "Live",
+      title: `${live.name} — the app's live read`,
+      accountId: live.accountId,
+      occurredAt: nowIso,
+      originGone: "",
+    });
+  }
+
+  // A claim's account, if the book knows it — an offer, not a filing. The
+  // live read's account always rides along.
+  const mentioned = accountsMentioned(
     [...new Set(candidates.flatMap((c) => c.claim.entities))],
     peos.map((p) => ({ id: p.id, name: p.name })),
   );
+  const named =
+    live && !mentioned.some((a) => a.id === live.accountId)
+      ? [{ id: live.accountId, name: live.name }, ...mentioned]
+      : mentioned;
 
   if (candidates.length === 0) {
     // IV.6 · the record has nothing — answer from the world instead, labelled.
@@ -436,6 +577,7 @@ export async function intranetAsk(question: string): Promise<AskReply> {
       degraded: "",
       accounts: named,
       world,
+      considered: 0,
     };
   }
 
@@ -468,32 +610,43 @@ export async function intranetAsk(question: string): Promise<AskReply> {
       degraded: ceiling.line,
       accounts: named,
       world: "",
+      considered: candidates.length,
     };
   }
 
-  if (!synthAvailable()) {
-    return EMPTY_ANSWER_REPLY(
-      q,
-      "No API key configured — the brain can hold material but can't answer yet.",
-    );
-  }
-
   // 5 · the answer. A pathological candidate set is cut rather than allowed to
-  //     become a four-dollar question.
+  //     become a four-dollar question. When the mouth is down — no key, or
+  //     the call fails — the record's own closest lines answer instead of
+  //     silence (the record-lines fallback, founder-decreed 2026-08-21).
   const forSynthesis = candidates.slice(0, CEILINGS.claimsPerAsk);
   let answer: Answer;
   let model = "";
-  try {
-    const r = await runSynthesis({
-      question: q,
-      candidates: forSynthesis,
-      docLabel,
-      plan,
-    });
-    answer = r.answer;
-    model = r.model;
-  } catch {
-    return EMPTY_ANSWER_REPLY(q, "The answer didn't come back — try again.");
+  if (!synthAvailable()) {
+    answer = recordLinesAnswer(forSynthesis);
+    model = "record-lines";
+  } else {
+    try {
+      const r = await runSynthesis({
+        question: q,
+        candidates: forSynthesis,
+        docLabel,
+        plan,
+      });
+      answer = r.answer;
+      model = r.model;
+    } catch {
+      answer = recordLinesAnswer(forSynthesis);
+      model = "record-lines";
+    }
+    // A dead key surfaces as a SWALLOWED transport error: runSynthesis
+    // returns EMPTY_ANSWER as if it succeeded (caught live 2026-08-22 —
+    // the pad read 74 lines and answered nothing). An empty mouth with
+    // material in hand is never an answer; the record's own lines speak.
+    // A genuine abstention is not empty — it says the record holds nothing.
+    if (!answer.answer.trim() && answer.citations.length === 0) {
+      answer = recordLinesAnswer(forSynthesis);
+      model = "record-lines";
+    }
   }
 
   const citations = renderCitations(answer.citations, forSynthesis, docs);
@@ -503,7 +656,9 @@ export async function intranetAsk(question: string): Promise<AskReply> {
   const world =
     citations.length === 0 ? redactMoney(await runWorldAnswer(q).catch(() => "")) : "";
 
-  // Keep the ask — for the fold, for evals, and so a repeat is cheap.
+  // Keep the ask — for the fold, for evals, and so a repeat is cheap. The
+  // world answer keeps too (founder-decreed 2026-08-18): a labelled outside
+  // answer the operator read once must survive a reload in the bank.
   try {
     await getPrisma().intranetAsk.create({
       data: {
@@ -516,6 +671,7 @@ export async function intranetAsk(question: string): Promise<AskReply> {
         coverage: coverage as unknown as object,
         model,
         ms: Date.now() - started,
+        world,
       },
     });
   } catch {
@@ -530,11 +686,13 @@ export async function intranetAsk(question: string): Promise<AskReply> {
     coverage,
     plan,
     model,
-    escalated: escalationReason(forSynthesis, plan),
+    // Nothing escalates when no model ran at all.
+    escalated: model === "record-lines" ? "" : escalationReason(forSynthesis, plan),
     thin: answer.confidence === "thin" ? thinLine(forSynthesis) : "",
     degraded: ceiling.breached ? ceiling.line : "",
     accounts: named,
     world,
+    considered: candidates.length,
   };
 }
 
@@ -682,7 +840,7 @@ export async function intranetSelfCheck(): Promise<SelfCheckReply> {
     return {
       ok: false,
       lines: [],
-      reason: "No API key configured — the room can't check itself yet.",
+      reason: "The brain is unreachable — the room can't check itself right now.",
     };
 
   const lines: string[] = [];

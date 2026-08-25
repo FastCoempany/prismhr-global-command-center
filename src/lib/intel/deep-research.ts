@@ -9,6 +9,7 @@
 // answers "what changed" instead of repeating itself.
 
 import Anthropic from "@anthropic-ai/sdk";
+import { claudeClient, claudeAvailable } from "@/lib/claude/health";
 import { redactMoney } from "@/lib/intel/lexicon";
 import { normPerson } from "@/lib/intel/provenance";
 
@@ -173,7 +174,7 @@ export function diffFindings(
 }
 
 export function researchAvailable(): boolean {
-  return Boolean(process.env.ANTHROPIC_API_KEY);
+  return claudeAvailable();
 }
 
 // One deep pass. Throws on API failure; the caller reports it rather than
@@ -187,7 +188,7 @@ export async function runResearch(input: {
 }): Promise<ResearchFinding> {
   // Sized to a long serverless budget, and no retry: a second full pass on
   // timeout would double a slow call into a certain one.
-  const client = new Anthropic({ timeout: 170_000, maxRetries: 0 });
+  const client = claudeClient({ timeout: 170_000, maxRetries: 0 });
   const known = [
     input.site ? `Their site: ${input.site}` : "",
     input.people?.length ? `People already on the deal: ${input.people.join(", ")}` : "",

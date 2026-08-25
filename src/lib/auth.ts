@@ -9,7 +9,8 @@ import { PUBLIC_ACCESS } from "@/lib/public-access";
 
 export const ACCESS_COOKIE_NAME = "field_signal_access";
 
-const ACCESS_COOKIE_MAX_AGE = 60 * 60 * 12;
+// 90 days — the operator signs in once per device, roughly four times a year.
+const ACCESS_COOKIE_MAX_AGE = 60 * 60 * 24 * 90;
 const ACCESS_COOKIE_MAX_AGE_MS = ACCESS_COOKIE_MAX_AGE * 1000;
 const FALLBACK_OWNER_EMAIL = "antaeus@example.local";
 

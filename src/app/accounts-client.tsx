@@ -1,8 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import { useFormStatus } from "react-dom";
+import { useRouter, useSearchParams } from "next/navigation";
 import { EXTRA_PARTNERS, partnerRole } from "@/lib/book/partners";
 import { competitorUrl } from "@/lib/book/research";
 import { SfCheckpoint } from "@/components/sf";
@@ -36,7 +35,6 @@ import {
   STAGES,
   approachBlurb,
   approachLabel,
-  priorityTier,
   stageLabel,
   suggestedAction,
   type Approach,
@@ -45,10 +43,19 @@ import {
 } from "@/lib/command-center/types";
 import { kitsFor, mergeText, type CampaignKit } from "@/lib/campaigns";
 import { EditableMessage } from "./today-client";
-import { getContacts } from "./accounts/actions";
-import type { BookContact } from "@/lib/book/contacts";
+import { getContacts, type ContactRow } from "./accounts/actions";
+import {
+  deleteMailTemplate,
+  draftOutreach,
+  listMailTemplates,
+  saveMailTemplate,
+  type MailTemplate,
+} from "./accounts/draft-actions";
 import { sfContactUrl } from "@/lib/salesforce";
 import styles from "./command-center.module.css";
+import SecondRecordPanel, { type RowSecond } from "./accounts/second-record-panel";
+import ActLane, { type LaneAct } from "./accounts/act-lane";
+import { markActActed, unmarkActActed } from "./accounts/act-actions";
 
 function CompetitorLinks({ names }: { names: string[] }) {
   return (
@@ -69,15 +76,6 @@ function CompetitorLinks({ names }: { names: string[] }) {
         );
       })}
     </>
-  );
-}
-
-function AddButton() {
-  const { pending } = useFormStatus();
-  return (
-    <button className={styles.addMini} disabled={pending}>
-      {pending ? "Adding…" : "Add to dashboard"}
-    </button>
   );
 }
 
@@ -153,8 +151,49 @@ function ValidateControls({
   );
 }
 
+// Every section of the drilldown rests behind a fold (founder-decreed
+// 2026-08-20) — the double-click lands on contacts and the research read;
+// depth opens on command.
+function Fold({
+  label,
+  hint,
+  defaultOpen = false,
+  children,
+}: {
+  label: string;
+  hint?: string;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className={styles.foldSec}>
+      <button
+        type="button"
+        className={styles.foldHead}
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+      >
+        {open ? "▾" : "▸"} {label}
+        {hint && <span className={styles.foldHint}>{hint}</span>}
+      </button>
+      {open && children}
+    </div>
+  );
+}
+
 export type AccountRow = {
   id: string;
+  /** The second record's row read — null when the drop holds nothing. */
+  second: RowSecond | null;
+  /** The Act Lane's saved, unsent draft — the pad never eats your words. */
+  actDraft: { to: string; subject: string; body: string } | null;
+  /** The newest gem's acted day ("" when un-acted) — the ✓ stamp's date. */
+  actedDay: string;
+  /** That gem's term, for the stamp's take-back. */
+  actedTerm: string;
+  /** A live board card (by id, digest-matched) — the fork's HomeRoom half. */
+  onBoard: boolean;
   name: string;
   industry: string;
   sizeBucket: string;
@@ -188,9 +227,15 @@ export type AccountRow = {
     adjustedDemand?: number;
   } | null;
   engagement: Engagement;
+  // Salesforce's Account Risk Level, from the risk: register — "HIGH" lights
+  // the row; anything else rides the chip's own word.
+  risk: string | null;
   // Off-structure state: ⚡ in motion (live conversation) or ⏸ parked. Not-mine
   // accounts never reach the room — they live in the exclusions ledger.
-  disposition: { status: "motion" | "parked"; reason: string } | null;
+  disposition: {
+    status: "motion" | "parked" | "won" | "lost" | "engaged";
+    reason: string;
+  } | null;
   notes: LinkedNote[];
   chipNotes: ChipNote[]; // the working record ("mine" lane)
   bgNotes: ChipNote[]; // background register — behind a click
@@ -204,6 +249,44 @@ export type AccountRow = {
   nextAction: string | null;
   nextActionDate: string | null;
   peoNotes: string | null;
+};
+
+// The touch cell's voice: first name + last initial, mono, dates as M/D.
+function shortWho(full: string): string {
+  const parts = (full ?? "").trim().split(/\s+/);
+  if (parts.length === 0 || !parts[0]) return "—";
+  const first = parts[0].toUpperCase();
+  return parts.length > 1
+    ? `${first} ${parts[parts.length - 1][0].toUpperCase()}`
+    : first;
+}
+function mmddOf(day: string): string {
+  return day ? day.slice(5).replace("-", "/") : "";
+}
+
+// The sheet sorts at the column title (founder-decreed 2026-08-21). Each
+// column carries its own comparator and a sensible first direction: names
+// A→Z, everything measured biggest-or-newest first.
+type ColKey = "name" | "score" | "demand" | "touch" | "signal" | "act";
+
+const COL_CMP: Record<ColKey, (a: AccountRow, b: AccountRow) => number> = {
+  name: (a, b) => a.name.localeCompare(b.name),
+  score: (a, b) => a.score - b.score,
+  demand: (a, b) => (a.demand ?? -1) - (b.demand ?? -1),
+  touch: (a, b) => (a.second?.touch?.day ?? "").localeCompare(b.second?.touch?.day ?? ""),
+  signal: (a, b) =>
+    (a.second?.gems.length ?? 0) - (b.second?.gems.length ?? 0) ||
+    (a.second?.supportTotal ?? 0) - (b.second?.supportTotal ?? 0),
+  act: (a, b) => (a.second?.act ? 1 : 0) - (b.second?.act ? 1 : 0),
+};
+
+const COL_DEFAULT_DIR: Record<ColKey, 1 | -1> = {
+  name: 1,
+  score: -1,
+  demand: -1,
+  touch: -1,
+  signal: -1,
+  act: -1,
 };
 
 function StageBadge({ stage }: { stage: Stage }) {
@@ -243,131 +326,145 @@ function WorkingDeal({ a, canWrite }: { a: AccountRow; canWrite: boolean }) {
   };
   return (
     <div className={styles.panel}>
-      <h3 className={styles.playsHead}>
-        Working the deal <StageBadge stage={a.stage} />{" "}
-        <ApproachChip approach={a.approach} />
-      </h3>
-      {canWrite ? (
-        <form action={savePeo} key={a.id}>
-          <input type="hidden" name="peoId" value={a.id} />
-          <input type="hidden" name="returnTo" value="/accounts" />
-          <div className={styles.field}>
-            <label>Stage</label>
-            <select name="stage" defaultValue={a.stage}>
-              {STAGES.map((s) => (
-                <option key={s.key} value={s.key}>
-                  {s.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className={styles.field}>
-            <label>Approach</label>
-            <select name="approach" defaultValue={a.approach}>
-              {APPROACHES.map((ap) => (
-                <option key={ap.key} value={ap.key}>
-                  {ap.label}
-                </option>
-              ))}
-            </select>
-            <p className={styles.hint}>{approachBlurb(a.approach)}</p>
-          </div>
-          <div className={styles.field}>
-            <label>International hiring in their book</label>
-            <select name="intent" defaultValue={a.intent}>
-              {INTENTS.map((i) => (
-                <option key={i.key} value={i.key}>
-                  {i.label}
-                </option>
-              ))}
-            </select>
-            <p className={styles.hint}>Lifts or lowers priority to match real demand.</p>
-          </div>
-          <div className={styles.field}>
-            <label>Next action</label>
-            <input
-              name="nextAction"
-              defaultValue={a.nextAction ?? ""}
-              placeholder={suggestedAction(a) ?? "Brief the CSM"}
-            />
-            {!a.nextAction && suggestedAction(a) && (
-              <p className={styles.hint}>{suggestedAction(a)}</p>
-            )}
-          </div>
-          <div className={styles.field}>
-            <label>Next action date</label>
-            <input
-              type="date"
-              name="nextActionDate"
-              defaultValue={a.nextActionDate ?? ""}
-            />
-          </div>
-          <div className={styles.field}>
-            <label>Notes</label>
-            <textarea name="notes" defaultValue={a.peoNotes ?? ""} />
-          </div>
-          <div className={styles.field}>
-            <label>Log activity</label>
-            <input
-              name="activity"
-              placeholder="Called Anika. She'll introduce two clients."
-            />
-          </div>
-          <div className={styles.saveRow}>
-            <button type="submit" className={styles.saveBtn}>
-              Save
-            </button>
-          </div>
-        </form>
-      ) : (
-        <p className={styles.muted}>Read-only access.</p>
-      )}
-
-      <div className={styles.plays}>
-        <h3 className={styles.playsHead}>Plays for this stage</h3>
-        {plays.length === 0 ? (
-          <p className={styles.muted}>
-            No play for this stage and approach. Advance the stage or clear the approach
-            gate.
-          </p>
-        ) : (
-          plays.map((k) => (
-            <div key={k.id} className={styles.play}>
-              <div className={styles.playTop}>
-                <strong>{k.name}</strong>
-                <span className={styles.chip}>{k.channel}</span>
-              </div>
-              <p className={styles.playAsk}>{mergeText(k.ask, a)}</p>
-              <details className={styles.playDetails}>
-                <summary>Preview message</summary>
-                <div className={styles.playSubject}>
-                  Subject: {mergeText(k.subject, a)}
-                </div>
-                <pre className={styles.playPre}>{mergeText(k.body, a)}</pre>
-              </details>
-              <div className={styles.playActions}>
-                <button
-                  type="button"
-                  className={styles.playCopy}
-                  onClick={() => copyKit(k)}
-                >
-                  {copiedId === k.id ? "Copied ✓" : "Copy message"}
-                </button>
-                {canWrite && (
-                  <form action={applyPlay}>
-                    <input type="hidden" name="peoId" value={a.id} />
-                    <input type="hidden" name="kitId" value={k.id} />
-                    <input type="hidden" name="returnTo" value="/accounts" />
-                    <button type="submit" className={styles.playApply}>
-                      Set as next action
-                    </button>
-                  </form>
-                )}
-              </div>
+      {/* Folded by decree (2026-08-14): the drilldown leads with the
+          research; the working furniture opens on demand. */}
+      <details className={styles.foldSect}>
+        <summary className={styles.foldSum}>
+          <h3 className={styles.playsHead}>
+            Working the deal <StageBadge stage={a.stage} />{" "}
+            <ApproachChip approach={a.approach} />
+          </h3>
+        </summary>
+        {canWrite ? (
+          <form action={savePeo} key={a.id}>
+            <input type="hidden" name="peoId" value={a.id} />
+            <input type="hidden" name="returnTo" value="/accounts" />
+            <div className={styles.field}>
+              <label>Stage</label>
+              <select name="stage" defaultValue={a.stage}>
+                {STAGES.map((s) => (
+                  <option key={s.key} value={s.key}>
+                    {s.label}
+                  </option>
+                ))}
+              </select>
             </div>
-          ))
+            <div className={styles.field}>
+              <label>Approach</label>
+              <select name="approach" defaultValue={a.approach}>
+                {APPROACHES.map((ap) => (
+                  <option key={ap.key} value={ap.key}>
+                    {ap.label}
+                  </option>
+                ))}
+              </select>
+              <p className={styles.hint}>{approachBlurb(a.approach)}</p>
+            </div>
+            <div className={styles.field}>
+              <label>International hiring in their book</label>
+              <select name="intent" defaultValue={a.intent}>
+                {INTENTS.map((i) => (
+                  <option key={i.key} value={i.key}>
+                    {i.label}
+                  </option>
+                ))}
+              </select>
+              <p className={styles.hint}>
+                Lifts or lowers priority to match real demand.
+              </p>
+            </div>
+            <div className={styles.field}>
+              <label>Next action</label>
+              <input
+                name="nextAction"
+                defaultValue={a.nextAction ?? ""}
+                placeholder={suggestedAction(a) ?? "Brief the CSM"}
+              />
+              {!a.nextAction && suggestedAction(a) && (
+                <p className={styles.hint}>{suggestedAction(a)}</p>
+              )}
+            </div>
+            <div className={styles.field}>
+              <label>Next action date</label>
+              <input
+                type="date"
+                name="nextActionDate"
+                defaultValue={a.nextActionDate ?? ""}
+              />
+            </div>
+            <div className={styles.field}>
+              <label>Notes</label>
+              <textarea name="notes" defaultValue={a.peoNotes ?? ""} />
+            </div>
+            <div className={styles.field}>
+              <label>Log activity</label>
+              <input
+                name="activity"
+                placeholder="Called Anika. She'll introduce two clients."
+              />
+            </div>
+            <div className={styles.saveRow}>
+              <button type="submit" className={styles.saveBtn}>
+                Save
+              </button>
+            </div>
+          </form>
+        ) : (
+          <p className={styles.muted}>Read-only access.</p>
         )}
-      </div>
+      </details>
+
+      <details className={styles.foldSect}>
+        <summary className={styles.foldSum}>
+          <h3 className={styles.playsHead}>
+            Plays for this stage{plays.length > 0 ? ` · ${plays.length}` : ""}
+          </h3>
+        </summary>
+        <div className={styles.plays}>
+          {plays.length === 0 ? (
+            <p className={styles.muted}>
+              No play for this stage and approach. Advance the stage or clear the approach
+              gate.
+            </p>
+          ) : (
+            plays.map((k) => (
+              <div key={k.id} className={styles.play}>
+                <div className={styles.playTop}>
+                  <strong>{k.name}</strong>
+                  <span className={styles.chip}>{k.channel}</span>
+                </div>
+                <p className={styles.playAsk}>{mergeText(k.ask, a)}</p>
+                <details className={styles.playDetails}>
+                  <summary>Preview message</summary>
+                  <div className={styles.playSubject}>
+                    Subject: {mergeText(k.subject, a)}
+                  </div>
+                  <pre className={styles.playPre}>{mergeText(k.body, a)}</pre>
+                </details>
+                <div className={styles.playActions}>
+                  <button
+                    type="button"
+                    className={styles.playCopy}
+                    onClick={() => copyKit(k)}
+                  >
+                    {copiedId === k.id ? "Copied ✓" : "Copy message"}
+                  </button>
+                  {canWrite && (
+                    <form action={applyPlay}>
+                      <input type="hidden" name="peoId" value={a.id} />
+                      <input type="hidden" name="kitId" value={k.id} />
+                      <input type="hidden" name="returnTo" value="/accounts" />
+                      <button type="submit" className={styles.playApply}>
+                        Set as next action
+                      </button>
+                    </form>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </details>
     </div>
   );
 }
@@ -401,13 +498,42 @@ const HEALTHS = ["green", "yellow", "red"] as const;
 // gates (SF pulled · notes · health), and a ready "can I join?" message. This is
 // the partner-first motion made concrete — ride the CSM's existing meetings.
 function EngagementPanel({ a }: { a: AccountRow }) {
+  // Rests as one line (founder-decreed 2026-08-20): the panel is ahead of
+  // where the ramp is — present, expandable, out of the way.
+  const [open, setOpen] = useState(false);
   const e = a.engagement;
   const gates = engagementGates(e);
   const who = a.csm.trim().split(/\s+/)[0] || a.csm;
+  if (!open)
+    return (
+      <div className={styles.engage}>
+        <button
+          type="button"
+          className={styles.engageFold}
+          onClick={() => setOpen(true)}
+          aria-expanded={false}
+        >
+          ▸ CSM engagement with {a.csm}
+          <span className={styles.engageGates}>
+            Prep {gates.count}/3
+            <span className={gates.sf ? styles.gateOn : styles.gateOff}>SF</span>
+            <span className={gates.notes ? styles.gateOn : styles.gateOff}>Notes</span>
+            <span className={gates.health ? styles.gateOn : styles.gateOff}>Health</span>
+          </span>
+        </button>
+      </div>
+    );
   return (
     <div className={styles.engage}>
       <div className={styles.engageHead}>
-        <span className={styles.engageTitle}>CSM engagement with {a.csm}</span>
+        <button
+          type="button"
+          className={styles.engageFold}
+          onClick={() => setOpen(false)}
+          aria-expanded={true}
+        >
+          ▾ CSM engagement with {a.csm}
+        </button>
         <span className={styles.engageGates}>
           Prep {gates.count}/3
           <span className={gates.sf ? styles.gateOn : styles.gateOff}>SF</span>
@@ -522,11 +648,13 @@ export function AccountsClient({
   const [tier, setTier] = useState("");
   const [play, setPlay] = useState("");
   const [stageF, setStageF] = useState("");
-  const [approachF, setApproachF] = useState("");
-  const [prioF, setPrioF] = useState("");
-  const [groupByCsm, setGroupByCsm] = useState(false);
-  const [hotOnly, setHotOnly] = useState(false);
-  const [sort, setSort] = useState("score");
+  // The Filter Door (founder-decreed 2026-08-21): the strip rests closed; a
+  // live filter keeps the door lit and named even while the strip is folded.
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  // Column-header sort (founder-decreed 2026-08-21): clicking a title sorts
+  // the sheet by that column; a second click flips it. The Sort dropdown is
+  // retired (2026-08-21) — the titles are the only sort, Global fit at rest.
+  const [colSort, setColSort] = useState<{ key: ColKey; dir: 1 | -1 } | null>(null);
   // Deep-link from Today (and elsewhere): /accounts?focus=<id> opens that
   // account's detail (initial openId, below) and scrolls it into view, so a link
   // lands on the row, not the top of a 130-row table. The savePeo redirect
@@ -534,6 +662,12 @@ export function AccountsClient({
   const params = useSearchParams();
   const focusId = params.get("focus") ?? params.get("peo") ?? "";
   const [openId, setOpenId] = useState(focusId);
+  // The second-record fold — one open at a time, from THE SIGNAL cell.
+  const [srOpenId, setSrOpenId] = useState("");
+  // The Act Lane (Version C, decreed 2026-08-21): one standing workbench,
+  // reloaded chip to chip. The lane component saves a touched draft on hop.
+  const [laneId, setLaneId] = useState("");
+  const router = useRouter();
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -541,8 +675,6 @@ export function AccountsClient({
     const el = document.getElementById(`acct-${focusId}`);
     if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [focusId]);
-
-  const isHot = (r: AccountRow) => r.play != null && (r.demand ?? 0) >= 60;
 
   // Partners (internal PrismHR people): the CSMs from the book + others like
   // Eric who may bring net-new accounts before owning any here.
@@ -556,21 +688,6 @@ export function AccountsClient({
     [rows],
   );
 
-  // Counts for every filter option, so each choice says how many it selects.
-  const countBy = (pick: (r: AccountRow) => string) => {
-    const m = new Map<string, number>();
-    for (const r of rows) {
-      const k = pick(r);
-      if (k) m.set(k, (m.get(k) ?? 0) + 1);
-    }
-    return m;
-  };
-  const csmCounts = useMemo(() => countBy((r) => r.csm), [rows]); // eslint-disable-line react-hooks/exhaustive-deps
-  const indCounts = useMemo(() => countBy((r) => r.industry), [rows]); // eslint-disable-line react-hooks/exhaustive-deps
-  const tierCounts = useMemo(() => countBy((r) => r.tier), [rows]); // eslint-disable-line react-hooks/exhaustive-deps
-  const playCounts = useMemo(() => countBy((r) => r.play ?? ""), [rows]); // eslint-disable-line react-hooks/exhaustive-deps
-  const hotCount = useMemo(() => rows.filter((r) => isHot(r)).length, [rows]);
-
   const filtered = useMemo(() => {
     const s = q.toLowerCase();
     const list = rows.filter((r) => {
@@ -579,9 +696,6 @@ export function AccountsClient({
       if (tier && r.tier !== tier) return false;
       if (play && r.play !== play) return false;
       if (stageF && r.stage !== stageF) return false;
-      if (approachF && r.approach !== approachF) return false;
-      if (prioF && priorityTier(r.blended) !== prioF) return false;
-      if (hotOnly && !isHot(r)) return false;
       if (
         s &&
         !`${r.name} ${r.city} ${r.state} ${r.contactName} ${r.industry}`
@@ -592,22 +706,57 @@ export function AccountsClient({
       return true;
     });
     return [...list].sort((a, b) => {
-      if (sort === "name") return a.name.localeCompare(b.name);
-      if (sort === "demand") return (b.demand ?? -1) - (a.demand ?? -1);
+      if (colSort) return COL_CMP[colSort.key](a, b) * colSort.dir || b.score - a.score;
       return b.score - a.score;
     });
-  }, [rows, q, csm, industry, tier, play, stageF, approachF, prioF, hotOnly, sort]);
+  }, [rows, q, csm, industry, tier, play, stageF, colSort]);
 
-  // Group-by-CSM view (the Book's grouping): per-CSM groups, largest first.
-  const grouped = useMemo(() => {
-    if (!groupByCsm) return null;
-    const m = new Map<string, AccountRow[]>();
-    for (const r of filtered) {
-      if (!m.has(r.csm)) m.set(r.csm, []);
-      m.get(r.csm)!.push(r);
-    }
-    return [...m.entries()].sort((a, b) => b[1].length - a[1].length);
-  }, [filtered, groupByCsm]);
+  // The door stays lit and named while any filter is live — filtered state
+  // is never invisible behind a closed strip.
+  const activeFilters = [
+    csm && "PARTNERS",
+    industry && "MODELS",
+    tier && "FIT",
+    play && "PLAYS",
+    stageF && "STAGES",
+  ].filter((f): f is string => Boolean(f));
+
+  const clickSort = (key: ColKey) =>
+    setColSort(
+      colSort?.key === key
+        ? { key, dir: colSort.dir === 1 ? -1 : 1 }
+        : { key, dir: COL_DEFAULT_DIR[key] },
+    );
+
+  const tickActed = async (id: string, term: string) => {
+    await markActActed({ accountId: id, term });
+    if (laneId === id) setLaneId("");
+    router.refresh();
+  };
+  const tickUnacted = async (id: string, term: string) => {
+    await unmarkActActed({ accountId: id, term });
+    router.refresh();
+  };
+
+  const laneRow = laneId ? rows.find((r) => r.id === laneId) : undefined;
+  const laneGem = laneRow?.second?.gems[0];
+  const laneAct: LaneAct | null =
+    laneRow && laneRow.second?.act && laneGem
+      ? {
+          accountId: laneRow.id,
+          accountName: laneRow.name,
+          term: laneGem.term,
+          act: laneRow.second.act,
+          reason: laneGem.reason,
+          whenDay: laneGem.whenDay,
+          cites: laneGem.cites,
+          to: laneRow.actDraft?.to ?? laneRow.contactName,
+          toEmail: laneRow.contactEmail,
+          subject: laneRow.actDraft?.subject ?? laneRow.second.act,
+          body: laneRow.actDraft?.body ?? "",
+          onBoard: laneRow.onBoard,
+        }
+      : null;
 
   const copyList = async () => {
     const text = filtered
@@ -690,477 +839,934 @@ export function AccountsClient({
 
   return (
     <>
-      <div className={styles.filters}>
+      <div className={styles.pageHead}>
+        <h1 className={styles.h1}>Account Room</h1>
+        <button
+          type="button"
+          className={styles.iconBtn}
+          onClick={copyList}
+          title="Copy the list"
+          aria-label="Copy the list"
+        >
+          {copied ? "✓" : "⧉"}
+        </button>
+        <button
+          type="button"
+          className={styles.iconBtn}
+          onClick={exportCsv}
+          title="Export CSV"
+          aria-label="Export CSV"
+        >
+          ⇩
+        </button>
+      </div>
+      {/* The search carries depth (founder-decreed 2026-08-21): inset
+          glyph, layered shadow, a real focus ring. */}
+      <div className={styles.searchWrap}>
+        <span className={styles.searchGlyph} aria-hidden="true">
+          ⌕
+        </span>
         <input
+          className={styles.searchDeep}
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Search account, city, contact…"
           aria-label="Search accounts"
         />
-        <select value={csm} onChange={(e) => setCsm(e.target.value)} aria-label="Partner">
-          <option value="">All partners ({rows.length})</option>
-          {partners.map((c) => (
-            <option key={c} value={c}>
-              {c} — {partnerRole(c)} ({csmCounts.get(c) ?? 0})
-            </option>
-          ))}
-        </select>
-        <select
-          value={industry}
-          onChange={(e) => setIndustry(e.target.value)}
-          aria-label="Industry"
-        >
-          <option value="">All models ({rows.length})</option>
-          {inds.map((i) => (
-            <option key={i} value={i}>
-              {i} ({indCounts.get(i) ?? 0})
-            </option>
-          ))}
-        </select>
-        <select
-          value={tier}
-          onChange={(e) => setTier(e.target.value)}
-          aria-label="Fit tier"
-        >
-          <option value="">All fit ({rows.length})</option>
-          <option value="high">High fit ({tierCounts.get("high") ?? 0})</option>
-          <option value="medium">Medium ({tierCounts.get("medium") ?? 0})</option>
-          <option value="low">Low ({tierCounts.get("low") ?? 0})</option>
-        </select>
-        <select
-          value={play}
-          onChange={(e) => setPlay(e.target.value)}
-          aria-label="Play type"
-        >
-          <option value="">All plays ({rows.length})</option>
-          <option value="displacement">
-            Displacement ({playCounts.get("displacement") ?? 0})
-          </option>
-          <option value="greenfield">
-            Greenfield ({playCounts.get("greenfield") ?? 0})
-          </option>
-        </select>
-        <select
-          value={stageF}
-          onChange={(e) => setStageF(e.target.value)}
-          aria-label="Stage"
-        >
-          <option value="">All stages</option>
-          {STAGES.map((s) => (
-            <option key={s.key} value={s.key}>
-              {s.label}
-            </option>
-          ))}
-        </select>
-        <select
-          value={approachF}
-          onChange={(e) => setApproachF(e.target.value)}
-          aria-label="Approach"
-        >
-          <option value="">Any approach</option>
-          {APPROACHES.map((a) => (
-            <option key={a.key} value={a.key}>
-              {a.label}
-            </option>
-          ))}
-        </select>
-        <select
-          value={prioF}
-          onChange={(e) => setPrioF(e.target.value)}
-          aria-label="Priority"
-        >
-          <option value="">All priority</option>
-          <option value="high">High priority</option>
-          <option value="medium">Medium</option>
-          <option value="low">Low</option>
-        </select>
-        <select value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort">
-          <option value="score">Sort: Global fit</option>
-          <option value="demand">Sort: demand</option>
-          <option value="name">Sort: name</option>
-        </select>
-        <label className={styles.toggle}>
-          <input
-            type="checkbox"
-            checked={groupByCsm}
-            onChange={(e) => setGroupByCsm(e.target.checked)}
-          />
-          Group by CSM
-        </label>
-        <label className={styles.toggle}>
-          <input
-            type="checkbox"
-            checked={hotOnly}
-            onChange={(e) => setHotOnly(e.target.checked)}
-          />
-          Hot targets ({hotCount})
-        </label>
-        <button type="button" className={styles.addMini} onClick={copyList}>
-          {copied ? "Copied ✓" : "Copy list"}
-        </button>
-        <button type="button" className={styles.addMini} onClick={exportCsv}>
-          Export CSV
-        </button>
-        <span className={styles.count}>
-          <b>{filtered.length}</b> of {rows.length}
-          {csm ? ` — ${csm.split(" ")[0]}'s` : ""}
-        </span>
       </div>
 
-      {(() => {
-        const hotOffBoard = rows.filter((r) => isHot(r) && !onDash.has(r.name));
-        if (hotOffBoard.length === 0 || !canAdd) return null;
-        return (
-          <div className={styles.triage}>
-            <span>
-              <b>{hotOffBoard.length}</b> hot{" "}
-              {hotOffBoard.length === 1 ? "signal" : "signals"} not on the board yet.
-            </span>
-            <button
-              type="button"
-              className={styles.addMini}
-              onClick={() => {
-                setHotOnly(true);
-                setCsm("");
-                setTier("");
-                setPlay("");
-              }}
-            >
-              Show them
-            </button>
-          </div>
-        );
-      })()}
-
-      <table className={styles.table}>
-        <thead>
-          <tr>
-            <th>Account</th>
-            <th>Global fit</th>
-            <th>Demand</th>
-            <th>Stage</th>
-            <th>Next action</th>
-            <th>Play</th>
-            <th>Model</th>
-            <th>PrismHR</th>
-            <th />
-          </tr>
-        </thead>
-        <tbody>
-          {(grouped
-            ? grouped.flatMap(([gName, list]) => [
-                { __group: gName, count: list.length },
-                ...list,
-              ])
-            : filtered
-          ).map((item) => {
-            if ("__group" in item)
-              return (
-                <tr key={`grp-${item.__group}`}>
-                  <td colSpan={9} className={styles.grp}>
-                    {item.__group} · {item.count}
-                  </td>
-                </tr>
-              );
-            const a = item;
-            return (
-              <Fragment key={a.id}>
-                <tr
-                  id={`acct-${a.id}`}
-                  className={a.id === openId ? styles.rowActive : ""}
-                >
-                  <td>
+      {/* The Filter Door (founder-decreed 2026-08-21, from the patch-list
+          triptych): no rail — the sheet runs full width, the five filters
+          live behind one mono door at the top-right shoulder, and a live
+          filter keeps the door lit and named. The hot-signal bar stays
+          retired. */}
+      <div className={styles.fdoorRow}>
+        <button
+          type="button"
+          className={
+            activeFilters.length ? `${styles.fdoor} ${styles.fdoorLive}` : styles.fdoor
+          }
+          onClick={() => setFiltersOpen(!filtersOpen)}
+          aria-expanded={filtersOpen}
+        >
+          FILTERS{activeFilters.map((f) => ` · ${f}`).join("")} ▾
+        </button>
+      </div>
+      {filtersOpen && (
+        <div className={styles.fstrip}>
+          <select
+            value={csm}
+            onChange={(e) => setCsm(e.target.value)}
+            aria-label="Partner"
+          >
+            <option value="">Partners</option>
+            {partners.map((c) => (
+              <option key={c} value={c}>
+                {c} — {partnerRole(c)}
+              </option>
+            ))}
+          </select>
+          <select
+            value={industry}
+            onChange={(e) => setIndustry(e.target.value)}
+            aria-label="Model"
+          >
+            <option value="">Models</option>
+            {inds.map((i) => (
+              <option key={i} value={i}>
+                {i}
+              </option>
+            ))}
+          </select>
+          <select
+            value={tier}
+            onChange={(e) => setTier(e.target.value)}
+            aria-label="Fit tier"
+          >
+            <option value="">Fit</option>
+            <option value="high">High fit</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+          </select>
+          <select
+            value={play}
+            onChange={(e) => setPlay(e.target.value)}
+            aria-label="Play type"
+          >
+            <option value="">Plays</option>
+            <option value="displacement">Displacement</option>
+            <option value="greenfield">Greenfield</option>
+          </select>
+          <select
+            value={stageF}
+            onChange={(e) => setStageF(e.target.value)}
+            aria-label="Stage"
+          >
+            <option value="">Stages</option>
+            {STAGES.map((s) => (
+              <option key={s.key} value={s.key}>
+                {s.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+      <div className={styles.laneWrap}>
+        <div className={styles.laneMain}>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                {(
+                  [
+                    ["name", "Account"],
+                    ["score", "Global fit"],
+                    ["demand", "Demand"],
+                    ["touch", "Last human touch"],
+                    ["signal", "The signal"],
+                    ["act", "Act"],
+                  ] as [ColKey, string][]
+                ).map(([key, label]) => (
+                  <th
+                    key={key}
+                    aria-sort={
+                      colSort?.key === key
+                        ? colSort.dir === 1
+                          ? "ascending"
+                          : "descending"
+                        : undefined
+                    }
+                  >
                     <button
-                      className={styles.rowBtn}
-                      onClick={() => setOpenId(openId === a.id ? "" : a.id)}
-                      aria-expanded={openId === a.id}
+                      type="button"
+                      className={styles.thSort}
+                      onClick={() => clickSort(key)}
+                      title={`Sort by ${label.toLowerCase()}`}
                     >
-                      {a.name}
-                    </button>{" "}
-                    {a.disposition && (
-                      <span
-                        className={styles.dispoBadge}
-                        title={a.disposition.reason || undefined}
-                      >
-                        {a.disposition.status === "motion" ? "⚡ in motion" : "⏸ parked"}
-                      </span>
-                    )}{" "}
-                    <ValBadge v={a.validation} />
-                    <div className={styles.rowSub}>
-                      {a.city}
-                      {a.state ? `, ${a.state}` : ""}
-                      {a.csm ? ` · ${a.csm}` : ""}
-                    </div>
-                  </td>
-                  <td>
-                    <span className={`${styles.fit} ${fitClass[a.tier]}`}>{a.score}</span>
-                  </td>
-                  <td>
-                    {a.researched && a.demand != null ? (
-                      <span className={`${styles.fit} ${demandClass(a.demand)}`}>
-                        {a.demand}
-                      </span>
-                    ) : (
-                      <span className={styles.muted} title="Not researched">
-                        —
-                      </span>
-                    )}
-                  </td>
-                  <td>
-                    <StageBadge stage={a.stage} />
-                    <div className={styles.stackTop}>
-                      <ApproachChip approach={a.approach} />
-                    </div>
-                  </td>
-                  <td>
-                    {a.nextAction ? (
-                      <>
-                        <span className={styles.rowSub}>{a.nextAction}</span>
-                        {a.nextActionDate && (
-                          <div className={styles.rowSub}>{a.nextActionDate}</div>
-                        )}
-                      </>
-                    ) : (
-                      <span className={styles.muted}>—</span>
-                    )}
-                  </td>
-                  <td>
-                    {a.play === "displacement" ? (
-                      <>
-                        <span className={`${styles.tag} ${styles.tagDisplace}`}>
-                          Displace
+                      {label}
+                      {colSort?.key === key && (
+                        <span className={styles.thArrow}>
+                          {colSort.dir === 1 ? "▲" : "▼"}
                         </span>
-                        {a.competitors.length > 0 && (
-                          <div className={styles.rowSub}>
-                            <CompetitorLinks names={a.competitors} />
-                          </div>
+                      )}
+                    </button>
+                    {key === "name" && (
+                      <span className={styles.thCount}>
+                        {filtered.length} of {rows.length}
+                      </span>
+                    )}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((a) => {
+                return (
+                  <Fragment key={a.id}>
+                    <tr
+                      id={`acct-${a.id}`}
+                      className={a.id === openId ? styles.rowActive : ""}
+                    >
+                      <td>
+                        <button
+                          className={styles.rowBtn}
+                          onClick={() => setOpenId(openId === a.id ? "" : a.id)}
+                          aria-expanded={openId === a.id}
+                        >
+                          {a.name}
+                        </button>{" "}
+                        {a.disposition && (
+                          <span
+                            className={[
+                              styles.dispoBadge,
+                              a.disposition.status === "won" ? styles.dispoWon : "",
+                              a.disposition.status === "lost" ? styles.dispoLost : "",
+                            ]
+                              .filter(Boolean)
+                              .join(" ")}
+                            title={a.disposition.reason || undefined}
+                          >
+                            {a.disposition.status === "motion"
+                              ? "⚡ in motion"
+                              : a.disposition.status === "parked"
+                                ? "⏸ parked"
+                                : a.disposition.status === "won"
+                                  ? "✓ closed won"
+                                  : a.disposition.status === "lost"
+                                    ? "✕ closed lost"
+                                    : "⌁ engaged"}
+                          </span>
+                        )}{" "}
+                        {a.risk && (
+                          <span
+                            className={styles.riskChip}
+                            title="Salesforce marks this account's risk level. Handle with care."
+                          >
+                            ⚠ {a.risk} RISK
+                          </span>
+                        )}{" "}
+                        <ValBadge v={a.validation} />
+                      </td>
+                      <td>
+                        <span className={`${styles.fit} ${fitClass[a.tier]}`}>
+                          {a.score}
+                        </span>
+                      </td>
+                      <td>
+                        {a.researched && a.demand != null ? (
+                          <span className={`${styles.fit} ${demandClass(a.demand)}`}>
+                            {a.demand}
+                          </span>
+                        ) : (
+                          <span className={styles.muted} title="Not researched">
+                            —
+                          </span>
                         )}
-                      </>
-                    ) : a.play === "greenfield" ? (
-                      <span className={`${styles.tag} ${styles.tagGreen}`}>
-                        Greenfield
-                      </span>
-                    ) : (
-                      <span className={styles.muted}>—</span>
-                    )}
-                  </td>
-                  <td className={styles.rowSub}>{a.industry}</td>
-                  <td>
-                    {a.incumbent ? (
-                      <span
-                        className={styles.chip}
-                        title={`Already a platform customer, on PrismHR cloud tenant “${a.cloud}”.`}
-                      >
-                        {a.cloud}
-                      </span>
-                    ) : (
-                      <span
-                        className={styles.muted}
-                        title="Not a PrismHR platform customer"
-                      >
-                        —
-                      </span>
-                    )}
-                  </td>
-                  <td>
-                    {canAdd &&
-                      (onDash.has(a.name) ? (
-                        <span className={styles.onDash}>On dashboard ✓</span>
-                      ) : (
-                        <form action={addCard}>
-                          <input type="hidden" name="name" value={a.name} />
-                          <input
-                            type="hidden"
-                            name="subtitle"
-                            value={`${a.csm}${a.industry ? ` · ${a.industry}` : ""}`}
-                          />
-                          <input type="hidden" name="seedDiscovery" value={seedFor(a)} />
-                          <input type="hidden" name="returnTo" value="/accounts" />
-                          <AddButton />
-                        </form>
-                      ))}
-                  </td>
-                </tr>
-                {openId === a.id && (
-                  <tr>
-                    <td colSpan={9}>
-                      <div className={styles.acctDetail}>
-                        <SfCheckpoint when="account" id={a.id} name={a.name} />
-                        <AccountChipNotes notes={a.chipNotes} />
-                        <AccountNotes notes={a.notes} />
-                        <PeopleIndex people={a.people} />
-                        <BackgroundIntel notes={a.bgNotes} />
-                        <EngagementPanel a={a} />
-                        <WorkingDeal a={a} canWrite={canWrite} />
-                        <div className={styles.demandBlock}>
-                          {a.researched && a.demand != null ? (
-                            <>
-                              <div className={styles.demandHead}>
-                                <span
-                                  className={`${styles.fit} ${demandClass(a.demand)}`}
+                      </td>
+                      <td>
+                        {a.second?.touch ? (
+                          <span
+                            className={styles.srTouch}
+                            title={`The second record's last human row — ${a.second.touch.kind === "account" ? "their side wrote" : "a colleague's motion"}`}
+                          >
+                            <span
+                              className={
+                                a.second.touch.kind === "account"
+                                  ? styles.srTouchAcct
+                                  : undefined
+                              }
+                            >
+                              {shortWho(a.second.touch.who)}
+                            </span>{" "}
+                            · {mmddOf(a.second.touch.day)}
+                          </span>
+                        ) : (
+                          <span className={styles.muted}>—</span>
+                        )}
+                      </td>
+                      <td>
+                        {a.second && a.second.gems.length > 0 ? (
+                          <button
+                            type="button"
+                            className={styles.srTerm}
+                            onClick={() => setSrOpenId(srOpenId === a.id ? "" : a.id)}
+                            aria-expanded={srOpenId === a.id}
+                            title="A verified gem — opens the card, citations, and the email meat"
+                          >
+                            {a.second.gems[0].term}
+                            {a.second.gems.length > 1 && (
+                              <span className={styles.srMore}>
+                                {" "}
+                                +{a.second.gems.length - 1}
+                              </span>
+                            )}
+                          </button>
+                        ) : a.second && a.second.supportTotal >= 8 ? (
+                          <button
+                            type="button"
+                            className={`${styles.srTerm} ${styles.srTermSupport}`}
+                            onClick={() => setSrOpenId(srOpenId === a.id ? "" : a.id)}
+                            aria-expanded={srOpenId === a.id}
+                            title="Heavy support traffic — opens the case list and the meat"
+                          >
+                            ▮ {a.second.supportTotal} CASES
+                          </button>
+                        ) : a.second?.verdict ? (
+                          <span className={styles.srVerdict} title={a.second.verdict}>
+                            {a.second.verdict}
+                          </span>
+                        ) : (
+                          <span className={styles.muted}>—</span>
+                        )}
+                      </td>
+                      <td className={styles.srActCell}>
+                        {a.second?.act && a.second.gems.length > 0 ? (
+                          <span className={styles.mchipWrap}>
+                            <button
+                              type="button"
+                              className={styles.mchip}
+                              onClick={() => setLaneId(laneId === a.id ? "" : a.id)}
+                              aria-expanded={laneId === a.id}
+                              title="Work the act on the lane — the draft, the evidence, the fork"
+                            >
+                              {a.second.act}
+                              <span className={styles.mchipSrc}>
+                                ◆ {a.second.gems[0].term} ·{" "}
+                                {mmddOf(a.second.gems[0].whenDay)}
+                              </span>
+                            </button>
+                            {canWrite && (
+                              <button
+                                type="button"
+                                className={styles.mtick}
+                                title="Mark acted — files the stamp, clears the nag"
+                                onClick={() => tickActed(a.id, a.second!.gems[0].term)}
+                              >
+                                ✓
+                              </button>
+                            )}
+                          </span>
+                        ) : a.actedDay ? (
+                          <span className={styles.actedStamp}>
+                            <b>✓ ACTED</b> · {mmddOf(a.actedDay)}
+                            {canWrite && a.actedTerm && (
+                              <>
+                                {" · "}
+                                <button
+                                  type="button"
+                                  className={styles.actedTb}
+                                  title="Take it back — the chip returns"
+                                  onClick={() => tickUnacted(a.id, a.actedTerm)}
                                 >
-                                  {a.demand}
-                                </span>
-                                <strong>Global-hiring demand</strong>
-                                <span className={styles.confChip}>
-                                  {a.confidence} confidence
-                                </span>
+                                  ↺
+                                </button>
+                              </>
+                            )}
+                          </span>
+                        ) : null}
+                      </td>
+                    </tr>
+                    {srOpenId === a.id && a.second && (
+                      <tr>
+                        <td colSpan={6} className={styles.srFoldTd}>
+                          <SecondRecordPanel accountId={a.id} second={a.second} />
+                        </td>
+                      </tr>
+                    )}
+                    {openId === a.id && (
+                      <tr>
+                        <td colSpan={6}>
+                          <div className={styles.acctDetail}>
+                            <SfCheckpoint when="account" id={a.id} name={a.name} />
+                            <p className={styles.acctMetaLine}>
+                              MODEL · {a.industry || "—"} · PRISMHR ·{" "}
+                              {a.incumbent ? a.cloud : "not a platform customer"}
+                              {a.city
+                                ? ` · ${a.city.toUpperCase()}${a.state ? `, ${a.state.toUpperCase()}` : ""}`
+                                : ""}
+                              {a.csm ? ` · CSM ${a.csm.toUpperCase()}` : ""}
+                              {a.play === "greenfield" ? " · PLAY · GREENFIELD" : ""}
+                              {a.play === "displacement"
+                                ? ` · PLAY · DISPLACE${a.competitors.length ? ` (${a.competitors.join(" / ").toUpperCase()})` : ""}`
+                                : ""}
+                            </p>
+                            {canAdd &&
+                              (onDash.has(a.name) ? (
+                                <p className={styles.acctMetaLine}>
+                                  ON THE DASHBOARD · CLEARED WITH THE CSM
+                                </p>
+                              ) : (
+                                <form action={addCard} className={styles.dashRow}>
+                                  <input type="hidden" name="name" value={a.name} />
+                                  <input
+                                    type="hidden"
+                                    name="subtitle"
+                                    value={`${a.csm}${a.industry ? ` · ${a.industry}` : ""}`}
+                                  />
+                                  <input
+                                    type="hidden"
+                                    name="seedDiscovery"
+                                    value={seedFor(a)}
+                                  />
+                                  <input
+                                    type="hidden"
+                                    name="returnTo"
+                                    value="/accounts"
+                                  />
+                                  <button className={styles.addMini} type="submit">
+                                    Put it on the dashboard
+                                  </button>
+                                </form>
+                              ))}
+                            {/* The people lead (founder-decreed 2026-08-20): the
+                            double-click is looking for contacts first. */}
+                            <ContactsPanel
+                              accountId={a.id}
+                              accountName={a.name}
+                              count={a.contactCount}
+                            />
+                            {/* The research leads (founder-decreed 2026-08-14): the drilldown opens with what the research knows; the working furniture follows, folded. */}
+                            <Fold
+                              label="Research read"
+                              hint="what the research knows about this account"
+                              defaultOpen
+                            >
+                              <div className={styles.demandBlock}>
+                                {a.researched ? (
+                                  <>
+                                    <div className={styles.demandHead}>
+                                      {a.demand != null && (
+                                        <span
+                                          className={`${styles.fit} ${demandClass(a.demand)}`}
+                                        >
+                                          {a.demand}
+                                        </span>
+                                      )}
+                                      <strong>Global-hiring demand</strong>
+                                      <span className={styles.confChip}>
+                                        {a.demand != null
+                                          ? `${a.confidence} confidence`
+                                          : "live pass, unscored"}
+                                      </span>
+                                    </div>
+                                    {a.play === "displacement" &&
+                                      a.competitors.length > 0 && (
+                                        <p className={styles.servedBy}>
+                                          Displacement play. Currently served by{" "}
+                                          <strong>
+                                            <CompetitorLinks names={a.competitors} />
+                                          </strong>
+                                          . Pitch: bring it in-house on the platform they
+                                          already run.
+                                        </p>
+                                      )}
+                                    {a.play === "greenfield" && (
+                                      <p className={styles.servedBy}>
+                                        Greenfield. Real demand, no incumbent EOR named in
+                                        the research.
+                                      </p>
+                                    )}
+                                    {a.summary && (
+                                      <p className={styles.demandSummary}>{a.summary}</p>
+                                    )}
+                                    {a.signals.length > 0 && (
+                                      <ul className={styles.signalList}>
+                                        {a.signals.slice(0, 4).map((s, i) => (
+                                          <li key={i}>{s}</li>
+                                        ))}
+                                      </ul>
+                                    )}
+                                    {a.countries.length > 0 && (
+                                      <div className={styles.countries}>
+                                        {a.countries.map((c) => (
+                                          <span key={c} className={styles.countryChip}>
+                                            {c}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    )}
+                                    {a.evidence.length > 0 && (
+                                      <div className={styles.evidence}>
+                                        {a.evidence.map((e, i) => (
+                                          <a
+                                            key={i}
+                                            href={e.url}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                          >
+                                            ↗ {hostOf(e.url)}
+                                          </a>
+                                        ))}
+                                      </div>
+                                    )}
+                                    {a.demand != null && (
+                                      <div className={styles.formula}>
+                                        How this {a.score} is built: 40% account profile
+                                        at {a.deskScore}, 60% global demand at{" "}
+                                        {a.demandAdj ?? a.demand}.
+                                        {a.confFactor < 1
+                                          ? ` Raw demand ${a.demand} trimmed to ${a.demandAdj} because confidence is ${a.confidence}.`
+                                          : ""}
+                                      </div>
+                                    )}
+                                  </>
+                                ) : (
+                                  <div className={styles.demandPending}>
+                                    Not researched: no findable web presence, or missed on
+                                    the run. Score is the account profile only. No demand
+                                    signal yet.
+                                  </div>
+                                )}
                               </div>
-                              {a.play === "displacement" && a.competitors.length > 0 && (
-                                <p className={styles.servedBy}>
-                                  Displacement play. Currently served by{" "}
-                                  <strong>
-                                    <CompetitorLinks names={a.competitors} />
-                                  </strong>
-                                  . Pitch: bring it in-house on the platform they already
-                                  run.
-                                </p>
-                              )}
-                              {a.play === "greenfield" && (
-                                <p className={styles.servedBy}>
-                                  Greenfield. Real demand, no incumbent EOR named in the
-                                  research.
-                                </p>
-                              )}
-                              {a.summary && (
-                                <p className={styles.demandSummary}>{a.summary}</p>
-                              )}
-                              {a.signals.length > 0 && (
-                                <ul className={styles.signalList}>
-                                  {a.signals.slice(0, 4).map((s, i) => (
-                                    <li key={i}>{s}</li>
-                                  ))}
-                                </ul>
-                              )}
-                              {a.countries.length > 0 && (
-                                <div className={styles.countries}>
-                                  {a.countries.map((c) => (
-                                    <span key={c} className={styles.countryChip}>
-                                      {c}
-                                    </span>
-                                  ))}
+                            </Fold>
+                            <AccountChipNotes notes={a.chipNotes} />
+                            <AccountNotes notes={a.notes} />
+                            <PeopleIndex people={a.people} />
+                            <BackgroundIntel notes={a.bgNotes} />
+                            <EngagementPanel a={a} />
+                            <Fold label="Working the deal" hint="stage, approach, plays">
+                              <WorkingDeal a={a} canWrite={canWrite} />
+                            </Fold>
+
+                            <Fold
+                              label="Account profile"
+                              hint="firmographics and the score's parts"
+                            >
+                              <div className={styles.bars}>
+                                <div className={styles.barsHead}>
+                                  Account profile · {a.deskScore}/100, firmographics only,
+                                  no research
                                 </div>
-                              )}
-                              {a.evidence.length > 0 && (
-                                <div className={styles.evidence}>
-                                  {a.evidence.map((e, i) => (
+                                {(
+                                  ["scale", "incumbency", "model", "recency"] as const
+                                ).map((k) => (
+                                  <div key={k} className={styles.barRow}>
+                                    <span className={styles.barLabel}>
+                                      {BAR_LABEL[k]}
+                                    </span>
+                                    <span className={styles.barTrack}>
+                                      <span
+                                        className={styles.barFill}
+                                        style={{
+                                          width: `${(a.breakdown[k] / BAR_MAX[k]) * 100}%`,
+                                        }}
+                                      />
+                                    </span>
+                                    <span className={styles.barVal}>
+                                      {a.breakdown[k]}/{BAR_MAX[k]}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+
+                              <div className={styles.acctMeta}>
+                                {a.sizeBucket ||
+                                  (a.size
+                                    ? `${a.size.toLocaleString()} WSE`
+                                    : "size unknown")}
+                                {" · Partner: "}
+                                {a.csm}, {partnerRole(a.csm)}
+                                {a.contactName && (
+                                  <>
+                                    {" · "}
+                                    {a.contactName}, the relationship
+                                    {a.contactEmail && (
+                                      <>
+                                        {" — "}
+                                        <a href={`mailto:${a.contactEmail}`}>
+                                          {a.contactEmail}
+                                        </a>
+                                      </>
+                                    )}
+                                  </>
+                                )}
+                                {a.website && (
+                                  <>
+                                    {" · "}
                                     <a
-                                      key={i}
-                                      href={e.url}
+                                      href={ensureHttp(a.website)}
                                       target="_blank"
                                       rel="noreferrer"
                                     >
-                                      ↗ {hostOf(e.url)}
+                                      {a.website}
                                     </a>
-                                  ))}
-                                </div>
-                              )}
-                              <div className={styles.formula}>
-                                How this {a.score} is built: 40% account profile at{" "}
-                                {a.deskScore}, 60% global demand at{" "}
-                                {a.demandAdj ?? a.demand}.
-                                {a.confFactor < 1
-                                  ? ` Raw demand ${a.demand} trimmed to ${a.demandAdj} because confidence is ${a.confidence}.`
-                                  : ""}
+                                  </>
+                                )}
                               </div>
-                            </>
-                          ) : (
-                            <div className={styles.demandPending}>
-                              Not researched: no findable web presence, or missed on the
-                              run. Score is the account profile only. No demand signal
-                              yet.
-                            </div>
-                          )}
-                        </div>
+                            </Fold>
 
-                        <div className={styles.bars}>
-                          <div className={styles.barsHead}>
-                            Account profile · {a.deskScore}/100, firmographics only, no
-                            research
+                            {canAdd && (
+                              <ValidateControls id={a.id} current={a.validation} />
+                            )}
                           </div>
-                          {(["scale", "incumbency", "model", "recency"] as const).map(
-                            (k) => (
-                              <div key={k} className={styles.barRow}>
-                                <span className={styles.barLabel}>{BAR_LABEL[k]}</span>
-                                <span className={styles.barTrack}>
-                                  <span
-                                    className={styles.barFill}
-                                    style={{
-                                      width: `${(a.breakdown[k] / BAR_MAX[k]) * 100}%`,
-                                    }}
-                                  />
-                                </span>
-                                <span className={styles.barVal}>
-                                  {a.breakdown[k]}/{BAR_MAX[k]}
-                                </span>
-                              </div>
-                            ),
-                          )}
-                        </div>
-
-                        <div className={styles.acctMeta}>
-                          {a.sizeBucket ||
-                            (a.size ? `${a.size.toLocaleString()} WSE` : "size unknown")}
-                          {" · Partner: "}
-                          {a.csm}, {partnerRole(a.csm)}
-                          {a.contactName && (
-                            <>
-                              {" · "}
-                              {a.contactName}, primary contact
-                              {a.contactEmail && (
-                                <>
-                                  {" — "}
-                                  <a href={`mailto:${a.contactEmail}`}>
-                                    {a.contactEmail}
-                                  </a>
-                                </>
-                              )}
-                            </>
-                          )}
-                          {a.website && (
-                            <>
-                              {" · "}
-                              <a
-                                href={ensureHttp(a.website)}
-                                target="_blank"
-                                rel="noreferrer"
-                              >
-                                {a.website}
-                              </a>
-                            </>
-                          )}
-                        </div>
-
-                        <ContactsPanel accountId={a.id} count={a.contactCount} />
-
-                        {canAdd && <ValidateControls id={a.id} current={a.validation} />}
-                      </div>
-                    </td>
-                  </tr>
-                )}
-              </Fragment>
-            );
-          })}
-        </tbody>
-      </table>
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        {laneAct && (
+          <ActLane
+            key={laneAct.accountId}
+            act={laneAct}
+            canWrite={canWrite}
+            onClose={() => setLaneId("")}
+          />
+        )}
+      </div>
     </>
   );
 }
 
-// The account's full contact roster — every column of the SF contact reports.
-// Collapsed by default; the list loads through a server action on first open
-// (5k contacts app-wide would otherwise ride in every page load).
-function ContactsPanel({ accountId, count }: { accountId: string; count: number }) {
-  const [open, setOpen] = useState(false);
-  const [list, setList] = useState<BookContact[] | null>(null);
-  const [q, setQ] = useState("");
-  if (count === 0) return null;
+// The draft desk (founder-decreed 2026-08-20): step one drafts here with the
+// brain against the account's record; step two opens Outlook with the
+// addresses and the text already on it. Other people from the account ride
+// as one-click cc chips.
+function DraftDialog({
+  accountId,
+  accountName,
+  contact,
+  others,
+  onClose,
+}: {
+  accountId: string;
+  accountName: string;
+  contact: ContactRow;
+  others: ContactRow[];
+  onClose: () => void;
+}) {
+  const [cc, setCc] = useState<string[]>([]);
+  const [ask, setAsk] = useState("");
+  const [subject, setSubject] = useState("");
+  const [body, setBody] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState("");
+  const name = `${contact.first} ${contact.last}`.trim();
 
-  const openUp = async () => {
-    const next = !open;
-    setOpen(next);
-    if (next && list === null) setList(await getContacts(accountId));
+  // The template shelf (founder-decreed 2026-08-20): named drafts, reused
+  // from a dropdown; {{first}} {{last}} {{name}} {{account}} fill on apply.
+  // The draft desk's one line (5.2): a per-person read of both records —
+  // exact words, cited or silent. Fetched once when the desk opens.
+  const [deskLine, setDeskLine] = useState<{
+    line: string;
+    cite: { k: string; day: string; who: string; subject: string } | null;
+  } | null>(null);
+  const [deskExcerpt, setDeskExcerpt] = useState<string | null>(null);
+  useEffect(() => {
+    const q = contact.email || name;
+    if (!q) return;
+    void fetch(
+      `/activity/evidence?acct=${encodeURIComponent(accountId)}&who=${encodeURIComponent(q)}`,
+      { cache: "no-store" },
+    )
+      .then((r) => r.json())
+      .then(
+        (j: {
+          ok: boolean;
+          line?: string;
+          cite?: typeof deskLine extends null
+            ? never
+            : NonNullable<typeof deskLine>["cite"];
+        }) => {
+          if (j.ok && j.line) setDeskLine({ line: j.line, cite: j.cite ?? null });
+        },
+      )
+      .catch(() => null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accountId, contact.email]);
+
+  const [templates, setTemplates] = useState<MailTemplate[]>([]);
+  const [tplSel, setTplSel] = useState("");
+  const [tplSaving, setTplSaving] = useState(false);
+  const [tplName, setTplName] = useState("");
+  useEffect(() => {
+    void listMailTemplates().then(setTemplates);
+  }, []);
+  const fill = (s: string) =>
+    s
+      .replaceAll("{{first}}", contact.first || name || "there")
+      .replaceAll("{{last}}", contact.last || "")
+      .replaceAll("{{name}}", name || contact.email)
+      .replaceAll("{{account}}", accountName);
+  const applyTemplate = (id: string) => {
+    setTplSel(id);
+    const t = templates.find((x) => x.id === id);
+    if (!t) return;
+    setSubject(fill(t.subject));
+    setBody(fill(t.body));
+    setNote("");
   };
+  const saveTemplate = async () => {
+    if (!tplName.trim() || !body.trim()) return;
+    const r = await saveMailTemplate(tplName, subject, body);
+    if (r.ok) {
+      setTemplates(await listMailTemplates());
+      setTplSaving(false);
+      setTplName("");
+      setNote("Template saved.");
+    } else setNote(r.reason ?? "The template didn't save.");
+  };
+  const dropTemplate = async () => {
+    if (!tplSel) return;
+    await deleteMailTemplate(tplSel);
+    setTplSel("");
+    setTemplates(await listMailTemplates());
+  };
+
+  const run = async () => {
+    if (busy || (!ask.trim() && !body.trim())) return;
+    setBusy(true);
+    setNote("");
+    const toNames = [
+      name,
+      ...others.filter((o) => cc.includes(o.email)).map((o) => `${o.first} ${o.last}`),
+    ];
+    const r = await draftOutreach(accountId, toNames, ask, body);
+    setBusy(false);
+    if (r.ok) {
+      setBody(r.body ?? "");
+      if (r.subject) setSubject(r.subject);
+      setNote(r.note ?? "");
+    } else setNote(r.reason ?? "The draft didn't come back.");
+  };
+
+  const mailto = `mailto:${encodeURIComponent(contact.email)}${
+    cc.length ? `?cc=${encodeURIComponent(cc.join(","))}&` : "?"
+  }subject=${encodeURIComponent(subject || `${accountName} — PrismHR Global`)}&body=${encodeURIComponent(
+    body.slice(0, 1800),
+  )}`;
+
+  return (
+    <div className={styles.draftBack} onClick={onClose}>
+      <div className={styles.draftBox} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.draftHead}>
+          <b>
+            Draft to {name || contact.email} · {accountName}
+          </b>
+          <button type="button" className={styles.draftX} onClick={onClose}>
+            ✕
+          </button>
+        </div>
+        {deskLine && (
+          <div className={styles.deskLine}>
+            {deskLine.line}
+            {(() => {
+              const cite = deskLine.cite;
+              if (!cite) return null;
+              return (
+                <button
+                  type="button"
+                  className={styles.deskLineRead}
+                  onClick={async () => {
+                    if (deskExcerpt !== null) {
+                      setDeskExcerpt(null);
+                      return;
+                    }
+                    try {
+                      const r = await fetch(
+                        `/activity/evidence?acct=${encodeURIComponent(accountId)}&k=${encodeURIComponent(cite.k)}`,
+                        { cache: "no-store" },
+                      );
+                      const j = (await r.json()) as {
+                        ok: boolean;
+                        row?: { excerpt: string };
+                      };
+                      setDeskExcerpt(
+                        j.ok
+                          ? j.row?.excerpt || "The subject is the whole entry."
+                          : "The row isn't in the staged slice.",
+                      );
+                    } catch {
+                      setDeskExcerpt("The evidence store didn't answer.");
+                    }
+                  }}
+                >
+                  {deskExcerpt !== null ? "▾" : "▸ read it"}
+                </button>
+              );
+            })()}
+            {deskExcerpt !== null && (
+              <div className={styles.srExcerpt}>{deskExcerpt}</div>
+            )}
+          </div>
+        )}
+        <div className={styles.draftTpl}>
+          <select
+            className={styles.draftTplSel}
+            value={tplSel}
+            onChange={(e) => applyTemplate(e.target.value)}
+            aria-label="Apply a saved template"
+          >
+            <option value="">Templates…</option>
+            {templates.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name}
+              </option>
+            ))}
+          </select>
+          {tplSel && (
+            <button
+              type="button"
+              className={styles.draftChip}
+              title="Delete this template"
+              onClick={() => void dropTemplate()}
+            >
+              delete ✕
+            </button>
+          )}
+          {!tplSaving ? (
+            <button
+              type="button"
+              className={styles.draftChip}
+              disabled={!body.trim()}
+              title="Save the current subject and body as a named template. {{first}} {{last}} {{name}} {{account}} fill in when applied."
+              onClick={() => setTplSaving(true)}
+            >
+              Save as template
+            </button>
+          ) : (
+            <>
+              <input
+                className={styles.draftTplName}
+                placeholder="Template name"
+                value={tplName}
+                autoFocus
+                onChange={(e) => setTplName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") void saveTemplate();
+                  if (e.key === "Escape") setTplSaving(false);
+                }}
+              />
+              <button
+                type="button"
+                className={styles.draftChipOn}
+                onClick={() => void saveTemplate()}
+              >
+                Save
+              </button>
+              <button
+                type="button"
+                className={styles.draftChip}
+                onClick={() => setTplSaving(false)}
+              >
+                ✕
+              </button>
+            </>
+          )}
+          <span className={styles.draftTplHint}>
+            {"{{first}} {{account}} fill in when a template is applied"}
+          </span>
+        </div>
+        {others.length > 0 && (
+          <div className={styles.draftCc}>
+            <span className={styles.draftLbl}>Also send to:</span>
+            {others.slice(0, 8).map((o) => (
+              <button
+                key={o.email}
+                type="button"
+                className={cc.includes(o.email) ? styles.draftChipOn : styles.draftChip}
+                onClick={() =>
+                  setCc((xs) =>
+                    xs.includes(o.email)
+                      ? xs.filter((x) => x !== o.email)
+                      : [...xs, o.email],
+                  )
+                }
+              >
+                {o.first} {o.last ? `${o.last[0]}.` : ""}
+              </button>
+            ))}
+          </div>
+        )}
+        <input
+          className={styles.draftAsk}
+          placeholder={
+            body
+              ? "What should change? Enter sharpens it."
+              : "What should this email do? Enter drafts it."
+          }
+          value={ask}
+          onChange={(e) => setAsk(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") void run();
+          }}
+        />
+        <input
+          className={styles.draftSubject}
+          placeholder="Subject"
+          value={subject}
+          onChange={(e) => setSubject(e.target.value)}
+        />
+        <textarea
+          className={styles.draftBody}
+          placeholder="The draft lands here. Edit it directly, or ask for changes above."
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          rows={10}
+        />
+        {note && <p className={styles.draftNote}>{note}</p>}
+        <div className={styles.draftActs}>
+          <button
+            type="button"
+            className={styles.draftGo}
+            disabled={busy}
+            onClick={() => void run()}
+          >
+            {busy ? "Writing…" : body ? "Sharpen it" : "Draft it"}
+          </button>
+          <a
+            className={body ? styles.draftOutlook : styles.draftOutlookOff}
+            href={body ? mailto : undefined}
+            onClick={(e) => {
+              if (!body) e.preventDefault();
+            }}
+          >
+            Open in Outlook →
+          </a>
+          {body && (
+            <button
+              type="button"
+              className={styles.draftCopy}
+              onClick={() => void navigator.clipboard?.writeText(body)}
+            >
+              Copy the text
+            </button>
+          )}
+        </div>
+        <p className={styles.draftFoot}>
+          Outlook opens with the addresses and the draft on it. When it&rsquo;s sent, drop
+          the .eml in the Chute — that files the touch.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// The account's full contact roster — the SF export PLUS the record's own
+// discoveries — leading the drilldown, open on arrival (founder-decreed
+// 2026-08-20): the double-click is looking for the people.
+function ContactsPanel({
+  accountId,
+  accountName,
+  count,
+}: {
+  accountId: string;
+  accountName: string;
+  count: number;
+}) {
+  const [open, setOpen] = useState(true);
+  const [list, setList] = useState<ContactRow[] | null>(null);
+  const [q, setQ] = useState("");
+  const [drafting, setDrafting] = useState<ContactRow | null>(null);
+  useEffect(() => {
+    if (list === null) void getContacts(accountId).then(setList);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  if (count === 0 && (list?.length ?? 0) === 0) return null;
+
+  const openUp = () => setOpen((v) => !v);
 
   const needle = q.trim().toLowerCase();
   const shown = (list ?? []).filter(
@@ -1173,9 +1779,27 @@ function ContactsPanel({ accountId, count }: { accountId: string; count: number 
 
   return (
     <div className={styles.ctcWrap}>
-      <button type="button" className={styles.ctcToggle} onClick={openUp}>
-        {open ? "▾" : "▸"} Contacts ({count})
+      <button
+        type="button"
+        className={`${styles.ctcToggle} ${styles.ctcLead}`}
+        onClick={openUp}
+      >
+        {open ? "▾" : "▸"} Contacts ({list ? list.length : count})
+        {list?.some((c) => c.fromRecord) && (
+          <span className={styles.ctcFromRec}>
+            {list.filter((c) => c.fromRecord).length} from the record
+          </span>
+        )}
       </button>
+      {drafting && (
+        <DraftDialog
+          accountId={accountId}
+          accountName={accountName}
+          contact={drafting}
+          others={(list ?? []).filter((c) => c.email && c.email !== drafting.email)}
+          onClose={() => setDrafting(null)}
+        />
+      )}
       {open && (
         <>
           {count > 8 && (
@@ -1211,6 +1835,24 @@ function ContactsPanel({ accountId, count }: { accountId: string; count: number 
                     </b>
                   )}
                   {c.title && <span className={styles.ctcTitle}> — {c.title}</span>}
+                  {c.fromRecord && (
+                    <span
+                      className={styles.ctcFromRec}
+                      title={`Discovered in the account's own record${c.firstSeen ? ` · first seen ${c.firstSeen.slice(0, 10)}` : ""} — not in the SF export yet.`}
+                    >
+                      from the record
+                    </span>
+                  )}
+                  {c.email && (
+                    <button
+                      type="button"
+                      className={styles.ctcDraft}
+                      title="Draft an email to them — the brain helps write it, Outlook sends it."
+                      onClick={() => setDrafting(c)}
+                    >
+                      ✎ Draft
+                    </button>
+                  )}
                 </div>
                 <div className={styles.ctcLine}>
                   {c.email && (

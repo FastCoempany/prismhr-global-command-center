@@ -184,6 +184,85 @@ describe("groundwork queue", () => {
     assert.equal(items[0].ruleId, "wire-trigger");
   });
 
+  test("an excluded account never stages, whatever its evidence", () => {
+    const a = acct({ id: "X0000000000000001", name: "Closing Deal" });
+    const { items, all } = buildQueue({
+      ...base,
+      accounts: [a],
+      intelById: new Map(),
+      notesById: new Map(),
+      wireAtById: new Map([[a.id, "2026-07-29T12:00:00Z"]]),
+      excludedIds: new Set([a.id]),
+    });
+    assert.equal(items.length, 0);
+    assert.equal(all.length, 0);
+  });
+
+  test("one rule holds at most two leading slots; the rest sink below other rules", () => {
+    // Three real book ids with demand above the gate, each with its OWN stale
+    // research pass; a fourth account carries a different, lower-weight rule.
+    const s1 = acct({ id: "001F000000w38ItIAI", name: "Stale One", csm: "Unassigned" });
+    const s2 = acct({ id: "001F000000w38OIIAY", name: "Stale Two", csm: "Unassigned" });
+    const s3 = acct({ id: "001F000000w38BOIAY", name: "Stale Three", csm: "Unassigned" });
+    const gap = acct({ id: "G0000000000000001", name: "Thin Book", csm: "Unassigned" });
+    const { all } = buildQueue({
+      ...base,
+      contactCountById: (id: string) => (id === gap.id ? 1 : 5),
+      accounts: [s1, s2, s3, gap],
+      intelById: new Map(),
+      notesById: new Map([
+        [gap.id, [{ body: "note", source: "room", createdAt: "2026-07-29T12:00:00Z" }]],
+      ]),
+      researchAtById: new Map([
+        [s1.id, "2026-04-01T12:00:00Z"],
+        [s2.id, "2026-04-01T12:00:00Z"],
+        [s3.id, "2026-04-01T12:00:00Z"],
+      ]),
+    });
+    const rules = all.map((q) => q.ruleId);
+    assert.deepEqual(rules.slice(0, 3), [
+      "stale-above-gate",
+      "stale-above-gate",
+      "stakeholder-gap",
+    ]);
+    assert.equal(rules[3], "stale-above-gate");
+  });
+
+  test("a stale book-wide stamp collapses to one research-pass move", () => {
+    const a = acct({ id: "001F000000w38ItIAI", name: "Big Demand", csm: "Unassigned" });
+    const b = acct({ id: "001F000000w38OIIAY", name: "Also Demand", csm: "Unassigned" });
+    // A quarter past the book sweep — research holds for 90 days before the
+    // queue puts pressure out front.
+    const { all } = buildQueue({
+      ...base,
+      now: new Date("2026-10-15T15:00:00Z"),
+      accounts: [a, b],
+      intelById: new Map(),
+      notesById: new Map(),
+    });
+    const stale = all.filter((q) => q.ruleId === "stale-above-gate");
+    assert.equal(stale.length, 1);
+    assert.equal(stale[0].action, "Run the research pass.");
+    assert.match(stale[0].reason, /^Book research \d+ days old\.$/);
+    // The strongest demand carries it.
+    assert.equal(stale[0].name, "Big Demand");
+  });
+
+  test("research inside the 90-day hold puts no pressure out front", () => {
+    const a = acct({ id: "001F000000w38ItIAI", name: "Fresh Enough", csm: "Unassigned" });
+    const { all } = buildQueue({
+      ...base,
+      accounts: [a],
+      intelById: new Map(),
+      notesById: new Map(),
+      researchAtById: new Map([[a.id, "2026-06-01T12:00:00Z"]]),
+    });
+    assert.equal(
+      all.some((q) => q.ruleId === "stale-above-gate"),
+      false,
+    );
+  });
+
   test("a stale wire hit ranks as nothing — the trigger is perishable", () => {
     const a = acct({ id: "A0000000000000003", name: "Old News" });
     const { items } = buildQueue({
@@ -543,9 +622,7 @@ describe("groundwork adversarial regressions", () => {
       touches: touch("2026-07-28T12:00:00Z", "awaiting"), // quiet 2 days
     });
     assert.equal(
-      fresh.items.some(
-        (i) => i.ruleId === "silence-bump" || i.ruleId === "cold-revival",
-      ),
+      fresh.items.some((i) => i.ruleId === "silence-bump" || i.ruleId === "cold-revival"),
       false,
     );
     const cold = buildQueue({

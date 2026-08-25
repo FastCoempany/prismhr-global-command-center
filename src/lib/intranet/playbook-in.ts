@@ -27,16 +27,22 @@ export function playbookQuestionDocs(): MirrorDoc[] {
   const seen = new Set<string>();
   const out: MirrorDoc[] = [];
 
+  // The brain reads filled text — a stored "{countries}" would surface
+  // verbatim in ask-the-app citations (pass-two finding, 2026-08-24).
+  const fill = (s: string) => s.replaceAll("{countries}", "those countries");
+
   for (const q of bank) {
     if (seen.has(q.id)) continue;
     seen.add(q.id);
     const product = (q as { product?: string }).product ?? "any";
     const body = [
-      `A discovery question we ask: "${q.question}"`,
-      q.why ? `We ask it because ${q.why}` : "",
-      q.listenFor?.length ? `What to listen for: ${q.listenFor.join("; ")}.` : "",
-      q.followUp ? `The follow-up: ${q.followUp}` : "",
-      q.relayLine ? `Said plainly: "${q.relayLine}"` : "",
+      `A discovery question we ask: "${fill(q.question)}"`,
+      q.why ? `We ask it because ${fill(q.why)}` : "",
+      q.listenFor?.length
+        ? `What to listen for: ${q.listenFor.map(fill).join("; ")}.`
+        : "",
+      q.followUp ? `The follow-up: ${fill(q.followUp)}` : "",
+      q.relayLine ? `Said plainly: "${fill(q.relayLine)}"` : "",
     ]
       .filter(Boolean)
       .join(" ");

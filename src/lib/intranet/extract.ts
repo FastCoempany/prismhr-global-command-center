@@ -13,6 +13,7 @@
 //     resolves the words. No ids, no codes, no numbers in any prompt.
 
 import Anthropic from "@anthropic-ai/sdk";
+import { claudeClient, claudeAvailable } from "@/lib/claude/health";
 import {
   CLAIM_KINDS,
   MODEL_EXTRACT_LIGHT,
@@ -23,7 +24,7 @@ import {
 import { bankPrompt } from "./bank";
 
 export function extractAvailable(): boolean {
-  return Boolean(process.env.ANTHROPIC_API_KEY);
+  return claudeAvailable();
 }
 
 /** Opus or better, always (founder-decreed 2026-07-31). Both roster slots
@@ -213,10 +214,21 @@ export type ReadInput = {
   grown: { parent: string; label: string }[];
 };
 
+// A body larger than this gets its tail cut at read time: a 60k-character
+// transcript cannot finish inside the read clock, so it timed out, retried,
+// and timed out again — forever (the 3-of-306 crawl, 2026-08-19). The full
+// text stays on the doc; only the read is capped, and offsets in the kept
+// prefix stay valid.
+export const READ_BODY_CAP = 48_000;
+
 export async function runRead(input: ReadInput): Promise<LiberalRead> {
   if (!extractAvailable()) throw new Error("No API key configured — reading is off.");
-  const client = new Anthropic({ timeout: 120_000, maxRetries: 1 });
+  const client = claudeClient({ timeout: 120_000, maxRetries: 1 });
 
+  const body =
+    input.body.length > READ_BODY_CAP
+      ? `${input.body.slice(0, READ_BODY_CAP)}\n\n[document truncated for reading — the record keeps the full text]`
+      : input.body;
   const user = `THE BANK — file against this first:
 ${bankPrompt(input.grown)}
 
@@ -224,7 +236,7 @@ DOCUMENT — from ${input.space || "an internal source"}${
     input.accountName ? `, about the account ${input.accountName}` : ""
   }, pasted ${input.occurredAt.slice(0, 10)}:
 
-${input.body}`;
+${body}`;
 
   const res = await client.messages.create({
     model: modelForOrigin(input.origin),
@@ -245,7 +257,9 @@ ${input.body}`;
     .join("")
     .trim();
   try {
-    return sanitizeRead(JSON.parse(text), input.body);
+    // Sanitize against the text the model actually read — a capped body's
+    // offsets stay valid in the full document, since only the tail was cut.
+    return sanitizeRead(JSON.parse(text), body);
   } catch {
     return EMPTY_READ;
   }

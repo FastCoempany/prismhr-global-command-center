@@ -3,6 +3,7 @@ import { DM_Serif_Display, JetBrains_Mono, Public_Sans } from "next/font/google"
 import { AppWayfinder } from "@/components/app-wayfinder";
 import { loadDashboard } from "@/lib/dashboard/data";
 import { csms, peos } from "@/lib/book";
+import { fetchSecondRecords } from "@/lib/activity/read";
 import { EXTRA_PARTNERS } from "@/lib/book/partners";
 import {
   isManual,
@@ -28,6 +29,7 @@ import {
   morningDoneKey,
   partnerKickoff,
   partnerOutreachKey,
+  latestLineByAccount,
   roundupBullets,
   roundupFrame,
   signals,
@@ -38,20 +40,25 @@ import { partitionFollowUps, roundupDue } from "@/lib/today/follow-ups";
 import { splitAsk } from "@/lib/today/ledger";
 import { DASH_NODES } from "@/lib/dashboard/stages";
 import { corpusFor, extractDealIntel } from "@/lib/intel/extract";
+import { relationshipFor } from "@/lib/intel/relationship";
 import { digestFor, digestForCardName } from "@/lib/intel/digest";
 import { COUNTRY_NAME } from "@/lib/intel/lexicon";
 import { suggestChecks } from "@/lib/intel/evidence";
 import { daysBetween, meterRead, readDeal, type RoomRead } from "@/lib/room/engine";
 import { moveDoneKey } from "@/lib/room/bind";
+import { lastTouchRead } from "@/lib/room/touch";
+import { isMeetingNote } from "@/lib/intel/meeting";
 import { buildStageRail } from "@/lib/room/stages-view";
 import { buildAccountSheet } from "@/lib/room/sheet-view";
 import { readLoss } from "@/lib/room/loss";
 import { GAP_DISMISS, readGaps } from "@/lib/room/gaps";
 import { researchNs } from "@/lib/intel/deep-research";
+import { getDemand, researchGeneratedAt } from "@/lib/book/research";
 import { readOutcome } from "@/lib/dashboard/outcome";
 import { owedToMe } from "@/lib/room/owed";
 import { GLOBAL_SCENT_RE } from "@/lib/intel/provenance";
 import { askHref, peerQuestions, scopedAsk } from "@/lib/intranet/bridges";
+import { sfAccountUrl } from "@/lib/salesforce";
 import { prospectAsks } from "@/lib/intranet/store";
 import { Chute } from "./chute";
 import { domainOf } from "@/lib/route-capture";
@@ -67,6 +74,9 @@ import {
 import styles from "./room.module.css";
 
 export const dynamic = "force-dynamic";
+// A distillation pass (activityRun via the Chute) runs to a 220s deadline —
+// the platform's default window would kill it mid-account.
+export const maxDuration = 300;
 
 const serif = DM_Serif_Display({
   weight: "400",
@@ -115,6 +125,12 @@ export default async function RoomPage() {
   // read once for the whole board. A deal inherits the questions its peers
   // provoked. Empty until the brain has read a demo — the room degrades quietly.
   const askedByPeers = await prospectAsks(600);
+
+  // The second record, one query for the whole board — the THEIRS line reads
+  // the verified gems; acted gems have already left the arrival surface.
+  const secondById = await fetchSecondRecords().catch(
+    () => new Map<string, never>() as Awaited<ReturnType<typeof fetchSecondRecords>>,
+  );
 
   const rows: RoomRow[] = [];
   for (const card of data.cards) {
@@ -171,7 +187,18 @@ export default async function RoomPage() {
       .slice(0, 72);
 
     const people = accountId ? peopleFor(allNotes, contactsFor(accountId), 6) : [];
-    const multiTone = people.length >= 3 ? "g" : people.length === 2 ? "y" : "r";
+    // MULTI reads the widest count the app holds: filed actors AND the
+    // digest's thread roster — a record-quiet deal with a known room must
+    // never render "nobody exists."
+    const peopleCount = Math.max(people.length, intel.threads.people.length);
+    const multiTone = peopleCount >= 3 ? "g" : peopleCount === 2 ? "y" : "r";
+
+    // Who this deal runs through — the record's most-seen person outranks the
+    // book's seeded primary the moment real communication files.
+    const rel = relationshipFor(allNotes, accountId ? contactsFor(accountId) : [], {
+      name: peo?.contactName,
+      email: peo?.contactEmail,
+    });
 
     let briefed = false;
     for (const node of DASH_NODES) {
@@ -180,6 +207,13 @@ export default async function RoomPage() {
           briefed = true;
       });
     }
+    // The notifier's own hand outranks the derived read (decreed 2026-08-19):
+    // the operator can set "opp created" or done directly from the row.
+    const briefedManual: "opp" | "done" | null = doneKeys.has(`briefed:${accountId}:opp`)
+      ? "opp"
+      : doneKeys.has(`briefed:${accountId}:done`)
+        ? "done"
+        : null;
 
     const step = cardNextStep(card, data.labels, now.getTime());
     const stageNode = step ? DASH_NODES.find((n) => n.key === step.nodeKey) : null;
@@ -202,6 +236,19 @@ export default async function RoomPage() {
       });
 
     const touch = accountId ? touchMap.get(`outreach:${accountId}`) : undefined;
+    // The touch clock reads the LATEST of the outreach log and the record's
+    // own outbound entries — a filed email is as real a touch as a logged
+    // send, so the room never demands an answer the record proves was given.
+    const touchRead = lastTouchRead(
+      allNotes,
+      touch
+        ? {
+            contactedAt: touch.contactedAt,
+            awaitingReply: touch.status === "awaiting",
+            who: firstName(rel.name) || "them",
+          }
+        : null,
+    );
     const read: RoomRead = readDeal({
       accountName: card.name,
       step: step
@@ -215,19 +262,28 @@ export default async function RoomPage() {
       timing: intel.timing
         ? { phrase: intel.timing.value.phrase, dateIso: intel.timing.value.dateIso ?? "" }
         : null,
-      lastTouch: touch
+      lastTouch: touchRead
         ? {
-            at: touch.contactedAt,
-            awaitingReply: touch.status === "awaiting",
-            who: firstName(peo?.contactName ?? "") || "them",
+            at: touchRead.at,
+            awaitingReply: touchRead.awaitingReply,
+            who: firstName(touchRead.who) || firstName(rel.name) || "them",
           }
         : null,
       lastInbound: intel.lastInbound
         ? {
             at: intel.lastInbound,
-            who: firstName(peo?.contactName ?? "") || "they",
+            // The person who actually wrote — the doc's own sender; the
+            // relationship rollup only stands in when the doc is anonymous.
+            who: firstName(intel.lastInboundWho) || firstName(rel.name) || "they",
+            promise: intel.lastInboundPromise,
           }
         : null,
+      // The newest meeting record — a meeting newer than any outbound makes
+      // the recap the move, never a "wait" (Staff Leasing 1:00 PM, 8/18).
+      lastMeeting: (() => {
+        const m = allNotes.find((n) => isMeetingNote(n));
+        return m ? { at: m.createdAt, who: firstName(rel.name) || "them" } : null;
+      })(),
       lastRecordAt: allNotes[0]?.createdAt ?? "",
       allGatesDone,
       now,
@@ -271,7 +327,9 @@ export default async function RoomPage() {
     const lossPrefix = `loss-dismiss:${card.id}:`;
     for (const key of dispositions.keys())
       if (key.startsWith(lossPrefix)) lossDismissed.add(key.slice(lossPrefix.length));
-    const loss = readLoss(mine, lossDismissed, now);
+    // BOTH lanes: a loss stated in case traffic is still a loss (Ted
+    // doctrine — the fate reads must see everything the corpus sees).
+    const loss = readLoss(allNotes, lossDismissed, now);
 
     // Owed-to-you: the record's action items with the operator's name on them,
     // minus anything dismissed or already open on the register.
@@ -280,7 +338,7 @@ export default async function RoomPage() {
     );
     const owed = accountId
       ? owedToMe(
-          mine,
+          allNotes,
           owedDismissed,
           sheet.open.map((o) => o.body),
           now,
@@ -293,7 +351,15 @@ export default async function RoomPage() {
     // When the research pass last ran — the refresh control states it, because a
     // button that doesn't say when it last ran invites re-running it blindly.
     const researchRows = accountId ? (notesById.get(researchNs(accountId)) ?? []) : [];
-    const researchAt = researchRows[0]?.createdAt ?? "";
+    // The chip reads the LATEST of both research stores: the on-demand deep
+    // pass (research: notes) and the book-wide sweep. "Never" only when
+    // neither store has touched this account — the stamp must not claim
+    // "never run" over a researched book record (founder-caught 2026-08-13).
+    const bookResearchAt =
+      accountId && getDemand(accountId)?.researched && researchGeneratedAt
+        ? `${researchGeneratedAt}T12:00:00Z`
+        : "";
+    const researchAt = researchRows[0]?.createdAt || bookResearchAt;
 
     const gapDismissed = new Set(
       [...dispositions.keys()].filter((k) => k.startsWith(GAP_DISMISS)),
@@ -333,8 +399,35 @@ export default async function RoomPage() {
       labels: data.labels,
     });
 
+    const theirs = (() => {
+      const sr = accountId ? secondById.get(accountId) : undefined;
+      const live = (sr?.gems ?? []).filter((g) => !g.actedDay).slice(0, 3);
+      if (live.length === 0) return null;
+      const g = live[0];
+      const first = (g.who[0] ?? "").split(" ")[0].toUpperCase();
+      const day = g.whenDay ? g.whenDay.slice(5).replace("-", "/") : "";
+      const label = [
+        first ? `${first}’S ${g.term}` : g.term,
+        day,
+        live.length > 1 ? `+${live.length - 1}` : "",
+      ]
+        .filter(Boolean)
+        .join(" · ");
+      return {
+        label,
+        gems: live.map((x) => ({
+          term: x.term,
+          act: x.act,
+          reason: x.reason,
+          whenDay: x.whenDay,
+          cites: x.cites,
+        })),
+      };
+    })();
+
     rows.push({
       accountId,
+      theirs,
       cardId: card.id,
       name: card.name,
       meta,
@@ -355,6 +448,8 @@ export default async function RoomPage() {
           .join(" · "),
       })),
       briefed,
+      briefedManual,
+      sfUrl: accountId ? sfAccountUrl(accountId) : null,
       climb: {
         frac: meter.frac,
         capTone: outcome
@@ -450,28 +545,7 @@ export default async function RoomPage() {
   );
   // The freshest filed line per account rides into every bullet with its
   // date — hand-written bullets age; the record doesn't.
-  const latestByAccount = new Map<string, { line: string; date: string }>();
-  for (const [acctId, ns] of notesById) {
-    const newest = ns.find(
-      (n) => n.lane === "mine" && !dispositions.has(`hide:note:${n.id}`),
-    );
-    if (!newest) continue;
-    const line = newest.body
-      .split("\n")[0]
-      .replace(/^[✉✓☰✎⚡▢✔☎]\s?/, "")
-      .trim()
-      .slice(0, 110);
-    if (!line) continue;
-    const d = new Date(Date.parse(newest.createdAt));
-    latestByAccount.set(acctId, {
-      line,
-      date: d.toLocaleDateString("en-US", {
-        timeZone: "America/Chicago",
-        month: "numeric",
-        day: "numeric",
-      }),
-    });
-  }
+  const latestByAccount = latestLineByAccount(notesById, dispositions);
   const cadence: CadenceRow[] = kickoff.map((k) => {
     const key = partnerOutreachKey(k.partner);
     const touch = touchMap.get(key);

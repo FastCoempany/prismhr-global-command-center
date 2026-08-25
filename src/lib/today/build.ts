@@ -686,6 +686,36 @@ export function roundupBullet(a: AccountIntel, variant = 0): string {
 // honest: the hand-written text was authored ONCE and the deal keeps moving —
 // a partner must never receive a claim the operator's own record contradicts,
 // so the freshest filed line rides along with its date.
+// The freshest filed line per account, dated — the record's own correction
+// rider for the hand-written bullets (Ted doctrine: the bullet was authored
+// once; the record keeps moving). Every roundup composer must pass this.
+export function latestLineByAccount(
+  notesById: Map<string, { id: string; lane: string; body: string; createdAt: string }[]>,
+  hidden: { has(key: string): boolean },
+): Map<string, { line: string; date: string }> {
+  const out = new Map<string, { line: string; date: string }>();
+  for (const [acctId, ns] of notesById) {
+    const newest = ns.find((n) => n.lane === "mine" && !hidden.has(`hide:note:${n.id}`));
+    if (!newest) continue;
+    const line = newest.body
+      .split("\n")[0]
+      .replace(/^[✉✓☰✎⚡▢✔☎]\s?/, "")
+      .trim()
+      .slice(0, 110);
+    if (!line) continue;
+    const d = new Date(Date.parse(newest.createdAt));
+    out.set(acctId, {
+      line,
+      date: d.toLocaleDateString("en-US", {
+        timeZone: "America/Chicago",
+        month: "numeric",
+        day: "numeric",
+      }),
+    });
+  }
+  return out;
+}
+
 export function roundupBullets(
   accounts: AccountIntel[],
   latestByAccount?: ReadonlyMap<string, { line: string; date: string }>,

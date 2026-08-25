@@ -17,6 +17,9 @@ import { redirect } from "next/navigation";
 import { getAppAccess } from "@/lib/auth";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import { contactsFor, type BookContact } from "@/lib/book/contacts";
+import { getPeo } from "@/lib/book";
+import { discoveredContacts, domainOfAccount } from "@/lib/book/live-contacts";
+import { peopleFor } from "@/lib/intel/people";
 
 function str(fd: FormData, key: string, max = 4000) {
   const v = fd.get(key);
@@ -115,8 +118,108 @@ export async function toggleSfChecked(formData: FormData) {
 // The account's full contact roster (from the 7/24 SF contact reports) —
 // fetched on demand when a Contacts panel opens, so the 1.5MB roster never
 // rides in the page payload.
-export async function getContacts(accountId: string): Promise<BookContact[]> {
+export type ContactRow = BookContact & { fromRecord?: boolean; firstSeen?: string };
+
+const EMPTY_CONTACT: Omit<BookContact, "first" | "last" | "email"> = {
+  id: "",
+  title: "",
+  street: "",
+  city: "",
+  state: "",
+  zip: "",
+  country: "",
+  phone: "",
+  mobile: "",
+  owner: "",
+};
+
+// The roster PLUS everything else the app knows (founder-decreed 2026-08-20,
+// widened same day for Back Office Risk, whose SF export held no one): the
+// book's seeded primary stands in when the export lacks them, addresses on
+// the account's domain join from filed captures, and name-only people from
+// the record's own traffic join without an email. Derived fresh on every
+// read — never stored (Ted doctrine).
+export async function getContacts(accountId: string): Promise<ContactRow[]> {
   const access = await getAppAccess();
   if (access.status !== "active") return [];
-  return contactsFor((accountId ?? "").slice(0, 40));
+  const id = (accountId ?? "").slice(0, 40);
+  const roster: ContactRow[] = [...contactsFor(id)];
+  const peo = getPeo(id);
+  if (!peo) return roster;
+
+  // The seed stands in until the record speaks: the book's primary contact
+  // joins when the export never carried them.
+  const have = new Set(roster.map((c) => c.email.toLowerCase()).filter(Boolean));
+  const haveNames = new Set(
+    roster.map((c) => `${c.first} ${c.last}`.trim().toLowerCase()).filter(Boolean),
+  );
+  const primaryName = (peo.contactName ?? "").trim();
+  const primaryEmail = (peo.contactEmail ?? "").trim().toLowerCase();
+  if (
+    primaryName &&
+    (!primaryEmail || !have.has(primaryEmail)) &&
+    !haveNames.has(primaryName.toLowerCase())
+  ) {
+    const parts = primaryName.split(/\s+/);
+    roster.unshift({
+      ...EMPTY_CONTACT,
+      first: parts[0] ?? "",
+      last: parts.slice(1).join(" "),
+      email: peo.contactEmail ?? "",
+    });
+    if (primaryEmail) have.add(primaryEmail);
+    haveNames.add(primaryName.toLowerCase());
+  }
+
+  if (!hasDatabaseEnv()) return roster;
+  try {
+    const notes = await getPrisma().accountNote.findMany({
+      where: { accountId: id },
+      select: { body: true, createdAt: true, actors: true, lane: true },
+      orderBy: { createdAt: "desc" },
+      take: 400,
+    });
+    const found = discoveredContacts(
+      notes.map((n) => ({ body: n.body, createdAt: n.createdAt.toISOString() })),
+      domainOfAccount(peo.website ?? "", peo.contactEmail ?? ""),
+      have,
+    );
+    for (const f of found) haveNames.add(`${f.first} ${f.last}`.trim().toLowerCase());
+
+    // Name-only people from the record's traffic — a VTT voice, an actors
+    // line, a filed thread — join without an email; the draft door stays
+    // shut until an address arrives.
+    const traffic = peopleFor(
+      notes.map((n) => ({
+        actors: n.actors ?? "",
+        lane: n.lane === "mine" ? ("mine" as const) : ("background" as const),
+        body: n.body,
+        createdAt: n.createdAt.toISOString(),
+      })),
+      roster,
+      24,
+    );
+    const named: ContactRow[] = [];
+    for (const p of traffic) {
+      const key = p.name.trim().toLowerCase();
+      if (!key || haveNames.has(key)) continue;
+      if (p.email && have.has(p.email.toLowerCase())) continue;
+      // Two words minimum — "IT Help" style artifacts and single tokens stay out.
+      if (p.name.trim().split(/\s+/).length < 2) continue;
+      const parts = p.name.trim().split(/\s+/);
+      named.push({
+        ...EMPTY_CONTACT,
+        first: parts[0],
+        last: parts.slice(1).join(" "),
+        title: p.title,
+        email: p.email,
+        fromRecord: true,
+        firstSeen: p.lastSeen,
+      });
+      haveNames.add(key);
+    }
+    return [...found, ...named, ...roster];
+  } catch {
+    return roster;
+  }
 }

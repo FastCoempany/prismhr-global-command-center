@@ -34,9 +34,10 @@
 .gate {
   padding: 40px;
 }
+/* Full width (founder-decreed 2026-08-19): the rows run the same span the
+   Chute does — the room's own padding is the only frame. */
 .wrap {
-  max-width: 1120px;
-  margin: 0 auto;
+  width: 100%;
 }
 
 /* ── header: mark left, forest add center, clock right ──────────────── */
@@ -61,6 +62,9 @@
 }
 .clock {
   justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
   font-family: var(--f-mono), Menlo, monospace;
   font-size: 10.5px;
   font-weight: 700;
@@ -233,11 +237,105 @@
   color: var(--forest);
   border-color: var(--forest);
 }
-.briefed {
+/* The name's left column: the partner notifier stacked over the SF door,
+   capped to the name's own height (founder-decreed 2026-08-19). */
+.nmSide {
   position: absolute;
   left: 0;
   top: -1px;
-  cursor: help;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  max-height: 24px;
+}
+.briefed {
+  border: 0;
+  background: none;
+  padding: 0;
+  line-height: 0;
+  cursor: pointer;
+}
+.bfWrap {
+  position: relative;
+  line-height: 0;
+}
+.bfPop {
+  position: absolute;
+  left: 18px;
+  top: -4px;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 8px 10px;
+  box-shadow: 0 4px 14px rgba(10, 28, 64, 0.12);
+  min-width: 118px;
+}
+.bfOpt {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font:
+    600 11px/1.4 var(--f-sans),
+    sans-serif;
+  color: var(--ink);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.bfOpt input {
+  accent-color: #1e5b46;
+  margin: 0;
+}
+.bfClear {
+  border: 0;
+  background: none;
+  padding: 0;
+  text-align: left;
+  font:
+    600 9.5px/1.4 var(--f-mono),
+    Menlo,
+    monospace;
+  letter-spacing: 0.08em;
+  color: var(--faint);
+  cursor: pointer;
+}
+.bfClear:hover {
+  color: var(--ink);
+}
+.sfMini {
+  font:
+    700 8px/1 var(--f-mono),
+    Menlo,
+    monospace;
+  letter-spacing: 0.08em;
+  color: var(--faint);
+  text-decoration: none;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 1px 2px;
+}
+.sfMini:hover {
+  color: var(--blue, #2563eb);
+  border-color: var(--blue, #2563eb);
+}
+.gateTag {
+  display: inline-block;
+  margin-left: 8px;
+  font:
+    700 8.5px/1.4 var(--f-mono),
+    Menlo,
+    monospace;
+  letter-spacing: 0.1em;
+  color: var(--faint);
+  border: 1px dashed var(--line);
+  border-radius: 999px;
+  padding: 1px 7px;
+  vertical-align: 1px;
+  white-space: nowrap;
 }
 .meta {
   display: block;
@@ -338,17 +436,17 @@
       ABOVE the dots so they are never covered ─────────────────────────── */
 .climb {
   position: relative;
-  margin: 18px 0 0;
+  margin: 9px 0 0;
 }
-/* The bar's own 16px zone — the label below flows clear of the fill. */
+/* The hairline (decreed 2026-08-18): a 5px zone, the label clear below. */
 .meterZone {
   position: relative;
-  height: 16px;
+  height: 5px;
 }
 .track {
   position: absolute;
   inset: 0;
-  border-radius: 5px;
+  border-radius: 3px;
   overflow: hidden;
   background: repeating-linear-gradient(
     -60deg,
@@ -359,14 +457,14 @@
 .gain {
   position: absolute;
   inset: 0 auto 0 0;
-  border-radius: 5px 0 0 5px;
+  border-radius: 3px 0 0 3px;
   background: linear-gradient(90deg, var(--forest), var(--forest2));
 }
 .cap {
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 7px;
+  width: 4px;
   z-index: 2;
 }
 .capRisk {
@@ -382,10 +480,10 @@
   position: absolute;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: 7px;
-  height: 7px;
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
-  border: 1.4px solid rgba(10, 28, 64, 0.28);
+  border: 1.2px solid rgba(10, 28, 64, 0.28);
   background: rgba(255, 255, 255, 0.85);
   padding: 0;
   cursor: pointer;
@@ -399,10 +497,10 @@
   border-color: rgba(255, 255, 255, 0.8);
 }
 .nodeCur {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   background: #fff;
-  border: 2.4px solid var(--ink);
+  border: 2px solid var(--ink);
 }
 /* the stage words live BELOW the bar — never on it, never under a dot */
 /* The meter's why bubble — same glass as the MULTI hovercard. */
@@ -1798,6 +1896,35 @@ button.sdRadio:hover {
   color: var(--soft);
   font-weight: 600;
 }
+.chuteMeter {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-top: 8px;
+}
+.chuteMeterLine {
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--quiet);
+}
+.chuteFold {
+  border: 0;
+  background: none;
+  padding: 2px 0;
+  cursor: pointer;
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.chuteFold:hover {
+  color: var(--ink);
+}
 .chuteList {
   list-style: none;
   margin: 8px 0 0;
@@ -1889,6 +2016,357 @@ button.sdRadio:hover {
   text-transform: uppercase;
   color: var(--color-ink-disabled);
   margin-top: 4px;
+}
+
+/* ── The Spring (triptych winner, 2026-08-13): registers rest as summary
+   lines; ⊕ springs one out in place; ⊖ or a sibling ⊕ folds it back. ── */
+.sumline {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--hair);
+  min-width: 0;
+}
+.sumOpen {
+  border-bottom: 0;
+  padding-top: 0;
+}
+.sumk {
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: var(--faint);
+  white-space: nowrap;
+}
+.sumkOn {
+  color: var(--ink);
+}
+.sumn {
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 9.5px;
+  color: var(--soft);
+  white-space: nowrap;
+}
+.sumtx {
+  font-size: 12.5px;
+  color: var(--soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+.splayBtn {
+  margin-left: auto;
+  border: 0;
+  background: none;
+  padding: 0 2px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--faint);
+  flex: none;
+}
+.splayBtn:hover {
+  color: var(--ink);
+}
+.sumline .splayBtn {
+  margin-left: 0;
+}
+.splayed {
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid var(--hair);
+  border-radius: 7px;
+  padding: 8px 11px;
+  margin: 4px 0 6px;
+  animation: springout 0.16s ease;
+}
+@keyframes springout {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.sic {
+  border: 0;
+  background: none;
+  padding: 0 2px;
+  cursor: pointer;
+  font-size: 11px;
+  color: var(--faint);
+  text-decoration: none;
+  flex: none;
+}
+.sic:hover {
+  color: var(--ink);
+}
+.askX {
+  border: 0;
+  background: none;
+  padding: 0 2px;
+  cursor: pointer;
+  font-size: 10px;
+  color: var(--quiet);
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.askRow:hover .askX {
+  opacity: 1;
+}
+.askX:hover {
+  color: var(--red);
+}
+.askGo {
+  font-size: 11px;
+  color: var(--faint);
+  text-decoration: none;
+  flex: none;
+}
+.askGo:hover {
+  color: var(--ink);
+}
+.rsrchChip {
+  border: 0;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--blue);
+  margin-top: 2px;
+  text-align: left;
+}
+.rsrchChip:hover {
+  text-decoration: underline;
+}
+.footLegend {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-top: 26px;
+  padding-top: 14px;
+  border-top: 1px solid var(--hair);
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: var(--faint);
+}
+
+/* ── the closed ledger ─────────────────────────────────────────────────
+   Closed deals stay on the board (the record keeps everything) but they
+   read as ledger, not work: the whole row recedes to quiet ink and wakes
+   under the hand; the stamp rides the name; one mono rule splits the
+   working book from the closed ledger. */
+.rowClosed {
+  opacity: 0.52;
+  transition: opacity 0.25s ease;
+}
+.rowClosed:hover,
+.rowClosed:focus-within {
+  opacity: 1;
+}
+.stampWon,
+.stampLost {
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  border-radius: 4px;
+  padding: 2px 7px;
+  margin-left: 10px;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+.stampWon {
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.45);
+}
+.stampLost {
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.45);
+}
+.closedRule {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 34px 0 10px;
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--faint);
+}
+.closedRule::before,
+.closedRule::after {
+  content: "";
+  flex: 1;
+  border-top: 1px solid rgba(10, 28, 64, 0.14);
+}
+
+/* ── the Hairline patch (decreed 2026-08-18) ─────────────────────────── */
+/* The meta rides the title line now — same mono voice, inline. */
+.metaIn {
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--faint);
+}
+/* The board gate, said once — a quiet dashed chip after the move. */
+.gate {
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--soft);
+  border: 1px dashed var(--quiet);
+  border-radius: 5px;
+  padding: 1px 8px;
+  margin-left: 9px;
+  vertical-align: 3px;
+  white-space: nowrap;
+}
+.gateDone {
+  color: var(--quiet);
+  text-decoration: line-through;
+}
+/* Four doors, each its own thing: the bolt orange, the note forest, the
+   action ink, the file blue — glyph and accent both distinct. */
+.door {
+  border: 1px solid var(--hair);
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--soft);
+  width: 27px;
+  height: 27px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.12s ease;
+  padding: 0;
+}
+.door:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.doorZap {
+  color: var(--orange);
+  border-color: rgba(230, 112, 30, 0.35);
+}
+.doorZap:hover {
+  background: rgba(230, 112, 30, 0.1);
+}
+.doorNote:hover {
+  color: var(--forest);
+  border-color: var(--forest);
+}
+.doorAct:hover {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+.doorFile:hover {
+  color: var(--blue);
+  border-color: var(--blue);
+}
+.doorOn {
+  background: var(--ink);
+  color: #fff !important;
+  border-color: var(--ink);
+}
+.doorOn.doorZap {
+  background: var(--orange);
+  border-color: var(--orange);
+}
+
+/* ── The THEIRS line (decreed 2026-08-20) — the second record's one seat in
+     the row, in the warm ochre the court once spoke. ── */
+.theirs {
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #8a5a00;
+  padding-bottom: 7px;
+  border-bottom: 1px solid rgba(10, 28, 64, 0.12);
+  margin-bottom: 4px;
+}
+.theirs button {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  border-bottom: 1px dashed rgba(138, 90, 0, 0.45);
+}
+.theirsFold {
+  margin: 4px 0 6px;
+}
+.theirsGem {
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid var(--hair);
+  border-left: 3px solid var(--orange);
+  border-radius: 7px;
+  padding: 9px 12px;
+}
+.theirsGem + .theirsGem {
+  margin-top: 8px;
+}
+.theirsTerm {
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--orange);
+}
+.theirsAct {
+  font-size: 14px;
+  font-weight: 700;
+  margin: 4px 0 1px;
+}
+.theirsWhy {
+  font-size: 12px;
+  color: var(--soft);
+  margin-bottom: 4px;
+}
+.theirsCite {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 10px;
+  line-height: 1.9;
+  color: var(--soft);
+  padding: 0;
+}
+.theirsCite:hover {
+  color: var(--ink);
+}
+.theirsCite b {
+  color: var(--blue, #2563eb);
+  font-weight: 500;
+}
+.theirsExcerpt {
+  margin: 3px 0 7px 10px;
+  padding: 7px 10px;
+  border-left: 2px solid rgba(10, 28, 64, 0.12);
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 0 6px 6px 0;
+  font-size: 12px;
+  color: var(--ink);
 }
 
 /* ── the fold ──────────────────────────────────────────────────────────────

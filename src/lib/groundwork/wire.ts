@@ -6,6 +6,7 @@
 // and the operator runs the sweep behind one click.
 
 import Anthropic from "@anthropic-ai/sdk";
+import { claudeClient, claudeAvailable } from "@/lib/claude/health";
 import { peos } from "@/lib/book";
 import { redactMoney } from "@/lib/intel/lexicon";
 import {
@@ -83,7 +84,7 @@ export function matchAccounts(text: string): string[] {
 }
 
 export function wireAvailable(): boolean {
-  return Boolean(process.env.ANTHROPIC_API_KEY);
+  return claudeAvailable();
 }
 
 export function newestWireIso(items: WireItem[]): string | null {
@@ -124,7 +125,10 @@ found at a real URL; 4 to 8 items; skip anything that merely mentions a word
 without mattering.`;
 
 export async function runWireSweep(now: Date): Promise<WireItem[]> {
-  const client = new Anthropic({ timeout: 120_000, maxRetries: 0 });
+  // The sweep needs the room the platform gives it: six searches plus the
+  // synthesis ran ~121s and the old 120s client timeout killed it one second
+  // short, every time, silently (caught 2026-08-20). The function cap is 300s.
+  const client = claudeClient({ timeout: 240_000, maxRetries: 0 });
   const disambig = Object.entries(DISAMBIGUATION)
     .map(([k, v]) => `${k} = ${v}`)
     .join("; ");

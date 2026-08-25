@@ -1,0 +1,167 @@
+/* The Sendbook — the outreach register. Antaeus: bright field, navy ink at
+   the ladder, serif masthead, mono kickers; green only for the record's own
+   replies, amber never (nothing here is due — Groundwork owes the due). */
+
+.wrap {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 28px 20px 80px;
+  color: #0a1c40;
+}
+
+.masthead {
+  margin-bottom: 6px;
+  font-family: var(--font-donor-serif), Georgia, serif;
+  font-size: 30px;
+  line-height: 1.15;
+}
+.sub {
+  color: rgba(10, 28, 64, 0.66);
+  margin-bottom: 22px;
+  max-width: 64ch;
+}
+.sub a {
+  color: #2563eb;
+}
+
+.weekhead {
+  display: flex;
+  gap: 22px;
+  align-items: baseline;
+  flex-wrap: wrap;
+  padding: 10px 0 12px;
+  border-bottom: 2px solid #0a1c40;
+  margin-bottom: 6px;
+}
+.whBig {
+  font-family: var(--font-donor-serif), Georgia, serif;
+  font-size: 22px;
+}
+.whMix {
+  font-family: var(--font-donor-mono), ui-monospace, Menlo, monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  color: rgba(10, 28, 64, 0.42);
+}
+
+.filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 14px 0 4px;
+}
+.fChip,
+.fChipOn {
+  font-family: var(--font-donor-mono), ui-monospace, Menlo, monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  border-radius: 999px;
+  padding: 4px 12px;
+  text-decoration: none;
+}
+.fChip {
+  color: rgba(10, 28, 64, 0.42);
+  border: 1px solid rgba(10, 28, 64, 0.22);
+}
+.fChip:hover {
+  color: #0a1c40;
+}
+.fChipOn {
+  color: #fff;
+  background: #0a1c40;
+  border: 1px solid #0a1c40;
+}
+
+.day {
+  font-family: var(--font-donor-mono), ui-monospace, Menlo, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: rgba(10, 28, 64, 0.42);
+  margin: 24px 0 6px;
+}
+
+.line {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(10, 28, 64, 0.1);
+  flex-wrap: wrap;
+}
+.ch {
+  font-family: var(--font-donor-mono), ui-monospace, Menlo, monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  color: rgba(10, 28, 64, 0.66);
+  min-width: 86px;
+}
+.acct {
+  font-weight: 600;
+  min-width: 150px;
+}
+.acct a {
+  color: #0a1c40;
+  text-decoration: none;
+}
+.acct a:hover {
+  text-decoration: underline;
+}
+.step {
+  font-family: var(--font-donor-mono), ui-monospace, Menlo, monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: rgba(10, 28, 64, 0.42);
+  min-width: 52px;
+}
+.clause {
+  color: rgba(10, 28, 64, 0.66);
+  font-size: 13.5px;
+  flex: 1;
+  min-width: 180px;
+}
+.cold {
+  font-family: var(--font-donor-mono), ui-monospace, Menlo, monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  color: rgba(10, 28, 64, 0.42);
+  border: 1px dashed rgba(10, 28, 64, 0.22);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+.replied {
+  font-family: var(--font-donor-mono), ui-monospace, Menlo, monospace;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: #22c55e;
+  font-weight: 600;
+}
+
+.empty {
+  color: rgba(10, 28, 64, 0.42);
+  padding: 32px 0;
+  max-width: 60ch;
+}
+
+.legend {
+  margin-top: 36px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(10, 28, 64, 0.1);
+  font-size: 12px;
+  color: rgba(10, 28, 64, 0.42);
+  max-width: 70ch;
+}
+
+/* The live-cadence marker (5.1, shipped 2026-08-20) — quiet mono, click-deep
+   by title; informs, never blocks. */
+.mktgLive {
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #b6791a;
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  border-radius: 4px;
+  padding: 1px 6px;
+  white-space: nowrap;
+}

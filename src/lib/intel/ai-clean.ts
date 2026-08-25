@@ -6,7 +6,7 @@
 // path. When ANTHROPIC_API_KEY is absent the app falls back to the
 // rule-based parser and nothing here runs.
 
-import Anthropic from "@anthropic-ai/sdk";
+import { claudeClient, claudeAvailable } from "@/lib/claude/health";
 import { redactMoney } from "@/lib/intel/lexicon";
 import { normPerson } from "@/lib/intel/provenance";
 import type { TimelineEntry } from "@/lib/sf-timeline";
@@ -31,7 +31,7 @@ export type AiCleanResult = {
 };
 
 export function aiCleanAvailable(): boolean {
-  return Boolean(process.env.ANTHROPIC_API_KEY);
+  return claudeAvailable();
 }
 
 const MAX_ENTRIES = 40;
@@ -142,11 +142,11 @@ Rules:
 - Dates: dayIso is YYYY-MM-DD resolved against today's date given in the message ("Today"/"Yesterday"/"Jul 30, 2025" all resolve). dayLabel is a short human label ("Jul 30" or "Today"). timeLabel like "5:27 PM", or "" if none. Unknown dates: dayIso "".
 - kind: "email" for emails, "call" for logged calls, "task" for tasks/meetings/upcoming items.
 - ATTRIBUTION IS SACRED. Threads quote earlier messages: attribute every statement to the author of the message where it FIRST appears — the latest sender did NOT say the quoted words below their reply. First-person statements ("I worked at…", "we required…") belong to the author of the message containing them. The operator is Antaeus Coe; he writes from his own mailbox, and he previously worked at Remote.com — so a line like "at Remote we required a deposit" inside HIS message is his own market knowledge, not a competitor speaking, and not a colleague's claim.
-- actions: EXPLICIT commitments only — a "TO DO:" line, "I'll send…", a dated promise. owner "me" when the operator owes it, "them" when someone else does. due as YYYY-MM-DD only when actually stated. fallback carries an if/then riding the commitment ("if not, send the ESC demo — scrub proprietary"). NEVER invent an action from a musing ("we should probably…", "it might be worth…") — those are not commitments.
+- actions: EXPLICIT commitments only — a "TO DO:" line, "I'll send…", a dated promise. owner "me" when the operator owes it, "them" when someone else does. due as YYYY-MM-DD only when actually stated. fallback carries an if/then riding the commitment ("if not, send the ESC demo — scrub proprietary"). NEVER invent an action from a musing ("we should probably…", "it might be worth…") — those are not commitments. THE FULFILLMENT RULE: before opening any commitment, read the REST of this document — a thread is a story in time, and a promise the same document later shows KEPT ("we'll get pricing together Monday" … three days later "Please see pricing attached") is history, never an open action. Only commitments the document leaves hanging become actions.
 - gaps: up to ${MAX_GAPS} questions the record still cannot answer that would MOST advance this specific deal — grounded in its countries, products, and stage ("Do the India workers need benefits parity?" beats "what is the timeline"). Never generic discovery boilerplate.
 - competitorIntel: market or competitor facts useful BEYOND this account — pricing models, deposit norms, competitor requirements, industry standards — each with WHO said it (attribution rule applies).
 - lessons: process lessons a future deal should remember (what slowed, killed, or won this one). Empty unless the paste actually teaches one.
-- outcome: "lost" only when the paste STATES the deal is lost (client chose another vendor, walked away); "won" only when signed/closed is stated; phrase = the exact evidence sentence, ≤120 chars. Otherwise "none" with "".
+- outcome: "lost" when the paste STATES the deal is lost — the client's words (chose another vendor, walked away) OR the operator's own verdict ("close lost it", "mark it lost", "this one is dead, X's team owns it"); "won" only when signed/closed is stated; phrase = the exact evidence sentence, ≤120 chars. Otherwise "none" with "".
 - accountName: the prospect/client company this paste is ABOUT (not the operator's own company, not a competitor) — "" when unclear.
 - signals: 0-${MAX_SIGNALS} short flags a salesperson would want surfaced — a newly mentioned country or expansion, an implied or explicit deadline, hesitation or stalling tone, who actually holds the decision, a competitor or incumbent system named, escalation or frustration, an owed follow-up with its owner. Plain short sentences. Empty array if nothing notable.
 - Order entries newest first. At most ${MAX_ENTRIES} entries.`;
@@ -341,9 +341,16 @@ export function modelFor(raw: string): string {
 // and a truncated generation is surfaced as a REAL error instead of the
 // invalid-JSON parse failure it used to masquerade as.
 export async function aiCleanTimeline(raw: string, now: Date): Promise<AiCleanResult> {
-  const client = new Anthropic({ timeout: 55_000, maxRetries: 1 });
+  const client = claudeClient({ timeout: 55_000, maxRetries: 1 });
   const todayIso = now.toLocaleDateString("en-CA", { timeZone: "America/Chicago" });
   const model = modelFor(raw);
+  // A full call transcript is the richest capture the app ever reads, and the
+  // costliest to under-read: a live demo routinely leaves several promises on
+  // the table, and each one the read misses is a deliverable missed in the
+  // real world. Say so, explicitly, when the paste is a transcript.
+  const ctHunt = /^CALL TRANSCRIPT\b/.test(raw.trimStart())
+    ? `\n\nThis is a complete call transcript. Hunt every commitment made on the call: "I'll send", "we'll get you", "let me pull together", "I'll check with", a recap or follow-up owed, a question someone promises to answer later. Each is an action with its owner. A demo or discovery call routinely leaves three to six commitments; finding only one usually means some were missed — sweep the closing minutes especially, where owed items concentrate. Mine the whole call for gaps, competitor intel, and lessons too.`
+    : "";
   const request = (maxTokens: number) =>
     client.messages.create({
       model,
@@ -352,7 +359,7 @@ export async function aiCleanTimeline(raw: string, now: Date): Promise<AiCleanRe
       messages: [
         {
           role: "user",
-          content: `Today's date is ${todayIso} (America/Chicago).\n\nRaw paste:\n\n${raw}`,
+          content: `Today's date is ${todayIso} (America/Chicago).${ctHunt}\n\nRaw paste:\n\n${raw}`,
         },
       ],
       output_config: { format: { type: "json_schema", schema: SCHEMA } },

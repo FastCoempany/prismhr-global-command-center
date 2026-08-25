@@ -27,9 +27,9 @@ import {
   intranetContents,
   intranetLedgerDay,
   intranetPassage,
-  intranetPulse,
 } from "./actions";
-import { readCapture, runBrain } from "./runners";
+import type { RunReport } from "./runners";
+import { cleanAskText } from "@/lib/ask/clean";
 import type {
   AskReply,
   PassageReply,
@@ -71,6 +71,7 @@ const DOTS = ["#2563EB", "#E6701E", "#22C55E", "#F59E0B", "#0A1C40"];
 export function IntranetClient({
   rail,
   initialQ,
+  grabArrived = false,
   empty,
   staleness,
   queue,
@@ -83,6 +84,7 @@ export function IntranetClient({
 }: {
   rail: RailTopic[];
   initialQ: string;
+  grabArrived?: boolean;
   empty: boolean;
   staleness: string;
   queue: { pending: number; unindexed: number };
@@ -104,6 +106,9 @@ export function IntranetClient({
   const [passage, setPassage] = useState<PassageReply | null>(null);
   const [paste, setPaste] = useState("");
   const [receipt, setReceipt] = useState("");
+  // The grab's receipt (caught 2026-08-20): the bookmarklet copies the rows
+  // and opens this page — landing cold said nothing about what just happened.
+  const [grabOpen, setGrabOpen] = useState(grabArrived);
   const [busy, startAsk] = useTransition();
   const [capBusy, startCap] = useTransition();
   const [runBusy, startRun] = useTransition();
@@ -171,9 +176,18 @@ export function IntranetClient({
   useEffect(() => {
     if (!canWrite) return;
     let alive = true;
+    // A plain GET, never a server action: an action response re-applies the
+    // current route and cancels in-flight navigations — on a 2-second drum
+    // that made the top tabs feel dead (caught 2026-08-19).
     const read = async () => {
-      const p = await intranetPulse();
-      if (alive && p) setPulseS(p);
+      try {
+        const res = await fetch("/intranet/pulse", { cache: "no-store" });
+        if (!res.ok) return;
+        const p = (await res.json()) as PulseReply | null;
+        if (alive && p) setPulseS(p);
+      } catch {
+        // a missed beat costs one gadget tick, never the page
+      }
     };
     void read();
     if (!gadgetLive)
@@ -266,7 +280,16 @@ export function IntranetClient({
         },
         ...l,
       ]);
-      const g = await readCapture(r.captureId);
+      // A plain POST, never a server action — a long read must not lock the
+      // tabs (caught 2026-08-22).
+      const g: RunReport = await fetch("/intranet/read", {
+        method: "POST",
+        cache: "no-store",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ captureId: r.captureId }),
+      })
+        .then((res) => res.json() as Promise<RunReport>)
+        .catch(() => ({ ok: false, lines: [], reason: "The reading didn't come back." }));
       // the progress line is transient — replaced by the result (IV.8)
       setLive((l) =>
         l.map((e) =>
@@ -291,7 +314,11 @@ export function IntranetClient({
 
   // The catch-up loop. Passes run back-to-back until the backlog is gone or
   // the operator stops it. The gadget narrates from the server's pulse — this
-  // loop only drives the passes and keeps the rail fresh.
+  // loop only drives the passes and keeps the rail fresh. It drives through
+  // a plain POST route, never a server action: Next blocks navigation while
+  // an action is in flight, and with the key alive a long catch-up locked
+  // the operator inside this room (caught 2026-08-22, same lesson as the
+  // pulse on 2026-08-19).
   const catchUp = (sweep: boolean) => {
     if (runBusy) return;
     stopRef.current = false;
@@ -299,7 +326,19 @@ export function IntranetClient({
       for (let pass = 0; pass < 60 && !stopRef.current; pass += 1) {
         // A sweep pass looks around the app and the Playbook first; catch-up
         // passes give their whole clock to reading.
-        const r = await runBrain(pass === 0 && sweep ? undefined : { sweep: false });
+        let r: { ok: boolean; busy?: boolean; halt?: boolean; pending?: number };
+        try {
+          const res = await fetch("/intranet/run", {
+            method: "POST",
+            cache: "no-store",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ sweep: pass === 0 && sweep }),
+          });
+          if (!res.ok) break;
+          r = (await res.json()) as typeof r;
+        } catch {
+          break; // a dropped pass ends the loop; ⟳ resumes it
+        }
         router.refresh();
         // r.busy: another catch-up already holds the room — the gadget shows
         // THAT run's pulse; watch it, don't stack.
@@ -638,7 +677,7 @@ export function IntranetClient({
     return (
       <>
         <p className={styles.itLQ}>{e.question}</p>
-        {e.answer && <p className={styles.itProse}>{e.answer}</p>}
+        {e.answer && <p className={styles.itProse}>{cleanAskText(e.answer)}</p>}
         {e.citations.length > 0 && (
           <div className={styles.itCites}>
             {e.citations.map((c) => (
@@ -694,7 +733,9 @@ export function IntranetClient({
         {reply.answer.confidence === "mixed" && !reply.degraded && (
           <p className={styles.itMixed}>The record disagrees with itself here.</p>
         )}
-        {reply.answer.answer && <p className={styles.itProse}>{reply.answer.answer}</p>}
+        {reply.answer.answer && (
+          <p className={styles.itProse}>{cleanAskText(reply.answer.answer)}</p>
+        )}
 
         {reply.world && (
           <div className={styles.itWorld}>
@@ -910,7 +951,9 @@ export function IntranetClient({
                   {gadgetLive
                     ? pulseS?.kind === "sendit"
                       ? "Send-it run — your paste"
-                      : "Refresh run — the whole backlog"
+                      : pulseS?.kind === "activity"
+                        ? "Activity run — the second record"
+                        : "Refresh run — the whole backlog"
                     : failHold
                       ? "Paused — the log says why"
                       : "At rest — caught up"}
@@ -1096,8 +1139,8 @@ export function IntranetClient({
 
           {!canAnswer && (
             <p className={styles.itWarn}>
-              No API key configured — the brain can hold what you give it and show its
-              index, but it can&apos;t compose an answer yet.
+              The brain is unreachable — asks answer from the record&apos;s own closest
+              lines, and new pastes wait to be read into the index.
             </p>
           )}
 
@@ -1188,6 +1231,40 @@ export function IntranetClient({
           </div>
         )}
 
+        {canWrite && grabOpen && (
+          <div className={styles.itGrab}>
+            <span className={styles.itGrabKick}>THE GRAB LANDED</span>
+            <span className={styles.itGrabTx}>
+              Your Sales Nav capture is on the clipboard. Paste it in the box below and
+              press Send it — it files, gets read, and fans out from there.
+            </span>
+            <button
+              type="button"
+              className={styles.itGrabBtn}
+              onClick={async () => {
+                try {
+                  const t = await navigator.clipboard.readText();
+                  if (t.trim()) {
+                    setPaste(t);
+                    setGrabOpen(false);
+                  }
+                } catch {
+                  // clipboard read refused — the manual paste path stands
+                }
+              }}
+            >
+              Paste it here
+            </button>
+            <button
+              type="button"
+              className={styles.itGrabX}
+              onClick={() => setGrabOpen(false)}
+              title="Dismiss"
+            >
+              ✕
+            </button>
+          </div>
+        )}
         {canWrite && (
           <div className={styles.itDock}>
             <div className={styles.itDockIn}>

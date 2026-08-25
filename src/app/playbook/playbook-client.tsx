@@ -1,32 +1,21 @@
 "use client";
 
-// The Playbook body. Three things live here: the scenario picker that shapes the
-// card, the card itself, and the cross-account knowledge the paste reads have
-// been collecting.
+// The Call Sheet — the Playbook's face, triptych winner (founder-decreed
+// 2026-08-24). Three panes: the bank on the left in the spoken voice, YOUR
+// sheet in the middle (built before the call with +), and the live card on
+// the right. During the call, click what you heard — the line stamps itself
+// and the branch map pulls in the question that answer leads to. By the end,
+// the plan has become the record of the conversation.
 //
-// The filter repair is the point of this rewrite. Chips carry their own counts
-// computed against the OTHER active filters, a chip that would return nothing is
-// inert rather than clickable, and an empty result says which filter to drop.
-// The old card had three phase chips with no questions behind them at all and
-// ANDed everything silently — two clicks and it read "0 of 25".
+// The relay/copy chip is retired from this surface (the CSM-relay era's
+// copy-a-sentence tool); relay lines still feed Groundwork's composers.
+// "Why this question" arrives expanded and folds — never the reverse.
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { DASH_NODES } from "@/lib/dashboard/stages";
-import {
-  NO_FILTERS,
-  PRODUCT_LABEL,
-  SOPH_LABEL,
-  emptyBecause,
-  facetCounts,
-  selectQuestions,
-  type Filters,
-  type QProduct,
-  type QSoph,
-  type Scenario,
-} from "@/lib/intel/bank";
-import type { DiscoveryQ, QAudience, QCategory, QPhase } from "@/lib/intel/discovery";
-import { askNextDone } from "../today/actions";
-import { setScenario } from "./actions";
+import { selectQuestions, NO_FILTERS, type Scenario } from "@/lib/intel/bank";
+import { branchNext } from "@/lib/intel/branches";
+import type { DiscoveryQ } from "@/lib/intel/discovery";
 import styles from "./playbook.module.css";
 
 type Q = DiscoveryQ;
@@ -41,20 +30,33 @@ export type ProspectProposal = {
   rooms: string;
 };
 
-const CATEGORIES: QCategory[] = [
-  "footprint",
-  "classification",
-  "risk",
-  "incumbent",
-  "money",
-  "timing",
-  "commercial",
-  "platform",
-];
-const AUDIENCES: QAudience[] = ["exec", "ops", "partner"];
-const PRODUCTS: QProduct[] = ["eor", "contractor", "payroll"];
-const SOPHS: QSoph[] = ["naive", "inhouse", "displacement"];
 const PHASE_LABEL = new Map(DASH_NODES.map((n) => [n.key as string, n.label]));
+const CAT_LABEL: Record<string, string> = {
+  footprint: "Where they hire",
+  classification: "Employee or contractor",
+  risk: "What could go wrong",
+  incumbent: "Current provider",
+  money: "Money",
+  timing: "Timing",
+  commercial: "Deal shape",
+  platform: "Their systems",
+};
+const AUD_LABEL: Record<string, string> = {
+  exec: "Executives",
+  ops: "Operations",
+  partner: "The partner",
+};
+
+// The sheet survives a reload for the Chicago day it was built on — the pad
+// never eats your words. Per-viewer convenience only; nothing files.
+const STASH_KEY = "playbook:callsheet:v1";
+function chicagoDay(): string {
+  try {
+    return new Date().toLocaleDateString("en-US", { timeZone: "America/Chicago" });
+  } catch {
+    return new Date().toDateString();
+  }
+}
 
 function shortDate(iso: string): string {
   const t = Date.parse(iso);
@@ -80,338 +82,298 @@ function CopyBtn({ payload, label }: { payload: string; label: string }) {
   );
 }
 
-// One facet's chip row. Every chip states what it would yield; a zero is shown
-// and disabled rather than hidden, so the bank's shape stays legible.
-function Facet<K extends keyof Filters>({
-  label,
-  facet,
-  values,
-  render,
-  filters,
-  counts,
-  onPick,
-}: {
-  label: string;
-  facet: K;
-  values: readonly NonNullable<Filters[K]>[];
-  render?: (v: string) => string;
-  filters: Filters;
-  counts: Map<string, number>;
-  onPick: (facet: K, v: Filters[K]) => void;
-}) {
-  const active = filters[facet];
-  return (
-    <div className={styles.facet}>
-      <span className={styles.facetLabel}>{label}</span>
-      <button
-        type="button"
-        className={`${styles.chip} ${!active ? styles.chipOn : ""}`}
-        onClick={() => onPick(facet, "" as Filters[K])}
-      >
-        all
-      </button>
-      {values.map((v) => {
-        const n = counts.get(String(v)) ?? 0;
-        const on = active === v;
-        return (
-          <button
-            key={String(v)}
-            type="button"
-            className={`${styles.chip} ${on ? styles.chipOn : ""} ${n === 0 && !on ? styles.chipDead : ""}`}
-            disabled={n === 0 && !on}
-            title={
-              n === 0 ? "no questions here with the current filters" : `${n} questions`
-            }
-            onClick={() => onPick(facet, (on ? "" : v) as Filters[K])}
-          >
-            {render ? render(String(v)) : String(v)}
-            <span className={styles.chipN}>{n}</span>
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
 export function PlaybookClient({
   questions,
   scenarios,
-  savedScenario,
-  accountId,
-  accounts,
   lessons,
   market,
   prospectAsks,
   oursNotTheirs,
-  bankTotal,
+  initialOpen = "",
 }: {
   questions: Q[];
   scenarios: Scenario[];
-  savedScenario: string;
-  accountId: string;
-  accounts: { id: string; name: string }[];
   lessons: Knowledge[];
   market: Knowledge[];
   prospectAsks: ProspectProposal[];
   oursNotTheirs: string[];
-  bankTotal: number;
+  initialOpen?: string;
 }) {
-  const [filters, setFilters] = useState<Filters>(NO_FILTERS);
-  const [scenarioId, setScenarioId] = useState(savedScenario);
-  const [tab, setTab] = useState<"card" | "learned">("card");
+  const [tab, setTab] = useState<"sheet" | "learned">("sheet");
+  const [scenarioId, setScenarioId] = useState("");
+  const [lineup, setLineup] = useState<string[]>([]);
+  const [heard, setHeard] = useState<Record<string, string>>({});
+  const [liveIdx, setLiveIdx] = useState(0);
+  const restored = useRef(false);
 
+  const byId = useMemo(() => new Map(questions.map((q) => [q.id, q])), [questions]);
   const scenario = useMemo(
     () => scenarios.find((s) => s.id === scenarioId) ?? null,
     [scenarios, scenarioId],
   );
 
-  // Choosing a scenario sets the product and sophistication it implies — the
-  // operator can still override either chip afterwards.
-  const pickScenario = (id: string) => {
-    const next = scenarios.find((s) => s.id === id) ?? null;
-    setScenarioId(next ? id : "");
-    setFilters((f) => ({
-      ...f,
-      product: next && next.product !== "any" ? next.product : "",
-      soph: next && next.sophistication !== "any" ? next.sophistication : "",
-    }));
-    if (accountId) void setScenario(accountId, next ? id : "");
+  // The bank in the engine's order for the chosen situation.
+  const bank = useMemo(() => {
+    const f = {
+      ...NO_FILTERS,
+      product: scenario && scenario.product !== "any" ? scenario.product : ("" as const),
+      soph:
+        scenario && scenario.sophistication !== "any"
+          ? scenario.sophistication
+          : ("" as const),
+    };
+    return selectQuestions(questions, f, scenario);
+  }, [questions, scenario]);
+
+  // Restore today's sheet; a deep link (?open=) joins the lineup and goes live.
+  useEffect(() => {
+    if (restored.current) return;
+    restored.current = true;
+    let next: { lineup: string[]; heard: Record<string, string>; liveIdx: number } = {
+      lineup: [],
+      heard: {},
+      liveIdx: 0,
+    };
+    try {
+      const raw = window.localStorage.getItem(STASH_KEY);
+      if (raw) {
+        const saved = JSON.parse(raw) as typeof next & { day?: string };
+        if (saved.day === chicagoDay() && Array.isArray(saved.lineup)) {
+          next = {
+            lineup: saved.lineup.filter((id) => byId.has(id)),
+            heard: saved.heard ?? {},
+            liveIdx: saved.liveIdx ?? 0,
+          };
+        }
+      }
+    } catch {
+      // a stash that can't be read is an empty sheet, never an error
+    }
+    if (initialOpen && byId.has(initialOpen) && !next.lineup.includes(initialOpen)) {
+      next.lineup = [...next.lineup, initialOpen];
+      next.liveIdx = next.lineup.length - 1;
+    }
+    setLineup(next.lineup);
+    setHeard(next.heard);
+    setLiveIdx(next.liveIdx);
+  }, [initialOpen, byId]);
+
+  useEffect(() => {
+    if (!restored.current) return;
+    try {
+      window.localStorage.setItem(
+        STASH_KEY,
+        JSON.stringify({ day: chicagoDay(), lineup, heard, liveIdx }),
+      );
+    } catch {
+      // storage refused — the sheet still works for the session
+    }
+  }, [lineup, heard, liveIdx]);
+
+  const live =
+    lineup.length > 0
+      ? (byId.get(lineup[Math.min(liveIdx, lineup.length - 1)]) ?? null)
+      : null;
+  const inLineup = useMemo(() => new Set(lineup), [lineup]);
+
+  const add = (id: string) => {
+    if (!inLineup.has(id)) setLineup((l) => [...l, id]);
   };
-
-  const shown = useMemo(
-    () => selectQuestions(questions, filters, scenario),
-    [questions, filters, scenario],
-  );
-  const counts = useMemo(
-    () => ({
-      category: facetCounts(questions, filters, "category", CATEGORIES, scenario),
-      phase: facetCounts(
-        questions,
-        filters,
-        "phase",
-        DASH_NODES.map((n) => n.key) as QPhase[],
-        scenario,
-      ),
-      audience: facetCounts(questions, filters, "audience", AUDIENCES, scenario),
-      product: facetCounts(questions, filters, "product", PRODUCTS, scenario),
-      soph: facetCounts(questions, filters, "soph", SOPHS, scenario),
-    }),
-    [questions, filters, scenario],
-  );
-
-  const pick = <K extends keyof Filters>(facet: K, v: Filters[K]) =>
-    setFilters((f) => ({ ...f, [facet]: v }));
+  const remove = (i: number) => {
+    setLineup((l) => l.filter((_, x) => x !== i));
+    setLiveIdx((v) => (i < v ? v - 1 : Math.min(v, Math.max(0, lineup.length - 2))));
+  };
+  // What they said: stamp the sheet, follow the branch if one is wired,
+  // otherwise advance down the lineup.
+  const heardBranch = (q: Q, i: number) => {
+    setHeard((h) => ({ ...h, [q.id]: q.listenFor[i] }));
+    const next = branchNext(q.id, i);
+    const at = lineup.indexOf(q.id);
+    if (next && byId.has(next) && !lineup.includes(next)) {
+      const nl = [...lineup];
+      nl.splice(at + 1, 0, next);
+      setLineup(nl);
+      setLiveIdx(at + 1);
+    } else if (next && lineup.includes(next)) {
+      setLiveIdx(lineup.indexOf(next));
+    } else if (at < lineup.length - 1) {
+      setLiveIdx(at + 1);
+    }
+  };
 
   return (
     <div className={styles.board}>
       <div className={styles.tabs}>
         <button
           type="button"
-          className={`${styles.tab} ${tab === "card" ? styles.tabOn : ""}`}
-          onClick={() => setTab("card")}
+          className={`${styles.tab} ${tab === "sheet" ? styles.tabOn : ""}`}
+          onClick={() => setTab("sheet")}
         >
-          The card
+          The call sheet
         </button>
         <button
           type="button"
           className={`${styles.tab} ${tab === "learned" ? styles.tabOn : ""}`}
           onClick={() => setTab("learned")}
         >
-          What the book learned
+          What we&apos;ve learned
           <span className={styles.chipN}>
             {lessons.length + market.length + prospectAsks.length}
           </span>
         </button>
-        {accounts.length > 0 && (
-          <span className={styles.bind}>
-            <label className={styles.bindPick}>
-              {accountId ? "bound to" : "bind to an account"}
-              <select
-                className={styles.bindSel}
-                defaultValue={accountId}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  window.location.href = v ? `/playbook?account=${v}` : "/playbook";
-                }}
-              >
-                <option value="">No account. The whole bank.</option>
-                {accounts.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </span>
-        )}
       </div>
 
-      {tab === "card" ? (
-        <>
-          <div className={styles.scenWrap}>
-            <span className={styles.facetLabel}>Scenario</span>
-            <div className={styles.scenRow}>
-              <button
-                type="button"
-                className={`${styles.scen} ${!scenarioId ? styles.scenOn : ""}`}
-                onClick={() => pickScenario("")}
-              >
-                No scenario. The whole bank.
-              </button>
+      {tab === "sheet" ? (
+        <div className={styles.sheetGrid}>
+          {/* ── Pane 1 · the bank ─────────────────────────────────────── */}
+          <div className={styles.paneBank}>
+            <div className={styles.paneHead}>The bank</div>
+            <select
+              className={styles.scenSelect}
+              value={scenarioId}
+              onChange={(e) => setScenarioId(e.target.value)}
+            >
+              <option value="">No scenario — the engine&apos;s own order</option>
               {scenarios.map((s) => (
-                <button
-                  key={s.id}
-                  type="button"
-                  className={`${styles.scen} ${scenarioId === s.id ? styles.scenOn : ""}`}
-                  title={s.blurb}
-                  onClick={() => pickScenario(s.id)}
-                >
+                <option key={s.id} value={s.id}>
                   {s.label}
-                </button>
+                </option>
               ))}
-            </div>
+            </select>
+            {scenario && <p className={styles.scenBlurb}>{scenario.blurb}</p>}
             {scenario && (
-              <div className={styles.scenBody}>
-                <p className={styles.scenBlurb}>{scenario.blurb}</p>
-                {scenario.traps.length > 0 && (
-                  <div className={styles.scenBlock}>
-                    <span className={styles.scenK}>Watch for</span>
-                    <ul className={styles.scenList}>
-                      {scenario.traps.map((t) => (
-                        <li key={t}>{t}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                {scenario.objections.length > 0 && (
-                  <div className={styles.scenBlock}>
-                    <span className={styles.scenK}>They&apos;ll say</span>
-                    <ul className={styles.scenList}>
-                      {scenario.objections.map((o) => (
-                        <li key={o.objection}>
-                          <b>&ldquo;{o.objection}&rdquo;</b> {o.counter}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
+              <details className={styles.scenFold}>
+                <summary>Watch for · {scenario.traps.length}</summary>
+                <ul className={styles.scenList}>
+                  {scenario.traps.map((t) => (
+                    <li key={t}>{t}</li>
+                  ))}
+                </ul>
+              </details>
             )}
-          </div>
-
-          <div className={styles.filters}>
-            <Facet
-              label="Line"
-              facet="product"
-              values={PRODUCTS}
-              render={(v) => PRODUCT_LABEL[v as QProduct]}
-              filters={filters}
-              counts={counts.product}
-              onPick={pick}
-            />
-            <Facet
-              label="Buyer"
-              facet="soph"
-              values={SOPHS}
-              render={(v) => SOPH_LABEL[v as QSoph]}
-              filters={filters}
-              counts={counts.soph}
-              onPick={pick}
-            />
-            <Facet
-              label="Category"
-              facet="category"
-              values={CATEGORIES}
-              filters={filters}
-              counts={counts.category}
-              onPick={pick}
-            />
-            <Facet
-              label="Phase"
-              facet="phase"
-              values={DASH_NODES.map((n) => n.key) as QPhase[]}
-              render={(v) => PHASE_LABEL.get(v) ?? v}
-              filters={filters}
-              counts={counts.phase}
-              onPick={pick}
-            />
-            <Facet
-              label="Audience"
-              facet="audience"
-              values={AUDIENCES}
-              filters={filters}
-              counts={counts.audience}
-              onPick={pick}
-            />
-          </div>
-
-          <div className={styles.count}>
-            {shown.length} of {questions.length} showing
-            {questions.length !== bankTotal && (
-              <span className={styles.countNote}>
-                {" "}
-                · {bankTotal - questions.length} retired on this account
-              </span>
+            {scenario && scenario.objections.length > 0 && (
+              <details className={styles.scenFold}>
+                <summary>They&apos;ll say · {scenario.objections.length}</summary>
+                <ul className={styles.scenList}>
+                  {scenario.objections.map((o) => (
+                    <li key={o.objection}>
+                      <b>&ldquo;{o.objection}&rdquo;</b> {o.counter}
+                    </li>
+                  ))}
+                </ul>
+              </details>
             )}
-          </div>
-
-          {shown.length === 0 ? (
-            <p className={styles.empty}>{emptyBecause(questions, filters, scenario)}</p>
-          ) : (
-            <div className={styles.grid}>
-              {shown.map((q) => (
-                <div key={q.id} className={styles.card}>
-                  <div className={styles.tags}>
-                    <span className={styles.tag}>{q.category}</span>
-                    <span className={styles.tag}>
-                      {PHASE_LABEL.get(q.phase) ?? q.phase}
-                    </span>
-                    <span className={styles.tag}>{q.audience}</span>
-                    {q.product && q.product !== "any" && (
-                      <span className={`${styles.tag} ${styles.tagLine}`}>
-                        {PRODUCT_LABEL[q.product]}
-                      </span>
-                    )}
-                    {q.soph && q.soph !== "any" && (
-                      <span className={styles.tag}>{SOPH_LABEL[q.soph]}</span>
-                    )}
-                  </div>
-                  <div className={styles.q}>
-                    {q.question} <CopyBtn payload={q.question} label="copy" />
-                  </div>
-                  <div className={styles.why}>{q.why}</div>
-                  <div className={styles.listen}>
-                    <b>Listen for:</b> {q.listenFor.join(" · ")}
-                  </div>
-                  <div className={styles.follow}>
-                    <b>Then:</b> {q.followUp}
-                  </div>
-                  <div className={styles.relay}>
-                    <b>Relay:</b> <i>{q.relayLine}</i>{" "}
-                    <CopyBtn payload={q.relayLine} label="copy relay" />
-                    {accountId && (
-                      <form action={askNextDone} className={styles.inline}>
-                        <input type="hidden" name="accountId" value={accountId} />
-                        <input type="hidden" name="questionId" value={q.id} />
-                        <input
-                          type="hidden"
-                          name="returnTo"
-                          value={`/playbook?account=${accountId}`}
-                        />
-                        <button
-                          className={styles.copyBtn}
-                          title="Asked. Retire it on this account."
-                        >
-                          ✓ asked
-                        </button>
-                      </form>
-                    )}
-                  </div>
+            <div className={styles.bankList}>
+              {bank.map((q) => (
+                <div key={q.id} className={styles.bankRow}>
+                  <span className={styles.bankQ}>{q.question}</span>
+                  <button
+                    type="button"
+                    className={`${styles.addBtn} ${inLineup.has(q.id) ? styles.addDone : ""}`}
+                    title={inLineup.has(q.id) ? "on the sheet" : "add to the sheet"}
+                    onClick={() => add(q.id)}
+                  >
+                    {inLineup.has(q.id) ? "✓" : "+"}
+                  </button>
                 </div>
               ))}
             </div>
-          )}
-        </>
+          </div>
+
+          {/* ── Pane 2 · your sheet ───────────────────────────────────── */}
+          <div className={styles.paneSheet}>
+            <div className={styles.paneHead}>
+              Your call sheet
+              <span className={styles.chipN}>{lineup.length}</span>
+            </div>
+            {lineup.length === 0 ? (
+              <p className={styles.empty}>
+                Empty. Pull questions in with + and run the call from here.
+              </p>
+            ) : (
+              lineup.map((id, i) => {
+                const q = byId.get(id);
+                if (!q) return null;
+                const h = heard[id];
+                return (
+                  <div
+                    key={id}
+                    className={`${styles.sheetRow} ${live?.id === id ? styles.sheetLive : ""}`}
+                    onClick={() => setLiveIdx(i)}
+                  >
+                    <span className={styles.sheetQ}>
+                      {i + 1}. {q.question}
+                    </span>
+                    {h && (
+                      <span className={styles.heardStamp}>heard · &ldquo;{h}&rdquo;</span>
+                    )}
+                    <button
+                      type="button"
+                      className={styles.rowX}
+                      title="off the sheet"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        remove(i);
+                      }}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                );
+              })
+            )}
+            {lineup.length > 0 && (
+              <button
+                type="button"
+                className={styles.startOver}
+                onClick={() => {
+                  setLineup([]);
+                  setHeard({});
+                  setLiveIdx(0);
+                }}
+              >
+                Start over
+              </button>
+            )}
+          </div>
+
+          {/* ── Pane 3 · live ─────────────────────────────────────────── */}
+          <div className={styles.paneLive}>
+            <div className={styles.paneHead}>Live</div>
+            {live ? (
+              <div className={styles.liveCard}>
+                <div className={styles.liveMeta}>
+                  {CAT_LABEL[live.category] ?? live.category} ·{" "}
+                  {PHASE_LABEL.get(live.phase) ?? live.phase} ·{" "}
+                  {AUD_LABEL[live.audience] ?? live.audience}
+                </div>
+                <div className={styles.liveQ}>{live.question}</div>
+                <details className={styles.whyFold} open>
+                  <summary>Why this question</summary>
+                  <p>{live.why}</p>
+                </details>
+                <div className={styles.liveK}>If they say — click what you heard</div>
+                {live.listenFor.map((l, i) => (
+                  <button
+                    key={l}
+                    type="button"
+                    className={`${styles.branchBtn} ${heard[live.id] === l ? styles.branchOn : ""}`}
+                    onClick={() => heardBranch(live, i)}
+                  >
+                    &ldquo;{l}&rdquo;
+                  </button>
+                ))}
+                <div className={styles.liveK}>Then</div>
+                <p className={styles.thenLine}>{live.followUp}</p>
+              </div>
+            ) : (
+              <p className={styles.empty}>
+                Build the sheet first — this pane carries one question at a time once
+                you&apos;re on the call.
+              </p>
+            )}
+          </div>
+        </div>
       ) : (
         <div className={styles.learned}>
           <div className={styles.kBlock}>

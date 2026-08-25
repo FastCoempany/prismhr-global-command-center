@@ -12,14 +12,25 @@
 import type { Peo } from "@/lib/book";
 import type { DealIntel } from "@/lib/intel/types";
 import { compositeScore, deskScore } from "@/lib/book/scoring";
+import { isMeetingNote } from "@/lib/intel/meeting";
 import { getDemand, researchGeneratedAt, DEMAND_GATE } from "@/lib/book/research";
 import { proximityRank } from "./proximity";
 import { intentFor, ridingLaneDate, type IntentSignal } from "./signals";
+import {
+  engagedNeverIntroduced,
+  intentWarm,
+  orgInboundKey,
+  orgInboundHolder,
+  outreachGem,
+  verifiedCold,
+  type SecondRecord,
+} from "@/lib/activity/read";
 import { USER_TZ, userDayKey } from "@/lib/tz";
 
 export type Band = "now" | "eleven" | "two";
 
 export type QueueRuleId =
+  | "seated"
   | "wire-trigger"
   | "intent-warm"
   | "riding-lane"
@@ -28,7 +39,9 @@ export type QueueRuleId =
   | "stale-above-gate"
   | "cold-revival"
   | "stakeholder-gap"
-  | "never-touched-incumbent";
+  | "never-touched-incumbent"
+  | "engaged-never-introduced"
+  | "second-record-gem";
 
 export type QueueItem = {
   accountId: string;
@@ -51,6 +64,47 @@ export const QUEUE_CAP = 6;
 export const BUMP_QUIET_DAYS = 7;
 export const REVIVAL_QUIET_DAYS = 45;
 
+// Research holds for a quarter (founder-decreed 2026-08-14): Groundwork puts
+// no pressure out front until a pass — per-account or book-wide — is 90 days
+// old. Fresh research on demand is the stage button's job, not the queue's.
+export const RESEARCH_STALE_DAYS = 90;
+
+// The record's live motion excludes an account from prospecting (canon:
+// Groundwork is outbound only; reactive motion belongs to the HomeRoom —
+// enforced from the record 2026-08-14, because the board lags). THEY are
+// engaging when a real inbound landed inside the window, or a meeting, call,
+// or transcript filed fresh. The operator's own outbound never excludes —
+// the drumbeat rules need it.
+export const MOTION_INBOUND_DAYS = 21;
+export const MOTION_MEETING_DAYS = 14;
+
+export function liveMotionIds(
+  notesById: Map<string, { body: string; source: string; createdAt: string }[]>,
+  intelById: Map<string, Pick<DealIntel, "lastInbound">>,
+  now: Date,
+): Set<string> {
+  const out = new Set<string>();
+  for (const [id, intel] of intelById) {
+    const inAt = Date.parse(intel.lastInbound || "");
+    if (!Number.isNaN(inAt) && (now.getTime() - inAt) / DAY <= MOTION_INBOUND_DAYS)
+      out.add(id);
+  }
+  for (const [id, notes] of notesById) {
+    if (out.has(id)) continue;
+    for (const n of notes) {
+      const at = Date.parse(n.createdAt);
+      if (Number.isNaN(at) || (now.getTime() - at) / DAY > MOTION_MEETING_DAYS) continue;
+      // The one shared spelling of "this note records a meeting" — the same
+      // read the touch clock and the room's recap rule use.
+      if (isMeetingNote(n)) {
+        out.add(id);
+        break;
+      }
+    }
+  }
+  return out;
+}
+
 // A wire hit older than this no longer justifies a news note — the trigger
 // is perishable by design.
 export const WIRE_FRESH_DAYS = 5;
@@ -72,8 +126,30 @@ export type QueueInput = {
   wireAtById?: Map<string, string>; // newest matched wire item per account, ISO
   researchAtById?: Map<string, string>; // newest deep-research note per account, ISO
   doneKeys?: Set<string>; // raw done-stamp keys, for the carryover read
+  // Accounts the queue must not stage: a deal at demo or later is the
+  // HomeRoom's to work, and a stamped Closed Won/Lost is over. Groundwork
+  // prospects the book it is NOT actively closing.
+  excludedIds?: Set<string>;
+  /** The second record, parsed once for the whole book (read.ts). */
+  secondById?: Map<string, SecondRecord>;
+  /** Accounts holding ANY live board card — engaged-never-introduced only
+   *  fires where no deal exists at all, whatever its stage. */
+  boardIds?: Set<string>;
+  /** The Act Lane's seats (founder-decreed 2026-08-21): moves the operator
+   *  filed from the accounts sheet. A seat outranks every rule and counts
+   *  as the account's own move; at most SEAT_SLOT_CAP lead the day. */
+  seats?: Map<string, { act: string; term: string; day: string }>;
   now: Date;
 };
+
+// The operator can't bury the drumbeat: at most three seated moves hold
+// leading slots; the rest sink below other rules, still ranked, never lost.
+export const SEAT_SLOT_CAP = 3;
+
+// One rule may hold at most this many of the day's top slots — a rule that
+// fires book-wide must never wall the wing. The rest of its hits sink below
+// every other rule's, still ranked, never lost.
+export const RULE_SLOT_CAP = 2;
 
 const DAY = 86_400_000;
 
@@ -102,7 +178,10 @@ export function currentBand(now: Date): Band {
 }
 
 const BAND_OF: Record<QueueRuleId, Band> = {
+  seated: "now",
   "wire-trigger": "now",
+  "second-record-gem": "now",
+  "engaged-never-introduced": "eleven",
   "silence-bump": "now",
   "riding-lane": "now",
   "intent-warm": "eleven",
@@ -117,7 +196,10 @@ const BAND_OF: Record<QueueRuleId, Band> = {
 // move), 2 is dated inside the week (a cadence day, a closing lane, a due
 // update), 1 keeps until worked.
 const HEAT_OF: Record<QueueRuleId, 1 | 2 | 3> = {
+  seated: 3,
   "wire-trigger": 3,
+  "second-record-gem": 3,
+  "engaged-never-introduced": 2,
   "intent-warm": 3,
   "riding-lane": 2,
   "silence-bump": 2,
@@ -136,12 +218,18 @@ export function moveKey(item: Pick<QueueItem, "accountId" | "ruleId">): string {
   return `${item.accountId}:${item.ruleId}`;
 }
 
-// Research staleness in days: the per-account deep-research note when one
-// exists, else the corpus's one book-wide stamp.
-function researchAgeDays(inp: QueueInput, accountId: string, now: Date): number {
+// Research staleness in days, per-account notes ONLY — null when the account
+// has never had its own pass. The book-wide stamp is handled once, outside
+// the per-account loop: one stale book is one move, never a wall of clones.
+function perAccountResearchAge(
+  inp: QueueInput,
+  accountId: string,
+  now: Date,
+): number | null {
   const perAccount = inp.researchAtById?.get(accountId);
-  const t = Date.parse(perAccount ?? researchGeneratedAt);
-  if (Number.isNaN(t)) return Infinity;
+  if (!perAccount) return null;
+  const t = Date.parse(perAccount);
+  if (Number.isNaN(t)) return null;
   return (now.getTime() - t) / DAY;
 }
 
@@ -165,6 +253,7 @@ function rankAll(inp: QueueInput, now: Date): QueueItem[] {
   }
 
   for (const p of inp.accounts) {
+    if (inp.excludedIds?.has(p.id)) continue;
     const notes = inp.notesById.get(p.id);
     const intent = intentFor(notes, now);
     const acctTouches = touchesByAccount.get(p.id) ?? [];
@@ -191,17 +280,70 @@ function rankAll(inp: QueueInput, now: Date): QueueItem[] {
       }
     }
 
-    // intent-warm (80): a fresh High reading from the pasted grab.
-    if (intent?.level === "high") {
+    // intent-warm (84): warm on EITHER store, merged by latest and never
+    // double-counted — the weekly export's open/click tallies (3·clicks +
+    // 1·opens, 10-day half-life, threshold 6) or a fresh High reading from
+    // the pasted SN grab. One candidate either way.
+    const sr = inp.secondById?.get(p.id);
+    const warm = intentWarm(sr, now);
+    if (warm || intent?.level === "high") {
       candidates.push({
         accountId: p.id,
         name: p.name,
         ruleId: "intent-warm",
-        weight: 80,
+        weight: 84,
         band: BAND_OF["intent-warm"],
         action: "Send the reading-us note.",
-        reason: "Their people are reading us.",
+        reason: warm
+          ? warm.opens30 > 0
+            ? `They opened ${warm.opens30} of ours.`
+            : `They clicked ${warm.clicks30} of ours.`
+          : "Their people are reading us.",
         owed: "note ready",
+        carried: false,
+        intent,
+      });
+    }
+
+    // engaged-never-introduced (78): heavy support traffic, still warm, on an
+    // account nobody ever pitched — no first-record motion, no board card.
+    // The file card carries the support pulse as ammunition.
+    // "Never pitched" means no CONVERSATION — no outreach touch and no filed
+    // send or meeting. A background case note filed for intel is not a
+    // conversation and must not silence the rule.
+    const hasConversation =
+      acctTouches.length > 0 || (notes ?? []).some((n) => /^[✉✔☎☰] /.test(n.body));
+    const eni = engagedNeverIntroduced(sr, now);
+    if (eni && !hasConversation && !inp.boardIds?.has(p.id)) {
+      candidates.push({
+        accountId: p.id,
+        name: p.name,
+        ruleId: "engaged-never-introduced",
+        weight: 78,
+        band: BAND_OF["engaged-never-introduced"],
+        action: "Open the first conversation.",
+        reason: `${eni.cases} support cases. Never pitched.`,
+        owed: "draft composed",
+        carried: false,
+        intent,
+      });
+    }
+
+    // second-record-gem (84): a verified, un-acted gem whose act points at
+    // account people is wire-class evidence — the act line IS the move, the
+    // refuter already checked the canon on it. Coordination gems stay in the
+    // rooms; the queue is outbound only.
+    const gem = outreachGem(sr);
+    if (gem) {
+      candidates.push({
+        accountId: p.id,
+        name: p.name,
+        ruleId: "second-record-gem",
+        weight: 84,
+        band: BAND_OF["second-record-gem"],
+        action: gem.act,
+        reason: gem.reason,
+        owed: "evidence attached",
         carried: false,
         intent,
       });
@@ -229,12 +371,44 @@ function rankAll(inp: QueueInput, now: Date): QueueItem[] {
     // silence-bump (72) and cold-revival (60): the drumbeat on open outbound
     // threads. A first touch awaiting a reply gets its second touch on the
     // cadence day; a thread quiet past the cold line gets one deliberate
-    // re-open with something new to say.
+    // re-open with something new to say. The clock reads the LATEST of the
+    // touch log and the record's own traffic (Ted doctrine): a filed
+    // outbound resets the drumbeat, and a filed REPLY silences it entirely —
+    // an answered thread is the HomeRoom's motion, not Groundwork's.
     const newestTouch = acctTouches
       .slice()
       .sort((a, b) => b.contactedAt.localeCompare(a.contactedAt))[0];
-    if (newestTouch) {
-      const quiet = (now.getTime() - Date.parse(newestTouch.contactedAt)) / DAY;
+    const intelHere = inp.intelById.get(p.id);
+    const lastOutIso = [newestTouch?.contactedAt ?? "", intelHere?.lastOutbound ?? ""]
+      .filter(Boolean)
+      .sort()
+      .pop();
+    // The answered check reads the WIDEST inbound the app holds (the second
+    // record law): a reply that landed in a colleague's inbox still answers
+    // the thread — no bump; the move flips to coordination instead.
+    const orgIn = orgInboundKey(sr);
+    const answeredMine =
+      !!intelHere?.lastInbound && !!lastOutIso && intelHere.lastInbound > lastOutIso;
+    const answeredOrg = !answeredMine && !!orgIn && !!lastOutIso && orgIn > lastOutIso;
+    if (newestTouch && lastOutIso && answeredOrg) {
+      const holder = orgInboundHolder(sr);
+      const first = holder.split(" ")[0] || "";
+      candidates.push({
+        accountId: p.id,
+        name: p.name,
+        ruleId: "silence-bump",
+        weight: 72,
+        band: BAND_OF["silence-bump"],
+        action: first ? `Ask ${first} what they said.` : "Find the reply org-side.",
+        reason: first ? `Their reply went to ${first}.` : "Their reply landed org-side.",
+        owed: "ask composed",
+        carried: false,
+        intent,
+      });
+    }
+    const answered = answeredMine || answeredOrg;
+    if (newestTouch && lastOutIso && !answered) {
+      const quiet = (now.getTime() - Date.parse(lastOutIso)) / DAY;
       if (
         newestTouch.status === "awaiting" &&
         quiet >= BUMP_QUIET_DAYS &&
@@ -247,7 +421,7 @@ function rankAll(inp: QueueInput, now: Date): QueueItem[] {
           weight: 72,
           band: BAND_OF["silence-bump"],
           action: "Send the second touch.",
-          reason: `No reply since ${monthDay(newestTouch.contactedAt)}.`,
+          reason: `No reply since ${monthDay(lastOutIso)}.`,
           owed: "draft composed",
           carried: false,
           intent,
@@ -260,7 +434,7 @@ function rankAll(inp: QueueInput, now: Date): QueueItem[] {
           weight: 60,
           band: BAND_OF["cold-revival"],
           action: "Revive the thread.",
-          reason: `Quiet since ${monthDay(newestTouch.contactedAt)}.`,
+          reason: `Quiet since ${monthDay(lastOutIso)}.`,
           owed: "draft composed",
           carried: false,
           intent,
@@ -268,13 +442,15 @@ function rankAll(inp: QueueInput, now: Date): QueueItem[] {
       }
     }
 
-    // stale-above-gate (65): real demand, research old.
-    const researchAge = researchAgeDays(inp, p.id, now);
+    // stale-above-gate (65): real demand, and the account's OWN research pass
+    // has gone stale. Fires only on a per-account pass — the book-wide stamp
+    // collapses to a single move after this loop.
+    const researchAge = perAccountResearchAge(inp, p.id, now);
     const demand = getDemand(p.id);
     if (
       (demand?.demandScore ?? 0) >= DEMAND_GATE &&
-      Number.isFinite(researchAge) &&
-      researchAge > 21
+      researchAge != null &&
+      researchAge > RESEARCH_STALE_DAYS
     ) {
       candidates.push({
         accountId: p.id,
@@ -313,14 +489,20 @@ function rankAll(inp: QueueInput, now: Date): QueueItem[] {
     // The backbone rule of the direct era: the first conversation, direct.
     const desk = deskScore(p);
     if (desk.incumbent && p.fitTier === "high" && !hasActivity) {
+      // Cold-validated (the second record law): zero account-person motion
+      // on BOTH records upgrades confidence — the cold is verified, not
+      // assumed, and the reason says so.
+      const cold = verifiedCold(sr);
       candidates.push({
         accountId: p.id,
         name: p.name,
         ruleId: "never-touched-incumbent",
-        weight: 50,
+        weight: cold ? 52 : 50,
         band: BAND_OF["never-touched-incumbent"],
         action: "Open the first conversation.",
-        reason: "On our platform. Never introduced.",
+        reason: cold
+          ? "Verified cold. Ninety quiet days."
+          : "On our platform. Never introduced.",
         owed: "draft composed",
         carried: false,
         intent,
@@ -328,12 +510,83 @@ function rankAll(inp: QueueInput, now: Date): QueueItem[] {
     }
   }
 
+  // The book-wide research stamp, collapsed to ONE move. When no per-account
+  // pass exists, six accounts "going stale" on the same day is one fact about
+  // the book, not six moves — the strongest above-gate account carries it.
+  const globalAgeT = Date.parse(researchGeneratedAt);
+  const globalAge = Number.isNaN(globalAgeT) ? null : (now.getTime() - globalAgeT) / DAY;
+  if (globalAge != null && globalAge > RESEARCH_STALE_DAYS) {
+    const bearers = inp.accounts
+      .filter(
+        (p) =>
+          !inp.excludedIds?.has(p.id) &&
+          !inp.researchAtById?.get(p.id) &&
+          (getDemand(p.id)?.demandScore ?? 0) >= DEMAND_GATE,
+      )
+      .sort((a, b) => {
+        const da = getDemand(a.id);
+        const db = getDemand(b.id);
+        return (
+          compositeScore(deskScore(b).score, db?.demandScore ?? null, db?.confidence)
+            .score -
+          compositeScore(deskScore(a).score, da?.demandScore ?? null, da?.confidence)
+            .score
+        );
+      });
+    const taken = new Set(candidates.map((c) => c.accountId));
+    const bearer = bearers.find((p) => !taken.has(p.id)) ?? bearers[0];
+    if (bearer) {
+      candidates.push({
+        accountId: bearer.id,
+        name: bearer.name,
+        ruleId: "stale-above-gate",
+        weight: 65,
+        band: BAND_OF["stale-above-gate"],
+        action: "Run the research pass.",
+        reason: `Book research ${Math.floor(globalAge)} days old.`,
+        owed: "recipe ready",
+        carried: false,
+        intent: intentFor(inp.notesById.get(bearer.id), now),
+      });
+    }
+  }
+
+  // seated (95): the operator filed this move from the accounts sheet's Act
+  // Lane — an explicit seat outranks every rule and rides until worked,
+  // taken back, or the record shows the outbound (the page filters those
+  // before they arrive here). The seat is the account's own move: it lands
+  // before the vehicle rules compute `occupied`, so no briefing slot ever
+  // swallows it.
+  const nameOf = new Map(inp.accounts.map((p) => [p.id, p.name]));
+  for (const [id, seat] of inp.seats ?? []) {
+    const name = nameOf.get(id);
+    if (!name) continue;
+    candidates.push({
+      accountId: id,
+      name,
+      ruleId: "seated",
+      weight: 95,
+      band: BAND_OF["seated"],
+      action: seat.act,
+      reason: `Seated ${monthDay(seat.day)} from the sheet.`,
+      owed: "draft on the lane",
+      carried: false,
+      intent: intentFor(inp.notesById.get(id), now),
+    });
+  }
+
   // roundup-slot (70): a partner manager's update rhythm has lapsed — their
   // roster's best-fit account takes the slot. The CSM door, chosen when it
   // is the fastest one, never the toll.
   const byId = new Map(inp.accounts.map((p) => [p.id, p]));
-  const rosterBest = new Map<string, { id: string; score: number }>();
+  // Accounts already carrying their OWN evidence. The roundup slot and the
+  // book-wide research stamp are about the CSM and the book — they ride an
+  // account as a vehicle, and a vehicle must never swallow the account's own
+  // move (caught 2026-08-20: a briefing slot ate a verified-cold first touch).
+  const occupied = new Set(candidates.map((c) => c.accountId));
+  const rosterRanked = new Map<string, { id: string; score: number }[]>();
   for (const p of inp.accounts) {
+    if (inp.excludedIds?.has(p.id)) continue;
     if (!p.csm || p.csm === "Unassigned") continue;
     const d = getDemand(p.id);
     const comp = compositeScore(
@@ -341,8 +594,16 @@ function rankAll(inp: QueueInput, now: Date): QueueItem[] {
       d?.demandScore ?? null,
       d?.confidence,
     ).score;
-    const best = rosterBest.get(p.csm);
-    if (!best || comp > best.score) rosterBest.set(p.csm, { id: p.id, score: comp });
+    const list = rosterRanked.get(p.csm) ?? [];
+    list.push({ id: p.id, score: comp });
+    rosterRanked.set(p.csm, list);
+  }
+  const rosterBest = new Map<string, { id: string; score: number }>();
+  for (const [csm, list] of rosterRanked) {
+    list.sort((a, b) => b.score - a.score);
+    // The best-fit FREE account carries the slot; only a roster with no free
+    // account falls back to colliding, where weight resolves it as before.
+    rosterBest.set(csm, list.find((x) => !occupied.has(x.id)) ?? list[0]);
   }
   for (const [csm, best] of rosterBest) {
     // The shared cadence rule: never stack an update on a live thread — due
@@ -383,7 +644,7 @@ function rankAll(inp: QueueInput, now: Date): QueueItem[] {
     return compositeScore(deskScore(p).score, d?.demandScore ?? null, d?.confidence)
       .score;
   };
-  return [...bestByAccount.values()].sort((a, b) => {
+  const sorted = [...bestByAccount.values()].sort((a, b) => {
     if (b.weight !== a.weight) return b.weight - a.weight;
     const cb = compOf(b.accountId) - compOf(a.accountId);
     if (cb !== 0) return cb;
@@ -391,6 +652,22 @@ function rankAll(inp: QueueInput, now: Date): QueueItem[] {
     const pb = byId.get(b.accountId);
     return (pa ? proximityRank(pa) : 3) - (pb ? proximityRank(pb) : 3);
   });
+
+  // The slot cap: one rule holds at most RULE_SLOT_CAP of the leading order;
+  // its overflow sinks below every other rule's hits, still ranked, never
+  // dropped. A monotone wall becomes two slots and an open wing.
+  const leading: QueueItem[] = [];
+  const sunk: QueueItem[] = [];
+  const perRule = new Map<QueueRuleId, number>();
+  for (const q of sorted) {
+    const n = perRule.get(q.ruleId) ?? 0;
+    const cap = q.ruleId === "seated" ? SEAT_SLOT_CAP : RULE_SLOT_CAP;
+    if (n < cap) {
+      perRule.set(q.ruleId, n + 1);
+      leading.push(q);
+    } else sunk.push(q);
+  }
+  return [...leading, ...sunk];
 }
 
 export function buildQueue(inp: QueueInput): {
@@ -411,9 +688,19 @@ export function buildQueue(inp: QueueInput): {
       .map((q) => moveKey(q)),
   );
   const done = inp.doneKeys ?? new Set<string>();
+  // The record clears a carry too (Ted doctrine): an outbound filed since
+  // yesterday IS the work — the stamp table only knows about the copy button.
+  const yesterdayIso = yesterday.toISOString();
+  const workedByRecord = (accountId: string): boolean => {
+    const out = inp.intelById.get(accountId)?.lastOutbound ?? "";
+    return !!out && out >= yesterdayIso;
+  };
   const all = ranked.map((q) => {
     const mk = moveKey(q);
-    const carried = shownYesterday.has(mk) && !done.has(`groundwork:${yesterKey}:${mk}`);
+    const carried =
+      shownYesterday.has(mk) &&
+      !done.has(`groundwork:${yesterKey}:${mk}`) &&
+      !workedByRecord(q.accountId);
     return carried ? { ...q, carried } : q;
   });
 

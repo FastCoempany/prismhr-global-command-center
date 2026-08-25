@@ -20,6 +20,52 @@
   color: #e6701e;
   border-color: #e6701e;
 }
+/* Lines still on the paper — the button burns red until the pad is clear. */
+.fabLit {
+  border-color: rgba(239, 68, 68, 0.75);
+  box-shadow:
+    0 8px 22px rgba(10, 28, 64, 0.16),
+    0 0 0 1px rgba(239, 68, 68, 0.45),
+    0 0 16px 4px rgba(239, 68, 68, 0.38);
+}
+.fabLit:hover {
+  color: #ef4444;
+  border-color: #ef4444;
+}
+/* An answer landed — the glow PULSES until the ask register is opened.
+   The pulse outranks the solid burn: it is the fresher event. */
+.fabPulse {
+  border-color: rgba(239, 68, 68, 0.85);
+  animation: scratchPulse 1.6s ease-in-out infinite;
+}
+.fabPulse:hover {
+  color: #ef4444;
+  border-color: #ef4444;
+}
+@keyframes scratchPulse {
+  0%,
+  100% {
+    box-shadow:
+      0 8px 22px rgba(10, 28, 64, 0.16),
+      0 0 0 1px rgba(239, 68, 68, 0.35),
+      0 0 10px 2px rgba(239, 68, 68, 0.25);
+  }
+  50% {
+    box-shadow:
+      0 8px 22px rgba(10, 28, 64, 0.16),
+      0 0 0 2px rgba(239, 68, 68, 0.75),
+      0 0 24px 8px rgba(239, 68, 68, 0.55);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fabPulse {
+    animation: none;
+    box-shadow:
+      0 8px 22px rgba(10, 28, 64, 0.16),
+      0 0 0 2px rgba(239, 68, 68, 0.75),
+      0 0 24px 8px rgba(239, 68, 68, 0.55);
+  }
+}
 .fab:focus-visible {
   outline: 2px solid #2563eb;
   outline-offset: 2px;
@@ -52,12 +98,23 @@
   padding: 10px 14px 8px;
   border-bottom: 1px solid rgba(10, 28, 64, 0.12);
 }
-.kick {
+.kick,
+.kickOn {
   font-family: var(--font-donor-mono), ui-monospace, Menlo, monospace;
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.18em;
   color: rgba(10, 28, 64, 0.42);
+  border: 0;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+}
+.kickOn {
+  color: #0a1c40;
+}
+.kick:hover {
+  color: #0a1c40;
 }
 .x {
   margin-left: auto;
@@ -143,6 +200,39 @@
   font-size: 11px;
   padding: 0 2px;
 }
+
+/* Edit in place (founder-decreed 2026-08-21): ✎ reveals on hover like ✕;
+   the line becomes its own input, Enter keeps, Escape puts it back. */
+.edit {
+  flex: none;
+  border: 0;
+  background: none;
+  color: transparent;
+  cursor: pointer;
+  font-size: 11px;
+  padding: 0 2px;
+}
+.row:hover .edit {
+  color: rgba(10, 28, 64, 0.22);
+}
+.row .edit:hover {
+  color: #2563eb;
+}
+.editIn {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid rgba(37, 99, 235, 0.45);
+  border-radius: 6px;
+  padding: 2px 7px;
+  font: inherit;
+  font-size: 12.5px;
+  color: inherit;
+  background: #fff;
+}
+.editIn:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.13);
+}
 .row:hover .del {
   color: rgba(10, 28, 64, 0.22);
 }
@@ -156,6 +246,59 @@
   font-size: 10.5px;
   color: rgba(10, 28, 64, 0.22);
 }
+.hint a {
+  color: rgba(10, 28, 64, 0.42);
+  text-decoration: none;
+}
+.hint a:hover {
+  color: #e6701e;
+}
+
+/* The ask register */
+.asking {
+  padding: 6px 14px 0;
+  font-size: 11.5px;
+  color: #2563eb;
+}
+.askRow {
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(10, 28, 64, 0.08);
+}
+.askRow:last-child {
+  border-bottom: 0;
+}
+.askQ {
+  font-weight: 700;
+  color: #0a1c40;
+  margin: 2px 0;
+}
+.askA {
+  color: rgba(10, 28, 64, 0.85);
+  white-space: pre-wrap;
+}
+.worldTag {
+  color: rgba(10, 28, 64, 0.42);
+  font-size: 11.5px;
+}
+.askLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+.askLinks a {
+  font-family: var(--font-donor-mono), ui-monospace, Menlo, monospace;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: #2563eb;
+  text-decoration: none;
+  border: 1px solid rgba(37, 99, 235, 0.35);
+  border-radius: 999px;
+  padding: 2px 9px;
+}
+.askLinks a:hover {
+  background: rgba(37, 99, 235, 0.08);
+}
 
 @media (max-width: 480px) {
   .card {
@@ -163,4 +306,32 @@
     left: 10px;
     width: auto;
   }
+}
+
+/* The struck history (decreed 2026-08-19) — the fold under the paper. */
+.struckKick {
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font: 700 9px/1 var(--font-donor-mono, ui-monospace, monospace);
+  letter-spacing: 0.18em;
+  color: rgba(10, 28, 64, 0.42);
+  /* the fold sits outside .list — it carries the card's own 14px gutters
+     so STRUCK lines up with the paper, never the card edge */
+  padding: 8px 14px 2px;
+  text-align: left;
+}
+.struckKick:hover {
+  color: #0a1c40;
+}
+.struckList {
+  max-height: 160px;
+  overflow-y: auto;
+  border-top: 1px dashed rgba(10, 28, 64, 0.22);
+  padding: 4px 14px 0;
+}
+.struckBody {
+  color: rgba(10, 28, 64, 0.42);
+  text-decoration: line-through;
+  text-decoration-color: rgba(10, 28, 64, 0.22);
 }

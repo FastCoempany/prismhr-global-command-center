@@ -196,3 +196,100 @@ describe("bounds — climb and day math", () => {
     assert.equal(daysBetween("2026-07-21T15:00:00Z", NOW), 7);
   });
 });
+
+describe("the recap rule — a fresh meeting puts the follow-up on the operator", () => {
+  const NOW = new Date("2026-08-18T21:00:00Z");
+  const base = {
+    accountName: "Staff Leasing",
+    step: null,
+    timing: null,
+    lastRecordAt: "2026-08-18T17:00:00Z",
+    now: NOW,
+  };
+  test("a meeting today beats 'wait' — the recap is the move", () => {
+    const r = readDeal({
+      ...base,
+      lastTouch: { at: "2026-08-12T19:32:00Z", awaitingReply: true, who: "Tom" },
+      lastMeeting: { at: "2026-08-18T17:00:00Z", who: "Tom" },
+    });
+    assert.match(r.move, /^Send Tom the recap\. You met today\./);
+    assert.equal(r.court.tone, "you");
+    assert.match(r.court.line, /MET TOM TODAY/);
+  });
+  test("an inbound after the meeting still outranks the recap", () => {
+    const r = readDeal({
+      ...base,
+      lastTouch: { at: "2026-08-12T19:32:00Z", awaitingReply: true, who: "Tom" },
+      lastMeeting: { at: "2026-08-18T17:00:00Z", who: "Tom" },
+      lastInbound: { at: "2026-08-18T19:00:00Z", who: "Tom" },
+    });
+    assert.match(r.move, /^Answer Tom\./);
+  });
+  test("an outbound sent after the meeting retires the recap — back to waiting", () => {
+    const r = readDeal({
+      ...base,
+      lastTouch: { at: "2026-08-18T18:00:00Z", awaitingReply: true, who: "Tom" },
+      lastMeeting: { at: "2026-08-18T17:00:00Z", who: "Tom" },
+    });
+    assert.match(r.move, /^Wait on Tom\./);
+  });
+  test("a stale meeting (past the recap window) falls back to ordinary rules", () => {
+    const r = readDeal({
+      ...base,
+      lastTouch: { at: "2026-08-01T12:00:00Z", awaitingReply: true, who: "Tom" },
+      lastMeeting: { at: "2026-08-05T12:00:00Z", who: "Tom" },
+    });
+    assert.ok(!/recap/i.test(r.move), r.move);
+  });
+  test("a meeting with an open stage item carries the item along", () => {
+    const r = readDeal({
+      ...base,
+      step: { nodeKey: "demo", nodeLabel: "Demo", item: "Book the demo", ageDays: 1 },
+      lastTouch: null,
+      lastMeeting: { at: "2026-08-18T17:00:00Z", who: "Tom" },
+    });
+    assert.match(r.move, /^Send Tom the recap\. You met today\./);
+  });
+});
+
+describe("the same-day send — a fresh outbound puts the ball with them", () => {
+  const NOW = new Date("2026-08-19T21:00:00Z");
+  const base = {
+    accountName: "Infiniti HR",
+    timing: null,
+    lastRecordAt: "2026-08-19T19:28:00Z",
+    now: NOW,
+  };
+  const step = {
+    nodeKey: "discovery",
+    nodeLabel: "Discovery",
+    item: "How they pay those workers today (method + any current provider)",
+    ageDays: 5,
+  };
+  test("an outbound sent today outranks the open stage item", () => {
+    const r = readDeal({
+      ...base,
+      step,
+      lastTouch: { at: "2026-08-19T19:28:00Z", awaitingReply: true, who: "Javier" },
+    });
+    assert.match(r.move, /^Wait on Javier\. You wrote today\./);
+    assert.match(r.court.line, /THEIR MOVE/);
+  });
+  test("yesterday's outbound hands the row back to the stage item", () => {
+    const r = readDeal({
+      ...base,
+      step,
+      lastTouch: { at: "2026-08-18T15:00:00Z", awaitingReply: true, who: "Javier" },
+    });
+    assert.match(r.move, /^How they pay those workers today/);
+  });
+  test("a same-day send never hides a fully gated board", () => {
+    const r = readDeal({
+      ...base,
+      step: null,
+      allGatesDone: true,
+      lastTouch: { at: "2026-08-19T19:28:00Z", awaitingReply: true, who: "Javier" },
+    });
+    assert.match(r.move, /^Stamp the outcome\./);
+  });
+});

@@ -50,6 +50,7 @@ import {
 } from "@/lib/intranet/playbook-in";
 import {
   mirrorAccountNote,
+  mirrorActivityDigest,
   mirrorCard,
   mirrorDemoNote,
   mirrorPartnerNote,
@@ -257,6 +258,49 @@ export async function syncApp(budget = 400): Promise<RunReport> {
       if (d) drafts.push(d);
     }
 
+    // §6 · the second record's digests — one per account per drop, rollup +
+    // gems only. Blast tallies and staged slices never enter the brain.
+    const activityNotes = await prisma.accountNote.findMany({
+      where: {
+        accountId: { startsWith: "activity:" },
+        // The staged slices are ~120KB each and never enter the brain — they
+        // must never ride this query either.
+        NOT: [
+          { accountId: { startsWith: "activity:stage:" } },
+          { accountId: "activity:manifest" },
+        ],
+      },
+      orderBy: { createdAt: "desc" },
+      take: 400,
+    });
+    const gemsNotes = await prisma.accountNote.findMany({
+      where: { accountId: { startsWith: "gems:" } },
+      orderBy: { createdAt: "desc" },
+      take: 400,
+    });
+    const gemsById = new Map(
+      gemsNotes.map((n) => [n.accountId.slice("gems:".length), n.body]),
+    );
+    for (const n of activityNotes) {
+      if (
+        n.accountId.startsWith("activity:stage:") ||
+        n.accountId === "activity:manifest"
+      )
+        continue;
+      const accountId = n.accountId.slice("activity:".length);
+      const head = /^⌗ ACTIVITY · drop (\S+) · (\S+)/.exec(n.body ?? "");
+      if (!head) continue;
+      const d = mirrorActivityDigest({
+        accountId,
+        accountName: nameById.get(accountId) ?? "",
+        dropSha: head[1],
+        dropDay: head[2],
+        rollupBody: n.body,
+        gemsBody: gemsById.get(accountId) ?? "",
+      });
+      if (d) drafts.push(d);
+    }
+
     const { created, updated, skipped } = await upsertDocs(drafts);
     lines.push(
       `Looked around the app — ${created} new, ${updated} changed, ${skipped} already in hand.`,
@@ -322,13 +366,22 @@ async function upsertDocs(drafts: MirrorDoc[]) {
 }
 
 /** Mark mirrors whose home rows have disappeared. Never a delete — the brain
- *  remembers what the app forgot, which is the whole point of C6. */
+ *  remembers what the app forgot, which is the whole point of C6. The playbook
+ *  origin joined 2026-08-24: a retired question's mirror doc otherwise teaches
+ *  a question the bank no longer asks, forever. */
 async function markVanished(): Promise<number> {
   const prisma = getPrisma();
   let n = 0;
+  const { DISCOVERY } = await import("@/lib/intel/discovery");
+  const { PRODUCT_BANK } = await import("@/lib/intel/discovery-product");
+  const { SCENARIOS } = await import("@/lib/intel/scenarios");
+  const bankIds = new Set([...DISCOVERY, ...PRODUCT_BANK].map((q) => q.id));
+  const scenarioIds = new Set(SCENARIOS.map((s) => s.id));
   const mirrored = await prisma.intranetDoc.findMany({
     where: {
-      origin: { in: ["account-note", "todo", "touch", "partner-note", "card", "demo"] },
+      origin: {
+        in: ["account-note", "todo", "touch", "partner-note", "card", "demo", "playbook"],
+      },
       originGone: null,
     },
     select: { id: true, origin: true, originRef: true },
@@ -383,6 +436,14 @@ async function markVanished(): Promise<number> {
               select: { id: true },
             }),
           );
+      else if (m.origin === "playbook") {
+        // question:/scenario: refs check against the static banks; market:/
+        // lessons: refs keep their own app rows and stay out of this sweep.
+        if (m.originRef.startsWith("question:"))
+          alive = bankIds.has(m.originRef.slice("question:".length));
+        else if (m.originRef.startsWith("scenario:"))
+          alive = scenarioIds.has(m.originRef.slice("scenario:".length));
+      }
     } catch {
       alive = true; // never mark on a query failure
     }
@@ -541,7 +602,7 @@ export async function extractPending(
     return {
       ok: false,
       lines: [],
-      reason: "No API key configured — nothing can be read.",
+      reason: "The brain is unreachable — nothing can be read right now.",
     };
 
   const prisma = getPrisma();
@@ -551,9 +612,13 @@ export async function extractPending(
     const unread = {
       OR: [{ extractedAt: null }, { promptVersion: { not: PROMPT_VERSION } }],
     };
+    // Never-tried docs first ("" sorts before "fail:N"), failures last — a
+    // document that keeps timing out must never head the queue every pass and
+    // starve the three hundred behind it (the 3-of-306 crawl, caught
+    // 2026-08-19). occurredAt breaks ties, newest first.
     const pending = await prisma.intranetDoc.findMany({
       where: opts?.captureId ? { AND: [unread, { captureId: opts.captureId }] } : unread,
-      orderBy: { occurredAt: "desc" },
+      orderBy: [{ promptVersion: "asc" }, { occurredAt: "desc" }],
       take: budget,
     });
     if (pending.length === 0) return { ok: true, lines: ["Everything has been read."] };
@@ -593,10 +658,11 @@ export async function extractPending(
     let total = doneBase + backlog;
     await pulse({ total, unit: `${unitWord} — ${doneBase} of ${total} ${partWord}` });
 
-    // Reads run four at a time — the model is the slow part and the calls are
-    // independent, so a pass gets four entries per model-latency instead of
-    // one. Persistence stays sequential, one document at a time, below.
-    const CONCURRENT_READS = 4;
+    // Reads run eight at a time — the model is the slow part and the calls
+    // are independent, so a pass gets eight entries per model-latency instead
+    // of one (doubled 2026-08-20; the 300-doc backlog crawled at four).
+    // Persistence stays sequential, one document at a time, below.
+    const CONCURRENT_READS = 8;
     for (let i = 0; i < pending.length; i += CONCURRENT_READS) {
       if (opts?.deadlineMs && Date.now() > opts.deadlineMs) {
         outOfTime = true;
@@ -637,6 +703,16 @@ export async function extractPending(
           if (!firstWhy) firstWhy = reasonOf(s.reason);
           const raw = `${doc.space || doc.origin} · ${iso(doc.occurredAt).slice(0, 10)} — ${rawOf(s.reason)}`;
           detail.push(raw);
+          // The failure is stamped so the doc sorts behind never-tried work
+          // next pass. It stays pending — promptVersion "fail:N" is still
+          // not the live version — it just stops hogging the front.
+          const priorFails = Number(/^fail:(\d+)$/.exec(doc.promptVersion)?.[1] ?? 0);
+          await prisma.intranetDoc
+            .update({
+              where: { id: doc.id },
+              data: { promptVersion: `fail:${priorFails + 1}` },
+            })
+            .catch(() => null);
           total -= 1; // the total shrinks so 100 stays honest
           await pulse(
             {
@@ -1091,7 +1167,7 @@ export async function readCapture(captureId: string): Promise<RunReport> {
       ok: false,
       lines: [],
       reason:
-        "Kept — but no API key is configured, so it can't be read into the index yet.",
+        "Kept — but the brain is unreachable, so it can't be read into the index yet.",
     };
 
   const prisma = getPrisma();

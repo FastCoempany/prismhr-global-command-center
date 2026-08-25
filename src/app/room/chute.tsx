@@ -10,6 +10,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import { chuteReadPdf, roomPaste, roomPasteUndo } from "./actions";
+import { activityRun, activityStage } from "../activity/actions";
+import { probeActivityReport, uploadActivityReport } from "@/lib/activity/upload";
+import { DROP_ACCEPT } from "@/lib/paste-files";
 import { readFileToText } from "./read-file";
 import { routeCapture, type RouteAccount, type RouteHit } from "@/lib/route-capture";
 import styles from "./room.module.css";
@@ -26,17 +29,22 @@ type ChuteItem = {
     | "error"
     | "dupe"
     | "interrupted"
-    | "undone";
+    | "undone"
+    | "activity"
+    | "activityDone";
   text?: string;
   account?: { id: string; name: string };
   why?: string;
   candidates?: RouteHit[];
   filed?: number;
   opened?: number;
+  asks?: number; // questions the read queued for the record
+  learned?: number; // facts and lessons the read filed to the playbook
   reason?: string;
   claim?: string; // the read's own account name, on a mismatch
   batch?: number; // files thrown together — one drop, one batch
   archived?: boolean; // a call transcript's full text rode along
+  degraded?: boolean; // the reader was down; raw text filed, nothing routed
   noteIds?: string[]; // what this filing wrote — the undo's reach
 };
 
@@ -64,7 +72,8 @@ function loadLedger(): { items: StoredItem[]; maxKey: number } {
       x.state === "reading" ||
       x.state === "filing" ||
       x.state === "pick" ||
-      x.state === "mismatch"
+      x.state === "mismatch" ||
+      x.state === "activity"
         ? {
             ...x,
             state: "interrupted" as const,
@@ -88,10 +97,13 @@ function saveLedger(items: ChuteItem[]) {
       why: x.why,
       filed: x.filed,
       opened: x.opened,
+      asks: x.asks,
+      learned: x.learned,
       reason: x.reason,
       claim: x.claim,
       batch: x.batch,
       archived: x.archived,
+      degraded: x.degraded,
       noteIds: x.noteIds,
     }));
     localStorage.setItem(LEDGER_KEY, JSON.stringify({ day: chicagoDay(), items: slim }));
@@ -109,6 +121,10 @@ export function Chute({
 }) {
   const [items, setItems] = useState<ChuteItem[]>([]);
   const [hot, setHot] = useState(false);
+  // The ledger folds: the meter line says what is running, anything waiting
+  // on the operator's pick stays visible, and at most two other rows show —
+  // the page belongs to the opportunities, not the receipts.
+  const [ledgerOpen, setLedgerOpen] = useState(false);
   const seq = useRef(0);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const byName = [...roster].sort((a, b) => a.name.localeCompare(b.name));
@@ -145,7 +161,10 @@ export function Chute({
         state: "filed",
         filed: r.filed,
         opened: (r.opened ?? []).length,
+        asks: r.asks,
+        learned: r.learned,
         archived: r.archived,
+        degraded: r.readFailed,
         noteIds: r.noteIds,
       });
     else if (r.duplicate)
@@ -155,10 +174,67 @@ export function Chute({
     else patch(key, { state: "error", reason: r.reason ?? "The file didn't take." });
   };
 
+  // The activity report is the one file the Chute reads for the BOOK, not an
+  // account: blasts tally in the browser and never upload, slices post in
+  // verified batches, and the distillation narrates through the Intranet's
+  // gadget. Recognition is by parsed header fingerprint, first 4 KB only.
+  const swallowActivity = async (f: File, key: number) => {
+    patch(key, {
+      state: "activity",
+      reason: "The activity report. Reading it here — blasts tally in the browser.",
+    });
+    try {
+      const res = await uploadActivityReport({
+        file: f,
+        book: roster.map((r) => ({ id: r.id, name: r.name })),
+        post: activityStage,
+        progress: (line) => patch(key, { reason: line }),
+      });
+      if (!res.ok) {
+        patch(key, { state: "error", reason: res.reason ?? "The drop didn't take." });
+        return;
+      }
+      if (res.reply?.unchanged) {
+        patch(key, {
+          state: "dupe",
+          reason: "Nothing changed — the record already holds this drop.",
+        });
+        return;
+      }
+      patch(key, {
+        reason: `Verified complete — ${res.reply?.queued?.distill ?? 0} accounts to distill. Watch the gadget on the Intranet.`,
+      });
+      for (;;) {
+        const r = await activityRun();
+        if (r.done || !r.ok) {
+          patch(key, {
+            state: r.ok ? "activityDone" : "error",
+            reason: r.ok
+              ? (r.receipt[r.receipt.length - 1] ?? "The second record is distilled.")
+              : (r.reason ?? "The run stopped — the Intranet dock holds the receipt."),
+          });
+          return;
+        }
+        patch(key, {
+          reason: `Distilling — ${r.remaining} account${r.remaining === 1 ? "" : "s"} to go.`,
+        });
+      }
+    } catch {
+      patch(key, {
+        state: "error",
+        reason: "The drop broke midway. Drop it again — staging replaces wholesale.",
+      });
+    }
+  };
+
   const swallow = async (f: File, batch: number) => {
     const key = ++seq.current;
     setItems((xs) => [{ key, filename: f.name, state: "reading", batch }, ...xs]);
     try {
+      if (/\.csv$/i.test(f.name) && (await probeActivityReport(f))) {
+        await swallowActivity(f, key);
+        return;
+      }
       const read = await readFileToText(f, chuteReadPdf);
       if (!read.ok) {
         patch(key, { state: "error", reason: read.reason });
@@ -196,6 +272,141 @@ export function Chute({
     return top ? { id: top.id, name: top.name } : null;
   };
 
+  // One receipt row — shared by the folded view and the open ledger.
+  const renderItem = (it: ChuteItem) => (
+    <li key={it.key} className={styles.chuteItem}>
+      <span className={styles.chuteFile}>{it.filename}</span>
+      {it.state === "reading" && <span>Reading…</span>}
+      {it.state === "filing" && it.account && (
+        <span>
+          Filing to {it.account.name}… {it.why ? `(${it.why})` : ""}
+        </span>
+      )}
+      {it.state === "filed" && it.account && (
+        <span className={styles.chuteDone}>
+          ✓ {it.account.name} · {it.filed} filed
+          {it.degraded
+            ? " · the reader was down — raw text only, nothing routed; ↩ undo and re-drop when it's back"
+            : it.archived
+              ? " · transcript on file"
+              : ""}
+          {(it.opened ?? 0) > 0
+            ? ` · ${it.opened} action${it.opened === 1 ? "" : "s"} opened`
+            : ""}
+          {(it.asks ?? 0) > 0
+            ? ` · ${it.asks} ask${it.asks === 1 ? "" : "s"} queued`
+            : ""}
+          {(it.learned ?? 0) > 0 ? ` · ${it.learned} to the playbook` : ""}
+          {it.why ? ` · ${it.why}` : ""}
+          {(it.noteIds?.length ?? 0) > 0 && (
+            <button
+              type="button"
+              className={styles.chuteUndo}
+              title="Wrong account? Removes this filing's record entries."
+              onClick={() => {
+                const acct = it.account;
+                const ids = it.noteIds;
+                if (!acct || !ids?.length) return;
+                void roomPasteUndo(acct.id, ids).then((r) => {
+                  if (r.ok)
+                    patch(it.key, {
+                      state: "undone",
+                      reason: `Taken back from ${acct.name}. ${r.removed} removed.`,
+                    });
+                });
+              }}
+            >
+              ↩ undo
+            </button>
+          )}
+        </span>
+      )}
+      {it.state === "undone" && <span className={styles.chuteDupe}>{it.reason}</span>}
+      {it.state === "activity" && <span>{it.reason}</span>}
+      {it.state === "activityDone" && (
+        <span className={styles.chuteDone}>
+          ✓ the second record · {it.reason}{" "}
+          <a href="/intranet">The receipt waits on the Intranet.</a>
+        </span>
+      )}
+      {it.state === "error" && <span className={styles.chuteErr}>{it.reason}</span>}
+      {it.state === "dupe" && <span className={styles.chuteDupe}>{it.reason}</span>}
+      {it.state === "interrupted" && (
+        <span className={styles.chuteWarn}>{it.reason}</span>
+      )}
+      {(it.state === "pick" || it.state === "mismatch") && !it.text && (
+        <span className={styles.chuteWarn}>
+          The pick did not survive. Drop the file again.
+        </span>
+      )}
+      {(it.state === "pick" || it.state === "mismatch") && it.text && (
+        <span className={styles.chutePick}>
+          {it.state === "mismatch" ? (
+            <span className={styles.chuteErr}>
+              Reads like {it.claim || "another account"}. Pick the account.
+            </span>
+          ) : (
+            <span>No sure match. Pick the account.</span>
+          )}
+          {(() => {
+            const mate = it.state === "pick" ? batchMate(it) : null;
+            return (
+              mate && (
+                <button
+                  type="button"
+                  className={styles.chuteBtn}
+                  title="The rest of this drop filed there."
+                  onClick={() => {
+                    if (it.text)
+                      void fileTo(
+                        it.key,
+                        it.text,
+                        mate,
+                        "the rest of this drop went there",
+                        true,
+                      );
+                  }}
+                >
+                  File to {mate.name}
+                </button>
+              )
+            );
+          })()}
+          <select
+            className={styles.chuteSel}
+            defaultValue=""
+            onChange={(e) => {
+              const id = e.target.value;
+              const a = roster.find((x) => x.id === id);
+              if (a && it.text)
+                void fileTo(
+                  it.key,
+                  it.text,
+                  { id: a.id, name: a.name },
+                  "your call",
+                  true,
+                );
+            }}
+          >
+            <option value="" disabled>
+              Pick the account…
+            </option>
+            {(it.candidates ?? []).map((c) => (
+              <option key={`c${c.id}`} value={c.id}>
+                {c.name} · {c.why}
+              </option>
+            ))}
+            {byName.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.name}
+              </option>
+            ))}
+          </select>
+        </span>
+      )}
+    </li>
+  );
+
   if (!canWrite) return null;
 
   return (
@@ -228,7 +439,7 @@ export function Chute({
           ref={inputRef}
           type="file"
           multiple
-          accept=".eml,.msg,.pdf,.vtt,.txt,.md,.csv,.log,.json"
+          accept={DROP_ACCEPT}
           style={{ display: "none" }}
           onChange={(e) => {
             handleFiles(e.target.files);
@@ -238,154 +449,83 @@ export function Chute({
       </div>
 
       <p className={styles.chutePact}>
-        <b>The pact:</b> Emails, call transcripts (.vtt), and text read free in your
-        browser; PDFs read through Claude. Every file routes by the book — contact email,
-        then company domain, then account name — and files like a paste: with the API key
-        on, Claude splits the thread into dated entries, opens the commitments it finds,
-        queues the unknowns as asks, files competitor intel and lessons to the Playbook,
-        detects Closed Won or Lost, and flags a file that reads like the wrong account;
-        without the key the record still files by rules. Nothing files blind — no sure
-        match waits for your pick — nothing files twice — a re-drop of something already
-        on file is refused — receipts survive a reload, and HomeRoom, Groundwork,
-        Accounts, and Today re-read the record at once, the Intranet mirroring it on its
-        next sync.
+        <b>The pact:</b> Emails, call transcripts (.vtt), spreadsheets, Word documents,
+        and text read free in your browser; PDFs and images — screenshots included, HEIC
+        converts on the way in — read through Claude. Every file routes by the book —
+        contact email, then company domain, then account name — and files like a paste:
+        with the API key on, Claude splits the thread into dated entries, opens the
+        commitments it finds, queues the unknowns as asks, files competitor intel and
+        lessons to the Playbook, detects Closed Won or Lost, and flags a file that reads
+        like the wrong account; without the key the record still files by rules. Nothing
+        files blind — no sure match waits for your pick — nothing files twice — a re-drop
+        of something already on file is refused — receipts survive a reload, and HomeRoom,
+        Groundwork, Accounts, and Today re-read the record at once, the Intranet mirroring
+        it on its next sync.
       </p>
 
-      {items.length > 0 && (
-        <ul className={styles.chuteList}>
-          {items.map((it) => (
-            <li key={it.key} className={styles.chuteItem}>
-              <span className={styles.chuteFile}>{it.filename}</span>
-              {it.state === "reading" && <span>Reading…</span>}
-              {it.state === "filing" && it.account && (
-                <span>
-                  Filing to {it.account.name}… {it.why ? `(${it.why})` : ""}
-                </span>
-              )}
-              {it.state === "filed" && it.account && (
-                <span className={styles.chuteDone}>
-                  ✓ {it.account.name} · {it.filed} filed
-                  {it.archived ? " · transcript on file" : ""}
-                  {(it.opened ?? 0) > 0 ? ` · ${it.opened} actions opened` : ""}
-                  {it.why ? ` · ${it.why}` : ""}
-                  {(it.noteIds?.length ?? 0) > 0 && (
+      {items.length > 0 &&
+        (() => {
+          const running = items.filter(
+            (x) =>
+              x.state === "reading" || x.state === "filing" || x.state === "activity",
+          );
+          const waiting = items.filter(
+            (x) => x.state === "pick" || x.state === "mismatch",
+          );
+          const meter = [
+            running.length > 0 ? `${running.length} running` : "",
+            waiting.length > 0
+              ? `${waiting.length} need${waiting.length === 1 ? "s" : ""} your pick`
+              : "",
+            `${items.length - running.length - waiting.length} settled today`,
+          ]
+            .filter(Boolean)
+            .join(" · ");
+          // Folded: everything waiting on the operator, then the freshest two
+          // of the rest. items is newest-first; keep that order.
+          const visible = new Set<number>(waiting.map((x) => x.key));
+          if (!ledgerOpen) {
+            let extra = 0;
+            for (const x of items) {
+              if (visible.has(x.key)) continue;
+              if (extra >= 2) break;
+              visible.add(x.key);
+              extra++;
+            }
+          }
+          const shown = ledgerOpen ? items : items.filter((x) => visible.has(x.key));
+          const hidden = items.length - shown.length;
+          return (
+            <>
+              <div className={styles.chuteMeter}>
+                <span className={styles.chuteMeterLine}>{meter}</span>
+                {(hidden > 0 || ledgerOpen) && (
+                  <button
+                    type="button"
+                    className={styles.chuteFold}
+                    onClick={() => setLedgerOpen((v) => !v)}
+                  >
+                    {ledgerOpen ? "Fold the ledger" : `Open the ledger · ${items.length}`}
+                  </button>
+                )}
+              </div>
+              <ul className={styles.chuteList}>
+                {shown.map(renderItem)}
+                {ledgerOpen && (
+                  <li>
                     <button
                       type="button"
-                      className={styles.chuteUndo}
-                      title="Wrong account? Removes this filing's record entries."
-                      onClick={() => {
-                        const acct = it.account;
-                        const ids = it.noteIds;
-                        if (!acct || !ids?.length) return;
-                        void roomPasteUndo(acct.id, ids).then((r) => {
-                          if (r.ok)
-                            patch(it.key, {
-                              state: "undone",
-                              reason: `Taken back from ${acct.name}. ${r.removed} removed.`,
-                            });
-                        });
-                      }}
+                      className={styles.chuteClear}
+                      onClick={() => setItems([])}
                     >
-                      ↩ undo
+                      Clear the receipts
                     </button>
-                  )}
-                </span>
-              )}
-              {it.state === "undone" && (
-                <span className={styles.chuteDupe}>{it.reason}</span>
-              )}
-              {it.state === "error" && (
-                <span className={styles.chuteErr}>{it.reason}</span>
-              )}
-              {it.state === "dupe" && (
-                <span className={styles.chuteDupe}>{it.reason}</span>
-              )}
-              {it.state === "interrupted" && (
-                <span className={styles.chuteWarn}>{it.reason}</span>
-              )}
-              {(it.state === "pick" || it.state === "mismatch") && !it.text && (
-                <span className={styles.chuteWarn}>
-                  The pick did not survive. Drop the file again.
-                </span>
-              )}
-              {(it.state === "pick" || it.state === "mismatch") && it.text && (
-                <span className={styles.chutePick}>
-                  {it.state === "mismatch" ? (
-                    <span className={styles.chuteErr}>
-                      Reads like {it.claim || "another account"}. Pick the account.
-                    </span>
-                  ) : (
-                    <span>No sure match. Pick the account.</span>
-                  )}
-                  {(() => {
-                    const mate = it.state === "pick" ? batchMate(it) : null;
-                    return (
-                      mate && (
-                        <button
-                          type="button"
-                          className={styles.chuteBtn}
-                          title="The rest of this drop filed there."
-                          onClick={() => {
-                            if (it.text)
-                              void fileTo(
-                                it.key,
-                                it.text,
-                                mate,
-                                "the rest of this drop went there",
-                                true,
-                              );
-                          }}
-                        >
-                          File to {mate.name}
-                        </button>
-                      )
-                    );
-                  })()}
-                  <select
-                    className={styles.chuteSel}
-                    defaultValue=""
-                    onChange={(e) => {
-                      const id = e.target.value;
-                      const a = roster.find((x) => x.id === id);
-                      if (a && it.text)
-                        void fileTo(
-                          it.key,
-                          it.text,
-                          { id: a.id, name: a.name },
-                          "your call",
-                          true,
-                        );
-                    }}
-                  >
-                    <option value="" disabled>
-                      Pick the account…
-                    </option>
-                    {(it.candidates ?? []).map((c) => (
-                      <option key={`c${c.id}`} value={c.id}>
-                        {c.name} · {c.why}
-                      </option>
-                    ))}
-                    {byName.map((a) => (
-                      <option key={a.id} value={a.id}>
-                        {a.name}
-                      </option>
-                    ))}
-                  </select>
-                </span>
-              )}
-            </li>
-          ))}
-          <li>
-            <button
-              type="button"
-              className={styles.chuteClear}
-              onClick={() => setItems([])}
-            >
-              Clear the receipts
-            </button>
-          </li>
-        </ul>
-      )}
+                  </li>
+                )}
+              </ul>
+            </>
+          );
+        })()}
     </section>
   );
 }

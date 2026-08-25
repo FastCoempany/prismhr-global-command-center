@@ -42,6 +42,25 @@ const OFF_BOOK: Peo[] = [
     fit: 85,
     fitTier: "high",
   },
+  {
+    // Added by request 2026-08-14, researched same day (see research.json).
+    // Not in the SF export — a Kansas City CPEO, family-owned since 1988.
+    id: "AXCETHR000000001",
+    name: "Axcet HR Solutions",
+    cloud: "",
+    csm: "Unassigned",
+    contactName: "Jerry Diddle", // founder & president — no live thread yet
+    contactEmail: "",
+    size: 0, // own WSE count undisclosed; honest zero over a guess
+    sizeBucket: "",
+    industry: "PEO/ASO",
+    city: "Overland Park",
+    state: "KS",
+    website: "axcethr.com",
+    lastActivity: "",
+    fit: 40,
+    fitTier: "low",
+  },
 ];
 
 export const peos = [...(book.peos as Peo[]), ...OFF_BOOK];

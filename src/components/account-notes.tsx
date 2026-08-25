@@ -12,6 +12,7 @@ function fmtWhen(iso: string): string {
   const t = Date.parse(iso);
   if (Number.isNaN(t)) return "";
   return new Date(t).toLocaleString("en-US", {
+    timeZone: "America/Chicago",
     month: "short",
     day: "numeric",
     hour: "numeric",
@@ -67,17 +68,24 @@ function NoteRow({ n }: { n: ChipNote }) {
 // actions completed from Today. This is the default register — background
 // intel lives in its own fold below.
 export function AccountChipNotes({ notes }: { notes: ChipNote[] }) {
+  // Rests as one line (founder-decreed 2026-08-20): the record is depth, not
+  // arrival — a double-click into the account is looking for the high-level
+  // read and the people, never a wall of dated entries.
+  const [open, setOpen] = useState(false);
   if (!notes || notes.length === 0) return null;
   return (
     <div className={styles.wrap}>
-      <div className={styles.head}>
-        <span className={styles.tag}>Record &amp; history</span>
+      <button
+        type="button"
+        className={styles.bgToggle}
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+      >
+        {open ? "▾" : "▸"} Record &amp; history
         <span className={styles.count}>{notes.length}</span>
         <span className={styles.hint}>notes, sends, and the work you closed, dated</span>
-      </div>
-      {notes.map((n) => (
-        <NoteRow key={n.id} n={n} />
-      ))}
+      </button>
+      {open && notes.map((n) => <NoteRow key={n.id} n={n} />)}
     </div>
   );
 }
@@ -112,36 +120,47 @@ export function BackgroundIntel({ notes }: { notes: ChipNote[] }) {
 // threads AND the background traffic — one row each, joined against the
 // contact roster for title/email.
 export function PeopleIndex({ people }: { people: PersonRow[] }) {
+  // Rests as one line (founder-decreed 2026-08-20), like every section.
+  const [open, setOpen] = useState(false);
   if (!people || people.length === 0) return null;
   return (
     <div className={styles.wrap}>
-      <div className={styles.head}>
-        <span className={styles.tag}>People</span>
+      <button
+        type="button"
+        className={styles.bgToggle}
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+      >
+        {open ? "▾" : "▸"} People
         <span className={styles.count}>{people.length}</span>
         <span className={styles.hint}>
           everyone in this account&apos;s traffic, your threads and the background
         </span>
-      </div>
-      {people.map((p) => (
-        <div key={p.name} className={styles.person}>
-          <span className={styles.personWho}>
-            <b>{p.name}</b>
-            {p.title && <span className={styles.personTitle}> — {p.title}</span>}
-          </span>
-          <span className={styles.personMeta}>
-            {p.inMine && <span className={styles.laneMine}>your threads</span>}
-            {p.inBackground && <span className={styles.laneBg}>case traffic</span>}×
-            {p.count}
-            {p.lastSeen && <> · last {fmtWhen(p.lastSeen)}</>}
-            {p.lastContext && (
-              <span className={styles.personCtx} title={p.lastContext}>
-                {" "}
-                · {p.lastContext}
+      </button>
+      {!open ? null : (
+        <>
+          {people.map((p) => (
+            <div key={p.name} className={styles.person}>
+              <span className={styles.personWho}>
+                <b>{p.name}</b>
+                {p.title && <span className={styles.personTitle}> — {p.title}</span>}
               </span>
-            )}
-          </span>
-        </div>
-      ))}
+              <span className={styles.personMeta}>
+                {p.inMine && <span className={styles.laneMine}>your threads</span>}
+                {p.inBackground && <span className={styles.laneBg}>case traffic</span>}×
+                {p.count}
+                {p.lastSeen && <> · last {fmtWhen(p.lastSeen)}</>}
+                {p.lastContext && (
+                  <span className={styles.personCtx} title={p.lastContext}>
+                    {" "}
+                    · {p.lastContext}
+                  </span>
+                )}
+              </span>
+            </div>
+          ))}
+        </>
+      )}
     </div>
   );
 }
@@ -149,22 +168,30 @@ export function PeopleIndex({ people }: { people: PersonRow[] }) {
 // Surfaces the notetaker notes linked to an account, read-only. Renders nothing
 // when there are none.
 export function AccountNotes({ notes }: { notes: LinkedNote[] }) {
+  // Rests as one line (founder-decreed 2026-08-20), like every section.
+  const [open, setOpen] = useState(false);
   if (!notes || notes.length === 0) return null;
   return (
     <div className={styles.wrap}>
-      <div className={styles.head}>
-        <span className={styles.tag}>Notes</span>
+      <button
+        type="button"
+        className={styles.bgToggle}
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+      >
+        {open ? "▾" : "▸"} Notes
         <span className={styles.count}>{notes.length}</span>
         <span className={styles.hint}>from your notetaker · edit on Today</span>
-      </div>
-      {notes.map((n) => (
-        <div key={n.id} className={`${styles.note} ${n.done ? styles.done : ""}`}>
-          <span className={styles.body}>{n.body.trim() || "(empty note)"}</span>
-          {n.remindAt ? (
-            <span className={styles.when}>📅 {fmtWhen(n.remindAt)}</span>
-          ) : null}
-        </div>
-      ))}
+      </button>
+      {open &&
+        notes.map((n) => (
+          <div key={n.id} className={`${styles.note} ${n.done ? styles.done : ""}`}>
+            <span className={styles.body}>{n.body.trim() || "(empty note)"}</span>
+            {n.remindAt ? (
+              <span className={styles.when}>📅 {fmtWhen(n.remindAt)}</span>
+            ) : null}
+          </div>
+        ))}
     </div>
   );
 }
