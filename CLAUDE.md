@@ -143,14 +143,16 @@ any surface, ever, unless explicitly directed.
    service front, billing, the go-to person) gets discovery, not just the
    client's deal — the record shows prospects volunteering exactly this when
    unasked.
-8. **The conversational register.** The test is how people converse, not how
-   they write. No mid-sentence noun catalogs ("— the cost, the timeline, and
-   the contract"); deliverables get said as spoken clauses ("what it would
-   cost, how long it would take, and what everyone signs"). Abstract claims
-   name a couple of concrete examples ("required employer costs — pension
-   and social contributions, in some places a mandated extra month's pay"),
-   never figures. Enumerations render as bullets with a plain subtext line
-   explaining each.
+8. **The conversational register.** The plain-speech law above applies in
+   full: the seven rhetorical devices, invented slang, constructed phrasing,
+   and reassurance flourishes are all banned here. Beyond it, the test is how
+   people converse, not how they write. No mid-sentence noun catalogs ("— the
+   cost, the timeline, and the contract"); deliverables get said as spoken
+   clauses ("what it would cost, how long it would take, and what everyone
+   signs"). Abstract claims name a couple of concrete examples ("required
+   employer costs — pension and social contributions, in some places a
+   mandated extra month's pay"), never figures. Enumerations render as
+   bullets with a plain subtext line explaining each.
 9. **The armer doctrine.** This is a channel sale — the same partner across
    the table for years. Offers of help keep us on their side of the table; a
    probe that makes them account for themselves moves us across it. Every
