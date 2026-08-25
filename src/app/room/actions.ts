@@ -1270,11 +1270,16 @@ export async function roomRecordEdit(
     const lines = n.body.split("\n");
     const glyph = /^[✉✓☰✎✔☎]/.exec(n.body)?.[0];
     // Strip any glyph the client's edit box carried back so glyphs never stack.
-    const bare = clean.replace(/^[✉✓☰✎✔☎⚡▢]\s?/, "").trim();
+    const bare = clean
+      .replace(/^[✉✓☰✎✔☎⚡▢]\s?/, "")
+      .trim()
+      .slice(0, 500);
     lines[0] = glyph ? `${glyph} ${bare}` : bare;
+    // Cap the EDITED LINE, never the whole body — a whole-body cap here once
+    // amputated a 60k-char archived transcript down to its first 8,000 chars.
     await prisma.accountNote.update({
       where: { id },
-      data: { body: lines.join("\n").slice(0, 8000) },
+      data: { body: lines.join("\n") },
     });
     refresh();
     return { ok: true };
