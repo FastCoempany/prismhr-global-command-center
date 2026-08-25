@@ -14,6 +14,11 @@ export type KnownAccount = { id: string; name: string };
 // left unworked comes back saying so. Namespaced like every other marker the
 // app keeps in AccountDisposition (pastehash:, gap-dismiss:, done-filed:), so
 // it costs no migration and never collides with a real account id.
+// Written with "parked" because that is the status loadDispositions() keeps —
+// the same choice done-filed: and loss-dismiss: make. The key carries the
+// meaning; the status column only decides whether the row survives the read.
+export const MOVE_DONE_STATUS = "parked";
+
 export function moveDoneKey(accountId: string, now: Date = new Date()): string {
   return `move-done:${accountId}:${chicagoDay(now.toISOString())}`.slice(0, 191);
 }

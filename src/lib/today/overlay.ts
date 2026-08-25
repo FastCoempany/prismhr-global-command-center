@@ -193,6 +193,22 @@ export async function loadPartnerNotes(): Promise<Map<string, PartnerNote[]>> {
 // "not-mine" = another rep's account (excluded everywhere, ledgered with the
 // reason); "parked" = deliberately shelved.
 export type DispositionStatus = "motion" | "not-mine" | "parked";
+
+// The only statuses loadDispositions() keeps. Anything else is dropped on the
+// floor — a real trap for the namespaced markers sharing this table
+// (pastehash:, gap-dismiss:, done-filed:, move-done:): a marker written with a
+// status outside this set is invisible to every page that reads the map, and
+// looks exactly like a marker that was never written. Markers that must
+// survive a reload use "parked".
+export const LOADED_DISPOSITION_STATUSES: readonly DispositionStatus[] = [
+  "motion",
+  "not-mine",
+  "parked",
+];
+
+export function isLoadedDispositionStatus(s: string): s is DispositionStatus {
+  return (LOADED_DISPOSITION_STATUSES as readonly string[]).includes(s);
+}
 export type Disposition = {
   status: DispositionStatus;
   reason: string;
@@ -205,8 +221,7 @@ export async function loadDispositions(): Promise<Map<string, Disposition>> {
     const rows = await getPrisma().accountDisposition.findMany();
     const out = new Map<string, Disposition>();
     for (const r of rows) {
-      if (r.status !== "motion" && r.status !== "not-mine" && r.status !== "parked")
-        continue;
+      if (!isLoadedDispositionStatus(r.status)) continue;
       out.set(r.accountId, {
         status: r.status,
         reason: r.reason,
