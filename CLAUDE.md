@@ -72,8 +72,20 @@ prose the operator reads — obeys these rules everywhere in the app:
 ## The plain-speech law (founder-decreed 2026-08-25)
 
 Authored speech everywhere — playbook asks and glosses, fact lines, operator
-guidance, generated prose — bans rhetorical engineering. The seven devices,
-named and dead:
+guidance, generated prose, composed drafts — bans rhetorical engineering.
+Three voices exist in this app, and the law reads differently per voice: the
+app speaking to the operator (the writing canon above governs — imperative,
+terse, no hedging), the seller speaking to a prospect (this law in full, plus
+the conversational register), and the prospect's simulated speech in answer
+rows (realism governs — hedged, incomplete, human; the writing canon's
+no-hedging rule does NOT apply there, because real people hedge). An
+imperative instruction ("Send the model") is the app doing its job; the
+banned maxim is generalized wisdom performed as a truth ("controlled beats
+discovered"). Seller-side narration — pipeline talk in anything a prospect
+will read or hear, drafts included — is banned under this law app-wide. Out
+of scope: this file itself, code, comments, and commit messages are
+engineering documentation, not operator copy. The seven devices, named and
+dead:
 
 1. **Antithesis** — "not X, but Y" ("a person, not a queue").
 2. **Paradox** — two states that shouldn't coexist ("a call that ends hasn't
@@ -118,7 +130,10 @@ any surface, ever, unless explicitly directed.
    tail — and the spoken why is the prospect's why, what answering gets THEM.
    Seller-side narration is banned from spoken lines ("we've got a live deal
    to work" is pipeline talk); tactical framing lives only in operator-facing
-   leads the prospect never hears.
+   leads the prospect never hears. Thirty minutes is the depth of the design,
+   not a stopwatch: no path exits before the give-back and the close, and
+   nothing pads to fill a clock. When the prospect ends the call early, the
+   close ritual still runs.
 2. **One thought, one question.** A question carries exactly one thought;
    jumbled asks are banned. The line of questioning works one client at a
    time — it never switches mid-chain into a survey of the whole client base.
@@ -141,8 +156,8 @@ any surface, ever, unless explicitly directed.
    are asked directly, and a firsthand line the tape itself holds stands.
 6. **The give-back law.** Before any next-step ask, play back what their
    answers add up to — a read-out per arc, bulleted, ending on a check
-   question. The teach paths' give-back is the list itself. Gathering all
-   call and then asking for a next step is banned.
+   question. The teach paths' give-back is the list itself. Gathering facts
+   for a whole call and then asking for a next step is banned.
 7. **The sweep law.** A path arriving at the close with a next step already
    set and dated skips the ritual ask (never re-ask a settled thing) and runs
    the room sweep instead — which explicitly steps past the client on deck
@@ -160,8 +175,19 @@ any surface, ever, unless explicitly directed.
    haven't thought about what we'd charge." The PEO's own operation (systems,
    service front, billing, the go-to person) gets discovery, not just the
    client's deal — the record shows prospects volunteering exactly this when
-   unasked.
-10. **The conversational register.** The plain-speech law above applies in
+   unasked. On a live-client path the client's deal comes first and the
+   operation's discovery rides after the read-out; when no client exists,
+   the operation IS the call. An answer's branch is the next thing the
+   seller says, never a jump to a new topic the answer didn't open.
+10. **Coverage.** Every ask's answer rows cover the responses the record
+    shows plus the realistic don't-know — a reply or voiced question the
+    tape or the filed record holds must have a row or a floor chip; a
+    missing realistic response is a bug, not a simplification.
+11. **Every exchange lands.** A floor question runs to an intelligent end:
+    the answer, the ask-back, the replies they'd actually give, and each
+    reply's response through to a landing. No exchange ends mid-air, and no
+    ask is left with nothing to say after they answer.
+12. **The conversational register.** The plain-speech law above applies in
    full: the seven rhetorical devices, invented slang, constructed phrasing,
    and reassurance flourishes are all banned here. Beyond it, the test is how
    people converse, not how they write. No mid-sentence noun catalogs ("— the
@@ -172,22 +198,30 @@ any surface, ever, unless explicitly directed.
    mandated extra month's pay"), never figures. Enumerations render as
    bullets with a plain subtext line explaining each. Answer rows ("if they
    say") are realistic speech — hedged, incomplete, human ("Honestly, I'd
-   have to ask them") — never engineered paraphrases nobody would say. A term
-   of art spoken to a prospect carries its gloss in the same breath, on the
-   same card.
-11. **The armer doctrine.** This is a channel sale — the same partner across
+   have to ask them") — never engineered paraphrases nobody would say, and
+   never carrying stage directions inside the quotes. A term of art spoken
+   to a prospect carries its gloss in the same breath, on the same card.
+13. **The armer doctrine.** This is a channel sale — the same partner across
    the table for years. Offers of help keep us on their side of the table; a
    probe that makes them account for themselves moves us across it. The test,
    per exchange: does the prospect leave holding something — a fact they
    needed, a document, a next step — or holding a debt, an account of
    themselves they owed us? Every ask and follow-up passes it.
-12. **Evidence or nothing.** Every lead and cite reads a rung of the
+14. **Evidence or nothing.** Every lead and cite reads a rung of the
     evidence ladder, strongest first: transcripts → filed threads → call
     notes → lessons, gems, and the gap ledger → research and team intel.
     Only nothing on any rung makes a thing unproven — and unproven ground is
     marked (∅), never faked. Nothing is invented: no origin stories, no
-    facts the record doesn't hold. Cite labels (ON TAPE / FILED THREAD /
-    CALL NOTES / ❖ LESSON) are evidence, never coined doctrine slogans.
+    facts the record doesn't hold. Cite labels name their rung — ON TAPE /
+    FILED THREAD / CALL NOTES / ❖ LESSON / RESEARCH / TEAM INTEL, compounds
+    allowed when a thing stands on two rungs — and are evidence, never
+    coined doctrine slogans.
+15. **The ship audit.** A playbook surface is delivered only after its
+    audits run clean, every time it changes: the graph audit (every node
+    reachable, every path ends in a close, every don't-know routed to a
+    teach or a list), the scans (account and person names, money, speech),
+    and an adversarial read against every law above. The passes are part of
+    authoring, not a favor to ask for.
 
 ## The direct doctrine (Russ Jones, SVP of Sales — SKO, Kansas City, 2026-08-03/06)
 
