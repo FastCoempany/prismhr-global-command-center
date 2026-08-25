@@ -96,9 +96,16 @@ reassurance flourishes ("and they shouldn't have to," "no judgment"). The
 register target is "totally fine" — words a person would actually say.
 Genuine content survives: tape quotes verbatim, real lists of three actual
 things, real two-case explanations, and precision repetition an ask itself
-needs ("not an office, not a bank account, a registered company"). The test,
-line by line: read it flat — does it still do work, and would a person say it
-without feeling like they're delivering a line?
+needs ("not an office, not a bank account, a registered company"). Three
+boundaries, so the law cuts the right things: a dash as ordinary speech
+punctuation is fine — the device is the dash as a hinge delivering an
+implication as a beat. A comparison of two real options or quantities is
+content ("one demo instead of three"); the device is two halves restating one
+idea for rhythm. Reassurance that states a fact is fine ("most partners can't
+answer these off the top of their head"); the flourish that performs empathy
+("no judgment," "they shouldn't have to") is not. The test, line by line:
+read it flat — does it still do work, and would a person say it without
+feeling like they're delivering a line?
 
 ## The playbook authoring canon (founder-decreed 2026-08-25)
 
@@ -112,30 +119,41 @@ any surface, ever, unless explicitly directed.
    Seller-side narration is banned from spoken lines ("we've got a live deal
    to work" is pipeline talk); tactical framing lives only in operator-facing
    leads the prospect never hears.
-2. **Teach on every don't-know.** A don't-know is never a dead end: hand them
+2. **One thought, one question.** A question carries exactly one thought;
+   jumbled asks are banned. The line of questioning works one client at a
+   time — it never switches mid-chain into a survey of the whole client base.
+3. **Only questions that must be asked.** The asked-for-what-arrives species
+   is banned: a question whose answer arrives on its own — implied by a
+   bigger fork already taken, or surfacing naturally at logistics (support
+   routing, client counts) — is never asked. The app never asks what it can
+   read, and the seller never asks what the conversation will hand over
+   anyway.
+4. **Teach on every don't-know.** A don't-know is never a dead end: hand them
    the exact list to gather, send it today, and book time to go through the
    answers together. Every don't-know routes to a teach or files a question
    to the client list. Loaded questions name their kinds ("promised anything
    — a start date, a salary, benefits, a title?").
-3. **The secondhand law.** A PEO holds its client's facts secondhand at best.
+5. **The secondhand law.** A PEO holds its client's facts secondhand at best.
    Asks about a client's hiring stage, pay, or registrations speak in relayed
    knowledge ("did the client say…"), answer rows reflect what a PEO would
    actually know, and a don't-know option always exists on client-fact asks.
-4. **The give-back law.** Before any next-step ask, play back what their
+   Facts the PEO holds firsthand — their own operation, their own referrals —
+   are asked directly, and a firsthand line the tape itself holds stands.
+6. **The give-back law.** Before any next-step ask, play back what their
    answers add up to — a read-out per arc, bulleted, ending on a check
    question. The teach paths' give-back is the list itself. Gathering all
    call and then asking for a next step is banned.
-5. **The sweep law.** A path arriving at the close with a next step already
+7. **The sweep law.** A path arriving at the close with a next step already
    set and dated skips the ritual ask (never re-ask a settled thing) and runs
    the room sweep instead — which explicitly steps past the client on deck
    before fishing for the next one. A surfaced client loops back into the
    consult on the same call.
-6. **The close ritual.** Every path ends with a next step on the calendar.
+8. **The close ritual.** Every path ends with a next step on the calendar.
    The ritual ask is the taped verbatim; the locks (demo booked with the room
    named, numbers with a review call booked, the internal-meeting re-convene
    with the one-pager out, the digest menu with a Friday time theirs to
    cancel) close every call.
-7. **Discovery progresses naturally and anticipates nuance.** Each question
+9. **Discovery progresses naturally and anticipates nuance.** Each question
    grows out of the answer before it — no checklists. Answer rows carry the
    nuance a real PEO brings: mixed setups, "it depends on the client," the
    wrong person on the call (files internal homework and moves on), "we
@@ -143,7 +161,7 @@ any surface, ever, unless explicitly directed.
    service front, billing, the go-to person) gets discovery, not just the
    client's deal — the record shows prospects volunteering exactly this when
    unasked.
-8. **The conversational register.** The plain-speech law above applies in
+10. **The conversational register.** The plain-speech law above applies in
    full: the seven rhetorical devices, invented slang, constructed phrasing,
    and reassurance flourishes are all banned here. Beyond it, the test is how
    people converse, not how they write. No mid-sentence noun catalogs ("— the
@@ -152,15 +170,24 @@ any surface, ever, unless explicitly directed.
    signs"). Abstract claims name a couple of concrete examples ("required
    employer costs — pension and social contributions, in some places a
    mandated extra month's pay"), never figures. Enumerations render as
-   bullets with a plain subtext line explaining each.
-9. **The armer doctrine.** This is a channel sale — the same partner across
+   bullets with a plain subtext line explaining each. Answer rows ("if they
+   say") are realistic speech — hedged, incomplete, human ("Honestly, I'd
+   have to ask them") — never engineered paraphrases nobody would say. A term
+   of art spoken to a prospect carries its gloss in the same breath, on the
+   same card.
+11. **The armer doctrine.** This is a channel sale — the same partner across
    the table for years. Offers of help keep us on their side of the table; a
-   probe that makes them account for themselves moves us across it. Every
-   ask and follow-up passes that test.
-10. **Evidence or nothing.** Every lead and cite reads a rung of the ladder
-    (ON TAPE / FILED THREAD / CALL NOTES / ❖ LESSON); nothing is invented —
-    no origin stories, no facts the record doesn't hold. Cite labels are
-    evidence, never coined doctrine slogans.
+   probe that makes them account for themselves moves us across it. The test,
+   per exchange: does the prospect leave holding something — a fact they
+   needed, a document, a next step — or holding a debt, an account of
+   themselves they owed us? Every ask and follow-up passes it.
+12. **Evidence or nothing.** Every lead and cite reads a rung of the
+    evidence ladder, strongest first: transcripts → filed threads → call
+    notes → lessons, gems, and the gap ledger → research and team intel.
+    Only nothing on any rung makes a thing unproven — and unproven ground is
+    marked (∅), never faked. Nothing is invented: no origin stories, no
+    facts the record doesn't hold. Cite labels (ON TAPE / FILED THREAD /
+    CALL NOTES / ❖ LESSON) are evidence, never coined doctrine slogans.
 
 ## The direct doctrine (Russ Jones, SVP of Sales — SKO, Kansas City, 2026-08-03/06)
 
