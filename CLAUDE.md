@@ -69,6 +69,37 @@ prose the operator reads — obeys these rules everywhere in the app:
     retired; say it as plain history: "they've only done business
     domestically up to this point."
 
+## The plain-speech law (founder-decreed 2026-08-25)
+
+Authored speech everywhere — playbook asks and glosses, fact lines, operator
+guidance, generated prose — bans rhetorical engineering. The seven devices,
+named and dead:
+
+1. **Antithesis** — "not X, but Y" ("a person, not a queue").
+2. **Paradox** — two states that shouldn't coexist ("a call that ends hasn't
+   ended").
+3. **Maxim** — imperative wisdom, no hedging ("controlled beats discovered").
+4. **Definitional flip** — redefining a familiar word ("questions now are
+   free — later they're change orders").
+5. **Consequence closer** — statement, dash, implication ("— the close
+   arrives earned").
+6. **Escalating triad** — three beats arranged so the third lands ("their
+   pay, our employment, our answer").
+7. **Chiasmus** — ABBA inversion ("inside the machine, not beside it").
+
+A line balanced on a device gets rewritten as a flat declarative carrying the
+same fact. A line with no content once the device is stripped was decoration
+and dies. Banned under the same law: invented slang ("read-back," "when it's
+home"), constructed non-conversational phrasing ("on the first pass," "which
+shape is your client," "unlocks the full shape"), and performative
+reassurance flourishes ("and they shouldn't have to," "no judgment"). The
+register target is "totally fine" — words a person would actually say.
+Genuine content survives: tape quotes verbatim, real lists of three actual
+things, real two-case explanations, and precision repetition an ask itself
+needs ("not an office, not a bank account, a registered company"). The test,
+line by line: read it flat — does it still do work, and would a person say it
+without feeling like they're delivering a line?
+
 ## The direct doctrine (Russ Jones, SVP of Sales — SKO, Kansas City, 2026-08-03/06)
 
 The CSM gate is down. Sellers are greenlit to market, sell, and reach out
