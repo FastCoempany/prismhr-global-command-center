@@ -240,9 +240,13 @@ LEAD["Portugal"] = [
  "Notice scales to 75 days past ten years of service.",
 ]
 LEAD["Puerto Rico"] = [
- "US federal law and Puerto Rico's own labour code both apply, and they are not the same rules.",
- "Unjust dismissal carries the mesada — three months' salary plus two weeks per year of service for anyone hired since January 2017.",
- "Vacation and sick leave accrue by the month, and the accrual rate depends on the hire date.",
+ "Two bodies of law apply at once — US federal statutes and Puerto Rico's own code — and where they differ the more generous one governs.",
+ "The Christmas bonus is statutory: 2% of wages earned to a 600 dollar cap at 21 or more employees, 300 below that, paid between 15 November and 15 December.",
+ "Overtime runs on the calendar day as well as the week, at time and a half past eight hours in a day.",
+ "The meal period has to start between the third and the sixth hour, and work through it is paid at time and a half on top of any overtime owed.",
+ "Unjust dismissal carries the mesada: three months' salary plus two weeks per year of service for anyone hired since 26 January 2017.",
+ "Three registrations before anyone is paid — Hacienda for income tax, the Department of Labor for unemployment and SINOT disability, and the State Insurance Fund for workers' compensation, which is a government monopoly you cannot buy around.",
+ "Act 4-2017 split the workforce by hire date: vacation accrual, sick leave and the mesada all differ for anyone hired before 26 January 2017.",
 ]
 LEAD["Romania"] = [
  "The burden sits on the employee — 25% social insurance and 10% health — with the employer paying a 2.25% work insurance contribution.",
