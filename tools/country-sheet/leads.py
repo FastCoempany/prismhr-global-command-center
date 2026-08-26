@@ -4,8 +4,14 @@
 The sixteen points are the same sixteen everywhere, and that is the problem the
 founder named: read as a block they say nothing about THIS country. These lines
 run above them and say what is specific here — the fact that makes running this
-one in-house a project rather than a payroll entry. Each line traces to that
-country's own bullets; nothing here is added from outside them.
+one in-house a project rather than a payroll entry.
+
+Most lines trace to that country's own sixteen. Some do not, and cannot: the
+sixteen have no slot for a statutory bonus outside salary, for the registrations
+owed before day one, for an insurance you must buy from one named provider, or
+for a rule that splits by hire date or headcount. Those are sourced separately
+and named as such in the commit that adds them. Puerto Rico is the worked
+example.
 """
 import json, io, os
 
@@ -240,13 +246,13 @@ LEAD["Portugal"] = [
  "Notice scales to 75 days past ten years of service.",
 ]
 LEAD["Puerto Rico"] = [
+ "Running the person on a mainland US payroll does not make them compliant. Income tax withholding belongs to Hacienda and not the IRS, year end is a 499R-2 instead of a W-2, and unemployment runs through Puerto Rico's own fund. FICA and FUTA genuinely are federal, which is why the setup looks like it is working.",
+ "Workers' compensation comes only from the State Insurance Fund. A mainland policy does not cover the employee, and without a Fund policy the employer loses its immunity from being sued directly.",
  "Two bodies of law apply at once — US federal statutes and Puerto Rico's own code — and where they differ the more generous one governs.",
  "The Christmas bonus is statutory: 2% of wages earned to a 600 dollar cap at 21 or more employees, 300 below that, paid between 15 November and 15 December.",
- "Overtime runs on the calendar day as well as the week, at time and a half past eight hours in a day.",
- "The meal period has to start between the third and the sixth hour, and work through it is paid at time and a half on top of any overtime owed.",
+ "Overtime runs on the calendar day as well as the week, at time and a half past eight hours in a day, and the meal period has to start between the third and the sixth hour or the time worked through it is paid at a premium too.",
  "Unjust dismissal carries the mesada: three months' salary plus two weeks per year of service for anyone hired since 26 January 2017.",
- "Three registrations before anyone is paid — Hacienda for income tax, the Department of Labor for unemployment and SINOT disability, and the State Insurance Fund for workers' compensation, which is a government monopoly you cannot buy around.",
- "Act 4-2017 split the workforce by hire date: vacation accrual, sick leave and the mesada all differ for anyone hired before 26 January 2017.",
+ "Three registrations before anyone is paid: Hacienda for income tax, the Department of Labor for unemployment and SINOT disability, and the State Insurance Fund for workers' compensation.",
 ]
 LEAD["Romania"] = [
  "The burden sits on the employee — 25% social insurance and 10% health — with the employer paying a 2.25% work insurance contribution.",
