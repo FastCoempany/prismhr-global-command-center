@@ -8,11 +8,12 @@
 // never a private narrow one).
 
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
-import { peos } from "@/lib/book";
+import { csms, peos } from "@/lib/book";
 import { contactsFor } from "@/lib/book/contacts";
 import { relationshipFor } from "@/lib/intel/relationship";
 import { isMeetingNote } from "@/lib/intel/meeting";
 import { lastTouchRead } from "@/lib/room/touch";
+import { isHomeSideName } from "@/lib/intel/provenance";
 import { todoBelongsTo } from "@/lib/room/sheet-view";
 import { visibleText } from "@/lib/today/route-notes";
 import { redactMoney } from "@/lib/intel/lexicon";
@@ -138,6 +139,7 @@ export async function liveReadFor(question: string): Promise<LiveRead | null> {
             who: first,
           }
         : null,
+      (n) => isHomeSideName(n, csms),
     );
     // A meeting record beats the correspondence clock — the recap is the
     // owed move, and the ask's answer should know a meeting just happened.

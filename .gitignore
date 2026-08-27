@@ -44,3 +44,6 @@ local/
 
 # Sidekick screenshots (large; generated locally)
 public/demo-screens/*.png
+tools/country-sheet/sheet-const.js.txt
+tools/country-sheet/leads.json
+tools/country-sheet/public-source-countries.json

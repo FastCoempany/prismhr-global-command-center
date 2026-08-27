@@ -4,7 +4,9 @@
 
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
-import { lastTouchRead, newestOutbound } from "../src/lib/room/touch";
+import { lastTouchRead, newestOutbound, targetOf } from "../src/lib/room/touch";
+import { isHomeSideName } from "../src/lib/intel/provenance";
+import { csms } from "../src/lib/book";
 
 const note = (actors: string, createdAt: string) => ({ actors, createdAt });
 
@@ -108,5 +110,78 @@ describe("a meeting is a thing that happened, never a send awaiting a reply", ()
       },
     ]);
     assert.ok(out);
+  });
+});
+
+// Our own side is on nearly every thread and identifies nobody. Born
+// 2026-08-27, the day the Regis row read "Wait on Lesha Cyphers. You wrote
+// today." — the CSM who made the introduction happened to lead the To line,
+// so the room told the operator to wait on his own colleague while the Regis
+// team held the ball.
+describe("the home side is never the person you are waiting on", () => {
+  const home = (n: string) => isHomeSideName(n, csms);
+
+  test("Regis: the CSM leads the To line and the account is folded into +2", () => {
+    const r = lastTouchRead(
+      [
+        note(
+          "Lesha Cyphers → Leilani Gonzalez +4",
+          "2026-08-26T15:32:00Z",
+        ),
+        note("Antaeus Coe → Lesha Cyphers +2", "2026-08-26T18:04:00Z"),
+      ],
+      null,
+      home,
+    );
+    assert.equal(r?.source, "record");
+    assert.equal(r?.awaitingReply, true);
+    // "" hands the row back to the relationship contact — never the colleague.
+    assert.equal(r?.who, "");
+  });
+
+  test("a send addressed only to a colleague keeps their name", () => {
+    const r = lastTouchRead(
+      [note("Antaeus Coe → Anika Steenstra", "2026-08-26T18:04:00Z")],
+      null,
+      home,
+    );
+    assert.equal(r?.who, "Anika Steenstra");
+  });
+
+  test("an account person leading the To line is untouched", () => {
+    const r = lastTouchRead(
+      [note("Antaeus Coe → Leilani Gonzalez +2", "2026-08-26T18:04:00Z")],
+      null,
+      home,
+    );
+    assert.equal(r?.who, "Leilani Gonzalez");
+  });
+
+  test("without the predicate the old read stands — no silent behavior change", () => {
+    const r = lastTouchRead(
+      [note("Antaeus Coe → Lesha Cyphers +2", "2026-08-26T18:04:00Z")],
+      null,
+    );
+    assert.equal(r?.who, "Lesha Cyphers");
+  });
+
+  test("targetOf blanks a collapsed home-side target and keeps a lone one", () => {
+    assert.equal(targetOf("Antaeus Coe → Lesha Cyphers +2", home), "");
+    assert.equal(targetOf("Antaeus Coe → Lesha Cyphers", home), "Lesha Cyphers");
+    assert.equal(targetOf("Antaeus Coe → Elise Munoz +1", home), "Elise Munoz");
+  });
+
+  test("the operator's own name never becomes the target", () => {
+    assert.equal(targetOf("Lesha Cyphers → Antaeus Coe +3", home), "");
+  });
+
+  test("the roster's Unassigned placeholder is nobody", () => {
+    assert.equal(isHomeSideName("Unassigned", csms), false);
+    assert.equal(isHomeSideName("", csms), false);
+  });
+
+  test("a bare prismhr address is our side even off the roster", () => {
+    assert.equal(isHomeSideName("someone@prismhr.com", csms), true);
+    assert.equal(isHomeSideName("lgonzalez@regishrgroup.com", csms), false);
   });
 });
