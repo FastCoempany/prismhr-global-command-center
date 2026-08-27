@@ -15,6 +15,27 @@ export const OPERATOR_NAME = "Antaeus Coe";
 const MINE_RE = /\bantaeus\b|antaeus\.coe@|acoe@prismhr/i;
 export { MINE_RE };
 
+// Our own side of a thread: the operator, anyone on the PrismHR roster the
+// caller hands in (the book's CSM column is the live one), or a bare
+// prismhr.com address. Named for the Regis row of 2026-08-27, which read
+// "Wait on Lesha Cyphers" because the CSM who made the intro happened to lead
+// the To line — the room told the operator to wait on his own colleague.
+// Pure: the roster arrives as an argument so this stays testable and the
+// intel layer never imports the book.
+export function isHomeSideName(name: string, roster: readonly string[]): boolean {
+  const s = normPerson(name ?? "").trim();
+  if (!s) return false;
+  if (MINE_RE.test(s)) return true;
+  if (/@prismhr\.com\b/i.test(s)) return true;
+  const key = s.toLowerCase();
+  return roster.some((r) => {
+    const t = normPerson(r ?? "")
+      .trim()
+      .toLowerCase();
+    return !!t && t !== "unassigned" && t === key;
+  });
+}
+
 // The light "just-in-case" promote: traffic that doesn't carry my name but is
 // unmistakably about my product line still belongs in my working record —
 // team members moving a Global deal without cc'ing me. Deliberately narrow

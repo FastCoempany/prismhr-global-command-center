@@ -52,18 +52,28 @@ export function newestOutbound(notes: NoteForTouch[]): NoteForTouch | null {
   return best;
 }
 
-function targetOf(actors: string): string {
+// The person a send was addressed to. The capture collapses a recipient list
+// to one name plus a count ("Antaeus Coe → Lesha Cyphers +2"), so position one
+// is whoever happened to lead the To line — and on an intro thread that is our
+// own CSM. When the named target is our own side AND the +n says other
+// recipients were folded away, the account's people are in that remainder and
+// their name is the one worth having: return "" so the caller falls back to the
+// relationship contact. A send addressed ONLY to a colleague keeps their name —
+// waiting on a teammate is a real coordination move (the Regis row, 2026-08-27).
+export function targetOf(actors: string, isHomeSide?: (name: string) => boolean): string {
   const arrow = actors.indexOf("→");
   if (arrow < 0) return "";
-  return actors
-    .slice(arrow + 1)
-    .replace(/\+\d+\s*$/, "")
-    .trim();
+  const tail = actors.slice(arrow + 1);
+  const collapsed = /\+\d+\s*$/.test(tail);
+  const name = tail.replace(/\+\d+\s*$/, "").trim();
+  if (collapsed && name && isHomeSide?.(name)) return "";
+  return name;
 }
 
 export function lastTouchRead(
   notes: NoteForTouch[],
   touch: TouchSource | null,
+  isHomeSide?: (name: string) => boolean,
 ): TouchRead | null {
   const out = newestOutbound(notes);
   const outAt = out ? Date.parse(out.createdAt) : NaN;
@@ -75,7 +85,7 @@ export function lastTouchRead(
     // A filed outbound puts the ball with them until they write back.
     return {
       at: out!.createdAt,
-      who: targetOf(out!.actors),
+      who: targetOf(out!.actors, isHomeSide),
       awaitingReply: true,
       source: "record",
     };

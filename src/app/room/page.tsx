@@ -56,7 +56,7 @@ import { researchNs } from "@/lib/intel/deep-research";
 import { getDemand, researchGeneratedAt } from "@/lib/book/research";
 import { readOutcome } from "@/lib/dashboard/outcome";
 import { owedToMe } from "@/lib/room/owed";
-import { GLOBAL_SCENT_RE } from "@/lib/intel/provenance";
+import { GLOBAL_SCENT_RE, isHomeSideName } from "@/lib/intel/provenance";
 import { askHref, peerQuestions, scopedAsk } from "@/lib/intranet/bridges";
 import { sfAccountUrl } from "@/lib/salesforce";
 import { prospectAsks } from "@/lib/intranet/store";
@@ -248,6 +248,9 @@ export default async function RoomPage() {
             who: firstName(rel.name) || "them",
           }
         : null,
+      // Our own side never becomes the person you are waiting on when the
+      // send also went to the account (the Regis row, 2026-08-27).
+      (n) => isHomeSideName(n, csms),
     );
     const read: RoomRead = readDeal({
       accountName: card.name,
