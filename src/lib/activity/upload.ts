@@ -29,6 +29,8 @@ export type UploadResult = {
   reply?: StageReply;
   rowCount: number;
   accounts: number;
+  /** Rows carrying email text — the count that makes a blank read visible. */
+  textRows: number;
   unmatchedRows: number;
 };
 
@@ -59,7 +61,14 @@ export async function uploadActivityReport(inp: {
     readBytes += value.byteLength;
     const stop = feed(decoder.decode(value, { stream: true }));
     if (stop)
-      return { ok: false, reason: stop, rowCount: 0, accounts: 0, unmatchedRows: 0 };
+      return {
+        ok: false,
+        reason: stop,
+        rowCount: 0,
+        accounts: 0,
+        textRows: 0,
+        unmatchedRows: 0,
+      };
     if (readBytes % (16 << 20) < 1 << 20)
       say(
         `Reading… ${Math.round(readBytes / (1 << 20))} MB in, ${ingest.rowCount()} rows.`,
@@ -67,11 +76,25 @@ export async function uploadActivityReport(inp: {
   }
   const stopTail = feed(decoder.decode());
   if (stopTail)
-    return { ok: false, reason: stopTail, rowCount: 0, accounts: 0, unmatchedRows: 0 };
+    return {
+      ok: false,
+      reason: stopTail,
+      rowCount: 0,
+      accounts: 0,
+      textRows: 0,
+      unmatchedRows: 0,
+    };
   for (const raw of parser.finish()) {
     const v = ingest.takeRow(raw);
     if (v.stop)
-      return { ok: false, reason: v.stop, rowCount: 0, accounts: 0, unmatchedRows: 0 };
+      return {
+        ok: false,
+        reason: v.stop,
+        rowCount: 0,
+        accounts: 0,
+        textRows: 0,
+        unmatchedRows: 0,
+      };
   }
 
   say(`Parsed ${ingest.rowCount()} rows. Sealing the slices…`);
@@ -86,6 +109,7 @@ export async function uploadActivityReport(inp: {
       reason: "The file held no readable rows.",
       rowCount: 0,
       accounts: 0,
+      textRows: 0,
       unmatchedRows: 0,
     };
 
@@ -127,6 +151,7 @@ export async function uploadActivityReport(inp: {
         reply,
         rowCount: ingest.rowCount(),
         accounts: slices.length,
+        textRows: manifest.textRows,
         unmatchedRows,
       };
   }
@@ -135,6 +160,7 @@ export async function uploadActivityReport(inp: {
     reply,
     rowCount: ingest.rowCount(),
     accounts: slices.length,
+    textRows: manifest.textRows,
     unmatchedRows,
   };
 }

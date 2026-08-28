@@ -7,7 +7,7 @@
 // waits here either way.
 
 import { useEffect, useRef, useState } from "react";
-import { activityReceipt, activityRun, activityStage } from "./actions";
+import { activityReceipt, activityRun, activityStage, activityTakeBack } from "./actions";
 import { probeActivityReport, uploadActivityReport } from "@/lib/activity/upload";
 import styles from "./dock.module.css";
 
@@ -25,6 +25,9 @@ export function ActivityDock({
   const [open, setOpen] = useState(false);
   const [hot, setHot] = useState(false);
   const [busy, setBusy] = useState(false);
+  // The take-back asks twice. One click arms it, the second does it — the
+  // reach is every account's second-record read, so a stray click must not.
+  const [armed, setArmed] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
@@ -92,7 +95,7 @@ export function ActivityDock({
         return;
       }
       setLine(
-        `Verified complete — ${res.reply?.queued?.distill ?? 0} accounts to distill, ${res.reply?.queued?.intentOnly ?? 0} tally-only.`,
+        `${res.rowCount} rows · ${res.accounts} accounts · ${res.textRows} carrying email text. ${res.reply?.queued?.distill ?? 0} to distill, ${res.reply?.queued?.intentOnly ?? 0} tally-only.`,
       );
       await drive();
     } catch {
@@ -135,6 +138,40 @@ export function ActivityDock({
         >
           ⇪ File
         </button>
+        {dropDay && !busy && (
+          <button
+            type="button"
+            className={styles.btn}
+            title={
+              armed
+                ? "Press again to clear it. Earlier drops are not kept — nothing is restored."
+                : "Take back this drop. Clears every account's second-record read."
+            }
+            onClick={() => {
+              if (!armed) {
+                setArmed(true);
+                setLine(
+                  "Press ↩ again to clear the second record. Earlier drops are not kept, so nothing is restored.",
+                );
+                return;
+              }
+              setArmed(false);
+              setBusy(true);
+              void activityTakeBack()
+                .then((r) => {
+                  setReceipt(r.lines);
+                  setLine(r.ok ? r.lines[0] : (r.reason ?? "The take-back failed."));
+                  if (r.ok) {
+                    setPhase("");
+                    setDropDay("");
+                  }
+                })
+                .finally(() => setBusy(false));
+            }}
+          >
+            {armed ? "↩ sure?" : "↩"}
+          </button>
+        )}
         {phase === "running" && !busy && (
           <button
             type="button"

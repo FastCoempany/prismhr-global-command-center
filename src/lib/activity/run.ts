@@ -38,6 +38,7 @@ import {
   GEMS_NS,
   INTENT_NS,
   MANIFEST_ID,
+  SECOND_RECORD_SPANS,
   STAGE_NS,
   SUPPORT_NS,
   emptyRunState,
@@ -227,6 +228,7 @@ export async function stageActivityBatch(batch: StageBatch): Promise<StageReply>
           fileName: "",
           fileBytes: 0,
           rowCount: 0,
+          textRows: 0,
           dupes: 0,
           window: { from: "", to: "" },
           laneTotals: { human: 0, csm: 0, support: 0, intent: 0, machinery: 0 },
@@ -355,9 +357,17 @@ export async function stageActivityBatch(batch: StageBatch): Promise<StageReply>
         if (inDrop.has(id) && !distillQueue.includes(id)) distillQueue.push(id);
     }
 
+    // What came in, first line, in counts. A drop that reads nothing looks
+    // identical to a drop that reads everything until this number is on the
+    // page — the 2026-08-28 blank read reported "Coverage: 100%" and the
+    // operator had no way to see that zero rows carried email text.
     const receipt: string[] = [
-      `The drop landed — ${m.rowCount} rows across ${m.accounts.length} accounts${m.dupes > 0 ? `, ${m.dupes} of them identical repeats (kept — multi-recipient sends look alike)` : ""}.`,
+      `The drop landed — ${m.rowCount} rows across ${m.accounts.length} accounts, ${m.textRows} of them carrying email text${m.dupes > 0 ? `, ${m.dupes} identical repeats kept (multi-recipient sends look alike)` : ""}.`,
     ];
+    if (m.textRows === 0 && m.rowCount > 0)
+      receipt.push(
+        `NOT ONE ROW CARRIED TEXT — this drop read nothing. Check the export's Full Comments column and drop it again.`,
+      );
     if (m.headerDiff.missing.length > 0)
       receipt.push(
         `Missing columns this drop: ${m.headerDiff.missing.join(", ")} — those readings run dark.`,
@@ -1016,4 +1026,68 @@ export async function activityStatus(): Promise<ActivityStatus> {
     receipt: run.receipt,
     remaining: run.distillQueue.length + run.intentQueue.length,
   };
+}
+
+// ── the take-back (2026-08-28) ──────────────────────────────────────────────
+// A drop is reversible. Not to the drop before it — the writer overwrites a
+// note body in place and the manifest keeps only the prior drop's checksums,
+// so there is no earlier content to restore and the button must never pretend
+// otherwise. What it can do is complete: clear every store the second record
+// owns, and the app falls back to what it showed before any export existed.
+//
+// The reach is exactly the five namespaces the run writes and nothing else.
+// The record's own entries, the HomeRoom's moves, the Sendbook, the
+// Scratchpaper, act drafts, seats and research notes are untouched — a bad
+// drop was never able to reach them, and neither is the undo.
+
+export type TakeBackResult = {
+  ok: boolean;
+  removed: number;
+  lines: string[];
+  reason?: string;
+};
+
+export async function takeBackSecondRecord(): Promise<TakeBackResult> {
+  if (!hasDatabaseEnv())
+    return { ok: false, removed: 0, lines: [], reason: "No database in this session." };
+  const prisma = getPrisma();
+  const current = await readManifestStore();
+  const was = current?.store.manifest;
+  const spans = SECOND_RECORD_SPANS;
+  const lines: string[] = [];
+  let removed = 0;
+  for (const s of spans) {
+    const r = await prisma.accountNote.deleteMany({
+      where: { accountId: { startsWith: s.ns } },
+    });
+    removed += r.count;
+    if (r.count > 0) lines.push(`${r.count} ${s.label} removed.`);
+  }
+  if (removed === 0)
+    return {
+      ok: true,
+      removed: 0,
+      lines: ["There was no second record to take back."],
+    };
+  lines.unshift(
+    was
+      ? `Took back the drop of ${was.fileName || "the activity export"} from ${was.dropDay} — ${was.rowCount} rows, ${was.accounts.length} accounts.`
+      : "Took back the second record.",
+  );
+  // Said plainly, because a take-back that quietly loses the drop before it
+  // would be the same kind of silence this whole fix exists to end.
+  lines.push(
+    "The second record is empty. Earlier drops are not kept, so nothing was restored — every other surface reads what it read before any export was filed.",
+  );
+  await pulse(
+    {
+      active: false,
+      kind: "activity",
+      now: "The second record was taken back — nothing filed.",
+      unit: "the second record — empty",
+      lanes: [],
+    },
+    [{ text: lines[0], bad: false }],
+  );
+  return { ok: true, removed, lines };
 }

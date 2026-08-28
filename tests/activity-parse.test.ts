@@ -12,6 +12,7 @@ import {
   dropShaOf,
   fieldForHeader,
   fingerprintHeaders,
+  refusalFor,
   rowRecord,
   rowsChecksum,
   stripThreadTokens,
@@ -372,4 +373,70 @@ test("the rebuilt export ingests end to end — logged mail lands human, with it
   assert.equal(slice.rows[0].d, "2026-08-21");
   assert.equal(slice.rows[0].p, "natalie@trend.example;antaeus.coe@prismhr.com");
   assert.match(slice.rows[0].c ?? "", /Puerto Rico/);
+});
+
+// ── the door has teeth (2026-08-28) ─────────────────────────────────────────
+// Recognition counted columns and did not weigh them. An export missing
+// Full Comments still matched twelve of nineteen, so it was accepted, and
+// 108,532 rows filed with no email text over a good read.
+
+const GUTLESS = REBUILT_HEADERS.filter((h) => h !== "Comments");
+
+test("an export with no email-body column is recognized and REFUSED", () => {
+  const fp = fingerprintHeaders(GUTLESS);
+  // Still the activity report — it must not fall through to another reader.
+  assert.equal(fp.ok, true);
+  assert.equal(fp.blockers.length, 1);
+  assert.equal(fp.blockers[0].header, "Full Comments");
+  const said = refusalFor(fp);
+  assert.match(said, /^Nothing filed\./);
+  assert.match(said, /Full Comments \(or Comments\)/);
+  assert.match(said, /the email bodies/);
+});
+
+test("the refusal names every load-bearing column that is gone", () => {
+  const fp = fingerprintHeaders(
+    GUTLESS.filter((h) => h !== "Assigned To: Full Name"),
+  );
+  assert.deepEqual(
+    fp.blockers.map((b) => b.header),
+    ["Full Comments", "Assigned"],
+  );
+  const said = refusalFor(fp);
+  assert.match(said, /Full Comments .* and Assigned /);
+  assert.match(said, /who each activity belongs to/);
+});
+
+test("a readable export has no blockers, under either spelling", () => {
+  assert.deepEqual(fingerprintHeaders(REBUILT_HEADERS).blockers, []);
+  assert.deepEqual(fingerprintHeaders([...CANON_HEADERS]).blockers, []);
+  assert.equal(refusalFor(fingerprintHeaders([...CANON_HEADERS])), "");
+});
+
+test("the door closes before a single row is bucketed", async () => {
+  const ing = createIngest(BOOK);
+  const stop = ing.takeRow(GUTLESS);
+  assert.match(stop.stop ?? "", /^Nothing filed\./);
+  assert.equal(ing.rowCount(), 0);
+});
+
+test("the manifest counts what could actually be read", async () => {
+  const ing = createIngest(BOOK);
+  const cells = (comments: string) => [
+    "Trend Personnel", "Email: Re: LMS?", BOOK[0].id, "", "", "", "", "", "",
+    "1", "", "Email", "", "", "Service Provider", "", "Anika Steenstra",
+    "8/28/2026", comments, "Completed", "8/20/2026", "Automated Process",
+    "8/21/2026",
+  ];
+  ing.takeRow(REBUILT_HEADERS);
+  ing.takeRow(cells("To: a@b.com\nCC: \nBCC: \n\nSubject: x\nBody:\nReal words."));
+  ing.takeRow(cells(""));
+  ing.takeRow(cells("   "));
+  const { manifest } = await ing.finish({
+    fileName: "sf.csv",
+    fileBytes: 1,
+    dropDay: "2026-08-28",
+  });
+  assert.equal(manifest.rowCount, 3);
+  assert.equal(manifest.textRows, 1);
 });

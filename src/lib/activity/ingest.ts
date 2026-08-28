@@ -12,6 +12,7 @@ import {
   dateTimeKeyOf,
   dropShaOf,
   fingerprintHeaders,
+  refusalFor,
   rowRecord,
   rowsChecksum,
   tallyChecksum,
@@ -84,6 +85,10 @@ export function createIngest(book: { id: string; name: string }[]): Ingest {
     machinery: 0,
   };
   let receiptRows = 0;
+  // Rows that actually carry words — the number the operator needs on arrival.
+  // A drop whose row count is huge and whose text count is zero is the shape
+  // of the 2026-08-28 blank read, and the receipt now says so out loud.
+  let textRows = 0;
   let rowCount = 0;
   let dupes = 0;
   let windowFrom = "";
@@ -97,6 +102,10 @@ export function createIngest(book: { id: string; name: string }[]): Ingest {
         return {
           stop: "This isn't the activity report — 18 Digit ID / Subject missing. Check the export's columns.",
         };
+      // Recognized but gutless. The door closes here, before a single row is
+      // bucketed, so a blank read can never replace a good one (2026-08-28).
+      const blocked = refusalFor(fingerprint);
+      if (blocked) return { stop: blocked };
       return {};
     }
     if (raw.length === 1 && raw[0].trim() === "") return {};
@@ -114,6 +123,7 @@ export function createIngest(book: { id: string; name: string }[]): Ingest {
     const key = occurrence > 0 ? `${key0}#${occurrence}` : key0;
     rowCount += 1;
 
+    if (r.comments.trim()) textRows += 1;
     const read = laneOf(r);
     laneTotals[read.lane] += 1;
     if (read.flags.receipt) receiptRows += 1;
@@ -296,6 +306,7 @@ export function createIngest(book: { id: string; name: string }[]): Ingest {
       fileName: inp.fileName,
       fileBytes: inp.fileBytes,
       rowCount,
+      textRows,
       dupes,
       window: { from: windowFrom, to: windowTo },
       laneTotals,

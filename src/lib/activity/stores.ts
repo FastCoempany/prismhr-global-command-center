@@ -23,6 +23,18 @@ export const GEMS_CAP = 2_600;
 export const SUPPORT_CAP = 2_400;
 export const INTENT_CAP = 1_200;
 
+/** Every namespace the second record owns, and nothing else — the take-back's
+ *  exact reach. ACTIVITY_NS deliberately covers the staged slices and the
+ *  manifest too: all three share the prefix, and clearing the drop clears all
+ *  three. Pinned by test against every other namespace in the app, because a
+ *  prefix delete is only ever as safe as the prefixes it does not share. */
+export const SECOND_RECORD_SPANS: { ns: string; label: string }[] = [
+  { ns: ACTIVITY_NS, label: "rollups, staged rows and the manifest" },
+  { ns: GEMS_NS, label: "gems" },
+  { ns: SUPPORT_NS, label: "support themes" },
+  { ns: INTENT_NS, label: "marketing tallies" },
+];
+
 /** activity:<id> holds the rollup — but activity:stage:<id> and
  *  activity:manifest live under the same prefix. This is the one test. */
 export function isRollupNoteId(accountId: string): boolean {
