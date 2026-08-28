@@ -2,8 +2,10 @@
 
 **Date**: Thursday, August 27, 2026, 2:00 PM (recording stamp `20260827_140038`)
 **Duration**: 1:24:58 recorded; the conversation runs to 1:14
-**Capture**: Teams recording — transcript (Word export) and video. No speaker labels
-survive Stream's Word export, so the transcript file carries none. The names below
+**Capture**: Teams recording — WebVTT, Word export, and video. Teams stripped every
+voice tag from both text exports, so neither carries a speaker; read through the
+app's own readers the two agree line for line (964 utterances each, 961 identical).
+The filed transcript is the VTT, which carries the cue boundaries. The names below
 come from the video's own participant roster and from people addressing each other
 on tape.
 
@@ -187,7 +189,7 @@ booth.
 ---
 
 Evidence: ON TAPE — `intelligence/InfinitiHR_call_27AUG26_transcript_Global Payroll
-Prism.txt` (the Word transcript read through the app's own reader) and the meeting
+Prism.txt` (the WebVTT read through the app's own reader) and the meeting
 recording's own frames for the roster and the deck. Figures shown on the demo
 tenant's invoice and dashboard screens are not recorded here — the money doctrine
 holds on every stored surface.

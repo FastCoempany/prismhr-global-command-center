@@ -1,6 +1,4 @@
-CALL TRANSCRIPT — dropped file Global.Payroll.Prism-20260827_140038-Meeting.Recording-en-US.docx
-Meeting: Global Payroll Prism
-Recorded: 2026-08-27 14:00
+CALL TRANSCRIPT — dropped file Global.Payroll.Prism-20260827_140038-Meeting.Recording-en-US.vtt
 Speakers: not labeled in this export
 
 You guys?
@@ -501,14 +499,14 @@ Don't necessarily need to start on the 1st of the month, you know that's up to y
 We do need that two week window to get things completed.
 Here's where we're going to put in there.
 You know most of these are going to be salaried full time employees in Italy.
-They use EUR, so we'll give them €10,000 a month.
+They use EUR, so we'll give them €10, 000 a month.
 They're going to be full time and this is really cool right here.
 This is a quick little gauge for your clients to know how much am I really going to pay?
-OK, so here the the salary is €10,000 a month.
+OK, so here the the salary is €10, 000 a month.
 Here are all my employer contributions.
 There are a lot in Italy, may or may not know that Italy is one of the more expensive countries where all this happens.
 But these are all the social charges and taxes.
-So that 10,000 per month, really 13,000 per month from an employer standpoint.
+So that 10,000 per month, really 13, 000 per month from an employer standpoint.
 And then here are all the taxes, the gross tenet and all that free health care that they get in Italy.
 It's all right here, they're not, it's not free, right?
 They're paying for it.

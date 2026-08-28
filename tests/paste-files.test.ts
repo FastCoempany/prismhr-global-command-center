@@ -367,3 +367,62 @@ test("a stampless transcript still reads once the cues are unmistakable", () => 
   assert.equal(/Recorded:/.test(paste), false);
   assert.match(paste, /^CALL TRANSCRIPT/);
 });
+
+// ── the anonymized VTT (2026-08-28) ─────────────────────────────────────────
+// Teams can export a recording with every voice tag stripped. "Same speaker"
+// was then true of every cue in the file, and the 8/27 Infiniti call parsed
+// into ONE line of 72,504 characters — no quoting, no excerpting, no timeline.
+
+const ANON_VTT = [
+  "WEBVTT",
+  "",
+  "42f915ef-6979-4606-90ef-25ba496255ac-0",
+  "00:00:02.040 --> 00:00:02.480",
+  "You guys?",
+  "",
+  "9efeadd7-71e2-42c3-9432-65d630a2a84f-0",
+  "00:00:03.360 --> 00:00:03.880",
+  "No, sorry.",
+  "",
+  "e18139de-dc9f-4653-be5a-784ec7d65c1b-0",
+  "00:00:03.880 --> 00:00:08.576",
+  "We realized our team meeting is at 2:30",
+  "",
+  "e18139de-dc9f-4653-be5a-784ec7d65c1b-1",
+  "00:00:08.576 --> 00:00:09.600",
+  "and we weren't sure how long you'd be.",
+].join("\n");
+
+test("a speakerless VTT keeps its utterances — the call never collapses to one line", () => {
+  const t = parseVtt(ANON_VTT);
+  assert.deepEqual(t.split("\n"), [
+    "You guys?",
+    "No, sorry.",
+    "We realized our team meeting is at 2:30 and we weren't sure how long you'd be.",
+  ]);
+  // The cue identifiers stay machinery.
+  assert.equal(/e18139de/.test(t), false);
+});
+
+test("an anonymized capture says so, and a named one does not", () => {
+  const anon = vttToPaste(ANON_VTT, "call.vtt");
+  assert.match(anon, /^CALL TRANSCRIPT — dropped file call\.vtt\n/);
+  assert.match(anon, /Speakers: not labeled in this export/);
+  assert.match(anon, /\n\nYou guys\?\n/);
+  assert.equal(sniffPaste(anon).kind, "transcript");
+  // A voice-tagged export never grows the line.
+  assert.equal(/Speakers:/.test(vttToPaste(TEAMS_VTT, "esc.vtt")), false);
+});
+
+test("no cue identifiers and no speakers: each cue stands on its own", () => {
+  const bare = [
+    "WEBVTT",
+    "",
+    "00:00:01.000 --> 00:00:02.000",
+    "First thing.",
+    "",
+    "00:00:02.100 --> 00:00:03.000",
+    "Second thing.",
+  ].join("\n");
+  assert.deepEqual(parseVtt(bare).split("\n"), ["First thing.", "Second thing."]);
+});
