@@ -22,6 +22,7 @@ import {
   parseRollupBody,
 } from "@/lib/activity/stores";
 import { caseNumberOf, cleanExcerpt, cleanSubject } from "@/lib/activity/excerpt";
+import { isMachineryName } from "@/lib/activity/classify";
 import type { StagedRow } from "@/lib/activity/types";
 
 export const dynamic = "force-dynamic";
@@ -39,12 +40,18 @@ async function stageRows(accountId: string): Promise<StagedRow[]> {
   return parseStageBody(rows[0].body)?.slice.rows ?? [];
 }
 
+/** Who the row shows as its person. A logged email files under the LOGGER —
+ *  "Automated Process" — and the drill must never print a mechanism where a
+ *  name belongs. The recipients ride separately in `people`. */
+const personOf = (r: StagedRow): string => (isMachineryName(r.a) ? "" : r.a);
+
 /** The row as the drill renders it — subject cleaned, excerpt cleaned again
  *  defensively (slices staged before the ingest cleaner keep their meat). */
 const rowOut = (r: StagedRow) => ({
   k: r.k,
   day: r.d,
-  who: r.a,
+  who: personOf(r),
+  people: r.p ? r.p.split(";").filter(Boolean) : [],
   subject: cleanSubject(r.s),
   lane: r.lane,
   excerpt: r.c ? cleanExcerpt(r.c) : "",
@@ -109,7 +116,8 @@ export async function GET(req: Request) {
         : undefined;
     const mmdd = (d: string) => (d ? d.slice(5).replace("-", "/") : "");
     if (hit) {
-      const first = hit.a.split(" ")[0] || "Someone";
+      const first =
+        personOf(hit).split(" ")[0] || (who ?? "").trim().split(" ")[0] || "Someone";
       return NextResponse.json(
         {
           ok: true,
@@ -191,7 +199,7 @@ export async function GET(req: Request) {
           rows: list.length,
           firstDay: days[0],
           lastDay: days[days.length - 1],
-          who: newest.a,
+          who: personOf(newest),
           subject: cleanSubject(newest.s),
         };
       })

@@ -20,6 +20,12 @@ export const MACHINERY_USERS = [
 
 const MACHINERY_SET = new Set<string>(MACHINERY_USERS);
 
+/** Is this name a mechanism rather than a person? Machinery is never rendered
+ *  as the human on a row — a logged email's assignee names the logger. */
+export function isMachineryName(name: string): boolean {
+  return MACHINERY_SET.has((name ?? "").trim());
+}
+
 export type ActivityLane = "machinery" | "intent" | "support" | "csm" | "human";
 
 export type LaneFlags = {
@@ -52,7 +58,34 @@ export type LaneRead = {
 export const INTENT_RE = /^\s*(Sent|Opened|Clicked)\s+/;
 
 // Engagement receipts that are not blast-form but are machinery all the same.
-export const RECEIPT_RE = /^\s*(\[Seismic\]|Submitted Form '|Automated Email:)/;
+// The case acknowledgement earns its place by measurement: 2,212 rows of
+// "PrismHR Case <n> has been received," in the 2026-08-28 export, every one of
+// them the case system writing back to itself. It carries the full logged-mail
+// scaffold, so without naming it here it would ride the logged-correspondence
+// hatch straight into the support lane and eat the slice cap (2026-08-28).
+export const RECEIPT_RE =
+  /^\s*(\[Seismic\]|Submitted Form '|Automated Email:|(?:Email:\s*)?PrismHR Case\s*#?\d+ has been received)/i;
+
+// A logged email carries the conversation in its Comments: the To/CC block SF
+// prepends, then "Body:". The email-to-Salesforce logger owns the ROW — it
+// files as "Automated Process" — but it never owns the CONVERSATION. Reading
+// the logger as the actor threw 115 of the operator's own 246 email rows into
+// machinery on the 2026-08-28 export, and the room read his accounts as
+// quieter than they were.
+//
+// Deliberately narrow: the subtype must actually be Email, and the comments
+// must carry BOTH a recipient line and a real Body: block. A bare subject, an
+// empty comment, or a blast receipt cannot satisfy it.
+const LOGGED_EMAIL_TO = /^(?:Additional\s+)?To:\s*\S/im;
+const LOGGED_EMAIL_BODY = /^Body:/im;
+
+export function isLoggedCorrespondence(r: ActivityRow): boolean {
+  if ((r.taskSubtype ?? "").trim() !== "Email") return false;
+  const c = r.comments ?? "";
+  if (!c) return false;
+  if (RECEIPT_RE.test(r.subject ?? "")) return false;
+  return LOGGED_EMAIL_TO.test(c) && LOGGED_EMAIL_BODY.test(c);
+}
 
 export function laneOf(r: ActivityRow, opts?: { csmRoster?: Set<string> }): LaneRead {
   const flags: LaneFlags = {
@@ -62,8 +95,11 @@ export function laneOf(r: ActivityRow, opts?: { csmRoster?: Set<string> }): Lane
     receipt: RECEIPT_RE.test(r.subject ?? ""),
   };
 
-  // 1 · machinery by assigned user, exact match.
-  if (MACHINERY_SET.has((r.assigned ?? "").trim())) return { lane: "machinery", flags };
+  // 1 · machinery by assigned user, exact match — EXCEPT where the row is a
+  //     logged email. Then the assignee names the logger, not the people, and
+  //     the row falls through to be classified on its own content.
+  if (MACHINERY_SET.has((r.assigned ?? "").trim()) && !isLoggedCorrespondence(r))
+    return { lane: "machinery", flags };
 
   // 2 · blast receipts — subject in the SF-generated form AND subtype Task
   //     (or blank). Tallied, never staged, never a touch.

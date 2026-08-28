@@ -3,7 +3,7 @@
 // quote out loud (the covenant, §7): every number rendered anywhere in the
 // app traces back to this file's arithmetic, never to generated text.
 
-import type { ActivityLane } from "./classify";
+import { isMachineryName, type ActivityLane } from "./classify";
 import { stripThreadTokens } from "./parse";
 import type { AccountSlice, StagedRow } from "./types";
 
@@ -70,6 +70,21 @@ export function namesInRow(r: StagedRow, names: Iterable<string>): string[] {
   return out;
 }
 
+/** The account people a logged email's recipient list names. `p` carries the
+ *  To/CC/BCC addresses; the map is built from the account's own contacts, so
+ *  every hit is by construction a person on their side — a prismhr.com
+ *  address simply isn't in it. This is how a row whose Assigned column says
+ *  "Automated Process" still names Jennifer (2026-08-28). */
+export function emailNamesInRow(r: StagedRow, byEmail: Map<string, string>): string[] {
+  if (!r.p || byEmail.size === 0) return [];
+  const out: string[] = [];
+  for (const addr of r.p.split(";")) {
+    const name = byEmail.get(addr.trim().toLowerCase());
+    if (name && !out.includes(name)) out.push(name);
+  }
+  return out;
+}
+
 const normSubject = (s: string): string =>
   stripThreadTokens(s)
     .replace(/^((re|fwd?|fw)\s*:\s*)+/i, "")
@@ -84,9 +99,13 @@ export function buildRollup(inp: {
   window: { from: string; to: string };
   colleagues: Set<string>;
   accountPeople: Set<string>;
+  /** Lowercased address → the account person's full name. Empty when the
+   *  export carries no contact addresses; the read simply falls back. */
+  accountEmails?: Map<string, string>;
 }): Rollup {
   const { slice } = inp;
   const rows = slice.rows;
+  const byEmail = inp.accountEmails ?? new Map<string, string>();
 
   // Intent totals from the tally — arithmetic over what the browser counted.
   let s = 0,
@@ -103,13 +122,23 @@ export function buildRollup(inp: {
   let lastHuman: Rollup["lastHuman"] = null;
   if (motion.length > 0) {
     const r = motion[0];
-    const accountNames = namesInRow(r, inp.accountPeople);
-    const who = accountNames[0] ?? r.a;
+    // The row's own text first, then the email's recipient list. Both name
+    // people on their side; the Assigned column may name only a mechanism.
+    const accountNames = [
+      ...namesInRow(r, inp.accountPeople),
+      ...emailNamesInRow(r, byEmail),
+    ];
+    // A logged email's Assigned column names the LOGGER, not a person on the
+    // thread. Machinery never renders as the human — the row's own text is
+    // asked first, and a mechanism falls through to "" so the surface's own
+    // fallback speaks instead (2026-08-28, the Automated Process read).
+    const assigned = isMachineryName(r.a) ? "" : r.a;
+    const who = accountNames[0] ?? assigned;
     const kind = accountNames[0]
       ? "account"
-      : inp.colleagues.has(r.a)
+      : assigned && inp.colleagues.has(assigned)
         ? "colleague"
-        : inp.accountPeople.has(r.a)
+        : assigned && inp.accountPeople.has(assigned)
           ? "account"
           : "unresolved";
     lastHuman = {
@@ -126,7 +155,10 @@ export function buildRollup(inp: {
   for (const r of rows) {
     if (r.lane === "machinery" || r.fl.includes("r")) continue;
     const seen = new Set<string>();
-    for (const name of namesInRow(r, inp.accountPeople)) {
+    for (const name of [
+      ...namesInRow(r, inp.accountPeople),
+      ...emailNamesInRow(r, byEmail),
+    ]) {
       if (seen.has(name)) continue;
       seen.add(name);
       const key = `${name}|account`;
@@ -135,7 +167,9 @@ export function buildRollup(inp: {
       tally.set(key, t);
     }
     const a = (r.a ?? "").trim();
-    if (a && !seen.has(a)) {
+    // A mechanism is never an actor. It survives the lane rules only because
+    // the row it logged is real correspondence; the people are in `p`.
+    if (a && !isMachineryName(a) && !seen.has(a)) {
       // The logger: a colleague when the file shows them across accounts, an
       // account person when this account is the only place they appear.
       const kind = inp.colleagues.has(a)
@@ -167,7 +201,11 @@ export function buildRollup(inp: {
   const threads: NotableThread[] = [...groups.values()]
     .map((g) => {
       const days = g.rows.map((r) => r.d).sort();
-      const led = g.rows.some((r) => namesInRow(r, inp.accountPeople).length > 0)
+      const led = g.rows.some(
+        (r) =>
+          namesInRow(r, inp.accountPeople).length > 0 ||
+          emailNamesInRow(r, byEmail).length > 0,
+      )
         ? ("account-led" as const)
         : ("internal" as const);
       return {

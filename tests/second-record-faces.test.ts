@@ -7,7 +7,12 @@
 
 import { strict as assert } from "node:assert";
 import { describe, test } from "node:test";
-import { caseNumberOf, cleanExcerpt, cleanSubject } from "../src/lib/activity/excerpt";
+import {
+  caseNumberOf,
+  cleanExcerpt,
+  cleanSubject,
+  correspondentsOf,
+} from "../src/lib/activity/excerpt";
 import {
   collisionFor,
   engagedNeverIntroduced,
@@ -793,5 +798,52 @@ describe("the adversarial patches hold", () => {
       }) as never,
     ).all.find((q) => q.ruleId === "engaged-never-introduced");
     assert.equal(sent, undefined, "a filed send is a conversation");
+  });
+});
+
+describe("correspondentsOf — who was on the email", () => {
+  const scaffold = [
+    "To: jennifer@infinitihr.com; ANTAEUS.COE@prismhr.com",
+    "CC: stephanie@infinitihr.com",
+    "BCC: ",
+    "Attachment: --none--",
+    "",
+    "Subject: Re: LMS?",
+    "Body:",
+    "Write me at nobody@example.com and see my card: sales@vendor.com",
+  ].join("\n");
+
+  test("reads the recipient lines, lowercased, in order, and never the body", () => {
+    assert.deepEqual(correspondentsOf(scaffold), [
+      "jennifer@infinitihr.com",
+      "antaeus.coe@prismhr.com",
+      "stephanie@infinitihr.com",
+    ]);
+  });
+
+  test("the case form's 'Additional To:' counts too", () => {
+    const raw =
+      "Additional To: alea@infinitihr.com\nCC: jjordan@prismhr.com\nBCC: \n\nSubject: Case\nBody:\nHi.";
+    assert.deepEqual(correspondentsOf(raw), [
+      "alea@infinitihr.com",
+      "jjordan@prismhr.com",
+    ]);
+  });
+
+  test("no scaffold, no correspondents — a plain note names nobody", () => {
+    assert.deepEqual(correspondentsOf("Left a voicemail for scott@infinitihr.com."), []);
+    assert.deepEqual(correspondentsOf(""), []);
+  });
+
+  test("the list is capped and duplicates collapse", () => {
+    const many = Array.from({ length: 20 }, (_, i) => `p${i}@x.com`).join("; ");
+    assert.equal(correspondentsOf(`To: ${many}\n\nBody:\nhi`).length, 12);
+    assert.deepEqual(correspondentsOf("To: a@b.com; A@B.com\nCC: a@b.com\n\nBody:\nhi"), [
+      "a@b.com",
+    ]);
+  });
+
+  test("the cleaner still cuts the scaffold it was read from", () => {
+    assert.equal(cleanExcerpt(scaffold).startsWith("Write me at"), true);
   });
 });

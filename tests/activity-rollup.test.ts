@@ -7,6 +7,7 @@ import assert from "node:assert/strict";
 import {
   buildRollup,
   intentWindows,
+  emailNamesInRow,
   isHumanMotion,
   namesInRow,
   supportThemes,
@@ -28,12 +29,14 @@ const mkRow = (p: Partial<StagedRow>): StagedRow => ({
   ct: p.ct ?? "",
   fl: p.fl ?? "",
   c: p.c,
+  p: p.p,
 });
 
 const mkSlice = (rows: StagedRow[], patch?: Partial<AccountSlice>): AccountSlice => ({
   id: "001TESTTRENDHR000A",
   name: "Trend Personnel",
   meta: {
+    primaryContactEmail: "",
     primaryContact: "Natalie Borland",
     primaryContactTitle: "CFO",
     lastContact: "",
@@ -200,4 +203,83 @@ test("the slice row cap drops oldest and counts them", async () => {
   assert.equal(slices[0].dropped, 20);
   // Newest-first held after the cap.
   assert.ok(slices[0].rows[0].d >= slices[0].rows[slices[0].rows.length - 1].d);
+});
+
+// ── the people on a logged email (2026-08-28) ───────────────────────────────
+// The Assigned column on captured mail names the LOGGER. Before this, the
+// newest motion at Infiniti HR read "Automated Process (unresolved)".
+
+const BY_EMAIL = new Map([
+  ["jennifer@infinitihr.com", "Jennifer Hardesty"],
+  ["scott@infinitihr.com", "Scott Smrkovski"],
+]);
+
+test("emailNamesInRow reads the recipient list, in order, deduped", () => {
+  const r = mkRow({
+    p: "jennifer@infinitihr.com;antaeus.coe@prismhr.com;JENNIFER@infinitihr.com;scott@infinitihr.com",
+  });
+  assert.deepEqual(emailNamesInRow(r, BY_EMAIL), [
+    "Jennifer Hardesty",
+    "Scott Smrkovski",
+  ]);
+  // Our own address is not in the map — a colleague never resolves here.
+  assert.deepEqual(emailNamesInRow(mkRow({ p: "antaeus.coe@prismhr.com" }), BY_EMAIL), []);
+  assert.deepEqual(emailNamesInRow(mkRow({}), BY_EMAIL), []);
+  assert.deepEqual(emailNamesInRow(mkRow({ p: "jennifer@infinitihr.com" }), new Map()), []);
+});
+
+test("last human names the correspondent, never the logger", () => {
+  const slice = mkSlice([
+    mkRow({
+      k: "n1",
+      d: "2026-08-27",
+      s: "Email: Re: LMS?",
+      a: "Automated Process",
+      p: "jennifer@infinitihr.com;antaeus.coe@prismhr.com",
+    }),
+  ]);
+  const r = buildRollup({
+    slice,
+    dropSha: "sha",
+    dropDay: "2026-08-28",
+    window: { from: "2026-06-01", to: "2026-08-28" },
+    colleagues: new Set(["Antaeus Coe"]),
+    accountPeople: new Set(["Jennifer Hardesty"]),
+    accountEmails: BY_EMAIL,
+  });
+  assert.equal(r.lastHuman?.who, "Jennifer Hardesty");
+  assert.equal(r.lastHuman?.kind, "account");
+  // The mechanism is never an actor, and the thread reads account-led.
+  assert.equal(
+    r.actors.some((a) => a.name === "Automated Process"),
+    false,
+  );
+  assert.equal(r.actors[0]?.name, "Jennifer Hardesty");
+  assert.equal(r.threads[0]?.led, "account-led");
+});
+
+test("with no map and a machinery logger, the read says unresolved and names nobody", () => {
+  const slice = mkSlice([
+    mkRow({ k: "n1", d: "2026-08-27", a: "Automated Process", p: "jennifer@infinitihr.com" }),
+  ]);
+  const r = buildRollup({
+    slice,
+    dropSha: "sha",
+    dropDay: "2026-08-28",
+    window: { from: "2026-06-01", to: "2026-08-28" },
+    colleagues: new Set(),
+    accountPeople: new Set(),
+  });
+  assert.equal(r.lastHuman?.who, "");
+  assert.equal(r.lastHuman?.kind, "unresolved");
+  assert.deepEqual(r.actors, []);
+});
+
+test("the body cap drops addresses before it drops a row", () => {
+  const long = Array.from({ length: 8 }, (_, i) => `person${i}@averylongdomain.example`).join(";");
+  const rows = Array.from({ length: 200 }, (_, i) =>
+    mkRow({ k: `k${i}`, d: "2026-08-01", c: "x".repeat(500), p: long }),
+  );
+  const body = JSON.stringify(rows);
+  assert.ok(body.length > 120_000, "fixture must actually exceed the cap");
 });

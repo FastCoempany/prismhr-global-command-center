@@ -46,11 +46,21 @@ export type Fingerprint = {
 export function fingerprintHeaders(headers: string[]): Fingerprint {
   const clean = headers.map((h) => h.replace(/^﻿/, "").trim());
   const have = new Set(clean);
-  const matched = CANON_HEADERS.filter((h) => have.has(h));
-  const missing = CANON_HEADERS.filter((h) => !have.has(h));
-  const extra = clean.filter(
-    (h) => h && !(CANON_HEADERS as readonly string[]).includes(h),
-  );
+  // A column present under an alias IS present. Recognition and the drop
+  // receipt both read through aliases, so the receipt never reports a field
+  // as missing while the reader is happily binding it (2026-08-28).
+  const fields = new Set<string>();
+  for (const h of clean) {
+    const f = fieldForHeader(h);
+    if (f) fields.add(f);
+  }
+  const canonField = (h: string) => FIELD_BY_HEADER[h];
+  const matched = CANON_HEADERS.filter((h) => {
+    const f = canonField(h);
+    return have.has(h) || (!!f && fields.has(f));
+  });
+  const missing = CANON_HEADERS.filter((h) => !matched.includes(h));
+  const extra = clean.filter((h) => h && !fieldForHeader(h));
   const anchors = ANCHOR_HEADERS.every((a) => have.has(a));
   return {
     ok: anchors && matched.length >= FINGERPRINT_MIN_MATCHES,
@@ -148,6 +158,10 @@ export type ActivityRow = {
   type: string;
   taskSubtype: string;
   primaryContact: string;
+  /** Not in the canonical nineteen — the 2026-08-28 report type carries it,
+   *  and an address beats a name for seeding a draft's TO line. "" when the
+   *  export doesn't include the column. */
+  primaryContactEmail: string;
   lastContact: string;
   contactedDate: string;
   primaryContactTitle: string;
@@ -180,6 +194,37 @@ const FIELD_BY_HEADER: Record<string, keyof ActivityRow> = {
   "Global Business Consultant": "gbc",
 };
 
+// Salesforce labels the same field differently depending on the report type
+// the export was built from — "Assigned" in one, "Assigned To: Full Name" in
+// the next. The 2026-08-28 rebuild renamed four columns that way and the
+// pipeline silently read them as empty: no assignee meant no machinery
+// classification, and no comments meant no excerpts, on a file that carried
+// both. The reader meets the export, never the other way round (2026-08-28).
+//
+// Aliases only ever ADD a spelling for a field the canon already names. A
+// header matching a canonical name exactly still wins — FIELD_BY_HEADER is
+// consulted first — so an export using the original labels is untouched.
+const HEADER_ALIASES: Record<string, keyof ActivityRow> = {
+  "Assigned To": "assigned",
+  "Assigned To: Full Name": "assigned",
+  "Assigned To: Full Name (Assigned)": "assigned",
+  Comments: "comments",
+  "Full Comment": "comments",
+  "Primary Contact: Full Name": "primaryContact",
+  "Primary Contact Email": "primaryContactEmail",
+  "Global Business Consultant: Full Name": "gbc",
+  "Task/Event Record Type Name": "recordType",
+  "Due Date Only": "date",
+  "Activity Date": "date",
+};
+
+/** The header→field map the reader actually uses: canonical names first,
+ *  aliases behind them. Exported so tests can assert the precedence. */
+export function fieldForHeader(header: string): keyof ActivityRow | undefined {
+  const h = (header ?? "").replace(/^﻿/, "").trim();
+  return FIELD_BY_HEADER[h] ?? HEADER_ALIASES[h];
+}
+
 export function emptyActivityRow(): ActivityRow {
   return {
     subject: "",
@@ -193,6 +238,7 @@ export function emptyActivityRow(): ActivityRow {
     type: "",
     taskSubtype: "",
     primaryContact: "",
+    primaryContactEmail: "",
     lastContact: "",
     contactedDate: "",
     primaryContactTitle: "",
@@ -209,9 +255,18 @@ export function emptyActivityRow(): ActivityRow {
  *  non-anchor column reads as empty (and gets named in the drop receipt). */
 export function rowRecord(headers: string[], row: string[]): ActivityRow {
   const out = emptyActivityRow();
+  const clean = (i: number) => (headers[i] ?? "").replace(/^﻿/, "").trim();
+  // Two passes, and the order is the point: a canonical column wins the field
+  // no matter where it sits in the file. A single pass would hand the field to
+  // whichever spelling appeared first, so an export listing "Assigned To: Full
+  // Name" before "Assigned" would read the logger as the person.
   for (let i = 0; i < headers.length; i++) {
-    const key = FIELD_BY_HEADER[headers[i]?.replace(/^﻿/, "").trim() ?? ""];
-    if (key) out[key] = row[i] ?? "";
+    const key = FIELD_BY_HEADER[clean(i)];
+    if (key && !out[key]) out[key] = row[i] ?? "";
+  }
+  for (let i = 0; i < headers.length; i++) {
+    const key = HEADER_ALIASES[clean(i)];
+    if (key && !out[key]) out[key] = row[i] ?? "";
   }
   return out;
 }

@@ -8,8 +8,10 @@
 import {
   emlToPaste,
   msgToPaste,
+  parseTranscriptDoc,
   readerFor,
   sheetToPaste,
+  transcriptDocToPaste,
   vttToPaste,
 } from "@/lib/paste-files";
 
@@ -58,8 +60,13 @@ export async function readFileToText(
     let text = "";
     if (kind === "eml") text = emlToPaste(await f.text(), f.name);
     else if (kind === "vtt") text = vttToPaste(await f.text(), f.name);
-    else if (kind === "text") text = (await f.text()).trim();
-    else if (kind === "sheet") {
+    else if (kind === "text") {
+      const raw = (await f.text()).trim();
+      // Teams' transcript pastes into a plain text file just as often as it
+      // saves as Word. Same recording, same read.
+      const doc = parseTranscriptDoc(raw);
+      text = doc ? transcriptDocToPaste(doc, f.name) : raw;
+    } else if (kind === "sheet") {
       const XLSX = await import("xlsx");
       const wb = XLSX.read(await f.arrayBuffer(), { type: "array" });
       const sheets = wb.SheetNames.map((name) => ({
@@ -73,7 +80,17 @@ export async function readFileToText(
     } else if (kind === "docx") {
       const mammoth = await import("mammoth");
       const r = await mammoth.extractRawText({ arrayBuffer: await f.arrayBuffer() });
-      text = `DOCUMENT — ${f.name}\n\n${(r.value ?? "").trim()}`.slice(0, 60000);
+      const raw = (r.value ?? "").trim();
+      // Teams exports the same recording as .vtt or as Word. A transcript
+      // reads as a transcript either way — otherwise the call arrives as a
+      // nameless document and the room learns nothing from it.
+      const doc = parseTranscriptDoc(raw);
+      // A transcript is never truncated — the close is at the end, and the
+      // 8/27 call runs past 70,000 characters. The .vtt path has never
+      // capped; the two captures of one recording behave alike.
+      text = doc
+        ? transcriptDocToPaste(doc, f.name)
+        : `DOCUMENT — ${f.name}\n\n${raw}`.slice(0, 60000);
     } else if (kind === "image") {
       const img = await normalizeImage(f);
       if (!img)

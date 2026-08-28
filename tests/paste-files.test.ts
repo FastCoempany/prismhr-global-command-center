@@ -10,8 +10,10 @@ import {
   emlToPaste,
   msgToPaste,
   htmlToText,
+  parseTranscriptDoc,
   parseVtt,
   pasteFingerprint,
+  transcriptDocToPaste,
   readerFor,
   vttToPaste,
 } from "../src/lib/paste-files";
@@ -304,4 +306,123 @@ test("readerFor dispatches by extension", () => {
   assert.equal(readerFor("shot.PNG"), "image");
   assert.equal(readerFor("pic.jpeg"), "image");
   assert.equal(readerFor("mystery.zip"), "unsupported");
+});
+
+// ── the transcript that arrives as a document (2026-08-28) ──────────────────
+// Teams' Stream player exports one recording two ways. Until this, the Word
+// form read as a nameless DOCUMENT and the call was lost.
+
+const RECORDING = [
+  "Global Payroll Prism-20260827_140038-Meeting Recording",
+  "0:02You guys?",
+  "0:03No, sorry.",
+  "1:22All right, I think I'm already sharing my screen here.",
+  "1:25Are we waiting on Scott or?",
+  "31:54Any changes after the 10th would happen in the next payroll run.",
+  "1:04:09We'll send the summary over.",
+].join("\n");
+
+test("a Teams recording document reads as a transcript, stamp and all", () => {
+  const doc = parseTranscriptDoc(RECORDING);
+  assert.ok(doc);
+  assert.equal(doc.title, "Global Payroll Prism");
+  assert.equal(doc.startedAt, "2026-08-27 14:00");
+  assert.equal(doc.lines.length, 6);
+  assert.equal(doc.lines[0], "You guys?");
+  assert.equal(doc.lines[5], "We'll send the summary over.");
+});
+
+test("the paste carries the same head the .vtt path writes", () => {
+  const paste = transcriptDocToPaste(parseTranscriptDoc(RECORDING)!, "call.docx");
+  assert.match(paste, /^CALL TRANSCRIPT — dropped file call\.docx\n/);
+  assert.match(paste, /\nMeeting: Global Payroll Prism\n/);
+  assert.match(paste, /\nRecorded: 2026-08-27 14:00\n/);
+  // Stream's Word export drops the voice tags. The read says so rather than
+  // guessing a name from the words.
+  assert.match(paste, /Speakers: not labeled in this export/);
+  assert.match(paste, /\n\nYou guys\?\n/);
+  assert.equal(/\d+:\d\dYou guys/.test(paste), false);
+});
+
+test("an ordinary document is never mistaken for a call", () => {
+  assert.equal(parseTranscriptDoc("Quarterly plan\n\nWe hire in Mexico.\nBudget set."), null);
+  assert.equal(parseTranscriptDoc("Agenda\n9:00 Welcome\n9:30 Demo\n10:00 Q&A"), null);
+  assert.equal(parseTranscriptDoc(""), null);
+  // A recording title with no cues under it is a title, not a transcript.
+  assert.equal(
+    parseTranscriptDoc("Global Payroll Prism-20260827_140038-Meeting Recording\nNo cues."),
+    null,
+  );
+});
+
+test("a stampless transcript still reads once the cues are unmistakable", () => {
+  const cues = Array.from({ length: 12 }, (_, i) => `${i}:0${i % 10}Line ${i}.`).join("\n");
+  const doc = parseTranscriptDoc(cues);
+  assert.ok(doc);
+  assert.equal(doc.title, "");
+  assert.equal(doc.startedAt, "");
+  assert.equal(doc.lines.length, 12);
+  // No stamp means no Recorded line — a date is never invented.
+  const paste = transcriptDocToPaste(doc, "unknown.docx");
+  assert.equal(/Recorded:/.test(paste), false);
+  assert.match(paste, /^CALL TRANSCRIPT/);
+});
+
+// ── the anonymized VTT (2026-08-28) ─────────────────────────────────────────
+// Teams can export a recording with every voice tag stripped. "Same speaker"
+// was then true of every cue in the file, and the 8/27 Infiniti call parsed
+// into ONE line of 72,504 characters — no quoting, no excerpting, no timeline.
+
+const ANON_VTT = [
+  "WEBVTT",
+  "",
+  "42f915ef-6979-4606-90ef-25ba496255ac-0",
+  "00:00:02.040 --> 00:00:02.480",
+  "You guys?",
+  "",
+  "9efeadd7-71e2-42c3-9432-65d630a2a84f-0",
+  "00:00:03.360 --> 00:00:03.880",
+  "No, sorry.",
+  "",
+  "e18139de-dc9f-4653-be5a-784ec7d65c1b-0",
+  "00:00:03.880 --> 00:00:08.576",
+  "We realized our team meeting is at 2:30",
+  "",
+  "e18139de-dc9f-4653-be5a-784ec7d65c1b-1",
+  "00:00:08.576 --> 00:00:09.600",
+  "and we weren't sure how long you'd be.",
+].join("\n");
+
+test("a speakerless VTT keeps its utterances — the call never collapses to one line", () => {
+  const t = parseVtt(ANON_VTT);
+  assert.deepEqual(t.split("\n"), [
+    "You guys?",
+    "No, sorry.",
+    "We realized our team meeting is at 2:30 and we weren't sure how long you'd be.",
+  ]);
+  // The cue identifiers stay machinery.
+  assert.equal(/e18139de/.test(t), false);
+});
+
+test("an anonymized capture says so, and a named one does not", () => {
+  const anon = vttToPaste(ANON_VTT, "call.vtt");
+  assert.match(anon, /^CALL TRANSCRIPT — dropped file call\.vtt\n/);
+  assert.match(anon, /Speakers: not labeled in this export/);
+  assert.match(anon, /\n\nYou guys\?\n/);
+  assert.equal(sniffPaste(anon).kind, "transcript");
+  // A voice-tagged export never grows the line.
+  assert.equal(/Speakers:/.test(vttToPaste(TEAMS_VTT, "esc.vtt")), false);
+});
+
+test("no cue identifiers and no speakers: each cue stands on its own", () => {
+  const bare = [
+    "WEBVTT",
+    "",
+    "00:00:01.000 --> 00:00:02.000",
+    "First thing.",
+    "",
+    "00:00:02.100 --> 00:00:03.000",
+    "Second thing.",
+  ].join("\n");
+  assert.deepEqual(parseVtt(bare).split("\n"), ["First thing.", "Second thing."]);
 });

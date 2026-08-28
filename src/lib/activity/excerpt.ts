@@ -89,6 +89,47 @@ export function cleanExcerpt(raw: string, cap = 500): string {
   return `${cut.slice(0, lastSpace > cap * 0.6 ? lastSpace : cap).trimEnd()}…`;
 }
 
+// ── who was on the email ────────────────────────────────────────────────────
+// The scaffold the cleaner throws away carries the one thing the export's
+// columns do not: the actual people. On a logged email the Assigned column
+// names the LOGGER — "Automated Process" on 118 of the operator's own rows in
+// the 2026-08-28 export — while To/CC/BCC name Jennifer, Stephanie, Anika.
+// Read the addresses before the scaffold is cut, and the room can say who was
+// on the thread instead of naming a mechanism.
+//
+// Only the recipient lines are read. The body is never scanned: a signature
+// block, a forwarded trail, or a disclaimer's "unsubscribe@" is not a
+// correspondent, and a support case's own boilerplate is thick with them.
+
+const RECIPIENT_LINE = /^(?:Additional\s+)?(?:To|CC|BCC):(.*)$/gim;
+const ADDRESS = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g;
+const HEAD_LIMIT = 600;
+
+/** The addresses in a logged email's To/CC/BCC lines, lowercased, deduped,
+ *  in the order they appear. Empty for anything without the scaffold. */
+export function correspondentsOf(raw: string, cap = 12): string[] {
+  const s = raw ?? "";
+  const bodyAt = s.search(/^Body:/im);
+  const head = s.slice(0, bodyAt > 0 ? Math.min(bodyAt, HEAD_LIMIT) : HEAD_LIMIT);
+  if (!head) return [];
+  const out: string[] = [];
+  const seen = new Set<string>();
+  RECIPIENT_LINE.lastIndex = 0;
+  let line: RegExpExecArray | null;
+  while ((line = RECIPIENT_LINE.exec(head))) {
+    ADDRESS.lastIndex = 0;
+    let a: RegExpExecArray | null;
+    while ((a = ADDRESS.exec(line[1]))) {
+      const addr = a[0].toLowerCase();
+      if (seen.has(addr)) continue;
+      seen.add(addr);
+      out.push(addr);
+      if (out.length >= cap) return out;
+    }
+  }
+  return out;
+}
+
 /** Case-thread tokens strip from rendered subjects; kept in citations. */
 export function cleanSubject(s: string): string {
   return (s ?? "")

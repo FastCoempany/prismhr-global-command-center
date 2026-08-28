@@ -211,14 +211,16 @@ export function emlToPaste(raw: string, filename: string): string {
 // The reader strips the machinery, names the speakers, and merges a speaker's
 // consecutive cues into one line, so the paste reads like the conversation.
 
-export function parseVtt(raw: string): string {
+/** The cues as speaker-and-text runs. Exported through parseVtt and
+ *  vttToPaste; the paste needs to know whether the export named anyone. */
+function parseVttRuns(raw: string): { speaker: string; text: string; key: string }[] {
   // Block-based, per the WebVTT grammar: cues separate on blank lines, and a
   // cue is [optional identifier line] + [timing line] + [text lines]. Reading
   // block-wise is what keeps Teams' GUID cue identifiers out of the text —
   // everything up to and including the "-->" line is machinery, never words.
   const blocks = (raw ?? "").replace(/\r\n/g, "\n").split(/\n{2,}/);
-  const out: { speaker: string; text: string }[] = [];
-  let cur: { speaker: string; text: string } | null = null;
+  const out: { speaker: string; text: string; key: string }[] = [];
+  let cur: { speaker: string; text: string; key: string } | null = null;
   for (const block of blocks) {
     const lines = block.split("\n").filter((l) => l.trim());
     if (lines.length === 0) continue;
@@ -227,6 +229,13 @@ export function parseVtt(raw: string): string {
     const timingAt = lines.findIndex((l) => l.includes("-->"));
     // No timing line = not a cue (a stray header block); nothing here is words.
     if (timingAt === -1) continue;
+    // The cue identifier is machinery in the text, but it carries the one
+    // structure a speakerless export has left: Teams splits an utterance
+    // across display cues and suffixes them -0, -1, -2 off a shared GUID. On
+    // an anonymized export (no <v> tags at all — the 8/27 Infiniti recording)
+    // that suffix is the only thing separating one utterance from the next.
+    const cueKey = timingAt > 0 ? lines[timingAt - 1].trim().replace(/-\d+$/, "") : "";
+    let within = 0;
     for (const line of lines.slice(timingAt + 1)) {
       const t = line.trim();
       if (!t) continue;
@@ -253,23 +262,127 @@ export function parseVtt(raw: string): string {
           speaker = cur.speaker;
         }
       }
-      if (cur && cur.speaker === speaker) cur.text += ` ${text}`;
+      // A named speaker's consecutive cues merge, as they always have. With NO
+      // speaker anywhere, "same speaker" would be true of every cue in the
+      // file and the whole call collapsed into one line — 72,504 characters of
+      // it on the 8/27 recording. Without a name to run on, the merge runs on
+      // the cue identifier instead, and a cue's own continuation lines always
+      // belong to it.
+      const sameRun =
+        cur !== null &&
+        cur.speaker === speaker &&
+        (speaker !== "" || within > 0 || (cueKey !== "" && cur.key === cueKey));
+      if (sameRun) cur!.text += ` ${text}`;
       else {
-        cur = { speaker, text };
+        cur = { speaker, text, key: cueKey };
         out.push(cur);
       }
+      within += 1;
     }
   }
-  return out
+  return out;
+}
+
+const runsToText = (runs: { speaker: string; text: string }[]): string =>
+  runs
     .map((c) => (c.speaker ? `${c.speaker}: ${c.text}` : c.text))
     .join("\n")
     .trim();
+
+export function parseVtt(raw: string): string {
+  return runsToText(parseVttRuns(raw));
 }
 
 // The paste text a .vtt becomes — headed CALL TRANSCRIPT so the dialect
 // detector, the rule parsers, and the AI read all know what they hold.
 export function vttToPaste(raw: string, filename: string): string {
-  return `CALL TRANSCRIPT — dropped file ${filename}\n\n${parseVtt(raw)}`.trim();
+  const runs = parseVttRuns(raw);
+  // Teams can export a recording with every voice tag stripped. Saying so is
+  // the honest read, and it is the same line the Word export earns — a name
+  // guessed from the words would be a name invented.
+  const anonymous = runs.length > 0 && runs.every((r) => !r.speaker);
+  const head = anonymous
+    ? `CALL TRANSCRIPT — dropped file ${filename}\nSpeakers: not labeled in this export`
+    : `CALL TRANSCRIPT — dropped file ${filename}`;
+  return `${head}\n\n${runsToText(runs)}`.trim();
+}
+
+// ── transcripts that arrive as documents (.docx) ────────────────────────────
+// A call transcript is a call transcript whatever file it rides in. Teams'
+// Stream player exports the SAME recording two ways: WebVTT, which the reader
+// above understands richly, and a Word document, which until now read as a
+// generic DOCUMENT and lost the call entirely (the 8/27 Global Payroll Prism
+// call with Infiniti HR, 2026-08-28).
+//
+// The document form is a title line carrying the recording's stamp, then one
+// line per cue prefixed with an elapsed timestamp and NO speaker — Stream
+// drops the voice tags on the way to Word. So the reader keeps what is there
+// and never invents what is not: the timestamps go, the words stay, and no
+// line is attributed to anyone.
+
+/** Teams names the recording "<meeting>-YYYYMMDD_HHMMSS-Meeting Recording". */
+const RECORDING_TITLE =
+  /^(.*?)-(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})\d{2}-Meeting Recording\s*$/;
+
+/** An elapsed-time cue: "0:02", "31:45", "1:04:09" — then the words. */
+const CUE_LINE = /^(\d{1,2}:)?\d{1,2}:\d{2}\s*(.*)$/;
+
+export type TranscriptDoc = {
+  title: string;
+  /** "YYYY-MM-DD HH:MM" in the recorder's own wall clock, or "". */
+  startedAt: string;
+  lines: string[];
+};
+
+/** Read a document as a transcript, or null when it plainly is not one. The
+ *  bar is deliberate: a title stamp, or enough cue lines that no ordinary
+ *  document could pass by accident. */
+export function parseTranscriptDoc(raw: string): TranscriptDoc | null {
+  const all = (raw ?? "").replace(/\r\n/g, "\n").split("\n");
+  let title = "";
+  let startedAt = "";
+  let from = 0;
+  for (let i = 0; i < Math.min(all.length, 5); i++) {
+    const m = RECORDING_TITLE.exec(all[i].trim());
+    if (!m) continue;
+    title = m[1].trim();
+    startedAt = `${m[2]}-${m[3]}-${m[4]} ${m[5]}:${m[6]}`;
+    from = i + 1;
+    break;
+  }
+  const lines: string[] = [];
+  let cues = 0;
+  for (const line of all.slice(from)) {
+    const t = line.trim();
+    if (!t) continue;
+    const m = CUE_LINE.exec(t);
+    if (m) {
+      cues += 1;
+      const words = m[2].trim();
+      if (words) lines.push(words);
+    } else lines.push(t);
+  }
+  if (!title && cues < 12) return null;
+  if (cues === 0) return null;
+  if (lines.length === 0) return null;
+  return { title, startedAt, lines };
+}
+
+/** The paste text a transcript document becomes — the same CALL TRANSCRIPT
+ *  head the .vtt path writes, so every reader downstream treats the two
+ *  captures identically. */
+export function transcriptDocToPaste(doc: TranscriptDoc, filename: string): string {
+  const head = [
+    `CALL TRANSCRIPT — dropped file ${filename}`,
+    doc.title ? `Meeting: ${doc.title}` : "",
+    doc.startedAt ? `Recorded: ${doc.startedAt}` : "",
+    // Stream's Word export carries no voice tags. Saying so is the honest
+    // read; a name guessed from the words would be a name invented.
+    "Speakers: not labeled in this export",
+  ]
+    .filter(Boolean)
+    .join("\n");
+  return `${head}\n\n${doc.lines.join("\n")}`.trim();
 }
 
 // ── Outlook .msg reading — fields come from the caller's msgreader pass ─────
