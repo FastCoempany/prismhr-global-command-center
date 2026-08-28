@@ -95,6 +95,9 @@ export type DropManifest = {
   fileName: string;
   fileBytes: number;
   rowCount: number;
+  /** Rows carrying text in Full Comments — what the drop could actually read.
+   *  Zero against a large rowCount means the file came in blank. */
+  textRows: number;
   dupes: number;
   window: { from: string; to: string };
   laneTotals: Record<ActivityLane, number>;

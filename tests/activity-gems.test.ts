@@ -16,6 +16,9 @@ import {
   renderIntentBody,
   renderManifestBody,
   renderRollupBody,
+  MANIFEST_ID,
+  SECOND_RECORD_SPANS,
+  STAGE_NS,
   renderStageBody,
   renderSupportBody,
   emptyRunState,
@@ -232,6 +235,7 @@ test("stage and manifest blocks round-trip", () => {
     fileName: "report.csv",
     fileBytes: 42,
     rowCount: 6,
+    textRows: 0,
     dupes: 1,
     window: { from: "2026-05-23", to: "2026-08-20" },
     laneTotals: { human: 1, csm: 0, support: 1, intent: 2, machinery: 1 },
@@ -306,4 +310,61 @@ test("terms: two words, labels not sentences", () => {
   assert.equal(lintTerm("TAX THREAD").ok, true);
   assert.equal(lintTerm("A VERY LONG TERM").ok, false);
   assert.equal(lintTerm("Partner motion happening now.").ok, false);
+});
+
+// ── the take-back's reach (2026-08-28) ──────────────────────────────────────
+// A prefix delete is only as safe as the prefixes it does NOT share. This is
+// the guard: every namespace the app writes, checked against the four the
+// take-back clears. A new namespace that collides fails the build here.
+
+const APP_NAMESPACES = [
+  "actdraft:",
+  "gaps:",
+  "hide:",
+  "inst:",
+  "manual:",
+  "playbook:",
+  "presence:",
+  "research:",
+  "scratch:pad",
+  "scratch:gone",
+  "seat:",
+  "sendbook:",
+  "template:mail",
+  "wire:",
+];
+
+test("the take-back clears the second record's four namespaces and no others", () => {
+  assert.deepEqual(
+    SECOND_RECORD_SPANS.map((s) => s.ns),
+    ["activity:", "gems:", "support:", "intent:"],
+  );
+  for (const other of APP_NAMESPACES)
+    for (const span of SECOND_RECORD_SPANS)
+      assert.equal(
+        other.startsWith(span.ns),
+        false,
+        `${other} would be swept by ${span.ns}`,
+      );
+  // Every span carries words for the receipt — a silent delete is not an undo.
+  for (const span of SECOND_RECORD_SPANS) assert.ok(span.label.length > 3);
+});
+
+test("the activity prefix deliberately takes the staged slices and the manifest", () => {
+  // The three share a prefix by design; the take-back wants all three, and
+  // isRollupNoteId is the only place they are told apart.
+  const activity = SECOND_RECORD_SPANS[0].ns;
+  assert.ok(`${STAGE_NS}001X`.startsWith(activity));
+  assert.ok(MANIFEST_ID.startsWith(activity));
+  assert.ok(`${activity}001X`.startsWith(activity));
+  assert.equal(isRollupNoteId(`${STAGE_NS}001X`), false);
+  assert.equal(isRollupNoteId(MANIFEST_ID), false);
+  assert.equal(isRollupNoteId(`${activity}001X`), true);
+});
+
+// A real Salesforce account id can never collide with a namespace.
+test("an account id never looks like a namespace", () => {
+  for (const id of ["001F000000w38OIIAY", "0012A00002ECIYxQAP"])
+    for (const span of SECOND_RECORD_SPANS)
+      assert.equal(id.startsWith(span.ns), false);
 });

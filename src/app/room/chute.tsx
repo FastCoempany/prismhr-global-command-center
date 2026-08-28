@@ -10,7 +10,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { chuteReadPdf, roomPaste, roomPasteUndo } from "./actions";
-import { activityRun, activityStage } from "../activity/actions";
+import { activityRun, activityStage, activityTakeBack } from "../activity/actions";
 import { probeActivityReport, uploadActivityReport } from "@/lib/activity/upload";
 import { DROP_ACCEPT } from "@/lib/paste-files";
 import { readFileToText } from "./read-file";
@@ -36,6 +36,10 @@ type ChuteItem = {
   account?: { id: string; name: string };
   why?: string;
   candidates?: RouteHit[];
+  /** The activity drop's own arrival counts — what came in, before any verdict. */
+  came?: { rows: number; accounts: number; textRows: number };
+  /** The take-back asks twice; one click arms it. */
+  armed?: boolean;
   filed?: number;
   opened?: number;
   asks?: number; // questions the read queued for the record
@@ -201,14 +205,23 @@ export function Chute({
         });
         return;
       }
+      const came = {
+        rows: res.rowCount,
+        accounts: res.accounts,
+        textRows: res.textRows,
+      };
       patch(key, {
-        reason: `Verified complete — ${res.reply?.queued?.distill ?? 0} accounts to distill. Watch the gadget on the Intranet.`,
+        came,
+        reason: `${came.rows} rows · ${came.accounts} accounts · ${came.textRows} carrying email text. Distilling…`,
       });
       for (;;) {
         const r = await activityRun();
         if (r.done || !r.ok) {
           patch(key, {
             state: r.ok ? "activityDone" : "error",
+            // The counts lead. What the run concluded rides behind them —
+            // "Coverage: 100%" over a file that read nothing is how the
+            // 2026-08-28 drop passed for a success (2026-08-28).
             reason: r.ok
               ? (r.receipt[r.receipt.length - 1] ?? "The second record is distilled.")
               : (r.reason ?? "The run stopped — the Intranet dock holds the receipt."),
@@ -324,9 +337,38 @@ export function Chute({
       {it.state === "undone" && <span className={styles.chuteDupe}>{it.reason}</span>}
       {it.state === "activity" && <span>{it.reason}</span>}
       {it.state === "activityDone" && (
-        <span className={styles.chuteDone}>
-          ✓ the second record · {it.reason}{" "}
-          <a href="/intranet">The receipt waits on the Intranet.</a>
+        <span className={it.came?.textRows === 0 ? styles.chuteWarn : styles.chuteDone}>
+          {it.came ? `${it.came.rows} rows · ` : ""}
+          {it.came ? `${it.came.accounts} accounts · ` : ""}
+          {it.came ? `${it.came.textRows} carrying email text. ` : ""}
+          {it.came?.textRows === 0 ? "This drop read nothing. " : `${it.reason} `}
+          <a href="/intranet">The receipt waits on the Intranet.</a>{" "}
+          <button
+            type="button"
+            className={styles.chuteUndo}
+            title={
+              it.armed
+                ? "Press again to clear it. Earlier drops are not kept, so nothing is restored."
+                : "Take this drop back. Clears every account's second-record read."
+            }
+            onClick={() => {
+              if (!it.armed) {
+                patch(it.key, { armed: true });
+                return;
+              }
+              patch(it.key, { armed: false });
+              void activityTakeBack().then((r) => {
+                patch(it.key, {
+                  state: "undone",
+                  reason: r.ok
+                    ? `${r.lines[0]} Nothing was restored — earlier drops are not kept.`
+                    : (r.reason ?? "The take-back failed."),
+                });
+              });
+            }}
+          >
+            {it.armed ? "↩ sure?" : "↩ take it back"}
+          </button>
         </span>
       )}
       {it.state === "error" && <span className={styles.chuteErr}>{it.reason}</span>}

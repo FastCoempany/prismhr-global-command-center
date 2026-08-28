@@ -9,8 +9,10 @@ import {
   activityStatus,
   runActivityPass,
   stageActivityBatch,
+  takeBackSecondRecord,
   type ActivityStatus,
   type RunPassResult,
+  type TakeBackResult,
 } from "@/lib/activity/run";
 import type { StageBatch, StageReply } from "@/lib/activity/types";
 
@@ -55,5 +57,23 @@ export async function activityReceipt(): Promise<ActivityStatus | null> {
     return await activityStatus();
   } catch {
     return null;
+  }
+}
+
+/** Clear every store the second record owns. Destructive and deliberate: the
+ *  callers ask twice before they call it. */
+export async function activityTakeBack(): Promise<TakeBackResult> {
+  const bad = await guardWrite();
+  if (bad) return { ok: false, removed: 0, lines: [], reason: bad };
+  try {
+    return await takeBackSecondRecord();
+  } catch (e) {
+    const msg = (e as Error)?.message ?? "unknown";
+    return {
+      ok: false,
+      removed: 0,
+      lines: [],
+      reason: `The take-back failed — ${msg.slice(0, 120)}.`,
+    };
   }
 }

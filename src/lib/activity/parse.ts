@@ -36,12 +36,56 @@ export const CANON_HEADERS = [
 export const ANCHOR_HEADERS = ["18 Digit ID", "Subject"] as const;
 export const FINGERPRINT_MIN_MATCHES = 10;
 
+// Recognition counts columns. It must also WEIGH them. On 2026-08-28 an export
+// rebuilt from a different report type arrived without Assigned and without
+// Full Comments; twelve of nineteen still matched, so the door opened, and
+// 108,532 rows filed with no assignee and no email text — overwriting a good
+// read with a blank one. A missing Event Subtype is a shrug. A missing Full
+// Comments is the whole point of the file.
+export const LOAD_BEARING: {
+  header: string;
+  field: keyof ActivityRow;
+  carries: string;
+  alsoCalled: string[];
+}[] = [
+  {
+    header: "Full Comments",
+    field: "comments",
+    carries: "the email bodies",
+    alsoCalled: ["Comments"],
+  },
+  {
+    header: "Assigned",
+    field: "assigned",
+    carries: "who each activity belongs to",
+    alsoCalled: ["Assigned To: Full Name"],
+  },
+];
+
 export type Fingerprint = {
+  /** Is this the activity report at all? Recognition, unchanged: both anchors
+   *  plus ten of the canonical nineteen. A file that fails this is not the
+   *  export and belongs to another reader. */
   ok: boolean;
   matched: string[];
   missing: string[];
   extra: string[];
+  /** Recognized, but gutless: load-bearing columns that bound to nothing under
+   *  any spelling the reader knows. A drop with blockers is REFUSED — nothing
+   *  is staged, nothing is overwritten. */
+  blockers: { header: string; carries: string; alsoCalled: string[] }[];
 };
+
+/** The refusal an operator reads, or "" when the file can be read. Names the
+ *  column, says what it carries, and says nothing was filed. */
+export function refusalFor(fp: Fingerprint): string {
+  if (fp.blockers.length === 0) return "";
+  const names = fp.blockers
+    .map((b) => `${b.header} (or ${b.alsoCalled.join(", ")})`)
+    .join(" and ");
+  const carries = fp.blockers.map((b) => b.carries).join(" and ");
+  return `Nothing filed. This export has no ${names} column, so it carries none of ${carries}. Re-export with it and drop it again.`;
+}
 
 export function fingerprintHeaders(headers: string[]): Fingerprint {
   const clean = headers.map((h) => h.replace(/^﻿/, "").trim());
@@ -67,6 +111,11 @@ export function fingerprintHeaders(headers: string[]): Fingerprint {
     matched,
     missing,
     extra,
+    blockers: LOAD_BEARING.filter((b) => !fields.has(b.field)).map((b) => ({
+      header: b.header,
+      carries: b.carries,
+      alsoCalled: b.alsoCalled,
+    })),
   };
 }
 
