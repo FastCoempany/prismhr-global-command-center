@@ -4,7 +4,7 @@
 // production does.
 
 import { redactMoney } from "@/lib/intel/lexicon";
-import { cleanExcerpt } from "./excerpt";
+import { cleanExcerpt, correspondentsOf } from "./excerpt";
 import { laneOf, type ActivityLane } from "./classify";
 import {
   activityRowKey,
@@ -20,6 +20,12 @@ import {
 } from "./parse";
 import type { AccountSlice, DropManifest, IntentTally, StagedRow } from "./types";
 import { CAMPAIGN_KEY_CAP, COMMENT_CAP, SLICE_BODY_CAP, SLICE_ROW_CAP } from "./types";
+
+// Recipient lists per row. Eight covers every real thread measured in the
+// 2026-08-28 export (the mean is two or three); the cap is what keeps a
+// forty-recipient blast from spending an account's whole body budget on
+// addresses.
+const P_CAP = 8;
 
 type Bucket = {
   id: string;
@@ -148,6 +154,7 @@ export function createIngest(book: { id: string; name: string }[]): Ingest {
         laneCounts: { human: 0, csm: 0, support: 0, intent: 0, machinery: 0 },
         meta: {
           primaryContact: "",
+          primaryContactEmail: "",
           primaryContactTitle: "",
           lastContact: "",
           contactedDate: "",
@@ -163,6 +170,8 @@ export function createIngest(book: { id: string; name: string }[]): Ingest {
     // Account-level columns: first non-empty wins, read once (§2.3.5).
     if (!b.meta.primaryContact && r.primaryContact)
       b.meta.primaryContact = r.primaryContact.trim();
+    if (!b.meta.primaryContactEmail && r.primaryContactEmail)
+      b.meta.primaryContactEmail = r.primaryContactEmail.trim().toLowerCase();
     if (!b.meta.primaryContactTitle && r.primaryContactTitle)
       b.meta.primaryContactTitle = r.primaryContactTitle.trim();
     if (!b.meta.lastContact && r.lastContact) b.meta.lastContact = r.lastContact.trim();
@@ -212,6 +221,11 @@ export function createIngest(book: { id: string; name: string }[]): Ingest {
       c: r.comments
         ? redactMoney(cleanExcerpt(r.comments, COMMENT_CAP)) || undefined
         : undefined,
+      // Read BEFORE the cleaner cuts the scaffold — the recipients are the
+      // only place a logged email names its people.
+      p: r.comments
+        ? correspondentsOf(r.comments, P_CAP).join(";") || undefined
+        : undefined,
     });
     return {};
   };
@@ -231,6 +245,15 @@ export function createIngest(book: { id: string; name: string }[]): Ingest {
       for (let i = rows.length - 1; i >= 0 && body.length > SLICE_BODY_CAP; i--) {
         if (rows[i].c) {
           delete rows[i].c;
+          body = JSON.stringify(rows);
+        }
+      }
+      // Then the recipient lists, oldest first — words outrank addresses, and
+      // both outrank losing a row. An account whose comments are all gone and
+      // is still over budget would otherwise start dropping rows silently.
+      for (let i = rows.length - 1; i >= 0 && body.length > SLICE_BODY_CAP; i--) {
+        if (rows[i].p) {
+          delete rows[i].p;
           body = JSON.stringify(rows);
         }
       }

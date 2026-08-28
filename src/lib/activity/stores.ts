@@ -37,6 +37,9 @@ export const sv = (s: string): string =>
 
 const sha8 = (sha: string): string => (sha ?? "").slice(0, 8);
 
+/** The grammar's placeholder for a slot the record cannot fill with a name. */
+export const NO_ONE = "—";
+
 // ── the rollup grammar (activity:<id>) ──────────────────────────────────────
 
 export function renderRollupBody(r: Rollup): string {
@@ -49,7 +52,10 @@ export function renderRollupBody(r: Rollup): string {
   );
   if (r.lastHuman)
     lines.push(
-      `LAST HUMAN · ${r.lastHuman.day} · ${sv(r.lastHuman.how)} · ${sv(r.lastHuman.who)} (${r.lastHuman.kind}) · ${sv(r.lastHuman.subject)}`,
+      // NO_ONE holds the slot when the row names nobody — a logged email files
+      // under a mechanism, and the rollup blanks it rather than print it. An
+      // empty slot would collapse the line past its own parser (2026-08-28).
+      `LAST HUMAN · ${r.lastHuman.day} · ${sv(r.lastHuman.how)} · ${sv(r.lastHuman.who) || NO_ONE} (${r.lastHuman.kind}) · ${sv(r.lastHuman.subject)}`,
     );
   if (r.lastOrgInbound) lines.push(`LAST ORG INBOUND · ${sv(r.lastOrgInbound)}`);
   for (const a of r.actors)
@@ -102,7 +108,7 @@ export function parseRollupBody(body: string): Rollup | null {
       out.lastHuman = {
         day: m[1],
         how: m[2].trim(),
-        who: m[3].trim(),
+        who: m[3].trim() === NO_ONE ? "" : m[3].trim(),
         kind: m[4],
         subject: m[5].trim(),
       };

@@ -72,6 +72,24 @@ test("the rollup grammar round-trips", () => {
   assert.equal(parsed.threads[0].led, "account-led");
 });
 
+test("an unnamed person survives the trip — the line never collapses", () => {
+  // A logged email files under a mechanism, so the rollup blanks the person
+  // rather than print it. The day, the how and the subject are still real and
+  // must come back whole (2026-08-28).
+  const anon = {
+    ...rollup,
+    lastHuman: { ...rollup.lastHuman!, who: "", kind: "unresolved" },
+  };
+  const body = renderRollupBody(anon);
+  assert.match(body, /LAST HUMAN · \S+ · \S+ · — \(unresolved\) · /);
+  const parsed = parseRollupBody(body);
+  assert.equal(parsed?.lastHuman?.who, "");
+  assert.equal(parsed?.lastHuman?.kind, "unresolved");
+  assert.equal(parsed?.lastHuman?.day, rollup.lastHuman!.day);
+  // The grammar's own separator sanitizer still applies to the subject.
+  assert.equal(parsed?.lastHuman?.subject, rollup.lastHuman!.subject.replace("|", "-"));
+});
+
 test("a verdict line survives the trip", () => {
   const withVerdict = {
     ...rollup,
@@ -175,7 +193,8 @@ test("stage and manifest blocks round-trip", () => {
     id: "001TESTTRENDHR000A",
     name: "Trend Personnel",
     meta: {
-      primaryContact: "Natalie Borland",
+      primaryContactEmail: "",
+    primaryContact: "Natalie Borland",
       primaryContactTitle: "CFO",
       lastContact: "",
       contactedDate: "4/12/2017",

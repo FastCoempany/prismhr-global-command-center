@@ -4,6 +4,11 @@
 // deck). This is the app's source of truth for what the product IS: outreach
 // drafts, demo prep, and Claude prompts ground themselves here instead of
 // improvising product claims.
+//
+// Facts marked ON TAPE were stated by the product team on a recorded call and
+// carry their date — the collateral says what we sell, the tape says how it
+// actually runs, and a partner asking "when can we go live" needs the second.
+// Source for the 2026-08-27 marks: intelligence/InfinitiHR_call_27AUG26_*.
 
 export type ProductTier = { name: string; forWho: string; includes: string[] };
 
@@ -52,7 +57,10 @@ export const PRODUCT_CANON: Product[] = [
       },
     ],
     keyFacts: [
-      "175+ countries supported; owned-entity infrastructure in 44 countries",
+      "175+ countries supported; owned-entity infrastructure in 44 countries — every country except US-sanctioned ones (ON TAPE 2026-08-27, Shane Jacobs)",
+      "Stand-up time is about two weeks, measured from a signed client agreement and the employee's information reaching us — not from first contact (ON TAPE 2026-08-27, Shane Jacobs)",
+      "A per-employee setup fee covers in-country setup and the employment contract. A reseller partner marks that up, or charges its own implementation fee over and above it — that markup is where a partner recovers the time it spends teaching its clients the platform (ON TAPE 2026-08-27)",
+      "A deposit of one month of salary, taxes and fees is held per employee, refunded at the end of employment. It is the fail-safe when a client's funding bounces: PrismHR Global is the legal employer in-country and pays regardless (ON TAPE 2026-08-27, Shane Jacobs)",
       "EOR Premium countries — Americas: Argentina, Belize, Brazil, Canada, Chile, Colombia, Dominican Republic, Guatemala, Honduras, Jamaica, Mexico, Paraguay, Peru, US; EMEA: Egypt, Kenya, South Africa, Spain; APAC: India, Philippines",
     ],
   },
@@ -86,6 +94,7 @@ export const PRODUCT_CANON: Product[] = [
     ],
     keyFacts: [
       "Global Wallet: instant payouts in local currency or USD; virtual cards, multi-currency, crypto payouts, stock investments",
+      "Contractors go live immediately — once they are in the system and have entered their own information, there is no waiting period (ON TAPE 2026-08-27, Shane Jacobs)",
     ],
   },
   {
@@ -105,6 +114,10 @@ export const PRODUCT_CANON: Product[] = [
       "NOT the same thing as the PrismHR core 'International Employee' record flag (June 2026 release notes, WSP-3980/3982/4043, service-provider-only INTLEMPLOYEE feature code): that flag only waives the US resident address on the employee record and such employees CANNOT be processed in a payroll batch — Global Payroll is the product that actually runs multi-country payroll",
       "Channel framing (flyer): built for service providers to extend their own global payroll services to clients across 175+ countries",
       "Partner-shareable one-page flyer exists (PHRFLY-GLOBALPYRLL, added 7/14 pm) — carries no pricing",
+      "Standing up in-country Global Payroll runs two to three months — the data collection and the in-country build are the reason, against about two weeks for EOR and immediate for contractors (ON TAPE 2026-08-27, Shane Jacobs)",
+      "Funding cadence: the 10th of the month is the cutoff for approvals, and funds are ACH-debited generally mid-to-third week so they reach the country before payday (ON TAPE 2026-08-27, Shane Jacobs)",
+      "Pay frequency follows country norm, not client preference — Canada, Mexico, the Philippines and Puerto Rico semi-monthly; most of Europe, South America and Southeast Asia monthly. Off-cycle runs are possible for a missed bonus or commission, for a fee (ON TAPE 2026-08-27, Shane Jacobs)",
+      "Who gets debited depends on the agreement: on a reseller agreement PrismHR draws the funds from the partner and the partner invoices its client; on a referral agreement PrismHR contracts with the client and pulls the funds directly (ON TAPE 2026-08-27, Shane Jacobs)",
     ],
   },
   {

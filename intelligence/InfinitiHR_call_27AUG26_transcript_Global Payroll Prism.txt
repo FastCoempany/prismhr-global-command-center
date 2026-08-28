@@ -1,0 +1,969 @@
+CALL TRANSCRIPT — dropped file Global.Payroll.Prism-20260827_140038-Meeting.Recording-en-US.docx
+Meeting: Global Payroll Prism
+Recorded: 2026-08-27 14:00
+Speakers: not labeled in this export
+
+You guys?
+No, sorry.
+We realized our team meeting is at 2:30 and we weren't sure how long you guys were going to be.
+You know what I'll, but that's OK.
+Fantastic.
+I was like, we'll push our meeting a little bit.
+We just didn't, we'll try go ahead.
+We'll try not to keep you guys too long.
+Well, I, I had positions that where you guys are at team meetings always include crab cakes.
+Is that the case or no where it sucks.
+I, I get down that way every once in a while and my, one of my kids went to University of Maryland and you know, like if my wife would go down on her own, I'm like, did you get crab cake?
+She's like, what is your, why are you so obsessed with crab cake?
+And you know, I'm in the Boston area.
+Crab cake here is like, you know, mashed up crab with a ton of bread crumbs, right?
+Versus what you get is those big, you know, softball sized shunts.
+And I'm like, well, have one and you'll understand If she doesn't like crab, it's what it comes down to at the end of the day.
+So Yep, she doesn't get it then.
+No, she wouldn't.
+We only have some alcohol sometimes but that's it.
+All right, I think I'm already sharing my screen here.
+Are we waiting on Scott or?
+No, Let's.
+Let's get going.
+He got it stuck.
+I'm recording the meeting so he can see it.
+Fantastic.
+Fantastic.
+Yeah, we can't.
+We can't get it started.
+Yeah, let's do it.
+So, yeah.
+Javier, I just want to start to say thanks.
+I appreciate you getting ready together.
+It looks like you brought the tax folks implementation folks.
+They're all folks on to the call.
+So thanks for doing that.
+Just really quick, if we can like start with a round of introductions, it'll be fine to just do your name, which you own at Infinity day-to-day is perfectly fine.
+I'll start with myself and then have my other colleagues introduce themselves and then we can come around to you guys.
+So I'm Antaeus based in Chicago, greatest city in the world, and I work directly with P OS like you guys and help you solve global issues for you and your clients.
+I'll pass off to to Shane.
+Yes, hello everybody.
+I'm Shane.
+I work with Antaeus and Russ.
+I'm based in our Chandler, AZ office and I'll be helping demonstrate the Prism global platform.
+So and I, Rebecca, I don't think we're related.
+No, but we met it at Prism Live.
+We did.
+That's right.
+So I'm Rush Jones.
+I've been with prison about 13 years.
+So I've known you guys at least from a business perspective for a long time, although you predate me, I think you guys came on around 2008.
+So thank you for the wonderful, wonderful years.
+I don't know that Chicago is the greatest city in the world.
+I see in the in the Boston area, but I am a New Jersey transplant, so we'll go with NYC and from my book, so nice to see you guys.
+Nice to meet you.
+Well, I'll let the ladies go first.
+Oh, yeah, yeah, sure.
+All right.
+Well, I'm Michelle.
+I'm the implementation manager, so I'm based in the Columbia, MD office.
+Jen, you want to go?
+I was like Jen Hardesty.
+I am our director of implementation and technology.
+So I kind of the technology piece, but very much involved in PRISM and our anything to do Prism within our support of our company.
+I've been with Infinity 12 years I think.
+So we yeah, we've, we've got a long relationship with Prism and look forward to kind of seeing what new platform here might add value to what we're looking for.
+Awesome, awesome.
+Becky.
+So hi, I'm Becky, Director of Payroll operations here in the Columbia office as well.
+And yeah, we're definitely interested in what you guys have going on.
+I saw a little demo at Prism live.
+So so I'm excited just to see what you guys have.
+I've been here about 5 1/2, well, almost six years actually next month.
+So so it's it's a joy working here.
+We love working with your team as well.
+Yeah, fantastic.
+Thanks, everybody.
+I'm out here.
+I'm out here.
+I'm just the link here trying to learn what you guys got.
+And I'm the Chief operating officer and Ralph was not able to make it, but that's why I'm recording.
+He's our director of tax and Dennis Scott, our CEO.
+That's it.
+Yeah.
+I was going to ask you about about Rafael.
+I forgot he was supposed to join with us too.
+So jumping right into it for the next 1015 minutes or so, I'm hoping we can do a couple of things.
+So first, I, I thought it might be helpful just to do a quick orientation of what our global offering is since Rebecca, Rebecca and Michelle were on the call, they weren't on our first call.
+From there, we can briefly touch on what I heard on our first call a couple weeks ago from Javier, Scott and Jennifer, just to make sure that we've kind of got the right high level sense of what's happening in your world in Infinity.
+And from there, I'll pass it over to hear just a little bit more from you guys, just in case I missed anything, if there's any, anything new you want to share.
+And then Shane will take us into the platform for the second-half so you guys can see how all this works.
+And then we can round it out with with with next steps and what that might look like.
+Does all that sound good?
+Yeah, fantastic.
+And everybody couldn't see my screen, right.
+Fantastic.
+So what our global offering does is it now makes it possible for you guys to offer four things to your clients.
+Number one, we can become at Prism the legal employer for somebody in another country.
+So nobody, nobody needs a company there #2 we can manage and pay your contractors.
+The third thing is we can run payroll for a company that already has its own NDS, own operation somewhere.
+And the fourth thing, which is probably what we're leaning, we'll lean in the most today is that we can, it's, it's one of the things I don't think I talked about on our, our, our initial call is that we can offer a white glove service where we can go and find the talent that you need, right?
+And we can do all of that in more than 175 different countries.
+So for example, like if we say we're hiring somebody in Brazil, Germany, there's a couple countries that came up on our last call, that means that our Brazilian and German teams, our entities there is going to be doing the hiring.
+So we're not handing them off to some local third party.
+And that brings me to my last point.
+And we get asked, asked this a lot with this new global offering, Prism HR global is ours, right?
+It's not something we're selling from another company.
+We're not white labeling it.
+It's something that we built from the ground up.
+And the way that you access the global platform that Shane's going to show us later is by clicking right in the, the prism, clicking like a global Prism button right in the platform that you're already used to.
+But we'll, we'll double click into some of that stuff here in a second.
+But first, for the folks that went on our first call, I just want to jump into a couple of the things that we we covered on that last call.
+So when Scott and Javier and Jennifer and I spoke a couple weeks ago, one of the things we discussed is how today whenever you guys have clients that bring you international related opportunities, you guys are referring it out.
+And that's the thing that kind of stuck with me a little bit is that you guys aren't just handing this stuff off.
+It's potential revenue that's leaving you guys entirely because you have your client that's going to build relationships with somebody else.
+And even though you guys are still in a relationship with that account, they're giving away business that could be yours.
+The most immediate opportunity that we talked about in our last call was centered around a couple of staffing clients that you mentioned hiring or hiring in Puerto Rico.
+And you guys mentioned that one of those employees is already on boarding right now to Prism.
+I'm sure there's probably more to that right now, but that's really where the first issue came up and where I was kind of hoping that Rafael could jump in a little bit and shed some light because the team had talked about how a couple of those employees is manageable today.
+But you guys are expecting that to scale up.
+And the, the main thing that came out of that was like the tax side of it is going to start to get burdensome.
+I know Raphael's not here, but maybe so Ruskin here, Michelle, it is.
+Can any of you guys speak to to that a little bit?
+Is that a fair picture?
+Do do any of you guys, maybe Rebecca on the payroll side represent any of that?
+Yeah, I'm pretty sure we're live in Puerto Rico now, but Raff's going to have to tell you if there's any struggles there with the tax stuff.
+Yeah, I am cute.
+I'm sorry.
+Go ahead.
+No, I was going to say Rafael would definitely be the one to tell you because I think he has to manually file and, you know, kind of outside the system.
+That's where the conversation started.
+Was his challenge over the manual whatever he has to do with the Puerto Rico, that's not funny, but you bring up that word manual.
+I was actually going to, I was curious from Rebecca too, like when the payrolls actually running, how much of that like are you seeing anything like that trickles down in your area that's you anticipate There are two clients in Puerto Rico.
+Yeah, there are two clients that were already here.
+They already had their own, you know, like account set up in Puerto Rico and then we had another one that didn't.
+So RAF has a solution for them and we are active like as Infinity.
+We have, we can process under Infinity now, but I I don't know if that's, you know, how much manual things he has to do and if he's looking for additional solutions there.
+And forgive me for mixing this up a little bit.
+When you say that the the one staffing company has an account in Puerto Rico, are you saying they have that they're established there like they have?
+Yeah, Yeah, I think one of our clients has established, another one was trying to get established, but now we are.
+So I think, I think he's fine.
+But again, we just need him how how dissolution was temporary was my understanding was what he's doing is like, OK, we've got one or two employees in Puerto Rico right now, but it wasn't a sustainable long term solution of what he's doing.
+If that were to grow.
+I think the second one or the one that already I'm sorry, go ahead, Rebecca.
+I think that changed.
+I think that changed from last time we talked.
+OK, no, that, that's, that's super helpful.
+You know, let me pause right there just in case anything circling around in Russ or Shane's head on on that.
+No, I'm, I'm, I'm good.
+From what I what I heard Jennifer and Rebecca is the issue isn't running the payroll, it's managing the tax, the tax burden side on Puerto Rico.
+Yeah.
+And and and chance, I mean if you have some more information as, as it comes, I mean I can help you find, you know, find an appropriate home for that, that feedback for sure possible.
+So the the other opportunities, so I can go back a slide here, Scott's not on the call, but just again just to give Michelle, Rebecca just some kind of insight and other things that I heard.
+I think you guys had an employee that relocated to Germany that you had to go find an outside provider for.
+And then I, I heard that your sales team is surfacing prospects that have already prospects that have people in Mexico and Brazil.
+Again, all business that you guys are having to, to outsource, but these are all countries that we already operate in.
+So between all those, it's a, it's a decent amount of activity that you guys are hearing.
+And we're hearing that from a lot of our, our partners that you no longer have to say no to.
+But the thing to think about in terms of like how we decide to handle them, it just comes down to one question that we like to put in your mind is like who's the legal employer of the person that's actually doing the work?
+If it's your client who's doing the work, then that's our global payroll solution.
+They would have a registered company in that country similar to like the the one Puerto Rico staffing company you talked about.
+But sometimes people think that's it.
+They just need to have an entity registered there.
+But there's also a lot of other stuff like you need to actually have payroll registration, a bank account, all those sorts of things.
+Then there's taxes and severance, a whole bunch of stuff that goes into that's specific to Puerto Rico.
+We're happy to get in the weeds on that stuff.
+Well, the time is right, but if it's us, then that's employer of record.
+If we're employing that person, then none of that stuff is needed, right?
+The employment contract, making sure they're paid the taxes, all that stuff, local authority nuances, we have all that stuff.
+So for all those countries that we're talking about, Germany, Brazil, Puerto Rico, if any of your clients have entities there, then that's where you will want to be able to offer them this service, the employer record.
+Before we jump into the platform, let me just open the floor and see if there's anything specific that you guys are hoping to see or if there's anything else that's come up changed.
+I know we just talked a little bit about the Puerto Rico stuff, but I just want to open up the floor a little bit before we we jump into the platform.
+I feel like we've passed off clients to for that had workers in Canada in the past years.
+So I'm, I'm assuming you guys are in Canada as well.
+So I, I think that would be their closest to us, right?
+So, so that might come up, but no, I, I remember seeing the platform when Shane was showing it to me.
+It looked really awesome.
+So I'm excited to see what you guys have have to show and if this is set up already, like we just like how much does it cost and is every state different and you know, like what what else is is entailed in it in the whole setup process when we get a client that has these needs.
+Awesome.
+Yeah, we'll, we'll touch on kind of the commercial piece here toward the end.
+But if anybody that didn't have anything else, we'll get into the fun part.
+I'll hand it off to Shane so he can take you guys on the platform and see how it actually works.
+And while he's demoing, please jump in whenever you can.
+There's no way you can throw Shane off.
+So yeah, I'll, I'll hand it over to Shane.
+OK, sounds good.
+Challenge accepted.
+So let me just pull it in now.
+Are you seeing my screen?
+OK, the Prism HR, this should be very familiar with you.
+So right now our Prism Global environment is a single sign on through Prism HR and it's very easy to get to.
+I'll just click in the payroll section and then go to Global Payroll.
+This now takes us into PRISM Global.
+It is a separate module.
+So as of right now, the system that we're you're seeing now with PRISM Global is separate from the US employees that you might have in PRISM HR.
+I'll talk about some of the future state and some of the things that do go back and forth, but just for your understanding, international employees are in this system.
+Your US employees stay in your Prism HR system.
+The first platform that comes up is the administration view as a service provider.
+This is really unique to Prism Global in that you can't see all your clients and their global employees.
+So depending on how you manage your your clients and then when they have new hires, you could help them, support them, see their environment and and provide some tools and help for them.
+So this is showing all the clients that I have as a service provider and the different type of workers.
+There's really three groups of workers that your clients will be engaged in internationally independent contractors that have no legal employment, but they're hiring them as a contractor part.
+I wouldn't even say part time, project based, short term, 6 months, very project specific.
+Those would be contractors and we can pay them through this platform EOR.
+What we're talking about most of the time is where I want to hire someone full time in another country, but I don't have a legal presence, I don't have an entity.
+And then when we say payroll, I do have a legal entity at subsidiary branch office.
+I have a business in that country and I'm running in country payroll.
+So those are the three groups that we talk about.
+We're always there to help advise on the classification.
+Obviously we see that here in the United States, but sometimes they think, oh, well, if I say it's a contractor, it must be so.
+Well, that's not the case.
+Each country has their own list of rules that are very specific to say, hey, no, I don't care what you say, Mr.
+American Company, they are classified as an employee.
+We need to make sure that they're an employer of record situation and we've run it, we've run across that.
+Sometimes it's no fault of their own, it's just how they've done it.
+They're very ignorant.
+Sometimes it's on purpose.
+I don't want to pay all those taxes in France.
+But from a liability risk standpoint, we're going to advise on, hey, based on this scenario, here's what's going on.
+OK, so here are my workers for each of my clients that are listed here on the right.
+And then I can see what that distribution looks like.
+So this very high level as you're looking over your client base and where their workers are in the country, worker type, EOR, payroll and contractors, this is just showing a list of my clients.
+This is where you're going to access their platform, which I'll show you in just a little bit.
+The workers here, again, I can dive into any of these workers specifically.
+So if there's a question or something going on with your client and you're providing support that you could go right here to this panel and then look at their employee record, their contracts, etcetera.
+In fact, why don't I do that with this Sam Lopez?
+Let's see, let's chose one that's active here in EOR.
+But let's, let's do that engagement in EOR.
+Here we go.
+Here's some active ones.
+Here's David Davis in the Philippines.
+I can view his information.
+Oh, it just kicked me out.
+Hold on.
+Let me rewind.
+Get back in there.
+Sorry about that.
+There we go.
+Let me impersonate instead.
+Make sure that works.
+Only happens when you're demoing, right?
+We're familiar there.
+That's better.
+It's easier to impersonate.
+So what I'm doing is I'm impersonating David.
+So this is his actual environment that he's logging into and it has all the information from an employee perspective.
+So this is stepping ahead a little bit, but each employee will have their own login to log into the system where they'll be able to see all their different payments that they've been, they've been given, see all their time off requests, the different types of leaves.
+As an employer of record, we're responsible for adhering to the statutory leaves in each country.
+Yes, most of the time that's more than the United States.
+They have all their different holidays.
+I can view into here all the Philippines holidays, annual leave, sick leaves.
+This was done for a client that gave their Philippine employees US holidays off.
+So we included a bucket there.
+So all these are tracked according to the statutory guiding and this is where I'd ask for that time off.
+Time tracking is not a clock in clock out, it's more of tracking their time.
+If your client wants that, this is available.
+So I put in here my working hours or maybe 5 hours this week.
+I can put the type where I'm at in that process and record that.
+And then that would be sent to their manager to approve those hours.
+So again, I worked five hours, 8 hours, etcetera.
+In some European countries, this is required even for salaried individuals.
+We will let you know that, right?
+We're the employer of record.
+So we're going to say in Spain, I don't care if it's the CFO, he has to go into some system and say I worked 8 hours as today because they actually get overtime pay.
+For full time salary employees in some countries, so, but that's on us.
+We'll make sure that we're following those rules and advising you and your clients appropriately.
+OK.
+As an employee, I have reimbursable expenses.
+We want to make sure they're going through this system and not your client's system.
+As there are employees, we want to make sure that they're processed correctly, done through payroll.
+There could be tax situations there.
+So we want all those reimbursable expenses to flow through us and not your clients.
+So that's what it looks like from a worker standpoint.
+I'll stop impersonating.
+Go back to the administrative view, which is what you're seeing as a service provider invoices.
+There's two types of invoices and this is in the reseller format.
+There's different paths in which you can decide on how to engage with Prism Global.
+One is as a reseller.
+So as a reseller, we would be invoicing you for all the services that we're providing.
+You in turn would then re invoice your client with a markup for those services.
+OK, So this would be the service provider invoices from US Prism HR to Infinity, OK.
+And I can see we basically group them as contractors, EOR or payroll.
+So this is just an example.
+I can view the invoice here.
+It's going to show what the rates are, the taxes and salary for that individual that were invoicing you that you would turn around and invoice The client invoices look a little different depending on the worker type.
+So a contractor you're going to see is just simply the fees, the fees that we're charging for those services, OK?
+EOR invoices actually contain the payroll taxes and our fees, OK.
+And then the payroll invoices are just our fees.
+So it's a little bit different depending on the worker classification, but just keep in mind as employer of record, the client is paying for all the salary, taxes and fees in one invoice.
+So that's how those invoices work here.
+And then the client invoice would be the invoices from you to the client, and they're all tracked here.
+Now, these invoices you can see, and I'll look at an ER invoice here as a kind of a view.
+This again would show here, here's Claire, here are the wages, taxes and fees.
+Those are the line items that you would then need a bill to your client.
+Now you can provide that bill in a lump sum.
+You can spell it out depending on how you want to invoice your client, but you have all the backup specifically on what the rates are, what the fees and taxes are and so forth.
+OK.
+So that's in a reseller environment, in a referral environment where you're like we don't want to be in the middle of that.
+We just want them to work with Prism Global directly.
+We would be the ones invoicing the client directly.
+OK, So there's the two paths on Tayis.
+We'll kind of talk about the differences and how that looks, but just want to be you to be aware, there are two different ways in which you can sell and offer these services.
+And so those are the invoices.
+And then last would be the administrative privileges that you're providing.
+You can go into here and let's edit.
+Jeremy and I can based on my client list, give him access to all your clients or just certain clients.
+Maybe he's only responsible for one.
+I could just give him access to that one client.
+OK, So you can set that up however you'd like in the settings sections, bank account information, pretty basic, but the client pricing is what is most important.
+These are the rates that you would be charging your client for these services and again, it's broken up by contract or worker type contractor.
+Here is just the fees for those contractor payment contractor plus.
+It's one step more meaning that the contract is between the contractor and Prism Global.
+In the earlier scenario with a contractor, the contracts for between the contractor and your client, but as a contractor plus or sometimes referred to as agent of record, contractor of record, we are holding the contract.
+So we're going to make sure that classification we talked about is accurate.
+We're not going to sign our name to a contract for a contractor if we know that there really should be classified as an employee.
+Now the rates are higher for that because we're taking on more responsibility and liability for that classification, but some companies want to make sure that you know they're being classified properly.
+Employer of record.
+There's a few more fees involved in that and again on case, we'll provide you with all of that.
+But again, it's a per employee per month fee.
+It does depend on the country.
+Some countries are more expensive than others.
+There's some set up fees, deposit, other things that are involved depending on the tier of the country will be the rate.
+But you as the reseller in this scenario can provide any overrides to countries that you'd like.
+So I provided some overrides here that no matter what, if it goes into the Albania, I'm going to charge a little bit less or charge a little bit more in another country.
+You can manage that all for money here.
+And then payroll again is for those incidents where your client has a business in another country and we're just processing the payroll directly.
+There's the different fees involved for that as well.
+So these are going to be all the pricing that you will set up when you're invoicing your clients in a reseller environment.
+Again, you don't necessarily need to send the invoice from this system to your client, but it will create and generate all the invoices.
+And then if you want to then invoice them based on your invoicing system, you're already invoicing them for the other services.
+You can then invoice them for the Global Services, but you'll have all the backup and details here.
+Any questions on that?
+Oh yeah, sorry, I just do.
+Most clients kind of upsell these prices to pass on the pricing.
+What do you historically, I would assume absolutely, yeah, we've seen we're gonna provide you a wholesale price, which we're invoicing you.
+We'll then show you a recommended retail price and they're pretty competitive in the marketplace.
+We're doing this in some other divisions.
+And so we know very clearly where the pricing at.
+I worked for a competitor previously, Antaeus did too.
+So we're very cautious of where we need to be for certain countries.
+Provide you with that guidance on here's typically what we see.
+But then we've even had some go, you know what, I'm going to actually increase it above that because I want to kind of take into consideration that I'm providing a little more guidance and direction from a service provider, but that's up to you on how much you want to mark that up.
+Got it, great.
+So that's the service provider platform view.
+This is what's unique about Prism Global fact that it's single sign on and that you're right into this administrative view as a service provider.
+Right now, the reports that you see or the information that's generated in here is self-contained within PRISM Global Future State and they're working on this.
+I'd say it's one of the top priorities of our development team is to be able to pull some of this global data into PRISM HR Report Center.
+So that way you can report on both your US and international populations as a whole.
+That is forthcoming.
+It's not available yet, but I know it's a very top priority as we've heard a lot of comments from our service provider.
+That'd be a great feature to have.
+So we're working on that.
+Yeah, Shane, I'm glad you mentioned that because Jennifer, I know on our first call you had you were curious about that.
+So yeah, thank you.
+OK, so if there are any more questions, let me dive into the client view again, what your client are going to see once they start engaging with us.
+So as a service provider, I can dive into their platforms.
+So let's just go to the Cervello Corporation and impersonate this.
+So this is as if I'm logging in as Cerbello and I can see everything now with their global populations in the dashboard setting.
+The one of the screens we're going to see the most and use the most is this pay period section, where each month I need to approve the pay periods, and they're again broken out into three groups, EOR, payroll, and contractor.
+So if I click into the EOR report, I can see all the countries, all the rates and taxes that make up that.
+OK.
+So if I go in here to Nina in Canada, it's going to show her rage, her wages, benefits and employer taxes and they're specific to each country.
+So I have all the details I need as a client, say is everything being accounted for, etcetera.
+It will show the employee gross to net down here below with a quick USD calculation here just for information and then employer costs as well.
+You know, and as they look at the different countries, that's what's going to change and be different is some countries have a lot more taxes and social charges than others, but they can see all of that here and wages, etcetera.
+And again, it's broken out into each country.
+So if I break into Mexico, those taxes are going to be different, look different.
+The social charges are all different based on Canada.
+Again, here's the Mexican pesos.
+So it gives you a quick calculation what that looks like in USD.
+In employer record services, we always pay the employees in local currency, although we're invoicing you in U.S.
+dollars.
+So there isn't any concern for you to do any foreign currency trans conversion.
+We'd manage that process for you.
+So you would pay the invoice, your client would pay the invoice in U.S.
+dollars.
+We take that and then we convert it and pay in local currency.
+With contractor payment, that's a little bit different.
+Contractor payments can be made in U.S.
+dollars and you would pay us there, but the funds are being put into a digital wallet, kind of like a Venmo account.
+It's called Listo Pay.
+And by that the contractor, wherever they're at in the world, has this wallet that they can then deposit into their bank account.
+They can transfer that into a other digital currency.
+Philippines is the best example.
+Everyone there uses G Cash.
+It's the Venmo equivalent.
+It's used everywhere all the time and you can immediately transfer from our wallet right into G Cash or the Brazil equivalent or the other country's equivalents.
+Those are becoming more and more common.
+That's a whole nother section that I could show you, but that that is for contractors only.
+And then from the payroll standpoint where we're just processing in country payroll, we are not collecting any of the salary or the taxes because that your client has set up a legal entity and they set up a local bank account.
+All we're doing is doing the calculations, rating the bank file and then directing their in country bank to make the salary payments and the tax payments.
+So those are the three types.
+Contractors go into a wallet, employer of record, we're transferring the funds directly into the employee's bank account in country and the taxes with global payroll, we're using your clients in country bank and directing the payments from that, that direction.
+Great thing is, is that all it's all done in one platform.
+It's all done here.
+We're managing the different payments as they go through.
+So then I can go in here and approve that, confirm approval and in an employer of record services, payroll cut off as the 10th of each month.
+That allows us to make any corrections and so forth.
+Make sure that we're invoicing you are the client appropriately getting the funds and then getting the funds to the country and paid out appropriately.
+Any changes that were to happen after the 10th of the month would just happen in the next payroll run.
+Most countries are on a monthly payroll cycle, although Canada, Mexico, Puerto Rico, some of those more US centric countries are twice per month, but I'd say most of Europe, South America, Southeast Asia, they're all in a monthly payroll kind of for your information.
+OK, so that's where they're going to approve those in each pay period.
+As the manager of these clients in Cervello, I have all my reimbursements that I can go through and look at and approve.
+So here Jane has provided that I can look at what the reimbursement looks like, see what the receipt looks like.
+Everything's self-contained and then I can disapprove that from right here.
+And then that will get approved.
+It's before the 10th of the month.
+So it'll, it'll get paid out in the next payroll.
+I also can do that with time off requests.
+So I'm doing all the different time off requests.
+Oh, there's my e-mail to approve the expense here.
+I can just look at what that leave is.
+Again, different countries at different leaves, different categories.
+We manage all of that.
+So I can approve those time offs, etcetera, and make sure that happens appropriately.
+The time tracking section is, again, if your client needs to track the time in some fashion.
+Again, some countries it's required.
+If I go into Claire, I can see that again, I work 7 hours this week or this day, five hours, etcetera.
+It's not a clock in or out.
+It's just recording their time.
+Some clients will use it as I want to work on this project or this client or this thing or that thing.
+You can set that up or your client can set that up as they'd like.
+So that's kind of it from a dashboard where they can quickly go and do those types of things.
+Reminders on upcoming holidays.
+So there's a lot of holidays out there that you don't realize in other countries there, there are a lot and everything else there.
+So.
+OK, so any questions on the dashboard?
+So let's talk about the the employees and kind of what that's that looks like.
+I'll first start with the onboarding section here.
+The onboarding section is going to show all the employees where they're at in that process.
+And this did it last time Russ was on another call where I can't scroll.
+So I need to just log out real quick and log back in.
+That's OK.
+I need to make sure I let our demo team know that once in a while my scrolling will stop.
+So I can't go all the way down, do this and I'm going to go into this one instead.
+There we go.
+Now it's scrolling.
+OK, sorry about that.
+So in the onboarding section, I can see where my employees are at that are going through the onboarding.
+Some of them are just in draft, we'll look at that.
+Some are waiting for their offer letter signatures, etcetera.
+So I can look at those easily.
+And my team section is going to show all my team members, both those that are onboarding and those that are active.
+So I can look at those, just look at all my active employees.
+And again, I can show both contractors EOR or payroll and I can sort that as well, just how I'd like.
+OK, so let me show you how you actually onboard an employee or a worker I should say.
+And that first question you ask is, is it a contractor or an employee?
+OK, for this, for the sake of this demo, let's do an employee.
+And then the next question is, is this an employer record?
+I don't have a legal entity in that country or I do and it's payroll.
+So let's just do employer record for this scenario here.
+Rebecca, I know where my genealogy is from, from the Jacobs line, but where is your ancestors from?
+I always like to ask that question, Italy, Germany, Ireland, Italy, let's do that one, OK?
+Mine are mostly German.
+Mine are mostly German on the Jacob side.
+So, so let's choose Italy as my country of nationality.
+OK, So that's the first question.
+What's their nationality and what country are they working in?
+And this is particularly important in in in Europe, but also just to know from a work standpoint.
+So if I say that I'm Italian, but I'm working in Belgium, it's going to say, oh, there's a difference there.
+Do they need work authorization in Belgium?
+Do we need to get a visa or work permit?
+So those are some stop beam points that just makes you think we don't know or we need to get that arranged.
+You work with us to get that taken care of.
+Most of the time you're going to say, well, they live and work in Italy, so we'll choose that here.
+So then there aren't any problems.
+Just like the United States.
+If I'm from Italy and want to work in the US, you would have to make sure they have a visa, work permit, a green card, something that they're authorized.
+Same scenario here with other countries, OK, if you have someone moving from the US to another country, we can sponsor work permits and visas, but it depends on the country.
+And so far, there's a little more investigation that we need to go through for that to happen, but we can help facilitate all that.
+So here I'm going to put in the job title.
+OK, I'll just choose a lead engineer for, for the sake of this.
+Maybe there's a lead here.
+The job description's going to be at you need to be as detailed as you'd like.
+So I'm just going to do this for now.
+I can select divisions, departments, teams, all sorts of things.
+I get this all set up ahead of time.
+So we'll put them in the product division.
+Let's see.
+We'll put them in the product development team and we'll make them do doing all the wheels.
+So I can get in, associate them however I'd like.
+And then I can also assign locations, whether it's country, city, field, Home Office, whatever, I'll put them in the field here.
+I can assign them a specific manager.
+So I can go through here.
+Let's just assign John manager to there and they're set up there.
+And then the start date from an employer of record standpoint, we need two weeks from the time that I've started this process till their first start date.
+And that those two weeks are important because we go through a lot of different processes in each country to get them registered, set up.
+Some countries, like when I was in France, I had to get a, a doctor's visit before I could start.
+So there's still doctor visits in France to do.
+There's lots of different things that happen.
+So we need that two weeks to make sure everything is completed.
+OK.
+So I'll just choose the 10th would be the earliest.
+OK.
+Don't necessarily need to start on the 1st of the month, you know that's up to you, but it would already client, but they do.
+We do need that two week window to get things completed.
+Here's where we're going to put in there.
+You know most of these are going to be salaried full time employees in Italy.
+They use EUR, so we'll give them €10,000 a month.
+They're going to be full time and this is really cool right here.
+This is a quick little gauge for your clients to know how much am I really going to pay?
+OK, so here the the salary is €10,000 a month.
+Here are all my employer contributions.
+There are a lot in Italy, may or may not know that Italy is one of the more expensive countries where all this happens.
+But these are all the social charges and taxes.
+So that 10,000 per month, really 13,000 per month from an employer standpoint.
+And then here are all the taxes, the gross tenet and all that free health care that they get in Italy.
+It's all right here, they're not, it's not free, right?
+They're paying for it.
+So his €10,000, he's only taken home 5500.
+It's almost half that crazy, but that's how it is in that country, right?
+So anyway, so this is a really cool tool.
+Previous companies, it would take me days to get this information, really difficult, but to have this as a quick snapshot, especially this employer amount.
+So this isn't so this won't catch your client off guard to go Oh well, I got my invoice and I'm paying 13,000.
+Well, yeah, it's because these are all the employer costs that are included that need to be paid.
+OK, Employment type most of the time is going to be full time and then definite that relates to the employment contract.
+Indefinite is no end date.
+Sometimes you might run into a fixed term contract and that would be I want this person to work from now until December 31st, but on December 31st that employment is terminated.
+OK, you can renew those fixed term contracts, but usually after you renew it once or twice it turns into indefinite anyway.
+So that leads me to a point that all of this employment is governed by employment contracts.
+These are none of this is at will.
+None of these are just with offer letters.
+It's always an employment contract.
+The contracts between Prism Global and the employee, OK, those employment contracts obviously note the salary, but it's all the paid vacations, leaves, holidays.
+Much of what we would put in an employee handbook are actually in the employment contract.
+And in Europe, they're going to be an Italian for this Italy individual, but most of the time they're both Italian and English, but they're always going to be according to their laws there.
+OK.
+Many of those can be signed electronically.
+Some countries still require a wet signature will facilitate all that.
+Again, you or your client don't need to worry about any of that stuff.
+We are managing it all.
+OK, I can provide additional payments.
+So here I can.
+Let's give them a, a monthly Internet allowance extra €100 a month and I can add that in here.
+Vacation and paid time off.
+Again, Italy has a ton of holidays, a ton of vacation.
+Your client can always add more, right?
+But they can never say you can't work.
+You can't take that holiday off right?
+It's it's required in those countries.
+Unlimited PTO doesn't exist outside the US.
+If they really are stressing on that, we can talk through on how that would work, but it's not advisable to put that in an employment contract because that binding contract will allow them to take as much time as off as they'd like and your client would never be able to get rid of them, right?
+So unlimited PTO doesn't work.
+So we'll we'll talk through that.
+We don't see that a whole lot, but it's just something to be aware of.
+OK, this is a really cool tool as well.
+Now, it's not so different from euros to dollars or Canadian dollars to U.S.
+dollars, but like when you're onboarding someone in in India and it's like ₹1.5 million, it's like, what does that mean?
+So this gives us a quick indication that my €10,000 is 10,900 in USD per month.
+So it gives them a quick, Are you sure you want to pay this amount or are you doing it correctly right?
+Before you move on, confirm that.
+Now, equipment's another thing to keep in mind.
+I'm working in Italy.
+How may I get my laptop?
+OK, There are different ways you can do that.
+You can tell the employee to buy it themselves and reimburse them.
+They might have their own equipment and you're like, yeah, you just use your personal equipment or you can use one of our partners.
+This is going to be changing very soon because we just acquired one of our partners we've been working with called Text Pal.
+I don't know if they were at Prism Live or not, but they, we were just acquired them.
+They are able to get equipment to anyone in the world in about 3 1/2 days.
+So they take care of that.
+Also, if they're like, oh, we'll just ship them their laptop.
+I can't tell you how long that's going to take.
+It could take months and stuck in customs, right?
+It's just very difficult.
+So we have a partnership there that would allow them to click and choose all their equipment and the text pals will get that to them again within three or four days.
+Next would be insurance.
+So in Italy, just as a Italian citizen working for an Italian company, I have national healthcare, OK?
+I have all the other benefits that come just with being an employee and a citizen there.
+A lot of European countries have a lot of socialized medicine, etcetera.
+So your client could say, yeah, that's great, just let them avail themselves of that.
+We're not going to pay extra.
+Or they could say, you know what, we want to add a little bit extra supplemental benefits.
+So over and above the statutory benefits in Italy, France, I know a little bit better.
+There's usually you have your national healthcare system in France, You can go to the hospital, doctors and so forth.
+But sometimes there's a gap between like I don't want to go to this one.
+I'm gonna go to like the private specialist.
+So there's a little bit of a gap.
+This insurance fills that gap.
+And so this is completely employer funded.
+So the employer would need to say I'm going to pay the 210 per month per dependent employees and dependents if I want to offer this.
+So it's up to the client.
+Now if I want to see what those look like, I can click on here and I can see all the benefits, plans, everything else so that they have access to all this.
+But keep in mind it's an all or nothing, OK?
+We'll also help guide you on what's customary.
+So I know in Australia national healthcare system, they go to public government run hospitals and doctors, but they're not the best.
+But there's also this private healthcare side.
+And in Australia they would much rather just have you give them a couple extra 100 bucks a month where they can just buy their private insurance.
+It's easier, it's common, it's what they do.
+So we would help guide you on is it better to offer the extra insurance or just give them an allowance.
+In India, it's always customary to provide insurance not only for their family and dependents but for their parents and grandparents.
+This is common and if you want to be competitive, you got to offer these benefits.
+So we would help you say these are the plans that you should really invest in.
+Now, it's really inexpensive in India to offer this.
+You think, oh, that's a lot of money.
+It's not.
+It's like under 100 bucks a month, like it's really inexpensive.
+So and again, we'll help guide your clients through all this as we're going through the onboarding.
+So in this scenario, now we're not going to offer it.
+Italy's got great healthcare, so it's good to go here is everything, make sure everything looks good.
+It does.
+I'm going to submit.
+So that's what your client will do to submit for the onboarding.
+So what happens next?
+What's going to happen?
+An offer letter is going to be generated and that's where it's going to hit a human.
+OK, all this has been done online, right?
+A lot of good self-service.
+But at this point, an offer letter is going to hit our global account manager and they will be assigned to you and your client.
+Her name is Judy.
+She sits in Utah, so she is in America and she's a human that will help guide the rest of this process.
+She will draft an offer letter.
+That offer letter will have the salary, the allowances, everything for their employment and then send an e-mail to the employee to log into the system and see the offer letter.
+Of course, your client will be able to review that first, but we choose to do that to negotiate any issues, talk about pay or salary or different things and do that in the offer letter scenario first.
+Once everything has been approved, we then actually draft the employment agreement that contract once is delivered to the, to the employee get signed and that's what starts their employment.
+We do that little step in between the this offer letter process because we found that when we go straight to an employment contract, if the employee has questions, red lines and so forth, we're now editing in a, a legal document.
+And so it gets into legal review process and it just seemed to bog down the process.
+And so we found this offer letter system works much better the the employees like it, our clients like it because now we're not in this legal review of an employment contract.
+So that gives you a lot, I'm probably giving you more information than you thought you needed, but just helps you understand our process when we're on boarding in other countries.
+OK, Does that make sense?
+So again, the employee will get their e-mail, they'll login, put in all their banking information, all their personal information, see the offer letter and now they're in their own environment to do that.
+OK, so if I go back to onboarding, I'm going to see where there you are, Rebecca, you're awaiting the offer letter.
+So the, the GAM, the global account manager within producing that your client will look at it and then you would see the offer letter.
+Everything looks great.
+I'll sign it.
+Wonderful.
+We'll get the employment contract off to you and I'll have the start date and everything looks good from there.
+So that's how you onboard an employee in the system.
+And again, it's very, very similar whether you're doing an employer of record, someone that's just doing in country payroll or a contractor.
+The contractor's a little bit different in that you're just setting a contractor rate.
+I'm going to pay the contractor €5000 a month for work or I'm going to charge my contractor's charging me €100 an hour for my work, right.
+But that's typically how it works and how how things go from a support standpoint.
+So now Rebecca's, you've signed your agreement, you're living in Italy, you're living your best life.
+You've got a question, right?
+There's a holiday coming up where I need to take this certain leave or whatever.
+You actually have a human to go to.
+That's what you're the global account manager.
+Is that before the employee, your client or yourselves to ask any questions?
+Judy is great and she can ask answer most of those questions.
+But if it's something very specific from an HR perspective, we have regional and in country HR experts, our European HR expert, her name is Kim, she happens to reside in the UK, but she knows more about European HR laws and practices than anyone I know.
+And she's wonderful to talk to.
+So she would be able to provide the guidance to Judy or to you or your client.
+And again, once you talk to her, you're like, OK, this is how it works, this is how we should go forward.
+Issues with taxes or pensions or anything like that, We'll have our payroll experts get that to Judy.
+But Judy, be your point of contact and your client's point of contact for any questions or issues.
+OK?
+So we like to say that it's we about a tech enabled, but humans behind the scenes, people that are actually talking with you, you can pick up and talk with, answer questions, that type of thing.
+OK, let me get a quick drink.
+Any questions at this point?
+I'm going to go through some of the other reporting features here.
+I guess more from the implementation side.
+The setup, is that something that we'd be responsible for or that you or I guess that would be a pricing thing.
+Are we going to pay you to do the setup?
+Are we doing the setup?
+And when you talk about the setup, what do you mean by that?
+Building the client in the system where the payroll is and these employees are housed like in Prism, right now we build a client there.
+That's what my department does is, you know, we got the contract from sales, we build the client in the system, get the employees in there.
+Yeah, let me go back to the search for rider View, and that's where you go to clients and you create a new client right here.
+OK, so you'd build this out.
+It's basic information, create the new client and it's created.
+It's pretty, just pretty straightforward, very straightforward.
+And then you would then be able to send the client an e-mail so they can go in and fill their banking information.
+And then that's where they you together can build.
+OK, who are all my managers?
+What are the workflows look like etcetera.
+Not let me show you that part right now, but yeah, pretty basic and easy to get and to create those.
+OK.
+So that looks a lot more streamlined than what we currently do in Prism.
+Yeah, Yeah, it is very streamlined.
+The developers of this system, I've known them for almost 8 years and when they developed this system was like, what do we want to see in an EOR platform that we wish was there?
+And so a lot of this is just very intuitive and easy to work through.
+So let me go back into my client here, impersonate here.
+OK, so let me go through some of that those settings that I just talked about again, basic settings here, billing contacts.
+I have all my users.
+So here are my users.
+I can give them different permissions, you know, based on that permission where they can either make modifications, view only do everything they want to.
+So all this is contained here.
+Let me go in here and look at Alex here again, I can be very specific.
+Alex can onboard approve not I can just click and give them all the permissions that they would like based on what the client needs roles and permissions.
+Again, this is kind of those roles.
+I want to make Alex an owner HR, finance, finance has all and most payment permissions, but they can't onboard again, they can select and set that all up that Michelle might be where you are assisting them on saying, hey, this is this is how it works.
+And of course, we would be there to assist as well.
+And as you onboard more and more employee clients, you're like, hey, these are what most of our clients are doing here.
+Here's how we'd recommend you can start getting that scenario too.
+So a shame if if a client comes on and they have one employee in Italy, but then they hire someone in Germany, someone in Ireland, are they just, is that 2 weeks what it takes to set up anywhere?
+Or do you have to like get to say that this client's only in Italy and like ahead of time and get it set up?
+Or is it just all of them are available?
+All of them are available.
+All of them give you that two week window.
+I'd say the only thing to keep in mind is, is the employee currently working for another company in Italy because in Italy those notice periods are long.
+They're usually 30 days.
+I've seen in the UK where there are 60 day notices.
+So that's just something where you're like, are they currently working?
+Have they given their notice?
+What's their notice.
+Like?
+So as long as that has been accomplished from the time we put them in the system till the start date, yeah, it's two weeks in every country.
+So.
+So they can't work 2 jobs?
+No, usually they can't.
+Yeah.
+Next they know those employment agreements, right?
+It's, it's very different there or I'd say everywhere except for here.
+So, so there's that approval workflows.
+This is what I want to get to.
+So time off requests, pay period approvals.
+I can select a group, meaning a district manager, a manager or a specific person that's going to be the first, second or even third approver.
+Here would be reimbursements.
+First I want to go to to their direct manager, then it goes to HR, then to finance.
+I can also add in here anyone that would receive just an e-mail notification.
+They're not part of the approval process, but I, I want to be notified every time a pay period gets approved or whatever.
+OK, So we have that for time card, pay periods, reimbursements, etcetera.
+OK.
+So that would be set up by your client on how they want that workflow to work.
+And then assignments.
+Earlier I'd said I'd set up different divisions, departments, workflows.
+So in here I've got engineering division, product division.
+I can set all those up however your client would like.
+And then they get your employees get assigned appropriately.
+And then here's where I can add any location that I'd like, whether it be office specific, you know, remote country, however you'd like.
+They can set that up here as well.
+Question here, do you build this or we build it?
+So usually the client is doing that here because they know what locations they have or how they want to group their global employees.
+You know most of these employees are going to be remotely working, but they may want to put them in a specific country so they can report on those countries etcetera.
+But usually the client is doing this part of it.
+OK, Have you seen that?
+Use our guidance that use like, you know, clients will not know.
+At the end of the day, many clients don't even know how to even login sometimes.
+So that's why I'm asking, you know, Paul got it.
+Yeah.
+Yeah.
+So what are you thinking about?
+Like on that last screen, those like approval workflows and that have you.
+Yeah, all all these like assignments, you know, Yeah, users wrote permissions, approval workflows, etcetera.
+Yeah.
+Well, one thing to keep in mind is that there's nothing that Shane has shown you today that you won't or you won't have access to us or, or or Judy, who you mentioned earlier that won't walk you through with your client and, and, and help you all put this together.
+Because one thing we understand is that this is new technology that a lot of companies didn't know even existed, right?
+So we understand that there's going to be some learning curves.
+So we're not just going to throw this out there and expect them to figure everything out.
+Even though you can see how user friendly it is, it won't take long to get it for them to get it figured out.
+So just keep that in the back of your head.
+They're not going to be like thrown into the wolves.
+And we're not charging you by the way, for, you know, needing to give you a 15 minute call.
+Yeah, go ahead.
+No, no, I appreciate that.
+I'm asking more.
+So so when we bill, you know, when we do like we, we give them a quote.
+We, you know, do we, we, we got a building this time, you know, that that will take us to to walk them.
+I see, I see, and I see, you know, just just we cannot say, oh, you know, Prism is going to charge X.
+But then we still do a bunch of legwork on, on, on, you know, So I'm trying this to figure that piece out.
+Well, last thing I'll say, and nobody's short on time.
+I hope you guys have like another 5 minutes or so, 5, maybe 10 minutes.
+OK, OK, Michelle and I are going to have to hop.
+Sorry to cut you off for no, no, no, no problem.
+One thing to keep in mind is like, that's the beauty about our reseller agreement is that we, we give you a suggested market price.
+I mean, and that's where you have some wriggle wiggle room to kind of think about how you want to adjust that price to.
+And Shane, maybe you think about this differently, but to build in those types of kind of ancillary things that are kind of hard to, to pin down.
+Like how do we, how do we make back our, our, our money for our time that we might spend teaching all our clients how to, how to manage the platform?
+So right, right, right.
+Yeah, We charge a setup fee per employee and that's for our teams for the time to get them set up in the country employment contract.
+So as you mark that up, you could build into that markup your time, right, Or a separate implementation fee that you would charge over and above ours like so there's some areas there where you can certainly do that.
+OK, OK, that that's why I'm asking.
+But very nice system though.
+And I know we we got a jump, but very complete.
+I mean, I don't have any other questions.
+I think.
+I mean you, you can basically cover any country except for US sanctioned countries.
+We're not going to go to Russia or North Korea, but yeah, in most countries we're we 175 plus I think is the the number.
+I quickly want to show you the reports.
+These are the EOR reports, the employer gross report, gross to net general Ledger reports etcetera.
+All those are available again, they're in our platform here.
+Specifically in the future those will be able to be pulled through into PRISM.
+So, but right now they're they're all contained right here.
+One last question is if we if we if we get a client needs this service, I mean, can we do it as as if somebody's interested, then we just put, you know, we bring you guys to the picture so we can figure out, you know, what to build or we have to sign an agreement or something.
+That's that's ideal.
+Yeah.
+So there there is an agreement like I mean, if you'd like to kind of see what the.
+Thank you.
+So nice to meet you, Michelle.
+Thank you so much, Jennifer.
+Thank you.
+We'll we'll talk soon.
+Have you real quick.
+So that's kind of like why we like to put just our our reseller template in front of you.
+Because if you know that you're going to be, you're going to have clients and it seems like you guys have a lot of velocity right now with different business that you guys have had to turn away.
+Once that's in place between us, when your clients come, it's so much easier to just get them up and running really quickly.
+So yes, we do have a, an agreement that we can, we can put in front of you.
+And then from there it's just you contracting with your clients.
+And we also have that template too that you that we put together that you that you will put in front, in front of each of your clients as they, as they, you know, come through the door, bring business to you.
+OK, OK, yeah, if you can just share that with us, we'll let's start reviewing it.
+I mean, so, so there is no like an add on to the current agreement of PRISM.
+This is separate, right?
+Or yeah.
+So that's that's essentially what what it, what it, what it is.
+But we want to give you an opportunity to take a look at the global agreement in case there's any red lines or any changes that you might want to make to make to the agreement.
+But essentially in a perfect world that that is how we we like to think about it as kind of an amendment to the agreement that you already have.
+OK.
+And then if we come across our client, then can we involve you guys?
+Will we have like a price price sheet or or we involve you guys so you guys can tell us.
+All right, that's going to be around this, you know.
+Yeah, but like the pricing conversation, most of that'll stay between US.
+And then you'll share with your client what your markup, price and those sorts of things are.
+But we definitely would like to have the client involved as soon as possible just because they know their business better than than any of us.
+There's probably a lot of questions that you guys just don't have the answer to.
+Like we'll need to know salary.
+We'll need to know how many head count they have now, how many they're anticipating.
+Those are the types of things that we need high level to be able to get pricing in the 1st place.
+And you may not know that right now.
+That's kind of where I was going to end the call is, is just to kind of put that in front of you as what we need in order to get you kind of like a ballpark of what pricing could look like.
+Shane, I'm missing anything like an RFP.
+Do you have like it's like an RFP request for proposal, you know, template or something like that, or like for you to be able to price it that we need to complete or just sell?
+No, no, no, no, no, it's, it's literally you going back to your client and saying, hey, right, you, you have the staffing company, for example, we've got 10 people, 10 employees who we want you guys to, to manage, right?
+We don't have an entity.
+We want them to be on our employer record products right where we handle everything right, Soup to nuts.
+We just need that head count and ideally what their salary are, their salary requirements are because that's what starts to fluctuate.
+Although the the those other, the other pieces like taxes and those sorts of things and all the other little nuanced things that are so that are specific to, to Puerto Rico.
+Yep, Yep, Yep, OK.
+But definitely bring Antaeus into those conversations with your clients because he'll be able to answer so many questions, set them at ease.
+Like, you know, it's yes, it's a, it's a tech, but it's a whole lot of service and support behind the scenes.
+And so on pace, we'll be able to explain all of that.
+I've been on calls with my clients and their clients and it's yeah, just to have those conversations that they know they're talking to somebody and that they they got their backs, you know, that's, that's really important.
+So OK, yeah.
+So once we have this like we have a client, let's just say that has someone in Germany, OK, so we reach out to you.
+We know it's two weeks once we have the system set up to get them kind of just set up once we start the process to get the employment contract written.
+But what is the setup process before that?
+Like when could we actually go live for the contract?
+What does that look like?
+The the way I like to think about that is we can move as quickly as you guys can.
+So as soon as I put and then right, once we know, once we have and, and it depends on which product, right?
+If we're talking about payroll, there's a lot of data collection and those things that need to happen.
+So you might be talking 60 to 90 days before we can actually start running the first payroll.
+If we're talking about employee of record where we're taking charge of, of everything, right, where you're using one of our, our entities in Germany, for example, that's usually like 2 weeks saying keep me honest.
+But it, it, it depends as far as like think of it this way, you being able to now open your doors to clients who need global EOR or payroll, those sorts of things.
+It's, it's just a matter of us getting the contract set up.
+And it sounds like for your needs, especially with the velocity coming from your sales team.
+Just a little tidbits I heard with like Brazil and Germany like in, in a lot of cases it sounds like it is going to be our EOR product.
+So I mean that's, that gets into a little bit more nuanced conversation depending on the product.
+Rebecca.
+OK, thank you.
+I'd say what I'm doing with my clients is first of all them understanding the reseller or referral agreements and how we're going to work together.
+Once that's signed, then we're ready.
+So your client comes to you and says, hey, we all want to hire someone in Germany.
+Then it's a matter of getting a pricing in front of them.
+You know, we can provide you with sample agreements to have your client sign that to sign up and once that agreement's been made and signed up, then we start the process.
+We're going to create the client, start getting the employee information put together as quickly as they can, get that information to us and we can get it into the system.
+Then that kind of two week window starts, right.
+So contractors can start immediately.
+So that's one thing I didn't mention earlier, the contractor and they want to set them up.
+Once they're set up in the system and the contractor puts in their information, they're live.
+So that's easy.
+Global payroll where they have their own entity, their own business in that country.
+That's more like a two to three month window because we're doing in country payroll.
+There's a lot more involved in getting that set up.
+But I would say that's probably a smaller percentage of your work that you'll probably see with us.
+But contractors immediate EOR 2 week global payroll two to three months.
+OK, thank you.
+Got it.
+I forgot about the maybe you guys answered this.
+I received a call funding the payroll.
+Those payrolls are how is that, let's say funded on Tuesday to pay on Friday or how how that works?
+Did you guys cover that?
+I'm not sure.
+Yeah, each country is a little bit different.
+The 10th of the month, the cutoff for payroll, get those approved and then there's a schedule for those countries when we were gonna then ACH debit those funds every month.
+But it's usually a week or two ahead of time because we need to account for getting the funds into another country and getting that set up and then appropriately getting the the the payments to the employees based on those countries days.
+Some countries it's like the last day of the month.
+The other countries is this day, so there's a little bit of difference between countries, but it's generally probably the third week, mid to 3rd week of the month when the funds are are drawn to get everyone paid.
+Oh OK.
+Their week on the payroll is monthly you said, but can it be bi weekly?
+Weekly?
+I think it can.
+It's usually country norm Canada, Mexico, Philippines, Puerto Rico, those are all bi monthly.
+Bi monthly, I'd say majority of Europe, South America, Southeast Asia are all monthly.
+So we can do like off cycles just normally like, oh, I forgot somebody to pay somebody.
+We can do those.
+We can, we can there'll be an extra fee for that off cycle payment, but we can do that or it just would then get paid the the following paycheck.
+Usually that's going to be we've all we missed a bonus for a Commission and they don't want to wait another month.
+We could do an off cycle payment.
+Yeah.
+So not like California where if you don't pay them that day, you're getting charged every single day.
+They're more lenient about just add it to the next month.
+Well, you're talking about regular payroll or like a miss bonus or Commission.
+Yeah, I mean, more clients do it all.
+So, yeah, now though countries are very, they're not, they're not lenient at all.
+So yeah, when the cut off date, the cut off date, yeah, we'll need that approval and we're going to put that, you know, we're going to pay regardless cause 'cause that's a long time, a month to wait for your money.
+If you missed mess something up, you know, if you did something up, yeah, now they're used to it.
+You know, you would live in Italy.
+I'm used to getting paid monthly.
+Of course if you miss something, you do got to wait a month, but they're used to that.
+But we can do off.
+Yes, the answer is yes, we can do off cycle.
+So and you can.
+So who funds that we Infinity or the client directly to you guys or depends on the agreement that we're on.
+On a resell agreement, we're going to be drawing the funds from you and then you would need to then invoice your client.
+If you elect to use our referral agreement where we're contracting directly with the client, then we're going to pull the funds from the client directly.
+OK, 'cause you're paying with all ACH and all that on your end.
+We're just literally paying the invoice and then charging the client for the invoice, correct.
+And I was going to say you guys accept wires as well.
+I guess ACH on wire or only ACH do you know?
+And what about if if clients bounce, which is very common, they bounce to us though we're we're paying them, right.
+Exactly.
+So they would be bouncing to us.
+Yeah.
+So we do U.S.
+dollars.
+Yes, we do require every employee that we collect a deposit.
+So this will be in, in the in the contract.
+So we require one month of the salary, taxes and fees to start.
+So we hold that in reserve because if that bounces were the employer of record in Italy, Italy doesn't care that you bounce, it's on us.
+So we use that deposit to pay.
+That deposit would need to be refunded immediately.
+That deposit is also refunded at the end of employment.
+So Rebecca finds another employer, we would refund any remaining amount back to the client or yourself in that respect.
+But that's that's the fail safe is we do have a deposit and that's common for the industry.
+Like everyone does it.
+I've never seen it not happen because, yeah, the funds aren't there That that's a mess, right?
+So that's where the deposit comes.
+Yeah, you answered my question.
+So, OK, cool, I'll find out.
+I'll send a note to our team on the wire versus Javier and and then ante us or you know, we can ask that and get that back to you with with Puerto Rico.
+We don't do like anything like that.
+Just so you guys know, that's why I mean we do it normally, you know with our payroll, the ACHS right back here or not.
+So it's not like they they have to pay, you know, 2 weeks and we hold the phones because many clients are that that's a sticky point.
+But they need to understand now if they want somebody in Europe, they that those are the rules, right.
+But but Puerto Rico at least it doesn't work like that for us currently.
+OK, Yeah, yeah, it's we're running it through the normal prism, just normal, normal process, you know, Tuesday, pay Friday, something like that.
+OK, got it.
+Yeah, yeah, little different process from that.
+So, yeah.
+OK, cool.
+No, thank you.
+Very, very informative.
+Great product and we'll we'll get back to you Antis if you can forward, Yeah, the agreements and for sure, you know, let us know what kind of information we need from a client to be able to at least get that conversation going.
+With that, we'll, we'll start talking to sales and, and figuring this out.
+Yeah, I'll send you an e-mail that summarizes all this stuff.
+It'll have some attachments.
+So it'll be a little bit of a weighty e-mail that'll answer all these questions.
+And yeah.
+And we'll, we'll go from there and start start the process.
+Yeah.
+And then quick question, are you guys attending Napio in September?
+Good question.
+One of our, one of the owners will be there.
+Mark will be there.
+OK, I'm scheduled to be there, but honestly, I don't know if I'll be able to make it.
+But if I am, I'll be there.
+Another, our VP of risk will be there as well.
+His name is Jack.
+OK, so have them come by the global booth.
+Me and Antes will be there.
+So yeah, I'll tell them some of us have to stay here and work.
+I know we have to do work.
+We don't have time.
+Exactly.
+But well, Javier, pleasure to meet you again, Rebecca, so nice to meet you.
+And we are very much so looking forward to to expanding our relationship with the global offering.
+Yeah.
+Thanks so much.
+I appreciate it.
+You guys have a great rest of your week.
+Take care.
+Bye.
+Bye.
+Yeah, bye.

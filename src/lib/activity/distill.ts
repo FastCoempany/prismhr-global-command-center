@@ -11,6 +11,7 @@ import { redactMoney } from "@/lib/intel/lexicon";
 import type { Gem, GemCite } from "./stores";
 import type { StagedRow } from "./types";
 import { stripThreadTokens } from "./parse";
+import { isMachineryName } from "./classify";
 
 export const MODEL_DISTILL_RICH = "claude-opus-5";
 export const MODEL_DISTILL_LIGHT = "claude-opus-5";
@@ -36,14 +37,23 @@ const packText = (pack: ContextPack): string =>
     ? pack.lines.map((l) => `- ${l}`).join("\n")
     : "- the first record holds nothing yet for this account";
 
+// The row as the distiller sees it. A logged email files under the LOGGER, so
+// a mechanism there is dropped and the recipient list speaks instead — without
+// this the model was handed "logged by Automated Process" and had every reason
+// to write it into a gem as a person (2026-08-28).
 const rowsText = (rows: StagedRow[]): string =>
   rows
-    .map(
-      (r) =>
-        `[${r.k}] ${r.d} · ${r.lane}${r.fl ? ` (${r.fl})` : ""} · logged by ${r.a || "?"} · ${r.s}${
-          r.c ? `\n    ${redactMoney(r.c).slice(0, 400)}` : ""
-        }`,
-    )
+    .map((r) => {
+      const by = isMachineryName(r.a) ? "" : r.a;
+      const who = by
+        ? `logged by ${by}`
+        : r.p
+          ? `on the thread: ${r.p.split(";").join(", ")}`
+          : "no person named on the row";
+      return `[${r.k}] ${r.d} · ${r.lane}${r.fl ? ` (${r.fl})` : ""} · ${who} · ${r.s}${
+        r.c ? `\n    ${redactMoney(r.c).slice(0, 400)}` : ""
+      }`;
+    })
     .join("\n");
 
 // ── the distiller ───────────────────────────────────────────────────────────
@@ -295,7 +305,8 @@ export function gemFromCandidate(inp: {
     .map((r) => ({
       k: r.k,
       day: r.d,
-      who: r.a,
+      // A citation never names a mechanism as its person.
+      who: isMachineryName(r.a) ? "" : r.a,
       subject: stripThreadTokens(r.s),
     }));
   return {

@@ -10,8 +10,10 @@ import {
   emlToPaste,
   msgToPaste,
   htmlToText,
+  parseTranscriptDoc,
   parseVtt,
   pasteFingerprint,
+  transcriptDocToPaste,
   readerFor,
   vttToPaste,
 } from "../src/lib/paste-files";
@@ -304,4 +306,64 @@ test("readerFor dispatches by extension", () => {
   assert.equal(readerFor("shot.PNG"), "image");
   assert.equal(readerFor("pic.jpeg"), "image");
   assert.equal(readerFor("mystery.zip"), "unsupported");
+});
+
+// ── the transcript that arrives as a document (2026-08-28) ──────────────────
+// Teams' Stream player exports one recording two ways. Until this, the Word
+// form read as a nameless DOCUMENT and the call was lost.
+
+const RECORDING = [
+  "Global Payroll Prism-20260827_140038-Meeting Recording",
+  "0:02You guys?",
+  "0:03No, sorry.",
+  "1:22All right, I think I'm already sharing my screen here.",
+  "1:25Are we waiting on Scott or?",
+  "31:54Any changes after the 10th would happen in the next payroll run.",
+  "1:04:09We'll send the summary over.",
+].join("\n");
+
+test("a Teams recording document reads as a transcript, stamp and all", () => {
+  const doc = parseTranscriptDoc(RECORDING);
+  assert.ok(doc);
+  assert.equal(doc.title, "Global Payroll Prism");
+  assert.equal(doc.startedAt, "2026-08-27 14:00");
+  assert.equal(doc.lines.length, 6);
+  assert.equal(doc.lines[0], "You guys?");
+  assert.equal(doc.lines[5], "We'll send the summary over.");
+});
+
+test("the paste carries the same head the .vtt path writes", () => {
+  const paste = transcriptDocToPaste(parseTranscriptDoc(RECORDING)!, "call.docx");
+  assert.match(paste, /^CALL TRANSCRIPT — dropped file call\.docx\n/);
+  assert.match(paste, /\nMeeting: Global Payroll Prism\n/);
+  assert.match(paste, /\nRecorded: 2026-08-27 14:00\n/);
+  // Stream's Word export drops the voice tags. The read says so rather than
+  // guessing a name from the words.
+  assert.match(paste, /Speakers: not labeled in this export/);
+  assert.match(paste, /\n\nYou guys\?\n/);
+  assert.equal(/\d+:\d\dYou guys/.test(paste), false);
+});
+
+test("an ordinary document is never mistaken for a call", () => {
+  assert.equal(parseTranscriptDoc("Quarterly plan\n\nWe hire in Mexico.\nBudget set."), null);
+  assert.equal(parseTranscriptDoc("Agenda\n9:00 Welcome\n9:30 Demo\n10:00 Q&A"), null);
+  assert.equal(parseTranscriptDoc(""), null);
+  // A recording title with no cues under it is a title, not a transcript.
+  assert.equal(
+    parseTranscriptDoc("Global Payroll Prism-20260827_140038-Meeting Recording\nNo cues."),
+    null,
+  );
+});
+
+test("a stampless transcript still reads once the cues are unmistakable", () => {
+  const cues = Array.from({ length: 12 }, (_, i) => `${i}:0${i % 10}Line ${i}.`).join("\n");
+  const doc = parseTranscriptDoc(cues);
+  assert.ok(doc);
+  assert.equal(doc.title, "");
+  assert.equal(doc.startedAt, "");
+  assert.equal(doc.lines.length, 12);
+  // No stamp means no Recorded line — a date is never invented.
+  const paste = transcriptDocToPaste(doc, "unknown.docx");
+  assert.equal(/Recorded:/.test(paste), false);
+  assert.match(paste, /^CALL TRANSCRIPT/);
 });

@@ -24,7 +24,7 @@ import { RUN_LOCK_CHECKSUM } from "@/lib/intranet/doctrine";
 import { inboundDates, recordSends, type NoteLike } from "@/lib/sendbook/read";
 import { readOutcome } from "@/lib/dashboard/outcome";
 import { rowsChecksum, tallyChecksum } from "./parse";
-import { deriveColleagues } from "./classify";
+import { deriveColleagues, isMachineryName } from "./classify";
 import {
   buildRollup,
   intentWindows,
@@ -599,8 +599,27 @@ export async function runActivityPass(opts?: {
     // export logs captured emails under their own name (measured 2026-08-20).
     for (const r of slice.rows) {
       const a = (r.a ?? "").trim();
-      if (a && a.includes(" ") && !colleagues.has(a)) out.add(a);
+      // Machinery is never a person. "Automated Process" has a space in it
+      // and is excluded from the colleague roster by construction, so without
+      // this guard the logger walked straight in as an account person.
+      if (a && a.includes(" ") && !isMachineryName(a) && !colleagues.has(a)) out.add(a);
     }
+    return out;
+  };
+
+  // Address → the account person's name. Built from the account's OWN
+  // contacts and the export's Primary Contact Email, so a hit is always
+  // someone on their side; our own addresses are never in it.
+  const accountEmailsFor = (slice: AccountSlice): Map<string, string> => {
+    const out = new Map<string, string>();
+    for (const c of contactsFor(slice.id)) {
+      const n = `${c.first ?? ""} ${c.last ?? ""}`.trim();
+      const e = (c.email ?? "").trim().toLowerCase();
+      if (n && n.includes(" ") && e.includes("@")) out.set(e, n);
+    }
+    const pe = (slice.meta.primaryContactEmail ?? "").trim().toLowerCase();
+    const pn = (slice.meta.primaryContact ?? "").trim();
+    if (pe.includes("@") && pn.includes(" ") && !out.has(pe)) out.set(pe, pn);
     return out;
   };
 
@@ -622,6 +641,7 @@ export async function runActivityPass(opts?: {
       window: m.window,
       colleagues,
       accountPeople,
+      accountEmails: accountEmailsFor(slice),
     });
     // Themes and examples read from the staged slice; the TOTAL is the full
     // lane count — the slice cap must never understate the number the

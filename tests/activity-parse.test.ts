@@ -10,6 +10,7 @@ import {
   dayKeyOf,
   dateTimeKeyOf,
   dropShaOf,
+  fieldForHeader,
   fingerprintHeaders,
   rowRecord,
   rowsChecksum,
@@ -214,4 +215,161 @@ test("header order does not change the drop identity", async () => {
     b.finish({ fileName: "b", fileBytes: 0, dropDay: "2026-08-20" }),
   ]);
   assert.equal(ra.manifest.dropSha, rb.manifest.dropSha);
+});
+
+// ── the reader meets the export (2026-08-28) ────────────────────────────────
+// Salesforce renames the same field by report type. The 8/28 rebuild shipped
+// "Assigned To: Full Name" and "Comments" where the canon says "Assigned" and
+// "Full Comments"; the pipeline read both as empty on 108,532 rows.
+
+const REBUILT_HEADERS = [
+  "Account Name",
+  "Subject",
+  "18 Digit ID",
+  "Global Business Consultant: Full Name",
+  "Primary Contact: Full Name",
+  "Primary Contact Email",
+  "Last Contact",
+  "Contacted Date",
+  "Primary Contact Title",
+  "Task",
+  "Task/Event Record Type",
+  "Task Subtype",
+  "Outreach Task Type",
+  "Call Type",
+  "Account Record Type",
+  "Event Subtype",
+  "Assigned To: Full Name",
+  "Last Activity",
+  "Comments",
+  "Status",
+  "Created Date",
+  "Created By: Full Name",
+  "Date",
+];
+
+test("aliases bind the renamed columns; the canon still wins on its own names", () => {
+  assert.equal(fieldForHeader("Assigned"), "assigned");
+  assert.equal(fieldForHeader("Assigned To: Full Name"), "assigned");
+  assert.equal(fieldForHeader("Full Comments"), "comments");
+  assert.equal(fieldForHeader("Comments"), "comments");
+  assert.equal(fieldForHeader("Primary Contact: Full Name"), "primaryContact");
+  assert.equal(fieldForHeader("Primary Contact Email"), "primaryContactEmail");
+  assert.equal(fieldForHeader("Global Business Consultant: Full Name"), "gbc");
+  assert.equal(fieldForHeader("﻿ Subject "), "subject");
+  assert.equal(fieldForHeader("Status"), undefined);
+});
+
+test("the rebuilt export's columns land in the record", () => {
+  const raw = [
+    "Infiniti HR",
+    "Email: Re: LMS?",
+    "001F000000w38OIIAY",
+    "Antaeus Coe",
+    "Scott Smrkovski",
+    "scott@infinitihr.com",
+    "",
+    "",
+    "CEO",
+    "1",
+    "Service Provider Task",
+    "Email",
+    "",
+    "",
+    "Service Provider",
+    "",
+    "Anika Steenstra",
+    "8/28/2026",
+    "To: jennifer@infinitihr.com\nCC: \nBCC: \nAttachment: --none--\n\nSubject: Re: LMS?\nBody:\nStanding by.",
+    "Completed",
+    "5/28/2026",
+    "Automated Process",
+    "7/21/2026",
+  ];
+  const r = rowRecord(REBUILT_HEADERS, raw);
+  assert.equal(r.assigned, "Anika Steenstra");
+  assert.equal(r.gbc, "Antaeus Coe");
+  assert.equal(r.primaryContact, "Scott Smrkovski");
+  assert.equal(r.primaryContactEmail, "scott@infinitihr.com");
+  assert.match(r.comments, /Standing by\./);
+  // "Date" is the activity's day — never Created Date, which sits two columns
+  // earlier and would have aged every row by two months.
+  assert.equal(r.date, "7/21/2026");
+});
+
+test("a canonical column never loses its value to an alias column", () => {
+  // Both spellings present: the canonical one is read, and an empty canonical
+  // cell falls through to the alias rather than blanking the field.
+  const headers = ["18 Digit ID", "Subject", "Assigned", "Assigned To: Full Name"];
+  assert.equal(rowRecord(headers, ["1", "s", "Real Name", "Logger"]).assigned, "Real Name");
+  assert.equal(rowRecord(headers, ["1", "s", "", "Logger"]).assigned, "Logger");
+  // And it wins from either side of the file — column order is not a tiebreak.
+  const flipped = ["18 Digit ID", "Subject", "Assigned To: Full Name", "Assigned"];
+  assert.equal(rowRecord(flipped, ["1", "s", "Logger", "Real Name"]).assigned, "Real Name");
+  assert.equal(rowRecord(flipped, ["1", "s", "Logger", ""]).assigned, "Logger");
+});
+
+test("the receipt is honest: an aliased column is never reported missing", () => {
+  const fp = fingerprintHeaders(REBUILT_HEADERS);
+  assert.equal(fp.ok, true);
+  for (const h of ["Assigned", "Full Comments", "Primary Contact"])
+    assert.equal(fp.missing.includes(h), false, `${h} reported missing`);
+  // Columns the export genuinely lacks are still named.
+  assert.deepEqual(fp.missing, ["Last Email Sent", "Last Email Received", "Type"]);
+  // And columns nothing reads are still named as extra.
+  assert.deepEqual(fp.extra, [
+    "Task",
+    "Account Record Type",
+    "Last Activity",
+    "Status",
+    "Created Date",
+    "Created By: Full Name",
+  ]);
+});
+
+test("the rebuilt export ingests end to end — logged mail lands human, with its people", async () => {
+  const ing = createIngest(BOOK);
+  const body =
+    "To: natalie@trend.example; antaeus.coe@prismhr.com\nCC: \nBCC: \nAttachment: --none--\n\nSubject: Re: LMS?\nBody:\nWe have a pain around Puerto Rico processing.";
+  ing.takeRow(REBUILT_HEADERS);
+  ing.takeRow([
+    "Trend Personnel",
+    "Email: Re: LMS?",
+    BOOK[0].id,
+    "Antaeus Coe",
+    "Natalie Borland",
+    "Natalie@Trend.Example",
+    "",
+    "",
+    "CFO",
+    "1",
+    "",
+    "Email",
+    "",
+    "",
+    "Service Provider",
+    "",
+    "Automated Process",
+    "8/28/2026",
+    body,
+    "Completed",
+    "8/20/2026",
+    "Automated Process",
+    "8/21/2026",
+  ]);
+  const { slices, manifest } = await ing.finish({
+    fileName: "sf90.csv",
+    fileBytes: 1,
+    dropDay: "2026-08-28",
+  });
+  assert.equal(manifest.rowCount, 1);
+  assert.equal(manifest.laneTotals.human, 1);
+  assert.equal(manifest.laneTotals.machinery, 0);
+  const slice = slices[0];
+  assert.equal(slice.meta.primaryContact, "Natalie Borland");
+  assert.equal(slice.meta.primaryContactEmail, "natalie@trend.example");
+  assert.equal(slice.rows.length, 1);
+  assert.equal(slice.rows[0].d, "2026-08-21");
+  assert.equal(slice.rows[0].p, "natalie@trend.example;antaeus.coe@prismhr.com");
+  assert.match(slice.rows[0].c ?? "", /Puerto Rico/);
 });
