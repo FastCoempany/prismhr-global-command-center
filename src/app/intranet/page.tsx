@@ -103,6 +103,15 @@ export default async function IntranetPage({
     <>
       <AppWayfinder current="Intranet" />
       <main className={styles.wrap}>
+        {/* The second record's door sits ABOVE the ledger, not under it. It
+            spent its life rendered after the client, which on a page whose
+            asked-list runs hundreds of rows deep meant the one control that
+            takes a drop back was unreachable without scrolling past
+            everything (2026-08-28). */}
+        <ActivityDock
+          book={peos.map((p) => ({ id: p.id, name: p.name }))}
+          canWrite={access.canWrite}
+        />
         <IntranetClient
           rail={rail}
           initialQ={initialQ}
@@ -116,10 +125,6 @@ export default async function IntranetPage({
           nowIso={nowIso}
           canWrite={access.canWrite}
           canAnswer={synthAvailable()}
-        />
-        <ActivityDock
-          book={peos.map((p) => ({ id: p.id, name: p.name }))}
-          canWrite={access.canWrite}
         />
       </main>
     </>
