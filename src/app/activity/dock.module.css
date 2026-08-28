@@ -2,7 +2,8 @@
    and ink per the Antaeus system; quiet until it holds something. */
 
 .dock {
-  margin-top: 18px;
+  /* Above the ledger now, so the gap belongs below it. */
+  margin-bottom: 18px;
   border: 1px dashed rgba(10, 28, 64, 0.22);
   border-radius: 8px;
   background: #f5f7fb;
