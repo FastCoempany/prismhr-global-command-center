@@ -60,11 +60,24 @@ describe("readDeal — the loud cases stay loud and legal", () => {
     assert.match(r.move, /Sept 1 target/);
     assert.match(r.court.line, /THEIR MOVE · BRYCE · QUIET \d DAYS/);
   });
-  test("fresh step, no thread → your move, green-or-amber, sentence uses the item", () => {
+  // Founder-decreed 2026-08-29: the stage carries an obligation, never a
+  // curiosity. A fresh gate with nothing owed and nobody late is not a move —
+  // it rides the UNKNOWN register, and the stage says so instead of
+  // reprinting the register's own line.
+  test("fresh gate, no thread, nothing owed → the stage points at UNKNOWN, not the gate", () => {
     const r = readDeal({ ...base, step: { ...step, ageDays: 0 } });
     assert.equal(r.court.tone, "you");
-    assert.match(r.move, /signature tracked/i);
+    assert.equal(r.move, "Nothing owed either way. The open gates are in UNKNOWN.");
+    assert.equal(/signature tracked/i.test(r.move), false);
     assert.ok(r.health === "green" || r.health === "amber");
+  });
+  test("the same fresh gate DOES speak once something is owed", () => {
+    const r = readDeal({
+      ...base,
+      step: { ...step, ageDays: 0 },
+      openOwed: [{ text: "Send the signed order form." }],
+    });
+    assert.equal(r.move, "Send the signed order form.");
   });
   test("the word 'steps' never appears in any generated copy", () => {
     for (const age of [null, 0, 3, 7, 400]) {
@@ -275,13 +288,25 @@ describe("the same-day send — a fresh outbound puts the ball with them", () =>
     assert.match(r.move, /^Wait on Javier\. You wrote today\./);
     assert.match(r.court.line, /THEIR MOVE/);
   });
-  test("yesterday's outbound hands the row back to the stage item", () => {
+  test("yesterday's outbound leaves the ball with them, never the gate's words", () => {
+    // Before 2026-08-29 this handed the row back to the gate item verbatim.
+    // The ball is theirs and nothing is owed here, so the row says that.
     const r = readDeal({
       ...base,
       step,
       lastTouch: { at: "2026-08-18T15:00:00Z", awaitingReply: true, who: "Javier" },
     });
-    assert.match(r.move, /^How they pay those workers today/);
+    assert.equal(/^How they pay those workers today/.test(r.move), false);
+    assert.match(r.move, /^Wait on Javier\./);
+  });
+  test("yesterday's outbound still yields to a thing owed", () => {
+    const r = readDeal({
+      ...base,
+      step,
+      lastTouch: { at: "2026-08-18T15:00:00Z", awaitingReply: true, who: "Javier" },
+      openOwed: [{ text: "Send Javier the agreements." }],
+    });
+    assert.equal(r.move, "Send Javier the agreements.");
   });
   test("a same-day send never hides a fully gated board", () => {
     const r = readDeal({
