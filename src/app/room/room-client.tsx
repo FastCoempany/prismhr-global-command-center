@@ -1827,13 +1827,21 @@ function Row({
                     type="button"
                     className={styles.sdTag}
                     disabled={pending}
-                    onClick={() => filePaste(mismatch.text, true)}
+                    onClick={() => {
+                      setReading(`${mismatch.bound} — reading it again`);
+                      filePaste(mismatch.text, true);
+                    }}
                   >
-                    file to {mismatch.bound} anyway ✓
+                    {/* The force path re-runs the whole read, which on a call
+                        transcript is a minute of silence. Without a word on
+                        the button the click looked like a dead control — the
+                        operator pressed it and nothing moved (2026-08-29). */}
+                    {pending ? "Filing…" : `file to ${mismatch.bound} anyway ✓`}
                   </button>
                   <button
                     type="button"
                     className={styles.sdTag}
+                    disabled={pending}
                     onClick={() => setMismatch(null)}
                   >
                     keep it out ✕
