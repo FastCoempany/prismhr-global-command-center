@@ -297,13 +297,21 @@ export function parseVtt(raw: string): string {
 // detector, the rule parsers, and the AI read all know what they hold.
 export function vttToPaste(raw: string, filename: string): string {
   const runs = parseVttRuns(raw);
+  // A .vtt carries no calendar date of its own — only elapsed cue times. The
+  // file name is where Teams puts the real moment, so the head carries it and
+  // the filing clock can read it (2026-08-29).
+  const recorded = recordedAtFromName(filename);
   // Teams can export a recording with every voice tag stripped. Saying so is
   // the honest read, and it is the same line the Word export earns — a name
   // guessed from the words would be a name invented.
   const anonymous = runs.length > 0 && runs.every((r) => !r.speaker);
-  const head = anonymous
-    ? `CALL TRANSCRIPT — dropped file ${filename}\nSpeakers: not labeled in this export`
-    : `CALL TRANSCRIPT — dropped file ${filename}`;
+  const head = [
+    `CALL TRANSCRIPT — dropped file ${filename}`,
+    recorded ? `Recorded: ${recorded}` : "",
+    anonymous ? "Speakers: not labeled in this export" : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
   return `${head}\n\n${runsToText(runs)}`.trim();
 }
 
@@ -319,6 +327,28 @@ export function vttToPaste(raw: string, filename: string): string {
 // drops the voice tags on the way to Word. So the reader keeps what is there
 // and never invents what is not: the timestamps go, the words stay, and no
 // line is attributed to anyone.
+
+/** Teams stamps the recording's own moment into the file NAME as well as the
+ *  title line: "<meeting>-YYYYMMDD_HHMMSS-Meeting Recording.vtt|.docx". The
+ *  name is the only date a WebVTT export carries — its cues are elapsed time,
+ *  not calendar time — so without this a call filed two days late reads as a
+ *  call that happened today. */
+const NAME_STAMP = /-(\d{4})(\d{2})(\d{2})[_-](\d{2})(\d{2})\d{2}-/;
+
+/** "YYYY-MM-DD HH:MM" from a recording's file name, or "". */
+export function recordedAtFromName(filename: string): string {
+  const m = NAME_STAMP.exec(filename ?? "");
+  return m ? `${m[1]}-${m[2]}-${m[3]} ${m[4]}:${m[5]}` : "";
+}
+
+/** The day a CALL TRANSCRIPT capture says it was recorded, as YYYY-MM-DD, or
+ *  "". Read from the head the two transcript readers write — never guessed
+ *  from the words, and never from the filing moment. */
+export function transcriptRecordedDay(paste: string): string {
+  const head = (paste ?? "").slice(0, 400);
+  const m = /^Recorded:\s*(\d{4}-\d{2}-\d{2})/m.exec(head);
+  return m ? m[1] : "";
+}
 
 /** Teams names the recording "<meeting>-YYYYMMDD_HHMMSS-Meeting Recording". */
 const RECORDING_TITLE =
@@ -372,10 +402,11 @@ export function parseTranscriptDoc(raw: string): TranscriptDoc | null {
  *  head the .vtt path writes, so every reader downstream treats the two
  *  captures identically. */
 export function transcriptDocToPaste(doc: TranscriptDoc, filename: string): string {
+  const recorded = doc.startedAt || recordedAtFromName(filename);
   const head = [
     `CALL TRANSCRIPT — dropped file ${filename}`,
     doc.title ? `Meeting: ${doc.title}` : "",
-    doc.startedAt ? `Recorded: ${doc.startedAt}` : "",
+    recorded ? `Recorded: ${recorded}` : "",
     // Stream's Word export carries no voice tags. Saying so is the honest
     // read; a name guessed from the words would be a name invented.
     "Speakers: not labeled in this export",
