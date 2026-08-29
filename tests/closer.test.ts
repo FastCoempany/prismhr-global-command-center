@@ -196,3 +196,85 @@ describe("an overdue paste-opened promise reads PROMISED", () => {
     assert.equal(sheet.open[0].promised, undefined);
   });
 });
+
+// ── the stage carries an obligation, never a curiosity (2026-08-29) ─────────
+// Founder-decreed: the Next Move answers "what do we owe them, or they us" —
+// a meeting, a document, a reply. A board gate is a thing we do not know yet,
+// and it already rides the UNKNOWN register; the stage printing it verbatim
+// said the same line twice and told the operator nothing was owed when
+// something was.
+
+const base = {
+  accountName: "Infiniti HR",
+  timing: null,
+  lastTouch: null,
+  lastRecordAt: "2026-08-27T12:00:00Z",
+  now: new Date("2026-08-29T15:00:00Z"),
+};
+
+const GATE = {
+  nodeKey: "needs",
+  nodeLabel: "Needs analysis",
+  item: "How they pay those workers today (method + any current provider)",
+  ageDays: 2,
+};
+
+test("an open obligation outranks the board's open gate", async () => {
+  const { readDeal } = await import("../src/lib/room/engine");
+  const r = readDeal({
+    ...base,
+    step: GATE,
+    openOwed: [{ text: "Send the calendar invite once they pick one of the Sep 2–4 windows." }],
+  });
+  assert.equal(r.move, "Send the calendar invite once they pick one of the Sep 2–4 windows.");
+  assert.equal(/How they pay those workers/.test(r.move), false);
+});
+
+test("with nothing owed, the gate is named as a place to look, never as the move", async () => {
+  const { readDeal } = await import("../src/lib/room/engine");
+  const r = readDeal({ ...base, step: GATE, openOwed: [] });
+  assert.equal(r.move, "Nothing owed either way. The open gates are in UNKNOWN.");
+  // The register's own line is never reprinted on the stage.
+  assert.equal(/How they pay those workers/.test(r.move), false);
+  assert.equal(/asks nothing else/.test(r.move), false);
+});
+
+test("a gate still speaks when someone is LATE on it — that is an obligation", async () => {
+  const { readDeal } = await import("../src/lib/room/engine");
+  const r = readDeal({
+    ...base,
+    step: GATE,
+    lastTouch: { at: "2026-08-20T12:00:00Z", awaitingReply: true, who: "Javier" },
+    openOwed: [],
+  });
+  assert.match(r.move, /^Chase Javier on “how they pay those workers today/);
+  assert.match(r.move, /Quiet 9 days\./);
+});
+
+test("a reply owed still outranks everything — the court comes first", async () => {
+  const { readDeal } = await import("../src/lib/room/engine");
+  const r = readDeal({
+    ...base,
+    step: GATE,
+    lastInbound: { at: "2026-08-28T12:00:00Z", who: "Javier" },
+    openOwed: [{ text: "Send the calendar invite." }],
+  });
+  assert.match(r.move, /^Answer Javier\./);
+});
+
+test("a long obligation is trimmed to one sentence the stage can carry", async () => {
+  const { readDeal } = await import("../src/lib/room/engine");
+  const r = readDeal({
+    ...base,
+    step: GATE,
+    openOwed: [
+      {
+        text: "Send Javier the agreements and the client-information list. He asked for both on the call and Jennifer repeated the ask before the close.",
+      },
+    ],
+  });
+  assert.equal(
+    r.move,
+    "Send Javier the agreements and the client-information list.",
+  );
+});

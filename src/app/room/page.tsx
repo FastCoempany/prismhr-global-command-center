@@ -252,6 +252,22 @@ export default async function RoomPage() {
       // send also went to the account (the Regis row, 2026-08-27).
       (n) => isHomeSideName(n, csms),
     );
+    const noteIds = new Set(allNotes.map((n) => n.id));
+    const sheet = buildAccountSheet(todos, accountId, noteIds, dispositions, now);
+    // Owed-to-you lines the record holds, minus anything dismissed or already
+    // open on the register — the same read the suggestions use.
+    const owedDismissedForRead = new Set(
+      [...dispositions.keys()].filter((k) => k.startsWith("owed:")),
+    );
+    const owedForRead = accountId
+      ? owedToMe(
+          allNotes,
+          owedDismissedForRead,
+          sheet.open.map((o) => o.body),
+          now,
+        )
+      : [];
+
     const read: RoomRead = readDeal({
       accountName: card.name,
       step: step
@@ -289,6 +305,11 @@ export default async function RoomPage() {
       })(),
       lastRecordAt: allNotes[0]?.createdAt ?? "",
       allGatesDone,
+      // What is owed, register first then the record's own owed lines.
+      openOwed: [
+        ...sheet.open.map((o) => ({ text: o.body })),
+        ...owedForRead.map((o) => ({ text: o.text })),
+      ],
       now,
     });
 
@@ -306,9 +327,9 @@ export default async function RoomPage() {
 
     // The sheet, in Today's own dialect: k:a-tagged action todos, account
     // linkage via the notetaker column OR the routing marker's note ids,
-    // same-day row delays, hides, and doneAt stamps.
-    const noteIds = new Set(allNotes.map((n) => n.id));
-    const sheet = buildAccountSheet(todos, accountId, noteIds, dispositions, now);
+    // same-day row delays, hides, and doneAt stamps. Built BEFORE the read —
+    // the stage's move is chosen from what is owed, so the obligations have
+    // to be in hand first (founder-decreed 2026-08-29).
     const sheetOpen = sheet.open;
     const sheetDelayed = sheet.delayed;
     const sheetDoneToday = sheet.doneToday.map((d) => ({
@@ -336,17 +357,12 @@ export default async function RoomPage() {
 
     // Owed-to-you: the record's action items with the operator's name on them,
     // minus anything dismissed or already open on the register.
-    const owedDismissed = new Set(
-      [...dispositions.keys()].filter((k) => k.startsWith("owed:")),
-    );
-    const owed = accountId
-      ? owedToMe(
-          allNotes,
-          owedDismissed,
-          sheet.open.map((o) => o.body),
-          now,
-        ).map((o) => ({ noteId: o.noteId, key: o.key, text: o.text, src: o.src }))
-      : [];
+    const owed = owedForRead.map((o) => ({
+      noteId: o.noteId,
+      key: o.key,
+      text: o.text,
+      src: o.src,
+    }));
 
     // STILL UNKNOWN — the asks the read queued for this deal, minus the ones
     // waved off as irrelevant. `queued` tells the operator whether dismissing

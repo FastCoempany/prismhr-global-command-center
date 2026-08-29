@@ -30,6 +30,11 @@ export type RoomInputs = {
   // every gate on every stage is checked but no outcome is stamped — the deal
   // is finished work waiting on the operator's call, never "not enough signal"
   allGatesDone?: boolean;
+  // OPEN OBLIGATIONS on this account — the register's live action items and
+  // the record's owed-to-you lines, newest-first. A thing owed always beats a
+  // thing wondered: the stage answers "what do we owe them, or they us",
+  // never "what don't we know yet" (founder-decreed 2026-08-29).
+  openOwed?: { text: string }[];
   now: Date;
 };
 
@@ -250,6 +255,15 @@ export function readDeal(i: RoomInputs): RoomRead {
     health = "amber";
   if (!i.step && !i.lastTouch && !inboundNewest && !i.allGatesDone) health = "quiet";
 
+  // The newest open obligation, trimmed to one sentence the stage can carry.
+  const owedNow = (() => {
+    const first = (i.openOwed ?? []).map((o) => (o.text ?? "").trim()).find(Boolean);
+    if (!first) return "";
+    const one = first.split(/(?<=[.!?])\s/)[0] ?? first;
+    const cut = one.length > 96 ? `${one.slice(0, 95).trimEnd()}…` : one;
+    return /[.!?…]$/.test(cut) ? cut : `${cut}.`;
+  })();
+
   // The move — one plain sentence built from what's actually known.
   let move: string;
   let thin = false;
@@ -299,22 +313,23 @@ export function readDeal(i: RoomInputs): RoomRead {
     // the row must acknowledge the send it just read (the Infiniti
     // demo-times drop, founder-decreed 2026-08-19).
     move = `Wait on ${i.lastTouch.who || "their reply"}. You wrote today.`;
-  } else if (i.step) {
-    // The gate item is already an imperative ("Book the demo") — say it
-    // plainly; never "close" it (decreed 2026-08-18).
-    const raw = i.step.item.trim() || "Work the open item";
-    const item = raw.charAt(0).toUpperCase() + raw.slice(1).replace(/\.+$/, "");
+  } else if (owedNow) {
+    // A thing owed. The register carries the rest; the stage carries the one.
+    move = clock && wallOverdue ? `${owedNow} ${clock.replace(/^— /, "")}.` : owedNow;
+  } else if (i.step && (quietLong || (wallOverdue && wallDaysPast != null))) {
+    // A gate is only ever a MOVE when someone is late on it — then it is a
+    // chase (they owe an answer) or a blown date (a commitment passed), both
+    // obligations. The bare "here is what we don't know" case is not a move
+    // at all: it rides UNKNOWN and the row's own chip, and the stage would
+    // only be saying the register's line twice (founder-decreed 2026-08-29).
+    const raw = i.step.item.trim() || "the open item";
     if (quietLong && i.lastTouch) {
       const who = i.lastTouch.who || "them";
       move = clock
         ? `Chase ${who} on “${raw.toLowerCase()}”. Quiet ${nDays(quietDays)}. ${i.timing!.phrase} is the wall.`
         : `Chase ${who} on “${raw.toLowerCase()}”. Quiet ${nDays(quietDays)}.`;
-    } else if (i.timing && wallOverdue) {
-      move = `${item}. The ${i.timing.phrase} wall passed ${daysAgo(wallDaysPast)}. Decide whether the date moved or the deal did.`;
-    } else if (i.timing) {
-      move = `${item}. ${i.timing.phrase} is the clock.`;
     } else {
-      move = `${item}. The stage asks nothing else.`;
+      move = `The ${i.timing!.phrase} wall passed ${daysAgo(wallDaysPast ?? 0)}. Decide whether the date moved or the deal did.`;
     }
   } else if (i.allGatesDone) {
     // The whole board is checked and nothing is stamped — the row stays loud
@@ -324,6 +339,11 @@ export function readDeal(i: RoomInputs): RoomRead {
     move = quietLong
       ? `Nudge ${i.lastTouch.who || "the thread"}. Quiet ${nDays(quietDays)}.`
       : `Wait on ${i.lastTouch.who || "their reply"}. Nothing owed on your side today.`;
+  } else if (i.step) {
+    // Nothing is owed in either direction and the board still has an open
+    // gate. Say that plainly and point at where the questions live, rather
+    // than reprinting one of them as if it were work owed.
+    move = "Nothing owed either way. The open gates are in UNKNOWN.";
   } else {
     move = "File a paste or a note. Not enough signal yet.";
     thin = true;
