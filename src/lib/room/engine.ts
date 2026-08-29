@@ -4,6 +4,7 @@
 // isn't enough signal to call a move, it says so instead of inventing one.
 
 import { DASH_NODES, DASH_NODE_KEYS } from "@/lib/dashboard/stages";
+import { splitFallback } from "./deliverables";
 
 export type Health = "red" | "amber" | "green" | "quiet";
 
@@ -255,11 +256,18 @@ export function readDeal(i: RoomInputs): RoomRead {
     health = "amber";
   if (!i.step && !i.lastTouch && !inboundNewest && !i.allGatesDone) health = "quiet";
 
-  // The newest open obligation, trimmed to one sentence the stage can carry.
+  // The newest open obligation, as the stage carries it: the commitment ONLY.
+  // An action body is `text ↯ fallback · from 7/29 paste` — the fallback is
+  // the contingency for when the wall blows and the tail is provenance, and
+  // neither is the thing owed. Carrying the raw body ran the stage into its
+  // own character cap and ellipsed a sentence mid-word (2026-08-29).
   const owedNow = (() => {
     const first = (i.openOwed ?? []).map((o) => (o.text ?? "").trim()).find(Boolean);
     if (!first) return "";
-    const one = first.split(/(?<=[.!?])\s/)[0] ?? first;
+    const commitment = splitFallback(first)
+      .text.replace(/\s·\s[^·]*$/, "")
+      .trim();
+    const one = (commitment || first).split(/(?<=[.!?])\s/)[0] ?? commitment;
     const cut = one.length > 96 ? `${one.slice(0, 95).trimEnd()}…` : one;
     return /[.!?…]$/.test(cut) ? cut : `${cut}.`;
   })();

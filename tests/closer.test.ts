@@ -278,3 +278,25 @@ test("a long obligation is trimmed to one sentence the stage can carry", async (
     "Send Javier the agreements and the client-information list.",
   );
 });
+
+test("the stage carries the commitment, not its fallback or its provenance", async () => {
+  const { readDeal } = await import("../src/lib/room/engine");
+  const { actionBody } = await import("../src/lib/room/deliverables");
+  const body = actionBody(
+    "Send the calendar invite once they pick one of the Sep 2–4 windows",
+    "if no window is chosen, follow up Tuesday so it still lands that week",
+    "from 8/29 paste",
+  );
+  const r = readDeal({ ...base, step: GATE, openOwed: [{ text: body }] });
+  assert.equal(
+    r.move,
+    "Send the calendar invite once they pick one of the Sep 2–4 windows.",
+  );
+  // The contingency surfaces when the wall blows, never on arrival.
+  assert.equal(/↯/.test(r.move), false);
+  assert.equal(/follow up Tuesday/.test(r.move), false);
+  // Provenance is a citation, not the thing owed.
+  assert.equal(/from 8\/29 paste/.test(r.move), false);
+  // And it never ellipses a sentence that fits.
+  assert.equal(/…/.test(r.move), false);
+});
