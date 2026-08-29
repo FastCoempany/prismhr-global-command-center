@@ -12,6 +12,8 @@ import {
   htmlToText,
   parseTranscriptDoc,
   parseVtt,
+  recordedAtFromName,
+  transcriptRecordedDay,
   pasteFingerprint,
   transcriptDocToPaste,
   readerFor,
@@ -425,4 +427,51 @@ test("no cue identifiers and no speakers: each cue stands on its own", () => {
     "Second thing.",
   ].join("\n");
   assert.deepEqual(parseVtt(bare).split("\n"), ["First thing.", "Second thing."]);
+});
+
+// ── a call is filed at the day it happened (2026-08-29) ─────────────────────
+// A .vtt carries only elapsed cue times; the calendar moment is in the file
+// name. Without reading it, a call dropped two days late told the room "you
+// met today" — and the recap rule reads that clock.
+
+const REAL_NAME = "Global.Payroll.Prism-20260827_140038-Meeting.Recording-en-US.vtt";
+
+test("the recording's own moment is read from its file name", () => {
+  assert.equal(recordedAtFromName(REAL_NAME), "2026-08-27 14:00");
+  assert.equal(
+    recordedAtFromName("Global Payroll Prism-20260827_140038-Meeting Recording.docx"),
+    "2026-08-27 14:00",
+  );
+  assert.equal(recordedAtFromName("notes.vtt"), "");
+  assert.equal(recordedAtFromName(""), "");
+});
+
+test("a .vtt paste carries the recorded date so the filing clock can read it", () => {
+  const p = vttToPaste(ANON_VTT, REAL_NAME);
+  assert.match(p, /\nRecorded: 2026-08-27 14:00\n/);
+  assert.equal(transcriptRecordedDay(p), "2026-08-27");
+  // A name with no stamp claims no date rather than inventing one.
+  const bare = vttToPaste(ANON_VTT, "call.vtt");
+  assert.equal(/Recorded:/.test(bare), false);
+  assert.equal(transcriptRecordedDay(bare), "");
+});
+
+test("the document path falls back to the file name when the title has no stamp", () => {
+  const cues = Array.from({ length: 12 }, (_, i) => `${i}:0${i % 10}Line ${i}.`).join("\n");
+  const doc = parseTranscriptDoc(cues)!;
+  assert.equal(doc.startedAt, "");
+  assert.match(transcriptDocToPaste(doc, REAL_NAME), /Recorded: 2026-08-27 14:00/);
+  // The title line still wins when it has one.
+  const titled = parseTranscriptDoc(RECORDING)!;
+  assert.match(
+    transcriptDocToPaste(titled, "renamed-by-somebody.docx"),
+    /Recorded: 2026-08-27 14:00/,
+  );
+});
+
+test("transcriptRecordedDay reads the head only, never the words", () => {
+  // A line deep in the conversation cannot masquerade as the head.
+  const body = `CALL TRANSCRIPT — dropped file x.vtt\n\n${"filler line\n".repeat(40)}Recorded: 1999-01-01`;
+  assert.equal(transcriptRecordedDay(body), "");
+  assert.equal(transcriptRecordedDay(""), "");
 });

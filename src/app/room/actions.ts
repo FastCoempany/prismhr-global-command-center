@@ -41,7 +41,7 @@ import { mintAsks } from "@/lib/intel/ask-mint";
 import { SCENARIOS } from "@/lib/intel/scenarios";
 import { corpusFor, extractDealIntel } from "@/lib/intel/extract";
 import { cleanSfPaste, parseSfTimeline, scrubSecrets } from "@/lib/sf-timeline";
-import { pasteFingerprint } from "@/lib/paste-files";
+import { pasteFingerprint, transcriptRecordedDay } from "@/lib/paste-files";
 import { redactMoney } from "@/lib/intel/lexicon";
 import {
   bindAccountId,
@@ -285,6 +285,15 @@ export async function roomPaste(
     };
   }
 
+  // The day the capture says it was recorded, at noon UTC so day-math is
+  // stable across timezones — the same convention the email path uses for its
+  // activity dates. Undefined when the capture carries no date, and then the
+  // DB stamps the filing moment as before.
+  const recordedAt = (): Date | undefined => {
+    const day = transcriptRecordedDay(rawText);
+    return day ? new Date(`${day}T12:00:00Z`) : undefined;
+  };
+
   // The transcript archive — a call's full conversation, kept whole behind
   // one head line. The registers show the head line only; the full text sits
   // under the fold, searchable and citable, never spelled out on arrival.
@@ -292,6 +301,11 @@ export async function roomPaste(
     const label =
       /^CALL TRANSCRIPT\s*—\s*(.+)$/m.exec(rawText.split("\n")[0] ?? "")?.[1] ??
       "filed from the room";
+    // A call is filed at the day it HAPPENED, never the day it was dropped.
+    // The email path has always done this; the transcript path never did, so a
+    // call dropped two days late told the room "you met today" — and the recap
+    // rule reads that clock (2026-08-29).
+    const at = recordedAt();
     const whole = redactMoney(cleanSfPaste(text)).slice(0, 150000);
     const voices = new Set(
       whole
@@ -305,6 +319,7 @@ export async function roomPaste(
       body: `☰ Call transcript — ${label}${voices > 1 ? ` · ${voices} voices` : ""} · full text under the fold\n${whole}`,
       lane: "mine",
       source: "transcript",
+      at,
     });
     return n.id;
   };
@@ -341,6 +356,7 @@ export async function roomPaste(
         body: `☰ transcript — filed from the room\n${body}`,
         lane: "mine",
         source: "transcript",
+        at: recordedAt(),
       });
       await stampPasteMark(pasteKey, n.id);
       refresh();
