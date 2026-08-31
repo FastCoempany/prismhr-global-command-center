@@ -23,6 +23,9 @@ export type Rollup = {
   dropDay: string;
   window: { from: string; to: string };
   lanes: Record<ActivityLane, number>;
+  /** Distinct emails behind those rows — one send logged once per Contact is
+   *  one email, however many rows the export made of it (2026-08-31). */
+  emails: Record<ActivityLane, number>;
   intent: { s: number; o: number; c: number };
   receipts: number;
   lastHuman: {
@@ -228,6 +231,7 @@ export function buildRollup(inp: {
     dropDay: inp.dropDay,
     window: inp.window,
     lanes: slice.laneCounts,
+    emails: slice.laneEmails ?? slice.laneCounts,
     intent: { s, o, c },
     receipts: slice.tally.receipts,
     lastHuman,

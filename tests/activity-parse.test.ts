@@ -136,8 +136,8 @@ test("hostile fixture: BOM, fake header in comment, dupe, money, unmatched — a
     dropDay: "2026-08-20",
   });
 
-  // The identical repeat is KEPT (multi-recipient sends look alike) and
-  // counted; its citation key gains an occurrence suffix.
+  // The identical repeat is COUNTED but no longer staged twice: one send
+  // logged once per Contact is one email (2026-08-31).
   assert.equal(manifest.dupes, 1);
   assert.equal(manifest.rowCount, 7);
   // The unmatched account is counted AND named.
@@ -157,9 +157,8 @@ test("hostile fixture: BOM, fake header in comment, dupe, money, unmatched — a
   // line inside it parsed as text, never as a header (recognition reads only
   // the parsed first row).
   const humanPair = trend.rows.filter((r) => r.s === "Re: Global payroll question");
-  assert.equal(humanPair.length, 2);
-  assert.notEqual(humanPair[0].k, humanPair[1].k);
-  assert.ok(humanPair.some((r) => r.k.endsWith("#1")));
+  assert.equal(humanPair.length, 1, "the exact repeat folds into its original");
+  assert.equal(humanPair[0].n, 2, "and says how many rows it arrived as");
   const human = humanPair[0];
   assert.ok(human);
   // The colleague rule: assigned on ≥2 distinct accounts. Colleague Two spans
@@ -258,7 +257,10 @@ test("aliases bind the renamed columns; the canon still wins on its own names", 
   assert.equal(fieldForHeader("Primary Contact Email"), "primaryContactEmail");
   assert.equal(fieldForHeader("Global Business Consultant: Full Name"), "gbc");
   assert.equal(fieldForHeader("﻿ Subject "), "subject");
-  assert.equal(fieldForHeader("Status"), undefined);
+  // Status is read now — it is the only column that tells an OPEN task's DUE
+  // date apart from a day something happened (2026-08-31).
+  assert.equal(fieldForHeader("Status"), "status");
+  assert.equal(fieldForHeader("Account Record Type"), undefined);
 });
 
 test("the rebuilt export's columns land in the record", () => {
@@ -322,7 +324,6 @@ test("the receipt is honest: an aliased column is never reported missing", () =>
     "Task",
     "Account Record Type",
     "Last Activity",
-    "Status",
     "Created Date",
     "Created By: Full Name",
   ]);
@@ -439,4 +440,66 @@ test("the manifest counts what could actually be read", async () => {
   });
   assert.equal(manifest.rowCount, 3);
   assert.equal(manifest.textRows, 1);
+});
+
+// ── the collapse, and the row that has not happened yet (2026-08-31) ────────
+
+const REBUILT_IDX = (h: string) => REBUILT_HEADERS.indexOf(h);
+const mkRow = (patch: Record<string, string>): string[] => {
+  const cells = REBUILT_HEADERS.map(() => "");
+  cells[REBUILT_IDX("Account Name")] = "Trend Personnel";
+  cells[REBUILT_IDX("18 Digit ID")] = BOOK[0].id;
+  cells[REBUILT_IDX("Task Subtype")] = "Email";
+  cells[REBUILT_IDX("Assigned To: Full Name")] = "Riley Pitt";
+  cells[REBUILT_IDX("Status")] = "Completed";
+  cells[REBUILT_IDX("Date")] = "8/20/2026";
+  for (const [k, v] of Object.entries(patch)) cells[REBUILT_IDX(k)] = v;
+  return cells;
+};
+
+test("one send logged once per contact stages ONCE, counted", async () => {
+  const ing = createIngest(BOOK, { dropDay: "2026-08-31" });
+  ing.takeRow(REBUILT_HEADERS);
+  const body = "To: a@trend.example\nCC: \nBCC: \n\nSubject: Monthly call\nBody:\nSee you Tuesday.";
+  for (let i = 0; i < 12; i++)
+    ing.takeRow(mkRow({ Subject: "Email: Re: Monthly call", Comments: body }));
+  // A genuinely different email on the same thread is NOT folded into it.
+  ing.takeRow(
+    mkRow({ Subject: "Email: Re: Monthly call", Comments: body.replace("Tuesday", "Wednesday") }),
+  );
+  const { slices, manifest } = await ing.finish({
+    fileName: "x.csv", fileBytes: 1, dropDay: "2026-08-31",
+  });
+  assert.equal(manifest.rowCount, 13);
+  const s = slices[0];
+  assert.equal(s.rows.length, 2, "twelve copies plus one distinct email");
+  assert.equal(s.rows.find((r) => (r.n ?? 1) > 1)?.n, 12);
+  // Rows stay the file's truth; emails say how many sends are behind them.
+  assert.equal(s.laneCounts.csm + s.laneCounts.human, 13);
+  assert.equal(s.laneEmails.csm + s.laneEmails.human, 2);
+});
+
+test("an OPEN row dated ahead never sets the window nor leads the account", async () => {
+  const ing = createIngest(BOOK, { dropDay: "2026-08-31" });
+  ing.takeRow(REBUILT_HEADERS);
+  ing.takeRow(mkRow({ Subject: "Email: real work", Date: "8/28/2026", Comments: "To: a@b.com\n\nBody:\nDone." }));
+  ing.takeRow(
+    mkRow({ Subject: "Strategic Business Review", Date: "3/26/2027", Status: "Not Started", "Task Subtype": "Task" }),
+  );
+  const { slices, manifest } = await ing.finish({
+    fileName: "x.csv", fileBytes: 1, dropDay: "2026-08-31",
+  });
+  // Kept and counted — it is a real row.
+  assert.equal(manifest.rowCount, 2);
+  assert.equal(slices[0].rows.length, 2);
+  // But it is not when the drop's activity ran, and it is not the newest thing.
+  assert.equal(manifest.window.to, "2026-08-28");
+  assert.equal(slices[0].rows[0].d, "2026-08-28");
+  assert.equal(slices[0].rows[1].fl.includes("f"), true);
+  // A COMPLETED row dated ahead is a data oddity, not a schedule — untouched.
+  const ing2 = createIngest(BOOK, { dropDay: "2026-08-31" });
+  ing2.takeRow(REBUILT_HEADERS);
+  ing2.takeRow(mkRow({ Subject: "Email: odd", Date: "3/26/2027", Status: "Completed" }));
+  const r2 = await ing2.finish({ fileName: "x.csv", fileBytes: 1, dropDay: "2026-08-31" });
+  assert.equal(r2.manifest.window.to, "2027-03-26");
 });
