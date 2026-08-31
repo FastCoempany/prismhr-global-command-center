@@ -60,12 +60,20 @@ export function coverageGaps(
   accounts: { id: string; name: string; humanRows: number }[],
   covered: Record<string, string>,
   hasPriorRollup: (id: string) => boolean,
+  hasGem: (id: string) => boolean = () => true,
 ): string[] {
   const out: string[] = [];
   for (const a of accounts) {
     if (a.humanRows === 0) continue;
-    if (covered[a.id]) continue;
-    if (hasPriorRollup(a.id)) continue;
+    // A HOLD is not a gem. It means the distiller was down and the account
+    // keeps whatever the last funded pass left it — which is nothing at all
+    // when there was no last funded pass. On 2026-08-31 a take-back cleared
+    // every gem, the re-drop ran with a dead key, and all 124 accounts came
+    // back "held": the run reported "Coverage: 100% — every active account
+    // holds a gem or an honest verdict" over an empty store. A hold now has
+    // to point at a gem that exists to count as covered.
+    if (covered[a.id] && (covered[a.id] !== "held" || hasGem(a.id))) continue;
+    if (!covered[a.id] && hasPriorRollup(a.id)) continue;
     out.push(a.name || a.id);
   }
   return out;

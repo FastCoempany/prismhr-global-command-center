@@ -187,6 +187,43 @@ test("coverage: gaps are accounts with human rows, no coverage, no prior rollup"
   );
 });
 
+test("a hold over an empty store is a coverage gap, not coverage", () => {
+  // 2026-08-31, live: a take-back cleared every gem, the re-drop ran with a
+  // dead key, and all 124 accounts came back "held". The run reported
+  // "Coverage: 100% — every active account holds a gem or an honest verdict"
+  // over a store with zero gems in it.
+  const accounts = [
+    { id: "a", name: "Alpha", humanRows: 5 },
+    { id: "b", name: "Bravo", humanRows: 3 },
+  ];
+  const allHeld = { a: "held", b: "held" };
+  // Nothing to fall back on: both are gaps and the run must fail coverage.
+  assert.deepEqual(
+    coverageGaps(accounts, allHeld, () => false, () => false),
+    ["Alpha", "Bravo"],
+  );
+  // A hold that points at a real gem IS coverage — that is what a hold means.
+  assert.deepEqual(
+    coverageGaps(accounts, allHeld, () => false, () => true),
+    [],
+  );
+  // One of each: only the empty one is a gap.
+  assert.deepEqual(
+    coverageGaps(accounts, allHeld, () => false, (id) => id === "a"),
+    ["Bravo"],
+  );
+  // A prior rollup never rescues a hold — a rollup is arithmetic, not a gem.
+  assert.deepEqual(
+    coverageGaps(accounts, allHeld, () => true, () => false),
+    ["Alpha", "Bravo"],
+  );
+  // Judged accounts are unaffected by the gem store either way.
+  assert.deepEqual(
+    coverageGaps(accounts, { a: "gems", b: "verdict" }, () => false, () => false),
+    [],
+  );
+});
+
 test("the mortality flag trips past half", () => {
   assert.equal(mortalityFlag(10, 6), true);
   assert.equal(mortalityFlag(10, 5), false);

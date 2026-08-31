@@ -888,18 +888,37 @@ export async function runActivityPass(opts?: {
       .filter(isRollupNoteId)
       .map((id) => id.slice(ACTIVITY_NS.length)),
   );
-  const uncovered = coverageGaps(m.accounts, run.covered, (id) => priorRollups.has(id));
+  // A held account keeps its OLD gems — so the store, not the hold, is the
+  // evidence. Read which accounts actually have one before judging coverage.
+  const gemHolders = new Set(
+    (
+      await getPrisma().accountNote.findMany({
+        where: { accountId: { startsWith: GEMS_NS } },
+        select: { accountId: true },
+      })
+    ).map((n) => n.accountId.slice(GEMS_NS.length)),
+  );
+  const uncovered = coverageGaps(
+    m.accounts,
+    run.covered,
+    (id) => priorRollups.has(id),
+    (id) => gemHolders.has(id),
+  );
 
   run.finishedAt = new Date().toISOString();
   const gemsN = Object.values(run.covered).filter((v) => v === "gems").length;
   const verdictsN = Object.values(run.covered).filter((v) => v === "verdict").length;
-  const heldN = Object.values(run.covered).filter((v) => v === "held").length;
+  const held = Object.entries(run.covered).filter(([, v]) => v === "held");
+  const heldN = held.length;
+  const heldEmpty = held.filter(([id]) => !gemHolders.has(id)).length;
   run.receipt.push(
     `${Object.keys(run.covered).length} accounts distilled — ${gemsN} hold confirmed gems, ${verdictsN} filed honest verdicts, ${run.died} candidates died in refutation.`,
   );
   if (heldN > 0)
     run.receipt.push(
-      `The distiller was down for ${heldN} account${heldN === 1 ? "" : "s"} — their gems hold from the last funded pass. Re-drop the file once the key is back and they re-judge.`,
+      heldEmpty === 0
+        ? `The distiller was down for ${heldN} account${heldN === 1 ? "" : "s"} — their gems hold from the last funded pass. Re-drop the file once the key is back and they re-judge.`
+        : `The distiller was down for ${heldN} account${heldN === 1 ? "" : "s"}, and ${heldEmpty} of them hold NO gem — there was no funded pass to fall back on. Fix the key and drop the file again; nothing was judged this run.`,
     );
   if (mortalityFlag(run.born, run.died))
     run.receipt.push(
@@ -912,8 +931,13 @@ export async function runActivityPass(opts?: {
     );
   } else {
     run.phase = "done";
+    // The claim is arithmetic, never a slogan: it names what the store holds.
+    // "Coverage: 100%" over an empty store is the exact line that told the
+    // founder a dead-key run had succeeded (2026-08-31).
     run.receipt.push(
-      "Coverage: 100% — every active account holds a gem or an honest verdict.",
+      heldN > 0
+        ? `Coverage: 100% — but ${heldN} account${heldN === 1 ? "" : "s"} held, so ${gemsN + verdictsN} of ${gemsN + verdictsN + heldN} were judged this run. The rest read their old gems.`
+        : "Coverage: 100% — every active account holds a gem or an honest verdict.",
     );
   }
   await writeManifestStore(store);
@@ -922,9 +946,11 @@ export async function runActivityPass(opts?: {
       active: false,
       kind: "activity",
       now:
-        run.phase === "done"
-          ? "The second record is distilled — coverage 100%."
-          : "The run finished BELOW coverage — see the receipt.",
+        run.phase !== "done"
+          ? "The run finished BELOW coverage — see the receipt."
+          : heldN > 0
+            ? `The second record is distilled — ${gemsN + verdictsN} judged, ${heldN} held on their old gems.`
+            : "The second record is distilled — coverage 100%.",
       unit: `the second record — ${Object.keys(run.covered).length} of ${totalWork} accounts`,
       lanes: [],
     },
