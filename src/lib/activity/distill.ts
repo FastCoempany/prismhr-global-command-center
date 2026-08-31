@@ -41,15 +41,22 @@ const packText = (pack: ContextPack): string =>
 // a mechanism there is dropped and the recipient list speaks instead — without
 // this the model was handed "logged by Automated Process" and had every reason
 // to write it into a gem as a person (2026-08-28).
+// "Logged by" was not enough. A CC is enough to file a colleague's email under
+// the operator, and the model read the column as the author and wrote his name
+// on Anika's words (founder, 2026-08-31). When the signature says who wrote
+// it, the model is told that and the logger is not mentioned at all.
 const rowsText = (rows: StagedRow[]): string =>
   rows
     .map((r) => {
+      const wrote = (r.w ?? "").trim();
       const by = isMachineryName(r.a) ? "" : r.a;
-      const who = by
-        ? `logged by ${by}`
-        : r.p
-          ? `on the thread: ${r.p.split(";").join(", ")}`
-          : "no person named on the row";
+      const who = wrote
+        ? `written by ${wrote}`
+        : by
+          ? `logged by ${by} (who logged it, NOT necessarily who wrote it)`
+          : r.p
+            ? `on the thread: ${r.p.split(";").join(", ")}`
+            : "no person named on the row";
       return `[${r.k}] ${r.d} · ${r.lane}${r.fl ? ` (${r.fl})` : ""} · ${who} · ${r.s}${
         r.c ? `\n    ${redactMoney(r.c).slice(0, 400)}` : ""
       }`;
@@ -305,8 +312,8 @@ export function gemFromCandidate(inp: {
     .map((r) => ({
       k: r.k,
       day: r.d,
-      // A citation never names a mechanism as its person.
-      who: isMachineryName(r.a) ? "" : r.a,
+      // The signature outranks the column; a citation never names a mechanism.
+      who: (r.w ?? "").trim() || (isMachineryName(r.a) ? "" : r.a),
       subject: stripThreadTokens(r.s),
     }));
   return {

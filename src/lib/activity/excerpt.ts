@@ -137,6 +137,174 @@ export function cleanExcerpt(raw: string, cap = 500): string {
   return `${cut.slice(0, lastSpace > cap * 0.6 ? lastSpace : cap).trimEnd()}…`;
 }
 
+// ── who WROTE it ────────────────────────────────────────────────────────────
+// Salesforce's comment scaffold carries To/CC/BCC and no From at all, so every
+// reader downstream fell back to the Assigned column — which on a captured
+// email is whose record the row hangs on, not whose hands typed it. On the
+// 2026-08-29 export that made 47 rows read as the operator's own sends when a
+// colleague had written them: Anika's onboarding welcome to Staff Leasing,
+// filed under Antaeus because he was CC'd. Attributing one person's words to
+// another is the worst thing this record can do (founder, 2026-08-31).
+//
+// The sender IS in the data, in the signature. Two independent signals, and
+// the read only speaks when they agree or when one stands alone and clean:
+//   · the sign-off name  ("Best regards,\nAnika Steenstra")
+//   · the signature's own address  ("E: anika.steenstra@prismhr.com")
+// Agreement is the confident case. Disagreement means a flattened thread has
+// put two people's signatures in one body, and the read declines rather than
+// guess — no attribution beats a wrong one.
+
+const SIGN_OFF =
+  /\b(?:Best regards|Kind regards|Warm regards|Best wishes|Many thanks|Regards|Sincerely|Cheers|Thanks|Thank you|Talk soon|Best)\b[,!.]?[\s\r\n]*([A-Z][A-Za-z.'’-]+(?:[ \t]+[A-Z][A-Za-z.'’-]+){0,2})(?![A-Za-z])/g;
+const SIG_EMAIL = /\bE:\s*[\s\uFFFD]*([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})/;
+
+/** Tokens that can follow a sign-off but are never part of a signature: the
+ *  first words of the next sentence ("Thanks! The invoice…"), the job title
+ *  glued under the name ("Amy Grazioso Vice President"), and the case
+ *  boilerplate SF stamps into support comments ("Original Case Details"). The
+ *  name is cut at the first of these; what stands before it is the name. */
+const NOT_A_NAME =
+  /^(?:And|The|For|You|Your|We|I|If|In|On|At|To|So|My|Our|Please|Again|All|Very|Much|Sent|From|Get|Have|Here|It|Is|Let|Look|Team|Support|Hi|Hello|Dear|Thanks?|Best|Regards|He|She|They|That|This|But|Same|Who|What|When|Why|Also|Just|Sample|Original|Case|Details|Info|Message|Banner|Practice|Workflow|Configuration|Senior|Sr|Jr|Junior|Director|Manager|Vice|President|Chief|Officer|Executive|Enterprise|Product|Client|Customer|Employee|Resource|Payroll|Sales|Account|Business|Development|Growth|Success|Partner|Specialist|Consultant|Coordinator|Analyst|Lead|Head|Global|Regional|National|Project|Certified|Professional|Associate|Assistant|Administrator|Advisor|Operations|Marketing|Service|Services|Solutions|Technology|Implementation|Onboarding|Benefits|Human|Resources|Talent|People|Building|Experience)$/i;
+
+/** Outlook's HTML-to-text pass glues the title onto the surname with no space
+ *  — "Jamie MorrisonSenior Sales" — and Proofpoint's sentinel glues its whole
+ *  banner on the same way. Keep the name half. Real names carry an internal
+ *  capital too (McDonald, MacKenzie, DeSantis), so the split only fires past a
+ *  prefix long enough that no such particle could be sitting there. */
+function unglue(token: string): string {
+  const m = /^([A-Za-z][a-z]{3,})([A-Z][A-Za-z]*)$/.exec(token);
+  return m ? m[1] : token;
+}
+
+/** A capital in the middle of a word the unglue could not split — "JoryJory's"
+ *  — is wreckage, not a surname. The particles that legitimately carry one are
+ *  named, so McDonald and O'Neill still read. */
+const PARTICLE = /^(?:Mc|Mac|O['’]|D['’]|De|Del|Della|Di|Du|La|Le|Van|Von)/;
+function isWreck(token: string): boolean {
+  // Hyphenated surnames are two names; each half is judged on its own, so
+  // "King-Corbin" reads while "JoryJory's" does not.
+  return token
+    .split(/[-–]/)
+    .some((part) => !PARTICLE.test(part) && /^.[a-z’']*[A-Z]/.test(part));
+}
+
+/** "CHASSIE SMITH" → "Chassie Smith"; "Bill Bill Laffey" → "Bill Laffey";
+ *  "Jamie MorrisonSenior Sales" → "Jamie Morrison"; "Sample Info" → "". The
+ *  result is a whole name or it is nothing — two clean tokens at least, since
+ *  a bare first name attributes to whoever else shares it. */
+function tidyName(raw: string): string {
+  const out: string[] = [];
+  // "Thanks, Mary.Hi Christina" — SF's flattening eats the space after a full
+  // stop. Put it back so the stop can end the signature where it should.
+  const words = raw
+    .trim()
+    .replace(/\.(?=[A-Z])/g, ". ")
+    .split(/\s+/);
+  for (let i = 0; i < words.length; i++) {
+    const word = words[i];
+    const shout = word === word.toUpperCase() && /[A-Z]/.test(word);
+    // A short shout after a mixed-case word is a credential, not a name:
+    // "Jessica Brach EVP", "Jeanette Coleman SPHR". A shout after a shout is
+    // just an all-caps signature — "CHASSIE SMITH" keeps both halves.
+    const priorShout =
+      i > 0 && words[i - 1] === words[i - 1].toUpperCase() && /[A-Z]/.test(words[i - 1]);
+    if (out.length && shout && word.replace(/\W/g, "").length <= 5 && !priorShout) break;
+    const cased = shout && word.length > 1 ? word[0] + word.slice(1).toLowerCase() : word;
+    const token = unglue(cased);
+    const stem = token.replace(/[.,]$/, "");
+    if (NOT_A_NAME.test(stem)) break;
+    if (token.length > 20 || /\d/.test(token) || isWreck(stem)) break;
+    // A trailing initial ("Celine Tabare R.") names nobody further.
+    if (out.length >= 2 && stem.length <= 1) break;
+    if (out.length && out[out.length - 1].toLowerCase() === token.toLowerCase()) continue;
+    out.push(stem);
+    // A full stop ends the signature. "Thanks, Riley. Nice to meet you" signs
+    // off with a first name only; the sentence after it is not a surname.
+    if (/\.$/.test(token) && stem.length > 1) break;
+    if (out.length === 3) break;
+  }
+  return out.length >= 2 ? out.join(" ") : "";
+}
+
+/** Do a name and an address plausibly belong to the same person? Matches
+ *  "anika.steenstra@", "asteenstra@", "steenstra@" and "anika@". */
+function nameFitsAddress(name: string, address: string): boolean {
+  const local = address
+    .split("@")[0]
+    .toLowerCase()
+    .replace(/[^a-z]/g, "");
+  const words = name
+    .toLowerCase()
+    .split(/\s+/)
+    .filter((w) => w.length > 1);
+  if (!local || words.length === 0) return false;
+  const last = words[words.length - 1];
+  const first = words[0];
+  return (
+    local.includes(last) ||
+    local.includes(first) ||
+    local === `${first[0]}${last}` ||
+    local === `${first}${last[0]}`
+  );
+}
+
+export type SenderRead = { name: string; email: string };
+
+/** Who wrote this email, from its own signature. Empty when the body does not
+ *  say plainly — an unattributed row is honest; a misattributed one is not. */
+export function senderOf(raw: string): SenderRead {
+  const s = raw ?? "";
+  const at = s.search(/^Body:/im);
+  let body = at >= 0 ? s.slice(at + 5) : s;
+  // Only the newest message speaks for the sender. Everything past the quoted
+  // trail was written by whoever is being replied TO — reading a signature out
+  // of there is exactly the misattribution this function exists to stop.
+  // No floor on the cut here, unlike the excerpt cleaner: an excerpt trimmed
+  // to nothing is a loss, but a sender read down to nothing is the right
+  // answer — the row simply does not say who wrote it.
+  const trail = QUOTE_TRAIL.exec(body);
+  if (trail) body = body.slice(0, trail.index);
+  body = body.replace(BANNER_SPAN, " ");
+  if (!body.trim()) return { name: "", email: "" };
+
+  const em = SIG_EMAIL.exec(body);
+  const email = em ? em[1].toLowerCase() : "";
+
+  // The newest message leads a flattened thread, so the FIRST sign-off wins.
+  let name = "";
+  SIGN_OFF.lastIndex = 0;
+  let m: RegExpExecArray | null;
+  while ((m = SIGN_OFF.exec(body))) {
+    if (m.index > 6000) break;
+    const cand = tidyName(m[1]);
+    if (!cand) continue;
+    name = cand;
+    break;
+  }
+
+  if (name && email) {
+    // Both present and agreeing is the confident read. Disagreeing means the
+    // body holds more than one signature; say nothing rather than pick.
+    return nameFitsAddress(name, email) ? { name, email } : { name: "", email: "" };
+  }
+  if (name) return { name, email: "" };
+  if (email) {
+    // No usable sign-off. An address spells a name only when it separates the
+    // two parts; "rjones@" does not, and "Rjones" is not a person.
+    const parts = email
+      .split("@")[0]
+      .split(/[._]/)
+      .filter((b) => b.length > 1);
+    if (parts.length >= 2)
+      return {
+        name: parts.map((b) => b[0].toUpperCase() + b.slice(1)).join(" "),
+        email,
+      };
+    return { name: "", email };
+  }
+  return { name: "", email: "" };
+}
+
 // ── who was on the email ────────────────────────────────────────────────────
 // The scaffold the cleaner throws away carries the one thing the export's
 // columns do not: the actual people. On a logged email the Assigned column

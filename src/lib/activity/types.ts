@@ -14,8 +14,12 @@ export type StagedRow = {
   d: string;
   /** Subject, verbatim (thread tokens strip at render, never here). */
   s: string;
-  /** Assigned — who logged it. */
+  /** Assigned — who LOGGED it. Never read as who wrote it: on a captured
+   *  email this is whose record the row hangs on, and a CC is enough. */
   a: string;
+  /** Who WROTE it, read out of the email's own signature — "" when the body
+   *  does not say plainly. Outranks `a` everywhere a person is named. */
+  w?: string;
   lane: ActivityLane;
   /** Task Subtype / Record Type / Call Type, verbatim. */
   sub: string;

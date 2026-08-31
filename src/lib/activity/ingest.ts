@@ -4,7 +4,7 @@
 // production does.
 
 import { redactMoney } from "@/lib/intel/lexicon";
-import { cleanExcerpt, correspondentsOf } from "./excerpt";
+import { cleanExcerpt, correspondentsOf, senderOf } from "./excerpt";
 import { laneOf, type ActivityLane } from "./classify";
 import {
   activityRowKey,
@@ -270,6 +270,9 @@ export function createIngest(
       p: r.comments
         ? correspondentsOf(r.comments, P_CAP).join(";") || undefined
         : undefined,
+      // Also read before the cleaner: the sign-off is the only place the
+      // export says who typed the words. Absent when it doesn't say.
+      w: r.comments ? senderOf(r.comments).name || undefined : undefined,
     };
     b.rows.push(staged);
     b.byKey.set(key0, staged);

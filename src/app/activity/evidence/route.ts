@@ -40,10 +40,13 @@ async function stageRows(accountId: string): Promise<StagedRow[]> {
   return parseStageBody(rows[0].body)?.slice.rows ?? [];
 }
 
-/** Who the row shows as its person. A logged email files under the LOGGER —
- *  "Automated Process" — and the drill must never print a mechanism where a
+/** Who the row shows as its person: the signature first, the Assigned column
+ *  only after. A logged email files under the LOGGER — a CC is enough to make
+ *  that the operator — so reading the column as the author put a colleague's
+ *  words in his mouth (founder, 2026-08-31). A mechanism never prints where a
  *  name belongs. The recipients ride separately in `people`. */
-const personOf = (r: StagedRow): string => (isMachineryName(r.a) ? "" : r.a);
+const personOf = (r: StagedRow): string =>
+  (r.w ?? "").trim() || (isMachineryName(r.a) ? "" : r.a);
 
 /** The row as the drill renders it — subject cleaned, excerpt cleaned again
  *  defensively (slices staged before the ingest cleaner keep their meat). */
@@ -107,7 +110,7 @@ export async function GET(req: Request) {
     const hit =
       needle.length >= 3
         ? rows.find((r) => {
-            const hay = `${r.s} ${r.a} ${r.c ?? ""}`.toLowerCase();
+            const hay = `${r.s} ${r.a} ${r.w ?? ""} ${r.c ?? ""}`.toLowerCase();
             return (
               hay.includes(needle) ||
               (nameBits.length > 1 && nameBits.every((b) => hay.includes(b)))
