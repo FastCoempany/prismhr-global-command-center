@@ -135,7 +135,11 @@ export function buildRollup(inp: {
     // thread. Machinery never renders as the human — the row's own text is
     // asked first, and a mechanism falls through to "" so the surface's own
     // fallback speaks instead (2026-08-28, the Automated Process read).
-    const assigned = isMachineryName(r.a) ? "" : r.a;
+    // The signature outranks the column. A row Assigned to the operator that
+    // a colleague signed is the colleague's send; naming the wrong person is
+    // worse than naming none (founder, 2026-08-31).
+    const logged = isMachineryName(r.a) ? "" : r.a;
+    const assigned = (r.w ?? "").trim() || logged;
     const who = accountNames[0] ?? assigned;
     const kind = accountNames[0]
       ? "account"
@@ -169,9 +173,10 @@ export function buildRollup(inp: {
       t.n += 1;
       tally.set(key, t);
     }
-    const a = (r.a ?? "").trim();
-    // A mechanism is never an actor. It survives the lane rules only because
-    // the row it logged is real correspondence; the people are in `p`.
+    // Who WROTE it, then who logged it. A mechanism is never an actor: it
+    // survives the lane rules only because the row it logged is real
+    // correspondence; the people are in `p`.
+    const a = (r.w ?? "").trim() || (r.a ?? "").trim();
     if (a && !isMachineryName(a) && !seen.has(a)) {
       // The logger: a colleague when the file shows them across accounts, an
       // account person when this account is the only place they appear.

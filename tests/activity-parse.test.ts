@@ -20,6 +20,7 @@ import {
 } from "../src/lib/activity/parse";
 import { createIngest } from "../src/lib/activity/ingest";
 import { BOOK, headerLine, hostileCsv, row, csvLine } from "./activity-fixtures";
+import { senderOf } from "../src/lib/activity/excerpt";
 
 test("quoted multiline fields with commas, quotes, CRLF parse as one row", () => {
   const p = createCsvParser();
@@ -502,4 +503,93 @@ test("an OPEN row dated ahead never sets the window nor leads the account", asyn
   ing2.takeRow(mkRow({ Subject: "Email: odd", Date: "3/26/2027", Status: "Completed" }));
   const r2 = await ing2.finish({ fileName: "x.csv", fileBytes: 1, dropDay: "2026-08-31" });
   assert.equal(r2.manifest.window.to, "2027-03-26");
+});
+
+// ── the signature outranks the Assigned column ──────────────────────────────
+// A CC is enough to file a colleague's email under the operator. Reading the
+// column as the author put Anika's onboarding welcome in Antaeus's mouth twice
+// in one session (founder, 2026-08-31): "wrong person attribution is huge".
+
+test("the sender is read from the signature, not from who logged the row", () => {
+  const body = [
+    "To: javier@staffleasing.com",
+    "CC: antaeus.coe@prismhr.com",
+    "Subject: Welcome",
+    "",
+    "Body:",
+    "Great meeting you both today. I will send the deck over tonight.",
+    "",
+    "Best regards,",
+    "Anika Steenstra",
+    "Client Growth Manager",
+    "E: anika.steenstra@prismhr.com",
+  ].join("\n");
+  const read = senderOf(body);
+  assert.equal(read.name, "Anika Steenstra");
+  assert.equal(read.email, "anika.steenstra@prismhr.com");
+});
+
+test("the read declines rather than guess", () => {
+  // Two signatures in one flattened body: say nothing.
+  const crossed = "Body:\nSure.\n\nRegards,\nAnika Steenstra\nE: mary.mahoney@prismhr.com";
+  assert.deepEqual(senderOf(crossed), { name: "", email: "" });
+  // A bare first name names whoever else shares it.
+  assert.equal(senderOf("Body:\nOn my way.\n\nThanks,\nRiley").name, "");
+  // The next sentence is not a surname.
+  assert.equal(senderOf("Body:\nOK.\n\nThanks, Riley. Nice to meet you.").name, "");
+  // Nothing to read at all.
+  assert.equal(senderOf("Body:\nSee attached.").name, "");
+});
+
+test("a signature below the quoted trail belongs to the person being replied to", () => {
+  const body = [
+    "Body:",
+    "Sounds good, see you then.",
+    "From: Javier Ramirez <javier@staffleasing.com>",
+    "Sent: Thursday, August 28, 2026 9:14 AM",
+    "Subject: Re: Welcome",
+    "",
+    "Best regards,",
+    "Anika Steenstra",
+  ].join("\n");
+  // Anika wrote the QUOTED message, not this one. No name beats the wrong one.
+  assert.equal(senderOf(body).name, "");
+});
+
+test("the name is tidied without garbling it", () => {
+  const sign = (s: string) => senderOf(`Body:\nHi.\n\nRegards,\n${s}`).name;
+  assert.equal(sign("CHASSIE SMITH"), "Chassie Smith");
+  assert.equal(sign("Bill Bill Laffey"), "Bill Laffey");
+  assert.equal(sign("Jamie MorrisonSenior Sales Executive"), "Jamie Morrison");
+  assert.equal(sign("Jessica Brach EVP Operations"), "Jessica Brach");
+  assert.equal(sign("Amy Grazioso Vice President"), "Amy Grazioso");
+  assert.equal(sign("Sample Info"), "");
+  assert.equal(sign("Original Case Details"), "");
+  assert.equal(sign("JoryJory's Calendar"), "");
+  // Names that legitimately carry an internal capital survive whole.
+  assert.equal(sign("Sean McDonald"), "Sean McDonald");
+  assert.equal(sign("Lisa King-Corbin"), "Lisa King-Corbin");
+  assert.equal(sign("Debbie Van Meers"), "Debbie Van Meers");
+});
+
+test("the staged row carries the writer, and the Assigned column stays the logger", async () => {
+  const ing = createIngest(BOOK, { dropDay: "2026-08-31" });
+  ing.takeRow(REBUILT_HEADERS);
+  ing.takeRow(
+    mkRow({
+      Subject: "Email: Welcome to PrismHR",
+      Date: "8/28/2026",
+      "Assigned To: Full Name": "Antaeus Coe",
+      Comments:
+        "To: javier@staffleasing.com\nCC: antaeus.coe@prismhr.com\n\nBody:\nGreat meeting you.\n\nBest regards,\nAnika Steenstra\nE: anika.steenstra@prismhr.com",
+    }),
+  );
+  const { slices } = await ing.finish({
+    fileName: "x.csv",
+    fileBytes: 1,
+    dropDay: "2026-08-31",
+  });
+  const staged = slices[0].rows[0];
+  assert.equal(staged.a, "Antaeus Coe");
+  assert.equal(staged.w, "Anika Steenstra");
 });
