@@ -26,6 +26,10 @@ export type StagedRow = {
   /** Full Comments — money-redacted, trimmed to budget. Optional: trimming to
    *  the slice cap drops comments before it drops rows. */
   c?: string;
+  /** How many rows this ONE email arrived as. Salesforce logs a send once per
+   *  Contact it touches, so five recipients at an account make five rows
+   *  identical in every exported column. Absent means one. */
+  n?: number;
   /** The people on a logged email — the To/CC/BCC addresses, lowercased and
    *  semicolon-joined. The Assigned column names the LOGGER on these rows;
    *  this names the correspondents. Absent on rows with no scaffold. */
@@ -68,7 +72,12 @@ export type AccountSlice = {
   rows: StagedRow[];
   dropped: number;
   tally: IntentTally;
+  /** Rows as the file holds them — the export's own truth. */
   laneCounts: Record<ActivityLane, number>;
+  /** DISTINCT emails behind those rows. On the 2026-08-29 export the CSM lane
+   *  read 49% high and the human lane 46% because one send logged as a dozen
+   *  rows counted as a dozen activities (2026-08-31). */
+  laneEmails: Record<ActivityLane, number>;
   rowsSum: string;
   tallySum: string;
 };

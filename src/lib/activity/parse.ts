@@ -219,6 +219,10 @@ export type ActivityRow = {
   outreachTaskType: string;
   eventSubtype: string;
   gbc: string;
+  /** Not in the canonical nineteen. On an OPEN task the Date column is a DUE
+   *  date, not a day anything happened — this is the only column that tells
+   *  the two apart. "" when the export omits it. */
+  status: string;
 };
 
 const FIELD_BY_HEADER: Record<string, keyof ActivityRow> = {
@@ -265,6 +269,7 @@ const HEADER_ALIASES: Record<string, keyof ActivityRow> = {
   "Task/Event Record Type Name": "recordType",
   "Due Date Only": "date",
   "Activity Date": "date",
+  Status: "status",
 };
 
 /** The header→field map the reader actually uses: canonical names first,
@@ -296,6 +301,7 @@ export function emptyActivityRow(): ActivityRow {
     outreachTaskType: "",
     eventSubtype: "",
     gbc: "",
+    status: "",
   };
 }
 
@@ -318,6 +324,18 @@ export function rowRecord(headers: string[], row: string[]): ActivityRow {
     if (key && !out[key]) out[key] = row[i] ?? "";
   }
   return out;
+}
+
+/** An OPEN row dated in the future is a calendar entry, not activity. It is
+ *  kept and counted, but it must not set the drop's window nor sort as the
+ *  newest thing on its account: one Not-Started task due 3/26/2027 stretched
+ *  the reported window by seven months and sat at the top of its account's
+ *  record ahead of everything that had actually happened (2026-08-31). */
+export function isScheduledAhead(r: ActivityRow, todayKey: string): boolean {
+  const st = (r.status ?? "").trim().toLowerCase();
+  if (!st || st === "completed") return false;
+  const d = dayKeyOf(r.date);
+  return !!d && d > todayKey;
 }
 
 // ── dates, the calendar way ─────────────────────────────────────────────────

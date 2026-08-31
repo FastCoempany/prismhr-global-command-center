@@ -35,7 +35,15 @@ const TAIL_MARKERS: RegExp[] = [
  *  begins. SF comments flatten the "From: … Sent: … To: … Subject: …" block
  *  onto run-on lines, so the cut looks for From: followed within a short
  *  span by Sent: — a shape body prose never has. */
-const QUOTE_TRAIL = /(?:^|\n|\s)From:\s+[^\n]{1,120}?(?:\n|\s)Sent:\s/;
+// Outlook mobile glues its sign-off straight onto the header —
+// "Get Outlook for iOSFrom: Javier Ramirez <…>" — with no space at all, so a
+// pattern anchored on whitespace walks straight past the earliest cut and
+// leaves a whole quoted message in the excerpt. 268 bodies in the 2026-08-29
+// export carry that glued form — and the character before is as often a
+// capital as not ("iOSFrom:"), so any letter or digit closes the boundary.
+// The "Sent:" that must follow within 120 characters is what keeps this from
+// firing on ordinary prose.
+const QUOTE_TRAIL = /(?:^|\n|\s|[A-Za-z0-9])From:\s+[^\n]{1,120}?(?:\n|\s)Sent:\s/;
 
 /** The comment head SF prepends: To/CC/BCC/Attachment/Subject then "Body:".
  *  Words start after "Body:" when that scaffold is present. */
@@ -53,6 +61,43 @@ function unmojibake(s: string): string {
     .replace(/�/g, " ")
     .replace(/(\w)\?(ve|re|ll|s|t|d|m)\b/g, "$1'$2")
     .replace(/\s\?\s/g, " — ");
+}
+
+// The self-quote cut. Salesforce's Full Comments holds the whole flattened
+// thread, and Outlook's HTML-to-text pass emits each message TWICE — once as a
+// run-on line, once properly broken — so the words repeat even where no
+// "From:" header survives to cut on. 2,243 of 11,643 excerpts in the
+// 2026-08-29 export said the same thing twice (2026-08-31).
+//
+// Content is the only reliable boundary: when a long opening run appears again
+// later, everything from that second appearance on is the quote. The probe is
+// deliberately long (a real sentence, not a stock phrase like "Thanks for your
+// time") and only the opening of the text is probed, so a message that merely
+// repeats itself rhetorically is left alone.
+// Compared on WORDS, not characters. The two copies of a message differ in
+// their punctuation and in how far SF's encoding mangled them — "the correct
+// Cheryl.?.?." against "the correct Cheryl..." — so a literal compare misses
+// them. Letters and digits only, with a map back to the original offsets.
+const SELF_QUOTE_PROBE = 48; // normalized chars ≈ a full sentence
+const SELF_QUOTE_MIN_KEEP = 80; // never cut an excerpt down to a fragment
+
+function cutSelfQuote(s: string): string {
+  if (s.length < SELF_QUOTE_MIN_KEEP + SELF_QUOTE_PROBE) return s;
+  let norm = "";
+  const at: number[] = [];
+  for (let i = 0; i < s.length; i++) {
+    const c = s.charCodeAt(i);
+    const lower = c >= 65 && c <= 90 ? c + 32 : c; // A-Z → a-z
+    if ((lower >= 97 && lower <= 122) || (lower >= 48 && lower <= 57)) {
+      norm += String.fromCharCode(lower);
+      at.push(i);
+    }
+  }
+  if (norm.length < SELF_QUOTE_PROBE * 2) return s;
+  const again = norm.indexOf(norm.slice(0, SELF_QUOTE_PROBE), SELF_QUOTE_PROBE);
+  if (again < 0) return s;
+  const cut = at[again];
+  return cut >= SELF_QUOTE_MIN_KEEP ? s.slice(0, cut) : s;
 }
 
 /** Clean one Full Comments blob down to the words a person wrote. The cap is
@@ -82,6 +127,9 @@ export function cleanExcerpt(raw: string, cap = 500): string {
   s = s.replace(CONTACT_CARD, " ");
   s = unmojibake(s);
   s = s.replace(/\s+/g, " ").trim();
+  // Last, on the normalized text: the doubled copy differs from the original
+  // only in its whitespace, so it is invisible until the runs are flattened.
+  s = cutSelfQuote(s).trim();
 
   if (s.length <= cap) return s;
   const cut = s.slice(0, cap);

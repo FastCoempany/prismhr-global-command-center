@@ -69,6 +69,12 @@ export function renderRollupBody(r: Rollup): string {
       // empty slot would collapse the line past its own parser (2026-08-28).
       `LAST HUMAN · ${r.lastHuman.day} · ${sv(r.lastHuman.how)} · ${sv(r.lastHuman.who) || NO_ONE} (${r.lastHuman.kind}) · ${sv(r.lastHuman.subject)}`,
     );
+  // Rows are the file's truth; emails are how many sends are behind them. The
+  // line carries both only when they differ, so an account with no collapsed
+  // repeats reads exactly as it always has.
+  const em = r.emails ?? r.lanes;
+  if (em.human !== r.lanes.human || em.csm !== r.lanes.csm)
+    lines.push(`EMAILS · human ${em.human} · csm ${em.csm} · support ${em.support}`);
   if (r.lastOrgInbound) lines.push(`LAST ORG INBOUND · ${sv(r.lastOrgInbound)}`);
   for (const a of r.actors)
     lines.push(`ACTOR · ${a.lane} · ${sv(a.name)} (${a.kind}) ×${a.n}`);
@@ -91,6 +97,7 @@ export function parseRollupBody(body: string): Rollup | null {
     dropDay: head[2],
     window: { from: head[3], to: head[4] },
     lanes: { human: 0, csm: 0, support: 0, intent: 0, machinery: 0 },
+    emails: { human: 0, csm: 0, support: 0, intent: 0, machinery: 0 },
     intent: { s: 0, o: 0, c: 0 },
     receipts: 0,
     lastHuman: null,
@@ -114,6 +121,15 @@ export function parseRollupBody(body: string): Rollup | null {
       out.lanes.machinery = Number(m[7]);
       out.receipts = Number(m[8]);
       out.lanes.intent = out.intent.s + out.intent.o + out.intent.c;
+      // Absent EMAILS line = no collapse happened; emails equal rows.
+      out.emails = { ...out.lanes };
+    } else if ((m = /^EMAILS · human (\d+) · csm (\d+) · support (\d+)$/.exec(line))) {
+      out.emails = {
+        ...out.emails,
+        human: Number(m[1]),
+        csm: Number(m[2]),
+        support: Number(m[3]),
+      };
     } else if (
       (m = /^LAST HUMAN · (\S+) · ([^·]+) · (.+) \((\w+)\) · (.*)$/.exec(line))
     ) {

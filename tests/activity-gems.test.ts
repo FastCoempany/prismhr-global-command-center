@@ -34,6 +34,7 @@ const rollup: Rollup = {
   dropDay: "2026-08-20",
   window: { from: "2026-05-23", to: "2026-08-20" },
   lanes: { human: 41, csm: 12, support: 96, intent: 2727, machinery: 14 },
+  emails: { human: 0, csm: 0, support: 0, intent: 0, machinery: 0 },
   intent: { s: 2100, o: 540, c: 87 },
   receipts: 9,
   lastHuman: {
@@ -221,7 +222,8 @@ test("stage and manifest blocks round-trip", () => {
     ],
     dropped: 0,
     tally: { days: {}, camps: {}, receipts: 0 },
-    laneCounts: { human: 1, csm: 0, support: 0, intent: 0, machinery: 0 },
+    laneEmails: { human: 0, csm: 0, support: 0, intent: 0, machinery: 0 },
+  laneCounts: { human: 1, csm: 0, support: 0, intent: 0, machinery: 0 },
     rowsSum: "r",
     tallySum: "t",
   };

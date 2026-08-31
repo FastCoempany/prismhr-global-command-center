@@ -48,6 +48,7 @@ const mkSlice = (rows: StagedRow[], patch?: Partial<AccountSlice>): AccountSlice
   rows,
   dropped: 0,
   tally: { days: { "2026-08-13": { s: 10, o: 4, c: 1 } }, camps: {}, receipts: 2 },
+  laneEmails: { human: 0, csm: 0, support: 0, intent: 0, machinery: 0 },
   laneCounts: { human: rows.length, csm: 0, support: 0, intent: 15, machinery: 3 },
   rowsSum: "",
   tallySum: "",
@@ -121,14 +122,16 @@ test("notable threads: grouped by normalized subject, account-led ranked in", ()
 test("verdict lines are arithmetic sentences", () => {
   const machineryOnly = buildRollup({
     slice: mkSlice([], {
-      laneCounts: { human: 0, csm: 0, support: 0, intent: 15, machinery: 3 },
+      laneEmails: { human: 0, csm: 0, support: 0, intent: 0, machinery: 0 },
+  laneCounts: { human: 0, csm: 0, support: 0, intent: 15, machinery: 3 },
     }),
     ...ctx,
   });
   assert.match(verdictLine(machineryOnly), /machinery only — 15 blast receipts/);
   const supportOnly = buildRollup({
     slice: mkSlice([mkRow({ lane: "support", s: "Email: PrismHR Case 1: help" })], {
-      laneCounts: { human: 0, csm: 0, support: 9, intent: 0, machinery: 0 },
+      laneEmails: { human: 0, csm: 0, support: 0, intent: 0, machinery: 0 },
+  laneCounts: { human: 0, csm: 0, support: 9, intent: 0, machinery: 0 },
       tally: { days: {}, camps: {}, receipts: 0 },
     }),
     ...ctx,

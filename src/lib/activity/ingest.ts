@@ -9,6 +9,7 @@ import { laneOf, type ActivityLane } from "./classify";
 import {
   activityRowKey,
   dayKeyOf,
+  isScheduledAhead,
   dateTimeKeyOf,
   dropShaOf,
   fingerprintHeaders,
@@ -32,8 +33,11 @@ type Bucket = {
   id: string;
   name: string;
   rows: StagedRow[];
+  /** rowKey → the staged row it collapsed into, so a repeat finds its own. */
+  byKey: Map<string, StagedRow>;
   tally: IntentTally;
   laneCounts: Record<ActivityLane, number>;
+  laneEmails: Record<ActivityLane, number>;
   meta: AccountSlice["meta"];
 };
 
@@ -63,7 +67,14 @@ export type Ingest = {
   }): Promise<IngestResult>;
 };
 
-export function createIngest(book: { id: string; name: string }[]): Ingest {
+export function createIngest(
+  book: { id: string; name: string }[],
+  opts?: { dropDay?: string },
+): Ingest {
+  // Chicago day, the app's one clock. Rows dated past it are the future.
+  const dropDayKey =
+    opts?.dropDay ||
+    new Date().toLocaleDateString("en-CA", { timeZone: "America/Chicago" });
   const bookById = new Map(book.map((b) => [b.id, b.name]));
   let headers: string[] | null = null;
   let fingerprint: Fingerprint | null = null;
@@ -137,7 +148,12 @@ export function createIngest(book: { id: string; name: string }[]): Ingest {
       if (n && n.trim().includes(" ")) contacts.add(n.trim());
 
     const day = dayKeyOf(r.date);
-    if (day) {
+    // An OPEN row's Date is a DUE date, not a day anything happened. One
+    // Not-Started task due 3/26/2027 stretched the reported window by seven
+    // months. It still stages and still counts — it just never speaks for
+    // when the drop's activity runs (2026-08-31).
+    const scheduled = isScheduledAhead(r, dropDayKey);
+    if (day && !scheduled) {
       if (!windowFrom || day < windowFrom) windowFrom = day;
       if (!windowTo || day > windowTo) windowTo = day;
     }
@@ -160,8 +176,10 @@ export function createIngest(book: { id: string; name: string }[]): Ingest {
         id: r.id18,
         name,
         rows: [],
+        byKey: new Map(),
         tally: { days: {}, camps: {}, receipts: 0 },
         laneCounts: { human: 0, csm: 0, support: 0, intent: 0, machinery: 0 },
+        laneEmails: { human: 0, csm: 0, support: 0, intent: 0, machinery: 0 },
         meta: {
           primaryContact: "",
           primaryContactEmail: "",
@@ -216,7 +234,22 @@ export function createIngest(book: { id: string; name: string }[]): Ingest {
     if (read.flags.receipt) b.tally.receipts += 1;
     if (read.lane === "machinery") return {};
 
-    b.rows.push({
+    // THE COLLAPSE. A repeat here is not a second activity: activityRowKey
+    // hashes every exported column, comments included, so an identical key
+    // means Salesforce logged ONE send once per Contact it touched. Stage the
+    // first and count the rest on it. The lane's row count still reports the
+    // file's truth; laneEmails reports how many emails are behind it. Before
+    // this, 137 of Amplify's 300 staged rows were copies of a handful of
+    // sends, the cap was cutting real history to hold them, and every
+    // drilldown showed the same excerpt a dozen times (2026-08-31).
+    const already = b.byKey.get(key0);
+    if (already) {
+      already.n = (already.n ?? 1) + 1;
+      return {};
+    }
+    b.laneEmails[read.lane] += 1;
+
+    const staged: StagedRow = {
       k: key,
       d: day,
       s: r.subject,
@@ -225,7 +258,8 @@ export function createIngest(book: { id: string; name: string }[]): Ingest {
       sub: r.taskSubtype,
       rt: r.recordType,
       ct: r.callType,
-      fl: flagsOf(read.flags),
+      // "f" — scheduled ahead: a real row, but not a thing that has happened.
+      fl: `${flagsOf(read.flags)}${scheduled ? "f" : ""}`,
       // The meat law: banners, quoted trails, and signatures go BEFORE the
       // cap, so the budget is spent on words a person wrote.
       c: r.comments
@@ -236,7 +270,9 @@ export function createIngest(book: { id: string; name: string }[]): Ingest {
       p: r.comments
         ? correspondentsOf(r.comments, P_CAP).join(";") || undefined
         : undefined,
-    });
+    };
+    b.rows.push(staged);
+    b.byKey.set(key0, staged);
     return {};
   };
 
@@ -247,7 +283,10 @@ export function createIngest(book: { id: string; name: string }[]): Ingest {
   }): Promise<IngestResult> => {
     const slices: AccountSlice[] = [];
     for (const b of buckets.values()) {
-      b.rows.sort((x, y) => (x.d < y.d ? 1 : x.d > y.d ? -1 : 0));
+      // Newest first — but a scheduled-ahead row sinks below everything that
+      // actually happened, however far in the future its due date sits.
+      const ahead = (r: StagedRow) => (r.fl.includes("f") ? 1 : 0);
+      b.rows.sort((x, y) => ahead(x) - ahead(y) || (x.d < y.d ? 1 : x.d > y.d ? -1 : 0));
       const dropped = Math.max(0, b.rows.length - SLICE_ROW_CAP);
       const rows = b.rows.slice(0, SLICE_ROW_CAP);
       // The body cap drops comments before it drops rows — oldest first.
@@ -279,6 +318,7 @@ export function createIngest(book: { id: string; name: string }[]): Ingest {
         dropped,
         tally: b.tally,
         laneCounts: b.laneCounts,
+        laneEmails: b.laneEmails,
         rowsSum,
         tallySum,
       });

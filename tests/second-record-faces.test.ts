@@ -71,6 +71,7 @@ const rollup = (over: Partial<Rollup>): Rollup => ({
   dropDay: "2026-08-20",
   window: { from: "2026-05-23", to: "2026-08-20" },
   lanes: { human: 0, csm: 0, support: 0, intent: 0, machinery: 0 },
+  emails: { human: 0, csm: 0, support: 0, intent: 0, machinery: 0 },
   intent: { s: 0, o: 0, c: 0 },
   receipts: 0,
   lastHuman: null,
@@ -845,5 +846,43 @@ describe("correspondentsOf — who was on the email", () => {
 
   test("the cleaner still cuts the scaffold it was read from", () => {
     assert.equal(cleanExcerpt(scaffold).startsWith("Write me at"), true);
+  });
+});
+
+describe("the cleaner cuts a message that quotes itself (2026-08-31)", () => {
+  const msg =
+    "Well, now that I've copied the correct Cheryl, I'm still not seeing the LMS icon on the Member portal. Can you show me what I'm missing? What a Monday.";
+
+  test("the doubled copy is cut, the first copy is kept whole", () => {
+    const out = cleanExcerpt(`${msg} Lauren Jones, Director of Operations ${msg}`);
+    assert.match(out, /^Well, now that I've copied the correct Cheryl/);
+    assert.equal(out.indexOf("What a Monday"), out.lastIndexOf("What a Monday"));
+  });
+
+  test("the copies are matched on words, not characters", () => {
+    // SF's encoding mangles the two copies differently — this is the shape
+    // that survived a literal compare (440 excerpts) until the probe ignored
+    // punctuation.
+    const mangled = msg.replace("Cheryl,", "Cheryl.?.?.");
+    const out = cleanExcerpt(`${mangled} Lauren Jones ${msg}`);
+    assert.equal(out.indexOf("What a Monday"), out.lastIndexOf("What a Monday"));
+  });
+
+  test("a message that never repeats is left exactly alone", () => {
+    const once = `${msg} Thanks, Lauren.`;
+    assert.equal(cleanExcerpt(once), once.replace(/\s+/g, " ").trim());
+  });
+
+  test("a short repeated phrase is not a quote — the probe is a whole sentence", () => {
+    const chatty = "Thanks! Thanks! Thanks so much, really. Thanks!";
+    assert.equal(cleanExcerpt(chatty), chatty);
+  });
+
+  test("Outlook mobile's glued header is still a quote boundary", () => {
+    const body =
+      "Ok standing by for access Get Outlook for iOSFrom: Javier Ramirez <j@x.com>\nSent: Thursday, 27 August 2026 14:28:24\nTo: Antaeus Coe <a@y.com>\nSubject: Re: Call recording";
+    const out = cleanExcerpt(body);
+    assert.match(out, /^Ok standing by for access/);
+    assert.equal(/Javier Ramirez/.test(out), false);
   });
 });
