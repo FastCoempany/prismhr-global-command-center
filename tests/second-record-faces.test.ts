@@ -913,3 +913,19 @@ test("the chute reconciles stored second-record receipts against the live run", 
   // And it fires when the operator comes back to the desk.
   assert.ok(chute.includes("visibilitychange"));
 });
+
+test("a settled receipt clears by hand; in-flight and waiting rows cannot", () => {
+  const chute = readFileSync(join(root, "src/app/room/chute.tsx"), "utf8");
+  // The hover ✕, tooltip-titled per the Spring's minimalist-controls decree.
+  assert.ok(chute.includes("chuteDismiss"));
+  assert.ok(chute.includes("Clear this receipt. The record keeps everything that filed."));
+  // The gate: only settled states carry the control. A row waiting on the
+  // operator's pick or still reading is never dismissible.
+  const gate = /const settled = [\s\S]{0,400}?;/.exec(chute)?.[0] ?? "";
+  for (const st of ["filed", "activityDone", "error", "dupe", "undone", "interrupted"])
+    assert.ok(gate.includes(`"${st}"`), `settled must include ${st}`);
+  for (const st of ["pick", "mismatch", "reading", "filing", "activity"])
+    assert.ok(!gate.includes(`"${st}"`), `settled must not include ${st}`);
+  const css = readFileSync(join(root, "src/app/room/room.module.css"), "utf8");
+  assert.ok(/\.chuteItem:hover \.chuteDismiss/.test(css), "the ✕ reveals on row hover");
+});

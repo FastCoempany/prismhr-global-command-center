@@ -1973,6 +1973,22 @@ button.sdRadio:hover {
 .chuteUndo:hover {
   color: var(--red, #ef4444);
 }
+.chuteDismiss {
+  border: 0;
+  background: none;
+  padding: 0 2px;
+  cursor: pointer;
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 10px;
+  color: var(--faint);
+  opacity: 0;
+}
+.chuteItem:hover .chuteDismiss {
+  opacity: 1;
+}
+.chuteDismiss:hover {
+  color: var(--red, #ef4444);
+}
 .chuteClear {
   border: 0;
   background: none;

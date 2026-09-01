@@ -332,9 +332,31 @@ export function Chute({
     return top ? { id: top.id, name: top.name } : null;
   };
 
+  // A settled receipt is the operator's to clear (decreed 2026-09-01: no
+  // notice sits on the screen against their will). In-flight rows and rows
+  // waiting on a pick stay — dismissing work that still needs a decision
+  // would be the ledger quietly forgetting what was thrown at it.
+  const settled = (s: ChuteItem["state"]): boolean =>
+    s === "filed" ||
+    s === "activityDone" ||
+    s === "error" ||
+    s === "dupe" ||
+    s === "undone" ||
+    s === "interrupted";
+
   // One receipt row — shared by the folded view and the open ledger.
   const renderItem = (it: ChuteItem) => (
     <li key={it.key} className={styles.chuteItem}>
+      {settled(it.state) && (
+        <button
+          type="button"
+          className={styles.chuteDismiss}
+          title="Clear this receipt. The record keeps everything that filed."
+          onClick={() => setItems((xs) => xs.filter((x) => x.key !== it.key))}
+        >
+          ✕
+        </button>
+      )}
       <span className={styles.chuteFile}>{it.filename}</span>
       {it.state === "reading" && <span>Reading…</span>}
       {it.state === "filing" && it.account && (
