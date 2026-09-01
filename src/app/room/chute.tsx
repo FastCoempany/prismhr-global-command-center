@@ -10,7 +10,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import { chuteReadPdf, roomPaste, roomPasteUndo } from "./actions";
-import { activityRun, activityStage, activityTakeBack } from "../activity/actions";
+import {
+  activityReceipt,
+  activityRun,
+  activityStage,
+  activityTakeBack,
+} from "../activity/actions";
 import { probeActivityReport, uploadActivityReport } from "@/lib/activity/upload";
 import { DROP_ACCEPT } from "@/lib/paste-files";
 import { readFileToText } from "./read-file";
@@ -50,6 +55,9 @@ type ChuteItem = {
   archived?: boolean; // a call transcript's full text rode along
   degraded?: boolean; // the reader was down; raw text filed, nothing routed
   noteIds?: string[]; // what this filing wrote — the undo's reach
+  /** A second-record drop. Marked structurally so the ledger's reconcile can
+   *  find its receipts without sniffing filenames or reason text. */
+  act?: boolean;
 };
 
 // The ledger survives a reload: receipts persist per Chicago day, minus the
@@ -109,6 +117,7 @@ function saveLedger(items: ChuteItem[]) {
       archived: x.archived,
       degraded: x.degraded,
       noteIds: x.noteIds,
+      act: x.act,
     }));
     localStorage.setItem(LEDGER_KEY, JSON.stringify({ day: chicagoDay(), items: slim }));
   } catch {
@@ -133,16 +142,53 @@ export function Chute({
   const inputRef = useRef<HTMLInputElement | null>(null);
   const byName = [...roster].sort((a, b) => a.name.localeCompare(b.name));
 
+  // A stored second-record receipt is a SEED; the manifest's live run state
+  // is the record, and the record outranks every seed (the Ted doctrine,
+  // applied to receipts). A drop that failed at 13:51 and was re-run green
+  // from the intranet dock at 17:37 sat red on this ledger for four hours
+  // (2026-09-01) — so every settled activity entry re-reads the live receipt
+  // on mount and again each time the tab comes back into view. A run still
+  // in flight is left alone; the dock is narrating it.
+  const reconcileSecondRecord = async () => {
+    const live = await activityReceipt();
+    if (!live?.hasDrop || live.phase === "running" || live.receipt.length === 0) return;
+    const line = live.receipt[live.receipt.length - 1] ?? "";
+    const state: ChuteItem["state"] = live.phase === "done" ? "activityDone" : "error";
+    setItems((xs) =>
+      xs.map((x) =>
+        x.act &&
+        (x.state === "activityDone" ||
+          x.state === "error" ||
+          x.state === "interrupted") &&
+        (x.state !== state || x.reason !== line)
+          ? { ...x, state, reason: line }
+          : x,
+      ),
+    );
+  };
+
   // Reload the day's ledger once on mount; persist on every change after.
   const loaded = useRef(false);
   useEffect(() => {
+    const back = () => {
+      if (document.visibilityState === "visible") void reconcileSecondRecord();
+    };
+    document.addEventListener("visibilitychange", back);
     const stored = loadLedger();
     seq.current = stored.maxKey;
     loaded.current = true;
-    if (!stored.items.length) return;
+    if (!stored.items.length) {
+      return () => document.removeEventListener("visibilitychange", back);
+    }
     // Deferred so hydration completes against the server's empty list first.
-    const t = setTimeout(() => setItems(stored.items), 0);
-    return () => clearTimeout(t);
+    const t = setTimeout(() => {
+      setItems(stored.items);
+      if (stored.items.some((x) => x.act)) void reconcileSecondRecord();
+    }, 0);
+    return () => {
+      clearTimeout(t);
+      document.removeEventListener("visibilitychange", back);
+    };
   }, []);
   useEffect(() => {
     if (loaded.current) saveLedger(items);
@@ -185,6 +231,7 @@ export function Chute({
   const swallowActivity = async (f: File, key: number) => {
     patch(key, {
       state: "activity",
+      act: true,
       reason: "The activity report. Reading it here — blasts tally in the browser.",
     });
     try {

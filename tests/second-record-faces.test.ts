@@ -6,6 +6,8 @@
 // is pure and tested here.
 
 import { strict as assert } from "node:assert";
+import { join } from "node:path";
+import { cwd } from "node:process";
 import { describe, test } from "node:test";
 import {
   caseNumberOf,
@@ -25,6 +27,8 @@ import {
   type SecondRecord,
 } from "../src/lib/activity/read";
 import { buildQueue } from "../src/lib/groundwork/day";
+
+const root = cwd();
 import { dropQueues } from "../src/lib/activity/harness";
 import { buildSendbook } from "../src/lib/sendbook/read";
 import { buildReadout } from "../src/lib/groundwork/readout";
@@ -885,4 +889,27 @@ describe("the cleaner cuts a message that quotes itself (2026-08-31)", () => {
     assert.match(out, /^Ok standing by for access/);
     assert.equal(/Javier Ramirez/.test(out), false);
   });
+});
+
+// ── the ledger reads the record, not its own memory ─────────────────────────
+// A 13:51 COVERAGE FAILED line sat red on the Chute for four hours after the
+// 17:37 run went green: the ledger persisted its receipt and never re-read
+// the live run state (2026-09-01). The record outranks every seed — receipts
+// included — so the Chute reconciles its second-record entries against the
+// live receipt on mount and when the tab returns to view.
+
+test("the chute reconciles stored second-record receipts against the live run", () => {
+  const chute = readFileSync(join(root, "src/app/room/chute.tsx"), "utf8");
+  // Structural marker — activity entries are found by flag, never by
+  // sniffing filenames or reason text.
+  assert.ok(chute.includes("act?: boolean"));
+  assert.ok(chute.includes("act: x.act"), "the flag must survive the ledger");
+  assert.ok(chute.includes("act: true"));
+  // The reconcile itself: live receipt in, stale entries updated, a running
+  // run left alone for the dock to narrate.
+  assert.ok(chute.includes("reconcileSecondRecord"));
+  assert.ok(chute.includes("activityReceipt"));
+  assert.ok(chute.includes('live.phase === "running"'));
+  // And it fires when the operator comes back to the desk.
+  assert.ok(chute.includes("visibilitychange"));
 });
