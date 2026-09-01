@@ -41,6 +41,11 @@ export function markClaudeUp(): void {
 
 const CREDIT_RE = /credit balance|billing|insufficient credit/i;
 
+/** A misconfigured identity-linked key fails every call the same way. It is a
+ *  400, not a 401, so without this it read as transient and the run retried a
+ *  doomed call for every account instead of saying the thing out loud. */
+const WORKSPACE_RE = /anthropic-workspace-id is required/i;
+
 /** Classify an error already thrown by a call: latch when it means the key
  *  is dead, leave transient trouble alone. Returns whether it latched. */
 export function noteClaudeFailure(e: unknown): boolean {
@@ -50,7 +55,8 @@ export function noteClaudeFailure(e: unknown): boolean {
     status === 401 ||
     status === 403 ||
     /invalid x-api-key|authentication_error/i.test(msg) ||
-    CREDIT_RE.test(msg);
+    CREDIT_RE.test(msg) ||
+    WORKSPACE_RE.test(msg);
   if (dead) markClaudeDown();
   return dead;
 }
@@ -64,7 +70,7 @@ const watchedFetch: typeof fetch = async (input, init) => {
   else if (res.status === 400) {
     try {
       const body = await res.clone().text();
-      if (CREDIT_RE.test(body)) markClaudeDown();
+      if (CREDIT_RE.test(body) || WORKSPACE_RE.test(body)) markClaudeDown();
     } catch {
       // an unreadable body stays unclassified
     }
@@ -72,9 +78,27 @@ const watchedFetch: typeof fetch = async (input, init) => {
   return res;
 };
 
+// An IDENTITY-LINKED key does not name its own workspace: the API refuses the
+// call with "anthropic-workspace-id is required when authenticating with an
+// identity-linked API key". Before that message existed to read, the same
+// condition surfaced as "your credit balance is too low" — which cost the
+// operator an evening chasing billing while his credits sat funded and
+// reachable (2026-09-01). Set ANTHROPIC_WORKSPACE_ID and every call carries
+// the header; leave it unset and a classic workspace key behaves exactly as
+// before, since the header is only added when the value exists.
+export function workspaceHeaders(): Record<string, string> {
+  const id = process.env.ANTHROPIC_WORKSPACE_ID?.trim();
+  return id ? { "anthropic-workspace-id": id } : {};
+}
+
 /** Drop-in for `new Anthropic(...)`: same options, health-instrumented. */
 export function claudeClient(
   opts?: ConstructorParameters<typeof Anthropic>[0],
 ): Anthropic {
-  return new Anthropic({ ...opts, fetch: watchedFetch });
+  return new Anthropic({
+    ...opts,
+    fetch: watchedFetch,
+    // A caller's own headers win — this fills the workspace in, never over.
+    defaultHeaders: { ...workspaceHeaders(), ...(opts?.defaultHeaders ?? {}) },
+  });
 }
