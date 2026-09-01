@@ -97,6 +97,17 @@ const say = (run: { receipt: string[] }, text: string): void => {
   run.receipt.push(stamped(text));
 };
 
+// What this build IS, printed beside the failure. Three times on 2026-09-01 a
+// deploy was reasoned about from the outside — promoted instead of rebuilt,
+// or built before a variable was saved — and each guess cost a drop. A build
+// that fails on configuration says which build it is and what configuration it
+// actually has; nobody has to infer it from a dashboard.
+function configLine(): string {
+  const sha = (process.env.VERCEL_GIT_COMMIT_SHA ?? "").slice(0, 7);
+  const ws = process.env.ANTHROPIC_WORKSPACE_ID?.trim();
+  return `This build is ${sha || "local"}; its workspace id is ${ws ? `set (${ws.slice(0, 12)}…)` : "NOT SET"}.`;
+}
+
 const CONCURRENT_DISTILLS = 4;
 const RETRY_SIGNAL_HUMAN_ROWS = 5;
 
@@ -867,7 +878,7 @@ export async function runActivityPass(opts?: {
           if (!run.receipt.some((r) => r.includes("completes arithmetically")))
             say(
               run,
-              `The key is dead — the API said: ${errText}. The rest of this drop completes arithmetically and gems hold from the last funded pass.`,
+              `The key is dead — the API said: ${errText}. ${configLine()} The rest of this drop completes arithmetically and gems hold from the last funded pass.`,
             );
           continue;
         }
