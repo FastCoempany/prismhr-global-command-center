@@ -75,6 +75,28 @@ const CHI = "America/Chicago";
 const chiDay = (d = new Date()): string =>
   d.toLocaleDateString("en-CA", { timeZone: CHI });
 
+// Every receipt line carries the Chicago clock it was written at. A run
+// rebuilds its closing lines each pass while earlier lines stay put, so a
+// re-drop's receipt showed last night's "58 gems, 43 verdicts" one line above
+// this morning's "0 candidates died" with nothing to tell them apart — the
+// operator could not say which line described which moment (2026-09-01).
+const chiClock = (d = new Date()): string =>
+  d.toLocaleTimeString("en-US", {
+    timeZone: CHI,
+    hour12: false,
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+/** One receipt line, stamped. Never stamps twice — a line rebuilt on a later
+ *  pass keeps the clock of the pass that wrote it. */
+export const STAMP = /^\d{2}:\d{2} · /;
+const stamped = (text: string): string =>
+  STAMP.test(text) ? text : `${chiClock()} · ${text}`;
+const say = (run: { receipt: string[] }, text: string): void => {
+  run.receipt.push(stamped(text));
+};
+
 const CONCURRENT_DISTILLS = 4;
 const RETRY_SIGNAL_HUMAN_ROWS = 5;
 
@@ -292,9 +314,11 @@ export async function stageActivityBatch(batch: StageBatch): Promise<StageReply>
       store.manifest = m;
       store.run.phase = "refused";
       store.run.receipt = [
-        missingBatches.length > 0
-          ? `Upload incomplete — ${missingBatches.length} of ${m.totalBatches} batches missing. Drop the file again.`
-          : `${badAccounts.length} account slice${badAccounts.length === 1 ? "" : "s"} failed verification. Drop the file again.`,
+        stamped(
+          missingBatches.length > 0
+            ? `Upload incomplete — ${missingBatches.length} of ${m.totalBatches} batches missing. Drop the file again.`
+            : `${badAccounts.length} account slice${badAccounts.length === 1 ? "" : "s"} failed verification. Drop the file again.`,
+        ),
       ];
       await writeManifestStore(store);
       return {
@@ -324,7 +348,9 @@ export async function stageActivityBatch(batch: StageBatch): Promise<StageReply>
     if (store.prior && store.prior.dropSha === m.dropSha && !rejudge) {
       store.manifest = m;
       store.run.phase = "done";
-      store.run.receipt = ["Nothing changed — the record already holds this drop."];
+      store.run.receipt = [
+        stamped("Nothing changed — the record already holds this drop."),
+      ];
       await writeManifestStore(store);
       return { ok: true, verified: true, unchanged: true };
     }
@@ -418,7 +444,7 @@ export async function stageActivityBatch(batch: StageBatch): Promise<StageReply>
       phase: "ready",
       distillQueue,
       intentQueue,
-      receipt,
+      receipt: receipt.map(stamped),
       // A same-sha re-drop keeps its coverage — the work already happened.
       covered: sameSha ? store.run.covered : {},
       batchesSeen: store.run.batchesSeen,
@@ -833,9 +859,15 @@ export async function runActivityPass(opts?: {
         // and the receipt says what held (founder-decreed 2026-08-22).
         noteClaudeFailure(s.reason);
         if (claudeDead()) {
+          // Say WHAT the API said. "The key is dead" names a symptom with
+          // three different causes — an invalid key, a key without permission,
+          // and a workspace with no credit read identically — and the operator
+          // burned an evening guessing between them while this text sat right
+          // here and was discarded (2026-09-01).
           if (!run.receipt.some((r) => r.includes("completes arithmetically")))
-            run.receipt.push(
-              "The key is dead — the rest of this drop completes arithmetically and gems hold from the last funded pass.",
+            say(
+              run,
+              `The key is dead — the API said: ${errText}. The rest of this drop completes arithmetically and gems hold from the last funded pass.`,
             );
           continue;
         }
@@ -846,9 +878,7 @@ export async function runActivityPass(opts?: {
           settled.every((x) => x.status === "rejected") &&
           Object.keys(run.covered).length === 0
         ) {
-          run.receipt.push(
-            `Every distillation failed — ${errText}. Fix it and run again.`,
-          );
+          say(run, `Every distillation failed — ${errText}. Fix it and run again.`);
           await writeManifestStore(store);
           await pulse(
             { active: false, now: `Distillation is paused — ${errText.slice(0, 120)}` },
@@ -911,22 +941,26 @@ export async function runActivityPass(opts?: {
   const held = Object.entries(run.covered).filter(([, v]) => v === "held");
   const heldN = held.length;
   const heldEmpty = held.filter(([id]) => !gemHolders.has(id)).length;
-  run.receipt.push(
+  say(
+    run,
     `${Object.keys(run.covered).length} accounts distilled — ${gemsN} hold confirmed gems, ${verdictsN} filed honest verdicts, ${run.died} candidates died in refutation.`,
   );
   if (heldN > 0)
-    run.receipt.push(
+    say(
+      run,
       heldEmpty === 0
         ? `The distiller was down for ${heldN} account${heldN === 1 ? "" : "s"} — their gems hold from the last funded pass. Re-drop the file once the key is back and they re-judge.`
         : `The distiller was down for ${heldN} account${heldN === 1 ? "" : "s"}, and ${heldEmpty} of them hold NO gem — there was no funded pass to fall back on. Fix the key and drop the file again; nothing was judged this run.`,
     );
   if (mortalityFlag(run.born, run.died))
-    run.receipt.push(
+    say(
+      run,
       `Distiller quality flag: ${run.died} of ${run.born} candidates died. Read the receipt before trusting this drop's gems.`,
     );
   if (uncovered.length > 0) {
     run.phase = "failed-coverage";
-    run.receipt.push(
+    say(
+      run,
       `COVERAGE FAILED — ${uncovered.length} active account${uncovered.length === 1 ? "" : "s"} hold neither a gem nor a verdict: ${uncovered.slice(0, 8).join(", ")}${uncovered.length > 8 ? ", …" : ""}.`,
     );
   } else {
@@ -934,7 +968,8 @@ export async function runActivityPass(opts?: {
     // The claim is arithmetic, never a slogan: it names what the store holds.
     // "Coverage: 100%" over an empty store is the exact line that told the
     // founder a dead-key run had succeeded (2026-08-31).
-    run.receipt.push(
+    say(
+      run,
       heldN > 0
         ? `Coverage: 100% — but ${heldN} account${heldN === 1 ? "" : "s"} held, so ${gemsN + verdictsN} of ${gemsN + verdictsN + heldN} were judged this run. The rest read their old gems.`
         : "Coverage: 100% — every active account holds a gem or an honest verdict.",

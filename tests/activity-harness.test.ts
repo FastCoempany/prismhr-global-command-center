@@ -6,6 +6,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { coverageGaps, mechanicalKill, mortalityFlag } from "../src/lib/activity/harness";
+import { STAMP } from "../src/lib/activity/run";
 import type { GemCandidate } from "../src/lib/activity/distill";
 
 const rows = new Map([
@@ -228,4 +229,17 @@ test("the mortality flag trips past half", () => {
   assert.equal(mortalityFlag(10, 6), true);
   assert.equal(mortalityFlag(10, 5), false);
   assert.equal(mortalityFlag(0, 0), false);
+});
+
+// ── the receipt says when, and says what the API said ───────────────────────
+
+test("a receipt line is stamped once and keeps the clock it was written at", () => {
+  // The stamper is idempotent: a closing line rebuilt on a later pass must not
+  // collect a second clock, or the receipt starts lying about its own age.
+  const once = "16:56 · The drop landed — 67872 rows across 124 accounts.";
+  assert.equal(STAMP.test(once), true);
+  assert.equal(once.replace(STAMP, ""), "The drop landed — 67872 rows across 124 accounts.");
+  assert.equal(STAMP.test("The drop landed — 67872 rows."), false);
+  // A stamp is a clock, never a date — the receipt is one drop's own story.
+  assert.equal(STAMP.test("2026-09-01 · The drop landed."), false);
 });
