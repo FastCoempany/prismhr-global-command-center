@@ -107,10 +107,15 @@ export async function archiveFileToGitHub(inp: {
     return { ok: false, reason: `${file.name} is over GitHub's 2GB asset cap.` };
   const account = sanitizeSegment(inp.accountName);
   const fname = sanitizeSegment(file.name);
+  // The catch below needs to know how far the run got: the wire can break
+  // AFTER GitHub commits, and a lost reply must never read as a lost file.
+  const base = `https://api.github.com/repos/${grant.repo}/contents/accounts`;
+  let contentsPath: string | null = null;
+  let releaseTag: string | null = null;
+  let draftUrl: string | null = null;
 
   try {
     if (lane === "file") {
-      const base = `https://api.github.com/repos/${grant.repo}/contents/accounts`;
       let path = `${encodeURIComponent(account)}/${encodeURIComponent(fname)}`;
       const probe = await fetch(`${base}/${path}`, { headers: gh(grant.token) });
       if (probe.status !== 404) {
@@ -122,6 +127,7 @@ export async function archiveFileToGitHub(inp: {
             : `${fname} ${stamp}`;
         path = `${encodeURIComponent(account)}/${encodeURIComponent(stamped)}`;
       }
+      contentsPath = path;
       const put = await fetch(`${base}/${path}`, {
         method: "PUT",
         headers: { ...gh(grant.token), "content-type": "application/json" },
@@ -150,6 +156,7 @@ export async function archiveFileToGitHub(inp: {
       bytes: file.size,
       when,
     });
+    releaseTag = meta.tag_name;
     // Draft first, publish last (founder-decreed 2026-09-02): the release is
     // created invisible, the binary uploads into it, and only a confirmed
     // upload flips it to a published pre-release. A failed upload deletes
@@ -166,6 +173,7 @@ export async function archiveFileToGitHub(inp: {
     };
     if (!rel.ok || !rj.upload_url || !rj.url)
       return { ok: false, reason: `GitHub said: ${rj.message ?? rel.status}` };
+    draftUrl = rj.url;
     const uploadUrl = `${rj.upload_url.split("{")[0]}?name=${encodeURIComponent(fname)}`;
     const up = await fetch(uploadUrl, {
       method: "POST",
@@ -205,7 +213,52 @@ export async function archiveFileToGitHub(inp: {
       url: pj.html_url ?? `https://github.com/${grant.repo}/releases`,
       detail: meta.tag_name,
     };
-  } catch {
-    return { ok: false, reason: "GitHub was unreachable. The file did not archive." };
+  } catch (e) {
+    // A thrown fetch is not proof of a lost file: GitHub can commit the
+    // write and the reply can die on the way back. On 2026-09-02 exactly
+    // that happened — a VTT landed in the vault while the row said
+    // "GitHub was unreachable. The file did not archive." So the catch
+    // asks the vault what actually landed before it says anything, and
+    // when it does report a failure it carries the real error, not a guess.
+    const said = e instanceof Error && e.message ? ` — ${e.message}` : "";
+    if (contentsPath) {
+      const check = await fetch(`${base}/${contentsPath}`, {
+        headers: gh(grant.token),
+      }).catch(() => null);
+      if (check?.ok) {
+        const cj = (await check.json().catch(() => ({}))) as { html_url?: string };
+        return {
+          ok: true,
+          kind: "file",
+          url: cj.html_url ?? `https://github.com/${grant.repo}`,
+          detail: `accounts/${decodeURIComponent(contentsPath)} · landed; the reply was lost on the way back`,
+        };
+      }
+    }
+    if (releaseTag) {
+      const check = await fetch(
+        `https://api.github.com/repos/${grant.repo}/releases/tags/${releaseTag}`,
+        { headers: gh(grant.token) },
+      ).catch(() => null);
+      if (check?.ok) {
+        const cj = (await check.json().catch(() => ({}))) as { html_url?: string };
+        return {
+          ok: true,
+          kind: "release",
+          url: cj.html_url ?? `https://github.com/${grant.repo}/releases`,
+          detail: `${releaseTag} · landed; the reply was lost on the way back`,
+        };
+      }
+      // The tag route only shows published releases; a draft left behind by
+      // a mid-upload break would sit hollow forever. Clear it.
+      if (draftUrl)
+        await fetch(draftUrl, { method: "DELETE", headers: gh(grant.token) }).catch(
+          () => undefined,
+        );
+    }
+    return {
+      ok: false,
+      reason: `The GitHub call broke off${said}. The vault shows no copy. Drop it again.`,
+    };
   }
 }

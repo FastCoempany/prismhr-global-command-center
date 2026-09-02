@@ -9,6 +9,7 @@ import { join } from "node:path";
 import { cwd } from "node:process";
 import {
   ARCHIVE_LIMIT_BYTES,
+  archiveFileToGitHub,
   laneFor,
   releaseMetaFor,
   sanitizeSegment,
@@ -117,6 +118,118 @@ test("the chute vaults every drop and routes binaries by filename or pick", () =
   assert.ok(!chute.includes("accept={DROP_ACCEPT}"));
   // The dropped File never persists to the ledger.
   assert.ok(chute.includes('Omit<ChuteItem, "text" | "candidates" | "file">'));
+});
+
+// ── the lost reply is not a lost file (2026-09-02) ──────────────────────────
+// A Simploy VTT landed in the vault while the row said "GitHub was
+// unreachable. The file did not archive." — the PUT committed and the reply
+// died on the way back, and the old blanket catch guessed a failure it could
+// not know. These runs script the wire and pin the honest behavior: verify
+// with the vault before claiming anything, and when it IS a failure, say the
+// real error.
+
+type FakeStep = { status?: number; body?: unknown } | { throws: string };
+const scriptFetch = (steps: FakeStep[], log: string[]) =>
+  (async (url: unknown, init?: { method?: string }) => {
+    log.push(`${init?.method ?? "GET"} ${String(url)}`);
+    const s = steps.shift();
+    if (!s) throw new Error("unscripted call: " + String(url));
+    if ("throws" in s) throw new TypeError(s.throws);
+    const status = s.status ?? 200;
+    return {
+      ok: status >= 200 && status < 300,
+      status,
+      json: async () => s.body ?? {},
+    };
+  }) as unknown as typeof fetch;
+
+const grant = { repo: "o/vault", token: "t" };
+
+test("a thrown PUT whose file actually landed reports the landing", async () => {
+  const real = globalThis.fetch;
+  const log: string[] = [];
+  globalThis.fetch = scriptFetch(
+    [
+      { status: 404 }, // name probe: free
+      { throws: "fetch failed" }, // PUT: reply lost AFTER the commit
+      { status: 200, body: { html_url: "https://github.com/o/vault/blob/x" } },
+    ],
+    log,
+  );
+  try {
+    const r = await archiveFileToGitHub({
+      file: new File(["WEBVTT"], "call.vtt"),
+      accountName: "Simploy",
+      grant,
+    });
+    assert.ok(r.ok, JSON.stringify(r));
+    if (r.ok) {
+      assert.equal(r.kind, "file");
+      assert.equal(r.url, "https://github.com/o/vault/blob/x");
+      assert.ok(r.detail.includes("accounts/Simploy/call.vtt"));
+      assert.ok(r.detail.includes("landed"));
+    }
+  } finally {
+    globalThis.fetch = real;
+  }
+});
+
+test("a thrown PUT with nothing in the vault reports the real error", async () => {
+  const real = globalThis.fetch;
+  globalThis.fetch = scriptFetch(
+    [{ status: 404 }, { throws: "fetch failed" }, { status: 404 }],
+    [],
+  );
+  try {
+    const r = await archiveFileToGitHub({
+      file: new File(["WEBVTT"], "call.vtt"),
+      accountName: "Simploy",
+      grant,
+    });
+    assert.ok(!r.ok);
+    if (!r.ok) {
+      assert.ok(r.reason.includes("fetch failed"), r.reason);
+      assert.ok(r.reason.includes("Drop it again"));
+      assert.ok(!r.reason.includes("unreachable"));
+    }
+  } finally {
+    globalThis.fetch = real;
+  }
+});
+
+test("a mid-upload break with no published release clears the draft", async () => {
+  const real = globalThis.fetch;
+  const log: string[] = [];
+  globalThis.fetch = scriptFetch(
+    [
+      {
+        status: 201,
+        body: {
+          upload_url: "https://uploads.github.com/repos/o/vault/releases/9/assets{?name}",
+          url: "https://api.github.com/repos/o/vault/releases/9",
+        },
+      },
+      { throws: "network reset" }, // the asset upload dies
+      { status: 404 }, // tag probe: nothing published
+      { status: 204 }, // the hollow draft is deleted
+    ],
+    log,
+  );
+  try {
+    const r = await archiveFileToGitHub({
+      file: new File([new Uint8Array(ARCHIVE_LIMIT_BYTES + 1)], "big.mp4"),
+      accountName: "Simploy",
+      grant,
+    });
+    assert.ok(!r.ok);
+    if (!r.ok) assert.ok(r.reason.includes("network reset"), r.reason);
+    assert.ok(
+      log.some((l) => l === "DELETE https://api.github.com/repos/o/vault/releases/9"),
+      log.join("\n"),
+    );
+  } finally {
+    globalThis.fetch = real;
+  }
 });
 
 test("the intranet carries the same chute", () => {
