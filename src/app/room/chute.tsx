@@ -16,8 +16,9 @@ import {
   activityStage,
   activityTakeBack,
 } from "../activity/actions";
+import { githubArchiveGrant } from "./archive-actions";
+import { archiveFileToGitHub, type ArchiveGrant } from "@/lib/github/archive";
 import { probeActivityReport, uploadActivityReport } from "@/lib/activity/upload";
-import { DROP_ACCEPT } from "@/lib/paste-files";
 import { readFileToText } from "./read-file";
 import { routeCapture, type RouteAccount, type RouteHit } from "@/lib/route-capture";
 import styles from "./room.module.css";
@@ -36,7 +37,8 @@ type ChuteItem = {
     | "interrupted"
     | "undone"
     | "activity"
-    | "activityDone";
+    | "activityDone"
+    | "vaulted";
   text?: string;
   account?: { id: string; name: string };
   why?: string;
@@ -58,6 +60,12 @@ type ChuteItem = {
   /** A second-record drop. Marked structurally so the ledger's reconcile can
    *  find its receipts without sniffing filenames or reason text. */
   act?: boolean;
+  /** The dropped File itself — volatile, never persisted; a reload loses it
+   *  and the pick line says so honestly. Carried so a recording can vault
+   *  after the operator picks its account. */
+  file?: File;
+  /** The vault receipt for this drop — where the file landed on GitHub. */
+  vault?: { text: string; url?: string; bad?: boolean };
 };
 
 // The ledger survives a reload: receipts persist per Chicago day, minus the
@@ -71,7 +79,7 @@ const LEDGER_CAP = 40;
 const chicagoDay = (): string =>
   new Date().toLocaleDateString("en-CA", { timeZone: "America/Chicago" });
 
-type StoredItem = Omit<ChuteItem, "text" | "candidates">;
+type StoredItem = Omit<ChuteItem, "text" | "candidates" | "file">;
 
 function loadLedger(): { items: StoredItem[]; maxKey: number } {
   try {
@@ -118,6 +126,7 @@ function saveLedger(items: ChuteItem[]) {
       degraded: x.degraded,
       noteIds: x.noteIds,
       act: x.act,
+      vault: x.vault,
     }));
     localStorage.setItem(LEDGER_KEY, JSON.stringify({ day: chicagoDay(), items: slim }));
   } catch {
@@ -203,9 +212,11 @@ export function Chute({
     account: { id: string; name: string },
     why: string,
     force: boolean,
+    srcFile?: File,
   ) => {
     patch(key, { state: "filing", account, why });
     const r = await roomPaste(account.id, text, { force });
+    if (r.ok && srcFile) void vaultTo(key, account, srcFile, false);
     if (r.ok)
       patch(key, {
         state: "filed",
@@ -222,6 +233,50 @@ export function Chute({
     else if (r.mismatch)
       patch(key, { state: "mismatch", claim: r.mismatch.claim, reason: r.reason });
     else patch(key, { state: "error", reason: r.reason ?? "The file didn't take." });
+  };
+
+  // The vault ride (founder-decreed 2026-09-02): every dropped file also
+  // archives to the GitHub vault under the account it routed to — readable
+  // files after they file, recordings and other binaries as their whole
+  // filing. One grant per session; the browser carries the bytes itself.
+  const grantRef = useRef<ArchiveGrant | null>(null);
+  const vaultTo = async (
+    key: number,
+    account: { id: string; name: string },
+    f: File,
+    alone: boolean,
+  ) => {
+    if (alone) patch(key, { state: "filing", account });
+    patch(key, { vault: { text: `vaulting ${f.name}…` } });
+    if (!grantRef.current) {
+      const g = await githubArchiveGrant();
+      if (!g.ok) {
+        patch(key, {
+          vault: { text: g.reason, bad: true },
+          ...(alone ? { state: "error", reason: g.reason } : {}),
+        });
+        return;
+      }
+      grantRef.current = g.grant;
+    }
+    const r = await archiveFileToGitHub({
+      file: f,
+      accountName: account.name,
+      grant: grantRef.current,
+    });
+    patch(key, {
+      vault: r.ok
+        ? {
+            text: `${r.kind === "release" ? "pre-release" : "vaulted"} · ${r.detail}`,
+            url: r.url,
+          }
+        : { text: r.reason, bad: true },
+      ...(alone
+        ? r.ok
+          ? { state: "vaulted", account }
+          : { state: "error", reason: r.reason }
+        : {}),
+    });
   };
 
   // The activity report is the one file the Chute reads for the BOOK, not an
@@ -289,7 +344,10 @@ export function Chute({
 
   const swallow = async (f: File, batch: number) => {
     const key = ++seq.current;
-    setItems((xs) => [{ key, filename: f.name, state: "reading", batch }, ...xs]);
+    setItems((xs) => [
+      { key, filename: f.name, state: "reading", batch, file: f },
+      ...xs,
+    ]);
     try {
       if (/\.csv$/i.test(f.name) && (await probeActivityReport(f))) {
         await swallowActivity(f, key);
@@ -297,12 +355,24 @@ export function Chute({
       }
       const read = await readFileToText(f, chuteReadPdf);
       if (!read.ok) {
-        patch(key, { state: "error", reason: read.reason });
+        // Not readable — a recording, an archive, a binary. It still belongs
+        // in the vault: route by the filename (a Teams recording usually
+        // carries the meeting's name) and otherwise wait for the pick.
+        const { best, candidates } = routeCapture(f.name, roster);
+        if (best) await vaultTo(key, { id: best.id, name: best.name }, f, true);
+        else patch(key, { state: "pick", candidates });
         return;
       }
       const { best, candidates } = routeCapture(read.text, roster);
       if (best)
-        await fileTo(key, read.text, { id: best.id, name: best.name }, best.why, false);
+        await fileTo(
+          key,
+          read.text,
+          { id: best.id, name: best.name },
+          best.why,
+          false,
+          f,
+        );
       else patch(key, { state: "pick", text: read.text, candidates });
     } catch {
       // Nothing dies silently — a broken filing says so.
@@ -338,6 +408,7 @@ export function Chute({
   // would be the ledger quietly forgetting what was thrown at it.
   const settled = (s: ChuteItem["state"]): boolean =>
     s === "filed" ||
+    s === "vaulted" ||
     s === "activityDone" ||
     s === "error" ||
     s === "dupe" ||
@@ -404,6 +475,11 @@ export function Chute({
         </span>
       )}
       {it.state === "undone" && <span className={styles.chuteDupe}>{it.reason}</span>}
+      {it.state === "vaulted" && (
+        <span className={styles.chuteDone}>
+          Vaulted to {it.account?.name ?? "its account"}.
+        </span>
+      )}
       {it.state === "activity" && <span>{it.reason}</span>}
       {it.state === "activityDone" && (
         <span className={it.came?.textRows === 0 ? styles.chuteWarn : styles.chuteDone}>
@@ -441,23 +517,40 @@ export function Chute({
         </span>
       )}
       {it.state === "error" && <span className={styles.chuteErr}>{it.reason}</span>}
+      {it.vault && (
+        <span className={it.vault.bad ? styles.chuteErr : styles.chuteDupe}>
+          ⇪ {it.vault.text}
+          {it.vault.url && (
+            <>
+              {" "}
+              <a href={it.vault.url} target="_blank" rel="noreferrer">
+                open
+              </a>
+            </>
+          )}
+        </span>
+      )}
       {it.state === "dupe" && <span className={styles.chuteDupe}>{it.reason}</span>}
       {it.state === "interrupted" && (
         <span className={styles.chuteWarn}>{it.reason}</span>
       )}
-      {(it.state === "pick" || it.state === "mismatch") && !it.text && (
+      {(it.state === "pick" || it.state === "mismatch") && !it.text && !it.file && (
         <span className={styles.chuteWarn}>
           The pick did not survive. Drop the file again.
         </span>
       )}
-      {(it.state === "pick" || it.state === "mismatch") && it.text && (
+      {(it.state === "pick" || it.state === "mismatch") && (it.text || it.file) && (
         <span className={styles.chutePick}>
           {it.state === "mismatch" ? (
             <span className={styles.chuteErr}>
               Reads like {it.claim || "another account"}. Pick the account.
             </span>
-          ) : (
+          ) : it.text ? (
             <span>No sure match. Pick the account.</span>
+          ) : (
+            <span>
+              A file the reader can&apos;t open. Pick its account for the vault.
+            </span>
           )}
           {(() => {
             const mate = it.state === "pick" ? batchMate(it) : null;
@@ -475,7 +568,9 @@ export function Chute({
                         mate,
                         "the rest of this drop went there",
                         true,
+                        it.file,
                       );
+                    else if (it.file) void vaultTo(it.key, mate, it.file, true);
                   }}
                 >
                   File to {mate.name}
@@ -496,7 +591,10 @@ export function Chute({
                   { id: a.id, name: a.name },
                   "your call",
                   true,
+                  it.file,
                 );
+              else if (a && it.file)
+                void vaultTo(it.key, { id: a.id, name: a.name }, it.file, true);
             }}
           >
             <option value="" disabled>
@@ -550,7 +648,6 @@ export function Chute({
           ref={inputRef}
           type="file"
           multiple
-          accept={DROP_ACCEPT}
           style={{ display: "none" }}
           onChange={(e) => {
             handleFiles(e.target.files);
@@ -571,7 +668,10 @@ export function Chute({
         files blind — no sure match waits for your pick — nothing files twice — a re-drop
         of something already on file is refused — receipts survive a reload, and HomeRoom,
         Groundwork, Accounts, and Today re-read the record at once, the Intranet mirroring
-        it on its next sync.
+        it on its next sync. Every file also lands in the GitHub vault under its account —
+        recordings and other files the reader can&apos;t open route by their filename or
+        wait for your pick, and anything past 25MB rides as a pre-release (2GB is the
+        ceiling per file).
       </p>
 
       {items.length > 0 &&

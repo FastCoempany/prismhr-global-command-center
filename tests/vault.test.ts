@@ -93,3 +93,35 @@ test("the token stays out of the bundle and behind the auth gate", () => {
   assert.ok(client.includes("archiveFiles(files)"));
   assert.ok(client.includes("archiveFileToGitHub"));
 });
+
+// ── every chute vaults (founder-decreed 2026-09-02) ─────────────────────────
+// Recordings and VTTs drop at ANY door — the row, the HomeRoom Chute, the
+// Intranet — and land in the vault under their account. A binary the reader
+// can't open routes by its filename or waits for the operator's pick; it is
+// never bounced with a can't-read error.
+
+test("the chute vaults every drop and routes binaries by filename or pick", () => {
+  const root = cwd();
+  const chute = readFileSync(join(root, "src/app/room/chute.tsx"), "utf8");
+  // The vault ride exists and uses the same grant + carrier as the row.
+  assert.ok(chute.includes("vaultTo"));
+  assert.ok(chute.includes("archiveFileToGitHub"));
+  assert.ok(chute.includes("githubArchiveGrant"));
+  // An unreadable file routes by filename, then falls to the pick — the
+  // error bounce is gone from that path.
+  assert.ok(chute.includes("routeCapture(f.name, roster)"));
+  assert.ok(chute.includes("Pick its account for the vault"));
+  // A readable file vaults AFTER it files, to the same account.
+  assert.ok(/r\.ok && srcFile.*vaultTo\(key, account, srcFile, false\)/.test(chute));
+  // The picker takes every type — no accept filter on the chute's input.
+  assert.ok(!chute.includes("accept={DROP_ACCEPT}"));
+  // The dropped File never persists to the ledger.
+  assert.ok(chute.includes('Omit<ChuteItem, "text" | "candidates" | "file">'));
+});
+
+test("the intranet carries the same chute", () => {
+  const root = cwd();
+  const page = readFileSync(join(root, "src/app/intranet/page.tsx"), "utf8");
+  assert.ok(page.includes('import { Chute } from "../room/chute"'));
+  assert.ok(page.includes("<Chute"));
+});
