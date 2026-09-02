@@ -550,7 +550,14 @@ function Row({
   const handleFiles = (list: FileList | null) => {
     const files = Array.from(list ?? []);
     void archiveFiles(files);
-    const f = files[0];
+    // The record's reader takes only the types it can read; everything else
+    // is vault-only and never earns a can't-read complaint for being a video.
+    const readableExts = new Set(
+      DROP_ACCEPT.split(",").map((e) => e.trim().replace(".", "").toLowerCase()),
+    );
+    const f = files.find((x) =>
+      readableExts.has(x.name.split(".").pop()?.toLowerCase() ?? ""),
+    );
     if (f && !pending && !reading) void readDroppedFile(f);
   };
 
@@ -1781,10 +1788,12 @@ function Row({
               >
                 ⇪
               </button>
+              {/* No accept filter: the vault takes every file type; the
+                  reader picks out the ones it can file to the record. */}
               <input
                 ref={fileInputRef}
                 type="file"
-                accept={DROP_ACCEPT}
+                multiple
                 style={{ display: "none" }}
                 onChange={(e) => {
                   handleFiles(e.target.files);
