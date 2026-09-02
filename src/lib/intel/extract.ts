@@ -13,6 +13,7 @@ import {
 } from "./lexicon";
 import { digestFor, digestForCardName, type DigestEntry } from "./digest";
 import { isCloser } from "./closer";
+import { effectiveAt } from "./clock";
 import { MINE_RE, inferActors } from "./provenance";
 import { EMPTY_INTEL, type DealIntel, type ProductKey, type SourcedFact } from "./types";
 
@@ -106,7 +107,10 @@ export function corpusFor(
     const closer = isSf && isCloser(n.body.split("\n").slice(1).join("\n"));
     docs.push({
       text: n.body,
-      at: n.createdAt,
+      // The stored stamp, refined by the OL head's own clock — same-day
+      // entries order by when they actually happened, not by a noon tie
+      // the outbound always won (the Trend 10:39 read, 2026-09-02).
+      at: effectiveAt(n.createdAt, n.body),
       src: `${isSf ? "sf-activity" : "note"} ${short(n.createdAt)}`,
       direction: !isSf
         ? undefined

@@ -6,6 +6,7 @@
 
 import { MINE_RE } from "@/lib/intel/provenance";
 import { isMeetingNote } from "@/lib/intel/meeting";
+import { effectiveAt } from "@/lib/intel/clock";
 
 export type TouchSource = {
   contactedAt: string; // ISO
@@ -45,9 +46,12 @@ export function newestOutbound(notes: NoteForTouch[]): NoteForTouch | null {
     // A meeting record is not correspondence — nobody awaits a reply to a
     // meeting that already happened (the Staff Leasing 1:00 PM, 2026-08-18).
     if (isMeetingNote(n)) continue;
-    const t = Date.parse(n.createdAt);
+    // The OL head's clock refines the noon day-anchor — an outbound is
+    // compared (and returned) at the moment it actually went, or the same-day
+    // inbound after it can never win the court (2026-09-02).
+    const t = Date.parse(effectiveAt(n.createdAt, n.body));
     if (Number.isNaN(t)) continue;
-    if (!best || t > Date.parse(best.createdAt)) best = n;
+    if (!best || t > Date.parse(effectiveAt(best.createdAt, best.body))) best = n;
   }
   return best;
 }
@@ -76,7 +80,7 @@ export function lastTouchRead(
   isHomeSide?: (name: string) => boolean,
 ): TouchRead | null {
   const out = newestOutbound(notes);
-  const outAt = out ? Date.parse(out.createdAt) : NaN;
+  const outAt = out ? Date.parse(effectiveAt(out.createdAt, out.body)) : NaN;
   const logAt = touch ? Date.parse(touch.contactedAt) : NaN;
   const hasOut = !Number.isNaN(outAt);
   const hasLog = !Number.isNaN(logAt);
@@ -84,7 +88,7 @@ export function lastTouchRead(
   if (hasOut && (!hasLog || outAt > logAt)) {
     // A filed outbound puts the ball with them until they write back.
     return {
-      at: out!.createdAt,
+      at: effectiveAt(out!.createdAt, out!.body),
       who: targetOf(out!.actors, isHomeSide),
       awaitingReply: true,
       source: "record",
