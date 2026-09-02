@@ -7,6 +7,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { headClockMinutes, effectiveAt } from "../src/lib/intel/clock";
+import { parseEmailPaste, sentClockLabel } from "../src/lib/intel/rules-read";
 import { extractDealIntel, type CorpusDoc } from "../src/lib/intel/extract";
 import { lastTouchRead } from "../src/lib/room/touch";
 import { readDeal } from "../src/lib/room/engine";
@@ -162,4 +163,55 @@ test("adversarial: the subject's own time cannot forge a clock", () => {
   // noon, so the strict compare still reads the outbound as last — the honest
   // read for entries whose order the record genuinely does not state.
   assert.ok(read.move.startsWith("Wait on"), `got: ${read.move}`);
+});
+
+// ── the raw .eml door writes its clock too (2026-09-02, the Melanie/Adam
+// name) ── the rules parser read the Sent header for the day and threw the
+// clock away, so two same-day sends tied at the anchor and the court named
+// the wrong recipient to wait on.
+
+test("the Sent header's clock survives into the head label", () => {
+  assert.equal(sentClockLabel("Wednesday, September 2, 2026 2:10 PM"), "2:10 PM");
+  assert.equal(sentClockLabel("Wed, 2 Sep 2026 10:39:17 -0500"), "10:39 AM");
+  assert.equal(sentClockLabel("Thursday, 27 August 2026 22:07:01"), "10:07 PM");
+  assert.equal(sentClockLabel("Tuesday, August 11, 2026 12:05 AM"), "12:05 AM");
+  assert.equal(sentClockLabel("September 2, 2026"), "");
+  assert.equal(sentClockLabel(""), "");
+});
+
+test("an .eml paste carries its clocks and the court names the right person", () => {
+  const paste = [
+    "From: Antaeus Coe",
+    "Sent: Wednesday, September 2, 2026 9:44 AM",
+    "To: Melanie Dreyer",
+    "Subject: Re: Philippines Pricing",
+    "Looking forward to Adam's thoughts on this.",
+    "From: Adam Dingwell",
+    "Sent: Wednesday, September 2, 2026 10:39 AM",
+    "To: Antaeus Coe",
+    "Subject: Re: Philippines Pricing",
+    "Still working through the proposal process.",
+    "From: Antaeus Coe",
+    "Sent: Wednesday, September 2, 2026 2:10 PM",
+    "To: Adam Dingwell",
+    "Subject: Re: Philippines Pricing",
+    "Mind if I toss tentative time on the calendar about a month out?",
+  ].join("\n");
+  const entries = parseEmailPaste(paste);
+  assert.equal(entries.length, 3);
+  assert.deepEqual(
+    entries.map((e) => e.timeLabel),
+    ["9:44 AM", "10:39 AM", "2:10 PM"],
+  );
+  // As filed: the head the room actions build from these entries.
+  const filed = entries.map((e) => ({
+    body: `✉ OL ${e.dayLabel} ${e.timeLabel} — ${e.subject} · ${e.from} → ${e.to}`,
+    actors: `${e.from} → ${e.to}`,
+    createdAt: `${e.dayIso}T12:00:00.000Z`,
+  }));
+  const touch = lastTouchRead(filed, null);
+  // The 2:10 PM send to Adam is the newest outbound — the person to wait on
+  // is Adam, never the morning send's recipient.
+  assert.equal(touch?.who, "Adam Dingwell");
+  assert.ok(touch && Date.parse(touch.at) > Date.parse("2026-09-02T12:00:00Z"));
 });

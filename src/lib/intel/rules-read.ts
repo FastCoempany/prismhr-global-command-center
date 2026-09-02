@@ -203,6 +203,24 @@ function sentDayIso(sent: string): string {
   return Number.isNaN(at) ? "" : chiDayIso(new Date(at));
 }
 
+// The CLOCK the same header names — kept as the head's own label so same-day
+// entries order by when they happened. Dropping it cost the court a name:
+// two same-day sends tied at the day anchor and "Wait on Melanie" printed
+// where "Wait on Adam" belonged (2026-09-02). Emitted in the 12-hour idiom
+// the OL head grammar already speaks ("2:10 PM"), 24-hour headers converted.
+export function sentClockLabel(sent: string): string {
+  const m = /(\d{1,2}):(\d{2})(?::\d{2})?\s*(AM|PM)?/i.exec(sent ?? "");
+  if (!m) return "";
+  let h = Number(m[1]);
+  const min = m[2];
+  const mer = m[3]?.toUpperCase();
+  if (mer) return h >= 1 && h <= 12 ? `${h}:${min} ${mer}` : "";
+  if (h > 23) return "";
+  const pm = h >= 12;
+  h = h % 12 || 12;
+  return `${h}:${min} ${pm ? "PM" : "AM"}`;
+}
+
 export function parseEmailPaste(raw: string): TimelineEntry[] {
   const text = (raw ?? "").replace(/\r/g, "");
   const blocks = text.split(/^(?=From:[ \t])/m).filter((b) => /^From:/.test(b));
@@ -228,7 +246,7 @@ export function parseEmailPaste(raw: string): TimelineEntry[] {
       from,
       to,
       others: 0,
-      timeLabel: "",
+      timeLabel: sentClockLabel(sent),
       dayLabel: dayIso ? dayIso.slice(5).replace("-", "/") : "",
       dayIso,
       body: body.slice(0, 6000),
