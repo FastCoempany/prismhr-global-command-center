@@ -2020,6 +2020,13 @@ button.sdRadio:hover {
   color: var(--ink);
 }
 
+.dropErr {
+  display: block;
+  font: 600 10.5px/1.5 var(--font-mono);
+  letter-spacing: 0.08em;
+  margin-top: 4px;
+  color: var(--red, #ef4444);
+}
 .dropHot {
   outline: 2px dashed var(--ds-orange);
   outline-offset: 2px;
