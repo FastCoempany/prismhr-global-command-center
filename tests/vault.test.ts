@@ -55,6 +55,31 @@ test("the release face carries tag, title, description, and pre-release", () => 
   assert.ok(meta.body.includes("Dropped: 2026-09-02"));
 });
 
+test("a release drafts first and publishes only after the asset lands", () => {
+  const root = cwd();
+  const lib = readFileSync(join(root, "src/lib/github/archive.ts"), "utf8");
+  // Created invisible…
+  assert.ok(lib.includes("draft: true"));
+  // …published only on a confirmed upload…
+  assert.ok(lib.includes("draft: false"));
+  const publishAt = lib.indexOf("draft: false");
+  const uploadAt = lib.indexOf("upload_url.split");
+  assert.ok(uploadAt > 0 && publishAt > uploadAt, "publish must follow the upload");
+  // …and a failed upload clears the empty draft rather than leaving a
+  // hollow release behind.
+  assert.ok(lib.includes('method: "DELETE"'));
+});
+
+test("the row picker takes every file type; the reader keeps its own gate", () => {
+  const root = cwd();
+  const client = readFileSync(join(root, "src/app/room/room-client.tsx"), "utf8");
+  // The vault input carries no accept filter and takes several at once.
+  assert.ok(!/ref=\{fileInputRef\}[\s\S]{0,120}accept=/.test(client));
+  assert.ok(/ref=\{fileInputRef\}[\s\S]{0,120}multiple/.test(client));
+  // Readable types still route to the record's reader.
+  assert.ok(client.includes("readableExts"));
+});
+
 test("the token stays out of the bundle and behind the auth gate", () => {
   const root = cwd();
   const lib = readFileSync(join(root, "src/lib/github/archive.ts"), "utf8");

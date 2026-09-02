@@ -150,17 +150,21 @@ export async function archiveFileToGitHub(inp: {
       bytes: file.size,
       when,
     });
+    // Draft first, publish last (founder-decreed 2026-09-02): the release is
+    // created invisible, the binary uploads into it, and only a confirmed
+    // upload flips it to a published pre-release. A failed upload deletes
+    // the empty draft — nothing hollow ever shows in the Releases tab.
     const rel = await fetch(`https://api.github.com/repos/${grant.repo}/releases`, {
       method: "POST",
       headers: { ...gh(grant.token), "content-type": "application/json" },
-      body: JSON.stringify(meta),
+      body: JSON.stringify({ ...meta, draft: true }),
     });
     const rj = (await rel.json().catch(() => ({}))) as {
       upload_url?: string;
-      html_url?: string;
+      url?: string;
       message?: string;
     };
-    if (!rel.ok || !rj.upload_url)
+    if (!rel.ok || !rj.upload_url || !rj.url)
       return { ok: false, reason: `GitHub said: ${rj.message ?? rel.status}` };
     const uploadUrl = `${rj.upload_url.split("{")[0]}?name=${encodeURIComponent(fname)}`;
     const up = await fetch(uploadUrl, {
@@ -173,15 +177,32 @@ export async function archiveFileToGitHub(inp: {
     });
     if (!up.ok) {
       const uj = (await up.json().catch(() => ({}))) as { message?: string };
+      await fetch(rj.url, { method: "DELETE", headers: gh(grant.token) }).catch(
+        () => undefined,
+      );
       return {
         ok: false,
-        reason: `The asset upload failed — ${uj.message ?? up.status}`,
+        reason: `The asset upload failed — ${uj.message ?? up.status}. The draft was cleared; drop it again.`,
       };
     }
+    const pub = await fetch(rj.url, {
+      method: "PATCH",
+      headers: { ...gh(grant.token), "content-type": "application/json" },
+      body: JSON.stringify({ draft: false }),
+    });
+    const pj = (await pub.json().catch(() => ({}))) as {
+      html_url?: string;
+      message?: string;
+    };
+    if (!pub.ok)
+      return {
+        ok: false,
+        reason: `The upload landed but publishing failed — ${pj.message ?? pub.status}. The release sits in drafts on GitHub.`,
+      };
     return {
       ok: true,
       kind: "release",
-      url: rj.html_url ?? `https://github.com/${grant.repo}/releases`,
+      url: pj.html_url ?? `https://github.com/${grant.repo}/releases`,
       detail: meta.tag_name,
     };
   } catch {
