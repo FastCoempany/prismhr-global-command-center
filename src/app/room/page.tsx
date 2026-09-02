@@ -56,7 +56,7 @@ import { researchNs } from "@/lib/intel/deep-research";
 import { getDemand, researchGeneratedAt } from "@/lib/book/research";
 import { readOutcome } from "@/lib/dashboard/outcome";
 import { owedToMe } from "@/lib/room/owed";
-import { GLOBAL_SCENT_RE, isHomeSideName } from "@/lib/intel/provenance";
+import { GLOBAL_SCENT_RE, MINE_RE, isHomeSideName } from "@/lib/intel/provenance";
 import { askHref, peerQuestions, scopedAsk } from "@/lib/intranet/bridges";
 import { sfAccountUrl } from "@/lib/salesforce";
 import { prospectAsks } from "@/lib/intranet/store";
@@ -301,7 +301,22 @@ export default async function RoomPage() {
       // the recap the move, never a "wait" (Staff Leasing 1:00 PM, 8/18).
       lastMeeting: (() => {
         const m = allNotes.find((n) => isMeetingNote(n));
-        return m ? { at: m.createdAt, who: firstName(rel.name) || "them" } : null;
+        if (!m) return null;
+        // The recap goes to whoever was IN the meeting — the note's own
+        // actors, whichever side is not the operator — and only when the
+        // note names nobody does the relationship contact stand in
+        // (2026-09-02: a meeting's recap was addressed to the relationship
+        // read while the record named the actual person in the room).
+        const actors = m.actors ?? "";
+        const arrow = actors.indexOf("→");
+        const sides = arrow >= 0 ? [actors.slice(0, arrow), actors.slice(arrow + 1)] : [];
+        const other = sides
+          .map((x) => x.replace(/\+\d+\s*$/, "").trim())
+          .find((x) => x && !MINE_RE.test(x));
+        return {
+          at: m.createdAt,
+          who: firstName(other ?? "") || firstName(rel.name) || "them",
+        };
       })(),
       lastRecordAt: allNotes[0]?.createdAt ?? "",
       allGatesDone,

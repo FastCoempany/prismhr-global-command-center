@@ -13,6 +13,16 @@ export const MEETING_RE =
 
 const LOGGED_ACTIVITY_RE = /^\s*✔[^\n]*\b(meeting|call|demo|visit)\b/i;
 
+// A note ABOUT a meeting is not a meeting. "✔ Follow-up with Anika — week of
+// Aug 31 meeting" whose body says "awaiting word on whether the meeting
+// actually took place" read as "You met today" and the row demanded a recap
+// of a meeting nobody can confirm happened (the Axcet read, 2026-09-02). The
+// head-word branches only count when nothing in the same window says the
+// meeting is chased, scheduled, or in doubt; the transcript/call sources
+// skip this veto — an archived call is a thing that happened by definition.
+const NOT_HELD_RE =
+  /\b(follow[- ]?up|awaiting|whether|no confirmation|not confirmed|did not (?:take place|happen|meet)|didn't (?:take place|happen|meet)|(?:re)?schedul\w*|upcoming|prep(?:are|ping)? for)\b/i;
+
 // A real call archive announces itself — the VTT pipeline heads its bodies
 // CALL TRANSCRIPT and the room's archive writes "☰ Call transcript — …".
 const TRANSCRIPT_HEAD_RE = /^\s*(?:☰\s*)?call transcript\b/i;
@@ -36,5 +46,6 @@ export function isMeetingNote(n: { body?: string; source?: string }): boolean {
     if (speakers.size >= 2) return true;
   }
   const head = body.slice(0, 200);
+  if (NOT_HELD_RE.test(head)) return false;
   return MEETING_RE.test(head) || LOGGED_ACTIVITY_RE.test(head);
 }

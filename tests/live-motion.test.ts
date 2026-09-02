@@ -168,3 +168,26 @@ describe("isMeetingNote — the one shared spelling", () => {
     );
   });
 });
+
+// ── a note ABOUT a meeting is not a meeting (the Axcet read, 2026-09-02) ────
+// "✔ Follow-up with Anika — week of Aug 31 meeting", body "Awaiting word on
+// whether the meeting actually took place", filed at today's date, read as
+// "You met today" and the row demanded a recap of a meeting nobody can
+// confirm happened.
+
+test("chasing, scheduling, and doubting a meeting never read as one held", () => {
+  const not = (body: string) =>
+    assert.equal(isMeetingNote({ body, source: "sf-ai" }), false, body.slice(0, 60));
+  not(
+    "✔ SF activity — Follow-up with Anika — week of Aug 31 meeting · Antaeus Coe → Anika\nAwaiting word from Anika on whether the meeting scheduled for the week of Aug 31 actually took place.",
+  );
+  not("✔ SF activity — Schedule the quarterly meeting · Antaeus Coe → Anika\nGet it on the calendar.");
+  not("✔ SF activity — Prep for Thursday demo · Antaeus Coe → Anika\nPull the deck together.");
+  not("✉ SF 8/18 — Re: rescheduling our call with Marcus\nCan we move it?");
+  // The real things still read as meetings.
+  const yes = (body: string, source = "sf-ai") =>
+    assert.equal(isMeetingNote({ body, source }), true, body.slice(0, 60));
+  yes("✔ SF activity — Meeting — quarterly business review · Anika → Antaeus Coe\nCovered the roadmap.");
+  yes("✉ SF 8/18 — met with Darlene on BE resolutions\nGood session.");
+  yes("☰ CALL TRANSCRIPT — Aug 27\nA: hello\nB: hi there", "transcript");
+});
