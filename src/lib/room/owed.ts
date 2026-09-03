@@ -60,6 +60,66 @@ function isInbound(actors: string): boolean {
   return !!from && !MINE_RE.test(from);
 }
 
+// ── the client's side of the Owed line (the Simploy call, 2026-09-03) ──────
+// The cleaner writes both sides in one line — "Owed: invoices + EOR confirm
+// — @Chassie; agreements, question list — @Antaeus" — and until now only the
+// operator's side was ever read. The client's side is the record saying
+// whose deliverable comes first after a meeting; the room's meeting move
+// reads it so "Send the recap" can also say what they owe. Derived display
+// only — nothing files, and the moment their reply lands the court flips
+// and this read retires itself.
+
+export type TheirOwed = {
+  noteId: string;
+  who: string; // the owner as the record names them
+  text: string; // the thing they owe
+  at: string; // the note's own moment
+};
+
+// One Owed line can carry several segments split on ";" — each ends with
+// "— @Owner". Scanned only inside an Owed block, segmented at semicolons
+// and sentence bounds, owners capitalized like names — so free text with a
+// stray semicolon or an em dash can never fabricate a debt.
+const OWED_BLOCK_RE = /\bOwed:\s*([^\n]+)/g;
+const OWED_SEG_SPLIT = /;|\.\s+(?=[A-Z])/;
+const OWED_SEG_RE =
+  /^\s*(.{3,140}?)\s*—\s*@?\s*([A-Z][\w'’-]*(?:\s[A-Z][\w'’-]*){0,3})\s*\.?\s*$/;
+
+export function owedByThem(
+  notes: readonly {
+    id: string;
+    body: string;
+    createdAt: string;
+  }[],
+  now: Date,
+): TheirOwed[] {
+  const out: TheirOwed[] = [];
+  for (const n of notes) {
+    if (out.length >= CAP) break;
+    const age = now.getTime() - Date.parse(n.createdAt);
+    if (Number.isNaN(age) || age > FRESH_DAYS * 86_400_000) continue;
+    OWED_BLOCK_RE.lastIndex = 0;
+    let m: RegExpExecArray | null;
+    while ((m = OWED_BLOCK_RE.exec(n.body ?? ""))) {
+      for (const seg of m[1].split(OWED_SEG_SPLIT)) {
+        const s = OWED_SEG_RE.exec(seg);
+        if (!s) continue;
+        const who = s[2].trim();
+        if (MINE_RE.test(who) || /^(you|me|us|we)$/i.test(who)) continue;
+        const text = s[1]
+          .replace(/\s+/g, " ")
+          .replace(/[.,;:]+$/, "")
+          .trim();
+        if (text.length < 3) continue;
+        out.push({ noteId: n.id, who, text, at: n.createdAt });
+        if (out.length >= CAP) break;
+      }
+      if (out.length >= CAP) break;
+    }
+  }
+  return out;
+}
+
 export function owedToMe(
   notes: readonly {
     id: string;
