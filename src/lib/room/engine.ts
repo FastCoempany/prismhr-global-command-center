@@ -26,6 +26,11 @@ export type RoomInputs = {
   // newest MEETING record — a meeting newer than any outbound puts the
   // follow-up on the operator: the recap is owed, never a "wait".
   lastMeeting?: { at: string; who: string } | null;
+  // What THEY left the meeting owing — the record's own Owed line, client's
+  // side (the Simploy call, 2026-09-03: the call ended with her invoices
+  // gating the pricing, and the row said only "send the recap"). Read by the
+  // meeting move alone; their reply landing flips the court and retires it.
+  theirBall?: { who: string; text: string } | null;
   // most recent record entry of ANY kind ("" = empty record)
   lastRecordAt: string;
   // every gate on every stage is checked but no outcome is stamped — the deal
@@ -309,7 +314,19 @@ export function readDeal(i: RoomInputs): RoomRead {
       inboundDays != null && inboundDays > 0 ? daysAgo(inboundDays) : "today"
     }.`;
   } else if (meetingNewest) {
-    move = `Send ${meetingWho || "them"} the recap. You met ${meetingAgo}.`;
+    const ball = (i.theirBall?.text ?? "").trim();
+    if (ball) {
+      // The meeting ended with a deliverable on THEIR side. The recap is
+      // still the operator's send, and the second sentence says what the
+      // room is waiting on — the court chip already carries "met today".
+      const owner = (i.theirBall?.who ?? "").split(/\s+/)[0];
+      const who = owner && owner !== (meetingWho.split(/\s+/)[0] ?? "") ? owner : "They";
+      const verb = who === "They" ? "owe" : "owes";
+      const thing = ball.length > 64 ? `${ball.slice(0, 63).trimEnd()}…` : ball;
+      move = `Send ${meetingWho || "them"} the recap. ${who} ${verb} ${thing}.`;
+    } else {
+      move = `Send ${meetingWho || "them"} the recap. You met ${meetingAgo}.`;
+    }
   } else if (
     i.lastTouch &&
     i.lastTouch.awaitingReply &&

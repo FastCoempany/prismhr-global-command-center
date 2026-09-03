@@ -1,7 +1,7 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 import { readLoss } from "@/lib/room/loss";
-import { owedKey, owedToMe } from "@/lib/room/owed";
+import { owedByThem, owedKey, owedToMe } from "@/lib/room/owed";
 
 // ADVERSARIAL — the two judgment mechanisms. The loss read must fire on real
 // loss language (Bryce's actual sentence) and stay silent on negations and
@@ -142,5 +142,60 @@ describe("owedToMe — my name opens work; everyone else's stays history", () =>
     flood.push(note("bad", null as unknown as string));
     const out = owedToMe(flood, none, [], now);
     assert.ok(out.length <= 3);
+  });
+});
+
+describe("owedByThem — the client's side of the Owed line (the Simploy call)", () => {
+  test("the real Simploy line: her segment reads, his does not", () => {
+    // Verbatim shape from the 9/2 call entry — one line, both sides, split
+    // on the semicolon.
+    const out = owedByThem(
+      [
+        note(
+          "s1",
+          "Suspected month-to-month; client shared its GP invoices. Owed: invoices + EOR confirm — @Chassie; agreements, question list, India ballpark — @Antaeus.",
+        ),
+      ],
+      now,
+    );
+    assert.equal(out.length, 1);
+    assert.equal(out[0].who, "Chassie");
+    assert.equal(out[0].text, "invoices + EOR confirm");
+  });
+  test("a mine-only Owed line yields nothing", () => {
+    const out = owedByThem([note("s2", "Owed: send the recap — @Antaeus.")], now);
+    assert.equal(out.length, 0);
+  });
+  test("adversarial: free text with a stray semicolon fabricates no debt", () => {
+    const out = owedByThem(
+      [
+        note(
+          "s3",
+          "Prefers SmartPay; eComp takes BoR — friction. No urgency; slow and steady.",
+        ),
+      ],
+      now,
+    );
+    assert.equal(out.length, 0);
+  });
+  test("adversarial: a trailing sentence with a dash fabricates no owner", () => {
+    const out = owedByThem(
+      [note("s7", "Owed: invoices — @Chassie. Some other sentence — with a dash.")],
+      now,
+    );
+    assert.equal(out.length, 1);
+    assert.equal(out[0].text, "invoices");
+    assert.equal(out[0].who, "Chassie");
+  });
+  test("adversarial: stale notes and junk never read or throw", () => {
+    const out = owedByThem(
+      [
+        note("s4", "Owed: the census file — @Dana.", "2026-06-01T10:00:00Z"),
+        note("s5", null as unknown as string),
+        { id: "s6", body: "Owed: x — @Dana.", createdAt: "garbage" },
+      ],
+      now,
+    );
+    assert.equal(out.length, 0);
   });
 });

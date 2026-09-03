@@ -55,7 +55,7 @@ import { GAP_DISMISS, readGaps } from "@/lib/room/gaps";
 import { researchNs } from "@/lib/intel/deep-research";
 import { getDemand, researchGeneratedAt } from "@/lib/book/research";
 import { readOutcome } from "@/lib/dashboard/outcome";
-import { owedToMe } from "@/lib/room/owed";
+import { owedByThem, owedToMe } from "@/lib/room/owed";
 import { GLOBAL_SCENT_RE, MINE_RE, isHomeSideName } from "@/lib/intel/provenance";
 import { askHref, peerQuestions, scopedAsk } from "@/lib/intranet/bridges";
 import { sfAccountUrl } from "@/lib/salesforce";
@@ -268,6 +268,47 @@ export default async function RoomPage() {
         )
       : [];
 
+    // The newest meeting record — a meeting newer than any outbound makes
+    // the recap the move, never a "wait" (Staff Leasing 1:00 PM, 8/18).
+    const meetingForRead = (() => {
+      const m = allNotes.find((n) => isMeetingNote(n));
+      if (!m) return null;
+      // The recap goes to whoever was IN the meeting — the note's own
+      // actors, whichever side is not the operator — and only when the
+      // note names nobody does the relationship contact stand in
+      // (2026-09-02: a meeting's recap was addressed to the relationship
+      // read while the record named the actual person in the room).
+      const actors = m.actors ?? "";
+      const arrow = actors.indexOf("→");
+      const sides = arrow >= 0 ? [actors.slice(0, arrow), actors.slice(arrow + 1)] : [];
+      const other = sides
+        .map((x) => x.replace(/\+\d+\s*$/, "").trim())
+        .find((x) => x && !MINE_RE.test(x));
+      return {
+        at: m.createdAt,
+        who: firstName(other ?? "") || firstName(rel.name) || "them",
+      };
+    })();
+    // What they left the meeting owing — the record's Owed line, client's
+    // side (the Simploy call, 2026-09-03). Day-matched to the meeting in
+    // Chicago so an old debt never rides a new meeting; colleagues are the
+    // home side, never the ball-holder.
+    const theirBall = (() => {
+      if (!meetingForRead) return null;
+      const day = (iso: string) => {
+        const t = Date.parse(iso);
+        return Number.isNaN(t)
+          ? ""
+          : new Date(t).toLocaleDateString("en-CA", { timeZone: "America/Chicago" });
+      };
+      const met = day(meetingForRead.at);
+      if (!met) return null;
+      const b = owedByThem(allNotes, now).find(
+        (o) => day(o.at) >= met && !isHomeSideName(o.who, csms),
+      );
+      return b ? { who: firstName(b.who) || "they", text: b.text } : null;
+    })();
+
     const read: RoomRead = readDeal({
       accountName: card.name,
       step: step
@@ -297,27 +338,8 @@ export default async function RoomPage() {
             promise: intel.lastInboundPromise,
           }
         : null,
-      // The newest meeting record — a meeting newer than any outbound makes
-      // the recap the move, never a "wait" (Staff Leasing 1:00 PM, 8/18).
-      lastMeeting: (() => {
-        const m = allNotes.find((n) => isMeetingNote(n));
-        if (!m) return null;
-        // The recap goes to whoever was IN the meeting — the note's own
-        // actors, whichever side is not the operator — and only when the
-        // note names nobody does the relationship contact stand in
-        // (2026-09-02: a meeting's recap was addressed to the relationship
-        // read while the record named the actual person in the room).
-        const actors = m.actors ?? "";
-        const arrow = actors.indexOf("→");
-        const sides = arrow >= 0 ? [actors.slice(0, arrow), actors.slice(arrow + 1)] : [];
-        const other = sides
-          .map((x) => x.replace(/\+\d+\s*$/, "").trim())
-          .find((x) => x && !MINE_RE.test(x));
-        return {
-          at: m.createdAt,
-          who: firstName(other ?? "") || firstName(rel.name) || "them",
-        };
-      })(),
+      lastMeeting: meetingForRead,
+      theirBall,
       lastRecordAt: allNotes[0]?.createdAt ?? "",
       allGatesDone,
       // What is owed, register first then the record's own owed lines.

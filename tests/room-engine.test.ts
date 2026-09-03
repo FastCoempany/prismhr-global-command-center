@@ -263,6 +263,49 @@ describe("the recap rule — a fresh meeting puts the follow-up on the operator"
     });
     assert.match(r.move, /^Send Tom the recap\. You met today\./);
   });
+
+  // The Simploy call (2026-09-03): the call ended with HER invoices gating
+  // the pricing, and the row said only "send the recap". The record's own
+  // Owed line, client's side, rides the meeting move as its second half.
+  test("their deliverable rides the recap move", () => {
+    const r = readDeal({
+      ...base,
+      lastTouch: { at: "2026-08-12T19:32:00Z", awaitingReply: true, who: "Chassie" },
+      lastMeeting: { at: "2026-08-18T17:00:00Z", who: "Chassie" },
+      theirBall: { who: "Chassie", text: "invoices + EOR confirm" },
+    });
+    assert.equal(r.move, "Send Chassie the recap. They owe invoices + EOR confirm.");
+    assert.equal(r.court.tone, "you");
+  });
+  test("a different ball-holder is named, never pronouned", () => {
+    const r = readDeal({
+      ...base,
+      lastTouch: null,
+      lastMeeting: { at: "2026-08-18T17:00:00Z", who: "Tom" },
+      theirBall: { who: "Dana", text: "the census file" },
+    });
+    assert.equal(r.move, "Send Tom the recap. Dana owes the census file.");
+  });
+  test("adversarial: an inbound after the meeting outranks their-ball too", () => {
+    const r = readDeal({
+      ...base,
+      lastTouch: { at: "2026-08-12T19:32:00Z", awaitingReply: true, who: "Chassie" },
+      lastMeeting: { at: "2026-08-18T17:00:00Z", who: "Chassie" },
+      lastInbound: { at: "2026-08-18T19:00:00Z", who: "Chassie" },
+      theirBall: { who: "Chassie", text: "invoices + EOR confirm" },
+    });
+    assert.match(r.move, /^Answer Chassie\./);
+  });
+  test("adversarial: a long owed thing is capped, never a run-on", () => {
+    const r = readDeal({
+      ...base,
+      lastTouch: null,
+      lastMeeting: { at: "2026-08-18T17:00:00Z", who: "Tom" },
+      theirBall: { who: "Dana", text: "x".repeat(200) },
+    });
+    assert.ok(r.move.length < 120, r.move);
+    assert.ok(r.move.includes("…"));
+  });
 });
 
 describe("the same-day send — a fresh outbound puts the ball with them", () => {
