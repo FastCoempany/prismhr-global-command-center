@@ -110,6 +110,9 @@ export type RoomRow = {
   stages: StageView[];
   suggestions: { node: string; index: number; item: string; why: string }[];
   move: string;
+  /** The whole commitment behind a shortened move — "" when the line is the
+   *  whole thing. Every compression is a door (the click-depth law). */
+  moveFull?: string;
   thin: boolean;
   court: { line: string; tone: "you" | "them" | "quiet" | "none" };
   outstanding: {
@@ -635,6 +638,9 @@ function Row({
     });
   };
   const [askGone, setAskGone] = useState<Set<string>>(new Set());
+  // The move's own door: the built line by default, the whole commitment on
+  // a click. Nothing deep ever surfaces uninvited.
+  const [moveOpen, setMoveOpen] = useState(false);
   const [research, setResearch] = useState<{ note: string; changed: string[] } | null>(
     null,
   );
@@ -1006,9 +1012,30 @@ function Row({
               {/* The gate chip is retired (founder-decreed 2026-08-19): the
                   stage's open question lives in the UNKNOWN register with
                   its own ✓ — the move line carries only the move. */}
-              <p className={`${styles.move} ${row.thin ? styles.thin : ""}`}>
-                {row.move}
-              </p>
+              {/* The move is BUILT from the commitment, not printed as it —
+                  and when the line holds detail back it opens rather than
+                  ending in a dead ellipsis (founder-decreed 2026-09-03). */}
+              {row.moveFull ? (
+                <p
+                  className={`${styles.move} ${row.thin ? styles.thin : ""} ${styles.moveDoor}`}
+                  title={row.moveFull}
+                  onClick={() => setMoveOpen((v) => !v)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setMoveOpen((v) => !v);
+                    }
+                  }}
+                >
+                  {moveOpen ? row.moveFull : row.move}
+                </p>
+              ) : (
+                <p className={`${styles.move} ${row.thin ? styles.thin : ""}`}>
+                  {row.move}
+                </p>
+              )}
               {/* Every row can answer now. When the move names the staged item
                   this still closes it; otherwise it marks the day — the case
                   that used to leave the operator with no reply at all. */}

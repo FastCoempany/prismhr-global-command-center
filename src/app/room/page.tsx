@@ -344,7 +344,9 @@ export default async function RoomPage() {
       allGatesDone,
       // What is owed, register first then the record's own owed lines.
       openOwed: [
-        ...sheet.open.map((o) => ({ text: o.body })),
+        // The full stored line, not the register's capped display body — the
+        // stage builds its own instruction and must never inherit a cut.
+        ...sheet.open.map((o) => ({ text: o.edit, wall: !!o.wall, due: o.due })),
         ...owedForRead.map((o) => ({ text: o.text })),
       ],
       now,
@@ -537,6 +539,7 @@ export default async function RoomPage() {
       stages: buildStageRail(card, data.labels),
       suggestions,
       move: read.move,
+      moveFull: read.moveFull ?? "",
       thin: read.thin,
       court: read.court,
       outstanding: step
