@@ -2485,3 +2485,22 @@ button.sdRadio:hover {
   padding: 1px 9px;
   border-radius: 5px;
 }
+
+/* The register's overflow door. The cap ranks and cuts; this says what it
+   held back and opens it in place — quiet ink, no orange, never a wall. */
+.restDoor {
+  display: block;
+  margin: 2px 0 2px 26px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: var(--f-mono), monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--ink) 42%, transparent);
+  cursor: pointer;
+}
+.restDoor:hover {
+  color: var(--ink);
+}

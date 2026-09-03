@@ -369,7 +369,10 @@ export default async function RoomPage() {
     // same-day row delays, hides, and doneAt stamps. Built BEFORE the read —
     // the stage's move is chosen from what is owed, so the obligations have
     // to be in hand first (founder-decreed 2026-08-29).
+    // The register shows the ranked eight and DOORS the rest — the cap used
+    // to drop them without a word (decreed 2026-09-03).
     const sheetOpen = sheet.open;
+    const sheetRest = sheet.rest ?? [];
     const sheetDelayed = sheet.delayed;
     const sheetDoneToday = sheet.doneToday.map((d) => ({
       id: d.id,
@@ -555,6 +558,7 @@ export default async function RoomPage() {
           }
         : null,
       sheetOpen,
+      sheetRest,
       sheetDelayed,
       sheetDoneToday,
       record: mine.slice(0, 6).map((n) => ({

@@ -13,6 +13,7 @@ import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 import { clip, moveFromCommitment, pickOwed, MOVE_BUDGET } from "../src/lib/room/move-line";
 import { meterRead, readDeal } from "../src/lib/room/engine";
+import { buildAccountSheet, OPEN_SHOWN } from "../src/lib/room/sheet-view";
 
 // The stored body, verbatim from the live Todo row that produced the screenshot.
 const REGIS =
@@ -181,5 +182,52 @@ describe("the engine renders the built line and opens the door", () => {
         words[words.length - 1],
       ),
     );
+  });
+});
+
+// ── the register's cap (2026-09-03) ─────────────────────────────────────────
+// It sliced eight in store order and dropped the rest silently: nine open
+// commitments across three accounts — Simploy's newest five among them — were
+// invisible on their own rows. The cap now ranks before it cuts and hands
+// back what it held.
+
+describe("the register's cap ranks, and never drops silently", () => {
+  const mk = (id: string, text: string, tags = "k:a") => ({
+    id,
+    body: `${text}\n⚑[${tags}]`,
+    done: false,
+    accountId: "A",
+    remindAt: null,
+    updatedAt: "2026-09-03T12:00:00Z",
+  });
+  test("a blown wall is kept and the overflow is handed back, not lost", () => {
+    const many = Array.from({ length: 12 }, (_, i) => mk(`t${i}`, `Commitment number ${i}`));
+    // The blown wall sits LAST in store order — exactly where the old cap
+    // would have thrown it away.
+    many.push(mk("wall", "Send the thing you promised", "d:2026-08-01,k:a"));
+    const sheet = buildAccountSheet(
+      many as never,
+      "A",
+      new Set<string>(),
+      new Map(),
+      new Date("2026-09-03T20:00:00Z"),
+    );
+    assert.equal(sheet.open.length, OPEN_SHOWN);
+    assert.equal(sheet.open[0].id, "wall", "the blown wall leads");
+    assert.equal(sheet.openMore, 5);
+    assert.equal(sheet.rest?.length, 5);
+    // Nothing vanished: shown + held back is everything open.
+    assert.equal(sheet.open.length + (sheet.rest?.length ?? 0), 13);
+  });
+  test("under the cap there is no door and nothing is held", () => {
+    const sheet = buildAccountSheet(
+      [mk("a", "One thing"), mk("b", "Another thing")] as never,
+      "A",
+      new Set<string>(),
+      new Map(),
+      new Date(),
+    );
+    assert.equal(sheet.openMore, 0);
+    assert.equal(sheet.rest?.length, 0);
   });
 });

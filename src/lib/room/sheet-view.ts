@@ -42,9 +42,16 @@ export type AccountSheet = {
     // whichever item the store happened to list first (decreed 2026-09-03).
     due?: string;
   }[];
+  /** How many open commitments the cap held back — 0 when all of them show. */
+  openMore?: number;
+  /** The held-back ones themselves, so the door opens without another query. */
+  rest?: AccountSheet["open"];
   delayed: { id: string; body: string; edit: string; when: string }[];
   doneToday: { id: string; body: string; edit: string; at: string }[];
 };
+
+/** How many open commitments the register shows before the door. */
+export const OPEN_SHOWN = 8;
 
 const ROW_DELAY = "row-delay:";
 const HIDE = "hide:";
@@ -190,8 +197,24 @@ export function buildAccountSheet(
     const bt = Number(tagsOf(todos.find((t) => t.id === b.id)?.body ?? "").doneAt);
     return (Number.isNaN(at) ? 0 : at) - (Number.isNaN(bt) ? 0 : bt);
   });
+  // The cap ranks before it cuts, and says what it held back (decreed
+  // 2026-09-03). It used to slice the newest eight in store order and drop
+  // the rest silently — nine open commitments across three accounts were
+  // invisible on their own rows, which is how the register stopped reading
+  // like the operator's work. A blown wall outranks a date, a date outranks
+  // position, and whatever still doesn't fit is a door, never a disappearance.
+  const ranked = [...out.open].sort((a, b) => {
+    const rank = (o: (typeof out.open)[number]) => (o.wall ? 0 : o.due ? 1 : 2);
+    const due = (o: (typeof out.open)[number]) => {
+      const t = Date.parse(`${o.due ?? ""}T12:00:00Z`);
+      return Number.isNaN(t) ? Number.MAX_SAFE_INTEGER : t;
+    };
+    return rank(a) - rank(b) || due(a) - due(b);
+  });
   return {
-    open: out.open.slice(0, 8),
+    open: ranked.slice(0, OPEN_SHOWN),
+    openMore: Math.max(0, ranked.length - OPEN_SHOWN),
+    rest: ranked.slice(OPEN_SHOWN),
     delayed: out.delayed.slice(0, 5),
     doneToday: out.doneToday.slice(0, 6),
   };

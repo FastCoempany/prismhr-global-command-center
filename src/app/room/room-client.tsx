@@ -129,6 +129,15 @@ export type RoomRow = {
     wall?: string;
     fallback?: string;
   }[];
+  /** Open commitments the register's cap held back. They are never dropped
+   *  — the list says how many and opens them (the click-depth law). */
+  sheetRest: {
+    id: string;
+    body: string;
+    edit?: string;
+    wall?: string;
+    fallback?: string;
+  }[];
   sheetDelayed: { id: string; body: string; edit?: string; when: string }[];
   sheetDoneToday: { id: string; body: string; edit?: string; at: string }[];
   record: { id: string; t: string; text: string; struck: boolean }[];
@@ -793,6 +802,12 @@ function Row({
   // register shows. One derivation, no second bookkeeping.
   const liveAsks = row.gaps.filter((g) => !askGone.has(g.id));
   const liveOpen = row.sheetOpen.filter((t) => !gone.has(t.id) && !doneIds.has(t.id));
+  // The register shows a ranked eight; the rest are a door, never a
+  // disappearance (decreed 2026-09-03).
+  const [restOpen, setRestOpen] = useState(false);
+  const restCount = row.sheetRest.filter(
+    (t) => !gone.has(t.id) && !doneIds.has(t.id),
+  ).length;
   const liveOwed = row.owed.filter((o) => !owedGone.has(o.key));
   const doneCount =
     row.sheetDoneToday.filter((t) => !gone.has(t.id)).length +
@@ -1379,7 +1394,7 @@ function Row({
           <div className={styles.sumline}>
             <span className={styles.sumk}>TODAY</span>
             <span className={styles.sumn}>
-              {liveOpen.length}
+              {liveOpen.length + restCount}
               {doneCount > 0 ? ` · ${doneCount} done` : ""}
             </span>
             <span className={styles.sumtx}>{topToday || "Nothing open today."}</span>
@@ -1398,7 +1413,7 @@ function Row({
             <div className={`${styles.sumline} ${styles.sumOpen}`}>
               <span className={`${styles.sumk} ${styles.sumkOn}`}>TODAY</span>
               <span className={styles.sumn}>
-                {liveOpen.length}
+                {liveOpen.length + restCount}
                 {doneCount > 0 ? ` · ${doneCount} done` : ""}
               </span>
               <button
@@ -1587,6 +1602,7 @@ function Row({
                 .filter((t) => backNow.has(t.id))
                 .map((t) => ({ id: t.id, body: t.body })),
               ...row.sheetOpen.filter((t) => !backNow.has(t.id)),
+              ...(restOpen ? row.sheetRest.filter((t) => !backNow.has(t.id)) : []),
             ]
               .filter((t) => !gone.has(t.id))
               .map(
@@ -1725,6 +1741,20 @@ function Row({
                   );
                 },
               )}
+            {/* Whatever the cap held back is a door, never a disappearance —
+                nine open commitments across three accounts were invisible on
+                their own rows before this (decreed 2026-09-03). */}
+            {restCount > 0 && (
+              <button
+                type="button"
+                className={styles.restDoor}
+                onClick={() => setRestOpen((v) => !v)}
+              >
+                {restOpen
+                  ? `fold the other ${restCount} back ⊖`
+                  : `${restCount} more open ⊕`}
+              </button>
+            )}
             {row.sheetDelayed
               .filter((t) => !gone.has(t.id) && !backNow.has(t.id))
               .map((t) => (
