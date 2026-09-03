@@ -110,6 +110,9 @@ export type RoomRow = {
   stages: StageView[];
   suggestions: { node: string; index: number; item: string; why: string }[];
   move: string;
+  /** The whole commitment behind a shortened move — "" when the line is the
+   *  whole thing. Every compression is a door (the click-depth law). */
+  moveFull?: string;
   thin: boolean;
   court: { line: string; tone: "you" | "them" | "quiet" | "none" };
   outstanding: {
@@ -120,6 +123,15 @@ export type RoomRow = {
     closedCount: number;
   } | null;
   sheetOpen: {
+    id: string;
+    body: string;
+    edit?: string;
+    wall?: string;
+    fallback?: string;
+  }[];
+  /** Open commitments the register's cap held back. They are never dropped
+   *  — the list says how many and opens them (the click-depth law). */
+  sheetRest: {
     id: string;
     body: string;
     edit?: string;
@@ -311,6 +323,10 @@ function Row({
     claim: string;
     bound: string;
     text: string;
+    why?: string;
+    // The dropped files, held with the question — the vault waits on the
+    // verdict too, so a disputed drop never lands in the wrong folder.
+    files?: File[];
   } | null>(null);
   const [gone, setGone] = useState<Set<string>>(new Set());
   // Rows the operator just un-held: they belong in the open list until the
@@ -460,15 +476,19 @@ function Row({
       else setNote(r.reason ?? "The delete didn't take.");
     });
   };
-  const filePaste = (text: string, force: boolean) => {
+  const filePaste = (text: string, force: boolean, waiting?: File[]) => {
     start(async () => {
       const r = await roomPaste(row.accountId, text, force ? { force: true } : undefined);
       setReading(null);
       if (r.mismatch) {
-        setMismatch({ ...r.mismatch, text });
+        // The guard objected — the files wait with the question. Nothing
+        // reaches the vault until the operator answers it.
+        setMismatch({ ...r.mismatch, text, files: waiting });
         return;
       }
       if (r.ok) {
+        // Accepted: NOW the files may go to this account's folder.
+        if (waiting?.length) void archiveFiles(waiting);
         // One receipt, in the order the work matters: what filed, what opened,
         // what it asked, what it learned, and whether it says this is over.
         const parts = [
@@ -500,18 +520,20 @@ function Row({
   };
   // The Drop reads a dropped or picked file into paste text, then files it
   // through the same read-and-file path as a paste. One file at a time.
-  const readDroppedFile = async (f: File) => {
+  const readDroppedFile = async (f: File, waiting?: File[]) => {
     setReading(f.name);
     setNote(null);
     const read = await readFileToText(f, (fd) => roomReadPdf(row.accountId, fd));
     if (!read.ok) {
       setReading(null);
       setNote(read.reason);
+      // Unreadable after all — the vault is the whole point for these.
+      if (waiting?.length) void archiveFiles(waiting);
       return;
     }
     // The label holds through the server filing too — the slow part is the
     // brain reading the text, and a silent row reads as a dead drop.
-    filePaste(read.text, false);
+    filePaste(read.text, false, waiting);
   };
   // The vault (founder-decreed 2026-09-02): EVERY file dropped on the row
   // archives to the GitHub vault under accounts/<this account>, fully
@@ -549,7 +571,6 @@ function Row({
 
   const handleFiles = (list: FileList | null) => {
     const files = Array.from(list ?? []);
-    void archiveFiles(files);
     // The record's reader takes only the types it can read; everything else
     // is vault-only and never earns a can't-read complaint for being a video.
     const readableExts = new Set(
@@ -558,7 +579,15 @@ function Row({
     const f = files.find((x) =>
       readableExts.has(x.name.split(".").pop()?.toLowerCase() ?? ""),
     );
-    if (f && !pending && !reading) void readDroppedFile(f);
+    // The vault waits on the guard (founder-decreed 2026-09-03). A readable
+    // capture archives only once the filing is ACCEPTED — a misfiled drop
+    // used to put its file in the wrong account's folder too, and the vault
+    // never un-writes (the Simploy call in accounts/Regis HR Group/). Files
+    // the reader can't open carry no verdict to wait for, so they go now.
+    const unreadable = files.filter((x) => x !== f);
+    if (unreadable.length) void archiveFiles(unreadable);
+    if (f && !pending && !reading) void readDroppedFile(f, files);
+    else if (f) void archiveFiles([f]);
   };
 
   const submitPaste = () => {
@@ -618,6 +647,9 @@ function Row({
     });
   };
   const [askGone, setAskGone] = useState<Set<string>>(new Set());
+  // The move's own door: the built line by default, the whole commitment on
+  // a click. Nothing deep ever surfaces uninvited.
+  const [moveOpen, setMoveOpen] = useState(false);
   const [research, setResearch] = useState<{ note: string; changed: string[] } | null>(
     null,
   );
@@ -770,6 +802,12 @@ function Row({
   // register shows. One derivation, no second bookkeeping.
   const liveAsks = row.gaps.filter((g) => !askGone.has(g.id));
   const liveOpen = row.sheetOpen.filter((t) => !gone.has(t.id) && !doneIds.has(t.id));
+  // The register shows a ranked eight; the rest are a door, never a
+  // disappearance (decreed 2026-09-03).
+  const [restOpen, setRestOpen] = useState(false);
+  const restCount = row.sheetRest.filter(
+    (t) => !gone.has(t.id) && !doneIds.has(t.id),
+  ).length;
   const liveOwed = row.owed.filter((o) => !owedGone.has(o.key));
   const doneCount =
     row.sheetDoneToday.filter((t) => !gone.has(t.id)).length +
@@ -989,9 +1027,30 @@ function Row({
               {/* The gate chip is retired (founder-decreed 2026-08-19): the
                   stage's open question lives in the UNKNOWN register with
                   its own ✓ — the move line carries only the move. */}
-              <p className={`${styles.move} ${row.thin ? styles.thin : ""}`}>
-                {row.move}
-              </p>
+              {/* The move is BUILT from the commitment, not printed as it —
+                  and when the line holds detail back it opens rather than
+                  ending in a dead ellipsis (founder-decreed 2026-09-03). */}
+              {row.moveFull ? (
+                <p
+                  className={`${styles.move} ${row.thin ? styles.thin : ""} ${styles.moveDoor}`}
+                  title={row.moveFull}
+                  onClick={() => setMoveOpen((v) => !v)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setMoveOpen((v) => !v);
+                    }
+                  }}
+                >
+                  {moveOpen ? row.moveFull : row.move}
+                </p>
+              ) : (
+                <p className={`${styles.move} ${row.thin ? styles.thin : ""}`}>
+                  {row.move}
+                </p>
+              )}
               {/* Every row can answer now. When the move names the staged item
                   this still closes it; otherwise it marks the day — the case
                   that used to leave the operator with no reply at all. */}
@@ -1335,7 +1394,7 @@ function Row({
           <div className={styles.sumline}>
             <span className={styles.sumk}>TODAY</span>
             <span className={styles.sumn}>
-              {liveOpen.length}
+              {liveOpen.length + restCount}
               {doneCount > 0 ? ` · ${doneCount} done` : ""}
             </span>
             <span className={styles.sumtx}>{topToday || "Nothing open today."}</span>
@@ -1354,7 +1413,7 @@ function Row({
             <div className={`${styles.sumline} ${styles.sumOpen}`}>
               <span className={`${styles.sumk} ${styles.sumkOn}`}>TODAY</span>
               <span className={styles.sumn}>
-                {liveOpen.length}
+                {liveOpen.length + restCount}
                 {doneCount > 0 ? ` · ${doneCount} done` : ""}
               </span>
               <button
@@ -1543,6 +1602,7 @@ function Row({
                 .filter((t) => backNow.has(t.id))
                 .map((t) => ({ id: t.id, body: t.body })),
               ...row.sheetOpen.filter((t) => !backNow.has(t.id)),
+              ...(restOpen ? row.sheetRest.filter((t) => !backNow.has(t.id)) : []),
             ]
               .filter((t) => !gone.has(t.id))
               .map(
@@ -1681,6 +1741,20 @@ function Row({
                   );
                 },
               )}
+            {/* Whatever the cap held back is a door, never a disappearance —
+                nine open commitments across three accounts were invisible on
+                their own rows before this (decreed 2026-09-03). */}
+            {restCount > 0 && (
+              <button
+                type="button"
+                className={styles.restDoor}
+                onClick={() => setRestOpen((v) => !v)}
+              >
+                {restOpen
+                  ? `fold the other ${restCount} back ⊖`
+                  : `${restCount} more open ⊕`}
+              </button>
+            )}
             {row.sheetDelayed
               .filter((t) => !gone.has(t.id) && !backNow.has(t.id))
               .map((t) => (
@@ -1867,8 +1941,9 @@ function Row({
                 whether the read is wrong or the drop was. */}
             {mismatch && (
               <div className={styles.misfile}>
-                <b>This reads like {mismatch.claim}</b>, not {mismatch.bound}. Nothing
-                filed yet.
+                <b>This reads like {mismatch.claim}</b>, not {mismatch.bound}
+                {mismatch.why ? ` — ${mismatch.why}` : ""}. Nothing filed yet, and the
+                file is holding out of the vault.
                 <span className={styles.sdSuggActs}>
                   <button
                     type="button"
@@ -1876,7 +1951,7 @@ function Row({
                     disabled={pending}
                     onClick={() => {
                       setReading(`${mismatch.bound} — reading it again`);
-                      filePaste(mismatch.text, true);
+                      filePaste(mismatch.text, true, mismatch.files);
                     }}
                   >
                     {/* The force path re-runs the whole read, which on a call

@@ -5,6 +5,7 @@
 
 import { DASH_NODES, DASH_NODE_KEYS } from "@/lib/dashboard/stages";
 import { splitFallback } from "./deliverables";
+import { clip, moveFromCommitment, pickOwed } from "./move-line";
 
 export type Health = "red" | "amber" | "green" | "quiet";
 
@@ -40,12 +41,20 @@ export type RoomInputs = {
   // the record's owed-to-you lines, newest-first. A thing owed always beats a
   // thing wondered: the stage answers "what do we owe them, or they us",
   // never "what don't we know yet" (founder-decreed 2026-08-29).
-  openOwed?: { text: string }[];
+  // Each carries what ranks it: a blown wall outranks a date, a date
+  // outranks position in the store (founder-decreed 2026-09-03 — the row's
+  // instruction used to be whichever item the sheet happened to list first).
+  openOwed?: { text: string; wall?: boolean; due?: string }[];
   now: Date;
 };
 
 export type RoomRead = {
   move: string; // plain sentence — "" never happens; thin reads are sentences too
+  // The whole commitment the move was built from, when the line holds
+  // anything back. Every compression is a door (the click-depth law): the
+  // row renders this behind the move, one click deep. "" when the line IS
+  // the whole thing.
+  moveFull?: string;
   thin: boolean; // true = not-enough-signal read
   health: Health;
   court: { line: string; tone: "you" | "them" | "quiet" | "none" };
@@ -138,7 +147,7 @@ export function meterRead(i: {
   if (i.step) {
     why.push(
       `${i.step.nodeLabel}: ${i.doneInStage} of ${i.totalInStage} gates checked.`,
-      `Next gate: ${i.step.item.slice(0, 90)}${i.step.item.length > 90 ? "…" : ""}`,
+      `Next gate: ${clip(i.step.item, 90).text}`,
     );
   } else {
     why.push("No stage is active on the board.");
@@ -266,16 +275,17 @@ export function readDeal(i: RoomInputs): RoomRead {
   // the contingency for when the wall blows and the tail is provenance, and
   // neither is the thing owed. Carrying the raw body ran the stage into its
   // own character cap and ellipsed a sentence mid-word (2026-08-29).
-  const owedNow = (() => {
-    const first = (i.openOwed ?? []).map((o) => (o.text ?? "").trim()).find(Boolean);
-    if (!first) return "";
-    const commitment = splitFallback(first)
-      .text.replace(/\s·\s[^·]*$/, "")
-      .trim();
-    const one = (commitment || first).split(/(?<=[.!?])\s/)[0] ?? commitment;
-    const cut = one.length > 96 ? `${one.slice(0, 95).trimEnd()}…` : one;
-    return /[.!?…]$/.test(cut) ? cut : `${cut}.`;
-  })();
+  // The move a commitment becomes. The stored body is
+  // `text ↯ fallback · from 7/29 paste` — the fallback is the contingency for
+  // when the wall blows and the tail is provenance, and neither is the thing
+  // owed. What survives is the INSTRUCTION, built clause-first and trimmed
+  // only on a word boundary; the whole commitment rides beside it for the
+  // door (src/lib/room/move-line.ts).
+  const owedPick = pickOwed(i.openOwed ?? []);
+  const owedBuilt = owedPick
+    ? moveFromCommitment(splitFallback(owedPick.text).text)
+    : { line: "", full: "", cut: false };
+  const owedNow = owedBuilt.line;
 
   // The move — one plain sentence built from what's actually known.
   let move: string;
@@ -322,7 +332,7 @@ export function readDeal(i: RoomInputs): RoomRead {
       const owner = (i.theirBall?.who ?? "").split(/\s+/)[0];
       const who = owner && owner !== (meetingWho.split(/\s+/)[0] ?? "") ? owner : "They";
       const verb = who === "They" ? "owe" : "owes";
-      const thing = ball.length > 64 ? `${ball.slice(0, 63).trimEnd()}…` : ball;
+      const thing = clip(ball, 64).text;
       move = `Send ${meetingWho || "them"} the recap. ${who} ${verb} ${thing}.`;
     } else {
       move = `Send ${meetingWho || "them"} the recap. You met ${meetingAgo}.`;
@@ -375,5 +385,10 @@ export function readDeal(i: RoomInputs): RoomRead {
     health = "quiet";
   }
 
-  return { move, thin, health, court, quietDays };
+  // The door: only when the printed line really is shorter than the thing.
+  const moveFull =
+    owedNow && move.includes(owedNow.replace(/\.$/, "")) && owedBuilt.cut
+      ? owedBuilt.full
+      : "";
+  return { move, thin, health, court, quietDays, ...(moveFull ? { moveFull } : {}) };
 }

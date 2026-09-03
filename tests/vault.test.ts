@@ -89,9 +89,12 @@ test("the token stays out of the bundle and behind the auth gate", () => {
   assert.ok(act.startsWith('"use server"'));
   assert.ok(act.includes("getAppAccess"));
   assert.ok(act.includes("canWrite"));
-  // And the row wires it: every dropped file archives, automatically.
+  // And the row wires it: every dropped file archives automatically — the
+  // unreadable ones at once, the readable one the moment its filing is
+  // accepted (the guard gates the vault, 2026-09-03).
   const client = readFileSync(join(root, "src/app/room/room-client.tsx"), "utf8");
-  assert.ok(client.includes("archiveFiles(files)"));
+  assert.ok(client.includes("void archiveFiles(unreadable)"));
+  assert.ok(client.includes("void archiveFiles(waiting)"));
   assert.ok(client.includes("archiveFileToGitHub"));
 });
 

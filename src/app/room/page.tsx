@@ -61,7 +61,7 @@ import { askHref, peerQuestions, scopedAsk } from "@/lib/intranet/bridges";
 import { sfAccountUrl } from "@/lib/salesforce";
 import { prospectAsks } from "@/lib/intranet/store";
 import { Chute } from "./chute";
-import { domainOf } from "@/lib/route-capture";
+import { routingRoster } from "@/lib/book/roster";
 import {
   RoomClient,
   type CadenceRow,
@@ -344,7 +344,9 @@ export default async function RoomPage() {
       allGatesDone,
       // What is owed, register first then the record's own owed lines.
       openOwed: [
-        ...sheet.open.map((o) => ({ text: o.body })),
+        // The full stored line, not the register's capped display body — the
+        // stage builds its own instruction and must never inherit a cut.
+        ...sheet.open.map((o) => ({ text: o.edit, wall: !!o.wall, due: o.due })),
         ...owedForRead.map((o) => ({ text: o.text })),
       ],
       now,
@@ -367,7 +369,10 @@ export default async function RoomPage() {
     // same-day row delays, hides, and doneAt stamps. Built BEFORE the read —
     // the stage's move is chosen from what is owed, so the obligations have
     // to be in hand first (founder-decreed 2026-08-29).
+    // The register shows the ranked eight and DOORS the rest — the cap used
+    // to drop them without a word (decreed 2026-09-03).
     const sheetOpen = sheet.open;
+    const sheetRest = sheet.rest ?? [];
     const sheetDelayed = sheet.delayed;
     const sheetDoneToday = sheet.doneToday.map((d) => ({
       id: d.id,
@@ -537,6 +542,7 @@ export default async function RoomPage() {
       stages: buildStageRail(card, data.labels),
       suggestions,
       move: read.move,
+      moveFull: read.moveFull ?? "",
       thin: read.thin,
       court: read.court,
       outstanding: step
@@ -552,6 +558,7 @@ export default async function RoomPage() {
           }
         : null,
       sheetOpen,
+      sheetRest,
       sheetDelayed,
       sheetDoneToday,
       record: mine.slice(0, 6).map((n) => ({
@@ -721,24 +728,11 @@ export default async function RoomPage() {
     .slice(0, 8)
     .map((t) => ({ id: t.id, body: t.body.split("\n")[0].slice(0, 140) }));
 
-  // The Chute's routing roster — every account the book knows, with the
-  // signals that identify it in a dropped file: contact emails and company
-  // domains. Built server-side; the contacts module never reaches the client.
-  const chuteRoster = peos.map((p) => {
-    const emails = [p.contactEmail, ...contactsFor(p.id).map((c) => c.email)]
-      .map((e) => (e ?? "").toLowerCase().trim())
-      .filter(Boolean);
-    const domains = [
-      domainOf(p.website),
-      ...emails.map((e) => e.split("@")[1] ?? ""),
-    ].filter(Boolean);
-    return {
-      id: p.id,
-      name: p.name,
-      emails: [...new Set(emails)],
-      domains: [...new Set(domains)],
-    };
-  });
+  // The Chute's routing roster — one shared build (src/lib/book/roster.ts),
+  // the same signals the misfile guard reads: contact emails, company
+  // domains, and the people the book binds to one account. A signal one door
+  // can read and another cannot is how one capture gets two answers.
+  const chuteRoster = routingRoster();
 
   return (
     <>

@@ -11,6 +11,12 @@ export type RouteAccount = {
   name: string;
   emails: string[]; // known contact emails, lowercase
   domains: string[]; // company domains, lowercase, no www
+  // The people the book binds to this account, as "first last" keys — the
+  // rung a call transcript actually carries. A tape has no addresses and no
+  // letterhead; it has two people saying each other's names (the Simploy
+  // call filed to Regis, 2026-09-03). Names the book binds to more than one
+  // account are excluded upstream: they identify nobody.
+  people?: string[];
 };
 
 export type RouteHit = {
@@ -89,6 +95,24 @@ export function initialsOf(name: string): string {
   return init.length >= 3 && init.length <= 5 ? init : "";
 }
 
+const titleCase = (s: string): string => s.replace(/\b[a-z]/g, (c) => c.toUpperCase());
+
+// Every "First Last" the text contains, as person keys. Capitalized pairs
+// only — a transcript's speaker labels ("Chassie Smith:") and the ordinary
+// way a name appears in prose both land here, and lowercase words never do.
+// Matching is against the book's own index, so a false pair matches nothing.
+const NAME_PAIR_RE = /\b([A-Z][a-z'’-]{1,20})\s+([A-Z][a-z'’-]{1,20})\b/g;
+
+export function peopleNamedIn(text: string): Set<string> {
+  const out = new Set<string>();
+  const raw = text ?? "";
+  NAME_PAIR_RE.lastIndex = 0;
+  let m: RegExpExecArray | null;
+  while ((m = NAME_PAIR_RE.exec(raw)))
+    out.add(`${m[1].toLowerCase()} ${m[2].toLowerCase()}`);
+  return out;
+}
+
 export function routeCapture(
   text: string,
   roster: RouteAccount[],
@@ -96,6 +120,7 @@ export function routeCapture(
   const raw = text ?? "";
   const lowered = raw.toLowerCase();
   const normedText = ` ${normName(raw)} `;
+  const foundPeople = peopleNamedIn(raw);
 
   const foundEmails = new Set((raw.match(EMAIL_RE) ?? []).map((e) => e.toLowerCase()));
   const foundDomains = new Set(
@@ -117,9 +142,13 @@ export function routeCapture(
       const domainHit = a.domains.find(
         (d) => d && !FREEMAIL.has(d) && !HOME_DOMAINS.has(d) && foundDomains.has(d),
       );
+      const personHit = (a.people ?? []).find((p) => foundPeople.has(p));
       if (domainHit) {
         score = 80;
         why = `${domainHit} address in the text`;
+      } else if (personHit) {
+        score = 75;
+        why = `${titleCase(personHit)} is ${a.name}'s contact`;
       } else {
         const n = normName(a.name);
         if (n && n.length >= 4 && normedText.includes(` ${n} `)) {

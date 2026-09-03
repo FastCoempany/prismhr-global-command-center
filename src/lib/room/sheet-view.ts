@@ -9,6 +9,7 @@ import { splitMarker, splitTags, visibleText } from "@/lib/today/route-notes";
 import { sameLocalDayIso } from "@/lib/today/ledger";
 import { redactMoney } from "@/lib/intel/lexicon";
 import { splitFallback } from "@/lib/room/deliverables";
+import { clip } from "@/lib/room/move-line";
 
 export type SheetTodo = {
   id: string;
@@ -36,10 +37,21 @@ export type AccountSheet = {
     // the counterparty heard the day and the day ended (decreed 2026-08-22).
     promised?: boolean;
     fallback?: string;
+    // The commitment's own date, wall passed or not — the stage ranks by it
+    // so the row's instruction is the most urgent thing owed, never
+    // whichever item the store happened to list first (decreed 2026-09-03).
+    due?: string;
   }[];
+  /** How many open commitments the cap held back — 0 when all of them show. */
+  openMore?: number;
+  /** The held-back ones themselves, so the door opens without another query. */
+  rest?: AccountSheet["open"];
   delayed: { id: string; body: string; edit: string; when: string }[];
   doneToday: { id: string; body: string; edit: string; at: string }[];
 };
+
+/** How many open commitments the register shows before the door. */
+export const OPEN_SHOWN = 8;
 
 const ROW_DELAY = "row-delay:";
 const HIDE = "hide:";
@@ -84,9 +96,9 @@ function displayLine(body: string): string {
   if (line.length <= LINE_CAP) return line;
   const bare = line.replace(/\s+·\s+from\s.*$/i, "").trimEnd();
   if (bare.length <= LINE_CAP) return bare;
-  const cut = bare.slice(0, LINE_CAP - 1);
-  const sp = cut.lastIndexOf(" ");
-  return `${sp > LINE_CAP / 2 ? cut.slice(0, sp) : cut}…`;
+  // One spelling of "trim on a word boundary" app-wide (move-line.ts) — a
+  // second copy is how the same line got cut two different ways.
+  return clip(bare, LINE_CAP).text;
 }
 
 function tagsOf(body: string): { kind: string; doneAt: string; date: string } {
@@ -161,6 +173,7 @@ export function buildAccountSheet(
           ...(wall ? { wall } : {}),
           ...(promised ? { promised } : {}),
           ...(fallback ? { fallback } : {}),
+          ...(date ? { due: date } : {}),
         });
       }
       continue;
@@ -184,8 +197,24 @@ export function buildAccountSheet(
     const bt = Number(tagsOf(todos.find((t) => t.id === b.id)?.body ?? "").doneAt);
     return (Number.isNaN(at) ? 0 : at) - (Number.isNaN(bt) ? 0 : bt);
   });
+  // The cap ranks before it cuts, and says what it held back (decreed
+  // 2026-09-03). It used to slice the newest eight in store order and drop
+  // the rest silently — nine open commitments across three accounts were
+  // invisible on their own rows, which is how the register stopped reading
+  // like the operator's work. A blown wall outranks a date, a date outranks
+  // position, and whatever still doesn't fit is a door, never a disappearance.
+  const ranked = [...out.open].sort((a, b) => {
+    const rank = (o: (typeof out.open)[number]) => (o.wall ? 0 : o.due ? 1 : 2);
+    const due = (o: (typeof out.open)[number]) => {
+      const t = Date.parse(`${o.due ?? ""}T12:00:00Z`);
+      return Number.isNaN(t) ? Number.MAX_SAFE_INTEGER : t;
+    };
+    return rank(a) - rank(b) || due(a) - due(b);
+  });
   return {
-    open: out.open.slice(0, 8),
+    open: ranked.slice(0, OPEN_SHOWN),
+    openMore: Math.max(0, ranked.length - OPEN_SHOWN),
+    rest: ranked.slice(OPEN_SHOWN),
     delayed: out.delayed.slice(0, 5),
     doneToday: out.doneToday.slice(0, 6),
   };

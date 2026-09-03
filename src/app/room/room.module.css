@@ -714,6 +714,16 @@ button.sdRadio:hover {
   font-weight: 600;
   line-height: 1.5;
 }
+/* A move that holds detail back is a door: the ellipsis is the affordance,
+   quiet until hover, and the whole commitment is one click under it. */
+.moveDoor {
+  cursor: pointer;
+}
+.moveDoor:hover {
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--ink) 22%, transparent);
+  text-underline-offset: 3px;
+}
 .thin {
   font-weight: 400;
   color: var(--soft);
@@ -2474,4 +2484,23 @@ button.sdRadio:hover {
   font-size: 10.5px;
   padding: 1px 9px;
   border-radius: 5px;
+}
+
+/* The register's overflow door. The cap ranks and cuts; this says what it
+   held back and opens it in place — quiet ink, no orange, never a wall. */
+.restDoor {
+  display: block;
+  margin: 2px 0 2px 26px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: var(--f-mono), monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--ink) 42%, transparent);
+  cursor: pointer;
+}
+.restDoor:hover {
+  color: var(--ink);
 }
