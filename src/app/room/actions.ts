@@ -11,9 +11,10 @@ import { revalidatePath } from "next/cache";
 import { getAppAccess } from "@/lib/auth";
 import { hasDatabaseEnv } from "@/lib/db";
 import { peos } from "@/lib/book";
+import { routingRoster } from "@/lib/book/roster";
+import { judgeFiling } from "@/lib/intel/misfile";
 import { digestFor, digestForCardName } from "@/lib/intel/digest";
 import {
-  accountMatches,
   aiCleanAvailable,
   aiCleanTimeline,
   dropNoiseEntries,
@@ -151,7 +152,7 @@ export async function roomPaste(
   learned?: number; // market facts + lessons filed to the playbook
   outcome?: { status: "lost" | "won"; phrase: string } | null;
   // The misfile guard: the read believes this belongs somewhere else.
-  mismatch?: { claim: string; bound: string };
+  mismatch?: { claim: string; bound: string; why?: string };
   readFailed?: boolean; // the read errored; the rule parser filed the record
   // The duplicate guard: this exact capture already filed to this account.
   duplicate?: boolean;
@@ -271,20 +272,30 @@ export async function roomPaste(
     }
   }
 
-  // The misfile guard. The read names the company the paste is ABOUT; if that
-  // disagrees with the row it was dropped on, nothing is written until the
-  // operator says file it anyway. Cheap to obey, expensive to skip — a paste
-  // filed to the wrong account poisons two deals at once.
-  if (read && !opts?.force && !accountMatches(read.accountName, acct.name)) {
+  // The misfile guard. Two rungs, either may object: the company the read
+  // names, and the evidence the text itself carries — a known address, a
+  // company domain, a person the book binds to one account. The second rung
+  // exists because a call transcript names no company at all, and the old
+  // guard read the model's silence as consent (the Simploy call filed to
+  // Regis, 2026-09-03). Cheap to obey, expensive to skip — a paste filed to
+  // the wrong account poisons two deals at once. It informs; it never blocks.
+  const verdict = opts?.force
+    ? ({ ok: true } as const)
+    : judgeFiling({
+        text: rawText,
+        claim: read?.accountName ?? "",
+        bound: { id: acct.id, name: acct.name },
+        roster: routingRoster(),
+      });
+  if (!verdict.ok) {
     return {
       ok: false,
       filed: 0,
       how,
-      mismatch: { claim: read.accountName, bound: acct.name },
-      reason: `This reads like ${read.accountName}, not ${acct.name}.`,
+      mismatch: { claim: verdict.claim, bound: verdict.bound, why: verdict.why },
+      reason: `This reads like ${verdict.claim}, not ${acct.name} — ${verdict.why}.`,
     };
   }
-
   // The day the capture says it was recorded, at noon UTC so day-math is
   // stable across timezones — the same convention the email path uses for its
   // activity dates. Undefined when the capture carries no date, and then the

@@ -35,6 +35,44 @@ export function contactCount(accountId: string): number {
 // Every person the book already knows, across all accounts — built once per
 // server process and held. The follow-up read uses it to keep from asking
 // whether a named contact should join the board: a person is not a deal.
+// Which account a person belongs to — the fact the misfile guard was missing
+// (the Simploy call filed to Regis, 2026-09-03: the book bound Chassie Smith
+// to Simploy in two stores, the tape never said either company's name, and
+// the guard read only company names). A name on exactly one account is a
+// routing signal; a name on several identifies nobody.
+let PEOPLE_INDEX: Map<string, string[]> | null = null;
+
+/** Normalized full name → the account ids the book binds it to. */
+export function peopleIndex(): ReadonlyMap<string, readonly string[]> {
+  if (PEOPLE_INDEX) return PEOPLE_INDEX;
+  const idx = new Map<string, string[]>();
+  for (const [accountId, list] of Object.entries(MAP)) {
+    for (const c of list) {
+      const key = personKey(`${c.first ?? ""} ${c.last ?? ""}`);
+      if (!key) continue;
+      const at = idx.get(key);
+      if (at) {
+        if (!at.includes(accountId)) at.push(accountId);
+      } else idx.set(key, [accountId]);
+    }
+  }
+  PEOPLE_INDEX = idx;
+  return idx;
+}
+
+/** The one spelling of a person's name used for matching — a first and a
+ *  last, lowercased, punctuation and middle initials dropped. Anything that
+ *  isn't two-plus real name words returns "" and never matches. */
+export function personKey(name: string): string {
+  const words = (name ?? "")
+    .toLowerCase()
+    .replace(/[^a-z\s'-]+/g, " ")
+    .split(/\s+/)
+    .filter((w) => w.length > 1);
+  if (words.length < 2) return "";
+  return `${words[0]} ${words[words.length - 1]}`;
+}
+
 let ALL_PEOPLE: string[] | null = null;
 export function knownPeople(): string[] {
   if (ALL_PEOPLE) return ALL_PEOPLE;

@@ -61,7 +61,7 @@ import { askHref, peerQuestions, scopedAsk } from "@/lib/intranet/bridges";
 import { sfAccountUrl } from "@/lib/salesforce";
 import { prospectAsks } from "@/lib/intranet/store";
 import { Chute } from "./chute";
-import { domainOf } from "@/lib/route-capture";
+import { routingRoster } from "@/lib/book/roster";
 import {
   RoomClient,
   type CadenceRow,
@@ -721,24 +721,11 @@ export default async function RoomPage() {
     .slice(0, 8)
     .map((t) => ({ id: t.id, body: t.body.split("\n")[0].slice(0, 140) }));
 
-  // The Chute's routing roster — every account the book knows, with the
-  // signals that identify it in a dropped file: contact emails and company
-  // domains. Built server-side; the contacts module never reaches the client.
-  const chuteRoster = peos.map((p) => {
-    const emails = [p.contactEmail, ...contactsFor(p.id).map((c) => c.email)]
-      .map((e) => (e ?? "").toLowerCase().trim())
-      .filter(Boolean);
-    const domains = [
-      domainOf(p.website),
-      ...emails.map((e) => e.split("@")[1] ?? ""),
-    ].filter(Boolean);
-    return {
-      id: p.id,
-      name: p.name,
-      emails: [...new Set(emails)],
-      domains: [...new Set(domains)],
-    };
-  });
+  // The Chute's routing roster — one shared build (src/lib/book/roster.ts),
+  // the same signals the misfile guard reads: contact emails, company
+  // domains, and the people the book binds to one account. A signal one door
+  // can read and another cannot is how one capture gets two answers.
+  const chuteRoster = routingRoster();
 
   return (
     <>

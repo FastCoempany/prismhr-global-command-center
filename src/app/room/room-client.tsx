@@ -311,6 +311,10 @@ function Row({
     claim: string;
     bound: string;
     text: string;
+    why?: string;
+    // The dropped files, held with the question — the vault waits on the
+    // verdict too, so a disputed drop never lands in the wrong folder.
+    files?: File[];
   } | null>(null);
   const [gone, setGone] = useState<Set<string>>(new Set());
   // Rows the operator just un-held: they belong in the open list until the
@@ -460,15 +464,19 @@ function Row({
       else setNote(r.reason ?? "The delete didn't take.");
     });
   };
-  const filePaste = (text: string, force: boolean) => {
+  const filePaste = (text: string, force: boolean, waiting?: File[]) => {
     start(async () => {
       const r = await roomPaste(row.accountId, text, force ? { force: true } : undefined);
       setReading(null);
       if (r.mismatch) {
-        setMismatch({ ...r.mismatch, text });
+        // The guard objected — the files wait with the question. Nothing
+        // reaches the vault until the operator answers it.
+        setMismatch({ ...r.mismatch, text, files: waiting });
         return;
       }
       if (r.ok) {
+        // Accepted: NOW the files may go to this account's folder.
+        if (waiting?.length) void archiveFiles(waiting);
         // One receipt, in the order the work matters: what filed, what opened,
         // what it asked, what it learned, and whether it says this is over.
         const parts = [
@@ -500,18 +508,20 @@ function Row({
   };
   // The Drop reads a dropped or picked file into paste text, then files it
   // through the same read-and-file path as a paste. One file at a time.
-  const readDroppedFile = async (f: File) => {
+  const readDroppedFile = async (f: File, waiting?: File[]) => {
     setReading(f.name);
     setNote(null);
     const read = await readFileToText(f, (fd) => roomReadPdf(row.accountId, fd));
     if (!read.ok) {
       setReading(null);
       setNote(read.reason);
+      // Unreadable after all — the vault is the whole point for these.
+      if (waiting?.length) void archiveFiles(waiting);
       return;
     }
     // The label holds through the server filing too — the slow part is the
     // brain reading the text, and a silent row reads as a dead drop.
-    filePaste(read.text, false);
+    filePaste(read.text, false, waiting);
   };
   // The vault (founder-decreed 2026-09-02): EVERY file dropped on the row
   // archives to the GitHub vault under accounts/<this account>, fully
@@ -549,7 +559,6 @@ function Row({
 
   const handleFiles = (list: FileList | null) => {
     const files = Array.from(list ?? []);
-    void archiveFiles(files);
     // The record's reader takes only the types it can read; everything else
     // is vault-only and never earns a can't-read complaint for being a video.
     const readableExts = new Set(
@@ -558,7 +567,15 @@ function Row({
     const f = files.find((x) =>
       readableExts.has(x.name.split(".").pop()?.toLowerCase() ?? ""),
     );
-    if (f && !pending && !reading) void readDroppedFile(f);
+    // The vault waits on the guard (founder-decreed 2026-09-03). A readable
+    // capture archives only once the filing is ACCEPTED — a misfiled drop
+    // used to put its file in the wrong account's folder too, and the vault
+    // never un-writes (the Simploy call in accounts/Regis HR Group/). Files
+    // the reader can't open carry no verdict to wait for, so they go now.
+    const unreadable = files.filter((x) => x !== f);
+    if (unreadable.length) void archiveFiles(unreadable);
+    if (f && !pending && !reading) void readDroppedFile(f, files);
+    else if (f) void archiveFiles([f]);
   };
 
   const submitPaste = () => {
@@ -1867,8 +1884,9 @@ function Row({
                 whether the read is wrong or the drop was. */}
             {mismatch && (
               <div className={styles.misfile}>
-                <b>This reads like {mismatch.claim}</b>, not {mismatch.bound}. Nothing
-                filed yet.
+                <b>This reads like {mismatch.claim}</b>, not {mismatch.bound}
+                {mismatch.why ? ` — ${mismatch.why}` : ""}. Nothing filed yet, and the
+                file is holding out of the vault.
                 <span className={styles.sdSuggActs}>
                   <button
                     type="button"
@@ -1876,7 +1894,7 @@ function Row({
                     disabled={pending}
                     onClick={() => {
                       setReading(`${mismatch.bound} — reading it again`);
-                      filePaste(mismatch.text, true);
+                      filePaste(mismatch.text, true, mismatch.files);
                     }}
                   >
                     {/* The force path re-runs the whole read, which on a call
