@@ -225,6 +225,29 @@ export async function roomPaste(
     // guard unavailable — file anyway
   }
 
+  // The misfile guard's FIRST rung runs before the read spends a cent. The
+  // evidence in the text — a known address, a company domain, a person the
+  // book binds to one account — needs no model at all, so a capture dropped
+  // on the wrong row is refused for free rather than after a full read
+  // (decreed 2026-09-04). The read's own company claim is judged after,
+  // below, once there is a claim to judge.
+  if (!opts?.force) {
+    const early = judgeFiling({
+      text: rawText,
+      claim: "",
+      bound: { id: acct.id, name: acct.name },
+      roster: routingRoster(),
+    });
+    if (!early.ok)
+      return {
+        ok: false,
+        filed: 0,
+        how: "",
+        mismatch: { claim: early.claim, bound: early.bound, why: early.why },
+        reason: `This reads like ${early.claim}, not ${acct.name} — ${early.why}.`,
+      };
+  }
+
   const now = new Date();
   let read: Awaited<ReturnType<typeof aiCleanTimeline>> | null = null;
   let entries: Awaited<ReturnType<typeof aiCleanTimeline>>["entries"] = [];

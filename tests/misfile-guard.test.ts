@@ -125,6 +125,16 @@ describe("the vault waits on the verdict", () => {
     assert.ok(client.includes("filePaste(mismatch.text, true, mismatch.files)"));
     assert.ok(client.includes("holding out of the vault"));
   });
+  test("the evidence rung runs BEFORE the read spends a cent", () => {
+    const whole = readFileSync(join(cwd(), "src/app/room/actions.ts"), "utf8");
+    const from = whole.indexOf("export async function roomPaste(");
+    const to = whole.indexOf("async function absorbRead(");
+    const paste = whole.slice(from, to);
+    const earlyAt = paste.indexOf("const early = judgeFiling({");
+    const readAt = paste.indexOf("await aiCleanTimeline(");
+    assert.ok(earlyAt > 0, "roomPaste runs an early, read-free guard");
+    assert.ok(readAt > earlyAt, "a wrong-row drop is refused before the model is called");
+  });
   test("the guard runs before anything files or fans out", () => {
     const whole = readFileSync(join(cwd(), "src/app/room/actions.ts"), "utf8");
     // Scoped to roomPaste's own body — other actions write notes of their own.
