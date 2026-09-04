@@ -128,6 +128,9 @@ export type RoomRow = {
     edit?: string;
     wall?: string;
     fallback?: string;
+    /** Why the record shows this already landed. The row says so instead of
+     *  nagging; the ✓ is still the operator's (decreed 2026-09-04). */
+    settled?: string;
   }[];
   /** Open commitments the register's cap held back. They are never dropped
    *  — the list says how many and opens them (the click-depth law). */
@@ -1613,6 +1616,7 @@ function Row({
                   wall?: string;
                   promised?: boolean;
                   fallback?: string;
+                  settled?: string;
                 }) => {
                   const did = doneIds.has(t.id);
                   if (todoEditId === t.id)
@@ -1658,20 +1662,34 @@ function Row({
                       </span>
                       {!did && (
                         <span
-                          className={`${styles.st} ${t.wall ? styles.stWall : styles.stOpen}`}
+                          className={`${styles.st} ${
+                            t.settled
+                              ? styles.stLanded
+                              : t.wall
+                                ? styles.stWall
+                                : styles.stOpen
+                          }`}
                         >
-                          {t.wall
-                            ? t.promised
-                              ? `PROMISED ${t.wall}`
-                              : `${t.wall} PASSED`
-                            : "OPEN"}
+                          {t.settled
+                            ? "LANDED"
+                            : t.wall
+                              ? t.promised
+                                ? `PROMISED ${t.wall}`
+                                : `${t.wall} PASSED`
+                              : "OPEN"}
                         </span>
                       )}
                       <span className={styles.tx}>
                         {editedTodos.get(t.id) ?? t.body}
                         {/* The if/then, run for you: the wall passed, so the
                       contingency is the move now. */}
-                        {!did && t.fallback && (
+                        {!did && t.settled && (
+                          <span className={styles.settledWhy}>
+                            The record shows this went out — {t.settled}. Close it when
+                            you agree.
+                          </span>
+                        )}
+                        {!did && !t.settled && t.fallback && (
                           <span className={styles.fallback}>
                             ↯ It didn&apos;t land. Go to the fallback: {t.fallback}
                           </span>

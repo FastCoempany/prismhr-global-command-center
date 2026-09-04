@@ -12,7 +12,7 @@ import {
   countriesIn,
 } from "./lexicon";
 import { digestFor, digestForCardName, type DigestEntry } from "./digest";
-import { isCloser } from "./closer";
+import { isCloser, isMeetingResponse } from "./closer";
 import { effectiveAt } from "./clock";
 import { MINE_RE, inferActors } from "./provenance";
 import { EMPTY_INTEL, type DealIntel, type ProductKey, type SourcedFact } from "./types";
@@ -105,6 +105,9 @@ export function corpusFor(
       n.body.split("\n")[0] ?? "",
     );
     const closer = isSf && isCloser(n.body.split("\n").slice(1).join("\n"));
+    // A calendar's own "Accepted:" is machinery too — the same family as the
+    // auto-reply above (2026-09-04). It never opens a reply-owed.
+    const accepted = isMeetingResponse(n.body);
     docs.push({
       text: n.body,
       // The stored stamp, refined by the OL head's own clock — same-day
@@ -116,7 +119,7 @@ export function corpusFor(
         ? undefined
         : MINE_RE.test(sender) || /—\s*Antaeus/i.test(n.body.split("\n")[0] ?? "")
           ? "out"
-          : attributed && !autoReply && !closer
+          : attributed && !autoReply && !closer && !accepted
             ? "in"
             : undefined,
       people: actors ? peopleFromActors(actors) : peopleIn(n.body),

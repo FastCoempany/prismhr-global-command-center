@@ -11,7 +11,7 @@ import {
   readFollowUp,
   routedIds,
 } from "@/lib/today/followup-brain";
-import { contactsFor, knownPeople } from "@/lib/book/contacts";
+import { contactsFor, knownPeople, personKey } from "@/lib/book/contacts";
 import { peopleFor } from "@/lib/intel/people";
 import {
   loadAccountNotes,
@@ -47,7 +47,7 @@ import { suggestChecks } from "@/lib/intel/evidence";
 import { daysBetween, meterRead, readDeal, type RoomRead } from "@/lib/room/engine";
 import { moveDoneKey } from "@/lib/room/bind";
 import { lastTouchRead } from "@/lib/room/touch";
-import { isMeetingNote } from "@/lib/intel/meeting";
+import { meetingRead } from "@/lib/intel/meeting";
 import { buildStageRail } from "@/lib/room/stages-view";
 import { buildAccountSheet } from "@/lib/room/sheet-view";
 import { readLoss } from "@/lib/room/loss";
@@ -56,7 +56,8 @@ import { researchNs } from "@/lib/intel/deep-research";
 import { getDemand, researchGeneratedAt } from "@/lib/book/research";
 import { readOutcome } from "@/lib/dashboard/outcome";
 import { owedByThem, owedToMe } from "@/lib/room/owed";
-import { GLOBAL_SCENT_RE, MINE_RE, isHomeSideName } from "@/lib/intel/provenance";
+import { settledByRecord } from "@/lib/room/settled";
+import { GLOBAL_SCENT_RE, isHomeSideName } from "@/lib/intel/provenance";
 import { askHref, peerQuestions, scopedAsk } from "@/lib/intranet/bridges";
 import { sfAccountUrl } from "@/lib/salesforce";
 import { prospectAsks } from "@/lib/intranet/store";
@@ -253,42 +254,63 @@ export default async function RoomPage() {
       (n) => isHomeSideName(n, csms),
     );
     const noteIds = new Set(allNotes.map((n) => n.id));
-    const sheet = buildAccountSheet(todos, accountId, noteIds, dispositions, now);
+    const sheet = buildAccountSheet(
+      todos,
+      accountId,
+      noteIds,
+      dispositions,
+      now,
+      allNotes,
+    );
     // Owed-to-you lines the record holds, minus anything dismissed or already
     // open on the register — the same read the suggestions use.
     const owedDismissedForRead = new Set(
       [...dispositions.keys()].filter((k) => k.startsWith("owed:")),
     );
-    const owedForRead = accountId
-      ? owedToMe(
-          allNotes,
-          owedDismissedForRead,
-          sheet.open.map((o) => o.body),
-          now,
-        )
-      : [];
+    const owedForRead = (
+      accountId
+        ? owedToMe(
+            allNotes,
+            owedDismissedForRead,
+            sheet.open.map((o) => o.body),
+            now,
+          )
+        : []
+    ).filter((o) => {
+      // A promise closes by delivery. The record holds the landing — the
+      // counterparty's own acceptance — so the room stops asking for a thing
+      // it can see was done (the Joseph Lyon invite, 2026-09-04).
+      const src = allNotes.find((n) => n.id === o.noteId);
+      return !settledByRecord({ text: o.text, at: src?.createdAt ?? "" }, allNotes);
+    });
 
     // The newest meeting record — a meeting newer than any outbound makes
     // the recap the move, never a "wait" (Staff Leasing 1:00 PM, 8/18).
     const meetingForRead = (() => {
-      const m = allNotes.find((n) => isMeetingNote(n));
+      // Who the recap is addressed to comes from the RECORD, in the order the
+      // record actually speaks: the meeting's own actors, a sibling note for
+      // the same call that has them (a recording files twice — the read's
+      // entry AND the actorless archive), then the transcript's own speaker
+      // labels. The relationship rollup is the last resort it was always
+      // meant to be (decreed 2026-09-04).
+      const roster = accountId ? contactsFor(accountId) : [];
+      const m = meetingRead(
+        allNotes,
+        (n) => isHomeSideName(n, csms),
+        (n) => {
+          const k = personKey(n);
+          return (
+            !!k && roster.some((c) => personKey(`${c.first ?? ""} ${c.last ?? ""}`) === k)
+          );
+        },
+      );
       if (!m) return null;
-      // The recap goes to whoever was IN the meeting — the note's own
-      // actors, whichever side is not the operator — and only when the
-      // note names nobody does the relationship contact stand in
-      // (2026-09-02: a meeting's recap was addressed to the relationship
-      // read while the record named the actual person in the room).
-      const actors = m.actors ?? "";
-      const arrow = actors.indexOf("→");
-      const sides = arrow >= 0 ? [actors.slice(0, arrow), actors.slice(arrow + 1)] : [];
-      const other = sides
-        .map((x) => x.replace(/\+\d+\s*$/, "").trim())
-        .find((x) => x && !MINE_RE.test(x));
       return {
-        at: m.createdAt,
-        who: firstName(other ?? "") || firstName(rel.name) || "them",
+        at: m.at,
+        who: firstName(m.who) || firstName(rel.name) || "them",
       };
     })();
+
     // What they left the meeting owing — the record's Owed line, client's
     // side (the Simploy call, 2026-09-03). Day-matched to the meeting in
     // Chicago so an old debt never rides a new meeting; colleagues are the
@@ -346,7 +368,9 @@ export default async function RoomPage() {
       openOwed: [
         // The full stored line, not the register's capped display body — the
         // stage builds its own instruction and must never inherit a cut.
-        ...sheet.open.map((o) => ({ text: o.edit, wall: !!o.wall, due: o.due })),
+        ...sheet.open
+          .filter((o) => !o.settled)
+          .map((o) => ({ text: o.edit, wall: !!o.wall, due: o.due })),
         ...owedForRead.map((o) => ({ text: o.text })),
       ],
       now,

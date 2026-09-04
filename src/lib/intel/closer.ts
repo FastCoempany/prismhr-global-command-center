@@ -92,3 +92,32 @@ export function isCloser(raw: string): boolean {
   }
   return true;
 }
+
+// ── the meeting response (founder-decreed 2026-09-04) ───────────────────────
+// "Accepted: Initial Chat | Intro to PrismHR Global" is the calendar
+// answering, not the client writing. On 2026-09-04 Joseph Lyon accepted a
+// Zoom invite fifteen minutes after it went out and the row said "Answer
+// Joseph. They wrote today." — there was nothing to answer; the meeting was
+// booked. This is the closer rule's own family: machinery is never a person,
+// so a response never opens a reply-owed.
+//
+// It is not silence, though. An acceptance is a real signal that they
+// engaged — it stays their voice for warmth, exactly as a sign-off does.
+// Only the reply-owed reading is suppressed.
+//
+// Detection reads the SUBJECT slot, where every calendar client puts the
+// verb: Outlook, Google and Zoom all prefix "Accepted:", "Declined:" or
+// "Tentative:". A person writing the word in a sentence never matches — the
+// prefix must open the subject.
+const MEETING_RESPONSE_RE =
+  /(?:^|—\s*)(?:Accepted|Declined|Tentatively accepted|Tentative)\s*:/i;
+
+/** True when a note's head is a calendar's own response to an invitation. */
+export function isMeetingResponse(head: string): boolean {
+  const line = (head ?? "").split("\n")[0] ?? "";
+  if (!line) return false;
+  // The head's subject rides after the em dash; a bare subject line counts too.
+  const dash = line.indexOf("—");
+  const subject = dash >= 0 ? line.slice(dash + 1) : line;
+  return MEETING_RESPONSE_RE.test(`— ${subject.trim()}`);
+}

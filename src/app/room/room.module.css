@@ -2504,3 +2504,16 @@ button.sdRadio:hover {
 .restDoor:hover {
   color: var(--ink);
 }
+
+/* A commitment the record shows already landed. Green is real health — the
+   thing happened — and the reason sits beneath it so the ✓ is informed. */
+.stLanded {
+  color: var(--green);
+  border-color: color-mix(in srgb, var(--green) 40%, transparent);
+}
+.settledWhy {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: color-mix(in srgb, var(--ink) 55%, transparent);
+}

@@ -10,6 +10,7 @@ import { sameLocalDayIso } from "@/lib/today/ledger";
 import { redactMoney } from "@/lib/intel/lexicon";
 import { splitFallback } from "@/lib/room/deliverables";
 import { clip } from "@/lib/room/move-line";
+import { settledByRecord } from "@/lib/room/settled";
 
 export type SheetTodo = {
   id: string;
@@ -41,6 +42,10 @@ export type AccountSheet = {
     // so the row's instruction is the most urgent thing owed, never
     // whichever item the store happened to list first (decreed 2026-09-03).
     due?: string;
+    // Why the record shows this already landed, when it does. The row says
+    // so and the stage stops instructing it; the commitment itself stays
+    // open until the operator closes it (decreed 2026-09-04).
+    settled?: string;
   }[];
   /** How many open commitments the cap held back — 0 when all of them show. */
   openMore?: number;
@@ -140,6 +145,9 @@ export function buildAccountSheet(
   accountNoteIds: ReadonlySet<string>,
   dispositions: ReadonlyMap<string, SheetDisposition>,
   now: Date,
+  /** The account's record, so a commitment the record shows already landed
+   *  says so instead of nagging (decreed 2026-09-04). */
+  notes: readonly { body: string; createdAt: string }[] = [],
 ): AccountSheet {
   const out: AccountSheet = { open: [], delayed: [], doneToday: [] };
   for (const t of todos) {
@@ -166,6 +174,7 @@ export function buildAccountSheet(
         // swallow the contingency.
         const fallback = wall ? splitFallback(edit).fallback : "";
         const promised = !!wall && /·\s*from\s+\d{1,2}\/\d{1,2}\s+paste/i.test(edit);
+        const landed = settledByRecord({ text: edit, at: t.createdAt }, notes);
         out.open.push({
           id: t.id,
           body,
@@ -174,6 +183,7 @@ export function buildAccountSheet(
           ...(promised ? { promised } : {}),
           ...(fallback ? { fallback } : {}),
           ...(date ? { due: date } : {}),
+          ...(landed ? { settled: landed.why } : {}),
         });
       }
       continue;
@@ -204,7 +214,8 @@ export function buildAccountSheet(
   // like the operator's work. A blown wall outranks a date, a date outranks
   // position, and whatever still doesn't fit is a door, never a disappearance.
   const ranked = [...out.open].sort((a, b) => {
-    const rank = (o: (typeof out.open)[number]) => (o.wall ? 0 : o.due ? 1 : 2);
+    const rank = (o: (typeof out.open)[number]) =>
+      o.settled ? 3 : o.wall ? 0 : o.due ? 1 : 2;
     const due = (o: (typeof out.open)[number]) => {
       const t = Date.parse(`${o.due ?? ""}T12:00:00Z`);
       return Number.isNaN(t) ? Number.MAX_SAFE_INTEGER : t;
