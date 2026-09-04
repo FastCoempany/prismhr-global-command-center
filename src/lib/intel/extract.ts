@@ -12,7 +12,7 @@ import {
   countriesIn,
 } from "./lexicon";
 import { digestFor, digestForCardName, type DigestEntry } from "./digest";
-import { isCloser, isMeetingResponse } from "./closer";
+import { isCloser, isMachinery } from "./closer";
 import { effectiveAt } from "./clock";
 import { MINE_RE, inferActors } from "./provenance";
 import { EMPTY_INTEL, type DealIntel, type ProductKey, type SourcedFact } from "./types";
@@ -101,13 +101,13 @@ export function corpusFor(
     // reply-owed and never resets the motion clocks — the ledger reads
     // through it to the last substantive message.
     const attributed = sender.trim().length > 0;
-    const autoReply = /automatic reply|out of office|auto-?reply|autoreply/i.test(
-      n.body.split("\n")[0] ?? "",
-    );
+    // One predicate for everything that arrives without a person deciding to
+    // write it — auto-replies, calendar responses, routed-lead alerts,
+    // delivery notices (src/lib/intel/closer.ts). Rebuilding this rule one
+    // exception at a time is how a marketing MQL took the court on HR Hawaii.
+    const machinery = isMachinery({ body: n.body, actors });
     const closer = isSf && isCloser(n.body.split("\n").slice(1).join("\n"));
-    // A calendar's own "Accepted:" is machinery too — the same family as the
-    // auto-reply above (2026-09-04). It never opens a reply-owed.
-    const accepted = isMeetingResponse(n.body);
+
     docs.push({
       text: n.body,
       // The stored stamp, refined by the OL head's own clock — same-day
@@ -119,7 +119,7 @@ export function corpusFor(
         ? undefined
         : MINE_RE.test(sender) || /—\s*Antaeus/i.test(n.body.split("\n")[0] ?? "")
           ? "out"
-          : attributed && !autoReply && !closer && !accepted
+          : attributed && !machinery && !closer
             ? "in"
             : undefined,
       people: actors ? peopleFromActors(actors) : peopleIn(n.body),

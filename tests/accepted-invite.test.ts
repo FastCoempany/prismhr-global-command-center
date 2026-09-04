@@ -11,7 +11,8 @@
 
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
-import { isMeetingResponse } from "../src/lib/intel/closer";
+import { isMachineSender, isMachinery, isMeetingResponse } from "../src/lib/intel/closer";
+import { effectiveAt } from "../src/lib/intel/clock";
 import { meetingRead, speakersIn } from "../src/lib/intel/meeting";
 import { settledByRecord } from "../src/lib/room/settled";
 import { corpusFor, extractDealIntel } from "../src/lib/intel/extract";
@@ -338,5 +339,147 @@ describe("the recap names who the record says was in the room", () => {
       meetingRead([{ body: "✉ OL 09/04 — Re: hi · A → B", createdAt: DAY, actors: "", source: "outlook" }], isHome),
       null,
     );
+  });
+});
+
+// ── machinery, in one predicate (2026-09-04) ────────────────────────────────
+// Three times the same rule was rebuilt one exception at a time: auto-reply,
+// then courtesy sign-off, then calendar acceptance — and hours after the
+// third, a marketing MQL alert took the court on HR Hawaii and the row said
+// "Answer Marketing. They wrote today." while the prospect had already
+// accepted the invitation. The rule stops being a list of exceptions.
+
+describe("machinery is one predicate, not a list of exceptions", () => {
+  const M = (body: string, actors: string) => isMachinery({ body, actors });
+  test("the MQL alert that took the court is machinery", () => {
+    assert.ok(
+      M(
+        "✉ OL Today 2:50 PM — 📣 New Website or Campaign Response Lead | PrismHR Global Solutions: Default - Marketplace Partner · Marketing → Antaeus Coe",
+        "Marketing → Antaeus Coe",
+      ),
+    );
+  });
+  test("the families it already covered still hold", () => {
+    assert.ok(M("✉ OL Today — Automatic reply: out this week · B → A", "Bryce Rowley → Antaeus Coe"));
+    assert.ok(M("✉ OL 09/04 — Accepted: Initial Chat · M → A", "Melanie Llanes → Antaeus Coe"));
+    assert.ok(M("✉ OL Today — Undeliverable: Re: pricing · p → A", "postmaster → Antaeus Coe"));
+  });
+  test("a department mailbox is not a person", () => {
+    assert.ok(isMachineSender("Marketing"));
+    assert.ok(isMachineSender("noreply@prismhr.com"));
+    assert.ok(!isMachineSender("Melanie Llanes"));
+    assert.ok(!isMachineSender("Bryce Rowley"));
+    assert.ok(!isMachineSender(""));
+  });
+  test("adversarial: a person writing ABOUT marketing is content", () => {
+    assert.ok(
+      !M(
+        "✉ OL Today — Re: the marketing plan we discussed · M → A",
+        "Melanie Llanes → Antaeus Coe",
+      ),
+    );
+  });
+});
+
+describe("a booked meeting is not a wait for a reply", () => {
+  const HI = [
+    {
+      id: "a",
+      body: "✉ OL 09/04 7:04 PM — Accepted: PrismHR Global Initial Chat · Melanie Llanes → Antaeus Coe",
+      createdAt: NOON,
+      actors: "Melanie Llanes → Antaeus Coe",
+      kind: "account",
+    },
+    {
+      id: "b",
+      body: "✉ OL Today 2:00 PM — Re: PrismHR Global Chat Scheduling · Antaeus Coe → Melanie Llanes +2\nInvite sent for 1p CST (9a HST).",
+      createdAt: NOON,
+      actors: "Antaeus Coe → Melanie Llanes +2",
+      kind: "account",
+    },
+  ];
+  const base = {
+    accountName: "HR Hawaii",
+    step: null,
+    timing: null,
+    lastRecordAt: NOON,
+    now: new Date("2026-09-04T23:00:00Z"),
+  };
+  test("the row waits for the meeting, not for a reply that already came", () => {
+    const r = readDeal({
+      ...base,
+      lastTouch: { at: effectiveAt(NOON, HI[1].body), awaitingReply: true, who: "Melanie" },
+      lastAccepted: { at: effectiveAt(NOON, HI[0].body), who: "Melanie" },
+    });
+    assert.equal(r.move, "Wait for the meeting. Melanie accepted.");
+    assert.equal(r.court.line, "BOOKED · MELANIE ACCEPTED");
+  });
+  test("the acceptance must carry its OWN clock, or the anchor buries it", () => {
+    // Both notes file at the same noon anchor; only the head clocks order
+    // them. Passing the raw stamp is the Trend tie all over again.
+    const raw = readDeal({
+      ...base,
+      lastTouch: { at: effectiveAt(NOON, HI[1].body), awaitingReply: true, who: "Melanie" },
+      lastAccepted: { at: NOON, who: "Melanie" },
+    });
+    assert.ok(!/Wait for the meeting/.test(raw.move), "the anchor loses the 7:04 PM clock");
+  });
+  test("a real reply after the acceptance outranks it", () => {
+    const r = readDeal({
+      ...base,
+      lastTouch: { at: effectiveAt(NOON, HI[1].body), awaitingReply: true, who: "Melanie" },
+      lastAccepted: { at: effectiveAt(NOON, HI[0].body), who: "Melanie" },
+      lastInbound: { at: "2026-09-04T20:00:00Z", who: "Melanie" },
+    });
+    assert.match(r.move, /^Answer Melanie/);
+  });
+  test("something genuinely owed still outranks a booking", () => {
+    const r = readDeal({
+      ...base,
+      lastTouch: null,
+      lastAccepted: { at: effectiveAt(NOON, HI[0].body), who: "Melanie" },
+      openOwed: [{ text: "Send the Hawaii pricing sheet", wall: true, due: "2026-08-20" }],
+    });
+    assert.match(r.move, /^Send the Hawaii pricing sheet/);
+  });
+});
+
+describe("the court chip counts in days, never to zero", () => {
+  const base = {
+    accountName: "x",
+    step: null,
+    timing: null,
+    lastRecordAt: "2026-09-04T12:00:00Z",
+    now: new Date("2026-09-04T20:00:00Z"),
+  };
+  test("today is TODAY, not 0 DAYS AGO", () => {
+    const r = readDeal({
+      ...base,
+      lastTouch: { at: "2026-09-01T12:00:00Z", awaitingReply: true, who: "Mel" },
+      lastInbound: { at: "2026-09-04T12:00:00Z", who: "Mel" },
+    });
+    assert.match(r.court.line, /WROTE TODAY$/);
+    assert.ok(!/0 DAYS/.test(r.court.line));
+  });
+  test("one day back is YESTERDAY, and a one-day wait is 1 DAY", () => {
+    const y = readDeal({
+      ...base,
+      lastTouch: { at: "2026-09-01T12:00:00Z", awaitingReply: true, who: "Mel" },
+      lastInbound: { at: "2026-09-03T12:00:00Z", who: "Mel" },
+    });
+    assert.match(y.court.line, /WROTE YESTERDAY$/);
+    const d = readDeal({
+      ...base,
+      lastTouch: { at: "2026-09-03T12:00:00Z", awaitingReply: true, who: "Mel" },
+    });
+    assert.match(d.court.line, /· 1 DAY$/);
+  });
+  test("a same-day wait reads TODAY, not 0 DAYS", () => {
+    const r = readDeal({
+      ...base,
+      lastTouch: { at: "2026-09-04T12:00:00Z", awaitingReply: true, who: "Mel" },
+      allGatesDone: true,
+    });
+    assert.ok(!/0 DAYS/.test(r.court.line), r.court.line);
   });
 });

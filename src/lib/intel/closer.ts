@@ -112,6 +112,18 @@ export function isCloser(raw: string): boolean {
 const MEETING_RESPONSE_RE =
   /(?:^|—\s*)(?:Accepted|Declined|Tentatively accepted|Tentative)\s*:/i;
 
+/** An acceptance specifically — a decline or a tentative proves nothing was
+ *  settled, so only this one says the meeting exists. */
+const ACCEPTED_RE = /(?:^|—\s*)Accepted\s*:/i;
+
+export function isAcceptance(head: string): boolean {
+  const line = (head ?? "").split("\n")[0] ?? "";
+  if (!isMeetingResponse(line)) return false;
+  const dash = line.indexOf("—");
+  const subject = dash >= 0 ? line.slice(dash + 1) : line;
+  return ACCEPTED_RE.test(`— ${subject.trim()}`);
+}
+
 /** True when a note's head is a calendar's own response to an invitation. */
 export function isMeetingResponse(head: string): boolean {
   const line = (head ?? "").split("\n")[0] ?? "";
@@ -120,4 +132,75 @@ export function isMeetingResponse(head: string): boolean {
   const dash = line.indexOf("—");
   const subject = dash >= 0 ? line.slice(dash + 1) : line;
   return MEETING_RESPONSE_RE.test(`— ${subject.trim()}`);
+}
+
+// ── machinery, in one place (founder-decreed 2026-09-04) ────────────────────
+// Three times now the same rule has been rebuilt one exception at a time: an
+// auto-reply is not the client writing (8/22), then a courtesy sign-off
+// (8/22), then a calendar acceptance (9/4) — and hours later a marketing MQL
+// alert took the court on HR Hawaii and the row said "Answer Marketing. They
+// wrote today." while the prospect had already accepted the invitation.
+//
+// So the rule stops being a list of exceptions and becomes one predicate.
+// Machinery is anything that arrives in an inbox without a person deciding
+// to write it: an out-of-office, a calendar response, a routed-lead alert, a
+// delivery notice. It never opens a reply-owed and never resets a motion
+// clock. It stays real for Sendbook warmth, which keeps its own reader —
+// this suppresses the OBLIGATION, never the fact that something arrived.
+
+const AUTO_REPLY_RE = /automatic reply|out of office|auto-?reply|autoreply/i;
+
+// Delivery and routing notices every mail system emits.
+const NOTICE_RE =
+  /undeliverable|delivery (?:status notification|has failed|receipt)|read: |mail delivery|message blocked|quarantine/i;
+
+// A routed lead or campaign alert. The 📣 marker is the marketing system's
+// own; the phrase is the routing subject it ships with.
+const CAMPAIGN_RE =
+  /📣|new website or campaign response lead|campaign response|new (?:mql|lead) (?:routed|assigned)|marketplace partner:/i;
+
+// Senders that are a mailbox or a department, never a person. Kept explicit
+// and single-token on purpose: a real name has a first and a last, and a
+// shared inbox that a human actually writes from is not on this list.
+const MACHINE_SENDERS = new Set([
+  "marketing",
+  "noreply",
+  "no-reply",
+  "donotreply",
+  "do-not-reply",
+  "notification",
+  "notifications",
+  "alerts",
+  "alert",
+  "automated",
+  "system",
+  "mailer-daemon",
+  "postmaster",
+  "salesforce",
+  "webmaster",
+  "support",
+  "info",
+]);
+
+/** Is this sender a mailbox or a department rather than a person? */
+export function isMachineSender(sender: string): boolean {
+  const s = (sender ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/\+\d+\s*$/, "")
+    .trim();
+  if (!s) return false;
+  const local = s.includes("@") ? (s.split("@")[0] ?? "") : s;
+  return MACHINE_SENDERS.has(local.replace(/[^a-z-]/g, ""));
+}
+
+/** Everything that arrives without a person deciding to write it. The head
+ *  is the note's first line; actors is its sender → recipient line. */
+export function isMachinery(n: { body?: string; actors?: string }): boolean {
+  const head = (n.body ?? "").split("\n")[0] ?? "";
+  if (AUTO_REPLY_RE.test(head)) return true;
+  if (NOTICE_RE.test(head)) return true;
+  if (CAMPAIGN_RE.test(head)) return true;
+  if (isMeetingResponse(head)) return true;
+  return isMachineSender((n.actors ?? "").split("→")[0] ?? "");
 }
