@@ -335,10 +335,49 @@ export function vttToPaste(raw: string, filename: string): string {
  *  call that happened today. */
 const NAME_STAMP = /-(\d{4})(\d{2})(\d{2})[_-](\d{2})(\d{2})\d{2}-/;
 
-/** "YYYY-MM-DD HH:MM" from a recording's file name, or "". */
+/** Zoom names it "GMT20260903-170218_Recording.transcript.vtt" — no leading
+ *  dash, and the stamp is UTC, which the GMT prefix says out loud. Teams'
+ *  pattern above never matched it, so a Zoom call filed a day late read as a
+ *  call that happened today (the Regis recording, 2026-09-04). */
+const ZOOM_STAMP = /GMT(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})/;
+
+const p2 = (n: number): string => String(n).padStart(2, "0");
+
+/** "YYYY-MM-DD HH:MM" from a recording's file name, or "".
+ *
+ *  Teams stamps its local wall clock and is taken as written. Zoom stamps
+ *  UTC, so it is converted to the operator's own day before the date is
+ *  taken — an 8pm Chicago call carries tomorrow's UTC date in its name, and
+ *  reading that literally would file the call a day into the future. */
 export function recordedAtFromName(filename: string): string {
-  const m = NAME_STAMP.exec(filename ?? "");
-  return m ? `${m[1]}-${m[2]}-${m[3]} ${m[4]}:${m[5]}` : "";
+  const name = filename ?? "";
+  const m = NAME_STAMP.exec(name);
+  if (m) return `${m[1]}-${m[2]}-${m[3]} ${m[4]}:${m[5]}`;
+  const z = ZOOM_STAMP.exec(name);
+  if (!z) return "";
+  const utc = Date.UTC(
+    Number(z[1]),
+    Number(z[2]) - 1,
+    Number(z[3]),
+    Number(z[4]),
+    Number(z[5]),
+    Number(z[6]),
+  );
+  if (Number.isNaN(utc)) return "";
+  // The Chicago wall clock of that moment — the day the operator was in.
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Chicago",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(new Date(utc));
+  const get = (t: string) => parts.find((x) => x.type === t)?.value ?? "";
+  const hh = get("hour") === "24" ? "00" : get("hour");
+  if (!get("year")) return "";
+  return `${get("year")}-${get("month")}-${get("day")} ${p2(Number(hh))}:${get("minute")}`;
 }
 
 /** The day a CALL TRANSCRIPT capture says it was recorded, as YYYY-MM-DD, or

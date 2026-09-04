@@ -446,6 +446,39 @@ test("the recording's own moment is read from its file name", () => {
   assert.equal(recordedAtFromName(""), "");
 });
 
+// Zoom's name (the Regis recording, 2026-09-04). Teams' pattern needs a
+// leading dash and never matched "GMT20260903-170218_Recording", so a Zoom
+// call filed the next morning stamped itself with the filing moment and the
+// row said "You met today" about yesterday's call.
+test("a Zoom recording's own moment is read, and its GMT stamp converted", () => {
+  assert.equal(
+    recordedAtFromName("GMT20260903-170218_Recording.transcript.vtt"),
+    "2026-09-03 12:02",
+  );
+  assert.equal(
+    recordedAtFromName("GMT20260902-180135_Recording.transcript.vtt"),
+    "2026-09-02 13:01",
+  );
+  // The stamp is UTC: an evening Chicago call carries TOMORROW's UTC date in
+  // its name. Read literally it would file a day into the future.
+  assert.equal(
+    recordedAtFromName("GMT20260904-010000_Recording.transcript.vtt"),
+    "2026-09-03 20:00",
+  );
+  // Teams keeps its own local-clock reading, unconverted.
+  assert.equal(recordedAtFromName(REAL_NAME), "2026-08-27 14:00");
+});
+
+test("the Zoom head carries the recorded day into the filing clock", () => {
+  const paste = vttToPaste(
+    "WEBVTT\n\n00:00:01.000 --> 00:00:04.000\n<v Chassie Smith>Good to see you.</v>\n",
+    "GMT20260903-170218_Recording.transcript.vtt",
+  );
+  assert.ok(paste.includes("Recorded: 2026-09-03 12:02"), paste.slice(0, 160));
+  // And the filing clock reads that head — never the moment of the drop.
+  assert.equal(transcriptRecordedDay(paste), "2026-09-03");
+});
+
 test("a .vtt paste carries the recorded date so the filing clock can read it", () => {
   const p = vttToPaste(ANON_VTT, REAL_NAME);
   assert.match(p, /\nRecorded: 2026-08-27 14:00\n/);
