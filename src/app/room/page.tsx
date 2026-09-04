@@ -56,6 +56,7 @@ import { researchNs } from "@/lib/intel/deep-research";
 import { getDemand, researchGeneratedAt } from "@/lib/book/research";
 import { readOutcome } from "@/lib/dashboard/outcome";
 import { owedByThem, owedToMe } from "@/lib/room/owed";
+import { settledByRecord } from "@/lib/room/settled";
 import { GLOBAL_SCENT_RE, MINE_RE, isHomeSideName } from "@/lib/intel/provenance";
 import { askHref, peerQuestions, scopedAsk } from "@/lib/intranet/bridges";
 import { sfAccountUrl } from "@/lib/salesforce";
@@ -253,20 +254,35 @@ export default async function RoomPage() {
       (n) => isHomeSideName(n, csms),
     );
     const noteIds = new Set(allNotes.map((n) => n.id));
-    const sheet = buildAccountSheet(todos, accountId, noteIds, dispositions, now);
+    const sheet = buildAccountSheet(
+      todos,
+      accountId,
+      noteIds,
+      dispositions,
+      now,
+      allNotes,
+    );
     // Owed-to-you lines the record holds, minus anything dismissed or already
     // open on the register — the same read the suggestions use.
     const owedDismissedForRead = new Set(
       [...dispositions.keys()].filter((k) => k.startsWith("owed:")),
     );
-    const owedForRead = accountId
-      ? owedToMe(
-          allNotes,
-          owedDismissedForRead,
-          sheet.open.map((o) => o.body),
-          now,
-        )
-      : [];
+    const owedForRead = (
+      accountId
+        ? owedToMe(
+            allNotes,
+            owedDismissedForRead,
+            sheet.open.map((o) => o.body),
+            now,
+          )
+        : []
+    ).filter((o) => {
+      // A promise closes by delivery. The record holds the landing — the
+      // counterparty's own acceptance — so the room stops asking for a thing
+      // it can see was done (the Joseph Lyon invite, 2026-09-04).
+      const src = allNotes.find((n) => n.id === o.noteId);
+      return !settledByRecord({ text: o.text, at: src?.createdAt ?? "" }, allNotes);
+    });
 
     // The newest meeting record — a meeting newer than any outbound makes
     // the recap the move, never a "wait" (Staff Leasing 1:00 PM, 8/18).
@@ -346,7 +362,9 @@ export default async function RoomPage() {
       openOwed: [
         // The full stored line, not the register's capped display body — the
         // stage builds its own instruction and must never inherit a cut.
-        ...sheet.open.map((o) => ({ text: o.edit, wall: !!o.wall, due: o.due })),
+        ...sheet.open
+          .filter((o) => !o.settled)
+          .map((o) => ({ text: o.edit, wall: !!o.wall, due: o.due })),
         ...owedForRead.map((o) => ({ text: o.text })),
       ],
       now,
