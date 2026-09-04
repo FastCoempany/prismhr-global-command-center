@@ -20,24 +20,12 @@
 // the stored commitment is untouched and the operator still holds the ✓. The
 // row simply stops instructing you to do a thing the record shows you did.
 
-import { isMeetingResponse } from "@/lib/intel/closer";
+import { isAcceptance } from "@/lib/intel/closer";
 import { effectiveAt } from "@/lib/intel/clock";
 
 /** Commitments about getting a meeting onto the calendar. */
 const SCHEDULING_RE =
   /\b(invit(?:e|ation)|calendar|booking link|calendly|schedule(?:d|s)? (?:the|a|it)|get (?:the|a) (?:call|meeting|demo)\b.*\b(?:on|booked)|put (?:time|it) on)\b/i;
-
-/** A response that says the meeting is ON — declines and tentatives prove
- *  nothing was settled, so only an acceptance counts. */
-const ACCEPTED_RE = /(?:^|—\s*)Accepted\s*:/i;
-
-function acceptedHead(body: string): boolean {
-  const line = (body ?? "").split("\n")[0] ?? "";
-  if (!isMeetingResponse(line)) return false;
-  const dash = line.indexOf("—");
-  const subject = dash >= 0 ? line.slice(dash + 1) : line;
-  return ACCEPTED_RE.test(`— ${subject.trim()}`);
-}
 
 export type Settlement = { why: string; at: string };
 
@@ -54,7 +42,7 @@ export function settledByRecord(
 
   for (const n of notes ?? []) {
     const body = n.body ?? "";
-    if (!acceptedHead(body)) continue;
+    if (!isAcceptance(body)) continue;
     // The acceptance has to POSTDATE the promise — an older meeting on the
     // books never settles a commitment made after it.
     const at = Date.parse(effectiveAt(n.createdAt, body));

@@ -32,6 +32,11 @@ export type RoomInputs = {
   // gating the pricing, and the row said only "send the recap"). Read by the
   // meeting move alone; their reply landing flips the court and retires it.
   theirBall?: { who: string; text: string } | null;
+  // The newest invitation ACCEPTANCE in the record. It is machinery, so it
+  // never opens a reply-owed — but it is proof the meeting exists, and a row
+  // that says "wait on Melanie" while Melanie has already accepted is telling
+  // the operator to wait for a thing that arrived (HR Hawaii, 2026-09-04).
+  lastAccepted?: { at: string; who: string } | null;
   // most recent record entry of ANY kind ("" = empty record)
   lastRecordAt: string;
   // every gate on every stage is checked but no outcome is stamped — the deal
@@ -67,6 +72,14 @@ const DAY = 86_400_000;
 // never "1 days ago"; a one-day quiet is "Quiet 1 day."
 const daysAgo = (n: number): string => (n === 1 ? "yesterday" : `${n} days ago`);
 const nDays = (n: number): string => `${n} day${n === 1 ? "" : "s"}`;
+
+// The same day grammar the move uses, in the court chip's own voice. "0 DAYS
+// AGO" is the species the founder already retired at "1 days ago" — a chip
+// that counts to zero is telling you it cannot count (HR Hawaii, 2026-09-04).
+const agoChip = (n: number | null): string =>
+  n == null || n <= 0 ? "TODAY" : n === 1 ? "YESTERDAY" : `${n} DAYS AGO`;
+const daysChip = (n: number): string =>
+  n <= 0 ? "TODAY" : n === 1 ? "1 DAY" : `${n} DAYS`;
 
 // Their promise holds an await this long before the chase resumes — a
 // "will be in touch" is theirs to keep for a week, then it's yours to chase
@@ -208,6 +221,17 @@ export function readDeal(i: RoomInputs): RoomRead {
   const meetingAgo =
     meetingDays != null && meetingDays > 0 ? daysAgo(meetingDays) : "today";
 
+  // The meeting is on the books: an acceptance newer than our last send, and
+  // no real reply or meeting after it.
+  const acceptedAt = i.lastAccepted?.at ?? "";
+  const acceptedNewest =
+    !!acceptedAt &&
+    !Number.isNaN(Date.parse(acceptedAt)) &&
+    !inboundNewest &&
+    !meetingNewest &&
+    (!i.lastTouch || Date.parse(acceptedAt) >= Date.parse(i.lastTouch.at));
+  const acceptedWho = (i.lastAccepted?.who || "").trim();
+
   // A dated wall is a real calendar fact — expire and escalate it.
   const wallMs = i.timing?.dateIso ? Date.parse(i.timing.dateIso) : NaN;
   const wallDaysPast = Number.isNaN(wallMs)
@@ -220,7 +244,7 @@ export function readDeal(i: RoomInputs): RoomRead {
   if (inboundNewest) {
     const who = (inboundWho || "they").toUpperCase().slice(0, 24);
     court = {
-      line: `YOUR MOVE · ${who} WROTE ${inboundDays ?? 0} DAYS AGO`,
+      line: `YOUR MOVE · ${who} WROTE ${agoChip(inboundDays)}`,
       tone: "you",
     };
   } else if (meetingNewest) {
@@ -229,13 +253,16 @@ export function readDeal(i: RoomInputs): RoomRead {
       line: `YOUR MOVE · MET ${who} ${meetingDays === 0 ? "TODAY" : `${meetingDays}D AGO`}`,
       tone: "you",
     };
+  } else if (acceptedNewest) {
+    const who = (acceptedWho || "they").toUpperCase().slice(0, 24);
+    court = { line: `BOOKED · ${who} ACCEPTED`, tone: "them" };
   } else if (i.lastTouch && i.lastTouch.awaitingReply) {
     const who = (i.lastTouch.who || "them").toUpperCase().slice(0, 24);
     const q = quietDays ?? 0;
     court =
       q >= QUIET_RED_DAYS
-        ? { line: `THEIR MOVE · ${who} · QUIET ${q} DAYS`, tone: "quiet" }
-        : { line: `THEIR MOVE · ${who} · ${q} DAYS`, tone: "them" };
+        ? { line: `THEIR MOVE · ${who} · QUIET ${daysChip(q)}`, tone: "quiet" }
+        : { line: `THEIR MOVE · ${who} · ${daysChip(q)}`, tone: "them" };
   } else if (i.step) {
     court = { line: "YOUR MOVE", tone: "you" };
   } else if (i.allGatesDone) {
@@ -337,6 +364,10 @@ export function readDeal(i: RoomInputs): RoomRead {
     } else {
       move = `Send ${meetingWho || "them"} the recap. You met ${meetingAgo}.`;
     }
+  } else if (acceptedNewest && !owedNow) {
+    // Nothing is owed either way — the invitation was accepted and the next
+    // real event is the meeting itself.
+    move = `Wait for the meeting. ${acceptedWho || "They"} accepted.`;
   } else if (
     i.lastTouch &&
     i.lastTouch.awaitingReply &&

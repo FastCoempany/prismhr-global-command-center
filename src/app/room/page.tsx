@@ -48,6 +48,8 @@ import { daysBetween, meterRead, readDeal, type RoomRead } from "@/lib/room/engi
 import { moveDoneKey } from "@/lib/room/bind";
 import { lastTouchRead } from "@/lib/room/touch";
 import { meetingRead } from "@/lib/intel/meeting";
+import { isAcceptance } from "@/lib/intel/closer";
+import { effectiveAt } from "@/lib/intel/clock";
 import { buildStageRail } from "@/lib/room/stages-view";
 import { buildAccountSheet } from "@/lib/room/sheet-view";
 import { readLoss } from "@/lib/room/loss";
@@ -361,6 +363,24 @@ export default async function RoomPage() {
           }
         : null,
       lastMeeting: meetingForRead,
+      // The newest invitation acceptance — machinery, so it opens no
+      // reply-owed, but it is proof the meeting exists (HR Hawaii, 9/4).
+      lastAccepted: (() => {
+        const a = allNotes.find((n) => isAcceptance(n.body ?? ""));
+        if (!a) return null;
+        const side =
+          (a.actors ?? "")
+            .split("→")[0]
+            ?.replace(/\+\d+\s*$/, "")
+            .trim() ?? "";
+        return {
+          at: effectiveAt(a.createdAt, a.body ?? ""),
+          who:
+            firstName(isHomeSideName(side, csms) ? "" : side) ||
+            firstName(rel.name) ||
+            "they",
+        };
+      })(),
       theirBall,
       lastRecordAt: allNotes[0]?.createdAt ?? "",
       allGatesDone,
