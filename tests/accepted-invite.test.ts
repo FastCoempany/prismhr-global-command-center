@@ -12,6 +12,7 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 import { isMeetingResponse } from "../src/lib/intel/closer";
+import { meetingRead, speakersIn } from "../src/lib/intel/meeting";
 import { settledByRecord } from "../src/lib/room/settled";
 import { corpusFor, extractDealIntel } from "../src/lib/intel/extract";
 import { buildAccountSheet } from "../src/lib/room/sheet-view";
@@ -235,5 +236,107 @@ describe("a promise closes by delivery, and the record holds the landing", () =>
       NOTES,
     );
     assert.equal(sheet.open[0].settled, undefined);
+  });
+});
+
+// ── who was actually met (2026-09-04) ───────────────────────────────────────
+// A dropped recording files TWICE — the read's ☎ CT entry, which names the
+// people, and the ☰ transcript archive, which holds the conversation and
+// carries no actors at all. Both stamp the same day, so whichever the sort
+// hands back first wins; when that was the archive the recap had nobody to
+// address and fell through to the relationship rollup, putting Leilani
+// Gonzalez on a recap the record says was with Elise Munoz.
+
+describe("the recap names who the record says was in the room", () => {
+  const isHome = (n: string) => /antaeus|lesha cyphers/i.test(n);
+  const DAY = "2026-09-03T12:00:00.000Z";
+  const ARCHIVE = {
+    id: "arch",
+    body: [
+      "☰ Call transcript — dropped file GMT20260903-170218_Recording.transcript.vtt · 4 voices · full text under the fold",
+      "CALL TRANSCRIPT — dropped file GMT20260903-170218_Recording.transcript.vtt",
+      "Antaeus Coe: Thanks for making the time.",
+      "Elise Munoz: Of course.",
+      "Lesha Cyphers: Glad we could connect you two.",
+      "Leilani Gonzalez: Same here.",
+    ].join("\n"),
+    createdAt: DAY,
+    actors: "",
+    source: "transcript",
+  };
+  const ENTRY = {
+    id: "ct",
+    body: "☎ CT Sep 3 12:02 PM — PRISM Global overview — Regis (Puerto Rico need) · Antaeus Coe → Elise Munoz +3",
+    createdAt: DAY,
+    actors: "Antaeus Coe → Elise Munoz +3",
+    source: "call-ai",
+  };
+
+  test("the actorless archive borrows the sibling entry's actors", () => {
+    const r = meetingRead([ARCHIVE, ENTRY], isHome);
+    assert.ok(r);
+    assert.equal(r!.who, "Elise Munoz");
+    assert.equal(r!.at, DAY);
+  });
+  test("order does not decide who was met", () => {
+    assert.equal(meetingRead([ENTRY, ARCHIVE], isHome)!.who, "Elise Munoz");
+  });
+  test("with no sibling, the transcript's own voices name them", () => {
+    const r = meetingRead([ARCHIVE], isHome);
+    assert.equal(r!.who, "Elise Munoz", "the first non-home speaker");
+  });
+  test("our own side is never the person we met", () => {
+    assert.deepEqual(speakersIn(ARCHIVE.body, isHome), ["Elise Munoz", "Leilani Gonzalez"]);
+    assert.ok(!speakersIn(ARCHIVE.body, isHome).includes("Antaeus Coe"));
+    assert.ok(!speakersIn(ARCHIVE.body, isHome).includes("Lesha Cyphers"), "a CSM is home side");
+  });
+  test("adversarial: a colleague on the tape is never who we met", () => {
+    // Shane Jacobs sets our proposal terms and appears on an Advocate Pay
+    // recording. He is on no CSM roster, so isHome cannot catch him — the
+    // book's own account roster has to (swept 2026-09-04). Naming him would
+    // put our own side on the row as the client.
+    const tape = {
+      id: "t",
+      body: [
+        "☰ Call transcript — dropped file demo.vtt · 9 voices · full text under the fold",
+        "CALL TRANSCRIPT — dropped file demo.vtt",
+        "Shane Jacobs: The deposit on the EOR employees is waived.",
+        "Bryce Rowley: Understood.",
+      ].join("\n"),
+      createdAt: DAY,
+      actors: "",
+      source: "transcript",
+    };
+    const onTheAccount = (n: string) => /bryce rowley/i.test(n);
+    assert.equal(meetingRead([tape], isHome, onTheAccount)!.who, "Bryce Rowley");
+    // With no roster to check against, the raw voice order would have named
+    // our own person first — which is exactly the failure.
+    assert.equal(meetingRead([tape], isHome)!.who, "Shane Jacobs");
+  });
+  test("adversarial: transcript metadata is never a person", () => {
+    const noisy = [
+      "☰ Call transcript — dropped file x.vtt",
+      "CALL TRANSCRIPT — dropped file x.vtt",
+      "Recorded: 2026-08-27 14:00",
+      "Speakers: not labeled in this export",
+      "TO DO: send the pricing",
+      "Topic: Antaeus Coe's Personal Meeting Room",
+      "brycerowley: hello",
+      "Elise Munoz: Of course.",
+    ].join("\n");
+    assert.deepEqual(speakersIn(noisy, isHome), ["Elise Munoz"]);
+  });
+  test("adversarial: a sibling from ANOTHER day never lends its actors", () => {
+    const older = { ...ENTRY, createdAt: "2026-08-01T12:00:00.000Z" };
+    const bare = { ...ARCHIVE, body: "☰ Call transcript — nobody labeled\nCALL TRANSCRIPT — x" };
+    const r = meetingRead([bare, older], isHome);
+    assert.equal(r!.who, "", "the caller falls back knowingly, never to the wrong day");
+  });
+  test("adversarial: no meetings, junk notes — no throw", () => {
+    assert.equal(meetingRead([], isHome), null);
+    assert.equal(
+      meetingRead([{ body: "✉ OL 09/04 — Re: hi · A → B", createdAt: DAY, actors: "", source: "outlook" }], isHome),
+      null,
+    );
   });
 });
