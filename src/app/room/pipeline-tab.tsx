@@ -18,10 +18,11 @@
 //   · the plain text is built from the record and his overlay, never from the
 //     rendered DOM, so what he copies is a fact in one place.
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { PipelineRecord } from "@/lib/pipeline/build";
 import { closeText, lineKey, recordToText, reportToText } from "@/lib/pipeline/plain";
 import { reportDocument, reportFileName } from "@/lib/pipeline/docx";
+import { freshPipeline } from "./pipeline-actions";
 import styles from "./room.module.css";
 
 const md = (iso: string) =>
@@ -442,9 +443,9 @@ function Record({
  *  margin, and a tab that builds its own stack collides with the tabs already
  *  there (caught on screen, 2026-09-08). */
 export function PipelineDrawer({
-  rows,
-  dayLabel,
-  staleNote,
+  rows: served,
+  dayLabel: servedDay,
+  staleNote: servedStale,
   onClose,
 }: {
   rows: PipelineRecord[];
@@ -453,6 +454,37 @@ export function PipelineDrawer({
   staleNote: string;
   onClose: () => void;
 }) {
+  // The room's render is as old as the page. Leave it open, drop a transcript
+  // down the Chute, and the served records predate the drop — so the drawer
+  // re-reads the moment it opens, and the button builds its file from that.
+  // Until the read lands, the served rows show rather than an empty pane: a
+  // slightly old report beats no report, and the line below says which it is.
+  const [fresh, setFresh] = useState<{
+    rows: PipelineRecord[];
+    dayLabel: string;
+    staleNote: string;
+    readAt: string;
+  } | null>(null);
+  const [reading, setReading] = useState(true);
+  useEffect(() => {
+    let live = true;
+    void freshPipeline()
+      .then((f) => {
+        if (live && f) setFresh(f);
+      })
+      .catch(() => {
+        // The served rows stand, and the line says the read did not land.
+      })
+      .finally(() => {
+        if (live) setReading(false);
+      });
+    return () => {
+      live = false;
+    };
+  }, []);
+  const rows = fresh?.rows ?? served;
+  const dayLabel = fresh?.dayLabel ?? servedDay;
+  const staleNote = fresh?.staleNote ?? servedStale;
   const [overlay, setOverlay] = useState<Overlay>({});
   const [copied, setCopied] = useState(false);
   // Two states, not two surfaces. The peek is the standing one — a narrow pane
@@ -490,6 +522,7 @@ export function PipelineDrawer({
         <button
           type="button"
           className={`${styles.pipeCopy} ${styles.pipeCopyPrimary} ${copied ? styles.pipeCopyDid : ""}`}
+          disabled={reading}
           onClick={async () => {
             await toClipboard(reportToText(rows, overlay, dayLabel));
             setCopied(true);
@@ -501,8 +534,12 @@ export function PipelineDrawer({
         <button
           type="button"
           className={styles.pipeCopy}
-          disabled={doc === "working"}
-          title="A Word file of the whole report, depth and all"
+          disabled={doc === "working" || reading}
+          title={
+            reading
+              ? "Reading the record…"
+              : "A Word file of the whole report, depth and all"
+          }
           onClick={async () => {
             setDoc("working");
             try {
@@ -535,7 +572,12 @@ export function PipelineDrawer({
         </button>
       </div>
       <p className={styles.pipeHint}>
-        {dayLabel} · sorted by what needs you most
+        {reading
+          ? "reading the record…"
+          : fresh
+            ? `read ${fresh.readAt}`
+            : "the room's own read"}{" "}
+        · {dayLabel} · sorted by what needs you most
         {stalled ? ` · ${stalled} with no next step` : ""}
         {staleNote ? ` · ${staleNote}` : ""}
       </p>

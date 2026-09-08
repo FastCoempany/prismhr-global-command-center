@@ -27,6 +27,7 @@ import {
   ARRIVAL,
 } from "../src/lib/pipeline/plain";
 import { reportDocument, reportSection, reportFileName } from "../src/lib/pipeline/docx";
+import { collectPipelineAccounts, pipelineDayLabel } from "../src/lib/pipeline/collect";
 
 const NOW = new Date("2026-09-08T12:00:00Z");
 
@@ -422,5 +423,71 @@ describe("the Word document", () => {
     for (const label of ["PRODUCTS", "OPPORTUNITIES", "MY CONTACTS", "MODEL", "COMPETITOR", "STAGE", "CLOSE DATE", "UNKNOWNS"])
       assert.ok(text.includes(label), `missing ${label}`);
     assert.ok(text.includes("None set — that is the finding"));
+  });
+});
+
+// The gathering. One implementation, shared by the room's render and the
+// drawer's fresh read — a second copy written for the action is the drift the
+// spec forbids, and it is what made the Word file carry a record from before
+// the last drop.
+describe("collecting the active accounts", () => {
+  const card = (o: Partial<Record<string, unknown>> = {}) =>
+    ({
+      id: "c1",
+      name: "Simploy",
+      archived: false,
+      notes: {},
+      checks: {},
+      states: {},
+      subtitle: "",
+      position: 0,
+      checkNotes: {},
+      activated: {},
+      dealSize: null,
+      stakeholders: [],
+      ...o,
+    }) as never;
+  const base = {
+    labels: {},
+    notesById: new Map([["acc", [{ id: "n", createdAt: "2026-09-02T18:00:00Z", body: "x", lane: "mine" as const }]]]),
+    todos: [],
+    dispositions: new Map<string, unknown>(),
+    secondById: new Map(),
+    peos: [{ id: "acc", name: "Simploy", csm: "Lesha Cyphers" }],
+    now: NOW,
+  };
+
+  test("an active card becomes a record's inputs", () => {
+    const got = collectPipelineAccounts({ ...base, cards: [card()] });
+    assert.equal(got.length, 1);
+    assert.equal(got[0].id, "acc");
+    assert.equal(got[0].csm, "Lesha Cyphers");
+    assert.equal(got[0].notes.length, 1);
+  });
+  test("archived and closed cards are not active", () => {
+    assert.equal(collectPipelineAccounts({ ...base, cards: [card({ archived: true })] }).length, 0);
+    // An outcome is stored as JSON carrying a status — a bare phrase is not a
+    // stamp, and readOutcome is right to ignore one.
+    const closed = card({
+      notes: { __outcome: JSON.stringify({ status: "won", phrase: "signed", at: "2026-09-01" }) },
+    });
+    assert.equal(collectPipelineAccounts({ ...base, cards: [closed] }).length, 0);
+  });
+  test("a ✕-parked note leaves the report, as it leaves every register", () => {
+    const got = collectPipelineAccounts({
+      ...base,
+      cards: [card()],
+      dispositions: new Map<string, unknown>([["hide:note:n", {}]]),
+    });
+    assert.deepEqual(got[0].notes, []);
+  });
+  test("a card the book cannot name is skipped rather than guessed", () => {
+    const got = collectPipelineAccounts({ ...base, cards: [card({ name: "Nobody Ltd" })] });
+    assert.equal(got.length, 0);
+  });
+  test("the day label is the Chicago day", () => {
+    assert.equal(pipelineDayLabel(new Date("2026-09-08T12:00:00Z")), "Tue, 9/8");
+    // 1am UTC on the 9th is still the 8th in Chicago.
+    assert.equal(pipelineDayLabel(new Date("2026-09-09T01:00:00Z")), "Tue, 9/8");
   });
 });

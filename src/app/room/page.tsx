@@ -65,12 +65,8 @@ import { sfAccountUrl } from "@/lib/salesforce";
 import { prospectAsks } from "@/lib/intranet/store";
 import { Chute } from "./chute";
 import { routingRoster } from "@/lib/book/roster";
-import {
-  buildPipelineReport,
-  homeSideFrom,
-  rankPipeline,
-  type PipelineAccount,
-} from "@/lib/pipeline/build";
+import { buildPipelineReport, homeSideFrom, rankPipeline } from "@/lib/pipeline/build";
+import { collectPipelineAccounts, pipelineDayLabel } from "@/lib/pipeline/collect";
 import {
   RoomClient,
   type CadenceRow,
@@ -142,10 +138,6 @@ export default async function RoomPage() {
   );
 
   const rows: RoomRow[] = [];
-  // The Pipeline tab's accounts, gathered inside the row loop so the report
-  // reads exactly the stores the room reads — no second pass, no second
-  // interpretation of the same record.
-  const pipeAccounts: PipelineAccount[] = [];
   for (const card of data.cards) {
     if (card.archived) continue;
     const accountId =
@@ -540,23 +532,6 @@ export default async function RoomPage() {
       };
     })();
 
-    // ── the Pipeline record's inputs ──────────────────────────────────────
-    // "Active" is the rule the board already keeps: a card that is not
-    // archived and carries no Closed Won / Closed Lost stamp. Nothing new is
-    // invented, and the count is whatever the board says it is.
-    if (accountId && !outcome)
-      pipeAccounts.push({
-        id: accountId,
-        name: card.name,
-        csm: String(peo?.csm ?? ""),
-        stageLabel: step?.nodeLabel ?? "",
-        notes: allNotes,
-        todos: todos.filter((t) => t.accountId === accountId),
-        gaps: gaps.shown.map((g) => g.question),
-        support: secondById.get(accountId)?.support ?? null,
-        actors: secondById.get(accountId)?.rollup?.actors ?? [],
-      });
-
     rows.push({
       accountId,
       theirs,
@@ -811,7 +786,18 @@ export default async function RoomPage() {
   // rendering confidently wrong counts.
   const pipeReport = rankPipeline(
     buildPipelineReport({
-      accounts: pipeAccounts,
+      // One gathering, shared with the drawer's fresh pull — a second copy
+      // written for the action is exactly the drift the spec forbids.
+      accounts: collectPipelineAccounts({
+        cards: data.cards,
+        labels: data.labels,
+        notesById,
+        todos,
+        dispositions,
+        secondById,
+        peos,
+        now,
+      }),
       // The whole book, not the active slice — a colleague who works across
       // the book but appears on only two active accounts is still ours.
       homeSide: homeSideFrom(notesById),
@@ -820,12 +806,7 @@ export default async function RoomPage() {
       now,
     }),
   );
-  const pipeDayLabel = now.toLocaleDateString("en-US", {
-    timeZone: "America/Chicago",
-    weekday: "short",
-    month: "numeric",
-    day: "numeric",
-  });
+  const pipeDayLabel = pipelineDayLabel(now);
   const pipeDrop = [...secondById.values()]
     .map((s) => s.rollup?.dropDay ?? "")
     .filter(Boolean)
