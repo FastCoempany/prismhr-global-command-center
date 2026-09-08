@@ -47,7 +47,7 @@ function field(
   overlay: Overlay,
   label: string,
   lines: Line[],
-  opts: { unknown?: string; bullets?: boolean } = {},
+  opts: { unknown?: string; bullets?: boolean; join?: string } = {},
 ): void {
   const kept = lines
     .map((l) => live(overlay, l.key, l.text))
@@ -65,7 +65,7 @@ function field(
   } else if (opts.bullets) {
     out.push(`${label}: ${kept[0]}`);
   } else {
-    out.push(`${label}: ${kept.join(" · ")}`);
+    out.push(`${label}: ${kept.join(opts.join ?? " · ")}`);
   }
 }
 
@@ -82,8 +82,8 @@ function field(
  *  the fold is for the eye, never for the deliverable. */
 export const ARRIVAL = [
   "Products",
-  "Opportunities",
-  "My contacts",
+  "Countries",
+  "Contacts",
   "Model",
   "Competitor",
   "Stage",
@@ -144,22 +144,23 @@ export function recordToText(r: PipelineRecord, overlay: Overlay = {}): string {
   field(
     out,
     overlay,
-    "Opportunities",
+    "Countries",
     r.opportunities.map((o, i) => ({
       key: k("opp", i),
       text: `${o.country} · ${o.product || "product Unknown"}${o.headcount ? ` · ${o.headcount}` : ""}`,
     })),
     { unknown: UNKNOWN, bullets: true },
   );
+  // Everyone who was in the room, on one line, commas between them.
   field(
     out,
     overlay,
-    "My contacts",
+    "Contacts",
     r.contacts.map((c, i) => ({
       key: k("contact", i),
       text: c.name + (c.title ? ` (${c.title})` : ""),
     })),
-    { unknown: UNKNOWN },
+    { unknown: UNKNOWN, join: ", " },
   );
   field(out, overlay, "Model", r.model ? [{ key: k("model"), text: r.model.v }] : [], {
     unknown: UNKNOWN,
@@ -196,13 +197,8 @@ export function recordToText(r: PipelineRecord, overlay: Overlay = {}): string {
       ? [
           {
             key: k("meeting"),
-            text:
-              `${r.lastTouch.kind} ${md(r.lastTouch.date)}` +
-              (r.lastTouch.room.length
-                ? ` · ${r.lastTouch.room
-                    .map((p) => p.name + (p.title ? ` (${p.title})` : ""))
-                    .join(", ")}`
-                : ""),
+            // A date, and nothing else. Who was there is on the contacts line.
+            text: md(r.lastTouch.date),
           },
         ]
       : [],

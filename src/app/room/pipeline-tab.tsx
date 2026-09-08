@@ -62,24 +62,30 @@ function Line({
   overlay,
   set,
   className,
+  unknown,
 }: {
   k: string;
   text: string;
   overlay: Overlay;
   set: (k: string, v: string | null) => void;
   className?: string;
+  /** Nothing on record. It still renders as a line he can type into — a field
+   *  the app could not fill is exactly the one he most wants to fill himself
+   *  (founder-caught 2026-09-08). It reads quiet until he does. */
+  unknown?: boolean;
 }) {
   if (overlay[k] === null) return null;
-  const shown = overlay[k] ?? text;
+  const edited = k in overlay;
+  const shown = overlay[k] ?? (unknown ? "Unknown" : text);
   return (
     <span className={`${styles.pipeLine} ${className ?? ""}`}>
       <span
         contentEditable
         suppressContentEditableWarning
-        className={styles.pipeEd}
+        className={`${styles.pipeEd} ${unknown && !edited ? styles.pipeUnknown : ""}`}
         onBlur={(e) => {
           const v = (e.currentTarget.textContent ?? "").replace(/\s+/g, " ").trim();
-          if (v !== text) set(k, v);
+          if (v !== (unknown ? "Unknown" : text)) set(k, v);
         }}
         onKeyDown={(e) => {
           if (e.key === "Enter") {
@@ -121,8 +127,6 @@ function Field({
   );
 }
 
-const Unknown = () => <span className={styles.pipeUnknown}>Unknown</span>;
-
 function Record({
   r,
   overlay,
@@ -143,18 +147,24 @@ function Record({
   const struck = Object.entries(overlay).filter(
     ([key, v]) => v === null && key.startsWith(`${r.id}:`),
   ).length;
-  const list = (
-    field: string,
-    items: readonly string[],
-    empty: React.ReactNode = <Unknown />,
-  ) => {
-    const rows = items.map((t, i) => (
-      <li key={i}>
-        <Line k={k(field, i)} text={t} overlay={overlay} set={set} />
-      </li>
-    ));
+  /** A field's lines. When the record holds none — or he has struck them all
+   *  — one editable Unknown stands in its place, because a field the app could
+   *  not fill is the one he most wants to fill himself. */
+  const list = (field: string, items: readonly string[], empty?: React.ReactNode) => {
     const alive = items.filter((_, i) => overlay[k(field, i)] !== null);
-    return alive.length ? <ul className={styles.pipeList}>{rows}</ul> : empty;
+    if (!alive.length)
+      return (
+        empty ?? <Line k={k(field, 0)} text="" unknown overlay={overlay} set={set} />
+      );
+    return (
+      <ul className={styles.pipeList}>
+        {items.map((t, i) => (
+          <li key={i}>
+            <Line k={k(field, i)} text={t} overlay={overlay} set={set} />
+          </li>
+        ))}
+      </ul>
+    );
   };
 
   return (
@@ -200,19 +210,16 @@ function Record({
       </div>
 
       <Field label="Products" src="deal intel">
-        {r.products.length ? (
-          <Line
-            k={k("products")}
-            text={r.products.join(", ")}
-            overlay={overlay}
-            set={set}
-          />
-        ) : (
-          <Unknown />
-        )}
+        <Line
+          k={k("products")}
+          text={r.products.join(", ")}
+          unknown={!r.products.length}
+          overlay={overlay}
+          set={set}
+        />
       </Field>
 
-      <Field label="Opportunities">
+      <Field label="Countries">
         {r.opportunities.length ? (
           <ul className={styles.pipeList}>
             {r.opportunities.map((o, i) => (
@@ -228,45 +235,48 @@ function Record({
             ))}
           </ul>
         ) : (
-          <Unknown />
+          <Line k={k("opp")} text="" unknown overlay={overlay} set={set} />
         )}
       </Field>
 
-      <Field label="My contacts" src="record">
-        {r.contacts.length ? (
-          <Line
-            k={k("contact")}
-            text={r.contacts
-              .map((c) => c.name + (c.title ? ` (${c.title})` : ""))
-              .join(" · ")}
-            overlay={overlay}
-            set={set}
-          />
-        ) : (
-          <Unknown />
-        )}
+      <Field label="Contacts" src="record">
+        <Line
+          k={k("contact")}
+          text={r.contacts
+            .map((c) => c.name + (c.title ? ` (${c.title})` : ""))
+            .join(", ")}
+          unknown={!r.contacts.length}
+          overlay={overlay}
+          set={set}
+        />
       </Field>
 
       <Field label="Model" src={r.model?.src}>
-        {r.model ? (
-          <Line k={k("model")} text={r.model.v} overlay={overlay} set={set} />
-        ) : (
-          <Unknown />
-        )}
+        <Line
+          k={k("model")}
+          text={r.model?.v ?? ""}
+          unknown={!r.model}
+          overlay={overlay}
+          set={set}
+        />
       </Field>
       <Field label="Competitor" src={r.incumbent?.src}>
-        {r.incumbent ? (
-          <Line k={k("incumbent")} text={r.incumbent.v} overlay={overlay} set={set} />
-        ) : (
-          <Unknown />
-        )}
+        <Line
+          k={k("incumbent")}
+          text={r.incumbent?.v ?? ""}
+          unknown={!r.incumbent}
+          overlay={overlay}
+          set={set}
+        />
       </Field>
       <Field label="Stage" src={r.stage?.src}>
-        {r.stage ? (
-          <Line k={k("stage")} text={r.stage.v} overlay={overlay} set={set} />
-        ) : (
-          <Unknown />
-        )}
+        <Line
+          k={k("stage")}
+          text={r.stage?.v ?? ""}
+          unknown={!r.stage}
+          overlay={overlay}
+          set={set}
+        />
       </Field>
       <Field
         label="Close date"
@@ -278,37 +288,27 @@ function Record({
             : undefined
         }
       >
-        {r.closeDate ? (
-          <>
-            <Line
-              k={k("close")}
-              text={closeText(r.closeDate)}
-              overlay={overlay}
-              set={set}
-            />
-            {r.closeDate.passed && <span className={styles.pipePillWarn}>Passed</span>}
-          </>
-        ) : (
-          <Unknown />
-        )}
+        <Line
+          k={k("close")}
+          text={closeText(r.closeDate)}
+          unknown={!r.closeDate}
+          overlay={overlay}
+          set={set}
+        />
+        {r.closeDate?.passed && <span className={styles.pipePillWarn}>Passed</span>}
       </Field>
 
+      {/* A date, and nothing else. Who was in the room is on the contacts
+          line — carrying five names here that the contacts line never
+          mentioned read as two different accounts. */}
       <Field label="Last meeting">
-        {r.lastTouch ? (
-          <Line
-            k={k("meeting")}
-            text={
-              `${r.lastTouch.kind} ${md(r.lastTouch.date)}` +
-              (r.lastTouch.room.length
-                ? ` · ${r.lastTouch.room.map((p) => p.name + (p.title ? ` (${p.title})` : "")).join(", ")}`
-                : "")
-            }
-            overlay={overlay}
-            set={set}
-          />
-        ) : (
-          <Unknown />
-        )}
+        <Line
+          k={k("meeting")}
+          text={r.lastTouch ? md(r.lastTouch.date) : ""}
+          unknown={!r.lastTouch}
+          overlay={overlay}
+          set={set}
+        />
       </Field>
 
       {/* Their turn runs first when the same conversation set both sides —
@@ -363,7 +363,7 @@ function Record({
           lines. The click-depth law decides: the budget wins and the
           intelligence moves a click down. Copy still takes the whole record;
           the fold is for the eye, never for the deliverable. */}
-      <details className={styles.pipeFold}>
+      <details className={styles.pipeFold} open={openDepth}>
         <summary>Depth · outcomes, unknowns, risk, FYI</summary>
         <Field label="Outcomes" src={r.outcomesSrc}>
           {list(
@@ -403,7 +403,7 @@ function Record({
 
         {r.handoffs.length > 0 && (
           <Field label="FYI · other teams" src="register">
-            {list("handoff", r.handoffs, null)}
+            {list("handoff", r.handoffs, <></>)}
           </Field>
         )}
 
@@ -418,22 +418,6 @@ function Record({
           </Field>
         )}
       </details>
-      {r.overtaken.length > 0 && (
-        <details className={styles.pipeFold} open={openDepth}>
-          <summary>
-            {r.overtaken.length} overtaken by the{" "}
-            {r.lastTouch ? md(r.lastTouch.date) : "last"} call
-          </summary>
-          <ul className={styles.pipeList}>
-            {r.overtaken.map((o, i) => (
-              <li key={i} className={styles.pipeUnknown}>
-                {o.text}{" "}
-                <span className={styles.pipeSrcInline}>opened {md(o.opened)}</span>
-              </li>
-            ))}
-          </ul>
-        </details>
-      )}
     </div>
   );
 }

@@ -7,6 +7,9 @@ import {
   PRODUCT_TERMS,
   URGENCY,
   countriesIn,
+  countryMentions,
+  countryNear,
+  COUNTRY_NAME,
   redactMoney,
 } from "@/lib/intel/lexicon";
 import { dateNear } from "@/lib/intel/extract";
@@ -249,5 +252,42 @@ describe("timing reads the sentence its urgency phrase is in", () => {
   test("a month already past means next year", () => {
     const s = "deadline by January 15";
     assert.equal(dateNear(s, 0, REF), "2027-01-15");
+  });
+});
+
+// A fact binds to the country NEAREST it, and the raw tape is speech.
+// Both rules come from the same two records read wrong on 2026-09-08.
+describe("countries bind by proximity, and the tape is not a deal fact", () => {
+  test("the ten are Canada's, not Mexico's", () => {
+    // XCEL HR's 8/13 read, verbatim. Two countries, one sentence, and the
+    // record says Mexico's headcount is unknown outright.
+    const s =
+      "Immediate: Mexico (headcount TBD, must call client) and Canada — 10 workers already live on payroll with a third party XLHR referred out; entity exists, win-back aimed at a Jan 1 switch.";
+    const at = s.indexOf("10 workers");
+    assert.equal(countryNear(s, at), "ca");
+  });
+  test("a country far from the fact does not claim it", () => {
+    const s = `Spain flagged next.${" ".repeat(400)}We counted 12 employees.`;
+    assert.equal(countryNear(s, s.indexOf("12 employees")), "");
+  });
+  test("a following mention only wins when it is much closer", () => {
+    const s = "Canada — 10 workers, and separately Mexico.";
+    assert.equal(countryNear(s, s.indexOf("10 workers")), "ca");
+    const t = "…nothing here… 10 workers in Mexico.";
+    assert.equal(countryNear(t, t.indexOf("10 workers")), "mx");
+  });
+  test("mentions carry their offsets", () => {
+    const got = countryMentions("Mexico and Canada");
+    assert.deepEqual(
+      got.map((m) => m.code),
+      ["mx", "ca"],
+    );
+    assert.ok(got[1].at > got[0].at);
+  });
+  test("Puerto Rico is a place work happens, and is now visible", () => {
+    assert.deepEqual(countriesIn("two staffing clients hiring in Puerto Rico"), ["pr"]);
+    assert.equal(COUNTRY_NAME.pr, "Puerto Rico");
+    // The bare initials are not read — PR is public relations far more often.
+    assert.deepEqual(countriesIn("send it to PR for review"), []);
   });
 });

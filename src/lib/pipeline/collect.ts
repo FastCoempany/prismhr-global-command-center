@@ -43,6 +43,12 @@ type Second = {
   rollup: { actors: PipelineAccount["actors"] } | null;
 };
 
+// A demo that happened, as the record writes it. "Demo scheduled" and "set up
+// a demo" are not a demo held, so the past tense and the held/ran forms are
+// what count.
+const DEMO_HELD_RE =
+  /\b(?:demo(?:ed|ed to)?\b[^.\n]{0,40}\b(?:held|ran|done|complete[d]?)|(?:held|ran|did|gave|walked (?:them )?through)\s+(?:a|the)\s+demo|demo\s+(?:held|complete[d]?|recap)|on the demo\b|during the demo\b|post-demo\b)/i;
+
 export type CollectInput = {
   cards: readonly Card[];
   /** The board's own stage labels, as loadDashboard() returns them. */
@@ -96,6 +102,12 @@ export function collectPipelineAccounts(input: CollectInput): PipelineAccount[] 
       ),
       support: second?.support ?? null,
       actors: second?.rollup?.actors ?? [],
+      // A demo on the board or in the record. Either is enough: the board is
+      // where the operator stamps it, the record is where it actually happened.
+      demoOnRecord:
+        card.states?.demo === "done" ||
+        (card.checks?.demo ?? []).some(Boolean) ||
+        notes.some((n) => DEMO_HELD_RE.test(n.body ?? "")),
     });
   }
   return out;

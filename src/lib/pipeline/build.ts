@@ -17,7 +17,14 @@ import { meetingRead, speakersIn } from "@/lib/intel/meeting";
 import { peopleFor } from "@/lib/intel/people";
 import { isHomeSideName, MINE_RE } from "@/lib/intel/provenance";
 import { effectiveAt } from "@/lib/intel/clock";
-import { COUNTRY_NAME, redactMoney } from "@/lib/intel/lexicon";
+import {
+  COUNTRY_NAME,
+  PRODUCT_TERMS,
+  countryMentions,
+  countryNear,
+  demandNear,
+  redactMoney,
+} from "@/lib/intel/lexicon";
 import { buildAccountSheet } from "@/lib/room/sheet-view";
 import { moveFromCommitment } from "@/lib/room/move-line";
 import { splitFallback } from "@/lib/room/deliverables";
@@ -63,8 +70,6 @@ export type PipelineRecord = {
   /** Verbatim speech the record kept — load-bearing in his own updates. */
   theirWords: string[];
   ourNext: { text: string; full: string; opened: string; urgent: boolean }[];
-  /** Commitments a later meeting overtook. Kept, folded, never a next step. */
-  overtaken: { text: string; opened: string }[];
   doneRecently: string[];
   theirSide: { who: string; text: string; at: string; src: string }[];
   /** Their turn comes first — his sends are not today's work. */
@@ -93,6 +98,9 @@ const PRODUCT: Record<string, string> = {
   aor: "AOR",
   talent: "Talent",
 };
+
+/** The book's close date until the operator files a real one, per account. */
+export const BOOK_CLOSE_DATE = "2026-12-25";
 
 const md = (iso: string) => `${Number(iso.slice(5, 7))}/${Number(iso.slice(8, 10))}`;
 const dayOf = (iso: string) => (iso ?? "").slice(0, 10);
@@ -171,6 +179,49 @@ export function tidyPeople(names: readonly string[]): string[] {
 /** One filed entry. Callers pass notes already stripped of ✕-parked rows
  *  (`hide:note:` dispositions) — the note survives in the table, the row does
  *  not, and the report must read exactly what the room reads. */
+/** Which product each country is named beside. Reads the distilled entries and
+ *  notes, never the raw tape — a demo walks through every product in the suite
+ *  and would attach all of them to whichever country was on screen. */
+/** The countries the record shows work in. Reads the same docs the countries
+ *  themselves came from — the reads, never the raw tape. An empty set means the
+ *  record is too thin to judge, and the caller keeps every country rather than
+ *  showing none. */
+function countriesInPlay(
+  notes: readonly { body: string; source?: string }[],
+): Set<string> {
+  const out = new Set<string>();
+  for (const n of notes) {
+    if (/transcript/.test(n.source ?? "")) continue;
+    for (const m of countryMentions(n.body ?? ""))
+      if (demandNear(n.body ?? "", m.at)) out.add(m.code);
+  }
+  return out;
+}
+
+function productByCountry(
+  notes: readonly { body: string; source?: string }[],
+): Map<string, string[]> {
+  const out = new Map<string, string[]>();
+  for (const n of notes) {
+    if (/transcript/.test(n.source ?? "")) continue;
+    for (const key of Object.keys(PRODUCT_TERMS) as (keyof typeof PRODUCT_TERMS)[]) {
+      const re = new RegExp(PRODUCT_TERMS[key].source, "gi");
+      for (const m of (n.body ?? "").matchAll(re)) {
+        const c = countryNear(n.body, m.index ?? 0, 120);
+        if (!c) continue;
+        const at = out.get(c) ?? out.set(c, []).get(c)!;
+        // Both, when the record names both. XCEL HR's Canada is a payroll
+        // win-back and its Mexico is EOR, but the record also says "Canada +
+        // Mexico EOR/Payroll pricing collateral" — naming both for both.
+        // Choosing one there asserts something the record does not; two is the
+        // honest reading, and the operator edits the line if he knows better.
+        if (!at.includes(key) && at.length < 2) at.push(key);
+      }
+    }
+  }
+  return out;
+}
+
 export type PipelineNote = {
   id: string;
   createdAt: string;
@@ -200,6 +251,8 @@ export type PipelineAccount = {
   todos: PipelineTodo[];
   /** The gap ledger's open questions — where discovery has holes. */
   gaps: string[];
+  /** A demo the board stamped or the record shows. Floors the stage. */
+  demoOnRecord?: boolean;
   support: SupportRead;
   actors: readonly ActorRead[];
 };
@@ -248,7 +301,6 @@ export type PipelineInput = {
 };
 
 const OPEN_CAP = 4;
-const OVERTAKEN_CAP = 6;
 const QUIET_RISK_DAYS = 21;
 
 export function buildPipelineReport(input: PipelineInput): PipelineRecord[] {
@@ -353,15 +405,30 @@ function record(
     if (h.value.country && !hcBy.has(h.value.country))
       hcBy.set(h.value.country, { n: h.value.n, src: h.src });
   const products = intel.products.map((p) => PRODUCT[p.value] ?? p.value);
-  const opportunities = intel.countries.slice(0, 4).map((c) => {
-    const hc = hcBy.get(c.value);
-    return {
-      country: COUNTRY_NAME[c.value] ?? c.value.toUpperCase(),
-      product: products[0] ?? "",
-      headcount: hc ? `${hc.n} ${hc.n === 1 ? "worker" : "workers"}` : "",
-      src: c.src,
-    };
-  });
+  // The product belongs to the COUNTRY, not to the account. XCEL HR's Canada
+  // is a managed-payroll win-back and its Mexico is EOR; taking the account's
+  // first product for every row printed "Canada · EOR", which is the opposite
+  // of what the record says. Where the record names no product beside a
+  // country, the honest answer is Unknown rather than a borrowed one.
+  const productAt = productByCountry(ns);
+  // Only the countries with work to be done in them. A country the account
+  // merely HAS something in is context: XCEL HR's parent already owns payroll
+  // companies in the UK, which the report was listing beside Mexico and Canada
+  // as though it were a deal.
+  const inPlay = countriesInPlay(ns);
+  const opportunities = intel.countries
+    .filter((c) => !inPlay.size || inPlay.has(c.value))
+    .slice(0, 4)
+    .map((c) => {
+      const hc = hcBy.get(c.value);
+      const named = productAt.get(c.value) ?? [];
+      return {
+        country: COUNTRY_NAME[c.value] ?? c.value.toUpperCase(),
+        product: named.map((k) => PRODUCT[k] ?? k).join(" / "),
+        headcount: hc ? `${hc.n} ${hc.n === 1 ? "worker" : "workers"}` : "",
+        src: c.src,
+      };
+    });
 
   // His own work vs another team's, ranked by when he made the promise. A
   // commitment a later meeting overtook is finished whatever the register says.
@@ -380,7 +447,6 @@ function record(
     .sort((x, y) => (y.opened ?? "").localeCompare(x.opened ?? ""));
 
   const ourNext: PipelineRecord["ourNext"] = [];
-  const overtaken: PipelineRecord["overtaken"] = [];
   const handoffs: string[] = [];
   for (const o of open) {
     if (o.settled) continue;
@@ -407,11 +473,11 @@ function record(
       continue;
     }
     const built = moveFromCommitment(raw);
-    if (lastMeetAt && o.opened && o.opened < lastMeetAt) {
-      if (!overtaken.some((x) => x.text === built.line))
-        overtaken.push({ text: built.line, opened: o.opened });
-      continue;
-    }
+    // A commitment a later meeting overtook is finished, whatever the register
+    // still says — and it is not shown at all. This report is read aloud to a
+    // room of forty-five; the only thing that belongs on it is where the
+    // account stands (founder-decreed 2026-09-08).
+    if (lastMeetAt && o.opened && o.opened < lastMeetAt) continue;
     if (ourNext.some((x) => x.text === built.line)) continue;
     ourNext.push({
       text: built.line,
@@ -434,7 +500,13 @@ function record(
     ...theirTurnFrom(ns, isHome).map((t) => ({ ...t, text: clean(t.text) })),
   ].filter((t, i, arr) => arr.findIndex((x) => x.text === t.text) === i);
 
-  const closeIso = intel.timing?.value.dateIso ?? "";
+  // One close date for the whole book, and his to change (founder-decreed
+  // 2026-09-08). Deriving it from whatever deadline phrase a note happened to
+  // carry produced dates that were never close dates at all — a demo recording
+  // he owed Shane, a prospect's internal review. A single stated default is
+  // honest about being a placeholder, and the line is editable everywhere the
+  // report renders.
+  const closeIso = BOOK_CLOSE_DATE;
   const lastAt = ns[0] ? dayOf(effectiveAt(ns[0].createdAt, ns[0].body)) : "";
   const quietDays = lastAt ? daysBetween(lastAt, today) : null;
 
@@ -442,10 +514,10 @@ function record(
   // step" is not written here: every face already renders the None-set flag,
   // and a report that says the same thing twice reads padded.
   const risks: { text: string; src: string }[] = [];
-  if (closeIso && closeIso < today)
+  if (closeIso < today)
     risks.push({
       text: `Close date passed ${md(closeIso)} with the deal still open.`,
-      src: intel.timing!.src,
+      src: "the book's date",
     });
   if (intel.incumbent)
     risks.push({
@@ -469,9 +541,11 @@ function record(
         }
       : null,
     events,
+    // Reseller unless the record says otherwise — it is the shape almost every
+    // partner takes, and the line is editable when one does not.
     model:
       intel.chair === "undecided"
-        ? null
+        ? { v: "Reseller", src: "the default", derived: true }
         : { v: intel.chair === "resale" ? "Reseller" : "Referral", src: "record" },
     incumbent: intel.incumbent
       ? { v: intel.incumbent.value, src: intel.incumbent.src }
@@ -482,7 +556,6 @@ function record(
     outcomesSrc: call ? `call read ${md(effectiveAt(call.createdAt, call.body))}` : "",
     theirWords: call ? quotesIn(call.body).map(clean) : [],
     ourNext: ourNext.slice(0, OPEN_CAP),
-    overtaken: overtaken.slice(0, OVERTAKEN_CAP),
     doneRecently: a.todos
       .filter((t) => t.done)
       .slice(0, 2)
@@ -493,37 +566,61 @@ function record(
     gated: gatedByThem(theirSide, ourNext),
     handoffs,
     unknowns: a.gaps.slice(0, 4).map(clean),
-    stage: a.stageLabel ? { v: a.stageLabel, src: "board" } : null,
-    closeDate: intel.timing
-      ? {
-          v: intel.timing.value.dateIso || intel.timing.value.phrase,
-          derived: !intel.timing.value.dateIso,
-          passed: !!closeIso && closeIso < today,
-          src: intel.timing.src,
-        }
-      : null,
+    stage: stageOf(a),
+    closeDate: {
+      v: BOOK_CLOSE_DATE,
+      derived: true,
+      passed: BOOK_CLOSE_DATE < today,
+      src: "the book's date",
+    },
     risks,
     quietDays,
+    // Everyone who was in the room IS a contact. The last-meeting line used to
+    // carry five names the contacts line never mentioned, which reads as two
+    // different accounts (founder-caught 2026-09-08).
     contacts: tidyPeople(
-      peopleFor(ns, roster, 12)
-        .map((p) => p.name)
-        .filter((n) => {
-          // The CSM is not a contact (never merge the two), and the record
-          // often carries only her first name.
-          const csm = (a.csm ?? "").toLowerCase();
-          const first = csm.split(" ")[0] ?? "";
-          const nm = (n ?? "").toLowerCase();
-          if (csm && (nm === csm || nm === first || nm.startsWith(`${first} `)))
-            return false;
-          return !!n && !isHome(n) && !MINE_RE.test(n);
-        }),
+      [...inRoom, ...peopleFor(ns, roster, 12).map((p) => p.name)].filter((n) => {
+        // The CSM is not a contact (never merge the two), and the record
+        // often carries only her first name.
+        const csm = (a.csm ?? "").toLowerCase();
+        const first = csm.split(" ")[0] ?? "";
+        const nm = (n ?? "").toLowerCase();
+        if (csm && (nm === csm || nm === first || nm.startsWith(`${first} `)))
+          return false;
+        return !!n && !isHome(n) && !MINE_RE.test(n);
+      }),
     )
-      .slice(0, 5)
+      .slice(0, 8)
       .map((n) => ({ name: n, title: titleOf(n) })),
     fyi: clean(fyiFromSupport(a.support)),
     fyiWho: ownerClause(owners.slice(0, 2)),
     owners,
   };
+}
+
+// The board's own ladder. A demo that happened means the deal is past showing
+// and into asking, so the stage reads Proposal at minimum however far behind
+// the board's own stamps have fallen (founder-decreed 2026-09-08).
+const STAGE_LADDER = [
+  "Investigate",
+  "First Time Meeting",
+  "Needs Analysis",
+  "Demo",
+  "Executive Summary",
+  "Proposal",
+  "Contract",
+];
+const PROPOSAL = STAGE_LADDER.indexOf("Proposal");
+
+function stageOf(a: PipelineAccount): Sourced | null {
+  const at = STAGE_LADDER.indexOf(a.stageLabel);
+  if (a.demoOnRecord && at < PROPOSAL)
+    return {
+      v: "Proposal",
+      src: a.stageLabel ? `demo held · board says ${a.stageLabel}` : "demo held",
+      derived: true,
+    };
+  return a.stageLabel ? { v: a.stageLabel, src: "board" } : null;
 }
 
 /** Sorted by what needs him most: a blown promise, then a deal whose turn is

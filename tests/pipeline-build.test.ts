@@ -135,9 +135,11 @@ describe("the record reads what the record says", () => {
     assert.equal(r.handoffs.length, 1);
     assert.match(r.handoffs[0], /recruitment specialist/);
   });
-  test("a commitment the call overtook is folded, not deleted", () => {
-    assert.ok(r.overtaken.some((o) => /Jul 28/.test(o.text)));
+  test("a commitment the call overtook is gone, not folded", () => {
+    // An executive readout carries where the account stands, and nothing else
+    // (founder-decreed 2026-09-08) — a superseded scheduling item is neither.
     assert.ok(!r.ourNext.some((o) => /Jul 28/.test(o.text)));
+    assert.ok(!("overtaken" in r), "the field itself is gone");
   });
   test("their turn is read, and it runs first", () => {
     assert.equal(r.theirSide[0].who, "Chassie");
@@ -238,7 +240,7 @@ describe("the plain text is what he pastes", () => {
     const lines = recordToText(r).split("\n");
     assert.equal(lines[0], "SIMPLOY");
     assert.match(lines[1], /CSM Lesha Cyphers/);
-    assert.ok(lines.some((l) => l.startsWith("Opportunities:") || l.startsWith("Opportunities: ")));
+    assert.ok(lines.some((l) => l.startsWith("Countries:")));
   });
   test("their move is printed before his, because it runs first", () => {
     const t = recordToText(r);
@@ -420,7 +422,7 @@ describe("the Word document", () => {
     };
     const [q] = build([bare]);
     const text = JSON.stringify(reportSection([q], {}, day));
-    for (const label of ["PRODUCTS", "OPPORTUNITIES", "MY CONTACTS", "MODEL", "COMPETITOR", "STAGE", "CLOSE DATE", "UNKNOWNS"])
+    for (const label of ["PRODUCTS", "COUNTRIES", "CONTACTS", "MODEL", "COMPETITOR", "STAGE", "CLOSE DATE", "UNKNOWNS"])
       assert.ok(text.includes(label), `missing ${label}`);
     assert.ok(text.includes("None set — that is the finding"));
   });
@@ -489,5 +491,128 @@ describe("collecting the active accounts", () => {
     assert.equal(pipelineDayLabel(new Date("2026-09-08T12:00:00Z")), "Tue, 9/8");
     // 1am UTC on the 9th is still the 8th in Chicago.
     assert.equal(pipelineDayLabel(new Date("2026-09-09T01:00:00Z")), "Tue, 9/8");
+  });
+});
+
+// The tape is speech, and speech is not a deal fact. Both records that were
+// read wrong on 2026-09-08 were wrong for this reason.
+describe("a transcript does not create opportunities", () => {
+  const tape = (body: string) =>
+    note({ id: "tape", source: "transcript", body: `☰ Call transcript — x\nCALL TRANSCRIPT\n${body}` });
+
+  test("the demo's own countries are not the client's", () => {
+    // XCEL HR carried Brazil and the Netherlands because the demo walked
+    // through them, and Infiniti HR carried Canada the same way.
+    const a = simploy({
+      notes: [
+        note({ id: "read", source: "call-ai", actors: "Antaeus Coe → Chassie Smith", body: "head\nThey want coverage in Spain." }),
+        tape("here's the Netherlands is going to show all the public holidays\nif I go in here to Nina in Canada"),
+      ],
+    });
+    const [r] = build([a]);
+    const named = r.opportunities.map((o) => o.country);
+    assert.ok(named.includes("Spain"), "the read's country stands");
+    assert.ok(!named.includes("Netherlands"), "the demo's screen is not an opportunity");
+    assert.ok(!named.includes("Canada"));
+  });
+
+  test("a hypothetical said aloud is not a headcount", () => {
+    // "if the client comes in, has 50 employees in the US, 20 in Mexico"
+    const a = simploy({
+      notes: [
+        note({ id: "read", source: "call-ai", actors: "Antaeus Coe → Chassie Smith", body: "head\nProspects with ~3 EEs in Mexico." }),
+        tape("if the client comes in, has 50 employees in the US, 20 in Mexico. So how does that process go"),
+      ],
+    });
+    const [r] = build([a]);
+    const mx = r.opportunities.find((o) => o.country === "Mexico");
+    assert.equal(mx?.headcount, "3 workers", "the read's number, not the scenario's");
+  });
+
+  test("a record that is only a transcript still speaks", () => {
+    // Truly nothing else: no digest seed either, or the seed's own countries
+    // count as a read and the tape stays behind them — which is the rule.
+    const a = simploy({
+      id: "tapeonly",
+      name: "Tape Only Co",
+      notes: [tape("We are hiring 4 people in Spain next quarter.")],
+      todos: [],
+    });
+    const [r] = build([a]);
+    assert.ok(r.opportunities.some((o) => o.country === "Spain"));
+  });
+
+  test("the product belongs to the country, and Unknown when unnamed", () => {
+    const a = simploy({
+      notes: [
+        note({
+          id: "read",
+          source: "call-ai",
+          actors: "Antaeus Coe → Chassie Smith",
+          // Spain needs demand of its own to be in play at all; what it has
+          // NOT got is a product named beside it.
+          body: "head\nCanada — 10 workers already live on payroll. A client in Spain too.",
+        }),
+      ],
+    });
+    const [r] = build([a]);
+    const ca = r.opportunities.find((o) => o.country === "Canada");
+    const es = r.opportunities.find((o) => o.country === "Spain");
+    assert.match(ca?.product ?? "", /Global Payroll/);
+    assert.equal(ca?.headcount, "10 workers");
+    assert.equal(es?.product, "", "unnamed renders Unknown, never a borrowed product");
+  });
+});
+
+// A country the account merely HAS something in is context, not a deal.
+describe("only countries with work in them", () => {
+  const read = (body: string) =>
+    note({ id: "r", source: "call-ai", actors: "Antaeus Coe → Chassie Smith", body: `head\n${body}` });
+
+  test("the parent's own payroll company is not an opportunity", () => {
+    // XCEL HR's real note, verbatim. Its parent already owns payroll companies
+    // in the UK, and the report listed the United Kingdom beside Mexico and
+    // Canada as though it were a deal.
+    const a = simploy({
+      notes: [
+        read(
+          "xcel has as part of their parent company - they have payrol comanies in uk and india for example, but theres still separation of systems. Canada — 10 workers already live on payroll.",
+        ),
+      ],
+    });
+    const [r] = build([a]);
+    const named = r.opportunities.map((o) => o.country);
+    assert.ok(named.includes("Canada"));
+    assert.ok(!named.includes("United Kingdom"), "context, not a country in play");
+    assert.ok(!named.includes("India"));
+  });
+
+  test("a demand word in a NEIGHBOURING sentence does not qualify a country", () => {
+    // The window version passed the UK on "they need payroll. just to pay
+    // them. theres national retirement insurance etc in the uk for exmple?"
+    const a = simploy({
+      notes: [
+        read(
+          "they need payroll. just to pay them. theres national retirement insurance etc in the uk for exmple? Mexico has 4 workers.",
+        ),
+      ],
+    });
+    const named = build([a])[0].opportunities.map((o) => o.country);
+    assert.ok(named.includes("Mexico"));
+    assert.ok(!named.includes("United Kingdom"));
+  });
+
+  test("a client in a country is demand — that is the unit of the channel", () => {
+    // Staff Leasing's real Canada: "cites Canada, incl. a Canadian client
+    // based in Fulton NY" has nothing else to stand on.
+    const a = simploy({
+      notes: [read("Tom hears global interest 3-4x/year. A Canadian client based in Fulton NY.")],
+    });
+    assert.ok(build([a])[0].opportunities.some((o) => o.country === "Canada"));
+  });
+
+  test("a record too thin to judge keeps every country rather than showing none", () => {
+    const a = simploy({ id: "thin", name: "Thin Co", notes: [read("Spain.")], todos: [] });
+    assert.ok(build([a])[0].opportunities.some((o) => o.country === "Spain"));
   });
 });

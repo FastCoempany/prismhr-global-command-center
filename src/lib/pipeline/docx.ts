@@ -124,7 +124,7 @@ function recordRows(r: PipelineRecord, overlay: Overlay): TableRow[] {
 
   add("Products", one("products", r.products.join(", ")), "deal intel");
   add(
-    "Opportunities",
+    "Countries",
     keep(
       "opp",
       r.opportunities.map(
@@ -135,10 +135,10 @@ function recordRows(r: PipelineRecord, overlay: Overlay): TableRow[] {
     r.opportunities[0]?.src,
   );
   add(
-    "My contacts",
+    "Contacts",
     one(
       "contact",
-      r.contacts.map((c) => c.name + (c.title ? ` (${c.title})` : "")).join(" · "),
+      r.contacts.map((c) => c.name + (c.title ? ` (${c.title})` : "")).join(", "),
     ),
     "record",
   );
@@ -159,13 +159,8 @@ function recordRows(r: PipelineRecord, overlay: Overlay): TableRow[] {
   add(
     "Last meeting",
     r.lastTouch
-      ? one(
-          "meeting",
-          `${r.lastTouch.kind} ${md(r.lastTouch.date)}` +
-            (r.lastTouch.room.length
-              ? ` · ${r.lastTouch.room.map((p) => p.name + (p.title ? ` (${p.title})` : "")).join(", ")}`
-              : ""),
-        )
+      ? // A date, and nothing else — who was there is on the contacts line.
+        one("meeting", md(r.lastTouch.date))
       : [],
   );
   add("Outcomes", keep("outcome", r.outcomes), r.outcomesSrc, "None recorded");
