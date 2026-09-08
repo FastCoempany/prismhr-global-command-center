@@ -21,6 +21,7 @@ import {
   gatedByThem,
   ownersFrom,
   ownerClause,
+  answeredSince,
 } from "../src/lib/pipeline/report";
 
 describe("another team's work is not his next step", () => {
@@ -346,5 +347,61 @@ describe("the FYI line speaks the way a person speaks", () => {
   test("nothing there renders nothing rather than an empty sentence", () => {
     assert.equal(fyiFromSupport(null), "");
     assert.equal(fyiFromSupport({ total: 0, spike: null, themes: [] }), "");
+  });
+});
+
+// A promise of theirs retires when they speak again. His own commitments have
+// had a settle rule since 2026-09-04 (src/lib/room/settled.ts); theirs had
+// none and was carried forever.
+describe("their promise is answered when they speak again", () => {
+  const isHome = (n: string) => /antaeus|lesha|anika/i.test(n);
+  // Trend Personnel, verbatim: Melanie promised on 9/1, Adam answered for the
+  // team on 9/2, and the report was still gating the account a week later.
+  const MELANIE = {
+    createdAt: "2026-09-01T15:06:00Z",
+    actors: "Melanie Dreyer → Antaeus Coe",
+    source: "outlook-ai",
+    body: "head\nWill check with their Sales Director — this piece of the proposal is not what is holding up the process.",
+  };
+  const ADAM = {
+    createdAt: "2026-09-02T15:39:00Z",
+    actors: "Adam Dingwell → Antaeus Coe",
+    source: "outlook-ai",
+    body: "head\nStill working through the proposal process; foresees another month or two before a decision at best. If they win the prospect's business this is more than likely something they will need.",
+  };
+
+  test("a colleague's answer closes the promiser's turn", () => {
+    assert.equal(answeredSince("2026-09-01", [ADAM], isHome), true);
+  });
+  test("our own reply is not their answer", () => {
+    const mine = {
+      createdAt: "2026-09-02T15:50:00Z",
+      actors: "Antaeus Coe → Adam Dingwell",
+      source: "outlook-ai",
+      body: "head\nMind if I toss tentative time on the calendar about a month out?",
+    };
+    assert.equal(answeredSince("2026-09-01", [mine], isHome), false);
+  });
+  test("a sign-off is punctuation, never an answer", () => {
+    const closer = {
+      createdAt: "2026-09-02T15:39:00Z",
+      actors: "Adam Dingwell → Antaeus Coe",
+      source: "outlook-ai",
+      body: "head\nThanks!",
+    };
+    assert.equal(answeredSince("2026-09-01", [closer], isHome), false);
+  });
+  test("machinery is never a person answering", () => {
+    const auto = {
+      createdAt: "2026-09-02T15:39:00Z",
+      actors: "Adam Dingwell → Antaeus Coe",
+      source: "outlook-ai",
+      body: "head\nOut of office. I am away until Monday and will reply on my return, thanks so much.",
+    };
+    assert.equal(answeredSince("2026-09-01", [auto], isHome), false);
+  });
+  test("silence keeps the promise open", () => {
+    assert.equal(answeredSince("2026-09-01", [MELANIE], isHome), false);
+    assert.equal(answeredSince("2026-09-03", [ADAM], isHome), false, "earlier does not answer later");
   });
 });
