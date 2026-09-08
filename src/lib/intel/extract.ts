@@ -10,6 +10,7 @@ import {
   PRODUCT_TERMS,
   URGENCY,
   countriesIn,
+  countryNear,
 } from "./lexicon";
 import { digestFor, digestForCardName, type DigestEntry } from "./digest";
 import { isCloser, isMachinery } from "./closer";
@@ -48,6 +49,10 @@ function futureDay(mon: string, day: number, ref: Date): string | undefined {
 // A record is written in paragraphs and line-broken notes, so a "sentence"
 // ends at .!? OR a newline — without the newline rule a bulleted note is one
 // sentence from top to bottom and the containment check buys nothing.
+// A filed transcript announces itself: the Chute writes "☰ Call transcript —"
+// and the body carries the CALL TRANSCRIPT head (src/lib/intel/meeting.ts).
+const TRANSCRIPT_BODY_RE = /^\s*(?:☰\s*)?call transcript\b/im;
+
 const SENT_EDGE = /[.!?\n]/;
 export function dateNear(text: string, at: number, ref: Date): string | undefined {
   const s = text ?? "";
@@ -72,6 +77,11 @@ export type CorpusDoc = {
   direction?: "in" | "out";
   people?: string[];
   sender?: string; // the inbound doc's own author — "" when it's the operator
+  /** A raw call transcript. The tape is every voice in the room at once,
+   *  including our own demo narration, so a fact appearing ONLY there is
+   *  speech rather than a deal fact — the same line the outcomes reader
+   *  already draws between the tape and the read's distillation of it. */
+  tape?: boolean;
 };
 
 const short = (iso: string) => {
@@ -128,9 +138,11 @@ export function corpusFor(
     // exception at a time is how a marketing MQL took the court on HR Hawaii.
     const machinery = isMachinery({ body: n.body, actors });
     const closer = isSf && isCloser(n.body.split("\n").slice(1).join("\n"));
+    const tape = TRANSCRIPT_BODY_RE.test(n.body);
 
     docs.push({
       text: n.body,
+      tape,
       // The stored stamp, refined by the OL head's own clock — same-day
       // entries order by when they actually happened, not by a noon tie
       // the outbound always won (the Trend 10:39 read, 2026-09-02).
@@ -231,21 +243,51 @@ export function extractDealIntel(docs: CorpusDoc[], seedEntry?: DigestEntry): De
       : intel.threads;
   }
 
+  // Countries the READS name — the distilled entries, filed mail, sheet lines
+  // and notes. A country that appears only in a raw transcript is speech, and
+  // on a demo call it is usually OUR OWN product narration: XCEL HR's report
+  // carried Brazil and the Netherlands because Shane walked them through the
+  // platform ("here's the Netherlands is going to show all the public
+  // holidays"), and Infiniti HR carried Canada off "if I go in here to Nina in
+  // Canada". Meanwhile Spain, which the read flags as the next country, was
+  // nowhere (2026-09-08). The tape still speaks when nothing else does — it is
+  // ranked behind, never dropped.
+  const spokenOnly: CorpusDoc[] = [];
   for (const doc of docs) {
     // countries
-    for (const c of countriesIn(doc.text))
-      push(intel.countries, c, doc, (a, b) => a === b);
-    // headcounts (first match per doc keeps noise down)
-    const hc = HEADCOUNT.exec(doc.text);
-    if (hc) {
-      const country = countriesIn(doc.text)[0];
-      push(
-        intel.headcounts,
-        { n: Number(hc[1]), country },
-        doc,
-        (a, b) => a.n === b.n && a.country === b.country,
-      );
-    }
+    if (doc.tape) spokenOnly.push(doc);
+    else
+      for (const c of countriesIn(doc.text))
+        push(intel.countries, c, doc, (a, b) => a === b);
+    // headcounts — every one in the doc, each bound to the country NEAREST it
+    //
+    // This used to read the FIRST headcount in a document and the FIRST country
+    // in that same document, two independent scans bolted together. On XCEL
+    // HR's 8/13 read both countries share one sentence:
+    //
+    //   Immediate: Mexico (headcount TBD, must call client) and Canada —
+    //   10 workers already live on payroll…
+    //
+    // so Canada's ten workers were filed against Mexico, whose headcount the
+    // record says outright is unknown (2026-09-08). Reading only the first
+    // match also lost every count after it: Infiniti HR names Puerto Rico,
+    // Germany, Brazil and Mexico in one line apiece.
+    // …and, like countries, only from the READS. A number said out loud on a
+    // call is as often a hypothetical as a fact: Infiniti HR's Mexico row read
+    // "50 workers" off Javier walking through a scenario — "if the client
+    // comes in, has 50 employees in the US, 20 in Mexico" — where the fifty
+    // are in the US and the whole sentence is an if. The reads hold the real
+    // numbers: one worker in Puerto Rico, about three in Mexico (2026-09-08).
+    if (!doc.tape)
+      for (const hc of doc.text.matchAll(new RegExp(HEADCOUNT.source, "gi"))) {
+        const country = countryNear(doc.text, hc.index ?? 0);
+        push(
+          intel.headcounts,
+          { n: Number(hc[1]), country },
+          doc,
+          (a, b) => a.n === b.n && a.country === b.country,
+        );
+      }
     // products — contractor_plus checked before contractor (lexicon order)
     for (const key of Object.keys(PRODUCT_TERMS) as ProductKey[]) {
       if (key === "contractor" && PRODUCT_TERMS.contractor_plus.test(doc.text)) continue;
@@ -307,6 +349,24 @@ export function extractDealIntel(docs: CorpusDoc[], seedEntry?: DigestEntry): De
     if (doc.direction === "out" && (!intel.lastOutbound || doc.at > intel.lastOutbound))
       intel.lastOutbound = doc.at;
   }
+
+  // Nothing but the tape ever named these here, so the tape stands — a record
+  // with only a transcript is still a record. This sits OUTSIDE the seed
+  // branch: an account with no digest entry is exactly the one most likely to
+  // have nothing but a transcript.
+  if (!intel.countries.length)
+    for (const doc of spokenOnly)
+      for (const c of countriesIn(doc.text))
+        push(intel.countries, c, doc, (a, b) => a === b);
+  if (!intel.headcounts.length)
+    for (const doc of spokenOnly)
+      for (const hc of doc.text.matchAll(new RegExp(HEADCOUNT.source, "gi")))
+        push(
+          intel.headcounts,
+          { n: Number(hc[1]), country: countryNear(doc.text, hc.index ?? 0) },
+          doc,
+          (a, b) => a.n === b.n && a.country === b.country,
+        );
 
   // The seed fills what no doc decided — a fallback, never a lock.
   if (seed) {

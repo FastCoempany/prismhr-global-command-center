@@ -17,7 +17,12 @@ import { meetingRead, speakersIn } from "@/lib/intel/meeting";
 import { peopleFor } from "@/lib/intel/people";
 import { isHomeSideName, MINE_RE } from "@/lib/intel/provenance";
 import { effectiveAt } from "@/lib/intel/clock";
-import { COUNTRY_NAME, redactMoney } from "@/lib/intel/lexicon";
+import {
+  COUNTRY_NAME,
+  PRODUCT_TERMS,
+  countryNear,
+  redactMoney,
+} from "@/lib/intel/lexicon";
 import { buildAccountSheet } from "@/lib/room/sheet-view";
 import { moveFromCommitment } from "@/lib/room/move-line";
 import { splitFallback } from "@/lib/room/deliverables";
@@ -171,6 +176,33 @@ export function tidyPeople(names: readonly string[]): string[] {
 /** One filed entry. Callers pass notes already stripped of ✕-parked rows
  *  (`hide:note:` dispositions) — the note survives in the table, the row does
  *  not, and the report must read exactly what the room reads. */
+/** Which product each country is named beside. Reads the distilled entries and
+ *  notes, never the raw tape — a demo walks through every product in the suite
+ *  and would attach all of them to whichever country was on screen. */
+function productByCountry(
+  notes: readonly { body: string; source?: string }[],
+): Map<string, string[]> {
+  const out = new Map<string, string[]>();
+  for (const n of notes) {
+    if (/transcript/.test(n.source ?? "")) continue;
+    for (const key of Object.keys(PRODUCT_TERMS) as (keyof typeof PRODUCT_TERMS)[]) {
+      const re = new RegExp(PRODUCT_TERMS[key].source, "gi");
+      for (const m of (n.body ?? "").matchAll(re)) {
+        const c = countryNear(n.body, m.index ?? 0, 120);
+        if (!c) continue;
+        const at = out.get(c) ?? out.set(c, []).get(c)!;
+        // Both, when the record names both. XCEL HR's Canada is a payroll
+        // win-back and its Mexico is EOR, but the record also says "Canada +
+        // Mexico EOR/Payroll pricing collateral" — naming both for both.
+        // Choosing one there asserts something the record does not; two is the
+        // honest reading, and the operator edits the line if he knows better.
+        if (!at.includes(key) && at.length < 2) at.push(key);
+      }
+    }
+  }
+  return out;
+}
+
 export type PipelineNote = {
   id: string;
   createdAt: string;
@@ -353,11 +385,18 @@ function record(
     if (h.value.country && !hcBy.has(h.value.country))
       hcBy.set(h.value.country, { n: h.value.n, src: h.src });
   const products = intel.products.map((p) => PRODUCT[p.value] ?? p.value);
+  // The product belongs to the COUNTRY, not to the account. XCEL HR's Canada
+  // is a managed-payroll win-back and its Mexico is EOR; taking the account's
+  // first product for every row printed "Canada · EOR", which is the opposite
+  // of what the record says. Where the record names no product beside a
+  // country, the honest answer is Unknown rather than a borrowed one.
+  const productAt = productByCountry(ns);
   const opportunities = intel.countries.slice(0, 4).map((c) => {
     const hc = hcBy.get(c.value);
+    const named = productAt.get(c.value) ?? [];
     return {
       country: COUNTRY_NAME[c.value] ?? c.value.toUpperCase(),
-      product: products[0] ?? "",
+      product: named.map((k) => PRODUCT[k] ?? k).join(" / "),
       headcount: hc ? `${hc.n} ${hc.n === 1 ? "worker" : "workers"}` : "",
       src: c.src,
     };

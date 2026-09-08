@@ -114,6 +114,16 @@ const COUNTRY_ALIASES: Record<string, string> = {
   "costa rica": "cr",
   vietnam: "vn",
   vietnamese: "vn",
+  // Puerto Rico is US soil and not a country, but it is a payroll jurisdiction
+  // of its own — its own tax authority and filings, statutory severance
+  // instead of at-will, retirement plans needing Treasury approval, workers'
+  // comp only from the state fund. The record treats it as a place work
+  // happens, and so must the scanner: Infiniti HR's live need was two staffing
+  // clients hiring there, and the report could not see it at all (2026-09-08).
+  // The bare initials are deliberately absent — "PR" is public relations far
+  // more often than it is the island.
+  "puerto rico": "pr",
+  "puerto rican": "pr",
 };
 
 const COUNTRY_RE = new RegExp(
@@ -130,6 +140,46 @@ export function countriesIn(text: string): string[] {
     if (code && !out.includes(code)) out.push(code);
   }
   return out;
+}
+
+/** Every country mention with the character offset it sits at — so a fact can
+ *  be bound to the country NEAREST it rather than to whichever country happens
+ *  to appear first in the document. */
+export function countryMentions(text: string): { code: string; at: number }[] {
+  const out: { code: string; at: number }[] = [];
+  for (const m of (text ?? "").matchAll(COUNTRY_RE)) {
+    const code = COUNTRY_ALIASES[m[1].toLowerCase()];
+    if (code) out.push({ code, at: m.index ?? 0 });
+  }
+  return out;
+}
+
+/** The country a fact at `at` belongs to: the nearest mention, preferring one
+ *  that PRECEDES it, because English attaches a count to the thing just named
+ *  ("Canada — 10 workers"). "" when the text names no country.
+ *
+ *  The XCEL HR read is the case this exists for. One sentence, two countries:
+ *
+ *    Immediate: Mexico (headcount TBD, must call client) and Canada —
+ *    10 workers already live on payroll with a third party XLHR referred out
+ *
+ *  The ten are Canada's, and Mexico is explicitly TBD. Binding to the first
+ *  country in the document put them on Mexico (2026-09-08). */
+export function countryNear(text: string, at: number, maxGap = 240): string {
+  const marks = countryMentions(text);
+  if (!marks.length) return "";
+  let best = "";
+  let bestGap = Number.MAX_SAFE_INTEGER;
+  for (const m of marks) {
+    // A mention after the fact is only preferred when it is much closer, so
+    // "Canada — 10 workers ... and Mexico" still reads as Canada's.
+    const gap = m.at <= at ? at - m.at : (m.at - at) * 2;
+    if (gap < bestGap) {
+      bestGap = gap;
+      best = m.code;
+    }
+  }
+  return bestGap <= maxGap ? best : "";
 }
 
 export const COUNTRY_NAME: Record<string, string> = {
@@ -159,6 +209,15 @@ export const COUNTRY_NAME: Record<string, string> = {
   sg: "Singapore",
   cr: "Costa Rica",
   vn: "Vietnam",
+  // Puerto Rico is US soil and not a country, but it is a payroll jurisdiction
+  // of its own — its own tax authority and filings, statutory severance
+  // instead of at-will, retirement plans needing Treasury approval, workers'
+  // comp only from the state fund. The record treats it as a place work
+  // happens, and so must the scanner: Infiniti HR's live need was two staffing
+  // clients hiring there, and the report could not see it at all (2026-09-08).
+  // The bare initials are not read — "PR" is public relations far more often
+  // than it is the island.
+  pr: "Puerto Rico",
 };
 
 // Money never reaches a UI string — strip every dollar/currency form from a
