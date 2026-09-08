@@ -22,7 +22,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { PipelineRecord } from "@/lib/pipeline/build";
 import { closeText, lineKey, recordToText, reportToText } from "@/lib/pipeline/plain";
 import { reportDocument, reportFileName } from "@/lib/pipeline/docx";
-import { freshPipeline } from "./pipeline-actions";
+import { freshPipeline, savePipelineEdits } from "./pipeline-actions";
 import styles from "./room.module.css";
 
 const md = (iso: string) =>
@@ -443,18 +443,25 @@ export function PipelineDrawer({
   // re-reads the moment it opens, and the button builds its file from that.
   // Until the read lands, the served rows show rather than an empty pane: a
   // slightly old report beats no report, and the line below says which it is.
+  const [overlay, setOverlay] = useState<Overlay>({});
   const [fresh, setFresh] = useState<{
     rows: PipelineRecord[];
     dayLabel: string;
     staleNote: string;
     readAt: string;
+    edits: Overlay;
   } | null>(null);
   const [reading, setReading] = useState(true);
   useEffect(() => {
     let live = true;
     void freshPipeline()
       .then((f) => {
-        if (live && f) setFresh(f);
+        if (!live || !f) return;
+        setFresh(f);
+        // His saved corrections come back with the record. They seed the
+        // overlay rather than replacing it, so anything typed while the read
+        // was in flight survives.
+        setOverlay((o) => ({ ...f.edits, ...o }));
       })
       .catch(() => {
         // The served rows stand, and the line says the read did not land.
@@ -469,7 +476,6 @@ export function PipelineDrawer({
   const rows = fresh?.rows ?? served;
   const dayLabel = fresh?.dayLabel ?? servedDay;
   const staleNote = fresh?.staleNote ?? servedStale;
-  const [overlay, setOverlay] = useState<Overlay>({});
   const [copied, setCopied] = useState(false);
   // Two states, not two surfaces. The peek is the standing one — a narrow pane
   // beside the room, arrival budget intact. Expanded takes the page and opens
@@ -477,13 +483,31 @@ export function PipelineDrawer({
   // glancing at one account (decreed 2026-09-08).
   const [wide, setWide] = useState(false);
   const [doc, setDoc] = useState<"" | "working" | "done">("");
-  const set = (k: string, v: string | null) => setOverlay((o) => ({ ...o, [k]: v }));
-  const restore = (id: string) =>
-    setOverlay((o) =>
-      Object.fromEntries(
-        Object.entries(o).filter(([k, v]) => !(v === null && k.startsWith(`${id}:`))),
-      ),
+  // A change is kept the moment it is made. The whole overlay for that account
+  // is written at once — one row per account — so a strike persists as plainly
+  // as a rewrite, and a reload finds the report exactly as he left it.
+  const persist = (accountId: string, next: Overlay) => {
+    const mine = Object.fromEntries(
+      Object.entries(next).filter(([key]) => key.startsWith(`${accountId}:`)),
     );
+    void savePipelineEdits({ accountId, edits: mine }).catch(() => {
+      // The line stays on screen; the next change tries again.
+    });
+  };
+  const set = (k: string, v: string | null) =>
+    setOverlay((o) => {
+      const next = { ...o, [k]: v };
+      persist(k.slice(0, k.indexOf(":")), next);
+      return next;
+    });
+  const restore = (id: string) =>
+    setOverlay((o) => {
+      const next = Object.fromEntries(
+        Object.entries(o).filter(([k, v]) => !(v === null && k.startsWith(`${id}:`))),
+      );
+      persist(id, next);
+      return next;
+    });
   // A record with no next step and nobody's turn is the one that needs him.
   const stalled = useMemo(
     () => rows.filter((r) => !r.ourNext.length && !r.theirSide.length).length,
