@@ -190,3 +190,39 @@ describe("the name scanner and the book's index", () => {
     assert.equal(best, null);
   });
 });
+
+// ── the bland head token (swept 2026-09-08, against the COMPLETE note table) ─
+// Every sweep this session ran `limit=6000` against a table PostgREST caps at
+// 1000 rows, so they saw 1000 of 1323 notes. Re-run whole, the guard disputed
+// three accounts' own records because one account is named "Employee
+// Professionals NE LLC" and a book of PEOs says "employee" constantly. The
+// BLAND list already held "employer"; it was missing its siblings.
+
+describe("a generic head token identifies nobody", () => {
+  const bland: RouteAccount[] = [
+    { id: "e", name: "Employee Professionals NE LLC", emails: [], domains: [], people: [] },
+    { id: "p", name: "Pinnacle Employee Services, Inc.", emails: [], domains: [], people: [] },
+  ];
+  test("“employee” no longer routes, so an ordinary PEO sentence disputes nothing", () => {
+    const text = "They have 40 employees on the plan and want employee onboarding fixed.";
+    const { best } = routeCapture(text, bland);
+    assert.equal(best, null);
+    assert.equal(
+      judgeFiling({ text, claim: "", bound: { id: "p", name: bland[1].name }, roster: bland })
+        .ok,
+      true,
+    );
+  });
+  test("the words that go with it are bland too", () => {
+    for (const w of ["employee", "employees", "professional", "professionals", "leasing"]) {
+      const { best } = routeCapture(`We discussed ${w} coverage at length.`, bland);
+      assert.equal(best, null, w);
+    }
+  });
+  test("a real distinctive head still routes", () => {
+    const { best } = routeCapture("Following up with Simploy on the reseller paperwork.", [
+      { id: "s", name: "Simploy", emails: [], domains: [], people: [] },
+    ]);
+    assert.ok(best, "a distinctive name is still a signal");
+  });
+});
