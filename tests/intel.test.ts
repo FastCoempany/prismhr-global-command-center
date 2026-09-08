@@ -9,6 +9,7 @@ import {
   countriesIn,
   redactMoney,
 } from "@/lib/intel/lexicon";
+import { dateNear } from "@/lib/intel/extract";
 import { DISCOVERY, questionsFor } from "@/lib/intel/discovery";
 import { DASH_NODES, nodeBriefs } from "@/lib/dashboard/stages";
 import { MOTIONS, motionsFor } from "@/lib/intel/motions";
@@ -77,6 +78,36 @@ describe("lexicon: countries + headcounts", () => {
     );
     assert.equal(HEADCOUNT.exec("300 ee of theirs")?.[1], "300");
     assert.equal(HEADCOUNT.exec("in 2026 we grew"), null);
+  });
+
+  // An email signature is not a deal size (found 2026-09-08 on Trend
+  // Personnel, whose Philippines opportunity rendered "9292 workers").
+  test("a phone number in a signature is not a headcount", () => {
+    const sig = [
+      "Antaeus Coe",
+      "Sr. Global Business Consultant",
+      "",
+      "P: 312.221.9292",
+      "E: antaeus.coe@prismhr.com",
+    ].join("\n");
+    assert.equal(HEADCOUNT.exec(sig), null);
+    // Anika's direct dial produced 4214 the same way.
+    assert.equal(HEADCOUNT.exec("P: 877.837.4311\nD: 703.554.4214\nE: a@b.com"), null);
+  });
+  test("a count and its unit sit on one line", () => {
+    assert.equal(HEADCOUNT.exec("we counted 40\nemployees left the plan"), null);
+    assert.equal(HEADCOUNT.exec("we counted 40 employees")?.[1], "40");
+  });
+  test("a lone e is not a unit, but EE is", () => {
+    assert.equal(HEADCOUNT.exec("10 e"), null);
+    assert.equal(HEADCOUNT.exec("10 EEs in Puerto Rico")?.[1], "10");
+    assert.equal(HEADCOUNT.exec("1 EE already onboarding")?.[1], "1");
+  });
+  test("digits inside a dotted run are part of a number", () => {
+    assert.equal(HEADCOUNT.exec("order 12.3456 workers"), null);
+    assert.equal(HEADCOUNT.exec("ext-5150 people"), null);
+    // …but an ordinary sentence still reads.
+    assert.equal(HEADCOUNT.exec("They have 10 workers there.")?.[1], "10");
   });
 });
 
@@ -175,5 +206,48 @@ describe("BRIEFS pairing", () => {
       );
       for (const b of briefs) assert.ok(b.trim().length > 0, `${n.key} empty brief`);
     }
+  });
+});
+
+// A close date belongs to the urgency phrase that names it (found 2026-09-08
+// on Simploy, whose close date read 7/30). The date used to be scanned out of
+// the whole document independently of where the urgency phrase sat, so on one
+// note the two landed 1,100 characters apart in unrelated paragraphs and the
+// operator's own errand became the deal's close date.
+describe("timing reads the sentence its urgency phrase is in", () => {
+  const REF = new Date("2026-07-29T19:09:00Z");
+
+  test("the date in the matching sentence is the one taken", () => {
+    const note = [
+      "Chassie fails the contractor test and needs to convert to EOR",
+      "The August 6th date is Chassie's internal deadline to recommend a vendor to leadership — not a go-live date",
+      "Pre-recorded demo and next steps",
+      "Antaeus is sending a pre-recorded version instead, by July 30th at the latest",
+    ].join("\n");
+    const at = note.indexOf("deadline");
+    assert.equal(dateNear(note, at, REF), "2026-08-06");
+  });
+
+  test("a date in another paragraph is not this phrase's date", () => {
+    const note = [
+      "This is time-sensitive for them.",
+      "Separately, I owe Shane a recording by July 30th.",
+    ].join("\n");
+    assert.equal(dateNear(note, note.indexOf("time-sensitive"), REF), undefined);
+  });
+
+  test("the preposition is optional and the ordinal is noise", () => {
+    for (const s of ["deadline is August 6", "deadline by August 6th", "deadline: Aug 6"])
+      assert.equal(dateNear(s, s.indexOf("deadline"), REF), "2026-08-06", s);
+  });
+
+  test("a sentence with no date says so", () => {
+    const s = "This is time-sensitive but nobody named a day.";
+    assert.equal(dateNear(s, s.indexOf("time-sensitive"), REF), undefined);
+  });
+
+  test("a month already past means next year", () => {
+    const s = "deadline by January 15";
+    assert.equal(dateNear(s, 0, REF), "2027-01-15");
   });
 });
