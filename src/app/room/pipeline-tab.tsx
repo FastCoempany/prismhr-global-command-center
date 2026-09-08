@@ -21,6 +21,7 @@
 import { useMemo, useState } from "react";
 import type { PipelineRecord } from "@/lib/pipeline/build";
 import { closeText, lineKey, recordToText, reportToText } from "@/lib/pipeline/plain";
+import { reportDocument, reportFileName } from "@/lib/pipeline/docx";
 import styles from "./room.module.css";
 
 const md = (iso: string) =>
@@ -126,11 +127,15 @@ function Record({
   overlay,
   set,
   restore,
+  openDepth,
 }: {
   r: PipelineRecord;
   overlay: Overlay;
   set: (k: string, v: string | null) => void;
   restore: (id: string) => void;
+  /** Full-page reading: every fold stands open. The peek keeps them shut, so
+   *  the arrival budget still holds where the budget is the point. */
+  openDepth: boolean;
 }) {
   const k = (f: string, i = 0) => lineKey(r.id, f, i);
   const [copied, setCopied] = useState(false);
@@ -413,7 +418,7 @@ function Record({
         )}
       </details>
       {r.overtaken.length > 0 && (
-        <details className={styles.pipeFold}>
+        <details className={styles.pipeFold} open={openDepth}>
           <summary>
             {r.overtaken.length} overtaken by the{" "}
             {r.lastTouch ? md(r.lastTouch.date) : "last"} call
@@ -450,6 +455,12 @@ export function PipelineDrawer({
 }) {
   const [overlay, setOverlay] = useState<Overlay>({});
   const [copied, setCopied] = useState(false);
+  // Two states, not two surfaces. The peek is the standing one — a narrow pane
+  // beside the room, arrival budget intact. Expanded takes the page and opens
+  // every fold, because reading the whole book at once is a different act from
+  // glancing at one account (decreed 2026-09-08).
+  const [wide, setWide] = useState(false);
+  const [doc, setDoc] = useState<"" | "working" | "done">("");
   const set = (k: string, v: string | null) => setOverlay((o) => ({ ...o, [k]: v }));
   const restore = (id: string) =>
     setOverlay((o) =>
@@ -464,9 +475,18 @@ export function PipelineDrawer({
   );
 
   return (
-    <div className={styles.drawerPane}>
+    <div className={`${styles.drawerPane} ${wide ? styles.drawerPaneWide : ""}`}>
       <div className={styles.dpHead}>
         <span className={styles.dpTabOn}>PIPELINE · {rows.length}</span>
+        <button
+          type="button"
+          className={styles.pipeCopy}
+          onClick={() => setWide((v) => !v)}
+          title={wide ? "Back to the peek" : "Open the whole report across the page"}
+          aria-expanded={wide}
+        >
+          {wide ? "⇥ Peek" : "⇤ Expand"}
+        </button>
         <button
           type="button"
           className={`${styles.pipeCopy} ${styles.pipeCopyPrimary} ${copied ? styles.pipeCopyDid : ""}`}
@@ -478,6 +498,38 @@ export function PipelineDrawer({
         >
           {copied ? "Copied" : "Copy whole report"}
         </button>
+        <button
+          type="button"
+          className={styles.pipeCopy}
+          disabled={doc === "working"}
+          title="A Word file of the whole report, depth and all"
+          onClick={async () => {
+            setDoc("working");
+            try {
+              // The library is ~1MB and only a press needs it — loading it on
+              // arrival would make every room render pay for a button most
+              // days go untouched.
+              const { Packer } = await import("docx");
+              const blob = await Packer.toBlob(reportDocument(rows, overlay, dayLabel));
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = reportFileName(dayLabel);
+              document.body.appendChild(a);
+              a.click();
+              a.remove();
+              // Revoke on the next tick — Edge cancels an in-flight download
+              // if the object URL dies underneath it.
+              setTimeout(() => URL.revokeObjectURL(url), 4000);
+              setDoc("done");
+              setTimeout(() => setDoc(""), 1600);
+            } catch {
+              setDoc("");
+            }
+          }}
+        >
+          {doc === "working" ? "Building…" : doc === "done" ? "Saved" : "⤓ Word file"}
+        </button>
         <button type="button" className={styles.dpClose} onClick={onClose}>
           ✕ close
         </button>
@@ -488,7 +540,14 @@ export function PipelineDrawer({
         {staleNote ? ` · ${staleNote}` : ""}
       </p>
       {rows.map((r) => (
-        <Record key={r.id} r={r} overlay={overlay} set={set} restore={restore} />
+        <Record
+          key={`${r.id}:${wide}`}
+          r={r}
+          overlay={overlay}
+          set={set}
+          restore={restore}
+          openDepth={wide}
+        />
       ))}
     </div>
   );

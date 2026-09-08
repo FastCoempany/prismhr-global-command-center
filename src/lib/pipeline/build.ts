@@ -204,8 +204,42 @@ export type PipelineAccount = {
   actors: readonly ActorRead[];
 };
 
+/** Who is ours, derived from the WIDEST record the app holds. A person who
+ *  turns up as an actor on `min` or more different accounts is not any one
+ *  client's person — they work here.
+ *
+ *  This must read the whole book, never the active slice. Ported into
+ *  production it was derived from the eleven active accounts alone, and a
+ *  PrismHR colleague who appears across the wider book but on only two active
+ *  ones walked straight back into a client's room (Shane Jacobs, XCEL HR,
+ *  caught 2026-09-08). The Ted doctrine is explicit: a derived fact reads the
+ *  widest live source, never a private narrow one. */
+export function homeSideFrom(
+  notesByAccount: Iterable<readonly [string, readonly { actors?: string | null }[]]>,
+  min = 3,
+): Set<string> {
+  const by = new Map<string, Set<string>>();
+  for (const [id, list] of notesByAccount) {
+    if (!id || id.includes(":")) continue; // namespaced stores are not accounts
+    for (const n of list)
+      for (const raw of (n.actors ?? "").split("→")) {
+        const nm = raw
+          .replace(/\+\d+\s*$/, "")
+          .trim()
+          .toLowerCase();
+        if (!nm || !/^[a-z]+ [a-z'-]+$/.test(nm)) continue;
+        (by.get(nm) ?? by.set(nm, new Set()).get(nm)!).add(id);
+      }
+  }
+  return new Set([...by].filter(([, s]) => s.size >= min).map(([nm]) => nm));
+}
+
 export type PipelineInput = {
   accounts: readonly PipelineAccount[];
+  /** Our own people, from homeSideFrom() over the whole book. Omitted, the
+   *  builder falls back to deriving it from the accounts it was handed — which
+   *  is narrower, and says so. */
+  homeSide?: ReadonlySet<string>;
   /** The CSM roster — who on our side is not the client. */
   csms: readonly string[];
   /** The operator's own name; he is never FYI to himself. */
@@ -235,9 +269,14 @@ export function buildPipelineReport(input: PipelineInput): PipelineRecord[] {
         if (!nm || !/^[a-z]+ [a-z'-]+$/.test(nm)) continue;
         (acctsByPerson.get(nm) ?? acctsByPerson.set(nm, new Set()).get(nm)!).add(a.id);
       }
-  const OURS = new Set(
-    [...acctsByPerson].filter(([, s]) => s.size >= 3).map(([nm]) => nm),
-  );
+  // The caller's set is the whole book; the local one is the active slice, and
+  // the union is what "ours" means. Reading the slice alone put a colleague
+  // back in a client's room (Shane Jacobs, XCEL HR) after this was ported into
+  // production.
+  const OURS = new Set([
+    ...(input.homeSide ?? []),
+    ...[...acctsByPerson].filter(([, s]) => s.size >= 3).map(([nm]) => nm),
+  ]);
   // A record often carries only a colleague's first name ("Anika"), and an
   // account with no CSM assigned has no name to compare it against.
   const CSM_FIRST = new Set(
