@@ -44,6 +44,27 @@ function futureDay(mon: string, day: number, ref: Date): string | undefined {
   return `${y}-${String(m).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
+// The sentence an urgency phrase sits in, and the date that sentence states.
+// A record is written in paragraphs and line-broken notes, so a "sentence"
+// ends at .!? OR a newline — without the newline rule a bulleted note is one
+// sentence from top to bottom and the containment check buys nothing.
+const SENT_EDGE = /[.!?\n]/;
+export function dateNear(text: string, at: number, ref: Date): string | undefined {
+  const s = text ?? "";
+  let from = at;
+  while (from > 0 && !SENT_EDGE.test(s[from - 1]!)) from--;
+  let to = at;
+  while (to < s.length && !SENT_EDGE.test(s[to]!)) to++;
+  const sentence = s.slice(from, to);
+  // "by August 6", "August 6th", "Aug 6" — the preposition is optional, the
+  // ordinal suffix is noise.
+  const m =
+    /\b(?:by\s+)?(?:early |late |end of )?([A-Z][a-z]{2,8})\.?\s+(\d{1,2})(?:st|nd|rd|th)?\b/.exec(
+      sentence,
+    );
+  return m ? futureDay(m[1], Number(m[2]), ref) : undefined;
+}
+
 export type CorpusDoc = {
   text: string;
   at: string; // ISO
@@ -243,18 +264,26 @@ export function extractDealIntel(docs: CorpusDoc[], seedEntry?: DigestEntry): De
       const hit = INCUMBENTS.find((i) => i.re.test(doc.text));
       if (hit) intel.incumbent = { value: hit.name, src: doc.src, at: doc.at };
     }
-    // timing — newest urgency phrase wins
+    // timing — newest urgency phrase wins, and the date must belong to it
+    //
+    // The date used to be scanned out of the WHOLE document, independently of
+    // where the urgency phrase sat. On Simploy's 7/29 note the two landed 1,100
+    // characters apart, in unrelated paragraphs:
+    //
+    //   …the August 6th date is Chassie's internal deadline to recommend a
+    //   vendor to leadership…                                   ← the urgency
+    //   …Antaeus is sending a pre-recorded version instead, by July 30th at
+    //   the latest…                                             ← the date taken
+    //
+    // so the operator's own errand — chasing a demo recording — became the
+    // deal's close date, while the decision date stated in the matching
+    // sentence was never read. A date belongs to an urgency phrase only when
+    // it shares a sentence with it, and a date stated plainly ("August 6th")
+    // counts as much as one introduced by "by".
     if (!intel.timing) {
       const u = URGENCY.exec(doc.text);
       if (u) {
-        const m = /\bby ((?:early |late |end of )?[A-Z][a-z]+(?: \d{1,2})?)/.exec(
-          doc.text,
-        );
-        let dateIso: string | undefined;
-        if (m) {
-          const md = /([A-Z][a-z]{2,})[a-z]* (\d{1,2})/.exec(m[1]);
-          if (md) dateIso = futureDay(md[1], Number(md[2]), new Date(doc.at));
-        }
+        const dateIso = dateNear(doc.text, u.index, new Date(doc.at));
         intel.timing = {
           value: { phrase: u[0], dateIso },
           src: doc.src,

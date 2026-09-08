@@ -19,6 +19,8 @@ import {
   waitingOn,
   theirTurnFrom,
   gatedByThem,
+  ownersFrom,
+  ownerClause,
 } from "../src/lib/pipeline/report";
 
 describe("another team's work is not his next step", () => {
@@ -252,6 +254,60 @@ describe("the gate — their turn precedes ours", () => {
   });
   test("nothing owed by them gates nothing", () => {
     assert.equal(gatedByThem([], [{ opened: "2026-09-02" }]), false);
+  });
+});
+
+describe("who on our side is handling it", () => {
+  // Simploy's real activity store, trimmed.
+  const ACT = [
+    "⌗ ACTIVITY · drop 1eef02a9 · 2026-08-31 · window 2026-06-27→2026-08-29",
+    "LANES · human 10 · csm 158 · support 75 · intent 563",
+    "ACTOR · support · Nihar Kulkarni (account) ×41",
+    "ACTOR · support · Janaki Streibig (account) ×19",
+    "ACTOR · support · Mike Paschal (colleague) ×13",
+    "ACTOR · csm · Lesha Cyphers (colleague) ×22",
+    "THREAD · 2026-08-24→2026-08-26 · 2 rows · account-led · Email: Re: Reseller",
+  ].join("\n");
+
+  test("our people are named, busiest first", () => {
+    const got = ownersFrom(ACT);
+    assert.equal(got.length, 2);
+    assert.equal(got[0].name, "Lesha Cyphers");
+    assert.equal(got[0].n, 22);
+    assert.equal(got[1].name, "Mike Paschal");
+  });
+  test("the client's own people are not named here", () => {
+    // This line answers "who on our side," not "who called."
+    const got = ownersFrom(ACT, ["support"], 5);
+    assert.deepEqual(got.map((o) => o.name), ["Mike Paschal"]);
+    assert.ok(!got.some((o) => o.name === "Nihar Kulkarni"));
+  });
+  test("a lane nobody asked about is not read", () => {
+    assert.deepEqual(ownersFrom(ACT, ["human"]), []);
+  });
+  test("the operator is never FYI to himself", () => {
+    // He is on his own accounts' CSM lane constantly; this line is about work
+    // that is not his.
+    const withMe = ACT + "\nACTOR · csm · Antaeus Coe (colleague) ×20";
+    assert.ok(ownersFrom(withMe, ["csm"], 5).some((o) => o.name === "Antaeus Coe"));
+    assert.ok(
+      !ownersFrom(withMe, ["csm"], 5, "Antaeus Coe").some((o) => o.name === "Antaeus Coe"),
+    );
+  });
+  test("the clause reads as a sentence, one name or several", () => {
+    assert.equal(ownerClause([{ name: "Mike Paschal", lane: "support", n: 13 }]), "Mike Paschal is handling it");
+    assert.equal(
+      ownerClause([
+        { name: "Mike Paschal", lane: "support", n: 13 },
+        { name: "Lesha Cyphers", lane: "csm", n: 22 },
+      ]),
+      "Mike Paschal and Lesha Cyphers are handling it",
+    );
+  });
+  test("nobody named is nobody named, never a guess", () => {
+    assert.equal(ownerClause([]), "");
+    assert.deepEqual(ownersFrom(""), []);
+    assert.deepEqual(ownersFrom("ACTOR · support · Someone (account) ×4"), []);
   });
 });
 

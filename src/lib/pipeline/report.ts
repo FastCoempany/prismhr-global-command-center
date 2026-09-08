@@ -131,6 +131,58 @@ export function fyiFromSupport(storeBody: string): string {
   return parts.length ? parts.join("; ") + "." : "";
 }
 
+// ── who is handling it ──────────────────────────────────────────────────────
+// The FYI line said what was happening at the account and never who. The
+// activity store already knows: it writes one ACTOR line per person per lane
+// and tags which side they sit on.
+//
+//   ACTOR · support · Nihar Kulkarni (account) ×41
+//   ACTOR · support · Mike Paschal (colleague) ×13
+//
+// A colleague on the support lane is the person inside PrismHR carrying that
+// account's traffic — the thing the operator must never be surprised by in
+// front of leadership. An (account) actor is the client's own person and is
+// not named here: this line answers "who on our side," not "who called."
+
+const ACTOR_RE = /^ACTOR · (\S+) · (.+?) \((colleague|account)\) ×(\d+)\s*$/;
+
+export type LaneOwner = { name: string; lane: string; n: number };
+
+/** Our own people on a lane, busiest first. `lanes` defaults to the lanes that
+ *  are somebody else's work — support and the CSM desk. */
+export function ownersFrom(
+  activityBody: string,
+  lanes: readonly string[] = ["support", "csm"],
+  cap = 2,
+  /** The operator's own name. This line is about work that is NOT his — he
+   *  turns up on his own accounts' CSM lane constantly and belongs nowhere
+   *  near an FYI about someone else's desk. */
+  me = "",
+): LaneOwner[] {
+  const mine = me.trim().toLowerCase();
+  const out: LaneOwner[] = [];
+  for (const line of (activityBody ?? "").split("\n")) {
+    const m = ACTOR_RE.exec(line.trim());
+    if (!m) continue;
+    const [, lane, name, side, n] = m;
+    if (side !== "colleague") continue;
+    if (!lanes.includes(lane)) continue;
+    if (mine && name.trim().toLowerCase() === mine) continue;
+    out.push({ name: name.trim(), lane, n: Number(n) });
+  }
+  return out.sort((a, b) => b.n - a.n).slice(0, cap);
+}
+
+/** "Mike Paschal is handling it" — the owners said as a clause the FYI line
+ *  can carry. Empty when the record names nobody, which is the honest answer
+ *  rather than a guess at whose desk it is. */
+export function ownerClause(owners: readonly LaneOwner[]): string {
+  const who = (owners ?? []).map((o) => o.name);
+  if (!who.length) return "";
+  if (who.length === 1) return `${who[0]} is handling it`;
+  return `${who.slice(0, -1).join(", ")} and ${who[who.length - 1]} are handling it`;
+}
+
 // ── the next step ───────────────────────────────────────────────────────────
 
 export type OpenItem = {
