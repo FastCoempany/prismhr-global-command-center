@@ -135,9 +135,11 @@ describe("the record reads what the record says", () => {
     assert.equal(r.handoffs.length, 1);
     assert.match(r.handoffs[0], /recruitment specialist/);
   });
-  test("a commitment the call overtook is folded, not deleted", () => {
-    assert.ok(r.overtaken.some((o) => /Jul 28/.test(o.text)));
+  test("a commitment the call overtook is gone, not folded", () => {
+    // An executive readout carries where the account stands, and nothing else
+    // (founder-decreed 2026-09-08) — a superseded scheduling item is neither.
     assert.ok(!r.ourNext.some((o) => /Jul 28/.test(o.text)));
+    assert.ok(!("overtaken" in r), "the field itself is gone");
   });
   test("their turn is read, and it runs first", () => {
     assert.equal(r.theirSide[0].who, "Chassie");
@@ -238,7 +240,7 @@ describe("the plain text is what he pastes", () => {
     const lines = recordToText(r).split("\n");
     assert.equal(lines[0], "SIMPLOY");
     assert.match(lines[1], /CSM Lesha Cyphers/);
-    assert.ok(lines.some((l) => l.startsWith("Opportunities:") || l.startsWith("Opportunities: ")));
+    assert.ok(lines.some((l) => l.startsWith("Countries:")));
   });
   test("their move is printed before his, because it runs first", () => {
     const t = recordToText(r);
@@ -420,7 +422,7 @@ describe("the Word document", () => {
     };
     const [q] = build([bare]);
     const text = JSON.stringify(reportSection([q], {}, day));
-    for (const label of ["PRODUCTS", "OPPORTUNITIES", "MY CONTACTS", "MODEL", "COMPETITOR", "STAGE", "CLOSE DATE", "UNKNOWNS"])
+    for (const label of ["PRODUCTS", "COUNTRIES", "CONTACTS", "MODEL", "COMPETITOR", "STAGE", "CLOSE DATE", "UNKNOWNS"])
       assert.ok(text.includes(label), `missing ${label}`);
     assert.ok(text.includes("None set — that is the finding"));
   });
