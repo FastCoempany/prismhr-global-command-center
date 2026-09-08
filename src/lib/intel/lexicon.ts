@@ -182,6 +182,41 @@ export function countryNear(text: string, at: number, maxGap = 240): string {
   return bestGap <= maxGap ? best : "";
 }
 
+// A country is IN PLAY when the record shows work to be done there — people to
+// employ, pay or quote for. A country the account merely HAS something in is
+// context.
+//
+// XCEL HR is the case. Its parent already owns payroll companies in the UK and
+// India, so the record names the UK twice — "they have payrol comanies in uk
+// and india for example" and "theres national retirement insurance etc in the
+// uk for exmple?" — and neither is a deal. The report listed the United
+// Kingdom beside Mexico and Canada as though it were one (2026-09-08).
+//
+// The test is positive evidence, never a blocklist: people, or a named intent
+// toward the place. Anything else is a mention. A CLIENT in a country counts —
+// in a PEO channel the client is the unit of demand, and Staff Leasing's real
+// Canada opportunity ("cites Canada, incl. a Canadian client based in Fulton
+// NY") had nothing else to stand on.
+const DEMAND_NEAR =
+  /\b(workers?|employees?|EEs?|staff|people|contractors?|headcount|hiring|hire[sd]?|onboard(?:ing|ed)?|relocat(?:e|ed|ing|ion)|placed?|payroll(?:ed)?\s+(?:there|them)|pric(?:e|ing)|quote[sd]?|proposal|coverage|cover(?:ing)?|expand(?:ing)?|opportunit(?:y|ies)|prospects?|clients?|requests?|need(?:s|ed)?|flagged|next\b|in play|win[- ]back)\b/i;
+
+/** Does the SENTENCE holding the country at `at` show work to be done there?
+ *
+ *  A character window is too wide. XCEL HR's UK survived one because a note
+ *  read "they need payroll. just to pay them. theres national retirement
+ *  insurance etc in the uk for exmple?" — the "need" belongs to a different
+ *  sentence about a different country, ninety characters away. Scoped to its
+ *  own sentence the UK clause has no demand in it at all, which is right: it
+ *  is a rhetorical aside about statutory rules. */
+export function demandNear(text: string, at: number): boolean {
+  const s = text ?? "";
+  let from = at;
+  while (from > 0 && !/[.!?\n]/.test(s[from - 1]!)) from--;
+  let to = at;
+  while (to < s.length && !/[.!?\n]/.test(s[to]!)) to++;
+  return DEMAND_NEAR.test(s.slice(from, to));
+}
+
 export const COUNTRY_NAME: Record<string, string> = {
   ca: "Canada",
   bg: "Bulgaria",

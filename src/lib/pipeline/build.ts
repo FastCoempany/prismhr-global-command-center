@@ -20,7 +20,9 @@ import { effectiveAt } from "@/lib/intel/clock";
 import {
   COUNTRY_NAME,
   PRODUCT_TERMS,
+  countryMentions,
   countryNear,
+  demandNear,
   redactMoney,
 } from "@/lib/intel/lexicon";
 import { buildAccountSheet } from "@/lib/room/sheet-view";
@@ -180,6 +182,22 @@ export function tidyPeople(names: readonly string[]): string[] {
 /** Which product each country is named beside. Reads the distilled entries and
  *  notes, never the raw tape — a demo walks through every product in the suite
  *  and would attach all of them to whichever country was on screen. */
+/** The countries the record shows work in. Reads the same docs the countries
+ *  themselves came from — the reads, never the raw tape. An empty set means the
+ *  record is too thin to judge, and the caller keeps every country rather than
+ *  showing none. */
+function countriesInPlay(
+  notes: readonly { body: string; source?: string }[],
+): Set<string> {
+  const out = new Set<string>();
+  for (const n of notes) {
+    if (/transcript/.test(n.source ?? "")) continue;
+    for (const m of countryMentions(n.body ?? ""))
+      if (demandNear(n.body ?? "", m.at)) out.add(m.code);
+  }
+  return out;
+}
+
 function productByCountry(
   notes: readonly { body: string; source?: string }[],
 ): Map<string, string[]> {
@@ -393,16 +411,24 @@ function record(
   // of what the record says. Where the record names no product beside a
   // country, the honest answer is Unknown rather than a borrowed one.
   const productAt = productByCountry(ns);
-  const opportunities = intel.countries.slice(0, 4).map((c) => {
-    const hc = hcBy.get(c.value);
-    const named = productAt.get(c.value) ?? [];
-    return {
-      country: COUNTRY_NAME[c.value] ?? c.value.toUpperCase(),
-      product: named.map((k) => PRODUCT[k] ?? k).join(" / "),
-      headcount: hc ? `${hc.n} ${hc.n === 1 ? "worker" : "workers"}` : "",
-      src: c.src,
-    };
-  });
+  // Only the countries with work to be done in them. A country the account
+  // merely HAS something in is context: XCEL HR's parent already owns payroll
+  // companies in the UK, which the report was listing beside Mexico and Canada
+  // as though it were a deal.
+  const inPlay = countriesInPlay(ns);
+  const opportunities = intel.countries
+    .filter((c) => !inPlay.size || inPlay.has(c.value))
+    .slice(0, 4)
+    .map((c) => {
+      const hc = hcBy.get(c.value);
+      const named = productAt.get(c.value) ?? [];
+      return {
+        country: COUNTRY_NAME[c.value] ?? c.value.toUpperCase(),
+        product: named.map((k) => PRODUCT[k] ?? k).join(" / "),
+        headcount: hc ? `${hc.n} ${hc.n === 1 ? "worker" : "workers"}` : "",
+        src: c.src,
+      };
+    });
 
   // His own work vs another team's, ranked by when he made the promise. A
   // commitment a later meeting overtook is finished whatever the register says.

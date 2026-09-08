@@ -549,7 +549,9 @@ describe("a transcript does not create opportunities", () => {
           id: "read",
           source: "call-ai",
           actors: "Antaeus Coe → Chassie Smith",
-          body: "head\nCanada — 10 workers already live on payroll. Nothing named for Spain yet.",
+          // Spain needs demand of its own to be in play at all; what it has
+          // NOT got is a product named beside it.
+          body: "head\nCanada — 10 workers already live on payroll. A client in Spain too.",
         }),
       ],
     });
@@ -559,5 +561,58 @@ describe("a transcript does not create opportunities", () => {
     assert.match(ca?.product ?? "", /Global Payroll/);
     assert.equal(ca?.headcount, "10 workers");
     assert.equal(es?.product, "", "unnamed renders Unknown, never a borrowed product");
+  });
+});
+
+// A country the account merely HAS something in is context, not a deal.
+describe("only countries with work in them", () => {
+  const read = (body: string) =>
+    note({ id: "r", source: "call-ai", actors: "Antaeus Coe → Chassie Smith", body: `head\n${body}` });
+
+  test("the parent's own payroll company is not an opportunity", () => {
+    // XCEL HR's real note, verbatim. Its parent already owns payroll companies
+    // in the UK, and the report listed the United Kingdom beside Mexico and
+    // Canada as though it were a deal.
+    const a = simploy({
+      notes: [
+        read(
+          "xcel has as part of their parent company - they have payrol comanies in uk and india for example, but theres still separation of systems. Canada — 10 workers already live on payroll.",
+        ),
+      ],
+    });
+    const [r] = build([a]);
+    const named = r.opportunities.map((o) => o.country);
+    assert.ok(named.includes("Canada"));
+    assert.ok(!named.includes("United Kingdom"), "context, not a country in play");
+    assert.ok(!named.includes("India"));
+  });
+
+  test("a demand word in a NEIGHBOURING sentence does not qualify a country", () => {
+    // The window version passed the UK on "they need payroll. just to pay
+    // them. theres national retirement insurance etc in the uk for exmple?"
+    const a = simploy({
+      notes: [
+        read(
+          "they need payroll. just to pay them. theres national retirement insurance etc in the uk for exmple? Mexico has 4 workers.",
+        ),
+      ],
+    });
+    const named = build([a])[0].opportunities.map((o) => o.country);
+    assert.ok(named.includes("Mexico"));
+    assert.ok(!named.includes("United Kingdom"));
+  });
+
+  test("a client in a country is demand — that is the unit of the channel", () => {
+    // Staff Leasing's real Canada: "cites Canada, incl. a Canadian client
+    // based in Fulton NY" has nothing else to stand on.
+    const a = simploy({
+      notes: [read("Tom hears global interest 3-4x/year. A Canadian client based in Fulton NY.")],
+    });
+    assert.ok(build([a])[0].opportunities.some((o) => o.country === "Canada"));
+  });
+
+  test("a record too thin to judge keeps every country rather than showing none", () => {
+    const a = simploy({ id: "thin", name: "Thin Co", notes: [read("Spain.")], todos: [] });
+    assert.ok(build([a])[0].opportunities.some((o) => o.country === "Spain"));
   });
 });
