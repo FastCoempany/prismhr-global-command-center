@@ -180,3 +180,169 @@ export function waitingOn(theirs: readonly { who: string; text: string }[]): str
   const first = (theirs ?? [])[0];
   return first ? `${first.who} owes ${first.text}` : "";
 }
+
+// ── their turn, where no Owed line names them ───────────────────────────────
+// owedByThem() reads exactly one syntax: "Owed: <thing> — @<Who>". A call read
+// writes that line; an ordinary email thread does not. Swept against the whole
+// record on 2026-09-08, four of eleven active accounts had the counterparty's
+// turn sitting in plain prose the reader can see and the app could not:
+//
+//   Trend Personnel  9/1  "I will check with our Sales Director"
+//   XCEL HR          8/13 Bill sizes Mexico with the client; Helen circles back
+//   Staff Leasing    8/18 Tom qualifies the four people with the client
+//   Infiniti HR      8/27 Javier adds his tax and payroll people to the demo
+//
+// Trend is the sharpest: the ball has been theirs since 9/1 and the report
+// said "None set." A promise is a promise whichever dialect the record kept it
+// in — so the second rung reads an inbound note's own first person.
+
+/** A forward commitment: something the writer says they are about to do. */
+const WILL_DO_RE =
+  /\b(?:will|going to|gonna|am going to|'ll)\s+((?:[a-z][\w'’-]*\s+){0,3}(?:check|share|send|provide|confirm|circle back|get back|come back|call|size|verify|forward|pull|ask|look|find out|follow up|talk|reach out|review|sign|return)\b(?:[^.!?;]{0,90}))/i;
+/** Machinery and hedges that look like a promise and are not one. */
+const NOT_A_PROMISE_RE =
+  /\b(?:out of (?:the )?office|auto(?:matic)?[- ]?reply|unsubscribe|this (?:message|email)|do not reply)\b/i;
+// A courtesy offer is not a turn. "We'll reach out if you need anything" puts
+// nothing on their side of the table — it hands the next move back to us.
+// Infiniti's 9/3 line read as a commitment until this ruled it out.
+const CONDITIONAL_RE =
+  /\b(?:if (?:you|they|we|there|it|that)|feel free|don'?t hesitate|as needed|let (?:me|us) know|should you|in case)\b/i;
+
+const senderOf = (actors: string) =>
+  (actors ?? "")
+    .split("→")[0]
+    ?.replace(/\+\d+\s*$/, "")
+    .trim() ?? "";
+
+/** Trim on a word boundary — a promise read aloud never ends mid-word. */
+const clip = (s: string, n: number) => {
+  if (s.length <= n) return s;
+  const cut = s.slice(0, n);
+  const sp = cut.lastIndexOf(" ");
+  return (sp > n * 0.6 ? cut.slice(0, sp) : cut).replace(/[,;]$/, "");
+};
+/** The first five content words — enough to tell one promise from two writings
+ *  of the same one. Stopwords are dropped because the two writings differ
+ *  exactly there: "check with OUR Sales Director AS this piece" against
+ *  "check with THEIR Sales Director — this piece" is one promise. */
+const FILLER = new Set([
+  "our",
+  "their",
+  "the",
+  "a",
+  "an",
+  "as",
+  "this",
+  "that",
+  "with",
+  "to",
+  "for",
+  "and",
+  "of",
+  "on",
+  "in",
+  "my",
+  "his",
+  "her",
+  "its",
+  "back",
+  "about",
+]);
+const stem = (s: string) =>
+  s
+    .toLowerCase()
+    .replace(/[^a-z ]/g, " ")
+    .split(/\s+/)
+    .filter((w) => w && !FILLER.has(w))
+    .slice(0, 5)
+    .join(" ");
+
+export type TheirTurn = { who: string; text: string; at: string; src: string };
+export type TurnNote = {
+  createdAt: string;
+  actors?: string | null;
+  source?: string | null;
+  body: string;
+};
+
+/** Everything the counterparty said they would do, newest first. `isHome` says
+ *  which names are ours; a note we wrote is never their promise. */
+export function theirTurnFrom(
+  notes: readonly TurnNote[],
+  isHome: (name: string) => boolean,
+  cap = 3,
+): TheirTurn[] {
+  const out: TheirTurn[] = [];
+  for (const n of notes ?? []) {
+    const who = senderOf(n.actors ?? "");
+    // Only an inbound note carries their first person. A transcript is every
+    // voice at once and cannot be attributed by its actors line, so it is not
+    // read here — the Owed line the call read writes covers that case.
+    if (!who || isHome(who) || /transcript/.test(n.source ?? "")) continue;
+    const body = n.body ?? "";
+    if (NOT_A_PROMISE_RE.test(body)) continue;
+    for (const raw of body.split(/\n|(?<=[.!?])\s+/)) {
+      const s = raw.trim().replace(/\s+/g, " ");
+      if (s.length < 14 || s.length > 200) continue;
+      if (/^Owed:/i.test(s)) continue;
+      if (CONDITIONAL_RE.test(s)) continue;
+      const m = WILL_DO_RE.exec(s);
+      if (!m) continue;
+      // The promise is the first clause; what follows it is explanation.
+      // "check with our Sales Director AS this piece of the proposal is not
+      // what is holding up the process" clipped to "…holding up the", which
+      // reads as a sentence that lost its end.
+      const text = clip(
+        m[1]
+          .split(/\s+(?:as|because|since|so that|but|and then)\s+|\s*[—;,]\s+/)[0]
+          .replace(/[,;—-]\s*$/, "")
+          .trim(),
+        92,
+      );
+      // The same message is often on file twice — the raw capture and the
+      // read's distillation of it. One promise, written two ways.
+      if (!text || out.some((o) => stem(o.text) === stem(text))) continue;
+      out.push({
+        who: who.split(" ")[0] || who,
+        text,
+        at: n.createdAt.slice(0, 10),
+        src: `record ${md(n.createdAt)}`,
+      });
+      break; // one promise per note — the newest note already ranks first
+    }
+    if (out.length >= cap) break;
+  }
+  return out;
+}
+
+// ── the gate ────────────────────────────────────────────────────────────────
+// The fault the operator named on 2026-09-08: "you've still missed what
+// Chassie owes us — it's the thing that precedes us sending her anything at
+// all." Simploy's record HELD her side and the report printed it beside his
+// three sends, as though both were live today. His own note says the order:
+// she shares the client's invoicing and contract, THEN he sends legal the
+// agreements. Having the fact and losing the sequence reads as work he can do
+// today when he cannot.
+
+/** Does the counterparty's turn come first? True when their newest promise is
+ *  no older than the commitments he opened — the same conversation set both,
+ *  or theirs came after, and either way the next move is not his. */
+export function gatedByThem(
+  theirs: readonly { at: string }[],
+  ours: readonly { opened: string }[],
+): boolean {
+  const theirAt =
+    (theirs ?? [])
+      .map((t) => t.at)
+      .sort()
+      .pop() ?? "";
+  if (!theirAt) return false;
+  const ourAt =
+    (ours ?? [])
+      .map((o) => o.opened)
+      .filter(Boolean)
+      .sort()
+      .pop() ?? "";
+  if (!ourAt) return true;
+  return theirAt >= ourAt;
+}

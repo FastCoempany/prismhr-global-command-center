@@ -17,6 +17,8 @@ import {
   fyiFromSupport,
   nextStepFrom,
   waitingOn,
+  theirTurnFrom,
+  gatedByThem,
 } from "../src/lib/pipeline/report";
 
 describe("another team's work is not his next step", () => {
@@ -119,6 +121,137 @@ describe("waiting on them", () => {
   });
   test("nothing owed says nothing", () => {
     assert.equal(waitingOn([]), "");
+  });
+});
+
+describe("their turn, where no Owed line names them", () => {
+  const isHome = (n: string) => /antaeus|lesha|anika/i.test(n);
+  // Trend Personnel, 9/1 — the real line. The ball has been theirs since, and
+  // the report said "None set."
+  const TREND = [
+    {
+      createdAt: "2026-09-01T14:00:00Z",
+      actors: "Melanie Dreyer → Antaeus Coe",
+      source: "outlook-ai",
+      body: "Good morning Antaeus – I will check with our Sales Director as this piece of the proposal is not what is holding up the process.",
+    },
+  ];
+  test("an inbound promise is read as their turn", () => {
+    const got = theirTurnFrom(TREND, isHome);
+    assert.equal(got.length, 1);
+    assert.equal(got[0].who, "Melanie");
+    // The promise is the first clause; the rest is explanation.
+    assert.equal(got[0].text, "check with our Sales Director");
+    assert.equal(got[0].at, "2026-09-01");
+  });
+  test("our own promise is never their turn", () => {
+    const ours = [
+      {
+        createdAt: "2026-09-02T14:00:00Z",
+        actors: "Antaeus Coe → Chassie Smith",
+        source: "outlook-ai",
+        body: "I will send the reseller agreement this week.",
+      },
+    ];
+    assert.deepEqual(theirTurnFrom(ours, isHome), []);
+  });
+  test("a transcript is every voice at once, so it is not attributed here", () => {
+    const tape = [
+      {
+        createdAt: "2026-08-13T14:00:00Z",
+        actors: "Bill Laffey → Antaeus Coe",
+        source: "transcript",
+        body: "Bill Laffey: I will call the client to size Mexico.",
+      },
+    ];
+    assert.deepEqual(theirTurnFrom(tape, isHome), []);
+  });
+  test("machinery never makes a promise", () => {
+    const auto = [
+      {
+        createdAt: "2026-09-01T14:00:00Z",
+        actors: "Melanie Dreyer → Antaeus Coe",
+        source: "outlook-ai",
+        body: "Out of office. I will get back to you when I return.",
+      },
+    ];
+    assert.deepEqual(theirTurnFrom(auto, isHome), []);
+  });
+  test("a courtesy offer is not a turn", () => {
+    // Infiniti, 9/3 — read as a commitment until the conditional ruled it out.
+    // "Reach out if you need anything" hands the next move back to us.
+    const offer = [
+      {
+        createdAt: "2026-09-03T14:00:00Z",
+        actors: "Raphael Kalu → Antaeus Coe",
+        source: "outlook-ai",
+        body: "Thanks for the deck. We will reach out if they need additional information, particularly on Puerto Rico.",
+      },
+    ];
+    assert.deepEqual(theirTurnFrom(offer, isHome), []);
+  });
+  test("one promise on file twice is one promise", () => {
+    // The raw capture and the read's distillation of the same message.
+    const twice = [
+      {
+        createdAt: "2026-09-01T15:00:00Z",
+        actors: "Melanie Dreyer → Antaeus Coe",
+        source: "outlook-ai",
+        body: "Will check with their Sales Director — this piece of the proposal is not what is holding up the process.",
+      },
+      {
+        createdAt: "2026-09-01T14:00:00Z",
+        actors: "Melanie Dreyer → Antaeus Coe",
+        source: "outlook",
+        body: "I will check with our Sales Director as this piece of the proposal is not what is holding up the process.",
+      },
+    ];
+    assert.equal(theirTurnFrom(twice, isHome).length, 1);
+  });
+  test("a promise read aloud never ends mid-word", () => {
+    const long = [
+      {
+        createdAt: "2026-09-01T14:00:00Z",
+        actors: "Melanie Dreyer → Antaeus Coe",
+        source: "outlook-ai",
+        body: "I will check with our Sales Director about the pricing structure and the contract terms and the implementation timeline and everything else outstanding.",
+      },
+    ];
+    const got = theirTurnFrom(long, isHome);
+    assert.equal(got.length, 1);
+    assert.ok(got[0].text.length <= 92);
+    assert.ok(!/\s$/.test(got[0].text) && !/[a-z]-$/.test(got[0].text));
+  });
+  test("the Owed line is the other rung's job, not this one's", () => {
+    const owed = [
+      {
+        createdAt: "2026-09-02T14:00:00Z",
+        actors: "Chassie Smith → Antaeus Coe",
+        source: "call-ai",
+        body: "Owed: invoices + EOR confirm — @Chassie; agreements — @Antaeus.",
+      },
+    ];
+    assert.deepEqual(theirTurnFrom(owed, isHome), []);
+  });
+});
+
+describe("the gate — their turn precedes ours", () => {
+  test("the Simploy case: one call set both sides, so theirs runs first", () => {
+    // "you've still missed what Chassie owes us — it's the thing that precedes
+    // us sending her anything at all."
+    assert.equal(
+      gatedByThem([{ at: "2026-09-02" }], [{ opened: "2026-09-02" }, { opened: "2026-09-02" }]),
+      true,
+    );
+  });
+  test("a promise he made AFTER their turn is his to run", () => {
+    assert.equal(gatedByThem([{ at: "2026-09-02" }], [{ opened: "2026-09-05" }]), false);
+  });
+  test("their turn with nothing owed by him is still their turn", () => {
+    assert.equal(gatedByThem([{ at: "2026-09-01" }], []), true);
+  });
+  test("nothing owed by them gates nothing", () => {
+    assert.equal(gatedByThem([], [{ opened: "2026-09-02" }]), false);
   });
 });
 

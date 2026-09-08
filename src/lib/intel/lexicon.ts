@@ -39,8 +39,22 @@ export const INCUMBENTS: { name: string; re: RegExp }[] = [
 export const URGENCY =
   /\b(time[- ]sensitive|deadline|by (early |late |end of )?(january|jan|february|feb|march|mar|april|apr|may|june|jun|july|jul|august|aug|september|sept?|october|oct|november|nov|december|dec)\b\.?( \d{1,2})?|quarterly review|leadership (team|review|meeting)|asap|as quickly as possible)\b/i;
 
+// A headcount and its unit sit on ONE line, and the unit is a word.
+//
+// Before this, `\s*` crossed newlines and `ee?s?` accepted a lone "e", so an
+// ordinary email signature read as a deal size (found 2026-09-08 on Trend
+// Personnel, whose Philippines opportunity rendered "9292 workers"):
+//
+//     P: 312.221.9292
+//     E: antaeus.coe@prismhr.com
+//
+// matched literally "9292\nE" — the phone's last four digits, the line break,
+// and the E of the address line. Anika's direct-dial produced "4214" the same
+// way. Three guards: digits inside a dotted or hyphenated run are part of a
+// number, not a count; the gap to the unit cannot cross a line; and "EE" is
+// two letters, never one.
 export const HEADCOUNT =
-  /\b~?\s?(\d{1,4})\s*(?:independent\s+|international\s+|intl\s+)?(?:ee?s?\b|employees?\b|people\b|contractors?\b|workers?\b|folks\b)/i;
+  /(?<![\d.\-])\b~?[ \t]?(\d{1,4})[ \t]*(?:independent[ \t]+|international[ \t]+|intl[ \t]+)?(?:ees?\b|employees?\b|people\b|contractors?\b|workers?\b|folks\b)/i;
 
 // Country detection: superset of the flags lib (which only carries art for a
 // few) — aliases and adjectives included. Returns iso2 codes; CountryFlag

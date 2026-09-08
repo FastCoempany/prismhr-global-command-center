@@ -78,6 +78,36 @@ describe("lexicon: countries + headcounts", () => {
     assert.equal(HEADCOUNT.exec("300 ee of theirs")?.[1], "300");
     assert.equal(HEADCOUNT.exec("in 2026 we grew"), null);
   });
+
+  // An email signature is not a deal size (found 2026-09-08 on Trend
+  // Personnel, whose Philippines opportunity rendered "9292 workers").
+  test("a phone number in a signature is not a headcount", () => {
+    const sig = [
+      "Antaeus Coe",
+      "Sr. Global Business Consultant",
+      "",
+      "P: 312.221.9292",
+      "E: antaeus.coe@prismhr.com",
+    ].join("\n");
+    assert.equal(HEADCOUNT.exec(sig), null);
+    // Anika's direct dial produced 4214 the same way.
+    assert.equal(HEADCOUNT.exec("P: 877.837.4311\nD: 703.554.4214\nE: a@b.com"), null);
+  });
+  test("a count and its unit sit on one line", () => {
+    assert.equal(HEADCOUNT.exec("we counted 40\nemployees left the plan"), null);
+    assert.equal(HEADCOUNT.exec("we counted 40 employees")?.[1], "40");
+  });
+  test("a lone e is not a unit, but EE is", () => {
+    assert.equal(HEADCOUNT.exec("10 e"), null);
+    assert.equal(HEADCOUNT.exec("10 EEs in Puerto Rico")?.[1], "10");
+    assert.equal(HEADCOUNT.exec("1 EE already onboarding")?.[1], "1");
+  });
+  test("digits inside a dotted run are part of a number", () => {
+    assert.equal(HEADCOUNT.exec("order 12.3456 workers"), null);
+    assert.equal(HEADCOUNT.exec("ext-5150 people"), null);
+    // …but an ordinary sentence still reads.
+    assert.equal(HEADCOUNT.exec("They have 10 workers there.")?.[1], "10");
+  });
 });
 
 describe("redactMoney", () => {
