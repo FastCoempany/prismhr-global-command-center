@@ -2759,3 +2759,14 @@ button.sdRadio:hover {
     column-span: all;
   }
 }
+
+/* An export never runs against records the drawer already knows are
+   superseded — the buttons wait for the read. */
+.pipeCopy:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.pipeCopy:disabled:hover {
+  color: rgba(10, 28, 64, 0.42);
+  border-color: var(--hair);
+}
