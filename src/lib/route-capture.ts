@@ -75,6 +75,15 @@ const BLAND = new Set([
   "resources",
   "consulting",
   "employer",
+  // "employee" belongs beside "employer": a book of PEOs says the word in
+  // nearly every capture, and one account is named "Employee Professionals
+  // NE LLC" — its head token alone was disputing three other accounts'
+  // records (swept 2026-09-08, against the COMPLETE note table).
+  "employee",
+  "employees",
+  "professional",
+  "professionals",
+  "leasing",
   "american",
   "national",
   "united",
