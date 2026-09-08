@@ -2517,3 +2517,211 @@ button.sdRadio:hover {
   font-size: 12px;
   color: color-mix(in srgb, var(--ink) 55%, transparent);
 }
+
+/* ══ The Pipeline record (decreed 2026-09-08) ══════════════════════════════
+   The drawer opens from the room's OWN right-margin rail, beside Roundups and
+   the eye — the first cut built a second rail in another stylesheet and the
+   two stacks collided on the same edge. These are the record's styles only;
+   the seat and the pane belong to the room. */
+.pipeHint {
+  margin: 8px 16px 4px;
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(10, 28, 64, 0.42);
+}
+.pipeRec {
+  border-top: 1px solid var(--hair);
+  padding: 10px 16px 12px;
+}
+.pipeHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+.pipeHead .pipeEd {
+  font-family: var(--f-serif), Georgia, serif;
+  font-size: 17px;
+  line-height: 1.15;
+}
+.pipeMeta {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 3px;
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(10, 28, 64, 0.42);
+}
+.pipeHeadBtns {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex: 0 0 auto;
+}
+.pipeField {
+  display: grid;
+  grid-template-columns: 116px 1fr auto;
+  gap: 10px;
+  align-items: baseline;
+  padding: 3px 0;
+  border-bottom: 1px dotted rgba(10, 28, 64, 0.07);
+}
+.pipeField:last-child {
+  border-bottom: 0;
+}
+.pipeKey {
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 9px;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: rgba(10, 28, 64, 0.42);
+  padding-top: 2px;
+}
+.pipeVal {
+  font-size: 13.5px;
+  color: var(--ink);
+}
+.pipeSrc,
+.pipeSrcInline {
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 8.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(10, 28, 64, 0.42);
+  white-space: nowrap;
+}
+.pipeSrcInline {
+  margin-left: 6px;
+}
+.pipeList {
+  margin: 0;
+  padding-left: 15px;
+}
+.pipeList li {
+  margin: 1px 0;
+}
+.pipeUnknown {
+  color: rgba(10, 28, 64, 0.42);
+  font-style: italic;
+}
+.pipeFlag {
+  color: var(--red);
+  font-weight: 700;
+}
+.pipeGate {
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #b45309;
+  margin-bottom: 3px;
+}
+.pipePillHot,
+.pipePillWarn {
+  display: inline-block;
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 8.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 1px 5px;
+  margin-left: 6px;
+  border: 1px solid rgba(245, 158, 11, 0.55);
+  color: #b45309;
+  border-radius: 2px;
+}
+
+/* Edit and delete. The ✕ is quiet until its line is under the cursor — a
+   report is read far more often than it is edited. A struck line leaves the
+   record and leaves the copy; the foot chip brings it back, because nothing
+   here should die by a mis-click. */
+.pipeLine {
+  position: relative;
+}
+.pipeEd {
+  outline: none;
+  border-radius: 2px;
+}
+.pipeEd:hover {
+  background: rgba(10, 28, 64, 0.035);
+}
+.pipeEd:focus {
+  background: #fff;
+  box-shadow:
+    0 0 0 1px #2563eb,
+    0 0 0 4px rgba(37, 99, 235, 0.12);
+}
+.pipeCut {
+  opacity: 0;
+  appearance: none;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  color: rgba(10, 28, 64, 0.42);
+  font-size: 10px;
+  line-height: 1;
+  padding: 2px 4px;
+  transition: 0.12s;
+}
+.pipeLine:hover .pipeCut,
+.pipeCut:focus {
+  opacity: 1;
+}
+.pipeCut:hover {
+  color: var(--red);
+}
+.pipeCopy,
+.pipeRestore {
+  appearance: none;
+  background: none;
+  border: 1px solid var(--hair);
+  border-radius: 2px;
+  cursor: pointer;
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(10, 28, 64, 0.42);
+  padding: 4px 8px;
+}
+.pipeCopy:hover,
+.pipeRestore:hover {
+  color: var(--ink);
+  border-color: rgba(10, 28, 64, 0.42);
+}
+/* Orange is the one dominant move on this surface, and it is Copy — the whole
+   point of the panel. */
+.pipeCopyPrimary {
+  background: var(--orange);
+  border-color: var(--orange);
+  color: #fff;
+}
+.pipeCopyPrimary:hover {
+  background: #cf6318;
+  border-color: #cf6318;
+  color: #fff;
+}
+.pipeCopyDid {
+  color: var(--green);
+  border-color: rgba(34, 197, 94, 0.5);
+  background: none;
+}
+.pipeFold {
+  margin-top: 6px;
+}
+.pipeFold summary {
+  cursor: pointer;
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(10, 28, 64, 0.42);
+}
+.pipeFold summary:hover {
+  color: var(--ink);
+}

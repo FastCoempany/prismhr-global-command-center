@@ -1,10 +1,14 @@
 "use client";
 
-// The Pipeline pull tab — a slim vertical tab on the HomeRoom's right margin
-// (founder-decreed 2026-09-08, the Ledger face). Pressing it flies the whole
-// report out over the page: every active account, one fixed label/value block
-// each, in an order identical for all of them so one can be read aloud with
-// nothing prepared.
+// The Pipeline drawer — opened from the HomeRoom's right-margin rail, beside
+// Roundups and the eye (founder-decreed 2026-09-08, the Ledger face). Every
+// active account, one fixed label/value block each, in an order identical for
+// all of them so one can be read aloud with nothing prepared.
+//
+// It joins the rail the room already keeps. The first cut built its OWN fixed
+// rail in a different stylesheet, and the two stacks collided on the same
+// margin — the Pipeline tab landing on top of Roundups. The room owns that
+// edge; anything that wants a seat there asks the room for one.
 //
 // Three things it does that no other surface does:
 //   · every line is editable in place, and Copy hands back exactly what is on
@@ -17,7 +21,7 @@
 import { useMemo, useState } from "react";
 import type { PipelineRecord } from "@/lib/pipeline/build";
 import { closeText, lineKey, recordToText, reportToText } from "@/lib/pipeline/plain";
-import styles from "../command-center.module.css";
+import styles from "./room.module.css";
 
 const md = (iso: string) =>
   /^\d{4}-\d{2}-\d{2}$/.test(iso ?? "")
@@ -428,17 +432,22 @@ function Record({
   );
 }
 
-export function PipelineTab({
+/** The drawer — the room's own pane, opened from the edge rail beside Roundups
+ *  and the eye. It is NOT a second rail: the room already keeps one on that
+ *  margin, and a tab that builds its own stack collides with the tabs already
+ *  there (caught on screen, 2026-09-08). */
+export function PipelineDrawer({
   rows,
   dayLabel,
   staleNote,
+  onClose,
 }: {
   rows: PipelineRecord[];
   dayLabel: string;
   /** "" when the second record is current; the honest line when it is not. */
   staleNote: string;
+  onClose: () => void;
 }) {
-  const [open, setOpen] = useState(false);
   const [overlay, setOverlay] = useState<Overlay>({});
   const [copied, setCopied] = useState(false);
   const set = (k: string, v: string | null) => setOverlay((o) => ({ ...o, [k]: v }));
@@ -448,64 +457,39 @@ export function PipelineTab({
         Object.entries(o).filter(([k, v]) => !(v === null && k.startsWith(`${id}:`))),
       ),
     );
-  // A record with no next step and nobody's turn is the one that needs him —
-  // the tab says how many before he opens it.
+  // A record with no next step and nobody's turn is the one that needs him.
   const stalled = useMemo(
     () => rows.filter((r) => !r.ourNext.length && !r.theirSide.length).length,
     [rows],
   );
 
   return (
-    <>
-      <div className={styles.pipeRail}>
+    <div className={styles.drawerPane}>
+      <div className={styles.dpHead}>
+        <span className={styles.dpTabOn}>PIPELINE · {rows.length}</span>
         <button
           type="button"
-          className={`${styles.pipeTab} ${open ? styles.pipeTabOn : ""}`}
-          onClick={() => setOpen((v) => !v)}
-          aria-expanded={open}
+          className={`${styles.pipeCopy} ${styles.pipeCopyPrimary} ${copied ? styles.pipeCopyDid : ""}`}
+          onClick={async () => {
+            await toClipboard(reportToText(rows, overlay, dayLabel));
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1200);
+          }}
         >
-          Pipeline · {rows.length}
+          {copied ? "Copied" : "Copy whole report"}
+        </button>
+        <button type="button" className={styles.dpClose} onClick={onClose}>
+          ✕ close
         </button>
       </div>
-      {open && (
-        <>
-          <div className={styles.pipeShade} onClick={() => setOpen(false)} />
-          <div className={styles.pipeFly}>
-            <div className={styles.pipeFlyHead}>
-              <span>Pipeline Status · {dayLabel}</span>
-              <div className={styles.pipeHeadBtns}>
-                <button
-                  type="button"
-                  className={`${styles.pipeCopy} ${styles.pipeCopyPrimary} ${copied ? styles.pipeCopyDid : ""}`}
-                  onClick={async () => {
-                    await toClipboard(reportToText(rows, overlay, dayLabel));
-                    setCopied(true);
-                    setTimeout(() => setCopied(false), 1200);
-                  }}
-                >
-                  {copied ? "Copied" : "Copy whole report"}
-                </button>
-                <button
-                  type="button"
-                  className={styles.pipeClose}
-                  onClick={() => setOpen(false)}
-                  aria-label="Close"
-                >
-                  ×
-                </button>
-              </div>
-            </div>
-            <p className={styles.pipeHint}>
-              {rows.length} active · sorted by what needs you most
-              {stalled ? ` · ${stalled} with no next step` : ""}
-              {staleNote ? ` · ${staleNote}` : ""}
-            </p>
-            {rows.map((r) => (
-              <Record key={r.id} r={r} overlay={overlay} set={set} restore={restore} />
-            ))}
-          </div>
-        </>
-      )}
-    </>
+      <p className={styles.pipeHint}>
+        {dayLabel} · sorted by what needs you most
+        {stalled ? ` · ${stalled} with no next step` : ""}
+        {staleNote ? ` · ${staleNote}` : ""}
+      </p>
+      {rows.map((r) => (
+        <Record key={r.id} r={r} overlay={overlay} set={set} restore={restore} />
+      ))}
+    </div>
   );
 }

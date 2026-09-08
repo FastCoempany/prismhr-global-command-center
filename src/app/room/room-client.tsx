@@ -63,6 +63,8 @@ import { archiveFileToGitHub } from "@/lib/github/archive";
 import { githubArchiveGrant } from "./archive-actions";
 import { readFileToText } from "./read-file";
 import type { StageView } from "@/lib/room/stages-view";
+import { PipelineDrawer } from "./pipeline-tab";
+import type { PipelineRecord } from "@/lib/pipeline/build";
 import styles from "./room.module.css";
 import TheirsLine, { type TheirsGem } from "./theirs-line";
 
@@ -2516,6 +2518,9 @@ export function RoomClient({
   canWrite,
   dbUnavailable,
   boardNames,
+  pipeline,
+  pipelineDay,
+  pipelineStale,
 }: {
   rows: RoomRow[];
   cadence: CadenceRow[];
@@ -2526,9 +2531,14 @@ export function RoomClient({
   canWrite: boolean;
   dbUnavailable: boolean;
   boardNames: { id: string; name: string }[];
+  /** The Pipeline Status report — one record per active account, read by the
+   *  rail's third seat. */
+  pipeline: PipelineRecord[];
+  pipelineDay: string;
+  pipelineStale: string;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [drawer, setDrawer] = useState<"cadence" | "eye" | null>(null);
+  const [drawer, setDrawer] = useState<"cadence" | "eye" | "pipeline" | null>(null);
   // Which rows are folded. Kept per browser, not per account: this is how the
   // operator wants to READ the board today, not a fact about the deal. The
   // server paints expanded and the stored preference applies once hydrated, so
@@ -2718,7 +2728,27 @@ export function RoomClient({
         {drawer === "eye" && (
           <EyeDrawer warming={warming} later={later} onClose={() => setDrawer(null)} />
         )}
+        {drawer === "pipeline" && (
+          <PipelineDrawer
+            rows={pipeline}
+            dayLabel={pipelineDay}
+            staleNote={pipelineStale}
+            onClose={() => setDrawer(null)}
+          />
+        )}
 
+        <button
+          type="button"
+          className={styles.edge}
+          style={{ top: "16%" }}
+          onClick={() => setDrawer((d) => (d === "pipeline" ? null : "pipeline"))}
+          title="Pipeline Status — every active account"
+        >
+          <span>PIPELINE</span>
+          {pipeline.length > 0 && (
+            <span className={styles.edgeCount}>{pipeline.length}</span>
+          )}
+        </button>
         <button
           type="button"
           className={styles.edge}
