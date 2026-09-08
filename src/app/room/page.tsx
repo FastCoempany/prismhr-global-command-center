@@ -70,7 +70,6 @@ import {
   rankPipeline,
   type PipelineAccount,
 } from "@/lib/pipeline/build";
-import { PipelineTab } from "./pipeline-tab";
 import {
   RoomClient,
   type CadenceRow,
@@ -839,7 +838,6 @@ export default async function RoomPage() {
         className={`${styles.room} ${serif.variable} ${sans.variable} ${mono.variable}`}
       >
         <Chute roster={chuteRoster} canWrite={data.canWrite} />
-        <PipelineTab rows={pipeReport} dayLabel={pipeDayLabel} staleNote={pipeStale} />
         <RoomClient
           rows={rows}
           cadence={cadence}
@@ -850,6 +848,9 @@ export default async function RoomPage() {
           canWrite={data.canWrite}
           dbUnavailable={data.status === "database-unavailable"}
           boardNames={rows.map((r) => ({ id: r.accountId, name: r.name }))}
+          pipeline={pipeReport}
+          pipelineDay={pipeDayLabel}
+          pipelineStale={pipeStale}
         />
       </main>
     </>
