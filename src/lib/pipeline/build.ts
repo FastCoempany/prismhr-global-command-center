@@ -30,6 +30,7 @@ import { moveFromCommitment } from "@/lib/room/move-line";
 import { splitFallback } from "@/lib/room/deliverables";
 import { owedByThem } from "@/lib/room/owed";
 import {
+  answeredSince,
   fyiFromSupport,
   gatedByThem,
   isOtherTeamWork,
@@ -498,7 +499,48 @@ function record(
       src: `record ${md(o.at)}`,
     })),
     ...theirTurnFrom(ns, isHome).map((t) => ({ ...t, text: clean(t.text) })),
-  ].filter((t, i, arr) => arr.findIndex((x) => x.text === t.text) === i);
+  ]
+    .filter((t, i, arr) => arr.findIndex((x) => x.text === t.text) === i)
+    // A promise they have since answered is finished. Trend Personnel was
+    // gated all week on "I will check with our Sales Director" that a
+    // colleague answered the next day.
+    .filter((t) => !answeredSince(t.at, ns, isHome));
+
+  // Nothing owed either way, and the last substantive word was his: the ball
+  // is still theirs — they owe a reply. The room already keeps this signal;
+  // the readout was silent about it and said "None set" on an account where
+  // he had just asked a question.
+  if (
+    !theirSide.length &&
+    intel.lastOutbound &&
+    (!intel.lastInbound || intel.lastOutbound > intel.lastInbound)
+  ) {
+    // Who owes it: whoever he wrote to, else whoever last wrote to him. A
+    // record that names a person should never render "They".
+    const last = ns.find(
+      (n) => dayOf(effectiveAt(n.createdAt, n.body)) === dayOf(intel.lastOutbound),
+    );
+    const to =
+      (last?.actors ?? "")
+        .split("→")[1]
+        ?.replace(/\+\d+\s*$/, "")
+        .trim() ?? "";
+    const lastFrom =
+      ns
+        .map((n) => (n.actors ?? "").split("→")[0]?.trim() ?? "")
+        .find((nm) => nm && !isHome(nm) && !MINE_RE.test(nm)) ?? "";
+    const named = to && !isHome(to) && !MINE_RE.test(to) ? to : lastFrom;
+    // Only when the record names the person. "They owe a reply" puts a word on
+    // the line that no row stands behind, and the contamination pass is right
+    // to call it out — a readout never says who without knowing who.
+    if (named)
+      theirSide.push({
+        who: named.split(" ")[0],
+        text: `reply to your ${md(intel.lastOutbound)} note`,
+        at: dayOf(intel.lastOutbound),
+        src: `record ${md(intel.lastOutbound)}`,
+      });
+  }
 
   // One close date for the whole book, and his to change (founder-decreed
   // 2026-09-08). Deriving it from whatever deadline phrase a note happened to

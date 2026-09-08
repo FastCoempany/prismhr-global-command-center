@@ -359,6 +359,38 @@ export function theirTurnFrom(
   return out;
 }
 
+// ── their promise is answered when they speak again ────────────────────────
+// A commitment of HIS retires when the record shows it landed
+// (src/lib/room/settled.ts). Theirs had no such rule and was carried forever.
+//
+// Trend Personnel is the case. Melanie wrote on 9/1, "I will check with our
+// Sales Director"; on 9/2 Adam answered for the team — "still working through
+// the proposal process, another month or two before a decision at best" — and
+// the report was still gating the account on her promise the following week.
+// It is the closer rule's own shape: read through to the last substantive
+// message, and let that set the state.
+
+/** Has anyone on their side spoken since `at`? A courtesy sign-off and
+ *  machinery are transparent, and the answer may come from a colleague of the
+ *  promiser — Adam answered for Melanie. */
+export function answeredSince(
+  at: string,
+  notes: readonly TurnNote[],
+  isHome: (name: string) => boolean,
+): boolean {
+  const after = Date.parse(`${at}T23:59:59Z`);
+  return (notes ?? []).some((n) => {
+    if (Date.parse(n.createdAt) <= after) return false;
+    const who = senderOf(n.actors ?? "");
+    if (!who || isHome(who)) return false;
+    if (/transcript/.test(n.source ?? "")) return false;
+    const body = n.body ?? "";
+    if (NOT_A_PROMISE_RE.test(body)) return false;
+    // A sign-off is punctuation, never an answer (the closer rule).
+    return body.replace(/^[^\n]*\n/, "").trim().length > 40;
+  });
+}
+
 // ── the gate ────────────────────────────────────────────────────────────────
 // The fault the operator named on 2026-09-08: "you've still missed what
 // Chassie owes us — it's the thing that precedes us sending her anything at
