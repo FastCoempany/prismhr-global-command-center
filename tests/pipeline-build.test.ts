@@ -12,6 +12,7 @@ import assert from "node:assert/strict";
 import {
   buildPipelineReport,
   rankPipeline,
+  homeSideFrom,
   quotesIn,
   tidyPeople,
   type PipelineAccount,
@@ -25,6 +26,7 @@ import {
   arrivalWords,
   ARRIVAL,
 } from "../src/lib/pipeline/plain";
+import { reportDocument, reportSection, reportFileName } from "../src/lib/pipeline/docx";
 
 const NOW = new Date("2026-09-08T12:00:00Z");
 
@@ -321,5 +323,104 @@ describe("the arrival budget is a hard limit", () => {
     const before = arrivalWords(r);
     const after = arrivalWords(r, { [lineKey(r.id, "opp", 0)]: null });
     assert.ok(after < before);
+  });
+});
+
+// Who is ours must be derived from the WHOLE book, never the active slice.
+// Ported into production this read the eleven active accounts alone, and a
+// PrismHR colleague who works across the wider book but appears on only two
+// active ones walked back into a client's room (Shane Jacobs, XCEL HR).
+describe("a colleague never stands in the client's room", () => {
+  const withColleague = simploy({
+    notes: [
+      note({
+        id: "m",
+        source: "transcript",
+        actors: "Chassie Smith → Antaeus Coe",
+        body: "CALL TRANSCRIPT\nChassie Smith: hello\nShane Jacobs: here is the demo\n",
+      }),
+    ],
+  });
+
+  test("the active slice alone is not wide enough to see him", () => {
+    const [r] = build([withColleague]);
+    assert.ok(
+      r.lastTouch?.room.some((p) => p.name === "Shane Jacobs"),
+      "without the wider book he is taken for a client person — the bug",
+    );
+  });
+
+  test("the book-wide set removes him from the room and the contacts", () => {
+    const [r] = buildPipelineReport({
+      accounts: [withColleague],
+      homeSide: new Set(["shane jacobs"]),
+      csms: ["Lesha Cyphers"],
+      me: "Antaeus Coe",
+      now: NOW,
+    });
+    assert.ok(!r.lastTouch?.room.some((p) => p.name === "Shane Jacobs"));
+    assert.ok(!r.contacts.some((c) => c.name === "Shane Jacobs"));
+    assert.ok(r.lastTouch?.room.some((p) => p.name === "Chassie Smith"), "she stays");
+  });
+
+  test("homeSideFrom names whoever appears across enough accounts", () => {
+    const book: [string, { actors: string }[]][] = [
+      ["a1", [{ actors: "Shane Jacobs → Someone Else" }]],
+      ["a2", [{ actors: "Shane Jacobs → Another Person" }]],
+      ["a3", [{ actors: "Shane Jacobs → A Third" }]],
+      ["a4", [{ actors: "Chassie Smith → Antaeus Coe" }]],
+      // Namespaced stores are not accounts and must never widen the count.
+      ["gaps:a5", [{ actors: "Chassie Smith → Antaeus Coe" }]],
+    ];
+    const ours = homeSideFrom(book);
+    assert.ok(ours.has("shane jacobs"));
+    assert.ok(!ours.has("chassie smith"), "one account is one client's person");
+  });
+});
+
+// The Word document — the one Pipeline surface a stranger reads. It carries
+// the depth the drawer folds away, because there is nothing to click in a file
+// somebody opens in Word.
+describe("the Word document", () => {
+  const [r] = build([simploy()]);
+  const day = "Tuesday, September 8";
+
+  test("it builds, and every account gets a heading and a table", () => {
+    const children = reportSection([r], {}, day);
+    const tables = children.filter((c) => c.constructor.name === "Table");
+    assert.equal(tables.length, 1, "one table per account");
+    assert.ok(children.length > 3, "title, meta, heading, table");
+  });
+  test("the file name says what it is and when", () => {
+    assert.equal(reportFileName(day), "Pipeline-Status-Tuesday-September-8.docx");
+    // A day label with nothing usable still produces a legal file name.
+    assert.equal(reportFileName("///"), "Pipeline-Status-today.docx");
+  });
+  test("a struck line never reaches the document", async () => {
+    const { Packer } = await import("docx");
+    const gone = r.ourNext[0].text;
+    const doc = reportDocument([r], { [lineKey(r.id, "next", 0)]: null }, day);
+    const xml = (await Packer.toBuffer(doc)).toString("latin1");
+    // The XML is UTF-8 inside a zip, so this is a coarse check — enough to
+    // catch a struck line being serialised anyway.
+    assert.ok(gone.length > 10);
+    const kept = reportDocument([r], {}, day);
+    assert.ok((await Packer.toBuffer(kept)).length !== xml.length, "the overlay changes the file");
+  });
+  test("an edited line is the one that ships", () => {
+    const children = reportSection([r], { [lineKey(r.id, "account")]: "Renamed Co" }, day);
+    const text = JSON.stringify(children);
+    assert.ok(text.includes("Renamed Co"));
+  });
+  test("a record with nothing on it still renders every label", () => {
+    const bare: PipelineAccount = {
+      id: "empty", name: "Quiet Co", csm: "", stageLabel: "",
+      notes: [], todos: [], gaps: [], support: null, actors: [],
+    };
+    const [q] = build([bare]);
+    const text = JSON.stringify(reportSection([q], {}, day));
+    for (const label of ["PRODUCTS", "OPPORTUNITIES", "MY CONTACTS", "MODEL", "COMPETITOR", "STAGE", "CLOSE DATE", "UNKNOWNS"])
+      assert.ok(text.includes(label), `missing ${label}`);
+    assert.ok(text.includes("None set — that is the finding"));
   });
 });

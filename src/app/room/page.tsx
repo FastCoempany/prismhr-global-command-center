@@ -67,6 +67,7 @@ import { Chute } from "./chute";
 import { routingRoster } from "@/lib/book/roster";
 import {
   buildPipelineReport,
+  homeSideFrom,
   rankPipeline,
   type PipelineAccount,
 } from "@/lib/pipeline/build";
@@ -809,7 +810,15 @@ export default async function RoomPage() {
   // day rides the header: a report older than the sweep says so rather than
   // rendering confidently wrong counts.
   const pipeReport = rankPipeline(
-    buildPipelineReport({ accounts: pipeAccounts, csms, me: "Antaeus Coe", now }),
+    buildPipelineReport({
+      accounts: pipeAccounts,
+      // The whole book, not the active slice — a colleague who works across
+      // the book but appears on only two active accounts is still ours.
+      homeSide: homeSideFrom(notesById),
+      csms,
+      me: "Antaeus Coe",
+      now,
+    }),
   );
   const pipeDayLabel = now.toLocaleDateString("en-US", {
     timeZone: "America/Chicago",
