@@ -3,7 +3,7 @@ import { DM_Serif_Display, JetBrains_Mono, Public_Sans } from "next/font/google"
 import { AppWayfinder } from "@/components/app-wayfinder";
 import { loadDashboard } from "@/lib/dashboard/data";
 import { csms, peos } from "@/lib/book";
-import { fetchSecondRecords } from "@/lib/activity/read";
+import { DROP_STALE_DAYS, fetchSecondRecords } from "@/lib/activity/read";
 import { EXTRA_PARTNERS } from "@/lib/book/partners";
 import {
   isManual,
@@ -65,6 +65,12 @@ import { sfAccountUrl } from "@/lib/salesforce";
 import { prospectAsks } from "@/lib/intranet/store";
 import { Chute } from "./chute";
 import { routingRoster } from "@/lib/book/roster";
+import {
+  buildPipelineReport,
+  rankPipeline,
+  type PipelineAccount,
+} from "@/lib/pipeline/build";
+import { PipelineTab } from "./pipeline-tab";
 import {
   RoomClient,
   type CadenceRow,
@@ -136,6 +142,10 @@ export default async function RoomPage() {
   );
 
   const rows: RoomRow[] = [];
+  // The Pipeline tab's accounts, gathered inside the row loop so the report
+  // reads exactly the stores the room reads — no second pass, no second
+  // interpretation of the same record.
+  const pipeAccounts: PipelineAccount[] = [];
   for (const card of data.cards) {
     if (card.archived) continue;
     const accountId =
@@ -530,6 +540,23 @@ export default async function RoomPage() {
       };
     })();
 
+    // ── the Pipeline record's inputs ──────────────────────────────────────
+    // "Active" is the rule the board already keeps: a card that is not
+    // archived and carries no Closed Won / Closed Lost stamp. Nothing new is
+    // invented, and the count is whatever the board says it is.
+    if (accountId && !outcome)
+      pipeAccounts.push({
+        id: accountId,
+        name: card.name,
+        csm: String(peo?.csm ?? ""),
+        stageLabel: step?.nodeLabel ?? "",
+        notes: allNotes,
+        todos: todos.filter((t) => t.accountId === accountId),
+        gaps: gaps.shown.map((g) => g.question),
+        support: secondById.get(accountId)?.support ?? null,
+        actors: secondById.get(accountId)?.rollup?.actors ?? [],
+      });
+
     rows.push({
       accountId,
       theirs,
@@ -778,6 +805,33 @@ export default async function RoomPage() {
   // can read and another cannot is how one capture gets two answers.
   const chuteRoster = routingRoster();
 
+  // ── the Pipeline report ───────────────────────────────────────────────────
+  // Built from the stores the loop already read. The second record's own drop
+  // day rides the header: a report older than the sweep says so rather than
+  // rendering confidently wrong counts.
+  const pipeReport = rankPipeline(
+    buildPipelineReport({ accounts: pipeAccounts, csms, me: "Antaeus Coe", now }),
+  );
+  const pipeDayLabel = now.toLocaleDateString("en-US", {
+    timeZone: "America/Chicago",
+    weekday: "short",
+    month: "numeric",
+    day: "numeric",
+  });
+  const pipeDrop = [...secondById.values()]
+    .map((s) => s.rollup?.dropDay ?? "")
+    .filter(Boolean)
+    .sort()
+    .pop();
+  const pipeDropAge = pipeDrop
+    ? (daysBetween(`${pipeDrop}T12:00:00Z`, now) ?? Number.MAX_SAFE_INTEGER)
+    : Number.MAX_SAFE_INTEGER;
+  const pipeStale = !pipeDrop
+    ? "no second record"
+    : pipeDropAge > DROP_STALE_DAYS
+      ? `second record ${pipeDrop.slice(5)} — stale`
+      : `second record ${pipeDrop.slice(5)}`;
+
   return (
     <>
       <AppWayfinder current="HomeRoom" />
@@ -785,6 +839,7 @@ export default async function RoomPage() {
         className={`${styles.room} ${serif.variable} ${sans.variable} ${mono.variable}`}
       >
         <Chute roster={chuteRoster} canWrite={data.canWrite} />
+        <PipelineTab rows={pipeReport} dayLabel={pipeDayLabel} staleNote={pipeStale} />
         <RoomClient
           rows={rows}
           cadence={cadence}

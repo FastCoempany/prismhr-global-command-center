@@ -258,19 +258,17 @@ describe("the gate — their turn precedes ours", () => {
 });
 
 describe("who on our side is handling it", () => {
-  // Simploy's real activity store, trimmed.
-  const ACT = [
-    "⌗ ACTIVITY · drop 1eef02a9 · 2026-08-31 · window 2026-06-27→2026-08-29",
-    "LANES · human 10 · csm 158 · support 75 · intent 563",
-    "ACTOR · support · Nihar Kulkarni (account) ×41",
-    "ACTOR · support · Janaki Streibig (account) ×19",
-    "ACTOR · support · Mike Paschal (colleague) ×13",
-    "ACTOR · csm · Lesha Cyphers (colleague) ×22",
-    "THREAD · 2026-08-24→2026-08-26 · 2 rows · account-led · Email: Re: Reseller",
-  ].join("\n");
+  // Simploy's real actor tally, as fetchSecondRecords() hands it over.
+  const ACTORS = [
+    { name: "Nihar Kulkarni", kind: "account", lane: "support", n: 41 },
+    { name: "Janaki Streibig", kind: "account", lane: "support", n: 19 },
+    { name: "Mike Paschal", kind: "colleague", lane: "support", n: 13 },
+    { name: "Lesha Cyphers", kind: "colleague", lane: "csm", n: 22 },
+    { name: "Someone Else", kind: "colleague", lane: "human", n: 90 },
+  ];
 
   test("our people are named, busiest first", () => {
-    const got = ownersFrom(ACT);
+    const got = ownersFrom(ACTORS);
     assert.equal(got.length, 2);
     assert.equal(got[0].name, "Lesha Cyphers");
     assert.equal(got[0].n, 22);
@@ -278,17 +276,21 @@ describe("who on our side is handling it", () => {
   });
   test("the client's own people are not named here", () => {
     // This line answers "who on our side," not "who called."
-    const got = ownersFrom(ACT, ["support"], 5);
+    const got = ownersFrom(ACTORS, ["support"], 5);
     assert.deepEqual(got.map((o) => o.name), ["Mike Paschal"]);
     assert.ok(!got.some((o) => o.name === "Nihar Kulkarni"));
   });
   test("a lane nobody asked about is not read", () => {
-    assert.deepEqual(ownersFrom(ACT, ["human"]), []);
+    // The human lane is his own deal — never FYI.
+    assert.deepEqual(ownersFrom(ACTORS, ["support", "csm"], 9).map((o) => o.name), [
+      "Lesha Cyphers",
+      "Mike Paschal",
+    ]);
   });
   test("the operator is never FYI to himself", () => {
     // He is on his own accounts' CSM lane constantly; this line is about work
     // that is not his.
-    const withMe = ACT + "\nACTOR · csm · Antaeus Coe (colleague) ×20";
+    const withMe = [...ACTORS, { name: "Antaeus Coe", kind: "colleague", lane: "csm", n: 20 }];
     assert.ok(ownersFrom(withMe, ["csm"], 5).some((o) => o.name === "Antaeus Coe"));
     assert.ok(
       !ownersFrom(withMe, ["csm"], 5, "Antaeus Coe").some((o) => o.name === "Antaeus Coe"),
@@ -306,31 +308,43 @@ describe("who on our side is handling it", () => {
   });
   test("nobody named is nobody named, never a guess", () => {
     assert.equal(ownerClause([]), "");
-    assert.deepEqual(ownersFrom(""), []);
-    assert.deepEqual(ownersFrom("ACTOR · support · Someone (account) ×4"), []);
+    assert.deepEqual(ownersFrom([]), []);
+    assert.deepEqual(
+      ownersFrom([{ name: "Someone", kind: "account", lane: "support", n: 4 }]),
+      [],
+    );
   });
 });
 
 describe("the FYI line speaks the way a person speaks", () => {
-  const STORE = [
-    "SUPPORT · 75 cases in window · spike 2026-08-17 (9 in a day) · dropSha 3f9a1c",
-    "THEME · 46 · 2026-06-29→2026-08-27 · Update Provided · cases 12,14,19",
-    "THEME · 12 · 2026-07-02→2026-08-11 · Suggested Solution · cases 3,7",
-  ].join("\n");
+  const SUPPORT = {
+    total: 75,
+    spike: { day: "2026-08-17", n: 9 },
+    themes: [
+      { label: "Update Provided", n: 46, firstDay: "2026-06-29", lastDay: "2026-08-27" },
+      { label: "Suggested Solution", n: 12, firstDay: "2026-07-02", lastDay: "2026-08-11" },
+    ],
+  };
 
-  test("the machine words never reach a line read to leadership", () => {
-    const line = fyiFromSupport(STORE);
-    assert.ok(!/dropSha/.test(line), "no checksum");
-    assert.ok(!/cases in window/.test(line), "no store dialect");
-  });
   test("the biggest theme carries the line, with its own window", () => {
     assert.equal(
-      fyiFromSupport(STORE),
+      fyiFromSupport(SUPPORT),
       "75 support cases 6/29–8/27, mostly update provided (46); spike 9 in a day on 8/17.",
     );
   });
-  test("an empty store renders nothing rather than an empty sentence", () => {
-    assert.equal(fyiFromSupport(""), "");
-    assert.equal(fyiFromSupport("SUPPORT · nothing here"), "");
+  test("no machine words reach a line read to leadership", () => {
+    const line = fyiFromSupport(SUPPORT);
+    assert.ok(!/dropSha/.test(line), "no checksum");
+    assert.ok(!/cases in window/.test(line), "no store dialect");
+  });
+  test("cases with no themes still say how many", () => {
+    assert.equal(
+      fyiFromSupport({ total: 12, spike: null, themes: [] }),
+      "12 support cases in the window.",
+    );
+  });
+  test("nothing there renders nothing rather than an empty sentence", () => {
+    assert.equal(fyiFromSupport(null), "");
+    assert.equal(fyiFromSupport({ total: 0, spike: null, themes: [] }), "");
   });
 });

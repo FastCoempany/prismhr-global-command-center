@@ -1,0 +1,506 @@
+// The Pipeline Status report — one record per active account, assembled from
+// the stores the room already loads (founder-decreed 2026-09-08, shipped to
+// the HomeRoom's right margin 2026-09-08).
+//
+// The job: someone asks "where's your pipeline," and this is read aloud with
+// nothing prepared. Every field traces to a row, a note or a book entry;
+// nothing is silently blank, because a row of Unknowns is the finding.
+//
+// Pure. Every store arrives as an argument, so the whole report can be built
+// in a test without a database — and the adversarial pass can feed it the
+// book's real 1,323 notes and check each field against the record.
+
+import { contactsFor } from "@/lib/book/contacts";
+import { corpusFor, extractDealIntel } from "@/lib/intel/extract";
+import { digestFor, digestForCardName } from "@/lib/intel/digest";
+import { meetingRead, speakersIn } from "@/lib/intel/meeting";
+import { peopleFor } from "@/lib/intel/people";
+import { isHomeSideName, MINE_RE } from "@/lib/intel/provenance";
+import { effectiveAt } from "@/lib/intel/clock";
+import { COUNTRY_NAME, redactMoney } from "@/lib/intel/lexicon";
+import { buildAccountSheet } from "@/lib/room/sheet-view";
+import { moveFromCommitment } from "@/lib/room/move-line";
+import { splitFallback } from "@/lib/room/deliverables";
+import { owedByThem } from "@/lib/room/owed";
+import {
+  fyiFromSupport,
+  gatedByThem,
+  isOtherTeamWork,
+  ownerClause,
+  ownersFrom,
+  theirTurnFrom,
+  type ActorRead,
+  type LaneOwner,
+  type SupportRead,
+} from "./report";
+import { outcomesFrom } from "./report";
+
+/** A value with the row it was read from. `derived` marks a value the app
+ *  inferred rather than one a person stated — the provenance rule that keeps a
+ *  close date named on a call apart from one the model guessed. */
+export type Sourced = { v: string; src: string; derived?: boolean };
+
+export type PipelineRecord = {
+  id: string;
+  account: string;
+  csm: string;
+  lastTouch: {
+    date: string;
+    kind: string;
+    room: { name: string; title: string }[];
+  } | null;
+  /** Dated events — "1 discovery call held (6.29), 1 demo held (7.11)" in the
+   *  account-planning doc's own shape. */
+  events: { at: string; kind: string }[];
+  model: Sourced | null;
+  incumbent: Sourced | null;
+  /** The unit he actually tracks: country × product, with the headcount the
+   *  record attached to that country. One account is often several. */
+  opportunities: { country: string; product: string; headcount: string; src: string }[];
+  products: string[];
+  outcomes: string[];
+  outcomesSrc: string;
+  /** Verbatim speech the record kept — load-bearing in his own updates. */
+  theirWords: string[];
+  ourNext: { text: string; full: string; opened: string; urgent: boolean }[];
+  /** Commitments a later meeting overtook. Kept, folded, never a next step. */
+  overtaken: { text: string; opened: string }[];
+  doneRecently: string[];
+  theirSide: { who: string; text: string; at: string; src: string }[];
+  /** Their turn comes first — his sends are not today's work. */
+  gated: boolean;
+  /** Another team's work inside PrismHR. FYI, never his next step. */
+  handoffs: string[];
+  unknowns: string[];
+  stage: Sourced | null;
+  closeDate: (Sourced & { passed: boolean }) | null;
+  risks: { text: string; src: string }[];
+  quietDays: number | null;
+  contacts: { name: string; title: string }[];
+  fyi: string;
+  fyiWho: string;
+  owners: LaneOwner[];
+};
+
+const PRODUCT: Record<string, string> = {
+  eor: "EOR",
+  contractor: "Contractor Mgmt",
+  contractor_plus: "Contractor Mgmt+",
+  payroll: "Global Payroll",
+  mpex: "MPEX",
+  wallet: "Wallet",
+  tlm: "TLM",
+  aor: "AOR",
+  talent: "Talent",
+};
+
+const md = (iso: string) => `${Number(iso.slice(5, 7))}/${Number(iso.slice(8, 10))}`;
+const dayOf = (iso: string) => (iso ?? "").slice(0, 10);
+const daysBetween = (a: string, b: string) =>
+  Math.round((Date.parse(`${b}T12:00:00Z`) - Date.parse(`${a}T12:00:00Z`)) / 86400000);
+
+/** Verbatim speech. The apostrophe inside a contraction is not a quote mark —
+ *  it only counts when a letter sits on both sides of it, or "can't this be in
+ *  one place?" comes back as "t this be in one place?". */
+const QUOTE_RE =
+  /(?<!\w)['‘"“]((?:[^'’"“”\n]|(?<=[A-Za-z])['’](?=[A-Za-z])){12,160})['’"”](?!\w)/g;
+export function quotesIn(body: string, cap = 3): string[] {
+  const out: string[] = [];
+  QUOTE_RE.lastIndex = 0;
+  let m: RegExpExecArray | null;
+  while ((m = QUOTE_RE.exec(body ?? ""))) {
+    const q = m[1].trim();
+    if (/^https?:/i.test(q) || /^[A-Z ]+$/.test(q)) continue;
+    if (!out.includes(q)) out.push(q);
+    if (out.length >= cap) break;
+  }
+  return out;
+}
+
+/** His own shorthand reaches the register with the pen on it. The report is
+ *  read to other people; the glyph is his, not theirs.
+ *
+ *  Money is stripped here, on every free-text field the record carries. The
+ *  register's own lines were already redacted by buildAccountSheet, but the
+ *  call read's outcomes, the prospect's quoted words and the FYI line reach
+ *  the report straight from the note body — and a report read to leadership
+ *  is exactly the surface the money doctrine exists for. Caught by its own
+ *  test, 2026-09-08. */
+const clean = (s: string) =>
+  redactMoney((s ?? "").replace(/^[✎✓·\s]+/, ""))
+    .replace(/\s+/g, " ")
+    .trim();
+
+// A contact list read aloud cannot carry "Tom Boell, Tom" or a department
+// name. A bare first name a fuller name already covers is the same person; a
+// single word naming no person is not a contact at all.
+const NOT_A_PERSON =
+  /^(marketing|sales|support|info|billing|accounting|hr|payroll|noreply|team|admin)$/i;
+export function tidyPeople(names: readonly string[]): string[] {
+  const cleaned = (names ?? [])
+    .map((n) =>
+      (n ?? "")
+        .replace(/["“”']/g, "")
+        .replace(/[<>]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim(),
+    )
+    // "PHR", "SPHR", "CPA" — a credential trailing a signature, not a person.
+    .filter((n) => n && !NOT_A_PERSON.test(n) && !/^[A-Z]{2,5}$/.test(n));
+  const out: string[] = [];
+  for (const n of cleaned) {
+    const parts = n.toLowerCase().split(" ");
+    const ends = `${parts[0]} ${parts[parts.length - 1]}`;
+    if (
+      out.some((o) => {
+        const p = o.toLowerCase().split(" ");
+        return (
+          o.toLowerCase() === n.toLowerCase() ||
+          `${p[0]} ${p[p.length - 1]}` === ends ||
+          (parts.length === 1 && p[0] === parts[0]) ||
+          (p.length === 1 && parts[0] === p[0])
+        );
+      })
+    )
+      continue;
+    out.push(n);
+  }
+  return out;
+}
+
+/** One filed entry. Callers pass notes already stripped of ✕-parked rows
+ *  (`hide:note:` dispositions) — the note survives in the table, the row does
+ *  not, and the report must read exactly what the room reads. */
+export type PipelineNote = {
+  id: string;
+  createdAt: string;
+  body: string;
+  lane: "mine" | "background";
+  actors?: string;
+  source?: string;
+  kind?: string;
+};
+export type PipelineTodo = {
+  id: string;
+  body: string;
+  accountId: string;
+  createdAt: string;
+  remindAt: string;
+  updatedAt: string;
+  done: boolean;
+};
+
+export type PipelineAccount = {
+  id: string;
+  name: string;
+  csm: string;
+  /** The card's derived stage label, "" when the board says nothing. */
+  stageLabel: string;
+  notes: PipelineNote[];
+  todos: PipelineTodo[];
+  /** The gap ledger's open questions — where discovery has holes. */
+  gaps: string[];
+  support: SupportRead;
+  actors: readonly ActorRead[];
+};
+
+export type PipelineInput = {
+  accounts: readonly PipelineAccount[];
+  /** The CSM roster — who on our side is not the client. */
+  csms: readonly string[];
+  /** The operator's own name; he is never FYI to himself. */
+  me: string;
+  now: Date;
+};
+
+const OPEN_CAP = 4;
+const OVERTAKEN_CAP = 6;
+const QUIET_RISK_DAYS = 21;
+
+export function buildPipelineReport(input: PipelineInput): PipelineRecord[] {
+  const today = dayOf(input.now.toISOString());
+
+  // Who is ours. The CSM roster names a handful; the record names the rest —
+  // a person who turns up as an actor on three or more different accounts is
+  // not any one client's person (the Ted doctrine: derived facts read the
+  // widest live source, never a private narrow one).
+  const acctsByPerson = new Map<string, Set<string>>();
+  for (const a of input.accounts)
+    for (const n of a.notes)
+      for (const raw of (n.actors ?? "").split("→")) {
+        const nm = raw
+          .replace(/\+\d+\s*$/, "")
+          .trim()
+          .toLowerCase();
+        if (!nm || !/^[a-z]+ [a-z'-]+$/.test(nm)) continue;
+        (acctsByPerson.get(nm) ?? acctsByPerson.set(nm, new Set()).get(nm)!).add(a.id);
+      }
+  const OURS = new Set(
+    [...acctsByPerson].filter(([, s]) => s.size >= 3).map(([nm]) => nm),
+  );
+  // A record often carries only a colleague's first name ("Anika"), and an
+  // account with no CSM assigned has no name to compare it against.
+  const CSM_FIRST = new Set(
+    input.csms.map((c) => c.toLowerCase().split(" ")[0]).filter(Boolean),
+  );
+  const isHome = (n: string) => {
+    const nm = (n ?? "").trim().toLowerCase();
+    if (isHomeSideName(n, input.csms as string[]) || OURS.has(nm)) return true;
+    return !nm.includes(" ") && CSM_FIRST.has(nm);
+  };
+
+  return input.accounts.map((a) => record(a, input, isHome, today));
+}
+
+function record(
+  a: PipelineAccount,
+  input: PipelineInput,
+  isHome: (n: string) => boolean,
+  today: string,
+): PipelineRecord {
+  const ns = a.notes
+    .map((n) => ({ ...n, actors: n.actors ?? "", source: n.source ?? "" }))
+    .sort(
+      (x, y) =>
+        Date.parse(effectiveAt(y.createdAt, y.body)) -
+        Date.parse(effectiveAt(x.createdAt, x.body)),
+    );
+  const intel = extractDealIntel(
+    corpusFor(a.id, a.name, {
+      acctNotes: ns.map((n) => ({ ...n, kind: n.kind ?? "account" })),
+      todos: a.todos.filter((t) => !t.done),
+    }),
+    digestFor(a.id) ?? digestForCardName(a.name),
+  );
+  const roster = contactsFor(a.id);
+  const titleOf = (nm: string) => {
+    const k = nm.toLowerCase().split(/\s+/)[0] ?? "";
+    return (
+      roster.find((c) => `${c.first} ${c.last}`.toLowerCase().includes(k))?.title ?? ""
+    );
+  };
+
+  // The last meeting and who was in the room — names AND titles.
+  const m = meetingRead(ns, isHome, () => true);
+  const mNote = m ? ns.find((n) => n.id === m.note.id) : undefined;
+  const inRoom = mNote
+    ? tidyPeople([
+        ...(m?.who ? [m.who] : []),
+        ...speakersIn(mNote.body, isHome),
+        ...(mNote.actors || "")
+          .split("→")
+          .map((s) => s.replace(/\+\d+\s*$/, "").trim())
+          .filter(Boolean),
+      ])
+        .filter((p) => !isHome(p) && !MINE_RE.test(p))
+        .slice(0, 5)
+    : [];
+
+  const events = ns
+    .filter((n) => /transcript|call-ai|meeting/.test(n.source))
+    .map((n) => ({
+      at: dayOf(effectiveAt(n.createdAt, n.body)),
+      kind: /transcript|call-ai/.test(n.source) ? "Call" : "Meeting",
+    }))
+    .filter((e, i, arr) => arr.findIndex((x) => x.at === e.at) === i)
+    .slice(0, 4);
+
+  const call = ns.find((n) => n.source === "call-ai");
+
+  // Opportunities — country × product, with the headcount attached to that
+  // country. One account is often several deals.
+  const hcBy = new Map<string, { n: number; src: string }>();
+  for (const h of intel.headcounts)
+    if (h.value.country && !hcBy.has(h.value.country))
+      hcBy.set(h.value.country, { n: h.value.n, src: h.src });
+  const products = intel.products.map((p) => PRODUCT[p.value] ?? p.value);
+  const opportunities = intel.countries.slice(0, 4).map((c) => {
+    const hc = hcBy.get(c.value);
+    return {
+      country: COUNTRY_NAME[c.value] ?? c.value.toUpperCase(),
+      product: products[0] ?? "",
+      headcount: hc ? `${hc.n} ${hc.n === 1 ? "worker" : "workers"}` : "",
+      src: c.src,
+    };
+  });
+
+  // His own work vs another team's, ranked by when he made the promise. A
+  // commitment a later meeting overtook is finished whatever the register says.
+  const sheet = buildAccountSheet(
+    a.todos as never,
+    a.id,
+    new Set<string>(),
+    new Map(),
+    input.now,
+    ns,
+  );
+  const openedAt = new Map(a.todos.map((t) => [t.id, dayOf(t.createdAt)]));
+  const lastMeetAt = m ? dayOf(m.at) : "";
+  const open = [...sheet.open, ...(sheet.rest ?? [])]
+    .map((o) => ({ ...o, opened: openedAt.get(o.id) ?? "" }))
+    .sort((x, y) => (y.opened ?? "").localeCompare(x.opened ?? ""));
+
+  const ourNext: PipelineRecord["ourNext"] = [];
+  const overtaken: PipelineRecord["overtaken"] = [];
+  const handoffs: string[] = [];
+  for (const o of open) {
+    if (o.settled) continue;
+    const raw = clean(splitFallback(o.edit).text);
+    if (isOtherTeamWork(raw)) {
+      const line = moveFromCommitment(raw).line;
+      // "…recruitment specialist." and "…recruitment specialist for
+      // international hiring support." are one handoff written twice.
+      const stem = line
+        .toLowerCase()
+        .replace(/[^a-z ]/g, "")
+        .split(" ")
+        .slice(0, 6)
+        .join(" ");
+      if (
+        !handoffs.some((h) =>
+          h
+            .toLowerCase()
+            .replace(/[^a-z ]/g, "")
+            .startsWith(stem),
+        )
+      )
+        handoffs.push(line);
+      continue;
+    }
+    const built = moveFromCommitment(raw);
+    if (lastMeetAt && o.opened && o.opened < lastMeetAt) {
+      if (!overtaken.some((x) => x.text === built.line))
+        overtaken.push({ text: built.line, opened: o.opened });
+      continue;
+    }
+    if (ourNext.some((x) => x.text === built.line)) continue;
+    ourNext.push({
+      text: built.line,
+      full: built.full,
+      opened: o.opened,
+      urgent: !!o.wall,
+    });
+  }
+
+  // Their turn, both rungs: the call read's Owed line, then an inbound note's
+  // own first person. Four of eleven accounts carry the second and not the
+  // first.
+  const theirSide = [
+    ...owedByThem(ns, input.now).map((o) => ({
+      who: o.who,
+      text: clean(o.text),
+      at: dayOf(o.at),
+      src: `record ${md(o.at)}`,
+    })),
+    ...theirTurnFrom(ns, isHome).map((t) => ({ ...t, text: clean(t.text) })),
+  ].filter((t, i, arr) => arr.findIndex((x) => x.text === t.text) === i);
+
+  const closeIso = intel.timing?.value.dateIso ?? "";
+  const lastAt = ns[0] ? dayOf(effectiveAt(ns[0].createdAt, ns[0].body)) : "";
+  const quietDays = lastAt ? daysBetween(lastAt, today) : null;
+
+  // Risks — evidenced only, each carrying the fact it stands on. "No next
+  // step" is not written here: every face already renders the None-set flag,
+  // and a report that says the same thing twice reads padded.
+  const risks: { text: string; src: string }[] = [];
+  if (closeIso && closeIso < today)
+    risks.push({
+      text: `Close date passed ${md(closeIso)} with the deal still open.`,
+      src: intel.timing!.src,
+    });
+  if (intel.incumbent)
+    risks.push({
+      text: `${intel.incumbent.value} holds the work today.`,
+      src: intel.incumbent.src,
+    });
+  if (quietDays !== null && quietDays >= QUIET_RISK_DAYS)
+    risks.push({ text: `Quiet ${quietDays} days.`, src: `record ${md(lastAt)}` });
+
+  const owners = ownersFrom(a.actors, ["support", "csm"], 4, input.me);
+
+  return {
+    id: a.id,
+    account: a.name,
+    csm: a.csm,
+    lastTouch: m
+      ? {
+          date: dayOf(m.at),
+          kind: /transcript|call/.test(mNote?.source ?? "") ? "Call" : "Meeting",
+          room: inRoom.map((p) => ({ name: p, title: titleOf(p) })),
+        }
+      : null,
+    events,
+    model:
+      intel.chair === "undecided"
+        ? null
+        : { v: intel.chair === "resale" ? "Reseller" : "Referral", src: "record" },
+    incumbent: intel.incumbent
+      ? { v: intel.incumbent.value, src: intel.incumbent.src }
+      : null,
+    opportunities,
+    products,
+    outcomes: call ? outcomesFrom(call.body).map(clean) : [],
+    outcomesSrc: call ? `call read ${md(effectiveAt(call.createdAt, call.body))}` : "",
+    theirWords: call ? quotesIn(call.body).map(clean) : [],
+    ourNext: ourNext.slice(0, OPEN_CAP),
+    overtaken: overtaken.slice(0, OVERTAKEN_CAP),
+    doneRecently: a.todos
+      .filter((t) => t.done)
+      .slice(0, 2)
+      .map(
+        (t) => moveFromCommitment(clean(splitFallback(t.body.split("\n")[0]).text)).line,
+      ),
+    theirSide,
+    gated: gatedByThem(theirSide, ourNext),
+    handoffs,
+    unknowns: a.gaps.slice(0, 4).map(clean),
+    stage: a.stageLabel ? { v: a.stageLabel, src: "board" } : null,
+    closeDate: intel.timing
+      ? {
+          v: intel.timing.value.dateIso || intel.timing.value.phrase,
+          derived: !intel.timing.value.dateIso,
+          passed: !!closeIso && closeIso < today,
+          src: intel.timing.src,
+        }
+      : null,
+    risks,
+    quietDays,
+    contacts: tidyPeople(
+      peopleFor(ns, roster, 12)
+        .map((p) => p.name)
+        .filter((n) => {
+          // The CSM is not a contact (never merge the two), and the record
+          // often carries only her first name.
+          const csm = (a.csm ?? "").toLowerCase();
+          const first = csm.split(" ")[0] ?? "";
+          const nm = (n ?? "").toLowerCase();
+          if (csm && (nm === csm || nm === first || nm.startsWith(`${first} `)))
+            return false;
+          return !!n && !isHome(n) && !MINE_RE.test(n);
+        }),
+    )
+      .slice(0, 5)
+      .map((n) => ({ name: n, title: titleOf(n) })),
+    fyi: clean(fyiFromSupport(a.support)),
+    fyiWho: ownerClause(owners.slice(0, 2)),
+    owners,
+  };
+}
+
+/** Sorted by what needs him most: a blown promise, then a deal whose turn is
+ *  live, then quiet. Reading order is fixed and identical for every record,
+ *  which is what lets one be read aloud without preparing. */
+export function rankPipeline(rows: readonly PipelineRecord[]): PipelineRecord[] {
+  const score = (r: PipelineRecord) => {
+    let s = 0;
+    if (r.ourNext.some((n) => n.urgent)) s -= 100;
+    if (r.theirSide.length) s -= 40;
+    if (r.lastTouch) s -= 30;
+    if (!r.ourNext.length) s -= 10;
+    s += Math.min(r.quietDays ?? 99, 60);
+    return s;
+  };
+  return [...rows].sort(
+    (a, b) => score(a) - score(b) || a.account.localeCompare(b.account),
+  );
+}

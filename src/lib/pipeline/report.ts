@@ -93,41 +93,34 @@ export function outcomesFrom(distilledBody: string, cap = 4): string[] {
 }
 
 // ── the FYI line ────────────────────────────────────────────────────────────
-// The second record's support store, said the way a person says it. The raw
-// head carries a dropSha and the phrase "cases in window" — machine words
-// that must never reach a report read to leadership.
+// The second record's own support summary, said the way a person says it. The
+// store's head line carries a dropSha and the phrase "cases in window" —
+// machine words that must never reach a report read to leadership. The typed
+// shape is read, never the note body: fetchSecondRecords() already parses it,
+// and a second parser here would be exactly the parallel data layer the spec
+// forbids.
 
 const md = (iso: string) => `${Number(iso.slice(5, 7))}/${Number(iso.slice(8, 10))}`;
 
-export function fyiFromSupport(storeBody: string): string {
-  const lines = (storeBody ?? "").split("\n");
-  const head = lines[0] ?? "";
-  const total = /·\s*(\d+)\s+cases/.exec(head)?.[1] ?? "";
-  const spike = /spike\s+(\d{4}-\d{2}-\d{2})\s*\((\d+)\s/.exec(head);
-  const themes = lines
-    .filter((l) => l.startsWith("THEME · "))
-    .map((l) => {
-      const m =
-        /^THEME · (\d+) · (\d{4}-\d{2}-\d{2})→(\d{4}-\d{2}-\d{2}) · ([^·]*?)\s*·/.exec(l);
-      return m
-        ? {
-            n: Number(m[1]),
-            from: m[2],
-            to: m[3],
-            label: m[4].replace(/^,\s*/, "").trim(),
-          }
-        : null;
-    })
-    .filter(Boolean) as { n: number; from: string; to: string; label: string }[];
-  if (!total && !themes.length) return "";
-  const top = [...themes].sort((a, b) => b.n - a.n)[0];
+export type SupportRead = {
+  total: number;
+  spike: { day: string; n: number } | null;
+  themes: readonly { label: string; n: number; firstDay: string; lastDay: string }[];
+} | null;
+
+export function fyiFromSupport(support: SupportRead): string {
+  if (!support || (!support.total && !support.themes.length)) return "";
+  const top = [...support.themes].sort((a, b) => b.n - a.n)[0];
   const parts: string[] = [];
-  if (total && top)
+  if (support.total && top)
     parts.push(
-      `${total} support cases ${md(top.from)}–${md(top.to)}, mostly ${top.label.toLowerCase() || "unlabelled"} (${top.n})`,
+      `${support.total} support cases ${md(top.firstDay)}–${md(top.lastDay)}, mostly ${
+        top.label.toLowerCase() || "unlabelled"
+      } (${top.n})`,
     );
-  else if (total) parts.push(`${total} support cases in the window`);
-  if (spike) parts.push(`spike ${spike[2]} in a day on ${md(spike[1])}`);
+  else if (support.total) parts.push(`${support.total} support cases in the window`);
+  if (support.spike)
+    parts.push(`spike ${support.spike.n} in a day on ${md(support.spike.day)}`);
   return parts.length ? parts.join("; ") + "." : "";
 }
 
@@ -144,14 +137,15 @@ export function fyiFromSupport(storeBody: string): string {
 // front of leadership. An (account) actor is the client's own person and is
 // not named here: this line answers "who on our side," not "who called."
 
-const ACTOR_RE = /^ACTOR · (\S+) · (.+?) \((colleague|account)\) ×(\d+)\s*$/;
-
 export type LaneOwner = { name: string; lane: string; n: number };
+/** The rollup's own actor tally — {name, kind, lane, n}, kind "colleague" for
+ *  our side and "account" for theirs. */
+export type ActorRead = { name: string; kind: string; lane: string; n: number };
 
 /** Our own people on a lane, busiest first. `lanes` defaults to the lanes that
  *  are somebody else's work — support and the CSM desk. */
 export function ownersFrom(
-  activityBody: string,
+  actors: readonly ActorRead[],
   lanes: readonly string[] = ["support", "csm"],
   cap = 2,
   /** The operator's own name. This line is about work that is NOT his — he
@@ -161,14 +155,12 @@ export function ownersFrom(
 ): LaneOwner[] {
   const mine = me.trim().toLowerCase();
   const out: LaneOwner[] = [];
-  for (const line of (activityBody ?? "").split("\n")) {
-    const m = ACTOR_RE.exec(line.trim());
-    if (!m) continue;
-    const [, lane, name, side, n] = m;
-    if (side !== "colleague") continue;
-    if (!lanes.includes(lane)) continue;
-    if (mine && name.trim().toLowerCase() === mine) continue;
-    out.push({ name: name.trim(), lane, n: Number(n) });
+  for (const a of actors ?? []) {
+    const name = (a?.name ?? "").trim();
+    if (!name || a.kind !== "colleague") continue;
+    if (!lanes.includes(a.lane)) continue;
+    if (mine && name.toLowerCase() === mine) continue;
+    out.push({ name, lane: a.lane, n: a.n });
   }
   return out.sort((a, b) => b.n - a.n).slice(0, cap);
 }
