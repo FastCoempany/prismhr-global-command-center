@@ -64,7 +64,13 @@ const prisma = new PrismaClient({
 const dayMs = 24 * 60 * 60 * 1000;
 const demoShareability = "demo_seed";
 const researchRoot = "https://research.gem.example";
-const legacyResearchRoot = "https://demo.gem.local";
+// Every domain a past seed wrote. These are history, so they never follow a
+// rename — an old row is only ever found under the name it was written with.
+const legacyResearchRoots = [
+  "https://demo.gem.local",
+  "https://research.fieldsignal.example",
+  "https://demo.fieldsignal.local",
+];
 
 const accountNames = [
   "Halsted Robotics Works",
@@ -78,10 +84,20 @@ const partnerEmails = [
   "jordan.ellis@gem.example",
   "priya.shah@gem.example",
 ];
+// Same rule as the research roots: the addresses a past seed wrote, under the
+// names it wrote them with. Email is the identity here, so a legacy address
+// dropped from this list leaves its partner behind and the next seed doubles
+// them in the UI.
 const legacyPartnerEmails = [
   "maya.chen@demo.gem.local",
   "jordan.ellis@demo.gem.local",
   "priya.shah@demo.gem.local",
+  "maya.chen@fieldsignal.example",
+  "jordan.ellis@fieldsignal.example",
+  "priya.shah@fieldsignal.example",
+  "maya.chen@demo.fieldsignal.local",
+  "jordan.ellis@demo.fieldsignal.local",
+  "priya.shah@demo.fieldsignal.local",
 ];
 const cleanupPartnerEmails = [...partnerEmails, ...legacyPartnerEmails];
 const peoNames = [
@@ -435,11 +451,11 @@ async function deleteDemoData(tx: Tx): Promise<DeleteStats> {
                     startsWith: researchRoot,
                   },
                 },
-                {
+                ...legacyResearchRoots.map((root) => ({
                   url: {
-                    startsWith: legacyResearchRoot,
+                    startsWith: root,
                   },
-                },
+                })),
               ],
             },
           ],
