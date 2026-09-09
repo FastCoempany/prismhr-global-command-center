@@ -115,6 +115,61 @@ describe("the pane's collapse never reaches the deliverable", () => {
   });
 });
 
+// Every label's rendered width in the drawer's rail type — JetBrains Mono at
+// 8.5px, 0.08em tracking, uppercase — measured in a browser, not estimated.
+// A label wider than the rail overflows its grid cell and the value paints
+// over the top of it. That shipped twice: labels wrapped at an 80px rail, then
+// three of them bled at 92px, worst on the gated Next-step row at 116px.
+const RAIL = 104;
+const MEASURED: Record<string, number> = {
+  Products: 47,
+  Countries: 53,
+  Contacts: 47,
+  Model: 29,
+  Competitor: 58,
+  Stage: 29,
+  "Close date": 58,
+  "Last meeting": 70,
+  "Their move": 58,
+  "Next step": 53,
+  "Waiting on": 58,
+  Outcomes: 47,
+  "Their words": 64,
+  Unknowns: 47,
+  Risk: 24,
+  "FYI · other teams": 99,
+  "FYI · elsewhere": 87,
+};
+
+describe("no label can outgrow the rail", () => {
+  it("every label the drawer renders has been measured and fits", async () => {
+    const { readFileSync } = await import("node:fs");
+    const tab = readFileSync("src/app/room/pipeline-tab.tsx", "utf8");
+    // The Field/Rows prop only — `aria-label` is a different thing that never
+    // reaches the rail.
+    const labels = [...tab.matchAll(/(?<![\w-])label="([^"]+)"/g)].map((m) => m[1]);
+    assert.ok(labels.length >= 15, `only found ${labels.length} labels — did the prop change?`);
+    for (const l of labels) {
+      const px = MEASURED[l];
+      assert.ok(
+        px !== undefined,
+        `"${l}" has never been measured. Render it at 8.5px JetBrains Mono, ` +
+          `0.08em tracking, uppercase, and add the width here.`,
+      );
+      assert.ok(px <= RAIL, `"${l}" is ${px}px in a ${RAIL}px rail — it will bleed`);
+    }
+  });
+
+  it("the rail in the stylesheet is the one these widths were checked against", async () => {
+    const { readFileSync } = await import("node:fs");
+    const css = readFileSync("src/app/room/room.module.css", "utf8");
+    assert.ok(
+      css.includes(`grid-template-columns: ${RAIL}px minmax(0, 1fr) auto;`),
+      `the rail moved away from ${RAIL}px — re-measure the labels before changing it`,
+    );
+  });
+});
+
 describe("the source subtext is retired", () => {
   it("the drawer renders no provenance chip", async () => {
     const { readFileSync } = await import("node:fs");

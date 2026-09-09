@@ -375,7 +375,7 @@ function Record({
           reads as work he can do when he cannot. */}
       {r.gated && (
         <Rows
-          label="Their move first"
+          label="Their move"
           ks={r.theirSide.map((_, i) => k("theirs", i))}
           texts={r.theirSide.map((t) => `${t.who} owes ${t.text}`)}
           overlay={overlay}
@@ -384,7 +384,7 @@ function Record({
       )}
 
       <Rows
-        label={r.gated ? "Next from me · after" : "Next step"}
+        label="Next step"
         ks={r.ourNext.map((_, i) => k("next", i))}
         texts={r.ourNext.map((n) => n.text)}
         overlay={overlay}
