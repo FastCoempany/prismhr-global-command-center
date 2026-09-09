@@ -2564,18 +2564,26 @@ button.sdRadio:hover {
   align-items: center;
   flex: 0 0 auto;
 }
-/* Every value starts on its label's line — no exceptions, no kickers
-   (founder-decreed 2026-09-09). The rail is 80px because FYI · ELSEWHERE is
-   the longest label and has to hold one line; that leaves the value 290px in
-   the peek, which is what src/lib/pipeline/density.ts budgets against. The
-   source chip lost its column — those 64px were the value's. */
+/* Every value starts on its label's line, and the row is ONE line
+   (founder-decreed 2026-09-09). The rail is 92px so FYI · ELSEWHERE — the
+   longest label — holds a single line too; at 80px it wrapped, which is the
+   fault this amendment fixes. The source chip is retired outright. */
 .pipeField {
   display: grid;
-  grid-template-columns: 80px 1fr;
+  grid-template-columns: 92px minmax(0, 1fr) auto;
   gap: 10px;
   align-items: baseline;
   padding: 3px 0;
   border-bottom: 1px dotted rgba(10, 28, 64, 0.07);
+}
+/* The door and the state pills. They sit OUTSIDE the scroller: a door that
+   scrolls off is not a door, and a warning you have to scroll to find is not
+   a warning. The column is auto, so it costs nothing on the rows without one. */
+.pipeAside {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  white-space: nowrap;
 }
 .pipeField:last-child {
   border-bottom: 0;
@@ -2587,13 +2595,40 @@ button.sdRadio:hover {
   text-transform: uppercase;
   color: rgba(10, 28, 64, 0.42);
   padding-top: 1px;
+  white-space: nowrap;
 }
+/* One line, and a value too wide for it scrolls left to right in its own row
+   rather than wrapping. Nothing is cut, so the sentence stays whole and stays
+   editable — the scrollbar is hidden because a 2px trough under every value
+   would read as chrome, and the fade at the right edge says there is more. */
 .pipeVal {
   font-size: 10.5px;
   line-height: 1.34;
   color: var(--ink);
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  /* The fade says there is more to the right. It only paints when the value
+     actually overflows — a short line keeps its full weight to the last
+     letter, so nothing reads as cut when it is not. */
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 14px), transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - 14px), transparent);
+}
+.pipeVal::-webkit-scrollbar {
+  display: none;
+}
+.pipeVal > .pipeLine,
+.pipeVal .pipeList li {
+  white-space: nowrap;
+}
+/* Opened, a multi-entry field is the one thing allowed to grow: each entry
+   takes a line of its own and each scrolls on its own. */
+.pipeVal .pipeList {
+  white-space: nowrap;
 }
 .pipeDoor {
+  flex: 0 0 auto;
   font-family: var(--f-mono), Menlo, monospace;
   font-size: 8.5px;
   letter-spacing: 0.1em;
@@ -2603,7 +2638,6 @@ button.sdRadio:hover {
   border: 0;
   border-bottom: 1px solid rgba(37, 99, 235, 0.3);
   padding: 0;
-  margin-left: 7px;
   cursor: pointer;
   white-space: nowrap;
 }
