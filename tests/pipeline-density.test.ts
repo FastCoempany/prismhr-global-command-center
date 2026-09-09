@@ -1,60 +1,29 @@
-// The column's budget, and the boundary it must never cross.
+// The Pipeline column's rules, and the boundary the drawer must never cross.
 //
-// The clip exists because a 290px column exists. The Word file has a page and
-// Copy has a clipboard, so neither has a column — and both read the record
-// itself. The last suite here is the one that matters: it fails the moment
-// someone "tidies up" by pushing the clip down into the record, which would
-// have the pane silently deciding what a readout contains.
+// One line per field. A value too wide scrolls sideways — nothing is cut, so
+// unlike the first cut there is no truncation to leak into a deliverable. What
+// the drawer still does is collapse a multi-entry field to its top entry, and
+// the last suite here holds the line that matters: Copy and the Word file read
+// the record, so they carry every entry however few the pane shows.
 import { strict as assert } from "node:assert";
 import { describe, it } from "node:test";
-import { VALUE_BUDGET, clipValue, joinEntries } from "@/lib/pipeline/density";
+import { joinEntries, oneLine } from "@/lib/pipeline/density";
 import { recordToText } from "@/lib/pipeline/plain";
 import { reportSection } from "@/lib/pipeline/docx";
 import type { PipelineRecord } from "@/lib/pipeline/build";
 
-const LONG =
-  "What commercial structure does Simploy expect for the reseller arrangement (margin, revenue share, who holds the client contract)?";
-const FYI =
-  "75 support cases 6/29–8/27, mostly update provided (46); spike 9 in a day on 8/17. Mike Paschal is handling it.";
+const UNKNOWNS = [
+  "Does XcelHR want to remain the client-facing brand (private label) or refer clients out?",
+  "Which countries is Genesis HR Solutions hiring in without a legal entity?",
+  "What work will the Mexico workers actually perform?",
+];
+const NEXT = [
+  "Send EOR and Payroll pricing collateral for Canada and Mexico.",
+  "Send broken-out payroll and EOR pricing for Canada and Mexico.",
+  "Send the top qualifying questions XLHR needs to answer to get pricing.",
+];
 
-describe("the column's budget", () => {
-  it("leaves a value inside the budget alone", () => {
-    const r = clipValue("Globalization Partners holds the work today.");
-    assert.equal(r.cut, false);
-    assert.equal(r.text, "Globalization Partners holds the work today.");
-  });
-
-  it("cuts a long value to the budget and says it cut", () => {
-    const r = clipValue(LONG);
-    assert.equal(r.cut, true);
-    assert.ok(r.text.length <= VALUE_BUDGET);
-    assert.ok(r.text.endsWith("…"));
-  });
-
-  it("never cuts mid-word", () => {
-    const r = clipValue(LONG);
-    const body = r.text.slice(0, -1);
-    assert.ok(LONG.startsWith(body), "the kept text is a prefix of the original");
-    // The character after what we kept is a boundary, not the middle of a word.
-    assert.ok(/[\s,;:.]/.test(LONG[body.length] ?? " "));
-  });
-
-  it("does not leave a period against the ellipsis", () => {
-    const r = clipValue(FYI);
-    assert.equal(r.cut, true);
-    assert.ok(!r.text.includes(".…"), `reads as a typo: ${r.text}`);
-  });
-
-  it("hard-cuts the one case with no boundary to find", () => {
-    const r = clipValue("x".repeat(200));
-    assert.equal(r.cut, true);
-    assert.ok(r.text.length <= VALUE_BUDGET);
-  });
-
-  it("collapses whitespace before measuring, so a wrapped paste is not over", () => {
-    assert.equal(clipValue("  Reseller\n  route  ").text, "Reseller route");
-  });
-
+describe("the column's rules", () => {
   it("joins short entries into one run", () => {
     assert.equal(
       joinEntries(["Brazil · EOR · 10 workers", "Germany · EOR · 50 workers"]),
@@ -63,56 +32,74 @@ describe("the column's budget", () => {
   });
 
   it("drops empty entries rather than leaving a dangling comma", () => {
-    assert.equal(joinEntries(["Mexico · EOR", "", "Canada · EOR"]), "Mexico · EOR, Canada · EOR");
+    assert.equal(
+      joinEntries(["Mexico · EOR", "", "Canada · EOR"]),
+      "Mexico · EOR, Canada · EOR",
+    );
+  });
+
+  it("flattens a pasted value so it cannot become a second line", () => {
+    assert.equal(oneLine("  Reseller\n  route  "), "Reseller route");
+    assert.equal(oneLine("a\t\tb\n\nc"), "a b c");
+  });
+
+  it("leaves a value that is already one line alone", () => {
+    assert.equal(oneLine("Globalization Partners"), "Globalization Partners");
+  });
+
+  it("never shortens a value — length is the column's problem, not the text's", () => {
+    const long = UNKNOWNS[0];
+    assert.equal(oneLine(long), long);
+    assert.ok(!oneLine(long).includes("…"));
   });
 });
 
 const record = (): PipelineRecord =>
   ({
     id: "a1",
-    account: "Simploy",
-    csm: "Lesha Cyphers",
-    lastTouch: { date: "2026-09-02", kind: "Call", room: [] },
+    account: "XCEL HR",
+    csm: "Anika Steenstra",
+    lastTouch: { date: "2026-08-13", kind: "Call", room: [] },
     events: [],
-    model: { v: "Reseller", src: "record" },
+    model: { v: "Reseller", src: "the default" },
     incumbent: null,
     opportunities: [],
     products: [],
     outcomes: [],
     outcomesSrc: "",
     theirWords: [],
-    ourNext: [{ text: LONG, opened: "2026-09-02", urgent: false }],
+    ourNext: NEXT.map((text) => ({ text, opened: "2026-08-18", urgent: false })),
     doneRecently: [],
     theirSide: [],
     gated: false,
     handoffs: [],
-    unknowns: [LONG],
+    unknowns: UNKNOWNS,
     stage: null,
     closeDate: null,
     risks: [],
     quietDays: null,
     contacts: [],
-    fyi: FYI,
+    fyi: "",
     fyiWho: "",
     owners: [],
   }) as unknown as PipelineRecord;
 
-describe("the clip never reaches the deliverable", () => {
-  it("Copy carries the whole value, not the column's version", () => {
+describe("the pane's collapse never reaches the deliverable", () => {
+  it("Copy carries every entry, not just the one on the line", () => {
     const text = recordToText(record(), {});
-    assert.ok(text.includes(LONG), "the full unknown is in the clipboard text");
-    assert.ok(text.includes(FYI), "the full FYI line is in the clipboard text");
-    assert.ok(!text.includes("…"), "nothing in the clipboard text was clipped");
+    for (const u of UNKNOWNS) assert.ok(text.includes(u), `missing unknown: ${u}`);
+    for (const n of NEXT) assert.ok(text.includes(n), `missing next step: ${n}`);
+    assert.ok(!text.includes("…"), "nothing in the clipboard text was shortened");
+    assert.ok(!/\+\d+ more/i.test(text), "the door is a control, never text");
   });
 
-  it("the Word file carries the whole value", () => {
+  it("the Word file carries every entry", () => {
     const runs = JSON.stringify(reportSection([record()], {}, "Wed 9/9"));
-    // The document is built from the record, so the long lines survive whole.
-    assert.ok(runs.includes("who holds the client contract"), "the unknown is whole");
-    assert.ok(runs.includes("Mike Paschal is handling it"), "the FYI line is whole");
+    for (const u of UNKNOWNS) assert.ok(runs.includes(u), `missing unknown: ${u}`);
+    for (const n of NEXT) assert.ok(runs.includes(n), `missing next step: ${n}`);
   });
 
-  it("nothing outside the drawer imports the budget", async () => {
+  it("nothing under the record imports the drawer's presentation", async () => {
     const { readFileSync, readdirSync } = await import("node:fs");
     const offenders: string[] = [];
     for (const f of readdirSync("src/lib/pipeline")) {
@@ -123,7 +110,18 @@ describe("the clip never reaches the deliverable", () => {
     assert.deepEqual(
       offenders,
       [],
-      "the clip is a render concern; the record's own modules must not import it",
+      "how the pane renders is the pane's business; the record must not know",
     );
+  });
+});
+
+describe("the source subtext is retired", () => {
+  it("the drawer renders no provenance chip", async () => {
+    const { readFileSync } = await import("node:fs");
+    const tab = readFileSync("src/app/room/pipeline-tab.tsx", "utf8");
+    for (const gone of ["srcChip", "pipeSrcInline", "deal intel", "gap ledger"])
+      assert.ok(!tab.includes(gone), `the readout still carries "${gone}"`);
+    // "opened 8/18" rode the next-step line and went with the rest.
+    assert.ok(!/opened \$\{md\(/.test(tab), "the opened-date chip is still rendered");
   });
 });

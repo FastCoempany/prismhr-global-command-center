@@ -21,7 +21,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { PipelineRecord } from "@/lib/pipeline/build";
 import { closeText, lineKey, recordToText, reportToText } from "@/lib/pipeline/plain";
-import { clipValue, joinEntries } from "@/lib/pipeline/density";
+import { joinEntries, oneLine } from "@/lib/pipeline/density";
 import { reportDocument, reportFileName } from "@/lib/pipeline/docx";
 import { freshPipeline, savePipelineEdits } from "./pipeline-actions";
 import styles from "./room.module.css";
@@ -58,9 +58,9 @@ async function toClipboard(text: string): Promise<void> {
 /** One editable, strikable line. The key is stable across re-renders, so an
  *  edit never lands on a neighbour.
  *
- *  A line longer than the column holds arrives clipped, and the clip is a
- *  door — one press and the whole line is back, editable in full. He never
- *  types into a truncated line: opening comes first, always. */
+ *  Exactly one line, always. A value wider than the column scrolls left to
+ *  right inside its own row rather than wrapping or cutting — so the sentence
+ *  stays whole, stays editable, and the row height never moves. */
 function Line({
   k,
   text,
@@ -69,7 +69,6 @@ function Line({
   className,
   unknown,
   tail,
-  whole,
 }: {
   k: string;
   text: string;
@@ -80,35 +79,12 @@ function Line({
    *  the app could not fill is exactly the one he most wants to fill himself
    *  (founder-caught 2026-09-08). It reads quiet until he does. */
   unknown?: boolean;
-  /** The source chip, riding the end of the line rather than a column of its
-   *  own — as a third grid column it took 64px the value needed. */
+  /** A state pill or a door, riding the end of the line. */
   tail?: React.ReactNode;
-  /** The record's own title. A name is not a value competing for a column, and
-   *  a record you cannot read the name of is not a record. It wraps; it never
-   *  clips. No account in the book reaches the budget today, so this is the
-   *  rule holding rather than a fault being fixed. */
-  whole?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
   if (overlay[k] === null) return null;
   const edited = k in overlay;
   const shown = overlay[k] ?? (unknown ? "Unknown" : text);
-  const clipped = clipValue(shown);
-  if (clipped.cut && !open && !whole)
-    return (
-      <span className={`${styles.pipeLine} ${className ?? ""}`}>
-        <span className={styles.pipeEd}>{clipped.text}</span>
-        <button
-          type="button"
-          className={styles.pipeDoor}
-          title="Show the whole line"
-          onClick={() => setOpen(true)}
-        >
-          more
-        </button>
-        {tail}
-      </span>
-    );
   return (
     <span className={`${styles.pipeLine} ${className ?? ""}`}>
       <span
@@ -116,7 +92,7 @@ function Line({
         suppressContentEditableWarning
         className={`${styles.pipeEd} ${unknown && !edited ? styles.pipeUnknown : ""}`}
         onBlur={(e) => {
-          const v = (e.currentTarget.textContent ?? "").replace(/\s+/g, " ").trim();
+          const v = oneLine(e.currentTarget.textContent ?? "");
           if (v !== (unknown ? "Unknown" : text)) set(k, v);
         }}
         onKeyDown={(e) => {
@@ -142,83 +118,99 @@ function Line({
   );
 }
 
-/** A field's entries under the column's budget. Collapsed, it shows its top
- *  entry and a door counting the rest; open, every entry, each editable.
- *  Four unknowns at two lines each is eight lines under one label whatever
- *  the type size does — the list is where the height actually went. */
-function Entries({
+/** One row: the label, the value, and anything pinned to the right of it.
+ *
+ *  The value scrolls sideways when it outruns the column, so nothing that must
+ *  stay visible can live inside it. A door that scrolls off is not a door, and
+ *  a state pill you have to scroll to find is not a warning — both sit in
+ *  their own column, which collapses to nothing on the rows without them. */
+function Field({
+  label,
+  children,
+  aside,
+}: {
+  label: string;
+  children: React.ReactNode;
+  aside?: React.ReactNode;
+}) {
+  return (
+    <div className={styles.pipeField}>
+      <div className={styles.pipeKey}>{label}</div>
+      <div className={styles.pipeVal}>{children}</div>
+      {aside ? <div className={styles.pipeAside}>{aside}</div> : null}
+    </div>
+  );
+}
+
+/** A field of one or more entries. Collapsed, its top entry holds the single
+ *  line and a pinned door counts the rest; opened, the row grows and every
+ *  entry gets a line of its own. This is the only thing allowed to make a
+ *  field taller — several entries are several things, where a long sentence
+ *  is still one. */
+function Rows({
+  label,
   ks,
   texts,
   overlay,
   set,
-  tail,
+  empty,
+  pill,
 }: {
+  label: string;
   ks: string[];
-  texts: string[];
+  texts: readonly string[];
   overlay: Overlay;
   set: (k: string, v: string | null) => void;
-  tail?: React.ReactNode;
+  /** What stands in when the record holds nothing and nothing was struck. */
+  empty?: React.ReactNode;
+  /** A state mark — Promised, Passed — pinned beside the door. */
+  pill?: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const live = texts
     .map((t, i) => [ks[i], t] as const)
     .filter(([key]) => overlay[key] !== null);
-  if (!live.length) return null;
-  if (live.length === 1 || open)
-    return live.length === 1 ? (
-      <Line k={live[0][0]} text={live[0][1]} overlay={overlay} set={set} tail={tail} />
-    ) : (
-      <ul className={styles.pipeList}>
-        {live.map(([key, t], i) => (
-          <li key={key}>
-            <Line
-              k={key}
-              text={t}
-              overlay={overlay}
-              set={set}
-              tail={i === live.length - 1 ? tail : undefined}
-            />
-          </li>
-        ))}
-      </ul>
-    );
+  const rest = live.length - 1;
+  const door =
+    !open && rest > 0 ? (
+      <button
+        type="button"
+        className={styles.pipeDoor}
+        title="Show every entry"
+        onClick={() => setOpen(true)}
+      >
+        +{rest} more
+      </button>
+    ) : null;
+  const body = !live.length ? (
+    (empty ?? <Line k={ks[0]} text="" unknown overlay={overlay} set={set} />)
+  ) : live.length === 1 || !open ? (
+    <Line k={live[0][0]} text={live[0][1]} overlay={overlay} set={set} />
+  ) : (
+    <ul className={styles.pipeList}>
+      {live.map(([key, t]) => (
+        <li key={key}>
+          <Line k={key} text={t} overlay={overlay} set={set} />
+        </li>
+      ))}
+    </ul>
+  );
   return (
-    <Line
-      k={live[0][0]}
-      text={live[0][1]}
-      overlay={overlay}
-      set={set}
-      tail={
-        <>
-          <button
-            type="button"
-            className={styles.pipeDoor}
-            title="Show every entry"
-            onClick={() => setOpen(true)}
-          >
-            +{live.length - 1} more
-          </button>
-          {tail}
-        </>
+    <Field
+      label={label}
+      aside={
+        pill || door ? (
+          <>
+            {pill}
+            {door}
+          </>
+        ) : undefined
       }
-    />
+    >
+      {body}
+    </Field>
   );
 }
-
-/** One row: the label, and the value starting on the label's own line. The
- *  source no longer takes a column of its own — it rides the end of the value
- *  (see Line's `tail`), because those 64px were the value's. */
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className={styles.pipeField}>
-      <div className={styles.pipeKey}>{label}</div>
-      <div className={styles.pipeVal}>{children}</div>
-    </div>
-  );
-}
-
-const srcChip = (src?: string) =>
-  src ? <span className={styles.pipeSrc}>{src}</span> : undefined;
 
 function Record({
   r,
@@ -240,45 +232,11 @@ function Record({
   const struck = Object.entries(overlay).filter(
     ([key, v]) => v === null && key.startsWith(`${r.id}:`),
   ).length;
-  /** A field's lines. When the record holds none — or he has struck them all
-   *  — one editable Unknown stands in its place, because a field the app could
-   *  not fill is the one he most wants to fill himself. */
-  const list = (
-    field: string,
-    items: readonly string[],
-    empty?: React.ReactNode,
-    src?: string,
-  ) => {
-    const alive = items.filter((_, i) => overlay[k(field, i)] !== null);
-    if (!alive.length)
-      return (
-        empty ?? (
-          <Line
-            k={k(field, 0)}
-            text=""
-            unknown
-            overlay={overlay}
-            set={set}
-            tail={srcChip(src)}
-          />
-        )
-      );
-    return (
-      <Entries
-        ks={items.map((_, i) => k(field, i))}
-        texts={[...items]}
-        overlay={overlay}
-        set={set}
-        tail={srcChip(src)}
-      />
-    );
-  };
-
   return (
     <div className={styles.pipeRec}>
       <div className={styles.pipeHead}>
         <div>
-          <Line k={k("account")} text={r.account} overlay={overlay} set={set} whole />
+          <Line k={k("account")} text={r.account} overlay={overlay} set={set} />
           <div className={styles.pipeMeta}>
             <span>{r.csm ? `CSM · ${r.csm}` : "CSM · unassigned"}</span>
             <span>
@@ -323,7 +281,6 @@ function Record({
           unknown={!r.products.length}
           overlay={overlay}
           set={set}
-          tail={srcChip("deal intel")}
         />
       </Field>
 
@@ -353,7 +310,6 @@ function Record({
           unknown={!r.contacts.length}
           overlay={overlay}
           set={set}
-          tail={srcChip("record")}
         />
       </Field>
 
@@ -364,7 +320,6 @@ function Record({
           unknown={!r.model}
           overlay={overlay}
           set={set}
-          tail={srcChip(r.model?.src)}
         />
       </Field>
       <Field label="Competitor">
@@ -374,7 +329,6 @@ function Record({
           unknown={!r.incumbent}
           overlay={overlay}
           set={set}
-          tail={srcChip(r.incumbent?.src)}
         />
       </Field>
       <Field label="Stage">
@@ -384,28 +338,22 @@ function Record({
           unknown={!r.stage}
           overlay={overlay}
           set={set}
-          tail={srcChip(r.stage?.src)}
         />
       </Field>
-      <Field label="Close date">
+      <Field
+        label="Close date"
+        aside={
+          r.closeDate?.passed ? (
+            <span className={styles.pipePillWarn}>Passed</span>
+          ) : undefined
+        }
+      >
         <Line
           k={k("close")}
           text={closeText(r.closeDate)}
           unknown={!r.closeDate}
           overlay={overlay}
           set={set}
-          tail={
-            <>
-              {r.closeDate?.passed && <span className={styles.pipePillWarn}>Passed</span>}
-              {srcChip(
-                r.closeDate
-                  ? r.closeDate.derived
-                    ? `derived · ${r.closeDate.src}`
-                    : r.closeDate.src
-                  : undefined,
-              )}
-            </>
-          }
         />
       </Field>
 
@@ -426,51 +374,37 @@ function Record({
           his sends are not today's work, and listing them as though they are
           reads as work he can do when he cannot. */}
       {r.gated && (
-        <Field label="Their move first">
-          {list(
-            "theirs",
-            r.theirSide.map((t) => `${t.who} owes ${t.text}`),
-          )}
-        </Field>
+        <Rows
+          label="Their move first"
+          ks={r.theirSide.map((_, i) => k("theirs", i))}
+          texts={r.theirSide.map((t) => `${t.who} owes ${t.text}`)}
+          overlay={overlay}
+          set={set}
+        />
       )}
 
-      <Field label={r.gated ? "Next from me · after" : "Next step"}>
-        {r.ourNext.length ? (
-          <>
-            {r.gated && (
-              <div className={styles.pipeGate}>
-                Waits on {r.theirSide[0]?.who ?? "them"}.
-              </div>
-            )}
-            <Entries
-              ks={r.ourNext.map((_, i) => k("next", i))}
-              texts={r.ourNext.map((n) => n.text)}
-              overlay={overlay}
-              set={set}
-              tail={
-                <>
-                  {r.ourNext[0]?.urgent && (
-                    <span className={styles.pipePillHot}>Promised</span>
-                  )}
-                  {srcChip(`opened ${md(r.ourNext[0]?.opened ?? "")}`)}
-                </>
-              }
-            />
-          </>
-        ) : (
-          <span className={styles.pipeFlag}>
-            None set <span className={styles.pipeUnknown}>— that is the finding</span>
-          </span>
-        )}
-      </Field>
+      <Rows
+        label={r.gated ? "Next from me · after" : "Next step"}
+        ks={r.ourNext.map((_, i) => k("next", i))}
+        texts={r.ourNext.map((n) => n.text)}
+        overlay={overlay}
+        set={set}
+        empty={<span className={styles.pipeFlag}>None set — that is the finding</span>}
+        pill={
+          r.ourNext[0]?.urgent ? (
+            <span className={styles.pipePillHot}>Promised</span>
+          ) : undefined
+        }
+      />
 
       {!r.gated && (
-        <Field label="Waiting on">
-          {list(
-            "theirs",
-            r.theirSide.map((t) => `${t.who} owes ${t.text}`),
-          )}
-        </Field>
+        <Rows
+          label="Waiting on"
+          ks={r.theirSide.map((_, i) => k("theirs", i))}
+          texts={r.theirSide.map((t) => `${t.who} owes ${t.text}`)}
+          overlay={overlay}
+          set={set}
+        />
       )}
 
       {/* Depth is one click down. His acceptance criterion is a record read
@@ -481,49 +415,55 @@ function Record({
           the fold is for the eye, never for the deliverable. */}
       <details className={styles.pipeFold} open={openDepth}>
         <summary>Depth · outcomes, unknowns, risk, FYI</summary>
-        <Field label="Outcomes">
-          {list(
-            "outcome",
-            r.outcomes,
-            <span className={styles.pipeUnknown}>None recorded</span>,
-            r.outcomesSrc,
-          )}
-        </Field>
+        <Rows
+          label="Outcomes"
+          ks={r.outcomes.map((_, i) => k("outcome", i))}
+          texts={r.outcomes}
+          overlay={overlay}
+          set={set}
+          empty={<span className={styles.pipeUnknown}>None recorded</span>}
+        />
 
         {r.theirWords.length > 0 && (
-          <Field label="Their words">
-            {list(
-              "quote",
-              r.theirWords.map((q) => `“${q}”`),
-              null,
-              r.outcomesSrc,
-            )}
-          </Field>
+          <Rows
+            label="Their words"
+            ks={r.theirWords.map((_, i) => k("quote", i))}
+            texts={r.theirWords.map((q) => `“${q}”`)}
+            overlay={overlay}
+            set={set}
+            empty={null}
+          />
         )}
 
-        <Field label="Unknowns">
-          {list(
-            "unknown",
-            r.unknowns,
-            <span className={styles.pipeUnknown}>None open</span>,
-            "gap ledger",
-          )}
-        </Field>
+        <Rows
+          label="Unknowns"
+          ks={r.unknowns.map((_, i) => k("unknown", i))}
+          texts={r.unknowns}
+          overlay={overlay}
+          set={set}
+          empty={<span className={styles.pipeUnknown}>None open</span>}
+        />
 
         {r.risks.length > 0 && (
-          <Field label="Risk">
-            {list(
-              "risk",
-              r.risks.map((x) => x.text),
-              null,
-            )}
-          </Field>
+          <Rows
+            label="Risk"
+            ks={r.risks.map((_, i) => k("risk", i))}
+            texts={r.risks.map((x) => x.text)}
+            overlay={overlay}
+            set={set}
+            empty={null}
+          />
         )}
 
         {r.handoffs.length > 0 && (
-          <Field label="FYI · other teams">
-            {list("handoff", r.handoffs, <></>, "register")}
-          </Field>
+          <Rows
+            label="FYI · other teams"
+            ks={r.handoffs.map((_, i) => k("handoff", i))}
+            texts={r.handoffs}
+            overlay={overlay}
+            set={set}
+            empty={<></>}
+          />
         )}
 
         {(r.fyi || r.fyiWho) && (
@@ -533,7 +473,6 @@ function Record({
               text={[r.fyi, r.fyiWho ? `${r.fyiWho}.` : ""].filter(Boolean).join(" ")}
               overlay={overlay}
               set={set}
-              tail={srcChip("second record")}
             />
           </Field>
         )}

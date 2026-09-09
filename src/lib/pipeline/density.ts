@@ -1,47 +1,30 @@
-// The Pipeline column's budget (founder-decreed 2026-09-09, "On the label's
-// own line").
+// The Pipeline column's rules (founder-decreed 2026-09-09, amended the same
+// day after the first cut still showed two-line labels and kept its subtext).
 //
-// Every value starts on its label's line — no exceptions, no kickers. That
-// hands the whole problem to the column: an 80px label rail leaves the value
-// 290px, about 53 characters a line at 10.5px. So a value that runs long
-// clips on a word boundary, and the clip is a door.
+// ONE LINE. Every field is exactly one line on arrival — no exceptions, no
+// wrapping, no second line for any label. A value too wide for the column is
+// NOT cut: it scrolls left to right inside its own row, so the sentence stays
+// whole and nothing needs an ellipsis or a door to get it back.
 //
-// THE BUDGET IS 88, AND IT WAS MEASURED, NOT DERIVED. The arithmetic says two
-// lines hold 106 characters. That is wrong: the source chip and the door ride
-// the last line and eat into the text's own room. Rendering the whole book at
-// 104, 96 and 88 and counting what overflowed found the real ceiling — 104
-// leaves twelve labels over two lines, 96 leaves five, 88 leaves none.
+// The row may grow in only one case: a field holding more than one entry. Its
+// top entry arrives on the line with a door counting the rest, and opening it
+// expands the row — because several entries are several things, not one long
+// sentence.
 //
-// THE CLIP IS A RENDER CONCERN AND LIVES ONLY IN THE DRAWER. Nothing here is
-// ever called from build.ts, plain.ts or docx.ts: Copy and the Word file read
-// the record itself, so they always carry the whole value however narrow the
-// pane got. A test guards it. Push this down into the record and the pane
-// starts silently deciding what a readout contains.
-
-export const VALUE_BUDGET = 88;
-
-export type Clipped = { text: string; cut: boolean };
-
-/** Trim to the budget on a WORD boundary. Never mid-word, never mid-number.
- *  A single word longer than the budget is the one case that hard-cuts —
- *  there is no boundary to find. Mirrors clip() in room/move-line.ts so a move
- *  and a value cut the same way. */
-export function clipValue(raw: string, budget = VALUE_BUDGET): Clipped {
-  const text = (raw ?? "").trim().replace(/\s+/g, " ");
-  if (text.length <= budget) return { text, cut: false };
-  const room = budget - 1; // the ellipsis takes a column
-  const head = text.slice(0, room);
-  const sp = head.lastIndexOf(" ");
-  // Keep a real amount of the line: a boundary in the last third only.
-  const body = sp > room * 0.6 ? head.slice(0, sp) : head;
-  // The period goes with the rest of the trailing punctuation — "on 8/17.…"
-  // reads as a typo.
-  return { text: `${body.replace(/[\s,;:.—-]+$/, "")}…`, cut: true };
-}
+// RETIRED the same day: the source subtext. "deal intel", "record", "opened
+// 8/18", "the book's date", "gap ledger", "second record" told the operator
+// where a value came from, which this readout does not need — it is read
+// aloud to a room, not audited. Every pixel it took belongs to the value.
 
 /** Fields whose entries are short enough to read as one run. Countries is the
  *  whole of this case: "Brazil · EOR · 10 workers, Germany · EOR · 50 workers"
- *  is a sentence, and as four bullets it was four lines under one label. */
+ *  is a sentence, and as four bullets it was four rows under one label. */
 export function joinEntries(entries: readonly string[]): string {
   return entries.filter(Boolean).join(", ");
+}
+
+/** Whitespace collapsed to a single run, so a pasted value that arrived with
+ *  newlines in it still renders as the one line the column promises. */
+export function oneLine(raw: string): string {
+  return (raw ?? "").replace(/\s+/g, " ").trim();
 }
