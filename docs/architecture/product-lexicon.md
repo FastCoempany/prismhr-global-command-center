@@ -1,5 +1,5 @@
 ---
-title: Field Signal Product Lexicon
+title: GEM Product Lexicon
 status: Draft
 owner: Antaeus
 related_docs:
@@ -7,7 +7,7 @@ related_docs:
   - docs/architecture/design-system.md
 ---
 
-# Field Signal Product Lexicon
+# GEM Product Lexicon
 
 ## Purpose
 
@@ -34,8 +34,9 @@ Words in the interface should reinforce the operating model:
 
 Use:
 
-- Field Signal
-- Field Signal for PrismHR Global
+- GEM
+- GEM — Global Employee Management
+- GEM for PrismHR Global
 
 Avoid:
 
@@ -382,7 +383,7 @@ Avoid:
 
 ## Review Checklist
 
-- Does the label sound like Field Signal rather than a CRM?
+- Does the label sound like GEM rather than a CRM?
 - Does it preserve relationship ownership?
 - Does it avoid implying automation?
 - Does it explain source or confidence when needed?

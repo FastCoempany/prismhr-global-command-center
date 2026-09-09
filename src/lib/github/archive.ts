@@ -70,7 +70,7 @@ export function releaseMetaFor(inp: {
       `File: ${inp.fileName}`,
       `Bytes: ${inp.bytes}`,
       `Dropped: ${day}`,
-      `Filed by Field Signal — too large for a repo file, carried as a release asset.`,
+      `Filed by GEM — too large for a repo file, carried as a release asset.`,
     ].join("\n"),
     prerelease: true,
   };

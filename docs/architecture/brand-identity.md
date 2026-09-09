@@ -1,5 +1,5 @@
 ---
-title: Field Signal Visual Identity
+title: GEM Visual Identity
 status: Draft
 owner: Product Owner / Canon Owner
 related_plan: docs/plans/master-mvp-plan.md
@@ -11,11 +11,11 @@ related_docs:
   - docs/research/prismhr-global-video-notes.md
 ---
 
-# Field Signal Visual Identity
+# GEM Visual Identity
 
 ## Supersession
 
-This file supersedes the earlier custom Field Signal palette, old icon rules, and no-navy wording.
+This file supersedes the earlier custom GEM palette, old icon rules, and no-navy wording.
 
 The repo folder `antaeus-brand-kit/` is now the visual-system donor for this app. It provides breadth and depth for color roles, typography, spacing, motion, component grammar, icon construction, density, and governance.
 
@@ -41,11 +41,15 @@ Use:
 
 Working app name:
 
-- Field Signal
+- GEM
+
+Expansion, said once per surface at most:
+
+- GEM — Global Employee Management
 
 Full reference:
 
-- Field Signal for PrismHR Global
+- GEM for PrismHR Global
 
 Descriptor:
 
@@ -59,7 +63,7 @@ The product remains a relationship-safe prospecting and partner-motion tool. The
 
 ## Visual Position
 
-Field Signal should feel:
+GEM should feel:
 
 - bright;
 - operator-grade;
@@ -147,7 +151,7 @@ Do not use negative letter spacing. Do not scale type with viewport width inside
 
 The app does not use the donor Grounded A.
 
-Field Signal uses an app-specific signal/field mark:
+GEM uses an app-specific signal/field mark:
 
 - field grid lines for prospecting territory;
 - a path line for relationship motion;
@@ -200,7 +204,7 @@ Use a top Wayfinder:
 - primary route links;
 - command affordance.
 
-Wayfinder is a visual pattern borrowed from the donor system. Labels, routes, and product language remain Field Signal-specific.
+Wayfinder is a visual pattern borrowed from the donor system. Labels, routes, and product language remain GEM-specific.
 
 ## Copy And Lexicon
 

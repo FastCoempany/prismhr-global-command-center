@@ -1,5 +1,5 @@
 ---
-title: Field Signal Iconography System
+title: GEM Iconography System
 status: Draft
 owner: Product Owner / Canon Owner
 related_docs:
@@ -7,7 +7,7 @@ related_docs:
   - docs/architecture/design-system.md
 ---
 
-# Field Signal Iconography System
+# GEM Iconography System
 
 ## Supersession
 
@@ -17,7 +17,7 @@ The app's iconography now borrows the construction discipline from `antaeus-bran
 
 ## Purpose
 
-Field Signal icons make the product feel owned without looking like a generic SaaS dashboard.
+GEM icons make the product feel owned without looking like a generic SaaS dashboard.
 
 They must support:
 

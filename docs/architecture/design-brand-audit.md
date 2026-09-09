@@ -14,7 +14,7 @@ related_docs:
 
 This audit records the corrected brand/design direction after adding `antaeus-brand-kit/` to the repo.
 
-The prior Field Signal visual system was too thin and too internally invented. The donor kit supplies deeper visual doctrine. The mistake to avoid is treating that donor kit as this app's identity.
+The prior GEM visual system was too thin and too internally invented. The donor kit supplies deeper visual doctrine. The mistake to avoid is treating that donor kit as this app's identity.
 
 ## Corrected Decision
 
@@ -50,7 +50,7 @@ Problem:
 Correction:
 
 - [brand-identity.md](brand-identity.md) now states that the donor system is a visual-system donor only.
-- The app keeps Field Signal / PrismHR Global identity.
+- The app keeps GEM / PrismHR Global identity.
 - The app mark is Signal Plot, not the donor Grounded A.
 
 ### 2. Old Color Law Conflicted With Donor Tokens
@@ -127,7 +127,7 @@ Correction:
 ## Non-Negotiables For Implementation
 
 - Donor identity assets are not used.
-- Field Signal / PrismHR Global remains the app identity.
+- GEM / PrismHR Global remains the app identity.
 - No dark surfaces, dark panels, dark gradients, or dark mode.
 - Ink is allowed for text and icons only.
 - Orange is rationed to active move/signal.

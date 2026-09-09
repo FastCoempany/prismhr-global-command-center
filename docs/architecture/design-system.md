@@ -18,7 +18,7 @@ related_docs:
 
 ## Supersession
 
-This document replaces the earlier Field Signal design-system draft. The previous custom palette, old rail-first shell, and old rounded Field Glyph rules are no longer canonical.
+This document replaces the earlier GEM design-system draft. The previous custom palette, old rail-first shell, and old rounded Field Glyph rules are no longer canonical.
 
 The folder `antaeus-brand-kit/` is now the visual-system donor. This app borrows the donor kit's depth: token discipline, color roles, typography, component grammar, motion rules, icon construction, density, and governance. It does not borrow the donor app's name, Grounded A mark, wordmark, favicon, rooms, claims, or product architecture.
 
@@ -360,7 +360,7 @@ Do not add new visual values directly in components when a token exists.
 A screen is design-complete only if:
 
 - donor identity assets are absent;
-- app identity remains Field Signal / PrismHR Global;
+- app identity remains GEM / PrismHR Global;
 - no dark surface, dark panel, or dark gradient appears;
 - ink is text/icon-only;
 - orange marks a real move or active signal;
