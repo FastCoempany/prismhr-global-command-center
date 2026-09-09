@@ -63,8 +63,8 @@ const prisma = new PrismaClient({
 
 const dayMs = 24 * 60 * 60 * 1000;
 const demoShareability = "demo_seed";
-const researchRoot = "https://research.fieldsignal.example";
-const legacyResearchRoot = "https://demo.fieldsignal.local";
+const researchRoot = "https://research.gem.example";
+const legacyResearchRoot = "https://demo.gem.local";
 
 const accountNames = [
   "Halsted Robotics Works",
@@ -74,14 +74,14 @@ const accountNames = [
   "Elgin Precision Foods",
 ];
 const partnerEmails = [
-  "maya.chen@fieldsignal.example",
-  "jordan.ellis@fieldsignal.example",
-  "priya.shah@fieldsignal.example",
+  "maya.chen@gem.example",
+  "jordan.ellis@gem.example",
+  "priya.shah@gem.example",
 ];
 const legacyPartnerEmails = [
-  "maya.chen@demo.fieldsignal.local",
-  "jordan.ellis@demo.fieldsignal.local",
-  "priya.shah@demo.fieldsignal.local",
+  "maya.chen@demo.gem.local",
+  "jordan.ellis@demo.gem.local",
+  "priya.shah@demo.gem.local",
 ];
 const cleanupPartnerEmails = [...partnerEmails, ...legacyPartnerEmails];
 const peoNames = [

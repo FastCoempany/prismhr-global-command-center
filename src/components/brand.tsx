@@ -34,9 +34,13 @@ export function ProductMark({ className, size = 24 }: ProductMarkProps) {
 
 export function ProductLockup() {
   return (
-    <span className="product-lockup" aria-label="Field Signal">
+    <span className="product-lockup" aria-label="GEM — Global Employee Management">
       <ProductMark size={24} />
-      <span className="product-lockup__name">Field Signal</span>
+      <span className="product-lockup__name">GEM</span>
+      {/* The expansion earns its place once: three letters name nothing on
+          their own, and this is the only surface that says what they stand
+          for. It drops with the name on a narrow screen. */}
+      <span className="product-lockup__expansion">Global Employee Management</span>
     </span>
   );
 }

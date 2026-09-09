@@ -313,7 +313,7 @@ export function reportDocument(
   dayLabel: string,
 ): Document {
   return new Document({
-    creator: "Field Signal",
+    creator: "GEM — Global Employee Management",
     title: `Pipeline Status — ${dayLabel}`,
     description: "Every active account, as the record holds it.",
     numbering: {

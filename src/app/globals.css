@@ -875,6 +875,15 @@ textarea {
   text-transform: uppercase;
 }
 
+/* What the three letters stand for — quieter than the name, and never
+   competing with it. */
+.product-lockup__expansion {
+  color: var(--ds-ink-42, rgba(10, 28, 64, 0.42));
+  font: 400 11px/1 var(--ds-font-sans);
+  letter-spacing: 0.04em;
+  margin-left: -4px;
+}
+
 .ds-wayfinder-shell {
   background: var(--ds-surface);
   border-bottom: 1px solid var(--ds-hair-strong);
@@ -1346,6 +1355,7 @@ textarea {
 
 @media (max-width: 720px) {
   .product-lockup__name,
+  .product-lockup__expansion,
   .ds-wayfinder__trail {
     display: none;
   }
