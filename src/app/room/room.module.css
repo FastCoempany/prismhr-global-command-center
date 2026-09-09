@@ -2565,12 +2565,16 @@ button.sdRadio:hover {
   flex: 0 0 auto;
 }
 /* Every value starts on its label's line, and the row is ONE line
-   (founder-decreed 2026-09-09). The rail is 92px so FYI · ELSEWHERE — the
-   longest label — holds a single line too; at 80px it wrapped, which is the
-   fault this amendment fixes. The source chip is retired outright. */
+   (founder-decreed 2026-09-09). The rail is 104px, which is what the widest
+   label actually measures at this type scale — FYI · OTHER TEAMS, at 99px.
+   Guessing this number bled twice: at 80px the labels wrapped, and at 92px
+   three of them overflowed their cell and the value painted over the top
+   (founder-caught on the gated Next-step row, whose label ran to 116px).
+   tests/pipeline-density.test.ts now fails on any label nobody has measured.
+   The source chip is retired outright. */
 .pipeField {
   display: grid;
-  grid-template-columns: 92px minmax(0, 1fr) auto;
+  grid-template-columns: 104px minmax(0, 1fr) auto;
   gap: 10px;
   align-items: baseline;
   padding: 3px 0;
