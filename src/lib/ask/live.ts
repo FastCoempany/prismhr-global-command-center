@@ -9,6 +9,7 @@
 
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import { csms, peos } from "@/lib/book";
+import { accountFacts, factLines } from "@/lib/account/facts";
 import { contactsFor } from "@/lib/book/contacts";
 import { relationshipFor } from "@/lib/intel/relationship";
 import { isMeetingNote } from "@/lib/intel/meeting";
@@ -110,6 +111,14 @@ export async function liveReadFor(question: string): Promise<LiveRead | null> {
       }),
     ]);
 
+    // Whether the account is on the dashboard, read from the same dashCard
+    // table and matched by the same name comparison the accounts page uses —
+    // so "cleared with the CSM" means here exactly what it means on the sheet.
+    const onBoard = await prisma.dashCard
+      .findFirst({ where: { name: hit.name }, select: { id: true } })
+      .then((c) => !!c)
+      .catch(() => false);
+
     const noteLike = notes.map((n) => ({
       id: n.id,
       body: n.body,
@@ -125,6 +134,23 @@ export async function liveReadFor(question: string): Promise<LiveRead | null> {
     const first = (rel.name ?? "").split(/\s+/)[0] || "them";
 
     const lines: string[] = [];
+
+    // The account's standing, from the SAME derivation the accounts sheet
+    // renders its meta line from. This leads because it is what the operator
+    // can already see on screen: a brain that cannot say who the CSM is while
+    // the page prints her name does not answer, it guesses (founder-caught
+    // 2026-09-10, Infiniti HR). Adding a fact in lib/account/facts reaches
+    // both surfaces; there is no second list to fall behind.
+    if (seed)
+      lines.push(
+        ...factLines(
+          accountFacts(seed, {
+            lastActivityIso: notes[0]?.createdAt.toISOString(),
+            onDashboard: onBoard,
+          }),
+        ),
+      );
+
     if (rel.name)
       lines.push(
         `The relationship on ${hit.name} is ${rel.name}${rel.email ? ` (${rel.email})` : ""}.`,

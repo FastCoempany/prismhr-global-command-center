@@ -4,6 +4,7 @@ import { Fragment, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { EXTRA_PARTNERS, partnerRole } from "@/lib/book/partners";
 import { competitorUrl } from "@/lib/book/research";
+import { metaLine } from "@/lib/account/facts";
 import { SfCheckpoint } from "@/components/sf";
 import {
   AccountChipNotes,
@@ -1177,17 +1178,24 @@ export function AccountsClient({
                         <td colSpan={6}>
                           <div className={styles.acctDetail}>
                             <SfCheckpoint when="account" id={a.id} name={a.name} />
+                            {/* Rendered from lib/account/facts, which the
+                                brain reads too — the sheet showing a fact the
+                                ask denies is the bug this shares away. */}
                             <p className={styles.acctMetaLine}>
-                              MODEL · {a.industry || "—"} · PRISMHR ·{" "}
-                              {a.incumbent ? a.cloud : "not a platform customer"}
-                              {a.city
-                                ? ` · ${a.city.toUpperCase()}${a.state ? `, ${a.state.toUpperCase()}` : ""}`
-                                : ""}
-                              {a.csm ? ` · CSM ${a.csm.toUpperCase()}` : ""}
-                              {a.play === "greenfield" ? " · PLAY · GREENFIELD" : ""}
-                              {a.play === "displacement"
-                                ? ` · PLAY · DISPLACE${a.competitors.length ? ` (${a.competitors.join(" / ").toUpperCase()})` : ""}`
-                                : ""}
+                              {metaLine({
+                                id: a.id,
+                                name: a.name,
+                                csm: a.csm,
+                                industry: a.industry,
+                                platform: a.incumbent
+                                  ? a.cloud
+                                  : "not a platform customer",
+                                city: a.city,
+                                state: a.state,
+                                play: a.play,
+                                competitors: a.competitors,
+                                onDashboard: onDash.has(a.name),
+                              })}
                             </p>
                             {canAdd &&
                               (onDash.has(a.name) ? (
