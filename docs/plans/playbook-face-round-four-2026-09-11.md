@@ -99,6 +99,31 @@ corrections. The win-back mechanism is an *Explain* entry on its shelf, not a
 ledger you fill. The instruments — tapping, state, the relay list accumulating,
 the give-back writing itself — are gone.
 
+## 3a. Fifth round — three ideas of a bank
+
+Founder review of round four: *the Fold, the Drawer and the Page all look
+identical.* Correct. All three opened on the same shelf index with the same find
+field, and differed only two clicks in. That fails the repo's own rule that
+distinctiveness comes from structure and information architecture.
+
+**Round five** — `docs/mockups/playbook-face-triptych-v5-2026-09-11.html` —
+keeps the 85 entries and the wing exactly as verified and changes the
+architecture of finding and reading, visible on arrival:
+
+| | The idea | What you see on arrival | How you find | How depth reads |
+|---|---|---|---|---|
+| **The Exchange** | A phrasebook | The whole bank as a dialogue: their voice left, ours right, in serif | Type what they said; the phrasebook narrows live, no dropdown. Situations are filter chips. | As more dialogue: their follow-ups left, our replies right, reasoning and sources under ours |
+| **The Board** | A map | Every entry a tile; shelves down, kinds across; all 85 on one screen | Type; tiles that don't match fade | A pane pinned to the bottom, the map staying above it |
+| **The Manual** | A book | Numbered chapters and sections, every entry fully open, a table of contents between the wing and the text | Type; non-matching sections fold to a heading and the count shows | Already open. Cross-references read §4.3 and jump |
+
+Round four is retired.
+
+Verified by a browser pass of 31 checks, all green, including an arrival check
+that the three frames differ before any click: the Exchange opens as a dialogue
+with cues visible, the Board opens with 85 tiles on the grid, the Manual opens
+with every section expanded and §-numbered. Scans clean; no horizontal scroll at
+400, 640 and 900 pixels in any of the three.
+
 ## 4. Verification
 
 Browser pass of 34 checks, all green: the wing's yes/no lines, lead lines and
