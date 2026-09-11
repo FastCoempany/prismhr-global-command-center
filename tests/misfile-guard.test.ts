@@ -226,3 +226,67 @@ describe("a generic head token identifies nobody", () => {
     assert.ok(best, "a distinctive name is still a signal");
   });
 });
+
+// ── the two-tier law reaches the guard (2026-09-11) ─────────────────────────
+// A PEO's mail is usually ABOUT its client, and the client is not in our book
+// and never will be. So a read that names some other company is the ordinary
+// shape of a channel sale, not a misfile — as long as the row carries evidence
+// of its own.
+//
+// The case: Martha Ohler at Simple Everest, Infiniti HR's own prospect, writing
+// to Tom at infinitihr.com with us copied, subject "Info needed for
+// InfinitiHR", asking whether a contractor of record is available for their
+// people in Poland. The router put it on Infiniti HR at 80 on the domain alone.
+// The read named Simple Everest, rung 1 fired before anything looked at
+// Infiniti's own evidence, and a live enquiry was held out of the vault.
+
+describe("a PEO's own client is not a misfile", () => {
+  const INFINITI = { id: "001F000000w38INFIN", name: "Infiniti HR" };
+  const twoTier: RouteAccount[] = [
+    ...roster,
+    {
+      id: INFINITI.id,
+      name: "Infiniti HR",
+      emails: ["jennifer@infinitihr.com"],
+      domains: ["infinitihr.com"],
+      people: ["jennifer hardesty"],
+    },
+  ];
+  // The prospect writes; the PEO is the addressee; we are copied.
+  const THREAD = [
+    "Subject: Re: Info needed for InfinitiHR",
+    "From: Martha Ohler <martha@simple-everest.com>",
+    "To: Tom Harrison <Tom@infinitihr.com>",
+    "Cc: Antaeus Coe <antaeus.coe@prismhr.com>",
+    "",
+    "I have learned that the contractors in Poland will remain contractors.",
+    "Do you have a contractor of record available? If so, that would work best for us.",
+  ].join("\n");
+
+  test("the row's own evidence outranks a read that names the client", () => {
+    const v = judgeFiling({
+      text: THREAD,
+      claim: "Simple Everest",
+      bound: INFINITI,
+      roster: twoTier,
+    });
+    assert.deepEqual(v, { ok: true });
+  });
+
+  test("the router finds the PEO on its domain, not the prospect", () => {
+    const { best } = routeCapture(THREAD, twoTier);
+    assert.equal(best?.name, "Infiniti HR");
+  });
+
+  test("a claim still objects when the row carries nothing of its own", () => {
+    // Same read, dropped on a row the text never touches.
+    const v = judgeFiling({
+      text: "I have learned that the contractors in Poland will remain contractors.",
+      claim: "Simple Everest",
+      bound: REGIS,
+      roster: twoTier,
+    });
+    assert.equal(v.ok, false);
+    if (!v.ok) assert.equal(v.claim, "Simple Everest");
+  });
+});

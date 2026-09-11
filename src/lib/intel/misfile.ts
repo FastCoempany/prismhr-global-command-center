@@ -17,11 +17,25 @@
 // itself carries — a known contact's address, a company domain, a person the
 // book binds to exactly one account. Either rung may object.
 //
-// One guard rule keeps this from crying wolf: evidence only objects when the
-// bound account has NO signal of its own. A Regis thread that mentions
-// "Chassie at Simploy" in passing still carries Regis's own people and
-// domain, so it files without a word. A capture that names only Simploy's
-// people, dropped on Regis, is the one that asks.
+// One guard rule keeps this from crying wolf: NEITHER rung objects when the
+// bound account has signal of its own. A Regis thread that mentions "Chassie
+// at Simploy" in passing still carries Regis's own people and domain, so it
+// files without a word. A capture that names only Simploy's people, dropped on
+// Regis, is the one that asks.
+//
+// That rule has to cover the read's claim too, and on 2026-09-03 it did not —
+// rung 1 objected before anything looked at the row's own evidence. This is
+// the two-tier law arriving at the guard: a PEO's mail is usually ABOUT its
+// client, and the client is not in our book and never will be. So a read that
+// names some other company is the ordinary shape of a channel sale, not a
+// misfile.
+//
+// Measured 2026-09-11: a thread from Martha Ohler at Simple Everest —
+// Infiniti HR's own prospect — addressed to Tom at infinitihr.com, subject
+// "Info needed for InfinitiHR", with us copied in. The router put it on
+// Infiniti HR at 80 on the domain alone. The read named Simple Everest, rung 1
+// fired, and a live Poland contractor-of-record enquiry was held out of the
+// vault.
 //
 // The verdict never blocks. It informs, and the operator files anyway if the
 // operator is right.
@@ -58,8 +72,18 @@ export function judgeFiling(inp: {
   const bound = inp.bound;
   const claim = (inp.claim ?? "").trim();
 
-  // Rung 1 — the read's own company claim. Unchanged behavior: a claim that
-  // disagrees with the row has always stopped the filing.
+  // The evidence the text carries, read once and used by both rungs.
+  const { candidates } = routeCapture(inp.text ?? "", [...inp.roster]);
+  const ownScore = candidates.find((c) => c.id === bound.id)?.score ?? 0;
+
+  // The guard rule, ahead of both rungs: a row carrying this much of its own
+  // evidence is never disputed. The operator dropped it somewhere the text
+  // supports, and whatever other company the read named is the client being
+  // discussed.
+  if (ownScore >= OWN_EVIDENCE_FLOOR) return { ok: true };
+
+  // Rung 1 — the read's own company claim, now only when the row has nothing
+  // of its own to stand on.
   if (claim && !accountMatches(claim, bound.name))
     return {
       ok: false,
@@ -70,10 +94,6 @@ export function judgeFiling(inp: {
 
   // Rung 2 — the evidence the text carries. Silence from the model is not
   // consent; it is simply silence, and the record speaks for itself.
-  const { candidates } = routeCapture(inp.text ?? "", [...inp.roster]);
-  const ownScore = candidates.find((c) => c.id === bound.id)?.score ?? 0;
-  if (ownScore >= OWN_EVIDENCE_FLOOR) return { ok: true };
-
   const elsewhere: RouteHit | undefined = candidates.find(
     (c) => c.id !== bound.id && c.score >= OWN_EVIDENCE_FLOOR,
   );
