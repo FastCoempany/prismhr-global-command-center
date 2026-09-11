@@ -80,11 +80,25 @@ export function judgeFiling(inp: {
   const { candidates } = routeCapture(inp.text ?? "", [...inp.roster]);
   const ownScore = candidates.find((c) => c.id === bound.id)?.score ?? 0;
 
-  // The guard rule, ahead of both rungs: a row carrying this much of its own
-  // evidence is never disputed. The operator dropped it somewhere the text
-  // supports, and whatever other company the read named is the client being
-  // discussed.
-  if (ownScore >= OWN_EVIDENCE_FLOOR) return { ok: true };
+  // The guard rule, ahead of both rungs: a row carrying its own evidence is
+  // not disputed. The operator dropped it somewhere the text supports, and
+  // whatever other company the read named is the client being discussed.
+  //
+  // Clearing the floor is not enough on its own — the floor is the weakest
+  // tier there is (a head word appearing anywhere in the text). A Simploy
+  // email carrying csmith@simploy.com scores Simploy 100; if it happens to say
+  // the word "Regis" and is dropped on Regis, Regis scores 55 on that word
+  // alone. Letting that through silently files a Simploy thread to Regis —
+  // the exact misfile this guard was built for. So the row must also be the
+  // strongest signal in the text, not merely a present one.
+  // Taken as a max rather than off the front of the list: candidates arrives
+  // sorted, but reading a rule's correctness off someone else's sort order is
+  // how it breaks quietly later.
+  const rivalScore = candidates.reduce(
+    (m, c) => (c.id === bound.id ? m : Math.max(m, c.score)),
+    0,
+  );
+  if (ownScore >= OWN_EVIDENCE_FLOOR && ownScore >= rivalScore) return { ok: true };
 
   // Rung 1 — the read's own company claim, now only when the row has nothing
   // of its own to stand on.

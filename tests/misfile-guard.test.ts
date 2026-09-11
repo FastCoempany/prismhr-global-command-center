@@ -327,3 +327,46 @@ describe("a disputed filing shows what the chosen row carries", () => {
     if (!v.ok) assert.equal(typeof v.boundWhy, "string");
   });
 });
+
+// ── the gate needs the row to be the STRONGEST signal, not merely present ───
+// Raised by review on #322. OWN_EVIDENCE_FLOOR is the weakest tier there is —
+// a head word appearing anywhere in the text. A Simploy email carrying
+// csmith@simploy.com scores Simploy 100; if it happens to say the word "Regis"
+// and is dropped on Regis, Regis scores 55 on that word alone. Gating on the
+// floor by itself let that file silently, which is the exact misfile this guard
+// was built for.
+
+describe("a weak head-word match does not outrank real evidence", () => {
+  const SIMPLOY_MAIL = [
+    "From: csmith@simploy.com",
+    "We looked at what Regis does here and want the same for our people.",
+  ].join("\n");
+
+  test("a Simploy email mentioning Regis, dropped on Regis, is disputed", () => {
+    const v = judgeFiling({
+      text: SIMPLOY_MAIL,
+      claim: "Simploy",
+      bound: REGIS,
+      roster,
+    });
+    assert.equal(v.ok, false);
+  });
+
+  test("and it is disputed even when the read named no company at all", () => {
+    // The claim rung is silent, so this is rung 2 doing the work — the case
+    // the guard was built for, reached through the same gate.
+    const v = judgeFiling({ text: SIMPLOY_MAIL, claim: "", bound: REGIS, roster });
+    assert.equal(v.ok, false);
+    if (!v.ok) assert.equal(v.claim, "Simploy");
+  });
+
+  test("dropped on Simploy, the same mail files without a word", () => {
+    const v = judgeFiling({
+      text: SIMPLOY_MAIL,
+      claim: "Simploy",
+      bound: SIMPLOY,
+      roster,
+    });
+    assert.deepEqual(v, { ok: true });
+  });
+});
