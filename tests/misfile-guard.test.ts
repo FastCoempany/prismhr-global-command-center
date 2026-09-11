@@ -370,3 +370,41 @@ describe("a weak head-word match does not outrank real evidence", () => {
     assert.deepEqual(v, { ok: true });
   });
 });
+
+// ── a tie is ambiguous, and the router already says so ──────────────────────
+// Raised by review on #322. routeCapture refuses to auto-route unless the top
+// score beats the second by AUTO_ROUTE_GAP, so it calls a tie ambiguous and
+// hands the capture to the picker. The gate blessing a tie contradicted that
+// on the same evidence, and would file a cross-account thread silently.
+
+describe("a tie does not clear the gate", () => {
+  // Both domains present — both accounts score 80.
+  const TIED = [
+    "From: ops@simploy.com",
+    "To: team@regishrgroup.com",
+    "Thread about the handover.",
+  ].join("\n");
+
+  test("the router itself calls this ambiguous", () => {
+    const { best } = routeCapture(TIED, roster);
+    assert.equal(best, null);
+  });
+
+  test("dropped on either row, a tied thread is disputed", () => {
+    for (const bound of [REGIS, SIMPLOY]) {
+      const v = judgeFiling({ text: TIED, claim: "", bound, roster });
+      assert.equal(v.ok, false, `${bound.name} should ask on a tie`);
+    }
+  });
+
+  test("a clear winner still files without a word", () => {
+    // Only Simploy's domain — no tie, nothing to ask about.
+    const v = judgeFiling({
+      text: "From: ops@simploy.com\nJust us on this one.",
+      claim: "",
+      bound: SIMPLOY,
+      roster,
+    });
+    assert.deepEqual(v, { ok: true });
+  });
+});

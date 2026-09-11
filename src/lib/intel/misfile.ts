@@ -98,7 +98,14 @@ export function judgeFiling(inp: {
     (m, c) => (c.id === bound.id ? m : Math.max(m, c.score)),
     0,
   );
-  if (ownScore >= OWN_EVIDENCE_FLOOR && ownScore >= rivalScore) return { ok: true };
+  // Strictly outranks, not ties. The router already holds this position on the
+  // same evidence: it refuses to auto-route unless the top score beats the
+  // second by AUTO_ROUTE_GAP, so a tie is ambiguous there and it hands the
+  // capture to the picker. A thread carrying both accounts' domains is exactly
+  // that — and blessing whichever row happened to be open would file a
+  // cross-account thread silently. The guard informs and never blocks, so
+  // asking costs a click and the banner now shows both sides.
+  if (ownScore >= OWN_EVIDENCE_FLOOR && ownScore > rivalScore) return { ok: true };
 
   // Rung 1 — the read's own company claim, now only when the row has nothing
   // of its own to stand on.
