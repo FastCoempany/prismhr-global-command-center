@@ -408,3 +408,56 @@ describe("a tie does not clear the gate", () => {
     assert.deepEqual(v, { ok: true });
   });
 });
+
+// ── the bound row is scored on its own ──────────────────────────────────────
+// Raised by review on #322. routeCapture returns hits.slice(0, 5) — a display
+// list for the picker — so a row ranking sixth is absent from it even when the
+// text carries its own domain. Reading the bound row's score out of that list
+// scored it 0 and had the banner tell the operator "nothing in the text points
+// to this account" about a row whose address was in the header.
+
+describe("a bound row outside the top five still shows its own evidence", () => {
+  const crowded: RouteAccount[] = [
+    { id: "A", name: "Alpha PEO", emails: ["a@alpha.com"], domains: ["alpha.com"], people: [] },
+    { id: "B", name: "Bravo HR", emails: ["b@bravo.com"], domains: ["bravo.com"], people: [] },
+    { id: "C", name: "Charlie Staffing", emails: ["c@charlie.com"], domains: ["charlie.com"], people: [] },
+    { id: "D", name: "Delta Employer", emails: ["d@delta.com"], domains: ["delta.com"], people: [] },
+    { id: "E", name: "Echo Group", emails: ["e@echo.com"], domains: ["echo.com"], people: [] },
+    { id: "Z", name: "Zulu Workforce", emails: ["someone@zulu.com"], domains: ["zulu.com"], people: [] },
+  ];
+  // Five contacts by address (100 each); Zulu appears only as a different
+  // address on its own domain (80), so it ranks sixth and falls off the list.
+  const TEXT =
+    "a@alpha.com b@bravo.com c@charlie.com d@delta.com e@echo.com — cc: payroll@zulu.com";
+
+  test("routeCapture really does drop it from the candidate list", () => {
+    const { candidates } = routeCapture(TEXT, crowded);
+    assert.equal(candidates.length, 5);
+    assert.equal(
+      candidates.some((c) => c.id === "Z"),
+      false,
+    );
+  });
+
+  test("the banner still names what points to it", () => {
+    const v = judgeFiling({
+      text: TEXT,
+      claim: "Alpha PEO",
+      bound: { id: "Z", name: "Zulu Workforce" },
+      roster: crowded,
+    });
+    assert.equal(v.ok, false);
+    if (!v.ok) assert.match(v.boundWhy, /zulu\.com/);
+  });
+
+  test("a row the roster does not hold scores nothing rather than throwing", () => {
+    const v = judgeFiling({
+      text: TEXT,
+      claim: "Alpha PEO",
+      bound: { id: "GHOST", name: "Not In The Book" },
+      roster: crowded,
+    });
+    assert.equal(v.ok, false);
+    if (!v.ok) assert.equal(v.boundWhy, "");
+  });
+});

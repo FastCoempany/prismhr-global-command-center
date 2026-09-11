@@ -78,7 +78,22 @@ export function judgeFiling(inp: {
 
   // The evidence the text carries, read once and used by both rungs.
   const { candidates } = routeCapture(inp.text ?? "", [...inp.roster]);
-  const ownScore = candidates.find((c) => c.id === bound.id)?.score ?? 0;
+
+  // The bound row is scored on its own, never read out of `candidates`.
+  // routeCapture returns hits.slice(0, 5) — a display list for the picker — so
+  // a row that ranks sixth is absent from it even when the text carries its
+  // domain, its contact, or its name. Reading ownScore from that list scored it
+  // 0 and told the operator "nothing in the text points to this account" about
+  // a row whose own address was sitting in the header (raised by review,
+  // 2026-09-11).
+  // A row the roster doesn't hold scores nothing, rather than throwing: the
+  // guard's job is to inform, and it cannot do that from a stack trace.
+  const boundAccount = inp.roster.find((a) => a.id === bound.id);
+  const ownHit = boundAccount
+    ? routeCapture(inp.text ?? "", [boundAccount]).candidates[0]
+    : undefined;
+  const ownScore = ownHit?.score ?? 0;
+  const ownWhy = ownHit?.why ?? "";
 
   // The guard rule, ahead of both rungs: a row carrying its own evidence is
   // not disputed. The operator dropped it somewhere the text supports, and
@@ -124,7 +139,7 @@ export function judgeFiling(inp: {
       claim,
       bound: bound.name,
       why: `the read names ${claim}`,
-      boundWhy: candidates.find((c) => c.id === bound.id)?.why ?? "",
+      boundWhy: ownWhy,
     };
 
   // Rung 2 — the evidence the text carries. Silence from the model is not
@@ -138,7 +153,7 @@ export function judgeFiling(inp: {
       claim: elsewhere.name,
       bound: bound.name,
       why: elsewhere.why,
-      boundWhy: candidates.find((c) => c.id === bound.id)?.why ?? "",
+      boundWhy: ownWhy,
     };
 
   return { ok: true };
