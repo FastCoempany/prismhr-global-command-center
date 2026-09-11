@@ -1,0 +1,1225 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The Playbook face — triptych, 2026-09-11</title>
+<style>
+  /* ── Antaeus token donor · bright field, one theme ────────────────── */
+  :root {
+    --field: #f5f7fb;
+    --surface: #ffffff;
+    --surface-sub: #fafbfd;
+    --surface-sunk: #eff2f7;
+    --ink: #0a1c40;
+    --ink-soft: rgba(10, 28, 64, 0.66);
+    --ink-faint: rgba(10, 28, 64, 0.42);
+    --ink-quiet: rgba(10, 28, 64, 0.22);
+    --hair: rgba(10, 28, 64, 0.07);
+    --hair-strong: rgba(10, 28, 64, 0.14);
+    --rule: rgba(10, 28, 64, 0.16);
+    --orange: #e6701e;
+    --orange-strong: #d4661b;
+    --orange-soft: rgba(230, 112, 30, 0.1);
+    --orange-tint: rgba(230, 112, 30, 0.05);
+    --blue: #2563eb;
+    --blue-soft: rgba(37, 99, 235, 0.08);
+    --green: #22c55e;
+    --green-soft: rgba(34, 197, 94, 0.1);
+    --amber: #f59e0b;
+    --amber-soft: rgba(245, 158, 11, 0.12);
+    --red: #ef4444;
+    --red-soft: rgba(239, 68, 68, 0.09);
+    --serif: "DM Serif Display", "Iowan Old Style", Georgia, serif;
+    --sans: "Public Sans", -apple-system, system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --sh-rest: 0 1px 2px rgba(10, 28, 64, 0.04), 0 4px 14px rgba(10, 28, 64, 0.05);
+    --sh-lift: 0 2px 4px rgba(10, 28, 64, 0.05), 0 14px 36px rgba(10, 28, 64, 0.08);
+  }
+  html, body { background: var(--field); }
+  body { margin: 0; color: var(--ink); font: 400 15px/1.6 var(--sans); -webkit-font-smoothing: antialiased; }
+  * { box-sizing: border-box; }
+  button { font: inherit; cursor: pointer; }
+  :focus-visible { outline: 3px solid var(--orange-soft); outline-offset: 1px; }
+  .kick { font: 600 10.5px/1.4 var(--mono); letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-faint); }
+
+  /* ── studio chrome ─────────────────────────────────────────────────── */
+  .studio { max-width: 1240px; margin: 0 auto; padding: 40px 40px 96px; }
+  .studio-head h1 { font: 400 clamp(30px, 4vw, 44px)/1.08 var(--serif); margin: 10px 0 12px; text-wrap: balance; }
+  .studio-head > p { max-width: 76ch; color: var(--ink-soft); margin: 0 0 4px; }
+  .seg { display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 2px; background: var(--surface-sub); border: 1px solid var(--hair-strong); border-radius: 99px; margin: 22px 0 8px; }
+  .seg button { border: 0; background: transparent; border-radius: 99px; padding: 7px 16px; font: 600 12px/1 var(--sans); color: var(--ink-soft); }
+  .seg button[aria-selected="true"] { background: var(--surface); color: var(--orange); box-shadow: var(--sh-rest); }
+  .opt-note { font-size: 13.5px; color: var(--ink-faint); max-width: 88ch; margin: 6px 0 18px; }
+  .opt-note b { color: var(--ink-soft); font-weight: 600; }
+  .opt-note .ax { color: var(--orange); font: 600 10.5px/1.4 var(--mono); letter-spacing: .14em; text-transform: uppercase; }
+
+  .frame { background: var(--field); border: 1px solid var(--hair-strong); border-radius: 12px; box-shadow: var(--sh-lift); overflow: hidden; position: relative; }
+  .option { display: none; }
+  .option.on { display: block; }
+
+  .way { display: flex; align-items: center; gap: 14px; padding: 8px 20px; background: var(--surface); border-bottom: 1px solid var(--hair-strong); }
+  .way .trail { font: 600 10.5px/1.2 var(--mono); letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-quiet); }
+  .way .here { font: 600 13px/1.2 var(--sans); }
+  .way .here span { color: var(--ink-faint); font-weight: 400; }
+  .way .routes { margin-left: auto; display: flex; gap: 16px; font: 400 12px/1 var(--sans); color: var(--ink-quiet); }
+  .way .routes b { color: var(--ink); font-weight: 600; }
+
+  .page { max-width: 1180px; margin: 0 auto; padding: 26px 32px 44px; }
+
+  .ribbon { display: flex; align-items: center; gap: 12px; margin: 26px 0 12px; }
+  .ribbon .rl { font: 600 10.5px/1.4 var(--mono); letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-faint); white-space: nowrap; }
+  .ribbon .rr { height: 1px; flex: 1; background: linear-gradient(90deg, var(--hair-strong), transparent); }
+  .ribbon .rc { font: 600 10.5px/1.4 var(--mono); letter-spacing: 0.16em; color: var(--ink-quiet); white-space: nowrap; }
+
+  .btn { border-radius: 4px; padding: 10px 16px; font: 600 13px/1 var(--sans); border: 1px solid transparent; }
+  .btn:active { transform: translateY(1px); }
+  .btn-accent { background: var(--orange); color: #fff; }
+  .btn-accent:hover { background: var(--orange-strong); }
+  .btn-2nd { background: var(--surface); color: var(--ink); border-color: var(--hair-strong); }
+  .btn-2nd:hover { border-color: var(--rule); }
+  .btn-sm { padding: 7px 12px; font-size: 12px; }
+
+  .card { background: var(--surface); border: 1px solid var(--hair-strong); border-radius: 8px; box-shadow: var(--sh-rest); }
+  .cardhd { padding: 11px 16px; border-bottom: 1px solid var(--hair); display: flex; align-items: center; gap: 10px; }
+  .cardhd .kick { color: var(--ink-faint); }
+  .cardhd .n { margin-left: auto; font: 600 11px/1 var(--mono); color: var(--ink-quiet); }
+  .cardbd { padding: 14px 16px; }
+
+  /* rungs — evidence labels */
+  .rung { display: inline-block; font: 600 9.5px/1.5 var(--mono); letter-spacing: .12em; text-transform: uppercase; padding: 2px 7px; border-radius: 3px; white-space: nowrap; }
+  .rung.tape { background: var(--green-soft); color: #15803d; }
+  .rung.filed { background: var(--blue-soft); color: #1d4ed8; }
+  .rung.research { background: var(--surface-sunk); color: var(--ink-faint); }
+  .rung.lesson { background: var(--orange-soft); color: var(--orange-strong); }
+  .rung.none { background: var(--amber-soft); color: #b45309; }
+
+  .say { background: var(--orange-tint); border-left: 3px solid var(--orange); border-radius: 0 6px 6px 0; padding: 12px 14px; }
+  .say .kick { color: var(--orange-strong); }
+  .say p { margin: 6px 0 0; font: 400 16.5px/1.45 var(--serif); }
+
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+  .split > div { padding: 13px 15px; }
+  .split > div:first-child { border-right: 1px solid var(--hair); }
+  .split h5 { margin: 0 0 8px; font: 600 10.5px/1.4 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--ink-faint); }
+  .split ul { margin: 0; padding-left: 16px; }
+  .split li { margin-bottom: 5px; font-size: 13.5px; color: var(--ink-soft); }
+  .split .mine h5 { color: var(--blue); }
+  .split .theirs h5 { color: var(--ink-faint); }
+
+  .warn { background: var(--amber-soft); border-radius: 6px; padding: 11px 13px; font-size: 13.5px; color: #92400e; }
+  .warn b { color: #78350f; }
+  .gapline { background: var(--surface-sunk); border-radius: 6px; padding: 10px 13px; font-size: 13px; color: var(--ink-soft); display: flex; gap: 9px; align-items: flex-start; }
+  .gapline .g { color: var(--amber); font-weight: 700; }
+
+  .chiprow { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { border: 1px solid var(--hair-strong); background: var(--surface); border-radius: 99px; padding: 5px 11px; font: 600 11px/1.3 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); }
+  .chip:hover { border-color: var(--orange); color: var(--orange); }
+  .chip.on { background: var(--orange); border-color: var(--orange); color: #fff; }
+  .chip.plain { font-family: var(--sans); text-transform: none; letter-spacing: 0; font-size: 12.5px; font-weight: 500; }
+
+  .empty { color: var(--ink-faint); font-size: 13.5px; padding: 16px; text-align: center; }
+
+  /* relay list */
+  .relay li { list-style: none; display: flex; gap: 9px; align-items: flex-start; padding: 7px 0; border-bottom: 1px dotted var(--hair-strong); font-size: 13.5px; }
+  .relay li:last-child { border-bottom: 0; }
+  .relay ul { margin: 0; padding: 0; }
+  .relay .num { font: 600 10.5px/1.7 var(--mono); color: var(--ink-quiet); flex: none; width: 16px; }
+  .relay .x { margin-left: auto; border: 0; background: transparent; color: var(--ink-quiet); font-size: 13px; padding: 0 2px; }
+  .relay .x:hover { color: var(--red); }
+  .closeline { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--hair); }
+
+  @media (max-width: 900px) {
+    .studio { padding: 24px 16px 60px; }
+    .page { padding: 20px 16px 36px; }
+    .split { grid-template-columns: 1fr; }
+    .split > div:first-child { border-right: 0; border-bottom: 1px solid var(--hair); }
+  }
+  /* Below ~640px the three-button answer rows squeezed the question down to one
+     word a line. The controls drop to their own row instead. */
+  @media (max-width: 640px) {
+    .way .routes { display: none; }
+    .cardhd { flex-wrap: wrap; }
+    .cardhd .n { margin-left: 0; flex-basis: 100%; }
+    .gate li, .askrow { flex-wrap: wrap; }
+    .gate .gq, .askrow .aq { flex-basis: 100%; }
+    .gate .gbtns, .askrow .adk { width: 100%; display: flex; gap: 5px; }
+    .gate .gbtns .gbtn, .askrow .adk .gbtn { flex: 1; text-align: center; }
+    .gate .gmark { display: none; }
+    .swTop { padding: 14px 16px 12px; }
+    .deskBar { padding: 0 10px; overflow-x: auto; }
+    .deskTab { padding: 12px 11px 10px; white-space: nowrap; }
+    .deskTab .dd { display: none; }
+    .deskNote { display: none; }
+    .laneHd .lt { margin-left: 0; }
+    .seatCard .sh { flex-wrap: wrap; }
+  }
+</style>
+</head>
+<body>
+<style>
+  /* ── Concept 1 · The Fork ──────────────────────────────────────────── */
+  .forkWrap { max-width: 760px; margin: 0 auto; padding: 34px 0 10px; }
+  .forkWrap .kick { text-align: center; }
+  .forkQ { font: 400 clamp(26px, 3.4vw, 38px)/1.15 var(--serif); text-align: center; margin: 12px 0 6px; text-wrap: balance; }
+  .forkSub { text-align: center; color: var(--ink-faint); font-size: 14px; margin: 0 0 26px; }
+  .forkOpt { display: block; width: 100%; text-align: left; background: var(--surface); border: 1px solid var(--hair-strong); border-radius: 8px; padding: 14px 18px; margin-bottom: 9px; box-shadow: var(--sh-rest); position: relative; }
+  .forkOpt:hover { border-color: var(--orange); box-shadow: var(--sh-lift); }
+  .forkOpt .oq { font: 400 16px/1.4 var(--sans); color: var(--ink); display: block; }
+  .forkOpt .ol { display: block; margin-top: 4px; font: 600 10px/1.4 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--ink-quiet); }
+  .forkOpt:hover .ol { color: var(--orange); }
+  .forkOpt.dk { background: var(--surface-sub); border-style: dashed; }
+  .forkOpt.dk .oq { color: var(--ink-soft); font-style: italic; }
+
+  .crumb { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 14px 0 4px; }
+  .crumb .seg1 { font: 600 10.5px/1.4 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--ink-quiet); }
+  .crumb .seg2 { font: 600 10.5px/1.4 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--orange); }
+  .crumb .arr { color: var(--ink-quiet); }
+  .crumb .rst { margin-left: auto; }
+
+  .laneHd { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; padding: 4px 0 18px; border-bottom: 1px solid var(--hair-strong); margin-bottom: 20px; }
+  .laneHd h2 { font: 400 30px/1.1 var(--serif); margin: 0; }
+  .laneHd .ll { color: var(--ink-soft); font-size: 14.5px; }
+  .laneHd .lt { margin-left: auto; font: 600 10.5px/1.4 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint); background: var(--surface-sunk); padding: 5px 10px; border-radius: 4px; }
+
+  .laneGrid { display: grid; grid-template-columns: 1.02fr 0.98fr; gap: 18px; align-items: start; }
+  @media (max-width: 980px) { .laneGrid { grid-template-columns: 1fr; } }
+  .stack > * + * { margin-top: 14px; }
+
+  .gate li { list-style: none; display: flex; gap: 10px; align-items: flex-start; padding: 9px 0; border-bottom: 1px dotted var(--hair-strong); }
+  .gate li:last-child { border-bottom: 0; }
+  .gate ul { margin: 0; padding: 0; }
+  .gate .gq { font-size: 13.5px; color: var(--ink); flex: 1; }
+  .gate .gmark { flex: none; width: 15px; font: 600 12px/1.5 var(--mono); color: var(--ink-quiet); }
+  .gate .gmark.yes { color: var(--green); }
+  .gate .gmark.no { color: var(--red); }
+  .gate .gmark.dk { color: var(--amber); }
+  .gate .gbtns { display: flex; gap: 4px; flex: none; }
+  .gbtn { border: 1px solid var(--hair-strong); background: var(--surface); border-radius: 4px; padding: 3px 8px; font: 600 10px/1.4 var(--mono); letter-spacing: .08em; color: var(--ink-faint); }
+  .gbtn:hover { border-color: var(--orange); color: var(--orange); }
+  .gbtn.on { background: var(--ink); border-color: var(--ink); color: #fff; }
+
+  .askrow { display: flex; gap: 10px; align-items: flex-start; padding: 9px 0; border-bottom: 1px dotted var(--hair-strong); }
+  .askrow:last-child { border-bottom: 0; }
+  .askrow .aq { flex: 1; font-size: 13.5px; }
+  .askrow .aq em { color: var(--ink-faint); font-style: normal; font-size: 12.5px; display: block; margin-top: 3px; }
+  .askrow .adk { flex: none; }
+
+  .teachWrap { background: var(--surface); border: 1px solid var(--amber); border-radius: 8px; box-shadow: var(--sh-lift); overflow: hidden; }
+  .teachWrap .th { background: var(--amber-soft); padding: 13px 18px; display: flex; align-items: center; gap: 12px; }
+  .teachWrap .th .kick { color: #92400e; }
+  .teachWrap .tb { padding: 18px; }
+  .teachWrap h3 { font: 400 24px/1.2 var(--serif); margin: 0 0 6px; }
+
+  .doorrow { display: flex; flex-wrap: wrap; gap: 6px; }
+  .door { border: 1px solid var(--hair-strong); background: var(--surface); border-radius: 4px; padding: 6px 11px; font: 600 11px/1.3 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); }
+  .door:hover { border-color: var(--blue); color: var(--blue); }
+  .door.on { background: var(--blue); border-color: var(--blue); color: #fff; }
+
+  .ctyBody li { list-style: none; display: flex; gap: 10px; align-items: flex-start; padding: 7px 0; border-bottom: 1px dotted var(--hair); font-size: 13.5px; }
+  .ctyBody ul { margin: 0; padding: 0; }
+  .ctyBody li:last-child { border-bottom: 0; }
+  .ctyBody .ct { flex: 1; }
+  .ctyBody .cr { flex: none; }
+
+  /* ── Concept 2 · The Switchboard ───────────────────────────────────── */
+  .swTop { background: var(--surface); border-bottom: 1px solid var(--hair-strong); padding: 18px 32px 14px; }
+  .swInner { max-width: 1180px; margin: 0 auto; }
+  .swField { display: flex; gap: 8px; align-items: stretch; }
+  .swField input { flex: 1; font: 400 17px/1.4 var(--sans); color: var(--ink); background: var(--surface-sub); border: 1px solid var(--hair-strong); border-radius: 6px; padding: 12px 15px; }
+  .swField input:focus { outline: 0; border-color: var(--orange); background: var(--surface); }
+  .swField input::placeholder { color: var(--ink-quiet); }
+  .swHint { margin: 9px 0 0; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .swHint .kick { flex: none; }
+  .swGrid { display: grid; grid-template-columns: 1.35fr 0.65fr; gap: 18px; align-items: start; }
+  @media (max-width: 980px) { .swGrid { grid-template-columns: 1fr; } }
+  .moveBar { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+  .moveBar .lbl { font: 600 10px/1.4 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--ink-quiet); margin-right: 2px; }
+  .mv { border: 1px solid var(--hair-strong); background: var(--surface); border-radius: 4px; padding: 5px 10px; font: 600 10px/1.4 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint); }
+  .mv:hover { border-color: var(--ink); color: var(--ink); }
+  .mv.on { color: #fff; border-color: transparent; }
+  .mv.on[data-move="ask"] { background: var(--blue); }
+  .mv.on[data-move="fact"] { background: var(--ink); }
+  .mv.on[data-move="dk"] { background: var(--amber); }
+  .mv.on[data-move="wrong"] { background: var(--red); }
+  .mv.on[data-move="country"] { background: var(--orange); }
+
+  .seat { min-height: 320px; }
+  .seatCard { background: var(--surface); border: 1px solid var(--hair-strong); border-radius: 8px; box-shadow: var(--sh-lift); overflow: hidden; }
+  .seatCard .sh { padding: 12px 18px; display: flex; align-items: center; gap: 11px; border-bottom: 1px solid var(--hair); }
+  .seatCard .sh .badge { font: 600 9.5px/1.5 var(--mono); letter-spacing: .13em; text-transform: uppercase; padding: 3px 9px; border-radius: 3px; color: #fff; }
+  .seatCard .sb { padding: 18px; }
+  .seatCard .flat { font: 400 22px/1.3 var(--serif); margin: 0 0 12px; text-wrap: balance; }
+  .seatCard .heard { font-size: 12.5px; color: var(--ink-faint); font-style: italic; }
+
+  .recstrip li { list-style: none; padding: 8px 0; border-bottom: 1px dotted var(--hair-strong); font-size: 13px; }
+  .recstrip li:last-child { border-bottom: 0; }
+  .recstrip ul { margin: 0; padding: 0; }
+  .recstrip .tag { font: 600 9px/1.5 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--ink-quiet); display: block; }
+  .recstrip .tag.int { color: var(--orange); }
+
+  /* ── Concept 3 · The Three Desks ───────────────────────────────────── */
+  .deskBar { background: var(--surface); border-bottom: 1px solid var(--hair-strong); padding: 0 32px; display: flex; gap: 2px; align-items: stretch; }
+  .deskTab { border: 0; background: transparent; padding: 15px 20px 13px; border-bottom: 2px solid transparent; font: 600 13px/1 var(--sans); color: var(--ink-faint); display: flex; align-items: center; gap: 8px; }
+  .deskTab:hover { color: var(--ink); }
+  .deskTab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--orange); }
+  .deskTab .dn { font: 600 10px/1.5 var(--mono); background: var(--surface-sunk); color: var(--ink-faint); border-radius: 99px; padding: 1px 7px; }
+  .deskTab[aria-selected="true"] .dn { background: var(--orange); color: #fff; }
+  .deskTab .dd { font: 600 9px/1.5 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--ink-quiet); }
+  .deskNote { margin-left: auto; align-self: center; font: 400 12px/1.4 var(--sans); color: var(--ink-quiet); }
+  .desk { display: none; }
+  .desk.on { display: block; }
+  .deskGrid { display: grid; grid-template-columns: 1.25fr 0.75fr; gap: 18px; align-items: start; }
+  @media (max-width: 980px) { .deskGrid { grid-template-columns: 1fr; } }
+  .scenSel { width: 100%; font: 400 14.5px/1.4 var(--sans); color: var(--ink); background: var(--surface); border: 1px solid var(--hair-strong); border-radius: 6px; padding: 11px 13px; }
+  .scenSel:focus { outline: 0; border-color: var(--orange); }
+  .needScen { border: 1px dashed var(--orange); background: var(--orange-tint); border-radius: 8px; padding: 24px; text-align: center; }
+  .needScen p { margin: 8px 0 0; color: var(--ink-soft); font-size: 13.5px; }
+  .needScen h3 { font: 400 22px/1.2 var(--serif); margin: 0; }
+  .filterIn { width: 100%; font: 400 15px/1.4 var(--sans); background: var(--surface); border: 1px solid var(--hair-strong); border-radius: 6px; padding: 11px 14px; color: var(--ink); }
+  .filterIn:focus { outline: 0; border-color: var(--blue); }
+  .ansRow { background: var(--surface); border: 1px solid var(--hair-strong); border-radius: 7px; margin-bottom: 8px; overflow: hidden; box-shadow: var(--sh-rest); }
+  .ansRow > button { width: 100%; text-align: left; border: 0; background: transparent; padding: 12px 15px; display: flex; gap: 11px; align-items: baseline; }
+  .ansRow > button:hover { background: var(--surface-sub); }
+  .ansRow .aqq { flex: 1; font-size: 14px; font-weight: 500; }
+  .ansRow .aop { color: var(--ink-quiet); font: 600 13px/1 var(--mono); }
+  .ansRow .abody { padding: 0 15px 15px; display: none; }
+  .ansRow.open .abody { display: block; }
+  .ansRow.open > button { background: var(--surface-sub); }
+
+  .callstrip { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; background: var(--surface-sunk); border-radius: 6px; padding: 9px 14px; margin-bottom: 18px; font-size: 12.5px; color: var(--ink-soft); }
+  .callstrip b { color: var(--ink); font-weight: 600; }
+  .callstrip .sep { color: var(--ink-quiet); }
+  .callstrip .k { font: 600 9.5px/1.5 var(--mono); letter-spacing: .13em; text-transform: uppercase; color: var(--ink-quiet); }
+
+  .legend { margin-top: 26px; padding-top: 14px; border-top: 1px solid var(--hair-strong); display: flex; gap: 18px; flex-wrap: wrap; font-size: 12px; color: var(--ink-faint); }
+  .legend span b { color: var(--ink-soft); font-weight: 600; }
+</style>
+
+<div class="studio">
+  <header class="studio-head">
+    <div class="kick">Playbook · face triptych · concepts, not a ship · 2026-09-11</div>
+    <h1>Three ways to shape the Playbook around the call that actually happens.</h1>
+    <p>
+      Read from two partner calls, 2026-09-03 and 2026-09-10. Direction locked in all
+      three: the legal-employer fork leads, the don&rsquo;t-know routes to a teach instead of
+      stalling, what they ask us gets an answer object, and the relay list leaves the call
+      as something you can hand over. No account or person names, no figures, evidence
+      rungs named on every claim. What differs between the three is the organizing axis.
+    </p>
+    <div class="seg" role="tablist" aria-label="Design options">
+      <button role="tab" aria-selected="true" data-opt="1">1 &middot; The Fork</button>
+      <button role="tab" aria-selected="false" data-opt="2">2 &middot; The Switchboard</button>
+      <button role="tab" aria-selected="false" data-opt="3">3 &middot; The Three Desks</button>
+    </div>
+    <p class="opt-note" id="note-1"><span class="ax">Decision-first.</span> <b>The surface opens as one question and nothing else.</b> Answer it and the whole face re-lanes to that product line &mdash; its gate, its duty split, its asks, its relay list. The bank is never a 113-row list; it is whatever this lane needs next. Every fork and every ask carries &ldquo;they don&rsquo;t know,&rdquo; and that answer flips the surface into teach mode rather than stalling it. Try the gate: answering <em>don&rsquo;t know</em> to any requirement builds the list for you.</p>
+    <p class="opt-note" id="note-2" hidden><span class="ax">Utterance-first.</span> <b>One input: what did they just say.</b> Type it, or tap a line heard on the tapes. A classifier routes it to one of five moves and renders that card in the seat &mdash; they asked us something, they told us a fact, they don&rsquo;t know, they said something that isn&rsquo;t right, or they named a country. Misread it? Force the move by hand. The record strip fills on the right; the relay list fills underneath.</p>
+    <p class="opt-note" id="note-3" hidden><span class="ax">Direction-first.</span> <b>Three desks, one running record.</b> Ask is the call sheet with the scenario made mandatory and the fork leading. Answer is the inbound desk, filtering as you type across boundaries, countries, mechanics and objections. Hand off is the relay list as a real object, with the close and a copy control. The three directions are named on the surface so the operator learns the model.</p>
+  </header>
+
+  <!-- ═══════════ OPTION 1 · THE FORK ═══════════ -->
+  <section class="frame option on" id="opt-1" aria-label="Option 1: The Fork">
+    <div class="way">
+      <span class="trail">Home &rsaquo;</span>
+      <span class="here">Playbook <span>&middot; live call</span></span>
+      <div class="routes"><span>Room</span><span>Accounts</span><span>Groundwork</span><span><b>Playbook</b></span><span>Intranet</span></div>
+    </div>
+    <div class="page" id="f1-page">
+      <div id="f1-arrival">
+        <div class="forkWrap">
+          <div class="kick">The fork</div>
+          <h2 class="forkQ">Who legally employs the person doing the work?</h2>
+          <p class="forkSub">The answer picks the line. Everything below re-cuts to it.</p>
+          <div id="f1-opts"></div>
+        </div>
+      </div>
+      <div id="f1-lane" hidden></div>
+      <div class="legend">
+        <span><b>ON TAPE</b> a recorded call</span>
+        <span><b>FILED THREAD</b> correspondence on file</span>
+        <span><b>RESEARCH</b> sourced, outside the record</span>
+        <span><b>&empty;</b> nothing on any rung &mdash; unproven, never faked</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ OPTION 2 · THE SWITCHBOARD ═══════════ -->
+  <section class="frame option" id="opt-2" aria-label="Option 2: The Switchboard">
+    <div class="way">
+      <span class="trail">Home &rsaquo;</span>
+      <span class="here">Playbook <span>&middot; live call</span></span>
+      <div class="routes"><span>Room</span><span>Accounts</span><span>Groundwork</span><span><b>Playbook</b></span><span>Intranet</span></div>
+    </div>
+    <div class="swTop">
+      <div class="swInner">
+        <div class="kick">What did they just say?</div>
+        <div class="swField" style="margin-top:8px">
+          <input id="sw-in" type="text" autocomplete="off" placeholder="Type what you heard, or tap a line below" aria-label="What did they just say" />
+          <button class="btn btn-accent" id="sw-go">Read it</button>
+        </div>
+        <div class="swHint">
+          <span class="kick">Heard on the tapes</span>
+          <span class="chiprow" id="sw-chips"></span>
+        </div>
+      </div>
+    </div>
+    <div class="page">
+      <div class="moveBar" id="sw-moves">
+        <span class="lbl">Read as</span>
+      </div>
+      <div class="swGrid">
+        <div class="seat" id="sw-seat"></div>
+        <div class="stack">
+          <div class="card recstrip">
+            <div class="cardhd"><span class="kick">What they&rsquo;ve told you</span><span class="n" id="sw-recn">0</span></div>
+            <div class="cardbd" id="sw-rec"><p class="empty" style="padding:0">Nothing stamped yet.</p></div>
+          </div>
+          <div class="card relay">
+            <div class="cardhd"><span class="kick">The list for their client</span><span class="n" id="sw-relayn">0</span></div>
+            <div class="cardbd" id="sw-relay"></div>
+          </div>
+        </div>
+      </div>
+      <div class="legend">
+        <span><b>ON TAPE</b> a recorded call</span>
+        <span><b>FILED THREAD</b> correspondence on file</span>
+        <span><b>RESEARCH</b> sourced, outside the record</span>
+        <span><b>&empty;</b> nothing on any rung &mdash; unproven, never faked</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ OPTION 3 · THE THREE DESKS ═══════════ -->
+  <section class="frame option" id="opt-3" aria-label="Option 3: The Three Desks">
+    <div class="way">
+      <span class="trail">Home &rsaquo;</span>
+      <span class="here">Playbook <span>&middot; live call</span></span>
+      <div class="routes"><span>Room</span><span>Accounts</span><span>Groundwork</span><span><b>Playbook</b></span><span>Intranet</span></div>
+    </div>
+    <div class="deskBar" role="tablist" aria-label="Desks">
+      <button class="deskTab" role="tab" aria-selected="true" data-desk="ask"><span class="dd">We ask</span> Ask <span class="dn" id="d-askn">0</span></button>
+      <button class="deskTab" role="tab" aria-selected="false" data-desk="answer"><span class="dd">They ask</span> Answer <span class="dn" id="d-ansn">0</span></button>
+      <button class="deskTab" role="tab" aria-selected="false" data-desk="hand"><span class="dd">They relay</span> Hand off <span class="dn" id="d-handn">0</span></button>
+      <span class="deskNote">One call, three directions.</span>
+    </div>
+    <div class="page">
+      <div class="callstrip" id="d3-strip"></div>
+
+      <div class="desk on" id="desk-ask">
+        <div class="deskGrid">
+          <div class="stack" id="d3-askmain"></div>
+          <div class="stack">
+            <div class="card">
+              <div class="cardhd"><span class="kick">The situation</span></div>
+              <div class="cardbd">
+                <select class="scenSel" id="d3-scen" aria-label="Which situation is this"></select>
+                <p id="d3-scenblurb" style="margin:10px 0 0;font-size:13px;color:var(--ink-faint)"></p>
+              </div>
+            </div>
+            <div class="card" id="d3-trapcard" hidden>
+              <div class="cardhd"><span class="kick">Watch for</span><span class="n" id="d3-trapn"></span></div>
+              <div class="cardbd" id="d3-traps"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="desk" id="desk-answer">
+        <div class="deskGrid">
+          <div>
+            <input class="filterIn" id="d3-filter" type="text" autocomplete="off" placeholder="What did they ask? Type a few words &mdash; boundary, filings, one screen, Puerto Rico, how fast&hellip;" aria-label="Filter answers" />
+            <div style="height:14px"></div>
+            <div id="d3-answers"></div>
+          </div>
+          <div class="stack">
+            <div class="card">
+              <div class="cardhd"><span class="kick">Countries named</span></div>
+              <div class="cardbd"><div class="doorrow" id="d3-doors"></div><div id="d3-cty" style="margin-top:12px"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="desk" id="desk-hand">
+        <div class="deskGrid">
+          <div class="card relay">
+            <div class="cardhd"><span class="kick">Send this today</span><span class="n" id="d3-handn2">0</span></div>
+            <div class="cardbd" id="d3-hand"></div>
+          </div>
+          <div class="stack">
+            <div class="card">
+              <div class="cardhd"><span class="kick">Add an ask</span></div>
+              <div class="cardbd"><div class="chiprow" id="d3-addasks"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="legend">
+        <span><b>ON TAPE</b> a recorded call</span>
+        <span><b>FILED THREAD</b> correspondence on file</span>
+        <span><b>RESEARCH</b> sourced, outside the record</span>
+        <span><b>&empty;</b> nothing on any rung &mdash; unproven, never faked</span>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ══════════════════════════════════════════════════════════════════════
+     THE SHARED SUBSTRATE
+     All three concepts read the same objects. Only the arrangement differs.
+     Every claim carries its rung. Nothing invented; ∅ where the record is
+     silent. No account or person names, no figures.
+     ══════════════════════════════════════════════════════════════════════ */
+
+  var TEACH_CORE = [
+    "Where does the person live and work day to day?",
+    "Do you have a registered company in that country?",
+    "If you do, is it registered for payroll, and do you hold a bank account there?",
+    "Who pays them right now, and from which country?",
+    "Who's named as the employer on whatever they signed?",
+    "Has anyone promised them a start date, a salary, benefits or a title?"
+  ];
+  var CLOSE_LINE = "Send the list today. Book thirty minutes to go through the answers together.";
+
+  var BOUNDARY = [
+    ["Global Talent", "We source candidates against your client's requirements. They pick. Then we employ the person through employer-of-record.", "tape"],
+    ["The staffing arm", "We staff the seat from our own location. Our desk, our equipment, our supervision. Your client directs the work day to day, on your client's systems.", "tape"],
+    ["The line", "A person already chosen goes to employer-of-record. An open seat can go either way.", "tape"]
+  ];
+  var BOUNDARY_GAP = "The work week the staffing side prices against was hedged by the person who said it. Don't quote it until it's confirmed.";
+
+  var LANES = {
+    payroll: {
+      label: "Global payroll", crumb: "GLOBAL PAYROLL",
+      line: "We run the payroll. Your client stays the employer.",
+      standup: "Stand-up runs two to three months", standupRung: "tape",
+      gate: [
+        { q: "Did the client say they hold a registered company there?", teach: "Do you have a registered company in that country, and what's its legal name?" },
+        { q: "Is that company registered for payroll, not only incorporated?", teach: "Is the company registered for payroll, separately from being incorporated?" },
+        { q: "Do they hold a bank account in country?", teach: "Do you hold a bank account in that country that payroll can leave from?" }
+      ],
+      gateNote: "All three, or it isn't global payroll.",
+      weDo: ["Gross-to-net and the statutory calculations", "Payslips", "The paperwork the in-country bank needs to pay everyone"],
+      theyKeep: ["The registrations", "The filings to the local authority", "The taxes themselves", "Severance", "The employment contract", "The account the money leaves from"],
+      say: "You'd keep the filings. We run the calculations and hand the bank what it needs to pay everyone.",
+      watch: "Ask how they pay these people today before you scope it. A client who says the person is employed through their entity sometimes turns out to be wrong.",
+      watchRung: "tape",
+      asks: [
+        { q: "Who's named as the employer on whatever the person signed?", why: "It decides the line, and clients get this wrong." },
+        { q: "Who pays them today, and from which country?", why: "Paying from a US account doesn't make the arrangement domestic." },
+        { q: "Did the client say who handles the local filings now?", why: "When nobody can name who files, usually nobody does." }
+      ],
+      doors: ["pr", "cov"]
+    },
+    eor: {
+      label: "Employer of record", crumb: "EMPLOYER OF RECORD",
+      line: "We become the legal employer. Nobody needs a company there.",
+      standup: "Stand-up runs about two weeks", standupRung: "tape",
+      gate: [
+        { q: "Did the client already promise a start date, a salary or a title?", teach: "Has anyone promised them a start date, a salary, benefits or a title?" },
+        { q: "Do you know where the person lives and works, not where they're from?", teach: "Where does the person live and work day to day?" },
+        { q: "Does the client want a company of their own there eventually?", teach: "Do you plan to open a company there, or would you rather not?" }
+      ],
+      gateNote: "Each one moves a date neither of us controls.",
+      weDo: ["The local employment contract", "Payroll and the taxes to the local authorities", "Statutory benefits", "Severance", "A deposit that covers the cycle if funding bounces"],
+      theyKeep: ["The work itself. Who does what, day to day."],
+      say: "Nobody needs a company there. We employ them, your client keeps the relationship.",
+      watch: "We support 175-plus countries and own entities in 44. Check the country before you tell them we have our own people on the ground.",
+      watchRung: "tape",
+      asks: [
+        { q: "Did the client say what they've already told this person?", why: "A promised start date starts a clock neither of us controls." },
+        { q: "Is the person authorized to work where they live?", why: "Employment sits where they live and work, not where they hold a passport." }
+      ],
+      doors: ["ph", "pr", "cov"]
+    },
+    contractor: {
+      label: "Contractor management", crumb: "CONTRACTOR",
+      line: "We pay and manage people who invoice as their own business.",
+      standup: "Live immediately once they're in the system", standupRung: "tape",
+      gate: [
+        { q: "Did the client say the person sets their own hours?", teach: "Do you set their hours, or do they?" },
+        { q: "Does the person work for anyone else?", teach: "Do they have other clients, or only you?" },
+        { q: "Do you know what the person signed?", teach: "Send me whatever they signed." }
+      ],
+      gateNote: "These are the facts that reclassify people.",
+      weDo: ["Payment to people who invoice as their own business", "The agreements and the payment path", "The record of who was paid what, and when"],
+      theyKeep: ["The relationship, and the classification call"],
+      say: "Check how they're classified now before we scope it. A contractor agreement doesn't settle it on its own.",
+      watch: "Status follows the facts of the relationship, not the title on the paper. Set hours, direction, exclusivity and open-ended work all pull the other way.",
+      watchRung: "research",
+      asks: [
+        { q: "Did the client say who directs this person's day?", why: "Direction is the fact that reclassifies people." },
+        { q: "Has anyone ever questioned how these people are classified?", why: "A live challenge changes the order of the work." }
+      ],
+      doors: ["cov"]
+    },
+    talent: {
+      label: "Nobody hired yet", crumb: "TALENT",
+      line: "The seat is open. Two ways to fill it.",
+      standup: "Candidates come back within a day", standupRung: "tape",
+      gate: [
+        { q: "Did the client already have someone in mind?", teach: "Do you have someone specific, or do you need us to find the person?" },
+        { q: "Did the client say why that country?", teach: "Why that country in particular?" },
+        { q: "Did the client say what the role actually does?", teach: "What does the role do all day, and what does it need for language and background?" }
+      ],
+      gateNote: "The first one picks the offering.",
+      boundary: true,
+      weDo: ["Sourcing against the client's requirements", "Candidates with a resume and a recorded introduction", "Employment through employer-of-record once they pick"],
+      theyKeep: ["The choice, and the interview"],
+      say: "If they already picked the person, we employ them. If the seat's still open, we can find them or staff it.",
+      watch: "",
+      watchRung: "",
+      asks: [
+        { q: "Has the client hired outside the US before?", why: "A first-timer needs teaching before they need a quote." },
+        { q: "Do they want the person on their own systems, or on ours?", why: "It's the line between the two offerings." }
+      ],
+      doors: ["ph", "cov"]
+    }
+  };
+
+  var FORK_OPTS = [
+    { t: "The client owns a company there and employs them through it", lane: "payroll" },
+    { t: "Nobody does yet, and the client would rather not own one there", lane: "eor" },
+    { t: "They invoice us as their own business", lane: "contractor" },
+    { t: "Nobody's been hired. They still need the person.", lane: "talent" },
+    { t: "They don't know", lane: "dk" }
+  ];
+
+  var COUNTRIES = {
+    pr: {
+      name: "Puerto Rico", sub: "US soil. Its own payroll jurisdiction.",
+      rows: [
+        ["Social Security and federal unemployment go where you'd expect. That's why it can look like it's already working.", "tape"],
+        ["Income tax withholding goes to Puerto Rico's own tax authority.", "research"],
+        ["The year-end form is the 499R-2/W-2PR, not a W-2.", "research"],
+        ["Unemployment runs through Puerto Rico's own fund.", "tape"],
+        ["Workers' compensation comes from the state fund only.", "research"],
+        ["Termination carries statutory severance. There's no at-will.", "research"],
+        ["Retirement plans need Treasury approval.", "research"],
+        ["Pay runs semi-monthly.", "tape"]
+      ],
+      gap: "Whether we run employer-of-record in Puerto Rico is unproven here. Ask before you promise it.",
+      correct: "Running someone through domestic payroll doesn't make them compliant in Puerto Rico."
+    },
+    ph: {
+      name: "Philippines", sub: "A country. Check entity coverage before you promise people on the ground.",
+      rows: [
+        ["Pay runs semi-monthly.", "tape"],
+        ["Thirteenth-month pay is statutory, due by the end of December.", "research"],
+        ["Contributions run to SSS, PhilHealth and Pag-IBIG.", "research"],
+        ["Termination runs on just or authorized cause. There's no at-will.", "research"],
+        ["Probation runs up to six months.", "research"]
+      ],
+      gap: "Whether this is one of the owned-entity countries is unproven here. Check before you say we have our own people there.",
+      correct: ""
+    },
+    cov: {
+      name: "Any other country", sub: "What holds everywhere.",
+      rows: [
+        ["175-plus countries supported. Owned-entity infrastructure in 44.", "tape"],
+        ["Every country except the sanctioned ones.", "tape"],
+        ["Pay frequency follows the country's norm, not the client's preference.", "tape"],
+        ["The tenth is the approval cutoff. Funds are drawn mid-month so they land before payday.", "tape"]
+      ],
+      gap: "Country-by-country detail past this is unproven here. That gap is what this face is asking you to close.",
+      correct: ""
+    }
+  };
+
+  var COUNTRY_MATCH = [
+    [/puerto\s*rico|\bpr\b|499|hacienda/i, "pr"],
+    [/philippines?|filipino|manila/i, "ph"]
+  ];
+
+  var ANSWERS = [
+    {
+      id: "filings", q: "Would you handle the tax filings, or would they?",
+      keys: ["filing", "filings", "tax", "taxes", "handle", "worry", "responsible", "file"],
+      flat: "On global payroll, your client keeps the filings.", rung: "tape",
+      blocks: [
+        { k: "split", mine: LANES.payroll.weDo, theirs: LANES.payroll.theyKeep },
+        { k: "say", t: "You'd keep the filings. We run the calculations and hand the bank what it needs to pay everyone." },
+        { k: "p", t: "Under employer-of-record it inverts. We're the employer, so the filings, the taxes and the severance are ours." }
+      ]
+    },
+    {
+      id: "boundary", q: "What's the difference between this and your staffing arm?",
+      keys: ["difference", "differ", "staffing", "solvo", "arm", "versus", "between", "same", "sounds", "similar"],
+      flat: "Staffing gives your client a seat we run. Global employs a person your client picked.", rung: "tape",
+      blocks: [{ k: "rows", rows: BOUNDARY, title: "Where the two part" }, { k: "gap", t: BOUNDARY_GAP }]
+    },
+    {
+      id: "onescreen", q: "Is it all one screen for the client?",
+      keys: ["screen", "platform", "tab", "login", "sso", "sign", "integrated", "seamless", "same", "experience"],
+      flat: "It's a separate platform, one click from Prism. One login.", rung: "tape",
+      blocks: [
+        { k: "p", t: "Single sign-on, so it's one click and no second password." },
+        { k: "warn", t: "Unified reporting is being built. Don't give them a date." }
+      ]
+    },
+    {
+      id: "chair", q: "Do we hand the client to you, or do I stay in the middle?",
+      keys: ["hand", "middle", "middleman", "refer", "referral", "reseller", "resell", "resale", "contract", "relationship", "bill", "billing", "route"],
+      flat: "Either. You hold the client contract, or we do and you take a fee.", rung: "tape",
+      blocks: [
+        { k: "rows", title: "How the contract sits", rows: [
+          ["Resale", "You hold the contract. We draw funds from you and you invoice your client.", "tape"],
+          ["Referral", "We contract with the client and draw directly. You take a fee for the life of it.", "tape"]
+        ] },
+        { k: "warn", t: "A referral partner can take the global work and come back for the domestic book. Holding the client contract keeps that door shut." }
+      ]
+    },
+    {
+      id: "prworkaround", q: "Their current provider already pays Puerto Rico. How?",
+      keys: ["already", "pays", "paying", "puerto", "rico", "current", "provider", "workaround", "somehow", "incumbent"],
+      flat: "Running someone through domestic payroll doesn't make them compliant there.", rung: "tape",
+      blocks: [
+        { k: "p", t: "Some of it does land where you'd expect, which is exactly what makes it look fine." },
+        { k: "rows", title: "What's different there", rows: [
+          ["Withholding", "Goes to Puerto Rico's own tax authority.", "research"],
+          ["Year-end", "The 499R-2/W-2PR, not a W-2.", "research"],
+          ["Unemployment", "Puerto Rico's own fund.", "tape"],
+          ["Workers' comp", "The state fund only.", "research"]
+        ] },
+        { k: "gap", t: COUNTRIES.pr.gap }
+      ]
+    },
+    {
+      id: "howfast", q: "How fast can you start?",
+      keys: ["fast", "quick", "long", "start", "timeline", "live", "when", "stand", "up", "speed", "soon"],
+      flat: "Contractors go live immediately. Employer-of-record runs about two weeks. Global payroll runs two to three months.", rung: "tape",
+      blocks: [{ k: "warn", t: "The two weeks starts at a signed client agreement and the person's information reaching us. Not at first contact." }]
+    },
+    {
+      id: "ground", q: "Do you actually have people on the ground there?",
+      keys: ["ground", "own", "entity", "entities", "local", "third", "party", "handing", "network", "countries", "175", "outsource"],
+      flat: "We support 175-plus countries and own entities in 44.", rung: "tape",
+      blocks: [{ k: "warn", t: "Check the country before you say we have our own people there. These are two different claims, and both got said on the same call." }]
+    },
+    {
+      id: "funds", q: "Who gets billed, and when does money move?",
+      keys: ["billed", "bill", "funds", "debit", "ach", "cutoff", "cadence", "invoice", "draw", "funding"],
+      flat: "On resale we draw from you and you invoice your client. On referral we contract with the client and draw directly.", rung: "tape",
+      blocks: [{ k: "p", t: "The tenth is the approval cutoff. Funds are drawn mid-month so they land in country before payday." }]
+    }
+  ];
+
+  var WRONG = [
+    { re: /(already|can|able to|do)\s+(pay|pays|paying|run)[^.?]*(puerto\s*rico)/i, ans: "prworkaround" },
+    { re: /(puerto\s*rico)[^.?]*(already|workaround|somehow|no problem|fine)/i, ans: "prworkaround" },
+    { re: /(add|put|run)[^.?]*(us|domestic|american)\s*payroll[^.?]*(abroad|overseas|another country)/i, ans: "ground" }
+  ];
+
+  var DK_RE = /\b(don'?t know|dunno|not sure|no idea|i'?d have to (ask|check)|have to ask|couldn'?t say|good question|that'?s all i|never asked|haven'?t asked|not really sure)\b/i;
+  var Q_START = /^(what|how|who|why|when|where|which|do|does|did|would|will|can|could|should|is|are|am|if)\b/i;
+
+  var HEARD = [
+    "We've got a prospect with three managing partners in Puerto Rico.",
+    "Would you do the tax filings, or would they?",
+    "What's the difference between this and your staffing arm?",
+    "Honestly, I'd have to ask them.",
+    "Their current provider pays them in Puerto Rico already.",
+    "Is it all one screen for the client?",
+    "Do we hand the client to you, or do I stay in the middle?",
+    "They want someone in the Philippines.",
+    "We had someone move abroad and stay on our payroll.",
+    "They'd only move on January 1st."
+  ];
+
+  var SCENARIOS = [
+    { id: "", label: "Pick the situation you're actually in", blurb: "", traps: [] },
+    { id: "live-client", label: "A live client deal, country named", blurb: "They came with a real prospect and a country. The client's deal leads; their own operation gets discovery after the read-out.",
+      traps: ["They hold the client's facts secondhand. Ask what the client said, not what's true.", "A territory can look domestic and behave like its own jurisdiction.", "The incumbent may be doing it wrong. That's an opening, not an insult to lead with."] },
+    { id: "one-off", label: "One vague inquiry, nothing behind it yet", blurb: "A client asked a question and went quiet. The partner can't say whether a person is picked or why that country.",
+      traps: ["Don't scope a deal that doesn't exist yet. Arm them to go find out.", "The reason for the country is usually the whole deal, and nobody asked.", "Asking them to account for what they don't know moves you across the table."] },
+    { id: "internal", label: "Their own payroll, not a client's", blurb: "Someone on their staff moved abroad and stayed on the books. This is the partner's own exposure.",
+      traps: ["Internal need, not a client's. Say internal.", "They may not have framed it as a problem yet.", "This is the cheapest credibility you will ever buy with them."] },
+    { id: "boundary", label: "They can't tell our products apart", blurb: "The call is about where one offering ends and the next begins. Draw the line before anything else.",
+      traps: ["Reciting four offerings answers nothing. Draw one line.", "The person asking may be protecting themselves from looking uninformed downstream.", "A hedge from our side gets repeated to their client as fact."] }
+  ];
+
+  /* ── shared render helpers ─────────────────────────────────────────── */
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]; }); }
+  function rung(r) {
+    var L = { tape: "ON TAPE", filed: "FILED THREAD", research: "RESEARCH", lesson: "❖ LESSON", none: "∅" };
+    if (!r) return "";
+    return '<span class="rung ' + r + '">' + L[r] + "</span>";
+  }
+  function splitCard(mine, theirs) {
+    return '<div class="card"><div class="cardhd"><span class="kick">What we do &middot; what they keep</span></div>' +
+      '<div class="split"><div class="mine"><h5>We do</h5><ul>' + mine.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") +
+      '</ul></div><div class="theirs"><h5>They keep</h5><ul>' + theirs.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") +
+      "</ul></div></div></div>";
+  }
+  function rowsCard(rows, title) {
+    return '<div class="card"><div class="cardhd"><span class="kick">' + esc(title || "The line") + "</span></div><div class=\"cardbd ctyBody\"><ul>" +
+      rows.map(function (r) {
+        return '<li><span class="ct"><b style="font-weight:600">' + esc(r[0]) + "</b> &mdash; " + esc(r[1]) + '</span><span class="cr">' + rung(r[2]) + "</span></li>";
+      }).join("") + "</ul></div></div>";
+  }
+  function block(b) {
+    if (b.k === "split") return splitCard(b.mine, b.theirs);
+    if (b.k === "rows") return rowsCard(b.rows, b.title);
+    if (b.k === "say") return '<div class="say"><div class="kick">Say this</div><p>' + esc(b.t) + "</p></div>";
+    if (b.k === "warn") return '<div class="warn">' + esc(b.t) + "</div>";
+    if (b.k === "gap") return '<div class="gapline"><span class="g">&empty;</span><span>' + esc(b.t) + "</span></div>";
+    return "<p style=\"margin:0;font-size:14px;color:var(--ink-soft)\">" + esc(b.t) + "</p>";
+  }
+  function countryCard(key) {
+    var c = COUNTRIES[key];
+    if (!c) return "";
+    var h = '<div class="card"><div class="cardhd"><span class="kick">' + esc(c.name) + '</span><span class="n">' + c.rows.length + " facts</span></div><div class=\"cardbd ctyBody\">";
+    h += '<p style="margin:0 0 10px;font-size:13px;color:var(--ink-faint)">' + esc(c.sub) + "</p><ul>";
+    h += c.rows.map(function (r) { return '<li><span class="ct">' + esc(r[0]) + '</span><span class="cr">' + rung(r[1]) + "</span></li>"; }).join("");
+    h += "</ul>";
+    if (c.gap) h += '<div class="gapline" style="margin-top:11px"><span class="g">&empty;</span><span>' + esc(c.gap) + "</span></div>";
+    return h + "</div></div>";
+  }
+  function relayCard(list, onRemoveAttr, idPrefix) {
+    if (!list.length) return '<p class="empty" style="padding:4px 0">Nothing yet. A don&rsquo;t-know puts the question here.</p>';
+    var h = "<ul>" + list.map(function (t, i) {
+      return '<li><span class="num">' + (i + 1) + '.</span><span>' + esc(t) + '</span><button class="x" ' + onRemoveAttr + '="' + i + '" title="off the list">&times;</button></li>';
+    }).join("") + "</ul>";
+    h += '<div class="closeline"><div class="say"><div class="kick">Close on this</div><p>' + esc(CLOSE_LINE) + "</p></div>" +
+      '<button class="btn btn-2nd btn-sm" style="margin-top:10px" data-copy="' + idPrefix + '">Copy the list</button></div>';
+    return h;
+  }
+  function copyText(list) {
+    return "Questions for your client\n\n" + list.map(function (t, i) { return (i + 1) + ". " + t; }).join("\n") + "\n\n" + CLOSE_LINE + "\n";
+  }
+  function bindCopy(scope, getList) {
+    scope.querySelectorAll("[data-copy]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var txt = copyText(getList());
+        if (navigator.clipboard) { navigator.clipboard.writeText(txt); }
+        var old = b.textContent; b.textContent = "Copied — list in hand";
+        setTimeout(function () { b.textContent = old; }, 2000);
+      });
+    });
+  }
+
+  /* ══════════════════════════════════════════════════════════════════════
+     CONCEPT 1 · THE FORK — decision-first
+     ══════════════════════════════════════════════════════════════════════ */
+  var F1 = { lane: null, gate: {}, relay: [], teach: null, door: null };
+  var f1arr = document.getElementById("f1-arrival");
+  var f1lane = document.getElementById("f1-lane");
+
+  function f1RenderArrival() {
+    document.getElementById("f1-opts").innerHTML = FORK_OPTS.map(function (o, i) {
+      var lane = o.lane === "dk" ? null : LANES[o.lane];
+      return '<button class="forkOpt' + (o.lane === "dk" ? " dk" : "") + '" data-f1opt="' + i + '">' +
+        '<span class="oq">' + esc(o.t) + "</span>" +
+        '<span class="ol">' + (lane ? esc(lane.crumb) : "Teach them what to go ask") + "</span></button>";
+    }).join("");
+    f1arr.querySelectorAll("[data-f1opt]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var o = FORK_OPTS[+b.dataset.f1opt];
+        if (o.lane === "dk") { F1.lane = null; F1.teach = TEACH_CORE.slice(); F1.relay = TEACH_CORE.slice(); }
+        else { F1.lane = o.lane; F1.teach = null; F1.door = null; }
+        f1Render();
+      });
+    });
+  }
+
+  function f1Add(q) { if (F1.relay.indexOf(q) < 0) F1.relay.push(q); }
+
+  function f1Render() {
+    if (!F1.lane && !F1.teach) { f1arr.hidden = false; f1lane.hidden = true; return; }
+    f1arr.hidden = true; f1lane.hidden = false;
+
+    var crumb = '<div class="crumb"><span class="seg1">The fork</span><span class="arr">&rsaquo;</span>' +
+      '<span class="seg2">' + (F1.teach ? "THEY DON&rsquo;T KNOW" : LANES[F1.lane].crumb) + "</span>" +
+      '<button class="btn btn-2nd btn-sm rst" id="f1-reset">&#8635; Start over</button></div>';
+
+    if (F1.teach) {
+      f1lane.innerHTML = crumb +
+        '<div class="teachWrap"><div class="th"><span class="kick">Teach, don&rsquo;t stall</span></div><div class="tb">' +
+        "<h3>They can&rsquo;t answer it, so hand them the list.</h3>" +
+        '<p style="margin:0 0 14px;color:var(--ink-soft);font-size:14px">A partner holds their client&rsquo;s facts secondhand at best. The fork is answerable once these come back.</p>' +
+        '<div class="card relay"><div class="cardhd"><span class="kick">The list for their client</span><span class="n">' + F1.relay.length + "</span></div>" +
+        '<div class="cardbd" id="f1-relaybd">' + relayCard(F1.relay, "data-f1rm", "f1") + "</div></div></div></div>";
+      f1Bind();
+      return;
+    }
+
+    var L = LANES[F1.lane];
+    var left = '<div class="card"><div class="cardhd"><span class="kick">The gate</span><span class="n">' + esc(L.gateNote) + "</span></div>" +
+      '<div class="cardbd gate"><ul>' + L.gate.map(function (g, i) {
+        var v = F1.gate[F1.lane + ":" + i] || "";
+        return "<li>" +
+          '<span class="gmark ' + (v === "y" ? "yes" : v === "n" ? "no" : v === "d" ? "dk" : "") + '">' + (v === "y" ? "&#10003;" : v === "n" ? "&times;" : v === "d" ? "?" : "&middot;") + "</span>" +
+          '<span class="gq">' + esc(g.q) + (v === "d" ? '<em style="display:block;color:var(--amber);font-size:12px;margin-top:3px">On the list &rarr; &ldquo;' + esc(g.teach) + "&rdquo;</em>" : "") + "</span>" +
+          '<span class="gbtns">' +
+          '<button class="gbtn' + (v === "y" ? " on" : "") + '" data-f1g="' + i + '" data-v="y">YES</button>' +
+          '<button class="gbtn' + (v === "n" ? " on" : "") + '" data-f1g="' + i + '" data-v="n">NO</button>' +
+          '<button class="gbtn' + (v === "d" ? " on" : "") + '" data-f1g="' + i + '" data-v="d">DON&rsquo;T KNOW</button>' +
+          "</span></li>";
+      }).join("") + "</ul></div></div>";
+
+    left += '<div class="card"><div class="cardhd"><span class="kick">Ask next</span><span class="n">' + L.asks.length + "</span></div><div class=\"cardbd\">" +
+      L.asks.map(function (a, i) {
+        return '<div class="askrow"><span class="aq">' + esc(a.q) + "<em>" + esc(a.why) + '</em></span>' +
+          '<span class="adk"><button class="gbtn" data-f1a="' + i + '">THEY DON&rsquo;T KNOW</button></span></div>';
+      }).join("") + "</div></div>";
+
+    var right = splitCard(L.weDo, L.theyKeep);
+    right += '<div class="say"><div class="kick">Say this</div><p>' + esc(L.say) + "</p></div>";
+    if (L.boundary) right += rowsCard(BOUNDARY, "Where the two offerings part") + '<div class="gapline"><span class="g">&empty;</span><span>' + esc(BOUNDARY_GAP) + "</span></div>";
+    if (L.watch) right += '<div class="warn"><b>Watch for.</b> ' + esc(L.watch) + " " + rung(L.watchRung) + "</div>";
+    var ctyBand = '<div class="ribbon"><span class="rl">Countries in play</span><span class="rr"></span>' +
+      '<span class="rc">' + L.doors.length + " OPEN" + (L.doors.length === 1 ? "" : "S") + "</span></div>" +
+      '<div class="doorrow" style="margin-bottom:12px">' + L.doors.map(function (d) {
+        return '<button class="door' + (F1.door === d ? " on" : "") + '" data-f1d="' + d + '">' + esc(COUNTRIES[d].name) + "</button>";
+      }).join("") + "</div>" +
+      (F1.door ? countryCard(F1.door) : '<p class="empty" style="padding:4px 0 0;text-align:left">Open one when a country gets named.</p>');
+
+    f1lane.innerHTML = crumb +
+      '<div class="laneHd"><h2>' + esc(L.label) + '</h2><span class="ll">' + esc(L.line) + "</span>" +
+      '<span class="lt">' + esc(L.standup) + " " + rung(L.standupRung) + "</span></div>" +
+      '<div class="laneGrid"><div class="stack">' + left + '</div><div class="stack">' + right + "</div></div>" +
+      ctyBand +
+      '<div class="ribbon"><span class="rl">The list for their client</span><span class="rr"></span><span class="rc">' + F1.relay.length + " ASK" + (F1.relay.length === 1 ? "" : "S") + "</span></div>" +
+      '<div class="card relay"><div class="cardbd" id="f1-relaybd">' + relayCard(F1.relay, "data-f1rm", "f1") + "</div></div>";
+    f1Bind();
+  }
+
+  function f1Bind() {
+    var r = document.getElementById("f1-reset");
+    if (r) r.addEventListener("click", function () { F1 = { lane: null, gate: {}, relay: [], teach: null, door: null }; f1Render(); });
+    f1lane.querySelectorAll("[data-f1g]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var i = +b.dataset.f1g, v = b.dataset.v, L = LANES[F1.lane], k = F1.lane + ":" + i;
+        F1.gate[k] = F1.gate[k] === v ? "" : v;
+        if (F1.gate[k] === "d") f1Add(L.gate[i].teach);
+        else { var x = F1.relay.indexOf(L.gate[i].teach); if (x >= 0) F1.relay.splice(x, 1); }
+        f1Render();
+      });
+    });
+    f1lane.querySelectorAll("[data-f1a]").forEach(function (b) {
+      b.addEventListener("click", function () { f1Add(LANES[F1.lane].asks[+b.dataset.f1a].q); f1Render(); });
+    });
+    f1lane.querySelectorAll("[data-f1d]").forEach(function (b) {
+      b.addEventListener("click", function () { F1.door = F1.door === b.dataset.f1d ? null : b.dataset.f1d; f1Render(); });
+    });
+    f1lane.querySelectorAll("[data-f1rm]").forEach(function (b) {
+      b.addEventListener("click", function () { F1.relay.splice(+b.dataset.f1rm, 1); f1Render(); });
+    });
+    bindCopy(f1lane, function () { return F1.relay; });
+  }
+
+  /* ══════════════════════════════════════════════════════════════════════
+     CONCEPT 2 · THE SWITCHBOARD — utterance-first
+     ══════════════════════════════════════════════════════════════════════ */
+  var F2 = { records: [], relay: [], last: null, forced: null };
+  var MOVES = [
+    ["ask", "They asked us"], ["fact", "They told us"], ["dk", "They don't know"],
+    ["wrong", "That's not right"], ["country", "A country"]
+  ];
+
+  function scoreAnswer(text) {
+    var t = text.toLowerCase(), best = null, bestN = 0;
+    ANSWERS.forEach(function (a) {
+      var n = 0;
+      a.keys.forEach(function (k) { if (t.indexOf(k) >= 0) n++; });
+      if (n > bestN) { bestN = n; best = a; }
+    });
+    return bestN >= 2 ? best : bestN === 1 ? best : null;
+  }
+  function findCountry(text) {
+    for (var i = 0; i < COUNTRY_MATCH.length; i++) if (COUNTRY_MATCH[i][0].test(text)) return COUNTRY_MATCH[i][1];
+    return null;
+  }
+  function facets(text) {
+    var f = [];
+    if (/\b(we|our|us|ourselves)\b/i.test(text) && !/\b(client|prospect|they|their)\b/i.test(text)) f.push("internal");
+    if (/january\s*1|jan\s*1|1-1|first of the year|new year/i.test(text)) f.push("timing");
+    if (/\bentity|registered company|company (there|down there)|incorporated\b/i.test(text)) f.push("entity");
+    return f;
+  }
+  function classify(text) {
+    var t = text.trim();
+    if (!t) return null;
+    for (var i = 0; i < WRONG.length; i++) if (WRONG[i].re.test(t)) return { move: "wrong", ans: WRONG[i].ans, country: findCountry(t), facets: facets(t) };
+    if (DK_RE.test(t)) return { move: "dk", country: findCountry(t), facets: facets(t) };
+    if (/\?\s*$/.test(t) || Q_START.test(t)) { var a = scoreAnswer(t); if (a) return { move: "ask", ans: a.id, country: findCountry(t), facets: facets(t) }; }
+    var c = findCountry(t);
+    if (c) return { move: "country", country: c, facets: facets(t) };
+    return { move: "fact", facets: facets(t), country: null };
+  }
+
+  function f2Seat(res, text) {
+    if (!res) return '<div class="empty" style="padding:60px 20px">Type what you heard, or tap a line above.</div>';
+    var COL = { ask: "var(--blue)", fact: "var(--ink)", dk: "var(--amber)", wrong: "var(--red)", country: "var(--orange)" };
+    var NAME = { ask: "They asked us", fact: "They told us", dk: "They don't know", wrong: "That's not right", country: "A country came up" };
+    var h = '<div class="seatCard"><div class="sh"><span class="badge" style="background:' + COL[res.move] + '">' + esc(NAME[res.move]) + "</span>" +
+      '<span class="heard">&ldquo;' + esc(text) + "&rdquo;</span></div><div class=\"sb\">";
+
+    if (res.move === "ask" || res.move === "wrong") {
+      var a = null;
+      ANSWERS.forEach(function (x) { if (x.id === res.ans) a = x; });
+      if (a) {
+        h += '<p class="flat">' + esc(a.flat) + "</p>";
+        h += '<p style="margin:-6px 0 14px">' + rung(a.rung) + "</p>";
+        h += a.blocks.map(function (b) { return '<div style="margin-bottom:12px">' + block(b) + "</div>"; }).join("");
+      } else {
+        h += '<p class="flat">Nothing on any rung answers this yet.</p>' + block({ k: "gap", t: "Say you don't have it, take it away, and come back with it. Never fill the gap from instinct." });
+      }
+    } else if (res.move === "dk") {
+      h += '<p class="flat">Hand them the list. Don&rsquo;t stall the call.</p>';
+      h += '<p style="margin:-6px 0 14px;font-size:13.5px;color:var(--ink-soft)">Every question below is now on the list at right.</p>';
+      h += rowsCard(TEACH_CORE.map(function (q) { return ["Ask the client", q, ""]; }), "What goes over today");
+      h += '<div style="margin-top:12px">' + block({ k: "say", t: CLOSE_LINE }) + "</div>";
+    } else if (res.move === "country") {
+      h += '<p class="flat">' + esc(COUNTRIES[res.country].name) + " has its own rules. Here they are.</p>";
+      h += countryCard(res.country);
+      if (COUNTRIES[res.country].correct) h += '<div style="margin-top:12px">' + block({ k: "warn", t: COUNTRIES[res.country].correct }) + "</div>";
+    } else {
+      h += '<p class="flat">Stamped. Here&rsquo;s what it changes.</p>';
+      var notes = [];
+      if (res.facets.indexOf("internal") >= 0) notes.push(["Internal", "This is the partner&rsquo;s own payroll, not a client&rsquo;s. Say internal.", ""]);
+      if (res.facets.indexOf("timing") >= 0) notes.push(["Timing", "A first-of-the-year start is a tax-year restart. Work the real deadline backwards from it.", "tape"]);
+      if (res.facets.indexOf("entity") >= 0) notes.push(["The fork", "An entity of their own points at global payroll. Check payroll registration and a bank account before you say so.", "tape"]);
+      if (!notes.length) notes.push(["Noted", "Nothing routes off this on its own. Keep going.", ""]);
+      h += rowsCard(notes, "What it moves");
+      var nx = res.facets.indexOf("internal") >= 0 ? "Ask where they live now and who&rsquo;s been withholding." :
+        res.facets.indexOf("timing") >= 0 ? "Ask when their agreement ends and whether leaving carries a fee." :
+        res.facets.indexOf("entity") >= 0 ? "Ask who&rsquo;s named as the employer on whatever the person signed." :
+        "Ask who legally employs the person doing the work.";
+      h += '<div style="margin-top:12px">' + block({ k: "say", t: nx.replace(/&rsquo;/g, "’") }) + "</div>";
+    }
+    return h + "</div></div>";
+  }
+
+  function f2Run(text, forced) {
+    var res = classify(text);
+    if (!res) return;
+    if (forced) res = { move: forced, ans: res.ans || (forced === "ask" || forced === "wrong" ? (scoreAnswer(text) || {}).id : null), country: res.country || findCountry(text) || "cov", facets: res.facets };
+    if (forced === "country" && !res.country) res.country = "cov";
+    F2.last = { res: res, text: text };
+    if (res.move === "dk") TEACH_CORE.forEach(function (q) { if (F2.relay.indexOf(q) < 0) F2.relay.push(q); });
+    if (res.move !== "dk") {
+      var tag = res.facets.indexOf("internal") >= 0 ? "Internal" : res.move === "country" ? "Country" : res.move === "ask" ? "They asked" : res.move === "wrong" ? "Corrected" : "Fact";
+      F2.records.unshift({ tag: tag, t: text, int: res.facets.indexOf("internal") >= 0 });
+    }
+    f2Render();
+  }
+
+  function f2Render() {
+    document.getElementById("sw-seat").innerHTML = f2Seat(F2.last && F2.last.res, F2.last ? F2.last.text : "");
+    var rec = document.getElementById("sw-rec");
+    rec.innerHTML = F2.records.length
+      ? "<ul>" + F2.records.map(function (r) { return '<li><span class="tag' + (r.int ? " int" : "") + '">' + esc(r.tag) + "</span>" + esc(r.t) + "</li>"; }).join("") + "</ul>"
+      : '<p class="empty" style="padding:0">Nothing stamped yet.</p>';
+    document.getElementById("sw-recn").textContent = F2.records.length;
+    document.getElementById("sw-relay").innerHTML = relayCard(F2.relay, "data-f2rm", "f2");
+    document.getElementById("sw-relayn").textContent = F2.relay.length;
+    document.querySelectorAll("#sw-moves .mv").forEach(function (b) {
+      b.classList.toggle("on", !!(F2.last && F2.last.res.move === b.dataset.move));
+    });
+    document.querySelectorAll("[data-f2rm]").forEach(function (b) {
+      b.addEventListener("click", function () { F2.relay.splice(+b.dataset.f2rm, 1); f2Render(); });
+    });
+    bindCopy(document.getElementById("sw-relay"), function () { return F2.relay; });
+  }
+
+  (function f2Init() {
+    document.getElementById("sw-chips").innerHTML = HEARD.map(function (t, i) {
+      return '<button class="chip plain" data-sw="' + i + '">' + esc(t) + "</button>";
+    }).join("");
+    document.querySelectorAll("[data-sw]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var t = HEARD[+b.dataset.sw];
+        document.getElementById("sw-in").value = t;
+        f2Run(t, null);
+      });
+    });
+    var mv = document.getElementById("sw-moves");
+    mv.insertAdjacentHTML("beforeend", MOVES.map(function (m) {
+      return '<button class="mv" data-move="' + m[0] + '">' + esc(m[1]) + "</button>";
+    }).join(""));
+    mv.querySelectorAll(".mv").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var t = document.getElementById("sw-in").value.trim();
+        if (!t) return;
+        f2Run(t, b.dataset.move);
+      });
+    });
+    function go() { var t = document.getElementById("sw-in").value.trim(); if (t) f2Run(t, null); }
+    document.getElementById("sw-go").addEventListener("click", go);
+    document.getElementById("sw-in").addEventListener("keydown", function (e) { if (e.key === "Enter") go(); });
+    f2Render();
+  })();
+
+  /* ══════════════════════════════════════════════════════════════════════
+     CONCEPT 3 · THE THREE DESKS — direction-first
+     ══════════════════════════════════════════════════════════════════════ */
+  var F3 = { desk: "ask", scen: "", lane: null, asked: 0, relay: [], open: null, filter: "", door: null };
+
+  function f3Strip() {
+    var s = SCENARIOS.filter(function (x) { return x.id === F3.scen; })[0];
+    var bits = [];
+    bits.push('<span class="k">This call</span>');
+    bits.push("<span><b>" + (s && s.id ? esc(s.label) : "no situation picked") + "</b></span>");
+    bits.push('<span class="sep">&middot;</span>');
+    bits.push("<span>" + (F3.lane ? "<b>" + esc(LANES[F3.lane].label) + "</b>" : "fork not answered") + "</span>");
+    bits.push('<span class="sep">&middot;</span>');
+    bits.push("<span><b>" + F3.asked + "</b> asked</span>");
+    bits.push('<span class="sep">&middot;</span>');
+    bits.push("<span><b>" + F3.relay.length + "</b> on the list for their client</span>");
+    document.getElementById("d3-strip").innerHTML = bits.join(" ");
+    document.getElementById("d-askn").textContent = F3.asked;
+    document.getElementById("d-ansn").textContent = ANSWERS.length;
+    document.getElementById("d-handn").textContent = F3.relay.length;
+    document.getElementById("d3-handn2").textContent = F3.relay.length;
+  }
+
+  function f3RenderAsk() {
+    var main = document.getElementById("d3-askmain");
+    if (!F3.scen) {
+      main.innerHTML = '<div class="needScen"><h3>Pick the situation first.</h3>' +
+        "<p>The same recital went to two unlike partners on two tapes. The situation is what stops that, so it isn&rsquo;t optional here.</p></div>";
+      return;
+    }
+    var h = '<div class="card"><div class="cardhd"><span class="kick">The fork</span><span class="n">leads every call</span></div><div class="cardbd">' +
+      '<p style="margin:0 0 12px;font:400 19px/1.3 var(--serif)">Who legally employs the person doing the work?</p><div class="chiprow">' +
+      FORK_OPTS.map(function (o, i) {
+        var on = o.lane !== "dk" && F3.lane === o.lane;
+        return '<button class="chip plain' + (on ? " on" : "") + '" data-d3f="' + i + '">' + esc(o.lane === "dk" ? "They don't know" : LANES[o.lane].label) + "</button>";
+      }).join("") + "</div></div></div>";
+
+    if (F3.lane) {
+      var L = LANES[F3.lane];
+      h += '<div class="card"><div class="cardhd"><span class="kick">' + esc(L.label) + '</span><span class="n">' + esc(L.standup) + "</span></div>" +
+        '<div class="cardbd"><p style="margin:0 0 12px;font-size:14px;color:var(--ink-soft)">' + esc(L.line) + "</p>" +
+        L.gate.concat(L.asks.map(function (a) { return { q: a.q, teach: a.q }; })).map(function (g, i) {
+          var on = F3.relay.indexOf(g.teach) >= 0;
+          return '<div class="askrow"><span class="aq">' + esc(g.q) + "</span>" +
+            '<span class="adk"><button class="gbtn" data-d3h="' + i + '">HEARD IT</button> ' +
+            '<button class="gbtn' + (on ? " on" : "") + '" data-d3d="' + i + '">DON&rsquo;T KNOW</button></span></div>';
+        }).join("") + "</div></div>";
+      h += splitCard(L.weDo, L.theyKeep);
+      h += '<div style="margin-top:14px"></div><div class="say"><div class="kick">Say this</div><p>' + esc(L.say) + "</p></div>";
+    }
+    main.innerHTML = h;
+
+    main.querySelectorAll("[data-d3f]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var o = FORK_OPTS[+b.dataset.d3f];
+        if (o.lane === "dk") { TEACH_CORE.forEach(function (q) { if (F3.relay.indexOf(q) < 0) F3.relay.push(q); }); F3.desk = "hand"; f3Render(); return; }
+        F3.lane = F3.lane === o.lane ? null : o.lane; f3Render();
+      });
+    });
+    var L2 = F3.lane ? LANES[F3.lane] : null;
+    function rowAt(i) { return L2.gate.concat(L2.asks.map(function (a) { return { q: a.q, teach: a.q }; }))[i]; }
+    main.querySelectorAll("[data-d3h]").forEach(function (b) {
+      b.addEventListener("click", function () { F3.asked++; b.classList.add("on"); f3Strip(); });
+    });
+    main.querySelectorAll("[data-d3d]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var g = rowAt(+b.dataset.d3d), x = F3.relay.indexOf(g.teach);
+        if (x >= 0) F3.relay.splice(x, 1); else F3.relay.push(g.teach);
+        f3Render();
+      });
+    });
+  }
+
+  function f3RenderAnswer() {
+    var f = F3.filter.toLowerCase().trim();
+    var list = ANSWERS.filter(function (a) {
+      if (!f) return true;
+      if (a.q.toLowerCase().indexOf(f) >= 0 || a.flat.toLowerCase().indexOf(f) >= 0) return true;
+      return a.keys.some(function (k) { return k.indexOf(f) >= 0 || f.indexOf(k) >= 0; });
+    });
+    var el = document.getElementById("d3-answers");
+    el.innerHTML = list.length ? list.map(function (a) {
+      return '<div class="ansRow' + (F3.open === a.id ? " open" : "") + '"><button data-d3a="' + a.id + '">' +
+        '<span class="aqq">' + esc(a.q) + '</span>' + rung(a.rung) + '<span class="aop">' + (F3.open === a.id ? "&minus;" : "+") + "</span></button>" +
+        '<div class="abody"><p style="margin:0 0 12px;font:400 18px/1.35 var(--serif)">' + esc(a.flat) + "</p>" +
+        a.blocks.map(function (b) { return '<div style="margin-bottom:10px">' + block(b) + "</div>"; }).join("") + "</div></div>";
+    }).join("") : '<p class="empty">Nothing on any rung answers that yet. Say so, take it away, come back with it.</p>';
+    el.querySelectorAll("[data-d3a]").forEach(function (b) {
+      b.addEventListener("click", function () { F3.open = F3.open === b.dataset.d3a ? null : b.dataset.d3a; f3RenderAnswer(); });
+    });
+    document.getElementById("d3-doors").innerHTML = Object.keys(COUNTRIES).map(function (k) {
+      return '<button class="door' + (F3.door === k ? " on" : "") + '" data-d3c="' + k + '">' + esc(COUNTRIES[k].name) + "</button>";
+    }).join("");
+    document.getElementById("d3-cty").innerHTML = F3.door ? countryCard(F3.door) : '<p class="empty" style="padding:6px 0">Open a country when one gets named.</p>';
+    document.querySelectorAll("[data-d3c]").forEach(function (b) {
+      b.addEventListener("click", function () { F3.door = F3.door === b.dataset.d3c ? null : b.dataset.d3c; f3RenderAnswer(); });
+    });
+  }
+
+  function f3RenderHand() {
+    document.getElementById("d3-hand").innerHTML = relayCard(F3.relay, "data-f3rm", "f3");
+    var pool = TEACH_CORE.concat(F3.lane ? LANES[F3.lane].gate.map(function (g) { return g.teach; }) : []);
+    document.getElementById("d3-addasks").innerHTML = pool.filter(function (q) { return F3.relay.indexOf(q) < 0; })
+      .map(function (q, i) { return '<button class="chip plain" data-f3add="' + esc(q) + '">+ ' + esc(q) + "</button>"; }).join("") ||
+      '<p class="empty" style="padding:0">Everything we know to ask is already on the list.</p>';
+    document.querySelectorAll("[data-f3add]").forEach(function (b) {
+      b.addEventListener("click", function () { F3.relay.push(b.dataset.f3add); f3Render(); });
+    });
+    document.querySelectorAll("[data-f3rm]").forEach(function (b) {
+      b.addEventListener("click", function () { F3.relay.splice(+b.dataset.f3rm, 1); f3Render(); });
+    });
+    bindCopy(document.getElementById("d3-hand"), function () { return F3.relay; });
+  }
+
+  function f3Render() {
+    ["ask", "answer", "hand"].forEach(function (d) {
+      document.getElementById("desk-" + d).classList.toggle("on", F3.desk === d);
+    });
+    document.querySelectorAll(".deskTab").forEach(function (b) {
+      b.setAttribute("aria-selected", b.dataset.desk === F3.desk ? "true" : "false");
+    });
+    f3Strip(); f3RenderAsk(); f3RenderAnswer(); f3RenderHand();
+  }
+
+  (function f3Init() {
+    var sel = document.getElementById("d3-scen");
+    sel.innerHTML = SCENARIOS.map(function (s) { return '<option value="' + s.id + '">' + esc(s.label) + "</option>"; }).join("");
+    sel.addEventListener("change", function () {
+      F3.scen = sel.value;
+      var s = SCENARIOS.filter(function (x) { return x.id === F3.scen; })[0];
+      document.getElementById("d3-scenblurb").textContent = s ? s.blurb : "";
+      var card = document.getElementById("d3-trapcard");
+      if (s && s.traps.length) {
+        card.hidden = false;
+        document.getElementById("d3-trapn").textContent = s.traps.length;
+        document.getElementById("d3-traps").innerHTML = "<ul style=\"margin:0;padding-left:16px\">" +
+          s.traps.map(function (t) { return '<li style="margin-bottom:7px;font-size:13.5px;color:var(--ink-soft)">' + esc(t) + "</li>"; }).join("") + "</ul>";
+      } else card.hidden = true;
+      f3Render();
+    });
+    document.querySelectorAll(".deskTab").forEach(function (b) {
+      b.addEventListener("click", function () { F3.desk = b.dataset.desk; f3Render(); });
+    });
+    var fi = document.getElementById("d3-filter");
+    fi.addEventListener("input", function () { F3.filter = fi.value; F3.open = null; f3RenderAnswer(); });
+    f3Render();
+  })();
+
+  /* ══════════════════════════════════════════════════════════════════════
+     THE STUDIO — option switching
+     ══════════════════════════════════════════════════════════════════════ */
+  document.querySelectorAll(".seg button").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var n = b.dataset.opt;
+      document.querySelectorAll(".seg button").forEach(function (x) { x.setAttribute("aria-selected", x === b ? "true" : "false"); });
+      document.querySelectorAll(".option").forEach(function (s) { s.classList.toggle("on", s.id === "opt-" + n); });
+      [1, 2, 3].forEach(function (i) { document.getElementById("note-" + i).hidden = String(i) !== n; });
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  });
+
+  f1RenderArrival();
+  f1Render();
+})();
+</script>
+</body>
+</html>
