@@ -4,6 +4,7 @@
 // production does.
 
 import { redactMoney } from "@/lib/intel/lexicon";
+import { resolveSfId } from "@/lib/salesforce";
 import { cleanExcerpt, correspondentsOf, senderOf } from "./excerpt";
 import { laneOf, type ActivityLane } from "./classify";
 import {
@@ -75,7 +76,22 @@ export function createIngest(
   const dropDayKey =
     opts?.dropDay ||
     new Date().toLocaleDateString("en-CA", { timeZone: "America/Chicago" });
-  const bookById = new Map(book.map((b) => [b.id, b.name]));
+  // A Salesforce id comes 15 or 18 chars — the 18 is the 15 plus a checksum
+  // suffix — so every join happens on the first 15.
+  const sf15 = (id: string) => id.trim().slice(0, 15);
+  // Manually-added accounts carry a synthetic id ("TLCCOMPANIES00001") that
+  // keys their stored notes and dispositions and must never change. The real
+  // Salesforce record behind one lives in SF_ID_OVERRIDES, and the export only
+  // ever speaks Salesforce — so register that id as an alias here. Without it
+  // every row for those accounts misses: measured 2026-09-10, 594 rows across
+  // five accounts, silently, on a drop that reported Coverage 100%.
+  const bookById = new Map<string, { id: string; name: string }>();
+  for (const b of book) {
+    bookById.set(b.id, b);
+    bookById.set(sf15(b.id), b);
+    const real = resolveSfId(b.id);
+    if (real) bookById.set(sf15(real), b);
+  }
   let headers: string[] | null = null;
   let fingerprint: Fingerprint | null = null;
   const seen = new Map<string, number>();
@@ -158,8 +174,11 @@ export function createIngest(
       if (!windowTo || day > windowTo) windowTo = day;
     }
 
-    const name = bookById.get(r.id18);
-    if (!name) {
+    // Resolve to the account the APP knows, not the id the export used — the
+    // bucket has to carry the internal id or the slice lands detached from
+    // everything already filed against that account.
+    const hit = bookById.get(r.id18) ?? bookById.get(sf15(r.id18));
+    if (!hit) {
       const u = unmatched.get(r.id18) ?? {
         name: r.account || "(unnamed)",
         id18: r.id18,
@@ -170,10 +189,11 @@ export function createIngest(
       return {};
     }
 
-    let b = buckets.get(r.id18);
+    const { id: acctId, name } = hit;
+    let b = buckets.get(acctId);
     if (!b) {
       b = {
-        id: r.id18,
+        id: acctId,
         name,
         rows: [],
         byKey: new Map(),
@@ -191,7 +211,7 @@ export function createIngest(
           gbc: "",
         },
       };
-      buckets.set(r.id18, b);
+      buckets.set(acctId, b);
     }
     b.laneCounts[read.lane] += 1;
 

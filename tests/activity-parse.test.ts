@@ -593,3 +593,73 @@ test("the staged row carries the writer, and the Assigned column stays the logge
   assert.equal(staged.a, "Antaeus Coe");
   assert.equal(staged.w, "Anika Steenstra");
 });
+
+// ── synthetic account ids ───────────────────────────────────────────────────
+// Manually-added accounts carry an id like "TLCCOMPANIES00001" that keys every
+// note and disposition filed against them, so it must never change. The export
+// only ever speaks Salesforce. Before the alias, every row for those accounts
+// was counted as unmatched and thrown away — 594 rows across five accounts on
+// the 2026-09-10 drop, silently, under a receipt that read Coverage 100%.
+
+test("a synthetic-id account matches on its real Salesforce id, and keeps its own id", async () => {
+  // TLC Companies: synthetic in the book, real 15-char id in SF_ID_OVERRIDES,
+  // 18-char id in the export. The 18 is the 15 plus a checksum suffix.
+  const BOOK_SYNTH = [{ id: "TLCCOMPANIES00001", name: "TLC Companies" }];
+  const ingest = createIngest(BOOK_SYNTH);
+  const p = createCsvParser();
+  const text = [
+    headerLine(),
+    csvLine(
+      row({
+        subject: "Email: a real one",
+        account: "TLC Companies",
+        id18: "001F000000w38OmIAI",
+        date: "9/2/2026",
+        comments: "Checking on the September invoice run.",
+      }),
+    ),
+    "",
+  ].join("\n");
+  for (const raw of p.push(text)) ingest.takeRow(raw);
+  for (const raw of p.finish()) ingest.takeRow(raw);
+
+  const { slices, manifest } = await ingest.finish({
+    fileName: "synth.csv",
+    fileBytes: text.length,
+    dropDay: "2026-09-10",
+  });
+
+  assert.equal(manifest.unmatched.length, 0);
+  assert.equal(slices.length, 1);
+  // The slice carries the APP's id, not the Salesforce one — anything else
+  // files the rows somewhere the rest of the app can't see them.
+  assert.equal(slices[0].id, "TLCCOMPANIES00001");
+  assert.equal(slices[0].name, "TLC Companies");
+});
+
+test("an account the book doesn't hold at all is still reported unmatched", async () => {
+  const ingest = createIngest([{ id: "TLCCOMPANIES00001", name: "TLC Companies" }]);
+  const p = createCsvParser();
+  const text = [
+    headerLine(),
+    csvLine(
+      row({
+        subject: "Email: not ours",
+        account: "Advocate Pay LLC",
+        id18: "001Pb00003esmqHIAQ",
+        date: "9/2/2026",
+        comments: "Nothing to do with the book.",
+      }),
+    ),
+    "",
+  ].join("\n");
+  for (const raw of p.push(text)) ingest.takeRow(raw);
+  for (const raw of p.finish()) ingest.takeRow(raw);
+  const { manifest } = await ingest.finish({
+    fileName: "unmatched.csv",
+    fileBytes: text.length,
+    dropDay: "2026-09-10",
+  });
+  assert.equal(manifest.unmatched.length, 1);
+  assert.equal(manifest.unmatched[0].name, "Advocate Pay LLC");
+});
