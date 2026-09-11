@@ -290,3 +290,40 @@ describe("a PEO's own client is not a misfile", () => {
     if (!v.ok) assert.equal(v.claim, "Simple Everest");
   });
 });
+
+// ── the banner shows both sides (2026-09-11) ────────────────────────────────
+// The verdict used to carry only the case AGAINST the operator's choice, so
+// the banner stated a conclusion and the correct move was labelled "file
+// anyway". Whatever the chosen row carries for itself now rides along, so the
+// operator is making a choice rather than overruling a verdict.
+
+describe("a disputed filing shows what the chosen row carries", () => {
+  test("boundWhy names the row's own evidence when it has some", () => {
+    // Regis text (its domain is present) but the read insists on Simploy: the
+    // evidence rung stays quiet, so force the claim rung with a weak row.
+    const v = judgeFiling({
+      text: "A note mentioning chassie smith and nobody else.",
+      claim: "Simploy",
+      bound: REGIS,
+      roster,
+    });
+    assert.equal(v.ok, false);
+    if (!v.ok) {
+      assert.equal(v.bound, "Regis HR Group");
+      // Nothing in that text points at Regis, and the banner must say so
+      // rather than leaving the operator to guess.
+      assert.equal(v.boundWhy, "");
+    }
+  });
+
+  test("boundWhy is empty, not undefined, so the banner can branch on it", () => {
+    const v = judgeFiling({
+      text: "Nothing identifying here at all.",
+      claim: "Advocate Pay",
+      bound: REGIS,
+      roster,
+    });
+    assert.equal(v.ok, false);
+    if (!v.ok) assert.equal(typeof v.boundWhy, "string");
+  });
+});

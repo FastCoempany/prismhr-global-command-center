@@ -324,11 +324,14 @@ function Row({
   >([]);
   // The misfile guard's holding pen: the read thinks this paste belongs to
   // another account, so nothing is written until the operator insists.
+  // boundWhy rides along so the banner can show what the chosen row carries.
   const [mismatch, setMismatch] = useState<{
     claim: string;
     bound: string;
     text: string;
     why?: string;
+    /** What the chosen row carries for itself — "" when it carries nothing. */
+    boundWhy?: string;
     // The dropped files, held with the question — the vault waits on the
     // verdict too, so a disputed drop never lands in the wrong folder.
     files?: File[];
@@ -1961,9 +1964,17 @@ function Row({
                 whether the read is wrong or the drop was. */}
             {mismatch && (
               <div className={styles.misfile}>
+                {/* Both sides, always. The banner used to state only the case
+                    against the operator's choice, so the correct move read as
+                    overruling the app — and on a channel sale the read names
+                    the PEO's client, which is not a misfile at all
+                    (2026-09-11). */}
                 <b>This reads like {mismatch.claim}</b>, not {mismatch.bound}
-                {mismatch.why ? ` — ${mismatch.why}` : ""}. Nothing filed yet, and the
-                file is holding out of the vault.
+                {mismatch.why ? ` — ${mismatch.why}` : ""}.{" "}
+                {mismatch.boundWhy
+                  ? `For ${mismatch.bound}: ${mismatch.boundWhy}.`
+                  : `Nothing in the text points to ${mismatch.bound}.`}{" "}
+                Nothing filed yet, and the file is holding out of the vault.
                 <span className={styles.sdSuggActs}>
                   <button
                     type="button"
@@ -1978,7 +1989,10 @@ function Row({
                         transcript is a minute of silence. Without a word on
                         the button the click looked like a dead control — the
                         operator pressed it and nothing moved (2026-08-29). */}
-                    {pending ? "Filing…" : `file to ${mismatch.bound} anyway ✓`}
+                    {/* "file anyway" framed the right answer as stubbornness.
+                        The operator is asserting whose account it is, so the
+                        button says that (2026-09-11). */}
+                    {pending ? "Filing…" : `No — it's ${mismatch.bound}'s ✓`}
                   </button>
                   <button
                     type="button"

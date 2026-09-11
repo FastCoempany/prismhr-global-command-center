@@ -53,6 +53,10 @@ export type MisfileVerdict =
       bound: string;
       /** Which rung objected, in the operator's words. */
       why: string;
+      /** What the row the operator chose carries for itself — "" when it
+       *  carries nothing. The banner shows both sides or the operator is
+       *  reading a verdict instead of making a choice. */
+      boundWhy: string;
     };
 
 /** A bound account carrying this much of its own evidence is never disputed
@@ -99,6 +103,7 @@ export function judgeFiling(inp: {
       claim,
       bound: bound.name,
       why: `the read names ${claim}`,
+      boundWhy: candidates.find((c) => c.id === bound.id)?.why ?? "",
     };
 
   // Rung 2 — the evidence the text carries. Silence from the model is not
@@ -112,6 +117,7 @@ export function judgeFiling(inp: {
       claim: elsewhere.name,
       bound: bound.name,
       why: elsewhere.why,
+      boundWhy: candidates.find((c) => c.id === bound.id)?.why ?? "",
     };
 
   return { ok: true };

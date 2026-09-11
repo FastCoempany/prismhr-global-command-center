@@ -152,7 +152,7 @@ export async function roomPaste(
   learned?: number; // market facts + lessons filed to the playbook
   outcome?: { status: "lost" | "won"; phrase: string } | null;
   // The misfile guard: the read believes this belongs somewhere else.
-  mismatch?: { claim: string; bound: string; why?: string };
+  mismatch?: { claim: string; bound: string; why?: string; boundWhy?: string };
   readFailed?: boolean; // the read errored; the rule parser filed the record
   // The duplicate guard: this exact capture already filed to this account.
   duplicate?: boolean;
@@ -243,7 +243,12 @@ export async function roomPaste(
         ok: false,
         filed: 0,
         how: "",
-        mismatch: { claim: early.claim, bound: early.bound, why: early.why },
+        mismatch: {
+          claim: early.claim,
+          bound: early.bound,
+          why: early.why,
+          boundWhy: early.boundWhy,
+        },
         reason: `This reads like ${early.claim}, not ${acct.name} — ${early.why}.`,
       };
   }
@@ -315,7 +320,12 @@ export async function roomPaste(
       ok: false,
       filed: 0,
       how,
-      mismatch: { claim: verdict.claim, bound: verdict.bound, why: verdict.why },
+      mismatch: {
+        claim: verdict.claim,
+        bound: verdict.bound,
+        why: verdict.why,
+        boundWhy: verdict.boundWhy,
+      },
       reason: `This reads like ${verdict.claim}, not ${acct.name} — ${verdict.why}.`,
     };
   }
