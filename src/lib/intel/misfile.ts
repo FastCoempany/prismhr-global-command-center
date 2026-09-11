@@ -84,6 +84,15 @@ export function judgeFiling(inp: {
 
   // Rung 1 — the read's own company claim, now only when the row has nothing
   // of its own to stand on.
+  //
+  // Note on what this rung is NOT: the read is asked for "the prospect/client
+  // company this paste is ABOUT" (ai-clean), so on a channel sale it answers
+  // with the PEO's client — a company the book will never hold. Narrowing this
+  // rung to claims that resolve to a real account was tried on 2026-09-11 and
+  // backed out: it silently retires "a disagreeing company claim disputes on
+  // its own", and a capture naming another company on a row with NO evidence
+  // of its own is exactly the drop worth asking about. The own-evidence gate
+  // above is what keeps the ordinary two-tier case quiet.
   if (claim && !accountMatches(claim, bound.name))
     return {
       ok: false,
