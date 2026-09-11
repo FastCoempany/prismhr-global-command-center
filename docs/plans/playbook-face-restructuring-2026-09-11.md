@@ -204,6 +204,9 @@ Objects the tapes proved necessary. Seven are new; the rest exist.
 | Object | Status | Sourced from |
 |---|---|---|
 | The legal-employer fork | Exists as a question, not as a spine | tape 9/3 · `x-entity-own`, `gp-who-runs` |
+| **The opener bank** — how the call starts, by shape | **New** | both tapes' first five minutes |
+| **The signal set** — what you tap while they talk | **New** | derived from both tapes |
+| **The spoken probes** — the natural form of an internal question | **New** | tape 9/3, asked in fragments |
 | **The duty split** — what we do, what they keep, per lane | **New** | tape 9/3, the brain blink |
 | **The product boundary card** — Talent, Solvo, EOR, contractor | **New** | tape 9/10, thirty minutes of it |
 | **The country card** — one per jurisdiction, rungs marked | **New** | tape 9/3 Puerto Rico, tape 9/10 Philippines |
@@ -225,17 +228,45 @@ components are the brand's in all three.
 
 ### Concept 1 — The Fork · *decision-first*
 
-The surface opens as one question and nothing else. Answer it and the whole face
-re-lanes to that product line: its sub-forks, its duty split, its questions, its
-traps, its relay list. The bank is never a 113-row list; it is whatever this lane
-needs next. Every fork carries "they don't know," and that answer flips the
-surface into teach mode rather than stalling it.
+**The fork is never spoken, so the surface does not open on it.** This was wrong
+in the first draft and the founder caught it: nobody opens a call with "who
+legally employs the person doing the work?" On the 9/3 tape it was never asked
+aloud at all — it was *derived* at minute 25 from things already said. It is an
+internal classification, not a script line, and a face that poses it as the
+opener teaches the wrong behavior.
 
-**Strength.** Kills the recital. The routing intelligence becomes the arrival
-instead of a minute-25 aside. The narrowest possible surface at every moment.
-**Cost.** Assumes you can answer the fork early. A partner mid-story about a
-deal they half-understand may not be able to, which puts weight on the
-don't-know path being genuinely good.
+So the concept runs in three bands.
+
+**The open.** An opener bank: four shapes the record holds, each with the line
+to say. All four are on tape. *They wrote ahead* — read their own note back and
+hand them the floor (9/10). *Nothing in front of you* — ask what they're hearing
+from their clients (9/3, the question that produced the entire Puerto Rico
+story). *They opened with a live deal* — let it run, introductions can wait
+(9/3). *You need the room first* — ask what the day to day looks like and who
+owns what (9/3, which got the whole operation unprompted).
+
+**Listening.** They talk; you tap what you hear. Nine signals, each weighted.
+The fork answers itself and names what moved it, so the operator can disagree —
+selection the room can defend, per the charter's first test. Conflicting signals
+refuse to lean rather than guessing. A named country opens right there, before
+the fork resolves, because on tape the country landed in the first ninety
+seconds. And when it will not resolve from listening, one spoken probe settles
+most of it: *"Who's paying them today, and who do they work for on paper?"* Each
+fork option also carries the narrower probe that settles it, so the internal
+question always has a natural spoken form.
+
+**The lane.** As before: gate, duty split, asks, countries, and the list.
+
+The list belongs to the call, not to a lane. Re-routing the fork never takes it
+off screen.
+
+**Strength.** Kills the recital without pretending a call starts with a
+classification. The routing intelligence arrives by minute two instead of minute
+25, and it arrives by inference rather than interrogation.
+**Cost.** Two objects to learn instead of one — the opener bank and the signal
+set. And the lean is only as good as its weights; a wrong lean stated
+confidently is worse than no lean, which is why it names its evidence and
+refuses to lean on conflict.
 
 ### Concept 2 — The Switchboard · *utterance-first*
 
@@ -273,9 +304,12 @@ All three concepts are live in one self-contained file — no network, no
 dependencies, opens from disk. The mechanics are real because the mechanics are
 the thing being judged:
 
-- **The Fork** re-lanes on every answer, the gate's don't-know writes the exact
-  relay question inline and onto the list, countries open one click deep, and
-  the fork's own don't-know enters teach mode.
+- **The Fork** opens on the opener bank, not the fork. Tapped signals move a
+  weighted lean that names its own evidence and refuses to lean on conflict. A
+  named country opens in the listening band before the fork resolves. Each fork
+  option carries the spoken probe that settles it. The gate's don't-know writes
+  the exact relay question inline and onto the list, and the fork's own
+  don't-know enters teach mode.
 - **The Switchboard** classifies free text you type, not just the seeded lines.
   Rules, not a lookup: don't-know first, then the misconception patterns, then
   question shape scored against the answer bank, then country, then fact. All
@@ -285,12 +319,21 @@ the thing being judged:
   across all three desks, filter the answer bank as you type, and build a
   copyable list on Hand off.
 
-Verified by a browser-driven pass of 34 checks covering every interaction in all
+Verified by a browser-driven pass of 49 checks covering every interaction in all
 three, plus the canon scans (no names, no figures, the word "steps" absent) and
-no-horizontal-scroll at 400, 640 and 900 pixels. Two things the pass caught and
+no-horizontal-scroll at 400, 640 and 900 pixels. Five things the pass caught and
 fixed: a country card that opened uninvited on arrival, against the click-depth
-law, and the talent lane asking the same question twice, against one-thought-one-
-question.
+law; the talent lane asking the same question twice, against one-thought-one-
+question; a spoken probe rendering in letterspaced mono caps, where a sentence
+belongs in sentence case; the "they named a country" signal auto-picking a
+country nobody had named; and the client list disappearing from view when the
+fork was re-routed, which reads as lost work even though the state survived.
+
+One more correction came out of founder review rather than the test pass: orange
+was doing three jobs at once on the listening band — selection state, the room's
+inference, and the line to say. Under the accent-by-role rule it now carries only
+the last. Tapped signals are navy because selection is state, not a move; the
+lean is blue because an inference the room is defending is system intelligence.
 
 ## 6. What survives
 

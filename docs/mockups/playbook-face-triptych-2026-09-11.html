@@ -97,6 +97,7 @@
   .say { background: var(--orange-tint); border-left: 3px solid var(--orange); border-radius: 0 6px 6px 0; padding: 12px 14px; }
   .say .kick { color: var(--orange-strong); }
   .say p { margin: 6px 0 0; font: 400 16.5px/1.45 var(--serif); }
+  .say .sayWhy { margin: 8px 0 0; font: 400 13px/1.5 var(--sans); color: var(--ink-soft); }
 
   .split { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
   .split > div { padding: 13px 15px; }
@@ -115,7 +116,10 @@
   .chiprow { display: flex; flex-wrap: wrap; gap: 6px; }
   .chip { border: 1px solid var(--hair-strong); background: var(--surface); border-radius: 99px; padding: 5px 11px; font: 600 11px/1.3 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); }
   .chip:hover { border-color: var(--orange); color: var(--orange); }
-  .chip.on { background: var(--orange); border-color: var(--orange); color: #fff; }
+  .chip.on { background: var(--ink); border-color: var(--ink); color: #fff; }
+  .lean { background: var(--blue-soft); border-radius: 6px; padding: 11px 13px; font-size: 13.5px; color: #1d4ed8; }
+  .lean b { color: #1e3a8a; }
+  .forkOpt.lit { border-color: var(--blue); box-shadow: var(--sh-lift); }
   .chip.plain { font-family: var(--sans); text-transform: none; letter-spacing: 0; font-size: 12.5px; font-weight: 500; }
 
   .empty { color: var(--ink-faint); font-size: 13.5px; padding: 16px; text-align: center; }
@@ -167,6 +171,8 @@
   .forkOpt:hover { border-color: var(--orange); box-shadow: var(--sh-lift); }
   .forkOpt .oq { font: 400 16px/1.4 var(--sans); color: var(--ink); display: block; }
   .forkOpt .ol { display: block; margin-top: 4px; font: 600 10px/1.4 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--ink-quiet); }
+  .forkOpt .probe { display: block; margin-top: 5px; font: 400 13px/1.45 var(--sans); color: var(--ink-faint); font-style: italic; }
+  .forkOpt:hover .probe { color: var(--ink-soft); }
   .forkOpt:hover .ol { color: var(--orange); }
   .forkOpt.dk { background: var(--surface-sub); border-style: dashed; }
   .forkOpt.dk .oq { color: var(--ink-soft); font-style: italic; }
@@ -312,7 +318,7 @@
       <button role="tab" aria-selected="false" data-opt="2">2 &middot; The Switchboard</button>
       <button role="tab" aria-selected="false" data-opt="3">3 &middot; The Three Desks</button>
     </div>
-    <p class="opt-note" id="note-1"><span class="ax">Decision-first.</span> <b>The surface opens as one question and nothing else.</b> Answer it and the whole face re-lanes to that product line &mdash; its gate, its duty split, its asks, its relay list. The bank is never a 113-row list; it is whatever this lane needs next. Every fork and every ask carries &ldquo;they don&rsquo;t know,&rdquo; and that answer flips the surface into teach mode rather than stalling it. Try the gate: answering <em>don&rsquo;t know</em> to any requirement builds the list for you.</p>
+    <p class="opt-note" id="note-1"><span class="ax">Decision-first.</span> <b>The fork is never said out loud, so the surface does not open on it.</b> It opens on the four ways these calls actually start &mdash; all four off the tapes &mdash; and hands you the line. Then it listens: you tap what you hear, and the fork answers itself, naming what moved it so you can disagree. Conflicting signals refuse to lean. A country opens while they are still talking, before the fork resolves. Each fork option carries the spoken probe that settles it, and one probe settles most of it outright. Answer it and the face re-lanes: gate, duty split, asks, all of it. Every fork and every ask carries &ldquo;they don&rsquo;t know,&rdquo; which builds the list rather than stalling the call.</p>
     <p class="opt-note" id="note-2" hidden><span class="ax">Utterance-first.</span> <b>One input: what did they just say.</b> Type it, or tap a line heard on the tapes. A classifier routes it to one of five moves and renders that card in the seat &mdash; they asked us something, they told us a fact, they don&rsquo;t know, they said something that isn&rsquo;t right, or they named a country. Misread it? Force the move by hand. The record strip fills on the right; the relay list fills underneath.</p>
     <p class="opt-note" id="note-3" hidden><span class="ax">Direction-first.</span> <b>Three desks, one running record.</b> Ask is the call sheet with the scenario made mandatory and the fork leading. Answer is the inbound desk, filtering as you type across boundaries, countries, mechanics and objections. Hand off is the relay list as a real object, with the close and a copy control. The three directions are named on the surface so the operator learns the model.</p>
   </header>
@@ -326,12 +332,8 @@
     </div>
     <div class="page" id="f1-page">
       <div id="f1-arrival">
-        <div class="forkWrap">
-          <div class="kick">The fork</div>
-          <h2 class="forkQ">Who legally employs the person doing the work?</h2>
-          <p class="forkSub">The answer picks the line. Everything below re-cuts to it.</p>
-          <div id="f1-opts"></div>
-        </div>
+        <div id="f1-open"></div>
+        <div id="f1-listen" hidden></div>
       </div>
       <div id="f1-lane" hidden></div>
       <div class="legend">
@@ -582,6 +584,57 @@
     }
   };
 
+  // How the call actually opens. None of these is the fork — the fork is answered
+  // by what comes back. Every line here is a shape the record holds.
+  var OPENERS = [
+    { id: "note", label: "They wrote ahead",
+      when: "A note, an email, a question forwarded from a client.",
+      say: "You gave me a little context \u2014 a client asking about hiring somewhere. Want to give me a bit more?",
+      why: "Their own words back, then the floor is theirs.", rung: "tape" },
+    { id: "cold", label: "Nothing in front of you",
+      when: "No context. The first real conversation about any of this.",
+      say: "What are you hearing from your clients on this, or is this the first time it has come up?",
+      why: "The story that comes back answers the fork on its own.", rung: "tape" },
+    { id: "hijack", label: "They opened with a live deal",
+      when: "They start talking before you get through the agenda.",
+      say: "Keep going. Who are the people, and where are they?",
+      why: "Let it run. Introductions can wait.", rung: "tape" },
+    { id: "ops", label: "You need the room first",
+      when: "New faces, and you can't tell who owns what.",
+      say: "Before we get into it, what does your day to day look like and who owns what?",
+      why: "The record shows partners volunteering their whole operation right here.", rung: "tape" }
+  ];
+
+  // Tap what you hear. The fork answers itself; the room shows its reasoning.
+  var SIGNALS = [
+    { id: "country", t: "They named a country", w: {}, note: "country" },
+    { id: "entity", t: "The client has a company there", w: { payroll: 3 } },
+    { id: "noentity", t: "The client would rather not own one", w: { eor: 3 } },
+    { id: "picked", t: "They already picked the person", w: { eor: 2 } },
+    { id: "nobody", t: "Nobody is hired yet", w: { talent: 3 } },
+    { id: "invoice", t: "The person invoices as their own business", w: { contractor: 3 } },
+    { id: "incumbent", t: "They are on another provider", w: {}, note: "incumbent" },
+    { id: "internal", t: "It is their own staff, not a client's", w: {}, note: "internal" },
+    { id: "dk", t: "They don't know", w: {}, note: "teach" }
+  ];
+
+  var SIGNAL_NOTE = {
+    country: "Open the country. It carries its own rules.",
+    incumbent: "Ask what the incumbent does for them there before you call it wrong.",
+    internal: "Internal, not a client's. Say internal.",
+    teach: "Hand them the list. The fork waits."
+  };
+
+  // The one spoken question that resolves most of the fork without sounding
+  // like a form. Each lane keeps its own narrower probe.
+  var FORK_PROBE = "Who's paying them today, and who do they work for on paper?";
+  var LANE_PROBE = {
+    payroll: "Do they have a company of their own down there?",
+    eor: "Has your client hired anyone there before?",
+    contractor: "How do these people bill \u2014 invoices, or a payroll?",
+    talent: "Do they have somebody in mind, or do they need us to find the person?"
+  };
+
   var FORK_OPTS = [
     { t: "The client owns a company there and employs them through it", lane: "payroll" },
     { t: "Nobody does yet, and the client would rather not own one there", lane: "eor" },
@@ -806,22 +859,137 @@
   /* ══════════════════════════════════════════════════════════════════════
      CONCEPT 1 · THE FORK — decision-first
      ══════════════════════════════════════════════════════════════════════ */
-  var F1 = { lane: null, gate: {}, relay: [], teach: null, door: null };
+  var F1 = { open: null, signals: {}, lane: null, gate: {}, relay: [], teach: null, door: null };
   var f1arr = document.getElementById("f1-arrival");
   var f1lane = document.getElementById("f1-lane");
 
+  // What the tapped signals add up to, and why. Selection the operator can argue
+  // with: the room never leans without naming what moved it.
+  function f1Lean() {
+    var w = { payroll: 0, eor: 0, contractor: 0, talent: 0 }, because = [];
+    SIGNALS.forEach(function (sg) {
+      if (!F1.signals[sg.id]) return;
+      var moved = false;
+      Object.keys(sg.w).forEach(function (k) { w[k] += sg.w[k]; moved = true; });
+      if (moved) because.push(sg.t.toLowerCase());
+    });
+    var top = null, topN = 0, tie = false;
+    Object.keys(w).forEach(function (k) {
+      if (w[k] > topN) { top = k; topN = w[k]; tie = false; }
+      else if (w[k] === topN && topN > 0) tie = true;
+    });
+    if (!top || topN < 3 || tie) return { lane: null, because: because };
+    return { lane: top, because: because };
+  }
+
   function f1RenderArrival() {
-    document.getElementById("f1-opts").innerHTML = FORK_OPTS.map(function (o, i) {
-      var lane = o.lane === "dk" ? null : LANES[o.lane];
-      return '<button class="forkOpt' + (o.lane === "dk" ? " dk" : "") + '" data-f1opt="' + i + '">' +
-        '<span class="oq">' + esc(o.t) + "</span>" +
-        '<span class="ol">' + (lane ? esc(lane.crumb) : "Teach them what to go ask") + "</span></button>";
-    }).join("");
-    f1arr.querySelectorAll("[data-f1opt]").forEach(function (b) {
+    var openEl = document.getElementById("f1-open");
+    var listenEl = document.getElementById("f1-listen");
+
+    // ── band 1 · the open. The fork is not here, because the fork is not said.
+    if (!F1.open) {
+      openEl.innerHTML = '<div class="forkWrap">' +
+        '<div class="kick">Start here</div>' +
+        '<h2 class="forkQ">How is this call opening?</h2>' +
+        '<p class="forkSub">Four shapes the record holds. Pick the one you are in.</p>' +
+        OPENERS.map(function (o, i) {
+          return '<button class="forkOpt" data-f1open="' + i + '">' +
+            '<span class="ol" style="margin:0 0 5px">' + esc(o.label) + " " + rung(o.rung) + "</span>" +
+            '<span class="oq">' + esc(o.when) + "</span></button>";
+        }).join("") + "</div>";
+      openEl.querySelectorAll("[data-f1open]").forEach(function (b) {
+        b.addEventListener("click", function () { F1.open = OPENERS[+b.dataset.f1open].id; f1RenderArrival(); });
+      });
+      listenEl.hidden = true;
+      return;
+    }
+
+    var op = OPENERS.filter(function (o) { return o.id === F1.open; })[0];
+    openEl.innerHTML = '<div class="crumb"><span class="seg1">The open</span><span class="arr">&rsaquo;</span>' +
+      '<span class="seg2">' + esc(op.label.toUpperCase()) + "</span>" +
+      '<button class="btn btn-2nd btn-sm rst" id="f1-reopen">&#8635; Start over</button></div>' +
+      '<div class="say" style="margin-bottom:18px"><div class="kick">Open with this</div><p>' + esc(op.say) + "</p>" +
+      '<div class="sayWhy">' + esc(op.why) + "</div></div>";
+    document.getElementById("f1-reopen").addEventListener("click", function () {
+      F1 = { open: null, signals: {}, lane: null, gate: {}, relay: [], teach: null, door: null };
+      f1RenderArrival(); f1Render();
+    });
+
+    // ── band 2 · listening. They talk; you tap; the fork answers itself.
+    listenEl.hidden = false;
+    var lean = f1Lean();
+    var notes = SIGNALS.filter(function (sg) { return F1.signals[sg.id] && sg.note; })
+      .map(function (sg) { return SIGNAL_NOTE[sg.note]; });
+
+    var head = '<div class="card" style="margin-bottom:16px"><div class="cardhd"><span class="kick">The fork</span>' +
+      '<span class="n">not a question you ask</span></div><div class="cardbd">' +
+      '<p style="margin:0 0 4px;font:400 26px/1.2 var(--serif)">Who legally employs the person doing the work?</p>' +
+      '<p style="margin:0 0 14px;font-size:12.5px;color:var(--ink-faint)">You answer this one, from what they say. It picks the line.</p>';
+    if (lean.lane) {
+      head += '<div class="lean" style="margin-bottom:12px"><b>Leaning ' + esc(LANES[lean.lane].label.toLowerCase()) + ".</b> " +
+        esc("You heard: " + lean.because.join("; ") + ".") + "</div>";
+    } else {
+      head += '<div class="gapline" style="margin-bottom:12px"><span class="g">&middot;</span><span>' +
+        (lean.because.length ? "Not enough yet. Keep listening, or answer it yourself." : "Nothing tapped yet. It answers itself as they talk.") + "</span></div>";
+    }
+    head += '<div class="say"><div class="kick">If it will not resolve, ask this</div><p>' + esc(FORK_PROBE) + "</p></div></div></div>";
+
+    var left = '<div class="card"><div class="cardhd"><span class="kick">Tap what you hear</span>' +
+      '<span class="n">they talk first</span></div><div class="cardbd"><div class="chiprow">' +
+      SIGNALS.map(function (sg) {
+        return '<button class="chip plain' + (F1.signals[sg.id] ? " on" : "") + '" data-f1sig="' + sg.id + '">' + esc(sg.t) + "</button>";
+      }).join("") + "</div>" +
+      (notes.length ? '<div style="margin-top:12px">' + notes.map(function (n) {
+        return '<div class="warn sigNote" style="margin-bottom:6px">' + esc(n) + "</div>"; }).join("") + "</div>" : "") +
+      (F1.signals.country ? '<div style="margin-top:12px"><div class="doorrow">' +
+        Object.keys(COUNTRIES).map(function (d) {
+          return '<button class="door' + (F1.door === d ? " on" : "") + '" data-f1d="' + d + '">' + esc(COUNTRIES[d].name) + "</button>";
+        }).join("") + "</div>" +
+        (F1.door ? '<div style="margin-top:12px">' + countryCard(F1.door) + "</div>" : "") + "</div>" : "") +
+      "</div></div>";
+
+    var right = '<div class="card"><div class="cardhd"><span class="kick">Or answer it yourself</span>' +
+      '<span class="n">' + (lean.lane ? "one is lit" : "nothing lit yet") + "</span></div><div class=\"cardbd\">" +
+      FORK_OPTS.map(function (o, i) {
+        var lane = o.lane === "dk" ? null : LANES[o.lane];
+        var lit = lean.lane && o.lane === lean.lane;
+        return '<button class="forkOpt' + (o.lane === "dk" ? " dk" : "") + (lit ? " lit" : "") + '" data-f1opt="' + i + '">' +
+          '<span class="oq">' + esc(o.t) + "</span>" +
+          '<span class="ol">' + (lane ? esc(lane.crumb) : "Teach them what to go ask") + "</span>" +
+          (lane ? '<span class="probe">Find out by asking: &ldquo;' + esc(LANE_PROBE[o.lane]) + "&rdquo;</span>" : "") + "</button>";
+      }).join("") + "</div></div>";
+
+    listenEl.innerHTML = head + '<div class="laneGrid"><div class="stack">' + left + '</div><div class="stack">' + right + "</div></div>" +
+      (F1.relay.length
+        ? '<div class="ribbon"><span class="rl">The list for their client</span><span class="rr"></span>' +
+          '<span class="rc">' + F1.relay.length + " ASK" + (F1.relay.length === 1 ? "" : "S") + "</span></div>" +
+          '<div class="card relay"><div class="cardbd" id="f1-relaybd">' + relayCard(F1.relay, "data-f1rm", "f1") + "</div></div>"
+        : "");
+
+    listenEl.querySelectorAll("[data-f1sig]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var id = b.dataset.f1sig;
+        F1.signals[id] = !F1.signals[id];
+        if (id === "country" && !F1.signals[id]) F1.door = null;
+        if (id === "dk" && F1.signals[id]) TEACH_CORE.forEach(function (q) { if (F1.relay.indexOf(q) < 0) F1.relay.push(q); });
+        f1RenderArrival();
+      });
+    });
+    listenEl.querySelectorAll("[data-f1rm]").forEach(function (b) {
+      b.addEventListener("click", function () { F1.relay.splice(+b.dataset.f1rm, 1); f1RenderArrival(); });
+    });
+    bindCopy(listenEl, function () { return F1.relay; });
+    listenEl.querySelectorAll("[data-f1d]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        F1.door = F1.door === b.dataset.f1d ? null : b.dataset.f1d;
+        f1RenderArrival();
+      });
+    });
+    listenEl.querySelectorAll("[data-f1opt]").forEach(function (b) {
       b.addEventListener("click", function () {
         var o = FORK_OPTS[+b.dataset.f1opt];
-        if (o.lane === "dk") { F1.lane = null; F1.teach = TEACH_CORE.slice(); F1.relay = TEACH_CORE.slice(); }
-        else { F1.lane = o.lane; F1.teach = null; F1.door = null; }
+        if (o.lane === "dk") { F1.lane = null; F1.teach = TEACH_CORE.slice(); TEACH_CORE.forEach(function (q) { if (F1.relay.indexOf(q) < 0) F1.relay.push(q); }); }
+        else { F1.lane = o.lane; F1.teach = null; }
         f1Render();
       });
     });
@@ -833,7 +1001,9 @@
     if (!F1.lane && !F1.teach) { f1arr.hidden = false; f1lane.hidden = true; return; }
     f1arr.hidden = true; f1lane.hidden = false;
 
-    var crumb = '<div class="crumb"><span class="seg1">The fork</span><span class="arr">&rsaquo;</span>' +
+    var crumb = '<div class="crumb"><span class="seg1">' +
+      (F1.open ? esc(OPENERS.filter(function (o) { return o.id === F1.open; })[0].label) + "</span><span class=\"arr\">&rsaquo;</span><span class=\"seg1\">The fork" : "The fork") +
+      '</span><span class="arr">&rsaquo;</span>' +
       '<span class="seg2">' + (F1.teach ? "THEY DON&rsquo;T KNOW" : LANES[F1.lane].crumb) + "</span>" +
       '<button class="btn btn-2nd btn-sm rst" id="f1-reset">&#8635; Start over</button></div>';
 
@@ -891,7 +1061,10 @@
 
   function f1Bind() {
     var r = document.getElementById("f1-reset");
-    if (r) r.addEventListener("click", function () { F1 = { lane: null, gate: {}, relay: [], teach: null, door: null }; f1Render(); });
+    if (r) r.addEventListener("click", function () {
+      F1.lane = null; F1.teach = null; F1.gate = {};
+      f1RenderArrival(); f1Render();
+    });
     f1lane.querySelectorAll("[data-f1g]").forEach(function (b) {
       b.addEventListener("click", function () {
         var i = +b.dataset.f1g, v = b.dataset.v, L = LANES[F1.lane], k = F1.lane + ":" + i;
