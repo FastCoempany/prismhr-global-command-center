@@ -2,7 +2,8 @@
 
 **Status:** CONCEPTS for founder review. Nothing ships without a ship order.
 **Date:** 2026-09-11.
-**Triptych:** `docs/mockups/playbook-face-triptych-v4-2026-09-11.html` — self-contained, opens from disk.
+**Current face (round six):** `docs/mockups/playbook-face-the-ear-2026-09-11.html` — one face, self-contained, opens from disk. See §3b.
+**Retired triptychs:** `playbook-face-triptych-v4-2026-09-11.html` (round four), `playbook-face-triptych-v5-2026-09-11.html` (round five).
 **Supersedes:** rounds one to three. All three were instruments; this is not.
 
 ---
@@ -124,9 +125,77 @@ with cues visible, the Board opens with 85 tiles on the grid, the Manual opens
 with every section expanded and §-numbered. Scans clean; no horizontal scroll at
 400, 640 and 900 pixels in any of the three.
 
+## 3b. Sixth round — the Ear
+
+Founder review of round five, verbatim in substance: the Exchange's find field
+is superficial because it only matches strings already on the page; typing
+"asked before" did not surface the asked-before shelf; the field would only be
+useful if it ran on inference — type what the person is saying and the app
+thinks and hands back the best two or three options; the opened depth is
+confusing; the Board is horrendous; the Manual sucks. Simplicity.
+
+All three are retired. **Round six** is one face, not three, because the brief
+narrowed to one idea and three versions of it would be costume:
+`docs/mockups/playbook-face-the-ear-2026-09-11.html`.
+
+**The Ear.** One field. Type what they're saying. Two or three cards come back:
+a mono kicker naming the situation and the kind, and the line to say in serif.
+Nothing else on arrival but the nine situations and reference shelves as plain
+links under the field, for the moments before the call when you want to browse.
+
+- **Open a card** and it reads out in one column: a quiet line on when it
+  applies, the fuller version as plain paragraphs, then IF THEY SAY as chips
+  carrying their likely words, then one source line with its rung and date
+  (more sources behind a `+N more`). The other cards collapse to one line each
+  so there is one place to look.
+- **Click a chip** and their words become the field's text. The authored reply
+  leads, already open, with its own fuller version, its own follow-ups and its
+  own source; the brain fills the other two seats. That is the depth mechanism:
+  the conversation continues through the one field, as far as the bank goes.
+  `← back` restores the previous field and cards.
+- **A country in what they type** lights the wing on the left the moment the
+  name lands. Opening a card that touches countries pins them in the wing.
+- **A situation link** fills the field with the shelf's label and shows its
+  opener and next two by kind order; `N more` opens the rest of the shelf.
+- **Nothing matches:** one plain line, the situations again. Under two content
+  words the page stays quiet rather than flicker.
+
+**The brain.** In this file the seat is a stand-in: a weighted index over every
+field of the 85 entries plus the 120 follow-up lines (their words are prospect
+lines too, and typed fresh they surface the authored reply), a domain thesaurus
+of roughly forty concepts so loose speech lands ("using someone else" is an
+incumbent, "farmed out" is win-back, "moved to" is the own-person shelf),
+contraction handling, shelf-label matching so "asked before" leads with the
+shelf that carries those words, and a two-or-three gate on relative score.
+Nine entries carry a few alternate phrasings the stand-in needs and the model
+never will. Thirty natural phrases from the tapes score 30/30 on first pick;
+a looser second batch of twenty reads well with two soft spots noted below.
+
+In production the seat is the model: the bank as a cached system prompt, the
+typed text as the message, the answer a JSON list of two or three entry ids
+and a country if one was named. The file carries that path now as a door at
+the foot of the page: paste an Anthropic key and the Ear calls the model
+directly from the browser on every pause in typing, with the stand-in showing
+first and the model's picks replacing it when they land. The key stays in the
+browser; nothing else leaves the page. Untested from the build environment,
+which has no key.
+
 ## 4. Verification
 
-Browser pass of 34 checks, all green: the wing's yes/no lines, lead lines and
+**Round six:** browser pass of 44 checks, all green: arrival (field, nine starts,
+no cards, wing empty, brain reads stand-in); typing "asked before" leads with
+the asked-before shelf's opener and shows two or three cards and nothing else;
+open collapses the rest to one line and shows chips and a rung-labelled source
+with none of the old labelled sections; a chip click puts their words in the
+field, leads with the open reply, and back restores; Portugal in the typed
+sentence lights the wing and leads with the own-person shelf; clear returns the
+starts; a situation link fills the field, shows three by kind order and counts
+the rest, rows promote; nothing-matches and under-two-words states; the key
+door opens and no request leaves without a key. Scans clean over rendered text
+and the bank source for account and person names, money figures and the word
+"steps". No horizontal scroll at 400, 640, 900 and 1440. No page errors.
+
+**Round four (retired):** browser pass of 34 checks, all green: the wing's yes/no lines, lead lines and
 sixteen; the Fold's grouping, in-place unfold, evidence rungs with dates,
 what-comes-next links across entries and shelves, find across shelves, country
 chips driving the wing; the Drawer's stable list and right-hand depth, links
@@ -149,3 +218,12 @@ dangling links, every entry with a fuller version and evidence.
 5. **What's not on any shelf yet:** M&A, permanent-establishment risk from a
    sales hire, visas, exiting EOR back to an entity, a compliance scare. No tape
    yet; the shelves are there when it arrives.
+6. **Two bank gaps the Ear exposed (round six).** "I'm the wrong person for
+   this, that's our sales team" has no entry, though the authoring canon names
+   the case; and "we did the ASO versus PEO thing, is that basically it" lands
+   on the wrong correction because the analogy lives only in an evidence line.
+   Both are bank entries to write, not face changes.
+7. **The model door** runs Claude Opus 5 at low effort with the bank cached in
+   the system prompt and structured JSON out. Production would move the same
+   call behind a server action so no key touches the browser. The stand-in's
+   thesaurus and alternate phrasings are scaffolding for this file only.
