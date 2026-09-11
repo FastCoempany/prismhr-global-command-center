@@ -3,7 +3,8 @@
 **Status:** PROPOSAL for founder review. Nothing here ships without an explicit ship order.
 **Date:** 2026-09-11.
 **Branch:** `claude/affectionate-carson-edrs26`.
-**Triptych:** `docs/mockups/playbook-face-triptych-2026-09-11.html`.
+**Triptychs:** first round `docs/mockups/playbook-face-triptych-2026-09-11.html`; second round `docs/mockups/playbook-face-triptych-v2-2026-09-11.html` (§5.5).
+**Corpus pass:** `docs/plans/call-corpus-adversarial-pass-2026-09-11.md`.
 **Evidence base:** two partner calls, 2026-09-03 and 2026-09-10, read end to end
 against `src/app/playbook/`, `src/lib/intel/`, and `src/lib/collateral/canon.ts`.
 **Scope:** the Playbook's face and its routing. The bank's content is largely
@@ -334,6 +335,66 @@ was doing three jobs at once on the listening band — selection state, the room
 inference, and the line to say. Under the accent-by-role rule it now carries only
 the last. Tapped signals are navy because selection is state, not a move; the
 lean is blue because an inference the room is defending is system intelligence.
+
+## 5.5 Second round — one card at a time (founder review, 2026-09-11)
+
+Founder review of the first triptych: *"when I click things, the page goes
+haywire — my eyes have to dart all over the page to see what the next thing
+is."* That is a correct reading of the first round. The Fork moved four regions
+on every click. The fix is not a smaller grid; it is no grid.
+
+**The second-round triptych** — `docs/mockups/playbook-face-triptych-v2-2026-09-11.html` —
+rebuilds all three concepts on one rule: **one column, one card, and the next
+thing appears where the last thing was.** The field is the only permanent
+control and finds a country, a question or a product from the same keystrokes.
+The fork is still here and still matters; it is one card among many now, not
+the architecture. What differs between the three is what becomes of the card
+you just left:
+
+- **The Desk** — replaced in place; where you were collapses to a quiet mono
+  trail under the field.
+- **The Thread** — the call reads top to bottom; each lookup lands under the
+  last and the previous folds to a line. Nothing is lost.
+- **The Slab** — one card, nothing else on screen; no field until you type.
+
+**The country sheet is in the file.** The founder pointed at work already done:
+`tools/country-sheet/` holds the sixteen points for 95 of the 197 priced
+countries — currency, VAT, payroll cycle, minimum wage, working hours, overtime,
+social security, healthcare, retirement, paid time off, public holidays,
+maternity, sick leave, probation, notice, severance — plus a lead block per
+country saying what makes this one a project rather than a payroll entry. It
+was built as concept data and never wired to a surface. The second round embeds
+it whole: type four letters, the country arrives with its lead lines; the
+sixteen open one click down; a long value opens the rest in place. A country
+with nothing on file says so and gives the line to say instead.
+
+**The adversarial pass across all five recorded calls** —
+`docs/plans/call-corpus-adversarial-pass-2026-09-11.md` — corrected the first
+scoring in three places (the hijack is two of five, not the norm; the read-back
+is the actual opener; the partner's own mechanics are the dominant question
+class) and added four answer cards, two list items, a time-to-live caveat and
+the Puerto Rico open question. Its sharpest number: **twenty distinct countries
+were named across five calls, and nineteen have the sixteen on file.** The
+twentieth is Yemen, named as a joke about sanctions.
+
+Verified by a browser pass of the whole second round plus the name scan and
+no-horizontal-scroll at 400, 640 and 900 pixels. Found and fixed on the way: a
+`<template>` element whose text content is always empty, so "the rest" opened
+nothing; a hit-list timer that could wipe the operator's matches if they clicked
+a card and typed again within a tenth of a second; and a test of my own that was
+clicking a card row while trying to focus the page.
+
+**Two decisions this round puts in front of the founder:**
+
+1. **Statutory figures on the country card.** The sheet's minimum-wage and
+   contribution lines carry figures, because law is written in figures. The
+   money doctrine is written for what we charge and what deals are worth. The
+   second round renders the sheet as sourced and flags this here rather than
+   deciding it.
+2. **The word "steps" in sourced country prose.** Five country lines use the
+   ordinary verb — *"notice steps out to seven months"* — in statutory text
+   quoted from the sheet. The decree targets the process-noun in the app's own
+   copy, which is clean. Surfaced rather than silently rewritten.
 
 ## 6. What survives
 
