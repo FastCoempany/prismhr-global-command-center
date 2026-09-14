@@ -87,7 +87,57 @@ carries them.
 
 ---
 
-## 6. Decisions to take before the triptych
+## 7. The triptych (built 2026-09-14, after the founder's decisions)
+
+**File:** `docs/mockups/playbook-face-triptych-product-first-2026-09-14.html`,
+self-contained, opens from disk. **Flyers:** filed under `intelligence/flyers/`
+(EOR, Payroll, Contractor Solutions, Talent) and authored into the middle
+panel; every flyer bullet renders under the issue it serves and again in the
+flyer's own tier boxes, cited FILED · flyer. **Decisions applied:** two
+contractor doors (contractor management; contractor of record, Contractor
+Plus on the platform); the between-us questions as a fixed foot under the
+right panel in all three; Puerto Rico and every country on the left only, so
+the PR-specific rows became generic scenarios that say "type it on the left";
+depth shape product → scenario → bullets with cites and the ask list; the
+flyer settled the contractor-of-record specifics (serves as the contractor of
+record, manages the agreements and compliant payments, reduces
+misclassification risk, navigates country-specific rules), and the tapes
+supply the how (the test per country, we won't sign for someone who should
+be an employee, the higher fee for the liability, we advise and the client
+decides).
+
+Same three panels in all three, same wing, same 5 products, same 29
+scenarios, same 10 between-us rows. What differs is the architecture:
+
+| | The idea | On arrival | The middle | The right |
+|---|---|---|---|---|
+| **The Sheet** | A one-pager per product | Five doors as cards; the right panel holds between-us in full | The flyer, in its own order: what it solves, how it runs, we do and they keep, the tiers, time and price, ask them | "When they say": the product's scenarios, each opening in place |
+| **The Issues** | What they care about is the axis | A five-by-five map: products across, issues down, every cell one line and a door | A product spine on the left; five issue blocks; how, ask, tiers, time beneath | Scenarios grouped by the same five issues; opening one lights the block it leans on |
+| **The Fork** | The sorting question is the door | "Who legally employs the person doing the work?" and five answers in the partner's words | The crumb with the answer, a "not the others" strip with the reason each is not this, then the flyer content | "How this lands": each scenario says where it lands, straddlers link to the other product |
+
+Content the founder asked for, checked: the contractor-of-record compliance
+block spells out how the exposure moves (the test, the refusal to sign, the
+localized agreement, compliant payments and documentation, offboarding, the
+employer-of-record path for anyone who fails). Every product carries its "in
+their language" line from the tapes. No product carries a figure.
+
+**Verification:** 44 browser checks, all green: the three arrivals differ
+before any click (cards; a 25-cell map; a question and five answers); three
+panels and the foot present in all three; the Sheet's six sections in flyer
+order, the picked door lit, filed and tape rungs both present, a scenario
+opening with bullets, ask list and sources, its also-link switching the
+product, the foot opening an answer; the Issues' map cell opening the product
+with that block lit, the spine, five blocks, grouped scenarios, the light
+following the opened scenario, the map returning; the Fork's crumb,
+not-the-others strip naming four, every scenario carrying a lands line,
+straddler and strip links switching the product; the wing pinning a
+scenario's country without opening it, the pin opening the card with the
+owned line, Puerto Rico's details living on the left. Scans clean on the
+product data for account and person names, money, "steps", and the
+owned-versus-supported wording. No horizontal scroll at 400, 640, 900, 1200
+and 1500. No page errors.
+
+## 6. Decisions to take before the triptych (as put, 2026-09-14; settled the same day, see §7)
 
 1. **One contractors door or two.** The record has two tiers: contractor
    payments, where the client holds the contract, and Contractor Plus, where
