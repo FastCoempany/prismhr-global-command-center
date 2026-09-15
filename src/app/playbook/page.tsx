@@ -1,8 +1,7 @@
 import { AppWayfinder } from "@/components/app-wayfinder";
 import { getPeo, peos } from "@/lib/book";
-import { DISCOVERY, questionsFor } from "@/lib/intel/discovery";
+import { DISCOVERY } from "@/lib/intel/discovery";
 import { PRODUCT_BANK } from "@/lib/intel/discovery-product";
-import { SCENARIOS } from "@/lib/intel/scenarios";
 import { knowledgeKey, readPlaybook } from "@/lib/playbook/store";
 import { COUNTRY_TALLY, countryIndex } from "@/lib/playbook/countries";
 import { CUES, PRODUCTS } from "@/lib/playbook/products";
@@ -17,24 +16,15 @@ import page from "./playbook.module.css";
 
 export const dynamic = "force-dynamic";
 
-// The Playbook — the products first (The Sheet, founder-decreed 2026-09-15),
-// then the card that puts the bank to work, then what the whole book has
-// taught: the lessons deals leave behind and the market facts that outlive the
-// account they came from.
+// The Playbook — The Sheet (founder-decreed 2026-09-15): the products are the
+// entry point, and beside them what the whole book has taught, the lessons
+// deals leave behind and the market facts that outlive the account they came
+// from.
 //
 // The country sheet never travels with the page. The index arrives — names,
 // aliases, how many points are on file — and a country's depth comes down from
 // /playbook/country when the operator names one.
-export default async function PlaybookPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ [k: string]: string | string[] | undefined }>;
-}) {
-  const sp = await searchParams;
-  // ?open=<questionId> — a deep link from an answer lands on the exact card,
-  // scrolled to and lit, never a page the operator has to search again.
-  const openId = typeof sp.open === "string" ? sp.open.slice(0, 60) : "";
-
+export default async function PlaybookPage() {
   const [acctNotes, dispositions, buyerAsks] = await Promise.all([
     loadAccountNotes(),
     loadDispositions(),
@@ -99,10 +89,10 @@ export default async function PlaybookPage({
     }
   })();
 
-  // The card is account-less (binding retired, founder-decreed 2026-08-22):
-  // questions stay country-agnostic. "those countries" reads correctly in both
-  // the second-person questions and the third-person relays; "their countries"
-  // flipped the possessor mid-sentence (pass-two finding, 2026-08-24).
+  // The bank's questions stay country-agnostic. "those countries" reads
+  // correctly in both the second-person questions and the third-person relays;
+  // "their countries" flipped the possessor mid-sentence (pass-two finding,
+  // 2026-08-24).
   const fill = (s: string) => s.replaceAll("{countries}", "those countries");
 
   // IV.5 · what real buyers asked, read from the brain — proposals beside the
@@ -114,29 +104,6 @@ export default async function PlaybookPage({
     [...DISCOVERY, ...PRODUCT_BANK].map((q) => fill(q.question)),
   );
 
-  // The whole bank: the original country-agnostic questions plus the
-  // product-line depth. `questionsFor` at the contract phase passes all the
-  // originals through with the fill applied; the client's selectQuestions owns
-  // the order the operator actually sees.
-  const bank = [
-    ...questionsFor({ phase: "contract", gaps: [], countries: [] }),
-    ...PRODUCT_BANK,
-  ];
-
-  const questions = bank.map((q) => ({
-    id: q.id,
-    category: q.category,
-    phase: q.phase,
-    audience: q.audience,
-    product: q.product ?? "any",
-    soph: q.soph ?? "any",
-    question: fill(q.question),
-    why: fill(q.why),
-    listenFor: q.listenFor.map(fill),
-    followUp: fill(q.followUp),
-    relayLine: fill(q.relayLine),
-  }));
-
   return (
     <>
       <AppWayfinder current="Playbook" />
@@ -146,8 +113,8 @@ export default async function PlaybookPage({
           <p className={styles.sub}>
             {/* One template string: the compiler drops the boundary space
                 between an expression child and its text sibling here, which
-                rendered "113questions" (caught live, 2026-08-24). */}
-            {`${PRODUCTS.length} products, ${CUES.length} things partners say about them, ${COUNTRY_TALLY.priced} countries priced. Beside them: ${questions.length} questions shaped by the scenario you're actually in, and what we've learned across every account.`}
+                once rendered "113questions" (caught live, 2026-08-24). */}
+            {`${PRODUCTS.length} products, ${CUES.length} things partners say about them, ${COUNTRY_TALLY.priced} countries priced. Beside them, what we've learned across every account.`}
           </p>
         </div>
         {srDrafts.length > 0 && (
@@ -183,9 +150,6 @@ export default async function PlaybookPage({
           </details>
         )}
         <PlaybookClient
-          questions={questions}
-          scenarios={SCENARIOS}
-          initialOpen={openId}
           lessons={lessons.map((l) => ({
             id: l.id,
             text: l.text,
