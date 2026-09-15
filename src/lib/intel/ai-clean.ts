@@ -55,6 +55,7 @@ const SCHEMA = {
           from: { type: "string" },
           to: { type: "string" },
           others: { type: "integer" },
+          recipients: { type: "array", items: { type: "string" } },
           timeLabel: { type: "string" },
           dayLabel: { type: "string" },
           dayIso: { type: "string" },
@@ -66,6 +67,7 @@ const SCHEMA = {
           "from",
           "to",
           "others",
+          "recipients",
           "timeLabel",
           "dayLabel",
           "dayIso",
@@ -138,6 +140,7 @@ Rules:
 - Strip ALL chrome and noise: Lightning UI labels ("Show more actions", "Expand All", field names like "From Address"/"Text Body"/"Priority"), security banners, "external sender" warnings, thread:: tokens, record ids, Zoom/Teams invite blocks (dial-ins, meeting ids, passcodes), email signatures, legal disclaimers, support-desk boilerplate ("NEVER include SSN…", "Responses via email to this case…").
 - body: the actual human substance only, concise, at most 600 characters. Never invent or embellish — omit rather than guess. NEVER write header lines into the body — no "From:", "To:", "Sent:", "Cc:", "Subject:", no "authored by", no "written by". Who wrote to whom belongs in the from/to fields; the app renders that itself. Inside the body, name a person only when the sentence needs them ("Bryce wants the deposit language cut").
 - subject: the real subject with "RE:/FW:" kept but case-thread tokens removed.
+- recipients: EVERY person the message went to, To and Cc alike, as names normalized the same way — INCLUDING our own side. This is the one field where a @prismhr.com colleague or the operator must be listed; "to" below deliberately hides them and cannot answer "did this reach us". Order as the header had them. Empty array only when the header named no recipient at all.
 - from / to: person names, normalized: first-person forms ("You", "me") become "Antaeus Coe" (the operator whose mailbox this is); "Last, First" renders as "First Last"; email-address tails in angle brackets drop. others: count of additional recipients ("and 1 other" → 1), else 0. WHEN A MESSAGE HAS SEVERAL RECIPIENTS, "to" names the person on the ACCOUNT'S side — never a @prismhr.com colleague, even when they lead the To line. Our own side (prismhr.com) is on nearly every thread and identifies nobody; a CSM who made an introduction is not who the operator is waiting on. Only when every recipient is @prismhr.com does "to" name a colleague. The count in others is unchanged either way.
 - Dates: dayIso is YYYY-MM-DD resolved against today's date given in the message ("Today"/"Yesterday"/"Jul 30, 2025" all resolve). dayLabel is a short human label ("Jul 30" or "Today"). timeLabel like "5:27 PM", or "" if none. Unknown dates: dayIso "".
 - kind: "email" for emails, "call" for logged calls, "task" for tasks/meetings/upcoming items.

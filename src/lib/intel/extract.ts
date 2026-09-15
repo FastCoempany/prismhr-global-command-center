@@ -15,7 +15,7 @@ import {
 import { digestFor, digestForCardName, type DigestEntry } from "./digest";
 import { isCloser, isMachinery } from "./closer";
 import { effectiveAt } from "./clock";
-import { MINE_RE, inferActors, isAddressedToUs } from "./provenance";
+import { MINE_RE, inferActors, isAddressedToUs, splitRecipients } from "./provenance";
 import { EMPTY_INTEL, type DealIntel, type ProductKey, type SourcedFact } from "./types";
 
 const MONTHS: Record<string, number> = {
@@ -104,6 +104,9 @@ export function corpusFor(
       createdAt: string;
       kind: string;
       actors?: string;
+      /** Every recipient the capture kept, our own side included. "" or absent
+       *  on every row filed before the field existed. */
+      recipients?: string | null;
     }[];
     partnerNotes?: { id: string; body: string; createdAt: string }[];
     todos?: { id: string; body: string; createdAt: string }[]; // pre-filtered to this account
@@ -152,7 +155,9 @@ export function corpusFor(
     // (Infiniti HR, 2026-09-15: "Answer Tom. They wrote today." — Tom had
     // written to Javier). A message to a colleague still counts as reaching
     // us; a message to the PEO's own people does not.
-    const toUs = homeSide === undefined || isAddressedToUs(actors, homeSide);
+    const toUs =
+      homeSide === undefined ||
+      isAddressedToUs(actors, homeSide, splitRecipients(n.recipients));
     // One predicate for everything that arrives without a person deciding to
     // write it — auto-replies, calendar responses, routed-lead alerts,
     // delivery notices (src/lib/intel/closer.ts). Rebuilding this rule one

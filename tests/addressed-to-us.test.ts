@@ -19,13 +19,36 @@
 // line without asking which side is ours.
 //
 // The rule these tests pin: a message is inbound TO US only when we are on the
-// receiving side. Conservative by construction — a recipient the line does not
-// name leaves the old answer standing, because the guard needs evidence to
-// take a reply away, and losing a real one is the worse failure.
+// receiving side.
+//
+// The first cut of that rule read the actors line's recipient slot and was
+// wrong, because that slot is contracted to hold something else. The cleaner
+// is told to put the ACCOUNT's person there whenever a message has several
+// recipients — even when a colleague leads the To line — since our own side is
+// on nearly every thread and identifies nobody. Everyone else becomes "+N". So
+// on a collapsed line an account-side name is exactly what the contract
+// promises whether we were on it or not, and 35 of the 39 entries that first
+// rule demoted sat behind a count that could have held the operator.
+//
+// So the capture now keeps the recipients it used to throw away, and the rule
+// reads in two tiers:
+//
+//   • a stored recipient list — the whole receiving side, our own side
+//     included. Where it exists it IS the answer.
+//   • no list (every row filed before the column) — only a line naming ONE
+//     recipient can take a reply away. A "+N" line proves nothing.
+//
+// Conservative in both tiers: the guard needs evidence to take a reply away,
+// and losing a real one is the worse failure.
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 import { corpusFor, extractDealIntel } from "@/lib/intel/extract";
-import { isAddressedToUs, recipientOf } from "@/lib/intel/provenance";
+import {
+  isAddressedToUs,
+  joinRecipients,
+  recipientOf,
+  splitRecipients,
+} from "@/lib/intel/provenance";
 import { readDeal } from "@/lib/room/engine";
 
 // The names the app knows as ours. In the app this is the CSM column unioned
@@ -201,6 +224,90 @@ describe("the Infiniti row", () => {
     const intel = extractDealIntel(docs);
     assert.equal(intel.lastInbound?.slice(0, 10), "2026-09-15");
     assert.match(intel.lastInboundWho ?? "", /Tom Harrison/);
+  });
+});
+
+describe("the recipient list, once the capture keeps one", () => {
+  // The repair for the gap above. `actors` names the account's person by
+  // decree and can never answer "did this reach us"; the capture now keeps
+  // every recipient beside it, and where that list exists it IS the answer —
+  // no counting, no inference from absence.
+  test("the operator inside the list keeps the reply", () => {
+    // Review's exact case: Tom → Javier +1 with Antaeus as the other recipient.
+    assert.equal(
+      isAddressedToUs("Tom Harrison → Javier Ramirez +1", HOME, [
+        "Javier Ramirez",
+        "Antaeus Coe",
+      ]),
+      true,
+    );
+  });
+
+  test("a colleague inside the list keeps it too", () => {
+    assert.equal(
+      isAddressedToUs("Tom Harrison → Javier Ramirez +1", HOME, [
+        "Javier Ramirez",
+        "Lesha Cyphers",
+      ]),
+      true,
+    );
+  });
+
+  test("a list of only their own people settles the Infiniti row", () => {
+    assert.equal(
+      isAddressedToUs("Tom Harrison → Javier Ramirez +3", HOME, [
+        "Javier Ramirez",
+        "Scott Smrkovski",
+        "Jennifer Hardesty",
+        "Rafael Kalu",
+      ]),
+      false,
+    );
+  });
+
+  test("the list is read through the same name cleaning", () => {
+    assert.equal(
+      isAddressedToUs("Tom Harrison → Javier Ramirez +1", HOME, [
+        "Javier Ramirez",
+        "Anika Steenstra >",
+      ]),
+      true,
+    );
+  });
+
+  test("an empty list is no list — the count rule still applies", () => {
+    assert.equal(isAddressedToUs("Tom Harrison → Javier Ramirez +3", HOME, []), true);
+    assert.equal(isAddressedToUs("Tom Harrison → Javier Ramirez", HOME, []), false);
+  });
+
+  test("the corpus reads it off the stored note", () => {
+    const withList = INFINITI.map((n) =>
+      n.id === "n5"
+        ? { ...n, recipients: "Javier Ramirez, Scott Smrkovski, Jennifer Hardesty" }
+        : n,
+    );
+    const docs = corpusFor("INF", "Infiniti HR", { acctNotes: withList, homeSide: HOME });
+    assert.equal(docs.find((d) => d.text.includes("At proposal stage"))!.direction, undefined);
+
+    const withUs = INFINITI.map((n) =>
+      n.id === "n5" ? { ...n, recipients: "Javier Ramirez, Antaeus Coe" } : n,
+    );
+    const docs2 = corpusFor("INF", "Infiniti HR", { acctNotes: withUs, homeSide: HOME });
+    assert.equal(docs2.find((d) => d.text.includes("At proposal stage"))!.direction, "in");
+  });
+});
+
+describe("storing the list", () => {
+  test("round-trips, normalizing each name on the way in", () => {
+    const stored = joinRecipients(["Javier Ramirez", "Steenstra, Anika", "  "]);
+    assert.equal(stored, "Javier Ramirez, Anika Steenstra");
+    assert.deepEqual(splitRecipients(stored), ["Javier Ramirez", "Anika Steenstra"]);
+  });
+
+  test("nothing stored reads as no list, not as an empty recipient", () => {
+    assert.deepEqual(splitRecipients(""), []);
+    assert.deepEqual(splitRecipients(null), []);
+    assert.deepEqual(splitRecipients(undefined), []);
   });
 });
 

@@ -36,6 +36,23 @@ export function isHomeSideName(name: string, roster: readonly string[]): boolean
   });
 }
 
+// The stored recipient list, which is one string because the column is one
+// string. Names are comma-joined on write; a name carrying its own comma is
+// not a thing the cleaner emits (it normalizes "Last, First" before this).
+export function splitRecipients(stored: string | null | undefined): string[] {
+  return (stored ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+export function joinRecipients(names: readonly string[] | undefined): string {
+  return (names ?? [])
+    .map((n) => normPerson(cleanNameToken(n)))
+    .filter(Boolean)
+    .join(", ");
+}
+
 // The receiving side of an actors line — "Tom Harrison → Javier Ramirez +3"
 // names Javier. The overflow count is how many others were on it, never a
 // person, so it comes off. "" when the line names nobody on the right.
@@ -93,19 +110,36 @@ export function cleanNameToken(raw: string): string {
 // narrow, and deliberately — it does not settle the Infiniti row, which
 // carries "+3". Settling that one needs the capture to keep the recipients it
 // currently throws away, not a cleverer reading of what survives.
-export function isAddressedToUs(actors: string, roster: readonly string[]): boolean {
+export function isAddressedToUs(
+  actors: string,
+  roster: readonly string[],
+  /** Every recipient the capture kept, our own side included. When the capture
+   *  carried it this IS the answer, and the collapsed-count reasoning below is
+   *  not needed. Absent on every row filed before the field existed. */
+  recipients?: readonly string[],
+): boolean {
+  const all = (recipients ?? []).map(cleanNameToken).filter(Boolean);
+  if (all.length) return all.some((n) => isOurs(n, roster));
+
+  // No list — fall back to what the actors line alone can prove.
   // "+N" means the line dropped N recipients on the floor. Any of them could
   // be us, and the contract above says the one it kept is theirs by design.
   if (/\+\d+\s*$/.test((actors ?? "").trim())) return true;
   const rcpt = recipientOf(actors);
   if (!rcpt) return true;
-  if (isHomeSideName(rcpt, roster)) return true;
-  // A record often carries only a colleague's first name ("Anika") — the same
-  // allowance the pipeline builder makes when it tells a colleague from a
-  // client. It can only ever KEEP an inbound, never take one away, so a client
-  // who happens to share a first name with one of ours costs nothing.
-  const one = rcpt.toLowerCase();
-  if (one.includes(" ")) return false;
+  return isOurs(rcpt, roster);
+}
+
+// One person, our side or theirs. The roster read, plus the allowance a record
+// needs: it often carries only a colleague's first name ("Anika"), the same
+// allowance the pipeline builder makes when it tells a colleague from a
+// client. That allowance can only ever KEEP an inbound, never take one away,
+// so a client who happens to share a first name with one of ours costs
+// nothing.
+function isOurs(name: string, roster: readonly string[]): boolean {
+  if (isHomeSideName(name, roster)) return true;
+  const one = name.trim().toLowerCase();
+  if (!one || one.includes(" ")) return false;
   if (MINE_RE.test(one)) return true;
   return roster.some((r) => (r ?? "").trim().toLowerCase().split(" ")[0] === one);
 }

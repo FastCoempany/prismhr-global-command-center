@@ -1098,6 +1098,11 @@ model AccountNote {
   // Provenance (stamped at write; "" on legacy rows = infer at read):
   lane      String   @default("") // "mine" (my working record) | "background" (ingested intel)
   actors    String   @default("") // "Kim Bartolotti → Lesha Cyphers +2"
+  // EVERY recipient, comma-joined, our own side included. `actors` names the
+  // ACCOUNT's person when a message has several recipients — by decree, since
+  // our side is on nearly every thread and identifies nobody — so it cannot
+  // answer "did this reach us". This can. "" on rows filed before it existed.
+  recipients String  @default("")
   source    String   @default("") // "sf" | "sf-ai" | "transcript" | "chip" | "move" | "touch" | ...
   createdAt DateTime @default(now())
 

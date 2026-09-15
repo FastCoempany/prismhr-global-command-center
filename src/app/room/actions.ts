@@ -29,7 +29,7 @@ import {
 import { fileGaps, gapDismissKey, gapNs, parseGapBody } from "@/lib/room/gaps";
 import { actionBody, splitFallback, urgencyForDue } from "@/lib/room/deliverables";
 import { outcomeMarkBody } from "@/lib/room/loss";
-import { MINE_RE, actorsLine, laneFor } from "@/lib/intel/provenance";
+import { MINE_RE, actorsLine, joinRecipients, laneFor } from "@/lib/intel/provenance";
 import {
   diffFindings,
   parseResearchBody,
@@ -409,6 +409,8 @@ export async function roomPaste(
     let filed = 0;
     for (const e of entries.slice(0, 40)) {
       const actors = actorsLine(e.from ?? "", e.to ?? "", e.others ?? 0);
+      // The whole receiving side, which `actors` deliberately does not carry.
+      const recipients = joinRecipients(e.recipients);
       const when = [e.dayLabel, e.timeLabel].filter(Boolean).join(" ");
       const glyph = e.kind === "task" ? "✔" : e.kind === "call" ? "☎" : "✉";
       const who = actors || "(unattributed)";
@@ -425,6 +427,7 @@ export async function roomPaste(
         ),
         lane: laneFor(actors, `${e.subject ?? ""}\n${e.body ?? ""}`),
         actors,
+        recipients,
         source: `${
           liveDialect === "OL"
             ? "outlook"

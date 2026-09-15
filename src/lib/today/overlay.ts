@@ -68,6 +68,9 @@ export type AccountNote = {
   lane: Lane;
   actors: string;
   source: string;
+  /** Every recipient the capture kept, comma-joined, our own side included.
+   *  "" on every row filed before the column existed. */
+  recipients: string;
   createdAt: string; // ISO
 };
 
@@ -92,6 +95,7 @@ type NoteRow = {
   lane?: string;
   actors?: string;
   source?: string;
+  recipients?: string;
 };
 
 // All account notes, newest first, grouped by account id. Defensive: degrades to
@@ -111,19 +115,29 @@ export async function loadAccountNotes(): Promise<Map<string, AccountNote[]>> {
   if (!hasDatabaseEnv()) return new Map();
   const prisma = getPrisma();
   let rows: NoteRow[];
+  const PROVENANCE = { ...NOTE_STABLE, lane: true, actors: true, source: true } as const;
   try {
+    // The newest column gets its own tier: sharing one with the provenance set
+    // would mean an unmigrated database drops lane, actors and source too.
     rows = await prisma.accountNote.findMany({
       orderBy: { createdAt: "desc" },
-      select: { ...NOTE_STABLE, lane: true, actors: true, source: true },
+      select: { ...PROVENANCE, recipients: true },
     });
   } catch {
     try {
       rows = await prisma.accountNote.findMany({
         orderBy: { createdAt: "desc" },
-        select: NOTE_STABLE,
+        select: PROVENANCE,
       });
     } catch {
-      return new Map();
+      try {
+        rows = await prisma.accountNote.findMany({
+          orderBy: { createdAt: "desc" },
+          select: NOTE_STABLE,
+        });
+      } catch {
+        return new Map();
+      }
     }
   }
   const out = new Map<string, AccountNote[]>();
@@ -143,6 +157,7 @@ export async function loadAccountNotes(): Promise<Map<string, AccountNote[]>> {
           : inferLane(kind, r.body, actors),
       actors,
       source: r.source ?? "",
+      recipients: r.recipients ?? "",
       createdAt: r.createdAt.toISOString(),
     };
     const list = out.get(r.accountId);
