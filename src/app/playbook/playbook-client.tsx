@@ -1,11 +1,16 @@
 "use client";
 
-// The Call Sheet — the Playbook's face, triptych winner (founder-decreed
-// 2026-08-24). Three panes: the bank on the left in the spoken voice, YOUR
-// sheet in the middle (built before the call with +), and the live card on
-// the right. During the call, click what you heard — the line stamps itself
-// and the branch map pulls in the question that answer leads to. By the end,
-// the plan has become the record of the conversation.
+// The Playbook's three registers.
+//
+// The face is The Sheet (product first, founder-decreed 2026-09-15): what are
+// we talking about, the product read the way its flyer reads, what partners
+// say about it, and the country beside it. It arrives first.
+//
+// The Call Sheet (the earlier face, founder-decreed 2026-08-24) keeps its
+// instrument: the bank on the left in the spoken voice, YOUR sheet in the
+// middle (built before the call with +), and the live card on the right.
+// During the call, click what you heard — the line stamps itself and the
+// branch map pulls in the question that answer leads to.
 //
 // The relay/copy chip is retired from this surface (the CSM-relay era's
 // copy-a-sentence tool); relay lines still feed Groundwork's composers.
@@ -16,6 +21,8 @@ import { DASH_NODES } from "@/lib/dashboard/stages";
 import { selectQuestions, NO_FILTERS, type Scenario } from "@/lib/intel/bank";
 import { branchNext } from "@/lib/intel/branches";
 import type { DiscoveryQ } from "@/lib/intel/discovery";
+import type { CountryRow } from "@/lib/playbook/countries";
+import { ProductSheet } from "./product-sheet";
 import styles from "./playbook.module.css";
 
 type Q = DiscoveryQ;
@@ -89,6 +96,8 @@ export function PlaybookClient({
   market,
   prospectAsks,
   oursNotTheirs,
+  countries,
+  countryTally,
   initialOpen = "",
 }: {
   questions: Q[];
@@ -97,9 +106,13 @@ export function PlaybookClient({
   market: Knowledge[];
   prospectAsks: ProspectProposal[];
   oursNotTheirs: string[];
+  countries: CountryRow[];
+  countryTally: { priced: number; written: number };
   initialOpen?: string;
 }) {
-  const [tab, setTab] = useState<"sheet" | "learned">("sheet");
+  const [tab, setTab] = useState<"products" | "sheet" | "learned">(
+    initialOpen ? "sheet" : "products",
+  );
   const [scenarioId, setScenarioId] = useState("");
   const [lineup, setLineup] = useState<string[]>([]);
   const [heard, setHeard] = useState<Record<string, string>>({});
@@ -206,6 +219,13 @@ export function PlaybookClient({
       <div className={styles.tabs}>
         <button
           type="button"
+          className={`${styles.tab} ${tab === "products" ? styles.tabOn : ""}`}
+          onClick={() => setTab("products")}
+        >
+          The products
+        </button>
+        <button
+          type="button"
           className={`${styles.tab} ${tab === "sheet" ? styles.tabOn : ""}`}
           onClick={() => setTab("sheet")}
         >
@@ -223,7 +243,9 @@ export function PlaybookClient({
         </button>
       </div>
 
-      {tab === "sheet" ? (
+      {tab === "products" ? (
+        <ProductSheet index={countries} tally={countryTally} />
+      ) : tab === "sheet" ? (
         <div className={styles.sheetGrid}>
           {/* ── Pane 1 · the bank ─────────────────────────────────────── */}
           <div className={styles.paneBank}>

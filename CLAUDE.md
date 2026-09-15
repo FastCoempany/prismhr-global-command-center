@@ -478,6 +478,45 @@ title; the search bar carries depth. The board lift holds app-wide: an
 account on the dashboard is cleared with the CSM and touched — stored
 state only ever advances the derived one (boardLift, loadCommand).
 
+## The Playbook face — The Sheet (triptych winner, ship order 2026-09-15)
+
+The products are the entry point, not the scenarios. Three panels, all in
+view: the country on the left, the product in the middle, what partners say
+about it on the right.
+
+- **The doors.** Five products — employer of record, global payroll,
+  contractor management, contractor of record, talent. Two contractor doors,
+  by decree. Arrival asks one thing ("What are we talking about?") and shows
+  the five with a line each; picking one drops them to a tab row with the
+  open door ticked orange, the surface's one dominant move.
+- **The middle reads like the flyer**, in the flyer's order: what it solves
+  (the five issues: compliance, who employs them, how fast, what it costs,
+  one place), how it runs, we do and they keep, the flyer's own tiers, time
+  and price, ask them. Every block cites its rung.
+- **The right panel is their words.** What partners actually say about that
+  product, from the tapes; opening one gives how we respond, the asks it
+  pulls from the product's own list, where it lands instead when it does, and
+  its cites. Opening a cue pins the countries it names into the wing.
+- **The between-us foot is fixed** under the right panel: the questions asked
+  on every call whatever the product. On arrival it takes the whole panel.
+- **The country wing never travels.** The sheet is ~360KB and stays on the
+  server; the page arrives with the index (name, alias, how many of the
+  sixteen are on file) and a country's card comes down from `/playbook/country`
+  — a GET, never a server action. Lead lines first, the sixteen behind one
+  line, long values behind "the rest". Puerto Rico and every other country
+  live here. A country we price but have not written up says so (∅); one we
+  do not cover says so too.
+- The Call Sheet keeps its seat as the second tab, and the learned register
+  (lessons, market facts, prospect asks) and the second record's draft queue
+  are untouched.
+- The ship audit runs in the suite, not by hand: `tests/playbook-sheet.test.ts`
+  holds the graph audit, the name scan, the money scan and the wing's index
+  against the sheet it stands on.
+- Statutory country facts on the wing (wage floors, VAT, severance) carry
+  their figures. The money doctrine guards OUR money; a government's published
+  wage floor is the country fact the wing exists to answer with. Redacting it
+  is one line in the route if the founder decides otherwise.
+
 ## Other standing decrees
 
 - The word "steps" never appears in operator-facing copy.

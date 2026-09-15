@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>PrismHR Global at a glance</title>
+<style>
+  @page { size: Letter; margin: 0; }
+  :root { --blue:#007bc3; --blue-deep:#0b5f9a; --teal:#00b5af; --teal-tint:#ebf9f9; --blue-tint:#f3f9fc; --orange:#fdb630; --purple:#4962a7; --ink:#233042; --ink-soft:#4b5563; --hair:#d9e2ec; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #fff; }
+  body { font-family: "Liberation Sans", "Lato", Arial, Helvetica, sans-serif; color: var(--ink); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .page { width: 8.5in; height: 11in; padding: 0.42in 0.5in 0.38in; display: flex; flex-direction: column; overflow: hidden; }
+
+  .head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.16in; }
+  .head img { height: 0.34in; width: auto; display: block; }
+  .head .k { font-size: 8.5pt; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--blue); }
+
+  .hero { position: relative; background: var(--blue); color: #fff; border-radius: 6px; padding: 0.2in 0.28in 0.22in; overflow: hidden; }
+  .hero::after { content: ""; position: absolute; right: -0.6in; top: -0.3in; width: 2.6in; height: 2in; background: var(--teal); transform: skewX(-18deg); opacity: .95; }
+  .hero::before { content: ""; position: absolute; right: -0.3in; bottom: -0.9in; width: 3.2in; height: 1.2in; background: var(--orange); transform: skewX(-18deg); }
+  .hero > * { position: relative; z-index: 1; }
+  .hero h1 { font-size: 22pt; line-height: 1.12; margin: 0 0 6px; font-weight: 700; max-width: 5.6in; letter-spacing: -.01em; }
+  .hero p { margin: 0; font-size: 10.5pt; line-height: 1.4; max-width: 5.2in; opacity: .96; }
+
+  .intro { margin: 0.16in 0 0.14in; font-size: 9.6pt; line-height: 1.45; color: var(--ink-soft); }
+  .intro b { color: var(--blue-deep); font-weight: 700; }
+
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.12in; }
+  .box { background: var(--blue-tint); border-radius: 6px; padding: 0.13in 0.16in 0.14in; border-top: 3px solid var(--blue); }
+  .box.teal { background: var(--teal-tint); border-top-color: var(--teal); }
+  .box.purple { border-top-color: var(--purple); }
+  .box h2 { margin: 0; font-size: 11.5pt; font-weight: 700; color: var(--blue); letter-spacing: .02em; text-transform: uppercase; }
+  .box .for { margin: 2px 0 6px; font-size: 9pt; font-weight: 700; color: var(--blue-deep); }
+  .box ul { margin: 0; padding-left: 0; list-style: none; }
+  .box li { position: relative; padding-left: 13px; font-size: 8.9pt; line-height: 1.38; margin: 0 0 3.5px; }
+  .box li::before { content: ""; position: absolute; left: 0; top: 5px; width: 6px; height: 6px; border-radius: 50%; background: var(--teal); }
+  .box .tiers { margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--hair); font-size: 8pt; line-height: 1.4; color: var(--ink-soft); }
+  .box .tiers b { color: var(--blue-deep); font-weight: 700; }
+  .box .split { display: grid; grid-template-columns: 1fr 1fr; gap: 0.1in; margin-top: 4px; }
+  .box .split h3 { margin: 0 0 3px; font-size: 8.6pt; font-weight: 700; color: var(--blue-deep); }
+  .box .split li { font-size: 8.4pt; }
+
+  .fork { margin-top: 0.13in; background: var(--teal-tint); border-radius: 6px; padding: 0.11in 0.16in 0.12in; }
+  .fork .q { font-size: 9.6pt; font-weight: 700; color: var(--blue-deep); margin: 0 0 6px; }
+  .fork .q span { font-weight: 400; color: var(--ink-soft); }
+  .fork .cols { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.1in; }
+  .fork .c { font-size: 8.4pt; line-height: 1.35; color: var(--ink-soft); border-left: 2px solid var(--teal); padding-left: 7px; }
+  .fork .c b { display: block; color: var(--blue); font-weight: 700; margin-top: 2px; }
+
+  .foot { margin-top: auto; padding-top: 0.12in; border-top: 1px solid var(--hair); display: flex; align-items: flex-end; justify-content: space-between; gap: 0.2in; }
+  .foot .cta { font-size: 9.4pt; line-height: 1.4; }
+  .foot .cta b { display: block; color: var(--ink); }
+  .foot .cta span { color: var(--blue); font-weight: 700; }
+  .foot .cta em { font-style: normal; color: var(--ink-soft); }
+  .foot .tag { flex: none; background: var(--blue); color: #fff; font-weight: 700; font-size: 9pt; padding: 6px 12px; border-radius: 6px 6px 0 6px; }
+  .foot .legal { font-size: 6.8pt; color: #8a94a3; margin-top: 3px; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="head">
+    <img src="data:image/png;base64,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" alt="PrismHR" />
+    <div class="k">PrismHR Global &middot; the offering at a glance</div>
+  </div>
+
+  <div class="hero">
+    <h1>Hire, pay and support global teams with PrismHR Global</h1>
+    <p>Four ways to serve your clients in more than 175 countries, on one platform, one click from PrismHR.</p>
+  </div>
+
+  <p class="intro">
+    <b>PrismHR Global lets you say yes when a client needs people abroad.</b> Whether your client wants to employ
+    someone in a country where they have no company, run payroll through a company they already have, engage contractors
+    compliantly, or find the right person first, every path runs on the same platform, with our own entities in country and
+    local expertise behind each one.
+  </p>
+
+  <div class="grid">
+    <div class="box">
+      <h2>Employer of Record</h2>
+      <div class="for">For your clients hiring full-time talent in a country where they have no legal entity</div>
+      <ul>
+        <li>PrismHR Global employs the worker through a local legal entity; your client manages the employee day to day.</li>
+        <li>Onboarding, payroll and benefits managed in country.</li>
+        <li>Employment contracts and compliance handled under local law.</li>
+      </ul>
+      <div class="tiers"><b>EOR Core</b> for identified talent &nbsp;&middot;&nbsp; <b>EOR Plus</b> adds sourcing, recruiting and hiring &nbsp;&middot;&nbsp; <b>EOR Premium</b> adds managed staffing with local supervision and HR administration, in select countries</div>
+    </div>
+
+    <div class="box teal">
+      <h2>Global Payroll</h2>
+      <div class="for">For your clients that already have a company in the country and stay the employer</div>
+      <ul>
+        <li>Payroll processed across 175+ countries through one centralized platform, in multiple currencies, for employees and contractors.</li>
+        <li>Country-specific tax, statutory and compliance requirements managed, with accurate, on-time payroll and localized expertise.</li>
+        <li>Centralized reporting and payroll insights; payroll data integrated with HR and finance systems; scales as your clients expand.</li>
+      </ul>
+    </div>
+
+    <div class="box teal">
+      <h2>Contractor Solutions</h2>
+      <div class="for">For your clients engaging independent contractors around the world</div>
+      <div class="split">
+        <div>
+          <h3>Contractor Management</h3>
+          <ul>
+            <li>Your client keeps the direct contractor relationship.</li>
+            <li>Streamlined onboarding and payments in local currencies.</li>
+            <li>W-8, W-9 and 1099 documentation and reporting.</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Contractor of Record</h3>
+          <ul>
+            <li>PrismHR Global serves as the contractor of record.</li>
+            <li>Contractor agreements and compliant payments managed.</li>
+            <li>Reduced worker misclassification risk; country-specific contractor rules navigated.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="box purple">
+      <h2>Talent Solutions</h2>
+      <div class="for">For your clients who need to find the person first, or want a fully managed workforce</div>
+      <div class="split">
+        <div>
+          <h3>Talent Recruitment</h3>
+          <ul>
+            <li>Qualified candidates sourced across global talent markets, targeted by country, industry and role.</li>
+            <li>Faster recruiting and hiring timelines; a seamless move into Employer of Record when needed.</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Talent Management</h3>
+          <ul>
+            <li>Everything in Talent Recruitment, plus workspace and housing arrangements where available.</li>
+            <li>Local HR administration and employee support; guidance on local employment practices.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="fork">
+    <p class="q">Which one fits? Start with one question: <span>who legally employs the person doing the work?</span></p>
+    <div class="cols">
+      <div class="c">No one yet, and your client doesn&rsquo;t want a company there <b>Employer of Record</b></div>
+      <div class="c">Your client&rsquo;s own company in that country <b>Global Payroll</b></div>
+      <div class="c">The person invoices as an independent business <b>Contractor Solutions</b></div>
+      <div class="c">No one yet, and the person still needs finding <b>Talent Solutions</b></div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <div class="cta">
+      <b>Help your clients hire, pay and grow globally with confidence through PrismHR Global.</b>
+      <span>Ready to grow your global offering?</span> <em>Antaeus Coe &nbsp;&middot;&nbsp; antaeus.coe@prismhr.com &nbsp;&middot;&nbsp; 312.221.9292</em>
+      <div class="legal">&copy;2026 PrismHR</div>
+    </div>
+    <div class="tag">prismhr.com</div>
+  </div>
+</div>
+</body>
+</html>

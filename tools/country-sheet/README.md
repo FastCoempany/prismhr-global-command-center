@@ -1,8 +1,9 @@
 # The country sheet — source data
 
-Concept-stage source data for the playbook's country sheet. Nothing here is wired
-into the app; it is kept in the repo so the sourcing work survives the session.
-The sheet itself is still a mockup and has not been shipped.
+Source data for the Playbook's country wing. `build-app-countries.py` emits
+`src/lib/playbook/countries.json`, which the shipped Playbook reads (The Sheet,
+founder-decreed 2026-09-15). `build-sheet.py` still emits the mockup's own
+`SHEET` const from the same three inputs.
 
 ## What is here
 
@@ -14,6 +15,7 @@ The sheet itself is still a mockup and has not been shipped.
 | `leads.py` | The lead block for every country with data — the country-specific facts that run above the sixteen. Emits `leads.json`. |
 | `pricing-to-slug.json` | Pricing-list country name → PrismHR guide slug. |
 | `build-sheet.py` | Joins all of the above against `tools/pricing/eor-pricing.csv` and emits `sheet-const.js.txt`, the `SHEET` const the mockup reads. |
+| `build-app-countries.py` | The same join, emitted as `src/lib/playbook/countries.json` — what the app reads. Commit the JSON: two of the three inputs are generated and gitignored. |
 
 ## Rebuilding
 
@@ -21,6 +23,7 @@ The sheet itself is still a mockup and has not been shipped.
 python3 tools/country-sheet/public-source-countries.py
 python3 tools/country-sheet/leads.py
 python3 tools/country-sheet/build-sheet.py
+python3 tools/country-sheet/build-app-countries.py
 ```
 
 ## Coverage
