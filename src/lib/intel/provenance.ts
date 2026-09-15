@@ -67,21 +67,36 @@ export function cleanNameToken(raw: string): string {
 }
 
 // Did this reach OUR side? Named for the Infiniti row of 2026-09-15, where a
-// thread between two of the PEO's own people — we were merely copied — read as
-// a reply owed and the stage said "Answer Tom. They wrote today." Nobody had
-// written to him.
+// thread between two of the PEO's own people read as a reply owed and the
+// stage said "Answer Tom. They wrote today." Nobody had written to him.
 //
-// A message to a colleague still counts: a reply that lands in a colleague's
-// inbox has still reached us, and the second record already holds that
-// position (src/lib/groundwork/day.ts — "no bump; the move flips to
-// coordination instead"). What does NOT count is a message addressed to
-// another of the account's own people.
+// A message to a colleague counts: a reply that lands in a colleague's inbox
+// has still reached us, and the second record already holds that position
+// (src/lib/groundwork/day.ts — "no bump; the move flips to coordination
+// instead").
 //
-// Conservative on purpose. It answers TRUE when the line names no recipient,
-// so a capture that never carried a To line keeps the answer it had before
-// this rule existed. Taking a real reply away is the worse failure of the two,
-// and the guard needs evidence to do it (evidence or nothing).
+// READ THE COUNT BEFORE TRUSTING THE NAME. The actors line's recipient slot is
+// not the recipient list. The cleaner is told, in as many words, that when a
+// message has several recipients "to" names the person on the ACCOUNT'S side,
+// never a @prismhr.com colleague, even when the colleague leads the To line
+// (src/lib/intel/ai-clean.ts) — because our own side is on nearly every thread
+// and identifies nobody. Everyone else collapses to "+N". So on a collapsed
+// line an account-side name is exactly what the contract promises whether we
+// were on it or not, and reading absence from it is reading nothing.
+//
+// Measured before this was written the second time: of 39 entries the naive
+// rule demoted across the whole record, 35 sat behind a "+N" that could have
+// held the operator. Only where the line names ONE recipient is that name the
+// whole truth, and only there may a reply be taken away.
+//
+// So: TRUE unless the line names a single recipient who is not ours. That is
+// narrow, and deliberately — it does not settle the Infiniti row, which
+// carries "+3". Settling that one needs the capture to keep the recipients it
+// currently throws away, not a cleverer reading of what survives.
 export function isAddressedToUs(actors: string, roster: readonly string[]): boolean {
+  // "+N" means the line dropped N recipients on the floor. Any of them could
+  // be us, and the contract above says the one it kept is theirs by design.
+  if (/\+\d+\s*$/.test((actors ?? "").trim())) return true;
   const rcpt = recipientOf(actors);
   if (!rcpt) return true;
   if (isHomeSideName(rcpt, roster)) return true;

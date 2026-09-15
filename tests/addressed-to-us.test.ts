@@ -82,9 +82,19 @@ describe("isAddressedToUs", () => {
     assert.equal(isAddressedToUs("Chassie Smith → someone@prismhr.com", HOME), true);
   });
 
-  test("a message between two of their own people is not", () => {
-    assert.equal(isAddressedToUs("Tom Harrison → Javier Ramirez +3", HOME), false);
-    assert.equal(isAddressedToUs("Scott Smrkovski → Tom Harrison +1", HOME), false);
+  test("a message to one of their own people, and only them, is not", () => {
+    assert.equal(isAddressedToUs("Tom Harrison → Javier Ramirez", HOME), false);
+    assert.equal(isAddressedToUs("Scott Smrkovski → Tom Harrison", HOME), false);
+  });
+
+  test("a collapsed line proves nothing, whoever it names", () => {
+    // The cleaner is told to put the ACCOUNT's person in "to" when a message
+    // has several recipients, even when a colleague leads the To line. So on a
+    // "+N" line an account-side name is what the contract promises whether we
+    // were on it or not, and the operator may be sitting in the count. Taking
+    // a reply away on that is reading absence as evidence.
+    assert.equal(isAddressedToUs("Tom Harrison → Javier Ramirez +3", HOME), true);
+    assert.equal(isAddressedToUs("Scott Smrkovski → Tom Harrison +1", HOME), true);
   });
 
   test("an unnamed recipient leaves the old answer standing", () => {
@@ -128,30 +138,37 @@ describe("names as the record actually stores them", () => {
 });
 
 describe("the Infiniti row", () => {
-  test("their internal thread is not an inbound to us", () => {
+  // Stated as a standing limitation, not a passing fix. The entry that caused
+  // the complaint reads "Tom Harrison → Javier Ramirez +3", and the three the
+  // line dropped could include the operator. The rule keeps it, so the row
+  // still says "Answer Tom" until the capture stops throwing recipients away.
+  // This test exists so the limitation is visible in the suite rather than
+  // discovered again in the room.
+  test("a collapsed internal thread is still read as inbound — the known gap", () => {
     const docs = corpusFor("INF", "Infiniti HR", {
       acctNotes: INFINITI,
+      homeSide: HOME,
+    });
+    const newest = docs.find((d) => d.text.includes("At proposal stage"))!;
+    assert.equal(newest.direction, "in");
+  });
+
+  test("the same thread on a single-recipient line is not inbound", () => {
+    // What the capture would give us if it kept one name instead of a count.
+    const docs = corpusFor("INF", "Infiniti HR", {
+      acctNotes: INFINITI.map((n) =>
+        n.id === "n5"
+          ? { ...n, actors: "Tom Harrison → Javier Ramirez" }
+          : n,
+      ),
       homeSide: HOME,
     });
     const newest = docs.find((d) => d.text.includes("At proposal stage"))!;
     assert.equal(newest.direction, undefined);
 
     const intel = extractDealIntel(docs);
-    // The operator's own 9/9 send is still the last outbound, and nothing has
-    // come back to him since.
     assert.equal(intel.lastOutbound?.slice(0, 10), "2026-09-09");
-    assert.ok(
-      !intel.lastInbound || intel.lastInbound < "2026-09-09",
-      `lastInbound should not be their internal thread, got ${intel.lastInbound}`,
-    );
-  });
 
-  test("the stage stops telling the operator to answer Tom", () => {
-    const docs = corpusFor("INF", "Infiniti HR", {
-      acctNotes: INFINITI,
-      homeSide: HOME,
-    });
-    const intel = extractDealIntel(docs);
     const read = readDeal({
       accountName: "Infiniti HR",
       step: null,
@@ -164,10 +181,7 @@ describe("the Infiniti row", () => {
       openOwed: [{ text: "Send the calendar invite once they pick a window" }],
       now: new Date("2026-09-15T18:00:00"),
     });
-    assert.ok(
-      !/^Answer Tom\b/.test(read.move),
-      `stage still answers Tom: ${read.move}`,
-    );
+    assert.ok(!/^Answer Tom\b/.test(read.move), `stage still answers Tom: ${read.move}`);
   });
 
   test("a real reply from Tom to the operator still owes an answer", () => {
