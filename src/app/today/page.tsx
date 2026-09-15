@@ -25,7 +25,8 @@ import {
 import { EdgeTray } from "./edge-tray";
 import { SpineRail } from "./spine-rail";
 import { DASH_NODES } from "@/lib/dashboard/stages";
-import { peos } from "@/lib/book";
+import { csms, peos } from "@/lib/book";
+import { homeSideFrom } from "@/lib/pipeline/build";
 import { contactsFor } from "@/lib/book/contacts";
 import { relationshipFor } from "@/lib/intel/relationship";
 import { AccountChip } from "./account-chip";
@@ -635,6 +636,10 @@ export default async function TodayPage({
   const briefNow = new Date();
   const briefDayKey = userDayKey(briefNow);
   const briefIdByName = new Map(peos.map((p) => [p.name.toLowerCase(), p.id]));
+  // Our own side, over the whole book — the inbound test needs it to tell a
+  // reply that reached us from a thread between two of the account's own
+  // people (Infiniti HR, 2026-09-15).
+  const ourSide = [...csms, ...homeSideFrom(acctNotes)];
   const briefCards: BriefCard[] = [];
   const docsByCard: Record<string, CorpusDoc[]> = {};
   const intelByCard: Record<string, DealIntel> = {};
@@ -647,6 +652,7 @@ export default async function TodayPage({
       "";
     const docs = corpusFor(acctId, card.name, {
       acctNotes: acctNotes.get(acctId),
+      homeSide: ourSide,
       todos: todos.filter((t) => acctId && t.accountId === acctId),
       touches: touches.filter(
         (t) =>
@@ -735,7 +741,7 @@ export default async function TodayPage({
     const aIntel =
       (dashCard && intelByCard[dashCard.id]) ??
       extractDealIntel(
-        corpusFor(a.id, a.name, { acctNotes: acctNotes.get(a.id) }),
+        corpusFor(a.id, a.name, { acctNotes: acctNotes.get(a.id), homeSide: ourSide }),
         digestFor(a.id) ?? digestForCardName(a.name),
       );
     const questions = askNextFor({

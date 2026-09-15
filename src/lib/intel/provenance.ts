@@ -36,6 +36,128 @@ export function isHomeSideName(name: string, roster: readonly string[]): boolean
   });
 }
 
+// The stored recipient list, which is one string because the column is one
+// string. Names are comma-joined on write; a name carrying its own comma is
+// not a thing the cleaner emits (it normalizes "Last, First" before this).
+export function splitRecipients(stored: string | null | undefined): string[] {
+  return (stored ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+export function joinRecipients(names: readonly string[] | undefined): string {
+  return (names ?? [])
+    .map((n) => normPerson(cleanNameToken(n)))
+    .filter(Boolean)
+    .join(", ");
+}
+
+// The receiving side of an actors line — "Tom Harrison → Javier Ramirez +3"
+// names Javier. The overflow count is how many others were on it, never a
+// person, so it comes off. "" when the line names nobody on the right.
+export function recipientOf(actors: string): string {
+  const right = (actors ?? "").split("→")[1];
+  if (right === undefined) return "";
+  return normPerson(cleanNameToken(right.replace(/\+\d+\s*$/, "")));
+}
+
+// Letters people put after their name. Stripped from an allowlist, never by a
+// blanket ", X" rule — "Pegram, Sarah" is a flipped name and normPerson has to
+// still see both halves to put it back.
+const CREDENTIALS =
+  /,\s*(?:PHR|SPHR|GPHR|SHRM-?S?CP|CPA|CPP|CEBS|MBA|JD|PMP|CPC|Jr\.?|Sr\.?|I{2,3})\.?\s*$/i;
+
+// Display quotes a mail client leaves hanging off a name, stripped only at the
+// EDGES. An apostrophe INSIDE a name belongs to the name: scrubbing quotes
+// blindly turned "Pat O'Neil" into "Pat O Neil", which then matched no roster
+// entry and — on a single-recipient line — threw a real reply away. Twenty-five
+// people in the book carry one (raised by review, 2026-09-15).
+const EDGE_QUOTES = /^["'“”‘’`]+|["'“”‘’`]+$/g;
+
+// A name as the record actually stores it, not as it ought to look. Captures
+// come out of mail clients half-parsed: `Anika Steenstra >` keeps the tail of a
+// stripped address, `"Melanie Dreyer` keeps the open quote of a display name,
+// `Sarah Pegram, PHR` carries credentials. Left alone, that stray `>` made a
+// CSM's own name fail to match the roster and demoted a real client reply
+// (found sweeping the record before shipping the inbound test, 2026-09-15).
+export function cleanNameToken(raw: string): string {
+  return (
+    (raw ?? "")
+      // Angle brackets delimit an address and are never part of a name, so
+      // they go wherever they sit — including the lone tail left behind when
+      // only half of an address was stripped.
+      .replace(/[<>]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .replace(EDGE_QUOTES, "")
+      .trim()
+      .replace(CREDENTIALS, "")
+      .trim()
+  );
+}
+
+// Did this reach OUR side? Named for the Infiniti row of 2026-09-15, where a
+// thread between two of the PEO's own people read as a reply owed and the
+// stage said "Answer Tom. They wrote today." Nobody had written to him.
+//
+// A message to a colleague counts: a reply that lands in a colleague's inbox
+// has still reached us, and the second record already holds that position
+// (src/lib/groundwork/day.ts — "no bump; the move flips to coordination
+// instead").
+//
+// READ THE COUNT BEFORE TRUSTING THE NAME. The actors line's recipient slot is
+// not the recipient list. The cleaner is told, in as many words, that when a
+// message has several recipients "to" names the person on the ACCOUNT'S side,
+// never a @prismhr.com colleague, even when the colleague leads the To line
+// (src/lib/intel/ai-clean.ts) — because our own side is on nearly every thread
+// and identifies nobody. Everyone else collapses to "+N". So on a collapsed
+// line an account-side name is exactly what the contract promises whether we
+// were on it or not, and reading absence from it is reading nothing.
+//
+// Measured before this was written the second time: of 39 entries the naive
+// rule demoted across the whole record, 35 sat behind a "+N" that could have
+// held the operator. Only where the line names ONE recipient is that name the
+// whole truth, and only there may a reply be taken away.
+//
+// So: TRUE unless the line names a single recipient who is not ours. That is
+// narrow, and deliberately — it does not settle the Infiniti row, which
+// carries "+3". Settling that one needs the capture to keep the recipients it
+// currently throws away, not a cleverer reading of what survives.
+export function isAddressedToUs(
+  actors: string,
+  roster: readonly string[],
+  /** Every recipient the capture kept, our own side included. When the capture
+   *  carried it this IS the answer, and the collapsed-count reasoning below is
+   *  not needed. Absent on every row filed before the field existed. */
+  recipients?: readonly string[],
+): boolean {
+  const all = (recipients ?? []).map(cleanNameToken).filter(Boolean);
+  if (all.length) return all.some((n) => isOurs(n, roster));
+
+  // No list — fall back to what the actors line alone can prove.
+  // "+N" means the line dropped N recipients on the floor. Any of them could
+  // be us, and the contract above says the one it kept is theirs by design.
+  if (/\+\d+\s*$/.test((actors ?? "").trim())) return true;
+  const rcpt = recipientOf(actors);
+  if (!rcpt) return true;
+  return isOurs(rcpt, roster);
+}
+
+// One person, our side or theirs. The roster read, plus the allowance a record
+// needs: it often carries only a colleague's first name ("Anika"), the same
+// allowance the pipeline builder makes when it tells a colleague from a
+// client. That allowance can only ever KEEP an inbound, never take one away,
+// so a client who happens to share a first name with one of ours costs
+// nothing.
+function isOurs(name: string, roster: readonly string[]): boolean {
+  if (isHomeSideName(name, roster)) return true;
+  const one = name.trim().toLowerCase();
+  if (!one || one.includes(" ")) return false;
+  if (MINE_RE.test(one)) return true;
+  return roster.some((r) => (r ?? "").trim().toLowerCase().split(" ")[0] === one);
+}
+
 // The light "just-in-case" promote: traffic that doesn't carry my name but is
 // unmistakably about my product line still belongs in my working record —
 // team members moving a Global deal without cc'ing me. Deliberately narrow

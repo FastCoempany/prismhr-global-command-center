@@ -12,6 +12,13 @@ export type TimelineEntry = {
   from: string;
   to: string;
   others: number; // "+ N others"
+  /** EVERY recipient by name, our own side included — the thing `to` is not.
+   *  `to` deliberately names the account's person when a message has several
+   *  recipients, even when a colleague leads the To line, so it can never
+   *  answer "did this reach us" (Infiniti HR, 2026-09-15). This carries the
+   *  whole list so the inbound test has something to read. Optional: absent on
+   *  every capture taken before it existed, and on the rule-based parser. */
+  recipients?: string[];
   timeLabel: string; // "3:47 PM" ("" when the stamp had no time)
   dayLabel: string; // "Jul 21" | "Yesterday" | "Today" | "6/29/2026" | ""
   dayIso: string; // "2026-07-21" resolved against `now` in Chicago, "" if unknown

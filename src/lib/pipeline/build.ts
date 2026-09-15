@@ -361,6 +361,10 @@ function record(
     corpusFor(a.id, a.name, {
       acctNotes: ns.map((n) => ({ ...n, kind: n.kind ?? "account" })),
       todos: a.todos.filter((t) => !t.done),
+      // The same union the builder already uses to tell a colleague from a
+      // client, handed down so the inbound test can tell a reply that reached
+      // us from a thread between two of the account's own people.
+      homeSide: [...input.csms, ...(input.homeSide ?? [])],
     }),
     digestFor(a.id) ?? digestForCardName(a.name),
   );

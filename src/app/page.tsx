@@ -2,7 +2,8 @@ import Link from "next/link";
 import { AppWayfinder } from "@/components/app-wayfinder";
 import { SfCheckpoint } from "@/components/sf";
 import type { ChipNote } from "@/components/account-notes";
-import { peos } from "@/lib/book";
+import { csms, peos } from "@/lib/book";
+import { homeSideFrom } from "@/lib/pipeline/build";
 import { loadDashboard } from "@/lib/dashboard/data";
 import {
   loadAccountNotes,
@@ -40,6 +41,10 @@ export default async function DashboardPage() {
   // name; notes carry the account id → resolve via the book). Notetaker notes
   // deliberately do NOT land here — they live on Today and the Account Room.
   const nameById = new Map(peos.map((p) => [p.id, p.name]));
+  // Our own side, read over the whole book — the inbound test needs it to tell
+  // a reply that reached us from a thread between two of the account's own
+  // people (Infiniti HR, 2026-09-15).
+  const ourSide = [...csms, ...homeSideFrom(acctNotesById)];
   // Country flags on cards — auto from the research's country extraction.
   const countryByName: Record<string, string> = {};
   for (const a of accountIntel()) {
@@ -88,6 +93,7 @@ export default async function DashboardPage() {
     if (acctId) acctIdByName[card.name] = acctId;
     const docs = corpusFor(acctId, card.name, {
       acctNotes: acctNotesById.get(acctId),
+      homeSide: ourSide,
       todos: todos.filter((t) => acctId && t.accountId === acctId),
       touches: touches.filter(
         (t) =>

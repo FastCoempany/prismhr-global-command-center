@@ -60,6 +60,7 @@ const note = (
   lane: "background",
   actors: "",
   source: "",
+  recipients: "",
   createdAt: iso("2026-07-28T12:00:00Z"),
   ...over,
 });

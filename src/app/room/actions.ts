@@ -29,7 +29,7 @@ import {
 import { fileGaps, gapDismissKey, gapNs, parseGapBody } from "@/lib/room/gaps";
 import { actionBody, splitFallback, urgencyForDue } from "@/lib/room/deliverables";
 import { outcomeMarkBody } from "@/lib/room/loss";
-import { MINE_RE, actorsLine, laneFor } from "@/lib/intel/provenance";
+import { MINE_RE, actorsLine, joinRecipients, laneFor } from "@/lib/intel/provenance";
 import {
   diffFindings,
   parseResearchBody,
@@ -152,7 +152,7 @@ export async function roomPaste(
   learned?: number; // market facts + lessons filed to the playbook
   outcome?: { status: "lost" | "won"; phrase: string } | null;
   // The misfile guard: the read believes this belongs somewhere else.
-  mismatch?: { claim: string; bound: string; why?: string };
+  mismatch?: { claim: string; bound: string; why?: string; boundWhy?: string };
   readFailed?: boolean; // the read errored; the rule parser filed the record
   // The duplicate guard: this exact capture already filed to this account.
   duplicate?: boolean;
@@ -243,7 +243,12 @@ export async function roomPaste(
         ok: false,
         filed: 0,
         how: "",
-        mismatch: { claim: early.claim, bound: early.bound, why: early.why },
+        mismatch: {
+          claim: early.claim,
+          bound: early.bound,
+          why: early.why,
+          boundWhy: early.boundWhy,
+        },
         reason: `This reads like ${early.claim}, not ${acct.name} — ${early.why}.`,
       };
   }
@@ -315,7 +320,12 @@ export async function roomPaste(
       ok: false,
       filed: 0,
       how,
-      mismatch: { claim: verdict.claim, bound: verdict.bound, why: verdict.why },
+      mismatch: {
+        claim: verdict.claim,
+        bound: verdict.bound,
+        why: verdict.why,
+        boundWhy: verdict.boundWhy,
+      },
       reason: `This reads like ${verdict.claim}, not ${acct.name} — ${verdict.why}.`,
     };
   }
@@ -399,6 +409,8 @@ export async function roomPaste(
     let filed = 0;
     for (const e of entries.slice(0, 40)) {
       const actors = actorsLine(e.from ?? "", e.to ?? "", e.others ?? 0);
+      // The whole receiving side, which `actors` deliberately does not carry.
+      const recipients = joinRecipients(e.recipients);
       const when = [e.dayLabel, e.timeLabel].filter(Boolean).join(" ");
       const glyph = e.kind === "task" ? "✔" : e.kind === "call" ? "☎" : "✉";
       const who = actors || "(unattributed)";
@@ -415,6 +427,7 @@ export async function roomPaste(
         ),
         lane: laneFor(actors, `${e.subject ?? ""}\n${e.body ?? ""}`),
         actors,
+        recipients,
         source: `${
           liveDialect === "OL"
             ? "outlook"
@@ -1182,6 +1195,11 @@ export async function roomGapsRefill(
     const found = research[0] ? parseResearchBody(research[0].body) : null;
     const intel = extractDealIntel(
       corpusFor(acct.id, acct.name, {
+        // No homeSide here on purpose. This path loads forty notes for ONE
+        // account, so the book-wide "works across several accounts" read that
+        // recognises a colleague is not available, and a partial roster would
+        // demote a real reply to one of them. The inbound test sits out; this
+        // corpus feeds the ask builder, which never reads direction.
         acctNotes: notes.map((n, i) => ({
           id: String(i),
           body: n.body,

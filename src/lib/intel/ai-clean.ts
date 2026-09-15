@@ -40,6 +40,9 @@ const MAX_ACTIONS = 6;
 const MAX_GAPS = 5;
 const MAX_INTEL = 4;
 const MAX_LESSONS = 3;
+// A header can carry a lot of people. Enough to hold a real distribution list
+// without letting a reply grow the row without bound.
+const MAX_RECIPIENTS = 30;
 
 // Structured-output schema — the API guarantees the reply parses to this.
 const SCHEMA = {
@@ -55,6 +58,7 @@ const SCHEMA = {
           from: { type: "string" },
           to: { type: "string" },
           others: { type: "integer" },
+          recipients: { type: "array", items: { type: "string" } },
           timeLabel: { type: "string" },
           dayLabel: { type: "string" },
           dayIso: { type: "string" },
@@ -66,6 +70,7 @@ const SCHEMA = {
           "from",
           "to",
           "others",
+          "recipients",
           "timeLabel",
           "dayLabel",
           "dayIso",
@@ -138,6 +143,7 @@ Rules:
 - Strip ALL chrome and noise: Lightning UI labels ("Show more actions", "Expand All", field names like "From Address"/"Text Body"/"Priority"), security banners, "external sender" warnings, thread:: tokens, record ids, Zoom/Teams invite blocks (dial-ins, meeting ids, passcodes), email signatures, legal disclaimers, support-desk boilerplate ("NEVER include SSN…", "Responses via email to this case…").
 - body: the actual human substance only, concise, at most 600 characters. Never invent or embellish — omit rather than guess. NEVER write header lines into the body — no "From:", "To:", "Sent:", "Cc:", "Subject:", no "authored by", no "written by". Who wrote to whom belongs in the from/to fields; the app renders that itself. Inside the body, name a person only when the sentence needs them ("Bryce wants the deposit language cut").
 - subject: the real subject with "RE:/FW:" kept but case-thread tokens removed.
+- recipients: EVERY person the message went to, To and Cc alike, as names normalized the same way — INCLUDING our own side. This is the one field where a @prismhr.com colleague or the operator must be listed; "to" below deliberately hides them and cannot answer "did this reach us". Order as the header had them. Empty array only when the header named no recipient at all.
 - from / to: person names, normalized: first-person forms ("You", "me") become "Antaeus Coe" (the operator whose mailbox this is); "Last, First" renders as "First Last"; email-address tails in angle brackets drop. others: count of additional recipients ("and 1 other" → 1), else 0. WHEN A MESSAGE HAS SEVERAL RECIPIENTS, "to" names the person on the ACCOUNT'S side — never a @prismhr.com colleague, even when they lead the To line. Our own side (prismhr.com) is on nearly every thread and identifies nobody; a CSM who made an introduction is not who the operator is waiting on. Only when every recipient is @prismhr.com does "to" name a colleague. The count in others is unchanged either way.
 - Dates: dayIso is YYYY-MM-DD resolved against today's date given in the message ("Today"/"Yesterday"/"Jul 30, 2025" all resolve). dayLabel is a short human label ("Jul 30" or "Today"). timeLabel like "5:27 PM", or "" if none. Unknown dates: dayIso "".
 - kind: "email" for emails, "call" for logged calls, "task" for tasks/meetings/upcoming items.
@@ -226,6 +232,16 @@ export function sanitizeAiResult(raw: unknown): AiCleanResult {
         timeLabel: str(x.timeLabel, 20),
         dayLabel: str(x.dayLabel, 20),
         dayIso: iso ? (x.dayIso as string) : "",
+        // The whole receiving side, normalized exactly like from/to. Missed on
+        // the first pass — the field was added to the schema and the prompt and
+        // then dropped here, so it never reached storage and the guard that
+        // reads it saw "" forever (raised by review, 2026-09-15).
+        recipients: Array.isArray(x.recipients)
+          ? x.recipients
+              .slice(0, MAX_RECIPIENTS)
+              .map((n) => normPerson(str(n, 80)))
+              .filter(Boolean)
+          : [],
         body: str(x.body, 800),
       });
     }

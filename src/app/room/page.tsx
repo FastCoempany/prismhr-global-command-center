@@ -126,6 +126,14 @@ export default async function RoomPage() {
   const touchMap = new Map(touches.map((t) => [t.subjectKey, t]));
   const now = new Date();
 
+  // Who counts as our side, read over the WHOLE book — the CSM column plus
+  // everyone the record shows working across several accounts. The inbound
+  // test needs it to tell a reply that reached us from a thread between two of
+  // the account's own people (Infiniti HR, 2026-09-15). Built once here rather
+  // than per row; the pipeline report below reuses it.
+  const homeSide = homeSideFrom(notesById);
+  const ourSide = [...csms, ...homeSide];
+
   // Phase 13.6 · the gap bridge. What prospects in comparable situations asked,
   // read once for the whole board. A deal inherits the questions its peers
   // provoked. Empty until the brain has read a demo — the room degrades quietly.
@@ -154,6 +162,7 @@ export default async function RoomPage() {
 
     const docs = corpusFor(accountId, card.name, {
       acctNotes: allNotes,
+      homeSide: ourSide,
       todos: todos.filter((t) => accountId && t.accountId === accountId),
       touches: touches.filter(
         (t) =>
@@ -800,7 +809,7 @@ export default async function RoomPage() {
       }),
       // The whole book, not the active slice — a colleague who works across
       // the book but appears on only two active accounts is still ours.
-      homeSide: homeSideFrom(notesById),
+      homeSide,
       csms,
       me: "Antaeus Coe",
       now,
