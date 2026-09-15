@@ -148,6 +148,29 @@ describe("names as the record actually stores them", () => {
     assert.equal(isAddressedToUs("Sarah Pegram → Anika", HOME), true);
   });
 
+  test("an apostrophe inside a name survives the cleaning", () => {
+    // Twenty-five people in the book carry one. Scrubbing quotes blindly made
+    // "Pat O'Neil" into "Pat O Neil", which matches no roster entry — and on a
+    // single-recipient line that throws a real reply away.
+    assert.equal(recipientOf("Tom Harrison → Pat O'Neil"), "Pat O'Neil");
+    assert.equal(recipientOf("Tom Harrison → D'Andra Simpkins >"), "D'Andra Simpkins");
+    assert.equal(recipientOf('Tom Harrison → "Kelly O’Brien'), "Kelly O’Brien");
+    assert.equal(
+      isAddressedToUs("Client Person → Pat O'Neil", [...HOME, "Pat O'Neil"]),
+      true,
+    );
+    assert.equal(
+      isAddressedToUs("Client Person → Pat O'Neil +1", [...HOME, "Pat O'Neil"], [
+        "Pat O'Neil",
+      ]),
+      true,
+    );
+  });
+
+  test("a flipped apostrophe name still flips", () => {
+    assert.equal(recipientOf("Tom Harrison → O'Neil, Pat"), "Pat O'Neil");
+  });
+
   test("a flipped name is not mistaken for a credential", () => {
     // "Pegram, Sarah" is one person written backwards; the credential strip
     // must not eat the half that makes her findable.

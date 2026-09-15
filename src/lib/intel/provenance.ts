@@ -68,6 +68,13 @@ export function recipientOf(actors: string): string {
 const CREDENTIALS =
   /,\s*(?:PHR|SPHR|GPHR|SHRM-?S?CP|CPA|CPP|CEBS|MBA|JD|PMP|CPC|Jr\.?|Sr\.?|I{2,3})\.?\s*$/i;
 
+// Display quotes a mail client leaves hanging off a name, stripped only at the
+// EDGES. An apostrophe INSIDE a name belongs to the name: scrubbing quotes
+// blindly turned "Pat O'Neil" into "Pat O Neil", which then matched no roster
+// entry and — on a single-recipient line — threw a real reply away. Twenty-five
+// people in the book carry one (raised by review, 2026-09-15).
+const EDGE_QUOTES = /^["'“”‘’`]+|["'“”‘’`]+$/g;
+
 // A name as the record actually stores it, not as it ought to look. Captures
 // come out of mail clients half-parsed: `Anika Steenstra >` keeps the tail of a
 // stripped address, `"Melanie Dreyer` keeps the open quote of a display name,
@@ -75,12 +82,19 @@ const CREDENTIALS =
 // CSM's own name fail to match the roster and demoted a real client reply
 // (found sweeping the record before shipping the inbound test, 2026-09-15).
 export function cleanNameToken(raw: string): string {
-  return (raw ?? "")
-    .replace(/[<>"']+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim()
-    .replace(CREDENTIALS, "")
-    .trim();
+  return (
+    (raw ?? "")
+      // Angle brackets delimit an address and are never part of a name, so
+      // they go wherever they sit — including the lone tail left behind when
+      // only half of an address was stripped.
+      .replace(/[<>]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .replace(EDGE_QUOTES, "")
+      .trim()
+      .replace(CREDENTIALS, "")
+      .trim()
+  );
 }
 
 // Did this reach OUR side? Named for the Infiniti row of 2026-09-15, where a
