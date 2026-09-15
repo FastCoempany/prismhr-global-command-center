@@ -36,6 +36,65 @@ export function isHomeSideName(name: string, roster: readonly string[]): boolean
   });
 }
 
+// The receiving side of an actors line — "Tom Harrison → Javier Ramirez +3"
+// names Javier. The overflow count is how many others were on it, never a
+// person, so it comes off. "" when the line names nobody on the right.
+export function recipientOf(actors: string): string {
+  const right = (actors ?? "").split("→")[1];
+  if (right === undefined) return "";
+  return normPerson(cleanNameToken(right.replace(/\+\d+\s*$/, "")));
+}
+
+// Letters people put after their name. Stripped from an allowlist, never by a
+// blanket ", X" rule — "Pegram, Sarah" is a flipped name and normPerson has to
+// still see both halves to put it back.
+const CREDENTIALS =
+  /,\s*(?:PHR|SPHR|GPHR|SHRM-?S?CP|CPA|CPP|CEBS|MBA|JD|PMP|CPC|Jr\.?|Sr\.?|I{2,3})\.?\s*$/i;
+
+// A name as the record actually stores it, not as it ought to look. Captures
+// come out of mail clients half-parsed: `Anika Steenstra >` keeps the tail of a
+// stripped address, `"Melanie Dreyer` keeps the open quote of a display name,
+// `Sarah Pegram, PHR` carries credentials. Left alone, that stray `>` made a
+// CSM's own name fail to match the roster and demoted a real client reply
+// (found sweeping the record before shipping the inbound test, 2026-09-15).
+export function cleanNameToken(raw: string): string {
+  return (raw ?? "")
+    .replace(/[<>"']+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(CREDENTIALS, "")
+    .trim();
+}
+
+// Did this reach OUR side? Named for the Infiniti row of 2026-09-15, where a
+// thread between two of the PEO's own people — we were merely copied — read as
+// a reply owed and the stage said "Answer Tom. They wrote today." Nobody had
+// written to him.
+//
+// A message to a colleague still counts: a reply that lands in a colleague's
+// inbox has still reached us, and the second record already holds that
+// position (src/lib/groundwork/day.ts — "no bump; the move flips to
+// coordination instead"). What does NOT count is a message addressed to
+// another of the account's own people.
+//
+// Conservative on purpose. It answers TRUE when the line names no recipient,
+// so a capture that never carried a To line keeps the answer it had before
+// this rule existed. Taking a real reply away is the worse failure of the two,
+// and the guard needs evidence to do it (evidence or nothing).
+export function isAddressedToUs(actors: string, roster: readonly string[]): boolean {
+  const rcpt = recipientOf(actors);
+  if (!rcpt) return true;
+  if (isHomeSideName(rcpt, roster)) return true;
+  // A record often carries only a colleague's first name ("Anika") — the same
+  // allowance the pipeline builder makes when it tells a colleague from a
+  // client. It can only ever KEEP an inbound, never take one away, so a client
+  // who happens to share a first name with one of ours costs nothing.
+  const one = rcpt.toLowerCase();
+  if (one.includes(" ")) return false;
+  if (MINE_RE.test(one)) return true;
+  return roster.some((r) => (r ?? "").trim().toLowerCase().split(" ")[0] === one);
+}
+
 // The light "just-in-case" promote: traffic that doesn't carry my name but is
 // unmistakably about my product line still belongs in my working record —
 // team members moving a Global deal without cc'ing me. Deliberately narrow

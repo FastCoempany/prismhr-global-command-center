@@ -1192,6 +1192,11 @@ export async function roomGapsRefill(
     const found = research[0] ? parseResearchBody(research[0].body) : null;
     const intel = extractDealIntel(
       corpusFor(acct.id, acct.name, {
+        // No homeSide here on purpose. This path loads forty notes for ONE
+        // account, so the book-wide "works across several accounts" read that
+        // recognises a colleague is not available, and a partial roster would
+        // demote a real reply to one of them. The inbound test sits out; this
+        // corpus feeds the ask builder, which never reads direction.
         acctNotes: notes.map((n, i) => ({
           id: String(i),
           body: n.body,

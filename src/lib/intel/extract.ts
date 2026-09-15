@@ -15,7 +15,7 @@ import {
 import { digestFor, digestForCardName, type DigestEntry } from "./digest";
 import { isCloser, isMachinery } from "./closer";
 import { effectiveAt } from "./clock";
-import { MINE_RE, inferActors } from "./provenance";
+import { MINE_RE, inferActors, isAddressedToUs } from "./provenance";
 import { EMPTY_INTEL, type DealIntel, type ProductKey, type SourcedFact } from "./types";
 
 const MONTHS: Record<string, number> = {
@@ -114,9 +114,21 @@ export function corpusFor(
       message?: string;
       log: { at: string; body: string }[];
     }[];
+    // Everyone who counts as our side: the CSM column unioned with whoever the
+    // record shows working across several accounts (pipeline/build's
+    // homeSideFrom). Only the inbound test reads it, and only to tell a reply
+    // that reached us from a thread between two of the account's own people.
+    // Optional, and an omitted roster leaves the old read standing — a caller
+    // that has not been taught the roster keeps replies rather than quietly
+    // losing them.
+    homeSide?: readonly string[];
   },
 ): CorpusDoc[] {
   const docs: CorpusDoc[] = [];
+  // Undefined is not "an empty roster" — it is "this caller has not been
+  // taught who we are", and the inbound test sits out entirely rather than
+  // demoting a reply to a colleague it cannot recognise.
+  const homeSide = stores.homeSide;
   for (const n of stores.acctNotes ?? []) {
     const isSf = /^[✉✔☎☰] /.test(n.body);
     // Direction from the ACTORS line's sender side — the head's em-dash slot
@@ -132,6 +144,15 @@ export function corpusFor(
     // reply-owed and never resets the motion clocks — the ledger reads
     // through it to the last substantive message.
     const attributed = sender.trim().length > 0;
+    // ...and it has to have reached us. Direction used to be read off the
+    // sender alone: not the operator, has a name, not machinery, not a
+    // sign-off, therefore inbound — the receiving half of the line was never
+    // consulted. So a thread between two of the account's OWN people, which we
+    // were merely copied on, registered exactly like a reply addressed to us
+    // (Infiniti HR, 2026-09-15: "Answer Tom. They wrote today." — Tom had
+    // written to Javier). A message to a colleague still counts as reaching
+    // us; a message to the PEO's own people does not.
+    const toUs = homeSide === undefined || isAddressedToUs(actors, homeSide);
     // One predicate for everything that arrives without a person deciding to
     // write it — auto-replies, calendar responses, routed-lead alerts,
     // delivery notices (src/lib/intel/closer.ts). Rebuilding this rule one
@@ -152,7 +173,7 @@ export function corpusFor(
         ? undefined
         : MINE_RE.test(sender) || /—\s*Antaeus/i.test(n.body.split("\n")[0] ?? "")
           ? "out"
-          : attributed && !machinery && !closer
+          : attributed && !machinery && !closer && toUs
             ? "in"
             : undefined,
       people: actors ? peopleFromActors(actors) : peopleIn(n.body),
