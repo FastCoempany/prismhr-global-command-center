@@ -42,6 +42,7 @@
 // and losing a real one is the worse failure.
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
+import { sanitizeAiResult } from "@/lib/intel/ai-clean";
 import { corpusFor, extractDealIntel } from "@/lib/intel/extract";
 import {
   isAddressedToUs,
@@ -317,6 +318,74 @@ describe("the recipient list, once the capture keeps one", () => {
     );
     const docs2 = corpusFor("INF", "Infiniti HR", { acctNotes: withUs, homeSide: HOME });
     assert.equal(docs2.find((d) => d.text.includes("At proposal stage"))!.direction, "in");
+  });
+});
+
+describe("the list survives the whole path, model reply to stored string", () => {
+  // The gap that let the field ship inert: every test above handed the list
+  // straight to the rule, so none of them crossed the sanitizer — which was
+  // building each entry field by field and simply never copied it. The schema
+  // had it, the prompt asked for it, the guard read it, and it was "" forever.
+  const reply = {
+    entries: [
+      {
+        kind: "email",
+        subject: "Re: pricing",
+        from: "Tom Harrison",
+        to: "Javier Ramirez",
+        others: 2,
+        recipients: ["Javier Ramirez", "Antaeus Coe", "Scott Smrkovski"],
+        timeLabel: "3:46 PM",
+        dayLabel: "Today",
+        dayIso: "2026-09-15",
+        body: "At proposal stage.",
+      },
+    ],
+  };
+
+  test("the sanitizer keeps it", () => {
+    const e = sanitizeAiResult(reply).entries[0]!;
+    assert.deepEqual(e.recipients, ["Javier Ramirez", "Antaeus Coe", "Scott Smrkovski"]);
+  });
+
+  test("and the operator inside it keeps the reply", () => {
+    const e = sanitizeAiResult(reply).entries[0]!;
+    const stored = joinRecipients(e.recipients);
+    assert.equal(stored, "Javier Ramirez, Antaeus Coe, Scott Smrkovski");
+    assert.equal(
+      isAddressedToUs("Tom Harrison → Javier Ramirez +2", HOME, splitRecipients(stored)),
+      true,
+    );
+  });
+
+  test("their own people only, and the reply goes", () => {
+    const theirs = {
+      entries: [
+        { ...reply.entries[0], recipients: ["Javier Ramirez", "Scott Smrkovski"] },
+      ],
+    };
+    const stored = joinRecipients(sanitizeAiResult(theirs).entries[0]!.recipients);
+    assert.equal(
+      isAddressedToUs("Tom Harrison → Javier Ramirez +2", HOME, splitRecipients(stored)),
+      false,
+    );
+  });
+
+  test("a reply with no recipients field degrades, never throws", () => {
+    const bare = { entries: [{ ...reply.entries[0], recipients: undefined }] };
+    assert.deepEqual(sanitizeAiResult(bare).entries[0]!.recipients, []);
+    const junk = { entries: [{ ...reply.entries[0], recipients: "not an array" }] };
+    assert.deepEqual(sanitizeAiResult(junk).entries[0]!.recipients, []);
+  });
+
+  test("names are normalized on the way through, like from and to", () => {
+    const messy = {
+      entries: [{ ...reply.entries[0], recipients: ["Steenstra, Anika", "  ", "You"] }],
+    };
+    assert.deepEqual(sanitizeAiResult(messy).entries[0]!.recipients, [
+      "Anika Steenstra",
+      "Antaeus Coe",
+    ]);
   });
 });
 

@@ -40,6 +40,9 @@ const MAX_ACTIONS = 6;
 const MAX_GAPS = 5;
 const MAX_INTEL = 4;
 const MAX_LESSONS = 3;
+// A header can carry a lot of people. Enough to hold a real distribution list
+// without letting a reply grow the row without bound.
+const MAX_RECIPIENTS = 30;
 
 // Structured-output schema — the API guarantees the reply parses to this.
 const SCHEMA = {
@@ -229,6 +232,16 @@ export function sanitizeAiResult(raw: unknown): AiCleanResult {
         timeLabel: str(x.timeLabel, 20),
         dayLabel: str(x.dayLabel, 20),
         dayIso: iso ? (x.dayIso as string) : "",
+        // The whole receiving side, normalized exactly like from/to. Missed on
+        // the first pass — the field was added to the schema and the prompt and
+        // then dropped here, so it never reached storage and the guard that
+        // reads it saw "" forever (raised by review, 2026-09-15).
+        recipients: Array.isArray(x.recipients)
+          ? x.recipients
+              .slice(0, MAX_RECIPIENTS)
+              .map((n) => normPerson(str(n, 80)))
+              .filter(Boolean)
+          : [],
         body: str(x.body, 800),
       });
     }
