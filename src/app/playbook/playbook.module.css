@@ -569,3 +569,9 @@
   font-size: 13.5px;
   margin: 0;
 }
+
+/* The Playbook runs wide: The Sheet is three panels side by side, and the
+   call sheet's three panes breathe at the same width. */
+main.wide {
+  max-width: 1680px;
+}

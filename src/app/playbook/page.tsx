@@ -4,6 +4,8 @@ import { DISCOVERY, questionsFor } from "@/lib/intel/discovery";
 import { PRODUCT_BANK } from "@/lib/intel/discovery-product";
 import { SCENARIOS } from "@/lib/intel/scenarios";
 import { knowledgeKey, readPlaybook } from "@/lib/playbook/store";
+import { COUNTRY_TALLY, countryIndex } from "@/lib/playbook/countries";
+import { CUES, PRODUCTS } from "@/lib/playbook/products";
 import { fetchSecondRecords } from "@/lib/activity/read";
 import { approveSecondDraft, dismissSecondDraft } from "./actions";
 import { loadAccountNotes, loadDispositions } from "@/lib/today/overlay";
@@ -11,13 +13,18 @@ import { prospectAsks } from "@/lib/intranet/store";
 import { harvestBattlecards } from "@/lib/intranet/bridges";
 import { PlaybookClient } from "./playbook-client";
 import styles from "../command-center.module.css";
+import page from "./playbook.module.css";
 
 export const dynamic = "force-dynamic";
 
-// The Playbook — what the whole book has taught, plus the card that puts it to
-// work. Three registers: the lessons deals leave behind, the market facts that
-// outlive the account they came from, and the discovery card, shaped to the
-// scenario in front of you.
+// The Playbook — the products first (The Sheet, founder-decreed 2026-09-15),
+// then the card that puts the bank to work, then what the whole book has
+// taught: the lessons deals leave behind and the market facts that outlive the
+// account they came from.
+//
+// The country sheet never travels with the page. The index arrives — names,
+// aliases, how many points are on file — and a country's depth comes down from
+// /playbook/country when the operator names one.
 export default async function PlaybookPage({
   searchParams,
 }: {
@@ -133,14 +140,14 @@ export default async function PlaybookPage({
   return (
     <>
       <AppWayfinder current="Playbook" />
-      <main className={styles.wrap}>
+      <main className={`${styles.wrap} ${page.wide}`}>
         <div className={styles.pageHead}>
           <h1 className={styles.h1}>Playbook</h1>
           <p className={styles.sub}>
             {/* One template string: the compiler drops the boundary space
                 between an expression child and its text sibling here, which
                 rendered "113questions" (caught live, 2026-08-24). */}
-            {`${questions.length} questions across EOR, contractor management, and global payroll, shaped by the scenario you're actually in. Below: what we've learned, carried across every account.`}
+            {`${PRODUCTS.length} products, ${CUES.length} things partners say about them, ${COUNTRY_TALLY.priced} countries priced. Beside them: ${questions.length} questions shaped by the scenario you're actually in, and what we've learned across every account.`}
           </p>
         </div>
         {srDrafts.length > 0 && (
@@ -201,6 +208,8 @@ export default async function PlaybookPage({
             rooms: p.rooms.join(", "),
           }))}
           oursNotTheirs={harvest.oursNotTheirs}
+          countries={countryIndex()}
+          countryTally={COUNTRY_TALLY}
         />
       </main>
     </>
