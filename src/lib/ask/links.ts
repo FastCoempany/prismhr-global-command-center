@@ -62,12 +62,12 @@ export function askLinks(
         );
       continue;
     }
-    // A playbook question cited → the Playbook, scrolled to that exact card.
-    const qm = /^question:(.+)$/.exec(c.originRef ?? "");
-    if (c.origin === "playbook" && qm) {
-      push("The Playbook card.", `/playbook?open=${encodeURIComponent(qm[1])}`);
-      continue;
-    }
+    // A playbook question cited → no door. The Call Sheet is retired
+    // (founder-decreed 2026-09-15) and the bank has no browsable card any
+    // more, so there is nowhere to send them. The citation still carries the
+    // question's own text; a link at a page that cannot show it would be the
+    // dead end the click-depth law bans.
+    if (c.origin === "playbook") continue;
     // Account-record material → the account's own drilldown.
     if (ACCOUNT_ORIGINS.has(c.origin) && c.accountId && !c.accountId.includes(":")) {
       const name = nameOf?.(c.accountId) ?? "";

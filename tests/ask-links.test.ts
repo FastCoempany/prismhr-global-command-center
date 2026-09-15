@@ -25,13 +25,20 @@ describe("askLinks — every door lands on the exact thing", () => {
     assert.equal(out[0].label, "Open Employer Solutions Corp.");
     assert.equal(out[0].href, "/accounts?focus=ESC0000000000001");
   });
-  test("a playbook question cites → the Playbook, scrolled to that card", () => {
+  test("a playbook question cites → no door, because the card is retired", () => {
+    // The Call Sheet went out on 2026-09-15 and the bank has no browsable
+    // card any more. A link labelled for a page that cannot show the question
+    // is the dead end the click-depth law bans, so the citation carries its
+    // own text and offers nothing to click.
     const out = askLinks({
       question: "q",
       accounts: [],
       citations: [cite({ origin: "playbook", originRef: "question:gp-funding" })],
     });
-    assert.ok(out.some((l) => l.href === "/playbook?open=gp-funding"));
+    assert.equal(
+      out.some((l) => l.href.startsWith("/playbook?open=")),
+      false,
+    );
   });
   test("account-record material links the account, named by the book", () => {
     const out = askLinks(

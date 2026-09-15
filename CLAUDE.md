@@ -482,7 +482,8 @@ state only ever advances the derived one (boardLift, loadCommand).
 
 The products are the entry point, not the scenarios. Three panels, all in
 view: the country on the left, the product in the middle, what partners say
-about it on the right.
+about it on the right. This is the whole instrument — full steam ahead on it,
+founder-decreed 2026-09-15.
 
 - **The doors.** Five products — employer of record, global payroll,
   contractor management, contractor of record, talent. Two contractor doors,
@@ -506,16 +507,25 @@ about it on the right.
   line, long values behind "the rest". Puerto Rico and every other country
   live here. A country we price but have not written up says so (∅); one we
   do not cover says so too.
-- The Call Sheet keeps its seat as the second tab, and the learned register
-  (lessons, market facts, prospect asks) and the second record's draft queue
-  are untouched.
+- **The Call Sheet is retired** (founder-decreed 2026-09-15). The three panes,
+  their stylesheet and the `?open=` deep link are gone. Its bank survives as a
+  library — the 113 discovery questions still feed the battlecard harvest, the
+  ask room's citations and the intranet — but it has no browsable surface, and
+  nothing links at one: a playbook citation in the brain's answer now offers no
+  door, because a link at a page that cannot show the question is the dead end
+  the click-depth law bans. What is left beside the face is the learned
+  register (lessons, market facts, prospect asks) and the second record's
+  draft queue, both untouched.
+- **No redactions on the country wing** (founder-decreed 2026-09-15, answering
+  the open question of 2026-09-14). Statutory country facts — wage floors, VAT,
+  social contributions, severance — render exactly as authored. 97 of 1,520
+  values carry a figure and every one of them stands. The money doctrine is
+  unchanged where it was aimed: OUR money — pricing, deal figures, what a
+  client pays — still never renders, and the suite fails the build if a figure
+  reaches the product copy.
 - The ship audit runs in the suite, not by hand: `tests/playbook-sheet.test.ts`
   holds the graph audit, the name scan, the money scan and the wing's index
   against the sheet it stands on.
-- Statutory country facts on the wing (wage floors, VAT, severance) carry
-  their figures. The money doctrine guards OUR money; a government's published
-  wage floor is the country fact the wing exists to answer with. Redacting it
-  is one line in the route if the founder decides otherwise.
 
 ## Other standing decrees
 
