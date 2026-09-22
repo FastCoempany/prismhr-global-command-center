@@ -1,0 +1,13 @@
+-- Every recipient a capture carried, comma-joined, our own side included.
+--
+-- `actors` cannot answer "did this reach us": the cleaner is told to name the
+-- ACCOUNT's person in its recipient slot whenever a message has several
+-- recipients, even when a colleague leads the To line, because our own side is
+-- on nearly every thread and identifies nobody. Everyone else collapses to a
+-- count. So the inbound test had nothing sound to read, and the HomeRoom asked
+-- the operator to answer a message put to someone else (Infiniti HR,
+-- 2026-09-15).
+--
+-- Additive and defaulted. Existing rows read as "no list", which the rule
+-- falls back on exactly as it behaved before this column existed.
+ALTER TABLE "AccountNote" ADD COLUMN "recipients" TEXT NOT NULL DEFAULT '';

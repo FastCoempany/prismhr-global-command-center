@@ -17,6 +17,10 @@ export type RouteAccount = {
   // call filed to Regis, 2026-09-03). Names the book binds to more than one
   // account are excluded upstream: they identify nobody.
   people?: string[];
+  // Trading names the book's own `name` does not carry. A company filed under
+  // its legal name is spoken about by its trade name, and a capture that says
+  // one should find the other (src/lib/book/merge.ts).
+  aka?: string[];
 };
 
 export type RouteHit = {
@@ -159,8 +163,13 @@ export function routeCapture(
         score = 75;
         why = `${titleCase(personHit)} is ${a.name}'s contact`;
       } else {
+        const spellings = [a.name, ...(a.aka ?? [])];
+        const named = spellings.find((label) => {
+          const n = normName(label);
+          return n && n.length >= 4 && normedText.includes(` ${n} `);
+        });
         const n = normName(a.name);
-        if (n && n.length >= 4 && normedText.includes(` ${n} `)) {
+        if (named) {
           score = 70;
           why = `named in the text`;
         } else {

@@ -7,6 +7,7 @@
 // A signal one door can read and another cannot is how the same capture gets
 // two different answers.
 
+import { AKA } from "./merge";
 import { peos } from "./index";
 import { contactsFor, peopleIndex, personKey } from "./contacts";
 import { domainOf, type RouteAccount } from "@/lib/route-capture";
@@ -35,6 +36,7 @@ export function routingRoster(): RouteAccount[] {
     return {
       id: p.id,
       name: p.name,
+      aka: AKA[p.id] ?? [],
       emails: [...new Set(emails)],
       domains: [...new Set(domains)],
       people: [...new Set(people)],
