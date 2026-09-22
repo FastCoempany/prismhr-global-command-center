@@ -1,5 +1,5 @@
 import book from "./book.json";
-import { canonicalAccountId, isAliasedAway } from "./merge";
+import { canonicalAccountId, isAliasedAway, RENAME } from "./merge";
 
 export type FitTier = "high" | "medium" | "low";
 
@@ -67,9 +67,10 @@ const OFF_BOOK: Peo[] = [
 // A duplicate row never reaches the app as its own account (see ./merge.ts).
 // Its stored record still resolves here through canonicalAccountId, so nothing
 // filed under the old id is lost — it just reads as the account it belongs to.
-export const peos = [...(book.peos as Peo[]), ...OFF_BOOK].filter(
-  (p) => !isAliasedAway(p.id),
-);
+export const peos = [...(book.peos as Peo[]), ...OFF_BOOK]
+  .filter((p) => !isAliasedAway(p.id))
+  // The name the operator uses, where the export's own differs (./merge.ts).
+  .map((p) => (RENAME[p.id] ? { ...p, name: RENAME[p.id]! } : p));
 export const csms = book.csms as string[];
 
 const byId = new Map(peos.map((p) => [p.id, p]));

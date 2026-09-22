@@ -14,7 +14,7 @@
 // filed under, and every surface resolves them to one account.
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
-import { ALIASES, canonicalAccountId, isAliasedAway } from "@/lib/book/merge";
+import { AKA, ALIASES, RENAME, canonicalAccountId, isAliasedAway } from "@/lib/book/merge";
 import { getPeo, peos } from "@/lib/book";
 import { routingRoster } from "@/lib/book/roster";
 import { routeCapture } from "@/lib/route-capture";
@@ -81,7 +81,7 @@ describe("the book speaks one account", () => {
     const byShell = getPeo(SHELL);
     assert.ok(byShell, "the shell id resolved to nothing");
     assert.equal(byShell!.id, REAL);
-    assert.match(byShell!.name, /Southern Personnel/);
+    assert.equal(byShell!.name, "myhrpros (SPMI)");
   });
 
   test("the surviving row is the one carrying the substance", () => {
@@ -92,23 +92,60 @@ describe("the book speaks one account", () => {
   });
 });
 
+describe("the name the operator uses", () => {
+  test("the row is called what people call it, carrying the entity", () => {
+    // Nobody says "Southern Personnel Management, Inc." The people are
+    // @myhrpros.com and the calls say "My HR Pros"; the legal entity rides in
+    // the parenthesis so the row still reconciles with Salesforce.
+    assert.equal(getPeo(REAL)!.name, "myhrpros (SPMI)");
+    assert.equal(peos.filter((p) => p.name === "myhrpros (SPMI)").length, 1);
+  });
+
+  test("the legal name it left behind is still one of its spellings", () => {
+    assert.ok(
+      (AKA[REAL] ?? []).some((n) => /Southern Personnel/.test(n)),
+      "dropping the legal name from the display would lose it entirely",
+    );
+  });
+
+  test("a rename never invents an account", () => {
+    const ids = new Set(peos.map((p) => p.id));
+    for (const id of Object.keys(RENAME))
+      assert.ok(ids.has(id), `${id} is renamed but is not an account`);
+  });
+});
+
 describe("routing finds it under either name", () => {
   const roster = routingRoster();
 
-  test("the trade name routes to the legal account", () => {
-    const r = routeCapture(
-      "Spoke with the team at My HR Professionals about a global hire.",
-      roster,
-    );
-    assert.equal(r.best?.id, REAL, `routed to ${r.best?.name}`);
+  test("every spelling of the trade name routes to the one account", () => {
+    // A tape says one form, a signature says another, and they normalize
+    // three different ways.
+    for (const said of ["My HR Professionals", "My HR Pros", "MyHR Pros", "MyHRPros"]) {
+      const r = routeCapture(`Spoke with the team at ${said} about a global hire.`, roster);
+      assert.equal(r.best?.id, REAL, `"${said}" routed to ${r.best?.name}`);
+    }
   });
 
-  test("the legal name still routes", () => {
+  test("the legal name it no longer displays still routes", () => {
     const r = routeCapture(
       "Call notes: Southern Personnel Management on the global piece.",
       roster,
     );
     assert.equal(r.best?.id, REAL);
+  });
+
+  test("a transcript routes on its people, with no address to read", () => {
+    // What the Chute hands the router off a .vtt: speaker labels and speech,
+    // no headers, no domains. The 9/21 call.
+    const tape = [
+      "Antaeus Coe: Joseph, can you hear us?",
+      "Joseph Lyon: I can't. Can you guys hear me?",
+      "lauren: My name is Lauren Jones. I am the Director of Operations for my HR Pros.",
+      "Joseph Lyon: And I'm Joseph Lyon, the CEO and one of the owners here.",
+    ].join("\n");
+    const r = routeCapture(tape, roster);
+    assert.equal(r.best?.id, REAL, `tape routed to ${r.best?.name}`);
   });
 
   test("both of the company's domains land on it", () => {

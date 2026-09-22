@@ -27,11 +27,34 @@ export const ALIASES: Record<string, string> = {
   "0013k00002dGqODAA0": "001F000000w389qIAA",
 };
 
-/** Trading names the book does not carry, by canonical id. Routing and search
- *  read these, so a capture that says "My HR Professionals" finds the account
- *  whose legal name is Southern Personnel Management. */
+/** What the account is called on every surface, overriding the export's own
+ *  name. The book's row says "Southern Personnel Management, Inc."; nobody
+ *  says that — the people are @myhrpros.com, the calls say "My HR Pros", and
+ *  the legal entity is carried in the parenthesis so the row still reconciles
+ *  with Salesforce (founder-decreed 2026-09-22). Kept here rather than edited
+ *  into book.json, which is an export and would lose it on the next sweep. */
+export const RENAME: Record<string, string> = {
+  "001F000000w389qIAA": "myhrpros (SPMI)",
+};
+
+/** Every other spelling the account answers to, by canonical id — the legal
+ *  name it left behind, the trade name in the forms people actually type, and
+ *  the initialism. Routing and search read these, so a capture naming any of
+ *  them lands on the one account.
+ *
+ *  Spelling matters here: the matcher compares normalized strings, and
+ *  "MyHR Pros", "My HR Pros" and "MyHRPros" normalize three different ways.
+ *  A tape says one, an email signature says another. */
 export const AKA: Record<string, string[]> = {
-  "001F000000w389qIAA": ["My HR Professionals", "MyHR Pros", "MyHRPros"],
+  "001F000000w389qIAA": [
+    "Southern Personnel Management",
+    "Southern Personnel Management, Inc.",
+    "My HR Professionals",
+    "My HR Pros",
+    "MyHR Pros",
+    "MyHRPros",
+    "SPMI",
+  ],
 };
 
 /** Namespaced stores key as "<namespace>:<accountId>" — gaps:, research:,
