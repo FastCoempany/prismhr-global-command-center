@@ -5,6 +5,7 @@
 
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import type { ClientHealth, Engagement } from "@/lib/engagement";
+import { canonicalAccountId } from "@/lib/book/merge";
 import { inferActors, inferLane, type Lane } from "@/lib/intel/provenance";
 import type { Snooze, Validation, ValidationStatus } from "./build";
 import type { Todo, Touch, TouchLogEntry } from "./follow-ups";
@@ -145,9 +146,14 @@ export async function loadAccountNotes(): Promise<Map<string, AccountNote[]>> {
     const kind =
       r.kind === "partner" ? "partner" : r.kind === "account" ? "account" : "mine";
     const actors = r.actors || inferActors(r.body);
+    // One company filed under two ids reads as one account here, so every
+    // surface downstream — the room, the queue, the sheet, the registers —
+    // sees the whole record without each of them learning the rule
+    // (src/lib/book/merge.ts). The stored row keeps the id it was filed under.
+    const acct = canonicalAccountId(r.accountId);
     const note: AccountNote = {
       id: r.id,
-      accountId: r.accountId,
+      accountId: acct,
       partner: r.partner,
       kind,
       body: r.body,
@@ -160,9 +166,9 @@ export async function loadAccountNotes(): Promise<Map<string, AccountNote[]>> {
       recipients: r.recipients ?? "",
       createdAt: r.createdAt.toISOString(),
     };
-    const list = out.get(r.accountId);
+    const list = out.get(acct);
     if (list) list.push(note);
-    else out.set(r.accountId, [note]);
+    else out.set(acct, [note]);
   }
   return out;
 }
