@@ -65,6 +65,7 @@ import { readFileToText } from "./read-file";
 import type { StageView } from "@/lib/room/stages-view";
 import { PipelineDrawer } from "./pipeline-tab";
 import type { PipelineRecord } from "@/lib/pipeline/build";
+import { todayRegister } from "@/lib/room/springs";
 import styles from "./room.module.css";
 import TheirsLine, { type TheirsGem } from "./theirs-line";
 
@@ -820,7 +821,15 @@ function Row({
   const doneCount =
     row.sheetDoneToday.filter((t) => !gone.has(t.id)).length +
     row.sheetOpen.filter((t) => !gone.has(t.id) && doneIds.has(t.id)).length;
-  const topToday = liveOpen[0]?.body ?? liveOwed[0]?.text ?? "";
+  // The numeral and the trailing text, from one derivation. They used to come
+  // from two, and a row with an owed line and no todo read "TODAY 0 · TrendHR
+  // follow-up" — a count of nothing beside a thing (2026-09-23).
+  const today = todayRegister({
+    owed: liveOwed.map((o) => o.text),
+    open: liveOpen.map((t) => t.body),
+    restCount,
+  });
+  const topToday = today.top;
 
   return (
     <div
@@ -1402,7 +1411,7 @@ function Row({
           <div className={styles.sumline}>
             <span className={styles.sumk}>TODAY</span>
             <span className={styles.sumn}>
-              {liveOpen.length + restCount}
+              {today.count}
               {doneCount > 0 ? ` · ${doneCount} done` : ""}
             </span>
             <span className={styles.sumtx}>{topToday || "Nothing open today."}</span>
@@ -1421,7 +1430,7 @@ function Row({
             <div className={`${styles.sumline} ${styles.sumOpen}`}>
               <span className={`${styles.sumk} ${styles.sumkOn}`}>TODAY</span>
               <span className={styles.sumn}>
-                {liveOpen.length + restCount}
+                {today.count}
                 {doneCount > 0 ? ` · ${doneCount} done` : ""}
               </span>
               <button
