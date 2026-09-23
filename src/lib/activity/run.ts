@@ -18,6 +18,7 @@
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import { csms } from "@/lib/book";
 import { contactsFor } from "@/lib/book/contacts";
+import { storedIdsFor } from "@/lib/book/merge";
 import { EXTRA_PARTNERS } from "@/lib/book/partners";
 import { redactMoney } from "@/lib/intel/lexicon";
 import { RUN_LOCK_CHECKSUM } from "@/lib/intranet/doctrine";
@@ -496,8 +497,11 @@ async function contextPackFor(accountId: string, name: string): Promise<ContextP
     "the operator is Antaeus Coe — their own logged motion is the first record, never a door to walk through",
   ];
   try {
+    // A merged account's record is filed under more than one id, and a gem
+    // standing on half the record is worse than no gem — the pack reads every
+    // id the account is stored under (src/lib/book/merge.ts).
     const notes = await prisma.accountNote.findMany({
-      where: { accountId },
+      where: { accountId: { in: storedIdsFor(accountId) } },
       orderBy: { createdAt: "desc" },
       take: 80,
     });
@@ -532,7 +536,7 @@ async function contextPackFor(accountId: string, name: string): Promise<ContextP
     }
 
     const todos = await prisma.todo.findMany({
-      where: { accountId, done: false },
+      where: { accountId: { in: storedIdsFor(accountId) }, done: false },
       orderBy: { createdAt: "desc" },
       take: 4,
     });

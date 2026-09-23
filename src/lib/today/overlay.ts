@@ -348,7 +348,10 @@ export async function loadTodos(): Promise<Todo[]> {
       id: r.id,
       body: r.body,
       done: r.done,
-      accountId: r.accountId ?? "",
+      // Same fold the notes take: one company filed under two ids owns its
+      // commitments on the merged account, not on the shell it was filed
+      // under. Two live action todos sat invisible here (myhrpros, 2026-09-23).
+      accountId: canonicalAccountId(r.accountId ?? ""),
       remindAt: r.remindAt ? r.remindAt.toISOString() : "",
       createdAt: r.createdAt.toISOString(),
       updatedAt: r.updatedAt.toISOString(),

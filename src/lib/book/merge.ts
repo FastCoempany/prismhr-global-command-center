@@ -78,3 +78,26 @@ export function canonicalAccountId(id: string): string {
 export function isAliasedAway(id: string): boolean {
   return Object.hasOwn(ALIASES, (id ?? "").trim());
 }
+
+/** Every id this account's rows might be sitting under: the id the app speaks
+ *  in, plus every duplicate folded into it.
+ *
+ *  The fold is read-time, so stored rows keep the id they were filed under —
+ *  and a query that pins `accountId` to a single value reads only half the
+ *  account. The loaders fold as they build their maps, but a direct query
+ *  cannot, so it asks for all of them: `accountId: { in: storedIdsFor(id) }`.
+ *
+ *  Namespaces ride through, so `gaps:<canonical>` expands to the gaps of every
+ *  id in the set. The canonical id always comes first. */
+export function storedIdsFor(id: string): string[] {
+  const key = (id ?? "").trim();
+  if (!key) return [];
+  const canon = canonicalAccountId(key);
+  const cut = canon.lastIndexOf(":");
+  const ns = cut < 0 ? "" : canon.slice(0, cut + 1);
+  const tail = cut < 0 ? canon : canon.slice(cut + 1);
+  const out = [canon];
+  for (const [dupe, real] of Object.entries(ALIASES))
+    if (real === tail && dupe !== tail) out.push(ns + dupe);
+  return out;
+}
