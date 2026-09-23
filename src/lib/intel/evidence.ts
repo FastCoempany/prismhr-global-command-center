@@ -20,9 +20,27 @@ type Rule = {
   node: DashNodeKey;
   itemIdx: number;
   re: RegExp;
-  pastOnly?: boolean; // evidence must be dated in the past (it happened)
+  /** Set only on a rule reading a standing FACT rather than an event that
+   *  happened. Every other rule here points at a gate worded as a thing
+   *  already done — "delivered", "sent", "briefed", "cleared" — so the date
+   *  gate below is the default and this is the one exemption. A new rule that
+   *  forgets to think about dates gets the safe read, not the loud one. */
+  standingFact?: true;
   label: (doc: CorpusDoc) => string;
 };
+
+// A document dated after today has not happened yet. A Salesforce task due
+// next week is ordinary text to a regex, so "proposal sent" sitting on a
+// calendar reminder would march the meter forward on work nobody has done —
+// the same future-dated read that had the room chasing a reply to a task the
+// operator had set themselves (Trend Personnel Services, 2026-09-23).
+//
+// An unparseable date is not a future one: evidence is never dropped over a
+// date the parser could not read.
+function futureDated(at: string, now: Date): boolean {
+  const ms = Date.parse(at);
+  return !Number.isNaN(ms) && ms > now.getTime();
+}
 
 const RULES: Rule[] = [
   {
@@ -30,7 +48,6 @@ const RULES: Rule[] = [
     node: "demo",
     itemIdx: 3,
     re: /demo (delivered|went|recap)|transcript filed|Accepted: Demo|demo (yesterday|last week)|Demo delivered/i,
-    pastOnly: true,
     label: (d) => `demo evidence · ${d.src}`,
   },
   {
@@ -66,6 +83,10 @@ const RULES: Rule[] = [
     node: "needs_analysis",
     itemIdx: 0,
     re: /countr(y|ies)|we're in [A-Z]|workers? in [A-Z]/,
+    // The gate asks which countries they hire in, and a country named is
+    // named — a reminder's due date does not un-name Brazil. The only rule
+    // here reading a fact instead of an event.
+    standingFact: true,
     label: (d) => `countries named · ${d.src}`,
   },
 ];
@@ -83,7 +104,7 @@ export function suggestChecks(
     const doc = docs.find((d) => {
       if (!rule.re.test(d.text)) return false;
       if (rule.id === "countries-known" && countriesIn(d.text).length === 0) return false;
-      if (rule.pastOnly && Date.parse(d.at) > now.getTime()) return false;
+      if (!rule.standingFact && futureDated(d.at, now)) return false;
       return true;
     });
     if (doc)
