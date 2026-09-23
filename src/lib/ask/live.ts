@@ -166,6 +166,7 @@ export async function liveReadFor(question: string): Promise<LiveRead | null> {
           }
         : null,
       (n) => isHomeSideName(n, csms),
+      new Date(),
     );
     // A meeting record beats the correspondence clock — the recap is the
     // owed move, and the ask's answer should know a meeting just happened.

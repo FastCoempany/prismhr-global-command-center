@@ -36,13 +36,26 @@ export type TouchRead = {
 // the app's one spelling of the operator — a private narrower regex here
 // would miss "acoe@prismhr" renderings and resurrect the very bug this file
 // exists to kill.
-export function newestOutbound(notes: NoteForTouch[]): NoteForTouch | null {
+export function newestOutbound(
+  notes: NoteForTouch[],
+  opts: {
+    /** Today. Omitted, the future check sits out and the read is unchanged —
+     *  the function stays pure for callers that hand it no clock. */
+    now?: Date;
+  } = {},
+): NoteForTouch | null {
   let best: NoteForTouch | null = null;
   for (const n of notes) {
     const arrow = (n.actors ?? "").indexOf("→");
     if (arrow < 0) continue;
     const sender = n.actors.slice(0, arrow);
     if (!MINE_RE.test(sender)) continue;
+    // A note the operator addressed to nobody but themselves never reached
+    // the account, so nothing is owed back and there is no one to wait on.
+    // Salesforce files a self-assigned task exactly this way — "Follow up
+    // with TrendHR · Antaeus Coe → Antaeus Coe" — and the row read it as a
+    // send (Trend Personnel Services, 2026-09-23).
+    if (selfAddressed(n.actors)) continue;
     // A meeting record is not correspondence — nobody awaits a reply to a
     // meeting that already happened (the Staff Leasing 1:00 PM, 2026-08-18).
     if (isMeetingNote(n)) continue;
@@ -51,6 +64,12 @@ export function newestOutbound(notes: NoteForTouch[]): NoteForTouch | null {
     // inbound after it can never win the court (2026-09-02).
     const t = Date.parse(effectiveAt(n.createdAt, n.body));
     if (Number.isNaN(t)) continue;
+    // A send dated ahead of today has not happened yet. A scheduled task is
+    // filed the moment it is created, and daysBetween clamps a future stamp
+    // to zero — so the same Trend row announced "You wrote today" about a
+    // reminder set for the following week. It is a real appointment; it is
+    // not a touch, and it is not in the past.
+    if (opts.now && t > opts.now.getTime()) continue;
     if (!best || t > Date.parse(effectiveAt(best.createdAt, best.body))) best = n;
   }
   return best;
@@ -70,16 +89,34 @@ export function targetOf(actors: string, isHomeSide?: (name: string) => boolean)
   const tail = actors.slice(arrow + 1);
   const collapsed = /\+\d+\s*$/.test(tail);
   const name = tail.replace(/\+\d+\s*$/, "").trim();
+  // The operator is never the person the operator is waiting on, whether or
+  // not the line collapsed. A COLLEAGUE still can be — a send addressed only
+  // to Anika leaves the ball with Anika, and that read is deliberate — but
+  // nobody waits on themselves (Trend Personnel Services, 2026-09-23).
+  if (name && MINE_RE.test(name)) return "";
   if (collapsed && name && isHomeSide?.(name)) return "";
   return name;
+}
+
+/** A send whose only named recipient is the operator. Collapsed lines are
+ *  excluded: a "+2" means other people were on it, and one of them is very
+ *  likely the account. */
+function selfAddressed(actors: string): boolean {
+  const arrow = (actors ?? "").indexOf("→");
+  if (arrow < 0) return false;
+  const tail = actors.slice(arrow + 1);
+  if (/\+\d+\s*$/.test(tail)) return false;
+  const name = tail.trim();
+  return !!name && MINE_RE.test(name);
 }
 
 export function lastTouchRead(
   notes: NoteForTouch[],
   touch: TouchSource | null,
   isHomeSide?: (name: string) => boolean,
+  now?: Date,
 ): TouchRead | null {
-  const out = newestOutbound(notes);
+  const out = newestOutbound(notes, { now });
   const outAt = out ? Date.parse(effectiveAt(out.createdAt, out.body)) : NaN;
   const logAt = touch ? Date.parse(touch.contactedAt) : NaN;
   const hasOut = !Number.isNaN(outAt);

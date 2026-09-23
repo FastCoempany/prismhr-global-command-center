@@ -265,6 +265,9 @@ export default async function RoomPage() {
       // Our own side never becomes the person you are waiting on when the
       // send also went to the account (the Regis row, 2026-08-27).
       (n) => isHomeSideName(n, csms),
+      // Today, so a send dated ahead of it is not read as a touch already
+      // made (Trend Personnel Services, 2026-09-23).
+      now,
     );
     const noteIds = new Set(allNotes.map((n) => n.id));
     const sheet = buildAccountSheet(
