@@ -595,7 +595,10 @@ function Row({
     // the reader can't open carry no verdict to wait for, so they go now.
     const unreadable = files.filter((x) => x !== f);
     if (unreadable.length) void archiveFiles(unreadable);
-    if (f && !pending && !reading) void readDroppedFile(f, files);
+    // Only the readable file waits on the verdict; the rest already went.
+    // Handing the whole drop down here vaulted every other file a second
+    // time on accept (audit pass 1, bug 8).
+    if (f && !pending && !reading) void readDroppedFile(f, [f]);
     else if (f) void archiveFiles([f]);
   };
 

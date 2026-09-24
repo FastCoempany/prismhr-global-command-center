@@ -114,7 +114,9 @@ describe("the vault waits on the verdict", () => {
     // The files ride to filePaste and archive inside the ok branch — never
     // beside the read, which is how the Simploy call reached the Regis
     // folder while the filing was still being judged.
-    assert.ok(/readDroppedFile\(f, files\)/.test(client));
+    // Only the readable file rides as `waiting`; the unreadable ones were
+    // archived at once and must not go a second time (audit pass 1, bug 8).
+    assert.ok(/readDroppedFile\(f, \[f\]\)/.test(client));
     assert.ok(/if \(waiting\?\.length\) void archiveFiles\(waiting\)/.test(client));
     const okAt = client.indexOf("if (waiting?.length) void archiveFiles(waiting);");
     const mismatchAt = client.indexOf("setMismatch({ ...r.mismatch, text, files: waiting })");
