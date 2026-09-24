@@ -5,6 +5,7 @@ This folder holds architecture and implementation planning docs.
 Current files:
 
 - brand-identity.md
+- chute-architecture-map.md
 - design-brand-audit.md
 - design-system.md
 - field-glyphs.md
