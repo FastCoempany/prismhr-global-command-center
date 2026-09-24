@@ -510,7 +510,7 @@ function Row({
           r.outcome ? `Reads ${r.outcome.status}. Confirm below.` : "",
           r.readFailed
             ? r.how === "transcript"
-              ? "The reader is down, so the raw text filed as one line and nothing routed. Cross it out and drop it again when the reader is back."
+              ? "The reader is down, so the raw text filed as one line and nothing routed. Undo this paste and drop it again when the reader is back."
               : "The read didn't complete. The rules filed the entries. Nothing was opened or asked. The account check ran on the text's own evidence only. Undo if it landed on the wrong row."
             : "",
         ].filter(Boolean);

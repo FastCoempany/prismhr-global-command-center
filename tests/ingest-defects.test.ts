@@ -114,7 +114,7 @@ describe("bug 4 — 'cross it out and drop it again' cannot work", () => {
     assert.ok(!client.includes("Cross it out and drop it again"));
     const at = client.indexOf("The reader is down");
     assert.ok(at > 0, "the degraded transcript receipt still exists");
-    assert.match(client.slice(at, at + 280), /undo/);
+    assert.match(client.slice(at, at + 280), /undo/i);
   });
   test("why undo works and cross-out does not", () => {
     // The undo clears the duplicate guard's marker, so the re-drop files.
