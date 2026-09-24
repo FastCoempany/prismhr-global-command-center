@@ -80,10 +80,10 @@ describe("the guard never cries wolf", () => {
     const bland = "Talked through pricing. They will come back to us next week.";
     assert.equal(judgeFiling({ text: bland, claim: "", bound: REGIS, roster }).ok, true);
   });
-  test("force (file it anyway) is the operator's, and the guard never blocks", () => {
-    // The guard returns a verdict; the caller passes force. Proven at the
-    // call site: a disputed verdict returns ok:false with a reason, never a
-    // thrown error or a silent drop.
+  test("force (file it anyway) is the operator's; the guard returns a verdict, never throws", () => {
+    // The guard returns a verdict; the caller passes force once the operator
+    // has picked. Proven at the call site: a disputed verdict returns
+    // ok:false with a reason, never a thrown error or a silent drop.
     const v = judgeFiling({ text: TAPE, claim: "", bound: REGIS, roster });
     assert.equal(typeof (v.ok ? "" : v.why), "string");
   });

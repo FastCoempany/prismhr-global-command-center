@@ -306,7 +306,8 @@ export async function roomPaste(
   // exists because a call transcript names no company at all, and the old
   // guard read the model's silence as consent (the Simploy call filed to
   // Regis, 2026-09-03). Cheap to obey, expensive to skip — a paste filed to
-  // the wrong account poisons two deals at once. It informs; it never blocks.
+  // the wrong account poisons two deals at once. A dispute holds the filing
+  // until the operator picks; force is the override.
   const verdict = opts?.force
     ? ({ ok: true } as const)
     : judgeFiling({

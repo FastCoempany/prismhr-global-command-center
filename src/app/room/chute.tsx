@@ -3,8 +3,9 @@
 // The Chute — the room's single intake. Throw files at it, as many as you
 // like; each one is read on the spot, routed to its account by the book's own
 // signals (a known contact's email, a company domain, the account's name),
-// and filed through the same pipeline a paste takes — judgment and misfile
-// guard included when the key is on. Nothing files blind: an unroutable file
+// and filed through the same pipeline a paste takes. The misfile guard runs
+// on the text's own evidence with or without the key; the model's judgment
+// rides when the key is on. Nothing files blind: an unroutable file
 // waits with a picker, and a read that disagrees with the route waits for the
 // operator's call.
 
