@@ -140,7 +140,7 @@ describe("bug 5 — absorbRead on a rules-fallback read", () => {
     const assignAt = roomPaste.indexOf("read = await aiCleanTimeline(");
     assert.ok(gateAt > 0 && assignAt > gateAt, "the read is assigned only when the key is on");
     assert.ok(roomPaste.slice(assignAt).includes("read = null;"), "a throw resets the read");
-    assert.match(roomPaste, /const absorbed = read\s*\?\s*await absorbRead\(/);
+    assert.match(roomPaste, /const absorbed(?::[^=]+)? = read\s*\?\s*await absorbRead\(/);
   });
 });
 

@@ -146,6 +146,8 @@ export async function roomPaste(
   how: string;
   reason?: string;
   noteIds?: string[];
+  // The actions the read opened, by id: the undo's other reach.
+  todoIds?: string[];
   // What the read did beyond filing the record:
   opened?: { id: string; text: string }[]; // auto-created actions (undo one by one)
   asks?: number; // new STILL UNKNOWN questions queued
@@ -453,11 +455,25 @@ export async function roomPaste(
       archived = true;
     }
     if (noteIds[0]) await stampPasteMark(pasteKey, noteIds[0]);
-    const absorbed = read
+    const absorbed: Awaited<ReturnType<typeof absorbRead>> = read
       ? await absorbRead(read, { id: acct.id, name: acct.name }, now)
-      : { opened: [], asks: 0, learned: 0, outcome: null };
+      : { opened: [], asks: 0, learned: 0, outcome: null, noteIds: [] };
+    // Everything the read fanned out rides in the receipt, so the undo can
+    // take back the whole filing: the asks, playbook lines and outcome marker
+    // by note id (in their own namespaces), the actions by todo id.
+    const { noteIds: fanoutIds, ...fanout } = absorbed;
+    noteIds.push(...fanoutIds);
     refresh();
-    return { ok: true, filed, how, noteIds, readFailed, archived, ...absorbed };
+    return {
+      ok: true,
+      filed,
+      how,
+      noteIds,
+      readFailed,
+      archived,
+      todoIds: fanout.opened.map((o) => o.id),
+      ...fanout,
+    };
   } catch {
     return {
       ok: false,
@@ -480,8 +496,11 @@ async function absorbRead(
   asks: number;
   learned: number;
   outcome: { status: "lost" | "won"; phrase: string } | null;
+  // Every note this fan-out wrote, so the paste's undo can reach it.
+  noteIds: string[];
 }> {
   const prisma = getPrisma();
+  const noteIds: string[] = [];
   const stamp = now.toLocaleDateString("en-US", {
     timeZone: "America/Chicago",
     month: "numeric",
@@ -549,7 +568,9 @@ async function absorbRead(
       .findMany({ where: { accountId: gapNs(acct.id) }, select: { body: true } })
       .catch(() => [] as { body: string }[]);
     const known = new Set(priorAsks.map((r) => knowledgeKey(parseGapBody(r.body))));
-    asks = (await fileGaps({ accountId: acct.id, questions: read.gaps, known })).length;
+    const gapIds = await fileGaps({ accountId: acct.id, questions: read.gaps, known });
+    asks = gapIds.length;
+    noteIds.push(...gapIds);
   }
 
   // 3. The playbook — knowledge that outlives the deal it came from. This is
@@ -568,15 +589,15 @@ async function absorbRead(
       .findMany({ where: { accountId: ns }, select: { body: true } })
       .catch(() => [] as { body: string }[]);
     const known = new Set(prior.map((r) => knowledgeKey(parsePlaybookBody(r.body).text)));
-    learned += (
-      await filePlaybook({
-        kind,
-        items,
-        accountId: acct.id,
-        accountName: acct.name,
-        known,
-      })
-    ).length;
+    const filedIds = await filePlaybook({
+      kind,
+      items,
+      accountId: acct.id,
+      accountName: acct.name,
+      known,
+    });
+    learned += filedIds.length;
+    noteIds.push(...filedIds);
   }
 
   // 4. The outcome. A closed deal is the biggest state change the app can
@@ -586,19 +607,20 @@ async function absorbRead(
   if (read.outcome.status === "lost" || read.outcome.status === "won") {
     outcome = { status: read.outcome.status, phrase: read.outcome.phrase };
     try {
-      await createAccountNoteRow({
+      const mark = await createAccountNoteRow({
         accountId: acct.id,
         kind: "account",
         body: outcomeMarkBody(read.outcome.status, read.outcome.phrase),
         lane: "mine",
         source: "outcome",
       });
+      noteIds.push(mark.id);
     } catch {
       outcome = null;
     }
   }
 
-  return { opened, asks, learned, outcome };
+  return { opened, asks, learned, outcome, noteIds };
 }
 
 // The completion line, filed to the account's own history exactly once. Keyed
@@ -853,46 +875,86 @@ export async function roomUnlog(
   }
 }
 
-// ↩ on a paste receipt — remove the WHOLE batch this paste filed, and only
-// that batch: the delete is scoped to the ids the paste returned AND to this
-// account, so a stale or forged id list can't reach anyone else's record.
+// ↩ on a paste receipt — take back the WHOLE filing, and only that filing:
+// the record entries, the transcript archive and the outcome marker on this
+// account, the asks in its gaps: namespace, the playbook lines whose tail
+// names it, and the actions the read opened. Every delete is scoped to the
+// ids the paste returned AND to this account or its own namespaces, so a
+// stale or forged id list can't reach anyone else's record.
 export async function roomPasteUndo(
   accountId: string,
   noteIds: string[],
-): Promise<{ ok: boolean; removed: number; reason?: string }> {
+  todoIds: string[] = [],
+): Promise<{ ok: boolean; removed: number; retired: number; reason?: string }> {
   const acct = bindAccountId(accountId, peos);
-  const ids = Array.isArray(noteIds)
-    ? noteIds
-        .filter((x): x is string => typeof x === "string")
-        .map((x) => x.trim().slice(0, 40))
-        .filter(Boolean)
-        .slice(0, 60)
-    : [];
-  if (!acct || ids.length === 0)
-    return { ok: false, removed: 0, reason: "Nothing to undo." };
+  const clean = (xs: string[]): string[] =>
+    Array.isArray(xs)
+      ? xs
+          .filter((x): x is string => typeof x === "string")
+          .map((x) => x.trim().slice(0, 40))
+          .filter(Boolean)
+          .slice(0, 200)
+      : [];
+  const ids = clean(noteIds);
+  const todos = clean(todoIds);
+  if (!acct || (ids.length === 0 && todos.length === 0))
+    return { ok: false, removed: 0, retired: 0, reason: "Nothing to undo." };
   if (!(await requireWrite()))
-    return { ok: false, removed: 0, reason: "Read-only session." };
+    return { ok: false, removed: 0, retired: 0, reason: "Read-only session." };
   try {
     const prisma = getPrisma();
-    const r = await prisma.accountNote.deleteMany({
-      where: { id: { in: ids }, accountId: acct.id },
-    });
+    // The account's own rows and its asks.
+    const r = ids.length
+      ? await prisma.accountNote.deleteMany({
+          where: { id: { in: ids }, accountId: { in: [acct.id, gapNs(acct.id)] } },
+        })
+      : { count: 0 };
+    // The playbook is one namespace for every account, so a line goes only
+    // when its ⟦tail⟧ names this one.
+    let playbook = 0;
+    if (ids.length) {
+      const lines = await prisma.accountNote.findMany({
+        where: {
+          id: { in: ids },
+          accountId: { in: [PLAYBOOK_MARKET, PLAYBOOK_LESSONS] },
+        },
+        select: { id: true, body: true },
+      });
+      const mine = lines
+        .filter((x) => parsePlaybookBody(x.body).tail.a === acct.id)
+        .map((x) => x.id);
+      if (mine.length) {
+        const p = await prisma.accountNote.deleteMany({ where: { id: { in: mine } } });
+        playbook = p.count;
+      }
+    }
+    // The actions the read opened, on this account only.
+    const t = todos.length
+      ? await prisma.todo.deleteMany({ where: { id: { in: todos }, accountId: acct.id } })
+      : { count: 0 };
     // The duplicate guard's marker carries the paste's first note id — an
     // undone paste must be re-fileable, so the marker goes with the notes.
-    try {
-      await prisma.accountDisposition.deleteMany({
-        where: {
-          accountId: { startsWith: `pastehash:${acct.id}:` },
-          reason: { contains: ids[0] },
-        },
-      });
-    } catch {
-      // marker cleanup is best-effort; the notes are already gone
+    if (ids[0]) {
+      try {
+        await prisma.accountDisposition.deleteMany({
+          where: {
+            accountId: { startsWith: `pastehash:${acct.id}:` },
+            reason: { contains: ids[0] },
+          },
+        });
+      } catch {
+        // marker cleanup is best-effort; the notes are already gone
+      }
     }
     refresh();
-    return { ok: true, removed: r.count };
+    return { ok: true, removed: r.count + playbook, retired: t.count };
   } catch {
-    return { ok: false, removed: 0, reason: "The undo didn't take. Try again." };
+    return {
+      ok: false,
+      removed: 0,
+      retired: 0,
+      reason: "The undo didn't take. Try again.",
+    };
   }
 }
 

@@ -318,8 +318,8 @@ function Row({
     {
       text: string;
       noteIds?: string[];
-      // Auto-opened commitments, each retired on its own — the paste's undo
-      // takes back the record it filed, never the work it opened.
+      // Auto-opened commitments: each retires on its own, and the paste's
+      // undo takes them all back with the record.
       opened?: { id: string; text: string; gone?: boolean }[];
     }[]
   >([]);
@@ -733,14 +733,19 @@ function Row({
     const f = freshInfo[idx];
     if (!f?.noteIds?.length || pending) return;
     const ids = f.noteIds;
+    const todoIds = (f.opened ?? []).map((o) => o.id);
     start(async () => {
-      const r = await roomPasteUndo(row.accountId, ids);
+      const r = await roomPasteUndo(row.accountId, ids, todoIds);
       if (r.ok)
         setFreshInfo((fs) =>
           fs.map((x, i) =>
             i === idx
               ? {
-                  text: `Paste undone. Removed ${r.removed} entr${r.removed === 1 ? "y" : "ies"}.`,
+                  text: `Paste undone. Removed ${r.removed} entr${r.removed === 1 ? "y" : "ies"}${
+                    r.retired
+                      ? ` and ${r.retired} action${r.retired === 1 ? "" : "s"}`
+                      : ""
+                  }.`,
                 }
               : x,
           ),
@@ -1560,14 +1565,14 @@ function Row({
                       type="button"
                       className={styles.rcptU}
                       onClick={() => undoPaste(i)}
-                      title="Removes the record this paste filed. The actions it opened stay."
+                      title="Takes back everything this paste filed, the actions it opened included."
                     >
                       ↩ undo paste
                     </button>
                   )}
                 </div>
-                {/* Each opened commitment retires on its own — the paste's undo is
-                about the record, and a wrong action is one ✕, not all of them.
+                {/* Each opened commitment can also retire on its own: a wrong action
+                is one ✕, and the paste's undo takes them all back with the record.
                 These are receipt chips, not a second copy of the work: the open
                 rows below are the real ones. */}
                 {(f.opened ?? []).length > 0 && (

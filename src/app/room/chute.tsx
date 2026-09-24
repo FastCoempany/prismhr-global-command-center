@@ -58,6 +58,7 @@ type ChuteItem = {
   archived?: boolean; // a call transcript's full text rode along
   degraded?: boolean; // the reader was down; raw text filed, nothing routed
   noteIds?: string[]; // what this filing wrote — the undo's reach
+  todoIds?: string[]; // the actions the read opened — the undo's other reach
   /** A second-record drop. Marked structurally so the ledger's reconcile can
    *  find its receipts without sniffing filenames or reason text. */
   act?: boolean;
@@ -126,6 +127,7 @@ function saveLedger(items: ChuteItem[]) {
       archived: x.archived,
       degraded: x.degraded,
       noteIds: x.noteIds,
+      todoIds: x.todoIds,
       act: x.act,
       vault: x.vault,
     }));
@@ -228,6 +230,7 @@ export function Chute({
         archived: r.archived,
         degraded: r.readFailed,
         noteIds: r.noteIds,
+        todoIds: r.todoIds,
       });
     else if (r.duplicate)
       patch(key, { state: "dupe", reason: r.reason ?? "Already on file." });
@@ -456,16 +459,20 @@ export function Chute({
             <button
               type="button"
               className={styles.chuteUndo}
-              title="Wrong account? Removes this filing's record entries."
+              title="Wrong account? Takes back everything this filing wrote."
               onClick={() => {
                 const acct = it.account;
                 const ids = it.noteIds;
                 if (!acct || !ids?.length) return;
-                void roomPasteUndo(acct.id, ids).then((r) => {
+                void roomPasteUndo(acct.id, ids, it.todoIds ?? []).then((r) => {
                   if (r.ok)
                     patch(it.key, {
                       state: "undone",
-                      reason: `Taken back from ${acct.name}. ${r.removed} removed.`,
+                      reason: `Taken back from ${acct.name}. ${r.removed} removed${
+                        r.retired
+                          ? `, ${r.retired} action${r.retired === 1 ? "" : "s"} retired`
+                          : ""
+                      }.`,
                     });
                 });
               }}
