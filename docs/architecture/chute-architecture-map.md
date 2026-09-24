@@ -16,6 +16,8 @@ Audit pass 1, taken on branch `claude/chute-architecture-audit-1c0svk` at 2026-0
 
 Method: nine readers mapped the repo by responsibility, nine cite-checkers refuted each map line by line against the files, two synthesis agents wrote the trace and the rankings, twenty skeptics attacked the refactor candidates, and a critic hunted for gaps. The ingest core was read by hand as well, and the thirteen test suites that pin it were run. Every cite below survived a line check. Claims that come from code shape rather than a run are marked [inferred].
 
+Status after pass 1: the bug pass that followed this map landed on main as PR #329 (squash d126259, 2026-09-24). It fixed the stale guard comments and receipt copy (§4), the "cross it out" advice (§4), the partial undo (§4, now takes back everything a filing wrote), the vault double-write (§4, candidate 6), and the verify-chain gap (the test script now runs 41 suites). Bug 5's premise did not reproduce; the receipt now names the model's judgment on a rules-filed paste. The Chute picker's mismatch fall-through and the Drop's first-file-only loop are reproduced in tests/ingest-defects-deferred.test.ts and wait for the refactor. Line numbers cited below are as of 8fa2803, before that PR.
+
 ## 1. Entry points and routes
 
 - **Every page is a self-gating server component.** 20 of 25 pages and all 7 route handlers declare force-dynamic: src/app/room/page.tsx:81, src/app/accounts/page.tsx:41, src/app/groundwork/page.tsx:93, src/app/intranet/page.tsx:40, src/app/playbook/page.tsx:17. So revalidatePath only busts the router cache. Nothing is statically cached anywhere.
