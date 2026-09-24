@@ -318,8 +318,8 @@ function Row({
     {
       text: string;
       noteIds?: string[];
-      // Auto-opened commitments, each retired on its own — the paste's undo
-      // takes back the record it filed, never the work it opened.
+      // Auto-opened commitments: each retires on its own, and the paste's
+      // undo takes them all back with the record.
       opened?: { id: string; text: string; gone?: boolean }[];
     }[]
   >([]);
@@ -501,7 +501,13 @@ function Row({
         // One receipt, in the order the work matters: what filed, what opened,
         // what it asked, what it learned, and whether it says this is over.
         const parts = [
-          `Filed ${r.filed} entr${r.filed === 1 ? "y" : "ies"}${r.how === "ai" ? ", read by Claude" : ""}.`,
+          `Filed ${r.filed} entr${r.filed === 1 ? "y" : "ies"}${
+            r.how === "ai"
+              ? ", read by Claude"
+              : r.judged
+                ? " by the rules, judgment by Claude"
+                : ""
+          }.`,
           r.opened?.length
             ? `${r.opened.length} action${r.opened.length === 1 ? "" : "s"} opened.`
             : "",
@@ -510,8 +516,8 @@ function Row({
           r.outcome ? `Reads ${r.outcome.status}. Confirm below.` : "",
           r.readFailed
             ? r.how === "transcript"
-              ? "The reader is down, so the raw text filed as one line and nothing routed. Cross it out and drop it again when the reader is back."
-              : "The read didn't complete. The rules filed the entries. Nothing was opened or asked, and the account check did not run — cross it out if it landed on the wrong row."
+              ? "The reader is down, so the raw text filed as one line and nothing routed. Undo this paste and drop it again when the reader is back."
+              : "The read didn't complete. The rules filed the entries. Nothing was opened or asked. The account check ran on the text's own evidence only. Undo if it landed on the wrong row."
             : "",
         ].filter(Boolean);
         setFreshInfo((f) => [
@@ -595,7 +601,10 @@ function Row({
     // the reader can't open carry no verdict to wait for, so they go now.
     const unreadable = files.filter((x) => x !== f);
     if (unreadable.length) void archiveFiles(unreadable);
-    if (f && !pending && !reading) void readDroppedFile(f, files);
+    // Only the readable file waits on the verdict; the rest already went.
+    // Handing the whole drop down here vaulted every other file a second
+    // time on accept (audit pass 1, bug 8).
+    if (f && !pending && !reading) void readDroppedFile(f, [f]);
     else if (f) void archiveFiles([f]);
   };
 
@@ -733,14 +742,19 @@ function Row({
     const f = freshInfo[idx];
     if (!f?.noteIds?.length || pending) return;
     const ids = f.noteIds;
+    const todoIds = (f.opened ?? []).map((o) => o.id);
     start(async () => {
-      const r = await roomPasteUndo(row.accountId, ids);
+      const r = await roomPasteUndo(row.accountId, ids, todoIds);
       if (r.ok)
         setFreshInfo((fs) =>
           fs.map((x, i) =>
             i === idx
               ? {
-                  text: `Paste undone. Removed ${r.removed} entr${r.removed === 1 ? "y" : "ies"}.`,
+                  text: `Paste undone. Removed ${r.removed} entr${r.removed === 1 ? "y" : "ies"}${
+                    r.retired
+                      ? ` and ${r.retired} action${r.retired === 1 ? "" : "s"}`
+                      : ""
+                  }.`,
                 }
               : x,
           ),
@@ -1560,14 +1574,14 @@ function Row({
                       type="button"
                       className={styles.rcptU}
                       onClick={() => undoPaste(i)}
-                      title="Removes the record this paste filed. The actions it opened stay."
+                      title="Takes back everything this paste filed, the actions it opened included."
                     >
                       ↩ undo paste
                     </button>
                   )}
                 </div>
-                {/* Each opened commitment retires on its own — the paste's undo is
-                about the record, and a wrong action is one ✕, not all of them.
+                {/* Each opened commitment can also retire on its own: a wrong action
+                is one ✕, and the paste's undo takes them all back with the record.
                 These are receipt chips, not a second copy of the work: the open
                 rows below are the real ones. */}
                 {(f.opened ?? []).length > 0 && (

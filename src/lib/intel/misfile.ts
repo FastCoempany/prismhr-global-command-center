@@ -37,8 +37,9 @@
 // fired, and a live Poland contractor-of-record enquiry was held out of the
 // vault.
 //
-// The verdict never blocks. It informs, and the operator files anyway if the
-// operator is right.
+// A disputed verdict holds the filing for the operator's pick (CLAUDE.md, the
+// Chute: nothing files blind). force is the operator's override, taken at
+// either door once the pick is made.
 
 import { accountMatches } from "./ai-clean";
 import { routeCapture, type RouteAccount, type RouteHit } from "@/lib/route-capture";
@@ -118,8 +119,8 @@ export function judgeFiling(inp: {
   // second by AUTO_ROUTE_GAP, so a tie is ambiguous there and it hands the
   // capture to the picker. A thread carrying both accounts' domains is exactly
   // that — and blessing whichever row happened to be open would file a
-  // cross-account thread silently. The guard informs and never blocks, so
-  // asking costs a click and the banner now shows both sides.
+  // cross-account thread silently. The guard holds the filing for the pick,
+  // so asking costs a click and the banner shows both sides.
   if (ownScore >= OWN_EVIDENCE_FLOOR && ownScore > rivalScore) return { ok: true };
 
   // Rung 1 — the read's own company claim, now only when the row has nothing

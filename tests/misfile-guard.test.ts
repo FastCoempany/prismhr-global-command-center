@@ -80,10 +80,10 @@ describe("the guard never cries wolf", () => {
     const bland = "Talked through pricing. They will come back to us next week.";
     assert.equal(judgeFiling({ text: bland, claim: "", bound: REGIS, roster }).ok, true);
   });
-  test("force (file it anyway) is the operator's, and the guard never blocks", () => {
-    // The guard returns a verdict; the caller passes force. Proven at the
-    // call site: a disputed verdict returns ok:false with a reason, never a
-    // thrown error or a silent drop.
+  test("force (file it anyway) is the operator's; the guard returns a verdict, never throws", () => {
+    // The guard returns a verdict; the caller passes force once the operator
+    // has picked. Proven at the call site: a disputed verdict returns
+    // ok:false with a reason, never a thrown error or a silent drop.
     const v = judgeFiling({ text: TAPE, claim: "", bound: REGIS, roster });
     assert.equal(typeof (v.ok ? "" : v.why), "string");
   });
@@ -114,7 +114,9 @@ describe("the vault waits on the verdict", () => {
     // The files ride to filePaste and archive inside the ok branch — never
     // beside the read, which is how the Simploy call reached the Regis
     // folder while the filing was still being judged.
-    assert.ok(/readDroppedFile\(f, files\)/.test(client));
+    // Only the readable file rides as `waiting`; the unreadable ones were
+    // archived at once and must not go a second time (audit pass 1, bug 8).
+    assert.ok(/readDroppedFile\(f, \[f\]\)/.test(client));
     assert.ok(/if \(waiting\?\.length\) void archiveFiles\(waiting\)/.test(client));
     const okAt = client.indexOf("if (waiting?.length) void archiveFiles(waiting);");
     const mismatchAt = client.indexOf("setMismatch({ ...r.mismatch, text, files: waiting })");
