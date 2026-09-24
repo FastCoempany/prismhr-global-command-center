@@ -7,6 +7,7 @@ Current files:
 - brand-identity.md
 - chute-architecture-map.md
 - chute-ingest-defects.md
+- decree-ledger.md
 - derived-fact-ledger.md
 - design-brand-audit.md
 - design-system.md
@@ -26,6 +27,10 @@ Every audit pass gets its own document here, in the order it ran:
    the app renders, where each is computed, where the paths diverge, the
    narrow reads, the note grammar, and the fields one account read must
    expose (refactor candidate 2).
+4. decree-ledger.md — audit pass 3, CLAUDE.md against the code: every
+   in-scope decree with how it is enforced, the violations ranked, the
+   decrees that conflict with each other, the ingest behaviors no decree
+   governs, and the tests the next pass should write.
 
 Likely future files:
 
