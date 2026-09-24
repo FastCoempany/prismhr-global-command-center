@@ -148,6 +148,11 @@ export async function roomPaste(
   noteIds?: string[];
   // The actions the read opened, by id: the undo's other reach.
   todoIds?: string[];
+  // The model's judgment fanned out (actions, asks, lessons, outcome),
+  // whichever reader filed the entries. `how` is the entries' provenance
+  // alone: a model read that found no dated entries hands the record to the
+  // rules and keeps its judgment (decided 2026-09-24, audit pass 1 bug 5).
+  judged?: boolean;
   // What the read did beyond filing the record:
   opened?: { id: string; text: string }[]; // auto-created actions (undo one by one)
   asks?: number; // new STILL UNKNOWN questions queued
@@ -472,6 +477,7 @@ export async function roomPaste(
       readFailed,
       archived,
       todoIds: fanout.opened.map((o) => o.id),
+      judged: read !== null,
       ...fanout,
     };
   } catch {

@@ -501,7 +501,13 @@ function Row({
         // One receipt, in the order the work matters: what filed, what opened,
         // what it asked, what it learned, and whether it says this is over.
         const parts = [
-          `Filed ${r.filed} entr${r.filed === 1 ? "y" : "ies"}${r.how === "ai" ? ", read by Claude" : ""}.`,
+          `Filed ${r.filed} entr${r.filed === 1 ? "y" : "ies"}${
+            r.how === "ai"
+              ? ", read by Claude"
+              : r.judged
+                ? " by the rules, judgment by Claude"
+                : ""
+          }.`,
           r.opened?.length
             ? `${r.opened.length} action${r.opened.length === 1 ? "" : "s"} opened.`
             : "",

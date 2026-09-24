@@ -142,6 +142,14 @@ describe("bug 5 — absorbRead on a rules-fallback read", () => {
     assert.ok(roomPaste.slice(assignAt).includes("read = null;"), "a throw resets the read");
     assert.match(roomPaste, /const absorbed(?::[^=]+)? = read\s*\?\s*await absorbRead\(/);
   });
+  test("option 1: the receipt names the model's judgment when the rules filed the entries", () => {
+    // Decided 2026-09-24: `how` stays the entries' provenance, and the
+    // result carries `judged` whenever the read object was non-null, so a
+    // filing whose entries came from the rules but whose actions and asks
+    // came from the model says so instead of reading as a plain rules pass.
+    assert.match(roomPaste, /judged: read !== null/);
+    assert.ok(client.includes("judgment by Claude"));
+  });
 });
 
 describe("bug 6 — undo is partial", () => {
