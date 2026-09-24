@@ -5,6 +5,7 @@
 
 import { redactMoney } from "@/lib/intel/lexicon";
 import { resolveSfId } from "@/lib/salesforce";
+import { storedIdsFor } from "@/lib/book/merge";
 import { cleanExcerpt, correspondentsOf, senderOf } from "./excerpt";
 import { laneOf, type ActivityLane } from "./classify";
 import {
@@ -91,6 +92,16 @@ export function createIngest(
     bookById.set(sf15(b.id), b);
     const real = resolveSfId(b.id);
     if (real) bookById.set(sf15(real), b);
+    // A merged account answers to more than one Salesforce id, and the CRM
+    // keeps filing against both — the duplicate record is still there, and
+    // merging account ids in Salesforce is not something we can do. The book
+    // it arrives with has the duplicate filtered out, so without this its rows
+    // match nothing and the drop reports them as an unknown account and throws
+    // them away (myhrpros (SPMI), 2026-09-24).
+    for (const alt of storedIdsFor(b.id)) {
+      bookById.set(alt, b);
+      bookById.set(sf15(alt), b);
+    }
   }
   let headers: string[] | null = null;
   let fingerprint: Fingerprint | null = null;
