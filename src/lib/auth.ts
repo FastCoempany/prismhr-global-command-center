@@ -109,11 +109,6 @@ export async function setAccessSession() {
   });
 }
 
-export async function clearAccessSession() {
-  const cookieStore = await cookies();
-  cookieStore.delete(ACCESS_COOKIE_NAME);
-}
-
 export async function hasAccessSession() {
   const cookieStore = await cookies();
   return isValidAccessToken(cookieStore.get(ACCESS_COOKIE_NAME)?.value);

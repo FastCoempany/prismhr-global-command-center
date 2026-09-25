@@ -88,7 +88,6 @@ export const chicagoDay = (now: Date = new Date()): string =>
 export const isWaiting = (s: LedgerState): boolean => s === "pick" || s === "mismatch";
 export const isInFlight = (s: LedgerState): boolean =>
   s === "reading" || s === "filing" || s === "activity";
-export const isSettled = (s: LedgerState): boolean => !isWaiting(s) && !isInFlight(s);
 
 // The router's why strings, read back into the rung that produced them —
 // only for rows persisted before the rung rode on the row itself.

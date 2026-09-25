@@ -117,8 +117,6 @@ export function dayLabel(dayKey: string, nowIso: string): string {
   return named;
 }
 
-export type LedgerDay = { key: string; label: string; entries: LedgerEntry[] };
-
 // ── the archive ─────────────────────────────────────────────────────────────
 export type ArchiveDay = { key: string; label: string; asks: number; pastes: number };
 export type ArchiveMonth = { month: string; days: ArchiveDay[] };

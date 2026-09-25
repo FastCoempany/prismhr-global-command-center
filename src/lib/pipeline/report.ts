@@ -148,17 +148,6 @@ export function ownerClause(owners: readonly LaneOwner[]): string {
   return `${who.slice(0, -1).join(", ")} and ${who[who.length - 1]} are handling it`;
 }
 
-// ── the next step ───────────────────────────────────────────────────────────
-
-export type OpenItem = {
-  /** The stored commitment, fallback and provenance tail included. */
-  edit: string;
-  wall?: string;
-  due?: string;
-  /** The record shows this already landed (src/lib/room/settled.ts). */
-  settled?: string;
-};
-
 // ── their turn, where no Owed line names them ───────────────────────────────
 // owedByThem() reads exactly one syntax: "Owed: <thing> — @<Who>". A call read
 // writes that line; an ordinary email thread does not. Swept against the whole

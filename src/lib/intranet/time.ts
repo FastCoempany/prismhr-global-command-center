@@ -8,16 +8,10 @@
 // point. That is a model call — but only after the mechanical pair proposal
 // below has cut a 60-claim topic from 1,770 pairs to fewer than thirty.
 
-import { AGE_DAYS, CONTRADICTION_MIN_DAYS, type ClaimKind } from "./doctrine";
+import { CONTRADICTION_MIN_DAYS, type ClaimKind } from "./doctrine";
 import type { Claim } from "./types";
 
 const DAY = 86_400_000;
-
-export type TimeState =
-  | { state: "current" }
-  | { state: "superseded"; byId: string; line: string }
-  | { state: "disputed"; withIds: string[]; line: string }
-  | { state: "aging"; line: string };
 
 /** Pairs worth arbitrating. All-pairs is quadratic and unaffordable; these four
  *  mechanical conditions do the cutting before any model sees anything. */
@@ -59,12 +53,6 @@ const COMPARABLE: Record<string, string[]> = {
 
 export function kindsComparable(a: ClaimKind, b: ClaimKind): boolean {
   return (COMPARABLE[a] ?? []).includes(b);
-}
-
-/** Days after which a claim of this kind is worth confirming. A commitment goes
- *  stale in a month; a prospect question never does. */
-export function ageLimit(kind: ClaimKind): number {
-  return AGE_DAYS[kind] ?? 365;
 }
 
 /** A superseded claim never travels alone into synthesis — its superseder goes

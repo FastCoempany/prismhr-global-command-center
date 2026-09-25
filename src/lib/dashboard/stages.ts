@@ -116,19 +116,7 @@ export const DASH_NODES: DashNode[] = [
   },
 ];
 
-// App stage → the EXACT Salesforce Stage picklist value (they're 1:1 now).
-export const SF_STAGE: Record<DashNodeKey, string> = {
-  investigate: "Investigate",
-  first_meeting: "First Time Meeting",
-  needs_analysis: "Needs Analysis",
-  demo: "Demo",
-  exec_summary: "Executive Summary",
-  proposal: "Proposal",
-  contract: "Contract",
-};
-
 export const DASH_NODE_KEYS = DASH_NODES.map((n) => n.key);
-export const LAST_NODE = DASH_NODES.length - 1;
 
 export function nodeChecklist(key: DashNodeKey): string[] {
   return DASH_NODES.find((n) => n.key === key)?.checklist ?? [];
@@ -139,9 +127,6 @@ export type NodeState = "todo" | "active" | "done";
 
 export const isNodeState = (v: unknown): v is NodeState =>
   v === "todo" || v === "active" || v === "done";
-
-export const stateWord = (s: NodeState) =>
-  s === "done" ? "Done" : s === "active" ? "In progress" : "Not started";
 
 // Derive a node's lit state from its checkbox array.
 export function stateFromChecks(checks: boolean[], itemCount: number): NodeState {

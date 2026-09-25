@@ -373,55 +373,12 @@ export function cardNextStep(
   return null;
 }
 
-export function commitmentGuidance(step: CardStep): Guidance {
-  const overdue = step.ageDays != null && step.ageDays >= COMMITMENT_WINDOW_DAYS;
-  const age =
-    step.ageDays == null
-      ? ""
-      : ` It's been open ${step.ageDays} day${step.ageDays === 1 ? "" : "s"} in ${step.nodeLabel}.`;
-  return {
-    do: `Close “${step.item}” on ${step.cardName}.${age}`,
-    how: [
-      `Open ${step.cardName} on the dashboard. It is in the ${step.nodeLabel} stage.`,
-      `Do it: ${step.item}.`,
-      `If you're waiting on someone, note exactly what you're waiting for so it's tracked, not silently slipping.`,
-      `Reflect it in Salesforce — a note plus any field/stage update — so the record matches the dashboard.`,
-      `When it's done, hit "Mark done ✓". The dashboard advances.`,
-    ],
-    consider:
-      step.ageDays == null
-        ? "This just started. Close it before it needs managing."
-        : overdue
-          ? `${step.ageDays} days open. The ${COMMITMENT_WINDOW_DAYS}-day window is blown. Close it today, or name the blocker and chase that.`
-          : `Open ${step.ageDays} day${step.ageDays === 1 ? "" : "s"}, inside the window. Put a finish date on it now, while it's still cheap.`,
-  };
-}
-
 // --- Step holds ---------------------------------------------------------------
 // Deliberate pauses on dashboard steps — leadership said "don't press." Keyed by
 // card name (curated in code, like ROUNDUP_BULLETS). A held card's step leaves
 // the numbered moves, renders as a dim ⏸ row, and carries its own guidance: the
 // move that's still yours is owning the re-check date, not pushing the client.
 export type StepHold = { reason: string; recheck: string; consider: string };
-
-export const STEP_HOLDS: Record<string, StepHold> = {
-  // Advocate Pay's hold (per Aleks 7/13, while our contracts solidified) was
-  // LIFTED 7/15: the client came back pressing — the unsolved Bulgaria problem
-  // costs them dearly monthly and they want the contract done now. Client
-  // urgency supersedes a protective hold; the step runs hot again.
-};
-
-export function holdGuidance(step: CardStep, hold: StepHold): Guidance {
-  return {
-    do: `${step.cardName}: “${step.item}” is on hold. ${hold.reason} Own the re-check: ${hold.recheck}. The day it clears, close it, log the exchange in Salesforce, and check it off.`,
-    how: [
-      `Confirm the hold still stands. It was set deliberately.`,
-      `Put the re-check on your calendar so the hold has an owner and a date.`,
-      `The day it clears: do it, log it in Salesforce, check it off on the dashboard.`,
-    ],
-    consider: hold.consider,
-  };
-}
 
 // --- Completion keys (per-day / per-week) -----------------------------------
 // A done-mark's key encodes the task AND its period, so it resets on a new

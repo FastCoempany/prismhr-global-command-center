@@ -36,5 +36,3 @@ export function researchPrompt(
   ];
   return lines.filter((l) => l !== "").join("\n");
 }
-
-export const CLAUDE_NEW_URL = "https://claude.ai/new";

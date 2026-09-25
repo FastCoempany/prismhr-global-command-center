@@ -41,13 +41,6 @@ export function questionById(
 export type QProduct = "eor" | "contractor" | "payroll" | "any";
 export type QSoph = "naive" | "inhouse" | "displacement" | "any";
 
-export const PRODUCT_LABEL: Record<QProduct, string> = {
-  eor: "EOR",
-  contractor: "Contractor mgmt",
-  payroll: "Global payroll",
-  any: "Any line",
-};
-
 export type Scenario = {
   id: string;
   label: string;

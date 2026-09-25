@@ -127,10 +127,6 @@ export function laneOf(r: ActivityRow, opts?: { csmRoster?: Set<string> }): Lane
   return { lane: "human", flags };
 }
 
-// ── people: colleague, account person, or nobody at all ─────────────────────
-
-export type ActorKind = "colleague" | "account" | "machinery" | "unresolved";
-
 /** The colleague roster, re-derived from the file itself every drop:
  *  everyone who ever appears in Assigned, minus machinery, plus the book's
  *  CSMs and EXTRA_PARTNERS. Zero maintenance (Appendix C). */

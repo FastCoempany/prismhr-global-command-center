@@ -38,28 +38,6 @@ const ART: Record<string, ReactNode> = {
   ),
 };
 
-// The book's research names countries in prose — map the ones we act on.
-const NAME_TO_CODE: Record<string, string> = {
-  canada: "ca",
-  bulgaria: "bg",
-  turkey: "tr",
-  mexico: "mx",
-  "united kingdom": "gb",
-  uk: "gb",
-  india: "in",
-  germany: "de",
-  philippines: "ph",
-  bahamas: "bs",
-};
-
-export function countryCode(name: string): string {
-  return NAME_TO_CODE[name.trim().toLowerCase()] ?? "";
-}
-
-// The flag list the manual picker offers — the countries this book actually
-// touches, most-likely first.
-export const PICKER_CODES = ["ca", "mx", "gb", "in", "bg", "de", "tr", "ph"];
-
 export const CODE_TO_NAME: Record<string, string> = {
   ca: "Canada",
   bg: "Bulgaria",

@@ -73,14 +73,6 @@ export type DraftClaim = {
   offsetEnd: number;
 };
 
-export type ExtractResult = {
-  summary: string;
-  claims: DraftClaim[];
-  topicMatches: string[];
-  topicProposals: { label: string; why: string }[];
-  linkRefs: { label: string; why: string }[];
-};
-
 /** A claim with everything retrieval and synthesis need. */
 export type Claim = {
   id: string;

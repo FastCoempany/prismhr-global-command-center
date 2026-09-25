@@ -123,17 +123,6 @@ export function groundedness(answer: Answer, candidateCount: number): number {
   return good / answer.citations.length;
 }
 
-export type EvalResult = {
-  id: string;
-  proves: string;
-  recall: number;
-  attribution: boolean;
-  abstention: boolean;
-  grounded: number;
-  passed: boolean;
-  note: string;
-};
-
 export const TARGETS = {
   recall: 0.85,
   attribution: 1,
