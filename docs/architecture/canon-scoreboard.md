@@ -20,7 +20,7 @@ The three audits said one thing from three angles: 111 of 187 decrees in scope a
 |---|---|---|
 | Honor-system decrees | 111 of 187 | 111 of 187 |
 | Ungoverned behaviors | 34 open | 34 open |
-| Conflicting pairs | 20 open | 5 open · 15 ruled |
+| Conflicting pairs | 20 open | 0 open · 20 ruled |
 
 ## How a row moves
 
@@ -191,7 +191,7 @@ Status is one of: open · ruled (the founder decided; the ruling is quoted) · e
 | D29 | The Chute renders nothing without canWrite (chute.tsx:627); read-only sessions have no intake and no receipt ledger | (276) | What a read-only session sees at the top of the HomeRoom. | open | — | — | — |
 | D30 | scratch rows and every other namespaced row consume the intranet mirror's 400-row budget before being skipped (runners.ts:146-151) [inferred] | Scratchpaper (297-298); Chute (283) | Whether namespaced rows are excluded in the query rather than after it. | open | — | — | — |
 
-## 3. Conflicting pairs (20: 5 open · 15 ruled)
+## 3. Conflicting pairs (20: 0 open · 20 ruled)
 
 Status is one of: open · ruled (which side, quoted) · encoded (CLAUDE.md amended; line cited) · aligned (the code follows the ruling; cite).
 
@@ -206,14 +206,14 @@ Status is one of: open · ruled (which side, quoted) · encoded (CLAUDE.md amend
 | C7 | Groundwork, 265-266 | Act Lane, 467-468 | Both by branch: day.ts:664 `ruleId === "seated" ? SEAT_SLOT_CAP : RULE … | ruled | Act Lane 467-468 stands; two caps for two things | — | batch 2 · 2026-09-25 |
 | C8 | Groundwork, 262-264 and 268-271 | Act Lane, 469-470 | The Act Lane: day.ts:561-576 pushes seats with no excludedIds check | ruled | Groundwork 262-271 stands; a seat follows its account to the HomeRoom | — | batch 2 · 2026-09-25 |
 | C9 | Groundwork, 266-268 | Vehicle rule, 446-449 | The vehicle rule with a fallback: day.ts:536-537 `bearers.find(p => !t … | ruled | vehicle rule stands; the bearer has no candidate of its own | — | batch 2 · 2026-09-25 |
-| C10 | Scratchpaper, 301-302 | Other standing decrees, 538-539 | The Scratchpaper: scratch/actions.ts:70, :296 no redact; :171 redacts … | open | — | — | — |
-| C11 | Playbook face, 519-525 | Other standing decrees, 538-539 | The face: countries.ts:165-179 and country/route.ts:28-30 never call r … | open | — | — | — |
-| C12 | Playbook authoring canon, 124-126 | Playbook face, 516-518 | The face: playbook-client.tsx:153, :176-177; playbook/page.tsx:158, :1 … | open | — | — | — |
-| C13 | Click-depth, 397-399 | Playbook face, 514-516 | The carve-out: src/lib/ask/links.ts:65-70; tests/ask-links.test.ts:28 … | open | — | — | — |
+| C10 | Scratchpaper, 301-302 | Other standing decrees, 538-539 | The Scratchpaper: scratch/actions.ts:70, :296 no redact; :171 redacts … | ruled | Scratchpaper 301-302 stands; the pad keeps figures | — | batch 3 · 2026-09-25 |
+| C11 | Playbook face, 519-525 | Other standing decrees, 538-539 | The face: countries.ts:165-179 and country/route.ts:28-30 never call r … | ruled | Playbook 519-525 stands; statutory facts render as authored | — | batch 3 · 2026-09-25 |
+| C12 | Playbook authoring canon, 124-126 | Playbook face, 516-518 | The face: playbook-client.tsx:153, :176-177; playbook/page.tsx:158, :1 … | ruled | Playbook face 516-518 stands; the register's names are cites | — | batch 3 · 2026-09-25 |
+| C13 | Click-depth, 397-399 | Playbook face, 514-516 | The carve-out: src/lib/ask/links.ts:65-70; tests/ask-links.test.ts:28 … | ruled | both stand; the citation opens in place to the bank's question | — | batch 3 · 2026-09-25 |
 | C14 | Spring, 345-347 | Spring, 344 | Both: controls carry only `title=` (room-client.tsx:1270, :1279, :1365 … | ruled | 344 stands; nothing superseded, the legend is the one place | — | batch 2 · 2026-09-25 |
 | C15 | Second record faces, 425 | Act Lane, 474-476 | The Act Lane: accounts-client.tsx:1199-1210 | ruled | Act Lane 474-476 stands; the hover glyph clause is retired text | — | batch 2 · 2026-09-25 |
 | C16 | Second record faces, 427-428 | Design canon, 11-16 and 37 | The face: room.module.css:2330 `#8a5a00` | ruled | design canon stands; THEIRS is the account's people, in blue | — | batch 2 · 2026-09-25 |
-| C17 | Writing canon 4, 55-56 | Plain-speech law, 79-81 | The carve-out [answer-row copy not re-read this pass] | open | — | — | — |
+| C17 | Writing canon 4, 55-56 | Plain-speech law, 79-81 | The carve-out [answer-row copy not re-read this pass] | ruled | plain-speech 79-81 stands; answer rows hedge | — | batch 3 · 2026-09-25 |
 | C18 | Sendbook, 317-318 | Ted, 363 | The Sendbook's "the book": groundwork/page.tsx:828-831 passes contacts … | ruled | Ted 363 stands; the chip row offers the record's people too | — | batch 1 · 2026-09-25 |
 | C19 | Direct doctrine, 240-241 | Act Lane, 477-479 | The gate: campaigns/index.ts:22-25; accounts-client.tsx:425-429 | ruled | direct doctrine stands; the Approach is a fact, never a gate | — | batch 2 · 2026-09-25 |
 | C20 | Chute, 283-284 | Chute, 285-287 | Interrupted: chute.tsx:84, :96-97 | ruled | 283-284 stands; a waiting pick survives a reload (R14 A) | — | batch 2 · 2026-09-25 |
@@ -223,3 +223,4 @@ Status is one of: open · ruled (which side, quoted) · encoded (CLAUDE.md amend
 - 2026-09-25 · opened from the pass-3 ledger at main 3726363. 111 · 34 · 20.
 - 2026-09-25 · ruling session, batch 1 (pass 3 C): C1, C2, C3, C4, C5, C6, C18 ruled. 111 · 34 · 13 open + 7 ruled.
 - 2026-09-25 · ruling session, batch 2 (pass 3 C): C7, C8, C9, C14, C15, C16, C19, C20 ruled. 111 · 34 · 5 open + 15 ruled.
+- 2026-09-25 · ruling session, batch 3 (pass 3 C): C10, C11, C12, C13, C17 ruled. Section C is fully ruled. 111 · 34 · 0 open + 20 ruled.
