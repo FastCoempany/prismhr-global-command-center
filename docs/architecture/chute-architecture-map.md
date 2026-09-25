@@ -7,6 +7,7 @@ related_docs:
   - docs/architecture/README.md
   - docs/architecture/chute-ingest-defects.md
   - docs/architecture/derived-fact-ledger.md
+  - docs/architecture/decree-ledger.md
   - src/app/room/chute.tsx
   - src/app/room/room-client.tsx
   - src/app/room/actions.ts

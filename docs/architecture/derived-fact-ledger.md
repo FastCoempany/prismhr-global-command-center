@@ -156,7 +156,7 @@ Sections A through D favor coverage over judgment. Section E favors judgment ove
 | Groundwork late-stage exclusion | src/app/groundwork/page.tsx:293-311 | DashCard | states demo/exec_summary/proposal/contract active or done; outcome read before the archived skip :300-307 | excludedIds |
 | Accounts boardById | src/app/accounts/page.tsx:134-151, :366-385 | DashCard | outcome, live = !archived and no outcome | disposition precedence: outcome > motion/parked > live > engaged |
 | pipeline collect | src/lib/pipeline/collect.ts:77-97 | DashCard | archived skip, outcome drop, step.nodeLabel | stageLabel |
-| boardLift | src/lib/command-center/types.ts:64-72; applied at src/lib/command-center/data.ts:61 and accounts/draft-actions.ts:62 | PeoState | NOT_TOUCHED → CSM_BRIEFED, NEEDS_CSM → CHANNEL_OK when a card exists | lifted stage/approach; accounts/page.tsx:411-412 reads PeoState raw |
+| boardLift | src/lib/command-center/types.ts:64-72; applied at src/lib/command-center/data.ts:61 and accounts/draft-actions.ts:62 | PeoState | NOT_TOUCHED → CSM_BRIEFED, NEEDS_CSM → CHANNEL_OK when a card exists | lifted stage/approach; accounts/page.tsx:411-412 reads the lifted rows from loadCommand (corrected in pass 3: the earlier "reads PeoState raw" was wrong) |
 | sfStageForStates | src/lib/dashboard/stages.ts:120-142 | DashCard states | furthest active or done node | SF picklist value |
 
 ### A11. Countries, products, headcount, timing
