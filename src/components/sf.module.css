@@ -1,23 +1,7 @@
 /* Salesforce checkpoint — a recognizable "check + update SF" notation used
    everywhere you act on an account. Deliberately distinct (SF blue) so it reads
    as one consistent cue across Today, Accounts, and the Dashboard. */
-.chk {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 6px;
-  flex-wrap: wrap;
-  border: 1px solid #b6e3f7;
-  background: #f0f9ff;
-  border-left: 3px solid #00a1e0;
-  border-radius: 6px;
-  padding: 2px 9px;
-  margin: 4px 0;
-  cursor: help;
-}
-.chkStrong {
-  border-color: #00a1e0;
-  background: #e4f4fc;
-}
+
 /* The retired-banner replacement: a micro-badge. Out of the way, still SF-blue,
    full wording in the tooltip. */
 .mini {
@@ -40,21 +24,7 @@
   line-height: 16px;
   white-space: nowrap;
 }
-.icon {
-  flex: none;
-  font-size: 11px;
-}
-.lead {
-  font-size: 9.5px;
-  font-weight: 800;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: #0369a1;
-}
-.text {
-  font-size: 11px;
-  color: #075985;
-}
+
 .link {
   align-self: flex-start;
   font-size: 12px;
