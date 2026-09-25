@@ -75,7 +75,7 @@ Problem:
 Correction:
 
 - [field-glyphs.md](field-glyphs.md) now uses the donor icon construction grammar: flat terminals, miter joins, 2px stroke, 24px grid.
-- The implementation lives in [src/components/field-glyph.tsx](../../src/components/field-glyph.tsx).
+- Implementation: the glyph component (src/components/field-glyph.tsx) was removed 2026-09-25 (pass 4, SAFE NOW 6): nothing rendered it; this spec stands as the design reference.
 
 ### 4. Navigation Needed A Structural Change
 

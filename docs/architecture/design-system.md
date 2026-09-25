@@ -74,7 +74,7 @@ App primitives:
 - [src/components/ui/field.tsx](../../src/components/ui/field.tsx)
 - [src/components/app-wayfinder.tsx](../../src/components/app-wayfinder.tsx)
 - [src/components/hml-priority-panel.tsx](../../src/components/hml-priority-panel.tsx)
-- [src/components/field-glyph.tsx](../../src/components/field-glyph.tsx)
+- Implementation: the glyph component (src/components/field-glyph.tsx) was removed 2026-09-25 (pass 4, SAFE NOW 6): nothing rendered it; this spec stands as the design reference.
 
 Do not import the donor kit's full component CSS if it brings donor-specific identity classes or dark overlay patterns into this app. Build app-owned components from the donor token and behavior model.
 
@@ -348,7 +348,7 @@ Current code alignment:
 - donor tokens and motion imported in `config/design-tokens.css`;
 - global app grammar in `src/app/globals.css`;
 - app mark in `src/components/brand.tsx`;
-- app icons in `src/components/field-glyph.tsx`;
+- app icons per docs/architecture/field-glyphs.md (the component was removed 2026-09-25; the spec stands);
 - Wayfinder in `src/components/app-wayfinder.tsx`;
 - HML panel in `src/components/hml-priority-panel.tsx`;
 - shared Button/Badge/Field primitives mapped to donor roles.

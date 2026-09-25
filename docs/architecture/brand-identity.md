@@ -175,7 +175,7 @@ The old Field Glyph style is superseded by an app-owned icon set built from the 
 
 Current implementation:
 
-- [src/components/field-glyph.tsx](../../src/components/field-glyph.tsx)
+- Implementation: the glyph component (src/components/field-glyph.tsx) was removed 2026-09-25 (pass 4, SAFE NOW 6): nothing rendered it; this spec stands as the design reference.
 
 Design spec:
 

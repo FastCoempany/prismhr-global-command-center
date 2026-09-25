@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { PUBLIC_ACCESS } from "@/lib/public-access";
 
 const ACCESS_COOKIE_NAME = "field_signal_access";
-const protectedRoutes = ["/", "/prospect-field"];
+const protectedRoutes = ["/"];
 
 function isProtectedRoute(pathname: string) {
   return protectedRoutes.some(
