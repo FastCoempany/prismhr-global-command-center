@@ -8,12 +8,16 @@ Current files:
 - canon-scoreboard.md
 - chute-architecture-map.md
 - chute-ingest-defects.md
+- dead-code-appendix.md
+- dead-code-ledger.md
+- decree-ledger-appendix.md
 - decree-ledger.md
 - derived-fact-ledger.md
 - design-brand-audit.md
 - design-system.md
 - field-glyphs.md
 - product-lexicon.md
+- rulings-sheet.md
 
 ## The Chute audit
 
@@ -32,11 +36,40 @@ Every audit pass gets its own document here, in the order it ran:
    in-scope decree with how it is enforced, the violations ranked, the
    decrees that conflict with each other, the ingest behaviors no decree
    governs, and the tests the next pass should write.
+5. dead-code-ledger.md — audit pass 4, what can come out before the
+   refactor and where the app spends work nobody reads: dead code, data,
+   surfaces, contracts, styles and tests, each classified against the
+   canon, plus the SAFE NOW, NEEDS A RULING and NEEDS THE DB lists.
 
 Beside the passes, one living file: canon-scoreboard.md keeps the three
 counts the audits produced (honor-system decrees, ungoverned behaviors,
 conflicting pairs) and every row behind them, and is the only place those
 rows move.
+
+rulings-sheet.md holds the seventeen decisions that gate the Chute
+refactor's first two candidates, each with its options, what every option
+changes in code, and a default; the founder rules, then CLAUDE.md is
+amended and the scoreboard moves.
+
+decree-ledger-appendix.md carries pass 3's evidence tables (the ingest
+surfaces' string inventory and its canon findings, the click-depth dead
+ends, and what the violations sweep checked and found clean);
+dead-code-appendix.md carries pass 4's (unused types, dead classes,
+test-only and seed-only exports, the route, model-call, revalidation,
+marker-family and head-token inventories, and the comment claims found
+true). Every pass's evidence lives in the repo, not in a session.
+
+The sequence after pass 4, as recommended on 2026-09-25 and not yet
+decided: (1) the founder rules on the rulings sheet, since a refactor now
+would bake in whichever side of each conflicting pair the code happens to
+be on; (2) a test pass, first adding the 27 hand-run suites to the chain,
+then writing the ten tests pass 3 lists and one for every decree the
+first two refactor candidates will move, then fixing the ruling-free
+violations (pass 3 B5, B7, B12, B14, B16, B17, B21, B42, B43) with a test
+in front of each; (3) the SAFE NOW removals from pass 4; (4) the refactor,
+candidate 1 (the dialect and head-token module) then candidate 2 (one
+account read with a declared home side and hide filter), then candidates
+3 through 9 in pass-1 order.
 
 Likely future files:
 
