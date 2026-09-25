@@ -262,16 +262,16 @@ Grouped by the piece of the refactor each row gates. Cites are against main at 7
 |---|---|---|---|
 | R1 | C2 | B | ruled 2026-09-25 · decree-ledger C2 |
 | R2 | D16 | | |
-| R3 | D23 | | |
-| R4 | D3 | | |
+| R3 | D23 | A | ruled 2026-09-25 · decree-ledger P3 |
+| R4 | D3 | A | ruled 2026-09-25 · decree-ledger D3 |
 | R5 | C3 | A | ruled 2026-09-25 · decree-ledger C3 |
 | R6 | C4 | A | ruled 2026-09-25 · decree-ledger C4 |
 | R7 | C5 | A, acceptance is machinery; BOOKED not ruled | ruled 2026-09-25 · decree-ledger C5 |
 | R8 | C6 | C | ruled 2026-09-25 · decree-ledger C6 |
 | R9 | :391 | | |
 | R10 | C1 | A | ruled 2026-09-25 · decree-ledger C1 |
-| R11 | D1 | | |
-| R12 | D2 | | |
+| R11 | D1 | A | ruled 2026-09-25 · decree-ledger D1 |
+| R12 | D2 | A | ruled 2026-09-25 · decree-ledger D2 |
 | R13 | D5 | | |
 | R14 | C20 | A | ruled 2026-09-25 · decree-ledger C20 |
 | R15 | D7 | | |

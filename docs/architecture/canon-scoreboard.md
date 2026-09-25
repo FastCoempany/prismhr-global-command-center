@@ -19,7 +19,7 @@ The three audits said one thing from three angles: 111 of 187 decrees in scope a
 | Ledger | At pass 3 (main 3726363) | Now |
 |---|---|---|
 | Honor-system decrees | 111 of 187 | 111 of 187 |
-| Ungoverned behaviors | 34 open | 34 open |
+| Ungoverned behaviors | 34 open | 26 open · 8 ruled |
 | Conflicting pairs | 20 open | 0 open · 20 ruled |
 
 ## How a row moves
@@ -150,20 +150,20 @@ Status is one of: honor · text (a text pin exists, not behavior) · chain (pinn
 | A12.11 | The writing canon and plain-speech law on the ingest surfaces | The seven devices: antithesis, paradox, maxim, definitional flip, consequence closer, escalating triad, chiasm … | mostly | honor | — | — |
 | A12.12 | The writing canon and plain-speech law on the ingest surfaces | "invented slang ..., constructed non-conversational phrasing ..., and performative reassurance flourishes" (10 … | no | honor | — | — |
 
-## 2. Ungoverned behaviors (34)
+## 2. Ungoverned behaviors (34: 26 open · 8 ruled)
 
 Status is one of: open · ruled (the founder decided; the ruling is quoted) · encoded (CLAUDE.md carries it; line cited) · enforced (a chain test or construction pins the new decree).
 
 | Ledger row | What the code does | Nearest decree | Ruling needed | Status | Ruling | Encoded at | Moved by |
 |---|---|---|---|---|---|---|---|
-| P1 | The wayfinder archives /today (app-wayfinder.tsx:86-100) while refresh() revalidates it (actions.ts:68) and it runs full derivation (today/page.tsx:65 … | Chute (283) | Whether /today is a surface or an archive, and whether a filing still owes it a refresh. | open | — | — | — |
-| P2 | The Intranet's Send-it box writes intranetDoc rows and never files an AccountNote [pass-1 cite, intranet/actions.ts:103-245] | Chute (276, 281) | Whether Send-it is an intake, and if so that it files through roomPaste. | open | — | — | — |
-| P3 | A note carries no record of which door filed it: createAccountNoteRow (write.ts:26-58) takes no door field and `source` names the dialect | Ted doctrine (359-375) | Whether the record must say which door filed a note. | open | — | — | — |
-| P4 | Second-record rows are written bare with kind "mine", source "activity" and no lane, actors or recipients (run.ts:190-191, :208-209) | Second record (404-419); Ted doctrine | Whether namespaced store rows may wear a record kind, or must carry one no first-record reader recognizes. | open | — | — | — |
-| D1 | The Intranet mounts a second Chute with an inline roster that lacks people and aka (intranet/page.tsx:118-138); a chain test pins the mount (vault.tes … | "ONE intake at the top" (276) | Whether the Intranet carries a Chute at all, and if so that it must take routingRoster(). | open | — | — | — |
-| D2 | A .csv that probes as the activity report leaves roomPaste for the second record (chute.tsx:356-359; upload.ts:14-24); the ActivityDock is a second do … | Second record (404-419); Chute (281) | Which doors take the export, and what the Drop does with one. | open | — | — | — |
-| D3 | PDFs and images go to the model before any routing (chute.tsx:360; actions.ts:1732-1791): 8 MB cap, claude-opus-5, a 60,000 slice, and a prompt that a … | "read on the spot" (277); the VTT clause (277-279) | What a PDF or image transcript is and whether it earns the CALL TRANSCRIPT path. | open | — | — | — |
-| D4 | Caps with no receipt: 60,000 / 400,000 with a truncation note (actions.ts:187-192); docx 60,000 (read-file.ts:93); sheets 4 tabs / 400 rows / 30,000 ( … | (277) | What may be cut on the way in and whether every cut appears on the receipt. | open | — | — | — |
+| P1 | The wayfinder archives /today (app-wayfinder.tsx:86-100) while refresh() revalidates it (actions.ts:68) and it runs full derivation (today/page.tsx:65 … | Chute (283) | Whether /today is a surface or an archive, and whether a filing still owes it a refresh. | ruled | GOVERN: archived means out of every tab and revalidation list | — | batch 4 · 2026-09-25 |
+| P2 | The Intranet's Send-it box writes intranetDoc rows and never files an AccountNote [pass-1 cite, intranet/actions.ts:103-245] | Chute (276, 281) | Whether Send-it is an intake, and if so that it files through roomPaste. | ruled | GOVERN: a capture naming an account files through the paste pipeline | — | batch 4 · 2026-09-25 |
+| P3 | A note carries no record of which door filed it: createAccountNoteRow (write.ts:26-58) takes no door field and `source` names the dialect | Ted doctrine (359-375) | Whether the record must say which door filed a note. | ruled | GOVERN: every note records its door in its own column | — | batch 4 · 2026-09-25 |
+| P4 | Second-record rows are written bare with kind "mine", source "activity" and no lane, actors or recipients (run.ts:190-191, :208-209) | Second record (404-419); Ted doctrine | Whether namespaced store rows may wear a record kind, or must carry one no first-record reader recognizes. | ruled | GOVERN: second-record rows carry full provenance | — | batch 4 · 2026-09-25 |
+| D1 | The Intranet mounts a second Chute with an inline roster that lacks people and aka (intranet/page.tsx:118-138); a chain test pins the mount (vault.tes … | "ONE intake at the top" (276) | Whether the Intranet carries a Chute at all, and if so that it must take routingRoster(). | ruled | GOVERN: one Chute, one roster, wherever it mounts (R11 A) | — | batch 4 · 2026-09-25 |
+| D2 | A .csv that probes as the activity report leaves roomPaste for the second record (chute.tsx:356-359; upload.ts:14-24); the ActivityDock is a second do … | Second record (404-419); Chute (281) | Which doors take the export, and what the Drop does with one. | ruled | GOVERN: Chute or dock take the export; the Drop refuses .csv (R12 A) | — | batch 4 · 2026-09-25 |
+| D3 | PDFs and images go to the model before any routing (chute.tsx:360; actions.ts:1732-1791): 8 MB cap, claude-opus-5, a 60,000 slice, and a prompt that a … | "read on the spot" (277); the VTT clause (277-279) | What a PDF or image transcript is and whether it earns the CALL TRANSCRIPT path. | ruled | GOVERN: the transcriber emits CALL TRANSCRIPT for a call (R4 A) | — | batch 4 · 2026-09-25 |
+| D4 | Caps with no receipt: 60,000 / 400,000 with a truncation note (actions.ts:187-192); docx 60,000 (read-file.ts:93); sheets 4 tabs / 400 rows / 30,000 ( … | (277) | What may be cut on the way in and whether every cut appears on the receipt. | ruled | GOVERN: file and text kept whole; only the model read is windowed, on the receipt | — | batch 4 · 2026-09-25 |
 | D5 | The picker and the batch-mate button file with force: true (chute.tsx:578, :600), skipping both guard rungs but never the duplicate guard; the batch-m … | "waits for the operator's pick" (284); routing (279-281) | Whether a pick is final and unguarded, and whether batch siblings are a routing signal. | open | — | — | — |
 | D6 | Unreadable files route by filename and vault with no guard and no pick when a name matches (chute.tsx:361-368) | "Nothing files blind" (284) | Whether vaulting counts as filing. | open | — | — | — |
 | D7 | The duplicate guard and its marker both fail open (actions.ts:231-233, :133-136); a ✕-parked filing keeps its marker (:1486-1491) | (287-289) | Guard or gate; and whether a parked filing is "on file". | open | — | — | — |
@@ -224,3 +224,4 @@ Status is one of: open · ruled (which side, quoted) · encoded (CLAUDE.md amend
 - 2026-09-25 · ruling session, batch 1 (pass 3 C): C1, C2, C3, C4, C5, C6, C18 ruled. 111 · 34 · 13 open + 7 ruled.
 - 2026-09-25 · ruling session, batch 2 (pass 3 C): C7, C8, C9, C14, C15, C16, C19, C20 ruled. 111 · 34 · 5 open + 15 ruled.
 - 2026-09-25 · ruling session, batch 3 (pass 3 C): C10, C11, C12, C13, C17 ruled. Section C is fully ruled. 111 · 34 · 0 open + 20 ruled.
+- 2026-09-25 · ruling session, batch 4 (pass 3 D): P1, P2, P3, P4, D1, D2, D3, D4 ruled. 111 · 26 open + 8 ruled · 0 open + 20 ruled.
