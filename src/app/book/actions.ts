@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { PeoApproach, PeoIntent, PeoStage } from "@/generated/prisma/client";
 import { getAppAccess } from "@/lib/auth";
@@ -75,8 +74,6 @@ export async function savePeo(formData: FormData) {
     await prisma.peoActivity.create({ data: { peoId, body: activity } });
   }
 
-  revalidatePath("/");
-  revalidatePath("/pipeline");
   redirect(backTo(formData, peoId, { saved: "1" }));
 }
 
@@ -109,7 +106,5 @@ export async function applyPlay(formData: FormData) {
   });
   await prisma.peoActivity.create({ data: { peoId, body: `Queued play: ${kit.name}` } });
 
-  revalidatePath("/");
-  revalidatePath("/pipeline");
   redirect(backTo(formData, peoId, { saved: "1" }));
 }

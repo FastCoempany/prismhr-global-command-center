@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getAppAccess } from "@/lib/auth";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
@@ -16,9 +15,9 @@ async function requireWrite() {
   return access.status === "active" && access.canWrite;
 }
 
+// Today, the page these forms lived on, retired 2026-09-25; the room is home.
 function done() {
-  revalidatePath("/today");
-  redirect("/today");
+  redirect("/room");
 }
 
 // Resolve a LIVE look-into item (synthetic li-live:* ids). The item set is

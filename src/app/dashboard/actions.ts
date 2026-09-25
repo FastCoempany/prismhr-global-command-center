@@ -33,13 +33,11 @@ async function requireWrite() {
 
 function safeReturn(fd: FormData): string {
   const raw = str(fd, "returnTo", 80);
-  return raw === "/accounts" || raw === "/today" || raw === "/room" ? raw : "/";
+  return raw === "/accounts" || raw === "/room" ? raw : "/";
 }
 
 function done(to = "/") {
-  revalidatePath("/");
   revalidatePath("/accounts");
-  revalidatePath("/today");
   revalidatePath("/room");
   redirect(to);
 }
@@ -367,7 +365,6 @@ export async function reorderCards(ids: string[]): Promise<{ ok: boolean }> {
         prisma.dashCard.update({ where: { id }, data: { position: i } }),
       ),
     );
-    revalidatePath("/");
     return { ok: true };
   } catch {
     return { ok: false };

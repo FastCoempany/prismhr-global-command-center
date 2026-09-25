@@ -524,7 +524,6 @@ describe("the restructure holds", () => {
   // wayfinder-routes.ts, since the 2026-09-25 rulings); the tab lists are
   // read from that table's own data.
   const live = WAYFINDER_ROUTES.filter((r) => !r.archived).map((r) => r.href);
-  const archived = WAYFINDER_ROUTES.filter((r) => r.archived).map((r) => r.href);
   test("the Playbook is a tab and the battlecard is gone", () => {
     assert.ok(live.includes("/playbook"));
     assert.ok(!WAYFINDER_ROUTES.some((r) => r.href.includes("/battlecard")));
@@ -537,22 +536,18 @@ describe("the restructure holds", () => {
     assert.ok(accounts.includes("partnerRoster"));
     assert.ok(accounts.includes("Partner roster"));
   });
-  test("Today and the board are archived, not deleted", () => {
-    assert.ok(archived.length > 0);
-    assert.ok(archived.includes("/today"));
-    assert.ok(existsSync(join(root, "src/app/today/page.tsx")));
-    assert.ok(existsSync(join(root, "src/app/page.tsx")));
-  });
   test("Intake became Capture and points at the room's own box", () => {
+    assert.ok(existsSync(join(root, "src/app/intake/page.tsx")));
     const intake = readFileSync(join(root, "src/app/intake/page.tsx"), "utf8");
     assert.ok(intake.includes('current="Capture"'));
     assert.ok(intake.includes('href="/room"'));
   });
-  test("the main row is seven: HomeRoom, Accounts, Groundwork, Playbook, Intranet, Pricing, Demos", () => {
-    // Everything outside the archive group is a place the operator works.
-    // The count is the contract — a new tab has to earn its way in on
-    // purpose. The Intranet did (the app's brain, asked for by name), and
-    // Groundwork did (the prospecting room, founder-directed).
+  test("the main row is eight: HomeRoom, Accounts, Groundwork, Playbook, Intranet, Pricing, Demos, Capture", () => {
+    // Every row is a place the operator works. The count is the contract — a
+    // new tab has to earn its way in on purpose. The Intranet did (the app's
+    // brain, asked for by name), Groundwork did (the prospecting room,
+    // founder-directed), and Capture stayed as the bookmarklet shelf's door
+    // when the archive group retired (ruled 2026-09-25).
     assert.deepEqual(live, [
       "/room",
       "/accounts",
@@ -561,21 +556,8 @@ describe("the restructure holds", () => {
       "/intranet",
       "/pricing",
       "/demos",
+      "/intake",
     ]);
-  });
-  test("Capture and Pipeline are archived, not deleted", () => {
-    for (const href of ["/today", "/", "/pipeline", "/intake"]) {
-      assert.ok(archived.includes(href), `${href} left the archive group`);
-    }
-    assert.ok(existsSync(join(root, "src/app/pipeline/page.tsx")));
-    assert.ok(existsSync(join(root, "src/app/intake/page.tsx")));
-  });
-  test("Pipeline concedes the pipeline to the Room and links land", () => {
-    const pipe = readFileSync(join(root, "src/app/pipeline/page.tsx"), "utf8");
-    assert.ok(/Room<\/Link> is the pipeline/.test(pipe), "the concession is missing");
-    // /book redirects to /accounts and drops the query — no card may point there.
-    assert.ok(!pipe.includes("/book"), "a card still links at the retired Book");
-    assert.ok(pipe.includes("/accounts?peo="));
   });
   test("the binding feature stays retired (founder-decreed 2026-08-22)", () => {
     // The card is account-less: no bind dropdown, no per-account retirement,
@@ -714,7 +696,7 @@ describe("the repairs hold", () => {
     assert.equal(isNamespacedAccountId("playbook:market"), true);
     assert.equal(isNamespacedAccountId("research:001x"), true);
     assert.equal(isNamespacedAccountId("0013600001abcDEF"), false);
-    for (const f of ["src/app/today/page.tsx", "src/app/archive/page.tsx"]) {
+    for (const f of ["src/app/archive/page.tsx"]) {
       const src = readFileSync(join(root, f), "utf8");
       assert.ok(src.includes("isNamespacedAccountId"), `${f} still iterates raw keys`);
     }

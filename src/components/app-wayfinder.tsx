@@ -19,7 +19,6 @@ export async function AppWayfinder({
   trail = "PrismHR Global",
 }: AppWayfinderProps) {
   const live = WAYFINDER_ROUTES.filter((r) => !r.archived);
-  const archived = WAYFINDER_ROUTES.filter((r) => r.archived);
   return (
     <header className="ds-wayfinder-shell">
       <div className="ds-wayfinder">
@@ -42,18 +41,6 @@ export async function AppWayfinder({
               {r.label}
             </Link>
           ))}
-          <span className="app-route-archive" aria-label="Archived surfaces">
-            {archived.map((r) => (
-              <Link
-                key={r.href}
-                aria-current={r.pages.includes(current) ? "page" : undefined}
-                className="app-route-arch"
-                href={r.href}
-              >
-                {r.label}
-              </Link>
-            ))}
-          </span>
         </nav>
         <DeskMeter />
         {onSignOut}

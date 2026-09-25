@@ -167,7 +167,7 @@ describe("the same firm is never two rows", () => {
     assert.equal(sameOrg("", "Acme"), false);
   });
   test("the add action checks the board and the book before creating", () => {
-    const actions = readFileSync(join(root, "src/app/today/actions.ts"), "utf8");
+    const actions = readFileSync(join(root, "src/app/room/ledger-actions.ts"), "utf8");
     const add =
       /export async function followUpAddBoard[\s\S]*?\n}\n/.exec(actions)?.[0] ?? "";
     assert.ok(add.includes("sameOrg"), "no duplicate check at all");
@@ -194,7 +194,7 @@ describe("manual follow-ups are their own species", () => {
 describe("the follow-up list is wired where the operator can reach it", () => {
   const client = readFileSync(join(root, "src/app/room/room-client.tsx"), "utf8");
   const page = readFileSync(join(root, "src/app/room/page.tsx"), "utf8");
-  const actions = readFileSync(join(root, "src/app/today/actions.ts"), "utf8");
+  const actions = readFileSync(join(root, "src/app/room/ledger-actions.ts"), "utf8");
   const css = readFileSync(join(root, "src/app/room/room.module.css"), "utf8");
 
   test("every control the list needs is wired", () => {

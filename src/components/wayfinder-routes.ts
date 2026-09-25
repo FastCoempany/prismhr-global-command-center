@@ -22,11 +22,10 @@ export const DEMO_PAGES: readonly string[] = [
   "Payroll Demo Sidekick",
 ];
 
-// Archived surfaces: Today, the board and Pipeline were the app's first three
-// rooms; the Room is all three now — it holds the deals in motion, so nothing
-// else gets to hold a second opinion about them. Capture keeps the
-// bookmarklets and the intake form, which need a page to be dragged from but
-// aren't daily work.
+// Today, the board and Pipeline were the app's first three rooms; the Room is
+// all three now, and the three pages retired 2026-09-25 (dead-code ledger,
+// section C). Capture keeps the bookmarklets and the intake form, which need
+// a page to be dragged from but aren't daily work; it is a plain door.
 export const WAYFINDER_ROUTES: readonly WayfinderRoute[] = [
   { label: "HomeRoom", href: "/room", pages: ["HomeRoom"], archived: false },
   { label: "Accounts", href: "/accounts", pages: ["Accounts"], archived: false },
@@ -35,10 +34,7 @@ export const WAYFINDER_ROUTES: readonly WayfinderRoute[] = [
   { label: "Intranet", href: "/intranet", pages: ["Intranet"], archived: false },
   { label: "Pricing", href: "/pricing", pages: ["Pricing"], archived: false },
   { label: "Demos", href: "/demos", pages: DEMO_PAGES, archived: false },
-  { label: "Today", href: "/today", pages: ["Today"], archived: true },
-  { label: "Board", href: "/", pages: ["Dashboard"], archived: true },
-  { label: "Pipeline", href: "/pipeline", pages: ["Pipeline"], archived: true },
-  { label: "Capture", href: "/intake", pages: ["Capture"], archived: true },
+  { label: "Capture", href: "/intake", pages: ["Capture"], archived: false },
 ];
 
 /** Where a route's page lives on disk, relative to the repo root. */

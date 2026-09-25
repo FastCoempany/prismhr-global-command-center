@@ -156,7 +156,7 @@ export default async function PartnersPage() {
 
           <p className={styles.sub}>
             Every outreach, reply, and note, dated and time-stamped, synced with{" "}
-            <Link href="/today">Today</Link>.
+            <Link href="/room">the HomeRoom</Link>.
           </p>
         </div>
 
@@ -190,8 +190,8 @@ export default async function PartnersPage() {
                           : `Awaiting reply · check-in ${shortDate(t.followUpAt)}`
                     : "No outreach logged yet"}
                 </span>
-                <Link href="/today" className={styles.prTodayLink}>
-                  Outreach card on Today →
+                <Link href="/room" className={styles.prTodayLink}>
+                  Outreach card on the HomeRoom →
                 </Link>
               </div>
 

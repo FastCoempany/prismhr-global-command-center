@@ -26,7 +26,6 @@ async function requireWrite() {
 
 function back() {
   revalidatePath("/archive");
-  revalidatePath("/today");
   redirect("/archive");
 }
 

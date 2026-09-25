@@ -66,9 +66,7 @@ async function requireWrite() {
 function refresh() {
   revalidatePath("/room");
   revalidatePath("/accounts");
-  revalidatePath("/today");
   revalidatePath("/groundwork");
-  revalidatePath("/");
 }
 
 // Type a line, press Enter → one note on THIS account, everywhere. Returns
@@ -779,7 +777,7 @@ import {
   withTags,
   type NoteTags,
 } from "@/lib/today/route-notes";
-import { routeSheetNote } from "@/app/today/sheet-actions";
+import { routeSheetNote } from "./sheet-actions";
 
 // The register's composer. The Note | Action toggle and urgency chips arrive
 // as opts (Today's capture bar, transplanted); the typed grammar still wins

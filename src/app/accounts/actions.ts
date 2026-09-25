@@ -34,7 +34,6 @@ async function requireWrite() {
 
 function done() {
   revalidatePath("/accounts");
-  revalidatePath("/today");
   redirect("/accounts");
 }
 

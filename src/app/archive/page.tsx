@@ -151,7 +151,7 @@ export default async function ArchivePage({
           <h1 className={styles.h1}>Archive</h1>
           <p className={styles.sub}>
             Done notes and the hidden bin. Nothing here is lost.{" "}
-            <Link href="/today">← Today</Link>
+            <Link href="/room">← HomeRoom</Link>
           </p>
         </div>
 

@@ -18,11 +18,9 @@ async function requireWrite() {
   return access.status === "active" && access.canWrite;
 }
 
-// Where to land after a write. Notes are added from the Partner Room and from
-// Today's partner cards, so both revalidate.
+// Where to land after a write.
 function done(target = "/partners") {
   revalidatePath("/partners");
-  revalidatePath("/today");
   redirect(target);
 }
 
