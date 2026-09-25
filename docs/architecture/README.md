@@ -14,6 +14,7 @@ Current files:
 - design-system.md
 - field-glyphs.md
 - product-lexicon.md
+- rulings-sheet.md
 
 ## The Chute audit
 
@@ -37,6 +38,11 @@ Beside the passes, one living file: canon-scoreboard.md keeps the three
 counts the audits produced (honor-system decrees, ungoverned behaviors,
 conflicting pairs) and every row behind them, and is the only place those
 rows move.
+
+rulings-sheet.md holds the seventeen decisions that gate the Chute
+refactor's first two candidates, each with its options, what every option
+changes in code, and a default; the founder rules, then CLAUDE.md is
+amended and the scoreboard moves.
 
 Likely future files:
 
