@@ -1,7 +1,11 @@
 "use server";
 
 // Archive actions — restore from the hidden bin, reopen a done note, or
-// delete forever (the only place a real delete lives, on purpose).
+// delete forever: the one delete the operator is offered as a delete, on
+// purpose, for hidden items only. Rows die elsewhere too, as housekeeping
+// rather than doors — the paste undo, the Act Lane's take-backs, the second
+// record's replace-forward writes, the Groundwork un-work, the template
+// store, and the chip popover's note delete in src/app/today/actions.ts.
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";

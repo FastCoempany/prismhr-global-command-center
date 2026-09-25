@@ -27,9 +27,10 @@ export function extractAvailable(): boolean {
   return claudeAvailable();
 }
 
-/** Opus or better, always (founder-decreed 2026-07-31). Both roster slots
- *  point at the parent brain now; the split survives only so a future decree
- *  can raise the rich side without touching the callers. */
+/** Which roster slot reads a document: the rich slot for a Teams thread, a
+ *  meeting or a demo, the light slot for the rest. Both are Opus — Opus or
+ *  better, always (founder-decreed 2026-07-31, canon 2026-09-25) — and the
+ *  roster in ./doctrine is the only place a model is named. */
 export function modelForOrigin(origin: string): string {
   return origin === "teams" || origin === "meeting" || origin === "demo"
     ? MODEL_EXTRACT_RICH

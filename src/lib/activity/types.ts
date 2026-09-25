@@ -41,7 +41,7 @@ export type StagedRow = {
 };
 
 /** Account-level columns the export repeats on every row — read once per
- *  account, first non-empty wins, never aggregated as if per-row (§2.3.5). */
+ *  account, first non-empty wins, never aggregated as if per-row. */
 export type SliceMeta = {
   primaryContact: string;
   /** The primary contact's address when the export carries it — "" otherwise.

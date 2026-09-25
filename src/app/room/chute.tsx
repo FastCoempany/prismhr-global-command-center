@@ -1,9 +1,11 @@
 "use client";
 
-// The Chute — the room's single intake. Throw files at it, as many as you
-// like; each one is read on the spot, routed to its account by the book's own
-// signals (a known contact's email, a company domain, the account's name),
-// and filed through the same pipeline a paste takes. The misfile guard runs
+// The Chute — the one intake, mounted at the HomeRoom's top and on the
+// Intranet: one component, one roster, the same routing wherever it mounts
+// (ruled 2026-09-25, D1 — CLAUDE.md, The Chute :301). Throw files at it, as
+// many as you like; each one is read on the spot, routed to its account by
+// the book's own signals (a known contact's email, a company domain, the
+// account's name), and filed through the same pipeline a paste takes. The misfile guard runs
 // on the text's own evidence with or without the key; the model's judgment
 // rides when the key is on. Nothing files blind: an unroutable file
 // waits with a picker, and a read that disagrees with the route waits for the
@@ -239,10 +241,13 @@ export function Chute({
     else patch(key, { state: "error", reason: r.reason ?? "The file didn't take." });
   };
 
-  // The vault ride (founder-decreed 2026-09-02): every dropped file also
-  // archives to the GitHub vault under the account it routed to — readable
-  // files after they file, recordings and other binaries as their whole
-  // filing. One grant per session; the browser carries the bytes itself.
+  // The vault ride (founder-decreed 2026-09-02; canon since 2026-09-25, D8 —
+  // CLAUDE.md, The Chute :307): every dropped file also archives whole to the
+  // GitHub vault under the account it routed to — readable files after they
+  // file, recordings and other binaries as their whole filing; a duplicate
+  // drop vaults nothing new. The rule puts the upload server-side so no token
+  // reaches the browser; this ride still takes one grant per session and the
+  // browser carries the bytes itself.
   const grantRef = useRef<ArchiveGrant | null>(null);
   const vaultTo = async (
     key: number,

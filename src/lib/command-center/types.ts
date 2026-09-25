@@ -25,9 +25,13 @@ export const STAGES: { key: Stage; label: string; pipeline: boolean }[] = [
 
 export const stageLabel = (s: Stage) => STAGES.find((x) => x.key === s)?.label ?? s;
 
-// --- Channel permission gate (feature 1) -------------------------------------
-// What you're allowed to do with this PEO right now. The go-to-market motion is
-// PEO-first: you reach the SMB through its PEO, and only after the CSM clears it.
+// --- The Approach (feature 1) ------------------------------------------------
+// A recorded fact, never a gate (ruled 2026-09-25, C19 — CLAUDE.md, The direct
+// doctrine :247): whether the CSM was briefed and whether client outreach is
+// cleared. Nothing is withheld by it — direct outreach is the default move and
+// the CSM is a door chosen when it is the fastest one, never a toll. The
+// campaign kits still filter on it (src/lib/campaigns/index.ts, ALLOWED); the
+// ruling retires that filter.
 export type Approach = "NEEDS_CSM" | "CHANNEL_OK" | "DIRECT_OK";
 
 export const APPROACHES: { key: Approach; label: string; blurb: string }[] = [
@@ -53,8 +57,8 @@ export const approachLabel = (a: Approach) =>
 export const approachBlurb = (a: Approach) =>
   APPROACHES.find((x) => x.key === a)?.blurb ?? "";
 
-// True when a suggested next step would jump the channel — i.e. we haven't been
-// cleared by the CSM yet. Today uses this to hold direct-motion suggestions.
+// True when the CSM has not been briefed yet. Nothing reads it: the Approach
+// is a fact, never a gate (C19), so no surface holds a move on it.
 export const isGated = (a: Approach) => a === "NEEDS_CSM";
 
 // The board's word outranks the hand-edited seed (founder-decreed 2026-08-21):

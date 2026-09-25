@@ -258,8 +258,8 @@ export async function syncApp(budget = 400): Promise<RunReport> {
       if (d) drafts.push(d);
     }
 
-    // §6 · the second record's digests — one per account per drop, rollup +
-    // gems only. Blast tallies and staged slices never enter the brain.
+    // The second record's digests — one per account per drop, rollup + gems
+    // only. Blast tallies and staged slices never enter the brain.
     const activityNotes = await prisma.accountNote.findMany({
       where: {
         accountId: { startsWith: "activity:" },

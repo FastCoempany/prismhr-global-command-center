@@ -113,7 +113,8 @@ const ageDays = (dayKey: string, now: Date): number | null => {
 // Score = 3·clicks + 1·opens over 30 days, recency-decayed with a 10-day
 // half-life anchored on the last open (the aggregate windows carry no per-day
 // series; the last-open anchor is the decay the store can honestly support —
-// §10 reserves the constants for founder tuning after live distribution).
+// the constants are placeholders reserved for founder tuning once a live
+// distribution exists).
 
 export const INTENT_WARM_THRESHOLD = 6;
 export const INTENT_HALF_LIFE_DAYS = 10;

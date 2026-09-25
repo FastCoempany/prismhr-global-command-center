@@ -1,11 +1,10 @@
-// The routing roster — one build, every door (the Chute, the row Drop, the
-// Intranet, the misfile guard). SERVER-ONLY: it reads contacts.json, which
-// must never reach a bundle.
-//
-// Before this existed, the Chute built its own roster inline and the row Drop
-// built nothing at all — it filed wherever the operator dropped, unchecked.
-// A signal one door can read and another cannot is how the same capture gets
-// two different answers.
+// The routing roster — the one build every door is to read: one Chute, one
+// roster, the same routing wherever it mounts (ruled 2026-09-25, D1 —
+// CLAUDE.md, The Chute :301). A door that builds its own roster reads fewer
+// signals than this one, and a signal one door can read and another cannot
+// is how the same capture gets two different answers; the row Drop once
+// built nothing at all and filed wherever the operator dropped, unchecked.
+// SERVER-ONLY: it reads contacts.json, which must never reach a bundle.
 
 import { AKA } from "./merge";
 import { peos } from "./index";

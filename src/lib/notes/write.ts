@@ -1,6 +1,12 @@
-// The one way to create an AccountNote. Stamps provenance (lane/actors/source)
-// and degrades to the pre-migration column set if the DB hasn't gained the
-// provenance columns yet — so deploys never race the Supabase SQL.
+// The way to create an AccountNote — the contract every writer is to take
+// (Provenance is columns, ruled 2026-09-25, P3/P4 — CLAUDE.md, The Ted
+// doctrine :405). Stamps provenance (lane/actors/source/recipients) and
+// degrades to the pre-migration column set if the DB hasn't gained the
+// provenance columns yet — so deploys never race the Supabase SQL. A create
+// outside this module is a bare row and a defect by the ruling; the audit of
+// 2026-09-25 found them in src/app/accounts/draft-actions.ts (the mail
+// template store) and src/lib/activity/run.ts (the second record's
+// namespaced notes).
 
 import { getPrisma } from "@/lib/db";
 import type { Lane } from "@/lib/intel/provenance";

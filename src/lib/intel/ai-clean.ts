@@ -1,10 +1,11 @@
-// The app's single LLM touchpoint: at the moment a paste is filed from
-// Intake, the raw text goes to Claude ONCE and comes back as clean,
-// structured, dated entries plus signal flags ("mentions a new country",
-// "reads like a stall"). Everything downstream stays deterministic — this
-// only ever REPLACES the paste-cleaning step, never the storage or render
-// path. When ANTHROPIC_API_KEY is absent the app falls back to the
-// rule-based parser and nothing here runs.
+// The paste read: at the moment a capture is filed from the room (roomPaste,
+// src/app/room/actions.ts), the raw text goes to Claude ONCE and comes back
+// as clean, structured, dated entries plus signal flags ("mentions a new
+// country", "reads like a stall"). One of the app's model calls, not its only
+// one (the inventory: docs/architecture/dead-code-appendix.md §7). Everything
+// downstream stays deterministic — this only ever REPLACES the paste-cleaning
+// step, never the storage or render path. When ANTHROPIC_API_KEY is absent
+// the app falls back to the rule-based parser and nothing here runs.
 
 import { claudeClient, claudeAvailable } from "@/lib/claude/health";
 import { redactMoney } from "@/lib/intel/lexicon";
@@ -318,12 +319,13 @@ export function accountMatches(claim: string, bound: string): boolean {
   return !!ct && !!bt && (ct === bt || b.includes(ct) || c.includes(bt));
 }
 
-// Which model reads this paste. A Salesforce timeline or an Outlook thread is
-// shaped work — headers, subjects, dates — and the cheap model does it well.
-// Freeform call notes are the opposite: no structure, all judgment, and the
-// commitments hide inside prose ("need the demo by 7/30, if not use ESC").
-// Those get the strong model, because a missed commitment there is a missed
-// deliverable in the real world.
+// The paste's shape. A Salesforce timeline or an Outlook thread is shaped
+// work — headers, subjects, dates. Freeform call notes are the opposite: no
+// structure, all judgment, and the commitments hide inside prose ("need the
+// demo by 7/30, if not use ESC"). The shape picks no model any more — the
+// read runs on Opus whatever the paste looks like (Opus or better, always) —
+// so nothing in the app consults this classifier today; the read-absorption
+// suite pins it.
 const SHAPED_HEAD =
   /^\s*(OUTLOOK THREAD|TEAMS CHAT|TEAMS THREAD)\b|^\s*(From|To|Sent|Subject|Cc)\s*:/im;
 const SF_CHROME = /\b(Show more actions|Expand All|From Address|Text Body|thread::)\b/i;
@@ -342,9 +344,11 @@ export function looksLikeNotes(raw: string): boolean {
   return NOTE_SCENT.test(text) || lines <= 40;
 }
 
-/** Opus or better, always — founder-decreed 2026-07-31. Haiku is never a
- *  model this app uses. The signature keeps its argument so callers and tests
- *  never notice the roster change. */
+/** Opus or better, always — founder-decreed 2026-07-31, canon since
+ *  2026-09-25 (CLAUDE.md, Other standing decrees :592-595): every model call
+ *  in the app runs on Opus or stronger, and the one roster lives in
+ *  src/lib/intranet/doctrine.ts. The paste's shape picks nothing; the
+ *  argument stays so callers and tests keep their signature. */
 export function modelFor(raw: string): string {
   void raw;
   return "claude-opus-5";

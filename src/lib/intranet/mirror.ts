@@ -313,7 +313,7 @@ export function goneLine(originGoneIso: string): string {
   return `From a note that has since been removed from the app${when ? ` (${when})` : ""}.`;
 }
 
-// ── the second record's digest (§6, shipped 2026-08-20) ─────────────────────
+// ── the second record's digest (shipped 2026-08-20) ─────────────────────────
 /** One document per account per drop: the rollup's arithmetic and the
  *  surviving gems, ≤4KB. Blast rows and staged slices never enter the brain —
  *  this builder accepts only the rollup and gems note bodies (the covenant's

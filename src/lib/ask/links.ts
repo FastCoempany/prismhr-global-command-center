@@ -52,7 +52,7 @@ export function askLinks(
 
   for (const c of input.citations ?? []) {
     if (!c) continue;
-    // A second-record digest cited → the account IS the evidence door (§6).
+    // A second-record digest cited → the account IS the evidence door.
     if (c.origin === "activity") {
       const id = (c.originRef ?? "").split(":")[0];
       if (id)

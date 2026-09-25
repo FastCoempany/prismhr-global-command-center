@@ -7,9 +7,11 @@
 // and drilldown Level 2 needs "the passage in its context", where the context
 // is the conversation, not the day.
 //
-// Mechanical first, model second. The cheap signals below do the splitting; the
-// model (in the server action) may only MERGE adjacent segments, never split
-// further. That asymmetry keeps segmentation deterministic and cheap.
+// Mechanical only. The cheap signals below do the splitting, and that is the
+// whole segmentation today: applyMerges can take a model's merge verdicts
+// (join adjacent segments, never split further), but the server action hands
+// it an empty list (src/app/intranet/actions.ts) and mergeProbe has no
+// caller, so no model touches a segment. Deterministic and free.
 
 import { SEGMENT_GAP_MINUTES, SEGMENT_MSG_CAP } from "./doctrine";
 import { checksum, msgKey } from "./normalize";

@@ -1,7 +1,7 @@
 // The Second Record's stores — namespaced AccountNote bodies, replaced
 // forward per drop, never accreted. The text grammar IS the store: every
 // renderer here has a parser, and the pair round-trips in tests, so a grammar
-// change is a versioned change to both together (Appendix A).
+// change is a versioned change to both together.
 //
 // Values are sanitized on the way in ("·" and "|" are the grammar's own
 // separators; newlines are line breaks), so a subject can never break a line
@@ -421,7 +421,7 @@ export type RunState = {
    *  ("held" = the distiller was down; arithmetic covered, gems owed a
    *  re-judge on the next drop with the key back). */
   covered: Record<string, string>;
-  /** Accounts that got their one re-distillation already (§3.7.2). */
+  /** Accounts that got their one re-distillation already. */
   retried: string[];
   /** Gem-candidate mortality this run: born vs died in refutation. */
   born: number;

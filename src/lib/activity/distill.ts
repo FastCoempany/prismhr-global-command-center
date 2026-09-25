@@ -3,7 +3,8 @@
 // the refuter (a separate call that defaults to refute), and mechanical canon
 // checks run in code before either call spends a token. Numbers never come
 // from here — the schemas hold no numeric fields except citation dates, so
-// every count the app renders traces to the rollup's arithmetic (§7.2).
+// every count the app renders traces to the rollup's arithmetic (the
+// covenant).
 
 import Anthropic from "@anthropic-ai/sdk";
 import { claudeClient, claudeAvailable } from "@/lib/claude/health";
@@ -141,7 +142,7 @@ export async function runDistill(inp: {
   rollupText: string;
   pack: ContextPack;
   rich: boolean;
-  /** Set on the one retry (§3.7.2): the named failure of the first pass. */
+  /** Set on the one retry an account gets: the named failure of the first pass. */
   retryNote?: string;
 }): Promise<DistillResult> {
   if (!distillAvailable()) throw new Error("No API key configured.");

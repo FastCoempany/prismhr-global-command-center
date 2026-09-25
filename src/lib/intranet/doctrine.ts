@@ -13,10 +13,13 @@
 //   C7  prospect questions are first-class intelligence
 
 // ── the model roster ────────────────────────────────────────────────────────
-// Claude is the parent brain. Opus 5 carries every judgment; Fable 5 escalates
-// when the record is large or contradicts itself. OPUS OR BETTER, ALWAYS —
-// founder-decreed 2026-07-31: Haiku is never a model this room uses. A later
-// "cost saving" that quietly downgrades the room fails the doctrine test.
+// The app's one model roster (canonized 2026-09-25 — CLAUDE.md, Other standing
+// decrees :592-595): every model call reads its slot from here and no caller
+// names a model. Claude is the parent brain. Opus 5 carries every judgment;
+// Fable 5 escalates when the record is large or contradicts itself. OPUS OR
+// BETTER, ALWAYS — founder-decreed 2026-07-31: Haiku is never a model this
+// app uses, and a later "cost saving" that quietly downgrades a slot fails
+// the doctrine test.
 export const MODEL_EXTRACT_RICH = "claude-opus-5";
 export const MODEL_EXTRACT_LIGHT = "claude-opus-5";
 export const MODEL_PLAN = "claude-opus-5";
@@ -91,7 +94,7 @@ export const ORIGINS = [
   "playbook",
   "research",
   "gap",
-  // the second record's digests (§6) — rollup + gems, never staged bodies
+  // the second record's digests — rollup + gems, never staged bodies
   "activity",
 ] as const;
 export type Origin = (typeof ORIGINS)[number];

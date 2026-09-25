@@ -1,7 +1,8 @@
 // The browser's half of the Second Record: stream the 128 MB export through
 // the RFC-4180 state machine into the ingest core (the same pure code the
 // tests run), then post the slices in verified batches. The server re-checks
-// everything — the manifest is the contract (§3.0).
+// everything — the manifest is the contract, and an incomplete upload
+// refuses to run.
 
 import { createCsvParser, fingerprintHeaders } from "./parse";
 import { createIngest } from "./ingest";

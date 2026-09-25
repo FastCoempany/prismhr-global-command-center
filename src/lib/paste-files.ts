@@ -35,9 +35,12 @@ export function sniffPaste(text: string): { kind: PasteKind; label: string } {
 
 // ── The duplicate guard's fingerprint ───────────────────────────────────────
 // The same capture filed to the same account must never enter the record
-// twice. The fingerprint survives whitespace and casing drift (a re-export or
-// a re-copy of the same thread), and two FNV-1a passes with different seeds
-// keep accidental collisions out of range for a book this size.
+// twice. The same capture is the same normalized body with the head line
+// skipped (ruled 2026-09-25, D16 — CLAUDE.md, The Chute :305): the
+// bookmarklets stamp a fresh date into the head, so a re-copy of one thread,
+// a renamed file and an .eml/.msg twin of one mail all dedupe. Whitespace and
+// casing drift never count, and two FNV-1a passes with different seeds keep
+// accidental collisions out of range for a book this size.
 
 export function pasteFingerprint(text: string): string {
   const norm = (text ?? "").toLowerCase().replace(/\s+/g, " ").trim();
@@ -499,8 +502,11 @@ export type DropReader =
   | "image"
   | "unsupported";
 
-// The one accept list both doors share — the row's Drop and the Chute must
-// never disagree about what the app can swallow.
+// The accept list both doors read. The rule (ruled 2026-09-25, D2 — CLAUDE.md,
+// The Chute :301): the doors agree on everything but the weekly export — the
+// Chute probes a .csv for the activity report and hands it to the second
+// record; the Drop refuses a .csv and says it goes in the Chute. Anything
+// else on this list files the same way from either door.
 export const DROP_ACCEPT =
   ".eml,.msg,.pdf,.vtt,.txt,.md,.csv,.log,.json,.xlsx,.xls,.docx,.png,.jpg,.jpeg,.webp,.gif,.heic,.heif";
 
