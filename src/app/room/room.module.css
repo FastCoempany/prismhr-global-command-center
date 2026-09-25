@@ -337,15 +337,7 @@
   vertical-align: 1px;
   white-space: nowrap;
 }
-.meta {
-  display: block;
-  font-family: var(--f-mono), Menlo, monospace;
-  font-size: 9.5px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  color: var(--faint);
-  margin-top: 3px;
-}
+
 .chips {
   display: inline-flex;
   gap: 6px;
@@ -800,19 +792,6 @@ button.sdRadio:hover {
   color: var(--ink);
   font-weight: 600;
 }
-.outst {
-  margin-top: 10px;
-  font-size: 12.5px;
-  color: var(--soft);
-}
-.closedct {
-  color: var(--quiet);
-  font-size: 12px;
-}
-.donenow {
-  color: var(--quiet);
-  text-decoration: line-through;
-}
 
 /* ── the glass half: the account's day sheet and record ─────────────── */
 .rec {
@@ -857,19 +836,7 @@ button.sdRadio:hover {
 }
 
 /* ── the register's furniture: the glyph key, day rules, state chips ── */
-.keybar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 3px 12px;
-  padding: 7px 0 5px;
-  border-bottom: 1px dashed var(--hair);
-  font-size: 10px;
-  color: var(--faint);
-}
-.keybar b {
-  font-weight: 400;
-  margin-right: 2px;
-}
+
 .kSend {
   color: var(--blue);
 }
@@ -956,9 +923,7 @@ button.sdRadio:hover {
   background: rgba(34, 197, 94, 0.12);
   color: #15803d;
 }
-.gSend {
-  color: var(--blue) !important;
-}
+
 .gAct {
   color: var(--orange) !important;
 }
@@ -1073,18 +1038,7 @@ button.sdRadio:hover {
   margin-right: 7px;
   font-variant-numeric: tabular-nums;
 }
-.when {
-  font-family: var(--f-mono), Menlo, monospace;
-  font-size: 10px;
-  font-weight: 700;
-  color: #8a5a00;
-  white-space: nowrap;
-}
-.ctl {
-  display: inline-flex;
-  gap: 2px;
-  flex: none;
-}
+
 .ctl button,
 .chkCtl button {
   border: 0;
@@ -1141,39 +1095,7 @@ button.sdRadio:hover {
   flex-wrap: wrap;
   margin: 8px 0 6px;
 }
-.mode {
-  border: 1px solid var(--hair);
-  background: rgba(255, 255, 255, 0.6);
-  border-radius: 8px;
-  padding: 5px 13px;
-  font-family: var(--f-sans), system-ui, sans-serif;
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--soft);
-  cursor: pointer;
-}
-.modeOn {
-  border: 1.6px solid var(--ink);
-  color: var(--ink);
-  background: #fff;
-}
-.urgc {
-  border: 1px solid var(--hair);
-  background: none;
-  border-radius: 999px;
-  padding: 4px 10px;
-  font-family: var(--f-mono), Menlo, monospace;
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  color: var(--faint);
-  cursor: pointer;
-}
-.urgOn {
-  border-color: var(--ink);
-  color: var(--ink);
-  background: #fff;
-}
+
 .hints {
   margin-left: auto;
   font-style: italic;
@@ -1536,13 +1458,7 @@ button.sdRadio:hover {
    System intelligence speaks in blue; these are the app's questions, not the
    record's facts, so they sit in the same register as the owed suggestions but
    read as a list rather than a claim. */
-.askBox {
-  margin: 3px 0 7px;
-  padding: 6px 9px;
-  background: rgba(37, 99, 235, 0.05);
-  border-left: 2px solid rgba(37, 99, 235, 0.5);
-  border-radius: 0 7px 7px 0;
-}
+
 .askRow {
   display: flex;
   align-items: baseline;
@@ -1554,15 +1470,6 @@ button.sdRadio:hover {
   font-size: 12.5px;
   line-height: 1.5;
   color: var(--soft);
-}
-.askMore {
-  display: block;
-  margin-top: 3px;
-  font-family: var(--f-mono), monospace;
-  font-size: 10px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--quiet);
 }
 
 /* The misfile guard — caution, not failure: nothing was written. */
@@ -1598,37 +1505,7 @@ button.sdRadio:hover {
 /* ── the research control ─────────────────────────────────────────────────────
    Says what it does and when it last did it. Blue: this is the system going and
    finding things out, not the operator's own record. */
-.rsrch {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  margin-top: 7px;
-}
-.rsrchBtn {
-  border: 1px solid rgba(37, 99, 235, 0.45);
-  background: rgba(37, 99, 235, 0.07);
-  color: var(--blue);
-  border-radius: 7px;
-  padding: 3px 11px;
-  font-family: var(--f-sans), system-ui, sans-serif;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-}
-.rsrchBtn:hover:not(:disabled) {
-  background: rgba(37, 99, 235, 0.14);
-}
-.rsrchBtn:disabled {
-  opacity: 0.6;
-  cursor: default;
-}
-.rsrchWhen {
-  font-family: var(--f-mono), Menlo, monospace;
-  font-size: 9.5px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--faint);
-}
+
 .rsrchOut {
   margin-top: 6px;
   padding: 7px 9px;
@@ -1643,12 +1520,7 @@ button.sdRadio:hover {
   margin: 3px 0 0;
   padding-left: 17px;
 }
-.askFoot {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  margin-top: 4px;
-}
+
 .openedChip {
   display: inline-flex;
   align-items: center;
@@ -1822,25 +1694,7 @@ button.sdRadio:hover {
 /* Questions comparable deals provoked — inherited, not owed (C7). One rule
    and one label for the whole section; each question leads with the shared
    countries so the label never repeats. */
-.peerRule {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 10px 0 4px;
-}
-.peerRuleLbl {
-  font-family: var(--f-mono), ui-monospace, Menlo, monospace;
-  font-size: 8.5px;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  color: var(--faint);
-  white-space: nowrap;
-}
-.peerRuleLine {
-  height: 1px;
-  flex: 1;
-  background: linear-gradient(90deg, rgba(10, 28, 64, 0.14), transparent);
-}
+
 .peerCtry {
   display: block;
   margin-bottom: 1px;
@@ -2266,10 +2120,7 @@ button.sdRadio:hover {
   vertical-align: 3px;
   white-space: nowrap;
 }
-.gateDone {
-  color: var(--quiet);
-  text-decoration: line-through;
-}
+
 /* Four doors, each its own thing: the bolt orange, the note forest, the
    action ink, the file blue — glyph and accent both distinct. */
 .door {
@@ -2648,19 +2499,7 @@ button.sdRadio:hover {
 .pipeDoor:hover {
   border-bottom-color: rgba(37, 99, 235, 0.8);
 }
-.pipeSrc,
-.pipeSrcInline {
-  font-family: var(--f-mono), Menlo, monospace;
-  font-size: 8px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: rgba(10, 28, 64, 0.22);
-  white-space: nowrap;
-  margin-left: 6px;
-}
-.pipeSrcInline {
-  margin-left: 6px;
-}
+
 .pipeList {
   margin: 0;
   padding-left: 13px;
@@ -2676,14 +2515,7 @@ button.sdRadio:hover {
   color: var(--red);
   font-weight: 700;
 }
-.pipeGate {
-  font-family: var(--f-mono), Menlo, monospace;
-  font-size: 9px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: #b45309;
-  margin-bottom: 3px;
-}
+
 .pipePillHot,
 .pipePillWarn {
   display: inline-block;
