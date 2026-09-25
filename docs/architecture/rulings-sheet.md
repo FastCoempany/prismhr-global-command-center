@@ -1,6 +1,6 @@
 ---
 title: Rulings Sheet
-status: Draft for the founder, 2026-09-25; rulings pending
+status: Ruled 2026-09-25; every row carries its ruling in decree-ledger.md and the law is in CLAUDE.md
 owner: Founder
 related_docs:
   - CLAUDE.md
@@ -260,22 +260,22 @@ Grouped by the piece of the refactor each row gates. Cites are against main at 7
 
 | Row | Ledger | Ruling | Note |
 |---|---|---|---|
-| R1 | C2 | | |
-| R2 | D16 | | |
-| R3 | D23 | | |
-| R4 | D3 | | |
-| R5 | C3 | | |
-| R6 | C4 | | |
-| R7 | C5 | | |
-| R8 | C6 | | |
+| R1 | C2 | B | ruled 2026-09-25 · decree-ledger C2 |
+| R2 | D16 | B | ruled 2026-09-25 · decree-ledger D16 |
+| R3 | D23 | A | ruled 2026-09-25 · decree-ledger P3 |
+| R4 | D3 | A | ruled 2026-09-25 · decree-ledger D3 |
+| R5 | C3 | A | ruled 2026-09-25 · decree-ledger C3 |
+| R6 | C4 | A | ruled 2026-09-25 · decree-ledger C4 |
+| R7 | C5 | A, acceptance is machinery; BOOKED not ruled | ruled 2026-09-25 · decree-ledger C5 |
+| R8 | C6 | C | ruled 2026-09-25 · decree-ledger C6 |
 | R9 | :391 | | |
-| R10 | C1 | | |
-| R11 | D1 | | |
-| R12 | D2 | | |
-| R13 | D5 | | |
-| R14 | C20 | | |
-| R15 | D7 | | |
-| R16 | D8 | | |
-| R17 | C8 | | |
+| R10 | C1 | A | ruled 2026-09-25 · decree-ledger C1 |
+| R11 | D1 | A | ruled 2026-09-25 · decree-ledger D1 |
+| R12 | D2 | A | ruled 2026-09-25 · decree-ledger D2 |
+| R13 | D5 | A, the pick is final; C withdrawn | ruled 2026-09-25 · decree-ledger D5 |
+| R14 | C20 | A | ruled 2026-09-25 · decree-ledger C20 |
+| R15 | D7 | A | ruled 2026-09-25 · decree-ledger D7 |
+| R16 | D8 | B | ruled 2026-09-25 · decree-ledger D8 |
+| R17 | C8 | a third option: the seat follows its account to the HomeRoom | ruled 2026-09-25 · decree-ledger C8 |
 
 Not on this sheet, deliberately: the other three conflicting pairs and seventeen ungoverned behaviors on the scoreboard. None of them changes what candidates 1 and 2 build; they wait for the passes that touch them.
