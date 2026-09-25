@@ -8,6 +8,7 @@ Current files:
 - canon-scoreboard.md
 - chute-architecture-map.md
 - chute-ingest-defects.md
+- dead-code-ledger.md
 - decree-ledger.md
 - derived-fact-ledger.md
 - design-brand-audit.md
@@ -33,6 +34,10 @@ Every audit pass gets its own document here, in the order it ran:
    in-scope decree with how it is enforced, the violations ranked, the
    decrees that conflict with each other, the ingest behaviors no decree
    governs, and the tests the next pass should write.
+5. dead-code-ledger.md — audit pass 4, what can come out before the
+   refactor and where the app spends work nobody reads: dead code, data,
+   surfaces, contracts, styles and tests, each classified against the
+   canon, plus the SAFE NOW, NEEDS A RULING and NEEDS THE DB lists.
 
 Beside the passes, one living file: canon-scoreboard.md keeps the three
 counts the audits produced (honor-system decrees, ungoverned behaviors,
