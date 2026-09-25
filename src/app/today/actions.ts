@@ -867,61 +867,10 @@ export async function setThreadStatus(formData: FormData) {
   done();
 }
 
-// --- Notes / to-dos (the notetaker, right column) ---------------------------
-// Called programmatically from the client (autosave), so they RETURN a value
-// instead of redirecting — live typing never triggers a page reload. Each write
-// is column-safe so a note's body always persists even before the notetaker
-// columns are migrated.
-
-export async function createTodoNote(): Promise<{ id: string } | null> {
-  if (!(await requireWrite())) return null;
-  try {
-    const prisma = getPrisma();
-    const top = await prisma.todo.findFirst({
-      orderBy: { position: "desc" },
-      select: { position: true },
-    });
-    const position = (top?.position ?? -1) + 1;
-    // Notes are auto-dated to today — 99% are about the day they're written.
-    // Column-safe: if remindAt isn't migrated yet, fall back to a bare create.
-    const t = await prisma.todo
-      .create({ data: { body: "", position, remindAt: new Date() } })
-      .catch(() => prisma.todo.create({ data: { body: "", position } }));
-    return { id: t.id };
-  } catch {
-    return null;
-  }
-}
-
-export async function saveTodoNote(
-  id: string,
-  body: string,
-  accountId: string,
-  remindAt: string,
-): Promise<{ ok: boolean }> {
-  if (!(await requireWrite()) || !id) return { ok: false };
-  const b = typeof body === "string" ? body.slice(0, 20000) : "";
-  const acct = accountId ? accountId.slice(0, 40) : null;
-  const when =
-    remindAt && !Number.isNaN(Date.parse(remindAt)) ? new Date(remindAt) : null;
-  const prisma = getPrisma();
-  try {
-    await prisma.todo.update({
-      where: { id },
-      data: { body: b, accountId: acct, remindAt: when },
-    });
-    return { ok: true };
-  } catch {
-    // Notetaker columns not migrated yet — still persist the body so the note is
-    // never lost; the account link + date save once the ALTER runs.
-    try {
-      await prisma.todo.update({ where: { id }, data: { body: b } });
-      return { ok: true };
-    } catch {
-      return { ok: false };
-    }
-  }
-}
+// --- To-do done toggle (the day sheet's ✓) ---------------------------------
+// Called programmatically from the client, so it RETURNS a value instead of
+// redirecting. The notetaker column and its create/save/delete actions were
+// removed 2026-09-25 (pass 4, SAFE NOW 5); only the ✓ remains.
 
 export async function setTodoDone(id: string, done: boolean): Promise<{ ok: boolean }> {
   if (!(await requireWrite()) || !id) return { ok: false };
@@ -929,17 +878,6 @@ export async function setTodoDone(id: string, done: boolean): Promise<{ ok: bool
     await getPrisma().todo.update({ where: { id }, data: { done: !!done } });
     // The ✓ lands the note on Today's ledger (its "done" event) — refresh the
     // server-rendered tab so it bops up without a manual reload.
-    revalidatePath("/today");
-    return { ok: true };
-  } catch {
-    return { ok: false };
-  }
-}
-
-export async function deleteTodoNote(id: string): Promise<{ ok: boolean }> {
-  if (!(await requireWrite()) || !id) return { ok: false };
-  try {
-    await getPrisma().todo.deleteMany({ where: { id } });
     revalidatePath("/today");
     return { ok: true };
   } catch {
