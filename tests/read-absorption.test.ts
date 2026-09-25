@@ -4,7 +4,9 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { cwd } from "node:process";
 
-import { looksLikeNotes, modelFor } from "../src/lib/intel/ai-clean";
+import { looksLikeNotes } from "../src/lib/intel/ai-clean";
+import { MODEL_READ } from "../src/lib/intranet/doctrine";
+import { WAYFINDER_ROUTES } from "../src/components/wayfinder-routes";
 import {
   actionBody,
   fallbackMove,
@@ -66,17 +68,19 @@ const note = (
 });
 
 // ── model routing ─────────────────────────────────────────────────────────────
-describe("the read routes notes-shaped pastes to the strong model", () => {
+describe("the read tells notes-shaped pastes from shaped work", () => {
   test("freeform call notes are notes-shaped", () => {
     const raw = `7/29/26 call with Chassie\nthey want Canada + Mexico\nTO DO: get pre recorded demo via shane by 7/30`;
     assert.equal(looksLikeNotes(raw), true);
-    assert.equal(modelFor(raw), "claude-opus-5");
   });
-  test("an Outlook thread is shaped work, not notes — and still reads on opus", () => {
+  test("an Outlook thread is shaped work, not notes", () => {
     const raw = `OUTLOOK THREAD\nFrom: Shane Smith\nTo: Antaeus Coe\nSubject: RE: contracts\n\nthat works`;
     assert.equal(looksLikeNotes(raw), false);
-    // Opus or better, always (decreed 2026-07-31) — shape no longer downgrades.
-    assert.equal(modelFor(raw), "claude-opus-5");
+  });
+  test("the read's model is the roster's slot: Opus or better, whatever the shape", () => {
+    // Opus or better, always (decreed 2026-07-31; one roster, ruled
+    // 2026-09-25) — the shape never picks the model, the roster does.
+    assert.match(MODEL_READ, /^claude-(opus|fable)-/);
   });
   test("a Salesforce timeline is shaped work even without mail headers", () => {
     const raw = [
@@ -541,22 +545,26 @@ describe("the ask mint", () => {
 
 // ── the restructure ───────────────────────────────────────────────────────────
 describe("the restructure holds", () => {
-  const nav = readFileSync(join(root, "src/components/app-wayfinder.tsx"), "utf8");
+  // The wayfinder renders its rows from one table (src/components/
+  // wayfinder-routes.ts, since the 2026-09-25 rulings); the tab lists are
+  // read from that table's own data.
+  const live = WAYFINDER_ROUTES.filter((r) => !r.archived).map((r) => r.href);
+  const archived = WAYFINDER_ROUTES.filter((r) => r.archived).map((r) => r.href);
   test("the Playbook is a tab and the battlecard is gone", () => {
-    assert.ok(nav.includes('href="/playbook"'));
-    assert.ok(!nav.includes("/battlecard"));
+    assert.ok(live.includes("/playbook"));
+    assert.ok(!WAYFINDER_ROUTES.some((r) => r.href.includes("/battlecard")));
     assert.ok(!existsSync(join(root, "src/app/battlecard")));
     assert.ok(existsSync(join(root, "src/app/playbook/page.tsx")));
   });
   test("Partners is no longer a tab, and its roster folded under Accounts", () => {
-    assert.ok(!/href="\/partners"/.test(nav));
+    assert.ok(!WAYFINDER_ROUTES.some((r) => r.href === "/partners"));
     const accounts = readFileSync(join(root, "src/app/accounts/page.tsx"), "utf8");
     assert.ok(accounts.includes("partnerRoster"));
     assert.ok(accounts.includes("Partner roster"));
   });
   test("Today and the board are archived, not deleted", () => {
-    assert.ok(nav.includes("app-route-archive"));
-    assert.ok(nav.includes('href="/today"'));
+    assert.ok(archived.length > 0);
+    assert.ok(archived.includes("/today"));
     assert.ok(existsSync(join(root, "src/app/today/page.tsx")));
     assert.ok(existsSync(join(root, "src/app/page.tsx")));
   });
@@ -566,14 +574,11 @@ describe("the restructure holds", () => {
     assert.ok(intake.includes('href="/room"'));
   });
   test("the main row is seven: HomeRoom, Accounts, Groundwork, Playbook, Intranet, Pricing, Demos", () => {
-    // Everything before the archive group is a place the operator works. The
-    // count is the contract — a new tab has to earn its way in on purpose.
-    // The Intranet did (the app's brain, asked for by name), and Groundwork
-    // did (the prospecting room, founder-directed).
-    const main = nav.split("app-route-archive")[0];
-    const links = [...main.matchAll(/href="(\/[a-z]*)"/g)].map((m) => m[1]);
-    assert.deepEqual(links, [
-      "/",
+    // Everything outside the archive group is a place the operator works.
+    // The count is the contract — a new tab has to earn its way in on
+    // purpose. The Intranet did (the app's brain, asked for by name), and
+    // Groundwork did (the prospecting room, founder-directed).
+    assert.deepEqual(live, [
       "/room",
       "/accounts",
       "/groundwork",
@@ -584,9 +589,8 @@ describe("the restructure holds", () => {
     ]);
   });
   test("Capture and Pipeline are archived, not deleted", () => {
-    const arch = nav.split("app-route-archive")[1] ?? "";
     for (const href of ["/today", "/", "/pipeline", "/intake"]) {
-      assert.ok(arch.includes(`href="${href}"`), `${href} left the archive group`);
+      assert.ok(archived.includes(href), `${href} left the archive group`);
     }
     assert.ok(existsSync(join(root, "src/app/pipeline/page.tsx")));
     assert.ok(existsSync(join(root, "src/app/intake/page.tsx")));

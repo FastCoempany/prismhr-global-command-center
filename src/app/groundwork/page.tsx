@@ -236,6 +236,9 @@ export default async function GroundworkPage({
       intelById.set(
         p.id,
         dealIntelFor(p.id, p.name, {
+          // Not taught the roster here: the inbound test sits out (E2 —
+          // every caller declares what it knows).
+          homeSide: undefined,
           acctNotes: intelNotes.map((n, i) => ({
             id: `${p.id}:${i}`,
             body: n.body,

@@ -10,6 +10,7 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import { claudeClient, claudeAvailable } from "@/lib/claude/health";
+import { MODEL_RESEARCH } from "@/lib/intranet/doctrine";
 import { redactMoney } from "@/lib/intel/lexicon";
 import { normPerson } from "@/lib/intel/provenance";
 
@@ -17,6 +18,20 @@ export const RESEARCH_NS = "research:";
 
 export function researchNs(accountId: string): string {
   return `${RESEARCH_NS}${accountId}`;
+}
+
+/** The research chip reads the LATEST of both stores — the on-demand deep
+ *  pass (research: notes) and the book-wide sweep — never whichever one the
+ *  surface happened to read first (the Spring; the Ted doctrine's merge-by-
+ *  latest). Undefined only when neither has touched the account. */
+export function latestResearchAt(deep?: string, sweep?: string): string | undefined {
+  const d = Date.parse(deep ?? "");
+  const s = Date.parse(sweep ?? "");
+  const hasDeep = !Number.isNaN(d);
+  const hasSweep = !Number.isNaN(s);
+  if (!hasDeep && !hasSweep) return undefined;
+  if (hasDeep && (!hasSweep || d >= s)) return deep;
+  return sweep;
 }
 
 export type ResearchFinding = {
@@ -206,7 +221,7 @@ export async function runResearch(input: {
   ];
   const ask = () =>
     client.messages.create({
-      model: "claude-opus-5",
+      model: MODEL_RESEARCH,
       max_tokens: 8192,
       system: SYSTEM,
       tools: [{ type: "web_search_20260209", name: "web_search", max_uses: 8 }],

@@ -35,15 +35,31 @@ export function sniffPaste(text: string): { kind: PasteKind; label: string } {
 
 // ── The duplicate guard's fingerprint ───────────────────────────────────────
 // The same capture filed to the same account must never enter the record
-// twice. The same capture is the same normalized body with the head line
-// skipped (ruled 2026-09-25, D16 — CLAUDE.md, The Chute :305): the
-// bookmarklets stamp a fresh date into the head, so a re-copy of one thread,
-// a renamed file and an .eml/.msg twin of one mail all dedupe. Whitespace and
-// casing drift never count, and two FNV-1a passes with different seeds keep
-// accidental collisions out of range for a book this size.
+// twice. The fingerprint survives whitespace and casing drift (a re-export or
+// a re-copy of the same thread), and two FNV-1a passes with different seeds
+// keep accidental collisions out of range for a book this size.
+//
+// The same capture is the same normalized BODY: the head line every producer
+// writes — "OUTLOOK THREAD — dropped file <name>", "CALL TRANSCRIPT — dropped
+// file <name>", the bookmarklets' "… - captured <date>" — carries the
+// filename or the copy moment, never the capture, so a renamed file, the .eml
+// and .msg of one mail, and a re-copy of one thread all fingerprint alike.
+// The head grammar is the sniffer's own token list (ruled 2026-09-25, D16 —
+// CLAUDE.md, The Chute :305).
+export const HEAD_LINE_RE =
+  /^(OUTLOOK THREAD|TEAMS THREAD|TEAMS CHAT|CALL TRANSCRIPT|SALESNAV|SPREADSHEET|DOCUMENT)\b/;
+
+/** The capture without its producer's head line. */
+export function fingerprintBody(text: string): string {
+  const t = (text ?? "").trimStart();
+  const nl = t.indexOf("\n");
+  const first = nl >= 0 ? t.slice(0, nl) : t;
+  if (!HEAD_LINE_RE.test(first)) return t;
+  return nl >= 0 ? t.slice(nl + 1) : "";
+}
 
 export function pasteFingerprint(text: string): string {
-  const norm = (text ?? "").toLowerCase().replace(/\s+/g, " ").trim();
+  const norm = fingerprintBody(text).toLowerCase().replace(/\s+/g, " ").trim();
   const fnv = (seed: number): number => {
     let h = seed >>> 0;
     for (let i = 0; i < norm.length; i++) {

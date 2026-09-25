@@ -32,6 +32,8 @@ export type RouteHit = {
   name: string;
   score: number;
   why: string;
+  /** Which rung placed the hit — the name a receipt keeps once the why (which
+   *  can carry an address) is dropped. */
   rung: RouteRung;
 };
 

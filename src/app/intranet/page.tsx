@@ -32,8 +32,7 @@ import { brainQueue } from "./runners";
 import { peos } from "@/lib/book";
 import { ActivityDock } from "../activity/dock";
 import { Chute } from "../room/chute";
-import { contactsFor } from "@/lib/book/contacts";
-import { domainOf } from "@/lib/route-capture";
+import { routingRoster } from "@/lib/book/roster";
 import { IntranetClient, type RailTopic } from "./intranet-client";
 import styles from "../command-center.module.css";
 
@@ -118,24 +117,7 @@ export default async function IntranetPage({
         {/* The same Chute the HomeRoom carries (founder-decreed 2026-09-02):
             recordings, VTTs, and anything else thrown here route, file, and
             vault exactly as they do at the room's door. */}
-        <Chute
-          roster={peos.map((p) => {
-            const emails = [p.contactEmail, ...contactsFor(p.id).map((c) => c.email)]
-              .map((e) => (e ?? "").toLowerCase().trim())
-              .filter(Boolean);
-            const domains = [
-              domainOf(p.website),
-              ...emails.map((e) => e.split("@")[1] ?? ""),
-            ].filter(Boolean);
-            return {
-              id: p.id,
-              name: p.name,
-              emails: [...new Set(emails)],
-              domains: [...new Set(domains)],
-            };
-          })}
-          canWrite={access.canWrite}
-        />
+        <Chute roster={routingRoster()} canWrite={access.canWrite} />
         <IntranetClient
           rail={rail}
           initialQ={initialQ}

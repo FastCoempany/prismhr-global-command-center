@@ -6,7 +6,7 @@
 
 import type { DashNodeKey } from "@/lib/dashboard/stages";
 import type { GlyphKind } from "@/app/today/ledger-icons";
-import { DISCOVERY } from "./discovery";
+import { questionById } from "./bank";
 import { redactMoney } from "./lexicon";
 import { sfLogCallUrl } from "@/lib/salesforce";
 import type { CorpusDoc } from "./extract";
@@ -73,7 +73,7 @@ export function businessDaysBetween(fromIso: string, to: Date): number {
 const isLive = (card: BriefCard) =>
   Object.values(card.states).some((s) => s === "active");
 
-const relay = (id: string): string => DISCOVERY.find((q) => q.id === id)?.relayLine ?? "";
+const relay = (id: string): string => questionById(id)?.relayLine ?? "";
 
 const CONTRACTS_OUT =
   /contracts? (for signature|sent|attached|out)|referral agreement|MSSA/i;

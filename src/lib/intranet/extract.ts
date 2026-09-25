@@ -14,27 +14,11 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import { claudeClient, claudeAvailable } from "@/lib/claude/health";
-import {
-  CLAIM_KINDS,
-  MODEL_EXTRACT_LIGHT,
-  MODEL_EXTRACT_RICH,
-  PROMPT_VERSION,
-  type ClaimKind,
-} from "./doctrine";
+import { CLAIM_KINDS, MODEL_EXTRACT, PROMPT_VERSION, type ClaimKind } from "./doctrine";
 import { bankPrompt } from "./bank";
 
 export function extractAvailable(): boolean {
   return claudeAvailable();
-}
-
-/** Which roster slot reads a document: the rich slot for a Teams thread, a
- *  meeting or a demo, the light slot for the rest. Both are Opus — Opus or
- *  better, always (founder-decreed 2026-07-31, canon 2026-09-25) — and the
- *  roster in ./doctrine is the only place a model is named. */
-export function modelForOrigin(origin: string): string {
-  return origin === "teams" || origin === "meeting" || origin === "demo"
-    ? MODEL_EXTRACT_RICH
-    : MODEL_EXTRACT_LIGHT;
 }
 
 // ── the instruction ─────────────────────────────────────────────────────────
@@ -240,7 +224,7 @@ DOCUMENT — from ${input.space || "an internal source"}${
 ${body}`;
 
   const res = await client.messages.create({
-    model: modelForOrigin(input.origin),
+    model: MODEL_EXTRACT,
     max_tokens: 16384,
     thinking: { type: "adaptive" },
     system: [{ type: "text", text: SYSTEM, cache_control: { type: "ephemeral" } }],

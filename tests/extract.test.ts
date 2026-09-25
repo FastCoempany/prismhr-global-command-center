@@ -6,6 +6,7 @@ import { digestFor } from "@/lib/intel/digest";
 describe("corpusFor", () => {
   test("assembles every store, tags SF activities, sorts newest first", () => {
     const docs = corpusFor("X1", "Acme", {
+      homeSide: undefined,
       acctNotes: [
         {
           id: "1",
@@ -47,6 +48,7 @@ describe("extractDealIntel", () => {
   test("golden: Advocate digest + fresh notes", () => {
     const dig = digestFor("ADVOCATEPAY000001")!;
     const docs = corpusFor("ADVOCATEPAY000001", "Advocate Pay — SubcontractorHub", {
+      homeSide: undefined,
       acctNotes: [
         {
           id: "n1",
@@ -71,6 +73,7 @@ describe("extractDealIntel", () => {
 
   test("cold account: extraction from raw notes only", () => {
     const intel = dealIntelFor("NOPE000000000001", "Nobody Co", {
+      homeSide: undefined,
       acctNotes: [
         {
           id: "1",

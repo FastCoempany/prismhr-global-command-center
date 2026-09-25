@@ -8,6 +8,7 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import { claudeClient, claudeAvailable } from "@/lib/claude/health";
+import { MODEL_DRAFT } from "@/lib/intranet/doctrine";
 import { getAppAccess } from "@/lib/auth";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import { getPeo, type Peo } from "@/lib/book";
@@ -165,7 +166,7 @@ ${draft ? `CURRENT DRAFT — revise it per the instruction, keep what works:\n${
   try {
     const client = claudeClient({ timeout: 90_000, maxRetries: 1 });
     const res = await client.messages.create({
-      model: "claude-opus-5",
+      model: MODEL_DRAFT,
       max_tokens: 8192,
       thinking: { type: "adaptive" },
       system: SYSTEM,

@@ -7,6 +7,7 @@
 
 import { rulesRead } from "@/lib/intel/rules-read";
 import { claudeClient, claudeAvailable } from "@/lib/claude/health";
+import { MODEL_TRANSCRIBE } from "@/lib/intranet/doctrine";
 import { revalidatePath } from "next/cache";
 import { getAppAccess } from "@/lib/auth";
 import { hasDatabaseEnv } from "@/lib/db";
@@ -1269,6 +1270,7 @@ export async function roomGapsRefill(
         // recognises a colleague is not available, and a partial roster would
         // demote a real reply to one of them. The inbound test sits out; this
         // corpus feeds the ask builder, which never reads direction.
+        homeSide: undefined,
         acctNotes: notes.map((n, i) => ({
           id: String(i),
           body: n.body,
@@ -1743,7 +1745,7 @@ async function transcribePdf(
   try {
     const client = claudeClient({ timeout: 110_000, maxRetries: 1 });
     const res = await client.messages.create({
-      model: "claude-opus-5",
+      model: MODEL_TRANSCRIBE,
       max_tokens: 16000,
       output_config: { effort: "low" },
       messages: [

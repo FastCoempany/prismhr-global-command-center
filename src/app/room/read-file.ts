@@ -46,10 +46,19 @@ async function normalizeImage(f: File): Promise<File | null> {
   }
 }
 
+/** Which door is reading. The Drop refuses the weekly activity export — the
+ *  Chute is the door that reads it for the book (ruled 2026-09-25, R12). */
+export type ReadDoor = "drop" | "chute";
+
+export const CSV_GOES_TO_THE_CHUTE = "The export goes in the Chute.";
+
 export async function readFileToText(
   f: File,
   readPdf: PdfReader,
+  opts: { door?: ReadDoor } = {},
 ): Promise<{ ok: true; text: string } | { ok: false; reason: string }> {
+  if (opts.door === "drop" && /\.csv$/i.test(f.name))
+    return { ok: false, reason: CSV_GOES_TO_THE_CHUTE };
   const kind = readerFor(f.name);
   if (kind === "unsupported")
     return {

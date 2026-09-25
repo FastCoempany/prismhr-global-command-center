@@ -148,8 +148,13 @@ test("the chute vaults every drop and routes binaries by filename or pick", () =
   assert.ok(/r\.ok && srcFile.*vaultTo\(key, account, srcFile, false\)/.test(chute));
   // The picker takes every type — no accept filter on the chute's input.
   assert.ok(!chute.includes("accept={DROP_ACCEPT}"));
-  // The dropped File never persists to the ledger.
-  assert.ok(chute.includes('Omit<ChuteItem, "text" | "candidates" | "file">'));
+  // The dropped File never persists to the ledger: the codec (chute-ledger.ts,
+  // since the 2026-09-25 rulings) names every stored field and `file` is not
+  // one of them; the component's row adds `file` on top of the ledger's row.
+  const ledger = readFileSync(join(root, "src/app/room/chute-ledger.ts"), "utf8");
+  assert.ok(!/\bfile\??:/.test(ledger), "the ledger row must not carry the File");
+  assert.ok(chute.includes("type ChuteItem = LedgerRow & {"));
+  assert.ok(chute.includes("file?: File;"));
 });
 
 // ── the wire, scripted ──────────────────────────────────────────────────────

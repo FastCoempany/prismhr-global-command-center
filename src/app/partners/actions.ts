@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getAppAccess } from "@/lib/auth";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
+import { MODEL_PARTNER_DRAFT } from "@/lib/intranet/doctrine";
 import { mirrorNoteToSheet } from "@/lib/today/mirror";
 
 function str(fd: FormData, key: string, max = 4000) {
@@ -137,7 +138,7 @@ export async function draftFollowUp(
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        model: "claude-sonnet-5",
+        model: MODEL_PARTNER_DRAFT,
         max_tokens: 1500,
         messages: [{ role: "user", content: prompt }],
       }),

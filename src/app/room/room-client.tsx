@@ -537,7 +537,9 @@ function Row({
   const readDroppedFile = async (f: File, waiting?: File[]) => {
     setReading(f.name);
     setNote(null);
-    const read = await readFileToText(f, (fd) => roomReadPdf(row.accountId, fd));
+    const read = await readFileToText(f, (fd) => roomReadPdf(row.accountId, fd), {
+      door: "drop",
+    });
     if (!read.ok) {
       setReading(null);
       setNote(read.reason);

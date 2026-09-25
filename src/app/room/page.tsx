@@ -54,7 +54,7 @@ import { buildStageRail } from "@/lib/room/stages-view";
 import { buildAccountSheet } from "@/lib/room/sheet-view";
 import { readLoss } from "@/lib/room/loss";
 import { GAP_DISMISS, readGaps } from "@/lib/room/gaps";
-import { researchNs } from "@/lib/intel/deep-research";
+import { latestResearchAt, researchNs } from "@/lib/intel/deep-research";
 import { getDemand, researchGeneratedAt } from "@/lib/book/research";
 import { readOutcome } from "@/lib/dashboard/outcome";
 import { owedByThem, owedToMe } from "@/lib/room/owed";
@@ -478,7 +478,7 @@ export default async function RoomPage() {
       accountId && getDemand(accountId)?.researched && researchGeneratedAt
         ? `${researchGeneratedAt}T12:00:00Z`
         : "";
-    const researchAt = researchRows[0]?.createdAt || bookResearchAt;
+    const researchAt = latestResearchAt(researchRows[0]?.createdAt, bookResearchAt) ?? "";
 
     const gapDismissed = new Set(
       [...dispositions.keys()].filter((k) => k.startsWith(GAP_DISMISS)),

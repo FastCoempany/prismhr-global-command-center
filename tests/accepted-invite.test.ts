@@ -87,7 +87,7 @@ describe("a calendar response is machinery, not a person writing", () => {
 
   test("the acceptance never flips the court — the last real inbound stands", () => {
     const intel = extractDealIntel(
-      corpusFor("acct", "My HR Professionals", { acctNotes: NOTES }),
+      corpusFor("acct", "My HR Professionals", { acctNotes: NOTES, homeSide: undefined }),
     );
     // Joseph's 10:22 AM message is his last real one — and the operator
     // answered it at 10:32, so nothing is owed back.
@@ -135,10 +135,7 @@ describe("a promise closes by delivery, and the record holds the landing", () =>
   test("adversarial: no notes, junk notes, junk dates — no throw, no settle", () => {
     assert.equal(settledByRecord(commitment, []), null);
     assert.equal(settledByRecord({ text: "", at: "" }, NOTES), null);
-    assert.equal(
-      settledByRecord({ ...commitment, at: "garbage" }, NOTES),
-      null,
-    );
+    assert.equal(settledByRecord({ ...commitment, at: "garbage" }, NOTES), null);
   });
 
   test("the register marks it LANDED and the stage stops instructing it", () => {
@@ -287,9 +284,15 @@ describe("the recap names who the record says was in the room", () => {
     assert.equal(r!.who, "Elise Munoz", "the first non-home speaker");
   });
   test("our own side is never the person we met", () => {
-    assert.deepEqual(speakersIn(ARCHIVE.body, isHome), ["Elise Munoz", "Leilani Gonzalez"]);
+    assert.deepEqual(speakersIn(ARCHIVE.body, isHome), [
+      "Elise Munoz",
+      "Leilani Gonzalez",
+    ]);
     assert.ok(!speakersIn(ARCHIVE.body, isHome).includes("Antaeus Coe"));
-    assert.ok(!speakersIn(ARCHIVE.body, isHome).includes("Lesha Cyphers"), "a CSM is home side");
+    assert.ok(
+      !speakersIn(ARCHIVE.body, isHome).includes("Lesha Cyphers"),
+      "a CSM is home side",
+    );
   });
   test("adversarial: a colleague on the tape is never who we met", () => {
     // Shane Jacobs sets our proposal terms and appears on an Advocate Pay
@@ -329,14 +332,27 @@ describe("the recap names who the record says was in the room", () => {
   });
   test("adversarial: a sibling from ANOTHER day never lends its actors", () => {
     const older = { ...ENTRY, createdAt: "2026-08-01T12:00:00.000Z" };
-    const bare = { ...ARCHIVE, body: "☰ Call transcript — nobody labeled\nCALL TRANSCRIPT — x" };
+    const bare = {
+      ...ARCHIVE,
+      body: "☰ Call transcript — nobody labeled\nCALL TRANSCRIPT — x",
+    };
     const r = meetingRead([bare, older], isHome);
     assert.equal(r!.who, "", "the caller falls back knowingly, never to the wrong day");
   });
   test("adversarial: no meetings, junk notes — no throw", () => {
     assert.equal(meetingRead([], isHome), null);
     assert.equal(
-      meetingRead([{ body: "✉ OL 09/04 — Re: hi · A → B", createdAt: DAY, actors: "", source: "outlook" }], isHome),
+      meetingRead(
+        [
+          {
+            body: "✉ OL 09/04 — Re: hi · A → B",
+            createdAt: DAY,
+            actors: "",
+            source: "outlook",
+          },
+        ],
+        isHome,
+      ),
       null,
     );
   });
@@ -360,9 +376,18 @@ describe("machinery is one predicate, not a list of exceptions", () => {
     );
   });
   test("the families it already covered still hold", () => {
-    assert.ok(M("✉ OL Today — Automatic reply: out this week · B → A", "Bryce Rowley → Antaeus Coe"));
-    assert.ok(M("✉ OL 09/04 — Accepted: Initial Chat · M → A", "Melanie Llanes → Antaeus Coe"));
-    assert.ok(M("✉ OL Today — Undeliverable: Re: pricing · p → A", "postmaster → Antaeus Coe"));
+    assert.ok(
+      M(
+        "✉ OL Today — Automatic reply: out this week · B → A",
+        "Bryce Rowley → Antaeus Coe",
+      ),
+    );
+    assert.ok(
+      M("✉ OL 09/04 — Accepted: Initial Chat · M → A", "Melanie Llanes → Antaeus Coe"),
+    );
+    assert.ok(
+      M("✉ OL Today — Undeliverable: Re: pricing · p → A", "postmaster → Antaeus Coe"),
+    );
   });
   test("a department mailbox is not a person", () => {
     assert.ok(isMachineSender("Marketing"));
@@ -408,7 +433,11 @@ describe("a booked meeting is not a wait for a reply", () => {
   test("the row waits for the meeting, not for a reply that already came", () => {
     const r = readDeal({
       ...base,
-      lastTouch: { at: effectiveAt(NOON, HI[1].body), awaitingReply: true, who: "Melanie" },
+      lastTouch: {
+        at: effectiveAt(NOON, HI[1].body),
+        awaitingReply: true,
+        who: "Melanie",
+      },
       lastAccepted: { at: effectiveAt(NOON, HI[0].body), who: "Melanie" },
     });
     assert.equal(r.move, "Wait for the meeting. Melanie accepted.");
@@ -419,15 +448,26 @@ describe("a booked meeting is not a wait for a reply", () => {
     // them. Passing the raw stamp is the Trend tie all over again.
     const raw = readDeal({
       ...base,
-      lastTouch: { at: effectiveAt(NOON, HI[1].body), awaitingReply: true, who: "Melanie" },
+      lastTouch: {
+        at: effectiveAt(NOON, HI[1].body),
+        awaitingReply: true,
+        who: "Melanie",
+      },
       lastAccepted: { at: NOON, who: "Melanie" },
     });
-    assert.ok(!/Wait for the meeting/.test(raw.move), "the anchor loses the 7:04 PM clock");
+    assert.ok(
+      !/Wait for the meeting/.test(raw.move),
+      "the anchor loses the 7:04 PM clock",
+    );
   });
   test("a real reply after the acceptance outranks it", () => {
     const r = readDeal({
       ...base,
-      lastTouch: { at: effectiveAt(NOON, HI[1].body), awaitingReply: true, who: "Melanie" },
+      lastTouch: {
+        at: effectiveAt(NOON, HI[1].body),
+        awaitingReply: true,
+        who: "Melanie",
+      },
       lastAccepted: { at: effectiveAt(NOON, HI[0].body), who: "Melanie" },
       lastInbound: { at: "2026-09-04T20:00:00Z", who: "Melanie" },
     });
@@ -438,7 +478,9 @@ describe("a booked meeting is not a wait for a reply", () => {
       ...base,
       lastTouch: null,
       lastAccepted: { at: effectiveAt(NOON, HI[0].body), who: "Melanie" },
-      openOwed: [{ text: "Send the Hawaii pricing sheet", wall: true, due: "2026-08-20" }],
+      openOwed: [
+        { text: "Send the Hawaii pricing sheet", wall: true, due: "2026-08-20" },
+      ],
     });
     assert.match(r.move, /^Send the Hawaii pricing sheet/);
   });

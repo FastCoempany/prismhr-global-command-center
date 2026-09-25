@@ -10,6 +10,8 @@
 
 import { MINE_RE, inferActors } from "@/lib/intel/provenance";
 import { isMeetingNote } from "@/lib/intel/meeting";
+import { isCloser, isMachinery } from "@/lib/intel/closer";
+import { effectiveAt } from "@/lib/intel/clock";
 import { csms } from "@/lib/book";
 
 export const SENDBOOK_NS = "sendbook:";
@@ -82,6 +84,12 @@ export function parseSendbookBody(
 
 // ── Reading the record's own traffic ────────────────────────────────────────
 
+// Every clock the register reads is the note's EFFECTIVE moment: the noon
+// day-anchor refined by the OL head's own clock, so a 9:44 AM send and the
+// 10:39 AM answer filed at the same noon stamp still order as they happened
+// (the Trend read, 2026-09-02; the Sendbook joins it 2026-09-25, E5).
+const at = (n: NoteLike): string => effectiveAt(n.createdAt, n.body);
+
 // The record's outbound sends — the same discriminators the touch clock and
 // the intel corpus use: a glyph-headed activity whose actors name the operator
 // as sender, that is not a meeting record (nobody "sends" a meeting that
@@ -101,7 +109,7 @@ export function recordSends(
       .slice(arrow + 1)
       .replace(/\+\d+\s*$/, "")
       .trim();
-    out.push({ at: n.createdAt, head: n.body.split("\n")[0] ?? "", who });
+    out.push({ at: at(n), head: n.body.split("\n")[0] ?? "", who });
   }
   return out;
 }
@@ -111,39 +119,52 @@ export function recordSends(
 // doctrine), and a CSM's voice never warms — NEVER MET means THEY have never
 // replied; a colleague chatting about the account is coordination, not the
 // account speaking (decreed 2026-08-19; enforced here 2026-08-22).
-const AUTO_RE = /automatic reply|out of office|auto-?reply|autoreply/i;
+//
+// Machinery never warms and never replies (ruled 2026-09-25, R7): a calendar
+// acceptance, a bounce, a campaign alert — anything that arrived without a
+// person deciding to write it — is the app's one machinery predicate, shared
+// with the court (src/lib/intel/closer.ts).
 const CSM_NAMES = new Set(csms.map((c) => c.trim().toLowerCase()));
 const isCsmVoice = (sender: string) => CSM_NAMES.has(sender.trim().toLowerCase());
+
+/** Their voice on a glyph-headed entry: a person, not us, not a CSM, not
+ *  machinery. Null when the entry is none of that. */
+function theirVoice(n: NoteLike): { actors: string; sender: string } | null {
+  if (!/^[✉✔☎☰] /.test(n.body)) return null;
+  const actors = n.actors || inferActors(n.body);
+  const sender = (actors.split("→")[0] ?? "").trim();
+  if (!sender || MINE_RE.test(sender) || isCsmVoice(sender)) return null;
+  if (isMachinery({ body: n.body, actors })) return null;
+  return { actors, sender };
+}
+
+/** A courtesy sign-off is their voice still — it warms — but it is not a
+ *  reply (the closer rule; ruled 2026-09-25, R6). Read past the head line. */
+const isSignOff = (n: NoteLike): boolean =>
+  isCloser(n.body.split("\n").slice(1).join("\n"));
 
 export function warmDates(notes: NoteLike[]): string[] {
   const out: string[] = [];
   for (const n of notes) {
     if (isMeetingNote(n)) {
-      out.push(n.createdAt);
+      out.push(at(n));
       continue;
     }
-    if (!/^[✉✔☎☰] /.test(n.body)) continue;
-    const actors = n.actors || inferActors(n.body);
-    const sender = (actors.split("→")[0] ?? "").trim();
-    if (!sender || MINE_RE.test(sender) || isCsmVoice(sender)) continue;
-    if (AUTO_RE.test(n.body.split("\n")[0] ?? "")) continue;
-    out.push(n.createdAt);
+    if (!theirVoice(n)) continue;
+    out.push(at(n));
   }
   return out;
 }
 
 // Inbound dates only — the reply annotations read these; meetings warm the
-// lane but a meeting is not "they wrote back".
+// lane but a meeting is not "they wrote back", and neither is "Thanks!".
 export function inboundDates(notes: NoteLike[]): string[] {
   const out: string[] = [];
   for (const n of notes) {
-    if (!/^[✉✔☎☰] /.test(n.body)) continue;
     if (isMeetingNote(n)) continue;
-    const actors = n.actors || inferActors(n.body);
-    const sender = (actors.split("→")[0] ?? "").trim();
-    if (!sender || MINE_RE.test(sender) || isCsmVoice(sender)) continue;
-    if (AUTO_RE.test(n.body.split("\n")[0] ?? "")) continue;
-    out.push(n.createdAt);
+    if (!theirVoice(n)) continue;
+    if (isSignOff(n)) continue;
+    out.push(at(n));
   }
   return out;
 }

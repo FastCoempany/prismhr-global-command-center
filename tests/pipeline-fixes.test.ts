@@ -108,6 +108,7 @@ describe("the deal read — filed intel finally moves the room", () => {
   });
   test("your own sends classify outbound; client replies inbound", () => {
     const docs = corpusFor("a", "Acme", {
+      homeSide: undefined,
       acctNotes: [
         note(
           "✉ SF Jul 28 — Re: contract · Antaeus Coe → Bryce Rowley",

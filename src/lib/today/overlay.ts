@@ -6,6 +6,7 @@
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import type { ClientHealth, Engagement } from "@/lib/engagement";
 import { canonicalAccountId } from "@/lib/book/merge";
+import { isRecordRowId } from "@/lib/notes/record-rows";
 import { inferActors, inferLane, type Lane } from "@/lib/intel/provenance";
 import type { Snooze, Validation, ValidationStatus } from "./build";
 import type { Todo, Touch, TouchLogEntry } from "./follow-ups";
@@ -109,7 +110,7 @@ type NoteRow = {
 // iterating the whole map would otherwise render a phantom account. Every
 // whole-map consumer filters on this.
 export function isNamespacedAccountId(id: string): boolean {
-  return (id ?? "").includes(":");
+  return !isRecordRowId(id);
 }
 
 export async function loadAccountNotes(): Promise<Map<string, AccountNote[]>> {

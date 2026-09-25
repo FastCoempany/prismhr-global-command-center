@@ -13,8 +13,30 @@
 // teaches or probes. A scenario is a saved combination of those, plus the
 // categories to lead with and the ones that are noise.
 
-import type { DiscoveryQ, QAudience, QCategory, QPhase } from "./discovery";
+import {
+  DISCOVERY,
+  type DiscoveryQ,
+  type QAudience,
+  type QCategory,
+  type QPhase,
+} from "./discovery";
 import type { DashNodeKey } from "@/lib/dashboard/stages";
+
+/** The bank's lookup: a question id — bare, or as the brain cites it
+ *  ("question:<id>") — resolves to the question's text and its gloss (the
+ *  why). Null when the bank holds no such question. The Call Sheet is
+ *  retired, so this is the only door a citation has to the question's own
+ *  words (the click-depth law, C13). */
+export function questionById(
+  id: string,
+): { id: string; question: string; why: string; relayLine: string } | null {
+  const bare = (id ?? "").trim().replace(/^question:/, "");
+  if (!bare) return null;
+  const q = DISCOVERY.find((x) => x.id === bare);
+  return q
+    ? { id: q.id, question: q.question, why: q.why, relayLine: q.relayLine }
+    : null;
+}
 
 export type QProduct = "eor" | "contractor" | "payroll" | "any";
 export type QSoph = "naive" | "inhouse" | "displacement" | "any";

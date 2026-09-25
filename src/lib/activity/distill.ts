@@ -9,14 +9,11 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { claudeClient, claudeAvailable } from "@/lib/claude/health";
 import { redactMoney } from "@/lib/intel/lexicon";
+import { MODEL_DISTILL, MODEL_REFUTE } from "@/lib/intranet/doctrine";
 import type { Gem, GemCite } from "./stores";
 import type { StagedRow } from "./types";
 import { stripThreadTokens } from "./parse";
 import { isMachineryName } from "./classify";
-
-export const MODEL_DISTILL_RICH = "claude-opus-5";
-export const MODEL_DISTILL_LIGHT = "claude-opus-5";
-export const MODEL_REFUTE = "claude-opus-5";
 
 export function distillAvailable(): boolean {
   return claudeAvailable();
@@ -159,7 +156,7 @@ THE SLICE (each row leads with its citation key):
 ${rowsText(inp.rows)}${inp.retryNote ? `\n\nRETRY: ${inp.retryNote}` : ""}`;
 
   const res = await client.messages.create({
-    model: inp.rich ? MODEL_DISTILL_RICH : MODEL_DISTILL_LIGHT,
+    model: MODEL_DISTILL,
     max_tokens: 4096,
     thinking: { type: "adaptive" },
     system: [

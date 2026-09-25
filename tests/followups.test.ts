@@ -14,6 +14,7 @@ import {
   wavedNames,
   withMarkers,
 } from "../src/lib/today/followup-brain";
+import { WAYFINDER_ROUTES } from "../src/components/wayfinder-routes";
 
 const root = cwd();
 const BOOK = [
@@ -245,9 +246,11 @@ describe("the follow-up list is wired where the operator can reach it", () => {
     );
   });
   test("the room is the HomeRoom now", () => {
-    const nav = readFileSync(join(root, "src/components/app-wayfinder.tsx"), "utf8");
-    assert.ok(nav.includes("HomeRoom"));
-    assert.ok(!/>\s*Room\s*</.test(nav), "a bare Room label survived");
+    // The wayfinder renders from one table (src/components/wayfinder-routes.ts,
+    // since the 2026-09-25 rulings); the label is read from its data.
+    const labels = WAYFINDER_ROUTES.map((r) => r.label);
+    assert.ok(labels.includes("HomeRoom"));
+    assert.ok(!labels.includes("Room"), "a bare Room label survived");
     assert.ok(page.includes('current="HomeRoom"'));
     assert.ok(client.includes("HOMEROOM"));
   });

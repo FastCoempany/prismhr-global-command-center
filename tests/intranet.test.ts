@@ -8,7 +8,7 @@ import {
   AGE_DAYS,
   CANDIDATE_CAP,
   KIND_WEIGHT,
-  MODEL_EXTRACT_RICH,
+  MODEL_EXTRACT,
   MODEL_PLAN,
   MODEL_SYNTH,
   MODEL_SYNTH_HARD,
@@ -16,6 +16,7 @@ import {
   RANK,
   TOPIC_PROMOTE_AT,
 } from "../src/lib/intranet/doctrine";
+import { WAYFINDER_ROUTES } from "../src/components/wayfinder-routes";
 import {
   captureReceipt,
   checksum,
@@ -32,12 +33,7 @@ import {
   segmentMessages,
   segmentTranscript,
 } from "../src/lib/intranet/segment";
-import {
-  asKind,
-  locateQuote,
-  modelForOrigin,
-  sanitizeRead,
-} from "../src/lib/intranet/extract";
+import { asKind, locateQuote, sanitizeRead } from "../src/lib/intranet/extract";
 import {
   BANK,
   BUYER_QUESTIONS_PARENT,
@@ -176,7 +172,7 @@ const topic = (over: Partial<Topic> & { id: string; label: string }): Topic => (
 describe("the doctrine is what the founder asked for", () => {
   test("Claude is the parent brain, and Fable is the escalation", () => {
     // A later "cost saving" that quietly downgrades the room fails here.
-    assert.equal(MODEL_EXTRACT_RICH, "claude-opus-5");
+    assert.equal(MODEL_EXTRACT, "claude-opus-5");
     assert.equal(MODEL_PLAN, "claude-opus-5");
     assert.equal(MODEL_SYNTH, "claude-opus-5");
     assert.equal(MODEL_SYNTH_HARD, "claude-fable-5");
@@ -398,9 +394,9 @@ describe("the liberal read organizes, files, and briefs", () => {
     assert.equal(asKind("gibberish"), "fact");
   });
   test("every read gets opus or better — never haiku (decreed 2026-07-31)", () => {
-    assert.equal(modelForOrigin("demo"), "claude-opus-5");
-    assert.equal(modelForOrigin("teams"), "claude-opus-5");
-    assert.equal(modelForOrigin("todo"), "claude-opus-5");
+    // One roster, one slot (ruled 2026-09-25): the origin never picks the
+    // model any more, so there is one value to hold to the decree.
+    assert.match(MODEL_EXTRACT, /^claude-(opus|fable)-/);
   });
   test("junk degrades to empty rather than throwing", () => {
     const r = sanitizeRead(null, body);
@@ -852,14 +848,15 @@ describe("the app's own record, and the promise never to forget it", () => {
 
 // ── the wiring ──────────────────────────────────────────────────────────────
 describe("the room is wired where the operator can reach it", () => {
-  const nav = readFileSync(join(root, "src/components/app-wayfinder.tsx"), "utf8");
   const page = readFileSync(join(root, "src/app/intranet/page.tsx"), "utf8");
   const client = readFileSync(join(root, "src/app/intranet/intranet-client.tsx"), "utf8");
   const css = readFileSync(join(root, "src/app/command-center.module.css"), "utf8");
 
   test("Intranet sits in the working row", () => {
-    const main = nav.split("app-route-archive")[0];
-    assert.ok(main.includes('href="/intranet"'), "the tab is missing or archived");
+    // The wayfinder renders from one table (src/components/wayfinder-routes.ts,
+    // since the 2026-09-25 rulings); the row's seat is read from its data.
+    const row = WAYFINDER_ROUTES.find((r) => r.href === "/intranet");
+    assert.ok(row && !row.archived, "the tab is missing or archived");
     assert.ok(page.includes('current="Intranet"'));
   });
   test("the ask bar, the rail, the paste dock and the fold are all present", () => {
@@ -975,10 +972,7 @@ describe("the chain that fills the brain is wired end to end", () => {
     // Next blocks navigation while an action is in flight, and a long
     // catch-up locked the operator in the room (caught 2026-08-22).
     assert.ok(client.includes('"/intranet/run"'), "nothing in the room starts the chain");
-    const runRoute = readFileSync(
-      join(root, "src/app/intranet/run/route.ts"),
-      "utf8",
-    );
+    const runRoute = readFileSync(join(root, "src/app/intranet/run/route.ts"), "utf8");
     assert.ok(runRoute.includes("runBrain"), "the run route never runs the brain");
     assert.ok(
       !client.includes("Bring the brain up to date"),
@@ -1005,10 +999,7 @@ describe("the chain that fills the brain is wired end to end", () => {
   });
   test("a paste is read on the spot and the operator watches the index grow (IV.3)", () => {
     assert.ok(client.includes('"/intranet/read"'), "Keep it is fire-and-forget again");
-    const readRoute = readFileSync(
-      join(root, "src/app/intranet/read/route.ts"),
-      "utf8",
-    );
+    const readRoute = readFileSync(join(root, "src/app/intranet/read/route.ts"), "utf8");
     assert.ok(readRoute.includes("readCapture"), "the read route never reads");
     assert.ok(client.includes("router.refresh"), "the rail never updates after ingest");
   });

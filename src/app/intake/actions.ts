@@ -75,6 +75,9 @@ export async function getDealIntel(accountId: string): Promise<PayrollPrefill | 
     loadTouches(),
   ]);
   const intel = dealIntelFor(id, peo.name, {
+    // Not taught the roster here: the inbound test sits out (E2 — every
+    // caller declares what it knows).
+    homeSide: undefined,
     acctNotes: acctNotes.get(id),
     todos: todos.filter((t) => t.accountId === id),
     touches: touches.filter(

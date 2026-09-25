@@ -9,6 +9,7 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import { claudeClient } from "@/lib/claude/health";
+import { MODEL_ASKS } from "@/lib/intranet/doctrine";
 import { redactMoney } from "@/lib/intel/lexicon";
 
 const SYSTEM = `You generate discovery questions for a consultant selling international employment services — employer of record, contractor management, and global payroll — into US staffing, PEO and HR service providers and their clients.
@@ -90,7 +91,7 @@ export function mintPrompt(c: MintContext): string {
 export async function mintAsks(c: MintContext, cap = 5): Promise<string[]> {
   const client = claudeClient({ timeout: 55_000, maxRetries: 1 });
   const msg = await client.messages.create({
-    model: "claude-opus-5",
+    model: MODEL_ASKS,
     // Five grounded questions is a small answer, but the ceiling has to leave
     // room for the model's own reasoning ahead of them — a truncated reply is a
     // silent empty list otherwise.

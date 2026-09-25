@@ -8,6 +8,7 @@
 // the app falls back to the rule-based parser and nothing here runs.
 
 import { claudeClient, claudeAvailable } from "@/lib/claude/health";
+import { MODEL_READ } from "@/lib/intranet/doctrine";
 import { redactMoney } from "@/lib/intel/lexicon";
 import { normPerson } from "@/lib/intel/provenance";
 import type { TimelineEntry } from "@/lib/sf-timeline";
@@ -319,13 +320,12 @@ export function accountMatches(claim: string, bound: string): boolean {
   return !!ct && !!bt && (ct === bt || b.includes(ct) || c.includes(bt));
 }
 
-// The paste's shape. A Salesforce timeline or an Outlook thread is shaped
+// What shape a paste is. A Salesforce timeline or an Outlook thread is shaped
 // work — headers, subjects, dates. Freeform call notes are the opposite: no
 // structure, all judgment, and the commitments hide inside prose ("need the
-// demo by 7/30, if not use ESC"). The shape picks no model any more — the
-// read runs on Opus whatever the paste looks like (Opus or better, always) —
-// so nothing in the app consults this classifier today; the read-absorption
-// suite pins it.
+// demo by 7/30, if not use ESC"). The shape never picks the model any more
+// (Opus or better, always — one roster in src/lib/intranet/doctrine.ts); it
+// still tells the readers what they are holding.
 const SHAPED_HEAD =
   /^\s*(OUTLOOK THREAD|TEAMS CHAT|TEAMS THREAD)\b|^\s*(From|To|Sent|Subject|Cc)\s*:/im;
 const SF_CHROME = /\b(Show more actions|Expand All|From Address|Text Body|thread::)\b/i;
@@ -344,16 +344,6 @@ export function looksLikeNotes(raw: string): boolean {
   return NOTE_SCENT.test(text) || lines <= 40;
 }
 
-/** Opus or better, always — founder-decreed 2026-07-31, canon since
- *  2026-09-25 (CLAUDE.md, Other standing decrees :592-595): every model call
- *  in the app runs on Opus or stronger, and the one roster lives in
- *  src/lib/intranet/doctrine.ts. The paste's shape picks nothing; the
- *  argument stays so callers and tests keep their signature. */
-export function modelFor(raw: string): string {
-  void raw;
-  return "claude-opus-5";
-}
-
 // One call, one paste. Throws on API failure — the caller degrades to the
 // rule-based parser. `now` is passed in so date resolution is testable.
 // The client gets an explicit timeout sized to serverless hosting (the SDK
@@ -363,7 +353,8 @@ export function modelFor(raw: string): string {
 export async function aiCleanTimeline(raw: string, now: Date): Promise<AiCleanResult> {
   const client = claudeClient({ timeout: 55_000, maxRetries: 1 });
   const todayIso = now.toLocaleDateString("en-CA", { timeZone: "America/Chicago" });
-  const model = modelFor(raw);
+  // Opus or better, always — founder-decreed 2026-07-31. One roster, one slot.
+  const model = MODEL_READ;
   // A full call transcript is the richest capture the app ever reads, and the
   // costliest to under-read: a live demo routinely leaves several promises on
   // the table, and each one the read misses is a deliverable missed in the

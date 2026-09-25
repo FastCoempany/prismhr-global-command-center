@@ -62,6 +62,7 @@ import {
 import { getScreen } from "@/lib/catalog";
 import { accountsMentioned } from "@/lib/intranet/bridges";
 import { isNamespacedAccountId } from "@/lib/today/overlay";
+import { recordRowsWhere } from "@/lib/notes/record-rows";
 import type { Claim, Topic } from "@/lib/intranet/types";
 
 export type RunReport = {
@@ -143,12 +144,16 @@ export async function syncApp(budget = 400): Promise<RunReport> {
   try {
     const drafts: MirrorDoc[] = [];
 
+    // The namespaces leave in the query, never after it: a budget of 400
+    // rows is 400 record rows, whatever the scratch pad or the second
+    // record's slices wrote that day (ruled 2026-09-25, D30).
     const notes = await prisma.accountNote.findMany({
+      where: recordRowsWhere(),
       orderBy: { createdAt: "desc" },
       take: budget,
     });
     for (const n of notes) {
-      if (isNamespacedAccountId(n.accountId)) continue; // playbook/gaps/research
+      if (isNamespacedAccountId(n.accountId)) continue; // belt to the query's braces
       const d = mirrorAccountNote(
         {
           id: n.id,
