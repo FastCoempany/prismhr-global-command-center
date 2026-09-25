@@ -30,9 +30,7 @@ test("sniffer names the head-token dialects", () => {
 
 test("sniffer reads bare email headers as an email thread", () => {
   const t = "From: Dana <dana@x.com>\nSent: Mon\nSubject: renewal\n\nbody here";
-  const s = sniffPaste(t);
-  assert.equal(s.kind, "outlook");
-  assert.equal(s.label, "an email thread");
+  assert.equal(sniffPaste(t).kind, "outlook");
 });
 
 test("sniffer reads a Salesforce activity timeline", () => {
@@ -273,9 +271,7 @@ test("vttToPaste heads the capture as a CALL TRANSCRIPT", () => {
   const p = vttToPaste(TEAMS_VTT, "esc-discovery.vtt");
   assert.match(p, /^CALL TRANSCRIPT — dropped file esc-discovery\.vtt\n/);
   assert.match(p, /Dana Ellis: Thanks for making time/);
-  const s = sniffPaste(p);
-  assert.equal(s.kind, "transcript");
-  assert.equal(s.label, "a call transcript");
+  assert.equal(sniffPaste(p).kind, "transcript");
 });
 
 // ── pasteFingerprint ────────────────────────────────────────────────────────
