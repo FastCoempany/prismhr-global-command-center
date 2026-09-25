@@ -261,7 +261,7 @@ Grouped by the piece of the refactor each row gates. Cites are against main at 7
 | Row | Ledger | Ruling | Note |
 |---|---|---|---|
 | R1 | C2 | B | ruled 2026-09-25 · decree-ledger C2 |
-| R2 | D16 | | |
+| R2 | D16 | B | ruled 2026-09-25 · decree-ledger D16 |
 | R3 | D23 | A | ruled 2026-09-25 · decree-ledger P3 |
 | R4 | D3 | A | ruled 2026-09-25 · decree-ledger D3 |
 | R5 | C3 | A | ruled 2026-09-25 · decree-ledger C3 |
