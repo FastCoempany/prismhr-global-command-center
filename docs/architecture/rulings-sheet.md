@@ -275,7 +275,7 @@ Grouped by the piece of the refactor each row gates. Cites are against main at 7
 | R13 | D5 | A, the pick is final; C withdrawn | ruled 2026-09-25 · decree-ledger D5 |
 | R14 | C20 | A | ruled 2026-09-25 · decree-ledger C20 |
 | R15 | D7 | A | ruled 2026-09-25 · decree-ledger D7 |
-| R16 | D8 | | |
+| R16 | D8 | B | ruled 2026-09-25 · decree-ledger D8 |
 | R17 | C8 | a third option: the seat follows its account to the HomeRoom | ruled 2026-09-25 · decree-ledger C8 |
 
 Not on this sheet, deliberately: the other three conflicting pairs and seventeen ungoverned behaviors on the scoreboard. None of them changes what candidates 1 and 2 build; they wait for the passes that touch them.
