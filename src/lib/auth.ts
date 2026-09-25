@@ -2,10 +2,6 @@ import crypto from "node:crypto";
 import { cookies } from "next/headers";
 import { UserRole, type User } from "@/generated/prisma/client";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
-// ⚠ TEMPORARY: site is PUBLIC while this flag is true — anyone with the URL
-// gets full owner access (view + edit), and the edge proxy skips its cookie
-// gate too. One flip in src/lib/public-access.ts restores the private gate.
-import { PUBLIC_ACCESS } from "@/lib/public-access";
 
 export const ACCESS_COOKIE_NAME = "field_signal_access";
 
@@ -128,9 +124,9 @@ export async function hasAccessSession() {
 }
 
 export async function getAppAccess(): Promise<AppAccess> {
-  // When public, skip the cookie gate entirely — everyone is treated as the
-  // signed-in owner (full read + write) and no login screen is shown.
-  if (!PUBLIC_ACCESS && !(await hasAccessSession())) {
+  // Every page signs in (ruled 2026-09-25): there is no public mode, so the
+  // cookie gate always runs.
+  if (!(await hasAccessSession())) {
     return {
       appUser: null,
       authEmail: null,
