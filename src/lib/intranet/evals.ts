@@ -141,69 +141,6 @@ export const TARGETS = {
   grounded: 0.95,
 } as const;
 
-export function scoreCase(
-  c: EvalCase,
-  input: {
-    candidates: Candidate[];
-    answer: Answer;
-    cited: { claimId: string; speaker: string }[];
-    byId: Map<string, Claim>;
-    nothingLine: string;
-  },
-): EvalResult {
-  const recall = recallAt(input.candidates, c.wants);
-  const attribution = attributionHolds(input.cited, input.byId);
-  const didAbstain = abstained(input.answer, input.nothingLine);
-  const abstention = c.shouldAbstain ? didAbstain : !didAbstain;
-  const grounded = groundedness(input.answer, input.candidates.length);
-
-  const passed =
-    (c.shouldAbstain || recall >= TARGETS.recall) &&
-    attribution &&
-    abstention &&
-    grounded >= TARGETS.grounded;
-
-  const note = !attribution
-    ? "a citation credited the wrong speaker"
-    : !abstention
-      ? c.shouldAbstain
-        ? "answered a question the record cannot support"
-        : "declined a question the record can support"
-      : grounded < TARGETS.grounded
-        ? "an assertion cited a handle that resolves to nothing"
-        : recall < TARGETS.recall
-          ? "retrieval missed material a human marked relevant"
-          : "";
-
-  return {
-    id: c.id,
-    proves: c.proves,
-    recall,
-    attribution,
-    abstention,
-    grounded,
-    passed,
-    note,
-  };
-}
-
-export function summarise(results: EvalResult[]): {
-  passed: number;
-  failed: number;
-  recall: number;
-  lines: string[];
-} {
-  const passed = results.filter((r) => r.passed).length;
-  const scored = results.filter((r) => r.recall > 0 || !r.passed);
-  const recall = scored.length
-    ? scored.reduce((n, r) => n + r.recall, 0) / scored.length
-    : 1;
-  const lines = results.map(
-    (r) => `${r.passed ? "✓" : "✕"} ${r.id} — ${r.proves}${r.note ? ` · ${r.note}` : ""}`,
-  );
-  return { passed, failed: results.length - passed, recall, lines };
-}
-
 // ── cost governance (F10) ───────────────────────────────────────────────────
 
 /** The day's ceilings. Breaching one degrades the room to structured retrieval

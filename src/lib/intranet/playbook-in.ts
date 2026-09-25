@@ -111,14 +111,6 @@ export function playbookKnowledgeDoc(row: {
   };
 }
 
-// ── prospect questions (C7) ─────────────────────────────────────────────────
-
-/** The Playbook's own namespaces, so the generic mirror can defer them here
- *  rather than double-filing every lesson (Phase 5.3). */
-export function isPlaybookNamespace(accountId: string): boolean {
-  return (accountId ?? "").startsWith("playbook:");
-}
-
 /** A one-line read of what a prospect question tells us, used in the rail and
  *  in the harvest proposal. A definitional question right after the EOR
  *  explanation means the framing failed — that is the intelligence, not the

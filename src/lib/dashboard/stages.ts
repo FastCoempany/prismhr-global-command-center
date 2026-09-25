@@ -127,20 +127,6 @@ export const SF_STAGE: Record<DashNodeKey, string> = {
   contract: "Contract",
 };
 
-// The SF stage a deal's board position implies — the furthest node that's been
-// touched (active or done). Falls back to the first stage for untouched cards.
-export function sfStageForStates(
-  states: Partial<Record<string, string>> | null | undefined,
-): string {
-  let stage = SF_STAGE.investigate;
-  if (!states) return stage;
-  for (const n of DASH_NODES) {
-    const s = states[n.key];
-    if (s === "active" || s === "done") stage = SF_STAGE[n.key];
-  }
-  return stage;
-}
-
 export const DASH_NODE_KEYS = DASH_NODES.map((n) => n.key);
 export const LAST_NODE = DASH_NODES.length - 1;
 

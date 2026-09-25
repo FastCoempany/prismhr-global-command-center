@@ -148,22 +148,3 @@ export function deriveColleagues(
   for (const n of extraPartners) if ((n ?? "").trim()) out.add(n.trim());
   return out;
 }
-
-/** Who a named person is. A name on both sides of the wall (a Primary
- *  Contact colliding with a colleague name) is UNRESOLVED — the refuter kills
- *  any gem whose act depends on it, and the receipt names the collision. */
-export function actorKindOf(
-  name: string,
-  colleagues: Set<string>,
-  accountPeople: Set<string>,
-): ActorKind {
-  const t = (name ?? "").trim();
-  if (!t) return "unresolved";
-  if (MACHINERY_SET.has(t)) return "machinery";
-  const isColleague = colleagues.has(t);
-  const isAccount = accountPeople.has(t);
-  if (isColleague && isAccount) return "unresolved";
-  if (isColleague) return "colleague";
-  if (isAccount) return "account";
-  return "unresolved";
-}

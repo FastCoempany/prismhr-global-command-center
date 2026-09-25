@@ -1,7 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { nextRoundupDueIso, sortEvents, splitAsk, withAsk } from "@/lib/today/ledger";
-import type { Touch } from "@/lib/today/follow-ups";
+import { sortEvents, splitAsk, withAsk } from "@/lib/today/ledger";
 
 test("ask marker", async (t) => {
   await t.test("withAsk → splitAsk round-trips", () => {
@@ -33,33 +32,6 @@ test("ask marker", async (t) => {
   await t.test("empty detail with an ask still works", () => {
     const d = withAsk("", "the answer");
     assert.deepEqual(splitAsk(d), { detail: "", ask: "the answer" });
-  });
-});
-
-test("roundup window", async (t) => {
-  const base: Touch = {
-    subjectKey: "k",
-    kind: "partner",
-    label: "Anika Steenstra",
-    detail: "",
-    message: "",
-    contactedAt: "2026-07-14T12:00:00.000Z",
-    followUpAt: "2026-07-15T12:00:00.000Z",
-    intervalDays: 2,
-    status: "archived",
-    log: [],
-  };
-
-  await t.test("archived thread → window opens 2 days after send", () => {
-    assert.equal(nextRoundupDueIso(base), "2026-07-16T12:00:00.000Z");
-  });
-
-  await t.test("live thread → no upcoming window", () => {
-    assert.equal(nextRoundupDueIso({ ...base, status: "awaiting" }), "");
-  });
-
-  await t.test("never contacted → due now, not upcoming", () => {
-    assert.equal(nextRoundupDueIso(undefined), "");
   });
 });
 

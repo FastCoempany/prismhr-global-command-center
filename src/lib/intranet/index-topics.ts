@@ -1,19 +1,3 @@
-// Phase 7 · INDEX — topics that stay still.
-//
-// The central decision: the index is NEVER recomputed from scratch. It
-// accumulates. A rail that looks different every morning is a rail nobody
-// believes, and an index nobody believes is worse than no index at all.
-//
-// Three invariants, all tested:
-//   I1 · a live topic leaves the rail only by merge, and a merge redirects
-//   I2 · the same documents in a different order produce the same live set
-//   I3 · a claim never silently leaves a topic
-//
-// Nothing here calls a model. Promotion, folding and counting are arithmetic;
-// only the merge ARBITRATION of near-but-not-identical labels needs judgment,
-// and that is a separate call the server action makes.
-
-import { TOPIC_PROMOTE_AT } from "./doctrine";
 import { BANK } from "./bank";
 import type { Topic } from "./types";
 
@@ -71,76 +55,6 @@ export function foldLabel(label: string): string {
 export function sameLabel(a: string, b: string): boolean {
   const x = foldLabel(a);
   return Boolean(x) && x === foldLabel(b);
-}
-
-/** Labels that fold CLOSE but not identically — the only pairs worth spending a
- *  model call on. Everything identical is merged mechanically; everything
- *  distant is left alone. */
-export function mergeCandidates(topics: Topic[]): [Topic, Topic][] {
-  const live = topics.filter((t) => t.status === "live");
-  const out: [Topic, Topic][] = [];
-  for (let i = 0; i < live.length; i += 1) {
-    for (let j = i + 1; j < live.length; j += 1) {
-      const a = foldLabel(live[i].label);
-      const b = foldLabel(live[j].label);
-      if (!a || !b || a === b) continue;
-      const aw = new Set(a.split(" "));
-      const bw = new Set(b.split(" "));
-      let shared = 0;
-      for (const w of bw) if (aw.has(w)) shared += 1;
-      const overlap = shared / Math.max(aw.size, bw.size);
-      if (overlap >= 0.5) out.push([live[i], live[j]]);
-    }
-  }
-  return out.slice(0, 40);
-}
-
-// ── the pending pool ────────────────────────────────────────────────────────
-/** Record a proposal. Support is counted in DISTINCT documents — one loud
- *  document cannot promote a topic on its own. */
-export function proposeTopic(
-  pool: Pending[],
-  proposal: { label: string; why: string },
-  docId: string,
-  nowIso: string,
-): Pending[] {
-  const next = pool.map((p) => ({ ...p, docIds: [...p.docIds] }));
-  const hit = next.find((p) => sameLabel(p.label, proposal.label));
-  if (hit) {
-    if (!hit.docIds.includes(docId)) hit.docIds.push(docId);
-    hit.lastSeen = nowIso;
-    return next;
-  }
-  next.push({
-    label: proposal.label.slice(0, 80),
-    docIds: [docId],
-    why: proposal.why.slice(0, 200),
-    firstSeen: nowIso,
-    lastSeen: nowIso,
-  });
-  return next;
-}
-
-/** Which pending labels have earned a place in the rail. Below the threshold a
- *  proposal stays invisible — that is what keeps the rail from filling with
- *  one-off noise from a single mention. */
-export function readyToPromote(pool: Pending[]): Pending[] {
-  return pool.filter((p) => p.docIds.length >= TOPIC_PROMOTE_AT);
-}
-
-// ── resolution ──────────────────────────────────────────────────────────────
-/** Follow merge redirects to the surviving topic. Every id ever issued resolves
- *  forever (I1), so an old link, an old citation and an old answer all still
- *  land. Cycles are impossible by construction but guarded anyway. */
-export function resolveTopic(topics: Topic[], id: string): Topic | null {
-  const byId = new Map(topics.map((t) => [t.id, t]));
-  let cur = byId.get(id) ?? null;
-  let hops = 0;
-  while (cur && cur.status === "merged" && cur.mergedInto && hops < 8) {
-    cur = byId.get(cur.mergedInto) ?? null;
-    hops += 1;
-  }
-  return cur;
 }
 
 /** The rail's top level (V.4): the bank's subject parents in their decreed

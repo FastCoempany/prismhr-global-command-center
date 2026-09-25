@@ -294,20 +294,6 @@ export function syncVerdict(
   return mirroredChecksum === freshChecksum ? "skip" : "update";
 }
 
-/** The line every citation to a vanished row carries, so the operator is never
- *  misled about what still exists upstream. */
-export function goneLine(originGoneIso: string): string {
-  const t = Date.parse(originGoneIso);
-  const when = Number.isNaN(t)
-    ? ""
-    : new Date(t).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        timeZone: "America/Chicago",
-      });
-  return `From a note that has since been removed from the app${when ? ` (${when})` : ""}.`;
-}
-
 // ── the second record's digest (shipped 2026-08-20) ─────────────────────────
 /** One document per account per drop: the rollup's arithmetic and the
  *  surviving gems, ≤4KB. Blast rows and staged slices never enter the brain —

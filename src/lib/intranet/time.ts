@@ -67,68 +67,6 @@ export function ageLimit(kind: ClaimKind): number {
   return AGE_DAYS[kind] ?? 365;
 }
 
-function fmt(iso: string): string {
-  const t = Date.parse(iso);
-  if (Number.isNaN(t)) return "";
-  return new Date(t).toLocaleDateString("en-US", {
-    month: "long",
-    timeZone: "America/Chicago",
-  });
-}
-
-function fmtShort(iso: string): string {
-  const t = Date.parse(iso);
-  if (Number.isNaN(t)) return "";
-  return new Date(t).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    timeZone: "America/Chicago",
-  });
-}
-
-/** What a claim's age and relations mean, in words an operator can act on. */
-export function readTime(
-  claim: Claim,
-  all: Map<string, Claim>,
-  nowIso: string,
-): TimeState {
-  if (claim.supersededBy) {
-    const newer = all.get(claim.supersededBy);
-    if (newer)
-      return {
-        state: "superseded",
-        byId: newer.id,
-        line: `Updated ${fmtShort(newer.saidAt)} — see the newer line.`,
-      };
-  }
-  if (claim.disputedWith.length) {
-    const others = claim.disputedWith.map((id) => all.get(id)).filter(Boolean) as Claim[];
-    if (others.length) {
-      const who = [...new Set([claim.speaker, ...others.map((o) => o.speaker)])]
-        .filter((s) => s && s !== "unknown")
-        .slice(0, 2);
-      // Naming the speakers here is provenance in service of an answer, not a
-      // person index — the narrow exception C4 allows.
-      const line =
-        who.length === 2
-          ? `${who[0]} and ${who[1]} landed on different framings.`
-          : "The record disagrees with itself here.";
-      return { state: "disputed", withIds: others.map((o) => o.id), line };
-    }
-  }
-  const limit = ageLimit(claim.kind);
-  if (Number.isFinite(limit)) {
-    const age = (Date.parse(nowIso) - Date.parse(claim.saidAt)) / DAY;
-    if (Number.isFinite(age) && age > limit) {
-      return {
-        state: "aging",
-        line: `Said in ${fmt(claim.saidAt)}. Confirm it.`,
-      };
-    }
-  }
-  return { state: "current" };
-}
-
 /** A superseded claim never travels alone into synthesis — its superseder goes
  *  with it, so the model can see which is which rather than treating a March
  *  position as today's (F6). */

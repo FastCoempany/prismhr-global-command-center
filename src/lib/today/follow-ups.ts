@@ -80,14 +80,6 @@ export function daysSinceIso(iso: string, now: number = Date.now()): number {
   return Math.max(0, Math.floor((now - t) / 86_400_000));
 }
 
-// Whole days until an ISO instant from `now` (ceil so "in 1.2 days" reads as 2;
-// past instants return 0 — they're due, not negative).
-export function daysUntilIso(iso: string, now: number = Date.now()): number {
-  const t = Date.parse(iso);
-  if (Number.isNaN(t)) return 0;
-  return Math.max(0, Math.ceil((t - now) / 86_400_000));
-}
-
 // A follow-up is "due" when it's still awaiting a reply and its follow-up instant
 // has arrived.
 export function isDue(t: Touch, now: number = Date.now()): boolean {

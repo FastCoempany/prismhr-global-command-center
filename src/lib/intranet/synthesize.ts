@@ -63,20 +63,6 @@ export function escalationReason(cands: Candidate[], plan: QueryPlan): string {
   return "";
 }
 
-// ── confidence (10.4) ───────────────────────────────────────────────────────
-/** Thin is not a failure to hide. It is the most useful thing the room can tell
- *  an operator who is about to repeat something to a prospect. */
-export function readConfidence(cands: Candidate[], nowIso: string): Answer["confidence"] {
-  if (cands.length < 3) return "thin";
-  const strong = cands.filter((c) => c.claim.confidence === "stated");
-  if (strong.length === 0) return "thin";
-  const yearAgo = Date.parse(nowIso) - 365 * 86_400_000;
-  const recent = cands.filter((c) => Date.parse(c.claim.saidAt) > yearAgo);
-  if (recent.length === 0) return "thin";
-  if (disputeCount(cands.map((c) => c.claim)) > 0) return "mixed";
-  return "firm";
-}
-
 /** The line shown above a thin answer, naming why it is thin. */
 export function thinLine(cands: Candidate[]): string {
   const newest = cands

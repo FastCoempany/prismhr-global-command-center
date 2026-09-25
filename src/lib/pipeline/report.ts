@@ -1,30 +1,3 @@
-// The Pipeline Status record — one per active account, assembled from what
-// the app already holds (founder-decreed 2026-09-08). Pure: every input is
-// passed in, so the whole thing is testable without a database.
-//
-// The job it does: someone asks "where's your pipeline," and this is read
-// out loud without preparing anything. That purpose sets three rules the
-// rest of the app does not need.
-//
-// ONE — the report is the OPERATOR'S work. A commitment that hands the job
-// to another team inside PrismHR — the recruitment specialist, the support
-// desk, an implementation crew — is not his next step. It rides an FYI line.
-// The Simploy row proved why: "Connect Chassie with PrismHR's recruitment
-// specialist," opened 8/25, took the next-step slot on 9/8 while the three
-// commitments he actually made on the 9/2 call sat behind it.
-//
-// TWO — what another team is doing AT the account is FYI, never a field with
-// the same weight as his own deal. Support cases are the account's traffic
-// with a different part of our company; he needs to know so leadership can
-// never surprise him, and that is all.
-//
-// THREE — Unknown is a value. A row of Unknowns is the finding: it says where
-// discovery has holes. Nothing is ever silently blank, and a value the record
-// implies is marked apart from one a person actually said.
-
-import { splitFallback } from "@/lib/room/deliverables";
-import { moveFromCommitment } from "@/lib/room/move-line";
-
 export type Provenance = {
   /** Where the value came from, in the operator's words. "" when Unknown. */
   src: string;
@@ -185,45 +158,6 @@ export type OpenItem = {
   /** The record shows this already landed (src/lib/room/settled.ts). */
   settled?: string;
 };
-
-/** The operator's own next action. Settled commitments are done, another
- *  team's handoffs are theirs, and what survives ranks by urgency: a blown
- *  wall, then the soonest date, then the newest. "" means None set — which
- *  is a finding, not a blank. */
-export function nextStepFrom(open: readonly OpenItem[]): {
-  text: string;
-  full: string;
-  handoffs: string[];
-} {
-  const handoffs: string[] = [];
-  const mine: OpenItem[] = [];
-  for (const o of open ?? []) {
-    if (o.settled) continue;
-    const commitment = splitFallback(o.edit ?? "").text;
-    if (isOtherTeamWork(commitment)) {
-      handoffs.push(moveFromCommitment(commitment).line);
-      continue;
-    }
-    mine.push(o);
-  }
-  const rank = (o: OpenItem) => (o.wall ? 0 : o.due ? 1 : 2);
-  const dueMs = (o: OpenItem) => {
-    const t = Date.parse(`${o.due ?? ""}T12:00:00Z`);
-    return Number.isNaN(t) ? Number.MAX_SAFE_INTEGER : t;
-  };
-  const pick = [...mine].sort((a, b) => rank(a) - rank(b) || dueMs(a) - dueMs(b))[0];
-  if (!pick) return { text: "", full: "", handoffs };
-  const built = moveFromCommitment(splitFallback(pick.edit).text);
-  return { text: built.line, full: built.full, handoffs };
-}
-
-/** What THEY owe, from the record's own Owed line — the sequence the report
- *  has to respect. A next step that ignores the counterparty's turn reads as
- *  work the operator can do today when he cannot. */
-export function waitingOn(theirs: readonly { who: string; text: string }[]): string {
-  const first = (theirs ?? [])[0];
-  return first ? `${first.who} owes ${first.text}` : "";
-}
 
 // ── their turn, where no Owed line names them ───────────────────────────────
 // owedByThem() reads exactly one syntax: "Owed: <thing> — @<Who>". A call read

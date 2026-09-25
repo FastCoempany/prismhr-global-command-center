@@ -71,9 +71,6 @@ export const SEGMENT_GAP_MINUTES = 90;
 /** Claim pairs must be at least this far apart to be a contradiction. */
 export const CONTRADICTION_MIN_DAYS = 14;
 
-/** C6 — nothing is ever deleted. Asserted by the doctrine test. */
-export const NOTHING_DELETED = true;
-
 // ── the vocabulary ──────────────────────────────────────────────────────────
 export const CLAIM_KINDS = [
   "fact",

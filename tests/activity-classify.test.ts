@@ -6,7 +6,6 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   MACHINERY_USERS,
-  actorKindOf,
   deriveColleagues,
   isLoggedCorrespondence,
   isMachineryName,
@@ -65,17 +64,6 @@ test("the colleague roster derives from Assigned ∪ CSMs ∪ extras − machine
   assert.ok(roster.has("Eric Ronci"));
   assert.ok(!roster.has("HubSpot Integration User"));
   assert.ok(!roster.has("Automated Process"));
-});
-
-test("actor kinds: colleague, account, machinery — and a collision is UNRESOLVED", () => {
-  const colleagues = new Set(["Greg Williams", "Jordan Cross"]);
-  const accountPeople = new Set(["Natalie Borland", "Jordan Cross"]);
-  assert.equal(actorKindOf("Greg Williams", colleagues, accountPeople), "colleague");
-  assert.equal(actorKindOf("Natalie Borland", colleagues, accountPeople), "account");
-  assert.equal(actorKindOf("Jordan Cross", colleagues, accountPeople), "unresolved");
-  assert.equal(actorKindOf("Automated Process", colleagues, accountPeople), "machinery");
-  assert.equal(actorKindOf("Nobody Known", colleagues, accountPeople), "unresolved");
-  assert.equal(actorKindOf("", colleagues, accountPeople), "unresolved");
 });
 
 test("rule 6: a CSM-assigned untyped row lands csm only when the roster is given", () => {

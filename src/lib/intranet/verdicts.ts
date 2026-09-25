@@ -194,10 +194,3 @@ export async function runTopicSummary(label: string, claims: Claim[]): Promise<s
     .trim()
     .slice(0, 240);
 }
-
-/** Whether a topic's summary has drifted far enough from its material to be
- *  worth regenerating: a quarter more claims than when it was last written. */
-export function summaryStale(claimCount: number, countAtLastSummary: number): boolean {
-  if (!countAtLastSummary) return claimCount > 0;
-  return claimCount >= countAtLastSummary * 1.25;
-}

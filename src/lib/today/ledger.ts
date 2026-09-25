@@ -1,11 +1,3 @@
-// The day-as-a-ledger — pure helpers. A "chase" only exists while something
-// NAMED is owed; the ask rides inside Touch.detail as a marker (no schema
-// change, degrades gracefully), so a due check-in with no ask renders as a
-// quiet check row, never a chase.
-//
-//   detail: "7 of 7 teed up ⊙owes: yes/no on the 5 flagged accounts"
-
-import { ROUNDUP_CADENCE_DAYS, type Touch } from "./follow-ups";
 import { sameUserDay } from "@/lib/tz";
 
 const ASK = "⊙owes:";
@@ -25,16 +17,6 @@ export function withAsk(detail: string, ask: string): string {
   const base = splitAsk(detail).detail;
   const clean = ask.trim();
   return clean ? `${base ? `${base} ` : ""}${ASK} ${clean}` : base;
-}
-
-// When the next roundup window opens for a partner whose thread is closed —
-// the dimmed "upcoming" ledger row. "" when there's no future window (live
-// thread, or never contacted = due right now, not upcoming).
-export function nextRoundupDueIso(touch: Touch | undefined): string {
-  if (!touch || touch.status !== "archived") return "";
-  const t = Date.parse(touch.contactedAt);
-  if (Number.isNaN(t)) return "";
-  return new Date(t + ROUNDUP_CADENCE_DAYS * 86_400_000).toISOString();
 }
 
 // True when two instants fall on the same calendar day AT THE USER'S DESK —

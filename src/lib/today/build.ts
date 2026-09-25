@@ -237,20 +237,6 @@ export function commitmentsFromCards(
   return out.sort((a, b) => (b.ageDays ?? -1) - (a.ageDays ?? -1));
 }
 
-// The partner-engagement line — the third question the owner brings to every
-// partner touch: what language gauges / raises / campaigns the Global product
-// for this specific client. Shaped by whether it's a displacement or greenfield.
-export function partnerAngle(a: AccountIntel): string {
-  const comp = a.competitors[0];
-  if (a.play === "displacement" && comp) {
-    return `Ask ${a.csm}: how is ${a.name} feeling about ${comp}? When's the renewal? We can bring that same coverage onto the PrismHR platform they already run: one bill, one system of record.`;
-  }
-  if (a.play === "greenfield") {
-    return `Ask ${a.csm}: is ${a.name} hiring anywhere they don't have a legal entity, or converting contractors? That misclassification exposure is our opening. Global lets them do it compliantly without standing up entities.`;
-  }
-  return `Ask ${a.csm} what ${a.name}'s cross-border footprint looks like: entities, how they pay, employees or contractors. Gauge before you campaign.`;
-}
-
 // --- "This morning" composition ---------------------------------------------
 // Turns the day's inputs into thoroughly-written moves, each with the exact
 // thing to do beside the reasoning. Verbose by design — anything that becomes an
@@ -478,20 +464,6 @@ export function triageDoneKey(accountId: string): string {
 // once, not a weekly ritual that resets every Monday).
 export function partnerOutreachKey(partner: string): string {
   return `partner-outreach:${partner}`;
-}
-
-// --- Weekly partner kickoff (Monday ritual) ---------------------------------
-// At the start of the week, tee up at least N interactions per partner: their
-// top Global-fit accounts, plus a ready-to-send opener that names them. Every
-// partner is included — the point is to arm the whole roster, not just the two
-// who already have hot signals; a book with no researched play still gets its
-// best-fit accounts as conversation starters (that's the relay motion).
-
-// True on Sunday/Monday (UTC) — the window to plan the week. A default-param now
-// keeps the impure clock read out of the React render path.
-export function isWeekKickoff(now: number = Date.now()): boolean {
-  const day = new Date(now).getUTCDay();
-  return day === 0 || day === 1; // Sun or Mon
 }
 
 // Freshness of an account chip on a partner's outreach card. The clock only
@@ -811,50 +783,6 @@ export function narrative(intel: AccountIntel[]): Narrative {
     mediumFit,
     hcmFunnel,
     topCountries,
-  };
-}
-
-// --- Narrative → action ------------------------------------------------------
-// Band 4 isn't a readout you admire — it's raw material for two moves: the line
-// you carry into the Aleks 1:1, and arming the partners. Each is spelled out to
-// the same granularity as the morning moves: what to do, step by step, and the
-// exact words to say (editable before you use them).
-
-// The line up to Aleks. `convert` is the single account you're actively working
-// (the highest-leverage move) — naming a specific deal in motion is what makes
-// the story land. Null when nothing's teed up yet.
-export function aleksLineGuidance(
-  nar: Narrative,
-  convert: AccountIntel | null,
-): Guidance {
-  const one = convert
-    ? `${convert.name}${convert.play ? ` (the ${convert.play})` : ""}`
-    : "the one account I'm working hardest right now";
-  const say =
-    `Here's where the base actually is on Global:\n\n` +
-    `• Researched: ${nar.researched} of ${nar.total} accounts\n` +
-    `• Strong global-hiring signal: ${nar.strongDemand}\n` +
-    (nar.emerging > 0
-      ? `• Emerging (lower demand or confidence — worth a partner conversation, not a forecast): ${nar.emerging}\n`
-      : "") +
-    `• Split: ${nar.displacement} displacement / ${nar.greenfield} greenfield\n` +
-    `• Converting this week: ${one}\n\n` +
-    `I'm not chasing volume — the motion is precision through the CSMs and Eric. What I need from ` +
-    `you: [air cover / an intro / a specific marketing asset] — I'll be precise on that in the meeting.`;
-  return {
-    do:
-      `Lock the one line for your 1:1 with Aleks` +
-      (convert ? `, built around ${convert.name}` : "") +
-      `. Honest headline, one real deal, one concrete ask.`,
-    how: [
-      `Read the five numbers above — every one is derived from your own account research, not a guess. That's your evidence, and it's what lets you be honest without sounding thin.`,
-      `Lead with the honest headline: ${nar.strongDemand} strong${nar.emerging > 0 ? `, ${nar.emerging} emerging` : ""}. Do not round up. A number you can defend beats a big one you can't.`,
-      `Name the one account you're converting this week${convert ? ` — right now that's ${convert.name}` : ""}. A specific deal in motion turns "there's potential" into "this is happening."`,
-      `End with a single concrete ask — air cover, an intro, or a marketing asset. Never walk into the 1:1 without one; that's how you convert a status update into support.`,
-      `Paste the script below into your 1:1 notes and edit it into your own voice before Monday.`,
-    ],
-    say,
-    consider: `Aleks carries this line upward, so it has to survive scrutiny. Every figure traces back to research you can point to. Keep it exactly that honest.`,
   };
 }
 

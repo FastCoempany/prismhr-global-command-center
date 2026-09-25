@@ -15,8 +15,6 @@ import {
   isOtherTeamWork,
   outcomesFrom,
   fyiFromSupport,
-  nextStepFrom,
-  waitingOn,
   theirTurnFrom,
   gatedByThem,
   ownersFrom,
@@ -43,8 +41,14 @@ describe("another team's work is not his next step", () => {
     assert.equal(isOtherTeamWork("Answer the support case myself"), false);
   });
   test("an ordinary commitment is untouched", () => {
-    assert.equal(isOtherTeamWork("Send the reseller agreement and the PEO-to-client agreement"), false);
-    assert.equal(isOtherTeamWork("Build ballpark India pricing for 4–5 EOR workers"), false);
+    assert.equal(
+      isOtherTeamWork("Send the reseller agreement and the PEO-to-client agreement"),
+      false,
+    );
+    assert.equal(
+      isOtherTeamWork("Build ballpark India pricing for 4–5 EOR workers"),
+      false,
+    );
   });
 });
 
@@ -65,10 +69,15 @@ describe("outcomes are decisions and stances, never topics", () => {
   test("the head line is not an outcome, and neither is the Owed line", () => {
     const got = outcomesFrom(CALL);
     assert.ok(!got.some((s) => /Today 1:01 PM/.test(s)), "the head line is provenance");
-    assert.ok(!got.some((s) => /^Owed:/i.test(s)), "the Owed line is the ledger, not a finding");
+    assert.ok(
+      !got.some((s) => /^Owed:/i.test(s)),
+      "the Owed line is the ledger, not a finding",
+    );
   });
   test("a topic is not an outcome", () => {
-    const got = outcomesFrom("head\nWe discussed pricing and reviewed the platform. We walked through the demo.");
+    const got = outcomesFrom(
+      "head\nWe discussed pricing and reviewed the platform. We walked through the demo.",
+    );
     assert.deepEqual(got, []);
   });
   test("a semicolon is a real boundary, not decoration", () => {
@@ -81,51 +90,7 @@ describe("outcomes are decisions and stances, never topics", () => {
   });
 });
 
-describe("the next step is his, ranked by what he owes soonest", () => {
-  const open = [
-    { edit: "Connect Chassie with PrismHR's recruitment specialist", due: "2026-08-25" },
-    { edit: "Send the reseller agreement and the PEO-to-client agreement", due: "2026-09-02" },
-    { edit: "Build ballpark India pricing", wall: "2026-09-02", due: "2026-09-02" },
-  ];
-  test("the handoff never takes the slot, and is named separately", () => {
-    const got = nextStepFrom(open);
-    assert.ok(!/recruitment specialist/.test(got.text));
-    assert.equal(got.handoffs.length, 1);
-    assert.match(got.handoffs[0], /recruitment specialist/);
-  });
-  test("a blown wall outranks a plain date", () => {
-    assert.match(nextStepFrom(open).text, /^Build ballpark India pricing/);
-  });
-  test("a settled commitment is done, whatever the register still says", () => {
-    const got = nextStepFrom([
-      { edit: "Send the calendar invite", due: "2026-08-31", settled: "she accepted 9/1" },
-      { edit: "Send the agreements", due: "2026-09-02" },
-    ]);
-    assert.match(got.text, /^Send the agreements/);
-  });
-  test("no step left is a finding, not a crash", () => {
-    const got = nextStepFrom([
-      { edit: "Connect Chassie with PrismHR's recruitment specialist", due: "2026-08-25" },
-    ]);
-    assert.equal(got.text, "");
-    assert.equal(got.handoffs.length, 1);
-  });
-  test("an empty register says nothing rather than guessing", () => {
-    assert.deepEqual(nextStepFrom([]), { text: "", full: "", handoffs: [] });
-  });
-});
-
-describe("waiting on them", () => {
-  test("the counterparty's turn reads as a sentence", () => {
-    assert.equal(
-      waitingOn([{ who: "Chassie", text: "invoices + EOR confirm" }]),
-      "Chassie owes invoices + EOR confirm",
-    );
-  });
-  test("nothing owed says nothing", () => {
-    assert.equal(waitingOn([]), "");
-  });
-});
+describe("waiting on them", () => {});
 
 describe("their turn, where no Owed line names them", () => {
   const isHome = (n: string) => /antaeus|lesha|anika/i.test(n);
@@ -243,7 +208,10 @@ describe("the gate — their turn precedes ours", () => {
     // "you've still missed what Chassie owes us — it's the thing that precedes
     // us sending her anything at all."
     assert.equal(
-      gatedByThem([{ at: "2026-09-02" }], [{ opened: "2026-09-02" }, { opened: "2026-09-02" }]),
+      gatedByThem(
+        [{ at: "2026-09-02" }],
+        [{ opened: "2026-09-02" }, { opened: "2026-09-02" }],
+      ),
       true,
     );
   });
@@ -278,27 +246,38 @@ describe("who on our side is handling it", () => {
   test("the client's own people are not named here", () => {
     // This line answers "who on our side," not "who called."
     const got = ownersFrom(ACTORS, ["support"], 5);
-    assert.deepEqual(got.map((o) => o.name), ["Mike Paschal"]);
+    assert.deepEqual(
+      got.map((o) => o.name),
+      ["Mike Paschal"],
+    );
     assert.ok(!got.some((o) => o.name === "Nihar Kulkarni"));
   });
   test("a lane nobody asked about is not read", () => {
     // The human lane is his own deal — never FYI.
-    assert.deepEqual(ownersFrom(ACTORS, ["support", "csm"], 9).map((o) => o.name), [
-      "Lesha Cyphers",
-      "Mike Paschal",
-    ]);
+    assert.deepEqual(
+      ownersFrom(ACTORS, ["support", "csm"], 9).map((o) => o.name),
+      ["Lesha Cyphers", "Mike Paschal"],
+    );
   });
   test("the operator is never FYI to himself", () => {
     // He is on his own accounts' CSM lane constantly; this line is about work
     // that is not his.
-    const withMe = [...ACTORS, { name: "Antaeus Coe", kind: "colleague", lane: "csm", n: 20 }];
+    const withMe = [
+      ...ACTORS,
+      { name: "Antaeus Coe", kind: "colleague", lane: "csm", n: 20 },
+    ];
     assert.ok(ownersFrom(withMe, ["csm"], 5).some((o) => o.name === "Antaeus Coe"));
     assert.ok(
-      !ownersFrom(withMe, ["csm"], 5, "Antaeus Coe").some((o) => o.name === "Antaeus Coe"),
+      !ownersFrom(withMe, ["csm"], 5, "Antaeus Coe").some(
+        (o) => o.name === "Antaeus Coe",
+      ),
     );
   });
   test("the clause reads as a sentence, one name or several", () => {
-    assert.equal(ownerClause([{ name: "Mike Paschal", lane: "support", n: 13 }]), "Mike Paschal is handling it");
+    assert.equal(
+      ownerClause([{ name: "Mike Paschal", lane: "support", n: 13 }]),
+      "Mike Paschal is handling it",
+    );
     assert.equal(
       ownerClause([
         { name: "Mike Paschal", lane: "support", n: 13 },
@@ -323,7 +302,12 @@ describe("the FYI line speaks the way a person speaks", () => {
     spike: { day: "2026-08-17", n: 9 },
     themes: [
       { label: "Update Provided", n: 46, firstDay: "2026-06-29", lastDay: "2026-08-27" },
-      { label: "Suggested Solution", n: 12, firstDay: "2026-07-02", lastDay: "2026-08-11" },
+      {
+        label: "Suggested Solution",
+        n: 12,
+        firstDay: "2026-07-02",
+        lastDay: "2026-08-11",
+      },
     ],
   };
 
@@ -402,6 +386,10 @@ describe("their promise is answered when they speak again", () => {
   });
   test("silence keeps the promise open", () => {
     assert.equal(answeredSince("2026-09-01", [MELANIE], isHome), false);
-    assert.equal(answeredSince("2026-09-03", [ADAM], isHome), false, "earlier does not answer later");
+    assert.equal(
+      answeredSince("2026-09-03", [ADAM], isHome),
+      false,
+      "earlier does not answer later",
+    );
   });
 });
