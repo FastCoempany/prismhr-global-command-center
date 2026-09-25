@@ -17,7 +17,7 @@
 
 import type { Answer, Candidate, Claim } from "./types";
 
-export type EvalCase = {
+type EvalCase = {
   id: string;
   question: string;
   /** Claim texts a human marked relevant. Matched loosely, so the fixture
@@ -144,7 +144,7 @@ export const CEILINGS = {
   claimsPerAsk: 80,
 } as const;
 
-export type CeilingState = {
+type CeilingState = {
   breached: boolean;
   which: string;
   line: string;

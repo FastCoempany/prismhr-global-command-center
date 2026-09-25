@@ -13,13 +13,13 @@ import { redactMoney } from "@/lib/intel/lexicon";
 import { normPerson } from "@/lib/intel/provenance";
 import type { TimelineEntry } from "@/lib/sf-timeline";
 
-export type ReadAction = {
+type ReadAction = {
   text: string;
   owner: "me" | "them";
   due: string; // YYYY-MM-DD or ""
   fallback: string; // the if/then riding the commitment, or ""
 };
-export type AiCleanResult = {
+type AiCleanResult = {
   entries: TimelineEntry[];
   signals: string[];
   // The full read — every field optional-by-emptiness so the timeline-only

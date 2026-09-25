@@ -14,7 +14,7 @@ export const OUTCOME_KEY = "__outcome";
 
 export type OutcomeStatus = "won" | "lost";
 
-export type DealOutcome = {
+type DealOutcome = {
   status: OutcomeStatus;
   phrase: string; // the evidence sentence, in the record's own words
   at: string; // ISO — when it was recorded

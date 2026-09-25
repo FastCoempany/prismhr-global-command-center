@@ -7,7 +7,7 @@
 import { redactMoney } from "@/lib/intel/lexicon";
 import { chicagoDay } from "@/lib/intranet/ledger";
 
-export type KnownAccount = { id: string; name: string };
+type KnownAccount = { id: string; name: string };
 
 // The day's move, closed. Keyed by account AND the operator's own day, so the
 // mark expires overnight on its own: tomorrow the read asks again, and a move
@@ -54,12 +54,12 @@ export function cleanLogBody(raw: unknown, cap = 2000): string {
 // leading "▢ " (or "[] ") makes it an open action; "⏲ wed …" schedules one.
 // Pure; the caller turns remindDay into a timestamp with nextRemindIso.
 
-export type LogParse =
+type LogParse =
   | { kind: "note"; body: string }
   | { kind: "action"; body: string }
   | { kind: "scheduled"; body: string; remindDay: RemindDay };
 
-export type RemindDay =
+type RemindDay =
   | "today"
   | "tomorrow"
   | "mon"

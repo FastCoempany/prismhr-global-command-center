@@ -1,7 +1,7 @@
 import { HmlValue, PermissionState, SourceConfidence } from "@/generated/prisma/client";
 import { readHmlRulesConfig } from "@/lib/hml-rules-config";
 
-export type ProspectScoringInput = {
+type ProspectScoringInput = {
   boundaryRisk: HmlValue;
   channelSignal: HmlValue;
   complexitySignal: HmlValue;
@@ -12,7 +12,7 @@ export type ProspectScoringInput = {
   sourceConfidence: SourceConfidence;
 };
 
-export type ProspectScore = {
+type ProspectScore = {
   boundarySafetyScore: number;
   evidenceScore: number;
   motionGate: "open" | "channel_only" | "blocked";
@@ -149,7 +149,7 @@ function scoreSignal(
   return Math.round((signalFactors[value] ?? 0) * weight);
 }
 
-export function prospectMotionGate(
+function prospectMotionGate(
   input: Pick<ProspectScoringInput, "boundaryRisk" | "permissionState">,
 ) {
   if (

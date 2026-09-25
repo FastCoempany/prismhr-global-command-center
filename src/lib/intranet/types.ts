@@ -2,7 +2,7 @@
 // so the pure libs (normalize, segment, rank, time) can be unit-tested without
 // a database anywhere near them.
 
-import type { AskShape, ClaimKind, Confidence, Origin } from "./doctrine";
+import type { ClaimKind, Confidence, Origin } from "./doctrine";
 
 /** One message inside a captured conversation, after normalization. */
 export type Msg = {
@@ -53,24 +53,6 @@ export type Segment = {
   occurredAt: string;
   speakers: string[];
   body: string;
-};
-
-/** A claim as the extractor returns it, before it reaches the database. */
-export type DraftClaim = {
-  text: string;
-  speaker: string;
-  kind: ClaimKind;
-  confidence: Confidence;
-  entities: string[];
-  /** Prospect questions only (C7). */
-  askShape: AskShape | "";
-  /** What prompted the buyer to ask — prospect questions only (C7). */
-  prompted: string;
-  /** The exact source span. A claim whose quote can't be found is dropped. */
-  quote: string;
-  /** Where that span sits in the document — what makes Level-2 drilldown work. */
-  offsetStart: number;
-  offsetEnd: number;
 };
 
 /** A claim with everything retrieval and synthesis need. */

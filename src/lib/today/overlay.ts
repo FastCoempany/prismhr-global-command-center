@@ -214,7 +214,7 @@ export async function loadPartnerNotes(): Promise<Map<string, PartnerNote[]>> {
 // structured path. "motion" = conversation already live (skip the roundup);
 // "not-mine" = another rep's account (excluded everywhere, ledgered with the
 // reason); "parked" = deliberately shelved.
-export type DispositionStatus = "motion" | "not-mine" | "parked";
+type DispositionStatus = "motion" | "not-mine" | "parked";
 
 // The only statuses loadDispositions() keeps. Anything else is dropped on the
 // floor — a real trap for the namespaced markers sharing this table
@@ -228,10 +228,10 @@ export const LOADED_DISPOSITION_STATUSES: readonly DispositionStatus[] = [
   "parked",
 ];
 
-export function isLoadedDispositionStatus(s: string): s is DispositionStatus {
+function isLoadedDispositionStatus(s: string): s is DispositionStatus {
   return (LOADED_DISPOSITION_STATUSES as readonly string[]).includes(s);
 }
-export type Disposition = {
+type Disposition = {
   status: DispositionStatus;
   reason: string;
   updatedAt: string; // ISO

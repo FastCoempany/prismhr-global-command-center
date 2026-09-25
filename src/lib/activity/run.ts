@@ -1020,7 +1020,7 @@ export async function runActivityPass(opts?: {
 
 // ── ⚔ 3 · acted detection — the first record kills the nag ──────────────────
 
-export async function actedSweep(): Promise<number> {
+async function actedSweep(): Promise<number> {
   const prisma = getPrisma();
   let stamped = 0;
   try {

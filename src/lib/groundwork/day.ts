@@ -62,13 +62,13 @@ export const QUEUE_CAP = 6;
 // The silence-bump cadence: a first touch left unanswered gets its second
 // touch after BUMP_QUIET_DAYS; past REVIVAL_QUIET_DAYS the thread is cold and
 // the move becomes a deliberate re-open instead of a bump.
-export const BUMP_QUIET_DAYS = 7;
-export const REVIVAL_QUIET_DAYS = 45;
+const BUMP_QUIET_DAYS = 7;
+const REVIVAL_QUIET_DAYS = 45;
 
 // Research holds for a quarter (founder-decreed 2026-08-14): Groundwork puts
 // no pressure out front until a pass — per-account or book-wide — is 90 days
 // old. Fresh research on demand is the stage button's job, not the queue's.
-export const RESEARCH_STALE_DAYS = 90;
+const RESEARCH_STALE_DAYS = 90;
 
 // The record's live motion excludes an account from prospecting (canon:
 // Groundwork is outbound only; reactive motion belongs to the HomeRoom —
@@ -76,8 +76,8 @@ export const RESEARCH_STALE_DAYS = 90;
 // engaging when a real inbound landed inside the window, or a meeting, call,
 // or transcript filed fresh. The operator's own outbound never excludes —
 // the drumbeat rules need it.
-export const MOTION_INBOUND_DAYS = 21;
-export const MOTION_MEETING_DAYS = 14;
+const MOTION_INBOUND_DAYS = 21;
+const MOTION_MEETING_DAYS = 14;
 
 export function liveMotionIds(
   notesById: Map<string, { body: string; source: string; createdAt: string }[]>,
@@ -108,7 +108,7 @@ export function liveMotionIds(
 
 // A wire hit older than this no longer justifies a news note — the trigger
 // is perishable by design.
-export const WIRE_FRESH_DAYS = 5;
+const WIRE_FRESH_DAYS = 5;
 
 type NoteLike = { body: string; source: string; createdAt: string };
 type TouchLike = {
@@ -118,7 +118,7 @@ type TouchLike = {
   status: string;
 };
 
-export type QueueInput = {
+type QueueInput = {
   accounts: Peo[];
   intelById: Map<string, DealIntel>; // present only for accounts with a corpus
   notesById: Map<string, NoteLike[]>; // newest first, real accounts only

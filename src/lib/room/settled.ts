@@ -27,7 +27,7 @@ import { effectiveAt } from "@/lib/intel/clock";
 const SCHEDULING_RE =
   /\b(invit(?:e|ation)|calendar|booking link|calendly|schedule(?:d|s)? (?:the|a|it)|get (?:the|a) (?:call|meeting|demo)\b.*\b(?:on|booked)|put (?:time|it) on)\b/i;
 
-export type Settlement = { why: string; at: string };
+type Settlement = { why: string; at: string };
 
 /** Does the record show this commitment already landed? Returns the receipt
  *  when it does, null when the commitment stands. */

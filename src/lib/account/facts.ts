@@ -26,7 +26,7 @@ import type { Peo } from "@/lib/book";
 import { analyzePlay, getDemand } from "@/lib/book/research";
 import { deskScore } from "@/lib/book/scoring";
 
-export type AccountFacts = {
+type AccountFacts = {
   id: string;
   name: string;
   /** The colleague who owns the relationship. The whole reason this exists. */

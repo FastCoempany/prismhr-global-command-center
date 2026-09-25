@@ -8,7 +8,7 @@
 // The ids let "undo" delete exactly the rows this routing created; the tail is
 // the human-readable receipt.
 
-export type NoteTarget = {
+type NoteTarget = {
   accounts: { id: string; name: string }[]; // routed to the account page
   partners: string[]; // routed to the partner room
 };
@@ -194,7 +194,7 @@ const STOP = new Set([
 // Partner first names match as whole words; a matched account pulls its CSM in.
 // If more than MAX_ACCOUNT_ROUTES accounts match, the note is ambiguous and
 // nothing routes — it stays plain for manual routing.
-export const MAX_ACCOUNT_ROUTES = 2;
+const MAX_ACCOUNT_ROUTES = 2;
 
 export function detectTargets(
   text: string,

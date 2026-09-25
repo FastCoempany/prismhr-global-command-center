@@ -15,7 +15,7 @@ import type { DealIntel } from "./types";
 // The ledger's icon language: every brief row carries one verb as a glyph.
 // The type lived beside the Today ledger's renderer until the page retired
 // (2026-09-25); the brief is the one reader left, so the type lives here.
-export type GlyphKind =
+type GlyphKind =
   | "send"
   | "decide"
   | "close"
@@ -28,7 +28,7 @@ export type GlyphKind =
   | "note"
   | "check";
 
-export type BriefRow = {
+type BriefRow = {
   ruleId: string;
   subjectId: string; // dedupe/done key
   icon: GlyphKind;

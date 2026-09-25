@@ -20,7 +20,7 @@ import {
 } from "./wire-keywords";
 
 export const WIRE_NS = "wire:";
-export const WIRE_STALE_HOURS = 12;
+const WIRE_STALE_HOURS = 12;
 
 export type WireItem = {
   headline: string;
@@ -88,7 +88,7 @@ export function wireAvailable(): boolean {
   return claudeAvailable();
 }
 
-export function newestWireIso(items: WireItem[]): string | null {
+function newestWireIso(items: WireItem[]): string | null {
   let newest: string | null = null;
   for (const i of items) if (!newest || i.at > newest) newest = i.at;
   return newest;

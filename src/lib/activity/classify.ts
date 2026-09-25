@@ -28,7 +28,7 @@ export function isMachineryName(name: string): boolean {
 
 export type ActivityLane = "machinery" | "intent" | "support" | "csm" | "human";
 
-export type LaneFlags = {
+type LaneFlags = {
   /** A colleague-run sequence (Task Subtype = Cadence / Outreach Task Type
    *  set) — feeds collision awareness; never reads as a personal touch. */
   automated: boolean;
@@ -41,7 +41,7 @@ export type LaneFlags = {
   receipt: boolean;
 };
 
-export type LaneRead = {
+type LaneRead = {
   lane: ActivityLane;
   /** Intent rows only: which receipt this is. */
   intentKind?: "sent" | "opened" | "clicked";
@@ -55,7 +55,7 @@ export type LaneRead = {
 // Task Subtype = Email and falls through to HUMAN — rule 2's subtype
 // condition is the trap-guard (verified: all 80,654 blast rows in the real
 // export carry Task Subtype = Task exactly).
-export const INTENT_RE = /^\s*(Sent|Opened|Clicked)\s+/;
+const INTENT_RE = /^\s*(Sent|Opened|Clicked)\s+/;
 
 // Engagement receipts that are not blast-form but are machinery all the same.
 // The case acknowledgement earns its place by measurement: 2,212 rows of
@@ -63,7 +63,7 @@ export const INTENT_RE = /^\s*(Sent|Opened|Clicked)\s+/;
 // them the case system writing back to itself. It carries the full logged-mail
 // scaffold, so without naming it here it would ride the logged-correspondence
 // hatch straight into the support lane and eat the slice cap (2026-08-28).
-export const RECEIPT_RE =
+const RECEIPT_RE =
   /^\s*(\[Seismic\]|Submitted Form '|Automated Email:|(?:Email:\s*)?PrismHR Case\s*#?\d+ has been received)/i;
 
 // A logged email carries the conversation in its Comments: the To/CC block SF

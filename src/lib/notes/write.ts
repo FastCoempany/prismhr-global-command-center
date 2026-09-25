@@ -17,7 +17,7 @@ import { getPrisma } from "@/lib/db";
 import { redactMoney } from "@/lib/intel/lexicon";
 import type { Lane } from "@/lib/intel/provenance";
 
-export type NewAccountNote = {
+type NewAccountNote = {
   accountId: string;
   partner?: string;
   kind: "mine" | "partner" | "account";
@@ -52,7 +52,7 @@ export type AccountNoteData = {
 };
 
 /** The slice of the Prisma client the writer needs — a test hands in a stub. */
-export type NoteClient = {
+type NoteClient = {
   accountNote: {
     create(args: { data: AccountNoteData }): Promise<{ id: string }>;
   };

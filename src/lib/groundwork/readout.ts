@@ -13,11 +13,11 @@ import { redactMoney } from "@/lib/intel/lexicon";
 import type { IntentSignal } from "./signals";
 import type { QueueItem } from "./day";
 
-export type ReadoutParagraph = { accountId: string; text: string };
-export type ReadoutSection = { title: string; paragraphs: ReadoutParagraph[] };
-export type Readout = { asOfIso: string; sections: ReadoutSection[] };
+type ReadoutParagraph = { accountId: string; text: string };
+type ReadoutSection = { title: string; paragraphs: ReadoutParagraph[] };
+type Readout = { asOfIso: string; sections: ReadoutSection[] };
 
-export type ReadoutInput = {
+type ReadoutInput = {
   accounts: Peo[];
   queue: QueueItem[]; // the FULL ranked list (uncapped) — counts stay real
   intelById: Map<string, DealIntel>;
@@ -225,7 +225,7 @@ export function readoutText(r: Readout): string {
 // ── The lint — the mechanical half of the §3 bar ─────────────────────────────
 // Advisory: a flagged sentence renders with a quiet marker, never a block.
 
-export type LintIssue = { kind: "banned-word" | "bare-date" | "money"; detail: string };
+type LintIssue = { kind: "banned-word" | "bare-date" | "money"; detail: string };
 
 // Trade shorthand banned in anything read to Russ unless translated in place —
 // the plan §3.1.5 list, minus words this register never needs.

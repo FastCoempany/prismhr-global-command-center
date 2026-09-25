@@ -50,7 +50,7 @@ const flagsOf = (f: {
 }): string =>
   `${f.automated ? "a" : ""}${f.inboundCall ? "i" : ""}${f.event ? "e" : ""}${f.receipt ? "r" : ""}`;
 
-export type IngestResult = {
+type IngestResult = {
   slices: AccountSlice[];
   manifest: DropManifest;
 };

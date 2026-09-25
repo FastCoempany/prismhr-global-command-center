@@ -16,7 +16,7 @@
 import type { Prisma } from "@/generated/prisma/client";
 
 /** The one character every namespaced AccountNote id carries. */
-export const NAMESPACE_MARK = ":";
+const NAMESPACE_MARK = ":";
 
 /** True for a book account's own row; false for every namespaced store. */
 export function isRecordRowId(id: string): boolean {

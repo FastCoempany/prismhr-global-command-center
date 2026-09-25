@@ -35,12 +35,12 @@ export type Channel = (typeof CHANNELS)[number];
 
 // A quiet gap this long ends a run — the next send starts a fresh drum at
 // step 1. Shares Groundwork's cold line by design.
-export const RUN_RESET_DAYS = 45;
+const RUN_RESET_DAYS = 45;
 
 const DAY = 86_400_000;
 const CHI = "America/Chicago";
 
-export type SendLine = {
+type SendLine = {
   accountId: string;
   at: string; // ISO
   channel: Channel;
@@ -51,7 +51,7 @@ export type SendLine = {
   repliedAt: string; // ISO of the first genuine inbound after this send, or ""
 };
 
-export type AccountLane = "never-met" | "gone-cold";
+type AccountLane = "never-met" | "gone-cold";
 
 export type NoteLike = {
   body: string;
@@ -189,7 +189,7 @@ const chiDay = (iso: string): string => {
 
 // ── The merge ───────────────────────────────────────────────────────────────
 
-export type SendbookInput = {
+type SendbookInput = {
   // Real-account notes, any order — the record.
   notesById: Map<string, NoteLike[]>;
   // sendbook:<id> notes keyed by the REAL account id — the taps.
@@ -297,7 +297,7 @@ export function buildSendbook(inp: SendbookInput): Sendbook {
 
 // Chicago week, Monday-anchored — "THIS WEEK" is the working week, not a
 // rolling window.
-export function chicagoWeekStart(now: Date): number {
+function chicagoWeekStart(now: Date): number {
   const dayKey = now.toLocaleDateString("en-CA", { timeZone: CHI });
   const weekday = new Date(`${dayKey}T12:00:00Z`).getUTCDay(); // 0 Sun … 6 Sat
   const back = (weekday + 6) % 7; // days since Monday
@@ -308,7 +308,7 @@ export function chicagoWeekStart(now: Date): number {
   return start.getTime() - 12 * 3_600_000; // back to that day's 00:00 UTC anchor
 }
 
-export type WeekStats = {
+type WeekStats = {
   total: number;
   byChannel: [Channel, number][]; // descending
   accounts: number;

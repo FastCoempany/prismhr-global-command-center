@@ -10,7 +10,7 @@ const ACCESS_COOKIE_MAX_AGE = 60 * 60 * 24 * 90;
 const ACCESS_COOKIE_MAX_AGE_MS = ACCESS_COOKIE_MAX_AGE * 1000;
 const FALLBACK_OWNER_EMAIL = "antaeus@example.local";
 
-export type AppAccess =
+type AppAccess =
   | {
       status: "unauthenticated";
       appUser: null;
@@ -109,7 +109,7 @@ export async function setAccessSession() {
   });
 }
 
-export async function hasAccessSession() {
+async function hasAccessSession() {
   const cookieStore = await cookies();
   return isValidAccessToken(cookieStore.get(ACCESS_COOKIE_NAME)?.value);
 }

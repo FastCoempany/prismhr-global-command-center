@@ -47,7 +47,7 @@ function dayOf(iso: string): string {
 
 /** Strip the record's glyph head so the brain reads the substance, not the
  *  filing dialect. "✉ SF Jul 21 — subject · actors" is scaffolding. */
-export function stripHead(body: string): string {
+function stripHead(body: string): string {
   return (body ?? "")
     .replace(/^[✉✔☎☰⚑✎✓▢✸⏲]\s*(?:SF|OL|TM)?\s*/u, "")
     .replace(/^[^\n]*—\s*/u, (m) => (m.length < 90 ? "" : m))
@@ -281,7 +281,7 @@ export function mirrorPartnerNote(n: {
 }
 
 // ── the sync verdict ────────────────────────────────────────────────────────
-export type SyncVerdict = "create" | "update" | "skip";
+type SyncVerdict = "create" | "update" | "skip";
 
 /** What to do with one home row. Unchanged rows are skipped entirely — no
  *  re-extraction, no cost. This is the whole defence against re-extracting the

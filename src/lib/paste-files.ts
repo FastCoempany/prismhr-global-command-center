@@ -6,7 +6,7 @@
 // Isomorphic on purpose: no DOM, no Node APIs — usable from the client and
 // from tests alike.
 
-export type PasteKind = "outlook" | "teams" | "salesnav" | "sf" | "transcript" | "note";
+type PasteKind = "outlook" | "teams" | "salesnav" | "sf" | "transcript" | "note";
 
 // What the Drop thinks it is holding, in plain words for the live chip.
 export function sniffPaste(text: string): { kind: PasteKind; label: string } {
@@ -46,11 +46,11 @@ export function sniffPaste(text: string): { kind: PasteKind; label: string } {
 // and .msg of one mail, and a re-copy of one thread all fingerprint alike.
 // The head grammar is the sniffer's own token list (ruled 2026-09-25, D16 —
 // CLAUDE.md, The Chute :305).
-export const HEAD_LINE_RE =
+const HEAD_LINE_RE =
   /^(OUTLOOK THREAD|TEAMS THREAD|TEAMS CHAT|CALL TRANSCRIPT|SALESNAV|SPREADSHEET|DOCUMENT)\b/;
 
 /** The capture without its producer's head line. */
-export function fingerprintBody(text: string): string {
+function fingerprintBody(text: string): string {
   const t = (text ?? "").trimStart();
   const nl = t.indexOf("\n");
   const first = nl >= 0 ? t.slice(0, nl) : t;
@@ -73,7 +73,7 @@ export function pasteFingerprint(text: string): string {
 
 // ── RFC 822 (.eml) reading ──────────────────────────────────────────────────
 
-export type EmlMessage = {
+type EmlMessage = {
   subject: string;
   from: string;
   to: string;
@@ -415,7 +415,7 @@ const RECORDING_TITLE =
 /** An elapsed-time cue: "0:02", "31:45", "1:04:09" — then the words. */
 const CUE_LINE = /^(\d{1,2}:)?\d{1,2}:\d{2}\s*(.*)$/;
 
-export type TranscriptDoc = {
+type TranscriptDoc = {
   title: string;
   /** "YYYY-MM-DD HH:MM" in the recorder's own wall clock, or "". */
   startedAt: string;
@@ -476,7 +476,7 @@ export function transcriptDocToPaste(doc: TranscriptDoc, filename: string): stri
 
 // ── Outlook .msg reading — fields come from the caller's msgreader pass ─────
 
-export type MsgFields = {
+type MsgFields = {
   subject?: string;
   senderName?: string;
   senderEmail?: string;
@@ -507,7 +507,7 @@ export function msgToPaste(fields: MsgFields, filename: string): string {
 }
 
 // File-type dispatch for the Drop: which reader a filename gets.
-export type DropReader =
+type DropReader =
   | "eml"
   | "msg"
   | "pdf"

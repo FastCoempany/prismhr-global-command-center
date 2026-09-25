@@ -27,7 +27,7 @@
 
 export const MOVE_BUDGET = 96;
 
-export type Clipped = { text: string; cut: boolean };
+type Clipped = { text: string; cut: boolean };
 
 /** Trim to a budget on a WORD boundary. Never mid-word, never mid-number.
  *  A single word longer than the budget is the one case that hard-cuts —

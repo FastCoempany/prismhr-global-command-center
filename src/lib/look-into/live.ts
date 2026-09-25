@@ -14,7 +14,7 @@ import { researchPrompt } from "@/lib/intel/research";
 import type { CheckSuggestion } from "@/lib/intel/evidence";
 import type { DealIntel } from "@/lib/intel/types";
 
-export type LiveLookIntoItem = {
+type LiveLookIntoItem = {
   id: string; // li-live:<kind>:<subjectId>
   kind: "research" | "ask" | "contradiction";
   title: string;
@@ -25,7 +25,7 @@ export type LiveLookIntoItem = {
 
 const DAY = 86_400_000;
 
-export type LiveLookIntoInput = {
+type LiveLookIntoInput = {
   now: Date;
   cards: {
     id: string;

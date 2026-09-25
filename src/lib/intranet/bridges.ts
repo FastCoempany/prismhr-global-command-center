@@ -84,7 +84,7 @@ export function sameAsk(a: string, b: string, at = 0.5): boolean {
   return shared / Math.min(x.size, y.size) >= at;
 }
 
-export type BattlecardProposal = {
+type BattlecardProposal = {
   /** The clearest phrasing of the ask — the longest one, which is usually the
    *  one that carries the qualifier that mattered. */
   question: string;

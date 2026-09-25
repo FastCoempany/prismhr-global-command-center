@@ -118,7 +118,7 @@ export function dayLabel(dayKey: string, nowIso: string): string {
 }
 
 // ── the archive ─────────────────────────────────────────────────────────────
-export type ArchiveDay = { key: string; label: string; asks: number; pastes: number };
+type ArchiveDay = { key: string; label: string; asks: number; pastes: number };
 export type ArchiveMonth = { month: string; days: ArchiveDay[] };
 
 /** The record calendarized: months, then days, each day carrying its counts.

@@ -35,7 +35,7 @@ export type V3Flow = {
   screenIds: string[];
 };
 
-export type V3Objection = {
+type V3Objection = {
   objection: string;
   response: string;
   relatedScreenId: string;
@@ -52,8 +52,8 @@ export type V3Companion = {
 // without it, so the two Sidekicks can't touch each other's playbooks.
 export const V3_PLAYBOOK_PREFIX = "v3:";
 
-export const v3Screens = screensJson.screens as V3Screen[];
-export const v3Flows = flowsJson.flows as V3Flow[];
+const v3Screens = screensJson.screens as V3Screen[];
+const v3Flows = flowsJson.flows as V3Flow[];
 export const v3Companion = companionJson as unknown as V3Companion;
 
 export const v3MasterFlow = v3Flows[0];

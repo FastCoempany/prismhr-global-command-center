@@ -194,16 +194,6 @@ export async function logTouch(formData: FormData) {
   done(formData);
 }
 
-// Undo — remove the logged contact entirely.
-export async function deleteTouch(formData: FormData) {
-  const subjectKey = str(formData, "subjectKey", 200);
-  if (!(await requireWrite()) || !subjectKey) done(formData);
-  await safeWrite(async () => {
-    await getPrisma().touch.deleteMany({ where: { subjectKey } });
-  });
-  done(formData);
-}
-
 // Close the loop — they replied; stop the cadence. The reply is stamped into the
 // thread history so the Partner Room timeline shows when the loop closed.
 export async function markReplied(formData: FormData) {

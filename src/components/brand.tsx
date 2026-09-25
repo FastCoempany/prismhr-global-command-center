@@ -10,7 +10,7 @@ function strokeForSize(size: number) {
   return 2;
 }
 
-export function ProductMark({ className, size = 24 }: ProductMarkProps) {
+function ProductMark({ className, size = 24 }: ProductMarkProps) {
   return (
     <svg
       aria-hidden="true"

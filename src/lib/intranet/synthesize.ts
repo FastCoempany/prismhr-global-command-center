@@ -181,10 +181,7 @@ const SCHEMA = {
 
 /** Candidates as the model sees them — numbered, with everything it needs to
  *  weigh one against another. */
-export function renderCandidates(
-  cands: Candidate[],
-  docLabel: Map<string, string>,
-): string {
+function renderCandidates(cands: Candidate[], docLabel: Map<string, string>): string {
   return cands
     .map((c, i) => {
       const d = docLabel.get(c.claim.docId) ?? "";
@@ -232,7 +229,7 @@ export function sanitizeAnswer(raw: unknown, maxHandle: number): Answer {
 // The record-only doctrine's counterpart. When the corpus has NOTHING, the room
 // answers from general knowledge instead of stopping at a shrug — under an
 // explicit label, never presented as corpus truth, never blended with it.
-export const WORLD_SYSTEM = `The reader asked their internal knowledge base a question and it had nothing — so you are answering from general knowledge instead. Their app will label your answer as coming from outside their record.
+const WORLD_SYSTEM = `The reader asked their internal knowledge base a question and it had nothing — so you are answering from general knowledge instead. Their app will label your answer as coming from outside their record.
 
 Be the most accurate, current, decisive briefing the reader could get on the question: 3 to 6 SHORT sentences, position first, plain speech. Lists of facts go one per line starting "- ". No headers, no bracketed references, no parenthetical asides. Never write "X-shaped" or "domestic-only" — plain words a peer would say on a call. Name genuine uncertainty where it exists. Never invent facts about the reader's own company, deals, colleagues or record — you know nothing about those; this answer is about the world. Do not state currency amounts; describe magnitude in words where cost matters.`;
 

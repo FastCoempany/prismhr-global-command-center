@@ -38,7 +38,7 @@ const ART: Record<string, ReactNode> = {
   ),
 };
 
-export const CODE_TO_NAME: Record<string, string> = {
+const CODE_TO_NAME: Record<string, string> = {
   ca: "Canada",
   bg: "Bulgaria",
   tr: "Turkey",

@@ -163,14 +163,3 @@ function fmtStamp(iso: string, timeZone: string = USER_TZ): string {
   });
   return `${day} · ${time}`;
 }
-
-// One account row in the roundup composer: toggling it in or out rebuilds the
-// message. "mark" flags why a row defaults to unchecked (already in motion, or
-// parked) so the checkbox row explains itself.
-export type RoundupSection = {
-  id: string;
-  name: string;
-  bullet: string;
-  on: boolean;
-  mark: "" | "motion" | "parked";
-};

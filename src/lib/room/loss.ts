@@ -4,7 +4,7 @@
 // nothing archives itself. Pure and adversarially tested: negations and
 // near-miss phrasings ("so we don't lose this") must never trigger it.
 
-export type LossRead = {
+type LossRead = {
   noteId: string; // the triggering record entry — dismissals key to it
   phrase: string; // the matched loss language, trimmed for display
   date: string; // M/D of the triggering entry (Chicago)
@@ -15,8 +15,8 @@ export type LossRead = {
 // provider"), and when it does it files a marker entry. A marker is a stated
 // fact, not an inference, so it outranks the phrase scan and never runs the
 // negation gauntlet — nobody writes one of these by accident.
-export const OUTCOME_MARK_LOST = "☒ THE RECORD READS LOST";
-export const OUTCOME_MARK_WON = "☑ THE RECORD READS WON";
+const OUTCOME_MARK_LOST = "☒ THE RECORD READS LOST";
+const OUTCOME_MARK_WON = "☑ THE RECORD READS WON";
 const MARK_RE = /^(☒ THE RECORD READS LOST|☑ THE RECORD READS WON)\s*—\s*(.*)$/m;
 
 export function outcomeMarkBody(status: "lost" | "won", phrase: string): string {

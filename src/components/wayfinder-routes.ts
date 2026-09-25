@@ -4,7 +4,7 @@
 // this table, and the suite checks every live row against the pages on disk
 // (ruled 2026-09-25, P1).
 
-export type WayfinderRoute = {
+type WayfinderRoute = {
   label: string;
   href: string;
   /** The `current` names that light this row. */
@@ -15,7 +15,7 @@ export type WayfinderRoute = {
 };
 
 // The three demo rooms live under one nav entry — any of them lights "Demos".
-export const DEMO_PAGES: readonly string[] = [
+const DEMO_PAGES: readonly string[] = [
   "Demos",
   "Demo Sidekick",
   "v3 Sidekick",

@@ -33,8 +33,8 @@ export const CANON_HEADERS = [
 // can add or drop report columns without the drop going dark — and a fake
 // header line INSIDE a quoted comment can never trigger recognition, because
 // recognition only ever reads the parsed first row.
-export const ANCHOR_HEADERS = ["18 Digit ID", "Subject"] as const;
-export const FINGERPRINT_MIN_MATCHES = 10;
+const ANCHOR_HEADERS = ["18 Digit ID", "Subject"] as const;
+const FINGERPRINT_MIN_MATCHES = 10;
 
 // Recognition counts columns. It must also WEIGH them. On 2026-08-28 an export
 // rebuilt from a different report type arrived without Assigned and without
@@ -42,7 +42,7 @@ export const FINGERPRINT_MIN_MATCHES = 10;
 // 108,532 rows filed with no assignee and no email text — overwriting a good
 // read with a blank one. A missing Event Subtype is a shrug. A missing Full
 // Comments is the whole point of the file.
-export const LOAD_BEARING: {
+const LOAD_BEARING: {
   header: string;
   field: keyof ActivityRow;
   carries: string;
@@ -418,7 +418,7 @@ export function stripThreadTokens(subject: string): string {
 // per-account checksums plus totals — which makes "same rows, same drop"
 // true even when file bytes differ in incidental ways.
 
-export async function sha256Hex(text: string): Promise<string> {
+async function sha256Hex(text: string): Promise<string> {
   const data = new TextEncoder().encode(text);
   const digest = await globalThis.crypto.subtle.digest("SHA-256", data);
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");

@@ -4,7 +4,7 @@
 
 import { DASH_NODES, type DashNodeKey, type NodeState } from "@/lib/dashboard/stages";
 
-export type StageItemView = {
+type StageItemView = {
   item: string;
   checked: boolean;
   note: string;

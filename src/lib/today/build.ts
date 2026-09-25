@@ -23,7 +23,7 @@ import { readOutcome } from "@/lib/dashboard/outcome";
 // (reach the client through their PEO). The HCM funnel is the other half of the
 // role: net-new HCM logos brought on by Enterprise Sales (Eric), plus HRaaS/HRO
 // platforms — these route to Global directly through the HCM side, not a CSM.
-export type Funnel = "peo" | "hcm";
+type Funnel = "peo" | "hcm";
 
 // Word-boundary match, not a bare substring: "hro" as a naked includes() would
 // mis-tag any future industry string that merely contains those letters. \b
@@ -41,7 +41,7 @@ export function funnelOf(csm: string, industry: string): Funnel {
 // PEO-side CSMs (Whitney Dideon carries the HCM book), so
 // csm/industry alone can't route them. Former customers (360 Business
 // Solutions, Payroll Medics, Talonique) are deliberately absent.
-export const HCM_CLIENT_IDS = new Set<string>([
+const HCM_CLIENT_IDS = new Set<string>([
   "0013k00003Ev0KDAAZ", // Accent Employer Solutions
   "0013k00003Ev0KSAAZ", // Administrative Benefits
   "0013k00003Ev0MZAAZ", // Denali HR Solutions
@@ -158,7 +158,7 @@ export function applyValidations(
 // wasn't low-confidence. Below that it's "emerging" — still worth surfacing (the
 // gate is 30), but it must never read as equal to a confirmed, high-demand
 // account. This is what keeps the count honest when we brief Aleks.
-export const STRONG_DEMAND = 40;
+const STRONG_DEMAND = 40;
 
 export function isStrongSignal(a: Pick<AccountIntel, "demand" | "confidence">): boolean {
   return a.demand != null && a.demand >= STRONG_DEMAND && a.confidence !== "low";
@@ -176,7 +176,7 @@ export function signals(intel: AccountIntel[], limit = 6): AccountIntel[] {
 
 // A commitment aged past this many days has blown its window (the demo-availability
 // gate is 5 business days) — used for the "hot" badge and state-of-play.
-export const COMMITMENT_WINDOW_DAYS = 5;
+const COMMITMENT_WINDOW_DAYS = 5;
 
 export type Commitment = {
   cardId: string;
@@ -263,7 +263,7 @@ export function partnerMessage(a: AccountIntel): string {
 // Granular, spoon-fed guidance for a task. do = the one standout action; how =
 // precise steps; say = the exact message to send (editable); consider = the
 // caveat / relationship note. Rendered as loud, labeled, color-coded sections.
-export type Guidance = {
+type Guidance = {
   do: string;
   how: string[];
   say?: string;
@@ -337,7 +337,7 @@ export function triageGuidance(a: AccountIntel): Guidance {
   };
 }
 
-export type CardStep = {
+type CardStep = {
   cardId: string;
   cardName: string;
   nodeKey: DashNodeKey;
@@ -372,13 +372,6 @@ export function cardNextStep(
   }
   return null;
 }
-
-// --- Step holds ---------------------------------------------------------------
-// Deliberate pauses on dashboard steps — leadership said "don't press." Keyed by
-// card name (curated in code, like ROUNDUP_BULLETS). A held card's step leaves
-// the numbered moves, renders as a dim ⏸ row, and carries its own guidance: the
-// move that's still yours is owning the re-check date, not pushing the client.
-export type StepHold = { reason: string; recheck: string; consider: string };
 
 // --- Completion keys (per-day / per-week) -----------------------------------
 // A done-mark's key encodes the task AND its period, so it resets on a new
@@ -427,7 +420,7 @@ export function partnerOutreachKey(partner: string): string {
 // starts once an official interaction happens (a note saved via the chip):
 // green under 24h, yellow 24–48h, red past 48h. A chip that was never worked
 // stays neutral — no color at all until an interaction triggers the timer.
-export type ChipTone = "none" | "fresh" | "stale" | "cold";
+type ChipTone = "none" | "fresh" | "stale" | "cold";
 
 export function chipTone(
   lastTouchedAt: string | null,
@@ -442,14 +435,14 @@ export function chipTone(
   return "cold";
 }
 
-export type PartnerKickoff = { partner: string; role: string; accounts: AccountIntel[] };
+type PartnerKickoff = { partner: string; role: string; accounts: AccountIntel[] };
 
 // Editorial pins: accounts a partner should always have teed up on their
 // roundup regardless of auto-rank — an owner override for a relationship reason
 // the Global-fit score can't see. Keyed by CSM name → account ids. Pins EXTEND
 // the card past the top-N (a 6th slot) rather than displacing an auto-pick, so
 // pinning never hides an account that earned its place on merit.
-export const ROUNDUP_PINS: Record<string, string[]> = {
+const ROUNDUP_PINS: Record<string, string[]> = {
   // My HR Pros (fka Southern Personnel Management) — pinned by owner request —
   // and ESC, whose 7/13 inbound (Global Payroll demo for interested ESC
   // clients) is a live thread on Lesha's card.
@@ -466,7 +459,7 @@ export const ROUNDUP_PINS: Record<string, string[]> = {
 // Hand-written roundup bullets for accounts where the generic play framing would
 // be wrong — e.g. a thread that's already live. Keyed by account id; used by
 // partnerWeekMessage in place of the displacement/greenfield/gauge template.
-export const ROUNDUP_BULLETS: Record<string, string> = {
+const ROUNDUP_BULLETS: Record<string, string> = {
   // Simploy — Chassie's inbound after PrismHR LIVE; the conversation is already
   // in motion, so the bullet reads as shared status, not a request for a read.
   "001F000000w38BOIAY":
@@ -832,7 +825,7 @@ export function movedThisWeek(cards: DashCardRow[], now: number = Date.now()): n
   return n;
 }
 
-export type StateOfPlay = {
+type StateOfPlay = {
   openLoops: number; // non-archived cards with a node in flight
   commitmentsPastWindow: number; // commitments aged past the window
   untriaged: number; // active signals not yet on the board

@@ -224,8 +224,8 @@ const stem = (s: string) =>
     .slice(0, 5)
     .join(" ");
 
-export type TheirTurn = { who: string; text: string; at: string; src: string };
-export type TurnNote = {
+type TheirTurn = { who: string; text: string; at: string; src: string };
+type TurnNote = {
   createdAt: string;
   actors?: string | null;
   source?: string | null;

@@ -5,8 +5,8 @@
 // travels inside the action's own body behind a marker: no schema change, and
 // every existing sheet renderer keeps working (it just shows one line).
 
-export const FALLBACK_GLYPH = "↯";
-export const PROVENANCE_GLYPH = "·";
+const FALLBACK_GLYPH = "↯";
+const PROVENANCE_GLYPH = "·";
 
 export type Commitment = {
   text: string;

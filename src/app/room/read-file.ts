@@ -15,7 +15,7 @@ import {
   vttToPaste,
 } from "@/lib/paste-files";
 
-export type PdfReader = (
+type PdfReader = (
   fd: FormData,
 ) => Promise<{ ok: boolean; text?: string; reason?: string }>;
 
@@ -48,9 +48,9 @@ async function normalizeImage(f: File): Promise<File | null> {
 
 /** Which door is reading. The Drop refuses the weekly activity export — the
  *  Chute is the door that reads it for the book (ruled 2026-09-25, R12). */
-export type ReadDoor = "drop" | "chute";
+type ReadDoor = "drop" | "chute";
 
-export const CSV_GOES_TO_THE_CHUTE = "The export goes in the Chute.";
+const CSV_GOES_TO_THE_CHUTE = "The export goes in the Chute.";
 
 export async function readFileToText(
   f: File,

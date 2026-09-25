@@ -61,7 +61,7 @@ function SfId({ id }: { id: string }) {
 
 // A deep-link to the account in Salesforce, or a copyable id, or (for synthetic
 // ids) a note that there's no SF record yet.
-export function SfLink({ id, name }: { id: string; name?: string }) {
+function SfLink({ id, name }: { id: string; name?: string }) {
   const url = sfAccountUrl(id);
   if (url) {
     return (

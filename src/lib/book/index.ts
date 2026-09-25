@@ -1,7 +1,7 @@
 import book from "./book.json";
 import { canonicalAccountId, isAliasedAway, RENAME } from "./merge";
 
-export type FitTier = "high" | "medium" | "low";
+type FitTier = "high" | "medium" | "low";
 
 export type Peo = {
   id: string;

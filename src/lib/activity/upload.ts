@@ -24,7 +24,7 @@ export async function probeActivityReport(file: File): Promise<boolean> {
   }
 }
 
-export type UploadResult = {
+type UploadResult = {
   ok: boolean;
   reason?: string;
   reply?: StageReply;

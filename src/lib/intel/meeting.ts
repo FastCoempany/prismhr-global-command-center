@@ -9,7 +9,7 @@
 // (✔ …) naming a meeting, call, demo, or visit — a record of a thing that
 // HAPPENED, never a send; or the head reads as a meeting in words.
 
-export const MEETING_RE =
+const MEETING_RE =
   /\b(met with|meeting with|call with|demo(?:'d)? (?:with|for|to)|walked (?:them|him|her) through)\b/i;
 
 const LOGGED_ACTIVITY_RE = /^\s*✔[^\n]*\b(meeting|call|demo|visit)\b/i;
@@ -107,7 +107,7 @@ const NOT_A_SPEAKER = new Set([
   "join zoom meeting",
 ]);
 
-export type MeetingRead = { at: string; who: string; note: { id?: string } };
+type MeetingRead = { at: string; who: string; note: { id?: string } };
 
 const otherSide = (actors: string, isHome: (n: string) => boolean): string => {
   const i = (actors ?? "").indexOf("→");

@@ -34,7 +34,7 @@ export function latestResearchAt(deep?: string, sweep?: string): string | undefi
   return sweep;
 }
 
-export type ResearchFinding = {
+type ResearchFinding = {
   summary: string; // 2-4 plain sentences: what this company is and does
   signals: string[]; // hiring/expansion/compliance signals worth acting on
   countries: string[]; // countries named anywhere in the evidence
@@ -43,7 +43,7 @@ export type ResearchFinding = {
   sources: { title: string; url: string }[];
 };
 
-export const EMPTY_FINDING: ResearchFinding = {
+const EMPTY_FINDING: ResearchFinding = {
   summary: "",
   signals: [],
   countries: [],

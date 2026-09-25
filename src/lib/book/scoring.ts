@@ -68,14 +68,14 @@ function recencyPts(p: Peo, liveActivityIso?: string, now?: Date): number {
   return 3;
 }
 
-export type DeskBreakdown = {
+type DeskBreakdown = {
   scale: number;
   incumbency: number;
   model: number;
   recency: number;
 };
 
-export type DeskScore = {
+type DeskScore = {
   score: number; // 0–100
   tier: "high" | "medium" | "low";
   incumbent: boolean;

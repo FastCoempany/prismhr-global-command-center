@@ -198,7 +198,7 @@ export async function docsByIds(ids: string[]): Promise<Map<string, DocRef>> {
 }
 
 // ── the corpus's own vital signs ────────────────────────────────────────────
-export type BrainStats = {
+type BrainStats = {
   docs: number;
   claims: number;
   topics: number;

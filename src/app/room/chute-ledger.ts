@@ -18,7 +18,7 @@
 
 import type { RouteHit } from "@/lib/route-capture";
 
-export type LedgerState =
+type LedgerState =
   | "reading"
   | "filing"
   | "filed"
@@ -65,8 +65,8 @@ export type LedgerRow = {
   vault?: { text: string; url?: string; bad?: boolean };
 };
 
-export const LEDGER_KEY = "chute-ledger-v1";
-export const LEDGER_CAP = 40;
+const LEDGER_KEY = "chute-ledger-v1";
+const LEDGER_CAP = 40;
 /** The most text a waiting row may carry into storage. Past this the row
  *  comes back interrupted rather than risking the whole ledger on a quota
  *  refusal. */
@@ -74,8 +74,8 @@ export const LEDGER_TEXT_CAP = 200_000;
 /** How many dropped files the Chute reads at once. */
 export const CHUTE_PARALLEL = 3;
 
-export const READ_CUT_SHORT = "A reload cut the read short. Drop the file again.";
-export const PICK_LOST = "The pick did not survive. Drop the file again.";
+const READ_CUT_SHORT = "A reload cut the read short. Drop the file again.";
+const PICK_LOST = "The pick did not survive. Drop the file again.";
 
 export type LedgerStorage = {
   getItem(key: string): string | null;
@@ -85,13 +85,13 @@ export type LedgerStorage = {
 export const chicagoDay = (now: Date = new Date()): string =>
   now.toLocaleDateString("en-CA", { timeZone: "America/Chicago" });
 
-export const isWaiting = (s: LedgerState): boolean => s === "pick" || s === "mismatch";
-export const isInFlight = (s: LedgerState): boolean =>
+const isWaiting = (s: LedgerState): boolean => s === "pick" || s === "mismatch";
+const isInFlight = (s: LedgerState): boolean =>
   s === "reading" || s === "filing" || s === "activity";
 
 // The router's why strings, read back into the rung that produced them —
 // only for rows persisted before the rung rode on the row itself.
-export function rungFromWhy(why: string | undefined): string {
+function rungFromWhy(why: string | undefined): string {
   const w = (why ?? "").trim();
   if (!w) return "";
   if (w === "your call") return "pick";
@@ -104,7 +104,7 @@ export function rungFromWhy(why: string | undefined): string {
   return "other";
 }
 
-export const rungOf = (row: LedgerRow): string => row.rung || rungFromWhy(row.why);
+const rungOf = (row: LedgerRow): string => row.rung || rungFromWhy(row.why);
 
 /** One row as it is written to storage. */
 export function storedRow(x: LedgerRow): LedgerRow {
@@ -141,7 +141,7 @@ export function storedRow(x: LedgerRow): LedgerRow {
 }
 
 /** One row as it comes back after a reload. */
-export function reconcileRow(x: LedgerRow): LedgerRow {
+function reconcileRow(x: LedgerRow): LedgerRow {
   if (isInFlight(x.state)) return { ...x, state: "interrupted", reason: READ_CUT_SHORT };
   if (isWaiting(x.state) && !x.text)
     return { ...x, state: "interrupted", reason: PICK_LOST };

@@ -75,7 +75,7 @@ export type GemCandidate = {
   citedRowKeys: string[];
 };
 
-export type DistillResult = { gems: GemCandidate[]; whyNone: string };
+type DistillResult = { gems: GemCandidate[]; whyNone: string };
 
 const DISTILL_SCHEMA = {
   type: "object",
@@ -194,7 +194,7 @@ ${rowsText(inp.rows)}${inp.retryNote ? `\n\nRETRY: ${inp.retryNote}` : ""}`;
 
 // ── the refuter ─────────────────────────────────────────────────────────────
 
-export type RefuteResult = {
+type RefuteResult = {
   refuted: boolean;
   failedCheck: string;
   why: string;

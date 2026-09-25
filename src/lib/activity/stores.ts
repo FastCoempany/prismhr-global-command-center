@@ -18,10 +18,10 @@ export const INTENT_NS = "intent:";
 export const STAGE_NS = "activity:stage:";
 export const MANIFEST_ID = "activity:manifest";
 
-export const ROLLUP_CAP = 4_000;
-export const GEMS_CAP = 2_600;
-export const SUPPORT_CAP = 2_400;
-export const INTENT_CAP = 1_200;
+const ROLLUP_CAP = 4_000;
+const GEMS_CAP = 2_600;
+const SUPPORT_CAP = 2_400;
+const INTENT_CAP = 1_200;
 
 /** Every namespace the second record owns, and nothing else — the take-back's
  *  exact reach. ACTIVITY_NS deliberately covers the staged slices and the
@@ -50,7 +50,7 @@ export const sv = (s: string): string =>
 const sha8 = (sha: string): string => (sha ?? "").slice(0, 8);
 
 /** The grammar's placeholder for a slot the record cannot fill with a name. */
-export const NO_ONE = "—";
+const NO_ONE = "—";
 
 // ── the rollup grammar (activity:<id>) ──────────────────────────────────────
 
@@ -411,7 +411,7 @@ export function parseStageBody(
 
 /** The run's book-keeping, stored beside the manifest: what still waits,
  *  what the run concluded, and the receipt the operator reads. */
-export type RunState = {
+type RunState = {
   phase: "staging" | "ready" | "running" | "done" | "failed-coverage" | "refused";
   /** Account ids whose rows changed — need rollups + distillation. */
   distillQueue: string[];

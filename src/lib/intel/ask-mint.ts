@@ -56,7 +56,7 @@ export function parseAsks(raw: string, cap = 5): string[] {
   return out;
 }
 
-export type MintContext = {
+type MintContext = {
   accountName: string;
   countries: string[];
   products: string[];

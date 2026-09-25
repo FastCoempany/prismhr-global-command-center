@@ -37,7 +37,7 @@ function drift(a: Set<string>, b: Set<string>): number {
 /** Render a segment's messages as the body the extractor reads. Speakers stay
  *  attached to their own words — this is the shape the attribution rule leans
  *  on, so it is never flattened. */
-export function renderSegment(msgs: Msg[]): string {
+function renderSegment(msgs: Msg[]): string {
   return msgs
     .map((m) => `${m.speaker}: ${m.body}`.trim())
     .join("\n\n")

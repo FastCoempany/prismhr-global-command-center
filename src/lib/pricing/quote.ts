@@ -10,7 +10,7 @@
 
 import { addOns, billingNote, countries, offboardingFee, pricingGeneratedAt } from ".";
 
-export type PriceQuote = { answer: string; matched: string[] };
+type PriceQuote = { answer: string; matched: string[] };
 
 const PRICE_RE =
   /\b(price|prices|pricing|priced|quote|quoted|cost|costs|rate|rates|fee|fees)\b|how much/i;

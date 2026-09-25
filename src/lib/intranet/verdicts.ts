@@ -96,7 +96,7 @@ export function sanitizeVerdicts(raw: unknown, byId: Map<string, Claim>): Verdic
 /** Does the justification actually reference both claims? Checked on a run of
  *  significant words rather than exact quotation, because a model will
  *  reasonably trim a long claim when quoting it. */
-export function quotesBoth(why: string, a: Claim, b: Claim): boolean {
+function quotesBoth(why: string, a: Claim, b: Claim): boolean {
   const words = (s: string) =>
     s
       .toLowerCase()

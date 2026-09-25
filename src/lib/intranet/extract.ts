@@ -78,7 +78,7 @@ const SCHEMA = {
 } as const;
 
 // ── shapes ──────────────────────────────────────────────────────────────────
-export type Statement = {
+type Statement = {
   text: string;
   speaker: string;
   kind: ClaimKind;
@@ -90,7 +90,7 @@ export type Statement = {
 
 export type Filing = { topic: string; subtopic: string; statements: Statement[] };
 
-export type LiberalRead = { brief: string; filings: Filing[] };
+type LiberalRead = { brief: string; filings: Filing[] };
 
 export const EMPTY_READ: LiberalRead = { brief: "", filings: [] };
 
@@ -188,7 +188,7 @@ export function sanitizeRead(raw: unknown, body: string): LiberalRead {
 }
 
 // ── the call ────────────────────────────────────────────────────────────────
-export type ReadInput = {
+type ReadInput = {
   body: string;
   origin: string;
   space: string;

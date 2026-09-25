@@ -91,7 +91,7 @@ function flushBeacon() {
   }
 }
 
-export function ensureStarted() {
+function ensureStarted() {
   if (started || typeof window === "undefined") return;
   started = true;
   lastInput = Date.now();
@@ -154,7 +154,7 @@ export function ensureStarted() {
 
 // The reset (founder-decreed 2026-08-19): zero today, locally and banked —
 // the meter restarts from 0h 00m 00s on the next tick.
-export function resetDesk(): void {
+function resetDesk(): void {
   storedA = 0;
   storedP = 0;
   sessA = 0;
@@ -171,7 +171,7 @@ export function presenceLastInput(): number {
   return started ? lastInput : Date.now();
 }
 
-export function usePresence(): Snap {
+function usePresence(): Snap {
   return useSyncExternalStore(
     (fn) => {
       subs.add(fn);

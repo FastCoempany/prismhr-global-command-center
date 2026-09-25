@@ -1,7 +1,7 @@
 import pricing from "./pricing.json";
 
 export type PriceCountry = { country: string; price: number; tier: string };
-export type AddOn = { label: string; price: number | string; billing: string };
+type AddOn = { label: string; price: number | string; billing: string };
 
 export const countries = pricing.countries as PriceCountry[];
 export const addOns = pricing.addOns as AddOn[];

@@ -16,7 +16,7 @@ import {
 } from "./doctrine";
 import type { Claim, Topic } from "./types";
 
-export type SplitProposal = {
+type SplitProposal = {
   verdict: "split" | "keep";
   why: string;
   children: { label: string; summary: string; claimIds: string[] }[];

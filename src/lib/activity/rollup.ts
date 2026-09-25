@@ -7,7 +7,7 @@ import { isMachineryName, type ActivityLane } from "./classify";
 import { stripThreadTokens } from "./parse";
 import type { AccountSlice, StagedRow } from "./types";
 
-export type ActorTally = { name: string; kind: string; lane: ActivityLane; n: number };
+type ActorTally = { name: string; kind: string; lane: ActivityLane; n: number };
 
 export type NotableThread = {
   subject: string; // rendered (thread tokens stripped)

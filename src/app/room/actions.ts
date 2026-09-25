@@ -72,7 +72,7 @@ function refresh() {
 // Type a line, press Enter → one note on THIS account, everywhere. Returns
 // the ids the receipt needs: the note row and its sheet mirror, so ↩ undo
 // and "make it an action →" can act on exactly what this keystroke created.
-export async function roomLog(
+async function roomLog(
   accountId: string,
   text: string,
 ): Promise<{ ok: boolean; reason?: string; noteId?: string; todoId?: string }> {

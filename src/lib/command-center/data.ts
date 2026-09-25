@@ -14,7 +14,7 @@ import {
 export type { PeoRow, Stage } from "./types";
 export { STAGES, stageLabel } from "./types";
 
-export type CommandData = {
+type CommandData = {
   status: "active" | "unauthenticated" | "database-unavailable";
   canWrite: boolean;
   rows: PeoRow[];

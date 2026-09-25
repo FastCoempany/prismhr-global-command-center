@@ -46,7 +46,7 @@ import { outcomesFrom } from "./report";
 /** A value with the row it was read from. `derived` marks a value the app
  *  inferred rather than one a person stated — the provenance rule that keeps a
  *  close date named on a call apart from one the model guessed. */
-export type Sourced = { v: string; src: string; derived?: boolean };
+type Sourced = { v: string; src: string; derived?: boolean };
 
 export type PipelineRecord = {
   id: string;
@@ -101,7 +101,7 @@ const PRODUCT: Record<string, string> = {
 };
 
 /** The book's close date until the operator files a real one, per account. */
-export const BOOK_CLOSE_DATE = "2026-12-25";
+const BOOK_CLOSE_DATE = "2026-12-25";
 
 const md = (iso: string) => `${Number(iso.slice(5, 7))}/${Number(iso.slice(8, 10))}`;
 const dayOf = (iso: string) => (iso ?? "").slice(0, 10);
@@ -223,7 +223,7 @@ function productByCountry(
   return out;
 }
 
-export type PipelineNote = {
+type PipelineNote = {
   id: string;
   createdAt: string;
   body: string;
@@ -232,7 +232,7 @@ export type PipelineNote = {
   source?: string;
   kind?: string;
 };
-export type PipelineTodo = {
+type PipelineTodo = {
   id: string;
   body: string;
   accountId: string;
@@ -288,7 +288,7 @@ export function homeSideFrom(
   return new Set([...by].filter(([, s]) => s.size >= min).map(([nm]) => nm));
 }
 
-export type PipelineInput = {
+type PipelineInput = {
   accounts: readonly PipelineAccount[];
   /** Our own people, from homeSideFrom() over the whole book. Omitted, the
    *  builder falls back to deriving it from the accounts it was handed — which

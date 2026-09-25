@@ -55,10 +55,10 @@ export type Scenario = {
 
 // A question's facets, with the bank's older entries defaulting to "applies
 // however the deal is shaped" rather than being silently excluded.
-export function productOf(q: DiscoveryQ): QProduct {
+function productOf(q: DiscoveryQ): QProduct {
   return q.product ?? "any";
 }
-export function sophOf(q: DiscoveryQ): QSoph {
+function sophOf(q: DiscoveryQ): QSoph {
   return q.soph ?? "any";
 }
 

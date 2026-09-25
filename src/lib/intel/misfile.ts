@@ -49,7 +49,7 @@ import {
   type RouteRung,
 } from "@/lib/route-capture";
 
-export type MisfileVerdict =
+type MisfileVerdict =
   | { ok: true }
   | {
       ok: false;

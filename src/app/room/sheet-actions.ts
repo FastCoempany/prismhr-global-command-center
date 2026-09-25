@@ -20,7 +20,7 @@ import {
   type RouteRefs,
 } from "@/lib/today/route-notes";
 
-export type SheetNote = {
+type SheetNote = {
   id: string;
   body: string; // full stored body (marker included)
   done: boolean;

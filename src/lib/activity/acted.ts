@@ -5,7 +5,7 @@
 // nothing — a bare fragment is not a person. The day check stays with the
 // caller, which knows the gem. Pure, so the canon suite pins it.
 
-export type MovedRow = {
+type MovedRow = {
   /** The send's recipient names, as the record reads them. */
   who: string;
   /** The note's head line. */

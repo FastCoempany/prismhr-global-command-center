@@ -39,7 +39,7 @@ export function actSendRow(a: { to: string; subject: string }): {
   };
 }
 
-export type ActDraft = { term: string; to: string; subject: string; body: string };
+type ActDraft = { term: string; to: string; subject: string; body: string };
 
 export function renderActDraftBody(d: ActDraft): string {
   return [

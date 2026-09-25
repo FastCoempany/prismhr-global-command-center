@@ -4,7 +4,7 @@
 
 import { redactMoney } from "./lexicon";
 
-export type ResearchKind = "country" | "incumbent" | "licensing" | "custom";
+type ResearchKind = "country" | "incumbent" | "licensing" | "custom";
 
 const FOCUS: Record<ResearchKind, string> = {
   country:

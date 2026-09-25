@@ -27,7 +27,7 @@ type TimelineRow = {
 };
 type Camp = { campaign: string; o: number; c: number; last: string };
 
-export type ChipsProps = {
+type ChipsProps = {
   accountId: string;
   support: { total: number; spikeDay: string; spikeN: number } | null;
   intent: { opens30: number; clicks30: number; lastOpen: string; sends7: number } | null;

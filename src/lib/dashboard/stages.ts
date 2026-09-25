@@ -28,7 +28,7 @@ export type DashNodeKey =
   | "proposal"
   | "contract";
 
-export type DashNode = {
+type DashNode = {
   key: DashNodeKey;
   label: string;
   heat: string; // the node's "lit" color on the grey→green ramp

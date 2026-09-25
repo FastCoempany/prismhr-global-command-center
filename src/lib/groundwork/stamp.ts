@@ -8,7 +8,7 @@
 
 import type { QueueRuleId } from "./day";
 
-export type StampContext = {
+type StampContext = {
   /** The newest wire headline matched to the account, "" when none. */
   wireHeadline?: string;
   /** Sales Navigator's engagement count, null when the row carried none. */

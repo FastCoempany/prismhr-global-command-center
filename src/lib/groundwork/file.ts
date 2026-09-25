@@ -15,10 +15,10 @@ import { composeFor, WIDENING_LINE, type Composed } from "./compose";
 import { paragraphFor } from "./readout";
 import { WIRE_NS, type WireItem } from "./wire";
 
-export type FilePerson = { name: string; title: string; flag: "csm" | "contact" | "" };
-export type FileHistoryLine = { atIso: string; line: string };
+type FilePerson = { name: string; title: string; flag: "csm" | "contact" | "" };
+type FileHistoryLine = { atIso: string; line: string };
 
-export type FileModel = {
+type FileModel = {
   accountId: string;
   /** The collision guard's quiet flag — informs, never blocks. "" = clear. */
   collisionLine: string;

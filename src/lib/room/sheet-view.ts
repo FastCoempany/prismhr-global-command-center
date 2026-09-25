@@ -21,8 +21,8 @@ export type SheetTodo = {
   createdAt: string;
   updatedAt: string;
 };
-export type SheetDisposition = { reason: string; updatedAt: string };
-export type AccountSheet = {
+type SheetDisposition = { reason: string; updatedAt: string };
+type AccountSheet = {
   // `wall` is the commitment's own date once it has passed, and `fallback` the
   // if/then that rode in with it — the app runs the contingency instead of
   // waiting for the operator to remember there was one. `edit` is the FULL

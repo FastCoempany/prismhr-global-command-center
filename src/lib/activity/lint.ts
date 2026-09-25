@@ -132,7 +132,7 @@ function deviceFaults(t: string): string[] {
 const wordCount = (s: string): number =>
   (s ?? "").trim().split(/\s+/).filter(Boolean).length;
 
-export type LintVerdict = { ok: boolean; faults: string[] };
+type LintVerdict = { ok: boolean; faults: string[] };
 
 /** Lint one act line against the writing canon. */
 export function lintAct(act: string): LintVerdict {
