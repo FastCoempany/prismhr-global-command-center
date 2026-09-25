@@ -277,16 +277,25 @@ Removals with no decree keeping them, no reader, and no migration. Ranked by lin
 Dormant without a decree, one sentence each.
 
 - /today, / (the Board), /pipeline and dashboard-client.tsx: retire or keep; retiring means moving fourteen actions the HomeRoom imports and breaking the today↔room action cycle first.
+  - RULING (2026-09-25): REMOVE — Move the fourteen actions the HomeRoom imports and the Board's five into modules the live surfaces own, break the today↔room cycle, then delete /today, / the Board, /pipeline and dashboard-client.tsx; P1 forbids keeping them as archived pages that derive on load.
 - /intake: archived in the nav but offered twice from the HomeRoom and once from Groundwork; a surface or an archive.
+  - RULING (2026-09-25): KEEP — /intake stays as a surface, not an archive: its nav row becomes a plain door, the ⊕ menu's duplicate item goes, and the bookmarklet shelf is its reason (see the SalesNav ruling below).
 - /partners, /archive, /asks: three live-linked pages with no nav entry and no decree.
+  - RULING (2026-09-25): KEEP — /partners, /archive and /asks stay, doored from Accounts, the HomeRoom fold and the pad, with no nav row.
 - /demos and its two child pages render demo flows with no auth gate; gate them or accept it.
+  - RULING (2026-09-25): KEEP — /demos and its two children take the same access check every other page takes; nothing renders without sign-in.
 - `risk:` and `inst:` reads: name the writer that was meant to exist or drop the reads; `inst:` is decreed (CLAUDE.md:258), `risk:` is not.
+  - RULING (2026-09-25): REMOVE — The risk: read goes; no importer exists and nothing else names Salesforce risk; the DB count first proves no out-of-repo writer.
+  - RULING (2026-09-25): DEFER — inst: stays until the institutions deck gets its writer, because CLAUDE.md:258 keeps the deck and the read costs nothing.
 - `scenario:` dispositions: promote the 2026-08-22 retirement from a code comment to the canon or drop the read after the count.
 - src/lib/intel/bank.ts and branches.ts: CLAUDE.md:511-513 keeps the bank; whether it keeps the branch map and the Call Sheet's filter helpers is unstated.
 - src/lib/intel/motions.ts: kept by one chain test only.
 - "Opus or better, always" (2026-07-31) exists only in comments and is contradicted by two sonnet call sites; canonize it or delete the comments and the three no-op model splits.
+  - RULING (2026-09-25): REMOVE — The three no-op model splits and their comments go; "Opus or better, always" becomes canon with one model roster in doctrine.ts read by every caller, and the two sonnet call sites (wire.ts:147, :156; partners/actions.ts:140) are violations the test pass moves to Opus.
 - PUBLIC_ACCESS: keep the switch or delete the branches it can never take.
+  - RULING (2026-09-25): REMOVE — The switch and both branches go; the canon never named a public mode, and D8 and D13 rule against the exposure it would create.
 - The SalesNav grab has three contradicting instructions (capture-shelf.tsx:125-128, groundwork/page.tsx:679-681, signals.ts:1-4); one door.
+  - RULING (2026-09-25): KEEP — One door: the grab pastes into the Chute or a Drop like any capture and files as a note with its own head; the bookmarklet's and Groundwork's instructions are rewritten to say so, and the queue rules that read salesnav notes stand.
 - PeoActivity: a write-only table; read it somewhere or stop writing it.
 - LookIntoStatus.note and SignalSnooze.snoozedUntil: columns whose readers were never written.
 - getAppAccess's upsert per call (G1): memoize per request or make the upsert once per session; the single most repeated unit of work in the app.
