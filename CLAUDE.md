@@ -244,6 +244,8 @@ directly to the PEOs. Be careful, but do what it takes. In this app that means:
 - When a send crosses a hot, live CSM thread, the composed thing carries a
   quiet flag so the operator knows. It informs; it never blocks.
 
+**The Approach is a fact, never a gate (ruled 2026-09-25, C19):** NEEDS_CSM, CHANNEL_OK and DIRECT_OK record whether the CSM was briefed and whether client outreach is cleared, and nothing is withheld by them. The stage's direct play is the default seed at every stage; the CSM play is the alternative and carries the quiet flag when a live CSM thread exists. The dashboard still advances the recorded fact (boardLift).
+
 ## Groundwork face (decided 2026-08-10)
 
 The Stage won the triptych, and the **winged stage** won the variations
@@ -271,6 +273,10 @@ means the deal is being worked — the HomeRoom's job, whatever the lagging
 board says. The operator's own outbound never excludes; the drumbeat rules
 need it.
 
+**The exclusion reads both records (ruled 2026-09-25, C6):** an account person's inbound that landed in a colleague's inbox is a real inbound and leaves the queue; the coordination move it produces is reactive and lives in the HomeRoom, never on Groundwork.
+
+**Ruled 2026-09-25 (C7, C9, D22, D26, D27):** the two-slot cap governs rules; seats are the operator's own forks and keep their own cap of three. The research bearer is the strongest above-gate account with no candidate of its own, the vehicle rule's letter, and a vehicle never collides: when every eligible account has its own move the slot drops for the day, and the bearer is chosen after the seats are placed. One band table lives in day.ts and the queue, the Klaxon and the test all read it: sends 9:00 to 11:00, people 11:00 to 14:00, research and filing from 14:00, Chicago; before 9:00 the send band is next, not now. No rule stamps with an empty label.
+
 ## The Chute (decided 2026-08-11)
 
 The HomeRoom carries ONE intake at the top: the Chute. Files (.eml/.msg/.pdf/
@@ -287,6 +293,20 @@ ledger survives a reload (per Chicago day; mid-flight reads come back as
 "interrupted — drop it again"), and the paste pipeline refuses duplicates
 app-wide: the same capture filed to the same account twice returns "Already on
 file. Nothing filed twice." (pastehash markers; an undo clears its marker).
+
+**The roster reads the record too (ruled 2026-09-25, C2):** beside the book's contacts and domains, the router's email and people rungs read every actor and recipient the record holds for the account. The rungs stay pure rules, the guard still judges the result, and an undo withdraws whatever the undone filing taught.
+
+**A waiting pick survives a reload (ruled 2026-09-25, C20):** a read that finished and waits on the operator's pick is not mid-flight; the ledger keeps its text and the wait comes back. A binary file the ledger cannot keep says so and asks for the re-drop.
+
+**Ruled 2026-09-25 (D1, D2, D3, D4, P2):** the Chute is one component with one roster and routes the same way wherever it mounts. The weekly export enters by the Chute or the Intranet dock, both into the one activity pipeline; the Drop refuses a .csv and says where it goes. The transcriber emits CALL TRANSCRIPT when a PDF or image reads as a call, with the recorded day when it carries one, and the tape's cap and archive follow. The vault keeps the file whole and the note keeps the text whole at any size; only the model's read is windowed, and every window that cut something is on the receipt. The Intranet's capture is a door too: what names an account files through this pipeline, routed, guarded and picked; what names none stays an Intranet doc and is never inbound.
+
+**Ruled 2026-09-25 (D5, D6, D7, D9, D11, D12, D13, D14):** the pick is final and files without a re-judge; a batch sibling is a suggestion, never a rung. Vaulting is filing: an unreadable file vaults to the account its filename names by the rungs or waits for the pick, with a receipt and a take-back. The duplicate check fails open and says so on the receipt; a ✕-parked filing is still on file and a re-drop is refused. A filing is disputed at most once: the guard's two rungs merge into one verdict and one pick answers both. The Chute reads three files at once; the rest wait in drop order and say so. Receipts dismiss per row and all at once; the fold shows every waiting row plus the two newest settled; a settled row keeps the account, the counts, the day and the rung, never an address or body text. Routing runs on the server: the roster never ships to the browser. A typed note is a paste.
+
+**Ruled 2026-09-25 (D10, D15, D16):** their commitments file as loops on their side with the promised day; the court reads them and a blown one carries as PROMISED like ours. The read's signals file on the note, a repeated commitment is one loop, and an outcome files a marker that only the operator's click closes. There is no revalidation list: every page derives on request. The same capture is the same normalized body, head line skipped, so a rename, a twin format and a re-copy with a fresh date all dedupe.
+
+**The vault is canon (ruled 2026-09-25, D8):** every dropped file archives whole to GitHub under accounts/<Account>/<file> through a server-side upload, so no token reaches the browser. The vault is evidence outside the money boundary because nothing renders from it. A duplicate drop vaults nothing new; every vault line is a receipt with a take-back.
+
+**Ruled 2026-09-25 (D29, D30):** a read-only session sees the Chute bar and its receipts and cannot drop; the bar says "Read-only session" where the ⇪ button was. The intranet mirror's query excludes every namespaced row by construction. The SalesNav grab pastes into the Chute or a Drop like any capture and files as a note with its own head.
 
 ## The Scratchpaper (decided 2026-08-12)
 
@@ -305,6 +325,8 @@ Escape puts it back, the timestamp and seat never move. ✕ is per line and
 deliberate — and it archives,
 never destroys (2026-08-19): the line moves to `scratch:gone`, readable under
 the pad's STRUCK fold, restorable by ↺. Nothing on the paper ever dies.
+
+**The ask door is not the paper (ruled 2026-09-25, D24):** a line leaves the pad only by the operator's own act of asking, and the pact holds for every line not asked. Click-away keeps an edit; the pad never eats your words.
 
 ## The Sendbook (triptych winner, decided 2026-08-19)
 
@@ -331,6 +353,8 @@ the record's own entries are never unwritten; the chip rows carry ✕ to close
 without filing. The wing never stamps mutely: no channel line means the
 rule's own label speaks.
 
+**Ruled 2026-09-25 (C4, C5, C18):** ↩ REPLIED needs a substantive inbound — a closer warms the lane and sets no annotation. Machinery never warms and never replies: a calendar acceptance, a bounce and a campaign alert are machinery whatever inbox caught them. The who chip row offers the record's people merged with the book's contacts, and asks only when the merged set holds more than one name.
+
 ## The Spring (triptych winner, decided 2026-08-13)
 
 The HomeRoom row's right panel runs on springs. Each register — UNKNOWN,
@@ -340,7 +364,9 @@ out in place; ⊖ or a sibling's ⊕ folds it back — one register out at a tim
 per row. Filing or composing anything springs TODAY open so receipts never
 land behind a fold. Attendant decrees, permanent:
 
-- The court line is retired — the move already says who and when.
+- The court line is retired — the move already says who and when. Retired in
+  full (ruled 2026-09-25, D25): the engine no longer computes it, and the test
+  pins the move line's who-and-when.
 - The per-row icon keybar is retired; ONE legend lives at the page foot.
 - Minimalist controls: "not this deal" is a hover-revealed ✕; "ask the brain"
   is ⌕; "mint sharper asks" is ⟳; "find the answer" is →; all tooltip-titled,
@@ -374,6 +400,10 @@ unattributed document is never inbound; an auto-reply is machinery, never
 the client writing. New surfaces are audited against this doctrine before
 they ship.
 
+**The touch log is not a stand-in (ruled 2026-09-25, C3):** it is the operator's own hand, and for when we last touched it merges with the record by latest like any two stores of one fact.
+
+**Provenance is columns (ruled 2026-09-25, P3, P4):** every note carries its door (chute, drop, act-lane, intranet, activity, seed, hand) in its own column beside source, which names the dialect, and its lane, actors and recipients. A second-record row carries them like a first-record row; a bare row is a defect.
+
 ## The closer rule (founder-decreed 2026-08-22)
 
 A courtesy sign-off — "No problem!", "thanks!", "sounds good", a thumbs-up,
@@ -391,6 +421,8 @@ PROMISED with its date — stronger than a plain wall, because a person
 heard the day and the day ended. All days are Chicago days, theirs or ours.
 The classifier lives in src/lib/intel/closer.ts, deliberately conservative:
 short, no question, no digits, no names — content always wins.
+
+**PROMISED needs a hearer (ruled 2026-09-25, D28):** a paste-provenance date has one by construction; a typed date reads PROMISED only when the line names the person it was promised to, and otherwise it is a wall.
 
 ## The click-depth law (founder-decreed 2026-08-20)
 
@@ -448,6 +480,14 @@ vehicle for someone else's cadence (roundup-slot, the book-wide research
 stamp) must prefer an account with no candidate of its own — a briefing slot
 never swallows an account's own move.
 
+**LAST HUMAN TOUCH reads both records (ruled 2026-09-25, C1):** the column shows the later of the first record's last human touch and the export's, and whispers which record it came from. No face reads the export alone for a fact the first record also holds.
+
+**THEIRS is the account's people (ruled 2026-09-25, C16):** the line leads only with gems about an account person and takes the palette's blue, the court's old color for their turn. A colleague's gem never leads it. "Their voice", everywhere in this file, means the PEO's own people, never a colleague's log.
+
+**Retired text (ruled 2026-09-25, C15):** the hover glyph at the name went with the Act Lane on 2026-08-21; the dashboard door is plain words in the drilldown.
+
+**Ruled 2026-09-25 (D17, D18, D19, D20, D21):** staging verifies before any slice replaces its predecessor, and a refused upload leaves the prior drop untouched. The operator's acted stamp is the first record: it survives the take-back and re-attaches by gem key. A colleague is a person the book names as internal or whose address is on our domain; the two-accounts count is the fallback only for a row with no address. An account-level Last Email Received with no attributed row is a datetime, shown as Salesforce's, never their voice: warmth, ↩ REPLIED and the exclusion need a row with an attributed inbound body that passes the machinery and closer reads. The record has moved on a gem when a first-record row after the gem's day carries the gem's person as an actor or recipient, by address or normalized name. Per-day counts and campaign titles are arithmetic and may upload; bodies and recipients never do. Gem lines are operator copy: the lint carries the seven devices, and a non-date digit kills the gem.
+
 ## The Act Lane (Version C winner, decreed 2026-08-21)
 
 The Accounts sheet works the act right there. The ACT column is the Move
@@ -477,6 +517,8 @@ drilldown). The count rides the Account column title; ⧉/⇩ ride the page
 title; the search bar carries depth. The board lift holds app-wide: an
 account on the dashboard is cleared with the CSM and touched — stored
 state only ever advances the derived one (boardLift, loadCommand).
+
+**A seat follows its account (ruled 2026-09-25, C8):** when the account is excluded from the queue, the seat leaves Groundwork and reads on the HomeRoom as the account's own action until worked or taken back; it returns to the wing if the exclusion lifts first.
 
 ## The Playbook face — The Sheet (triptych winner, ship order 2026-09-15)
 
@@ -527,6 +569,8 @@ founder-decreed 2026-09-15.
   holds the graph audit, the name scan, the money scan and the wing's index
   against the sheet it stands on.
 
+**Ruled 2026-09-25 (C12, C13):** the learned register keeps its names; a lesson's account and a market fact's speaker are its cite on the evidence ladder, and the universal-tool rule governs the authored surfaces only. A playbook citation in the brain's answer opens in place, one click, to the cited question and its gloss from the bank, with no page and no link; the Call Sheet stays retired and the click-depth law holds.
+
 ## Other standing decrees
 
 - The word "steps" never appears in operator-facing copy.
@@ -537,6 +581,21 @@ founder-decreed 2026-09-15.
   color on hover only. Names stay "Roundups" and "Check-ins"; never "Cadence".
 - Money figures never appear in anything stored, rendered, or mocked
   (`redactMoney` doctrine).
+- Two carve-outs stand (ruled 2026-09-25, C10, C11): the Scratchpaper's lines,
+  because the pad routes nowhere, and the country wing's statutory facts. Our
+  money, everywhere else, still never renders.
 - Ship pattern: branch `claude/prismhr-demo-guide-strategy-6h0oqg` → PR →
   Vercel CI green → squash merge = live production. Verify chain uses `&&`:
   prettier → tsc → eslint (0 warnings) → tsx tests → next build.
+- An archived surface (ruled 2026-09-25, P1) leaves every tab list and every
+  revalidation list, and no live surface imports its actions.
+- **Opus or better, always** (founder-decreed 2026-07-31, canonized
+  2026-09-25): every model call in the app runs on Opus or a stronger model.
+  One model roster lives in src/lib/intranet/doctrine.ts and every caller
+  reads its slot from it; no caller names a model.
+- **Every page signs in** (ruled 2026-09-25): the demo pages take the access
+  check every other page takes, and there is no public mode.
+- **The surfaces** (ruled 2026-09-25): the Board, Today and Pipeline pages are
+  retired once their actions move to the live surfaces. /intake stays as the
+  bookmarklet shelf's door with a plain nav row; /partners, /archive and
+  /asks stay, doored from live surfaces, with no nav row.

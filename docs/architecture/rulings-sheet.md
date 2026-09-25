@@ -1,6 +1,6 @@
 ---
 title: Rulings Sheet
-status: In session, 2026-09-25; rulings recorded in decree-ledger.md as they land
+status: Ruled 2026-09-25; every row carries its ruling in decree-ledger.md and the law is in CLAUDE.md
 owner: Founder
 related_docs:
   - CLAUDE.md

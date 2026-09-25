@@ -229,3 +229,4 @@ Status is one of: open · ruled (which side, quoted) · encoded (CLAUDE.md amend
 - 2026-09-25 · ruling session, batch 6 (pass 3 D): D10, D15, D16, D17, D18, D19, D20, D21 ruled. 111 · 10 open + 24 ruled · 0 open + 20 ruled.
 - 2026-09-25 · ruling session, batch 7 (pass 3 D): D8, D22, D23, D24, D25, D26, D27, D28 ruled. 111 · 2 open + 32 ruled · 0 open + 20 ruled.
 - 2026-09-25 · ruling session, batch 8 (pass 3 D): D29, D30 ruled. Every ungoverned behavior and every conflicting pair is ruled. 111 · 0 open + 34 ruled · 0 open + 20 ruled.
+- 2026-09-25 · the ruling session's law lands in CLAUDE.md (every approved draft, batches 1 to 9); pass 4's batch 10 is recorded as assumed under the pass-5 brief. Rows move to encoded when the test pass cites the line.

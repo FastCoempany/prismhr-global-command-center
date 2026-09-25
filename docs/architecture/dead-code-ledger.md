@@ -288,8 +288,15 @@ Dormant without a decree, one sentence each.
   - RULING (2026-09-25): REMOVE — The risk: read goes; no importer exists and nothing else names Salesforce risk; the DB count first proves no out-of-repo writer.
   - RULING (2026-09-25): DEFER — inst: stays until the institutions deck gets its writer, because CLAUDE.md:258 keeps the deck and the read costs nothing.
 - `scenario:` dispositions: promote the 2026-08-22 retirement from a code comment to the canon or drop the read after the count.
+  - RULING (2026-09-25): REMOVE — Drop the scenario: read once the DB count is zero, and the 2026-08-22 retirement becomes one canon line.
+  - assumed: recorded under the pass-5 brief of 2026-09-25 without a per-item answer on batch 10; strike if wrong.
 - src/lib/intel/bank.ts and branches.ts: CLAUDE.md:511-513 keeps the bank; whether it keeps the branch map and the Call Sheet's filter helpers is unstated.
+  - RULING (2026-09-25): KEEP — bank.ts's questions stay; C13's in-place citation needs them.
+  - RULING (2026-09-25): REMOVE — branches.ts and the three filter helpers (NO_FILTERS, facetCounts, emptyBecause) go, with their test pins rewritten to the questions.
+  - assumed: recorded under the pass-5 brief of 2026-09-25 without a per-item answer on batch 10; strike if wrong.
 - src/lib/intel/motions.ts: kept by one chain test only.
+  - RULING (2026-09-25): REMOVE — motions.ts and its test block go; a test that pins code the app never runs pins nothing.
+  - assumed: recorded under the pass-5 brief of 2026-09-25 without a per-item answer on batch 10; strike if wrong.
 - "Opus or better, always" (2026-07-31) exists only in comments and is contradicted by two sonnet call sites; canonize it or delete the comments and the three no-op model splits.
   - RULING (2026-09-25): REMOVE — The three no-op model splits and their comments go; "Opus or better, always" becomes canon with one model roster in doctrine.ts read by every caller, and the two sonnet call sites (wire.ts:147, :156; partners/actions.ts:140) are violations the test pass moves to Opus.
 - PUBLIC_ACCESS: keep the switch or delete the branches it can never take.
@@ -297,10 +304,20 @@ Dormant without a decree, one sentence each.
 - The SalesNav grab has three contradicting instructions (capture-shelf.tsx:125-128, groundwork/page.tsx:679-681, signals.ts:1-4); one door.
   - RULING (2026-09-25): KEEP — One door: the grab pastes into the Chute or a Drop like any capture and files as a note with its own head; the bookmarklet's and Groundwork's instructions are rewritten to say so, and the queue rules that read salesnav notes stand.
 - PeoActivity: a write-only table; read it somewhere or stop writing it.
+  - RULING (2026-09-25): REMOVE — savePeo and applyPlay file the record's own note through the hand door instead (P3), and the PeoActivity model drops in the migration after the DB count.
+  - assumed: recorded under the pass-5 brief of 2026-09-25 without a per-item answer on batch 10; strike if wrong.
 - LookIntoStatus.note and SignalSnooze.snoozedUntil: columns whose readers were never written.
+  - RULING (2026-09-25): REMOVE — Both columns go with Today's features, in the same migration as PeoActivity.
+  - assumed: recorded under the pass-5 brief of 2026-09-25 without a per-item answer on batch 10; strike if wrong.
 - getAppAccess's upsert per call (G1): memoize per request or make the upsert once per session; the single most repeated unit of work in the app.
+  - RULING (2026-09-25): KEEP — getAppAccess stays; the upsert runs once per session at sign-in and the per-request read is memoized with React's cache().
+  - assumed: recorded under the pass-5 brief of 2026-09-25 without a per-item answer on batch 10; strike if wrong.
 - The pipeline report built twice per /room load (G2) and the Sendbook built twice across two pages (G4): candidate 2's one read is the natural home for both.
+  - RULING (2026-09-25): DEFER — until refactor candidate 2's one account read lands; that read is the fix for both.
+  - assumed: recorded under the pass-5 brief of 2026-09-25 without a per-item answer on batch 10; strike if wrong.
 - The intranet's second model read of every filed note and its fan-out (G6): share the structured read or accept the spend.
+  - RULING (2026-09-25): KEEP — the intranet's read stays for documents only it reads; a filed note's extractor takes the structured read stored with the note (D10), and the todo and playbook mirrors carry the note's read rather than earning their own.
+  - assumed: recorded under the pass-5 brief of 2026-09-25 without a per-item answer on batch 10; strike if wrong.
 
 ## NEEDS THE DB
 
