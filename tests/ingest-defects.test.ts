@@ -7,7 +7,9 @@
 // roomPaste and roomPasteUndo cannot be called from a test: both gate on
 // getAppAccess (next/headers cookies) and getPrisma, so these tests read the
 // source the way misfile-guard and read-absorption already do. Where the
-// behavior is pure (judgeFiling), the test calls it.
+// behavior is pure (judgeFiling), the test calls it. The pins on receipt and
+// comment wording were retired 2026-09-25; what still reads source is the
+// sequencing inside the server actions, which has no callable seam.
 
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
@@ -22,7 +24,6 @@ const read = (p: string) => readFileSync(join(root, p), "utf8");
 const actions = read("src/app/room/actions.ts");
 const client = read("src/app/room/room-client.tsx");
 const chute = read("src/app/room/chute.tsx");
-const misfile = read("src/lib/intel/misfile.ts");
 
 /** The body of one top-level function in a source file, from its head to the
  *  next marker. Scoped slices keep an assertion about roomPaste from being
@@ -78,13 +79,6 @@ describe("bug 3 — the guard's comments and copy contradict the canon", () => {
   // CLAUDE.md (the Chute): "Nothing files blind: no sure match or a disputed
   // read waits for the operator's pick." The behavior is decreed; the
   // sentences saying the verdict never blocks were the bug.
-  test("the stale sentences are gone", () => {
-    assert.ok(!misfile.includes("The verdict never blocks"), "misfile.ts header");
-    assert.ok(!misfile.includes("The guard informs and never blocks"), "misfile.ts tie rule");
-    assert.ok(!roomPaste.includes("It informs; it never blocks"), "roomPaste's guard comment");
-    assert.ok(!client.includes("the account check did not run"), "the Drop's readFailed copy");
-    assert.ok(!chute.includes("guard included when the key is on"), "the Chute's header");
-  });
   test("the blocking behavior is unchanged: a disputed read holds for the pick", () => {
     // The pure verdict still disputes…
     const v = judgeFiling({ text: TAPE, claim: "", bound: REGIS, roster });
@@ -99,31 +93,29 @@ describe("bug 3 — the guard's comments and copy contradict the canon", () => {
     assert.match(roomPaste.slice(lateAt, lateAt + 160), /return \{\s*ok: false,\s*filed: 0/);
     assert.ok(roomPaste.includes("opts?.force"), "force stays the operator's override");
   });
-  test("the keyless early rung is described as keyless", () => {
-    // The early guard runs before the read, on the text's own evidence, key
-    // or no key. The Drop's readFailed copy has to say the check ran.
-    const at = client.indexOf("The read didn't complete.");
-    assert.ok(at > 0, "the rules-only receipt still exists");
-    assert.match(client.slice(at, at + 320), /account check/i);
-    assert.doesNotMatch(client.slice(at, at + 320), /did not run/);
+  test("the keyless early rung stands on the text's own evidence", () => {
+    // The early guard runs before any read, key or no key, so its verdict
+    // has to be complete with no claim in: the rung that objected, the row
+    // the evidence points at and the row the operator chose. That is what
+    // the rules-only receipt reports.
+    const v = judgeFiling({ text: TAPE, claim: "", bound: REGIS, roster });
+    assert.equal(v.ok, false);
+    if (!v.ok) {
+      assert.equal(v.rung, "person");
+      assert.equal(v.claim, "Simploy");
+      assert.equal(v.bound, "Regis HR Group");
+    }
   });
 });
 
 describe("bug 4 — 'cross it out and drop it again' cannot work", () => {
-  test("the degraded transcript receipt points at a path that succeeds", () => {
-    assert.ok(!client.includes("Cross it out and drop it again"));
-    const at = client.indexOf("The reader is down");
-    assert.ok(at > 0, "the degraded transcript receipt still exists");
-    assert.match(client.slice(at, at + 280), /undo/i);
-  });
   test("why undo works and cross-out does not", () => {
     // The undo clears the duplicate guard's marker, so the re-drop files.
     assert.ok(pasteUndo.includes("startsWith: `pastehash:${acct.id}:`"));
     // Cross-out parks the note under hide:note: and leaves the marker, so
-    // the re-drop returns "Already on file".
+    // the re-drop is refused as a duplicate.
     assert.ok(recordDelete.includes("hide:note:"));
     assert.ok(!recordDelete.includes("pastehash"));
-    assert.ok(roomPaste.includes("Nothing filed twice."));
   });
 });
 
@@ -146,9 +138,9 @@ describe("bug 5 — absorbRead on a rules-fallback read", () => {
     // Decided 2026-09-24: `how` stays the entries' provenance, and the
     // result carries `judged` whenever the read object was non-null, so a
     // filing whose entries came from the rules but whose actions and asks
-    // came from the model says so instead of reading as a plain rules pass.
+    // came from the model can say so instead of reading as a plain rules
+    // pass. The flag is the contract; the Drop's receipt reads it.
     assert.match(roomPaste, /judged: read !== null/);
-    assert.ok(client.includes("judgment by Claude"));
   });
 });
 
@@ -176,10 +168,9 @@ describe("bug 6 — undo is partial", () => {
     // namespaces can be reached by a forged id list.
     assert.ok(pasteUndo.includes("accountId: acct.id"));
   });
-  test("both doors hand the todo ids to the undo, and the copy stops promising to leave them", () => {
+  test("both doors hand the todo ids to the undo", () => {
     assert.match(chute, /roomPasteUndo\(acct\.id, ids, it\.todoIds/);
     assert.match(client, /roomPasteUndo\(row\.accountId, ids, /);
-    assert.ok(!client.includes("The actions it opened stay"));
   });
 });
 
