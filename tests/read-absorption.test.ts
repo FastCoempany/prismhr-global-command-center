@@ -3,17 +3,9 @@ import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { cwd } from "node:process";
-
-import { looksLikeNotes } from "../src/lib/intel/ai-clean";
 import { MODEL_READ } from "../src/lib/intranet/doctrine";
 import { WAYFINDER_ROUTES } from "../src/components/wayfinder-routes";
-import {
-  actionBody,
-  fallbackMove,
-  hasFallback,
-  splitFallback,
-  urgencyForDue,
-} from "../src/lib/room/deliverables";
+import { actionBody, splitFallback, urgencyForDue } from "../src/lib/room/deliverables";
 import { gapDismissKey, gapNs, parseGapBody, readGaps } from "../src/lib/room/gaps";
 import {
   knowledgeKey,
@@ -21,12 +13,7 @@ import {
   playbookBody,
   readPlaybook,
 } from "../src/lib/playbook/store";
-import {
-  OUTCOME_KEY,
-  readOutcome,
-  stripOutcome,
-  writeOutcome,
-} from "../src/lib/dashboard/outcome";
+import { OUTCOME_KEY, readOutcome, writeOutcome } from "../src/lib/dashboard/outcome";
 import { outcomeMarkBody, readLoss } from "../src/lib/room/loss";
 import { selectQuestions, type Filters } from "../src/lib/intel/bank";
 import { DISCOVERY } from "../src/lib/intel/discovery";
@@ -73,32 +60,10 @@ const note = (
 
 // ── model routing ─────────────────────────────────────────────────────────────
 describe("the read tells notes-shaped pastes from shaped work", () => {
-  test("freeform call notes are notes-shaped", () => {
-    const raw = `7/29/26 call with Chassie\nthey want Canada + Mexico\nTO DO: get pre recorded demo via shane by 7/30`;
-    assert.equal(looksLikeNotes(raw), true);
-  });
-  test("an Outlook thread is shaped work, not notes", () => {
-    const raw = `OUTLOOK THREAD\nFrom: Shane Smith\nTo: Antaeus Coe\nSubject: RE: contracts\n\nthat works`;
-    assert.equal(looksLikeNotes(raw), false);
-  });
   test("the read's model is the roster's slot: Opus or better, whatever the shape", () => {
     // Opus or better, always (decreed 2026-07-31; one roster, ruled
     // 2026-09-25) — the shape never picks the model, the roster does.
     assert.match(MODEL_READ, /^claude-(opus|fable)-/);
-  });
-  test("a Salesforce timeline is shaped work even without mail headers", () => {
-    const raw = [
-      "Show more actions",
-      "Text Body",
-      ...Array(60).fill("activity line"),
-    ].join("\n");
-    assert.equal(looksLikeNotes(raw), false);
-  });
-  test("a monster wall is never routed to the expensive model", () => {
-    assert.equal(looksLikeNotes("call notes\n" + "x".repeat(30_000)), false);
-  });
-  test("empty text is nothing-shaped", () => {
-    assert.equal(looksLikeNotes("   "), false);
   });
 });
 
@@ -114,20 +79,6 @@ describe("deliverables — the if/then rides the commitment", () => {
     assert.equal(text, "Get the pre-recorded demo from Shane");
     assert.equal(fallback, "send the ESC demo, scrubbed of proprietary detail");
     assert.ok(body.includes("· from 7/29 paste"));
-  });
-  test("a commitment with no contingency has no fallback", () => {
-    const plain = actionBody("Send the recap", "", "from 7/29 paste");
-    assert.equal(hasFallback(plain), false);
-    assert.equal(splitFallback(plain).text, "Send the recap · from 7/29 paste");
-  });
-  test("the blown-wall move names the contingency, not the commitment", () => {
-    const move = fallbackMove(body);
-    assert.ok(move.startsWith("Get the pre-recorded demo from Shane didn't land"));
-    assert.ok(move.includes("scrubbed of proprietary detail"));
-    assert.ok(!move.includes("from 7/29 paste"));
-  });
-  test("no fallback means no move to promote", () => {
-    assert.equal(fallbackMove("Send the recap"), "");
   });
   test("urgency follows the wall's distance", () => {
     const now = new Date("2026-07-29T12:00:00Z");
@@ -277,10 +228,6 @@ describe("Closed Won / Closed Lost — terminal staging", () => {
     assert.equal(readOutcome({}), null);
     assert.equal(readOutcome({ [OUTCOME_KEY]: "not json" }), null);
     assert.equal(readOutcome({ [OUTCOME_KEY]: '{"status":"maybe"}' }), null);
-  });
-  test("the reserved key never leaks into a per-stage note view", () => {
-    const stripped = stripOutcome({ demo: "x", [OUTCOME_KEY]: "{}" });
-    assert.deepEqual(Object.keys(stripped), ["demo"]);
   });
 });
 
@@ -754,7 +701,6 @@ describe("the repairs hold", () => {
       "roomGapsRefill",
       "roomResearch",
       "roomRetire",
-      "roomReopen",
     ]) {
       const i = actions.indexOf(`export async function ${fn}(`);
       assert.ok(i > 0, `${fn} is gone`);

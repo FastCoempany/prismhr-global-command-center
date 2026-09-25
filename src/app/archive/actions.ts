@@ -5,7 +5,7 @@
 // purpose, for hidden items only. Rows die elsewhere too, as housekeeping
 // rather than doors — the paste undo, the Act Lane's take-backs, the second
 // record's replace-forward writes, the Groundwork un-work, the template
-// store, and the chip popover's note delete in src/app/today/actions.ts.
+// store, and the ledger actions that moved to src/app/room/ledger-actions.ts.
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";

@@ -65,11 +65,3 @@ export function writeOutcome(
     });
   return out;
 }
-
-// A closed card's node notes shouldn't leak the reserved key into any per-stage
-// note view.
-export function stripOutcome(notes: Record<string, string>): Record<string, string> {
-  const out = { ...notes };
-  delete out[OUTCOME_KEY];
-  return out;
-}

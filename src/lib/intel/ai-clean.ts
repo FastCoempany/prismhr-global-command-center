@@ -320,30 +320,6 @@ export function accountMatches(claim: string, bound: string): boolean {
   return !!ct && !!bt && (ct === bt || b.includes(ct) || c.includes(bt));
 }
 
-// What shape a paste is. A Salesforce timeline or an Outlook thread is shaped
-// work — headers, subjects, dates. Freeform call notes are the opposite: no
-// structure, all judgment, and the commitments hide inside prose ("need the
-// demo by 7/30, if not use ESC"). The shape never picks the model any more
-// (Opus or better, always — one roster in src/lib/intranet/doctrine.ts); it
-// still tells the readers what they are holding.
-const SHAPED_HEAD =
-  /^\s*(OUTLOOK THREAD|TEAMS CHAT|TEAMS THREAD)\b|^\s*(From|To|Sent|Subject|Cc)\s*:/im;
-const SF_CHROME = /\b(Show more actions|Expand All|From Address|Text Body|thread::)\b/i;
-const NOTE_SCENT =
-  /\b(to\s*do|todo|action items?|next steps?|call (?:with|notes)|meeting (?:with|notes)|notes? from|debrief|recap)\b/i;
-
-export function looksLikeNotes(raw: string): boolean {
-  const text = (raw ?? "").trim();
-  if (!text) return false;
-  // Anything wearing mail or CRM clothing is shaped, whatever else it says.
-  if (SHAPED_HEAD.test(text) || SF_CHROME.test(text)) return false;
-  // Long walls of dialogue (transcripts) are notes-shaped too — they are pure
-  // judgment — but a wall past this size costs more than the read is worth.
-  if (text.length > 24_000) return false;
-  const lines = text.split("\n").filter((l) => l.trim()).length;
-  return NOTE_SCENT.test(text) || lines <= 40;
-}
-
 // One call, one paste. Throws on API failure — the caller degrades to the
 // rule-based parser. `now` is passed in so date resolution is testable.
 // The client gets an explicit timeout sized to serverless hosting (the SDK

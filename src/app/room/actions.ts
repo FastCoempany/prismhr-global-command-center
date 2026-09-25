@@ -1074,37 +1074,6 @@ export async function roomRetire(
   }
 }
 
-// A closure recorded in error must be undoable — the card comes back to the
-// board with its stage rail intact and the terminal stamp removed.
-export async function roomReopen(
-  accountId: string,
-  cardId: string,
-): Promise<{ ok: boolean; reason?: string }> {
-  const cid = typeof cardId === "string" ? cardId.trim().slice(0, 40) : "";
-  if (!bindAccountId(accountId, peos) || !cid)
-    return { ok: false, reason: "Not a bound row." };
-  if (!(await requireWrite())) return { ok: false, reason: "Read-only session." };
-  try {
-    const prisma = getPrisma();
-    const card = await prisma.dashCard.findUnique({
-      where: { id: cid },
-      select: { notes: true },
-    });
-    if (!card) return { ok: false, reason: "That card is gone." };
-    await prisma.dashCard.update({
-      where: { id: cid },
-      data: {
-        archived: false,
-        notes: writeOutcome(card.notes, null),
-      },
-    });
-    refresh();
-    return { ok: true };
-  } catch {
-    return { ok: false, reason: "That didn't save. Try again." };
-  }
-}
-
 // --- The research pass -------------------------------------------------------
 // The obvious button. First run is the deep one; every run files its findings as
 // a note on the account, so the record, the corpus, the intel extractor and the

@@ -154,30 +154,6 @@ export function LocalTime({ iso }: { iso: string }) {
   );
 }
 
-// Time-only variant for the ledger's time column — "9:43a", never a date.
-export function LocalClock({ iso }: { iso: string }) {
-  const [text, setText] = useState(() => fmtClock(iso));
-  useEffect(() => {
-    const id = setTimeout(() => setText(fmtClock(iso)), 0);
-    return () => clearTimeout(id);
-  }, [iso]);
-  return (
-    <time dateTime={iso} suppressHydrationWarning>
-      {text}
-    </time>
-  );
-}
-
-function fmtClock(iso: string, timeZone: string = USER_TZ): string {
-  const t = Date.parse(iso);
-  if (Number.isNaN(t)) return "";
-  return new Date(t)
-    .toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone })
-    .toLowerCase()
-    .replace(" am", "a")
-    .replace(" pm", "p");
-}
-
 function fmtStamp(iso: string, timeZone: string = USER_TZ): string {
   const t = Date.parse(iso);
   if (Number.isNaN(t)) return "";
@@ -194,35 +170,6 @@ function fmtStamp(iso: string, timeZone: string = USER_TZ): string {
     ...(timeZone ? { timeZone } : {}),
   });
   return `${day} · ${time}`;
-}
-
-// Copy a partner-engagement line to the clipboard — the first, smallest step
-// toward "automate copy to partners": today it's one click to paste into Slack.
-export function CopyLine({
-  text,
-  label = "Copy the line",
-}: {
-  text: string;
-  label?: string;
-}) {
-  const [done, setDone] = useState(false);
-  return (
-    <button
-      type="button"
-      className={styles.copyLine}
-      onClick={async () => {
-        try {
-          await navigator.clipboard.writeText(text);
-          setDone(true);
-          setTimeout(() => setDone(false), 2000);
-        } catch {
-          setDone(false);
-        }
-      }}
-    >
-      {done ? "Copied ✓" : label}
-    </button>
-  );
 }
 
 export function NoteSubmit() {

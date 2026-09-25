@@ -40,19 +40,6 @@ export function splitFallback(body: string): Commitment {
   };
 }
 
-export function hasFallback(body: string): boolean {
-  return splitFallback(body).fallback.length > 0;
-}
-
-// The move when a dated commitment's date has passed and a fallback exists.
-// Plain and imperative — the operator should not have to reconstruct the plan.
-export function fallbackMove(body: string): string {
-  const { text, fallback } = splitFallback(body);
-  if (!fallback) return "";
-  const what = text.replace(/\s+·\s+from\s.*$/i, "").trim();
-  return `${what} didn't land. Go to the fallback: ${fallback}`;
-}
-
 // Urgency a dated commitment deserves. Anything due inside two days is high,
 // this week is med, further out carries none — the composer's own ladder.
 export function urgencyForDue(dueIso: string, now: Date): "" | "low" | "med" | "high" {
