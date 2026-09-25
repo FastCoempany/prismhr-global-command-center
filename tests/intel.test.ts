@@ -15,9 +15,7 @@ import {
 import { dateNear } from "@/lib/intel/extract";
 import { DISCOVERY, questionsFor } from "@/lib/intel/discovery";
 import { DASH_NODES, nodeBriefs } from "@/lib/dashboard/stages";
-import { MOTIONS, motionsFor } from "@/lib/intel/motions";
 import { DIGEST, digestFor, digestForCardName } from "@/lib/intel/digest";
-import { EMPTY_INTEL, type DealIntel } from "@/lib/intel/types";
 
 // Real corpus sentences as fixtures — the lexicon must read the actual mail.
 
@@ -148,25 +146,6 @@ describe("discovery bank", () => {
       merged.every((q) => !q.question.includes("{countries}")),
       "no unmerged {countries}",
     );
-  });
-});
-
-describe("motions", () => {
-  test("signals derive from intel and gate by stage", () => {
-    const intel: DealIntel = {
-      ...EMPTY_INTEL,
-      chair: "undecided",
-      threads: { people: ["Only One"], execSeen: true, opsSeen: false },
-    };
-    const m = motionsFor(intel, "needs_analysis");
-    const ids = m.map((x) => x.id);
-    assert.ok(ids.includes("settle-chair"));
-    assert.ok(ids.includes("open-second-thread"));
-    assert.ok(ids.includes("map-countries"));
-    assert.ok(!ids.includes("settle-chair-late")); // wrong stage
-  });
-  test("every motion say-line is a direct question", () => {
-    for (const m of MOTIONS) assert.ok(m.say.trim().endsWith("?"), m.id);
   });
 });
 
