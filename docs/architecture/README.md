@@ -18,6 +18,7 @@ Current files:
 - field-glyphs.md
 - product-lexicon.md
 - rulings-sheet.md
+- scaffold-pass.md
 
 ## The Chute audit
 
@@ -59,6 +60,9 @@ test-only and seed-only exports, the route, model-call, revalidation,
 marker-family and head-token inventories, and the comment claims found
 true). Every pass's evidence lives in the repo, not in a session.
 
+scaffold-pass.md is pass 5 (2026-09-25): the canon tests under
+tests/canon/, the text pins rewritten on the ingest suites, the removals,
+the stale comments, and the STANDS decrees the code still does not follow.
 The sequence after pass 4, as recommended on 2026-09-25 and not yet
 decided: (1) the founder rules on the rulings sheet, since a refactor now
 would bake in whichever side of each conflicting pair the code happens to
