@@ -20,7 +20,7 @@ The three audits said one thing from three angles: 111 of 187 decrees in scope a
 |---|---|---|
 | Honor-system decrees | 111 of 187 | 111 of 187 |
 | Ungoverned behaviors | 34 open | 34 open |
-| Conflicting pairs | 20 open | 20 open |
+| Conflicting pairs | 20 open | 13 open · 7 ruled |
 
 ## How a row moves
 
@@ -191,18 +191,18 @@ Status is one of: open · ruled (the founder decided; the ruling is quoted) · e
 | D29 | The Chute renders nothing without canWrite (chute.tsx:627); read-only sessions have no intake and no receipt ledger | (276) | What a read-only session sees at the top of the HomeRoom. | open | — | — | — |
 | D30 | scratch rows and every other namespaced row consume the intranet mirror's 400-row budget before being skipped (runners.ts:146-151) [inferred] | Scratchpaper (297-298); Chute (283) | Whether namespaced rows are excluded in the query rather than after it. | open | — | — | — |
 
-## 3. Conflicting pairs (20)
+## 3. Conflicting pairs (20: 13 open · 7 ruled)
 
 Status is one of: open · ruled (which side, quoted) · encoded (CLAUDE.md amended; line cited) · aligned (the code follows the ruling; cite).
 
 | Ledger row | Decree 1 | Decree 2 | Code follows at pass 3 | Status | Ruling | Encoded at | Moved by |
 |---|---|---|---|---|---|---|---|
-| C1 | Ted, 368-372 | Second record faces, 424-426 | The face: accounts/page.tsx:345-352 → rollup.ts:124-158; touch.ts is n … | open | — | — | — |
-| C2 | Chute, 279-281 | Ted, 363 | The Chute: roster.ts:24-35 builds from peos, contactsFor and AKA; no f … | open | — | — | — |
-| C3 | Ted, 364-368 | Ted, 371-372 | Merge by latest: touch.ts:125 `outAt > logAt` | open | — | — | — |
-| C4 | Closer, 381-382 | Sendbook, 326-327 | The Sendbook's literal reading: read.ts:136-149 has no closer test → : … | open | — | — | — |
-| C5 | Ted, 373-374 | Second ring, 429-431 | The comment: read.ts:118-132 excludes AUTO_RE only, so acceptances, no … | open | — | — | — |
-| C6 | Groundwork, 258-260 | Second record, 409-410 | The second record: day.ts:389-408 fires the org-answered silence-bump … | open | — | — | — |
+| C1 | Ted, 368-372 | Second record faces, 424-426 | The face: accounts/page.tsx:345-352 → rollup.ts:124-158; touch.ts is n … | ruled | Ted 368-372 stands; the column merges both records by latest | — | batch 1 · 2026-09-25 |
+| C2 | Chute, 279-281 | Ted, 363 | The Chute: roster.ts:24-35 builds from peos, contactsFor and AKA; no f … | ruled | Ted 363 stands; the roster reads the record's actors too (R1 B) | — | batch 1 · 2026-09-25 |
+| C3 | Ted, 364-368 | Ted, 371-372 | Merge by latest: touch.ts:125 `outAt > logAt` | ruled | 371-372 stands; the touch log merges by latest (R5 A) | — | batch 1 · 2026-09-25 |
+| C4 | Closer, 381-382 | Sendbook, 326-327 | The Sendbook's literal reading: read.ts:136-149 has no closer test → : … | ruled | closer rule stands; ↩ REPLIED needs substance (R6 A) | — | batch 1 · 2026-09-25 |
+| C5 | Ted, 373-374 | Second ring, 429-431 | The comment: read.ts:118-132 excludes AUTO_RE only, so acceptances, no … | ruled | 373-374 and 408 stand; machinery never warms, acceptance is machinery | — | batch 1 · 2026-09-25 |
+| C6 | Groundwork, 258-260 | Second record, 409-410 | The second record: day.ts:389-408 fires the org-answered silence-bump … | ruled | 258-260 stands; org inbound excludes, the move goes to the HomeRoom (R8 C) | — | batch 1 · 2026-09-25 |
 | C7 | Groundwork, 265-266 | Act Lane, 467-468 | Both by branch: day.ts:664 `ruleId === "seated" ? SEAT_SLOT_CAP : RULE … | open | — | — | — |
 | C8 | Groundwork, 262-264 and 268-271 | Act Lane, 469-470 | The Act Lane: day.ts:561-576 pushes seats with no excludedIds check | open | — | — | — |
 | C9 | Groundwork, 266-268 | Vehicle rule, 446-449 | The vehicle rule with a fallback: day.ts:536-537 `bearers.find(p => !t … | open | — | — | — |
@@ -214,10 +214,11 @@ Status is one of: open · ruled (which side, quoted) · encoded (CLAUDE.md amend
 | C15 | Second record faces, 425 | Act Lane, 474-476 | The Act Lane: accounts-client.tsx:1199-1210 | open | — | — | — |
 | C16 | Second record faces, 427-428 | Design canon, 11-16 and 37 | The face: room.module.css:2330 `#8a5a00` | open | — | — | — |
 | C17 | Writing canon 4, 55-56 | Plain-speech law, 79-81 | The carve-out [answer-row copy not re-read this pass] | open | — | — | — |
-| C18 | Sendbook, 317-318 | Ted, 363 | The Sendbook's "the book": groundwork/page.tsx:828-831 passes contacts … | open | — | — | — |
+| C18 | Sendbook, 317-318 | Ted, 363 | The Sendbook's "the book": groundwork/page.tsx:828-831 passes contacts … | ruled | Ted 363 stands; the chip row offers the record's people too | — | batch 1 · 2026-09-25 |
 | C19 | Direct doctrine, 240-241 | Act Lane, 477-479 | The gate: campaigns/index.ts:22-25; accounts-client.tsx:425-429 | open | — | — | — |
 | C20 | Chute, 283-284 | Chute, 285-287 | Interrupted: chute.tsx:84, :96-97 | open | — | — | — |
 
 ## Log
 
 - 2026-09-25 · opened from the pass-3 ledger at main 3726363. 111 · 34 · 20.
+- 2026-09-25 · ruling session, batch 1 (pass 3 C): C1, C2, C3, C4, C5, C6, C18 ruled. 111 · 34 · 13 open + 7 ruled.
