@@ -26,6 +26,7 @@ import { inboundDates, recordSends, type NoteLike } from "@/lib/sendbook/read";
 import { readOutcome } from "@/lib/dashboard/outcome";
 import { rowsChecksum, tallyChecksum } from "./parse";
 import { deriveColleagues, isMachineryName } from "./classify";
+import { personMoved } from "./acted";
 import {
   buildRollup,
   intentWindows,
@@ -1042,6 +1043,14 @@ export async function actedSweep(): Promise<number> {
         createdAt: n.createdAt.toISOString(),
         actors: n.actors ?? "",
       }));
+      // The columns behind each send, keyed the way recordSends reads them,
+      // so the match reads actors and recipients (D20), never the head alone.
+      const columnsOf = new Map<string, { actors: string; recipients: string }>();
+      for (const n of notes)
+        columnsOf.set(`${n.createdAt.toISOString()}|${n.body.split("\n")[0] ?? ""}`, {
+          actors: n.actors ?? "",
+          recipients: n.recipients ?? "",
+        });
       const sends = recordSends(likes);
       let changed = false;
       for (const g of gems) {
@@ -1049,8 +1058,15 @@ export async function actedSweep(): Promise<number> {
         for (const s of sends) {
           const day = chiDay(new Date(s.at));
           if (day <= g.createdDay) continue;
-          const text = `${s.who} ${s.head}`;
-          if (g.who.some((w) => w && text.includes(w))) {
+          const cols = columnsOf.get(`${s.at}|${s.head}`);
+          if (
+            personMoved(g.who, {
+              who: s.who,
+              head: s.head,
+              actors: cols?.actors ?? "",
+              recipients: cols?.recipients ?? "",
+            })
+          ) {
             g.actedDay = day;
             changed = true;
             stamped += 1;

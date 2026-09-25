@@ -27,6 +27,7 @@ import {
 import { clockShort, userDayKey } from "@/lib/tz";
 import { sfAccountUrl } from "@/lib/salesforce";
 import { buildQueue, heatOf, liveMotionIds, moveKey } from "@/lib/groundwork/day";
+import { stampSubtext } from "@/lib/groundwork/stamp";
 import {
   collisionFor,
   dropAgeDays,
@@ -398,9 +399,8 @@ export default async function GroundworkPage({
   // When no channel line exists (a copy-stamp, a pre-register stamp), the
   // subtext carries the move's own specifics — the headline, the thread
   // subject, the quiet date, the CSM's name — never a bare label
-  // (founder-decreed 2026-08-19: the subtext answers what it means).
-  const clip = (s: string, n: number) =>
-    s.length > n ? `${s.slice(0, n - 1).trimEnd()}…` : s;
+  // (founder-decreed 2026-08-19: the subtext answers what it means). The
+  // words per rule live in src/lib/groundwork/stamp.ts; this builds the facts.
   const threadSubjectOf = (id: string): string => {
     const l = sendbook.lines.find(
       (x) => x.accountId === id && x.from === "record" && x.clause,
@@ -417,57 +417,26 @@ export default async function GroundworkPage({
       if (w.accountIds.includes(id) && (!best || w.at > best.at)) best = w;
     return best?.headline ?? "";
   };
+  const seatDayOf = (id: string): string => {
+    const n = notesMap.get(`${SEAT_NS}${id}`)?.[0];
+    return n ? (parseSeatBody(n.body)?.day ?? "") : "";
+  };
   const ruleSub = (id: string, ruleId: string): string => {
-    switch (ruleId) {
-      case "wire-trigger": {
-        const h = wireHeadFor(id);
-        return h
-          ? `SENT THE NEWS NOTE · ${clip(h.toUpperCase(), 46)}`
-          : "SENT A NOTE ABOUT THEIR NEWS";
-      }
-      case "intent-warm": {
-        const n = intentById.get(id)?.activities;
-        return n
-          ? `SENT THE READING-US NOTE · ${n} SALES NAV READS`
-          : "SENT THE READING-US NOTE · SALES NAV SHOWS THEM READING US";
-      }
-      case "riding-lane": {
-        const d = ridingLaneDate(accountNotes.get(id), now);
-        return d
-          ? `ASKED INTO THE COLLEAGUE'S OPEN DEAL · CLOSES ${monthDay(d).toUpperCase()}`
-          : "ASKED INTO THE COLLEAGUE'S OPEN DEAL";
-      }
-      case "silence-bump": {
-        const s = threadSubjectOf(id);
-        const d = lastSendDateOf(id);
-        return `NUDGED ${s ? `THE '${clip(s.toUpperCase(), 34)}' THREAD` : "THE OPEN THREAD"}${d ? ` · NO REPLY SINCE ${d.toUpperCase()}` : ""}`;
-      }
-      case "cold-revival": {
-        const s = threadSubjectOf(id);
-        const d = lastSendDateOf(id);
-        return `REVIVED ${s ? `THE '${clip(s.toUpperCase(), 34)}' THREAD` : "THE COLD THREAD"}${d ? ` · QUIET SINCE ${d.toUpperCase()}` : ""}`;
-      }
-      case "roundup-slot": {
-        const csm = getPeo(id)?.csm ?? "";
-        return csm && csm !== "Unassigned"
-          ? `BRIEFED ${csm.toUpperCase()} ON THIS ACCOUNT`
-          : "BRIEFED THE PARTNER MANAGER ON THIS ACCOUNT";
-      }
-      case "stale-above-gate": {
-        const r = researchByAccount.get(id);
-        if (r) {
-          const age = Math.floor((now.getTime() - Date.parse(r.at)) / 86_400_000);
-          return `REFRESHED THE ACCOUNT RESEARCH · WAS ${age} DAYS OLD`;
-        }
-        return "RAN THE BOOK-WIDE RESEARCH PASS";
-      }
-      case "stakeholder-gap":
-        return "DUG UP A SECOND CONTACT NAME";
-      case "never-touched-incumbent":
-        return "SENT FIRST COLD EMAIL · STEP 1";
-      default:
-        return "";
-    }
+    const r = researchByAccount.get(id);
+    const lane = ridingLaneDate(accountNotes.get(id), now);
+    return stampSubtext(ruleId, {
+      wireHeadline: wireHeadFor(id),
+      intentActivities: intentById.get(id)?.activities ?? null,
+      ridingLaneCloses: lane ? monthDay(lane) : "",
+      threadSubject: threadSubjectOf(id),
+      lastSendDate: lastSendDateOf(id),
+      csm: getPeo(id)?.csm ?? "",
+      researchAgeDays: r
+        ? Math.floor((now.getTime() - Date.parse(r.at)) / 86_400_000)
+        : null,
+      seatDay: seatDayOf(id),
+      gemTerm: outreachGem(secondById.get(id))?.term ?? "",
+    });
   };
 
   const doneToday: {

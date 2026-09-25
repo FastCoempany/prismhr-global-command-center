@@ -117,7 +117,6 @@ export type RoomRow = {
    *  whole thing. Every compression is a door (the click-depth law). */
   moveFull?: string;
   thin: boolean;
-  court: { line: string; tone: "you" | "them" | "quiet" | "none" };
   outstanding: {
     item: string;
     node: string;

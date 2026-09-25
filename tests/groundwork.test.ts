@@ -232,13 +232,19 @@ describe("groundwork queue", () => {
     const a = acct({ id: "001F000000w38ItIAI", name: "Big Demand", csm: "Unassigned" });
     const b = acct({ id: "001F000000w38OIIAY", name: "Also Demand", csm: "Unassigned" });
     // A quarter past the book sweep — research holds for 90 days before the
-    // queue puts pressure out front.
+    // queue puts pressure out front. Both accounts carry a plain note so
+    // neither fires a move of its own: a vehicle never collides (D22), so the
+    // stamp only ever rides a free account.
+    const plain = [{ body: "note", source: "room", createdAt: "2026-10-14T12:00:00Z" }];
     const { all } = buildQueue({
       ...base,
       now: new Date("2026-10-15T15:00:00Z"),
       accounts: [a, b],
       intelById: new Map(),
-      notesById: new Map(),
+      notesById: new Map([
+        [a.id, plain],
+        [b.id, plain],
+      ]),
     });
     const stale = all.filter((q) => q.ruleId === "stale-above-gate");
     assert.equal(stale.length, 1);
@@ -635,8 +641,14 @@ describe("groundwork adversarial regressions", () => {
 
   test("a live partner thread suppresses the roundup slot; an archived stale one opens it", () => {
     const p = acct({ id: "P0000000000000002", name: "Rounder", csm: "Kim Bartolotti" });
+    // A plain note keeps the account free of a move of its own — the slot
+    // rides a vehicle, and a vehicle never collides (D22).
+    const notesById = new Map([
+      [p.id, [{ body: "note", source: "room", createdAt: "2026-07-29T12:00:00Z" }]],
+    ]);
     const live = buildQueue({
       ...base,
+      notesById,
       accounts: [p],
       touches: [
         {
@@ -653,6 +665,7 @@ describe("groundwork adversarial regressions", () => {
     );
     const due = buildQueue({
       ...base,
+      notesById,
       accounts: [p],
       touches: [
         {

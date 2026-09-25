@@ -602,7 +602,6 @@ export default async function RoomPage() {
       move: read.move,
       moveFull: read.moveFull ?? "",
       thin: read.thin,
-      court: read.court,
       outstanding: step
         ? {
             item: step.item,
