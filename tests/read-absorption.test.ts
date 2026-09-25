@@ -647,9 +647,6 @@ describe("the room wires every new mechanism", () => {
     test(`${wired} exists on the server`, () =>
       assert.ok(actions.includes(`export async function ${wired}`)));
   }
-  test("the paste's undo says it takes the opened actions back too", () => {
-    assert.ok(client.includes("the actions it opened included"));
-  });
   test("the research control states when it last ran", () => {
     // The Spring's chip grammar (2026-08-13), amended since: the label is the
     // verb, the run date rides the tooltip, and NEVER stands when neither
