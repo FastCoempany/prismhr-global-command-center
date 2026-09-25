@@ -19,7 +19,7 @@ The three audits said one thing from three angles: 111 of 187 decrees in scope a
 | Ledger | At pass 3 (main 3726363) | Now |
 |---|---|---|
 | Honor-system decrees | 111 of 187 | 111 of 187 |
-| Ungoverned behaviors | 34 open | 2 open · 32 ruled |
+| Ungoverned behaviors | 34 open | 0 open · 34 ruled |
 | Conflicting pairs | 20 open | 0 open · 20 ruled |
 
 ## How a row moves
@@ -150,7 +150,7 @@ Status is one of: honor · text (a text pin exists, not behavior) · chain (pinn
 | A12.11 | The writing canon and plain-speech law on the ingest surfaces | The seven devices: antithesis, paradox, maxim, definitional flip, consequence closer, escalating triad, chiasm … | mostly | honor | — | — |
 | A12.12 | The writing canon and plain-speech law on the ingest surfaces | "invented slang ..., constructed non-conversational phrasing ..., and performative reassurance flourishes" (10 … | no | honor | — | — |
 
-## 2. Ungoverned behaviors (34: 2 open · 32 ruled)
+## 2. Ungoverned behaviors (34: 0 open · 34 ruled)
 
 Status is one of: open · ruled (the founder decided; the ruling is quoted) · encoded (CLAUDE.md carries it; line cited) · enforced (a chain test or construction pins the new decree).
 
@@ -188,8 +188,8 @@ Status is one of: open · ruled (the founder decided; the ruling is quoted) · e
 | D26 | The Klaxon opens the send window at 7:00 (instrument.tsx:18-24) while the band table says 9:00 to 11:00 (day.ts:168-178) and the chain pins 10a/12:30p … | Groundwork face (254-257) | One clock for the band. | ruled | GOVERN: one band table; sends open at 9:00 Chicago | — | batch 7 · 2026-09-25 |
 | D27 | Sheet stamps for seated, second-record-gem and engaged-never-introduced carry no subtext (groundwork/page.tsx:420-471 default "") | "The wing never stamps mutely" (331-332) | The label each of those three rules speaks. | ruled | GOVERN: no rule stamps with an empty label | — | batch 7 · 2026-09-25 |
 | D28 | Hand-typed dated actions never read PROMISED (sheet-view.ts:176), only paste-provenance rows | Closer rule (389-390) | Whether a date the operator heard and typed is a promise. | ruled | GOVERN: PROMISED needs a hearer | — | batch 7 · 2026-09-25 |
-| D29 | The Chute renders nothing without canWrite (chute.tsx:627); read-only sessions have no intake and no receipt ledger | (276) | What a read-only session sees at the top of the HomeRoom. | open | — | — | — |
-| D30 | scratch rows and every other namespaced row consume the intranet mirror's 400-row budget before being skipped (runners.ts:146-151) [inferred] | Scratchpaper (297-298); Chute (283) | Whether namespaced rows are excluded in the query rather than after it. | open | — | — | — |
+| D29 | The Chute renders nothing without canWrite (chute.tsx:627); read-only sessions have no intake and no receipt ledger | (276) | What a read-only session sees at the top of the HomeRoom. | ruled | GOVERN: a read-only session sees the bar and receipts; the bar says why | — | batch 8 · 2026-09-25 |
+| D30 | scratch rows and every other namespaced row consume the intranet mirror's 400-row budget before being skipped (runners.ts:146-151) [inferred] | Scratchpaper (297-298); Chute (283) | Whether namespaced rows are excluded in the query rather than after it. | ruled | GOVERN: the mirror excludes namespaced rows in the query | — | batch 8 · 2026-09-25 |
 
 ## 3. Conflicting pairs (20: 0 open · 20 ruled)
 
@@ -228,3 +228,4 @@ Status is one of: open · ruled (which side, quoted) · encoded (CLAUDE.md amend
 - 2026-09-25 · ruling session, batch 5 (pass 3 D): D5, D6, D7, D9, D11, D12, D13, D14 ruled. 111 · 18 open + 16 ruled · 0 open + 20 ruled.
 - 2026-09-25 · ruling session, batch 6 (pass 3 D): D10, D15, D16, D17, D18, D19, D20, D21 ruled. 111 · 10 open + 24 ruled · 0 open + 20 ruled.
 - 2026-09-25 · ruling session, batch 7 (pass 3 D): D8, D22, D23, D24, D25, D26, D27, D28 ruled. 111 · 2 open + 32 ruled · 0 open + 20 ruled.
+- 2026-09-25 · ruling session, batch 8 (pass 3 D): D29, D30 ruled. Every ungoverned behavior and every conflicting pair is ruled. 111 · 0 open + 34 ruled · 0 open + 20 ruled.

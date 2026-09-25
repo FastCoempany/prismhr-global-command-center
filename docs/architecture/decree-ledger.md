@@ -445,7 +445,9 @@ Pass 1's four, confirmed on this tree: the wayfinder archives /today (app-wayfin
 | 28 | Hand-typed dated actions never read PROMISED (sheet-view.ts:176), only paste-provenance rows | Closer rule (389-390) | Whether a date the operator heard and typed is a promise. |
 | | RULING (2026-09-25): GOVERN — PROMISED needs a hearer: a paste-provenance date has one by construction, and a typed date reads PROMISED only when the line names the person it was promised to; otherwise it is a wall. | | |
 | 29 | The Chute renders nothing without canWrite (chute.tsx:627); read-only sessions have no intake and no receipt ledger | (276) | What a read-only session sees at the top of the HomeRoom. |
+| | RULING (2026-09-25): GOVERN — A read-only session sees the Chute bar and its receipts and cannot drop; the bar says "Read-only session" where the ⇪ button was, so the room's top never changes shape by session. | | |
 | 30 | scratch rows and every other namespaced row consume the intranet mirror's 400-row budget before being skipped (runners.ts:146-151) [inferred] | Scratchpaper (297-298); Chute (283) | Whether namespaced rows are excluded in the query rather than after it. |
+| | RULING (2026-09-25): GOVERN — The intranet mirror's query excludes every namespaced row by construction (scratch, gems, seat, research, wire, sendbook, actdraft and the rest), so its budget is spent on record rows only. | | |
 
 ## E. The test list
 
