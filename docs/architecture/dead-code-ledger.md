@@ -8,6 +8,7 @@ related_docs:
   - docs/architecture/derived-fact-ledger.md
   - docs/architecture/decree-ledger.md
   - docs/architecture/canon-scoreboard.md
+  - docs/architecture/dead-code-appendix.md
 ---
 
 # Dead Code Ledger
@@ -110,7 +111,7 @@ Eighty symbols are exported and used only inside their own file. They are not de
 
 ### A6. Unused type exports
 
-148 exported types and interfaces that no other file imports (knip, both runs), about 949 lines of definitions, in 68 files. Local use inside their own file was not checked, so they are superfluous exports, not certainly dead definitions. The heaviest files: src/lib/intranet/extract.ts (Statement, Filing, LiberalRead, ReadInput), src/lib/pipeline/report.ts (Provenance, Field, OpenItem, TheirTurn, TurnNote), src/lib/today/build.ts (Commitment, StepHold, PartnerKickoff, Narrative, StateOfPlay), src/lib/groundwork/readout.ts (five), src/lib/paste-files.ts (five), src/lib/room/touch.ts (TouchSource, NoteForTouch, TouchRead), src/lib/sendbook/read.ts (five). Full list in the knip output kept with this pass's working files.
+148 exported types and interfaces that no other file imports (knip, both runs), about 949 lines of definitions, in 68 files. Local use inside their own file was not checked, so they are superfluous exports, not certainly dead definitions. The heaviest files: src/lib/intranet/extract.ts (Statement, Filing, LiberalRead, ReadInput), src/lib/pipeline/report.ts (Provenance, Field, OpenItem, TheirTurn, TurnNote), src/lib/today/build.ts (Commitment, StepHold, PartnerKickoff, Narrative, StateOfPlay), src/lib/groundwork/readout.ts (five), src/lib/paste-files.ts (five), src/lib/room/touch.ts (TouchSource, NoteForTouch, TouchRead), src/lib/sendbook/read.ts (five). The full list by file and line is in docs/architecture/dead-code-appendix.md, with the full dead-class lists behind E.
 
 ### A7. Dependencies knip flags
 
