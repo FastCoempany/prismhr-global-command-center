@@ -1524,7 +1524,7 @@ export async function roomNoteToAction(
       }
       if (!owned)
         return { ok: false, reason: "That entry belongs to a different account." };
-      await patchRoomTodoTags(todoId, t.body, { kind: "action", doneAt: "", delay: "" });
+      await patchRoomTodoTags(todoId, t.body, { kind: "action", doneAt: "" });
       await prisma.todo.update({
         where: { id: todoId },
         data: { done: false, accountId: acct.id },
@@ -1630,7 +1630,6 @@ export async function roomTodoSet(
       // already-routed items pass through untouched).
       await patchRoomTodoTags(id, t.body, {
         doneAt: String(Date.now()),
-        delay: "",
       });
       await prisma.todo.update({ where: { id }, data: { done: true } });
       await prisma.accountDisposition

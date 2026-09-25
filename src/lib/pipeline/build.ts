@@ -393,7 +393,7 @@ function record(
     : [];
 
   const events = ns
-    .filter((n) => /transcript|call-ai|meeting/.test(n.source))
+    .filter((n) => /transcript|call-ai/.test(n.source))
     .map((n) => ({
       at: dayOf(effectiveAt(n.createdAt, n.body)),
       kind: /transcript|call-ai/.test(n.source) ? "Call" : "Meeting",

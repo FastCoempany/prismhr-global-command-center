@@ -26,7 +26,7 @@ export const dynamic = "force-dynamic";
 type Entry = {
   at: string; // ISO
   body: string;
-  tag: "outreach" | "reply" | "note" | "stash" | "log";
+  tag: "outreach" | "reply" | "note" | "log";
   noteId?: string; // present when the entry is a deletable PartnerNote
 };
 
@@ -73,7 +73,7 @@ function timelineFor(
     out.push({
       at: n.createdAt,
       body: n.body,
-      tag: n.source === "stash" ? "stash" : "note",
+      tag: "note",
       noteId: n.id,
     });
   }
@@ -84,7 +84,6 @@ const TAG_LABEL: Record<Entry["tag"], string> = {
   outreach: "outreach",
   reply: "reply",
   note: "note",
-  stash: "from Stash",
   log: "logged",
 };
 

@@ -183,7 +183,7 @@ test("note tags marker", async (t) => {
   });
 });
 
-test("ledger lifecycle tags — kind / delay / doneAt / country", async (t) => {
+test("ledger lifecycle tags — kind / doneAt / country", async (t) => {
   await t.test("k:a round-trips as an action", () => {
     const body = withTags("build the workbook", { ...NO_TAGS, kind: "action" });
     const { text, tags } = splitTags(body);
@@ -191,12 +191,6 @@ test("ledger lifecycle tags — kind / delay / doneAt / country", async (t) => {
     assert.equal(tags.kind, "action");
   });
 
-  await t.test("delay reason survives commas, brackets and unicode", () => {
-    const reason = "waiting on Bryce, per [legal] — étape 2";
-    const body = withTags("chase the contract", { ...NO_TAGS, delay: reason });
-    const { tags } = splitTags(body);
-    assert.equal(tags.delay, reason);
-  });
 
   await t.test("doneAt keeps epoch millis; junk is ignored", () => {
     const body = withTags("done thing", { ...NO_TAGS, doneAt: "1753029600000" });
@@ -217,7 +211,6 @@ test("ledger lifecycle tags — kind / delay / doneAt / country", async (t) => {
       urgency: "high",
       when: "",
       kind: "action",
-      delay: "blocked",
       doneAt: "1753029600000",
       country: "bg",
     });
@@ -230,7 +223,6 @@ test("ledger lifecycle tags — kind / delay / doneAt / country", async (t) => {
       urgency: "high",
       when: "",
       kind: "action",
-      delay: "blocked",
       doneAt: "1753029600000",
       country: "bg",
     });

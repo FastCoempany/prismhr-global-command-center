@@ -59,9 +59,6 @@ export type NoteTags = {
   when: "" | "today" | "later";
   // A note that IS an action — it lives on the Today ledger, not the sheet.
   kind: "" | "action";
-  // Why the action is delayed — free text, URI-encoded in the marker so commas
-  // and brackets can't break the format. "" = not delayed.
-  delay: string;
   // When the action was marked done — epoch millis as a string ("" = not done
   // via the ledger; the boolean done column still governs visibility).
   doneAt: string;
@@ -75,7 +72,6 @@ export const NO_TAGS: NoteTags = {
   urgency: "",
   when: "",
   kind: "",
-  delay: "",
   doneAt: "",
   country: "",
 };
@@ -96,13 +92,6 @@ export function splitTags(text: string): { text: string; tags: NoteTags } {
     if (k === "u" && (v === "low" || v === "med" || v === "high")) tags.urgency = v;
     if (k === "w" && (v === "today" || v === "later")) tags.when = v;
     if (k === "k" && v === "a") tags.kind = "action";
-    if (k === "dl" && v) {
-      try {
-        tags.delay = decodeURIComponent(v);
-      } catch {
-        // malformed encoding — drop rather than crash
-      }
-    }
     if (k === "dn" && /^\d{10,16}$/.test(v)) tags.doneAt = v;
     if (k === "c" && /^[a-z]{2}$/i.test(v)) tags.country = v.toLowerCase();
   }
@@ -115,7 +104,6 @@ export function withTags(text: string, tags: NoteTags): string {
     tags.urgency ? `u:${tags.urgency}` : "",
     tags.when ? `w:${tags.when}` : "",
     tags.kind === "action" ? "k:a" : "",
-    tags.delay ? `dl:${encodeURIComponent(tags.delay)}` : "",
     tags.doneAt ? `dn:${tags.doneAt}` : "",
     tags.country ? `c:${tags.country.toLowerCase()}` : "",
   ].filter(Boolean);

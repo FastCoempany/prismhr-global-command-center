@@ -965,7 +965,7 @@ model FieldNote {
 
 // Completion marks for the day/week — so the owner can see when every little
 // task is done. The key encodes the task AND its period (e.g.
-// "morning:2026-07-06:acct:<id>" or "kickoff:2026-W28:Anika Steenstra"), so it
+// "morning:2026-07-06:acct:<id>"), so it
 // resets automatically on a new day/week. Presence = done.
 model TaskDone {
   id     String   @id @default(cuid())
@@ -1025,7 +1025,7 @@ model LookIntoStatus {
 // partner contacted (or an outreach sent) creates one; Today then surfaces it
 // when the follow-up comes due and keeps nudging every `intervalDays` until you
 // mark a reply. `subjectKey` is stable and deterministic (e.g.
-// "kickoff:2026-W28:Anika Steenstra" or "outreach:<accountId>") so re-contacting
+// "outreach:<accountId>") so re-contacting
 // the same subject advances the same thread instead of duplicating it. label /
 // detail snapshot the display text so the follow-up list is self-contained.
 model Touch {

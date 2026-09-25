@@ -176,7 +176,7 @@ export async function doneSheetAction(formData: FormData) {
   const id = str(formData, "id", 40);
   if (!(await requireWrite()) || !id) done();
   await safeWrite(async () => {
-    await patchTodoTags(id, { doneAt: String(Date.now()), delay: "" });
+    await patchTodoTags(id, { doneAt: String(Date.now()) });
     await getPrisma().todo.update({ where: { id }, data: { done: true } });
     await getPrisma()
       .accountDisposition.deleteMany({
@@ -192,7 +192,7 @@ export async function sheetActionBack(formData: FormData) {
   const id = str(formData, "id", 40);
   if (!(await requireWrite()) || !id) done();
   await safeWrite(async () => {
-    await patchTodoTags(id, { kind: "", delay: "", doneAt: "" });
+    await patchTodoTags(id, { kind: "", doneAt: "" });
     await getPrisma().todo.update({ where: { id }, data: { done: false } });
   });
   done();
@@ -1069,7 +1069,7 @@ export async function makeLedgerAction(src: LedgerSrc): Promise<{ ok: boolean }>
       if (!t) return { ok: false };
       const { text, refs, label } = splitMarker(t.body);
       const { text: plain, tags } = splitTags(text);
-      const tagged = withTags(plain, { ...tags, kind: "action", doneAt: "", delay: "" });
+      const tagged = withTags(plain, { ...tags, kind: "action", doneAt: "" });
       await prisma.todo.update({
         where: { id: src.id },
         data: { body: refs ? withMarker(tagged, refs, label) : tagged, done: false },

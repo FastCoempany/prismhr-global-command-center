@@ -3,7 +3,7 @@
 // touch clock came to mistake the Staff Leasing 1:00 PM meeting for a letter
 // awaiting Tom's reply, 2026-08-18). The touch clock, Groundwork, the ask
 // room, the Sendbook and the room's page read it; the pipeline report still
-// spells its own (src/lib/pipeline/build.ts, the /transcript|call-ai|meeting/
+// spells its own (src/lib/pipeline/build.ts, the /transcript|call-ai/
 // family), the one copy left to fold in. Three signals, any one enough:
 // the source is a call/transcript reader; the head is a logged activity
 // (✔ …) naming a meeting, call, demo, or visit — a record of a thing that
