@@ -57,10 +57,6 @@ export const approachLabel = (a: Approach) =>
 export const approachBlurb = (a: Approach) =>
   APPROACHES.find((x) => x.key === a)?.blurb ?? "";
 
-// True when the CSM has not been briefed yet. Nothing reads it: the Approach
-// is a fact, never a gate (C19), so no surface holds a move on it.
-export const isGated = (a: Approach) => a === "NEEDS_CSM";
-
 // The board's word outranks the hand-edited seed (founder-decreed 2026-08-21):
 // putting an account on the dashboard IS clearing it with the CSM and touching
 // it. The stored state only ever ADVANCES the derived one — a card never drags
@@ -87,19 +83,11 @@ export const INTENTS: { key: Intent; label: string }[] = [
   { key: "HIGH", label: "High" },
 ];
 
-export const intentLabel = (i: Intent) => INTENTS.find((x) => x.key === i)?.label ?? i;
-
 const INTENT_BOOST: Record<Intent, number> = { HIGH: 15, MEDIUM: 7, LOW: -8, UNKNOWN: 0 };
 
 // Blend structural fit (0–100) with the intent signal into a working priority.
 export function priorityScore(fit: number, intent: Intent): number {
   return Math.max(0, Math.min(100, Math.round(fit + INTENT_BOOST[intent])));
-}
-
-export function priorityTier(priority: number): "high" | "medium" | "low" {
-  if (priority >= 70) return "high";
-  if (priority >= 45) return "medium";
-  return "low";
 }
 
 // --- Suggested next action (feature 3) ---------------------------------------

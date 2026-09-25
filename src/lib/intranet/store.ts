@@ -25,10 +25,6 @@ import {
 
 const EMPTY_TOPICS: Topic[] = [];
 
-export function storeAvailable(): boolean {
-  return hasDatabaseEnv();
-}
-
 function iso(d: Date | string | null | undefined): string {
   if (!d) return "";
   return typeof d === "string" ? d : d.toISOString();
@@ -165,20 +161,6 @@ export async function claimsByIds(ids: string[]): Promise<Claim[]> {
   }
 }
 
-export async function claimsInTopic(topicId: string, take = 400): Promise<Claim[]> {
-  if (!hasDatabaseEnv() || !topicId) return [];
-  try {
-    const rows = await getPrisma().intranetClaim.findMany({
-      where: { topicIds: { has: topicId } },
-      orderBy: { saidAt: "desc" },
-      take,
-    });
-    return rows.map(toClaim);
-  } catch {
-    return [];
-  }
-}
-
 // ── documents ───────────────────────────────────────────────────────────────
 export async function docsByIds(ids: string[]): Promise<Map<string, DocRef>> {
   const out = new Map<string, DocRef>();
@@ -213,22 +195,6 @@ export async function docsByIds(ids: string[]): Promise<Map<string, DocRef>> {
     // tables not migrated yet — an empty map renders an empty room
   }
   return out;
-}
-
-/** The whole document, for Level-3 drilldown. */
-export async function docBody(
-  id: string,
-): Promise<{ body: string; links: unknown; speakers: string[] } | null> {
-  if (!hasDatabaseEnv() || !id) return null;
-  try {
-    const d = await getPrisma().intranetDoc.findUnique({
-      where: { id },
-      select: { body: true, links: true, speakers: true },
-    });
-    return d ? { body: d.body, links: d.links, speakers: d.speakers } : null;
-  } catch {
-    return null;
-  }
 }
 
 // ── the corpus's own vital signs ────────────────────────────────────────────

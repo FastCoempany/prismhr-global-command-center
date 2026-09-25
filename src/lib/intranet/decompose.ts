@@ -142,14 +142,3 @@ export async function runSplit(topic: Topic, claims: Claim[]): Promise<SplitProp
     return KEEP;
   }
 }
-
-/** Undoing a split: children's claims return to the parent and the children are
- *  marked merged-into-parent, never deleted (C6). Available from the rail,
- *  because the model will occasionally be wrong and the operator should not have
- *  to live with it. */
-export function unsplitPlan(
-  parent: Topic,
-  children: Topic[],
-): { childIds: string[]; mergedInto: string } {
-  return { childIds: children.map((c) => c.id), mergedInto: parent.id };
-}

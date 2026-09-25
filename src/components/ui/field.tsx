@@ -30,13 +30,6 @@ export function Input({
   return <input className={cn("ds-input", className)} {...props} />;
 }
 
-export function Textarea({
-  className,
-  ...props
-}: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  return <textarea className={cn("ds-input ds-textarea", className)} {...props} />;
-}
-
 export function Select({
   className,
   ...props

@@ -128,15 +128,6 @@ export function readyToPromote(pool: Pending[]): Pending[] {
   return pool.filter((p) => p.docIds.length >= TOPIC_PROMOTE_AT);
 }
 
-/** Pending labels quiet for 90 days are archived — never deleted (C6), so the
- *  tally survives if the subject comes back. */
-export function stalePending(pool: Pending[], nowIso: string, days = 90): Pending[] {
-  const cut = Date.parse(nowIso) - days * 86_400_000;
-  return pool.filter(
-    (p) => p.docIds.length < TOPIC_PROMOTE_AT && Date.parse(p.lastSeen) < cut,
-  );
-}
-
 // ── resolution ──────────────────────────────────────────────────────────────
 /** Follow merge redirects to the surviving topic. Every id ever issued resolves
  *  forever (I1), so an old link, an old citation and an old answer all still

@@ -178,9 +178,6 @@ export const CANON_FACTS: string[] = [
   "Market: EOR projected to grow by more than half between 2021 and 2028; 36% of employers report talent shortages",
 ];
 
-export const CANON_SOURCE =
-  "Release `prismmktgcollateral` (7/14/2026): PrismHR Global EOR flyer, Contractor Solutions flyer, Talent flyer, and the “Expand Without Borders” deck (54 slides) — plus the Global Payroll flyer (PHRFLY-GLOBALPYRLL), which dropped later on 7/14 and was ingested directly.";
-
 // A compact text block for grounding Claude prompts in the released canon.
 export function canonForPrompt(): string {
   const products = PRODUCT_CANON.map((p) => {

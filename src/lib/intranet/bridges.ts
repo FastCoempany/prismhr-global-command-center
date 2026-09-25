@@ -73,13 +73,6 @@ function words(s: string): string[] {
     .filter((w) => w.length > 3 && !STOP.has(w));
 }
 
-/** A question's identity, independent of how it was phrased. Sorted significant
- *  words — so "how long until we're live?" and "when are we live by?" land in
- *  the same place only when they genuinely share substance. */
-export function askKey(text: string): string {
-  return [...new Set(words(text))].sort().join(" ");
-}
-
 /** Two asks are the same ask when they share most of their substance. Set at
  *  half deliberately: a question about payroll timing and a question about
  *  onboarding timing must NOT collapse into one battlecard. */

@@ -294,11 +294,6 @@ export function syncVerdict(
   return mirroredChecksum === freshChecksum ? "skip" : "update";
 }
 
-/** C6 — what happens when a home row disappears. Never a delete. */
-export function goneStamp(nowIso: string): { originGone: string } {
-  return { originGone: nowIso };
-}
-
 /** The line every citation to a vanished row carries, so the operator is never
  *  misled about what still exists upstream. */
 export function goneLine(originGoneIso: string): string {

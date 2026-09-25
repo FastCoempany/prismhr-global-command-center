@@ -74,17 +74,3 @@ export function accountTerms(): string[] {
 // if the book ever outgrows this, the sweep logs the truncation honestly
 // rather than silently watching a subset.
 export const ACCOUNT_TERM_CAP = 200;
-
-export function registrySummary(): {
-  category: number;
-  competitors: number;
-  family: number;
-  accounts: number;
-} {
-  return {
-    category: CATEGORY_TERMS.length,
-    competitors: COMPETITOR_TERMS.length,
-    family: FAMILY_TERMS.length,
-    accounts: accountTerms().length,
-  };
-}

@@ -163,9 +163,3 @@ export function disputeCount(claims: Claim[]): number {
   }
   return n;
 }
-
-/** The dismissal key for a verdict the operator waved off. Recorded, never
- *  re-proposed — the founder knows things the corpus doesn't. */
-export function verdictDismissKey(aId: string, bId: string): string {
-  return `intranet-verdict:${[aId, bId].sort().join(":")}`;
-}

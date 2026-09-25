@@ -25,13 +25,6 @@ export const OUTCOME_LABEL: Record<OutcomeStatus, string> = {
   lost: "Closed Lost",
 };
 
-// Terminal SF picklist values, so a closed card still answers "what stage is
-// this in Salesforce?" honestly.
-export const OUTCOME_SF_STAGE: Record<OutcomeStatus, string> = {
-  won: "Closed Won",
-  lost: "Closed Lost",
-};
-
 type RawRec = Record<string, unknown>;
 
 export function readOutcome(notes: unknown): DealOutcome | null {

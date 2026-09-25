@@ -75,21 +75,6 @@ export async function saveActDraft(args: {
   }
 }
 
-export async function discardActDraft(args: {
-  accountId: string;
-}): Promise<{ ok: boolean }> {
-  const accountId = clip(args.accountId, 40);
-  if (!accountId || !(await requireWrite())) return { ok: false };
-  try {
-    await getPrisma().accountNote.deleteMany({
-      where: { accountId: `${ACT_DRAFT_NS}${accountId}` },
-    });
-    return { ok: true };
-  } catch {
-    return { ok: false };
-  }
-}
-
 // ── the send (a real outbound on the record) ────────────────────────────────
 
 export async function fileActSend(args: {

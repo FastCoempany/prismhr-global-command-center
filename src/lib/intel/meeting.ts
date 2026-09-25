@@ -9,10 +9,6 @@
 // (✔ …) naming a meeting, call, demo, or visit — a record of a thing that
 // HAPPENED, never a send; or the head reads as a meeting in words.
 
-// The call sources as a set. Unread: isMeetingNote tests the source inline
-// below, because "transcript" alone proves nothing without the body.
-export const MEETING_SOURCE = new Set(["call", "call-ai", "transcript"]);
-
 export const MEETING_RE =
   /\b(met with|meeting with|call with|demo(?:'d)? (?:with|for|to)|walked (?:them|him|her) through)\b/i;
 

@@ -16,7 +16,7 @@
 import { PRODUCT_BANK } from "@/lib/intel/discovery-product";
 import { DISCOVERY } from "@/lib/intel/discovery";
 import { SCENARIOS } from "@/lib/intel/scenarios";
-import { PROSPECT_TOPIC_LABEL, type AskShape } from "./doctrine";
+import { type AskShape } from "./doctrine";
 import { clean, type MirrorDoc } from "./mirror";
 
 /** Every battlecard question as a document. The facets ride along as entities,
@@ -112,61 +112,6 @@ export function playbookKnowledgeDoc(row: {
 }
 
 // ── prospect questions (C7) ─────────────────────────────────────────────────
-
-/** The seeded root. Every other topic is discovered; this one is allowed to
- *  exist from the start, because the founder named it as the window to winning
- *  deals and because the first demo transcript needs somewhere to land. */
-export const PROSPECT_ROOT = {
-  label: PROSPECT_TOPIC_LABEL,
-  summary:
-    "What buyers actually ask in demos — the shape of the question, and the moment that provoked it.",
-};
-
-/** The children the root decomposes into. Seeded rather than discovered for the
- *  same reason: the shapes are known in advance, and an empty rail teaches
- *  nothing. */
-export const PROSPECT_SHAPE_TOPICS: {
-  shape: AskShape;
-  label: string;
-  summary: string;
-}[] = [
-  {
-    shape: "definitional",
-    label: "They don't know what it is",
-    summary:
-      "Questions where the buyer is still working out what a thing means — usually a sign the framing before it failed.",
-  },
-  {
-    shape: "commercial",
-    label: "Price, terms and structure",
-    summary: "What it costs, how it is billed, and what shape the agreement takes.",
-  },
-  {
-    shape: "risk",
-    label: "Exposure and compliance",
-    summary: "Where the buyer thinks they might get hurt.",
-  },
-  {
-    shape: "technical",
-    label: "Platform, data and integration",
-    summary: "How it connects to what they already run.",
-  },
-  {
-    shape: "process",
-    label: "How it works day to day",
-    summary: "What actually happens on a Tuesday once this is live.",
-  },
-  {
-    shape: "timeline",
-    label: "How long, and when",
-    summary: "Sequencing, go-live, and what has to happen first.",
-  },
-];
-
-/** Whether a transcript is a demo — the corpus C7 cares most about. */
-export function isDemoOrigin(origin: string): boolean {
-  return origin === "demo";
-}
 
 /** The Playbook's own namespaces, so the generic mirror can defer them here
  *  rather than double-filing every lesson (Phase 5.3). */

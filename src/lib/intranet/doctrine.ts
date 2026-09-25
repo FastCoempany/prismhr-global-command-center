@@ -30,8 +30,6 @@ export const MODEL_PLAN = OPUS;
 export const MODEL_SYNTH = OPUS;
 export const MODEL_SYNTH_HARD = FABLE;
 export const MODEL_TOPIC = OPUS;
-export const MODEL_SEGMENT = OPUS;
-
 // The rest of the app's callers, one slot each.
 /** The paste read — aiCleanTimeline (src/lib/intel/ai-clean.ts). */
 export const MODEL_READ = OPUS;

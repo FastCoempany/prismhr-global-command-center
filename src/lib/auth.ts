@@ -91,10 +91,6 @@ function isValidAccessToken(token: string | undefined) {
   }
 }
 
-export function hasAccessCookieValue(value: string | undefined) {
-  return isValidAccessToken(value);
-}
-
 export function isValidAccessCode(input: string) {
   const expected = accessCode();
   if (!expected) return false;

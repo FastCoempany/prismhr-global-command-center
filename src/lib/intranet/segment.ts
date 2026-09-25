@@ -17,8 +17,6 @@ import { SEGMENT_GAP_MINUTES, SEGMENT_MSG_CAP } from "./doctrine";
 import { checksum, msgKey } from "./normalize";
 import type { Msg, Segment } from "./types";
 
-const DAY_MS = 86_400_000;
-
 function dayKey(iso: string): string {
   const t = Date.parse(iso);
   return Number.isNaN(t) ? "" : new Date(t).toISOString().slice(0, 10);
@@ -112,15 +110,6 @@ export function applyMerges(segments: Segment[], merges: boolean[]): Segment[] {
   return out;
 }
 
-/** The first line of each segment — all the merge call ever sees. It never
- *  reads the bodies, which is what keeps it costing fractions of a cent. */
-export function mergeProbe(segments: Segment[]): string[] {
-  return segments.map((s) => {
-    const first = s.msgs[0];
-    return `${first.speaker}: ${first.body.split("\n")[0].slice(0, 140)}`;
-  });
-}
-
 // ── transcripts ─────────────────────────────────────────────────────────────
 // A meeting or demo transcript is ONE document unless it is very long, because
 // its whole value is the arc of the conversation. When it must split, it splits
@@ -177,12 +166,4 @@ export function fallbackTitle(space: string, seg: Segment): string {
   const first = seg.msgs[0]?.body ?? seg.body;
   const gist = first.replace(/\s+/g, " ").trim().slice(0, 60);
   return `${space || "Capture"} — ${gist}${gist.length >= 60 ? "…" : ""}`;
-}
-
-/** Days between two instants, floored, never negative. */
-export function daysBetweenIso(a: string, b: string): number {
-  const x = Date.parse(a);
-  const y = Date.parse(b);
-  if (Number.isNaN(x) || Number.isNaN(y)) return 0;
-  return Math.max(0, Math.floor(Math.abs(y - x) / DAY_MS));
 }

@@ -104,8 +104,3 @@ export function liveLookInto(inp: LiveLookIntoInput): LiveLookIntoItem[] {
   const rank = { high: 0, medium: 1 } as const;
   return out.sort((a, b) => rank[a.weight] - rank[b.weight]);
 }
-
-// Nav-badge replacement: any unresolved weight-high live item.
-export function liveHighCount(items: LiveLookIntoItem[], resolved: Set<string>): number {
-  return items.filter((i) => i.weight === "high" && !resolved.has(i.id)).length;
-}

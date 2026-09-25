@@ -48,13 +48,6 @@ export const PRODUCT_LABEL: Record<QProduct, string> = {
   any: "Any line",
 };
 
-export const SOPH_LABEL: Record<QSoph, string> = {
-  naive: "New to this",
-  inhouse: "Runs it themselves",
-  displacement: "On a competitor",
-  any: "Any",
-};
-
 export type Scenario = {
   id: string;
   label: string;
