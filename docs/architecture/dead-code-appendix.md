@@ -225,3 +225,122 @@ All in src/lib/hml.ts; the module's only importers are prisma/seed.ts and tests/
 | src/lib/pipeline/docx.ts:368 | DOC_ACCENT_UNUSED |
 | src/lib/sidekick-v3/index.ts:63 | getV3Screen |
 | src/lib/sidekick-v3/index.ts:70 | v3Modules |
+
+## 6. Route inventory and inbound links
+
+| Route | File | Inbound links (file:line; wayfinder row) | force-dynamic | Classification |
+|---|---|---|---|---|
+| / (Board) | src/app/page.tsx | the brand mark on every page (app-wayfinder.tsx:28) and the archived row (:104); groundwork/page.tsx:681 (a link labelled HomeRoom); today/page.tsx:247, 323, 1496, 1499, 1701; lib/intel/brief.ts:232; revalidatePath at room/actions.ts:70, book/actions.ts:77, 112, today/actions.ts:1250, 1312, dashboard/actions.ts:40, 370; redirect fallbacks dashboard/actions.ts:36, auth/actions.ts:16, login/page.tsx:17; middleware-guarded access-proxy.ts:5 | yes | DORMANT WITHOUT A DECREE |
+| /accounts | src/app/accounts/page.tsx | primary row :47 and about forty sites | yes | LIVE |
+| /activity/evidence | src/app/activity/evidence/route.ts | fetched from theirs-line.tsx:48; evidence-chips.tsx:79, 99, 117, 142; accounts-client.tsx:1469, 1577; second-record-panel.tsx:70, 99, 119; act-lane.tsx:172 | yes | LIVE (CLAUDE.md:436-444) |
+| /archive | src/app/archive/page.tsx | room-client.tsx:2169; lib/ask/links.ts:84; today/day-sheet.tsx:550; revalidated by room/actions.ts:1669, today/actions.ts:229, 1040, 1062, 1077, 1100, archive/actions.ts:24; not in the wayfinder | yes | LIVE, no decree |
+| /asks | src/app/asks/page.tsx | scratchpad.tsx:495 (mounted on every page); not in the wayfinder | yes | LIVE, no decree |
+| /book | src/app/book/page.tsx (redirect → /accounts) | none; book/actions.ts:78, 113 revalidate a redirect | no | DEAD route; its actions are live |
+| /demos | src/app/demos/page.tsx | primary row :82 | yes | LIVE, no auth gate |
+| /dev/popover | src/app/dev/popover/page.tsx | none (header :1-3 "Not linked from anywhere") | yes | DEAD, unguarded |
+| /groundwork | src/app/groundwork/page.tsx | primary :54; sendbook/page.tsx:132; room/actions.ts:69 | yes | LIVE |
+| /intake (Capture) | src/app/intake/page.tsx | archived row :118; room-client.tsx:2673, 2687; groundwork/page.tsx:680; never revalidated | yes | LIVE-linked, archived in nav |
+| /intranet | src/app/intranet/page.tsx | primary :68; chute.tsx:498; groundwork:682; ask/links.ts:93; intranet/bridges.ts:246 | yes | LIVE |
+| /intranet/health, /intranet/pastes | health/page.tsx, pastes/page.tsx | intranet-client.tsx:566, :564 | yes | LIVE, not in the wayfinder |
+| /intranet/pulse, /intranet/read, /intranet/run | route.ts ×3 | intranet-client.tsx:184, :285, :331 | yes | LIVE |
+| /login | src/app/login/page.tsx | access-proxy.ts:15; auth/actions.ts:23, 43; "Sign in" on 17 pages | no | LIVE |
+| /look-into | src/app/look-into/page.tsx (redirect → /today#lookinto) | none | no | DEAD route; its action is used by today/look-into-band.tsx:11 |
+| /partners | src/app/partners/page.tsx | accounts/page.tsx:458; today/page.tsx:939; today/atc-rail.tsx:202; today/partner-notes.tsx:82; not in the wayfinder | yes | LIVE-linked, no decree |
+| /payroll-demo-sidekick | src/app/payroll-demo-sidekick/page.tsx | demos/page.tsx:24 | no | LIVE via Demos, no auth gate |
+| /pipeline | src/app/pipeline/page.tsx | archived row :111 only; book/actions.ts:79, 114 | yes | DORMANT WITHOUT A DECREE |
+| /playbook | src/app/playbook/page.tsx | primary :61; today/ask-next.tsx:66 | yes | LIVE |
+| /playbook/country | route.ts | product-sheet.tsx:542 | yes | LIVE (CLAUDE.md:505-506) |
+| /presence/beat | route.ts | presence/engine.tsx:64, 83, 104 | yes | LIVE |
+| /pricing | src/app/pricing/page.tsx | primary :75; scratch/actions.ts:192, 248 | yes | LIVE |
+| /room | src/app/room/page.tsx | primary :40; pipeline:37, 53; intake:43; capture-shelf:250; 22 returnTo inputs | yes | LIVE |
+| /scratch/feed | route.ts | scratchpad.tsx:61 | yes | LIVE (CLAUDE.md:291-307) |
+| /sendbook | src/app/sendbook/page.tsx | groundwork/page.tsx:1190 only; groundwork/actions.ts:95, 143 | yes | LIVE by decree (CLAUDE.md:311-312) |
+| /sidekick, /sidekick-v3, /sidekick/flows/prismhr-global | page.tsx ×3 | demos/page.tsx:12, :18; sidekick-client.tsx:149, 195, 327 | yes, yes, no | LIVE via Demos; the flow page has no auth gate |
+| /today | src/app/today/page.tsx | archived row :97; partners/page.tsx:160, 194; archive/page.tsx:154; look-into/page.tsx:5; today/actions.ts:54 (done()); dashboard/actions.ts:36; revalidated by room/actions.ts:68 on every filing and 17 other sites | yes | DORMANT WITHOUT A DECREE |
+
+Non-routes referenced as routes: /prospect-field (guarded by access-proxy.ts:5, linked from the dead hml-priority.ts:64, no page), /notes (only notes-client.tsx remembers it), /auth (actions only). src/app/api does not exist.
+
+## 7. Model-call inventory
+
+| Call site | Fires on | Consumer of the result | Duplicate of | Est. per week (basis) |
+|---|---|---|---|---|
+| src/lib/intel/ai-clean.ts:371 aiCleanTimeline (opus, 16k → 8k on 400, 55 s, one retry) | every roomPaste past both guards (room/actions.ts:274); a picker or batch-mate force re-runs the read only when the late guard refused | entries → note bodies (:429-446); actions → todos, gaps, playbook, outcome (:496-628); the object discarded (:392-393) | runRead re-reads the note | ~20 [inferred, daily outbound work] + forced repeats |
+| src/app/room/actions.ts:1746 transcribePdf (opus, effort low) | per PDF or image via roomReadPdf :1794 / chuteReadPdf :1808 | the text, then aiCleanTimeline on it | — | ~2 [inferred] |
+| src/lib/intel/deep-research.ts:208 runResearch (opus + web_search ×8, 170 s; second call on pause_turn :215-217) | roomResearch click (room-client.tsx:679; groundwork/actions.ts:53) | research: + plain note + gaps (actions.ts:1165-1186) | — | ~2-5 [inferred] |
+| src/lib/intel/ask-mint.ts:92 mintAsks (opus 6k) | roomGapsRefill click (room-client.tsx:691), after six parallel reads and corpusFor over 40 notes (actions.ts:1218-1281) | gaps: rows (:1293-1297) | — | ~2 [inferred] |
+| src/app/accounts/draft-actions.ts:167 (opus 8k, thinking) | draft desk click; an 8-note read first (:139-153) | subject and body to the pad | — | ~5 [inferred] |
+| src/app/partners/actions.ts:132 raw fetch (sonnet 1.5k) | draftFollowUp click; getFollowUpPrompt reloads the four stores the page loaded (:90-95) | the draft | — | ~1 [inferred] |
+| src/lib/groundwork/wire.ts:146 (+:155 on pause_turn) (sonnet + web_search ×6, 240 s) | sweepWire form (groundwork/page.tsx:1067, 1114), gated by sweepDue (actions.ts:193) | wire: notes (:203-216) | — | ~1-2 [inferred] |
+| src/lib/activity/distill.ts:160 runDistill (opus 4k, thinking, cached system) | per changed account with substance per drop (run.ts:735-742); +1 retry for dense empties (:781-787) | gems: note (:801-802) | later runRead as a digest doc (runners.ts:263-300) | ≤151, typically tens |
+| src/lib/activity/distill.ts:263 runRefute (opus 2k, thinking) | per candidate surviving mechanicalKill (run.ts:749-767) | gem kept or died | — | tens to low hundreds |
+| src/lib/intranet/extract.ts:241 runRead (16k, thinking, cached system) | extractPending, 8 concurrent (runners.ts:670-693); from runBrain (:1688, 24 per pass), readCapture (:1218), padAsk (scratch/actions.ts:175, 10 before answering) | claims | of aiCleanTimeline (note docs), of the todo and playbook fan-out (mirrorTodo, ingestPlaybook), of runDistill (digest docs) | ~80-250 [inferred] |
+| src/lib/intranet/retrieve.ts:137 runPlan | per ask (intranet/actions.ts:442) | query plan | — | ~10 [inferred] |
+| src/lib/intranet/synthesize.ts:258 runWorldAnswer; :295 runSynthesis (+:349 one regeneration) | an ask with no candidates or no citations (:557, :657); an ask with candidates (:629) | the answer | — | ~3; ~10 [inferred] |
+| src/lib/intranet/verdicts.ts:138 runVerdicts; :176 runTopicSummary | readTimeAcrossTopics 1 topic per sweep, 4 deep (runners.ts:1392); indexTopics per stale topic (:1001) | supersedes and disputes stamps; topic summaries | — | ~5; ~5-20 [inferred] |
+| src/lib/intranet/decompose.ts:116 runSplit | decomposeTopics 1 per sweep, 4 deep (:1104) | split proposal | — | ~5 [inferred] |
+
+## 8. Revalidation inventory
+
+Every page.tsx under src/app is force-dynamic except sidekick/flows/prismhr-global, payroll-demo-sidekick, book (a redirect), look-into (a redirect) and login; so the only revalidated target that is not force-dynamic is /book, which has no content.
+
+| revalidatePath or refresh (file:line) | Target | What it buys |
+|---|---|---|
+| src/app/room/actions.ts:66-70 refresh(), called at :98, :386, :414, :471, :692, :727, :757, :832, :877, :955, :1024, :1071, :1102, :1192, :1302, :1331, :1354, :1397, :1417, :1461, :1492, :1532, :1576, :1671, :1718 | /room, /accounts, /today, /groundwork, / | the current-route re-render in the action response only; /today and / are archived |
+| room/actions.ts:1669; :1842 | /archive; /room | nothing beyond the current route |
+| src/app/accounts/act-actions.ts:36-38 (from :117, :207, :221, :238) | /accounts, /groundwork, /room | nothing; act-lane.tsx:116, :147, :158 then router.refresh() → a second /accounts render [inferred] |
+| accounts/actions.ts:36-37 | /accounts, /today | nothing |
+| groundwork/actions.ts:55-56, :95, :142-143, :155, :172, :230, :266-267 | /groundwork, /room, /sendbook | nothing |
+| today/actions.ts (32 sites: :51-52, :229, :701, :712, :753-754, :830, :932, :943, :987, :1010, :1039-1040, :1061-1062, :1076-1077, :1099-1100, :1114, :1163, :1249-1252, :1311-1313, :1340); today/sheet-actions.ts:44 | /today, /room, /archive, /accounts, /, /playbook | nothing |
+| book/actions.ts:77-79, :112-114 | /, /book, /pipeline | nothing; /book has no page to purge and redirect() at :80, :115 re-renders anyway |
+| look-into/actions.ts:20 then redirect("/today") :21 | /today | nothing, twice |
+| partners/actions.ts:23-24; playbook/actions.ts:35, :57; asks/actions.ts:13; dashboard/actions.ts:40-43, :370; archive/actions.ts:24-25; sidekick/actions.ts ×10; sidekick-v3/actions.ts ×10 | own pages | nothing |
+| router.refresh() accounts-client.tsx:735, :739 (after markActActed and unmarkActActed, which do not call refresh()) | /accounts | the only refresh; needed |
+| router.refresh() act-lane.tsx:125 (doDone → markActActed) | /accounts | needed |
+| router.refresh() act-lane.tsx:116, :147, :158 | /accounts | duplicate of the action's revalidatePath |
+| router.refresh() intranet-client.tsx:309 (after a send-it read), :342 (after every catch-up pass, ≤60) | /intranet | the only refresh, but one full render per pass |
+
+## 9. AccountDisposition marker families
+
+LOADED_DISPOSITION_STATUSES = motion, not-mine, parked (src/lib/today/overlay.ts:225-229, applied :244); loadDispositions has eleven callers.
+
+| Family | Writer (file:line, status) | Kept by the loader | Read by | Verdict |
+|---|---|---|---|---|
+| <accountId> real dispositions | today/actions.ts:765 setDisposition (motion / not-mine / parked); :823 logHappening; :787 deleteMany | yes | every loadDispositions caller | LIVE |
+| pastehash:<acct>:<fp> | room/actions.ts:123-126, status "filed" | no | room/actions.ts:128-131, :211-213 findUnique, :945-949 deleteMany on undo | LIVE, narrow reads only (CLAUDE.md:289) |
+| presence:<day> | presence/actions.ts:41-43, status "presence" | no | presence/actions.ts:36, :68; :56 deleteMany | LIVE, narrow reads only |
+| done-filed:<todoId> | room/actions.ts:657 parked | yes, unused in the map | room/actions.ts:638 findUnique (idempotency) | LIVE |
+| move-done:<acct>:<day> | room/actions.ts:717 (bind.ts:20-24) | yes | room/page.tsx:638 | LIVE |
+| gap-dismiss:<noteId> | room/actions.ts:1326 | yes | room/page.tsx:484; gaps.ts:50; collect.ts:72 | LIVE |
+| loss-dismiss:<card>:<noteId> | room/actions.ts:1349 | yes | room/page.tsx:451; room/actions.ts:1016 | LIVE |
+| owed:<noteId>:<hash> | room/actions.ts:1412 (key minted owed.ts:32-36) | yes | room/page.tsx:284 → owed.ts:144 | LIVE |
+| hide:note:<id> | room/actions.ts:1487 | yes | room/page.tsx:159; groundwork/page.tsx:195; sendbook/page.tsx:84; collect.ts:88; build.ts:698 | LIVE |
+| hide:todo:<id> | room/actions.ts:1664; today/actions.ts:223, :1056 | yes | today/page.tsx:787; sheet-view.ts:155 | LIVE |
+| hide:acct: / hide:partner: / hide:touchLog:<key>\|<at> | today/actions.ts:1030 via hideKeyFor (ledger.ts:74-77) | yes | today/page.tsx:1094, :1108, :1149 | LIVE (split from hide:note:) |
+| hide:send:<subjectKey>\|<at>, hide:move:<key> | today/actions.ts:1094 hideLedgerKey (past-row.tsx:58; minted today/page.tsx:1146, :1172) | yes | today/page.tsx:1134, :1163 | LIVE |
+| hide:* (any) | — | — | archive/page.tsx:85; archive/actions.ts:34, :89 deleteMany | LIVE |
+| roundup-mute:<partner> | today/actions.ts:82 (:95 delete) | yes | room/page.tsx:664; today/page.tsx:1026 | LIVE |
+| partner-light:<partner> | today/actions.ts:116, status "motion" (:122 delete) | yes | today/page.tsx:1033 | LIVE |
+| row-delay:<rowKey> | today/actions.ts:140 (:153, :182; room/actions.ts:1637, :1657 delete) | yes | today/page.tsx:1228-1232; sheet-view.ts:163-164 | LIVE |
+| nofile:<id> | today/actions.ts:254 | yes | today/page.tsx:784-785 | LIVE |
+| brief-done:<rule>:<subj>:<day> / brief-mute:<rule>:<subj> | today/actions.ts:1206 / :1221 | yes | lib/intel/brief.ts:93-94 | LIVE |
+| asknext-done:<acct>:<qid> | today/actions.ts:1258 | yes | lib/intel/ask-next.ts:73 | LIVE |
+| sugg-dismiss:<card>:<node>:<idx> | dashboard/actions.ts:343 | yes | room/page.tsx:415; page.tsx:109; today/page.tsx:675 | LIVE |
+| srdraft:<key> | playbook/actions.ts:45-52 | yes | playbook/page.tsx:70-71 | LIVE (CLAUDE.md:432) |
+| scenario:<acct> | none | — | room/actions.ts:1246-1250 findUnique | read-never-written; the retirement is a code comment (playbook/actions.ts:3-5) |
+
+## 10. Head tokens
+
+| Token | Producers | Consumers | Verdict |
+|---|---|---|---|
+| OUTLOOK THREAD | paste-files.ts:196, :478; room/actions.ts:1769 (transcribePdf prompt); intake/capture-shelf.tsx:33 | room/actions.ts:174; paste-files.ts:17; sf-timeline.ts:271; ai-clean.ts:328 (dead consumer); intranet/normalize.ts:38, :52, :54, :131 | live |
+| TEAMS THREAD | capture-shelf.tsx:98; room/actions.ts:1769; no file reader emits it | room/actions.ts:176, :301; paste-files.ts:18; sf-timeline.ts:271; ai-clean.ts:328 (dead); normalize.ts:37, :52, :54, :131 | live |
+| TEAMS CHAT | none | paste-files.ts:18 (chip label); ai-clean.ts:328 (dead consumer); not in roomPaste's sniff | no producer: DEAD |
+| CALL TRANSCRIPT | paste-files.ts:309, :446 (from read-file.ts:66, :90) | room/actions.ts:178, :354; paste-files.ts:15, :386; sf-timeline.ts:271; ai-clean.ts:366; meeting.ts:28; extract.ts:54 | live; the transcriber never emits it (rulings sheet R4) |
+| ☰ Call transcript — (archive head) | room/actions.ts:371 | meeting.ts:28; extract.ts:54 | live |
+| SALESNAV ACCOUNTS | capture-shelf.tsx:130 (target /intranet?grab=1) | room/actions.ts:180; paste-files.ts:19; groundwork/signals.ts:107; never the Intranet | emitted for a door that never reads it |
+| SPREADSHEET | paste-files.ts:529 | none | no consumer: DEAD |
+| DOCUMENT | read-file.ts:93 | none (intranet/extract.ts:235 is a prompt string) | no consumer: DEAD |
+
+## 11. Comment claims checked and found true
+
+So the next pass need not re-check them: src/lib/activity/excerpt.ts:3 "the one cleaner both halves use" (ingest.ts:8 imports it on the upload path); src/lib/activity/run.ts:1110 "exactly the five namespaces" (stores.ts:14-18); src/lib/activity/distill.ts:1 "the ONLY place the second record meets a model"; src/app/activity/evidence/route.ts:1 "the ONE place staged slice bodies leave the store" (run.ts:220 reads them inside the run); src/lib/pipeline/collect.ts:1-3; src/lib/account/facts.ts:16-20; src/lib/dashboard/complete.ts:1-4; src/lib/dashboard/stages.ts:367; src/lib/today/build.ts:538-539; src/lib/groundwork/day.ts:97; src/lib/public-access.ts:1-2; src/lib/access-proxy.ts:24-25 [inferred]; src/lib/groundwork/readout.ts:231 (plan §3.1.5 resolves to groundwork-room-plan.md §3.1 rule 5); src/app/room/page.tsx:789 "one shared build" for the room's two doors; src/app/room/chute.tsx:3 "the room's single intake" (decree wording; the Intranet mount is by its own comment's decree of 2026-09-02, intranet/page.tsx:118-120); src/lib/claude/health.ts:28 "The one gate every *Available() reads" (partners/actions.ts:126-128 bypasses it with equivalent logic [inferred]). Doc references that resolve: the groundwork plan sections cited from signals.ts:7, wire.ts:5, file.ts:130, proximity.ts:2, institutions.ts:1, compose.ts:2, :5, :49, readout.ts:1, :5, :45, :225, :231, groundwork/actions.ts:5, page.tsx:95, copy-stamp.tsx:4 (docs/plans/groundwork-room-plan.md §3 :111, §3.1 :129, §3.5 :224, §6 :419, §7.2 :547, §8 D8 :582, :700, §9 :794); docs/intranet-research-room.md from doctrine.ts:5, normalize.ts:49, synthesize.ts:43, ledger.ts:51, doctrine.ts:10-13; docs/command-center-tables.sql, docs/dashboard-tables.sql, docs/intranet-tables.sql from the sites that cite them.

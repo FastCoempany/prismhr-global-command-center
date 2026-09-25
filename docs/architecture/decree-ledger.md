@@ -7,6 +7,7 @@ related_docs:
   - docs/architecture/chute-architecture-map.md
   - docs/architecture/chute-ingest-defects.md
   - docs/architecture/derived-fact-ledger.md
+  - docs/architecture/decree-ledger-appendix.md
 ---
 
 # Decree Ledger

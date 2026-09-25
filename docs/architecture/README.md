@@ -10,6 +10,7 @@ Current files:
 - chute-ingest-defects.md
 - dead-code-appendix.md
 - dead-code-ledger.md
+- decree-ledger-appendix.md
 - decree-ledger.md
 - derived-fact-ledger.md
 - design-brand-audit.md
@@ -50,9 +51,13 @@ refactor's first two candidates, each with its options, what every option
 changes in code, and a default; the founder rules, then CLAUDE.md is
 amended and the scoreboard moves.
 
-dead-code-appendix.md carries pass 4's full working lists (unused types,
-dead classes, test-only and seed-only exports) so the ledger's counts have
-their rows in the repo.
+decree-ledger-appendix.md carries pass 3's evidence tables (the ingest
+surfaces' string inventory and its canon findings, the click-depth dead
+ends, and what the violations sweep checked and found clean);
+dead-code-appendix.md carries pass 4's (unused types, dead classes,
+test-only and seed-only exports, the route, model-call, revalidation,
+marker-family and head-token inventories, and the comment claims found
+true). Every pass's evidence lives in the repo, not in a session.
 
 The sequence after pass 4, as recommended on 2026-09-25 and not yet
 decided: (1) the founder rules on the rulings sheet, since a refactor now
