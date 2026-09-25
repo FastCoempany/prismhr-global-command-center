@@ -23,11 +23,16 @@ export type RouteAccount = {
   aka?: string[];
 };
 
+/** Which signal scored a hit, strongest first. The flag a caller or a test
+ *  branches on; `why` is the same fact in the operator's words. */
+export type RouteRung = "email" | "domain" | "person" | "name" | "head" | "initials";
+
 export type RouteHit = {
   id: string;
   name: string;
   score: number;
   why: string;
+  rung: RouteRung;
 };
 
 // Domains that identify a mailbox provider, not a company.
@@ -146,11 +151,13 @@ export function routeCapture(
   for (const a of roster) {
     let score = 0;
     let why = "";
+    let rung: RouteRung | null = null;
 
     const emailHit = a.emails.find((e) => foundEmails.has(e));
     if (emailHit) {
       score = 100;
       why = `${emailHit} is ${a.name}'s contact`;
+      rung = "email";
     } else {
       const domainHit = a.domains.find(
         (d) => d && !FREEMAIL.has(d) && !HOME_DOMAINS.has(d) && foundDomains.has(d),
@@ -159,9 +166,11 @@ export function routeCapture(
       if (domainHit) {
         score = 80;
         why = `${domainHit} address in the text`;
+        rung = "domain";
       } else if (personHit) {
         score = 75;
         why = `${titleCase(personHit)} is ${a.name}'s contact`;
+        rung = "person";
       } else {
         const spellings = [a.name, ...(a.aka ?? [])];
         const named = spellings.find((label) => {
@@ -172,6 +181,7 @@ export function routeCapture(
         if (named) {
           score = 70;
           why = `named in the text`;
+          rung = "name";
         } else {
           const head = n.split(" ")[0] ?? "";
           const init = initialsOf(a.name);
@@ -182,16 +192,18 @@ export function routeCapture(
           ) {
             score = 55;
             why = `“${head}” appears in the text`;
+            rung = "head";
           } else if (init && new RegExp(`\\b${init}\\b`).test(raw)) {
             // Initials are a candidate signal, never a filing signal — below
             // the auto-route bar by design (ESC fits more than one account).
             score = 50;
             why = `“${init}” matches the initials`;
+            rung = "initials";
           }
         }
       }
     }
-    if (score > 0) hits.push({ id: a.id, name: a.name, score, why });
+    if (score > 0 && rung) hits.push({ id: a.id, name: a.name, score, why, rung });
   }
 
   hits.sort((x, y) => y.score - x.score || x.name.localeCompare(y.name));

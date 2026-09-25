@@ -42,7 +42,12 @@
 // either door once the pick is made.
 
 import { accountMatches } from "./ai-clean";
-import { routeCapture, type RouteAccount, type RouteHit } from "@/lib/route-capture";
+import {
+  routeCapture,
+  type RouteAccount,
+  type RouteHit,
+  type RouteRung,
+} from "@/lib/route-capture";
 
 export type MisfileVerdict =
   | { ok: true }
@@ -54,6 +59,9 @@ export type MisfileVerdict =
       bound: string;
       /** Which rung objected, in the operator's words. */
       why: string;
+      /** Which rung objected, as a flag: the read's own company claim, or
+       *  the kind of evidence the text itself carried. */
+      rung: "claim" | RouteRung;
       /** What the row the operator chose carries for itself — "" when it
        *  carries nothing. The banner shows both sides or the operator is
        *  reading a verdict instead of making a choice. */
@@ -140,6 +148,7 @@ export function judgeFiling(inp: {
       claim,
       bound: bound.name,
       why: `the read names ${claim}`,
+      rung: "claim",
       boundWhy: ownWhy,
     };
 
@@ -154,6 +163,7 @@ export function judgeFiling(inp: {
       claim: elsewhere.name,
       bound: bound.name,
       why: elsewhere.why,
+      rung: elsewhere.rung,
       boundWhy: ownWhy,
     };
 
