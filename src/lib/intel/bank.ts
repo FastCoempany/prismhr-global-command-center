@@ -77,14 +77,6 @@ export type Filters = {
   soph: QSoph | "";
 };
 
-export const NO_FILTERS: Filters = {
-  category: "",
-  phase: "",
-  audience: "",
-  product: "",
-  soph: "",
-};
-
 // "any" questions always survive a product/sophistication filter — they are
 // true whatever the answer is, which is exactly why they're marked "any".
 function facetMatch(qv: string, want: string): boolean {
@@ -157,49 +149,4 @@ export function selectQuestions(
     if (pa !== pb) return pa - pb;
     return a.id.localeCompare(b.id);
   });
-}
-
-// How many questions each chip would yield if it were the ONLY change to the
-// current filters. This is what makes a dead chip visibly dead.
-export function facetCounts<K extends keyof Filters>(
-  bank: readonly DiscoveryQ[],
-  f: Filters,
-  facet: K,
-  values: readonly NonNullable<Filters[K]>[],
-  scenario?: Scenario | null,
-): Map<string, number> {
-  const out = new Map<string, number>();
-  for (const v of values) {
-    const probe = { ...f, [facet]: v } as Filters;
-    out.set(String(v), selectQuestions(bank, probe, scenario).length);
-  }
-  return out;
-}
-
-// The names the empty state speaks match the labels on screen — the rail says
-// "Line" and "Buyer", so the message never asks the operator to drop a filter
-// no row is named after.
-const FILTER_LABEL: Record<keyof Filters, string> = {
-  category: "Category",
-  phase: "Phase",
-  audience: "Audience",
-  product: "Line",
-  soph: "Buyer",
-};
-
-// Why the list is empty, in words the operator can act on. Never a bare zero.
-export function emptyBecause(
-  bank: readonly DiscoveryQ[],
-  f: Filters,
-  scenario?: Scenario | null,
-): string {
-  const active = (Object.entries(f) as [keyof Filters, string][]).filter(([, v]) => v);
-  if (active.length === 0) return "The bank is empty — that's a bug, not a filter.";
-  // Find the single filter that, dropped, brings questions back.
-  for (const [k] of active) {
-    const without = { ...f, [k]: "" } as Filters;
-    if (selectQuestions(bank, without, scenario).length > 0)
-      return `Nothing asks that. Drop the ${FILTER_LABEL[k]} filter and there are questions again.`;
-  }
-  return "No question in the bank fits that combination yet.";
 }

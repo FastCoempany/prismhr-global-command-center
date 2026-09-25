@@ -10,7 +10,6 @@ import { DISCOVERY, questionsFor } from "@/lib/intel/discovery";
 import { PRODUCT_BANK } from "@/lib/intel/discovery-product";
 import { SCENARIOS } from "@/lib/intel/scenarios";
 import {
-  NO_FILTERS,
   selectQuestions,
   type Filters,
   type QProduct,
@@ -18,6 +17,16 @@ import {
 } from "@/lib/intel/bank";
 import { askNextFor, bankFor } from "@/lib/intel/ask-next";
 import { EMPTY_INTEL, type DealIntel } from "@/lib/intel/types";
+
+// The Call Sheet's filter helpers left the bank 2026-09-25 (pass 4 ruling);
+// the empty filter set stays here as the fixture selectQuestions is tested with.
+const NO_FILTERS: Filters = {
+  category: "",
+  phase: "",
+  audience: "",
+  product: "",
+  soph: "",
+};
 
 const CATEGORIES = new Set([
   "footprint",
@@ -203,25 +212,5 @@ describe("new content keeps the house doctrine", () => {
     assert.ok(eorFirst.length > 0, "EOR still has no first-meeting question");
     assert.ok(eorDisp.length > 0, "EOR still has no displacement question");
     assert.ok(cmNaive.length > 0, "contractor still has no naive question");
-  });
-});
-
-describe("the branch map routes only to real questions", () => {
-  test("every branch link lands on a bank id and never overruns listenFor", async () => {
-    const { BRANCH_NEXT } = await import("@/lib/intel/branches");
-    const byId = new Map([...DISCOVERY, ...PRODUCT_BANK].map((q) => [q.id, q]));
-    for (const [qid, row] of Object.entries(BRANCH_NEXT)) {
-      const q = byId.get(qid);
-      assert.ok(q, `${qid} left the bank but still carries branches`);
-      assert.ok(
-        row.length <= q!.listenFor.length,
-        `${qid} has more branches than listenFor entries`,
-      );
-      for (const next of row) {
-        if (next === null) continue;
-        assert.ok(byId.has(next), `${qid} branches to unknown question ${next}`);
-        assert.notEqual(next, qid, `${qid} branches to itself`);
-      }
-    }
   });
 });

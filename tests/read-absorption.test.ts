@@ -28,13 +28,7 @@ import {
   writeOutcome,
 } from "../src/lib/dashboard/outcome";
 import { outcomeMarkBody, readLoss } from "../src/lib/room/loss";
-import {
-  NO_FILTERS,
-  emptyBecause,
-  facetCounts,
-  selectQuestions,
-  type Filters,
-} from "../src/lib/intel/bank";
+import { selectQuestions, type Filters } from "../src/lib/intel/bank";
 import { DISCOVERY } from "../src/lib/intel/discovery";
 import { migrateNotes } from "../src/lib/dashboard/stages";
 import { cardNextStep, commitmentsFromCards } from "../src/lib/today/build";
@@ -50,6 +44,16 @@ import {
 } from "../src/lib/intel/deep-research";
 import { mintPrompt, parseAsks } from "../src/lib/intel/ask-mint";
 import type { AccountNote } from "../src/lib/today/overlay";
+
+// The Call Sheet's filter helpers left the bank 2026-09-25 (pass 4 ruling);
+// the empty filter set stays here as the fixture selectQuestions is tested with.
+const NO_FILTERS: Filters = {
+  category: "",
+  phase: "",
+  audience: "",
+  product: "",
+  soph: "",
+};
 
 const root = cwd();
 const iso = (d: string) => new Date(d).toISOString();
@@ -340,20 +344,6 @@ describe("the card's filters tell the truth", () => {
     const ids = BANK.map((q) => q.id);
     assert.equal(new Set(ids).size, ids.length);
   });
-  test("no filter combination the chips offer can come up empty", () => {
-    // A chip is only clickable when its own count is non-zero, so for every
-    // single-facet selection the count and the selection must agree.
-    for (const facet of ["category", "phase", "audience", "product", "soph"] as const) {
-      const values = [
-        ...new Set(BANK.map((q) => (q as Record<string, unknown>)[facet] ?? "any")),
-      ];
-      const counts = facetCounts(BANK, NO_FILTERS, facet, values as never[], null);
-      for (const [v, n] of counts) {
-        const got = selectQuestions(BANK, { ...NO_FILTERS, [facet]: v } as Filters, null);
-        assert.equal(got.length, n, `${facet}=${v} count disagrees with selection`);
-      }
-    }
-  });
   test("the phase chips that used to be dead now carry questions", () => {
     for (const phase of ["investigate", "exec_summary", "contract"] as const) {
       const n = selectQuestions(BANK, { ...NO_FILTERS, phase }, null).length;
@@ -367,21 +357,6 @@ describe("the card's filters tell the truth", () => {
     assert.ok(eor.some((q) => (q.product ?? "any") === "any"));
     assert.ok(eor.some((q) => q.product === "eor"));
     assert.ok(!eor.some((q) => q.product === "payroll"));
-  });
-  test("an empty result says which filter to drop", () => {
-    const impossible: Filters = {
-      ...NO_FILTERS,
-      category: "classification",
-      phase: "contract",
-      audience: "partner",
-      product: "payroll",
-      soph: "displacement",
-    };
-    const shown = selectQuestions(BANK, impossible, null);
-    assert.equal(shown.length, 0);
-    const why = emptyBecause(BANK, impossible, null);
-    assert.ok(why.length > 20);
-    assert.ok(!/^0 of/.test(why));
   });
   test("a scenario leads with its own categories and sinks its noise to the tail", () => {
     // Avoid demotes instead of hiding (2026-08-24): a scenario's own traps
