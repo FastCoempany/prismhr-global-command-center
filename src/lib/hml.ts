@@ -66,7 +66,7 @@ type ResolvedProspectFieldRules = {
   recommended_actions: Record<HmlValue, string>;
 };
 
-export type ProspectFieldSignalSet = {
+type ProspectFieldSignalSet = {
   internationalSignal: HmlValue;
   contractorSignal: HmlValue;
   hiringSignal: HmlValue;

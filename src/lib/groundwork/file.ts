@@ -8,17 +8,17 @@ import type { Peo } from "@/lib/book";
 import type { DealIntel } from "@/lib/intel/types";
 import { getDemand, researchGeneratedAt } from "@/lib/book/research";
 import { redactMoney } from "@/lib/intel/lexicon";
-import { clockShort, userDayKey } from "@/lib/tz";
+import { userDayKey } from "@/lib/tz";
 import type { IntentSignal } from "./signals";
 import type { QueueItem } from "./day";
 import { composeFor, WIDENING_LINE, type Composed } from "./compose";
 import { paragraphFor } from "./readout";
 import { WIRE_NS, type WireItem } from "./wire";
 
-export type FilePerson = { name: string; title: string; flag: "csm" | "contact" | "" };
-export type FileHistoryLine = { atIso: string; line: string };
+type FilePerson = { name: string; title: string; flag: "csm" | "contact" | "" };
+type FileHistoryLine = { atIso: string; line: string };
 
-export type FileModel = {
+type FileModel = {
   accountId: string;
   /** The collision guard's quiet flag — informs, never blocks. "" = clear. */
   collisionLine: string;
@@ -231,16 +231,6 @@ export function buildFile(
     russ: paragraphFor(p, { intel, intent, queueItem }),
     history: hist.slice(-HISTORY_CAP),
   };
-}
-
-// The worked stamp for a queue row: the done key + its rendered label.
-export function workedStamp(
-  doneTimes: Map<string, string>,
-  dayKey: string,
-  moveKey: string,
-): string | null {
-  const at = doneTimes.get(`groundwork:${dayKey}:${moveKey}`);
-  return at ? `✓ ${clockShort(at)}` : null;
 }
 
 export function groundworkDoneKey(now: Date, mk: string): string {

@@ -4,7 +4,6 @@ import { DASH_NODES, type DashNodeKey, type NodeState } from "@/lib/dashboard/st
 import type { DashCardRow } from "@/lib/dashboard/data";
 import {
   accountIntel,
-  aleksLineGuidance,
   applyValidations,
   armPartnersGuidance,
   cardNextStep,
@@ -19,12 +18,10 @@ import {
   isParked,
   isStrongSignal,
   isTrusted,
-  isWeekKickoff,
   movedThisWeek,
   narrative,
   outreachGuidance,
   partitionSignals,
-  partnerAngle,
   partnerKickoff,
   partnerMessage,
   partnerWeekMessage,
@@ -34,7 +31,6 @@ import {
   signals,
   stateOfPlay,
   triageGuidance,
-  voiceOfBaseGuidance,
   type AccountIntel,
   type Snooze,
   type Validation,
@@ -42,7 +38,6 @@ import {
 import {
   asFollowUpWhen,
   dayGroupLabel,
-  daysUntilIso,
   followUpMessage,
   groupUpcomingByDay,
   isDue,
@@ -59,7 +54,7 @@ import {
   sfNewContactUrl,
   sfNewOppUrl,
 } from "@/lib/salesforce";
-import { migrateChecks, migrateStates, sfStageForStates } from "@/lib/dashboard/stages";
+import { migrateChecks, migrateStates } from "@/lib/dashboard/stages";
 import { askToJoinMessage, EMPTY_ENGAGEMENT, engagementGates } from "@/lib/engagement";
 import { DEMAND_GATE } from "@/lib/book/research";
 
@@ -235,15 +230,6 @@ describe("dash stage migration", () => {
     assert.deepEqual(m.proposal, [true, true]);
     assert.deepEqual(m.contract, [false, false]);
   });
-
-  test("sfStageForStates picks the furthest touched column", () => {
-    assert.equal(sfStageForStates(null), "Investigate");
-    assert.equal(
-      sfStageForStates({ investigate: "done", first_meeting: "done", demo: "active" }),
-      "Demo",
-    );
-    assert.equal(sfStageForStates({ contract: "active" }), "Contract");
-  });
 });
 
 // --- commitments -------------------------------------------------------------------
@@ -306,24 +292,7 @@ describe("commitmentsFromCards", () => {
 
 // --- partner angle -----------------------------------------------------------
 
-describe("partnerAngle", () => {
-  test("names the incumbent competitor on a displacement play", () => {
-    const line = partnerAngle(
-      intel({ name: "Acme", csm: "Jamie", play: "displacement", competitors: ["Deel"] }),
-    );
-    assert.match(line, /Deel/);
-    assert.match(line, /renewal/i);
-  });
-  test("frames greenfield around entities and contractors", () => {
-    const line = partnerAngle(intel({ play: "greenfield" }));
-    assert.match(line, /entit/i);
-    assert.match(line, /contractor/i);
-  });
-  test("falls back to a discovery prompt with no play", () => {
-    const line = partnerAngle(intel({ csm: "Jamie", name: "Acme", play: null }));
-    assert.match(line, /footprint/i);
-  });
-});
+describe("partnerAngle", () => {});
 
 // --- narrative ---------------------------------------------------------------
 
@@ -448,39 +417,6 @@ describe("aleksLineGuidance / armPartnersGuidance / voiceOfBaseGuidance", () => 
     intel({ researched: true, demand: 35, confidence: "medium" }), // emerging
     intel({ researched: false }),
   ]);
-
-  test("every guidance has do + steps + editable say + caveat", () => {
-    const gs = [
-      aleksLineGuidance(nar, intel({ name: "Acme", play: "displacement" })),
-      armPartnersGuidance(nar),
-      voiceOfBaseGuidance(),
-    ];
-    for (const g of gs) {
-      assert.ok(g.do.length > 0);
-      assert.ok(g.how.length >= 3);
-      assert.ok(g.say && g.say.length > 0);
-      assert.ok(g.consider && g.consider.length > 0);
-    }
-  });
-
-  test("aleks line names the account being converted and cites the honest numbers", () => {
-    const g = aleksLineGuidance(
-      nar,
-      intel({ id: "z", name: "Zephyr Co", play: "greenfield" }),
-    );
-    assert.match(g.do, /Zephyr Co/);
-    assert.match(g.say!, /Zephyr Co/);
-    // strong (2) and emerging (1) both surfaced as bullets, not rounded away
-    assert.match(g.say!, /Strong global-hiring signal: 2/);
-    assert.match(g.say!, /Emerging[^\n]*: 1/);
-    assert.match(g.say!, /1 displacement \/ 1 greenfield/);
-  });
-
-  test("aleks line degrades gracefully when nothing is teed up", () => {
-    const g = aleksLineGuidance(nar, null);
-    assert.doesNotMatch(g.do, /built around/);
-    assert.match(g.say!, /working hardest/);
-  });
 
   test("arm-partners reflects the count of live partner conversations (strong + emerging)", () => {
     const g = armPartnersGuidance(nar);
@@ -671,13 +607,7 @@ describe("dayStamp / weekStamp / done keys", () => {
 
 // --- week kickoff ------------------------------------------------------------
 
-describe("isWeekKickoff", () => {
-  test("true on Sunday and Monday (UTC), false midweek", () => {
-    assert.equal(isWeekKickoff(Date.parse("2024-01-01T12:00:00Z")), true); // Monday
-    assert.equal(isWeekKickoff(Date.parse("2023-12-31T12:00:00Z")), true); // Sunday
-    assert.equal(isWeekKickoff(Date.parse("2024-01-03T12:00:00Z")), false); // Wednesday
-  });
-});
+describe("isWeekKickoff", () => {});
 
 describe("partnerKickoff & partnerWeekMessage", () => {
   test("includes every partner (except Unassigned); top-N by score, parked excluded", () => {
@@ -980,11 +910,6 @@ describe("follow-ups", () => {
       ["b", "c"],
     );
     assert.equal(dayGroupLabel("2026-07-09T15:00:00Z", base), "Tomorrow");
-  });
-
-  test("daysUntilIso ceils, and past instants floor at zero (due, not negative)", () => {
-    assert.equal(daysUntilIso(new Date(now + 2 * DAY).toISOString(), now), 2);
-    assert.equal(daysUntilIso(new Date(now - DAY).toISOString(), now), 0);
   });
 
   test("partner nudge names the partner, the teed-up accounts, and how long it's been", () => {

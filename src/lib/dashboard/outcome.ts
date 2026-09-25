@@ -14,20 +14,13 @@ export const OUTCOME_KEY = "__outcome";
 
 export type OutcomeStatus = "won" | "lost";
 
-export type DealOutcome = {
+type DealOutcome = {
   status: OutcomeStatus;
   phrase: string; // the evidence sentence, in the record's own words
   at: string; // ISO — when it was recorded
 };
 
 export const OUTCOME_LABEL: Record<OutcomeStatus, string> = {
-  won: "Closed Won",
-  lost: "Closed Lost",
-};
-
-// Terminal SF picklist values, so a closed card still answers "what stage is
-// this in Salesforce?" honestly.
-export const OUTCOME_SF_STAGE: Record<OutcomeStatus, string> = {
   won: "Closed Won",
   lost: "Closed Lost",
 };
@@ -70,13 +63,5 @@ export function writeOutcome(
       phrase: outcome.phrase.slice(0, 200),
       at: outcome.at,
     });
-  return out;
-}
-
-// A closed card's node notes shouldn't leak the reserved key into any per-stage
-// note view.
-export function stripOutcome(notes: Record<string, string>): Record<string, string> {
-  const out = { ...notes };
-  delete out[OUTCOME_KEY];
   return out;
 }

@@ -61,7 +61,7 @@ export function sfAccountUrl(id: string): string | null {
 }
 
 // A contact record id (003 prefix, 15 or 18 chars).
-export function isRealSfContactId(id: string): boolean {
+function isRealSfContactId(id: string): boolean {
   return /^003[a-zA-Z0-9]{12}([a-zA-Z0-9]{3})?$/.test(id.trim());
 }
 

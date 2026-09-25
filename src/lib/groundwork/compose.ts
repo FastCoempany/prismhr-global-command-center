@@ -94,8 +94,9 @@ export function composeFor(args: {
   switch (ruleId) {
     case "seated":
       // The operator seated this from the accounts sheet's Act Lane — the
-      // gem's act is the move, its reason the grounding, and any saved lane
-      // draft outranks this composed fallback at the stage.
+      // gem's act is the move, its reason the grounding. The lane's saved
+      // draft (actdraft:) stays the lane's; the stage reads the seat alone
+      // and composes this from the gem.
       return {
         kind: "send-draft",
         label: `Copy the note${labelTo}`,

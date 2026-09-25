@@ -25,7 +25,7 @@ type Knowledge = { id: string; text: string; from: string; at: string; who?: str
 
 /** A battlecard question proposed from what real buyers asked (C7, IV.5). The
  *  brain groups the asks; the Playbook is where a human decides. */
-export type ProspectProposal = {
+type ProspectProposal = {
   question: string;
   read: string;
   asked: number;

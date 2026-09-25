@@ -58,16 +58,6 @@ export const payrollDemoMeta = store.meta;
 export const payrollDemoSteps = store.steps;
 export const payrollDemoQuestions = store.questions;
 
-const stepById = new Map(payrollDemoSteps.map((s) => [s.id, s]));
-
-export function getPayrollDemoStep(id: string): PayrollDemoStep | undefined {
-  return stepById.get(id);
-}
-
-export function questionsForStep(stepId: string): PayrollDemoQuestion[] {
-  return payrollDemoQuestions.filter((q) => q.stepId === stepId);
-}
-
 export function payrollDemoScreenshotPath(id: string): string {
   return `/demo-screens/payroll-demo/${id}.jpg`;
 }

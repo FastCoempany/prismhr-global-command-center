@@ -13,25 +13,33 @@
 // teaches or probes. A scenario is a saved combination of those, plus the
 // categories to lead with and the ones that are noise.
 
-import type { DiscoveryQ, QAudience, QCategory, QPhase } from "./discovery";
+import {
+  DISCOVERY,
+  type DiscoveryQ,
+  type QAudience,
+  type QCategory,
+  type QPhase,
+} from "./discovery";
 import type { DashNodeKey } from "@/lib/dashboard/stages";
+
+/** The bank's lookup: a question id — bare, or as the brain cites it
+ *  ("question:<id>") — resolves to the question's text and its gloss (the
+ *  why). Null when the bank holds no such question. The Call Sheet is
+ *  retired, so this is the only door a citation has to the question's own
+ *  words (the click-depth law, C13). */
+export function questionById(
+  id: string,
+): { id: string; question: string; why: string; relayLine: string } | null {
+  const bare = (id ?? "").trim().replace(/^question:/, "");
+  if (!bare) return null;
+  const q = DISCOVERY.find((x) => x.id === bare);
+  return q
+    ? { id: q.id, question: q.question, why: q.why, relayLine: q.relayLine }
+    : null;
+}
 
 export type QProduct = "eor" | "contractor" | "payroll" | "any";
 export type QSoph = "naive" | "inhouse" | "displacement" | "any";
-
-export const PRODUCT_LABEL: Record<QProduct, string> = {
-  eor: "EOR",
-  contractor: "Contractor mgmt",
-  payroll: "Global payroll",
-  any: "Any line",
-};
-
-export const SOPH_LABEL: Record<QSoph, string> = {
-  naive: "New to this",
-  inhouse: "Runs it themselves",
-  displacement: "On a competitor",
-  any: "Any",
-};
 
 export type Scenario = {
   id: string;
@@ -47,10 +55,10 @@ export type Scenario = {
 
 // A question's facets, with the bank's older entries defaulting to "applies
 // however the deal is shaped" rather than being silently excluded.
-export function productOf(q: DiscoveryQ): QProduct {
+function productOf(q: DiscoveryQ): QProduct {
   return q.product ?? "any";
 }
-export function sophOf(q: DiscoveryQ): QSoph {
+function sophOf(q: DiscoveryQ): QSoph {
   return q.soph ?? "any";
 }
 
@@ -60,14 +68,6 @@ export type Filters = {
   audience: QAudience | "";
   product: QProduct | "";
   soph: QSoph | "";
-};
-
-export const NO_FILTERS: Filters = {
-  category: "",
-  phase: "",
-  audience: "",
-  product: "",
-  soph: "",
 };
 
 // "any" questions always survive a product/sophistication filter — they are
@@ -142,49 +142,4 @@ export function selectQuestions(
     if (pa !== pb) return pa - pb;
     return a.id.localeCompare(b.id);
   });
-}
-
-// How many questions each chip would yield if it were the ONLY change to the
-// current filters. This is what makes a dead chip visibly dead.
-export function facetCounts<K extends keyof Filters>(
-  bank: readonly DiscoveryQ[],
-  f: Filters,
-  facet: K,
-  values: readonly NonNullable<Filters[K]>[],
-  scenario?: Scenario | null,
-): Map<string, number> {
-  const out = new Map<string, number>();
-  for (const v of values) {
-    const probe = { ...f, [facet]: v } as Filters;
-    out.set(String(v), selectQuestions(bank, probe, scenario).length);
-  }
-  return out;
-}
-
-// The names the empty state speaks match the labels on screen — the rail says
-// "Line" and "Buyer", so the message never asks the operator to drop a filter
-// no row is named after.
-const FILTER_LABEL: Record<keyof Filters, string> = {
-  category: "Category",
-  phase: "Phase",
-  audience: "Audience",
-  product: "Line",
-  soph: "Buyer",
-};
-
-// Why the list is empty, in words the operator can act on. Never a bare zero.
-export function emptyBecause(
-  bank: readonly DiscoveryQ[],
-  f: Filters,
-  scenario?: Scenario | null,
-): string {
-  const active = (Object.entries(f) as [keyof Filters, string][]).filter(([, v]) => v);
-  if (active.length === 0) return "The bank is empty — that's a bug, not a filter.";
-  // Find the single filter that, dropped, brings questions back.
-  for (const [k] of active) {
-    const without = { ...f, [k]: "" } as Filters;
-    if (selectQuestions(bank, without, scenario).length > 0)
-      return `Nothing asks that. Drop the ${FILTER_LABEL[k]} filter and there are questions again.`;
-  }
-  return "No question in the bank fits that combination yet.";
 }

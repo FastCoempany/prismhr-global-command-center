@@ -28,7 +28,7 @@ export type DashNodeKey =
   | "proposal"
   | "contract";
 
-export type DashNode = {
+type DashNode = {
   key: DashNodeKey;
   label: string;
   heat: string; // the node's "lit" color on the grey→green ramp
@@ -116,33 +116,7 @@ export const DASH_NODES: DashNode[] = [
   },
 ];
 
-// App stage → the EXACT Salesforce Stage picklist value (they're 1:1 now).
-export const SF_STAGE: Record<DashNodeKey, string> = {
-  investigate: "Investigate",
-  first_meeting: "First Time Meeting",
-  needs_analysis: "Needs Analysis",
-  demo: "Demo",
-  exec_summary: "Executive Summary",
-  proposal: "Proposal",
-  contract: "Contract",
-};
-
-// The SF stage a deal's board position implies — the furthest node that's been
-// touched (active or done). Falls back to the first stage for untouched cards.
-export function sfStageForStates(
-  states: Partial<Record<string, string>> | null | undefined,
-): string {
-  let stage = SF_STAGE.investigate;
-  if (!states) return stage;
-  for (const n of DASH_NODES) {
-    const s = states[n.key];
-    if (s === "active" || s === "done") stage = SF_STAGE[n.key];
-  }
-  return stage;
-}
-
 export const DASH_NODE_KEYS = DASH_NODES.map((n) => n.key);
-export const LAST_NODE = DASH_NODES.length - 1;
 
 export function nodeChecklist(key: DashNodeKey): string[] {
   return DASH_NODES.find((n) => n.key === key)?.checklist ?? [];
@@ -153,9 +127,6 @@ export type NodeState = "todo" | "active" | "done";
 
 export const isNodeState = (v: unknown): v is NodeState =>
   v === "todo" || v === "active" || v === "done";
-
-export const stateWord = (s: NodeState) =>
-  s === "done" ? "Done" : s === "active" ? "In progress" : "Not started";
 
 // Derive a node's lit state from its checkbox array.
 export function stateFromChecks(checks: boolean[], itemCount: number): NodeState {

@@ -14,26 +14,11 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import { claudeClient, claudeAvailable } from "@/lib/claude/health";
-import {
-  CLAIM_KINDS,
-  MODEL_EXTRACT_LIGHT,
-  MODEL_EXTRACT_RICH,
-  PROMPT_VERSION,
-  type ClaimKind,
-} from "./doctrine";
+import { CLAIM_KINDS, MODEL_EXTRACT, PROMPT_VERSION, type ClaimKind } from "./doctrine";
 import { bankPrompt } from "./bank";
 
 export function extractAvailable(): boolean {
   return claudeAvailable();
-}
-
-/** Opus or better, always (founder-decreed 2026-07-31). Both roster slots
- *  point at the parent brain now; the split survives only so a future decree
- *  can raise the rich side without touching the callers. */
-export function modelForOrigin(origin: string): string {
-  return origin === "teams" || origin === "meeting" || origin === "demo"
-    ? MODEL_EXTRACT_RICH
-    : MODEL_EXTRACT_LIGHT;
 }
 
 // ── the instruction ─────────────────────────────────────────────────────────
@@ -93,7 +78,7 @@ const SCHEMA = {
 } as const;
 
 // ── shapes ──────────────────────────────────────────────────────────────────
-export type Statement = {
+type Statement = {
   text: string;
   speaker: string;
   kind: ClaimKind;
@@ -105,7 +90,7 @@ export type Statement = {
 
 export type Filing = { topic: string; subtopic: string; statements: Statement[] };
 
-export type LiberalRead = { brief: string; filings: Filing[] };
+type LiberalRead = { brief: string; filings: Filing[] };
 
 export const EMPTY_READ: LiberalRead = { brief: "", filings: [] };
 
@@ -203,7 +188,7 @@ export function sanitizeRead(raw: unknown, body: string): LiberalRead {
 }
 
 // ── the call ────────────────────────────────────────────────────────────────
-export type ReadInput = {
+type ReadInput = {
   body: string;
   origin: string;
   space: string;
@@ -239,7 +224,7 @@ DOCUMENT — from ${input.space || "an internal source"}${
 ${body}`;
 
   const res = await client.messages.create({
-    model: modelForOrigin(input.origin),
+    model: MODEL_EXTRACT,
     max_tokens: 16384,
     thinking: { type: "adaptive" },
     system: [{ type: "text", text: SYSTEM, cache_control: { type: "ephemeral" } }],

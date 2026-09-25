@@ -1,14 +1,16 @@
 // The price desk (founder-decreed 2026-08-21): pricing questions pull from
-// the Pricing page — the one sanctioned money surface — and never from the
-// brain's stores, which are money-redacted by doctrine and can never hold a
-// figure. The quote is arithmetic from src/lib/pricing, computed at read
-// time, no model call. The ask ledger stores its money-redacted twin with a
-// pointer back to the page (the bank routes; the paper's exception does not
-// apply here).
+// the Pricing page — the one surface that carries OUR money — and never from
+// the brain's stores, which are money-redacted by doctrine and can never hold
+// a figure. (The country wing renders figures too, statutory ones — wage
+// floors, contributions — never ours: the no-redactions decree, CLAUDE.md,
+// The Playbook face; ruled 2026-09-25, C11.) The quote is arithmetic from
+// src/lib/pricing, computed at read time, no model call. The ask ledger
+// stores its money-redacted twin with a pointer back to the page (the bank
+// routes; the paper's exception does not apply here).
 
 import { addOns, billingNote, countries, offboardingFee, pricingGeneratedAt } from ".";
 
-export type PriceQuote = { answer: string; matched: string[] };
+type PriceQuote = { answer: string; matched: string[] };
 
 const PRICE_RE =
   /\b(price|prices|pricing|priced|quote|quoted|cost|costs|rate|rates|fee|fees)\b|how much/i;

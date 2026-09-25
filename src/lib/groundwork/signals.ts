@@ -9,9 +9,9 @@
 // pasted reading counts: if the latest grab shows no intent, an older High is
 // dead, not dormant.
 
-export const DECAY_DAYS = 7;
+const DECAY_DAYS = 7;
 
-export type IntentLevel = "high" | "moderate";
+type IntentLevel = "high" | "moderate";
 
 export type IntentSignal = {
   level: IntentLevel;
@@ -54,7 +54,7 @@ export function intentFor(notes: NoteLike[] | undefined, now: Date): IntentSigna
 
 // The newest salesnav-sourced note anywhere in the book — the fact the nudge
 // runs on, whatever account it landed against.
-export function newestReadIso(notesByAccount: Map<string, NoteLike[]>): string | null {
+function newestReadIso(notesByAccount: Map<string, NoteLike[]>): string | null {
   let newest: string | null = null;
   for (const notes of notesByAccount.values()) {
     for (const n of notes) {

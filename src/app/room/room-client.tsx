@@ -31,7 +31,7 @@ import {
   muteRoundupPartner,
   snoozeSignal,
   unmuteRoundupPartner,
-} from "../today/actions";
+} from "./ledger-actions";
 import { dismissSuggestion, saveNote, toggleCheck } from "../dashboard/actions";
 import {
   roomBriefedSet,
@@ -117,7 +117,6 @@ export type RoomRow = {
    *  whole thing. Every compression is a door (the click-depth law). */
   moveFull?: string;
   thin: boolean;
-  court: { line: string; tone: "you" | "them" | "quiet" | "none" };
   outstanding: {
     item: string;
     node: string;
@@ -538,7 +537,9 @@ function Row({
   const readDroppedFile = async (f: File, waiting?: File[]) => {
     setReading(f.name);
     setNote(null);
-    const read = await readFileToText(f, (fd) => roomReadPdf(row.accountId, fd));
+    const read = await readFileToText(f, (fd) => roomReadPdf(row.accountId, fd), {
+      door: "drop",
+    });
     if (!read.ok) {
       setReading(null);
       setNote(read.reason);

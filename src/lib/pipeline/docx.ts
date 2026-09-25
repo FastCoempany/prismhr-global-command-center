@@ -39,7 +39,6 @@ const VALUE_W = CONTENT - LABEL_W;
 
 const INK = "0A1C40";
 const QUIET = "6B7A99";
-const ORANGE = "E6701E";
 const AMBER = "B45309";
 
 const md = (iso: string) =>
@@ -361,8 +360,3 @@ export function reportFileName(dayLabel: string): string {
   const slug = dayLabel.replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "");
   return `Pipeline-Status-${slug || "today"}.docx`;
 }
-
-/** Orange is the one dominant move on the Pipeline surface and it belongs to
- *  Copy; the document keeps it for nothing, so the token is here only to say
- *  so out loud rather than leaving a reader to wonder. */
-export const DOC_ACCENT_UNUSED = ORANGE;

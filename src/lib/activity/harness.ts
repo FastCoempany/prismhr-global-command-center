@@ -1,6 +1,6 @@
 // The harness — the pure halves of the three adversarial passes, extracted
-// so the suite can adversarially test the verifiers themselves (§8.3): a
-// harness that cannot catch planted faults fails the build.
+// so the suite can adversarially test the verifiers themselves: a harness
+// that cannot catch planted faults fails the build.
 
 import { lintAct, lintReason, lintTerm } from "./lint";
 import type { GemCandidate } from "./distill";
@@ -55,7 +55,7 @@ export function mechanicalKill(
 
 /** ⚔ 1 · the coverage invariant's arithmetic: every account with human or
  *  CSM rows must be covered this run or hold prior coverage. Returns the
- *  names that are neither — a non-empty answer fails the run (§3.7). */
+ *  names that are neither — a non-empty answer fails the run. */
 export function coverageGaps(
   accounts: { id: string; name: string; humanRows: number }[],
   covered: Record<string, string>,
@@ -80,12 +80,12 @@ export function coverageGaps(
 }
 
 /** The distiller-quality flag: more than half the candidates dying is worth
- *  the founder's eye on the receipt (§3.8). */
+ *  the founder's eye on the receipt. */
 export function mortalityFlag(born: number, died: number): boolean {
   return born > 0 && died / born > 0.5;
 }
 
-/** The drop's work queues (§3.3), pure. An account already covered under the
+/** The drop's work queues, pure. An account already covered under the
  *  incoming sha never re-queues — the same rows distill to the same gems, and
  *  a re-drop of the same file must cost zero model calls (burned once,
  *  2026-08-21 — never again). */

@@ -101,11 +101,13 @@ const readFor = (notes: typeof trendNotes, now: Date) => {
   });
 };
 
-test("a same-day reply after the operator's send wins the court", () => {
+// The court line is retired in full (ruled 2026-09-25, D25): the move line
+// says who and when, and these pin that instead of the chip's string.
+test("a same-day reply after the operator's send makes the move theirs to answer", () => {
   const read = readFor(trendNotes, new Date("2026-09-02T20:00:00Z"));
   assert.ok(read.move.startsWith("Answer Adam"), `got: ${read.move}`);
-  assert.equal(read.court.tone, "you");
-  assert.ok(read.court.line.includes("ADAM"));
+  // Who and when, on the move line itself.
+  assert.equal(read.move, "Answer Adam. They wrote today.");
 });
 
 test("adversarial: the operator answering back the same day flips it again", () => {
@@ -119,7 +121,8 @@ test("adversarial: the operator answering back the same day flips it again", () 
   ];
   const read = readFor(answered, new Date("2026-09-02T20:00:00Z"));
   assert.ok(read.move.startsWith("Wait on"), `got: ${read.move}`);
-  assert.equal(read.court.tone, "them");
+  // The move names the thread's person and the day the operator wrote.
+  assert.equal(read.move, "Wait on Melanie. You wrote today.");
 });
 
 test("adversarial: clockless day entries still order across days", () => {

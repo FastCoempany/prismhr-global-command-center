@@ -41,8 +41,8 @@ export type StagedRow = {
 };
 
 /** Account-level columns the export repeats on every row — read once per
- *  account, first non-empty wins, never aggregated as if per-row (§2.3.5). */
-export type SliceMeta = {
+ *  account, first non-empty wins, never aggregated as if per-row. */
+type SliceMeta = {
   primaryContact: string;
   /** The primary contact's address when the export carries it — "" otherwise.
    *  Seeds a draft's TO line and resolves correspondents to a name. */
@@ -92,7 +92,7 @@ export const COMMENT_CAP = 500;
 export const BATCH_BYTE_CAP = 512_000;
 export const CAMPAIGN_KEY_CAP = 60;
 
-export type ManifestAccount = {
+type ManifestAccount = {
   id: string;
   name: string;
   rowsSum: string;

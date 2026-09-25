@@ -9,9 +9,9 @@
 
 import { COUNTRY_NAME } from "@/lib/intel/lexicon";
 
-export type FollowUpHit = { id: string; name: string };
+type FollowUpHit = { id: string; name: string };
 
-export type FollowUpRead = {
+type FollowUpRead = {
   // Book accounts named in the chase — these get the note and the action.
   accounts: FollowUpHit[];
   // Partners named in the chase — these get a partner note.

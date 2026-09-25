@@ -6,6 +6,7 @@
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import type { ClientHealth, Engagement } from "@/lib/engagement";
 import { canonicalAccountId } from "@/lib/book/merge";
+import { isRecordRowId } from "@/lib/notes/record-rows";
 import { inferActors, inferLane, type Lane } from "@/lib/intel/provenance";
 import type { Snooze, Validation, ValidationStatus } from "./build";
 import type { Todo, Touch, TouchLogEntry } from "./follow-ups";
@@ -109,7 +110,7 @@ type NoteRow = {
 // iterating the whole map would otherwise render a phantom account. Every
 // whole-map consumer filters on this.
 export function isNamespacedAccountId(id: string): boolean {
-  return (id ?? "").includes(":");
+  return !isRecordRowId(id);
 }
 
 export async function loadAccountNotes(): Promise<Map<string, AccountNote[]>> {
@@ -213,7 +214,7 @@ export async function loadPartnerNotes(): Promise<Map<string, PartnerNote[]>> {
 // structured path. "motion" = conversation already live (skip the roundup);
 // "not-mine" = another rep's account (excluded everywhere, ledgered with the
 // reason); "parked" = deliberately shelved.
-export type DispositionStatus = "motion" | "not-mine" | "parked";
+type DispositionStatus = "motion" | "not-mine" | "parked";
 
 // The only statuses loadDispositions() keeps. Anything else is dropped on the
 // floor — a real trap for the namespaced markers sharing this table
@@ -227,10 +228,10 @@ export const LOADED_DISPOSITION_STATUSES: readonly DispositionStatus[] = [
   "parked",
 ];
 
-export function isLoadedDispositionStatus(s: string): s is DispositionStatus {
+function isLoadedDispositionStatus(s: string): s is DispositionStatus {
   return (LOADED_DISPOSITION_STATUSES as readonly string[]).includes(s);
 }
-export type Disposition = {
+type Disposition = {
   status: DispositionStatus;
   reason: string;
   updatedAt: string; // ISO

@@ -12,10 +12,10 @@
 //     the file streamed up as a binary asset; assets carry to 2GB.
 
 export const ARCHIVE_LIMIT_BYTES = 25 * 1024 * 1024;
-export const ASSET_CAP_BYTES = 2 * 1024 * 1024 * 1024;
+const ASSET_CAP_BYTES = 2 * 1024 * 1024 * 1024;
 
 export type ArchiveGrant = { repo: string; token: string };
-export type ArchiveResult =
+type ArchiveResult =
   | { ok: true; kind: "file" | "release"; url: string; detail: string }
   | { ok: false; reason: string };
 

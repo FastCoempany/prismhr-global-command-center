@@ -10,7 +10,7 @@ import type { AccountNote } from "@/lib/today/overlay";
 
 export const GAP_NS = "gaps:";
 export const GAP_DISMISS = "gap-dismiss:";
-export const GAP_SHOW_CAP = 3;
+const GAP_SHOW_CAP = 3;
 
 export function gapNs(accountId: string): string {
   return `${GAP_NS}${accountId}`;
@@ -26,7 +26,7 @@ export type Gap = {
   at: string; // ISO — newest asks are the most deal-relevant
 };
 
-export function gapBody(question: string): string {
+function gapBody(question: string): string {
   return `? ${question.trim()}`;
 }
 

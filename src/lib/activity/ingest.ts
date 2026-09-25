@@ -50,14 +50,15 @@ const flagsOf = (f: {
 }): string =>
   `${f.automated ? "a" : ""}${f.inboundCall ? "i" : ""}${f.event ? "e" : ""}${f.receipt ? "r" : ""}`;
 
-export type IngestResult = {
+type IngestResult = {
   slices: AccountSlice[];
   manifest: DropManifest;
 };
 
 export type Ingest = {
   /** Feed one parsed CSV row. Returns a refusal message on a failed header
-   *  fingerprint — the loud-fail door (§3.10). */
+   *  fingerprint — the loud-fail door: a file that is not the report stops
+   *  here and says so. */
   takeRow(raw: string[]): { stop?: string };
   rowCount(): number;
   /** Cap, trim, checksum, and manifest. */
@@ -215,7 +216,8 @@ export function createIngest(
     }
     b.laneCounts[read.lane] += 1;
 
-    // Account-level columns: first non-empty wins, read once (§2.3.5).
+    // Account-level columns: first non-empty wins, read once, never
+    // aggregated as if per-row.
     if (!b.meta.primaryContact && r.primaryContact)
       b.meta.primaryContact = r.primaryContact.trim();
     if (!b.meta.primaryContactEmail && r.primaryContactEmail)
@@ -232,7 +234,8 @@ export function createIngest(
     if (!b.meta.gbc && r.gbc) b.meta.gbc = r.gbc.trim();
 
     if (read.lane === "intent") {
-      // Blast receipts collapse to arithmetic and never upload (§3.0).
+      // Blast receipts collapse to arithmetic and never upload: intent is
+      // tallied, never a touch.
       const d = day || "unknown";
       const dayRow = (b.tally.days[d] ??= { s: 0, o: 0, c: 0 });
       if (read.intentKind === "sent") dayRow.s += 1;

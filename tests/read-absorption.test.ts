@@ -3,15 +3,9 @@ import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { cwd } from "node:process";
-
-import { looksLikeNotes, modelFor } from "../src/lib/intel/ai-clean";
-import {
-  actionBody,
-  fallbackMove,
-  hasFallback,
-  splitFallback,
-  urgencyForDue,
-} from "../src/lib/room/deliverables";
+import { MODEL_READ } from "../src/lib/intranet/doctrine";
+import { WAYFINDER_ROUTES } from "../src/components/wayfinder-routes";
+import { actionBody, splitFallback, urgencyForDue } from "../src/lib/room/deliverables";
 import { gapDismissKey, gapNs, parseGapBody, readGaps } from "../src/lib/room/gaps";
 import {
   knowledgeKey,
@@ -19,20 +13,9 @@ import {
   playbookBody,
   readPlaybook,
 } from "../src/lib/playbook/store";
-import {
-  OUTCOME_KEY,
-  readOutcome,
-  stripOutcome,
-  writeOutcome,
-} from "../src/lib/dashboard/outcome";
+import { OUTCOME_KEY, readOutcome, writeOutcome } from "../src/lib/dashboard/outcome";
 import { outcomeMarkBody, readLoss } from "../src/lib/room/loss";
-import {
-  NO_FILTERS,
-  emptyBecause,
-  facetCounts,
-  selectQuestions,
-  type Filters,
-} from "../src/lib/intel/bank";
+import { selectQuestions, type Filters } from "../src/lib/intel/bank";
 import { DISCOVERY } from "../src/lib/intel/discovery";
 import { migrateNotes } from "../src/lib/dashboard/stages";
 import { cardNextStep, commitmentsFromCards } from "../src/lib/today/build";
@@ -48,6 +31,16 @@ import {
 } from "../src/lib/intel/deep-research";
 import { mintPrompt, parseAsks } from "../src/lib/intel/ask-mint";
 import type { AccountNote } from "../src/lib/today/overlay";
+
+// The Call Sheet's filter helpers left the bank 2026-09-25 (pass 4 ruling);
+// the empty filter set stays here as the fixture selectQuestions is tested with.
+const NO_FILTERS: Filters = {
+  category: "",
+  phase: "",
+  audience: "",
+  product: "",
+  soph: "",
+};
 
 const root = cwd();
 const iso = (d: string) => new Date(d).toISOString();
@@ -66,31 +59,11 @@ const note = (
 });
 
 // ── model routing ─────────────────────────────────────────────────────────────
-describe("the read routes notes-shaped pastes to the strong model", () => {
-  test("freeform call notes are notes-shaped", () => {
-    const raw = `7/29/26 call with Chassie\nthey want Canada + Mexico\nTO DO: get pre recorded demo via shane by 7/30`;
-    assert.equal(looksLikeNotes(raw), true);
-    assert.equal(modelFor(raw), "claude-opus-5");
-  });
-  test("an Outlook thread is shaped work, not notes — and still reads on opus", () => {
-    const raw = `OUTLOOK THREAD\nFrom: Shane Smith\nTo: Antaeus Coe\nSubject: RE: contracts\n\nthat works`;
-    assert.equal(looksLikeNotes(raw), false);
-    // Opus or better, always (decreed 2026-07-31) — shape no longer downgrades.
-    assert.equal(modelFor(raw), "claude-opus-5");
-  });
-  test("a Salesforce timeline is shaped work even without mail headers", () => {
-    const raw = [
-      "Show more actions",
-      "Text Body",
-      ...Array(60).fill("activity line"),
-    ].join("\n");
-    assert.equal(looksLikeNotes(raw), false);
-  });
-  test("a monster wall is never routed to the expensive model", () => {
-    assert.equal(looksLikeNotes("call notes\n" + "x".repeat(30_000)), false);
-  });
-  test("empty text is nothing-shaped", () => {
-    assert.equal(looksLikeNotes("   "), false);
+describe("the read tells notes-shaped pastes from shaped work", () => {
+  test("the read's model is the roster's slot: Opus or better, whatever the shape", () => {
+    // Opus or better, always (decreed 2026-07-31; one roster, ruled
+    // 2026-09-25) — the shape never picks the model, the roster does.
+    assert.match(MODEL_READ, /^claude-(opus|fable)-/);
   });
 });
 
@@ -106,20 +79,6 @@ describe("deliverables — the if/then rides the commitment", () => {
     assert.equal(text, "Get the pre-recorded demo from Shane");
     assert.equal(fallback, "send the ESC demo, scrubbed of proprietary detail");
     assert.ok(body.includes("· from 7/29 paste"));
-  });
-  test("a commitment with no contingency has no fallback", () => {
-    const plain = actionBody("Send the recap", "", "from 7/29 paste");
-    assert.equal(hasFallback(plain), false);
-    assert.equal(splitFallback(plain).text, "Send the recap · from 7/29 paste");
-  });
-  test("the blown-wall move names the contingency, not the commitment", () => {
-    const move = fallbackMove(body);
-    assert.ok(move.startsWith("Get the pre-recorded demo from Shane didn't land"));
-    assert.ok(move.includes("scrubbed of proprietary detail"));
-    assert.ok(!move.includes("from 7/29 paste"));
-  });
-  test("no fallback means no move to promote", () => {
-    assert.equal(fallbackMove("Send the recap"), "");
   });
   test("urgency follows the wall's distance", () => {
     const now = new Date("2026-07-29T12:00:00Z");
@@ -270,10 +229,6 @@ describe("Closed Won / Closed Lost — terminal staging", () => {
     assert.equal(readOutcome({ [OUTCOME_KEY]: "not json" }), null);
     assert.equal(readOutcome({ [OUTCOME_KEY]: '{"status":"maybe"}' }), null);
   });
-  test("the reserved key never leaks into a per-stage note view", () => {
-    const stripped = stripOutcome({ demo: "x", [OUTCOME_KEY]: "{}" });
-    assert.deepEqual(Object.keys(stripped), ["demo"]);
-  });
 });
 
 describe("the loss read prefers a stated outcome over an inferred one", () => {
@@ -336,20 +291,6 @@ describe("the card's filters tell the truth", () => {
     const ids = BANK.map((q) => q.id);
     assert.equal(new Set(ids).size, ids.length);
   });
-  test("no filter combination the chips offer can come up empty", () => {
-    // A chip is only clickable when its own count is non-zero, so for every
-    // single-facet selection the count and the selection must agree.
-    for (const facet of ["category", "phase", "audience", "product", "soph"] as const) {
-      const values = [
-        ...new Set(BANK.map((q) => (q as Record<string, unknown>)[facet] ?? "any")),
-      ];
-      const counts = facetCounts(BANK, NO_FILTERS, facet, values as never[], null);
-      for (const [v, n] of counts) {
-        const got = selectQuestions(BANK, { ...NO_FILTERS, [facet]: v } as Filters, null);
-        assert.equal(got.length, n, `${facet}=${v} count disagrees with selection`);
-      }
-    }
-  });
   test("the phase chips that used to be dead now carry questions", () => {
     for (const phase of ["investigate", "exec_summary", "contract"] as const) {
       const n = selectQuestions(BANK, { ...NO_FILTERS, phase }, null).length;
@@ -363,21 +304,6 @@ describe("the card's filters tell the truth", () => {
     assert.ok(eor.some((q) => (q.product ?? "any") === "any"));
     assert.ok(eor.some((q) => q.product === "eor"));
     assert.ok(!eor.some((q) => q.product === "payroll"));
-  });
-  test("an empty result says which filter to drop", () => {
-    const impossible: Filters = {
-      ...NO_FILTERS,
-      category: "classification",
-      phase: "contract",
-      audience: "partner",
-      product: "payroll",
-      soph: "displacement",
-    };
-    const shown = selectQuestions(BANK, impossible, null);
-    assert.equal(shown.length, 0);
-    const why = emptyBecause(BANK, impossible, null);
-    assert.ok(why.length > 20);
-    assert.ok(!/^0 of/.test(why));
   });
   test("a scenario leads with its own categories and sinks its noise to the tail", () => {
     // Avoid demotes instead of hiding (2026-08-24): a scenario's own traps
@@ -541,39 +467,35 @@ describe("the ask mint", () => {
 
 // ── the restructure ───────────────────────────────────────────────────────────
 describe("the restructure holds", () => {
-  const nav = readFileSync(join(root, "src/components/app-wayfinder.tsx"), "utf8");
+  // The wayfinder renders its rows from one table (src/components/
+  // wayfinder-routes.ts, since the 2026-09-25 rulings); the tab lists are
+  // read from that table's own data.
+  const live = WAYFINDER_ROUTES.filter((r) => !r.archived).map((r) => r.href);
   test("the Playbook is a tab and the battlecard is gone", () => {
-    assert.ok(nav.includes('href="/playbook"'));
-    assert.ok(!nav.includes("/battlecard"));
+    assert.ok(live.includes("/playbook"));
+    assert.ok(!WAYFINDER_ROUTES.some((r) => r.href.includes("/battlecard")));
     assert.ok(!existsSync(join(root, "src/app/battlecard")));
     assert.ok(existsSync(join(root, "src/app/playbook/page.tsx")));
   });
   test("Partners is no longer a tab, and its roster folded under Accounts", () => {
-    assert.ok(!/href="\/partners"/.test(nav));
+    assert.ok(!WAYFINDER_ROUTES.some((r) => r.href === "/partners"));
     const accounts = readFileSync(join(root, "src/app/accounts/page.tsx"), "utf8");
     assert.ok(accounts.includes("partnerRoster"));
     assert.ok(accounts.includes("Partner roster"));
   });
-  test("Today and the board are archived, not deleted", () => {
-    assert.ok(nav.includes("app-route-archive"));
-    assert.ok(nav.includes('href="/today"'));
-    assert.ok(existsSync(join(root, "src/app/today/page.tsx")));
-    assert.ok(existsSync(join(root, "src/app/page.tsx")));
-  });
   test("Intake became Capture and points at the room's own box", () => {
+    assert.ok(existsSync(join(root, "src/app/intake/page.tsx")));
     const intake = readFileSync(join(root, "src/app/intake/page.tsx"), "utf8");
     assert.ok(intake.includes('current="Capture"'));
     assert.ok(intake.includes('href="/room"'));
   });
-  test("the main row is seven: HomeRoom, Accounts, Groundwork, Playbook, Intranet, Pricing, Demos", () => {
-    // Everything before the archive group is a place the operator works. The
-    // count is the contract — a new tab has to earn its way in on purpose.
-    // The Intranet did (the app's brain, asked for by name), and Groundwork
-    // did (the prospecting room, founder-directed).
-    const main = nav.split("app-route-archive")[0];
-    const links = [...main.matchAll(/href="(\/[a-z]*)"/g)].map((m) => m[1]);
-    assert.deepEqual(links, [
-      "/",
+  test("the main row is eight: HomeRoom, Accounts, Groundwork, Playbook, Intranet, Pricing, Demos, Capture", () => {
+    // Every row is a place the operator works. The count is the contract — a
+    // new tab has to earn its way in on purpose. The Intranet did (the app's
+    // brain, asked for by name), Groundwork did (the prospecting room,
+    // founder-directed), and Capture stayed as the bookmarklet shelf's door
+    // when the archive group retired (ruled 2026-09-25).
+    assert.deepEqual(live, [
       "/room",
       "/accounts",
       "/groundwork",
@@ -581,22 +503,8 @@ describe("the restructure holds", () => {
       "/intranet",
       "/pricing",
       "/demos",
+      "/intake",
     ]);
-  });
-  test("Capture and Pipeline are archived, not deleted", () => {
-    const arch = nav.split("app-route-archive")[1] ?? "";
-    for (const href of ["/today", "/", "/pipeline", "/intake"]) {
-      assert.ok(arch.includes(`href="${href}"`), `${href} left the archive group`);
-    }
-    assert.ok(existsSync(join(root, "src/app/pipeline/page.tsx")));
-    assert.ok(existsSync(join(root, "src/app/intake/page.tsx")));
-  });
-  test("Pipeline concedes the pipeline to the Room and links land", () => {
-    const pipe = readFileSync(join(root, "src/app/pipeline/page.tsx"), "utf8");
-    assert.ok(/Room<\/Link> is the pipeline/.test(pipe), "the concession is missing");
-    // /book redirects to /accounts and drops the query — no card may point there.
-    assert.ok(!pipe.includes("/book"), "a card still links at the retired Book");
-    assert.ok(pipe.includes("/accounts?peo="));
   });
   test("the binding feature stays retired (founder-decreed 2026-08-22)", () => {
     // The card is account-less: no bind dropdown, no per-account retirement,
@@ -647,9 +555,6 @@ describe("the room wires every new mechanism", () => {
     test(`${wired} exists on the server`, () =>
       assert.ok(actions.includes(`export async function ${wired}`)));
   }
-  test("the paste's undo says it takes the opened actions back too", () => {
-    assert.ok(client.includes("the actions it opened included"));
-  });
   test("the research control states when it last ran", () => {
     // The Spring's chip grammar (2026-08-13), amended since: the label is the
     // verb, the run date rides the tooltip, and NEVER stands when neither
@@ -738,7 +643,7 @@ describe("the repairs hold", () => {
     assert.equal(isNamespacedAccountId("playbook:market"), true);
     assert.equal(isNamespacedAccountId("research:001x"), true);
     assert.equal(isNamespacedAccountId("0013600001abcDEF"), false);
-    for (const f of ["src/app/today/page.tsx", "src/app/archive/page.tsx"]) {
+    for (const f of ["src/app/archive/page.tsx"]) {
       const src = readFileSync(join(root, f), "utf8");
       assert.ok(src.includes("isNamespacedAccountId"), `${f} still iterates raw keys`);
     }
@@ -796,7 +701,6 @@ describe("the repairs hold", () => {
       "roomGapsRefill",
       "roomResearch",
       "roomRetire",
-      "roomReopen",
     ]) {
       const i = actions.indexOf(`export async function ${fn}(`);
       assert.ok(i > 0, `${fn} is gone`);

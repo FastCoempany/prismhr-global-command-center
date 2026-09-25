@@ -25,8 +25,10 @@ const out = (createdAt: string, subject = "Re: Global") => ({
   createdAt,
   actors: "Antaeus Coe → Bill Laffey +4",
 });
+// A substantive reply — a courtesy "thanks" alone is a closer, which warms
+// the lane but never annotates ↩ REPLIED (ruled 2026-09-25, R6).
 const inb = (createdAt: string) => ({
-  body: `✉ OL Aug 2 — Re: Global · Bill Laffey → Antaeus Coe\nthanks`,
+  body: `✉ OL Aug 2 — Re: Global · Bill Laffey → Antaeus Coe\nWe have two clients asking about Canada. Can you walk us through it?`,
   source: "outlook-ai",
   createdAt,
   actors: "Bill Laffey → Antaeus Coe",

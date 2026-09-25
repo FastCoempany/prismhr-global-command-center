@@ -4,7 +4,7 @@
 
 import { redactMoney } from "./lexicon";
 
-export type ResearchKind = "country" | "incumbent" | "licensing" | "custom";
+type ResearchKind = "country" | "incumbent" | "licensing" | "custom";
 
 const FOCUS: Record<ResearchKind, string> = {
   country:
@@ -36,5 +36,3 @@ export function researchPrompt(
   ];
   return lines.filter((l) => l !== "").join("\n");
 }
-
-export const CLAUDE_NEW_URL = "https://claude.ai/new";

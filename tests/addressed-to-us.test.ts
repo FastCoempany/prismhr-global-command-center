@@ -161,9 +161,11 @@ describe("names as the record actually stores them", () => {
       true,
     );
     assert.equal(
-      isAddressedToUs("Client Person → Pat O'Neil +1", [...HOME, "Pat O'Neil"], [
-        "Pat O'Neil",
-      ]),
+      isAddressedToUs(
+        "Client Person → Pat O'Neil +1",
+        [...HOME, "Pat O'Neil"],
+        ["Pat O'Neil"],
+      ),
       true,
     );
   });
@@ -204,9 +206,7 @@ describe("the Infiniti row", () => {
     // What the capture would give us if it kept one name instead of a count.
     const docs = corpusFor("INF", "Infiniti HR", {
       acctNotes: INFINITI.map((n) =>
-        n.id === "n5"
-          ? { ...n, actors: "Tom Harrison → Javier Ramirez" }
-          : n,
+        n.id === "n5" ? { ...n, actors: "Tom Harrison → Javier Ramirez" } : n,
       ),
       homeSide: HOME,
     });
@@ -311,13 +311,19 @@ describe("the recipient list, once the capture keeps one", () => {
         : n,
     );
     const docs = corpusFor("INF", "Infiniti HR", { acctNotes: withList, homeSide: HOME });
-    assert.equal(docs.find((d) => d.text.includes("At proposal stage"))!.direction, undefined);
+    assert.equal(
+      docs.find((d) => d.text.includes("At proposal stage"))!.direction,
+      undefined,
+    );
 
     const withUs = INFINITI.map((n) =>
       n.id === "n5" ? { ...n, recipients: "Javier Ramirez, Antaeus Coe" } : n,
     );
     const docs2 = corpusFor("INF", "Infiniti HR", { acctNotes: withUs, homeSide: HOME });
-    assert.equal(docs2.find((d) => d.text.includes("At proposal stage"))!.direction, "in");
+    assert.equal(
+      docs2.find((d) => d.text.includes("At proposal stage"))!.direction,
+      "in",
+    );
   });
 });
 
@@ -416,7 +422,10 @@ describe("the fix does not widen past the receiving side", () => {
   test("with no roster handed in, the read is unchanged from before", () => {
     // Every caller that has not been taught the roster yet keeps its old
     // behavior rather than silently losing replies.
-    const docs = corpusFor("INF", "Infiniti HR", { acctNotes: INFINITI });
+    const docs = corpusFor("INF", "Infiniti HR", {
+      acctNotes: INFINITI,
+      homeSide: undefined,
+    });
     const newest = docs.find((d) => d.text.includes("At proposal stage"))!;
     assert.equal(newest.direction, "in");
   });

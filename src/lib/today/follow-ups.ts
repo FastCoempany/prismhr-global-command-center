@@ -8,7 +8,7 @@ import { userDayKey, USER_TZ } from "@/lib/tz";
 
 // When the next check-in can land: later today, or tomorrow. That's the whole
 // menu — no multi-day windows.
-export type FollowUpWhen = "today" | "tomorrow";
+type FollowUpWhen = "today" | "tomorrow";
 
 export function asFollowUpWhen(v: string): FollowUpWhen {
   return v === "today" ? "today" : "tomorrow";
@@ -25,7 +25,7 @@ export type TouchLogEntry = { at: string; body: string };
 // "open" is the off-ramp for threads where nobody owes anybody a reply: the
 // cadence stops chasing entirely, the thread stays visible as open-ended, and
 // logging a new exchange re-arms it.
-export type TouchStatus = "awaiting" | "replied" | "responded" | "archived" | "open";
+type TouchStatus = "awaiting" | "replied" | "responded" | "archived" | "open";
 
 export type Touch = {
   subjectKey: string;
@@ -74,18 +74,10 @@ export function nextCheckIn(now: number, when: FollowUpWhen): Date {
 }
 
 // Whole days between an ISO instant and `now` (floored, never negative).
-export function daysSinceIso(iso: string, now: number = Date.now()): number {
+function daysSinceIso(iso: string, now: number = Date.now()): number {
   const t = Date.parse(iso);
   if (Number.isNaN(t)) return 0;
   return Math.max(0, Math.floor((now - t) / 86_400_000));
-}
-
-// Whole days until an ISO instant from `now` (ceil so "in 1.2 days" reads as 2;
-// past instants return 0 — they're due, not negative).
-export function daysUntilIso(iso: string, now: number = Date.now()): number {
-  const t = Date.parse(iso);
-  if (Number.isNaN(t)) return 0;
-  return Math.max(0, Math.ceil((t - now) / 86_400_000));
 }
 
 // A follow-up is "due" when it's still awaiting a reply and its follow-up instant
@@ -97,7 +89,7 @@ export function isDue(t: Touch, now: number = Date.now()): boolean {
   );
 }
 
-export type FollowUpBuckets = {
+type FollowUpBuckets = {
   due: Touch[]; // awaiting + past the follow-up instant — needs you now (most overdue first)
   upcoming: Touch[]; // awaiting + follow-up still in the future (soonest first)
   replied: Touch[]; // closed the loop (most recent first)
@@ -133,7 +125,7 @@ export function partitionFollowUps(
 // closed (or was never opened), a fresh roundup is DUE two days after the last
 // send. Live threads (awaiting/replied/responded/open) are excluded — you don't
 // stack a new roundup on an active conversation.
-export const ROUNDUP_CADENCE_DAYS = 2;
+const ROUNDUP_CADENCE_DAYS = 2;
 
 export function roundupDue(touch: Touch | undefined, now: number = Date.now()): boolean {
   if (!touch) return true; // never contacted — due immediately
@@ -143,7 +135,7 @@ export function roundupDue(touch: Touch | undefined, now: number = Date.now()): 
 
 // Upcoming check-ins, grouped by the calendar day they're due (UTC), soonest day
 // first. Labels read for scanning: "Today", "Tomorrow", else "Wednesday · Jul 15".
-export type DayGroup = { key: string; label: string; items: Touch[] };
+type DayGroup = { key: string; label: string; items: Touch[] };
 
 function utcDayKey(ms: number): string {
   return userDayKey(new Date(ms));
@@ -184,14 +176,6 @@ export function groupUpcomingByDay(
   // partitionFollowUps already sorted `upcoming` soonest-first, so insertion
   // order is day order and items within a day stay soonest-first.
   return [...groups.values()];
-}
-
-// Open notes carrying a future date — they join the cockpit's Scheduled list so
-// the calendar view is complete (check-ins + dated notes in one place).
-export function futureDatedTodos(todos: Todo[], now: number = Date.now()): Todo[] {
-  return todos
-    .filter((t) => !t.done && t.remindAt && Date.parse(t.remindAt) > now)
-    .sort((a, b) => Date.parse(a.remindAt) - Date.parse(b.remindAt));
 }
 
 // The ready-to-send follow-up nudge — a gentle "circling back," shaped by whether

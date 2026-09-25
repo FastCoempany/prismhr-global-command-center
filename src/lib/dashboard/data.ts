@@ -13,7 +13,7 @@ import {
   type NodeState,
 } from "./stages";
 
-export type Stakeholder = { name: string; role: string; note: string };
+type Stakeholder = { name: string; role: string; note: string };
 
 export type DashCardRow = {
   id: string;
@@ -30,7 +30,7 @@ export type DashCardRow = {
   stakeholders: Stakeholder[];
 };
 
-export type DashData = {
+type DashData = {
   status: "active" | "unauthenticated" | "database-unavailable";
   canWrite: boolean;
   cards: DashCardRow[];

@@ -121,10 +121,11 @@ export function corpusFor(
     // record shows working across several accounts (pipeline/build's
     // homeSideFrom). Only the inbound test reads it, and only to tell a reply
     // that reached us from a thread between two of the account's own people.
-    // Optional, and an omitted roster leaves the old read standing — a caller
-    // that has not been taught the roster keeps replies rather than quietly
-    // losing them.
-    homeSide?: readonly string[];
+    // A caller must SAY what it knows (ruled 2026-09-25, E2): the roster it
+    // holds, or `undefined` — which is not "an empty roster" but "this caller
+    // has not been taught who we are", and leaves the old read standing so a
+    // reply to a colleague is kept rather than quietly lost.
+    homeSide: readonly string[] | undefined;
   },
 ): CorpusDoc[] {
   const docs: CorpusDoc[] = [];

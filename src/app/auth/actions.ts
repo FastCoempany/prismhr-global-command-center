@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { clearAccessSession, isValidAccessCode, setAccessSession } from "@/lib/auth";
+import { isValidAccessCode, setAccessSession } from "@/lib/auth";
 
 function required(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -36,9 +36,4 @@ export async function signIn(formData: FormData) {
 
   await setAccessSession();
   redirect(next);
-}
-
-export async function signOut() {
-  await clearAccessSession();
-  redirect("/login");
 }

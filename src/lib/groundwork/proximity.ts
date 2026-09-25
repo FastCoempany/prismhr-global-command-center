@@ -5,7 +5,7 @@
 
 import type { Peo } from "@/lib/book";
 
-export type ProxBand = "metro" | "daydrive" | "flight" | "far";
+type ProxBand = "metro" | "daydrive" | "flight" | "far";
 
 // Chicago-metro towns that appear in the book. Lowercased contains-match so
 // "Westchester" and "Westchester, IL" both land.

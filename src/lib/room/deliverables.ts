@@ -5,8 +5,8 @@
 // travels inside the action's own body behind a marker: no schema change, and
 // every existing sheet renderer keeps working (it just shows one line).
 
-export const FALLBACK_GLYPH = "↯";
-export const PROVENANCE_GLYPH = "·";
+const FALLBACK_GLYPH = "↯";
+const PROVENANCE_GLYPH = "·";
 
 export type Commitment = {
   text: string;
@@ -38,19 +38,6 @@ export function splitFallback(body: string): Commitment {
       .replace(new RegExp(`\\s${PROVENANCE_GLYPH}\\s.*$`), "")
       .trim(),
   };
-}
-
-export function hasFallback(body: string): boolean {
-  return splitFallback(body).fallback.length > 0;
-}
-
-// The move when a dated commitment's date has passed and a fallback exists.
-// Plain and imperative — the operator should not have to reconstruct the plan.
-export function fallbackMove(body: string): string {
-  const { text, fallback } = splitFallback(body);
-  if (!fallback) return "";
-  const what = text.replace(/\s+·\s+from\s.*$/i, "").trim();
-  return `${what} didn't land. Go to the fallback: ${fallback}`;
 }
 
 // Urgency a dated commitment deserves. Anything due inside two days is high,

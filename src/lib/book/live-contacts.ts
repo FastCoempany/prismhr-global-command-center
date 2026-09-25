@@ -7,7 +7,7 @@
 import { MINE_RE } from "@/lib/intel/provenance";
 import type { BookContact } from "@/lib/book/contacts";
 
-export type LiveContact = BookContact & { fromRecord: true; firstSeen: string };
+type LiveContact = BookContact & { fromRecord: true; firstSeen: string };
 
 type NoteLike = { body: string; createdAt: string };
 

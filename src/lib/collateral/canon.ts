@@ -10,7 +10,7 @@
 // actually runs, and a partner asking "when can we go live" needs the second.
 // Source for the 2026-08-27 marks: intelligence/InfinitiHR_call_27AUG26_*.
 
-export type ProductTier = { name: string; forWho: string; includes: string[] };
+type ProductTier = { name: string; forWho: string; includes: string[] };
 
 export type Product = {
   key: "eor" | "contractors" | "payroll" | "talent";
@@ -20,7 +20,7 @@ export type Product = {
   keyFacts: string[];
 };
 
-export const PRODUCT_CANON: Product[] = [
+const PRODUCT_CANON: Product[] = [
   {
     key: "eor",
     name: "Global Employer of Record (EOR)",
@@ -160,14 +160,14 @@ export const PRODUCT_CANON: Product[] = [
 // parties in the Canadian chain — cost-favorable — and the open design question
 // on any Canada deal is what the client wants from a technology standpoint
 // (native-in-Prism experience vs. separate system).
-export const CANADA_DELIVERY_NOTE =
+const CANADA_DELIVERY_NOTE =
   "Canada: Vensure/PrismHR own local payroll tech in Canada (MPEX) — no 3rd parties in the chain, cost-favorable. Scope Canada deals around what the client wants from a technology standpoint.";
 
-export const PAYROLL_PRICING_PROCESS =
+const PAYROLL_PRICING_PROCESS =
   "Global Payroll pricing: there are NO standard list rates — each engagement is individually priced per country (per the internal agreement). Process: reach out to Anthony Falzone (Head of Global Ops at PrismHR) for the country quote and copy Aleks. Never state or estimate Global Payroll rates in a draft; say a country-specific quote is being prepared.";
 
 // Platform-level facts that apply across the family.
-export const CANON_FACTS: string[] = [
+const CANON_FACTS: string[] = [
   "One platform for EOR, AOR/contractors and global payroll — a single vendor instead of stitched point solutions",
   "Workforce support across 175+ countries; onboarding across 165+ countries; owned entities in 44 countries",
   "For existing PrismHR customers, Global is built into their setup — a new tab, no integration work",
@@ -177,9 +177,6 @@ export const CANON_FACTS: string[] = [
   "Scale: payroll processed at the hundred-billion scale, 2.2M+ worksite employees served, 90 brands in the Vensure family (PrismHR founded 1985, Vensure 2004)",
   "Market: EOR projected to grow by more than half between 2021 and 2028; 36% of employers report talent shortages",
 ];
-
-export const CANON_SOURCE =
-  "Release `prismmktgcollateral` (7/14/2026): PrismHR Global EOR flyer, Contractor Solutions flyer, Talent flyer, and the “Expand Without Borders” deck (54 slides) — plus the Global Payroll flyer (PHRFLY-GLOBALPYRLL), which dropped later on 7/14 and was ingested directly.";
 
 // A compact text block for grounding Claude prompts in the released canon.
 export function canonForPrompt(): string {

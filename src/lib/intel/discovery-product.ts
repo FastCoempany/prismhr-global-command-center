@@ -13,7 +13,10 @@
 // voice on every relay line), and coverage (empty category/phase/audience
 // cells filled). Ids are permanent: a retired question is keyed by id, so
 // renaming one un-retires it everywhere — asknext-done rows, intranet mirror
-// refs, and /playbook?open= deep links all key on the id.
+// refs, and the brain's playbook citations all key on the id. The Call Sheet
+// and its ?open= deep link are retired (founder-decreed 2026-09-15); a
+// citation opens in place to the bank's question (ruled 2026-09-25, C13 —
+// CLAUDE.md, The Playbook face :572).
 //
 // The twins retirement (2026-08-24, pass-two program step 1): eight questions
 // whose ground a DISCOVERY sibling already held were removed — x-payment-path

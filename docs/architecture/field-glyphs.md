@@ -84,7 +84,7 @@ This mark is app-owned. It is not the donor Grounded A.
 
 Implementation:
 
-- [src/components/field-glyph.tsx](../../src/components/field-glyph.tsx)
+- Implementation: the glyph component (src/components/field-glyph.tsx) was removed 2026-09-25 (pass 4, SAFE NOW 6): nothing rendered it; this spec stands as the design reference.
 
 Current names:
 

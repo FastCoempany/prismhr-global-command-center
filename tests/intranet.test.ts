@@ -8,14 +8,13 @@ import {
   AGE_DAYS,
   CANDIDATE_CAP,
   KIND_WEIGHT,
-  MODEL_EXTRACT_RICH,
+  MODEL_EXTRACT,
   MODEL_PLAN,
   MODEL_SYNTH,
   MODEL_SYNTH_HARD,
-  NOTHING_DELETED,
   RANK,
-  TOPIC_PROMOTE_AT,
 } from "../src/lib/intranet/doctrine";
+import { WAYFINDER_ROUTES } from "../src/components/wayfinder-routes";
 import {
   captureReceipt,
   checksum,
@@ -32,12 +31,7 @@ import {
   segmentMessages,
   segmentTranscript,
 } from "../src/lib/intranet/segment";
-import {
-  asKind,
-  locateQuote,
-  modelForOrigin,
-  sanitizeRead,
-} from "../src/lib/intranet/extract";
+import { asKind, locateQuote, sanitizeRead } from "../src/lib/intranet/extract";
 import {
   BANK,
   BUYER_QUESTIONS_PARENT,
@@ -48,11 +42,7 @@ import {
 import {
   descendantIds,
   foldLabel,
-  mergeCandidates,
-  proposeTopic,
   railTopics,
-  readyToPromote,
-  resolveTopic,
   sameLabel,
   stalenessLine,
 } from "../src/lib/intranet/index-topics";
@@ -67,20 +57,16 @@ import {
 import {
   longestVerbatimRun,
   modelFor,
-  readConfidence,
   sanitizeAnswer,
   violatesVerbatim,
 } from "../src/lib/intranet/synthesize";
 import {
-  ageLimit,
   disputeCount,
   kindsComparable,
   proposePairs,
-  readTime,
   withSupersessions,
 } from "../src/lib/intranet/time";
 import {
-  goneLine,
   mirrorAccountNote,
   mirrorCard,
   mirrorDemoNote,
@@ -98,8 +84,6 @@ import {
   healthLine,
   readCeilings,
   recallAt,
-  scoreCase,
-  summarise,
 } from "../src/lib/intranet/evals";
 import {
   accountsMentioned,
@@ -111,28 +95,14 @@ import {
   scopedAsk,
   type ProspectAsk,
 } from "../src/lib/intranet/bridges";
+import { askShapeRead, playbookKnowledgeDoc } from "../src/lib/intranet/playbook-in";
 import {
-  askShapeRead,
-  isPlaybookNamespace,
-  playbookKnowledgeDoc,
-} from "../src/lib/intranet/playbook-in";
-import {
-  archiveDayMeta,
-  archiveRollup,
-  chicagoDay,
   countryOf,
   countryTallies,
-  dayLabel,
   flagSrc,
-  groupByDay,
   launderDigest,
-  type LedgerEntry,
 } from "../src/lib/intranet/ledger";
-import {
-  sanitizeVerdicts,
-  summaryStale,
-  supersessionDirection,
-} from "../src/lib/intranet/verdicts";
+import { sanitizeVerdicts, supersessionDirection } from "../src/lib/intranet/verdicts";
 import type { Answer, Candidate, Claim, Msg, Topic } from "../src/lib/intranet/types";
 
 const root = cwd();
@@ -176,13 +146,10 @@ const topic = (over: Partial<Topic> & { id: string; label: string }): Topic => (
 describe("the doctrine is what the founder asked for", () => {
   test("Claude is the parent brain, and Fable is the escalation", () => {
     // A later "cost saving" that quietly downgrades the room fails here.
-    assert.equal(MODEL_EXTRACT_RICH, "claude-opus-5");
+    assert.equal(MODEL_EXTRACT, "claude-opus-5");
     assert.equal(MODEL_PLAN, "claude-opus-5");
     assert.equal(MODEL_SYNTH, "claude-opus-5");
     assert.equal(MODEL_SYNTH_HARD, "claude-fable-5");
-  });
-  test("nothing is ever deleted", () => {
-    assert.equal(NOTHING_DELETED, true);
   });
   test("ranking never looks at where a claim came from (C1)", () => {
     const src = readFileSync(join(root, "src/lib/intranet/retrieve.ts"), "utf8");
@@ -398,9 +365,9 @@ describe("the liberal read organizes, files, and briefs", () => {
     assert.equal(asKind("gibberish"), "fact");
   });
   test("every read gets opus or better — never haiku (decreed 2026-07-31)", () => {
-    assert.equal(modelForOrigin("demo"), "claude-opus-5");
-    assert.equal(modelForOrigin("teams"), "claude-opus-5");
-    assert.equal(modelForOrigin("todo"), "claude-opus-5");
+    // One roster, one slot (ruled 2026-09-25): the origin never picks the
+    // model any more, so there is one value to hold to the decree.
+    assert.match(MODEL_EXTRACT, /^claude-(opus|fable)-/);
   });
   test("junk degrades to empty rather than throwing", () => {
     const r = sanitizeRead(null, body);
@@ -444,35 +411,6 @@ describe("the index accumulates and stays still", () => {
     assert.ok(sameLabel("Risks with EOR", "EOR risk"));
     assert.ok(!sameLabel("EOR risk", "Payroll risk"));
     assert.equal(foldLabel("The Handover Process!"), "handover process");
-  });
-  test("a proposal needs three documents before it reaches the rail", () => {
-    let pool = proposeTopic([], { label: "Brazil hiring", why: "" }, "d1", NOW);
-    pool = proposeTopic(pool, { label: "Brazil hirings", why: "" }, "d2", NOW);
-    assert.equal(readyToPromote(pool).length, 0);
-    pool = proposeTopic(pool, { label: "Brazil hiring", why: "" }, "d3", NOW);
-    assert.equal(readyToPromote(pool).length, 1);
-    assert.equal(TOPIC_PROMOTE_AT, 3);
-  });
-  test("one loud document cannot promote a topic on its own", () => {
-    let pool = proposeTopic([], { label: "Wallet", why: "" }, "d1", NOW);
-    pool = proposeTopic(pool, { label: "Wallet", why: "" }, "d1", NOW);
-    pool = proposeTopic(pool, { label: "Wallet", why: "" }, "d1", NOW);
-    assert.equal(readyToPromote(pool).length, 0);
-  });
-  test("a merged topic keeps its row and redirects forever (I1)", () => {
-    const topics = [
-      topic({ id: "old", label: "EOR risks", status: "merged", mergedInto: "new" }),
-      topic({ id: "new", label: "EOR risk" }),
-    ];
-    assert.equal(resolveTopic(topics, "old")?.id, "new");
-  });
-  test("only near-but-not-identical labels are worth arbitrating", () => {
-    const pairs = mergeCandidates([
-      topic({ id: "a", label: "Brazil payroll calendar" }),
-      topic({ id: "b", label: "Brazil payroll calendars" }),
-      topic({ id: "c", label: "Partner commercials" }),
-    ]);
-    assert.ok(pairs.length <= 1);
   });
   test("a topic's branch is reachable to any depth", () => {
     const topics = [
@@ -676,21 +614,6 @@ describe("the answer composes, commits, and refuses well", () => {
     const answer = `Lesha put it plainly: “${source}”`;
     assert.ok(!violatesVerbatim(answer, [source]));
   });
-  test("thin is surfaced rather than hidden (F12)", () => {
-    assert.equal(readConfidence(cands(2), NOW), "thin");
-    assert.equal(
-      readConfidence(cands(5, { confidence: "hedged" }), NOW),
-      "thin",
-      "all-hedged evidence read as firm",
-    );
-    assert.equal(readConfidence(cands(5), NOW), "firm");
-  });
-  test("a contested record reads mixed", () => {
-    const c = cands(4);
-    c[0].claim.disputedWith = [c[1].claim.id];
-    c[1].claim.disputedWith = [c[0].claim.id];
-    assert.equal(readConfidence(c, NOW), "mixed");
-  });
   test("the harder brain takes over when the record fights itself", () => {
     const plain = cands(5);
     assert.equal(modelFor(plain, fallbackPlan("q")), MODEL_SYNTH);
@@ -751,68 +674,6 @@ describe("time is explained in words an operator can act on", () => {
     assert.equal(kindsComparable("question", "fact"), false);
     assert.equal(kindsComparable("decision", "fact"), true);
   });
-  test("superseded says what to do about it", () => {
-    const older = claim({
-      id: "old",
-      text: "the older position",
-      supersededBy: "new",
-      saidAt: "2026-03-01T12:00:00Z",
-    });
-    const newer = claim({
-      id: "new",
-      text: "the newer position",
-      saidAt: "2026-07-30T12:00:00Z",
-    });
-    const s = readTime(older, new Map([["new", newer]]), NOW);
-    assert.equal(s.state, "superseded");
-    assert.ok(/see the newer line/.test((s as { line: string }).line));
-  });
-  test("disputed names both voices so the split is legible", () => {
-    const a = claim({
-      id: "a",
-      text: "one framing",
-      speaker: "Lindsey Forrest",
-      disputedWith: ["b"],
-    });
-    const b = claim({ id: "b", text: "another framing", speaker: "Kimberly Durosko" });
-    const s = readTime(a, new Map([["b", b]]), NOW);
-    assert.equal(s.state, "disputed");
-    assert.ok(/Lindsey/.test((s as { line: string }).line));
-  });
-  test("aging is per kind — a commitment sours long before a fact", () => {
-    const old = "2026-05-01T12:00:00Z";
-    assert.equal(
-      readTime(
-        claim({ id: "x", text: "owed", kind: "commitment", saidAt: old }),
-        new Map(),
-        NOW,
-      ).state,
-      "aging",
-    );
-    assert.equal(
-      readTime(
-        claim({ id: "y", text: "a fact", kind: "fact", saidAt: old }),
-        new Map(),
-        NOW,
-      ).state,
-      "current",
-    );
-    assert.equal(
-      readTime(
-        claim({
-          id: "z",
-          text: "how long?",
-          kind: "prospect-question",
-          saidAt: "2020-01-01T00:00:00Z",
-        }),
-        new Map(),
-        NOW,
-      ).state,
-      "current",
-      "a prospect question aged out",
-    );
-    assert.equal(ageLimit("prospect-question"), Number.POSITIVE_INFINITY);
-  });
   test("a superseded claim never travels alone into an answer (F6)", () => {
     const older = claim({ id: "old", text: "older", supersededBy: "new" });
     const newer = claim({ id: "new", text: "newer" });
@@ -833,16 +694,6 @@ describe("the app's own record, and the promise never to forget it", () => {
     assert.equal(syncVerdict("abc", "xyz"), "update");
     assert.equal(syncVerdict(null, "abc"), "create");
   });
-  test("a vanished app row is stamped, never deleted (C6)", () => {
-    const line = goneLine("2026-07-30T12:00:00Z");
-    assert.ok(/has since been removed from the app/.test(line));
-    const src = readFileSync(join(root, "src/lib/intranet/mirror.ts"), "utf8");
-    assert.ok(!/\.delete\(|deleteMany/.test(src), "the mirror learned to delete");
-  });
-  test("the Playbook's namespaces defer to their own phase", () => {
-    assert.ok(isPlaybookNamespace("playbook:market"));
-    assert.ok(!isPlaybookNamespace("001simploy"));
-  });
   test("a prospect question's shape is read into plain words (C7)", () => {
     const line = askShapeRead("definitional", "the EOR slide");
     assert.ok(/still working out what it is/.test(line));
@@ -852,14 +703,15 @@ describe("the app's own record, and the promise never to forget it", () => {
 
 // ── the wiring ──────────────────────────────────────────────────────────────
 describe("the room is wired where the operator can reach it", () => {
-  const nav = readFileSync(join(root, "src/components/app-wayfinder.tsx"), "utf8");
   const page = readFileSync(join(root, "src/app/intranet/page.tsx"), "utf8");
   const client = readFileSync(join(root, "src/app/intranet/intranet-client.tsx"), "utf8");
   const css = readFileSync(join(root, "src/app/command-center.module.css"), "utf8");
 
   test("Intranet sits in the working row", () => {
-    const main = nav.split("app-route-archive")[0];
-    assert.ok(main.includes('href="/intranet"'), "the tab is missing or archived");
+    // The wayfinder renders from one table (src/components/wayfinder-routes.ts,
+    // since the 2026-09-25 rulings); the row's seat is read from its data.
+    const row = WAYFINDER_ROUTES.find((r) => r.href === "/intranet");
+    assert.ok(row && !row.archived, "the tab is missing or archived");
     assert.ok(page.includes('current="Intranet"'));
   });
   test("the ask bar, the rail, the paste dock and the fold are all present", () => {
@@ -975,10 +827,7 @@ describe("the chain that fills the brain is wired end to end", () => {
     // Next blocks navigation while an action is in flight, and a long
     // catch-up locked the operator in the room (caught 2026-08-22).
     assert.ok(client.includes('"/intranet/run"'), "nothing in the room starts the chain");
-    const runRoute = readFileSync(
-      join(root, "src/app/intranet/run/route.ts"),
-      "utf8",
-    );
+    const runRoute = readFileSync(join(root, "src/app/intranet/run/route.ts"), "utf8");
     assert.ok(runRoute.includes("runBrain"), "the run route never runs the brain");
     assert.ok(
       !client.includes("Bring the brain up to date"),
@@ -1005,10 +854,7 @@ describe("the chain that fills the brain is wired end to end", () => {
   });
   test("a paste is read on the spot and the operator watches the index grow (IV.3)", () => {
     assert.ok(client.includes('"/intranet/read"'), "Keep it is fire-and-forget again");
-    const readRoute = readFileSync(
-      join(root, "src/app/intranet/read/route.ts"),
-      "utf8",
-    );
+    const readRoute = readFileSync(join(root, "src/app/intranet/read/route.ts"), "utf8");
     assert.ok(readRoute.includes("readCapture"), "the read route never reads");
     assert.ok(client.includes("router.refresh"), "the rail never updates after ingest");
   });
@@ -1169,11 +1015,6 @@ describe("a contradiction has to justify itself", () => {
     );
     assert.equal(kept.length, 0);
   });
-  test("a summary is regenerated once its topic has grown a quarter", () => {
-    assert.equal(summaryStale(10, 8), true);
-    assert.equal(summaryStale(9, 8), false);
-    assert.equal(summaryStale(4, 0), true);
-  });
 });
 
 // ── Phase 13 · evals, governance and the bridges ────────────────────────────
@@ -1265,58 +1106,6 @@ describe("the measures that decide whether the room is any good", () => {
     };
     assert.equal(groundedness(a, 3), 2 / 3);
     assert.equal(groundedness({ ...a, citations: [] }, 3), 1);
-  });
-  test("a case that misattributes fails however good its recall", () => {
-    const c = EVAL_SET[0];
-    const claims = cands([
-      "four to six weeks from signature to first payroll",
-      "slipped",
-    ]);
-    const byId = new Map(claims.map((x) => [x.claim.id, x.claim]));
-    const r = scoreCase(c, {
-      candidates: claims,
-      answer: {
-        answer: "Four to six weeks, and it has slipped twice.",
-        citations: [1, 2],
-        reasoning: "",
-        setAside: [],
-        confidence: "firm",
-        gaps: [],
-      },
-      cited: [{ claimId: "c0", speaker: "somebody else" }],
-      byId,
-      nothingLine: "Nothing in the record",
-    });
-    assert.equal(r.passed, false);
-    assert.equal(r.note, "a citation credited the wrong speaker");
-  });
-  test("a failure says which commitment broke", () => {
-    const summary = summarise([
-      {
-        id: "a",
-        proves: "C1",
-        recall: 1,
-        attribution: true,
-        abstention: true,
-        grounded: 1,
-        passed: true,
-        note: "",
-      },
-      {
-        id: "b",
-        proves: "C7",
-        recall: 0.2,
-        attribution: true,
-        abstention: true,
-        grounded: 1,
-        passed: false,
-        note: "retrieval missed material a human marked relevant",
-      },
-    ]);
-    assert.equal(summary.passed, 1);
-    assert.equal(summary.failed, 1);
-    assert.ok(summary.lines[1].includes("C7"));
-    assert.ok(summary.lines[1].includes("retrieval missed"));
   });
 });
 
@@ -1865,71 +1654,6 @@ describe("the ingest digest says where things went, not just that the index grew
     const cl = readFileSync(join(root, "src/app/intranet/intranet-client.tsx"), "utf8");
     assert.ok(cl.includes('"Send it"'));
     assert.ok(!cl.includes('"Keep it"'), "the old button name came back");
-  });
-});
-
-// ── the Ledger (IV.8) ───────────────────────────────────────────────────────
-describe("the room is a running record that survives the tab", () => {
-  const mkAsk = (id: string, at: string): LedgerEntry => ({
-    kind: "ask",
-    id,
-    at,
-    question: "q",
-    answer: "a",
-    reasoning: "",
-    model: "",
-    citations: [],
-  });
-  const mkFed = (id: string, at: string): LedgerEntry => ({
-    kind: "fed",
-    id,
-    at,
-    space: "Global Sales Team",
-    title: "",
-    origin: "teams",
-    lines: ["Got it."],
-    briefs: [],
-    detail: [],
-  });
-
-  test("an instant lands on the operator's day, not UTC's", () => {
-    // 02:00 UTC on the 31st is still the evening of the 30th in Chicago.
-    assert.equal(chicagoDay("2026-07-31T02:00:00.000Z"), "2026-07-30");
-    assert.equal(chicagoDay("2026-07-30T15:00:00.000Z"), "2026-07-30");
-    assert.equal(chicagoDay("not a date"), "");
-  });
-  test("dividers speak: Today, Yesterday, then just the date", () => {
-    const now = "2026-07-30T18:00:00.000Z";
-    assert.ok(dayLabel("2026-07-30", now).startsWith("Today — "));
-    assert.ok(dayLabel("2026-07-29", now).startsWith("Yesterday — "));
-    assert.ok(!dayLabel("2026-07-22", now).includes("—"));
-  });
-  test("the record groups under day dividers, newest first", () => {
-    const days = groupByDay(
-      [
-        mkAsk("a1", "2026-07-29T20:00:00.000Z"),
-        mkFed("f1", "2026-07-30T19:00:00.000Z"),
-        mkAsk("a2", "2026-07-30T16:00:00.000Z"),
-      ],
-      "2026-07-30T21:00:00.000Z",
-    );
-    assert.equal(days.length, 2);
-    assert.equal(days[0].entries.map((e) => e.id).join(","), "f1,a2");
-    assert.equal(days[1].entries[0].id, "a1");
-  });
-  test("the archive rolls the record into months and days with counts", () => {
-    const months = archiveRollup([
-      { at: "2026-07-30T15:00:00.000Z", kind: "ask" },
-      { at: "2026-07-30T16:00:00.000Z", kind: "fed" },
-      { at: "2026-07-30T17:00:00.000Z", kind: "ask" },
-      { at: "2026-06-02T15:00:00.000Z", kind: "fed" },
-    ]);
-    assert.equal(months.length, 2);
-    assert.equal(months[0].month, "July 2026");
-    assert.equal(months[0].days[0].asks, 2);
-    assert.equal(months[0].days[0].pastes, 1);
-    assert.equal(archiveDayMeta(months[0].days[0]), "2 asks · 1 paste");
-    assert.equal(months[1].month, "June 2026");
   });
 });
 

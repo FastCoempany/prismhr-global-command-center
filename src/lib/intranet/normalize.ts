@@ -37,7 +37,7 @@ const REPORT_RE =
 const HEAD_TEAMS = /^TEAMS THREAD\b/;
 const HEAD_OUTLOOK = /^OUTLOOK THREAD\b/;
 
-export function detectOrigin(raw: string, hint?: Origin): Origin {
+function detectOrigin(raw: string, hint?: Origin): Origin {
   const head = (raw ?? "").trimStart();
   if (HEAD_TEAMS.test(head)) return "teams";
   if (HEAD_OUTLOOK.test(head)) return "paste";
@@ -124,7 +124,7 @@ export function readReport(body: string): CaptureReport | null {
 }
 
 /** Strip the grab's own scaffolding, so the stored body is conversation only. */
-export function stripScaffolding(body: string): string {
+function stripScaffolding(body: string): string {
   return (body ?? "")
     .replace(LINKS_BLOCK_RE, "")
     .replace(REPORT_RE, "")

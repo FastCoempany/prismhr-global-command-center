@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { PeoApproach, PeoIntent, PeoStage } from "@/generated/prisma/client";
 import { getAppAccess } from "@/lib/auth";
@@ -22,7 +21,8 @@ function str(fd: FormData, key: string, max = 4000) {
 
 function backTo(fd: FormData, peoId: string, extra?: Record<string, string>) {
   const raw = str(fd, "returnTo", 200);
-  const base = raw.startsWith("/") && !raw.startsWith("//") ? raw.split("?")[0] : "/book";
+  const base =
+    raw.startsWith("/") && !raw.startsWith("//") ? raw.split("?")[0] : "/accounts";
   const params = new URLSearchParams();
   if (peoId) params.set("peo", peoId);
   for (const [k, v] of Object.entries(extra ?? {})) params.set(k, v);
@@ -74,9 +74,6 @@ export async function savePeo(formData: FormData) {
     await prisma.peoActivity.create({ data: { peoId, body: activity } });
   }
 
-  revalidatePath("/");
-  revalidatePath("/book");
-  revalidatePath("/pipeline");
   redirect(backTo(formData, peoId, { saved: "1" }));
 }
 
@@ -109,8 +106,5 @@ export async function applyPlay(formData: FormData) {
   });
   await prisma.peoActivity.create({ data: { peoId, body: `Queued play: ${kit.name}` } });
 
-  revalidatePath("/");
-  revalidatePath("/book");
-  revalidatePath("/pipeline");
   redirect(backTo(formData, peoId, { saved: "1" }));
 }

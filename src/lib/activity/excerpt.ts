@@ -248,7 +248,7 @@ function nameFitsAddress(name: string, address: string): boolean {
   );
 }
 
-export type SenderRead = { name: string; email: string };
+type SenderRead = { name: string; email: string };
 
 /** Who wrote this email, from its own signature. Empty when the body does not
  *  say plainly — an unattributed row is honest; a misattributed one is not. */

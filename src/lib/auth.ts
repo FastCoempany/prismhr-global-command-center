@@ -2,10 +2,6 @@ import crypto from "node:crypto";
 import { cookies } from "next/headers";
 import { UserRole, type User } from "@/generated/prisma/client";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
-// ⚠ TEMPORARY: site is PUBLIC while this flag is true — anyone with the URL
-// gets full owner access (view + edit), and the edge proxy skips its cookie
-// gate too. One flip in src/lib/public-access.ts restores the private gate.
-import { PUBLIC_ACCESS } from "@/lib/public-access";
 
 export const ACCESS_COOKIE_NAME = "field_signal_access";
 
@@ -14,7 +10,7 @@ const ACCESS_COOKIE_MAX_AGE = 60 * 60 * 24 * 90;
 const ACCESS_COOKIE_MAX_AGE_MS = ACCESS_COOKIE_MAX_AGE * 1000;
 const FALLBACK_OWNER_EMAIL = "antaeus@example.local";
 
-export type AppAccess =
+type AppAccess =
   | {
       status: "unauthenticated";
       appUser: null;
@@ -95,10 +91,6 @@ function isValidAccessToken(token: string | undefined) {
   }
 }
 
-export function hasAccessCookieValue(value: string | undefined) {
-  return isValidAccessToken(value);
-}
-
 export function isValidAccessCode(input: string) {
   const expected = accessCode();
   if (!expected) return false;
@@ -117,20 +109,15 @@ export async function setAccessSession() {
   });
 }
 
-export async function clearAccessSession() {
-  const cookieStore = await cookies();
-  cookieStore.delete(ACCESS_COOKIE_NAME);
-}
-
-export async function hasAccessSession() {
+async function hasAccessSession() {
   const cookieStore = await cookies();
   return isValidAccessToken(cookieStore.get(ACCESS_COOKIE_NAME)?.value);
 }
 
 export async function getAppAccess(): Promise<AppAccess> {
-  // When public, skip the cookie gate entirely — everyone is treated as the
-  // signed-in owner (full read + write) and no login screen is shown.
-  if (!PUBLIC_ACCESS && !(await hasAccessSession())) {
+  // Every page signs in (ruled 2026-09-25): there is no public mode, so the
+  // cookie gate always runs.
+  if (!(await hasAccessSession())) {
     return {
       appUser: null,
       authEmail: null,

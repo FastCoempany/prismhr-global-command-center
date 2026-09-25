@@ -7,7 +7,7 @@
 // questions asked on every call whatever the product.
 
 /** What a partner is actually worried about, the five that recur. */
-export type Issue = "compliance" | "control" | "speed" | "cost" | "oneplace";
+type Issue = "compliance" | "control" | "speed" | "cost" | "oneplace";
 
 /** The rung a line stands on. Strongest first; nothing is ever faked. */
 export type Rung = "tape" | "filed" | "research" | "none";
@@ -15,7 +15,7 @@ export type Rung = "tape" | "filed" | "research" | "none";
 /** [what it says, the rung, where it came from] */
 export type Cite = [text: string, rung: Rung, source?: string];
 
-export type Solve = {
+type Solve = {
   /** The answer in one line. */
   head: string;
   /** The answer said properly. */
@@ -85,7 +85,7 @@ export type Cue = {
   cty?: string[];
 };
 
-export type BetweenQ = { q: string; a: string; ev: Cite[] };
+type BetweenQ = { q: string; a: string; ev: Cite[] };
 
 export const ISSUES: Record<Issue, string> = {
   compliance: "Compliance",

@@ -16,9 +16,9 @@ import type { AccountNote } from "@/lib/today/overlay";
 export const PLAYBOOK_MARKET = "playbook:market";
 export const PLAYBOOK_LESSONS = "playbook:lessons";
 
-export type PlaybookKind = "market" | "lesson";
+type PlaybookKind = "market" | "lesson";
 
-export type PlaybookEntry = {
+type PlaybookEntry = {
   id: string;
   kind: PlaybookKind;
   text: string;

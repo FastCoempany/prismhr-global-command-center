@@ -5,8 +5,8 @@
 
 export const INST_NS = "inst:";
 
-export type InstitutionKind = "client-world" | "partner-world" | "home-turf";
-export type InstitutionRung = "verify" | "attend" | "contribute" | "host" | "referral";
+type InstitutionKind = "client-world" | "partner-world" | "home-turf";
+type InstitutionRung = "verify" | "attend" | "contribute" | "host" | "referral";
 
 export type Institution = {
   slug: string;

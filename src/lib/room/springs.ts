@@ -15,7 +15,7 @@
 // and render with a clock, and what is finished rides the line separately as
 // "· N done", so neither belongs in it.
 
-export type TodayRegister = {
+type TodayRegister = {
   /** How many things are open today — owed lines, open commitments, and
    *  whatever the display cap held back. */
   count: number;

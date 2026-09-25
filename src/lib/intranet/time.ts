@@ -8,16 +8,10 @@
 // point. That is a model call — but only after the mechanical pair proposal
 // below has cut a 60-claim topic from 1,770 pairs to fewer than thirty.
 
-import { AGE_DAYS, CONTRADICTION_MIN_DAYS, type ClaimKind } from "./doctrine";
+import { CONTRADICTION_MIN_DAYS, type ClaimKind } from "./doctrine";
 import type { Claim } from "./types";
 
 const DAY = 86_400_000;
-
-export type TimeState =
-  | { state: "current" }
-  | { state: "superseded"; byId: string; line: string }
-  | { state: "disputed"; withIds: string[]; line: string }
-  | { state: "aging"; line: string };
 
 /** Pairs worth arbitrating. All-pairs is quadratic and unaffordable; these four
  *  mechanical conditions do the cutting before any model sees anything. */
@@ -61,74 +55,6 @@ export function kindsComparable(a: ClaimKind, b: ClaimKind): boolean {
   return (COMPARABLE[a] ?? []).includes(b);
 }
 
-/** Days after which a claim of this kind is worth confirming. A commitment goes
- *  stale in a month; a prospect question never does. */
-export function ageLimit(kind: ClaimKind): number {
-  return AGE_DAYS[kind] ?? 365;
-}
-
-function fmt(iso: string): string {
-  const t = Date.parse(iso);
-  if (Number.isNaN(t)) return "";
-  return new Date(t).toLocaleDateString("en-US", {
-    month: "long",
-    timeZone: "America/Chicago",
-  });
-}
-
-function fmtShort(iso: string): string {
-  const t = Date.parse(iso);
-  if (Number.isNaN(t)) return "";
-  return new Date(t).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    timeZone: "America/Chicago",
-  });
-}
-
-/** What a claim's age and relations mean, in words an operator can act on. */
-export function readTime(
-  claim: Claim,
-  all: Map<string, Claim>,
-  nowIso: string,
-): TimeState {
-  if (claim.supersededBy) {
-    const newer = all.get(claim.supersededBy);
-    if (newer)
-      return {
-        state: "superseded",
-        byId: newer.id,
-        line: `Updated ${fmtShort(newer.saidAt)} — see the newer line.`,
-      };
-  }
-  if (claim.disputedWith.length) {
-    const others = claim.disputedWith.map((id) => all.get(id)).filter(Boolean) as Claim[];
-    if (others.length) {
-      const who = [...new Set([claim.speaker, ...others.map((o) => o.speaker)])]
-        .filter((s) => s && s !== "unknown")
-        .slice(0, 2);
-      // Naming the speakers here is provenance in service of an answer, not a
-      // person index — the narrow exception C4 allows.
-      const line =
-        who.length === 2
-          ? `${who[0]} and ${who[1]} landed on different framings.`
-          : "The record disagrees with itself here.";
-      return { state: "disputed", withIds: others.map((o) => o.id), line };
-    }
-  }
-  const limit = ageLimit(claim.kind);
-  if (Number.isFinite(limit)) {
-    const age = (Date.parse(nowIso) - Date.parse(claim.saidAt)) / DAY;
-    if (Number.isFinite(age) && age > limit) {
-      return {
-        state: "aging",
-        line: `Said in ${fmt(claim.saidAt)}. Confirm it.`,
-      };
-    }
-  }
-  return { state: "current" };
-}
-
 /** A superseded claim never travels alone into synthesis — its superseder goes
  *  with it, so the model can see which is which rather than treating a March
  *  position as today's (F6). */
@@ -162,10 +88,4 @@ export function disputeCount(claims: Claim[]): number {
     }
   }
   return n;
-}
-
-/** The dismissal key for a verdict the operator waved off. Recorded, never
- *  re-proposed — the founder knows things the corpus doesn't. */
-export function verdictDismissKey(aId: string, bId: string): string {
-  return `intranet-verdict:${[aId, bId].sort().join(":")}`;
 }

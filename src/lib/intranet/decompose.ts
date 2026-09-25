@@ -16,7 +16,7 @@ import {
 } from "./doctrine";
 import type { Claim, Topic } from "./types";
 
-export type SplitProposal = {
+type SplitProposal = {
   verdict: "split" | "keep";
   why: string;
   children: { label: string; summary: string; claimIds: string[] }[];
@@ -141,15 +141,4 @@ export async function runSplit(topic: Topic, claims: Claim[]): Promise<SplitProp
   } catch {
     return KEEP;
   }
-}
-
-/** Undoing a split: children's claims return to the parent and the children are
- *  marked merged-into-parent, never deleted (C6). Available from the rail,
- *  because the model will occasionally be wrong and the operator should not have
- *  to live with it. */
-export function unsplitPlan(
-  parent: Topic,
-  children: Topic[],
-): { childIds: string[]; mergedInto: string } {
-  return { childIds: children.map((c) => c.id), mergedInto: parent.id };
 }

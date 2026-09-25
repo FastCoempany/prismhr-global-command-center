@@ -19,7 +19,7 @@ import { todoBelongsTo } from "@/lib/room/sheet-view";
 import { visibleText } from "@/lib/today/route-notes";
 import { redactMoney } from "@/lib/intel/lexicon";
 
-export type LiveRead = { accountId: string; name: string; lines: string[] };
+type LiveRead = { accountId: string; name: string; lines: string[] };
 
 const norm = (s: string) => (s ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
 

@@ -117,25 +117,8 @@ export function dayLabel(dayKey: string, nowIso: string): string {
   return named;
 }
 
-export type LedgerDay = { key: string; label: string; entries: LedgerEntry[] };
-
-/** The record, grouped under day dividers, newest day first, newest entry
- *  first within a day. */
-export function groupByDay(entries: LedgerEntry[], nowIso: string): LedgerDay[] {
-  const sorted = [...entries].sort((a, b) => b.at.localeCompare(a.at));
-  const out: LedgerDay[] = [];
-  for (const e of sorted) {
-    const key = chicagoDay(e.at);
-    if (!key) continue;
-    const last = out[out.length - 1];
-    if (last && last.key === key) last.entries.push(e);
-    else out.push({ key, label: dayLabel(key, nowIso), entries: [e] });
-  }
-  return out;
-}
-
 // ── the archive ─────────────────────────────────────────────────────────────
-export type ArchiveDay = { key: string; label: string; asks: number; pastes: number };
+type ArchiveDay = { key: string; label: string; asks: number; pastes: number };
 export type ArchiveMonth = { month: string; days: ArchiveDay[] };
 
 /** The record calendarized: months, then days, each day carrying its counts.

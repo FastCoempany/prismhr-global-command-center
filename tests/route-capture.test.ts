@@ -32,7 +32,7 @@ test("a known contact email routes with the strongest score", () => {
     ROSTER,
   );
   assert.equal(r.best?.id, "SIMPLOY01");
-  assert.match(r.best!.why, /dana@simploy\.com/);
+  assert.equal(r.best?.rung, "email");
 });
 
 test("a company domain routes when the exact contact is unknown", () => {
@@ -41,7 +41,7 @@ test("a company domain routes when the exact contact is unknown", () => {
     ROSTER,
   );
   assert.equal(r.best?.id, "ADVOCATE01");
-  assert.match(r.best!.why, /advocatepay\.com/);
+  assert.equal(r.best?.rung, "domain");
 });
 
 test("freemail and our own domain route nothing", () => {
@@ -99,7 +99,7 @@ test("initials surface candidates but never auto-route", () => {
   );
   assert.equal(r.best, null);
   assert.equal(r.candidates.length, 2);
-  assert.ok(r.candidates.every((c) => /matches the initials/.test(c.why)));
+  assert.ok(r.candidates.every((c) => c.rung === "initials"));
 });
 
 test("a contact email still beats matching initials", () => {

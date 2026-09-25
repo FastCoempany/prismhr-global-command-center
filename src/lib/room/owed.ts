@@ -6,7 +6,7 @@
 
 import { MINE_RE } from "@/lib/intel/provenance";
 
-export type OwedSuggestion = {
+type OwedSuggestion = {
   noteId: string;
   key: string; // durable dismissal key: owed:<noteId>:<hash>
   text: string; // the owed thing, ready to become an action body
@@ -69,7 +69,7 @@ function isInbound(actors: string): boolean {
 // only — nothing files, and the moment their reply lands the court flips
 // and this read retires itself.
 
-export type TheirOwed = {
+type TheirOwed = {
   noteId: string;
   who: string; // the owner as the record names them
   text: string; // the thing they owe

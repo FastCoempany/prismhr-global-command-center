@@ -14,7 +14,7 @@ import sheet from "./countries.json";
 export type Rung = "tape" | "filed" | "research" | "none";
 export type Verdict = "ok" | "note" | "ask" | "no";
 
-export type CountryPoint = { label: string; value: string; source?: string };
+type CountryPoint = { label: string; value: string; source?: string };
 
 export type CountryRow = {
   /** Country name as the pricing list spells it. */

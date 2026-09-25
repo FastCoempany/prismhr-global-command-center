@@ -11,10 +11,35 @@
 //
 // Money is redacted at the write site, like everywhere else.
 
+import { redactMoney } from "@/lib/intel/lexicon";
+import { OPERATOR_NAME } from "@/lib/intel/provenance";
+
 export const ACT_DRAFT_NS = "actdraft:";
 export const SEAT_NS = "seat:";
 
-export type ActDraft = { term: string; to: string; subject: string; body: string };
+// The row Send files — a real ✉ outbound on the record. Provenance is
+// columns (ruled 2026-09-25, D23/P3): every writer fills actors and
+// recipients at write, the Act Lane included, and money never reaches the
+// body. Pure, so the canon suite pins the row without a database.
+export function actSendRow(a: { to: string; subject: string }): {
+  body: string;
+  lane: "mine";
+  actors: string;
+  recipients: string;
+  source: "act-lane";
+} {
+  const to = (a.to ?? "").trim();
+  const subject = (a.subject ?? "").trim();
+  return {
+    body: redactMoney(`✉ ${subject || "Sent"} — sent to ${to}.`),
+    lane: "mine",
+    actors: `${OPERATOR_NAME} → ${to}`,
+    recipients: to,
+    source: "act-lane",
+  };
+}
+
+type ActDraft = { term: string; to: string; subject: string; body: string };
 
 export function renderActDraftBody(d: ActDraft): string {
   return [

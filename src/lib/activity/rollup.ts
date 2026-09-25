@@ -1,13 +1,13 @@
 // The rollup builder — pure arithmetic and verbatim quotation over a staged
 // slice, NO model call, because the rollup feeds counts the operator will
-// quote out loud (the covenant, §7): every number rendered anywhere in the
+// quote out loud (the covenant): every number rendered anywhere in the
 // app traces back to this file's arithmetic, never to generated text.
 
 import { isMachineryName, type ActivityLane } from "./classify";
 import { stripThreadTokens } from "./parse";
 import type { AccountSlice, StagedRow } from "./types";
 
-export type ActorTally = { name: string; kind: string; lane: ActivityLane; n: number };
+type ActorTally = { name: string; kind: string; lane: ActivityLane; n: number };
 
 export type NotableThread = {
   subject: string; // rendered (thread tokens stripped)
@@ -248,7 +248,7 @@ export function buildRollup(inp: {
 }
 
 /** The honesty line for an account with no surviving gems — arithmetic
- *  sentences from the rollup, never model text (§3.7). */
+ *  sentences from the rollup, never model text. */
 export function verdictLine(r: Rollup): string {
   const human = r.lanes.human + r.lanes.csm;
   const blasts = r.intent.s + r.intent.o + r.intent.c;

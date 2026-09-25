@@ -1,7 +1,7 @@
 import screensJson from "./screens.json";
 import flowsJson from "./flows.json";
 import companionJson from "./companion.json";
-import { modules as catalogModules, type ModuleEntry } from "@/lib/catalog";
+import { modules as catalogModules } from "@/lib/catalog";
 
 // v3 Sidekick data layer — ONE canonical screen store; flows are ordered
 // references into it (never copies). Everything here is account-neutral and
@@ -35,7 +35,7 @@ export type V3Flow = {
   screenIds: string[];
 };
 
-export type V3Objection = {
+type V3Objection = {
   objection: string;
   response: string;
   relatedScreenId: string;
@@ -52,24 +52,15 @@ export type V3Companion = {
 // without it, so the two Sidekicks can't touch each other's playbooks.
 export const V3_PLAYBOOK_PREFIX = "v3:";
 
-export const v3Screens = screensJson.screens as V3Screen[];
-export const v3Flows = flowsJson.flows as V3Flow[];
+const v3Screens = screensJson.screens as V3Screen[];
+const v3Flows = flowsJson.flows as V3Flow[];
 export const v3Companion = companionJson as unknown as V3Companion;
 
 export const v3MasterFlow = v3Flows[0];
 
 const byId = new Map(v3Screens.map((s) => [s.id, s]));
 
-export function getV3Screen(id: string): V3Screen | undefined {
-  return byId.get(id);
-}
-
 export const v3ScreenIds = new Set(v3Screens.map((s) => s.id));
-
-// Module lens over the same store — reuses the real catalog module labels.
-export const v3Modules: ModuleEntry[] = catalogModules.filter(([key]) =>
-  v3Screens.some((s) => s.module === key),
-);
 
 export function v3ModuleLabel(key: string): string {
   return catalogModules.find(([k]) => k === key)?.[1] ?? key;

@@ -32,7 +32,7 @@ export type ScreenOverride = {
   branching: string[];
 };
 
-export type SidekickV3Data = {
+type SidekickV3Data = {
   status: "active" | "unauthenticated" | "database-unavailable";
   canWrite: boolean;
   message: string;

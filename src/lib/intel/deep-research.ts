@@ -10,6 +10,7 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import { claudeClient, claudeAvailable } from "@/lib/claude/health";
+import { MODEL_RESEARCH } from "@/lib/intranet/doctrine";
 import { redactMoney } from "@/lib/intel/lexicon";
 import { normPerson } from "@/lib/intel/provenance";
 
@@ -19,7 +20,21 @@ export function researchNs(accountId: string): string {
   return `${RESEARCH_NS}${accountId}`;
 }
 
-export type ResearchFinding = {
+/** The research chip reads the LATEST of both stores — the on-demand deep
+ *  pass (research: notes) and the book-wide sweep — never whichever one the
+ *  surface happened to read first (the Spring; the Ted doctrine's merge-by-
+ *  latest). Undefined only when neither has touched the account. */
+export function latestResearchAt(deep?: string, sweep?: string): string | undefined {
+  const d = Date.parse(deep ?? "");
+  const s = Date.parse(sweep ?? "");
+  const hasDeep = !Number.isNaN(d);
+  const hasSweep = !Number.isNaN(s);
+  if (!hasDeep && !hasSweep) return undefined;
+  if (hasDeep && (!hasSweep || d >= s)) return deep;
+  return sweep;
+}
+
+type ResearchFinding = {
   summary: string; // 2-4 plain sentences: what this company is and does
   signals: string[]; // hiring/expansion/compliance signals worth acting on
   countries: string[]; // countries named anywhere in the evidence
@@ -28,7 +43,7 @@ export type ResearchFinding = {
   sources: { title: string; url: string }[];
 };
 
-export const EMPTY_FINDING: ResearchFinding = {
+const EMPTY_FINDING: ResearchFinding = {
   summary: "",
   signals: [],
   countries: [],
@@ -206,7 +221,7 @@ export async function runResearch(input: {
   ];
   const ask = () =>
     client.messages.create({
-      model: "claude-opus-5",
+      model: MODEL_RESEARCH,
       max_tokens: 8192,
       system: SYSTEM,
       tools: [{ type: "web_search_20260209", name: "web_search", max_uses: 8 }],

@@ -27,7 +27,8 @@ import {
 } from "@/lib/activity/read";
 import { USER_TZ, userDayKey } from "@/lib/tz";
 
-export type Band = "now" | "eleven" | "two";
+import { type Band } from "./bands";
+export { BAND_TABLE, bandAt, chicagoMinutes, currentBand, type Band } from "./bands";
 
 export type QueueRuleId =
   | "seated"
@@ -61,13 +62,13 @@ export const QUEUE_CAP = 6;
 // The silence-bump cadence: a first touch left unanswered gets its second
 // touch after BUMP_QUIET_DAYS; past REVIVAL_QUIET_DAYS the thread is cold and
 // the move becomes a deliberate re-open instead of a bump.
-export const BUMP_QUIET_DAYS = 7;
-export const REVIVAL_QUIET_DAYS = 45;
+const BUMP_QUIET_DAYS = 7;
+const REVIVAL_QUIET_DAYS = 45;
 
 // Research holds for a quarter (founder-decreed 2026-08-14): Groundwork puts
 // no pressure out front until a pass — per-account or book-wide — is 90 days
 // old. Fresh research on demand is the stage button's job, not the queue's.
-export const RESEARCH_STALE_DAYS = 90;
+const RESEARCH_STALE_DAYS = 90;
 
 // The record's live motion excludes an account from prospecting (canon:
 // Groundwork is outbound only; reactive motion belongs to the HomeRoom —
@@ -75,8 +76,8 @@ export const RESEARCH_STALE_DAYS = 90;
 // engaging when a real inbound landed inside the window, or a meeting, call,
 // or transcript filed fresh. The operator's own outbound never excludes —
 // the drumbeat rules need it.
-export const MOTION_INBOUND_DAYS = 21;
-export const MOTION_MEETING_DAYS = 14;
+const MOTION_INBOUND_DAYS = 21;
+const MOTION_MEETING_DAYS = 14;
 
 export function liveMotionIds(
   notesById: Map<string, { body: string; source: string; createdAt: string }[]>,
@@ -107,7 +108,7 @@ export function liveMotionIds(
 
 // A wire hit older than this no longer justifies a news note — the trigger
 // is perishable by design.
-export const WIRE_FRESH_DAYS = 5;
+const WIRE_FRESH_DAYS = 5;
 
 type NoteLike = { body: string; source: string; createdAt: string };
 type TouchLike = {
@@ -117,7 +118,7 @@ type TouchLike = {
   status: string;
 };
 
-export type QueueInput = {
+type QueueInput = {
   accounts: Peo[];
   intelById: Map<string, DealIntel>; // present only for accounts with a corpus
   notesById: Map<string, NoteLike[]>; // newest first, real accounts only
@@ -165,18 +166,6 @@ const monthDay = (iso: string) => {
   });
 };
 
-// Which band the CLOCK is in right now (Chicago). 9:00–11:00 sends ·
-// 11:00–2:00 people · 2:00 on research & filing. Before 9 the day hasn't
-// opened; the sends band is "next", not "past".
-export function currentBand(now: Date): Band {
-  const hour = Number(
-    now.toLocaleString("en-US", { hour: "numeric", hour12: false, timeZone: USER_TZ }),
-  );
-  if (hour < 11) return "now";
-  if (hour < 14) return "eleven";
-  return "two";
-}
-
 const BAND_OF: Record<QueueRuleId, Band> = {
   seated: "now",
   "wire-trigger": "now",
@@ -191,6 +180,10 @@ const BAND_OF: Record<QueueRuleId, Band> = {
   "stale-above-gate": "two",
   "stakeholder-gap": "two",
 };
+
+// Every rule the queue can fire, so a surface that speaks per rule (the
+// wing's stamp subtext) can be checked against the whole set.
+export const QUEUE_RULE_IDS = Object.keys(BAND_OF) as QueueRuleId[];
 
 // The wing's heat ladder: 3 burns today (a perishable signal or a carried
 // move), 2 is dated inside the week (a cadence day, a closing lane, a due
@@ -510,9 +503,44 @@ function rankAll(inp: QueueInput, now: Date): QueueItem[] {
     }
   }
 
+  // seated (95): the operator filed this move from the accounts sheet's Act
+  // Lane — an explicit seat outranks every rule and rides until worked,
+  // taken back, or the record shows the outbound (the page filters those
+  // before they arrive here). The seat is the account's own move: it lands
+  // before the vehicle rules compute their bearers, so no briefing slot ever
+  // swallows it (ruled 2026-09-25, D22). A seat follows its account (C8): an
+  // excluded account's seat leaves Groundwork with it.
+  const nameOf = new Map(inp.accounts.map((p) => [p.id, p.name]));
+  for (const [id, seat] of inp.seats ?? []) {
+    const name = nameOf.get(id);
+    if (!name) continue;
+    if (inp.excludedIds?.has(id)) continue;
+    candidates.push({
+      accountId: id,
+      name,
+      ruleId: "seated",
+      weight: 95,
+      band: BAND_OF["seated"],
+      action: seat.act,
+      reason: `Seated ${monthDay(seat.day)} from the sheet.`,
+      owed: "draft on the lane",
+      carried: false,
+      intent: intentFor(inp.notesById.get(id), now),
+    });
+  }
+
+  // Accounts already carrying their OWN evidence, seats included. The
+  // roundup slot and the book-wide research stamp are about the CSM and the
+  // book — they ride an account as a vehicle, and a vehicle never collides
+  // (ruled 2026-09-25, D22): when every eligible account has its own move
+  // the slot drops for the day and returns when one is free. Caught
+  // 2026-08-20: a briefing slot ate a verified-cold first touch.
+  const occupied = new Set(candidates.map((c) => c.accountId));
+
   // The book-wide research stamp, collapsed to ONE move. When no per-account
   // pass exists, six accounts "going stale" on the same day is one fact about
-  // the book, not six moves — the strongest above-gate account carries it.
+  // the book, not six moves — the strongest above-gate account with no
+  // candidate of its own carries it (C9).
   const globalAgeT = Date.parse(researchGeneratedAt);
   const globalAge = Number.isNaN(globalAgeT) ? null : (now.getTime() - globalAgeT) / DAY;
   if (globalAge != null && globalAge > RESEARCH_STALE_DAYS) {
@@ -533,8 +561,7 @@ function rankAll(inp: QueueInput, now: Date): QueueItem[] {
             .score
         );
       });
-    const taken = new Set(candidates.map((c) => c.accountId));
-    const bearer = bearers.find((p) => !taken.has(p.id)) ?? bearers[0];
+    const bearer = bearers.find((p) => !occupied.has(p.id));
     if (bearer) {
       candidates.push({
         accountId: bearer.id,
@@ -548,42 +575,14 @@ function rankAll(inp: QueueInput, now: Date): QueueItem[] {
         carried: false,
         intent: intentFor(inp.notesById.get(bearer.id), now),
       });
+      occupied.add(bearer.id);
     }
   }
 
-  // seated (95): the operator filed this move from the accounts sheet's Act
-  // Lane — an explicit seat outranks every rule and rides until worked,
-  // taken back, or the record shows the outbound (the page filters those
-  // before they arrive here). The seat is the account's own move: it lands
-  // before the vehicle rules compute `occupied`, so no briefing slot ever
-  // swallows it.
-  const nameOf = new Map(inp.accounts.map((p) => [p.id, p.name]));
-  for (const [id, seat] of inp.seats ?? []) {
-    const name = nameOf.get(id);
-    if (!name) continue;
-    candidates.push({
-      accountId: id,
-      name,
-      ruleId: "seated",
-      weight: 95,
-      band: BAND_OF["seated"],
-      action: seat.act,
-      reason: `Seated ${monthDay(seat.day)} from the sheet.`,
-      owed: "draft on the lane",
-      carried: false,
-      intent: intentFor(inp.notesById.get(id), now),
-    });
-  }
-
   // roundup-slot (70): a partner manager's update rhythm has lapsed — their
-  // roster's best-fit account takes the slot. The CSM door, chosen when it
-  // is the fastest one, never the toll.
+  // roster's best-fit FREE account takes the slot. The CSM door, chosen when
+  // it is the fastest one, never the toll.
   const byId = new Map(inp.accounts.map((p) => [p.id, p]));
-  // Accounts already carrying their OWN evidence. The roundup slot and the
-  // book-wide research stamp are about the CSM and the book — they ride an
-  // account as a vehicle, and a vehicle must never swallow the account's own
-  // move (caught 2026-08-20: a briefing slot ate a verified-cold first touch).
-  const occupied = new Set(candidates.map((c) => c.accountId));
   const rosterRanked = new Map<string, { id: string; score: number }[]>();
   for (const p of inp.accounts) {
     if (inp.excludedIds?.has(p.id)) continue;
@@ -601,9 +600,10 @@ function rankAll(inp: QueueInput, now: Date): QueueItem[] {
   const rosterBest = new Map<string, { id: string; score: number }>();
   for (const [csm, list] of rosterRanked) {
     list.sort((a, b) => b.score - a.score);
-    // The best-fit FREE account carries the slot; only a roster with no free
-    // account falls back to colliding, where weight resolves it as before.
-    rosterBest.set(csm, list.find((x) => !occupied.has(x.id)) ?? list[0]);
+    // The best-fit FREE account carries the slot; a roster with no free
+    // account drops the slot for the day (a vehicle never collides).
+    const free = list.find((x) => !occupied.has(x.id));
+    if (free) rosterBest.set(csm, free);
   }
   for (const [csm, best] of rosterBest) {
     // The shared cadence rule: never stack an update on a live thread — due

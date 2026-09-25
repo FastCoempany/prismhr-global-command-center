@@ -5,9 +5,9 @@
 import { DASH_NODES, type DashNodeKey } from "@/lib/dashboard/stages";
 import { redactMoney } from "./lexicon";
 
-export type BriefSection = { title: string; bullets: string[] };
+type BriefSection = { title: string; bullets: string[] };
 
-export type WeeklyInput = {
+type WeeklyInput = {
   now: Date;
   cards: {
     name: string;

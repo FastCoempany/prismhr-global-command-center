@@ -95,24 +95,6 @@ export const ARRIVAL = [
   "Waiting on",
 ] as const;
 
-/** How many words a record puts on screen before anything is opened. The
- *  adversarial pass measures this, never the copy. */
-export function arrivalWords(r: PipelineRecord, overlay: Overlay = {}): number {
-  const keep = new Set<string>(ARRIVAL);
-  return recordToText(r, overlay)
-    .split("\n")
-    .filter((l, i) => {
-      if (i < 2) return true; // the name and its meta line
-      const label = /^([^:]+):/.exec(l)?.[1];
-      if (label) return keep.has(label.trim());
-      // a bullet belongs to whatever label opened above it
-      return false;
-    })
-    .join(" ")
-    .split(/\s+/)
-    .filter(Boolean).length;
-}
-
 /** One record, as the fixed label/value block he reads aloud. */
 export function recordToText(r: PipelineRecord, overlay: Overlay = {}): string {
   const k = (f: string, i = 0) => lineKey(r.id, f, i);

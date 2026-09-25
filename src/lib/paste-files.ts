@@ -6,7 +6,7 @@
 // Isomorphic on purpose: no DOM, no Node APIs — usable from the client and
 // from tests alike.
 
-export type PasteKind = "outlook" | "teams" | "salesnav" | "sf" | "transcript" | "note";
+type PasteKind = "outlook" | "teams" | "salesnav" | "sf" | "transcript" | "note";
 
 // What the Drop thinks it is holding, in plain words for the live chip.
 export function sniffPaste(text: string): { kind: PasteKind; label: string } {
@@ -38,9 +38,28 @@ export function sniffPaste(text: string): { kind: PasteKind; label: string } {
 // twice. The fingerprint survives whitespace and casing drift (a re-export or
 // a re-copy of the same thread), and two FNV-1a passes with different seeds
 // keep accidental collisions out of range for a book this size.
+//
+// The same capture is the same normalized BODY: the head line every producer
+// writes — "OUTLOOK THREAD — dropped file <name>", "CALL TRANSCRIPT — dropped
+// file <name>", the bookmarklets' "… - captured <date>" — carries the
+// filename or the copy moment, never the capture, so a renamed file, the .eml
+// and .msg of one mail, and a re-copy of one thread all fingerprint alike.
+// The head grammar is the sniffer's own token list (ruled 2026-09-25, D16 —
+// CLAUDE.md, The Chute :305).
+const HEAD_LINE_RE =
+  /^(OUTLOOK THREAD|TEAMS THREAD|TEAMS CHAT|CALL TRANSCRIPT|SALESNAV|SPREADSHEET|DOCUMENT)\b/;
+
+/** The capture without its producer's head line. */
+function fingerprintBody(text: string): string {
+  const t = (text ?? "").trimStart();
+  const nl = t.indexOf("\n");
+  const first = nl >= 0 ? t.slice(0, nl) : t;
+  if (!HEAD_LINE_RE.test(first)) return t;
+  return nl >= 0 ? t.slice(nl + 1) : "";
+}
 
 export function pasteFingerprint(text: string): string {
-  const norm = (text ?? "").toLowerCase().replace(/\s+/g, " ").trim();
+  const norm = fingerprintBody(text).toLowerCase().replace(/\s+/g, " ").trim();
   const fnv = (seed: number): number => {
     let h = seed >>> 0;
     for (let i = 0; i < norm.length; i++) {
@@ -54,7 +73,7 @@ export function pasteFingerprint(text: string): string {
 
 // ── RFC 822 (.eml) reading ──────────────────────────────────────────────────
 
-export type EmlMessage = {
+type EmlMessage = {
   subject: string;
   from: string;
   to: string;
@@ -396,7 +415,7 @@ const RECORDING_TITLE =
 /** An elapsed-time cue: "0:02", "31:45", "1:04:09" — then the words. */
 const CUE_LINE = /^(\d{1,2}:)?\d{1,2}:\d{2}\s*(.*)$/;
 
-export type TranscriptDoc = {
+type TranscriptDoc = {
   title: string;
   /** "YYYY-MM-DD HH:MM" in the recorder's own wall clock, or "". */
   startedAt: string;
@@ -457,7 +476,7 @@ export function transcriptDocToPaste(doc: TranscriptDoc, filename: string): stri
 
 // ── Outlook .msg reading — fields come from the caller's msgreader pass ─────
 
-export type MsgFields = {
+type MsgFields = {
   subject?: string;
   senderName?: string;
   senderEmail?: string;
@@ -488,7 +507,7 @@ export function msgToPaste(fields: MsgFields, filename: string): string {
 }
 
 // File-type dispatch for the Drop: which reader a filename gets.
-export type DropReader =
+type DropReader =
   | "eml"
   | "msg"
   | "pdf"
@@ -499,8 +518,11 @@ export type DropReader =
   | "image"
   | "unsupported";
 
-// The one accept list both doors share — the row's Drop and the Chute must
-// never disagree about what the app can swallow.
+// The accept list both doors read. The rule (ruled 2026-09-25, D2 — CLAUDE.md,
+// The Chute :301): the doors agree on everything but the weekly export — the
+// Chute probes a .csv for the activity report and hands it to the second
+// record; the Drop refuses a .csv and says it goes in the Chute. Anything
+// else on this list files the same way from either door.
 export const DROP_ACCEPT =
   ".eml,.msg,.pdf,.vtt,.txt,.md,.csv,.log,.json,.xlsx,.xls,.docx,.png,.jpg,.jpeg,.webp,.gif,.heic,.heif";
 

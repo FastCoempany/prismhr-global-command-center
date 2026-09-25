@@ -15,15 +15,39 @@
 // ── the model roster ────────────────────────────────────────────────────────
 // Claude is the parent brain. Opus 5 carries every judgment; Fable 5 escalates
 // when the record is large or contradicts itself. OPUS OR BETTER, ALWAYS —
-// founder-decreed 2026-07-31: Haiku is never a model this room uses. A later
-// "cost saving" that quietly downgrades the room fails the doctrine test.
-export const MODEL_EXTRACT_RICH = "claude-opus-5";
-export const MODEL_EXTRACT_LIGHT = "claude-opus-5";
-export const MODEL_PLAN = "claude-opus-5";
-export const MODEL_SYNTH = "claude-opus-5";
-export const MODEL_SYNTH_HARD = "claude-fable-5";
-export const MODEL_TOPIC = "claude-opus-5";
-export const MODEL_SEGMENT = "claude-opus-5";
+// founder-decreed 2026-07-31: Haiku is never a model this room uses, and
+// neither is Sonnet. A later "cost saving" that quietly downgrades the room
+// fails the doctrine test. This is the ONE roster app-wide (canonized
+// 2026-09-25 — CLAUDE.md, Other standing decrees :592-595): every caller
+// that reaches a model reads its slot here, and no module carries a model
+// id of its own.
+const OPUS = "claude-opus-5";
+const FABLE = "claude-fable-5";
+
+// The Intranet's own slots.
+export const MODEL_EXTRACT = OPUS;
+export const MODEL_PLAN = OPUS;
+export const MODEL_SYNTH = OPUS;
+export const MODEL_SYNTH_HARD = FABLE;
+export const MODEL_TOPIC = OPUS;
+// The rest of the app's callers, one slot each.
+/** The paste read — aiCleanTimeline (src/lib/intel/ai-clean.ts). */
+export const MODEL_READ = OPUS;
+/** The Chute's PDF and image transcriber (src/app/room/actions.ts). */
+export const MODEL_TRANSCRIBE = OPUS;
+/** The Act Lane's draft desk (src/app/accounts/draft-actions.ts). */
+export const MODEL_DRAFT = OPUS;
+/** The on-demand deep research pass (src/lib/intel/deep-research.ts). */
+export const MODEL_RESEARCH = OPUS;
+/** The ask minter (src/lib/intel/ask-mint.ts). */
+export const MODEL_ASKS = OPUS;
+/** The second record's distillation and its refuter (src/lib/activity/distill.ts). */
+export const MODEL_DISTILL = OPUS;
+export const MODEL_REFUTE = OPUS;
+/** The wire sweep (src/lib/groundwork/wire.ts). */
+export const MODEL_WIRE = OPUS;
+/** The partner room's follow-up draft (src/app/partners/actions.ts). */
+export const MODEL_PARTNER_DRAFT = OPUS;
 
 // ── the thresholds ──────────────────────────────────────────────────────────
 /** Documents that must want a proposed topic before it joins the rail. */
@@ -46,9 +70,6 @@ export const SEGMENT_MSG_CAP = 60;
 export const SEGMENT_GAP_MINUTES = 90;
 /** Claim pairs must be at least this far apart to be a contradiction. */
 export const CONTRADICTION_MIN_DAYS = 14;
-
-/** C6 — nothing is ever deleted. Asserted by the doctrine test. */
-export const NOTHING_DELETED = true;
 
 // ── the vocabulary ──────────────────────────────────────────────────────────
 export const CLAIM_KINDS = [
@@ -91,7 +112,7 @@ export const ORIGINS = [
   "playbook",
   "research",
   "gap",
-  // the second record's digests (§6) — rollup + gems, never staged bodies
+  // the second record's digests — rollup + gems, never staged bodies
   "activity",
 ] as const;
 export type Origin = (typeof ORIGINS)[number];

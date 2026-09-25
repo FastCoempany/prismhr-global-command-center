@@ -7,6 +7,7 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import { claudeClient, claudeAvailable } from "@/lib/claude/health";
+import { MODEL_WIRE } from "@/lib/intranet/doctrine";
 import { peos } from "@/lib/book";
 import { redactMoney } from "@/lib/intel/lexicon";
 import {
@@ -19,7 +20,7 @@ import {
 } from "./wire-keywords";
 
 export const WIRE_NS = "wire:";
-export const WIRE_STALE_HOURS = 12;
+const WIRE_STALE_HOURS = 12;
 
 export type WireItem = {
   headline: string;
@@ -87,7 +88,7 @@ export function wireAvailable(): boolean {
   return claudeAvailable();
 }
 
-export function newestWireIso(items: WireItem[]): string | null {
+function newestWireIso(items: WireItem[]): string | null {
   let newest: string | null = null;
   for (const i of items) if (!newest || i.at > newest) newest = i.at;
   return newest;
@@ -144,7 +145,7 @@ Disambiguation: ${disambig}.`;
 
   const ask = () =>
     client.messages.create({
-      model: "claude-sonnet-5",
+      model: MODEL_WIRE,
       max_tokens: 4096,
       system: SYSTEM,
       tools: [{ type: "web_search_20260209", name: "web_search", max_uses: 6 }],
@@ -153,7 +154,7 @@ Disambiguation: ${disambig}.`;
   let msg = await ask();
   if (msg.stop_reason === "pause_turn") {
     msg = await client.messages.create({
-      model: "claude-sonnet-5",
+      model: MODEL_WIRE,
       max_tokens: 4096,
       system: SYSTEM,
       tools: [{ type: "web_search_20260209", name: "web_search", max_uses: 6 }],

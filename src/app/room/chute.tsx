@@ -1,9 +1,11 @@
 "use client";
 
-// The Chute — the room's single intake. Throw files at it, as many as you
-// like; each one is read on the spot, routed to its account by the book's own
-// signals (a known contact's email, a company domain, the account's name),
-// and filed through the same pipeline a paste takes. The misfile guard runs
+// The Chute — the one intake, mounted at the HomeRoom's top and on the
+// Intranet: one component, one roster, the same routing wherever it mounts
+// (ruled 2026-09-25, D1 — CLAUDE.md, The Chute :301). Throw files at it, as
+// many as you like; each one is read on the spot, routed to its account by
+// the book's own signals (a known contact's email, a company domain, the
+// account's name), and filed through the same pipeline a paste takes. The misfile guard runs
 // on the text's own evidence with or without the key; the model's judgment
 // rides when the key is on. Nothing files blind: an unroutable file
 // waits with a picker, and a read that disagrees with the route waits for the
@@ -21,121 +23,24 @@ import { githubArchiveGrant } from "./archive-actions";
 import { archiveFileToGitHub, type ArchiveGrant } from "@/lib/github/archive";
 import { probeActivityReport, uploadActivityReport } from "@/lib/activity/upload";
 import { readFileToText } from "./read-file";
-import { routeCapture, type RouteAccount, type RouteHit } from "@/lib/route-capture";
+import { routeCapture, type RouteAccount } from "@/lib/route-capture";
+import {
+  CHUTE_PARALLEL,
+  loadLedger,
+  runLimited,
+  saveLedger,
+  type LedgerRow,
+} from "./chute-ledger";
 import styles from "./room.module.css";
 
-type ChuteItem = {
-  key: number;
-  filename: string;
-  state:
-    | "reading"
-    | "filing"
-    | "filed"
-    | "pick"
-    | "mismatch"
-    | "error"
-    | "dupe"
-    | "interrupted"
-    | "undone"
-    | "activity"
-    | "activityDone"
-    | "vaulted";
-  text?: string;
-  account?: { id: string; name: string };
-  why?: string;
-  candidates?: RouteHit[];
-  /** The activity drop's own arrival counts — what came in, before any verdict. */
-  came?: { rows: number; accounts: number; textRows: number };
-  /** The take-back asks twice; one click arms it. */
-  armed?: boolean;
-  filed?: number;
-  opened?: number;
-  asks?: number; // questions the read queued for the record
-  learned?: number; // facts and lessons the read filed to the playbook
-  reason?: string;
-  claim?: string; // the read's own account name, on a mismatch
-  batch?: number; // files thrown together — one drop, one batch
-  archived?: boolean; // a call transcript's full text rode along
-  degraded?: boolean; // the reader was down; raw text filed, nothing routed
-  noteIds?: string[]; // what this filing wrote — the undo's reach
-  todoIds?: string[]; // the actions the read opened — the undo's other reach
-  /** A second-record drop. Marked structurally so the ledger's reconcile can
-   *  find its receipts without sniffing filenames or reason text. */
-  act?: boolean;
+// The row the ledger keeps lives in chute-ledger.ts (pure, testable); the
+// component adds the one field that never persists.
+type ChuteItem = LedgerRow & {
   /** The dropped File itself — volatile, never persisted; a reload loses it
    *  and the pick line says so honestly. Carried so a recording can vault
    *  after the operator picks its account. */
   file?: File;
-  /** The vault receipt for this drop — where the file landed on GitHub. */
-  vault?: { text: string; url?: string; bad?: boolean };
 };
-
-// The ledger survives a reload: receipts persist per Chicago day, minus the
-// heavy fields (text, candidates). A reload reconciles honestly — finished
-// receipts keep their ✓; anything mid-flight when the page died comes back
-// as interrupted, because its read died with the tab. The room never quietly
-// forgets what was thrown at it.
-const LEDGER_KEY = "chute-ledger-v1";
-const LEDGER_CAP = 40;
-
-const chicagoDay = (): string =>
-  new Date().toLocaleDateString("en-CA", { timeZone: "America/Chicago" });
-
-type StoredItem = Omit<ChuteItem, "text" | "candidates" | "file">;
-
-function loadLedger(): { items: StoredItem[]; maxKey: number } {
-  try {
-    const raw = localStorage.getItem(LEDGER_KEY);
-    if (!raw) return { items: [], maxKey: 0 };
-    const parsed = JSON.parse(raw) as { day?: string; items?: StoredItem[] };
-    if (parsed.day !== chicagoDay() || !Array.isArray(parsed.items))
-      return { items: [], maxKey: 0 };
-    const items = parsed.items.slice(0, LEDGER_CAP).map((x) =>
-      x.state === "reading" ||
-      x.state === "filing" ||
-      x.state === "pick" ||
-      x.state === "mismatch" ||
-      x.state === "activity"
-        ? {
-            ...x,
-            state: "interrupted" as const,
-            reason: "A reload cut the read short. Drop the file again.",
-          }
-        : x,
-    );
-    return { items, maxKey: items.reduce((m, x) => Math.max(m, x.key), 0) };
-  } catch {
-    return { items: [], maxKey: 0 };
-  }
-}
-
-function saveLedger(items: ChuteItem[]) {
-  try {
-    const slim: StoredItem[] = items.slice(0, LEDGER_CAP).map((x) => ({
-      key: x.key,
-      filename: x.filename,
-      state: x.state,
-      account: x.account,
-      why: x.why,
-      filed: x.filed,
-      opened: x.opened,
-      asks: x.asks,
-      learned: x.learned,
-      reason: x.reason,
-      claim: x.claim,
-      batch: x.batch,
-      archived: x.archived,
-      degraded: x.degraded,
-      noteIds: x.noteIds,
-      todoIds: x.todoIds,
-      act: x.act,
-      vault: x.vault,
-    }));
-    localStorage.setItem(LEDGER_KEY, JSON.stringify({ day: chicagoDay(), items: slim }));
-  } catch {
-    // storage full or blocked — the live view still works
-  }
-}
 
 export function Chute({
   roster,
@@ -186,7 +91,7 @@ export function Chute({
       if (document.visibilityState === "visible") void reconcileSecondRecord();
     };
     document.addEventListener("visibilitychange", back);
-    const stored = loadLedger();
+    const stored = loadLedger(localStorage);
     seq.current = stored.maxKey;
     loaded.current = true;
     if (!stored.items.length) {
@@ -203,7 +108,7 @@ export function Chute({
     };
   }, []);
   useEffect(() => {
-    if (loaded.current) saveLedger(items);
+    if (loaded.current) saveLedger(items, localStorage);
   }, [items]);
 
   const patch = (key: number, up: Partial<ChuteItem>) =>
@@ -214,10 +119,13 @@ export function Chute({
     text: string,
     account: { id: string; name: string },
     why: string,
+    rung: string,
     force: boolean,
     srcFile?: File,
   ) => {
-    patch(key, { state: "filing", account, why });
+    // The text rides on the row: a mismatch waits for the pick with the text
+    // it needs to file, and the ledger keeps it across a reload.
+    patch(key, { state: "filing", account, why, rung, text });
     const r = await roomPaste(account.id, text, { force });
     if (r.ok && srcFile) void vaultTo(key, account, srcFile, false);
     if (r.ok)
@@ -239,10 +147,13 @@ export function Chute({
     else patch(key, { state: "error", reason: r.reason ?? "The file didn't take." });
   };
 
-  // The vault ride (founder-decreed 2026-09-02): every dropped file also
-  // archives to the GitHub vault under the account it routed to — readable
-  // files after they file, recordings and other binaries as their whole
-  // filing. One grant per session; the browser carries the bytes itself.
+  // The vault ride (founder-decreed 2026-09-02; canon since 2026-09-25, D8 —
+  // CLAUDE.md, The Chute :307): every dropped file also archives whole to the
+  // GitHub vault under the account it routed to — readable files after they
+  // file, recordings and other binaries as their whole filing; a duplicate
+  // drop vaults nothing new. The rule puts the upload server-side so no token
+  // reaches the browser; this ride still takes one grant per session and the
+  // browser carries the bytes itself.
   const grantRef = useRef<ArchiveGrant | null>(null);
   const vaultTo = async (
     key: number,
@@ -346,12 +257,7 @@ export function Chute({
     }
   };
 
-  const swallow = async (f: File, batch: number) => {
-    const key = ++seq.current;
-    setItems((xs) => [
-      { key, filename: f.name, state: "reading", batch, file: f },
-      ...xs,
-    ]);
+  const swallow = async (f: File, key: number) => {
     try {
       if (/\.csv$/i.test(f.name) && (await probeActivityReport(f))) {
         await swallowActivity(f, key);
@@ -374,6 +280,7 @@ export function Chute({
           read.text,
           { id: best.id, name: best.name },
           best.why,
+          best.rung,
           false,
           f,
         );
@@ -387,7 +294,30 @@ export function Chute({
   const batchSeq = useRef(0);
   const handleFiles = (list: FileList | null) => {
     const batch = ++batchSeq.current;
-    for (const f of Array.from(list ?? [])) void swallow(f, batch);
+    const files = Array.from(list ?? []);
+    // Every file gets its row the moment it lands; the reads run at most
+    // CHUTE_PARALLEL at a time, in drop order — the rest wait their turn.
+    const seated = files.map((f) => ({ f, key: ++seq.current }));
+    setItems((xs) => [
+      ...seated
+        .map(({ f, key }) => ({
+          key,
+          filename: f.name,
+          state: "reading" as const,
+          batch,
+          file: f,
+        }))
+        .reverse(),
+      ...xs,
+    ]);
+    void runLimited(
+      seated.map(
+        ({ f, key }) =>
+          () =>
+            swallow(f, key),
+      ),
+      CHUTE_PARALLEL,
+    );
   };
 
   // Files thrown together are almost always one account's export. When an
@@ -575,6 +505,7 @@ export function Chute({
                         it.text,
                         mate,
                         "the rest of this drop went there",
+                        "batch",
                         true,
                         it.file,
                       );
@@ -598,6 +529,7 @@ export function Chute({
                   it.text,
                   { id: a.id, name: a.name },
                   "your call",
+                  "pick",
                   true,
                   it.file,
                 );

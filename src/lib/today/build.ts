@@ -23,7 +23,7 @@ import { readOutcome } from "@/lib/dashboard/outcome";
 // (reach the client through their PEO). The HCM funnel is the other half of the
 // role: net-new HCM logos brought on by Enterprise Sales (Eric), plus HRaaS/HRO
 // platforms — these route to Global directly through the HCM side, not a CSM.
-export type Funnel = "peo" | "hcm";
+type Funnel = "peo" | "hcm";
 
 // Word-boundary match, not a bare substring: "hro" as a naked includes() would
 // mis-tag any future industry string that merely contains those letters. \b
@@ -41,7 +41,7 @@ export function funnelOf(csm: string, industry: string): Funnel {
 // PEO-side CSMs (Whitney Dideon carries the HCM book), so
 // csm/industry alone can't route them. Former customers (360 Business
 // Solutions, Payroll Medics, Talonique) are deliberately absent.
-export const HCM_CLIENT_IDS = new Set<string>([
+const HCM_CLIENT_IDS = new Set<string>([
   "0013k00003Ev0KDAAZ", // Accent Employer Solutions
   "0013k00003Ev0KSAAZ", // Administrative Benefits
   "0013k00003Ev0MZAAZ", // Denali HR Solutions
@@ -158,7 +158,7 @@ export function applyValidations(
 // wasn't low-confidence. Below that it's "emerging" — still worth surfacing (the
 // gate is 30), but it must never read as equal to a confirmed, high-demand
 // account. This is what keeps the count honest when we brief Aleks.
-export const STRONG_DEMAND = 40;
+const STRONG_DEMAND = 40;
 
 export function isStrongSignal(a: Pick<AccountIntel, "demand" | "confidence">): boolean {
   return a.demand != null && a.demand >= STRONG_DEMAND && a.confidence !== "low";
@@ -176,7 +176,7 @@ export function signals(intel: AccountIntel[], limit = 6): AccountIntel[] {
 
 // A commitment aged past this many days has blown its window (the demo-availability
 // gate is 5 business days) — used for the "hot" badge and state-of-play.
-export const COMMITMENT_WINDOW_DAYS = 5;
+const COMMITMENT_WINDOW_DAYS = 5;
 
 export type Commitment = {
   cardId: string;
@@ -237,20 +237,6 @@ export function commitmentsFromCards(
   return out.sort((a, b) => (b.ageDays ?? -1) - (a.ageDays ?? -1));
 }
 
-// The partner-engagement line — the third question the owner brings to every
-// partner touch: what language gauges / raises / campaigns the Global product
-// for this specific client. Shaped by whether it's a displacement or greenfield.
-export function partnerAngle(a: AccountIntel): string {
-  const comp = a.competitors[0];
-  if (a.play === "displacement" && comp) {
-    return `Ask ${a.csm}: how is ${a.name} feeling about ${comp}? When's the renewal? We can bring that same coverage onto the PrismHR platform they already run: one bill, one system of record.`;
-  }
-  if (a.play === "greenfield") {
-    return `Ask ${a.csm}: is ${a.name} hiring anywhere they don't have a legal entity, or converting contractors? That misclassification exposure is our opening. Global lets them do it compliantly without standing up entities.`;
-  }
-  return `Ask ${a.csm} what ${a.name}'s cross-border footprint looks like: entities, how they pay, employees or contractors. Gauge before you campaign.`;
-}
-
 // --- "This morning" composition ---------------------------------------------
 // Turns the day's inputs into thoroughly-written moves, each with the exact
 // thing to do beside the reasoning. Verbose by design — anything that becomes an
@@ -277,7 +263,7 @@ export function partnerMessage(a: AccountIntel): string {
 // Granular, spoon-fed guidance for a task. do = the one standout action; how =
 // precise steps; say = the exact message to send (editable); consider = the
 // caveat / relationship note. Rendered as loud, labeled, color-coded sections.
-export type Guidance = {
+type Guidance = {
   do: string;
   how: string[];
   say?: string;
@@ -351,7 +337,7 @@ export function triageGuidance(a: AccountIntel): Guidance {
   };
 }
 
-export type CardStep = {
+type CardStep = {
   cardId: string;
   cardName: string;
   nodeKey: DashNodeKey;
@@ -385,56 +371,6 @@ export function cardNextStep(
     };
   }
   return null;
-}
-
-export function commitmentGuidance(step: CardStep): Guidance {
-  const overdue = step.ageDays != null && step.ageDays >= COMMITMENT_WINDOW_DAYS;
-  const age =
-    step.ageDays == null
-      ? ""
-      : ` It's been open ${step.ageDays} day${step.ageDays === 1 ? "" : "s"} in ${step.nodeLabel}.`;
-  return {
-    do: `Close “${step.item}” on ${step.cardName}.${age}`,
-    how: [
-      `Open ${step.cardName} on the dashboard. It is in the ${step.nodeLabel} stage.`,
-      `Do it: ${step.item}.`,
-      `If you're waiting on someone, note exactly what you're waiting for so it's tracked, not silently slipping.`,
-      `Reflect it in Salesforce — a note plus any field/stage update — so the record matches the dashboard.`,
-      `When it's done, hit "Mark done ✓". The dashboard advances.`,
-    ],
-    consider:
-      step.ageDays == null
-        ? "This just started. Close it before it needs managing."
-        : overdue
-          ? `${step.ageDays} days open. The ${COMMITMENT_WINDOW_DAYS}-day window is blown. Close it today, or name the blocker and chase that.`
-          : `Open ${step.ageDays} day${step.ageDays === 1 ? "" : "s"}, inside the window. Put a finish date on it now, while it's still cheap.`,
-  };
-}
-
-// --- Step holds ---------------------------------------------------------------
-// Deliberate pauses on dashboard steps — leadership said "don't press." Keyed by
-// card name (curated in code, like ROUNDUP_BULLETS). A held card's step leaves
-// the numbered moves, renders as a dim ⏸ row, and carries its own guidance: the
-// move that's still yours is owning the re-check date, not pushing the client.
-export type StepHold = { reason: string; recheck: string; consider: string };
-
-export const STEP_HOLDS: Record<string, StepHold> = {
-  // Advocate Pay's hold (per Aleks 7/13, while our contracts solidified) was
-  // LIFTED 7/15: the client came back pressing — the unsolved Bulgaria problem
-  // costs them dearly monthly and they want the contract done now. Client
-  // urgency supersedes a protective hold; the step runs hot again.
-};
-
-export function holdGuidance(step: CardStep, hold: StepHold): Guidance {
-  return {
-    do: `${step.cardName}: “${step.item}” is on hold. ${hold.reason} Own the re-check: ${hold.recheck}. The day it clears, close it, log the exchange in Salesforce, and check it off.`,
-    how: [
-      `Confirm the hold still stands. It was set deliberately.`,
-      `Put the re-check on your calendar so the hold has an owner and a date.`,
-      `The day it clears: do it, log it in Salesforce, check it off on the dashboard.`,
-    ],
-    consider: hold.consider,
-  };
 }
 
 // --- Completion keys (per-day / per-week) -----------------------------------
@@ -480,25 +416,11 @@ export function partnerOutreachKey(partner: string): string {
   return `partner-outreach:${partner}`;
 }
 
-// --- Weekly partner kickoff (Monday ritual) ---------------------------------
-// At the start of the week, tee up at least N interactions per partner: their
-// top Global-fit accounts, plus a ready-to-send opener that names them. Every
-// partner is included — the point is to arm the whole roster, not just the two
-// who already have hot signals; a book with no researched play still gets its
-// best-fit accounts as conversation starters (that's the relay motion).
-
-// True on Sunday/Monday (UTC) — the window to plan the week. A default-param now
-// keeps the impure clock read out of the React render path.
-export function isWeekKickoff(now: number = Date.now()): boolean {
-  const day = new Date(now).getUTCDay();
-  return day === 0 || day === 1; // Sun or Mon
-}
-
 // Freshness of an account chip on a partner's outreach card. The clock only
 // starts once an official interaction happens (a note saved via the chip):
 // green under 24h, yellow 24–48h, red past 48h. A chip that was never worked
 // stays neutral — no color at all until an interaction triggers the timer.
-export type ChipTone = "none" | "fresh" | "stale" | "cold";
+type ChipTone = "none" | "fresh" | "stale" | "cold";
 
 export function chipTone(
   lastTouchedAt: string | null,
@@ -513,14 +435,14 @@ export function chipTone(
   return "cold";
 }
 
-export type PartnerKickoff = { partner: string; role: string; accounts: AccountIntel[] };
+type PartnerKickoff = { partner: string; role: string; accounts: AccountIntel[] };
 
 // Editorial pins: accounts a partner should always have teed up on their
 // roundup regardless of auto-rank — an owner override for a relationship reason
 // the Global-fit score can't see. Keyed by CSM name → account ids. Pins EXTEND
 // the card past the top-N (a 6th slot) rather than displacing an auto-pick, so
 // pinning never hides an account that earned its place on merit.
-export const ROUNDUP_PINS: Record<string, string[]> = {
+const ROUNDUP_PINS: Record<string, string[]> = {
   // My HR Pros (fka Southern Personnel Management) — pinned by owner request —
   // and ESC, whose 7/13 inbound (Global Payroll demo for interested ESC
   // clients) is a live thread on Lesha's card.
@@ -537,7 +459,7 @@ export const ROUNDUP_PINS: Record<string, string[]> = {
 // Hand-written roundup bullets for accounts where the generic play framing would
 // be wrong — e.g. a thread that's already live. Keyed by account id; used by
 // partnerWeekMessage in place of the displacement/greenfield/gauge template.
-export const ROUNDUP_BULLETS: Record<string, string> = {
+const ROUNDUP_BULLETS: Record<string, string> = {
   // Simploy — Chassie's inbound after PrismHR LIVE; the conversation is already
   // in motion, so the bullet reads as shared status, not a request for a read.
   "001F000000w38BOIAY":
@@ -814,50 +736,6 @@ export function narrative(intel: AccountIntel[]): Narrative {
   };
 }
 
-// --- Narrative → action ------------------------------------------------------
-// Band 4 isn't a readout you admire — it's raw material for two moves: the line
-// you carry into the Aleks 1:1, and arming the partners. Each is spelled out to
-// the same granularity as the morning moves: what to do, step by step, and the
-// exact words to say (editable before you use them).
-
-// The line up to Aleks. `convert` is the single account you're actively working
-// (the highest-leverage move) — naming a specific deal in motion is what makes
-// the story land. Null when nothing's teed up yet.
-export function aleksLineGuidance(
-  nar: Narrative,
-  convert: AccountIntel | null,
-): Guidance {
-  const one = convert
-    ? `${convert.name}${convert.play ? ` (the ${convert.play})` : ""}`
-    : "the one account I'm working hardest right now";
-  const say =
-    `Here's where the base actually is on Global:\n\n` +
-    `• Researched: ${nar.researched} of ${nar.total} accounts\n` +
-    `• Strong global-hiring signal: ${nar.strongDemand}\n` +
-    (nar.emerging > 0
-      ? `• Emerging (lower demand or confidence — worth a partner conversation, not a forecast): ${nar.emerging}\n`
-      : "") +
-    `• Split: ${nar.displacement} displacement / ${nar.greenfield} greenfield\n` +
-    `• Converting this week: ${one}\n\n` +
-    `I'm not chasing volume — the motion is precision through the CSMs and Eric. What I need from ` +
-    `you: [air cover / an intro / a specific marketing asset] — I'll be precise on that in the meeting.`;
-  return {
-    do:
-      `Lock the one line for your 1:1 with Aleks` +
-      (convert ? `, built around ${convert.name}` : "") +
-      `. Honest headline, one real deal, one concrete ask.`,
-    how: [
-      `Read the five numbers above — every one is derived from your own account research, not a guess. That's your evidence, and it's what lets you be honest without sounding thin.`,
-      `Lead with the honest headline: ${nar.strongDemand} strong${nar.emerging > 0 ? `, ${nar.emerging} emerging` : ""}. Do not round up. A number you can defend beats a big one you can't.`,
-      `Name the one account you're converting this week${convert ? ` — right now that's ${convert.name}` : ""}. A specific deal in motion turns "there's potential" into "this is happening."`,
-      `End with a single concrete ask — air cover, an intro, or a marketing asset. Never walk into the 1:1 without one; that's how you convert a status update into support.`,
-      `Paste the script below into your 1:1 notes and edit it into your own voice before Monday.`,
-    ],
-    say,
-    consider: `Aleks carries this line upward, so it has to survive scrutiny. Every figure traces back to research you can point to. Keep it exactly that honest.`,
-  };
-}
-
 // Arm the partners — the enablement move. At startup stage the constraint isn't
 // leads, it's whether Eric and the CSMs are equipped to talk Global at all.
 export function armPartnersGuidance(nar: Narrative): Guidance {
@@ -947,7 +825,7 @@ export function movedThisWeek(cards: DashCardRow[], now: number = Date.now()): n
   return n;
 }
 
-export type StateOfPlay = {
+type StateOfPlay = {
   openLoops: number; // non-archived cards with a node in flight
   commitmentsPastWindow: number; // commitments aged past the window
   untriaged: number; // active signals not yet on the board

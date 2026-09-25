@@ -1,19 +1,20 @@
 // The Second Record's run — staging verification, rollups, distillation,
 // refutation, coverage. The three adversarial passes live HERE, as stages of
-// the running system, not as a QA chapter:
+// the running system, not as a QA chapter (the plan blessed 2026-08-20;
+// CLAUDE.md, The second record):
 //
 //   ⚔ 1 · coverage — every account with human motion ends the run holding a
 //         CONFIRMED gem or an arithmetic verdict; below 100% the run marks
-//         itself failed-coverage and cannot complete silently (§3.7).
+//         itself failed-coverage and cannot complete silently.
 //   ⚔ 2 · refutation — every gem candidate faces mechanical canon checks in
 //         code, then an independent refuter that defaults to refute; one
-//         failed check kills it before storage (§3.8).
+//         failed check kills it before storage.
 //   ⚔ 3 · staleness & acted — a new drop replaces changed accounts' gems
 //         wholesale; the first record kills the nag the moment the operator
-//         moves on a gem's person (§3.9).
+//         moves on a gem's person.
 //
 // The transport is verified too: the manifest names every batch and every
-// account checksum, and an incomplete upload refuses to run (§3.0).
+// account checksum, and an incomplete upload refuses to run.
 
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import { csms } from "@/lib/book";
@@ -25,6 +26,7 @@ import { inboundDates, recordSends, type NoteLike } from "@/lib/sendbook/read";
 import { readOutcome } from "@/lib/dashboard/outcome";
 import { rowsChecksum, tallyChecksum } from "./parse";
 import { deriveColleagues, isMachineryName } from "./classify";
+import { personMoved } from "./acted";
 import {
   buildRollup,
   intentWindows,
@@ -366,7 +368,7 @@ export async function stageActivityBatch(batch: StageBatch): Promise<StageReply>
       return { ok: true, verified: true, unchanged: true };
     }
 
-    // Change detection (§3.3): rows changed → distill; tally alone → arithmetic.
+    // Change detection: rows changed → distill; tally alone → arithmetic.
     // A re-drop of the SAME file refreshes staging but never re-distills what
     // this sha already produced — an account counts as covered when the run's
     // covered map holds it OR its rollup note already exists (rollups replace
@@ -426,7 +428,7 @@ export async function stageActivityBatch(batch: StageBatch): Promise<StageReply>
       );
 
     // ⚔ lane drift — a >15-point share swing against the prior drop is named,
-    // never silently absorbed (§3.2).
+    // never silently absorbed.
     if (store.prior) {
       const share = (t: Record<string, number>, k: string): number => {
         const total = Object.values(t).reduce((a, b) => a + b, 0);
@@ -612,7 +614,7 @@ export async function runActivityPass(opts?: {
     Object.keys(run.covered).length + run.distillQueue.length + run.intentQueue.length;
   const doneAlready = Object.keys(run.covered).length;
 
-  // ⚔ 3 · staleness & acted — sweep at the head of every pass (§3.9).
+  // ⚔ 3 · staleness & acted — sweep at the head of every pass.
   await actedSweep();
 
   // Tally-only accounts: pure arithmetic, no model, cheap enough to finish.
@@ -777,7 +779,7 @@ export async function runActivityPass(opts?: {
       gems = await attempt();
 
       // ⚔ 1b · one re-distillation for signal-dense empties, the failure
-      // named in the prompt (§3.7.2).
+      // named in the prompt — the one retry an account gets.
       const dense =
         motionRows.length >= RETRY_SIGNAL_HUMAN_ROWS ||
         slice.rows.some((r) => r.fl.includes("i")) ||
@@ -915,7 +917,7 @@ export async function runActivityPass(opts?: {
     return { ok: true, done: false, remaining, receipt: run.receipt };
   }
 
-  // ⚔ 1 · the coverage invariant — 100% or the run says failed (§3.7).
+  // ⚔ 1 · the coverage invariant — 100% or the run says failed.
   // Unchanged accounts keep their prior coverage; the rollup note is the
   // evidence it exists.
   const priorRollups = new Set(
@@ -1016,9 +1018,9 @@ export async function runActivityPass(opts?: {
   };
 }
 
-// ── ⚔ 3 · acted detection — the first record kills the nag (§3.9) ───────────
+// ── ⚔ 3 · acted detection — the first record kills the nag ──────────────────
 
-export async function actedSweep(): Promise<number> {
+async function actedSweep(): Promise<number> {
   const prisma = getPrisma();
   let stamped = 0;
   try {
@@ -1041,6 +1043,14 @@ export async function actedSweep(): Promise<number> {
         createdAt: n.createdAt.toISOString(),
         actors: n.actors ?? "",
       }));
+      // The columns behind each send, keyed the way recordSends reads them,
+      // so the match reads actors and recipients (D20), never the head alone.
+      const columnsOf = new Map<string, { actors: string; recipients: string }>();
+      for (const n of notes)
+        columnsOf.set(`${n.createdAt.toISOString()}|${n.body.split("\n")[0] ?? ""}`, {
+          actors: n.actors ?? "",
+          recipients: n.recipients ?? "",
+        });
       const sends = recordSends(likes);
       let changed = false;
       for (const g of gems) {
@@ -1048,8 +1058,15 @@ export async function actedSweep(): Promise<number> {
         for (const s of sends) {
           const day = chiDay(new Date(s.at));
           if (day <= g.createdDay) continue;
-          const text = `${s.who} ${s.head}`;
-          if (g.who.some((w) => w && text.includes(w))) {
+          const cols = columnsOf.get(`${s.at}|${s.head}`);
+          if (
+            personMoved(g.who, {
+              who: s.who,
+              head: s.head,
+              actors: cols?.actors ?? "",
+              recipients: cols?.recipients ?? "",
+            })
+          ) {
             g.actedDay = day;
             changed = true;
             stamped += 1;

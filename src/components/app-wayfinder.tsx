@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { ProductLockup } from "@/components/brand";
 import { DeskMeter } from "@/components/presence/engine";
+import { WAYFINDER_ROUTES } from "@/components/wayfinder-routes";
 
 type AppWayfinderProps = {
   current: string;
@@ -9,19 +10,15 @@ type AppWayfinderProps = {
   trail?: string;
 };
 
-// The three demo rooms live under one nav entry — any of them lights "Demos".
-const DEMO_PAGES = new Set([
-  "Demos",
-  "Demo Sidekick",
-  "v3 Sidekick",
-  "Payroll Demo Sidekick",
-]);
+// The route table lives in wayfinder-routes.ts (pure data, so the suite can
+// check every live row against the pages on disk); this renders it.
 
 export async function AppWayfinder({
   current,
   onSignOut,
   trail = "PrismHR Global",
 }: AppWayfinderProps) {
+  const live = WAYFINDER_ROUTES.filter((r) => !r.archived);
   return (
     <header className="ds-wayfinder-shell">
       <div className="ds-wayfinder">
@@ -34,92 +31,16 @@ export async function AppWayfinder({
         </span>
         <span className="ds-wayfinder__spacer" />
         <nav className="app-wayfinder-routes" aria-label="Primary routes">
-          <Link
-            aria-current={current === "HomeRoom" ? "page" : undefined}
-            className="app-route-link"
-            href="/room"
-          >
-            HomeRoom
-          </Link>
-          <Link
-            aria-current={current === "Accounts" ? "page" : undefined}
-            className="app-route-link"
-            href="/accounts"
-          >
-            Accounts
-          </Link>
-          <Link
-            aria-current={current === "Groundwork" ? "page" : undefined}
-            className="app-route-link"
-            href="/groundwork"
-          >
-            Groundwork
-          </Link>
-          <Link
-            aria-current={current === "Playbook" ? "page" : undefined}
-            className="app-route-link"
-            href="/playbook"
-          >
-            Playbook
-          </Link>
-          <Link
-            aria-current={current === "Intranet" ? "page" : undefined}
-            className="app-route-link"
-            href="/intranet"
-          >
-            Intranet
-          </Link>
-          <Link
-            aria-current={current === "Pricing" ? "page" : undefined}
-            className="app-route-link"
-            href="/pricing"
-          >
-            Pricing
-          </Link>
-          <Link
-            aria-current={DEMO_PAGES.has(current) ? "page" : undefined}
-            className="app-route-link"
-            href="/demos"
-          >
-            Demos
-          </Link>
-          {/* Archived surfaces. Today, the board and Pipeline were the app's
-              first three rooms; the Room is all three now — it holds the deals
-              in motion, so nothing else gets to hold a second opinion about
-              them. Capture keeps the bookmarklets and the intake form, which
-              need a page to be dragged from but aren't daily work. All four
-              stay reachable and stay quiet — no colour, no weight, no
-              competition for the eye. */}
-          <span className="app-route-archive" aria-label="Archived surfaces">
+          {live.map((r) => (
             <Link
-              aria-current={current === "Today" ? "page" : undefined}
-              className="app-route-arch"
-              href="/today"
+              key={r.href}
+              aria-current={r.pages.includes(current) ? "page" : undefined}
+              className="app-route-link"
+              href={r.href}
             >
-              Today
+              {r.label}
             </Link>
-            <Link
-              aria-current={current === "Dashboard" ? "page" : undefined}
-              className="app-route-arch"
-              href="/"
-            >
-              Board
-            </Link>
-            <Link
-              aria-current={current === "Pipeline" ? "page" : undefined}
-              className="app-route-arch"
-              href="/pipeline"
-            >
-              Pipeline
-            </Link>
-            <Link
-              aria-current={current === "Capture" ? "page" : undefined}
-              className="app-route-arch"
-              href="/intake"
-            >
-              Capture
-            </Link>
-          </span>
+          ))}
         </nav>
         <DeskMeter />
         {onSignOut}

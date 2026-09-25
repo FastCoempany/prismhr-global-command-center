@@ -11,6 +11,30 @@ export const SCRATCH_NS = "scratch:pad";
 // the intranet mirror by the same construction.
 export const SCRATCH_GONE_NS = "scratch:gone";
 
+/** The cross-out's one statement: the row moves from the pad to the struck
+ *  history. Only the namespace changes — the body and the timestamp ride
+ *  untouched, and nothing is deleted (CLAUDE.md, The Scratchpaper: "Nothing
+ *  on the paper ever dies"). */
+export function strikeMove(id: string): {
+  where: { id: string; accountId: string };
+  data: { accountId: string };
+} {
+  return { where: { id, accountId: SCRATCH_NS }, data: { accountId: SCRATCH_GONE_NS } };
+}
+
+/** The slice of the client the cross-out needs — an update, never a delete. */
+export type StrikeClient = {
+  accountNote: {
+    updateMany(args: ReturnType<typeof strikeMove>): Promise<{ count: number }>;
+  };
+};
+
+/** Cross a line out: the one write the ✕ makes. Returns how many rows moved. */
+export async function strikeLine(client: StrikeClient, id: string): Promise<number> {
+  const r = await client.accountNote.updateMany(strikeMove(id));
+  return r.count;
+}
+
 const CHI = "America/Chicago";
 
 const chicagoDayKey = (d: Date): string =>

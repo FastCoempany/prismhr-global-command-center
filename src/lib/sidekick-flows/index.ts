@@ -4,7 +4,7 @@ import prismhrGlobalMasterDemoFlowJson from "./prismhr-global-master-demo-flow.v
 // (Zoom recording + dense frame review). Read-only reference data — nothing
 // here touches the database or the editable Sidekick catalog.
 
-export type FlowScreen = {
+type FlowScreen = {
   id: string;
   title: string;
   sourceMoments: number[];
@@ -25,7 +25,7 @@ export type FlowScreen = {
   branching: string[];
 };
 
-export type FlowCut = {
+type FlowCut = {
   moments: string;
   range: string;
   disposition: string;
@@ -33,7 +33,7 @@ export type FlowCut = {
   reason: string;
 };
 
-export type SidekickFlow = {
+type SidekickFlow = {
   version: string;
   name: string;
   status: string;

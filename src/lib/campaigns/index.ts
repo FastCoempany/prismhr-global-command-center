@@ -4,7 +4,7 @@ import type { Approach, Stage } from "@/lib/command-center/types";
 // content (like the catalog); only *which* play was applied to a PEO persists,
 // via PeoState.nextAction + a PeoActivity log entry.
 
-export type KitAudience = "CSM" | "PEO" | "CLIENT";
+type KitAudience = "CSM" | "PEO" | "CLIENT";
 export type Channel = "email" | "call" | "message";
 
 export type CampaignKit = {
@@ -142,7 +142,7 @@ Antaeus`,
   },
 ];
 
-export type MergeContext = {
+type MergeContext = {
   name: string;
   csm: string;
   contactName: string;

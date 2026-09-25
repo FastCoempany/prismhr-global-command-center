@@ -49,7 +49,7 @@ type Second = {
 const DEMO_HELD_RE =
   /\b(?:demo(?:ed|ed to)?\b[^.\n]{0,40}\b(?:held|ran|done|complete[d]?)|(?:held|ran|did|gave|walked (?:them )?through)\s+(?:a|the)\s+demo|demo\s+(?:held|complete[d]?|recap)|on the demo\b|during the demo\b|post-demo\b)/i;
 
-export type CollectInput = {
+type CollectInput = {
   cards: readonly Card[];
   /** The board's own stage labels, as loadDashboard() returns them. */
   labels: Record<string, string>;

@@ -29,7 +29,7 @@ import { getPrisma } from "@/lib/db";
 import { createAccountNoteRow } from "@/lib/notes/write";
 import { redactMoney } from "@/lib/intel/lexicon";
 
-export type FreshPipeline = {
+type FreshPipeline = {
   rows: PipelineRecord[];
   dayLabel: string;
   staleNote: string;

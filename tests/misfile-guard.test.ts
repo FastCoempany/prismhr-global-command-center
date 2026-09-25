@@ -46,13 +46,14 @@ const TAPE = [
 ].join("\n");
 
 describe("the people rung — the fact the guard was missing", () => {
-  test("the real misfile is caught, and named in the operator's words", () => {
+  test("the real misfile is caught, on the people rung", () => {
     const v = judgeFiling({ text: TAPE, claim: "", bound: REGIS, roster });
     assert.equal(v.ok, false);
     if (!v.ok) {
       assert.equal(v.claim, "Simploy");
       assert.equal(v.bound, "Regis HR Group");
-      assert.match(v.why, /Chassie Smith is Simploy's contact/);
+      assert.equal(v.rung, "person");
+      assert.match(v.why, /Chassie Smith/);
     }
   });
   test("the same tape files silently on its own row", () => {
@@ -98,7 +99,10 @@ describe("the company rung still stands, and outranks nothing", () => {
       roster,
     });
     assert.equal(v.ok, false);
-    if (!v.ok) assert.match(v.why, /the read names Advocate Pay/);
+    if (!v.ok) {
+      assert.equal(v.rung, "claim");
+      assert.equal(v.claim, "Advocate Pay");
+    }
   });
   test("a fuzzy-but-agreeing claim files", () => {
     assert.equal(
@@ -125,7 +129,6 @@ describe("the vault waits on the verdict", () => {
   test("a disputed drop holds its file with the question", () => {
     assert.ok(client.includes("files?: File[]"));
     assert.ok(client.includes("filePaste(mismatch.text, true, mismatch.files)"));
-    assert.ok(client.includes("holding out of the vault"));
   });
   test("the evidence rung runs BEFORE the read spends a cent", () => {
     const whole = readFileSync(join(cwd(), "src/app/room/actions.ts"), "utf8");

@@ -8,13 +8,13 @@ import { MINE_RE } from "@/lib/intel/provenance";
 import { isMeetingNote } from "@/lib/intel/meeting";
 import { effectiveAt } from "@/lib/intel/clock";
 
-export type TouchSource = {
+type TouchSource = {
   contactedAt: string; // ISO
   awaitingReply: boolean;
   who: string;
 };
 
-export type NoteForTouch = {
+type NoteForTouch = {
   actors: string; // "Sender → Target [+n]" — "" when unattributed
   createdAt: string; // ISO, activity's own moment
   // Optional but load-bearing: a meeting RECORD carries the operator's name
@@ -24,7 +24,7 @@ export type NoteForTouch = {
   source?: string;
 };
 
-export type TouchRead = {
+type TouchRead = {
   at: string;
   who: string; // the person reached — "" when unknown
   awaitingReply: boolean;

@@ -102,10 +102,37 @@ const DEADLINE_RE =
 // own subtext says it).
 const RETIRED_RE = /\b(\w+[-\s]shaped|their own book|domestic-only|steps)\b/i;
 
+// Gem lines are operator copy (ruled 2026-09-25, D21): the plain-speech law's
+// devices are linted here, and a digit that is not a date kills the line,
+// because every rendered count is arithmetic, never model prose.
+
+// Antithesis — "not X, but Y" / "not X but Y", or the clause-level "X, not Y".
+const ANTITHESIS_RE = /,\s*not\s+\w|\bnot\s+\w[^,.;]*?,?\s+but\s+\w/i;
+
+// The dash hinge — an em dash, en dash or spaced hyphen delivering a short
+// closing beat (one to four words) as the line's implication.
+const DASH_HINGE_RE = /(?:—|–|\s-\s)\s*(?:\S+\s+){0,3}\S+\s*[.!]?$/;
+
+// Every date form a gem line may carry; any digit left after these are
+// stripped is a count.
+const DATE_FORMS_RE =
+  /\b\d{4}-\d{2}-\d{2}\b|\b\d{1,2}\/\d{1,2}(?:\/\d{2,4})?\b|\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\.?\s+\d{1,2}(?:st|nd|rd|th)?\b(?:,?\s+(?:19|20)\d{2}\b)?|\b\d{1,2}(?:st|nd|rd|th)?\s+(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\b|\b(?:19|20)\d{2}\b/gi;
+
+const nonDateDigit = (t: string): boolean => /\d/.test(t.replace(DATE_FORMS_RE, " "));
+
+// The device faults one line carries, in the order they read.
+function deviceFaults(t: string): string[] {
+  const faults: string[] = [];
+  if (ANTITHESIS_RE.test(t)) faults.push("antithesis");
+  if (DASH_HINGE_RE.test(t)) faults.push("a dash hinge");
+  if (nonDateDigit(t)) faults.push("a digit that is not a date");
+  return faults;
+}
+
 const wordCount = (s: string): number =>
   (s ?? "").trim().split(/\s+/).filter(Boolean).length;
 
-export type LintVerdict = { ok: boolean; faults: string[] };
+type LintVerdict = { ok: boolean; faults: string[] };
 
 /** Lint one act line against the writing canon. */
 export function lintAct(act: string): LintVerdict {
@@ -120,6 +147,7 @@ export function lintAct(act: string): LintVerdict {
   if (DEADLINE_RE.test(t)) faults.push("a deadline rides the action line");
   if (RETIRED_RE.test(t)) faults.push("retired vocabulary");
   if (/[—()]/.test(t)) faults.push("an aside or parenthetical");
+  faults.push(...deviceFaults(t));
   return { ok: faults.length === 0, faults };
 }
 
@@ -133,6 +161,7 @@ export function lintReason(reason: string): LintVerdict {
   if (words > 8) faults.push(`${words} words — the cap is eight`);
   if (HEDGE_RE.test(t)) faults.push("hedging");
   if (RETIRED_RE.test(t)) faults.push("retired vocabulary");
+  faults.push(...deviceFaults(t));
   return { ok: faults.length === 0, faults };
 }
 

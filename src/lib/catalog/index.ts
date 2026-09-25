@@ -1,6 +1,6 @@
 import catalog from "./catalog.json";
 
-export type ScreenElement = {
+type ScreenElement = {
   name: string;
   actions: string[];
 };

@@ -1,11 +1,15 @@
 "use client";
 
 // The THEIRS line — the HomeRoom's decreed winner (Concept I, 2026-08-20).
-// One mono line at the head of the row's register panel, in the warm ochre
-// the room once reserved for the other side's court. Click it and the
-// verified gems unfold inside the panel, the email meat one more click down
-// (the meat law), served by the evidence route. The move keeps its seat and
-// its weight, unconditionally; COMPARABLE and every register keep theirs.
+// One mono line at the head of the row's register panel. THEIRS is the
+// account's people (ruled 2026-09-25, C16 — CLAUDE.md, The second record
+// :485): the line leads only with gems about an account person, a colleague's
+// gem never leads it, and its color is the palette's blue — the retired
+// court's color for their turn (c_them; the ochre was ours, c_you). The
+// stylesheet still paints .theirs ochre today. Click it and the verified gems
+// unfold inside the panel, the email meat one more click down (the meat
+// law), served by the evidence route. The move keeps its seat and its
+// weight, unconditionally; COMPARABLE and every register keep theirs.
 
 import { useState } from "react";
 import styles from "./room.module.css";

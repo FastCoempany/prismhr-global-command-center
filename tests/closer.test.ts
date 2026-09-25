@@ -59,6 +59,7 @@ describe("closers are transparent in the ledger", () => {
     // The Lesha thread, in filing order: her substantive message, the
     // operator's reply, her courtesy close.
     const docs = corpusFor("SIMPLOY01", "Simploy", {
+      homeSide: undefined,
       acctNotes: [
         note(
           "✉ TM Today 1:49 PM — Chassie owes you information · Lesha Cyphers → Antaeus Coe\nHey. I just talked to Chassie at Simploy. She owes you some information and will be in touch.",
@@ -87,6 +88,7 @@ describe("closers are transparent in the ledger", () => {
 
   test("a substantive inbound still counts — transparency is not deafness", () => {
     const docs = corpusFor("SIMPLOY01", "Simploy", {
+      homeSide: undefined,
       acctNotes: [
         note(
           "✉ TM Today 2:10 PM — Can you send the Canada model? · Chassie Smith → Antaeus Coe\nCan you send the Canada model this week?",
@@ -144,6 +146,7 @@ describe("their promise is an await, never a reply owed", () => {
   test("the live Simploy entry reads as their promise", async () => {
     const { corpusFor, extractDealIntel } = await import("../src/lib/intel/extract");
     const docs = corpusFor("SIMPLOY01", "Simploy", {
+      homeSide: undefined,
       acctNotes: [
         {
           id: "n9",
@@ -224,9 +227,14 @@ test("an open obligation outranks the board's open gate", async () => {
   const r = readDeal({
     ...base,
     step: GATE,
-    openOwed: [{ text: "Send the calendar invite once they pick one of the Sep 2–4 windows." }],
+    openOwed: [
+      { text: "Send the calendar invite once they pick one of the Sep 2–4 windows." },
+    ],
   });
-  assert.equal(r.move, "Send the calendar invite once they pick one of the Sep 2–4 windows.");
+  assert.equal(
+    r.move,
+    "Send the calendar invite once they pick one of the Sep 2–4 windows.",
+  );
   assert.equal(/How they pay those workers/.test(r.move), false);
 });
 
@@ -273,10 +281,7 @@ test("a long obligation is trimmed to one sentence the stage can carry", async (
       },
     ],
   });
-  assert.equal(
-    r.move,
-    "Send Javier the agreements and the client-information list.",
-  );
+  assert.equal(r.move, "Send Javier the agreements and the client-information list.");
 });
 
 test("the stage carries the commitment, not its fallback or its provenance", async () => {

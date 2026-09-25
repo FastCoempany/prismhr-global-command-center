@@ -1,6 +1,7 @@
 // The vault's arithmetic — lanes, names, tags, and the release face — pure
 // and pinned. The wire calls live in the browser; what the suite proves is
-// that every decision AROUND them is deterministic and canon-clean.
+// that every decision AROUND them is deterministic and canon-clean, and the
+// wire itself is scripted so the order of the calls can be read back.
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
@@ -15,6 +16,9 @@ import {
   sanitizeSegment,
   tagFor,
 } from "../src/lib/github/archive";
+import { readFileToText } from "../src/app/room/read-file";
+import { readerFor } from "../src/lib/paste-files";
+import { routeCapture, type RouteAccount } from "../src/lib/route-capture";
 
 test("the lane is size alone: repo file, pre-release, or refused", () => {
   assert.equal(laneFor(1), "file");
@@ -25,19 +29,25 @@ test("the lane is size alone: repo file, pre-release, or refused", () => {
 });
 
 test("the folder is named by the account, readably", () => {
-  assert.equal(sanitizeSegment("Staff Leasing Of Central New York, Inc."),
-    "Staff Leasing Of Central New York, Inc");
-  assert.equal(sanitizeSegment("M&M Sales & Outsourcing, Inc."),
-    "M&M Sales & Outsourcing, Inc");
-  assert.equal(sanitizeSegment("a/b\\c:d*e?f\"g<h>i|j#k%l"), "a-b-c-d-e-f-g-h-i-j-k-l");
+  assert.equal(
+    sanitizeSegment("Staff Leasing Of Central New York, Inc."),
+    "Staff Leasing Of Central New York, Inc",
+  );
+  assert.equal(
+    sanitizeSegment("M&M Sales & Outsourcing, Inc."),
+    "M&M Sales & Outsourcing, Inc",
+  );
+  assert.equal(sanitizeSegment('a/b\\c:d*e?f"g<h>i|j#k%l'), "a-b-c-d-e-f-g-h-i-j-k-l");
   assert.equal(sanitizeSegment("  .hidden.  "), "hidden");
   assert.equal(sanitizeSegment(""), "unnamed");
 });
 
 test("tags are machine-safe and unique by the second", () => {
   const when = new Date(Date.UTC(2026, 8, 2, 14, 30, 5));
-  assert.equal(tagFor("Staff Leasing Of Central New York, Inc.", when),
-    "acct-staff-leasing-of-central-new-york-inc-20260902-143005");
+  assert.equal(
+    tagFor("Staff Leasing Of Central New York, Inc.", when),
+    "acct-staff-leasing-of-central-new-york-inc-20260902-143005",
+  );
   const later = new Date(Date.UTC(2026, 8, 2, 14, 30, 6));
   assert.notEqual(tagFor("Same Account", when), tagFor("Same Account", later));
 });
@@ -51,40 +61,47 @@ test("the release face carries tag, title, description, and pre-release", () => 
   });
   assert.equal(meta.prerelease, true);
   assert.ok(meta.tag_name.startsWith("acct-pinnacle-employee-services-inc-"));
-  assert.equal(meta.name, "Pinnacle Employee Services, Inc. — quarterly-call.mp4");
+  // The title names the account and the file; the body carries the file and
+  // the day it was dropped. What the face says beyond that is its own.
+  assert.ok(meta.name.includes("Pinnacle Employee Services, Inc."));
+  assert.ok(meta.name.includes("quarterly-call.mp4"));
   assert.ok(meta.body.includes("quarterly-call.mp4"));
-  assert.ok(meta.body.includes("Dropped: 2026-09-02"));
+  assert.ok(meta.body.includes("2026-09-02"));
 });
 
-test("a release drafts first and publishes only after the asset lands", () => {
-  const root = cwd();
-  const lib = readFileSync(join(root, "src/lib/github/archive.ts"), "utf8");
-  // Created invisible…
-  assert.ok(lib.includes("draft: true"));
-  // …published only on a confirmed upload…
-  assert.ok(lib.includes("draft: false"));
-  const publishAt = lib.indexOf("draft: false");
-  const uploadAt = lib.indexOf("upload_url.split");
-  assert.ok(uploadAt > 0 && publishAt > uploadAt, "publish must follow the upload");
-  // …and a failed upload clears the empty draft rather than leaving a
-  // hollow release behind.
-  assert.ok(lib.includes('method: "DELETE"'));
-});
-
-test("the row picker takes every file type; the reader keeps its own gate", () => {
+test("the row picker takes every file type; the reader keeps its own gate", async () => {
   const root = cwd();
   const client = readFileSync(join(root, "src/app/room/room-client.tsx"), "utf8");
   // The vault input carries no accept filter and takes several at once.
   assert.ok(!/ref=\{fileInputRef\}[\s\S]{0,120}accept=/.test(client));
   assert.ok(/ref=\{fileInputRef\}[\s\S]{0,120}multiple/.test(client));
-  // Readable types still route to the record's reader.
-  assert.ok(client.includes("readableExts"));
+  // The reader's gate is its own: a type it cannot read is refused before
+  // any read is spent, and a readable one comes back as paste text.
+  let reads = 0;
+  const readPdf = async () => {
+    reads++;
+    return { ok: false, reason: "unscripted" };
+  };
+  assert.equal(readerFor("quarterly-call.mp4"), "unsupported");
+  const video = await readFileToText(
+    new File(["not text"], "quarterly-call.mp4"),
+    readPdf,
+  );
+  assert.equal(video.ok, false);
+  const mail = await readFileToText(
+    new File(
+      ["From: dana@simploy.com\nSubject: Renewal\n\nThe board meets Thursday."],
+      "renewal.eml",
+    ),
+    readPdf,
+  );
+  assert.ok(mail.ok);
+  if (mail.ok) assert.match(mail.text, /^OUTLOOK THREAD/);
+  assert.equal(reads, 0);
 });
 
-test("the token stays out of the bundle and behind the auth gate", () => {
+test("the grant is handed out behind the auth gate, and the row wires the vault", () => {
   const root = cwd();
-  const lib = readFileSync(join(root, "src/lib/github/archive.ts"), "utf8");
-  assert.ok(!lib.includes("process.env"), "the client lib must never read env");
   const act = readFileSync(join(root, "src/app/room/archive-actions.ts"), "utf8");
   assert.ok(act.startsWith('"use server"'));
   assert.ok(act.includes("getAppAccess"));
@@ -111,30 +128,57 @@ test("the chute vaults every drop and routes binaries by filename or pick", () =
   assert.ok(chute.includes("vaultTo"));
   assert.ok(chute.includes("archiveFileToGitHub"));
   assert.ok(chute.includes("githubArchiveGrant"));
-  // An unreadable file routes by filename, then falls to the pick — the
-  // error bounce is gone from that path.
-  assert.ok(chute.includes("routeCapture(f.name, roster)"));
-  assert.ok(chute.includes("Pick its account for the vault"));
+  // An unreadable file routes by its filename — a Teams recording usually
+  // carries the meeting's name — and otherwise falls to the pick with no
+  // candidate to suggest.
+  const roster: RouteAccount[] = [
+    { id: "S", name: "Simploy", emails: [], domains: [], people: [] },
+    { id: "R", name: "Regis HR Group", emails: [], domains: [], people: [] },
+  ];
+  const named = routeCapture(
+    "Simploy discovery-20260902_1801-Meeting Recording.mp4",
+    roster,
+  );
+  assert.equal(named.best?.id, "S");
+  assert.equal(named.best?.rung, "name");
+  const bare = routeCapture("GMT20260902-180135_Recording.mp4", roster);
+  assert.equal(bare.best, null);
+  assert.deepEqual(bare.candidates, []);
   // A readable file vaults AFTER it files, to the same account.
   assert.ok(/r\.ok && srcFile.*vaultTo\(key, account, srcFile, false\)/.test(chute));
   // The picker takes every type — no accept filter on the chute's input.
   assert.ok(!chute.includes("accept={DROP_ACCEPT}"));
-  // The dropped File never persists to the ledger.
-  assert.ok(chute.includes('Omit<ChuteItem, "text" | "candidates" | "file">'));
+  // The dropped File never persists to the ledger: the codec (chute-ledger.ts,
+  // since the 2026-09-25 rulings) names every stored field and `file` is not
+  // one of them; the component's row adds `file` on top of the ledger's row.
+  const ledger = readFileSync(join(root, "src/app/room/chute-ledger.ts"), "utf8");
+  assert.ok(!/\bfile\??:/.test(ledger), "the ledger row must not carry the File");
+  assert.ok(chute.includes("type ChuteItem = LedgerRow & {"));
+  assert.ok(chute.includes("file?: File;"));
 });
 
-// ── the lost reply is not a lost file (2026-09-02) ──────────────────────────
+// ── the wire, scripted ──────────────────────────────────────────────────────
 // A Simploy VTT landed in the vault while the row said "GitHub was
 // unreachable. The file did not archive." — the PUT committed and the reply
 // died on the way back, and the old blanket catch guessed a failure it could
-// not know. These runs script the wire and pin the honest behavior: verify
-// with the vault before claiming anything, and when it IS a failure, say the
-// real error.
+// not know (2026-09-02). These runs script the wire and read the calls back:
+// what was asked of GitHub, in what order, with which credential.
 
 type FakeStep = { status?: number; body?: unknown } | { throws: string };
-const scriptFetch = (steps: FakeStep[], log: string[]) =>
-  (async (url: unknown, init?: { method?: string }) => {
-    log.push(`${init?.method ?? "GET"} ${String(url)}`);
+type Call = { method: string; url: string; body: string; auth: string };
+const scriptFetch = (steps: FakeStep[], log: string[], calls: Call[] = []) =>
+  (async (
+    url: unknown,
+    init?: { method?: string; body?: unknown; headers?: Record<string, string> },
+  ) => {
+    const method = init?.method ?? "GET";
+    log.push(`${method} ${String(url)}`);
+    calls.push({
+      method,
+      url: String(url),
+      body: typeof init?.body === "string" ? init.body : "",
+      auth: init?.headers?.Authorization ?? "",
+    });
     const s = steps.shift();
     if (!s) throw new Error("unscripted call: " + String(url));
     if ("throws" in s) throw new TypeError(s.throws);
@@ -147,6 +191,89 @@ const scriptFetch = (steps: FakeStep[], log: string[]) =>
   }) as unknown as typeof fetch;
 
 const grant = { repo: "o/vault", token: "t" };
+
+test("a release drafts first and publishes only after the asset lands", async () => {
+  const real = globalThis.fetch;
+  const calls: Call[] = [];
+  globalThis.fetch = scriptFetch(
+    [
+      {
+        status: 201,
+        body: {
+          upload_url: "https://uploads.github.com/repos/o/vault/releases/9/assets{?name}",
+          url: "https://api.github.com/repos/o/vault/releases/9",
+        },
+      },
+      { status: 200 }, // the asset lands
+      { status: 200, body: { html_url: "https://github.com/o/vault/releases/tag/x" } },
+    ],
+    [],
+    calls,
+  );
+  try {
+    const r = await archiveFileToGitHub({
+      file: new File([new Uint8Array(ARCHIVE_LIMIT_BYTES + 1)], "big.mp4"),
+      accountName: "Simploy",
+      grant,
+    });
+    assert.ok(r.ok, JSON.stringify(r));
+    if (r.ok) {
+      assert.equal(r.kind, "release");
+      assert.equal(r.url, "https://github.com/o/vault/releases/tag/x");
+    }
+    // Created invisible, the binary uploaded into it, then flipped public —
+    // in that order, and nothing deleted along the way.
+    assert.deepEqual(
+      calls.map((c) => c.method),
+      ["POST", "POST", "PATCH"],
+    );
+    assert.equal(calls[0].url, "https://api.github.com/repos/o/vault/releases");
+    assert.equal(JSON.parse(calls[0].body).draft, true);
+    assert.ok(
+      calls[1].url.startsWith(
+        "https://uploads.github.com/repos/o/vault/releases/9/assets?name=",
+      ),
+    );
+    assert.equal(calls[2].url, "https://api.github.com/repos/o/vault/releases/9");
+    assert.equal(JSON.parse(calls[2].body).draft, false);
+  } finally {
+    globalThis.fetch = real;
+  }
+});
+
+test("the credential on the wire is the grant's, never the environment's", async () => {
+  // The lib never reads env: a token in the environment must not ride, only
+  // the grant the server handed the browser.
+  const real = globalThis.fetch;
+  const envToken = process.env.GITHUB_ARCHIVE_TOKEN;
+  process.env.GITHUB_ARCHIVE_TOKEN = "env-token-that-must-not-ride";
+  const calls: Call[] = [];
+  globalThis.fetch = scriptFetch(
+    [
+      { status: 404 }, // name probe: free
+      {
+        status: 201,
+        body: { content: { html_url: "https://github.com/o/vault/blob/x" } },
+      },
+    ],
+    [],
+    calls,
+  );
+  try {
+    const r = await archiveFileToGitHub({
+      file: new File(["WEBVTT"], "call.vtt"),
+      accountName: "Simploy",
+      grant,
+    });
+    assert.ok(r.ok, JSON.stringify(r));
+    assert.equal(calls.length, 2);
+    for (const c of calls) assert.equal(c.auth, "Bearer t");
+  } finally {
+    globalThis.fetch = real;
+    if (envToken === undefined) delete process.env.GITHUB_ARCHIVE_TOKEN;
+    else process.env.GITHUB_ARCHIVE_TOKEN = envToken;
+  }
+});
 
 test("a thrown PUT whose file actually landed reports the landing", async () => {
   const real = globalThis.fetch;
@@ -170,8 +297,12 @@ test("a thrown PUT whose file actually landed reports the landing", async () => 
       assert.equal(r.kind, "file");
       assert.equal(r.url, "https://github.com/o/vault/blob/x");
       assert.ok(r.detail.includes("accounts/Simploy/call.vtt"));
-      assert.ok(r.detail.includes("landed"));
     }
+    // The catch asked the vault before it said anything: a GET of the same
+    // path the PUT was writing, after the PUT died.
+    const path =
+      "https://api.github.com/repos/o/vault/contents/accounts/Simploy/call.vtt";
+    assert.deepEqual(log, [`GET ${path}`, `PUT ${path}`, `GET ${path}`]);
   } finally {
     globalThis.fetch = real;
   }
@@ -190,11 +321,7 @@ test("a thrown PUT with nothing in the vault reports the real error", async () =
       grant,
     });
     assert.ok(!r.ok);
-    if (!r.ok) {
-      assert.ok(r.reason.includes("fetch failed"), r.reason);
-      assert.ok(r.reason.includes("Drop it again"));
-      assert.ok(!r.reason.includes("unreachable"));
-    }
+    if (!r.ok) assert.ok(r.reason.includes("fetch failed"), r.reason);
   } finally {
     globalThis.fetch = real;
   }

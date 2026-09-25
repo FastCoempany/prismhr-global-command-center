@@ -31,7 +31,7 @@ import {
   loadTouches,
   loadValidations,
 } from "@/lib/today/overlay";
-import { clearDisposition } from "../today/actions";
+import { clearDisposition } from "../room/ledger-actions";
 import { LocalTime } from "../today-client";
 import { EMPTY_ENGAGEMENT } from "@/lib/engagement";
 import type { LinkedNote } from "@/components/account-notes";

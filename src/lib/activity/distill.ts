@@ -3,19 +3,17 @@
 // the refuter (a separate call that defaults to refute), and mechanical canon
 // checks run in code before either call spends a token. Numbers never come
 // from here — the schemas hold no numeric fields except citation dates, so
-// every count the app renders traces to the rollup's arithmetic (§7.2).
+// every count the app renders traces to the rollup's arithmetic (the
+// covenant).
 
 import Anthropic from "@anthropic-ai/sdk";
 import { claudeClient, claudeAvailable } from "@/lib/claude/health";
 import { redactMoney } from "@/lib/intel/lexicon";
+import { MODEL_DISTILL, MODEL_REFUTE } from "@/lib/intranet/doctrine";
 import type { Gem, GemCite } from "./stores";
 import type { StagedRow } from "./types";
 import { stripThreadTokens } from "./parse";
 import { isMachineryName } from "./classify";
-
-export const MODEL_DISTILL_RICH = "claude-opus-5";
-export const MODEL_DISTILL_LIGHT = "claude-opus-5";
-export const MODEL_REFUTE = "claude-opus-5";
 
 export function distillAvailable(): boolean {
   return claudeAvailable();
@@ -77,7 +75,7 @@ export type GemCandidate = {
   citedRowKeys: string[];
 };
 
-export type DistillResult = { gems: GemCandidate[]; whyNone: string };
+type DistillResult = { gems: GemCandidate[]; whyNone: string };
 
 const DISTILL_SCHEMA = {
   type: "object",
@@ -141,7 +139,7 @@ export async function runDistill(inp: {
   rollupText: string;
   pack: ContextPack;
   rich: boolean;
-  /** Set on the one retry (§3.7.2): the named failure of the first pass. */
+  /** Set on the one retry an account gets: the named failure of the first pass. */
   retryNote?: string;
 }): Promise<DistillResult> {
   if (!distillAvailable()) throw new Error("No API key configured.");
@@ -158,7 +156,7 @@ THE SLICE (each row leads with its citation key):
 ${rowsText(inp.rows)}${inp.retryNote ? `\n\nRETRY: ${inp.retryNote}` : ""}`;
 
   const res = await client.messages.create({
-    model: inp.rich ? MODEL_DISTILL_RICH : MODEL_DISTILL_LIGHT,
+    model: MODEL_DISTILL,
     max_tokens: 4096,
     thinking: { type: "adaptive" },
     system: [
@@ -196,7 +194,7 @@ ${rowsText(inp.rows)}${inp.retryNote ? `\n\nRETRY: ${inp.retryNote}` : ""}`;
 
 // ── the refuter ─────────────────────────────────────────────────────────────
 
-export type RefuteResult = {
+type RefuteResult = {
   refuted: boolean;
   failedCheck: string;
   why: string;

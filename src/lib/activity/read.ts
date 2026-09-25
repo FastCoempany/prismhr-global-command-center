@@ -113,12 +113,13 @@ const ageDays = (dayKey: string, now: Date): number | null => {
 // Score = 3·clicks + 1·opens over 30 days, recency-decayed with a 10-day
 // half-life anchored on the last open (the aggregate windows carry no per-day
 // series; the last-open anchor is the decay the store can honestly support —
-// §10 reserves the constants for founder tuning after live distribution).
+// the constants are placeholders reserved for founder tuning once a live
+// distribution exists).
 
-export const INTENT_WARM_THRESHOLD = 6;
-export const INTENT_HALF_LIFE_DAYS = 10;
+const INTENT_WARM_THRESHOLD = 6;
+const INTENT_HALF_LIFE_DAYS = 10;
 
-export type IntentWarm = {
+type IntentWarm = {
   score: number;
   opens30: number;
   clicks30: number;
@@ -179,7 +180,7 @@ export function orgInboundHolder(sr: SecondRecord | undefined): string {
 // doctrine). The 7-day send window rides the intent grammar's 7D row; slices
 // staged before that row existed read as no-cadence rather than guessing.
 
-export type Collision = {
+type Collision = {
   mktgSends7: number;
   colleague: { who: string; day: string } | null;
 };
@@ -200,8 +201,8 @@ export function collisionFor(sr: SecondRecord | undefined, now: Date): Collision
 // ── engaged-never-introduced (rule table: 78) ───────────────────────────────
 // Heavy support traffic, still warm, on an account nobody ever pitched.
 
-export const ENI_MIN_CASES = 8;
-export const ENI_FRESH_DAYS = 60;
+const ENI_MIN_CASES = 8;
+const ENI_FRESH_DAYS = 60;
 
 export function engagedNeverIntroduced(
   sr: SecondRecord | undefined,

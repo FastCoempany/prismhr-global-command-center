@@ -86,7 +86,7 @@ async function canWrite() {
 }
 
 // ── capture ─────────────────────────────────────────────────────────────────
-export type CaptureReply = {
+type CaptureReply = {
   ok: boolean;
   receipt: string;
   /** What just landed, so the room can read it immediately (IV.3). */
@@ -704,7 +704,7 @@ export type ShelfScope =
   | { type: "topic"; id: string; label: string }
   | { type: "country"; code: string; label: string; topicId?: string };
 
-export type ShelfItem = {
+type ShelfItem = {
   claimId: string;
   text: string;
   speaker: string;
@@ -832,7 +832,7 @@ export async function intranetPulse(): Promise<PulseReply | null> {
 // pipeline end to end and reports in plain words. A recall case whose material
 // simply isn't in the record yet says so, rather than posing as a failure.
 
-export type SelfCheckReply = { ok: boolean; lines: string[]; reason?: string };
+type SelfCheckReply = { ok: boolean; lines: string[]; reason?: string };
 
 export async function intranetSelfCheck(): Promise<SelfCheckReply> {
   if (!(await canRead())) return { ok: false, lines: [], reason: "Sign in to continue." };

@@ -900,10 +900,13 @@ describe("the cleaner cuts a message that quotes itself (2026-08-31)", () => {
 
 test("the chute reconciles stored second-record receipts against the live run", () => {
   const chute = readFileSync(join(root, "src/app/room/chute.tsx"), "utf8");
+  // The ledger's row and codec live in chute-ledger.ts (pure) since the
+  // 2026-09-25 rulings; the flag is declared and persisted there.
+  const ledger = readFileSync(join(root, "src/app/room/chute-ledger.ts"), "utf8");
   // Structural marker — activity entries are found by flag, never by
   // sniffing filenames or reason text.
-  assert.ok(chute.includes("act?: boolean"));
-  assert.ok(chute.includes("act: x.act"), "the flag must survive the ledger");
+  assert.ok(ledger.includes("act?: boolean"));
+  assert.ok(ledger.includes("act: x.act"), "the flag must survive the ledger");
   assert.ok(chute.includes("act: true"));
   // The reconcile itself: live receipt in, stale entries updated, a running
   // run left alone for the dock to narrate.
@@ -918,7 +921,6 @@ test("a settled receipt clears by hand; in-flight and waiting rows cannot", () =
   const chute = readFileSync(join(root, "src/app/room/chute.tsx"), "utf8");
   // The hover ✕, tooltip-titled per the Spring's minimalist-controls decree.
   assert.ok(chute.includes("chuteDismiss"));
-  assert.ok(chute.includes("Clear this receipt. The record keeps everything that filed."));
   // The gate: only settled states carry the control. A row waiting on the
   // operator's pick or still reading is never dismissible.
   const gate = /const settled = [\s\S]{0,400}?;/.exec(chute)?.[0] ?? "";

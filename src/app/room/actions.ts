@@ -7,6 +7,7 @@
 
 import { rulesRead } from "@/lib/intel/rules-read";
 import { claudeClient, claudeAvailable } from "@/lib/claude/health";
+import { MODEL_TRANSCRIBE } from "@/lib/intranet/doctrine";
 import { revalidatePath } from "next/cache";
 import { getAppAccess } from "@/lib/auth";
 import { hasDatabaseEnv } from "@/lib/db";
@@ -65,15 +66,13 @@ async function requireWrite() {
 function refresh() {
   revalidatePath("/room");
   revalidatePath("/accounts");
-  revalidatePath("/today");
   revalidatePath("/groundwork");
-  revalidatePath("/");
 }
 
 // Type a line, press Enter → one note on THIS account, everywhere. Returns
 // the ids the receipt needs: the note row and its sheet mirror, so ↩ undo
 // and "make it an action →" can act on exactly what this keystroke created.
-export async function roomLog(
+async function roomLog(
   accountId: string,
   text: string,
 ): Promise<{ ok: boolean; reason?: string; noteId?: string; todoId?: string }> {
@@ -778,7 +777,7 @@ import {
   withTags,
   type NoteTags,
 } from "@/lib/today/route-notes";
-import { routeSheetNote } from "@/app/today/sheet-actions";
+import { routeSheetNote } from "./sheet-actions";
 
 // The register's composer. The Note | Action toggle and urgency chips arrive
 // as opts (Today's capture bar, transplanted); the typed grammar still wins
@@ -1075,37 +1074,6 @@ export async function roomRetire(
   }
 }
 
-// A closure recorded in error must be undoable — the card comes back to the
-// board with its stage rail intact and the terminal stamp removed.
-export async function roomReopen(
-  accountId: string,
-  cardId: string,
-): Promise<{ ok: boolean; reason?: string }> {
-  const cid = typeof cardId === "string" ? cardId.trim().slice(0, 40) : "";
-  if (!bindAccountId(accountId, peos) || !cid)
-    return { ok: false, reason: "Not a bound row." };
-  if (!(await requireWrite())) return { ok: false, reason: "Read-only session." };
-  try {
-    const prisma = getPrisma();
-    const card = await prisma.dashCard.findUnique({
-      where: { id: cid },
-      select: { notes: true },
-    });
-    if (!card) return { ok: false, reason: "That card is gone." };
-    await prisma.dashCard.update({
-      where: { id: cid },
-      data: {
-        archived: false,
-        notes: writeOutcome(card.notes, null),
-      },
-    });
-    refresh();
-    return { ok: true };
-  } catch {
-    return { ok: false, reason: "That didn't save. Try again." };
-  }
-}
-
 // --- The research pass -------------------------------------------------------
 // The obvious button. First run is the deep one; every run files its findings as
 // a note on the account, so the record, the corpus, the intel extractor and the
@@ -1269,6 +1237,7 @@ export async function roomGapsRefill(
         // recognises a colleague is not available, and a partial roster would
         // demote a real reply to one of them. The inbound test sits out; this
         // corpus feeds the ask builder, which never reads direction.
+        homeSide: undefined,
         acctNotes: notes.map((n, i) => ({
           id: String(i),
           body: n.body,
@@ -1524,7 +1493,7 @@ export async function roomNoteToAction(
       }
       if (!owned)
         return { ok: false, reason: "That entry belongs to a different account." };
-      await patchRoomTodoTags(todoId, t.body, { kind: "action", doneAt: "", delay: "" });
+      await patchRoomTodoTags(todoId, t.body, { kind: "action", doneAt: "" });
       await prisma.todo.update({
         where: { id: todoId },
         data: { done: false, accountId: acct.id },
@@ -1630,7 +1599,6 @@ export async function roomTodoSet(
       // already-routed items pass through untouched).
       await patchRoomTodoTags(id, t.body, {
         doneAt: String(Date.now()),
-        delay: "",
       });
       await prisma.todo.update({ where: { id }, data: { done: true } });
       await prisma.accountDisposition
@@ -1744,7 +1712,7 @@ async function transcribePdf(
   try {
     const client = claudeClient({ timeout: 110_000, maxRetries: 1 });
     const res = await client.messages.create({
-      model: "claude-opus-5",
+      model: MODEL_TRANSCRIBE,
       max_tokens: 16000,
       output_config: { effort: "low" },
       messages: [

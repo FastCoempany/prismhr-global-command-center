@@ -13,12 +13,12 @@ import { getAppAccess } from "@/lib/auth";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import { createAccountNoteRow } from "@/lib/notes/write";
 import { redactMoney } from "@/lib/intel/lexicon";
-import { OPERATOR_NAME } from "@/lib/intel/provenance";
 import { userDayKey } from "@/lib/tz";
 import { GEMS_NS, parseGemsBody, renderGemsBody } from "@/lib/activity/stores";
 import {
   ACT_DRAFT_NS,
   SEAT_NS,
+  actSendRow,
   renderActDraftBody,
   renderSeatBody,
 } from "@/lib/act/lane";
@@ -75,21 +75,6 @@ export async function saveActDraft(args: {
   }
 }
 
-export async function discardActDraft(args: {
-  accountId: string;
-}): Promise<{ ok: boolean }> {
-  const accountId = clip(args.accountId, 40);
-  if (!accountId || !(await requireWrite())) return { ok: false };
-  try {
-    await getPrisma().accountNote.deleteMany({
-      where: { accountId: `${ACT_DRAFT_NS}${accountId}` },
-    });
-    return { ok: true };
-  } catch {
-    return { ok: false };
-  }
-}
-
 // ── the send (a real outbound on the record) ────────────────────────────────
 
 export async function fileActSend(args: {
@@ -105,10 +90,7 @@ export async function fileActSend(args: {
     await createAccountNoteRow({
       accountId,
       kind: "mine",
-      body: redactMoney(`✉ ${subject || "Sent"} — sent to ${to}.`),
-      lane: "mine",
-      actors: `${OPERATOR_NAME} → ${to}`,
-      source: "act-lane",
+      ...actSendRow({ to, subject }),
     });
     // The draft is consumed by the send.
     await getPrisma().accountNote.deleteMany({

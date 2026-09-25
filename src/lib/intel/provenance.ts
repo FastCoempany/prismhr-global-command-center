@@ -81,7 +81,7 @@ const EDGE_QUOTES = /^["'“”‘’`]+|["'“”‘’`]+$/g;
 // `Sarah Pegram, PHR` carries credentials. Left alone, that stray `>` made a
 // CSM's own name fail to match the roster and demoted a real client reply
 // (found sweeping the record before shipping the inbound test, 2026-09-15).
-export function cleanNameToken(raw: string): string {
+function cleanNameToken(raw: string): string {
   return (
     (raw ?? "")
       // Angle brackets delimit an address and are never part of a name, so

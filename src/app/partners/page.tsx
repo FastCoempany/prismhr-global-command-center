@@ -26,7 +26,7 @@ export const dynamic = "force-dynamic";
 type Entry = {
   at: string; // ISO
   body: string;
-  tag: "outreach" | "reply" | "note" | "stash" | "log";
+  tag: "outreach" | "reply" | "note" | "log";
   noteId?: string; // present when the entry is a deletable PartnerNote
 };
 
@@ -73,7 +73,7 @@ function timelineFor(
     out.push({
       at: n.createdAt,
       body: n.body,
-      tag: n.source === "stash" ? "stash" : "note",
+      tag: "note",
       noteId: n.id,
     });
   }
@@ -84,7 +84,6 @@ const TAG_LABEL: Record<Entry["tag"], string> = {
   outreach: "outreach",
   reply: "reply",
   note: "note",
-  stash: "from Stash",
   log: "logged",
 };
 
@@ -157,7 +156,7 @@ export default async function PartnersPage() {
 
           <p className={styles.sub}>
             Every outreach, reply, and note, dated and time-stamped, synced with{" "}
-            <Link href="/today">Today</Link>.
+            <Link href="/room">the HomeRoom</Link>.
           </p>
         </div>
 
@@ -191,8 +190,8 @@ export default async function PartnersPage() {
                           : `Awaiting reply · check-in ${shortDate(t.followUpAt)}`
                     : "No outreach logged yet"}
                 </span>
-                <Link href="/today" className={styles.prTodayLink}>
-                  Outreach card on Today →
+                <Link href="/room" className={styles.prTodayLink}>
+                  Outreach card on the HomeRoom →
                 </Link>
               </div>
 

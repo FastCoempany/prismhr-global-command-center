@@ -9,7 +9,7 @@ import { clip, moveFromCommitment, pickOwed } from "./move-line";
 
 export type Health = "red" | "amber" | "green" | "quiet";
 
-export type RoomInputs = {
+type RoomInputs = {
   accountName: string;
   // the current stage step (null = nothing active on the card)
   step: {
@@ -114,9 +114,9 @@ export function climbFraction(
 // Evidence sits the meter at the START of the evidenced stage — proof the
 // stage is in play, never proof it's done.
 
-export type MeterEvidence = { nodeKey: string; why: string };
+type MeterEvidence = { nodeKey: string; why: string };
 
-export type MeterRead = {
+type MeterRead = {
   frac: number; // 0..1 meter position
   label: string; // the mono line under the bar
   why: string[]; // the hover bubble, line by line

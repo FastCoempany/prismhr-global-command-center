@@ -1,7 +1,7 @@
 import research from "./research.json";
 
 export type Evidence = { claim: string; url: string };
-export type DemandRecord = {
+type DemandRecord = {
   demandScore: number | null;
   confidence: "high" | "medium" | "low";
   signals: string[];
@@ -134,7 +134,7 @@ export function competitorUrl(name: string): string | undefined {
   return COMPETITOR_URLS[name];
 }
 
-export type PlayType = "displacement" | "greenfield" | null;
+type PlayType = "displacement" | "greenfield" | null;
 
 // The demand floor at which a researched account carries an actionable play (and
 // counts as a real "signal in" on Today). Lowered from 40 → 30 to surface the

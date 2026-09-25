@@ -9,17 +9,7 @@
   font: 400 15px/1.6 var(--font-sans);
 }
 
-.lay {
-  display: grid;
-  grid-template-columns: minmax(320px, 2fr) minmax(0, 3fr);
-  gap: 26px;
-  align-items: start;
-}
-
 @media (max-width: 1023px) {
-  .lay {
-    grid-template-columns: 1fr;
-  }
   .wrap {
     padding: 16px 16px 40px;
   }
@@ -53,28 +43,7 @@
   white-space: nowrap;
 }
 
-.band {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 14px 0 8px;
-}
-.bandLabel {
-  composes: kick;
-  white-space: nowrap;
-}
-.bandNow {
-  color: var(--ds-orange);
-}
-.bandRule {
-  height: 1px;
-  flex: 1;
-  background: linear-gradient(90deg, var(--color-line), transparent);
-}
 /* A window that has already closed today reads quieter — done is past. */
-.bandPast {
-  opacity: 0.55;
-}
 
 .due {
   display: grid;
@@ -100,89 +69,8 @@
   color: var(--color-ink);
 }
 
-.queue {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.row {
-  display: grid;
-  grid-template-columns: 3px 1fr auto;
-  gap: 12px;
-  align-items: center;
-  background: var(--color-surface);
-  border: 1px solid var(--color-line);
-  border-radius: 8px;
-  padding: 10px 12px;
-  color: inherit;
-  text-decoration: none;
-}
-.row:hover {
-  border-color: var(--color-line-strong);
-}
-.rowFocused {
-  background: var(--ds-orange-tint);
-  border-color: var(--color-line-strong);
-}
-.rowOff {
-  box-shadow: var(--shadow-raised);
-  border-bottom: 3px solid var(--ds-orange);
-}
-.gauge {
-  width: 3px;
-  align-self: stretch;
-  border-radius: 2px;
-  background: var(--ds-ink-quiet);
-}
-.gaugeBlue {
-  background: var(--ds-blue);
-}
-.gaugeAmber {
-  background: var(--ds-amber);
-}
-.rowName {
-  font-weight: 600;
-  font-size: 13.5px;
-}
-.rowMeta {
-  font-size: 12px;
-  color: var(--color-ink-disabled);
-}
-.rowMeta b {
-  color: var(--color-ink-soft);
-  font-weight: 600;
-}
-.rowReason {
-  color: var(--color-ink-disabled);
-}
 /* The carryover mark — amber, because an unworked yesterday is a caution. */
-.carry {
-  font: 600 10px/1.4 var(--font-mono);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--ds-amber);
-  margin-left: 6px;
-  white-space: nowrap;
-}
-.rowOwed {
-  font: 600 11px/1.5 var(--font-mono);
-  color: var(--ds-ink-quiet);
-  text-align: right;
-  white-space: nowrap;
-}
-.rowWorked {
-  color: var(--ds-green);
-}
 
-.intent {
-  font: 600 10px/1.4 var(--font-sans);
-  color: var(--ds-blue);
-  border: 1px solid var(--ds-blue);
-  border-radius: 99px;
-  padding: 1px 8px;
-  background: var(--ds-blue-soft);
-  white-space: nowrap;
-}
 /* Proximity is a tiebreak, not health — the chip stays quiet ink; the word
    carries the meaning. */
 .prox {
@@ -193,13 +81,6 @@
   padding: 1px 8px;
   background: var(--color-surface-mist);
   white-space: nowrap;
-}
-
-.queueFoot {
-  font-size: 12.5px;
-  color: var(--color-ink-disabled);
-  margin: 10px 2px 0;
-  max-width: 46ch;
 }
 
 .wire {
@@ -263,21 +144,6 @@
   color: var(--color-ink);
 }
 
-.file {
-  background: var(--color-surface);
-  border: 1px solid var(--color-line);
-  border-bottom: 3px solid var(--ds-orange);
-  border-radius: 8px;
-  box-shadow: var(--shadow-raised);
-  padding: 22px 24px 0;
-  display: flex;
-  flex-direction: column;
-}
-.fileTitle {
-  font: 400 26px/1.25 var(--font-serif);
-  margin: 6px 0 10px;
-  text-wrap: balance;
-}
 .fileStory {
   color: var(--color-ink-soft);
   font-size: 14px;
@@ -456,32 +322,6 @@
 /* ── The winged stage (CLAUDE.md, decided 2026-08-10) ──────────────────── */
 
 /* The instrument capsule — clock · date · weather · the working band. */
-.instr {
-  display: flex;
-  align-items: baseline;
-  gap: 14px;
-  flex-wrap: wrap;
-  padding: 8px 2px 10px;
-  border-bottom: 1px solid var(--color-line);
-  font: 600 11px/1.5 var(--font-mono);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--color-ink-disabled);
-  margin-bottom: 14px;
-}
-.instrDigits {
-  font-size: 15px;
-  letter-spacing: 0.04em;
-  color: var(--color-ink-soft);
-  font-variant-numeric: tabular-nums;
-}
-.instrWx {
-  color: var(--color-ink-disabled);
-}
-.instrBand {
-  margin-left: auto;
-  color: var(--color-ink-soft);
-}
 
 /* The Klaxon — the band's command and countdown run the masthead
    (triptych winner, 2026-08-11). */

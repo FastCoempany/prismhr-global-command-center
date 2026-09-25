@@ -27,7 +27,7 @@ import type { Candidate, Claim, QueryPlan, Road, Topic } from "./types";
 
 const DAY = 86_400_000;
 
-export const EMPTY_PLAN: QueryPlan = {
+const EMPTY_PLAN: QueryPlan = {
   intent: "lookup",
   topicIds: [],
   entities: [],
@@ -88,7 +88,7 @@ const PLAN_SCHEMA = {
   },
 } as const;
 
-export function planAvailable(): boolean {
+function planAvailable(): boolean {
   return claudeAvailable();
 }
 
