@@ -19,7 +19,7 @@ The three audits said one thing from three angles: 111 of 187 decrees in scope a
 | Ledger | At pass 3 (main 3726363) | Now |
 |---|---|---|
 | Honor-system decrees | 111 of 187 | 111 of 187 |
-| Ungoverned behaviors | 34 open | 26 open · 8 ruled |
+| Ungoverned behaviors | 34 open | 18 open · 16 ruled |
 | Conflicting pairs | 20 open | 0 open · 20 ruled |
 
 ## How a row moves
@@ -150,7 +150,7 @@ Status is one of: honor · text (a text pin exists, not behavior) · chain (pinn
 | A12.11 | The writing canon and plain-speech law on the ingest surfaces | The seven devices: antithesis, paradox, maxim, definitional flip, consequence closer, escalating triad, chiasm … | mostly | honor | — | — |
 | A12.12 | The writing canon and plain-speech law on the ingest surfaces | "invented slang ..., constructed non-conversational phrasing ..., and performative reassurance flourishes" (10 … | no | honor | — | — |
 
-## 2. Ungoverned behaviors (34: 26 open · 8 ruled)
+## 2. Ungoverned behaviors (34: 18 open · 16 ruled)
 
 Status is one of: open · ruled (the founder decided; the ruling is quoted) · encoded (CLAUDE.md carries it; line cited) · enforced (a chain test or construction pins the new decree).
 
@@ -164,16 +164,16 @@ Status is one of: open · ruled (the founder decided; the ruling is quoted) · e
 | D2 | A .csv that probes as the activity report leaves roomPaste for the second record (chute.tsx:356-359; upload.ts:14-24); the ActivityDock is a second do … | Second record (404-419); Chute (281) | Which doors take the export, and what the Drop does with one. | ruled | GOVERN: Chute or dock take the export; the Drop refuses .csv (R12 A) | — | batch 4 · 2026-09-25 |
 | D3 | PDFs and images go to the model before any routing (chute.tsx:360; actions.ts:1732-1791): 8 MB cap, claude-opus-5, a 60,000 slice, and a prompt that a … | "read on the spot" (277); the VTT clause (277-279) | What a PDF or image transcript is and whether it earns the CALL TRANSCRIPT path. | ruled | GOVERN: the transcriber emits CALL TRANSCRIPT for a call (R4 A) | — | batch 4 · 2026-09-25 |
 | D4 | Caps with no receipt: 60,000 / 400,000 with a truncation note (actions.ts:187-192); docx 60,000 (read-file.ts:93); sheets 4 tabs / 400 rows / 30,000 ( … | (277) | What may be cut on the way in and whether every cut appears on the receipt. | ruled | GOVERN: file and text kept whole; only the model read is windowed, on the receipt | — | batch 4 · 2026-09-25 |
-| D5 | The picker and the batch-mate button file with force: true (chute.tsx:578, :600), skipping both guard rungs but never the duplicate guard; the batch-m … | "waits for the operator's pick" (284); routing (279-281) | Whether a pick is final and unguarded, and whether batch siblings are a routing signal. | open | — | — | — |
-| D6 | Unreadable files route by filename and vault with no guard and no pick when a name matches (chute.tsx:361-368) | "Nothing files blind" (284) | Whether vaulting counts as filing. | open | — | — | — |
-| D7 | The duplicate guard and its marker both fail open (actions.ts:231-233, :133-136); a ✕-parked filing keeps its marker (:1486-1491) | (287-289) | Guard or gate; and whether a parked filing is "on file". | open | — | — | — |
+| D5 | The picker and the batch-mate button file with force: true (chute.tsx:578, :600), skipping both guard rungs but never the duplicate guard; the batch-m … | "waits for the operator's pick" (284); routing (279-281) | Whether a pick is final and unguarded, and whether batch siblings are a routing signal. | ruled | GOVERN: the pick is final; a batch sibling is a suggestion | — | batch 5 · 2026-09-25 |
+| D6 | Unreadable files route by filename and vault with no guard and no pick when a name matches (chute.tsx:361-368) | "Nothing files blind" (284) | Whether vaulting counts as filing. | ruled | GOVERN: vaulting is filing, with a receipt and a take-back | — | batch 5 · 2026-09-25 |
+| D7 | The duplicate guard and its marker both fail open (actions.ts:231-233, :133-136); a ✕-parked filing keeps its marker (:1486-1491) | (287-289) | Guard or gate; and whether a parked filing is "on file". | ruled | GOVERN: the duplicate check fails open and says so; parked is on file (R15 A) | — | batch 5 · 2026-09-25 |
 | D8 | The GitHub vault: browser-carried raw bytes under accounts/<Account>/<file>, a 25 MB / 2 GB split, a token handed to the browser (archive-actions.ts:1 … | none | Canonize the vault: naming, lanes, the browser-held token, and the money boundary. | open | — | — | — |
-| D9 | Two verdicts per filing: a keyless early rung with an empty claim (actions.ts:241-261) and a late rung on the read's claim (:318-339); keyless session … | (283-284) | Whether a filing may be disputed twice. | open | — | — | — |
+| D9 | Two verdicts per filing: a keyless early rung with an empty claim (actions.ts:241-261) and a late rung on the read's claim (:318-339); keyless session … | (283-284) | Whether a filing may be disputed twice. | ruled | GOVERN: one verdict per filing, one pick answers both rungs | — | batch 5 · 2026-09-25 |
 | D10 | Owner "them" actions are dropped from the fan-out (actions.ts:520); read.signals is never stored (ai-clean.ts:22); fan-out dedupes against open todos, … | (281-283) | Where their commitments and the read's signals live; whether a repeated commitment is one; confirm the marker-not-close rule. | open | — | — | — |
-| D11 | Unbounded parallel swallows: N concurrent model reads and N grant calls before grantRef fills (chute.tsx:388-391, :255-264) | (277) | A concurrency ceiling. | open | — | — | — |
-| D12 | Per-receipt ✕ and "Clear the receipts" (chute.tsx:409-434, :733-743), decreed 2026-09-01 in a comment and pinned in chain (second-record-faces.test.ts … | (285-286) | Canonize receipt dismissal, the receipt fold's budget, and what the ledger may keep. | open | — | — | — |
-| D13 | routingRoster() with contact emails, domains and people is serialized as a client prop (room/page.tsx:793, :842) while roster.ts:2-3 says contacts.jso … | none | Whether the book's contact emails may ship in the RSC payload. | open | — | — | — |
-| D14 | Typed rich notes route through roomPaste and its guard and dedupe (room-client.tsx:394-403) | (281) | Whether a typed note is a paste. | open | — | — | — |
+| D11 | Unbounded parallel swallows: N concurrent model reads and N grant calls before grantRef fills (chute.tsx:388-391, :255-264) | (277) | A concurrency ceiling. | ruled | GOVERN: at most three reads at once; the rest wait in drop order | — | batch 5 · 2026-09-25 |
+| D12 | Per-receipt ✕ and "Clear the receipts" (chute.tsx:409-434, :733-743), decreed 2026-09-01 in a comment and pinned in chain (second-record-faces.test.ts … | (285-286) | Canonize receipt dismissal, the receipt fold's budget, and what the ledger may keep. | ruled | GOVERN: receipts dismiss per row and all; settled rows keep no address or text | — | batch 5 · 2026-09-25 |
+| D13 | routingRoster() with contact emails, domains and people is serialized as a client prop (room/page.tsx:793, :842) while roster.ts:2-3 says contacts.jso … | none | Whether the book's contact emails may ship in the RSC payload. | ruled | GOVERN: routing runs on the server; the roster never ships | — | batch 5 · 2026-09-25 |
+| D14 | Typed rich notes route through roomPaste and its guard and dedupe (room-client.tsx:394-403) | (281) | Whether a typed note is a paste. | ruled | GOVERN: a typed note is a paste | — | batch 5 · 2026-09-25 |
 | D15 | refresh() names five paths (actions.ts:65-71) and every page is force-dynamic, so the list decides nothing today | "every tab re-derives" (283) | Whether refresh() is the canonical tab list or dead code. | open | — | — | — |
 | D16 | The fingerprint hashes the head line including the filename (paste-files.ts:42-53, :196, :309, :478), so a renamed file or an .eml/.msg twin of one ma … | "the same capture" (288) | What "the same capture" means. | open | — | — | — |
 | D17 | Second-record slices overwrite per account at run.ts:298 before the manifest verifies at :306-342; a refused or abandoned upload leaves new slices und … | "an incomplete upload refuses to run" (413-414) | Whether staging must verify before any slice replaces its predecessor. | open | — | — | — |
@@ -225,3 +225,4 @@ Status is one of: open · ruled (which side, quoted) · encoded (CLAUDE.md amend
 - 2026-09-25 · ruling session, batch 2 (pass 3 C): C7, C8, C9, C14, C15, C16, C19, C20 ruled. 111 · 34 · 5 open + 15 ruled.
 - 2026-09-25 · ruling session, batch 3 (pass 3 C): C10, C11, C12, C13, C17 ruled. Section C is fully ruled. 111 · 34 · 0 open + 20 ruled.
 - 2026-09-25 · ruling session, batch 4 (pass 3 D): P1, P2, P3, P4, D1, D2, D3, D4 ruled. 111 · 26 open + 8 ruled · 0 open + 20 ruled.
+- 2026-09-25 · ruling session, batch 5 (pass 3 D): D5, D6, D7, D9, D11, D12, D13, D14 ruled. 111 · 18 open + 16 ruled · 0 open + 20 ruled.

@@ -272,9 +272,9 @@ Grouped by the piece of the refactor each row gates. Cites are against main at 7
 | R10 | C1 | A | ruled 2026-09-25 · decree-ledger C1 |
 | R11 | D1 | A | ruled 2026-09-25 · decree-ledger D1 |
 | R12 | D2 | A | ruled 2026-09-25 · decree-ledger D2 |
-| R13 | D5 | | |
+| R13 | D5 | A, the pick is final; C withdrawn | ruled 2026-09-25 · decree-ledger D5 |
 | R14 | C20 | A | ruled 2026-09-25 · decree-ledger C20 |
-| R15 | D7 | | |
+| R15 | D7 | A | ruled 2026-09-25 · decree-ledger D7 |
 | R16 | D8 | | |
 | R17 | C8 | a third option: the seat follows its account to the HomeRoom | ruled 2026-09-25 · decree-ledger C8 |
 
