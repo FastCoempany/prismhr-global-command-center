@@ -481,18 +481,20 @@ Each names today's behavior at the door with its cite, what the plumbing carries
 
 ## 7. Decisions I need from you
 
-1. Filing is a table (default), or a namespaced `read:` note.
-2. The pastehash marker stays the duplicate key through this plan (default), or the check moves onto Filing's unique constraint with a backfill as one more slice.
-3. The read runs before the guard when the key is on so one verdict carries both grounds, as D9 reads (default), or the early rung keeps running before the read and a disputed filing can show two verdicts.
-4. The pick files the held read with no second model read (default), or the pick re-reads as today.
-5. Files above the platform's request cap for server functions: hold them in Vercel Blob by a per-file client token and vault from the server (default), keep the browser PUT for those files only, or cap the vault and receipt the rest as too big to vault.
-6. `Todo.filingId` is a column (default), or the filing link rides in the tag codec as `from:<id>`.
-7. Their loops are Todo rows tagged `owner: them` (default), or note rows.
-8. The second record's structured bodies redact string values and keep numeric fields (default), or pass `keepFigures` like the Scratchpaper.
-9. `morningDoneKey` reads Chicago per the closer rule (default) once you rule; until then it stays UTC and tests/today.test.ts:655 stands.
-10. C13 and C19 ride as two small PRs outside this plan (default), or join it as slices 19 and 20.
-11. A refused .csv on the Drop is not vaulted (default), or vaulted like any dropped file.
-12. The read's signals live on the Filing row the note links to (default), or are appended to the note body under D10's letter.
-13. The model's read schema stays as it is until the single read has landed (default), or grows per-entry deal facts in slice 4 so the surfaces stop regex-mining.
-14. Slice 11b waits on the coordination move's HomeRoom seat (default), or ships now with the move on the TODAY register.
-15. You run `npm run db:migrate:deploy` before slices 3 and 4 merge (default), or the build script gains `prisma migrate deploy`.
+Each is a yes-or-no question; "yes" is the default. The line beneath names the other road.
+
+1. **Store the read in its own table?** Default yes. Otherwise a namespaced `read:` note.
+2. **Keep the pastehash marker as the duplicate key?** Default yes. Otherwise the check moves onto Filing's unique constraint with a backfill, one more slice.
+3. **Read first, then one verdict with both grounds?** Default yes, as D9 reads. Otherwise the early rung keeps running before the read and a disputed filing can show two verdicts.
+4. **Does the pick reuse the read, no re-read?** Default yes. Otherwise the pick re-reads as today.
+5. **Big files: hop through Vercel Blob to vault?** Default yes, a per-file client token and the server vaults from Blob. Otherwise keep the browser PUT for files above the cap only, or cap the vault and receipt the rest as too big.
+6. **Link todos to filings by a column?** Default yes, `Todo.filingId`. Otherwise the link rides in the tag codec as `from:<id>`.
+7. **Their promises as todo rows tagged theirs?** Default yes, `owner: them` with the hearer and the day. Otherwise note rows.
+8. **Second-record JSON: redact strings, keep counts?** Default yes. Otherwise pass `keepFigures` like the Scratchpaper.
+9. **Morning done key: Chicago or UTC?** Default Chicago, per the closer rule. Until you rule it stays UTC and tests/today.test.ts:655 stands.
+10. **C13 and C19 as separate PRs?** Default yes, two small PRs outside this plan. Otherwise slices 19 and 20.
+11. **Refused .csv on the Drop: never vaulted?** Default yes. Otherwise vaulted like any dropped file.
+12. **Signals live on the filing row?** Default yes, on the Filing row the note links to. Otherwise appended to the note body under D10's letter.
+13. **Model schema unchanged until the read lands?** Default yes. Otherwise slice 4 grows per-entry deal facts so the surfaces stop regex-mining.
+14. **Hold slice 11b until the seat exists?** Default yes. Otherwise it ships now with the coordination move on the TODAY register.
+15. **You run the migration before merge?** Default yes, `npm run db:migrate:deploy` before slices 3 and 4 merge. Otherwise the build script gains `prisma migrate deploy`.
