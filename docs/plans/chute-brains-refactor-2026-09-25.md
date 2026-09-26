@@ -481,20 +481,79 @@ Each names today's behavior at the door with its cite, what the plumbing carries
 
 ## 7. Decisions I need from you
 
-Each is a yes-or-no question; "yes" is the default. The line beneath names the other road.
+Written plainly. Each says what happens today, then what yes and no mean. Yes is the default every time. The technical form of each lives in §2 and §4.
 
-1. **Store the read in its own table?** Default yes. Otherwise a namespaced `read:` note.
-2. **Keep the pastehash marker as the duplicate key?** Default yes. Otherwise the check moves onto Filing's unique constraint with a backfill, one more slice.
-3. **Read first, then one verdict with both grounds?** Default yes, as D9 reads. Otherwise the early rung keeps running before the read and a disputed filing can show two verdicts.
-4. **Does the pick reuse the read, no re-read?** Default yes. Otherwise the pick re-reads as today.
-5. **Big files: hop through Vercel Blob to vault?** Default yes, a per-file client token and the server vaults from Blob. Otherwise keep the browser PUT for files above the cap only, or cap the vault and receipt the rest as too big.
-6. **Link todos to filings by a column?** Default yes, `Todo.filingId`. Otherwise the link rides in the tag codec as `from:<id>`.
-7. **Their promises as todo rows tagged theirs?** Default yes, `owner: them` with the hearer and the day. Otherwise note rows.
-8. **Second-record JSON: redact strings, keep counts?** Default yes. Otherwise pass `keepFigures` like the Scratchpaper.
-9. **Morning done key: Chicago or UTC?** Default Chicago, per the closer rule. Until you rule it stays UTC and tests/today.test.ts:655 stands.
-10. **C13 and C19 as separate PRs?** Default yes, two small PRs outside this plan. Otherwise slices 19 and 20.
-11. **Refused .csv on the Drop: never vaulted?** Default yes. Otherwise vaulted like any dropped file.
-12. **Signals live on the filing row?** Default yes, on the Filing row the note links to. Otherwise appended to the note body under D10's letter.
-13. **Model schema unchanged until the read lands?** Default yes. Otherwise slice 4 grows per-entry deal facts so the surfaces stop regex-mining.
-14. **Hold slice 11b until the seat exists?** Default yes. Otherwise it ships now with the coordination move on the TODAY register.
-15. **You run the migration before merge?** Default yes, `npm run db:migrate:deploy` before slices 3 and 4 merge. Otherwise the build script gains `prisma migrate deploy`.
+1. **Should the AI's reading of a file get its own storage spot?**
+   - Today: when you drop a file, the AI reads it and writes up what it found. The app uses that write-up once and throws it away.
+   - Yes: save it in its own new spot, and link every note it made back to it.
+   - No: stuff it inside the notes as extra text.
+
+2. **Should the "already filed" check stay where it is for now?**
+   - Today: the app remembers every file you filed, so a second drop says "Already on file." That memory lives in its own little list.
+   - Yes: leave that list alone during this work.
+   - No: move it into the new storage spot now, which adds one more step.
+
+3. **Should a wrong-company warning come once instead of twice?**
+   - Today: the app checks the file before the AI reads it and again after. You can get warned twice about the same file.
+   - Yes: let the AI read first, then check once and show one warning with every reason. The AI then reads every file, but question 4 reuses that reading.
+   - No: keep the two checks.
+
+4. **After a warning, should your pick reuse the first reading?**
+   - Today: when you pick the right company, the AI reads the whole file a second time.
+   - Yes: reuse the first reading. It's faster and costs nothing extra.
+   - No: read it again.
+
+5. **How should big files get backed up?**
+   - Today: your browser uploads every file to the GitHub backup itself, so the browser holds the backup's secret key. You ruled the key must stay on the server. The server can only take a few megabytes at a time.
+   - Yes: big files go to a Vercel holding spot first, and the server copies them to the backup from there.
+   - Other choices: let the browser keep uploading only the big ones, or skip backing up big files and say so on the receipt.
+
+6. **Should each to-do remember which file created it, in its own column?**
+   - Today: Undo only works because the browser remembers a list of what a file made.
+   - Yes: add a column to the to-do list that points at the file.
+   - No: hide that pointer inside the to-do's text.
+
+7. **Should the other side's promises become to-dos?**
+   - Today: when a client says "I'll send the list Friday," the app throws it away. It only keeps your promises.
+   - Yes: save their promises as to-dos marked as theirs, with who promised and the day.
+   - No: save them as plain notes.
+
+8. **In the saved Salesforce data, should the money blanker skip counts?**
+   - Today: the app blanks out money everywhere it saves. The weekly Salesforce data is full of counts like 1,200, and the blanker can mistake those for money.
+   - Yes: blank money in the words and leave the counts alone.
+   - No: don't blank anything in that data, the way the scratchpad works.
+
+9. **Should "done today" use Chicago time?**
+   - Today: one part of the app starts a new day around 7 PM Chicago time, so something you check off at 8 PM counts as tomorrow's. Your rule says all days are Chicago days.
+   - Yes: switch it to Chicago time.
+   - Until you answer, it stays as it is.
+
+10. **Should two unrelated fixes be their own small jobs?**
+    - Today: two of your rulings aren't built yet. One makes a playbook question in the brain's answer open right where you click it. The other stops the app from hiding plays based on whether the CSM was briefed.
+    - Yes: do them as two small separate jobs.
+    - No: add them to this plan.
+
+11. **If the Salesforce spreadsheet is dropped on one account, should it skip the backup?**
+    - Today: the app turns it away with "The export goes in the Chute," but still backs it up.
+    - Yes: don't back it up, since it was turned away.
+    - No: back it up anyway.
+
+12. **Should the AI's short hints be saved with its reading?**
+    - Today: the AI also writes short hints like "they're talking to a competitor." Nobody saves them.
+    - Yes: keep them in the new storage spot with the rest of the reading.
+    - No: add them to the end of the note's text.
+
+13. **Should we wait before asking the AI for more?**
+    - Today: the app finds countries, products and headcounts by scanning the words in notes. The AI could list them directly instead.
+    - Yes: wait until the rest of this plan is done before changing what we ask the AI.
+    - No: add it now.
+
+14. **Should the "ask your colleague" move wait for its new spot?**
+    - Today: when a client replies to your colleague, Groundwork tells you "Ask Anika what they said." You ruled that belongs on the HomeRoom. The HomeRoom has no spot designed for it yet.
+    - Yes: leave it on Groundwork until the spot is designed.
+    - No: move it now onto that account's TODAY list.
+
+15. **Will you run the database update yourself?**
+    - Today: two steps in this plan add new columns to the database. Someone has to run one command so the live database gets them before those steps go live.
+    - Yes: you run the command before each of those two merges.
+    - No: the app runs it automatically every time it deploys.
