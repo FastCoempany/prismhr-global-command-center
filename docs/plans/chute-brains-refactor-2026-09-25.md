@@ -538,8 +538,8 @@ Written plainly. Each says what happens today, then what yes and no mean. Yes is
     - Yes: don't back it up, since it was turned away.
     - No: back it up anyway.
 
-12. **Should the AI's short hints be saved with its reading?**
-    - Today: the AI also writes short hints like "they're talking to a competitor." Nobody saves them.
+12. **Should the app keep the AI's hints about each file?**
+    - Today: the AI writes a few short hints about each file, like "they named a competitor" or "the decision sits with their CFO." The app asks for them and then throws them away.
     - Yes: keep them in the new storage spot with the rest of the reading.
     - No: add them to the end of the note's text.
 
