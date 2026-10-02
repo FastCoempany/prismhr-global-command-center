@@ -1,12 +1,10 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
 import { ProductLockup } from "@/components/brand";
 import { DeskMeter } from "@/components/presence/engine";
 import { WAYFINDER_ROUTES } from "@/components/wayfinder-routes";
 
 type AppWayfinderProps = {
   current: string;
-  onSignOut?: ReactNode;
   trail?: string;
 };
 
@@ -15,7 +13,6 @@ type AppWayfinderProps = {
 
 export async function AppWayfinder({
   current,
-  onSignOut,
   trail = "PrismHR Global",
 }: AppWayfinderProps) {
   const live = WAYFINDER_ROUTES.filter((r) => !r.archived);
@@ -43,7 +40,6 @@ export async function AppWayfinder({
           ))}
         </nav>
         <DeskMeter />
-        {onSignOut}
       </div>
     </header>
   );
