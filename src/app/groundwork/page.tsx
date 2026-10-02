@@ -649,10 +649,9 @@ export default async function GroundworkPage({
             <span className={styles.dueBar} />
             <span>
               ▤ <b>Run the Sales Nav grab.</b> The intent read is due. The grab lives on
-              the <Link href="/intake">Capture page</Link>. Paste the rows at the{" "}
-              <Link href="/">HomeRoom</Link> ⚡. The queue re-ranks on who is reading us.
-              The full snapshot parks in the <Link href="/intranet">Intranet</Link>. Ten
-              minutes.
+              the <Link href="/intake">Capture page</Link>. Paste the rows into the{" "}
+              <Link href="/">HomeRoom</Link> Chute or an account&apos;s Drop. They file as
+              a note and the queue re-ranks on who is reading us. Ten minutes.
             </span>
           </div>
         )}

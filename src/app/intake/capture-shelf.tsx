@@ -126,10 +126,10 @@ function teamsBookmarklet(origin: string): string {
 // 2026-09-25 — CLAUDE.md, The Chute :309): the grab pastes into the Chute or
 // a Drop like any capture and files as a note under its own SALESNAV ACCOUNTS
 // head, which the queue's intent rules read (src/lib/groundwork/signals.ts).
-// The code still opens /intranet?grab=1 below, and the Intranet's grab box
-// still invites the paste into its own dock, which files an Intranet capture,
-// never an account note. That page does carry the Chute. Retargeting the open
-// is the design pass's.
+// The code still opens /intranet?grab=1 below. That page carries the Chute and
+// its grab box points the operator at it, but the box's "Paste it here" button
+// still fills the Intranet's own dock, which files an Intranet capture, never
+// an account note. Retargeting the open and the button is the design pass's.
 function salesNavBookmarklet(origin: string): string {
   const js = `(async()=>{if(location.hostname.indexOf('linkedin.com')<0||location.pathname.indexOf('/sales')<0){alert('Open the Sales Navigator Accounts list first. That dashboard is what gets captured.');return}const sleep=(ms)=>new Promise(r=>setTimeout(r,ms));const rowsOf=()=>{let els=document.querySelectorAll('main table tbody tr');if(els.length<2)els=document.querySelectorAll('[role="table"] [role="row"]');if(els.length<2)els=document.querySelectorAll('main li');return els};const seen=new Set();const out=[];const collect=()=>{rowsOf().forEach((r)=>{const x=(r.innerText||'').replace(/\\s+$/,'');if(x&&x.length>10&&!seen.has(x)){seen.add(x);out.push(x)}})};const pane=(()=>{let p=document.querySelector('main')||document.body;for(let i=0;i<6&&p;i++){if(p.scrollHeight>p.clientHeight+80)return p;p=p.parentElement}return document.scrollingElement||document.body})();for(let page=0;page<20;page++){let last=-1;for(let i=0;i<24;i++){collect();const done=pane.scrollTop+pane.clientHeight>=pane.scrollHeight-4;if(done&&pane.scrollHeight===last)break;last=pane.scrollHeight;pane.scrollTop=pane.scrollHeight;await sleep(600)}collect();const next=document.querySelector('button[aria-label="Next"]:not([disabled]),button[aria-label="Next page"]:not([disabled])');if(!next)break;next.click();await sleep(1500);pane.scrollTop=0;await sleep(500)}if(out.length<2){alert('Nothing readable found. Is the Accounts list on screen?');return}const t='SALESNAV ACCOUNTS - captured '+new Date().toLocaleString()+' - '+out.length+' rows collected\\n\\n'+out.join('\\n\\n----\\n\\n');let ok=false;try{await navigator.clipboard.writeText(t);ok=true}catch(e){}if(ok){window.open('${origin}/intranet?grab=1','_blank');return}const d=document.createElement('button');d.textContent='Copy '+out.length+' rows and open the paste target';d.style.cssText='position:fixed;top:16px;right:16px;z-index:2147483647;background:#0a1c40;color:#fff;border:0;padding:14px 16px;border-radius:8px;font:600 13px sans-serif;cursor:pointer;box-shadow:0 8px 30px rgba(10,28,64,.35)';d.onclick=async()=>{try{await navigator.clipboard.writeText(t)}catch(e){window.prompt('Copy blocked. Press Ctrl+C:',t.slice(0,4000))}d.remove();window.open('${origin}/intranet?grab=1','_blank')};document.body.appendChild(d)})()`;
   return `javascript:${js}`;
@@ -190,7 +190,7 @@ const TOOLS: Tool[] = [
     where: "accounts list",
     label: "▤ Grab Sales Nav intent",
     takes:
-      "The whole accounts list. It scrolls and pages through every row itself, 118 accounts in under a minute, collecting names, intent levels, activity counts, and alerts. Lands whole in the Intranet, never on one account's row.",
+      "The whole accounts list. It scrolls and pages through every row itself, 118 accounts in under a minute, collecting names, intent levels, activity counts, and alerts. Paste it into the Chute or an account's Drop. It files as a note.",
     refuses:
       "Any page that isn't Sales Navigator. Keep the tab in front while it walks the list; a navy button hands you the copy when it finishes.",
     build: salesNavBookmarklet,
