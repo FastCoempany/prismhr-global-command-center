@@ -10,7 +10,7 @@
 // room never invents a sky.
 
 import { useEffect, useState } from "react";
-import { BAND_TABLE } from "@/lib/groundwork/bands";
+import { BAND_TABLE, currentBand } from "@/lib/groundwork/bands";
 import styles from "./groundwork.module.css";
 
 const CHICAGO = { latitude: 41.8781, longitude: -87.6298 };
@@ -28,6 +28,7 @@ const WORDS = [
 const BANDS = BAND_TABLE.map((b, i) => {
   const after = BAND_TABLE[i + 1];
   return {
+    id: b.id,
     from: b.from,
     to: b.to,
     label: WORDS[i]?.label ?? "",
@@ -103,8 +104,10 @@ export function Instrument() {
   const min = chi ? chi.getHours() * 60 + chi.getMinutes() + chi.getSeconds() / 60 : null;
   const sec = chi ? chi.getSeconds() : 0;
 
-  const band =
-    min == null ? BANDS[0] : (BANDS.find((b) => min < b.to) ?? BANDS[BANDS.length - 1]);
+  // The band is the table's own reading (currentBand, D26): null before the
+  // day opens, and before the day the send band is the one on the masthead.
+  const bandId = now ? currentBand(now) : null;
+  const band = BANDS.find((b) => b.id === bandId) ?? BANDS[0];
   const afterDay = min != null && min >= DAY_TO;
   // Before the day opens the send band is NEXT, not now (D26): the count runs
   // to its opening and the bar waits full.
