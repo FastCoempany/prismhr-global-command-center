@@ -311,6 +311,54 @@ describe("the same capture is the same normalized body, head line skipped", () =
     );
   });
 
+  test("the .eml and the .msg of one mail fingerprint equal (a twin format dedupes)", () => {
+    // One mail, read two ways. The .eml carries its Date header as the client
+    // wrote it; msgreader hands the .msg's delivery time back as a UTC string.
+    // Same From, To, Subject and body; the two Sent lines name one instant.
+    const eml = [
+      "From: Dana Ellis <dana@simploy.example>",
+      "To: Antaeus Coe <acoe@prismhr.com>",
+      "Subject: Re: Canada",
+      "Date: Tue, 02 Sep 2026 09:44:00 -0500",
+      "",
+      "The board meets Thursday. Can you send the model?",
+    ].join("\n");
+    const msg = {
+      subject: "Re: Canada",
+      senderName: "Dana Ellis",
+      senderEmail: "dana@simploy.example",
+      recipients: [{ name: "Antaeus Coe", email: "acoe@prismhr.com" }],
+      body: "The board meets Thursday. Can you send the model?",
+      messageDeliveryTime: "Tue, 02 Sep 2026 14:44:00 GMT",
+    };
+    assert.equal(
+      pasteFingerprint(emlToPaste(eml, "thread.eml")),
+      pasteFingerprint(msgToPaste(msg, "thread.msg")),
+    );
+    // A different instant is a different capture: the normalization reads the
+    // date, it never drops it.
+    assert.notEqual(
+      pasteFingerprint(emlToPaste(eml, "thread.eml")),
+      pasteFingerprint(
+        msgToPaste({ ...msg, messageDeliveryTime: "Wed, 03 Sep 2026 14:44:00 GMT" }, "b.msg"),
+      ),
+    );
+    // Two recipients: the .eml header joins them with a comma, msgreader's list
+    // with a semicolon. Still one mail.
+    const eml2 = eml.replace(
+      "To: Antaeus Coe <acoe@prismhr.com>",
+      "To: Antaeus Coe <acoe@prismhr.com>, Greg Williams <greg@prismhr.com>",
+    );
+    const msg2 = {
+      ...msg,
+      recipients: [...msg.recipients, { name: "Greg Williams", email: "greg@prismhr.com" }],
+    };
+    assert.equal(
+      pasteFingerprint(emlToPaste(eml2, "thread.eml")),
+      pasteFingerprint(msgToPaste(msg2, "thread.msg")),
+    );
+  });
+
   test("a bookmarklet re-copy with a fresh capture moment is the same thread", () => {
     const body = "\n\nDana Ellis\nThe board meets Thursday.";
     assert.equal(

@@ -39,23 +39,58 @@ export function sniffPaste(text: string): { kind: PasteKind; label: string } {
 // a re-copy of the same thread), and two FNV-1a passes with different seeds
 // keep accidental collisions out of range for a book this size.
 //
-// The same capture is the same normalized BODY: the head line every producer
-// writes — "OUTLOOK THREAD — dropped file <name>", "CALL TRANSCRIPT — dropped
-// file <name>", the bookmarklets' "… - captured <date>" — carries the
-// filename or the copy moment, never the capture, so a renamed file, the .eml
-// and .msg of one mail, and a re-copy of one thread all fingerprint alike.
-// The head grammar is the sniffer's own token list (ruled 2026-09-25, D16 —
-// CLAUDE.md, The Chute :305).
+// The same capture is the same normalized BODY (ruled 2026-09-25, D16 —
+// CLAUDE.md, The Chute :305): a renamed file, the .eml and .msg of one mail,
+// and a re-copy of one thread all fingerprint alike. The fingerprint
+// normalizes exactly four things, and only in the fingerprint — the stored
+// body is never rewritten:
+//
+// 1. The head line every producer writes — "OUTLOOK THREAD — dropped file
+//    <name>", "CALL TRANSCRIPT — dropped file <name>", the bookmarklets'
+//    "… - captured <date>" — is skipped: it carries the filename or the copy
+//    moment, never the capture. The head grammar is the sniffer's own token
+//    list.
+// 2. A "Sent:" line's date is read as one instant (ISO), when the date names
+//    its zone. emlToPaste writes the Date header as the client wrote it
+//    ("Tue, 02 Sep 2026 09:44:00 -0500"); msgToPaste writes msgreader's UTC
+//    string ("Tue, 02 Sep 2026 14:44:00 GMT"). One mail, two spellings of one
+//    moment. A date without a zone (an Outlook quoted trail's "Tuesday,
+//    September 2, 2026 9:44 AM") is left as written — reading it would depend
+//    on the machine's clock, and a fingerprint never does.
+// 3. A "To:" or "Cc:" line's recipient separator: the .eml header joins
+//    addresses with a comma, msgreader's recipient list with a semicolon.
+// 4. Casing and whitespace runs (in pasteFingerprint below), so a re-export
+//    or a re-copy of one thread reads the same.
 const HEAD_LINE_RE =
   /^(OUTLOOK THREAD|TEAMS THREAD|TEAMS CHAT|CALL TRANSCRIPT|SALESNAV|SPREADSHEET|DOCUMENT)\b/;
 
-/** The capture without its producer's head line. */
+const SENT_LINE_RE = /^(sent:[ \t]*)(.+)$/gim;
+const RECIPIENT_LINE_RE = /^((?:to|cc):[ \t]*)(.+)$/gim;
+// A date that names its zone: an offset, or GMT / UTC / Z.
+const ZONED_DATE_RE = /[+-]\d{4}\b|\b(?:GMT|UTC)\b|\dZ\b/;
+
+/** The date of a Sent: line as one ISO instant, or as written when it names
+ *  no zone or does not parse. */
+function sentInstant(date: string): string {
+  const d = date.trim();
+  if (!ZONED_DATE_RE.test(d)) return d;
+  const ms = Date.parse(d);
+  return Number.isNaN(ms) ? d : new Date(ms).toISOString();
+}
+
+/** The capture without its producer's head line, its Sent: dates read as
+ *  instants and its To:/Cc: separators agreed. */
 function fingerprintBody(text: string): string {
   const t = (text ?? "").trimStart();
   const nl = t.indexOf("\n");
   const first = nl >= 0 ? t.slice(0, nl) : t;
-  if (!HEAD_LINE_RE.test(first)) return t;
-  return nl >= 0 ? t.slice(nl + 1) : "";
+  const body = HEAD_LINE_RE.test(first) ? (nl >= 0 ? t.slice(nl + 1) : "") : t;
+  return body
+    .replace(SENT_LINE_RE, (_, k: string, d: string) => `${k}${sentInstant(d)}`)
+    .replace(
+      RECIPIENT_LINE_RE,
+      (_, k: string, v: string) => `${k}${v.replace(/;/g, ",")}`,
+    );
 }
 
 export function pasteFingerprint(text: string): string {
