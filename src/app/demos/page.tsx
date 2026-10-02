@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AppWayfinder } from "@/components/app-wayfinder";
+import { getAppAccess } from "@/lib/auth";
 import styles from "./demos.module.css";
 import shell from "../command-center.module.css";
 
@@ -28,7 +29,22 @@ const DEMOS = [
   },
 ];
 
-export default function DemosPage() {
+export default async function DemosPage() {
+  // Every page signs in (ruled 2026-09-25).
+  const access = await getAppAccess();
+  if (access.status === "unauthenticated") {
+    return (
+      <>
+        <AppWayfinder current="Demos" />
+        <main className={shell.wrap}>
+          <p>
+            Sign in to continue. <Link href="/login">Sign in</Link>.
+          </p>
+        </main>
+      </>
+    );
+  }
+
   return (
     <>
       <AppWayfinder current="Demos" />

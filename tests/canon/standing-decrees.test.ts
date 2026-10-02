@@ -72,6 +72,54 @@ describe("an archived surface leaves every tab list and every revalidation list"
   });
 });
 
+// ── Every page signs in (ruled 2026-09-25): no public mode ────────────────
+describe("every page signs in", () => {
+  // A page takes the gate itself, or through a loader that takes it: the
+  // room, Groundwork and Accounts read loadCommand / loadDashboard, the two
+  // sidekicks read their data module. Each loader calls getAppAccess and
+  // reports "unauthenticated" for the page to render.
+  const GATES = [
+    "getAppAccess(",
+    "loadDashboard(",
+    "loadCommand(",
+    "loadSidekick(",
+    "loadSidekickV3(",
+  ];
+  const GATED_LOADERS = [
+    "src/lib/dashboard/data.ts",
+    "src/lib/command-center/data.ts",
+    "src/app/sidekick/data.ts",
+    "src/app/sidekick-v3/data.ts",
+  ];
+  // The exact allowlist: the root is a pure redirect to the HomeRoom, which
+  // takes the gate; the login page is the door.
+  const EXEMPT = ["src/app/page.tsx", "src/app/login/page.tsx"];
+
+  test("every loader a page gates through calls getAppAccess itself", () => {
+    for (const f of GATED_LOADERS)
+      assert.ok(readFileSync(join(root, f), "utf8").includes("getAppAccess("), f);
+  });
+
+  test("the root page only redirects", () => {
+    const text = readFileSync(join(root, "src/app/page.tsx"), "utf8");
+    assert.match(text, /redirect\("\/room"\)/);
+    assert.doesNotMatch(text, /<main|return \(/);
+  });
+
+  test("every other src/app/**/page.tsx takes the access check", () => {
+    const pages = walk(join(root, "src/app"))
+      .filter((f) => /[\\/]page\.tsx$/.test(f))
+      .map((f) => relative(root, f).split("\\").join("/"));
+    assert.ok(pages.length >= 20, `only ${pages.length} pages`);
+    const ungated = pages.filter((p) => {
+      if (EXEMPT.includes(p)) return false;
+      const text = readFileSync(join(root, p), "utf8");
+      return !GATES.some((g) => text.includes(g));
+    });
+    assert.deepEqual(ungated, []);
+  });
+});
+
 // ── C13 · a playbook citation and the bank (click-depth :397-399; the face
 // :512-516). The card is retired; what holds is the bank's own lookup ─────
 describe("a playbook citation opens in place to the bank's question", () => {
