@@ -1,12 +1,18 @@
 // The price desk (founder-decreed 2026-08-21): pricing questions pull from
-// the Pricing page — the one surface that carries OUR money — and never from
-// the brain's stores, which are money-redacted by doctrine and can never hold
-// a figure. (The country wing renders figures too, statutory ones — wage
-// floors, contributions — never ours: the no-redactions decree, CLAUDE.md,
-// The Playbook face; ruled 2026-09-25, C11.) The quote is arithmetic from
-// src/lib/pricing, computed at read time, no model call. The ask ledger
-// stores its money-redacted twin with a pointer back to the page (the bank
-// routes; the paper's exception does not apply here).
+// the Pricing page's source (src/lib/pricing) — the page is where OUR money
+// is authored — and never from the brain's stores, which are money-redacted
+// by doctrine and can never hold a figure. (The country wing renders figures
+// too, statutory ones — wage floors, contributions — never ours: the
+// no-redactions decree, CLAUDE.md, The Playbook face; ruled 2026-09-25, C11.)
+// The quote is arithmetic from src/lib/pricing, computed at read time, no
+// model call. The ask ledger stores its money-redacted twin with a pointer
+// back to the page (the bank routes; the paper's exception does not apply
+// here). The Pricing page is not the only surface that renders our figures:
+// priceDeskDisplay below re-derives them at read time for the two surfaces
+// that show ledger answers — the Asks page (src/app/asks/page.tsx) and the
+// Scratchpaper's ask door (src/app/scratch/actions.ts) — so a price-desk
+// answer carries its figures there too, fresh from the source, never from
+// the store.
 
 import { addOns, billingNote, countries, offboardingFee, pricingGeneratedAt } from ".";
 

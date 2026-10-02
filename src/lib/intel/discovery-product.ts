@@ -14,9 +14,11 @@
 // cells filled). Ids are permanent: a retired question is keyed by id, so
 // renaming one un-retires it everywhere — asknext-done rows, intranet mirror
 // refs, and the brain's playbook citations all key on the id. The Call Sheet
-// and its ?open= deep link are retired (founder-decreed 2026-09-15); a
-// citation opens in place to the bank's question (ruled 2026-09-25, C13 —
-// CLAUDE.md, The Playbook face :572).
+// and its ?open= deep link are retired (founder-decreed 2026-09-15). A
+// citation is ruled to open in place to the bank's question (ruled 2026-09-25,
+// C13 — CLAUDE.md, The Playbook face :572); the code still offers no door
+// (src/lib/ask/links.ts, the playbook branch skips the citation), and
+// questionById in bank.ts is the lookup the design pass builds that door on.
 //
 // The twins retirement (2026-08-24, pass-two program step 1): eight questions
 // whose ground a DISCOVERY sibling already held were removed — x-payment-path

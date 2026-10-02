@@ -1,11 +1,14 @@
 "use server";
 
-// The vault's one server involvement: hand an authed operator the grant the
-// browser needs to speak to GitHub itself. The file NEVER passes through
+// The vault's one server involvement today: hand an authed operator the grant
+// the browser needs to speak to GitHub itself. The file NEVER passes through
 // here — the server's request cap could not hold a recording, and a relay
 // would be a second transfer of the same bytes for nothing. The token lives
 // only in the environment and in this reply to a signed-in, can-write
-// session; it is never rendered, logged, or bundled.
+// session; it is never rendered, logged, or bundled, but it does reach the
+// browser's fetch. D8 rules the upload server-side so no token reaches the
+// browser (ruled 2026-09-25 — CLAUDE.md, The Chute :307); that upload is the
+// design pass's, and this grant stays the vault's path until it lands.
 
 import { getAppAccess } from "@/lib/auth";
 import type { ArchiveGrant } from "@/lib/github/archive";

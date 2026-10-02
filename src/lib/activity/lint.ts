@@ -1,8 +1,10 @@
 // The mechanical canon linter — the cheap rejections that never spend a model
-// call (§3.8 check 5, §7.2). Every generated act line faces this before the
-// refuter does: imperative, six words or fewer, no hedging, no deadline in
-// the action, no retired phrases, term two words or fewer. Pure and exported
-// so the covenant's own tests exercise the accept and reject sets.
+// call (the refutation pass as blessed 2026-08-20: the mechanical canon lint
+// runs first, then the independent refuter — CLAUDE.md, The second record).
+// Every generated act line faces this before the refuter does: imperative,
+// six words or fewer, no hedging, no deadline in the action, no retired
+// phrases, term two words or fewer. Pure and exported so the covenant's own
+// tests exercise the accept and reject sets.
 
 const VERBS = new Set([
   "reach",

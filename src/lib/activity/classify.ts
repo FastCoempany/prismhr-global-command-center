@@ -11,7 +11,9 @@
 import type { ActivityRow } from "./parse";
 
 // The fixed machinery list — exact names, verified in the export. Additions
-// are a code change with a test, never inference (Appendix C).
+// are a code change with a test, never inference (the machinery rule as
+// blessed 2026-08-20: a fixed, verified list, because machinery is never a
+// person — CLAUDE.md, The second record).
 export const MACHINERY_USERS = [
   "HubSpot Integration User",
   "Salesforce Administrator User",
@@ -129,7 +131,10 @@ export function laneOf(r: ActivityRow, opts?: { csmRoster?: Set<string> }): Lane
 
 /** The colleague roster, re-derived from the file itself every drop:
  *  everyone who ever appears in Assigned, minus machinery, plus the book's
- *  CSMs and EXTRA_PARTNERS. Zero maintenance (Appendix C). */
+ *  CSMs and EXTRA_PARTNERS. Zero maintenance (the roster rule as blessed
+ *  2026-08-20: from the file each drop, never a hand-kept list). D19's read,
+ *  the book's internal names and our domain first, is the design pass's
+ *  (ruled 2026-09-25 — CLAUDE.md, The second record :489). */
 export function deriveColleagues(
   assignedNames: Iterable<string>,
   bookCsms: Iterable<string>,

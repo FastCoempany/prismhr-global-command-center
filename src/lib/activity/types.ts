@@ -118,7 +118,8 @@ export type DropManifest = {
   accounts: ManifestAccount[];
   /** Rows whose 18 Digit ID matched no book account — counted AND named. */
   unmatched: { name: string; id18: string; rows: number }[];
-  /** The colleague roster this drop derived (Appendix C). */
+  /** The colleague roster this drop derived (the roster rule as blessed
+   *  2026-08-20: from the file each drop, never a hand-kept list). */
   colleagues: string[];
   /** Primary-contact names colliding with colleague names — UNRESOLVED. */
   collisions: string[];
