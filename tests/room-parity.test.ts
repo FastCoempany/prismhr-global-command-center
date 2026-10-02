@@ -27,7 +27,7 @@ const ledgerActions = (await import("../src/app/room/ledger-actions")) as Record
   string,
   unknown
 >;
-const dashActions = (await import("../src/app/dashboard/actions")) as Record<
+const dashActions = (await import("../src/app/accounts/board-actions")) as Record<
   string,
   unknown
 >;
