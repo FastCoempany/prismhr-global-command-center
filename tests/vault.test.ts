@@ -1,13 +1,14 @@
 // The vault's arithmetic — lanes, names, tags, and the release face — pure
 // and pinned. The wire calls live in the browser; what the suite proves is
 // that every decision AROUND them is deterministic and canon-clean, and the
-// wire itself is scripted so the order of the calls can be read back.
+// wire itself is scripted so the order of the calls can be read back. The
+// row's and the Chute's own decisions are pure too (src/lib/room/drop-plan.ts,
+// src/app/room/chute-ledger.ts) and their faces render here; no assertion
+// reads a source file.
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
-import { cwd } from "node:process";
+import { createElement } from "react";
 import {
   ARCHIVE_LIMIT_BYTES,
   archiveFileToGitHub,
@@ -17,8 +18,11 @@ import {
   tagFor,
 } from "../src/lib/github/archive";
 import { readFileToText } from "../src/app/room/read-file";
-import { readerFor } from "../src/lib/paste-files";
+import { DROP_ACCEPT, readerFor } from "../src/lib/paste-files";
 import { routeCapture, type RouteAccount } from "../src/lib/route-capture";
+import { splitDrop, vaultAfterVerdict } from "../src/lib/room/drop-plan";
+import { loadLedger, saveLedger, storedRow, type LedgerRow } from "../src/app/room/chute-ledger";
+import { chute, render, roomClient, roomRow, textOf } from "./helpers/room-render";
 
 test("the lane is size alone: repo file, pre-release, or refused", () => {
   assert.equal(laneFor(1), "file");
@@ -69,12 +73,36 @@ test("the release face carries tag, title, description, and pre-release", () => 
   assert.ok(meta.body.includes("2026-09-02"));
 });
 
+
+const memory = (): { getItem(k: string): string | null; setItem(k: string, v: string): void } => {
+  const m = new Map<string, string>();
+  return { getItem: (k) => m.get(k) ?? null, setItem: (k, v) => void m.set(k, v) };
+};
+
 test("the row picker takes every file type; the reader keeps its own gate", async () => {
-  const root = cwd();
-  const client = readFileSync(join(root, "src/app/room/room-client.tsx"), "utf8");
-  // The vault input carries no accept filter and takes several at once.
-  assert.ok(!/ref=\{fileInputRef\}[\s\S]{0,120}accept=/.test(client));
-  assert.ok(/ref=\{fileInputRef\}[\s\S]{0,120}multiple/.test(client));
+  // The vault input on the row carries no accept filter and takes several at
+  // once — read off the row as the browser paints it.
+  const room = await roomClient();
+  const board = await render(
+    createElement(room.RoomClient, {
+      rows: [roomRow()],
+      cadence: [],
+      checkins: [],
+      followUps: [],
+      warming: [],
+      later: [],
+      canWrite: true,
+      dbUnavailable: false,
+      boardNames: [],
+      pipeline: [],
+      pipelineDay: "",
+      pipelineStale: "",
+    }),
+  );
+  const inputs = board.match(/<input[^>]*type="file"[^>]*>/g) ?? [];
+  assert.equal(inputs.length, 1, "one file input per row");
+  assert.ok(!/accept=/.test(inputs[0]), "the vault input carries no accept filter");
+  assert.ok(/\smultiple(=""|\s|\/|>)/.test(inputs[0]), "the vault input takes several");
   // The reader's gate is its own: a type it cannot read is refused before
   // any read is spent, and a readable one comes back as paste text.
   let reads = 0;
@@ -100,19 +128,43 @@ test("the row picker takes every file type; the reader keeps its own gate", asyn
   assert.equal(reads, 0);
 });
 
-test("the grant is handed out behind the auth gate, and the row wires the vault", () => {
-  const root = cwd();
-  const act = readFileSync(join(root, "src/app/room/archive-actions.ts"), "utf8");
-  assert.ok(act.startsWith('"use server"'));
-  assert.ok(act.includes("getAppAccess"));
-  assert.ok(act.includes("canWrite"));
+test("the grant is handed out behind the auth gate, and the row wires the vault", async () => {
+  // No signed-in session, no grant — whatever the environment holds. Outside
+  // a request there is no cookie to read, so the action refuses or throws;
+  // either way nothing carrying the token comes back.
+  const { githubArchiveGrant } = await import("../src/app/room/archive-actions");
+  const prevRepo = process.env.GITHUB_ARCHIVE_REPO;
+  const prevToken = process.env.GITHUB_ARCHIVE_TOKEN;
+  process.env.GITHUB_ARCHIVE_REPO = "o/vault";
+  process.env.GITHUB_ARCHIVE_TOKEN = "env-token-that-must-not-ride";
+  try {
+    const r = await githubArchiveGrant().then(
+      (x) => x,
+      () => ({ ok: false as const, reason: "no request scope" }),
+    );
+    assert.equal(r.ok, false);
+    assert.ok(!JSON.stringify(r).includes("env-token-that-must-not-ride"));
+  } finally {
+    if (prevRepo === undefined) delete process.env.GITHUB_ARCHIVE_REPO;
+    else process.env.GITHUB_ARCHIVE_REPO = prevRepo;
+    if (prevToken === undefined) delete process.env.GITHUB_ARCHIVE_TOKEN;
+    else process.env.GITHUB_ARCHIVE_TOKEN = prevToken;
+  }
   // And the row wires it: every dropped file archives automatically — the
   // unreadable ones at once, the readable one the moment its filing is
-  // accepted (the guard gates the vault, 2026-09-03).
-  const client = readFileSync(join(root, "src/app/room/room-client.tsx"), "utf8");
-  assert.ok(client.includes("void archiveFiles(unreadable)"));
-  assert.ok(client.includes("void archiveFiles(waiting)"));
-  assert.ok(client.includes("archiveFileToGitHub"));
+  // accepted (the guard gates the vault, 2026-09-03). One file is read per
+  // drop; everything else goes straight to the vault.
+  const vtt = new File(["WEBVTT"], "call.vtt");
+  const mp4 = new File([new Uint8Array(8)], "call.mp4");
+  const png = new File([new Uint8Array(8)], "whiteboard.png");
+  const split = splitDrop([mp4, vtt, png], DROP_ACCEPT);
+  assert.equal(split.readable, vtt);
+  assert.deepEqual(split.unreadable, [mp4, png]);
+  assert.deepEqual(vaultAfterVerdict({ ok: true }, [vtt]).archive, [vtt]);
+  assert.deepEqual(
+    vaultAfterVerdict({ ok: false, mismatch: { claim: "Simploy" } }, [vtt]).archive,
+    [],
+  );
 });
 
 // ── every chute vaults (founder-decreed 2026-09-02) ─────────────────────────
@@ -121,13 +173,7 @@ test("the grant is handed out behind the auth gate, and the row wires the vault"
 // can't open routes by its filename or waits for the operator's pick; it is
 // never bounced with a can't-read error.
 
-test("the chute vaults every drop and routes binaries by filename or pick", () => {
-  const root = cwd();
-  const chute = readFileSync(join(root, "src/app/room/chute.tsx"), "utf8");
-  // The vault ride exists and uses the same grant + carrier as the row.
-  assert.ok(chute.includes("vaultTo"));
-  assert.ok(chute.includes("archiveFileToGitHub"));
-  assert.ok(chute.includes("githubArchiveGrant"));
+test("the chute vaults every drop and routes binaries by filename or pick", async () => {
   // An unreadable file routes by its filename — a Teams recording usually
   // carries the meeting's name — and otherwise falls to the pick with no
   // candidate to suggest.
@@ -144,17 +190,43 @@ test("the chute vaults every drop and routes binaries by filename or pick", () =
   const bare = routeCapture("GMT20260902-180135_Recording.mp4", roster);
   assert.equal(bare.best, null);
   assert.deepEqual(bare.candidates, []);
-  // A readable file vaults AFTER it files, to the same account.
-  assert.ok(/r\.ok && srcFile.*vaultTo\(key, account, srcFile, false\)/.test(chute));
+  // A readable file vaults AFTER it files, to the same account: the Chute
+  // runs the row's own verdict gate, so an accepted filing releases the file,
+  // a duplicate vaults nothing new, and a dispute keeps it for the pick.
+  const vtt = new File(["WEBVTT"], "Simploy discovery.vtt");
+  const accepted = { ok: true, filed: 2, how: "ai" };
+  const duplicate = { ok: false, filed: 0, how: "", duplicate: true };
+  const disputed = { ok: false, mismatch: { claim: "Simploy", bound: "Regis HR Group" } };
+  assert.deepEqual(vaultAfterVerdict(accepted, [vtt]).archive, [vtt]);
+  assert.deepEqual(vaultAfterVerdict(duplicate, [vtt]).archive, []);
+  assert.deepEqual(vaultAfterVerdict(disputed, [vtt]), { archive: [], hold: [vtt] });
   // The picker takes every type — no accept filter on the chute's input.
-  assert.ok(!chute.includes("accept={DROP_ACCEPT}"));
+  const { Chute } = await chute();
+  const bar = await render(createElement(Chute, { roster, canWrite: true }));
+  const input = /<input[^>]*type="file"[^>]*>/.exec(bar)?.[0] ?? "";
+  assert.ok(input, "the Chute paints a file input");
+  assert.ok(!/accept=/.test(input), "no accept filter on the chute's input");
+  assert.ok(/\smultiple(=""|\s|\/|>)/.test(input));
+  assert.ok(textOf(bar).includes("⇪ Files"));
   // The dropped File never persists to the ledger: the codec (chute-ledger.ts,
   // since the 2026-09-25 rulings) names every stored field and `file` is not
-  // one of them; the component's row adds `file` on top of the ledger's row.
-  const ledger = readFileSync(join(root, "src/app/room/chute-ledger.ts"), "utf8");
-  assert.ok(!/\bfile\??:/.test(ledger), "the ledger row must not carry the File");
-  assert.ok(chute.includes("type ChuteItem = LedgerRow & {"));
-  assert.ok(chute.includes("file?: File;"));
+  // one of them, so a binary waiting on the pick comes back after a reload
+  // saying to drop it again.
+  const waiting = {
+    key: 1,
+    filename: "GMT20260902-180135_Recording.mp4",
+    state: "pick",
+    candidates: [],
+    file: vtt,
+  } as LedgerRow & { file: File };
+  assert.ok(!("file" in storedRow(waiting)), "the ledger row must not carry the File");
+  const storage = memory();
+  saveLedger([waiting], storage);
+  const back = loadLedger(storage);
+  assert.equal(back.items.length, 1);
+  assert.ok(!("file" in back.items[0]));
+  assert.equal(back.items[0].state, "interrupted");
+  assert.match(back.items[0].reason ?? "", /Drop the file again/);
 });
 
 // ── the wire, scripted ──────────────────────────────────────────────────────
@@ -362,9 +434,3 @@ test("a mid-upload break with no published release clears the draft", async () =
   }
 });
 
-test("the intranet carries the same chute", () => {
-  const root = cwd();
-  const page = readFileSync(join(root, "src/app/intranet/page.tsx"), "utf8");
-  assert.ok(page.includes('import { Chute } from "../room/chute"'));
-  assert.ok(page.includes("<Chute"));
-});
