@@ -1,5 +1,11 @@
 "use server";
 
+// The board's card writes: add a card, tick a node's check, keep a node's
+// note, dismiss a suggested check. They lived in the Board's actions file;
+// the Board retired 2026-09-25 (dead-code ledger, section C) and the live
+// surfaces that still post these forms, Accounts and the HomeRoom, own them
+// here (ruled 2026-09-25, P1). Behavior unchanged.
+
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getAppAccess } from "@/lib/auth";

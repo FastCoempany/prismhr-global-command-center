@@ -1,11 +1,13 @@
 "use server";
 
 // Archive actions — restore from the hidden bin, reopen a done note, or
-// delete forever: the one delete the operator is offered as a delete, on
-// purpose, for hidden items only. Rows die elsewhere too, as housekeeping
-// rather than doors — the paste undo, the Act Lane's take-backs, the second
-// record's replace-forward writes, the Groundwork un-work, the template
-// store, and the ledger actions that moved to src/app/room/ledger-actions.ts.
+// delete forever: a delete the operator is offered as a delete, on purpose,
+// for hidden items only. It is one of two such doors; the other is the
+// Partners page's deletePartnerNote (src/app/partners/actions.ts, the ✕ on a
+// partner note). Rows die elsewhere too, as housekeeping rather than doors —
+// the paste undo, the Act Lane's take-backs, the second record's
+// replace-forward writes, the Groundwork un-work, the template store, and the
+// ledger actions that moved to src/app/room/ledger-actions.ts.
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";

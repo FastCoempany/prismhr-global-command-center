@@ -17,6 +17,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { cwd } from "node:process";
 import { judgeFiling } from "../src/lib/intel/misfile";
+import { readFreeVerdict } from "../src/lib/room/paste";
 import type { RouteAccount } from "../src/lib/route-capture";
 
 const root = cwd();
@@ -84,10 +85,15 @@ describe("bug 3 — the guard's comments and copy contradict the canon", () => {
     const v = judgeFiling({ text: TAPE, claim: "", bound: REGIS, roster });
     assert.equal(v.ok, false);
     // …and roomPaste still returns ok:false, filed:0 on either pass unless
-    // the operator forces.
-    const earlyAt = roomPaste.indexOf("if (!early.ok)");
-    assert.ok(earlyAt > 0, "the early guard is still consulted");
-    assert.match(roomPaste.slice(earlyAt, earlyAt + 160), /return \{\s*ok: false,\s*filed: 0/);
+    // the operator forces. The early pass is readFreeVerdict (src/lib/room/
+    // paste.ts, since audit pass 5): its refusal is the receipt roomPaste
+    // hands back.
+    const refused = readFreeVerdict(TAPE, REGIS, roster);
+    assert.ok(refused, "the early guard is still consulted");
+    assert.equal(refused.ok, false);
+    assert.equal(refused.filed, 0);
+    const earlyAt = roomPaste.indexOf("if (refused) return refused;");
+    assert.ok(earlyAt > 0, "roomPaste returns the early refusal");
     const lateAt = roomPaste.indexOf("if (!verdict.ok)");
     assert.ok(lateAt > earlyAt, "the late guard is still consulted");
     assert.match(roomPaste.slice(lateAt, lateAt + 160), /return \{\s*ok: false,\s*filed: 0/);

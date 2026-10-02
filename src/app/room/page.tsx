@@ -5,12 +5,6 @@ import { loadDashboard } from "@/lib/dashboard/data";
 import { csms, peos } from "@/lib/book";
 import { DROP_STALE_DAYS, fetchSecondRecords } from "@/lib/activity/read";
 import { EXTRA_PARTNERS } from "@/lib/book/partners";
-import {
-  isManual,
-  openCandidates,
-  readFollowUp,
-  routedIds,
-} from "@/lib/today/followup-brain";
 import { contactsFor, knownPeople, personKey } from "@/lib/book/contacts";
 import { peopleFor } from "@/lib/intel/people";
 import {
@@ -37,6 +31,7 @@ import {
   triageDoneKey,
 } from "@/lib/today/build";
 import { partitionFollowUps, roundupDue } from "@/lib/today/follow-ups";
+import { followUpRowsFor, knownOrgNames, splitTouches } from "@/lib/today/followup-rows";
 import { splitAsk } from "@/lib/today/ledger";
 import { DASH_NODES } from "@/lib/dashboard/stages";
 import { corpusFor, extractDealIntel } from "@/lib/intel/extract";
@@ -694,41 +689,20 @@ export default async function RoomPage() {
   // The follow-up list is the operator's own — chases he wrote by hand. It has
   // nothing to do with the check-in cadence (threads waiting on somebody else),
   // so it comes out of the touch pile first and never reaches that drawer.
-  const manualTouches = touches.filter(
-    (t) => isManual(t.subjectKey) && t.status !== "archived",
+  // The derivation is pure (src/lib/today/followup-rows.ts): the question is
+  // only asked about a name NOBODY already knows — not the board, and not the
+  // book behind Accounts. Offering to add a company that already has a record
+  // is how duplicates get made.
+  const { manual: manualTouches, cadence: cadenceTouches } = splitTouches(touches);
+  const followUpRows: FollowUpRow[] = followUpRowsFor(
+    manualTouches,
+    peos.map((p) => ({ id: p.id, name: p.name })),
+    [...csms, ...EXTRA_PARTNERS, ...knownPeople()],
+    knownOrgNames(data.cards, peos),
   );
-  const knownOrgs = [...data.cards.map((c) => c.name), ...peos.map((p) => p.name)];
-  const followUpRows: FollowUpRow[] = manualTouches
-    .sort((a, b) => Date.parse(b.contactedAt) - Date.parse(a.contactedAt))
-    .slice(0, 40)
-    .map((t) => {
-      const read = readFollowUp(
-        t.label,
-        peos.map((p) => ({ id: p.id, name: p.name })),
-        [...csms, ...EXTRA_PARTNERS, ...knownPeople()],
-      );
-      return {
-        subjectKey: t.subjectKey,
-        label: t.label,
-        armedAt: t.contactedAt,
-        // Accounts this chase already filed itself against — shown as plain
-        // provenance, not as a control.
-        filed: routedIds(t.detail ?? "")
-          .map((id) => peos.find((p) => p.id === id)?.name ?? "")
-          .filter(Boolean),
-        // The one open question: a name nobody on the board answers to.
-        // The question is only asked about a name NOBODY already knows — not the
-        // board, and not the book behind Accounts. Offering to add a company
-        // that already has a record is how duplicates get made.
-        newName: openCandidates(read, t.detail ?? "", knownOrgs)[0] ?? "",
-      };
-    });
 
   // Check-ins & chases: every due thread, with its named ask when one is set.
-  const followUps = partitionFollowUps(
-    touches.filter((t) => !isManual(t.subjectKey)),
-    now.getTime(),
-  );
+  const followUps = partitionFollowUps(cadenceTouches, now.getTime());
   const checkins: CheckinRow[] = followUps.due.slice(0, 12).map((t) => {
     const ask = splitAsk(t.detail ?? "").ask;
     return {

@@ -1235,8 +1235,8 @@ export function IntranetClient({
           <div className={styles.itGrab}>
             <span className={styles.itGrabKick}>THE GRAB LANDED</span>
             <span className={styles.itGrabTx}>
-              Your Sales Nav capture is on the clipboard. Paste it in the box below and
-              press Send it — it files, gets read, and fans out from there.
+              Your Sales Nav capture is on the clipboard. Paste it into the Chute on this
+              page or an account&apos;s Drop. It files as a note and the queue reads it.
             </span>
             <button
               type="button"

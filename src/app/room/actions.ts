@@ -14,6 +14,7 @@ import { hasDatabaseEnv } from "@/lib/db";
 import { peos } from "@/lib/book";
 import { routingRoster } from "@/lib/book/roster";
 import { judgeFiling } from "@/lib/intel/misfile";
+import { dialectOf, readFreeVerdict, sourceFor } from "@/lib/room/paste";
 import { digestFor, digestForCardName } from "@/lib/intel/digest";
 import {
   aiCleanAvailable,
@@ -169,15 +170,7 @@ export async function roomPaste(
   const rawText = typeof raw === "string" ? raw.trim() : "";
   // The capture's true dialect travels into the head token and source column —
   // an Outlook thread must never masquerade as Salesforce activity.
-  const dialect = /^OUTLOOK THREAD\b/.test(rawText)
-    ? "OL"
-    : /^TEAMS THREAD\b/.test(rawText)
-      ? "TM"
-      : /^CALL TRANSCRIPT\b/.test(rawText)
-        ? "CT"
-        : /^SALESNAV\b/.test(rawText)
-          ? "SN"
-          : "SF";
+  const dialect = dialectOf(rawText);
   // Head-keep suits newest-first captures (SF, Outlook). A call transcript is
   // different: the decisions live at the END of the call and the whole
   // conversation is the intelligence, so transcripts get a far higher ceiling
@@ -238,25 +231,12 @@ export async function roomPaste(
   // (decreed 2026-09-04). The read's own company claim is judged after,
   // below, once there is a claim to judge.
   if (!opts?.force) {
-    const early = judgeFiling({
-      text: rawText,
-      claim: "",
-      bound: { id: acct.id, name: acct.name },
-      roster: routingRoster(),
-    });
-    if (!early.ok)
-      return {
-        ok: false,
-        filed: 0,
-        how: "",
-        mismatch: {
-          claim: early.claim,
-          bound: early.bound,
-          why: early.why,
-          boundWhy: early.boundWhy,
-        },
-        reason: `This reads like ${early.claim}, not ${acct.name} — ${early.why}.`,
-      };
+    const refused = readFreeVerdict(
+      rawText,
+      { id: acct.id, name: acct.name },
+      routingRoster(),
+    );
+    if (refused) return refused;
   }
 
   const now = new Date();
@@ -435,17 +415,7 @@ export async function roomPaste(
         lane: laneFor(actors, `${e.subject ?? ""}\n${e.body ?? ""}`),
         actors,
         recipients,
-        source: `${
-          liveDialect === "OL"
-            ? "outlook"
-            : liveDialect === "TM"
-              ? "teams"
-              : liveDialect === "CT"
-                ? "call"
-                : liveDialect === "SN"
-                  ? "salesnav"
-                  : "sf"
-        }${how === "ai" ? "-ai" : ""}`,
+        source: sourceFor(liveDialect, how),
         at,
       });
       noteIds.push(n.id);

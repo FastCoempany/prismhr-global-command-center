@@ -20,7 +20,7 @@ The three audits said one thing from three angles: 111 of 187 decrees in scope a
 |---|---|---|
 | Honor-system decrees | 111 of 187 | 111 of 187 |
 | Ungoverned behaviors | 34 open | 0 open · 34 encoded |
-| Conflicting pairs | 20 open | 0 open · 8 encoded · 12 aligned |
+| Conflicting pairs | 20 open | 0 open · 10 encoded · 10 aligned |
 
 ## How a row moves
 
@@ -200,8 +200,8 @@ Status is one of: open · ruled (which side, quoted) · encoded (CLAUDE.md amend
 | C1 | Ted, 368-372 | Second record faces, 424-426 | The face: accounts/page.tsx:345-352 → rollup.ts:124-158; touch.ts is n … | encoded | Ted 368-372 stands; the column merges both records by latest | CLAUDE.md:483 | batch 1 · 2026-09-25; 710fab5; pass 5 |
 | C2 | Chute, 279-281 | Ted, 363 | The Chute: roster.ts:24-35 builds from peos, contactsFor and AKA; no f … | encoded | Ted 363 stands; the roster reads the record's actors too (R1 B) | CLAUDE.md:297 | batch 1 · 2026-09-25; 710fab5; pass 5 |
 | C3 | Ted, 364-368 | Ted, 371-372 | Merge by latest: touch.ts:125 `outAt > logAt` | aligned | 371-372 stands; the touch log merges by latest (R5 A) | CLAUDE.md:403 · touch.ts:125 · canon/ted-doctrine | batch 1 · 2026-09-25; 710fab5; pass 5 |
-| C4 | Closer, 381-382 | Sendbook, 326-327 | The Sendbook's literal reading: read.ts:136-149 has no closer test → : … | aligned | closer rule stands; ↩ REPLIED needs substance (R6 A) | CLAUDE.md:356 · sendbook/read.ts · canon/sendbook | batch 1 · 2026-09-25; 710fab5; pass 5 |
-| C5 | Ted, 373-374 | Second ring, 429-431 | The comment: read.ts:118-132 excludes AUTO_RE only, so acceptances, no … | aligned | 373-374 and 408 stand; machinery never warms, acceptance is machinery | CLAUDE.md:356 · sendbook/read.ts · canon/sendbook | batch 1 · 2026-09-25; 710fab5; pass 5 |
+| C4 | Closer, 381-382 | Sendbook, 326-327 | The Sendbook's literal reading: read.ts:136-149 has no closer test → : … | encoded | closer rule stands; ↩ REPLIED needs substance (R6 A) | CLAUDE.md:356 · sendbook/read.ts · canon/sendbook (corrected 2026-10-02 by the verification pass: aligned → encoded; the org-wide inbound path at sendbook/read.ts:223-228 and :283-290 takes the export's account-level datetime with no machinery or closer read, pinned by second-record-faces.test.ts:569) | batch 1 · 2026-09-25; 710fab5; pass 5 |
+| C5 | Ted, 373-374 | Second ring, 429-431 | The comment: read.ts:118-132 excludes AUTO_RE only, so acceptances, no … | encoded | 373-374 and 408 stand; machinery never warms, acceptance is machinery | CLAUDE.md:356 · sendbook/read.ts · canon/sendbook (corrected 2026-10-02 by the verification pass: aligned → encoded; the org-wide inbound path at sendbook/read.ts:223-228 and :283-290 takes the export's account-level datetime with no machinery or closer read, pinned by second-record-faces.test.ts:569) | batch 1 · 2026-09-25; 710fab5; pass 5 |
 | C6 | Groundwork, 258-260 | Second record, 409-410 | The second record: day.ts:389-408 fires the org-answered silence-bump … | encoded | 258-260 stands; org inbound excludes, the move goes to the HomeRoom (R8 C) | CLAUDE.md:276 | batch 1 · 2026-09-25; 710fab5; pass 5 |
 | C7 | Groundwork, 265-266 | Act Lane, 467-468 | Both by branch: day.ts:664 `ruleId === "seated" ? SEAT_SLOT_CAP : RULE … | aligned | Act Lane 467-468 stands; two caps for two things | CLAUDE.md:278 · day.ts · canon/groundwork | batch 2 · 2026-09-25; 710fab5; pass 5 |
 | C8 | Groundwork, 262-264 and 268-271 | Act Lane, 469-470 | The Act Lane: day.ts:561-576 pushes seats with no excludedIds check | encoded | Groundwork 262-271 stands; a seat follows its account to the HomeRoom | CLAUDE.md:521 | batch 2 · 2026-09-25; 710fab5; pass 5 |
@@ -228,6 +228,7 @@ Status is one of: open · ruled (which side, quoted) · encoded (CLAUDE.md amend
 - 2026-09-25 · ruling session, batch 5 (pass 3 D): D5, D6, D7, D9, D11, D12, D13, D14 ruled. 111 · 18 open + 16 ruled · 0 open + 20 ruled.
 - 2026-09-25 · ruling session, batch 6 (pass 3 D): D10, D15, D16, D17, D18, D19, D20, D21 ruled. 111 · 10 open + 24 ruled · 0 open + 20 ruled.
 - 2026-09-25 · ruling session, batch 7 (pass 3 D): D8, D22, D23, D24, D25, D26, D27, D28 ruled. 111 · 2 open + 32 ruled · 0 open + 20 ruled.
+- 2026-10-02 · verification pass: C4 and C5 move aligned → encoded; the code follows them on the first record's path only (the org-wide inbound path takes the export's datetime unread). 111 · 34 · 0 open + 20 ruled, 10 encoded · 10 aligned.
 - 2026-09-25 · ruling session, batch 8 (pass 3 D): D29, D30 ruled. Every ungoverned behavior and every conflicting pair is ruled. 111 · 0 open + 34 ruled · 0 open + 20 ruled.
 - 2026-09-25 · the ruling session's law lands in CLAUDE.md (every approved draft, batches 1 to 9); pass 4's batch 10 is recorded as assumed under the pass-5 brief. Rows move to encoded when the test pass cites the line.
 - 2026-09-25 · pass 5 (the scaffold): every pair and behavior moves to encoded with its CLAUDE.md line; twelve pairs are aligned with a cite (the code follows, a canon suite pins). The 111 honor-system decrees are not re-scored here; the canon suites pin many of them and the next pass maps each to its A row.

@@ -1,6 +1,6 @@
 // The Sendbook's decrees, pinned as behavior (CLAUDE.md "The Sendbook",
-// :309-332, the closer rule :377-393, the Ted doctrine's machinery clause
-// :373-374, and the 2026-09-25 rulings R6 and R7). Every test calls
+// :331-354, the closer rule :407-423, the Ted doctrine's machinery clause
+// :399-400, and the 2026-09-25 rulings R6 and R7). Every test calls
 // buildSendbook and checks its lines and lanes; none reads a source file.
 
 import { test, describe } from "node:test";
@@ -27,9 +27,9 @@ const reply = (clock: string, text: string, createdAt = NOON, from = "Adam Reyes
 const book = (notes: ReturnType<typeof send>[]) =>
   buildSendbook({ notesById: new Map([["A1", notes]]), tapsById: new Map(), now: NOW });
 
-// ── E5 · "Replies annotate from the record only (↩ REPLIED)" (:326-327) read
+// ── E5 · "Replies annotate from the record only (↩ REPLIED)" (:348-349) read
 // on the record's own clock (the Ted doctrine: the record holds a finer clock)
-describe("the Sendbook reads effectiveAt (CLAUDE.md:326-327, :363)", () => {
+describe("the Sendbook reads effectiveAt (CLAUDE.md:348-349, :389)", () => {
   test("a 9:44 AM send and a 10:39 AM reply at one noon anchor: the reply annotates", () => {
     const { lines } = book([
       send("9:44 AM"),
@@ -50,7 +50,7 @@ describe("the Sendbook reads effectiveAt (CLAUDE.md:326-327, :363)", () => {
   });
 });
 
-// ── C4 · the closer rule (:381-387) against the Sendbook (:324-327; ruled R6)
+// ── C4 · the closer rule (:411-417) against the Sendbook (:346-349; ruled R6)
 describe("↩ REPLIED needs a substantive inbound; a closer warms and sets no annotation", () => {
   test("a Thanks! after a send warms the lane and annotates nothing", () => {
     const { lines, laneById } = book([send("9:44 AM"), reply("10:39 AM", "Thanks!")]);
@@ -79,9 +79,9 @@ describe("↩ REPLIED needs a substantive inbound; a closer warms and sets no an
   });
 });
 
-// ── C5 · "an auto-reply is machinery, never the client writing" (:373-374;
+// ── C5 · "an auto-reply is machinery, never the client writing" (:399-400;
 // ruled R7: machinery never warms and never replies) ──────────────────────
-describe("machinery never warms and never replies (CLAUDE.md:373-374)", () => {
+describe("machinery never warms and never replies (CLAUDE.md:399-400)", () => {
   const cases: [string, ReturnType<typeof send>][] = [
     [
       "a calendar acceptance",

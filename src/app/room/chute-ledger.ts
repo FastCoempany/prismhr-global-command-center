@@ -203,3 +203,56 @@ export async function runLimited<T>(
   await Promise.all(Array.from({ length: lanes }, worker));
   return results;
 }
+
+/** A settled receipt is the operator's to clear (decreed 2026-09-01: no
+ *  notice sits on the screen against their will). In-flight rows and rows
+ *  waiting on a pick stay — dismissing work that still needs a decision would
+ *  be the ledger quietly forgetting what was thrown at it. */
+export function isSettled(s: LedgerRow["state"]): boolean {
+  return (
+    s === "filed" ||
+    s === "vaulted" ||
+    s === "activityDone" ||
+    s === "error" ||
+    s === "dupe" ||
+    s === "undone" ||
+    s === "interrupted"
+  );
+}
+
+/** The live run state the activity receipt reports, as the reconcile reads it. */
+export type LiveRun = {
+  hasDrop: boolean;
+  phase: string;
+  receipt: readonly string[];
+};
+
+/** A stored second-record receipt is a SEED; the manifest's live run state is
+ *  the record, and the record outranks every seed (the Ted doctrine, applied
+ *  to receipts). Every settled activity row re-reads the live receipt: a row
+ *  that said COVERAGE FAILED at 13:51 goes green when the 17:37 run did. A run
+ *  still in flight is left alone — the dock is narrating it — and so is every
+ *  row that is not an activity drop. Returns the same array when nothing
+ *  changes, so a state setter can bail out. */
+export function reconcileActivityRows<T extends LedgerRow>(
+  items: T[],
+  live: LiveRun | null | undefined,
+): T[] {
+  if (!live?.hasDrop || live.phase === "running" || live.receipt.length === 0)
+    return items;
+  const line = live.receipt[live.receipt.length - 1] ?? "";
+  const state: LedgerRow["state"] = live.phase === "done" ? "activityDone" : "error";
+  let changed = false;
+  const next = items.map((x) => {
+    if (
+      x.act &&
+      (x.state === "activityDone" || x.state === "error" || x.state === "interrupted") &&
+      (x.state !== state || x.reason !== line)
+    ) {
+      changed = true;
+      return { ...x, state, reason: line };
+    }
+    return x;
+  });
+  return changed ? next : items;
+}

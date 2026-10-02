@@ -1,8 +1,9 @@
 // The cleared Playbook program's guards (2026-08-24). Each test pins a defect
 // the two audit passes and the verification wing proved: the {countries} leak
 // walked through a vacuous test, two hardcoded ids had no pin, scenario
-// suppression hid trap-demanded questions, arrival order was an alphabetical
-// accident, and the ask-next merge had three ways to fire backwards.
+// suppression hid trap-demanded questions, and arrival order was an
+// alphabetical accident. The ask-next merge's guards left with the module
+// (no src importer, removed 2026-10-02).
 
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
@@ -15,8 +16,6 @@ import {
   type QProduct,
   type QSoph,
 } from "@/lib/intel/bank";
-import { askNextFor, bankFor } from "@/lib/intel/ask-next";
-import { EMPTY_INTEL, type DealIntel } from "@/lib/intel/types";
 
 // The Call Sheet's filter helpers left the bank 2026-09-25 (pass 4 ruling);
 // the empty filter set stays here as the fixture selectQuestions is tested with.
@@ -52,11 +51,6 @@ const SERVED = [
   followUp: fill(q.followUp),
   relayLine: fill(q.relayLine),
 }));
-
-const intel = (over: Partial<DealIntel> = {}): DealIntel => ({
-  ...structuredClone(EMPTY_INTEL),
-  ...over,
-});
 
 describe("token hygiene — the leak class that shipped", () => {
   test("no field of the served page carries a raw {countries}", () => {
@@ -142,47 +136,6 @@ describe("arrival order is curated, not alphabetical", () => {
       shown.findIndex((q) => q.id === "fp-where") < 6,
       "fp-where sits deep in the arrival order",
     );
-  });
-});
-
-describe("the ask-next merge fires forward, never backwards", () => {
-  test("the earliest stage serves questions now — it was silently empty", () => {
-    const qs = askNextFor({
-      intel: intel(),
-      states: {},
-      accountId: "A1",
-      doneKeys: new Set(),
-    });
-    assert.ok(qs.length > 0, "investigate-stage ask-next is empty again");
-    assert.ok(qs.length <= 3);
-  });
-  test("displacement questions wait for a known incumbent", () => {
-    const cold = bankFor(intel());
-    assert.ok(
-      !cold.some((q) => (q.soph ?? "any") === "displacement"),
-      "a competitor question fired with no competitor known",
-    );
-    const warm = bankFor(
-      intel({ incumbent: { value: "G-P", src: "digest", at: "2026-07-07T00:00:00Z" } }),
-    );
-    assert.ok(warm.some((q) => (q.soph ?? "any") === "displacement"));
-  });
-  test("a deal with no named product earns only product-neutral questions", () => {
-    const cold = bankFor(intel());
-    assert.ok(cold.every((q) => (q.product ?? "any") === "any"));
-    const eor = bankFor(
-      intel({ products: [{ value: "eor", src: "note", at: "2026-07-01T00:00:00Z" }] }),
-    );
-    assert.ok(eor.some((q) => q.product === "eor"));
-    assert.ok(!eor.some((q) => q.product === "payroll"));
-  });
-  test("contractor-plus maps into the contractor lane", () => {
-    const bank = bankFor(
-      intel({
-        products: [{ value: "contractor_plus", src: "note", at: "2026-07-01T00:00:00Z" }],
-      }),
-    );
-    assert.ok(bank.some((q) => q.product === "contractor"));
   });
 });
 

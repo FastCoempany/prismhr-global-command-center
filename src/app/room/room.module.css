@@ -805,26 +805,6 @@ button.sdRadio:hover {
   align-self: start;
   min-width: 0;
 }
-.court {
-  font-family: var(--f-mono), Menlo, monospace;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  padding-bottom: 7px;
-  border-bottom: 1px solid rgba(10, 28, 64, 0.12);
-}
-.c_you {
-  color: #8a5a00;
-}
-.c_them {
-  color: var(--blue);
-}
-.c_quiet {
-  color: var(--red);
-}
-.c_none {
-  color: var(--quiet);
-}
 .zone {
   display: block;
   margin: 10px 0 2px;
@@ -1039,7 +1019,6 @@ button.sdRadio:hover {
   font-variant-numeric: tabular-nums;
 }
 
-.ctl button,
 .chkCtl button {
   border: 0;
   background: none;
@@ -1048,7 +1027,6 @@ button.sdRadio:hover {
   padding: 0 3px;
   cursor: pointer;
 }
-.ctl button:hover,
 .chkCtl button:hover {
   color: var(--ink);
 }
@@ -2328,13 +2306,6 @@ button.sdRadio:hover {
 .worked:disabled {
   opacity: 0.6;
   cursor: default;
-}
-
-/* Research now rides the chip run, so it takes the chips' scale. */
-.chips .rsrchBtn {
-  font-size: 10.5px;
-  padding: 1px 9px;
-  border-radius: 5px;
 }
 
 /* The register's overflow door. The cap ranks and cuts; this says what it

@@ -35,6 +35,25 @@ export async function strikeLine(client: StrikeClient, id: string): Promise<numb
   return r.count;
 }
 
+// The in-place edit's one decision (founder-decreed 2026-08-21; ruled
+// 2026-09-25, D24 — CLAUDE.md, The Scratchpaper :329): Enter keeps, Escape
+// puts it back, and a click-away KEEPS — the pad never eats your words. The
+// kept text is the draft trimmed; an unchanged draft keeps the original and
+// the caller writes nothing; a blanked draft puts the line back, because the
+// paper keeps no empty line.
+export type EditEvent = "enter" | "escape" | "blur";
+
+export function editOutcome(
+  event: EditEvent,
+  draft: string,
+  original: string,
+): { action: "keep" | "revert"; text: string } {
+  const text = (draft ?? "").trim();
+  if (text === original) return { action: "keep", text: original };
+  if (event === "escape" || !text) return { action: "revert", text: original };
+  return { action: "keep", text };
+}
+
 const CHI = "America/Chicago";
 
 const chicagoDayKey = (d: Date): string =>

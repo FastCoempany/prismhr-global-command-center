@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AppWayfinder } from "@/components/app-wayfinder";
+import { getAppAccess } from "@/lib/auth";
 import { moduleLabel } from "@/lib/catalog";
 import { prismhrGlobalMasterDemoFlow } from "@/lib/sidekick-flows";
 import styles from "./flow.module.css";
@@ -34,7 +35,22 @@ function Text({ label, text }: { label: string; text: string }) {
   );
 }
 
-export default function GuidedDemoFlowPage() {
+export default async function GuidedDemoFlowPage() {
+  // Every page signs in (ruled 2026-09-25).
+  const access = await getAppAccess();
+  if (access.status === "unauthenticated") {
+    return (
+      <>
+        <AppWayfinder current="Guided Demo Flow" trail="Demo Sidekick" />
+        <main className="app-main">
+          <p>
+            Sign in to continue. <Link href="/login">Sign in</Link>.
+          </p>
+        </main>
+      </>
+    );
+  }
+
   return (
     <>
       <AppWayfinder current="Guided Demo Flow" trail="Demo Sidekick" />

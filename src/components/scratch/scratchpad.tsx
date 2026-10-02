@@ -26,7 +26,7 @@ import {
   type PadAskEntry,
   type ScratchLine,
 } from "@/app/scratch/actions";
-import { dayLabelFor, timeLabelFor } from "@/lib/scratch";
+import { dayLabelFor, editOutcome, timeLabelFor, type EditEvent } from "@/lib/scratch";
 import { cleanAskText } from "@/lib/ask/clean";
 import styles from "./scratchpad.module.css";
 
@@ -200,19 +200,22 @@ export function Scratchpad() {
   };
 
   // Edit in place (founder-decreed 2026-08-21): ✎ on hover, the line becomes
-  // its own input, Enter keeps, Escape puts it back. The timestamp and the
-  // seat never move — only the words.
+  // its own input, Enter keeps, Escape puts it back, a click-away keeps (D24:
+  // the pad never eats your words). The decision is editOutcome's; this only
+  // writes what it says to keep. The timestamp and the seat never move — only
+  // the words.
   const [editId, setEditId] = useState("");
   const editRef = useRef<HTMLInputElement | null>(null);
   useEffect(() => {
     if (editId) editRef.current?.focus();
   }, [editId]);
 
-  const keepEdit = async (id: string) => {
-    const body = editRef.current?.value.trim() ?? "";
+  const settleEdit = async (id: string, event: EditEvent) => {
     const cur = (lines ?? []).find((l) => l.id === id);
     if (!cur) return setEditId("");
-    if (!body || body === cur.body) return setEditId("");
+    const out = editOutcome(event, editRef.current?.value ?? "", cur.body);
+    if (out.action === "revert" || out.text === cur.body) return setEditId("");
+    const body = out.text;
     const prev = cur.body;
     setLines((xs) => (xs ?? []).map((l) => (l.id === id ? { ...l, body } : l)));
     setEditId("");
@@ -369,13 +372,13 @@ export function Scratchpad() {
                           maxLength={500}
                           aria-label="Edit the line"
                           onKeyDown={(e) => {
-                            if (e.key === "Enter") void keepEdit(l.id);
+                            if (e.key === "Enter") void settleEdit(l.id, "enter");
                             if (e.key === "Escape") {
                               e.stopPropagation();
-                              setEditId("");
+                              void settleEdit(l.id, "escape");
                             }
                           }}
-                          onBlur={() => void keepEdit(l.id)}
+                          onBlur={() => void settleEdit(l.id, "blur")}
                         />
                       ) : (
                         <span className={styles.body}>{l.body}</span>

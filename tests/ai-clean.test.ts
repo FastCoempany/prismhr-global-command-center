@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { sanitizeAiResult } from "@/lib/intel/ai-clean";
+import { READER_CONTRACT, sanitizeAiResult } from "@/lib/intel/ai-clean";
 
 test("sanitize: coerces a well-formed reply through intact", () => {
   const r = sanitizeAiResult({
@@ -104,21 +104,24 @@ test("sanitize: caps entry count at 40 and clamps others", () => {
 
 // The fulfillment rule (founder-decreed 2026-08-19, born on the Trend HR
 // Philippines thread): a promise the same document later shows KEPT is
-// history, never an open action. The rule lives in the reader's contract —
-// this pins it there, with the exact shape that taught it.
-test("the reader's contract carries the fulfillment rule", async () => {
-  const { readFileSync } = await import("node:fs");
-  const src = readFileSync(
-    new URL("../src/lib/intel/ai-clean.ts", import.meta.url),
-    "utf8",
-  );
-  assert.ok(src.includes("THE FULFILLMENT RULE"), "the rule left the contract");
+// history, never an open action. The rule lives in the reader's contract — the
+// system prompt every read is handed — and this pins it in that text, with
+// the exact shape that taught it.
+test("the reader's contract carries the fulfillment rule", () => {
+  const contract = READER_CONTRACT;
+  assert.equal(typeof contract, "string");
+  assert.ok(contract.includes("THE FULFILLMENT RULE"), "the rule left the contract");
   assert.ok(
-    src.includes("Please see pricing attached"),
+    contract.includes("Please see pricing attached"),
     "the Trend thread shape is the rule's example",
   );
   assert.ok(
-    src.includes("Only commitments the document leaves hanging become actions"),
+    contract.includes("Only commitments the document leaves hanging become actions"),
     "the rule must state what DOES open",
   );
+  // The contract is what the read runs under, so its other load-bearing rules
+  // ride in the same text: explicit commitments only, and no action from a
+  // musing.
+  assert.ok(contract.includes("EXPLICIT commitments only"));
+  assert.ok(contract.includes("NEVER invent an action from a musing"));
 });

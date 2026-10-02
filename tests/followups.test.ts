@@ -1,11 +1,11 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
-import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
-import { cwd } from "node:process";
+import { createElement } from "react";
 
 import {
+  boardRowFor,
   isManual,
+  manualFollowUpData,
   openCandidates,
   readFollowUp,
   routedIds,
@@ -14,9 +14,27 @@ import {
   wavedNames,
   withMarkers,
 } from "../src/lib/today/followup-brain";
+import {
+  followUpRowsFor,
+  knownOrgNames,
+  splitTouches,
+} from "../src/lib/today/followup-rows";
+import { fileFollowUpToAccounts } from "../src/lib/today/followup-file";
+import { bindDismiss, type DismissTarget } from "../src/components/use-dismiss";
+import { TOOLS, teamsBookmarklet } from "../src/app/intake/grabs";
+import { parseSfTimeline } from "../src/lib/sf-timeline";
+import { dialectOf, sourceFor } from "../src/lib/room/paste";
 import { WAYFINDER_ROUTES } from "../src/components/wayfinder-routes";
+import {
+  captureShelf,
+  classesOf,
+  followUpRow,
+  formsOf,
+  render,
+  roomClient,
+  textOf,
+} from "./helpers/room-render";
 
-const root = cwd();
 const BOOK = [
   { id: "ADVOCATEPAY000001", name: "Advocate Pay" },
   { id: "001simploy", name: "Simploy" },
@@ -167,18 +185,59 @@ describe("the same firm is never two rows", () => {
     assert.equal(sameOrg("", "Acme"), false);
   });
   test("the add action checks the board and the book before creating", () => {
-    const actions = readFileSync(join(root, "src/app/room/ledger-actions.ts"), "utf8");
-    const add =
-      /export async function followUpAddBoard[\s\S]*?\n}\n/.exec(actions)?.[0] ?? "";
-    assert.ok(add.includes("sameOrg"), "no duplicate check at all");
-    assert.ok(/dashCard\.findMany/.test(add), "the board is never consulted");
-    assert.ok(/peos\.find/.test(add), "the book is never consulted");
-    assert.ok(add.includes("inBook?.name ?? name"), "a book account loses its own name");
+    // followUpAddBoard decides through boardRowFor: the board first, then the
+    // book — a row that already exists is never created twice, and a book
+    // account takes the book's own spelling so every intel path binds to it.
+    const board = [{ name: "ACME LOGISTICS INC" }];
+    assert.deepEqual(boardRowFor("Acme Logistics", board, BOOK), {
+      create: false,
+      name: "Acme Logistics",
+    });
+    assert.deepEqual(boardRowFor("simploy, llc", [], BOOK), {
+      create: true,
+      name: "Simploy",
+    });
+    assert.deepEqual(boardRowFor("Globex LLC", board, BOOK), {
+      create: true,
+      name: "Globex LLC",
+    });
   });
   test("the question is never asked about a name the book already carries", () => {
-    const page = readFileSync(join(root, "src/app/room/page.tsx"), "utf8");
-    assert.ok(/knownOrgs/.test(page));
-    assert.ok(/peos\.map\(\(p\) => p\.name\)/.test(page), "the book is left out");
+    // The room's known names are the board's cards AND the book behind
+    // Accounts; a chase naming a book account that is not yet on the board
+    // asks nothing.
+    const known = knownOrgNames([{ name: "Regis HR Group" }], BOOK);
+    assert.ok(known.includes("Regis HR Group"));
+    assert.ok(known.includes("Simploy"));
+    const rows = followUpRowsFor(
+      [
+        {
+          subjectKey: "manual:1",
+          label: "chase Simploy for the countersignature",
+          detail: null,
+          contactedAt: "2026-09-25T15:00:00Z",
+          status: "awaiting",
+        },
+        {
+          subjectKey: "manual:2",
+          label: "chase Globex LLC for the countersignature",
+          detail: null,
+          contactedAt: "2026-09-25T16:00:00Z",
+          status: "awaiting",
+        },
+      ],
+      BOOK,
+      PARTNERS,
+      known,
+    );
+    // Newest armed first; the book account asks nothing, the stranger does.
+    assert.deepEqual(
+      rows.map((r) => [r.subjectKey, r.newName]),
+      [
+        ["manual:2", "Globex LLC"],
+        ["manual:1", ""],
+      ],
+    );
   });
 });
 
@@ -192,12 +251,26 @@ describe("manual follow-ups are their own species", () => {
 
 // ── the wiring ────────────────────────────────────────────────────────────────
 describe("the follow-up list is wired where the operator can reach it", () => {
-  const client = readFileSync(join(root, "src/app/room/room-client.tsx"), "utf8");
-  const page = readFileSync(join(root, "src/app/room/page.tsx"), "utf8");
-  const actions = readFileSync(join(root, "src/app/room/ledger-actions.ts"), "utf8");
-  const css = readFileSync(join(root, "src/app/room/room.module.css"), "utf8");
+  const roomProps = {
+    rows: [],
+    cadence: [],
+    checkins: [],
+    followUps: [followUpRow()],
+    warming: [],
+    later: [],
+    canWrite: true,
+    dbUnavailable: false,
+    boardNames: [],
+    pipeline: [],
+    pipelineDay: "",
+    pipelineStale: "",
+  };
 
-  test("every control the list needs is wired", () => {
+  test("every control the list needs is wired", async () => {
+    const actions = (await import("../src/app/room/ledger-actions")) as Record<
+      string,
+      unknown
+    >;
     for (const a of [
       "addFollowUp",
       "followUpDone",
@@ -205,88 +278,203 @@ describe("the follow-up list is wired where the operator can reach it", () => {
       "followUpAddBoard",
       "followUpWaveOff",
     ]) {
-      assert.ok(client.includes(a), `${a} missing from the client`);
-      assert.ok(
-        actions.includes(`export async function ${a}`),
-        `${a} has no server half`,
-      );
+      assert.equal(typeof actions[a], "function", `${a} has no server half`);
     }
+    // The block the add menu opens arms a chase and comes home to /room.
+    const room = await roomClient();
+    const block = await render(
+      createElement(room.FollowUpBlock, { rows: [followUpRow()] }),
+    );
+    const forms = formsOf(block);
+    assert.equal(forms.length, 1);
+    assert.ok(/name="label"/.test(forms[0]));
+    assert.ok(/name="returnTo" value="\/room"/.test(forms[0]));
+    assert.ok(textOf(block).includes("1 open"));
   });
-  test("the count rides the add button", () => {
-    assert.ok(client.includes("addBadge"));
-    assert.ok(css.includes(".addBadge"));
+  test("the count rides the add button", async () => {
+    const room = await roomClient();
+    const withOne = await render(createElement(room.RoomClient, roomProps));
+    assert.match(withOne, /title="follow-ups still owed">1</);
+    const withNone = await render(
+      createElement(room.RoomClient, { ...roomProps, followUps: [] }),
+    );
+    assert.ok(!withNone.includes("follow-ups still owed"), "an empty list shows no badge");
   });
-  test("arming a chase offers no when — everything is now", () => {
-    // The dropdown is gone from the composer, and the action no longer reads a
-    // window for a manual arm: a written-down chase is due on the spot.
-    const block = /function FollowUpBlock[\s\S]*?\n}\n/.exec(client)?.[0] ?? "";
-    assert.ok(block, "the follow-up block moved");
+  test("arming a chase offers no when — everything is now", async () => {
+    // The dropdown is gone from the composer, and the arm reads no window
+    // for a manual chase: a written-down chase is due on the spot.
+    const room = await roomClient();
+    const block = await render(createElement(room.FollowUpBlock, { rows: [] }));
     assert.ok(!/name="when"/.test(block), "the when picker came back");
-    const arm = /export async function addFollowUp[\s\S]*?\n}\n/.exec(actions)?.[0] ?? "";
-    assert.ok(arm.includes("followUpAt: new Date(now)"), "a chase is no longer due now");
-    assert.ok(!arm.includes("nextCheckIn"), "the arm still consults the cadence clock");
+    const now = Date.parse("2026-09-25T15:00:00Z");
+    const data = manualFollowUpData({
+      key: "abc-123",
+      label: "chase Simploy for the countersignature",
+      detail: "",
+      routed: ["001simploy"],
+      now,
+    });
+    assert.equal(data.subjectKey, "manual:abc-123");
+    assert.equal(data.followUpAt.getTime(), now, "a chase is no longer due now");
+    assert.equal(data.contactedAt.getTime(), now);
+    assert.equal(data.intervalDays, 0);
+    assert.equal(data.status, "awaiting");
+    assert.deepEqual(routedIds(data.detail ?? ""), ["001simploy"]);
   });
-  test("a chase that names an account files itself there", () => {
-    const arm = /export async function addFollowUp[\s\S]*?\nasync function/.exec(
-      actions,
-    )?.[0];
-    assert.ok(arm?.includes("fileFollowUpToAccounts"));
-    const filer =
-      /async function fileFollowUpToAccounts[\s\S]*?\n}\n/.exec(actions)?.[0] ?? "";
+  test("a chase that names an account files itself there", async () => {
     // The action reaches the right-hand panel; the note reaches the history.
-    assert.ok(filer.includes("roomCompose"), "no action lands on the account");
-    assert.ok(filer.includes("createAccountNoteRow"), "no note reaches the record");
+    // Returned ids are the ones that actually took, at most three.
+    const composed: string[] = [];
+    const noted: { accountId: string; body: string; lane: string; source: string }[] =
+      [];
+    const filed = await fileFollowUpToAccounts(
+      "chase Bryce for the signed SOW",
+      [
+        { id: "a1", name: "Alpha" },
+        { id: "a2", name: "Bravo" },
+        { id: "a3", name: "Charlie" },
+        { id: "a4", name: "Delta" },
+      ],
+      {
+        compose: async (accountId, text, opts) => {
+          composed.push(accountId);
+          assert.equal(text, "chase Bryce for the signed SOW");
+          assert.deepEqual(opts, { kind: "action", urgency: "med" });
+          return accountId === "a2" ? { ok: false } : { ok: true };
+        },
+        note: async (n) => {
+          noted.push(n);
+        },
+      },
+    );
+    assert.deepEqual(composed, ["a1", "a2", "a3"], "at most three accounts, in order");
+    assert.deepEqual(filed, ["a1", "a3"], "only the actions that took are remembered");
+    assert.deepEqual(
+      noted.map((n) => n.accountId),
+      ["a1", "a3"],
+      "no note without its action",
+    );
+    for (const n of noted) {
+      assert.equal(n.body, "⏲ Follow-up armed: chase Bryce for the signed SOW");
+      assert.equal(n.lane, "mine");
+      assert.equal(n.source, "followup");
+    }
+    // A composer that throws is a skipped account, never a broken arm.
+    const broken = await fileFollowUpToAccounts("x", [{ id: "z", name: "Zulu" }], {
+      compose: async () => {
+        throw new Error("down");
+      },
+      note: async () => {},
+    });
+    assert.deepEqual(broken, []);
   });
   test("manual chases never reach the check-in drawer", () => {
-    assert.ok(
-      /partitionFollowUps\(\s*touches\.filter\(\(t\) => !isManual\(t\.subjectKey\)\)/.test(
-        page,
-      ),
+    const touches = [
+      { subjectKey: "manual:1", status: "awaiting" },
+      { subjectKey: "manual:2", status: "archived" },
+      { subjectKey: "outreach:001simploy", status: "awaiting" },
+      { subjectKey: "kickoff:2026-W31:Lesha Cyphers", status: "replied" },
+    ];
+    const { manual, cadence } = splitTouches(touches);
+    assert.deepEqual(
+      manual.map((t) => t.subjectKey),
+      ["manual:1"],
+      "the list is the live chases",
+    );
+    assert.deepEqual(
+      cadence.map((t) => t.subjectKey),
+      ["outreach:001simploy", "kickoff:2026-W31:Lesha Cyphers"],
       "cadence buckets still swallow manual follow-ups",
     );
   });
-  test("the room is the HomeRoom now", () => {
+  test("the room is the HomeRoom now", async () => {
     // The wayfinder renders from one table (src/components/wayfinder-routes.ts,
-    // since the 2026-09-25 rulings); the label is read from its data.
+    // since the 2026-09-25 rulings); the label is read from its data, and the
+    // room's own masthead says the same.
     const labels = WAYFINDER_ROUTES.map((r) => r.label);
     assert.ok(labels.includes("HomeRoom"));
     assert.ok(!labels.includes("Room"), "a bare Room label survived");
-    assert.ok(page.includes('current="HomeRoom"'));
-    assert.ok(client.includes("HOMEROOM"));
+    const room = await roomClient();
+    const board = await render(createElement(room.RoomClient, roomProps));
+    assert.ok(textOf(board).includes("HOMEROOM"));
   });
 });
 
 // ── the click-away gesture ────────────────────────────────────────────────────
 describe("every open panel closes on a click away", () => {
-  const hook = readFileSync(join(root, "src/components/use-dismiss.ts"), "utf8");
-  const client = readFileSync(join(root, "src/app/room/room-client.tsx"), "utf8");
+  // The hook binds through bindDismiss while the panel is open; the gestures
+  // and the cleanup are pinned on that binding with a scripted document.
+  type Listener = (e: unknown) => void;
+  const fakeDoc = () => {
+    const bound = new Map<string, Listener[]>();
+    return {
+      bound,
+      addEventListener: (type: string, fn: Listener) => {
+        bound.set(type, [...(bound.get(type) ?? []), fn]);
+      },
+      removeEventListener: (type: string, fn: Listener) => {
+        bound.set(type, (bound.get(type) ?? []).filter((f) => f !== fn));
+      },
+      fire: (type: string, e: unknown) => {
+        for (const fn of bound.get(type) ?? []) fn(e);
+      },
+    };
+  };
+  const panelWith = (inside: object) =>
+    ({ contains: (n: unknown) => n === inside }) as unknown as Element;
+
   test("the hook answers to both gestures and cleans up after itself", () => {
-    assert.ok(hook.includes("pointerdown"), "an outside click does nothing");
-    assert.ok(/Escape/.test(hook), "Escape does nothing");
-    assert.ok(/removeEventListener/.test(hook), "the listener outlives the panel");
-    // The listener must not exist while the panel is shut.
-    assert.ok(/if \(!open\) return;/.test(hook));
+    const doc = fakeDoc();
+    const inside = {};
+    const outside = {};
+    let closed = 0;
+    const unbind = bindDismiss(
+      doc as unknown as DismissTarget,
+      () => panelWith(inside),
+      () => closed++,
+    );
+    // An outside pointer down closes; one inside the panel is left alone.
+    doc.fire("pointerdown", { target: outside });
+    assert.equal(closed, 1, "an outside click does nothing");
+    doc.fire("pointerdown", { target: inside });
+    assert.equal(closed, 1, "a click inside the panel closed it");
+    // Escape closes; any other key does not.
+    doc.fire("keydown", { key: "Escape" });
+    assert.equal(closed, 2, "Escape does nothing");
+    doc.fire("keydown", { key: "Enter" });
+    assert.equal(closed, 2);
+    // The unbind takes both listeners down, so nothing outlives the panel.
+    unbind();
+    assert.deepEqual(
+      [...doc.bound.values()].map((l) => l.length),
+      [0, 0],
+      "the listener outlives the panel",
+    );
+    doc.fire("pointerdown", { target: outside });
+    doc.fire("keydown", { key: "Escape" });
+    assert.equal(closed, 2);
   });
-  test("the HomeRoom's panels all use it", () => {
-    assert.ok(client.includes("useDismiss"));
-    for (const m of ["addRef", "drawerRef", "stageRef"]) {
-      assert.ok(client.includes(m), `${m} never got wired`);
-    }
-  });
-  test("the paste box is deliberately left alone", () => {
-    // Typed-but-unfiled text must never vanish on a stray click; that panel
-    // keeps its explicit Cancel.
-    assert.ok(!/useDismiss<[^>]*>\(pasteOpen/.test(client));
+  test("a panel with no element yet ignores the pointer", () => {
+    const doc = fakeDoc();
+    let closed = 0;
+    bindDismiss(doc as unknown as DismissTarget, () => null, () => closed++);
+    doc.fire("pointerdown", { target: {} });
+    assert.equal(closed, 0);
   });
 });
 
 // ── the Teams capture ─────────────────────────────────────────────────────────
 describe("the Teams bookmarklet", () => {
-  const intake = readFileSync(join(root, "src/app/intake/capture-shelf.tsx"), "utf8");
-  const bm = /function teamsBookmarklet\([\s\S]*?\n}\n/.exec(intake)?.[0] ?? "";
-  test("it exists and is offered on Capture", () => {
-    assert.ok(bm, "no Teams bookmarklet");
-    assert.ok(intake.includes("Grab Teams thread"));
+  const bm = teamsBookmarklet("https://cc.example.test");
+  test("it exists and is offered on Capture", async () => {
+    assert.ok(bm.startsWith("javascript:"), "no Teams bookmarklet");
+    const teams = TOOLS.find((t) => t.key === "teams");
+    assert.ok(teams, "the shelf does not offer the Teams grab");
+    assert.equal(teams.label, "☰ Grab Teams thread");
+    assert.equal(teams.build("https://cc.example.test"), bm);
+    const shelf = await captureShelf();
+    const html = await render(createElement(shelf.CaptureShelf, { accounts: [] }));
+    assert.ok(textOf(html).includes("Grab Teams thread"));
   });
   test("it reads the thread, not the whole app chrome", () => {
     assert.ok(/message-pane-list-viewport|messagePaneList/.test(bm));
@@ -303,70 +491,94 @@ describe("the Teams bookmarklet", () => {
   });
   test("the capture stamps its own dialect, and the pipeline knows it", () => {
     assert.ok(/TEAMS THREAD/.test(bm));
-    const sf = readFileSync(join(root, "src/lib/sf-timeline.ts"), "utf8");
-    assert.ok(
-      /\(OUTLOOK\|TEAMS\) THREAD/.test(sf),
-      "the SF parser would try to parse a Teams capture",
-    );
-    const room = readFileSync(join(root, "src/app/room/actions.ts"), "utf8");
-    assert.ok(room.includes('"TM"'), "a Teams paste files as Salesforce activity");
-    assert.ok(
-      room.includes('"teams"'),
-      "the source column lies about where it came from",
-    );
+    const paste =
+      "TEAMS THREAD - Simploy · captured 9/25/2026\n\nChassie: the invoices are coming";
+    // The SF anchor grammar refuses the dialect outright, so a Teams capture
+    // never parses as Salesforce activity…
+    assert.deepEqual(parseSfTimeline(paste), [], "the SF parser tried a Teams capture");
+    // …roomPaste files it as TM, under its own source column.
+    assert.equal(dialectOf(paste), "TM", "a Teams paste files as Salesforce activity");
+    assert.equal(sourceFor("TM", "rules"), "teams", "the source column lies");
+    assert.equal(sourceFor("TM", "ai"), "teams-ai");
+    assert.equal(dialectOf("OUTLOOK THREAD - captured"), "OL");
+    assert.equal(sourceFor("OL", "rules"), "outlook");
+    assert.equal(dialectOf("CALL TRANSCRIPT — dropped file x.vtt"), "CT");
+    assert.equal(sourceFor("CT", "ai"), "call-ai");
+    assert.equal(dialectOf("SALESNAV ACCOUNTS - captured"), "SN");
+    assert.equal(sourceFor("SN", "rules"), "salesnav");
+    assert.equal(dialectOf("Lesha Cyphers to Kim Bartolotti\nRE: PrismOne"), "SF");
+    assert.equal(sourceFor("SF", "ai"), "sf-ai");
   });
 });
 
 // ── Capture, the shelf ────────────────────────────────────────────────────────
 describe("the Capture page is the shelf the grabs live on", () => {
-  const shelf = readFileSync(join(root, "src/app/intake/capture-shelf.tsx"), "utf8");
-  const page = readFileSync(join(root, "src/app/intake/page.tsx"), "utf8");
-  const css = readFileSync(join(root, "src/app/command-center.module.css"), "utf8");
-
-  test("all four grabs sit on it, each with what it takes and refuses", () => {
+  test("all four grabs sit on it, each with what it takes and refuses", async () => {
+    const shelf = await captureShelf();
+    const html = await render(createElement(shelf.CaptureShelf, { accounts: [] }));
+    const text = textOf(html);
     for (const g of [
       "Grab Outlook thread",
       "Grab SF activity",
       "Grab Teams thread",
       "Grab Sales Nav intent",
     ]) {
-      assert.ok(shelf.includes(g), `${g} left the shelf`);
+      assert.ok(text.includes(g), `${g} left the shelf`);
     }
-    // one type declaration + one value per tool — four grabs since Sales Nav
-    assert.equal((shelf.match(/refuses:/g) ?? []).length, 5, "a grab hides its refusal");
-    assert.equal((shelf.match(/takes:/g) ?? []).length, 5, "a grab hides what it takes");
+    // One value per tool — four grabs since Sales Nav — and every grab prints
+    // both on the shelf.
+    assert.equal(TOOLS.length, 4);
+    for (const t of TOOLS) {
+      assert.ok(t.takes.length > 20, `${t.key} hides what it takes`);
+      assert.ok(t.refuses.length > 20, `${t.key} hides its refusal`);
+      assert.ok(text.includes(t.takes), `${t.key}'s takes is not on the shelf`);
+      assert.ok(text.includes(t.refuses), `${t.key}'s refusal is not on the shelf`);
+    }
+    assert.equal((html.match(/<b>takes<\/b>/g) ?? []).length, 4);
+    assert.equal((html.match(/<b>refuses<\/b>/g) ?? []).length, 4);
   });
-  test("the paste workflow is gone — filing happens at the account", () => {
-    assert.ok(!existsSync(join(root, "src/app/intake/intake-client.tsx")));
-    assert.ok(!existsSync(join(root, "src/app/intake/intake-tabs.tsx")));
+  test("the paste workflow is gone — filing happens at the account", async () => {
+    // The old client and its tabs are no longer modules anyone can load.
+    for (const dead of ["../src/app/intake/intake-client", "../src/app/intake/intake-tabs"]) {
+      await assert.rejects(import(dead), { code: "ERR_MODULE_NOT_FOUND" });
+    }
+    const shelf = await captureShelf();
+    const html = await render(createElement(shelf.CaptureShelf, { accounts: [] }));
     for (const dead of [
       "Paste from clipboard",
       "SF activity paste",
       "SF timeline",
       "Transcript / meeting notes",
     ]) {
-      assert.ok(!page.includes(dead) && !shelf.includes(dead), `${dead} survived`);
+      assert.ok(!textOf(html).includes(dead), `${dead} survived`);
     }
-    const actions = readFileSync(join(root, "src/app/intake/actions.ts"), "utf8");
-    assert.ok(!/export async function fileTimeline/.test(actions));
-    assert.ok(!/export async function fileTranscript/.test(actions));
-    assert.ok(!/export async function cleanWithAI/.test(actions));
+    const actions = (await import("../src/app/intake/actions")) as Record<string, unknown>;
+    for (const gone of ["fileTimeline", "fileTranscript", "cleanWithAI"]) {
+      assert.equal(actions[gone], undefined, `${gone} is still an action`);
+    }
+    assert.equal(typeof actions.getDealIntel, "function", "the prefill action stays");
   });
-  test("the payroll form stays reachable, one click down", () => {
-    assert.ok(shelf.includes("PayrollForm"));
-    assert.ok(shelf.includes("Payroll intake form"));
+  test("the payroll form stays reachable, one click down", async () => {
+    const shelf = await captureShelf();
+    const html = await render(createElement(shelf.CaptureShelf, { accounts: [] }));
+    assert.ok(textOf(html).includes("✎ Payroll intake form"));
+    // One click down: the form itself is not on the shelf until asked for.
+    assert.ok(/aria-expanded="false"/.test(html));
+    assert.ok(!/<form/.test(html), "the payroll form painted before its click");
   });
-  test("the page still points at the account as the place work lands", () => {
-    assert.ok(page.includes('href="/room"') || page.includes('"/room"'));
-    assert.ok(page.includes('current="Capture"'));
+  test("the page still points at the account as the place work lands", async () => {
+    const shelf = await captureShelf();
+    const html = await render(createElement(shelf.CaptureShelf, { accounts: [] }));
+    assert.ok(html.includes('href="/room"'));
+    assert.ok(textOf(html).includes("HomeRoom"));
   });
-  test("every class the shelf asks for exists", () => {
-    const used = new Set<string>();
-    for (const m of shelf.matchAll(/styles\.([A-Za-z_][A-Za-z0-9_]*)/g)) used.add(m[1]);
-    const defined = new Set<string>();
-    for (const m of css.matchAll(/\.([A-Za-z_][A-Za-z0-9_]*)/g)) defined.add(m[1]);
+  test("every class the shelf asks for exists", async () => {
+    // A CSS module hands back undefined for a class the sheet does not
+    // define, so a dangling styles.x paints as class="undefined".
+    const shelf = await captureShelf();
+    const html = await render(createElement(shelf.CaptureShelf, { accounts: [] }));
     assert.deepEqual(
-      [...used].filter((c) => !defined.has(c)),
+      classesOf(html).filter((c) => c === "undefined" || c === "null"),
       [],
     );
   });

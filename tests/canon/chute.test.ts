@@ -1,4 +1,4 @@
-// The Chute's decrees, pinned as behavior (CLAUDE.md "The Chute", :274-289,
+// The Chute's decrees, pinned as behavior (CLAUDE.md "The Chute", :280-295,
 // and the 2026-09-25 rulings R2, R11, R12, R14 and D11, D12, D30). Every
 // test here calls a function and checks what it returns; none reads a
 // source file.
@@ -56,9 +56,9 @@ const row = (over: Partial<LedgerRow> & { key: number; state: LedgerRow["state"]
   ...over,
 });
 
-// ── E10 + C20 · "a disputed read waits for the operator's pick" (:283-284) and
-// "The receipt ledger survives a reload" (:285-287) ────────────────────────
-describe("a waiting pick survives a reload with its text (CLAUDE.md:283-287)", () => {
+// ── E10 + C20 · "a disputed read waits for the operator's pick" (:289-290) and
+// "The receipt ledger survives a reload" (:291-293) ────────────────────────
+describe("a waiting pick survives a reload with its text (CLAUDE.md:289-293)", () => {
   test("a pick row with text comes back a pick row with the same text", () => {
     const storage = memory();
     const text = "OUTLOOK THREAD — dropped file 1.eml\nFrom: nobody@example.org\n\nhello";
@@ -162,7 +162,7 @@ describe("a waiting pick survives a reload with its text (CLAUDE.md:283-287)", (
   });
 });
 
-// ── D12 · what the ledger may keep (:285-287) ─────────────────────────────
+// ── D12 · what the ledger may keep (:291-293; ruled at :303) ────────────────
 describe("a settled row keeps the account, the counts, the day and the rung, never an address or body text", () => {
   const filed = row({
     key: 9,
@@ -231,7 +231,7 @@ describe("a settled row keeps the account, the counts, the day and the rung, nev
   });
 });
 
-// ── D11 · a concurrency ceiling (:277) ────────────────────────────────────
+// ── D11 · a concurrency ceiling (:283; ruled at :303) ───────────────────────
 describe("the Chute reads at most three files at once; the rest wait in drop order", () => {
   const tick = () => new Promise<void>((r) => setTimeout(r, 4));
 
@@ -276,7 +276,7 @@ describe("the Chute reads at most three files at once; the rest wait in drop ord
   });
 });
 
-// ── D16 · "the same capture" (:288) ───────────────────────────────────────
+// ── D16 · "the same capture" (:294; ruled at :305) ──────────────────────────
 describe("the same capture is the same normalized body, head line skipped", () => {
   const raw = [
     "From: Dana Ellis <dana@simploy.example>",
@@ -311,6 +311,54 @@ describe("the same capture is the same normalized body, head line skipped", () =
     );
   });
 
+  test("the .eml and the .msg of one mail fingerprint equal (a twin format dedupes)", () => {
+    // One mail, read two ways. The .eml carries its Date header as the client
+    // wrote it; msgreader hands the .msg's delivery time back as a UTC string.
+    // Same From, To, Subject and body; the two Sent lines name one instant.
+    const eml = [
+      "From: Dana Ellis <dana@simploy.example>",
+      "To: Antaeus Coe <acoe@prismhr.com>",
+      "Subject: Re: Canada",
+      "Date: Tue, 02 Sep 2026 09:44:00 -0500",
+      "",
+      "The board meets Thursday. Can you send the model?",
+    ].join("\n");
+    const msg = {
+      subject: "Re: Canada",
+      senderName: "Dana Ellis",
+      senderEmail: "dana@simploy.example",
+      recipients: [{ name: "Antaeus Coe", email: "acoe@prismhr.com" }],
+      body: "The board meets Thursday. Can you send the model?",
+      messageDeliveryTime: "Tue, 02 Sep 2026 14:44:00 GMT",
+    };
+    assert.equal(
+      pasteFingerprint(emlToPaste(eml, "thread.eml")),
+      pasteFingerprint(msgToPaste(msg, "thread.msg")),
+    );
+    // A different instant is a different capture: the normalization reads the
+    // date, it never drops it.
+    assert.notEqual(
+      pasteFingerprint(emlToPaste(eml, "thread.eml")),
+      pasteFingerprint(
+        msgToPaste({ ...msg, messageDeliveryTime: "Wed, 03 Sep 2026 14:44:00 GMT" }, "b.msg"),
+      ),
+    );
+    // Two recipients: the .eml header joins them with a comma, msgreader's list
+    // with a semicolon. Still one mail.
+    const eml2 = eml.replace(
+      "To: Antaeus Coe <acoe@prismhr.com>",
+      "To: Antaeus Coe <acoe@prismhr.com>, Greg Williams <greg@prismhr.com>",
+    );
+    const msg2 = {
+      ...msg,
+      recipients: [...msg.recipients, { name: "Greg Williams", email: "greg@prismhr.com" }],
+    };
+    assert.equal(
+      pasteFingerprint(emlToPaste(eml2, "thread.eml")),
+      pasteFingerprint(msgToPaste(msg2, "thread.msg")),
+    );
+  });
+
   test("a bookmarklet re-copy with a fresh capture moment is the same thread", () => {
     const body = "\n\nDana Ellis\nThe board meets Thursday.";
     assert.equal(
@@ -340,7 +388,7 @@ describe("the same capture is the same normalized body, head line skipped", () =
   });
 });
 
-// ── D2 · the Drop and the export (:281; ruled R12) ────────────────────────
+// ── D2 · the Drop and the export (:287, ruled at :301; R12) ────────────────
 describe("the Drop refuses a .csv and says where it goes", () => {
   const noPdf = async () => ({ ok: false as const, reason: "not here" });
   const csv = "Subject,Date,Assigned\nCall,9/2/2026,Antaeus Coe\nEmail,9/3/2026,Anika\n";
@@ -365,7 +413,7 @@ describe("the Drop refuses a .csv and says where it goes", () => {
   });
 });
 
-// ── D1 · one Chute, one roster (:276; ruled R11) ──────────────────────────
+// ── D1 · one Chute, one roster (:282, ruled at :301; R11) ──────────────────
 describe("the Chute is one component with one roster wherever it mounts", () => {
   const roster = routingRoster();
 
@@ -401,7 +449,7 @@ describe("the Chute is one component with one roster wherever it mounts", () => 
   });
 });
 
-// ── D30 · the mirror's query (:297-298, :283) ─────────────────────────────
+// ── D30 · the mirror's query (:317-318, :289; ruled at :309) ─────────────
 describe("the intranet mirror's query excludes every namespaced row by construction", () => {
   // A tiny evaluator for the where the builder returns: NOT + contains /
   // startsWith on accountId. Anything else the builder starts emitting must

@@ -134,7 +134,10 @@ const SCHEMA = {
   additionalProperties: false,
 } as const;
 
-const SYSTEM = `You clean raw pastes from a Salesforce activity timeline (or emails / meeting notes) into structured activity entries for a sales command center. The operator reads these entries to decide their next move — every entry must carry actionable substance, or not exist.
+// The reader's contract — the system prompt every read runs under. Exported
+// so the suite can pin its rules (the fulfillment rule among them) as the text
+// the model is actually handed, never by scanning this file.
+export const READER_CONTRACT = `You clean raw pastes from a Salesforce activity timeline (or emails / meeting notes) into structured activity entries for a sales command center. The operator reads these entries to decide their next move — every entry must carry actionable substance, or not exist.
 
 Rules:
 - One entry per real activity (an email sent, a task, a logged call). Emails quoted inside another email are part of that email's body context, not separate entries — but DO surface their substance.
@@ -342,7 +345,7 @@ export async function aiCleanTimeline(raw: string, now: Date): Promise<AiCleanRe
     client.messages.create({
       model,
       max_tokens: maxTokens,
-      system: SYSTEM,
+      system: READER_CONTRACT,
       messages: [
         {
           role: "user",

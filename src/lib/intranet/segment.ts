@@ -9,9 +9,10 @@
 //
 // Mechanical only. The cheap signals below do the splitting, and that is the
 // whole segmentation today: applyMerges can take a model's merge verdicts
-// (join adjacent segments, never split further), but the server action hands
-// it an empty list (src/app/intranet/actions.ts) and mergeProbe has no
-// caller, so no model touches a segment. Deterministic and free.
+// (join adjacent segments, never split further), but its one caller, the
+// server action (src/app/intranet/actions.ts), hands it an empty list, and
+// nothing in the app produces a merge list, so no model touches a segment.
+// Deterministic and free.
 
 import { SEGMENT_GAP_MINUTES, SEGMENT_MSG_CAP } from "./doctrine";
 import { checksum, msgKey } from "./normalize";

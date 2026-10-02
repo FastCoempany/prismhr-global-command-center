@@ -1,5 +1,5 @@
 // The Scratchpaper's decree, pinned as behavior (CLAUDE.md "The Scratchpaper",
-// :291-307: "✕ is per line and deliberate — and it archives, never destroys
+// :311-327: "✕ is per line and deliberate — and it archives, never destroys
 // ... Nothing on the paper ever dies"). Every test calls a function and
 // checks what it returns or what it asked a stub client to do; none reads a
 // source file.
@@ -9,14 +9,15 @@ import assert from "node:assert/strict";
 import {
   SCRATCH_GONE_NS,
   SCRATCH_NS,
+  editOutcome,
   strikeLine,
   strikeMove,
   type StrikeClient,
 } from "../../src/lib/scratch";
 
 // ── E8 · "the line moves to scratch:gone ... Nothing on the paper ever dies"
-// (:304-307) ───────────────────────────────────────────────────────────────
-describe("nothing on the paper ever dies (CLAUDE.md:304-307)", () => {
+// (:324-327) ───────────────────────────────────────────────────────────────
+describe("nothing on the paper ever dies (CLAUDE.md:324-327)", () => {
   test("the cross-out moves the row from the pad to the struck history and changes nothing else", () => {
     const m = strikeMove("line-1");
     assert.deepEqual(m.where, { id: "line-1", accountId: SCRATCH_NS });
@@ -86,5 +87,55 @@ describe("nothing on the paper ever dies (CLAUDE.md:304-307)", () => {
       accountNote: { updateMany: async () => ({ count: 0 }) },
     };
     assert.equal(await strikeLine(client, "nope"), 0);
+  });
+});
+
+// ── D24 · "Click-away keeps an edit; the pad never eats your words" (:329) ──
+describe("the in-place edit: Enter keeps, Escape puts it back, click-away keeps (CLAUDE.md:329)", () => {
+  const original = "call Dana about the quote";
+
+  test("Enter keeps the draft", () => {
+    assert.deepEqual(editOutcome("enter", "call Dana about the Canada quote", original), {
+      action: "keep",
+      text: "call Dana about the Canada quote",
+    });
+  });
+
+  test("Escape reverts to the original, whatever the draft held", () => {
+    assert.deepEqual(editOutcome("escape", "call Dana about the Canada quote", original), {
+      action: "revert",
+      text: original,
+    });
+    assert.deepEqual(editOutcome("escape", "", original), { action: "revert", text: original });
+  });
+
+  test("blur keeps the draft: a click-away never eats your words", () => {
+    assert.deepEqual(editOutcome("blur", "call Dana about the Canada quote", original), {
+      action: "keep",
+      text: "call Dana about the Canada quote",
+    });
+    // The kept words are trimmed, as the pad writes them.
+    assert.deepEqual(editOutcome("blur", "  call Dana tomorrow  ", original), {
+      action: "keep",
+      text: "call Dana tomorrow",
+    });
+  });
+
+  test("an unchanged draft on any event is a no-op keep", () => {
+    for (const event of ["enter", "escape", "blur"] as const) {
+      assert.deepEqual(editOutcome(event, original, original), {
+        action: "keep",
+        text: original,
+      });
+      assert.deepEqual(editOutcome(event, `  ${original}  `, original), {
+        action: "keep",
+        text: original,
+      });
+    }
+  });
+
+  test("a blanked draft puts the line back: the paper keeps no empty line", () => {
+    assert.deepEqual(editOutcome("enter", "   ", original), { action: "revert", text: original });
+    assert.deepEqual(editOutcome("blur", "", original), { action: "revert", text: original });
   });
 });

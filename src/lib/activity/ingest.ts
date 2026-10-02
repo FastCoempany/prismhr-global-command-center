@@ -357,8 +357,12 @@ export function createIngest(
 
     // The colleague roster: assigned on two or more distinct accounts. A
     // single-account assigned name reads as that account's person, not a
-    // colleague. The server unions in the book's CSMs and EXTRA_PARTNERS
-    // (Appendix C). Collisions named now.
+    // colleague. The server unions in the book's CSMs and EXTRA_PARTNERS (the
+    // roster rule as blessed 2026-08-20: derived from the file each drop,
+    // never a hand-kept list). Collisions named now. D19 rules the book's
+    // internal names and our domain the first read, with this two-accounts
+    // count the fallback only for a row with no address (ruled 2026-09-25 —
+    // CLAUDE.md, The second record :489); the code still counts first.
     const colleagues = [...assigned.entries()]
       .filter(([, accts]) => accts.size >= 2)
       .map(([name]) => name)

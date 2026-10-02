@@ -1,4 +1,6 @@
+import Link from "next/link";
 import { AppWayfinder } from "@/components/app-wayfinder";
+import { getAppAccess } from "@/lib/auth";
 import { getPeo, peos } from "@/lib/book";
 import { DISCOVERY } from "@/lib/intel/discovery";
 import { PRODUCT_BANK } from "@/lib/intel/discovery-product";
@@ -25,6 +27,21 @@ export const dynamic = "force-dynamic";
 // aliases, how many points are on file — and a country's depth comes down from
 // /playbook/country when the operator names one.
 export default async function PlaybookPage() {
+  // Every page signs in (ruled 2026-09-25).
+  const access = await getAppAccess();
+  if (access.status === "unauthenticated") {
+    return (
+      <>
+        <AppWayfinder current="Playbook" />
+        <main className={styles.wrap}>
+          <p>
+            Sign in to continue. <Link href="/login">Sign in</Link>.
+          </p>
+        </main>
+      </>
+    );
+  }
+
   const [acctNotes, dispositions, buyerAsks] = await Promise.all([
     loadAccountNotes(),
     loadDispositions(),
