@@ -1,6 +1,6 @@
 // Standing decrees pinned as behavior: the wayfinder's archive (the Playbook
-// face's own precedent, CLAUDE.md:508-516, and the pass-1 ruling P1), the
-// bank's door under the click-depth law (:395-402 with :512-516), and the
+// face's own precedent, CLAUDE.md:552-560, and the pass-1 ruling P1), the
+// bank's door under the click-depth law (:427-434 with :554-558), and the
 // model roster ("Opus or better, always", founder-decreed 2026-07-31; one
 // roster, ruled 2026-09-25). Every test calls a function or reads a
 // module's exported values, except the two import scans under P1, which read
@@ -120,8 +120,8 @@ describe("every page signs in", () => {
   });
 });
 
-// ── C13 · a playbook citation and the bank (click-depth :397-399; the face
-// :512-516). The card is retired; what holds is the bank's own lookup ─────
+// ── C13 · a playbook citation and the bank (click-depth :429-431; the face
+// :554-558). The card is retired; what holds is the bank's own lookup ─────
 describe("a playbook citation opens in place to the bank's question", () => {
   const first = DISCOVERY[0];
 

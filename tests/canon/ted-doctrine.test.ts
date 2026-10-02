@@ -1,6 +1,6 @@
 // The Ted doctrine, pinned as behavior (CLAUDE.md "The Ted doctrine",
-// :359-375, with the Spring's research-chip decree at :349-351 and the
-// standing money decree at :538-539). Every test calls a function and checks
+// :385-401, with the Spring's research-chip decree at :374-376 and the
+// standing money decree at :582-583). Every test calls a function and checks
 // what it returns; none reads a source file.
 
 import { test, describe } from "node:test";
@@ -10,9 +10,9 @@ import { latestResearchAt } from "../../src/lib/intel/deep-research";
 import { corpusFor } from "../../src/lib/intel/extract";
 import { lastTouchRead } from "../../src/lib/room/touch";
 
-// ── E3 · "Money figures never appear in anything stored" (:538-539) meets
-// "the record outranks every seed" (:363): the one writer redacts ────────
-describe("no writer reaches AccountNote without redaction (CLAUDE.md:538-539)", () => {
+// ── E3 · "Money figures never appear in anything stored" (:582-583) meets
+// "the record outranks every seed" (:389): the one writer redacts ────────
+describe("no writer reaches AccountNote without redaction (CLAUDE.md:582-583)", () => {
   const stub = () => {
     const writes: AccountNoteData[] = [];
     return {
@@ -81,7 +81,7 @@ describe("no writer reaches AccountNote without redaction (CLAUDE.md:538-539)", 
     assert.equal(writes[0].createdAt, at);
   });
 
-  test("the Scratchpaper's carve-out keeps figures (CLAUDE.md:299-302), nothing else does", async () => {
+  test("the Scratchpaper's carve-out keeps figures (CLAUDE.md:319-322), nothing else does", async () => {
     const { client, writes } = stub();
     await createAccountNoteRow(
       {
@@ -122,8 +122,8 @@ describe("no writer reaches AccountNote without redaction (CLAUDE.md:538-539)", 
   });
 });
 
-// ── E9 · "The research control ... reading the LATEST of both stores" (:349-351)
-describe("the research chip reads the latest of both stores (CLAUDE.md:349-351)", () => {
+// ── E9 · "The research control ... reading the LATEST of both stores" (:374-376)
+describe("the research chip reads the latest of both stores (CLAUDE.md:374-376)", () => {
   test("the sweep wins when it is newer", () => {
     assert.equal(
       latestResearchAt("2026-07-02T12:00:00Z", "2026-08-13T12:00:00Z"),
@@ -147,10 +147,10 @@ describe("the research chip reads the latest of both stores (CLAUDE.md:349-351)"
   });
 });
 
-// ── E2 · "derived facts ... must read the WIDEST live source" (:368-371):
+// ── E2 · "derived facts ... must read the WIDEST live source" (:394-397):
 // the corpus carries the actors column, and a caller declares its homeSide
 // (enforced by type — corpusFor's `homeSide` key is required) ─────────────
-describe("every corpus carries actors and a homeSide (CLAUDE.md:368-371)", () => {
+describe("every corpus carries actors and a homeSide (CLAUDE.md:394-397)", () => {
   test("a note with actors produces a doc carrying those actors as its people and sender", () => {
     const docs = corpusFor("A1", "Acme", {
       homeSide: ["Anika Patel"],
@@ -191,8 +191,8 @@ describe("every corpus carries actors and a homeSide (CLAUDE.md:368-371)", () =>
   });
 });
 
-// ── C3 · "a fact's two stores merge by latest" (:371-372; ruled R5) ───────
-describe("the touch log merges with the record by latest (CLAUDE.md:371-372)", () => {
+// ── C3 · "a fact's two stores merge by latest" (:397-398; ruled R5) ───────
+describe("the touch log merges with the record by latest (CLAUDE.md:397-398)", () => {
   const send = (createdAt: string) => ({
     actors: "Antaeus Coe → Dana Ellis",
     createdAt,

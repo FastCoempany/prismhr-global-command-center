@@ -1,5 +1,5 @@
 // The Scratchpaper's decree, pinned as behavior (CLAUDE.md "The Scratchpaper",
-// :291-307: "✕ is per line and deliberate — and it archives, never destroys
+// :311-327: "✕ is per line and deliberate — and it archives, never destroys
 // ... Nothing on the paper ever dies"). Every test calls a function and
 // checks what it returns or what it asked a stub client to do; none reads a
 // source file.
@@ -16,8 +16,8 @@ import {
 } from "../../src/lib/scratch";
 
 // ── E8 · "the line moves to scratch:gone ... Nothing on the paper ever dies"
-// (:304-307) ───────────────────────────────────────────────────────────────
-describe("nothing on the paper ever dies (CLAUDE.md:304-307)", () => {
+// (:324-327) ───────────────────────────────────────────────────────────────
+describe("nothing on the paper ever dies (CLAUDE.md:324-327)", () => {
   test("the cross-out moves the row from the pad to the struck history and changes nothing else", () => {
     const m = strikeMove("line-1");
     assert.deepEqual(m.where, { id: "line-1", accountId: SCRATCH_NS });
