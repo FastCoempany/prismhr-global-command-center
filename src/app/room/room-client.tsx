@@ -59,6 +59,7 @@ import {
   roomUnlog,
 } from "./actions";
 import { DROP_ACCEPT, sniffPaste } from "@/lib/paste-files";
+import { splitDrop, vaultAfterVerdict } from "@/lib/room/drop-plan";
 import { archiveFileToGitHub } from "@/lib/github/archive";
 import { githubArchiveGrant } from "./archive-actions";
 import { readFileToText } from "./read-file";
@@ -488,15 +489,16 @@ function Row({
     start(async () => {
       const r = await roomPaste(row.accountId, text, force ? { force: true } : undefined);
       setReading(null);
+      const vault = vaultAfterVerdict(r, waiting);
       if (r.mismatch) {
         // The guard objected — the files wait with the question. Nothing
         // reaches the vault until the operator answers it.
-        setMismatch({ ...r.mismatch, text, files: waiting });
+        setMismatch({ ...r.mismatch, text, files: vault.hold });
         return;
       }
       if (r.ok) {
         // Accepted: NOW the files may go to this account's folder.
-        if (waiting?.length) void archiveFiles(waiting);
+        if (vault.archive.length) void archiveFiles(vault.archive);
         // One receipt, in the order the work matters: what filed, what opened,
         // what it asked, what it learned, and whether it says this is over.
         const parts = [
@@ -589,18 +591,12 @@ function Row({
     const files = Array.from(list ?? []);
     // The record's reader takes only the types it can read; everything else
     // is vault-only and never earns a can't-read complaint for being a video.
-    const readableExts = new Set(
-      DROP_ACCEPT.split(",").map((e) => e.trim().replace(".", "").toLowerCase()),
-    );
-    const f = files.find((x) =>
-      readableExts.has(x.name.split(".").pop()?.toLowerCase() ?? ""),
-    );
     // The vault waits on the guard (founder-decreed 2026-09-03). A readable
     // capture archives only once the filing is ACCEPTED — a misfiled drop
     // used to put its file in the wrong account's folder too, and the vault
     // never un-writes (the Simploy call in accounts/Regis HR Group/). Files
     // the reader can't open carry no verdict to wait for, so they go now.
-    const unreadable = files.filter((x) => x !== f);
+    const { readable: f, unreadable } = splitDrop(files, DROP_ACCEPT);
     if (unreadable.length) void archiveFiles(unreadable);
     // Only the readable file waits on the verdict; the rest already went.
     // Handing the whole drop down here vaulted every other file a second

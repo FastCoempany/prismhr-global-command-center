@@ -8,13 +8,13 @@
 
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
-import { cwd } from "node:process";
 import { judgeFiling } from "../src/lib/intel/misfile";
 import { peopleNamedIn, routeCapture, type RouteAccount } from "../src/lib/route-capture";
 import { peopleIndex, personKey } from "../src/lib/book/contacts";
 import { routingRoster } from "../src/lib/book/roster";
+import { splitDrop, vaultAfterVerdict } from "../src/lib/room/drop-plan";
+import { readFreeVerdict } from "../src/lib/room/paste";
+import { DROP_ACCEPT } from "../src/lib/paste-files";
 
 const SIMPLOY = { id: "001F000000w38BOIAY", name: "Simploy" };
 const REGIS = { id: "001F000000w38OHIAY", name: "Regis HR Group" };
@@ -113,50 +113,87 @@ describe("the company rung still stands, and outranks nothing", () => {
 });
 
 describe("the vault waits on the verdict", () => {
-  const client = readFileSync(join(cwd(), "src/app/room/room-client.tsx"), "utf8");
+  // The Drop's decisions are pure (src/lib/room/drop-plan.ts) and the row and
+  // the Chute both run them: which file waits on the filing, and what the
+  // verdict does with it.
+  const vtt = new File(["WEBVTT\n00:00 --> 00:01\nHi Chassie."], "call.vtt");
+  const mp4 = new File([new Uint8Array(8)], "call.mp4");
+  const disputed = {
+    ok: false,
+    mismatch: { claim: "Simploy", bound: "Regis HR Group", why: "Chassie Smith" },
+  };
+
   test("a readable drop archives only after the filing is accepted", () => {
-    // The files ride to filePaste and archive inside the ok branch — never
-    // beside the read, which is how the Simploy call reached the Regis
-    // folder while the filing was still being judged.
-    // Only the readable file rides as `waiting`; the unreadable ones were
-    // archived at once and must not go a second time (audit pass 1, bug 8).
-    assert.ok(/readDroppedFile\(f, \[f\]\)/.test(client));
-    assert.ok(/if \(waiting\?\.length\) void archiveFiles\(waiting\)/.test(client));
-    const okAt = client.indexOf("if (waiting?.length) void archiveFiles(waiting);");
-    const mismatchAt = client.indexOf("setMismatch({ ...r.mismatch, text, files: waiting })");
-    assert.ok(mismatchAt > 0 && okAt > mismatchAt, "the accept path archives, the dispute holds");
+    // The reader takes one file and it waits; the unreadable ones go to the
+    // vault at once and never ride again (audit pass 1, bug 8).
+    const split = splitDrop([mp4, vtt], DROP_ACCEPT);
+    assert.equal(split.readable, vtt);
+    assert.deepEqual(split.unreadable, [mp4]);
+    // Accepted: NOW the waiting file goes to the account's folder — once.
+    assert.deepEqual(vaultAfterVerdict({ ok: true }, [vtt]), {
+      archive: [vtt],
+      hold: [],
+    });
+    // A filing that failed for any other reason sends nothing anywhere.
+    assert.deepEqual(vaultAfterVerdict({ ok: false }, [vtt]), {
+      archive: [],
+      hold: [],
+    });
+    // Nothing waiting, nothing to do.
+    assert.deepEqual(vaultAfterVerdict({ ok: true }, undefined), {
+      archive: [],
+      hold: [],
+    });
   });
   test("a disputed drop holds its file with the question", () => {
-    assert.ok(client.includes("files?: File[]"));
-    assert.ok(client.includes("filePaste(mismatch.text, true, mismatch.files)"));
+    const step = vaultAfterVerdict(disputed, [vtt]);
+    assert.deepEqual(step, { archive: [], hold: [vtt] });
+    // The held file rides the operator's "file it anyway": the forced retry's
+    // acceptance is what releases it to the vault.
+    assert.deepEqual(vaultAfterVerdict({ ok: true }, step.hold), {
+      archive: [vtt],
+      hold: [],
+    });
   });
-  test("the evidence rung runs BEFORE the read spends a cent", () => {
-    const whole = readFileSync(join(cwd(), "src/app/room/actions.ts"), "utf8");
-    const from = whole.indexOf("export async function roomPaste(");
-    const to = whole.indexOf("async function absorbRead(");
-    const paste = whole.slice(from, to);
-    const earlyAt = paste.indexOf("const early = judgeFiling({");
-    const readAt = paste.indexOf("await aiCleanTimeline(");
-    assert.ok(earlyAt > 0, "roomPaste runs an early, read-free guard");
-    assert.ok(readAt > earlyAt, "a wrong-row drop is refused before the model is called");
+  test("the evidence rung runs BEFORE the read spends a cent", async () => {
+    // roomPaste's first gate is readFreeVerdict: text, row and roster in, the
+    // refusal out — no model, no network. Any fetch during the verdict is a
+    // read being spent, so the wire is made to fail loudly.
+    const real = globalThis.fetch;
+    globalThis.fetch = (() => {
+      throw new Error("the read-free rung reached the wire");
+    }) as unknown as typeof fetch;
+    try {
+      const refused = readFreeVerdict(TAPE, REGIS, roster);
+      assert.ok(refused, "a wrong-row drop is refused before the model is called");
+      assert.equal(refused.ok, false);
+      assert.equal(refused.mismatch.claim, "Simploy");
+      assert.equal(refused.mismatch.bound, "Regis HR Group");
+      assert.match(refused.mismatch.why ?? "", /Chassie Smith/);
+      assert.match(refused.reason, /^This reads like Simploy, not Regis HR Group — /);
+      // The same tape on its own row clears the gate and the read may run.
+      assert.equal(readFreeVerdict(TAPE, SIMPLOY, roster), null);
+    } finally {
+      globalThis.fetch = real;
+    }
   });
   test("the guard runs before anything files or fans out", () => {
-    const whole = readFileSync(join(cwd(), "src/app/room/actions.ts"), "utf8");
-    // Scoped to roomPaste's own body — other actions write notes of their own.
-    const from = whole.indexOf("export async function roomPaste(");
-    const to = whole.indexOf("async function absorbRead(");
-    assert.ok(from > 0 && to > from);
-    const paste = whole.slice(from, to);
-    const guardAt = paste.indexOf("judgeFiling({");
-    assert.ok(guardAt > 0, "roomPaste runs the guard");
-    assert.ok(
-      paste.indexOf("await absorbRead(") > guardAt,
-      "knowledge never fans out from a disputed capture",
-    );
-    assert.ok(
-      paste.indexOf("await createAccountNoteRow({") > guardAt,
-      "no entry is written before the verdict",
-    );
+    // A refusal is the whole receipt: nothing filed, nothing opened, no asks,
+    // no playbook lines — the dispute alone, for the banner.
+    const refused = readFreeVerdict(TAPE, REGIS, roster);
+    assert.ok(refused);
+    assert.equal(refused.filed, 0);
+    assert.equal(refused.how, "");
+    assert.deepEqual(Object.keys(refused).sort(), [
+      "filed",
+      "how",
+      "mismatch",
+      "ok",
+      "reason",
+    ]);
+    // Force is the operator's: the gate is skipped by the caller, never by the
+    // verdict — the same text still reads as Simploy on the Regis row.
+    assert.equal(judgeFiling({ text: TAPE, claim: "", bound: REGIS, roster }).ok, false);
   });
 });
 

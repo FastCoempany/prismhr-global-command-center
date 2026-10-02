@@ -14,6 +14,7 @@ import { hasDatabaseEnv } from "@/lib/db";
 import { peos } from "@/lib/book";
 import { routingRoster } from "@/lib/book/roster";
 import { judgeFiling } from "@/lib/intel/misfile";
+import { readFreeVerdict } from "@/lib/room/paste";
 import { digestFor, digestForCardName } from "@/lib/intel/digest";
 import {
   aiCleanAvailable,
@@ -238,25 +239,12 @@ export async function roomPaste(
   // (decreed 2026-09-04). The read's own company claim is judged after,
   // below, once there is a claim to judge.
   if (!opts?.force) {
-    const early = judgeFiling({
-      text: rawText,
-      claim: "",
-      bound: { id: acct.id, name: acct.name },
-      roster: routingRoster(),
-    });
-    if (!early.ok)
-      return {
-        ok: false,
-        filed: 0,
-        how: "",
-        mismatch: {
-          claim: early.claim,
-          bound: early.bound,
-          why: early.why,
-          boundWhy: early.boundWhy,
-        },
-        reason: `This reads like ${early.claim}, not ${acct.name} — ${early.why}.`,
-      };
+    const refused = readFreeVerdict(
+      rawText,
+      { id: acct.id, name: acct.name },
+      routingRoster(),
+    );
+    if (refused) return refused;
   }
 
   const now = new Date();
