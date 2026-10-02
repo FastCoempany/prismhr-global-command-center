@@ -2675,20 +2675,6 @@ export function RoomClient({
                 className={styles.mi}
                 onClick={() => setMenuOpen(false)}
               >
-                <span className={styles.miIc}>⚡</span>
-                <span>
-                  <b>File a paste</b>
-                  <span className={styles.miD}>
-                    Salesforce capture, email, or notes. It cleans and files to any
-                    account.
-                  </span>
-                </span>
-              </Link>
-              <Link
-                href="/intake"
-                className={styles.mi}
-                onClick={() => setMenuOpen(false)}
-              >
                 <span className={styles.miIc}>✎</span>
                 <span>
                   <b>Payroll intake form</b>
