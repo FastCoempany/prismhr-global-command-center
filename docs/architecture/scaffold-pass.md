@@ -1,6 +1,6 @@
 ---
 title: Scaffold Pass
-status: Audit pass 5, 2026-09-25; branch claude/chute-scaffold-1c0svk, ready for a PR
+status: Audit pass 5, 2026-09-25; merged as PR #335 (squash ab281df) 2026-09-25; corrected 2026-10-02 by the verification pass
 owner: Founder
 related_docs:
   - CLAUDE.md
@@ -14,7 +14,7 @@ related_docs:
 
 Pass 5 of the Chute audit: the codebase made smaller and every decree the refactor could break pinned by a test that asserts behavior, so a red during the refactor means something. It reads the 2026-09-25 rulings in the pass-3 and pass-4 ledgers and the CLAUDE.md entries they made. Branch `claude/chute-scaffold-1c0svk`, cut from the audit branch tip (main plus the ruling session, 710fab5), 27 commits, all pushed. Every commit passed the verify chain (prettier → tsc → eslint at 0 warnings → the test chain → next build) before it was made; two commits (b5bf3ef, 6eed8b8) were first recorded with a stale `.next/types` breaking tsc and re-verified green on a rebuilt tree before anything else was stacked on them.
 
-Closing counts: **51 suites in the chain** (41 before), **922 tests passing** (853 before; 97 new canon tests, 125 removed with the dead code they pinned or converted from text pins), **17,700 lines removed** across the removals, **97 canon tests**, 4 decrees that could not be pinned without the design pass, 1 removal blocked on the database, 3 pass-4 misses reported.
+Closing counts: **51 suites in the chain** (41 before), **922 tests passing** (853 before; 97 new canon tests, 125 removed with the dead code they pinned or converted from text pins), **15,568 lines deleted and 4,817 added** in the squash (corrected 2026-10-02 by the verification pass from "17,700 lines removed"; `git diff --shortstat caa1818 ab281df`), **97 canon tests**, 4 decrees that could not be pinned without the design pass (twelve more named in §A.3 by the verification pass), 1 removal blocked on the database, 3 pass-4 misses reported.
 
 ## A. The decree tests
 
@@ -97,6 +97,23 @@ Each is the smallest change that made the code follow the decree it pins; none c
 | P4, the second record's bare creates (run.ts:190, :208) | both bodies are ⟪act⟫ JSON blobs; the writer's redaction would rewrite comma-grouped numbers inside them | a structured-body flag for the second record's stores, or the P3/P4 column design |
 | The closer classifier's own cases | already pinned in tests/closer.test.ts:19, :36, :39 | nothing |
 
+Corrected 2026-10-02 by the verification pass: twelve more GOVERN rulings of 2026-09-25 stand unpinned and were left off this table. Each needs the design pass's code before a behavior test has anything to assert against.
+
+| Decree | Why not now | What would have to change |
+|---|---|---|
+| P2 (CLAUDE.md:301; the file and the note stay whole, only the model's read is windowed and a cut window is on the receipt) | no receipt field or windowing seam exists; the pin has nothing to read | a windowing seam that returns what it cut, and a receipt field that carries it |
+| P3 (:405; the door is its own column) | AccountNote carries lane, actors, recipients and source; no door column exists (prisma/schema.prisma) | the door column, its migration, and every writer stamping it |
+| D3 (:301; the transcriber emits CALL TRANSCRIPT with the recorded day) | the PDF and image read returns text with no head; only the .vtt and the Drop's own readers stamp CALL TRANSCRIPT (paste-files.ts) | a transcriber seam that reads a call and stamps the head and the day |
+| D4 (:301; the Intranet's capture is a door) | src/app/intranet/actions.ts never calls routeCapture; a paste there is an Intranet doc whatever it names | the Intranet capture routes, guards and picks through the one pipeline when the text names an account |
+| D8 (:307; a server-side upload, no token in the browser) | src/app/room/archive-actions.ts hands the token to the browser's fetch | a server upload route the Chute posts the file to |
+| D9 (:303; vaulting is filing, by the rungs or the pick, with a receipt and a take-back) | the vault ride is inline in chute.tsx with the GitHub and DB calls; no pure seam | a vault plan seam the Chute calls and the test drives |
+| D13 (:303; receipts dismiss per row and all at once, the fold shows every waiting row plus the two newest settled) | the fold's shape is chute.tsx JSX; a per-row dismiss exists (:358) and nothing pure decides what the fold shows | a pure fold reducer over the ledger rows |
+| D14 (:303; routing runs on the server, the roster never ships) | the Chute is a client component taking `roster` as a prop (intranet/page.tsx:120, the room page) | a server routing action the Chute calls with the text alone |
+| D15 (:305; no revalidation list, every page derives on request) | twelve files call revalidatePath; the pin would be a source scan, which the canon tests forbid | the revalidatePath calls go, and the pages derive on request |
+| D17 (:489; staging verifies before a slice replaces its predecessor, a refused upload leaves the prior drop) | activityStage writes through Prisma inline (src/app/activity/actions.ts:25); no pure plan seam | a pure staging plan the action applies, testable without the database |
+| D19 (:489; a colleague is book-internal or on our domain, the two-accounts count is the fallback) | ingest.ts derives colleagues by the two-accounts count first and unions the book's CSMs after; no address read | the roster reads the book's internal names and our domain first, the count only for a row with no address |
+| D29 (:309; a read-only session sees the bar and its receipts) | chute.tsx:559 `if (!canWrite) return null;` renders nothing read-only | the bar and the receipt fold render read-only with "Read-only session" where ⇪ was |
+
 ## B. Text pins on the ingest path
 
 Seven suites, one commit each. A "text pin" is an assertion on a source file's text, on the exact wording of an operator-facing string, or on an order that is not the behavior. Each was rewritten as a behavior assertion where one exists and deleted where the text was all it checked. One source flag was added once, for four suites: RouteHit and the misfile verdict carry `rung` (email · domain · person · name · head · initials, or "claim"), the same fact the why sentence carried in words (src/lib/route-capture.ts, src/lib/intel/misfile.ts; commit 892b33d).
@@ -164,6 +181,8 @@ Left, with the reason: the server-action sequencing pins in ingest-defects and m
 
 ## C. Removals
 
+Corrected 2026-10-02 by the verification pass: the content of every row below, of section B's per-suite commits and of section D's title landed on main in the squash ab281df (PR #335, merged 2026-09-25); the SHAs in this document name the pre-rebase commits on the scaffold branch, which are on no remote branch.
+
 One commit each; the chain green before each. KEEP and DEFER items untouched.
 
 | Item | Lines removed | Commit |
@@ -227,8 +246,8 @@ For every STANDS ruling in pass 3 C, whether the code now follows the decree tha
 | C1 · Ted :368-372, both records merge by latest | src/app/accounts/page.tsx:345-352 reads sr.rollup.lastHuman alone | no | the column reads the first record's last human touch beside the rollup's and shows the later, with its source whispered |
 | C2 · Ted :363, the roster reads the record | src/lib/book/roster.ts:20-35 builds from peos, contactsFor and AKA only | no | a loader over the actors and recipients columns per account joins the roster's email and people rungs; an undo withdraws what the undone filing taught |
 | C3 · Ted :371-372, the touch log merges by latest | src/lib/room/touch.ts:125 | yes (canon/ted-doctrine) | — |
-| C4 · closer :381-387, ↩ REPLIED needs substance | src/lib/sendbook/read.ts inboundDates, isSignOff gate | yes, this pass (canon/sendbook) | — |
-| C5 · Ted :373-374 and :408, machinery never warms | src/lib/sendbook/read.ts theirVoice, isMachinery gate | yes, this pass (canon/sendbook) | — |
+| C4 · closer :381-387, ↩ REPLIED needs substance | src/lib/sendbook/read.ts inboundDates, isSignOff gate; the org-wide path at :223-228 and :283-290 takes the export's account-level inboundAt into the inbound set with no closer read | half (corrected 2026-10-02 by the verification pass): the first record's path, this pass (canon/sendbook); the org-wide path annotates on a datetime, pinned as behavior by tests/second-record-faces.test.ts:569 | the org signal carries only inbounds with an attributed body that passes isSignOff (D19, :489) |
+| C5 · Ted :373-374 and :408, machinery never warms | src/lib/sendbook/read.ts theirVoice, isMachinery gate; the org-wide path at :223-228 takes the export's account-level inboundAt into the warm set with no machinery read | half (corrected 2026-10-02 by the verification pass): the first record's path, this pass (canon/sendbook); the org-wide path warms on a datetime, pinned as behavior by tests/second-record-faces.test.ts:569 | the org signal carries only inbounds with an attributed body that passes isMachinery (D19, :489) |
 | C6 · Groundwork :258-260 with :268-271, an org inbound excludes; the coordination move lives in the HomeRoom | src/lib/groundwork/day.ts:82 liveMotionIds reads the first record only; the silence-bump's org variant still fires on Groundwork (:22-23, :38, :174) | no | liveMotionIds reads orgInboundKey (with D19's attributed-body rule); the org coordination move becomes a HomeRoom todo or THEIRS line |
 | C7 · Act Lane :467-468, two caps | day.ts SEAT_SLOT_CAP and RULE_SLOT_CAP by branch | yes (canon/groundwork) | — |
 | C8 · Groundwork :262-271, a seat follows its account | day.ts:517 the seat loop skips excludedIds | half: it leaves Groundwork (canon/groundwork); the HomeRoom does not yet carry it | the HomeRoom reads seat: notes for excluded accounts as the account's own action until worked or taken back |
@@ -245,7 +264,7 @@ For every STANDS ruling in pass 3 C, whether the code now follows the decree tha
 | C19 · direct doctrine :240-241, the Approach is a fact, never a gate | src/lib/campaigns/index.ts:24, :172 ALLOWED filters kits by approach; src/app/accounts/draft-actions.ts:73 seeds the CSM play first for NEEDS_CSM | no | kitsFor prefers the stage's direct play at every stage; ALLOWED becomes an ordering hint, never an exclusion; the CSM play is the alternative with the quiet flag when a live CSM thread exists; boardLift stays |
 | C20 · Chute :283-284, a waiting pick survives a reload | src/app/room/chute-ledger.ts | yes, this pass (canon/chute) | — |
 
-Seven of the twenty stand unfollowed (C1, C2, C6, C8's HomeRoom half, C13, C16, C18, C19); every one is a behavior change for the design pass.
+Eight of the twenty stand unfollowed (C1, C2, C6, C8's HomeRoom half, C13, C16, C18, C19); every one is a behavior change for the design pass. Corrected 2026-10-02 by the verification pass: the list above counts eight, not the seven first written, and C4 and C5 are only half-followed — the Sendbook's org-wide inbound path at src/lib/sendbook/read.ts:223-228 and :283-290 takes the export's account-level datetime into the warm and inbound sets with no machinery or closer read, and tests/second-record-faces.test.ts:569 pins that behavior — so ten of twenty stand unfollowed.
 
 ## The counts
 
@@ -254,7 +273,7 @@ Seven of the twenty stand unfollowed (C1, C2, C6, C8's HomeRoom half, C13, C16, 
 | Suites in the chain | 41 | 51 |
 | Tests passing | 853 | 922 |
 | Canon tests | 0 | 97 |
-| Lines removed | — | 17,700 (net of the tests and modules added) |
+| Lines changed in the squash | — | 15,568 deleted, 4,817 added (ab281df against caa1818; corrected 2026-10-02 by the verification pass from "17,700 removed") |
 | Commits on the branch | — | 27 |
 
-Branch `claude/chute-scaffold-1c0svk`, cut from 710fab5 (the audit branch's tip: main c9b82ed plus the ruling session's ten commits). The audit branch `claude/chute-architecture-audit-1c0svk` carries the rulings and the CLAUDE.md law and has no PR yet; its PR should merge first, then the scaffold branch rebases onto main and opens its own. No PR was opened.
+Branch `claude/chute-scaffold-1c0svk`, cut from 710fab5 (the audit branch's tip: main c9b82ed plus the ruling session's ten commits). The audit branch `claude/chute-architecture-audit-1c0svk` carries the rulings and the CLAUDE.md law and had no PR when this was written; its PR was to merge first, then the scaffold branch to rebase onto main and open its own. Corrected 2026-10-02 by the verification pass: that is what happened — the audit branch merged as PR #334 (caa1818), and the scaffold branch, rebased onto it, merged as PR #335 on 2026-09-25, squashed to ab281df.
