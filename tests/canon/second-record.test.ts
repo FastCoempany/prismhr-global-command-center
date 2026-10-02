@@ -110,4 +110,69 @@ describe("gem lines are operator copy: the seven devices are linted, and a non-d
     assert.equal(lintReason("Their partner thread is live.").ok, true);
     assert.equal(lintReason("Nine support cases. Never pitched.").ok, true);
   });
+
+  // The plain-speech law's own examples (CLAUDE.md:90-100), verbatim, one per
+  // device the lint did not yet carry — and beside each, a plain line a naive
+  // regex would wrongly catch, which must pass. A false positive kills a real
+  // gem, so the pass lines pin the detectors' conservatism.
+  test("paradox dies: 'a call that ends hasn't ended'", () => {
+    const v = lintReason("a call that ends hasn't ended");
+    assert.equal(v.ok, false);
+    assert.ok(v.faults.includes("paradox"), v.faults.join("; "));
+    // A stem and its negation in one clause, whoever the subject is.
+    assert.ok(lintReason("The quiet thread hasn't gone quiet.").faults.includes("paradox"));
+    // The line's own imperative verb is the app doing its job, not a paradox;
+    // and two subjects across a comma are two clauses, not one.
+    assert.equal(lintAct("Ask what they haven't asked yet.").ok, true);
+    assert.equal(lintReason("They replied, we haven't replied.").ok, true);
+    assert.equal(lintReason("Nine support cases. Never pitched.").ok, true);
+  });
+
+  test("maxim dies: 'controlled beats discovered'", () => {
+    const v = lintReason("controlled beats discovered");
+    assert.equal(v.ok, false);
+    assert.ok(v.faults.includes("a maxim"), v.faults.join("; "));
+    assert.ok(lintReason("Speed over polish.").faults.includes("a maxim"));
+    assert.ok(lintReason("Nine cases. Controlled beats discovered.").faults.includes("a maxim"));
+    // "over" inside an instruction is a preposition, not an aphorism.
+    assert.equal(lintAct("Send the deck over email.").ok, true);
+    assert.equal(lintAct("Call over Zoom.").ok, true);
+    assert.equal(lintReason("Their CFO beats around the bush.").ok, true);
+  });
+
+  test("definitional flip dies: 'questions now are free — later they're change orders'", () => {
+    const v = lintReason("questions now are free — later they're change orders");
+    assert.equal(v.ok, false);
+    assert.ok(v.faults.includes("a definitional flip"), v.faults.join("; "));
+    // The "X is just Y" redefinition is the same device.
+    assert.ok(lintReason("Questions are just change orders.").faults.includes("a definitional flip"));
+    // "now" and "later" in an instruction are times, not a redefinition; and
+    // a measured fact with "just" is a fact.
+    assert.equal(lintAct("Send it now and follow later.").ok, true);
+    assert.equal(lintReason("The deck is just two pages.").ok, true);
+  });
+
+  test("escalating triad dies: 'their pay, our employment, our answer'", () => {
+    const v = lintReason("their pay, our employment, our answer");
+    assert.equal(v.ok, false);
+    assert.ok(v.faults.includes("an escalating triad"), v.faults.join("; "));
+    // A real list of three actual things is content, not a device.
+    assert.equal(lintAct("Ask Greg, Jane, and Natalie.").ok, true);
+    assert.equal(lintReason("Their pay, their benefits, their taxes.").ok, true);
+    assert.equal(lintReason("Their CFO, their CEO, and the board.").ok, true);
+  });
+
+  test("chiasmus dies: 'inside the machine, not beside it'", () => {
+    assert.equal(lintReason("inside the machine, not beside it").ok, false);
+    // The ABBA inversion proper: two content words mirrored in one sentence.
+    const v = lintReason("Work the plan, plan the work.");
+    assert.equal(v.ok, false);
+    assert.ok(v.faults.includes("chiasmus"), v.faults.join("; "));
+    assert.ok(lintReason("Plan the work and work the plan.").faults.includes("chiasmus"));
+    // A word that comes back across a sentence break, or with other content
+    // between the mirrored pair, is repetition, not a mirror.
+    assert.equal(lintReason("Call Greg. Greg asked for a call.").ok, true);
+    assert.equal(lintReason("Call Greg, since Greg asked for a call.").ok, true);
+    assert.equal(lintAct("Ask Greg Williams about the call.").ok, true);
+  });
 });
