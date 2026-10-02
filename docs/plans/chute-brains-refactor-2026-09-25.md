@@ -15,7 +15,7 @@ related_docs:
 
 # Chute Brains Refactor Plan
 
-Pass 6, written 2026-09-25 on branch `claude/chute-brains-plan-1c0svk`, cut from main at ab281df (the scaffold merged). Every file:line below was checked on that tree after the scaffold; the pass-1 map's numbers have drifted and are not reused. Ledger cites name the pass and the section (pass 1 §4, pass 2 E, pass 3 C6, pass 4 G3, scaffold E). Every RULING in the ledgers and every dated entry in CLAUDE.md is settled and is treated as law here. Claims that come from code shape and not from a run are marked [inferred]. This pass writes one document and no code.
+Pass 6, written 2026-09-25 on branch `claude/chute-brains-plan-1c0svk`, cut from main at ab281df (the scaffold merged). Every file:line below was checked on that tree after the scaffold; the pass-1 map's numbers have drifted and are not reused. Ledger cites name the pass and the section (pass 1 §4, pass 2 E, pass 3 C6, pass 4 G3, scaffold E). Every RULING in the ledgers and every dated entry in CLAUDE.md is settled and is treated as law here, with one caveat: the eight rulings the dead-code ledger marks "assumed" were recorded without a per-item answer, and §7 item 16 asks for them. Claims that come from code shape and not from a run are marked [inferred]. This pass writes one document and no code.
 
 ## 1. Where we are
 
@@ -45,7 +45,7 @@ The ingest path is one server pipeline with two client doors and a third intake 
 
 **Pick: C.** A table named `Filing`: `id`, `accountId`, `fingerprint`, `door`, `dialect`, `how` (ai, rules, transcript), `status` (held, filed), `read` (Json, the sanitized result, null on a keyless filing), `windows` (Json, every window that cut something as `{what, read, of}`), `dupeCheck` (ran, skipped), `createdAt`, `filedAt`. Unique on `(accountId, fingerprint)`. `AccountNote.filingId` and `Todo.filingId`, nullable and indexed, link what the filing wrote. The intranet's local type `Filing` at src/lib/intranet/extract.ts:91 renames to `TopicFiling` so the generated client's name is free.
 
-**Reason.** P3 and P4 (CLAUDE.md:405) rule that provenance is columns, and pass 2 C's 47-read sweep shows what namespaced notes cost every reader. The G6 ruling names "the structured read stored with the note," which is a column-linked row, not a body scan. D4 (:303) needs the windows kept somewhere the receipt can read them; D5 and D9 need a held read; D10 needs the signals kept. The pass-1 candidate 9 shape, "a read cached by fingerprint," is this table's held row.
+**Reason.** P3 and P4 (CLAUDE.md:405) rule that provenance is columns, and pass 2 C's 47-read sweep shows what namespaced notes cost every reader. The G6 ruling names "the structured read stored with the note," which is a column-linked row, not a body scan. D4 (:301) needs the windows kept somewhere the receipt can read them; D5 and D9 need a held read; D10 needs the signals kept. The pass-1 candidate 9 shape, "a read cached by fingerprint," is this table's held row.
 
 **What would make it wrong.** If the founder wants no schema additions at all, B is the fallback and its JSON goes through the writer with `structured: true` (decision 5) so the redaction reads string values only. If the read's schema is meant to grow into per-entry deal facts (countries, products, headcounts) so the surfaces stop regex-mining, that growth changes what the model is asked and is deferred (§7, item 13); this decision stores what the model returns today.
 
@@ -151,7 +151,7 @@ A .csv on the Drop is refused with "The export goes in the Chute." (read-file.ts
 
 ### 2.6 Reaching the surfaces
 
-**What is decided.** What "every tab re-derives" (CLAUDE.md:291) means per surface after a filing, and by what mechanism.
+**What is decided.** What "every tab re-derives" (CLAUDE.md:289) means per surface after a filing, and by what mechanism.
 
 **Options.**
 
@@ -258,10 +258,10 @@ Dependency order first, then risk. Every slice is one PR: branch off main, chain
 ### Slice 2 · One Chicago day
 
 - **Files changed:** src/lib/tz.ts gains `chicagoDay(iso | Date)` beside `userDayKey`; the private copies at src/lib/room/loss.ts:41, sheet-view.ts:130, owed.ts:38, src/lib/scratch.ts:40, src/lib/intel/rules-read.ts:21, src/lib/intranet/ledger.ts:99 and src/app/room/chute-ledger.ts:85 import it.
-- **Unchanged:** `dayStamp` at src/lib/today/build.ts:383 and `morningDoneKey`, which wait on the clock ruling pass 3 E flagged (tests/today.test.ts:655 pins UTC; §7, item 9).
+- **Unchanged:** `dayStamp` at src/lib/today/build.ts:383 and `morningDoneKey`, which wait on the clock ruling pass 3 E flagged (tests/today.test.ts:591-602 pins UTC; §7, item 9).
 - **Must stay green:** today, room-bind ("Chicago move-done key"), brief, closer ("the wall chip carries the promise"), scratch is hand-run, canon/chute ("the ledger is per Chicago day"), canon/closer-rule.
 - **Tests added:** tests/tz.test.ts: the seven call sites' inputs give the same key at 19:30 and 00:30 Chicago either side of midnight.
-- **Decrees it could break:** the closer rule's "All days are Chicago days" (CLAUDE.md:421) is what the fold serves; the UTC pin at today.test.ts:655 is untouched.
+- **Decrees it could break:** the closer rule's "All days are Chicago days" (CLAUDE.md:421) is what the fold serves; the UTC pin at today.test.ts:591-602 is untouched.
 - **App verification:** the Scratchpaper's TODAY kicker and the Chute ledger's day agree at 7 PM Chicago.
 - **Rollback:** revert.
 - **Size:** S.
@@ -284,7 +284,7 @@ Dependency order first, then risk. Every slice is one PR: branch off main, chain
 - **Unchanged:** the pastehash marker and its check; the guard order; the fan-out (slice 6 moves it); the picker.
 - **Must stay green:** ingest-defects ("absorbRead hands back the ids of everything it wrote", "roomPasteUndo takes back notes in every namespace the filing wrote, and the todos", "both doors hand the todo ids to the undo"); misfile-guard (the roomPaste slice pins hold because the function keeps its name and order); read-absorption; second-record-faces; vault; canon/chute; canon/ted-doctrine.
 - **Tests added:** tests/ingest-filing.test.ts: a filing's read round-trips through the sanitizer unchanged; every row and todo the filing wrote carries its id; the windows list names what was cut of what arrived; a keyless filing stores a null read and `how: rules`; the tape's archive note is the whole text; the no-entries note is the whole text; the receipt sentence reads "Read 60,000 of 212,000 characters." and "The duplicate check didn't run." from the result.
-- **Decrees it could break:** D4 and D7 (CLAUDE.md:303) are what it delivers; the Chute's "same pipeline a paste takes" (:287) holds because `roomPaste` is still the one door; the money doctrine holds because the stored read passes `sanitizeAiResult` (ai-clean.ts:214-218 redacts every string) and the archive note still passes `redactMoney`; the writing canon governs the two new receipt sentences (imperative not needed, they state facts; six words is not a budget for receipts, which are drilldown copy under the click-depth law).
+- **Decrees it could break:** D4 (CLAUDE.md:301) and D7 (:303) are what it delivers; the Chute's "same pipeline a paste takes" (:287) holds because `roomPaste` is still the one door; the money doctrine holds because the stored read passes `sanitizeAiResult` (ai-clean.ts:214-218 redacts every string) and the archive note still passes `redactMoney`; the writing canon governs the two new receipt sentences (imperative not needed, they state facts; six words is not a budget for receipts, which are drilldown copy under the click-depth law).
 - **App verification:** drop a 300,000-character transcript on the Chute and read the windows line on the receipt; file a paste twice and see the duplicate refusal still name "Already on file."; pull the database and see the Filing row with its read.
 - **Rollback:** revert; the table and columns stay empty and harmless, or the down migration drops them.
 - **Size:** L.
@@ -317,7 +317,7 @@ Dependency order first, then risk. Every slice is one PR: branch off main, chain
 - **Unchanged:** `routeCapture` itself (pure, src/lib/route-capture.ts); the rungs and their scores; the vault's path and collision rule (archive.ts:118-150).
 - **Must stay green:** route-capture (all); canon/chute ("routingRoster() carries emails, domains, people and aka for every account", "the people rung routes a capture that only names a known person"); misfile-guard's behavior half. Text pins to rewrite: vault.test.ts:113-114 (`void archiveFiles(unreadable)` / `(waiting)`) and :368-369 (`<Chute roster=`), second-record-faces.test.ts:913-917 keep their identifiers.
 - **Tests added:** tests/ingest-route.test.ts: an address the book lacks and the record holds routes by the email rung; a person the record names routes by the people rung; the joined roster is built from the columns and not from bodies; after the filing that taught an address is undone, the address routes nowhere (by construction: the rows are gone); no client module imports roster.ts (a source scan); no server action returns a token (a scan of archive-actions' absence and vault-actions' return type).
-- **Decrees it could break:** D13 and C2 (CLAUDE.md:297, :303) and D8 (:307) are what it delivers; "pure rules, no API needed" (:285-286) holds because `routeText` calls no model; the vault's size lane (archive.ts:14, 25 MB) meets the platform's request cap for server functions, which is below it [inferred from Vercel's published limits]: files above the cap are §7, item 5.
+- **Decrees it could break:** D13 and C2 (CLAUDE.md:297, :303) and D8 (:307) are what it delivers; "pure rules, no API needed" (:286-287) holds because `routeText` calls no model; the vault's size lane (archive.ts:14, 25 MB) meets the platform's request cap for server functions, which is below it [inferred from Vercel's published limits]: files above the cap are §7, item 5.
 - **App verification:** drop an .eml from an address only the record has seen; see it route without a pick; drop a 3 MB PDF and find it in the vault under the account; check the browser's network log for no GitHub request.
 - **Rollback:** revert; the vault path is unchanged so nothing lands twice.
 - **Size:** M.
@@ -328,7 +328,7 @@ Dependency order first, then risk. Every slice is one PR: branch off main, chain
 - **Unchanged:** the look of both doors; the ledger codec (chute-ledger.ts); the second-record swallow (`swallowActivity`, chute.tsx:201-258, and the dock) beyond calling the shared reconcile.
 - **Must stay green:** vault, second-record-faces (chute pins :913-917 stay: the identifiers move into use-ingest and the pin reads that file), ingest-defects, misfile-guard, canon/chute, room-parity (the action names reaching room-client.tsx change to the hooks' names: text pin rewritten), today-register (its small room-client pin). Text pins to rewrite: misfile-guard.test.ts:123-126 (`readDroppedFile(f, [f])`, the archive-after-accept order) and vault.test.ts:113-114, :156 (`type ChuteItem = LedgerRow & {`).
 - **Tests added:** the two deferred tests go green and move into tests/ingest-defects.test.ts; tests/ingest-hooks.test.ts on the pure reducers inside the hooks: two readable files on a row both reach the pipeline; a verdict with both grounds renders once; a pick files the held id; a refused file is neither read nor vaulted; the read-only state renders the bar and no input.
-- **Decrees it could break:** "The per-row Drop stays" (CLAUDE.md:292) holds: the Drop keeps its seat and look; "read on the spot" (:283) holds; D11 (three at once) by canon/chute's `runLimited` tests; D29 (:309) is what it delivers; the Spring's "filing anything springs TODAY open" (:364-365) holds because the row's receipt path is the same call.
+- **Decrees it could break:** "The per-row Drop stays" (CLAUDE.md:291) holds: the Drop keeps its seat and look; "read on the spot" (:283) holds; D11 (three at once) by canon/chute's `runLimited` tests; D29 (:309) is what it delivers; the Spring's "filing anything springs TODAY open" (:364-365) holds because the row's receipt path is the same call.
 - **BLOCKED ON FACE:** the unified verdict rendering (one component in both doors) and any change to the receipt's shape. The hooks ship behind today's two renderings.
 - **App verification:** drop two .eml files on a row and see two receipts; drop a disputed thread on the Chute, reload, pick, and see it filed, not vaulted; open the room in a read-only session and see the bar.
 - **Rollback:** revert.
@@ -340,7 +340,7 @@ Dependency order first, then risk. Every slice is one PR: branch off main, chain
 - **Unchanged:** every page's `force-dynamic`.
 - **Must stay green:** room-parity; read-absorption; canon/standing-decrees ("every live row's href resolves to a page on disk").
 - **Tests added:** a source scan in tests/canon/chute.test.ts: no `revalidatePath` call remains under src/app/room; use-ingest calls `router.refresh` after a filing.
-- **Decrees it could break:** D15 (CLAUDE.md:305) is what it delivers; "every tab re-derives" (:291) holds by force-dynamic and the refresh; P1 (:590-591) holds because no revalidation list exists to name an archived surface.
+- **Decrees it could break:** D15 (CLAUDE.md:305) is what it delivers; "every tab re-derives" (:289) holds by force-dynamic and the refresh; P1 (:590-591) holds because no revalidation list exists to name an archived surface.
 - **App verification:** file on the Drop and see the row's registers update without a reload; navigate to /accounts and see the new note's LAST HUMAN TOUCH.
 - **Rollback:** revert.
 - **Size:** S.
@@ -389,9 +389,9 @@ Dependency order first, then risk. Every slice is one PR: branch off main, chain
 
 ### Slice 13 · The single read, part 4: the Sendbook
 
-- **Files changed:** src/lib/sendbook/read.ts:97-170 (`recordSends`, `theirVoice`, `warmDates`, `inboundDates`) read `docs` and their flags: a send is a doc with `direction: out`, not a meeting, not self-addressed, at `effectiveAt`; warmth is any doc whose sender is not home and not machinery, closers kept; ↩ REPLIED needs a doc that is `in`, not machinery, not a closer; `orgSignals` folds through `secondRecord` under D19's gate; src/app/sendbook/page.tsx:70-105 and groundwork/page.tsx:209-214 build the register from the same read, so the two builds agree (pass 4 G4).
+- **Files changed:** src/lib/sendbook/read.ts:97-170 (`recordSends`, `theirVoice`, `warmDates`, `inboundDates`) read `docs` and their flags: a send is a doc with `direction: out`, not a meeting, not self-addressed, at `effectiveAt`; warmth is any doc whose sender is not home and not machinery, closers kept; ↩ REPLIED needs a doc that is `in`, not machinery, not a closer; `orgSignals` folds through `secondRecord` under D19's gate (today src/lib/sendbook/read.ts:223-228 pours the export's account-level datetime into the warm and inbound sets with no machinery or closer read, and :283-290 annotates ↩ REPLIED from it, so C4 and C5 hold on the first-record path only); src/app/sendbook/page.tsx:70-105 and groundwork/page.tsx:209-214 build the register from the same read, so the two builds agree (pass 4 G4).
 - **Unchanged:** the lanes' names and the step counting.
-- **Must stay green:** canon/sendbook (all), sendbook is hand-run, touch, self-task-touch, groundwork.
+- **Must stay green:** canon/sendbook (all), sendbook is hand-run, touch, self-task-touch, groundwork. Text pin to rewrite: tests/second-record-faces.test.ts:569-594 pins today's defect, an org-side datetime with no body setting the lane and ↩ REPLIED; under D19 it becomes "an attributed inbound body sets them, a bare datetime does not".
 - **Tests added:** in tests/canon/sendbook.test.ts: the register built from the read equals the register built from rows on every existing fixture; Groundwork's and /sendbook's registers agree on an account with an org inbound.
 - **Decrees it could break:** the Sendbook's lane law (CLAUDE.md:346-352) and C4, C5 (:356) by canon/sendbook; "their voice" meaning the account's people (:485) by the `senderIsHome` flag.
 - **App verification:** /sendbook and Groundwork's Tallyfoot agree on the week's counts.
@@ -463,6 +463,8 @@ Each names today's behavior at the door with its cite, what the plumbing carries
 7. **The typed note's head.** Today: a rich typed note goes through `filePaste` with no head (room-client.tsx:397-403). After: the pipeline stamps the `TYPED NOTE` producer head and the `typed` source (D14). Decide: whether the paste pane says so before the operator presses "Read & file" (:1976-1983).
 8. **The Intranet's Send-it box.** Today: `intranetCapture` writes intranetDoc rows and never a note (intranet/actions.ts:103-204; intranet-client.tsx:260). After: a capture naming an account files through the pipeline and can be disputed. Decide: whether Send-it becomes the Chute's paste door on that page, or keeps its own receipt and hands a dispute to the mounted Chute.
 9. **The Drop's four buttons.** Today: ⚡ paste pane, ▢, ✸, ⇪ and a file input with no accept filter (room-client.tsx:1861-1924). After: `useIngest` applies the same accept verdict at both doors and refuses a .csv with the decreed sentence. Decide: whether the input filters by accept or lets the refusal speak.
+10. **The BOOKED annotation.** Today: an acceptance sets ↩ REPLIED on the Sendbook line only through the org-wide path, and the first-record path treats it as machinery (src/lib/sendbook/read.ts:132-139). After: the read carries `lastAccepted` and a `machinery` flag per doc, so the Sendbook can mark a booked meeting without calling it a reply. Decide: whether a send answered by a calendar acceptance carries a BOOKED annotation, and how it reads. The C5 ruling left this to pass 6 (decree-ledger.md C row 5).
+11. **The three stamp words.** Today: the wing stamps SEATED with its day, THEIRS with the gem's term, and ENGAGED · NEVER MET (src/lib/groundwork/stamp.ts:45-52). The D27 ruling fixed the rule, no empty label, and left the words to pass 6. Decide: keep these three or better them.
 
 ## 6. What this plan does not do
 
@@ -526,7 +528,7 @@ Written plainly. Each says what happens today, then what yes and no mean. Yes is
 9. **Should "done today" use Chicago time?**
    - Today: one part of the app starts a new day around 7 PM Chicago time, so something you check off at 8 PM counts as tomorrow's. Your rule says all days are Chicago days.
    - Yes: switch it to Chicago time.
-   - Until you answer, it stays as it is.
+   - Until you answer, it stays as it is. The UTC pins are tests/today.test.ts:591-602.
 
 10. **Should two unrelated fixes be their own small jobs?**
     - Today: two of your rulings aren't built yet. One makes a playbook question in the brain's answer open right where you click it. The other stops the app from hiding plays based on whether the CSM was briefed.
@@ -557,3 +559,8 @@ Written plainly. Each says what happens today, then what yes and no mean. Yes is
     - Today: two steps in this plan add new columns to the database. Someone has to run one command so the live database gets them before those steps go live.
     - Yes: you run the command before each of those two merges.
     - No: the app runs it automatically every time it deploys.
+
+16. **Do the eight batch-10 rulings stand?**
+    - Today: the last batch of the ruling session was recorded as assumed, with no answer from you on each item (docs/architecture/dead-code-ledger.md, the "assumed:" lines). This plan leans on three of them: the intranet keeps its read and takes the stored one (decision 1 and slice 16), the double builds wait for the single read (decision 2), and getAppAccess stays as it is (section 6). Two removals already on main rest on two more: motions.ts and branches.ts.
+    - Yes: they stand as recorded.
+    - No: name the ones to strike, and the plan and the two removals get revisited.
