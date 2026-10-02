@@ -90,6 +90,6 @@ The chain ran green before each commit: prettier, tsc, eslint at zero warnings, 
 
 ## Open after this pass
 
-- Bugs 1 and 2 wait on the refactor, red in tests/ingest-defects-deferred.test.ts, which is run by hand: `npx tsx --test tests/ingest-defects-deferred.test.ts`.
+- Bug 2 waits on the refactor, red in tests/ingest-defects-deferred.test.ts as a behavior pin on splitDrop, run by hand: `npx tsx --test tests/ingest-defects-deferred.test.ts`. Bug 1 closed on 2026-09-25 when the C20 scaffold put the text on the row before the read (chute.tsx fileTo); tests/canon/chute.test.ts pins the ledger half. Recorded 2026-10-02 by the verification pass.
 - The completion note fileCompletion writes (actions.ts:628) is outside the undo's reach.
 - The Chute's picker shows the claim but not the bound row's evidence; the Drop's banner shows both. Candidate 9.

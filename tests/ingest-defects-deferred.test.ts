@@ -1,43 +1,39 @@
 // Ingest defects from audit pass 1 that are FIX IN REFACTOR: they sit in
-// code the coming Chute refactor replaces (the two handleFiles forks, the
-// picker, the Drop's file loop), so they are reproduced here and left red.
-// This file runs by hand only — it is deliberately outside package.json's
-// test script, never behind a skip. Each test names the refactor that closes
-// it; when that refactor lands, move the test into ingest-defects.test.ts.
+// code the coming Chute refactor replaces, so they are reproduced here as
+// behavior and left red. This file runs by hand only — it is deliberately
+// outside package.json's test script, never behind a skip. Each test names
+// the refactor that closes it; when that refactor lands, move the test into
+// ingest-defects.test.ts.
 //
-// Map: docs/architecture/chute-architecture-map.md (audit branch), §4 and
-// closer 3.
+// Bug 1 (the Chute picker's mismatch fall-through) left this file on
+// 2026-10-02: the C20 scaffold put the text on the row before the read
+// (chute.tsx fileTo), so a disputed auto-route keeps its text for the pick,
+// and tests/canon/chute.test.ts pins the ledger half ("a mismatch row keeps
+// its text and its state too"). The old pin here was a regex over the source
+// and read red after the fix moved the text to an earlier patch.
+//
+// Map: docs/architecture/chute-architecture-map.md, §4 and closer 3; the
+// plan: docs/plans/chute-brains-refactor-2026-09-25.md, slice 8.
 
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
-import { cwd } from "node:process";
-
-const root = cwd();
-const client = readFileSync(join(root, "src/app/room/room-client.tsx"), "utf8");
-const chute = readFileSync(join(root, "src/app/room/chute.tsx"), "utf8");
-
-describe("bug 1 — the Chute picker's mismatch fall-through", () => {
-  // Closed by: the shared verdict component for both doors (map closer 3,
-  // candidate 9). fileTo patches a guard-rejected auto-route to "mismatch"
-  // without its text (chute.tsx fileTo); text is patched only on the "pick"
-  // branch; the picker's select then falls through `if (a && it.text)` to
-  // vaultTo, so the readable text is vaulted under the picked account and
-  // never filed. Interim one-line fix if wanted: carry `text` on the
-  // mismatch patch.
-  test("a guard-rejected auto-route keeps its text for the pick", () => {
-    assert.match(chute, /patch\(key, \{ state: "mismatch"[^}]*\btext\b/);
-  });
-});
+import { splitDrop } from "../src/lib/room/drop-plan";
+import { DROP_ACCEPT } from "../src/lib/paste-files";
 
 describe("bug 2 — the Drop files the first readable file only", () => {
-  // Closed by: the shared handleFiles / vault hook (map closer 3, candidate
-  // 6), which replaces the Drop's file loop. Today handleFiles picks the
-  // FIRST file with a readable extension and vaults every other file
-  // unread, so two .eml files dropped on a row file one and lose the other
-  // to the record.
+  // Closed by: the shared handleFiles hook (plan slice 8), which replaces the
+  // Drop's split. Today splitDrop hands the reader ONE readable file and
+  // sends every other file to the vault unread, so two .eml files dropped on
+  // a row file one and lose the other to the record.
   test("every readable file in a drop is read, not just the first", () => {
-    assert.ok(!/const f = files\.find\(/.test(client), "the Drop reads one file per drop");
+    const a = new File(["From: a@x.com\nSubject: one\n\nbody one"], "one.eml");
+    const b = new File(["From: b@x.com\nSubject: two\n\nbody two"], "two.eml");
+    const split = splitDrop([a, b], DROP_ACCEPT);
+    const unreadReadable = split.unreadable.filter((f) => /\.eml$/i.test(f.name));
+    assert.deepEqual(
+      unreadReadable.map((f) => f.name),
+      [],
+      "a readable file went to the vault unread",
+    );
   });
 });
