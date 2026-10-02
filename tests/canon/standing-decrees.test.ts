@@ -36,9 +36,31 @@ describe("an archived surface leaves every tab list and every revalidation list"
       assert.ok(existsSync(join(root, pageFileFor(r.href))), `${r.label} → ${r.href}`);
   });
 
-  test("every archived row still resolves — reachable and quiet, never a dead link", () => {
-    for (const r of WAYFINDER_ROUTES.filter((x) => x.archived))
+  // The live table holds no archived row since the three first rooms retired
+  // (2026-09-25), so the archived-row rule is pinned against a fixture that
+  // marks a real page archived: the rule reads the flag, not the table.
+  test("an archived row still resolves — reachable and quiet, never a dead link", () => {
+    const fixture: (typeof WAYFINDER_ROUTES)[number][] = [
+      { label: "Capture", href: "/intake", pages: ["Capture"], archived: true },
+      { label: "HomeRoom", href: "/room", pages: ["HomeRoom"], archived: false },
+    ];
+    const archived = fixture.filter((x) => x.archived);
+    assert.equal(archived.length, 1);
+    for (const r of archived)
       assert.ok(existsSync(join(root, pageFileFor(r.href))), `${r.label} → ${r.href}`);
+  });
+
+  // The surfaces ruling (Other standing decrees): the Board at "/", Today and
+  // Pipeline are retired. They left the table, and the two that had their own
+  // directories left the disk; "/" keeps a page only as the redirect to /room.
+  test("the retired surfaces are in the table under no href", () => {
+    const hrefs = new Set(WAYFINDER_ROUTES.map((r) => r.href));
+    for (const gone of ["/", "/today", "/pipeline"]) assert.ok(!hrefs.has(gone), gone);
+  });
+
+  test("no page file exists for /today or /pipeline", () => {
+    for (const gone of ["/today", "/pipeline"])
+      assert.ok(!existsSync(join(root, pageFileFor(gone))), pageFileFor(gone));
   });
 
   test("the table is well-formed: unique hrefs, every row lights on a name", () => {
