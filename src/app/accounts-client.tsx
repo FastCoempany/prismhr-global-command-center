@@ -21,7 +21,7 @@ import {
   engagementGates,
   type Engagement,
 } from "@/lib/engagement";
-import { addCard } from "./dashboard/actions";
+import { addCard } from "./accounts/board-actions";
 import {
   applyPlay,
   clearValidation,

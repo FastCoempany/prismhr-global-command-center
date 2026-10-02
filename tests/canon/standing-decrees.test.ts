@@ -3,12 +3,13 @@
 // bank's door under the click-depth law (:395-402 with :512-516), and the
 // model roster ("Opus or better, always", founder-decreed 2026-07-31; one
 // roster, ruled 2026-09-25). Every test calls a function or reads a
-// module's exported values; none scans a source file for text.
+// module's exported values, except the two import scans under P1, which read
+// import statements and nothing else.
 
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
-import { existsSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { join, relative } from "node:path";
 import { cwd } from "node:process";
 import { WAYFINDER_ROUTES, pageFileFor } from "../../src/components/wayfinder-routes";
 import { questionById } from "../../src/lib/intel/bank";
@@ -16,6 +17,17 @@ import { DISCOVERY } from "../../src/lib/intel/discovery";
 import * as doctrine from "../../src/lib/intranet/doctrine";
 
 const root = cwd();
+
+// Every .ts/.tsx under a directory, depth-first.
+function walk(dir: string): string[] {
+  const out: string[] = [];
+  for (const name of readdirSync(dir)) {
+    const p = join(dir, name);
+    if (statSync(p).isDirectory()) out.push(...walk(p));
+    else if (/\.tsx?$/.test(name)) out.push(p);
+  }
+  return out;
+}
 
 // ── P1 · an archived surface leaves every tab list ────────────────────────
 describe("an archived surface leaves every tab list and every revalidation list", () => {
@@ -42,6 +54,21 @@ describe("an archived surface leaves every tab list and every revalidation list"
   test("the page path is derived from the href alone", () => {
     assert.equal(pageFileFor("/"), "src/app/page.tsx");
     assert.equal(pageFileFor("/room"), "src/app/room/page.tsx");
+  });
+
+  // The Board, Today and Pipeline retired 2026-09-25; their actions moved to
+  // the live surfaces that post them. No live file imports from the retired
+  // surfaces' action modules (P1).
+  test("no file under src/app imports a retired surface's actions", () => {
+    const retired = /["'](?:[./@]|[\w-]+\/)*(?:dashboard|today|pipeline)\/actions["']/;
+    const offenders: string[] = [];
+    for (const f of walk(join(root, "src/app"))) {
+      const text = readFileSync(f, "utf8");
+      for (const line of text.split("\n"))
+        if (/^\s*(?:import|export)\b/.test(line) && retired.test(line))
+          offenders.push(`${relative(root, f)}: ${line.trim()}`);
+    }
+    assert.deepEqual(offenders, []);
   });
 });
 

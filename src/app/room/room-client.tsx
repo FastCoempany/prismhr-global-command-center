@@ -32,7 +32,7 @@ import {
   snoozeSignal,
   unmuteRoundupPartner,
 } from "./ledger-actions";
-import { dismissSuggestion, saveNote, toggleCheck } from "../dashboard/actions";
+import { dismissSuggestion, saveNote, toggleCheck } from "../accounts/board-actions";
 import {
   roomBriefedSet,
   roomClose,
