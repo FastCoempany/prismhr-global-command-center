@@ -27,7 +27,9 @@ import { routeCapture, type RouteAccount } from "@/lib/route-capture";
 import { vaultAfterVerdict } from "@/lib/room/drop-plan";
 import {
   CHUTE_PARALLEL,
+  isSettled,
   loadLedger,
+  reconcileActivityRows,
   runLimited,
   saveLedger,
   type LedgerRow,
@@ -69,20 +71,9 @@ export function Chute({
   // in flight is left alone; the dock is narrating it.
   const reconcileSecondRecord = async () => {
     const live = await activityReceipt();
-    if (!live?.hasDrop || live.phase === "running" || live.receipt.length === 0) return;
-    const line = live.receipt[live.receipt.length - 1] ?? "";
-    const state: ChuteItem["state"] = live.phase === "done" ? "activityDone" : "error";
-    setItems((xs) =>
-      xs.map((x) =>
-        x.act &&
-        (x.state === "activityDone" ||
-          x.state === "error" ||
-          x.state === "interrupted") &&
-        (x.state !== state || x.reason !== line)
-          ? { ...x, state, reason: line }
-          : x,
-      ),
-    );
+    // The reconcile is pure (chute-ledger.ts); it hands back the same array
+    // when nothing changes, so the setter bails out.
+    setItems((xs) => reconcileActivityRows(xs, live));
   };
 
   // Reload the day's ledger once on mount; persist on every change after.
@@ -340,23 +331,13 @@ export function Chute({
     return top ? { id: top.id, name: top.name } : null;
   };
 
-  // A settled receipt is the operator's to clear (decreed 2026-09-01: no
-  // notice sits on the screen against their will). In-flight rows and rows
-  // waiting on a pick stay — dismissing work that still needs a decision
-  // would be the ledger quietly forgetting what was thrown at it.
-  const settled = (s: ChuteItem["state"]): boolean =>
-    s === "filed" ||
-    s === "vaulted" ||
-    s === "activityDone" ||
-    s === "error" ||
-    s === "dupe" ||
-    s === "undone" ||
-    s === "interrupted";
+  // A settled receipt is the operator's to clear (decreed 2026-09-01); the
+  // gate is isSettled in chute-ledger.ts.
 
   // One receipt row — shared by the folded view and the open ledger.
   const renderItem = (it: ChuteItem) => (
     <li key={it.key} className={styles.chuteItem}>
-      {settled(it.state) && (
+      {isSettled(it.state) && (
         <button
           type="button"
           className={styles.chuteDismiss}

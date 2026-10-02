@@ -6,8 +6,6 @@
 // is pure and tested here.
 
 import { strict as assert } from "node:assert";
-import { join } from "node:path";
-import { cwd } from "node:process";
 import { describe, test } from "node:test";
 import {
   caseNumberOf,
@@ -28,12 +26,19 @@ import {
 } from "../src/lib/activity/read";
 import { buildQueue } from "../src/lib/groundwork/day";
 
-const root = cwd();
 import { dropQueues } from "../src/lib/activity/harness";
 import { buildSendbook } from "../src/lib/sendbook/read";
 import { buildReadout } from "../src/lib/groundwork/readout";
 import { mirrorActivityDigest } from "../src/lib/intranet/mirror";
-import { readFileSync } from "node:fs";
+import {
+  isSettled,
+  loadLedger,
+  reconcileActivityRows,
+  saveLedger,
+  storedRow,
+  type LedgerRow,
+  type LedgerStorage,
+} from "../src/app/room/chute-ledger";
 import { composeFor } from "../src/lib/groundwork/compose";
 import type { Peo } from "../src/lib/book";
 import type { Rollup, IntentWindows } from "../src/lib/activity/rollup";
@@ -638,10 +643,29 @@ describe("the ring reads the second record", () => {
       }),
       null,
     );
-    // The covenant's import guard: the mirror must never touch staged slices.
-    const src = readFileSync("src/lib/intranet/mirror.ts", "utf8");
-    assert.ok(!src.includes("parseStageBody"));
-    assert.ok(!src.includes("activity:stage"));
+    // The covenant's guard, as behavior: the digest is the header line, the
+    // rollup and the gems — nothing else. A staged slice handed in beside them
+    // never reaches the body, because the mirror reads only those two fields.
+    assert.equal(
+      d.body,
+      [
+        "The weekly Salesforce activity export's read on Test Partner, drop of 2026-08-20. Counts are arithmetic from the rollup; gems are refuter-verified.",
+        "⌗ ACTIVITY · drop 037742a0 · 2026-08-20 · window a→b\nLANES · human 4",
+        "\n◆ GEM · drop 037742a0 · CONFIRMED · created 2026-08-20 · acted:no",
+      ].join("\n"),
+    );
+    const smuggled = mirrorActivityDigest({
+      accountId: "A1",
+      accountName: "Test Partner",
+      dropSha: "037742a0",
+      dropDay: "2026-08-20",
+      rollupBody: "⌗ ACTIVITY · drop 037742a0",
+      gemsBody: "",
+      stageBody: "activity:stage · a staged body that must never travel",
+    } as Parameters<typeof mirrorActivityDigest>[0]);
+    assert.ok(smuggled);
+    assert.ok(!smuggled.body.includes("must never travel"));
+    assert.ok(!smuggled.body.includes("activity:stage"));
   });
 });
 
@@ -896,38 +920,74 @@ describe("the cleaner cuts a message that quotes itself (2026-08-31)", () => {
 // 17:37 run went green: the ledger persisted its receipt and never re-read
 // the live run state (2026-09-01). The record outranks every seed — receipts
 // included — so the Chute reconciles its second-record entries against the
-// live receipt on mount and when the tab returns to view.
+// live receipt on mount and when the tab returns to view. The reconcile and
+// the ledger's codec are pure (src/app/room/chute-ledger.ts) and pinned here
+// as behavior.
+
+const memory = (): LedgerStorage => {
+  const m = new Map<string, string>();
+  return { getItem: (k) => m.get(k) ?? null, setItem: (k, v) => void m.set(k, v) };
+};
 
 test("the chute reconciles stored second-record receipts against the live run", () => {
-  const chute = readFileSync(join(root, "src/app/room/chute.tsx"), "utf8");
-  // The ledger's row and codec live in chute-ledger.ts (pure) since the
-  // 2026-09-25 rulings; the flag is declared and persisted there.
-  const ledger = readFileSync(join(root, "src/app/room/chute-ledger.ts"), "utf8");
   // Structural marker — activity entries are found by flag, never by
-  // sniffing filenames or reason text.
-  assert.ok(ledger.includes("act?: boolean"));
-  assert.ok(ledger.includes("act: x.act"), "the flag must survive the ledger");
-  assert.ok(chute.includes("act: true"));
-  // The reconcile itself: live receipt in, stale entries updated, a running
-  // run left alone for the dock to narrate.
-  assert.ok(chute.includes("reconcileSecondRecord"));
-  assert.ok(chute.includes("activityReceipt"));
-  assert.ok(chute.includes('live.phase === "running"'));
-  // And it fires when the operator comes back to the desk.
-  assert.ok(chute.includes("visibilitychange"));
+  // sniffing filenames or reason text — and the flag survives the ledger.
+  const stale: LedgerRow = {
+    key: 7,
+    filename: "activity.csv",
+    state: "error",
+    reason: "COVERAGE FAILED · 13:51",
+    act: true,
+  };
+  assert.equal(storedRow(stale).act, true, "the flag must survive the ledger");
+  const storage = memory();
+  saveLedger([stale], storage);
+  assert.equal(loadLedger(storage).items[0]?.act, true);
+  // The reconcile itself: live receipt in, stale entries updated to what the
+  // run concluded, everything else left as it was.
+  const plain: LedgerRow = { key: 8, filename: "call.vtt", state: "error", reason: "x" };
+  const live = { hasDrop: true, phase: "done", receipt: ["Coverage 100% · 17:37"] };
+  const after = reconcileActivityRows([stale, plain], live);
+  assert.equal(after[0].state, "activityDone");
+  assert.equal(after[0].reason, "Coverage 100% · 17:37");
+  assert.equal(after[1], plain, "a row that is not an activity drop is never touched");
+  // A run that failed again reads red again, with the run's own last line.
+  const red = reconcileActivityRows([{ ...stale, state: "activityDone" }], {
+    hasDrop: true,
+    phase: "failed",
+    receipt: ["COVERAGE FAILED · 18:02"],
+  });
+  assert.equal(red[0].state, "error");
+  assert.equal(red[0].reason, "COVERAGE FAILED · 18:02");
+  // A running run is left alone for the dock to narrate; so is no drop at
+  // all, an empty receipt, and a receipt that says nothing new — and in each
+  // case the same array comes back, so the setter can bail out.
+  const items = [stale];
+  assert.equal(reconcileActivityRows(items, { ...live, phase: "running" }), items);
+  assert.equal(reconcileActivityRows(items, { ...live, hasDrop: false }), items);
+  assert.equal(reconcileActivityRows(items, { ...live, receipt: [] }), items);
+  assert.equal(reconcileActivityRows(items, null), items);
+  const settledTwice = [after[0]];
+  assert.equal(reconcileActivityRows(settledTwice, live), settledTwice);
+  // An in-flight activity row is the dock's, not the reconcile's.
+  const inFlight = [{ ...stale, state: "activity" as const }];
+  assert.equal(reconcileActivityRows(inFlight, live), inFlight);
 });
 
 test("a settled receipt clears by hand; in-flight and waiting rows cannot", () => {
-  const chute = readFileSync(join(root, "src/app/room/chute.tsx"), "utf8");
-  // The hover ✕, tooltip-titled per the Spring's minimalist-controls decree.
-  assert.ok(chute.includes("chuteDismiss"));
-  // The gate: only settled states carry the control. A row waiting on the
-  // operator's pick or still reading is never dismissible.
-  const gate = /const settled = [\s\S]{0,400}?;/.exec(chute)?.[0] ?? "";
-  for (const st of ["filed", "activityDone", "error", "dupe", "undone", "interrupted"])
-    assert.ok(gate.includes(`"${st}"`), `settled must include ${st}`);
-  for (const st of ["pick", "mismatch", "reading", "filing", "activity"])
-    assert.ok(!gate.includes(`"${st}"`), `settled must not include ${st}`);
-  const css = readFileSync(join(root, "src/app/room/room.module.css"), "utf8");
-  assert.ok(/\.chuteItem:hover \.chuteDismiss/.test(css), "the ✕ reveals on row hover");
+  // The gate: only settled states carry the hover ✕ (tooltip-titled per the
+  // Spring's minimalist-controls decree). A row waiting on the operator's
+  // pick or still reading is never dismissible.
+  for (const st of [
+    "filed",
+    "vaulted",
+    "activityDone",
+    "error",
+    "dupe",
+    "undone",
+    "interrupted",
+  ] as const)
+    assert.equal(isSettled(st), true, `settled must include ${st}`);
+  for (const st of ["pick", "mismatch", "reading", "filing", "activity"] as const)
+    assert.equal(isSettled(st), false, `settled must not include ${st}`);
 });
