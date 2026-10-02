@@ -468,3 +468,40 @@ export function sameOrg(a: string, b: string): boolean {
 export function isManual(subjectKey: string): boolean {
   return subjectKey.startsWith("manual:");
 }
+
+// Which row the board gets for a name arriving on a follow-up: none when the
+// board already carries the firm under any spelling; otherwise one, spelled
+// the book's way when the book knows it, so every intel path binds to it —
+// notes, research, the meter. A near-miss spelling would strand the row.
+export function boardRowFor(
+  name: string,
+  board: readonly { name: string }[],
+  book: readonly { name: string }[],
+): { create: boolean; name: string } {
+  const already = board.find((c) => sameOrg(c.name, name));
+  const inBook = book.find((p) => sameOrg(p.name, name));
+  return { create: !already, name: inBook?.name ?? name };
+}
+
+// The touch a hand-armed chase writes. Due on the spot — the list is the
+// whole cadence — and remembering the accounts it already filed itself to.
+export function manualFollowUpData(args: {
+  key: string;
+  label: string;
+  detail: string;
+  routed: readonly string[];
+  now: number;
+}) {
+  return {
+    subjectKey: `manual:${args.key}`,
+    kind: "custom" as const,
+    label: args.label,
+    detail: withMarkers(args.detail, [...args.routed], []) || null,
+    message: null,
+    contactedAt: new Date(args.now),
+    followUpAt: new Date(args.now),
+    intervalDays: 0,
+    status: "awaiting" as const,
+    log: [],
+  };
+}

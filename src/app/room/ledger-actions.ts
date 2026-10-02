@@ -13,10 +13,11 @@ import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import { randomUUID } from "node:crypto";
 import { asFollowUpWhen, nextCheckIn, type TouchLogEntry } from "@/lib/today/follow-ups";
 import {
+  boardRowFor,
   isManual,
+  manualFollowUpData,
   readFollowUp,
   routedIds,
-  sameOrg,
   wavedNames,
   withMarkers,
 } from "@/lib/today/followup-brain";
@@ -24,6 +25,7 @@ import { csms, peos } from "@/lib/book";
 import { EXTRA_PARTNERS } from "@/lib/book/partners";
 import { knownPeople } from "@/lib/book/contacts";
 import { roomCompose } from "./actions";
+import { fileFollowUpToAccounts } from "@/lib/today/followup-file";
 import { triageDoneKey } from "@/lib/today/build";
 import { createAccountNoteRow } from "@/lib/notes/write";
 import { mirrorNoteToSheet } from "@/lib/today/mirror";
@@ -295,52 +297,24 @@ export async function addFollowUp(formData: FormData) {
   );
   await safeWrite(async () => {
     const now = Date.now();
-    const routed = await fileFollowUpToAccounts(label, read.accounts);
+    // File the chase against the accounts it named (src/lib/today/followup-
+    // file.ts): one action in the right-hand panel, one note on the record.
+    const routed = await fileFollowUpToAccounts(label, read.accounts, {
+      compose: roomCompose,
+      note: createAccountNoteRow,
+    });
     await getPrisma().touch.create({
-      data: {
-        subjectKey: `manual:${randomUUID()}`,
-        kind: "custom",
+      // Due now — the list is the whole cadence.
+      data: manualFollowUpData({
+        key: randomUUID(),
         label,
-        detail: withMarkers(str(formData, "detail", 400), routed, []) || null,
-        message: null,
-        contactedAt: new Date(now),
-        // Due now — the list is the whole cadence.
-        followUpAt: new Date(now),
-        intervalDays: 0,
-        status: "awaiting",
-        log: [],
-      },
+        detail: str(formData, "detail", 400),
+        routed,
+        now,
+      }),
     });
   });
   done(formData);
-}
-
-// File a chase against the accounts it named: one note on the record (so it
-// reaches the account's history on Accounts) and one action in the right-hand
-// panel (so it reaches the deal's own list of open work). Returns the ids that
-// actually took, so the follow-up can remember and never double-file.
-async function fileFollowUpToAccounts(
-  label: string,
-  hits: { id: string; name: string }[],
-): Promise<string[]> {
-  const filed: string[] = [];
-  for (const h of hits.slice(0, 3)) {
-    const r = await roomCompose(h.id, label, { kind: "action", urgency: "med" }).catch(
-      () => null,
-    );
-    if (!r?.ok) continue;
-    // The action is the work; the note is the memory. Without this line the
-    // chase never reaches the account's history on Accounts.
-    await createAccountNoteRow({
-      accountId: h.id,
-      kind: "account",
-      body: `⏲ Follow-up armed: ${label}`,
-      lane: "mine",
-      source: "followup",
-    }).catch(() => null);
-    filed.push(h.id);
-  }
-  return filed;
 }
 
 // Tick a follow-up off. Done is done — the row leaves the list and the badge.
@@ -381,16 +355,15 @@ export async function followUpAddBoard(formData: FormData) {
     // spelling, the card takes THAT name so every intel path binds to it —
     // notes, research, the meter. A near-miss spelling would strand the row.
     const existing = await prisma.dashCard.findMany({ select: { id: true, name: true } });
-    const already = existing.find((c) => sameOrg(c.name, name));
-    const inBook = peos.find((p) => sameOrg(p.name, name));
-    if (!already) {
+    const row = boardRowFor(name, existing, peos);
+    if (row.create) {
       const top = await prisma.dashCard.findFirst({
         orderBy: { position: "desc" },
         select: { position: true },
       });
       await prisma.dashCard.create({
         data: {
-          name: inBook?.name ?? name,
+          name: row.name,
           subtitle: null,
           position: (top?.position ?? -1) + 1,
           states: {},

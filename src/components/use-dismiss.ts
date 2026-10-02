@@ -19,6 +19,37 @@
 
 import { useEffect, useRef, type RefObject } from "react";
 
+export type DismissTarget = Pick<Document, "addEventListener" | "removeEventListener">;
+
+/** The two gestures, bound to a document: a pointer down outside the panel
+ *  or Escape calls onClose. Returns the unbind, which takes both listeners
+ *  down. Pure DOM wiring — the hook below runs it while the panel is open. */
+export function bindDismiss(
+  doc: DismissTarget,
+  panel: () => Element | null,
+  onClose: () => void,
+): () => void {
+  const away = (e: PointerEvent) => {
+    const el = panel();
+    if (!el) return;
+    const target = e.target as Node | null;
+    // A click on the element that opened the panel is that button's business,
+    // not ours — but it lives outside the panel, so it still closes here and
+    // its own toggle re-opens. Net effect: one click, panel gone.
+    if (target && el.contains(target)) return;
+    onClose();
+  };
+  const esc = (e: KeyboardEvent) => {
+    if (e.key === "Escape") onClose();
+  };
+  doc.addEventListener("pointerdown", away, true);
+  doc.addEventListener("keydown", esc);
+  return () => {
+    doc.removeEventListener("pointerdown", away, true);
+    doc.removeEventListener("keydown", esc);
+  };
+}
+
 export function useDismiss<T extends HTMLElement>(
   open: boolean,
   onClose: () => void,
@@ -34,25 +65,11 @@ export function useDismiss<T extends HTMLElement>(
 
   useEffect(() => {
     if (!open) return;
-    const away = (e: PointerEvent) => {
-      const el = ref.current;
-      if (!el) return;
-      const target = e.target as Node | null;
-      // A click on the element that opened the panel is that button's business,
-      // not ours — but it lives outside the panel, so it still closes here and
-      // its own toggle re-opens. Net effect: one click, panel gone.
-      if (target && el.contains(target)) return;
-      cb.current();
-    };
-    const esc = (e: KeyboardEvent) => {
-      if (e.key === "Escape") cb.current();
-    };
-    document.addEventListener("pointerdown", away, true);
-    document.addEventListener("keydown", esc);
-    return () => {
-      document.removeEventListener("pointerdown", away, true);
-      document.removeEventListener("keydown", esc);
-    };
+    return bindDismiss(
+      document,
+      () => ref.current,
+      () => cb.current(),
+    );
   }, [open]);
 
   return ref;

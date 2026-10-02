@@ -45,3 +45,35 @@ export function readFreeVerdict(
     reason: `This reads like ${early.claim}, not ${acct.name} — ${early.why}.`,
   };
 }
+
+/** The capture's dialect, read off its head token. An Outlook thread must
+ *  never masquerade as Salesforce activity. */
+export type Dialect = "OL" | "TM" | "CT" | "SN" | "SF";
+
+export function dialectOf(rawText: string): Dialect {
+  return /^OUTLOOK THREAD\b/.test(rawText)
+    ? "OL"
+    : /^TEAMS THREAD\b/.test(rawText)
+      ? "TM"
+      : /^CALL TRANSCRIPT\b/.test(rawText)
+        ? "CT"
+        : /^SALESNAV\b/.test(rawText)
+          ? "SN"
+          : "SF";
+}
+
+/** The source column a filed entry carries: the dialect's own name, with the
+ *  model's suffix when the read was the model's. */
+export function sourceFor(dialect: Dialect, how: string): string {
+  const base =
+    dialect === "OL"
+      ? "outlook"
+      : dialect === "TM"
+        ? "teams"
+        : dialect === "CT"
+          ? "call"
+          : dialect === "SN"
+            ? "salesnav"
+            : "sf";
+  return `${base}${how === "ai" ? "-ai" : ""}`;
+}
