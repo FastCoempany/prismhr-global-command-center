@@ -2284,7 +2284,7 @@ function PartnerCard({ c }: { c: CadenceRow }) {
   );
 }
 
-function CadenceDrawer({
+export function CadenceDrawer({
   cadence,
   checkins,
   onClose,
@@ -2387,7 +2387,7 @@ function CadenceDrawer({
 // The follow-up block inside the add menu: the composer that arms a chase, and
 // beside it the count that raises the whole list. A chase is always "now" —
 // there is no when to pick, because writing it down is the deciding.
-function FollowUpBlock({ rows }: { rows: FollowUpRow[] }) {
+export function FollowUpBlock({ rows }: { rows: FollowUpRow[] }) {
   const [open, setOpen] = useState(false);
   const [pinned, setPinned] = useState(false);
   const show = open || pinned;
@@ -2468,7 +2468,7 @@ function FollowUpBlock({ rows }: { rows: FollowUpRow[] }) {
   );
 }
 
-function EyeDrawer({
+export function EyeDrawer({
   warming,
   later,
   onClose,
