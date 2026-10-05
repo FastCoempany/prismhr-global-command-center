@@ -79,7 +79,9 @@ export function judgeFiling(inp: {
   claim: string;
   /** The row it is being filed to. */
   bound: { id: string; name: string };
-  /** Every account the book knows, with its routing signals. */
+  /** Every account the book knows, with its routing signals: the joined
+   *  roster, the book's signals and the record's actors and recipients
+   *  (C2; src/lib/ingest/route.ts). Handed in, so this stays pure. */
   roster: readonly RouteAccount[];
 }): MisfileVerdict {
   const bound = inp.bound;

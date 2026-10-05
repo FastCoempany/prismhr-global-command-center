@@ -71,6 +71,26 @@ export const ADDITIVE: readonly AdditiveMigration[] = [
       `CREATE INDEX IF NOT EXISTS "Todo_filingId_idx" ON "Todo"("filingId");`,
     ],
   },
+  {
+    // The vault's staging for a file that arrives in pieces (slice 7; D8 as
+    // amended 2026-10-05). One table, no column on any existing one.
+    migration: "20261005180000_vault_chunk",
+    present: [{ table: "VaultChunk" }],
+    statements: [
+      `CREATE TABLE IF NOT EXISTS "VaultChunk" (
+    "id" TEXT NOT NULL,
+    "accountId" TEXT NOT NULL,
+    "filename" TEXT NOT NULL,
+    "index" INTEGER NOT NULL,
+    "total" INTEGER NOT NULL,
+    "bytes" BYTEA NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "VaultChunk_pkey" PRIMARY KEY ("id")
+);`,
+      `CREATE INDEX IF NOT EXISTS "VaultChunk_accountId_filename_idx" ON "VaultChunk"("accountId", "filename");`,
+    ],
+  },
 ];
 
 /** The two raw methods the migrator needs; PrismaClient has both. */

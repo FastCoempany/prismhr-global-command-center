@@ -1,10 +1,12 @@
 // The vault run — every file dropped on a HomeRoom row archives to the
-// GitHub vault repo, named by its account (founder-decreed 2026-09-02).
-// The BROWSER does the carrying: GitHub's API takes browser calls directly,
-// so the file never transits the app's server (whose request cap could not
-// hold a recording anyway). The server's only part is handing this code a
-// short grant — see src/app/room/archive-actions.ts. This module never
-// reads the environment: a credential has no business existing in a bundle.
+// GitHub vault repo, named by its account (founder-decreed 2026-09-02;
+// canon since 2026-09-25, D8, as amended 2026-10-05 — CLAUDE.md, The
+// Chute). The SERVER does the carrying: the doors in src/app/room/
+// vault-actions.ts read the repository and the token from the environment
+// and hand them to this call, so no token reaches the browser; a file above
+// one request's cap arrives in pieces the server assembles before it lands
+// here. This module never reads the environment itself: what it speaks to
+// GitHub with is what its caller hands it, and the suite pins that.
 //
 // Two lanes, GitHub's own boundary between them:
 //   · 25MB and under — a plain repo file at accounts/<Account Name>/<file>.
@@ -14,7 +16,6 @@
 export const ARCHIVE_LIMIT_BYTES = 25 * 1024 * 1024;
 const ASSET_CAP_BYTES = 2 * 1024 * 1024 * 1024;
 
-export type ArchiveGrant = { repo: string; token: string };
 type ArchiveResult =
   | { ok: true; kind: "file" | "release"; url: string; detail: string }
   | { ok: false; reason: string };
@@ -97,7 +98,9 @@ async function fileToBase64(f: File): Promise<string> {
 export async function archiveFileToGitHub(inp: {
   file: File;
   accountName: string;
-  grant: ArchiveGrant;
+  /** The vault's repository and the credential that writes to it — read
+   *  from the environment by the server door, never by this module. */
+  grant: { repo: string; token: string };
   now?: Date;
 }): Promise<ArchiveResult> {
   const { file, grant } = inp;

@@ -1,8 +1,9 @@
 // The vault's arithmetic — lanes, names, tags, and the release face — pure
-// and pinned. The wire calls live in the browser; what the suite proves is
-// that every decision AROUND them is deterministic and canon-clean, and the
-// wire itself is scripted so the order of the calls can be read back. The
-// row's and the Chute's own decisions are pure too (src/lib/room/drop-plan.ts,
+// and pinned. The wire calls live on the server since slice 7 (D8 as amended
+// 2026-10-05); what the suite proves is that every decision AROUND them is
+// deterministic and canon-clean, and the wire itself is scripted so the
+// order of the calls can be read back. The row's and the Chute's own
+// decisions are pure too (src/lib/room/drop-plan.ts,
 // src/app/room/chute-ledger.ts) and their faces render here; no assertion
 // reads a source file.
 
@@ -128,22 +129,31 @@ test("the row picker takes every file type; the reader keeps its own gate", asyn
   assert.equal(reads, 0);
 });
 
-test("the grant is handed out behind the auth gate, and the row wires the vault", async () => {
-  // No signed-in session, no grant — whatever the environment holds. Outside
-  // a request there is no cookie to read, so the action refuses or throws;
-  // either way nothing carrying the token comes back.
-  const { githubArchiveGrant } = await import("../src/app/room/archive-actions");
+test("the vault's doors answer behind the auth gate and never carry the token, and the row wires the vault", async () => {
+  // No signed-in session, no landing — whatever the environment holds.
+  // Outside a request there is no cookie to read, so each door refuses or
+  // throws; either way nothing carrying the token comes back. The grant that
+  // once rode to the browser retired with src/app/room/archive-actions.ts
+  // (slice 7; D8 as amended 2026-10-05): the subjects are the doors' own
+  // returns, vaultFile's and vaultChunk's.
+  const { vaultChunk, vaultFile } = await import("../src/app/room/vault-actions");
   const prevRepo = process.env.GITHUB_ARCHIVE_REPO;
   const prevToken = process.env.GITHUB_ARCHIVE_TOKEN;
   process.env.GITHUB_ARCHIVE_REPO = "o/vault";
   process.env.GITHUB_ARCHIVE_TOKEN = "env-token-that-must-not-ride";
   try {
-    const r = await githubArchiveGrant().then(
+    const refused = () => ({ ok: false as const, reason: "no request scope" });
+    const form = new FormData();
+    form.set("file", new File(["WEBVTT"], "call.vtt"), "call.vtt");
+    const whole = await vaultFile("001F000000w38BOIAY", form).then((x) => x, refused);
+    assert.equal(whole.ok, false);
+    assert.ok(!JSON.stringify(whole).includes("env-token-that-must-not-ride"));
+    const piece = await vaultChunk("001F000000w38BOIAY", "big.mp4", 0, 3, form).then(
       (x) => x,
-      () => ({ ok: false as const, reason: "no request scope" }),
+      refused,
     );
-    assert.equal(r.ok, false);
-    assert.ok(!JSON.stringify(r).includes("env-token-that-must-not-ride"));
+    assert.equal(piece.ok, false);
+    assert.ok(!JSON.stringify(piece).includes("env-token-that-must-not-ride"));
   } finally {
     if (prevRepo === undefined) delete process.env.GITHUB_ARCHIVE_REPO;
     else process.env.GITHUB_ARCHIVE_REPO = prevRepo;
@@ -200,9 +210,11 @@ test("the chute vaults every drop and routes binaries by filename or pick", asyn
   assert.deepEqual(vaultAfterVerdict(accepted, [vtt]).archive, [vtt]);
   assert.deepEqual(vaultAfterVerdict(duplicate, [vtt]).archive, []);
   assert.deepEqual(vaultAfterVerdict(disputed, [vtt]), { archive: [], hold: [vtt] });
-  // The picker takes every type — no accept filter on the chute's input.
+  // The picker takes every type — no accept filter on the chute's input. The
+  // mount is propless but for canWrite: the roster never ships to the browser
+  // (D12), the route runs on the server (slice 7).
   const { Chute } = await chute();
-  const bar = await render(createElement(Chute, { roster, canWrite: true }));
+  const bar = await render(createElement(Chute, { canWrite: true }));
   const input = /<input[^>]*type="file"[^>]*>/.exec(bar)?.[0] ?? "";
   assert.ok(input, "the Chute paints a file input");
   assert.ok(!/accept=/.test(input), "no accept filter on the chute's input");

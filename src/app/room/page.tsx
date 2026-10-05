@@ -59,7 +59,6 @@ import { askHref, peerQuestions, scopedAsk } from "@/lib/intranet/bridges";
 import { sfAccountUrl } from "@/lib/salesforce";
 import { prospectAsks } from "@/lib/intranet/store";
 import { Chute } from "./chute";
-import { routingRoster } from "@/lib/book/roster";
 import { buildPipelineReport, homeSideFrom, rankPipeline } from "@/lib/pipeline/build";
 import { collectPipelineAccounts, pipelineDayLabel } from "@/lib/pipeline/collect";
 import {
@@ -769,12 +768,6 @@ export default async function RoomPage() {
     .slice(0, 8)
     .map((t) => ({ id: t.id, body: t.body.split("\n")[0].slice(0, 140) }));
 
-  // The Chute's routing roster — one shared build (src/lib/book/roster.ts),
-  // the same signals the misfile guard reads: contact emails, company
-  // domains, and the people the book binds to one account. A signal one door
-  // can read and another cannot is how one capture gets two answers.
-  const chuteRoster = routingRoster();
-
   // ── the Pipeline report ───────────────────────────────────────────────────
   // Built from the stores the loop already read. The second record's own drop
   // day rides the header: a report older than the sweep says so rather than
@@ -822,7 +815,9 @@ export default async function RoomPage() {
       <main
         className={`${styles.room} ${serif.variable} ${sans.variable} ${mono.variable}`}
       >
-        <Chute roster={chuteRoster} canWrite={data.canWrite} />
+        {/* The Chute routes on the server over the joined roster (C2, D12);
+            no roster rides the page. */}
+        <Chute canWrite={data.canWrite} />
         <RoomClient
           rows={rows}
           cadence={cadence}

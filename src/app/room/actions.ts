@@ -12,7 +12,7 @@ import { revalidatePath } from "next/cache";
 import { getAppAccess } from "@/lib/auth";
 import { hasDatabaseEnv } from "@/lib/db";
 import { peos } from "@/lib/book";
-import { routingRoster } from "@/lib/book/roster";
+import { joinedRoster } from "@/lib/ingest/route";
 import { guardPlan, type GuardVerdict } from "@/lib/ingest/guard";
 import { EXCERPT_CAP, readRungVerdict } from "@/lib/ingest/verdict-reason";
 import { HEADS, SOURCE_OF, sniffHead } from "@/lib/ingest/dialect";
@@ -306,14 +306,17 @@ export async function roomPaste(
   // below, once there is a claim to judge. A filing may be disputed twice,
   // each time with a reason of nine words or fewer (D9 as amended
   // 2026-10-05); this rung's reason is built from the rule's own why, so a
-  // keyless session gets this rung alone, as before.
+  // keyless session gets this rung alone, as before. Both rungs read the
+  // joined roster — the book's signals and the record's actors and
+  // recipients (C2) — read once here on the server (D12).
+  const roster = await joinedRoster();
   if (!opts?.force) {
     const refused = refusal(
       guardPlan({
         text: rawText,
         claim: "",
         bound: { id: acct.id, name: acct.name },
-        roster: routingRoster(),
+        roster,
       }).text,
       "",
     );
@@ -387,7 +390,7 @@ export async function roomPaste(
     text: rawText,
     claim: read?.accountName ?? "",
     bound: { id: acct.id, name: acct.name },
-    roster: routingRoster(),
+    roster,
   });
   const disputed = plan.read
     ? await readRungVerdict(

@@ -327,6 +327,7 @@ Dependency order first, then risk. Every slice is one PR: branch off main, chain
 - **App verification:** drop an .eml from an address only the record has seen; see it route without a pick; drop a 3 MB PDF and find it in the vault under the account; check the browser's network log for no GitHub request.
 - **Rollback:** revert; the vault path is unchanged so nothing lands twice.
 - **Size:** M.
+- **Amended 2026-10-05 (slice 7 as shipped):** the browser-side cut and the server-side staging live in src/lib/ingest/vault.ts beside the thin doors in vault-actions.ts so the suite can script both halves, the Chute takes the picker's names from the route action's reply and a `chuteBook()` action rather than any prop, and misfile.ts stays pure — the joined roster reaches `judgeFiling` through `guardPlan`'s callers in roomPaste.
 
 ### Slice 8 · The shared door hooks
 

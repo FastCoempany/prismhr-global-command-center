@@ -32,7 +32,6 @@ import { brainQueue } from "./runners";
 import { peos } from "@/lib/book";
 import { ActivityDock } from "../activity/dock";
 import { Chute } from "../room/chute";
-import { routingRoster } from "@/lib/book/roster";
 import { IntranetClient, type RailTopic } from "./intranet-client";
 import styles from "../command-center.module.css";
 
@@ -116,8 +115,9 @@ export default async function IntranetPage({
         />
         {/* The same Chute the HomeRoom carries (founder-decreed 2026-09-02):
             recordings, VTTs, and anything else thrown here route, file, and
-            vault exactly as they do at the room's door. */}
-        <Chute roster={routingRoster()} canWrite={access.canWrite} />
+            vault exactly as they do at the room's door. The route runs on
+            the server over the joined roster (C2, D12); no roster rides. */}
+        <Chute canWrite={access.canWrite} />
         <IntranetClient
           rail={rail}
           initialQ={initialQ}

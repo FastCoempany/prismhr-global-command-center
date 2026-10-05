@@ -3,12 +3,14 @@
 // The Chute — the one intake, mounted at the HomeRoom's top and on the
 // Intranet: one component, one roster, the same routing wherever it mounts
 // (ruled 2026-09-25, D1 — CLAUDE.md, The Chute :301). Throw files at it, as
-// many as you like; each one is read on the spot, routed to its account by
-// the book's own signals (a known contact's email, a company domain, the
-// account's name), and filed through the same pipeline a paste takes. The misfile guard runs
-// on the text's own evidence with or without the key; the model's judgment
-// rides when the key is on. Nothing files blind: an unroutable file
-// waits with a picker, and a read that disagrees with the route waits for the
+// many as you like; each one is read on the spot, routed to its account on
+// the server by the book's signals and the record's (a known contact's
+// email, a company domain, a person the record or the book binds to one
+// account, the account's name — C2, D12; the roster never ships here), and
+// filed through the same pipeline a paste takes. The misfile guard runs on
+// the text's own evidence with or without the key; the model's judgment
+// rides when the key is on. Nothing files blind: an unroutable file waits
+// with a picker, and a read that disagrees with the route waits for the
 // operator's call.
 
 import { useEffect, useRef, useState } from "react";
@@ -19,12 +21,12 @@ import {
   activityStage,
   activityTakeBack,
 } from "../activity/actions";
-import { githubArchiveGrant } from "./archive-actions";
-import { archiveFileToGitHub, type ArchiveGrant } from "@/lib/github/archive";
+import { chuteBook, routeText, type BookName } from "./route-actions";
+import { vaultChunk, vaultFile } from "./vault-actions";
+import { sendToVault } from "@/lib/ingest/vault";
 import { probeActivityReport, uploadActivityReport } from "@/lib/activity/upload";
 import { readFileToText } from "./read-file";
 import { filingSentences, type Window } from "@/lib/ingest/windows";
-import { routeCapture, type RouteAccount } from "@/lib/route-capture";
 import { vaultAfterVerdict } from "@/lib/room/drop-plan";
 import {
   CHUTE_PARALLEL,
@@ -46,13 +48,7 @@ type ChuteItem = LedgerRow & {
   file?: File;
 };
 
-export function Chute({
-  roster,
-  canWrite,
-}: {
-  roster: RouteAccount[];
-  canWrite: boolean;
-}) {
+export function Chute({ canWrite }: { canWrite: boolean }) {
   const [items, setItems] = useState<ChuteItem[]>([]);
   const [hot, setHot] = useState(false);
   // The ledger folds: the meter line says what is running, anything waiting
@@ -61,7 +57,19 @@ export function Chute({
   const [ledgerOpen, setLedgerOpen] = useState(false);
   const seq = useRef(0);
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const byName = [...roster].sort((a, b) => a.name.localeCompare(b.name));
+  // The picker's names, and the second record's book: names only, from the
+  // router's door. The roster itself — addresses, domains, people — stays on
+  // the server (D12); every route answers with the names too, so a picker
+  // that follows a route has its list even when the mount's fetch is slow.
+  const [book, setBook] = useState<BookName[]>([]);
+  useEffect(() => {
+    void chuteBook().then((b) => {
+      if (b.length) setBook(b);
+    });
+  }, []);
+  const byName = [...book].sort((a, b) => a.name.localeCompare(b.name));
+  const bookOrFetched = async (): Promise<BookName[]> =>
+    book.length ? book : await chuteBook();
 
   // A stored second-record receipt is a SEED; the manifest's live run state
   // is the record, and the record outranks every seed (the Ted doctrine,
@@ -149,14 +157,14 @@ export function Chute({
     else patch(key, { state: "error", reason: r.reason ?? "The file didn't take." });
   };
 
-  // The vault ride (founder-decreed 2026-09-02; canon since 2026-09-25, D8 —
-  // CLAUDE.md, The Chute :307): every dropped file also archives whole to the
-  // GitHub vault under the account it routed to — readable files after they
-  // file, recordings and other binaries as their whole filing; a duplicate
-  // drop vaults nothing new. The rule puts the upload server-side so no token
-  // reaches the browser; this ride still takes one grant per session and the
-  // browser carries the bytes itself.
-  const grantRef = useRef<ArchiveGrant | null>(null);
+  // The vault ride (founder-decreed 2026-09-02; canon since 2026-09-25, D8,
+  // as amended 2026-10-05 — CLAUDE.md, The Chute :307): every dropped file
+  // also archives whole to the GitHub vault under the account it routed to —
+  // readable files after they file, recordings and other binaries as their
+  // whole filing; a duplicate drop vaults nothing new. The server does the
+  // carrying (src/app/room/vault-actions.ts), so no token reaches the
+  // browser; a file above one request's cap goes up in pieces the server
+  // assembles before it lands (src/lib/ingest/vault.ts).
   const vaultTo = async (
     key: number,
     account: { id: string; name: string },
@@ -165,22 +173,13 @@ export function Chute({
   ) => {
     if (alone) patch(key, { state: "filing", account });
     patch(key, { vault: { text: `vaulting ${f.name}…` } });
-    if (!grantRef.current) {
-      const g = await githubArchiveGrant();
-      if (!g.ok) {
-        patch(key, {
-          vault: { text: g.reason, bad: true },
-          ...(alone ? { state: "error", reason: g.reason } : {}),
-        });
-        return;
-      }
-      grantRef.current = g.grant;
-    }
-    const r = await archiveFileToGitHub({
-      file: f,
-      accountName: account.name,
-      grant: grantRef.current,
-    });
+    const r = await sendToVault(
+      account.id,
+      f,
+      { whole: vaultFile, piece: vaultChunk },
+      (sent, total) =>
+        patch(key, { vault: { text: `vaulting ${f.name}… ${sent} of ${total}` } }),
+    );
     patch(key, {
       vault: r.ok
         ? {
@@ -209,7 +208,7 @@ export function Chute({
     try {
       const res = await uploadActivityReport({
         file: f,
-        book: roster.map((r) => ({ id: r.id, name: r.name })),
+        book: await bookOrFetched(),
         post: activityStage,
         progress: (line) => patch(key, { reason: line }),
       });
@@ -266,17 +265,26 @@ export function Chute({
         return;
       }
       const read = await readFileToText(f, chuteReadPdf);
+      // The route runs on the server over the joined roster (C2, D12); what
+      // comes back is the verdict and the picker's names.
+      const routed = async (text: string) => {
+        const r = await routeText(text);
+        if (r.book.length) setBook(r.book);
+        return r;
+      };
       if (!read.ok) {
         // Not readable — a recording, an archive, a binary. It still belongs
         // in the vault: route by the filename (a Teams recording usually
         // carries the meeting's name) and otherwise wait for the pick.
-        const { best, candidates } = routeCapture(f.name, roster);
-        if (best) await vaultTo(key, { id: best.id, name: best.name }, f, true);
+        const { best, candidates, refused } = await routed(f.name);
+        if (refused) patch(key, { state: "error", reason: refused });
+        else if (best) await vaultTo(key, { id: best.id, name: best.name }, f, true);
         else patch(key, { state: "pick", candidates });
         return;
       }
-      const { best, candidates } = routeCapture(read.text, roster);
-      if (best)
+      const { best, candidates, refused } = await routed(read.text);
+      if (refused) patch(key, { state: "error", reason: refused });
+      else if (best)
         await fileTo(
           key,
           read.text,
@@ -525,7 +533,9 @@ export function Chute({
             defaultValue=""
             onChange={(e) => {
               const id = e.target.value;
-              const a = roster.find((x) => x.id === id);
+              const a =
+                book.find((x) => x.id === id) ??
+                (it.candidates ?? []).find((x) => x.id === id);
               if (a && it.text)
                 void fileTo(
                   it.key,
@@ -603,19 +613,19 @@ export function Chute({
       <p className={styles.chutePact}>
         <b>The pact:</b> Emails, call transcripts (.vtt), spreadsheets, Word documents,
         and text read free in your browser; PDFs and images — screenshots included, HEIC
-        converts on the way in — read through Claude. Every file routes by the book —
-        contact email, then company domain, then account name — and files like a paste:
-        with the API key on, Claude splits the thread into dated entries, opens the
-        commitments it finds, queues the unknowns as asks, files competitor intel and
-        lessons to the Playbook, detects Closed Won or Lost, and flags a file that reads
-        like the wrong account; without the key the record still files by rules. Nothing
-        files blind — no sure match waits for your pick — nothing files twice — a re-drop
-        of something already on file is refused — receipts survive a reload, and HomeRoom,
-        Groundwork, Accounts, and Today re-read the record at once, the Intranet mirroring
-        it on its next sync. Every file also lands in the GitHub vault under its account —
-        recordings and other files the reader can&apos;t open route by their filename or
-        wait for your pick, and anything past 25MB rides as a pre-release (2GB is the
-        ceiling per file).
+        converts on the way in — read through Claude. Every file routes by the book and
+        the record — contact email, then company domain, then a known person, then account
+        name — and files like a paste: with the API key on, Claude splits the thread into
+        dated entries, opens the commitments it finds, queues the unknowns as asks, files
+        competitor intel and lessons to the Playbook, detects Closed Won or Lost, and
+        flags a file that reads like the wrong account; without the key the record still
+        files by rules. Nothing files blind — no sure match waits for your pick — nothing
+        files twice — a re-drop of something already on file is refused — receipts survive
+        a reload, and HomeRoom, Groundwork, Accounts, and Today re-read the record at
+        once, the Intranet mirroring it on its next sync. Every file also lands in the
+        GitHub vault under its account — recordings and other files the reader can&apos;t
+        open route by their filename or wait for your pick, and anything past 25MB rides
+        as a pre-release (2GB is the ceiling per file).
       </p>
 
       {items.length > 0 &&

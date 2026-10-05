@@ -119,6 +119,17 @@ describe("the additive list and its files agree", () => {
     ]);
     assert.equal(filing.statements.length, 7);
   });
+
+  test("the slice 7 entry checks the staging table alone and touches no other", () => {
+    const vault = ADDITIVE.find((m) => m.migration === "20261005180000_vault_chunk");
+    assert.ok(vault);
+    assert.deepEqual(vault.present, [{ table: "VaultChunk" }]);
+    assert.equal(vault.statements.length, 2);
+    assert.match(vault.statements[0], /CREATE TABLE IF NOT EXISTS "VaultChunk"/);
+    assert.match(vault.statements[0], /"bytes" BYTEA NOT NULL/);
+    assert.match(vault.statements[1], /CREATE INDEX IF NOT EXISTS "VaultChunk_accountId_filename_idx"/);
+    assert.ok(!vault.statements.some((s) => /ALTER TABLE/.test(s)), "no existing table is altered");
+  });
 });
 
 describe("applyAdditive", () => {
