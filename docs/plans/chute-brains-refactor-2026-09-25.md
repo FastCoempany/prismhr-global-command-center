@@ -193,28 +193,28 @@ A .csv on the Drop is refused with "The export goes in the Chute." (read-file.ts
 
 New modules:
 
-| Module | Holds | Imported by |
-|---|---|---|
-| src/lib/ingest/dialect.ts | HEADS, sniffHead, SOURCE_OF, predicates, GLYPH_RE, LEGACY_HEAD_RE | every reader in §2.3; the transcriber; paste-files |
-| src/lib/ingest/doors.ts | `DOORS` and the `Door` type | notes/write, ingest/pipeline, act-actions, run.ts, intranet |
-| src/lib/ingest/windows.ts | every named window with `{read, of}` (D4): READ_WINDOW_TAPE, READ_WINDOW, TRANSCRIBE_WINDOW, TRANSCRIBE_BYTES, SHEET_WINDOW, DOCX_WINDOW, ENTRY_CAP, TEXT_FLOOR | pipeline, read-file, paste-files, the transcriber |
-| src/lib/ingest/guard.ts | `guardPlan({force, text, claim, bound, roster})`, pure, a verdict per rung with its reason | pipeline |
-| src/lib/ingest/verdict-reason.ts | `verdictReason`: the read rung's model call with web search, slot `MODEL_VERDICT` in doctrine.ts | pipeline |
-| src/lib/ingest/filing.ts | `fileFiling`, `undoFiling`, `findFiling`, `readOfNote` over the Filing table | pipeline, undo, intranet extractor |
-| src/lib/ingest/fanout.ts | `absorbRead` moved; their loops; ids returned | pipeline |
-| src/lib/ingest/pipeline.ts | `filePaste(...)`: sniff, window, fingerprint, dupe, read or rules, guard, rows, fan-out; returns `PasteResult` | room/actions.ts (`roomPaste`), intranet capture |
-| src/lib/ingest/route.ts | `routeText` over `routingRoster()` ∪ the record's roster (C2) | route-actions.ts, misfile.ts |
-| src/lib/notes/write.ts | `createAccountNoteRow` with `door` required and `structured`; `createTodoRow` | every writer |
-| src/lib/record/read.ts | `readAccount` and `AccountRead` | room/page, groundwork/page, pipeline/build, sendbook/read, engine, accounts/page, room/actions, intake, ask/live |
-| src/lib/record/docs.ts | rows → `docs` with direction, flags, `effectiveAt` | record/read |
-| src/lib/record/whose-move.ts | `whoseMove` over the read | record/read; engine; day.ts |
-| src/app/room/ingest/use-ingest.ts | handleFiles, swallow, CHUTE_PARALLEL, csv fork by door, `router.refresh` | chute.tsx, room-client.tsx |
-| src/app/room/ingest/use-verdict.ts | mismatch and pick state; the pick re-runs `roomPaste` with force | both doors |
-| src/app/room/ingest/use-receipts.ts | the ledger over chute-ledger.ts | both doors |
-| src/app/room/ingest/use-undo.ts | `roomPasteUndo(filingId)` | both doors |
-| src/app/room/route-actions.ts | `routeText` server action | use-ingest |
-| src/app/room/vault-actions.ts | `vaultFile` and `vaultChunk` server upload | use-ingest |
-| prisma: Filing; VaultChunk; AccountNote.door, AccountNote.filingId; Todo.filingId | the structured read, the vault's staging and the links | filing.ts, vault-actions.ts, write.ts |
+| Module                                                                            | Holds                                                                                                                                                           | Imported by                                                                                                      |
+| --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| src/lib/ingest/dialect.ts                                                         | HEADS, sniffHead, SOURCE_OF, predicates, GLYPH_RE, LEGACY_HEAD_RE                                                                                               | every reader in §2.3; the transcriber; paste-files                                                               |
+| src/lib/ingest/doors.ts                                                           | `DOORS` and the `Door` type                                                                                                                                     | notes/write, ingest/pipeline, act-actions, run.ts, intranet                                                      |
+| src/lib/ingest/windows.ts                                                         | every named window with `{read, of}` (D4): READ_WINDOW_TAPE, READ_WINDOW, TRANSCRIBE_WINDOW, TRANSCRIBE_BYTES, SHEET_WINDOW, DOCX_WINDOW, ENTRY_CAP, TEXT_FLOOR | pipeline, read-file, paste-files, the transcriber                                                                |
+| src/lib/ingest/guard.ts                                                           | `guardPlan({force, text, claim, bound, roster})`, pure, a verdict per rung with its reason                                                                      | pipeline                                                                                                         |
+| src/lib/ingest/verdict-reason.ts                                                  | `verdictReason`: the read rung's model call with web search, slot `MODEL_VERDICT` in doctrine.ts                                                                | pipeline                                                                                                         |
+| src/lib/ingest/filing.ts                                                          | `fileFiling`, `undoFiling`, `findFiling`, `readOfNote` over the Filing table                                                                                    | pipeline, undo, intranet extractor                                                                               |
+| src/lib/ingest/fanout.ts                                                          | `absorbRead` moved; their loops; ids returned                                                                                                                   | pipeline                                                                                                         |
+| src/lib/ingest/pipeline.ts                                                        | `filePaste(...)`: sniff, window, fingerprint, dupe, read or rules, guard, rows, fan-out; returns `PasteResult`                                                  | room/actions.ts (`roomPaste`), intranet capture                                                                  |
+| src/lib/ingest/route.ts                                                           | `routeText` over `routingRoster()` ∪ the record's roster (C2)                                                                                                   | route-actions.ts, misfile.ts                                                                                     |
+| src/lib/notes/write.ts                                                            | `createAccountNoteRow` with `door` required and `structured`; `createTodoRow`                                                                                   | every writer                                                                                                     |
+| src/lib/record/read.ts                                                            | `readAccount` and `AccountRead`                                                                                                                                 | room/page, groundwork/page, pipeline/build, sendbook/read, engine, accounts/page, room/actions, intake, ask/live |
+| src/lib/record/docs.ts                                                            | rows → `docs` with direction, flags, `effectiveAt`                                                                                                              | record/read                                                                                                      |
+| src/lib/record/whose-move.ts                                                      | `whoseMove` over the read                                                                                                                                       | record/read; engine; day.ts                                                                                      |
+| src/app/room/ingest/use-ingest.ts                                                 | handleFiles, swallow, CHUTE_PARALLEL, csv fork by door, `router.refresh`                                                                                        | chute.tsx, room-client.tsx                                                                                       |
+| src/app/room/ingest/use-verdict.ts                                                | mismatch and pick state; the pick re-runs `roomPaste` with force                                                                                                | both doors                                                                                                       |
+| src/app/room/ingest/use-receipts.ts                                               | the ledger over chute-ledger.ts                                                                                                                                 | both doors                                                                                                       |
+| src/app/room/ingest/use-undo.ts                                                   | `roomPasteUndo(filingId)`                                                                                                                                       | both doors                                                                                                       |
+| src/app/room/route-actions.ts                                                     | `routeText` server action                                                                                                                                       | use-ingest                                                                                                       |
+| src/app/room/vault-actions.ts                                                     | `vaultFile` and `vaultChunk` server upload                                                                                                                      | use-ingest                                                                                                       |
+| prisma: Filing; VaultChunk; AccountNote.door, AccountNote.filingId; Todo.filingId | the structured read, the vault's staging and the links                                                                                                          | filing.ts, vault-actions.ts, write.ts                                                                            |
 
 Retired when their last caller leaves: `corpusFor` and `dealIntelFor` (extract.ts:97-219, :436-443), `refresh()` (actions.ts:67-71), `githubArchiveGrant` (archive-actions.ts:16-31), `dialectOf` and `sourceFor` (src/lib/room/paste.ts:52-63, :67-79, folded into the dialect module), `sniffPaste` and `HEAD_LINE_RE` (paste-files.ts:12-34, :64-65), the engine's `court` (engine.ts:65, :243-272, :424), the inline known-sets, the six direct `prisma.todo.create` sites, the two bare `accountNote.create` sites in run.ts and the one in draft-actions.ts. `readFreeVerdict` (paste.ts:23-48) and the drop-plan helpers (drop-plan.ts:18-26, :39-46) are kept and composed, not retired: `guardPlan` calls the first and `useIngest` the second.
 
@@ -280,7 +280,7 @@ Dependency order first, then risk. Every slice is one PR: branch off main, chain
 - **Decrees it could break:** the money doctrine (CLAUDE.md:582-583) is held by canon/ted-doctrine's redaction tests and the new structured-body test; P3 (:405) is what the slice delivers; the Spring's "tags survive verbatim" (:377-378) by the codec round-trip test.
 - **App verification:** run the migration; file a paste on the Drop and see `door = drop` on the new rows in the database; open a todo from it and edit the line, tags intact.
 - **Rollback:** revert the squash; the column stays and is harmless (default ""), or the down migration drops it.
-- **Migration:** package.json:8's build script becomes `prisma generate && prisma migrate deploy && next build`, so the deploy runs every migration (§7, item 15). Preview deployments share the database, so a preview runs it too; every migration in this plan is additive, so that is safe.
+- **Migration:** the app applies it when the server starts: src/lib/db/migrate.ts lists every additive migration beside its file under prisma/migrations, and src/instrumentation.ts runs the list on the app's own connection, catalog-guarded so a column that exists costs one SELECT and no lock. The plan first had package.json:8's build script run `prisma migrate deploy` (§7, item 15); probed on two preview builds on 2026-10-05, Vercel's build sandbox cannot reach the database on either configured URL (P1001 on both ports), so a build-time migration would fail every deploy. Preview deployments share the database, so a preview applies it too; every migration in this plan is additive and idempotent, so that is safe.
 - **Size:** M.
 
 ### Slice 4 · The Filing table and the stored read
@@ -471,16 +471,17 @@ Each names today's behavior at the door with its cite, what the plumbing carries
 8. **The Drop's four buttons.** Today: ⚡ paste pane, ▢, ✸, ⇪ and a file input with no accept filter (room-client.tsx:1857-1920). After: `useIngest` applies the same accept verdict at both doors and refuses a .csv with the decreed sentence. Decide: whether the input filters by accept or lets the refusal speak.
 9. **The BOOKED annotation.** Today: an acceptance sets ↩ REPLIED on the Sendbook line only through the org-wide path, and the first-record path treats it as machinery (src/lib/sendbook/read.ts:132-139). After: the read carries `lastAccepted` and a `machinery` flag per doc, so the Sendbook can mark a booked meeting without calling it a reply. Decide: whether a send answered by a calendar acceptance carries a BOOKED annotation, and how it reads. The C5 ruling left this to pass 6 (decree-ledger.md C row 5).
 10. **The three stamp words.** Today: the wing stamps SEATED with its day, THEIRS with the gem's term, and ENGAGED · NEVER MET (src/lib/groundwork/stamp.ts:45-52). The D27 ruling fixed the rule, no empty label, and left the words to pass 6. Decide: keep these three or better them.
-   - Answer: yes.
-   - Answer: yes.
-   - Answer: no. Warn twice. Each warning explains, in nine words or fewer, why it thinks this is a different company than the one it was dropped on. The second reason comes from the AI, which reads the account's page data and the web to answer. See §2.4 and slice 5.
-   - Answer: no. Read it again to be sure. See §2.4 and slice 5.
-   - Answer: git is the home for every file, big ones included. Big files travel through the server in pieces and are glued back together before they land. See §2.4 and slice 7.
-   - Answer: yes.
-   - Answer: yes.
-   - Answer: yes.
-   - Answer: yes. Slice 2 switches `morningDoneKey` to Chicago and rewrites the UTC pins.
-   - Answer: yes.
+
+- Answer: yes.
+- Answer: yes.
+- Answer: no. Warn twice. Each warning explains, in nine words or fewer, why it thinks this is a different company than the one it was dropped on. The second reason comes from the AI, which reads the account's page data and the web to answer. See §2.4 and slice 5.
+- Answer: no. Read it again to be sure. See §2.4 and slice 5.
+- Answer: git is the home for every file, big ones included. Big files travel through the server in pieces and are glued back together before they land. See §2.4 and slice 7.
+- Answer: yes.
+- Answer: yes.
+- Answer: yes.
+- Answer: yes. Slice 2 switches `morningDoneKey` to Chicago and rewrites the UTC pins.
+- Answer: yes.
 
 ## 6. What this plan does not do
 
@@ -553,34 +554,40 @@ Written plainly. Each says what happens today, then what yes and no mean, and ca
     - Today: the app turns it away with "The export goes in the Chute," but still backs it up.
     - Yes: don't back it up, since it was turned away.
     - No: back it up anyway.
-   - Answer: no. Back it up anyway, do not file it there, and show a notice that says it was dropped in the wrong place, will not be filed there, is backed up, and belongs in the Chute. See §2.4 and slice 8.
+
+- Answer: no. Back it up anyway, do not file it there, and show a notice that says it was dropped in the wrong place, will not be filed there, is backed up, and belongs in the Chute. See §2.4 and slice 8.
 
 12. **Should the app keep the AI's hints about each file?**
     - Today: the AI writes a few short hints about each file, like "they named a competitor" or "the decision sits with their CFO." The app asks for them and then throws them away.
     - Yes: keep them in the new storage spot with the rest of the reading.
     - No: add them to the end of the note's text.
-   - Answer: yes.
+
+- Answer: yes.
 
 13. **Should we wait before asking the AI for more?**
     - Today: the app finds countries, products and headcounts by scanning the words in notes. The AI could list them directly instead.
     - Yes: wait until the rest of this plan is done before changing what we ask the AI.
     - No: add it now.
-   - Answer: no. Ask the AI for more now. Slice 4 grows the read with countries, products, headcounts, timing and promises, and slice 10 reads them first. See §2.1.
+
+- Answer: no. Ask the AI for more now. Slice 4 grows the read with countries, products, headcounts, timing and promises, and slice 10 reads them first. See §2.1.
 
 14. **Should the "ask your colleague" move wait for its new spot?**
     - Today: when a client replies to your colleague, Groundwork tells you "Ask Anika what they said." You ruled that belongs on the HomeRoom. The HomeRoom has no spot designed for it yet.
     - Yes: leave it on Groundwork until the spot is designed.
     - No: move it now onto that account's TODAY list.
-   - Answer: retire "ask your coworker" everywhere; it was an early idea and is not needed. Slice 11b deletes it, and CLAUDE.md:276, :442-443 and :485 are amended.
+
+- Answer: retire "ask your coworker" everywhere; it was an early idea and is not needed. Slice 11b deletes it, and CLAUDE.md:276, :442-443 and :485 are amended.
 
 15. **Will you run the database update yourself?**
     - Today: two steps in this plan add new columns to the database. Someone has to run one command so the live database gets them before those steps go live.
     - Yes: you run the command before each of those two merges.
     - No: the app runs it automatically every time it deploys.
-   - Answer: no. The deploy runs the update and the merge carries it. Slice 3 adds `prisma migrate deploy` to the build script.
+
+- Answer: no. The deploy runs the update and the merge carries it. Slice 3 first put `prisma migrate deploy` in the build script; the build cannot reach the database (probed 2026-10-05), so the app applies each migration itself when the server starts (slice 3's Migration line).
 
 16. **Do the eight batch-10 rulings stand?**
     - Today: the last batch of the ruling session was recorded as assumed, with no answer from you on each item (docs/architecture/dead-code-ledger.md, the "assumed:" lines). This plan leans on three of them: the intranet keeps its read and takes the stored one (decision 1 and slice 16), the double builds wait for the single read (decision 2), and getAppAccess stays as it is (section 6). Two removals already on main rest on two more: motions.ts and branches.ts.
     - Yes: they stand as recorded.
     - No: name the ones to strike, and the plan and the two removals get revisited.
-   - Answer: yes, the eight stand, with one amendment: the column SignalSnooze.snoozedUntil stays, because the HomeRoom and Groundwork read it; LookIntoStatus.note goes as ruled. The eight are recorded as confirmed in docs/architecture/dead-code-ledger.md.
+
+- Answer: yes, the eight stand, with one amendment: the column SignalSnooze.snoozedUntil stays, because the HomeRoom and Groundwork read it; LookIntoStatus.note goes as ruled. The eight are recorded as confirmed in docs/architecture/dead-code-ledger.md.

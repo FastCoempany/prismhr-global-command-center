@@ -121,10 +121,10 @@ export async function createAccountNoteRow(
     ...at,
   };
   // The door rides with lane, actors and source: one provenance tier. Its
-  // column lands with the deploy that ships this code (the build script runs
-  // `prisma migrate deploy` first), so on a deployed database this tier never
-  // degrades for want of it; a database that never ran the migration falls
-  // through to the stable tier as before.
+  // column lands with the deploy that ships this code (the server applies the
+  // migration when it starts, src/lib/db/migrate.ts), so on a deployed
+  // database this tier never degrades for want of it; a database that never
+  // ran the migration falls through to the stable tier as before.
   const provenance: AccountNoteData = {
     ...stable,
     lane: n.lane ?? "mine",

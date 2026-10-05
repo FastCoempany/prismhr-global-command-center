@@ -6,7 +6,12 @@
 -- writer (src/lib/notes/write.ts) now requires it; the roster of doors lives in
 -- src/lib/ingest/doors.ts. A bare row is a defect by the ruling.
 --
+-- Applied by the app when the server starts (src/lib/db/migrate.ts lists it,
+-- src/instrumentation.ts runs it) because Vercel's build cannot reach the
+-- database; IF NOT EXISTS keeps that re-runnable and keeps `prisma migrate
+-- deploy` honest on a database the app already updated.
+--
 -- Additive and defaulted. Existing rows read as "" — filed before the column
 -- existed — and nothing reads the column yet; the Filing table (slice 4) and
 -- the receipt face (slice 18) are what will.
-ALTER TABLE "AccountNote" ADD COLUMN "door" TEXT NOT NULL DEFAULT '';
+ALTER TABLE "AccountNote" ADD COLUMN IF NOT EXISTS "door" TEXT NOT NULL DEFAULT '';

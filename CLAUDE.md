@@ -197,25 +197,25 @@ any surface, ever, unless explicitly directed.
     reply's response through to a landing. No exchange ends mid-air, and no
     ask is left with nothing to say after they answer.
 12. **The conversational register.** The plain-speech law above applies in
-   full: the seven rhetorical devices, invented slang, constructed phrasing,
-   and reassurance flourishes are all banned here. Beyond it, the test is how
-   people converse, not how they write. No mid-sentence noun catalogs ("— the
-   cost, the timeline, and the contract"); deliverables get said as spoken
-   clauses ("what it would cost, how long it would take, and what everyone
-   signs"). Abstract claims name a couple of concrete examples ("required
-   employer costs — pension and social contributions, in some places a
-   mandated extra month's pay"), never figures. Enumerations render as
-   bullets with a plain subtext line explaining each. Answer rows ("if they
-   say") are realistic speech — hedged, incomplete, human ("Honestly, I'd
-   have to ask them") — never engineered paraphrases nobody would say, and
-   never carrying stage directions inside the quotes. A term of art spoken
-   to a prospect carries its gloss in the same breath, on the same card.
+    full: the seven rhetorical devices, invented slang, constructed phrasing,
+    and reassurance flourishes are all banned here. Beyond it, the test is how
+    people converse, not how they write. No mid-sentence noun catalogs ("— the
+    cost, the timeline, and the contract"); deliverables get said as spoken
+    clauses ("what it would cost, how long it would take, and what everyone
+    signs"). Abstract claims name a couple of concrete examples ("required
+    employer costs — pension and social contributions, in some places a
+    mandated extra month's pay"), never figures. Enumerations render as
+    bullets with a plain subtext line explaining each. Answer rows ("if they
+    say") are realistic speech — hedged, incomplete, human ("Honestly, I'd
+    have to ask them") — never engineered paraphrases nobody would say, and
+    never carrying stage directions inside the quotes. A term of art spoken
+    to a prospect carries its gloss in the same breath, on the same card.
 13. **The armer doctrine.** This is a channel sale — the same partner across
-   the table for years. Offers of help keep us on their side of the table; a
-   probe that makes them account for themselves moves us across it. The test,
-   per exchange: does the prospect leave holding something — a fact they
-   needed, a document, a next step — or holding a debt, an account of
-   themselves they owed us? Every ask and follow-up passes it.
+    the table for years. Offers of help keep us on their side of the table; a
+    probe that makes them account for themselves moves us across it. The test,
+    per exchange: does the prospect leave holding something — a fact they
+    needed, a document, a next step — or holding a debt, an account of
+    themselves they owed us? Every ask and follow-up passes it.
 14. **Evidence or nothing.** Every lead and cite reads a rung of the
     evidence ladder, strongest first: transcripts → filed threads → call
     notes → lessons, gems, and the gap ledger → research and team intel.
@@ -588,9 +588,11 @@ founder-decreed 2026-09-15.
 - Ship pattern: branch `claude/prismhr-demo-guide-strategy-6h0oqg` → PR →
   Vercel CI green → squash merge = live production. Verify chain uses `&&`:
   prettier → tsc → eslint (0 warnings) → tsx tests → next build. Migrations
-  run at deploy (ruled 2026-10-05): the build script runs `prisma migrate
-  deploy` before `next build`, every migration is additive, and each lands
-  with the slice that needs it.
+  run at deploy (ruled 2026-10-05): every migration is additive, lands under
+  prisma/migrations with the slice that needs it, and is listed in
+  src/lib/db/migrate.ts, which the server applies on its own connection when
+  it starts (src/instrumentation.ts). The build never runs them: Vercel's
+  build cannot reach the database (P1001 on both URLs, probed 2026-10-05).
 - An archived surface (ruled 2026-09-25, P1) leaves every tab list and every
   revalidation list, and no live surface imports its actions.
 - **Opus or better, always** (founder-decreed 2026-07-31, canonized
