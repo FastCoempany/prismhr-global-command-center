@@ -6,10 +6,16 @@
 
 import { getAppAccess } from "@/lib/auth";
 import { peos } from "@/lib/book";
-import { dealIntelFor } from "@/lib/intel/extract";
 import { digestFor, digestForCardName } from "@/lib/intel/digest";
 import { COUNTRY_NAME, redactMoney } from "@/lib/intel/lexicon";
-import { loadAccountNotes, loadTodos, loadTouches } from "@/lib/today/overlay";
+import { homeSideFrom } from "@/lib/pipeline/build";
+import { declaredHomeSide, readFromStores } from "@/lib/record/stores";
+import {
+  loadAccountNotes,
+  loadDispositions,
+  loadTodos,
+  loadTouches,
+} from "@/lib/today/overlay";
 
 // --- Payroll intake form prefills ------------------------------------------
 // One value-returning action: derive the account's DealIntel and shape it as
@@ -69,21 +75,29 @@ export async function getDealIntel(accountId: string): Promise<PayrollPrefill | 
   const peo = peos.find((p) => p.id === id);
   if (!peo) return null;
 
-  const [acctNotes, todos, touches] = await Promise.all([
+  const [notesById, todos, touches, dispositions] = await Promise.all([
     loadAccountNotes(),
     loadTodos(),
     loadTouches(),
+    loadDispositions(),
   ]);
-  const intel = dealIntelFor(id, peo.name, {
-    // Not taught the roster here: the inbound test sits out (E2 — every
-    // caller declares what it knows).
-    homeSide: undefined,
-    acctNotes: acctNotes.get(id),
-    todos: todos.filter((t) => t.accountId === id),
-    touches: touches.filter(
-      (t) => t.subjectKey === `outreach:${id}` || t.subjectKey === `acct:${id}`,
-    ),
-  });
+  // The single account read (src/lib/record/read.ts; §2.2, the third
+  // migration). The prefill used to run the extractor over a corpus of its
+  // own: no hide filter, the roster never declared (pass 2 C). The read hides
+  // what the operator ✕-parked, declares the roster (E9) and reads every store
+  // the room reads, so the form is prefilled with the deal facts the room
+  // shows. Nothing here reads direction.
+  const intel = readFromStores(
+    {
+      notesById,
+      touches,
+      todos,
+      dispositions,
+      homeSide: declaredHomeSide(homeSideFrom(notesById)),
+    },
+    { id, name: peo.name },
+    { now: new Date() },
+  ).intel;
   const dig = digestFor(id) ?? digestForCardName(peo.name);
 
   // SMB name: a "— <SMB>" suffix on a digest alias (the dashboard card name).

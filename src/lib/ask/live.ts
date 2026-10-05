@@ -6,17 +6,29 @@
 // is never filed anywhere, so an ask must derive it again at ask time, with
 // the SAME pure readers the room uses (Ted doctrine: the widest live source,
 // never a private narrow one).
+//
+// Since slice 12 of the Chute brains refactor plan (§2.2, the third
+// migration) the derivation IS the room's: the single account read over the
+// stores the room loads. The 25-row query on the raw id that stood here saw
+// no shell-filed row, no hide filter and no roster, so the ask brain named
+// the book's seed as the relationship while the room named the CEO thread
+// (pass 2 C, the relationship row), and it said "no reply has been filed"
+// off the touch clock alone, which never looked for the reply.
 
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
-import { csms, peos } from "@/lib/book";
+import { peos } from "@/lib/book";
 import { accountFacts, factLines } from "@/lib/account/facts";
-import { contactsFor } from "@/lib/book/contacts";
-import { relationshipFor } from "@/lib/intel/relationship";
-import { isMeetingNote } from "@/lib/intel/meeting";
-import { lastTouchRead } from "@/lib/room/touch";
-import { isHomeSideName } from "@/lib/intel/provenance";
+import { homeSideFrom } from "@/lib/pipeline/build";
+import type { AccountRead } from "@/lib/record/read";
+import { declaredHomeSide, readFromStores } from "@/lib/record/stores";
 import { theirLoopOf } from "@/lib/room/owed";
 import { todoBelongsTo } from "@/lib/room/sheet-view";
+import {
+  loadAccountNotes,
+  loadDispositions,
+  loadTodos,
+  loadTouches,
+} from "@/lib/today/overlay";
 import { visibleText } from "@/lib/today/route-notes";
 import { redactMoney } from "@/lib/intel/lexicon";
 
@@ -72,9 +84,100 @@ const firstLine = (body: string): string =>
     .map((l) => l.trim())
     .find((l) => l.length > 0) ?? "";
 
-// Derive the account's live sheet: the relationship, the waiting state, the
-// open work, the freshest record lines. Every line is claim-sized so the
-// synthesizer can weigh and cite them like anything else.
+type LiveRow = { id: string; body: string; actors: string; createdAt: string };
+
+/** The claim lines, composed from the read: the relationship, the waiting
+ *  state, the open work, the freshest record lines. Every line is claim-sized
+ *  so the synthesizer can weigh and cite them like anything else. Pure, so the
+ *  suite can pin what the brain is told. */
+export function liveLines(
+  hit: { id: string; name: string },
+  read: AccountRead,
+  extra: {
+    /** The account's standing, from lib/account/facts — it leads the sheet. */
+    facts: readonly string[];
+    /** The visible record rows, newest first. */
+    rows: readonly LiveRow[];
+    openTodos: readonly { body: string; accountId: string }[];
+  },
+): string[] {
+  // Who this deal runs through — the read's, so the brain names the person
+  // the room names (the record's most-seen person over the book's seed).
+  const rel = read.relationship;
+  const first = (rel.name ?? "").split(/\s+/)[0] || "them";
+
+  const lines: string[] = [...extra.facts];
+
+  if (rel.name)
+    lines.push(
+      `The relationship on ${hit.name} is ${rel.name}${rel.email ? ` (${rel.email})` : ""}.`,
+    );
+
+  const touch = read.lastTouch;
+  const meeting = read.lastMeeting;
+  // A meeting record beats the correspondence clock — the recap is the
+  // owed move, and the ask's answer should know a meeting just happened.
+  const meetingNewer =
+    meeting && (!touch || Date.parse(meeting.at) >= Date.parse(touch.at));
+  if (meeting && meetingNewer)
+    lines.push(
+      `A meeting with ${hit.name} was held ${monthDay(meeting.at)} — the record of it is filed; the follow-up recap is the operator's to send.`,
+    );
+  else if (touch?.awaitingReply) {
+    const who = touch.who || first;
+    // The touch clock says the ball left with them; whether it came back is
+    // the read's lastInbound, and only an empty one means no reply is on
+    // file. The old line said so off the clock alone, and lied whenever the
+    // reply sat on the row.
+    const theirs = read.lastInbound;
+    if (!theirs)
+      lines.push(
+        `The room's live read: waiting on ${who} since ${monthDay(
+          touch.at,
+        )} — the last outbound went to them and no reply has been filed. Nothing owed on the operator's side.`,
+      );
+    else if (Date.parse(theirs.at) > Date.parse(touch.at))
+      lines.push(
+        `The room's live read: ${theirs.who || first} wrote back ${monthDay(
+          theirs.at,
+        )}, after the operator's ${monthDay(touch.at)} note. The reply is the operator's to send.`,
+      );
+    else
+      lines.push(
+        `The room's live read: waiting on ${who} since ${monthDay(
+          touch.at,
+        )}. The last outbound went to them; their last word on file is from ${monthDay(
+          theirs.at,
+        )}.`,
+      );
+  } else if (touch) lines.push(`Last touch on ${hit.name} was ${monthDay(touch.at)}.`);
+
+  const noteIds = new Set(extra.rows.map((n) => n.id));
+  for (const t of extra.openTodos) {
+    if (lines.length >= 10) break;
+    if (!todoBelongsTo({ body: t.body, accountId: t.accountId ?? "" }, hit.id, noteIds))
+      continue;
+    // A loop on their side (D10) is not open on the operator's sheet.
+    if (theirLoopOf(t.body)) continue;
+    const line = firstLine(t.body);
+    if (line) lines.push(`Open on the sheet for ${hit.name}: "${line.slice(0, 160)}".`);
+  }
+
+  for (const n of extra.rows.slice(0, 8)) {
+    if (lines.length >= 14) break;
+    const line = firstLine(n.body);
+    if (!line) continue;
+    const who = (n.actors ?? "").trim();
+    lines.push(
+      `Record ${monthDay(n.createdAt)}${who ? ` (${who.slice(0, 60)})` : ""}: ${line.slice(0, 200)}`,
+    );
+  }
+
+  return lines;
+}
+
+// Derive the account's live sheet from the one read and hand its lines to the
+// brain.
 export async function liveReadFor(question: string): Promise<LiveRead | null> {
   if (!hasDatabaseEnv()) return null;
   const hit = matchAccountIn(
@@ -84,57 +187,35 @@ export async function liveReadFor(question: string): Promise<LiveRead | null> {
   if (!hit) return null;
   const seed = peos.find((p) => p.id === hit.id);
   try {
-    const prisma = getPrisma();
-    const [notes, touch, openTodos] = await Promise.all([
-      prisma.accountNote.findMany({
-        where: { accountId: hit.id },
-        orderBy: { createdAt: "desc" },
-        take: 25,
-        select: {
-          id: true,
-          body: true,
-          actors: true,
-          createdAt: true,
-          source: true,
-          lane: true,
-        },
-      }),
-      prisma.touch
-        .findFirst({
-          where: { subjectKey: `outreach:${hit.id}` },
-          orderBy: { contactedAt: "desc" },
-        })
-        .catch(() => null),
-      prisma.todo.findMany({
-        where: { done: false },
-        select: { id: true, body: true, accountId: true },
-        take: 400,
-      }),
+    // The stores the room loads, loaded the same way, so the ask reads the
+    // read the room reads: the wide loader folds the shell id, the read hides
+    // what the operator ✕-parked, and the roster is the declared union (E9).
+    const [notesById, touches, todos, dispositions] = await Promise.all([
+      loadAccountNotes(),
+      loadTouches(),
+      loadTodos(),
+      loadDispositions(),
     ]);
+    const read = readFromStores(
+      {
+        notesById,
+        touches,
+        todos,
+        dispositions,
+        homeSide: declaredHomeSide(homeSideFrom(notesById)),
+      },
+      hit,
+      { now: new Date() },
+    );
+    const rows = (notesById.get(hit.id) ?? []).filter((n) => !read.hidden.has(n.id));
 
     // Whether the account is on the dashboard, read from the same dashCard
     // table and matched by the same name comparison the accounts page uses —
     // so "cleared with the CSM" means here exactly what it means on the sheet.
-    const onBoard = await prisma.dashCard
-      .findFirst({ where: { name: hit.name }, select: { id: true } })
+    const onBoard = await getPrisma()
+      .dashCard.findFirst({ where: { name: hit.name }, select: { id: true } })
       .then((c) => !!c)
       .catch(() => false);
-
-    const noteLike = notes.map((n) => ({
-      id: n.id,
-      body: n.body,
-      actors: n.actors ?? "",
-      source: n.source ?? "",
-      lane: (n.lane === "background" ? "background" : "mine") as "mine" | "background",
-      createdAt: n.createdAt.toISOString(),
-    }));
-    const rel = relationshipFor(noteLike, contactsFor(hit.id), {
-      name: seed?.contactName ?? "",
-      email: seed?.contactEmail ?? "",
-    });
-    const first = (rel.name ?? "").split(/\s+/)[0] || "them";
-
-    const lines: string[] = [];
 
     // The account's standing, from the SAME derivation the accounts sheet
     // renders its meta line from. This leads because it is what the operator
@@ -142,73 +223,20 @@ export async function liveReadFor(question: string): Promise<LiveRead | null> {
     // the page prints her name does not answer, it guesses (founder-caught
     // 2026-09-10, Infiniti HR). Adding a fact in lib/account/facts reaches
     // both surfaces; there is no second list to fall behind.
-    if (seed)
-      lines.push(
-        ...factLines(
+    const facts = seed
+      ? factLines(
           accountFacts(seed, {
-            lastActivityIso: notes[0]?.createdAt.toISOString(),
+            lastActivityIso: rows[0]?.createdAt,
             onDashboard: onBoard,
           }),
-        ),
-      );
+        )
+      : [];
 
-    if (rel.name)
-      lines.push(
-        `The relationship on ${hit.name} is ${rel.name}${rel.email ? ` (${rel.email})` : ""}.`,
-      );
-
-    const touchRead = lastTouchRead(
-      noteLike,
-      touch
-        ? {
-            contactedAt: touch.contactedAt.toISOString(),
-            awaitingReply: touch.status === "awaiting",
-            who: first,
-          }
-        : null,
-      (n) => isHomeSideName(n, csms),
-      new Date(),
-    );
-    // A meeting record beats the correspondence clock — the recap is the
-    // owed move, and the ask's answer should know a meeting just happened.
-    const meeting = noteLike.find((n) => isMeetingNote(n));
-    const meetingNewer =
-      meeting &&
-      (!touchRead || Date.parse(meeting.createdAt) >= Date.parse(touchRead.at));
-    if (meeting && meetingNewer)
-      lines.push(
-        `A meeting with ${hit.name} was held ${monthDay(meeting.createdAt)} — the record of it is filed; the follow-up recap is the operator's to send.`,
-      );
-    else if (touchRead?.awaitingReply)
-      lines.push(
-        `The room's live read: waiting on ${touchRead.who || first} since ${monthDay(
-          touchRead.at,
-        )} — the last outbound went to them and no reply has been filed. Nothing owed on the operator's side.`,
-      );
-    else if (touchRead)
-      lines.push(`Last touch on ${hit.name} was ${monthDay(touchRead.at)}.`);
-
-    const noteIds = new Set(notes.map((n) => n.id));
-    for (const t of openTodos) {
-      if (lines.length >= 10) break;
-      if (!todoBelongsTo({ body: t.body, accountId: t.accountId ?? "" }, hit.id, noteIds))
-        continue;
-      // A loop on their side (D10) is not open on the operator's sheet.
-      if (theirLoopOf(t.body)) continue;
-      const line = firstLine(t.body);
-      if (line) lines.push(`Open on the sheet for ${hit.name}: "${line.slice(0, 160)}".`);
-    }
-
-    for (const n of notes.slice(0, 8)) {
-      if (lines.length >= 14) break;
-      const line = firstLine(n.body);
-      if (!line) continue;
-      const who = (n.actors ?? "").trim();
-      lines.push(
-        `Record ${monthDay(n.createdAt.toISOString())}${who ? ` (${who.slice(0, 60)})` : ""}: ${line.slice(0, 200)}`,
-      );
-    }
-
+    const lines = liveLines(hit, read, {
+      facts,
+      rows,
+      openTodos: todos.filter((t) => !t.done),
+    });
     if (lines.length === 0) return null;
     return {
       accountId: hit.id,

@@ -396,6 +396,7 @@ Dependency order first, then risk. Every slice is one PR: branch off main, chain
 - **App verification:** open the drawer and compare rows with the previous deploy; press ⟳ on a row whose record sits under a shell id and see the minted asks cite it.
 - **Rollback:** revert.
 - **Size:** M.
+- **Amended 2026-10-05 (built):** the reads reach the drawer through `collectPipelineAccounts`'s `readFor` and ride on `PipelineAccount.read`, the page keeping its loop's reads in a map it hands down; the fresh pull, the minter, the intake prefill and the live read assemble theirs through one helper the module map did not list, src/lib/record/stores.ts (`readFromStores`, `declaredHomeSide`); the live read takes `lastTouch` and `lastMeeting` from the read as well, because its 25-row query is gone and nothing else is left to read them from; and build.ts's source checks were already on the dialect predicates since slice 1, so nothing changed there.
 
 ### Slice 13 · The single read, part 4: the Sendbook
 

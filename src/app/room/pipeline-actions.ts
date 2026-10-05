@@ -14,11 +14,17 @@ import { csms, peos } from "@/lib/book";
 import { getAppAccess } from "@/lib/auth";
 import { loadDashboard } from "@/lib/dashboard/data";
 import { DROP_STALE_DAYS, fetchSecondRecords } from "@/lib/activity/read";
-import { loadAccountNotes, loadDispositions, loadTodos } from "@/lib/today/overlay";
+import {
+  loadAccountNotes,
+  loadDispositions,
+  loadTodos,
+  loadTouches,
+} from "@/lib/today/overlay";
 import { daysBetween } from "@/lib/room/engine";
 import { buildPipelineReport, homeSideFrom, rankPipeline } from "@/lib/pipeline/build";
 import type { PipelineRecord } from "@/lib/pipeline/build";
 import { collectPipelineAccounts, pipelineDayLabel } from "@/lib/pipeline/collect";
+import { declaredHomeSide, readFromStores } from "@/lib/record/stores";
 import {
   PIPELINE_EDIT_NS,
   editsFrom,
@@ -49,16 +55,31 @@ export async function freshPipeline(): Promise<FreshPipeline | null> {
   const data = await loadDashboard();
   if (data.status !== "active") return null;
 
-  const [notesById, todos, dispositions] = await Promise.all([
+  const [notesById, todos, dispositions, touches] = await Promise.all([
     loadAccountNotes(),
     loadTodos(),
     loadDispositions(),
+    loadTouches(),
   ]);
   const secondById = await fetchSecondRecords().catch(
     () => new Map() as Awaited<ReturnType<typeof fetchSecondRecords>>,
   );
   const now = new Date();
 
+  // The whole book, not the active slice — a colleague who works across the
+  // book but appears on only two active accounts is still ours.
+  const homeSide = homeSideFrom(notesById);
+  // The reads, assembled the way the HomeRoom's row loop assembles them and
+  // built once per active account, so the fresh pull reads exactly what the
+  // page read, only later (§2.2, the third migration; pass 4 G2).
+  const stores = {
+    notesById,
+    touches,
+    todos,
+    dispositions,
+    secondById,
+    homeSide: declaredHomeSide(homeSide),
+  };
   const accounts = collectPipelineAccounts({
     cards: data.cards,
     labels: data.labels,
@@ -68,13 +89,17 @@ export async function freshPipeline(): Promise<FreshPipeline | null> {
     secondById,
     peos,
     now,
+    readFor: (id, card) =>
+      readFromStores(
+        stores,
+        { id, name: card.name },
+        { now, board: { card, labels: data.labels } },
+      ),
   });
   const rows = rankPipeline(
     buildPipelineReport({
       accounts,
-      // The whole book, not the active slice — a colleague who works across the
-      // book but appears on only two active accounts is still ours.
-      homeSide: homeSideFrom(notesById),
+      homeSide,
       csms,
       me: "Antaeus Coe",
       now,

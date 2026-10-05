@@ -13,6 +13,7 @@ import { readOutcome } from "@/lib/dashboard/outcome";
 import { cardNextStep } from "@/lib/today/build";
 import { GAP_DISMISS, readGaps } from "@/lib/room/gaps";
 import { digestForCardName } from "@/lib/intel/digest";
+import type { AccountRead } from "@/lib/record/read";
 import type { PipelineAccount } from "./build";
 
 // The board's own row shape — taken from loadDashboard() rather than restated,
@@ -55,11 +56,18 @@ type CollectInput = {
   labels: Record<string, string>;
   notesById: ReadonlyMap<string, Note[]>;
   todos: readonly Todo[];
-  /** Dispositions gate two things here: ✕-parked note rows and dismissed gaps. */
+  /** Dispositions gate the dismissed gaps here; ✕-parked rows leave through
+   *  the read's own filter. */
   dispositions: ReadonlyMap<string, unknown>;
   secondById: ReadonlyMap<string, Second>;
   peos: readonly { id: string; name: string; csm?: string }[];
   now: Date;
+  /** The account's single read, built once by the caller (§2.2, the third
+   *  migration): the HomeRoom hands down the reads its row loop built, the
+   *  fresh pull builds one per active account. The record reads its facts
+   *  from it and the hide filter is its own, so the report is never built
+   *  from a second reading of the same rows (pass 4 G2). */
+  readFor: (accountId: string, card: Card) => AccountRead | undefined;
 };
 
 /** Every ACTIVE account's inputs. "Active" is the rule the board already keeps
@@ -82,10 +90,16 @@ export function collectPipelineAccounts(input: CollectInput): PipelineAccount[] 
     if (!accountId) continue;
     if (readOutcome(card.notes)) continue;
 
+    // A card the caller holds no read for has nothing to report from; the
+    // page's loop reads every live card, so this never skips one there.
+    const read = input.readFor(accountId, card);
+    if (!read) continue;
+
     // ✕-parked entries leave every register view — the note survives in the
-    // table, the row does not. The report must read exactly what the room does.
+    // table, the row does not. The one hide filter is the read's (§2.2), so
+    // the report reads exactly what the room does.
     const notes = (input.notesById.get(accountId) ?? []).filter(
-      (n) => !input.dispositions.has(`hide:note:${n.id}`),
+      (n) => !read.hidden.has(n.id),
     );
     const step = cardNextStep(card, input.labels, input.now.getTime());
     const second = input.secondById.get(accountId);
@@ -102,6 +116,7 @@ export function collectPipelineAccounts(input: CollectInput): PipelineAccount[] 
       ),
       support: second?.support ?? null,
       actors: second?.rollup?.actors ?? [],
+      read,
       // A demo on the board or in the record. Either is enough: the board is
       // where the operator stamps it, the record is where it actually happened.
       demoOnRecord:
