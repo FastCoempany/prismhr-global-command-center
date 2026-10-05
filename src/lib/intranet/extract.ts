@@ -14,8 +14,11 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import { claudeClient, claudeAvailable } from "@/lib/claude/health";
+import type { AiCleanResult } from "@/lib/intel/ai-clean";
+import type { EntryPromise, TimelineEntry } from "@/lib/sf-timeline";
 import { CLAIM_KINDS, MODEL_EXTRACT, PROMPT_VERSION, type ClaimKind } from "./doctrine";
 import { bankPrompt } from "./bank";
+import { OPERATOR } from "./mirror";
 
 export function extractAvailable(): boolean {
   return claudeAvailable();
@@ -187,6 +190,126 @@ export function sanitizeRead(raw: unknown, body: string): LiberalRead {
   return { brief: str(r.brief, 6000), filings };
 }
 
+// ── the stored read ─────────────────────────────────────────────────────────
+// A mirrored row the pipeline already read carries its read on the Filing
+// row (src/lib/ingest/filing.ts). The extractor takes that read and pays for
+// a model read only for documents with none (the dead-code ledger's G6
+// ruling, 2026-09-25; the plan's §2.6 and slice 16): a filed note's
+// extractor takes the structured read stored with the note, and the todo
+// mirror carries the note's read rather than earning its own. What it files
+// is what the row already carries, sanitized — the entry's own words, the
+// person who said them, the countries the read clamped to the lexicon, and
+// each promise the entry stated — never a sentence the app composed, and no
+// brief: nothing is invented. The raw shape below goes through the same
+// sanitizer against the same body as the model's reply, so the claims the
+// runner writes from a stored read have exactly the shape the model's would.
+
+/** Where a stored read's statements file: deal correspondence and the
+ *  commitments it carries, under the bank's deal parent. */
+export const STORED_READ_TOPIC = {
+  topic: "Deals & selling",
+  subtopic: "Deal strategy & next moves",
+} as const;
+
+/** A statement before the sanitizer, as the model would have said it. */
+type RawStatement = {
+  text: string;
+  speaker: string;
+  kind: ClaimKind;
+  countries: string[];
+  quote: string;
+};
+
+/** The entry a mirrored note carries, found by its words: the one whose body
+ *  the document holds, or, for a subject-only entry (a task, a call with no
+ *  body), the one whose subject heads it. A mirrored note is one entry — the
+ *  pipeline writes one row per entry — so one match is the rule; a tape's
+ *  archive note and a whole-text note match none and emit nothing, because
+ *  their entries ride their own rows. */
+export function entryOf(read: AiCleanResult, body: string): TimelineEntry | null {
+  const head = body.split("\n")[0] ?? "";
+  const hits = read.entries.filter((e) =>
+    e.body.trim().length >= 8
+      ? locateQuote(body, e.body) !== null
+      : e.subject.trim().length >= 8 && head.includes(e.subject.trim()),
+  );
+  if (hits.length === 1) return hits[0];
+  if (hits.length > 1)
+    return hits.find((e) => e.subject && head.includes(e.subject)) ?? hits[0];
+  return null;
+}
+
+/** The operator's action a mirrored todo carries: the one whose text the
+ *  document holds. Their loops never mirror, so only the operator's are
+ *  looked for. */
+export function actionOf(
+  read: AiCleanResult,
+  body: string,
+): AiCleanResult["actions"][number] | null {
+  return (
+    read.actions.find(
+      (a) => a.owner === "me" && a.text.trim().length >= 8 && locateQuote(body, a.text),
+    ) ?? null
+  );
+}
+
+/** Who made a promise the entry states: our side is the operator; theirs is
+ *  the entry's author when the author is not the operator. */
+function promiser(p: EntryPromise, e: TimelineEntry): string {
+  if (p.by === "me") return OPERATOR;
+  return e.from && e.from !== OPERATOR ? e.from : "unknown";
+}
+
+/** The stored read as the raw liberal shape the sanitizer takes: for a
+ *  mirrored todo the action it carries, as the operator's commitment; for a
+ *  mirrored note the entry it carries, as its author's statement with the
+ *  countries the read named, and each promise the entry stated. Empty when
+ *  the document carries nothing the read knows. */
+export function readFromFiling(
+  read: AiCleanResult,
+  doc: { body: string; origin: string; speakers?: readonly string[] },
+): {
+  brief: string;
+  filings: { topic: string; subtopic: string; statements: RawStatement[] }[];
+} {
+  const statements: RawStatement[] = [];
+  if (doc.origin === "todo") {
+    const a = actionOf(read, doc.body);
+    if (a)
+      statements.push({
+        text: a.text,
+        speaker: OPERATOR,
+        kind: "commitment",
+        countries: [],
+        quote: a.text,
+      });
+  } else {
+    const e = entryOf(read, doc.body);
+    if (e) {
+      const said = e.body.trim().length >= 8 ? e.body : e.subject;
+      statements.push({
+        text: said,
+        speaker: e.from || doc.speakers?.[0] || "unknown",
+        kind: "fact",
+        countries: [...(e.countries ?? [])],
+        quote: said,
+      });
+      for (const p of e.promises ?? [])
+        statements.push({
+          text: p.what,
+          speaker: promiser(p, e),
+          kind: "commitment",
+          countries: [],
+          quote: p.what,
+        });
+    }
+  }
+  return {
+    brief: "",
+    filings: statements.length ? [{ ...STORED_READ_TOPIC, statements }] : [],
+  };
+}
+
 // ── the call ────────────────────────────────────────────────────────────────
 type ReadInput = {
   body: string;
@@ -197,6 +320,20 @@ type ReadInput = {
   /** Subtopics the index has grown beyond the bank, so the model files into
    *  them rather than re-inventing them. Labels only (V.2). */
   grown: { parent: string; label: string }[];
+  /** The pipeline's read of the row this document mirrors, when it has one
+   *  (G6): taken in place of a model read. Null or absent means the document
+   *  is one only the brain reads, and the model reads it. */
+  stored?: AiCleanResult | null;
+  /** Who said what in the mirrored row, for an entry with no author. */
+  speakers?: readonly string[];
+};
+
+/** The slice of the model client the read needs — a test hands in a stub,
+ *  the way the verdict module takes one. */
+export type ReadClient = {
+  messages: {
+    create(params: Anthropic.MessageCreateParamsNonStreaming): Promise<Anthropic.Message>;
+  };
 };
 
 // A body larger than this gets its tail cut at read time: a 60k-character
@@ -206,14 +343,31 @@ type ReadInput = {
 // prefix stay valid.
 export const READ_BODY_CAP = 48_000;
 
-export async function runRead(input: ReadInput): Promise<LiberalRead> {
-  if (!extractAvailable()) throw new Error("No API key configured — reading is off.");
-  const client = claudeClient({ timeout: 120_000, maxRetries: 1 });
-
+export async function runRead(
+  input: ReadInput,
+  client?: ReadClient,
+): Promise<LiberalRead> {
   const body =
     input.body.length > READ_BODY_CAP
       ? `${input.body.slice(0, READ_BODY_CAP)}\n\n[document truncated for reading — the record keeps the full text]`
       : input.body;
+
+  // The stored read first, before the key is even looked at: a row the
+  // pipeline read costs nothing here and needs no model (G6). It is clamped
+  // against the same body the model would have read.
+  if (input.stored)
+    return sanitizeRead(
+      readFromFiling(input.stored, {
+        body,
+        origin: input.origin,
+        speakers: input.speakers,
+      }),
+      body,
+    );
+
+  if (!extractAvailable()) throw new Error("No API key configured — reading is off.");
+  const model = client ?? claudeClient({ timeout: 120_000, maxRetries: 1 });
+
   const user = `THE BANK — file against this first:
 ${bankPrompt(input.grown)}
 
@@ -223,7 +377,7 @@ DOCUMENT — from ${input.space || "an internal source"}${
 
 ${body}`;
 
-  const res = await client.messages.create({
+  const res = await model.messages.create({
     model: MODEL_EXTRACT,
     max_tokens: 16384,
     thinking: { type: "adaptive" },
