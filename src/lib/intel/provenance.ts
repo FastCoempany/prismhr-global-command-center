@@ -4,6 +4,12 @@
 // support threads, other-department chatter). Stamped at write time; inferred
 // at read time for rows written before the columns existed. Pure — testable.
 
+import {
+  LEGACY_HEAD_RE,
+  LEGACY_HEAD_START_RE,
+  LEGACY_SUBJECT_RE,
+} from "@/lib/ingest/dialect";
+
 export type Lane = "mine" | "background";
 
 // The operator, canonically. Outlook renders them as "You"; Teams as "you" or
@@ -195,9 +201,11 @@ export function actorsLine(from: string, to: string, others: number): string {
 
 // Filed note heads: "✉ SF Jul 22 4:11 PM — Subject · A → B +2". The dialect
 // token names the capture's true origin — SF timeline, OL (Outlook thread),
-// TM (Teams chat) — so the record never claims CRM provenance for an inbox
-// grab. Legacy inference accepts all three.
-const SF_HEAD_RE = /^[✉✔☎] (?:SF|OL|TM) [^—\n]*— .*? · (.+?)$/mu;
+// TM (Teams chat), CT (call transcript), SN (Sales Nav grab) — so the record
+// never claims CRM provenance for an inbox grab. Legacy inference accepts the
+// whole alphabet (the dialect table, src/lib/ingest/dialect.ts); it exists
+// only for rows filed before the columns (ruled 2026-09-25, D23).
+const SF_HEAD_RE = LEGACY_HEAD_RE;
 
 // Recover the actors from a legacy note body (written before the column
 // existed). "" when the body has no SF head. The head's "(unattributed)"
@@ -215,13 +223,13 @@ export function inferActors(body: string): string {
 // routes) was typed or filed by me and is my working record by construction.
 export function inferLane(kind: string, body: string, actors: string): Lane {
   if (kind !== "account") return "mine";
-  if (!/^[✉✔☎] (?:SF|OL|TM) /u.test(body ?? "")) return "mine";
+  if (!LEGACY_HEAD_START_RE.test(body ?? "")) return "mine";
   return laneFor(actors, body);
 }
 
 // The subject of a paste-filed note ("" for hand-written notes) — feeds the
 // People index's "last context" column.
 export function inferSubject(body: string): string {
-  const m = /^[✉✔☎] (?:SF|OL|TM) [^—\n]*— (.*?) · [^·\n]*$/mu.exec(body ?? "");
+  const m = LEGACY_SUBJECT_RE.exec(body ?? "");
   return m ? m[1].trim() : "";
 }

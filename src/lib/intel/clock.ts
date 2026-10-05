@@ -12,7 +12,9 @@
 // nothing ever leaves its day. Notes without the OL head, without a clock, or
 // filed with a real timestamp are untouched.
 
-const OL_HEAD = /^✉ OL /;
+import { GLYPHS } from "@/lib/ingest/dialect";
+
+const OL_HEAD = new RegExp(`^${GLYPHS.email} OL `);
 const CLOCK = /(\d{1,2}):(\d{2})\s*(AM|PM)/i;
 const NOON_MIN = 12 * 60;
 const MIN_MS = 60_000;

@@ -11,6 +11,7 @@
 // pre-redaction text is never written down. There is no "original" to leak.
 
 import { createHash } from "node:crypto";
+import { HEADS, sniffHead } from "@/lib/ingest/dialect";
 import { scrubSecrets } from "@/lib/sf-timeline";
 import { redactMoney } from "@/lib/intel/lexicon";
 import { normPerson } from "@/lib/intel/provenance";
@@ -33,25 +34,33 @@ const LINK_LINE_RE = /^\s*\[(\d+)\]\s*(.+?)\s*·\s*(\S+|—)\s*(?:·\s*(.*))?$/;
 const REPORT_RE =
   /⟦CAPTURED\s+(\d+)\s+messages?\s*·\s*scrolled\s+(\d+)\s*·\s*oldest\s+([^\s·⟧]+)(\s*·\s*ceiling)?\s*⟧/;
 
-/** Heads the capture tools stamp, so the dialect is read rather than guessed. */
-const HEAD_TEAMS = /^TEAMS THREAD\b/;
-const HEAD_OUTLOOK = /^OUTLOOK THREAD\b/;
-
+/** Heads the capture tools stamp, so the dialect is read rather than guessed
+ *  (the dialect table, src/lib/ingest/dialect.ts). A Teams thread or chat is
+ *  "teams"; an Outlook thread is a paste like any other. */
 function detectOrigin(raw: string, hint?: Origin): Origin {
-  const head = (raw ?? "").trimStart();
-  if (HEAD_TEAMS.test(head)) return "teams";
-  if (HEAD_OUTLOOK.test(head)) return "paste";
+  const { dialect } = sniffHead(raw ?? "");
+  if (dialect === "TM") return "teams";
+  if (dialect === "OL") return "paste";
   if (hint) return hint;
   return "paste";
 }
+
+/** The two bookmarklet heads that carry a space: "TEAMS THREAD - <space> -
+ *  captured …" and the Outlook grab's. */
+const SPACE_HEAD = `(?:${HEADS.teams}|${HEADS.outlook})`;
+const SPACE_CAPTURED_RE = new RegExp(
+  `^${SPACE_HEAD}\\s*-\\s*(.+?)\\s*-\\s*captured\\b`,
+  "i",
+);
+const SPACE_BARE_RE = new RegExp(`^${SPACE_HEAD}\\s*-\\s*(.+)$`, "i");
 
 /** The space a capture came from — a disambiguation label, never a partition
  *  (I.7). Read off the stamped head: "TEAMS THREAD - Global Sales Team - …". */
 export function readSpace(raw: string): string {
   const first = (raw ?? "").trimStart().split("\n")[0] ?? "";
-  const m = /^(?:TEAMS|OUTLOOK) THREAD\s*-\s*(.+?)\s*-\s*captured\b/i.exec(first);
+  const m = SPACE_CAPTURED_RE.exec(first);
   if (m) return m[1].trim().slice(0, 120);
-  const m2 = /^(?:TEAMS|OUTLOOK) THREAD\s*-\s*(.+)$/i.exec(first);
+  const m2 = SPACE_BARE_RE.exec(first);
   return m2
     ? m2[1]
         .replace(/\s*-\s*captured.*$/i, "")

@@ -8,6 +8,7 @@
 // the app falls back to the rule-based parser and nothing here runs.
 
 import { claudeClient, claudeAvailable } from "@/lib/claude/health";
+import { sniffHead } from "@/lib/ingest/dialect";
 import { MODEL_READ } from "@/lib/intranet/doctrine";
 import { redactMoney } from "@/lib/intel/lexicon";
 import { normPerson } from "@/lib/intel/provenance";
@@ -338,9 +339,10 @@ export async function aiCleanTimeline(raw: string, now: Date): Promise<AiCleanRe
   // costliest to under-read: a live demo routinely leaves several promises on
   // the table, and each one the read misses is a deliverable missed in the
   // real world. Say so, explicitly, when the paste is a transcript.
-  const ctHunt = /^CALL TRANSCRIPT\b/.test(raw.trimStart())
-    ? `\n\nThis is a complete call transcript. Hunt every commitment made on the call: "I'll send", "we'll get you", "let me pull together", "I'll check with", a recap or follow-up owed, a question someone promises to answer later. Each is an action with its owner. A demo or discovery call routinely leaves three to six commitments; finding only one usually means some were missed — sweep the closing minutes especially, where owed items concentrate. Mine the whole call for gaps, competitor intel, and lessons too.`
-    : "";
+  const ctHunt =
+    sniffHead(raw).dialect === "CT"
+      ? `\n\nThis is a complete call transcript. Hunt every commitment made on the call: "I'll send", "we'll get you", "let me pull together", "I'll check with", a recap or follow-up owed, a question someone promises to answer later. Each is an action with its owner. A demo or discovery call routinely leaves three to six commitments; finding only one usually means some were missed — sweep the closing minutes especially, where owed items concentrate. Mine the whole call for gaps, competitor intel, and lessons too.`
+      : "";
   const request = (maxTokens: number) =>
     client.messages.create({
       model,

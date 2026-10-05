@@ -6,6 +6,8 @@
 // scrolling). Pure and tolerant: unknown lines fall into the body rather than
 // breaking an entry.
 
+import { sniffHead } from "@/lib/ingest/dialect";
+
 export type TimelineEntry = {
   kind: "email" | "task" | "call";
   subject: string;
@@ -267,9 +269,11 @@ export function parseSfTimeline(text: string, now: Date = new Date()): TimelineE
   // An Outlook-thread capture is a different dialect entirely — the SF anchor
   // grammar ("X to Y") false-positives on subjects like "Welcome to PrismHR"
   // and fabricates entries. Refuse it here so the caller takes the transcript
-  // path (or the AI, which reads the stamp) instead.
-  if (/^((OUTLOOK|TEAMS) THREAD|CALL TRANSCRIPT)\b/.test((text ?? "").trimStart()))
-    return [];
+  // path (or the AI, which reads the stamp) instead. A Teams chat and a call
+  // transcript are refused the same way; a Sales Nav grab and the headless
+  // captures still parse.
+  const { dialect } = sniffHead(text ?? "");
+  if (dialect === "OL" || dialect === "TM" || dialect === "CT") return [];
   // Junk is stripped up front so both timeline shapes parse over clean lines
   // and whatever survives into bodies is conversation, not chrome.
   const lines = cleanSfPaste(text ?? "")

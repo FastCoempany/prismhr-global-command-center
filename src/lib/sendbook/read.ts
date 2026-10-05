@@ -8,6 +8,7 @@
 // replied and no meeting was ever held — the operator's outbound never warms
 // an account, and a CSM intro doesn't either.
 
+import { GLYPH_CLASS, GLYPH_RE } from "@/lib/ingest/dialect";
 import { MINE_RE, inferActors } from "@/lib/intel/provenance";
 import { isMeetingNote } from "@/lib/intel/meeting";
 import { isCloser, isMachinery } from "@/lib/intel/closer";
@@ -99,7 +100,7 @@ export function recordSends(
 ): { at: string; head: string; who: string }[] {
   const out: { at: string; head: string; who: string }[] = [];
   for (const n of notes) {
-    if (!/^[✉✔☎☰] /.test(n.body)) continue;
+    if (!GLYPH_RE.test(n.body)) continue;
     const actors = n.actors || inferActors(n.body);
     const arrow = actors.indexOf("→");
     const sender = arrow >= 0 ? actors.slice(0, arrow) : "";
@@ -130,7 +131,7 @@ const isCsmVoice = (sender: string) => CSM_NAMES.has(sender.trim().toLowerCase()
 /** Their voice on a glyph-headed entry: a person, not us, not a CSM, not
  *  machinery. Null when the entry is none of that. */
 function theirVoice(n: NoteLike): { actors: string; sender: string } | null {
-  if (!/^[✉✔☎☰] /.test(n.body)) return null;
+  if (!GLYPH_RE.test(n.body)) return null;
   const actors = n.actors || inferActors(n.body);
   const sender = (actors.split("→")[0] ?? "").trim();
   if (!sender || MINE_RE.test(sender) || isCsmVoice(sender)) return null;
@@ -171,8 +172,9 @@ export function inboundDates(notes: NoteLike[]): string[] {
 
 // The record entry's head, cleaned into a short clause: glyph and routing
 // dropped, subject kept.
+const LEADING_GLYPH_RE = new RegExp(`^[${GLYPH_CLASS}]\\s*`, "u");
 export function clauseFromHead(head: string): string {
-  const noGlyph = head.replace(/^[✉✔☎☰]\s*/, "");
+  const noGlyph = head.replace(LEADING_GLYPH_RE, "");
   // "OL Aug 17 1:33 PM — Re: Subject · A → B +4" → "Re: Subject"
   const dash = noGlyph.indexOf("—");
   let s = dash >= 0 ? noGlyph.slice(dash + 1) : noGlyph;

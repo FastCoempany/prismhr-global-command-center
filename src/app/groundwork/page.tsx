@@ -47,6 +47,7 @@ import { readOutcome } from "@/lib/dashboard/outcome";
 import { digestForCardName } from "@/lib/intel/digest";
 import { READOUT_READ_KEY, buildFile } from "@/lib/groundwork/file";
 import { proximityMark } from "@/lib/groundwork/proximity";
+import { isSalesNav, isWire } from "@/lib/ingest/dialect";
 import {
   intentFor,
   intentReadDue,
@@ -229,7 +230,7 @@ export default async function GroundworkPage({
     // SN grabs and wire filings have their own parsers — they never join the
     // mail corpus, where their glyph heads would read as inbound messages.
     const intelNotes = (notes ?? []).filter(
-      (n) => !n.source.startsWith("salesnav") && n.source !== "wire",
+      (n) => !isSalesNav(n.source) && !isWire(n.source),
     );
     const acctTouches = touchesByAccount.get(p.id);
     if (intelNotes.length || acctTouches?.length) {
@@ -271,7 +272,7 @@ export default async function GroundworkPage({
   }
   for (const [id, notes] of accountNotes) {
     for (const n of notes) {
-      if (n.source !== "wire") continue;
+      if (!isWire(n.source)) continue;
       const cur = wireAtById.get(id);
       if (!cur || n.createdAt > cur) wireAtById.set(id, n.createdAt);
     }

@@ -13,6 +13,7 @@
 // its mirror, stamped with the day it went. The brain remembers what the app
 // forgot — that is the point of it.
 
+import { DIALECT_ALT, GLYPH_CLASS } from "@/lib/ingest/dialect";
 import { splitFallback } from "@/lib/room/deliverables";
 import { splitTags } from "@/lib/today/route-notes";
 import { isNamespacedAccountId } from "@/lib/today/overlay";
@@ -46,10 +47,16 @@ function dayOf(iso: string): string {
 }
 
 /** Strip the record's glyph head so the brain reads the substance, not the
- *  filing dialect. "✉ SF Jul 21 — subject · actors" is scaffolding. */
+ *  filing dialect. "✉ SF Jul 21 — subject · actors" is scaffolding. The
+ *  record glyphs and the dialect alphabet are the dialect table's
+ *  (src/lib/ingest/dialect.ts); the chip glyphs after them are the room's. */
+const HEAD_SCAFFOLD_RE = new RegExp(
+  `^[${GLYPH_CLASS}⚑✎✓▢✸⏲]\\s*(?:${DIALECT_ALT})?\\s*`,
+  "u",
+);
 function stripHead(body: string): string {
   return (body ?? "")
-    .replace(/^[✉✔☎☰⚑✎✓▢✸⏲]\s*(?:SF|OL|TM)?\s*/u, "")
+    .replace(HEAD_SCAFFOLD_RE, "")
     .replace(/^[^\n]*—\s*/u, (m) => (m.length < 90 ? "" : m))
     .trim();
 }

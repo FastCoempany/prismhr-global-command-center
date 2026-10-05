@@ -14,7 +14,8 @@ import { hasDatabaseEnv } from "@/lib/db";
 import { peos } from "@/lib/book";
 import { routingRoster } from "@/lib/book/roster";
 import { judgeFiling } from "@/lib/intel/misfile";
-import { dialectOf, readFreeVerdict, sourceFor } from "@/lib/room/paste";
+import { HEADS, SOURCE_OF, sniffHead } from "@/lib/ingest/dialect";
+import { readFreeVerdict, transcriberPrompt } from "@/lib/room/paste";
 import { digestFor, digestForCardName } from "@/lib/intel/digest";
 import {
   aiCleanAvailable,
@@ -169,8 +170,10 @@ export async function roomPaste(
   const acct = bindAccountId(accountId, peos);
   const rawText = typeof raw === "string" ? raw.trim() : "";
   // The capture's true dialect travels into the head token and source column —
-  // an Outlook thread must never masquerade as Salesforce activity.
-  const dialect = dialectOf(rawText);
+  // an Outlook thread must never masquerade as Salesforce activity. The head
+  // found rides to the source column too: a spreadsheet, a document and a
+  // typed note keep the SF token and say what they were in source.
+  const { dialect, head: sniffedHead } = sniffHead(rawText);
   // Head-keep suits newest-first captures (SF, Outlook). A call transcript is
   // different: the decisions live at the END of the call and the whole
   // conversation is the intelligence, so transcripts get a far higher ceiling
@@ -329,9 +332,10 @@ export async function roomPaste(
   // one head line. The registers show the head line only; the full text sits
   // under the fold, searchable and citable, never spelled out on arrival.
   const archiveNote = async (): Promise<string> => {
+    // The tape's own head line, "CALL TRANSCRIPT — <label>", names the archive.
+    const tapeLabel = new RegExp(`^${HEADS.call}\\s*—\\s*(.+)$`, "m");
     const label =
-      /^CALL TRANSCRIPT\s*—\s*(.+)$/m.exec(rawText.split("\n")[0] ?? "")?.[1] ??
-      "filed from the room";
+      tapeLabel.exec(rawText.split("\n")[0] ?? "")?.[1] ?? "filed from the room";
     // A call is filed at the day it HAPPENED, never the day it was dropped.
     // The email path has always done this; the transcript path never did, so a
     // call dropped two days late told the room "you met today" — and the recap
@@ -415,7 +419,7 @@ export async function roomPaste(
         lane: laneFor(actors, `${e.subject ?? ""}\n${e.body ?? ""}`),
         actors,
         recipients,
-        source: sourceFor(liveDialect, how),
+        source: SOURCE_OF(liveDialect, sniffedHead, how),
         at,
       });
       noteIds.push(n.id);
@@ -1663,8 +1667,10 @@ export async function roomTodoEdit(
 // The document transcriber — Claude reads a PDF or an image (a screenshot of
 // an email, a chat, a whiteboard, a business card) to paste text the room's
 // readers understand. An email thread comes back headed OUTLOOK THREAD, a
-// chat as TEAMS THREAD, anything else as a plain transcript. The bytes never
-// persist; only the filed entries do.
+// chat as TEAMS THREAD, a call as CALL TRANSCRIPT with its Recorded line
+// (ruled 2026-09-25, D3), anything else as a plain transcript; the ask is
+// transcriberPrompt in src/lib/room/paste.ts, whose heads are the dialect
+// table's. The bytes never persist; only the filed entries do.
 const IMAGE_MEDIA = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
 
 async function transcribePdf(
@@ -1704,7 +1710,7 @@ async function transcribePdf(
                 },
             {
               type: "text",
-              text: `Transcribe this ${isImage ? "image" : "document"} to plain text for a sales record. If it shows an email thread, start the output with "OUTLOOK THREAD — ${file.name}" and give each message its own From / To / Sent / Subject header block, newest first, with the message text under it. If it shows a chat, start with "TEAMS THREAD — ${file.name}" and keep speakers named inline. If it is a screenshot of anything else — a slide, a whiteboard, a card, handwriting — transcribe every readable word in reading order and describe only what is needed to make the text make sense. Output only the transcription.`,
+              text: transcriberPrompt(isImage ? "image" : "document", file.name),
             },
           ],
         },
