@@ -238,6 +238,46 @@ export function anyLiveGem(sr: SecondRecord | undefined): Gem | null {
   return sr?.gems?.[0] ?? null;
 }
 
+// ── the THEIRS line (decreed 2026-08-20; ruled 2026-09-25, C16) ─────────────
+// THEIRS is the account's people. The line leads only with a gem about an
+// account person — "their voice" means the PEO's own people, never a
+// colleague's log — so a colleague's gem never leads it; an account with no
+// live account-person gem has no THEIRS line at all. Acted gems have already
+// left the arrival surface. Colleague gems still ride behind the lead until
+// slice 11b retires their seat on the row.
+
+export type TheirsLine = {
+  label: string;
+  gems: Pick<Gem, "term" | "act" | "reason" | "whenDay" | "cites">[];
+};
+
+export function theirsLine(sr: SecondRecord | null | undefined): TheirsLine | null {
+  const live = (sr?.gems ?? []).filter((g) => !g.actedDay);
+  const theirs = live.filter((g) => g.whoKind !== "colleague");
+  if (theirs.length === 0) return null;
+  const shown = [...theirs, ...live.filter((g) => g.whoKind === "colleague")].slice(0, 3);
+  const g = shown[0];
+  const first = (g.who[0] ?? "").split(" ")[0].toUpperCase();
+  const day = g.whenDay ? g.whenDay.slice(5).replace("-", "/") : "";
+  const label = [
+    first ? `${first}’S ${g.term}` : g.term,
+    day,
+    shown.length > 1 ? `+${shown.length - 1}` : "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  return {
+    label,
+    gems: shown.map((x) => ({
+      term: x.term,
+      act: x.act,
+      reason: x.reason,
+      whenDay: x.whenDay,
+      cites: x.cites,
+    })),
+  };
+}
+
 // ── drop staleness (the Tallyfoot's quiet pressure line) ────────────────────
 
 export const DROP_STALE_DAYS = 10;

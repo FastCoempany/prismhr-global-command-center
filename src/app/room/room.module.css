@@ -2151,13 +2151,15 @@ button.sdRadio:hover {
 }
 
 /* ── The THEIRS line (decreed 2026-08-20) — the second record's one seat in
-     the row, in the warm ochre the court once spoke. ── */
+     the row. THEIRS is the account's people, so it takes the palette's blue,
+     the retired court's color for their turn (ruled 2026-09-25, C16); the
+     ochre was ours. ── */
 .theirs {
   font-family: var(--f-mono), Menlo, monospace;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.08em;
-  color: #8a5a00;
+  color: var(--blue);
   padding-bottom: 7px;
   border-bottom: 1px solid rgba(10, 28, 64, 0.12);
   margin-bottom: 4px;
@@ -2169,7 +2171,7 @@ button.sdRadio:hover {
   font: inherit;
   color: inherit;
   cursor: pointer;
-  border-bottom: 1px dashed rgba(138, 90, 0, 0.45);
+  border-bottom: 1px dashed color-mix(in srgb, var(--blue) 45%, transparent);
 }
 .theirsFold {
   margin: 4px 0 6px;

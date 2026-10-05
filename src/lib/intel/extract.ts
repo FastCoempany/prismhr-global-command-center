@@ -252,8 +252,10 @@ function push<T>(
     list.push({ value, src: doc.src, at: doc.at });
 }
 
-// The relayed-or-direct shapes of "they owe you the next move".
-const THEIR_PROMISE_RE =
+// The relayed-or-direct shapes of "they owe you the next move". Exported for
+// the single read (src/lib/record/read.ts), which names the promise's own
+// sentence beside the extractor's flag.
+export const THEIR_PROMISE_RE =
   /\b(?:will|going to|gonna|she'?ll|he'?ll|they'?ll|i'?ll)\s+(?:be in touch|reach out|get back|follow up|circle back|send|call you|contact you)|owes?\s+(?:you|us|antaeus)\b|\bOwed:.*—\s*@/i;
 
 export function extractDealIntel(docs: CorpusDoc[], seedEntry?: DigestEntry): DealIntel {
