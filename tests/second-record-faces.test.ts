@@ -18,7 +18,6 @@ import {
   engagedNeverIntroduced,
   intentWarm,
   orgInboundKey,
-  orgInboundHolder,
   outreachGem,
   verifiedCold,
   dropAgeDays,
@@ -232,24 +231,12 @@ describe("read.ts — the pure derivations", () => {
     assert.equal(verifiedCold(sr({})), false); // no rollup = never "verified"
   });
 
-  test("orgInboundKey normalizes both date shapes; holder names the colleague", () => {
+  test("orgInboundKey normalizes both date shapes", () => {
     const a = sr({ rollup: rollup({ lastOrgInbound: "2026-08-19 14:49" }) });
     assert.equal(orgInboundKey(a), "2026-08-19T14:49:00");
     const b = sr({ rollup: rollup({ lastOrgInbound: "2026-08-19" }) });
     assert.equal(orgInboundKey(b), "2026-08-19T12:00:00");
     assert.equal(orgInboundKey(sr({})), "");
-    const c = sr({
-      rollup: rollup({
-        lastHuman: {
-          day: "2026-08-19",
-          how: "email",
-          who: "Anika Steenstra",
-          kind: "colleague",
-          subject: "Re: renewal",
-        },
-      }),
-    });
-    assert.equal(orgInboundHolder(c), "Anika Steenstra");
   });
 
   test("engagedNeverIntroduced: heavy, warm support only", () => {
@@ -455,7 +442,12 @@ describe("the queue reads the second record", () => {
     assert.equal(moved, undefined);
   });
 
-  test("an org-side reply flips the bump to coordination instead of nagging", () => {
+  test("an org-side reply silences the drumbeat and produces no move (C6, amended 2026-10-05)", () => {
+    // Twelve quiet days since the touch would fire the second-touch bump; the
+    // export says the account answered, into a colleague's inbox. The thread is
+    // answered — no bump, no revival — and the retired coordination move
+    // ("Ask Anika what they said.") stages nowhere: a colleague's motion
+    // produces nothing for the operator to do.
     const second = new Map([
       [
         "TEST0000000000001",
@@ -473,23 +465,48 @@ describe("the queue reads the second record", () => {
         }),
       ],
     ]);
-    const { all } = buildQueue(
-      baseInput({
-        secondById: second,
-        touches: [
-          {
-            subjectKey: "outreach:TEST0000000000001",
-            contactedAt: "2026-08-08T12:00:00Z",
-            followUpAt: "",
-            status: "awaiting",
-          },
-        ],
-      }) as never,
+    const input = baseInput({
+      secondById: second,
+      touches: [
+        {
+          subjectKey: "outreach:TEST0000000000001",
+          contactedAt: "2026-08-08T12:00:00Z",
+          followUpAt: "",
+          status: "awaiting",
+        },
+      ],
+    });
+    const { all } = buildQueue(input as never);
+    assert.equal(
+      all.some((q) => q.ruleId === "silence-bump"),
+      false,
+      "no bump",
     );
-    const bump = all.find((q) => q.ruleId === "silence-bump");
-    assert.ok(bump);
-    assert.equal(bump.reason, "Their reply went to Anika.");
-    assert.equal(bump.action, "Ask Anika what they said.");
+    assert.equal(
+      all.some((q) => q.ruleId === "cold-revival"),
+      false,
+      "no revival",
+    );
+    assert.equal(
+      all.some((q) => /what they said|org-side/i.test(`${q.action} ${q.reason}`)),
+      false,
+      "the coordination move is retired",
+    );
+    // Nothing of the account's own stages. The account is free now, so the
+    // CSM's briefing slot may ride it as a vehicle (D22) — a move about the
+    // cadence, never about the reply; the exclusion, pinned in canon/groundwork,
+    // takes even that away when the reply is an attributed inbound.
+    assert.deepEqual(
+      all.filter(
+        (q) => q.accountId === "TEST0000000000001" && q.ruleId !== "roundup-slot",
+      ),
+      [],
+    );
+    // Without the org inbound the same quiet thread still gets its bump: the
+    // silence is the reply's doing, not a dead rule.
+    const unanswered = buildQueue({ ...input, secondById: new Map() } as never);
+    assert.equal(unanswered.all[0]?.ruleId, "silence-bump");
+    assert.equal(unanswered.all[0]?.action, "Send the second touch.");
   });
 
   test("cold-validated upgrades never-touched-incumbent to 52 with the verified reason", () => {
@@ -700,7 +717,7 @@ describe("the same-sha re-drop costs nothing", () => {
 // ═══ the adversarial-pass patches (2026-08-21) ═══════════════════════════════
 
 describe("the adversarial patches hold", () => {
-  test("the operator is never a collision and never holds their reply", () => {
+  test("the operator is never a collision", () => {
     const mine = sr({
       rollup: rollup({
         lastOrgInbound: "2026-08-19 09:00",
@@ -714,8 +731,7 @@ describe("the adversarial patches hold", () => {
       }),
     });
     assert.equal(collisionFor(mine, NOW), null);
-    assert.equal(orgInboundHolder(mine), "");
-    // A real colleague still registers both ways.
+    // A real colleague still registers.
     const real = sr({
       rollup: rollup({
         lastHuman: {
@@ -728,7 +744,6 @@ describe("the adversarial patches hold", () => {
       }),
     });
     assert.equal(collisionFor(real, NOW)?.colleague?.who, "Anika Steenstra");
-    assert.equal(orgInboundHolder(real), "Anika Steenstra");
   });
 
   test("intent-warm never claims opens it doesn't have", () => {

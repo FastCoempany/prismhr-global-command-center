@@ -540,9 +540,10 @@ export default async function RoomPage() {
       labels: data.labels,
     });
 
-    // THEIRS is the account's people (ruled 2026-09-25, C16): the line leads
-    // only with a gem about an account person, read from the folded second
-    // record the read carries.
+    // THEIRS is the account's people (ruled 2026-09-25, C16, amended
+    // 2026-10-05): the line carries only gems about an account person, read
+    // from the folded second record the read carries; a colleague's gem has
+    // no seat on the line or the row.
     const theirs = theirsLine(acct.secondRecord);
 
     rows.push({

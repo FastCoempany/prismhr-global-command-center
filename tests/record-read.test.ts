@@ -552,8 +552,8 @@ describe("secondRecordFor folds a shell-keyed drop under the canonical id", () =
     assert.equal(read.secondRecord, null);
   });
 
-  // ── THEIRS leads only with an account person's gem (C16) ──────────────
-  test("THEIRS's lead skips a colleague's gem", () => {
+  // ── THEIRS carries only an account person's gems (C16, amended 2026-10-05) ──
+  test("THEIRS's lead skips a colleague's gem, and the colleague's gem has no seat behind it", () => {
     const line = theirsLine(
       sr({
         gems: [
@@ -563,8 +563,12 @@ describe("secondRecordFor folds a shell-keyed drop under the canonical id", () =
       }),
     );
     assert.ok(line);
-    assert.equal(line.label, "TOM’S TAX SWITCH · 08/19 · +1");
-    assert.equal(line.gems[0].term, "TAX SWITCH");
+    // No "+1": the colleague's gem is not on the line (slice 11b).
+    assert.equal(line.label, "TOM’S TAX SWITCH · 08/19");
+    assert.deepEqual(
+      line.gems.map((g) => g.term),
+      ["TAX SWITCH"],
+    );
   });
 
   test("only colleague gems: no THEIRS line at all", () => {

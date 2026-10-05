@@ -1,7 +1,7 @@
 // Canon pins for the Groundwork face (CLAUDE.md "Groundwork face", the
-// rulings of 2026-09-25: C6, C7, C8, C9, D22, D26, D27). Every test drives a
-// pure builder with an input and asserts what comes back — never a string in
-// a source file.
+// rulings of 2026-09-25: C6 as amended 2026-10-05, C7, C8, C9, D22, D26,
+// D27). Every test drives a pure builder with an input and asserts what comes
+// back — never a string in a source file.
 
 import { strict as assert } from "node:assert";
 import { describe, test } from "node:test";
@@ -9,11 +9,13 @@ import {
   bandAt,
   buildQueue,
   currentBand,
+  liveMotionIds,
   QUEUE_RULE_IDS,
   RULE_SLOT_CAP,
   SEAT_SLOT_CAP,
 } from "../../src/lib/groundwork/day";
 import { stampSubtext } from "../../src/lib/groundwork/stamp";
+import { readAccount } from "../../src/lib/record/read";
 import type { Peo } from "../../src/lib/book";
 import type { DealIntel } from "../../src/lib/intel/types";
 
@@ -108,6 +110,137 @@ describe("the two-slot cap governs rules; seats keep their own cap of three (C6/
     assert.ok(leadingWires.every((q) => q.ruleId === "wire-trigger"));
     assert.equal(all[RULE_SLOT_CAP].ruleId, "intent-warm");
     assert.equal(all[RULE_SLOT_CAP + 1].ruleId, "wire-trigger");
+  });
+});
+
+describe("the exclusion reads both records (C6, amended 2026-10-05): a reply that landed org-side leaves the queue", () => {
+  const id = "O0000000000000001";
+  const org = acct({ id, name: "Answered Elsewhere" });
+  const NOW_SEP = new Date("2026-09-25T15:00:00Z"); // 10:00a Chicago
+  // Every rule's fuel, so "no item under any rule" means every rule: a seat,
+  // a wire hit, a touch awaiting its bump, a High intent grab, an outreach gem.
+  const everything = {
+    ...base,
+    now: NOW_SEP,
+    accounts: [org],
+    seats: new Map([[id, seatOf("Send the model.")]]),
+    wireAtById: new Map([[id, "2026-09-24T12:00:00Z"]]),
+    touches: [
+      {
+        subjectKey: `outreach:${id}`,
+        contactedAt: "2026-09-10T12:00:00Z",
+        followUpAt: "",
+        status: "awaiting",
+      },
+    ],
+    notesById: new Map([
+      [
+        id,
+        [
+          {
+            body: "SALESNAV ACCOUNTS - captured 9/24 - 1 rows collected\nhigh buyer intent",
+            source: "salesnav-ai",
+            createdAt: "2026-09-24T12:00:00Z",
+          },
+        ],
+      ],
+    ]),
+    secondById: new Map([
+      [
+        id,
+        {
+          rollup: null,
+          support: null,
+          intent: null,
+          gems: [
+            {
+              dropSha: "d942e0f2",
+              verdict: "CONFIRMED" as const,
+              createdDay: "2026-09-24",
+              actedDay: "",
+              who: ["Tom Harrison"],
+              whoKind: "account" as const,
+              term: "CANADA ASK",
+              what: "Tom asked about Canada",
+              whenDay: "2026-09-22",
+              signal: "asked",
+              act: "Send the Canada one-pager.",
+              reason: "Sep 22 reply asks about Canada.",
+              cites: [],
+            },
+          ],
+        },
+      ],
+    ]),
+  };
+
+  test("the fuel alone stages the account — the pin below is the exclusion's, not an empty queue's", () => {
+    const { all } = buildQueue(everything);
+    assert.ok(all.some((q) => q.accountId === id));
+  });
+
+  test("their mail to a colleague's inbox is a real inbound on the first record: excluded, no item under any rule", () => {
+    const read = readAccount({
+      account: { id, name: org.name, contacts: [] },
+      notes: [
+        {
+          id: "m1",
+          accountId: id,
+          partner: "",
+          kind: "account",
+          lane: "mine",
+          body: "✉ OL Sep 20 — Re: Canada · Tom Harrison → Anika Steenstra\nCan we talk about Canada next week?",
+          actors: "Tom Harrison → Anika Steenstra",
+          source: "outlook-ai",
+          recipients: "Anika Steenstra",
+          createdAt: "2026-09-20T15:00:00Z",
+        },
+      ],
+      touches: [],
+      todos: [],
+      dispositions: new Map(),
+      homeSide: ["Anika Steenstra"],
+      now: NOW_SEP,
+    });
+    assert.equal(read.intel.lastInboundWho, "Tom Harrison", "the reply reached us");
+    const excludedIds = liveMotionIds(new Map(), new Map([[id, read.intel]]), NOW_SEP);
+    assert.ok(excludedIds.has(id), "in motion: excluded");
+    const { all } = buildQueue({ ...everything, excludedIds });
+    assert.deepEqual(
+      all.filter((q) => q.accountId === id),
+      [],
+    );
+    assert.equal(
+      all.some((q) => /what they said|org-side/i.test(`${q.action} ${q.reason}`)),
+      false,
+      "no coordination move anywhere",
+    );
+  });
+
+  test("the export's attributed inbound row is the same fact on the second record", () => {
+    const second = new Map([
+      [
+        id,
+        {
+          rollup: {
+            lastTheirs: { day: "2026-09-20", who: "Tom Harrison", subject: "Re: Canada" },
+          },
+        },
+      ],
+    ]);
+    const excludedIds = liveMotionIds(new Map(), new Map(), NOW_SEP, second);
+    assert.ok(excludedIds.has(id));
+    const { all } = buildQueue({ ...everything, excludedIds });
+    assert.deepEqual(
+      all.filter((q) => q.accountId === id),
+      [],
+    );
+    // The account-level datetime alone is not that fact (D19).
+    const datetimeOnly = new Map([[id, { rollup: { lastTheirs: null } }]]);
+    assert.equal(
+      liveMotionIds(new Map(), new Map(), NOW_SEP, datetimeOnly).has(id),
+      false,
+    );
   });
 });
 

@@ -21,7 +21,6 @@ import {
   engagedNeverIntroduced,
   intentWarm,
   orgInboundKey,
-  orgInboundHolder,
   outreachGem,
   verifiedCold,
   type SecondRecord,
@@ -402,27 +401,15 @@ function rankAll(inp: QueueInput, now: Date): QueueItem[] {
       .pop();
     // The answered check reads the WIDEST inbound the app holds (the second
     // record law): a reply that landed in a colleague's inbox still answers
-    // the thread — no bump; the move flips to coordination instead.
+    // the thread, so the drumbeat falls silent. It stages nothing in its
+    // place — the coordination move ("Ask … what they said.") is retired
+    // (ruled 2026-09-25, C6, amended 2026-10-05): a colleague's motion
+    // produces nothing for the operator to do, and an account person's reply
+    // that reached a colleague is the exclusion's business, not a rule's.
     const orgIn = orgInboundKey(sr);
     const answeredMine =
       !!intelHere?.lastInbound && !!lastOutIso && intelHere.lastInbound > lastOutIso;
     const answeredOrg = !answeredMine && !!orgIn && !!lastOutIso && orgIn > lastOutIso;
-    if (newestTouch && lastOutIso && answeredOrg) {
-      const holder = orgInboundHolder(sr);
-      const first = holder.split(" ")[0] || "";
-      candidates.push({
-        accountId: p.id,
-        name: p.name,
-        ruleId: "silence-bump",
-        weight: 72,
-        band: BAND_OF["silence-bump"],
-        action: first ? `Ask ${first} what they said.` : "Find the reply org-side.",
-        reason: first ? `Their reply went to ${first}.` : "Their reply landed org-side.",
-        owed: "ask composed",
-        carried: false,
-        intent,
-      });
-    }
     const answered = answeredMine || answeredOrg;
     if (newestTouch && lastOutIso && !answered) {
       const quiet = (now.getTime() - Date.parse(lastOutIso)) / DAY;

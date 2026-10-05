@@ -387,6 +387,7 @@ Dependency order first, then risk. Every slice is one PR: branch off main, chain
 - **App verification:** an account whose reply went to a colleague shows on no wing and no HomeRoom row as a move; the drumbeat stays silent on it.
 - **Rollback:** revert.
 - **Size:** S. Not blocked; it can run any time after slice 10.
+- **Amended 2026-10-05 (built):** the THEIRS change lives in `theirsLine` (src/lib/activity/read.ts), where slice 10 put the builder, and three pins outside the one named here had to follow it — tests/record-read.test.ts's THEIRS label dropped the "+1" that counted the colleague gem riding behind the lead (slice 10's interim behavior, which its own comment scheduled this slice to retire), and the two `orgInboundHolder` assertions in tests/second-record-faces.test.ts left with the function; the rewritten org test lets the CSM's roundup slot ride the now-free account as a vehicle (D22), and the strict "no item under any rule" is pinned in tests/canon/groundwork.test.ts with the account excluded.
 
 ### Slice 12 · The single read, part 3: the drawer, the asks and intake
 
