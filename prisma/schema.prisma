@@ -1090,21 +1090,26 @@ model StashItem {
 // Notes/Follow-ups tabs. Also drives the chip freshness color (green/yellow/red
 // by time since the account was last touched).
 model AccountNote {
-  id        String   @id @default(cuid())
-  accountId String // book account (Salesforce id)
-  partner   String   @default("") // whose outreach card it was written from
-  kind      String   @default("mine") // "mine" | "partner"
-  body      String
+  id         String   @id @default(cuid())
+  accountId  String // book account (Salesforce id)
+  partner    String   @default("") // whose outreach card it was written from
+  kind       String   @default("mine") // "mine" | "partner"
+  body       String
   // Provenance (stamped at write; "" on legacy rows = infer at read):
-  lane      String   @default("") // "mine" (my working record) | "background" (ingested intel)
-  actors    String   @default("") // "Kim Bartolotti → Lesha Cyphers +2"
+  lane       String   @default("") // "mine" (my working record) | "background" (ingested intel)
+  actors     String   @default("") // "Kim Bartolotti → Lesha Cyphers +2"
   // EVERY recipient, comma-joined, our own side included. `actors` names the
   // ACCOUNT's person when a message has several recipients — by decree, since
   // our side is on nearly every thread and identifies nobody — so it cannot
   // answer "did this reach us". This can. "" on rows filed before it existed.
-  recipients String  @default("")
-  source    String   @default("") // "sf" | "sf-ai" | "transcript" | "chip" | "move" | "touch" | ...
-  createdAt DateTime @default(now())
+  recipients String   @default("")
+  source     String   @default("") // "sf" | "sf-ai" | "transcript" | "chip" | "move" | "touch" | ...
+  // The door the row came through (Provenance is columns, ruled 2026-09-25,
+  // P3): "chute" | "drop" | "act-lane" | "intranet" | "activity" | "seed" |
+  // "hand" — src/lib/ingest/doors.ts. `source` names the dialect; this names
+  // the hand that filed it. "" on rows filed before it existed.
+  door       String   @default("")
+  createdAt  DateTime @default(now())
 
   @@index([accountId, createdAt])
 }

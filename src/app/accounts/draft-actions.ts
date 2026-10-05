@@ -11,6 +11,7 @@ import { claudeClient, claudeAvailable } from "@/lib/claude/health";
 import { MODEL_DRAFT } from "@/lib/intranet/doctrine";
 import { getAppAccess } from "@/lib/auth";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
+import { createAccountNoteRow } from "@/lib/notes/write";
 import { getPeo, type Peo } from "@/lib/book";
 import { redactMoney } from "@/lib/intel/lexicon";
 import { KITS, getKit, kitsFor, mergeText, type CampaignKit } from "@/lib/campaigns";
@@ -257,20 +258,21 @@ export async function saveMailTemplate(
   if (!n) return { ok: false, reason: "Name it first." };
   if (!b) return { ok: false, reason: "An empty template saves nothing." };
   try {
-    const row = await getPrisma().accountNote.create({
-      data: {
-        accountId: TEMPLATE_NS,
-        kind: "account",
-        lane: "background",
-        actors: "",
-        source: "mail-template",
-        body: JSON.stringify({
-          name: n,
-          subject: redactMoney((subject ?? "").trim()).slice(0, 140),
-          body: b,
-        }),
-      },
-      select: { id: true },
+    // Through the one writer (P3): the template is a JSON body, so the
+    // writer's redaction runs over its string values and the body stays JSON.
+    const row = await createAccountNoteRow({
+      accountId: TEMPLATE_NS,
+      kind: "account",
+      door: "hand",
+      lane: "background",
+      actors: "",
+      source: "mail-template",
+      body: JSON.stringify({
+        name: n,
+        subject: redactMoney((subject ?? "").trim()).slice(0, 140),
+        body: b,
+      }),
+      structured: true,
     });
     return { ok: true, id: row.id };
   } catch {

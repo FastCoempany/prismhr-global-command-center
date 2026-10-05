@@ -34,6 +34,7 @@ describe("no writer reaches AccountNote without redaction (CLAUDE.md:582-583)", 
       {
         accountId: "A1",
         kind: "account",
+        door: "hand",
         body: "They quoted $12,000 a month for Canada.",
       },
       client,
@@ -48,7 +49,7 @@ describe("no writer reaches AccountNote without redaction (CLAUDE.md:582-583)", 
   test("lane defaults to mine; provenance and recipients ride on the first tier", async () => {
     const { client, writes } = stub();
     await createAccountNoteRow(
-      { accountId: "A1", kind: "mine", body: "Call Dana." },
+      { accountId: "A1", kind: "mine", door: "hand", body: "Call Dana." },
       client,
     );
     assert.equal(writes[0].lane, "mine");
@@ -65,6 +66,7 @@ describe("no writer reaches AccountNote without redaction (CLAUDE.md:582-583)", 
       {
         accountId: "A1",
         kind: "account",
+        door: "hand",
         body: "✉ OL 9:44 AM — Re: Canada · Antaeus Coe → Dana Ellis\nSent the model.",
         lane: "background",
         actors: "Antaeus Coe → Dana Ellis",
@@ -87,6 +89,7 @@ describe("no writer reaches AccountNote without redaction (CLAUDE.md:582-583)", 
       {
         accountId: "scratch:pad",
         kind: "mine",
+        door: "hand",
         body: "quote came in at $12,000",
         keepFigures: true,
       },
@@ -94,7 +97,7 @@ describe("no writer reaches AccountNote without redaction (CLAUDE.md:582-583)", 
     );
     assert.equal(writes[0].body, "quote came in at $12,000");
     await createAccountNoteRow(
-      { accountId: "A1", kind: "mine", body: "quote came in at $12,000" },
+      { accountId: "A1", kind: "mine", door: "hand", body: "quote came in at $12,000" },
       client,
     );
     assert.ok(!writes[1].body.includes("12,000"));
@@ -113,7 +116,7 @@ describe("no writer reaches AccountNote without redaction (CLAUDE.md:582-583)", 
       },
     };
     const r = await createAccountNoteRow(
-      { accountId: "A1", kind: "account", body: "$5,000 PEPM they said" },
+      { accountId: "A1", kind: "account", door: "hand", body: "$5,000 PEPM they said" },
       client,
     );
     assert.equal(r.id, "stable");

@@ -30,7 +30,8 @@ import {
   parsePlaybookBody,
 } from "@/lib/playbook/store";
 import { fileGaps, gapDismissKey, gapNs, parseGapBody } from "@/lib/room/gaps";
-import { actionBody, splitFallback, urgencyForDue } from "@/lib/room/deliverables";
+import { actionBody, splitFallback } from "@/lib/room/deliverables";
+import type { Door } from "@/lib/ingest/doors";
 import { outcomeMarkBody } from "@/lib/room/loss";
 import { MINE_RE, actorsLine, joinRecipients, laneFor } from "@/lib/intel/provenance";
 import {
@@ -53,7 +54,7 @@ import {
   moveDoneKey,
   MOVE_DONE_STATUS,
 } from "@/lib/room/bind";
-import { createAccountNoteRow } from "@/lib/notes/write";
+import { createAccountNoteRow, createTodoRow } from "@/lib/notes/write";
 import { applyStepComplete } from "@/lib/dashboard/complete";
 import { mirrorNoteToSheet } from "@/lib/today/mirror";
 import { OUTCOME_LABEL, writeOutcome, type OutcomeStatus } from "@/lib/dashboard/outcome";
@@ -88,6 +89,7 @@ async function roomLog(
       accountId: acct.id,
       kind: "account",
       body: `✎ ${body}`,
+      door: "hand",
       lane: "mine",
       source: "room",
     });
@@ -140,7 +142,10 @@ async function stampPasteMark(pasteKey: string, firstNoteId: string) {
 export async function roomPaste(
   accountId: string,
   raw: string,
-  opts?: { force?: boolean },
+  // The door the capture came through stamps every row the filing writes
+  // (P3): the Chute says "chute"; a paste or file on the account's own row
+  // is the Drop, the default.
+  opts?: { force?: boolean; door?: Door },
 ): Promise<{
   ok: boolean;
   filed: number;
@@ -168,6 +173,7 @@ export async function roomPaste(
   archived?: boolean;
 }> {
   const acct = bindAccountId(accountId, peos);
+  const door: Door = opts?.door ?? "drop";
   const rawText = typeof raw === "string" ? raw.trim() : "";
   // The capture's true dialect travels into the head token and source column —
   // an Outlook thread must never masquerade as Salesforce activity. The head
@@ -352,6 +358,7 @@ export async function roomPaste(
       accountId: acct.id,
       kind: "account",
       body: `☰ Call transcript — ${label}${voices > 1 ? ` · ${voices} voices` : ""} · full text under the fold\n${whole}`,
+      door,
       lane: "mine",
       source: "transcript",
       at,
@@ -389,6 +396,7 @@ export async function roomPaste(
         accountId: acct.id,
         kind: "account",
         body: `☰ transcript — filed from the room\n${body}`,
+        door,
         lane: "mine",
         source: "transcript",
         at: recordedAt(),
@@ -416,6 +424,7 @@ export async function roomPaste(
           0,
           4000,
         ),
+        door,
         lane: laneFor(actors, `${e.subject ?? ""}\n${e.body ?? ""}`),
         actors,
         recipients,
@@ -434,7 +443,7 @@ export async function roomPaste(
     }
     if (noteIds[0]) await stampPasteMark(pasteKey, noteIds[0]);
     const absorbed: Awaited<ReturnType<typeof absorbRead>> = read
-      ? await absorbRead(read, { id: acct.id, name: acct.name }, now)
+      ? await absorbRead(read, { id: acct.id, name: acct.name }, now, door)
       : { opened: [], asks: 0, learned: 0, outcome: null, noteIds: [] };
     // Everything the read fanned out rides in the receipt, so the undo can
     // take back the whole filing: the asks, playbook lines and outcome marker
@@ -470,6 +479,8 @@ async function absorbRead(
   read: Awaited<ReturnType<typeof aiCleanTimeline>>,
   acct: { id: string; name: string },
   now: Date,
+  // The filing's door: every row the fan-out writes carries it (P3).
+  door: Door,
 ): Promise<{
   opened: { id: string; text: string }[];
   asks: number;
@@ -518,20 +529,15 @@ async function absorbRead(
       if (!key || seen.has(key)) continue;
       seen.add(key);
       try {
-        const t = await prisma.todo.create({
-          data: {
-            body: withTags(body, {
-              ...NO_TAGS,
-              kind: "action",
-              urgency: urgencyForDue(a.due, now),
-              // The wall itself — the sheet reads this to know the date passed.
-              date: a.due,
-            }),
-            done: false,
-            position: ++top,
-            accountId: acct.id,
-            remindAt: a.due ? new Date(`${a.due}T12:00:00Z`) : new Date(),
-          },
+        // The wall rides as the date tag, sets the urgency, and places the
+        // reminder — the writer carries the codec (src/lib/notes/write.ts).
+        const t = await createTodoRow({
+          body,
+          tags: { kind: "action" },
+          due: a.due,
+          now,
+          position: ++top,
+          accountId: acct.id,
         });
         opened.push({ id: t.id, text: a.text });
       } catch {
@@ -547,7 +553,12 @@ async function absorbRead(
       .findMany({ where: { accountId: gapNs(acct.id) }, select: { body: true } })
       .catch(() => [] as { body: string }[]);
     const known = new Set(priorAsks.map((r) => knowledgeKey(parseGapBody(r.body))));
-    const gapIds = await fileGaps({ accountId: acct.id, questions: read.gaps, known });
+    const gapIds = await fileGaps({
+      accountId: acct.id,
+      questions: read.gaps,
+      known,
+      door,
+    });
     asks = gapIds.length;
     noteIds.push(...gapIds);
   }
@@ -574,6 +585,7 @@ async function absorbRead(
       accountId: acct.id,
       accountName: acct.name,
       known,
+      door,
     });
     learned += filedIds.length;
     noteIds.push(...filedIds);
@@ -590,6 +602,7 @@ async function absorbRead(
         accountId: acct.id,
         kind: "account",
         body: outcomeMarkBody(read.outcome.status, read.outcome.phrase),
+        door,
         lane: "mine",
         source: "outcome",
       });
@@ -624,6 +637,7 @@ async function fileCompletion(accountId: string, todoId: string, body: string) {
       accountId,
       kind: "account",
       body: `✓ ${text} — done ${day}`,
+      door: "hand",
       lane: "mine",
       source: "done",
     });
@@ -743,7 +757,6 @@ export async function roomClose(args: {
 import { nextRemindIso, parseLogInput } from "@/lib/room/bind";
 import { getPrisma } from "@/lib/db";
 import {
-  NO_TAGS,
   splitMarker,
   splitTags,
   visibleText,
@@ -785,22 +798,14 @@ export async function roomCompose(
         ? { ok: true, kind: "note", noteId: r.noteId, todoId: r.todoId }
         : { ok: false, reason: r.reason };
     }
-    const prisma = getPrisma();
-    const top = await prisma.todo.findFirst({
-      orderBy: { position: "desc" },
-      select: { position: true },
-    });
-    const t = await prisma.todo.create({
-      data: {
-        body: withTags(parsed.body, { ...NO_TAGS, kind: "action", urgency }),
-        done: false,
-        position: (top?.position ?? -1) + 1,
-        accountId: acct.id,
-        remindAt:
-          parsed.kind === "scheduled"
-            ? new Date(nextRemindIso(parsed.remindDay, new Date()))
-            : new Date(),
-      },
+    const t = await createTodoRow({
+      body: parsed.body,
+      tags: { kind: "action", urgency },
+      accountId: acct.id,
+      remindAt:
+        parsed.kind === "scheduled"
+          ? new Date(nextRemindIso(parsed.remindDay, new Date()))
+          : new Date(),
     });
     refresh();
     return {
@@ -981,6 +986,7 @@ async function closeCard(args: {
         body: `✓ ${label}. Confirmed by your call.${
           args.phrase ? ` The evidence: ${redactMoney(args.phrase).slice(0, 160)}` : ""
         }`,
+        door: "hand",
         lane: "mine",
         source: "outcome",
       }).catch(() => null);
@@ -1108,6 +1114,7 @@ export async function roomResearch(
       accountId: researchNs(acct.id),
       kind: "account",
       body: researchBody(finding, now),
+      door: "hand",
       lane: "background",
       source: "research",
     });
@@ -1117,6 +1124,7 @@ export async function roomResearch(
       accountId: acct.id,
       kind: "account",
       body: researchBody(finding, now).split("\n⟪")[0],
+      door: "hand",
       lane: "background",
       source: "research",
     }).catch(() => null);
@@ -1129,6 +1137,7 @@ export async function roomResearch(
       accountId: acct.id,
       questions: finding.asks,
       known: new Set(priorAsks.map((r) => knowledgeKey(parseGapBody(r.body)))),
+      door: "hand",
     });
 
     refresh();
@@ -1241,6 +1250,7 @@ export async function roomGapsRefill(
       accountId: acct.id,
       questions: minted,
       known: new Set(asks.map((r) => knowledgeKey(parseGapBody(r.body)))),
+      door: "hand",
     });
     refresh();
     return { ok: true, added: added.length };
@@ -1317,18 +1327,11 @@ export async function roomOwedAccept(
   if (!(await requireWrite())) return { ok: false, reason: "Read-only session." };
   try {
     const prisma = getPrisma();
-    const top = await prisma.todo.findFirst({
-      orderBy: { position: "desc" },
-      select: { position: true },
-    });
-    await prisma.todo.create({
-      data: {
-        body: withTags(body, { ...NO_TAGS, kind: "action" }),
-        done: false,
-        position: (top?.position ?? -1) + 1,
-        accountId: acct.id,
-        remindAt: new Date(),
-      },
+    await createTodoRow({
+      body,
+      tags: { kind: "action" },
+      accountId: acct.id,
+      remindAt: new Date(),
     });
     await prisma.accountDisposition
       .upsert({
@@ -1503,18 +1506,11 @@ export async function roomNoteToAction(
     }
     text = text.trim().slice(0, 300);
     if (!text) return { ok: false, reason: "Nothing to promote." };
-    const top = await prisma.todo.findFirst({
-      orderBy: { position: "desc" },
-      select: { position: true },
-    });
-    await prisma.todo.create({
-      data: {
-        body: withTags(text, { ...NO_TAGS, kind: "action" }),
-        done: false,
-        position: (top?.position ?? -1) + 1,
-        accountId: acct.id,
-        remindAt: new Date(),
-      },
+    await createTodoRow({
+      body: text,
+      tags: { kind: "action" },
+      accountId: acct.id,
+      remindAt: new Date(),
     });
     refresh();
     return { ok: true };

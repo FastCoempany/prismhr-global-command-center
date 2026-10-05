@@ -5,6 +5,7 @@
 // effort by design — a failed mirror never fails the write it mirrors.
 
 import { getPrisma } from "@/lib/db";
+import { createTodoRow } from "@/lib/notes/write";
 import { withMarker, type RouteRefs } from "./route-notes";
 
 export async function mirrorNoteToSheet(
@@ -19,10 +20,12 @@ export async function mirrorNoteToSheet(
       select: { position: true },
     });
     const position = (top?.position ?? -1) + 1;
+    // The marker is already on the body; the writer takes it as handed over.
+    // A table without remindAt still takes the row, as before.
     const b = withMarker(body.slice(0, 20000), refs, label);
-    const t = await prisma.todo
-      .create({ data: { body: b, position, remindAt: new Date() } })
-      .catch(() => prisma.todo.create({ data: { body: b, position } }));
+    const t = await createTodoRow({ body: b, position, remindAt: new Date() }).catch(() =>
+      createTodoRow({ body: b, position }),
+    );
     return t.id;
   } catch {
     // Sheet mirror is best-effort; the original note already saved.
