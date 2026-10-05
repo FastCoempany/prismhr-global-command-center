@@ -60,7 +60,11 @@ describe("health thresholds — flips happen at the boundary, not near it", () =
       lastRecordAt: touchAt(1),
       now: NOW,
     });
-    assert.equal(r.court.tone, "you");
+    // The court line is retired (ruled 2026-09-25, D25): the move line says
+    // who and when. A thread they answered never reads "Wait on"; the open
+    // gate is ours to chase, and the line names the person and the quiet.
+    assert.ok(!/^Wait on/.test(r.move), r.move);
+    assert.equal(r.move, "Chase Kristen on “demo delivered”. Quiet 10 days.");
   });
 });
 

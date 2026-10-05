@@ -412,6 +412,7 @@ Dependency order first, then risk. Every slice is one PR: branch off main, chain
 - **App verification:** /sendbook and Groundwork's Tallyfoot agree on the week's counts.
 - **Rollback:** revert.
 - **Size:** M.
+- **Amended 2026-10-05 (built):** `buildSendbook` takes `readsById` (the read's `docs` and `secondRecord`, which an AccountRead satisfies as it stands) and folds the second record itself through `orgSignalsOf`, so no page builds an `orgSignals` map; the three readers keep a rows door (`docsFromRows`, the same `docOf` over a row with the CSM column as the roster) because the Accounts sheet's engaged read, the activity run's context pack and the HomeRoom's seat read still hand rows until slice 15, and the fixtures enter by it; a send is the operator's own (`MINE_RE` on the doc's sender, as `newestOutbound` spells it), never self-addressed (touch.ts's `selfAddressed`, now exported), and Groundwork's seat retirement reads the read's docs, so a ✕-parked send retires no seat.
 
 ### Slice 14 · The single read, part 5: whose move
 
@@ -423,6 +424,7 @@ Dependency order first, then risk. Every slice is one PR: branch off main, chain
 - **App verification:** the room's move lines are unchanged on the same data; the drawer's "they owe a reply" agrees with the room's move.
 - **Rollback:** revert.
 - **Size:** M.
+- **Amended 2026-10-05 (built):** the rungs live in `whoseMoveFrom(facts, now)` in src/lib/record/whose-move.ts and the verdict carries a `rung` (reply, meeting, acceptance, send, loop, none), because the engine's sentences and the drawer's "they owe a reply" need the rung, not the clocks; the engine takes `whoseMove` from the read and, handed only the facts (its own suites feed it by hand), runs the same function, so the sentence is one either way; row 2 of pass 2 B ("a colleague's mail never flips it") landed in `docOf` — a home-side sender's mail is neither `in` nor `out` — so the read's `lastInbound`, the exclusion, the Sendbook and the court answer alike; Groundwork hands the Channel Ask's taps into the read's touch log so the verdict and the drumbeat share one clock, and `readAccount` takes the newest `outreach:` touch by `contactedAt`; `buildQueue` takes `moveById` and falls back to `whoseMoveFrom` over its own facts for callers without reads; report.ts's `theirTurnFrom` and `answeredSince` stayed pure harvesters over rows (their hand-run suite pins the signature) and the drawer reads `theirPromise` and `whoseMove` in build.ts; the read's `theirPromise` filters home-side owners as the page did; and three suites outside the named four carried court pins or the page's old owedByThem call and followed D25 — room-engine, record-read's parity suite, and ingest-fanout's source pin.
 
 ### Slice 15 · The single read, part 6: Accounts
 

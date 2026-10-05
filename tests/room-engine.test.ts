@@ -4,7 +4,9 @@ import { climbFraction, daysBetween, meterRead, readDeal } from "@/lib/room/engi
 
 // ADVERSARIAL PASS 2 — the room's read. The engine must stay honest under
 // missing, malformed, and extreme inputs: no invented moves, no NaN leaking
-// into copy, no forbidden words, bounds that hold.
+// into copy, no forbidden words, bounds that hold. The court line is retired
+// in full (ruled 2026-09-25, D25): where these pins read the chip they read
+// the move line, which says who and when.
 
 const NOW = new Date("2026-07-28T17:00:00Z");
 
@@ -23,14 +25,14 @@ describe("readDeal — honesty under missing data", () => {
     assert.equal(r.thin, true);
     assert.equal(r.health, "quiet");
     assert.match(r.move, /Not enough signal/);
-    assert.equal(r.court.tone, "none");
+    assert.equal(r.move, "File a paste or a note. Not enough signal yet.");
   });
   test("garbage dates never leak NaN into copy", () => {
     const r = readDeal({
       ...base,
       lastTouch: { at: "not-a-date", awaitingReply: true, who: "Bryce" },
     });
-    assert.ok(!/NaN|undefined|null/.test(r.move + r.court.line));
+    assert.ok(!/NaN|undefined|null/.test(r.move));
   });
   test("future-dated touches clamp to zero quiet days", () => {
     const r = readDeal({
@@ -58,7 +60,8 @@ describe("readDeal — the loud cases stay loud and legal", () => {
     assert.equal(r.health, "red");
     assert.match(r.move, /Chase Bryce/);
     assert.match(r.move, /Sept 1 target/);
-    assert.match(r.court.line, /THEIR MOVE · BRYCE · QUIET \d DAYS/);
+    // Their move, quiet a week: the move line carries the person and the clock.
+    assert.match(r.move, /Quiet 7 days/);
   });
   // Founder-decreed 2026-08-29: the stage carries an obligation, never a
   // curiosity. A fresh gate with nothing owed and nobody late is not a move —
@@ -66,7 +69,7 @@ describe("readDeal — the loud cases stay loud and legal", () => {
   // reprinting the register's own line.
   test("fresh gate, no thread, nothing owed → the stage points at UNKNOWN, not the gate", () => {
     const r = readDeal({ ...base, step: { ...step, ageDays: 0 } });
-    assert.equal(r.court.tone, "you");
+    assert.ok(!/^Wait on/.test(r.move), "an open gate with no thread is never theirs");
     assert.equal(r.move, "Nothing owed either way. The open gates are in UNKNOWN.");
     assert.equal(/signature tracked/i.test(r.move), false);
     assert.ok(r.health === "green" || r.health === "amber");
@@ -89,7 +92,7 @@ describe("readDeal — the loud cases stay loud and legal", () => {
       assert.ok(!/\bsteps?\b/i.test(r.move), r.move);
     }
   });
-  test("hostile who-strings are capped and case-normalized in the court line", () => {
+  test("a hostile who-string never breaks the move line's shape", () => {
     const r = readDeal({
       ...base,
       lastTouch: {
@@ -98,18 +101,18 @@ describe("readDeal — the loud cases stay loud and legal", () => {
         who: "x".repeat(500),
       },
     });
-    assert.ok(r.court.line.length < 60);
+    // The line still opens with the verb and closes with the quiet; the name
+    // rides between them whatever it is.
+    assert.match(r.move, /^Nudge x+\. Quiet 8 days\.$/);
   });
 });
 
 describe("readDeal — every gate closed, nothing stamped", () => {
-  test("all gates done → stamp move, green health, your court, never thin", () => {
+  test("all gates done → stamp move, green health, your move, never thin", () => {
     const r = readDeal({ ...base, allGatesDone: true });
     assert.equal(r.thin, false);
     assert.equal(r.health, "green");
-    assert.match(r.move, /Stamp the outcome/);
-    assert.equal(r.court.tone, "you");
-    assert.match(r.court.line, /STAMP THE OUTCOME/);
+    assert.equal(r.move, "Stamp the outcome. Every gate is closed.");
   });
 });
 
@@ -225,9 +228,8 @@ describe("the recap rule — a fresh meeting puts the follow-up on the operator"
       lastTouch: { at: "2026-08-12T19:32:00Z", awaitingReply: true, who: "Tom" },
       lastMeeting: { at: "2026-08-18T17:00:00Z", who: "Tom" },
     });
-    assert.match(r.move, /^Send Tom the recap\. You met today\./);
-    assert.equal(r.court.tone, "you");
-    assert.match(r.court.line, /MET TOM TODAY/);
+    // Who and when, on the move line: met Tom, today.
+    assert.equal(r.move, "Send Tom the recap. You met today.");
   });
   test("an inbound after the meeting still outranks the recap", () => {
     const r = readDeal({
@@ -275,7 +277,6 @@ describe("the recap rule — a fresh meeting puts the follow-up on the operator"
       theirBall: { who: "Chassie", text: "invoices + EOR confirm" },
     });
     assert.equal(r.move, "Send Chassie the recap. They owe invoices + EOR confirm.");
-    assert.equal(r.court.tone, "you");
   });
   test("a different ball-holder is named, never pronouned", () => {
     const r = readDeal({
@@ -328,8 +329,8 @@ describe("the same-day send — a fresh outbound puts the ball with them", () =>
       step,
       lastTouch: { at: "2026-08-19T19:28:00Z", awaitingReply: true, who: "Javier" },
     });
-    assert.match(r.move, /^Wait on Javier\. You wrote today\./);
-    assert.match(r.court.line, /THEIR MOVE/);
+    // Their move, on the move line: who we wait on and when we wrote.
+    assert.equal(r.move, "Wait on Javier. You wrote today.");
   });
   test("yesterday's outbound leaves the ball with them, never the gate's words", () => {
     // Before 2026-08-29 this handed the row back to the gate item verbatim.

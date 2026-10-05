@@ -440,8 +440,9 @@ describe("a booked meeting is not a wait for a reply", () => {
       },
       lastAccepted: { at: effectiveAt(NOON, HI[0].body), who: "Melanie" },
     });
+    // The court line is retired (D25): the move line says who and when —
+    // booked, and by whom.
     assert.equal(r.move, "Wait for the meeting. Melanie accepted.");
-    assert.equal(r.court.line, "BOOKED · MELANIE ACCEPTED");
   });
   test("the acceptance must carry its OWN clock, or the anchor buries it", () => {
     // Both notes file at the same noon anchor; only the head clocks order
@@ -486,7 +487,10 @@ describe("a booked meeting is not a wait for a reply", () => {
   });
 });
 
-describe("the court chip counts in days, never to zero", () => {
+describe("the move line counts in days, never to zero", () => {
+  // The court chip is retired in full (ruled 2026-09-25, D25); the day grammar
+  // it carried — "0 DAYS AGO" is a chip that cannot count — lives on the move
+  // line, which says who and when.
   const base = {
     accountName: "x",
     step: null,
@@ -494,34 +498,35 @@ describe("the court chip counts in days, never to zero", () => {
     lastRecordAt: "2026-09-04T12:00:00Z",
     now: new Date("2026-09-04T20:00:00Z"),
   };
-  test("today is TODAY, not 0 DAYS AGO", () => {
+  test("today is today, never 0 days ago", () => {
     const r = readDeal({
       ...base,
       lastTouch: { at: "2026-09-01T12:00:00Z", awaitingReply: true, who: "Mel" },
       lastInbound: { at: "2026-09-04T12:00:00Z", who: "Mel" },
     });
-    assert.match(r.court.line, /WROTE TODAY$/);
-    assert.ok(!/0 DAYS/.test(r.court.line));
+    assert.equal(r.move, "Answer Mel. They wrote today.");
+    assert.ok(!/0 days/i.test(r.move));
   });
-  test("one day back is YESTERDAY, and a one-day wait is 1 DAY", () => {
+  test("one day back is yesterday, and a one-day wait names the person and the day", () => {
     const y = readDeal({
       ...base,
       lastTouch: { at: "2026-09-01T12:00:00Z", awaitingReply: true, who: "Mel" },
       lastInbound: { at: "2026-09-03T12:00:00Z", who: "Mel" },
     });
-    assert.match(y.court.line, /WROTE YESTERDAY$/);
+    assert.equal(y.move, "Answer Mel. They wrote yesterday.");
     const d = readDeal({
       ...base,
       lastTouch: { at: "2026-09-03T12:00:00Z", awaitingReply: true, who: "Mel" },
     });
-    assert.match(d.court.line, /· 1 DAY$/);
+    assert.equal(d.move, "Wait on Mel. Nothing owed on your side today.");
   });
-  test("a same-day wait reads TODAY, not 0 DAYS", () => {
+  test("a same-day wait never counts to zero", () => {
     const r = readDeal({
       ...base,
       lastTouch: { at: "2026-09-04T12:00:00Z", awaitingReply: true, who: "Mel" },
       allGatesDone: true,
     });
-    assert.ok(!/0 DAYS/.test(r.court.line), r.court.line);
+    assert.equal(r.move, "Stamp the outcome. Every gate is closed.");
+    assert.ok(!/0 days/i.test(r.move), r.move);
   });
 });

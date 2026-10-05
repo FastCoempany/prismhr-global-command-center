@@ -15,6 +15,7 @@ import { contactCount, contactsFor } from "@/lib/book/contacts";
 import { relationshipFor } from "@/lib/intel/relationship";
 import type { DealIntel } from "@/lib/intel/types";
 import { readAccount, secondRecordFor, type AccountRead } from "@/lib/record/read";
+import { readFromStores } from "@/lib/record/stores";
 import { homeSideFrom } from "@/lib/pipeline/build";
 import { RESEARCH_NS } from "@/lib/intel/deep-research";
 import {
@@ -208,18 +209,24 @@ export default async function GroundworkPage({
     );
   }
 
-  // The Sendbook's merged read — record sends + tapped touches, stepped and
-  // laned. The wing subtext, the drumbeat synthetics, and the Tallyfoot all
-  // read this one view.
-  const sendbook = buildSendbook({
-    notesById: accountNotes,
-    tapsById: sendTapsById,
-    now,
-  });
-  const sendWeek = weekStats(sendbook, now);
+  // A tapped touch is a logged touch (Ted doctrine: the drumbeat reads the
+  // widest store) — synthesized at read time for the queue's clocks and for
+  // the read's own touch log, never written into the touch log itself. The
+  // read's whose-move verdict sees the same clock the drumbeat does (C3).
+  const sendTapTouches = [...sendTapsById.entries()].flatMap(([id, notes]) =>
+    notes.map((n) => ({
+      subjectKey: `outreach:${id}`,
+      label: "",
+      contactedAt: n.createdAt,
+      followUpAt: "",
+      status: "awaiting",
+      log: [] as { at: string; body: string }[],
+    })),
+  );
+  const touchesForRead = [...touches, ...sendTapTouches];
 
-  const touchesByAccount = new Map<string, typeof touches>();
-  for (const t of touches) {
+  const touchesByAccount = new Map<string, typeof touchesForRead>();
+  for (const t of touchesForRead) {
     const m = /^outreach:(.+)$/.exec(t.subjectKey);
     if (!m) continue;
     const list = touchesByAccount.get(m[1]) ?? [];
@@ -271,7 +278,7 @@ export default async function GroundworkPage({
           contact: { name: p.contactName, email: p.contactEmail },
         },
         notes: rows,
-        touches,
+        touches: touchesForRead,
         todos,
         dispositions,
         secondRecord: secondFolded.get(p.id) ?? null,
@@ -285,6 +292,26 @@ export default async function GroundworkPage({
     const sig = intentFor(accountNotes.get(p.id), now);
     if (sig) intentById.set(p.id, sig);
   }
+  // A record row filed under an id the book does not list still has a
+  // register line; it gets the same read, assembled the same way.
+  for (const id of accountNotes.keys())
+    if (!readById.has(id))
+      readById.set(
+        id,
+        readFromStores(
+          { notesById: notesMap, touches: touchesForRead, todos, dispositions, homeSide },
+          { id, name: getPeo(id)?.name ?? id },
+          { now },
+        ),
+      );
+
+  // The Sendbook's merged read — record sends + tapped touches, stepped and
+  // laned. The wing subtext, the drumbeat synthetics, and the Tallyfoot all
+  // read this one view, and the view reads the single account read: the same
+  // docs, flags and second record /sendbook builds from, so the two registers
+  // agree (pass 4 G4; slice 13).
+  const sendbook = buildSendbook({ readsById: readById, tapsById: sendTapsById, now });
+  const sendWeek = weekStats(sendbook, now);
 
   // The wire's newest hit per account — the wire-trigger rule's evidence.
   // BOTH stores (Ted doctrine): the sweep's auto-matches AND wire items the
@@ -353,18 +380,6 @@ export default async function GroundworkPage({
   for (const id of liveMotionIds(accountNotes, intelById, now, secondFolded))
     excludedIds.add(id);
 
-  // A tapped touch is a logged touch (Ted doctrine: the drumbeat reads the
-  // widest store) — synthesized at read time for the queue's clocks, never
-  // written into the touch log itself.
-  const sendTapTouches = [...sendTapsById.entries()].flatMap(([id, notes]) =>
-    notes.map((n) => ({
-      subjectKey: `outreach:${id}`,
-      contactedAt: n.createdAt,
-      followUpAt: "",
-      status: "awaiting",
-    })),
-  );
-
   // The Act Lane's seats (founder-decreed 2026-08-21): a move the operator
   // filed from the accounts sheet leads the wing until it is worked, taken
   // back, or the record shows the outbound after the seat.
@@ -380,17 +395,24 @@ export default async function GroundworkPage({
     // seat stays off the wing until the Archive restores it.
     if (dispositions.has(`hide:note:${seatNote.id}`)) continue;
     const seatAt = Date.parse(seatNote.createdAt);
-    const worked = recordSends(notesMap.get(accountId) ?? []).some(
+    // The read's docs, so a ✕-parked send retires no seat (the one hide
+    // filter, inside the read).
+    const worked = recordSends(readById.get(accountId)?.docs ?? []).some(
       (s) => Date.parse(s.at) > seatAt,
     );
     if (!worked) seats.set(accountId, seat);
   }
 
+  // Whose move it is, per account, from the read (field 4): the drumbeat
+  // tells an answered thread from an open one by this verdict (slice 14).
+  const moveById = new Map([...readById].map(([id, r]) => [id, r.whoseMove] as const));
+
   const { all: rankedAll } = buildQueue({
     accounts: peos,
     intelById,
+    moveById,
     notesById: accountNotes,
-    touches: [...touches, ...sendTapTouches],
+    touches: touchesForRead,
     // The widest people count the app holds (Ted doctrine): the frozen SF
     // export AND the record's live thread roster — "find a second name" must
     // never fire under a green MULTI chip.

@@ -5,14 +5,18 @@
 // disagree with the queue. The forward motion (what is due next) stays
 // Groundwork's; this page tells what happened.
 
-import { fetchSecondRecords, orgInboundKey } from "@/lib/activity/read";
+import { fetchSecondRecords, type SecondRecord } from "@/lib/activity/read";
 import Link from "next/link";
 import { AppWayfinder } from "@/components/app-wayfinder";
 import { getAppAccess } from "@/lib/auth";
 import { getPeo } from "@/lib/book";
+import { homeSideFrom } from "@/lib/pipeline/build";
+import type { AccountRead } from "@/lib/record/read";
+import { declaredHomeSide, readFromStores } from "@/lib/record/stores";
 import {
   SENDBOOK_NS,
   buildSendbook,
+  orgSignalsOf,
   weekStats,
   type Channel,
   type NoteLike,
@@ -21,6 +25,8 @@ import {
   isNamespacedAccountId,
   loadAccountNotes,
   loadDispositions,
+  loadTodos,
+  loadTouches,
 } from "@/lib/today/overlay";
 import { dayLabelFor } from "@/lib/scratch";
 import styles from "./sendbook.module.css";
@@ -60,13 +66,15 @@ export default async function SendbookPage({
   }
 
   const now = new Date();
-  const [notesMap, dispositions] = await Promise.all([
+  const [notesMap, dispositions, touches, todos] = await Promise.all([
     loadAccountNotes(),
     loadDispositions(),
+    loadTouches(),
+    loadTodos(),
   ]);
 
-  const notesById = new Map<string, NoteLike[]>();
   const tapsById = new Map<string, NoteLike[]>();
+  const accountIds: string[] = [];
   for (const [id, notes] of notesMap) {
     if (id.startsWith(SENDBOOK_NS)) {
       const accountId = id.slice(SENDBOOK_NS.length);
@@ -78,31 +86,38 @@ export default async function SendbookPage({
       continue;
     }
     if (isNamespacedAccountId(id)) continue;
-    notesById.set(
-      id,
-      notes
-        .filter((n) => !dispositions.has(`hide:note:${n.id}`))
-        .map((n) => ({
-          body: n.body,
-          source: n.source,
-          createdAt: n.createdAt,
-          actors: n.actors,
-        })),
-    );
+    accountIds.push(id);
   }
 
-  // The second record's signals — org inbound flips lanes; a live cadence
-  // marks the line. Informs, never blocks.
-  const secondById = await fetchSecondRecords().catch(
-    () => new Map<string, never>() as Awaited<ReturnType<typeof fetchSecondRecords>>,
+  // The second record, parsed once for the whole book; the read folds it by
+  // canonical id (E17), and the register reads its attributed inbound
+  // through the read (D19).
+  const secondById: Map<string, SecondRecord> = await fetchSecondRecords().catch(
+    () => new Map(),
   );
-  const orgSignals = new Map<string, { inboundAt: string; mktgLive: boolean }>();
-  for (const [id, sr] of secondById) {
-    const inboundAt = orgInboundKey(sr);
-    const mktgLive = (sr.intent?.windows.w7?.s ?? 0) > 0;
-    if (inboundAt || mktgLive) orgSignals.set(id, { inboundAt, mktgLive });
-  }
-  const book = buildSendbook({ notesById, tapsById, now, orgSignals });
+  // The single account read per account, assembled exactly as Groundwork
+  // assembles its own — the full rows with their actors and recipients, the
+  // declared roster over the whole book, the hide filter inside the read — so
+  // this register and the Tallyfoot's are one register (pass 4 G4; slice 13).
+  const stores = {
+    notesById: notesMap,
+    touches,
+    todos,
+    dispositions,
+    secondById,
+    homeSide: declaredHomeSide(homeSideFrom(notesMap)),
+  };
+  const readsById = new Map<string, AccountRead>();
+  for (const id of accountIds)
+    readsById.set(
+      id,
+      readFromStores(stores, { id, name: getPeo(id)?.name ?? id }, { now }),
+    );
+  const book = buildSendbook({ readsById, tapsById, now });
+  // A live marketing cadence marks the line. Informs, never blocks.
+  const mktgLive = new Set<string>();
+  for (const [id, read] of readsById)
+    if (orgSignalsOf(read.secondRecord).mktgLive) mktgLive.add(id);
   // The cadence marker speaks once per account — on its newest line — never
   // as a wall down the register (quiet ink, the canon's way).
   const newestLineAt = new Map<string, string>();
@@ -193,15 +208,14 @@ export default async function SendbookPage({
                 {l.clause}
                 {l.contact ? (l.clause ? ` — ${l.contact}` : l.contact) : ""}
               </span>
-              {orgSignals.get(l.accountId)?.mktgLive &&
-                newestLineAt.get(l.accountId) === l.at && (
-                  <span
-                    className={styles.mktgLive}
-                    title="Marketing sent this account a blast inside seven days — your note lands beside it. It informs; it never blocks."
-                  >
-                    MKTG LIVE
-                  </span>
-                )}
+              {mktgLive.has(l.accountId) && newestLineAt.get(l.accountId) === l.at && (
+                <span
+                  className={styles.mktgLive}
+                  title="Marketing sent this account a blast inside seven days — your note lands beside it. It informs; it never blocks."
+                >
+                  MKTG LIVE
+                </span>
+              )}
               {book.laneById.get(l.accountId) === "gone-cold" && (
                 <span
                   className={styles.cold}

@@ -175,11 +175,21 @@ export function docOf(
   // write it; one for the sign-off after the head (src/lib/intel/closer.ts).
   const machinery = isMachinery({ body: n.body, actors });
   const closer = isEntry && isCloser(n.body.split("\n").slice(1).join("\n"));
+  // ...and a person of THEIRS wrote it. A colleague's mail to the operator —
+  // the CSM who made the intro saying "you should hear from them" — is
+  // coordination, never the account writing: "their voice" means the PEO's
+  // own people (C16), and a colleague's motion produces nothing for the
+  // operator to do (C6, amended 2026-10-05). Reading it as inbound told the
+  // room to answer Lesha and took the account off Groundwork for three weeks
+  // (pass 2 B, row 2); the Sendbook never read it so and the court now reads
+  // as the Sendbook does. The flag stays on the doc for the readers that want
+  // the colleague's row anyway — the people index, the relationship.
+  const home = attributed && isHomeSideName(sender, homeSide);
   const direction: RecordDoc["direction"] = !isEntry
     ? undefined
     : mine || /—\s*Antaeus/i.test(n.body.split("\n")[0] ?? "")
       ? "out"
-      : attributed && !machinery && !closer && toUs
+      : attributed && !home && !machinery && !closer && toUs
         ? "in"
         : undefined;
   return {
@@ -190,7 +200,7 @@ export function docOf(
     ...(direction ? { direction } : {}),
     people: actors ? peopleFromActors(actors) : peopleIn(n.body),
     sender,
-    senderIsHome: attributed && isHomeSideName(sender, homeSide),
+    senderIsHome: home,
     machinery,
     closer,
     noteId: n.id,

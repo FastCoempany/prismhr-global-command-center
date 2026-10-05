@@ -10,6 +10,7 @@ import assert from "node:assert/strict";
 import {
   buildSendbook,
   clauseFromHead,
+  docsFromRows,
   inboundDates,
   parseSendbookBody,
   recordSends,
@@ -17,7 +18,12 @@ import {
   shortName,
   warmDates,
   weekStats,
+  type NoteLike,
 } from "../src/lib/sendbook/read";
+
+// The rows door: a fixture's rows become the read's docs (slice 13).
+const reads = (byId: [string, NoteLike[]][]) =>
+  new Map(byId.map(([id, notes]) => [id, { docs: docsFromRows(notes), secondRecord: null }]));
 
 const out = (createdAt: string, subject = "Re: Global") => ({
   body: `✉ OL Aug 1 — ${subject} · Antaeus Coe → Bill Laffey +4\nbody text`,
@@ -93,7 +99,7 @@ test("machinery and unattributed entries are never inbound", () => {
 
 test("steps count within a run and a 45-day quiet resets the drum", () => {
   const { lines } = buildSendbook({
-    notesById: new Map(),
+    readsById: new Map(),
     tapsById: new Map([
       [
         "A1",
@@ -114,7 +120,7 @@ test("steps count within a run and a 45-day quiet resets the drum", () => {
 
 test("the account speaking resets the drum; the reply annotates the send", () => {
   const { lines, laneById } = buildSendbook({
-    notesById: new Map([
+    readsById: reads([
       ["A1", [out("2026-08-01T12:00:00.000Z"), inb("2026-08-05T12:00:00.000Z")]],
     ]),
     tapsById: new Map([["A1", [tap("2026-08-10T12:00:00.000Z")]]]),
@@ -131,7 +137,7 @@ test("the account speaking resets the drum; the reply annotates the send", () =>
 
 test("outbound alone never warms: ten sends to silence is still NEVER MET", () => {
   const { laneById } = buildSendbook({
-    notesById: new Map([["A1", [out("2026-08-01T12:00:00.000Z")]]]),
+    readsById: reads([["A1", [out("2026-08-01T12:00:00.000Z")]]]),
     tapsById: new Map(),
     now: new Date("2026-08-19T18:00:00.000Z"),
   });
@@ -140,7 +146,7 @@ test("outbound alone never warms: ten sends to silence is still NEVER MET", () =
 
 test("a tapped EMAIL folds into the record's same-day send", () => {
   const { lines } = buildSendbook({
-    notesById: new Map([["A1", [out("2026-08-19T16:00:00.000Z")]]]),
+    readsById: reads([["A1", [out("2026-08-19T16:00:00.000Z")]]]),
     tapsById: new Map([["A1", [tap("2026-08-19T15:00:00.000Z", "EMAIL")]]]),
     now: new Date("2026-08-19T18:00:00.000Z"),
   });
@@ -151,7 +157,7 @@ test("a tapped EMAIL folds into the record's same-day send", () => {
 
 test("the week head counts touches, channels, accounts, and replies", () => {
   const book = buildSendbook({
-    notesById: new Map([["A2", [out("2026-08-18T12:00:00.000Z")]]]),
+    readsById: reads([["A2", [out("2026-08-18T12:00:00.000Z")]]]),
     tapsById: new Map([["A1", [tap("2026-08-19T15:00:00.000Z")]]]),
     now: new Date("2026-08-19T18:00:00.000Z"),
   });

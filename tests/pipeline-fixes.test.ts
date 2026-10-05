@@ -184,9 +184,8 @@ describe("the deal read — filed intel finally moves the room", () => {
       lastRecordAt: "2026-07-28T12:00:00Z",
       now: new Date("2026-07-29T12:00:00Z"),
     });
-    assert.equal(read.court.tone, "you");
-    assert.ok(/SARAH WROTE/.test(read.court.line), read.court.line);
-    assert.ok(/Answer Sarah/.test(read.move), read.move);
+    // The court line is retired (D25): the move line says who and when.
+    assert.equal(read.move, "Answer Sarah. They wrote yesterday.");
     assert.notEqual(read.health, "red"); // quiet-alarm suppressed — they answered
   });
   test("an expired dated wall reads red and says so", () => {
@@ -210,6 +209,7 @@ describe("the deal read — filed intel finally moves the room", () => {
       lastRecordAt: "",
       now: new Date("2026-07-29T12:00:00Z"),
     });
-    assert.equal(read.court.tone, "them");
+    // Their move, on the move line: the send two days back is theirs to answer.
+    assert.equal(read.move, "Wait on Sarah. Nothing owed on your side today.");
   });
 });
