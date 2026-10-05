@@ -13,6 +13,7 @@
 import { contactsFor } from "@/lib/book/contacts";
 import { corpusFor, extractDealIntel } from "@/lib/intel/extract";
 import { digestFor, digestForCardName } from "@/lib/intel/digest";
+import { isCall, isTape } from "@/lib/ingest/dialect";
 import { meetingRead, speakersIn } from "@/lib/intel/meeting";
 import { peopleFor } from "@/lib/intel/people";
 import { isHomeSideName, MINE_RE } from "@/lib/intel/provenance";
@@ -192,7 +193,7 @@ function countriesInPlay(
 ): Set<string> {
   const out = new Set<string>();
   for (const n of notes) {
-    if (/transcript/.test(n.source ?? "")) continue;
+    if (isTape(n.source)) continue;
     for (const m of countryMentions(n.body ?? ""))
       if (demandNear(n.body ?? "", m.at)) out.add(m.code);
   }
@@ -204,7 +205,7 @@ function productByCountry(
 ): Map<string, string[]> {
   const out = new Map<string, string[]>();
   for (const n of notes) {
-    if (/transcript/.test(n.source ?? "")) continue;
+    if (isTape(n.source)) continue;
     for (const key of Object.keys(PRODUCT_TERMS) as (keyof typeof PRODUCT_TERMS)[]) {
       const re = new RegExp(PRODUCT_TERMS[key].source, "gi");
       for (const m of (n.body ?? "").matchAll(re)) {
@@ -393,15 +394,15 @@ function record(
     : [];
 
   const events = ns
-    .filter((n) => /transcript|call-ai/.test(n.source))
+    .filter((n) => isTape(n.source) || isCall(n.source))
     .map((n) => ({
       at: dayOf(effectiveAt(n.createdAt, n.body)),
-      kind: /transcript|call-ai/.test(n.source) ? "Call" : "Meeting",
+      kind: isTape(n.source) || isCall(n.source) ? "Call" : "Meeting",
     }))
     .filter((e, i, arr) => arr.findIndex((x) => x.at === e.at) === i)
     .slice(0, 4);
 
-  const call = ns.find((n) => n.source === "call-ai");
+  const call = ns.find((n) => isCall(n.source));
 
   // Opportunities — country × product, with the headcount attached to that
   // country. One account is often several deals.
@@ -582,7 +583,7 @@ function record(
     lastTouch: m
       ? {
           date: dayOf(m.at),
-          kind: /transcript|call/.test(mNote?.source ?? "") ? "Call" : "Meeting",
+          kind: isTape(mNote?.source) || isCall(mNote?.source) ? "Call" : "Meeting",
           room: inRoom.map((p) => ({ name: p, title: titleOf(p) })),
         }
       : null,

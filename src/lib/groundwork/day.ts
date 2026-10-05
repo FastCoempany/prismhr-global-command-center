@@ -12,6 +12,7 @@
 import type { Peo } from "@/lib/book";
 import type { DealIntel } from "@/lib/intel/types";
 import { compositeScore, deskScore } from "@/lib/book/scoring";
+import { GLYPH_RE } from "@/lib/ingest/dialect";
 import { isMeetingNote } from "@/lib/intel/meeting";
 import { getDemand, researchGeneratedAt, DEMAND_GATE } from "@/lib/book/research";
 import { proximityRank } from "./proximity";
@@ -305,7 +306,7 @@ function rankAll(inp: QueueInput, now: Date): QueueItem[] {
     // send or meeting. A background case note filed for intel is not a
     // conversation and must not silence the rule.
     const hasConversation =
-      acctTouches.length > 0 || (notes ?? []).some((n) => /^[✉✔☎☰] /.test(n.body));
+      acctTouches.length > 0 || (notes ?? []).some((n) => GLYPH_RE.test(n.body));
     const eni = engagedNeverIntroduced(sr, now);
     if (eni && !hasConversation && !inp.boardIds?.has(p.id)) {
       candidates.push({

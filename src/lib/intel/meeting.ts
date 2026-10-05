@@ -7,12 +7,19 @@
 // family), the one copy left to fold in. Three signals, any one enough:
 // the source is a call/transcript reader; the head is a logged activity
 // (✔ …) naming a meeting, call, demo, or visit — a record of a thing that
-// HAPPENED, never a send; or the head reads as a meeting in words.
+// HAPPENED, never a send; or the head reads as a meeting in words. The glyph,
+// the source literals and the tape's head are the dialect table's
+// (src/lib/ingest/dialect.ts).
+
+import { GLYPHS, TAPE_HEAD_RE, isCall, isTape } from "@/lib/ingest/dialect";
 
 const MEETING_RE =
   /\b(met with|meeting with|call with|demo(?:'d)? (?:with|for|to)|walked (?:them|him|her) through)\b/i;
 
-const LOGGED_ACTIVITY_RE = /^\s*✔[^\n]*\b(meeting|call|demo|visit)\b/i;
+const LOGGED_ACTIVITY_RE = new RegExp(
+  `^\\s*${GLYPHS.task}[^\\n]*\\b(meeting|call|demo|visit)\\b`,
+  "i",
+);
 
 // A note ABOUT a meeting is not a meeting. "✔ Follow-up with Anika — week of
 // Aug 31 meeting" whose body says "awaiting word on whether the meeting
@@ -26,14 +33,14 @@ const NOT_HELD_RE =
 
 // A real call archive announces itself — the VTT pipeline heads its bodies
 // CALL TRANSCRIPT and the room's archive writes "☰ Call transcript — …".
-const TRANSCRIPT_HEAD_RE = /^\s*(?:☰\s*)?call transcript\b/i;
+const TRANSCRIPT_HEAD_RE = TAPE_HEAD_RE;
 const SPEAKER_LINE_RE = /^([^:\n]{2,30}):\s\S/;
 
 export function isMeetingNote(n: { body?: string; source?: string }): boolean {
   const body = n.body ?? "";
   const src = n.source ?? "";
-  if (src === "call" || src === "call-ai") return true;
-  if (src === "transcript") {
+  if (isCall(src)) return true;
+  if (isTape(src)) {
     // The room's zero-entry fallback files ANY unstructured paste under
     // source "transcript" — a typed one-liner is not a call (the Axcet
     // "i did not meet with them today" read, caught 2026-08-18). Source

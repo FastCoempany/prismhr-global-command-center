@@ -6,17 +6,21 @@
 // Isomorphic on purpose: no DOM, no Node APIs — usable from the client and
 // from tests alike.
 
+import { HEAD_LINE_RE, sniffHead } from "@/lib/ingest/dialect";
+
 type PasteKind = "outlook" | "teams" | "salesnav" | "sf" | "transcript" | "note";
 
-// What the Drop thinks it is holding, in plain words for the live chip.
+// What the Drop thinks it is holding, in plain words for the live chip. The
+// head tokens are the dialect table's (src/lib/ingest/dialect.ts); a
+// spreadsheet, a document and a typed note keep the SF token and fall through
+// to the shape tests below like any other headless text.
 export function sniffPaste(text: string): { kind: PasteKind; label: string } {
   const t = (text ?? "").trimStart();
-  if (/^CALL TRANSCRIPT\b/.test(t))
-    return { kind: "transcript", label: "a call transcript" };
-  if (/^OUTLOOK THREAD\b/.test(t)) return { kind: "outlook", label: "an Outlook thread" };
-  if (/^(TEAMS THREAD|TEAMS CHAT)\b/.test(t))
-    return { kind: "teams", label: "a Teams chat" };
-  if (/^SALESNAV\b/.test(t)) return { kind: "salesnav", label: "a Sales Nav grab" };
+  const { dialect } = sniffHead(t);
+  if (dialect === "CT") return { kind: "transcript", label: "a call transcript" };
+  if (dialect === "OL") return { kind: "outlook", label: "an Outlook thread" };
+  if (dialect === "TM") return { kind: "teams", label: "a Teams chat" };
+  if (dialect === "SN") return { kind: "salesnav", label: "a Sales Nav grab" };
   if (/^(From|Sent|Subject)\s*:/m.test(t) && /^Subject\s*:/m.test(t))
     return { kind: "outlook", label: "an email thread" };
   // Salesforce activity timelines lead entries with a kind word and a date.
@@ -48,8 +52,8 @@ export function sniffPaste(text: string): { kind: PasteKind; label: string } {
 // 1. The head line every producer writes — "OUTLOOK THREAD — dropped file
 //    <name>", "CALL TRANSCRIPT — dropped file <name>", the bookmarklets'
 //    "… - captured <date>" — is skipped: it carries the filename or the copy
-//    moment, never the capture. The head grammar is the sniffer's own token
-//    list.
+//    moment, never the capture. The head grammar is the dialect table's own
+//    token list (src/lib/ingest/dialect.ts, HEAD_LINE_RE).
 // 2. A "Sent:" line's date is read as one instant (ISO), when the date names
 //    its zone. emlToPaste writes the Date header as the client wrote it
 //    ("Tue, 02 Sep 2026 09:44:00 -0500"); msgToPaste writes msgreader's UTC
@@ -61,9 +65,6 @@ export function sniffPaste(text: string): { kind: PasteKind; label: string } {
 //    addresses with a comma, msgreader's recipient list with a semicolon.
 // 4. Casing and whitespace runs (in pasteFingerprint below), so a re-export
 //    or a re-copy of one thread reads the same.
-const HEAD_LINE_RE =
-  /^(OUTLOOK THREAD|TEAMS THREAD|TEAMS CHAT|CALL TRANSCRIPT|SALESNAV|SPREADSHEET|DOCUMENT)\b/;
-
 const SENT_LINE_RE = /^(sent:[ \t]*)(.+)$/gim;
 const RECIPIENT_LINE_RE = /^((?:to|cc):[ \t]*)(.+)$/gim;
 // A date that names its zone: an offset, or GMT / UTC / Z.

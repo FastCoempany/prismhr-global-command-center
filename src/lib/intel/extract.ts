@@ -13,6 +13,7 @@ import {
   countryNear,
 } from "./lexicon";
 import { digestFor, digestForCardName, type DigestEntry } from "./digest";
+import { GLYPH_RE, TAPE_HEAD_IN_BODY_RE } from "@/lib/ingest/dialect";
 import { isCloser, isMachinery } from "./closer";
 import { effectiveAt } from "./clock";
 import { MINE_RE, inferActors, isAddressedToUs, splitRecipients } from "./provenance";
@@ -50,8 +51,9 @@ function futureDay(mon: string, day: number, ref: Date): string | undefined {
 // ends at .!? OR a newline — without the newline rule a bulleted note is one
 // sentence from top to bottom and the containment check buys nothing.
 // A filed transcript announces itself: the Chute writes "☰ Call transcript —"
-// and the body carries the CALL TRANSCRIPT head (src/lib/intel/meeting.ts).
-const TRANSCRIPT_BODY_RE = /^\s*(?:☰\s*)?call transcript\b/im;
+// and the body carries the CALL TRANSCRIPT head (the dialect table,
+// src/lib/ingest/dialect.ts; src/lib/intel/meeting.ts reads the same line).
+const TRANSCRIPT_BODY_RE = TAPE_HEAD_IN_BODY_RE;
 
 const SENT_EDGE = /[.!?\n]/;
 export function dateNear(text: string, at: number, ref: Date): string | undefined {
@@ -134,7 +136,7 @@ export function corpusFor(
   // demoting a reply to a colleague it cannot recognise.
   const homeSide = stores.homeSide;
   for (const n of stores.acctNotes ?? []) {
-    const isSf = /^[✉✔☎☰] /.test(n.body);
+    const isSf = GLYPH_RE.test(n.body);
     // Direction from the ACTORS line's sender side — the head's em-dash slot
     // holds the subject, so the old /—\s*Antaeus/ test classified the
     // operator's own sends as inbound and pacified every went-dark detector.

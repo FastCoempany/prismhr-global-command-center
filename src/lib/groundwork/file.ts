@@ -7,6 +7,7 @@
 import type { Peo } from "@/lib/book";
 import type { DealIntel } from "@/lib/intel/types";
 import { getDemand, researchGeneratedAt } from "@/lib/book/research";
+import { isPaste, isSalesNav, isWire } from "@/lib/ingest/dialect";
 import { redactMoney } from "@/lib/intel/lexicon";
 import { userDayKey } from "@/lib/tz";
 import type { IntentSignal } from "./signals";
@@ -104,11 +105,10 @@ export function buildFile(
   // Sources line — provenance, computed (spec F1): it lists only stores that
   // actually contributed, labeled as what they are.
   const sources: string[] = [];
-  const isPaste = (src: string) => /^(sf|outlook|teams|transcript|room)/.test(src);
   const pasteNotes = notes.filter((n) => isPaste(n.source));
-  const filedWire = notes.filter((n) => n.source === "wire");
+  const filedWire = notes.filter((n) => isWire(n.source));
   const otherNotes = notes.filter(
-    (n) => !isPaste(n.source) && n.source !== "wire" && !n.source.startsWith("salesnav"),
+    (n) => !isPaste(n.source) && !isWire(n.source) && !isSalesNav(n.source),
   );
   if (pasteNotes.length > 0)
     sources.push(`HomeRoom pastes ${shortDate(pasteNotes[0].createdAt)}`);

@@ -9,6 +9,8 @@
 // pasted reading counts: if the latest grab shows no intent, an older High is
 // dead, not dormant.
 
+import { HEADS, isSalesNav as isSalesNavSource } from "@/lib/ingest/dialect";
+
 const DECAY_DAYS = 7;
 
 type IntentLevel = "high" | "moderate";
@@ -21,7 +23,11 @@ export type IntentSignal = {
 
 type NoteLike = { body: string; source: string; createdAt: string };
 
-const isSalesNav = (n: NoteLike) => (n.source ?? "").startsWith("salesnav");
+const isSalesNav = (n: NoteLike) => isSalesNavSource(n.source);
+
+// The grab's own head line — "SALESNAV ACCOUNTS - captured <date> - N rows
+// collected" — carries the copy moment, never a deal date.
+const GRAB_HEAD_RE = new RegExp(`${HEADS.salesnav} ACCOUNTS\\s*-\\s*captured`, "i");
 
 // "High buyer intent", "expressing High buyer intent", "High · 11 activities",
 // "11 activities" — the grab ships Sales Navigator's own words, so the parse
@@ -102,9 +108,7 @@ export function ridingLaneDate(
   for (const n of notes ?? []) {
     if (!isSalesNav(n)) continue;
     const noteDay = n.createdAt.slice(0, 10);
-    const lines = n.body
-      .split("\n")
-      .filter((l) => !/SALESNAV ACCOUNTS\s*-\s*captured/i.test(l));
+    const lines = n.body.split("\n").filter((l) => !GRAB_HEAD_RE.test(l));
     for (const line of lines) {
       for (const m of line.matchAll(/\b(\d{1,2})\/(\d{1,2})\/(\d{4})\b/g)) {
         const iso = `${m[3]}-${m[1].padStart(2, "0")}-${m[2].padStart(2, "0")}`;
