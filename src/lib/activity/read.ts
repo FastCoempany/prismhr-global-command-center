@@ -223,13 +223,6 @@ export function outreachGem(sr: SecondRecord | undefined): Gem | null {
   return null;
 }
 
-/** The newest live gem of any kind — the Accounts row's line. The THEIRS
- *  line no longer reads it: a colleague's gem has no seat there (C16). */
-export function anyLiveGem(sr: SecondRecord | undefined): Gem | null {
-  for (const g of sr?.gems ?? []) if (!g.actedDay) return g;
-  return sr?.gems?.[0] ?? null;
-}
-
 // ── the THEIRS line (decreed 2026-08-20; ruled 2026-09-25, C16) ─────────────
 // THEIRS is the account's people. The line carries only gems about an
 // account person — "their voice" means the PEO's own people, never a

@@ -1712,6 +1712,8 @@ describe("LAST HUMAN TOUCH reads both records and whispers which (C1)", () => {
     receipts: 0,
     lastHuman: null,
     lastOrgInbound: "",
+    // Slice 11a's attributed inbound (D19); the C1 merge reads lastHuman alone.
+    lastTheirs: null,
     actors: [],
     threads: [],
     verdict: "",
