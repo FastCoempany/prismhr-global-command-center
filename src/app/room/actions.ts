@@ -22,6 +22,7 @@ import {
   type DupeCheck,
   type FilingHow,
 } from "@/lib/ingest/filing";
+import { absorbRead, fileCompletion, undoCompletions } from "@/lib/ingest/fanout";
 import {
   ENTRY_CAP,
   READ_WINDOW,
@@ -42,14 +43,10 @@ import {
 import {
   PLAYBOOK_LESSONS,
   PLAYBOOK_MARKET,
-  filePlaybook,
-  knowledgeKey,
   parsePlaybookBody,
 } from "@/lib/playbook/store";
 import { fileGaps, gapDismissKey, gapNs, parseGapBody } from "@/lib/room/gaps";
-import { actionBody, splitFallback } from "@/lib/room/deliverables";
 import type { Door } from "@/lib/ingest/doors";
-import { outcomeMarkBody } from "@/lib/room/loss";
 import { MINE_RE, actorsLine, joinRecipients, laneFor } from "@/lib/intel/provenance";
 import {
   diffFindings,
@@ -566,11 +563,14 @@ export async function roomPaste(
     if (noteIds[0]) await stampPasteMark(pasteKey, noteIds[0]);
     const absorbed: Awaited<ReturnType<typeof absorbRead>> = read
       ? await absorbRead(read, { id: acct.id, name: acct.name }, now, door, filingId)
-      : { opened: [], asks: 0, learned: 0, outcome: null, noteIds: [] };
+      : { opened: [], loops: [], asks: 0, learned: 0, outcome: null, noteIds: [] };
     // Everything the read fanned out rides in the receipt, so the undo can
     // take back the whole filing: the asks, playbook lines and outcome marker
-    // by note id (in their own namespaces), the actions by todo id.
-    const { noteIds: fanoutIds, ...fanout } = absorbed;
+    // by note id (in their own namespaces), the actions and their loops by
+    // todo id. A loop is the undo's reach and nothing else's yet: the
+    // receipt's opened chips are the operator's actions alone (D10; the
+    // loop's seat is the face's, the plan's §5.4).
+    const { noteIds: fanoutIds, loops, ...fanout } = absorbed;
     noteIds.push(...fanoutIds);
     refresh();
     return {
@@ -580,7 +580,7 @@ export async function roomPaste(
       noteIds,
       readFailed,
       archived,
-      todoIds: fanout.opened.map((o) => o.id),
+      todoIds: [...fanout.opened.map((o) => o.id), ...loops.map((l) => l.id)],
       judged: read !== null,
       filingId,
       windows,
@@ -594,193 +594,6 @@ export async function roomPaste(
       how,
       reason: "Filing failed partway. Check the account page.",
     };
-  }
-}
-
-// Everything the read produced that ISN'T a record entry. Kept separate from
-// the filing loop so a failure here can never lose the record — each limb
-// swallows its own errors and reports what it managed.
-async function absorbRead(
-  read: Awaited<ReturnType<typeof aiCleanTimeline>>,
-  acct: { id: string; name: string },
-  now: Date,
-  // The filing's door: every row the fan-out writes carries it (P3).
-  door: Door,
-  // The filing's row: every row and todo the fan-out writes links to it
-  // (§2.1), so one undo by id reaches the whole filing. Undefined when the
-  // table is not there yet.
-  filingId?: string,
-): Promise<{
-  opened: { id: string; text: string }[];
-  asks: number;
-  learned: number;
-  outcome: { status: "lost" | "won"; phrase: string } | null;
-  // Every note this fan-out wrote, so the paste's undo can reach it.
-  noteIds: string[];
-}> {
-  const prisma = getPrisma();
-  const noteIds: string[] = [];
-  const stamp = now.toLocaleDateString("en-US", {
-    timeZone: "America/Chicago",
-    month: "numeric",
-    day: "numeric",
-  });
-
-  // 1. Commitments the operator owes become real work, one row each, so each
-  // one can be undone on its own. What THEY owe stays in the record — the
-  // owed-to-you read already surfaces those as suggestions.
-  const opened: { id: string; text: string }[] = [];
-  const mine = read.actions.filter((a) => a.owner === "me");
-  if (mine.length) {
-    const openBodies = await prisma.todo
-      .findMany({
-        where: { accountId: acct.id, done: false },
-        select: { body: true },
-      })
-      .catch(() => [] as { body: string }[]);
-    // Compare commitment to commitment. The STORED body carries the fallback and
-    // the "· from M/D paste" provenance, so hashing it raw never matches the
-    // model's bare text and every re-paste opens the same work again.
-    const commitmentKey = (body: string) =>
-      knowledgeKey(
-        splitFallback(visibleText(body)).text.replace(/\s+·\s+from\s.*$/i, ""),
-      );
-    const seen = new Set(openBodies.map((t) => commitmentKey(t.body)));
-    let top =
-      (
-        await prisma.todo
-          .findFirst({ orderBy: { position: "desc" }, select: { position: true } })
-          .catch(() => null)
-      )?.position ?? -1;
-    for (const a of mine) {
-      const body = actionBody(a.text, a.fallback, `from ${stamp} paste`);
-      const key = knowledgeKey(a.text);
-      if (!key || seen.has(key)) continue;
-      seen.add(key);
-      try {
-        // The wall rides as the date tag, sets the urgency, and places the
-        // reminder — the writer carries the codec (src/lib/notes/write.ts).
-        const t = await createTodoRow({
-          body,
-          tags: { kind: "action" },
-          due: a.due,
-          now,
-          position: ++top,
-          accountId: acct.id,
-          filingId,
-        });
-        opened.push({ id: t.id, text: a.text });
-      } catch {
-        // One commitment that won't open never costs the others.
-      }
-    }
-  }
-
-  // 2. The asks — questions the record still can't answer for THIS deal.
-  let asks = 0;
-  if (read.gaps.length) {
-    const priorAsks = await prisma.accountNote
-      .findMany({ where: { accountId: gapNs(acct.id) }, select: { body: true } })
-      .catch(() => [] as { body: string }[]);
-    const known = new Set(priorAsks.map((r) => knowledgeKey(parseGapBody(r.body))));
-    const gapIds = await fileGaps({
-      accountId: acct.id,
-      questions: read.gaps,
-      known,
-      door,
-      filingId,
-    });
-    asks = gapIds.length;
-    noteIds.push(...gapIds);
-  }
-
-  // 3. The playbook — knowledge that outlives the deal it came from. This is
-  // the cure for knowledge trapped per account: filed to a namespace, read by
-  // every account.
-  let learned = 0;
-  const market = read.competitorIntel.map((c) => ({ text: c.fact, who: c.who }));
-  const lessons = read.lessons.map((l) => ({ text: l, who: "" }));
-  for (const [kind, items] of [
-    ["market", market],
-    ["lesson", lessons],
-  ] as const) {
-    if (!items.length) continue;
-    const ns = kind === "market" ? PLAYBOOK_MARKET : PLAYBOOK_LESSONS;
-    const prior = await prisma.accountNote
-      .findMany({ where: { accountId: ns }, select: { body: true } })
-      .catch(() => [] as { body: string }[]);
-    const known = new Set(prior.map((r) => knowledgeKey(parsePlaybookBody(r.body).text)));
-    const filedIds = await filePlaybook({
-      kind,
-      items,
-      accountId: acct.id,
-      accountName: acct.name,
-      known,
-      door,
-      filingId,
-    });
-    learned += filedIds.length;
-    noteIds.push(...filedIds);
-  }
-
-  // 4. The outcome. A closed deal is the biggest state change the app can
-  // make, so the read only files the marker that makes the row say it — the
-  // operator's click is what actually closes the card.
-  let outcome: { status: "lost" | "won"; phrase: string } | null = null;
-  if (read.outcome.status === "lost" || read.outcome.status === "won") {
-    outcome = { status: read.outcome.status, phrase: read.outcome.phrase };
-    try {
-      const mark = await createAccountNoteRow({
-        accountId: acct.id,
-        kind: "account",
-        body: outcomeMarkBody(read.outcome.status, read.outcome.phrase),
-        door,
-        lane: "mine",
-        source: "outcome",
-        filingId,
-      });
-      noteIds.push(mark.id);
-    } catch {
-      outcome = null;
-    }
-  }
-
-  return { opened, asks, learned, outcome, noteIds };
-}
-
-// The completion line, filed to the account's own history exactly once. Keyed
-// by todo id so done → undo → done can't stack duplicates on the record.
-async function fileCompletion(accountId: string, todoId: string, body: string) {
-  const prisma = getPrisma();
-  const key = `done-filed:${todoId}`.slice(0, 191);
-  try {
-    const already = await prisma.accountDisposition.findUnique({
-      where: { accountId: key },
-      select: { accountId: true },
-    });
-    if (already) return;
-    const text = splitFallback(visibleText(body)).text.slice(0, 300);
-    if (!text) return;
-    const day = new Date().toLocaleDateString("en-US", {
-      timeZone: "America/Chicago",
-      month: "numeric",
-      day: "numeric",
-    });
-    await createAccountNoteRow({
-      accountId,
-      kind: "account",
-      body: `✓ ${text} — done ${day}`,
-      door: "hand",
-      lane: "mine",
-      source: "done",
-    });
-    await prisma.accountDisposition.upsert({
-      where: { accountId: key },
-      create: { accountId: key, status: "parked", reason: "completion filed" },
-      update: { status: "parked", reason: "completion filed" },
-    });
-  } catch {
-    // The close still stands even if its history line doesn't land.
   }
 }
 
@@ -809,6 +622,8 @@ export async function roomActionUndo(
     if (t.done || splitTags(t.body).tags.doneAt)
       return { ok: false, reason: "That one's already closed. Undo it on the row." };
     await prisma.todo.delete({ where: { id } });
+    // A completion line the row filed before it was reopened goes with it.
+    await undoCompletions(acct.id, [id]);
     refresh();
     return { ok: true };
   } catch {
@@ -892,7 +707,6 @@ import { getPrisma } from "@/lib/db";
 import {
   splitMarker,
   splitTags,
-  visibleText,
   withMarker,
   withTags,
   type NoteTags,
@@ -1050,6 +864,17 @@ export async function roomPasteUndo(
         playbook = p.count;
       }
     }
+    // The todos the filing still links, read before the row goes: a
+    // completion line is keyed by its todo, and the key is all that finds it.
+    const filingTodos = filing
+      ? await prisma.todo
+          .findMany({
+            where: { filingId: filing, accountId: acct.id },
+            select: { id: true },
+          })
+          .then((rows) => rows.map((x) => x.id))
+          .catch(() => [] as string[])
+      : [];
     // The actions the read opened, on this account only.
     const t = todos.length
       ? await prisma.todo.deleteMany({ where: { id: { in: todos }, accountId: acct.id } })
@@ -1059,6 +884,9 @@ export async function roomPasteUndo(
     const byFiling = filing
       ? await undoFiling(filing, acct.id)
       : { notes: 0, todos: 0, filing: 0 };
+    // A completion line filed when the operator closed an opened todo before
+    // undoing goes with its todo (the defects doc's open item).
+    const completions = await undoCompletions(acct.id, [...todos, ...filingTodos]);
     // The duplicate guard's marker carries the paste's first note id — an
     // undone paste must be re-fileable, so the marker goes with the notes.
     if (ids[0]) {
@@ -1076,7 +904,7 @@ export async function roomPasteUndo(
     refresh();
     return {
       ok: true,
-      removed: r.count + playbook + byFiling.notes,
+      removed: r.count + playbook + byFiling.notes + completions,
       retired: t.count + byFiling.todos,
     };
   } catch {
@@ -1276,14 +1104,11 @@ export async function roomResearch(
       source: "research",
     }).catch(() => null);
 
-    // Anything the pass says is worth asking joins the carousel.
-    const priorAsks = await prisma.accountNote
-      .findMany({ where: { accountId: gapNs(acct.id) }, select: { body: true } })
-      .catch(() => [] as { body: string }[]);
+    // Anything the pass says is worth asking joins the carousel; the
+    // namespace owns its dedupe.
     await fileGaps({
       accountId: acct.id,
       questions: finding.asks,
-      known: new Set(priorAsks.map((r) => knowledgeKey(parseGapBody(r.body)))),
       door: "hand",
     });
 
@@ -1393,10 +1218,10 @@ export async function roomGapsRefill(
       lessons: [...lessons, ...market].map((r) => parsePlaybookBody(r.body).text),
       asked: asks.map((r) => parseGapBody(r.body)),
     });
+    // The rows were read above for the mint; the namespace owns the dedupe.
     const added = await fileGaps({
       accountId: acct.id,
       questions: minted,
-      known: new Set(asks.map((r) => knowledgeKey(parseGapBody(r.body)))),
       door: "hand",
     });
     refresh();

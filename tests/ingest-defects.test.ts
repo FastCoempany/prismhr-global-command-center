@@ -23,6 +23,9 @@ import type { RouteAccount } from "../src/lib/route-capture";
 const root = cwd();
 const read = (p: string) => readFileSync(join(root, p), "utf8");
 const actions = read("src/app/room/actions.ts");
+// The fan-out lives in its own module since slice 6 of the Chute brains
+// refactor plan (src/lib/ingest/fanout.ts); roomPaste imports it by name.
+const fanoutSrc = read("src/lib/ingest/fanout.ts");
 const client = read("src/app/room/room-client.tsx");
 const chute = read("src/app/room/chute.tsx");
 
@@ -37,8 +40,16 @@ function slice(src: string, from: string, to: string): string {
   return src.slice(a, b);
 }
 
-const roomPaste = slice(actions, "export async function roomPaste(", "async function absorbRead(");
-const absorbRead = slice(actions, "async function absorbRead(", "async function fileCompletion(");
+const roomPaste = slice(
+  actions,
+  "export async function roomPaste(",
+  "export async function roomActionUndo(",
+);
+const absorbRead = slice(
+  fanoutSrc,
+  "export async function absorbRead(",
+  "export function completionKey(",
+);
 const pasteUndo = slice(
   actions,
   "export async function roomPasteUndo(",

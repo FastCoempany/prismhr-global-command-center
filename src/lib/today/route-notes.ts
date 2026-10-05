@@ -64,6 +64,18 @@ export type NoteTags = {
   doneAt: string;
   // ISO-3166 alpha-2 country code the note/action is tied to ("" = none).
   country: string;
+  // A loop on THEIR side (CLAUDE.md, The Chute, ruled 2026-09-25, D10): a
+  // commitment the read attributes to the account's people files as a Todo
+  // row tagged `o:them`, with the promised day in `d:`, the person it was
+  // promised to in `h:` and the person who owes it in `b:`. A their-loop is
+  // never the operator's action (no `k:a`), so every reader that lists the
+  // operator's work leaves it alone by construction; owedByThem reads it.
+  owner: "" | "them";
+  // The hearer — who the promise was made TO. PROMISED needs a hearer
+  // (ruled 2026-09-25, D28): a their-loop with no hearer reads as a wall.
+  hearer: string;
+  // Who owes it, as the record names them ("" when the record cannot say).
+  by: string;
 };
 
 const TAG = "⚑";
@@ -74,7 +86,21 @@ export const NO_TAGS: NoteTags = {
   kind: "",
   doneAt: "",
   country: "",
+  owner: "",
+  hearer: "",
+  by: "",
 };
+
+// A name inside the tag line: the codec splits parts on "," and key from
+// value on ":", and the line ends at "]", so a name sheds those three and
+// collapses its whitespace. Everything else survives verbatim.
+export function tagName(raw: string): string {
+  return (raw ?? "")
+    .replace(/[,:\]]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 80);
+}
 
 // Split a text (already stripped of any routing marker) into the visible note
 // and its tags. Unknown or malformed values are ignored, the line still strips.
@@ -94,6 +120,9 @@ export function splitTags(text: string): { text: string; tags: NoteTags } {
     if (k === "k" && v === "a") tags.kind = "action";
     if (k === "dn" && /^\d{10,16}$/.test(v)) tags.doneAt = v;
     if (k === "c" && /^[a-z]{2}$/i.test(v)) tags.country = v.toLowerCase();
+    if (k === "o" && v === "them") tags.owner = "them";
+    if (k === "h") tags.hearer = tagName(v);
+    if (k === "b") tags.by = tagName(v);
   }
   return { text: text.slice(0, at === 0 ? 0 : i).trimEnd(), tags };
 }
@@ -106,6 +135,9 @@ export function withTags(text: string, tags: NoteTags): string {
     tags.kind === "action" ? "k:a" : "",
     tags.doneAt ? `dn:${tags.doneAt}` : "",
     tags.country ? `c:${tags.country.toLowerCase()}` : "",
+    tags.owner === "them" ? "o:them" : "",
+    tagName(tags.hearer) ? `h:${tagName(tags.hearer)}` : "",
+    tagName(tags.by) ? `b:${tagName(tags.by)}` : "",
   ].filter(Boolean);
   const clean = text.trimEnd();
   return parts.length ? `${clean}\n${TAG}[${parts.join(",")}]` : clean;

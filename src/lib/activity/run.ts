@@ -21,6 +21,7 @@ import { csms } from "@/lib/book";
 import { contactsFor } from "@/lib/book/contacts";
 import { EXTRA_PARTNERS } from "@/lib/book/partners";
 import { redactMoney } from "@/lib/intel/lexicon";
+import { theirLoopOf } from "@/lib/room/owed";
 import { RUN_LOCK_CHECKSUM } from "@/lib/intranet/doctrine";
 import { inboundDates, recordSends, type NoteLike } from "@/lib/sendbook/read";
 import { readOutcome } from "@/lib/dashboard/outcome";
@@ -538,10 +539,13 @@ async function contextPackFor(accountId: string, name: string): Promise<ContextP
       orderBy: { createdAt: "desc" },
       take: 4,
     });
-    for (const t of todos)
+    for (const t of todos) {
+      // A loop on their side (D10) is not the operator's commitment.
+      if (theirLoopOf(t.body)) continue;
       lines.push(
         `open commitment: ${redactMoney(t.body.replace(/\s+/g, " ")).slice(0, 90)}`,
       );
+    }
 
     const card = await prisma.dashCard.findFirst({ where: { name } });
     if (card) {

@@ -4,7 +4,8 @@
 // writers' link tier — and as source where it does not: roomPaste gates on
 // getAppAccess and getPrisma, so, as tests/ingest-defects.test.ts does, the
 // sequencing inside it is read from the slice between
-// `export async function roomPaste(` and `async function absorbRead(`.
+// `export async function roomPaste(` and `export async function
+// roomActionUndo(`, and the fan-out from its own module (slice 6).
 //
 // D4 (CLAUDE.md, The Chute): the note keeps the text whole at any size; only
 // the model's read is windowed, and every window that cut something is on the
@@ -57,6 +58,7 @@ import {
 const root = cwd();
 const read = (p: string) => readFileSync(join(root, p), "utf8");
 const actions = read("src/app/room/actions.ts");
+const fanoutSrc = read("src/lib/ingest/fanout.ts");
 
 /** The body of one top-level function, from its head to the next marker. */
 function slice(src: string, from: string, to: string): string {
@@ -81,8 +83,16 @@ function callArgs(src: string, open: number): string {
   return src.slice(open + 1);
 }
 
-const roomPaste = slice(actions, "export async function roomPaste(", "async function absorbRead(");
-const absorbRead = slice(actions, "async function absorbRead(", "async function fileCompletion(");
+const roomPaste = slice(
+  actions,
+  "export async function roomPaste(",
+  "export async function roomActionUndo(",
+);
+const absorbRead = slice(
+  fanoutSrc,
+  "export async function absorbRead(",
+  "export function completionKey(",
+);
 const pasteUndo = slice(
   actions,
   "export async function roomPasteUndo(",

@@ -14,6 +14,7 @@ import {
   isNamespacedAccountId,
 } from "@/lib/today/overlay";
 import { peos } from "@/lib/book";
+import { theirLoopOf } from "@/lib/room/owed";
 import { splitMarker, splitTags, visibleText } from "@/lib/today/route-notes";
 import { userDayKey, USER_TZ } from "@/lib/tz";
 import { deleteForever, reopenTodo, restoreHidden } from "./actions";
@@ -111,6 +112,8 @@ export default async function ArchivePage({
   const hits: Hit[] = [];
   if (query) {
     for (const t of todos) {
+      // A loop on their side (D10) is not a sheet row; owedByThem reads it.
+      if (theirLoopOf(t.body)) continue;
       const text = visibleText(t.body);
       if (!text.toLowerCase().includes(query)) continue;
       const tags = splitTags(splitMarker(t.body).text).tags;

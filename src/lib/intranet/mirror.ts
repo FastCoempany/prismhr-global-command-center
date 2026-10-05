@@ -15,6 +15,7 @@
 
 import { DIALECT_ALT, GLYPH_CLASS } from "@/lib/ingest/dialect";
 import { splitFallback } from "@/lib/room/deliverables";
+import { theirLoopOf } from "@/lib/room/owed";
 import { splitTags } from "@/lib/today/route-notes";
 import { isNamespacedAccountId } from "@/lib/today/overlay";
 import { redactMoney } from "@/lib/intel/lexicon";
@@ -131,6 +132,10 @@ export function mirrorTodo(
   },
   accountName: string,
 ): MirrorDoc | null {
+  // A loop on their side (D10) is not an action the operator opened. It
+  // mirrors nothing until the face decides where a loop sits (the plan's
+  // §5.4); owedByThem is its one reader.
+  if (theirLoopOf(t.body)) return null;
   const { text: tagless } = splitTags(t.body);
   const { text, fallback } = splitFallback(tagless);
   const clean = (text ?? "").replace(/\s*·\s*from [^·]*$/i, "").trim();

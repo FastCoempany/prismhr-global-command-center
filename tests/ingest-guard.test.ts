@@ -12,8 +12,8 @@
 // call takes a stub client the way the Filing module takes one — and as
 // source where it does not: roomPaste gates on getAppAccess and getPrisma,
 // so, as tests/ingest-defects.test.ts does, its sequencing is read from the
-// slice between `export async function roomPaste(` and `async function
-// absorbRead(`.
+// slice between `export async function roomPaste(` and `export async
+// function roomActionUndo(` (the fan-out left for its own module in slice 6).
 
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
@@ -61,7 +61,11 @@ function slice(src: string, from: string, to: string): string {
   return src.slice(a, b);
 }
 
-const roomPaste = slice(actions, "export async function roomPaste(", "async function absorbRead(");
+const roomPaste = slice(
+  actions,
+  "export async function roomPaste(",
+  "export async function roomActionUndo(",
+);
 
 // ── the fixtures, as misfile-guard.test.ts holds them ──────────────────────
 const SIMPLOY = { id: "001F000000w38BOIAY", name: "Simploy" };

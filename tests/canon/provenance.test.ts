@@ -130,7 +130,9 @@ describe("every note carries its door in its own column (CLAUDE.md:405, P3)", ()
     assert.match(chute, /roomPaste\([^)]*door:\s*"chute"/);
     const actions = read("src/app/room/actions.ts");
     assert.match(actions, /const door: Door = opts\?\.door \?\? "drop";/);
-    const absorb = actions.slice(actions.indexOf("async function absorbRead("));
+    // The fan-out is its own module since slice 6 (src/lib/ingest/fanout.ts).
+    const fanoutSrc = read("src/lib/ingest/fanout.ts");
+    const absorb = fanoutSrc.slice(fanoutSrc.indexOf("export async function absorbRead("));
     const fanout = absorb.slice(0, absorb.indexOf("\n}\n"));
     assert.match(fanout, /door: Door,/, "absorbRead takes the filing's door");
     assert.ok(!/door:\s*"/.test(fanout), "the fan-out never names a door of its own");

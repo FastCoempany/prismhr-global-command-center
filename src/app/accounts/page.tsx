@@ -35,6 +35,7 @@ import { clearDisposition } from "../room/ledger-actions";
 import { LocalTime } from "../today-client";
 import { EMPTY_ENGAGEMENT } from "@/lib/engagement";
 import type { LinkedNote } from "@/components/account-notes";
+import { theirLoopOf } from "@/lib/room/owed";
 import { AccountsClient, type AccountRow } from "../accounts-client";
 import styles from "../command-center.module.css";
 
@@ -111,10 +112,11 @@ export default async function AccountsPage() {
   const command = await loadCommand();
   const peoStateById = new Map(command.rows.map((r) => [r.id, r]));
 
-  // Notetaker notes linked to accounts (surfaced read-only here).
+  // Notetaker notes linked to accounts (surfaced read-only here). A loop on
+  // their side (D10) is not the operator's note; owedByThem reads it.
   const notesByAccount = new Map<string, LinkedNote[]>();
   for (const t of await loadTodos()) {
-    if (!t.accountId) continue;
+    if (!t.accountId || theirLoopOf(t.body)) continue;
     const list = notesByAccount.get(t.accountId) ?? [];
     list.push({ id: t.id, body: t.body, done: t.done, remindAt: t.remindAt });
     notesByAccount.set(t.accountId, list);

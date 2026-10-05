@@ -15,6 +15,7 @@ import { relationshipFor } from "@/lib/intel/relationship";
 import { isMeetingNote } from "@/lib/intel/meeting";
 import { lastTouchRead } from "@/lib/room/touch";
 import { isHomeSideName } from "@/lib/intel/provenance";
+import { theirLoopOf } from "@/lib/room/owed";
 import { todoBelongsTo } from "@/lib/room/sheet-view";
 import { visibleText } from "@/lib/today/route-notes";
 import { redactMoney } from "@/lib/intel/lexicon";
@@ -192,6 +193,8 @@ export async function liveReadFor(question: string): Promise<LiveRead | null> {
       if (lines.length >= 10) break;
       if (!todoBelongsTo({ body: t.body, accountId: t.accountId ?? "" }, hit.id, noteIds))
         continue;
+      // A loop on their side (D10) is not open on the operator's sheet.
+      if (theirLoopOf(t.body)) continue;
       const line = firstLine(t.body);
       if (line) lines.push(`Open on the sheet for ${hit.name}: "${line.slice(0, 160)}".`);
     }
