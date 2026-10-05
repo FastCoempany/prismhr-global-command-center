@@ -61,8 +61,8 @@ import {
 import { filingSentences, type Window } from "@/lib/ingest/windows";
 import { DROP_ACCEPT, sniffPaste } from "@/lib/paste-files";
 import { splitDrop, vaultAfterVerdict } from "@/lib/room/drop-plan";
-import { archiveFileToGitHub } from "@/lib/github/archive";
-import { githubArchiveGrant } from "./archive-actions";
+import { sendToVault } from "@/lib/ingest/vault";
+import { vaultChunk, vaultFile } from "./vault-actions";
 import { readFileToText } from "./read-file";
 import type { StageView } from "@/lib/room/stages-view";
 import { PipelineDrawer } from "./pipeline-tab";
@@ -570,29 +570,29 @@ function Row({
     // brain reading the text, and a silent row reads as a dead drop.
     filePaste(read.text, false, waiting, read.windows);
   };
-  // The vault (founder-decreed 2026-09-02): EVERY file dropped on the row
-  // archives to the GitHub vault under accounts/<this account>, fully
-  // automatic — small files as repo files, large ones as pre-release assets.
-  // The archive rides beside the filing, never instead of it: readable files
-  // still file to the record exactly as before, and a binary the reader
-  // cannot open still lands in the vault.
+  // The vault (founder-decreed 2026-09-02; canon since 2026-09-25, D8, as
+  // amended 2026-10-05): EVERY file dropped on the row archives to the
+  // GitHub vault under accounts/<this account>, fully automatic — small
+  // files as repo files, large ones as pre-release assets. The server does
+  // the carrying (src/app/room/vault-actions.ts), so no token reaches the
+  // browser; a file above one request's cap goes up in pieces the server
+  // assembles before it lands. The archive rides beside the filing, never
+  // instead of it: readable files still file to the record exactly as
+  // before, and a binary the reader cannot open still lands in the vault.
   const [arch, setArch] = useState<{ text: string; url?: string; bad?: boolean } | null>(
     null,
   );
   const archiveFiles = async (files: File[]) => {
     if (files.length === 0) return;
-    const g = await githubArchiveGrant();
-    if (!g.ok) {
-      setArch({ text: g.reason, bad: true });
-      return;
-    }
     for (const f of files) {
       setArch({ text: `Archiving ${f.name} to the vault…` });
-      const r = await archiveFileToGitHub({
-        file: f,
-        accountName: row.name,
-        grant: g.grant,
-      });
+      const r = await sendToVault(
+        row.accountId,
+        f,
+        { whole: vaultFile, piece: vaultChunk },
+        (sent, total) =>
+          setArch({ text: `Archiving ${f.name} to the vault… ${sent} of ${total}` }),
+      );
       setArch(
         r.ok
           ? {

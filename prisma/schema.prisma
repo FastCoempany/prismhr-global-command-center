@@ -1150,6 +1150,25 @@ model Filing {
   @@index([accountId])
 }
 
+// The vault's staging (the Chute brains refactor plan, §2.4 and slice 7; D8
+// as amended 2026-10-05 — CLAUDE.md, The Chute): a dropped file above the
+// server's request cap arrives in pieces of at most 4 MB, each a row here,
+// until the last one lands; then the server assembles the file in order,
+// pushes it to GitHub once and deletes the pieces. Nothing renders from it
+// and nothing stays in it past one upload; a piece left behind by an
+// abandoned upload is swept on the next one.
+model VaultChunk {
+  id        String   @id @default(cuid())
+  accountId String
+  filename  String
+  index     Int
+  total     Int
+  bytes     Bytes
+  createdAt DateTime @default(now())
+
+  @@index([accountId, filename])
+}
+
 // A dated, time-stamped note pinned to a partner (CSM) — the by-partner
 // repository behind the Partner Room and the notes strip on each partner's
 // outreach card. Written from Stash routing, the Partner Room's note box, or

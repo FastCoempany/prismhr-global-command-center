@@ -163,7 +163,8 @@ export function guardPlan(inp: {
   claim: string;
   /** The row it is being filed to. */
   bound: { id: string; name: string };
-  /** Every account the book knows, with its routing signals. */
+  /** Every account the book knows, with its routing signals: the joined
+   *  roster (C2; src/lib/ingest/route.ts), handed in so this stays pure. */
   roster: readonly RouteAccount[];
 }): GuardPlan {
   if (inp.force) return { text: null, read: null };
