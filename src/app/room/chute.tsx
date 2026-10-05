@@ -118,7 +118,7 @@ export function Chute({
     // The text rides on the row: a mismatch waits for the pick with the text
     // it needs to file, and the ledger keeps it across a reload.
     patch(key, { state: "filing", account, why, rung, text });
-    const r = await roomPaste(account.id, text, { force });
+    const r = await roomPaste(account.id, text, { force, door: "chute" });
     // The same verdict gate the row's Drop runs: the file vaults only once the
     // filing is accepted; a dispute keeps it on the row for the pick.
     const [vaulting] = vaultAfterVerdict(r, srcFile ? [srcFile] : []).archive;

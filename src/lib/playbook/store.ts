@@ -10,6 +10,7 @@
 // pages iterate real accounts, so these rows are invisible everywhere until the
 // Playbook renders them on purpose.
 
+import type { Door } from "@/lib/ingest/doors";
 import { createAccountNoteRow } from "@/lib/notes/write";
 import type { AccountNote } from "@/lib/today/overlay";
 
@@ -104,6 +105,7 @@ export async function filePlaybook(opts: {
   accountId: string;
   accountName: string;
   known: Set<string>; // knowledgeKey() of what's already filed
+  door: Door; // the filing's door — the fan-out passes it, an approval says "hand"
   at?: Date;
 }): Promise<string[]> {
   const ids: string[] = [];
@@ -122,6 +124,7 @@ export async function filePlaybook(opts: {
           n: opts.accountName,
           w: (item.who ?? "").trim(),
         }),
+        door: opts.door,
         lane: "background",
         source: "playbook",
         at: opts.at,

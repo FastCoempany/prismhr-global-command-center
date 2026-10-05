@@ -138,6 +138,7 @@ export async function savePipelineEdits(args: {
         accountId: `${PIPELINE_EDIT_NS}${accountId}`,
         kind: "mine",
         body,
+        door: "hand",
         lane: "mine",
         source: "pipeline",
       });

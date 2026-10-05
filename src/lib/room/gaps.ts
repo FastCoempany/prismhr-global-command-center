@@ -4,6 +4,7 @@
 // irrelevant — and waving one off advances the carousel to the next ask rather
 // than leaving a hole. When the queue runs dry the room offers to mint more.
 
+import type { Door } from "@/lib/ingest/doors";
 import { createAccountNoteRow } from "@/lib/notes/write";
 import { knowledgeKey } from "@/lib/playbook/store";
 import type { AccountNote } from "@/lib/today/overlay";
@@ -62,6 +63,7 @@ export async function fileGaps(opts: {
   accountId: string;
   questions: string[];
   known: Set<string>; // knowledgeKey() of asks already on file (live or waved off)
+  door: Door; // the filing's door — the fan-out passes it, a click says "hand"
   at?: Date;
 }): Promise<string[]> {
   const ids: string[] = [];
@@ -76,6 +78,7 @@ export async function fileGaps(opts: {
         accountId: gapNs(opts.accountId),
         kind: "account",
         body: gapBody(question),
+        door: opts.door,
         lane: "background",
         source: "gap",
         at: opts.at,

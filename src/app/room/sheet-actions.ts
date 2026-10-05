@@ -59,6 +59,7 @@ async function writeRoutes(
         accountId: a.id,
         kind: "mine",
         body: text,
+        door: "hand",
         lane: "mine",
         source: "sheet",
       });

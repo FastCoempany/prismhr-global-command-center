@@ -188,6 +188,7 @@ export async function logTouch(formData: FormData) {
         accountId: subjectKey.slice("outreach:".length),
         kind: "account",
         body: `✉ Outreach sent${message ? `: “${clipForLog(message)}”` : ""}`,
+        door: "hand",
         lane: "mine",
         source: "touch",
       });
@@ -301,7 +302,8 @@ export async function addFollowUp(formData: FormData) {
     // file.ts): one action in the right-hand panel, one note on the record.
     const routed = await fileFollowUpToAccounts(label, read.accounts, {
       compose: roomCompose,
-      note: createAccountNoteRow,
+      // The chase is the operator's own hand; the filer names the rest.
+      note: (n) => createAccountNoteRow({ ...n, door: "hand" }),
     });
     await getPrisma().touch.create({
       // Due now — the list is the whole cadence.
@@ -434,6 +436,7 @@ export async function clearDisposition(formData: FormData) {
       accountId,
       kind: "account",
       body: "↩ Returned to active",
+      door: "hand",
       lane: "mine",
       source: "disposition",
     });
@@ -460,6 +463,7 @@ export async function dismissTriage(formData: FormData) {
       accountId,
       kind: "account",
       body,
+      door: "hand",
       lane: "mine",
       source: "move",
     });
