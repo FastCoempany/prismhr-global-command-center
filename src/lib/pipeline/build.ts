@@ -499,10 +499,23 @@ function record(
     });
   }
 
-  // Their turn, three rungs: the loops the read filed on their side (D10),
-  // the call read's Owed line, then an inbound note's own first person. Four
-  // of eleven accounts carry the last and not the others.
+  // Their turn, three rungs: what the read says they said they would do
+  // (field 14 — their loops, the call read's Owed line, the newest inbound's
+  // own promise, colleagues filtered as the home side), the rest of the loops
+  // and Owed lines, then an inbound note's own first person. Four of eleven
+  // accounts carry the last and not the others.
+  const promise = a.read.theirPromise;
   const theirSide = [
+    ...(promise && promise.text
+      ? [
+          {
+            who: promise.who,
+            text: clean(promise.text),
+            at: dayOf(promise.at),
+            src: `record ${md(promise.at)}`,
+          },
+        ]
+      : []),
     ...owedByThem(ns, input.now, a.todos).map((o) => ({
       who: o.who,
       text: clean(o.text),
@@ -517,29 +530,21 @@ function record(
     // colleague answered the next day.
     .filter((t) => !answeredSince(t.at, ns, isHome));
 
-  // Nothing owed either way, and the last substantive word was his: the ball
-  // is still theirs — they owe a reply. The room already keeps this signal;
-  // the readout was silent about it and said "None set" on an account where
-  // he had just asked a question.
-  if (
-    !theirSide.length &&
-    intel.lastOutbound &&
-    (!intel.lastInbound || intel.lastOutbound > intel.lastInbound)
-  ) {
+  // Nothing owed either way, and the move is theirs on our send: the ball
+  // is still theirs — they owe a reply. Whose move it is comes from the read
+  // (field 4; §2.2, the fifth migration): the room and the drawer answer
+  // alike, and an acceptance after the send books the meeting instead of
+  // leaving a reply owed. The readout used to be silent about this and said
+  // "None set" on an account where he had just asked a question.
+  const move = a.read.whoseMove;
+  if (!theirSide.length && move.whose === "them" && move.rung === "send") {
     // Who owes it: whoever he wrote to, else whoever last wrote to him. A
     // record that names a person should never render "They".
-    const last = ns.find(
-      (n) => dayOf(effectiveAt(n.createdAt, n.body)) === dayOf(intel.lastOutbound),
-    );
-    const to =
-      (last?.actors ?? "")
-        .split("→")[1]
-        ?.replace(/\+\d+\s*$/, "")
-        .trim() ?? "";
     const lastFrom =
       ns
         .map((n) => (n.actors ?? "").split("→")[0]?.trim() ?? "")
         .find((nm) => nm && !isHome(nm) && !MINE_RE.test(nm)) ?? "";
+    const to = move.who;
     const named = to && !isHome(to) && !MINE_RE.test(to) ? to : lastFrom;
     // Only when the record names the person. "They owe a reply" puts a word on
     // the line that no row stands behind, and the contamination pass is right
@@ -547,9 +552,9 @@ function record(
     if (named)
       theirSide.push({
         who: named.split(" ")[0],
-        text: `reply to your ${md(intel.lastOutbound)} note`,
-        at: dayOf(intel.lastOutbound),
-        src: `record ${md(intel.lastOutbound)}`,
+        text: `reply to your ${md(move.since)} note`,
+        at: dayOf(move.since),
+        src: `record ${md(move.since)}`,
       });
   }
 

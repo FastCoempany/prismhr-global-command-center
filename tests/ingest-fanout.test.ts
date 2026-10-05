@@ -33,6 +33,7 @@ import { undoFiling, type FilingClient } from "../src/lib/ingest/filing";
 import { sanitizeAiResult } from "../src/lib/intel/ai-clean";
 import type { AccountNoteData, TodoData } from "../src/lib/notes/write";
 import { filePlaybook, knownPlaybook, playbookBody } from "../src/lib/playbook/store";
+import { readAccount } from "../src/lib/record/read";
 import { readDeal } from "../src/lib/room/engine";
 import { fileGaps, gapNs, knownGaps } from "../src/lib/room/gaps";
 import { dayBlown, owedByThem, theirLoopOf } from "../src/lib/room/owed";
@@ -381,11 +382,36 @@ describe("owedByThem reads a their-loop row beside its regex", () => {
     assert.equal(bare.move, "Send Tom the recap. Chassie owes invoices + EOR confirm.");
   });
 
-  test("the room and the pipeline hand their loops to the reader", () => {
+  test("the room and the pipeline hand their loops to the reader, through the read", () => {
+    // Since slice 14 the room takes the loop from the single account read's
+    // theirPromise (field 14), which hands the account's todos to owedByThem
+    // itself; the pipeline reads the same field ahead of its own call.
+    const acct = readAccount({
+      account: { id: "A1", name: "Acme PEO" },
+      notes: [],
+      touches: [],
+      todos: [
+        { id: "t1", body: PRICING, done: false, accountId: "A1", createdAt: "2026-10-05T18:00:00Z" },
+      ],
+      dispositions: new Map(),
+      homeSide: [],
+      now: NOW,
+    });
+    assert.deepEqual(acct.theirPromise, {
+      who: "Adam Bell",
+      text: "Send the pricing model",
+      at: "2026-10-05T18:00:00Z",
+      day: "2026-10-09",
+    });
+    assert.equal(acct.whoseMove.rung, "loop");
+    assert.equal(acct.whoseMove.who, "Adam Bell");
+    const lib = read("src/lib/record/read.ts");
+    assert.match(lib, /owedByThem\(visible, now, todos\)/);
     const page = read("src/app/room/page.tsx");
-    assert.match(page, /owedByThem\(\s*allNotes,\s*now,\s*todos\.filter\(/);
+    assert.match(page, /acct\.theirPromise/);
     assert.match(page, /\.\.\.\(b\.day \? \{ day: b\.day \} : \{\}\)/);
     const build = read("src/lib/pipeline/build.ts");
+    assert.match(build, /a\.read\.theirPromise/);
     assert.match(build, /owedByThem\(ns, input\.now, a\.todos\)/);
   });
 });

@@ -5,7 +5,7 @@
 // page's; machinery and sign-offs are flags on the doc, never exclusions; the
 // second record folds a shell-keyed drop under the canonical id; THEIRS leads
 // only with an account person's gem (C16); and whoseMove agrees with the
-// engine's court on the room-read fixtures. Slice 12 adds the third
+// engine's move line on the room-read fixtures. Slice 12 adds the third
 // migration's pins at the foot: the drawer's record, the minter's corpus and
 // the live read all read the one read. One wiring test there reads the
 // callers' source; nothing else here reads a source file.
@@ -28,7 +28,7 @@ import type { AccountSlice, StagedRow } from "../src/lib/activity/types";
 import { orgInboundKey } from "../src/lib/activity/read";
 import { buildAccountSheet } from "../src/lib/room/sheet-view";
 import { renderSeatBody } from "../src/lib/act/lane";
-import { whoChipNames } from "../src/lib/sendbook/read";
+import { inboundDates, recordSends, warmDates, whoChipNames } from "../src/lib/sendbook/read";
 import { corpusFor, extractDealIntel } from "../src/lib/intel/extract";
 import { digestFor, digestForCardName } from "../src/lib/intel/digest";
 import { lastTouchRead } from "../src/lib/room/touch";
@@ -652,22 +652,25 @@ describe("secondRecordFor folds a shell-keyed drop under the canonical id", () =
   });
 });
 
-// ── whoseMove agrees with the engine's court ────────────────────────────────
+// ── whoseMove agrees with the engine's move line ────────────────────────────
+// The court line is retired in full (ruled 2026-09-25, D25); the move line
+// says who and when, and these pins read it.
+
+/** The engine's move line, read as the record's answer: "Answer" and the recap
+ *  are ours, "Wait on", "Nudge" and "Chase <name>" are theirs, the booked
+ *  meeting is the acceptance, and a thin or gate-only read is no thread. */
+const asWhose = (move: string): "you" | "them" | "booked" | "none" =>
+  /^Wait for the meeting\./.test(move)
+    ? "booked"
+    : /^(Answer |Send .+ the recap\.|Hold for their follow-up|Chase the follow-up)/.test(move)
+      ? "you"
+      : /^(Wait on |Nudge |Chase )/.test(move)
+        ? "them"
+        : "none";
 
 describe("whoseMove agrees with the engine's answer on the room-read fixtures", () => {
   const touchAt = (daysAgo: number) =>
     new Date(NOW.getTime() - daysAgo * 86_400_000).toISOString();
-
-  /** The engine's tone, read as the record's answer: "you" is ours, "them"
-   *  and "quiet" are theirs, BOOKED is the acceptance, "none" is no thread. */
-  const asWhose = (court: { line: string; tone: string }) =>
-    court.line.startsWith("BOOKED")
-      ? "booked"
-      : court.tone === "you"
-        ? "you"
-        : court.tone === "them" || court.tone === "quiet"
-          ? "them"
-          : "none";
 
   test("a logged touch awaiting a reply at 4, 5 and 10 days", () => {
     for (const days of [4, 5, 10]) {
@@ -681,7 +684,7 @@ describe("whoseMove agrees with the engine's answer on the room-read fixtures", 
         now: NOW,
       });
       const mine = whoseMove([], [], NOW, { touch: log });
-      assert.equal(mine.whose, asWhose(engine.court), `${days} days`);
+      assert.equal(mine.whose, asWhose(engine.move), `${days} days`);
       assert.equal(mine.whose, "them");
       assert.equal(mine.who, "Kristen");
       assert.equal(mine.since, log.contactedAt);
@@ -699,51 +702,55 @@ describe("whoseMove agrees with the engine's answer on the room-read fixtures", 
       now: NOW,
     });
     const mine = whoseMove([], [], NOW, { touch: log });
-    assert.equal(asWhose(engine.court), "none");
+    assert.equal(asWhose(engine.move), "none");
     assert.equal(mine.whose, "none");
   });
 
-  /** The engine fed the way the room page feeds it, from the same rows. */
+  /** The engine fed the way the room page feeds it, from the same rows: the
+   *  facts from the read and, since slice 14, the read's own verdict. The
+   *  engine with only the facts runs the same rungs (whoseMoveFrom), and the
+   *  two must write one sentence — pinned on every fixture below. */
   const engineOver = (notes: RecordNote[], now: Date, roster: readonly string[] = []) => {
     const isHome = (n: string) => isHomeSideName(n, roster);
     const { read } = both("A1", "Acme", { homeSide: roster, notes, now });
     const touchRead = lastTouchRead(notes, null, isHome, now);
-    return {
-      read,
-      engine: readDeal({
-        accountName: "Acme",
-        step: null,
-        timing: null,
-        lastTouch: touchRead
-          ? {
-              at: touchRead.at,
-              awaitingReply: touchRead.awaitingReply,
-              who: touchRead.who,
-            }
-          : null,
-        lastInbound: read.intel.lastInbound
-          ? {
-              at: read.intel.lastInbound,
-              who: read.intel.lastInboundWho,
-              promise: read.intel.lastInboundPromise,
-            }
-          : null,
-        lastMeeting: read.lastMeeting
-          ? { at: read.lastMeeting.at, who: read.lastMeeting.who }
-          : null,
-        lastAccepted: read.lastAccepted
-          ? { at: read.lastAccepted.at, who: read.lastAccepted.who }
-          : null,
-        lastRecordAt: read.lastRecordAt,
-        now,
-      }),
+    const facts = {
+      accountName: "Acme",
+      step: null,
+      timing: null,
+      lastTouch: touchRead
+        ? {
+            at: touchRead.at,
+            awaitingReply: touchRead.awaitingReply,
+            who: touchRead.who,
+          }
+        : null,
+      lastInbound: read.lastInbound
+        ? {
+            at: read.lastInbound.at,
+            who: read.lastInbound.who,
+            promise: read.lastInbound.promise,
+          }
+        : null,
+      lastMeeting: read.lastMeeting
+        ? { at: read.lastMeeting.at, who: read.lastMeeting.who }
+        : null,
+      lastAccepted: read.lastAccepted
+        ? { at: read.lastAccepted.at, who: read.lastAccepted.who }
+        : null,
+      lastRecordAt: read.lastRecordAt,
+      now,
     };
+    const engine = readDeal({ ...facts, whoseMove: read.whoseMove });
+    const fromFacts = readDeal(facts);
+    assert.equal(fromFacts.move, engine.move, "the verdict and the facts write one sentence");
+    return { read, engine };
   };
 
   test("the Trend reply after the send is ours to answer", () => {
     const now = new Date("2026-09-02T20:00:00Z");
     const { read, engine } = engineOver(TREND, now);
-    assert.equal(asWhose(engine.court), "you");
+    assert.equal(asWhose(engine.move), "you");
     assert.equal(read.whoseMove.whose, "you");
     assert.equal(read.whoseMove.who, "Adam Dingwell");
     assert.equal(whoseMove(read.docs, [], now).whose, "you");
@@ -762,7 +769,7 @@ describe("whoseMove agrees with the engine's answer on the room-read fixtures", 
       }),
     ];
     const { read, engine } = engineOver(answered, now);
-    assert.equal(asWhose(engine.court), "them");
+    assert.equal(asWhose(engine.move), "them");
     assert.equal(read.whoseMove.whose, "them");
     assert.equal(read.whoseMove.who, "Adam Dingwell");
   });
@@ -770,7 +777,7 @@ describe("whoseMove agrees with the engine's answer on the room-read fixtures", 
   test("the acceptance after our send books the meeting", () => {
     const now = new Date("2026-09-04T22:00:00Z");
     const { read, engine } = engineOver(JOSEPH, now);
-    assert.equal(asWhose(engine.court), "booked");
+    assert.equal(asWhose(engine.move), "booked");
     assert.equal(read.whoseMove.whose, "booked");
     assert.equal(read.whoseMove.who, "Joseph Lyon");
   });
@@ -794,7 +801,7 @@ describe("whoseMove agrees with the engine's answer on the room-read fixtures", 
       }),
     ];
     const { read, engine } = engineOver(notes, now);
-    assert.equal(asWhose(engine.court), "you");
+    assert.equal(asWhose(engine.move), "you");
     assert.equal(read.whoseMove.whose, "you");
     assert.equal(read.whoseMove.who, "Chassie Smith");
     assert.equal(read.lastMeeting?.noteId, "k2");
@@ -819,11 +826,12 @@ describe("whoseMove agrees with the engine's answer on the room-read fixtures", 
       }),
     ];
     const { read, engine } = engineOver(notes, now);
-    assert.equal(asWhose(engine.court), "you");
+    assert.equal(asWhose(engine.move), "you");
     assert.equal(read.whoseMove.whose, "you");
     assert.equal(read.whoseMove.who, "Adam Meyer");
     // A colleague writing to the operator about the account is not the
-    // account writing: with Lesha on the roster the move stays none.
+    // account writing (pass 2 B, row 2): with Lesha on the roster the doc is
+    // not inbound, and the move stays none on the read and on the engine.
     const colleague = engineOver(
       [
         row({
@@ -838,9 +846,9 @@ describe("whoseMove agrees with the engine's answer on the room-read fixtures", 
       now,
       ["Lesha Cyphers"],
     );
-    // The old corpus reads a colleague's mail to us as inbound (the ledger's
-    // row 2, accidental); the read says the same today — parity, recorded.
-    assert.equal(colleague.read.whoseMove.whose, asWhose(colleague.engine.court));
+    assert.equal(colleague.read.whoseMove.whose, "none");
+    assert.equal(colleague.read.lastInbound, null, "a colleague's mail is never inbound");
+    assert.equal(asWhose(colleague.engine.move), "none");
   });
 
   test("an open loop on their side with no thread leaves the move with them", () => {
@@ -1846,5 +1854,206 @@ describe("an inbound with no send reads engaged", () => {
       both("A1", "Acme", { homeSide: [], notes: [] }).read.conversationExists,
       false,
     );
+  });
+});
+
+// ── slice 14 · whose move, spelled once (§2.2, the fifth migration) ─────────
+// Pass 2 B's first five rows each named a note on which two readers disagreed
+// about whose move it was. One spelling now answers for the room, the drawer,
+// the drumbeat and the Sendbook, and each row gets one answer.
+
+describe("the five whose-move fixtures of pass 2 B rows 1 to 5 give one answer each", () => {
+  const CSMS = ["Lesha Cyphers"];
+  const isHome = (n: string) => isHomeSideName(n, CSMS);
+
+  /** The read, the engine on its verdict, and the register's two date sets. */
+  const everywhere = (notes: RecordNote[], now: Date) => {
+    const read = readAccount({
+      account: { id: "A1", name: "Acme" },
+      notes,
+      touches: [],
+      todos: [],
+      dispositions: new Map(),
+      homeSide: CSMS,
+      now,
+    });
+    const touchRead = lastTouchRead(notes, null, isHome, now);
+    const engine = readDeal({
+      accountName: "Acme",
+      step: null,
+      timing: null,
+      whoseMove: read.whoseMove,
+      lastTouch: touchRead
+        ? { at: touchRead.at, awaitingReply: touchRead.awaitingReply, who: touchRead.who }
+        : null,
+      lastInbound: read.lastInbound,
+      lastMeeting: read.lastMeeting,
+      lastAccepted: read.lastAccepted,
+      lastRecordAt: read.lastRecordAt,
+      now,
+    });
+    return {
+      read,
+      engine,
+      sends: recordSends(read.docs),
+      warm: warmDates(read.docs),
+      inbound: inboundDates(read.docs),
+    };
+  };
+
+  test("row 1 · a self-addressed SF task never flips the court: the inbound before it stands", () => {
+    const now = new Date("2026-09-25T17:00:00Z");
+    const { read, engine, sends } = everywhere(
+      [
+        row({
+          id: "s2",
+          body: "✔ SF Sep 20 — Follow up with TrendHR · Antaeus Coe → Antaeus Coe",
+          actors: "Antaeus Coe → Antaeus Coe",
+          source: "sf",
+          createdAt: "2026-09-20T12:00:00Z",
+        }),
+        row({
+          id: "s1",
+          body: "✉ OL Sep 18 — Re: pricing · Adam Meyer → Antaeus Coe\nCan you send the Canada numbers?",
+          actors: "Adam Meyer → Antaeus Coe",
+          source: "outlook-ai",
+          createdAt: "2026-09-18T12:00:00Z",
+        }),
+      ],
+      now,
+    );
+    assert.deepEqual(
+      { whose: read.whoseMove.whose, rung: read.whoseMove.rung, who: read.whoseMove.who },
+      { whose: "you", rung: "reply", who: "Adam Meyer" },
+    );
+    assert.equal(engine.move, "Answer Adam Meyer. They wrote 7 days ago.");
+    // The task is not a send on any register: not the touch clock's, not the
+    // Sendbook's.
+    assert.equal(read.lastOutbound, null);
+    assert.deepEqual(sends, []);
+  });
+
+  test("row 2 · a colleague's mail never flips it: not inbound, not warm, not excluding", () => {
+    const now = new Date("2026-09-25T17:00:00Z");
+    const notes = [
+      row({
+        id: "c1",
+        body: "✉ OL Sep 22 — Re: Regis intro · Lesha Cyphers → Antaeus Coe\nI made the intro, you should hear from them.",
+        actors: "Lesha Cyphers → Antaeus Coe",
+        recipients: "Antaeus Coe",
+        source: "outlook-ai",
+        createdAt: "2026-09-22T12:00:00Z",
+      }),
+      row({
+        id: "c0",
+        body: "✉ OL Sep 21 — Re: Regis intro · Antaeus Coe → Leilani Gonzalez +1\nLooking forward to it.",
+        actors: "Antaeus Coe → Leilani Gonzalez +1",
+        source: "outlook-ai",
+        createdAt: "2026-09-21T12:00:00Z",
+      }),
+    ];
+    const { read, engine, warm, inbound } = everywhere(notes, now);
+    const lesha = read.docs.find((d) => d.noteId === "c1")!;
+    assert.equal(lesha.senderIsHome, true);
+    assert.equal(lesha.direction, undefined, "ours, so neither in nor out");
+    assert.equal(read.lastInbound, null);
+    // The thread is still ours awaiting Leilani: the send stands, the mail
+    // between colleagues changes nothing.
+    assert.equal(read.whoseMove.whose, "them");
+    assert.equal(read.whoseMove.rung, "send");
+    assert.equal(read.whoseMove.who, "Leilani Gonzalez");
+    assert.ok(!/^Answer/.test(engine.move), engine.move);
+    assert.deepEqual(warm, [], "a CSM's voice never warms");
+    assert.deepEqual(inbound, []);
+    assert.equal(
+      liveMotionIds(new Map(), new Map([["A1", read.intel]]), now).has("A1"),
+      false,
+      "a colleague's mail does not take the account off Groundwork",
+    );
+  });
+
+  test("row 3 · an acceptance books: machinery for the register, the meeting for the move", () => {
+    const now = new Date("2026-09-04T22:00:00Z");
+    const { read, engine, warm, inbound } = everywhere(JOSEPH, now);
+    assert.deepEqual(
+      { whose: read.whoseMove.whose, rung: read.whoseMove.rung, who: read.whoseMove.who },
+      { whose: "booked", rung: "acceptance", who: "Joseph Lyon" },
+    );
+    assert.equal(engine.move, "Wait for the meeting. Joseph Lyon accepted.");
+    const accepted = read.docs.find((d) => d.noteId === "n5")!;
+    assert.equal(accepted.machinery, true);
+    assert.ok(!warm.includes(accepted.at), "the acceptance never warms");
+    assert.ok(!inbound.includes(accepted.at), "and never replies");
+    // Joseph's own 10:22 message is his voice, and it does both.
+    const wrote = read.docs.find((d) => d.noteId === "n2")!;
+    assert.ok(warm.includes(wrote.at));
+    assert.ok(inbound.includes(wrote.at));
+  });
+
+  test("row 4 · a closer changes nothing for the move, and warms the lane", () => {
+    const now = new Date("2026-09-25T17:00:00Z");
+    const { read, engine, warm, inbound } = everywhere(
+      [
+        row({
+          id: "k2",
+          body: "✉ OL Sep 23 — Re: pricing · Adam Meyer → Antaeus Coe\nThanks!",
+          actors: "Adam Meyer → Antaeus Coe",
+          recipients: "Antaeus Coe",
+          source: "outlook-ai",
+          createdAt: "2026-09-23T12:00:00Z",
+        }),
+        row({
+          id: "k1",
+          body: "✉ OL Sep 22 — Re: pricing · Antaeus Coe → Adam Meyer\nThe Canada numbers are attached.",
+          actors: "Antaeus Coe → Adam Meyer",
+          source: "outlook-ai",
+          createdAt: "2026-09-22T12:00:00Z",
+        }),
+      ],
+      now,
+    );
+    const thanks = read.docs.find((d) => d.noteId === "k2")!;
+    assert.equal(thanks.closer, true);
+    assert.equal(thanks.direction, undefined, "transparent for whose move");
+    assert.deepEqual(
+      { whose: read.whoseMove.whose, rung: read.whoseMove.rung, who: read.whoseMove.who },
+      { whose: "them", rung: "send", who: "Adam Meyer" },
+    );
+    assert.equal(engine.move, "Wait on Adam Meyer. Nothing owed on your side today.");
+    assert.deepEqual(warm, [thanks.at], "their voice is still their voice");
+    assert.deepEqual(inbound, [], "and ↩ REPLIED needs a substantive inbound");
+  });
+
+  test("row 5 · a same-day reply orders against the send by the head clock, on every reader", () => {
+    const now = new Date("2026-09-02T20:00:00Z");
+    // 9:44 AM send, 10:39 AM reply, one noon anchor: the reply answers the send.
+    const answered = everywhere(TREND, now);
+    assert.deepEqual(
+      {
+        whose: answered.read.whoseMove.whose,
+        rung: answered.read.whoseMove.rung,
+        who: answered.read.whoseMove.who,
+      },
+      { whose: "you", rung: "reply", who: "Adam Dingwell" },
+    );
+    assert.equal(answered.engine.move, "Answer Adam Dingwell. They wrote today.");
+    assert.equal(answered.sends.length, 1);
+    assert.ok(answered.inbound[0] > answered.sends[0].at, "the register orders them the same");
+    // The same two entries with the send at 2:15 PM: a morning reply never
+    // answers an afternoon send.
+    const afternoon = everywhere(
+      [
+        row({
+          ...TREND[0],
+          body: TREND[0].body.replace("9:44 AM", "2:15 PM"),
+        }),
+        TREND[1],
+      ],
+      now,
+    );
+    assert.equal(afternoon.read.whoseMove.whose, "them");
+    assert.equal(afternoon.read.whoseMove.rung, "send");
+    assert.equal(afternoon.engine.move, "Wait on Melanie Dreyer. You wrote today.");
+    assert.ok(afternoon.inbound[0] < afternoon.sends[0].at);
   });
 });

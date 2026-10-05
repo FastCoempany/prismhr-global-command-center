@@ -8,10 +8,10 @@
 // source the app holds, never a private narrow one, and a fact's two stores
 // merge by latest.
 //
-// The HomeRoom reads it first (this slice); Groundwork, the drawer, the
-// Sendbook, the engine's court and Accounts follow one slice each (§2.2, the
-// migration order). The old path — corpusFor and extractDealIntel — stays
-// for its other callers until the last one leaves, and tests/record-read
+// The HomeRoom read it first (slice 10); Groundwork, the drawer, the Sendbook
+// and whose move followed (slices 11a to 14), and Accounts is the one left
+// (§2.2, the migration order). The old path — corpusFor and extractDealIntel —
+// stays for its other callers until the last one leaves, and tests/record-read
 // pins that the two agree on every fixture the old path's suites hold.
 
 import { secondRecordFor, type SecondRecord } from "@/lib/activity/read";
@@ -329,8 +329,14 @@ export function readAccount(input: AccountReadInput): AccountRead {
   const touches = input.touches.filter(
     (t) => (id && t.subjectKey === `outreach:${id}`) || t.label.toLowerCase() === name,
   );
+  // The log's newest entry for the account. The table keeps one row per
+  // subject, but Groundwork hands the Channel Ask's taps in beside it as
+  // touches of their own (a tapped touch is a logged touch), and the clock
+  // reads the latest of them (C3).
   const outreach = id
-    ? touches.find((t) => t.subjectKey === `outreach:${id}`)
+    ? touches
+        .filter((t) => t.subjectKey === `outreach:${id}`)
+        .sort((a, b) => Date.parse(b.contactedAt) - Date.parse(a.contactedAt))[0]
     : undefined;
 
   const homeSide = input.homeSide;
@@ -476,15 +482,19 @@ export function readAccount(input: AccountReadInput): AccountRead {
   })();
 
   // 14 · what they said they would do: their loops and Owed lines (D10, the
-  // Simploy call), and the newest inbound's own promise, newest first.
+  // Simploy call), and the newest inbound's own promise, newest first. A
+  // colleague is the home side, never the ball-holder: an Owed segment the
+  // cleaner wrote to "@Lesha" is ours to chase internally, not theirs.
   const theirPromise = (() => {
-    const owed = owedByThem(visible, now, todos).map((o) => ({
-      who: o.who,
-      text: o.text,
-      at: o.at,
-      ...(o.day ? { day: o.day } : {}),
-      ...(o.promised ? { promised: true } : {}),
-    }));
+    const owed = owedByThem(visible, now, todos)
+      .filter((o) => !isHome(o.who))
+      .map((o) => ({
+        who: o.who,
+        text: o.text,
+        at: o.at,
+        ...(o.day ? { day: o.day } : {}),
+        ...(o.promised ? { promised: true } : {}),
+      }));
     if (lastInbound?.promise) {
       const doc = live.find((d) => d.noteId === lastInbound.noteId);
       // The sentence they wrote, from the body after the head; the head's

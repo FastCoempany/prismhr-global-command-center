@@ -5,7 +5,7 @@ import { loadDashboard } from "@/lib/dashboard/data";
 import { csms, peos } from "@/lib/book";
 import { DROP_STALE_DAYS, fetchSecondRecords, theirsLine } from "@/lib/activity/read";
 import { EXTRA_PARTNERS } from "@/lib/book/partners";
-import { contactsFor, knownPeople, personKey } from "@/lib/book/contacts";
+import { contactsFor, knownPeople } from "@/lib/book/contacts";
 import {
   loadAccountNotes,
   loadDispositions,
@@ -39,7 +39,6 @@ import { COUNTRY_NAME } from "@/lib/intel/lexicon";
 import { suggestChecks } from "@/lib/intel/evidence";
 import { daysBetween, meterRead, readDeal, type RoomRead } from "@/lib/room/engine";
 import { moveDoneKey } from "@/lib/room/bind";
-import { meetingRead } from "@/lib/intel/meeting";
 import { buildStageRail } from "@/lib/room/stages-view";
 import { buildAccountSheet } from "@/lib/room/sheet-view";
 import { liveMotionIds } from "@/lib/groundwork/day";
@@ -50,9 +49,9 @@ import { GAP_DISMISS, readGaps } from "@/lib/room/gaps";
 import { latestResearchAt, researchNs } from "@/lib/intel/deep-research";
 import { getDemand, researchGeneratedAt } from "@/lib/book/research";
 import { readOutcome } from "@/lib/dashboard/outcome";
-import { owedByThem, owedToMe } from "@/lib/room/owed";
+import { owedToMe } from "@/lib/room/owed";
 import { settledByRecord } from "@/lib/room/settled";
-import { GLOBAL_SCENT_RE, isHomeSideName } from "@/lib/intel/provenance";
+import { GLOBAL_SCENT_RE } from "@/lib/intel/provenance";
 import { askHref, peerQuestions, scopedAsk } from "@/lib/intranet/bridges";
 import { sfAccountUrl } from "@/lib/salesforce";
 import { prospectAsks } from "@/lib/intranet/store";
@@ -322,40 +321,26 @@ export default async function RoomPage() {
       return !settledByRecord({ text: o.text, at: src?.createdAt ?? "" }, allNotes);
     });
 
-    // The newest meeting record — a meeting newer than any outbound makes
-    // the recap the move, never a "wait" (Staff Leasing 1:00 PM, 8/18).
-    const meetingForRead = (() => {
-      // Who the recap is addressed to comes from the RECORD, in the order the
-      // record actually speaks: the meeting's own actors, a sibling note for
-      // the same call that has them (a recording files twice — the read's
-      // entry AND the actorless archive), then the transcript's own speaker
-      // labels. The relationship rollup is the last resort it was always
-      // meant to be (decreed 2026-09-04).
-      const roster = accountId ? contactsFor(accountId) : [];
-      const m = meetingRead(
-        allNotes,
-        (n) => isHomeSideName(n, csms),
-        (n) => {
-          const k = personKey(n);
-          return (
-            !!k && roster.some((c) => personKey(`${c.first ?? ""} ${c.last ?? ""}`) === k)
-          );
-        },
-      );
-      if (!m) return null;
-      return {
-        at: m.at,
-        who: firstName(m.who) || firstName(rel.name) || "them",
-      };
-    })();
+    // The newest meeting record is the read's (field 6): who the recap is
+    // addressed to comes from the RECORD, in the order the record speaks —
+    // the meeting's own actors, a sibling note for the same call, the
+    // transcript's own speaker labels (decreed 2026-09-04) — with the whole
+    // declared roster as our side. The relationship rollup is the last resort
+    // it was always meant to be.
+    const meetingForRead = acct.lastMeeting
+      ? {
+          at: acct.lastMeeting.at,
+          who: firstName(acct.lastMeeting.who) || firstName(rel.name) || "them",
+        }
+      : null;
 
-    // What they left the meeting owing — the record's Owed line, client's
-    // side (the Simploy call, 2026-09-03), and their loops the read filed
-    // (D10), which owedByThem reads from the account's own Todo rows.
-    // Day-matched to the meeting in Chicago so an old debt never rides a new
-    // meeting; colleagues are the home side, never the ball-holder.
+    // What they left the meeting owing — the read's theirPromise (field 14):
+    // their loops the read filed (D10) and the record's Owed line, client's
+    // side (the Simploy call, 2026-09-03), colleagues already filtered out as
+    // the home side. Day-matched to the meeting in Chicago so an old debt
+    // never rides a new meeting.
     const theirBall = (() => {
-      if (!meetingForRead) return null;
+      if (!meetingForRead || !acct.theirPromise) return null;
       const day = (iso: string) => {
         const t = Date.parse(iso);
         return Number.isNaN(t)
@@ -363,24 +348,21 @@ export default async function RoomPage() {
           : new Date(t).toLocaleDateString("en-CA", { timeZone: "America/Chicago" });
       };
       const met = day(meetingForRead.at);
-      if (!met) return null;
-      const b = owedByThem(
-        allNotes,
-        now,
-        todos.filter((t) => accountId && t.accountId === accountId),
-      ).find((o) => day(o.at) >= met && !isHomeSideName(o.who, csms));
-      return b
-        ? {
-            who: firstName(b.who) || "they",
-            text: b.text,
-            ...(b.day ? { day: b.day } : {}),
-            ...(b.promised ? { promised: true } : {}),
-          }
-        : null;
+      if (!met || day(acct.theirPromise.at) < met) return null;
+      const b = acct.theirPromise;
+      return {
+        who: firstName(b.who) || "they",
+        text: b.text,
+        ...(b.day ? { day: b.day } : {}),
+        ...(b.promised ? { promised: true } : {}),
+      };
     })();
 
     const read: RoomRead = readDeal({
       accountName: card.name,
+      // Whose move it is, from the read (field 4): the engine writes the
+      // sentence the rung calls for (§2.2, the fifth migration).
+      whoseMove: acct.whoseMove,
       step: step
         ? {
             nodeKey: step.nodeKey,
@@ -399,13 +381,13 @@ export default async function RoomPage() {
             who: firstName(touchRead.who) || firstName(rel.name) || "them",
           }
         : null,
-      lastInbound: intel.lastInbound
+      lastInbound: acct.lastInbound
         ? {
-            at: intel.lastInbound,
+            at: acct.lastInbound.at,
             // The person who actually wrote — the doc's own sender; the
             // relationship rollup only stands in when the doc is anonymous.
-            who: firstName(intel.lastInboundWho) || firstName(rel.name) || "they",
-            promise: intel.lastInboundPromise,
+            who: firstName(acct.lastInbound.who) || firstName(rel.name) || "they",
+            promise: acct.lastInbound.promise,
           }
         : null,
       lastMeeting: meetingForRead,

@@ -1,9 +1,14 @@
 // The Operating Room's per-deal read — pure and deterministic. Everything the
-// row asserts (the next move, the climb, the health cap, whose court it is)
-// derives from state the app already holds; nothing here guesses. When there
-// isn't enough signal to call a move, it says so instead of inventing one.
+// row asserts (the next move, the climb, the health cap) derives from state
+// the app already holds; nothing here guesses. When there isn't enough signal
+// to call a move, it says so instead of inventing one. Whose move it is comes
+// from the single account read (src/lib/record/whose-move.ts, §2.2): the
+// engine reads the verdict's rung and writes the sentence; it compares no
+// clocks of its own. The court line is retired in full (ruled 2026-09-25,
+// D25) — the move already says who and when.
 
 import { DASH_NODES, DASH_NODE_KEYS } from "@/lib/dashboard/stages";
+import { whoseMoveFrom, type WhoseMove } from "@/lib/record/whose-move";
 import { chicagoDay } from "@/lib/tz";
 import { splitFallback } from "./deliverables";
 import { clip, moveFromCommitment, pickOwed } from "./move-line";
@@ -20,13 +25,18 @@ type RoomInputs = {
     ageDays: number | null;
   } | null;
   timing: { phrase: string; dateIso: string } | null;
+  // Whose move it is, from the read (field 4). The rung decides which
+  // sentence is written: a reply newer than our send is ours to answer, a
+  // fresh meeting puts the recap on us, an acceptance books the meeting. A
+  // caller holding the facts and no read may leave it out: the same rungs
+  // run over the facts below through the one spelling (whoseMoveFrom).
+  whoseMove?: WhoseMove | null;
   // last outbound touch on the account thread (null = no thread yet)
   lastTouch: { at: string; awaitingReply: boolean; who: string } | null;
-  // newest INBOUND evidence in the record (a pasted client reply) — when it
-  // postdates the last outbound touch, the court flips: you owe the answer.
+  // newest INBOUND evidence in the record (a pasted client reply) — who wrote
+  // and whether it was their promise; the read's lastInbound.
   lastInbound?: { at: string; who: string; promise?: boolean } | null;
-  // newest MEETING record — a meeting newer than any outbound puts the
-  // follow-up on the operator: the recap is owed, never a "wait".
+  // newest MEETING record — who we met and when; the read's lastMeeting.
   lastMeeting?: { at: string; who: string } | null;
   // What THEY left the meeting owing — the record's own Owed line, client's
   // side (the Simploy call, 2026-09-03: the call ended with her invoices
@@ -40,6 +50,7 @@ type RoomInputs = {
   // never opens a reply-owed — but it is proof the meeting exists, and a row
   // that says "wait on Melanie" while Melanie has already accepted is telling
   // the operator to wait for a thing that arrived (HR Hawaii, 2026-09-04).
+  // The read's lastAccepted.
   lastAccepted?: { at: string; who: string } | null;
   // most recent record entry of ANY kind ("" = empty record)
   lastRecordAt: string;
@@ -66,7 +77,6 @@ export type RoomRead = {
   moveFull?: string;
   thin: boolean; // true = not-enough-signal read
   health: Health;
-  court: { line: string; tone: "you" | "them" | "quiet" | "none" };
   quietDays: number | null;
 };
 
@@ -76,12 +86,6 @@ const DAY = 86_400_000;
 // never "1 days ago"; a one-day quiet is "Quiet 1 day."
 const daysAgo = (n: number): string => (n === 1 ? "yesterday" : `${n} days ago`);
 const nDays = (n: number): string => `${n} day${n === 1 ? "" : "s"}`;
-
-// The same day grammar the move uses, in the court chip's own voice. "0 DAYS
-// AGO" is the species the founder already retired at "1 days ago" — a chip
-// that counts to zero is telling you it cannot count (HR Hawaii, 2026-09-04).
-const agoChip = (n: number | null): string =>
-  n == null || n <= 0 ? "TODAY" : n === 1 ? "YESTERDAY" : `${n} DAYS AGO`;
 
 // A promised day as the reason line says it: "today", a weekday inside the
 // coming week ("Friday"), else the date ("10/17"). Chicago days throughout.
@@ -114,8 +118,6 @@ const loopReason = (ball: { day?: string; promised?: boolean }, now: Date): stri
   if (day >= chicagoDay(now)) return ` Promised ${dayWord(day, now)}.`;
   return ball.promised ? ` PROMISED ${md(day)}.` : ` The ${md(day)} wall passed.`;
 };
-const daysChip = (n: number): string =>
-  n <= 0 ? "TODAY" : n === 1 ? "1 DAY" : `${n} DAYS`;
 
 // Their promise holds an await this long before the chase resumes — a
 // "will be in touch" is theirs to keep for a week, then it's yours to chase
@@ -222,50 +224,47 @@ export function meterRead(i: {
 
 const QUIET_RED_DAYS = 5;
 const AGE_RED_DAYS = 7;
-// A meeting's recap stays the move for this long; past it the meeting is
-// history and the ordinary rules speak again.
-const RECAP_DAYS = 5;
 
 export function readDeal(i: RoomInputs): RoomRead {
   const quietDays = i.lastTouch ? daysBetween(i.lastTouch.at, i.now) : null;
   const hasRecord = !!i.lastRecordAt && !Number.isNaN(Date.parse(i.lastRecordAt));
 
-  // A pasted client reply newer than the last outbound flips the court: the
-  // "quiet Nd, chase them" story is a lie once they've answered — you owe.
-  const inboundAt = i.lastInbound?.at ?? "";
-  const inboundNewest =
-    !!inboundAt &&
-    !Number.isNaN(Date.parse(inboundAt)) &&
-    (!i.lastTouch || Date.parse(inboundAt) > Date.parse(i.lastTouch.at));
-  const inboundDays = inboundNewest ? daysBetween(inboundAt, i.now) : null;
+  // Whose move: the read's verdict, or the same rungs over the facts in hand.
+  // The engine writes the sentence the rung calls for and compares no clocks
+  // of its own (§2.2, the fifth migration).
+  const verdict =
+    i.whoseMove ??
+    whoseMoveFrom(
+      {
+        lastTouch: i.lastTouch,
+        inbound: i.lastInbound ? { at: i.lastInbound.at, who: i.lastInbound.who } : null,
+        meeting: i.lastMeeting ?? null,
+        accepted: i.lastAccepted ?? null,
+        loop: null,
+      },
+      i.now,
+    );
+
+  // A pasted client reply newer than the last outbound: the "quiet Nd, chase
+  // them" story is a lie once they've answered — you owe.
+  const inboundNewest = verdict.rung === "reply";
+  const inboundDays = inboundNewest ? daysBetween(i.lastInbound?.at ?? "", i.now) : null;
   const inboundWho = (i.lastInbound?.who || "").trim();
 
   // A meeting newer than any outbound (and not yet answered by an inbound)
   // puts the follow-up on the operator — the recap is owed, never a "wait"
   // (the Staff Leasing 1:00 PM read, founder-decreed 2026-08-18). A recap
-  // left unsent goes stale after RECAP_DAYS and the ordinary rules resume.
-  const meetingAt = i.lastMeeting?.at ?? "";
-  const meetingDays = meetingAt ? daysBetween(meetingAt, i.now) : null;
-  const meetingNewest =
-    !!meetingAt &&
-    !Number.isNaN(Date.parse(meetingAt)) &&
-    !inboundNewest &&
-    (!i.lastTouch || Date.parse(meetingAt) >= Date.parse(i.lastTouch.at)) &&
-    meetingDays != null &&
-    meetingDays <= RECAP_DAYS;
+  // left unsent goes stale after the recap window and the ordinary rules
+  // resume; the window is the rung's (src/lib/record/whose-move.ts).
+  const meetingNewest = verdict.rung === "meeting";
+  const meetingDays = meetingNewest ? daysBetween(i.lastMeeting?.at ?? "", i.now) : null;
   const meetingWho = (i.lastMeeting?.who || "").trim();
   const meetingAgo =
     meetingDays != null && meetingDays > 0 ? daysAgo(meetingDays) : "today";
 
   // The meeting is on the books: an acceptance newer than our last send, and
   // no real reply or meeting after it.
-  const acceptedAt = i.lastAccepted?.at ?? "";
-  const acceptedNewest =
-    !!acceptedAt &&
-    !Number.isNaN(Date.parse(acceptedAt)) &&
-    !inboundNewest &&
-    !meetingNewest &&
-    (!i.lastTouch || Date.parse(acceptedAt) >= Date.parse(i.lastTouch.at));
+  const acceptedNewest = verdict.rung === "acceptance";
   const acceptedWho = (i.lastAccepted?.who || "").trim();
 
   // A dated wall is a real calendar fact — expire and escalate it.
@@ -275,45 +274,12 @@ export function readDeal(i: RoomInputs): RoomRead {
     : Math.floor((i.now.getTime() - wallMs) / DAY);
   const wallOverdue = wallDaysPast != null && wallDaysPast > 0;
 
-  // Court — whose move it is, in one mono line.
-  let court: RoomRead["court"];
-  if (inboundNewest) {
-    const who = (inboundWho || "they").toUpperCase().slice(0, 24);
-    court = {
-      line: `YOUR MOVE · ${who} WROTE ${agoChip(inboundDays)}`,
-      tone: "you",
-    };
-  } else if (meetingNewest) {
-    const who = (meetingWho || "them").toUpperCase().slice(0, 24);
-    court = {
-      line: `YOUR MOVE · MET ${who} ${meetingDays === 0 ? "TODAY" : `${meetingDays}D AGO`}`,
-      tone: "you",
-    };
-  } else if (acceptedNewest) {
-    const who = (acceptedWho || "they").toUpperCase().slice(0, 24);
-    court = { line: `BOOKED · ${who} ACCEPTED`, tone: "them" };
-  } else if (i.lastTouch && i.lastTouch.awaitingReply) {
-    const who = (i.lastTouch.who || "them").toUpperCase().slice(0, 24);
-    const q = quietDays ?? 0;
-    court =
-      q >= QUIET_RED_DAYS
-        ? { line: `THEIR MOVE · ${who} · QUIET ${daysChip(q)}`, tone: "quiet" }
-        : { line: `THEIR MOVE · ${who} · ${daysChip(q)}`, tone: "them" };
-  } else if (i.step) {
-    court = { line: "YOUR MOVE", tone: "you" };
-  } else if (i.allGatesDone) {
-    court = { line: "YOUR MOVE · STAMP THE OUTCOME", tone: "you" };
-  } else {
-    court = { line: "NO THREAD OPEN YET", tone: "none" };
-  }
-
   // Not enough signal — an honest read, never a fabricated move.
   if (!i.step && !hasRecord && !i.lastTouch && !i.allGatesDone) {
     return {
       move: "File a paste or a note. Not enough signal yet.",
       thin: true,
       health: "quiet",
-      court,
       quietDays,
     };
   }
@@ -391,7 +357,7 @@ export function readDeal(i: RoomInputs): RoomRead {
     if (ball) {
       // The meeting ended with a deliverable on THEIR side. The recap is
       // still the operator's send, and the second sentence says what the
-      // room is waiting on — the court chip already carries "met today".
+      // room is waiting on.
       const owner = (i.theirBall?.who ?? "").split(/\s+/)[0];
       const who = owner && owner !== (meetingWho.split(/\s+/)[0] ?? "") ? owner : "They";
       const verb = who === "They" ? "owe" : "owes";
@@ -457,5 +423,5 @@ export function readDeal(i: RoomInputs): RoomRead {
     owedNow && move.includes(owedNow.replace(/\.$/, "")) && owedBuilt.cut
       ? owedBuilt.full
       : "";
-  return { move, thin, health, court, quietDays, ...(moveFull ? { moveFull } : {}) };
+  return { move, thin, health, quietDays, ...(moveFull ? { moveFull } : {}) };
 }

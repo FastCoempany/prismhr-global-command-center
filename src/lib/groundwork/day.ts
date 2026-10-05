@@ -14,6 +14,7 @@ import type { DealIntel } from "@/lib/intel/types";
 import { compositeScore, deskScore } from "@/lib/book/scoring";
 import { GLYPH_RE } from "@/lib/ingest/dialect";
 import { isMeetingNote } from "@/lib/intel/meeting";
+import { whoseMoveFrom, type WhoseMove } from "@/lib/record/whose-move";
 import { getDemand, researchGeneratedAt, DEMAND_GATE } from "@/lib/book/research";
 import { proximityRank } from "./proximity";
 import { intentFor, ridingLaneDate, type IntentSignal } from "./signals";
@@ -156,6 +157,11 @@ type QueueInput = {
   excludedIds?: Set<string>;
   /** The second record, parsed once for the whole book (read.ts). */
   secondById?: Map<string, SecondRecord>;
+  /** Whose move it is, per account, from the single account read (field 4;
+   *  §2.2, the fifth migration). The drumbeat reads it to tell an answered
+   *  thread from an open one. Absent for an account, the same rungs run over
+   *  the facts the queue holds (whoseMoveFrom). */
+  moveById?: Map<string, WhoseMove>;
   /** Accounts holding ANY live board card — engaged-never-introduced only
    *  fires where no deal exists at all, whatever its stage. */
   boardIds?: Set<string>;
@@ -399,16 +405,38 @@ function rankAll(inp: QueueInput, now: Date): QueueItem[] {
       .filter(Boolean)
       .sort()
       .pop();
-    // The answered check reads the WIDEST inbound the app holds (the second
-    // record law): a reply that landed in a colleague's inbox still answers
-    // the thread, so the drumbeat falls silent. It stages nothing in its
-    // place — the coordination move ("Ask … what they said.") is retired
-    // (ruled 2026-09-25, C6, amended 2026-10-05): a colleague's motion
-    // produces nothing for the operator to do, and an account person's reply
-    // that reached a colleague is the exclusion's business, not a rule's.
+    // The answered check reads whose move it is (the one spelling,
+    // src/lib/record/whose-move.ts): their reply, a fresh meeting or their
+    // acceptance after our send means the thread is not waiting on them, so
+    // the drumbeat falls silent — on a booked meeting too, which the old
+    // clock comparison never saw. The read's verdict carries the Channel
+    // Ask's taps, handed into its touch log beside the record's sends. The
+    // second record's datetime still silences it and nothing else (D19): a
+    // reply that landed in a colleague's inbox answers the thread, and it
+    // stages nothing in its place — the coordination move ("Ask … what they
+    // said.") is retired (ruled 2026-09-25, C6, amended 2026-10-05).
     const orgIn = orgInboundKey(sr);
-    const answeredMine =
-      !!intelHere?.lastInbound && !!lastOutIso && intelHere.lastInbound > lastOutIso;
+    const move =
+      inp.moveById?.get(p.id) ??
+      whoseMoveFrom(
+        {
+          lastTouch: lastOutIso
+            ? {
+                at: lastOutIso,
+                awaitingReply: newestTouch?.status === "awaiting",
+                who: "",
+              }
+            : null,
+          inbound: intelHere?.lastInbound
+            ? { at: intelHere.lastInbound, who: intelHere.lastInboundWho }
+            : null,
+          meeting: null,
+          accepted: null,
+          loop: null,
+        },
+        now,
+      );
+    const answeredMine = move.whose === "you" || move.whose === "booked";
     const answeredOrg = !answeredMine && !!orgIn && !!lastOutIso && orgIn > lastOutIso;
     const answered = answeredMine || answeredOrg;
     if (newestTouch && lastOutIso && !answered) {
