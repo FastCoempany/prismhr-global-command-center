@@ -55,6 +55,7 @@ import {
 import { sfContactUrl } from "@/lib/salesforce";
 import styles from "./command-center.module.css";
 import SecondRecordPanel, { type RowSecond } from "./accounts/second-record-panel";
+import type { LastHumanTouch } from "@/lib/record/accounts";
 import ActLane, { type LaneAct } from "./accounts/act-lane";
 import { markActActed, unmarkActActed } from "./accounts/act-actions";
 
@@ -187,6 +188,9 @@ export type AccountRow = {
   id: string;
   /** The second record's row read — null when the drop holds nothing. */
   second: RowSecond | null;
+  /** LAST HUMAN TOUCH: the later of the record's own touch and the export's
+   *  last human row, whispering which record it came from (C1). */
+  touch: LastHumanTouch | null;
   /** The Act Lane's saved, unsent draft — the pad never eats your words. */
   actDraft: { to: string; subject: string; body: string } | null;
   /** The newest gem's acted day ("" when un-acted) — the ✓ stamp's date. */
@@ -274,7 +278,7 @@ const COL_CMP: Record<ColKey, (a: AccountRow, b: AccountRow) => number> = {
   name: (a, b) => a.name.localeCompare(b.name),
   score: (a, b) => a.score - b.score,
   demand: (a, b) => (a.demand ?? -1) - (b.demand ?? -1),
-  touch: (a, b) => (a.second?.touch?.day ?? "").localeCompare(b.second?.touch?.day ?? ""),
+  touch: (a, b) => (a.touch?.day ?? "").localeCompare(b.touch?.day ?? ""),
   signal: (a, b) =>
     (a.second?.gems.length ?? 0) - (b.second?.gems.length ?? 0) ||
     (a.second?.supportTotal ?? 0) - (b.second?.supportTotal ?? 0),
@@ -1064,21 +1068,27 @@ export function AccountsClient({
                         )}
                       </td>
                       <td>
-                        {a.second?.touch ? (
+                        {a.touch ? (
                           <span
                             className={styles.srTouch}
-                            title={`The second record's last human row — ${a.second.touch.kind === "account" ? "their side wrote" : "a colleague's motion"}`}
+                            title={
+                              a.touch.record === "record"
+                                ? "The record's own last touch — the operator wrote to them"
+                                : `The second record's last human row — ${a.touch.kind === "account" ? "their side wrote" : "a colleague's motion"}`
+                            }
                           >
                             <span
                               className={
-                                a.second.touch.kind === "account"
+                                a.touch.kind === "account"
                                   ? styles.srTouchAcct
                                   : undefined
                               }
                             >
-                              {shortWho(a.second.touch.who)}
+                              {shortWho(a.touch.who)}
                             </span>{" "}
-                            · {mmddOf(a.second.touch.day)}
+                            · {mmddOf(a.touch.day)}
+                            {/* The whisper (C1): which record the value came from. */}
+                            <span className={styles.srTouchRecord}>{a.touch.record}</span>
                           </span>
                         ) : (
                           <span className={styles.muted}>—</span>

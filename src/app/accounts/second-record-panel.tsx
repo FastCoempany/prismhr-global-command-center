@@ -9,7 +9,6 @@ import { useState } from "react";
 import styles from "../command-center.module.css";
 
 export type RowSecond = {
-  touch: { who: string; day: string; kind: string } | null;
   gems: {
     term: string;
     act: string;

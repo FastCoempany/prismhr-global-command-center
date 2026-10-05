@@ -35,6 +35,8 @@ import { lastTouchRead } from "../src/lib/room/touch";
 import { readDeal } from "../src/lib/room/engine";
 import { isHomeSideName } from "../src/lib/intel/provenance";
 import { theirsLine, type SecondRecord } from "../src/lib/activity/read";
+import type { Rollup } from "../src/lib/activity/rollup";
+import { lastHumanTouch, sheetSecond } from "../src/lib/record/accounts";
 import type { Gem } from "../src/lib/activity/stores";
 import { ALIASES, canonicalAccountId } from "../src/lib/book/merge";
 import { NO_TAGS, withTags } from "../src/lib/today/route-notes";
@@ -590,6 +592,63 @@ describe("secondRecordFor folds a shell-keyed drop under the canonical id", () =
     assert.equal(line?.label, "GREG’S MIXED · 08/19");
     assert.equal(line?.gems.length, 1);
     assert.equal(theirsLine(null), null);
+  });
+
+  // ── the Accounts row reads the same builder (C6, C16, amended 2026-10-05) ──
+  test("a row whose only live gem is a colleague's shows no ACT chip and no gem", () => {
+    const row = sheetSecond(
+      sr({
+        gems: [
+          gem({
+            whoKind: "colleague",
+            who: ["Anika Steenstra"],
+            term: "HANDOFF",
+            act: "Ask Anika what they said.",
+          }),
+        ],
+      }),
+    );
+    assert.ok(row, "a drop is a row");
+    assert.equal(row.act, null);
+    assert.deepEqual(row.gems, []);
+  });
+
+  test("an account person's gem leads the chip; an acted one has left; no drop is no row", () => {
+    const row = sheetSecond(
+      sr({
+        gems: [
+          gem({
+            whoKind: "colleague",
+            term: "HANDOFF",
+            act: "Ask Anika what they said.",
+          }),
+          gem({ whoKind: "account", term: "TAX SWITCH" }),
+        ],
+      }),
+    );
+    assert.equal(row?.act, "Ask Greg Williams about Schenck call.");
+    assert.equal(row?.gems[0]?.term, "TAX SWITCH");
+    assert.equal(
+      sheetSecond(sr({ gems: [gem({ whoKind: "account", actedDay: "2026-08-21" })] }))
+        ?.act,
+      null,
+    );
+    assert.equal(sheetSecond(null), null);
+    // The verdict and the support fold ride whatever the gems say.
+    const support = sheetSecond(
+      sr({
+        rollup: null,
+        support: {
+          dropSha: "x",
+          total: 9,
+          spike: { day: "2026-08-19", n: 4 },
+          themes: [],
+        },
+      }),
+    );
+    assert.equal(support?.act, null);
+    assert.equal(support?.supportTotal, 9);
+    assert.equal(support?.spikeDay, "2026-08-19");
   });
 });
 
@@ -1637,5 +1696,155 @@ describe("a seat on an excluded account reads on the HomeRoom's sheet as open (C
     assert.deepEqual(s.delayed, [
       { id: "s1", body: "Send the model.", edit: "Send the model.", when: "HELD" },
     ]);
+  });
+});
+
+// ── the Accounts sheet: LAST HUMAN TOUCH reads both records (C1) ────────────
+
+describe("LAST HUMAN TOUCH reads both records and whispers which (C1)", () => {
+  const rollup = (over: Partial<Rollup>): Rollup => ({
+    dropSha: "037742a0",
+    dropDay: "2026-09-26",
+    window: { from: "2026-06-28", to: "2026-09-26" },
+    lanes: { human: 0, csm: 0, support: 0, intent: 0, machinery: 0 },
+    emails: { human: 0, csm: 0, support: 0, intent: 0, machinery: 0 },
+    intent: { s: 0, o: 0, c: 0 },
+    receipts: 0,
+    lastHuman: null,
+    lastOrgInbound: "",
+    // Slice 11a's attributed inbound (D19); the C1 merge reads lastHuman alone.
+    lastTheirs: null,
+    actors: [],
+    threads: [],
+    verdict: "",
+    ...over,
+  });
+  /** The export's last human row, as the rollup states it. */
+  const exportRow = (
+    day: string,
+    who = "Dana Ellis",
+    kind = "account",
+  ): SecondRecord => ({
+    rollup: rollup({
+      lastHuman: { day, how: "email", who, kind, subject: "Re: Canada" },
+    }),
+    gems: [],
+    support: null,
+    intent: null,
+  });
+  // An .eml dropped on the Chute files as an OUTLOOK THREAD entry: the
+  // operator's send to the account's person, filed Sep 22.
+  const EML = [
+    row({
+      id: "e1",
+      body: "✉ OL Sep 22 10:12 AM — Re: Canada model · Antaeus Coe → Dana Ellis\nModel attached, as promised.",
+      actors: "Antaeus Coe → Dana Ellis",
+      source: "outlook",
+      createdAt: "2026-09-22T15:12:00Z",
+    }),
+  ];
+  const NOW_SEP = new Date("2026-09-26T17:00:00Z");
+
+  test("an .eml filed Sep 22 beats an export row of Sep 10 and whispers record", () => {
+    const { read } = both("A1", "Acme", { homeSide: [], notes: EML, now: NOW_SEP });
+    assert.equal(read.lastTouch?.source, "record");
+    assert.deepEqual(lastHumanTouch(read, exportRow("2026-09-10")), {
+      who: "Dana Ellis",
+      day: "2026-09-22",
+      kind: "ours",
+      record: "record",
+    });
+  });
+
+  test("the export wins the other way and whispers salesforce", () => {
+    const { read } = both("A1", "Acme", { homeSide: [], notes: EML, now: NOW_SEP });
+    assert.deepEqual(lastHumanTouch(read, exportRow("2026-09-25", "Adam Dingwell")), {
+      who: "Adam Dingwell",
+      day: "2026-09-25",
+      kind: "account",
+      record: "salesforce",
+    });
+  });
+
+  test("one record alone speaks; a tie goes to the record; neither is nothing", () => {
+    const { read } = both("A1", "Acme", { homeSide: [], notes: EML, now: NOW_SEP });
+    assert.equal(lastHumanTouch(read, null)?.record, "record");
+    const empty = both("A1", "Acme", { homeSide: [], notes: [], now: NOW_SEP }).read;
+    assert.equal(lastHumanTouch(empty, exportRow("2026-09-10"))?.record, "salesforce");
+    assert.equal(lastHumanTouch(empty, null), null);
+    // The export's day is a day and the record's moment is the operator's
+    // own hand: the same day reads from the record.
+    assert.equal(lastHumanTouch(read, exportRow("2026-09-22"))?.record, "record");
+  });
+
+  test("the touch log is the record too: it merges with the record's sends by latest (C3)", () => {
+    const { read } = both("A1", "Acme", {
+      homeSide: [],
+      notes: EML,
+      touches: [
+        touch({
+          subjectKey: "outreach:A1",
+          label: "Acme",
+          contactedAt: "2026-09-24T15:00:00Z",
+        }),
+      ],
+      now: NOW_SEP,
+    });
+    assert.equal(read.lastTouch?.source, "log");
+    const merged = lastHumanTouch(read, exportRow("2026-09-23"));
+    assert.equal(merged?.day, "2026-09-24");
+    assert.equal(merged?.record, "record");
+    // The log names no target: the relationship contact speaks.
+    assert.equal(merged?.who, "Dana Ellis");
+  });
+});
+
+// ── engaged reads the conversation (field 16), on Accounts and Groundwork ───
+
+describe("an inbound with no send reads engaged", () => {
+  const INBOUND_ONLY = [
+    row({
+      id: "i1",
+      body: "✉ OL Sep 20 — Re: Canada · Dana Ellis → Antaeus Coe\nWe have two clients asking about Canada. Can you walk us through it?",
+      actors: "Dana Ellis → Antaeus Coe",
+      recipients: "Antaeus Coe",
+      source: "outlook",
+      createdAt: "2026-09-20T15:00:00Z",
+    }),
+  ];
+
+  test("on Accounts: engaged reads conversationExists, and the touch column stays empty", () => {
+    const { read } = both("A1", "Acme", { homeSide: [], notes: INBOUND_ONLY });
+    assert.equal(read.lastOutbound, null);
+    assert.equal(read.lastTouch, null);
+    assert.equal(read.conversationExists, true);
+    // Their word reached us and nothing of ours went out: engaged, with no
+    // touch of the record's own for LAST HUMAN TOUCH to show.
+    assert.equal(lastHumanTouch(read, null), null);
+  });
+
+  test("on Groundwork: the same rows, the same field", () => {
+    // Groundwork's page reads the same `conversationExists` (slice 11a); the
+    // pin rides the read, where both pages' answer lives.
+    const { read } = both("A1", "Acme", {
+      homeSide: [],
+      notes: INBOUND_ONLY,
+      now: new Date("2026-10-05T17:00:00Z"),
+    });
+    assert.equal(read.conversationExists, true);
+    assert.equal(read.lastInbound?.who, "Dana Ellis");
+  });
+
+  test("machinery or a sign-off alone is no conversation, and an empty record is none", () => {
+    // The acceptance (Joseph's n5) is machinery; Lesha's "No problem!" is a
+    // closer: neither carries a direction, so neither engages.
+    const accepted = both("HRH01", "HR Hawaii", { homeSide: [], notes: [JOSEPH[0]] });
+    assert.equal(accepted.read.conversationExists, false);
+    const signOff = both("SIMPLOY01", "Simploy", { homeSide: [], notes: [LESHA[0]] });
+    assert.equal(signOff.read.conversationExists, false);
+    assert.equal(
+      both("A1", "Acme", { homeSide: [], notes: [] }).read.conversationExists,
+      false,
+    );
   });
 });
