@@ -273,7 +273,7 @@ means the deal is being worked — the HomeRoom's job, whatever the lagging
 board says. The operator's own outbound never excludes; the drumbeat rules
 need it.
 
-**The exclusion reads both records (ruled 2026-09-25, C6):** an account person's inbound that landed in a colleague's inbox is a real inbound and leaves the queue; the coordination move it produces is reactive and lives in the HomeRoom, never on Groundwork.
+**The exclusion reads both records (ruled 2026-09-25, C6; amended 2026-10-05):** an account person's inbound that landed in a colleague's inbox is a real inbound and leaves the queue. It produces no move for the operator anywhere: the coordination move ("Ask Anika what they said.") is retired, on Groundwork and on the HomeRoom alike.
 
 **Ruled 2026-09-25 (C7, C9, D22, D26, D27):** the two-slot cap governs rules; seats are the operator's own forks and keep their own cap of three. The research bearer is the strongest above-gate account with no candidate of its own, the vehicle rule's letter, and a vehicle never collides: when every eligible account has its own move the slot drops for the day, and the bearer is chosen after the seats are placed. One band table lives in day.ts and the queue, the Klaxon and the test all read it: sends 9:00 to 11:00, people 11:00 to 14:00, research and filing from 14:00, Chicago; before 9:00 the send band is next, not now. No rule stamps with an empty label.
 
@@ -298,13 +298,13 @@ file. Nothing filed twice." (pastehash markers; an undo clears its marker).
 
 **A waiting pick survives a reload (ruled 2026-09-25, C20):** a read that finished and waits on the operator's pick is not mid-flight; the ledger keeps its text and the wait comes back. A binary file the ledger cannot keep says so and asks for the re-drop.
 
-**Ruled 2026-09-25 (D1, D2, D3, D4, P2):** the Chute is one component with one roster and routes the same way wherever it mounts. The weekly export enters by the Chute or the Intranet dock, both into the one activity pipeline; the Drop refuses a .csv and says where it goes. The transcriber emits CALL TRANSCRIPT when a PDF or image reads as a call, with the recorded day when it carries one, and the tape's cap and archive follow. The vault keeps the file whole and the note keeps the text whole at any size; only the model's read is windowed, and every window that cut something is on the receipt. The Intranet's capture is a door too: what names an account files through this pipeline, routed, guarded and picked; what names none stays an Intranet doc and is never inbound.
+**Ruled 2026-09-25 (D1, D2, D3, D4, P2):** the Chute is one component with one roster and routes the same way wherever it mounts. The weekly export enters by the Chute or the Intranet dock, both into the one activity pipeline; the Drop refuses a .csv, vaults it under the row's account, files nothing there, and the receipt says it was dropped in the wrong place, is backed up, and belongs in the Chute (amended 2026-10-05). The transcriber emits CALL TRANSCRIPT when a PDF or image reads as a call, with the recorded day when it carries one, and the tape's cap and archive follow. The vault keeps the file whole and the note keeps the text whole at any size; only the model's read is windowed, and every window that cut something is on the receipt. The Intranet's capture is a door too: what names an account files through this pipeline, routed, guarded and picked; what names none stays an Intranet doc and is never inbound.
 
-**Ruled 2026-09-25 (D5, D6, D7, D9, D11, D12, D13, D14):** the pick is final and files without a re-judge; a batch sibling is a suggestion, never a rung. Vaulting is filing: an unreadable file vaults to the account its filename names by the rungs or waits for the pick, with a receipt and a take-back. The duplicate check fails open and says so on the receipt; a ✕-parked filing is still on file and a re-drop is refused. A filing is disputed at most once: the guard's two rungs merge into one verdict and one pick answers both. The Chute reads three files at once; the rest wait in drop order and say so. Receipts dismiss per row and all at once; the fold shows every waiting row plus the two newest settled; a settled row keeps the account, the counts, the day and the rung, never an address or body text. Routing runs on the server: the roster never ships to the browser. A typed note is a paste.
+**Ruled 2026-09-25 (D5, D6, D7, D9, D11, D12, D13, D14):** the pick is final and files without a re-judge; a batch sibling is a suggestion, never a rung. Vaulting is filing: an unreadable file vaults to the account its filename names by the rungs or waits for the pick, with a receipt and a take-back. The duplicate check fails open and says so on the receipt; a ✕-parked filing is still on file and a re-drop is refused. A filing may be disputed twice (amended 2026-10-05): the text rung warns before the read and the read's rung warns after it, each with a reason of nine words or fewer that says why the file looks like a different company than the one it was dropped on; the read rung's reason is the model's, read from the account's page data and the web, and when the model finds the same company the warning withdraws. One pick answers, and the pick's read runs again. The Chute reads three files at once; the rest wait in drop order and say so. Receipts dismiss per row and all at once; the fold shows every waiting row plus the two newest settled; a settled row keeps the account, the counts, the day and the rung, never an address or body text. Routing runs on the server: the roster never ships to the browser. A typed note is a paste.
 
 **Ruled 2026-09-25 (D10, D15, D16):** their commitments file as loops on their side with the promised day; the court reads them and a blown one carries as PROMISED like ours. The read's signals file on the note, a repeated commitment is one loop, and an outcome files a marker that only the operator's click closes. There is no revalidation list: every page derives on request. The same capture is the same normalized body, head line skipped, so a rename, a twin format and a re-copy with a fresh date all dedupe.
 
-**The vault is canon (ruled 2026-09-25, D8):** every dropped file archives whole to GitHub under accounts/<Account>/<file> through a server-side upload, so no token reaches the browser. The vault is evidence outside the money boundary because nothing renders from it. A duplicate drop vaults nothing new; every vault line is a receipt with a take-back.
+**The vault is canon (ruled 2026-09-25, D8):** every dropped file archives whole to GitHub under accounts/<Account>/<file> through a server-side upload, so no token reaches the browser. Files of every size travel this way: one above the server's request cap arrives in pieces the server assembles before it lands, and git is the home for every dropped file (amended 2026-10-05). The vault is evidence outside the money boundary because nothing renders from it. A duplicate drop vaults nothing new; every vault line is a receipt with a take-back.
 
 **Ruled 2026-09-25 (D29, D30):** a read-only session sees the Chute bar and its receipts and cannot drop; the bar says "Read-only session" where the ⇪ button was. The intranet mirror's query excludes every namespaced row by construction. The SalesNav grab pastes into the Chute or a Drop like any capture and files as a note with its own head.
 
@@ -439,8 +439,9 @@ The weekly Salesforce activity export is a second record beside the
 operator's own. It inherits every law of the first: the record outranks every
 seed, machinery is never a person, money never renders, derived facts read
 the widest merge of both records by latest. Blast receipts are intent, never
-touches. A colleague's motion produces coordination moves; an account
-person's motion produces outreach moves. Every gem cites the rows it stands
+touches. A colleague's motion produces nothing for the operator to do (the
+coordination move retired 2026-10-05); an account person's motion produces
+outreach moves. Every gem cites the rows it stands
 on or does not exist. The backbone lives in `src/lib/activity/` (SECOND-
 RECORD-PLAN §3, blessed 2026-08-20): the browser tallies the blast 81% and
 never uploads it, slices post in checksummed batches, an incomplete upload
@@ -482,7 +483,7 @@ never swallows an account's own move.
 
 **LAST HUMAN TOUCH reads both records (ruled 2026-09-25, C1):** the column shows the later of the first record's last human touch and the export's, and whispers which record it came from. No face reads the export alone for a fact the first record also holds.
 
-**THEIRS is the account's people (ruled 2026-09-25, C16):** the line leads only with gems about an account person and takes the palette's blue, the court's old color for their turn. A colleague's gem never leads it. "Their voice", everywhere in this file, means the PEO's own people, never a colleague's log.
+**THEIRS is the account's people (ruled 2026-09-25, C16):** the line leads only with gems about an account person and takes the palette's blue, the court's old color for their turn. A colleague's gem never leads it and, since 2026-10-05, has no seat on the line or the row. "Their voice", everywhere in this file, means the PEO's own people, never a colleague's log.
 
 **Retired text (ruled 2026-09-25, C15):** the hover glyph at the name went with the Act Lane on 2026-08-21; the dashboard door is plain words in the drilldown.
 
@@ -586,7 +587,10 @@ founder-decreed 2026-09-15.
   money, everywhere else, still never renders.
 - Ship pattern: branch `claude/prismhr-demo-guide-strategy-6h0oqg` → PR →
   Vercel CI green → squash merge = live production. Verify chain uses `&&`:
-  prettier → tsc → eslint (0 warnings) → tsx tests → next build.
+  prettier → tsc → eslint (0 warnings) → tsx tests → next build. Migrations
+  run at deploy (ruled 2026-10-05): the build script runs `prisma migrate
+  deploy` before `next build`, every migration is additive, and each lands
+  with the slice that needs it.
 - An archived surface (ruled 2026-09-25, P1) leaves every tab list and every
   revalidation list, and no live surface imports its actions.
 - **Opus or better, always** (founder-decreed 2026-07-31, canonized
