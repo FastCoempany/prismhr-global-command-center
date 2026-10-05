@@ -14,6 +14,8 @@ related_docs:
 
 The three audits said one thing from three angles: 111 of 187 decrees in scope are honor system, the ingest path has 34 behaviors nobody has ruled on, and 20 pairs of decrees contradict each other. This file keeps the three counts and the rows behind them, and it is the only place they move. Every row was generated from docs/architecture/decree-ledger.md at main 3726363 and carries that ledger's row id (A1.9 is section A1, row 9; C4 and D17 likewise; P1 to P4 are the four ungoverned behaviors pass 1 found first). Read the ledger for the cites; this file holds the state.
 
+**Pass 7 shipped 2026-10-05.** The plan's ship log (docs/plans/chute-brains-refactor-2026-09-25.md, section 4) lists the sixteen PRs, #339 to #354, that delivered slices 1 to 17; slice 18 stays blocked on the face. The ledgers below were last reconciled at the scaffold close and have not been re-walked since, so a row that pass 7 encoded still reads as it did then. The re-walk is the next audit's first step.
+
 ## The numbers
 
 | Ledger | At pass 3 (main 3726363) | Now |
