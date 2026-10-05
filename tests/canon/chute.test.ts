@@ -1,10 +1,15 @@
 // The Chute's decrees, pinned as behavior (CLAUDE.md "The Chute", :280-295,
-// and the 2026-09-25 rulings R2, R11, R12, R14 and D11, D12, D30). Every
-// test here calls a function and checks what it returns; none reads a
-// source file.
+// and the 2026-09-25 rulings R2, R11, R12, R14 and D11, D12, D15, D30).
+// Every test here calls a function and checks what it returns, except the
+// D15 scan at the foot, which pins an absence (no revalidation call under
+// src/app/room) and the asks that replaced it, and so reads source and
+// nothing else.
 
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync, readdirSync, statSync } from "node:fs";
+import { join, relative } from "node:path";
+import { cwd } from "node:process";
 import {
   CHUTE_PARALLEL,
   LEDGER_TEXT_CAP,
@@ -496,6 +501,57 @@ describe("the intranet mirror's query excludes every namespaced row by construct
     for (const p of peos) {
       assert.equal(admits(where, p.id), true, p.id);
       assert.equal(isNamespacedAccountId(p.id), false, p.id);
+    }
+  });
+});
+
+// ── D15 · there is no revalidation list (:305; P1 at :590-591) ────────────
+// Every page derives on request: the room's actions used to name three pages
+// to revalidate after every write, and an archived surface had to be struck
+// from that list (P1). Slice 9 of the Chute brains refactor plan retired the
+// list; the client that made a write asks the router for the fresh read
+// itself. The scan pins both halves: no revalidation call under src/app/room,
+// and the ask in every client there that writes.
+describe("there is no revalidation list: every page derives on request (D15)", () => {
+  const root = cwd();
+  const read = (p: string) => readFileSync(join(root, p), "utf8");
+  // Every .ts/.tsx under a directory, depth-first.
+  const walk = (dir: string): string[] => {
+    const out: string[] = [];
+    for (const name of readdirSync(dir)) {
+      const p = join(dir, name);
+      if (statSync(p).isDirectory()) out.push(...walk(p));
+      else if (/\.tsx?$/.test(name)) out.push(p);
+    }
+    return out;
+  };
+
+  test("no file under src/app/room revalidates a path or a tag", () => {
+    const offenders: string[] = [];
+    for (const f of walk(join(root, "src/app/room"))) {
+      const text = read(relative(root, f));
+      if (/\brevalidate(?:Path|Tag)\s*\(/.test(text) || /from "next\/cache"/.test(text))
+        offenders.push(relative(root, f));
+    }
+    assert.deepEqual(offenders, []);
+  });
+
+  // The ask that replaced the list, in each client under src/app/room that
+  // calls a write action: the doors' hooks (the filing and the take-back)
+  // and the HomeRoom's rows (the sheet, the register, the stage, the
+  // notifier). ingest-hooks pins that the filing's ask follows roomPaste and
+  // happens once; this pins that every writing client carries one at all.
+  test("every client under src/app/room that writes asks the router for the fresh read", () => {
+    const writers = [
+      "src/app/room/ingest/use-ingest.ts",
+      "src/app/room/ingest/use-undo.ts",
+      "src/app/room/room-client.tsx",
+    ];
+    for (const f of writers) {
+      const src = read(f);
+      assert.match(src, /^"use client";/, `${f} is a client module`);
+      assert.match(src, /import \{ useRouter \} from "next\/navigation"/, f);
+      assert.ok(src.includes("router.refresh()"), `${f} never asks for the fresh read`);
     }
   });
 });

@@ -35,8 +35,8 @@ export function useUndo() {
   const undo = async (accountId: string, row: Undoable) => {
     const r = await roomPasteUndo(...undoRequest(accountId, row));
     // The rows are gone and every page derives on request (D15): the client
-    // asks for the fresh read here, as the filing does, so the take-back
-    // outlives slice 9's retirement of the server's refresh.
+    // asks for the fresh read here, as the filing does; the server
+    // revalidates nothing (slice 9), so this ask is the take-back's only one.
     if (r.ok) router.refresh();
     return r;
   };

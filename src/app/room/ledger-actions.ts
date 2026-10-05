@@ -6,7 +6,6 @@
 // room imports, the one Accounts imports and the five the shared client kit
 // imports moved here unchanged. Every form lands on the room.
 
-import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getAppAccess } from "@/lib/auth";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
@@ -42,9 +41,11 @@ async function requireWrite() {
 }
 
 // Where a form lands after a write. returnTo once chose between Today and the
-// room; Today retired 2026-09-25, so the room is the only landing left.
+// room; Today retired 2026-09-25, so the room is the only landing left. The
+// redirect is the refresh: the room is force-dynamic and derives on request
+// (D15), so the landing renders what the write just changed, and nothing here
+// names a path to revalidate (slice 9 of the Chute brains refactor plan).
 function done(fd?: FormData) {
-  revalidatePath("/room");
   const raw = fd?.get("returnTo");
   redirect(raw === "/room" ? raw : "/room");
 }
@@ -419,10 +420,10 @@ export async function followUpWaveOff(formData: FormData) {
 // happened and why — the disposition is state, the note is the record.
 
 // Where a disposition form lands: the page it came from, else the room (Today,
-// the old default, retired 2026-09-25).
+// the old default, retired 2026-09-25). Every landing is force-dynamic, so the
+// redirect carries the fresh read and no path is revalidated (D15).
 function doneTo(fd: FormData) {
   const target = str(fd, "returnTo", 200) || "/room";
-  revalidatePath("/accounts");
   redirect(target);
 }
 
@@ -473,6 +474,5 @@ export async function dismissTriage(formData: FormData) {
       name || "account",
     );
   });
-  revalidatePath("/accounts");
   done(formData);
 }
