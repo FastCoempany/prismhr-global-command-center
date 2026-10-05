@@ -5,11 +5,16 @@
 // page's; machinery and sign-offs are flags on the doc, never exclusions; the
 // second record folds a shell-keyed drop under the canonical id; THEIRS leads
 // only with an account person's gem (C16); and whoseMove agrees with the
-// engine's court on the room-read fixtures. Nothing here reads a source file.
+// engine's court on the room-read fixtures. Slice 12 adds the third
+// migration's pins at the foot: the drawer's record, the minter's corpus and
+// the live read all read the one read. One wiring test there reads the
+// callers' source; nothing else here reads a source file.
 
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { readAccount, secondRecordFor, type RecordNote } from "../src/lib/record/read";
+import { declaredHomeSide, readFromStores } from "../src/lib/record/stores";
 import { whoseMove } from "../src/lib/record/whose-move";
 import { corpusFor, extractDealIntel } from "../src/lib/intel/extract";
 import { digestFor, digestForCardName } from "../src/lib/intel/digest";
@@ -18,8 +23,10 @@ import { readDeal } from "../src/lib/room/engine";
 import { isHomeSideName } from "../src/lib/intel/provenance";
 import { theirsLine, type SecondRecord } from "../src/lib/activity/read";
 import type { Gem } from "../src/lib/activity/stores";
-import { ALIASES } from "../src/lib/book/merge";
+import { ALIASES, canonicalAccountId } from "../src/lib/book/merge";
 import { NO_TAGS, withTags } from "../src/lib/today/route-notes";
+import { buildPipelineReport, type PipelineAccount } from "../src/lib/pipeline/build";
+import { liveLines } from "../src/lib/ask/live";
 
 const NOW = new Date("2026-09-05T17:00:00Z");
 
@@ -60,7 +67,13 @@ const touch = (o: {
 type Stores = {
   notes: RecordNote[];
   homeSide: readonly string[];
-  todos?: { id: string; body: string; done: boolean; accountId: string; createdAt: string }[];
+  todos?: {
+    id: string;
+    body: string;
+    done: boolean;
+    accountId: string;
+    createdAt: string;
+  }[];
   touches?: ReturnType<typeof touch>[];
   dispositions?: Map<string, unknown>;
   now?: Date;
@@ -70,7 +83,11 @@ type Stores = {
  *  rows the room's own filter kept, the same roster and the same seed. */
 function both(id: string, name: string, s: Stores) {
   const dispositions = s.dispositions ?? new Map<string, unknown>();
-  const todos = (s.todos ?? []).map((t) => ({ ...t, remindAt: "", updatedAt: t.createdAt }));
+  const todos = (s.todos ?? []).map((t) => ({
+    ...t,
+    remindAt: "",
+    updatedAt: t.createdAt,
+  }));
   const touches = (s.touches ?? []).map((t) => ({ ...t, message: t.message ?? "" }));
   const read = readAccount({
     account: { id, name },
@@ -622,7 +639,11 @@ describe("whoseMove agrees with the engine's answer on the room-read fixtures", 
         step: null,
         timing: null,
         lastTouch: touchRead
-          ? { at: touchRead.at, awaitingReply: touchRead.awaitingReply, who: touchRead.who }
+          ? {
+              at: touchRead.at,
+              awaitingReply: touchRead.awaitingReply,
+              who: touchRead.who,
+            }
           : null,
         lastInbound: read.intel.lastInbound
           ? {
@@ -631,7 +652,9 @@ describe("whoseMove agrees with the engine's answer on the room-read fixtures", 
               promise: read.intel.lastInboundPromise,
             }
           : null,
-        lastMeeting: read.lastMeeting ? { at: read.lastMeeting.at, who: read.lastMeeting.who } : null,
+        lastMeeting: read.lastMeeting
+          ? { at: read.lastMeeting.at, who: read.lastMeeting.who }
+          : null,
         lastAccepted: read.lastAccepted
           ? { at: read.lastAccepted.at, who: read.lastAccepted.who }
           : null,
@@ -824,7 +847,11 @@ describe("the read carries the twenty fields of pass 2 E in its order", () => {
     assert.equal(read.today.key, "2026-09-05");
     assert.equal(read.today.isToday("2026-09-05T18:00:00Z"), true);
     assert.equal(read.today.isToday("2026-09-06T04:30:00Z"), true, "11:30p Chicago");
-    assert.equal(read.today.isToday("2026-09-06T05:30:00Z"), false, "12:30a the next day");
+    assert.equal(
+      read.today.isToday("2026-09-06T05:30:00Z"),
+      false,
+      "12:30a the next day",
+    );
     assert.equal(read.relationship.name, "Lesha Cyphers");
     assert.equal(read.relationship.source, "record");
     assert.equal(read.people[0]?.name, "Lesha Cyphers");
@@ -926,7 +953,11 @@ describe("countries, products and headcounts carry the tape flag", () => {
       ],
     });
     const byValue = Object.fromEntries(read.countries.map((c) => [c.value, c.tape]));
-    assert.deepEqual(byValue, { mx: false, br: true }, "Mexico from the read, Brazil only on the tape");
+    assert.deepEqual(
+      byValue,
+      { mx: false, br: true },
+      "Mexico from the read, Brazil only on the tape",
+    );
     assert.equal(read.headcounts[0]?.value.n, 3);
     assert.equal(read.headcounts[0]?.tape, false);
     // The extractor's own countries rank the tape behind the reads and drop
@@ -934,6 +965,286 @@ describe("countries, products and headcounts carry the tape flag", () => {
     assert.deepEqual(
       read.intel.countries.map((c) => c.value),
       ["mx"],
+    );
+  });
+});
+
+// ── slice 12 · the drawer, the asks and intake read the one read ────────────
+
+describe("the drawer's record reads the room's read on the same rows (§2.2, the third migration)", () => {
+  const CSMS = ["Lesha Cyphers"];
+  const now = new Date("2026-09-08T12:00:00Z");
+  const ROWS = [
+    row({
+      id: "ol2",
+      body: "✉ OL Sep 5 — Re: agreements · Antaeus Coe → Chassie Smith\nAgreements attached.",
+      actors: "Antaeus Coe → Chassie Smith",
+      source: "outlook-ai",
+      createdAt: "2026-09-05T15:00:00Z",
+    }),
+    row({
+      id: "hid",
+      body: "✉ OL Sep 4 — Re: Brazil · Chassie Smith → Antaeus Coe\nWe have 3 contractors in Brazil too.",
+      actors: "Chassie Smith → Antaeus Coe",
+      recipients: "Antaeus Coe",
+      source: "outlook-ai",
+      createdAt: "2026-09-04T15:00:00Z",
+    }),
+    row({
+      id: "call",
+      body: "☎ CT Sep 2 1:01 PM — Reseller path · Antaeus Coe → Chassie Smith\nWants the reseller route. The target client has 5 workers in Mexico, likely employer of record.",
+      actors: "Antaeus Coe → Chassie Smith",
+      source: "call-ai",
+      createdAt: "2026-09-02T18:00:00Z",
+    }),
+  ];
+  // The Brazil reply is ✕-parked: the room never shows it, so the drawer must not.
+  const dispositions = new Map<string, unknown>([
+    ["hide:note:hid", { status: "parked" }],
+  ]);
+  const read = readAccount({
+    account: { id: "SIMPLOY01", name: "Simploy" },
+    notes: ROWS,
+    touches: [],
+    todos: [],
+    dispositions,
+    homeSide: CSMS,
+    now,
+  });
+  // The account as collectPipelineAccounts hands it to the builder: the
+  // visible rows and the read beside them.
+  const account: PipelineAccount = {
+    id: "SIMPLOY01",
+    name: "Simploy",
+    csm: "Lesha Cyphers",
+    stageLabel: "",
+    notes: ROWS.filter((n) => !read.hidden.has(n.id)).map((n) => ({
+      id: n.id,
+      createdAt: n.createdAt,
+      body: n.body,
+      lane: n.lane,
+      actors: n.actors,
+      source: n.source,
+    })),
+    todos: [],
+    gaps: [],
+    support: null,
+    actors: [],
+    read,
+  };
+  const [rec] = buildPipelineReport({
+    accounts: [account],
+    csms: CSMS,
+    me: "Antaeus Coe",
+    now,
+  });
+
+  test("products, countries, the headcount and the last meeting are the read's fields", () => {
+    assert.deepEqual(
+      read.intel.products.map((p) => p.value),
+      ["eor"],
+    );
+    assert.deepEqual(rec.products, ["EOR"]);
+    assert.deepEqual(
+      read.intel.countries.map((c) => c.value),
+      ["mx"],
+    );
+    assert.deepEqual(
+      rec.opportunities.map((o) => [o.country, o.product, o.headcount]),
+      [["Mexico", "EOR", "5 workers"]],
+    );
+    assert.equal(read.lastMeeting?.noteId, "call");
+    assert.equal(read.lastMeeting?.who, "Chassie Smith");
+    assert.equal(rec.lastTouch?.date, "2026-09-02");
+    assert.equal(rec.lastTouch?.kind, "Call");
+    assert.equal(rec.lastTouch?.room[0]?.name, read.lastMeeting?.who);
+    assert.deepEqual(rec.events, [{ at: "2026-09-02", kind: "Call" }]);
+  });
+
+  test("the reply they owe reads the read's clocks", () => {
+    assert.equal(read.lastInbound, null, "the only inbound is parked");
+    assert.equal(read.lastOutbound?.noteId, "ol2");
+    assert.equal(rec.theirSide[0]?.who, "Chassie");
+    assert.match(rec.theirSide[0]?.text ?? "", /reply to your 9\/5 note/);
+  });
+
+  test("a ✕-parked row leaves the drawer as it leaves the room: in docs flagged, out of every fact", () => {
+    const parked = read.docs.find((d) => d.noteId === "hid");
+    assert.equal(parked?.hidden, true);
+    assert.equal(parked?.direction, "in", "the doc keeps its own reading");
+    assert.ok(!read.intel.countries.some((c) => c.value === "br"));
+    assert.ok(!rec.opportunities.some((o) => o.country === "Brazil"));
+    assert.ok(!rec.contacts.some((c) => c.name === "Brazil"));
+  });
+});
+
+describe("the minter's corpus is the read's docs: the shell id folds under the canonical account", () => {
+  const [SHELL, REAL] = Object.entries(ALIASES)[0];
+  const NAME = "myhrpros (SPMI)";
+  // The table as it stands (src/lib/book/merge.ts): the CEO thread was filed
+  // under the shell id, the account's own note under the real one.
+  const stored = [
+    row({
+      id: "ceo",
+      accountId: SHELL,
+      body: "✉ OL Sep 10 — Re: Canada payroll · Joseph Lyon → Antaeus Coe\nWe have 40 employees in Canada we would move to an employer of record.",
+      actors: "Joseph Lyon → Antaeus Coe",
+      recipients: "Antaeus Coe",
+      source: "outlook-ai",
+      createdAt: "2026-09-10T15:00:00Z",
+    }),
+    row({
+      id: "own",
+      accountId: REAL,
+      body: "plain note",
+      createdAt: "2026-09-01T15:00:00Z",
+    }),
+  ];
+  // The wide loader folds by canonical id and the stored row keeps the id it
+  // was filed under (src/lib/today/overlay.ts); the fold, as the loader does it.
+  const notesById = new Map<string, RecordNote[]>();
+  for (const n of stored) {
+    const k = canonicalAccountId(n.accountId);
+    notesById.set(k, [...(notesById.get(k) ?? []), n]);
+  }
+  const stores = {
+    notesById,
+    touches: [],
+    todos: [],
+    dispositions: new Map<string, unknown>(),
+    homeSide: declaredHomeSide([]),
+  };
+
+  test("the CEO thread filed under the shell id is a doc of the real account", () => {
+    assert.equal(notesById.size, 1, "one company, one account");
+    const read = readFromStores(stores, { id: REAL, name: NAME }, { now: NOW });
+    assert.ok(read.docs.some((d) => d.noteId === "ceo"));
+    assert.ok(read.intel.countries.some((c) => c.value === "ca"));
+    assert.ok(read.intel.products.some((p) => p.value === "eor"));
+    assert.equal(read.lastInbound?.noteId, "ceo");
+    // The ask brain names the relationship the room names (pass 2 C, the
+    // relationship row): the record over the book's seed.
+    assert.equal(read.relationship.name, "Joseph Lyon");
+    assert.equal(read.relationship.source, "record");
+  });
+
+  test("a ✕-parked row of the shell's leaves the minter's corpus too", () => {
+    const read = readFromStores(
+      { ...stores, dispositions: new Map([["hide:note:ceo", { status: "parked" }]]) },
+      { id: REAL, name: NAME },
+      { now: NOW },
+    );
+    assert.equal(read.docs.find((d) => d.noteId === "ceo")?.hidden, true);
+    assert.equal(read.lastInbound, null);
+    assert.ok(!read.intel.countries.some((c) => c.src.startsWith("sf-activity")));
+  });
+
+  test("the declared roster is the CSM column plus the record's own (E9)", () => {
+    const roster = declaredHomeSide(new Set(["shane jacobs"]));
+    assert.ok(roster.includes("shane jacobs"));
+    assert.ok(roster.length > 1, "the CSM column rides too");
+  });
+
+  test("the minter, the intake prefill and the live read assemble the read from the stores, nothing of their own", () => {
+    const actions = readFileSync("src/app/room/actions.ts", "utf8");
+    const refill = actions.slice(
+      actions.indexOf("export async function roomGapsRefill("),
+      actions.indexOf("export async function roomGapDismiss("),
+    );
+    assert.ok(refill.includes("readFromStores("), "the minter reads the read");
+    assert.ok(
+      refill.includes("loadAccountNotes()"),
+      "through the wide loader, which folds the shell id",
+    );
+    assert.ok(!refill.includes("take: 40"), "the forty-row corpus is gone");
+    assert.ok(
+      refill.includes("never reads direction"),
+      "the ask builder's deliberate blindness stays written down (pass 2 E)",
+    );
+    for (const f of [
+      "src/app/intake/actions.ts",
+      "src/lib/ask/live.ts",
+      "src/lib/pipeline/build.ts",
+      "src/app/room/actions.ts",
+    ]) {
+      const src = readFileSync(f, "utf8");
+      assert.ok(
+        !/\b(corpusFor|dealIntelFor|extractDealIntel)\(/.test(src),
+        `${f} builds a corpus of its own`,
+      );
+    }
+    for (const f of ["src/app/intake/actions.ts", "src/lib/ask/live.ts"])
+      assert.ok(
+        readFileSync(f, "utf8").includes("readFromStores("),
+        `${f} reads the read`,
+      );
+  });
+});
+
+describe('the live read says "no reply has been filed" only when the read\'s lastInbound is empty', () => {
+  const NO_REPLY = /no reply has been filed/;
+  const linesFor = (notes: RecordNote[], now: Date) => {
+    const read = readAccount({
+      account: { id: "A1", name: "Acme" },
+      notes,
+      touches: [],
+      todos: [],
+      dispositions: new Map(),
+      homeSide: [],
+      now,
+    });
+    return liveLines({ id: "A1", name: "Acme" }, read, {
+      facts: [],
+      rows: notes,
+      openTodos: [],
+    });
+  };
+
+  test("our send and nothing back: the phrase stands", () => {
+    const lines = linesFor(
+      [
+        row({
+          id: "o1",
+          body: "✉ OL Sep 1 — Re: intro · Antaeus Coe → Dana Ellis\nSending the model.",
+          actors: "Antaeus Coe → Dana Ellis",
+          source: "outlook-ai",
+          createdAt: "2026-09-01T15:00:00Z",
+        }),
+      ],
+      new Date("2026-09-03T15:00:00Z"),
+    );
+    assert.ok(
+      lines.some((l) => NO_REPLY.test(l) && /waiting on Dana Ellis since 9\/1/.test(l)),
+    );
+  });
+
+  test("their reply after our send: they wrote, and the phrase is gone", () => {
+    const lines = linesFor(TREND, new Date("2026-09-02T20:00:00Z"));
+    assert.ok(!lines.some((l) => NO_REPLY.test(l)));
+    assert.ok(
+      lines.some(
+        (l) => /Adam Dingwell wrote back 9\/2/.test(l) && /operator's to send/.test(l),
+      ),
+      lines.join("\n"),
+    );
+  });
+
+  test("their word before our newest send: still waiting, their last word dated, the phrase gone", () => {
+    const lines = linesFor(LESHA, NOW);
+    assert.ok(!lines.some((l) => NO_REPLY.test(l)));
+    assert.ok(
+      lines.some(
+        (l) =>
+          /waiting on Lesha Cyphers since 8\/22/.test(l) &&
+          /their last word on file is from 8\/22/.test(l),
+      ),
+      lines.join("\n"),
+    );
+    // The relationship is the read's: the record's person, not the book's seed.
+    assert.ok(lines.some((l) => l === "The relationship on Acme is Lesha Cyphers."));
+    // The record lines ride beneath, newest first.
+    assert.ok(
+      lines.some((l) => /^Record 8\/22 \(Lesha Cyphers → Antaeus Coe\): /.test(l)),
     );
   });
 });

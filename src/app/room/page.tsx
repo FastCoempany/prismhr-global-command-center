@@ -135,6 +135,9 @@ export default async function RoomPage() {
   );
 
   const rows: RoomRow[] = [];
+  // The reads, kept by account for the pipeline report below: built once per
+  // row here, read once more there, never built twice (§2.2; pass 4 G2).
+  const reads = new Map<string, ReturnType<typeof readAccount>>();
   for (const card of data.cards) {
     if (card.archived) continue;
     const accountId =
@@ -168,6 +171,7 @@ export default async function RoomPage() {
       now,
       board: { card, labels: data.labels },
     });
+    if (accountId) reads.set(accountId, acct);
     // ✕-parked entries (hide:note: dispositions) leave every register view —
     // the read holds the one filter; the note survives in the table, the row
     // does not.
@@ -732,9 +736,9 @@ export default async function RoomPage() {
     .map((t) => ({ id: t.id, body: t.body.split("\n")[0].slice(0, 140) }));
 
   // ── the Pipeline report ───────────────────────────────────────────────────
-  // Built from the stores the loop already read. The second record's own drop
-  // day rides the header: a report older than the sweep says so rather than
-  // rendering confidently wrong counts.
+  // Built from the stores the loop already read, and from the reads it already
+  // built. The second record's own drop day rides the header: a report older
+  // than the sweep says so rather than rendering confidently wrong counts.
   const pipeReport = rankPipeline(
     buildPipelineReport({
       // One gathering, shared with the drawer's fresh pull — a second copy
@@ -748,6 +752,10 @@ export default async function RoomPage() {
         secondById,
         peos,
         now,
+        // The loop's own reads, one per row (§2.2, the third migration): the
+        // report reads its facts from them and builds nothing of its own, so
+        // the pipeline is read once per /room load (pass 4 G2).
+        readFor: (id) => reads.get(id),
       }),
       // The whole book, not the active slice — a colleague who works across
       // the book but appears on only two active accounts is still ours.

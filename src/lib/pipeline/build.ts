@@ -11,11 +11,10 @@
 // book's real 1,323 notes and check each field against the record.
 
 import { contactsFor } from "@/lib/book/contacts";
-import { corpusFor, extractDealIntel } from "@/lib/intel/extract";
-import { digestFor, digestForCardName } from "@/lib/intel/digest";
 import { isCall, isTape } from "@/lib/ingest/dialect";
-import { meetingRead, speakersIn } from "@/lib/intel/meeting";
+import { speakersIn } from "@/lib/intel/meeting";
 import { peopleFor } from "@/lib/intel/people";
+import type { AccountRead } from "@/lib/record/read";
 import { isHomeSideName, MINE_RE } from "@/lib/intel/provenance";
 import { effectiveAt } from "@/lib/intel/clock";
 import {
@@ -257,6 +256,11 @@ export type PipelineAccount = {
   demoOnRecord?: boolean;
   support: SupportRead;
   actors: readonly ActorRead[];
+  /** The single account read, built once by the page's row loop or the fresh
+   *  pull and handed down (src/lib/record/read.ts; §2.2, the third
+   *  migration). The deal facts, the record's docs and the last meeting are
+   *  read from it — the drawer assembles no corpus of its own. */
+  read: AccountRead;
 };
 
 /** Who is ours, derived from the WIDEST record the app holds. A person who
@@ -358,17 +362,12 @@ function record(
         Date.parse(effectiveAt(y.createdAt, y.body)) -
         Date.parse(effectiveAt(x.createdAt, x.body)),
     );
-  const intel = extractDealIntel(
-    corpusFor(a.id, a.name, {
-      acctNotes: ns.map((n) => ({ ...n, kind: n.kind ?? "account" })),
-      todos: a.todos.filter((t) => !t.done),
-      // The same union the builder already uses to tell a colleague from a
-      // client, handed down so the inbound test can tell a reply that reached
-      // us from a thread between two of the account's own people.
-      homeSide: [...input.csms, ...(input.homeSide ?? [])],
-    }),
-    digestFor(a.id) ?? digestForCardName(a.name),
-  );
+  // The deal facts are the read's (§2.2, the third migration). The drawer used
+  // to assemble a corpus of its own beside the room's — the open todos only,
+  // no touch log, no recipients column — and the two could disagree on the
+  // same rows. The read is the widest spelling written once, so the report
+  // says what the room says (the Ted doctrine).
+  const intel = a.read.intel;
   const roster = contactsFor(a.id);
   const titleOf = (nm: string) => {
     const k = nm.toLowerCase().split(/\s+/)[0] ?? "";
@@ -377,9 +376,16 @@ function record(
     );
   };
 
-  // The last meeting and who was in the room — names AND titles.
-  const m = meetingRead(ns, isHome, () => true);
-  const mNote = m ? ns.find((n) => n.id === m.note.id) : undefined;
+  // The last meeting is the read's (field 6): one meeting read for the room
+  // and the report. Who was in the room — names AND titles — still comes off
+  // the row itself, its actors line and the tape's own speaker labels.
+  const m = a.read.lastMeeting;
+  const mNote = m ? ns.find((n) => n.id === m.noteId) : undefined;
+  // The day the report prints is the row's stored stamp, as it always was.
+  // The read's `at` is the row's effective moment, and a day read off it
+  // would carry an evening meeting across the UTC midnight the stored stamp
+  // never crosses.
+  const mAt = mNote?.createdAt ?? m?.at ?? "";
   const inRoom = mNote
     ? tidyPeople([
         ...(m?.who ? [m.who] : []),
@@ -393,12 +399,12 @@ function record(
         .slice(0, 5)
     : [];
 
-  const events = ns
-    .filter((n) => isTape(n.source) || isCall(n.source))
-    .map((n) => ({
-      at: dayOf(effectiveAt(n.createdAt, n.body)),
-      kind: isTape(n.source) || isCall(n.source) ? "Call" : "Meeting",
-    }))
+  // Dated calls, off the read's docs: the archive and the call read's entries
+  // by the dialect predicates, each at the doc's own effective moment. The
+  // filter already decided the kind.
+  const events = a.read.docs
+    .filter((d) => !d.hidden && d.noteId && (isTape(d.source) || isCall(d.source)))
+    .map((d) => ({ at: dayOf(d.at), kind: "Call" }))
     .filter((e, i, arr) => arr.findIndex((x) => x.at === e.at) === i)
     .slice(0, 4);
 
@@ -447,7 +453,7 @@ function record(
     ns,
   );
   const openedAt = new Map(a.todos.map((t) => [t.id, dayOf(t.createdAt)]));
-  const lastMeetAt = m ? dayOf(m.at) : "";
+  const lastMeetAt = m ? dayOf(mAt) : "";
   const open = [...sheet.open, ...(sheet.rest ?? [])]
     .map((o) => ({ ...o, opened: openedAt.get(o.id) ?? "" }))
     .sort((x, y) => (y.opened ?? "").localeCompare(x.opened ?? ""));
@@ -582,7 +588,7 @@ function record(
     csm: a.csm,
     lastTouch: m
       ? {
-          date: dayOf(m.at),
+          date: dayOf(mAt),
           kind: isTape(mNote?.source) || isCall(mNote?.source) ? "Call" : "Meeting",
           room: inRoom.map((p) => ({ name: p, title: titleOf(p) })),
         }

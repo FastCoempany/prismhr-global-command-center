@@ -34,7 +34,7 @@ import {
   type Window,
 } from "@/lib/ingest/windows";
 import { transcriberPrompt } from "@/lib/room/paste";
-import { digestFor, digestForCardName } from "@/lib/intel/digest";
+import { digestForCardName } from "@/lib/intel/digest";
 import {
   aiCleanAvailable,
   aiCleanTimeline,
@@ -58,7 +58,14 @@ import {
 } from "@/lib/intel/deep-research";
 import { mintAsks } from "@/lib/intel/ask-mint";
 import { SCENARIOS } from "@/lib/intel/scenarios";
-import { corpusFor, extractDealIntel } from "@/lib/intel/extract";
+import { homeSideFrom } from "@/lib/pipeline/build";
+import { declaredHomeSide, readFromStores } from "@/lib/record/stores";
+import {
+  loadAccountNotes,
+  loadDispositions,
+  loadTodos,
+  loadTouches,
+} from "@/lib/today/overlay";
 import { cleanSfPaste, parseSfTimeline, scrubSecrets } from "@/lib/sf-timeline";
 import { pasteFingerprint, transcriptRecordedDay } from "@/lib/paste-files";
 import { redactMoney } from "@/lib/intel/lexicon";
@@ -1141,7 +1148,17 @@ export async function roomGapsRefill(
   if (!(await requireWrite())) return { ok: false, reason: "Read-only session." };
   try {
     const prisma = getPrisma();
-    const [asks, research, lessons, market, scen, notes] = await Promise.all([
+    const [
+      asks,
+      research,
+      lessons,
+      market,
+      scen,
+      notesById,
+      todos,
+      touches,
+      dispositions,
+    ] = await Promise.all([
       prisma.accountNote
         .findMany({ where: { accountId: gapNs(acct.id) }, select: { body: true } })
         .catch(() => [] as { body: string }[]),
@@ -1175,37 +1192,39 @@ export async function roomGapsRefill(
           select: { reason: true },
         })
         .catch(() => null),
-      prisma.accountNote
-        .findMany({
-          where: { accountId: acct.id },
-          orderBy: { createdAt: "desc" },
-          take: 40,
-          select: { body: true, actors: true, createdAt: true, kind: true },
-        })
-        .catch(
-          () => [] as { body: string; actors: string; createdAt: Date; kind: string }[],
-        ),
+      // The stores the read takes, the way every page loads them: the wide
+      // loader folds a row filed under a shell id under its canonical
+      // account, and the touch log, the sheet and the markers ride so the
+      // read here is the room's own.
+      loadAccountNotes(),
+      loadTodos(),
+      loadTouches(),
+      loadDispositions(),
     ]);
 
     const found = research[0] ? parseResearchBody(research[0].body) : null;
-    const intel = extractDealIntel(
-      corpusFor(acct.id, acct.name, {
-        // No homeSide here on purpose. This path loads forty notes for ONE
-        // account, so the book-wide "works across several accounts" read that
-        // recognises a colleague is not available, and a partial roster would
-        // demote a real reply to one of them. The inbound test sits out; this
-        // corpus feeds the ask builder, which never reads direction.
-        homeSide: undefined,
-        acctNotes: notes.map((n, i) => ({
-          id: String(i),
-          body: n.body,
-          actors: n.actors ?? "",
-          createdAt: n.createdAt.toISOString(),
-          kind: n.kind,
-        })),
-      }),
-      digestFor(acct.id) ?? digestForCardName(acct.name),
+    // The single account read (src/lib/record/read.ts; §2.2, the third
+    // migration). The minter used to read forty raw rows on the canonical id
+    // — no shell fold, no hide filter, no todos or touches, no roster (pass 2
+    // C, the old :1252 row) — so asks were minted blind to the CEO thread
+    // filed under the shell id and blind to nothing the operator ✕-parked.
+    // The read's docs are the full visible record, folded, and its intel is
+    // the room's. The roster is declared because the read takes one (E9);
+    // the ask builder itself wants no inbound test — it reads countries,
+    // products and the timing phrase off the docs and never reads direction
+    // (pass 2 E).
+    const read = readFromStores(
+      {
+        notesById,
+        touches,
+        todos,
+        dispositions,
+        homeSide: declaredHomeSide(homeSideFrom(notesById)),
+      },
+      acct,
+      { now: new Date() },
     );
+    const intel = read.intel;
     const scenario = SCENARIOS.find((x) => x.id === (scen?.reason ?? "")) ?? null;
 
     const minted = await mintAsks({

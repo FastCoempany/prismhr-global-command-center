@@ -27,8 +27,43 @@ import {
 } from "../src/lib/pipeline/plain";
 import { reportDocument, reportSection, reportFileName } from "../src/lib/pipeline/docx";
 import { collectPipelineAccounts, pipelineDayLabel } from "../src/lib/pipeline/collect";
+import { readAccount, type RecordNote } from "../src/lib/record/read";
+import { digestFor, digestForCardName } from "../src/lib/intel/digest";
 
 const NOW = new Date("2026-09-08T12:00:00Z");
+const CSMS = ["Lesha Cyphers", "Anika Steenstra"];
+
+/** The read the page's loop hands down for the account, built over the
+ *  fixture's own rows and todos with the same roster the builder is given
+ *  (slice 12: the drawer reads its facts from the read, not a corpus of its
+ *  own). Built last, so an override's notes and todos are what it reads. */
+function withRead(
+  a: Omit<PipelineAccount, "read">,
+  roster: readonly string[] = CSMS,
+): PipelineAccount {
+  const notes: RecordNote[] = a.notes.map((n) => ({
+    ...n,
+    accountId: a.id,
+    partner: "",
+    kind: "account",
+    actors: n.actors ?? "",
+    source: n.source ?? "",
+    recipients: "",
+  }));
+  return {
+    ...a,
+    read: readAccount({
+      account: { id: a.id, name: a.name },
+      notes,
+      todos: a.todos,
+      touches: [],
+      dispositions: new Map(),
+      homeSide: roster,
+      digest: digestFor(a.id) ?? digestForCardName(a.name),
+      now: NOW,
+    }),
+  };
+}
 
 const note = (o: Partial<PipelineAccount["notes"][number]>) => ({
   id: o.id ?? "n1",
@@ -55,8 +90,8 @@ const CALL_BODY = [
   "Wants the reseller route with own markup. Target client: moving company, ~1 yr on Globalization Partners, ~4–5 India admin workers, likely EOR; client asks 'can't this be in one place?'. Suspected month-to-month. Open to a slight premium for consolidation. No urgency — 'slow and steady wins the race'. Owed: invoices + EOR confirm — @Chassie; agreements — @Antaeus.",
 ].join("\n");
 
-function simploy(over: Partial<PipelineAccount> = {}): PipelineAccount {
-  return {
+function simploy(over: Partial<Omit<PipelineAccount, "read">> = {}): PipelineAccount {
+  return withRead({
     id: "acc",
     name: "Simploy",
     csm: "Lesha Cyphers",
@@ -109,7 +144,7 @@ function simploy(over: Partial<PipelineAccount> = {}): PipelineAccount {
       { name: "Nihar Kulkarni", kind: "account", lane: "support", n: 41 },
     ],
     ...over,
-  };
+  });
 }
 
 const build = (accounts: PipelineAccount[]): PipelineRecord[] =>
@@ -174,7 +209,7 @@ describe("the record reads what the record says", () => {
 
 describe("the report degrades honestly", () => {
   test("an account with nothing on it still produces a record", () => {
-    const bare: PipelineAccount = {
+    const bare = withRead({
       id: "empty",
       name: "Quiet Co",
       csm: "",
@@ -184,7 +219,7 @@ describe("the report degrades honestly", () => {
       gaps: [],
       support: null,
       actors: [],
-    };
+    });
     const [r] = build([bare]);
     assert.equal(r.account, "Quiet Co");
     assert.deepEqual(r.ourNext, []);
@@ -195,7 +230,7 @@ describe("the report degrades honestly", () => {
     assert.equal(r.gated, false, "nothing owed by them gates nothing");
   });
   test("no next step and nobody's turn is the finding, in the text too", () => {
-    const bare = { ...simploy(), todos: [], notes: [] };
+    const bare = withRead({ ...simploy(), todos: [], notes: [] });
     const [r] = build([bare]);
     assert.match(recordToText(r), /Next step: None set — that is the finding/);
   });
@@ -235,11 +270,11 @@ describe("what needs him most comes first", () => {
       ],
       notes: [],
     });
-    const quiet: PipelineAccount = {
+    const quiet = withRead({
       ...simploy({ id: "quiet", name: "Quiet Co" }),
       notes: [],
       todos: [],
-    };
+    });
     const ranked = rankPipeline(build([quiet, urgent]));
     assert.equal(ranked[0].account, "Urgent Co");
   });
@@ -356,7 +391,8 @@ describe("a colleague never stands in the client's room", () => {
 
   test("the book-wide set removes him from the room and the contacts", () => {
     const [r] = buildPipelineReport({
-      accounts: [withColleague],
+      // The read is built with the same union the builder is handed.
+      accounts: [withRead(withColleague, ["Lesha Cyphers", "shane jacobs"])],
       homeSide: new Set(["shane jacobs"]),
       csms: ["Lesha Cyphers"],
       me: "Antaeus Coe",
@@ -427,7 +463,7 @@ describe("the Word document", () => {
     assert.ok(text.includes("Renamed Co"));
   });
   test("a record with nothing on it still renders every label", () => {
-    const bare: PipelineAccount = {
+    const bare = withRead({
       id: "empty",
       name: "Quiet Co",
       csm: "",
@@ -437,7 +473,7 @@ describe("the Word document", () => {
       gaps: [],
       support: null,
       actors: [],
-    };
+    });
     const [q] = build([bare]);
     const text = JSON.stringify(reportSection([q], {}, day));
     for (const label of [
@@ -497,19 +533,42 @@ describe("collecting the active accounts", () => {
     peos: [{ id: "acc", name: "Simploy", csm: "Lesha Cyphers" }],
     now: NOW,
   };
+  // The read the page's loop would hand down for the card, over the input's
+  // own stores, so what a test overrides (its dispositions, its cards) reaches
+  // the read the way it reaches the collector.
+  type CollectInput = Parameters<typeof collectPipelineAccounts>[0];
+  const collect = (input: Omit<CollectInput, "readFor">) =>
+    collectPipelineAccounts({
+      ...input,
+      readFor: (id, c) =>
+        readAccount({
+          account: { id, name: c.name },
+          notes: (input.notesById.get(id) ?? []).map((n) => ({
+            ...n,
+            accountId: id,
+            partner: "",
+            kind: "account" as const,
+            actors: n.actors ?? "",
+            source: n.source ?? "",
+            recipients: "",
+          })),
+          todos: input.todos,
+          touches: [],
+          dispositions: input.dispositions,
+          homeSide: CSMS,
+          now: input.now,
+        }),
+    });
 
   test("an active card becomes a record's inputs", () => {
-    const got = collectPipelineAccounts({ ...base, cards: [card()] });
+    const got = collect({ ...base, cards: [card()] });
     assert.equal(got.length, 1);
     assert.equal(got[0].id, "acc");
     assert.equal(got[0].csm, "Lesha Cyphers");
     assert.equal(got[0].notes.length, 1);
   });
   test("archived and closed cards are not active", () => {
-    assert.equal(
-      collectPipelineAccounts({ ...base, cards: [card({ archived: true })] }).length,
-      0,
-    );
+    assert.equal(collect({ ...base, cards: [card({ archived: true })] }).length, 0);
     // An outcome is stored as JSON carrying a status — a bare phrase is not a
     // stamp, and readOutcome is right to ignore one.
     const closed = card({
@@ -517,18 +576,28 @@ describe("collecting the active accounts", () => {
         __outcome: JSON.stringify({ status: "won", phrase: "signed", at: "2026-09-01" }),
       },
     });
-    assert.equal(collectPipelineAccounts({ ...base, cards: [closed] }).length, 0);
+    assert.equal(collect({ ...base, cards: [closed] }).length, 0);
   });
   test("a ✕-parked note leaves the report, as it leaves every register", () => {
-    const got = collectPipelineAccounts({
+    const got = collect({
       ...base,
       cards: [card()],
       dispositions: new Map<string, unknown>([["hide:note:n", {}]]),
     });
     assert.deepEqual(got[0].notes, []);
+    // The one hide filter is the read's: the row is in its docs, flagged.
+    assert.equal(got[0].read.docs.find((d) => d.noteId === "n")?.hidden, true);
+  });
+  test("a card the caller holds no read for is skipped, never reported blind", () => {
+    const got = collectPipelineAccounts({
+      ...base,
+      cards: [card()],
+      readFor: () => undefined,
+    });
+    assert.equal(got.length, 0);
   });
   test("a card the book cannot name is skipped rather than guessed", () => {
-    const got = collectPipelineAccounts({
+    const got = collect({
       ...base,
       cards: [card({ name: "Nobody Ltd" })],
     });
