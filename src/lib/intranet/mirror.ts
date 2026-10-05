@@ -34,7 +34,8 @@ export type MirrorDoc = {
   accountId: string;
 };
 
-const OPERATOR = "Antaeus Coe";
+/** The operator, as every mirrored document and the extractor name him. */
+export const OPERATOR = "Antaeus Coe";
 
 function dayOf(iso: string): string {
   const t = Date.parse(iso);

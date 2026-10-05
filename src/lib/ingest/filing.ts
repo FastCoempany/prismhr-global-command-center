@@ -167,6 +167,23 @@ export async function findFiling(
   }
 }
 
+/** The sanitized read of one filing, by id, or null: the filing is not there,
+ *  it was keyless, or the table is not there yet. The reader a caller holding
+ *  the link column already takes — the intranet's extractor for a mirrored
+ *  todo, whose Todo row carries the filingId (G6: the todo mirror carries the
+ *  note's read rather than earning its own). */
+export async function readOfFiling(
+  filingId: string,
+  client: FilingClient = getPrisma(),
+): Promise<AiCleanResult | null> {
+  try {
+    const row = await client.filing.findUnique({ where: { id: filingId } });
+    return row ? rowOf(row).read : null;
+  } catch {
+    return null;
+  }
+}
+
 /** The sanitized read of the filing that wrote a note, or null: the note has
  *  no filing, the filing was keyless, or the columns are not there yet. */
 export async function readOfNote(
@@ -179,8 +196,7 @@ export async function readOfNote(
       select: { filingId: true },
     });
     if (!note?.filingId) return null;
-    const row = await client.filing.findUnique({ where: { id: note.filingId } });
-    return row ? rowOf(row).read : null;
+    return await readOfFiling(note.filingId, client);
   } catch {
     return null;
   }

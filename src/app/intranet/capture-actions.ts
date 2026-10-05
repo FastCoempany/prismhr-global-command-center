@@ -1,0 +1,210 @@
+"use server";
+
+// The Intranet's capture door (the Chute brains refactor plan, slice 16). The
+// Intranet's capture is a door too (ruled 2026-09-25, P2 — CLAUDE.md, The
+// Chute): what names an account files through the paste pipeline, routed,
+// guarded and picked like the Chute's, and the brain reads it from the record
+// on the next sweep; what names none stays an Intranet doc and is never
+// inbound. One pipeline wherever a capture enters (D1): the filing is
+// roomPaste with the intranet door, so every row it writes carries the door
+// in its own column (P3). Routing runs here, on the server, over the joined
+// roster (D12): the lib's routeText, never the action's, because this already
+// is the server, and the reply carries an account's name and nothing else.
+//
+// Until the Send-it box can show a dispute (the plan's §5.7, BLOCKED ON
+// FACE), the capture files when routing is sure and stays an Intranet doc
+// when it is not — an unsure route, or a dispute from either of the guard's
+// rungs — and the receipt line says which happened and where the pick lives.
+// The words are the pure half's (src/lib/intranet/capture-door.ts).
+//
+// This is the one module on the Intranet that writes to the record. The
+// ask-and-answer half (actions.ts) still writes only to the Intranet's own
+// tables, and the import-graph test keeps it that way.
+
+import { roomPaste } from "@/app/room/actions";
+import { getAppAccess } from "@/lib/auth";
+import { getPrisma, hasDatabaseEnv } from "@/lib/db";
+import { routeText } from "@/lib/ingest/route";
+import { captureVerdict, filedLine, keptLikeLine } from "@/lib/intranet/capture-door";
+import {
+  normalizeCapture,
+  unseenMessages,
+  captureReceipt,
+} from "@/lib/intranet/normalize";
+import {
+  applyMerges,
+  fallbackTitle,
+  segmentMessages,
+  segmentTranscript,
+} from "@/lib/intranet/segment";
+
+async function canWrite() {
+  if (!hasDatabaseEnv()) return false;
+  const access = await getAppAccess();
+  return access.status === "active" && access.canWrite;
+}
+
+export type CaptureReply = {
+  ok: boolean;
+  receipt: string;
+  /** What just landed in the brain, so the room can read it immediately
+   *  (IV.3). Empty when the capture filed to the record instead: nothing of
+   *  it waits in the brain to be read, the sweep mirrors it. */
+  captureId: string;
+  /** Provenance for the sent stamp (V): where the paste came from, or the
+   *  account it filed to. */
+  space: string;
+  origin: string;
+  reason?: string;
+};
+
+const refused = (reason: string): CaptureReply => ({
+  ok: false,
+  receipt: "",
+  captureId: "",
+  space: "",
+  origin: "",
+  reason,
+});
+
+/** Take a grab or a paste. Routed first: a capture that names an account
+ *  files through the pipeline and never becomes an Intranet doc (P2). The
+ *  rest takes the brain's own road, where redaction happens inside
+ *  normalizeCapture, before the first write — there is no pre-redaction
+ *  text to leak. */
+export async function intranetCapture(
+  raw: string,
+  originHint?: "teams" | "meeting" | "demo" | "paste",
+): Promise<CaptureReply> {
+  if (!(await canWrite())) return refused("Read-only session.");
+  const text = (raw ?? "").trim();
+  if (text.length < 20) return refused("Nothing there to keep.");
+
+  const cap = normalizeCapture(text, { origin: originHint });
+
+  // The route, on the server over the joined roster (D12, C2). The raw text
+  // routes, as a dropped file's does: the addresses are the strongest rung.
+  const verdict = captureVerdict(await routeText(text));
+  let kept = verdict.file ? "" : verdict.line;
+  if (verdict.file) {
+    // The pipeline the Chute files through, with this door's name (D1, P3).
+    // Its guard runs both rungs; its duplicate check is per account.
+    const r = await roomPaste(verdict.account.id, text, { door: "intranet" });
+    if (r.ok)
+      return {
+        ok: true,
+        receipt: filedLine(verdict.account.name, r.readFailed),
+        captureId: "",
+        space: verdict.account.name,
+        origin: cap.origin,
+      };
+    if (r.duplicate)
+      return {
+        ok: true,
+        receipt: r.reason ?? "Already on file. Nothing filed twice.",
+        captureId: "",
+        space: verdict.account.name,
+        origin: cap.origin,
+      };
+    if (!r.mismatch) return refused(r.reason ?? "That didn't land.");
+    // A dispute at either rung: the capture is kept here and the operator
+    // takes it to the Chute, whose picker the Send-it box cannot show yet.
+    kept = keptLikeLine([r.mismatch.claim]);
+  }
+
+  try {
+    const prisma = getPrisma();
+
+    // Identical capture → no-op. Re-grabbing a thread must never double it.
+    const seen = await prisma.intranetCapture.findUnique({
+      where: { rawChecksum: cap.checksum },
+      select: { id: true },
+    });
+    if (seen) {
+      await prisma.intranetCapture.update({
+        where: { id: seen.id },
+        data: { capturedAt: new Date() },
+      });
+      return {
+        ok: true,
+        receipt: "Already in the brain — nothing new to add.",
+        captureId: seen.id,
+        space: cap.space,
+        origin: cap.origin,
+      };
+    }
+
+    const capture = await prisma.intranetCapture.create({
+      data: {
+        origin: cap.origin,
+        raw: cap.body.slice(0, 400_000),
+        rawChecksum: cap.checksum,
+        title: cap.title,
+        meta: { space: cap.space, links: cap.links, report: cap.report },
+      },
+    });
+
+    // Overlap: which messages has the brain already read, in this space?
+    const priorKeys = new Set<string>();
+    if (cap.space) {
+      const priorDocs = await prisma.intranetDoc.findMany({
+        where: { space: cap.space },
+        select: { checksum: true },
+        take: 400,
+      });
+      for (const d of priorDocs) priorKeys.add(d.checksum);
+    }
+
+    const fresh = cap.msgs.length ? unseenMessages(cap.msgs, new Set()) : [];
+    const segments = cap.msgs.length
+      ? applyMerges(segmentMessages(fresh), [])
+      : segmentTranscript(cap.body, new Date().toISOString());
+
+    let keptCount = 0;
+    let skipped = 0;
+    for (const seg of segments) {
+      if (priorKeys.has(seg.key)) {
+        skipped += seg.msgs.length || 1;
+        continue;
+      }
+      await prisma.intranetDoc.create({
+        data: {
+          captureId: capture.id,
+          origin: cap.origin,
+          originRef: `${capture.id}:${seg.key}`,
+          space: cap.space,
+          title: fallbackTitle(cap.space, seg),
+          body: seg.body,
+          speakers: seg.speakers,
+          occurredAt: new Date(seg.occurredAt || Date.now()),
+          links: cap.links,
+          checksum: seg.key,
+        },
+      });
+      keptCount += seg.msgs.length || 1;
+    }
+
+    await prisma.intranetCapture.update({
+      where: { id: capture.id },
+      data: { segmented: true },
+    });
+
+    return {
+      ok: true,
+      receipt: `${kept} ${captureReceipt({
+        space: cap.space,
+        kept: keptCount,
+        skipped,
+        links: cap.links.length,
+        report: cap.report,
+      })}`,
+      captureId: capture.id,
+      space: cap.space,
+      origin: cap.origin,
+    };
+  } catch {
+    return refused(
+      "The brain's tables aren't there yet — run docs/intranet-tables.sql in Supabase.",
+    );
+  }
+}

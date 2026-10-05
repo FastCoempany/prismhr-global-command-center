@@ -25,6 +25,8 @@ import {
   TOPIC_SPLIT_AT,
   type ClaimKind,
 } from "@/lib/intranet/doctrine";
+import { readOfFiling, readOfNote } from "@/lib/ingest/filing";
+import type { AiCleanResult } from "@/lib/intel/ai-clean";
 import { checksum } from "@/lib/intranet/normalize";
 import { extractAvailable, runRead } from "@/lib/intranet/extract";
 import {
@@ -685,8 +687,12 @@ export async function extractPending(
             : `Reading ${held[0].what} and ${held.length - 1} more.`,
       });
 
+      // A mirrored row the pipeline already read carries its read on the
+      // Filing row; the extractor takes it and pays for a model read only
+      // for documents with none (G6; the plan's slice 16).
+      const stored = await Promise.all(batch.map((d) => storedRead(d)));
       const settled = await Promise.allSettled(
-        batch.map((d) =>
+        batch.map((d, b) =>
           runRead({
             body: d.body,
             origin: d.origin,
@@ -694,6 +700,8 @@ export async function extractPending(
             occurredAt: iso(d.occurredAt),
             accountName: nameById.get(d.accountId) ?? undefined,
             grown,
+            stored: stored[b],
+            speakers: d.speakers,
           }),
         ),
       );
@@ -793,9 +801,11 @@ export async function extractPending(
           {
             log: [
               {
+                // A row read from its filing says so: the log is where the
+                // operator sees that no second model read was paid.
                 text: nSt
-                  ? `${w.what} read — ${nSt} statement${nSt === 1 ? "" : "s"} filed under ${subs.join(", ")}.`
-                  : `${w.what} read clean — nothing worth keeping, and that's fine.`,
+                  ? `${w.what} read${stored[b] ? " from its filing" : ""} — ${nSt} statement${nSt === 1 ? "" : "s"} filed under ${subs.join(", ")}.`
+                  : `${w.what} read${stored[b] ? " from its filing" : ""} clean — nothing worth keeping, and that's fine.`,
               },
             ],
           },
@@ -1594,6 +1604,26 @@ async function pulse(
   } catch {
     // the instrument never gets to break the machine
   }
+}
+
+/** The pipeline's read of the row a document mirrors, when it has one (G6;
+ *  the plan's slice 16): a note's through its filingId column, an action's
+ *  through the Todo's — the todo mirror carries the note's read rather than
+ *  earning its own. Null for every other origin, for a row filed before the
+ *  column, for a keyless filing, and for a database that has not gained the
+ *  table — and then the model reads the document, as before. */
+async function storedRead(doc: {
+  origin: string;
+  originRef: string;
+}): Promise<AiCleanResult | null> {
+  if (doc.origin === "account-note") return readOfNote(doc.originRef);
+  if (doc.origin === "todo") {
+    const t = await getPrisma()
+      .todo.findUnique({ where: { id: doc.originRef }, select: { filingId: true } })
+      .catch(() => null);
+    return t?.filingId ? readOfFiling(t.filingId) : null;
+  }
+  return null;
 }
 
 /** A document named the way the gadget's lane says it (IV.9, plain words). */

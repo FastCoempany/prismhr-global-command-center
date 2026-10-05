@@ -1,11 +1,13 @@
 "use server";
 
-// The Intranet's server half — capture in, answers out.
+// The Intranet's server half — answers out.
 //
 // This module writes ONLY to the Intranet's own tables. It imports no write
 // action from the room, the accounts page, today or the playbook, and a test
 // walks the import graph to keep it that way: the room reads, it does not edit
-// (I.2).
+// (I.2). The capture is the one exception and lives in its own module: the
+// Intranet's capture is a door (ruled 2026-09-25, P2), and the Send-it box's
+// action files through the pipeline from capture-actions.ts.
 
 import { getAppAccess } from "@/lib/auth";
 import { priceQuoteFor } from "@/lib/pricing/quote";
@@ -16,17 +18,6 @@ import {
   PROMPT_VERSION,
   RUN_LOCK_CHECKSUM,
 } from "@/lib/intranet/doctrine";
-import {
-  normalizeCapture,
-  unseenMessages,
-  captureReceipt,
-} from "@/lib/intranet/normalize";
-import {
-  applyMerges,
-  fallbackTitle,
-  segmentMessages,
-  segmentTranscript,
-} from "@/lib/intranet/segment";
 import { descendantIds } from "@/lib/intranet/index-topics";
 import {
   claimsByEntities,
@@ -77,156 +68,6 @@ import type {
 async function canRead() {
   const access = await getAppAccess();
   return access.status === "active";
-}
-
-async function canWrite() {
-  if (!hasDatabaseEnv()) return false;
-  const access = await getAppAccess();
-  return access.status === "active" && access.canWrite;
-}
-
-// ── capture ─────────────────────────────────────────────────────────────────
-type CaptureReply = {
-  ok: boolean;
-  receipt: string;
-  /** What just landed, so the room can read it immediately (IV.3). */
-  captureId: string;
-  /** Provenance for the sent stamp (V): where the paste came from. */
-  space: string;
-  origin: string;
-  reason?: string;
-};
-
-/** Take a grab or a paste into the brain. Redaction happens inside
- *  normalizeCapture, before the first write — there is no pre-redaction text to
- *  leak. */
-export async function intranetCapture(
-  raw: string,
-  originHint?: "teams" | "meeting" | "demo" | "paste",
-): Promise<CaptureReply> {
-  if (!(await canWrite()))
-    return {
-      ok: false,
-      receipt: "",
-      captureId: "",
-      space: "",
-      origin: "",
-      reason: "Read-only session.",
-    };
-  const text = (raw ?? "").trim();
-  if (text.length < 20)
-    return {
-      ok: false,
-      receipt: "",
-      captureId: "",
-      space: "",
-      origin: "",
-      reason: "Nothing there to keep.",
-    };
-
-  const cap = normalizeCapture(text, { origin: originHint });
-
-  try {
-    const prisma = getPrisma();
-
-    // Identical capture → no-op. Re-grabbing a thread must never double it.
-    const seen = await prisma.intranetCapture.findUnique({
-      where: { rawChecksum: cap.checksum },
-      select: { id: true },
-    });
-    if (seen) {
-      await prisma.intranetCapture.update({
-        where: { id: seen.id },
-        data: { capturedAt: new Date() },
-      });
-      return {
-        ok: true,
-        receipt: "Already in the brain — nothing new to add.",
-        captureId: seen.id,
-        space: cap.space,
-        origin: cap.origin,
-      };
-    }
-
-    const capture = await prisma.intranetCapture.create({
-      data: {
-        origin: cap.origin,
-        raw: cap.body.slice(0, 400_000),
-        rawChecksum: cap.checksum,
-        title: cap.title,
-        meta: { space: cap.space, links: cap.links, report: cap.report },
-      },
-    });
-
-    // Overlap: which messages has the brain already read, in this space?
-    const priorKeys = new Set<string>();
-    if (cap.space) {
-      const priorDocs = await prisma.intranetDoc.findMany({
-        where: { space: cap.space },
-        select: { checksum: true },
-        take: 400,
-      });
-      for (const d of priorDocs) priorKeys.add(d.checksum);
-    }
-
-    const fresh = cap.msgs.length ? unseenMessages(cap.msgs, new Set()) : [];
-    const segments = cap.msgs.length
-      ? applyMerges(segmentMessages(fresh), [])
-      : segmentTranscript(cap.body, new Date().toISOString());
-
-    let kept = 0;
-    let skipped = 0;
-    for (const seg of segments) {
-      if (priorKeys.has(seg.key)) {
-        skipped += seg.msgs.length || 1;
-        continue;
-      }
-      await prisma.intranetDoc.create({
-        data: {
-          captureId: capture.id,
-          origin: cap.origin,
-          originRef: `${capture.id}:${seg.key}`,
-          space: cap.space,
-          title: fallbackTitle(cap.space, seg),
-          body: seg.body,
-          speakers: seg.speakers,
-          occurredAt: new Date(seg.occurredAt || Date.now()),
-          links: cap.links,
-          checksum: seg.key,
-        },
-      });
-      kept += seg.msgs.length || 1;
-    }
-
-    await prisma.intranetCapture.update({
-      where: { id: capture.id },
-      data: { segmented: true },
-    });
-
-    return {
-      ok: true,
-      receipt: captureReceipt({
-        space: cap.space,
-        kept,
-        skipped,
-        links: cap.links.length,
-        report: cap.report,
-      }),
-      captureId: capture.id,
-      space: cap.space,
-      origin: cap.origin,
-    };
-  } catch {
-    return {
-      ok: false,
-      receipt: "",
-      captureId: "",
-      space: "",
-      origin: "",
-      reason:
-        "The brain's tables aren't there yet — run docs/intranet-tables.sql in Supabase.",
-    };
-  }
 }
 
 // The record-lines fallback (founder-decreed 2026-08-21): when the brain's

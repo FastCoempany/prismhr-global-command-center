@@ -23,11 +23,11 @@ import { useRouter } from "next/navigation";
 import { useDismiss } from "@/components/use-dismiss";
 import {
   intranetAsk,
-  intranetCapture,
   intranetContents,
   intranetLedgerDay,
   intranetPassage,
 } from "./actions";
+import { intranetCapture } from "./capture-actions";
 import type { RunReport } from "./runners";
 import { cleanAskText } from "@/lib/ask/clean";
 import type {
@@ -266,6 +266,27 @@ export function IntranetClient({
       setPaste("");
       const id = `fed-${Date.now()}`;
       const at = new Date().toISOString();
+      // A capture that named an account filed to the record through the
+      // pipeline (P2): nothing of it waits here to be read, the sweep mirrors
+      // it. The receipt line is the whole entry, and the rail refreshes.
+      if (!r.captureId) {
+        setLive((l) => [
+          {
+            kind: "fed",
+            id,
+            at,
+            space: r.space,
+            title: "",
+            origin: r.origin,
+            lines: [r.receipt],
+            briefs: [],
+            detail: [],
+          },
+          ...l,
+        ]);
+        router.refresh();
+        return;
+      }
       setLive((l) => [
         {
           kind: "fed",
