@@ -26,7 +26,7 @@ import {
 import { buildQueue } from "../src/lib/groundwork/day";
 
 import { dropQueues } from "../src/lib/activity/harness";
-import { buildSendbook } from "../src/lib/sendbook/read";
+import { buildSendbook, docsFromRows } from "../src/lib/sendbook/read";
 import { buildReadout } from "../src/lib/groundwork/readout";
 import { mirrorActivityDigest } from "../src/lib/intranet/mirror";
 import {
@@ -589,7 +589,7 @@ describe("the queue reads the second record", () => {
 // ═══ the second ring ═════════════════════════════════════════════════════════
 
 describe("the ring reads the second record", () => {
-  test("an org-side inbound flips the Sendbook lane and annotates the reply", () => {
+  test("an attributed inbound body sets the Sendbook lane and ↩ REPLIED; a bare datetime sets neither (D19)", () => {
     const notes = [
       {
         body: "✉ Sent the first note →[to Pat]",
@@ -599,22 +599,34 @@ describe("the ring reads the second record", () => {
         kind: "email",
       },
     ];
-    const base = {
-      notesById: new Map([["A1", notes]]),
-      tapsById: new Map(),
-      now: NOW,
-    };
-    const before = buildSendbook(base as never);
+    const bookWith = (secondRecord: SecondRecord | null) =>
+      buildSendbook({
+        readsById: new Map([["A1", { docs: docsFromRows(notes), secondRecord }]]),
+        tapsById: new Map(),
+        now: NOW,
+      });
+    const before = bookWith(null);
     assert.equal(before.laneById.get("A1"), "never-met");
-    const after = buildSendbook({
-      ...base,
-      orgSignals: new Map([
-        ["A1", { inboundAt: "2026-08-10T09:00:00", mktgLive: false }],
-      ]),
-    } as never);
-    assert.equal(after.laneById.get("A1"), "gone-cold");
-    const line = after.lines.find((l) => l.accountId === "A1");
-    assert.ok(line && line.repliedAt === "2026-08-10T09:00:00");
+    // Their word, read from the row's own signature through the machinery
+    // and closer reads (the rollup's lastTheirs): their voice, whoever's
+    // inbox caught it. It flips the lane and annotates the send at the day's
+    // noon anchor.
+    const theirs = bookWith(
+      sr({
+        rollup: rollup({
+          lastOrgInbound: "2026-08-10 09:00",
+          lastTheirs: { day: "2026-08-10", who: "Pat Example", subject: "Re: global" },
+        }),
+      }),
+    );
+    assert.equal(theirs.laneById.get("A1"), "gone-cold");
+    const line = theirs.lines.find((l) => l.accountId === "A1");
+    assert.equal(line?.repliedAt, "2026-08-10T12:00:00.000Z");
+    // The account-level Last Email Received is a datetime, never their voice:
+    // with no attributed row behind it the lane stays and nothing annotates.
+    const datetime = bookWith(sr({ rollup: rollup({ lastOrgInbound: "2026-08-10 09:00" }) }));
+    assert.equal(datetime.laneById.get("A1"), "never-met");
+    assert.equal(datetime.lines.find((l) => l.accountId === "A1")?.repliedAt, "");
     // The operator's own outbound still never warms (the decree).
     assert.equal(before.laneById.get("A1"), "never-met");
   });

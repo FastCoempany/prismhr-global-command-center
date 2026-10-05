@@ -15,6 +15,7 @@ import { contactCount, contactsFor } from "@/lib/book/contacts";
 import { relationshipFor } from "@/lib/intel/relationship";
 import type { DealIntel } from "@/lib/intel/types";
 import { readAccount, secondRecordFor, type AccountRead } from "@/lib/record/read";
+import { readFromStores } from "@/lib/record/stores";
 import { homeSideFrom } from "@/lib/pipeline/build";
 import { RESEARCH_NS } from "@/lib/intel/deep-research";
 import {
@@ -208,16 +209,6 @@ export default async function GroundworkPage({
     );
   }
 
-  // The Sendbook's merged read — record sends + tapped touches, stepped and
-  // laned. The wing subtext, the drumbeat synthetics, and the Tallyfoot all
-  // read this one view.
-  const sendbook = buildSendbook({
-    notesById: accountNotes,
-    tapsById: sendTapsById,
-    now,
-  });
-  const sendWeek = weekStats(sendbook, now);
-
   const touchesByAccount = new Map<string, typeof touches>();
   for (const t of touches) {
     const m = /^outreach:(.+)$/.exec(t.subjectKey);
@@ -285,6 +276,26 @@ export default async function GroundworkPage({
     const sig = intentFor(accountNotes.get(p.id), now);
     if (sig) intentById.set(p.id, sig);
   }
+  // A record row filed under an id the book does not list still has a
+  // register line; it gets the same read, assembled the same way.
+  for (const id of accountNotes.keys())
+    if (!readById.has(id))
+      readById.set(
+        id,
+        readFromStores(
+          { notesById: notesMap, touches, todos, dispositions, homeSide },
+          { id, name: getPeo(id)?.name ?? id },
+          { now },
+        ),
+      );
+
+  // The Sendbook's merged read — record sends + tapped touches, stepped and
+  // laned. The wing subtext, the drumbeat synthetics, and the Tallyfoot all
+  // read this one view, and the view reads the single account read: the same
+  // docs, flags and second record /sendbook builds from, so the two registers
+  // agree (pass 4 G4; slice 13).
+  const sendbook = buildSendbook({ readsById: readById, tapsById: sendTapsById, now });
+  const sendWeek = weekStats(sendbook, now);
 
   // The wire's newest hit per account — the wire-trigger rule's evidence.
   // BOTH stores (Ted doctrine): the sweep's auto-matches AND wire items the
@@ -380,7 +391,9 @@ export default async function GroundworkPage({
     // seat stays off the wing until the Archive restores it.
     if (dispositions.has(`hide:note:${seatNote.id}`)) continue;
     const seatAt = Date.parse(seatNote.createdAt);
-    const worked = recordSends(notesMap.get(accountId) ?? []).some(
+    // The read's docs, so a ✕-parked send retires no seat (the one hide
+    // filter, inside the read).
+    const worked = recordSends(readById.get(accountId)?.docs ?? []).some(
       (s) => Date.parse(s.at) > seatAt,
     );
     if (!worked) seats.set(accountId, seat);

@@ -412,6 +412,7 @@ Dependency order first, then risk. Every slice is one PR: branch off main, chain
 - **App verification:** /sendbook and Groundwork's Tallyfoot agree on the week's counts.
 - **Rollback:** revert.
 - **Size:** M.
+- **Amended 2026-10-05 (built):** `buildSendbook` takes `readsById` (the read's `docs` and `secondRecord`, which an AccountRead satisfies as it stands) and folds the second record itself through `orgSignalsOf`, so no page builds an `orgSignals` map; the three readers keep a rows door (`docsFromRows`, the same `docOf` over a row with the CSM column as the roster) because the Accounts sheet's engaged read, the activity run's context pack and the HomeRoom's seat read still hand rows until slice 15, and the fixtures enter by it; a send is the operator's own (`MINE_RE` on the doc's sender, as `newestOutbound` spells it), never self-addressed (touch.ts's `selfAddressed`, now exported), and Groundwork's seat retirement reads the read's docs, so a ✕-parked send retires no seat.
 
 ### Slice 14 · The single read, part 5: whose move
 

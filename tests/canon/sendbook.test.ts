@@ -5,7 +5,16 @@
 
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
-import { buildSendbook, inboundDates, warmDates } from "../../src/lib/sendbook/read";
+import {
+  buildSendbook,
+  docsFromRows,
+  inboundDates,
+  warmDates,
+  type NoteLike,
+} from "../../src/lib/sendbook/read";
+import { readAccount, type RecordNote } from "../../src/lib/record/read";
+import { csms } from "../../src/lib/book";
+import type { SecondRecord } from "../../src/lib/activity/read";
 
 const NOW = new Date("2026-09-25T18:00:00.000Z");
 // The noon-UTC day anchor every Outlook entry files at.
@@ -24,8 +33,17 @@ const reply = (clock: string, text: string, createdAt = NOON, from = "Adam Reyes
   actors: `${from} → Antaeus Coe`,
 });
 
-const book = (notes: ReturnType<typeof send>[]) =>
-  buildSendbook({ notesById: new Map([["A1", notes]]), tapsById: new Map(), now: NOW });
+// Every fixture the file builds a register from, kept for the parity pin at
+// the foot: the register built from the read equals the one built from rows.
+const FIXTURES: NoteLike[][] = [];
+const book = (notes: ReturnType<typeof send>[]) => {
+  FIXTURES.push(notes);
+  return buildSendbook({
+    readsById: new Map([["A1", { docs: docsFromRows(notes), secondRecord: null }]]),
+    tapsById: new Map(),
+    now: NOW,
+  });
+};
 
 // ── E5 · "Replies annotate from the record only (↩ REPLIED)" (:348-349) read
 // on the record's own clock (the Ted doctrine: the record holds a finer clock)
@@ -135,5 +153,162 @@ describe("machinery never warms and never replies (CLAUDE.md:399-400)", () => {
     const note = reply("10:39 AM", "We are in. Send the contract over.");
     assert.equal(warmDates([note]).length, 1);
     assert.equal(inboundDates([note]).length, 1);
+  });
+});
+
+// ── slice 13 · the register reads the single account read (§2.2) ───────────
+// The rows door and the read build one register: a row goes through the same
+// docOf the read uses, so warmth, ↩ REPLIED and the steps come out the same
+// whichever door the record came in by.
+describe("the register built from the read equals the register built from rows", () => {
+  const rowsOf = (notes: NoteLike[]): RecordNote[] =>
+    notes.map((n, i) => ({
+      id: `r${i + 1}`,
+      accountId: "A1",
+      partner: "",
+      kind: "account",
+      lane: "mine",
+      actors: n.actors ?? "",
+      source: n.source,
+      recipients: "",
+      body: n.body,
+      createdAt: n.createdAt,
+    }));
+  const readOf = (notes: NoteLike[], secondRecord: SecondRecord | null = null) =>
+    readAccount({
+      account: { id: "A1", name: "Canon Fixture Co" },
+      notes: rowsOf(notes),
+      touches: [],
+      todos: [],
+      dispositions: new Map(),
+      secondRecord,
+      homeSide: csms,
+      now: NOW,
+    });
+  const fromRows = (notes: NoteLike[]) =>
+    buildSendbook({
+      readsById: new Map([["A1", { docs: docsFromRows(notes), secondRecord: null }]]),
+      tapsById: new Map(),
+      now: NOW,
+    });
+  const fromRead = (notes: NoteLike[]) =>
+    buildSendbook({ readsById: new Map([["A1", readOf(notes)]]), tapsById: new Map(), now: NOW });
+
+  test("on every fixture this file holds", () => {
+    assert.ok(FIXTURES.length >= 8, `fixtures collected: ${FIXTURES.length}`);
+    for (const notes of FIXTURES) {
+      const a = fromRows(notes);
+      const b = fromRead(notes);
+      assert.deepEqual(b.lines, a.lines);
+      assert.deepEqual([...b.laneById], [...a.laneById]);
+    }
+  });
+
+  test("the lane and the annotation come off the doc's flags, not a second reading of the row", () => {
+    const notes = [send("9:44 AM"), reply("10:39 AM", "We are in. Send the contract over.")];
+    const read = readOf(notes);
+    const [inDoc] = read.docs.filter((d) => d.direction === "in");
+    assert.equal(inDoc.senderIsHome, false);
+    assert.equal(inDoc.machinery, false);
+    assert.equal(inDoc.closer, false);
+    assert.deepEqual(warmDates(read.docs), [inDoc.at]);
+    assert.deepEqual(inboundDates(read.docs), [inDoc.at]);
+    assert.equal(read.warmth.lastReplyAt, inDoc.at, "the read's own warmth agrees");
+  });
+});
+
+// ── slice 13 · the two pages build one register (pass 4 G4) ─────────────────
+// Groundwork and /sendbook each used to build the register from their own
+// projection of the rows, and only /sendbook poured the second record in. Both
+// now hand the same read, so an account whose reply landed in a colleague's
+// inbox reads GONE COLD on the Tallyfoot and on /sendbook alike — and only an
+// attributed inbound body is that reply (D19).
+describe("Groundwork's and /sendbook's registers agree on an account with an org inbound", () => {
+  const theirs = (over: Partial<NonNullable<SecondRecord["rollup"]>>): SecondRecord => ({
+    rollup: {
+      dropSha: "d1",
+      dropDay: "2026-09-24",
+      window: { from: "2026-06-24", to: "2026-09-24" },
+      lanes: { human: 0, csm: 0, support: 0, intent: 0, machinery: 0 },
+      emails: { human: 0, csm: 0, support: 0, intent: 0, machinery: 0 },
+      intent: { s: 0, o: 0, c: 0 },
+      receipts: 0,
+      lastHuman: null,
+      lastOrgInbound: "",
+      lastTheirs: null,
+      actors: [],
+      threads: [],
+      verdict: "",
+      ...over,
+    },
+    gems: [],
+    support: null,
+    intent: null,
+  });
+  const notes = [send("9:44 AM")];
+  const rows: RecordNote[] = notes.map((n, i) => ({
+    id: `s${i + 1}`,
+    accountId: "A1",
+    partner: "",
+    kind: "account",
+    lane: "mine",
+    actors: n.actors,
+    source: n.source,
+    recipients: "",
+    body: n.body,
+    createdAt: n.createdAt,
+  }));
+  const sr = theirs({
+    lastTheirs: { day: "2026-09-10", who: "Adam Reyes", subject: "Re: Canada" },
+    lastOrgInbound: "2026-09-10 09:12",
+  });
+  const register = (touches: Parameters<typeof readAccount>[0]["touches"]) =>
+    buildSendbook({
+      readsById: new Map([
+        [
+          "A1",
+          readAccount({
+            account: { id: "A1", name: "Canon Fixture Co" },
+            notes: rows,
+            touches,
+            todos: [],
+            dispositions: new Map(),
+            secondRecord: sr,
+            homeSide: csms,
+            now: NOW,
+          }),
+        ],
+      ]),
+      tapsById: new Map(),
+      now: NOW,
+    });
+
+  test("the same read on both pages: one lane, one annotation, from the attributed inbound", () => {
+    // /sendbook's assembly and Groundwork's, which also carries the touch log.
+    const plain = register([]);
+    const withLog = register([
+      {
+        subjectKey: "outreach:A1",
+        label: "",
+        contactedAt: "2026-09-03T15:00:00.000Z",
+        status: "awaiting",
+        log: [],
+      },
+    ]);
+    assert.deepEqual(withLog.lines, plain.lines);
+    assert.deepEqual([...withLog.laneById], [...plain.laneById]);
+    assert.equal(plain.laneById.get("A1"), "gone-cold");
+    assert.equal(plain.lines[0].repliedAt, "2026-09-10T12:00:00.000Z");
+  });
+
+  test("the account-level datetime alone sets neither (D19)", () => {
+    const datetimeOnly = theirs({ lastOrgInbound: "2026-09-10 09:12" });
+    const { lines, laneById } = buildSendbook({
+      readsById: new Map([["A1", { docs: docsFromRows(notes), secondRecord: datetimeOnly }]]),
+      tapsById: new Map(),
+      now: NOW,
+    });
+    assert.equal(laneById.get("A1"), "never-met");
+    assert.equal(lines[0].repliedAt, "");
   });
 });

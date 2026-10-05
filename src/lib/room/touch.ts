@@ -100,8 +100,9 @@ export function targetOf(actors: string, isHomeSide?: (name: string) => boolean)
 
 /** A send whose only named recipient is the operator. Collapsed lines are
  *  excluded: a "+2" means other people were on it, and one of them is very
- *  likely the account. */
-function selfAddressed(actors: string): boolean {
+ *  likely the account. Exported so the Sendbook reads the same rule: a
+ *  self-assigned task is not a touch on any register (pass 2 B, row 1). */
+export function selfAddressed(actors: string): boolean {
   const arrow = (actors ?? "").indexOf("→");
   if (arrow < 0) return false;
   const tail = actors.slice(arrow + 1);
