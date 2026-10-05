@@ -352,6 +352,7 @@ Dependency order first, then risk. Every slice is one PR: branch off main, chain
 - **App verification:** file on the Drop and see the row's registers update without a reload; navigate to /accounts and see the new note's LAST HUMAN TOUCH.
 - **Rollback:** revert.
 - **Size:** S.
+- **Amended 2026-10-05 (built):** "no other file under src/app/room revalidates" was stale: src/app/room/ledger-actions.ts held three more (`done()`, `doneTo()` and `dismissTriage`), retired with the rest, and its form actions need no client ask because each ends in a `redirect()` to a force-dynamic page, which is the fresh read; the HomeRoom's rows (room-client.tsx: the composer, the sheet's ops and edits, the register's ✎ and ✕, the asks, the loss and owed exits, the close and the mark, the retire, the research pass, the notifier) ask the router themselves after each write that took, and the two hooks keep their one ask each.
 
 ### Slice 10 · The single read, part 1: the module and the HomeRoom
 

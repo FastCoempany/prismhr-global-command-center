@@ -4,11 +4,18 @@
 // against the book before anything writes, so a row can only ever file to
 // itself. These return values (the room updates in place) instead of
 // redirecting.
+//
+// Nothing here revalidates a path. There is no revalidation list (ruled
+// 2026-09-25, D15): every page is force-dynamic and derives on request, and
+// the client that made a write asks the router for the fresh read itself
+// (router.refresh() in the component that called the action), so a surface
+// that archives leaves no list to be struck from (P1). The private refresh()
+// that named three pages retired with slice 9 of the Chute brains refactor
+// plan.
 
 import { rulesRead } from "@/lib/intel/rules-read";
 import { claudeClient, claudeAvailable } from "@/lib/claude/health";
 import { MODEL_TRANSCRIBE } from "@/lib/intranet/doctrine";
-import { revalidatePath } from "next/cache";
 import { getAppAccess } from "@/lib/auth";
 import { hasDatabaseEnv } from "@/lib/db";
 import { peos } from "@/lib/book";
@@ -89,12 +96,6 @@ async function requireWrite() {
   return access.status === "active" && access.canWrite;
 }
 
-function refresh() {
-  revalidatePath("/room");
-  revalidatePath("/accounts");
-  revalidatePath("/groundwork");
-}
-
 // Type a line, press Enter → one note on THIS account, everywhere. Returns
 // the ids the receipt needs: the note row and its sheet mirror, so ↩ undo
 // and "make it an action →" can act on exactly what this keystroke created.
@@ -121,7 +122,6 @@ async function roomLog(
       { accountNoteIds: [n.id], partnerNoteIds: [] },
       acct.name,
     );
-    refresh();
     return { ok: true, noteId: n.id, todoId: todoId ?? undefined };
   } catch {
     return { ok: false, reason: "The note didn't save. Try again." };
@@ -491,7 +491,6 @@ export async function roomPaste(
         await writeFiling("transcript");
         const id = await archiveNote();
         await stampPasteMark(pasteKey, id);
-        refresh();
         return {
           ok: true,
           filed: 1,
@@ -522,7 +521,6 @@ export async function roomPaste(
         filingId,
       });
       await stampPasteMark(pasteKey, n.id);
-      refresh();
       return {
         ok: true,
         filed: 1,
@@ -584,7 +582,6 @@ export async function roomPaste(
     // loop's seat is the face's, the plan's §5.4).
     const { noteIds: fanoutIds, loops, ...fanout } = absorbed;
     noteIds.push(...fanoutIds);
-    refresh();
     return {
       ok: true,
       filed,
@@ -636,7 +633,6 @@ export async function roomActionUndo(
     await prisma.todo.delete({ where: { id } });
     // A completion line the row filed before it was reopened goes with it.
     await undoCompletions(acct.id, [id]);
-    refresh();
     return { ok: true };
   } catch {
     return { ok: false, reason: "The undo didn't take. Try again." };
@@ -671,7 +667,6 @@ export async function roomMoveDone(
         update: { status: MOVE_DONE_STATUS, reason: new Date().toISOString() },
       });
     }
-    refresh();
     return { ok: true };
   } catch {
     return { ok: false, reason: "That didn't save. Try again." };
@@ -701,7 +696,6 @@ export async function roomClose(args: {
       cardName: (args.cardName ?? "").slice(0, 160),
       accountId: resolvedId,
     });
-    refresh();
     return { ok: true };
   } catch {
     return { ok: false, reason: "The close didn't save. Try again." };
@@ -766,7 +760,6 @@ export async function roomCompose(
           ? new Date(nextRemindIso(parsed.remindDay, new Date()))
           : new Date(),
     });
-    refresh();
     return {
       ok: true,
       kind: parsed.kind === "scheduled" ? "scheduled" : "action",
@@ -811,7 +804,6 @@ export async function roomUnlog(
         .catch(() => null);
     }
     await prisma.todo.delete({ where: { id } });
-    refresh();
     return { ok: true };
   } catch {
     return { ok: false, reason: "The undo didn't take. Try again." };
@@ -913,7 +905,6 @@ export async function roomPasteUndo(
         // marker cleanup is best-effort; the notes are already gone
       }
     }
-    refresh();
     return {
       ok: true,
       removed: r.count + playbook + byFiling.notes + completions,
@@ -987,7 +978,6 @@ async function closeCard(args: {
         update: { status: "parked", reason: label },
       })
       .catch(() => null);
-    refresh();
     return { ok: true };
   } catch {
     return { ok: false, reason: "That didn't save. Try again." };
@@ -1034,7 +1024,6 @@ export async function roomRetire(
       where: { id: cid },
       data: { archived: true },
     });
-    refresh();
     return { ok: true };
   } catch {
     return { ok: false, reason: "That didn't save. Try again." };
@@ -1124,7 +1113,6 @@ export async function roomResearch(
       door: "hand",
     });
 
-    refresh();
     return {
       ok: true,
       changed: diffFindings(previous, finding),
@@ -1248,7 +1236,6 @@ export async function roomGapsRefill(
       questions: minted,
       door: "hand",
     });
-    refresh();
     return { ok: true, added: added.length };
   } catch {
     return { ok: false, reason: "Minting didn't complete. Try again." };
@@ -1277,7 +1264,6 @@ export async function roomGapDismiss(
       create: { accountId: key, status: "parked", reason: "not relevant" },
       update: { status: "parked", reason: "not relevant" },
     });
-    refresh();
     return { ok: true };
   } catch {
     return { ok: false, reason: "That didn't save. Try again." };
@@ -1300,7 +1286,6 @@ export async function roomLossDismiss(
       create: { accountId: key, status: "parked", reason: "keep salvaging" },
       update: { status: "parked", reason: "keep salvaging" },
     });
-    refresh();
     return { ok: true };
   } catch {
     return { ok: false, reason: "That didn't save. Try again." };
@@ -1336,7 +1321,6 @@ export async function roomOwedAccept(
         update: { status: "parked", reason: "accepted" },
       })
       .catch(() => null);
-    refresh();
     return { ok: true };
   } catch {
     return { ok: false, reason: "That didn't save. Try again." };
@@ -1356,7 +1340,6 @@ export async function roomOwedDismiss(
       create: { accountId: k, status: "parked", reason: "dismissed" },
       update: { status: "parked", reason: "dismissed" },
     });
-    refresh();
     return { ok: true };
   } catch {
     return { ok: false, reason: "That didn't save. Try again." };
@@ -1400,7 +1383,6 @@ export async function roomRecordEdit(
       where: { id },
       data: { body: lines.join("\n") },
     });
-    refresh();
     return { ok: true };
   } catch {
     return { ok: false, reason: "The edit didn't save. Try again." };
@@ -1431,7 +1413,6 @@ export async function roomRecordDelete(
       create: { accountId: key, status: "parked", reason: n.body.slice(0, 300) },
       update: { status: "parked", reason: n.body.slice(0, 300) },
     });
-    refresh();
     return { ok: true };
   } catch {
     return { ok: false, reason: "The delete didn't take. Try again." };
@@ -1471,7 +1452,6 @@ export async function roomNoteToAction(
         where: { id: todoId },
         data: { done: false, accountId: acct.id },
       });
-      refresh();
       return { ok: true };
     }
     const noteId = typeof src?.noteId === "string" ? src.noteId.trim().slice(0, 40) : "";
@@ -1508,7 +1488,6 @@ export async function roomNoteToAction(
       accountId: acct.id,
       remindAt: new Date(),
     });
-    refresh();
     return { ok: true };
   } catch {
     return { ok: false, reason: "That didn't save. Try again." };
@@ -1606,7 +1585,6 @@ export async function roomTodoSet(
       const seat = await seatRowFor(acct.id, id);
       if (!seat) return { ok: false, reason: "That item is gone." };
       await seatOp(acct.id, seat, op);
-      refresh();
       return { ok: true };
     }
     let owned = (t.accountId ?? "") === acct.id;
@@ -1663,9 +1641,7 @@ export async function roomTodoSet(
         create: { accountId: key, status: "parked", reason: snippet },
         update: { status: "parked", reason: snippet },
       });
-      revalidatePath("/archive");
     }
-    refresh();
     return { ok: true };
   } catch {
     return { ok: false, reason: "That didn't save. Try again." };
@@ -1702,7 +1678,6 @@ export async function roomTodoEdit(
         where: { id },
         data: { body: renderSeatBody({ act, term: parsed.term, day: parsed.day }) },
       });
-      refresh();
       return { ok: true };
     }
     let owned = (t.accountId ?? "") === acct.id;
@@ -1727,7 +1702,6 @@ export async function roomTodoEdit(
     let body = withTags(clean, tags);
     if (marker.refs) body = withMarker(body, marker.refs, marker.label);
     await prisma.todo.update({ where: { id }, data: { body } });
-    refresh();
     return { ok: true };
   } catch {
     return { ok: false, reason: "The edit didn't save." };
@@ -1856,6 +1830,5 @@ export async function roomBriefedSet(
   } catch {
     return { ok: false, reason: "The status didn't keep. Try again." };
   }
-  revalidatePath("/room");
   return { ok: true };
 }

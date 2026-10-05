@@ -14,6 +14,7 @@ import {
   useTransition,
 } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useDismiss } from "@/components/use-dismiss";
 import { ChiClock } from "../today-client";
 import {
@@ -214,12 +215,16 @@ function Briefed({
   const [open, setOpen] = useState(false);
   const [local, setLocal] = useState<"opp" | "done" | null>(manual);
   const [pending, start] = useTransition();
+  const router = useRouter();
   const lit = on || local !== null;
   const set = (v: "opp" | "done" | "clear") => {
     setLocal(v === "clear" ? null : v);
     setOpen(false);
     start(async () => {
-      await roomBriefedSet(accountId, v);
+      // The page derives on request (D15): a status that kept asks the
+      // router for the fresh read here, in the component that set it.
+      const r = await roomBriefedSet(accountId, v);
+      if (r.ok) router.refresh();
     });
   };
   const title = lit
@@ -400,6 +405,17 @@ function Row({
   // The move button owns its own spinner — a register-row op must never
   // dress the Mark-it-done button in "Saving…".
   const [closePending, startClose] = useTransition();
+  // Every page derives on request (D15): the server's revalidation retired
+  // with slice 9 of the Chute brains refactor plan, so a write that took asks
+  // the router for the fresh read here, in the component that made it, once
+  // per write. The row's optimistic state lands first and the re-derived page
+  // follows. The shared door and the take-back ask on their own (use-ingest.ts,
+  // use-undo.ts), so the filing path is never asked twice.
+  const router = useRouter();
+  const took = <R extends { ok: boolean }>(r: R): R => {
+    if (r.ok) router.refresh();
+    return r;
+  };
 
   // The box decides (founder-decreed 2026-08-13): a jot stays an instant
   // note, but anything that reads like a capture — a pasted thread, meeting
@@ -418,7 +434,9 @@ function Row({
       return;
     }
     start(async () => {
-      const r = await roomCompose(row.accountId, text, { kind: mode, urgency: urg });
+      const r = took(
+        await roomCompose(row.accountId, text, { kind: mode, urgency: urg }),
+      );
       if (r.ok && r.kind) {
         setFreshCaps((f) => [
           {
@@ -439,7 +457,7 @@ function Row({
     if (!c?.todoId || pending) return;
     const todoId = c.todoId;
     start(async () => {
-      const r = await roomUnlog(row.accountId, todoId);
+      const r = took(await roomUnlog(row.accountId, todoId));
       if (r.ok) setFreshCaps((f) => f.filter((_, i) => i !== idx));
       else setNote(r.reason ?? "The undo didn't take.");
     });
@@ -449,7 +467,7 @@ function Row({
     if (!c?.todoId || pending) return;
     const todoId = c.todoId;
     start(async () => {
-      const r = await roomNoteToAction(row.accountId, { todoId });
+      const r = took(await roomNoteToAction(row.accountId, { todoId }));
       if (r.ok)
         setFreshCaps((f) =>
           f.map((x, i) => (i === idx ? { ...x, kind: "action", promoted: true } : x)),
@@ -460,7 +478,7 @@ function Row({
   const promoteNote = (noteId: string, text: string) => {
     if (pending || promotedNotes.has(noteId)) return;
     start(async () => {
-      const r = await roomNoteToAction(row.accountId, { noteId });
+      const r = took(await roomNoteToAction(row.accountId, { noteId }));
       if (r.ok) {
         setPromotedNotes((s) => new Set(s).add(noteId));
         setFreshCaps((f) => [
@@ -474,7 +492,7 @@ function Row({
     const text = editText.trim();
     if (!text || pending) return;
     start(async () => {
-      const r = await roomRecordEdit(row.accountId, noteId, text);
+      const r = took(await roomRecordEdit(row.accountId, noteId, text));
       if (r.ok) {
         setEditedNotes((m) => new Map(m).set(noteId, text));
         setEditId(null);
@@ -485,7 +503,7 @@ function Row({
     const text = todoEditText.trim();
     if (!text || pending) return;
     start(async () => {
-      const r = await roomTodoEdit(row.accountId, todoId, text);
+      const r = took(await roomTodoEdit(row.accountId, todoId, text));
       if (r.ok) {
         setEditedTodos((m) => new Map(m).set(todoId, text));
         setTodoEditId(null);
@@ -495,7 +513,7 @@ function Row({
   const deleteNote = (noteId: string) => {
     if (pending) return;
     start(async () => {
-      const r = await roomRecordDelete(row.accountId, noteId);
+      const r = took(await roomRecordDelete(row.accountId, noteId));
       if (r.ok) setDeletedNotes((s) => new Set(s).add(noteId));
       else setNote(r.reason ?? "The delete didn't take.");
     });
@@ -667,7 +685,7 @@ function Row({
   const undoOpened = (idx: number, id: string) => {
     if (pending) return;
     start(async () => {
-      const r = await roomActionUndo(row.accountId, id);
+      const r = took(await roomActionUndo(row.accountId, id));
       if (r.ok)
         setFreshInfo((fs) =>
           fs.map((x, i) =>
@@ -693,7 +711,7 @@ function Row({
     const l = row.loss;
     start(async () => {
       const call = status === "won" ? roomMarkWon : roomMarkLost;
-      const r = await call(row.accountId, row.cardId, l.noteId, l.phrase);
+      const r = took(await call(row.accountId, row.cardId, l.noteId, l.phrase));
       if (r.ok) {
         setLossState("lost");
         setFreshInfo((f) => [
@@ -710,7 +728,7 @@ function Row({
   const retireRow = () => {
     if (pending) return;
     start(async () => {
-      const r = await roomRetire(row.accountId, row.cardId);
+      const r = took(await roomRetire(row.accountId, row.cardId));
       if (r.ok) setFreshInfo((f) => [{ text: "Retired from the board." }, ...f]);
       else setNote(r.reason ?? "That didn't save.");
     });
@@ -727,7 +745,7 @@ function Row({
   const runResearchPass = () => {
     if (rsrchPending) return;
     startResearch(async () => {
-      const r = await roomResearch(row.accountId);
+      const r = took(await roomResearch(row.accountId));
       if (r.ok)
         setResearch({
           note: r.summary || "Filed to the record.",
@@ -739,7 +757,7 @@ function Row({
   const refillAsks = () => {
     if (askPending) return;
     startAsk(async () => {
-      const r = await roomGapsRefill(row.accountId);
+      const r = took(await roomGapsRefill(row.accountId));
       if (r.ok)
         setFreshInfo((f) => [
           {
@@ -755,7 +773,7 @@ function Row({
   const dismissAsk = (id: string) => {
     if (askPending) return;
     startAsk(async () => {
-      const r = await roomGapDismiss(row.accountId, id);
+      const r = took(await roomGapDismiss(row.accountId, id));
       if (r.ok) setAskGone((sx) => new Set(sx).add(id));
       else setNote(r.reason ?? "That didn't save.");
     });
@@ -764,7 +782,7 @@ function Row({
     if (!row.loss || pending) return;
     const l = row.loss;
     start(async () => {
-      const r = await roomLossDismiss(row.accountId, row.cardId, l.noteId);
+      const r = took(await roomLossDismiss(row.accountId, row.cardId, l.noteId));
       if (r.ok) setLossState("salvaging");
       else setNote(r.reason ?? "That didn't save.");
     });
@@ -772,7 +790,7 @@ function Row({
   const owedAccept = (o: { key: string; text: string }) => {
     if (pending) return;
     start(async () => {
-      const r = await roomOwedAccept(row.accountId, o.text, o.key);
+      const r = took(await roomOwedAccept(row.accountId, o.text, o.key));
       if (r.ok) {
         setOwedGone((s) => new Set(s).add(o.key));
         setFreshCaps((f) => [{ body: o.text, kind: "action", promoted: true }, ...f]);
@@ -782,7 +800,7 @@ function Row({
   const owedDismiss = (o: { key: string }) => {
     if (pending) return;
     start(async () => {
-      const r = await roomOwedDismiss(row.accountId, o.key);
+      const r = took(await roomOwedDismiss(row.accountId, o.key));
       if (r.ok) setOwedGone((s) => new Set(s).add(o.key));
       else setNote(r.reason ?? "That didn't save.");
     });
@@ -825,6 +843,8 @@ function Row({
     if (closePending || (closed && worked)) return;
     const o = row.outstanding;
     startClose(async () => {
+      // Two writes, one ask for the fresh read: whichever of them took.
+      let wrote = false;
       if (o && !closed) {
         const r = await roomClose({
           accountId: row.accountId,
@@ -836,6 +856,7 @@ function Row({
           cardName: row.name,
         });
         if (r.ok) {
+          wrote = true;
           setClosedKey(o.doneKey);
           setFreshInfo((f) => [{ text: `Closed: ${o.item}` }, ...f]);
         } else {
@@ -844,21 +865,24 @@ function Row({
         }
       }
       const m = await roomMoveDone(row.accountId);
-      if (m.ok) setWorkedNow(true);
-      else setNote(m.reason ?? "That didn't save.");
+      if (m.ok) {
+        wrote = true;
+        setWorkedNow(true);
+      } else setNote(m.reason ?? "That didn't save.");
+      if (wrote) router.refresh();
     });
   };
 
   // Taking the mark back — the operator's own correction, same day only.
   const undoWorked = () =>
     startClose(async () => {
-      const r = await roomMoveDone(row.accountId, true);
+      const r = took(await roomMoveDone(row.accountId, true));
       if (r.ok) setWorkedNow(false);
       else setNote(r.reason ?? "That didn't save.");
     });
   const todoOp = (id: string, op: "done" | "undo" | "tomorrow" | "now" | "drop") =>
     start(async () => {
-      const r = await roomTodoSet(row.accountId, id, op);
+      const r = took(await roomTodoSet(row.accountId, id, op));
       if (!r.ok) setNote(r.reason ?? "That didn't save.");
       else if (op === "done") setDoneIds((s) => new Set(s).add(id));
       else if (op === "undo")

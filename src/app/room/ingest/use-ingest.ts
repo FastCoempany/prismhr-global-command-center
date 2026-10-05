@@ -137,8 +137,8 @@ export function useIngest({ door, readPdf }: { door: IngestDoor; readPdf: PdfRea
     const r = await roomPaste(...filingRequest(door, accountId, text, opts));
     // Every page derives on request (D15), so the client asks for the fresh
     // read here, once, when the filing took; a refusal wrote nothing to
-    // re-read. The server's own revalidation still runs beside this until
-    // slice 9 retires it.
+    // re-read. The server revalidates nothing (slice 9): this ask is the
+    // only one the filing makes.
     if (r.ok) router.refresh();
     return { ...r, vault: vaultAfterVerdict(r, opts.waiting) };
   };
