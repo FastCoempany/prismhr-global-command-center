@@ -5,6 +5,7 @@
 // first where the browser can decode it. Returns paste text the room's
 // readers understand, or the reason it couldn't.
 
+import { DOCX_WINDOW, TEXT_FLOOR, cut, type Window } from "@/lib/ingest/windows";
 import {
   emlToPaste,
   msgToPaste,
@@ -15,9 +16,11 @@ import {
   vttToPaste,
 } from "@/lib/paste-files";
 
+/** The transcriber's answer: the text, and the window when it cut something
+ *  (D4) so the filing can record it. */
 type PdfReader = (
   fd: FormData,
-) => Promise<{ ok: boolean; text?: string; reason?: string }>;
+) => Promise<{ ok: boolean; text?: string; reason?: string; window?: Window | null }>;
 
 // HEIC/HEIF → JPEG where the browser can decode it (Safari and most Apple
 // devices can; elsewhere the read fails honestly). Oversized images downscale
@@ -52,11 +55,16 @@ type ReadDoor = "drop" | "chute";
 
 const CSV_GOES_TO_THE_CHUTE = "The export goes in the Chute.";
 
+/** The paste text a file becomes, and every window that cut something on
+ *  the way (D4): the document's own cap, or the transcriber's. The windows
+ *  ride to roomPaste so the Filing row and the receipt carry them. */
 export async function readFileToText(
   f: File,
   readPdf: PdfReader,
   opts: { door?: ReadDoor } = {},
-): Promise<{ ok: true; text: string } | { ok: false; reason: string }> {
+): Promise<
+  { ok: true; text: string; windows: Window[] } | { ok: false; reason: string }
+> {
   if (opts.door === "drop" && /\.csv$/i.test(f.name))
     return { ok: false, reason: CSV_GOES_TO_THE_CHUTE };
   const kind = readerFor(f.name);
@@ -67,6 +75,7 @@ export async function readFileToText(
     };
   try {
     let text = "";
+    const windows: Window[] = [];
     if (kind === "eml") text = emlToPaste(await f.text(), f.name);
     else if (kind === "vtt") text = vttToPaste(await f.text(), f.name);
     else if (kind === "text") {
@@ -85,7 +94,9 @@ export async function readFileToText(
           raw: false,
         }) as unknown[][],
       }));
-      text = sheetToPaste(sheets, f.name);
+      const s = sheetToPaste(sheets, f.name);
+      text = s.text;
+      if (s.window) windows.push(s.window);
     } else if (kind === "docx") {
       const mammoth = await import("mammoth");
       const r = await mammoth.extractRawText({ arrayBuffer: await f.arrayBuffer() });
@@ -97,9 +108,12 @@ export async function readFileToText(
       // A transcript is never truncated — the close is at the end, and the
       // 8/27 call runs past 70,000 characters. The .vtt path has never
       // capped; the two captures of one recording behave alike.
-      text = doc
-        ? transcriptDocToPaste(doc, f.name)
-        : `DOCUMENT — ${f.name}\n\n${raw}`.slice(0, 60000);
+      if (doc) text = transcriptDocToPaste(doc, f.name);
+      else {
+        const c = cut("the document", `DOCUMENT — ${f.name}\n\n${raw}`, DOCX_WINDOW);
+        text = c.text;
+        if (c.window) windows.push(c.window);
+      }
     } else if (kind === "image") {
       const img = await normalizeImage(f);
       if (!img)
@@ -116,6 +130,7 @@ export async function readFileToText(
           reason: r.reason ?? "The image read failed. Paste the text instead.",
         };
       text = r.text;
+      if (r.window) windows.push(r.window);
     } else if (kind === "msg") {
       const { default: MsgReader } = await import("@kenjiuno/msgreader");
       const data = new MsgReader(await f.arrayBuffer()).getFileData();
@@ -143,10 +158,11 @@ export async function readFileToText(
           reason: r.reason ?? "The document read failed. Paste the text instead.",
         };
       text = r.text;
+      if (r.window) windows.push(r.window);
     }
-    if (text.length < 20)
+    if (text.length < TEXT_FLOOR)
       return { ok: false, reason: `${f.name} came back empty. Paste the text instead.` };
-    return { ok: true, text };
+    return { ok: true, text, windows };
   } catch {
     return { ok: false, reason: `Reading ${f.name} failed. Paste the text instead.` };
   }

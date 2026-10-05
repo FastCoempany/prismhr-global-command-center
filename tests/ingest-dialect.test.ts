@@ -95,7 +95,7 @@ describe("the head alphabet — every producer head sniffs to its dialect", () =
     const sheet = sheetToPaste(
       [{ name: "Accounts", rows: [["Simploy", "Mexico"]] }],
       "a.xlsx",
-    );
+    ).text;
     assert.deepEqual(sniffHead(sheet), { dialect: "SF", head: HEADS.spreadsheet });
     // The docx reader's head for a document that is not a transcript
     // (src/app/room/read-file.ts).

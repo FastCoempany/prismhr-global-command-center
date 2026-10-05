@@ -107,6 +107,8 @@ export async function filePlaybook(opts: {
   known: Set<string>; // knowledgeKey() of what's already filed
   door: Door; // the filing's door — the fan-out passes it, an approval says "hand"
   at?: Date;
+  /** The filing that taught it (slice 4): the fan-out passes it, an approval has none. */
+  filingId?: string;
 }): Promise<string[]> {
   const ids: string[] = [];
   for (const item of opts.items) {
@@ -128,6 +130,7 @@ export async function filePlaybook(opts: {
         lane: "background",
         source: "playbook",
         at: opts.at,
+        filingId: opts.filingId,
       });
       ids.push(row.id);
     } catch {

@@ -23,6 +23,7 @@ import { githubArchiveGrant } from "./archive-actions";
 import { archiveFileToGitHub, type ArchiveGrant } from "@/lib/github/archive";
 import { probeActivityReport, uploadActivityReport } from "@/lib/activity/upload";
 import { readFileToText } from "./read-file";
+import { filingSentences, type Window } from "@/lib/ingest/windows";
 import { routeCapture, type RouteAccount } from "@/lib/route-capture";
 import { vaultAfterVerdict } from "@/lib/room/drop-plan";
 import {
@@ -114,11 +115,14 @@ export function Chute({
     rung: string,
     force: boolean,
     srcFile?: File,
+    // What the reader cut before the text arrived (D4), so the Filing row
+    // and the receipt carry it; it rides the row to the pick's re-run too.
+    windows?: Window[],
   ) => {
     // The text rides on the row: a mismatch waits for the pick with the text
     // it needs to file, and the ledger keeps it across a reload.
-    patch(key, { state: "filing", account, why, rung, text });
-    const r = await roomPaste(account.id, text, { force, door: "chute" });
+    patch(key, { state: "filing", account, why, rung, text, windows });
+    const r = await roomPaste(account.id, text, { force, door: "chute", windows });
     // The same verdict gate the row's Drop runs: the file vaults only once the
     // filing is accepted; a dispute keeps it on the row for the pick.
     const [vaulting] = vaultAfterVerdict(r, srcFile ? [srcFile] : []).archive;
@@ -134,6 +138,9 @@ export function Chute({
         degraded: r.readFailed,
         noteIds: r.noteIds,
         todoIds: r.todoIds,
+        filingId: r.filingId,
+        windows: r.windows,
+        dupeCheck: r.dupeCheck,
       });
     else if (r.duplicate)
       patch(key, { state: "dupe", reason: r.reason ?? "Already on file." });
@@ -278,8 +285,10 @@ export function Chute({
           best.rung,
           false,
           f,
+          read.windows,
         );
-      else patch(key, { state: "pick", text: read.text, candidates });
+      else
+        patch(key, { state: "pick", text: read.text, candidates, windows: read.windows });
     } catch {
       // Nothing dies silently — a broken filing says so.
       patch(key, { state: "error", reason: "The filing broke. Drop it again." });
@@ -370,6 +379,9 @@ export function Chute({
             : ""}
           {(it.learned ?? 0) > 0 ? ` · ${it.learned} to the playbook` : ""}
           {it.why ? ` · ${it.why}` : ""}
+          {filingSentences(it)
+            .map((s) => ` · ${s}`)
+            .join("")}
           {(it.noteIds?.length ?? 0) > 0 && (
             <button
               type="button"
@@ -493,6 +505,7 @@ export function Chute({
                         "batch",
                         true,
                         it.file,
+                        it.windows,
                       );
                     else if (it.file) void vaultTo(it.key, mate, it.file, true);
                   }}
@@ -517,6 +530,7 @@ export function Chute({
                   "pick",
                   true,
                   it.file,
+                  it.windows,
                 );
               else if (a && it.file)
                 void vaultTo(it.key, { id: a.id, name: a.name }, it.file, true);
