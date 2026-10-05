@@ -14,7 +14,8 @@ import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import { createAccountNoteRow, createTodoRow } from "@/lib/notes/write";
 import { redactMoney } from "@/lib/intel/lexicon";
 import { userDayKey } from "@/lib/tz";
-import { GEMS_NS, parseGemsBody, renderGemsBody } from "@/lib/activity/stores";
+import { fetchGemsNoteFor } from "@/lib/activity/read";
+import { renderGemsBody } from "@/lib/activity/stores";
 import {
   ACT_DRAFT_NS,
   SEAT_NS,
@@ -108,22 +109,20 @@ export async function fileActSend(args: {
 // ── the hand stamp (and its take-back) ──────────────────────────────────────
 // Sets/clears actedDay on the gem itself — one store, the same field the
 // acted sweep writes when the record shows the move (Ted doctrine: the
-// record can re-stamp a taken-back act any time it truly speaks).
+// record can re-stamp a taken-back act any time it truly speaks). The note
+// is found through the second record's own read, folded by canonical id
+// (E17): the gems the face showed may sit under the account's shell id, and
+// the stamp lands on that note, never on an empty twin under the other key.
 
 async function setActed(accountId: string, term: string, day: string) {
-  const prisma = getPrisma();
-  const note = await prisma.accountNote.findFirst({
-    where: { accountId: `${GEMS_NS}${accountId}` },
-    orderBy: { createdAt: "desc" },
-  });
+  const note = await fetchGemsNoteFor(accountId);
   if (!note) return false;
-  const gems = parseGemsBody(note.body);
-  const gem = gems.find((g) => g.term === term);
+  const gem = note.gems.find((g) => g.term === term);
   if (!gem) return false;
   gem.actedDay = day;
-  await prisma.accountNote.update({
+  await getPrisma().accountNote.update({
     where: { id: note.id },
-    data: { body: renderGemsBody(gems) },
+    data: { body: renderGemsBody(note.gems) },
   });
   return true;
 }

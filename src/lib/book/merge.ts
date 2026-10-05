@@ -78,3 +78,22 @@ export function canonicalAccountId(id: string): string {
 export function isAliasedAway(id: string): boolean {
   return Object.hasOwn(ALIASES, (id ?? "").trim());
 }
+
+/** Every stored id that resolves to this account — the canonical id first,
+ *  then each duplicate aliased into it — so a reader that queries by key can
+ *  fold before the query instead of after it (the second record's fold, E17:
+ *  its stores key by the id they were filed under, and a row staged under the
+ *  shell is the account's). A namespaced key expands the same way and keeps
+ *  its namespace; an id with no duplicate comes back alone. */
+export function accountIdsOf(id: string): string[] {
+  const key = (id ?? "").trim();
+  if (!key) return [];
+  const cut = key.lastIndexOf(":");
+  const ns = cut < 0 ? "" : key.slice(0, cut + 1);
+  const tail = cut < 0 ? key : key.slice(cut + 1);
+  const canonical = ALIASES[tail] ?? tail;
+  const dupes = Object.entries(ALIASES)
+    .filter(([, real]) => real === canonical)
+    .map(([dupe]) => dupe);
+  return [canonical, ...dupes].map((t) => ns + t);
+}

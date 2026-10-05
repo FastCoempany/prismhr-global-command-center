@@ -28,6 +28,16 @@ export function isMachineryName(name: string): boolean {
   return MACHINERY_SET.has((name ?? "").trim());
 }
 
+/** Who a staged row shows as its person: the signature first, the Assigned
+ *  column only after. A logged email files under the LOGGER — a CC is enough
+ *  to make that the operator — so reading the column as the author put a
+ *  colleague's words in his mouth (founder, 2026-08-31). A mechanism never
+ *  prints where a name belongs. One rule for the drill and the writer's
+ *  actors column, so the two never name a different person for one row. */
+export function rowPerson(r: { a: string; w?: string }): string {
+  return (r.w ?? "").trim() || (isMachineryName(r.a) ? "" : (r.a ?? "").trim());
+}
+
 export type ActivityLane = "machinery" | "intent" | "support" | "csm" | "human";
 
 type LaneFlags = {

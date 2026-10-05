@@ -5,6 +5,7 @@
 // heavy staging slices are NOT loaded here — they are the evidence store the
 // drill route reads one account at a time (the covenant's import guard).
 
+import { accountIdsOf, canonicalAccountId } from "@/lib/book/merge";
 import { getPrisma } from "@/lib/db";
 import { MINE_RE } from "@/lib/intel/provenance";
 import type { Gem } from "./stores";
@@ -12,6 +13,7 @@ import {
   ACTIVITY_NS,
   GEMS_NS,
   INTENT_NS,
+  MANIFEST_ID,
   SUPPORT_NS,
   STAGE_NS,
   parseGemsBody,
@@ -42,25 +44,60 @@ const empty = (): SecondRecord => ({
   intent: null,
 });
 
-/** One query for the whole book's second record. Stage slices and the
- *  manifest never load here — a face that wants row bodies goes through the
- *  evidence route, one account at a time. */
-export async function fetchSecondRecords(): Promise<Map<string, SecondRecord>> {
+/** A stored row as the fold takes it: the key it was filed under and its body. */
+export type StoredNote = { accountId: string; body: string };
+
+// ── the fold by canonical id (E17) ──────────────────────────────────────────
+// The stores key by the id they were filed under, and one company filed under
+// two ids is one account to every surface (src/lib/book/merge.ts; the Ted
+// doctrine: the two stores merge). So the raw tails fold here, once, before
+// any face reads them: every key that resolves to an account is one of its
+// parts, each namespace is taken from the freshest drop that holds it, and
+// the account's own key is first among equals. This is the one spelling —
+// the wide fetch, the one-account lookup and the narrow reads below all run
+// through it, so no surface folds a second way.
+
+type Part = { own: boolean; sr: SecondRecord };
+
+const dropDayOf = (sr: SecondRecord): string =>
+  sr.rollup?.dropDay ||
+  sr.gems.reduce((m, g) => (g.createdDay > m ? g.createdDay : m), "") ||
+  "";
+
+/** The parts in the order the fold reads them: the freshest drop first, the
+ *  account's own key before a duplicate's on the same day. */
+function orderParts<P extends Part>(parts: readonly P[]): P[] {
+  return [...parts].sort(
+    (a, b) =>
+      dropDayOf(b.sr).localeCompare(dropDayOf(a.sr)) || Number(b.own) - Number(a.own),
+  );
+}
+
+/** The part a namespace is read from: the first, in fold order, that holds
+ *  one. The gems note the hand stamp writes is found the same way, so what
+ *  the operator stamps is what the face showed. */
+export function pickPart<P extends Part>(
+  parts: readonly P[],
+  holds: (sr: SecondRecord) => boolean,
+): P | null {
+  return orderParts(parts).find((p) => holds(p.sr)) ?? null;
+}
+
+function foldParts(parts: readonly Part[]): SecondRecord | null {
+  if (parts.length === 0) return null;
+  if (parts.length === 1) return parts[0].sr;
+  return {
+    rollup: pickPart(parts, (sr) => !!sr.rollup)?.sr.rollup ?? null,
+    gems: pickPart(parts, (sr) => sr.gems.length > 0)?.sr.gems ?? [],
+    support: pickPart(parts, (sr) => !!sr.support)?.sr.support ?? null,
+    intent: pickPart(parts, (sr) => !!sr.intent)?.sr.intent ?? null,
+  };
+}
+
+/** The four small stores, parsed from their rows and keyed by the raw tail —
+ *  newest row per namespace per key, as the rows arrive newest first. */
+function partsByRawId(rows: readonly StoredNote[]): Map<string, SecondRecord> {
   const out = new Map<string, SecondRecord>();
-  const prisma = getPrisma();
-  // The staged slices share the activity: prefix but are ~120KB each — they
-  // must never ride this query (caught 2026-08-21: every page load was
-  // hauling ~15MB of slice bodies just to skip them in the loop).
-  const rows = await prisma.accountNote.findMany({
-    where: {
-      OR: [ACTIVITY_NS, GEMS_NS, SUPPORT_NS, INTENT_NS].map((ns) => ({
-        accountId: { startsWith: ns },
-      })),
-      NOT: [{ accountId: { startsWith: STAGE_NS } }, { accountId: "activity:manifest" }],
-    },
-    orderBy: { createdAt: "desc" },
-    select: { accountId: true, body: true },
-  });
   const at = (id: string): SecondRecord => {
     const cur = out.get(id) ?? empty();
     out.set(id, cur);
@@ -69,7 +106,7 @@ export async function fetchSecondRecords(): Promise<Map<string, SecondRecord>> {
   for (const r of rows) {
     // STAGE_NS ("activity:stage:") shares the ACTIVITY_NS prefix — skip it
     // and the manifest before splitting.
-    if (r.accountId.startsWith(STAGE_NS) || r.accountId === "activity:manifest") continue;
+    if (r.accountId.startsWith(STAGE_NS) || r.accountId === MANIFEST_ID) continue;
     if (r.accountId.startsWith(GEMS_NS)) {
       const sr = at(r.accountId.slice(GEMS_NS.length));
       if (sr.gems.length === 0) sr.gems = parseGemsBody(r.body);
@@ -87,17 +124,172 @@ export async function fetchSecondRecords(): Promise<Map<string, SecondRecord>> {
   return out;
 }
 
-/** One account's staged rows — the evidence store, read one account at a
- *  time (the covenant: only the drill and the prep read bodies). */
-export async function fetchStageRows(accountId: string): Promise<StagedRow[]> {
+/** The whole second record from its stored rows, folded: the map's keys are
+ *  canonical ids, and a drop staged under a shell id reads under the account
+ *  it belongs to. Pure — the fetch below hands it the query's rows. */
+export function foldSecondRecords(
+  rows: readonly StoredNote[],
+): Map<string, SecondRecord> {
+  const raw = partsByRawId(rows);
+  const grouped = new Map<string, Part[]>();
+  for (const [key, sr] of raw) {
+    const canonical = canonicalAccountId(key);
+    const list = grouped.get(canonical) ?? [];
+    list.push({ own: key === canonical, sr });
+    grouped.set(canonical, list);
+  }
+  const out = new Map<string, SecondRecord>();
+  for (const [canonical, parts] of grouped) {
+    const folded = foldParts(parts);
+    if (folded) out.set(canonical, folded);
+  }
+  return out;
+}
+
+/** One account's second record from a map by id, folded by canonical id —
+ *  whether the map is the fetch's (already folded) or one keyed by raw
+ *  tails: every id that resolves to the account is looked up and the parts
+ *  fold here, so a caller never has to know which map it holds. Null when no
+ *  drop touched the account under any id. */
+export function secondRecordFor(
+  byId: ReadonlyMap<string, SecondRecord>,
+  accountId: string,
+): SecondRecord | null {
+  const canonical = canonicalAccountId(accountId);
+  if (!canonical) return null;
+  const parts: Part[] = [];
+  for (const key of accountIdsOf(canonical)) {
+    const sr = byId.get(key);
+    if (sr) parts.push({ own: key === canonical, sr });
+  }
+  return foldParts(parts);
+}
+
+/** The where for the four small stores — never the staged slices, which
+ *  share the activity: prefix but are ~120KB each and must never ride a
+ *  page's query (caught 2026-08-21: every page load was hauling ~15MB of
+ *  slice bodies just to skip them in the loop), and never the manifest. */
+const smallStoresWhere = (ids?: readonly string[]) => ({
+  OR: [ACTIVITY_NS, GEMS_NS, SUPPORT_NS, INTENT_NS].map((ns) =>
+    ids
+      ? { accountId: { in: ids.map((id) => `${ns}${id}`) } }
+      : { accountId: { startsWith: ns } },
+  ),
+  NOT: [{ accountId: { startsWith: STAGE_NS } }, { accountId: MANIFEST_ID }],
+});
+
+/** One query for the whole book's second record, folded by canonical id.
+ *  Stage slices and the manifest never load here — a face that wants row
+ *  bodies goes through the evidence route, one account at a time. */
+export async function fetchSecondRecords(): Promise<Map<string, SecondRecord>> {
   const prisma = getPrisma();
   const rows = await prisma.accountNote.findMany({
-    where: { accountId: `${STAGE_NS}${accountId}` },
+    where: smallStoresWhere(),
     orderBy: { createdAt: "desc" },
-    take: 1,
+    select: { accountId: true, body: true },
   });
-  if (rows.length === 0) return [];
-  return parseStageBody(rows[0].body)?.slice.rows ?? [];
+  return foldSecondRecords(rows);
+}
+
+/** One account's second record, read narrow — the four small stores under
+ *  every id that folds into the account, through the same fold as the wide
+ *  fetch. The evidence route reads it where it used to read one namespace by
+ *  one key (pass 2 C's narrow-read defect). */
+export async function fetchSecondRecordFor(
+  accountId: string,
+): Promise<SecondRecord | null> {
+  const canonical = canonicalAccountId(accountId);
+  if (!canonical) return null;
+  const prisma = getPrisma();
+  const rows = await prisma.accountNote.findMany({
+    where: smallStoresWhere(accountIdsOf(canonical)),
+    orderBy: { createdAt: "desc" },
+    select: { accountId: true, body: true },
+  });
+  return foldSecondRecords(rows).get(canonical) ?? null;
+}
+
+/** The gems note the hand stamp writes to (src/app/accounts/act-actions.ts):
+ *  of the gems notes under every id that folds into the account, the one the
+ *  fold reads — so the operator stamps the gem the face showed, never a
+ *  twin under the other key. Null when no gems note exists under any id. */
+export async function fetchGemsNoteFor(
+  accountId: string,
+): Promise<{ id: string; gems: Gem[] } | null> {
+  const canonical = canonicalAccountId(accountId);
+  if (!canonical) return null;
+  const prisma = getPrisma();
+  // The same four stores the fold reads, so the parts here order exactly as
+  // they did on the face: a part's drop day comes from its rollup when it has
+  // one, and a gems-only read would have dated it from the gems instead.
+  const rows = await prisma.accountNote.findMany({
+    where: smallStoresWhere(accountIdsOf(canonical)),
+    orderBy: { createdAt: "desc" },
+    select: { id: true, accountId: true, body: true },
+  });
+  const byRawId = partsByRawId(rows);
+  // The newest gems note per key, as the rows arrive newest first; replace
+  // forward keeps one per key, and a stray behind it is not read.
+  const gemsNoteByKey = new Map<string, string>();
+  for (const r of rows) {
+    if (!r.accountId.startsWith(GEMS_NS)) continue;
+    const key = r.accountId.slice(GEMS_NS.length);
+    if (!gemsNoteByKey.has(key)) gemsNoteByKey.set(key, r.id);
+  }
+  const parts: (Part & { id: string })[] = [];
+  for (const [key, id] of gemsNoteByKey) {
+    const sr = byRawId.get(key);
+    if (sr) parts.push({ id, own: key === canonical, sr });
+  }
+  const hit = pickPart(parts, (sr) => sr.gems.length > 0);
+  return hit ? { id: hit.id, gems: hit.sr.gems } : null;
+}
+
+/** The staged rows of every slice that folds into one account, as one list:
+ *  the account's own slice first, then a duplicate's, newest day first across
+ *  them, one row per key. A gem's cite names a row key, and the drill has to
+ *  find it whichever id the slice was staged under. Pure. */
+export function foldStageRows(
+  slices: readonly { own: boolean; rows: readonly StagedRow[] }[],
+): StagedRow[] {
+  const ordered = [...slices].sort((a, b) => Number(b.own) - Number(a.own));
+  const seen = new Set<string>();
+  const out: StagedRow[] = [];
+  for (const s of ordered)
+    for (const r of s.rows) {
+      if (seen.has(r.k)) continue;
+      seen.add(r.k);
+      out.push(r);
+    }
+  // Stable: within a day the slice's own order (newest first) holds.
+  return out.sort((a, b) => (a.d < b.d ? 1 : a.d > b.d ? -1 : 0));
+}
+
+/** One account's staged rows — the evidence store, read one account at a
+ *  time (the covenant: only the drill and the prep read bodies) — under every
+ *  id that folds into the account (E17). */
+export async function fetchStageRows(accountId: string): Promise<StagedRow[]> {
+  const canonical = canonicalAccountId(accountId);
+  if (!canonical) return [];
+  const prisma = getPrisma();
+  const rows = await prisma.accountNote.findMany({
+    where: { accountId: { in: accountIdsOf(canonical).map((id) => `${STAGE_NS}${id}`) } },
+    orderBy: { createdAt: "desc" },
+    select: { accountId: true, body: true },
+  });
+  const seen = new Set<string>();
+  const slices: { own: boolean; rows: StagedRow[] }[] = [];
+  for (const r of rows) {
+    // Replace-forward keeps one slice per key; a stray behind it is not read.
+    if (seen.has(r.accountId)) continue;
+    seen.add(r.accountId);
+    const key = r.accountId.slice(STAGE_NS.length);
+    slices.push({
+      own: key === canonical,
+      rows: parseStageBody(r.body)?.slice.rows ?? [],
+    });
+  }
+  return foldStageRows(slices);
 }
 
 const DAY = 86_400_000;

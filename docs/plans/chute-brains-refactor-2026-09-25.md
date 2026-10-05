@@ -458,6 +458,7 @@ Dependency order first, then risk. Every slice is one PR: branch off main, chain
 - **App verification:** drop the weekly export; pull a `gems:` row and see its provenance columns; the Accounts gem column is unchanged.
 - **Rollback:** revert; rows written bare before the slice stay bare and are a known set.
 - **Size:** S.
+- **Amended 2026-10-05 (built):** the stage and manifest bodies are JSON whole (the human head is their first field; the parsers still read the ⟪act⟫ block rows staged earlier carry), because `structured: true` reads string values only when the body parses as JSON and the other four stores are text grammars that redact as text; the update path keeps its replace-forward write and also stamps the provenance columns, so the export's people follow the drop and a row written bare before the slice heals on the next one; and the fold's one spelling is src/lib/activity/read.ts (`foldSecondRecords`, with `secondRecordFor` re-exported from src/lib/record/read.ts), where `fetchStageRows` reads the slices under every id that folds into the account as one list and `fetchGemsNoteFor` finds the note the hand stamp writes to.
 
 ### Slice 18 · The verdict face and the receipt face
 

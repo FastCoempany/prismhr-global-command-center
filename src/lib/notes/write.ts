@@ -3,9 +3,9 @@
 // doctrine :405). Stamps provenance (door/lane/actors/source/recipients) and
 // degrades to the pre-migration column set if the DB hasn't gained the
 // provenance columns yet — so deploys never race the SQL. A create outside
-// this module is a bare row and a defect by the ruling; the one left is
-// src/lib/activity/run.ts (the second record's namespaced notes), which the
-// second record's own slice routes through here.
+// this module is a bare row and a defect by the ruling; the second record's
+// namespaced notes come through here too (src/lib/activity/run.ts, slice 17),
+// and the suite pins that no other create exists.
 //
 // The door is required: every row says which door it came through
 // (src/lib/ingest/doors.ts), in its own column beside `source`, which names

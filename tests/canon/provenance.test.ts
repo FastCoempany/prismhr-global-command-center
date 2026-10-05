@@ -29,6 +29,36 @@ import {
   withMarker,
   withTags,
 } from "../../src/lib/today/route-notes";
+import {
+  foldSecondRecords,
+  foldStageRows,
+  secondRecordFor,
+} from "../../src/lib/activity/read";
+import {
+  replaceSecondRecordNote,
+  slicePeople,
+  type SecondRecordClient,
+} from "../../src/lib/activity/run";
+import {
+  ACTIVITY_NS,
+  GEMS_NS,
+  INTENT_NS,
+  MANIFEST_ID,
+  STAGE_NS,
+  emptyRunState,
+  parseIntentBody,
+  parseManifestBody,
+  parseStageBody,
+  renderGemsBody,
+  renderIntentBody,
+  renderManifestBody,
+  renderRollupBody,
+  renderStageBody,
+  type Gem,
+} from "../../src/lib/activity/stores";
+import type { Rollup } from "../../src/lib/activity/rollup";
+import type { AccountSlice, DropManifest, StagedRow } from "../../src/lib/activity/types";
+import { ALIASES } from "../../src/lib/book/merge";
 
 const root = cwd();
 const rel = (p: string) => relative(root, p).split("\\").join("/");
@@ -140,7 +170,9 @@ describe("every note carries its door in its own column (CLAUDE.md:405, P3)", ()
     assert.match(actions, /const door: Door = opts\?\.door \?\? "drop";/);
     // The fan-out is its own module since slice 6 (src/lib/ingest/fanout.ts).
     const fanoutSrc = read("src/lib/ingest/fanout.ts");
-    const absorb = fanoutSrc.slice(fanoutSrc.indexOf("export async function absorbRead("));
+    const absorb = fanoutSrc.slice(
+      fanoutSrc.indexOf("export async function absorbRead("),
+    );
     const fanout = absorb.slice(0, absorb.indexOf("\n}\n"));
     assert.match(fanout, /door: Door,/, "absorbRead takes the filing's door");
     assert.ok(!/door:\s*"/.test(fanout), "the fan-out never names a door of its own");
@@ -152,11 +184,11 @@ describe("every note carries its door in its own column (CLAUDE.md:405, P3)", ()
   });
 
   test("the only create of an AccountNote is the writer's; the only create of a Todo too", () => {
-    // run.ts is the second record's writer, exempt until slice 17 routes it.
-    const allowed = new Set(["src/lib/notes/write.ts", "src/lib/activity/run.ts"]);
+    // The second record's writer (src/lib/activity/run.ts) comes through the
+    // one writer since slice 17; nothing is exempt.
     const bareNotes = SRC.filter(
       (f) =>
-        !allowed.has(rel(f)) &&
+        rel(f) !== "src/lib/notes/write.ts" &&
         /accountNote\s*\.\s*create\s*\(/.test(readFileSync(f, "utf8")),
     ).map(rel);
     assert.deepEqual(bareNotes, [], "a bare AccountNote row is a defect (P4)");
@@ -290,6 +322,384 @@ describe("a structured body redacts its words and keeps its counts", () => {
       client,
     );
     assert.equal(writes[0].body, '{"q":"[—]"}');
+  });
+});
+
+// ── P4 · the second record's rows carry provenance like the first's ────────
+// (CLAUDE.md, The second record; slice 17 of the Chute brains refactor plan.)
+
+const SHA = "d942e0f2ffffffffd942e0f2ffffffffd942e0f2ffffffffd942e0f2ffffffff";
+
+/** One account's staged slice as the export's columns fill it: a human row
+ *  with a signature read and two addresses, a machinery row, a support row.
+ *  The counts are the ones a money blanker could mistake for figures. */
+const stagedSlice = (over: Partial<AccountSlice> = {}): AccountSlice => ({
+  id: "001TEST00000000AAA",
+  name: "Test Partner",
+  meta: {
+    primaryContact: "Pat Example",
+    primaryContactEmail: "pat@example.com",
+    primaryContactTitle: "",
+    lastContact: "",
+    contactedDate: "",
+    lastEmailSentKey: "",
+    lastEmailReceivedKey: "",
+    gbc: "",
+  },
+  rows: [
+    {
+      k: "a1b2c3d4e5f60718",
+      d: "2026-08-20",
+      s: "Re: the $5,000 PEPM model",
+      a: "Antaeus Coe",
+      w: "Natalie Borland",
+      lane: "human",
+      sub: "Email",
+      rt: "",
+      ct: "",
+      fl: "",
+      c: "she wrote back",
+      n: 1234,
+      p: "natalie.borland@example.com;acoe@prismhr.com",
+    },
+    {
+      k: "0f0e0d0c0b0a0908",
+      d: "2026-08-19",
+      s: "Webinar follow-up",
+      a: "Automated Process",
+      lane: "machinery",
+      sub: "",
+      rt: "",
+      ct: "",
+      fl: "a",
+      p: "natalie.borland@example.com",
+    },
+    {
+      k: "1122334455667788",
+      d: "2026-08-18",
+      s: "Case 00123: W-2 reprint",
+      a: "Greg Williams",
+      lane: "support",
+      sub: "",
+      rt: "",
+      ct: "",
+      fl: "",
+    },
+  ],
+  dropped: 0,
+  tally: {
+    days: { "2026-08-20": { s: 1200, o: 34, c: 5 } },
+    camps: { "$500 gift card webinar": { s: 1200, o: 34, c: 5, lastOpen: "2026-08-20" } },
+    receipts: 2,
+  },
+  laneCounts: { human: 1234, csm: 0, support: 1, intent: 1200, machinery: 1 },
+  laneEmails: { human: 1, csm: 0, support: 1, intent: 1200, machinery: 1 },
+  rowsSum: SHA,
+  tallySum: SHA,
+  ...over,
+});
+
+/** The replace-forward write's client, stubbed: what it finds under the key,
+ *  and every create, update and delete it is asked for. */
+const secondRecordStub = (existing: { id: string }[] = []) => {
+  const creates: AccountNoteData[] = [];
+  const updates: { id: string; data: Partial<AccountNoteData> }[] = [];
+  const deletes: string[] = [];
+  const client: SecondRecordClient = {
+    accountNote: {
+      findMany: async () => existing,
+      update: async ({ where, data }) => {
+        updates.push({ id: where.id, data });
+        return {};
+      },
+      delete: async ({ where }) => {
+        deletes.push(where.id);
+        return {};
+      },
+      create: async ({ data }) => {
+        creates.push(data);
+        return { id: `n${creates.length}` };
+      },
+    },
+  };
+  return { client, creates, updates, deletes };
+};
+
+describe("a second-record row carries lane, actors, recipients, source and door (P4)", () => {
+  test("a fresh key goes through the writer with the activity door and the export's people", async () => {
+    const slice = stagedSlice();
+    const { client, creates, updates } = secondRecordStub();
+    await replaceSecondRecordNote(
+      `${STAGE_NS}${slice.id}`,
+      renderStageBody(slice, SHA),
+      slicePeople(slice),
+      client,
+    );
+    assert.equal(updates.length, 0);
+    assert.equal(creates.length, 1);
+    const row = creates[0];
+    assert.equal(row.accountId, `${STAGE_NS}${slice.id}`);
+    assert.equal(row.kind, "mine");
+    assert.equal(row.door, "activity");
+    assert.equal(row.lane, "background");
+    assert.equal(row.source, "activity");
+    // The signature first, the Assigned column after, never a mechanism: the
+    // machinery row names nobody, and the logger is not the author.
+    assert.equal(row.actors, "Natalie Borland, Greg Williams");
+    // Every address on a logged email, once, our own side included.
+    assert.equal(row.recipients, "natalie.borland@example.com, acoe@prismhr.com");
+  });
+
+  test("a key with a row keeps the row and takes the drop's body and columns; strays fold away", async () => {
+    const slice = stagedSlice();
+    const { client, creates, updates, deletes } = secondRecordStub([
+      { id: "kept" },
+      { id: "stray" },
+    ]);
+    await replaceSecondRecordNote(
+      `${STAGE_NS}${slice.id}`,
+      renderStageBody(slice, SHA),
+      slicePeople(slice),
+      client,
+    );
+    assert.equal(creates.length, 0, "the update path never creates");
+    assert.deepEqual(deletes, ["stray"]);
+    assert.equal(updates.length, 1);
+    assert.equal(updates[0].id, "kept");
+    const data = updates[0].data;
+    assert.equal(data.door, "activity");
+    assert.equal(data.lane, "background");
+    assert.equal(data.source, "activity");
+    assert.equal(data.actors, "Natalie Borland, Greg Williams");
+    assert.equal(data.recipients, "natalie.borland@example.com, acoe@prismhr.com");
+    // The same bytes either path: the writer's structured redaction.
+    assert.equal(data.body, redactStructured(renderStageBody(slice, SHA)));
+  });
+
+  test("the manifest carries the door and no account's people", async () => {
+    const { client, creates } = secondRecordStub();
+    const store = { manifest: manifestOf(), run: emptyRunState(), prior: null };
+    await replaceSecondRecordNote(
+      MANIFEST_ID,
+      renderManifestBody(store),
+      undefined,
+      client,
+    );
+    assert.equal(creates[0].door, "activity");
+    assert.equal(creates[0].actors, "");
+    assert.equal(creates[0].recipients, "");
+  });
+});
+
+const manifestOf = (over: Partial<DropManifest> = {}): DropManifest => ({
+  dropSha: SHA,
+  dropDay: "2026-08-20",
+  fileName: "report.csv",
+  fileBytes: 42,
+  rowCount: 6,
+  textRows: 3,
+  dupes: 1,
+  window: { from: "2026-05-23", to: "2026-08-20" },
+  laneTotals: { human: 1, csm: 0, support: 1, intent: 2, machinery: 1 },
+  receiptRows: 0,
+  accounts: [],
+  unmatched: [],
+  colleagues: [],
+  collisions: [],
+  headerDiff: { missing: [], extra: [] },
+  totalBatches: 101,
+  ...over,
+});
+
+describe("a second-record body keeps its counts and redacts the words (P4 meets the money doctrine)", () => {
+  test("the intent store: the counts stand, the campaign title loses its figure", async () => {
+    const { client, creates } = secondRecordStub();
+    await replaceSecondRecordNote(
+      `${INTENT_NS}X`,
+      renderIntentBody({
+        dropSha: SHA,
+        windows: {
+          w7: { s: 0, o: 0, c: 0 },
+          w30: { s: 1200, o: 34, c: 5 },
+          w60: { s: 1200, o: 34, c: 5 },
+          w90: { s: 1200, o: 34, c: 5 },
+          lastOpen: "2026-08-20",
+          top: [{ campaign: "$500 gift card webinar", o: 34, c: 5, last: "2026-08-20" }],
+        },
+        receipts: 2,
+      }),
+      undefined,
+      client,
+    );
+    const back = parseIntentBody(creates[0].body);
+    assert.ok(back);
+    assert.deepEqual(back.windows.w30, { s: 1200, o: 34, c: 5 });
+    assert.equal(back.receipts, 2);
+    assert.equal(back.windows.top[0].o, 34);
+    assert.ok(!/\$|500/.test(back.windows.top[0].campaign), back.windows.top[0].campaign);
+    assert.match(back.windows.top[0].campaign, /gift card webinar/);
+  });
+
+  test("the stage store is JSON whole: counts, keys and checksums stand, a subject loses its figure", async () => {
+    const slice = stagedSlice();
+    const { client, creates } = secondRecordStub();
+    await replaceSecondRecordNote(
+      `${STAGE_NS}${slice.id}`,
+      renderStageBody(slice, SHA),
+      slicePeople(slice),
+      client,
+    );
+    const body = creates[0].body;
+    assert.ok(
+      body.startsWith("{"),
+      "the body is JSON, so the writer redacts by string value",
+    );
+    JSON.parse(body);
+    const back = parseStageBody(body);
+    assert.ok(back);
+    assert.equal(back.dropSha, SHA);
+    assert.equal(back.slice.laneCounts.human, 1234);
+    assert.equal(back.slice.laneCounts.intent, 1200);
+    assert.equal(back.slice.rows[0].n, 1234);
+    assert.deepEqual(back.slice.tally.days["2026-08-20"], { s: 1200, o: 34, c: 5 });
+    assert.equal(back.slice.rows[0].k, "a1b2c3d4e5f60718");
+    assert.equal(back.slice.rowsSum, SHA);
+    assert.equal(back.slice.tallySum, SHA);
+    assert.ok(!/\d/.test(back.slice.rows[0].s), back.slice.rows[0].s);
+    assert.match(back.slice.rows[0].s, /^Re: the \[—\]/);
+    // The support subject's case number is not a figure.
+    assert.equal(back.slice.rows[2].s, "Case 00123: W-2 reprint");
+  });
+
+  test("the manifest store is JSON whole, so a run of batch indexes is never read as a figure", async () => {
+    // Text redaction eats "99,100" as a comma-grouped number — the one shape
+    // that used to break the manifest's parse past a hundred batches.
+    const run = {
+      ...emptyRunState(),
+      batchesSeen: Array.from({ length: 101 }, (_, i) => i),
+    };
+    const store = { manifest: manifestOf(), run, prior: null };
+    assert.throws(() => JSON.parse(redactMoney(JSON.stringify(store))));
+    const { client, creates } = secondRecordStub();
+    await replaceSecondRecordNote(
+      MANIFEST_ID,
+      renderManifestBody(store),
+      undefined,
+      client,
+    );
+    const back = parseManifestBody(creates[0].body);
+    assert.deepEqual(back, store);
+  });
+
+  test("a row staged before the slice still reads: the legacy marked block parses", () => {
+    const slice = stagedSlice();
+    const legacy = `⌗ STAGE · drop ${SHA.slice(0, 8)} · Test Partner · rows 3 · dropped 0\n⟪act⟫${JSON.stringify({ dropSha: SHA, slice })}⟪/act⟫`;
+    assert.deepEqual(parseStageBody(legacy)?.slice, slice);
+    const store = { manifest: manifestOf(), run: emptyRunState(), prior: null };
+    const legacyManifest = `⌗ MANIFEST · drop x\n⟪act⟫${JSON.stringify(store)}⟪/act⟫`;
+    assert.deepEqual(parseManifestBody(legacyManifest), store);
+  });
+});
+
+// ── E17 · the second record folds by canonical id ──────────────────────────
+
+describe("a drop keyed by a shell id reads under the canonical account (E17)", () => {
+  const [SHELL, REAL] = Object.entries(ALIASES)[0];
+  const gem = (over: Partial<Gem> = {}): Gem => ({
+    dropSha: SHA,
+    verdict: "CONFIRMED",
+    createdDay: "2026-08-20",
+    actedDay: "",
+    who: ["Tom Schenck"],
+    whoKind: "account",
+    term: "TAX SWITCH",
+    what: "Tom asked Greg for a call about switching",
+    whenDay: "2026-08-19",
+    signal: "decision maker moved from silent to asking",
+    act: "Ask Greg Williams about Schenck call.",
+    reason: "Aug 19 reply wants to discuss switching.",
+    cites: [],
+    ...over,
+  });
+  const rollup = (over: Partial<Rollup> = {}): Rollup => ({
+    dropSha: SHA,
+    dropDay: "2026-08-20",
+    window: { from: "2026-05-23", to: "2026-08-20" },
+    lanes: { human: 1, csm: 0, support: 0, intent: 0, machinery: 0 },
+    emails: { human: 1, csm: 0, support: 0, intent: 0, machinery: 0 },
+    intent: { s: 0, o: 0, c: 0 },
+    receipts: 0,
+    lastHuman: null,
+    lastOrgInbound: "",
+    lastTheirs: null,
+    actors: [],
+    threads: [],
+    verdict: "",
+    ...over,
+  });
+
+  test("the fold's keys are canonical ids; the shell's stores read under the account", () => {
+    const folded = foldSecondRecords([
+      { accountId: `${GEMS_NS}${SHELL}`, body: renderGemsBody([gem()]) },
+      { accountId: `${ACTIVITY_NS}${SHELL}`, body: renderRollupBody(rollup()) },
+      // The stage slice and the manifest share the prefix and never fold in.
+      { accountId: `${STAGE_NS}${SHELL}`, body: "{}" },
+      { accountId: MANIFEST_ID, body: "{}" },
+    ]);
+    assert.deepEqual([...folded.keys()], [REAL]);
+    const sr = folded.get(REAL);
+    assert.equal(sr?.gems[0].term, "TAX SWITCH");
+    assert.equal(sr?.rollup?.dropDay, "2026-08-20");
+    // The lookup answers either id with the one record.
+    assert.equal(secondRecordFor(folded, SHELL), sr);
+    assert.equal(secondRecordFor(folded, REAL), sr);
+  });
+
+  test("both ids staged: each namespace from the freshest drop, the account's own key first among equals", () => {
+    const folded = foldSecondRecords([
+      {
+        accountId: `${GEMS_NS}${SHELL}`,
+        body: renderGemsBody([gem({ term: "SHELL", createdDay: "2026-08-27" })]),
+      },
+      { accountId: `${GEMS_NS}${REAL}`, body: renderGemsBody([gem({ term: "REAL" })]) },
+      { accountId: `${ACTIVITY_NS}${REAL}`, body: renderRollupBody(rollup()) },
+    ]);
+    const sr = folded.get(REAL);
+    assert.equal(sr?.gems[0].term, "SHELL", "the fresher drop's gems");
+    assert.equal(sr?.rollup?.dropDay, "2026-08-20", "the only rollup");
+    const tie = foldSecondRecords([
+      { accountId: `${GEMS_NS}${SHELL}`, body: renderGemsBody([gem({ term: "SHELL" })]) },
+      { accountId: `${GEMS_NS}${REAL}`, body: renderGemsBody([gem({ term: "REAL" })]) },
+    ]);
+    assert.equal(tie.get(REAL)?.gems[0].term, "REAL");
+  });
+
+  test("the staged rows of both slices read as one list, the account's own first, one row per key", () => {
+    const row = (k: string, d: string): StagedRow => ({
+      k,
+      d,
+      s: k,
+      a: "Greg Williams",
+      lane: "human",
+      sub: "",
+      rt: "",
+      ct: "",
+      fl: "",
+    });
+    const shared = row("shared", "2026-08-21");
+    const rows = foldStageRows([
+      {
+        own: false,
+        rows: [row("shell-new", "2026-08-27"), { ...shared, s: "the shell's copy" }],
+      },
+      { own: true, rows: [shared, row("real-old", "2026-08-20")] },
+    ]);
+    assert.deepEqual(
+      rows.map((r) => r.k),
+      ["shell-new", "shared", "real-old"],
+    );
+    assert.equal(rows[1].s, "shared", "the account's own slice supplies the shared row");
+    assert.deepEqual(foldStageRows([]), []);
   });
 });
 
