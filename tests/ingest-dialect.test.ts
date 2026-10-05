@@ -179,13 +179,31 @@ describe("the head alphabet — every producer head sniffs to its dialect", () =
  *  paste bases with the model's suffix, and the empty column. */
 const ALL_LITERALS: string[] = [
   ...Object.values(SOURCES),
-  ...["sf", "outlook", "teams", "call", "salesnav", "sheet", "doc", "typed"].map(
-    (s) => `${s}-ai`,
-  ),
+  ...[
+    "sf",
+    "outlook",
+    "teams",
+    "call",
+    "salesnav",
+    "spreadsheet",
+    "doc",
+    "typed",
+  ].map((s) => `${s}-ai`),
   "",
 ];
 
 describe("the source table — every stored literal maps through it", () => {
+  test("a spreadsheet drop's literal is not the room's sheet (amended 2026-10-05)", () => {
+    // sheet-actions.ts:63 stores "sheet" for a line routed off the room's
+    // sheet, a dialect of its own. The plan's first table gave the spreadsheet
+    // drop the same literal; one literal cannot name two dialects, so the drop
+    // files as "spreadsheet" and "sheet" stays the room's.
+    assert.equal(SOURCES.sheet, "sheet");
+    assert.equal(SOURCES.spreadsheet, "spreadsheet");
+    assert.equal(SOURCE_OF("SF", HEADS.spreadsheet, "rules"), "spreadsheet");
+    assert.notEqual(SOURCE_OF("SF", HEADS.spreadsheet, "ai"), `${SOURCES.sheet}-ai`);
+  });
+
   test("SOURCE_OF by dialect, head and how", () => {
     const cases: [Dialect, (typeof HEAD_LIST)[number] | null, string][] = [
       ["OL", HEADS.outlook, "outlook"],
@@ -194,7 +212,7 @@ describe("the source table — every stored literal maps through it", () => {
       ["CT", HEADS.call, "call"],
       ["SN", HEADS.salesnav, "salesnav"],
       ["SF", null, "sf"],
-      ["SF", HEADS.spreadsheet, "sheet"],
+      ["SF", HEADS.spreadsheet, "spreadsheet"],
       ["SF", HEADS.document, "doc"],
       ["SF", HEADS.typed, "typed"],
       // the dialect outranks the head: a rules read that found an email
@@ -290,7 +308,14 @@ describe("the source table — every stored literal maps through it", () => {
     ])
       assert.ok(isPaste(src), src);
     // … and what the three heads that gained a literal need from it.
-    for (const src of ["sheet", "sheet-ai", "doc", "doc-ai", "typed", "typed-ai"])
+    for (const src of [
+      "spreadsheet",
+      "spreadsheet-ai",
+      "doc",
+      "doc-ai",
+      "typed",
+      "typed-ai",
+    ])
       assert.ok(isPaste(src), src);
     for (const src of [
       "call",

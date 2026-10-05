@@ -84,7 +84,7 @@ export const SOURCES = {
   call: "call",
   salesnav: "salesnav",
   sf: "sf",
-  sheet: "sheet",
+  spreadsheet: "spreadsheet",
   doc: "doc",
   typed: "typed",
   // the other writers' fixed literals
@@ -104,6 +104,7 @@ export const SOURCES = {
   done: "done",
   followup: "followup",
   disposition: "disposition",
+  sheet: "sheet", // the room's routed line (sheet-actions.ts), never a spreadsheet
   pipeline: "pipeline",
   mailTemplate: "mail-template",
 } as const;
@@ -128,7 +129,7 @@ export function SOURCE_OF(dialect: Dialect, head: Head | null, how: string): str
           : dialect === "SN"
             ? SOURCES.salesnav
             : head === HEADS.spreadsheet
-              ? SOURCES.sheet
+              ? SOURCES.spreadsheet
               : head === HEADS.document
                 ? SOURCES.doc
                 : head === HEADS.typed
@@ -163,7 +164,7 @@ const PASTE_BASES: ReadonlySet<string> = new Set<string>([
   SOURCES.sf,
   SOURCES.outlook,
   SOURCES.teams,
-  SOURCES.sheet,
+  SOURCES.spreadsheet,
   SOURCES.doc,
   SOURCES.typed,
   SOURCES.transcript,
