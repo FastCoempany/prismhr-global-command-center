@@ -1,6 +1,7 @@
 ---
 title: Chute Brains Refactor Plan
-status: Draft
+status: Approved
+approved: Founder, 2026-10-05, by answering the sixteen questions of section 7 in chat
 owner: Founder
 related_docs:
   - docs/architecture/chute-architecture-map.md
@@ -17,7 +18,7 @@ related_docs:
 
 Pass 6, written 2026-09-25 on branch `claude/chute-brains-plan-1c0svk`, cut from main at ab281df (the scaffold merged). Every file:line below was checked on that tree after the scaffold; the pass-1 map's numbers have drifted and are not reused. Ledger cites name the pass and the section (pass 1 §4, pass 2 E, pass 3 C6, pass 4 G3, scaffold E). Every RULING in the ledgers and every dated entry in CLAUDE.md is settled and is treated as law here, with one caveat: the eight rulings the dead-code ledger marks "assumed" were recorded without a per-item answer, and §7 item 16 asks for them. Claims that come from code shape and not from a run are marked [inferred]. This pass writes one document and no code.
 
-Re-cited 2026-10-02 against main 00fe8b2 after pass 5 closed (PR #336).
+Re-cited 2026-10-02 against main 00fe8b2 after pass 5 closed (PR #336). Approved 2026-10-05: the founder answered every question in §7; the answers are written into §2, §4 and §5 below and into CLAUDE.md the same day, and each §7 item carries its answer.
 
 ## 1. Where we are
 
@@ -31,7 +32,7 @@ The ingest path is one server pipeline with two client doors and a third intake 
 
 **What the rulings changed and the code does not yet do.** The scaffold pinned 34 GOVERN rulings and 20 STANDS rulings where a pure seam existed, scaffold A. Pass 5 closed what needed no new seam: every page signs in; the Board's actions left the retired surface for src/app/accounts/board-actions.ts; src/lib/activity/lint.ts carries the seven devices; `fingerprintBody` at src/lib/paste-files.ts:83-95 normalizes the Sent, To and Cc lines so the .eml and .msg twin dedupes, which is D16; `editOutcome` at src/lib/scratch.ts:46 keeps a click-away edit, which is D24; and the followups, misfile-guard and vault suites now pin behavior on src/lib/room/paste.ts and drop-plan.ts instead of source text. What waits here: the roster ships to the browser against D13, CLAUDE.md:303; the vault's token reaches the browser against D8, :307, as the comment at chute.tsx:145-151 says itself; the transcriber asks for OUTLOOK or TEAMS heads only at actions.ts:1707 against D3; no note carries its door against P3, :405, and prisma/schema.prisma:1092-1110 has no such column; run.ts:192 and :210 write bare rows against P4; `refresh()` names three paths at actions.ts:67-71 with 24 callers against D15; the guard still gives two verdicts against D9; their commitments are dropped at :489 against D10; the pick re-reads against D5; the archive and no-entries notes cut the text against D4; D14, D17, D18, D19, D29 and P2 have no code behind them. Scaffold E lists the STANDS rulings the code does not follow: C1, C2, C4 and C5 on the Sendbook's org-wide path, C6, C8's HomeRoom half, C13, C16, C18, C19.
 
-**Why the structured read is the hinge.** Every one of the seven decisions below gets simpler once the model's read is a row instead of a return value. The single account read (decision 2) can stop regex-mining direction and kind from prose it wrote itself, because the read already holds them per entry. The fan-out (decision 5) becomes replayable from a stored read: an undo can take back by filing id instead of a list of ids the browser carried; a fan-out fixed after a bug pass can re-run. The one-verdict rule (D9) and the final pick (D5) need the read to run once and wait, which a held filing row is. The receipt's windows (D4) are facts about the read and belong with it. The intranet's extractor takes the stored read instead of paying for a second one (pass 4's ruling on G6: "a filed note's extractor takes the structured read stored with the note"). D10 says the read's signals file on the note; there is nowhere to file them today. None of that is possible while the read dies at actions.ts:441-451.
+**Why the structured read is the hinge.** Every one of the seven decisions below gets simpler once the model's read is a row instead of a return value. The single account read (decision 2) can stop regex-mining direction and kind from prose it wrote itself, because the read already holds them per entry. The fan-out (decision 5) becomes replayable from a stored read: an undo can take back by filing id instead of a list of ids the browser carried; a fan-out fixed after a bug pass can re-run. The pick re-reads by the founder's answer of 2026-10-05, so no read is held; the Filing row is written when a filing lands. The receipt's windows (D4) are facts about the read and belong with it. The intranet's extractor takes the stored read instead of paying for a second one (pass 4's ruling on G6: "a filed note's extractor takes the structured read stored with the note"). D10 says the read's signals file on the note; there is nowhere to file them today. None of that is possible while the read dies at actions.ts:441-451.
 
 ## 2. Decisions
 
@@ -43,13 +44,13 @@ The ingest path is one server pipeline with two client doors and a third intake 
 
 - A. Store nothing. The entries live on as note rows; the fan-out rows live on unlinked; the signals die. Costs: G3 and G6 stand; D10 has no home; undo keeps carrying id lists through the browser; the pick re-reads; the intranet re-reads.
 - B. Store the read as a namespaced note, `read:<account>` with a JSON body, the way `research:`, `gems:` and `activity:` already do. Costs: the writer's money redaction rewrites comma-grouped numbers inside JSON (scaffold A.3, P4 row); a new namespace has to join `recordRowsWhere` and the D30 exclusion; per-account rows fold by the alias rules and pick up the narrow-read defects of pass 2 C; nothing links a note to its read except a body scan.
-- C. Store the read in its own table, one row per filing, and link every row the filing wrote to it by a column. Costs: a migration (additive), and the founder runs `prisma migrate deploy` (package.json:18) since the session cannot reach the database; one more model in the schema.
+- C. Store the read in its own table, one row per filing, and link every row the filing wrote to it by a column. Costs: a migration (additive), run by the deploy (§7, item 15); one more model in the schema.
 
-**Pick: C.** A table named `Filing`: `id`, `accountId`, `fingerprint`, `door`, `dialect`, `how` (ai, rules, transcript), `status` (held, filed), `read` (Json, the sanitized result, null on a keyless filing), `windows` (Json, every window that cut something as `{what, read, of}`), `dupeCheck` (ran, skipped), `createdAt`, `filedAt`. Unique on `(accountId, fingerprint)`. `AccountNote.filingId` and `Todo.filingId`, nullable and indexed, link what the filing wrote. The intranet's local type `Filing` at src/lib/intranet/extract.ts:91 renames to `TopicFiling` so the generated client's name is free.
+**Pick: C.** A table named `Filing`: `id`, `accountId`, `fingerprint`, `door`, `dialect`, `how` (ai, rules, transcript), `read` (Json, the sanitized result, null on a keyless filing), `windows` (Json, every window that cut something as `{what, read, of}`), `dupeCheck` (ran, skipped), `createdAt`, `filedAt`. Unique on `(accountId, fingerprint)`. `AccountNote.filingId` and `Todo.filingId`, nullable and indexed, link what the filing wrote. The intranet's local type `Filing` at src/lib/intranet/extract.ts:91 renames to `TopicFiling` so the generated client's name is free.
 
-**Reason.** P3 and P4 (CLAUDE.md:405) rule that provenance is columns, and pass 2 C's 47-read sweep shows what namespaced notes cost every reader. The G6 ruling names "the structured read stored with the note," which is a column-linked row, not a body scan. D4 (:301) needs the windows kept somewhere the receipt can read them; D5 and D9 need a held read; D10 needs the signals kept. The pass-1 candidate 9 shape, "a read cached by fingerprint," is this table's held row.
+**Reason.** P3 and P4 (CLAUDE.md:405) rule that provenance is columns, and pass 2 C's 47-read sweep shows what namespaced notes cost every reader. The G6 ruling names "the structured read stored with the note," which is a column-linked row, not a body scan. D4 (:301) needs the windows kept somewhere the receipt can read them; D10 needs the signals kept. The founder answered §7 item 13 on 2026-10-05: the read's schema grows in slice 4 with per-entry deal facts (countries, products, headcounts, timing, promises with their hearer and day), so the single read takes the model's facts first and regex-mines only rows with no Filing.
 
-**What would make it wrong.** If the founder wants no schema additions at all, B is the fallback and its JSON goes through the writer with `structured: true` (decision 5) so the redaction reads string values only. If the read's schema is meant to grow into per-entry deal facts (countries, products, headcounts) so the surfaces stop regex-mining, that growth changes what the model is asked and is deferred (§7, item 13); this decision stores what the model returns today.
+**What would make it wrong.** If the founder wants no schema additions at all, B is the fallback and its JSON goes through the writer with `structured: true` (decision 5) so the redaction reads string values only. If the grown schema's facts disagree with the regex on the existing fixtures, the parity test in slice 10 decides which one the surfaces show, and the regex stays the fallback for every row filed before the Filing table.
 
 **The pastehash marker stays.** The `pastehash:` AccountDisposition marker (actions.ts:115-137, :201-225) remains the duplicate key in this plan; the Filing row carries the same fingerprint, so moving the check onto the table's unique constraint is one later slice with a backfill (§7, item 2). The canon's letter at CLAUDE.md:294-295 names the marker, and tests/ingest-defects.test.ts:118-124 pins that cross-out never clears it.
 
@@ -125,12 +126,12 @@ The note head `${glyph} ${dialect} ${when} — ${subject} · ${actors}` at actio
 **Pick: B.** The hooks live in `src/app/room/ingest/`. The server contract:
 
 - `routeText(head, text)` server action (src/app/room/route-actions.ts): the roster never ships to the browser (D13, CLAUDE.md:303). The roster is `routingRoster()` (src/lib/book/roster.ts:20-45) joined with the record's actors and recipients per account (C2, :297), built per request from the AccountNote columns.
-- `roomPaste(accountId, text, { force, door, filename })`: `door` is required and stamps every row (P3); the result carries `filingId`, `windows`, `dupeCheck`, and one verdict with both grounds when disputed (D9).
-- `roomPasteHeld(filingId, accountId)`: the pick files a held read under the picked account without a second read and without a re-judge; the duplicate check still runs (D5, :303).
-- `vaultFile(accountId, formData)`: the server uploads (D8, :307); `githubArchiveGrant` retires and no token leaves the server.
+- `roomPaste(accountId, text, { force, door, filename })`: `door` is required and stamps every row (P3); the result carries `filingId`, `windows`, `dupeCheck`, and a verdict at whichever rung disputes it, each verdict with a reason of nine words or fewer. The text rung's reason is built from the rung's own evidence ("Names Regis staff, not Simploy."). The read rung's reason comes from a model call, `verdictReason` in src/lib/ingest/verdict-reason.ts on an Opus slot with web search like deep-research.ts:227, fed the capture's head and first 2,000 characters, the bound account's page data (name, site, contacts, countries, the record's people) and the claimed account's, answering whether the file is the same company; when it says the same company, the read rung withdraws and the filing proceeds. This is the founder's answer of 2026-10-05 to §7 item 3, which supersedes D9's one-verdict rule.
+- The pick re-runs `roomPaste` with `force` and the read runs again, to be sure (§7 item 4); no read is held, and the pick never re-judges (D5, :303).
+- `vaultFile(accountId, formData)` and `vaultChunk(accountId, filename, index, total, formData)`: the server uploads (D8, :307); a file above the server's request cap arrives in pieces of at most 4 MB that stage in a `VaultChunk` table until the last one lands, then the server assembles the file, pushes it to GitHub and deletes the pieces; git is the home for every size (§7 item 5); `githubArchiveGrant` retires and no token leaves the server.
 - `roomPasteUndo(filingId)`: takes back every row with that `filingId` (notes, gaps, playbook lines by tail, todos, the outcome marker) and clears the marker.
 
-A .csv on the Drop is refused with "The export goes in the Chute." (read-file.ts:60-61, shipped in the scaffold) and is not vaulted, because a refusal is not a filing and D6 says vaulting is filing (assumption; §7, item 11). The Intranet mounts the same Chute with no roster prop (D1, :301). A pick never re-judges (D5). Bugs 1 and 2 close inside `useIngest` and `useVerdict`: every readable file in a drop is read, and a disputed auto-route keeps its text for the pick because the held filing keeps it on the server.
+A .csv on the Drop is refused with "The export goes in the Chute." (read-file.ts:60-61, shipped in the scaffold), is vaulted under the row's account, is never filed there, and the receipt says so: "Not filed here. Backed up. Drop the export in the Chute." (§7 item 11). The Intranet mounts the same Chute with no roster prop (D1, :301). A pick never re-judges (D5). Bug 2 closes inside `useIngest`: every readable file in a drop is read. Bug 1 closed with the C20 scaffold, which put the text on the row before the read (chute.tsx:118-120).
 
 **Reason.** Pass 1 candidates 6, 7 and 9 give the hook shapes; the skeptics' finding on candidate 7 is why the faces stay two. The brief keeps the face out of this plan, and B is the only option whose plumbing ships behind today's faces unchanged.
 
@@ -197,22 +198,23 @@ New modules:
 | src/lib/ingest/dialect.ts | HEADS, sniffHead, SOURCE_OF, predicates, GLYPH_RE, LEGACY_HEAD_RE | every reader in §2.3; the transcriber; paste-files |
 | src/lib/ingest/doors.ts | `DOORS` and the `Door` type | notes/write, ingest/pipeline, act-actions, run.ts, intranet |
 | src/lib/ingest/windows.ts | every named window with `{read, of}` (D4): READ_WINDOW_TAPE, READ_WINDOW, TRANSCRIBE_WINDOW, TRANSCRIBE_BYTES, SHEET_WINDOW, DOCX_WINDOW, ENTRY_CAP, TEXT_FLOOR | pipeline, read-file, paste-files, the transcriber |
-| src/lib/ingest/guard.ts | `guardPlan({force, text, claim, bound, roster})`, pure, one verdict with both grounds (D9) | pipeline |
-| src/lib/ingest/filing.ts | `holdFiling`, `fileFiling`, `undoFiling`, `findFiling`, `readOfNote` over the Filing table | pipeline, undo, intranet extractor |
+| src/lib/ingest/guard.ts | `guardPlan({force, text, claim, bound, roster})`, pure, a verdict per rung with its reason | pipeline |
+| src/lib/ingest/verdict-reason.ts | `verdictReason`: the read rung's model call with web search, slot `MODEL_VERDICT` in doctrine.ts | pipeline |
+| src/lib/ingest/filing.ts | `fileFiling`, `undoFiling`, `findFiling`, `readOfNote` over the Filing table | pipeline, undo, intranet extractor |
 | src/lib/ingest/fanout.ts | `absorbRead` moved; their loops; ids returned | pipeline |
-| src/lib/ingest/pipeline.ts | `filePaste(...)`: sniff, window, fingerprint, dupe, read or rules, guard, rows, fan-out; returns `PasteResult` | room/actions.ts (`roomPaste`, `roomPasteHeld`), intranet capture |
+| src/lib/ingest/pipeline.ts | `filePaste(...)`: sniff, window, fingerprint, dupe, read or rules, guard, rows, fan-out; returns `PasteResult` | room/actions.ts (`roomPaste`), intranet capture |
 | src/lib/ingest/route.ts | `routeText` over `routingRoster()` ∪ the record's roster (C2) | route-actions.ts, misfile.ts |
 | src/lib/notes/write.ts | `createAccountNoteRow` with `door` required and `structured`; `createTodoRow` | every writer |
 | src/lib/record/read.ts | `readAccount` and `AccountRead` | room/page, groundwork/page, pipeline/build, sendbook/read, engine, accounts/page, room/actions, intake, ask/live |
 | src/lib/record/docs.ts | rows → `docs` with direction, flags, `effectiveAt` | record/read |
 | src/lib/record/whose-move.ts | `whoseMove` over the read | record/read; engine; day.ts |
 | src/app/room/ingest/use-ingest.ts | handleFiles, swallow, CHUTE_PARALLEL, csv fork by door, `router.refresh` | chute.tsx, room-client.tsx |
-| src/app/room/ingest/use-verdict.ts | mismatch and pick state; `roomPasteHeld` | both doors |
+| src/app/room/ingest/use-verdict.ts | mismatch and pick state; the pick re-runs `roomPaste` with force | both doors |
 | src/app/room/ingest/use-receipts.ts | the ledger over chute-ledger.ts | both doors |
 | src/app/room/ingest/use-undo.ts | `roomPasteUndo(filingId)` | both doors |
 | src/app/room/route-actions.ts | `routeText` server action | use-ingest |
-| src/app/room/vault-actions.ts | `vaultFile` server upload | use-ingest |
-| prisma: Filing; AccountNote.door, AccountNote.filingId; Todo.filingId | the structured read and the links | filing.ts, write.ts |
+| src/app/room/vault-actions.ts | `vaultFile` and `vaultChunk` server upload | use-ingest |
+| prisma: Filing; VaultChunk; AccountNote.door, AccountNote.filingId; Todo.filingId | the structured read, the vault's staging and the links | filing.ts, vault-actions.ts, write.ts |
 
 Retired when their last caller leaves: `corpusFor` and `dealIntelFor` (extract.ts:97-219, :436-443), `refresh()` (actions.ts:67-71), `githubArchiveGrant` (archive-actions.ts:16-31), `dialectOf` and `sourceFor` (src/lib/room/paste.ts:52-63, :67-79, folded into the dialect module), `sniffPaste` and `HEAD_LINE_RE` (paste-files.ts:12-34, :64-65), the engine's `court` (engine.ts:65, :243-272, :424), the inline known-sets, the six direct `prisma.todo.create` sites, the two bare `accountNote.create` sites in run.ts and the one in draft-actions.ts. `readFreeVerdict` (paste.ts:23-48) and the drop-plan helpers (drop-plan.ts:18-26, :39-46) are kept and composed, not retired: `guardPlan` calls the first and `useIngest` the second.
 
@@ -223,8 +225,8 @@ paste-files (producers, fingerprint)          dialect ──► provenance · me
 read-file (browser) ──► use-ingest ──► route-actions ──► ingest/route ◄── roster ∪ record columns
                             │
                             └──► roomPaste (thin door) ──► ingest/pipeline
-                                                              ├── windows · fingerprint · filing (held/filed)
-                                                              ├── guard (one verdict) · ai-clean | rules-read
+                                                              ├── windows · fingerprint · filing
+                                                              ├── guard (a verdict per rung, each with a reason) · verdict-reason · ai-clean | rules-read
                                                               ├── notes/write (door, filingId, structured)
                                                               └── fanout (todos, gaps, playbook, outcome, their loops)
                                                                        │
@@ -260,10 +262,11 @@ Dependency order first, then risk. Every slice is one PR: branch off main, chain
 ### Slice 2 · One Chicago day
 
 - **Files changed:** src/lib/tz.ts gains `chicagoDay(iso | Date)` beside `userDayKey`; the private copies at src/lib/room/loss.ts:41, sheet-view.ts:130, owed.ts:38, src/lib/scratch.ts:59-60, src/lib/intel/rules-read.ts:21, src/lib/intranet/ledger.ts:99 and src/app/room/chute-ledger.ts:85 import it.
-- **Unchanged:** `dayStamp` at src/lib/today/build.ts:383 and `morningDoneKey`, which wait on the clock ruling pass 3 E flagged (tests/today.test.ts:591-602 pins UTC; §7, item 9).
+- **Files changed, continued:** `morningDoneKey` at src/lib/today/build.ts reads the Chicago day (§7 item 9, answered yes); tests/today.test.ts:591-602's UTC pins are rewritten to Chicago.
+- **Unchanged:** `dayStamp` where it feeds week stamps.
 - **Must stay green:** today, room-bind ("Chicago move-done key"), brief, closer ("the wall chip carries the promise"), scratch is hand-run, canon/chute ("the ledger is per Chicago day"), canon/closer-rule.
 - **Tests added:** tests/tz.test.ts: the seven call sites' inputs give the same key at 19:30 and 00:30 Chicago either side of midnight.
-- **Decrees it could break:** the closer rule's "All days are Chicago days" (CLAUDE.md:421) is what the fold serves; the UTC pin at today.test.ts:591-602 is untouched.
+- **Decrees it could break:** the closer rule's "All days are Chicago days" (CLAUDE.md:421) is what the fold and the morning key deliver.
 - **App verification:** the Scratchpaper's TODAY kicker and the Chute ledger's day agree at 7 PM Chicago.
 - **Rollback:** revert.
 - **Size:** S.
@@ -277,29 +280,29 @@ Dependency order first, then risk. Every slice is one PR: branch off main, chain
 - **Decrees it could break:** the money doctrine (CLAUDE.md:582-583) is held by canon/ted-doctrine's redaction tests and the new structured-body test; P3 (:405) is what the slice delivers; the Spring's "tags survive verbatim" (:377-378) by the codec round-trip test.
 - **App verification:** run the migration; file a paste on the Drop and see `door = drop` on the new rows in the database; open a todo from it and edit the line, tags intact.
 - **Rollback:** revert the squash; the column stays and is harmless (default ""), or the down migration drops it.
-- **Migration:** the founder runs `npm run db:migrate:deploy` against Supabase before the PR merges, or the build script gains `prisma migrate deploy` (§7, item 15).
+- **Migration:** package.json:8's build script becomes `prisma generate && prisma migrate deploy && next build`, so the deploy runs every migration (§7, item 15). Preview deployments share the database, so a preview runs it too; every migration in this plan is additive, so that is safe.
 - **Size:** M.
 
 ### Slice 4 · The Filing table and the stored read
 
-- **Files changed:** prisma/schema.prisma adds `Filing` (§2.1), `AccountNote.filingId String?` with an index, `Todo.filingId String?` with an index, and a migration; src/lib/intranet/extract.ts:91 renames `Filing` to `TopicFiling` (with its importers); new src/lib/ingest/filing.ts and src/lib/ingest/windows.ts; src/app/room/actions.ts `roomPaste` writes the Filing row before the notes, stamps `filingId` on every row and todo the filing writes, stores the sanitized read, records every window that cut something (:179-184 and the transcriber's :1725) and the duplicate check's outcome (:223-225) on the row, returns `filingId`, `windows` and `dupeCheck`; the archive note (:331-357) and the no-entries note (:364-391) keep the text whole (D4); the receipts at chute.tsx:357-399 and room-client.tsx:502-525 carry the windows sentence and the D7 sentence.
+- **Files changed:** prisma/schema.prisma adds `Filing` (§2.1), `AccountNote.filingId String?` with an index, `Todo.filingId String?` with an index, and a migration; src/lib/intranet/extract.ts:91 renames `Filing` to `TopicFiling` (with its importers); new src/lib/ingest/filing.ts and src/lib/ingest/windows.ts; src/lib/intel/ai-clean.ts's schema grows per-entry deal facts (countries, products, headcounts, timing, promises with their hearer and day) that `sanitizeAiResult` clamps to the lexicon (§7 item 13; the surfaces keep regex-mining until slice 10 reads them); src/app/room/actions.ts `roomPaste` writes the Filing row before the notes, stamps `filingId` on every row and todo the filing writes, stores the sanitized read, records every window that cut something (:179-184 and the transcriber's :1725) and the duplicate check's outcome (:223-225) on the row, returns `filingId`, `windows` and `dupeCheck`; the archive note (:331-357) and the no-entries note (:364-391) keep the text whole (D4); the receipts at chute.tsx:357-399 and room-client.tsx:502-525 carry the windows sentence and the D7 sentence.
 - **Unchanged:** the pastehash marker and its check; the guard order; the fan-out (slice 6 moves it); the picker.
 - **Must stay green:** ingest-defects ("absorbRead hands back the ids of everything it wrote", "roomPasteUndo takes back notes in every namespace the filing wrote, and the todos", "both doors hand the todo ids to the undo"); misfile-guard (its pins are behavior on `readFreeVerdict`, `judgeFiling` and drop-plan.ts since pass 5, and the guard order is unchanged here); read-absorption; second-record-faces; vault; canon/chute; canon/ted-doctrine. Source slices to keep true: ingest-defects.test.ts:40-41 slice actions.ts between `export async function roomPaste(` and `async function absorbRead(`, so both names stay in place in this slice.
-- **Tests added:** tests/ingest-filing.test.ts: a filing's read round-trips through the sanitizer unchanged; every row and todo the filing wrote carries its id; the windows list names what was cut of what arrived; a keyless filing stores a null read and `how: rules`; the tape's archive note is the whole text; the no-entries note is the whole text; the receipt sentence reads "Read 60,000 of 212,000 characters." and "The duplicate check didn't run." from the result.
+- **Tests added:** tests/ingest-filing.test.ts: a filing's read round-trips through the sanitizer unchanged; every row and todo the filing wrote carries its id; the windows list names what was cut of what arrived; a keyless filing stores a null read and `how: rules`; the grown read round-trips and the sanitizer drops a country the lexicon does not know; the tape's archive note is the whole text; the no-entries note is the whole text; the receipt sentence reads "Read 60,000 of 212,000 characters." and "The duplicate check didn't run." from the result.
 - **Decrees it could break:** D4 (CLAUDE.md:301) and D7 (:303) are what it delivers; the Chute's "same pipeline a paste takes" (:287) holds because `roomPaste` is still the one door; the money doctrine holds because the stored read passes `sanitizeAiResult` (ai-clean.ts:214-218 redacts every string) and the archive note still passes `redactMoney`; the writing canon governs the two new receipt sentences (imperative not needed, they state facts; six words is not a budget for receipts, which are drilldown copy under the click-depth law).
 - **App verification:** drop a 300,000-character transcript on the Chute and read the windows line on the receipt; file a paste twice and see the duplicate refusal still name "Already on file."; pull the database and see the Filing row with its read.
 - **Rollback:** revert; the table and columns stay empty and harmless, or the down migration drops them.
 - **Size:** L.
 
-### Slice 5 · One verdict and the held read
+### Slice 5 · Two verdicts, each with its reason
 
-- **Files changed:** new src/lib/ingest/guard.ts (`guardPlan`, pure); src/app/room/actions.ts `roomPaste` runs the read first when the key is on, then one `guardPlan` over the text and the read's claim, and on a dispute writes the Filing row as `held` with the read and returns one mismatch carrying both grounds, the candidates and `filingId`; new `roomPasteHeld(filingId, accountId)` files the held read under the picked account with no read and no re-judge, the duplicate check still running (D5); keyless sessions get the text rung alone; src/lib/intel/misfile.ts keeps its two rungs as functions `guardPlan` composes.
-- **Unchanged:** the picker and the banner (slice 8 rewires them; until then both doors call `roomPaste` with `force: true` on a pick as today, which now files the held read by fingerprint lookup inside `roomPaste` rather than re-reading); `readFreeVerdict` and `dialectOf` in src/lib/room/paste.ts keep their signatures, since `guardPlan` composes the first.
-- **Must stay green:** misfile-guard's behavior half ("force (file it anyway) is the operator's; the guard returns a verdict, never throws", the people rung, the company rung, boundWhy, the tie); ingest-defects ("the blocking behavior is unchanged: a disputed read holds for the pick", "the keyless early rung stands on the text's own evidence"); route-capture; canon/chute. Behavior pins to rewrite: misfile-guard.test.ts:158-198 ("the evidence rung runs BEFORE the read spends a cent", "the guard runs before anything files or fans out") pin the read-free rung as a separate refusal before the model; D9 is ruled, so they become "one verdict, both grounds, before anything shows" and "the guard runs before any row is written", with the keyless case still refusing on the text alone.
-- **Tests added:** tests/ingest-guard.test.ts: a rival account above the floor and a claim that fails `accountMatches` produce one verdict with two grounds; a keyless filing produces the text rung alone; a held row filed by the pick writes no second read (the model client is a counter in the test); the pick against a duplicate under the picked account is refused; a held row older than its Chicago day is swept.
-- **Decrees it could break:** "Nothing files blind" (CLAUDE.md:290-291) holds because a dispute still waits; D5 and D9 (:303) are what it delivers; the pass-4 duplicated-read count falls by the forced re-reads it counted.
-- **App verification:** drop a thread that names another PEO on a bound row; see one banner with both grounds; pick; confirm in the database that one Filing row exists, `held` then `filed`, and the model was called once (the health latch's counter in the logs).
-- **Rollback:** revert; held rows, if any, are swept by the next day's read.
+- **Files changed:** new src/lib/ingest/guard.ts (`guardPlan`, pure, composing `readFreeVerdict` and `judgeFiling`): the text rung before the read returns a mismatch whose `reason` is nine words or fewer, built from the rung's why; the read rung after the read returns a mismatch only when the read's claim fails `accountMatches` or a rival outranks the bound row, and its `reason` is the model's. New src/lib/ingest/verdict-reason.ts (`verdictReason`, slot `MODEL_VERDICT` in src/lib/intranet/doctrine.ts, Opus, `web_search` as at src/lib/intel/deep-research.ts:227): fed the capture's head and first 2,000 characters, the bound account's page data and the claimed or rival account's, it answers `{ sameCompany, reason }`; when `sameCompany` is true the read rung withdraws and the filing proceeds, and when the call fails the read rung's reason falls back to the rule's why. src/app/room/actions.ts `roomPaste` returns each verdict as it arises; the pick re-runs `roomPaste` with `force`, the read runs again (§7 item 4), the duplicate check still runs, and nothing re-judges (D5); keyless sessions get the text rung alone. The receipt sentence is the reason itself.
+- **Unchanged:** the picker and the banner (slice 8 rewires them; both doors call `roomPaste` with `force: true` on a pick as today); `readFreeVerdict` and `dialectOf` in src/lib/room/paste.ts keep their signatures, since `guardPlan` composes the first; the order the text rung runs in, before the read.
+- **Must stay green:** misfile-guard's behavior half ("force (file it anyway) is the operator's; the guard returns a verdict, never throws", the people rung, the company rung, boundWhy, the tie); ingest-defects ("the blocking behavior is unchanged: a disputed read holds for the pick", "the keyless early rung stands on the text's own evidence"); route-capture; canon/chute; misfile-guard.test.ts:158-198 ("the evidence rung runs BEFORE the read spends a cent", "the guard runs before anything files or fans out") stay as they are, since the text rung still refuses before the model and the founder's answer keeps both rungs.
+- **Tests added:** tests/ingest-guard.test.ts: the text rung's reason is nine words or fewer and names the rung's evidence; the read rung's reason is the stubbed model's and nine words or fewer; a stubbed `sameCompany: true` withdraws the read rung; a failed model call falls back to the rule's why; a keyless filing produces the text rung alone; the pick re-runs the read (the model client is a counter in the test and reads 2); the pick against a duplicate under the picked account is refused; the two reasons pass the writing canon's lint (no hedge, no em-dash aside).
+- **Decrees it could break:** "Nothing files blind" (CLAUDE.md:290-291) holds because a dispute still waits; D5 (:303) holds because the pick never re-judges; D9 as amended 2026-10-05 (:303) is what it delivers; "Opus or better" (:592-595) holds because `MODEL_VERDICT` is a roster slot; the writing canon (:42-70) governs the two reasons.
+- **App verification:** drop a thread that names another PEO on a bound row; see the first warning at once with its reason, then the second after the read with the model's reason; pick; confirm the read ran again in the logs and one Filing row exists.
+- **Rollback:** revert.
 - **Size:** L.
 
 ### Slice 6 · The fan-out module
@@ -315,24 +318,24 @@ Dependency order first, then risk. Every slice is one PR: branch off main, chain
 
 ### Slice 7 · Routing and the vault on the server
 
-- **Files changed:** new src/lib/ingest/route.ts (`routeText` over `routingRoster()` joined with a per-account roster read from the AccountNote `actors` and `recipients` columns, memoized per request); new src/app/room/route-actions.ts; new src/app/room/vault-actions.ts (`vaultFile(accountId, formData)` calling `archiveFileToGitHub` server-side with the token from env); src/lib/github/archive.ts loses the grant type; src/app/room/archive-actions.ts retires; chute.tsx:152-190 and room-client.tsx:565-588 call `vaultFile`; chute.tsx:48-54 drops the `roster` prop and :266-287 calls `routeText`; room/page.tsx:815 and intranet/page.tsx:120 stop passing the roster; src/lib/intel/misfile.ts:75-85 takes the joined roster.
+- **Files changed:** new src/lib/ingest/route.ts (`routeText` over `routingRoster()` joined with a per-account roster read from the AccountNote `actors` and `recipients` columns, memoized per request); new src/app/room/route-actions.ts; new src/app/room/vault-actions.ts (`vaultFile(accountId, formData)` calling `archiveFileToGitHub` server-side with the token from env, and `vaultChunk(accountId, filename, index, total, formData)` staging pieces of at most 4 MB in a new `VaultChunk` table, additive migration, until the last piece lands, when the server assembles the file, calls `archiveFileToGitHub` and deletes the pieces; `useIngest` cuts any file above 4 MB into pieces); src/lib/github/archive.ts loses the grant type; src/app/room/archive-actions.ts retires; chute.tsx:152-190 and room-client.tsx:565-588 call `vaultFile`; chute.tsx:48-54 drops the `roster` prop and :266-287 calls `routeText`; room/page.tsx:815 and intranet/page.tsx:120 stop passing the roster; src/lib/intel/misfile.ts:75-85 takes the joined roster.
 - **Unchanged:** `routeCapture` itself (pure, src/lib/route-capture.ts); the rungs and their scores; the vault's path and collision rule (archive.ts:118-150).
 - **Must stay green:** route-capture (all); canon/chute ("routingRoster() carries emails, domains, people and aka for every account", "the people rung routes a capture that only names a known person"); misfile-guard's behavior half; second-record-faces ("the chute reconciles stored second-record receipts against the live run", :932-960, a behavior pin on chute-ledger.ts that the roster change never touches). Pins to rewrite: vault.test.ts:205 mounts `<Chute roster canWrite>` and becomes the propless mount; vault.test.ts:146 (the serialized result never carries the env token) stays and gains `vaultFile`'s return as a second subject; ingest-defects.test.ts:189-192 (`void archiveFiles(unreadable)` / `(waiting)`, `readDroppedFile(f, [f])`) still hold here because the call names survive until slice 8.
-- **Tests added:** tests/ingest-route.test.ts: an address the book lacks and the record holds routes by the email rung; a person the record names routes by the people rung; the joined roster is built from the columns and not from bodies; after the filing that taught an address is undone, the address routes nowhere (by construction: the rows are gone); no client module imports roster.ts (a source scan); no server action returns a token (a scan of archive-actions' absence and vault-actions' return type).
-- **Decrees it could break:** D13 and C2 (CLAUDE.md:297, :303) and D8 (:307) are what it delivers; "pure rules, no API needed" (:286-287) holds because `routeText` calls no model; the vault's size lane (archive.ts:14, 25 MB) meets the platform's request cap for server functions, which is below it [inferred from Vercel's published limits]: files above the cap are §7, item 5.
+- **Tests added:** tests/ingest-route.test.ts: an address the book lacks and the record holds routes by the email rung; a person the record names routes by the people rung; the joined roster is built from the columns and not from bodies; after the filing that taught an address is undone, the address routes nowhere (by construction: the rows are gone); no client module imports roster.ts (a source scan); no server action returns a token (a scan of archive-actions' absence and vault-actions' return type); a 10 MB file arrives in three pieces and lands as one GitHub PUT (a scripted fetch); a missing piece vaults nothing and the receipt says the backup did not finish.
+- **Decrees it could break:** D13 and C2 (CLAUDE.md:297, :303) and D8 (:307) are what it delivers; "pure rules, no API needed" (:286-287) holds because `routeText` calls no model; D8 as amended 2026-10-05 (every size through the server, git the home) is what the pieces deliver; the vault's 25 MB lane and the release lane at archive.ts:118-215 are unchanged on the server side.
 - **App verification:** drop an .eml from an address only the record has seen; see it route without a pick; drop a 3 MB PDF and find it in the vault under the account; check the browser's network log for no GitHub request.
 - **Rollback:** revert; the vault path is unchanged so nothing lands twice.
 - **Size:** M.
 
 ### Slice 8 · The shared door hooks
 
-- **Files changed:** new src/app/room/ingest/use-ingest.ts, use-verdict.ts, use-receipts.ts, use-undo.ts; src/app/room/chute.tsx (`swallow`, `handleFiles`, `fileTo`, `vaultTo`, the picker's handlers at :109-143, :255-316, :465-531) and the Drop in src/app/room/room-client.tsx (`filePaste`, `readDroppedFile`, `handleFiles`, `undoPaste`, the banner's handlers at :488-606, :738-761, :1985-2027) call the hooks; `useIngest` folds in what pass 5 already made pure rather than duplicating it: `splitDrop` and `vaultAfterVerdict` from src/lib/room/drop-plan.ts (the first widened so every readable file in a drop is read, bug 2) and `isSettled` and `reconcileActivityRows` from chute-ledger.ts:211-258 for the receipts; a disputed auto-route keeps its text through the held filing (bug 1, whose text already rides the filing patch at chute.tsx:118-120); the pick calls `roomPasteHeld`; a refused .csv on the Drop is not vaulted (room-client.tsx:549); the read-only bar renders with "Read-only session" where the ⇪ button was (D29, chute.tsx:544); tests/ingest-defects-deferred.test.ts's two pins are re-aimed at behavior (today :29 reads red though the text rides the row, and :40 reads green though `splitDrop` still hands the Drop one file) and join package.json's chain.
+- **Files changed:** new src/app/room/ingest/use-ingest.ts, use-verdict.ts, use-receipts.ts, use-undo.ts; src/app/room/chute.tsx (`swallow`, `handleFiles`, `fileTo`, `vaultTo`, the picker's handlers at :109-143, :255-316, :465-531) and the Drop in src/app/room/room-client.tsx (`filePaste`, `readDroppedFile`, `handleFiles`, `undoPaste`, the banner's handlers at :488-606, :738-761, :1985-2027) call the hooks; `useIngest` folds in what pass 5 already made pure rather than duplicating it: `splitDrop` and `vaultAfterVerdict` from src/lib/room/drop-plan.ts (the first widened so every readable file in a drop is read, bug 2) and `isSettled` and `reconcileActivityRows` from chute-ledger.ts:211-258 for the receipts; bug 1 is already closed, the text rides the filing patch at chute.tsx:118-120; the pick re-runs `roomPaste` with `force`; a refused .csv on the Drop is vaulted under the row's account and never filed there, and its receipt reads "Not filed here. Backed up. Drop the export in the Chute." (room-client.tsx:549; §7 item 11); the read-only bar renders with "Read-only session" where the ⇪ button was (D29, chute.tsx:544); tests/ingest-defects-deferred.test.ts's two pins are re-aimed at behavior (today :29 reads red though the text rides the row, and :40 reads green though `splitDrop` still hands the Drop one file) and join package.json's chain.
 - **Unchanged:** the look of both doors; the ledger codec (chute-ledger.ts); the second-record swallow (`swallowActivity`, chute.tsx:196-253, and the dock) beyond calling the shared reconcile.
 - **Must stay green:** vault, second-record-faces (the reconcile test at :932-960 pins chute-ledger.ts behavior and keeps reading it), ingest-defects, misfile-guard (behavior on drop-plan.ts; `splitDrop`'s widened return keeps "a readable drop archives only after the filing is accepted" and "a disputed drop holds its file with the question" true per file), canon/chute, room-parity (the action names reaching room-client.tsx change to the hooks' names: text pin rewritten), today-register (its small room-client pin). Source pins to rewrite: ingest-defects.test.ts:189-192 (`void archiveFiles(unreadable)` / `(waiting)`, `readDroppedFile(f, [f])`) read the hook instead of room-client.tsx; vault.test.ts:205 mounts the propless Chute.
-- **Tests added:** the two deferred tests, re-aimed, go green and move into tests/ingest-defects.test.ts; tests/ingest-hooks.test.ts on the pure reducers inside the hooks: two readable files on a row both reach the pipeline; a verdict with both grounds renders once; a pick files the held id; a refused file is neither read nor vaulted; the read-only state renders the bar and no input.
+- **Tests added:** the two deferred tests, re-aimed, go green and move into tests/ingest-defects.test.ts; tests/ingest-hooks.test.ts on the pure reducers inside the hooks: two readable files on a row both reach the pipeline; each verdict renders with its reason; a pick re-runs the filing with force; a refused .csv is vaulted and not read, and its receipt names the Chute; the read-only state renders the bar and no input.
 - **Decrees it could break:** "The per-row Drop stays" (CLAUDE.md:291) holds: the Drop keeps its seat and look; "read on the spot" (:283) holds; D11 (three at once) by canon/chute's `runLimited` tests; D29 (:309) is what it delivers; the Spring's "filing anything springs TODAY open" (:364-365) holds because the row's receipt path is the same call.
 - **BLOCKED ON FACE:** the unified verdict rendering (one component in both doors) and any change to the receipt's shape. The hooks ship behind today's two renderings.
-- **App verification:** drop two .eml files on a row and see two receipts; drop a disputed thread on the Chute, reload, pick, and see it filed, not vaulted; open the room in a read-only session and see the bar.
+- **App verification:** drop two .eml files on a row and see two receipts; drop a disputed thread on the Chute, reload, pick, and see it filed, not vaulted; drop the weekly export on a row and see it backed up, not filed, with the receipt pointing at the Chute; open the room in a read-only session and see the bar.
 - **Rollback:** revert.
 - **Size:** L.
 
@@ -364,19 +367,21 @@ Dependency order first, then risk. Every slice is one PR: branch off main, chain
 - **Unchanged:** the org silence-bump at day.ts:382-400 (slice 11b); the queue rules' weights; the Klaxon, which reads `currentBand` from the one band table.
 - **Must stay green:** groundwork, live-motion, canon/groundwork (all fifteen), canon/sendbook, second-record-faces (the silence-bump org test at :457-493 stays until 11b), sendbook is hand-run.
 - **Tests added:** in tests/record-read.test.ts: Groundwork's intel now equals the room's on the same account (the pass 2 B rows 7 and 8 fixtures: a CT send is the last outbound on both; an account-person-to-account-person mail is not inbound on both); an export row with an attributed inbound body excludes for 21 days; an account-level datetime alone does not; the who chip row asks with two names and not with one; a seat on an excluded account reads on the sheet as open.
-- **Decrees it could break:** "The operator's own outbound never excludes" (CLAUDE.md:273-274) by live-motion; C6 (:276) and D19 (:489) are what it delivers; C8 (:521) the HomeRoom half; C18 (:356); the vehicle rule and the caps by canon/groundwork.
+- **Decrees it could break:** "The operator's own outbound never excludes" (CLAUDE.md:273-274) by live-motion; C6 as amended 2026-10-05 (:276) and D19 (:489) are what it delivers; C8 (:521) the HomeRoom half; C18 (:356); the vehicle rule and the caps by canon/groundwork.
 - **App verification:** an account whose reply landed in a colleague's inbox leaves the wing; its seat, if any, shows on the room's TODAY register; the Worked-it chip row asks who only when two names exist.
 - **Rollback:** revert.
 - **Size:** M.
 
-### Slice 11b · The coordination move leaves Groundwork
+### Slice 11b · The coordination move retires
 
-- **Files changed:** src/lib/groundwork/day.ts:382-400's org variant of silence-bump retires; the read's `secondRecord` exposes colleague gems as coordination moves; the HomeRoom row renders them in the seat the face decides.
-- **Must stay green:** canon/groundwork; second-record-faces (its org silence-bump tests are rewritten to the HomeRoom seat).
-- **Tests added:** the coordination move never reaches `buildQueue`'s output; it reaches the room's row.
-- **Decrees it could break:** "Yesterday carries. The room never quietly forgets" (CLAUDE.md:60-62): retiring the Groundwork move before the room shows it would forget a move, so this slice does not ship until the seat exists.
-- **BLOCKED ON FACE:** the colleague coordination move's seat on the HomeRoom row (C16's ruling leaves it to pass 6; §5.5).
-- **Size:** S once unblocked.
+- **Files changed:** src/lib/groundwork/day.ts:382-400, the org variant of silence-bump that stages "Ask Anika what they said.", is deleted; the `answeredOrg` test at :385 stays, because an org-side reply still silences the drumbeat and still excludes (C6's first half); `orgInboundHolder` (src/lib/activity/read.ts:169-175) loses its only caller and goes; room/page.tsx:516-540 stops offering colleague gems to the THEIRS line at all, beyond slice 10's lead filter; tests/second-record-faces.test.ts:457-493's org silence-bump test is rewritten: an org inbound silences the drumbeat and produces no move.
+- **Unchanged:** the exclusion; the drumbeat on the operator's own threads; the Sendbook.
+- **Must stay green:** canon/groundwork (all), live-motion, groundwork, second-record-faces (rewritten test), canon/second-record.
+- **Tests added:** in tests/canon/groundwork.test.ts: an account whose reply landed org-side is excluded and `buildQueue` holds no item for it under any rule.
+- **Decrees it could break:** the founder's answer of 2026-10-05 to §7 item 14 retires the move everywhere; CLAUDE.md:276, :442-443 and :485 are amended the same day to say a colleague's motion produces nothing for the operator to do; "Yesterday carries" (:60-62) is not touched because a retired move is not a forgotten one.
+- **App verification:** an account whose reply went to a colleague shows on no wing and no HomeRoom row as a move; the drumbeat stays silent on it.
+- **Rollback:** revert.
+- **Size:** S. Not blocked; it can run any time after slice 10.
 
 ### Slice 12 · The single read, part 3: the drawer, the asks and intake
 
@@ -429,7 +434,7 @@ Dependency order first, then risk. Every slice is one PR: branch off main, chain
 - **Must stay green:** intranet (hand-run, and the chain's read-absorption pins on MODEL_EXTRACT), canon/chute ("every namespace the app defines is excluded"), canon/standing-decrees ("the roster has slots, and every one is Opus or better").
 - **Tests added:** tests/intranet-capture.test.ts: a capture naming a known address files an AccountNote with `door: intranet`; one naming nothing writes an intranetDoc and no note; the extractor's model client is not called for a doc whose note has a read; the claims it emits from a stored read equal the claims it emitted from the model on the same fixture (parity on the extract suite's fixtures).
 - **Decrees it could break:** P2 (decree ledger D, ruled) is what it delivers; "Opus or better" (CLAUDE.md:592-595) holds because the roster is unchanged; the intranet digest's "staged bodies never enter the brain" (:465-466) holds because the Filing read carries entries the note already carries, sanitized.
-- **BLOCKED ON FACE:** how the Send-it box shows a dispute (§5.8); until then the capture files when routing is sure and stays an intranetDoc when it is not, with a receipt line saying so.
+- **BLOCKED ON FACE:** how the Send-it box shows a dispute (§5.7); until then the capture files when routing is sure and stays an intranetDoc when it is not, with a receipt line saying so.
 - **App verification:** paste a thread into Send-it; see it on the account's row; run the sweep and see no second model read in the logs for that note.
 - **Rollback:** revert.
 - **Size:** M.
@@ -447,35 +452,42 @@ Dependency order first, then risk. Every slice is one PR: branch off main, chain
 
 ### Slice 18 · The verdict face and the receipt face
 
-- **What it is:** one verdict component in both doors showing both grounds and the candidates; the receipt's shape at both doors (windows, door, rung, the undo); the read-only bar's look; their loops' register seat; the coordination move's seat; the Send-it box's dispute. Every mechanism it needs ships in slices 4 to 16.
+- **What it is:** one verdict component in both doors showing both grounds and the candidates; the receipt's shape at both doors (windows, door, rung, the undo); the read-only bar's look; their loops' register seat; the Send-it box's dispute. Every mechanism it needs ships in slices 4 to 16.
 - **BLOCKED ON FACE.** Not ordered here. The mockup triptych for it is the founder's to call (CLAUDE.md:379-383).
 
-Order and count: 19 slices (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11a, 11b, 12, 13, 14, 15, 16, 17, 18). Slices 11b and 18 are BLOCKED ON FACE; slice 8 and slice 16 ship with one part each marked BLOCKED ON FACE and the rest live. Slices 1, 2, 3 and 17 can run in any order among themselves; 4 needs 3; 5 needs 4; 6 needs 3 and 4; 7 needs nothing but is placed before 8 because 8 wires its actions; 8 needs 5, 6 and 7; 9 needs 8; 10 needs 1 and 2; 11a to 15 need 10 in order; 16 needs 4, 7 and 10; 11b and 18 need the face.
+Order and count: 19 slices (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11a, 11b, 12, 13, 14, 15, 16, 17, 18). Slice 18 is BLOCKED ON FACE; slice 8 and slice 16 ship with one part each marked BLOCKED ON FACE and the rest live. Slices 1, 2, 3 and 17 can run in any order among themselves; 4 needs 3; 5 needs 4; 6 needs 3 and 4; 7 needs nothing but is placed before 8 because 8 wires its actions; 8 needs 5, 6 and 7; 9 needs 8; 10 needs 1 and 2; 11a to 15 need 10 in order; 11b needs 10 and nothing else; 16 needs 4, 7 and 10; 18 needs the face.
 
 ## 5. Face questions
 
 Each names today's behavior at the door with its cite, what the plumbing carries after the slices above, and what the mockup has to decide.
 
-1. **The Chute's picker.** Today: a mismatch banner reads "Reads like {claim}. Pick the account." and shows the claim only (chute.tsx:467-472), a batch-mate button (:479-500) and a select (:505-530); every choice files with force. After: the verdict carries both grounds, the candidates with their rungs and whys, and the held filing's id; the pick files without a read. Decide: what a disputed filing looks like on the Chute, and whether it is the same component as the Drop's banner.
-2. **The Drop's banner.** Today: a two-sided banner shows both accounts and their whys (room-client.tsx:1992-1996), "No — it's X's ✓" re-runs the read (:1999-2016), "keep it out ✕" drops the held files (:2017-2025). After: the same verdict object; the force button files the held read; the held files are vaulted or not by one rule. Decide: the banner's shape, and what "keep it out" does with the files.
+1. **The Chute's picker.** Today: a mismatch banner reads "Reads like {claim}. Pick the account." and shows the claim only (chute.tsx:467-472), a batch-mate button (:479-500) and a select (:505-530); every choice files with force. After: the verdict carries both grounds, the candidates with their rungs and whys, and each verdict's reason; the pick re-reads. Decide: what a disputed filing looks like on the Chute, and whether it is the same component as the Drop's banner.
+2. **The Drop's banner.** Today: a two-sided banner shows both accounts and their whys (room-client.tsx:1992-1996), "No — it's X's ✓" re-runs the read (:1999-2016), "keep it out ✕" drops the held files (:2017-2025). After: the same verdict object with its reason; the force button re-runs the read; the held files are vaulted or not by one rule. Decide: the banner's shape, and what "keep it out" does with the files.
 3. **The receipt at both doors.** Today: the Chute's row (chute.tsx:357-399) carries the counts, the degraded line and the undo; the Drop's (room-client.tsx:1565-1614) carries the text, the opened chips and the undo; the ledger keeps waiting rows plus two settled (D12). After: the result carries `filingId`, `door`, `rung`, `windows`, `dupeCheck`, `judged`, `how`. Decide: which of those a receipt shows on arrival and which sit one click down (the click-depth law, CLAUDE.md:427-434), with the windows sentence and the D7 sentence as decreed substance.
 4. **Their loops.** Today: dropped (actions.ts:489). After: Todo rows tagged `owner: them` with the hearer and the promised day; the move line reads them through `owedByThem`; the court reads them through `theirPromise`. Decide: whether their loops sit in the TODAY register with a their-side marker, on a line of their own beside THEIRS, or only in the move line; and how a blown one reads (PROMISED with its date is decreed, CLAUDE.md:419-421).
-5. **The colleague coordination move.** Today: Groundwork's silence-bump org variant fires "Ask Anika what they said" (day.ts:382-400). After: the read exposes it as a coordination move off the wing (C6). Decide: its seat on the HomeRoom row (the C16 ruling leaves this to pass 6; THEIRS is reserved for the account's people).
-6. **The read-only Chute bar.** Today: nothing renders without `canWrite` (chute.tsx:544). After: the bar and its receipts render; "Read-only session" where the ⇪ button was is decreed (D29). Decide: the bar's look in that state.
-7. **The typed note's head.** Today: a rich typed note goes through `filePaste` with no head (room-client.tsx:399-404). After: the pipeline stamps the `TYPED NOTE` producer head and the `typed` source (D14). Decide: whether the paste pane says so before the operator presses "Read & file" (:1972-1980).
-8. **The Intranet's Send-it box.** Today: `intranetCapture` writes intranetDoc rows and never a note (intranet/actions.ts:103-230; intranet-client.tsx:260). After: a capture naming an account files through the pipeline and can be disputed. Decide: whether Send-it becomes the Chute's paste door on that page, or keeps its own receipt and hands a dispute to the mounted Chute.
-9. **The Drop's four buttons.** Today: ⚡ paste pane, ▢, ✸, ⇪ and a file input with no accept filter (room-client.tsx:1857-1920). After: `useIngest` applies the same accept verdict at both doors and refuses a .csv with the decreed sentence. Decide: whether the input filters by accept or lets the refusal speak.
-10. **The BOOKED annotation.** Today: an acceptance sets ↩ REPLIED on the Sendbook line only through the org-wide path, and the first-record path treats it as machinery (src/lib/sendbook/read.ts:132-139). After: the read carries `lastAccepted` and a `machinery` flag per doc, so the Sendbook can mark a booked meeting without calling it a reply. Decide: whether a send answered by a calendar acceptance carries a BOOKED annotation, and how it reads. The C5 ruling left this to pass 6 (decree-ledger.md C row 5).
-11. **The three stamp words.** Today: the wing stamps SEATED with its day, THEIRS with the gem's term, and ENGAGED · NEVER MET (src/lib/groundwork/stamp.ts:45-52). The D27 ruling fixed the rule, no empty label, and left the words to pass 6. Decide: keep these three or better them.
+5. **The read-only Chute bar.** Today: nothing renders without `canWrite` (chute.tsx:544). After: the bar and its receipts render; "Read-only session" where the ⇪ button was is decreed (D29). Decide: the bar's look in that state.
+6. **The typed note's head.** Today: a rich typed note goes through `filePaste` with no head (room-client.tsx:399-404). After: the pipeline stamps the `TYPED NOTE` producer head and the `typed` source (D14). Decide: whether the paste pane says so before the operator presses "Read & file" (:1972-1980).
+7. **The Intranet's Send-it box.** Today: `intranetCapture` writes intranetDoc rows and never a note (intranet/actions.ts:103-230; intranet-client.tsx:260). After: a capture naming an account files through the pipeline and can be disputed. Decide: whether Send-it becomes the Chute's paste door on that page, or keeps its own receipt and hands a dispute to the mounted Chute.
+8. **The Drop's four buttons.** Today: ⚡ paste pane, ▢, ✸, ⇪ and a file input with no accept filter (room-client.tsx:1857-1920). After: `useIngest` applies the same accept verdict at both doors and refuses a .csv with the decreed sentence. Decide: whether the input filters by accept or lets the refusal speak.
+9. **The BOOKED annotation.** Today: an acceptance sets ↩ REPLIED on the Sendbook line only through the org-wide path, and the first-record path treats it as machinery (src/lib/sendbook/read.ts:132-139). After: the read carries `lastAccepted` and a `machinery` flag per doc, so the Sendbook can mark a booked meeting without calling it a reply. Decide: whether a send answered by a calendar acceptance carries a BOOKED annotation, and how it reads. The C5 ruling left this to pass 6 (decree-ledger.md C row 5).
+10. **The three stamp words.** Today: the wing stamps SEATED with its day, THEIRS with the gem's term, and ENGAGED · NEVER MET (src/lib/groundwork/stamp.ts:45-52). The D27 ruling fixed the rule, no empty label, and left the words to pass 6. Decide: keep these three or better them.
+   - Answer: yes.
+   - Answer: yes.
+   - Answer: no. Warn twice. Each warning explains, in nine words or fewer, why it thinks this is a different company than the one it was dropped on. The second reason comes from the AI, which reads the account's page data and the web to answer. See §2.4 and slice 5.
+   - Answer: no. Read it again to be sure. See §2.4 and slice 5.
+   - Answer: git is the home for every file, big ones included. Big files travel through the server in pieces and are glued back together before they land. See §2.4 and slice 7.
+   - Answer: yes.
+   - Answer: yes.
+   - Answer: yes.
+   - Answer: yes. Slice 2 switches `morningDoneKey` to Chicago and rewrites the UTC pins.
+   - Answer: yes.
 
 ## 6. What this plan does not do
 
-- No face work. Slices 11b and 18 and the marked parts of 8 and 16 wait on a mockup and a ship order (CLAUDE.md:379-383).
-- No Prisma drops. The NEEDS THE DB list (pass 4), PeoActivity, `scenario:`, `risk:`, LookIntoStatus.note and SignalSnooze.snoozedUntil are not touched. The only schema changes are additive: Filing, `AccountNote.door`, `AccountNote.filingId`, `Todo.filingId`.
-- No growth of the model's read schema. The read stores what `sanitizeAiResult` returns today; per-entry deal facts are §7, item 13.
+- No face work. Slice 18 and the marked parts of 8 and 16 wait on a mockup and a ship order (CLAUDE.md:379-383).
+- No Prisma drops. The NEEDS THE DB list (pass 4), PeoActivity, `scenario:`, `risk:` and LookIntoStatus.note are not touched; SignalSnooze.snoozedUntil stays for good, because the HomeRoom and Groundwork read it (§7 item 16). The only schema changes are additive: Filing, VaultChunk, `AccountNote.door`, `AccountNote.filingId`, `Todo.filingId`.
 - No move of the pastehash marker onto the Filing table (§7, item 2).
 - No second-record staging (D17), acted-stamp store (D18) or colleague roster (D19's first half). Those are the second record's own plan.
-- No change to `morningDoneKey`'s clock without the ruling pass 3 E flagged (§7, item 9).
 - No `getAppAccess` memo (a KEEP ruling in pass 4; a separate small PR).
 - No C13 (the citation opens in place) and no C19 (the Approach is never a gate). Both are STANDS rulings the code does not follow (scaffold E) and both are outside the Chute's brains (§7, item 10).
 - No SalesNav instruction rewrite (a KEEP ruling; copy only).
@@ -485,7 +497,7 @@ Each names today's behavior at the door with its cite, what the plumbing carries
 
 ## 7. Decisions I need from you
 
-Written plainly. Each says what happens today, then what yes and no mean. Yes is the default every time. The technical form of each lives in §2 and §4.
+Written plainly. Each says what happens today, then what yes and no mean, and carries the founder's answer of 2026-10-05. The technical form of each lives in §2 and §4.
 
 1. **Should the AI's reading of a file get its own storage spot?**
    - Today: when you drop a file, the AI reads it and writes up what it found. The app uses that write-up once and throws it away.
@@ -541,28 +553,34 @@ Written plainly. Each says what happens today, then what yes and no mean. Yes is
     - Today: the app turns it away with "The export goes in the Chute," but still backs it up.
     - Yes: don't back it up, since it was turned away.
     - No: back it up anyway.
+   - Answer: no. Back it up anyway, do not file it there, and show a notice that says it was dropped in the wrong place, will not be filed there, is backed up, and belongs in the Chute. See §2.4 and slice 8.
 
 12. **Should the app keep the AI's hints about each file?**
     - Today: the AI writes a few short hints about each file, like "they named a competitor" or "the decision sits with their CFO." The app asks for them and then throws them away.
     - Yes: keep them in the new storage spot with the rest of the reading.
     - No: add them to the end of the note's text.
+   - Answer: yes.
 
 13. **Should we wait before asking the AI for more?**
     - Today: the app finds countries, products and headcounts by scanning the words in notes. The AI could list them directly instead.
     - Yes: wait until the rest of this plan is done before changing what we ask the AI.
     - No: add it now.
+   - Answer: no. Ask the AI for more now. Slice 4 grows the read with countries, products, headcounts, timing and promises, and slice 10 reads them first. See §2.1.
 
 14. **Should the "ask your colleague" move wait for its new spot?**
     - Today: when a client replies to your colleague, Groundwork tells you "Ask Anika what they said." You ruled that belongs on the HomeRoom. The HomeRoom has no spot designed for it yet.
     - Yes: leave it on Groundwork until the spot is designed.
     - No: move it now onto that account's TODAY list.
+   - Answer: retire "ask your coworker" everywhere; it was an early idea and is not needed. Slice 11b deletes it, and CLAUDE.md:276, :442-443 and :485 are amended.
 
 15. **Will you run the database update yourself?**
     - Today: two steps in this plan add new columns to the database. Someone has to run one command so the live database gets them before those steps go live.
     - Yes: you run the command before each of those two merges.
     - No: the app runs it automatically every time it deploys.
+   - Answer: no. The deploy runs the update and the merge carries it. Slice 3 adds `prisma migrate deploy` to the build script.
 
 16. **Do the eight batch-10 rulings stand?**
     - Today: the last batch of the ruling session was recorded as assumed, with no answer from you on each item (docs/architecture/dead-code-ledger.md, the "assumed:" lines). This plan leans on three of them: the intranet keeps its read and takes the stored one (decision 1 and slice 16), the double builds wait for the single read (decision 2), and getAppAccess stays as it is (section 6). Two removals already on main rest on two more: motions.ts and branches.ts.
     - Yes: they stand as recorded.
     - No: name the ones to strike, and the plan and the two removals get revisited.
+   - Answer: yes, the eight stand, with one amendment: the column SignalSnooze.snoozedUntil stays, because the HomeRoom and Groundwork read it; LookIntoStatus.note goes as ruled. The eight are recorded as confirmed in docs/architecture/dead-code-ledger.md.
