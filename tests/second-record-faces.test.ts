@@ -85,6 +85,7 @@ const rollup = (over: Partial<Rollup>): Rollup => ({
   receipts: 0,
   lastHuman: null,
   lastOrgInbound: "",
+  lastTheirs: null,
   actors: [],
   threads: [],
   verdict: "",

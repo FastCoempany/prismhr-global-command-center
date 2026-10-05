@@ -9,6 +9,11 @@
 // migration's pins at the foot: the drawer's record, the minter's corpus and
 // the live read all read the one read. One wiring test there reads the
 // callers' source; nothing else here reads a source file.
+//
+// Slice 11a: Groundwork reads the account as the room does (pass 2 B rows 7
+// and 8); the exclusion reads the export's attributed inbound and never its
+// datetime (D19); the who chip row asks only between two names (C18); and a
+// seat on an excluded account reads on the HomeRoom's register (C8).
 
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
@@ -16,6 +21,14 @@ import { readFileSync } from "node:fs";
 import { readAccount, secondRecordFor, type RecordNote } from "../src/lib/record/read";
 import { declaredHomeSide, readFromStores } from "../src/lib/record/stores";
 import { whoseMove } from "../src/lib/record/whose-move";
+import { liveMotionIds } from "../src/lib/groundwork/day";
+import { buildRollup } from "../src/lib/activity/rollup";
+import { parseRollupBody, renderRollupBody } from "../src/lib/activity/stores";
+import type { AccountSlice, StagedRow } from "../src/lib/activity/types";
+import { orgInboundKey } from "../src/lib/activity/read";
+import { buildAccountSheet } from "../src/lib/room/sheet-view";
+import { renderSeatBody } from "../src/lib/act/lane";
+import { whoChipNames } from "../src/lib/sendbook/read";
 import { corpusFor, extractDealIntel } from "../src/lib/intel/extract";
 import { digestFor, digestForCardName } from "../src/lib/intel/digest";
 import { lastTouchRead } from "../src/lib/room/touch";
@@ -1246,5 +1259,379 @@ describe('the live read says "no reply has been filed" only when the read\'s las
     assert.ok(
       lines.some((l) => /^Record 8\/22 \(Lesha Cyphers → Antaeus Coe\): /.test(l)),
     );
+  });
+});
+
+// ═══ slice 11a · Groundwork and the exclusion ═══════════════════════════════
+
+// The two rows the derived-fact ledger named (pass 2 B, rows 7 and 8): the
+// old Groundwork corpus dropped the actors column and the roster, so a ☎ CT
+// send read as nothing and a mail between two of their people read as inbound.
+// Both pages now call readAccount with the same assembly — the full rows, the
+// whole touch log, the declared roster — and this is what that assembly says.
+const CHASSIE = [
+  row({
+    id: "ct",
+    body: "☎ CT Sep 20 — Intro call · Antaeus Coe → Chassie Smith\nWalked through the model.",
+    actors: "Antaeus Coe → Chassie Smith",
+    source: "call-ai",
+    createdAt: "2026-09-20T15:00:00Z",
+  }),
+  row({
+    id: "ol",
+    body: "✉ OL Sep 10 — Intro · Antaeus Coe → Chassie Smith\nHere is the overview.",
+    actors: "Antaeus Coe → Chassie Smith",
+    source: "outlook-ai",
+    createdAt: "2026-09-10T15:00:00Z",
+  }),
+];
+const THEIR_THREAD = [
+  row({
+    id: "tj",
+    body: "✉ OL Sep 15 — Re: payroll · Tom Harrison → Javier Ramirez\nCan you pull the Mexico headcount?",
+    actors: "Tom Harrison → Javier Ramirez",
+    recipients: "Javier Ramirez",
+    source: "outlook-ai",
+    createdAt: "2026-09-15T15:00:00Z",
+  }),
+];
+const ROSTER = ["Lesha Cyphers", "Anika Steenstra"];
+
+/** The page's call, as Groundwork and the room both make it. */
+const pageRead = (notes: RecordNote[], now = new Date("2026-09-25T17:00:00Z")) =>
+  readAccount({
+    account: { id: "A1", name: "Test Partner", contacts: [] },
+    notes,
+    touches: [],
+    todos: [],
+    dispositions: new Map(),
+    homeSide: ROSTER,
+    now,
+  });
+
+describe("Groundwork reads the account as the room does (slice 11a; pass 2 B rows 7 and 8)", () => {
+  test("row 7: the ☎ CT send with its actors column is the last outbound on both", () => {
+    const groundwork = pageRead(CHASSIE);
+    const room = pageRead(CHASSIE);
+    assert.deepEqual(groundwork.intel, room.intel);
+    assert.equal(groundwork.intel.lastOutbound, "2026-09-20T15:00:00Z");
+    assert.equal(groundwork.intel.lastInbound, "");
+  });
+
+  test("row 8: a mail between two of their people is not inbound on both", () => {
+    const groundwork = pageRead(THEIR_THREAD);
+    const room = pageRead(THEIR_THREAD);
+    assert.deepEqual(groundwork.intel, room.intel);
+    assert.equal(groundwork.intel.lastInbound, "");
+    assert.equal(groundwork.lastInbound, null);
+    // The same mail to a colleague's inbox IS inbound (C6, amended
+    // 2026-10-05): their reply reached us, whoever caught it.
+    const toColleague = pageRead([
+      row({
+        ...THEIR_THREAD[0],
+        body: "✉ OL Sep 15 — Re: payroll · Tom Harrison → Lesha Cyphers\nCan you pull the Mexico headcount?",
+        actors: "Tom Harrison → Lesha Cyphers",
+        recipients: "Lesha Cyphers",
+      }),
+    ]);
+    assert.equal(toColleague.intel.lastInbound, "2026-09-15T15:00:00Z");
+    assert.equal(toColleague.intel.lastInboundWho, "Tom Harrison");
+    // …and it leaves the queue for 21 days, producing no move anywhere.
+    const ids = liveMotionIds(
+      new Map(),
+      new Map([["A1", toColleague.intel]]),
+      new Date("2026-09-25T17:00:00Z"),
+    );
+    assert.ok(ids.has("A1"));
+  });
+});
+
+// ── the exclusion reads the export's attributed inbound (D19) ───────────────
+
+const stagedRow = (p: Partial<StagedRow>): StagedRow => ({
+  k: p.k ?? "k",
+  d: p.d ?? "2026-08-25",
+  s: p.s ?? "Re: global payroll",
+  a: p.a ?? "Lesha Cyphers",
+  lane: p.lane ?? "human",
+  sub: p.sub ?? "Email",
+  rt: p.rt ?? "Service Provider Task",
+  ct: p.ct ?? "",
+  fl: p.fl ?? "",
+  ...(p.w ? { w: p.w } : {}),
+  ...(p.c ? { c: p.c } : {}),
+  ...(p.p ? { p: p.p } : {}),
+});
+const slice = (rows: StagedRow[], lastEmailReceivedKey: string): AccountSlice => ({
+  id: "A1",
+  name: "Test Partner",
+  meta: {
+    primaryContactEmail: "",
+    primaryContact: "Dana Reyes",
+    primaryContactTitle: "CFO",
+    lastContact: "",
+    contactedDate: "",
+    lastEmailSentKey: "",
+    lastEmailReceivedKey,
+    gbc: "",
+  },
+  rows,
+  dropped: 0,
+  tally: { days: {}, camps: {}, receipts: 0 },
+  laneCounts: { human: rows.length, csm: 0, support: 0, intent: 0, machinery: 0 },
+  laneEmails: { human: rows.length, csm: 0, support: 0, intent: 0, machinery: 0 },
+  rowsSum: "",
+  tallySum: "",
+});
+const rollupOf = (rows: StagedRow[], lastEmailReceivedKey: string) =>
+  buildRollup({
+    slice: slice(rows, lastEmailReceivedKey),
+    dropSha: "d942e0f2aaaaaaaa",
+    dropDay: "2026-09-01",
+    window: { from: "2026-06-01", to: "2026-09-01" },
+    colleagues: new Set(["Lesha Cyphers"]),
+    accountPeople: new Set(["Dana Reyes"]),
+    accountEmails: new Map([["dana.reyes@example.com", "Dana Reyes"]]),
+  });
+const secondOf = (rows: StagedRow[], lastEmailReceivedKey: string) => ({
+  rollup: rollupOf(rows, lastEmailReceivedKey),
+  gems: [],
+  support: null,
+  intent: null,
+});
+const DANA_WROTE = stagedRow({
+  k: "dana",
+  d: "2026-08-25",
+  w: "Dana Reyes",
+  c: "To: lesha.cyphers@prismhr.com\nSubject: Re: global payroll\nBody: Thanks for the intro. Can we talk about Canada next week?\nBest regards,\nDana Reyes",
+});
+
+describe("the exclusion reads the second record's attributed inbound, never its datetime (D19)", () => {
+  test("an export row with an attributed inbound body excludes for 21 days", () => {
+    const second = new Map([["A1", secondOf([DANA_WROTE], "2026-08-25 09:00")]]);
+    assert.equal(second.get("A1")!.rollup.lastTheirs?.who, "Dana Reyes");
+    // A day key reads at noon UTC, as every day key in the second record does.
+    const within = liveMotionIds(
+      new Map(),
+      new Map(),
+      new Date("2026-09-15T11:00:00Z"),
+      second,
+    );
+    assert.ok(within.has("A1"), "inside 21 days: in motion, off the queue");
+    const past = liveMotionIds(
+      new Map(),
+      new Map(),
+      new Date("2026-09-16T17:00:00Z"),
+      second,
+    );
+    assert.equal(past.has("A1"), false, "past 21 days: the exclusion lifts");
+    // The line survives the store's round trip, so a page reads what the run wrote.
+    const parsed = parseRollupBody(renderRollupBody(second.get("A1")!.rollup));
+    assert.deepEqual(parsed?.lastTheirs, {
+      day: "2026-08-25",
+      who: "Dana Reyes",
+      subject: "Re: global payroll",
+    });
+  });
+
+  test("an account-level datetime alone does not", () => {
+    // Last Email Received says yesterday; the rows hold only the operator's
+    // own send, with Dana in the To line. A datetime is not their voice.
+    const ours = stagedRow({
+      k: "ours",
+      d: "2026-09-04",
+      a: "Antaeus Coe",
+      w: "Antaeus Coe",
+      p: "dana.reyes@example.com",
+      c: "To: dana.reyes@example.com\nSubject: Re: global payroll\nBody: Sending the model over.\nBest,\nAntaeus Coe",
+    });
+    const second = new Map([["A1", secondOf([ours], "2026-09-04 09:00")]]);
+    const sr = second.get("A1")!;
+    assert.equal(sr.rollup.lastTheirs, null);
+    assert.equal(
+      sr.rollup.lastHuman?.kind,
+      "account",
+      "the To line names her — not enough",
+    );
+    // The datetime still reads where the drumbeat reads it; it just never excludes.
+    assert.equal(orgInboundKey(sr), "2026-09-04T09:00:00");
+    const ids = liveMotionIds(
+      new Map(),
+      new Map(),
+      new Date("2026-09-05T17:00:00Z"),
+      second,
+    );
+    assert.equal(ids.has("A1"), false);
+    // A rollup written before the line existed reads null and excludes nothing.
+    const old = parseRollupBody(
+      renderRollupBody(sr.rollup)
+        .split("\n")
+        .filter((l) => !l.startsWith("LAST THEIRS"))
+        .join("\n"),
+    );
+    assert.equal(old?.lastTheirs, null);
+  });
+
+  test("a sign-off and a calendar response are not their word", () => {
+    const thanks = stagedRow({
+      k: "thanks",
+      d: "2026-09-04",
+      w: "Dana Reyes",
+      c: "To: lesha.cyphers@prismhr.com\nSubject: Re: global payroll\nBody: Thanks!\nBest regards,\nDana Reyes",
+    });
+    const accepted = stagedRow({
+      k: "accepted",
+      d: "2026-09-04",
+      s: "Accepted: Intro to PrismHR Global",
+      w: "Dana Reyes",
+      c: "To: lesha.cyphers@prismhr.com\nSubject: Accepted: Intro\nBody: Dana Reyes has accepted this meeting.",
+    });
+    const second = new Map([
+      ["A1", secondOf([thanks, accepted, DANA_WROTE], "2026-09-04 09:00")],
+    ]);
+    // The closer and the acceptance are read through to her real word of Aug 25.
+    assert.equal(second.get("A1")!.rollup.lastTheirs?.day, "2026-08-25");
+    const ids = liveMotionIds(
+      new Map(),
+      new Map(),
+      new Date("2026-09-25T17:00:00Z"),
+      second,
+    );
+    assert.equal(ids.has("A1"), false, "Aug 25 is past the window; Sep 4 never counted");
+  });
+});
+
+// ── the who chip row (C18) ──────────────────────────────────────────────────
+
+describe("the who chip row offers the record's people merged with the book's and asks only between two names (C18)", () => {
+  test("one person in the record, the same person in the book: one name, no ask", () => {
+    const names = whoChipNames(
+      [{ name: "Dana M. Reyes" }],
+      [{ first: "Dana", last: "Reyes" }],
+    );
+    assert.deepEqual(names, ["Dana M. Reyes"]);
+    assert.equal(names.length > 1, false);
+  });
+
+  test("the record's person and a second name from the book: two names, the record first, the row asks", () => {
+    const names = whoChipNames(
+      [{ name: "Dana Reyes" }],
+      [
+        { first: "Pat", last: "Example" },
+        { first: "Dana", last: "Reyes" },
+      ],
+    );
+    assert.deepEqual(names, ["Dana Reyes", "Pat Example"]);
+    assert.equal(names.length > 1, true);
+  });
+
+  test("the read's people feed it: who the record names leads the book's roster", () => {
+    const acct = readAccount({
+      account: {
+        id: "A1",
+        name: "Test Partner",
+        contacts: [
+          { first: "Pat", last: "Example", title: "CEO", email: "pat@example.com" },
+          { first: "Dana", last: "Reyes", title: "CFO", email: "dana@example.com" },
+        ],
+      },
+      notes: [
+        row({
+          id: "d1",
+          body: "✉ OL Sep 15 — Re: payroll · Dana Reyes → Antaeus Coe\nCan we talk Monday?",
+          actors: "Dana Reyes → Antaeus Coe",
+          source: "outlook-ai",
+          createdAt: "2026-09-15T15:00:00Z",
+        }),
+      ],
+      touches: [],
+      todos: [],
+      dispositions: new Map(),
+      homeSide: ROSTER,
+      now: NOW,
+    });
+    assert.deepEqual(
+      whoChipNames(acct.people, [
+        { first: "Pat", last: "Example" },
+        { first: "Dana", last: "Reyes" },
+      ]),
+      ["Dana Reyes", "Pat Example"],
+    );
+    // A book that knows no one and a record naming one person: no ask.
+    assert.equal(whoChipNames(acct.people, []).length, 1);
+  });
+});
+
+// ── a seat follows its account onto the register (C8) ───────────────────────
+
+describe("a seat on an excluded account reads on the HomeRoom's sheet as open (C8)", () => {
+  const SEAT = {
+    id: "s1",
+    body: renderSeatBody({ act: "Send the model.", term: "MODEL", day: "2026-09-01" }),
+    createdAt: "2026-09-01T15:00:00Z",
+  };
+  const sheet = (
+    seat: Parameters<typeof buildAccountSheet>[6],
+    opts: {
+      notes?: { body: string; createdAt: string; source?: string; actors?: string }[];
+      dispositions?: Map<string, { reason: string; updatedAt: string }>;
+    } = {},
+  ) =>
+    buildAccountSheet(
+      [],
+      "A1",
+      new Set(),
+      opts.dispositions ?? new Map(),
+      NOW,
+      opts.notes ?? [],
+      seat,
+    );
+
+  test("excluded: the seat is an open line carrying the act, the seat row's own id", () => {
+    const s = sheet({ rows: [SEAT], excluded: true });
+    assert.deepEqual(s.open, [
+      { id: "s1", body: "Send the model.", edit: "Send the model." },
+    ]);
+    assert.equal(s.openMore, 0);
+  });
+
+  test("not excluded: the seat stays on the wing and reads nowhere here", () => {
+    assert.deepEqual(sheet({ rows: [SEAT], excluded: false }).open, []);
+    assert.deepEqual(sheet(null).open, []);
+  });
+
+  test("worked — by today's stamp or by the record's outbound after the seat — it reads nowhere", () => {
+    assert.deepEqual(sheet({ rows: [SEAT], excluded: true, workedToday: true }).open, []);
+    const sent = {
+      body: "✉ OL Sep 3 — Re: the model · Antaeus Coe → Dana Reyes\nAttached.",
+      createdAt: "2026-09-03T15:00:00Z",
+      source: "outlook-ai",
+      actors: "Antaeus Coe → Dana Reyes",
+    };
+    assert.deepEqual(sheet({ rows: [SEAT], excluded: true }, { notes: [sent] }).open, []);
+    // A send BEFORE the seat is not the seat's work.
+    const earlier = { ...sent, createdAt: "2026-08-20T15:00:00Z" };
+    assert.equal(
+      sheet({ rows: [SEAT], excluded: true }, { notes: [earlier] }).open.length,
+      1,
+    );
+  });
+
+  test("taken back with ✕ (hide:note:) it is gone; held with ⏲ it reads HELD for the day", () => {
+    const parked = new Map([
+      ["hide:note:s1", { reason: "", updatedAt: NOW.toISOString() }],
+    ]);
+    assert.deepEqual(
+      sheet({ rows: [SEAT], excluded: true }, { dispositions: parked }).open,
+      [],
+    );
+    const held = new Map([
+      ["row-delay:todo:s1", { reason: "", updatedAt: NOW.toISOString() }],
+    ]);
+    const s = sheet({ rows: [SEAT], excluded: true }, { dispositions: held });
+    assert.deepEqual(s.open, []);
+    assert.deepEqual(s.delayed, [
+      { id: "s1", body: "Send the model.", edit: "Send the model.", when: "HELD" },
+    ]);
   });
 });

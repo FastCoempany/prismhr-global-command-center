@@ -76,7 +76,12 @@ const RESEARCH_STALE_DAYS = 90;
 // enforced from the record 2026-08-14, because the board lags). THEY are
 // engaging when a real inbound landed inside the window, or a meeting, call,
 // or transcript filed fresh. The operator's own outbound never excludes —
-// the drumbeat rules need it.
+// the drumbeat rules need it. The exclusion reads both records (ruled
+// 2026-09-25, C6, amended 2026-10-05): an account person's inbound that landed
+// in a colleague's inbox is a real inbound — on the first record it arrives
+// through the declared roster's inbound test, on the second through the
+// export's attributed row — and it leaves the queue, producing no move for
+// the operator anywhere.
 const MOTION_INBOUND_DAYS = 21;
 const MOTION_MEETING_DAYS = 14;
 
@@ -84,11 +89,29 @@ export function liveMotionIds(
   notesById: Map<string, { body: string; source: string; createdAt: string }[]>,
   intelById: Map<string, Pick<DealIntel, "lastInbound">>,
   now: Date,
+  /** The second record by account id. Only a row with an attributed inbound
+   *  body excludes (the rollup's lastTheirs, built under the machinery and
+   *  closer reads); the account-level Last Email Received is a datetime and
+   *  never does (ruled 2026-09-25, D19). */
+  secondById?: ReadonlyMap<
+    string,
+    { rollup: { lastTheirs: { day: string } | null } | null }
+  >,
 ): Set<string> {
   const out = new Set<string>();
   for (const [id, intel] of intelById) {
     const inAt = Date.parse(intel.lastInbound || "");
     if (!Number.isNaN(inAt) && (now.getTime() - inAt) / DAY <= MOTION_INBOUND_DAYS)
+      out.add(id);
+  }
+  for (const [id, sr] of secondById ?? []) {
+    if (out.has(id)) continue;
+    const day = sr.rollup?.lastTheirs?.day ?? "";
+    if (!day) continue;
+    // A day key is a calendar fact; it reads at noon UTC, as every day key in
+    // the second record does.
+    const at = Date.parse(`${day.slice(0, 10)}T12:00:00Z`);
+    if (!Number.isNaN(at) && (now.getTime() - at) / DAY <= MOTION_INBOUND_DAYS)
       out.add(id);
   }
   for (const [id, notes] of notesById) {

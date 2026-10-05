@@ -28,6 +28,7 @@ const mkRow = (p: Partial<StagedRow>): StagedRow => ({
   rt: p.rt ?? "Service Provider Task",
   ct: p.ct ?? "",
   fl: p.fl ?? "",
+  w: p.w,
   c: p.c,
   p: p.p,
 });
@@ -100,6 +101,99 @@ test("last human motion: the newest genuine person, account name preferred", () 
   assert.equal(r.receipts, 2);
 });
 
+test("their newest word is the attributed row, never the datetime or the operator's send (D19)", () => {
+  // The signature names the writer. Dana's reply, logged by a colleague,
+  // reads as theirs; the operator's send to her — her name in the To line,
+  // so LAST HUMAN says "account" — does not; a colleague's does not; a bare
+  // "Thanks!" and a calendar response pass nothing. Last Email Received is a
+  // datetime and never speaks for any of them.
+  const scaffold = (subject: string, body: string) =>
+    `To: lesha.cyphers@prismhr.com\nSubject: ${subject}\nBody: ${body}`;
+  const dana = mkRow({
+    k: "theirs",
+    d: "2026-08-17",
+    s: "Re: global payroll",
+    a: "Lesha Cyphers",
+    w: "Dana Reyes",
+    c: scaffold(
+      "Re: global payroll",
+      "Thanks for the intro. Can we talk about Canada next week?\nBest regards,\nDana Reyes",
+    ),
+  });
+  const ours = mkRow({
+    k: "ours",
+    d: "2026-08-19",
+    s: "Re: global payroll",
+    a: "Antaeus Coe",
+    w: "Antaeus Coe",
+    p: "dana.reyes@example.com",
+    c: scaffold("Re: global payroll", "Sending the model over.\nBest,\nAntaeus Coe"),
+  });
+  const colleague = mkRow({
+    k: "csm",
+    d: "2026-08-18",
+    s: "Re: renewal",
+    a: "Lesha Cyphers",
+    w: "Lesha Cyphers",
+    lane: "csm",
+    c: scaffold("Re: renewal", "Looping in Antaeus.\nThanks,\nLesha Cyphers"),
+  });
+  const closer = mkRow({
+    k: "closer",
+    d: "2026-08-19",
+    s: "Re: global payroll",
+    a: "Lesha Cyphers",
+    w: "Dana Reyes",
+    c: scaffold("Re: global payroll", "Thanks!\nBest regards,\nDana Reyes"),
+  });
+  const accepted = mkRow({
+    k: "accepted",
+    d: "2026-08-19",
+    s: "Accepted: Intro to PrismHR Global",
+    a: "Lesha Cyphers",
+    w: "Dana Reyes",
+    c: scaffold("Accepted: Intro to PrismHR Global", "Dana Reyes has accepted."),
+  });
+  const ctx2 = {
+    ...ctx,
+    colleagues: new Set(["Lesha Cyphers"]),
+    accountPeople: new Set(["Dana Reyes"]),
+    accountEmails: new Map([["dana.reyes@example.com", "Dana Reyes"]]),
+  };
+  const r = buildRollup({
+    ...ctx2,
+    slice: mkSlice([ours, closer, accepted, colleague, dana]),
+  });
+  // The operator's own send is the last human and names her — and is not hers.
+  assert.equal(r.lastHuman?.kind, "account");
+  assert.equal(r.lastHuman?.day, "2026-08-19");
+  assert.deepEqual(r.lastTheirs, {
+    day: "2026-08-17",
+    who: "Dana Reyes",
+    subject: "Re: global payroll",
+  });
+  assert.equal(r.lastOrgInbound, "2026-08-19 09:02");
+  // Nothing attributed: the datetime stands alone and lastTheirs is null.
+  const none = buildRollup({
+    ...ctx2,
+    slice: mkSlice([ours, closer, accepted, colleague]),
+  });
+  assert.equal(none.lastTheirs, null);
+  assert.equal(none.lastOrgInbound, "2026-08-19 09:02");
+  // An unattributed row — no signature, her address in the To line — is not
+  // their word either: the Ted doctrine's "an unattributed document is never
+  // inbound", on the export.
+  const unsigned = mkRow({
+    k: "unsigned",
+    d: "2026-08-19",
+    s: "Re: global payroll",
+    a: "Automated Process",
+    p: "dana.reyes@example.com",
+    c: scaffold("Re: global payroll", "Can we talk about Canada next week?"),
+  });
+  assert.equal(buildRollup({ ...ctx2, slice: mkSlice([unsigned]) }).lastTheirs, null);
+});
+
 test("notable threads: grouped by normalized subject, account-led ranked in", () => {
   const rows = [
     mkRow({ d: "2026-08-12", s: "Partner Introduction ~ Zayzoon | TrendHR" }),
@@ -123,7 +217,7 @@ test("verdict lines are arithmetic sentences", () => {
   const machineryOnly = buildRollup({
     slice: mkSlice([], {
       laneEmails: { human: 0, csm: 0, support: 0, intent: 0, machinery: 0 },
-  laneCounts: { human: 0, csm: 0, support: 0, intent: 15, machinery: 3 },
+      laneCounts: { human: 0, csm: 0, support: 0, intent: 15, machinery: 3 },
     }),
     ...ctx,
   });
@@ -131,7 +225,7 @@ test("verdict lines are arithmetic sentences", () => {
   const supportOnly = buildRollup({
     slice: mkSlice([mkRow({ lane: "support", s: "Email: PrismHR Case 1: help" })], {
       laneEmails: { human: 0, csm: 0, support: 0, intent: 0, machinery: 0 },
-  laneCounts: { human: 0, csm: 0, support: 9, intent: 0, machinery: 0 },
+      laneCounts: { human: 0, csm: 0, support: 9, intent: 0, machinery: 0 },
       tally: { days: {}, camps: {}, receipts: 0 },
     }),
     ...ctx,
@@ -226,9 +320,15 @@ test("emailNamesInRow reads the recipient list, in order, deduped", () => {
     "Scott Smrkovski",
   ]);
   // Our own address is not in the map — a colleague never resolves here.
-  assert.deepEqual(emailNamesInRow(mkRow({ p: "antaeus.coe@prismhr.com" }), BY_EMAIL), []);
+  assert.deepEqual(
+    emailNamesInRow(mkRow({ p: "antaeus.coe@prismhr.com" }), BY_EMAIL),
+    [],
+  );
   assert.deepEqual(emailNamesInRow(mkRow({}), BY_EMAIL), []);
-  assert.deepEqual(emailNamesInRow(mkRow({ p: "jennifer@infinitihr.com" }), new Map()), []);
+  assert.deepEqual(
+    emailNamesInRow(mkRow({ p: "jennifer@infinitihr.com" }), new Map()),
+    [],
+  );
 });
 
 test("last human names the correspondent, never the logger", () => {
@@ -263,7 +363,12 @@ test("last human names the correspondent, never the logger", () => {
 
 test("with no map and a machinery logger, the read says unresolved and names nobody", () => {
   const slice = mkSlice([
-    mkRow({ k: "n1", d: "2026-08-27", a: "Automated Process", p: "jennifer@infinitihr.com" }),
+    mkRow({
+      k: "n1",
+      d: "2026-08-27",
+      a: "Automated Process",
+      p: "jennifer@infinitihr.com",
+    }),
   ]);
   const r = buildRollup({
     slice,
@@ -279,7 +384,10 @@ test("with no map and a machinery logger, the read says unresolved and names nob
 });
 
 test("the body cap drops addresses before it drops a row", () => {
-  const long = Array.from({ length: 8 }, (_, i) => `person${i}@averylongdomain.example`).join(";");
+  const long = Array.from(
+    { length: 8 },
+    (_, i) => `person${i}@averylongdomain.example`,
+  ).join(";");
   const rows = Array.from({ length: 200 }, (_, i) =>
     mkRow({ k: `k${i}`, d: "2026-08-01", c: "x".repeat(500), p: long }),
   );

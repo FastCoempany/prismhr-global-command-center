@@ -375,6 +375,7 @@ Dependency order first, then risk. Every slice is one PR: branch off main, chain
 - **App verification:** an account whose reply landed in a colleague's inbox leaves the wing; its seat, if any, shows on the room's TODAY register; the Worked-it chip row asks who only when two names exist.
 - **Rollback:** revert.
 - **Size:** M.
+- **Amended 2026-10-05 (built):** the second record held no attributed inbound a page could read — `fetchSecondRecords` never loads the staged rows — so the rollup gained `lastTheirs` (src/lib/activity/rollup.ts, rendered and parsed as `LAST THEIRS` in stores.ts; null on every rollup written before the line, so nothing is faked until the next drop), built over the staged rows under D19's gate (the writer from the body's signature, not the operator, a mechanism or a colleague; the subject through the machinery read; the body cut to the reply's own words by `replyWords` in excerpt.ts and through the closer read), and `liveMotionIds` reads it as an optional fourth input; the seat on the register needed its controls to mean something, so `roomTodoSet` and `roomTodoEdit` take a seat row (✓ the day's Groundwork stamp, ↩ its removal, ⏲ the `row-delay:todo:` hold, ✕ a `hide:note:` park the Groundwork seat read now honors too, ✎ the act with term and day kept); and the who chip list is `whoChipNames` in src/lib/sendbook/read.ts, since the row files a Sendbook note.
 
 ### Slice 11b · The coordination move retires
 

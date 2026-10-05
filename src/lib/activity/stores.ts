@@ -76,6 +76,11 @@ export function renderRollupBody(r: Rollup): string {
   if (em.human !== r.lanes.human || em.csm !== r.lanes.csm)
     lines.push(`EMAILS · human ${em.human} · csm ${em.csm} · support ${em.support}`);
   if (r.lastOrgInbound) lines.push(`LAST ORG INBOUND · ${sv(r.lastOrgInbound)}`);
+  // Their own word, attributed (D19) — absent when no row is.
+  if (r.lastTheirs)
+    lines.push(
+      `LAST THEIRS · ${r.lastTheirs.day} · ${sv(r.lastTheirs.who)} · ${sv(r.lastTheirs.subject)}`,
+    );
   for (const a of r.actors)
     lines.push(`ACTOR · ${a.lane} · ${sv(a.name)} (${a.kind}) ×${a.n}`);
   for (const t of r.threads)
@@ -102,6 +107,9 @@ export function parseRollupBody(body: string): Rollup | null {
     receipts: 0,
     lastHuman: null,
     lastOrgInbound: "",
+    // A rollup written before the line existed reads null: nothing attributed,
+    // nothing faked (D19).
+    lastTheirs: null,
     actors: [],
     threads: [],
     verdict: "",
@@ -142,6 +150,8 @@ export function parseRollupBody(body: string): Rollup | null {
       };
     } else if ((m = /^LAST ORG INBOUND · (.+)$/.exec(line))) {
       out.lastOrgInbound = m[1].trim();
+    } else if ((m = /^LAST THEIRS · (\S+) · ([^·]+) · (.*)$/.exec(line))) {
+      out.lastTheirs = { day: m[1], who: m[2].trim(), subject: m[3].trim() };
     } else if ((m = /^ACTOR · (\w+) · (.+) \((\w+)\) ×(\d+)$/.exec(line))) {
       out.actors.push({
         lane: m[1] as ActivityLane,

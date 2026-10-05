@@ -252,6 +252,26 @@ type SenderRead = { name: string; email: string };
 
 /** Who wrote this email, from its own signature. Empty when the body does not
  *  say plainly — an unattributed row is honest; a misattributed one is not. */
+/** The reply's own words and nothing else: the newest message with the
+ *  scaffold, the quoted trail, the banners and the sign-off cut, and no floor.
+ *  The excerpt cleaner keeps a floor because an excerpt trimmed to nothing is
+ *  a loss; here nothing is the answer — a body that is only a sign-off has no
+ *  words of its own, which is what the closer read needs to know (ruled
+ *  2026-09-25, D19). */
+export function replyWords(raw: string): string {
+  const s = raw ?? "";
+  const at = s.search(/^Body:/im);
+  let body = at >= 0 ? s.slice(at + 5) : s;
+  const trail = QUOTE_TRAIL.exec(body);
+  if (trail) body = body.slice(0, trail.index);
+  body = body.replace(BANNER_SPAN, " ");
+  SIGN_OFF.lastIndex = 0;
+  const off = SIGN_OFF.exec(body);
+  SIGN_OFF.lastIndex = 0;
+  if (off) body = body.slice(0, off.index);
+  return body.replace(/\s+/g, " ").trim();
+}
+
 export function senderOf(raw: string): SenderRead {
   const s = raw ?? "";
   const at = s.search(/^Body:/im);
