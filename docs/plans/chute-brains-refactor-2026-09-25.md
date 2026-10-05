@@ -1,7 +1,8 @@
 ---
 title: Chute Brains Refactor Plan
-status: Approved
+status: Shipped 2026-10-05, slices 1 to 17; slice 18 stays blocked on the face
 approved: Founder, 2026-10-05, by answering the sixteen questions of section 7 in chat
+shipped: PRs #339 to #354, squash merged to main on 2026-10-05; the ship log heads section 4
 owner: Founder
 related_docs:
   - docs/architecture/chute-architecture-map.md
@@ -247,6 +248,37 @@ activity/run ──► notes/write (door activity, structured) ──► activit
 ## 4. Slices
 
 Dependency order first, then risk. Every slice is one PR: branch off main, chain green (prettier → tsc → eslint at zero warnings → tsx tests → next build), squash merge (CLAUDE.md:587-589). "Must stay green" names chain suites; a text pin the slice has to rewrite is named as such, and the rewrite is part of the slice. Honor-system decrees the slice could break are named with the check that guards them. Sizes: S under a day, M one to two days, L three or more [inferred].
+
+### Ship log (2026-10-05)
+
+Every slice shipped as one squash-merged PR after its chain ran green on main's base and Vercel built its preview. Each landed with one or more dated amendment sentences in its own section below where the build had to differ from the slice text.
+
+| Slice | PR | Merge | Note |
+|---|---|---|---|
+| 2 · One Chicago day | #339 | bb8b1e4 | |
+| 1 · The dialect module | #340 | 292bfe5 | The spreadsheet drop files as `spreadsheet`; `sheet` stays the room's routed line (§2.3 amended). |
+| 3 · The door column and the writer contract | #341 | 8db896e | The app applies its own additive migrations at startup (src/lib/db/migrate.ts, src/instrumentation.ts); Vercel's build cannot reach the database. |
+| 4 · The Filing table and the stored read | #342 | 0fb8419 | Deal facts sit on each entry; the migrator takes several statements and presence checks; one summary log line per start. |
+| 5 · Two verdicts, each with its reason | #343 | 9a8beeb | MODEL_VERDICT on the roster; the read rung's model say in `readRungVerdict`. |
+| 6 · The fan-out module and their loops | #344 | e1b6de4 | A their-loop carries who owes it; generic Todo readers skip loops; the Todo writer redacts. |
+| 7 · Routing and the vault on the server | #345 | 105b7d7 | Pieces of at most 4 MB through a VaultChunk table; body limit 4400 KB. |
+| 10 · The single read, part 1 | #346 | 6f5e42b | Parity on every fixture; THEIRS takes the palette's blue. |
+| 12 · The single read, part 3 | #347 | 0ce08eb | One store-to-read assembly (src/lib/record/stores.ts); the report built once per load. |
+| 8 · The shared door hooks | #348 | 46510a5 | One vault assertion had pinned bug 2 and follows the plan now; the verdict hold is a line. |
+| 11a and 11b · Groundwork and the exclusion; the coordination move retires | #349 | aa36489 | The rollup gains `lastTheirs` (D19); the seat row works on the sheet. |
+| 9 · refresh() retires | #350 | 661940b | ledger-actions.ts held three revalidations the plan missed; every writing client refreshes itself. |
+| 15 · The single read, part 6: Accounts | #351 | 395268a | The ACT chip and gems take the one C16 builder; `anyLiveGem` leaves. |
+| 17 · The second record's writer | #352 | 09bf0a2 | Stage and manifest bodies are JSON whole; the fold has one home in src/lib/activity/read.ts. |
+| 16 · The Intranet's capture through the pipeline | #353 | df38ecb | The door is src/app/intranet/capture-actions.ts, the one Intranet module that may import the pipeline. |
+| 13 and 14 · The Sendbook; whose move | #354 | 823a770 | The court is deleted (D25); a home-side sender's mail is never inbound. |
+
+Open after the pass, for the founder:
+
+- **Slice 18** stays blocked on the face: the verdict component, the receipt's shape, their loops' register seat and the Send-it box's dispute wait on the triptych.
+- **The move line's loop sentence.** A client promise relayed by a CSM on the roster no longer reads as inbound (pass 2 B row 2), so the engine's "Hold for their follow-up. Promised …" branch does not fire for it; the their-loop carries the promise into whose-move and their promise, but the move sentences have no loop sentence outside the meeting branch, and such a row falls to the touch clock. That sentence is §5.4's open face decision.
+- **The migrations' state in production is unverified from the build session.** The startup migrator ran on two production cold starts under request bursts and both catalog queries timed out at the pooler's auth step (`08006 EAUTHTIMEOUT`); it reported and the server started, as designed. Whether a later cold start applied `AccountNote.door`, `Filing`, `AccountNote.filingId`, `Todo.filingId` and `VaultChunk` could not be read from here. Check the database, or run `npx prisma migrate deploy` once from a machine that reaches it; every migration is idempotent. The pooler timeouts under concurrent cold starts are worth a look on their own.
+- **Pre-existing lines outside the pass:** two em-dash hinges in the live read's older lines (src/lib/ask/live.ts); the Playbook mirrors still earn their own model read (G6 names them, slice 16's text did not); a new drop's rows for a shell id land in the unmatched count at ingest (the read-side fold covers rows already staged); object keys in the stage body's campaign tally are not redacted (a ruling is needed before redacting keys); the Intranet suite's five Teams-grab bookmarklet failures predate the pass.
+- **Branches to prune:** the merged `claude/slice-*-1c0svk` branches and `claude/probe-migrate-status` cannot be deleted through the session's GitHub proxy.
 
 ### Slice 1 · The dialect module
 
