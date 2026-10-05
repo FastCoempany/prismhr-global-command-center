@@ -10,8 +10,9 @@
 // pages iterate real accounts, so these rows are invisible everywhere until the
 // Playbook renders them on purpose.
 
+import { getPrisma } from "@/lib/db";
 import type { Door } from "@/lib/ingest/doors";
-import { createAccountNoteRow } from "@/lib/notes/write";
+import { createAccountNoteRow, type AccountNoteData } from "@/lib/notes/write";
 import type { AccountNote } from "@/lib/today/overlay";
 
 export const PLAYBOOK_MARKET = "playbook:market";
@@ -97,6 +98,30 @@ export function readPlaybook(notesByAccount: Map<string, AccountNote[]>): {
   return { market: take("market"), lessons: take("lesson") };
 }
 
+/** The slice of the Prisma client the playbook needs — a test hands in a stub. */
+export type PlaybookClient = {
+  accountNote: {
+    findMany(args: {
+      where: { accountId: string };
+      select: { body: true };
+    }): Promise<{ body: string }[]>;
+    create(args: { data: AccountNoteData }): Promise<{ id: string }>;
+  };
+};
+
+/** What one register already knows, keyed for the dedupe. The namespace
+ *  owns it (the plan's §2.5): a caller that already read the rows may pass
+ *  `known` to filePlaybook and save the read. */
+export async function knownPlaybook(
+  kind: PlaybookKind,
+  client: PlaybookClient = getPrisma(),
+): Promise<Set<string>> {
+  const rows = await client.accountNote
+    .findMany({ where: { accountId: nsFor(kind) }, select: { body: true } })
+    .catch(() => [] as { body: string }[]);
+  return new Set(rows.map((r) => knowledgeKey(parsePlaybookBody(r.body).text)));
+}
+
 // File new knowledge, skipping anything the playbook already knows. Returns the
 // note ids created so a paste receipt can name them.
 export async function filePlaybook(opts: {
@@ -104,34 +129,42 @@ export async function filePlaybook(opts: {
   items: { text: string; who?: string }[];
   accountId: string;
   accountName: string;
-  known: Set<string>; // knowledgeKey() of what's already filed
+  /** knowledgeKey() of what's already filed. Omitted, the register reads its
+   *  own rows and dedupes against them. */
+  known?: Set<string>;
   door: Door; // the filing's door — the fan-out passes it, an approval says "hand"
   at?: Date;
   /** The filing that taught it (slice 4): the fan-out passes it, an approval has none. */
   filingId?: string;
+  client?: PlaybookClient;
 }): Promise<string[]> {
   const ids: string[] = [];
+  const client = opts.client ?? getPrisma();
+  const known = opts.known ?? (await knownPlaybook(opts.kind, client));
   for (const item of opts.items) {
     const text = (item.text ?? "").trim();
     if (text.length < 12) continue;
     const key = knowledgeKey(text);
-    if (!key || opts.known.has(key)) continue;
-    opts.known.add(key);
+    if (!key || known.has(key)) continue;
+    known.add(key);
     try {
-      const row = await createAccountNoteRow({
-        accountId: nsFor(opts.kind),
-        kind: "account",
-        body: playbookBody(opts.kind, text, {
-          a: opts.accountId,
-          n: opts.accountName,
-          w: (item.who ?? "").trim(),
-        }),
-        door: opts.door,
-        lane: "background",
-        source: "playbook",
-        at: opts.at,
-        filingId: opts.filingId,
-      });
+      const row = await createAccountNoteRow(
+        {
+          accountId: nsFor(opts.kind),
+          kind: "account",
+          body: playbookBody(opts.kind, text, {
+            a: opts.accountId,
+            n: opts.accountName,
+            w: (item.who ?? "").trim(),
+          }),
+          door: opts.door,
+          lane: "background",
+          source: "playbook",
+          at: opts.at,
+          filingId: opts.filingId,
+        },
+        client,
+      );
       ids.push(row.id);
     } catch {
       // A knowledge line that won't file is not worth failing a paste over.

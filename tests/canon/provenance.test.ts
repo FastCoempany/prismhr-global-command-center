@@ -130,7 +130,9 @@ describe("every note carries its door in its own column (CLAUDE.md:405, P3)", ()
     assert.match(chute, /roomPaste\([^)]*door:\s*"chute"/);
     const actions = read("src/app/room/actions.ts");
     assert.match(actions, /const door: Door = opts\?\.door \?\? "drop";/);
-    const absorb = actions.slice(actions.indexOf("async function absorbRead("));
+    // The fan-out is its own module since slice 6 (src/lib/ingest/fanout.ts).
+    const fanoutSrc = read("src/lib/ingest/fanout.ts");
+    const absorb = fanoutSrc.slice(fanoutSrc.indexOf("export async function absorbRead("));
     const fanout = absorb.slice(0, absorb.indexOf("\n}\n"));
     assert.match(fanout, /door: Door,/, "absorbRead takes the filing's door");
     assert.ok(!/door:\s*"/.test(fanout), "the fan-out never names a door of its own");
@@ -285,6 +287,26 @@ describe("a structured body redacts its words and keeps its counts", () => {
 
 // ── The Spring (:377-378): the Todo writer's codec reads back unchanged ───
 describe("createTodoRow writes the sheet's codec", () => {
+  test("a figure in the body is redacted before the tags ride; the tags are untouched", async () => {
+    const { client, writes } = todoStub();
+    await createTodoRow(
+      {
+        body: "Send the $1,200 PEPM model.",
+        tags: { kind: "action" },
+        due: "2026-07-30",
+        now: new Date("2026-07-28T15:00:00Z"),
+        accountId: "A1",
+      },
+      client,
+    );
+    const body = writes[0]!.body;
+    assert.ok(!body.includes("1,200"), body);
+    assert.equal(redactMoney(body), body, "the stored body carries no figure");
+    const { tags } = splitTags(body);
+    assert.equal(tags.date, "2026-07-30");
+    assert.equal(tags.kind, "action");
+  });
+
   test("a dated commitment: the wall, its urgency and kind, read back by splitTags unchanged", async () => {
     const now = new Date("2026-07-28T15:00:00Z");
     const { client, writes } = todoStub();

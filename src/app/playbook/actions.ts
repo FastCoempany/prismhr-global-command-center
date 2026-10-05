@@ -20,17 +20,13 @@ export async function approveSecondDraft(formData: FormData): Promise<void> {
   const accountId = String(formData.get("accountId") ?? "");
   const accountName = String(formData.get("accountName") ?? "").slice(0, 80);
   if (text.trim().length < 12) return;
-  const { filePlaybook, knowledgeKey, readPlaybook } =
-    await import("@/lib/playbook/store");
-  const { loadAccountNotes } = await import("@/lib/today/overlay");
-  const notes = await loadAccountNotes();
-  const known = new Set(readPlaybook(notes).market.map((m) => knowledgeKey(m.text)));
+  // The register owns its dedupe: filePlaybook reads what it already knows.
+  const { filePlaybook } = await import("@/lib/playbook/store");
   await filePlaybook({
     kind: "market",
     items: [{ text }],
     accountId,
     accountName,
-    known,
     door: "hand",
   });
   revalidatePath("/playbook");

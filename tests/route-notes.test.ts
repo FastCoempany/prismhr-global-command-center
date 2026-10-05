@@ -213,6 +213,9 @@ test("ledger lifecycle tags — kind / doneAt / country", async (t) => {
       kind: "action",
       doneAt: "1753029600000",
       country: "bg",
+      owner: "",
+      hearer: "",
+      by: "",
     });
     const body = withMarker(tagged, { accountNoteIds: ["a1"], partnerNoteIds: [] }, "AP");
     const { text: afterRoute } = splitMarker(body);
@@ -225,6 +228,9 @@ test("ledger lifecycle tags — kind / doneAt / country", async (t) => {
       kind: "action",
       doneAt: "1753029600000",
       country: "bg",
+      owner: "",
+      hearer: "",
+      by: "",
     });
     assert.equal(visibleText(body), "full house");
   });

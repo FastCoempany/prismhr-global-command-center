@@ -493,11 +493,11 @@ function record(
     });
   }
 
-  // Their turn, both rungs: the call read's Owed line, then an inbound note's
-  // own first person. Four of eleven accounts carry the second and not the
-  // first.
+  // Their turn, three rungs: the loops the read filed on their side (D10),
+  // the call read's Owed line, then an inbound note's own first person. Four
+  // of eleven accounts carry the last and not the others.
   const theirSide = [
-    ...owedByThem(ns, input.now).map((o) => ({
+    ...owedByThem(ns, input.now, a.todos).map((o) => ({
       who: o.who,
       text: clean(o.text),
       at: dayOf(o.at),

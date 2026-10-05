@@ -323,9 +323,10 @@ export default async function RoomPage() {
     })();
 
     // What they left the meeting owing — the record's Owed line, client's
-    // side (the Simploy call, 2026-09-03). Day-matched to the meeting in
-    // Chicago so an old debt never rides a new meeting; colleagues are the
-    // home side, never the ball-holder.
+    // side (the Simploy call, 2026-09-03), and their loops the read filed
+    // (D10), which owedByThem reads from the account's own Todo rows.
+    // Day-matched to the meeting in Chicago so an old debt never rides a new
+    // meeting; colleagues are the home side, never the ball-holder.
     const theirBall = (() => {
       if (!meetingForRead) return null;
       const day = (iso: string) => {
@@ -336,10 +337,19 @@ export default async function RoomPage() {
       };
       const met = day(meetingForRead.at);
       if (!met) return null;
-      const b = owedByThem(allNotes, now).find(
-        (o) => day(o.at) >= met && !isHomeSideName(o.who, csms),
-      );
-      return b ? { who: firstName(b.who) || "they", text: b.text } : null;
+      const b = owedByThem(
+        allNotes,
+        now,
+        todos.filter((t) => accountId && t.accountId === accountId),
+      ).find((o) => day(o.at) >= met && !isHomeSideName(o.who, csms));
+      return b
+        ? {
+            who: firstName(b.who) || "they",
+            text: b.text,
+            ...(b.day ? { day: b.day } : {}),
+            ...(b.promised ? { promised: true } : {}),
+          }
+        : null;
     })();
 
     const read: RoomRead = readDeal({

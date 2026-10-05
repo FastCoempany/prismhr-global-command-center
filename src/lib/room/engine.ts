@@ -4,6 +4,7 @@
 // isn't enough signal to call a move, it says so instead of inventing one.
 
 import { DASH_NODES, DASH_NODE_KEYS } from "@/lib/dashboard/stages";
+import { chicagoDay } from "@/lib/tz";
 import { splitFallback } from "./deliverables";
 import { clip, moveFromCommitment, pickOwed } from "./move-line";
 
@@ -29,9 +30,12 @@ type RoomInputs = {
   lastMeeting?: { at: string; who: string } | null;
   // What THEY left the meeting owing — the record's own Owed line, client's
   // side (the Simploy call, 2026-09-03: the call ended with her invoices
-  // gating the pricing, and the row said only "send the recap"). Read by the
-  // meeting move alone; their reply landing flips the court and retires it.
-  theirBall?: { who: string; text: string } | null;
+  // gating the pricing, and the row said only "send the recap"), or a loop
+  // on their side the read filed (D10). Read by the meeting move alone;
+  // their reply landing flips the court and retires it. A loop carries the
+  // day they named, and `promised` when that day ended with a hearer on
+  // record — PROMISED needs a hearer (D28); a blown day with none is a wall.
+  theirBall?: { who: string; text: string; day?: string; promised?: boolean } | null;
   // The newest invitation ACCEPTANCE in the record. It is machinery, so it
   // never opens a reply-owed — but it is proof the meeting exists, and a row
   // that says "wait on Melanie" while Melanie has already accepted is telling
@@ -78,6 +82,38 @@ const nDays = (n: number): string => `${n} day${n === 1 ? "" : "s"}`;
 // that counts to zero is telling you it cannot count (HR Hawaii, 2026-09-04).
 const agoChip = (n: number | null): string =>
   n == null || n <= 0 ? "TODAY" : n === 1 ? "YESTERDAY" : `${n} DAYS AGO`;
+
+// A promised day as the reason line says it: "today", a weekday inside the
+// coming week ("Friday"), else the date ("10/17"). Chicago days throughout.
+const md = (dayIso: string): string =>
+  new Date(`${dayIso}T12:00:00Z`).toLocaleDateString("en-US", {
+    timeZone: "UTC",
+    month: "numeric",
+    day: "numeric",
+  });
+const dayWord = (dayIso: string, now: Date): string => {
+  const today = chicagoDay(now);
+  if (dayIso === today) return "today";
+  const ahead = Math.round(
+    (Date.parse(`${dayIso}T12:00:00Z`) - Date.parse(`${today}T12:00:00Z`)) / DAY,
+  );
+  if (ahead > 0 && ahead < 7)
+    return new Date(`${dayIso}T12:00:00Z`).toLocaleDateString("en-US", {
+      timeZone: "UTC",
+      weekday: "long",
+    });
+  return md(dayIso);
+};
+
+// The loop's reason, after the meeting move names what they owe: the day
+// they named while it stands; PROMISED with its date once it ended with a
+// hearer on record; a plain wall when it ended with none (D28).
+const loopReason = (ball: { day?: string; promised?: boolean }, now: Date): string => {
+  const day = ball.day ?? "";
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return "";
+  if (day >= chicagoDay(now)) return ` Promised ${dayWord(day, now)}.`;
+  return ball.promised ? ` PROMISED ${md(day)}.` : ` The ${md(day)} wall passed.`;
+};
 const daysChip = (n: number): string =>
   n <= 0 ? "TODAY" : n === 1 ? "1 DAY" : `${n} DAYS`;
 
@@ -360,7 +396,7 @@ export function readDeal(i: RoomInputs): RoomRead {
       const who = owner && owner !== (meetingWho.split(/\s+/)[0] ?? "") ? owner : "They";
       const verb = who === "They" ? "owe" : "owes";
       const thing = clip(ball, 64).text;
-      move = `Send ${meetingWho || "them"} the recap. ${who} ${verb} ${thing}.`;
+      move = `Send ${meetingWho || "them"} the recap. ${who} ${verb} ${thing}.${loopReason(i.theirBall ?? {}, i.now)}`;
     } else {
       move = `Send ${meetingWho || "them"} the recap. You met ${meetingAgo}.`;
     }

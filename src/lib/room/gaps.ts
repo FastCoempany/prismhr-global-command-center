@@ -4,8 +4,9 @@
 // irrelevant — and waving one off advances the carousel to the next ask rather
 // than leaving a hole. When the queue runs dry the room offers to mint more.
 
+import { getPrisma } from "@/lib/db";
 import type { Door } from "@/lib/ingest/doors";
-import { createAccountNoteRow } from "@/lib/notes/write";
+import { createAccountNoteRow, type AccountNoteData } from "@/lib/notes/write";
 import { knowledgeKey } from "@/lib/playbook/store";
 import type { AccountNote } from "@/lib/today/overlay";
 
@@ -59,33 +60,65 @@ export function readGaps(
   return { shown: live.slice(0, cap), queued: Math.max(0, live.length - cap) };
 }
 
+/** The slice of the Prisma client the asks need — a test hands in a stub. */
+export type GapClient = {
+  accountNote: {
+    findMany(args: {
+      where: { accountId: string };
+      select: { body: true };
+    }): Promise<{ body: string }[]>;
+    create(args: { data: AccountNoteData }): Promise<{ id: string }>;
+  };
+};
+
+/** What the namespace already holds, live or waved off, keyed for the
+ *  dedupe. The namespace owns it (the plan's §2.5): a caller that already
+ *  read the rows may pass `known` to fileGaps and save the read. */
+export async function knownGaps(
+  accountId: string,
+  client: GapClient = getPrisma(),
+): Promise<Set<string>> {
+  const rows = await client.accountNote
+    .findMany({ where: { accountId: gapNs(accountId) }, select: { body: true } })
+    .catch(() => [] as { body: string }[]);
+  return new Set(rows.map((r) => knowledgeKey(parseGapBody(r.body))));
+}
+
 export async function fileGaps(opts: {
   accountId: string;
   questions: string[];
-  known: Set<string>; // knowledgeKey() of asks already on file (live or waved off)
+  /** knowledgeKey() of asks already on file (live or waved off). Omitted, the
+   *  namespace reads its own rows and dedupes against them. */
+  known?: Set<string>;
   door: Door; // the filing's door — the fan-out passes it, a click says "hand"
   at?: Date;
   /** The filing that asked (slice 4): the fan-out passes it, a click has none. */
   filingId?: string;
+  client?: GapClient;
 }): Promise<string[]> {
   const ids: string[] = [];
+  const client = opts.client ?? getPrisma();
+  const known = opts.known ?? (await knownGaps(opts.accountId, client));
   for (const q of opts.questions) {
     const question = (q ?? "").trim();
     if (question.length < 8) continue;
     const key = knowledgeKey(question);
-    if (!key || opts.known.has(key)) continue;
-    opts.known.add(key);
+    if (!key || known.has(key)) continue;
+    known.add(key);
     try {
-      const row = await createAccountNoteRow({
-        accountId: gapNs(opts.accountId),
-        kind: "account",
-        body: gapBody(question),
-        door: opts.door,
-        lane: "background",
-        source: "gap",
-        at: opts.at,
-        filingId: opts.filingId,
-      });
+      const row = await createAccountNoteRow(
+        {
+          accountId: gapNs(opts.accountId),
+          kind: "account",
+          body: gapBody(question),
+          door: opts.door,
+          lane: "background",
+          source: "gap",
+          at: opts.at,
+          filingId: opts.filingId,
+        },
+        client,
+      );
       ids.push(row.id);
     } catch {
       // Same doctrine as the playbook: a lost ask never fails a paste.

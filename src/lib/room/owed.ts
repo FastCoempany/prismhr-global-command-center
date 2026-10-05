@@ -5,6 +5,7 @@
 // register; dismiss ✕ retires the suggestion durably. Pure.
 
 import { MINE_RE } from "@/lib/intel/provenance";
+import { splitMarker, splitTags } from "@/lib/today/route-notes";
 import { chicagoDay } from "@/lib/tz";
 
 type OwedSuggestion = {
@@ -69,7 +70,45 @@ type TheirOwed = {
   who: string; // the owner as the record names them
   text: string; // the thing they owe
   at: string; // the note's own moment
+  // The rest is a their-loop's alone (D10); the Owed line's segments carry
+  // none of it. `day` is the promised day (yyyy-mm-dd, "" when none was
+  // named); `hearer` is who heard the promise; `promised` is true only when
+  // the day has passed AND a hearer is named — PROMISED needs a hearer (ruled
+  // 2026-09-25, D28), so a blown loop with no hearer reads as a plain wall.
+  day?: string;
+  hearer?: string;
+  promised?: boolean;
 };
+
+// ── their loops (CLAUDE.md, The Chute, ruled 2026-09-25, D10) ──────────────
+// The read's commitments on THEIR side file as Todo rows tagged `o:them`,
+// with the promised day, the hearer and the person who owes it in the tag
+// line (src/lib/today/route-notes.ts), linked to their filing by column.
+// This is the one reader of those rows: a loop is never the operator's
+// action, so the sheet, the ledger and the mirror leave it alone, and the
+// court reads it here beside the Owed line. The row's own `done` closes it.
+
+export type TheirLoop = {
+  text: string;
+  by: string;
+  hearer: string;
+  day: string;
+};
+
+/** The their-loop a Todo body carries, or null when the row is not one. */
+export function theirLoopOf(body: string): TheirLoop | null {
+  const { text, tags } = splitTags(splitMarker(body ?? "").text);
+  if (tags.owner !== "them") return null;
+  const what = text.replace(/\s+/g, " ").trim();
+  if (what.length < 3) return null;
+  return { text: what, by: tags.by, hearer: tags.hearer, day: tags.date };
+}
+
+/** Has the promised day ended, Chicago (the closer rule: all days are
+ *  Chicago days, theirs or ours)? False with no day, or a day still ahead. */
+export function dayBlown(day: string, now: Date): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(day) && day < chicagoDay(now);
+}
 
 // One Owed line can carry several segments split on ";" — each ends with
 // "— @Owner". Scanned only inside an Owed block, segmented at semicolons
@@ -87,8 +126,41 @@ export function owedByThem(
     createdAt: string;
   }[],
   now: Date,
+  // The account's Todo rows, for the their-loops among them (D10). A loop is
+  // open until its row is done: no freshness window, because a promise
+  // closes only by delivery or explicit release (the closer rule), and the
+  // readers that retire a debt — their reply landing, the meeting day — do
+  // so on their own terms. Loops lead, newest filing first, under the cap.
+  todos: readonly {
+    id: string;
+    body: string;
+    createdAt: string;
+    done?: boolean;
+  }[] = [],
 ): TheirOwed[] {
   const out: TheirOwed[] = [];
+  const seen = new Set<string>();
+  const loops = [...todos]
+    .filter((t) => !t.done)
+    .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
+  for (const t of loops) {
+    if (out.length >= CAP) break;
+    if (Number.isNaN(Date.parse(t.createdAt))) continue;
+    const loop = theirLoopOf(t.body);
+    if (!loop) continue;
+    const key = `${loop.text.toLowerCase()}|${loop.day}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({
+      noteId: t.id,
+      who: loop.by,
+      text: loop.text,
+      at: t.createdAt,
+      day: loop.day,
+      hearer: loop.hearer,
+      promised: dayBlown(loop.day, now) && loop.hearer !== "",
+    });
+  }
   for (const n of notes) {
     if (out.length >= CAP) break;
     const age = now.getTime() - Date.parse(n.createdAt);
