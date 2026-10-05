@@ -14,7 +14,14 @@
 // filed under, and every surface resolves them to one account.
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
-import { AKA, ALIASES, RENAME, canonicalAccountId, isAliasedAway } from "@/lib/book/merge";
+import {
+  AKA,
+  ALIASES,
+  RENAME,
+  accountIdsOf,
+  canonicalAccountId,
+  isAliasedAway,
+} from "@/lib/book/merge";
 import { getPeo, peos } from "@/lib/book";
 import { routingRoster } from "@/lib/book/roster";
 import { routeCapture } from "@/lib/route-capture";
@@ -42,20 +49,43 @@ describe("canonicalAccountId", () => {
   });
 
   test("a multi-segment namespace keeps every segment", () => {
-    assert.equal(
-      canonicalAccountId(`activity:stage:${SHELL}`),
-      `activity:stage:${REAL}`,
-    );
+    assert.equal(canonicalAccountId(`activity:stage:${SHELL}`), `activity:stage:${REAL}`);
   });
 
   test("keys that only look namespaced are left alone", () => {
-    for (const k of ["scratch:pad", "playbook:market", "playbook:lessons", "activity:manifest"])
+    for (const k of [
+      "scratch:pad",
+      "playbook:market",
+      "playbook:lessons",
+      "activity:manifest",
+    ])
       assert.equal(canonicalAccountId(k), k);
   });
 
   test("empty and unknown ids do not throw", () => {
     assert.equal(canonicalAccountId(""), "");
     assert.equal(canonicalAccountId("NOPE"), "NOPE");
+  });
+});
+
+describe("accountIdsOf — the fold's reverse, for a reader that queries by key", () => {
+  test("the canonical id first, then every duplicate folded into it, from either side", () => {
+    assert.deepEqual(accountIdsOf(REAL), [REAL, SHELL]);
+    assert.deepEqual(accountIdsOf(SHELL), [REAL, SHELL]);
+  });
+
+  test("a namespaced key expands under its namespace, every segment kept", () => {
+    assert.deepEqual(accountIdsOf(`gems:${SHELL}`), [`gems:${REAL}`, `gems:${SHELL}`]);
+    assert.deepEqual(accountIdsOf(`activity:stage:${REAL}`), [
+      `activity:stage:${REAL}`,
+      `activity:stage:${SHELL}`,
+    ]);
+  });
+
+  test("an id with no duplicate stands alone; a bare namespace key too; an empty id expands to nothing", () => {
+    assert.deepEqual(accountIdsOf("001F000000w38OIIAY"), ["001F000000w38OIIAY"]);
+    assert.deepEqual(accountIdsOf("activity:manifest"), ["activity:manifest"]);
+    assert.deepEqual(accountIdsOf(""), []);
   });
 });
 
@@ -122,7 +152,10 @@ describe("routing finds it under either name", () => {
     // A tape says one form, a signature says another, and they normalize
     // three different ways.
     for (const said of ["My HR Professionals", "My HR Pros", "MyHR Pros", "MyHRPros"]) {
-      const r = routeCapture(`Spoke with the team at ${said} about a global hire.`, roster);
+      const r = routeCapture(
+        `Spoke with the team at ${said} about a global hire.`,
+        roster,
+      );
       assert.equal(r.best?.id, REAL, `"${said}" routed to ${r.best?.name}`);
     }
   });

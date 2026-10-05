@@ -14,8 +14,7 @@
 // for its other callers until the last one leaves, and tests/record-read
 // pins that the two agree on every fixture the old path's suites hold.
 
-import type { SecondRecord } from "@/lib/activity/read";
-import { canonicalAccountId } from "@/lib/book/merge";
+import { secondRecordFor, type SecondRecord } from "@/lib/activity/read";
 import type { DashCardRow } from "@/lib/dashboard/data";
 import { readOutcome } from "@/lib/dashboard/outcome";
 import { DASH_NODES } from "@/lib/dashboard/stages";
@@ -79,7 +78,7 @@ export type AccountReadInput = {
   /** The disposition markers; the hide filter reads `hide:note:<id>`. */
   dispositions: ReadonlyMap<string, unknown>;
   /** The second record for the account, folded by canonical id (E17;
-   *  secondRecordFor below does the fold). */
+   *  secondRecordFor, src/lib/activity/read.ts, does the fold). */
   secondRecord?: SecondRecord | null;
   /** csms ∪ homeSideFrom, declared, never optional (E9). */
   homeSide: readonly string[];
@@ -178,39 +177,11 @@ export type AccountRead = {
 const HIDE_NOTE = "hide:note:";
 
 // ── the second record's fold (E17) ──────────────────────────────────────────
-// Namespaced rows key by the id they were filed under, and one company filed
-// under two ids is one account to every surface (src/lib/book/merge.ts). The
-// fetch hands back a map by raw tail; this folds every key that resolves to
-// the account into one record, the four namespaces each taken from the
-// freshest drop that holds them, the canonical id first among equals.
-
-const dropDayOf = (sr: SecondRecord): string =>
-  sr.rollup?.dropDay ||
-  sr.gems.reduce((m, g) => (g.createdDay > m ? g.createdDay : m), "") ||
-  "";
-
-export function secondRecordFor(
-  byId: ReadonlyMap<string, SecondRecord>,
-  accountId: string,
-): SecondRecord | null {
-  const canonical = canonicalAccountId(accountId);
-  if (!canonical) return null;
-  const parts: { own: boolean; sr: SecondRecord }[] = [];
-  for (const [key, sr] of byId)
-    if (canonicalAccountId(key) === canonical) parts.push({ own: key === canonical, sr });
-  if (parts.length === 0) return null;
-  if (parts.length === 1) return parts[0].sr;
-  parts.sort(
-    (a, b) =>
-      dropDayOf(b.sr).localeCompare(dropDayOf(a.sr)) || Number(b.own) - Number(a.own),
-  );
-  return {
-    rollup: parts.find((p) => p.sr.rollup)?.sr.rollup ?? null,
-    gems: parts.find((p) => p.sr.gems.length > 0)?.sr.gems ?? [],
-    support: parts.find((p) => p.sr.support)?.sr.support ?? null,
-    intent: parts.find((p) => p.sr.intent)?.sr.intent ?? null,
-  };
-}
+// The fold lives with the second record's read layer (src/lib/activity/read.ts)
+// since slice 17, so the wide fetch, this lookup and the narrow reads share
+// one spelling; it is re-exported here because this is where the pages and
+// the stores import it from.
+export { secondRecordFor };
 
 // ── the stage (E12) ─────────────────────────────────────────────────────────
 // The card's position as the surfaces already read it: the next gate as the

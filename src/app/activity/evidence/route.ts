@@ -12,41 +12,25 @@
 
 import { NextResponse } from "next/server";
 import { getAppAccess } from "@/lib/auth";
-import { getPrisma, hasDatabaseEnv } from "@/lib/db";
-import {
-  STAGE_NS,
-  INTENT_NS,
-  ACTIVITY_NS,
-  parseStageBody,
-  parseIntentBody,
-  parseRollupBody,
-} from "@/lib/activity/stores";
+import { hasDatabaseEnv } from "@/lib/db";
+import { fetchSecondRecordFor, fetchStageRows } from "@/lib/activity/read";
 import { caseNumberOf, cleanExcerpt, cleanSubject } from "@/lib/activity/excerpt";
-import { isMachineryName } from "@/lib/activity/classify";
+import { rowPerson } from "@/lib/activity/classify";
 import type { StagedRow } from "@/lib/activity/types";
 
 export const dynamic = "force-dynamic";
 
 const noStore = { headers: { "cache-control": "no-store" } };
 
-async function stageRows(accountId: string): Promise<StagedRow[]> {
-  const prisma = getPrisma();
-  const rows = await prisma.accountNote.findMany({
-    where: { accountId: `${STAGE_NS}${accountId}` },
-    orderBy: { createdAt: "desc" },
-    take: 1,
-  });
-  if (rows.length === 0) return [];
-  return parseStageBody(rows[0].body)?.slice.rows ?? [];
-}
+// The reads here are the second record's own (src/lib/activity/read.ts), so
+// they fold by canonical id with every other face (E17): a slice staged under
+// the account's shell id is this account's evidence, and the one-key reads
+// this route used to spell for itself were pass 2 C's narrow-read defect.
 
-/** Who the row shows as its person: the signature first, the Assigned column
- *  only after. A logged email files under the LOGGER — a CC is enough to make
- *  that the operator — so reading the column as the author put a colleague's
- *  words in his mouth (founder, 2026-08-31). A mechanism never prints where a
- *  name belongs. The recipients ride separately in `people`. */
-const personOf = (r: StagedRow): string =>
-  (r.w ?? "").trim() || (isMachineryName(r.a) ? "" : r.a);
+/** Who the row shows as its person — one rule with the writer's actors
+ *  column (src/lib/activity/classify.ts). The recipients ride separately in
+ *  `people`. */
+const personOf = (r: StagedRow): string => rowPerson(r);
 
 /** The row as the drill renders it — subject cleaned, excerpt cleaned again
  *  defensively (slices staged before the ingest cleaner keep their meat). */
@@ -76,12 +60,7 @@ export async function GET(req: Request) {
   const camps = url.searchParams.get("camps");
 
   if (camps) {
-    const prisma = getPrisma();
-    const note = await prisma.accountNote.findFirst({
-      where: { accountId: `${INTENT_NS}${acct}` },
-      orderBy: { createdAt: "desc" },
-    });
-    const parsed = note ? parseIntentBody(note.body) : null;
+    const parsed = (await fetchSecondRecordFor(acct))?.intent ?? null;
     return NextResponse.json(
       { ok: true, windows: parsed?.windows ?? null, receipts: parsed?.receipts ?? 0 },
       noStore,
@@ -93,15 +72,11 @@ export async function GET(req: Request) {
     // one line, cited or silent — no fuzzy maybes. Priority: a row naming the
     // person → the org's inbound → the measured silence. An unmatched
     // recipient with no rollup renders nothing at all.
-    const prisma = getPrisma();
-    const [rows, rollupNote] = await Promise.all([
-      stageRows(acct),
-      prisma.accountNote.findFirst({
-        where: { accountId: `${ACTIVITY_NS}${acct}` },
-        orderBy: { createdAt: "desc" },
-      }),
+    const [rows, second] = await Promise.all([
+      fetchStageRows(acct),
+      fetchSecondRecordFor(acct),
     ]);
-    const rollup = rollupNote ? parseRollupBody(rollupNote.body) : null;
+    const rollup = second?.rollup ?? null;
     const needle = who.trim().toLowerCase();
     const nameBits = needle
       .split(/[@\s.]+/)
@@ -156,7 +131,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ ok: true, line: "", cite: null }, noStore);
   }
 
-  const rows = await stageRows(acct);
+  const rows = await fetchStageRows(acct);
 
   if (k) {
     const row = rows.find((r) => r.k === k);

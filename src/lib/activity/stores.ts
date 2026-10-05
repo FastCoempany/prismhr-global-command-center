@@ -397,26 +397,50 @@ export function parseIntentBody(body: string): {
   return out;
 }
 
-// ── staging and the manifest (data, not grammar — JSON in a marked block) ───
+// ── staging and the manifest (data, not grammar — a JSON body) ─────────────
+// These two stores are JSON whole, with the human head as the first field,
+// because they go through the one writer with `structured: true` (P4; slice
+// 17): the redaction then reads string values only, and a row key, a
+// checksum, a count or a numeric array is never mistaken for a figure. They
+// used to ride as a text head over a ⟪act⟫-marked block, which no JSON parse
+// could see through — a body redacted as text was one comma-grouped array
+// away from a manifest that no longer parsed. Rows staged before this slice
+// still carry the block, and the parsers read both.
 
 const BLOCK_RE = /⟪act⟫([\s\S]*?)⟪\/act⟫/;
 
+/** The JSON a stored body holds: the body itself when it is JSON whole, else
+ *  the legacy marked block, else nothing. */
+function storedJson<T>(body: string): T | null {
+  const text = body ?? "";
+  try {
+    if (text.startsWith("{")) return JSON.parse(text) as T;
+  } catch {
+    // not JSON whole — the legacy block below
+  }
+  const m = BLOCK_RE.exec(text);
+  if (!m) return null;
+  try {
+    return JSON.parse(m[1]) as T;
+  } catch {
+    return null;
+  }
+}
+
 export function renderStageBody(slice: AccountSlice, dropSha: string): string {
-  return `⌗ STAGE · drop ${sha8(dropSha)} · ${sv(slice.name)} · rows ${slice.rows.length} · dropped ${slice.dropped}\n⟪act⟫${JSON.stringify({ dropSha, slice })}⟪/act⟫`;
+  return JSON.stringify({
+    head: `⌗ STAGE · drop ${sha8(dropSha)} · ${sv(slice.name)} · rows ${slice.rows.length} · dropped ${slice.dropped}`,
+    dropSha,
+    slice,
+  });
 }
 
 export function parseStageBody(
   body: string,
 ): { dropSha: string; slice: AccountSlice } | null {
-  const m = BLOCK_RE.exec(body ?? "");
-  if (!m) return null;
-  try {
-    const raw = JSON.parse(m[1]) as { dropSha?: string; slice?: AccountSlice };
-    if (!raw.dropSha || !raw.slice?.id) return null;
-    return { dropSha: raw.dropSha, slice: raw.slice };
-  } catch {
-    return null;
-  }
+  const raw = storedJson<{ dropSha?: string; slice?: AccountSlice }>(body);
+  if (!raw?.dropSha || !raw.slice?.id) return null;
+  return { dropSha: raw.dropSha, slice: raw.slice };
 }
 
 /** The run's book-keeping, stored beside the manifest: what still waits,
@@ -473,17 +497,17 @@ export type ManifestStore = {
 
 export function renderManifestBody(store: ManifestStore): string {
   const m = store.manifest;
-  return `⌗ MANIFEST · drop ${sha8(m.dropSha)} · ${m.dropDay} · rows ${m.rowCount} · accounts ${m.accounts.length} · ${store.run.phase}\n⟪act⟫${JSON.stringify(store)}⟪/act⟫`;
+  return JSON.stringify({
+    head: `⌗ MANIFEST · drop ${sha8(m.dropSha)} · ${m.dropDay} · rows ${m.rowCount} · accounts ${m.accounts.length} · ${store.run.phase}`,
+    manifest: store.manifest,
+    run: store.run,
+    prior: store.prior,
+  });
 }
 
 export function parseManifestBody(body: string): ManifestStore | null {
-  const m = BLOCK_RE.exec(body ?? "");
-  if (!m) return null;
-  try {
-    const raw = JSON.parse(m[1]) as ManifestStore;
-    if (!raw.manifest?.dropSha || !raw.run) return null;
-    return raw;
-  } catch {
-    return null;
-  }
+  const raw = storedJson<Partial<ManifestStore>>(body);
+  if (!raw?.manifest?.dropSha || !raw.run) return null;
+  // The head is the body's label, not the store's: it is left behind here.
+  return { manifest: raw.manifest, run: raw.run, prior: raw.prior ?? null };
 }

@@ -21,12 +21,18 @@ import { csms } from "@/lib/book";
 import { contactsFor } from "@/lib/book/contacts";
 import { EXTRA_PARTNERS } from "@/lib/book/partners";
 import { redactMoney } from "@/lib/intel/lexicon";
+import { joinRecipients } from "@/lib/intel/provenance";
+import {
+  createAccountNoteRow,
+  redactStructured,
+  type AccountNoteData,
+} from "@/lib/notes/write";
 import { theirLoopOf } from "@/lib/room/owed";
 import { RUN_LOCK_CHECKSUM } from "@/lib/intranet/doctrine";
 import { inboundDates, recordSends, type NoteLike } from "@/lib/sendbook/read";
 import { readOutcome } from "@/lib/dashboard/outcome";
 import { rowsChecksum, tallyChecksum } from "./parse";
-import { deriveColleagues, isMachineryName } from "./classify";
+import { deriveColleagues, isMachineryName, rowPerson } from "./classify";
 import { personMoved } from "./acted";
 import {
   buildRollup,
@@ -174,43 +180,131 @@ async function readManifestStore(): Promise<{
   return store ? { noteId: rows[0].id, store } : null;
 }
 
+/** The manifest is book-wide: no account's people are on it. */
 async function writeManifestStore(store: ManifestStore): Promise<void> {
-  const prisma = getPrisma();
-  const body = renderManifestBody(store);
-  const existing = await prisma.accountNote.findMany({
-    where: { accountId: MANIFEST_ID },
-    select: { id: true },
-  });
-  if (existing.length > 0) {
-    await prisma.accountNote.update({
-      where: { id: existing[0].id },
-      data: { body },
-    });
-    // Replace forward: any strays beyond the first are folded away.
-    for (const extra of existing.slice(1))
-      await prisma.accountNote.delete({ where: { id: extra.id } });
-  } else {
-    await prisma.accountNote.create({
-      data: { accountId: MANIFEST_ID, kind: "mine", body, source: "activity" },
-    });
-  }
+  await replaceSecondRecordNote(MANIFEST_ID, renderManifestBody(store));
 }
 
-/** Replace-forward write for any activity namespace note. */
-async function replaceNote(accountId: string, body: string): Promise<void> {
-  const prisma = getPrisma();
-  const existing = await prisma.accountNote.findMany({
+// ── the second record's writer (P4; slice 17) ───────────────────────────────
+// A second-record row carries its provenance like a first-record row: the
+// door in its own column beside source, lane, actors and recipients, and a
+// bare row is a defect (Provenance is columns, ruled 2026-09-25, P3/P4 —
+// CLAUDE.md, The Ted doctrine). So a fresh row goes through the one writer
+// (src/lib/notes/write.ts) with door "activity", lane "background" (ingested
+// intelligence around the account, never the operator's own working record),
+// source "activity", and the export's people; and the body is marked
+// structured, so the stage and manifest JSON redact by string value and a
+// count, a row key or a checksum is never taken for a figure. The text
+// grammars (rollup, gems, support, intent) hold no JSON and redact as text,
+// which is what they need: their counts carry no comma groups.
+
+/** The people columns a second-record row carries beside its door. */
+export type SecondRecordPeople = { actors: string; recipients: string };
+
+const NO_PEOPLE: SecondRecordPeople = { actors: "", recipients: "" };
+
+// The columns are the people on the account's traffic this drop, not the
+// evidence — the staged rows beneath carry every address — so the list is
+// bounded here rather than the row.
+const PEOPLE_CAP = 100;
+
+const joinPeople = (people: Iterable<string>): string =>
+  joinRecipients([...people].slice(0, PEOPLE_CAP));
+
+/** The export's people on a slice, from the columns the slice already carries
+ *  and never a body ("bodies and recipients never upload" holds because these
+ *  are the uploaded columns, read back): who each row shows as its person —
+ *  the signature first, the Assigned column after, never a mechanism
+ *  (machinery is never a person) — as the actors; every address on a logged
+ *  email as the recipients, our own side included, comma-joined the way the
+ *  record's own rows carry theirs. One name or address once, newest first. */
+export function slicePeople(slice: Pick<AccountSlice, "rows">): SecondRecordPeople {
+  const actors = new Set<string>();
+  const recipients = new Set<string>();
+  for (const r of slice.rows) {
+    const who = rowPerson(r);
+    if (who) actors.add(who);
+    for (const p of (r.p ?? "").split(";")) {
+      const addr = p.trim().toLowerCase();
+      if (addr) recipients.add(addr);
+    }
+  }
+  return { actors: joinPeople(actors), recipients: joinPeople(recipients) };
+}
+
+/** The slice of the Prisma client the replace-forward write needs — a test
+ *  hands in a stub, the way the writer takes its client. */
+export type SecondRecordClient = {
+  accountNote: {
+    findMany(args: {
+      where: { accountId: string };
+      select: { id: true };
+    }): Promise<{ id: string }[]>;
+    update(args: {
+      where: { id: string };
+      data: Partial<AccountNoteData>;
+    }): Promise<unknown>;
+    delete(args: { where: { id: string } }): Promise<unknown>;
+    create(args: { data: AccountNoteData }): Promise<{ id: string }>;
+  };
+};
+
+/** Replace-forward write for any second-record note. A key with no row gets
+ *  one through the writer; a key with a row keeps it — the same row, the same
+ *  id — and takes the new body with the drop's provenance columns, because the
+ *  export's people change drop to drop and a row written bare before this
+ *  slice heals on the next drop rather than staying a defect. Strays behind
+ *  the first row are folded away. The body is redacted the way the writer
+ *  redacts a structured one, so both paths store the same bytes. */
+export async function replaceSecondRecordNote(
+  accountId: string,
+  body: string,
+  people: SecondRecordPeople = NO_PEOPLE,
+  client: SecondRecordClient = getPrisma(),
+): Promise<void> {
+  const existing = await client.accountNote.findMany({
     where: { accountId },
     select: { id: true },
   });
   if (existing.length > 0) {
-    await prisma.accountNote.update({ where: { id: existing[0].id }, data: { body } });
+    const redacted = redactStructured(body);
+    const provenance: Partial<AccountNoteData> = {
+      lane: "background",
+      actors: people.actors,
+      source: "activity",
+      door: "activity",
+      recipients: people.recipients,
+    };
+    try {
+      await client.accountNote.update({
+        where: { id: existing[0].id },
+        data: { body: redacted, ...provenance },
+      });
+    } catch {
+      // A database without the provenance columns keeps the body current and
+      // nothing else — the writer's own tiers, mirrored (never a lost drop).
+      await client.accountNote.update({
+        where: { id: existing[0].id },
+        data: { body: redacted },
+      });
+    }
     for (const extra of existing.slice(1))
-      await prisma.accountNote.delete({ where: { id: extra.id } });
+      await client.accountNote.delete({ where: { id: extra.id } });
   } else {
-    await prisma.accountNote.create({
-      data: { accountId, kind: "mine", body, source: "activity" },
-    });
+    await createAccountNoteRow(
+      {
+        accountId,
+        kind: "mine",
+        body,
+        door: "activity",
+        structured: true,
+        lane: "background",
+        source: "activity",
+        actors: people.actors,
+        recipients: people.recipients,
+      },
+      client,
+    );
   }
 }
 
@@ -298,7 +392,11 @@ export async function stageActivityBatch(batch: StageBatch): Promise<StageReply>
       continue;
     }
     for (const r of slice.rows) if (r.c) r.c = redactMoney(r.c);
-    await replaceNote(`${STAGE_NS}${slice.id}`, renderStageBody(slice, batch.dropSha));
+    await replaceSecondRecordNote(
+      `${STAGE_NS}${slice.id}`,
+      renderStageBody(slice, batch.dropSha),
+      slicePeople(slice),
+    );
   }
 
   if (!store.run.batchesSeen.includes(batch.batchIndex))
@@ -626,13 +724,14 @@ export async function runActivityPass(opts?: {
     const id = run.intentQueue.shift()!;
     const staged = await readStageSlice(id);
     if (!staged) continue;
-    await replaceNote(
+    await replaceSecondRecordNote(
       `${INTENT_NS}${id}`,
       renderIntentBody({
         dropSha: m.dropSha,
         windows: intentWindows(staged.slice.tally, today),
         receipts: staged.slice.tally.receipts,
       }),
+      slicePeople(staged.slice),
     );
     run.covered[id] = run.covered[id] || "verdict";
   }
@@ -686,6 +785,8 @@ export async function runActivityPass(opts?: {
     const slice = staged.slice;
     const name = slice.name || nameById.get(id) || id;
     const accountPeople = accountPeopleFor(slice);
+    // The provenance columns every store written for this account carries.
+    const people = slicePeople(slice);
 
     const rollup: Rollup = buildRollup({
       slice,
@@ -702,17 +803,19 @@ export async function runActivityPass(opts?: {
     const support = supportThemes(slice.rows);
     support.total = Math.max(support.total, slice.laneCounts.support);
     if (support.total > 0)
-      await replaceNote(
+      await replaceSecondRecordNote(
         `${SUPPORT_NS}${id}`,
         renderSupportBody({ dropSha: m.dropSha, ...support }),
+        people,
       );
-    await replaceNote(
+    await replaceSecondRecordNote(
       `${INTENT_NS}${id}`,
       renderIntentBody({
         dropSha: m.dropSha,
         windows: intentWindows(slice.tally, today),
         receipts: slice.tally.receipts,
       }),
+      people,
     );
 
     const motionRows = slice.rows.filter(isHumanMotion);
@@ -797,7 +900,7 @@ export async function runActivityPass(opts?: {
     }
 
     if (gems.length > 0) {
-      await replaceNote(`${GEMS_NS}${id}`, renderGemsBody(gems));
+      await replaceSecondRecordNote(`${GEMS_NS}${id}`, renderGemsBody(gems), people);
       rollup.verdict = "";
       run.covered[id] = "gems";
       log.push(`${name}: ${gems.length} gem${gems.length === 1 ? "" : "s"} confirmed.`);
@@ -826,7 +929,11 @@ export async function runActivityPass(opts?: {
           : `${name}: ${rollup.verdict}.`,
       );
     }
-    await replaceNote(`${ACTIVITY_NS}${id}`, renderRollupBody(rollup));
+    await replaceSecondRecordNote(
+      `${ACTIVITY_NS}${id}`,
+      renderRollupBody(rollup),
+      people,
+    );
     return log;
   };
 
