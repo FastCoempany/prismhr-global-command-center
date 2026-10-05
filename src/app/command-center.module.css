@@ -3588,6 +3588,16 @@
   color: var(--ink);
   font-weight: 700;
 }
+/* The whisper under the touch — which record the value came from (C1). The
+   Move Chip's source-line kicker: mono, recessive ink, one lowercase word. */
+.srTouchRecord {
+  display: block;
+  font-family: var(--font-donor-mono), ui-monospace, Menlo, monospace;
+  font-size: 9px;
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  color: rgba(10, 28, 64, 0.42);
+}
 .srTerm {
   font-family: var(--font-donor-mono), ui-monospace, Menlo, monospace;
   font-size: 10.5px;

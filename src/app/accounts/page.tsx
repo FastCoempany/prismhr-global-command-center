@@ -2,19 +2,21 @@ import Link from "next/link";
 import { AppWayfinder } from "@/components/app-wayfinder";
 import { getAppAccess } from "@/lib/auth";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
-import { peos } from "@/lib/book";
+import { csms, peos } from "@/lib/book";
 import { EXTRA_PARTNERS } from "@/lib/book/partners";
 import { contactCount, contactsFor } from "@/lib/book/contacts";
 import { peopleFor } from "@/lib/intel/people";
-import { relationshipFor } from "@/lib/intel/relationship";
-import { anyLiveGem, fetchSecondRecords } from "@/lib/activity/read";
+import { fetchSecondRecords } from "@/lib/activity/read";
+import { readAccount, secondRecordFor } from "@/lib/record/read";
+import { lastHumanTouch, sheetSecond } from "@/lib/record/accounts";
+import { homeSideFrom } from "@/lib/pipeline/build";
 import { ACT_DRAFT_NS, parseActDraftBody } from "@/lib/act/lane";
 import { parseResearchBody, researchNs } from "@/lib/intel/deep-research";
 import { loadCommand } from "@/lib/command-center/data";
 import { loadDashboard } from "@/lib/dashboard/data";
 import { readOutcome } from "@/lib/dashboard/outcome";
-import { digestForCardName } from "@/lib/intel/digest";
-import { SENDBOOK_NS, recordSends } from "@/lib/sendbook/read";
+import { digestFor, digestForCardName } from "@/lib/intel/digest";
+import { SENDBOOK_NS } from "@/lib/sendbook/read";
 import { compositeScore, deskScore } from "@/lib/book/scoring";
 import {
   analyzePlay,
@@ -114,8 +116,9 @@ export default async function AccountsPage() {
 
   // Notetaker notes linked to accounts (surfaced read-only here). A loop on
   // their side (D10) is not the operator's note; owedByThem reads it.
+  const todos = await loadTodos();
   const notesByAccount = new Map<string, LinkedNote[]>();
-  for (const t of await loadTodos()) {
+  for (const t of todos) {
     if (!t.accountId || theirLoopOf(t.body)) continue;
     const list = notesByAccount.get(t.accountId) ?? [];
     list.push({ id: t.id, body: t.body, done: t.done, remindAt: t.remindAt });
@@ -152,15 +155,18 @@ export default async function AccountsPage() {
       }
     }
   }
-  // Cold outreach on the record: a logged touch, a tapped Sendbook channel,
-  // or a filed outbound — the widest merge the app holds (Ted doctrine).
-  const engagedIds = new Set<string>();
-  for (const t of touches) {
-    const m = /^outreach:(.+)$/.exec(t.subjectKey);
-    if (m) engagedIds.add(m[1]);
-  }
+  // Who counts as our side, read over the WHOLE book — the CSM column plus
+  // everyone the record shows working across several accounts — built once,
+  // the way the room builds it, and handed to every read below (E9: the
+  // caller says who we are; the read never guesses).
+  const ourSide = [...csms, ...homeSideFrom(chipNotes)];
+  // The Sendbook's tapped channel (a sendbook:<id> note) is the one door to
+  // "engaged" the read's input does not carry: namespaced rows never enter an
+  // account's corpus. The touch log and the record's own sends are the
+  // read's (conversationExists, field 16), so the old outreach rung is gone.
+  const tapped = new Set<string>();
   for (const key of chipNotes.keys())
-    if (key.startsWith(SENDBOOK_NS)) engagedIds.add(key.slice(SENDBOOK_NS.length));
+    if (key.startsWith(SENDBOOK_NS)) tapped.add(key.slice(SENDBOOK_NS.length));
 
   // One row per partner who actually owns something in the book.
   const partnerRoster = (() => {
@@ -228,18 +234,43 @@ export default async function AccountsPage() {
   const rows: AccountRow[] = peos
     .filter((p) => !excludedIds.has(p.id))
     .map((p) => {
+      // The single account read (src/lib/record/read.ts; the Chute brains
+      // refactor plan, §2.2, slice 15): one read of every store for this
+      // account, from the same loaders the room reads. The touch column, the
+      // engaged read, the newest-note clock and the relationship take their
+      // facts from it; the book's roster and seeded contact ride in as the
+      // seeds the record outranks (the Ted doctrine).
+      const acct = readAccount({
+        account: {
+          id: p.id,
+          name: p.name,
+          contacts: contactsFor(p.id),
+          contact: { name: p.contactName, email: p.contactEmail },
+        },
+        notes: chipNotes.get(p.id) ?? [],
+        touches,
+        todos,
+        dispositions,
+        // Folded by canonical id: a drop keyed by a shell id reads under the
+        // one account (E17) — the fold §2.7 names for C1's merge on this page.
+        secondRecord: secondRecordFor(secondById, p.id),
+        homeSide: ourSide,
+        digest: digestFor(p.id) ?? digestForCardName(p.name),
+        now,
+      });
+      const sr = acct.secondRecord;
       const d = deskScore(p, {
-        lastActivityIso: (chipNotes.get(p.id) ?? [])[0]?.createdAt,
+        // The newest entry's moment (field 20): the visible record's own
+        // clock, never a ✕-parked row; "" on an empty record is no clock.
+        lastActivityIso: acct.lastRecordAt || undefined,
         now,
       });
       const dem = getDemand(p.id);
       // The relationship outranks the book seed here too (Ted doctrine):
       // the contact this page names, mails, exports, and merges into
-      // campaign copy is the record's person, book seed only as fallback.
-      const rel = relationshipFor(chipNotes.get(p.id) ?? [], contactsFor(p.id), {
-        name: p.contactName,
-        email: p.contactEmail,
-      });
+      // campaign copy is the record's person, book seed only as fallback —
+      // the read's own answer (field 13), the same one the room shows.
+      const rel = acct.relationship;
       // Research reads BOTH stores: the book-wide sweep and the live
       // deep-pass notes — a paid pass must never render "Not researched."
       // The stores merge by latest (Ted doctrine): whichever pass spoke last
@@ -333,38 +364,16 @@ export default async function AccountsPage() {
         })(),
         // The ✓ stamp: the newest acted gem's day and term (take-back needs
         // the term). "" when nothing is stamped.
-        actedDay: (() => {
-          const sr = secondById.get(p.id);
-          const g = (sr?.gems ?? []).find((x) => x.actedDay);
-          return g?.actedDay ?? "";
-        })(),
-        actedTerm: (() => {
-          const sr = secondById.get(p.id);
-          const g = (sr?.gems ?? []).find((x) => x.actedDay);
-          return g?.term ?? "";
-        })(),
+        actedDay: (sr?.gems ?? []).find((x) => x.actedDay)?.actedDay ?? "",
+        actedTerm: (sr?.gems ?? []).find((x) => x.actedDay)?.term ?? "",
         onBoard: boardById.has(p.id),
-        second: (() => {
-          const sr = secondById.get(p.id);
-          if (!sr) return null;
-          const lh = sr.rollup?.lastHuman ?? null;
-          const gem = anyLiveGem(sr);
-          const live = sr.gems.filter((g) => !g.actedDay).slice(0, 3);
-          return {
-            touch: lh ? { who: lh.who, day: lh.day, kind: lh.kind } : null,
-            gems: live.map((g) => ({
-              term: g.term,
-              act: g.act,
-              reason: g.reason,
-              whenDay: g.whenDay,
-              cites: g.cites,
-            })),
-            act: gem && !gem.actedDay ? gem.act : null,
-            verdict: sr.rollup?.verdict ?? "",
-            supportTotal: sr.support?.total ?? 0,
-            spikeDay: sr.support?.spike?.day ?? "",
-          };
-        })(),
+        // LAST HUMAN TOUCH reads both records (C1): the later of the read's
+        // own touch and the export's last human row, with the whisper.
+        touch: lastHumanTouch(acct, sr),
+        // The row's gems and the ACT chip read only an account person's gems
+        // (C6, C16, amended 2026-10-05) through the THEIRS line's own
+        // builder — a colleague's gem never raises an act for the operator.
+        second: sheetSecond(sr),
         disposition: (() => {
           const board = boardById.get(p.id);
           // The stamp outranks everything: a Closed deal is never "in motion".
@@ -378,7 +387,11 @@ export default async function AccountsPage() {
             return { status: d.status, reason: d.reason };
           if (board?.live)
             return { status: "motion" as const, reason: "On the HomeRoom board." };
-          if (engagedIds.has(p.id) || recordSends(chipNotes.get(p.id) ?? []).length > 0)
+          // Engaged reads the conversation (field 16): any doc with a
+          // direction — a send of ours or their inbound — or any touch, so an
+          // inbound with no send reads engaged and a bounce or a sign-off
+          // alone does not; the Sendbook's tap is the second door.
+          if (acct.conversationExists || tapped.has(p.id))
             return {
               status: "engaged" as const,
               reason: "Cold outreach on the record. No HomeRoom row yet.",

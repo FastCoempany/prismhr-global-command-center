@@ -434,6 +434,7 @@ Dependency order first, then risk. Every slice is one PR: branch off main, chain
 - **App verification:** file an .eml on a row and see /accounts's LAST HUMAN TOUCH move to today with the whisper.
 - **Rollback:** revert.
 - **Size:** M.
+- **Amended 2026-10-05 (built):** the merge and the row's gem builder live in src/lib/record/accounts.ts (`lastHumanTouch`, `sheetSecond`) so the page and tests/record-read share one answer; engaged keeps the Sendbook's tap as a second door because a sendbook:<id> note is a namespaced store the read's input never carries; the row's second record is the read's folded one (E17); the ACT chip and the row's gems read `theirsLine` (C6 and C16 as amended 2026-10-05), which leaves `anyLiveGem` with no caller in a file this slice does not hold; and tests/second-record-faces holds no LAST HUMAN TOUCH pin to rewrite — its `lastHuman` fixtures feed `verifiedCold`, `orgInboundHolder` and `collisionFor`, outside C1's merge.
 
 ### Slice 16 · The Intranet's capture through the pipeline, and the extractor takes the read
 
