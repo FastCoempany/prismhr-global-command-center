@@ -11,6 +11,7 @@ import { redactMoney } from "@/lib/intel/lexicon";
 import { splitFallback } from "@/lib/room/deliverables";
 import { clip } from "@/lib/room/move-line";
 import { settledByRecord } from "@/lib/room/settled";
+import { chicagoDay } from "@/lib/tz";
 
 export type SheetTodo = {
   id: string;
@@ -127,11 +128,13 @@ function passedWall(dateIso: string, now: Date): string {
   });
 }
 
-function chicagoDay(iso: string): string {
-  const t = Date.parse(iso);
-  if (Number.isNaN(t)) return "";
-  return new Date(t)
-    .toLocaleDateString("en-US", { timeZone: "America/Chicago", weekday: "short" })
+// The weekday of the reminder's Chicago day ("WED"), read off the one day key
+// (src/lib/tz.ts) so the word and the day never disagree.
+function chicagoWeekday(iso: string): string {
+  const day = chicagoDay(iso);
+  if (!day) return "";
+  return new Date(`${day}T12:00:00Z`)
+    .toLocaleDateString("en-US", { weekday: "short", timeZone: "UTC" })
     .toUpperCase();
 }
 
@@ -165,7 +168,7 @@ export function buildAccountSheet(
 
     if (!t.done) {
       if (remindFuture)
-        out.delayed.push({ id: t.id, body, edit, when: chicagoDay(t.remindAt) });
+        out.delayed.push({ id: t.id, body, edit, when: chicagoWeekday(t.remindAt) });
       else if (isAction && delayedToday)
         out.delayed.push({ id: t.id, body, edit, when: "HELD" });
       else if (isAction) {

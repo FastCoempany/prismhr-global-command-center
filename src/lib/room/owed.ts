@@ -5,6 +5,7 @@
 // register; dismiss ✕ retires the suggestion durably. Pure.
 
 import { MINE_RE } from "@/lib/intel/provenance";
+import { chicagoDay } from "@/lib/tz";
 
 type OwedSuggestion = {
   noteId: string;
@@ -35,15 +36,9 @@ export function owedKey(noteId: string, text: string): string {
   return `owed:${noteId}:${h.toString(16)}`;
 }
 
-function chicagoDay(iso: string): string {
-  const t = Date.parse(iso);
-  if (Number.isNaN(t)) return "";
-  return new Date(t).toLocaleDateString("en-US", {
-    timeZone: "America/Chicago",
-    month: "numeric",
-    day: "numeric",
-  });
-}
+// M/D of the entry's Chicago day, read off the one day key (src/lib/tz.ts).
+const chicagoMD = (iso: string): string =>
+  chicagoDay(iso).replace(/^\d{4}-0?(\d+)-0?(\d+)$/, "$1/$2");
 
 function senderOf(actors: string): string {
   return (
@@ -155,7 +150,7 @@ export function owedToMe(
     const age = now.getTime() - Date.parse(n.createdAt);
     if (Number.isNaN(age) || age > FRESH_DAYS * 86_400_000) continue;
     const body = n.body ?? "";
-    const day = chicagoDay(n.createdAt);
+    const day = chicagoMD(n.createdAt);
 
     // Dialect 1: the cleaner's "Owed: X — @owner" lines, mine only.
     OWED_LINE_RE.lastIndex = 0;

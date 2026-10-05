@@ -26,6 +26,13 @@ export function userDayKey(iso: string | number | Date): string {
   return d.toLocaleDateString("en-CA", { timeZone: USER_TZ });
 }
 
+// The one Chicago day ("2026-09-24") every day boundary in the app reads —
+// the Chute ledger, the Scratchpaper's kicker, the morning done key, the
+// record's dates (CLAUDE.md, the closer rule: all days are Chicago days,
+// theirs or ours). userDayKey already computes exactly this; the name says
+// which day it is.
+export const chicagoDay = userDayKey;
+
 export function sameUserDay(iso: string, ref: Date | number = Date.now()): boolean {
   const k = userDayKey(iso);
   return k !== "" && k === userDayKey(ref instanceof Date ? ref : new Date(ref));

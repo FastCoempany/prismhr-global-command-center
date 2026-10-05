@@ -63,8 +63,9 @@ export function outreachSubjectKey(accountId: string): string {
 
 // The next check-in instant. "today" = a few hours from now; "tomorrow" = this
 // time tomorrow. Either way the window never includes a weekend — anything that
-// would land on Sat/Sun rolls forward to Monday (same time of day). Days are
-// UTC, consistent with dayStamp/weekStamp everywhere else. Pure given `now`.
+// would land on Sat/Sun rolls forward to Monday (same time of day). The weekend
+// check reads the UTC weekday of the instant; the day and week stamps in
+// build.ts read the Chicago day (src/lib/tz.ts). Pure given `now`.
 export function nextCheckIn(now: number, when: FollowUpWhen): Date {
   const base = when === "today" ? now + 4 * 3_600_000 : now + 86_400_000;
   let d = new Date(base);

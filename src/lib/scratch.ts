@@ -3,6 +3,8 @@
 // AccountNote rows under SCRATCH_NS, which keeps them out of every account
 // view and out of the intranet mirror by construction: the pad stays the pad.
 
+import { chicagoDay } from "@/lib/tz";
+
 export const SCRATCH_NS = "scratch:pad";
 
 // The struck archive (founder-decreed 2026-08-19): a crossed-out line moves
@@ -56,16 +58,14 @@ export function editOutcome(
 
 const CHI = "America/Chicago";
 
-const chicagoDayKey = (d: Date): string =>
-  d.toLocaleDateString("en-CA", { timeZone: CHI });
-
-// TODAY · YESTERDAY · then the dated kicker ("MON · AUG 11").
+// TODAY · YESTERDAY · then the dated kicker ("MON · AUG 11"). The day is the
+// one Chicago day every surface reads (src/lib/tz.ts).
 export function dayLabelFor(iso: string, now: Date = new Date()): string {
   const t = new Date(Date.parse(iso));
   if (Number.isNaN(t.getTime())) return "";
-  const day = chicagoDayKey(t);
-  if (day === chicagoDayKey(now)) return "TODAY";
-  if (day === chicagoDayKey(new Date(now.getTime() - 86_400_000))) return "YESTERDAY";
+  const day = chicagoDay(t);
+  if (day === chicagoDay(now)) return "TODAY";
+  if (day === chicagoDay(new Date(now.getTime() - 86_400_000))) return "YESTERDAY";
   return t
     .toLocaleDateString("en-US", {
       timeZone: CHI,
