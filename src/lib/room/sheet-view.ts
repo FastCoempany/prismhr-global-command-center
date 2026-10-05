@@ -8,9 +8,11 @@
 import { splitMarker, splitTags, visibleText } from "@/lib/today/route-notes";
 import { sameLocalDayIso } from "@/lib/today/ledger";
 import { redactMoney } from "@/lib/intel/lexicon";
+import { parseSeatBody } from "@/lib/act/lane";
 import { splitFallback } from "@/lib/room/deliverables";
 import { clip } from "@/lib/room/move-line";
 import { settledByRecord } from "@/lib/room/settled";
+import { recordSends } from "@/lib/sendbook/read";
 import { chicagoDay } from "@/lib/tz";
 
 export type SheetTodo = {
@@ -58,6 +60,19 @@ type AccountSheet = {
 
 /** How many open commitments the register shows before the door. */
 export const OPEN_SHOWN = 8;
+
+/** The Act Lane's seat as the register takes it (ruled 2026-09-25, C8). */
+export type SeatForSheet = {
+  /** The account's seat:<id> rows, newest first, as the wide loader holds
+   *  them; the newest is the seat. */
+  rows: readonly { id: string; body: string; createdAt: string }[];
+  /** The account is excluded from Groundwork's queue today — the board, the
+   *  ledger's hand, a snooze, or the record's live motion. Only then does the
+   *  seat leave the wing and read here. */
+  excluded: boolean;
+  /** Groundwork's worked stamp for the seat already stands today. */
+  workedToday?: boolean;
+};
 
 const ROW_DELAY = "row-delay:";
 const HIDE = "hide:";
@@ -149,8 +164,16 @@ export function buildAccountSheet(
   dispositions: ReadonlyMap<string, SheetDisposition>,
   now: Date,
   /** The account's record, so a commitment the record shows already landed
-   *  says so instead of nagging (decreed 2026-09-04). */
-  notes: readonly { body: string; createdAt: string }[] = [],
+   *  says so instead of nagging (decreed 2026-09-04), and so a seat the
+   *  record shows worked reads nowhere (C8). */
+  notes: readonly {
+    body: string;
+    createdAt: string;
+    source?: string;
+    actors?: string;
+  }[] = [],
+  /** The Act Lane's seat, when the account holds one (C8). */
+  seat: SeatForSheet | null = null,
 ): AccountSheet {
   const out: AccountSheet = { open: [], delayed: [], doneToday: [] };
   for (const t of todos) {
@@ -205,6 +228,34 @@ export function buildAccountSheet(
         at: stampOk ? new Date(stamp).toISOString() : t.updatedAt,
       });
   }
+  // A seat follows its account (ruled 2026-09-25, C8): when the account is
+  // excluded from Groundwork's queue, the Act Lane's seat leaves the wing and
+  // reads here as the account's own action — until it is worked (the day's
+  // stamp, or the record showing the outbound after it), taken back (✕ parks
+  // it like any record entry), or the exclusion lifts and it returns to the
+  // wing. The line is the operator's own act, ranked with the plain open
+  // lines: the seat's day is when it was seated, never when it is due.
+  const seatRow = seat?.excluded && !seat.workedToday ? seat.rows[0] : undefined;
+  const seated = seatRow ? parseSeatBody(seatRow.body) : null;
+  if (seatRow && seated && !dispositions.has(`${HIDE}note:${seatRow.id}`)) {
+    const seatAt = Date.parse(seatRow.createdAt);
+    const workedByRecord = recordSends(
+      notes.map((n) => ({
+        body: n.body,
+        source: n.source ?? "",
+        createdAt: n.createdAt,
+        ...(n.actors ? { actors: n.actors } : {}),
+      })),
+    ).some((s) => Date.parse(s.at) > seatAt);
+    if (!workedByRecord) {
+      const held = dispositions.get(`${ROW_DELAY}todo:${seatRow.id}`);
+      const line = { id: seatRow.id, body: seated.act, edit: seated.act };
+      if (held && sameLocalDayIso(held.updatedAt, now))
+        out.delayed.push({ ...line, when: "HELD" });
+      else out.open.push(line);
+    }
+  }
+
   out.doneToday.sort((a, b) => {
     const at = Number(tagsOf(todos.find((t) => t.id === a.id)?.body ?? "").doneAt);
     const bt = Number(tagsOf(todos.find((t) => t.id === b.id)?.body ?? "").doneAt);

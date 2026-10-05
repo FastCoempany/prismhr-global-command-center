@@ -76,6 +76,8 @@ import {
   MOVE_DONE_STATUS,
 } from "@/lib/room/bind";
 import { createAccountNoteRow, createTodoRow } from "@/lib/notes/write";
+import { SEAT_NS, parseSeatBody, renderSeatBody } from "@/lib/act/lane";
+import { groundworkDoneKey } from "@/lib/groundwork/file";
 import { applyStepComplete } from "@/lib/dashboard/complete";
 import { mirrorNoteToSheet } from "@/lib/today/mirror";
 import { OUTCOME_LABEL, writeOutcome, type OutcomeStatus } from "@/lib/dashboard/outcome";
@@ -1525,6 +1527,62 @@ async function patchRoomTodoTags(id: string, body: string, patch: Partial<NoteTa
   });
 }
 
+// A seat on the register (ruled 2026-09-25, C8). When its account is excluded
+// from Groundwork's queue, the Act Lane's seat reads on the TODAY register
+// with the register's own controls, and each control means what it means on
+// the wing: ✓ writes the day's worked stamp Groundwork's own button writes,
+// ↩ takes the stamp back, ⏲ holds the line for today, ✕ parks the row like
+// any record entry (restorable from the Archive), and ✎ rewrites the act with
+// the seat's term and day kept. The seat row itself is never deleted here —
+// the Act Lane's take-back is the one door that removes it.
+async function seatRowFor(
+  accountId: string,
+  id: string,
+): Promise<{ id: string; body: string } | null> {
+  const prisma = getPrisma();
+  const n = await prisma.accountNote.findUnique({
+    where: { id },
+    select: { id: true, accountId: true, body: true },
+  });
+  return n && n.accountId === `${SEAT_NS}${accountId}`
+    ? { id: n.id, body: n.body }
+    : null;
+}
+
+async function seatOp(
+  accountId: string,
+  seat: { id: string; body: string },
+  op: "done" | "undo" | "tomorrow" | "now" | "drop",
+): Promise<void> {
+  const prisma = getPrisma();
+  const stamp = groundworkDoneKey(new Date(), `${accountId}:seated`);
+  const held = `row-delay:todo:${seat.id}`.slice(0, 191);
+  const reason = seat.body.slice(0, 300);
+  if (op === "done")
+    await prisma.taskDone.upsert({
+      where: { key: stamp },
+      create: { key: stamp },
+      update: {},
+    });
+  else if (op === "undo") await prisma.taskDone.deleteMany({ where: { key: stamp } });
+  else if (op === "tomorrow")
+    await prisma.accountDisposition.upsert({
+      where: { accountId: held },
+      create: { accountId: held, status: "parked", reason },
+      update: { status: "parked", reason },
+    });
+  else if (op === "now")
+    await prisma.accountDisposition.deleteMany({ where: { accountId: held } });
+  else {
+    const key = `hide:note:${seat.id}`.slice(0, 191);
+    await prisma.accountDisposition.upsert({
+      where: { accountId: key },
+      create: { accountId: key, status: "parked", reason },
+      update: { status: "parked", reason },
+    });
+  }
+}
+
 // ✓ / ↩ / ⏲ / ✕ on an open item — Today's ledger lifecycle, spoken from the
 // room. Ops are a closed set; the todo must belong to the bound account,
 // either by its notetaker column or by a routing marker that references one
@@ -1543,7 +1601,14 @@ export async function roomTodoSet(
   try {
     const prisma = getPrisma();
     const t = await prisma.todo.findUnique({ where: { id } });
-    if (!t) return { ok: false, reason: "That item is gone." };
+    if (!t) {
+      // Not a todo: the account's seat on the register (C8), or gone.
+      const seat = await seatRowFor(acct.id, id);
+      if (!seat) return { ok: false, reason: "That item is gone." };
+      await seatOp(acct.id, seat, op);
+      refresh();
+      return { ok: true };
+    }
     let owned = (t.accountId ?? "") === acct.id;
     if (!owned) {
       const refs = splitMarker(t.body).refs;
@@ -1624,7 +1689,22 @@ export async function roomTodoEdit(
   try {
     const prisma = getPrisma();
     const t = await prisma.todo.findUnique({ where: { id } });
-    if (!t) return { ok: false, reason: "That item is gone." };
+    if (!t) {
+      // Not a todo: the account's seat on the register (C8), or gone. The act
+      // is rewritten; the term and the seated day survive, as a todo's tags
+      // do. The grammar's own separator leaves the text, and the fork's cap
+      // on the act holds.
+      const seat = await seatRowFor(acct.id, id);
+      const parsed = seat ? parseSeatBody(seat.body) : null;
+      if (!seat || !parsed) return { ok: false, reason: "That item is gone." };
+      const act = next.replace(/·/g, "-").slice(0, 200);
+      await prisma.accountNote.update({
+        where: { id },
+        data: { body: renderSeatBody({ act, term: parsed.term, day: parsed.day }) },
+      });
+      refresh();
+      return { ok: true };
+    }
     let owned = (t.accountId ?? "") === acct.id;
     if (!owned) {
       const refs = splitMarker(t.body).refs;

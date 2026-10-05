@@ -21,7 +21,6 @@ import {
   engagedNeverIntroduced,
   intentWarm,
   orgInboundKey,
-  orgInboundHolder,
   outreachGem,
   verifiedCold,
   type SecondRecord,
@@ -76,7 +75,12 @@ const RESEARCH_STALE_DAYS = 90;
 // enforced from the record 2026-08-14, because the board lags). THEY are
 // engaging when a real inbound landed inside the window, or a meeting, call,
 // or transcript filed fresh. The operator's own outbound never excludes —
-// the drumbeat rules need it.
+// the drumbeat rules need it. The exclusion reads both records (ruled
+// 2026-09-25, C6, amended 2026-10-05): an account person's inbound that landed
+// in a colleague's inbox is a real inbound — on the first record it arrives
+// through the declared roster's inbound test, on the second through the
+// export's attributed row — and it leaves the queue, producing no move for
+// the operator anywhere.
 const MOTION_INBOUND_DAYS = 21;
 const MOTION_MEETING_DAYS = 14;
 
@@ -84,11 +88,29 @@ export function liveMotionIds(
   notesById: Map<string, { body: string; source: string; createdAt: string }[]>,
   intelById: Map<string, Pick<DealIntel, "lastInbound">>,
   now: Date,
+  /** The second record by account id. Only a row with an attributed inbound
+   *  body excludes (the rollup's lastTheirs, built under the machinery and
+   *  closer reads); the account-level Last Email Received is a datetime and
+   *  never does (ruled 2026-09-25, D19). */
+  secondById?: ReadonlyMap<
+    string,
+    { rollup: { lastTheirs: { day: string } | null } | null }
+  >,
 ): Set<string> {
   const out = new Set<string>();
   for (const [id, intel] of intelById) {
     const inAt = Date.parse(intel.lastInbound || "");
     if (!Number.isNaN(inAt) && (now.getTime() - inAt) / DAY <= MOTION_INBOUND_DAYS)
+      out.add(id);
+  }
+  for (const [id, sr] of secondById ?? []) {
+    if (out.has(id)) continue;
+    const day = sr.rollup?.lastTheirs?.day ?? "";
+    if (!day) continue;
+    // A day key is a calendar fact; it reads at noon UTC, as every day key in
+    // the second record does.
+    const at = Date.parse(`${day.slice(0, 10)}T12:00:00Z`);
+    if (!Number.isNaN(at) && (now.getTime() - at) / DAY <= MOTION_INBOUND_DAYS)
       out.add(id);
   }
   for (const [id, notes] of notesById) {
@@ -379,27 +401,15 @@ function rankAll(inp: QueueInput, now: Date): QueueItem[] {
       .pop();
     // The answered check reads the WIDEST inbound the app holds (the second
     // record law): a reply that landed in a colleague's inbox still answers
-    // the thread — no bump; the move flips to coordination instead.
+    // the thread, so the drumbeat falls silent. It stages nothing in its
+    // place — the coordination move ("Ask … what they said.") is retired
+    // (ruled 2026-09-25, C6, amended 2026-10-05): a colleague's motion
+    // produces nothing for the operator to do, and an account person's reply
+    // that reached a colleague is the exclusion's business, not a rule's.
     const orgIn = orgInboundKey(sr);
     const answeredMine =
       !!intelHere?.lastInbound && !!lastOutIso && intelHere.lastInbound > lastOutIso;
     const answeredOrg = !answeredMine && !!orgIn && !!lastOutIso && orgIn > lastOutIso;
-    if (newestTouch && lastOutIso && answeredOrg) {
-      const holder = orgInboundHolder(sr);
-      const first = holder.split(" ")[0] || "";
-      candidates.push({
-        accountId: p.id,
-        name: p.name,
-        ruleId: "silence-bump",
-        weight: 72,
-        band: BAND_OF["silence-bump"],
-        action: first ? `Ask ${first} what they said.` : "Find the reply org-side.",
-        reason: first ? `Their reply went to ${first}.` : "Their reply landed org-side.",
-        owed: "ask composed",
-        carried: false,
-        intent,
-      });
-    }
     const answered = answeredMine || answeredOrg;
     if (newestTouch && lastOutIso && !answered) {
       const quiet = (now.getTime() - Date.parse(lastOutIso)) / DAY;

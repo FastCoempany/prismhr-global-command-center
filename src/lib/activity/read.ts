@@ -155,23 +155,15 @@ export function verifiedCold(sr: SecondRecord | undefined): boolean {
 
 // ── the org-wide answered check (silence-bump / cold-revival hardening) ─────
 // The widest inbound the app holds: the rollup's LAST ORG INBOUND, as a
-// sortable ISO-ish key. "" when the second record holds none.
+// sortable ISO-ish key. "" when the second record holds none. It silences
+// the drumbeat and nothing else: a datetime is never their voice (D19), and
+// who caught the reply is nobody's move (C6, amended 2026-10-05).
 
 export function orgInboundKey(sr: SecondRecord | undefined): string {
   const v = sr?.rollup?.lastOrgInbound ?? "";
   const m = /^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?/.exec(v);
   if (!m) return "";
   return m[2] ? `${m[1]}T${m[2]}:00` : `${m[1]}T12:00:00`;
-}
-
-/** The colleague most likely holding that inbound — the rollup's last human
- *  when it names a colleague. "" when the record can't say who. */
-export function orgInboundHolder(sr: SecondRecord | undefined): string {
-  const lh = sr?.rollup?.lastHuman;
-  // The operator's own rows log as colleague motion in the export — but
-  // "their reply went to Antaeus" is nonsense; you'd know.
-  if (!lh || lh.kind !== "colleague" || MINE_RE.test(lh.who)) return "";
-  return lh.who;
 }
 
 // ── the collision guard (a gate, not a rule) ────────────────────────────────
@@ -231,20 +223,19 @@ export function outreachGem(sr: SecondRecord | undefined): Gem | null {
   return null;
 }
 
-/** The newest coordination gem — the THEIRS door's strongest line when no
- *  outreach gem leads. */
+/** The newest live gem of any kind — the Accounts row's line. The THEIRS
+ *  line no longer reads it: a colleague's gem has no seat there (C16). */
 export function anyLiveGem(sr: SecondRecord | undefined): Gem | null {
   for (const g of sr?.gems ?? []) if (!g.actedDay) return g;
   return sr?.gems?.[0] ?? null;
 }
 
 // ── the THEIRS line (decreed 2026-08-20; ruled 2026-09-25, C16) ─────────────
-// THEIRS is the account's people. The line leads only with a gem about an
+// THEIRS is the account's people. The line carries only gems about an
 // account person — "their voice" means the PEO's own people, never a
-// colleague's log — so a colleague's gem never leads it; an account with no
-// live account-person gem has no THEIRS line at all. Acted gems have already
-// left the arrival surface. Colleague gems still ride behind the lead until
-// slice 11b retires their seat on the row.
+// colleague's log — so a colleague's gem has no seat on the line or the row
+// (C16, amended 2026-10-05); an account with no live account-person gem has
+// no THEIRS line at all. Acted gems have already left the arrival surface.
 
 export type TheirsLine = {
   label: string;
@@ -252,10 +243,9 @@ export type TheirsLine = {
 };
 
 export function theirsLine(sr: SecondRecord | null | undefined): TheirsLine | null {
-  const live = (sr?.gems ?? []).filter((g) => !g.actedDay);
-  const theirs = live.filter((g) => g.whoKind !== "colleague");
+  const theirs = (sr?.gems ?? []).filter((g) => !g.actedDay && g.whoKind !== "colleague");
   if (theirs.length === 0) return null;
-  const shown = [...theirs, ...live.filter((g) => g.whoKind === "colleague")].slice(0, 3);
+  const shown = theirs.slice(0, 3);
   const g = shown[0];
   const first = (g.who[0] ?? "").split(" ")[0].toUpperCase();
   const day = g.whenDay ? g.whenDay.slice(5).replace("-", "/") : "";

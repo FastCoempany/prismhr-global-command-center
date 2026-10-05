@@ -3,7 +3,10 @@
 // quote out loud (the covenant): every number rendered anywhere in the
 // app traces back to this file's arithmetic, never to generated text.
 
+import { isCloser, isMachinery } from "@/lib/intel/closer";
+import { MINE_RE } from "@/lib/intel/provenance";
 import { isMachineryName, type ActivityLane } from "./classify";
+import { replyWords } from "./excerpt";
 import { stripThreadTokens } from "./parse";
 import type { AccountSlice, StagedRow } from "./types";
 
@@ -36,8 +39,16 @@ export type Rollup = {
     subject: string;
   } | null;
   /** The account's newest org-wide inbound (Last Email Received) — a
-   *  calendar/datetime fact from the export's account-level column. */
+   *  calendar/datetime fact from the export's account-level column. A
+   *  datetime, never their voice (ruled 2026-09-25, D19): it silences the
+   *  drumbeat and nothing else. */
   lastOrgInbound: string;
+  /** Their newest word in the export (D19): the newest human-motion row whose
+   *  writer, read from the body's own signature, is on their side, and whose
+   *  subject and body pass the machinery and closer reads. null when no row
+   *  is attributed. The exclusion reads this, never lastOrgInbound; warmth
+   *  and ↩ REPLIED take it when the Sendbook migrates onto the read. */
+  lastTheirs: { day: string; who: string; subject: string } | null;
   actors: ActorTally[];
   threads: NotableThread[];
   /** Present only when no gems survived — the arithmetic honesty line. */
@@ -157,6 +168,26 @@ export function buildRollup(inp: {
     };
   }
 
+  // Their newest word (D19). The writer is the signature's name — a row with
+  // none is unattributed, and an unattributed row is never inbound (the Ted
+  // doctrine). The operator, a mechanism and a colleague are never "them".
+  // The subject takes the machinery read a head takes, and the body, cut to
+  // the reply's own words, takes the closer read: a calendar response and a
+  // "Thanks!" stay real for the lane counts and never speak here, and a body
+  // the slice cap trimmed away cannot pass a read it never took. A row naming
+  // an account person in its text or its To line is not enough — that is the
+  // operator's own send as often as their reply.
+  let lastTheirs: Rollup["lastTheirs"] = null;
+  for (const r of motion) {
+    const w = (r.w ?? "").trim();
+    if (!w || MINE_RE.test(w) || isMachineryName(w) || inp.colleagues.has(w)) continue;
+    if (isMachinery({ body: r.s, actors: w })) continue;
+    const words = replyWords(r.c ?? "");
+    if (!words || isCloser(words)) continue;
+    lastTheirs = { day: r.d, who: w, subject: stripThreadTokens(r.s).slice(0, 90) };
+    break;
+  }
+
   // Actors: resolved people counted across non-receipt rows, top six.
   const tally = new Map<string, ActorTally>();
   for (const r of rows) {
@@ -241,6 +272,7 @@ export function buildRollup(inp: {
     receipts: slice.tally.receipts,
     lastHuman,
     lastOrgInbound: slice.meta.lastEmailReceivedKey,
+    lastTheirs,
     actors,
     threads,
     verdict: "",

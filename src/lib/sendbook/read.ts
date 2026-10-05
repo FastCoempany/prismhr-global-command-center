@@ -14,6 +14,7 @@ import { isMeetingNote } from "@/lib/intel/meeting";
 import { isCloser, isMachinery } from "@/lib/intel/closer";
 import { effectiveAt } from "@/lib/intel/clock";
 import { csms } from "@/lib/book";
+import { personKey } from "@/lib/book/contacts";
 
 export const SENDBOOK_NS = "sendbook:";
 
@@ -349,6 +350,34 @@ export function weekStats(book: Sendbook, now: Date): WeekStats {
 }
 
 // "Cristina Bouchard" → "CRISTINA B." — the wing subtext's short name.
+// ── The who chip row (ruled 2026-09-25, C18) ────────────────────────────────
+// The Channel Ask's second row offers the record's people merged with the
+// book's contacts and asks only when the merged set holds more than one name.
+// The record first, most-seen first, as the read orders them; the roster
+// fills in behind, one spelling per person, so "Dana M. Reyes" on a thread
+// and "Dana Reyes" in the book are one name and the row never asks between
+// a person and herself.
+
+export function whoChipNames(
+  people: readonly { name: string }[],
+  contacts: readonly { first?: string; last?: string }[],
+  cap = 6,
+): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  const add = (raw: string) => {
+    const full = raw.replace(/\s+/g, " ").trim();
+    if (!full) return;
+    const key = personKey(full) || full.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    out.push(full);
+  };
+  for (const p of people) add(p.name);
+  for (const c of contacts) add(`${c.first ?? ""} ${c.last ?? ""}`);
+  return out.slice(0, cap);
+}
+
 export function shortName(full: string): string {
   const parts = full.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return "";

@@ -10,11 +10,12 @@ import Link from "next/link";
 import { AppWayfinder } from "@/components/app-wayfinder";
 import { getAppAccess } from "@/lib/auth";
 import { hasDatabaseEnv } from "@/lib/db";
-import { peos, getPeo } from "@/lib/book";
+import { csms, getPeo, peos } from "@/lib/book";
 import { contactCount, contactsFor } from "@/lib/book/contacts";
-import { dealIntelFor } from "@/lib/intel/extract";
 import { relationshipFor } from "@/lib/intel/relationship";
 import type { DealIntel } from "@/lib/intel/types";
+import { readAccount, secondRecordFor, type AccountRead } from "@/lib/record/read";
+import { homeSideFrom } from "@/lib/pipeline/build";
 import { RESEARCH_NS } from "@/lib/intel/deep-research";
 import {
   isNamespacedAccountId,
@@ -22,6 +23,7 @@ import {
   loadDispositions,
   loadDoneTimes,
   loadSnoozes,
+  loadTodos,
   loadTouches,
 } from "@/lib/today/overlay";
 import { clockShort, userDayKey } from "@/lib/tz";
@@ -44,10 +46,10 @@ import { cleanSubject } from "@/lib/activity/excerpt";
 import EvidenceChips from "./evidence-chips";
 import { loadDashboard } from "@/lib/dashboard/data";
 import { readOutcome } from "@/lib/dashboard/outcome";
-import { digestForCardName } from "@/lib/intel/digest";
+import { digestFor, digestForCardName } from "@/lib/intel/digest";
 import { READOUT_READ_KEY, buildFile } from "@/lib/groundwork/file";
 import { proximityMark } from "@/lib/groundwork/proximity";
-import { isSalesNav, isWire } from "@/lib/ingest/dialect";
+import { isWire } from "@/lib/ingest/dialect";
 import {
   intentFor,
   intentReadDue,
@@ -75,6 +77,7 @@ import {
   recordSends,
   shortName,
   weekStats,
+  whoChipNames,
   type NoteLike as SendNote,
 } from "@/lib/sendbook/read";
 import { SEAT_NS, parseSeatBody } from "@/lib/act/lane";
@@ -128,12 +131,13 @@ export default async function GroundworkPage({
   const canWrite = access.canWrite && hasDatabaseEnv();
   const now = new Date();
 
-  const [notesMap, touches, doneTimes, dispositions, snoozes] = await Promise.all([
+  const [notesMap, touches, doneTimes, dispositions, snoozes, todos] = await Promise.all([
     loadAccountNotes(),
     loadTouches(),
     loadDoneTimes(),
     loadDispositions(),
     loadSnoozes(),
+    loadTodos(),
   ]);
 
   // Split the note map: real accounts feed the corpus; namespaces feed the
@@ -214,7 +218,6 @@ export default async function GroundworkPage({
   });
   const sendWeek = weekStats(sendbook, now);
 
-  // Intel only where a corpus exists — regex extraction over notes + touches.
   const touchesByAccount = new Map<string, typeof touches>();
   for (const t of touches) {
     const m = /^outreach:(.+)$/.exec(t.subjectKey);
@@ -223,40 +226,63 @@ export default async function GroundworkPage({
     list.push(t);
     touchesByAccount.set(m[1], list);
   }
+
+  // Who counts as our side, read over the WHOLE book: the CSM column plus
+  // everyone the record shows working across several accounts — the same
+  // union the HomeRoom declares (E9), so the inbound test here tells a reply
+  // that reached a colleague from a thread between two of the account's own
+  // people, and an account person's mail that landed in a colleague's inbox
+  // is a real inbound (ruled 2026-09-25, C6, amended 2026-10-05).
+  const homeSide = [...csms, ...homeSideFrom(notesMap)];
+
+  // The second record, parsed once for the whole book — rule fuel, the chips,
+  // and the collision gate all read this one map; the reads and the exclusion
+  // take it folded by canonical id, so a drop keyed by a shell id reads under
+  // the one account (E17).
+  const secondById: Map<string, SecondRecord> = await fetchSecondRecords().catch(
+    () => new Map(),
+  );
+  const secondFolded = new Map<string, SecondRecord>();
+  for (const p of peos) {
+    const sr = secondRecordFor(secondById, p.id);
+    if (sr) secondFolded.set(p.id, sr);
+  }
+
+  // The single account read (src/lib/record/read.ts; the Chute brains refactor
+  // plan, §2.2, slice 11a): one read per account, built exactly as the
+  // HomeRoom builds its own — the full rows with their actors and recipients,
+  // the whole touch log and todo store, the declared roster, the seed — so
+  // this room's intel is the room's intel on the same account. The narrow
+  // corpus this replaced dropped the actors column and the roster, read a CT
+  // send as nothing and a mail between two of their people as inbound (pass 2
+  // B, rows 7 and 8). The read holds the hide filter, so the raw rows go in.
+  const readById = new Map<string, AccountRead>();
   const intelById = new Map<string, DealIntel>();
   const intentById = new Map<string, IntentSignal>();
   for (const p of peos) {
-    const notes = accountNotes.get(p.id);
-    // SN grabs and wire filings have their own parsers — they never join the
-    // mail corpus, where their glyph heads would read as inbound messages.
-    const intelNotes = (notes ?? []).filter(
-      (n) => !isSalesNav(n.source) && !isWire(n.source),
-    );
+    const rows = notesMap.get(p.id) ?? [];
     const acctTouches = touchesByAccount.get(p.id);
-    if (intelNotes.length || acctTouches?.length) {
-      intelById.set(
-        p.id,
-        dealIntelFor(p.id, p.name, {
-          // Not taught the roster here: the inbound test sits out (E2 —
-          // every caller declares what it knows).
-          homeSide: undefined,
-          acctNotes: intelNotes.map((n, i) => ({
-            id: `${p.id}:${i}`,
-            body: n.body,
-            createdAt: n.createdAt,
-            kind: "account",
-          })),
-          touches: (acctTouches ?? []).map((t) => ({
-            subjectKey: t.subjectKey,
-            label: t.label,
-            contactedAt: t.contactedAt,
-            message: t.message,
-            log: t.log ?? [],
-          })),
-        }),
-      );
+    if (rows.length || acctTouches?.length) {
+      const acct = readAccount({
+        account: {
+          id: p.id,
+          name: p.name,
+          contacts: contactsFor(p.id),
+          contact: { name: p.contactName, email: p.contactEmail },
+        },
+        notes: rows,
+        touches,
+        todos,
+        dispositions,
+        secondRecord: secondFolded.get(p.id) ?? null,
+        homeSide,
+        digest: digestFor(p.id) ?? digestForCardName(p.name),
+        now,
+      });
+      readById.set(p.id, acct);
+      intelById.set(p.id, acct.intel);
     }
-    const sig = intentFor(notes, now);
+    const sig = intentFor(accountNotes.get(p.id), now);
     if (sig) intentById.set(p.id, sig);
   }
 
@@ -284,11 +310,6 @@ export default async function GroundworkPage({
   // to work, and a stamped outcome is over. Groundwork prospects the book it
   // is NOT actively closing — those accounts leave the queue entirely.
   const excludedIds = new Set<string>();
-  // The second record, parsed once for the whole book — rule fuel, the chips,
-  // and the collision gate all read this one map.
-  const secondById: Map<string, SecondRecord> = await fetchSecondRecords().catch(
-    () => new Map(),
-  );
   // Accounts holding ANY live board card — engaged-never-introduced fires
   // only where no deal exists at all, whatever its stage.
   const boardIds = new Set<string>();
@@ -326,8 +347,11 @@ export default async function GroundworkPage({
   for (const id of snoozes.keys()) if (!id.includes(":")) excludedIds.add(id);
   // The record's live motion excludes too: a recent inbound or a fresh
   // meeting on file means the deal is being WORKED — the HomeRoom's job,
-  // whatever the lagging board says.
-  for (const id of liveMotionIds(accountNotes, intelById, now)) excludedIds.add(id);
+  // whatever the lagging board says. Both records speak (C6): the export's
+  // attributed inbound row excludes like a filed one; its account-level
+  // datetime never does (D19).
+  for (const id of liveMotionIds(accountNotes, intelById, now, secondFolded))
+    excludedIds.add(id);
 
   // A tapped touch is a logged touch (Ted doctrine: the drumbeat reads the
   // widest store) — synthesized at read time for the queue's clocks, never
@@ -352,6 +376,9 @@ export default async function GroundworkPage({
     if (!accountId || !seatNote) continue;
     const seat = parseSeatBody(seatNote.body);
     if (!seat) continue;
+    // ✕ on the register parks the seat like any record entry (C8); a parked
+    // seat stays off the wing until the Archive restores it.
+    if (dispositions.has(`hide:note:${seatNote.id}`)) continue;
     const seatAt = Date.parse(seatNote.createdAt);
     const worked = recordSends(notesMap.get(accountId) ?? []).some(
       (s) => Date.parse(s.at) > seatAt,
@@ -511,11 +538,14 @@ export default async function GroundworkPage({
           })),
           laneDate: ridingLaneDate(accountNotes.get(stageItem.accountId), now),
           research: researchByAccount.get(stageItem.accountId) ?? null,
-          relationship: relationshipFor(
-            notesMap.get(stageItem.accountId) ?? [],
-            contactsFor(stageItem.accountId),
-            { name: stageAccount.contactName, email: stageAccount.contactEmail },
-          ),
+          // The read's relationship — the record's most-seen person over the
+          // book's seed; an account with no record reads the seed.
+          relationship:
+            readById.get(stageItem.accountId)?.relationship ??
+            relationshipFor([], contactsFor(stageItem.accountId), {
+              name: stageAccount.contactName,
+              email: stageAccount.contactEmail,
+            }),
           second: await (async () => {
             const sr = secondById.get(stageItem.accountId);
             if (!sr) return null;
@@ -797,10 +827,13 @@ export default async function GroundworkPage({
                       <ChannelAsk
                         mk={moveKey(stageItem)}
                         accountId={stageItem.accountId}
-                        contacts={contactsFor(stageItem.accountId)
-                          .map((c) => [c.first, c.last].filter(Boolean).join(" "))
-                          .filter(Boolean)
-                          .slice(0, 6)}
+                        // The record's people merged with the book's contacts;
+                        // the row asks only when the merged set holds more
+                        // than one name (ruled 2026-09-25, C18).
+                        contacts={whoChipNames(
+                          readById.get(stageItem.accountId)?.people ?? [],
+                          contactsFor(stageItem.accountId),
+                        )}
                         clause={stageItem.action}
                         accent={stageItem.ruleId !== "stale-above-gate"}
                       />

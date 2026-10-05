@@ -42,6 +42,9 @@ import { moveDoneKey } from "@/lib/room/bind";
 import { meetingRead } from "@/lib/intel/meeting";
 import { buildStageRail } from "@/lib/room/stages-view";
 import { buildAccountSheet } from "@/lib/room/sheet-view";
+import { liveMotionIds } from "@/lib/groundwork/day";
+import { groundworkDoneKey } from "@/lib/groundwork/file";
+import { SEAT_NS } from "@/lib/act/lane";
 import { readLoss } from "@/lib/room/loss";
 import { GAP_DISMISS, readGaps } from "@/lib/room/gaps";
 import { latestResearchAt, researchNs } from "@/lib/intel/deep-research";
@@ -262,6 +265,26 @@ export default async function RoomPage() {
     // person we wait on (the Regis row, 2026-08-27; E9).
     const touchRead = acct.lastTouch;
     const noteIds = new Set(allNotes.map((n) => n.id));
+    // A seat follows its account (ruled 2026-09-25, C8). Groundwork's queue
+    // excludes an account on four facts — the board (a deal at demo or later,
+    // or a stamped outcome: the read's stage), the ledger's hand (not-mine,
+    // parked), a snooze, and the record's live motion on either record — and
+    // the register asks the same four here, per row, so an excluded account's
+    // seat reads on its TODAY register and nowhere else; the moment the
+    // exclusion lifts it returns to the wing.
+    const dispo = accountId ? dispositions.get(accountId)?.status : undefined;
+    const excluded =
+      !!accountId &&
+      (!!acct.stage?.late ||
+        dispo === "not-mine" ||
+        dispo === "parked" ||
+        snoozes.has(accountId) ||
+        liveMotionIds(
+          new Map([[accountId, allNotes]]),
+          new Map([[accountId, acct.intel]]),
+          now,
+          acct.secondRecord ? new Map([[accountId, acct.secondRecord]]) : undefined,
+        ).has(accountId));
     const sheet = buildAccountSheet(
       todos,
       accountId,
@@ -269,6 +292,13 @@ export default async function RoomPage() {
       dispositions,
       now,
       allNotes,
+      accountId
+        ? {
+            rows: notesById.get(`${SEAT_NS}${accountId}`) ?? [],
+            excluded,
+            workedToday: doneKeys.has(groundworkDoneKey(now, `${accountId}:seated`)),
+          }
+        : null,
     );
     // Owed-to-you lines the record holds, minus anything dismissed or already
     // open on the register — the same read the suggestions use.
@@ -510,9 +540,10 @@ export default async function RoomPage() {
       labels: data.labels,
     });
 
-    // THEIRS is the account's people (ruled 2026-09-25, C16): the line leads
-    // only with a gem about an account person, read from the folded second
-    // record the read carries.
+    // THEIRS is the account's people (ruled 2026-09-25, C16, amended
+    // 2026-10-05): the line carries only gems about an account person, read
+    // from the folded second record the read carries; a colleague's gem has
+    // no seat on the line or the row.
     const theirs = theirsLine(acct.secondRecord);
 
     rows.push({

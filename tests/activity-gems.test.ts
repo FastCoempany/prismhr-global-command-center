@@ -45,6 +45,11 @@ const rollup: Rollup = {
     subject: "Re: Partner Introduction ~ Zayzoon | TrendHR",
   },
   lastOrgInbound: "2026-08-19 09:02",
+  lastTheirs: {
+    day: "2026-08-19",
+    who: "Natalie Borland",
+    subject: "Re: Partner Introduction ~ Zayzoon | TrendHR",
+  },
   actors: [
     { name: "Natalie Borland", kind: "account", lane: "human", n: 9 },
     { name: "Anika Steenstra", kind: "colleague", lane: "csm", n: 3 },
@@ -198,7 +203,7 @@ test("stage and manifest blocks round-trip", () => {
     name: "Trend Personnel",
     meta: {
       primaryContactEmail: "",
-    primaryContact: "Natalie Borland",
+      primaryContact: "Natalie Borland",
       primaryContactTitle: "CFO",
       lastContact: "",
       contactedDate: "4/12/2017",
@@ -223,7 +228,7 @@ test("stage and manifest blocks round-trip", () => {
     dropped: 0,
     tally: { days: {}, camps: {}, receipts: 0 },
     laneEmails: { human: 0, csm: 0, support: 0, intent: 0, machinery: 0 },
-  laneCounts: { human: 1, csm: 0, support: 0, intent: 0, machinery: 0 },
+    laneCounts: { human: 1, csm: 0, support: 0, intent: 0, machinery: 0 },
     rowsSum: "r",
     tallySum: "t",
   };
@@ -367,6 +372,5 @@ test("the activity prefix deliberately takes the staged slices and the manifest"
 // A real Salesforce account id can never collide with a namespace.
 test("an account id never looks like a namespace", () => {
   for (const id of ["001F000000w38OIIAY", "0012A00002ECIYxQAP"])
-    for (const span of SECOND_RECORD_SPANS)
-      assert.equal(id.startsWith(span.ns), false);
+    for (const span of SECOND_RECORD_SPANS) assert.equal(id.startsWith(span.ns), false);
 });
