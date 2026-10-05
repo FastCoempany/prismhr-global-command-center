@@ -287,6 +287,26 @@ describe("a structured body redacts its words and keeps its counts", () => {
 
 // ── The Spring (:377-378): the Todo writer's codec reads back unchanged ───
 describe("createTodoRow writes the sheet's codec", () => {
+  test("a figure in the body is redacted before the tags ride; the tags are untouched", async () => {
+    const { client, writes } = todoStub();
+    await createTodoRow(
+      {
+        body: "Send the $1,200 PEPM model.",
+        tags: { kind: "action" },
+        due: "2026-07-30",
+        now: new Date("2026-07-28T15:00:00Z"),
+        accountId: "A1",
+      },
+      client,
+    );
+    const body = writes[0]!.body;
+    assert.ok(!body.includes("1,200"), body);
+    assert.equal(redactMoney(body), body, "the stored body carries no figure");
+    const { tags } = splitTags(body);
+    assert.equal(tags.date, "2026-07-30");
+    assert.equal(tags.kind, "action");
+  });
+
   test("a dated commitment: the wall, its urgency and kind, read back by splitTags unchanged", async () => {
     const now = new Date("2026-07-28T15:00:00Z");
     const { client, writes } = todoStub();

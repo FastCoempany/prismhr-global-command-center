@@ -214,7 +214,10 @@ export async function createTodoRow(
   t: NewTodo,
   client: TodoClient = getPrisma(),
 ): Promise<{ id: string }> {
-  let body = t.body;
+  // The money doctrine holds for a Todo as for a note: the figure is cut
+  // before the tags ride, so the codec never carries one and a caller that
+  // hands raw text cannot bypass it (slice 6 raised the gap).
+  let body = redactMoney(t.body);
   let remindAt = t.remindAt;
   if (t.tags || t.due !== undefined) {
     const tags: NoteTags = { ...NO_TAGS, ...t.tags };
