@@ -1,0 +1,12 @@
+-- The door a note came through, in its own column beside `source`.
+--
+-- Provenance is columns (ruled 2026-09-25, P3/P4): every note carries its
+-- door — chute, drop, act-lane, intranet, activity, seed, hand — beside
+-- `source`, which names the dialect, and its lane, actors and recipients. The
+-- writer (src/lib/notes/write.ts) now requires it; the roster of doors lives in
+-- src/lib/ingest/doors.ts. A bare row is a defect by the ruling.
+--
+-- Additive and defaulted. Existing rows read as "" — filed before the column
+-- existed — and nothing reads the column yet; the Filing table (slice 4) and
+-- the receipt face (slice 18) are what will.
+ALTER TABLE "AccountNote" ADD COLUMN "door" TEXT NOT NULL DEFAULT '';

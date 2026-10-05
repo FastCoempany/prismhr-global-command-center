@@ -63,6 +63,7 @@ export async function applyStepComplete(args: {
       accountId,
       kind: "account",
       body,
+      door: "hand",
       lane: "mine",
       source: "move",
     });

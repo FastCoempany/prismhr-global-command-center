@@ -75,6 +75,7 @@ export async function scratchAdd(
       accountId: SCRATCH_NS,
       kind: "mine",
       body: text,
+      door: "hand",
       lane: "mine",
       source: "scratch",
       at,

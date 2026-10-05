@@ -31,6 +31,7 @@ export async function approveSecondDraft(formData: FormData): Promise<void> {
     accountId,
     accountName,
     known,
+    door: "hand",
   });
   revalidatePath("/playbook");
 }

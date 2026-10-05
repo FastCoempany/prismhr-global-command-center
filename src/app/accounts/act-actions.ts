@@ -11,7 +11,7 @@
 import { revalidatePath } from "next/cache";
 import { getAppAccess } from "@/lib/auth";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
-import { createAccountNoteRow } from "@/lib/notes/write";
+import { createAccountNoteRow, createTodoRow } from "@/lib/notes/write";
 import { redactMoney } from "@/lib/intel/lexicon";
 import { userDayKey } from "@/lib/tz";
 import { GEMS_NS, parseGemsBody, renderGemsBody } from "@/lib/activity/stores";
@@ -66,6 +66,7 @@ export async function saveActDraft(args: {
       accountId: `${ACT_DRAFT_NS}${accountId}`,
       kind: "mine",
       body,
+      door: "act-lane",
       lane: "mine",
       source: "act-lane",
     });
@@ -90,6 +91,7 @@ export async function fileActSend(args: {
     await createAccountNoteRow({
       accountId,
       kind: "mine",
+      door: "act-lane",
       ...actSendRow({ to, subject }),
     });
     // The draft is consumed by the send.
@@ -173,19 +175,7 @@ export async function forkAct(args: {
   const prisma = getPrisma();
   try {
     if (args.toHome) {
-      const top = await prisma.todo.findFirst({
-        orderBy: { position: "desc" },
-        select: { position: true },
-      });
-      const t = await prisma.todo.create({
-        data: {
-          body: act,
-          done: false,
-          position: (top?.position ?? -1) + 1,
-          accountId,
-          remindAt: new Date(),
-        },
-      });
+      const t = await createTodoRow({ body: act, accountId, remindAt: new Date() });
       refresh();
       return { ok: true, undo: { kind: "todo", id: t.id } };
     }
@@ -197,6 +187,7 @@ export async function forkAct(args: {
       accountId: `${SEAT_NS}${accountId}`,
       kind: "mine",
       body: redactMoney(renderSeatBody({ act, term, day: userDayKey(new Date()) })),
+      door: "act-lane",
       lane: "mine",
       source: "act-lane",
     });
