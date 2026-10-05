@@ -1,15 +1,18 @@
 // The ingest-defect reproductions from audit pass 1 (docs/architecture/
 // chute-architecture-map.md on the audit branch). One test per bug, named
-// for the bug it pins. The FIX NOW set lives here and runs in the verify
-// chain; the FIX IN REFACTOR set lives in ingest-defects-deferred.test.ts,
-// outside the chain, each with the refactor that closes it named.
+// for the bug it pins. The FIX NOW set ran here from the start; the FIX IN
+// REFACTOR set (bugs 1 and 2) waited in ingest-defects-deferred.test.ts,
+// outside the chain, until slice 8 of the Chute brains refactor plan put the
+// doors over shared hooks (src/app/room/ingest) and closed them; those two
+// moved here, re-aimed at the hooks' behavior, and the deferred file is gone.
 //
 // roomPaste and roomPasteUndo cannot be called from a test: both gate on
 // getAppAccess (next/headers cookies) and getPrisma, so these tests read the
 // source the way misfile-guard and read-absorption already do. Where the
-// behavior is pure (judgeFiling), the test calls it. The pins on receipt and
-// comment wording were retired 2026-09-25; what still reads source is the
-// sequencing inside the server actions, which has no callable seam.
+// behavior is pure (judgeFiling, the hooks' plan and request builders), the
+// test calls it. The pins on receipt and comment wording were retired
+// 2026-09-25; what still reads source is the sequencing inside the server
+// actions, which has no callable seam.
 
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
@@ -19,6 +22,11 @@ import { cwd } from "node:process";
 import { judgeFiling } from "../src/lib/intel/misfile";
 import { readFreeVerdict } from "../src/lib/room/paste";
 import type { RouteAccount } from "../src/lib/route-capture";
+import { splitDrop, vaultAfterVerdict } from "../src/lib/room/drop-plan";
+import { DROP_ACCEPT } from "../src/lib/paste-files";
+import { filingRequest, planDrop } from "../src/app/room/ingest/use-ingest";
+import { holdVerdict } from "../src/app/room/ingest/use-verdict";
+import { undoRequest } from "../src/app/room/ingest/use-undo";
 
 const root = cwd();
 const read = (p: string) => readFileSync(join(root, p), "utf8");
@@ -86,6 +94,56 @@ const TAPE = [
   "Antaeus Coe: Hi, Chassie, how are you?",
   "Chassie Smith: Good, thanks for making time.",
 ].join("\n");
+
+describe("bug 1 — the Chute picker's mismatch fell through to the vault", () => {
+  // Closed 2026-10-02 by the C20 scaffold (the text rides the row before the
+  // read) and pinned on the hook since slice 8: the held verdict carries the
+  // text with it, and the pick's re-run files that text with force (D5).
+  test("a disputed auto-route keeps its text for the pick, and the pick files it", () => {
+    const disputed = {
+      ok: false,
+      mismatch: { claim: "Simploy", bound: "Regis HR Group", rung: "text" as const, reason: "Names Simploy staff, not Regis HR Group." },
+      reason: "Names Simploy staff, not Regis HR Group.",
+    };
+    const held = holdVerdict(disputed, { text: TAPE, windows: [] });
+    assert.ok(held, "a dispute is held, never dropped");
+    assert.equal(held.text, TAPE, "the text rides with the question");
+    assert.equal(held.reason, "Names Simploy staff, not Regis HR Group.");
+    const [accountId, text, opts] = filingRequest("chute", SIMPLOY.id, held.text, {
+      force: true,
+      windows: held.windows,
+    });
+    assert.equal(accountId, SIMPLOY.id);
+    assert.equal(text, TAPE, "the pick files the held text, not a re-read of nothing");
+    assert.equal(opts?.force, true, "the pick is final: the filing re-runs with force (D5)");
+    assert.equal(opts?.door, "chute");
+  });
+});
+
+describe("bug 2 — the Drop files the first readable file only", () => {
+  // Closed by the shared door (slice 8): every readable file in a drop is
+  // read, each through the pipeline, each with its own receipt. splitDrop
+  // used to hand the reader ONE readable file and send every other file to
+  // the vault unread, so two .eml files dropped on a row filed one and lost
+  // the other to the record.
+  test("every readable file in a drop is read, not just the first", () => {
+    const a = new File(["From: a@x.com\nSubject: one\n\nbody one"], "one.eml");
+    const b = new File(["From: b@x.com\nSubject: two\n\nbody two"], "two.eml");
+    const split = splitDrop([a, b], DROP_ACCEPT);
+    const unreadReadable = split.unreadable.filter((f) => /\.eml$/i.test(f.name));
+    assert.deepEqual(
+      unreadReadable.map((f) => f.name),
+      [],
+      "a readable file went to the vault unread",
+    );
+    assert.deepEqual(split.readables, [a, b], "both files reach the reader, in drop order");
+    for (const door of ["drop", "chute"] as const) {
+      const plan = planDrop([a, b], door);
+      assert.deepEqual(plan.read, [a, b], `${door}: both files are read`);
+      assert.deepEqual(plan.vault, [], `${door}: nothing readable is vaulted unread`);
+    }
+  });
+});
 
 describe("bug 3 — the guard's comments and copy contradict the canon", () => {
   // CLAUDE.md (the Chute): "Nothing files blind: no sure match or a disputed
@@ -185,21 +243,46 @@ describe("bug 6 — undo is partial", () => {
     // namespaces can be reached by a forged id list.
     assert.ok(pasteUndo.includes("accountId: acct.id"));
   });
-  test("both doors hand the todo ids to the undo", () => {
-    assert.match(chute, /roomPasteUndo\(acct\.id, ids, it\.todoIds/);
-    assert.match(client, /roomPasteUndo\(row\.accountId, ids, /);
+  test("both doors hand the todo ids and the filing id to the undo", () => {
+    // The take-back is the shared hook's since slice 8 (use-undo.ts): the
+    // request carries every id the receipt kept and the Filing id when the
+    // filing wrote one, so a row filed before the Filing table still undoes
+    // by its lists and a row filed after undoes whole by its id.
+    const [accountId, noteIds, todoIds, filingId] = undoRequest(SIMPLOY.id, {
+      noteIds: ["n1", "n2"],
+      todoIds: ["t1"],
+      filingId: "f1",
+    });
+    assert.equal(accountId, SIMPLOY.id);
+    assert.deepEqual(noteIds, ["n1", "n2"]);
+    assert.deepEqual(todoIds, ["t1"]);
+    assert.equal(filingId, "f1");
+    const older = undoRequest(SIMPLOY.id, { noteIds: ["n1"] });
+    assert.deepEqual(older.slice(1), [["n1"], [], undefined], "a pre-Filing receipt undoes by its lists");
+    // Neither door reaches the server's undo on its own any more.
+    assert.ok(chute.includes("useUndo()"), "the Chute takes the shared undo");
+    assert.ok(client.includes("useUndo()"), "the Drop takes the shared undo");
+    assert.ok(!chute.includes("roomPasteUndo("), "the Chute calls the hook, not the action");
+    assert.ok(!client.includes("roomPasteUndo("), "the Drop calls the hook, not the action");
   });
 });
 
 describe("bug 8 — every non-primary file dropped on a row is vaulted twice", () => {
   test("the waiting list excludes files already vaulted as unreadable", () => {
-    // Both archiveFiles calls stay (vault.test.ts pins them as decreed):
-    // the unreadable ones go at once, the readable one waits on the
-    // verdict. The defect was that `waiting` carried the whole drop, so
+    // The plan is the shared door's (use-ingest.ts, slice 8): the unreadable
+    // ones go to the vault at once, each readable one waits on its own
+    // verdict alone. The defect was that `waiting` carried the whole drop, so
     // every non-primary file was PUT again on accept.
-    assert.ok(client.includes("void archiveFiles(unreadable)"));
-    assert.ok(client.includes("void archiveFiles(waiting)"));
-    assert.ok(!client.includes("readDroppedFile(f, files)"));
-    assert.ok(client.includes("readDroppedFile(f, [f])"));
+    const vtt = new File(["WEBVTT"], "call.vtt");
+    const mp4 = new File([new Uint8Array(8)], "call.mp4");
+    const png = new File([new Uint8Array(8)], "whiteboard.png");
+    const plan = planDrop([mp4, vtt, png], "drop");
+    assert.deepEqual(plan.vault, [mp4], "the unreadable one goes at once");
+    assert.deepEqual(plan.read, [vtt, png], "each readable one waits on its own verdict");
+    assert.deepEqual(plan.refused, []);
+    for (const f of plan.read)
+      assert.ok(!plan.vault.includes(f), `${f.name} is in both lists, so it would vault twice`);
+    // Accepted: the waiting list is the one file, so the vault takes it once.
+    assert.deepEqual(vaultAfterVerdict({ ok: true }, [vtt]).archive, [vtt]);
   });
 });

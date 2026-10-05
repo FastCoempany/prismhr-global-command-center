@@ -31,7 +31,14 @@ const dashActions = (await import("../src/app/accounts/board-actions")) as Recor
   string,
   unknown
 >;
-const modules = { room: roomActions, ledger: ledgerActions, dash: dashActions };
+// The shared door hooks (slice 8): the Drop reads, files, holds a verdict and
+// takes back through them, so each is a real export too.
+const ingestHooks = {
+  ...(await import("../src/app/room/ingest/use-ingest")),
+  ...(await import("../src/app/room/ingest/use-verdict")),
+  ...(await import("../src/app/room/ingest/use-undo")),
+} as Record<string, unknown>;
+const modules = { room: roomActions, ledger: ledgerActions, dash: dashActions, ingest: ingestHooks };
 
 // A board of two: one live row with open work, an owed line and a sheet; one
 // row whose record reads lost, so the judgment banner paints too.
@@ -152,6 +159,15 @@ describe("room client — every absorbed capability is wired", () => {
       shows: /The bolt — paste anything\. It reads and files to Simploy\./,
     },
     { what: "a paste can be undone whole", action: "roomPasteUndo", from: "room" },
+    // the shared door: the Drop files, holds a verdict and takes back through the hooks
+    {
+      what: "the Drop files through the shared door",
+      action: "useIngest",
+      from: "ingest",
+      shows: /File — email, PDF, transcript, spreadsheet, document, or image\./,
+    },
+    { what: "a disputed paste is held for the pick", action: "useVerdict", from: "ingest" },
+    { what: "the paste's take-back is the shared undo", action: "useUndo", from: "ingest" },
     { what: "the move closes for real", action: "roomClose", from: "room", shows: /Mark it done/ },
     // the roundups engine in the drawer
     { what: "copy & mark sent", action: "logTouch", from: "ledger", shows: /Copy &amp; mark sent/ },

@@ -12,50 +12,35 @@
 // rides when the key is on. Nothing files blind: an unroutable file waits
 // with a picker, and a read that disagrees with the route waits for the
 // operator's call.
+//
+// The mechanics live in the shared door hooks (./ingest, slice 8 of the
+// Chute brains refactor plan): accept, read, route, file and vault through
+// useIngest, the held verdict through use-verdict, the ledger through
+// useReceipts, the take-back through useUndo. This file is the face: what a
+// row says, the picker, the bar and the fold.
 
 import { useEffect, useRef, useState } from "react";
-import { chuteReadPdf, roomPaste, roomPasteUndo } from "./actions";
-import {
-  activityReceipt,
-  activityRun,
-  activityStage,
-  activityTakeBack,
-} from "../activity/actions";
-import { chuteBook, routeText, type BookName } from "./route-actions";
-import { vaultChunk, vaultFile } from "./vault-actions";
-import { sendToVault } from "@/lib/ingest/vault";
+import { chuteReadPdf } from "./actions";
+import { activityRun, activityStage, activityTakeBack } from "../activity/actions";
+import { chuteBook, type BookName } from "./route-actions";
 import { probeActivityReport, uploadActivityReport } from "@/lib/activity/upload";
-import { readFileToText } from "./read-file";
 import { filingSentences, type Window } from "@/lib/ingest/windows";
-import { vaultAfterVerdict } from "@/lib/room/drop-plan";
-import {
-  CHUTE_PARALLEL,
-  isSettled,
-  loadLedger,
-  reconcileActivityRows,
-  runLimited,
-  saveLedger,
-  type LedgerRow,
-} from "./chute-ledger";
+import { useIngest } from "./ingest/use-ingest";
+import { holdVerdict } from "./ingest/use-verdict";
+import { useReceipts, type Receipt } from "./ingest/use-receipts";
+import { useUndo } from "./ingest/use-undo";
 import styles from "./room.module.css";
 
-// The row the ledger keeps lives in chute-ledger.ts (pure, testable); the
-// component adds the one field that never persists.
-type ChuteItem = LedgerRow & {
-  /** The dropped File itself — volatile, never persisted; a reload loses it
-   *  and the pick line says so honestly. Carried so a recording can vault
-   *  after the operator picks its account. */
-  file?: File;
-};
-
 export function Chute({ canWrite }: { canWrite: boolean }) {
-  const [items, setItems] = useState<ChuteItem[]>([]);
+  const ingest = useIngest({ door: "chute", readPdf: chuteReadPdf });
+  const receipts = useReceipts();
+  const { items, patch } = receipts;
+  const { undo } = useUndo();
   const [hot, setHot] = useState(false);
   // The ledger folds: the meter line says what is running, anything waiting
   // on the operator's pick stays visible, and at most two other rows show —
   // the page belongs to the opportunities, not the receipts.
   const [ledgerOpen, setLedgerOpen] = useState(false);
-  const seq = useRef(0);
   const inputRef = useRef<HTMLInputElement | null>(null);
   // The picker's names, and the second record's book: names only, from the
   // router's door. The roster itself — addresses, domains, people — stays on
@@ -71,50 +56,6 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
   const bookOrFetched = async (): Promise<BookName[]> =>
     book.length ? book : await chuteBook();
 
-  // A stored second-record receipt is a SEED; the manifest's live run state
-  // is the record, and the record outranks every seed (the Ted doctrine,
-  // applied to receipts). A drop that failed at 13:51 and was re-run green
-  // from the intranet dock at 17:37 sat red on this ledger for four hours
-  // (2026-09-01) — so every settled activity entry re-reads the live receipt
-  // on mount and again each time the tab comes back into view. A run still
-  // in flight is left alone; the dock is narrating it.
-  const reconcileSecondRecord = async () => {
-    const live = await activityReceipt();
-    // The reconcile is pure (chute-ledger.ts); it hands back the same array
-    // when nothing changes, so the setter bails out.
-    setItems((xs) => reconcileActivityRows(xs, live));
-  };
-
-  // Reload the day's ledger once on mount; persist on every change after.
-  const loaded = useRef(false);
-  useEffect(() => {
-    const back = () => {
-      if (document.visibilityState === "visible") void reconcileSecondRecord();
-    };
-    document.addEventListener("visibilitychange", back);
-    const stored = loadLedger(localStorage);
-    seq.current = stored.maxKey;
-    loaded.current = true;
-    if (!stored.items.length) {
-      return () => document.removeEventListener("visibilitychange", back);
-    }
-    // Deferred so hydration completes against the server's empty list first.
-    const t = setTimeout(() => {
-      setItems(stored.items);
-      if (stored.items.some((x) => x.act)) void reconcileSecondRecord();
-    }, 0);
-    return () => {
-      clearTimeout(t);
-      document.removeEventListener("visibilitychange", back);
-    };
-  }, []);
-  useEffect(() => {
-    if (loaded.current) saveLedger(items, localStorage);
-  }, [items]);
-
-  const patch = (key: number, up: Partial<ChuteItem>) =>
-    setItems((xs) => xs.map((x) => (x.key === key ? { ...x, ...up } : x)));
-
   const fileTo = async (
     key: number,
     text: string,
@@ -128,12 +69,16 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
     windows?: Window[],
   ) => {
     // The text rides on the row: a mismatch waits for the pick with the text
-    // it needs to file, and the ledger keeps it across a reload.
+    // it needs to file, and the ledger keeps it across a reload (C20).
     patch(key, { state: "filing", account, why, rung, text, windows });
-    const r = await roomPaste(account.id, text, { force, door: "chute", windows });
+    const r = await ingest.file(account.id, text, {
+      force,
+      windows,
+      waiting: srcFile ? [srcFile] : [],
+    });
     // The same verdict gate the row's Drop runs: the file vaults only once the
     // filing is accepted; a dispute keeps it on the row for the pick.
-    const [vaulting] = vaultAfterVerdict(r, srcFile ? [srcFile] : []).archive;
+    const [vaulting] = r.vault.archive;
     if (vaulting) void vaultTo(key, account, vaulting, false);
     if (r.ok)
       patch(key, {
@@ -152,9 +97,14 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
       });
     else if (r.duplicate)
       patch(key, { state: "dupe", reason: r.reason ?? "Already on file." });
-    else if (r.mismatch)
-      patch(key, { state: "mismatch", claim: r.mismatch.claim, reason: r.reason });
-    else patch(key, { state: "error", reason: r.reason ?? "The file didn't take." });
+    else {
+      // The row already carries the text and the windows; the verdict adds
+      // the claim and its reason, which the pick line says (D9 as amended
+      // 2026-10-05).
+      const held = holdVerdict(r, {});
+      if (held) patch(key, { state: "mismatch", claim: held.claim, reason: held.reason });
+      else patch(key, { state: "error", reason: r.reason ?? "The file didn't take." });
+    }
   };
 
   // The vault ride (founder-decreed 2026-09-02; canon since 2026-09-25, D8,
@@ -162,9 +112,9 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
   // also archives whole to the GitHub vault under the account it routed to —
   // readable files after they file, recordings and other binaries as their
   // whole filing; a duplicate drop vaults nothing new. The server does the
-  // carrying (src/app/room/vault-actions.ts), so no token reaches the
-  // browser; a file above one request's cap goes up in pieces the server
-  // assembles before it lands (src/lib/ingest/vault.ts).
+  // carrying, so no token reaches the browser; a file above one request's cap
+  // goes up in pieces the server assembles before it lands (useIngest's
+  // vault, over src/lib/ingest/vault.ts).
   const vaultTo = async (
     key: number,
     account: { id: string; name: string },
@@ -173,12 +123,8 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
   ) => {
     if (alone) patch(key, { state: "filing", account });
     patch(key, { vault: { text: `vaulting ${f.name}…` } });
-    const r = await sendToVault(
-      account.id,
-      f,
-      { whole: vaultFile, piece: vaultChunk },
-      (sent, total) =>
-        patch(key, { vault: { text: `vaulting ${f.name}… ${sent} of ${total}` } }),
+    const r = await ingest.vault(account.id, f, (sent, total) =>
+      patch(key, { vault: { text: `vaulting ${f.name}… ${sent} of ${total}` } }),
     );
     patch(key, {
       vault: r.ok
@@ -258,24 +204,28 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
     }
   };
 
-  const swallow = async (f: File, key: number) => {
+  // One file, start to finish. `vaultOnly` is the plan's word on a file the
+  // reader cannot open: it skips the read and goes to the vault by its
+  // filename or waits for the pick.
+  const swallow = async (f: File, key: number, vaultOnly: boolean) => {
     try {
       if (/\.csv$/i.test(f.name) && (await probeActivityReport(f))) {
         await swallowActivity(f, key);
         return;
       }
-      const read = await readFileToText(f, chuteReadPdf);
       // The route runs on the server over the joined roster (C2, D12); what
       // comes back is the verdict and the picker's names.
       const routed = async (text: string) => {
-        const r = await routeText(text);
+        const r = await ingest.route(text);
         if (r.book.length) setBook(r.book);
         return r;
       };
-      if (!read.ok) {
-        // Not readable — a recording, an archive, a binary. It still belongs
-        // in the vault: route by the filename (a Teams recording usually
-        // carries the meeting's name) and otherwise wait for the pick.
+      const read = vaultOnly ? null : await ingest.read(f);
+      if (!read?.ok) {
+        // Not readable — a recording, an archive, a binary, or a read that
+        // came back empty. It still belongs in the vault: route by the
+        // filename (a Teams recording usually carries the meeting's name) and
+        // otherwise wait for the pick.
         const { best, candidates, refused } = await routed(f.name);
         if (refused) patch(key, { state: "error", reason: refused });
         else if (best) await vaultTo(key, { id: best.id, name: best.name }, f, true);
@@ -308,34 +258,24 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
     const batch = ++batchSeq.current;
     const files = Array.from(list ?? []);
     // Every file gets its row the moment it lands; the reads run at most
-    // CHUTE_PARALLEL at a time, in drop order — the rest wait their turn.
-    const seated = files.map((f) => ({ f, key: ++seq.current }));
-    setItems((xs) => [
-      ...seated
-        .map(({ f, key }) => ({
-          key,
-          filename: f.name,
-          state: "reading" as const,
-          batch,
-          file: f,
-        }))
-        .reverse(),
-      ...xs,
-    ]);
-    void runLimited(
+    // CHUTE_PARALLEL at a time, in drop order — the rest wait their turn
+    // (D11). The plan says which files the reader cannot open; on the Chute
+    // a .csv is read, because the weekly export is this door's to take.
+    const vaultOnly = new Set(ingest.plan(files).vault);
+    const seated = receipts.seat(files, batch);
+    void ingest.limited(
       seated.map(
         ({ f, key }) =>
           () =>
-            swallow(f, key),
+            swallow(f, key, vaultOnly.has(f)),
       ),
-      CHUTE_PARALLEL,
     );
   };
 
   // Files thrown together are almost always one account's export. When an
   // unsure file's batch-mates filed somewhere, that account is the one-click
   // suggestion; the picker stays as the fallback.
-  const batchMate = (it: ChuteItem): { id: string; name: string } | null => {
+  const batchMate = (it: Receipt): { id: string; name: string } | null => {
     if (it.batch == null) return null;
     const counts = new Map<string, { id: string; name: string; n: number }>();
     for (const x of items) {
@@ -349,17 +289,17 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
   };
 
   // A settled receipt is the operator's to clear (decreed 2026-09-01); the
-  // gate is isSettled in chute-ledger.ts.
+  // gate is isSettled in chute-ledger.ts, read through the ledger hook.
 
   // One receipt row — shared by the folded view and the open ledger.
-  const renderItem = (it: ChuteItem) => (
+  const renderItem = (it: Receipt) => (
     <li key={it.key} className={styles.chuteItem}>
-      {isSettled(it.state) && (
+      {receipts.settled(it) && (
         <button
           type="button"
           className={styles.chuteDismiss}
           title="Clear this receipt. The record keeps everything that filed."
-          onClick={() => setItems((xs) => xs.filter((x) => x.key !== it.key))}
+          onClick={() => receipts.dismiss(it.key)}
         >
           ✕
         </button>
@@ -399,7 +339,7 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
                 const acct = it.account;
                 const ids = it.noteIds;
                 if (!acct || !ids?.length) return;
-                void roomPasteUndo(acct.id, ids, it.todoIds ?? []).then((r) => {
+                void undo(acct.id, it).then((r) => {
                   if (r.ok)
                     patch(it.key, {
                       state: "undone",
@@ -570,7 +510,86 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
     </li>
   );
 
-  if (!canWrite) return null;
+  // The ledger: the meter line, the fold and the rows. Rendered the same in a
+  // read-only session, which sees the receipts and cannot drop (D29).
+  const ledger =
+    items.length > 0 &&
+    (() => {
+      const running = items.filter(
+        (x) => x.state === "reading" || x.state === "filing" || x.state === "activity",
+      );
+      const waiting = items.filter((x) => x.state === "pick" || x.state === "mismatch");
+      const meter = [
+        running.length > 0 ? `${running.length} running` : "",
+        waiting.length > 0
+          ? `${waiting.length} need${waiting.length === 1 ? "s" : ""} your pick`
+          : "",
+        `${items.length - running.length - waiting.length} settled today`,
+      ]
+        .filter(Boolean)
+        .join(" · ");
+      // Folded: everything waiting on the operator, then the freshest two
+      // of the rest. items is newest-first; keep that order.
+      const visible = new Set<number>(waiting.map((x) => x.key));
+      if (!ledgerOpen) {
+        let extra = 0;
+        for (const x of items) {
+          if (visible.has(x.key)) continue;
+          if (extra >= 2) break;
+          visible.add(x.key);
+          extra++;
+        }
+      }
+      const shown = ledgerOpen ? items : items.filter((x) => visible.has(x.key));
+      const hidden = items.length - shown.length;
+      return (
+        <>
+          <div className={styles.chuteMeter}>
+            <span className={styles.chuteMeterLine}>{meter}</span>
+            {(hidden > 0 || ledgerOpen) && (
+              <button
+                type="button"
+                className={styles.chuteFold}
+                onClick={() => setLedgerOpen((v) => !v)}
+              >
+                {ledgerOpen ? "Fold the ledger" : `Open the ledger · ${items.length}`}
+              </button>
+            )}
+          </div>
+          <ul className={styles.chuteList}>
+            {shown.map(renderItem)}
+            {ledgerOpen && (
+              <li>
+                <button
+                  type="button"
+                  className={styles.chuteClear}
+                  onClick={() => receipts.dismissAll()}
+                >
+                  Clear the receipts
+                </button>
+              </li>
+            )}
+          </ul>
+        </>
+      );
+    })();
+
+  // A read-only session sees the bar and its receipts and cannot drop: no
+  // drop handlers, no input, and the bar says so where the ⇪ button was
+  // (ruled 2026-09-25, D29 — CLAUDE.md, The Chute :309).
+  if (!canWrite)
+    return (
+      <section className={styles.chute}>
+        <div className={styles.chuteBar}>
+          <span className={styles.chuteK}>THE CHUTE</span>
+          <span className={styles.chuteLine}>
+            Throw files here. They find their account.
+          </span>
+          <span className={styles.chuteLine}>Read-only session</span>
+        </div>
+        {ledger}
+      </section>
+    );
 
   return (
     <section
@@ -628,69 +647,7 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
         as a pre-release (2GB is the ceiling per file).
       </p>
 
-      {items.length > 0 &&
-        (() => {
-          const running = items.filter(
-            (x) =>
-              x.state === "reading" || x.state === "filing" || x.state === "activity",
-          );
-          const waiting = items.filter(
-            (x) => x.state === "pick" || x.state === "mismatch",
-          );
-          const meter = [
-            running.length > 0 ? `${running.length} running` : "",
-            waiting.length > 0
-              ? `${waiting.length} need${waiting.length === 1 ? "s" : ""} your pick`
-              : "",
-            `${items.length - running.length - waiting.length} settled today`,
-          ]
-            .filter(Boolean)
-            .join(" · ");
-          // Folded: everything waiting on the operator, then the freshest two
-          // of the rest. items is newest-first; keep that order.
-          const visible = new Set<number>(waiting.map((x) => x.key));
-          if (!ledgerOpen) {
-            let extra = 0;
-            for (const x of items) {
-              if (visible.has(x.key)) continue;
-              if (extra >= 2) break;
-              visible.add(x.key);
-              extra++;
-            }
-          }
-          const shown = ledgerOpen ? items : items.filter((x) => visible.has(x.key));
-          const hidden = items.length - shown.length;
-          return (
-            <>
-              <div className={styles.chuteMeter}>
-                <span className={styles.chuteMeterLine}>{meter}</span>
-                {(hidden > 0 || ledgerOpen) && (
-                  <button
-                    type="button"
-                    className={styles.chuteFold}
-                    onClick={() => setLedgerOpen((v) => !v)}
-                  >
-                    {ledgerOpen ? "Fold the ledger" : `Open the ledger · ${items.length}`}
-                  </button>
-                )}
-              </div>
-              <ul className={styles.chuteList}>
-                {shown.map(renderItem)}
-                {ledgerOpen && (
-                  <li>
-                    <button
-                      type="button"
-                      className={styles.chuteClear}
-                      onClick={() => setItems([])}
-                    >
-                      Clear the receipts
-                    </button>
-                  </li>
-                )}
-              </ul>
-            </>
-          );
-        })()}
+      {ledger}
     </section>
   );
 }

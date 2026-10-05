@@ -269,11 +269,18 @@ describe("routing runs on the server; the roster never ships to the browser", ()
   });
 
   test("the doors route through the action, and no roster prop rides either page", () => {
+    // The route call is the shared door's since slice 8 (src/app/room/ingest/
+    // use-ingest.ts); the Chute calls the hook, and neither routes in the browser.
     const chute = read("src/app/room/chute.tsx");
+    const door = read("src/app/room/ingest/use-ingest.ts");
     assert.ok(isClientModule(chute));
-    assert.match(chute, /import \{[^}]*\brouteText\b[^}]*\} from "\.\/route-actions"/);
-    assert.ok(!/routeCapture\(/.test(chute), "the Chute no longer routes in the browser");
-    assert.ok(!/roster/.test(chute.replace(/\/\/[^\n]*/g, "").replace(/\/\*[\s\S]*?\*\//g, "")), "no roster in the Chute's code");
+    assert.ok(isClientModule(door));
+    assert.match(door, /import \{[^}]*\brouteText\b[^}]*\} from "\.\.\/route-actions"/);
+    assert.match(chute, /useIngest\(\{\s*door:\s*"chute"/);
+    for (const [name, src] of [["the Chute", chute], ["the shared door", door]] as const) {
+      assert.ok(!/routeCapture\(/.test(src), `${name} routes in the browser`);
+      assert.ok(!/roster/.test(src.replace(/\/\/[^\n]*/g, "").replace(/\/\*[\s\S]*?\*\//g, "")), `no roster in ${name}'s code`);
+    }
     for (const page of ["src/app/room/page.tsx", "src/app/intranet/page.tsx"]) {
       const src = read(page);
       assert.ok(!/<Chute[^>]*roster=/.test(src), `${page} passes a roster`);
@@ -332,13 +339,23 @@ describe("no server action returns a token", () => {
     assert.ok(!lib.includes("process.env"), "the carriage never reads env");
     // The env is read in the doors alone, and only into the GitHub call.
     assert.equal((doors.match(/GITHUB_ARCHIVE_TOKEN/g) ?? []).length, 2, "named once to read, once in the message");
-    for (const client of ["src/app/room/chute.tsx", "src/app/room/room-client.tsx"]) {
+    for (const client of [
+      "src/app/room/chute.tsx",
+      "src/app/room/room-client.tsx",
+      "src/app/room/ingest/use-ingest.ts",
+    ]) {
       const src = read(client);
       assert.ok(!src.includes("process.env"), `${client} reads env`);
       assert.ok(!src.includes("GITHUB_ARCHIVE"), `${client} names the vault's env`);
       assert.ok(!/archiveFileToGitHub/.test(src), `${client} speaks to GitHub itself`);
-      assert.match(src, /import \{ vaultChunk, vaultFile \} from "\.\/vault-actions"/);
-      assert.match(src, /sendToVault\(/);
+    }
+    // The carriage is the shared door's since slice 8: both faces vault
+    // through it, and it alone posts through the two server doors.
+    const door = read("src/app/room/ingest/use-ingest.ts");
+    assert.match(door, /import \{ vaultChunk, vaultFile \} from "\.\.\/vault-actions"/);
+    assert.match(door, /sendToVault\(/);
+    for (const face of ["src/app/room/chute.tsx", "src/app/room/room-client.tsx"]) {
+      assert.match(read(face), /ingest\.vault\(/, `${face} vaults through the shared door`);
     }
   });
 });
