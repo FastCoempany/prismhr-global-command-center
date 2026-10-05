@@ -4,6 +4,8 @@
 // nothing archives itself. Pure and adversarially tested: negations and
 // near-miss phrasings ("so we don't lose this") must never trigger it.
 
+import { chicagoDay } from "@/lib/tz";
+
 type LossRead = {
   noteId: string; // the triggering record entry — dismissals key to it
   phrase: string; // the matched loss language, trimmed for display
@@ -38,15 +40,9 @@ const NEGATION_RE =
 const FRESH_DAYS = 30;
 const SCAN_CAP = 12;
 
-function chicagoDay(iso: string): string {
-  const t = Date.parse(iso);
-  if (Number.isNaN(t)) return "";
-  return new Date(t).toLocaleDateString("en-US", {
-    timeZone: "America/Chicago",
-    month: "numeric",
-    day: "numeric",
-  });
-}
+// M/D of the entry's Chicago day, read off the one day key (src/lib/tz.ts).
+const chicagoMD = (iso: string): string =>
+  chicagoDay(iso).replace(/^\d{4}-0?(\d+)-0?(\d+)$/, "$1/$2");
 
 // Scan the freshest record entries (newest first) for a live loss signal.
 // `dismissedNoteIds` carries the operator's "keep salvaging" calls — a
@@ -67,7 +63,7 @@ export function readLoss(
       return {
         noteId: n.id,
         phrase: (mark[2] || "").trim().slice(0, 90),
-        date: chicagoDay(n.createdAt),
+        date: chicagoMD(n.createdAt),
         status: mark[1] === OUTCOME_MARK_WON ? "won" : "lost",
       };
     }
@@ -78,7 +74,7 @@ export function readLoss(
     return {
       noteId: n.id,
       phrase: m[0].trim().slice(0, 90),
-      date: chicagoDay(n.createdAt),
+      date: chicagoMD(n.createdAt),
       status: "lost",
     };
   }

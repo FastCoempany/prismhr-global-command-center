@@ -588,17 +588,31 @@ describe("cardNextStep", () => {
 // --- completion keys ---------------------------------------------------------
 
 describe("dayStamp / weekStamp / done keys", () => {
-  test("dayStamp is UTC yyyy-mm-dd", () => {
-    assert.equal(dayStamp(Date.parse("2026-07-06T09:30:00Z")), "2026-07-06");
+  test("dayStamp is the Chicago yyyy-mm-dd, either side of midnight", () => {
+    // 04:30Z on Jul 7 is still 11:30 PM Jul 6 in Chicago (CDT); 05:30Z is 12:30 AM Jul 7
+    assert.equal(dayStamp(Date.parse("2026-07-07T04:30:00Z")), "2026-07-06");
+    assert.equal(dayStamp(Date.parse("2026-07-07T05:30:00Z")), "2026-07-07");
+    // in standard time the line sits an hour later (CST)
+    assert.equal(dayStamp(Date.parse("2026-12-11T05:30:00Z")), "2026-12-10");
+    assert.equal(dayStamp(Date.parse("2026-12-11T06:30:00Z")), "2026-12-11");
   });
-  test("weekStamp is ISO year-week", () => {
+  test("weekStamp is the ISO year-week of the Chicago day", () => {
     assert.equal(weekStamp(Date.parse("2026-07-06T12:00:00Z")), "2026-W28"); // Mon of ISO week 28
     assert.equal(weekStamp(Date.parse("2024-01-01T12:00:00Z")), "2024-W01");
+    // Sunday 9 PM Chicago is 02:00Z Monday: the week stays with the day
+    assert.equal(dayStamp(Date.parse("2026-07-13T02:00:00Z")), "2026-07-12");
+    assert.equal(weekStamp(Date.parse("2026-07-13T02:00:00Z")), "2026-W28");
   });
-  test("morning key resets by day; partner-outreach key is stable per partner", () => {
+  test("morning key resets by Chicago day; partner-outreach key is stable per partner", () => {
+    // 7:30 PM Jul 6 in Chicago is already Jul 7 in UTC — the key names Jul 6
     assert.equal(
-      morningDoneKey("acct:X", Date.parse("2026-07-06T00:00:00Z")),
+      morningDoneKey("acct:X", Date.parse("2026-07-07T00:30:00Z")),
       "morning:2026-07-06:acct:X",
+    );
+    // 12:30 AM Jul 7 in Chicago names Jul 7
+    assert.equal(
+      morningDoneKey("acct:X", Date.parse("2026-07-07T05:30:00Z")),
+      "morning:2026-07-07:acct:X",
     );
     // No date component — the sent mark persists (standing tracker, not weekly).
     assert.equal(partnerOutreachKey("Anika"), "partner-outreach:Anika");

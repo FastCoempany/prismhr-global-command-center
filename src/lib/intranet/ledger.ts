@@ -13,6 +13,7 @@
 //     copy of the record (C1: one brain)
 
 import { COUNTRY_NAME } from "@/lib/intel/lexicon";
+import { chicagoDay } from "@/lib/tz";
 
 export type StoredCitation = {
   n: number;
@@ -93,14 +94,10 @@ export function sentFrom(space: string, origin: string): string {
 }
 
 // ── days, in the operator's clock ───────────────────────────────────────────
-const TZ = "America/Chicago";
-
-/** "2026-07-30" — the day an instant belongs to, in the operator's timezone. */
-export function chicagoDay(iso: string): string {
-  const t = Date.parse(iso);
-  if (Number.isNaN(t)) return "";
-  return new Date(t).toLocaleDateString("en-CA", { timeZone: TZ });
-}
+/** "2026-07-30" — the day an instant belongs to, in the operator's timezone:
+ *  the one Chicago day app-wide (src/lib/tz.ts), re-exported for the readers
+ *  that take it from here. */
+export { chicagoDay };
 
 /** The divider's words: "Today — Wednesday, Jul 30", then "Yesterday — …",
  *  then just the date. */

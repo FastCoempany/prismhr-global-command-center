@@ -17,6 +17,7 @@
 // CHUTE_PARALLEL files read at once; the rest wait in drop order.
 
 import type { RouteHit } from "@/lib/route-capture";
+import { chicagoDay } from "@/lib/tz";
 
 type LedgerState =
   | "reading"
@@ -82,8 +83,9 @@ export type LedgerStorage = {
   setItem(key: string, value: string): void;
 };
 
-export const chicagoDay = (now: Date = new Date()): string =>
-  now.toLocaleDateString("en-CA", { timeZone: "America/Chicago" });
+/** The ledger's day is the one Chicago day app-wide (src/lib/tz.ts),
+ *  re-exported so the canon suite's import holds. */
+export { chicagoDay };
 
 const isWaiting = (s: LedgerState): boolean => s === "pick" || s === "mismatch";
 const isInFlight = (s: LedgerState): boolean =>

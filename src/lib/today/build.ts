@@ -18,6 +18,7 @@ import {
 import { DASH_NODES, type DashNodeKey } from "@/lib/dashboard/stages";
 import type { DashCardRow } from "@/lib/dashboard/data";
 import { readOutcome } from "@/lib/dashboard/outcome";
+import { chicagoDay } from "@/lib/tz";
 
 // Which lead stream an account funnels through. The PEO channel is CSM-owned
 // (reach the client through their PEO). The HCM funnel is the other half of the
@@ -376,19 +377,22 @@ export function cardNextStep(
 // --- Completion keys (per-day / per-week) -----------------------------------
 // A done-mark's key encodes the task AND its period, so it resets on a new
 // day/week. Default-param now keeps the clock read out of the React render path.
+// The day is the operator's Chicago day (CLAUDE.md, the closer rule: all days
+// are Chicago days; the refactor plan's §7 item 9): a move checked off at 8 PM
+// counts for the day it was checked, not for tomorrow.
 function pad2(n: number): string {
   return n < 10 ? `0${n}` : `${n}`;
 }
 
+// "2026-07-06" — the operator's calendar day, Chicago (src/lib/tz.ts).
 export function dayStamp(now: number = Date.now()): string {
-  const d = new Date(now);
-  return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())}`;
+  return chicagoDay(now);
 }
 
-// ISO-8601 year + week (e.g. "2026-W28").
+// ISO-8601 year + week (e.g. "2026-W28") of the operator's day, so the week
+// stamp and the day stamp name the same calendar.
 export function weekStamp(now: number = Date.now()): string {
-  const d = new Date(now);
-  const target = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+  const target = new Date(`${dayStamp(now)}T00:00:00Z`);
   const dayNr = (target.getUTCDay() + 6) % 7; // Mon=0..Sun=6
   target.setUTCDate(target.getUTCDate() - dayNr + 3); // Thursday of this week
   const thursday = target.getTime();

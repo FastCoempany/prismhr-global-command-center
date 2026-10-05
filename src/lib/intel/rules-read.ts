@@ -15,15 +15,11 @@
 // never a touch; the deep read restores attribution when the key returns.
 
 import type { TimelineEntry } from "@/lib/sf-timeline";
+import { chicagoDay } from "@/lib/tz";
 
-const CHI = "America/Chicago";
-
-function chiDayIso(d: Date): string {
-  return d.toLocaleDateString("en-CA", { timeZone: CHI });
-}
-
+// Every day the reader writes is the one Chicago day (src/lib/tz.ts).
 function shiftDays(now: Date, days: number): string {
-  return chiDayIso(new Date(now.getTime() - days * 86_400_000));
+  return chicagoDay(new Date(now.getTime() - days * 86_400_000));
 }
 
 // ── the Teams-style chat ────────────────────────────────────────────────────
@@ -65,10 +61,10 @@ function resolveDateLine(line: string, now: Date): string | null {
   const month = MONTHS[m[1].toLowerCase()];
   const day = parseInt(m[2], 10);
   if (!month || day < 1 || day > 31) return null;
-  let year = m[3] ? parseInt(m[3], 10) : parseInt(chiDayIso(now).slice(0, 4), 10);
+  let year = m[3] ? parseInt(m[3], 10) : parseInt(chicagoDay(now).slice(0, 4), 10);
   const pad = (n: number) => String(n).padStart(2, "0");
   // Dividers are the past: a bare month-day ahead of today rolls back a year.
-  if (!m[3] && `${year}-${pad(month)}-${pad(day)}` > chiDayIso(now)) year -= 1;
+  if (!m[3] && `${year}-${pad(month)}-${pad(day)}` > chicagoDay(now)) year -= 1;
   return `${year}-${pad(month)}-${pad(day)}`;
 }
 
@@ -94,7 +90,7 @@ export function parseChatPaste(raw: string, now: Date): TimelineEntry[] {
     body: string[];
   };
   const turns: Turn[] = [];
-  let dayIso = chiDayIso(now);
+  let dayIso = chicagoDay(now);
   let dayLabel = "Today";
   let cur: Turn | null = null;
 
@@ -103,7 +99,7 @@ export function parseChatPaste(raw: string, now: Date): TimelineEntry[] {
     if (!line) continue;
     if (DAY_RE.test(line)) {
       dayLabel = line;
-      dayIso = /yesterday/i.test(line) ? shiftDays(now, 1) : chiDayIso(now);
+      dayIso = /yesterday/i.test(line) ? shiftDays(now, 1) : chicagoDay(now);
       continue;
     }
     // A dated divider between runs sets the day it names (refuted: silently
@@ -139,7 +135,7 @@ export function parseChatPaste(raw: string, now: Date): TimelineEntry[] {
       if (looksLikeName(name)) {
         if (trail) {
           dayLabel = trail[1];
-          dayIso = /yesterday/i.test(trail[1]) ? shiftDays(now, 1) : chiDayIso(now);
+          dayIso = /yesterday/i.test(trail[1]) ? shiftDays(now, 1) : chicagoDay(now);
         }
         cur = { who: name, time: turn[2].toUpperCase(), dayIso, dayLabel, body: [] };
         turns.push(cur);
@@ -200,7 +196,7 @@ function sentDayIso(sent: string): string {
     .replace(/,\s*$/, "");
   if (!dateOnly) return "";
   const at = Date.parse(`${dateOnly} 12:00:00 UTC`);
-  return Number.isNaN(at) ? "" : chiDayIso(new Date(at));
+  return Number.isNaN(at) ? "" : chicagoDay(new Date(at));
 }
 
 // The CLOCK the same header names — kept as the head's own label so same-day
