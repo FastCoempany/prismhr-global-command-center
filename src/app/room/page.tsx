@@ -3,10 +3,9 @@ import { DM_Serif_Display, JetBrains_Mono, Public_Sans } from "next/font/google"
 import { AppWayfinder } from "@/components/app-wayfinder";
 import { loadDashboard } from "@/lib/dashboard/data";
 import { csms, peos } from "@/lib/book";
-import { DROP_STALE_DAYS, fetchSecondRecords } from "@/lib/activity/read";
+import { DROP_STALE_DAYS, fetchSecondRecords, theirsLine } from "@/lib/activity/read";
 import { EXTRA_PARTNERS } from "@/lib/book/partners";
 import { contactsFor, knownPeople, personKey } from "@/lib/book/contacts";
-import { peopleFor } from "@/lib/intel/people";
 import {
   loadAccountNotes,
   loadDispositions,
@@ -34,17 +33,13 @@ import { partitionFollowUps, roundupDue } from "@/lib/today/follow-ups";
 import { followUpRowsFor, knownOrgNames, splitTouches } from "@/lib/today/followup-rows";
 import { splitAsk } from "@/lib/today/ledger";
 import { DASH_NODES } from "@/lib/dashboard/stages";
-import { corpusFor, extractDealIntel } from "@/lib/intel/extract";
-import { relationshipFor } from "@/lib/intel/relationship";
+import { readAccount, secondRecordFor } from "@/lib/record/read";
 import { digestFor, digestForCardName } from "@/lib/intel/digest";
 import { COUNTRY_NAME } from "@/lib/intel/lexicon";
 import { suggestChecks } from "@/lib/intel/evidence";
 import { daysBetween, meterRead, readDeal, type RoomRead } from "@/lib/room/engine";
 import { moveDoneKey } from "@/lib/room/bind";
-import { lastTouchRead } from "@/lib/room/touch";
 import { meetingRead } from "@/lib/intel/meeting";
-import { isAcceptance } from "@/lib/intel/closer";
-import { effectiveAt } from "@/lib/intel/clock";
 import { buildStageRail } from "@/lib/room/stages-view";
 import { buildAccountSheet } from "@/lib/room/sheet-view";
 import { readLoss } from "@/lib/room/loss";
@@ -148,26 +143,41 @@ export default async function RoomPage() {
       "";
     const peo = peoById.get(accountId);
     const rawNotes = accountId ? (notesById.get(accountId) ?? []) : [];
+    // The single account read (src/lib/record/read.ts; the Chute brains
+    // refactor plan, §2.2): one read of every store for this account, built
+    // once per row. The registers, the move's inputs and the THEIRS line read
+    // their facts from it; the drawer, the engine's court and the other
+    // surfaces migrate onto it one slice at a time. The book's roster and the
+    // seeded contact ride in as the seeds the record outranks.
+    const acct = readAccount({
+      account: {
+        id: accountId,
+        name: card.name,
+        contacts: accountId ? contactsFor(accountId) : [],
+        contact: { name: peo?.contactName, email: peo?.contactEmail },
+      },
+      notes: rawNotes,
+      touches,
+      todos,
+      dispositions,
+      // The second record, folded by canonical id: a drop keyed by a shell
+      // id reads under the one account (E17).
+      secondRecord: accountId ? secondRecordFor(secondById, accountId) : null,
+      homeSide: ourSide,
+      digest: digestFor(accountId) ?? digestForCardName(card.name),
+      now,
+      board: { card, labels: data.labels },
+    });
     // ✕-parked entries (hide:note: dispositions) leave every register view —
-    // the note survives in the table, the row does not.
-    const allNotes = rawNotes.filter((n) => !dispositions.has(`hide:note:${n.id}`));
+    // the read holds the one filter; the note survives in the table, the row
+    // does not.
+    const allNotes = rawNotes.filter((n) => !acct.hidden.has(n.id));
     const mine = allNotes.filter((n) => n.lane === "mine");
     const backgroundTotal = allNotes.length - mine.length;
 
-    const docs = corpusFor(accountId, card.name, {
-      acctNotes: allNotes,
-      homeSide: ourSide,
-      todos: todos.filter((t) => accountId && t.accountId === accountId),
-      touches: touches.filter(
-        (t) =>
-          (accountId && t.subjectKey === `outreach:${accountId}`) ||
-          t.label.toLowerCase() === card.name.toLowerCase(),
-      ),
-    });
-    const intel = extractDealIntel(
-      docs,
-      digestFor(accountId) ?? digestForCardName(card.name),
-    );
+    // The docs the evidence rules read: the visible record, every store.
+    const docs = acct.docs.filter((d) => !d.hidden);
+    const intel = acct.intel;
 
     const prods = new Set(intel.products.map((p) => p.value));
     const shape = prods.has("eor")
@@ -194,7 +204,7 @@ export default async function RoomPage() {
       .toUpperCase()
       .slice(0, 72);
 
-    const people = accountId ? peopleFor(allNotes, contactsFor(accountId), 6) : [];
+    const people = acct.people.slice(0, 6);
     // MULTI reads the widest count the app holds: filed actors AND the
     // digest's thread roster — a record-quiet deal with a known room must
     // never render "nobody exists."
@@ -203,10 +213,7 @@ export default async function RoomPage() {
 
     // Who this deal runs through — the record's most-seen person outranks the
     // book's seeded primary the moment real communication files.
-    const rel = relationshipFor(allNotes, accountId ? contactsFor(accountId) : [], {
-      name: peo?.contactName,
-      email: peo?.contactEmail,
-    });
+    const rel = acct.relationship;
 
     let briefed = false;
     for (const node of DASH_NODES) {
@@ -243,26 +250,13 @@ export default async function RoomPage() {
         return n.checklist.every((_, idx) => checks[idx]);
       });
 
-    const touch = accountId ? touchMap.get(`outreach:${accountId}`) : undefined;
     // The touch clock reads the LATEST of the outreach log and the record's
     // own outbound entries — a filed email is as real a touch as a logged
     // send, so the room never demands an answer the record proves was given.
-    const touchRead = lastTouchRead(
-      allNotes,
-      touch
-        ? {
-            contactedAt: touch.contactedAt,
-            awaitingReply: touch.status === "awaiting",
-            who: firstName(rel.name) || "them",
-          }
-        : null,
-      // Our own side never becomes the person you are waiting on when the
-      // send also went to the account (the Regis row, 2026-08-27).
-      (n) => isHomeSideName(n, csms),
-      // Today, so a send dated ahead of it is not read as a touch already
-      // made (Trend Personnel Services, 2026-09-23).
-      now,
-    );
+    // The read merges the two by latest (C3), with the whole declared roster
+    // as our side, so a colleague leading a collapsed To line is never the
+    // person we wait on (the Regis row, 2026-08-27; E9).
+    const touchRead = acct.lastTouch;
     const noteIds = new Set(allNotes.map((n) => n.id));
     const sheet = buildAccountSheet(
       todos,
@@ -383,24 +377,14 @@ export default async function RoomPage() {
       lastMeeting: meetingForRead,
       // The newest invitation acceptance — machinery, so it opens no
       // reply-owed, but it is proof the meeting exists (HR Hawaii, 9/4).
-      lastAccepted: (() => {
-        const a = allNotes.find((n) => isAcceptance(n.body ?? ""));
-        if (!a) return null;
-        const side =
-          (a.actors ?? "")
-            .split("→")[0]
-            ?.replace(/\+\d+\s*$/, "")
-            .trim() ?? "";
-        return {
-          at: effectiveAt(a.createdAt, a.body ?? ""),
-          who:
-            firstName(isHomeSideName(side, csms) ? "" : side) ||
-            firstName(rel.name) ||
-            "they",
-        };
-      })(),
+      lastAccepted: acct.lastAccepted
+        ? {
+            at: acct.lastAccepted.at,
+            who: firstName(acct.lastAccepted.who) || firstName(rel.name) || "they",
+          }
+        : null,
       theirBall,
-      lastRecordAt: allNotes[0]?.createdAt ?? "",
+      lastRecordAt: acct.lastRecordAt,
       allGatesDone,
       // What is owed, register first then the record's own owed lines.
       openOwed: [
@@ -522,31 +506,10 @@ export default async function RoomPage() {
       labels: data.labels,
     });
 
-    const theirs = (() => {
-      const sr = accountId ? secondById.get(accountId) : undefined;
-      const live = (sr?.gems ?? []).filter((g) => !g.actedDay).slice(0, 3);
-      if (live.length === 0) return null;
-      const g = live[0];
-      const first = (g.who[0] ?? "").split(" ")[0].toUpperCase();
-      const day = g.whenDay ? g.whenDay.slice(5).replace("-", "/") : "";
-      const label = [
-        first ? `${first}’S ${g.term}` : g.term,
-        day,
-        live.length > 1 ? `+${live.length - 1}` : "",
-      ]
-        .filter(Boolean)
-        .join(" · ");
-      return {
-        label,
-        gems: live.map((x) => ({
-          term: x.term,
-          act: x.act,
-          reason: x.reason,
-          whenDay: x.whenDay,
-          cites: x.cites,
-        })),
-      };
-    })();
+    // THEIRS is the account's people (ruled 2026-09-25, C16): the line leads
+    // only with a gem about an account person, read from the folded second
+    // record the read carries.
+    const theirs = theirsLine(acct.secondRecord);
 
     rows.push({
       accountId,

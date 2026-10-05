@@ -362,6 +362,7 @@ Dependency order first, then risk. Every slice is one PR: branch off main, chain
 - **App verification:** open /room and compare every row's move, meta and THEIRS against the previous deploy on the same data; a colleague's gem no longer leads THEIRS.
 - **Rollback:** revert; the read module stays unused.
 - **Size:** L.
+- **Amended 2026-10-05 (built):** the read's input carries three things the signature in §2.2 left out and the HomeRoom's parity needed — the book's seeds for the account under `account` (`contacts`, the roster the people index and the relationship join; `contact`, the seeded primary), a row's Filing facts as `notes[].facts` (field 18 reads them when a caller hands them; no loader does yet), and the board's card as `board?` (field 12 is null without it) — and `whoseMove(docs, todos, now, opts?)` takes the touch log and the roster through `opts`, because a logged touch with no message is not a doc; the THEIRS lead builder (`theirsLine`) sits beside `outreachGem` and `anyLiveGem` in src/lib/activity/read.ts, and the page calls it.
 
 ### Slice 11a · The single read, part 2: Groundwork and the exclusion
 
