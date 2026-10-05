@@ -15,6 +15,13 @@ export async function register() {
     const report = await applyAdditive(getPrisma());
     for (const name of report.applied) console.log(`[migrate] applied ${name}`);
     for (const f of report.failed) console.warn(`[migrate] ${f.migration}: ${f.error}`);
+    // One summary line on every start, applied or not: the production
+    // runtime log is the only window onto the database, and a hook that is
+    // silent when every column is present cannot prove it ran.
+    const names = (xs: readonly string[]) => (xs.length ? xs.join(", ") : "none");
+    console.log(
+      `[migrate] applied: ${names(report.applied)}; present: ${names(report.present)}; failed: ${names(report.failed.map((f) => f.migration))}`,
+    );
   } catch (e) {
     console.warn(`[migrate] ${e instanceof Error ? e.message : String(e)}`);
   }

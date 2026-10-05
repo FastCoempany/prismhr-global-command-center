@@ -1057,12 +1057,17 @@ model Todo {
   accountId String? // optional link to a book account (Salesforce id)
   remindAt  DateTime? // optional date/time set via the calendar picker
   position  Int       @default(0)
+  // The filing that opened this row (the Chute brains refactor plan, §2.1;
+  // slice 4): one undo by id reaches everything one capture wrote. Null on
+  // every row the operator opened by hand and on rows filed before the column.
+  filingId  String?
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
   @@index([done])
   @@index([position])
   @@index([accountId])
+  @@index([filingId])
 }
 
 // Stash — the app-wide capture inbox. Any text you highlight, right-click, or
@@ -1109,9 +1114,40 @@ model AccountNote {
   // "hand" — src/lib/ingest/doors.ts. `source` names the dialect; this names
   // the hand that filed it. "" on rows filed before it existed.
   door       String   @default("")
+  // The filing that wrote this row (§2.1 of the Chute brains refactor plan;
+  // slice 4): the stored read a row came from, and the undo's one key. Null
+  // on rows the pipeline did not write and on rows filed before the column.
+  filingId   String?
   createdAt  DateTime @default(now())
 
   @@index([accountId, createdAt])
+  @@index([filingId])
+}
+
+// One filing per capture (the Chute brains refactor plan, §2.1, pick C): the
+// structured read stored with the rows it wrote, linked by filingId on
+// AccountNote and Todo rather than scanned out of a body (provenance is
+// columns, P3/P4). `read` is the sanitized model result, null on a keyless
+// filing; `windows` is every window that cut something as {what, read, of}
+// (D4); `dupeCheck` says whether the duplicate check ran or was skipped (D7).
+// `filedAt` is the capture's own day when its head carries one, else the
+// filing moment. Unique on (accountId, fingerprint) — the pastehash marker's
+// own key — so a re-drop after an undo replaces the row.
+model Filing {
+  id          String   @id @default(cuid())
+  accountId   String
+  fingerprint String
+  door        String
+  dialect     String
+  how         String // "ai" | "rules" | "transcript"
+  read        Json?
+  windows     Json
+  dupeCheck   String // "ran" | "skipped"
+  createdAt   DateTime @default(now())
+  filedAt     DateTime
+
+  @@unique([accountId, fingerprint])
+  @@index([accountId])
 }
 
 // A dated, time-stamped note pinned to a partner (CSM) — the by-partner

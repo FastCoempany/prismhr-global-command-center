@@ -15,6 +15,22 @@ import { peos } from "@/lib/book";
 import { routingRoster } from "@/lib/book/roster";
 import { judgeFiling } from "@/lib/intel/misfile";
 import { HEADS, SOURCE_OF, sniffHead } from "@/lib/ingest/dialect";
+import {
+  fileFiling,
+  undoFiling,
+  type DupeCheck,
+  type FilingHow,
+} from "@/lib/ingest/filing";
+import {
+  ENTRY_CAP,
+  READ_WINDOW,
+  READ_WINDOW_TAPE,
+  TEXT_FLOOR,
+  TRANSCRIBE_BYTES,
+  TRANSCRIBE_WINDOW,
+  cut,
+  type Window,
+} from "@/lib/ingest/windows";
 import { readFreeVerdict, transcriberPrompt } from "@/lib/room/paste";
 import { digestFor, digestForCardName } from "@/lib/intel/digest";
 import {
@@ -144,14 +160,22 @@ export async function roomPaste(
   raw: string,
   // The door the capture came through stamps every row the filing writes
   // (P3): the Chute says "chute"; a paste or file on the account's own row
-  // is the Drop, the default.
-  opts?: { force?: boolean; door?: Door },
+  // is the Drop, the default. `windows` carries what a reader cut before the
+  // text arrived — the transcriber's, the document's — so the Filing row
+  // and the receipt hold every window (D4).
+  opts?: { force?: boolean; door?: Door; windows?: Window[] },
 ): Promise<{
   ok: boolean;
   filed: number;
   how: string;
   reason?: string;
   noteIds?: string[];
+  // The Filing row every row and todo of this filing links to (§2.1).
+  filingId?: string;
+  // Every window that cut something (D4), for the receipt.
+  windows?: Window[];
+  // Whether the duplicate check ran, or failed open (D7).
+  dupeCheck?: DupeCheck;
   // The actions the read opened, by id: the undo's other reach.
   todoIds?: string[];
   // The model's judgment fanned out (actions, asks, lessons, outcome),
@@ -180,17 +204,23 @@ export async function roomPaste(
   // found rides to the source column too: a spreadsheet, a document and a
   // typed note keep the SF token and say what they were in source.
   const { dialect, head: sniffedHead } = sniffHead(rawText);
-  // Head-keep suits newest-first captures (SF, Outlook). A call transcript is
-  // different: the decisions live at the END of the call and the whole
-  // conversation is the intelligence, so transcripts get a far higher ceiling
-  // (a three-hour call still fits). If a monster paste ever exceeds its cap,
-  // tell the model so instead of lying by omission.
-  const cap = dialect === "CT" ? 400000 : 60000;
-  const over = rawText.length - cap;
-  const text =
-    over > 0
-      ? `${rawText.slice(0, cap)}\n[NOTE: paste truncated — ${over} more characters omitted]`
-      : rawText;
+  // Only the model's read is windowed (D4): head-keep suits newest-first
+  // captures (SF, Outlook); a call transcript gets the tape's far higher
+  // ceiling, because the decisions live at the END of the call (src/lib/
+  // ingest/windows.ts). If a monster paste ever exceeds its window, tell the
+  // model so instead of lying by omission — the note is model-facing. Every
+  // window that cut something rides to the Filing row and the receipt, the
+  // reader's own windows first.
+  const readCut = cut(
+    "the paste",
+    rawText,
+    dialect === "CT" ? READ_WINDOW_TAPE : READ_WINDOW,
+  );
+  const text = readCut.window
+    ? `${readCut.text}\n[NOTE: paste truncated — ${rawText.length - readCut.window.read} more characters omitted]`
+    : readCut.text;
+  const windows: Window[] = [...(opts?.windows ?? [])];
+  if (readCut.window) windows.push(readCut.window);
   if (!acct)
     return {
       ok: false,
@@ -198,7 +228,7 @@ export async function roomPaste(
       how: "",
       reason: "That row isn't bound to a known account.",
     };
-  if (text.length < 20)
+  if (text.length < TEXT_FLOOR)
     return { ok: false, filed: 0, how: "", reason: "Paste something first." };
   if (!(await requireWrite()))
     return { ok: false, filed: 0, how: "", reason: "Read-only session." };
@@ -206,8 +236,11 @@ export async function roomPaste(
   // The duplicate guard — app-wide, since every door (row paste, the Drop,
   // the Chute) files through here. The same capture filed to the same account
   // twice is refused BEFORE any read spends a cent. A guard that errors never
-  // blocks a filing.
-  const pasteKey = `pastehash:${acct.id}:${pasteFingerprint(rawText)}`.slice(0, 191);
+  // blocks a filing — it fails open, and the Filing row and the receipt say
+  // so (ruled 2026-09-25, D7).
+  const fingerprint = pasteFingerprint(rawText);
+  const pasteKey = `pastehash:${acct.id}:${fingerprint}`.slice(0, 191);
+  let dupeCheck: DupeCheck = "ran";
   try {
     const prior = await getPrisma().accountDisposition.findUnique({
       where: { accountId: pasteKey },
@@ -231,6 +264,7 @@ export async function roomPaste(
     }
   } catch {
     // guard unavailable — file anyway
+    dupeCheck = "skipped";
   }
 
   // The misfile guard's FIRST rung runs before the read spends a cent. The
@@ -334,9 +368,32 @@ export async function roomPaste(
     return day ? new Date(`${day}T12:00:00Z`) : undefined;
   };
 
+  // The Filing row (§2.1): written once every refusal is behind us and
+  // before the first row it links, so a refused capture leaves no row and a
+  // filed one is reachable by one id. It carries the sanitized read (null on
+  // a keyless filing), every window that cut something (D4), the duplicate
+  // check's outcome (D7) and the capture's own day when its head names one.
+  // A database without the table answers null and the rows file unlinked.
+  let filingId: string | undefined;
+  const writeFiling = async (filingHow: FilingHow) => {
+    const f = await fileFiling({
+      accountId: acct.id,
+      fingerprint,
+      door,
+      dialect,
+      how: filingHow,
+      read,
+      windows,
+      dupeCheck,
+      filedAt: recordedAt() ?? now,
+    });
+    filingId = f?.id;
+  };
+
   // The transcript archive — a call's full conversation, kept whole behind
   // one head line. The registers show the head line only; the full text sits
   // under the fold, searchable and citable, never spelled out on arrival.
+  // Whole at any size (D4): the read is windowed, the note never is.
   const archiveNote = async (): Promise<string> => {
     // The tape's own head line, "CALL TRANSCRIPT — <label>", names the archive.
     const tapeLabel = new RegExp(`^${HEADS.call}\\s*—\\s*(.+)$`, "m");
@@ -347,7 +404,7 @@ export async function roomPaste(
     // call dropped two days late told the room "you met today" — and the recap
     // rule reads that clock (2026-08-29).
     const at = recordedAt();
-    const whole = redactMoney(cleanSfPaste(text)).slice(0, 150000);
+    const whole = redactMoney(cleanSfPaste(rawText));
     const voices = new Set(
       whole
         .split("\n")
@@ -362,6 +419,7 @@ export async function roomPaste(
       lane: "mine",
       source: "transcript",
       at,
+      filingId,
     });
     return n.id;
   };
@@ -371,6 +429,7 @@ export async function roomPaste(
     if (entries.length === 0) {
       if (dialect === "CT") {
         // A call with no read still keeps its whole conversation.
+        await writeFiling("transcript");
         const id = await archiveNote();
         await stampPasteMark(pasteKey, id);
         refresh();
@@ -381,17 +440,18 @@ export async function roomPaste(
           noteIds: [id],
           archived: true,
           readFailed,
+          filingId,
+          windows,
+          dupeCheck,
         };
       }
-      // Transcripts and Teams chats run OLDEST-first — keep the TAIL, where
-      // the decisions and owed items live, and say when the head was cut.
-      const whole = redactMoney(cleanSfPaste(text));
-      const body =
-        whole.length > 6000
-          ? `[earlier portion trimmed: ${whole.length - 6000} characters]\n…${whole.slice(-6000)}`
-          : whole;
+      // A capture with no entries files whole as one line (D4): the read was
+      // windowed, the note is not, and the decisions at the end of an
+      // oldest-first chat are kept with everything before them.
+      const body = redactMoney(cleanSfPaste(rawText));
       if (!body)
         return { ok: false, filed: 0, how, reason: "Nothing recognizable to file." };
+      await writeFiling("transcript");
       const n = await createAccountNoteRow({
         accountId: acct.id,
         kind: "account",
@@ -400,13 +460,24 @@ export async function roomPaste(
         lane: "mine",
         source: "transcript",
         at: recordedAt(),
+        filingId,
       });
       await stampPasteMark(pasteKey, n.id);
       refresh();
-      return { ok: true, filed: 1, how: "transcript", noteIds: [n.id], readFailed };
+      return {
+        ok: true,
+        filed: 1,
+        how: "transcript",
+        noteIds: [n.id],
+        readFailed,
+        filingId,
+        windows,
+        dupeCheck,
+      };
     }
+    await writeFiling(how === "ai" ? "ai" : "rules");
     let filed = 0;
-    for (const e of entries.slice(0, 40)) {
+    for (const e of entries.slice(0, ENTRY_CAP)) {
       const actors = actorsLine(e.from ?? "", e.to ?? "", e.others ?? 0);
       // The whole receiving side, which `actors` deliberately does not carry.
       const recipients = joinRecipients(e.recipients);
@@ -430,6 +501,7 @@ export async function roomPaste(
         recipients,
         source: SOURCE_OF(liveDialect, sniffedHead, how),
         at,
+        filingId,
       });
       noteIds.push(n.id);
       filed++;
@@ -443,7 +515,7 @@ export async function roomPaste(
     }
     if (noteIds[0]) await stampPasteMark(pasteKey, noteIds[0]);
     const absorbed: Awaited<ReturnType<typeof absorbRead>> = read
-      ? await absorbRead(read, { id: acct.id, name: acct.name }, now, door)
+      ? await absorbRead(read, { id: acct.id, name: acct.name }, now, door, filingId)
       : { opened: [], asks: 0, learned: 0, outcome: null, noteIds: [] };
     // Everything the read fanned out rides in the receipt, so the undo can
     // take back the whole filing: the asks, playbook lines and outcome marker
@@ -460,6 +532,9 @@ export async function roomPaste(
       archived,
       todoIds: fanout.opened.map((o) => o.id),
       judged: read !== null,
+      filingId,
+      windows,
+      dupeCheck,
       ...fanout,
     };
   } catch {
@@ -481,6 +556,10 @@ async function absorbRead(
   now: Date,
   // The filing's door: every row the fan-out writes carries it (P3).
   door: Door,
+  // The filing's row: every row and todo the fan-out writes links to it
+  // (§2.1), so one undo by id reaches the whole filing. Undefined when the
+  // table is not there yet.
+  filingId?: string,
 ): Promise<{
   opened: { id: string; text: string }[];
   asks: number;
@@ -538,6 +617,7 @@ async function absorbRead(
           now,
           position: ++top,
           accountId: acct.id,
+          filingId,
         });
         opened.push({ id: t.id, text: a.text });
       } catch {
@@ -558,6 +638,7 @@ async function absorbRead(
       questions: read.gaps,
       known,
       door,
+      filingId,
     });
     asks = gapIds.length;
     noteIds.push(...gapIds);
@@ -586,6 +667,7 @@ async function absorbRead(
       accountName: acct.name,
       known,
       door,
+      filingId,
     });
     learned += filedIds.length;
     noteIds.push(...filedIds);
@@ -605,6 +687,7 @@ async function absorbRead(
         door,
         lane: "mine",
         source: "outcome",
+        filingId,
       });
       noteIds.push(mark.id);
     } catch {
@@ -869,6 +952,10 @@ export async function roomPasteUndo(
   accountId: string,
   noteIds: string[],
   todoIds: string[] = [],
+  // The Filing row (§2.1): when the caller names it, every row and todo
+  // still carrying its id goes with it, and then the row itself. The id
+  // lists stay the undo's reach until the doors send the id (slice 8).
+  filingId?: string,
 ): Promise<{ ok: boolean; removed: number; retired: number; reason?: string }> {
   const acct = bindAccountId(accountId, peos);
   const clean = (xs: string[]): string[] =>
@@ -881,7 +968,8 @@ export async function roomPasteUndo(
       : [];
   const ids = clean(noteIds);
   const todos = clean(todoIds);
-  if (!acct || (ids.length === 0 && todos.length === 0))
+  const filing = typeof filingId === "string" ? filingId.trim().slice(0, 40) : "";
+  if (!acct || (ids.length === 0 && todos.length === 0 && !filing))
     return { ok: false, removed: 0, retired: 0, reason: "Nothing to undo." };
   if (!(await requireWrite()))
     return { ok: false, removed: 0, retired: 0, reason: "Read-only session." };
@@ -916,6 +1004,11 @@ export async function roomPasteUndo(
     const t = todos.length
       ? await prisma.todo.deleteMany({ where: { id: { in: todos }, accountId: acct.id } })
       : { count: 0 };
+    // The Filing row and whatever still carries its id, scoped to this
+    // account by the row's own column; a forged id reaches no one else.
+    const byFiling = filing
+      ? await undoFiling(filing, acct.id)
+      : { notes: 0, todos: 0, filing: 0 };
     // The duplicate guard's marker carries the paste's first note id — an
     // undone paste must be re-fileable, so the marker goes with the notes.
     if (ids[0]) {
@@ -931,7 +1024,11 @@ export async function roomPasteUndo(
       }
     }
     refresh();
-    return { ok: true, removed: r.count + playbook, retired: t.count };
+    return {
+      ok: true,
+      removed: r.count + playbook + byFiling.notes,
+      retired: t.count + byFiling.todos,
+    };
   } catch {
     return {
       ok: false,
@@ -1671,10 +1768,10 @@ const IMAGE_MEDIA = new Set(["image/jpeg", "image/png", "image/webp", "image/gif
 
 async function transcribePdf(
   file: File,
-): Promise<{ ok: boolean; text?: string; reason?: string }> {
+): Promise<{ ok: boolean; text?: string; reason?: string; window?: Window | null }> {
   if (!claudeAvailable())
     return { ok: false, reason: "The reader is unreachable. Paste the text instead." };
-  if (file.size > 8 * 1024 * 1024)
+  if (file.size > TRANSCRIBE_BYTES)
     return { ok: false, reason: "That file is over 8 MB. Export a smaller one." };
   const isImage = IMAGE_MEDIA.has(file.type);
   if (!isImage && file.type !== "application/pdf" && !/\.pdf$/i.test(file.name))
@@ -1722,9 +1819,12 @@ async function transcribePdf(
       .map((b) => b.text)
       .join("\n")
       .trim();
-    if (text.length < 20)
+    if (text.length < TEXT_FLOOR)
       return { ok: false, reason: "Nothing readable came back from the document." };
-    return { ok: true, text: text.slice(0, 60000) };
+    // The transcriber's window rides back with the text (D4): the door hands
+    // it to roomPaste, which records it on the Filing row and the receipt.
+    const c = cut("the transcription", text, TRANSCRIBE_WINDOW);
+    return { ok: true, text: c.text, window: c.window };
   } catch {
     return { ok: false, reason: "The document read failed. Paste the text instead." };
   }
@@ -1734,7 +1834,7 @@ async function transcribePdf(
 export async function roomReadPdf(
   accountId: string,
   formData: FormData,
-): Promise<{ ok: boolean; text?: string; reason?: string }> {
+): Promise<{ ok: boolean; text?: string; reason?: string; window?: Window | null }> {
   const acct = bindAccountId(accountId, peos);
   if (!acct) return { ok: false, reason: "That row isn't bound to a known account." };
   if (!(await requireWrite())) return { ok: false, reason: "Read-only session." };
@@ -1747,7 +1847,7 @@ export async function roomReadPdf(
 // transcription afterward. Same permission gate, same transcriber.
 export async function chuteReadPdf(
   formData: FormData,
-): Promise<{ ok: boolean; text?: string; reason?: string }> {
+): Promise<{ ok: boolean; text?: string; reason?: string; window?: Window | null }> {
   if (!(await requireWrite())) return { ok: false, reason: "Read-only session." };
   const file = formData.get("file");
   if (!(file instanceof File)) return { ok: false, reason: "No file arrived." };

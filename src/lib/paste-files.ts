@@ -7,6 +7,7 @@
 // from tests alike.
 
 import { HEAD_LINE_RE, sniffHead } from "@/lib/ingest/dialect";
+import { SHEET_WINDOW, type Window } from "@/lib/ingest/windows";
 
 type PasteKind = "outlook" | "teams" | "salesnav" | "sf" | "transcript" | "note";
 
@@ -578,21 +579,34 @@ export function readerFor(filename: string): DropReader {
 }
 
 // A spreadsheet as paste text: sheet by sheet, tab-separated, capped hard so
-// a 40k-row export can't flood the read. The reader downstream treats it as
-// plain text intelligence like anything else.
-export function sheetToPaste(
-  sheets: { name: string; rows: unknown[][] }[],
+// a 40k-row export can't flood the read (SHEET_WINDOW, src/lib/ingest/
+// windows.ts; four sheets, four hundred rows each). The reader downstream
+// treats it as plain text intelligence like anything else. The trim is a
+// window, and every window that cut something is on the receipt (D4): the
+// text is built twice, once under the caps and once with every row, and the
+// second build's length is what the sheet would have been.
+type Sheet = { name: string; rows: unknown[][] };
+
+const SHEET_CAP = 4;
+const ROW_CAP = 400;
+
+const rowLine = (row: unknown[]): string =>
+  row
+    .map((c) => (c == null ? "" : String(c).replace(/\s+/g, " ").trim()))
+    .join("\t")
+    .replace(/\t+$/g, "");
+
+function buildSheetText(
+  sheets: Sheet[],
   filename: string,
+  caps: { sheets: number; rows: number; budget: number },
 ): string {
   const out: string[] = [`SPREADSHEET — ${filename}`];
-  let budget = 30000;
-  for (const s of sheets.slice(0, 4)) {
+  let budget = caps.budget;
+  for (const s of sheets.slice(0, caps.sheets)) {
     out.push(`\n== sheet: ${s.name} ==`);
-    for (const row of s.rows.slice(0, 400)) {
-      const line = row
-        .map((c) => (c == null ? "" : String(c).replace(/\s+/g, " ").trim()))
-        .join("\t")
-        .replace(/\t+$/g, "");
+    for (const row of s.rows.slice(0, caps.rows)) {
+      const line = rowLine(row);
       if (!line.trim()) continue;
       budget -= line.length;
       if (budget <= 0) {
@@ -601,7 +615,27 @@ export function sheetToPaste(
       }
       out.push(line);
     }
-    if (s.rows.length > 400) out.push(`[${s.rows.length - 400} more rows trimmed]`);
+    if (s.rows.length > caps.rows)
+      out.push(`[${s.rows.length - caps.rows} more rows trimmed]`);
   }
   return out.join("\n");
+}
+
+export function sheetToPaste(
+  sheets: Sheet[],
+  filename: string,
+): { text: string; window: Window | null } {
+  const text = buildSheetText(sheets, filename, {
+    sheets: SHEET_CAP,
+    rows: ROW_CAP,
+    budget: SHEET_WINDOW,
+  });
+  const whole = buildSheetText(sheets, filename, {
+    sheets: Infinity,
+    rows: Infinity,
+    budget: Infinity,
+  });
+  const window =
+    text === whole ? null : { what: "the sheet", read: text.length, of: whole.length };
+  return { text, window };
 }

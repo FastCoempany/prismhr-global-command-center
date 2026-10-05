@@ -9,10 +9,13 @@
 
 import { claudeClient, claudeAvailable } from "@/lib/claude/health";
 import { sniffHead } from "@/lib/ingest/dialect";
+import { ENTRY_CAP } from "@/lib/ingest/windows";
 import { MODEL_READ } from "@/lib/intranet/doctrine";
-import { redactMoney } from "@/lib/intel/lexicon";
+import { COUNTRY_ALIASES, COUNTRY_NAME, redactMoney } from "@/lib/intel/lexicon";
 import { normPerson } from "@/lib/intel/provenance";
-import type { TimelineEntry } from "@/lib/sf-timeline";
+import { countryIndex } from "@/lib/playbook/countries";
+import { PRODUCTS } from "@/lib/playbook/products";
+import type { EntryHeadcount, EntryPromise, TimelineEntry } from "@/lib/sf-timeline";
 
 type ReadAction = {
   text: string;
@@ -20,7 +23,7 @@ type ReadAction = {
   due: string; // YYYY-MM-DD or ""
   fallback: string; // the if/then riding the commitment, or ""
 };
-type AiCleanResult = {
+export type AiCleanResult = {
   entries: TimelineEntry[];
   signals: string[];
   // The full read — every field optional-by-emptiness so the timeline-only
@@ -31,21 +34,98 @@ type AiCleanResult = {
   lessons: string[]; // process lessons a future deal should remember
   outcome: { status: "none" | "lost" | "won"; phrase: string };
   accountName: string; // the company this paste is ABOUT ("" if unclear)
+  // The deal facts ride on each entry (TimelineEntry in src/lib/sf-timeline.ts;
+  // the plan's §2.1, §7 item 13): the model names them per entry and the
+  // sanitizer clamps them to the lexicon, so the single read (slice 10) takes
+  // the model's facts first and regex-mines only rows with no Filing. Until
+  // then no surface reads them.
 };
 
 export function aiCleanAvailable(): boolean {
   return claudeAvailable();
 }
 
-const MAX_ENTRIES = 40;
+const MAX_ENTRIES = ENTRY_CAP;
 const MAX_SIGNALS = 8;
 const MAX_ACTIONS = 6;
 const MAX_GAPS = 5;
 const MAX_INTEL = 4;
 const MAX_LESSONS = 3;
+const MAX_COUNTRIES = 12;
+const MAX_PRODUCTS = 5;
+const MAX_HEADCOUNTS = 8;
+const MAX_PROMISES = 8;
 // A header can carry a lot of people. Enough to hold a real distribution list
 // without letting a reply grow the row without bound.
 const MAX_RECIPIENTS = 30;
+
+// ── The lexicon the deal facts are clamped to ───────────────────────────────
+// Countries: the richest list the app holds is the Playbook's country index
+// (every country on the pricing list plus the ones we get asked about, each
+// with its aliases), joined with the extraction lexicon's aliases and
+// adjectives (src/lib/intel/lexicon.ts) spelled onto the same names. A country
+// neither knows is dropped, never stored. Products: the Playbook's five doors,
+// by name, id and second name.
+const normKey = (s: string): string =>
+  (s ?? "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/^the /, "")
+    .trim();
+
+function buildCountryLexicon(): Map<string, string> {
+  const map = new Map<string, string>();
+  const put = (key: string, name: string) => {
+    const k = normKey(key);
+    if (k && !map.has(k)) map.set(k, name);
+  };
+  for (const row of countryIndex()) {
+    put(row.name, row.name);
+    // "Czech Republic/Czechia" answers to either half.
+    for (const part of row.name.split("/")) put(part, row.name);
+    // The alias column is space-joined — "uk britain england scotland wales",
+    // "united arab emirates dubai abu dhabi" — so the whole string and each
+    // word are keys; a word already taken by a name keeps the name.
+    if (row.alias) {
+      put(row.alias, row.name);
+      for (const word of row.alias.split(/\s+/)) if (word.length > 1) put(word, row.name);
+    }
+  }
+  // The extraction lexicon speaks in iso2 codes; its COUNTRY_NAME table turns
+  // a code into a name, and the index's spelling of that name wins.
+  for (const [alias, code] of Object.entries(COUNTRY_ALIASES)) {
+    const name = COUNTRY_NAME[code];
+    if (!name) continue;
+    put(alias, map.get(normKey(name)) ?? name);
+  }
+  return map;
+}
+
+const COUNTRY_LEXICON = buildCountryLexicon();
+
+/** A country as the lexicon spells it, or "" when the lexicon does not know
+ *  it. Exported so the suite can pin the clamp. */
+export function canonCountry(name: string): string {
+  return COUNTRY_LEXICON.get(normKey(name)) ?? "";
+}
+
+function buildProductLexicon(): Map<string, string> {
+  const map = new Map<string, string>();
+  for (const p of PRODUCTS) {
+    for (const key of [p.name, p.id, p.sub ?? ""]) {
+      const k = normKey(key);
+      if (k && !map.has(k)) map.set(k, p.name);
+    }
+  }
+  return map;
+}
+
+const PRODUCT_LEXICON = buildProductLexicon();
+
+/** A product as the Playbook names it, or "" when it is not one of the five. */
+export function canonProduct(name: string): string {
+  return PRODUCT_LEXICON.get(normKey(name)) ?? "";
+}
 
 // Structured-output schema — the API guarantees the reply parses to this.
 const SCHEMA = {
@@ -66,6 +146,35 @@ const SCHEMA = {
           dayLabel: { type: "string" },
           dayIso: { type: "string" },
           body: { type: "string" },
+          countries: { type: "array", items: { type: "string" } },
+          products: { type: "array", items: { type: "string" } },
+          headcounts: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                what: { type: "string" },
+                count: { type: "integer" },
+              },
+              required: ["what", "count"],
+              additionalProperties: false,
+            },
+          },
+          timing: { type: "string" },
+          promises: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                what: { type: "string" },
+                by: { type: "string", enum: ["me", "them"] },
+                hearer: { type: "string" },
+                day: { type: "string" },
+              },
+              required: ["what", "by", "hearer", "day"],
+              additionalProperties: false,
+            },
+          },
         },
         required: [
           "kind",
@@ -78,6 +187,11 @@ const SCHEMA = {
           "dayLabel",
           "dayIso",
           "body",
+          "countries",
+          "products",
+          "headcounts",
+          "timing",
+          "promises",
         ],
         additionalProperties: false,
       },
@@ -161,6 +275,12 @@ Rules:
 - outcome: "lost" when the paste STATES the deal is lost — the client's words (chose another vendor, walked away) OR the operator's own verdict ("close lost it", "mark it lost", "this one is dead, X's team owns it"); "won" only when signed/closed is stated; phrase = the exact evidence sentence, ≤120 chars. Otherwise "none" with "".
 - accountName: the prospect/client company this paste is ABOUT (not the operator's own company, not a competitor) — "" when unclear.
 - signals: 0-${MAX_SIGNALS} short flags a salesperson would want surfaced — a newly mentioned country or expansion, an implied or explicit deadline, hesitation or stalling tone, who actually holds the decision, a competitor or incumbent system named, escalation or frustration, an owed follow-up with its owner. Plain short sentences. Empty array if nothing notable.
+- Each entry also carries the deal facts THAT entry states — on the message, call or task that said them, never pooled onto another entry, so every fact keeps who said it and when (the attribution rule applies). Most entries carry none; leave the arrays empty and timing "" then.
+  - countries: every country this entry shows work to be done in — people to employ, pay, or quote for — by its plain English name ("Mexico", "United Kingdom", "Puerto Rico"). A country merely mentioned (an office they already have, a place someone is from) is NOT listed.
+  - products: which of our five this entry is about, by name — employer of record, global payroll, contractor management, contractor of record, talent — only when the text says so or the need plainly is one.
+  - headcounts: every number of people this entry states, as what they are and the count ("workers in Mexico" → 10, "contractors in the UK" → 3). Only numbers the text states; never estimate, never total.
+  - timing: when they need it, in this entry's own words ("by January", "before the Q3 review", "no rush, next month"), or "" when the entry says nothing about when.
+  - promises: the explicit commitments this entry makes, each with the person it was made TO — what was promised, by "me" (the operator) or "them", hearer = the name of the person who heard it ("" only when the text truly names no one), day = YYYY-MM-DD when a day was named for it, else "". The fulfillment rule applies here exactly as it does to actions: a promise the document later shows kept is history and is not listed.
 - Order entries newest first. At most ${MAX_ENTRIES} entries.`;
 
 // Deterministic noise gate — belt to the prompt's suspenders, and the same
@@ -220,6 +340,48 @@ export function sanitizeAiResult(raw: unknown): AiCleanResult {
     typeof v === "string"
       ? redactMoney(v.replace(GRAMMAR, " ").trim()).slice(0, cap)
       : "";
+  // The entry's deal facts, clamped to the lexicon: a country or product the
+  // app does not know is dropped, a count is a non-negative integer, every
+  // string goes through the same redaction and grammar strip as the rest.
+  const canonList = (v: unknown, canon: (s: string) => string, cap: number): string[] => {
+    if (!Array.isArray(v)) return [];
+    const out: string[] = [];
+    for (const x of v) {
+      const name = canon(str(x, 80));
+      if (name && !out.includes(name)) out.push(name);
+      if (out.length >= cap) break;
+    }
+    return out;
+  };
+  const headcountsOf = (v: unknown): EntryHeadcount[] => {
+    if (!Array.isArray(v)) return [];
+    const out: EntryHeadcount[] = [];
+    for (const h of v.slice(0, MAX_HEADCOUNTS)) {
+      if (!h || typeof h !== "object") continue;
+      const x = h as Record<string, unknown>;
+      const what = str(x.what, 80);
+      if (!what || typeof x.count !== "number" || !Number.isFinite(x.count)) continue;
+      out.push({ what, count: Math.max(0, Math.min(99999, Math.round(x.count))) });
+    }
+    return out;
+  };
+  const promisesOf = (v: unknown): EntryPromise[] => {
+    if (!Array.isArray(v)) return [];
+    const out: EntryPromise[] = [];
+    for (const p of v.slice(0, MAX_PROMISES)) {
+      if (!p || typeof p !== "object") continue;
+      const x = p as Record<string, unknown>;
+      const what = str(x.what, 200);
+      if (what.length < 6) continue;
+      out.push({
+        what,
+        by: x.by === "them" ? "them" : "me",
+        hearer: normPerson(str(x.hearer, 80)),
+        day: typeof x.day === "string" && /^\d{4}-\d{2}-\d{2}$/.test(x.day) ? x.day : "",
+      });
+    }
+    return out;
+  };
   if (Array.isArray(r.entries)) {
     for (const e of r.entries.slice(0, MAX_ENTRIES)) {
       if (!e || typeof e !== "object") continue;
@@ -249,6 +411,11 @@ export function sanitizeAiResult(raw: unknown): AiCleanResult {
               .filter(Boolean)
           : [],
         body: str(x.body, 800),
+        countries: canonList(x.countries, canonCountry, MAX_COUNTRIES),
+        products: canonList(x.products, canonProduct, MAX_PRODUCTS),
+        headcounts: headcountsOf(x.headcounts),
+        timing: str(x.timing, 120),
+        promises: promisesOf(x.promises),
       });
     }
   }

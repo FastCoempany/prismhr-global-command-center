@@ -65,6 +65,8 @@ export async function fileGaps(opts: {
   known: Set<string>; // knowledgeKey() of asks already on file (live or waved off)
   door: Door; // the filing's door — the fan-out passes it, a click says "hand"
   at?: Date;
+  /** The filing that asked (slice 4): the fan-out passes it, a click has none. */
+  filingId?: string;
 }): Promise<string[]> {
   const ids: string[] = [];
   for (const q of opts.questions) {
@@ -82,6 +84,7 @@ export async function fileGaps(opts: {
         lane: "background",
         source: "gap",
         at: opts.at,
+        filingId: opts.filingId,
       });
       ids.push(row.id);
     } catch {

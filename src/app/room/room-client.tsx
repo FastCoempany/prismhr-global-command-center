@@ -58,6 +58,7 @@ import {
   roomTodoSet,
   roomUnlog,
 } from "./actions";
+import { filingSentences, type Window } from "@/lib/ingest/windows";
 import { DROP_ACCEPT, sniffPaste } from "@/lib/paste-files";
 import { splitDrop, vaultAfterVerdict } from "@/lib/room/drop-plan";
 import { archiveFileToGitHub } from "@/lib/github/archive";
@@ -336,6 +337,8 @@ function Row({
     // The dropped files, held with the question — the vault waits on the
     // verdict too, so a disputed drop never lands in the wrong folder.
     files?: File[];
+    // What the reader cut before the text arrived (D4), held for the re-run.
+    windows?: Window[];
   } | null>(null);
   const [gone, setGone] = useState<Set<string>>(new Set());
   // Rows the operator just un-held: they belong in the open list until the
@@ -485,15 +488,22 @@ function Row({
       else setNote(r.reason ?? "The delete didn't take.");
     });
   };
-  const filePaste = (text: string, force: boolean, waiting?: File[]) => {
+  const filePaste = (
+    text: string,
+    force: boolean,
+    waiting?: File[],
+    // What the reader cut before the text arrived (D4): the transcriber's
+    // or the document's window, recorded on the Filing row and the receipt.
+    windows?: Window[],
+  ) => {
     start(async () => {
-      const r = await roomPaste(row.accountId, text, force ? { force: true } : undefined);
+      const r = await roomPaste(row.accountId, text, { force, windows });
       setReading(null);
       const vault = vaultAfterVerdict(r, waiting);
       if (r.mismatch) {
         // The guard objected — the files wait with the question. Nothing
         // reaches the vault until the operator answers it.
-        setMismatch({ ...r.mismatch, text, files: vault.hold });
+        setMismatch({ ...r.mismatch, text, files: vault.hold, windows });
         return;
       }
       if (r.ok) {
@@ -520,6 +530,9 @@ function Row({
               ? "The reader is down, so the raw text filed as one line and nothing routed. Undo this paste and drop it again when the reader is back."
               : "The read didn't complete. The rules filed the entries. Nothing was opened or asked. The account check ran on the text's own evidence only. Undo if it landed on the wrong row."
             : "",
+          // Every window that cut something, and the duplicate check when it
+          // failed open (D4, D7) — the same sentences the Chute's receipt says.
+          ...filingSentences(r),
         ].filter(Boolean);
         setFreshInfo((f) => [
           { text: parts.join(" "), noteIds: r.noteIds, opened: r.opened },
@@ -551,7 +564,7 @@ function Row({
     }
     // The label holds through the server filing too — the slow part is the
     // brain reading the text, and a silent row reads as a dead drop.
-    filePaste(read.text, false, waiting);
+    filePaste(read.text, false, waiting, read.windows);
   };
   // The vault (founder-decreed 2026-09-02): EVERY file dropped on the row
   // archives to the GitHub vault under accounts/<this account>, fully
@@ -2002,7 +2015,7 @@ function Row({
                     disabled={pending}
                     onClick={() => {
                       setReading(`${mismatch.bound} — reading it again`);
-                      filePaste(mismatch.text, true, mismatch.files);
+                      filePaste(mismatch.text, true, mismatch.files, mismatch.windows);
                     }}
                   >
                     {/* The force path re-runs the whole read, which on a call

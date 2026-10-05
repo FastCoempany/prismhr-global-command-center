@@ -59,7 +59,7 @@ export const HEADCOUNT =
 // Country detection: superset of the flags lib (which only carries art for a
 // few) — aliases and adjectives included. Returns iso2 codes; CountryFlag
 // falls back to a coded plate for countries without art.
-const COUNTRY_ALIASES: Record<string, string> = {
+export const COUNTRY_ALIASES: Record<string, string> = {
   canada: "ca",
   canadian: "ca",
   ontario: "ca",

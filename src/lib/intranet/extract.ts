@@ -88,9 +88,9 @@ type Statement = {
   offsetEnd: number;
 };
 
-export type Filing = { topic: string; subtopic: string; statements: Statement[] };
+export type TopicFiling = { topic: string; subtopic: string; statements: Statement[] };
 
-type LiberalRead = { brief: string; filings: Filing[] };
+type LiberalRead = { brief: string; filings: TopicFiling[] };
 
 export const EMPTY_READ: LiberalRead = { brief: "", filings: [] };
 
@@ -153,7 +153,7 @@ export function asKind(v: unknown): ClaimKind {
 export function sanitizeRead(raw: unknown, body: string): LiberalRead {
   const r = (raw ?? {}) as Record<string, unknown>;
   const filingsIn = Array.isArray(r.filings) ? r.filings : [];
-  const filings: Filing[] = [];
+  const filings: TopicFiling[] = [];
 
   for (const f of filingsIn.slice(0, 40)) {
     const o = (f ?? {}) as Record<string, unknown>;

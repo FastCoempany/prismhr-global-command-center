@@ -54,6 +54,9 @@ type NewAccountNote = {
   /** The body is JSON: redaction runs over its string values, never its
    *  numeric fields, and the body stays JSON (P4; §7 item 8 of the plan). */
   structured?: true;
+  /** The filing that wrote this row (the plan's §2.1; slice 4): the Filing
+   *  row the stored read lives on. Only the paste pipeline sets it. */
+  filingId?: string;
 };
 
 /** The columns a note row is written with, oldest tier first. */
@@ -68,6 +71,7 @@ export type AccountNoteData = {
   source?: string;
   door?: string;
   recipients?: string;
+  filingId?: string;
 };
 
 /** The slice of the Prisma client the writer needs — a test hands in a stub. */
@@ -132,14 +136,24 @@ export async function createAccountNoteRow(
     source: n.source ?? "",
     door: n.door,
   };
+  const full: AccountNoteData = { ...provenance, recipients: n.recipients ?? "" };
+  // The filing link is the newest column and rides its own tier, tried only
+  // when a filing is named: a row with no filing never spends an attempt on
+  // it, and a database without the column loses the link alone, never the
+  // provenance beneath it.
+  if (n.filingId) {
+    try {
+      return await client.accountNote.create({ data: { ...full, filingId: n.filingId } });
+    } catch {
+      // fall through to the tiers below
+    }
+  }
   try {
     // Newest column first. It gets its own tier rather than joining the one
     // below: sharing a tier would mean an unmigrated database silently drops
     // lane, actors and source too, which is a much larger loss than the one
     // column actually missing.
-    return await client.accountNote.create({
-      data: { ...provenance, recipients: n.recipients ?? "" },
-    });
+    return await client.accountNote.create({ data: full });
   } catch {
     try {
       return await client.accountNote.create({ data: provenance });
@@ -158,6 +172,7 @@ export type TodoData = {
   position: number;
   accountId?: string;
   remindAt?: Date;
+  filingId?: string;
 };
 
 /** The slice of the Prisma client the Todo writer needs — a test hands in a stub. */
@@ -190,6 +205,9 @@ export type NewTodo = {
   remindAt?: Date;
   /** The sheet position; omitted → one past the top. */
   position?: number;
+  /** The filing that opened this row (the plan's §2.1; slice 4), so one undo
+   *  by id reaches it. Only the paste pipeline's fan-out sets it. */
+  filingId?: string;
 };
 
 export async function createTodoRow(
@@ -219,5 +237,14 @@ export async function createTodoRow(
   const data: TodoData = { body, done: false, position };
   if (t.accountId) data.accountId = t.accountId;
   if (remindAt) data.remindAt = remindAt;
+  // The filing link rides its own tier, as on the note: a database without
+  // the column loses the link alone, and the row still opens.
+  if (t.filingId) {
+    try {
+      return await client.todo.create({ data: { ...data, filingId: t.filingId } });
+    } catch {
+      // fall through to the row without the link
+    }
+  }
   return client.todo.create({ data });
 }

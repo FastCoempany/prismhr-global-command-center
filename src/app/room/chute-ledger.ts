@@ -16,6 +16,7 @@
 // again. The limiter at the foot is the Chute's concurrency ceiling: at most
 // CHUTE_PARALLEL files read at once; the rest wait in drop order.
 
+import type { Window } from "@/lib/ingest/windows";
 import type { RouteHit } from "@/lib/route-capture";
 import { chicagoDay } from "@/lib/tz";
 
@@ -60,6 +61,14 @@ export type LedgerRow = {
   degraded?: boolean;
   noteIds?: string[];
   todoIds?: string[];
+  /** The Filing row the filing wrote (§2.1 of the Chute brains refactor plan). */
+  filingId?: string;
+  /** Every window that cut something (D4): what a reader cut before the
+   *  text arrived rides on a waiting row to the pick's re-run, and a settled
+   *  row keeps them for its receipt — counts, never text. */
+  windows?: Window[];
+  /** Whether the duplicate check ran, or failed open (D7). */
+  dupeCheck?: string;
   /** A second-record drop. Marked structurally so the ledger's reconcile can
    *  find its receipts without sniffing filenames or reason text. */
   act?: boolean;
@@ -127,6 +136,9 @@ export function storedRow(x: LedgerRow): LedgerRow {
     degraded: x.degraded,
     noteIds: x.noteIds,
     todoIds: x.todoIds,
+    filingId: x.filingId,
+    windows: x.windows,
+    dupeCheck: x.dupeCheck,
     act: x.act,
     vault: x.vault,
   };

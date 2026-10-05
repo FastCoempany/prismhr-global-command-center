@@ -25,6 +25,32 @@ export type TimelineEntry = {
   dayLabel: string; // "Jul 21" | "Yesterday" | "Today" | "6/29/2026" | ""
   dayIso: string; // "2026-07-21" resolved against `now` in Chicago, "" if unknown
   body: string;
+  // The deal facts THIS entry states (the Chute brains refactor plan, §2.1;
+  // §7 item 13, answered 2026-10-05). They sit on the entry, never on the
+  // read, because every surfaced fact is a door to the row it stands on (the
+  // click-depth and meat laws) and the Ted doctrine asks who said a thing
+  // and when; slice 10 aggregates across entries for the account's view.
+  // Optional-by-emptiness: the model's read fills them, empty on most
+  // entries; the rule-based parser leaves them absent, like `recipients`.
+  countries?: string[]; // the lexicon's spelling, work to be done there
+  products?: string[]; // the Playbook's five, by name
+  headcounts?: EntryHeadcount[];
+  timing?: string; // when they need it, in their words, or ""
+  promises?: EntryPromise[];
+};
+
+/** A stated number of people: what they are, and how many. The count is a
+ *  number in a JSON field, never a figure in a string (the money doctrine's
+ *  boundary, as the structured body draws it). */
+export type EntryHeadcount = { what: string; count: number };
+
+/** A commitment with the person who heard it (PROMISED needs a hearer, ruled
+ *  2026-09-25, D28) and the day named for it, YYYY-MM-DD or "". */
+export type EntryPromise = {
+  what: string;
+  by: "me" | "them";
+  hearer: string;
+  day: string;
 };
 
 const MONTHS: Record<string, number> = {
