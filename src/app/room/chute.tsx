@@ -478,7 +478,12 @@ export function Chute({
         <span className={styles.chutePick}>
           {it.state === "mismatch" ? (
             <span className={styles.chuteErr}>
-              Reads like {it.claim || "another account"}. Pick the account.
+              {/* The disputed row's receipt says the rung's reason — nine
+                  words or fewer (D9 as amended 2026-10-05). */}
+              {it.reason
+                ? `${it.reason} `
+                : `Reads like ${it.claim || "another account"}. `}
+              Pick the account.
             </span>
           ) : it.text ? (
             <span>No sure match. Pick the account.</span>

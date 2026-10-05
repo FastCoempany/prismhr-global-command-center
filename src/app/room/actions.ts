@@ -13,7 +13,8 @@ import { getAppAccess } from "@/lib/auth";
 import { hasDatabaseEnv } from "@/lib/db";
 import { peos } from "@/lib/book";
 import { routingRoster } from "@/lib/book/roster";
-import { judgeFiling } from "@/lib/intel/misfile";
+import { guardPlan, type GuardVerdict } from "@/lib/ingest/guard";
+import { EXCERPT_CAP, readRungVerdict } from "@/lib/ingest/verdict-reason";
 import { HEADS, SOURCE_OF, sniffHead } from "@/lib/ingest/dialect";
 import {
   fileFiling,
@@ -31,7 +32,7 @@ import {
   cut,
   type Window,
 } from "@/lib/ingest/windows";
-import { readFreeVerdict, transcriberPrompt } from "@/lib/room/paste";
+import { transcriberPrompt } from "@/lib/room/paste";
 import { digestFor, digestForCardName } from "@/lib/intel/digest";
 import {
   aiCleanAvailable,
@@ -155,6 +156,28 @@ async function stampPasteMark(pasteKey: string, firstNoteId: string) {
   }
 }
 
+// A disputed verdict as the receipt roomPaste hands back: nothing filed,
+// nothing opened, the dispute carried for the doors with its rung and its
+// reason (D9 as amended 2026-10-05). Null when there is no verdict, so a
+// rung that cleared reads as nothing to return.
+function refusal(verdict: GuardVerdict | null, how: string) {
+  if (!verdict) return null;
+  return {
+    ok: false as const,
+    filed: 0 as const,
+    how,
+    mismatch: {
+      claim: verdict.claim,
+      bound: verdict.bound,
+      why: verdict.why,
+      boundWhy: verdict.boundWhy,
+      rung: verdict.rung,
+      reason: verdict.reason,
+    },
+    reason: verdict.reason,
+  };
+}
+
 export async function roomPaste(
   accountId: string,
   raw: string,
@@ -188,8 +211,19 @@ export async function roomPaste(
   asks?: number; // new STILL UNKNOWN questions queued
   learned?: number; // market facts + lessons filed to the playbook
   outcome?: { status: "lost" | "won"; phrase: string } | null;
-  // The misfile guard: the read believes this belongs somewhere else.
-  mismatch?: { claim: string; bound: string; why?: string; boundWhy?: string };
+  // The misfile guard: the capture reads like another account. `rung` says
+  // which rung objected — the text's own evidence before the read, or the
+  // read's claim after it — and `reason` is that rung's sentence, nine
+  // words or fewer (D9 as amended 2026-10-05); the doors keep `why` and
+  // `boundWhy` as the evidence behind it.
+  mismatch?: {
+    claim: string;
+    bound: string;
+    why?: string;
+    boundWhy?: string;
+    rung?: "text" | "read";
+    reason?: string;
+  };
   readFailed?: boolean; // the read errored; the rule parser filed the record
   // The duplicate guard: this exact capture already filed to this account.
   duplicate?: boolean;
@@ -272,12 +306,19 @@ export async function roomPaste(
   // book binds to one account — needs no model at all, so a capture dropped
   // on the wrong row is refused for free rather than after a full read
   // (decreed 2026-09-04). The read's own company claim is judged after,
-  // below, once there is a claim to judge.
+  // below, once there is a claim to judge. A filing may be disputed twice,
+  // each time with a reason of nine words or fewer (D9 as amended
+  // 2026-10-05); this rung's reason is built from the rule's own why, so a
+  // keyless session gets this rung alone, as before.
   if (!opts?.force) {
-    const refused = readFreeVerdict(
-      rawText,
-      { id: acct.id, name: acct.name },
-      routingRoster(),
+    const refused = refusal(
+      guardPlan({
+        text: rawText,
+        claim: "",
+        bound: { id: acct.id, name: acct.name },
+        roster: routingRoster(),
+      }).text,
+      "",
     );
     if (refused) return refused;
   }
@@ -329,34 +370,43 @@ export async function roomPaste(
     }
   }
 
-  // The misfile guard. Two rungs, either may object: the company the read
-  // names, and the evidence the text itself carries — a known address, a
-  // company domain, a person the book binds to one account. The second rung
-  // exists because a call transcript names no company at all, and the old
-  // guard read the model's silence as consent (the Simploy call filed to
-  // Regis, 2026-09-03). Cheap to obey, expensive to skip — a paste filed to
-  // the wrong account poisons two deals at once. A dispute holds the filing
-  // until the operator picks; force is the override.
-  const verdict = opts?.force
-    ? ({ ok: true } as const)
-    : judgeFiling({
-        text: rawText,
-        claim: read?.accountName ?? "",
-        bound: { id: acct.id, name: acct.name },
-        roster: routingRoster(),
-      });
+  // The misfile guard's second rung, after the read: the company the read
+  // names, judged when the row has nothing of its own to stand on. It exists
+  // beside the first because a call transcript names no company at all, and
+  // the old guard read the model's silence as consent (the Simploy call
+  // filed to Regis, 2026-09-03). Cheap to obey, expensive to skip — a paste
+  // filed to the wrong account poisons two deals at once. When this rung
+  // disputes, the model reads both accounts' page data and the web and says
+  // whether the two are the same company under another name: when they are,
+  // the warning withdraws and the filing proceeds; when they are not, its
+  // reason is the verdict's; when it has no answer, the rule's reason stands
+  // (D9 as amended 2026-10-05; the founder's answer to §7 item 3). The call
+  // runs only here, never on a filing the rule accepts. A dispute holds the
+  // filing until the operator picks. With force no rung runs — the pick
+  // never re-judges (D5) — and the read above ran again all the same, to be
+  // sure (§7 item 4).
+  const plan = guardPlan({
+    force: Boolean(opts?.force),
+    text: rawText,
+    claim: read?.accountName ?? "",
+    bound: { id: acct.id, name: acct.name },
+    roster: routingRoster(),
+  });
+  const disputed = plan.read
+    ? await readRungVerdict(
+        plan.read,
+        { head: rawText.split("\n")[0] ?? "", excerpt: rawText.slice(0, EXCERPT_CAP) },
+        { id: acct.id, name: acct.name },
+      )
+    : null;
+  const verdict = refusal(disputed, how) ?? ({ ok: true } as const);
   if (!verdict.ok) {
     return {
       ok: false,
       filed: 0,
       how,
-      mismatch: {
-        claim: verdict.claim,
-        bound: verdict.bound,
-        why: verdict.why,
-        boundWhy: verdict.boundWhy,
-      },
-      reason: `This reads like ${verdict.claim}, not ${acct.name} — ${verdict.why}.`,
+      mismatch: verdict.mismatch,
+      reason: verdict.reason,
     };
   }
   // The day the capture says it was recorded, at noon UTC so day-math is
