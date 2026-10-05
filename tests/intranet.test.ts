@@ -186,7 +186,14 @@ describe("the doctrine is what the founder asked for", () => {
     walk(join(root, "src/lib/intranet"));
     walk(join(root, "src/app/intranet"));
     const banned = /from "@\/app\/(room|today|accounts|playbook|dashboard)\/actions"/;
+    // The one door P2 ruled (CLAUDE.md, The Chute, 2026-09-25): a capture
+    // that names an account files through the room's pipeline, so the door
+    // module alone imports roomPaste. Every other Intranet file still only
+    // reads. The door is named here so a second importer stays a failure.
+    const door = join(root, "src/app/intranet/capture-actions.ts");
+    assert.ok(files.includes(door), "the capture door module is missing");
     for (const f of files) {
+      if (f === door) continue;
       const src = readFileSync(f, "utf8");
       assert.ok(!banned.test(src), `${f} imports a write action — the room only reads`);
     }
