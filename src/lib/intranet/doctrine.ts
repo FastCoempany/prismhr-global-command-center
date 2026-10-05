@@ -33,6 +33,10 @@ export const MODEL_TOPIC = OPUS;
 // The rest of the app's callers, one slot each.
 /** The paste read — aiCleanTimeline (src/lib/intel/ai-clean.ts). */
 export const MODEL_READ = OPUS;
+/** The misfile guard's read rung — verdictReason (src/lib/ingest/
+ *  verdict-reason.ts): is the dropped file the same company under another
+ *  name? (D9 as amended 2026-10-05 — CLAUDE.md, The Chute.) */
+export const MODEL_VERDICT = OPUS;
 /** The Chute's PDF and image transcriber (src/app/room/actions.ts). */
 export const MODEL_TRANSCRIBE = OPUS;
 /** The Act Lane's draft desk (src/app/accounts/draft-actions.ts). */

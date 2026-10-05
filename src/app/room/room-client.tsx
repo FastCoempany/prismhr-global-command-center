@@ -334,6 +334,10 @@ function Row({
     why?: string;
     /** What the chosen row carries for itself — "" when it carries nothing. */
     boundWhy?: string;
+    /** Which rung objected, and its sentence of nine words or fewer (D9 as
+     *  amended 2026-10-05): the banner shows the reason where the why was. */
+    rung?: "text" | "read";
+    reason?: string;
     // The dropped files, held with the question — the vault waits on the
     // verdict too, so a disputed drop never lands in the wrong folder.
     files?: File[];
@@ -2002,11 +2006,19 @@ function Row({
                     overruling the app — and on a channel sale the read names
                     the PEO's client, which is not a misfile at all
                     (2026-09-11). */}
+                {/* The rung's reason, nine words or fewer, stands where the
+                    rule's why stood (D9 as amended 2026-10-05); it already
+                    says what the row carries, so the absence line yields to
+                    it and the row's own evidence still shows. */}
                 <b>This reads like {mismatch.claim}</b>, not {mismatch.bound}
-                {mismatch.why ? ` — ${mismatch.why}` : ""}.{" "}
+                {mismatch.reason
+                  ? `. ${mismatch.reason}`
+                  : `${mismatch.why ? ` — ${mismatch.why}` : ""}.`}{" "}
                 {mismatch.boundWhy
                   ? `For ${mismatch.bound}: ${mismatch.boundWhy}.`
-                  : `Nothing in the text points to ${mismatch.bound}.`}{" "}
+                  : mismatch.reason
+                    ? ""
+                    : `Nothing in the text points to ${mismatch.bound}.`}{" "}
                 Nothing filed yet, and the file is holding out of the vault.
                 <span className={styles.sdSuggActs}>
                   <button
