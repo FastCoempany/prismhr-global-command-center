@@ -161,15 +161,18 @@ test("the vault's doors answer behind the auth gate and never carry the token, a
     else process.env.GITHUB_ARCHIVE_TOKEN = prevToken;
   }
   // And the row wires it: every dropped file archives automatically — the
-  // unreadable ones at once, the readable one the moment its filing is
-  // accepted (the guard gates the vault, 2026-09-03). One file is read per
-  // drop; everything else goes straight to the vault.
+  // unreadable ones at once, each readable one the moment its own filing is
+  // accepted (the guard gates the vault, 2026-09-03). Every readable file is
+  // read (bug 2, closed in slice 8); only what the reader cannot open goes
+  // straight to the vault. The whiteboard screenshot is an image the
+  // transcriber reads, so it waits on its filing like the tape does.
   const vtt = new File(["WEBVTT"], "call.vtt");
   const mp4 = new File([new Uint8Array(8)], "call.mp4");
   const png = new File([new Uint8Array(8)], "whiteboard.png");
   const split = splitDrop([mp4, vtt, png], DROP_ACCEPT);
   assert.equal(split.readable, vtt);
-  assert.deepEqual(split.unreadable, [mp4, png]);
+  assert.deepEqual(split.readables, [vtt, png]);
+  assert.deepEqual(split.unreadable, [mp4]);
   assert.deepEqual(vaultAfterVerdict({ ok: true }, [vtt]).archive, [vtt]);
   assert.deepEqual(
     vaultAfterVerdict({ ok: false, mismatch: { claim: "Simploy" } }, [vtt]).archive,

@@ -126,8 +126,16 @@ describe("every note carries its door in its own column (CLAUDE.md:405, P3)", ()
   });
 
   test("the Chute files as chute; the row's paste is the drop; the fan-out carries the filing's door", () => {
+    // The doors file through the shared hook since slice 8: the Chute mounts
+    // it as "chute", the row's Drop as "drop", and the hook's one roomPaste
+    // call stamps the door it was mounted with.
     const chute = read("src/app/room/chute.tsx");
-    assert.match(chute, /roomPaste\([^)]*door:\s*"chute"/);
+    assert.match(chute, /useIngest\(\{\s*door:\s*"chute"/);
+    const client = read("src/app/room/room-client.tsx");
+    assert.match(client, /useIngest\(\{\s*door:\s*"drop"/);
+    const door = read("src/app/room/ingest/use-ingest.ts");
+    assert.match(door, /roomPaste\(\.\.\.filingRequest\(door,/);
+    assert.match(door, /\{ force: !!opts\.force, door, windows: opts\.windows \}/);
     const actions = read("src/app/room/actions.ts");
     assert.match(actions, /const door: Door = opts\?\.door \?\? "drop";/);
     // The fan-out is its own module since slice 6 (src/lib/ingest/fanout.ts).

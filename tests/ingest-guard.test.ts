@@ -560,7 +560,11 @@ describe("the result and the doors", () => {
 
   test("each door shows the reason where the why was, and the receipt line says it", () => {
     assert.match(chute, /\{it\.reason\s*\?\s*`\$\{it\.reason\} `\s*:\s*`Reads like \$\{it\.claim \|\| "another account"\}\. `\}\s*Pick the account\./);
-    assert.ok(client.includes("rung?: \"text\" | \"read\";"));
+    // The held verdict is the shared hook's since slice 8 (use-verdict.ts);
+    // the Drop holds it through useVerdict and paints the same fields.
+    const verdict = read("src/app/room/ingest/use-verdict.ts");
+    assert.ok(verdict.includes("rung?: \"text\" | \"read\";"));
+    assert.match(client, /useVerdict<DropHold>\(\)/);
     assert.match(client, /\{mismatch\.reason\s*\?\s*`\. \$\{mismatch\.reason\}`/);
   });
 });

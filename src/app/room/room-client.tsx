@@ -49,8 +49,6 @@ import {
   roomNoteToAction,
   roomOwedAccept,
   roomOwedDismiss,
-  roomPaste,
-  roomPasteUndo,
   roomReadPdf,
   roomRecordDelete,
   roomRecordEdit,
@@ -59,11 +57,10 @@ import {
   roomUnlog,
 } from "./actions";
 import { filingSentences, type Window } from "@/lib/ingest/windows";
-import { DROP_ACCEPT, sniffPaste } from "@/lib/paste-files";
-import { splitDrop, vaultAfterVerdict } from "@/lib/room/drop-plan";
-import { sendToVault } from "@/lib/ingest/vault";
-import { vaultChunk, vaultFile } from "./vault-actions";
-import { readFileToText } from "./read-file";
+import { sniffPaste } from "@/lib/paste-files";
+import { DROP_CSV_RECEIPT, useIngest } from "./ingest/use-ingest";
+import { holdVerdict, useVerdict, type Held } from "./ingest/use-verdict";
+import { useUndo } from "./ingest/use-undo";
 import type { StageView } from "@/lib/room/stages-view";
 import { PipelineDrawer } from "./pipeline-tab";
 import type { PipelineRecord } from "@/lib/pipeline/build";
@@ -301,6 +298,16 @@ type FreshCap = {
   promoted?: boolean;
 };
 
+// The misfile guard's holding pen: the read thinks this paste belongs to
+// another account, so nothing is written until the operator insists. The
+// verdict (use-verdict.ts) carries both sides, so the banner can show what
+// the chosen row carries, and the rung's reason where the why stood (D9 as
+// amended 2026-10-05). The Drop holds beside it what the answer needs: the
+// text, the dropped files held with the question so a disputed drop never
+// lands in the wrong folder, and what the reader cut before the text
+// arrived (D4), for the re-run.
+type DropHold = Held<{ text: string; files?: File[]; windows?: Window[] }>;
+
 function Row({
   row,
   collapsed,
@@ -310,6 +317,14 @@ function Row({
   collapsed: boolean;
   onToggle: () => void;
 }) {
+  // The shared door (src/app/room/ingest, slice 8 of the Chute brains
+  // refactor plan): this row is the Drop, bound to its account, reading
+  // PDFs through its own transcriber.
+  const ingest = useIngest({
+    door: "drop",
+    readPdf: (fd) => roomReadPdf(row.accountId, fd),
+  });
+  const { undo } = useUndo();
   // The day's mark, held locally so the ✓ lands the instant it's clicked; the
   // server round trip re-derives it on the next paint.
   const [workedNow, setWorkedNow] = useState(false);
@@ -319,31 +334,16 @@ function Row({
     {
       text: string;
       noteIds?: string[];
+      // The Filing row the paste wrote: the undo's handle (use-undo.ts).
+      filingId?: string;
       // Auto-opened commitments: each retires on its own, and the paste's
       // undo takes them all back with the record.
       opened?: { id: string; text: string; gone?: boolean }[];
     }[]
   >([]);
-  // The misfile guard's holding pen: the read thinks this paste belongs to
-  // another account, so nothing is written until the operator insists.
-  // boundWhy rides along so the banner can show what the chosen row carries.
-  const [mismatch, setMismatch] = useState<{
-    claim: string;
-    bound: string;
-    text: string;
-    why?: string;
-    /** What the chosen row carries for itself — "" when it carries nothing. */
-    boundWhy?: string;
-    /** Which rung objected, and its sentence of nine words or fewer (D9 as
-     *  amended 2026-10-05): the banner shows the reason where the why was. */
-    rung?: "text" | "read";
-    reason?: string;
-    // The dropped files, held with the question — the vault waits on the
-    // verdict too, so a disputed drop never lands in the wrong folder.
-    files?: File[];
-    // What the reader cut before the text arrived (D4), held for the re-run.
-    windows?: Window[];
-  } | null>(null);
+  // The held verdict the banner shows; a second dispute waits its turn
+  // behind it (use-verdict.ts).
+  const { mismatch, setMismatch } = useVerdict<DropHold>();
   const [gone, setGone] = useState<Set<string>>(new Set());
   // Rows the operator just un-held: they belong in the open list until the
   // server round trip re-partitions them there.
@@ -371,9 +371,17 @@ function Row({
   const [composerOpen, setComposerOpen] = useState(false);
   const [pasteText, setPasteText] = useState("");
   const [note, setNote] = useState<string | null>(null);
-  // The Drop's file path: hot while a file hovers, named while one is read.
+  // The Drop's file path: hot while a file hovers, named while files are
+  // read. Several files of one drop read at once (bug 2 closed, slice 8), so
+  // the label holds every name still being read.
   const [dropHot, setDropHot] = useState(false);
-  const [reading, setReading] = useState<string | null>(null);
+  const [reading, setReading] = useState<string[]>([]);
+  const readingAdd = (name: string) => setReading((xs) => [...xs, name]);
+  const readingDrop = (name: string) =>
+    setReading((xs) => {
+      const i = xs.indexOf(name);
+      return i < 0 ? xs : [...xs.slice(0, i), ...xs.slice(i + 1)];
+    });
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   // Which outstanding item was closed — keyed by doneKey so the strike never
   // carries over onto the NEXT item after the panel refreshes.
@@ -492,6 +500,9 @@ function Row({
       else setNote(r.reason ?? "The delete didn't take.");
     });
   };
+  // File a text to this row through the shared door, inside the row's
+  // transition so the receipt lands as one update. Resolves once the filing
+  // has returned and its receipt has landed, so a reader can drop its label.
   const filePaste = (
     text: string,
     force: boolean,
@@ -499,68 +510,89 @@ function Row({
     // What the reader cut before the text arrived (D4): the transcriber's
     // or the document's window, recorded on the Filing row and the receipt.
     windows?: Window[],
+  ): Promise<void> =>
+    new Promise((done) =>
+      start(() => fileText(text, force, waiting, windows).finally(done)),
+    );
+  const fileText = async (
+    text: string,
+    force: boolean,
+    waiting?: File[],
+    windows?: Window[],
   ) => {
-    start(async () => {
-      const r = await roomPaste(row.accountId, text, { force, windows });
-      setReading(null);
-      const vault = vaultAfterVerdict(r, waiting);
-      if (r.mismatch) {
-        // The guard objected — the files wait with the question. Nothing
-        // reaches the vault until the operator answers it.
-        setMismatch({ ...r.mismatch, text, files: vault.hold, windows });
-        return;
-      }
-      if (r.ok) {
-        // Accepted: NOW the files may go to this account's folder.
-        if (vault.archive.length) void archiveFiles(vault.archive);
-        // One receipt, in the order the work matters: what filed, what opened,
-        // what it asked, what it learned, and whether it says this is over.
-        const parts = [
-          `Filed ${r.filed} entr${r.filed === 1 ? "y" : "ies"}${
-            r.how === "ai"
-              ? ", read by Claude"
-              : r.judged
-                ? " by the rules, judgment by Claude"
-                : ""
-          }.`,
-          r.opened?.length
-            ? `${r.opened.length} action${r.opened.length === 1 ? "" : "s"} opened.`
-            : "",
-          r.asks ? `${r.asks} new ask${r.asks === 1 ? "" : "s"} queued.` : "",
-          r.learned ? `${r.learned} to the playbook.` : "",
-          r.outcome ? `Reads ${r.outcome.status}. Confirm below.` : "",
-          r.readFailed
-            ? r.how === "transcript"
-              ? "The reader is down, so the raw text filed as one line and nothing routed. Undo this paste and drop it again when the reader is back."
-              : "The read didn't complete. The rules filed the entries. Nothing was opened or asked. The account check ran on the text's own evidence only. Undo if it landed on the wrong row."
-            : "",
-          // Every window that cut something, and the duplicate check when it
-          // failed open (D4, D7) — the same sentences the Chute's receipt says.
-          ...filingSentences(r),
-        ].filter(Boolean);
-        setFreshInfo((f) => [
-          { text: parts.join(" "), noteIds: r.noteIds, opened: r.opened },
-          ...f,
-        ]);
-        setPasteText("");
-        setLogText("");
-        setPasteOpen(false);
-        setMismatch(null);
-        setNote(null);
-        setSpring("today");
-      } else setNote(r.reason ?? "The paste didn't file.");
-    });
+    const r = await ingest.file(row.accountId, text, { force, windows, waiting });
+    const vault = r.vault;
+    // The guard objected: the files wait with the question. Nothing
+    // reaches the vault until the operator answers it.
+    const held = holdVerdict(r, { text, files: vault.hold, windows });
+    if (held) {
+      setMismatch(held);
+      return;
+    }
+    if (r.ok) {
+      // Accepted: NOW the files may go to this account's folder.
+      if (vault.archive.length) void archiveFiles(vault.archive);
+      // One receipt, in the order the work matters: what filed, what opened,
+      // what it asked, what it learned, and whether it says this is over.
+      const parts = [
+        `Filed ${r.filed} entr${r.filed === 1 ? "y" : "ies"}${
+          r.how === "ai"
+            ? ", read by Claude"
+            : r.judged
+              ? " by the rules, judgment by Claude"
+              : ""
+        }.`,
+        r.opened?.length
+          ? `${r.opened.length} action${r.opened.length === 1 ? "" : "s"} opened.`
+          : "",
+        r.asks ? `${r.asks} new ask${r.asks === 1 ? "" : "s"} queued.` : "",
+        r.learned ? `${r.learned} to the playbook.` : "",
+        r.outcome ? `Reads ${r.outcome.status}. Confirm below.` : "",
+        r.readFailed
+          ? r.how === "transcript"
+            ? "The reader is down, so the raw text filed as one line and nothing routed. Undo this paste and drop it again when the reader is back."
+            : "The read didn't complete. The rules filed the entries. Nothing was opened or asked. The account check ran on the text's own evidence only. Undo if it landed on the wrong row."
+          : "",
+        // Every window that cut something, and the duplicate check when it
+        // failed open (D4, D7) — the same sentences the Chute's receipt says.
+        ...filingSentences(r),
+      ].filter(Boolean);
+      setFreshInfo((f) => [
+        {
+          text: parts.join(" "),
+          noteIds: r.noteIds,
+          filingId: r.filingId,
+          opened: r.opened,
+        },
+        ...f,
+      ]);
+      setPasteText("");
+      setLogText("");
+      setPasteOpen(false);
+      setMismatch(null);
+      setNote(null);
+      setSpring("today");
+    } else setNote(r.reason ?? "The paste didn't file.");
+  };
+  // The operator asserts whose account it is: the pick re-runs the whole
+  // read with force and nothing is re-judged (D5). The held text, files and
+  // windows ride the re-run; the label says the read is running again.
+  const pickBound = () => {
+    if (!mismatch) return;
+    const label = `${mismatch.bound} — reading it again`;
+    readingAdd(label);
+    void filePaste(mismatch.text, true, mismatch.files, mismatch.windows).then(() =>
+      readingDrop(label),
+    );
   };
   // The Drop reads a dropped or picked file into paste text, then files it
-  // through the same read-and-file path as a paste. One file at a time.
+  // through the same read-and-file path as a paste. Each file of a drop
+  // files on its own, with its own receipt (bug 2 closed, slice 8).
   const readDroppedFile = async (f: File, waiting?: File[]) => {
-    setReading(f.name);
-    setNote(null);
-    const read = await readFileToText(f, (fd) => roomReadPdf(row.accountId, fd), {
-      door: "drop",
-    });
+    readingAdd(f.name);
+    const read = await ingest.read(f);
     if (!read.ok) {
-      setReading(null);
+      readingDrop(f.name);
       setNote(read.reason);
       // Unreadable after all — the vault is the whole point for these.
       if (waiting?.length) void archiveFiles(waiting);
@@ -568,7 +600,8 @@ function Row({
     }
     // The label holds through the server filing too — the slow part is the
     // brain reading the text, and a silent row reads as a dead drop.
-    filePaste(read.text, false, waiting, read.windows);
+    await filePaste(read.text, false, waiting, read.windows);
+    readingDrop(f.name);
   };
   // The vault (founder-decreed 2026-09-02; canon since 2026-09-25, D8, as
   // amended 2026-10-05): EVERY file dropped on the row archives to the
@@ -586,12 +619,8 @@ function Row({
     if (files.length === 0) return;
     for (const f of files) {
       setArch({ text: `Archiving ${f.name} to the vault…` });
-      const r = await sendToVault(
-        row.accountId,
-        f,
-        { whole: vaultFile, piece: vaultChunk },
-        (sent, total) =>
-          setArch({ text: `Archiving ${f.name} to the vault… ${sent} of ${total}` }),
+      const r = await ingest.vault(row.accountId, f, (sent, total) =>
+        setArch({ text: `Archiving ${f.name} to the vault… ${sent} of ${total}` }),
       );
       setArch(
         r.ok
@@ -605,21 +634,29 @@ function Row({
   };
 
   const handleFiles = (list: FileList | null) => {
-    const files = Array.from(list ?? []);
-    // The record's reader takes only the types it can read; everything else
-    // is vault-only and never earns a can't-read complaint for being a video.
-    // The vault waits on the guard (founder-decreed 2026-09-03). A readable
-    // capture archives only once the filing is ACCEPTED — a misfiled drop
-    // used to put its file in the wrong account's folder too, and the vault
-    // never un-writes (the Simploy call in accounts/Regis HR Group/). Files
-    // the reader can't open carry no verdict to wait for, so they go now.
-    const { readable: f, unreadable } = splitDrop(files, DROP_ACCEPT);
-    if (unreadable.length) void archiveFiles(unreadable);
-    // Only the readable file waits on the verdict; the rest already went.
-    // Handing the whole drop down here vaulted every other file a second
-    // time on accept (audit pass 1, bug 8).
-    if (f && !pending && !reading) void readDroppedFile(f, [f]);
-    else if (f) void archiveFiles([f]);
+    setNote(null);
+    // The shared door's plan (use-ingest.ts): the record's reader takes only
+    // the types it can read; everything else is vault-only and never earns a
+    // can't-read complaint for being a video. The vault waits on the guard
+    // (founder-decreed 2026-09-03). A readable capture archives only once the
+    // filing is ACCEPTED — a misfiled drop used to put its file in the wrong
+    // account's folder too, and the vault never un-writes (the Simploy call
+    // in accounts/Regis HR Group/). Files the reader can't open carry no
+    // verdict to wait for, so they go now.
+    const plan = ingest.plan(list);
+    if (plan.vault.length) void archiveFiles(plan.vault);
+    // The weekly export is the Chute's to read (D2 as amended 2026-10-05):
+    // dropped on a row it is refused before any read, backed up under this
+    // account, never filed here, and the receipt says so.
+    if (plan.refused.length) {
+      setNote(DROP_CSV_RECEIPT);
+      void archiveFiles(plan.refused);
+    }
+    // Every readable file is read, each filing on its own (bug 2), at most
+    // CHUTE_PARALLEL at a time in drop order (D11). Each waits on its own
+    // verdict alone: handing the whole drop down vaulted every other file a
+    // second time on accept (audit pass 1, bug 8).
+    void ingest.limited(plan.read.map((f) => () => readDroppedFile(f, [f])));
   };
 
   const submitPaste = () => {
@@ -758,7 +795,11 @@ function Row({
     const ids = f.noteIds;
     const todoIds = (f.opened ?? []).map((o) => o.id);
     start(async () => {
-      const r = await roomPasteUndo(row.accountId, ids, todoIds);
+      const r = await undo(row.accountId, {
+        noteIds: ids,
+        todoIds,
+        filingId: f.filingId,
+      });
       if (r.ok)
         setFreshInfo((fs) =>
           fs.map((x, i) =>
@@ -1916,7 +1957,7 @@ function Row({
               <button
                 type="button"
                 className={`${styles.door} ${styles.doorFile}`}
-                disabled={pending || !!reading}
+                disabled={pending || reading.length > 0}
                 onClick={() => fileInputRef.current?.click()}
                 title="File — email, PDF, transcript, spreadsheet, document, or image."
               >
@@ -2025,10 +2066,7 @@ function Row({
                     type="button"
                     className={styles.sdTag}
                     disabled={pending}
-                    onClick={() => {
-                      setReading(`${mismatch.bound} — reading it again`);
-                      filePaste(mismatch.text, true, mismatch.files, mismatch.windows);
-                    }}
+                    onClick={pickBound}
                   >
                     {/* The force path re-runs the whole read, which on a call
                         transcript is a minute of silence. Without a word on
@@ -2050,7 +2088,9 @@ function Row({
                 </span>
               </div>
             )}
-            {reading && <p className={styles.sniff}>Reading {reading}…</p>}
+            {reading.length > 0 && (
+              <p className={styles.sniff}>Reading {reading.join(", ")}…</p>
+            )}
             {arch && (
               <p className={arch.bad ? styles.dropErr : styles.sniff}>
                 ⇪ {arch.text}

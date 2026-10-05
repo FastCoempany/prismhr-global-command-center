@@ -6,7 +6,11 @@
 // a source file.
 
 import { register } from "node:module";
-import type { ReactElement } from "react";
+import { createElement, type ReactElement } from "react";
+import {
+  AppRouterContext,
+  type AppRouterInstance,
+} from "next/dist/shared/lib/app-router-context.shared-runtime";
 import type {
   CadenceRow,
   CheckinRow,
@@ -21,9 +25,24 @@ export const roomClient = () => import("../../src/app/room/room-client");
 export const chute = () => import("../../src/app/room/chute");
 export const captureShelf = () => import("../../src/app/intake/capture-shelf");
 
+// The doors ask the router for the fresh read after a filing (useRouter from
+// next/navigation, in the shared door hooks); under renderToStaticMarkup no
+// App Router is mounted, and the hook throws without one. A stub stands in
+// for first paint: it never navigates and its refresh is a no-op.
+const stubRouter: AppRouterInstance = {
+  back() {},
+  forward() {},
+  refresh() {},
+  push() {},
+  replace() {},
+  prefetch() {},
+};
+
 export async function render(el: ReactElement): Promise<string> {
   const { renderToStaticMarkup } = await import("react-dom/server");
-  return renderToStaticMarkup(el);
+  return renderToStaticMarkup(
+    createElement(AppRouterContext.Provider, { value: stubRouter }, el),
+  );
 }
 
 /** The operator-facing text of a render: tags gone, entities read back. */

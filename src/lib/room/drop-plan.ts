@@ -6,22 +6,33 @@
 // reader cannot open carry no verdict to wait for, so they go at once.
 
 export type DropSplit = {
-  /** The one file the reader takes — it waits on the filing's verdict. */
+  /** The first readable file: the one the Drop read alone before slice 8 of
+   *  the Chute brains refactor plan, kept for the suites that read the split
+   *  one file at a time. `readables` is the whole list. */
   readable: File | undefined;
+  /** Every file the reader can open, in drop order. Each one is read and
+   *  waits on its own filing's verdict: a drop of two .eml files is two
+   *  filings, never one filing and one file lost to the record (audit pass
+   *  1, bug 2; closed in slice 8). */
+  readables: File[];
   /** Everything else: vault-only, archived now, never read a second time. */
   unreadable: File[];
 };
 
-/** Split a drop by the reader's accept list: the first readable file goes to
- *  the reader and waits; the rest go straight to the vault. */
+/** Split a drop by the reader's accept list: every readable file goes to the
+ *  reader and waits; the rest go straight to the vault. */
 export function splitDrop(files: readonly File[], accept: string): DropSplit {
   const readableExts = new Set(
     accept.split(",").map((e) => e.trim().replace(".", "").toLowerCase()),
   );
-  const readable = files.find((x) =>
-    readableExts.has(x.name.split(".").pop()?.toLowerCase() ?? ""),
-  );
-  return { readable, unreadable: files.filter((x) => x !== readable) };
+  const canRead = (x: File): boolean =>
+    readableExts.has(x.name.split(".").pop()?.toLowerCase() ?? "");
+  const readables = files.filter(canRead);
+  return {
+    readable: readables[0],
+    readables,
+    unreadable: files.filter((x) => !canRead(x)),
+  };
 }
 
 export type VaultStep = {
