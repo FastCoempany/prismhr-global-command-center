@@ -17,8 +17,9 @@
 // The Drop's receipts are the TODAY register's and have no ledger; both
 // doors paint their receipts with one component (./receipt.tsx; slice 18a,
 // the face approved 2026-10-06). The ledger also takes the Intranet's
-// hand-off: a Send-it capture the guard disputed arrives as a held row
-// (./hand-off.ts).
+// hand-off: a Send-it capture the guard disputed, or one the route found no
+// sure match for, arrives as a held row (./hand-off.ts; the unsure route
+// since 2026-10-06).
 
 import { useEffect, useRef, useState } from "react";
 import { activityReceipt } from "../../activity/actions";
@@ -55,9 +56,9 @@ export function useReceipts() {
   };
 
   // Reload the day's ledger once on mount; persist on every change after.
-  // The hand-off listener rides the same mount: a Send-it capture the guard
-  // disputed is seated as a held row, newest first, and marked taken so the
-  // sender does not seat it in storage a second time.
+  // The hand-off listener rides the same mount: a held Send-it capture,
+  // disputed or unsure, is seated as a held row, newest first, and marked
+  // taken so the sender does not seat it in storage a second time.
   useEffect(() => {
     const back = () => {
       if (document.visibilityState === "visible") void reconcile();

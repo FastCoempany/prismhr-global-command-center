@@ -264,28 +264,34 @@ export function IntranetClient({
         setReceipt(r.reason ?? "That didn't land.");
         return;
       }
-      // A capture the guard disputed is held in the Chute mounted above this
-      // box, with the same held box every door uses (slice 18a; the face
-      // approved 2026-10-06): the text goes from here to there in the
-      // browser, the verdict came from the server, and the pick files it
-      // through the pipeline with the intranet door. This box keeps its own
-      // line, which says where the capture waits.
+      // A capture the guard disputed, or one the route found no sure match
+      // for, is held in the Chute mounted above this box, with the same held
+      // box every door uses (slice 18a; the unsure route ordered 2026-10-06):
+      // the text goes from here to there in the browser, the verdict or the
+      // candidates came from the server, and the pick files it through the
+      // pipeline with the intranet door. This box keeps its own line, which
+      // says where the capture waits.
       if (r.held)
         handToChute({
           filename: SEND_IT_LABEL,
           text: sent,
-          account: r.held.account,
-          claim: r.held.mismatch.claim,
-          verdict: {
-            rung: r.held.mismatch.rung,
-            reason: r.held.mismatch.reason,
-            why: r.held.mismatch.why,
-            boundWhy: r.held.mismatch.boundWhy,
-            reasonBy: r.held.mismatch.reasonBy,
-            claimId: r.held.mismatch.claimId,
-            candidates: r.held.mismatch.candidates,
-          },
           door: "intranet",
+          ...("candidates" in r.held
+            ? // Unsure: the held row offers the route's candidates.
+              { candidates: r.held.candidates }
+            : {
+                account: r.held.account,
+                claim: r.held.mismatch.claim,
+                verdict: {
+                  rung: r.held.mismatch.rung,
+                  reason: r.held.mismatch.reason,
+                  why: r.held.mismatch.why,
+                  boundWhy: r.held.mismatch.boundWhy,
+                  reasonBy: r.held.mismatch.reasonBy,
+                  claimId: r.held.mismatch.claimId,
+                  candidates: r.held.mismatch.candidates,
+                },
+              }),
         });
       setReceipt("");
       setPaste("");

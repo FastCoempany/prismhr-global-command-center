@@ -53,6 +53,12 @@ export type HeldVerdict = {
   candidates?: { id: string; name: string; rung: string }[];
 };
 
+/** One account a waiting row offers: what the held box reads, and what a
+ *  route hit carries besides when the Chute routed the row itself. */
+export type PickCandidate = { id: string; name: string; rung: string } & Partial<
+  Pick<RouteHit, "score" | "why">
+>;
+
 export type LedgerRow = {
   key: number;
   filename: string;
@@ -64,7 +70,11 @@ export type LedgerRow = {
    *  head, initials) or the operator's own hand (pick, batch). Settled rows
    *  keep this in place of the why, which can carry an address. */
   rung?: string;
-  candidates?: RouteHit[];
+  /** The router's candidates on a row waiting for the pick, which the held
+   *  box offers by id, name and rung. A Chute route's hits carry their score
+   *  and why beside them; a Send-it hand-off's never do, because what leaves
+   *  the server is names and rungs (D12). */
+  candidates?: PickCandidate[];
   /** The activity drop's own arrival counts — what came in, before any verdict. */
   came?: { rows: number; accounts: number; textRows: number };
   /** The take-back asks twice; one click arms it. */
@@ -98,8 +108,9 @@ export type LedgerRow = {
    *  (C20) and dropped the moment the row settles (D12). */
   verdict?: HeldVerdict;
   /** A capture another door handed to the Chute: the Intranet's Send-it,
-   *  whose disputed capture the Chute holds and files with that door (P2,
-   *  P3; slice 18a). Never shown: the receipt names no door. */
+   *  whose disputed or unsure capture the Chute holds and files with that
+   *  door (P2, P3; slice 18a, the unsure route since 2026-10-06). Never
+   *  shown: the receipt names no door. */
   door?: "intranet";
   /** The day the row settled, M/D in Chicago: a settled row keeps the day. */
   day?: string;
@@ -275,22 +286,46 @@ export function isSettled(s: LedgerRow["state"]): boolean {
   );
 }
 
-/** A capture another door hands to the Chute (slice 18a): the Intranet's
- *  Send-it, when the guard disputed it. The Chute holds it as a held row
- *  with the same box, and the pick files it with the door it came through. */
-export type HandOff = {
-  filename: string;
-  text: string;
-  /** The account the route chose and the guard disputed. */
+/** A capture another door hands to the Chute: the Intranet's Send-it. One
+ *  box holds a disputed or unsure file at every door (CLAUDE.md, The held
+ *  file and the receipt, ship order 2026-10-06), so Send-it hands over both:
+ *  a capture the guard disputed (slice 18a), and one the route found no sure
+ *  match for (ordered 2026-10-06). The Chute holds either as a held row with
+ *  the same box, and the pick files it with the door it came through. */
+export type HandOff = DisputedHandOff | UnsureHandOff;
+
+type HandOffBase = { filename: string; text: string; door: "intranet" };
+
+/** A capture the guard disputed: the account the route chose, what the
+ *  capture reads like, and the rung's verdict. */
+export type DisputedHandOff = HandOffBase & {
   account: { id: string; name: string };
-  /** What the capture reads like. */
   claim: string;
   verdict: HeldVerdict;
-  door: "intranet";
 };
 
-/** The held row a hand-off becomes. */
+/** A capture the route found no sure match for: the candidates it found,
+ *  by id, name and rung (D12), which the held row offers as its choices. */
+export type UnsureHandOff = HandOffBase & {
+  candidates: { id: string; name: string; rung: string }[];
+};
+
+/** The held row a hand-off becomes. An unsure capture waits as a pick row,
+ *  the state the Chute's own unroutable files wait in, so the box says "No
+ *  sure match" and offers the candidates; a disputed one waits on its
+ *  verdict. */
 export function handOffRow(h: HandOff, key: number): LedgerRow {
+  if ("candidates" in h)
+    return {
+      key,
+      filename: h.filename,
+      state: "pick",
+      text: h.text,
+      // Rebuilt field by field, so nothing beside the id, the name and the
+      // rung rides into the ledger (D12).
+      candidates: h.candidates.map((c) => ({ id: c.id, name: c.name, rung: c.rung })),
+      door: h.door,
+    };
   return {
     key,
     filename: h.filename,
