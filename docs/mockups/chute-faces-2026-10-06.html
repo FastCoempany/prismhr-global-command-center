@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Chute Faces</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=JetBrains+Mono:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  /* The Antaeus tokens, as antaeus-brand-kit/css/tokens.css sets them. One theme. */
+  :root{
+    color-scheme: light;
+    --field:#f5f7fb; --surface:#ffffff; --surface-sub:#fafbfd; --surface-sunk:#eff2f7;
+    --ink:#0a1c40; --ink-soft:rgba(10,28,64,.66); --ink-faint:rgba(10,28,64,.42); --ink-quiet:rgba(10,28,64,.22);
+    --hair:rgba(10,28,64,.07); --hair-strong:rgba(10,28,64,.14);
+    --orange:#e6701e; --orange-soft:rgba(230,112,30,.1);
+    --blue:#2563eb; --blue-soft:rgba(37,99,235,.08);
+    --green:#22c55e; --amber:#f59e0b; --amber-soft:rgba(245,158,11,.12); --red:#ef4444;
+    --serif:"DM Serif Display",serif; --sans:"Public Sans",-apple-system,system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{background:var(--field)}
+  body{margin:0;color:var(--ink);font:400 15px/1.6 var(--sans);-webkit-font-smoothing:antialiased}
+  button{font:inherit;color:inherit;cursor:pointer}
+  .page{max-width:900px;margin:0 auto;padding:40px 16px 96px}
+  .kick{font:600 10.5px/1.4 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint)}
+  h1{font:400 clamp(30px,5vw,44px)/1.1 var(--serif);margin:10px 0 12px;text-wrap:balance}
+  .lede{color:var(--ink-soft);max-width:68ch;margin:0}
+  .status{display:inline-block;margin-top:16px;padding:6px 12px;border:1px solid var(--hair-strong);border-radius:99px;background:var(--surface);font:600 10.5px/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft)}
+
+  section{margin-top:56px}
+  h2{font:400 26px/1.2 var(--serif);margin:6px 0 8px}
+  .why{margin:0 0 20px;padding:0;list-style:none;max-width:72ch}
+  .why li{font-size:14px;color:var(--ink-soft);padding:4px 0 4px 16px;position:relative}
+  .why li::before{content:"";position:absolute;left:0;top:13px;width:6px;height:1px;background:var(--ink-faint)}
+  .label{font:600 10px/1.4 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);margin:26px 0 8px}
+
+  /* The Chute, as production draws it: a dashed tray at the top of the HomeRoom. */
+  .chute{padding:12px 16px;background:rgba(255,255,255,.66);border:1.5px dashed var(--ink-quiet);border-radius:12px}
+  .chute-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+  .chute-head .meter{font:600 10.5px/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft)}
+  .chute-head .clear{margin-left:auto;border:0;background:none;font:600 10.5px/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);padding:0}
+  .chute-head .clear:hover{color:var(--ink)}
+  .chute-list{list-style:none;margin:10px 0 0;padding:0}
+  .chute-list>li{padding:9px 0;border-top:1px solid var(--hair)}
+  .chute-list>li:first-child{border-top:0}
+  .file{font:500 10.5px/1.5 var(--mono);color:var(--ink)}
+
+  /* The held file: one component at every door. */
+  .held{background:var(--surface);border:1px solid var(--hair-strong);border-left:3px solid var(--amber);border-radius:8px;padding:12px 14px 12px 14px}
+  .held-k{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .pill{font:600 10px/1.4 var(--mono);letter-spacing:.14em;text-transform:uppercase;background:var(--amber-soft);color:var(--ink);padding:2px 7px;border-radius:4px}
+  .reason{display:block;margin:8px 0 0;border:0;background:none;padding:0;text-align:left;font:500 15px/1.5 var(--sans);color:var(--ink)}
+  .reason:hover{text-decoration:underline;text-decoration-color:var(--ink-quiet);text-underline-offset:3px}
+  .reason .open{font:600 10px/1 var(--mono);color:var(--ink-faint);margin-left:6px;letter-spacing:.1em}
+  .grounds{display:none;margin:10px 0 0;padding:10px 12px;background:var(--surface-sub);border-radius:6px}
+  .grounds.on{display:block}
+  .grounds dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:6px 14px}
+  .grounds dt{font:600 10px/1.9 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);white-space:nowrap}
+  .grounds dt.ai{color:var(--blue)}
+  .grounds dd{margin:0;font-size:13.5px;color:var(--ink-soft)}
+  .choices{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:12px}
+  .solid{border:0;background:var(--ink);color:#fff;border-radius:4px;padding:7px 14px;font:600 13px/1.2 var(--sans)}
+  .solid:hover{background:#13285a}
+  .text{border:0;background:none;padding:4px 0;font:600 13px/1.2 var(--sans);color:var(--ink-soft)}
+  .text:hover{color:var(--ink)}
+  .x{margin-left:auto;border:0;background:none;color:var(--ink-faint);font-size:14px;padding:2px 4px;opacity:.55}
+  .held:hover .x,.rcpt:hover .ctl{opacity:1}
+  .others{display:none;margin:10px 0 0;padding:0;list-style:none;border:1px solid var(--hair-strong);border-radius:6px;background:var(--surface)}
+  .others.on{display:block}
+  .others li{display:flex;gap:10px;align-items:baseline;padding:8px 12px;border-top:1px solid var(--hair);font-size:13.5px}
+  .others li:first-child{border-top:0}
+  .others .why-rung{margin-left:auto;font:600 10px/1.4 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint)}
+
+  /* The receipt. */
+  .rcpt{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .rline{border:0;background:none;padding:0;text-align:left;font:500 11.5px/1.6 var(--mono);color:var(--ink-soft);letter-spacing:.02em}
+  .rline:hover{color:var(--ink)}
+  .rline .ok{color:var(--green);font-weight:700;margin-right:4px}
+  .rline a{color:var(--ink);text-decoration:none;border-bottom:1px solid var(--ink-quiet)}
+  .ctl{display:flex;gap:6px;margin-left:auto;opacity:.45}
+  .ctl button{border:0;background:none;color:var(--ink-faint);font-size:13px;padding:0 3px}
+  .ctl button:hover{color:var(--ink)}
+  .caveat{margin:4px 0 0;padding-left:10px;border-left:2px solid var(--amber);font-size:13px;color:var(--ink-soft)}
+  .quiet{font:500 11.5px/1.6 var(--mono);color:var(--ink-faint)}
+  .wrote{display:none;margin:8px 0 2px;padding:10px 12px;background:var(--surface-sub);border-radius:6px}
+  .wrote.on{display:block}
+  .wrote .k{font:600 10px/1.6 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);margin:6px 0 2px}
+  .wrote .k:first-child{margin-top:0}
+  .wrote ul{margin:0;padding-left:16px}
+  .wrote li{font-size:13.5px;color:var(--ink-soft);margin:1px 0}
+
+  /* A HomeRoom row, enough of it to show the move line. */
+  .row{background:var(--surface);border:1px solid var(--hair-strong);border-radius:12px;padding:18px 20px;display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:22px}
+  @media (max-width:760px){.row{grid-template-columns:1fr}}
+  .acct{font:400 24px/1.15 var(--serif);margin:0 0 4px}
+  .acct a{color:var(--ink);text-decoration:none}
+  .meta{font:500 11px/1.6 var(--mono);color:var(--ink-faint);letter-spacing:.04em;margin:0 0 12px}
+  .move{display:block;border:0;background:none;padding:0;text-align:left;margin:0;font:600 16.5px/1.5 var(--sans);color:var(--ink)}
+  .move.door:hover{text-decoration:underline;text-decoration-color:var(--ink-quiet);text-underline-offset:3px}
+  .move .more{font:600 12px/1 var(--mono);color:var(--ink-faint);margin-left:4px}
+  .go{margin-top:10px;background:rgba(230,112,30,.16);border:1px solid rgba(230,112,30,.55);color:var(--orange);border-radius:7px;padding:8px 16px;font-size:13.5px;font-weight:700}
+  .promises{display:none;margin:12px 0 0;padding:0;list-style:none;border-top:1px solid var(--hair)}
+  .promises.on{display:block}
+  .promises li{padding:9px 0;border-bottom:1px solid var(--hair);font-size:13.5px}
+  .promises .who{font-weight:600;color:var(--ink)}
+  .promises .src{display:block;font:500 10.5px/1.6 var(--mono);letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase}
+  .panel{border-left:1px solid var(--hair);padding-left:18px}
+  @media (max-width:760px){.panel{border-left:0;border-top:1px solid var(--hair);padding:14px 0 0}}
+  .theirs{font:700 10px/1.6 var(--mono);letter-spacing:.08em;color:var(--blue);padding-bottom:7px;border-bottom:1px solid var(--hair);margin-bottom:8px}
+  .reg{display:flex;align-items:baseline;gap:8px;padding:6px 0;border-bottom:1px solid var(--hair);font-size:13px;color:var(--ink-soft)}
+  .reg .rk{font:600 10px/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);min-width:72px}
+  .reg .n{font:600 11px/1.4 var(--mono);color:var(--ink)}
+  .seg{display:inline-flex;flex-wrap:wrap;gap:2px;padding:2px;background:var(--surface-sub);border:1px solid var(--hair-strong);border-radius:99px;margin:0 0 14px}
+  .seg button{border:0;background:none;border-radius:99px;padding:6px 12px;font:600 12px/1.2 var(--sans);color:var(--ink-soft)}
+  .seg button.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(10,28,64,.12)}
+  .note{font-size:13px;color:var(--ink-faint);margin:10px 0 0;max-width:72ch}
+  .sendit{margin-top:14px;padding:10px 14px;background:var(--surface);border:1px solid var(--hair-strong);border-radius:8px;font-size:13.5px;color:var(--ink-soft)}
+  .sendit b{font:600 10px/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);margin-right:8px}
+  .ro{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+  .ro .meter{font:600 10.5px/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft)}
+  .ro .lock{margin-left:auto;font:600 10.5px/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint)}
+</style>
+</head>
+<body>
+<main class="page">
+  <div class="kick">Chute brains · slice 18 · ship order 2026-10-06</div>
+  <h1>The held file, the receipt, and their promise</h1>
+  <p class="lede">The two calls the founder asked for on 2026-10-06, drawn in the brand's system, and approved with a ship order the same day. Slice 18 builds them on the machinery slices 1 to 17 shipped.</p>
+  <span class="status">Winner · ship order 2026-10-06</span>
+
+  <!-- ───────────────────────── 1. The held file ───────────────────────── -->
+  <section>
+    <div class="kick">Call 1 · part one</div>
+    <h2>The held file</h2>
+    <ul class="why">
+      <li>One box at every door: the Chute, the Drop, and the Intranet's Send-it, which hands its dispute to the Chute.</li>
+      <li>State first: the reason, nine words or fewer. The reason opens to the evidence in one click.</li>
+      <li>The app's best guess is the solid button. No orange here, because the row's move owns the page's one orange.</li>
+      <li>"Don't file it" keeps the file off every account and still backs it up, since every dropped file belongs in git. Today the Drop throws it away.</li>
+    </ul>
+
+    <div class="label">In the Chute · the text rung warns before the read</div>
+    <div class="chute">
+      <div class="chute-head"><span class="meter">3 files · 2 filed · 1 held</span><button class="clear" type="button">Clear all</button></div>
+      <ul class="chute-list">
+        <li>
+          <div class="held">
+            <div class="held-k"><span class="pill">Held</span><span class="file">simploy-renewal.eml</span></div>
+            <button class="reason" type="button" data-toggle="g1">Chassie Smith is Simploy's contact. Nothing points to Regis.<span class="open">WHY ▾</span></button>
+            <div class="grounds" id="g1">
+              <dl>
+                <dt>In the text</dt><dd>chassie@simploy.com is the book's contact for Simploy.</dd>
+                <dt>For Regis</dt><dd>Nothing in the text names Regis HR Group or its people.</dd>
+              </dl>
+            </div>
+            <div class="choices">
+              <button class="solid" type="button">File to Simploy</button>
+              <button class="text" type="button">Keep on Regis</button>
+              <button class="text" type="button" data-toggle="o1">Another account ▾</button>
+              <button class="x" type="button" title="Don't file it. It still backs up.">✕</button>
+            </div>
+            <ul class="others" id="o1">
+              <li>Simploy<span class="why-rung">Address</span></li>
+              <li>Regis HR Group<span class="why-rung">Dropped here</span></li>
+              <li>Cornerstone Employer Solutions<span class="why-rung">Same batch</span></li>
+              <li style="color:var(--ink-faint)">Search the book…</li>
+            </ul>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <div class="label">On a HomeRoom row · the read rung warns after the read</div>
+    <div class="held">
+      <div class="held-k"><span class="pill">Held</span><span class="file">call-oct-2.vtt</span></div>
+      <button class="reason" type="button" data-toggle="g2">Advocate Pay and Regis are separate PEOs.<span class="open">WHY ▾</span></button>
+      <div class="grounds" id="g2">
+        <dl>
+          <dt>From the read</dt><dd>The call is about Advocate Pay's client in Mexico.</dd>
+          <dt class="ai">Web check</dt><dd>Advocate Pay and Regis HR Group are separate PEOs. Neither owns the other.</dd>
+          <dt>For Regis</dt><dd>Regis shows up once, as a passing mention.</dd>
+        </dl>
+      </div>
+      <div class="choices">
+        <button class="solid" type="button">File to Advocate Pay</button>
+        <button class="text" type="button">Keep on Regis</button>
+        <button class="text" type="button">Another account ▾</button>
+        <button class="x" type="button" title="Don't file it. It still backs up.">✕</button>
+      </div>
+    </div>
+    <p class="note">On the Drop the same box replaces today's two-sided banner, "No, it's X's ✓" and "keep it out ✕". When the web check finds the same company, the box never appears.</p>
+
+    <div class="sendit"><b>Send-it</b>Held in the Chute above.</div>
+    <p class="note">The Intranet's Send-it box keeps its own line and hands a disputed capture to the Chute mounted on that page. There, "Don't file it" keeps the capture in the brain.</p>
+  </section>
+
+  <!-- ───────────────────────── 2. The receipt ───────────────────────── -->
+  <section>
+    <div class="kick">Call 1 · part two</div>
+    <h2>The receipt</h2>
+    <ul class="why">
+      <li>One line per filing at both doors: the account, what it filed, the day, and how it was routed. That is what your D12 ruling says a receipt keeps.</li>
+      <li>A second line shows only when something needs saying: the read was cut, the duplicate check didn't run, or the reader was down.</li>
+      <li>The line opens to what the filing wrote. ↺ takes the whole filing back. ✕ clears the receipt.</li>
+      <li>Today's long line, with its dash aside and its brackets, goes. So do the Drop's opened-action chips: the to-dos show in TODAY, which springs open on filing.</li>
+    </ul>
+
+    <div class="label">The Chute's fold · tap the first line</div>
+    <div class="chute">
+      <div class="chute-head"><span class="meter">7 receipts · today</span><button class="clear" type="button">Clear all</button></div>
+      <ul class="chute-list">
+        <li>
+          <div class="rcpt">
+            <button class="rline" type="button" data-toggle="w1"><span class="ok">✓</span><a href="#">Regis HR Group</a> · 3 filed · 1 to-do · 10/6 · address</button>
+            <span class="ctl"><button type="button" title="Take back everything this filing wrote">↺</button><button type="button" title="Clear this receipt">✕</button></span>
+          </div>
+          <div class="wrote" id="w1">
+            <div class="k">Filed</div>
+            <ul><li>Re: renewal timing · Lesha Cyphers · 10/3</li><li>Census template request · 10/4</li><li>Pricing call recap · 10/6</li></ul>
+            <div class="k">To-do</div>
+            <ul><li>Send the census template.</li></ul>
+          </div>
+        </li>
+        <li>
+          <div class="rcpt">
+            <button class="rline" type="button"><span class="ok">✓</span><a href="#">Simploy</a> · 1 filed · 1 their promise · 10/6 · picked</button>
+            <span class="ctl"><button type="button">↺</button><button type="button">✕</button></span>
+          </div>
+          <p class="caveat">Read 60,000 of 212,000 characters.</p>
+        </li>
+        <li>
+          <div class="rcpt">
+            <button class="rline" type="button"><span class="ok">✓</span><a href="#">Advocate Pay</a> · 4 filed · 10/6 · domain</button>
+            <span class="ctl"><button type="button">↺</button><button type="button">✕</button></span>
+          </div>
+          <p class="caveat">The duplicate check didn't run.</p>
+        </li>
+        <li>
+          <div class="rcpt">
+            <button class="rline" type="button"><span class="ok">✓</span><a href="#">Cornerstone</a> · 1 filed · 10/6 · name</button>
+            <span class="ctl"><button type="button">↺</button><button type="button">✕</button></span>
+          </div>
+          <p class="caveat">The reader was down. Only the text filed.</p>
+        </li>
+        <li><div class="rcpt"><span class="rline">⇪ Backed up · board-deck.pdf · 10/6 · <a href="#">open</a></span><span class="ctl"><button type="button">↺</button><button type="button">✕</button></span></div></li>
+        <li><div class="rcpt"><span class="rline">⇪ Not filed. Backed up. · stray-scan.pdf · 10/6</span><span class="ctl"><button type="button">✕</button></span></div></li>
+        <li><div class="rcpt"><span class="quiet">↺ Taken back from Regis HR Group. 3 removed.</span><span class="ctl"><button type="button">✕</button></span></div></li>
+      </ul>
+    </div>
+
+    <div class="label">On the Drop · the weekly export dropped on a row</div>
+    <div class="chute" style="border-style:solid;border-color:var(--hair-strong);background:var(--surface)">
+      <div class="rcpt"><span class="rline">⇪ activity-export-oct-6.csv · 10/6</span></div>
+      <p class="caveat">Not filed here. Backed up. Drop the export in the Chute.</p>
+    </div>
+
+    <div class="label">A read-only session</div>
+    <div class="chute">
+      <div class="ro"><span class="meter">2 receipts · today</span><span class="lock">Read-only session</span></div>
+      <ul class="chute-list">
+        <li><div class="rcpt"><span class="rline"><span class="ok">✓</span><a href="#">Regis HR Group</a> · 3 filed · 1 to-do · 10/6 · address</span></div></li>
+      </ul>
+    </div>
+    <p class="note">The bar stays as slice 8 built it. A read-only receipt has no ↺.</p>
+  </section>
+
+  <!-- ───────────────────────── 3. Their promise ───────────────────────── -->
+  <section>
+    <div class="kick">Call 2</div>
+    <h2>Where their promise shows up</h2>
+    <ul class="why">
+      <li>On the move line only. TODAY stays your own list, every line something you do. THEIRS stays the Salesforce gem line.</li>
+      <li>While the promise stands and you owe nothing else, the line says to wait and names the day. When the day passes, it becomes your move: chase.</li>
+      <li>PROMISED in capitals only when someone heard the day. With no hearer, it reads as a wall, per your D28 ruling.</li>
+      <li>The line opens to what they promised, who heard it, and the filing it came from. "+2" means two more are open, and opens them.</li>
+      <li>"Hold for their follow-up" and "Chase the follow-up" retire into these lines, so one fact has one wording.</li>
+    </ul>
+
+    <div class="seg" role="tablist" aria-label="State of the promise">
+      <button type="button" class="on" data-state="wait">Waiting</button>
+      <button type="button" data-state="today">Due today</button>
+      <button type="button" data-state="blown">Day passed, heard</button>
+      <button type="button" data-state="wall">Day passed, no hearer</button>
+      <button type="button" data-state="more">Three open</button>
+    </div>
+
+    <div class="row">
+      <div>
+        <p class="acct"><a href="#">Simploy</a></p>
+        <p class="meta">DEMO · EOR · MEXICO · LAST TOUCH 10/6</p>
+        <button class="move door" type="button" id="move">Wait on Adam. Promised Friday.</button>
+        <ul class="promises" id="promises">
+          <li><span class="who">Adam Bell</span> · Send the census for the Mexico hires.<span class="src">Promised to Antaeus Coe · Friday 10/10 · Filed thread 10/6</span></li>
+        </ul>
+        <button class="go" type="button" id="go" hidden>Chase Adam</button>
+      </div>
+      <div class="panel">
+        <div class="theirs">THEIRS · ADAM'S EOR QUESTION · 10/02</div>
+        <div class="reg"><span class="rk">Unknown</span><span class="n">2</span>Who signs the employment contract?</div>
+        <div class="reg"><span class="rk">Today</span><span class="n">1</span>Send the Mexico cost sheet.</div>
+        <p class="note" style="margin-top:8px">The registers and THEIRS are unchanged.</p>
+      </div>
+    </div>
+    <p class="note" id="statenote">The promise stands and you owe nothing else, so the line says wait and names the day.</p>
+  </section>
+
+  <section>
+    <div class="kick">What the calls leave alone</div>
+    <ul class="why">
+      <li>Four other face questions in the plan stay open: the typed note's head, the Drop's four buttons, the BOOKED mark on the Sendbook, and the three stamp words on Groundwork.</li>
+      <li>Nothing here changes Groundwork, the Accounts sheet, or the Sendbook.</li>
+    </ul>
+  </section>
+</main>
+
+<script>
+  document.querySelectorAll("[data-toggle]").forEach((b) => {
+    b.addEventListener("click", (e) => {
+      e.preventDefault();
+      const t = document.getElementById(b.dataset.toggle);
+      if (t) t.classList.toggle("on");
+    });
+  });
+  const states = {
+    wait:  { move: "Wait on Adam. Promised Friday.", go: false, note: "The promise stands and you owe nothing else, so the line says wait and names the day.",
+             list: [["Adam Bell", "Send the census for the Mexico hires.", "Promised to Antaeus Coe · Friday 10/10 · Filed thread 10/6"]] },
+    today: { move: "Wait on Adam. Due today.", go: false, note: "The day is today. It is still theirs to send.",
+             list: [["Adam Bell", "Send the census for the Mexico hires.", "Promised to Antaeus Coe · Today 10/10 · Filed thread 10/6"]] },
+    blown: { move: "Chase Adam. PROMISED 10/10.", go: true, note: "Someone heard the day and the day ended, so it is your move now and it carries the date.",
+             list: [["Adam Bell", "Send the census for the Mexico hires.", "Promised to Antaeus Coe · 10/10 · Filed thread 10/6"]] },
+    wall:  { move: "Chase Adam. The 10/10 wall passed.", go: true, note: "The record names no one who heard the day, so it reads as a wall, not PROMISED.",
+             list: [["Adam Bell", "Send the census for the Mexico hires.", "Due 10/10 · no hearer on record · Filed thread 10/6"]] },
+    more:  { move: "Wait on Adam. Promised Friday. +2", go: false, note: "The most pressing promise leads. The +2 opens the other two.",
+             list: [["Adam Bell", "Send the census for the Mexico hires.", "Promised to Antaeus Coe · Friday 10/10 · Filed thread 10/6"],
+                    ["Simploy", "Confirm the Mexico start dates.", "Promised to Antaeus Coe · 10/14 · Call notes 10/2"],
+                    ["Lesha Cyphers relayed", "Their benefits broker will send the plan summary.", "No day given · Filed thread 10/3"]] },
+  };
+  const move = document.getElementById("move"), list = document.getElementById("promises"),
+        go = document.getElementById("go"), note = document.getElementById("statenote");
+  function render(key) {
+    const s = states[key];
+    move.textContent = s.move;
+    go.hidden = !s.go;
+    note.textContent = s.note;
+    list.innerHTML = s.list.map(([w, t, src]) =>
+      `<li><span class="who">${w}</span> · ${t}<span class="src">${src}</span></li>`).join("");
+    document.querySelectorAll(".seg button").forEach((b) => b.classList.toggle("on", b.dataset.state === key));
+  }
+  document.querySelectorAll(".seg button").forEach((b) => b.addEventListener("click", () => render(b.dataset.state)));
+  move.addEventListener("click", () => list.classList.toggle("on"));
+</script>
+</body>
+</html>
