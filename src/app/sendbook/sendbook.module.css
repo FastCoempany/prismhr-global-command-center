@@ -129,7 +129,8 @@
   border-radius: 999px;
   padding: 2px 8px;
 }
-.replied {
+.replied,
+.booked {
   font-family: var(--font-donor-mono), ui-monospace, Menlo, monospace;
   font-size: 10px;
   letter-spacing: 0.06em;

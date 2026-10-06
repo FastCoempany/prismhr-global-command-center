@@ -434,13 +434,38 @@ describe("no rule stamps with an empty label (D27)", () => {
     }
   });
 
-  test("the three once-silent rules speak: seated with its day, the gem with its term, engaged as never met", () => {
-    assert.equal(stampSubtext("seated", { seatDay: "2026-08-20" }), "SEATED · 8/20");
+  test("the three once-silent rules say what was done: the seat, the gem, the first conversation", () => {
+    // Decided 2026-10-06: past tense, then the specific, like every stamp.
+    assert.equal(
+      stampSubtext("seated", { seatDay: "2026-08-20" }),
+      "WORKED THE MOVE FROM THE SHEET · SEATED 8/20",
+    );
+    assert.equal(stampSubtext("seated", {}), "WORKED THE MOVE FROM THE SHEET");
+    assert.equal(
+      stampSubtext("second-record-gem", { gemTerm: "phr stall", gemWho: "Adam Bell" }),
+      "ACTED ON ADAM’S PHR STALL",
+    );
     assert.equal(
       stampSubtext("second-record-gem", { gemTerm: "phr stall" }),
-      "THEIRS · PHR STALL",
+      "ACTED ON THEIR PHR STALL",
     );
-    assert.equal(stampSubtext("engaged-never-introduced", {}), "ENGAGED · NEVER MET");
+    assert.equal(stampSubtext("second-record-gem", {}), "ACTED ON THEIR LATEST ACTIVITY");
+    assert.equal(
+      stampSubtext("engaged-never-introduced", { supportCases: 14 }),
+      "OPENED THE FIRST CONVERSATION · 14 SUPPORT CASES",
+    );
+    assert.equal(
+      stampSubtext("engaged-never-introduced", {}),
+      "OPENED THE FIRST CONVERSATION",
+    );
+  });
+
+  test("no stamp is a bare noun: each opens on what the operator did", () => {
+    const VERB = /^(SENT|NUDGED|REVIVED|BRIEFED|REFRESHED|RAN|DUG|ASKED|WORKED|ACTED|OPENED)\b/;
+    for (const id of QUEUE_RULE_IDS) {
+      const sub = stampSubtext(id, {});
+      assert.match(sub, VERB, `${id} stamps ${sub}`);
+    }
   });
 
   test("a rule the table does not know still speaks its own label", () => {

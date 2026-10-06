@@ -474,9 +474,21 @@ export default async function GroundworkPage({
     const n = notesMap.get(`${SEAT_NS}${id}`)?.[0];
     return n ? (parseSeatBody(n.body)?.day ?? "") : "";
   };
+  // The gem a stamp names: the one the record answered today, once the
+  // operator's send has reached it, else the one still leading. The folded
+  // second record, so a drop keyed by a shell id stamps under its account.
+  const stampGem = (id: string) => {
+    const sr = secondFolded.get(id);
+    return (
+      (sr?.gems ?? []).find(
+        (g) => g.actedDay === dayKey && g.whoKind !== "colleague" && !!g.act,
+      ) ?? outreachGem(sr)
+    );
+  };
   const ruleSub = (id: string, ruleId: string): string => {
     const r = researchByAccount.get(id);
     const lane = ridingLaneDate(accountNotes.get(id), now);
+    const gem = stampGem(id);
     return stampSubtext(ruleId, {
       wireHeadline: wireHeadFor(id),
       intentActivities: intentById.get(id)?.activities ?? null,
@@ -488,7 +500,9 @@ export default async function GroundworkPage({
         ? Math.floor((now.getTime() - Date.parse(r.at)) / 86_400_000)
         : null,
       seatDay: seatDayOf(id),
-      gemTerm: outreachGem(secondById.get(id))?.term ?? "",
+      gemTerm: gem?.term ?? "",
+      gemWho: gem?.who[0] ?? "",
+      supportCases: engagedNeverIntroduced(secondFolded.get(id), now)?.cases ?? null,
     });
   };
 

@@ -3,8 +3,11 @@
 // specifics — the headline, the thread subject, the quiet date, the CSM's
 // name — never a bare label (founder-decreed 2026-08-19: the subtext answers
 // what it means). No rule stamps with an empty label (ruled 2026-09-25, D27):
-// a rule with nothing specific to say speaks its own label. Pure, so the
-// canon suite can check every rule.
+// a rule with nothing specific to say speaks its own label. Every stamp says
+// what the operator did, in the past tense, then its specific (the founder,
+// 2026-10-06): the seat, the gem and the never-pitched account once stamped
+// a bare noun, SEATED, THEIRS and ENGAGED · NEVER MET, and now speak like the
+// rest. Pure, so the canon suite can check every rule.
 
 import type { QueueRuleId } from "./day";
 
@@ -27,6 +30,10 @@ type StampContext = {
   seatDay?: string;
   /** The second-record gem's term, "" when none leads. */
   gemTerm?: string;
+  /** The gem's first person, as the THEIRS line names them, "" when none. */
+  gemWho?: string;
+  /** The support cases behind engaged-never-introduced, null when none. */
+  supportCases?: number | null;
 };
 
 const clip = (s: string, n: number) =>
@@ -41,15 +48,28 @@ const shortDay = (day: string): string => {
 export function stampSubtext(ruleId: QueueRuleId | string, ctx: StampContext): string {
   switch (ruleId) {
     case "seated": {
+      // The seat's own reason line says "Seated 10/6 from the sheet."
       const d = shortDay(ctx.seatDay ?? "");
-      return d ? `SEATED · ${d}` : "SEATED FROM THE SHEET";
+      return d
+        ? `WORKED THE MOVE FROM THE SHEET · SEATED ${d}`
+        : "WORKED THE MOVE FROM THE SHEET";
     }
     case "second-record-gem": {
-      const t = (ctx.gemTerm ?? "").trim();
-      return t ? `THEIRS · ${clip(t.toUpperCase(), 40)}` : "THEIRS";
+      // The THEIRS line's own label, "ADAM'S PHR STALL", so the stamp names
+      // the thing the operator saw and acted on.
+      const t = clip((ctx.gemTerm ?? "").trim().toUpperCase(), 40);
+      const who = (ctx.gemWho ?? "").trim().split(/\s+/)[0]?.toUpperCase() ?? "";
+      if (!t) return "ACTED ON THEIR LATEST ACTIVITY";
+      return who ? `ACTED ON ${who}’S ${t}` : `ACTED ON THEIR ${t}`;
     }
-    case "engaged-never-introduced":
-      return "ENGAGED · NEVER MET";
+    case "engaged-never-introduced": {
+      // The move said "Open the first conversation." over "{N} support
+      // cases. Never pitched."
+      const n = ctx.supportCases;
+      return n
+        ? `OPENED THE FIRST CONVERSATION · ${n} SUPPORT CASES`
+        : "OPENED THE FIRST CONVERSATION";
+    }
     case "wire-trigger": {
       const h = ctx.wireHeadline ?? "";
       return h

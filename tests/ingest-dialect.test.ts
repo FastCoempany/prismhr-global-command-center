@@ -23,6 +23,8 @@ import {
 } from "../src/lib/ingest/dialect";
 import { dialectOf, sourceFor, transcriberPrompt } from "../src/lib/room/paste";
 import {
+  TYPED_NOTE_HEAD,
+  asTypedNote,
   emlToPaste,
   msgToPaste,
   parseTranscriptDoc,
@@ -594,5 +596,34 @@ describe("the readers read the one alphabet", () => {
       isMeetingNote({ body: "✉ TM Today — Site visit · Antaeus Coe → Tom Boell" }),
       false,
     );
+  });
+});
+
+// ── the typed note's head (D14; decided 2026-10-06, the plan's §5 item 6) ──
+describe("a typed note files under its own head, and only a typed note does", () => {
+  const NOTES = "Met the team.\nThey want Mexico first.\nSend the deck Friday.";
+
+  test("notes typed at the row carry the TYPED NOTE head and file as typed", () => {
+    const stamped = asTypedNote(NOTES);
+    assert.equal(stamped, `${TYPED_NOTE_HEAD}\n${NOTES}`);
+    const { dialect, head } = sniffHead(stamped);
+    assert.deepEqual({ dialect, head }, { dialect: "SF", head: HEADS.typed });
+    assert.equal(SOURCE_OF(dialect, head, "ai"), "typed-ai");
+    assert.equal(SOURCE_OF(dialect, head, "regex"), "typed");
+    assert.ok(isPaste("typed-ai"));
+  });
+
+  test("the head never changes the capture: the same note re-filed headless is a duplicate", () => {
+    assert.equal(pasteFingerprint(asTypedNote(NOTES)), pasteFingerprint(NOTES));
+  });
+
+  test("a thread pasted into the composer keeps its own dialect", () => {
+    const thread =
+      "From: Adam Reyes\nSent: Tue, 02 Sep 2026 09:44:00 -0500\nTo: Antaeus Coe\n" +
+      "Subject: Canada\n\nWe are in.";
+    assert.equal(asTypedNote(thread), thread);
+    const headed = "OUTLOOK THREAD — dropped file canada.eml\nWe are in.";
+    assert.equal(asTypedNote(headed), headed);
+    assert.equal(asTypedNote("   "), "");
   });
 });
