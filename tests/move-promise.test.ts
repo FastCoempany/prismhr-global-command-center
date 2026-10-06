@@ -679,3 +679,39 @@ describe("the move line is a door on the row", () => {
     );
   });
 });
+
+// ── the row's health: their promise keeps it live (founder, 2026-10-06) ─────
+
+describe("a row whose open item is their promise is never quiet", () => {
+  test("with nothing else on the row, no promise reads quiet", () => {
+    const r = readDeal({ ...base, theirPromises: [], now: TUE });
+    assert.equal(r.health, "quiet");
+  });
+
+  test("a promise that stands reads green and sorts with the live rows", () => {
+    assert.equal(readDeal({ ...base, theirPromises: [adam()], now: TUE }).health, "green");
+    assert.equal(readDeal({ ...base, theirPromises: [adam()], now: FRI }).health, "green");
+  });
+
+  test("a blown promise reads amber, heard or not", () => {
+    const heard = readDeal({ ...base, theirPromises: [adam({ promised: true })], now: MON });
+    assert.equal(heard.move, "Chase Adam. PROMISED 10/9.");
+    assert.equal(heard.health, "amber");
+    const wall = readDeal({ ...base, theirPromises: [adam()], now: MON });
+    assert.equal(wall.move, "Chase Adam. The 10/9 wall passed.");
+    assert.equal(wall.health, "amber");
+  });
+
+  test("a dayless promise past its window reads amber; inside it, green", () => {
+    const fresh = readDeal({ ...base, theirPromises: [broker], now: TUE });
+    assert.equal(fresh.health, "green");
+    const late = readDeal({
+      ...base,
+      theirPromises: [{ ...broker, at: "2026-09-25T15:00:00Z" }],
+      now: TUE,
+    });
+    assert.ok(late.move.startsWith("Chase Lesha."), late.move);
+    assert.equal(late.health, "amber");
+  });
+});
+

@@ -447,6 +447,14 @@ export function readDeal(i: RoomInputs): RoomRead {
   )
     health = "amber";
   if (!i.step && !i.lastTouch && !inboundNewest && !i.allGatesDone) health = "quiet";
+  // A row whose open item is their promise is live, never quiet (founder,
+  // 2026-10-06): while it stands the deal is moving on their side, so the
+  // row sorts with the live rows; once the day passes it is the operator's
+  // chase, and the row carries caution. A red row stays red.
+  if (lead) {
+    if (health === "quiet") health = "green";
+    if (lead.yours && health === "green") health = "amber";
+  }
 
   // The newest open obligation, as the stage carries it: the commitment ONLY.
   // An action body is `text ↯ fallback · from 7/29 paste` — the fallback is
