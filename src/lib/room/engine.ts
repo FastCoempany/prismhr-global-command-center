@@ -34,6 +34,9 @@ export type PromiseIn = {
   promised?: boolean;
   /** Who heard it, as the record names them; absent when it names nobody. */
   hearer?: string;
+  /** The colleague it reached us through, when it was relayed; absent when
+   *  the account's own people said it to us (the founder, 2026-10-06). */
+  via?: string;
   kind?: "loop" | "owed" | "inbound";
   /** The filed entry it came from, with its rung of the evidence ladder. */
   entry?: { at: string; rung: "tape" | "thread" | "notes" } | null;
@@ -171,6 +174,32 @@ const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
 
 const firstOf = (name: string): string => (name ?? "").trim().split(/\s+/)[0] ?? "";
 
+// ── a relayed promise (the founder, 2026-10-06) ───────────────────────────
+// A promise of theirs that reached us through a colleague is still theirs.
+// The move chases the client, never the colleague: the ask-your-colleague
+// move is retired (CLAUDE.md, C6 as amended 2026-10-05), and going through
+// the CSM stays the operator's own choice (the direct doctrine). The
+// colleague shows one click deep, on the door, and the move keeps its six
+// words.
+
+const viaOf = (p: PromiseIn): string => (p.via ?? "").trim();
+
+// Who owes it, as the move and the door name them; "" when the record
+// cannot say, and the account stands in. A relayed promise whose named
+// owner shares the colleague's first name falls back too, because the move
+// prints only the first name and "Chase Lesha" would read as the colleague.
+function ownerOf(p: PromiseIn): string {
+  const who = (p.who ?? "").trim();
+  const via = viaOf(p);
+  if (via && who && firstOf(who).toLowerCase() === firstOf(via).toLowerCase()) return "";
+  return who;
+}
+
+// Who heard it: the record's hearer, else the colleague who relayed it. A
+// colleague who carried the promise to us heard it, so a dated relay reads
+// PROMISED once its day passes (D28 needs a hearer; the colleague is one).
+const hearerOf = (p: PromiseIn): string => (p.hearer ?? "").trim() || viaOf(p);
+
 // The evidence ladder's own cite words (CLAUDE.md, the playbook authoring
 // canon, item 14), as the door says them in a sentence.
 const RUNG_WORD = {
@@ -191,12 +220,14 @@ type Pressed = {
 };
 
 function pressOf(p: PromiseIn, now: Date, fallback: string): Pressed {
-  const who = firstOf(p.who) || fallback;
+  const who = firstOf(ownerOf(p)) || fallback;
   const day = ISO_DAY.test(p.day ?? "") ? (p.day as string) : "";
   if (day) {
     const clock = Date.parse(`${day}T12:00:00Z`);
+    // A relay was heard by the colleague who carried it, whatever the
+    // read's flag says (D28; the founder, 2026-10-06).
     if (dayBlown(day, now))
-      return p.promised
+      return p.promised || viaOf(p)
         ? { p, tier: 0, clock, line: `Chase ${who}. PROMISED ${md(day)}.`, yours: true }
         : {
             p,
@@ -224,13 +255,18 @@ function pressOf(p: PromiseIn, now: Date, fallback: string): Pressed {
     : { p, tier: 5, clock, line: `Wait on ${who}. Promised ${ago}.`, yours: false };
 }
 
-/** One line of the door: who owes it, what, who heard it, the day, and the
- *  filed entry it came from with its rung. Money never renders. */
+/** One line of the door: who owes it, what, the colleague it came through
+ *  when relayed, who heard it, the day, and the filed entry it came from
+ *  with its rung. Money never renders. */
 function doorLine(p: PromiseIn, now: Date, fallback: string): string {
-  const parts = [(p.who ?? "").trim() || fallback];
+  const parts = [ownerOf(p) || fallback];
   const what = (p.text ?? "").replace(/\s+/g, " ").trim();
   if (what) parts.push(/[.!?…]$/.test(what) ? what : `${what}.`);
-  const hearer = (p.hearer ?? "").trim();
+  // The colleague a relayed promise came through rides here, one click
+  // deep, in the line's own grammar (the founder, 2026-10-06).
+  const via = viaOf(p);
+  if (via) parts.push(`via ${firstOf(via)}`);
+  const hearer = hearerOf(p);
   const day = ISO_DAY.test(p.day ?? "") ? (p.day as string) : "";
   if (day) {
     const word = dayWord(day, now);
@@ -518,8 +554,9 @@ export function readDeal(i: RoomInputs): RoomRead {
     !!lead &&
     lead.yours &&
     wroteToday &&
-    firstOf(lead.p.who) !== "" &&
-    firstOf(lead.p.who).toLowerCase() === firstOf(i.lastTouch?.who ?? "").toLowerCase();
+    firstOf(ownerOf(lead.p)) !== "" &&
+    firstOf(ownerOf(lead.p)).toLowerCase() ===
+      firstOf(i.lastTouch?.who ?? "").toLowerCase();
   let door = "";
   if (answerOwed && i.step) {
     // The board gate rides the row as its own chip — the move never says a

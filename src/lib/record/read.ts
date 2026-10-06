@@ -26,10 +26,10 @@ import { GLYPH_RE } from "@/lib/ingest/dialect";
 import { HEADCOUNT, PRODUCT_TERMS, countriesIn, countryNear } from "@/lib/intel/lexicon";
 import { isMeetingNote, meetingRead } from "@/lib/intel/meeting";
 import { peopleFor, type ContactForPeople, type PersonRow } from "@/lib/intel/people";
-import { isHomeSideName } from "@/lib/intel/provenance";
+import { MINE_RE, isHomeSideName, normPerson } from "@/lib/intel/provenance";
 import { relationshipFor, type Relationship } from "@/lib/intel/relationship";
 import type { DealIntel, ProductKey, SourcedFact } from "@/lib/intel/types";
-import { owedByThem } from "@/lib/room/owed";
+import { dayBlown, owedByThem } from "@/lib/room/owed";
 import { lastTouchRead, newestOutbound, targetOf } from "@/lib/room/touch";
 import type { EntryHeadcount } from "@/lib/sf-timeline";
 import { cardNextStep } from "@/lib/today/build";
@@ -115,10 +115,19 @@ export type TheirPromise = {
   at: string;
   /** The day they named, yyyy-mm-dd. */
   day?: string;
-  /** The day ended with a hearer on record (D28). */
+  /** The day ended with a hearer on record (D28). The colleague who relayed
+   *  a promise heard it, so a relay with a day counts (the founder,
+   *  2026-10-06). */
   promised?: boolean;
   /** Who heard it, as the record names them. */
   hearer?: string;
+  /** The colleague the promise reached us through, as the record names
+   *  them; absent when the account's own people said it to us. A relay is
+   *  detected from the record alone: the entry it came from was sent by
+   *  someone on our side, or the record names a colleague as the promiser,
+   *  and then `who` is the account person the record names, else "" (the
+   *  founder, 2026-10-06). The colleague is never the person who owes it. */
+  via?: string;
   /** A loop the read filed (D10), a line of the cleaner's Owed block, or
    *  the newest inbound's own words. */
   kind: "loop" | "owed" | "inbound";
@@ -520,13 +529,32 @@ export function readAccount(input: AccountReadInput): AccountRead {
 
   // 14 · what they said they would do: their loops and Owed lines (D10, the
   // Simploy call), and the newest inbound's own promise, newest first. A
-  // colleague is the home side, never the ball-holder: an Owed segment the
-  // cleaner wrote to "@Lesha" is ours to chase internally, not theirs.
+  // colleague is never the ball-holder. A promise that reached us through a
+  // colleague is the account's, relayed (the founder, 2026-10-06): the move
+  // chases the client, because the ask-your-colleague move is retired (C6 as
+  // amended 2026-10-05) and going through the CSM stays the operator's own
+  // choice (the direct doctrine).
   const theirPromises = (() => {
     const docByNote = new Map(live.filter((d) => d.noteId).map((d) => [d.noteId, d]));
     const entryOf = (noteId: string): TheirPromise["entry"] => {
       const d = docByNote.get(noteId);
       return d ? { at: d.at, noteId, rung: evidenceRung(d) } : null;
+    };
+    // The colleague a promise reached us through, read from the record with
+    // no model call: the promiser the record names is on our side (a loop's
+    // `by` can name the colleague who carried it), or the entry it came from
+    // was sent by someone on our side (the doc's senderIsHome, from the
+    // declared roster). The operator is never a via: the relay reaches the
+    // operator.
+    const firstLower = (n: string): string =>
+      ((n ?? "").trim().split(/\s+/)[0] ?? "").toLowerCase();
+    const viaOf = (who: string, entry: TheirPromise["entry"]): string => {
+      const named = normPerson(who ?? "").trim();
+      if (named && isHome(named) && !MINE_RE.test(named)) return named;
+      const d = entry ? docByNote.get(entry.noteId) : undefined;
+      if (!d?.senderIsHome) return "";
+      const sender = normPerson(d.sender.replace(/\+\d+\s*$/, "")).trim();
+      return sender && !MINE_RE.test(sender) ? sender : "";
     };
     // A loop cites the filing that wrote it, by the column (§2.1): the
     // entry the person who owes it wrote, else the filing's tape or first
@@ -556,22 +584,49 @@ export function readAccount(input: AccountReadInput): AccountRead {
       return pick ? entryOf(pick.id) : null;
     };
     const todoById = new Map(todos.map((t) => [t.id, t]));
-    const open: TheirPromise[] = owedByThem(visible, now, todos)
-      .filter((o) => !isHome(o.who))
-      .map((o) => {
+    const open: TheirPromise[] = owedByThem(visible, now, todos).flatMap(
+      (o): TheirPromise[] => {
+        // A line naming the operator is the operator's own debt, and the
+        // register carries it; it is never a promise of theirs.
+        if (MINE_RE.test(normPerson(o.who ?? ""))) return [];
         // owedByThem keys a loop by its todo and an Owed line by its note.
         const loop = todoById.get(o.noteId);
-        return {
-          who: o.who,
-          text: o.text,
-          at: o.at,
-          ...(o.day ? { day: o.day } : {}),
-          ...(o.promised ? { promised: true } : {}),
-          ...(o.hearer ? { hearer: o.hearer } : {}),
-          kind: loop ? "loop" : "owed",
-          entry: loop ? loopEntry(loop.filingId, o.who) : entryOf(o.noteId),
-        };
-      });
+        const entry = loop ? loopEntry(loop.filingId, o.who) : entryOf(o.noteId);
+        const via = viaOf(o.who, entry);
+        // The record names a colleague as the one who owes it: by the roster,
+        // or by the first name the relaying colleague goes by ("— @Lesha"),
+        // which the roster's full names cannot match.
+        const colleague =
+          isHome(o.who) ||
+          (!!via && !!firstLower(o.who) && firstLower(o.who) === firstLower(via));
+        // The cleaner's Owed line names the one who owes it ("— @Chassie"),
+        // so a colleague named there owes it: internal work, never a promise
+        // of theirs, relayed or not, and the ask-your-colleague move is
+        // retired (C6 as amended 2026-10-05).
+        if (colleague && !loop) return [];
+        // When a loop the read filed on their side (D10) names a colleague,
+        // it named the one who carried it: the colleague is the via, never
+        // the owner, so the owner falls back to "" and the move names the
+        // account.
+        const who = colleague ? "" : o.who;
+        // PROMISED needs a hearer (D28), and the colleague who relayed a
+        // dated promise heard the day.
+        const promised = !!o.promised || (!!via && !!o.day && dayBlown(o.day, now));
+        return [
+          {
+            who,
+            text: o.text,
+            at: o.at,
+            ...(o.day ? { day: o.day } : {}),
+            ...(promised ? { promised: true } : {}),
+            ...(o.hearer ? { hearer: o.hearer } : {}),
+            ...(via ? { via } : {}),
+            kind: loop ? "loop" : "owed",
+            entry,
+          },
+        ];
+      },
+    );
     if (lastInbound?.promise) {
       const doc = live.find((d) => d.noteId === lastInbound.noteId);
       // The sentence they wrote, from the body after the head; the head's
@@ -593,6 +648,8 @@ export function readAccount(input: AccountReadInput): AccountRead {
       const twice =
         !!entry &&
         open.some((p) => p.kind === "loop" && p.entry?.noteId === entry.noteId);
+      // It carries no via: a home-side sender's mail is never inbound (docOf),
+      // so the newest inbound is always the account's own people speaking.
       if (!twice)
         open.push({
           who: lastInbound.who,

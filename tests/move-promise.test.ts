@@ -715,3 +715,380 @@ describe("a row whose open item is their promise is never quiet", () => {
   });
 });
 
+
+// ── a promise relayed through a colleague (the founder, 2026-10-06) ─────────
+// A promise of theirs that reached us through a colleague is marked as
+// relayed, read from the record with no model call: the entry it came from
+// was sent by someone on our side, or the record names a colleague as the
+// promiser. The move chases the client and never the colleague, because the
+// ask-your-colleague move is retired (C6 as amended 2026-10-05) and going
+// through the CSM stays the operator's own choice (the direct doctrine). The
+// colleague shows one click deep on the door; the move keeps its six words.
+// A dated relay was heard, by the colleague, so it reads PROMISED once its
+// day passes (D28); a dayless one keeps the await window.
+
+/** No move line ever sends the operator to the colleague. */
+function assertNoColleague(move: string): void {
+  assert.ok(
+    !/\b(Ask|Chase|Wait on|Answer|Nudge) Lesha\b/.test(move),
+    `the colleague staged: ${move}`,
+  );
+  assert.ok(!/Lesha/.test(move), `the colleague on the move line: ${move}`);
+}
+
+describe("a relayed promise on the move line and its door", () => {
+  const relayedDates: PromiseIn = {
+    ...startDates,
+    via: "Lesha Cyphers",
+    entry: { at: "2026-10-03T15:00:00Z", rung: "thread" },
+  };
+
+  test("the door line carries via and the colleague's first name after what was promised", () => {
+    const r = readDeal({ ...base, theirPromises: [relayedDates], now: TUE });
+    assert.equal(r.move, "Wait on Simploy. Promised 10/14.");
+    assert.equal(
+      r.moveFull,
+      "Simploy · Confirm the Mexico start dates. · via Lesha · Promised to Antaeus Coe" +
+        " · 10/14 · Filed thread 10/3",
+    );
+    assertNoColleague(r.move);
+  });
+
+  test("the move names the account person the record names as owing it", () => {
+    const r = readDeal({
+      ...base,
+      theirPromises: [adam({ via: "Lesha Cyphers" })],
+      now: TUE,
+    });
+    assert.equal(r.move, "Wait on Adam. Promised Friday.");
+    assert.equal(
+      r.moveFull,
+      "Adam Bell · Send the census for the Mexico hires. · via Lesha" +
+        " · Promised to Antaeus Coe · Friday 10/9 · Filed thread 10/6",
+    );
+  });
+
+  test("a colleague handed in as the owner falls back to the account, on the move and the door", () => {
+    for (const who of ["Lesha Cyphers", "Lesha"]) {
+      const r = readDeal({
+        ...base,
+        theirPromises: [{ ...relayedDates, who }],
+        now: TUE,
+      });
+      assert.equal(r.move, "Wait on Simploy. Promised 10/14.", who);
+      assert.match(
+        r.moveFull ?? "",
+        /^Simploy · Confirm the Mexico start dates\. · via Lesha · /,
+      );
+      assertNoColleague(r.move);
+    }
+  });
+
+  test("a dated relay past its day reads PROMISED: the colleague heard it (D28)", () => {
+    const named = readDeal({
+      ...base,
+      theirPromises: [
+        adam({ via: "Lesha Cyphers", hearer: undefined, promised: undefined }),
+      ],
+      now: MON,
+    });
+    assert.equal(named.move, "Chase Adam. PROMISED 10/9.");
+    assert.equal(
+      named.moveFull,
+      "Adam Bell · Send the census for the Mexico hires. · via Lesha" +
+        " · Promised to Lesha Cyphers · 10/9 · Filed thread 10/6",
+    );
+    const account = readDeal({
+      ...base,
+      theirPromises: [{ ...relayedDates, hearer: undefined }],
+      now: new Date("2026-10-16T17:00:00Z"),
+    });
+    assert.equal(account.move, "Chase Simploy. PROMISED 10/14.");
+    assertNoColleague(account.move);
+    // The same promise unrelayed and unheard is a plain wall, as it was.
+    const unrelayed = readDeal({
+      ...base,
+      theirPromises: [adam({ hearer: undefined, promised: undefined })],
+      now: MON,
+    });
+    assert.equal(unrelayed.move, "Chase Adam. The 10/9 wall passed.");
+  });
+
+  test("a dayless relay keeps the await window, then turns to the chase, never PROMISED", () => {
+    const at = (days: number) =>
+      new Date(TUE.getTime() - days * 86_400_000).toISOString();
+    const relay: PromiseIn = {
+      who: "",
+      text: "Send the plan summary",
+      at: at(3),
+      via: "Lesha Cyphers",
+      kind: "owed",
+      entry: { at: at(3), rung: "thread" },
+    };
+    const fresh = readDeal({ ...base, theirPromises: [relay], now: TUE });
+    assert.equal(fresh.move, "Wait on Simploy. Promised 3 days ago.");
+    assert.equal(
+      fresh.moveFull,
+      "Simploy · Send the plan summary. · via Lesha · Promised to Lesha Cyphers" +
+        " · No day given · Filed thread 10/3",
+    );
+    const edge = readDeal({ ...base, theirPromises: [{ ...relay, at: at(7) }], now: TUE });
+    assert.equal(edge.move, "Wait on Simploy. Promised 7 days ago.");
+    const late = readDeal({ ...base, theirPromises: [{ ...relay, at: at(8) }], now: TUE });
+    assert.equal(late.move, "Chase Simploy. Promised 8 days ago.");
+    for (const r of [fresh, edge, late]) {
+      assert.ok(!/PROMISED/.test(r.move), r.move);
+      assertNoColleague(r.move);
+    }
+  });
+
+  test("a send to the colleague today is not the chase; a send to the client is", () => {
+    const blownRelay = [adam({ via: "Lesha Cyphers", promised: true })];
+    const toLesha = readDeal({
+      ...base,
+      lastTouch: { at: "2026-10-12T15:00:00Z", awaitingReply: true, who: "Lesha" },
+      theirPromises: blownRelay,
+      now: MON,
+    });
+    assert.equal(toLesha.move, "Chase Adam. PROMISED 10/9.");
+    const toAdam = readDeal({
+      ...base,
+      lastTouch: { at: "2026-10-12T15:00:00Z", awaitingReply: true, who: "Adam" },
+      theirPromises: blownRelay,
+      now: MON,
+    });
+    assert.equal(toAdam.move, "Wait on Adam. You wrote today.");
+  });
+
+  test("relay lines obey the writing canon and money never renders in the door", () => {
+    const cases: [PromiseIn[], Date][] = [
+      [[relayedDates], TUE],
+      [[relayedDates], new Date("2026-10-16T17:00:00Z")],
+      [[adam({ via: "Lesha Cyphers" })], MON],
+      [[adam({ via: "Lesha Cyphers" }), broker, relayedDates], TUE],
+    ];
+    for (const [theirPromises, now] of cases) {
+      const r = readDeal({ ...base, theirPromises, now });
+      assertCanon(r.move);
+      assertNoColleague(r.move);
+      for (const line of (r.moveFull ?? "").split("\n"))
+        assert.ok(!/[—(]/.test(line), `a dash aside in the door: ${line}`);
+    }
+    const money = readDeal({
+      ...base,
+      theirPromises: [adam({ via: "Lesha Cyphers", text: "Wire the $25k deposit" })],
+      now: TUE,
+    });
+    assert.ok(!/\$\s?25/.test(money.moveFull ?? ""), money.moveFull);
+  });
+});
+
+describe("the read marks a relay from the record, with no model call", () => {
+  const ROSTER = ["Lesha Cyphers"];
+
+  const readWith = (
+    notes: RecordNote[],
+    todos: ReturnType<typeof loopTodo>[],
+    now: Date,
+    homeSide: string[],
+  ) =>
+    readAccount({
+      account: { id: "A1", name: "Simploy" },
+      notes,
+      touches: [],
+      todos,
+      dispositions: new Map(),
+      homeSide,
+      now,
+    });
+
+  // Lesha relays what Adam said; the read filed Adam's promise as a loop off
+  // Lesha's mail (D10), so the loop cites that entry.
+  const LESHA_RELAY = note({
+    id: "n4",
+    body:
+      "✉ OL Oct 3 10:00 AM — Mexico census · Lesha Cyphers → Antaeus Coe\n" +
+      "Talked to Adam. Adam will send the census for the Mexico hires by Friday.",
+    actors: "Lesha Cyphers → Antaeus Coe",
+    recipients: "Antaeus Coe",
+    source: "outlook-ai",
+    createdAt: "2026-10-03T15:00:00Z",
+    filingId: "f2",
+  });
+
+  // Lesha writes the Owed line and names Lesha as the one who owes it: the
+  // Owed line names the debtor ("— @Chassie"), so this is Lesha's own work.
+  const LESHA_OWED = note({
+    id: "n5",
+    body:
+      "✉ OL Oct 3 10:00 AM — Start dates · Lesha Cyphers → Antaeus Coe\n" +
+      "Owed: confirm the Mexico start dates — @Lesha.",
+    actors: "Lesha Cyphers → Antaeus Coe",
+    recipients: "Antaeus Coe",
+    source: "outlook",
+    createdAt: "2026-10-03T15:00:00Z",
+  });
+
+  const relayedCensus = (tags: Partial<typeof NO_TAGS> = {}) =>
+    loopTodo(
+      "t3",
+      CENSUS,
+      { date: "2026-10-09", hearer: "Antaeus Coe", by: "Adam Bell", ...tags },
+      { filingId: "f2" },
+    );
+
+  test("a promise whose source entry a colleague sent reads as relayed, via set", () => {
+    const acct = readWith([LESHA_RELAY], [relayedCensus()], TUE, ROSTER);
+    assert.equal(acct.lastInbound, null, "a colleague's mail is never inbound");
+    assert.equal(acct.theirPromises.length, 1);
+    assert.deepEqual(acct.theirPromises[0], {
+      who: "Adam Bell",
+      text: CENSUS,
+      at: "2026-10-06T14:11:00Z",
+      day: "2026-10-09",
+      hearer: "Antaeus Coe",
+      via: "Lesha Cyphers",
+      kind: "loop",
+      entry: { at: "2026-10-03T15:00:00Z", noteId: "n4", rung: "thread" },
+    });
+    const r = moveOf(acct, TUE);
+    assert.equal(r.move, "Wait on Adam. Promised Friday.");
+    assert.equal(
+      r.moveFull,
+      "Adam Bell · Send the census for the Mexico hires. · via Lesha" +
+        " · Promised to Antaeus Coe · Friday 10/9 · Filed thread 10/3",
+    );
+  });
+
+  test("the record names no one on their side: the move names the account, never the colleague", () => {
+    const acct = readWith([LESHA_RELAY], [relayedCensus({ by: "" })], TUE, ROSTER);
+    assert.equal(acct.theirPromises.length, 1);
+    assert.equal(acct.theirPromises[0]?.who, "");
+    assert.equal(acct.theirPromises[0]?.via, "Lesha Cyphers");
+    const r = moveOf(acct, TUE);
+    assert.equal(r.move, "Wait on Simploy. Promised Friday.");
+    assert.equal(
+      r.moveFull,
+      "Simploy · Send the census for the Mexico hires. · via Lesha" +
+        " · Promised to Antaeus Coe · Friday 10/9 · Filed thread 10/3",
+    );
+    assertNoColleague(r.move);
+  });
+
+  test("an Owed line in a colleague's mail naming their person is relayed", () => {
+    const owed = note({
+      id: "n6",
+      body:
+        "✉ OL Oct 3 10:00 AM — Start dates · Lesha Cyphers → Antaeus Coe\n" +
+        "Owed: confirm the Mexico start dates — @Adam Bell.",
+      actors: "Lesha Cyphers → Antaeus Coe",
+      recipients: "Antaeus Coe",
+      source: "outlook",
+      createdAt: "2026-10-03T15:00:00Z",
+    });
+    const acct = readWith([owed], [], TUE, ROSTER);
+    assert.deepEqual(acct.theirPromises[0], {
+      who: "Adam Bell",
+      text: "confirm the Mexico start dates",
+      at: "2026-10-03T15:00:00Z",
+      via: "Lesha Cyphers",
+      kind: "owed",
+      entry: { at: "2026-10-03T15:00:00Z", noteId: "n6", rung: "thread" },
+    });
+    assert.equal(moveOf(acct, TUE).move, "Wait on Adam. Promised 3 days ago.");
+  });
+
+  test("an Owed line naming a colleague is the colleague's own work, never theirs", () => {
+    // Lesha names Lesha in Lesha's own mail, by first name.
+    assert.equal(readWith([LESHA_OWED], [], TUE, ROSTER).theirPromises.length, 0);
+    // The operator's own note names the colleague in full.
+    const typed = note({
+      id: "n7",
+      body: "Owed: send the SOW — @Lesha Cyphers; the census — @Adam Bell.",
+      source: "typed",
+      createdAt: "2026-10-03T15:00:00Z",
+    });
+    const acct = readWith([typed], [], TUE, ROSTER);
+    assert.deepEqual(
+      acct.theirPromises.map((p) => [p.who, p.text]),
+      [["Adam Bell", "the census"]],
+    );
+    assert.equal(moveOf(acct, TUE).move, "Wait on Adam. Promised 3 days ago.");
+  });
+
+  test("a colleague named as the promiser is the via, and the owner falls back", () => {
+    // A loop whose `by` is a colleague on the roster, with no filing to cite.
+    const loop = loopTodo("t4", "Send the plan summary", {
+      date: "2026-10-09",
+      hearer: "Antaeus Coe",
+      by: "Lesha Cyphers",
+    });
+    const acct = readWith([], [loop], TUE, ROSTER);
+    assert.equal(acct.theirPromises[0]?.who, "");
+    assert.equal(acct.theirPromises[0]?.via, "Lesha Cyphers");
+    assert.equal(acct.theirPromises[0]?.entry, null);
+    const r = moveOf(acct, TUE);
+    assert.equal(r.move, "Wait on Simploy. Promised Friday.");
+    assert.equal(
+      r.moveFull,
+      "Simploy · Send the plan summary. · via Lesha · Promised to Antaeus Coe" +
+        " · Friday 10/9",
+    );
+    // Before the relay ruling this loop was dropped as the home side's; the
+    // operator is still never the one who owes a promise of theirs.
+    const mine = loopTodo("t5", "Send the plan summary", { by: "Antaeus Coe" });
+    assert.equal(readWith([], [mine], TUE, ROSTER).theirPromises.length, 0);
+  });
+
+  test("a dated relay past its day reads PROMISED, heard by the colleague (D28)", () => {
+    const unheard = relayedCensus({ hearer: "" });
+    const acct = readWith([LESHA_RELAY], [unheard], MON, ROSTER);
+    assert.equal(acct.theirPromises[0]?.hearer, undefined);
+    assert.equal(acct.theirPromises[0]?.promised, true);
+    const r = moveOf(acct, MON);
+    assert.equal(r.move, "Chase Adam. PROMISED 10/9.");
+    assert.match(r.moveFull ?? "", / · via Lesha · Promised to Lesha Cyphers · 10\/9 · /);
+  });
+
+  test("a dayless relay keeps the await window", () => {
+    const dayless = relayedCensus({ date: "", hearer: "" });
+    const acct = readWith([LESHA_RELAY], [dayless], TUE, ROSTER);
+    assert.equal(acct.theirPromises[0]?.via, "Lesha Cyphers");
+    assert.equal(acct.theirPromises[0]?.promised, undefined);
+    assert.equal(moveOf(acct, TUE).move, "Wait on Adam. Promised today.");
+    const later = new Date("2026-10-15T17:00:00Z");
+    const late = moveOf(readWith([LESHA_RELAY], [dayless], later, ROSTER), later);
+    assert.equal(late.move, "Chase Adam. Promised 9 days ago.");
+  });
+
+  test("a promise the client sent directly carries no via", () => {
+    const census = loopTodo(
+      "t1",
+      CENSUS,
+      { date: "2026-10-09", hearer: "Antaeus Coe", by: "Adam Bell" },
+      { filingId: "f1" },
+    );
+    const acct = readWith([ADAM_MAIL, LESHA_RELAY], [census], TUE, ROSTER);
+    const direct = acct.theirPromises.find((p) => p.entry?.noteId === "n1");
+    assert.ok(direct, "the client's own promise is on the list");
+    assert.equal("via" in direct, false);
+    assert.ok(!/ · via /.test(moveOf(acct, TUE).moveFull ?? ""));
+  });
+
+  test("with an empty roster nothing is relayed", () => {
+    const empty = readWith(
+      [LESHA_RELAY, LESHA_OWED],
+      [relayedCensus({ hearer: "" })],
+      MON,
+      [],
+    );
+    assert.ok(empty.theirPromises.length > 0);
+    for (const p of empty.theirPromises)
+      assert.equal("via" in p, false, JSON.stringify(p));
+    const r = moveOf(empty, MON);
+    assert.ok(!/ · via /.test(r.moveFull ?? ""), r.moveFull);
+    // Unrelayed and unheard, the census is a plain wall, never PROMISED.
+    const census = empty.theirPromises.find((p) => p.kind === "loop");
+    assert.equal(census?.promised, undefined);
+  });
+});
