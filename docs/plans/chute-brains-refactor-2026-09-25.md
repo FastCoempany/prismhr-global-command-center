@@ -517,17 +517,6 @@ Each names today's behavior at the door with its cite, what the plumbing carries
 9. **The BOOKED annotation.** Today: an acceptance sets ↩ REPLIED on the Sendbook line only through the org-wide path, and the first-record path treats it as machinery (src/lib/sendbook/read.ts:132-139). After: the read carries `lastAccepted` and a `machinery` flag per doc, so the Sendbook can mark a booked meeting without calling it a reply. Decide: whether a send answered by a calendar acceptance carries a BOOKED annotation, and how it reads. The C5 ruling left this to pass 6 (decree-ledger.md C row 5).
 10. **The three stamp words.** Today: the wing stamps SEATED with its day, THEIRS with the gem's term, and ENGAGED · NEVER MET (src/lib/groundwork/stamp.ts:45-52). The D27 ruling fixed the rule, no empty label, and left the words to pass 6. Decide: keep these three or better them.
 
-- Answer: yes.
-- Answer: yes.
-- Answer: no. Warn twice. Each warning explains, in nine words or fewer, why it thinks this is a different company than the one it was dropped on. The second reason comes from the AI, which reads the account's page data and the web to answer. See §2.4 and slice 5.
-- Answer: no. Read it again to be sure. See §2.4 and slice 5.
-- Answer: git is the home for every file, big ones included. Big files travel through the server in pieces and are glued back together before they land. See §2.4 and slice 7.
-- Answer: yes.
-- Answer: yes.
-- Answer: yes.
-- Answer: yes. Slice 2 switches `morningDoneKey` to Chicago and rewrites the UTC pins.
-- Answer: yes.
-
 ## 6. What this plan does not do
 
 - No face work. Slice 18 and the marked parts of 8 and 16 wait on a mockup and a ship order (CLAUDE.md:379-383).
@@ -550,50 +539,70 @@ Written plainly. Each says what happens today, then what yes and no mean, and ca
    - Yes: save it in its own new spot, and link every note it made back to it.
    - No: stuff it inside the notes as extra text.
 
+- Answer: yes.
+
 2. **Should the "already filed" check stay where it is for now?**
    - Today: the app remembers every file you filed, so a second drop says "Already on file." That memory lives in its own little list.
    - Yes: leave that list alone during this work.
    - No: move it into the new storage spot now, which adds one more step.
+
+- Answer: yes.
 
 3. **Should a wrong-company warning come once instead of twice?**
    - Today: the app checks the file before the AI reads it and again after. You can get warned twice about the same file.
    - Yes: let the AI read first, then check once and show one warning with every reason. The AI then reads every file, but question 4 reuses that reading.
    - No: keep the two checks.
 
+- Answer: no. Warn twice. Each warning explains, in nine words or fewer, why it thinks this is a different company than the one it was dropped on. The second reason comes from the AI, which reads the account's page data and the web to answer. See §2.4 and slice 5.
+
 4. **After a warning, should your pick reuse the first reading?**
    - Today: when you pick the right company, the AI reads the whole file a second time.
    - Yes: reuse the first reading. It's faster and costs nothing extra.
    - No: read it again.
+
+- Answer: no. Read it again to be sure. See §2.4 and slice 5.
 
 5. **How should big files get backed up?**
    - Today: your browser uploads every file to the GitHub backup itself, so the browser holds the backup's secret key. You ruled the key must stay on the server. The server can only take a few megabytes at a time.
    - Yes: big files go to a Vercel holding spot first, and the server copies them to the backup from there.
    - Other choices: let the browser keep uploading only the big ones, or skip backing up big files and say so on the receipt.
 
+- Answer: git is the home for every file, big ones included. Big files travel through the server in pieces and are glued back together before they land. See §2.4 and slice 7.
+
 6. **Should each to-do remember which file created it, in its own column?**
    - Today: Undo only works because the browser remembers a list of what a file made.
    - Yes: add a column to the to-do list that points at the file.
    - No: hide that pointer inside the to-do's text.
+
+- Answer: yes.
 
 7. **Should the other side's promises become to-dos?**
    - Today: when a client says "I'll send the list Friday," the app throws it away. It only keeps your promises.
    - Yes: save their promises as to-dos marked as theirs, with who promised and the day.
    - No: save them as plain notes.
 
+- Answer: yes.
+
 8. **In the saved Salesforce data, should the money blanker skip counts?**
    - Today: the app blanks out money everywhere it saves. The weekly Salesforce data is full of counts like 1,200, and the blanker can mistake those for money.
    - Yes: blank money in the words and leave the counts alone.
    - No: don't blank anything in that data, the way the scratchpad works.
+
+- Answer: yes.
 
 9. **Should "done today" use Chicago time?**
    - Today: one part of the app starts a new day around 7 PM Chicago time, so something you check off at 8 PM counts as tomorrow's. Your rule says all days are Chicago days.
    - Yes: switch it to Chicago time.
    - Until you answer, it stays as it is. The UTC pins are tests/today.test.ts:591-602.
 
+- Answer: yes. Slice 2 switches `morningDoneKey` to Chicago and rewrites the UTC pins.
+
 10. **Should two unrelated fixes be their own small jobs?**
     - Today: two of your rulings aren't built yet. One makes a playbook question in the brain's answer open right where you click it. The other stops the app from hiding plays based on whether the CSM was briefed.
     - Yes: do them as two small separate jobs.
     - No: add them to this plan.
+
+- Answer: yes.
 
 11. **If the Salesforce spreadsheet is dropped on one account, should it skip the backup?**
     - Today: the app turns it away with "The export goes in the Chute," but still backs it up.
