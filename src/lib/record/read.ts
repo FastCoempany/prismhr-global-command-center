@@ -22,6 +22,7 @@ import { isAcceptance } from "@/lib/intel/closer";
 import { effectiveAt } from "@/lib/intel/clock";
 import type { DigestEntry } from "@/lib/intel/digest";
 import { THEIR_PROMISE_RE, extractDealIntel } from "@/lib/intel/extract";
+import { GLYPH_RE } from "@/lib/ingest/dialect";
 import { HEADCOUNT, PRODUCT_TERMS, countriesIn, countryNear } from "@/lib/intel/lexicon";
 import { isMeetingNote, meetingRead } from "@/lib/intel/meeting";
 import { peopleFor, type ContactForPeople, type PersonRow } from "@/lib/intel/people";
@@ -34,7 +35,13 @@ import type { EntryHeadcount } from "@/lib/sf-timeline";
 import { cardNextStep } from "@/lib/today/build";
 import type { AccountNote } from "@/lib/today/overlay";
 import { chicagoDay } from "@/lib/tz";
-import { buildDocs, type RecordDoc, type TouchRow } from "./docs";
+import {
+  buildDocs,
+  evidenceRung,
+  type EvidenceRung,
+  type RecordDoc,
+  type TouchRow,
+} from "./docs";
 import { whoseMove, type WhoseMove } from "./whose-move";
 
 /** The deal facts a Filing's read states on one entry (src/lib/sf-timeline.ts,
@@ -67,13 +74,16 @@ export type AccountReadInput = {
    *  what names the account (outreach:<id> and the label match, as
    *  room/page.tsx read it). */
   touches: readonly (TouchRow & { status?: string })[];
-  /** Every todo on the account, done included; the read keeps the account's. */
+  /** Every todo on the account, done included; the read keeps the account's.
+   *  `filingId` links a loop to the filing that wrote it (§2.1), so the
+   *  promise can cite the entry it came from. */
   todos: readonly {
     id: string;
     body: string;
     done: boolean;
     accountId: string;
     createdAt: string;
+    filingId?: string;
   }[];
   /** The disposition markers; the hide filter reads `hide:note:<id>`. */
   dispositions: ReadonlyMap<string, unknown>;
@@ -95,6 +105,27 @@ export type AccountReadInput = {
 export type TapedFact<T> = SourcedFact<T> & { tape: boolean };
 
 type DealOutcome = NonNullable<ReturnType<typeof readOutcome>>;
+
+/** One promise still open on their side (field 14's list). */
+export type TheirPromise = {
+  /** Who owes it, as the record names them; "" when it cannot say. */
+  who: string;
+  text: string;
+  /** The loop's filing, the Owed line's note, the inbound's own moment. */
+  at: string;
+  /** The day they named, yyyy-mm-dd. */
+  day?: string;
+  /** The day ended with a hearer on record (D28). */
+  promised?: boolean;
+  /** Who heard it, as the record names them. */
+  hearer?: string;
+  /** A loop the read filed (D10), a line of the cleaner's Owed block, or
+   *  the newest inbound's own words. */
+  kind: "loop" | "owed" | "inbound";
+  /** The filed entry it came from and its rung of the evidence ladder; null
+   *  when the record cannot point at one, never a guess. */
+  entry: { at: string; noteId: string; rung: EvidenceRung } | null;
+};
 
 export type Stage = {
   step: {
@@ -156,6 +187,12 @@ export type AccountRead = {
     day?: string;
     promised?: boolean;
   } | null;
+  /** 14 · the whole list theirPromise heads: every promise still open on
+   *  their side, newest first, each with who heard it and the filed entry it
+   *  came from. The HomeRoom's move line reads it (slice 18b). It is field
+   *  14 grown, by the plan's own rule: a surface that needs a fact the read
+   *  does not carry grows the read, never a private re-derivation (§2.2). */
+  theirPromises: TheirPromise[];
   /** 15 · the newest invitation acceptance: machinery, but proof the meeting
    *  exists. `who` is "" when our own side accepted. */
   lastAccepted: { at: string; who: string; noteId: string } | null;
@@ -485,16 +522,56 @@ export function readAccount(input: AccountReadInput): AccountRead {
   // Simploy call), and the newest inbound's own promise, newest first. A
   // colleague is the home side, never the ball-holder: an Owed segment the
   // cleaner wrote to "@Lesha" is ours to chase internally, not theirs.
-  const theirPromise = (() => {
-    const owed = owedByThem(visible, now, todos)
+  const theirPromises = (() => {
+    const docByNote = new Map(live.filter((d) => d.noteId).map((d) => [d.noteId, d]));
+    const entryOf = (noteId: string): TheirPromise["entry"] => {
+      const d = docByNote.get(noteId);
+      return d ? { at: d.at, noteId, rung: evidenceRung(d) } : null;
+    };
+    // A loop cites the filing that wrote it, by the column (§2.1): the
+    // entry the person who owes it wrote, else the filing's tape or first
+    // record entry. A row with no filing, or a filing with no visible entry,
+    // cites nothing rather than a guess.
+    const loopEntry = (
+      filingId: string | undefined,
+      who: string,
+    ): TheirPromise["entry"] => {
+      if (!filingId) return null;
+      const rows = visible.filter((n) => n.filingId === filingId);
+      const said = who.trim().toLowerCase();
+      const by = said
+        ? rows.find(
+            (n) =>
+              (n.actors ?? "")
+                .split("→")[0]
+                ?.replace(/\+\d+\s*$/, "")
+                .trim()
+                .toLowerCase() === said,
+          )
+        : undefined;
+      const pick =
+        by ??
+        rows.find((n) => docByNote.get(n.id)?.tape) ??
+        rows.find((n) => GLYPH_RE.test(n.body ?? ""));
+      return pick ? entryOf(pick.id) : null;
+    };
+    const todoById = new Map(todos.map((t) => [t.id, t]));
+    const open: TheirPromise[] = owedByThem(visible, now, todos)
       .filter((o) => !isHome(o.who))
-      .map((o) => ({
-        who: o.who,
-        text: o.text,
-        at: o.at,
-        ...(o.day ? { day: o.day } : {}),
-        ...(o.promised ? { promised: true } : {}),
-      }));
+      .map((o) => {
+        // owedByThem keys a loop by its todo and an Owed line by its note.
+        const loop = todoById.get(o.noteId);
+        return {
+          who: o.who,
+          text: o.text,
+          at: o.at,
+          ...(o.day ? { day: o.day } : {}),
+          ...(o.promised ? { promised: true } : {}),
+          ...(o.hearer ? { hearer: o.hearer } : {}),
+          kind: loop ? "loop" : "owed",
+          entry: loop ? loopEntry(loop.filingId, o.who) : entryOf(o.noteId),
+        };
+      });
     if (lastInbound?.promise) {
       const doc = live.find((d) => d.noteId === lastInbound.noteId);
       // The sentence they wrote, from the body after the head; the head's
@@ -504,19 +581,45 @@ export function readAccount(input: AccountReadInput): AccountRead {
       const body = cut >= 0 ? text.slice(cut + 1) : "";
       const inBody = THEIR_PROMISE_RE.exec(body);
       const inHead = inBody ? null : THEIR_PROMISE_RE.exec(text);
-      owed.push({
-        who: lastInbound.who,
-        text: inBody
-          ? sentenceAround(body, inBody.index)
-          : inHead
-            ? sentenceAround(text, inHead.index)
-            : "",
-        at: lastInbound.at,
-      });
+      // Who heard it: the person the message was addressed to.
+      const hearer =
+        (doc?.actors.split("→")[1] ?? "")
+          .split(/[;,]/)[0]
+          ?.replace(/\+\d+\s*$/, "")
+          .trim() ?? "";
+      const entry = entryOf(lastInbound.noteId);
+      // A loop the read filed off this same entry already says it, with the
+      // day and the hearer: one promise is one line, never two.
+      const twice =
+        !!entry &&
+        open.some((p) => p.kind === "loop" && p.entry?.noteId === entry.noteId);
+      if (!twice)
+        open.push({
+          who: lastInbound.who,
+          text: inBody
+            ? sentenceAround(body, inBody.index)
+            : inHead
+              ? sentenceAround(text, inHead.index)
+              : "",
+          at: lastInbound.at,
+          ...(hearer ? { hearer } : {}),
+          kind: "inbound",
+          entry,
+        });
     }
-    owed.sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
-    return owed[0] ?? null;
+    open.sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
+    return open;
   })();
+  // The head, in the shape the drawer and the meeting move have always read.
+  const theirPromise = theirPromises[0]
+    ? {
+        who: theirPromises[0].who,
+        text: theirPromises[0].text,
+        at: theirPromises[0].at,
+        ...(theirPromises[0].day ? { day: theirPromises[0].day } : {}),
+        ...(theirPromises[0].promised ? { promised: true } : {}),
+      }
+    : null;
 
   // 18 · the facts with the tape flag, the Filing's own first.
   const factsById = new Map<string, EntryFacts>();
@@ -544,6 +647,7 @@ export function readAccount(input: AccountReadInput): AccountRead {
     stage: input.board ? stageOf(input.board, now) : null,
     relationship,
     theirPromise,
+    theirPromises,
     lastAccepted,
     conversationExists: live.some((d) => !!d.direction) || touches.length > 0,
     secondRecord: input.secondRecord ?? null,

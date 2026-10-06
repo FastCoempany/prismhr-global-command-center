@@ -72,6 +72,8 @@ describe("the move line carries who and when (D25)", () => {
       lastTouch: { at: "2026-08-30T14:44:00Z", awaitingReply: true, who: "Melanie" },
       lastInbound: { at: "2026-09-01T15:39:00Z", who: "Adam", promise: true },
     });
-    assert.equal(r.move, "Hold for their follow-up. Promised yesterday.");
+    // The retired "Hold for their follow-up" became the approved wait line,
+    // which names who owes it (the face approved 2026-10-06).
+    assert.equal(r.move, "Wait on Adam. Promised yesterday.");
   });
 });

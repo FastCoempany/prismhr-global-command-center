@@ -1154,7 +1154,17 @@ function Row({
                     }
                   }}
                 >
-                  {moveOpen ? row.moveFull : row.move}
+                  {/* A promise line's door holds one line per open promise
+                      (the face approved 2026-10-06); each opens on its own
+                      line. */}
+                  {moveOpen
+                    ? row.moveFull.split("\n").map((line, k) => (
+                        <Fragment key={k}>
+                          {k > 0 && <br />}
+                          {line}
+                        </Fragment>
+                      ))
+                    : row.move}
                 </p>
               ) : (
                 <p className={`${styles.move} ${row.thin ? styles.thin : ""}`}>

@@ -14,7 +14,15 @@
 // filed before the columns (D23), so a row arrives here with them.
 
 import type { CorpusDoc } from "@/lib/intel/extract";
-import { GLYPH_RE, TAPE_HEAD_IN_BODY_RE } from "@/lib/ingest/dialect";
+import {
+  GLYPHS,
+  GLYPH_RE,
+  READ_SUFFIX,
+  SOURCES,
+  TAPE_HEAD_IN_BODY_RE,
+  isCall,
+  isTape,
+} from "@/lib/ingest/dialect";
 import { isCloser, isMachinery } from "@/lib/intel/closer";
 import { effectiveAt } from "@/lib/intel/clock";
 import type { DigestEntry } from "@/lib/intel/digest";
@@ -210,6 +218,28 @@ export function docOf(
     recipients: splitRecipients(n.recipients),
     hidden: hidden.has(n.id),
   };
+}
+
+/** A record row's rung on the evidence ladder (CLAUDE.md, the playbook
+ *  authoring canon, item 14: transcripts, then filed threads, then call
+ *  notes). The tape and the entries a call read filed off a recording are
+ *  the tape; a mail or chat entry is a filed thread; every other row the
+ *  record holds (a typed note, a logged call, a task) is call notes. */
+export type EvidenceRung = "tape" | "thread" | "notes";
+
+export function evidenceRung(
+  d: Pick<RecordDoc, "tape" | "source" | "text">,
+): EvidenceRung {
+  const src = d.source ?? "";
+  if (d.tape || isTape(src) || isCall(src)) return "tape";
+  const base = src.endsWith(READ_SUFFIX) ? src.slice(0, -READ_SUFFIX.length) : src;
+  if (
+    (d.text ?? "").startsWith(`${GLYPHS.email} `) ||
+    base === SOURCES.outlook ||
+    base === SOURCES.teams
+  )
+    return "thread";
+  return "notes";
 }
 
 /** Every store the app holds for one account, as docs, newest first. The

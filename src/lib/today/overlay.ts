@@ -74,6 +74,9 @@ export type AccountNote = {
    *  "" on every row filed before the column existed. */
   recipients: string;
   createdAt: string; // ISO
+  /** The filing that wrote the row (§2.1), when the column loaded and the
+   *  row has one: a loop on their side cites its entry through it. */
+  filingId?: string;
 };
 
 // Column-safe select sets: if the provenance columns aren't migrated yet, fall
@@ -98,6 +101,7 @@ type NoteRow = {
   actors?: string;
   source?: string;
   recipients?: string;
+  filingId?: string | null;
 };
 
 // All account notes, newest first, grouped by account id. Defensive: degrades to
@@ -121,24 +125,32 @@ export async function loadAccountNotes(): Promise<Map<string, AccountNote[]>> {
   try {
     // The newest column gets its own tier: sharing one with the provenance set
     // would mean an unmigrated database drops lane, actors and source too.
+    // The filing link is newer still and takes the tier above it.
     rows = await prisma.accountNote.findMany({
       orderBy: { createdAt: "desc" },
-      select: { ...PROVENANCE, recipients: true },
+      select: { ...PROVENANCE, recipients: true, filingId: true },
     });
   } catch {
     try {
       rows = await prisma.accountNote.findMany({
         orderBy: { createdAt: "desc" },
-        select: PROVENANCE,
+        select: { ...PROVENANCE, recipients: true },
       });
     } catch {
       try {
         rows = await prisma.accountNote.findMany({
           orderBy: { createdAt: "desc" },
-          select: NOTE_STABLE,
+          select: PROVENANCE,
         });
       } catch {
-        return new Map();
+        try {
+          rows = await prisma.accountNote.findMany({
+            orderBy: { createdAt: "desc" },
+            select: NOTE_STABLE,
+          });
+        } catch {
+          return new Map();
+        }
       }
     }
   }
@@ -166,6 +178,7 @@ export async function loadAccountNotes(): Promise<Map<string, AccountNote[]>> {
       source: r.source ?? "",
       recipients: r.recipients ?? "",
       createdAt: r.createdAt.toISOString(),
+      ...(r.filingId ? { filingId: r.filingId } : {}),
     };
     const list = out.get(acct);
     if (list) list.push(note);
@@ -340,6 +353,26 @@ const TODO_ORDER = [{ done: "asc" }, { createdAt: "desc" }] as const;
 export async function loadTodos(): Promise<Todo[]> {
   if (!hasDatabaseEnv()) return [];
   const prisma = getPrisma();
+  try {
+    // The filing link (§2.1) rides a tier of its own, above the notetaker
+    // columns, so a database without it still loads every account link.
+    const rows = await prisma.todo.findMany({
+      orderBy: [...TODO_ORDER],
+      select: { ...TODO_STABLE, accountId: true, remindAt: true, filingId: true },
+    });
+    return rows.map((r) => ({
+      id: r.id,
+      body: r.body,
+      done: r.done,
+      accountId: r.accountId ?? "",
+      remindAt: r.remindAt ? r.remindAt.toISOString() : "",
+      createdAt: r.createdAt.toISOString(),
+      updatedAt: r.updatedAt.toISOString(),
+      ...(r.filingId ? { filingId: r.filingId } : {}),
+    }));
+  } catch {
+    // No filing column yet: the tier below loads the rest.
+  }
   try {
     const rows = await prisma.todo.findMany({
       orderBy: [...TODO_ORDER],

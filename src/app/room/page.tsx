@@ -34,6 +34,7 @@ import { followUpRowsFor, knownOrgNames, splitTouches } from "@/lib/today/follow
 import { splitAsk } from "@/lib/today/ledger";
 import { DASH_NODES } from "@/lib/dashboard/stages";
 import { readAccount, secondRecordFor } from "@/lib/record/read";
+import { shortName } from "@/lib/ingest/guard";
 import { digestFor, digestForCardName } from "@/lib/intel/digest";
 import { COUNTRY_NAME } from "@/lib/intel/lexicon";
 import { suggestChecks } from "@/lib/intel/evidence";
@@ -359,7 +360,9 @@ export default async function RoomPage() {
     })();
 
     const read: RoomRead = readDeal({
-      accountName: card.name,
+      // The account as a person says it: the move names it when the record
+      // cannot say who owes a promise.
+      accountName: shortName(card.name),
       // Whose move it is, from the read (field 4): the engine writes the
       // sentence the rung calls for (§2.2, the fifth migration).
       whoseMove: acct.whoseMove,
@@ -400,6 +403,10 @@ export default async function RoomPage() {
           }
         : null,
       theirBall,
+      // Every promise still open on their side, the read's list (field 14):
+      // the move line is the one place their promises show, and its door
+      // lists them all (the face approved 2026-10-06).
+      theirPromises: acct.theirPromises,
       lastRecordAt: acct.lastRecordAt,
       allGatesDone,
       // What is owed, register first then the record's own owed lines.

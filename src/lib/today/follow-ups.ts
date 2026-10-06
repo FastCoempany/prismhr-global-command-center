@@ -52,6 +52,9 @@ export type Todo = {
   remindAt: string; // ISO ("" = none — display falls back to createdAt)
   createdAt: string; // ISO
   updatedAt: string; // ISO — for done notes this is when the ✓ landed
+  /** The filing that wrote the row (§2.1), when the column loaded and the
+   *  row has one. */
+  filingId?: string;
 };
 
 // Stable, deterministic subject keys. The kickoff key carries the ISO week so the
