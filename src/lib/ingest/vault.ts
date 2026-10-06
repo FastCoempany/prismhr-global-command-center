@@ -4,7 +4,7 @@
 // one above the server's request cap arrives in pieces the server assembles
 // before it lands (ruled 2026-09-25, D8, as amended 2026-10-05 — CLAUDE.md,
 // The Chute). Vaulting is filing: the receipt carries the path or the tag
-// the file landed under, which is the take-back's handle (D13).
+// the file landed under, which is the backup's address in git; backups are permanent (founder, 2026-10-06), so nothing takes it back.
 //
 // Two halves, one module. The browser half cuts a file into pieces of at
 // most 4 MB and posts them in order through the doors it is handed; it
@@ -33,7 +33,7 @@ export const UNFILED = "_unfiled";
 export const UNFINISHED = "The backup didn't finish. Drop it again.";
 
 /** The vault's receipt: where the file landed (the lane and its path or tag,
- *  the take-back's handle), or why it did not. Never a credential. */
+ *  the backup's address in git), or why it did not. Never a credential. */
 export type VaultReceipt =
   | { ok: true; kind: "file" | "release"; url: string; detail: string }
   | { ok: false; reason: string };
