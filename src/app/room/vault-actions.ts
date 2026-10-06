@@ -8,7 +8,7 @@
 // the repository and the token live in the environment, are read here on
 // the server, and are handed to the GitHub call alone. The receipt that
 // goes back carries the lane and the path or tag the file landed under —
-// the take-back's handle (D13) — and never a credential; the suite scans
+// the backup's address in git, permanent by ruling (2026-10-06) — and never a credential; the suite scans
 // this file's doors for that.
 //
 // Two doors. `vaultFile` takes a file that fits one request. `vaultChunk`
