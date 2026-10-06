@@ -6,7 +6,7 @@
 // Isomorphic on purpose: no DOM, no Node APIs — usable from the client and
 // from tests alike.
 
-import { HEAD_LINE_RE, sniffHead } from "@/lib/ingest/dialect";
+import { HEADS, HEAD_LINE_RE, sniffHead } from "@/lib/ingest/dialect";
 import { SHEET_WINDOW, type Window } from "@/lib/ingest/windows";
 
 type PasteKind = "outlook" | "teams" | "salesnav" | "sf" | "transcript" | "note";
@@ -36,6 +36,22 @@ export function sniffPaste(text: string): { kind: PasteKind; label: string } {
   if (lines.length >= 6 && speakerish.length / lines.length > 0.4)
     return { kind: "transcript", label: "a transcript" };
   return { kind: "note", label: "notes" };
+}
+
+// ── The typed note's head (ruled 2026-09-25, D14; decided 2026-10-06) ──────
+// A typed note is a paste. The ▢ composer's rich path files it under its own
+// head, so the source column says "typed" (P3) and the read knows the
+// operator wrote it. Only text that reads as notes is stamped: a thread or a
+// chat pasted into the composer keeps its own dialect, and text that already
+// carries a head keeps it. The ⚡ pane stamps nothing, because it cannot tell
+// typing from pasting. The fingerprint skips the head line, so the same note
+// re-filed through the ⚡ pane is still the same capture.
+export const TYPED_NOTE_HEAD = `${HEADS.typed} — typed on the Drop`;
+
+export function asTypedNote(text: string): string {
+  const t = (text ?? "").trim();
+  if (!t || sniffHead(t).head || sniffPaste(t).kind !== "note") return t;
+  return `${TYPED_NOTE_HEAD}\n${t}`;
 }
 
 // ── The duplicate guard's fingerprint ───────────────────────────────────────

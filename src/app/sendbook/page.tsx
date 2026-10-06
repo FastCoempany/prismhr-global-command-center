@@ -227,6 +227,14 @@ export default async function SendbookPage({
               {l.repliedAt && (
                 <span className={styles.replied}>↩ REPLIED {shortDate(l.repliedAt)}</span>
               )}
+              {l.bookedAt && (
+                <span
+                  className={styles.booked}
+                  title="Their calendar accepted a meeting after this send. The calendar answered, so it doesn't count as a reply and doesn't warm the account."
+                >
+                  BOOKED {shortDate(l.bookedAt)}
+                </span>
+              )}
             </div>
           </div>
         ))}

@@ -6,6 +6,7 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 import {
+  acceptanceDates,
   buildSendbook,
   docsFromRows,
   inboundDates,
@@ -153,6 +154,63 @@ describe("machinery never warms and never replies (CLAUDE.md:399-400)", () => {
     const note = reply("10:39 AM", "We are in. Send the contract over.");
     assert.equal(warmDates([note]).length, 1);
     assert.equal(inboundDates([note]).length, 1);
+  });
+});
+
+// ── BOOKED (decided 2026-10-06; the plan's §5 item 9) ──────────────────────
+// A send their calendar answered carries BOOKED. The acceptance is machinery
+// (C5), so it says what happened and nothing more: no warmth, no reply, no
+// fresh drum.
+describe("a send their calendar accepted carries BOOKED, and BOOKED is never a reply", () => {
+  const accepted = (clock: string, createdAt = NOON, from = "Adam Reyes") => ({
+    body: `✉ OL ${clock} — Accepted: Global intro · ${from} → Antaeus Coe\n`,
+    source: "outlook-ai",
+    createdAt,
+    actors: `${from} → Antaeus Coe`,
+  });
+
+  test("their acceptance after a send books it, and the lane stays NEVER MET", () => {
+    const { lines, laneById } = book([send("9:44 AM"), accepted("11:02 AM")]);
+    assert.equal(lines[0].bookedAt, "2026-09-02T11:02:00.000Z");
+    assert.equal(lines[0].repliedAt, "");
+    assert.equal(laneById.get("A1"), "never-met");
+  });
+
+  test("the drum keeps counting across an acceptance", () => {
+    const { lines } = book([
+      send("9:44 AM", "2026-09-01T12:00:00.000Z"),
+      accepted("11:02 AM", "2026-09-01T12:00:00.000Z"),
+      send("9:44 AM", "2026-09-03T12:00:00.000Z"),
+    ]);
+    const [newer, older] = lines;
+    assert.equal(older.bookedAt, "2026-09-01T11:02:00.000Z");
+    assert.equal(newer.step, 2);
+    assert.equal(newer.bookedAt, "");
+  });
+
+  test("our own side accepting books nothing", () => {
+    assert.deepEqual(acceptanceDates([accepted("11:02 AM", NOON, "Antaeus Coe")]), []);
+    const { lines } = book([send("9:44 AM"), accepted("11:02 AM", NOON, "Antaeus Coe")]);
+    assert.equal(lines[0].bookedAt, "");
+  });
+
+  test("an acceptance before the send answers nothing; a decline books nothing", () => {
+    assert.equal(book([send("2:15 PM"), accepted("11:02 AM")]).lines[0].bookedAt, "");
+    const declined = {
+      ...accepted("11:02 AM"),
+      body: "✉ OL 11:02 AM — Declined: Global intro · Adam Reyes → Antaeus Coe\n",
+    };
+    assert.deepEqual(acceptanceDates([declined]), []);
+  });
+
+  test("a reply and an acceptance both annotate the send", () => {
+    const { lines } = book([
+      send("9:44 AM"),
+      reply("10:39 AM", "Tuesday works. Sending an invite."),
+      accepted("11:02 AM"),
+    ]);
+    assert.equal(lines[0].repliedAt, "2026-09-02T10:39:00.000Z");
+    assert.equal(lines[0].bookedAt, "2026-09-02T11:02:00.000Z");
   });
 });
 

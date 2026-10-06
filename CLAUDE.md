@@ -277,6 +277,8 @@ need it.
 
 **Ruled 2026-09-25 (C7, C9, D22, D26, D27):** the two-slot cap governs rules; seats are the operator's own forks and keep their own cap of three. The research bearer is the strongest above-gate account with no candidate of its own, the vehicle rule's letter, and a vehicle never collides: when every eligible account has its own move the slot drops for the day, and the bearer is chosen after the seats are placed. One band table lives in day.ts and the queue, the Klaxon and the test all read it: sends 9:00 to 11:00, people 11:00 to 14:00, research and filing from 14:00, Chicago; before 9:00 the send band is next, not now. No rule stamps with an empty label.
 
+**The stamp words (ship order 2026-10-06):** every wing stamp says what the operator did, in the past tense, then its specific: "WORKED THE MOVE FROM THE SHEET · SEATED 10/6", "ACTED ON ADAM’S PHR STALL" (the THEIRS line's own label), "OPENED THE FIRST CONVERSATION · 14 SUPPORT CASES". SEATED, THEIRS and ENGAGED · NEVER MET retire as stamps.
+
 ## The Chute (decided 2026-08-11)
 
 The HomeRoom carries ONE intake at the top: the Chute. Files (.eml/.msg/.pdf/
@@ -309,6 +311,8 @@ file. Nothing filed twice." (pastehash markers; an undo clears its marker).
 **Ruled 2026-09-25 (D29, D30):** a read-only session sees the Chute bar and its receipts and cannot drop; the bar says "Read-only session" where the ⇪ button was. The intranet mirror's query excludes every namespaced row by construction. The SalesNav grab pastes into the Chute or a Drop like any capture and files as a note with its own head.
 
 **The held file and the receipt (ship order 2026-10-06; docs/mockups/chute-faces-2026-10-06.html):** one box holds a disputed or unsure file at every door: an amber HELD kicker, the reason, which opens to its grounds, then "File to {claim}" in solid ink, "Keep on {bound}", "Another account" and a hover ✕, "Don't file it." The ✕ files nothing and backs the file up under accounts/_unfiled/; on the Intranet it keeps the capture in the brain. A receipt is one line: the account, its counts, the day and the rung, with an amber second line only for a cut read, a skipped duplicate check or a reader that was down. The line opens to what the filing wrote; ↺ takes it back, ✕ clears it. Send-it hands its dispute to the Chute: "Held in the Chute above."
+
+**The typed note and the picker (ship order 2026-10-06):** notes typed in the Drop's ▢ composer file under the TYPED NOTE head with the typed source, and its chip says "Reads as a typed note." before Enter; a thread pasted there keeps its own dialect. The ⚡ pane stamps nothing, because it cannot tell typing from pasting. Neither door's file picker filters by type: the vault takes every file, and a misplaced .csv gets its refusal.
 
 ## The Scratchpaper (decided 2026-08-12)
 
@@ -356,6 +360,8 @@ without filing. The wing never stamps mutely: no channel line means the
 rule's own label speaks.
 
 **Ruled 2026-09-25 (C4, C5, C18):** ↩ REPLIED needs a substantive inbound — a closer warms the lane and sets no annotation. Machinery never warms and never replies: a calendar acceptance, a bounce and a campaign alert are machinery whatever inbox caught them. The who chip row offers the record's people merged with the book's contacts, and asks only when the merged set holds more than one name.
+
+**BOOKED (ship order 2026-10-06):** a send their calendar accepted carries BOOKED with the day, green, beside ↩ REPLIED when both apply. The acceptance stays machinery: BOOKED never warms the lane, never resets the drum and never counts as a reply, and our own side accepting books nothing.
 
 ## The Spring (triptych winner, decided 2026-08-13)
 

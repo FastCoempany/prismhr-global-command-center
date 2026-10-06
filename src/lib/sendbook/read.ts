@@ -17,6 +17,7 @@
 // row. The second record folds in through the read's own `secondRecord`.
 
 import { GLYPH_CLASS } from "@/lib/ingest/dialect";
+import { isAcceptance } from "@/lib/intel/closer";
 import { MINE_RE } from "@/lib/intel/provenance";
 import { isMeetingNote } from "@/lib/intel/meeting";
 import { csms } from "@/lib/book";
@@ -60,6 +61,7 @@ type SendLine = {
   from: "tap" | "record";
   step: number; // position within its run, 1-based
   repliedAt: string; // ISO of the first genuine inbound after this send, or ""
+  bookedAt: string; // ISO of their calendar acceptance after this send, or ""
 };
 
 type AccountLane = "never-met" | "gone-cold";
@@ -209,6 +211,22 @@ export function inboundDates(list: readonly RowOrDoc[]): string[] {
   return out;
 }
 
+/** Their calendar accepting a meeting: the BOOKED annotation reads these
+ *  (decided 2026-10-06). An acceptance from their side, attributed and not
+ *  ✕-parked. It is machinery (C5), so it never warms the lane, never resets
+ *  the drum and never counts as ↩ REPLIED; it says what happened, which is
+ *  the register's job. Our own side accepting their invite answers no send
+ *  of ours. */
+export function acceptanceDates(list: readonly RowOrDoc[]): string[] {
+  const out: string[] = [];
+  for (const d of asDocs(list)) {
+    if (d.hidden || !d.sender || d.senderIsHome) continue;
+    if (!isAcceptance(d.text.split("\n")[0] ?? "")) continue;
+    out.push(d.at);
+  }
+  return out;
+}
+
 // The record entry's head, cleaned into a short clause: glyph and routing
 // dropped, subject kept.
 const LEADING_GLYPH_RE = new RegExp(`^[${GLYPH_CLASS}]\\s*`, "u");
@@ -290,9 +308,10 @@ export function buildSendbook(inp: SendbookInput): Sendbook {
     const { theirsAt } = orgSignalsOf(read?.secondRecord);
     const warm = [...warmDates(docs), ...(theirsAt ? [theirsAt] : [])].sort();
     const inbound = [...inboundDates(docs), ...(theirsAt ? [theirsAt] : [])].sort();
+    const accepted = acceptanceDates(docs).sort();
     laneById.set(id, warm.length > 0 ? "gone-cold" : "never-met");
 
-    type Raw = Omit<SendLine, "step" | "repliedAt">;
+    type Raw = Omit<SendLine, "step" | "repliedAt" | "bookedAt">;
     const raw: Raw[] = [];
     for (const n of inp.tapsById.get(id) ?? []) {
       const p = parseSendbookBody(n.body);
@@ -337,7 +356,7 @@ export function buildSendbook(inp: SendbookInput): Sendbook {
       const warmBetween = prevAt && warm.some((w) => w > prevAt && w < r.at);
       step = !prevAt || gapReset || warmBetween ? 1 : step + 1;
       prevAt = r.at;
-      return { ...r, step, repliedAt: "" };
+      return { ...r, step, repliedAt: "", bookedAt: "" };
     });
 
     // Reply annotations: each genuine inbound answers the newest send before
@@ -348,6 +367,15 @@ export function buildSendbook(inp: SendbookInput): Sendbook {
         if (s.at < inAt && (!best || s.at > best.at)) best = s;
       }
       if (best && !best.repliedAt) best.repliedAt = inAt;
+    }
+    // BOOKED, the same way: their acceptance answers the newest send before
+    // it, one per send, the first acceptance wins.
+    for (const acAt of accepted) {
+      let best: SendLine | null = null;
+      for (const s of stepped) {
+        if (s.at < acAt && (!best || s.at > best.at)) best = s;
+      }
+      if (best && !best.bookedAt) best.bookedAt = acAt;
     }
 
     lines.push(...stepped);

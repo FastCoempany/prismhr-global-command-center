@@ -59,7 +59,7 @@ import {
 import type { Window } from "@/lib/ingest/windows";
 import { shortName } from "@/lib/ingest/short-name";
 import { monthDay } from "@/lib/ingest/wrote";
-import { sniffPaste } from "@/lib/paste-files";
+import { asTypedNote, sniffPaste } from "@/lib/paste-files";
 import type { LedgerRow } from "./chute-ledger";
 import { HeldBox, type HeldAccount, type HeldChoice } from "./ingest/held";
 import { ReceiptLine } from "./ingest/receipt";
@@ -444,7 +444,9 @@ function Row({
     const text = logText.trim();
     if (!text || pending) return;
     if (mode === "note" && readsRich(text)) {
-      filePaste(text, false);
+      // A typed note is a paste (D14): notes file under the TYPED NOTE head,
+      // and a thread pasted here keeps its own (decided 2026-10-06).
+      filePaste(asTypedNote(text), false);
       return;
     }
     start(async () => {
@@ -2019,8 +2021,10 @@ function Row({
               >
                 ⇪
               </button>
-              {/* No accept filter: the vault takes every file type; the
-                  reader picks out the ones it can file to the record. */}
+              {/* No accept filter: the vault takes every file type, the
+                  reader picks out the ones it can file to the record, and a
+                  misplaced .csv gets its refusal instead of vanishing from
+                  the picker (decided 2026-10-06). */}
               <input
                 ref={fileInputRef}
                 type="file"
@@ -2053,9 +2057,15 @@ function Row({
                   placeholder="Type the second it happens: call notes, Teams pastes, stray thoughts…"
                   aria-label={`Log to ${row.name}`}
                 />
+                {/* Said before Enter (decided 2026-10-06): notes typed here
+                    file as a typed note; anything else names its own read. */}
                 {mode === "note" && readsRich(logText.trim()) && (
                   <span className={styles.sniff}>
-                    Reads as {sniffPaste(logText).label}. Enter runs the full read.
+                    Reads as{" "}
+                    {sniffPaste(logText).kind === "note"
+                      ? "a typed note"
+                      : sniffPaste(logText).label}
+                    . Enter runs the full read.
                   </span>
                 )}
               </>
