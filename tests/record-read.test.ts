@@ -662,7 +662,7 @@ describe("secondRecordFor folds a shell-keyed drop under the canonical id", () =
 const asWhose = (move: string): "you" | "them" | "booked" | "none" =>
   /^Wait for the meeting\./.test(move)
     ? "booked"
-    : /^(Answer |Send .+ the recap\.|Hold for their follow-up|Chase the follow-up)/.test(move)
+    : /^(Answer |Send .+ the recap\.)/.test(move)
       ? "you"
       : /^(Wait on |Nudge |Chase )/.test(move)
         ? "them"
@@ -897,6 +897,10 @@ describe("the read carries the twenty fields of pass 2 E in its order", () => {
       "stage",
       "relationship",
       "theirPromise",
+      // Field 14 grown by slice 18b: the move line needs every open promise,
+      // and a surface that needs a fact the read does not carry grows the
+      // read (§2.2).
+      "theirPromises",
       "lastAccepted",
       "conversationExists",
       "secondRecord",

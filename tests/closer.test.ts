@@ -121,7 +121,9 @@ describe("their promise is an await, never a reply owed", () => {
       ...base,
       lastInbound: { at: ago(1), who: "Lesha", promise: true },
     });
-    assert.match(r.move, /^Hold for their follow-up\. Promised yesterday\.$/);
+    // "Hold for their follow-up" retired into the approved wait line
+    // (the face approved 2026-10-06).
+    assert.match(r.move, /^Wait on Lesha\. Promised yesterday\.$/);
     assert.ok(!/Answer/.test(r.move));
   });
 
@@ -131,7 +133,8 @@ describe("their promise is an await, never a reply owed", () => {
       ...base,
       lastInbound: { at: ago(8), who: "Lesha", promise: true },
     });
-    assert.match(r.move, /^Chase the follow-up\. Promised 8 days ago\.$/);
+    // "Chase the follow-up" retired into the approved chase line.
+    assert.match(r.move, /^Chase Lesha\. Promised 8 days ago\.$/);
   });
 
   test("a real ask still demands the answer", async () => {

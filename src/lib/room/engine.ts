@@ -8,14 +8,40 @@
 // D25) — the move already says who and when.
 
 import { DASH_NODES, DASH_NODE_KEYS } from "@/lib/dashboard/stages";
+import { redactMoney } from "@/lib/intel/lexicon";
 import { whoseMoveFrom, type WhoseMove } from "@/lib/record/whose-move";
 import { chicagoDay } from "@/lib/tz";
 import { splitFallback } from "./deliverables";
 import { clip, moveFromCommitment, pickOwed } from "./move-line";
+import { dayBlown } from "./owed";
 
 export type Health = "red" | "amber" | "green" | "quiet";
 
+/** One promise still open on their side, as the read's list carries it
+ *  (src/lib/record/read.ts, theirPromises): a loop the read filed (D10), a
+ *  line of the cleaner's Owed block, or the newest inbound's own words. The
+ *  read's TheirPromise satisfies it as it stands. */
+export type PromiseIn = {
+  /** Who owes it, as the record names them; "" when it cannot say. */
+  who: string;
+  /** What they promised; "" when the record holds only that they did. */
+  text: string;
+  /** When it was made or filed: the clock a promise with no day runs on. */
+  at: string;
+  /** The day they named, yyyy-mm-dd; absent when they named none. */
+  day?: string;
+  /** The day ended with a hearer on record: PROMISED needs a hearer (D28). */
+  promised?: boolean;
+  /** Who heard it, as the record names them; absent when it names nobody. */
+  hearer?: string;
+  kind?: "loop" | "owed" | "inbound";
+  /** The filed entry it came from, with its rung of the evidence ladder. */
+  entry?: { at: string; rung: "tape" | "thread" | "notes" } | null;
+};
+
 type RoomInputs = {
+  // The account as a person says it ("Simploy", never "Simploy, Inc."): the
+  // move names it when the record cannot say who owes a promise.
   accountName: string;
   // the current stage step (null = nothing active on the card)
   step: {
@@ -46,6 +72,13 @@ type RoomInputs = {
   // day they named, and `promised` when that day ended with a hearer on
   // record — PROMISED needs a hearer (D28); a blown day with none is a wall.
   theirBall?: { who: string; text: string; day?: string; promised?: boolean } | null;
+  // Every promise still open on their side, from the read (field 14's list).
+  // Their promises show on the move line and nowhere else: TODAY stays the
+  // operator's own list and THEIRS the second record's line (the face
+  // approved with its ship order on 2026-10-06). A caller with no read may
+  // leave it out; the newest inbound's own promise then stands alone, as the
+  // engine's own suites hand it in.
+  theirPromises?: readonly PromiseIn[];
   // The newest invitation ACCEPTANCE in the record. It is machinery, so it
   // never opens a reply-owed — but it is proof the meeting exists, and a row
   // that says "wait on Melanie" while Melanie has already accepted is telling
@@ -73,7 +106,8 @@ export type RoomRead = {
   // The whole commitment the move was built from, when the line holds
   // anything back. Every compression is a door (the click-depth law): the
   // row renders this behind the move, one click deep. "" when the line IS
-  // the whole thing.
+  // the whole thing. A promise line's door is one line per open promise,
+  // newline-joined: who, what, who heard it, the day, and the filed entry.
   moveFull?: string;
   thin: boolean; // true = not-enough-signal read
   health: Health;
@@ -121,8 +155,102 @@ const loopReason = (ball: { day?: string; promised?: boolean }, now: Date): stri
 
 // Their promise holds an await this long before the chase resumes — a
 // "will be in touch" is theirs to keep for a week, then it's yours to chase
-// (the closer rule's case table, founder-decreed 2026-08-22).
+// (the closer rule's case table, founder-decreed 2026-08-22). It is the
+// clock of every promise that named no day.
 const PROMISE_AWAIT_DAYS = 7;
+
+// ── their promises on the move line (the face approved 2026-10-06) ────────
+// While a promise stands and the operator owes nothing else, the move says
+// to wait and names the day. Once the day passes it is the operator's move:
+// chase, with PROMISED and its date when someone heard the day (the closer
+// rule), a plain wall when nobody did (D28). A promise with no day keeps
+// the await window. "Hold for their follow-up" and "Chase the follow-up"
+// retired into these lines, so one fact has one wording.
+
+const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
+
+const firstOf = (name: string): string => (name ?? "").trim().split(/\s+/)[0] ?? "";
+
+// The evidence ladder's own cite words (CLAUDE.md, the playbook authoring
+// canon, item 14), as the door says them in a sentence.
+const RUNG_WORD = {
+  tape: "On tape",
+  thread: "Filed thread",
+  notes: "Call notes",
+} as const;
+
+type Pressed = {
+  p: PromiseIn;
+  // 0 PROMISED, 1 a wall, 2 a dayless chase, 3 due today, 4 a day ahead,
+  // 5 a dayless wait: the operator's chases first, then the nearest wait.
+  tier: number;
+  clock: number;
+  line: string;
+  // The day passed: the move is the operator's chase, no longer a wait.
+  yours: boolean;
+};
+
+function pressOf(p: PromiseIn, now: Date, fallback: string): Pressed {
+  const who = firstOf(p.who) || fallback;
+  const day = ISO_DAY.test(p.day ?? "") ? (p.day as string) : "";
+  if (day) {
+    const clock = Date.parse(`${day}T12:00:00Z`);
+    if (dayBlown(day, now))
+      return p.promised
+        ? { p, tier: 0, clock, line: `Chase ${who}. PROMISED ${md(day)}.`, yours: true }
+        : {
+            p,
+            tier: 1,
+            clock,
+            line: `Chase ${who}. The ${md(day)} wall passed.`,
+            yours: true,
+          };
+    if (day === chicagoDay(now))
+      return { p, tier: 3, clock, line: `Wait on ${who}. Due today.`, yours: false };
+    return {
+      p,
+      tier: 4,
+      clock,
+      line: `Wait on ${who}. Promised ${dayWord(day, now)}.`,
+      yours: false,
+    };
+  }
+  const days = daysBetween(p.at, now);
+  const ago = days != null && days > 0 ? daysAgo(days) : "today";
+  const at = Date.parse(p.at);
+  const clock = Number.isNaN(at) ? Number.MAX_SAFE_INTEGER : at;
+  return days != null && days > PROMISE_AWAIT_DAYS
+    ? { p, tier: 2, clock, line: `Chase ${who}. Promised ${ago}.`, yours: true }
+    : { p, tier: 5, clock, line: `Wait on ${who}. Promised ${ago}.`, yours: false };
+}
+
+/** One line of the door: who owes it, what, who heard it, the day, and the
+ *  filed entry it came from with its rung. Money never renders. */
+function doorLine(p: PromiseIn, now: Date, fallback: string): string {
+  const parts = [(p.who ?? "").trim() || fallback];
+  const what = (p.text ?? "").replace(/\s+/g, " ").trim();
+  if (what) parts.push(/[.!?…]$/.test(what) ? what : `${what}.`);
+  const hearer = (p.hearer ?? "").trim();
+  const day = ISO_DAY.test(p.day ?? "") ? (p.day as string) : "";
+  if (day) {
+    const word = dayWord(day, now);
+    const when = dayBlown(day, now)
+      ? md(day)
+      : day === chicagoDay(now)
+        ? `Today ${md(day)}`
+        : word === md(day)
+          ? word
+          : `${word} ${md(day)}`;
+    if (hearer) parts.push(`Promised to ${hearer}`, when);
+    else parts.push(`Due ${when}`, "no hearer on record");
+  } else {
+    if (hearer) parts.push(`Promised to ${hearer}`);
+    parts.push("No day given");
+  }
+  const filed = p.entry ? chicagoDay(p.entry.at) : "";
+  if (p.entry && filed) parts.push(`${RUNG_WORD[p.entry.rung]} ${md(filed)}`);
+  return redactMoney(parts.join(" · "));
+}
 
 export function daysBetween(iso: string, now: Date): number | null {
   const t = Date.parse(iso);
@@ -251,6 +379,27 @@ export function readDeal(i: RoomInputs): RoomRead {
   const inboundDays = inboundNewest ? daysBetween(i.lastInbound?.at ?? "", i.now) : null;
   const inboundWho = (i.lastInbound?.who || "").trim();
 
+  // The newest inbound is THEIR promise, relayed or direct: nothing is owed
+  // from this side, so it is never "Answer" the person who made it. It
+  // counts while it is the newest thing; once we write after it, the send
+  // rung speaks, as it always has.
+  const inboundPromise = inboundNewest && !!i.lastInbound?.promise;
+  const answerOwed = inboundNewest && !inboundPromise;
+
+  // Their open promises, the most pressing first. The read's list carries
+  // the inbound's promise beside the loops, already one line per promise; a
+  // caller with no list has only the inbound's.
+  const promises: readonly PromiseIn[] = i.theirPromises
+    ? i.theirPromises.filter((p) => p.kind !== "inbound" || inboundPromise)
+    : inboundPromise
+      ? [{ who: inboundWho, text: "", at: i.lastInbound?.at ?? "", kind: "inbound" }]
+      : [];
+  const fallbackWho = i.accountName.trim() || "them";
+  const pressed = promises
+    .map((p) => pressOf(p, i.now, fallbackWho))
+    .sort((a, b) => a.tier - b.tier || a.clock - b.clock);
+  const lead = pressed[0] ?? null;
+
   // A meeting newer than any outbound (and not yet answered by an inbound)
   // puts the follow-up on the operator — the recap is owed, never a "wait"
   // (the Staff Leasing 1:00 PM read, founder-decreed 2026-08-18). A recap
@@ -275,7 +424,7 @@ export function readDeal(i: RoomInputs): RoomRead {
   const wallOverdue = wallDaysPast != null && wallDaysPast > 0;
 
   // Not enough signal — an honest read, never a fabricated move.
-  if (!i.step && !hasRecord && !i.lastTouch && !i.allGatesDone) {
+  if (!i.step && !hasRecord && !i.lastTouch && !i.allGatesDone && !lead) {
     return {
       move: "File a paste or a note. Not enough signal yet.",
       thin: true,
@@ -328,16 +477,43 @@ export function readDeal(i: RoomInputs): RoomRead {
         ? `against ${i.timing.phrase}`
         : `on a ${i.timing.phrase.toLowerCase()} ask`
     : "";
-  if (inboundNewest && i.lastInbound?.promise) {
-    // The newest inbound is THEIR promise — relayed or direct. Nothing is
-    // owed from this side: hold the await, then chase the promise itself,
-    // never "Answer" the person who made it.
-    const ago = inboundDays != null && inboundDays > 0 ? daysAgo(inboundDays) : "today";
-    move =
-      inboundDays != null && inboundDays > PROMISE_AWAIT_DAYS
-        ? `Chase the follow-up. Promised ${ago}.`
-        : `Hold for their follow-up. Promised ${ago}.`;
-  } else if (inboundNewest && i.step) {
+  // The operator already moved today: a filed send or a logged touch puts
+  // the ball with them until tomorrow (the Infiniti demo-times drop,
+  // founder-decreed 2026-08-19). Never on a reply newer than that send.
+  const wroteToday =
+    !!i.lastTouch &&
+    i.lastTouch.awaitingReply &&
+    quietDays === 0 &&
+    !i.allGatesDone &&
+    !inboundNewest;
+  // Their promise, standing or blown, leads only when the operator owes
+  // nothing else: a thing owed, a late gate and the stamp all outrank it,
+  // and a reply and a recap are taken before it ever gets here. Chasing
+  // their slip never jumps ahead of something we owe; the closer rule makes
+  // our own blown promise the strongest thing on a row (ruled for slice 18b
+  // on 2026-10-06).
+  const owesElse =
+    !!owedNow ||
+    (!!i.step && (quietLong || (wallOverdue && wallDaysPast != null))) ||
+    !!i.allGatesDone;
+  // A nudge is the operator's own cadence on a quiet send, not a thing
+  // owed: its reason is a clock. A blown promise's reason is a promise
+  // someone heard, and a promise made outranks recency (the writing canon),
+  // so only a blown promise jumps a nudge; one that stands yields to it
+  // (ruled for slice 18b on 2026-10-06).
+  const nudgeDue = !!i.lastTouch?.awaitingReply && quietLong;
+  // A blown promise is the operator's chase, over every wait. The one wait
+  // it yields to is the chase itself: a send to the person who owes it,
+  // today, so the row acknowledges the send it just read, and the chase
+  // carries tomorrow.
+  const chasedToday =
+    !!lead &&
+    lead.yours &&
+    wroteToday &&
+    firstOf(lead.p.who) !== "" &&
+    firstOf(lead.p.who).toLowerCase() === firstOf(i.lastTouch?.who ?? "").toLowerCase();
+  let door = "";
+  if (answerOwed && i.step) {
     // The board gate rides the row as its own chip — the move never says a
     // thing twice, and "close" the jargon is retired (decreed 2026-08-18).
     const who = inboundWho || "they";
@@ -345,7 +521,7 @@ export function readDeal(i: RoomInputs): RoomRead {
     move = wallOverdue
       ? `Answer ${who}. They wrote ${ago}. The ${i.timing!.phrase} wall passed.`
       : `Answer ${who}. They wrote ${ago}.`;
-  } else if (inboundNewest) {
+  } else if (answerOwed) {
     const who = inboundWho || "they";
     // "Answer" already says the reply is owed — the reason is just the
     // trigger (founder-decreed 2026-08-22).
@@ -366,20 +542,22 @@ export function readDeal(i: RoomInputs): RoomRead {
     } else {
       move = `Send ${meetingWho || "them"} the recap. You met ${meetingAgo}.`;
     }
+  } else if (lead && !owesElse && (lead.yours ? !chasedToday : !nudgeDue)) {
+    // Their promise, on the move line and nowhere else. A blown one is the
+    // operator's chase and ranks under everything the operator owes, over a
+    // nudge and every wait; one that stands is the wait itself. With more open, the most
+    // pressing leads and the reason ends in "+N"; the door opens them all,
+    // one line each.
+    const more = pressed.length - 1;
+    move = more > 0 ? `${lead.line} +${more}` : lead.line;
+    door = pressed.map((x) => doorLine(x.p, i.now, fallbackWho)).join("\n");
   } else if (acceptedNewest && !owedNow) {
     // Nothing is owed either way — the invitation was accepted and the next
     // real event is the meeting itself.
     move = `Wait for the meeting. ${acceptedWho || "They"} accepted.`;
-  } else if (
-    i.lastTouch &&
-    i.lastTouch.awaitingReply &&
-    quietDays === 0 &&
-    !i.allGatesDone
-  ) {
-    // The operator already moved today — a filed send or a logged touch puts
-    // the ball with them until tomorrow. The open gate rides its own chip;
-    // the row must acknowledge the send it just read (the Infiniti
-    // demo-times drop, founder-decreed 2026-08-19).
+  } else if (wroteToday && i.lastTouch) {
+    // The open gate rides its own chip; the row must acknowledge the send
+    // it just read.
     move = `Wait on ${i.lastTouch.who || "their reply"}. You wrote today.`;
   } else if (owedNow) {
     // A thing owed. The register carries the rest; the stage carries the one.
@@ -418,10 +596,12 @@ export function readDeal(i: RoomInputs): RoomRead {
     health = "quiet";
   }
 
-  // The door: only when the printed line really is shorter than the thing.
+  // The door: a promise line always opens to what was promised; an owed
+  // line only when the printed line really is shorter than the thing.
   const moveFull =
-    owedNow && move.includes(owedNow.replace(/\.$/, "")) && owedBuilt.cut
+    door ||
+    (owedNow && move.includes(owedNow.replace(/\.$/, "")) && owedBuilt.cut
       ? owedBuilt.full
-      : "";
+      : "");
   return { move, thin, health, quietDays, ...(moveFull ? { moveFull } : {}) };
 }
