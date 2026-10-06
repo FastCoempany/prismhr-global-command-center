@@ -169,7 +169,10 @@ export function ReceiptLine({
               title={shortName(acct.name) === acct.name ? undefined : acct.name}
             >
               {shortName(acct.name)}
-            </Link>
+            </Link>{" "}
+            {/* The separator's leading space sits outside the button: a
+                button's first whitespace collapses, which ran the account
+                name into its dot. */}
             <button
               type="button"
               className={styles.rcptOpen}
@@ -177,7 +180,7 @@ export function ReceiptLine({
               title={open ? "Hide what this filing wrote" : "Show what this filing wrote"}
               onClick={toggle}
             >
-              {" · "}
+              {"· "}
               {receiptTail(row)}
             </button>
           </span>
