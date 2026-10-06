@@ -6,35 +6,45 @@
 // store or a session. The server half (src/app/intranet/capture-actions.ts)
 // routes on the server (D12) and files through roomPaste.
 //
-// The capture files when routing is sure. A route that is not sure stays an
-// Intranet doc, with a receipt line saying so and where the pick lives. A
-// capture the guard disputes is held in the Chute mounted above the Send-it
-// box, which says so in one line (slice 18a; the face approved 2026-10-06),
-// and the held box's ✕ there brings it back to the brain. The receipt speaks
-// in the surface's own word for itself — the brain — and carries an account
-// name, never a figure.
+// The capture files when routing is sure. One box holds a disputed or unsure
+// file at every door (CLAUDE.md, The held file and the receipt, ship order
+// 2026-10-06), so a capture that is not sure goes where a disputed one goes:
+// it is held in the Chute mounted above the Send-it box, which says so in
+// one line. A dispute is the guard's (slice 18a); an unsure route is the
+// router's, when it finds candidate accounts and no sure one, and the held
+// row offers those candidates as its choices (ordered 2026-10-06). The held
+// box's ✕ there brings either back to the brain. A capture that names no
+// account stays in the brain, as P2 rules. The receipt speaks in the
+// surface's own word for itself — the brain — and carries an account name,
+// never a figure.
 
-import type { RouteHit } from "@/lib/route-capture";
+import type { RouteHit, RouteRung } from "@/lib/route-capture";
 
 export type CaptureRoute = { best: RouteHit | null; candidates: RouteHit[] };
 
+/** One account a held row offers: its id, its name and the rung that found
+ *  it. Never the hit's why, which can carry an address, and never its score:
+ *  what leaves the server is names and rungs (D12). */
+export type HeldCandidate = { id: string; name: string; rung: RouteRung };
+
 export type CaptureVerdict =
   | { file: true; account: { id: string; name: string } }
-  | { file: false; line: string };
+  | { file: false; hold: true; line: string; candidates: HeldCandidate[] }
+  | { file: false; hold: false; line: string };
 
 const KEPT = "Kept in the brain.";
-const PICK = "File it from the Chute.";
 
-/** Send-it's line when the guard disputes the capture: it waits as a held
- *  row in the Chute mounted above the box (slice 18a). */
+/** Send-it's line when the capture is held: the guard disputed it, or the
+ *  route found no sure match, and it waits as a held row in the Chute
+ *  mounted above the box (slice 18a; the unsure route since 2026-10-06). */
 export const HELD_LINE = "Held in the Chute above.";
 
 export function heldLine(): string {
   return HELD_LINE;
 }
 
-/** The line when the held box's ✕ keeps a disputed capture in the brain:
- *  filed on no account, and an Intranet doc again (P2). */
+/** The line when the held box's ✕ keeps a held capture in the brain: filed
+ *  on no account, and an Intranet doc again (P2). */
 export function keptLine(): string {
   return KEPT;
 }
@@ -44,27 +54,10 @@ export function keptUnnamedLine(): string {
   return `${KEPT} Nothing names an account.`;
 }
 
-/** The line when the capture reads like an account the door cannot file to
- *  on its own — an unsure route, or a guard's dispute — naming it so the
- *  operator can take it to the Chute's picker. Two names at most. */
-export function keptLikeLine(names: readonly string[]): string {
-  const two = names
-    .map((n) => n.trim())
-    .filter(Boolean)
-    .slice(0, 2);
-  if (two.length === 0) return keptUnnamedLine();
-  return `${KEPT} It reads like ${two.join(" or ")}. ${PICK}`;
-}
-
-/** The names an unsure route reads like: the candidates that share the top
- *  score, two at most. Empty when the router found nothing. */
-export function readsLike(route: CaptureRoute): string[] {
-  const top = route.candidates[0];
-  if (!top) return [];
-  return route.candidates
-    .filter((c) => c.score === top.score)
-    .slice(0, 2)
-    .map((c) => c.name);
+/** The accounts an unsure route offers the held row, in the router's order,
+ *  strongest rung first: ids, names and rungs, nothing more (D12). */
+export function heldCandidates(route: CaptureRoute): HeldCandidate[] {
+  return route.candidates.map((c) => ({ id: c.id, name: c.name, rung: c.rung }));
 }
 
 /** The line when the capture filed to the record. A read that failed says
@@ -75,12 +68,16 @@ export function filedLine(name: string, readFailed = false): string {
     : `Filed to ${name}.`;
 }
 
-/** The door's verdict on a route: file when the router is sure — a best
- *  above the auto-route bar, clear of the second by the gap — and keep
- *  otherwise, with the line that says why. The pipeline's own guard judges
- *  the filing after this; a dispute there keeps the capture too. */
+/** The door's verdict on a route. It files when the router is sure: a best
+ *  above the auto-route bar, clear of the second by the gap. It holds when
+ *  the router found candidates and no sure one, with those candidates for
+ *  the Chute's held row (ordered 2026-10-06). It keeps the capture in the
+ *  brain when nothing names an account (P2). The pipeline's own guard
+ *  judges a filing after this; a dispute there is held too. */
 export function captureVerdict(route: CaptureRoute): CaptureVerdict {
   if (route.best)
     return { file: true, account: { id: route.best.id, name: route.best.name } };
-  return { file: false, line: keptLikeLine(readsLike(route)) };
+  const candidates = heldCandidates(route);
+  if (candidates.length) return { file: false, hold: true, line: heldLine(), candidates };
+  return { file: false, hold: false, line: keptUnnamedLine() };
 }

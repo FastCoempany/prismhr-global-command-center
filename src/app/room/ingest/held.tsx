@@ -3,7 +3,8 @@
 // The held file (slice 18a of the Chute brains refactor plan; the face the
 // founder approved with a ship order on 2026-10-06). One box at every door:
 // the Chute's held row, the Drop's held question, and, through the Chute
-// mounted on the Intranet page, a Send-it capture the guard disputed.
+// mounted on the Intranet page, a Send-it capture the guard disputed or the
+// route found no sure match for (the unsure route since 2026-10-06).
 //
 // State first. The top line is the amber HELD kicker and the file. The
 // second is the rung's reason, nine words or fewer (D9 as amended

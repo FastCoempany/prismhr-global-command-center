@@ -519,6 +519,62 @@ describe("Send-it hands a disputed capture to the Chute above", () => {
   });
 });
 
+describe("Send-it hands an unsure capture to the Chute above, as a dispute (ordered 2026-10-06)", () => {
+  // One box holds a disputed or unsure file at every door (CLAUDE.md, The
+  // held file and the receipt). An unsure capture arrives as a pick row: no
+  // verdict, the route's candidates, the intranet door.
+  const unsure: HandOff = {
+    filename: "Send-it paste",
+    text: "From: ops@simploy.com\nTo: team@regishrgroup.com\n\nThread about the handover.",
+    candidates: [
+      { id: REGIS.id, name: REGIS.name, rung: "domain" },
+      { id: SIMPLOY.id, name: SIMPLOY.name, rung: "domain" },
+    ],
+    door: "intranet",
+  };
+
+  test("the held box says No sure match and offers the candidates as its choices", async () => {
+    const row = handOffRow(unsure, 8);
+    assert.equal(row.state, "pick");
+    // Painted the way the Chute paints a waiting row with text and no verdict.
+    const html = await heldBox({
+      file: row.filename,
+      verdict: null,
+      say: NO_SURE_MATCH,
+      candidates: row.candidates,
+      dismissTitle: HELD_X_TITLE_BRAIN,
+      defaultOpen: "others",
+    });
+    const copy = textOf(html);
+    assert.match(copy, /^Held Send-it paste No sure match\. Pick the account\. /);
+    assert.ok(!/WHY/.test(copy), "nothing disputed it, so no grounds to open");
+    assert.ok(!copy.includes("Keep on"), "no row to keep it on");
+    assert.ok(copy.includes("File to Regis HR Group"), "the strongest candidate is the solid button");
+    assert.ok(copy.includes("Another account ▴"));
+    assert.ok(copy.includes("Simploy Domain"), "the other candidate, by its rung");
+    assert.ok(html.includes(`placeholder="Search the book…"`), "then a search of the book");
+    assert.ok(html.includes(`title="Don&#x27;t file it. It stays in the brain."`));
+    // The Chute hands a waiting row's own candidates to the box, with no
+    // verdict and no row to keep it on, and the ✕'s title by its door.
+    const chute = read("src/app/room/chute.tsx");
+    assert.match(chute, /verdict=\{it\.state === "mismatch" \? \(it\.verdict \?\? \{ reason: it\.reason \}\) : null\}/);
+    assert.match(chute, /say=\{it\.text \? NO_SURE_MATCH : VAULT_PICK\}/);
+    assert.match(chute, /\(it\.candidates \?\? \[\]\)\.map\(\(c\) => \(\{ id: c\.id, name: c\.name, rung: c\.rung \}\)\)/);
+  });
+
+  test("its pick files with the intranet door and its ✕ keeps it in the brain", () => {
+    const row = handOffRow(unsure, 9);
+    const [, , opts] = filingRequest("intranet", REGIS.id, unsure.text, { force: true });
+    assert.equal(opts?.door, "intranet");
+    assert.equal(row.door, "intranet");
+    assert.match(read("src/app/room/chute.tsx"), /it\.windows,\s*it\.door,/);
+    assert.deepEqual(dismissHeld({ door: row.door, filename: row.filename, text: row.text }), {
+      kind: "keep",
+      text: unsure.text,
+    });
+  });
+});
+
 // ── the writing canon ───────────────────────────────────────────────────────
 
 describe("the faces' copy obeys the writing canon", () => {
@@ -530,6 +586,7 @@ describe("the faces' copy obeys the writing canon", () => {
       await heldBox({ file: "call.vtt", verdict: READ_VERDICT, claim: ADVOCATE.name, bound: REGIS, defaultOpen: "grounds" }),
       await heldBox({ file: "rec.mp4", verdict: null, say: "A file the reader can't open. Pick its account for the vault." }),
       await heldBox({ file: "Send-it paste", verdict: TEXT_VERDICT, claim: SIMPLOY.name, bound: REGIS, dismissTitle: HELD_X_TITLE_BRAIN }),
+      await heldBox({ file: "Send-it paste", verdict: null, say: NO_SURE_MATCH, candidates: [{ id: REGIS.id, name: REGIS.name, rung: "domain" }], dismissTitle: HELD_X_TITLE_BRAIN, defaultOpen: "others" }),
       await receiptLine(filed({ promises: 2, asks: 1, learned: 1, windows: [{ what: "the paste", read: 60000, of: 212000 }], dupeCheck: "skipped", degraded: true })),
       await receiptLine(filed(), { defaultOpen: true, wrote: { filed: ["Re: renewal · Lesha Cyphers · 10/3"], todos: ["Send the census template."], promises: [] } }),
       await receiptLine(filed({ filingId: undefined }), { defaultOpen: true }),

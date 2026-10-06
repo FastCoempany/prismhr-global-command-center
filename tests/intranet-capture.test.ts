@@ -21,18 +21,21 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { cwd } from "node:process";
 import type Anthropic from "@anthropic-ai/sdk";
+import { handOffRow, loadLedger, saveLedger, seatHandOff } from "../src/app/room/chute-ledger";
+import { SEND_IT_LABEL } from "../src/app/room/ingest/hand-off";
+import { dismissHeld } from "../src/app/room/ingest/use-verdict";
 import { markClaudeUp } from "../src/lib/claude/health";
 import { isDoor } from "../src/lib/ingest/doors";
 import { readOfFiling, type FilingClient } from "../src/lib/ingest/filing";
 import { routeText } from "../src/lib/ingest/route";
 import { sanitizeAiResult } from "../src/lib/intel/ai-clean";
 import {
+  HELD_LINE,
   captureVerdict,
   filedLine,
+  heldCandidates,
   heldLine,
-  keptLikeLine,
   keptUnnamedLine,
-  readsLike,
 } from "../src/lib/intranet/capture-door";
 import { MODEL_EXTRACT } from "../src/lib/intranet/doctrine";
 import {
@@ -115,7 +118,7 @@ const canon = (line: string, label: string) => {
 
 // ── the door's verdict and its words ────────────────────────────────────────
 
-describe("the capture door: file when the route is sure, keep when it is not (P2)", () => {
+describe("the capture door: file when the route is sure, hold when it is unsure, keep when nothing names an account (P2)", () => {
   test("a capture naming a known address routes to its account and files", async () => {
     const route = await routeText(NAMED, roster);
     assert.equal(route.best?.id, SIMPLOY.id, route.candidates.map((c) => c.why).join(" | "));
@@ -136,25 +139,36 @@ describe("the capture door: file when the route is sure, keep when it is not (P2
     canon(v.line, "the unnamed line");
   });
 
-  test("an unsure route is kept and names what it reads like, two names at most", async () => {
+  test("an unsure route is held with its candidates, and its line says where it waits", async () => {
+    // Rewritten for the order of 2026-10-06 (CLAUDE.md, The held file and
+    // the receipt: one box holds a disputed or unsure file at every door).
+    // This pin asserted the retired line "Kept in the brain. It reads like
+    // Regis HR Group or Simploy. File it from the Chute."; an unsure route
+    // is now held in the Chute like a dispute, offering the candidates.
     const route = await routeText(TIED, roster);
     assert.equal(route.best, null, "two domains at the same score never auto-route");
-    assert.deepEqual(readsLike(route), [REGIS.name, SIMPLOY.name]);
     const v = captureVerdict(route);
     assert.ok(!v.file);
-    assert.equal(
-      v.line,
-      "Kept in the brain. It reads like Regis HR Group or Simploy. File it from the Chute.",
-    );
-    canon(v.line, "the tied line");
+    assert.ok(v.hold, "an unsure route is held, never kept");
+    assert.equal(v.line, "Held in the Chute above.");
+    assert.deepEqual(v.candidates, [
+      { id: REGIS.id, name: REGIS.name, rung: "domain" },
+      { id: SIMPLOY.id, name: SIMPLOY.name, rung: "domain" },
+    ]);
+    canon(v.line, "the held line");
   });
 
-  test("a disputed capture's receipt names the claim and points at the Chute", () => {
-    const line = keptLikeLine([SIMPLOY.name]);
-    assert.equal(line, "Kept in the brain. It reads like Simploy. File it from the Chute.");
-    canon(line, "the dispute line");
-    assert.equal(keptLikeLine([]), keptUnnamedLine(), "no claim reads as nothing named");
-    assert.equal(keptLikeLine(["", "  "]), keptUnnamedLine());
+  test("a dispute and an unsure route share Send-it's held line, and the retired pointer is gone", () => {
+    // Rewritten for the order of 2026-10-06. This pin asserted keptLikeLine,
+    // the helper that spelled the retired "File it from the Chute." line;
+    // the helper is deleted with the last case that used it.
+    assert.equal(heldLine(), HELD_LINE);
+    assert.equal(HELD_LINE, "Held in the Chute above.");
+    canon(HELD_LINE, "the held line");
+    const pure = read("src/lib/intranet/capture-door.ts");
+    assert.ok(!pure.includes("File it from the Chute"), "the retired pointer is back");
+    assert.ok(!/export function keptLikeLine|export function readsLike/.test(pure));
+    assert.ok(!door.includes("File it from the Chute"));
   });
 
   test("the filed line carries the account's name and says when the reader was down", () => {
@@ -222,8 +236,9 @@ describe("the Send-it box's action routes on the server and files through the pi
     assert.match(heldReply, /held: \{ account: verdict\.account, mismatch: r\.mismatch \}/);
     assert.equal(heldLine(), "Held in the Chute above.");
     assert.match(capture, /if \(!r\.mismatch\) return refused\(r\.reason \?\? "That didn't land\."\);/);
-    // The brain's road still says why it kept a capture: an unsure route's
-    // line, or the held box's ✕ coming back down it with keep.
+    // The brain's road still says why it kept a capture: the line for a
+    // capture that names no account, or the held box's ✕ coming back down
+    // it with keep.
     assert.match(capture, /receipt: `\$\{kept\} \$\{captureReceipt\(\{/);
   });
 
@@ -251,6 +266,111 @@ describe("the Send-it box's action routes on the server and files through the pi
     // The two faces the receipt had before are the two it has now.
     assert.match(client, /lines: \[r\.receipt, "Reading what you sent…"\]/);
     assert.match(client, /\{receipt && <p className=\{styles\.itDockErr\}>\{receipt\}<\/p>\}/);
+  });
+});
+
+// ── an unsure capture is held in the Chute, as a dispute is ─────────────────
+
+describe("an unsure Send-it capture is held in the Chute above, as a dispute is (ordered 2026-10-06)", () => {
+  // CLAUDE.md, The held file and the receipt: one box holds a disputed or
+  // unsure file at every door, and Send-it hands its dispute to the Chute.
+  // intranetCapture gates on the session and the store, so its branch is read
+  // from its module, as the dispute's is above; the verdict, the row, the
+  // reload and the ✕ are pure and pinned as behavior.
+  const capture = slice(door, "export async function intranetCapture(", "\n}\n");
+
+  test("an unsure capture returns the held reply with its candidates and writes no Intranet doc", async () => {
+    const v = captureVerdict(await routeText(TIED, roster));
+    assert.ok(!v.file && v.hold);
+    // Ids, names and rungs only: never the why, which can carry an address,
+    // and never the score (D12).
+    for (const c of v.candidates) assert.deepEqual(Object.keys(c).sort(), ["id", "name", "rung"]);
+    assert.ok(!JSON.stringify(v.candidates).includes("@"), "an address rode out");
+    assert.ok(!JSON.stringify(v.candidates).includes("regishrgroup.com"), "a domain rode out");
+    // The branch returns the held reply before any Intranet doc write.
+    const hold = capture.indexOf("if (verdict.hold)");
+    const doc = capture.indexOf("prisma.intranetDoc.create(");
+    const create = capture.indexOf("prisma.intranetCapture.create(");
+    assert.ok(hold > 0 && hold < doc && hold < create, "the held return comes before any brain write");
+    const reply = capture.slice(hold, capture.indexOf("};", hold));
+    assert.match(reply, /receipt: verdict\.line,/);
+    assert.match(reply, /captureId: "",/, "nothing of it waits in the brain");
+    assert.match(reply, /held: \{ candidates: verdict\.candidates \}/);
+    // The route that decides it is the one the sure branch reads.
+    assert.ok(capture.indexOf("const verdict = captureVerdict(await routeText(text));") < hold);
+    // Only the operator's ✕ brings it to the brain: keep skips the route.
+    assert.ok(capture.indexOf("if (!opts?.keep) {") < capture.indexOf("captureVerdict("));
+  });
+
+  test("its Send-it line is Held in the Chute above.", async () => {
+    const v = captureVerdict(await routeText(TIED, roster));
+    assert.ok(!v.file);
+    assert.equal(v.line, "Held in the Chute above.");
+    assert.equal(v.line, heldLine());
+    // The client hands it over before its line lands in the receipt's seat,
+    // with the candidates and the intranet door.
+    const hand = client.indexOf("if (r.held)");
+    const line = client.indexOf("if (!r.captureId) {");
+    assert.ok(hand > 0 && hand < line, "the hand-off comes first");
+    const handed = client.slice(hand, line);
+    assert.match(handed, /handToChute\(\{[\s\S]*?filename: SEND_IT_LABEL,[\s\S]*?text: sent,[\s\S]*?door: "intranet",/);
+    assert.match(handed, /"candidates" in r\.held[\s\S]*?\{ candidates: r\.held\.candidates \}/);
+  });
+
+  test("the Chute row it seeds is a pick row offering exactly those candidates, through a reload", async () => {
+    const v = captureVerdict(await routeText(TIED, roster));
+    assert.ok(!v.file && v.hold);
+    const handOff = { filename: SEND_IT_LABEL, text: TIED, candidates: v.candidates, door: "intranet" as const };
+    const row = handOffRow(handOff, 3);
+    assert.equal(row.state, "pick", "the no-sure-match state the Chute's own unroutable files wait in");
+    assert.equal(row.filename, "Send-it paste");
+    assert.equal(row.text, TIED);
+    assert.equal(row.door, "intranet");
+    assert.deepEqual(row.candidates, heldCandidates(await routeText(TIED, roster)));
+    assert.deepEqual(row.candidates, v.candidates);
+    assert.equal(row.verdict, undefined, "no verdict: nothing disputed it");
+    assert.equal(row.account, undefined, "no row to keep it on");
+    // A stray field never rides into the ledger (D12).
+    const stray = handOffRow(
+      { ...handOff, candidates: [{ ...v.candidates[0], why: "ops@simploy.com is Simploy's contact" } as (typeof v.candidates)[number]] },
+      4,
+    );
+    assert.deepEqual(stray.candidates, [v.candidates[0]]);
+    // With no Chute listening it is seated in the stored ledger and comes
+    // back waiting on the pick, with its text and its candidates (C20).
+    const m = new Map<string, string>();
+    const storage = { getItem: (k: string) => m.get(k) ?? null, setItem: (k: string, x: string) => void m.set(k, x) };
+    const now = new Date("2026-10-06T15:00:00Z");
+    saveLedger([], storage, now);
+    seatHandOff(handOff, storage, now);
+    const [back] = loadLedger(storage, now).items;
+    assert.equal(back.state, "pick");
+    assert.equal(back.text, TIED);
+    assert.equal(back.door, "intranet");
+    assert.deepEqual(back.candidates, v.candidates);
+  });
+
+  test("the ✕ on it keeps the capture in the brain", async () => {
+    const v = captureVerdict(await routeText(TIED, roster));
+    assert.ok(!v.file && v.hold);
+    const row = handOffRow({ filename: SEND_IT_LABEL, text: TIED, candidates: v.candidates, door: "intranet" }, 5);
+    assert.deepEqual(dismissHeld({ door: row.door, filename: row.filename, text: row.text }), {
+      kind: "keep",
+      text: TIED,
+    });
+    // The keep road is the brain's own: it skips the route and the pipeline.
+    assert.match(door, /export async function intranetKeep\(raw: string\): Promise<CaptureReply> \{\s*return intranetCapture\(raw, undefined, \{ keep: true \}\);/);
+  });
+
+  test("a capture that names no account still stays in the brain with its line (P2)", async () => {
+    const v = captureVerdict(await routeText(BLAND, roster));
+    assert.ok(!v.file);
+    assert.equal(v.hold, false, "nothing to hold: no candidate");
+    assert.equal(v.line, "Kept in the brain. Nothing names an account.");
+    // The unnamed line rides into the brain's receipt; the held return is
+    // guarded by the hold, so this capture falls through to the doc write.
+    assert.match(capture, /kept = verdict\.file \? "" : verdict\.line;/);
+    assert.match(capture, /receipt: `\$\{kept\} \$\{captureReceipt\(\{/);
   });
 });
 

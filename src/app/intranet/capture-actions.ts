@@ -11,14 +11,18 @@
 // roster (D12): the lib's routeText, never the action's, because this already
 // is the server, and the reply carries an account's name and nothing else.
 //
-// The capture files when routing is sure, and an unsure route stays an
-// Intranet doc with a receipt line saying where the pick lives. A dispute
-// from either of the guard's rungs is held (slice 18a; the face approved
-// 2026-10-06): nothing writes here, the reply carries the routed account and
-// the verdict, and the Send-it box hands them to the Chute mounted above it,
-// whose held box files the pick through roomPaste with the intranet door.
-// The held box's ✕ comes back through intranetKeep, which takes the brain's
-// own road with no route and no filing. The words are the pure half's
+// The capture files when routing is sure. One box holds a disputed or unsure
+// file at every door (CLAUDE.md, The held file and the receipt, ship order
+// 2026-10-06), so both are held here: a dispute from either of the guard's
+// rungs (slice 18a), and an unsure route, where the router finds candidate
+// accounts and no sure one (ordered 2026-10-06). Nothing writes here. The
+// reply carries what the held row needs: for a dispute, the routed account
+// and the verdict; for an unsure route, the candidates by id, name and rung
+// (D12). The Send-it box hands them to the Chute mounted above it, whose
+// held box files the pick through roomPaste with the intranet door. The
+// held box's ✕ comes back through intranetKeep, which takes the brain's own
+// road with no route and no filing. A capture that names no account takes
+// that road straight away (P2). The words are the pure half's
 // (src/lib/intranet/capture-door.ts).
 //
 // This is the one module on the Intranet that writes to the record. The
@@ -34,6 +38,7 @@ import {
   filedLine,
   heldLine,
   keptLine,
+  type HeldCandidate,
 } from "@/lib/intranet/capture-door";
 import {
   normalizeCapture,
@@ -65,14 +70,18 @@ export type CaptureReply = {
   space: string;
   origin: string;
   reason?: string;
-  /** Set when the guard disputed the capture (slice 18a): the account the
-   *  route chose and the verdict, for the Chute mounted above the Send-it box
-   *  to hold. The text stays with the client that sent it, and the roster
-   *  never travels (D12). */
-  held?: {
-    account: { id: string; name: string };
-    mismatch: NonNullable<Awaited<ReturnType<typeof roomPaste>>["mismatch"]>;
-  };
+  /** Set when the capture is held, for the Chute mounted above the Send-it
+   *  box to hold. A dispute (slice 18a) carries the account the route chose
+   *  and the guard's verdict; an unsure route (ordered 2026-10-06) carries
+   *  the router's candidates, which the held row offers as its choices. The
+   *  text stays with the client that sent it, and the roster never travels
+   *  (D12). */
+  held?:
+    | {
+        account: { id: string; name: string };
+        mismatch: NonNullable<Awaited<ReturnType<typeof roomPaste>>["mismatch"]>;
+      }
+    | { candidates: HeldCandidate[] };
 };
 
 const refused = (reason: string): CaptureReply => ({
@@ -85,11 +94,12 @@ const refused = (reason: string): CaptureReply => ({
 });
 
 /** Take a grab or a paste. Routed first: a capture that names an account
- *  files through the pipeline and never becomes an Intranet doc (P2). The
- *  rest takes the brain's own road, where redaction happens inside
- *  normalizeCapture, before the first write — there is no pre-redaction
- *  text to leak. With `keep`, the capture takes the brain's road straight
- *  away: the held box's ✕ on a disputed capture (slice 18a). */
+ *  files through the pipeline, or is held in the Chute when the guard
+ *  disputes it or the route is unsure, and never becomes an Intranet doc on
+ *  the way (P2). The rest takes the brain's own road, where redaction
+ *  happens inside normalizeCapture, before the first write — there is no
+ *  pre-redaction text to leak. With `keep`, the capture takes the brain's
+ *  road straight away: the held box's ✕ on a held capture (slice 18a). */
 export async function intranetCapture(
   raw: string,
   originHint?: "teams" | "meeting" | "demo" | "paste",
@@ -141,6 +151,20 @@ export async function intranetCapture(
         held: { account: verdict.account, mismatch: r.mismatch },
       };
     }
+    // An unsure route is held the way a dispute is (ordered 2026-10-06): the
+    // router found candidate accounts and no sure one, so nothing writes
+    // here until the operator's pick in the Chute, or the ✕ that brings it
+    // back down the brain's road. The candidates travel as ids, names and
+    // rungs (D12).
+    if (verdict.hold)
+      return {
+        ok: true,
+        receipt: verdict.line,
+        captureId: "",
+        space: "",
+        origin: cap.origin,
+        held: { candidates: verdict.candidates },
+      };
   }
 
   try {
@@ -240,9 +264,10 @@ export async function intranetCapture(
   }
 }
 
-/** The held box's ✕ on a disputed Send-it capture (slice 18a): the capture
- *  files on no account and takes the brain's own road, an Intranet doc the
- *  brain reads on its next pass (P2: what is not filed is never inbound). */
+/** The held box's ✕ on a held Send-it capture, disputed (slice 18a) or
+ *  unsure (ordered 2026-10-06): the capture files on no account and takes
+ *  the brain's own road, an Intranet doc the brain reads on its next pass
+ *  (P2: what is not filed is never inbound). */
 export async function intranetKeep(raw: string): Promise<CaptureReply> {
   return intranetCapture(raw, undefined, { keep: true });
 }
