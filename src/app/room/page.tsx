@@ -337,9 +337,10 @@ export default async function RoomPage() {
 
     // What they left the meeting owing — the read's theirPromise (field 14):
     // their loops the read filed (D10) and the record's Owed line, client's
-    // side (the Simploy call, 2026-09-03), colleagues already filtered out as
-    // the home side. Day-matched to the meeting in Chicago so an old debt
-    // never rides a new meeting.
+    // side (the Simploy call, 2026-09-03). A colleague is never named as the
+    // one who owes it: a relayed promise's owner is the account person the
+    // record names, else "" (the founder, 2026-10-06). Day-matched to the
+    // meeting in Chicago so an old debt never rides a new meeting.
     const theirBall = (() => {
       if (!meetingForRead || !acct.theirPromise) return null;
       const day = (iso: string) => {

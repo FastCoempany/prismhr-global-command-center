@@ -12,6 +12,7 @@
 
 import { contactsFor } from "@/lib/book/contacts";
 import { isCall, isTape } from "@/lib/ingest/dialect";
+import { shortName } from "@/lib/ingest/short-name";
 import { speakersIn } from "@/lib/intel/meeting";
 import { peopleFor } from "@/lib/intel/people";
 import type { AccountRead } from "@/lib/record/read";
@@ -501,15 +502,17 @@ function record(
 
   // Their turn, three rungs: what the read says they said they would do
   // (field 14 — their loops, the call read's Owed line, the newest inbound's
-  // own promise, colleagues filtered as the home side), the rest of the loops
-  // and Owed lines, then an inbound note's own first person. Four of eleven
-  // accounts carry the last and not the others.
+  // own promise, a colleague never named as the one who owes it), the rest of
+  // the loops and Owed lines, then an inbound note's own first person. Four
+  // of eleven accounts carry the last and not the others.
   const promise = a.read.theirPromise;
   const theirSide = [
     ...(promise && promise.text
       ? [
           {
-            who: promise.who,
+            // The record names nobody on their side, or only the colleague
+            // who relayed it: the account owes it (the founder, 2026-10-06).
+            who: promise.who || shortName(a.name),
             text: clean(promise.text),
             at: dayOf(promise.at),
             src: `record ${md(promise.at)}`,
