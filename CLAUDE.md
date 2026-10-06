@@ -308,6 +308,8 @@ file. Nothing filed twice." (pastehash markers; an undo clears its marker).
 
 **Ruled 2026-09-25 (D29, D30):** a read-only session sees the Chute bar and its receipts and cannot drop; the bar says "Read-only session" where the ⇪ button was. The intranet mirror's query excludes every namespaced row by construction. The SalesNav grab pastes into the Chute or a Drop like any capture and files as a note with its own head.
 
+**The held file and the receipt (ship order 2026-10-06; docs/mockups/chute-faces-2026-10-06.html):** one box holds a disputed or unsure file at every door: an amber HELD kicker, the reason, which opens to its grounds, then "File to {claim}" in solid ink, "Keep on {bound}", "Another account" and a hover ✕, "Don't file it." The ✕ files nothing and backs the file up under accounts/_unfiled/; on the Intranet it keeps the capture in the brain. A receipt is one line: the account, its counts, the day and the rung, with an amber second line only for a cut read, a skipped duplicate check or a reader that was down. The line opens to what the filing wrote; ↺ takes it back, ✕ clears it. Send-it hands its dispute to the Chute: "Held in the Chute above."
+
 ## The Scratchpaper (decided 2026-08-12)
 
 The stash floater is retired — component, actions, and lib deleted. In its
@@ -423,6 +425,8 @@ The classifier lives in src/lib/intel/closer.ts, deliberately conservative:
 short, no question, no digits, no names — content always wins.
 
 **PROMISED needs a hearer (ruled 2026-09-25, D28):** a paste-provenance date has one by construction; a typed date reads PROMISED only when the line names the person it was promised to, and otherwise it is a wall.
+
+**Their promise rides the move line (ship order 2026-10-06):** a promise owed by the account's side shows on the HomeRoom move line only, never in TODAY or on THEIRS. "Wait on Adam. Promised Friday." while it stands and nothing is owed from this side; "Wait on Adam. Due today." on the day; "Chase Adam. PROMISED 10/9." once a heard day passes; "Chase Adam. The 10/9 wall passed." when no one heard it. The line opens to every open promise and " +N" counts the rest.
 
 ## The click-depth law (founder-decreed 2026-08-20)
 
