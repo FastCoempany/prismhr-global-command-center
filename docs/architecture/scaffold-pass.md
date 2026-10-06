@@ -1,6 +1,6 @@
 ---
 title: Scaffold Pass
-status: Audit pass 5, 2026-09-25; merged as PR #335 (squash ab281df) 2026-09-25; corrected 2026-10-02 by the verification pass
+status: Audit pass 5, 2026-09-25; merged as PR #335 (squash ab281df) 2026-09-25; corrected 2026-10-02 by the verification pass; re-walked by pass 8, 2026-10-06
 owner: Founder
 related_docs:
   - CLAUDE.md
@@ -277,3 +277,182 @@ Eight of the twenty stand unfollowed (C1, C2, C6, C8's HomeRoom half, C13, C16, 
 | Commits on the branch | — | 27 |
 
 Branch `claude/chute-scaffold-1c0svk`, cut from 710fab5 (the audit branch's tip: main c9b82ed plus the ruling session's ten commits). The audit branch `claude/chute-architecture-audit-1c0svk` carries the rulings and the CLAUDE.md law and had no PR when this was written; its PR was to merge first, then the scaffold branch to rebase onto main and open its own. Corrected 2026-10-02 by the verification pass: that is what happened — the audit branch merged as PR #334 (caa1818), and the scaffold branch, rebased onto it, merged as PR #335 on 2026-09-25, squashed to ab281df.
+
+## Re-walk, pass 8
+
+Re-walked 2026-10-06 against main at d119c52 (branch `claude/pass-8-recheck-1c0svk`), after pass 7, the Chute brains refactor (PRs #339 to #366), and the pass-5 close before it (#336, 00fe8b2). The CLAUDE.md lines in the sections above are the scaffold's and have drifted; the cites here are this tree's. A pin is "chain" when a chain test calls the code and checks what comes back, "text" when it reads source.
+
+**The canon suites.** All ten files the scaffold added are in package.json:10 and pass when run alone on this tree: groundwork 19, act-lane 3, second-record 14, closer-rule 3, spring 6, chute 28, ted-doctrine 12, sendbook 19, scratchpaper 10, standing-decrees 15; 129 tests where the scaffold closed with 97. tests/canon/provenance.test.ts (slice 3, #341) joined them in the chain, 24 tests, all passing. §A's rule that no canon test reads a source file is superseded: standing-decrees reads source since the pass-5 close (#336; the sign-in and retired-surface scans, standing-decrees.test.ts:84-145), chute since slice 9 (#350; the D15 scan at chute.test.ts:515-557, which its header declares at :1-6), and provenance was born with source scans in #341. The other seven read none.
+
+### A.1 re-walked
+
+| Scaffold row | Status | Now |
+|---|---|---|
+| C7 · four seats | holds | tests/canon/groundwork.test.ts › "four seats: SEAT_SLOT_CAP lead, the fourth sinks below the next rule's hit" |
+| C7 · three hits of one rule | holds | › "three hits of one rule: RULE_SLOT_CAP lead, the third sinks below another rule" |
+| C8 + E6 · an excluded seat never seats | holds | › "a seat whose account is in excludedIds never seats" (day.ts:278); the HomeRoom half is §E's C8 row |
+| D22 · the research stamp drops | holds | › "the research stamp drops for the day when every eligible account has its own move" |
+| D22 · the roundup rides the free account | holds | › "the roundup slot rides the one free account on the roster, never an occupied one" |
+| D22 · the roundup drops | holds | › "the roundup slot drops for the day when the whole roster is occupied" |
+| bearer after the seats | holds | › "a seated account is never the research bearer — the bearer is chosen after the seats" |
+| C9 · the bearer | holds | › "the strongest account has its own move; the stamp rides the weaker free one", › "with every bearer free, the strongest carries it" |
+| D26 · one band table | holds | › "8:00 Chicago is not the live send band; 10:00 is sends; 12:30 is people; 15:00 is research", › "the band edges, minute by minute", › "winter time reads the same wall clock (CST)" (bands.ts:12, :31, :38) |
+| D27 · no empty label | superseded by pass 7 (#366, d119c52) | the stamp words changed on the ship order (CLAUDE.md:280): › "the three once-silent rules say what was done: the seat, the gem, the first conversation" asserts "WORKED THE MOVE FROM THE SHEET · SEATED 8/20", "ACTED ON {who}’S PHR STALL" and "OPENED THE FIRST CONVERSATION" where the scaffold asserted SEATED, THEIRS and ENGAGED · NEVER MET; › "no stamp is a bare noun: each opens on what the operator did" is new; the empty-label and unknown-rule tests hold |
+| P3/D23 · the Act Lane's send row | holds | tests/canon/act-lane.test.ts › "Send's row carries the operator as actor, the address as recipient, and no money", › "a blank subject still files as a send, addressed" (act/lane.ts:24) |
+| Act Lane · three seats lead | holds | › "a fourth seat sinks below the third — and below the next rule's own hit" |
+| D20 · personMoved | holds | the four personMoved tests in tests/canon/second-record.test.ts (acted.ts:35) |
+| D21 · gem lines are operator copy | holds | the five lint tests, and five more the pass-5 close added (#336): paradox, maxim, definitional flip, escalating triad, chiasmus |
+| D28 · PROMISED needs a hearer | holds | the three tests in tests/canon/closer-rule.test.ts; the typed-hearer half is §A.3's |
+| D25 · the move carries who and when | superseded in part by pass 7 (#359, 4f4779d) | five tests hold; › "their promise holds the await and says when it was made" now asserts "Wait on {who}. Promised yesterday." where the scaffold's asserted the retired "Hold for their follow-up." line (CLAUDE.md:435) |
+| C20 + E10 · a waiting pick survives | holds | the six reload tests in tests/canon/chute.test.ts (saveLedger and loadLedger, chute-ledger.ts:217, :233) |
+| D12 · a settled row keeps no address or text | holds | the five tests (storedRow, chute-ledger.ts:167) |
+| D11 · three at once | holds | the two runLimited tests (chute-ledger.ts:254) |
+| D16 · the same body | holds | the five fingerprint tests, and › "the .eml and the .msg of one mail fingerprint equal (a twin format dedupes)" from the pass-5 close (fingerprintBody, paste-files.ts:101) |
+| D2 · the Drop refuses a .csv | holds | the three readFileToText tests (read-file.ts:68-69); since slice 8 the Drop refuses before any read too (planDrop, use-ingest.ts:78-86), tests/ingest-hooks.test.ts › "a refused .csv on the Drop is vaulted and not read, and its receipt names the Chute" (chain) |
+| D1 · one Chute, one roster | holds | the two routingRoster() tests; since slice 7 neither mount passes a roster (#345; room/page.tsx:812, intranet/page.tsx:120), tests/ingest-route.test.ts › "the doors route through the action, and no roster prop rides either page" (text) |
+| D30 · the mirror excludes namespaced rows | holds | the two tests (record-rows.ts:29; runners.ts:153) |
+| E3 · no writer without redaction | holds | the five tests in tests/canon/ted-doctrine.test.ts; their fixtures gained `door: "hand"` when the door became required (#341) |
+| E9 · the research chip | holds | the three latestResearchAt tests (deep-research.ts:27) |
+| E2 · every corpus carries actors and a homeSide | holds as a test; superseded on the live path by pass 7 | both tests call corpusFor, which no src code calls since the single read (#346 to #354; extract.ts:99); the live classifier is docOf (record/docs.ts:164-221), held on the same fixture by tests/record-read.test.ts › "ted-doctrine: a reply to us with a declared roster, and our own send" (chain) |
+| C3 · the touch log merges by latest | holds | the two lastTouchRead tests (touch.ts:114), which the read reaches through whoseMove (whose-move.ts:162) |
+| E5 · the Sendbook reads effectiveAt | holds | the two tests, now through buildSendbook's rows door (docsFromRows, sendbook/read.ts:107; #354) |
+| C4 · ↩ REPLIED needs substance | holds | the three tests |
+| C5 · machinery never warms | holds | the machinery loop and its contrast test |
+| E8 · nothing on the paper dies | holds | the five strike tests (scratch.ts:20, :35), and five edit tests the pass-5 close added for D24 |
+| P1 · an archived surface leaves every list | holds | the scaffold's four tests, and three the pass-5 close added: › "the retired surfaces are in the table under no href", › "no page file exists for /today or /pipeline", › "no file under src/app imports a retired surface's actions" |
+| C13 · questionById | holds | the three tests; questionById still has no src caller (bank.ts:30), so the decree stands unfollowed (§E) |
+| the one model roster | holds | the two tests; the verdict slot joined the roster in #343 (doctrine.ts:39) |
+
+### A.2 re-walked
+
+| Source change | Status | Now |
+|---|---|---|
+| day.ts: seat loop, bearer, roundup, QUEUE_RULE_IDS | holds | day.ts:278, :556, :215 |
+| bands.ts and the Klaxon | holds | bands.ts:12, :31, :38 |
+| stamp.ts stampSubtext | superseded by pass 7 (#366) | stamp.ts:48 says what the operator did |
+| act/lane.ts actSendRow | holds | act/lane.ts:24 |
+| activity/acted.ts personMoved | holds | acted.ts:35 |
+| activity/lint.ts | holds | four devices more since #336 |
+| the court stops passing; the engine half waits | superseded by pass 7 (#354, 823a770) | the engine's court is deleted (engine.ts:7-8); see §A.3 |
+| chute-ledger.ts | holds, grown | HeldVerdict :46, handOffRow :317 and seatHandOff :344 came with #360 and #363 |
+| paste-files.ts HEAD_LINE_RE and fingerprintBody | superseded by pass 7 (#340, 292bfe5) | HEAD_LINE_RE lives in dialect.ts:65; fingerprintBody stays at paste-files.ts:101 and imports it |
+| read-file.ts refuses a .csv on the Drop | holds | read-file.ts:68-69, under planDrop since #348 |
+| intranet/page.tsx takes routingRoster() | superseded by pass 7 (#345, 105b7d7) | no roster prop at all; routing on the server (route-actions.ts:40) |
+| notes/record-rows.ts | holds | record-rows.ts:22, :29 |
+| notes/write.ts redacts, takes a client, keepFigures | holds, grown | door required and `structured` (#341), createTodoRow (write.ts:213) |
+| deep-research.ts latestResearchAt | holds | deep-research.ts:27 |
+| extract.ts homeSide required | holds on a function no src code calls | corpusFor's options (extract.ts:130); the read declares homeSide in its own input (read.ts:60) |
+| sendbook/read.ts effectiveAt, theirVoice, isSignOff | superseded by pass 7 (#354) | the register reads the read's docs and their flags (theirVoice over RecordDoc at sendbook/read.ts:184; docsFromRows :107) |
+| scratch.ts strikeMove and strikeLine | holds | scratch.ts:20, :35 |
+| components/wayfinder-routes.ts | holds | wayfinder-routes.ts:29 |
+| intel/bank.ts questionById | holds, with no src caller | bank.ts:30; brief.ts, its one caller, was deleted by the pass-5 close with its suite (#336) |
+| intranet/doctrine.ts one roster | holds | doctrine.ts:28-54 |
+| chain suites that read the data tables | holds [not re-walked line by line] | read-absorption, followups, second-record-faces and vault pass alone on this tree |
+
+### A.3 re-walked
+
+| Decree | Status | Now |
+|---|---|---|
+| D25, the engine half | superseded by pass 7 (#354) | the court and its chips are deleted (engine.ts:7-8); room-read, pipeline-fixes and accepted-invite assert the move line; tests/canon/spring.test.ts and tests/record-read.test.ts › "the five whose-move fixtures of pass 2 B rows 1 to 5 give one answer each" hold it |
+| D18, the acted stamp survives the take-back | holds as unpinned and unbuilt | out of pass 7 by the plan's §6; takeBackSecondRecord still clears the second record (run.ts:1250) |
+| D5, the pick is final | superseded by pass 7 (#343, 9a8beeb) | guardPlan (guard.ts:183, force at :197); tests/ingest-guard.test.ts › "re-runs the read: the plan holds no read and runs no rung with force", › "against a duplicate under the picked account is refused" (chain) |
+| D28, the typed hearer | holds as unpinned and unbuilt; a live violation | sheet-view.ts:202 sets `promised` only for a "from M/D paste" line, so a typed date that names its hearer reads as a wall (CLAUDE.md:433) |
+| D24, click-away keeps an edit | superseded by the pass-5 close (#336) | editOutcome (scratch.ts:48); tests/canon/scratchpaper.test.ts › "blur keeps the draft: a click-away never eats your words" (chain) |
+| P4, the second record's bare creates | superseded by pass 7 (#352, 09bf0a2) | run.ts:294-307 through the writer with `structured`; tests/canon/provenance.test.ts › "a fresh key goes through the writer with the activity door and the export's people" (chain) |
+| the closer classifier's own cases | holds | tests/closer.test.ts, in the chain |
+| P2, only the model's read is windowed | superseded by pass 7 (#342, 0fb8419) | windows.ts; tests/ingest-filing.test.ts › "the tape's archive note is the whole text", › "the no-entries note is the whole text", › '"Read 60,000 of 212,000 characters." and "The duplicate check didn't run."' |
+| P3, the door is a column | superseded by pass 7 (#341, 8db896e) | schema.prisma:1116, doors.ts:15; tests/canon/provenance.test.ts › "every createAccountNoteRow call in src passes a door from DOORS" (text), › "every door the roster names is stored, beside lane, actors, source and recipients" (chain) |
+| D3, the transcriber emits CALL TRANSCRIPT | superseded by pass 7 (#340) | paste.ts:73-75; tests/ingest-dialect.test.ts, "the transcriber's ask" (chain on the prompt; transcribePdf itself is called by no test) |
+| D4, the Intranet's capture is a door | superseded by pass 7 (#353, df38ecb) | capture-actions.ts:103-265; tests/intranet-capture.test.ts › "a capture naming a known address routes to its account and files" (chain) |
+| D8, the server-side upload | superseded by pass 7 (#345) | vault-actions.ts, vault.ts; tests/ingest-route.test.ts › "the grant action is gone and nothing imports it" (text), › "a 10 MB file arrives in three pieces and lands as one GitHub PUT" (chain) |
+| D9, vaulting is filing | superseded by pass 7 (#345, #348, #360) and amended | an unreadable file routes by filename or waits for the pick (chute.tsx:370-381); backups are permanent and carry no ↺ (receipt.tsx:235-252; CLAUDE.md:305, :309); tests/vault.test.ts › "the chute vaults every drop and routes binaries by filename or pick" (chain) |
+| D13, the fold | holds as unpinned | the fold is still inline in chute.tsx:562-576 and no test pins "every waiting row plus the two newest settled"; per-row and all-at-once dismissals exist (use-receipts.ts:126-127) |
+| D14, routing on the server | superseded by pass 7 (#345) | route-actions.ts:40; tests/ingest-route.test.ts › "an address the book lacks and the record holds routes by the email rung" (chain), › "no client module imports the book's roster or the server router" (text) |
+| D15, no revalidation list | superseded in part by pass 7 (#350, 661940b) | nothing under src/app/room revalidates (tests/canon/chute.test.ts › "no file under src/app/room revalidates a path or a tag", text); 41 calls remain in ten files elsewhere (the map's pass-8 section) |
+| D17, staging verifies first | holds as unpinned and unbuilt | out of pass 7 by the plan's §6 |
+| D19, a colleague is book-internal or on our domain | half superseded by pass 7 (#349, #354) | the attributed-body half is built (the rollup's lastTheirs; tests/record-read.test.ts › "an export row with an attributed inbound body excludes for 21 days", tests/canon/sendbook.test.ts › "the account-level datetime alone sets neither (D19)"); the colleague roster still counts two accounts first (activity/ingest.ts:358-370) |
+| D29, the read-only bar | superseded by pass 7 (#348) | chute.tsx:615-627; tests/ingest-hooks.test.ts › "the read-only state renders the bar and no input" (chain), tests/ingest-faces.test.ts › "↺ is absent in a read-only session" (chain) |
+
+### B re-walked
+
+| Suite | Status | Now |
+|---|---|---|
+| route-capture | holds | the rung asserts at route-capture.test.ts:35, :44, :102 |
+| misfile-guard | holds | rung "person" at misfile-guard.test.ts:55; rung "claim" and the claim at :103-104 |
+| ingest-defects | holds, re-aimed | the keyless rung is › "the keyless early rung stands on the text's own evidence" (ingest-defects.test.ts:171-183); slice 8 moved bugs 1 and 2 in as behavior on the hooks (#348) |
+| paste-files | holds | the kind asserts stand (paste-files.test.ts:26, :50) |
+| vault | holds | releaseMetaFor (vault.test.ts:61-73); the scripted release, POST, POST, PATCH (:315); readerFor and the reader's gate (:83, :114); the decoy token (:141-161); the recording routes by filename (:197-205); the landing log (:392) |
+| read-absorption | holds | the deleted assertion stays deleted |
+| second-record-faces | holds | the deleted assertion stays deleted |
+| the pins left as text | holds, moved | the server-action sequencing pins still read actions.ts (ingest-defects.test.ts:164-169, :189-193, :206-218); the component-wiring pins now read the hook calls (`useUndo()`, ingest-defects.test.ts:263-266); ai-clean's prompt case stands |
+
+### C re-walked
+
+Every removal holds. Re-checked on this tree: src/app/today, src/app/pipeline, src/app/book/page.tsx, src/app/look-into, src/app/dev/popover, src/app/prospect-field, src/app/notes/notes-client.tsx, src/app/dashboard/dashboard-client.tsx, src/lib/public-access.ts, src/components/partner-notes.tsx, src/lib/aleks/one-on-one.ts, src/lib/cloud-data-policy.ts, src/lib/paste.ts and the four cascade files are absent, and no PUBLIC_ACCESS reference remains in src. Three rows moved since:
+
+- **SAFE NOW 3.** The court classes kept for room-parity are gone: the pass-5 close removed `.court` and the c_you, c_them, c_quiet and c_none rules (#336), and tests/room-parity.test.ts no longer names them. The five `#8a5a00` rules outside the THEIRS line stand (room.module.css:830, :833, :900, :914, :1378), left to the face pass by the plan's §6.
+- **REMOVE · the risk: read.** Still blocked and still in place (accounts/page.tsx:95-101).
+- **The pass-4 misses.** selectQuestions (bank.ts:113) is still exported and called by nothing in src, with productOf and sophOf (:58, :61) behind it. src/lib/look-into/live.ts is now imported by nothing at all: the pass-5 close deleted tests/narrative.test.ts, its last reader (#336).
+
+### D re-walked
+
+| file | Status | Now |
+|---|---|---|
+| ai-clean.ts header | holds | ai-clean.ts:1-8 |
+| ai-clean.ts model comment | holds | the slot is MODEL_READ from the roster (ai-clean.ts:13, :505) |
+| book/roster.ts header | holds | roster.ts:1-7; the joined roster widens it on the server (route.ts:196-207) |
+| groundwork/compose.ts | holds | compose.ts:96-99 |
+| intel/discovery-product.ts | holds | discovery-product.ts:12-22 still names the missing door |
+| command-center/types.ts | holds | types.ts:28-35 names ALLOWED as the filter C19 retires |
+| notes/write.ts header | superseded by pass 7 (#341, #352) | write.ts:1-26: no bare create remains, the second record writes through the writer, the door is required, the Todo has its writer |
+| archive/actions.ts | holds | archive/actions.ts:3-9 |
+| intake/capture-shelf.tsx | moved, then went stale | the comment now lives at src/app/intake/grabs.ts:109-116; its last sentence, that the grab box's paste "files an Intranet capture, never an account note", is untrue since slice 16 (#353): a capture that names an account files through roomPaste |
+| intranet/segment.ts | holds | segment.ts:10-15 |
+| intel/meeting.ts | holds | meeting.ts:1-12, reading the dialect table since #340 |
+| pricing/quote.ts | holds | quote.ts:1-9 |
+| paste-files.ts, the doors agree but the .csv | holds | paste-files.ts:575 |
+| paste-files.ts, the fingerprint | holds | paste-files.ts:57-75, HEAD_LINE_RE now the dialect table's |
+| intranet/doctrine.ts and intranet/extract.ts | holds | doctrine.ts:28-54 |
+| room/chute.tsx header | superseded by pass 7 (#348, #360) | chute.tsx:3-23 describes the door over the shared hooks and the two faces |
+| room/theirs-line.tsx | superseded by pass 7 (#346, 6f5e42b) | the stylesheet paints the blue (room.module.css:2355-2358); theirs-line.tsx:3-12 says so |
+| the 27 plan-section cites | holds | no "SECOND-RECORD-PLAN" or "Appendix A" cite remains in src |
+| .env.example | holds | the seven variables (.env.example:3-30); GITHUB_ARCHIVE_REPO and GITHUB_ARCHIVE_TOKEN are read on the server alone now (vault-actions.ts:63-64) |
+
+### E re-walked
+
+| Decree | Status | Now |
+|---|---|---|
+| C1 · LAST HUMAN TOUCH reads both records (CLAUDE.md:494) | followed since pass 7 (#351, 395268a) | lastHumanTouch (record/accounts.ts:30; accounts/page.tsx:372); tests/record-read.test.ts › "an .eml filed Sep 22 beats an export row of Sep 10 and whispers record" (chain) |
+| C2 · the roster reads the record (:299) | followed since pass 7 (#345) | joinRosters (route.ts:102); tests/ingest-route.test.ts › "an address the book lacks and the record holds routes by the email rung" (chain) |
+| C3 · the touch log (:411) | holds | canon/ted-doctrine |
+| C4 · ↩ REPLIED needs substance (:362) | followed on both paths since pass 7 (#354) | the org-wide path reads the attributed inbound (orgSignalsOf, sendbook/read.ts:275); tests/canon/sendbook.test.ts › "the account-level datetime alone sets neither (D19)", tests/second-record-faces.test.ts › "an attributed inbound body sets the Sendbook lane and ↩ REPLIED; a bare datetime sets neither (D19)" (chain) |
+| C5 · machinery never warms (:362) | followed on both paths since pass 7 (#354) | the same pins |
+| C6 · the exclusion reads both records (:276) | followed since pass 7 (#349, aa36489) | liveMotionIds reads the rollup's lastTheirs (day.ts:88; groundwork/page.tsx:380); the coordination move is retired; tests/canon/groundwork.test.ts › "their mail to a colleague's inbox is a real inbound on the first record: excluded, no item under any rule" (chain) |
+| C7 · two caps (:278) | holds | canon/groundwork |
+| C8 · a seat follows its account (:532) | followed in full since pass 7 (#349) | the HomeRoom half reads the seat on the sheet (sheet-view.ts:64-73); tests/record-read.test.ts › "excluded: the seat is an open line carrying the act, the seat row's own id" (chain) |
+| C9 · the vehicle rule (:278, :489) | holds | canon/groundwork |
+| C10 · the Scratchpaper's carve-out (:595) | holds | scratch/actions.ts:82 |
+| C11 · the country wing (:595) | holds [not re-walked; pass 7 left the files alone] | tests/playbook-sheet.test.ts in the chain |
+| C12 · the learned register keeps its names (:583) | holds [not re-walked; pass 7 left the files alone] | — |
+| C13 · the citation opens in place (:583) | not followed; a live violation outside pass 7 by the plan's §6 | the ask links still skip a playbook citation (ask/links.ts:65-70) and questionById has no src caller; the operator sees a playbook citation on /asks or the pad's ask door that opens nothing |
+| C14 · the Spring's controls (:379-381) | holds [not re-walked] | — |
+| C15 · retired text (:498) | holds | the dashboard door is plain words in the drilldown (accounts-client.tsx:1234) |
+| C16 · THEIRS is the account's people (:496) | followed since pass 7 (#346, #349) | `.theirs` takes the blue (room.module.css:2355-2358); theirsLine leads with an account person's gem only (activity/read.ts:430); tests/record-read.test.ts › "THEIRS's lead skips a colleague's gem, and the colleague's gem has no seat behind it" (chain) |
+| C17 · answer rows hedge (:79-81) | holds [not re-walked] | — |
+| C18 · the who chip row (:362) | followed since pass 7 (#349) | whoChipNames (sendbook/read.ts:450); tests/record-read.test.ts › "the record's person and a second name from the book: two names, the record first, the row asks" (chain) |
+| C19 · the Approach is a fact (:247) | not followed; a live violation outside pass 7 by the plan's §6 | ALLOWED still filters the kits by approach, NEEDS_CSM reaching the CSM play alone (campaigns/index.ts:24-28, :171-174), and the draft desk seeds `kitsFor(stage, approach)[0]` (draft-actions.ts:63, :74), so a NEEDS_CSM account's composed draft seeds the CSM play where the decree makes the stage's direct play the default [inferred from code shape; not run] |
+| C20 · a waiting pick survives (:301) | holds | canon/chute |
+
+Of the ten the corrected count above left unfollowed, eight are followed now (C1, C2, C4, C5, C6, C8, C16, C18) and two are not (C13, C19), both outside pass 7 by the plan's §6 and both live.
+
+### The counts, re-walked
+
+| | Scaffold close | Pass 8 |
+|---|---|---|
+| Test files in the chain | 51 | 62 (package.json:10): the pass-5 close deleted brief and format (#336, 49), pass 7 added thirteen |
+| Canon tests in the scaffold's ten files | 97 | 129, all passing alone |
+| Canon files in the chain | 10 | 11 (with provenance, 24 tests) |
+| Canon files that read source | 0 | 3 (standing-decrees, chute, provenance) |
+| A.1 rows | 34 | 31 hold (C13's among them, its decree still unfollowed), 2 superseded by pass 7 (D27, D25 in part), 1 held only off the live path (E2) |
+| A.3 rows | 19 | 12 superseded (11 by pass 7, D24 by the pass-5 close), 2 superseded in part by pass 7 (D15 outside src/app/room, D19's colleague roster), 4 still open (D18, D28's typed half, D13, D17), 1 needing nothing (the closer cases) |
+| E rows | 20 | 18 followed (8 of them since pass 7), 2 not followed and live (C13, C19) |

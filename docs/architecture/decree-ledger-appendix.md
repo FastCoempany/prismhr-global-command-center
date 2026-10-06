@@ -1,6 +1,6 @@
 ---
 title: Decree Ledger Appendix
-status: Audit pass 3 evidence tables, 2026-09-25
+status: Audit pass 3 evidence tables, 2026-09-25; re-walked by pass 8, 2026-10-06 (section 5)
 owner: Founder
 related_docs:
   - docs/architecture/decree-ledger.md
