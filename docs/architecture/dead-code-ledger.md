@@ -1,6 +1,6 @@
 ---
 title: Dead Code Ledger
-status: Audit pass 4, 2026-09-25
+status: Audit pass 4, 2026-09-25; re-walked by pass 8, 2026-10-06
 owner: Founder
 related_docs:
   - CLAUDE.md
@@ -333,3 +333,246 @@ Dormant without a decree, one sentence each.
 ## The numbers
 
 Dead exports: 38 symbols nothing references (286 lines), 35 kept alive only by tests (~401 lines, 15 of them by chain suites), 10 kept alive only by the seed (all of src/lib/hml.ts), 80 superfluous export keywords, 148 unused type exports. Dead files: 8 (1,035 lines). Dead models: 17 needing a count (15 seed-only, PeoActivity write-only, StashItem never migrated). Dead CSS classes: 341 of 2,015 (~3,001 lines), 4 of them pinned by a chain test. Suites outside the chain: 28 (27 should be in it, 1 red by design). Model calls per week with no reader: none; duplicated opus-class reads about 100 to 250 a week [inferred].
+
+## Re-walk, pass 8 (2026-10-06, main d119c52)
+
+Taken on main at d119c52. This section adds; nothing above it is struck or edited, and the front-matter status line is the one other change. Every item above gets one state: `deleted` (the commit that removed it), `still present` (where it is now), `kept by ruling` (the ruling that keeps it) or `now used` (the importer). Pass 5's removals all landed in the squash ab281df (#335); the scaffold-branch SHAs that docs/architecture/scaffold-pass.md §C names are pre-rebase commits on no remote branch, so they appear here only as the row's name. 00fe8b2 (#336) closed pass 5. Pass 7, the Chute brains refactor, is #339 to #366. CLAUDE.md lines are this tree's. A claim from code shape without a run is marked [inferred].
+
+### 1. The ledger's items now
+
+#### A1. Modules nothing imports
+
+| Item | State |
+|---|---|
+| src/app/notes-client.tsx, with createTodoNote, saveTodoNote, deleteTodoNote | deleted, ab281df (#335; SAFE NOW 5); the three actions went with src/app/today/actions.ts |
+| src/components/hml-priority-panel.tsx, src/lib/hml-priority.ts, src/components/field-glyph.tsx, src/components/ui/badge.tsx | deleted, ab281df (#335; SAFE NOW 6), with the `/prospect-field` guard |
+| src/app/today/partner-notes.tsx, src/lib/aleks/one-on-one.ts, src/lib/cloud-data-policy.ts | deleted, ab281df (#335; SAFE NOW 9) |
+
+8 of 8 deleted.
+
+#### A2. Exported symbols nothing references
+
+The A2 table names 39 symbols and the wayfinder's onSignOut prop; its total line says 38 because appendix §5 omits moveCard.
+
+| Item | State |
+|---|---|
+| CopyLine, LocalClock (today-client.tsx) | deleted, ab281df (#335; the SAFE NOW 8 row that also took the last five test-only exports); today-client.tsx keeps ChiClock, EditableMessage, LocalTime |
+| promoteSheetTodo, deleteLedgerNote | deleted with their files, ab281df (#335) |
+| discardActDraft, moveCard, signOut | deleted, ab281df (#335; SAFE NOW 7); dashboard/actions.ts itself moved to src/app/accounts/board-actions.ts in 00fe8b2 (#336) |
+| onSignOut prop (app-wayfinder.tsx) | deleted, 00fe8b2 (#336) |
+| The 33 others: docBody, claimsInTopic, storeAvailable, registrySummary, unsplitPlan, workedStamp, mergeProbe, daysBetweenIso, MODEL_SEGMENT, PROSPECT_ROOT, PROSPECT_SHAPE_TOPICS, isDemoOrigin, stalePending, branchNext, askKey, SOPH_LABEL, OUTCOME_SF_STAGE, Textarea, verdictDismissKey, isGated, intentLabel, priorityTier, getV3Screen, v3Modules, getPayrollDemoStep, questionsForStep, DOC_ACCENT_UNUSED, liveHighCount, goneStamp, hasAccessCookieValue, CANON_SOURCE, MEETING_SOURCE | deleted, ab281df (#335; SAFE NOW 7, branchNext with branches.ts); `git log -S` on each name in its file ends at ab281df, and none of the names exists in src now |
+
+40 of 40 deleted.
+
+#### A3. Exports kept alive only by tests
+
+| Item | State |
+|---|---|
+| sfStageForStates, aleksLineGuidance, partnerAngle, isWeekKickoff, daysUntilIso, roomReopen, looksLikeNotes with SHAPED_HEAD, SF_CHROME, NOTE_SCENT and the ai-clean modelFor, hasFallback, fallbackMove, stripOutcome, actorKindOf, arrivalWords, nextStepFrom, waitingOn, nextRoundupDueIso, the thirteen intranet exports (mergeCandidates, proposeTopic, readyToPromote, resolveTopic, readTime, NOTHING_DELETED, scoreCase, summarise, isPlaybookNamespace, summaryStale, readConfidence, goneLine, groupByDay) | deleted, ab281df (#335; SAFE NOW 8). The name `modelFor` survives only as a different, live function: the answer router at src/lib/intranet/synthesize.ts:46 |
+| formatContributingSignal | deleted, ab281df (#335); src/lib/format.ts went in 00fe8b2 (#336) |
+| NO_FILTERS, facetCounts, emptyBecause | deleted, ab281df (#335), under the REMOVE ruling (2026-09-25, confirmed 2026-10-05) |
+| motionsFor | deleted with src/lib/intel/motions.ts, ab281df (#335), under the REMOVE ruling |
+| currentBand | now used: src/app/groundwork/instrument.tsx:13, :109 (00fe8b2, #336, "The Klaxon reads the band from currentBand"); it lives in src/lib/groundwork/bands.ts:38, and src/lib/groundwork/day.ts:32 re-exports it for tests/groundwork.test.ts and tests/canon/groundwork.test.ts (both chain) |
+| instNoteBody | kept by ruling: still present at src/lib/groundwork/institutions.ts:20, read only by tests/groundwork.test.ts (chain); the `inst:` DEFER ruling of 2026-09-25 keeps the deck (CLAUDE.md:260, "the institutions") |
+
+35 listed: 33 deleted, 1 now used, 1 kept by ruling.
+
+#### A4. Exports kept alive only by the seed script
+
+| Item | State |
+|---|---|
+| src/lib/hml.ts (651 lines, the ten `classify*` at :221-:606), src/lib/hml-rules-config.ts (13), src/lib/prospect-scoring.ts (206) | still present, unchanged; importers are prisma/seed.ts:46 and tests/hml.test.ts:21 (chain) only; the production knip run reports all three files unused. Waits on the fifteen models (NEEDS THE DB) |
+
+#### A5. Superfluous export keywords (80)
+
+72 lost the keyword in ab281df (#335; the 248-keyword commit of SAFE NOW 10). MODEL_DISTILL_RICH and MODEL_DISTILL_LIGHT are deleted (the no-op split went; distill reads MODEL_DISTILL from the roster, src/lib/activity/distill.ts:12, :159). htmlToPlainText is deleted with src/lib/paste.ts (the cascade of ab281df). RULE_SLOT_CAP and GAP_NS stay exported and are now named by chain tests (tests/canon/groundwork.test.ts, tests/canon/chute.test.ts), which is what the A5 note asked of RULE_SLOT_CAP. Still present: CONFIDENCES, ASK_SHAPES, ORIGINS (src/lib/intranet/doctrine.ts:90, :94, :104), read only by the exported types beside them. MOTION_INBOUND_DAYS, MOTION_MEETING_DAYS, RESEARCH_STALE_DAYS and RUN_RESET_DAYS, which A5 said should stay exported, lost the keyword (day.ts:72, :85, :86; sendbook/read.ts:50); no test names them.
+
+#### A6. Unused type exports (148)
+
+109 lost the keyword (ab281df), 10 went with their type, 10 with their file, and Relationship is now used (src/lib/record/read.ts:30). 18 are still exported and imported by no other file: ScreenOverride ×2, Seat, Ingest, Evidence, Product, PeoRow, Stage, Pending, Verdict, Provenance, Field, deliverables' Commitment, Gap, Sendbook, build's Commitment, Narrative (17 in src), and GoldenCase (tests/activity-fixtures.ts:130). Lines in docs/architecture/dead-code-appendix.md §12.6.
+
+#### A7. Dependencies
+
+Unchanged: knip still flags `@prisma/client`, `pg`, `@types/pg` and `tailwindcss`, each needed for the reason A7 gives. It also reports four unlisted packages, none of them dead code: postcss (postcss.config.mjs), dotenv (prisma.config.ts:1), @next/env (prisma/seed.ts:1), playwright (tools/demo-capture/capture.mjs:26).
+
+#### B. Dead data
+
+| Item | State |
+|---|---|
+| The fifteen seed-only models (prisma/schema.prisma:268 to :722) | still present, same lines; zero delegate calls in src; prisma/seed.ts writes each. NEEDS THE DB |
+| PeoActivity (:902) | still present; written at src/app/book/actions.ts:74, :107, read nowhere. REMOVE ruling (confirmed 2026-10-05) unbuilt; the plan held it out of pass 7 (docs/plans/chute-brains-refactor-2026-09-25.md:536) |
+| StashItem (:1080) | still present; zero calls; still no migration names it (22 migrations). Correction: docs/dashboard-tables.sql:151 is a hand-run script that creates it, so the table may exist after all [inferred: whether the script ran is unknown] |
+| `inst:<slug>` | kept by ruling (DEFER): read at src/app/groundwork/page.tsx:174-175, no writer |
+| `risk:<acct>` | still present: src/app/accounts/page.tsx:94-106, rendered through :358; REMOVE ruling blocked on the DB count |
+| `scenario:<acct>` | still present: findUnique at src/app/room/actions.ts:1200-1204; REMOVE ruling (confirmed 2026-10-05) waits on the DB count |
+| Touch.subjectKey `acct:` | the three named arms are deleted with their pages (app/page.tsx and today/page.tsx in ab281df; intake/actions.ts no longer carries one); one arm pass 4 missed is still present: src/lib/intranet/mirror.ts:199 `/^(outreach\|acct):(.+)$/` (at :186 on 741f3ad) |
+| `kickoff:` schema comments | deleted, ab281df (#335; SAFE NOW 10) |
+| Todo tag `dl:` | deleted from the codec, ab281df (#335; SAFE NOW 10) |
+| `pastehash:` and `presence:` families | unchanged, live: statuses "filed" (src/app/room/actions.ts:152-153) and "presence" (src/app/presence/actions.ts:43) stay outside LOADED_DISPOSITION_STATUSES (src/lib/today/overlay.ts:238-242) |
+| LookIntoStatus.note | still present (schema :1013); since the cascade of ab281df deleted look-into/actions.ts and look-into/status.ts, the whole model has no delegate call in src, not just the column. REMOVE ruling unbuilt |
+| SignalSnooze.snoozedUntil | kept by ruling (KEEP, amended 2026-10-05): written src/app/room/ledger-actions.ts:106-111, read src/lib/today/overlay.ts:21-27 and src/lib/today/build.ts:788-795 |
+| TaskDone `morning:` keys | still present, live, never pruned: minted by morningDoneKey (src/lib/today/build.ts:405-407) for the room (src/app/room/page.tsx:602) |
+| PeoState `@@index([nextActionDate])` | still present (schema :899); no query filters or orders on the column [inferred from grep] |
+| Seed fields book.json `count`, contacts.json `owner`, research.json `verified` | still present; no reader. Correction: `verified` is on 14 of the 132 research records, not all of them |
+
+#### C. Dead surfaces
+
+| Item | State |
+|---|---|
+| /today | deleted, ab281df (#335), under the REMOVE ruling; seventeen actions moved to src/app/room/ledger-actions.ts and sheet-actions.ts |
+| / the Board, dashboard-client.tsx | deleted, ab281df (#335); src/app/page.tsx:6-8 now redirects to /room; the Board's four card actions moved to src/app/accounts/board-actions.ts in 00fe8b2 (#336) |
+| /pipeline | deleted, ab281df (#335) |
+| /intake | kept by ruling (KEEP; CLAUDE.md:614-617): a plain row at src/components/wayfinder-routes.ts:38; the ⊕ menu's duplicate item retired in 00fe8b2 (#336) |
+| /book, /look-into page files | deleted, ab281df (#335); /book's actions stay live (savePeo, applyPlay, src/app/book/actions.ts) |
+| /dev/popover | deleted, ab281df (#335) |
+| notes-client, the sign-out door, `/prospect-field` | deleted (A1, A2); src/lib/access-proxy.ts:4 now guards `/` only |
+| /partners, /archive, /asks | kept by ruling (KEEP; CLAUDE.md:614-617): pages present, no wayfinder row (wayfinder-routes.ts:29-39) |
+| /demos and its two children | kept by ruling, gated: every page takes getAppAccess since 00fe8b2 (#336; CLAUDE.md:612-613) |
+| src/app/today-client.tsx | still present (165 lines), live kit for accounts, partners and the room; the archived page's name is all that is wrong with it |
+
+#### D. Dead contracts
+
+| Item | State |
+|---|---|
+| TEAMS CHAT | still present, now by design: the dialect module reads it as a hand-copied chat head (src/lib/ingest/dialect.ts:15-16, :24, :49; 292bfe5, #340); no code emits it |
+| SPREADSHEET, DOCUMENT | now used: dialect.ts:27-28 maps both, and the source column records `spreadsheet` and `doc` (dialect.ts:87-88; #340) |
+| SALESNAV ACCOUNTS | kept by ruling (KEEP, one door; CLAUDE.md:311): copy rewritten in 00fe8b2 (#336); the bookmarklet still opens `/intranet?grab=1` (src/app/intake/grabs.ts:118), and the Intranet's capture files through the pipeline since df38ecb (#353) |
+| `stash` source literal, `meeting` alternative | deleted, ab281df (#335; SAFE NOW 10); `.prTag_stash` survives at src/app/command-center.module.css:1207, which no tag the partners page assigns can reach (E) |
+| The three no-op model splits | deleted, ab281df (#335); every caller reads a roster slot (the two former exceptions now read MODEL_WIRE, src/lib/groundwork/wire.ts:148, :157, and MODEL_PARTNER_DRAFT, src/app/partners/actions.ts:139), and no call site outside src/lib/intranet/doctrine.ts carries a model identifier (CLAUDE.md:608-611) |
+| MODEL_SEGMENT, mergeProbe | deleted, ab281df (#335) |
+| PUBLIC_ACCESS | deleted with src/lib/public-access.ts, ab281df (#335) |
+| NOTHING_DELETED | deleted, ab281df (#335) |
+| The fourteen stale comments | rewritten, ab281df (#335; scaffold-pass.md §D), eleven more in 00fe8b2 (#336) |
+| "SECOND-RECORD-PLAN" and "Appendix A" cites in code | rewritten, ab281df (#335); none left in src |
+| .env.example | rewritten, ab281df (#335) |
+| The two contradicted canon lines | Call Sheet classes deleted (E below); StashItem still present (B above), the "from Stash" label deleted |
+
+#### E. Dead styles
+
+Recomputed (appendix §12.7). The dead-only rules of command-center.module.css, playbook.module.css, room.module.css, groundwork.module.css, sf.module.css and account-notes.module.css: deleted, ab281df (#335; SAFE NOW 1-4), with a further 386 command-center classes and room's court and `c_*` set in 00fe8b2 (#336). The 17 imported modules now hold 1,222 classes; with the ten `styles[expr]` accesses resolved (sidekick's tiers, product-sheet's rungs and verdicts) and each template held to its value map, one is dead: `.prTag_stash` (src/app/command-center.module.css:1207), because the template at src/app/partners/page.tsx:226 takes only outreach, reply, note or log (:29). A pass-4 miss, the stash literal's last trace. dashboard.module.css: still present as a whole file nothing imports (below, 2a).
+
+#### F. Dead tests
+
+87 suites exist; the chain runs 62. Of pass 4's 28 outside suites, narrative and ask-next are deleted (00fe8b2, #336), ingest-defects-deferred retired into behavior pins in tests/ingest-defects.test.ts (46510a5, #348), and none joined the chain. All 25 still outside were run on this tree: 24 pass in full; tests/intranet.test.ts passes 169 of 174. Its five failures are stale text pins, the "the grab takes the whole thread, structured (IV.4)" block, which reads src/app/intake/capture-shelf.tsx (tests/intranet.test.ts:1493) for markers the bookmarklet builders carried until 00fe8b2 (#336) moved them to src/app/intake/grabs.ts. The plan's ship log names the five as predating pass 7. Pass 4's "None fails" no longer holds for that one suite.
+
+#### G. Work with no reader
+
+| # | State |
+|---|---|
+| 1 | still present: getAppAccess upserts on every call with no `cache()` (src/lib/auth.ts:117-174, upsert :145); the KEEP ruling's memo and sign-in-only upsert are unbuilt |
+| 2 | the second build per /room load is gone: the drawer takes the page's reads (src/app/room/page.tsx:779; 0ce08eb, #347). The drawer's open still rebuilds through freshPipeline (src/app/room/pipeline-tab.tsx:516 → src/app/room/pipeline-actions.ts:49) |
+| 3 | the seven corpus sites are one read (src/lib/record/read.ts:360, extractDealIntel at :404) and the structured read is stored (0fb8419, #342); per-request derivation stays by decree (CLAUDE.md:307) |
+| 4 | closed: one register from one read on both pages (823a770, #354) |
+| 5 | still present in another shape: the browser pass is gone (105b7d7, #345); the door's route call is a server action (src/app/room/ingest/use-ingest.ts:137), and roomPaste runs guardPlan twice (src/app/room/actions.ts:343, :416), each running routeCapture (src/lib/ingest/guard.ts:200) and judgeFiling twice (src/lib/room/paste.ts:29, guard.ts:225), each judgeFiling scoring the roster and the bound row (src/lib/intel/misfile.ts:91, :104) [inferred count] |
+| 6 | partly closed: notes and actions take the stored read (src/app/intranet/runners.ts:1610-1624; df38ecb, #353); the playbook mirrors still earn their own read (plan ship log) |
+| 7 | still present: actedSweep at the head of every pass (src/lib/activity/run.ts:720) |
+| 8 | still present: sequential loaders (src/app/accounts/page.tsx:90-141); `blended` written at :429 and only typed at src/app/accounts-client.tsx:253 |
+| 9 | still present: src/app/accounts/act-lane.tsx:116, :147, :158 refresh after actions that revalidate (src/app/accounts/act-actions.ts:36-39); the catch-up refresh moved to src/app/intranet/intranet-client.tsx:361 |
+| 10 | still present: src/components/scratch/scratchpad.tsx:96-121 |
+| 11 | still present, moved: src/app/room/ingest/use-receipts.ts:53-79 (46510a5, #348) |
+| 12 | still present: src/app/presence/actions.ts:27-43 |
+| 13 | still present: src/app/intranet/intranet-client.tsx:185, :198 |
+| 14 | deleted: room's refresh() retired in 661940b (#350); src/app/room/actions.ts:8-14 says so and tests/canon/chute.test.ts › "no file under src/app/room revalidates a path or a tag" pins it (text). Outside the room 41 `revalidatePath` calls remain in ten action files, among them a second private refresh() at src/app/accounts/act-actions.ts:36-39; none names an archived surface (P1, CLAUDE.md:606-607) |
+| 15 | still present: src/app/room/actions.ts:1110-1127 |
+| 16 | `risk:` and `inst:` arms still present (B); the `acct:` arms left with their pages except mirror.ts:199 |
+| 17 | deleted: the engine's court, 823a770 (#354; CLAUDE.md:375-377) |
+| 18 | still present: package.json:8, :11 |
+
+#### SAFE NOW
+
+1-4 deleted, ab281df (#335), with 00fe8b2 (#336) finishing command-center and room. 5, 6, 9 deleted, ab281df. 7 deleted, ab281df; the onSignOut prop in 00fe8b2. 8 deleted, ab281df, except instNoteBody (kept by ruling) and currentBand (now used). 10 deleted, ab281df, except the A5 and A6 survivors above. 11 rewritten, ab281df and 00fe8b2.
+
+#### The rulings
+
+| Ruling (2026-09-25) | State |
+|---|---|
+| REMOVE /today, /, /pipeline, dashboard-client | deleted, ab281df (#335); the Board's actions moved in 00fe8b2 (#336) |
+| KEEP /intake | kept by ruling; plain row, duplicate menu item gone (#336) |
+| KEEP /partners, /archive, /asks | kept by ruling |
+| KEEP /demos, gated | kept by ruling; gated in 00fe8b2 (#336) |
+| REMOVE `risk:` | still present, src/app/accounts/page.tsx:94-106; blocked on the DB count (scaffold-pass.md §C) |
+| DEFER `inst:` | kept by ruling, src/app/groundwork/page.tsx:174-175 |
+| REMOVE `scenario:` (confirmed 2026-10-05) | still present, src/app/room/actions.ts:1200-1204 |
+| KEEP bank.ts | kept by ruling; questionById (src/lib/intel/bank.ts:30) is exported for C13 (CLAUDE.md:583), whose in-place door is unbuilt (src/lib/ask/links.ts:65-70 still offers no door), so only tests/canon/standing-decrees.test.ts calls it |
+| REMOVE branches.ts and the three filter helpers (confirmed) | deleted, ab281df (#335) |
+| REMOVE motions.ts (confirmed) | deleted, ab281df (#335) |
+| REMOVE the model splits; one roster | deleted and built, ab281df (#335); CLAUDE.md:608-611 |
+| REMOVE PUBLIC_ACCESS | deleted, ab281df (#335) |
+| KEEP the SalesNav one door | kept by ruling (D above) |
+| REMOVE PeoActivity (confirmed) | still present (B above) |
+| REMOVE LookIntoStatus.note (confirmed) | still present; the model is now wholly unread and unwritten (B above) |
+| KEEP SignalSnooze.snoozedUntil (amended 2026-10-05, confirmed) | kept by ruling (B above) |
+| KEEP getAppAccess, memoized (confirmed) | still present, unbuilt (G1) |
+| DEFER G2 and G4 to the one read (confirmed) | closed by the read: #347 and #354 (G2, G4) |
+| KEEP the intranet read for its own documents (confirmed) | kept by ruling, partly built (G6) |
+
+All eight rulings once recorded as assumed are confirmed (2026-10-05, the lines above).
+
+#### NEEDS THE DB
+
+None of the eight queries has been run; the founder's check of 2026-10-06 covered the pass-7 migrations only (plan ship log). Two change shape: LookIntoStatus now needs `SELECT count(*) FROM "LookIntoStatus"` for the whole table, since no code touches it; StashItem's `to_regclass` check stands, with docs/dashboard-tables.sql:151 as a way it could exist.
+
+### 2. New dead code since pass 4
+
+Method: this ledger's own, run read-only. knip 5.88.1 (fetched by npx, nothing installed in the repo) twice: once with every test file, prisma/seed.ts and tools/ as entries, and once in production mode with only the Next.js route files (page, layout, route, loading and the rest), src/instrumentation.ts and src/proxy.ts as entries, the tsx, node and prisma plugins off so the test script's file list cannot re-enter as entries, and src/generated ignored. Each reported export was then counted inside its own file with comments stripped (the split pass 4 used between A2 and A5, and between A3 and exports a live function still calls), a re-export counted as unused, and a TypeScript-AST closure moved a symbol into the dead set when every reference to it in its own file sits inside a dead declaration. CSS as in E. The same runs on git-archived copies of 741f3ad and 00fe8b2 in the scratch directory date each find. Calibration on 741f3ad: the method returns pass 4's 8 files, all 39 A2 symbols, 32 of the 35 A3 exports (the other three come back as test-only files or, for roomReopen, a name-only pin), and the six files of A2, A3 and A4 that only tests or the seed import (branches.ts, motions.ts, format.ts and the HML three). Configs, rules and the full lists: docs/architecture/dead-code-appendix.md §12. Next.js route files are entries by construction, never reported.
+
+#### 2a. Modules nothing imports
+
+| File | Since | Note |
+|---|---|---|
+| src/lib/look-into/live.ts (106 lines) | pass 5: on 741f3ad /today, the look-into band and the hand-run tests/narrative.test.ts imported it; the pages went in ab281df, the suite in 00fe8b2 | scaffold-pass.md §C reported it as read only by that suite; it now has no reader |
+| src/lib/intel/research.ts (38) | pass 5: on 741f3ad the Board, /today, today/ask-next.tsx, look-into/live.ts and the hand-run ask-next suite imported it; all but live.ts went in ab281df and 00fe8b2 | researchPrompt (:19-38) is its one export |
+| src/app/dashboard.module.css (811 lines, 89 classes) | pass 5: its one importer, dashboard-client.tsx, went in ab281df | outside knip's reach; found by the CSS scan |
+
+#### 2b. Exports nothing references
+
+| Item | Since | Note |
+|---|---|---|
+| src/app/room/actions.ts:633 roomActionUndo (29 lines) | pass 7: its caller, the receipt's opened-action chips, retired in ec2181b (#360) | a server action no client calls. tests/read-absorption.test.ts › "roomActionUndo exists on the server; the receipt's chips that called it are retired" asserts it stays (text), and four chain suites slice roomPaste's source up to its signature (ingest-filing :89, ingest-fanout :612, ingest-route :302, ingest-guard :67) |
+| src/lib/today/build.ts:773 voiceOfBaseGuidance (13) | pass 5: its caller left with /today in ab281df | |
+| src/lib/groundwork/day.ts:32 re-exports BAND_TABLE and chicagoMinutes | pass 5: bands.ts was split out in ab281df | the Klaxon imports bands.ts directly (instrument.tsx:13) |
+| src/lib/book/index.ts:81 industries, :82 states | pass-4 miss: dead on 741f3ad | common words likely defeated the name scan [inferred] |
+| src/lib/command-center/data.ts:15 re-export of STAGES and stageLabel (with the types PeoRow and Stage at :14); :121 todayIso | pass-4 miss | |
+| src/components/ui/field.tsx:33 Select | pass-4 miss | Textarea beside it went in ab281df |
+
+#### 2c. Exports kept alive only by tests
+
+Chain or hand per COMMON's list; "+" marks an export dead only through the closure (its one in-file caller is dead).
+
+| Item | Since | Pinned by |
+|---|---|---|
+| src/lib/intel/extract.ts:440 dealIntelFor (8) and +:99 corpusFor (123, with the private peopleFromActors, peopleIn, TRANSCRIPT_BODY_RE, short) | pass 7: corpusFor's last outside caller left in 0ce08eb (#347), dealIntelFor's in aa36489 (#349); the plan retires both "when their last caller leaves" (§3) and they were not removed | dealIntelFor: extract (chain); tests/record-read.test.ts:1260 names it only in a scan asserting four files never call it (text). corpusFor: closer, extract, canon/ted-doctrine, record-read, addressed-to-us, accepted-invite, pipeline-fixes (all chain); record-read's describe at :211 uses it as the parity oracle for readAccount |
+| src/lib/room/paste.ts:56 dialectOf, :62 sourceFor | pass 7: re-exports since 292bfe5 (#340), by slice 1's design, so the followups suite keeps its path | followups, ingest-dialect (chain) |
+| src/lib/ingest/doors.ts:27 isDoor | pass 7, born test-only (8db896e, #341) | intranet-capture, canon/provenance (chain) |
+| src/lib/ingest/filing.ts:155 findFiling (14) | pass 7, born test-only (0fb8419, #342) | ingest-filing (chain) |
+| src/lib/salesforce.ts:97 sfNewOppUrl, :129 sfNewContactUrl, :146 sfLogCallUrl, +:85 defaultCloseDate (63 in all) | pass 5: callers left with /today and the Board | today (chain) |
+| src/lib/today/build.ts:207 commitmentsFromCards, :274 outreachGuidance with +:252 partnerMessage, :321 triageGuidance, :429 chipTone, :745 armPartnersGuidance, :839 stateOfPlay with +:817 movedThisWeek (182) | pass 5 | today (chain); commitmentsFromCards also read-absorption (chain) |
+| src/lib/today/follow-ups.ts:63 outreachSubjectKey, :167 groupUpcomingByDay with +:148 dayGroupLabel, :188 followUpMessage (56) | pass 5 | today (chain) |
+| src/lib/today/ledger.ts:16 withAsk, :50 sortEvents | pass 5 | ledger (hand) |
+| src/lib/dashboard/stages.ts:333 nodeBriefs with +:308 BRIEFS (27) | pass 5 | intel (chain) |
+| src/lib/intel/discovery.ts:487 questionsFor (26) | pass 5 | intel (chain), playbook-program (hand) |
+| src/lib/intranet/evals.ts:84 recallAt, :97 attributionHolds, :120 groundedness | pass 5: their caller scoreCase went in ab281df | intranet (hand) |
+| src/lib/intranet/doctrine.ts:167 AGE_DAYS | pass 5 | intranet (hand) |
+| src/lib/pipeline/plain.ts:83 ARRIVAL | pass 5: its in-file caller arrivalWords went in ab281df | pipeline-build (hand) |
+| src/lib/groundwork/day.ts:215 QUEUE_RULE_IDS; src/components/wayfinder-routes.ts:41 pageFileFor; day.ts:32 re-export of bandAt | pass 5, born for the canon suites | canon/groundwork, canon/standing-decrees (chain) |
+| src/lib/intel/bank.ts:30 questionById | pass 5 | canon/standing-decrees (chain). Kept by ruling: C13 (CLAUDE.md:583) |
+| src/lib/intel/bank.ts:113 selectQuestions with +:79 matches (and the private productOf, sophOf, facetMatch, PHASE_RANK, OPENERS) | pass-4 miss, reported by scaffold-pass.md §C and not removed | read-absorption (chain), playbook-program (hand) |
+| src/lib/today/build.ts:394 weekStamp, :682 partnerWeekMessage; src/lib/paste-files.ts:364 parseVtt | pass-4 misses: test-only on 741f3ad | today, tz, paste-files (chain) |
+
+#### 2d. Remains of what pass 7 retired
+
+- refresh(): gone from src/app/room/actions.ts (661940b, #350); its comment at :8-14 is the only trace. The second private refresh() at src/app/accounts/act-actions.ts:36-39 predates pass 7 and was outside slice 9's scope (G14 above).
+- The court: deleted from the engine (823a770, #354); the `c_*` and `.court` classes went in 00fe8b2 (#336). What remains is the word in comments (src/lib/room/engine.ts:7, :74; owed.ts:65, :89; touch.ts:64; record/docs.ts:11, :192; whose-move.ts:9; theirs-line.tsx:8; room.module.css:2356) and the chain suite's name tests/intraday-court.test.ts, which pins the move line. No code.
+- The coordination move: the org silence-bump is deleted and orgInboundHolder with it (aa36489, #349); no move text survives. `answeredOrg` stays by design (src/lib/groundwork/day.ts:440-441: an org-side reply still silences the drumbeat). anyLiveGem is gone (395268a, #351).
+- The plan's other "retired when their last caller leaves" (§3): githubArchiveGrant gone; the bare `todo.create` and `accountNote.create` sites gone (every create is in src/lib/notes/write.ts:146-161, :247-252); HEAD_LINE_RE moved into src/lib/ingest/dialect.ts:65; sniffPaste stays, live (src/app/room/room-client.tsx:440, :2065-2082); corpusFor, dealIntelFor, dialectOf and sourceFor stay, test-only (2c). The "inline known-sets" name no symbol and were not checked.
+- The retired stamps (d119c52, #366): SEATED survives only inside the new stamp text (src/lib/groundwork/stamp.ts:54); no picker carries an accept filter except the activity dock's `.csv` (src/app/activity/dock.tsx:200), the export's own door.
+
+Not dead, counted so the next pass need not: 24 superfluous export keywords (15 pass-4 misses still standing, 6 from pass 7: headRe, STALE_PIECE_MS, entryLine, verdictPages, RECAP_DAYS, pickPart; 1 from pass 5: bands.ts chicagoMinutes; BRIEFS and matches are dead and counted in 2c); 83 type exports in src no other file imports (17 carried from A6, 66 since); 159 exports a live function in their own file still calls and only a test imports. Lists in appendix §12.
+
+### 3. The arithmetic
+
+The items section 1's brief names (A1, A2, A3, A4, the rulings and NEEDS THE DB): 111. Closed 88 (A1 8, A2 40, A3 34 counting currentBand as now used, rulings 6). Kept by ruling 9 (instNoteBody and eight rulings). Still present 14 (A4, five rulings unbuilt or blocked: `risk:`, `scenario:`, PeoActivity, LookIntoStatus.note, the getAppAccess memo, and the eight DB queries).
+
+The rest of the ledger: A5 75 of 80 closed (72 keywords, the 2 split constants, htmlToPlainText with its file), 2 now named by chain tests, 3 still exported; 4 of the 72 are the queue constants A5 wanted kept exported. A6 130 of 148 closed, 18 remain. B 15 rows: 2 deleted, 1 split (the `acct:` arms: three gone, one missed arm present), 12 present: 2 kept by ruling (`inst:`, snoozedUntil), 2 live as pass 4 said (the two disposition families, the morning keys), 8 open. C 12 rows: 8 deleted, 3 kept by ruling, 1 present (today-client.tsx, live and misnamed). D 13 rows: 9 deleted or rewritten, 1 now used, 2 kept by ruling or design, 1 present (StashItem). E: 341 dead classes closed; 1 module now wholly orphaned; 1 class (`.prTag_stash`) a pass-4 miss. F: 3 of 28 suites gone, 25 outside, 1 with five stale tests. G 18 rows: 3 closed, 3 partly, 12 present.
+
+New since pass 4: 54 items. 3 modules nothing imports (all from pass 5); 10 exports nothing references (3 from pass 5, 1 from pass 7, 6 pass-4 misses); 41 exports kept alive only by tests (30 from pass 5, 6 from pass 7, 5 pass-4 misses). questionById is kept by ruling. Of the other 40, 33 are reached by a chain suite (BRIEFS and matches through the function that calls them), so the chain pins code the app never runs; 7 only by hand-run suites. About 1,650 lines: 955 in the three files and about 700 in the 51 symbols' declarations by AST span, comments and private helpers not counted.

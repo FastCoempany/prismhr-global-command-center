@@ -1,6 +1,6 @@
 ---
 title: Decree Ledger Appendix
-status: Audit pass 3 evidence tables, 2026-09-25
+status: Audit pass 3 evidence tables, 2026-09-25; re-walked by pass 8, 2026-10-06 (section 5)
 owner: Founder
 related_docs:
   - docs/architecture/decree-ledger.md
@@ -276,3 +276,210 @@ Enforcement on these strings: tests/ingest-defects.test.ts pins "The read didn't
 ## 4. Checked and found clean (violations-only sweep)
 
 So the next pass need not re-check them. Design canon: the field #F5F7FB with one theme (antaeus-brand-kit/css/tokens.css:24; no prefers-color-scheme or data-theme anywhere in src; config/design-tokens.css:5 `color-scheme: light`); the ink ladder (tokens.css:31-35); the four role accents (tokens.css:50-57); the type trio (src/app/layout.tsx:2, src/app/room/page.tsx:2, config/design-tokens.css:94-97) with the one Arial fallback at src/lib/flags.tsx:98 reported; no Grounded-A mark exists in src (config/design-tokens.css:8-11 forbids it; the masthead mark is ProductMark); the banned hexes appear only in .module.css files (src/components/account-notes.module.css:2-3; src/app/command-center.module.css:2753, 2934, 3072-3074, 3170-3171), out of that sweep's scope; no stationery metaphors or progress-wash ribbons (Groundwork's `styles.ribbon` at groundwork/page.tsx:1054 is a flex section head). Playbook authoring canon: 5,025 names from book.json and contacts.json grepped against src/lib/playbook/products.ts, zero hits; no money figures in products.ts; "steps" guarded by tests/playbook-sheet.test.ts:134-137; (∅) used at product-sheet.tsx:35, 136, 143; no consequence closers in spoken lines. Direct doctrine: no "ride it, never around it" copy anywhere. Playbook face: five doors and two contractor doors (products.ts PRODUCTS; tests/playbook-sheet.test.ts:68); arrival copy at product-sheet.tsx:588; the door tick orange at product-sheet.module.css:360-362; the middle's order at product-sheet.tsx:312-410; the right panel from the tapes at :417-472, :564-568; the between-us foot fixed at :474-501, :644; the country wing as a GET (src/app/playbook/country/route.ts:19; product-sheet.tsx:542) with no server action serving cards; lead lines first, the sixteen behind one line, "the rest" at :153-169, :110-114; Puerto Rico at countries.ts:70-74; (∅) and not-covered lines at product-sheet.tsx:133-146; the Call Sheet retired with no route, stylesheet link or ?open= link in src (comments only) and the brain's playbook citation offering no door (src/lib/ask/links.ts:65-70); no redactMoney under src/app/playbook or src/lib/playbook; tests/playbook-sheet.test.ts:129-132 in the chain. Other standing decrees: no ↗ on an account name (SfLink has no consumers; accounts-client.tsx:1838 is a contact, :1304 a URL host); MULTI and its ladder at room/page.tsx:208 and groundwork/page.tsx:904-910; the edge tab names at room-client.tsx:2795-2797; the second record's staged bodies redacted at run.ts:297; the HomeRoom note writers redact (room/actions.ts:80 via cleanLogBody, :361, :398, :432; act-actions.ts:52, :108, :217; pipeline-actions.ts:134; playbook store input arrives redacted from ai-clean.ts:215). Gaps in the sweep's own coverage: tests/playbook-sheet.test.ts:120 scans names of five or more characters with a space, so single-word account names are never scanned, and spokenLines() excludes cite text; the data is clean today.
+
+## 5. Re-walk, pass 8 (2026-10-06, main d119c52)
+
+Pass 8 re-walked sections 2 and 3 on main at d119c52, after pass 5 (#335, #336) and pass 7, the Chute brains refactor (#339 to #366), and swept the operator copy pass 7 added on the ingest surfaces. Cites are against d119c52; CLAUDE.md lines are current lines on that tree (617 lines), not the pass-3 lines the sections above carry. Status words: fixed (the string or the dead end is gone and what replaced it complies), removed (the string or surface is gone), stands (still there, at the line given). Nothing above is struck. The ledger's section F holds the ranked violations and the test list.
+
+### 5.1 The findings of sections 2 and 3, now
+
+Section 2, the writing-canon and plain-speech findings (26 rows, in their order):
+
+| §2 row | Pass-3 cite · string | Now | file:line now |
+|---|---|---|---|
+| 1 | actions.ts:203 and five more · "Read-only session." | stands | src/app/room/actions.ts:293, :864, :1812, :1823; src/app/room/route-actions.ts:42; src/app/room/vault-actions.ts:55; src/app/activity/actions.ts:21. archive-actions.ts is gone (#345). D29 (CLAUDE.md:311) now decrees the same words on the Chute bar (src/app/room/chute.tsx:623). |
+| 2 | run.ts:574, :580 · "No store." / "No drop staged." | stands | src/lib/activity/run.ts:677, :685. |
+| 3 | room-client.tsx:1995; chute.tsx:554; room-client.tsx:516, :1947, :1961 · "This reads like …" / "Reads like …" / "Reads …" / "Reads as …" | stands, two sites removed | The Drop's two-sided banner, the Chute's "Reads like {claim}. Pick the account." and "Reads {status}. Confirm below." went with #360. "Reads as …" stands on the Drop's chips (src/app/room/room-client.tsx:2062-2069, :2082), and the held box's fallback reason is "This reads like {claim}." (src/lib/ingest/guard.ts:151, :180). |
+| 4 | chute.tsx:669-670 · the screenshots aside in the pact | stands | src/app/room/chute.tsx:669-670. |
+| 5 | chute.tsx:670-671 · "Every file routes by the book — contact email, then company domain, then account name — and files like a paste" | stands | chute.tsx:670-672; #345 re-flowed it to "the book and the record" and added "then a known person", aside kept. |
+| 6 | chute.tsx:675-677 · "Nothing files blind — no sure match waits for your pick — nothing files twice — …" | stands | chute.tsx:676-678. |
+| 7 | chute.tsx:681-682 · "(2GB is the ceiling per file)" | stands | chute.tsx:682. |
+| 8 | chute.tsx:671-675 · the sixty-word sentence with a colon and a semicolon | stands | chute.tsx:672-676. |
+| 9 | chute.tsx:446 · "· the reader was down — raw text only, nothing routed; ↩ undo and re-drop when it's back" | fixed | src/app/room/ingest/receipt.tsx:31 "The reader was down. Only the text filed." on the receipt's second line (#360). |
+| 10 | chute.tsx:439 · "Filing to {name}… ({why})" | fixed | receipt.tsx:277 "{file} · Filing to {name}…" (#360). |
+| 11 | room-client.tsx:2007 → :2031 · "Reading {bound} — reading it again…" | fixed | room-client.tsx:621-622 → :2124 "Reading the file again for {name}…" (#360). |
+| 12 | run.ts:402-403; :424-425 · "(multi-recipient sends look alike)"; "Name collisions (unresolved either side):" | stands | run.ts:503, :526. |
+| 13 | run.ts:881 + :108 · "The key is dead — the API said: {err}. This build is {sha}; …" | stands | run.ts:994 with :114-117. |
+| 14 | run.ts:1157 · "… nothing was restored — every other surface reads what it read …" | stands | run.ts:1280. |
+| 15 | dock.tsx:147 · "Earlier drops are not kept — nothing is restored." | stands | src/app/activity/dock.tsx:147; the Chute's own copy says it flat with "so" (chute.tsx:460). |
+| 16 | run.ts:406 · "NOT ONE ROW CARRIED TEXT — this drop read nothing." | stands | run.ts:507. |
+| 17 | run.ts:410 · "those readings run dark" | stands | run.ts:511. |
+| 18 | dock.tsx:60 · "Watch the gadget." | stands | dock.tsx:60. |
+| 19 | chute.tsx:681 · "rides as a pre-release" | stands | chute.tsx:681-682. The pre-release lane is still real (src/app/room/vault-actions.ts:86; src/lib/github/archive.ts:31-33). |
+| 20 | chute.tsx:675-676 · "Nothing files blind" | stands | chute.tsx:676. |
+| 21 | room-client.tsx:2000 · "the file is holding out of the vault" | removed | The banner gave way to the held box in #360, and the misfile-guard pin on the string went with it; neither src nor tests carries it. |
+| 22 | run.ts:881, :963, :964 · "completes arithmetically" / "funded pass" | stands | run.ts:994, :1076, :1077. |
+| 23 | chute.tsx:344; dock.tsx:102 · "staging replaces wholesale" | stands | chute.tsx:349; dock.tsx:102. |
+| 24 | chute.tsx:669; :678-679 · "read free in your browser"; "the Intranet mirroring it on its next sync" | stands | chute.tsx:669, :679. The same sentence still names Today, a retired surface (CLAUDE.md:614-615), among the pages that "re-read the record at once" (chute.tsx:678-679). |
+| 25 | run.ts:957, :986 · "honest verdicts" | stands | run.ts:1070, :1099. |
+| 26 | actions.ts:228; chute.tsx:675-676 · "Nothing filed twice." | stands | src/app/room/actions.ts:321; chute.tsx:676-677; and a third site, the Send-it fallback src/app/intranet/capture-actions.ts:136 (#360). Decreed verbatim at CLAUDE.md:296-297. |
+
+The section's closing notes, now. The rule-7 adjacency stands and is pinned: the ledger loads empty when its stored day is not today's (src/app/room/chute-ledger.ts:225), tests/canon/chute.test.ts › "the ledger is per Chicago day: yesterday's rows do not come back" pins it in the chain, and a pick held yesterday does not come back today saying so (CLAUDE.md:60-61). The dead mismatch reason stands at src/lib/room/paste.ts:46 ("This reads like {claim}, not {name} — {why}."), which guardPlan replaces with reasonFromWhy (src/lib/ingest/guard.ts:204-219), so it still reaches no surface; the chain still pins its text (tests/misfile-guard.test.ts › "the evidence rung runs BEFORE the read spends a cent", at :173). The Drop's paste placeholder still names three file types (src/app/room/room-client.tsx:2078) while neither picker filters by type since #366 (CLAUDE.md:315).
+
+Section 3, the click-depth dead ends (26 rows, in their order):
+
+| §3 row | Pass-3 cite · the compressed thing | Now | file:line now |
+|---|---|---|---|
+| 1 | chute.tsx:444 · ✓ {account} · {N} filed | fixed | The receipt line opens in place to what the filing wrote (src/app/room/ingest/receipt.tsx:145-224, read by src/app/room/filing-actions.ts:23-53 through src/lib/ingest/wrote.ts:73-86); chain tests/ingest-faces.test.ts › "the line opens in place to what the filing wrote" (#360). |
+| 2 | chute.tsx:450-452 · · N actions opened | fixed | Now "N to-do(s)" (receipt.tsx:64), listed whole under To-dos when the line opens (:305). |
+| 3 | chute.tsx:453-455 · · N asks queued | stands | Now "N asks" (receipt.tsx:66). The opened line lists no asks: the read returns entries, to-dos and their promises (wrote.ts:18-25) from the account's own notes and todos (filing-actions.ts:35-48). |
+| 4 | chute.tsx:456 · · N to the playbook | stands | receipt.tsx:67; the playbook rows the filing wrote are not read back. |
+| 5 | chute.tsx:447 · · transcript on file | removed | The string is gone; the tape's archive entry lists under Filed when the line opens (wrote.ts:56-69). |
+| 6 | chute.tsx:236 ← actions.ts:228 · Already on file. Filed M/D. Nothing filed twice. | stands | receipt.tsx:260-262 renders it with no door to the prior filing; src/app/room/actions.ts:321. |
+| 7 | chute.tsx:564-572 · the batch-mate button | stands, as a control | Now "Same batch" in the held box's account list and the solid button's suggestion (src/app/room/ingest/held.tsx:125-132, :190-195); a choice, not a door, as before. |
+| 8 | chute.tsx:490-498 · N rows · N accounts · N carrying email text. | stands | chute.tsx:450-454; the link opens the Intranet page, not the rows. |
+| 9 | chute.tsx:695-699, :727 · the meter and "Open the ledger · N" | stands, a door | chute.tsx:551-595: the meter is the fold's button whenever a row is hidden. |
+| 10 | dock.tsx:98 · N rows · N accounts · … N to distill, N tally-only. | stands | src/app/activity/dock.tsx:98. |
+| 11 | dock.tsx:130 · Last drop {day} · distilled | stands | dock.tsx:130. |
+| 12 | dock.tsx:41 · A run was interrupted — N accounts still wait. | stands | dock.tsx:41. |
+| 13 | dock.tsx:194 · Receipt · N | stands, a door | dock.tsx:194. |
+| 14 | room-client.tsx:504-510 · Filed N entries … | fixed | The Drop's filing receipt is the same receipt line (src/app/room/room-client.tsx:583-600, painted at :1715), which opens (#360). |
+| 15 | room-client.tsx:511-512 → :1584-1612 · N actions opened. | fixed | The to-dos list whole under To-dos (receipt.tsx:305); the 60-character chips are gone. |
+| 16 | room-client.tsx:513-514 · N new asks queued. / N to the playbook. | stands | As rows 3 and 4: receipt.tsx:66-67. |
+| 17 | room-client.tsx:1263, :1300 · UNKNOWN · N queued | stands | room-client.tsx:1403, :1440. |
+| 18 | room-client.tsx:1329-1334 · STAGE GATE · N BEHIND IT | stands | room-client.tsx:1471-1475. |
+| 19 | room-client.tsx:1428-1430 · TODAY N · M done | stands, a door | room-client.tsx:1566-1576. |
+| 20 | room-client.tsx:948-969 · RESEARCH ⟳ | stands | room-client.tsx:1084-1098: the date lives in the title and the click runs the pass. |
+| 21 | theirs-line.tsx:73-81, :92-108 · THEIRS · {label} | stands, a door | src/app/room/theirs-line.tsx:80-81, :99. |
+| 22 | evidence-chips.tsx:167-176, :214-244 · ◆ N GEMS | stands, a door | src/app/groundwork/evidence-chips.tsx:171, :214. |
+| 23 | evidence-chips.tsx:178-187, :246-283 · ▮ SUPPORT N · SPIKE M/D | stands, a door | evidence-chips.tsx:74, :247. |
+| 24 | evidence-chips.tsx:189-198, :286-299 · INTENT · O N · C N · 30D | stands, a door | evidence-chips.tsx:112, :285. |
+| 25 | evidence-chips.tsx:199-212, :303-313 · the collision chip | stands | evidence-chips.tsx:199-211, :303-312: one layer of prose, no drill to the colleague's row. |
+| 26 | src/lib/ask/links.ts:65-70 · a playbook citation in the brain's answer | stands, now against a ruling | C13 (CLAUDE.md:583) rules the citation opens in place, one click, to the cited question and its gloss. links.ts:65-70 still skips it, and questionById (src/lib/intel/bank.ts:30) has no caller in src; only tests/canon/standing-decrees.test.ts › "a bare question id resolves to the question's text and its gloss" calls it. |
+
+Tally: section 2, 26 rows: 3 fixed, 1 removed, 22 stand (row 3 with two of its sites removed). Section 3, 26 rows: 4 fixed, 1 removed, 13 dead ends stand, 7 rows that were doors stay doors, 1 control stays a control.
+
+### 5.2 The copy pass 7 added on the ingest surfaces
+
+Swept against the writing canon (CLAUDE.md:42-70), the plain-speech law (:72-120) and the click-depth law (:437-444). A string the founder decreed verbatim is marked decreed; a finding names the rule it breaks. Enforcement on this copy: tests/ingest-faces.test.ts › "no operator string in these components carries an em-dash, a parenthetical or the word steps" renders the held box and the receipt and scans the literals of held.tsx, receipt.tsx and hand-off.ts; tests/ingest-guard.test.ts › "each passes the writing canon's lint, with and without the row's own evidence" lints every text-rung reason; tests/move-promise.test.ts › "six words or fewer per sentence, no dash aside, no parenthetical" lints the promise lines; all three are in the chain. Nothing lints the dock, the stamp words or the Send-it receipts.
+
+The held box (src/app/room/ingest/held.tsx, with the reasons it shows from src/lib/ingest/guard.ts):
+
+| file:line | String | Verdict |
+|---|---|---|
+| held.tsx:221 | Held | decreed (the amber HELD kicker, CLAUDE.md:313) |
+| guard.ts:134-150, :170-171 | The read names {claim}. · {claim}'s contact address is in the text. · {claim}'s contact address is here. · {claim}'s contact is here. · {who} is {claim}'s contact. · {who} is {claim}'s. · A {claim} email address is in the text. · A {claim} address is here. · {claim} is named in the text. · {claim} is named. · “{head}” in the text points to {claim}. · “{head}” points to {claim}. · “{initials}” matches {claim}'s initials. · {row} shows up too. · Nothing points to {row}. | compliant; nine words or fewer by construction (guard.ts:159-181) and linted in the chain |
+| guard.ts:151, :180 | This reads like {claim}. | finding, contested as in §2 row 3: writing canon rule 4 (CLAUDE.md:55-56) names "this account appears to"; the counter is that it states a classifier verdict awaiting the pick [inferred either way] |
+| src/lib/ingest/verdict-reason.ts:124-145 | the read rung's reason, the model's sentence | compliant by gate: capped at nine words and run through lintReason before it shows; chain tests/ingest-guard.test.ts › "the sanitizer: redacted, grammar-stripped, trimmed, nine words, canon-clean" |
+| held.tsx:233 | WHY ▾ / WHY ▴ | compliant; the reason is the door to its grounds (:238-249), one click, as CLAUDE.md:313 asks |
+| held.tsx:229 | Show the evidence / Hide the evidence (title) | compliant |
+| held.tsx:79, :81, :82, :86 | From the read · Web check · In the text · For {row} | compliant |
+| held.tsx:56-65 | The read names {x}. · {who} is the book's contact for {account}. · A {domain} address is in the text. · {name} is named in the text. · “{head}” appears in the text. · “{initials}” matches {name}'s initials. | compliant |
+| held.tsx:89 | Nothing in the text names {row} or its people. | compliant |
+| held.tsx:34 | No sure match. Pick the account. | compliant; pass-3 copy kept, the action imperative |
+| held.tsx:36 | A file the reader can't open. Pick its account for the vault. | compliant |
+| held.tsx:260 | File to {name} | decreed (CLAUDE.md:313) |
+| held.tsx:270 | Keep on {name} | decreed |
+| held.tsx:283 | Another account ▾ / Pick the account ▾ | decreed ("Another account"); compliant |
+| held.tsx:99-104 | Address · Domain · Person · Name | compliant |
+| held.tsx:125, :129, :131, :194 | Dropped here · Same batch · A suggestion. The rest of this drop filed there. | compliant |
+| held.tsx:30 | Don't file it. It still backs up. (the ✕'s title) | decreed ("Don't file it."), the second sentence a fact; compliant |
+| held.tsx:32 | Don't file it. It stays in the brain. | compliant |
+| held.tsx:318 | Search the book… | compliant |
+
+The receipt (src/app/room/ingest/receipt.tsx, src/lib/ingest/wrote.ts, the window sentences in src/lib/ingest/windows.ts, and the Chute's own receipt lines):
+
+| file:line | String | Verdict |
+|---|---|---|
+| receipt.tsx:165-185, :88 | ✓ {account} · {counts} · {M/D} · {rung} | decreed shape (CLAUDE.md:313) |
+| receipt.tsx:63 | {n} filed | compliant; opens to the Filed list |
+| receipt.tsx:64 | {n} to-do / {n} to-dos | compliant; opens to the To-dos list |
+| receipt.tsx:65 | {n} their promise / {n} their promises | finding [mild]: constructed phrasing (CLAUDE.md:105-106); "1 their promise" is not how a person counts. The door holds: it opens to Their promises |
+| receipt.tsx:66 | {n} ask / {n} asks | finding: click-depth law (CLAUDE.md:439-441). The opened line lists no asks, because filingWrote reads the account's own notes and todos (filing-actions.ts:35-48) and wroteFrom returns entries, to-dos and promises only (wrote.ts:18-25, :73-86) |
+| receipt.tsx:67 | {n} to the playbook | finding: click-depth law, as the row above |
+| receipt.tsx:35-53 | address · domain · person · name · picked | compliant; the rung word stands in for the router's why, which a settled row may not keep (D12, CLAUDE.md:305), so it opens to nothing by decree |
+| receipt.tsx:31 | The reader was down. Only the text filed. | compliant |
+| windows.ts:95 | Read {n} of {m} characters[ of {what}]. | compliant; D4's "what was read of what arrived" (CLAUDE.md:303) |
+| windows.ts:102 | The duplicate check didn't run. | compliant; D7 (CLAUDE.md:305) |
+| receipt.tsx:121 | Take back everything this filing wrote (↺ title) | compliant |
+| receipt.tsx:131 | Clear this receipt (✕ title) | compliant |
+| receipt.tsx:180 | Show what this filing wrote / Hide what this filing wrote | compliant |
+| receipt.tsx:195, :201, :206 | File · · Backed up · open | compliant |
+| receipt.tsx:216, :218, :310 | Reading… · Nothing on file for this filing. | compliant |
+| receipt.tsx:304-306 | Filed · To-do · To-dos · Their promise · Their promises | compliant |
+| wrote.ts:56-69 | {subject} · {people} · {M/D}, with "No subject" for an empty head (:64) | compliant; addresses scrubbed (:41-49) |
+| receipt.tsx:238-246 | ⇪ Backed up · {file} · {M/D} · open | compliant |
+| receipt.tsx:251 | ⇪ Not filed. Backed up. · {file} · {M/D} | compliant |
+| receipt.tsx:254 | Not filed. Kept in the brain. · {file} · {M/D} | compliant |
+| receipt.tsx:257 ← chute.tsx:284, room-client.tsx:882 | ↺ Taken back from {account}. {n} removed. | finding: click-depth law (CLAUDE.md:439-441); "N removed" opens to nothing, and since #360 it sums the removed rows and the retired to-dos into one number |
+| receipt.tsx:260-262 ← actions.ts:321 | {file} · Already on file. Filed {M/D}. Nothing filed twice. | carried from §2 row 26 and §3 row 6: the maxim is decreed verbatim; no door to the prior filing |
+| receipt.tsx:277-278 | {file} · Filing to {account}… · {file} · Reading… | compliant |
+| receipt.tsx:287 | Backed up under {account}. (title) | compliant |
+| chute.tsx:185, :188 | Backing up {file}… · Backing up {file}… {sent} of {total} | compliant |
+| chute.tsx:249 | The backup broke off. Drop it again. | compliant |
+| chute.tsx:231 | That didn't land. | compliant |
+| chute.tsx:287; room-client.tsx:884 | The take-back didn't go through. | compliant |
+| chute.tsx:551-561 | {n} files · {n} filed · {n} held · {n} reading / {n} receipts · today | compliant; the meter is the fold's door whenever a row is hidden (:581-592) |
+| chute.tsx:587 | Hide the older receipts / Show all {n} | compliant |
+| chute.tsx:600, :603 | Clear every settled receipt. The record keeps everything that filed. · Clear all | compliant |
+
+Send-it's hand-off (src/app/room/ingest/hand-off.ts, the Intranet's capture door and its client):
+
+| file:line | String | Verdict |
+|---|---|---|
+| src/lib/intranet/capture-door.ts:40 | Held in the Chute above. | decreed (CLAUDE.md:313) |
+| hand-off.ts:24 | Send-it paste (the held row's name) | compliant |
+| capture-door.ts:35, :54 | Kept in the brain. · Kept in the brain. Nothing names an account. | compliant |
+| capture-door.ts:66-68 | Filed to {account}. · Filed to {account}. The reader was down, so only the text filed. | compliant |
+| src/app/intranet/capture-actions.ts:110 | Nothing there to keep. | compliant |
+| capture-actions.ts:136 | Already on file. Nothing filed twice. (fallback) | carried from §2 row 26 |
+| capture-actions.ts:141 | That didn't land. | compliant |
+| capture-actions.ts:185 | Already in the brain — nothing new to add. | finding [mild]: writing canon rule 5 (CLAUDE.md:57), an em-dash appended clause whose second half restates the first (CLAUDE.md:114-116); added with the door in #353 |
+| chute.tsx:517 → held.tsx:32 | Don't file it. It stays in the brain. (the ✕ on a Send-it hold) | compliant |
+
+src/app/intranet/intranet-client.tsx adds no visible copy in pass 7; the hand-off rides an event (intranet-client.tsx:275-296) and the box keeps capture-door.ts's line.
+
+The move line's promise sentences (src/lib/room/engine.ts, pressOf at :222-256 and doorLine at :261-289):
+
+| file:line | String | Verdict |
+|---|---|---|
+| engine.ts:231 | Chase {who}. PROMISED {M/D}. | decreed (CLAUDE.md:435) |
+| engine.ts:236 | Chase {who}. The {M/D} wall passed. | decreed |
+| engine.ts:240 | Wait on {who}. Due today. | decreed |
+| engine.ts:245 | Wait on {who}. Promised {weekday / M/D}. | decreed |
+| engine.ts:254-255 | Chase {who}. Promised {N days ago}. · Wait on {who}. Promised {today / yesterday / N days ago}. | finding [mild, inferred]: writing canon rule 5, a sentence needing a second read (CLAUDE.md:57). In the dated line "Promised Friday" names the day the thing is due; in these dayless lines "Promised yesterday" names the day the promise was made, so "Wait on {who}. Promised today." can be read as due today |
+| engine.ts:597 | {line} +{N} | decreed (" +N counts the rest", CLAUDE.md:435); the door opens every promise (:598; src/app/room/room-client.tsx:1194-1218) |
+| engine.ts:151-157 | (after a meeting move) Promised {day}. · PROMISED {M/D}. · The {M/D} wall passed. | compliant |
+| engine.ts:261-289 | {owner} · {what}. · via {first name} · Promised to {hearer} · {Today M/D / weekday M/D / M/D} · {On tape / Filed thread / Call notes} {M/D}; Due {when} · no hearer on record; No day given | compliant; the cite words are the evidence ladder's own (engine.ts:205-209; CLAUDE.md:224-226) and the line is money-redacted (:288) |
+
+The CSV refusal receipt:
+
+| file:line | String | Verdict |
+|---|---|---|
+| src/app/room/ingest/use-ingest.ts:70-71 → receipt.tsx:80-82, :141-143 | Not filed here. Backed up. Drop the export in the Chute. | compliant; carries D2's three facts (CLAUDE.md:303); chain tests/ingest-hooks.test.ts › "a refused .csv on the Drop is vaulted and not read, and its receipt names the Chute" |
+| receipt.tsx:238-246 | ⇪ {file} · {M/D} (the refused export's first line) | finding [mild]: click-depth law (CLAUDE.md:439-441); the second line says "Backed up." but the line drops the "open" link every other backup carries (:239 tests `!row.note`), so the backup opens from nowhere; pinned that way by tests/ingest-faces.test.ts › "the refused export keeps its decreed line as the amber second line" |
+| src/app/room/read-file.ts:56 | The export goes in the Chute. | compliant (the reader's belt; planDrop refuses first) |
+
+The typed-note chip (src/app/room/room-client.tsx):
+
+| file:line | String | Verdict |
+|---|---|---|
+| room-client.tsx:2062-2069 | Reads as a typed note. Enter runs the full read. | compliant; the decreed chip (CLAUDE.md:315) with pass 3's tail; "Reads as" is the contested rule-4 form already logged at §2 row 3 |
+| src/lib/paste-files.ts:49 | TYPED NOTE — typed on the Drop (the note's head) | compliant; a label dash |
+
+BOOKED (src/app/sendbook/page.tsx):
+
+| file:line | String | Verdict |
+|---|---|---|
+| page.tsx:235 | BOOKED {M/D} | finding: click-depth law (CLAUDE.md:439-441); the badge carries a title and no door to the acceptance row, as ↩ REPLIED beside it has none (:228) |
+| page.tsx:233 | Their calendar accepted a meeting after this send. The calendar answered, so it doesn't count as a reply and doesn't warm the account. (title) | compliant |
+
+The stamp words (src/lib/groundwork/stamp.ts; the wing renders them as plain text, src/app/groundwork/page.tsx:751):
+
+| file:line | String | Verdict |
+|---|---|---|
+| stamp.ts:54-55 | WORKED THE MOVE FROM THE SHEET · SEATED {M/D} | decreed (CLAUDE.md:280) |
+| stamp.ts:62-63 | ACTED ON {WHO}’S {TERM} · ACTED ON THEIR {TERM} · ACTED ON THEIR LATEST ACTIVITY | decreed shape |
+| stamp.ts:70-71 | OPENED THE FIRST CONVERSATION · {N} SUPPORT CASES | decreed; the count opens nothing (click-depth law, CLAUDE.md:439-441), logged because the decree spells the count and not the missing door |
+| stamp.ts:76-77 | SENT THE NEWS NOTE · {HEADLINE} · SENT A NOTE ABOUT THEIR NEWS | compliant |
+| stamp.ts:82-83 | SENT THE READING-US NOTE · {N} SALES NAV READS · SENT THE READING-US NOTE · SALES NAV SHOWS THEM READING US | finding [mild]: constructed phrasing (CLAUDE.md:105-106); nothing else on screen is called a "reading-us note", and the count opens nothing |
+| stamp.ts:88-89 | ASKED INTO THE COLLEAGUE'S OPEN DEAL · CLOSES {DATE} | finding [mild]: constructed phrasing ("asked into") |
+| stamp.ts:94 | NUDGED THE '{SUBJECT}' THREAD · NO REPLY SINCE {DATE} | compliant |
+| stamp.ts:99 | REVIVED THE '{SUBJECT}' THREAD · QUIET SINCE {DATE} | compliant |
+| stamp.ts:104-105 | BRIEFED {CSM} ON THIS ACCOUNT · BRIEFED THE PARTNER MANAGER ON THIS ACCOUNT | compliant |
+| stamp.ts:110-111 | REFRESHED THE ACCOUNT RESEARCH · WAS {N} DAYS OLD · RAN THE BOOK-WIDE RESEARCH PASS | compliant |
+| stamp.ts:114 | DUG UP A SECOND CONTACT NAME | compliant |
+| stamp.ts:116 | SENT FIRST COLD EMAIL · STEP 1 | compliant; "STEP 1" is the Sendbook's decreed subtext grammar (CLAUDE.md:351) and the "steps" ban (:587) names the plural [contested] |
+| stamp.ts:119-123 | {RULE ID, spaced} · WORKED | compliant |
+
+Tally of 5.2: 87 rows, each a string or a family of one string's variants: 59 compliant, 15 decreed (one, OPENED THE FIRST CONVERSATION, with a click-depth note on its count), 2 carried from section 2 (the duplicate refusal on the receipt and on Send-it), and 11 findings: 5 against the click-depth law (the asks count, the playbook count, "N removed", the refused export's missing door, BOOKED), 3 against the plain-speech law's constructed-phrasing ban ("their promise", "the reading-us note", "asked into"), 2 against writing canon rule 5 ("Already in the brain — nothing new to add." and the dayless "Promised yesterday" [inferred]), and the contested rule-4 fallback "This reads like {claim}." All 11 are on copy pass 7 added. Three are pinned in their current shape in the chain: "1 their promise" (tests/ingest-faces.test.ts › "a filing's line carries exactly the account, each count, the day and the rung"), "Taken back from … N removed." (› "the other receipts read as the face draws them") and the refused export's line (› "the refused export keeps its decreed line as the amber second line").
