@@ -1,6 +1,6 @@
 ---
 title: Dead Code Appendix
-status: Audit pass 4 working lists, 2026-09-25
+status: Audit pass 4 working lists, 2026-09-25; re-walked by pass 8, 2026-10-06
 owner: Founder
 related_docs:
   - docs/architecture/dead-code-ledger.md
@@ -344,3 +344,234 @@ LOADED_DISPOSITION_STATUSES = motion, not-mine, parked (src/lib/today/overlay.ts
 ## 11. Comment claims checked and found true
 
 So the next pass need not re-check them: src/lib/activity/excerpt.ts:3 "the one cleaner both halves use" (ingest.ts:8 imports it on the upload path); src/lib/activity/run.ts:1110 "exactly the five namespaces" (stores.ts:14-18); src/lib/activity/distill.ts:1 "the ONLY place the second record meets a model"; src/app/activity/evidence/route.ts:1 "the ONE place staged slice bodies leave the store" (run.ts:220 reads them inside the run); src/lib/pipeline/collect.ts:1-3; src/lib/account/facts.ts:16-20; src/lib/dashboard/complete.ts:1-4; src/lib/dashboard/stages.ts:367; src/lib/today/build.ts:538-539; src/lib/groundwork/day.ts:97; src/lib/public-access.ts:1-2; src/lib/access-proxy.ts:24-25 [inferred]; src/lib/groundwork/readout.ts:231 (plan §3.1.5 resolves to groundwork-room-plan.md §3.1 rule 5); src/app/room/page.tsx:789 "one shared build" for the room's two doors; src/app/room/chute.tsx:3 "the room's single intake" (decree wording; the Intranet mount is by its own comment's decree of 2026-09-02, intranet/page.tsx:118-120); src/lib/claude/health.ts:28 "The one gate every *Available() reads" (partners/actions.ts:126-128 bypasses it with equivalent logic [inferred]). Doc references that resolve: the groundwork plan sections cited from signals.ts:7, wire.ts:5, file.ts:130, proximity.ts:2, institutions.ts:1, compose.ts:2, :5, :49, readout.ts:1, :5, :45, :225, :231, groundwork/actions.ts:5, page.tsx:95, copy-stamp.tsx:4 (docs/plans/groundwork-room-plan.md §3 :111, §3.1 :129, §3.5 :224, §6 :419, §7.2 :547, §8 D8 :582, :700, §9 :794); docs/intranet-research-room.md from doctrine.ts:5, normalize.ts:49, synthesize.ts:43, ledger.ts:51, doctrine.ts:10-13; docs/command-center-tables.sql, docs/dashboard-tables.sql, docs/intranet-tables.sql from the sites that cite them.
+
+## 12. Pass 8 lists (2026-10-06, main d119c52)
+
+The lists behind the ledger's "Re-walk, pass 8" section. Sections 1 to 11 above are pass 4's and stand as written; nothing here replaces them.
+
+### 12.1 Method and how to re-run it
+
+knip 5.88.1, run with `npx -y knip@5 --config <file> --no-progress --reporter json` from the repo root, nothing installed into the repo. Two configs, kept outside the repo and given here whole.
+
+Run one counts tests, the seed and tools as readers:
+
+```json
+{
+  "entry": [
+    "src/app/**/{page,layout,route,loading,error,not-found,template,default,global-error}.{ts,tsx}",
+    "src/instrumentation.ts",
+    "src/proxy.ts",
+    "prisma/seed.ts",
+    "tests/**/*.test.ts",
+    "tools/**/*.{mjs,js,ts}",
+    "next.config.ts",
+    "prisma.config.ts"
+  ],
+  "project": ["src/**/*.{ts,tsx}", "prisma/**/*.ts", "tests/**/*.ts", "tools/**/*.{mjs,js,ts}"],
+  "ignore": ["src/generated/**"]
+}
+```
+
+Run two is production mode (`--production`) with the app's own entries only. The tsx, node and prisma plugins are off: a first attempt that only listed tests/** under `ignore`, plugins on and production mode off, returned nearly the test-counting result, consistent with a plugin reading package.json's `test` script and adding every chain suite back as an entry [inferred]:
+
+```json
+{
+  "entry": [
+    "src/app/**/{page,layout,route,loading,error,not-found,template,default,global-error}.{ts,tsx}!",
+    "src/instrumentation.ts!",
+    "src/proxy.ts!"
+  ],
+  "project": ["src/**/*.{ts,tsx}!"],
+  "ignore": ["src/generated/**"],
+  "tsx": false,
+  "node": false,
+  "prisma": false
+}
+```
+
+Classification of each src export knip reports, by a node script over the two JSON outputs:
+
+- reported by run one: nothing outside its file references it. If its own file names it only at the declaration (comments stripped), or the report is a re-export line, it is dead (§12.3); otherwise the `export` keyword is superfluous (§12.5).
+- reported by run two only: only tests or the seed import it. Same in-file test: unused in its own file means kept alive only by tests (§12.4); used there means a live function still calls it and the export exists for a test (counted, not listed: 159 in 72 files, the most in src/lib/today/build.ts with 9 and src/lib/intranet/extract.ts with 7).
+- types are listed apart (§12.6), as pass 4 did.
+- closure: a TypeScript-AST pass over each file holding a dead export marks any other top-level declaration dead when every reference to it in that file sits inside a dead declaration and knip reports no outside importer. It added BRIEFS, matches, partnerMessage, movedThisWeek, defaultCloseDate, dayGroupLabel and corpusFor (§12.4, marked +), and the private helpers named there.
+
+Dating: the same two runs on `git archive` copies of 741f3ad (pass 4's tree) and 00fe8b2 (pass 5 closed), with node_modules and src/generated linked in, unpacked in the session's scratch directory. Calibration on 741f3ad: pass 4's eight A1 files exactly; all 39 symbols the A2 table names; 32 of the 35 in §4 above, with roomReopen returned as unreferenced (its test reads it by name) and motionsFor and formatContributingSignal returned inside test-only files; branches.ts, motions.ts, format.ts and the HML three as files only tests or the seed import. The run also returns symbols pass 4 did not list, recorded in the ledger as pass-4 misses.
+
+CSS: every class selector in each `.module.css` (comments stripped) against `id.name`, `id["name"]` and the prefix of each `` id[`prefix${…}`] `` template in every file that imports the module as `id`; each template was then held to its value map and each remaining `id[expr]` resolved by hand from its map.
+
+### 12.2 Modules nothing imports
+
+| File | Lines | Last importer, gone in |
+|---|---|---|
+| src/lib/look-into/live.ts | 106 | tests/narrative.test.ts (hand), 00fe8b2; /today and the look-into band, ab281df |
+| src/lib/intel/research.ts | 38 | look-into/live.ts (itself orphaned); the Board, /today and today/ask-next.tsx, ab281df; tests/ask-next.test.ts, 00fe8b2 |
+| src/app/dashboard.module.css | 811 | src/app/dashboard-client.tsx, ab281df |
+
+Run two also reports src/lib/hml.ts, src/lib/hml-rules-config.ts and src/lib/prospect-scoring.ts: the seed's (ledger A4).
+
+### 12.3 Exports nothing references (10)
+
+| File:line | Name | Since |
+|---|---|---|
+| src/app/room/actions.ts:633 | roomActionUndo | pass 7, ec2181b (#360); text-pinned (ledger 2b) |
+| src/lib/today/build.ts:773 | voiceOfBaseGuidance | pass 5 |
+| src/lib/groundwork/day.ts:32 | BAND_TABLE (re-export) | pass 5 |
+| src/lib/groundwork/day.ts:32 | chicagoMinutes (re-export) | pass 5 |
+| src/lib/book/index.ts:81 | industries | pass-4 miss |
+| src/lib/book/index.ts:82 | states | pass-4 miss |
+| src/lib/command-center/data.ts:15 | STAGES (re-export) | pass-4 miss |
+| src/lib/command-center/data.ts:15 | stageLabel (re-export) | pass-4 miss |
+| src/lib/command-center/data.ts:121 | todayIso | pass-4 miss |
+| src/components/ui/field.tsx:33 | Select | pass-4 miss |
+
+### 12.4 Exports kept alive only by tests (36, and 7 by closure)
+
+| File:line | Name | Test references | Since |
+|---|---|---|---|
+| src/lib/salesforce.ts:97 | sfNewOppUrl | today (chain) | pass 5 |
+| src/lib/salesforce.ts:129 | sfNewContactUrl | today (chain) | pass 5 |
+| src/lib/salesforce.ts:146 | sfLogCallUrl | today (chain) | pass 5 |
+| src/lib/salesforce.ts:85 | + defaultCloseDate | today (chain) | pass 5 |
+| src/lib/groundwork/day.ts:32 | bandAt (re-export) | canon/groundwork (chain) | pass 5 |
+| src/lib/groundwork/day.ts:32 | currentBand (re-export) | canon/groundwork, groundwork (chain) | ledger A3; the function is now used from bands.ts |
+| src/lib/groundwork/day.ts:215 | QUEUE_RULE_IDS | canon/groundwork (chain) | pass 5 |
+| src/lib/groundwork/institutions.ts:20 | instNoteBody | groundwork (chain) | ledger A3; kept by ruling |
+| src/lib/today/build.ts:207 | commitmentsFromCards | today, read-absorption (chain) | pass 5 |
+| src/lib/today/build.ts:274 | outreachGuidance | today (chain) | pass 5 |
+| src/lib/today/build.ts:252 | + partnerMessage | today (chain) | pass 5 |
+| src/lib/today/build.ts:321 | triageGuidance | today (chain) | pass 5 |
+| src/lib/today/build.ts:394 | weekStamp | today, tz (chain) | pass-4 miss |
+| src/lib/today/build.ts:429 | chipTone | today (chain) | pass 5 |
+| src/lib/today/build.ts:682 | partnerWeekMessage | today (chain) | pass-4 miss |
+| src/lib/today/build.ts:745 | armPartnersGuidance | today (chain) | pass 5 |
+| src/lib/today/build.ts:839 | stateOfPlay | today (chain) | pass 5 |
+| src/lib/today/build.ts:817 | + movedThisWeek | today (chain) | pass 5 |
+| src/lib/today/follow-ups.ts:63 | outreachSubjectKey | today (chain) | pass 5 |
+| src/lib/today/follow-ups.ts:167 | groupUpcomingByDay | today (chain) | pass 5 |
+| src/lib/today/follow-ups.ts:148 | + dayGroupLabel | today (chain) | pass 5 |
+| src/lib/today/follow-ups.ts:188 | followUpMessage | today (chain) | pass 5 |
+| src/lib/intel/discovery.ts:487 | questionsFor | intel (chain), playbook-program (hand) | pass 5 |
+| src/lib/today/ledger.ts:16 | withAsk | ledger (hand) | pass 5 |
+| src/lib/today/ledger.ts:50 | sortEvents | ledger (hand) | pass 5 |
+| src/lib/dashboard/stages.ts:333 | nodeBriefs | intel (chain) | pass 5 |
+| src/lib/dashboard/stages.ts:308 | + BRIEFS | none directly; nodeBriefs reads it | pass 5 |
+| src/lib/intranet/evals.ts:84 | recallAt | intranet (hand) | pass 5 |
+| src/lib/intranet/evals.ts:97 | attributionHolds | intranet (hand) | pass 5 |
+| src/lib/intranet/evals.ts:120 | groundedness | intranet (hand) | pass 5 |
+| src/lib/intranet/doctrine.ts:167 | AGE_DAYS | intranet (hand) | pass 5 |
+| src/components/wayfinder-routes.ts:41 | pageFileFor | canon/standing-decrees (chain) | pass 5 |
+| src/lib/paste-files.ts:364 | parseVtt | paste-files (chain) | pass-4 miss |
+| src/lib/ingest/filing.ts:155 | findFiling | ingest-filing (chain) | pass 7, 0fb8419 (#342) |
+| src/lib/room/paste.ts:56 | dialectOf | followups, ingest-dialect (chain) | pass 7, 292bfe5 (#340) |
+| src/lib/room/paste.ts:62 | sourceFor | followups, ingest-dialect (chain) | pass 7, 292bfe5 (#340) |
+| src/lib/ingest/doors.ts:27 | isDoor | intranet-capture, canon/provenance (chain) | pass 7, 8db896e (#341) |
+| src/lib/pipeline/plain.ts:83 | ARRIVAL | pipeline-build (hand) | pass 5 |
+| src/lib/intel/bank.ts:30 | questionById | canon/standing-decrees (chain) | pass 5; kept by ruling (C13) |
+| src/lib/intel/bank.ts:113 | selectQuestions | read-absorption (chain), playbook-program (hand) | pass-4 miss (scaffold-pass.md §C) |
+| src/lib/intel/bank.ts:79 | + matches | none directly; selectQuestions reads it | pass-4 miss |
+| src/lib/intel/extract.ts:440 | dealIntelFor | extract (chain); record-read names it in a text scan only (:1260) | pass 7, aa36489 (#349) |
+| src/lib/intel/extract.ts:99 | + corpusFor | closer, extract, canon/ted-doctrine, record-read, addressed-to-us, accepted-invite, pipeline-fixes (chain) | pass 7, 0ce08eb (#347) |
+
+Private helpers the closure also finds dead, not exported and not counted: src/lib/today/build.ts COMMITMENT_WINDOW_DAYS, Guidance, pad2, ChipTone, StateOfPlay; src/lib/intel/bank.ts PHASE_RANK, OPENERS, productOf, sophOf, facetMatch; src/lib/salesforce.ts dfv; src/lib/today/follow-ups.ts DayGroup, utcDayKey; src/lib/intel/discovery.ts PHASE_ORDER; src/lib/today/ledger.ts LedgerEvent, LedgerSrc; src/lib/intel/extract.ts peopleFromActors, peopleIn, TRANSCRIPT_BODY_RE, short.
+
+### 12.5 Superfluous export keywords (24, and 3 knip does not report)
+
+Used in their own file, imported by no other file and no test.
+
+- Since pass 7: src/lib/ingest/dialect.ts:58 headRe; src/lib/ingest/vault.ts:167 STALE_PIECE_MS; src/lib/ingest/wrote.ts:56 entryLine; src/lib/ingest/verdict-reason.ts:325 verdictPages; src/lib/record/whose-move.ts:85 RECAP_DAYS; src/lib/activity/read.ts:79 pickPart.
+- Since pass 5: src/lib/groundwork/bands.ts:19 chicagoMinutes.
+- On 741f3ad too, not in pass 4's A5: src/lib/dashboard/stages.ts:308 BRIEFS and src/lib/intel/bank.ts:79 matches (both now dead by closure, §12.4); src/lib/groundwork/file.ts:244 WIRE_NS; src/lib/intranet/extract.ts:28 SYSTEM, :98 EMPTY_READ, :344 READ_BODY_CAP, :407 PROMPT_VERSION; src/lib/intranet/decompose.ts:25 KEEP; src/lib/intranet/synthesize.ts:30 EMPTY_ANSWER, :129 SYSTEM; src/lib/auth.ts:6 ACCESS_COOKIE_NAME (src/lib/access-proxy.ts:3 keeps its own copy); src/app/intranet/runners.ts:138 syncApp, :470 ingestPlaybook, :931 indexTopics, :1081 decomposeTopics, :1381 readTimeAcrossTopics; src/lib/pricing/index.ts:11 currency.
+- Pass 4's A5, still exported: src/lib/intranet/doctrine.ts:90 CONFIDENCES, :94 ASK_SHAPES, :104 ORIGINS (read by the exported types beside them, which is why knip does not report them).
+
+### 12.6 Unused type exports, by file (83 in src)
+
+Imported by no other file. * marks a type a test imports. Local use was not checked, as in §1.
+
+| File | Types (name:line) |
+|---|---|
+| src/app/intake/grabs.ts | Tool:122 |
+| src/app/intranet/capture-actions.ts | CaptureReply:61 |
+| src/app/room/chute-ledger.ts | LiveRun:354, LedgerStorage:136* |
+| src/app/room/ingest/use-ingest.ts | IngestDoor:36*, PdfReader:45*, DropPlan:51*, FilingOpts:88*, Filed:121* |
+| src/app/room/ingest/use-undo.ts | Undoable:15* |
+| src/app/room/ingest/use-verdict.ts | Dismissal:96* |
+| src/app/sidekick-v3/data.ts | ScreenOverride:25 |
+| src/app/sidekick/data.ts | ScreenOverride:21 |
+| src/components/use-dismiss.ts | DismissTarget:22* |
+| src/lib/act/lane.ts | Seat:66 |
+| src/lib/activity/ingest.ts | Ingest:58 |
+| src/lib/activity/read.ts | StoredNote:48 |
+| src/lib/activity/run.ts | SecondRecordPeople:202, SecondRecordClient:237* |
+| src/lib/book/research.ts | Evidence:3 |
+| src/lib/collateral/canon.ts | Product:15 |
+| src/lib/command-center/data.ts | PeoRow:14, Stage:14 |
+| src/lib/db/migrate.ts | MigrateReport:102, Presence:20*, AdditiveMigration:26*, RawClient:97* |
+| src/lib/ingest/dialect.ts | Head:32, Source:112 |
+| src/lib/ingest/fanout.ts | TheirCommitment:43, LoopClient:141*, CompletionClient:377* |
+| src/lib/ingest/filing.ts | NewFiling:27, FilingRow:44, FilingClient:59*, FilingData:87* |
+| src/lib/ingest/guard.ts | GuardPlan:61 |
+| src/lib/ingest/route.ts | RosterRow:33*, RosterClient:37* |
+| src/lib/ingest/vault.ts | VaultDoors:59*, VaultChunkClient:134*, Piece:169* |
+| src/lib/ingest/verdict-reason.ts | AccountPage:40, VerdictAnswer:50, VerdictClient:44* |
+| src/lib/intel/bank.ts | Filters:65* |
+| src/lib/intel/evidence.ts | CheckSuggestion:11 |
+| src/lib/intranet/bridges.ts | ProspectAsk:23* |
+| src/lib/intranet/capture-door.ts | CaptureRoute:23, CaptureVerdict:30 |
+| src/lib/intranet/extract.ts | TopicFiling:94, ReadClient:333* |
+| src/lib/intranet/index-topics.ts | Pending:5 |
+| src/lib/intranet/verdicts.ts | Verdict:16 |
+| src/lib/notes/write.ts | NewTodo:189 |
+| src/lib/pipeline/report.ts | Provenance:1, Field:7 |
+| src/lib/playbook/store.ts | PlaybookClient:102 |
+| src/lib/record/accounts.ts | SheetSecond:64 |
+| src/lib/record/docs.ts | RecordRow:39, DocsInput:147 |
+| src/lib/record/stores.ts | LoadedStores:26 |
+| src/lib/record/whose-move.ts | MoveFacts:50, TouchForMove:64, WhoseMoveOptions:70 |
+| src/lib/room/deliverables.ts | Commitment:11 |
+| src/lib/room/drop-plan.ts | DropSplit:8 |
+| src/lib/room/engine.ts | PromiseIn:24* |
+| src/lib/room/gaps.ts | Gap:25, GapClient:64 |
+| src/lib/room/owed.ts | TheirLoop:91 |
+| src/lib/room/paste.ts | PasteRefusal:11, Dialect:54 |
+| src/lib/room/sheet-view.ts | SeatForSheet:65, SheetTodo:18* |
+| src/lib/scratch.ts | StrikeClient:28* |
+| src/lib/sendbook/read.ts | RowOrDoc:133, SendbookRead:254, Sendbook:287 |
+| src/lib/today/build.ts | Commitment:182, Narrative:690 |
+| src/lib/today/followup-file.ts | FollowUpFiler:7 |
+| src/lib/today/followup-rows.ts | FollowUpRowView:18 |
+
+Outside src, as in §1: tests/activity-fixtures.ts GoldenCase:130 (and its export csvField:12, used in its own file only). Of pass 4's 148, the 17 src types still here are ScreenOverride ×2, Seat, Ingest, Evidence, Product, PeoRow, Stage, Pending, Verdict, Provenance, Field, deliverables' Commitment, Gap, Sendbook, build's Commitment and Narrative.
+
+### 12.7 CSS modules
+
+| Module | Importers | Classes | Unreferenced after resolution |
+|---|---|---|---|
+| src/app/command-center.module.css | 20 | 434 | 1: `.prTag_stash` (:1207); the template `prTag_${e.tag}` (src/app/partners/page.tsx:226) takes outreach, reply, note or log (:29); `health_` takes green, yellow, red (src/app/accounts-client.tsx:500) |
+| src/app/room/room.module.css | 7 | 285 | 0 (template `m_` takes g, y, r: src/app/room/page.tsx:219) |
+| src/app/groundwork/groundwork.module.css | 6 | 103 | 0 (templates `h` and `tick` take heatOf's 1, 2, 3: src/lib/groundwork/day.ts:235) |
+| src/app/playbook/product-sheet.module.css | 1 | 81 | 0 (tape, filed, research through `styles[rung]`; vOk, vAsk, vNo, vNote through VERDICT_CLASS) |
+| src/app/sidekick/sidekick.module.css | 1 | 67 | 0 (high, medium, low through `styles[s.tier]`) |
+| src/app/sidekick-v3/sidekick-v3.module.css | 1 | 59 | 0 |
+| src/app/payroll-demo-sidekick/payroll-demo.module.css | 1 | 49 | 0 |
+| src/components/scratch/scratchpad.module.css | 1 | 29 | 0 |
+| src/app/sendbook/sendbook.module.css | 1 | 21 | 0 |
+| src/components/account-notes.module.css | 1 | 18 | 0 |
+| src/app/sidekick/flows/prismhr-global/flow.module.css | 1 | 18 | 0 |
+| src/app/playbook/playbook.module.css | 2 | 15 | 0 |
+| src/app/asks/asks.module.css | 1 | 14 | 0 |
+| src/components/presence/presence.module.css | 1 | 12 | 0 |
+| src/app/activity/dock.module.css | 1 | 8 | 0 |
+| src/components/sf.module.css | 1 | 5 | 0 |
+| src/app/demos/demos.module.css | 1 | 4 | 0 |
+| src/app/dashboard.module.css | 0 | 89 | all 89: no file imports the module (811 lines) |
+
+Total 1,311 classes in 18 modules; 1,222 in the 17 imported modules, one of them dead.
+
+### 12.8 The suites outside the chain, run on d119c52
+
+`npx tsx --test tests/<name>.test.ts`, one at a time. Pass 4's count in brackets where it differs. Every suite that changed count was edited in ab281df, which removed the test-only exports and their cases; playbook-program also in 00fe8b2 (the ask-next block), pipeline-build in 0ce08eb (#347), route-notes in e1b6de4 (#344), intranet in df38ecb (#353).
+
+account-facts 12/12; act-lane 7/7; activity-classify 11/11 [12]; activity-gems 17/17; ask-links 9/9; ask-live 4/4; board-lift 2/2; claude-workspace 2/2; intranet 169/174 [193/193]; key-health 7/7; ledger 7/7 [11]; live-contacts 4/4; pipeline-build 46/46 [48]; pipeline-density 11/11; pipeline-edits 8/8; pipeline-report 35/35 [42]; playbook-program 10/10 [15]; presence 10/10; price-desk 7/7; relationship 6/6; room-grammar 10/10; room-sheet 13/13; route-notes 25/25 [26]; scratch 6/6; sendbook 11/11.
+
+The intranet suite's five failures are the subtests of "the grab takes the whole thread, structured (IV.4)": "every message is emitted with the delimiters the parser was built for", "attribution is read from the DOM, never inferred from layout", "it scrolls until the top stops yielding, not eight passes", "it harvests incrementally, because Teams unloads what scrolls away", "an unrecognised DOM degrades to plain text and says so". Each reads src/app/intake/capture-shelf.tsx (tests/intranet.test.ts:1493); the markers now live in src/app/intake/grabs.ts (00fe8b2, #336). Gone since pass 4: narrative and ask-next (00fe8b2), ingest-defects-deferred (46510a5, #348).
