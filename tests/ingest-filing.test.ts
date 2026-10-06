@@ -752,19 +752,29 @@ describe("the receipt sentences read from the result (D4, D7)", () => {
   });
 
   test("both doors read the same sentences from the result, and the ledger keeps them", () => {
+    // Rewritten for slice 18a (the face approved 2026-10-06): the two old
+    // receipt strings retired into one receipt component both doors paint
+    // (src/app/room/ingest/receipt.tsx), which reads the sentences from the
+    // row each door fills from the result. tests/ingest-faces.test.ts
+    // renders it.
     const chute = read("src/app/room/chute.tsx");
     const client = read("src/app/room/room-client.tsx");
-    assert.ok(chute.includes("filingSentences(it)"));
-    assert.ok(client.includes("...filingSentences(r),"));
-    for (const key of ["filingId: r.filingId", "windows: r.windows", "dupeCheck: r.dupeCheck"])
-      assert.ok(chute.includes(key), key);
+    const receipt = read("src/app/room/ingest/receipt.tsx");
+    assert.ok(receipt.includes("filingSentences(r)"));
+    for (const [name, face] of [["the Chute", chute], ["the Drop", client]] as const) {
+      assert.match(face, /import \{ ReceiptLine \} from "\.\/ingest\/receipt";/, name);
+      assert.ok(face.includes("<ReceiptLine"), `${name} paints the one receipt`);
+      for (const key of ["filingId: r.filingId", "windows: r.windows", "dupeCheck: r.dupeCheck"])
+        assert.ok(face.includes(key), `${name}: ${key}`);
+    }
     const ledger = read("src/app/room/chute-ledger.ts");
     for (const key of ["filingId: x.filingId", "windows: x.windows", "dupeCheck: x.dupeCheck"])
       assert.ok(ledger.includes(key), key);
     // The windows a reader cut ride the row to the pick's re-run on the
-    // Chute, and the mismatch state on the Drop.
-    assert.equal((chute.match(/\bit\.windows,\n/g) ?? []).length, 2);
-    assert.ok(client.includes("filePaste(mismatch.text, true, mismatch.files, mismatch.windows)"));
+    // Chute (the held box's one pick, which replaced the batch-mate button
+    // and the select), and the held question on the Drop.
+    assert.equal((chute.match(/\bit\.windows,\n/g) ?? []).length, 1);
+    assert.ok(client.includes("filePaste(mismatch.text, true, mismatch.files, mismatch.windows, to)"));
     assert.ok(client.includes("filePaste(read.text, false, waiting, read.windows)"));
   });
 });

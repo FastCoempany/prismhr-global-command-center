@@ -1450,22 +1450,6 @@ button.sdRadio:hover {
   color: var(--soft);
 }
 
-/* The misfile guard — caution, not failure: nothing was written. */
-.misfile {
-  margin-top: 7px;
-  padding: 7px 9px;
-  background: rgba(245, 158, 11, 0.09);
-  border-left: 2px solid var(--amber);
-  border-radius: 0 7px 7px 0;
-  font-size: 12.5px;
-  line-height: 1.55;
-  color: var(--soft);
-}
-.misfile b {
-  color: var(--ink);
-  font-weight: 600;
-}
-
 /* A wall that already passed is real risk, and the contingency that rode in
    with the commitment becomes the move. */
 .stWall {
@@ -1497,38 +1481,6 @@ button.sdRadio:hover {
 .rsrchList {
   margin: 3px 0 0;
   padding-left: 17px;
-}
-
-.openedChip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  margin-left: 6px;
-  padding: 1px 7px;
-  border-radius: 999px;
-  border: 1px solid rgba(30, 91, 70, 0.3);
-  background: rgba(30, 91, 70, 0.07);
-  font-size: 11.5px;
-  color: var(--forest);
-}
-.openedGone {
-  border-color: var(--hair);
-  background: none;
-  color: var(--quiet);
-  text-decoration: line-through;
-}
-.openedX {
-  border: 0;
-  background: none;
-  padding: 0;
-  color: inherit;
-  font-size: 11px;
-  cursor: pointer;
-  opacity: 0.7;
-}
-.openedX:hover {
-  opacity: 1;
-  color: var(--red);
 }
 
 /* ── the follow-up list — the add menu's own drawer ──────────────────────
@@ -1744,61 +1696,44 @@ button.sdRadio:hover {
   gap: 12px;
   margin-top: 8px;
 }
-.chuteMeterLine {
-  font-family: var(--f-mono), Menlo, monospace;
+.chuteMeterLine,
+.chuteMeterBtn {
+  font-family: var(--f-mono, var(--ds-font-mono));
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--quiet);
+  color: var(--ds-ink-soft);
 }
-.chuteFold {
+/* The meter is the fold's door when receipts sit behind it (D12; the
+   click-depth law): every compression opens. */
+.chuteMeterBtn {
   border: 0;
   background: none;
   padding: 2px 0;
   cursor: pointer;
-  font-family: var(--f-mono), Menlo, monospace;
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--faint);
 }
-.chuteFold:hover {
-  color: var(--ink);
+.chuteMeterBtn:hover {
+  color: var(--ds-ink);
 }
 .chuteList {
   list-style: none;
-  margin: 8px 0 0;
+  margin: 6px 0 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
 }
 .chuteItem {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
+  padding: 9px 0;
+  border-top: 1px solid var(--ds-hair);
   font-size: 12.5px;
-  color: var(--soft);
-  flex-wrap: wrap;
+  color: var(--ds-ink-soft);
+}
+.chuteItem:first-child {
+  border-top: 0;
 }
 .chuteFile {
   font-family: var(--f-mono), Menlo, monospace;
   font-size: 10.5px;
   color: var(--ink);
-}
-.chuteDone {
-  color: #1a7f3c;
-}
-.chuteErr {
-  color: var(--red, #ef4444);
-}
-.chuteDupe {
-  color: var(--quiet);
-}
-.chuteWarn {
-  color: var(--amber, #f59e0b);
 }
 .chuteUndo {
   margin-left: 8px;
@@ -1815,60 +1750,326 @@ button.sdRadio:hover {
 .chuteUndo:hover {
   color: var(--red, #ef4444);
 }
-.chuteDismiss {
-  border: 0;
-  background: none;
-  padding: 0 2px;
-  cursor: pointer;
-  font-family: var(--f-mono), Menlo, monospace;
-  font-size: 10px;
-  color: var(--faint);
-  opacity: 0;
-}
-.chuteItem:hover .chuteDismiss {
-  opacity: 1;
-}
-.chuteDismiss:hover {
-  color: var(--red, #ef4444);
-}
 .chuteClear {
+  margin-left: auto;
   border: 0;
   background: none;
   padding: 2px 0;
   cursor: pointer;
-  font-family: var(--f-mono), Menlo, monospace;
-  font-size: 9px;
+  font-family: var(--f-mono, var(--ds-font-mono));
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.12em;
-  color: var(--faint);
+  color: var(--ds-ink-faint);
   text-transform: uppercase;
 }
 .chuteClear:hover {
-  color: var(--ink);
+  color: var(--ds-ink);
 }
-.chutePick {
-  display: inline-flex;
+
+/* ── the held file and the receipt (slice 18a; the face approved
+   2026-10-06) ── One held box and one receipt line at every door: the
+   Chute, the Drop and the Intranet's Send-it through the Chute mounted on
+   its page. Amber marks a hold and a caveat; the box's primary button is
+   solid ink; green is the ✓ alone; no orange, because the row's move owns
+   the page's one orange. The --ds-* tokens sit on :root (config/
+   design-tokens.css), so the Intranet's mount, outside .room, reads them
+   too. */
+.held {
+  background: var(--ds-surface);
+  border: 1px solid var(--ds-hair-strong);
+  border-left: 3px solid var(--ds-amber);
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-family: var(--f-sans, var(--ds-font-sans));
+  color: var(--ds-ink);
+}
+.heldTop {
+  display: flex;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
 }
-.chuteSel {
-  max-width: 340px;
-  font-size: 12px;
-  padding: 2px 6px;
-  border: 1px solid rgba(10, 28, 64, 0.22);
-  border-radius: 7px;
-  background: #fff;
-  color: var(--ink);
+.heldPill {
+  font: 600 10px/1.4 var(--f-mono, var(--ds-font-mono));
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  background: var(--ds-amber-soft);
+  color: var(--ds-ink);
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+.heldFile {
+  font: 500 10.5px/1.5 var(--f-mono, var(--ds-font-mono));
+  color: var(--ds-ink);
+  overflow-wrap: anywhere;
+}
+.heldReason,
+.heldSay {
+  display: block;
+  margin: 8px 0 0;
+  border: 0;
+  background: none;
+  padding: 0;
+  text-align: left;
+  font: 500 15px/1.5 var(--f-sans, var(--ds-font-sans));
+  color: var(--ds-ink);
+}
+.heldReason {
+  cursor: pointer;
+}
+.heldReason:hover {
+  text-decoration: underline;
+  text-decoration-color: var(--ds-ink-quiet);
+  text-underline-offset: 3px;
+}
+.heldWhy {
+  margin-left: 6px;
+  font: 600 10px/1 var(--f-mono, var(--ds-font-mono));
+  letter-spacing: 0.1em;
+  color: var(--ds-ink-faint);
+}
+.heldGrounds {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  background: var(--ds-surface-sub);
+  border-radius: 6px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 14px;
+}
+.heldK {
+  font: 600 10px/1.9 var(--f-mono, var(--ds-font-mono));
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ds-ink-faint);
+  white-space: nowrap;
+}
+.heldKWeb {
+  color: var(--ds-blue);
+}
+.heldV {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--ds-ink-soft);
+  overflow-wrap: anywhere;
+}
+.heldChoices {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+.heldSolid {
+  border: 0;
+  background: var(--ds-ink);
+  color: var(--ds-on-ink);
+  border-radius: 4px;
+  padding: 7px 14px;
+  font: 600 13px/1.2 var(--f-sans, var(--ds-font-sans));
+  cursor: pointer;
+}
+.heldSolid:hover {
+  background: var(--ds-ink-700);
+}
+.heldText {
+  border: 0;
+  background: none;
+  padding: 4px 0;
+  font: 600 13px/1.2 var(--f-sans, var(--ds-font-sans));
+  color: var(--ds-ink-soft);
+  cursor: pointer;
+}
+.heldText:hover {
+  color: var(--ds-ink);
+}
+.heldSolid:disabled,
+.heldText:disabled,
+.heldOther:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.heldX {
+  margin-left: auto;
+  border: 0;
+  background: none;
+  padding: 2px 4px;
+  font-size: 14px;
+  color: var(--ds-ink-faint);
+  cursor: pointer;
+  opacity: 0;
+}
+.held:hover .heldX,
+.heldX:focus-visible {
+  opacity: 1;
+}
+.heldX:hover {
+  color: var(--ds-ink);
+}
+.heldOthers {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  border: 1px solid var(--ds-hair-strong);
+  border-radius: 6px;
+  background: var(--ds-surface);
+}
+.heldOthers > li + li {
+  border-top: 1px solid var(--ds-hair);
+}
+.heldOther {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 12px;
+  border: 0;
+  background: none;
+  text-align: left;
+  font: 400 13.5px/1.4 var(--f-sans, var(--ds-font-sans));
+  color: var(--ds-ink);
+  cursor: pointer;
+}
+.heldOther:hover {
+  background: var(--ds-surface-sub);
+}
+.heldOtherRung {
+  margin-left: auto;
+  font: 600 10px/1.4 var(--f-mono, var(--ds-font-mono));
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ds-ink-faint);
+}
+.heldSearch {
+  width: 100%;
+  border: 0;
+  background: none;
+  padding: 8px 12px;
+  font: 400 13.5px/1.4 var(--f-sans, var(--ds-font-sans));
+  color: var(--ds-ink);
+}
+.heldSearch:focus {
+  outline: none;
+  background: var(--ds-surface-sub);
 }
 
-.dropErr {
-  display: block;
-  font: 600 10.5px/1.5 var(--font-mono);
-  letter-spacing: 0.08em;
-  margin-top: 4px;
-  color: var(--red, #ef4444);
+.rcptRow {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
 }
+.rcptLine,
+.rcptQuiet,
+.rcptErr,
+.rcptWarn {
+  font: 500 11.5px/1.6 var(--f-mono, var(--ds-font-mono));
+  letter-spacing: 0.02em;
+  color: var(--ds-ink-soft);
+  overflow-wrap: anywhere;
+}
+.rcptQuiet {
+  color: var(--ds-ink-faint);
+  margin: 0;
+}
+.rcptErr {
+  color: var(--ds-red);
+}
+.rcptWarn {
+  color: var(--ds-ink-soft);
+  border-left: 2px solid var(--ds-amber);
+  padding-left: 8px;
+}
+.rcptLine a,
+.rcptWrote a {
+  color: var(--ds-ink);
+  text-decoration: none;
+  border-bottom: 1px solid var(--ds-ink-quiet);
+}
+.rcptOk {
+  margin-right: 4px;
+  color: var(--ds-green);
+  font-weight: 700;
+}
+.rcptAcct {
+  color: var(--ds-ink);
+}
+.rcptOpen {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.rcptOpen:hover {
+  color: var(--ds-ink);
+}
+.rcptCtl {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+  opacity: 0;
+}
+.rcptRow:hover .rcptCtl,
+.rcptCtl:focus-within {
+  opacity: 1;
+}
+.rcptCtl button {
+  border: 0;
+  background: none;
+  padding: 0 3px;
+  font-size: 13px;
+  color: var(--ds-ink-faint);
+  cursor: pointer;
+}
+.rcptCtl button:hover {
+  color: var(--ds-ink);
+}
+.rcptCaveat {
+  margin: 4px 0 0;
+  padding-left: 10px;
+  border-left: 2px solid var(--ds-amber);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ds-ink-soft);
+}
+.rcptWrote {
+  margin: 8px 0 2px;
+  padding: 10px 12px;
+  background: var(--ds-surface-sub);
+  border-radius: 6px;
+}
+.rcptWroteK {
+  margin: 6px 0 2px;
+  font: 600 10px/1.6 var(--f-mono, var(--ds-font-mono));
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ds-ink-faint);
+}
+.rcptWrote > :first-child,
+.rcptWrote > div:first-child > .rcptWroteK {
+  margin-top: 0;
+}
+.rcptWroteList {
+  margin: 0;
+  padding-left: 16px;
+}
+.rcptWroteList li {
+  margin: 1px 0;
+  font-size: 13.5px;
+  color: var(--ds-ink-soft);
+  overflow-wrap: anywhere;
+}
+/* A Drop receipt sits in the TODAY register, under the row's own lines. */
+.rcptItem {
+  padding: 4px 0 4px 24px;
+}
+
 .dropHot {
   outline: 2px dashed var(--ds-orange);
   outline-offset: 2px;

@@ -38,7 +38,6 @@ import {
   roomBriefedSet,
   roomClose,
   roomCompose,
-  roomActionUndo,
   roomGapDismiss,
   roomGapsRefill,
   roomLossDismiss,
@@ -57,10 +56,15 @@ import {
   roomTodoSet,
   roomUnlog,
 } from "./actions";
-import { filingSentences, type Window } from "@/lib/ingest/windows";
+import type { Window } from "@/lib/ingest/windows";
+import { shortName } from "@/lib/ingest/short-name";
+import { monthDay } from "@/lib/ingest/wrote";
 import { sniffPaste } from "@/lib/paste-files";
+import type { LedgerRow } from "./chute-ledger";
+import { HeldBox, type HeldAccount, type HeldChoice } from "./ingest/held";
+import { ReceiptLine } from "./ingest/receipt";
 import { DROP_CSV_RECEIPT, useIngest } from "./ingest/use-ingest";
-import { holdVerdict, useVerdict, type Held } from "./ingest/use-verdict";
+import { dismissHeld, holdVerdict, useVerdict, type Held } from "./ingest/use-verdict";
 import { useUndo } from "./ingest/use-undo";
 import type { StageView } from "@/lib/room/stages-view";
 import { PipelineDrawer } from "./pipeline-tab";
@@ -313,6 +317,15 @@ type FreshCap = {
 // arrived (D4), for the re-run.
 type DropHold = Held<{ text: string; files?: File[]; windows?: Window[] }>;
 
+// One line of the TODAY register's fresh receipts: a sentence the row said
+// (a close, a retire, an ask minted), or a filing's receipt, which the Drop
+// paints with the Chute's own receipt line (slice 18a; the face approved
+// 2026-10-06). A Drop receipt is never stored: the register is this row's.
+type FreshEntry = { text: string; receipt?: undefined } | { receipt: LedgerRow };
+
+/** Today, M/D in Chicago: the day a receipt shows. */
+const receiptDay = (): string => monthDay(new Date());
+
 function Row({
   row,
   collapsed,
@@ -335,17 +348,18 @@ function Row({
   const [workedNow, setWorkedNow] = useState(false);
   const worked = row.workedToday || workedNow;
   const [freshCaps, setFreshCaps] = useState<FreshCap[]>([]);
-  const [freshInfo, setFreshInfo] = useState<
-    {
-      text: string;
-      noteIds?: string[];
-      // The Filing row the paste wrote: the undo's handle (use-undo.ts).
-      filingId?: string;
-      // Auto-opened commitments: each retires on its own, and the paste's
-      // undo takes them all back with the record.
-      opened?: { id: string; text: string; gone?: boolean }[];
-    }[]
-  >([]);
+  const [freshInfo, setFreshInfo] = useState<FreshEntry[]>([]);
+  // Each receipt's key, so a backup that lands later finds its filing.
+  const receiptSeq = useRef(0);
+  const addReceipt = (rc: Omit<LedgerRow, "key">): number => {
+    const key = ++receiptSeq.current;
+    setFreshInfo((f) => [{ receipt: { ...rc, key } }, ...f]);
+    return key;
+  };
+  const patchReceipt = (key: number, up: Partial<LedgerRow>) =>
+    setFreshInfo((f) =>
+      f.map((x) => (x.receipt?.key === key ? { receipt: { ...x.receipt, ...up } } : x)),
+    );
   // The held verdict the banner shows; a second dispute waits its turn
   // behind it (use-verdict.ts).
   const { mismatch, setMismatch } = useVerdict<DropHold>();
@@ -518,9 +532,10 @@ function Row({
       else setNote(r.reason ?? "The delete didn't take.");
     });
   };
-  // File a text to this row through the shared door, inside the row's
-  // transition so the receipt lands as one update. Resolves once the filing
-  // has returned and its receipt has landed, so a reader can drop its label.
+  // File a text through the shared door, inside the row's transition so the
+  // receipt lands as one update. Resolves once the filing has returned and
+  // its receipt has landed, with whether it took, so a reader can drop its
+  // label and a pick can answer the question it was asked.
   const filePaste = (
     text: string,
     force: boolean,
@@ -528,80 +543,131 @@ function Row({
     // What the reader cut before the text arrived (D4): the transcriber's
     // or the document's window, recorded on the Filing row and the receipt.
     windows?: Window[],
-  ): Promise<void> =>
+    // The account a held question's answer names; this row by default.
+    to?: HeldAccount,
+  ): Promise<boolean> =>
     new Promise((done) =>
-      start(() => fileText(text, force, waiting, windows).finally(done)),
+      start(async () => {
+        try {
+          done(await fileText(text, force, waiting, windows, to));
+        } catch {
+          setNote("The paste didn't file.");
+          done(false);
+        }
+      }),
     );
   const fileText = async (
     text: string,
     force: boolean,
     waiting?: File[],
     windows?: Window[],
-  ) => {
-    const r = await ingest.file(row.accountId, text, { force, windows, waiting });
+    to?: HeldAccount,
+  ): Promise<boolean> => {
+    const account = to ?? { id: row.accountId, name: row.name };
+    const r = await ingest.file(account.id, text, { force, windows, waiting });
     const vault = r.vault;
     // The guard objected: the files wait with the question. Nothing
     // reaches the vault until the operator answers it.
     const held = holdVerdict(r, { text, files: vault.hold, windows });
     if (held) {
       setMismatch(held);
-      return;
+      return false;
     }
     if (r.ok) {
-      // Accepted: NOW the files may go to this account's folder.
-      if (vault.archive.length) void archiveFiles(vault.archive);
-      // One receipt, in the order the work matters: what filed, what opened,
-      // what it asked, what it learned, and whether it says this is over.
-      const parts = [
-        `Filed ${r.filed} entr${r.filed === 1 ? "y" : "ies"}${
-          r.how === "ai"
-            ? ", read by Claude"
-            : r.judged
-              ? " by the rules, judgment by Claude"
-              : ""
-        }.`,
-        r.opened?.length
-          ? `${r.opened.length} action${r.opened.length === 1 ? "" : "s"} opened.`
-          : "",
-        r.asks ? `${r.asks} new ask${r.asks === 1 ? "" : "s"} queued.` : "",
-        r.learned ? `${r.learned} to the playbook.` : "",
-        r.outcome ? `Reads ${r.outcome.status}. Confirm below.` : "",
-        r.readFailed
-          ? r.how === "transcript"
-            ? "The reader is down, so the raw text filed as one line and nothing routed. Undo this paste and drop it again when the reader is back."
-            : "The read didn't complete. The rules filed the entries. Nothing was opened or asked. The account check ran on the text's own evidence only. Undo if it landed on the wrong row."
-          : "",
-        // Every window that cut something, and the duplicate check when it
-        // failed open (D4, D7) — the same sentences the Chute's receipt says.
-        ...filingSentences(r),
-      ].filter(Boolean);
-      setFreshInfo((f) => [
-        {
-          text: parts.join(" "),
-          noteIds: r.noteIds,
-          filingId: r.filingId,
-          opened: r.opened,
-        },
-        ...f,
-      ]);
+      // One receipt line (slice 18a): the account, each count, the day, and
+      // "picked" when the operator answered a held question. The second
+      // line says what needs saying: the windows, the duplicate check, the
+      // reader that was down. The to-dos themselves show in TODAY, which
+      // springs open below; the line opens to what the filing wrote.
+      const key = addReceipt({
+        filename: waiting?.[0]?.name ?? "",
+        state: "filed",
+        account,
+        rung: force ? "pick" : undefined,
+        filed: r.filed,
+        opened: (r.opened ?? []).length,
+        promises: r.promises,
+        asks: r.asks,
+        learned: r.learned,
+        degraded: r.readFailed,
+        noteIds: r.noteIds,
+        todoIds: r.todoIds,
+        filingId: r.filingId,
+        windows: r.windows,
+        dupeCheck: r.dupeCheck,
+        day: receiptDay(),
+      });
+      // Accepted: NOW the files may go to the account's folder, and the
+      // backup rides the filing's own receipt.
+      if (vault.archive.length) void archiveFiles(vault.archive, account, key);
       setPasteText("");
       setLogText("");
       setPasteOpen(false);
-      setMismatch(null);
       setNote(null);
       setSpring("today");
-    } else setNote(r.reason ?? "The paste didn't file.");
+      return true;
+    }
+    setNote(r.reason ?? "The paste didn't file.");
+    return false;
   };
-  // The operator asserts whose account it is: the pick re-runs the whole
-  // read with force and nothing is re-judged (D5). The held text, files and
-  // windows ride the re-run; the label says the read is running again.
-  const pickBound = () => {
+  // An answer to the held question is final: the filing re-runs with force
+  // and the held text, files and windows, the read runs again and nothing is
+  // re-judged (D5). The question steps down only when the answer filed, so a
+  // second held question behind it keeps its place.
+  const answerHeld = (to?: HeldAccount) => {
     if (!mismatch) return;
-    const label = `${mismatch.bound} — reading it again`;
+    const label = `the file again for ${to?.name ?? mismatch.bound}`;
     readingAdd(label);
-    void filePaste(mismatch.text, true, mismatch.files, mismatch.windows).then(() =>
-      readingDrop(label),
+    void filePaste(mismatch.text, true, mismatch.files, mismatch.windows, to).then(
+      (ok) => {
+        readingDrop(label);
+        if (ok) setMismatch(null);
+      },
     );
+  };
+  // A held paste dies with its pane: closing the bolt answers it with
+  // nothing filed. Held files never go this way; they wait for the box,
+  // whose ✕ still backs them up (slice 18a).
+  const dropHeldPaste = () => {
+    if (mismatch && !mismatch.files?.length) setMismatch(null);
+  };
+  // "Keep on {row}": the operator asserts the drop was right.
+  const pickBound = () => answerHeld();
+  const pickHeld = (account: HeldAccount, how: HeldChoice) =>
+    how === "bound" || account.id === row.accountId ? pickBound() : answerHeld(account);
+  // The held box's ✕ (slice 18a): nothing files on any account, and the held
+  // files back up under accounts/_unfiled/ (a held paste backs up as its
+  // text), because git is the home for every dropped file (D8 as amended
+  // 2026-10-05). The Drop used to discard them.
+  const unfileHeld = () => {
+    if (!mismatch) return;
+    const plan = dismissHeld({
+      filename: mismatch.files?.[0]?.name,
+      text: mismatch.text,
+      files: mismatch.files,
+    });
+    setMismatch(null);
+    if (plan.kind !== "vault") return;
+    void (async () => {
+      for (const f of plan.files) {
+        setArch({ text: `Backing up ${f.name}…` });
+        const r = await ingest.vaultUnfiled(f, (sent, total) =>
+          setArch({ text: `Backing up ${f.name}… ${sent} of ${total}` }),
+        );
+        addReceipt(
+          r.ok
+            ? {
+                filename: f.name,
+                state: "unfiled",
+                day: receiptDay(),
+                vault: { text: r.detail, url: r.url },
+              }
+            : { filename: f.name, state: "error", reason: r.reason, day: receiptDay() },
+        );
+      }
+      setArch(null);
+      setSpring("today");
+    })();
   };
   // The Drop reads a dropped or picked file into paste text, then files it
   // through the same read-and-file path as a paste. Each file of a drop
@@ -630,25 +696,40 @@ function Row({
   // assembles before it lands. The archive rides beside the filing, never
   // instead of it: readable files still file to the record exactly as
   // before, and a binary the reader cannot open still lands in the vault.
-  const [arch, setArch] = useState<{ text: string; url?: string; bad?: boolean } | null>(
-    null,
-  );
-  const archiveFiles = async (files: File[]) => {
+  // The backup in flight shows on the Drop; each one that lands is a
+  // receipt in TODAY, or rides the receipt of the filing it backs (slice
+  // 18a). `note` is the refused export's decreed line.
+  const [arch, setArch] = useState<{ text: string } | null>(null);
+  const archiveFiles = async (
+    files: File[],
+    account: HeldAccount = { id: row.accountId, name: row.name },
+    filing?: number,
+    note?: string,
+  ) => {
     if (files.length === 0) return;
     for (const f of files) {
-      setArch({ text: `Archiving ${f.name} to the vault…` });
-      const r = await ingest.vault(row.accountId, f, (sent, total) =>
-        setArch({ text: `Archiving ${f.name} to the vault… ${sent} of ${total}` }),
+      setArch({ text: `Backing up ${f.name}…` });
+      const r = await ingest.vault(account.id, f, (sent, total) =>
+        setArch({ text: `Backing up ${f.name}… ${sent} of ${total}` }),
       );
-      setArch(
-        r.ok
-          ? {
-              text: `${f.name} archived${r.kind === "release" ? " as a pre-release" : ""} · ${r.detail}`,
-              url: r.url,
-            }
-          : { text: r.reason, bad: true },
-      );
+      const vault = r.ok ? { text: r.detail, url: r.url } : { text: r.reason, bad: true };
+      if (filing !== undefined) patchReceipt(filing, { vault });
+      else
+        addReceipt(
+          r.ok
+            ? {
+                filename: f.name,
+                state: "vaulted",
+                account,
+                day: receiptDay(),
+                vault,
+                note,
+              }
+            : { filename: f.name, state: "error", reason: r.reason, day: receiptDay() },
+        );
     }
+    setArch(null);
+    if (filing === undefined) setSpring("today");
   };
 
   const handleFiles = (list: FileList | null) => {
@@ -666,10 +747,8 @@ function Row({
     // The weekly export is the Chute's to read (D2 as amended 2026-10-05):
     // dropped on a row it is refused before any read, backed up under this
     // account, never filed here, and the receipt says so.
-    if (plan.refused.length) {
-      setNote(DROP_CSV_RECEIPT);
-      void archiveFiles(plan.refused);
-    }
+    if (plan.refused.length)
+      void archiveFiles(plan.refused, undefined, undefined, DROP_CSV_RECEIPT);
     // Every readable file is read, each filing on its own (bug 2), at most
     // CHUTE_PARALLEL at a time in drop order (D11). Each waits on its own
     // verdict alone: handing the whole drop down vaulted every other file a
@@ -681,26 +760,6 @@ function Row({
     const text = pasteText.trim();
     if (!text || pending) return;
     filePaste(text, false);
-  };
-  const undoOpened = (idx: number, id: string) => {
-    if (pending) return;
-    start(async () => {
-      const r = took(await roomActionUndo(row.accountId, id));
-      if (r.ok)
-        setFreshInfo((fs) =>
-          fs.map((x, i) =>
-            i === idx
-              ? {
-                  ...x,
-                  opened: (x.opened ?? []).map((o) =>
-                    o.id === id ? { ...o, gone: true } : o,
-                  ),
-                }
-              : x,
-          ),
-        );
-      else setNote(r.reason ?? "The undo didn't take.");
-    });
   };
   // The loss read's two exits + the owed suggestions' two exits — all
   // optimistic, all durable server-side.
@@ -807,34 +866,24 @@ function Row({
   };
   const lossLive = !!row.loss && lossState === "live";
 
-  const undoPaste = (idx: number) => {
-    const f = freshInfo[idx];
-    if (!f?.noteIds?.length || pending) return;
-    const ids = f.noteIds;
-    const todoIds = (f.opened ?? []).map((o) => o.id);
+  // ↺ on a filing's receipt takes the whole filing back by its id
+  // (use-undo.ts), the to-dos it opened included, and the receipt says what
+  // went.
+  const takeBack = (rc: LedgerRow) => {
+    const acct = rc.account;
+    if (!acct || pending) return;
     start(async () => {
-      const r = await undo(row.accountId, {
-        noteIds: ids,
-        todoIds,
-        filingId: f.filingId,
-      });
+      const r = await undo(acct.id, rc);
       if (r.ok)
-        setFreshInfo((fs) =>
-          fs.map((x, i) =>
-            i === idx
-              ? {
-                  text: `Paste undone. Removed ${r.removed} entr${r.removed === 1 ? "y" : "ies"}${
-                    r.retired
-                      ? ` and ${r.retired} action${r.retired === 1 ? "" : "s"}`
-                      : ""
-                  }.`,
-                }
-              : x,
-          ),
-        );
-      else setNote(r.reason ?? "The undo didn't take.");
+        patchReceipt(rc.key, {
+          state: "undone",
+          reason: `Taken back from ${shortName(acct.name)}. ${r.removed + r.retired} removed.`,
+        });
+      else setNote(r.reason ?? "The take-back didn't go through.");
     });
   };
+  const clearReceipt = (key: number) =>
+    setFreshInfo((f) => f.filter((x) => x.receipt?.key !== key));
   // Done means two things at once, and the row needs both. A staged item closes
   // where it always closed — that's the record's version of the truth. The
   // day's mark rides alongside it so EVERY row can answer the read, including
@@ -1653,59 +1702,32 @@ function Row({
                 })()
               ),
             )}
-            {(freshAll ? freshInfo : freshInfo.slice(0, 2)).map((f, i) => (
-              <div key={`fi${i}`}>
-                <div className={`${styles.it} ${styles.fresh}`}>
+            {/* The filing's receipt is the Chute's own line (slice 18a): the
+                to-dos it opened are the real rows below, so the receipt no
+                longer carries chips of them; its line opens to what it
+                wrote. */}
+            {(freshAll ? freshInfo : freshInfo.slice(0, 2)).map((f, i) => {
+              const rc = f.receipt;
+              return rc ? (
+                <div key={`fr${rc.key}`} className={`${styles.rcptItem} ${styles.fresh}`}>
+                  <ReceiptLine
+                    row={rc}
+                    canWrite={row.canWrite}
+                    onTakeBack={
+                      rc.state === "filed" && (rc.noteIds?.length || rc.filingId)
+                        ? () => takeBack(rc)
+                        : undefined
+                    }
+                    onClear={() => clearReceipt(rc.key)}
+                  />
+                </div>
+              ) : (
+                <div key={`fi${i}`} className={`${styles.it} ${styles.fresh}`}>
                   <span className={`${styles.ic} ${styles.gDone}`}>✓</span>
                   <span className={styles.tx}>{f.text}</span>
-                  {f.noteIds && f.noteIds.length > 0 && (
-                    <button
-                      type="button"
-                      className={styles.rcptU}
-                      onClick={() => undoPaste(i)}
-                      title="Takes back everything this paste filed, the actions it opened included."
-                    >
-                      ↩ undo paste
-                    </button>
-                  )}
                 </div>
-                {/* Each opened commitment can also retire on its own: a wrong action
-                is one ✕, and the paste's undo takes them all back with the record.
-                These are receipt chips, not a second copy of the work: the open
-                rows below are the real ones. */}
-                {(f.opened ?? []).length > 0 && (
-                  <div className={styles.rcpt}>
-                    <b>opened →</b>
-                    {(f.opened ?? []).map((o) => (
-                      <span
-                        key={o.id}
-                        className={`${styles.openedChip} ${
-                          o.gone || doneIds.has(o.id) ? styles.openedGone : ""
-                        }`}
-                      >
-                        {o.text.slice(0, 60)}
-                        {/* Once the operator has closed or parked the row itself,
-                        the receipt's take-back is no longer the right verb —
-                        the register row owns it from then on. */}
-                        {row.canWrite &&
-                          !o.gone &&
-                          !doneIds.has(o.id) &&
-                          !gone.has(o.id) && (
-                            <button
-                              type="button"
-                              className={styles.openedX}
-                              onClick={() => undoOpened(i, o.id)}
-                              title="Take it back. The read got this one wrong."
-                            >
-                              ✕
-                            </button>
-                          )}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
+              );
+            })}
             {freshInfo.length > 2 && (
               <button
                 type="button"
@@ -1957,7 +1979,7 @@ function Row({
                 onClick={() => {
                   setPasteOpen((v) => !v);
                   setComposerOpen(false);
-                  setMismatch(null);
+                  dropHeldPaste();
                 }}
               >
                 ⚡
@@ -2056,7 +2078,7 @@ function Row({
                     className={styles.cancel}
                     onClick={() => {
                       setPasteOpen(false);
-                      setMismatch(null);
+                      dropHeldPaste();
                     }}
                   >
                     Cancel
@@ -2072,72 +2094,26 @@ function Row({
                 </div>
               </div>
             )}
-            {/* The misfile guard. Nothing was written; the operator decides
-                whether the read is wrong or the drop was. */}
+            {/* The held file (slice 18a; the face approved 2026-10-06): the
+                same box the Chute paints. Nothing was written; the reason
+                opens to both sides' grounds, the answer files with force,
+                and the ✕ files nothing and still backs the files up. */}
             {mismatch && (
-              <div className={styles.misfile}>
-                {/* Both sides, always. The banner used to state only the case
-                    against the operator's choice, so the correct move read as
-                    overruling the app — and on a channel sale the read names
-                    the PEO's client, which is not a misfile at all
-                    (2026-09-11). */}
-                {/* The rung's reason, nine words or fewer, stands where the
-                    rule's why stood (D9 as amended 2026-10-05); it already
-                    says what the row carries, so the absence line yields to
-                    it and the row's own evidence still shows. */}
-                <b>This reads like {mismatch.claim}</b>, not {mismatch.bound}
-                {mismatch.reason
-                  ? `. ${mismatch.reason}`
-                  : `${mismatch.why ? ` — ${mismatch.why}` : ""}.`}{" "}
-                {mismatch.boundWhy
-                  ? `For ${mismatch.bound}: ${mismatch.boundWhy}.`
-                  : mismatch.reason
-                    ? ""
-                    : `Nothing in the text points to ${mismatch.bound}.`}{" "}
-                Nothing filed yet, and the file is holding out of the vault.
-                <span className={styles.sdSuggActs}>
-                  <button
-                    type="button"
-                    className={styles.sdTag}
-                    disabled={pending}
-                    onClick={pickBound}
-                  >
-                    {/* The force path re-runs the whole read, which on a call
-                        transcript is a minute of silence. Without a word on
-                        the button the click looked like a dead control — the
-                        operator pressed it and nothing moved (2026-08-29). */}
-                    {/* "file anyway" framed the right answer as stubbornness.
-                        The operator is asserting whose account it is, so the
-                        button says that (2026-09-11). */}
-                    {pending ? "Filing…" : `No — it's ${mismatch.bound}'s ✓`}
-                  </button>
-                  <button
-                    type="button"
-                    className={styles.sdTag}
-                    disabled={pending}
-                    onClick={() => setMismatch(null)}
-                  >
-                    keep it out ✕
-                  </button>
-                </span>
-              </div>
+              <HeldBox
+                file={mismatch.files?.[0]?.name ?? "Paste"}
+                verdict={mismatch}
+                claim={mismatch.claim}
+                bound={{ id: row.accountId, name: row.name }}
+                candidates={mismatch.candidates}
+                busy={pending}
+                onPick={pickHeld}
+                onDismiss={unfileHeld}
+              />
             )}
             {reading.length > 0 && (
               <p className={styles.sniff}>Reading {reading.join(", ")}…</p>
             )}
-            {arch && (
-              <p className={arch.bad ? styles.dropErr : styles.sniff}>
-                ⇪ {arch.text}
-                {arch.url && (
-                  <>
-                    {" "}
-                    <a href={arch.url} target="_blank" rel="noreferrer">
-                      open on GitHub
-                    </a>
-                  </>
-                )}
-              </p>
-            )}
+            {arch && <p className={styles.sniff}>⇪ {arch.text}</p>}
             {note && <p className={styles.err}>{note}</p>}
           </div>
         )}

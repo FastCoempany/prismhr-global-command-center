@@ -21,6 +21,13 @@
  *  under it, and the limit stays under Vercel's request cap. */
 export const VAULT_PIECE_BYTES = 4 * 1024 * 1024;
 
+/** The vault's unfiled mode (slice 18a of the Chute brains refactor plan):
+ *  the account id a door is handed when the held box's ✕ backs a file up
+ *  under accounts/_unfiled/ and files it on no account. The server's gate
+ *  reads it before any account binds, so no account is needed, and no book
+ *  account's Salesforce id can collide with it. */
+export const UNFILED = "_unfiled";
+
 /** The receipt's one line when the set never became whole. Operator copy:
  *  what happened, then what to do. */
 export const UNFINISHED = "The backup didn't finish. Drop it again.";
@@ -106,6 +113,18 @@ export async function sendToVault(
   // Every piece was taken and none made the set whole: the server never
   // assembled it, so nothing landed.
   return { ok: false, reason: UNFINISHED };
+}
+
+/** Back a file up and file it on no account: the held box's ✕ (slice 18a).
+ *  The same two doors and the same carriage, in the unfiled mode, so a file
+ *  of any size lands under accounts/_unfiled/ the way every other one lands
+ *  under its account. */
+export function sendUnfiled(
+  file: File,
+  doors: VaultDoors,
+  onPiece?: (sent: number, total: number) => void,
+): Promise<VaultReceipt> {
+  return sendToVault(UNFILED, file, doors, onPiece);
 }
 
 // ── the server half ─────────────────────────────────────────────────────────

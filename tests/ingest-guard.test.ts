@@ -558,14 +558,22 @@ describe("the result and the doors", () => {
     assert.match(roomPaste, /if \(!verdict\.ok\) \{\s*return \{\s*ok: false,\s*filed: 0,\s*how,\s*mismatch: verdict\.mismatch,\s*reason: verdict\.reason,/);
   });
 
-  test("each door shows the reason where the why was, and the receipt line says it", () => {
-    assert.match(chute, /\{it\.reason\s*\?\s*`\$\{it\.reason\} `\s*:\s*`Reads like \$\{it\.claim \|\| "another account"\}\. `\}\s*Pick the account\./);
+  test("each door shows the reason where the why was, in the one held box", () => {
+    // Rewritten for slice 18a (the face approved 2026-10-06): the Chute's
+    // "Pick the account." line and the Drop's two-sided banner retired into
+    // one held box both doors paint (src/app/room/ingest/held.tsx). The
+    // rung's reason is its second line and the rule's why sits one click
+    // down in the grounds; tests/ingest-faces.test.ts renders both.
+    const held = read("src/app/room/ingest/held.tsx");
+    assert.match(held, /\{verdict\.reason\}/, "the box says the rung's reason");
+    assert.match(held, /groundsOf\(verdict,/, "and opens to the grounds behind it");
+    assert.match(chute, /<HeldBox[\s\S]*?verdict=\{it\.state === "mismatch" \? \(it\.verdict \?\? \{ reason: it\.reason \}\) : null\}/);
     // The held verdict is the shared hook's since slice 8 (use-verdict.ts);
-    // the Drop holds it through useVerdict and paints the same fields.
+    // the Drop holds it through useVerdict and hands the box the same fields.
     const verdict = read("src/app/room/ingest/use-verdict.ts");
     assert.ok(verdict.includes("rung?: \"text\" | \"read\";"));
     assert.match(client, /useVerdict<DropHold>\(\)/);
-    assert.match(client, /\{mismatch\.reason\s*\?\s*`\. \$\{mismatch\.reason\}`/);
+    assert.match(client, /<HeldBox[\s\S]*?verdict=\{mismatch\}/);
   });
 });
 

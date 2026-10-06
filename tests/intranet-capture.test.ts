@@ -29,6 +29,7 @@ import { sanitizeAiResult } from "../src/lib/intel/ai-clean";
 import {
   captureVerdict,
   filedLine,
+  heldLine,
   keptLikeLine,
   keptUnnamedLine,
   readsLike,
@@ -207,11 +208,22 @@ describe("the Send-it box's action routes on the server and files through the pi
     assert.equal((capture.match(/intranetDoc\.create\(/g) ?? []).length, 1);
   });
 
-  test("a dispute at either rung keeps the capture, with the claim in the receipt", () => {
-    const dispute = capture.indexOf("kept = keptLikeLine([r.mismatch.claim]);");
+  test("a dispute at either rung is held in the Chute above, and writes nothing here", () => {
+    // Rewritten for slice 18a (the face approved 2026-10-06): a disputed
+    // capture no longer falls through to the brain with a line pointing at
+    // the Chute. It returns the held reply before any Intranet doc write,
+    // carrying the routed account and the verdict for the Chute mounted
+    // above the box, and Send-it's line says where it waits.
+    const dispute = capture.indexOf("receipt: heldLine(),");
     const doc = capture.indexOf("prisma.intranetDoc.create(");
-    assert.ok(dispute > 0 && doc > dispute, "the dispute falls through to the kept road");
+    assert.ok(dispute > 0 && doc > dispute, "the held return comes before any Intranet doc write");
+    const heldReply = capture.slice(dispute, capture.indexOf("};", dispute));
+    assert.match(heldReply, /captureId: ""/, "nothing of it waits in the brain");
+    assert.match(heldReply, /held: \{ account: verdict\.account, mismatch: r\.mismatch \}/);
+    assert.equal(heldLine(), "Held in the Chute above.");
     assert.match(capture, /if \(!r\.mismatch\) return refused\(r\.reason \?\? "That didn't land\."\);/);
+    // The brain's road still says why it kept a capture: an unsure route's
+    // line, or the held box's ✕ coming back down it with keep.
     assert.match(capture, /receipt: `\$\{kept\} \$\{captureReceipt\(\{/);
   });
 

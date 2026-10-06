@@ -17,13 +17,15 @@
 // file in order, lands it once and deletes the pieces (src/lib/ingest/
 // vault.ts). Vaulting is filing: the account is bound against the book the
 // way every room action binds, so a file can only ever land under an
-// account the book knows.
+// account the book knows, or, in the unfiled mode the held box's ✕ asks for
+// (slice 18a), under accounts/_unfiled/ and no account at all.
 
 import { getAppAccess } from "@/lib/auth";
 import { peos } from "@/lib/book";
 import { getPrisma } from "@/lib/db";
 import { archiveFileToGitHub } from "@/lib/github/archive";
 import {
+  UNFILED,
   UNFINISHED,
   VAULT_FIELD,
   VAULT_PIECE_BYTES,
@@ -34,18 +36,30 @@ import {
 import { bindAccountId } from "@/lib/room/bind";
 
 type Opened =
-  | { ok: true; account: { id: string; name: string }; repo: string; token: string }
+  | {
+      ok: true;
+      /** The account the file lands under; null in the unfiled mode. */
+      account: { id: string; name: string } | null;
+      repo: string;
+      token: string;
+    }
   | { ok: false; reason: string };
 
 /** The gate every vault call takes: a signed-in session that can write, an
- *  account the book knows, and a configured vault. What it opens stays in
- *  this file; the doors answer with a receipt. */
+ *  account the book knows (or the unfiled mode, which names none), and a
+ *  configured vault. What it opens stays in this file; the doors answer with
+ *  a receipt. */
 async function open(accountId: string): Promise<Opened> {
   const access = await getAppAccess();
   if (access.status !== "active" || !access.canWrite)
     return { ok: false, reason: "Read-only session." };
-  const acct = bindAccountId(accountId, peos);
-  if (!acct) return { ok: false, reason: "That account is not in the book." };
+  // The unfiled mode (slice 18a): the held box's ✕ files nothing on any
+  // account and the file still backs up, because git is the home for every
+  // dropped file (D8 as amended 2026-10-05). No account binds, since none is
+  // named; the session check above still holds.
+  const unfiled = accountId === UNFILED;
+  const acct = unfiled ? null : bindAccountId(accountId, peos);
+  if (!unfiled && !acct) return { ok: false, reason: "That account is not in the book." };
   const repo = (process.env.GITHUB_ARCHIVE_REPO ?? "").trim();
   const token = (process.env.GITHUB_ARCHIVE_TOKEN ?? "").trim();
   if (!repo || !token)
@@ -54,7 +68,12 @@ async function open(accountId: string): Promise<Opened> {
       reason:
         "The vault isn't configured. Set GITHUB_ARCHIVE_REPO and GITHUB_ARCHIVE_TOKEN.",
     };
-  return { ok: true, account: { id: acct.id, name: acct.name }, repo, token };
+  return {
+    ok: true,
+    account: acct ? { id: acct.id, name: acct.name } : null,
+    repo,
+    token,
+  };
 }
 
 /** The file a door posted, or null when nothing readable came. */
@@ -75,7 +94,7 @@ export async function vaultFile(
   if (!file) return { ok: false, reason: "No file arrived. Drop it again." };
   return archiveFileToGitHub({
     file,
-    accountName: g.account.name,
+    accountName: g.account?.name ?? null,
     grant: { repo: g.repo, token: g.token },
   });
 }
@@ -100,7 +119,7 @@ export async function vaultChunk(
   return stagePiece(
     getPrisma(),
     {
-      accountId: g.account.id,
+      accountId: g.account?.id ?? UNFILED,
       filename: name,
       index: Number(index),
       total: Number(total),
@@ -110,7 +129,7 @@ export async function vaultChunk(
     (file) =>
       archiveFileToGitHub({
         file,
-        accountName: g.account.name,
+        accountName: g.account?.name ?? null,
         grant: { repo: g.repo, token: g.token },
       }),
   );

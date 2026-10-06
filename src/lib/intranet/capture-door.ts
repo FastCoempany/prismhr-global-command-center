@@ -6,11 +6,13 @@
 // store or a session. The server half (src/app/intranet/capture-actions.ts)
 // routes on the server (D12) and files through roomPaste.
 //
-// Until the Send-it box can show a dispute (the plan's §5.7, BLOCKED ON
-// FACE), the capture files when routing is sure and stays an Intranet doc
-// when it is not, with a receipt line saying which happened and where the
-// pick lives. The receipt speaks in the surface's own word for itself — the
-// brain — and carries an account name, never a figure.
+// The capture files when routing is sure. A route that is not sure stays an
+// Intranet doc, with a receipt line saying so and where the pick lives. A
+// capture the guard disputes is held in the Chute mounted above the Send-it
+// box, which says so in one line (slice 18a; the face approved 2026-10-06),
+// and the held box's ✕ there brings it back to the brain. The receipt speaks
+// in the surface's own word for itself — the brain — and carries an account
+// name, never a figure.
 
 import type { RouteHit } from "@/lib/route-capture";
 
@@ -22,6 +24,20 @@ export type CaptureVerdict =
 
 const KEPT = "Kept in the brain.";
 const PICK = "File it from the Chute.";
+
+/** Send-it's line when the guard disputes the capture: it waits as a held
+ *  row in the Chute mounted above the box (slice 18a). */
+export const HELD_LINE = "Held in the Chute above.";
+
+export function heldLine(): string {
+  return HELD_LINE;
+}
+
+/** The line when the held box's ✕ keeps a disputed capture in the brain:
+ *  filed on no account, and an Intranet doc again (P2). */
+export function keptLine(): string {
+  return KEPT;
+}
 
 /** The line when nothing in the capture names an account. */
 export function keptUnnamedLine(): string {

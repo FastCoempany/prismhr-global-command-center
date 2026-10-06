@@ -10,9 +10,9 @@
 // state carries it). Both doors build the held verdict here. The Drop keeps
 // it as state through useVerdict; the Chute keeps it on the ledger row
 // (use-receipts.ts), because a row waiting on the operator is already a held
-// question. What the two faces paint from it stays theirs until the face
-// pass: one verdict component in both doors is BLOCKED ON FACE (plan, slice
-// 18), so the two renderings stand.
+// question. Both doors, and the Intranet's Send-it through the Chute mounted
+// on its page, paint it with one component, the held box (./held.tsx; slice
+// 18a, the face approved 2026-10-06).
 
 import { useState } from "react";
 import type { PasteResult } from "./use-ingest";
@@ -32,6 +32,13 @@ export type Verdict = {
    *  read's claim after it. */
   rung?: "text" | "read";
   reason?: string;
+  /** The claimed account when the book holds it: the box's solid button. */
+  claimId?: string;
+  /** "model" when the reason is the web check's, read from both accounts'
+   *  page data and the web. */
+  reasonBy?: "model";
+  /** The router's candidates, by name and rung, for "Another account". */
+  candidates?: { id: string; name: string; rung: string }[];
 };
 
 /** A verdict with what the door holds beside it to answer: the Drop carries
@@ -77,4 +84,30 @@ export function useVerdict<T>(): {
   const [queue, setQueue] = useState<T[]>([]);
   const setMismatch = (next: T | null) => setQueue((q) => queueVerdict(q, next));
   return { mismatch: queue[0] ?? null, setMismatch };
+}
+
+/** What the held box's ✕ does with a held capture (slice 18a): it files
+ *  nothing on any account. A Send-it capture keeps the brain's own road, an
+ *  Intranet doc again (P2). Everything else backs up under accounts/_unfiled/,
+ *  because git is the home for every dropped file (D8 as amended 2026-10-05):
+ *  the dropped files themselves when the door still holds them, and the text
+ *  as a .txt when a reload took the file and left the text (C20) or when the
+ *  capture was a paste with no file at all. */
+export type Dismissal =
+  | { kind: "keep"; text: string }
+  | { kind: "vault"; files: File[] }
+  | { kind: "none" };
+
+export function dismissHeld(h: {
+  door?: string;
+  filename?: string;
+  text?: string;
+  files?: readonly File[];
+}): Dismissal {
+  const text = (h.text ?? "").trim();
+  if (h.door === "intranet") return text ? { kind: "keep", text } : { kind: "none" };
+  if (h.files?.length) return { kind: "vault", files: [...h.files] };
+  if (!text) return { kind: "none" };
+  const name = h.filename?.trim() ? `${h.filename.trim()}.txt` : "paste.txt";
+  return { kind: "vault", files: [new File([text], name, { type: "text/plain" })] };
 }

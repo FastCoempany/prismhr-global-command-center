@@ -7,9 +7,10 @@
 //     a reload must not quietly turn the wait into "drop it again";
 //   · a row mid-read when the tab died (reading, filing, activity) comes back
 //     interrupted, because its read died with the tab;
-//   · a settled row (filed, undone, vaulted, dupe, error, activityDone,
-//     interrupted) keeps the account, the counts, the day and the rung the
-//     router placed it on — never an address, never body text.
+//   · a settled row (filed, undone, vaulted, unfiled, kept, dupe, error,
+//     activityDone, interrupted) keeps the account, the counts, the day and
+//     the rung the router placed it on — never an address, never body text,
+//     and never the held verdict, whose evidence can carry an address.
 //
 // A waiting row whose text cannot be kept — a binary awaiting the vault, or a
 // capture past LEDGER_TEXT_CAP — comes back interrupted and says to drop it
@@ -32,7 +33,25 @@ type LedgerState =
   | "undone"
   | "activity"
   | "activityDone"
-  | "vaulted";
+  | "vaulted"
+  // The held box's ✕ (slice 18a): filed on no account and backed up under
+  // accounts/_unfiled/, or, for a Send-it capture, kept in the brain.
+  | "unfiled"
+  | "kept";
+
+/** The verdict a held row waits on (slice 18a): the rung that spoke, its
+ *  reason, the evidence behind it on both sides, the claimed account and the
+ *  router's candidates. The held box's grounds open to the evidence, which
+ *  can carry an address, so a settled row never keeps it (D12). */
+export type HeldVerdict = {
+  rung?: "text" | "read";
+  reason?: string;
+  why?: string;
+  boundWhy?: string;
+  reasonBy?: "model";
+  claimId?: string;
+  candidates?: { id: string; name: string; rung: string }[];
+};
 
 export type LedgerRow = {
   key: number;
@@ -72,7 +91,23 @@ export type LedgerRow = {
   /** A second-record drop. Marked structurally so the ledger's reconcile can
    *  find its receipts without sniffing filenames or reason text. */
   act?: boolean;
-  vault?: { text: string; url?: string; bad?: boolean };
+  /** The backup riding the row: in flight, landed (with its link) or failed
+   *  (with the reason). */
+  vault?: { text: string; url?: string; bad?: boolean; going?: boolean };
+  /** The verdict a held row waits on; kept across a reload with the text
+   *  (C20) and dropped the moment the row settles (D12). */
+  verdict?: HeldVerdict;
+  /** A capture another door handed to the Chute: the Intranet's Send-it,
+   *  whose disputed capture the Chute holds and files with that door (P2,
+   *  P3; slice 18a). Never shown: the receipt names no door. */
+  door?: "intranet";
+  /** The day the row settled, M/D in Chicago: a settled row keeps the day. */
+  day?: string;
+  /** Their promises the filing filed as loops on their side (D10). */
+  promises?: number;
+  /** One amber sentence for the receipt's second line: the refused export's
+   *  decreed line on the Drop (D2 as amended 2026-10-05). */
+  note?: string;
 };
 
 const LEDGER_KEY = "chute-ledger-v1";
@@ -127,6 +162,7 @@ export function storedRow(x: LedgerRow): LedgerRow {
     came: x.came,
     filed: x.filed,
     opened: x.opened,
+    promises: x.promises,
     asks: x.asks,
     learned: x.learned,
     reason: x.reason,
@@ -141,6 +177,9 @@ export function storedRow(x: LedgerRow): LedgerRow {
     dupeCheck: x.dupeCheck,
     act: x.act,
     vault: x.vault,
+    door: x.door,
+    day: x.day,
+    note: x.note,
   };
   if (isWaiting(x.state)) {
     const keep = !!x.text && x.text.length <= LEDGER_TEXT_CAP;
@@ -148,7 +187,7 @@ export function storedRow(x: LedgerRow): LedgerRow {
       ...base,
       why: x.why,
       rung: rungOf(x) || undefined,
-      ...(keep ? { text: x.text, candidates: x.candidates } : {}),
+      ...(keep ? { text: x.text, candidates: x.candidates, verdict: x.verdict } : {}),
     };
   }
   return { ...base, rung: rungOf(x) || undefined };
@@ -230,8 +269,50 @@ export function isSettled(s: LedgerRow["state"]): boolean {
     s === "error" ||
     s === "dupe" ||
     s === "undone" ||
-    s === "interrupted"
+    s === "interrupted" ||
+    s === "unfiled" ||
+    s === "kept"
   );
+}
+
+/** A capture another door hands to the Chute (slice 18a): the Intranet's
+ *  Send-it, when the guard disputed it. The Chute holds it as a held row
+ *  with the same box, and the pick files it with the door it came through. */
+export type HandOff = {
+  filename: string;
+  text: string;
+  /** The account the route chose and the guard disputed. */
+  account: { id: string; name: string };
+  /** What the capture reads like. */
+  claim: string;
+  verdict: HeldVerdict;
+  door: "intranet";
+};
+
+/** The held row a hand-off becomes. */
+export function handOffRow(h: HandOff, key: number): LedgerRow {
+  return {
+    key,
+    filename: h.filename,
+    state: "mismatch",
+    text: h.text,
+    account: h.account,
+    claim: h.claim,
+    reason: h.verdict.reason,
+    verdict: h.verdict,
+    door: h.door,
+  };
+}
+
+/** Seat a hand-off in the stored ledger, for when no Chute is listening:
+ *  the next mount reads it back held, with its text (C20). */
+export function seatHandOff(
+  h: HandOff,
+  storage: LedgerStorage,
+  now: Date = new Date(),
+): void {
+  const { items, maxKey } = loadLedger(storage, now);
+  saveLedger([handOffRow(h, maxKey + 1), ...items], storage, now);
 }
 
 /** The live run state the activity receipt reports, as the reconcile reads it. */

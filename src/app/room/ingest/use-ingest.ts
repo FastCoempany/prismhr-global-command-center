@@ -8,8 +8,8 @@
 // Drop read one file of a drop and sent the rest to the vault unread (audit
 // pass 1, bug 2), while the Chute read them all. One plan now, and every
 // readable file in a drop is read, each filing on its own with its own
-// receipt. The faces keep their look; one verdict component for both doors
-// and the receipt's shape wait on the face pass (plan, slice 18).
+// receipt. Both faces paint one held box and one receipt (./held.tsx and
+// ./receipt.tsx; slice 18a, the face approved 2026-10-06).
 //
 // Client-side only, and marked so the D12 scan reads this module as the
 // browser's: routing runs on the server through its action and the roster
@@ -21,7 +21,7 @@
 
 import { useRouter } from "next/navigation";
 import type { Door } from "@/lib/ingest/doors";
-import { sendToVault, type VaultReceipt } from "@/lib/ingest/vault";
+import { sendToVault, sendUnfiled, type VaultReceipt } from "@/lib/ingest/vault";
 import type { Window } from "@/lib/ingest/windows";
 import { DROP_ACCEPT } from "@/lib/paste-files";
 import { splitDrop, vaultAfterVerdict, type VaultStep } from "@/lib/room/drop-plan";
@@ -34,6 +34,11 @@ import { vaultChunk, vaultFile } from "../vault-actions";
 /** The two doors this flow mounts behind: the Chute (the HomeRoom's and the
  *  Intranet's, one component — D1) and the account row's Drop. */
 export type IngestDoor = Extract<Door, "chute" | "drop">;
+
+/** The doors a filing can name: the two this flow mounts behind, and the
+ *  Intranet's, whose disputed Send-it capture the Chute holds and files with
+ *  the door it came through (slice 18a; P2, P3). */
+export type FilingDoor = Extract<Door, "chute" | "drop" | "intranet">;
 
 /** The transcriber a door reads PDFs and images through: the Chute's own
  *  action, or the row's, bound to its account. */
@@ -90,6 +95,9 @@ export type FilingOpts = {
   /** The files waiting on this filing's verdict: an accepted filing releases
    *  them to the vault, a disputed one holds them with the question. */
   waiting?: readonly File[];
+  /** The door the capture came through when it is not this flow's own: a
+   *  Send-it capture held in the Chute files as the Intranet's (P3). */
+  door?: FilingDoor;
 };
 
 /** What one filing asks of the server: the account, the text, and the door
@@ -97,7 +105,7 @@ export type FilingOpts = {
  *  with the operator's force and the reader's windows. Pure, so the suite
  *  can read the request a pick makes. */
 export function filingRequest(
-  door: IngestDoor,
+  door: FilingDoor,
   accountId: string,
   text: string,
   opts: Pick<FilingOpts, "force" | "windows"> = {},
@@ -128,12 +136,17 @@ export function useIngest({ door, readPdf }: { door: IngestDoor; readPdf: PdfRea
    *  Chute's call; the Drop is bound to its row and never routes. */
   const route = (text: string): Promise<RouteReply> => routeText(text);
 
-  /** File a text to an account through the pipeline, as this door. */
-  const file = async (
+  /** File a text to an account through the pipeline, as this door, or as
+   *  the door a handed-off capture came through. */
+  const file = (accountId: string, text: string, opts: FilingOpts = {}): Promise<Filed> =>
+    fileThrough(opts.door ?? door, accountId, text, opts);
+
+  async function fileThrough(
+    door: FilingDoor,
     accountId: string,
     text: string,
-    opts: FilingOpts = {},
-  ): Promise<Filed> => {
+    opts: FilingOpts,
+  ): Promise<Filed> {
     const r = await roomPaste(...filingRequest(door, accountId, text, opts));
     // Every page derives on request (D15), so the client asks for the fresh
     // read here, once, when the filing took; a refusal wrote nothing to
@@ -141,7 +154,7 @@ export function useIngest({ door, readPdf }: { door: IngestDoor; readPdf: PdfRea
     // only one the filing makes.
     if (r.ok) router.refresh();
     return { ...r, vault: vaultAfterVerdict(r, opts.waiting) };
-  };
+  }
 
   /** Carry one file to the vault under an account, through the server's two
    *  doors: whole when it fits one request, in pieces when it does not. */
@@ -152,11 +165,20 @@ export function useIngest({ door, readPdf }: { door: IngestDoor; readPdf: PdfRea
   ): Promise<VaultReceipt> =>
     sendToVault(accountId, f, { whole: vaultFile, piece: vaultChunk }, onPiece);
 
+  /** Back one file up under accounts/_unfiled/ and file it on no account:
+   *  the held box's ✕ (slice 18a). The same two server doors, in the
+   *  vault's unfiled mode, so no token reaches the browser (D8). */
+  const vaultUnfiled = (
+    f: File,
+    onPiece?: (sent: number, total: number) => void,
+  ): Promise<VaultReceipt> =>
+    sendUnfiled(f, { whole: vaultFile, piece: vaultChunk }, onPiece);
+
   /** Run the drop's reads at most CHUTE_PARALLEL at a time, in drop order;
    *  the rest wait their turn (D11). */
   function limited<T>(tasks: readonly (() => Promise<T>)[]): Promise<T[]> {
     return runLimited(tasks, CHUTE_PARALLEL);
   }
 
-  return { door, plan, read, route, file, vault, limited };
+  return { door, plan, read, route, file, vault, vaultUnfiled, limited };
 }
