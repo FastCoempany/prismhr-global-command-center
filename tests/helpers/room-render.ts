@@ -24,6 +24,9 @@ register(new URL("./css-hooks.mjs", import.meta.url));
 export const roomClient = () => import("../../src/app/room/room-client");
 export const chute = () => import("../../src/app/room/chute");
 export const captureShelf = () => import("../../src/app/intake/capture-shelf");
+// The held box and the receipt every door paints (slice 18a).
+export const held = () => import("../../src/app/room/ingest/held");
+export const receipt = () => import("../../src/app/room/ingest/receipt");
 
 // The doors ask the router for the fresh read after a filing (useRouter from
 // next/navigation, in the shared door hooks); under renderToStaticMarkup no

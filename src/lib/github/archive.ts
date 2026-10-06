@@ -14,6 +14,13 @@
 //     the file streamed up as a binary asset; assets carry to 2GB.
 
 export const ARCHIVE_LIMIT_BYTES = 25 * 1024 * 1024;
+
+/** The vault's folder for a file the operator chose not to file (slice 18a of
+ *  the Chute brains refactor plan): the held box's ✕ files nothing on any
+ *  account and the file still backs up, because git is the home for every
+ *  dropped file (D8 as amended 2026-10-05). The underscore keeps it apart
+ *  from every account's folder; no account in the book carries the name. */
+export const UNFILED_FOLDER = "_unfiled";
 const ASSET_CAP_BYTES = 2 * 1024 * 1024 * 1024;
 
 type ArchiveResult =
@@ -94,10 +101,13 @@ async function fileToBase64(f: File): Promise<string> {
 
 /** Archive one dropped file. Small files land as accounts/<name>/<file>; a
  *  name already taken gets the drop's timestamp folded in — the vault never
- *  overwrites. Large files cut a pre-release and carry as an asset. */
+ *  overwrites. Large files cut a pre-release and carry as an asset. With no
+ *  account the file lands unfiled, as accounts/_unfiled/<file>. */
 export async function archiveFileToGitHub(inp: {
   file: File;
-  accountName: string;
+  /** The account the file files to, or null in the unfiled mode: the held
+   *  box's ✕, which files nothing and still backs the file up. */
+  accountName: string | null;
   /** The vault's repository and the credential that writes to it — read
    *  from the environment by the server door, never by this module. */
   grant: { repo: string; token: string };
@@ -108,7 +118,8 @@ export async function archiveFileToGitHub(inp: {
   const lane = laneFor(file.size);
   if (lane === "too-big")
     return { ok: false, reason: `${file.name} is over GitHub's 2GB asset cap.` };
-  const account = sanitizeSegment(inp.accountName);
+  const owner = inp.accountName ?? UNFILED_FOLDER;
+  const account = sanitizeSegment(owner);
   const fname = sanitizeSegment(file.name);
   // The catch below needs to know how far the run got: the wire can break
   // AFTER GitHub commits, and a lost reply must never read as a lost file.
@@ -154,7 +165,7 @@ export async function archiveFileToGitHub(inp: {
     }
 
     const meta = releaseMetaFor({
-      account: inp.accountName,
+      account: owner,
       fileName: file.name,
       bytes: file.size,
       when,

@@ -14,18 +14,23 @@
 // that failed at 13:51 and was re-run green from the Intranet dock at 17:37
 // never sits red here for four hours again (2026-09-01).
 //
-// The Drop's receipts are the TODAY register's and have no ledger; their
-// shape, like the Chute's, waits on the face pass.
+// The Drop's receipts are the TODAY register's and have no ledger; both
+// doors paint their receipts with one component (./receipt.tsx; slice 18a,
+// the face approved 2026-10-06). The ledger also takes the Intranet's
+// hand-off: a Send-it capture the guard disputed arrives as a held row
+// (./hand-off.ts).
 
 import { useEffect, useRef, useState } from "react";
 import { activityReceipt } from "../../activity/actions";
 import {
+  handOffRow,
   isSettled,
   loadLedger,
   reconcileActivityRows,
   saveLedger,
   type LedgerRow,
 } from "../chute-ledger";
+import { HAND_OFF_EVENT, type HandOffDetail } from "./hand-off";
 
 /** One receipt as the Chute holds it: the ledger's row plus the one field
  *  that never persists. */
@@ -50,25 +55,39 @@ export function useReceipts() {
   };
 
   // Reload the day's ledger once on mount; persist on every change after.
+  // The hand-off listener rides the same mount: a Send-it capture the guard
+  // disputed is seated as a held row, newest first, and marked taken so the
+  // sender does not seat it in storage a second time.
   useEffect(() => {
     const back = () => {
       if (document.visibilityState === "visible") void reconcile();
     };
+    const take = (e: Event) => {
+      const d = (e as CustomEvent<HandOffDetail>).detail;
+      if (!d || d.taken) return;
+      d.taken = true;
+      const row = handOffRow(d, ++seq.current);
+      setItems((xs) => [row, ...xs]);
+    };
     document.addEventListener("visibilitychange", back);
+    window.addEventListener(HAND_OFF_EVENT, take);
     const stored = loadLedger(localStorage);
     seq.current = stored.maxKey;
     loaded.current = true;
-    if (!stored.items.length) {
-      return () => document.removeEventListener("visibilitychange", back);
-    }
-    // Deferred so hydration completes against the server's empty list first.
+    const off = () => {
+      document.removeEventListener("visibilitychange", back);
+      window.removeEventListener(HAND_OFF_EVENT, take);
+    };
+    if (!stored.items.length) return off;
+    // Deferred so hydration completes against the server's empty list first;
+    // anything seated in between keeps its place above the stored rows.
     const t = setTimeout(() => {
-      setItems(stored.items);
+      setItems((xs) => [...xs, ...stored.items]);
       if (stored.items.some((x) => x.act)) void reconcile();
     }, 0);
     return () => {
       clearTimeout(t);
-      document.removeEventListener("visibilitychange", back);
+      off();
     };
   }, []);
   useEffect(() => {
@@ -99,10 +118,12 @@ export function useReceipts() {
   };
 
   /** A settled receipt is the operator's to clear (decreed 2026-09-01); the
-   *  gate is isSettled in chute-ledger.ts. */
+   *  gate is isSettled in chute-ledger.ts. Clear all clears every settled
+   *  receipt at once (D12) and leaves what is still reading or held, because
+   *  a question the room asked and then dropped is the room forgetting it. */
   const settled = (row: Receipt): boolean => isSettled(row.state);
   const dismiss = (key: number) => setItems((xs) => xs.filter((x) => x.key !== key));
-  const dismissAll = () => setItems([]);
+  const dismissAll = () => setItems((xs) => xs.filter((x) => !isSettled(x.state)));
 
   return { items, patch, seat, settled, dismiss, dismissAll, reconcile };
 }

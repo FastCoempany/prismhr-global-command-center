@@ -54,6 +54,7 @@ import {
 } from "@/lib/playbook/store";
 import { fileGaps, gapDismissKey, gapNs, parseGapBody } from "@/lib/room/gaps";
 import type { Door } from "@/lib/ingest/doors";
+import type { RouteRung } from "@/lib/route-capture";
 import { MINE_RE, actorsLine, joinRecipients, laneFor } from "@/lib/intel/provenance";
 import {
   diffFindings,
@@ -179,6 +180,17 @@ function refusal(verdict: GuardVerdict | null, how: string) {
       boundWhy: verdict.boundWhy,
       rung: verdict.rung,
       reason: verdict.reason,
+      // What the held box needs beyond the evidence (slice 18a): the claimed
+      // account when the book holds it, whether the reason is the model's,
+      // and the router's candidates by name and rung. A candidate's why stays
+      // here: it can carry an address, and the box names each by its rung.
+      ...(verdict.claimId ? { claimId: verdict.claimId } : {}),
+      ...(verdict.reasonBy ? { reasonBy: verdict.reasonBy } : {}),
+      candidates: (verdict.candidates ?? []).map((c) => ({
+        id: c.id,
+        name: c.name,
+        rung: c.rung,
+      })),
     },
     reason: verdict.reason,
   };
@@ -214,6 +226,7 @@ export async function roomPaste(
   judged?: boolean;
   // What the read did beyond filing the record:
   opened?: { id: string; text: string }[]; // auto-created actions (undo one by one)
+  promises?: number; // their commitments filed as loops on their side (D10)
   asks?: number; // new STILL UNKNOWN questions queued
   learned?: number; // market facts + lessons filed to the playbook
   outcome?: { status: "lost" | "won"; phrase: string } | null;
@@ -229,6 +242,12 @@ export async function roomPaste(
     boundWhy?: string;
     rung?: "text" | "read";
     reason?: string;
+    // The held box's choices (slice 18a): the claimed account when the book
+    // holds it, "model" when the reason is the web check's, and the
+    // router's candidates by name and rung, never by why.
+    claimId?: string;
+    reasonBy?: "model";
+    candidates?: { id: string; name: string; rung: RouteRung }[];
   };
   readFailed?: boolean; // the read errored; the rule parser filed the record
   // The duplicate guard: this exact capture already filed to this account.
@@ -590,6 +609,8 @@ export async function roomPaste(
       readFailed,
       archived,
       todoIds: [...fanout.opened.map((o) => o.id), ...loops.map((l) => l.id)],
+      // The receipt counts their promises beside the to-dos (slice 18a).
+      promises: loops.length,
       judged: read !== null,
       filingId,
       windows,

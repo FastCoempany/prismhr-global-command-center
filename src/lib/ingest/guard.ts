@@ -23,6 +23,7 @@
 import { judgeFiling } from "@/lib/intel/misfile";
 import { readFreeVerdict } from "@/lib/room/paste";
 import { routeCapture, type RouteAccount, type RouteHit } from "@/lib/route-capture";
+import { shortName } from "./short-name";
 
 /** Which of the guard's two rungs disputed: the text's own evidence, before
  *  the read, or the read's company claim, after it. */
@@ -45,6 +46,16 @@ export type GuardVerdict = {
   /** Nine words or fewer: why this looks like a different company than the
    *  one it was dropped on. Operator copy under the writing canon. */
   reason: string;
+  /** The claimed company's account, when the book holds it under that exact
+   *  name or a name it is also known as; absent when it does not (a PEO's
+   *  client, most days) or when it is the row itself. The held box's solid
+   *  button files here (slice 18a), so a loose match would file a capture
+   *  to the wrong company: exact names only, as claimPage reads them. */
+  claimId?: string;
+  /** "model" when the reason is the model's, read from both accounts' page
+   *  data and the web (src/lib/ingest/verdict-reason.ts); absent when the
+   *  rule built it. The held box's grounds name it "Web check". */
+  reasonBy?: "model";
 };
 
 export type GuardPlan = {
@@ -61,28 +72,44 @@ export const REASON_WORDS = 9;
 
 const wordsOf = (s: string): number => s.trim().split(/\s+/).filter(Boolean).length;
 
-// The trailing legal form a name carries in the book and nobody says out
-// loud: "Simploy, Inc." is Simploy in every sentence.
-const LEGAL_RE =
-  /[,.]?\s+(?:inc|llc|l\.l\.c|corp|corporation|co|ltd|plc|lp|llp|pllc)\.?$/i;
+// The name as a person says it lives in its own module since slice 18a, so
+// the held box reads it in the browser without the rungs; re-exported here
+// for the suites that pin it beside the reason.
+export { shortName };
 
-/** The name as a person says it: the trade-name split dropped ("Cornerstone
- *  Employer Solutions (dba SynchronyHR)" is Cornerstone Employer Solutions),
- *  a dashed qualifier dropped, the legal suffix dropped. The full name rides
- *  in the verdict's claim and bound; the reason has nine words to spend. */
-export function shortName(name: string): string {
-  let n = (name ?? "").trim();
-  n = n.split(/\s+(?:dba|d\/b\/a)\s+|\s*\((?:dba|d\/b\/a)\b/i)[0]!.trim();
-  n = n.split(/\s[-–—]\s/)[0]!.trim();
-  n = n.replace(/\s*\([^)]*\)\s*$/, "").trim();
-  for (;;) {
-    const m = n.replace(LEGAL_RE, "").trim();
-    if (m === n) break;
-    n = m;
-  }
-  n = n.replace(/[,.]+$/, "").trim();
-  return n || (name ?? "").trim();
+const normName = (s: string): string =>
+  shortName(s ?? "")
+    .toLowerCase()
+    .replace(/[^a-z0-9 ]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+/** The account a claim names, by exact name or a name the book also knows it
+ *  by, said the way a person says it ("Simploy, Inc." is Simploy). Undefined
+ *  when the book holds no such account, or when the claim names the row it
+ *  was dropped on, since filing there is the box's other button. */
+export function claimAccountId(
+  claim: string,
+  roster: readonly RouteAccount[],
+  boundId = "",
+): string | undefined {
+  const key = normName(claim);
+  if (!key) return undefined;
+  const hit = roster.find(
+    (a) => normName(a.name) === key || (a.aka ?? []).some((x) => normName(x) === key),
+  );
+  return hit && hit.id !== boundId ? hit.id : undefined;
 }
+
+/** The claim's account as an optional key: present only when it resolves. */
+const claimKey = (
+  claim: string,
+  roster: readonly RouteAccount[],
+  boundId: string,
+): { claimId?: string } => {
+  const id = claimAccountId(claim, roster, boundId);
+  return id ? { claimId: id } : {};
+};
 
 const clip = (name: string, words: number): string =>
   name.trim().split(/\s+/).slice(0, words).join(" ");
@@ -186,6 +213,7 @@ export function guardPlan(inp: {
         boundWhy,
         candidates,
         reason: reasonFromWhy(why, boundName, claim, boundWhy),
+        ...claimKey(claim, inp.roster, bound.id),
       },
       read: null,
     };
@@ -206,6 +234,7 @@ export function guardPlan(inp: {
       boundWhy: late.boundWhy,
       candidates,
       reason: reasonFromWhy(late.why, late.bound, late.claim, late.boundWhy),
+      ...claimKey(late.claim, inp.roster, bound.id),
     },
   };
 }

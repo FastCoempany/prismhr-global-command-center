@@ -544,7 +544,6 @@ describe("the room wires every new mechanism", () => {
   const actions = readFileSync(join(root, "src/app/room/actions.ts"), "utf8");
   const css = readFileSync(join(root, "src/app/room/room.module.css"), "utf8");
   for (const wired of [
-    "roomActionUndo",
     "roomGapDismiss",
     "roomGapsRefill",
     "roomResearch",
@@ -555,6 +554,17 @@ describe("the room wires every new mechanism", () => {
     test(`${wired} exists on the server`, () =>
       assert.ok(actions.includes(`export async function ${wired}`)));
   }
+  // Rewritten for slice 18a (the face approved 2026-10-06): the receipt's
+  // opened-action chips, whose ✕ called roomActionUndo, retired into the one
+  // receipt line. The to-dos show in TODAY with their own controls, and the
+  // receipt's ↺ takes the whole filing back through the shared undo. The
+  // action stays on the server, guarded below.
+  test("roomActionUndo exists on the server; the receipt's chips that called it are retired", () => {
+    assert.ok(actions.includes("export async function roomActionUndo"));
+    assert.ok(!client.includes("openedChip"), "the opened chips are back on the receipt");
+    assert.ok(client.includes("<ReceiptLine"), "the Drop paints the one receipt");
+    assert.ok(client.includes("useUndo()"), "and takes the filing back through the shared undo");
+  });
   test("the research control states when it last ran", () => {
     // The Spring's chip grammar (2026-08-13), amended since: the label is the
     // verb, the run date rides the tooltip, and NEVER stands when neither

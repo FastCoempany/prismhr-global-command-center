@@ -28,6 +28,7 @@ import {
   intranetPassage,
 } from "./actions";
 import { intranetCapture } from "./capture-actions";
+import { SEND_IT_LABEL, handToChute } from "../room/ingest/hand-off";
 import type { RunReport } from "./runners";
 import { cleanAskText } from "@/lib/ask/clean";
 import type {
@@ -257,11 +258,35 @@ export function IntranetClient({
     // SEND-IT RUN is in front of them within a second of pressing.
     gadgetRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
     startCap(async () => {
-      const r = await intranetCapture(paste);
+      const sent = paste;
+      const r = await intranetCapture(sent);
       if (!r.ok) {
         setReceipt(r.reason ?? "That didn't land.");
         return;
       }
+      // A capture the guard disputed is held in the Chute mounted above this
+      // box, with the same held box every door uses (slice 18a; the face
+      // approved 2026-10-06): the text goes from here to there in the
+      // browser, the verdict came from the server, and the pick files it
+      // through the pipeline with the intranet door. This box keeps its own
+      // line, which says where the capture waits.
+      if (r.held)
+        handToChute({
+          filename: SEND_IT_LABEL,
+          text: sent,
+          account: r.held.account,
+          claim: r.held.mismatch.claim,
+          verdict: {
+            rung: r.held.mismatch.rung,
+            reason: r.held.mismatch.reason,
+            why: r.held.mismatch.why,
+            boundWhy: r.held.mismatch.boundWhy,
+            reasonBy: r.held.mismatch.reasonBy,
+            claimId: r.held.mismatch.claimId,
+            candidates: r.held.mismatch.candidates,
+          },
+          door: "intranet",
+        });
       setReceipt("");
       setPaste("");
       const id = `fed-${Date.now()}`;

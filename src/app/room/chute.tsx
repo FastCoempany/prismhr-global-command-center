@@ -16,20 +16,55 @@
 // The mechanics live in the shared door hooks (./ingest, slice 8 of the
 // Chute brains refactor plan): accept, read, route, file and vault through
 // useIngest, the held verdict through use-verdict, the ledger through
-// useReceipts, the take-back through useUndo. This file is the face: what a
-// row says, the picker, the bar and the fold.
+// useReceipts, the take-back through useUndo. The faces are the held box and
+// the receipt (./ingest/held.tsx, ./ingest/receipt.tsx; slice 18a, the face
+// the founder approved with a ship order on 2026-10-06), which the Drop
+// paints too. This file is the door: the bar, the fold and what each row's
+// choices do.
 
 import { useEffect, useRef, useState } from "react";
 import { chuteReadPdf } from "./actions";
 import { activityRun, activityStage, activityTakeBack } from "../activity/actions";
+import { intranetKeep } from "../intranet/capture-actions";
 import { chuteBook, type BookName } from "./route-actions";
 import { probeActivityReport, uploadActivityReport } from "@/lib/activity/upload";
-import { filingSentences, type Window } from "@/lib/ingest/windows";
-import { useIngest } from "./ingest/use-ingest";
-import { holdVerdict } from "./ingest/use-verdict";
+import type { Window } from "@/lib/ingest/windows";
+import { shortName } from "@/lib/ingest/short-name";
+import { monthDay } from "@/lib/ingest/wrote";
+import type { HeldVerdict } from "./chute-ledger";
+import {
+  HELD_X_TITLE,
+  HELD_X_TITLE_BRAIN,
+  HeldBox,
+  NO_SURE_MATCH,
+  VAULT_PICK,
+  type HeldAccount,
+  type HeldChoice,
+} from "./ingest/held";
+import { ReceiptLine } from "./ingest/receipt";
+import { useIngest, type FilingDoor } from "./ingest/use-ingest";
+import { dismissHeld, holdVerdict, type Verdict } from "./ingest/use-verdict";
 import { useReceipts, type Receipt } from "./ingest/use-receipts";
 import { useUndo } from "./ingest/use-undo";
 import styles from "./room.module.css";
+
+/** Today, M/D in Chicago: the day a settled receipt keeps (D12). */
+const today = (): string => monthDay(new Date());
+
+/** The verdict a held row keeps beside its text: the rung, its reason and
+ *  the evidence behind it, the claimed account, the candidates. */
+const heldOf = (v: Verdict): HeldVerdict => ({
+  rung: v.rung,
+  reason: v.reason,
+  why: v.why,
+  boundWhy: v.boundWhy,
+  reasonBy: v.reasonBy,
+  claimId: v.claimId,
+  candidates: v.candidates,
+});
+
+const count = (n: number, one: string, many: string): string =>
+  `${n} ${n === 1 ? one : many}`;
 
 export function Chute({ canWrite }: { canWrite: boolean }) {
   const ingest = useIngest({ door: "chute", readPdf: chuteReadPdf });
@@ -37,22 +72,22 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
   const { items, patch } = receipts;
   const { undo } = useUndo();
   const [hot, setHot] = useState(false);
-  // The ledger folds: the meter line says what is running, anything waiting
-  // on the operator's pick stays visible, and at most two other rows show —
-  // the page belongs to the opportunities, not the receipts.
+  // The ledger folds: every held row and every row still reading shows, and
+  // the two newest settled receipts with them (D12) — the page belongs to
+  // the opportunities, not the receipts. The meter line opens the rest.
   const [ledgerOpen, setLedgerOpen] = useState(false);
+  // Held rows whose ✕ is running: the box stays, its choices wait.
+  const [working, setWorking] = useState<ReadonlySet<number>>(new Set());
   const inputRef = useRef<HTMLInputElement | null>(null);
-  // The picker's names, and the second record's book: names only, from the
-  // router's door. The roster itself — addresses, domains, people — stays on
-  // the server (D12); every route answers with the names too, so a picker
-  // that follows a route has its list even when the mount's fetch is slow.
+  // The second record's book: names only, from the router's door. The
+  // routing signals themselves — addresses, domains, people — stay on the
+  // server (D12); the held box fetches the same names when it searches.
   const [book, setBook] = useState<BookName[]>([]);
   useEffect(() => {
     void chuteBook().then((b) => {
       if (b.length) setBook(b);
     });
   }, []);
-  const byName = [...book].sort((a, b) => a.name.localeCompare(b.name));
   const bookOrFetched = async (): Promise<BookName[]> =>
     book.length ? book : await chuteBook();
 
@@ -67,14 +102,26 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
     // What the reader cut before the text arrived (D4), so the Filing row
     // and the receipt carry it; it rides the row to the pick's re-run too.
     windows?: Window[],
+    // The door a handed-off capture came through: a Send-it capture files
+    // as the Intranet's (P3). The Chute's own rows file as the Chute.
+    door?: FilingDoor,
   ) => {
     // The text rides on the row: a mismatch waits for the pick with the text
     // it needs to file, and the ledger keeps it across a reload (C20).
-    patch(key, { state: "filing", account, why, rung, text, windows });
+    patch(key, {
+      state: "filing",
+      account,
+      why,
+      rung,
+      text,
+      windows,
+      verdict: undefined,
+    });
     const r = await ingest.file(account.id, text, {
       force,
       windows,
       waiting: srcFile ? [srcFile] : [],
+      door,
     });
     // The same verdict gate the row's Drop runs: the file vaults only once the
     // filing is accepted; a dispute keeps it on the row for the pick.
@@ -85,6 +132,7 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
         state: "filed",
         filed: r.filed,
         opened: (r.opened ?? []).length,
+        promises: r.promises,
         asks: r.asks,
         learned: r.learned,
         archived: r.archived,
@@ -94,16 +142,28 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
         filingId: r.filingId,
         windows: r.windows,
         dupeCheck: r.dupeCheck,
+        day: today(),
       });
     else if (r.duplicate)
-      patch(key, { state: "dupe", reason: r.reason ?? "Already on file." });
+      patch(key, { state: "dupe", reason: r.reason ?? "Already on file.", day: today() });
     else {
       // The row already carries the text and the windows; the verdict adds
-      // the claim and its reason, which the pick line says (D9 as amended
-      // 2026-10-05).
+      // the claim, its reason and the grounds the held box opens to (D9 as
+      // amended 2026-10-05; slice 18a).
       const held = holdVerdict(r, {});
-      if (held) patch(key, { state: "mismatch", claim: held.claim, reason: held.reason });
-      else patch(key, { state: "error", reason: r.reason ?? "The file didn't take." });
+      if (held)
+        patch(key, {
+          state: "mismatch",
+          claim: held.claim,
+          reason: held.reason,
+          verdict: heldOf(held),
+        });
+      else
+        patch(key, {
+          state: "error",
+          reason: r.reason ?? "The file didn't take.",
+          day: today(),
+        });
     }
   };
 
@@ -121,23 +181,110 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
     f: File,
     alone: boolean,
   ) => {
-    if (alone) patch(key, { state: "filing", account });
-    patch(key, { vault: { text: `vaulting ${f.name}…` } });
+    if (alone) patch(key, { state: "filing", account, verdict: undefined });
+    patch(key, { vault: { text: `Backing up ${f.name}…`, going: true } });
     const r = await ingest.vault(account.id, f, (sent, total) =>
-      patch(key, { vault: { text: `vaulting ${f.name}… ${sent} of ${total}` } }),
+      patch(key, {
+        vault: { text: `Backing up ${f.name}… ${sent} of ${total}`, going: true },
+      }),
     );
     patch(key, {
-      vault: r.ok
-        ? {
-            text: `${r.kind === "release" ? "pre-release" : "vaulted"} · ${r.detail}`,
-            url: r.url,
-          }
-        : { text: r.reason, bad: true },
+      vault: r.ok ? { text: r.detail, url: r.url } : { text: r.reason, bad: true },
       ...(alone
         ? r.ok
-          ? { state: "vaulted", account }
-          : { state: "error", reason: r.reason }
+          ? { state: "vaulted", account, day: today() }
+          : { state: "error", reason: r.reason, day: today() }
         : {}),
+    });
+  };
+
+  // The held box's ✕ (slice 18a): the row files nothing on any account. A
+  // Send-it capture keeps the brain's own road (P2); everything else backs
+  // up under accounts/_unfiled/, the file itself or its text when a reload
+  // took the file (dismissHeld), and the receipt says "Not filed. Backed up."
+  const dismissRow = async (it: Receipt) => {
+    const plan = dismissHeld({
+      door: it.door,
+      filename: it.filename,
+      text: it.text,
+      files: it.file ? [it.file] : [],
+    });
+    if (plan.kind === "none") {
+      receipts.dismiss(it.key);
+      return;
+    }
+    setWorking((w) => new Set(w).add(it.key));
+    const done = (up: Partial<Receipt>) => {
+      patch(it.key, { ...up, verdict: undefined, day: today() });
+      setWorking((w) => {
+        const next = new Set(w);
+        next.delete(it.key);
+        return next;
+      });
+    };
+    try {
+      if (plan.kind === "keep") {
+        const r = await intranetKeep(plan.text);
+        done(
+          r.ok
+            ? { state: "kept" }
+            : { state: "error", reason: r.reason ?? "That didn't land." },
+        );
+        return;
+      }
+      for (const f of plan.files) {
+        const r = await ingest.vaultUnfiled(f, (sent, total) =>
+          patch(it.key, {
+            vault: { text: `Backing up ${f.name}… ${sent} of ${total}`, going: true },
+          }),
+        );
+        if (!r.ok) {
+          done({ state: "error", reason: r.reason, vault: undefined });
+          return;
+        }
+        patch(it.key, { vault: { text: r.detail, url: r.url } });
+      }
+      done({ state: "unfiled" });
+    } catch {
+      done({ state: "error", reason: "The backup broke off. Drop it again." });
+    }
+  };
+
+  // A choice in the held box is final: the filing re-runs with force and the
+  // row's windows, the read runs again, nothing is re-judged (D5). The batch
+  // sibling's suggestion keeps its own rung on the receipt (D6).
+  const pickHeld = (it: Receipt, account: HeldAccount, how: HeldChoice) => {
+    const batch = how === "batch";
+    const why = batch ? "the rest of this drop went there" : "your call";
+    const rung = batch ? "batch" : "pick";
+    if (it.text)
+      void fileTo(
+        it.key,
+        it.text,
+        account,
+        why,
+        rung,
+        true,
+        it.file,
+        it.windows,
+        it.door,
+      );
+    else if (it.file) void vaultTo(it.key, account, it.file, true);
+  };
+
+  // ↺ takes the whole filing back by its id (use-undo.ts), and the receipt
+  // says what went.
+  const takeBack = (it: Receipt) => {
+    const acct = it.account;
+    if (!acct) return;
+    void undo(acct.id, it).then((r) => {
+      if (r.ok)
+        patch(it.key, {
+          state: "undone",
+          reason: `Taken back from ${shortName(acct.name)}. ${r.removed + r.retired} removed.`,
+          day: today(),
+        });
+      else patch(it.key, { note: r.reason ?? "The take-back didn't go through." });
     });
   };
 
@@ -272,9 +419,9 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
     );
   };
 
-  // Files thrown together are almost always one account's export. When an
-  // unsure file's batch-mates filed somewhere, that account is the one-click
-  // suggestion; the picker stays as the fallback.
+  // Files thrown together are almost always one account's export. When a
+  // held file's batch-mates filed somewhere, that account is the suggestion
+  // the held box offers, never a rung (D6).
   const batchMate = (it: Receipt): { id: string; name: string } | null => {
     if (it.batch == null) return null;
     const counts = new Map<string, { id: string; name: string; n: number }>();
@@ -288,84 +435,18 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
     return top ? { id: top.id, name: top.name } : null;
   };
 
-  // A settled receipt is the operator's to clear (decreed 2026-09-01); the
-  // gate is isSettled in chute-ledger.ts, read through the ledger hook.
+  const isWaiting = (it: Receipt) => it.state === "pick" || it.state === "mismatch";
+  const isRunning = (it: Receipt) =>
+    it.state === "reading" || it.state === "filing" || it.state === "activity";
 
-  // One receipt row — shared by the folded view and the open ledger.
-  const renderItem = (it: Receipt) => (
-    <li key={it.key} className={styles.chuteItem}>
-      {receipts.settled(it) && (
-        <button
-          type="button"
-          className={styles.chuteDismiss}
-          title="Clear this receipt. The record keeps everything that filed."
-          onClick={() => receipts.dismiss(it.key)}
-        >
-          ✕
-        </button>
-      )}
+  // The second record's drop keeps its own receipt: the counts that came in,
+  // the run's last line, and its two-press take-back.
+  const renderActivity = (it: Receipt) => (
+    <div className={styles.rcptRow}>
       <span className={styles.chuteFile}>{it.filename}</span>
-      {it.state === "reading" && <span>Reading…</span>}
-      {it.state === "filing" && it.account && (
-        <span>
-          Filing to {it.account.name}… {it.why ? `(${it.why})` : ""}
-        </span>
-      )}
-      {it.state === "filed" && it.account && (
-        <span className={styles.chuteDone}>
-          ✓ {it.account.name} · {it.filed} filed
-          {it.degraded
-            ? " · the reader was down — raw text only, nothing routed; ↩ undo and re-drop when it's back"
-            : it.archived
-              ? " · transcript on file"
-              : ""}
-          {(it.opened ?? 0) > 0
-            ? ` · ${it.opened} action${it.opened === 1 ? "" : "s"} opened`
-            : ""}
-          {(it.asks ?? 0) > 0
-            ? ` · ${it.asks} ask${it.asks === 1 ? "" : "s"} queued`
-            : ""}
-          {(it.learned ?? 0) > 0 ? ` · ${it.learned} to the playbook` : ""}
-          {it.why ? ` · ${it.why}` : ""}
-          {filingSentences(it)
-            .map((s) => ` · ${s}`)
-            .join("")}
-          {(it.noteIds?.length ?? 0) > 0 && (
-            <button
-              type="button"
-              className={styles.chuteUndo}
-              title="Wrong account? Takes back everything this filing wrote."
-              onClick={() => {
-                const acct = it.account;
-                const ids = it.noteIds;
-                if (!acct || !ids?.length) return;
-                void undo(acct.id, it).then((r) => {
-                  if (r.ok)
-                    patch(it.key, {
-                      state: "undone",
-                      reason: `Taken back from ${acct.name}. ${r.removed} removed${
-                        r.retired
-                          ? `, ${r.retired} action${r.retired === 1 ? "" : "s"} retired`
-                          : ""
-                      }.`,
-                    });
-                });
-              }}
-            >
-              ↩ undo
-            </button>
-          )}
-        </span>
-      )}
-      {it.state === "undone" && <span className={styles.chuteDupe}>{it.reason}</span>}
-      {it.state === "vaulted" && (
-        <span className={styles.chuteDone}>
-          Vaulted to {it.account?.name ?? "its account"}.
-        </span>
-      )}
-      {it.state === "activity" && <span>{it.reason}</span>}
+      {it.state === "activity" && <span className={styles.rcptLine}>{it.reason}</span>}
       {it.state === "activityDone" && (
-        <span className={it.came?.textRows === 0 ? styles.chuteWarn : styles.chuteDone}>
+        <span className={styles.rcptLine}>
           {it.came ? `${it.came.rows} rows · ` : ""}
           {it.came ? `${it.came.accounts} accounts · ` : ""}
           {it.came ? `${it.came.textRows} carrying email text. ` : ""}
@@ -399,113 +480,61 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
           </button>
         </span>
       )}
-      {it.state === "error" && <span className={styles.chuteErr}>{it.reason}</span>}
-      {it.vault && (
-        <span className={it.vault.bad ? styles.chuteErr : styles.chuteDupe}>
-          ⇪ {it.vault.text}
-          {it.vault.url && (
-            <>
-              {" "}
-              <a href={it.vault.url} target="_blank" rel="noreferrer">
-                open
-              </a>
-            </>
-          )}
-        </span>
-      )}
-      {it.state === "dupe" && <span className={styles.chuteDupe}>{it.reason}</span>}
-      {it.state === "interrupted" && (
-        <span className={styles.chuteWarn}>{it.reason}</span>
-      )}
-      {(it.state === "pick" || it.state === "mismatch") && !it.text && !it.file && (
-        <span className={styles.chuteWarn}>
-          The pick did not survive. Drop the file again.
-        </span>
-      )}
-      {(it.state === "pick" || it.state === "mismatch") && (it.text || it.file) && (
-        <span className={styles.chutePick}>
-          {it.state === "mismatch" ? (
-            <span className={styles.chuteErr}>
-              {/* The disputed row's receipt says the rung's reason — nine
-                  words or fewer (D9 as amended 2026-10-05). */}
-              {it.reason
-                ? `${it.reason} `
-                : `Reads like ${it.claim || "another account"}. `}
-              Pick the account.
-            </span>
-          ) : it.text ? (
-            <span>No sure match. Pick the account.</span>
-          ) : (
-            <span>
-              A file the reader can&apos;t open. Pick its account for the vault.
-            </span>
-          )}
-          {(() => {
-            const mate = it.state === "pick" ? batchMate(it) : null;
-            return (
-              mate && (
-                <button
-                  type="button"
-                  className={styles.chuteBtn}
-                  title="The rest of this drop filed there."
-                  onClick={() => {
-                    if (it.text)
-                      void fileTo(
-                        it.key,
-                        it.text,
-                        mate,
-                        "the rest of this drop went there",
-                        "batch",
-                        true,
-                        it.file,
-                        it.windows,
-                      );
-                    else if (it.file) void vaultTo(it.key, mate, it.file, true);
-                  }}
-                >
-                  File to {mate.name}
-                </button>
-              )
-            );
-          })()}
-          <select
-            className={styles.chuteSel}
-            defaultValue=""
-            onChange={(e) => {
-              const id = e.target.value;
-              const a =
-                book.find((x) => x.id === id) ??
-                (it.candidates ?? []).find((x) => x.id === id);
-              if (a && it.text)
-                void fileTo(
-                  it.key,
-                  it.text,
-                  { id: a.id, name: a.name },
-                  "your call",
-                  "pick",
-                  true,
-                  it.file,
-                  it.windows,
-                );
-              else if (a && it.file)
-                void vaultTo(it.key, { id: a.id, name: a.name }, it.file, true);
-            }}
+      {receipts.settled(it) && (
+        <span className={styles.rcptCtl}>
+          <button
+            type="button"
+            title="Clear this receipt"
+            aria-label="Clear this receipt"
+            onClick={() => receipts.dismiss(it.key)}
           >
-            <option value="" disabled>
-              Pick the account…
-            </option>
-            {(it.candidates ?? []).map((c) => (
-              <option key={`c${c.id}`} value={c.id}>
-                {c.name} · {c.why}
-              </option>
-            ))}
-            {byName.map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.name}
-              </option>
-            ))}
-          </select>
+            ✕
+          </button>
         </span>
+      )}
+    </div>
+  );
+
+  // One row: a held file is the held box; the second record's drop keeps its
+  // own receipt; everything else is the receipt line.
+  const renderItem = (it: Receipt) => (
+    <li key={it.key} className={styles.chuteItem}>
+      {isWaiting(it) && (it.text || it.file) ? (
+        <HeldBox
+          file={it.filename}
+          verdict={it.state === "mismatch" ? (it.verdict ?? { reason: it.reason }) : null}
+          say={it.text ? NO_SURE_MATCH : VAULT_PICK}
+          claim={it.claim}
+          bound={it.state === "mismatch" ? (it.account ?? null) : null}
+          candidates={
+            (it.state === "mismatch" ? it.verdict?.candidates : undefined) ??
+            (it.candidates ?? []).map((c) => ({ id: c.id, name: c.name, rung: c.rung }))
+          }
+          suggestion={batchMate(it)}
+          canWrite={canWrite}
+          busy={working.has(it.key)}
+          status={it.vault?.going ? it.vault.text : undefined}
+          dismissTitle={it.door === "intranet" ? HELD_X_TITLE_BRAIN : HELD_X_TITLE}
+          onPick={(a, how) => pickHeld(it, a, how)}
+          onDismiss={() => void dismissRow(it)}
+        />
+      ) : isWaiting(it) ? (
+        <span className={styles.rcptWarn}>
+          {it.filename} · The pick did not survive. Drop the file again.
+        </span>
+      ) : it.act && (it.state === "activity" || it.state === "activityDone") ? (
+        renderActivity(it)
+      ) : (
+        <ReceiptLine
+          row={it}
+          canWrite={canWrite}
+          onTakeBack={
+            it.state === "filed" && (it.noteIds?.length || it.filingId)
+              ? () => takeBack(it)
+              : undefined
+          }
+          onClear={receipts.settled(it) ? () => receipts.dismiss(it.key) : undefined}
+        />
       )}
     </li>
   );
@@ -515,22 +544,26 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
   const ledger =
     items.length > 0 &&
     (() => {
-      const running = items.filter(
-        (x) => x.state === "reading" || x.state === "filing" || x.state === "activity",
+      const running = items.filter(isRunning);
+      const waiting = items.filter(isWaiting);
+      const settledCount = items.filter((x) => receipts.settled(x)).length;
+      const filed = items.filter((x) => x.state === "filed").length;
+      const meter =
+        running.length + waiting.length > 0
+          ? [
+              count(items.length, "file", "files"),
+              filed > 0 ? `${filed} filed` : "",
+              waiting.length > 0 ? `${waiting.length} held` : "",
+              running.length > 0 ? `${running.length} reading` : "",
+            ]
+              .filter(Boolean)
+              .join(" · ")
+          : `${count(items.length, "receipt", "receipts")} · today`;
+      // Folded: every held row and every row still reading, then the two
+      // newest settled receipts (D12). items is newest-first; keep that order.
+      const visible = new Set<number>(
+        items.filter((x) => isWaiting(x) || isRunning(x)).map((x) => x.key),
       );
-      const waiting = items.filter((x) => x.state === "pick" || x.state === "mismatch");
-      const meter = [
-        running.length > 0 ? `${running.length} running` : "",
-        waiting.length > 0
-          ? `${waiting.length} need${waiting.length === 1 ? "s" : ""} your pick`
-          : "",
-        `${items.length - running.length - waiting.length} settled today`,
-      ]
-        .filter(Boolean)
-        .join(" · ");
-      // Folded: everything waiting on the operator, then the freshest two
-      // of the rest. items is newest-first; keep that order.
-      const visible = new Set<number>(waiting.map((x) => x.key));
       if (!ledgerOpen) {
         let extra = 0;
         for (const x of items) {
@@ -545,31 +578,33 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
       return (
         <>
           <div className={styles.chuteMeter}>
-            <span className={styles.chuteMeterLine}>{meter}</span>
-            {(hidden > 0 || ledgerOpen) && (
+            {hidden > 0 || ledgerOpen ? (
               <button
                 type="button"
-                className={styles.chuteFold}
+                className={styles.chuteMeterBtn}
+                aria-expanded={ledgerOpen}
+                title={
+                  ledgerOpen ? "Hide the older receipts" : `Show all ${items.length}`
+                }
                 onClick={() => setLedgerOpen((v) => !v)}
               >
-                {ledgerOpen ? "Fold the ledger" : `Open the ledger · ${items.length}`}
+                {meter} {ledgerOpen ? "▴" : "▾"}
+              </button>
+            ) : (
+              <span className={styles.chuteMeterLine}>{meter}</span>
+            )}
+            {settledCount > 0 && (
+              <button
+                type="button"
+                className={styles.chuteClear}
+                title="Clear every settled receipt. The record keeps everything that filed."
+                onClick={() => receipts.dismissAll()}
+              >
+                Clear all
               </button>
             )}
           </div>
-          <ul className={styles.chuteList}>
-            {shown.map(renderItem)}
-            {ledgerOpen && (
-              <li>
-                <button
-                  type="button"
-                  className={styles.chuteClear}
-                  onClick={() => receipts.dismissAll()}
-                >
-                  Clear the receipts
-                </button>
-              </li>
-            )}
-          </ul>
+          <ul className={styles.chuteList}>{shown.map(renderItem)}</ul>
         </>
       );
     })();

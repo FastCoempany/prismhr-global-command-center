@@ -365,5 +365,9 @@ export async function readRungVerdict(
   }
   if (!answer) return verdict;
   if (answer.sameCompany) return null;
-  return answer.reason ? { ...verdict, reason: answer.reason } : verdict;
+  // The held box's grounds say whose reason this is (slice 18a): the model's
+  // reads "Web check"; the rule's verdict stands untouched when it had none.
+  return answer.reason
+    ? { ...verdict, reason: answer.reason, reasonBy: "model" }
+    : verdict;
 }
