@@ -16,6 +16,7 @@ Current files:
 - design-brand-audit.md
 - design-system.md
 - field-glyphs.md
+- pass-8-rewalk.md
 - product-lexicon.md
 - rulings-sheet.md
 - scaffold-pass.md
@@ -74,6 +75,14 @@ in front of each; (3) the SAFE NOW removals from pass 4; (4) the refactor,
 candidate 1 (the dialect and head-token module) then candidate 2 (one
 account read with a declared home side and hide filter), then candidates
 3 through 9 in pass-1 order.
+
+Pass 6 is the plan, docs/plans/chute-brains-refactor-2026-09-25.md, and
+pass 7 shipped it (#339 to #366). pass-8-rewalk.md is pass 8 (2026-10-06):
+the re-walk of every ledger above against main d119c52 after pass 7. Each
+ledger carries its own re-walk section; the scoreboard's rows are
+re-scored; the pass-8 file holds the evidence behind those moves, the 51
+live violations found, the fourteen questions for the founder, and the
+housekeeping. Twenty-five hand-run suites are still outside the chain.
 
 Likely future files:
 
