@@ -1,8 +1,8 @@
 ---
 title: Chute Brains Refactor Plan
-status: Shipped 2026-10-05, slices 1 to 17; slice 18 stays blocked on the face
+status: Shipped, slices 1 to 17 on 2026-10-05 and slice 18 on 2026-10-06
 approved: Founder, 2026-10-05, by answering the sixteen questions of section 7 in chat
-shipped: PRs #339 to #354, squash merged to main on 2026-10-05; the ship log heads section 4
+shipped: PRs #339 to #354 on 2026-10-05, and #359 and #360 on 2026-10-06; the ship log heads section 4
 owner: Founder
 related_docs:
   - docs/architecture/chute-architecture-map.md
@@ -271,10 +271,12 @@ Every slice shipped as one squash-merged PR after its chain ran green on main's 
 | 17 · The second record's writer | #352 | 09bf0a2 | Stage and manifest bodies are JSON whole; the fold has one home in src/lib/activity/read.ts. |
 | 16 · The Intranet's capture through the pipeline | #353 | df38ecb | The door is src/app/intranet/capture-actions.ts, the one Intranet module that may import the pipeline. |
 | 13 and 14 · The Sendbook; whose move | #354 | 823a770 | The court is deleted (D25); a home-side sender's mail is never inbound. |
+| 18b · Their promise on the move line | #359 | 4f4779d | Ship order 2026-10-06. Owed work leads; a blown promise outranks a nudge and every wait. The read grows `theirPromises`. |
+| 18a · The held box and the receipt | #360 | ec2181b | Ship order 2026-10-06. The ✕ backs a file up under accounts/_unfiled/; Send-it hands its dispute to the Chute. |
 
 Open after the pass, for the founder:
 
-- **Slice 18**: ship order given 2026-10-06 on docs/mockups/chute-faces-2026-10-06.html; built as 18a and 18b.
+- **Slice 18** shipped 2026-10-06 as #359 and #360. Left open by it: a backed-up file has no take-back, because nothing removes a file from the vault yet, and D13 asks for one; an unsure Send-it route, with candidates but no dispute, still stays in the brain; a row whose only move is their promise still sorts as quiet; a relayed promise cannot be told from a direct one in the record.
 - **The move line's loop sentence**: decided 2026-10-06 in §5 item 4 and built in slice 18b.
 - **The migrations are in production.** The founder checked the database in the Supabase SQL editor on 2026-10-06: `AccountNote.door`, `Filing`, `AccountNote.filingId`, `Todo.filingId` and `VaultChunk` are all present. The startup migrator's catalog query timed out at the pooler's auth step (`08006 EAUTHTIMEOUT`) on two cold starts under request bursts; it fails open, so those starts cost a log line and nothing else, and the pooler's behavior under concurrent cold starts is still worth a look.
 - **Pre-existing lines outside the pass:** two em-dash hinges in the live read's older lines (src/lib/ask/live.ts); the Playbook mirrors still earn their own model read (G6 names them, slice 16's text did not); a new drop's rows for a shell id land in the unmatched count at ingest (the read-side fold covers rows already staged); object keys in the stage body's campaign tally are not redacted (a ruling is needed before redacting keys); the Intranet suite's five Teams-grab bookmarklet failures predate the pass.
