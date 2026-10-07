@@ -26,7 +26,7 @@ import {
   renderActDraftBody,
   renderSeatBody,
 } from "@/lib/act/lane";
-import { sendConsequences, stampActed } from "./rules";
+import { forkTodo, sendConsequences, stampActed } from "./rules";
 
 async function requireWrite(): Promise<boolean> {
   if (!hasDatabaseEnv()) return false;
@@ -179,7 +179,8 @@ export async function forkAct(args: {
   const prisma = getPrisma();
   try {
     if (args.toHome) {
-      const t = await createTodoRow({ body: act, accountId, remindAt: new Date() });
+      // An action the TODAY register reads (A8.15): the rule carries the tag.
+      const t = await createTodoRow(forkTodo({ accountId, act, now: new Date() }));
       return { ok: true, undo: { kind: "todo", id: t.id } };
     }
     // One seat per account — refiling replaces the old seat.

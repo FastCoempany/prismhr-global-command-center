@@ -26,7 +26,7 @@ import {
   type FileChild,
 } from "docx";
 import type { PipelineRecord } from "./build";
-import { closeText, lineKey, type Overlay } from "./plain";
+import { closeText, lineKey, passedDay, type Overlay } from "./plain";
 
 // US Letter in DXA (1440 = one inch). The library defaults to A4, which prints
 // short on every printer in the building.
@@ -265,7 +265,10 @@ export function reportSection(
         ],
       }),
     );
-    if (r.ourNext.some((n) => n.urgent))
+    // The sheet's own verdict (D28): PROMISED with its date only when
+    // someone heard the day; a typed date nobody heard is a plain wall.
+    const passed = passedDay(r);
+    if (passed)
       children.push(
         new Paragraph({
           spacing: { after: 100 },
@@ -273,7 +276,9 @@ export function reportSection(
           shading: { type: ShadingType.CLEAR, color: "auto", fill: AMBER_SOFT },
           children: [
             new TextRun({
-              text: "PROMISED, AND THE DAY PASSED",
+              text: passed.promised
+                ? `PROMISED ${passed.wall}, AND THE DAY PASSED`
+                : `THE ${passed.wall} WALL PASSED`,
               size: 15,
               bold: true,
               color: INK,

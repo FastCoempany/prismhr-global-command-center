@@ -20,7 +20,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { PipelineRecord } from "@/lib/pipeline/build";
-import { closeText, lineKey, recordToText, reportToText } from "@/lib/pipeline/plain";
+import {
+  closeText,
+  lineKey,
+  passedDay,
+  passedPill,
+  recordToText,
+  reportToText,
+} from "@/lib/pipeline/plain";
 import { joinEntries, oneLine } from "@/lib/pipeline/density";
 import { reportDocument, reportFileName } from "@/lib/pipeline/docx";
 import { freshPipeline, savePipelineEdits } from "./pipeline-actions";
@@ -232,6 +239,7 @@ function Record({
   const struck = Object.entries(overlay).filter(
     ([key, v]) => v === null && key.startsWith(`${r.id}:`),
   ).length;
+  const passed = passedDay(r);
   return (
     <div className={styles.pipeRec}>
       <div className={styles.pipeHead}>
@@ -245,8 +253,10 @@ function Record({
                 : "No meeting on record"}
             </span>
             {r.quietDays === null ? null : <span>Quiet {r.quietDays} days</span>}
-            {r.ourNext.some((n) => n.urgent) ? (
-              <span className={styles.pipePillHot}>Promised, passed</span>
+            {/* The sheet's own verdict (D28): PROMISED with its date only
+                when someone heard the day, and a plain wall otherwise. */}
+            {passed ? (
+              <span className={styles.pipePillHot}>{passedPill(passed)}</span>
             ) : null}
           </div>
         </div>
@@ -391,8 +401,8 @@ function Record({
         set={set}
         empty={<span className={styles.pipeFlag}>None set — that is the finding</span>}
         pill={
-          r.ourNext[0]?.urgent ? (
-            <span className={styles.pipePillHot}>Promised</span>
+          r.ourNext[0]?.wall ? (
+            <span className={styles.pipePillHot}>{passedPill(r.ourNext[0])}</span>
           ) : undefined
         }
       />

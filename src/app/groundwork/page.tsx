@@ -42,7 +42,7 @@ import {
   secondOnlyMotionIds,
   sweepAtFor,
 } from "@/lib/groundwork/day";
-import { stampSubtext } from "@/lib/groundwork/stamp";
+import { wingStamp, type ChannelTouch } from "@/lib/groundwork/stamp";
 import {
   collisionFor,
   dropAgeDays,
@@ -95,7 +95,6 @@ import {
   SENDBOOK_NS,
   buildSendbook,
   recordSends,
-  shortName,
   weekStats,
   whoChipNames,
   type NoteLike as SendNote,
@@ -482,20 +481,12 @@ export default async function GroundworkPage({
   // stops firing later in the day.
   // The stamp's subtext reads the Sendbook: the newest touch filed today for
   // that account says what was done — channel, step, who.
-  const sendToday = new Map<string, { channel: string; step: number; contact: string }>();
+  const sendToday = new Map<string, ChannelTouch>();
   for (const l of sendbook.lines) {
     const t = Date.parse(l.at);
     if (Number.isNaN(t) || userDayKey(new Date(t)) !== dayKey) continue;
     if (!sendToday.has(l.accountId)) sendToday.set(l.accountId, l); // newest first
   }
-  const subFor = (accountId: string): string => {
-    const s = sendToday.get(accountId);
-    if (!s) return "";
-    return [`${s.channel} · STEP ${s.step}`, s.contact ? shortName(s.contact) : ""]
-      .filter(Boolean)
-      .join(" · ");
-  };
-
   // When no channel line exists (a copy-stamp, a pre-register stamp), the
   // subtext carries the move's own specifics — the headline, the thread
   // subject, the quiet date, the CSM's name — never a bare label
@@ -532,14 +523,14 @@ export default async function GroundworkPage({
       ) ?? outreachGem(sr)
     );
   };
-  const ruleSub = (id: string, ruleId: string): string => {
+  const ruleFacts = (id: string) => {
     const r = researchByAccount.get(id);
     // The age the move spoke: the newer of the account's own pass and the
     // sweep, as the queue reads it (G7). No own pass means the book-wide one.
     const researchAt = r ? (latestResearchAt(r.at, sweepAtFor(id)) ?? r.at) : "";
     const lane = ridingLaneDate(accountNotes.get(id), now);
     const gem = stampGem(id);
-    return stampSubtext(ruleId, {
+    return {
       wireHeadline: wireHeadFor(id),
       intentActivities: intentById.get(id)?.activities ?? null,
       ridingLaneCloses: lane ? monthDay(lane) : "",
@@ -553,7 +544,7 @@ export default async function GroundworkPage({
       gemTerm: gem?.term ?? "",
       gemWho: gem?.who[0] ?? "",
       supportCases: engagedNeverIntroduced(secondFolded.get(id), now)?.cases ?? null,
-    });
+    };
   };
 
   const doneToday: {
@@ -571,7 +562,9 @@ export default async function GroundworkPage({
       doneToday.push({
         name,
         at: clockShort(at),
-        sub: subFor(m[1]) || ruleSub(m[1], m[2]),
+        // The channel line leads when a touch is filed, else the rule's
+        // words (D27, ship order 2026-10-06): one choice, pinned (wingStamp).
+        sub: wingStamp(sendToday.get(m[1]), m[2], () => ruleFacts(m[1])),
         mk: `${m[1]}:${m[2]}`,
         accountId: m[1],
       });

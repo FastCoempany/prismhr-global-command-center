@@ -11,6 +11,7 @@ import { readOutcome } from "@/lib/dashboard/outcome";
 import type { AccountRead } from "@/lib/record/read";
 import { hideNoteKey } from "@/lib/record/hide";
 import type { LastHumanTouch } from "@/lib/record/accounts";
+import type { NewTodo } from "@/lib/notes/write";
 import { userDayKey } from "@/lib/tz";
 
 // ── the board lift: a live deal (pass 8 A4; the Act Lane, A8.15) ─────────────
@@ -42,6 +43,20 @@ export function boardWords(
  *  Groundwork's wing, and the lane never says "the deal is live" for them. */
 export function liveOnBoard(b: BoardWord | undefined): boolean {
   return !!b && b.live && !b.outcome;
+}
+
+/** The todo the fork's HomeRoom half files: a live deal's move as an action
+ *  the TODAY register reads, due now. The register lists only action todos
+ *  (buildAccountSheet), so the fork carries the action tag a composed action
+ *  carries; the bare text it once filed answered "✓ FILED · THE HOMEROOM'S
+ *  TODAY REGISTER" and never appeared there (A8.15). */
+export function forkTodo(a: { accountId: string; act: string; now: Date }): NewTodo {
+  return {
+    body: a.act,
+    tags: { kind: "action" },
+    accountId: a.accountId,
+    remindAt: a.now,
+  };
 }
 
 // ── hidden is hidden (pass 8 X1) ─────────────────────────────────────────────

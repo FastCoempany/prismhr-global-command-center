@@ -23,8 +23,11 @@ import {
   reportToText,
   lineKey,
   closeText,
+  passedDay,
+  passedPill,
   ARRIVAL,
 } from "../src/lib/pipeline/plain";
+import { createElement } from "react";
 import { reportDocument, reportSection, reportFileName } from "../src/lib/pipeline/docx";
 import { collectPipelineAccounts, pipelineDayLabel } from "../src/lib/pipeline/collect";
 import { readAccount, type RecordNote } from "../src/lib/record/read";
@@ -419,6 +422,43 @@ describe("a colleague never stands in the client's room", () => {
     assert.ok(ours.has("shane jacobs"));
     assert.ok(!ours.has("chassie smith"), "one account is one client's person");
   });
+
+  // The first record's actors keep three (ruled 2026-10-07, pass 8 call 10):
+  // a message's actor is often theirs, so two accounts prove nothing.
+  test("a name on two accounts is not ours by count; on three it is (pass 8 call 10)", () => {
+    const book = (n: number): [string, { actors: string }[]][] =>
+      Array.from({ length: n }, (_, i) => [
+        `a${i + 1}`,
+        [{ actors: `Shane Jacobs → Person ${"ABCD"[i]}` }],
+      ]);
+    assert.ok(!homeSideFrom(book(2)).has("shane jacobs"), "two accounts are not three");
+    assert.ok(homeSideFrom(book(3)).has("shane jacobs"));
+    // The same name twice on one account is still one account.
+    const twice: [string, { actors: string }[]][] = [
+      ["a1", [{ actors: "Shane Jacobs → X Ray" }, { actors: "Shane Jacobs → Y Zed" }]],
+      ["a2", [{ actors: "Shane Jacobs → Z Zed" }]],
+    ];
+    assert.ok(!homeSideFrom(twice).has("shane jacobs"));
+  });
+
+  test("the builder's own count, with no book-wide set handed in, keeps the same three", () => {
+    const others = (n: number) =>
+      Array.from({ length: n }, (_, i) =>
+        simploy({
+          id: `o${i + 1}`,
+          name: `Other ${i + 1}`,
+          notes: [note({ id: `o${i}`, actors: `Shane Jacobs → Person ${"ABCD"[i]}` })],
+          todos: [],
+        }),
+      );
+    const roomOf = (n: number) =>
+      build([withColleague, ...others(n)])[0].lastTouch?.room.map((p) => p.name) ?? [];
+    assert.ok(
+      roomOf(2).includes("Shane Jacobs"),
+      "two accounts leave him a client person",
+    );
+    assert.ok(!roomOf(3).includes("Shane Jacobs"), "three make him ours");
+  });
 });
 
 // The Word document — the one Pipeline surface a stranger reads. It carries
@@ -454,14 +494,22 @@ describe("the Word document", () => {
     );
   });
   test("a blown promise is flagged in the brand's amber by role: a rule and a fill, ink words (S-24)", () => {
+    // The sheet's verdict rides the line (D28): a heard day that passed.
     const blown = {
       ...r,
       ourNext: [
-        { text: "Send the model", full: "Send the model", opened: "", urgent: true },
+        {
+          text: "Send the model",
+          full: "Send the model",
+          opened: "",
+          urgent: true,
+          wall: "9/4",
+          promised: true,
+        },
       ],
     };
     const text = JSON.stringify(reportSection([blown], {}, day));
-    const at = text.indexOf("PROMISED, AND THE DAY PASSED");
+    const at = text.indexOf("PROMISED 9/4, AND THE DAY PASSED");
     assert.ok(at > 0, "the kicker renders");
     // The off-brand dark amber is gone; #F59E0B is the rule, its soft tint
     // the fill, and the run around the kicker is ink.
@@ -507,6 +555,124 @@ describe("the Word document", () => {
     ])
       assert.ok(text.includes(label), `missing ${label}`);
     assert.ok(text.includes("None set — that is the finding"));
+  });
+});
+
+// ── PROMISED needs a hearer, in the drawer and its Word file (D28) ──────────
+// A typed date reads PROMISED only when the line names the person it was
+// promised to, and otherwise it is a wall. The drawer reads the sheet's own
+// verdict (src/lib/room/sheet-view.ts) and keeps no rule of its own: it used
+// to flag any passed day "Promised, passed" and print "PROMISED, AND THE DAY
+// PASSED" in the Word file, a hand-typed date nobody heard included.
+
+describe("the drawer says PROMISED only when someone heard the day (D28)", () => {
+  const day = "Tuesday, September 8";
+  // The day passed on 9/4; the record is read on 9/8.
+  const dated = (body: string) => ({
+    id: "p",
+    body: `${body}\n⚑[k:a,d:2026-09-04]`,
+    accountId: "acc",
+    createdAt: "2026-09-03T15:00:00Z",
+    remindAt: "",
+    updatedAt: "2026-09-03T15:00:00Z",
+    done: false,
+  });
+  // Nobody is named and the record holds no one: a plain wall.
+  const [unheard] = build([simploy({ notes: [], todos: [dated("Send the pricing")] })]);
+  // The call's own person is named in the line: the day was promised to her.
+  const [heard] = build([simploy({ todos: [dated("Send Chassie the pricing")] })]);
+
+  test("the record carries the sheet's verdict: the wall, and PROMISED only with a hearer", () => {
+    assert.equal(unheard.ourNext[0].wall, "9/4");
+    assert.ok(!unheard.ourNext[0].promised, "no hearer, no promise");
+    assert.equal(heard.ourNext[0].wall, "9/4");
+    assert.equal(heard.ourNext[0].promised, true);
+  });
+
+  test("the drawer: a plain wall reads 'The 9/4 wall passed', never Promised", async () => {
+    const { render, textOf } = await import("./helpers/room-render");
+    const { PipelineDrawer } = await import("../src/app/room/pipeline-tab");
+    const text = textOf(
+      await render(
+        createElement(PipelineDrawer, {
+          rows: [unheard],
+          dayLabel: day,
+          staleNote: "",
+          onClose: () => {},
+        }),
+      ),
+    );
+    assert.match(text, /The 9\/4 wall passed/);
+    assert.ok(!/Promised/i.test(text), text);
+  });
+
+  test("the drawer: a heard day reads PROMISED with its date", async () => {
+    const { render, textOf } = await import("./helpers/room-render");
+    const { PipelineDrawer } = await import("../src/app/room/pipeline-tab");
+    const text = textOf(
+      await render(
+        createElement(PipelineDrawer, {
+          rows: [heard],
+          dayLabel: day,
+          staleNote: "",
+          onClose: () => {},
+        }),
+      ),
+    );
+    assert.match(text, /Promised 9\/4/);
+    assert.ok(!/wall passed/.test(text), text);
+  });
+
+  test("the Word file: a plain wall prints THE 9/4 WALL PASSED, never PROMISED", () => {
+    const text = JSON.stringify(reportSection([unheard], {}, day));
+    assert.ok(text.includes("THE 9/4 WALL PASSED"), "the wall's kicker renders");
+    assert.ok(!text.includes("PROMISED"), "no hearer, no promise");
+  });
+
+  test("the Word file: a heard day prints PROMISED with its date", () => {
+    const text = JSON.stringify(reportSection([heard], {}, day));
+    assert.ok(text.includes("PROMISED 9/4, AND THE DAY PASSED"));
+    assert.ok(!text.includes("WALL PASSED"));
+  });
+
+  test("a day still ahead flags nothing in either", async () => {
+    const [ahead] = build([
+      simploy({
+        notes: [],
+        todos: [
+          { ...dated("Send the pricing"), body: "Send the pricing\n⚑[k:a,d:2026-09-20]" },
+        ],
+      }),
+    ]);
+    assert.equal(passedDay(ahead), null);
+    const text = JSON.stringify(reportSection([ahead], {}, day));
+    assert.ok(!/PROMISED|WALL PASSED/.test(text));
+  });
+
+  test("a heard promise outranks a plain wall on the record's flag", () => {
+    const both = {
+      ...unheard,
+      ourNext: [
+        {
+          text: "Book the demo",
+          full: "Book the demo",
+          opened: "",
+          urgent: true,
+          wall: "9/2",
+        },
+        {
+          text: "Send Chassie the pricing",
+          full: "Send Chassie the pricing",
+          opened: "",
+          urgent: true,
+          wall: "9/4",
+          promised: true,
+        },
+      ],
+    };
+    assert.deepEqual(passedDay(both), { wall: "9/4", promised: true });
+    assert.equal(passedPill(passedDay(both)), "Promised 9/4");
+    assert.equal(passedPill(passedDay(unheard)), "The 9/4 wall passed");
   });
 });
 

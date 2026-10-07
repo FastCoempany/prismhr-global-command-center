@@ -144,9 +144,10 @@ export function docsFromRows(
 
 /** A row or a doc: the three readers below take either. The rows door stays
  *  for the callers the single read has not reached yet — the Accounts sheet's
- *  engaged read (slice 15), the activity run's context pack and the HomeRoom's
- *  seat read — and a row goes through the same `docOf` the read uses, so the
- *  answer is the read's whichever door it came in by. */
+ *  engaged read (slice 15) and the HomeRoom's seat read; the activity run's
+ *  context pack reads the account read itself (A2.4) — and a row goes through
+ *  the same `docOf` the read uses, so the answer is the read's whichever door
+ *  it came in by. */
 export type RowOrDoc = RecordDoc | NoteLike;
 
 const asDocs = (list: readonly RowOrDoc[]): readonly RecordDoc[] => {

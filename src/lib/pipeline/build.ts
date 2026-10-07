@@ -72,7 +72,18 @@ export type PipelineRecord = {
   outcomesSrc: string;
   /** Verbatim speech the record kept — load-bearing in his own updates. */
   theirWords: string[];
-  ourNext: { text: string; full: string; opened: string; urgent: boolean }[];
+  /** Our open commitments. `urgent` is a passed day, which ranks the
+   *  record; `wall` is that day (M/D) and `promised` the sheet's own verdict
+   *  that someone heard it (D28), so the drawer and its Word file say
+   *  PROMISED only when the sheet does. */
+  ourNext: {
+    text: string;
+    full: string;
+    opened: string;
+    urgent: boolean;
+    wall?: string;
+    promised?: boolean;
+  }[];
   doneRecently: string[];
   theirSide: { who: string; text: string; at: string; src: string }[];
   /** Their turn comes first — his sends are not today's work. */
@@ -281,7 +292,9 @@ export type PipelineAccount = {
 
 /** Who is ours, derived from the WIDEST record the app holds. A person who
  *  turns up as an actor on `min` or more different accounts is not any one
- *  client's person — they work here.
+ *  client's person — they work here. Three, on purpose: a message's actor is
+ *  often theirs, so two accounts prove nothing (ruled 2026-10-07, pass 8 call
+ *  10; pinned exactly in tests/pipeline-build).
  *
  *  This must read the whole book, never the active slice. Ported into
  *  production it was derived from the eleven active accounts alone, and a
@@ -331,25 +344,17 @@ export function buildPipelineReport(input: PipelineInput): PipelineRecord[] {
   // Who is ours. The CSM roster names a handful; the record names the rest —
   // a person who turns up as an actor on three or more different accounts is
   // not any one client's person (the Ted doctrine: derived facts read the
-  // widest live source, never a private narrow one).
-  const acctsByPerson = new Map<string, Set<string>>();
-  for (const a of input.accounts)
-    for (const n of a.notes)
-      for (const raw of (n.actors ?? "").split("→")) {
-        const nm = raw
-          .replace(/\+\d+\s*$/, "")
-          .trim()
-          .toLowerCase();
-        if (!nm || !/^[a-z]+ [a-z'-]+$/.test(nm)) continue;
-        (acctsByPerson.get(nm) ?? acctsByPerson.set(nm, new Set()).get(nm)!).add(a.id);
-      }
+  // widest live source, never a private narrow one). The first record's
+  // actors keep three (ruled 2026-10-07, pass 8 call 10), counted by the one
+  // spelling of the count, homeSideFrom, so the slice and the book never
+  // count two different ways.
   // The caller's set is the whole book; the local one is the active slice, and
   // the union is what "ours" means. Reading the slice alone put a colleague
   // back in a client's room (Shane Jacobs, XCEL HR) after this was ported into
   // production.
   const OURS = new Set([
     ...(input.homeSide ?? []),
-    ...[...acctsByPerson].filter(([, s]) => s.size >= 3).map(([nm]) => nm),
+    ...homeSideFrom(input.accounts.map((a) => [a.id, a.notes] as const)),
   ]);
   // A record often carries only a colleague's first name ("Anika"), and an
   // account with no CSM assigned has no name to compare it against.
@@ -509,11 +514,16 @@ function record(
     // account stands (founder-decreed 2026-09-08).
     if (lastMeetAt && o.opened && o.opened < lastMeetAt) continue;
     if (ourNext.some((x) => x.text === built.line)) continue;
+    // The sheet's verdict rides with the line (D28): a typed date reads
+    // PROMISED only when the line names who heard it, and otherwise it is a
+    // wall. The drawer used to read any passed day as Promised.
     ourNext.push({
       text: built.line,
       full: built.full,
       opened: o.opened,
       urgent: !!o.wall,
+      ...(o.wall ? { wall: o.wall } : {}),
+      ...(o.promised ? { promised: true } : {}),
     });
   }
 

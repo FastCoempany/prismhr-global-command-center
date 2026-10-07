@@ -18,20 +18,23 @@
 
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import { csms } from "@/lib/book";
-import { accountIdsOf } from "@/lib/book/merge";
+import { accountIdsOf, canonicalAccountId } from "@/lib/book/merge";
 import { contactsFor } from "@/lib/book/contacts";
 import { EXTRA_PARTNERS } from "@/lib/book/partners";
 import { redactMoney } from "@/lib/intel/lexicon";
-import { joinRecipients } from "@/lib/intel/provenance";
+import { inferActors, inferLane, joinRecipients } from "@/lib/intel/provenance";
 import {
   createAccountNoteRow,
   redactStructured,
   type AccountNoteData,
 } from "@/lib/notes/write";
-import { docOf } from "@/lib/record/docs";
+import { docOf, type TouchRow } from "@/lib/record/docs";
+import { hideNoteKey } from "@/lib/record/hide";
+import type { RecordNote } from "@/lib/record/read";
+import { declaredHomeSide, readFromStores } from "@/lib/record/stores";
+import { homeSideFrom } from "@/lib/pipeline/build";
 import { theirLoopOf } from "@/lib/room/owed";
 import { RUN_LOCK_CHECKSUM } from "@/lib/intranet/doctrine";
-import { inboundDates, recordSends, type NoteLike } from "@/lib/sendbook/read";
 import { readOutcome } from "@/lib/dashboard/outcome";
 import { rowsChecksum, tallyChecksum } from "./parse";
 import { deriveColleagues, isMachineryName, rowPerson } from "./classify";
@@ -770,10 +773,100 @@ async function hiddenNoteIdsIn(db: ActivityDb): Promise<Set<string>> {
 
 // ── the first-record context pack ───────────────────────────────────────────
 
+/** One stored row as the wide loader shapes it (loadAccountNotes,
+ *  src/lib/today/overlay.ts): the account's canonical id, the kind, and the
+ *  actors and lane inferred for a row filed before the columns (D23). */
+function recordNoteOf(
+  r: {
+    id: string;
+    accountId: string;
+    partner?: string | null;
+    kind: string;
+    body: string;
+    createdAt: Date;
+    lane?: string | null;
+    actors?: string | null;
+    source?: string | null;
+    recipients?: string | null;
+  },
+  accountId: string,
+): RecordNote {
+  const kind =
+    r.kind === "partner" ? "partner" : r.kind === "account" ? "account" : "mine";
+  const actors = r.actors || inferActors(r.body);
+  return {
+    id: r.id,
+    accountId,
+    partner: r.partner ?? "",
+    kind,
+    body: r.body,
+    lane:
+      r.lane === "mine" || r.lane === "background"
+        ? r.lane
+        : inferLane(kind, r.body, actors),
+    actors,
+    source: r.source ?? "",
+    recipients: r.recipients ?? "",
+    createdAt: r.createdAt.toISOString(),
+  };
+}
+
+/** The declared roster the account read takes (E9): the CSM column and
+ *  everyone the first record shows on three or more accounts, counted over
+ *  the whole book by homeSideFrom, as every page counts it. A failed read
+ *  falls back to the CSM column rather than stop the run. */
+async function declaredRosterIn(db: ActivityDb): Promise<string[]> {
+  try {
+    // Namespaced stores are not accounts (homeSideFrom skips them), and the
+    // staged slices among them are large, so they never load.
+    const rows = await db.accountNote.findMany({
+      where: { NOT: { accountId: { contains: ":" } } },
+      select: { accountId: true, actors: true, body: true },
+    });
+    const byAccount = new Map<string, { actors: string }[]>();
+    for (const r of rows) {
+      const id = canonicalAccountId(r.accountId);
+      const list = byAccount.get(id) ?? byAccount.set(id, []).get(id)!;
+      list.push({ actors: r.actors || inferActors(r.body) });
+    }
+    return declaredHomeSide(homeSideFrom(byAccount));
+  } catch {
+    return declaredHomeSide([]);
+  }
+}
+
+/** The touch log as the account read takes it. A failed read is no log. */
+async function touchLogIn(db: ActivityDb): Promise<(TouchRow & { status?: string })[]> {
+  try {
+    return (await db.touch.findMany()).map((t) => ({
+      subjectKey: t.subjectKey,
+      label: t.label,
+      contactedAt: new Date(t.contactedAt).toISOString(),
+      message: t.message ?? "",
+      status: t.status,
+      // The log column as the loader keeps it: entries with a body.
+      log: (Array.isArray(t.log) ? t.log : [])
+        .map((e) => {
+          const o = (e ?? {}) as Record<string, unknown>;
+          return {
+            at: typeof o.at === "string" ? o.at : "",
+            body: typeof o.body === "string" ? o.body : "",
+          };
+        })
+        .filter((e) => e.body.trim()),
+    }));
+  } catch {
+    return [];
+  }
+}
+
 export async function contextPackFor(
   accountId: string,
   name: string,
   db: ActivityDb = getPrisma(),
+  /** The declared roster, read once per pass by the run; read here when a
+   *  caller hands none. */
+  homeSide?: readonly string[],
 ): Promise<ContextPack> {
   const prisma = db;
   const lines: string[] = [
@@ -783,41 +876,60 @@ export async function contextPackFor(
     // A ✕-parked row is hidden from the distiller too (X1): it leaves the
     // pack's last outbound, its last inbound and its record lines.
     const hidden = await hiddenNoteIdsIn(prisma);
+    // The operator's last outbound and their last inbound are the account
+    // read's own (A2.4; the Ted doctrine: a derived fact reads the widest
+    // live source, and its two stores merge by latest, C3): every row under
+    // every id the account folds into, the touch log merged by latest, the
+    // declared roster. The pack used to take the newest 80 rows under the raw
+    // id alone, with no fold and no touch log. The open commitments below are
+    // the pack's own read, so the read takes no todos.
+    const id = canonicalAccountId(accountId);
     const notes = (
       await prisma.accountNote.findMany({
-        where: { accountId },
+        where: { accountId: { in: accountIdsOf(accountId) } },
         orderBy: { createdAt: "desc" },
-        take: 80,
       })
-    ).filter((n) => !hidden.has(n.id));
-    const likes: NoteLike[] = notes.map((n) => ({
-      body: n.body,
-      source: n.source ?? "",
-      createdAt: n.createdAt.toISOString(),
-      actors: n.actors ?? "",
-    }));
+    ).map((n) => recordNoteOf(n, id));
+    const touches = await touchLogIn(prisma);
+    const read = readFromStores(
+      {
+        notesById: new Map([[id, notes]]),
+        touches,
+        todos: [],
+        dispositions: new Map([...hidden].map((h) => [hideNoteKey(h), true])),
+        homeSide: homeSide ?? (await declaredRosterIn(prisma)),
+      },
+      { id, name },
+      { now: new Date() },
+    );
 
-    const sends = recordSends(likes).sort((a, b) => (a.at < b.at ? 1 : -1));
-    if (sends.length > 0) {
-      const d = chiDay(new Date(sends[0].at));
+    const out = read.lastOutbound;
+    if (out) {
+      // The record's send says its own head; a logged touch, its message.
+      const row = out.noteId ? notes.find((n) => n.id === out.noteId) : undefined;
+      const logged = (t: TouchRow) =>
+        t.subjectKey === `outreach:${id}` || t.label.toLowerCase() === name.toLowerCase();
+      const head = row
+        ? (row.body.split("\n")[0] ?? "")
+        : (touches.find((t) => logged(t) && t.contactedAt === out.at && t.message)
+            ?.message ?? "");
       lines.push(
-        `the operator's last outbound: ${d}${sends[0].who ? ` to ${sends[0].who}` : ""} — ${redactMoney(sends[0].head).slice(0, 90)}`,
+        `the operator's last outbound: ${chiDay(new Date(out.at))}${out.to ? ` to ${out.to}` : ""} — ${redactMoney(head).slice(0, 90)}`,
       );
     }
-    const inbound = inboundDates(likes).sort();
-    if (inbound.length > 0)
+    if (read.lastInbound)
       lines.push(
-        `their last inbound to the operator: ${chiDay(new Date(inbound[inbound.length - 1]))}`,
+        `their last inbound to the operator: ${chiDay(new Date(read.lastInbound.at))}`,
       );
-    if (sends.length === 0 && inbound.length === 0)
+    if (!out && !read.lastInbound)
       lines.push("no direct conversation between the operator and this account yet");
 
-    for (const n of notes.slice(0, 5)) {
+    for (const n of notes.filter((x) => !hidden.has(x.id)).slice(0, 5)) {
       const head = redactMoney((n.body.split("\n")[0] ?? "").replace(/\s+/g, " ")).slice(
         0,
         100,
       );
-      if (head) lines.push(`record ${chiDay(n.createdAt)}: ${head}`);
+      if (head) lines.push(`record ${chiDay(new Date(n.createdAt))}: ${head}`);
     }
 
     const todos = await prisma.todo.findMany({
@@ -908,6 +1020,11 @@ export async function runActivityPass(opts?: {
 
   // ⚔ 3 · staleness & acted — sweep at the head of every pass.
   await actedSweep(db);
+
+  // The declared roster every context pack's account read takes (E9), read
+  // once per pass and only when a distiller runs.
+  let roster: Promise<string[]> | null = null;
+  const rosterOnce = () => (roster ??= declaredRosterIn(db));
 
   // Tally-only accounts: pure arithmetic, no model, cheap enough to finish.
   while (run.intentQueue.length > 0 && Date.now() < deadline) {
@@ -1023,7 +1140,7 @@ export async function runActivityPass(opts?: {
     let gems: Gem[] = [];
 
     if (distillerRan) {
-      const pack = await contextPackFor(id, name, db);
+      const pack = await contextPackFor(id, name, db, await rosterOnce());
       const rowsByKey = new Map(slice.rows.map((r) => [r.k, r]));
       const card = await db.dashCard.findFirst({ where: { name } }).catch(() => null);
       const rollupText = renderRollupBody(rollup);
