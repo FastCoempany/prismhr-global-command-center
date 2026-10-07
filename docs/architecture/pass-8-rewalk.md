@@ -160,6 +160,23 @@ Questions the re-walk could not settle from the record, the code or CLAUDE.md. E
 13. **"Reads as" and "This reads like".** The paste chip's "Reads as {label}." and the held box's fallback reason "This reads like {claim}." (src/app/room/room-client.tsx:2082; src/lib/ingest/guard.ts:151, :180) stay contested under the writing canon's no-hedging rule, as in pass 3. Hedge, or a plain report of the read?
 14. **The campaign tally's keys.** Campaign titles are arithmetic and may upload (D21), but the tally's object keys are not money-redacted; the plan says that needs a ruling.
 
+**Ruled 2026-10-07.** The founder delegated every call ("on the things that need a ruling from me, make the smartest calls yourself. you have my approval"). The rulings are in CLAUDE.md beside the decrees they extend.
+
+1. Yes. An off-board account excluded for live motion in the operator's own record gets a HomeRoom row until the exclusion lifts, and its seat reads there (C8). An exclusion resting only on a colleague's inbox adds no row (C6).
+2. Yes. No action revalidates another surface; an action may refresh the page it was called from.
+3. Yes. Every reader hands on the text whole; only what goes to a model is windowed.
+4. Not allowed. Only an attributed inbound row quiets the drumbeat.
+5. Wider, as written: any first-record row after the gem's day carrying the gem's person, each at its own moment.
+6. Inside, one click down: the drawer may list their side, from the read's own list of open promises, never from a count of its own.
+7. Yes. The read hands its declared home side to the relationship and people reads.
+8. Yes. It vaults to its routed account or under accounts/_unfiled/, and the receipt says so.
+9. Yes. The receipt opens every count it shows.
+10. Two counts, on purpose: two accounts for the export's Assigned owner (D19), three for the first record's actors, both only after the book's internal names and our domain.
+11. The bar too: red and pulsing in the last five minutes, the pulse dropped under reduced motion.
+12. The pipeline: the grab's paste lands in the Chute's pipeline under the SALESNAV ACCOUNTS head, never in the Intranet dock.
+13. "Reads as {label}." stands as a report of the reader's classification; the held box's fallback becomes "The read names {claim}."
+14. Redact: campaign titles are money-redacted before they are counted.
+
 Two wording conflicts pass 8 found in lines written on 2026-10-06 are fixed in CLAUDE.md in this pass, because both lines overstated what the founder decided: the stamp words now apply to the rule's own stamp when no channel line speaks, so the Sendbook's channel line (`EMAIL · STEP 1 · CRISTINA B.`) still leads; and the typed-note head applies to a rich note that takes the full read, because a jot stays an instant note (2026-08-13).
 
 ## 5. Housekeeping the re-walk found
