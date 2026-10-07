@@ -59,7 +59,7 @@ const base = {
   now: NOW,
 };
 
-describe("the two-slot cap governs rules; seats keep their own cap of three (C6/C7)", () => {
+describe("the two-slot cap governs rules; seats keep their own cap of three (C7)", () => {
   test("four seats: SEAT_SLOT_CAP lead, the fourth sinks below the next rule's hit", () => {
     const seatsIds = [
       "S0000000000000001",

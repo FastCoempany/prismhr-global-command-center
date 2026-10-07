@@ -1,5 +1,6 @@
 // The products — the Playbook's five doors, authored from the four product
-// flyers (FILED · flyer) and from what partners actually say on the tapes.
+// flyers (FILED · flyer, a filed document) and from what partners actually
+// say on the tapes.
 // No account names, no person names, no figures.
 //
 // Three registers travel together: the products themselves, the cues (what a
@@ -10,18 +11,28 @@
 type Issue = "compliance" | "control" | "speed" | "cost" | "oneplace";
 
 /** The rung a line stands on, the evidence ladder strongest first (the
- *  playbook authoring canon, rule 14): a transcript, a filed thread or
- *  document, call notes, a lesson, then research and team intel. Nothing is
- *  ever faked: unproven ground is "none" and says so (∅). */
-export type Rung = "tape" | "filed" | "notes" | "lesson" | "research" | "intel" | "none";
+ *  playbook authoring canon, rule 14): a transcript, a filed thread, a filed
+ *  document (the flyers), call notes, a lesson, then research and team
+ *  intel. Nothing is ever faked: unproven ground is "none" and says so (∅). */
+export type Rung =
+  | "tape"
+  | "filed"
+  | "doc"
+  | "notes"
+  | "lesson"
+  | "research"
+  | "intel"
+  | "none";
 
 /** What each rung's chip says. The labels name the rung (rule 14: ON TAPE /
- *  FILED THREAD / CALL NOTES / ❖ LESSON / RESEARCH / TEAM INTEL). "FILED"
- *  stays short because the flyers sit on that rung beside the threads, and a
- *  flyer is not a thread; its source says which. */
+ *  FILED THREAD / CALL NOTES / ❖ LESSON / RESEARCH / TEAM INTEL). A cite to
+ *  a filed thread reads FILED THREAD, the canon's label. A flyer is a filed
+ *  document, not a thread, and the canon's list carries no label for a
+ *  document, so its chip keeps FILED (seam S-27). */
 export const RUNG_LABEL: Record<Rung, string> = {
   tape: "ON TAPE",
-  filed: "FILED",
+  filed: "FILED THREAD",
+  doc: "FILED",
   notes: "CALL NOTES",
   lesson: "❖ LESSON",
   research: "RESEARCH",
@@ -150,7 +161,7 @@ export const PRODUCTS: Product[] = [
           "Manage onboarding, payroll and benefits",
         ],
         ev: [
-          ["Handle employment contracts and compliance.", "filed", "flyer"],
+          ["Handle employment contracts and compliance.", "doc", "flyer"],
           [
             "'None of this is at-will. It's always an employment contract.' 'Unlimited PTO doesn't exist outside the US.'",
             "tape",
@@ -173,7 +184,7 @@ export const PRODUCTS: Product[] = [
         ev: [
           [
             "Employ workers through local legal entities; clients manage employees while PrismHR Global serves as the legal employer.",
-            "filed",
+            "doc",
             "flyer",
           ],
           [
@@ -320,7 +331,7 @@ export const PRODUCTS: Product[] = [
         ],
         [
           "Employ workers through local legal entities; clients manage employees while PrismHR Global serves as the legal employer.",
-          "filed",
+          "doc",
           "flyer",
         ],
       ],
@@ -380,7 +391,7 @@ export const PRODUCTS: Product[] = [
         ev: [
           [
             "Manage country-specific tax, statutory and compliance requirements.",
-            "filed",
+            "doc",
             "flyer",
           ],
           [
@@ -433,7 +444,7 @@ export const PRODUCTS: Product[] = [
         ev: [
           [
             "Centralized platform, multi-currency, reporting, integration with HR and finance systems.",
-            "filed",
+            "doc",
             "flyer",
           ],
         ],
@@ -483,7 +494,7 @@ export const PRODUCTS: Product[] = [
         ],
         [
           "Centralized platform, multi-currency, reporting, integration with HR and finance systems.",
-          "filed",
+          "doc",
           "flyer",
         ],
       ],
@@ -495,7 +506,7 @@ export const PRODUCTS: Product[] = [
         ],
         [
           "Manage country-specific tax, statutory and compliance requirements.",
-          "filed",
+          "doc",
           "flyer",
         ],
       ],
@@ -568,7 +579,7 @@ export const PRODUCTS: Product[] = [
             "tape",
             "7/7 · 9/10",
           ],
-          ["Pay contractors in local currencies.", "filed", "flyer"],
+          ["Pay contractors in local currencies.", "doc", "flyer"],
         ],
       },
       compliance: {
@@ -576,7 +587,7 @@ export const PRODUCTS: Product[] = [
         body: "W-8, W-9 and 1099 documentation and reporting. Standard contractor agreements. And before anyone signs, the questions that tell you whether this person is a contractor in that country, because the paper doesn’t settle it. If the answer leans employee, the compliant answer for that person is employer of record, on the same platform.",
         pts: ["Support W-8, W-9 and 1099 documentation and reporting"],
         ev: [
-          ["Support W-8, W-9 and 1099 documentation and reporting.", "filed", "flyer"],
+          ["Support W-8, W-9 and 1099 documentation and reporting.", "doc", "flyer"],
           [
             "'Sometimes they think, if I say it's a contractor, it must be so. That's not the case.'",
             "tape",
@@ -589,7 +600,7 @@ export const PRODUCTS: Product[] = [
         body: "Nothing changes about who the contractor works for or who holds the agreement. We advise on classification. The client decides.",
         pts: [],
         ev: [
-          ["For clients managing their own independent contractors.", "filed", "flyer"],
+          ["For clients managing their own independent contractors.", "doc", "flyer"],
           [
             "'We would advise what's best for that country. Ultimately it's the client's decision.'",
             "tape",
@@ -661,14 +672,10 @@ export const PRODUCTS: Product[] = [
           "tape",
           "7/7 \u00b7 9/10",
         ],
-        [
-          "Onboard international contractors with streamlined workflows.",
-          "filed",
-          "flyer",
-        ],
+        ["Onboard international contractors with streamlined workflows.", "doc", "flyer"],
       ],
       split: [
-        ["Support W-8, W-9 and 1099 documentation and reporting.", "filed", "flyer"],
+        ["Support W-8, W-9 and 1099 documentation and reporting.", "doc", "flyer"],
         [
           "'We would advise what's best for that country. Ultimately it's the client's decision.'",
           "tape",
@@ -733,7 +740,7 @@ export const PRODUCTS: Product[] = [
         ev: [
           [
             "Serves as the contractor of record; manages contractor agreements and compliant payments; reduces worker misclassification risk; navigates country-specific contractor regulations.",
-            "filed",
+            "doc",
             "flyer",
           ],
           [
@@ -752,7 +759,7 @@ export const PRODUCTS: Product[] = [
         head: "The client still directs the work.",
         body: "The relationship on the ground doesn’t change. What changes is whose name is on the contract and who answers for its compliance.",
         pts: [],
-        ev: [["For clients needing additional compliance protection.", "filed", "flyer"]],
+        ev: [["For clients needing additional compliance protection.", "doc", "flyer"]],
       },
       speed: {
         head: "Immediate, once the classification check is done.",
@@ -833,7 +840,7 @@ export const PRODUCTS: Product[] = [
         ],
         [
           "Serves as the contractor of record; manages contractor agreements and compliant payments; reduces worker misclassification risk; navigates country-specific contractor regulations.",
-          "filed",
+          "doc",
           "flyer",
         ],
       ],
@@ -897,7 +904,7 @@ export const PRODUCTS: Product[] = [
         ev: [
           [
             "Source qualified candidates across global talent markets; target by country, industry and role; accelerate timelines.",
-            "filed",
+            "doc",
             "flyer",
           ],
         ],
@@ -926,7 +933,7 @@ export const PRODUCTS: Product[] = [
         ev: [
           [
             "Transition seamlessly into Employer of Record services when needed.",
-            "filed",
+            "doc",
             "flyer",
           ],
         ],
@@ -942,7 +949,7 @@ export const PRODUCTS: Product[] = [
         ev: [
           [
             "Talent Management: workspace and housing where available, local HR administration, employee support, local practices.",
-            "filed",
+            "doc",
             "flyer",
           ],
         ],
@@ -1008,7 +1015,7 @@ export const PRODUCTS: Product[] = [
         ["'They will send you a resume and a video of that individual.'", "tape", "9/10"],
         [
           "Transition seamlessly into Employer of Record services when needed.",
-          "filed",
+          "doc",
           "flyer",
         ],
       ],
@@ -1020,7 +1027,7 @@ export const PRODUCTS: Product[] = [
         ],
         [
           "Source qualified candidates across global talent markets; target by country, industry and role; accelerate timelines.",
-          "filed",
+          "doc",
           "flyer",
         ],
       ],
@@ -1728,7 +1735,7 @@ export const CUES: Cue[] = [
       ],
       [
         "Talent Management: workspace and housing where available, local HR administration.",
-        "filed",
+        "doc",
         "flyer",
       ],
     ],

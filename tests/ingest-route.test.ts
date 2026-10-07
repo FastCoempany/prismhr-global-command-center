@@ -2,12 +2,12 @@
 // and slice 7). C2 (CLAUDE.md, The Chute): beside the book's contacts and
 // domains, the router's email and people rungs read every actor and
 // recipient the record holds for the account; the rungs stay pure rules;
-// an undo withdraws whatever the undone filing taught. D12: routing runs on
+// an undo withdraws whatever the undone filing taught. D13: routing runs on
 // the server and the roster never ships to the browser. D8 as amended
 // 2026-10-05: every dropped file archives whole to GitHub through a
 // server-side upload, so no token reaches the browser; a file above the
 // server's request cap arrives in pieces the server assembles before it
-// lands. D13: vaulting is filing, with a receipt.
+// lands. D6: vaulting is filing, with a receipt.
 //
 // Pinned as behavior where the seam exists — the roster builder and the
 // route over a stubbed client, the pieces over a stubbed staging client and
@@ -30,6 +30,22 @@ import {
   type RosterClient,
   type RosterRow,
 } from "../src/lib/ingest/route";
+import { claimCapture, releaseCapture, type ClaimClient } from "../src/lib/ingest/filing";
+import {
+  fileGrab,
+  grabCounts,
+  grabResult,
+  isGrab,
+  keptGrab,
+  planGrab,
+  splitGrab,
+  unmatchedLine,
+  type GrabNote,
+  type GrabStore,
+} from "../src/lib/ingest/grab";
+import { ALREADY_ON_FILE } from "../src/lib/ingest/wrote";
+import { intentFor } from "../src/lib/groundwork/signals";
+import type { RouteAccount } from "../src/lib/route-capture";
 import {
   UNFINISHED,
   VAULT_PIECE_BYTES,
@@ -241,7 +257,7 @@ describe("the roster the rungs read is the book's joined with the record's", () 
   });
 });
 
-// ── the roster never ships (D12) ────────────────────────────────────────────
+// ── the roster never ships (D13) ────────────────────────────────────────────
 
 /** Every source file under src, recursively. */
 function sources(dir: string, out: string[] = []): string[] {
@@ -307,7 +323,7 @@ describe("routing runs on the server; the roster never ships to the browser", ()
   });
 });
 
-// ── the vault on the server (D8, D13) ───────────────────────────────────────
+// ── the vault on the server (D8, D6) ────────────────────────────────────────
 
 describe("no server action returns a token", () => {
   test("the grant action is gone and nothing imports it", () => {
@@ -653,5 +669,220 @@ describe("a file above the request cap arrives in pieces and lands once", () => 
     assert.ok(!/ALTER TABLE/.test(sql), "no existing table is touched");
     const schema = read("prisma/schema.prisma");
     assert.match(schema, /model VaultChunk \{[\s\S]*?bytes\s+Bytes[\s\S]*?\}/);
+  });
+});
+
+// ── the Sales Nav grab, one note per account (seam S-25) ───────────────────
+// Pass 8 call 12 and D30: the grab files through the one pipeline under its
+// SALESNAV ACCOUNTS head. It is a list of about a hundred accounts, rows
+// parted by "----", and it used to file as ONE note on the ONE row it was
+// pasted on, so the queue's intent read took every row as that account's.
+// Now each row routes by the router's rungs and files on its own account;
+// a row with no sure match files nothing and is counted on the receipt; the
+// duplicate guard holds per account.
+
+describe("the Sales Nav grab files each row on its own account", () => {
+  const ROSTER: RouteAccount[] = [
+    { id: "A0000000000000001", name: "Acme Staffing Partners", emails: [], domains: [] },
+    { id: "B0000000000000002", name: "Beacon Workforce", emails: [], domains: [] },
+    { id: "C0000000000000003", name: "Corvid Employer Group", emails: [], domains: [] },
+  ];
+  const HEAD = "SALESNAV ACCOUNTS - captured 10/7/2026, 9:12:00 AM - 3 rows collected";
+  const GRAB =
+    `${HEAD}\n\n` +
+    "Acme Staffing Partners\nStaffing and Recruiting · High buyer intent · 11 activities\n\n----\n\n" +
+    "Beacon Workforce\nHuman Resources · Moderate buyer intent\n\n----\n\n" +
+    "Halcyon Unknown Holdings\nHigh buyer intent · 4 activities";
+  const NOW = new Date("2026-10-07T15:00:00.000Z");
+
+  /** The pipeline's writers over memory: the real claim and release over a
+   *  stubbed disposition table, and the Filing rows and notes recorded. */
+  function memory() {
+    const marks = new Map<string, { status: string; reason: string }>();
+    const client: ClaimClient = {
+      accountDisposition: {
+        create: async ({ data }) => {
+          if (marks.has(data.accountId))
+            throw Object.assign(new Error("Unique constraint failed"), { code: "P2002" });
+          marks.set(data.accountId, { status: data.status, reason: data.reason });
+          return data;
+        },
+        findUnique: async ({ where }) => marks.get(where.accountId) ?? null,
+        updateMany: async ({ where, data }) => {
+          const r = marks.get(where.accountId);
+          if (!r || r.status !== where.status || r.reason !== where.reason) return { count: 0 };
+          r.reason = data.reason;
+          return { count: 1 };
+        },
+        deleteMany: async ({ where }) => {
+          const r = marks.get(where.accountId);
+          if (!r || r.status !== where.status || r.reason !== where.reason) return { count: 0 };
+          marks.delete(where.accountId);
+          return { count: 1 };
+        },
+      },
+    };
+    const notes: (GrabNote & { id: string })[] = [];
+    const filings: { id: string; accountId: string; dupeCheck: string }[] = [];
+    const store: GrabStore = {
+      claim: (key) => claimCapture(key, NOW, client),
+      release: (key, token) => releaseCapture(key, token, client),
+      stamp: async (key, noteId) => {
+        marks.set(key, { status: "filed", reason: `${NOW.toISOString()}·${noteId}` });
+      },
+      filing: async (accountId, _fp, dupeCheck) => {
+        const id = `F${filings.length + 1}`;
+        filings.push({ id, accountId, dupeCheck });
+        return id;
+      },
+      note: async (n) => {
+        const id = `N${notes.length + 1}`;
+        notes.push({ ...n, id });
+        return id;
+      },
+    };
+    return { store, notes, filings, marks };
+  }
+
+  test("the grab splits at its row lines under its own head", () => {
+    assert.ok(isGrab(GRAB));
+    assert.ok(!isGrab("OUTLOOK THREAD - captured\n\nhi"));
+    const { head, rows } = splitGrab(GRAB);
+    assert.equal(head, HEAD);
+    assert.equal(rows.length, 3);
+    assert.match(rows[2], /^Halcyon Unknown Holdings/);
+  });
+
+  test("a three-row grab files two notes, one per known account, and counts the unknown row", async () => {
+    const plan = planGrab(GRAB, ROSTER);
+    assert.deepEqual(
+      plan.filings.map((f) => [f.account.id, f.rung]),
+      [
+        ["A0000000000000001", "name"],
+        ["B0000000000000002", "name"],
+      ],
+    );
+    assert.deepEqual(plan.missed, ["Halcyon Unknown Holdings"]);
+
+    const { store, notes, filings } = memory();
+    const g = await fileGrab(plan, store, "drop");
+    assert.equal(notes.length, 2, "one note per surely matched account");
+    // The accounts file a few at a time; the summary keeps the grab's order.
+    assert.deepEqual(
+      notes.map((n) => n.accountId).sort(),
+      ["A0000000000000001", "B0000000000000002"],
+    );
+    assert.deepEqual(
+      g.accounts.map((a) => a.id),
+      ["A0000000000000001", "B0000000000000002"],
+    );
+    for (const n of notes) {
+      // Under the grab's own head, with the source the intent read takes.
+      assert.ok(n.body.startsWith(`${HEAD}\n\n`), "the note keeps the SALESNAV ACCOUNTS head");
+      assert.equal(n.source, "salesnav");
+      assert.equal(n.door, "drop");
+      assert.equal(n.lane, "background");
+      assert.equal(n.kind, "account");
+      assert.ok(filings.some((f) => f.id === n.filingId && f.accountId === n.accountId));
+    }
+    // Each note carries its own row and no other account's.
+    const noteOf = (id: string) => notes.find((n) => n.accountId === id)!;
+    const acme = noteOf("A0000000000000001");
+    const beacon = noteOf("B0000000000000002");
+    assert.match(acme.body, /Acme Staffing Partners/);
+    assert.doesNotMatch(acme.body, /Beacon|Halcyon/);
+    assert.match(beacon.body, /Beacon Workforce/);
+    assert.doesNotMatch(beacon.body, /Acme|Halcyon/);
+    // The unknown row filed nothing and is counted.
+    assert.equal(g.unmatched, 1);
+    assert.deepEqual(g.failed, []);
+    assert.deepEqual(g.duplicates, []);
+    const r = grabResult(g, []);
+    assert.equal(r.ok, true);
+    assert.equal(r.filed, 2);
+    assert.ok(r.ok && r.grab.unmatched === 1);
+    // Every note id rides inside the grab, per account; none at the top,
+    // where a take-back bound to one account would read them as the whole.
+    assert.ok(!("noteIds" in r));
+    for (const a of g.accounts) {
+      assert.ok(notes.some((n) => n.id === a.noteId && n.accountId === a.id), `${a.id}'s note`);
+      assert.ok(filings.some((f) => f.id === a.filingId && f.accountId === a.id), `${a.id}'s filing`);
+    }
+    assert.deepEqual(grabCounts(g), ["2 accounts", "1 row matched no account"]);
+    assert.equal(unmatchedLine(1), "1 row matched no account.");
+
+    // The queue's intent read now reads each account's own row.
+    const at = NOW.toISOString();
+    assert.equal(intentFor([{ body: acme.body, source: acme.source, createdAt: at }], NOW)?.level, "high");
+    assert.equal(intentFor([{ body: beacon.body, source: beacon.source, createdAt: at }], NOW)?.level, "moderate");
+  });
+
+  test("the duplicate guard holds per account: a re-paste files nothing twice", async () => {
+    const m = memory();
+    await fileGrab(planGrab(GRAB, ROSTER), m.store, "drop");
+    // The same rows with a fresh copy moment: the head line is skipped (D16).
+    const again = GRAB.replace("9:12:00 AM", "4:40:00 PM");
+    const g = await fileGrab(planGrab(again, ROSTER), m.store, "chute");
+    assert.equal(m.notes.length, 2, "nothing filed twice");
+    assert.deepEqual(g.accounts, []);
+    assert.deepEqual(
+      g.duplicates.map((d) => d.id),
+      ["A0000000000000001", "B0000000000000002"],
+    );
+    const r = grabResult(g, []);
+    assert.ok(!r.ok && "duplicate" in r && r.duplicate);
+    assert.equal(r.reason, `${ALREADY_ON_FILE} 1 row matched no account.`);
+    // A changed row on one account files that account alone.
+    const moved = again.replace("Moderate buyer intent", "High buyer intent");
+    const g2 = await fileGrab(planGrab(moved, ROSTER), m.store, "drop");
+    assert.deepEqual(g2.accounts.map((a) => a.id), ["B0000000000000002"]);
+    assert.deepEqual(g2.duplicates.map((d) => d.id), ["A0000000000000001"]);
+  });
+
+  test("nothing files blind: a grab no row of which surely matches files nothing", async () => {
+    // Two accounts named in one row tie on the name rung: no sure match.
+    const tied = `${HEAD}\n\nAcme Staffing Partners and Beacon Workforce\nHigh buyer intent`;
+    const plan = planGrab(tied, ROSTER);
+    assert.deepEqual(plan.filings, []);
+    const m = memory();
+    const g = await fileGrab(plan, m.store, "drop");
+    assert.equal(m.notes.length, 0);
+    const r = grabResult(g, []);
+    assert.equal(r.ok, false);
+    assert.equal(r.reason, "1 row matched no account.");
+  });
+
+  test("a settled receipt keeps ids, names and counts, never a row's text (D12)", async () => {
+    const g = await fileGrab(planGrab(GRAB, ROSTER), memory().store, "drop");
+    assert.deepEqual(g.missed, ["Halcyon Unknown Holdings"]);
+    const kept = keptGrab(g);
+    assert.ok(kept);
+    assert.ok(!("missed" in kept));
+    assert.ok(!JSON.stringify(kept).includes("Halcyon"));
+  });
+
+  test("roomPaste splits a grab before the duplicate claim and the read, and the Chute's door files it", () => {
+    const actions = read("src/app/room/actions.ts");
+    const a = actions.indexOf("export async function roomPaste(");
+    const roomPaste = actions.slice(a, actions.indexOf("export async function roomMoveDone(", a));
+    const branch = roomPaste.indexOf('if (dialect === "SN") return await fileGrabCapture(rawText, door, opts.windows ?? []);');
+    assert.ok(branch > 0, "roomPaste hands a grab to the split");
+    assert.ok(branch < roomPaste.indexOf("claimCapture(pasteKey"), "before the whole-capture claim");
+    assert.ok(branch < roomPaste.indexOf("aiCleanTimeline("), "before the read");
+    assert.ok(roomPaste.indexOf("requireWrite()") < branch, "after the session check");
+    // The split reads the joined roster and files through the pipeline's own
+    // writers, with the door the capture came through.
+    const grab = actions.slice(actions.indexOf("async function fileGrabCapture("), actions.indexOf("function refusal("));
+    assert.match(grab, /planGrab\(rawText, await joinedRoster\(\)\)/);
+    for (const writer of ["claimCapture(", "releaseCapture(", "stampPasteMark(", "fileFiling(", "createAccountNoteRow("])
+      assert.ok(grab.includes(writer), writer);
+    assert.match(grab, /fileGrab\(\s*plan,\s*\{[\s\S]*?\},\s*door,?\s*\)/);
+    assert.match(actions, /export async function roomGrab\(/);
+    // The Chute tells a grab before it routes and hands it to the split.
+    const chute = read("src/app/room/chute.tsx");
+    const swallow = chute.slice(chute.indexOf("const swallow = async"), chute.indexOf("const batchSeq"));
+    assert.ok(swallow.indexOf("isGrab(read.text)") > 0, "the Chute tells a grab");
+    assert.ok(swallow.indexOf("isGrab(read.text)") < swallow.indexOf("routed(read.text)"), "before the route");
+    assert.match(read("src/app/room/ingest/use-ingest.ts"), /await roomGrab\(/);
   });
 });

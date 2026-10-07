@@ -3,12 +3,14 @@
 // ACCOUNTS head, never in the Intranet dock. The grab opens the HomeRoom now;
 // a bookmark dragged before that change still opens this page, so the grab
 // box and the dock both read the head and point at the HomeRoom instead of
-// taking it. Every other capture the dock takes as it always has.
+// taking it. Any account's box will do: the pipeline splits the grab row by
+// row onto each account it names (seam S-25). Every other capture the dock
+// takes as it always has.
 
 import { sniffHead } from "@/lib/ingest/dialect";
 
 export const SALESNAV_ELSEWHERE =
-  "That's a Sales Nav grab. Paste it into an account's ⚡ box on the HomeRoom.";
+  "That's a Sales Nav grab. Paste it into any account's ⚡ box on the HomeRoom.";
 
 /** The line the dock answers with when it will not take a capture; "" when
  *  it takes it. */

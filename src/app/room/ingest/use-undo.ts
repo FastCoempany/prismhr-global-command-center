@@ -9,7 +9,8 @@
 // and its undo is the ids the receipt kept. Both doors hand over both.
 
 import { useRouter } from "next/navigation";
-import { roomPasteUndo } from "../actions";
+import type { GrabSummary } from "@/lib/ingest/grab";
+import { roomGrabUndo, roomPasteUndo } from "../actions";
 
 /** What a receipt keeps for its take-back. */
 export type Undoable = {
@@ -18,7 +19,27 @@ export type Undoable = {
   /** The Filing row the filing wrote (§2.1 of the plan); absent on a receipt
    *  filed before the table existed. */
   filingId?: string;
+  /** A Sales Nav grab's split (seam S-25): every account it filed to, each
+   *  with its own note and Filing row. */
+  grab?: Pick<GrabSummary, "accounts">;
 };
+
+/** A grab's take-back: every account it filed to, each with its own note
+ *  and Filing row, which the server takes back one account at a time, each
+ *  bound to its account as every undo is, so the whole grab goes back and
+ *  no id reaches another account. Pure, so the suite can read what the
+ *  take-back asks. */
+export function grabUndoRequest(
+  grab: Pick<GrabSummary, "accounts">,
+): Parameters<typeof roomGrabUndo> {
+  return [
+    grab.accounts.map((a) => ({
+      id: a.id,
+      noteId: a.noteId,
+      ...(a.filingId ? { filingId: a.filingId } : {}),
+    })),
+  ];
+}
 
 /** What the undo asks of the server: the account, every note id and todo id
  *  the receipt kept, and the Filing id when the filing wrote one. Pure, so
@@ -33,7 +54,10 @@ export function undoRequest(
 export function useUndo() {
   const router = useRouter();
   const undo = async (accountId: string, row: Undoable) => {
-    const r = await roomPasteUndo(...undoRequest(accountId, row));
+    // A grab filed on many accounts: its take-back reaches each of them.
+    const r = row.grab?.accounts.length
+      ? await roomGrabUndo(...grabUndoRequest(row.grab))
+      : await roomPasteUndo(...undoRequest(accountId, row));
     // The rows are gone and every page derives on request (D15): the client
     // asks for the fresh read here, as the filing does; the server
     // revalidates nothing (slice 9), so this ask is the take-back's only one.

@@ -25,7 +25,7 @@ import { sendToVault, sendUnfiled, type VaultReceipt } from "@/lib/ingest/vault"
 import { transportCut, type Window } from "@/lib/ingest/windows";
 import { DROP_ACCEPT } from "@/lib/paste-files";
 import { splitDrop, vaultAfterVerdict, type VaultStep } from "@/lib/room/drop-plan";
-import { roomPaste } from "../actions";
+import { roomGrab, roomPaste } from "../actions";
 import { CHUTE_PARALLEL, runLimited } from "../chute-ledger";
 import { readFileToText } from "../read-file";
 import { routeText, type RouteReply } from "../route-actions";
@@ -156,13 +156,34 @@ export function useIngest({ door, readPdf }: { door: IngestDoor; readPdf: PdfRea
     opts: FilingOpts,
   ): Promise<Filed> {
     const r = await roomPaste(...filingRequest(door, accountId, text, opts));
+    return landed(r, opts.waiting);
+  }
+
+  /** What a filing's result does once it lands: the fresh read, and the
+   *  files that waited on its verdict. */
+  function landed(r: PasteResult, waiting?: readonly File[]): Filed {
     // Every page derives on request (D15), so the client asks for the fresh
     // read here, once, when the filing took; a refusal wrote nothing to
     // re-read. The server revalidates nothing (slice 9): this ask is the
     // only one the filing makes.
     if (r.ok) router.refresh();
-    return { ...r, vault: vaultAfterVerdict(r, opts.waiting) };
+    return { ...r, vault: vaultAfterVerdict(r, waiting) };
   }
+
+  /** File a Sales Nav grab through the pipeline, as this door (seam S-25).
+   *  The grab names a list of accounts, never one, so it skips the whole-text
+   *  route: the server splits it row by row and files each row on the
+   *  account it surely matches. The Chute's call; a paste on the row reaches
+   *  the same split through roomPaste. The transport's window applies as it
+   *  does to any text (D4). */
+  const fileGrab = async (
+    text: string,
+    opts: Pick<FilingOpts, "windows" | "waiting"> = {},
+  ): Promise<Filed> => {
+    const [, carried, sent] = filingRequest(door, "", text, { windows: opts.windows });
+    const r = await roomGrab(carried, { door: sent.door, windows: sent.windows });
+    return landed(r, opts.waiting);
+  };
 
   /** Carry one file to the vault under an account, through the server's two
    *  doors: whole when it fits one request, in pieces when it does not. */
@@ -188,5 +209,5 @@ export function useIngest({ door, readPdf }: { door: IngestDoor; readPdf: PdfRea
     return runLimited(tasks, CHUTE_PARALLEL);
   }
 
-  return { door, plan, read, route, file, vault, vaultUnfiled, limited };
+  return { door, plan, read, route, file, fileGrab, vault, vaultUnfiled, limited };
 }

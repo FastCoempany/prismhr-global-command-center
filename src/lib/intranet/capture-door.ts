@@ -4,7 +4,7 @@
 // and is never inbound. This is the pure half of that door — the verdict on
 // a route and the receipt's words — so the suite can pin both without a
 // store or a session. The server half (src/app/intranet/capture-actions.ts)
-// routes on the server (D12) and files through roomPaste.
+// routes on the server (D13) and files through roomPaste.
 //
 // The capture files when routing is sure. One box holds a disputed or unsure
 // file at every door (CLAUDE.md, The held file and the receipt, ship order
@@ -24,7 +24,7 @@ export type CaptureRoute = { best: RouteHit | null; candidates: RouteHit[] };
 
 /** One account a held row offers: its id, its name and the rung that found
  *  it. Never the hit's why, which can carry an address, and never its score:
- *  what leaves the server is names and rungs (D12). */
+ *  what leaves the server is names and rungs (D13). */
 export type HeldCandidate = { id: string; name: string; rung: RouteRung };
 
 export type CaptureVerdict =
@@ -55,7 +55,7 @@ export function keptUnnamedLine(): string {
 }
 
 /** The accounts an unsure route offers the held row, in the router's order,
- *  strongest rung first: ids, names and rungs, nothing more (D12). */
+ *  strongest rung first: ids, names and rungs, nothing more (D13). */
 export function heldCandidates(route: CaptureRoute): HeldCandidate[] {
   return route.candidates.map((c) => ({ id: c.id, name: c.name, rung: c.rung }));
 }

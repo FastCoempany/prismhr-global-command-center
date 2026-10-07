@@ -24,6 +24,15 @@ import { guardPlan, type GuardVerdict } from "@/lib/ingest/guard";
 import { EXCERPT_CAP, readRungVerdict } from "@/lib/ingest/verdict-reason";
 import { HEADS, SOURCE_OF, sniffHead } from "@/lib/ingest/dialect";
 import {
+  GRAB_PARALLEL,
+  fileGrab,
+  grabResult,
+  isGrab,
+  planGrab,
+  runLimited,
+  type GrabSummary,
+} from "@/lib/ingest/grab";
+import {
   claimCapture,
   fileFiling,
   findFiling,
@@ -172,6 +181,74 @@ async function stampPasteMark(pasteKey: string, firstNoteId: string) {
   }
 }
 
+// The Sales Navigator grab, split (pass 8 call 12 and D30; seam S-25). The
+// grab is a list of about a hundred accounts, never one account's capture:
+// each row routes by the router's rungs over the joined roster (C2, read
+// here on the server, D13) and files as its own note under the grab's head
+// on the account it surely matches, through the pipeline's own writers —
+// the duplicate guard's claim and marker per account, a Filing row per
+// account, the one note writer with the door the capture came through. A
+// row with no sure match files nothing and is counted on the receipt
+// (src/lib/ingest/grab.ts). No model reads the list.
+async function fileGrabCapture(
+  rawText: string,
+  door: Door,
+  windows: Window[],
+): Promise<Awaited<ReturnType<typeof roomPaste>>> {
+  const plan = planGrab(rawText, await joinedRoster());
+  const now = new Date();
+  try {
+    const grab = await fileGrab(
+      plan,
+      {
+        claim: (key) => claimCapture(key, now),
+        release: (key, token) => releaseCapture(key, token),
+        stamp: (key, noteId) => stampPasteMark(key, noteId),
+        filing: async (accountId, fingerprint, dupeCheck) =>
+          (
+            await fileFiling({
+              accountId,
+              fingerprint,
+              door,
+              dialect: "SN",
+              how: "rules",
+              read: null,
+              windows,
+              dupeCheck,
+              filedAt: now,
+            })
+          )?.id,
+        note: async (n) => (await createAccountNoteRow({ ...n, door: n.door })).id,
+      },
+      door,
+    );
+    return grabResult(grab, windows);
+  } catch {
+    return {
+      ok: false,
+      filed: 0,
+      how: "rules",
+      reason: "Filing failed partway. Check the account page.",
+    };
+  }
+}
+
+// The Chute's door for a grab (seam S-25): a grab names no one account, so
+// the Chute files it here without routing it whole first, and the split
+// routes every row. The Drop's paste reaches the same split through
+// roomPaste.
+export async function roomGrab(
+  raw: string,
+  opts: { door: Door; windows?: Window[] },
+): Promise<Awaited<ReturnType<typeof roomPaste>>> {
+  const rawText = typeof raw === "string" ? raw.trim() : "";
+  if (!isGrab(rawText))
+    return { ok: false, filed: 0, how: "", reason: "That isn't a Sales Nav grab." };
+  if (!(await requireWrite()))
+    return { ok: false, filed: 0, how: "", reason: "Read-only session." };
+  return fileGrabCapture(rawText, opts.door, opts.windows ?? []);
+}
+
 // A disputed verdict as the receipt roomPaste hands back: nothing filed,
 // nothing opened, the dispute carried for the doors with its rung and its
 // reason (D9 as amended 2026-10-05). Null when there is no verdict, so a
@@ -267,6 +344,9 @@ export async function roomPaste(
   prior?: { day?: string; filingId?: string };
   // A call transcript's full text was archived alongside the read's entries.
   archived?: boolean;
+  // A Sales Nav grab's split (seam S-25): the accounts its rows filed to,
+  // the ones already on file, and the rows that matched no account.
+  grab?: GrabSummary;
 }> {
   const acct = bindAccountId(accountId, peos);
   const door: Door = opts.door;
@@ -304,6 +384,13 @@ export async function roomPaste(
     return { ok: false, filed: 0, how: "", reason: "Paste something first." };
   if (!(await requireWrite()))
     return { ok: false, filed: 0, how: "", reason: "Read-only session." };
+
+  // A Sales Nav grab is a list of accounts, never this row's capture (pass 8
+  // call 12 and D30; seam S-25): it splits row by row, each row filed on the
+  // account it surely matches with the duplicate guard per account, and the
+  // row the paste landed on decides nothing. Whole, the list's read is not
+  // windowed: no model reads it.
+  if (dialect === "SN") return await fileGrabCapture(rawText, door, opts.windows ?? []);
 
   // The duplicate guard — app-wide, since every door (row paste, the Drop,
   // the Chute) files through here. The same capture filed to the same account
@@ -862,6 +949,41 @@ export async function roomUnlog(
   } catch {
     return { ok: false, reason: "The undo didn't take. Try again." };
   }
+}
+
+// ↺ on a Sales Nav grab's receipt (seam S-25): the grab filed one note on
+// each account it surely matched, so its take-back is every account's share,
+// each through the one take-back below and bound to its own account, so no
+// id reaches another account's record. One request for the whole grab: a
+// hundred accounts are a hundred take-backs, run a few at a time here
+// rather than a hundred round trips from the browser.
+export async function roomGrabUndo(
+  shares: { id: string; noteId: string; filingId?: string }[],
+): Promise<Awaited<ReturnType<typeof roomPasteUndo>>> {
+  const list = (Array.isArray(shares) ? shares : [])
+    .filter((x) => x && typeof x.id === "string" && typeof x.noteId === "string")
+    .slice(0, 500);
+  if (list.length === 0)
+    return { ok: false, removed: 0, retired: 0, reason: "Nothing to undo." };
+  const results = await runLimited(
+    list.map(
+      (x) => () =>
+        roomPasteUndo(
+          x.id,
+          [x.noteId],
+          [],
+          typeof x.filingId === "string" ? x.filingId : undefined,
+        ),
+    ),
+    GRAB_PARALLEL,
+  );
+  const failed = results.find((r) => !r.ok);
+  return {
+    ok: !failed,
+    removed: results.reduce((n, r) => n + r.removed, 0),
+    retired: results.reduce((n, r) => n + r.retired, 0),
+    ...(failed ? { reason: failed.reason ?? "The undo didn't take. Try again." } : {}),
+  };
 }
 
 // ↩ on a paste receipt — take back the WHOLE filing, and only that filing:

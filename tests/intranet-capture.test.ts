@@ -191,7 +191,7 @@ describe("the capture door: file when the route is sure, hold when it is unsure,
 describe("the Send-it box's action routes on the server and files through the pipeline", () => {
   const capture = slice(door, "export async function intranetCapture(", "\n}\n");
 
-  test("it is a server module and routes with the lib, never the roster in the browser (D12)", () => {
+  test("it is a server module and routes with the lib, never the roster in the browser (D13)", () => {
     assert.match(door, /^"use server";/);
     assert.match(door, /import \{ routeText \} from "@\/lib\/ingest\/route";/);
     assert.ok(!/route-actions/.test(door), "the server never calls its own action");
@@ -283,7 +283,7 @@ describe("an unsure Send-it capture is held in the Chute above, as a dispute is 
     const v = captureVerdict(await routeText(TIED, roster));
     assert.ok(!v.file && v.hold);
     // Ids, names and rungs only: never the why, which can carry an address,
-    // and never the score (D12).
+    // and never the score (D13).
     for (const c of v.candidates) assert.deepEqual(Object.keys(c).sort(), ["id", "name", "rung"]);
     assert.ok(!JSON.stringify(v.candidates).includes("@"), "an address rode out");
     assert.ok(!JSON.stringify(v.candidates).includes("regishrgroup.com"), "a domain rode out");

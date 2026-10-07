@@ -178,7 +178,11 @@ describe("the vault waits on the verdict", () => {
       assert.equal(refused.mismatch.claim, "Simploy");
       assert.equal(refused.mismatch.bound, "Regis HR Group");
       assert.match(refused.mismatch.why ?? "", /Chassie Smith/);
-      assert.match(refused.reason, /^This reads like Simploy, not Regis HR Group — /);
+      // The held box's fallback grammar, never "This reads like X, not Y —
+      // why." (ruled 2026-10-07, pass 8 call 13): a plain report of the read,
+      // with no hedge and no em-dash hinge (the writing canon, rules 4 and 5).
+      assert.equal(refused.reason, "The read names Simploy.");
+      assert.doesNotMatch(refused.reason, /reads like|, not |—/);
       // The same tape on its own row clears the gate and the read may run.
       assert.equal(readFreeVerdict(TAPE, SIMPLOY, roster), null);
     } finally {

@@ -28,6 +28,7 @@ import { activityRun, activityStage, activityTakeBack } from "../activity/action
 import { intranetKeep } from "../intranet/capture-actions";
 import { chuteBook, type BookName } from "./route-actions";
 import { probeActivityReport, uploadActivityReport } from "@/lib/activity/upload";
+import { isGrab } from "@/lib/ingest/grab";
 import type { Window } from "@/lib/ingest/windows";
 import { shortName } from "@/lib/ingest/short-name";
 import { ALREADY_ON_FILE, monthDay } from "@/lib/ingest/wrote";
@@ -178,6 +179,40 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
     }
   };
 
+  // A Sales Nav grab names a list of accounts, never one (pass 8 call 12,
+  // D30; seam S-25): it skips the whole-text route, which could only come
+  // back unsure, and the server splits it row by row, each row filed on the
+  // account it surely matches. The receipt counts the accounts, the rows
+  // that matched none and the rows already on file. The grab's file belongs
+  // to no one account, so it backs up under accounts/_unfiled/ (D8: git is
+  // the home for every dropped file).
+  const fileGrabRow = async (key: number, text: string, f: File, windows?: Window[]) => {
+    patch(key, { state: "filing", windows, verdict: undefined });
+    const r = await ingest.fileGrab(text, { windows, waiting: [f] });
+    if (r.ok) {
+      patch(key, {
+        state: "filed",
+        filed: r.filed,
+        grab: r.grab,
+        windows: r.windows,
+        dupeCheck: r.dupeCheck,
+        day: today(),
+      });
+      const [kept] = r.vault.archive;
+      if (kept) void backUp(key, kept);
+    } else if (r.duplicate)
+      patch(key, { state: "dupe", reason: r.reason ?? ALREADY_ON_FILE, day: today() });
+    else {
+      patch(key, {
+        state: "error",
+        reason: r.reason ?? "The file didn't take.",
+        day: today(),
+      });
+      const [failed] = r.vault.failed ?? [];
+      if (failed) void backUp(key, failed);
+    }
+  };
+
   // A readable file whose filing failed still vaults (ruled 2026-10-07, pass
   // 8 call 8): to the account it was filing to, or under accounts/_unfiled/
   // when it had none or that backup was refused, so git stays the home for
@@ -307,12 +342,15 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
   // the tab lives.
   const takeBack = (it: Receipt) => {
     const acct = it.account;
-    if (!acct) return;
-    void undo(acct.id, it).then((r) => {
+    // A grab files on many accounts and names none: its take-back reaches
+    // every account it filed to (use-undo.ts, seam S-25).
+    if (!acct && !it.grab) return;
+    const from = acct && !it.grab ? ` from ${shortName(acct.name)}` : "";
+    void undo(acct?.id ?? "", it).then((r) => {
       if (r.ok)
         patch(it.key, {
           state: "undone",
-          reason: `Taken back from ${shortName(acct.name)}. ${r.removed + r.retired} removed.`,
+          reason: `Taken back${from}. ${r.removed + r.retired} removed.`,
           took: r.took,
           day: today(),
         });
@@ -403,6 +441,10 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
         return r;
       };
       const read = vaultOnly ? null : await ingest.read(f);
+      if (read?.ok && isGrab(read.text)) {
+        await fileGrabRow(key, read.text, f, read.windows);
+        return;
+      }
       if (!read?.ok) {
         // Not readable — a recording, an archive, a binary, or a read that
         // came back empty. It still belongs in the vault: route by the
@@ -568,7 +610,8 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
           row={it}
           canWrite={canWrite}
           onTakeBack={
-            it.state === "filed" && (it.noteIds?.length || it.filingId)
+            it.state === "filed" &&
+            (it.noteIds?.length || it.filingId || it.grab?.accounts.length)
               ? () => takeBack(it)
               : undefined
           }

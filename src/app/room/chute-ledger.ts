@@ -17,6 +17,7 @@
 // again. The limiter at the foot is the Chute's concurrency ceiling: at most
 // CHUTE_PARALLEL files read at once; the rest wait in drop order.
 
+import { keptGrab, type GrabSummary } from "@/lib/ingest/grab";
 import type { Window } from "@/lib/ingest/windows";
 import type { FilingWrote } from "@/lib/ingest/wrote";
 import type { RouteHit } from "@/lib/route-capture";
@@ -130,6 +131,11 @@ export type LedgerRow = {
    *  never keeps (D12), so storedRow drops them and a reloaded row opens to
    *  the counts it kept instead. */
   took?: FilingWrote;
+  /** A Sales Nav grab's split (seam S-25): the accounts its rows filed to,
+   *  the ones already on file and the rows that matched no account. Ids,
+   *  names and counts, so a settled row keeps it; the unmatched rows' text
+   *  rides only while the tab lives (D12; storedRow drops it). */
+  grab?: GrabSummary;
 };
 
 const LEDGER_KEY = "chute-ledger-v1";
@@ -205,6 +211,7 @@ export function storedRow(x: LedgerRow): LedgerRow {
     day: x.day,
     note: x.note,
     prior: x.prior,
+    grab: keptGrab(x.grab),
   };
   if (isWaiting(x.state)) {
     const keep = !!x.text && x.text.length <= LEDGER_TEXT_CAP;
